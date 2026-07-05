@@ -1,15 +1,38 @@
 name: Deploy to Hugging Face
 
-# Manual button only. Open this repo on the GitHub mobile site → Actions →
-# "Deploy to Hugging Face" → Run workflow. Nothing ships to prod automatically,
-# so a stray mobile commit can never deploy by accident.
+# Manual button only. Open this repo on the GitHub mobile app (or site) →
+# Actions → "Deploy to Hugging Face" → Run workflow. Fill in one line
+# describing your change, pick minor/major, tap Run. Nothing ships to prod
+# automatically, so a stray mobile commit can never deploy by accident.
+#
+# What one tap does, in order:
+#   1. bump_version.py raises APP_VERSION + writes the "What's new" changelog
+#      entry (from the "summary" you type) — no hand-editing version.py.
+#   2. Deploy: runs the exact same routine as the local deploy_hf.py.
+#   3. On success, commits the version bump back to this branch so the repo
+#      stays in sync with what's live.
 on:
   workflow_dispatch:
     inputs:
+      summary:
+        description: "What changed? One plain-language sentence (shown on the sign-in 'What's new')."
+        type: string
+        required: true
+      bump:
+        description: "Version step"
+        type: choice
+        default: minor
+        options:
+          - minor   # small change / fix:  1.82 -> 1.83
+          - major   # big release:          1.9  -> 2.0
       skip_backup:
         description: "DANGER: skip the pre-deploy DB backup gate (only if backup infra is down)"
         type: boolean
         default: false
+
+# Let the deploy job commit the version bump back to the branch.
+permissions:
+  contents: write
 
 # Never let two deploys overlap (each one restarts the live Space).
 concurrency:
@@ -27,9 +50,26 @@ jobs:
         with:
           python-version: "3.11"
 
-      # deploy_hf.py needs only huggingface_hub; pull_backup.py is stdlib-only.
+      # deploy_hf.py needs only huggingface_hub; bump_version.py + pull_backup.py
+      # are stdlib-only.
       - name: Install deploy dependency
         run: pip install "huggingface_hub>=0.23"
+
+      # Bump APP_VERSION + prepend the changelog entries from your one-line
+      # summary. This is what the deploy's strict-version gate requires, so it
+      # runs BEFORE the deploy — no phone-side editing of version.py.
+      - name: Bump version + changelog
+        id: bump
+        env:
+          # Via env, not inline ${{ }}, so a summary with backticks/$() can't
+          # be injected into the shell.
+          SUMMARY: ${{ inputs.summary }}
+          BUMP: ${{ inputs.bump }}
+        run: |
+          python bump_version.py \
+            --bump "$BUMP" \
+            --summary "$SUMMARY" \
+            --github-output "$GITHUB_OUTPUT"
 
       - name: Deploy (runs the exact same routine as the local deploy_hf.py)
         env:
@@ -39,3 +79,19 @@ jobs:
           CSS_DEPLOY_STRICT_VERSION: "1"             # hard-abort if APP_VERSION wasn't bumped
         run: |
           python deploy_hf.py --yes ${{ inputs.skip_backup && '--skip-backup' || '' }}
+
+      # Only after a successful deploy: record the bump in the repo so the
+      # branch matches what's now live. If the deploy failed, this is skipped
+      # and the working-tree bump is discarded — re-running recomputes the same
+      # version (the repo's APP_VERSION was never advanced).
+      - name: Commit version bump
+        if: success()
+        env:
+          SUMMARY: ${{ inputs.summary }}
+          NEW_VERSION: ${{ steps.bump.outputs.new_version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add version.py CHANGELOG.md
+          git commit -m "Deploy v${NEW_VERSION}: ${SUMMARY}"
+          git push origin "HEAD:${{ github.ref_name }}"
