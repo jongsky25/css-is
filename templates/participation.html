@@ -1,0 +1,302 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, empty_state, chart_table %}
+{% import "_export.html" as ex %}
+{% block title %}Participation{% endblock %}
+{% block content %}
+<style>
+  .controls { display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:.9rem; }
+  .pillrow { display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
+  .seg { display:flex; gap:.3rem; }
+  .seg a { font-size:.78rem; text-decoration:none; color:var(--soft); padding:.28rem .65rem; border-radius:999px; border:1px solid var(--line); }
+  .seg a.on { background:var(--ink); color:var(--on-accent); border-color:var(--ink); }
+  .seglab { font-size:.72rem; color:var(--soft); text-transform:uppercase; letter-spacing:.04em; margin-right:.1rem; }
+
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1.1rem 1.3rem;
+           margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .panel h2 { font-size:1.05rem; margin:0 0 .2rem; }
+  h3 { font-size:1rem; margin:0 0 .2rem; } .sublab { color:var(--soft); font-size:.82rem; margin:0 0 .8rem; }
+
+  /* consolidated "is participation healthy?" read */
+  .read { border-left:5px solid var(--accent); }
+  .read.good { border-left-color:var(--green); background:var(--green-bg); }
+  .read.watch { border-left-color:var(--amber); background:var(--amber-bg); }
+  .read.neutral { border-left-color:var(--grey); }
+  .read-head { font-size:1.12rem; font-weight:700; line-height:1.35; display:flex; gap:.55rem; align-items:flex-start; }
+  .read-head .pill { flex:0 0 auto; font-size:.66rem; font-weight:700; padding:.16rem .55rem; border-radius:999px; border:1px solid; margin-top:.2rem; text-transform:uppercase; letter-spacing:.03em; }
+  .read.good .pill { background:var(--green-bg); color:var(--green); border-color:var(--green-ln); }
+  .read.watch .pill { background:var(--amber-bg); color:var(--amber); border-color:var(--amber-ln); }
+  .read.neutral .pill { background:var(--surface-3); color:var(--soft); border-color:var(--line); }
+  .read-sub { color:var(--ink-soft); font-size:.93rem; line-height:1.5; margin-top:.55rem; }
+
+  /* at-a-glance totals per survey type */
+  .vcards { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1.1rem; }
+  @media (max-width:780px){ .vcards { grid-template-columns:1fr; } }
+  .vcard { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:.9rem 1.1rem;
+           box-shadow:0 1px 3px rgba(20,30,50,.05); display:flex; flex-direction:column; gap:.35rem; }
+  .vcard .kicker { font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:var(--soft); }
+  .vcard .num { display:flex; align-items:baseline; gap:.45rem; }
+  .vcard .num b { font-size:2.1rem; font-weight:800; line-height:1; }
+  .vcard .num span { color:var(--soft); font-size:.82rem; }
+  .delta { font-size:.88rem; font-weight:700; display:inline-flex; align-items:center; gap:.3rem; }
+  .delta.up { color:var(--green); } .delta.down { color:var(--red); } .delta.flat { color:var(--soft); }
+  .delta .sub { color:var(--soft); font-weight:500; }
+
+  /* shared chart styles (mirrors the Trends page) */
+  .chart svg { width:100%; height:auto; }
+  .chart .axis { stroke:var(--line); stroke-width:1; }
+  .chart .grid { stroke:var(--surface-3); stroke-width:1; }
+  .chart .ylab { font-size:10.5px; fill:var(--soft); text-anchor:end; }
+  .chart .mainline { fill:none; stroke:var(--accent); stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
+  .chart .mainline.cov { stroke:#2f855a; } .chart .mainline.eng { stroke:#805ad5; }
+  .chart .ctl-band { fill:var(--surface-3); opacity:.7; }
+  .chart .conf { fill:#2f855a; opacity:.13; stroke:none; }
+  .chart .cl { stroke:#64748b; stroke-width:1.2; stroke-dasharray:5 4; }
+  .chart .lim { stroke:var(--line-strong); stroke-width:1; stroke-dasharray:2 3; }
+  .chart .ctl-lab { font-size:9px; fill:var(--grey); text-anchor:end; }
+  .chart .dot { fill:#fff; stroke:var(--accent); stroke-width:3; }
+  .chart .dot.cov { stroke:#2f855a; } .chart .dot.eng { stroke:#805ad5; }
+  .chart .dot.sig { fill:var(--red); stroke:var(--red); }
+  .chart .dotlab { font-size:11px; font-weight:700; fill:var(--ink); text-anchor:middle; }
+  .chart .xlab { font-size:10.5px; fill:var(--soft); text-anchor:middle; }
+  .chart .axtitle { font-size:11px; font-weight:600; fill:var(--soft); }
+  .calcnote { color:var(--soft); font-size:.78rem; margin:.5rem 0 0; }
+  .calcnote b { font-weight:600; color:var(--ink-soft); }
+  .zoomnote { font-style:italic; }
+  .bandnote { color:var(--soft); font-size:.78rem; margin:.5rem 0 0; display:flex; gap:1.1rem; flex-wrap:wrap; }
+  .bandnote b { font-weight:600; color:var(--ink-soft); }
+  .bandnote .key { display:inline-flex; align-items:center; gap:.35rem; }
+  .bandnote .sw { width:16px; height:10px; border-radius:3px; display:inline-block; }
+  .bandnote .sw.band { background:var(--surface-3); border:1px solid var(--line-strong); }
+  .bandnote .sw.rib { background:#2f855a; opacity:.2; }
+  .bandnote .sw.sig { width:10px; height:10px; border-radius:50%; background:var(--red); }
+  /* tiny inline SPC read under a chart */
+  .miniread { font-size:.86rem; line-height:1.45; margin:.2rem 0 .7rem; display:flex; gap:.5rem; align-items:flex-start; }
+  .miniread .mp { flex:0 0 auto; font-size:.62rem; font-weight:700; padding:.12rem .5rem; border-radius:999px; border:1px solid; text-transform:uppercase; letter-spacing:.03em; margin-top:.1rem; }
+  .miniread.good .mp { background:var(--green-bg); color:var(--green); border-color:var(--green-ln); }
+  .miniread.bad .mp { background:var(--red-bg); color:var(--red); border-color:var(--red-ln); }
+  .miniread.neutral .mp { background:var(--surface-3); color:var(--soft); border-color:var(--line); }
+  .miniread .mt b { color:var(--ink); }
+
+  .cover { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; margin-bottom:1rem; }
+  @media (max-width:560px){ .cover { grid-template-columns:1fr; } }
+  .cover .metric .top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.3rem; }
+  .cover .metric .big { font-size:1.4rem; font-weight:800; } .cover .metric .lab { color:var(--soft); font-size:.85rem; }
+  .cover .track { background:var(--surface-3); border-radius:6px; height:12px; overflow:hidden; display:block; margin-top:.3rem; }
+  .cover .fill { display:block; height:100%; border-radius:6px; background:linear-gradient(90deg,#48bb78,#2f855a); }
+
+  .unit { display:grid; grid-template-columns:13rem 1fr 4.4rem auto; align-items:center; gap:.6rem; margin:.3rem 0; font-size:.9rem; }
+  @media (max-width:560px){ .unit { grid-template-columns:8.5rem 1fr auto; } .unit .per { display:none; } }
+  .unit.section .lab { padding-left:1rem; color:var(--soft); font-weight:500; }
+  .unit .lab { font-weight:700; }
+  .unit a.lab { color:var(--accent); text-decoration:none; } .unit a.lab:hover { text-decoration:underline; }
+  .unit .track { background:var(--surface-3); border-radius:6px; height:13px; overflow:hidden; display:block; }
+  .unit .fill { display:block; height:100%; border-radius:6px; background:linear-gradient(90deg,#63b3ed,#2b6cb0); }
+  .unit.up .fill { background:linear-gradient(90deg,#68d391,#2f855a); }
+  .unit.down .fill { background:linear-gradient(90deg,#f6ad55,#c05621); }
+  .unit.zero .fill { background:var(--surface-3); } .unit .val { font-variant-numeric:tabular-nums; font-weight:700; text-align:right; }
+  .unit.zero .val { color:var(--grey); }
+  .unit .per { font-size:.78rem; color:var(--soft); text-align:right; font-variant-numeric:tabular-nums; }
+  .unit .mv { font-size:.66rem; font-weight:800; padding:.04rem .35rem; border-radius:999px; margin-left:.4rem; vertical-align:.08em; }
+  .unit.up .mv { background:var(--green); color:#fff; } .unit.down .mv { background:#c05621; color:#fff; }
+  .ulegend { font-size:.78rem; color:var(--soft); margin:.2rem 0 .8rem; }
+
+  .spot { display:flex; gap:.7rem; align-items:flex-start; padding:.65rem .85rem; border-radius:10px;
+          margin-bottom:.5rem; border:1px solid; font-size:.93rem; }
+  .spot .dot { flex:0 0 auto; width:.65rem; height:.65rem; border-radius:50%; margin-top:.35rem; }
+  .spot.bad { background:var(--red-bg); border-color:var(--red-ln); } .spot.bad .dot { background:var(--red); }
+  .spot.mid { background:var(--amber-bg); border-color:var(--amber-ln); } .spot.mid .dot { background:var(--amber); }
+  .all-good { color:var(--green); font-weight:600; }
+  .chart-end-delta { display:inline-block; font-size:.78rem; font-weight:700;
+    margin:.3rem 0 .1rem; padding:.16rem .55rem; border-radius:999px; }
+  .chart-end-delta.up { background:var(--green-bg); color:var(--green); }
+  .chart-end-delta.down { background:var(--red-bg); color:var(--red); }
+  .chart-end-delta.flat { background:var(--surface-3); color:var(--soft); }
+</style>
+
+{# ---- reusable single-line chart: control band + (optional) confidence ribbon + signal dots + labelled axes ---- #}
+{% macro linechart(G, ytitle, xtitle, kind='', pct=false) %}
+<svg viewBox="0 0 {{ G.W }} {{ G.H }}" role="img" aria-label="{{ ytitle }} over time">
+  {% for gl in G.grid %}
+    <line class="grid" x1="{{ G.padl }}" y1="{{ gl.y }}" x2="{{ G.W - 16 }}" y2="{{ gl.y }}"></line>
+    <text class="ylab" x="{{ G.padl - 6 }}" y="{{ gl.y + 3.5 }}">{{ gl.label }}</text>
+  {% endfor %}
+  {% if G.control and (G.control.lcl_y - G.control.ucl_y) > 0.5 %}
+    <rect class="ctl-band" x="{{ G.control.x1 }}" y="{{ G.control.ucl_y }}" width="{{ G.control.x2 - G.control.x1 }}" height="{{ (G.control.lcl_y - G.control.ucl_y)|round(1) }}"></rect>
+  {% endif %}
+  {% if G.conf_poly %}<polygon class="conf" points="{{ G.conf_poly }}"></polygon>{% endif %}
+  {% if G.control %}
+    <line class="lim" x1="{{ G.control.x1 }}" y1="{{ G.control.ucl_y }}" x2="{{ G.control.x2 }}" y2="{{ G.control.ucl_y }}"></line>
+    <line class="lim" x1="{{ G.control.x1 }}" y1="{{ G.control.lcl_y }}" x2="{{ G.control.x2 }}" y2="{{ G.control.lcl_y }}"></line>
+    <line class="cl" x1="{{ G.control.x1 }}" y1="{{ G.control.cl_y }}" x2="{{ G.control.x2 }}" y2="{{ G.control.cl_y }}"></line>
+    <text class="ctl-lab" x="{{ G.control.lab_x }}" y="{{ G.control.ucl_y - 2.5 }}">usual high {{ G.control.ucl_label }}</text>
+    <text class="ctl-lab" x="{{ G.control.lab_x }}" y="{{ G.control.lcl_y + 9 }}">usual low {{ G.control.lcl_label }}</text>
+  {% endif %}
+  <line class="axis" x1="{{ G.padl }}" y1="{{ G.axis_y }}" x2="{{ G.W - 16 }}" y2="{{ G.axis_y }}"></line>
+  {% if G.main_poly %}<polyline class="mainline {{ kind }}" points="{{ G.main_poly }}"></polyline>{% endif %}
+  {% for d in G.main_dots %}
+    {% set val = (d.value|round(0)|int ~ '%') if pct else d.shown %}
+    <circle class="dot {{ kind }}{{ ' sig' if d.signal }}" cx="{{ d.x }}" cy="{{ d.y }}" r="{{ 5.5 if d.signal else 4.5 }}"
+      data-tip="{{ d.label }}" data-val="{{ val }}" {% if d.n %}data-n="{{ d.n }}"{% endif %}
+      aria-label="{{ d.label }}: {{ val }}{% if d.n %} (n={{ d.n }}){% endif %}{{ ' — stands out from the usual range' if d.signal }}"></circle>
+    {% if loop.length <= 14 %}<text class="dotlab" x="{{ d.x }}" y="{{ d.y - 10 }}">{{ val }}</text>{% endif %}
+  {% endfor %}
+  {% for lab in G.xlabels %}
+    {% if lab.show %}<text class="xlab" x="{{ lab.x }}" y="{{ G.axis_y + 16 }}">{{ lab.text }}</text>{% endif %}
+  {% endfor %}
+  <text class="axtitle" x="{{ G.xtitle_x }}" y="{{ G.xtitle_y }}" text-anchor="middle">{{ xtitle }}</text>
+  <text class="axtitle" x="{{ G.ytitle_x }}" y="{{ G.ytitle_y }}" text-anchor="middle" transform="rotate(-90 {{ G.ytitle_x }} {{ G.ytitle_y }})">{{ ytitle }}</text>
+</svg>
+{% if G.main_table %}{{ chart_table(ytitle ~ ' per ' ~ xtitle|lower, ['Period', ytitle], G.main_table) }}{% endif %}
+{% if G.control %}
+<p class="bandnote">
+  <span class="key"><span class="sw band"></span><b>Usual range</b> — where it normally sits</span>
+  {% if G.conf_poly %}<span class="key"><span class="sw rib"></span><b>Margin of error</b> — wider when fewer events</span>{% endif %}
+  {% if G.control.has_signal %}<span class="key"><span class="sw sig"></span><b>Stands out</b> — a genuine signal worth a look</span>{% endif %}
+</p>
+{% endif %}
+{% endmacro %}
+
+{% macro miniread(cr) %}
+{% if cr %}<p class="miniread {{ cr.tone }}"><span class="mp">{{ cr.label }}</span><span class="mt"><b>{{ cr.headline }}</b> {{ cr.detail }}</span></p>{% endif %}
+{% endmacro %}
+
+{{ page_header("Participation") }}
+<p class="lede">How <em>much</em> feedback we're getting — whether responses are genuinely rising or falling (not just normal month-to-month wobble), how deeply events are heard, who's active, and where the blind spots are.</p>
+
+{% set xtitle = {'monthly':'Month','quarterly':'Quarter','yearly':'Year'}.get(grain,'Period') %}
+{% set perword = {'monthly':'month','quarterly':'quarter','yearly':'year'}.get(grain,'period') %}
+{% set anyG = (volumes | selectattr('has_data') | map(attribute='geom') | first) %}
+
+<div class="controls">
+  <div class="pillrow">
+    <span class="seglab">By</span>
+    <div class="seg">
+      {% for g in ['monthly','quarterly','yearly'] %}
+      <a href="/dashboard/participation?grain={{ g }}&org={{ sel_org|urlencode }}&period={{ sel_period|urlencode }}{{ '&full=1' if show_full else '' }}" class="{{ 'on' if grain==g }}">{{ g|capitalize }}</a>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="pillrow">
+    {% if anyG and (anyG.windowed or show_full) %}
+    <div class="seg">
+      <a href="/dashboard/participation?grain={{ grain }}&org={{ sel_org|urlencode }}&period={{ sel_period|urlencode }}" class="{{ 'on' if not show_full }}">Recent</a>
+      <a href="/dashboard/participation?grain={{ grain }}&org={{ sel_org|urlencode }}&period={{ sel_period|urlencode }}&full=1" class="{{ 'on' if show_full }}">Full history ({{ anyG.full_n }})</a>
+    </div>
+    {% endif %}
+    {{ ex.download('/dashboard/export?visual=participation&grain=' ~ grain ~ '&org=' ~ (sel_org|urlencode) ~ '&period=' ~ (sel_period|urlencode), 'Download') }}
+  </div>
+</div>
+
+{# ---- consolidated read ---- #}
+<div class="panel read {{ read.tone }}">
+  <div class="read-head">
+    <span class="pill">{{ {'good':'Rising','watch':'Easing','neutral':'Steady'}.get(read.tone,'—') }}</span>
+    <span>{{ read.lead }}</span>
+  </div>
+  <div class="read-sub"><span aria-hidden="true">📋</span> <strong>Coverage:</strong> {{ read.coverage }}</div>
+  {% if read.driver %}<div class="read-sub"><span aria-hidden="true">🔍</span> <strong>{{ read.driver }}</strong></div>{% endif %}
+</div>
+
+{# ---- at-a-glance totals ---- #}
+<div class="vcards">
+  {% for v in volumes %}
+  {% set h = v.headline %}
+  {% set arrow = '▲' if h.dir=='up' else ('▼' if h.dir=='down' else '–') %}
+  <div class="vcard">
+    <div class="kicker">{{ v.title }}</div>
+    <div class="num"><b>{{ v.total|comma }}</b><span>total responses</span></div>
+    {% if h.latest is not none %}
+      {% if h.delta is not none %}
+      <div class="delta {{ h.dir }}"><span aria-hidden="true">{{ arrow }}</span> {{ h.latest|comma }} in {{ h.latest_label }}
+        <span class="sub">({{ '+' if h.delta > 0 else '' }}{{ h.delta|comma }} vs {{ h.prev|comma }} prior)</span></div>
+      {% else %}
+      <div class="delta flat">{{ h.latest|comma }} in {{ h.latest_label }}</div>
+      {% endif %}
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+{# ---- responses over time, per survey type, with SPC control band ---- #}
+{% for v in volumes %}
+{% if v.has_data %}{% set G = v.geom %}
+<div class="panel chart">
+  <h3>Responses over time — {{ v.title }}</h3>
+  <p class="sublab">Distinct responses per {{ perword }}.
+    <span class="zoomnote">Zoomed in to the range of the data.{% if G.windowed %} Showing the last {{ G.shown_n }} of {{ G.full_n }} periods.{% endif %}</span></p>
+  {{ miniread(v.control_read) }}
+  {{ linechart(G, 'Responses', xtitle, kind='') }}
+  <p class="calcnote"><b>How it's computed:</b> each point counts the distinct survey responses received in that {{ xtitle|lower }}. The shaded band is the usual range (average ± normal variation); a point outside it is flagged as a real signal.</p>
+</div>
+{% endif %}
+{% endfor %}
+
+{# ---- engagement depth: responses per event ---- #}
+{% if eng_trend.has_data %}{% set E = eng_trend.geom %}
+<div class="panel chart">
+  <h3>How deeply events are heard</h3>
+  <p class="sublab">Average responses per event — are events drawing fuller feedback, not just are there more of them?
+    <span class="zoomnote">Zoomed in to the range of the data.{% if E.windowed %} Showing the last {{ E.shown_n }} of {{ E.full_n }} periods.{% endif %}</span></p>
+  {{ linechart(E, 'Responses per event', xtitle, kind='eng') }}
+  <p class="calcnote"><b>How it's computed:</b> total responses in the {{ xtitle|lower }} ÷ the number of events that ran that {{ xtitle|lower }}. The band is the usual range.</p>
+</div>
+{% endif %}
+
+{# ---- coverage: snapshot + trend with confidence ribbon ---- #}
+<div class="panel chart">
+  <h2>Coverage</h2>
+  <p class="sublab">How much of the program is actually being measured{% if sel_org %} in {{ scope_label }}{% endif %}.</p>
+  <div class="cover">
+    <div class="metric">
+      <div class="top"><span class="big">{{ coverage.events_with }} / {{ coverage.events_total }}</span>
+        <span class="lab">events drew feedback</span></div>
+      <span class="track"><span class="fill" style="width:{{ coverage.events_pct|round(0) }}%"></span></span>
+    </div>
+    <div class="metric">
+      <div class="top"><span class="big">{{ coverage.staff_rated }} / {{ coverage.staff_total }}</span>
+        <span class="lab">staff have a rating</span></div>
+      <span class="track"><span class="fill" style="width:{{ coverage.staff_pct|round(0) }}%"></span></span>
+    </div>
+  </div>
+  {% if cov_trend.has_data %}{% set C = cov_trend.geom %}
+  <h3 style="margin-top:.4rem">Event coverage over time</h3>
+  <p class="sublab">Share of the events that ran each {{ perword }} that drew any feedback.
+    <span class="zoomnote">Zoomed in — full scale is 0–100%.{% if C.windowed %} Showing the last {{ C.shown_n }} of {{ C.full_n }} periods.{% endif %}</span></p>
+  {{ miniread(cov_trend.control_read) }}
+  {{ linechart(C, 'Events with feedback (%)', xtitle, kind='cov', pct=true) }}
+  <p class="calcnote"><b>How it's computed:</b> of the events held in that {{ xtitle|lower }}, the percentage that received at least one response. The ribbon is the 95% margin of error — wider when only a few events ran.</p>
+  {% endif %}
+</div>
+
+{# ---- where feedback comes from: normalized + movers ---- #}
+<div class="panel">
+  <h2>Where feedback is coming from</h2>
+  <p class="sublab">Distinct responses attributed to each division and section{% if sel_org %} in {{ scope_label }}{% endif %}, with how many each drew per event.</p>
+  {% if by_unit %}
+    <p class="ulegend">Bars show total responses. <b>Per event</b> normalizes for size. Units that moved most this {{ perword }} are <span style="color:var(--green);font-weight:700">highlighted</span>.</p>
+    {% for u in by_unit %}
+    <div class="unit {{ u.level }} {{ u.role }} {{ 'zero' if u.count == 0 }}">
+      {% if u.path and u.path != 'External' and u.count %}
+      <a class="lab" href="/dashboard/people?org={{ u.path|urlencode }}" title="See the people in {{ u.label }}">{{ u.label }} <span aria-hidden="true">→</span></a>
+      {% else %}<span class="lab">{{ u.label }}</span>{% endif %}
+      <span class="track"><span class="fill" style="width:{{ u.pct|round(1) }}%"></span></span>
+      <span class="per">{{ u.per_event_s }}/ev</span>
+      <span class="val">{{ u.count|comma }}{% if u.role %}<span class="mv"><span aria-hidden="true">{{ '▲' if u.role=='up' else '▼' }}</span>{{ '+' if u.delta>0 else '' }}{{ u.delta|comma }}</span>{% endif %}</span>
+    </div>
+    {% endfor %}
+  {% else %}{{ empty_state("No org units to show.", icon="◔") }}{% endif %}
+</div>
+
+{# ---- blind spots ---- #}
+<div class="panel">
+  <h2>Blind spots</h2>
+  <p class="sublab">Who and what is silent — gaps worth closing.</p>
+  {% if spots %}
+    {% for s in spots %}
+    <div class="spot {{ s.tone }}"><span class="dot"></span><span>{{ s.text }}</span></div>
+    {% endfor %}
+  {% else %}
+    <p class="all-good">No blind spots — every unit and every staff member has feedback on record.</p>
+  {% endif %}
+</div>
+{% endblock %}

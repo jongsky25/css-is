@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="{{ lang|default('en') }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}CSS-IS{% endblock %}</title>
+{# Set theme + text size before first paint so the choice never flashes. #}
+<script>(function(){try{var d=document.documentElement;var t=localStorage.getItem("theme");if(t!=="dark"&&t!=="light"&&t!=="contrast"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light";}d.setAttribute("data-theme",t);var s=localStorage.getItem("textscale");if(s!=="sm"&&s!=="lg"&&s!=="md"){s="md";}d.setAttribute("data-textscale",s);var dn=localStorage.getItem("density");if(dn!=="compact"&&dn!=="cozy"){dn="cozy";}d.setAttribute("data-density",dn);var ac=localStorage.getItem("accent");if(["blue","teal","violet","emerald","rose","amber"].indexOf(ac)<0){ac="blue";}d.setAttribute("data-accent",ac);}catch(e){}})();</script>
+<link rel="stylesheet" href="/static/css/app.css?v=20260622b">
+{# Installable PWA: manifest start_url points back to THIS page so an installed
+   survey link reopens the same survey. theme/icon hints for Android + iOS. #}
+{% set _mstart = (request.url.path ~ ('?' ~ request.url.query if request.url.query else '')) | urlencode %}
+<link rel="manifest" href="/manifest.webmanifest?start={{ _mstart }}">
+<meta name="theme-color" content="#002060">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="CSS-IS">
+<link rel="icon" href="/static/img/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/static/img/icons/apple-touch-icon.png">
+<script>if("serviceWorker" in navigator){addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){});});}</script>
+{% block head %}{% endblock %}
+</head>
+<body>
+<a class="skip-link" href="#maincontent">Skip to content</a>
+{% block progress %}{% endblock %}
+<div class="pub-wrap">
+  <div class="pub-top">
+    {% if lang is defined %}
+    {# Survey-form language switch (English ↔ Filipino). Plain links so it works
+       without JS; /lang sets a cookie and returns to this same page. #}
+    {% set _lnext = (request.url.path ~ ('?' ~ request.url.query if request.url.query else '')) | urlencode %}
+    <nav class="lang-toggle" aria-label="{{ t('lang_aria', lang) }}">
+      <a href="/lang/en?next={{ _lnext }}"{% if lang != 'fil' %} class="on" aria-current="true"{% endif %}>EN</a>
+      <a href="/lang/fil?next={{ _lnext }}"{% if lang == 'fil' %} class="on" aria-current="true"{% endif %}>FIL</a>
+    </nav>
+    {% endif %}
+    {% if request.state.user %}
+    <a class="fb-bell{{ ' has-unread' if request.state.feedback_unread }}" href="/my/feedback" title="Notifications — updates on your feedback" aria-label="Notifications{{ ' — %d new update(s) on your feedback'|format(request.state.feedback_unread) if request.state.feedback_unread else ' — updates on your feedback' }}">🔔{% if request.state.feedback_unread %}<span class="fb-badge">{{ request.state.feedback_unread }}</span>{% endif %}</a>
+    {% endif %}
+    <details class="settings">
+      <summary aria-label="Display settings" title="Display settings">⚙</summary>
+      <div class="settings-menu">
+        <div class="set-group">
+          <div class="set-lab">Theme</div>
+          <div class="seg-ctl" role="group" aria-label="Theme">
+            <button type="button" data-set-theme="light">Light</button>
+            <button type="button" data-set-theme="dark">Dark</button>
+            <button type="button" data-set-theme="contrast">Contrast</button>
+          </div>
+        </div>
+        <div class="set-group">
+          <div class="set-lab">Accent</div>
+          <div class="swatch-ctl" role="group" aria-label="Accent colour">
+            <button type="button" class="sw-blue" data-set-accent="blue" title="Blue" aria-label="Blue"></button>
+            <button type="button" class="sw-teal" data-set-accent="teal" title="Teal" aria-label="Teal"></button>
+            <button type="button" class="sw-violet" data-set-accent="violet" title="Violet" aria-label="Violet"></button>
+            <button type="button" class="sw-emerald" data-set-accent="emerald" title="Emerald" aria-label="Emerald"></button>
+            <button type="button" class="sw-rose" data-set-accent="rose" title="Rose" aria-label="Rose"></button>
+            <button type="button" class="sw-amber" data-set-accent="amber" title="Amber" aria-label="Amber"></button>
+          </div>
+        </div>
+        <div class="set-group">
+          <div class="set-lab">Text size</div>
+          <div class="seg-ctl" role="group" aria-label="Text size">
+            <button type="button" class="tsz-sm" data-set-text="sm" title="Small">A</button>
+            <button type="button" data-set-text="md" title="Medium">A</button>
+            <button type="button" class="tsz-lg" data-set-text="lg" title="Large">A</button>
+          </div>
+        </div>
+        <div class="set-group">
+          <div class="set-lab">Density</div>
+          <div class="seg-ctl" role="group" aria-label="Density">
+            <button type="button" data-set-density="cozy" title="Cozy">Cozy</button>
+            <button type="button" data-set-density="compact" title="Compact">Compact</button>
+          </div>
+        </div>
+      </div>
+    </details>
+  </div>
+  <main id="maincontent" tabindex="-1">{% block content %}{% endblock %}</main>
+  <div class="pub-foot">{% block foot %}CSS-IS · Client Satisfaction Survey{% endblock %}
+    <div class="equity-credit"><span class="equity-mark sm" aria-hidden="true"></span><span>An Equity in Health Section innovation</span></div>
+  </div>
+</div>
+{% if request.state.user and request.state.spot_feedback_enabled %}
+<button id="sfBtn" class="sf-float" type="button" aria-label="Send feedback about this page">💬 Send feedback</button>
+<script src="/static/js/feedback.js?v=20260614a" defer></script>
+{% endif %}
+{# Offline-capture UI strings for app.js (PWA Phase 2). Survey-flow pages set
+   `lang`; other public pages fall back to the English defaults baked into app.js. #}
+{% if lang is defined %}
+<script>window.OFFLINE_I18N = {
+  saved_h1: {{ t('offline_saved_h1', lang)|string|tojson }},
+  saved_msg: {{ t('offline_saved_msg', lang)|string|tojson }},
+  waiting: {{ t('offline_waiting', lang)|string|tojson }},
+  sending: {{ t('offline_sending', lang)|string|tojson }},
+  sent_one: {{ t('offline_sent_one', lang)|string|tojson }},
+  sent_many: {{ t('offline_sent_many', lang)|string|tojson }},
+  failed: {{ t('offline_failed', lang)|string|tojson }},
+  failed_label: {{ t('offline_failed_label', lang)|string|tojson }},
+  discard: {{ t('offline_discard', lang)|string|tojson }}
+};</script>
+{% endif %}
+<script src="/static/js/app.js?v=20260622b" defer></script>
+</body>
+</html>

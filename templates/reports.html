@@ -1,0 +1,458 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, empty_state %}
+{% import "_story.html" as s %}
+{% block title %}Reports{% endblock %}
+
+{% block head %}
+<style>
+  .official { display:inline-block; background:var(--amber-bg); color:var(--amber); border:1px solid var(--amber-ln);
+              border-radius:999px; padding:.15rem .7rem; font-size:.74rem; font-weight:700; margin-bottom:.75rem; }
+  .rtabs { display:flex; flex-wrap:wrap; gap:.4rem; margin:.4rem 0 1.1rem; border-bottom:2px solid var(--line); padding-bottom:0; }
+  .rtab { padding:.55rem 1rem; font-size:.9rem; font-weight:600; color:var(--soft); text-decoration:none;
+          border:1px solid var(--line); border-bottom:none; border-radius:9px 9px 0 0; background:var(--surface-2);
+          position:relative; bottom:-2px; }
+  .rtab:hover { background:var(--surface); color:var(--ink-soft); }
+  .rtab.on { background:var(--surface); color:var(--accent,#4f46e5); border-color:var(--line);
+             border-bottom:2px solid var(--surface); font-weight:700; }
+  /* official SERVQUAL summary + demographics */
+  .sq-summary { display:flex; flex-wrap:wrap; gap:1.25rem; margin:.8rem 0; padding:.9rem 1.1rem;
+                background:var(--surface-2); border:1px solid var(--line); border-radius:10px; }
+  .sq-summary .s { display:flex; flex-direction:column; }
+  .sq-summary .s .k { font-size:.7rem; text-transform:uppercase; letter-spacing:.03em; color:var(--soft); font-weight:700; }
+  .sq-summary .s .v { font-size:1.25rem; font-weight:800; font-variant-numeric:tabular-nums; }
+  .demo-ratio { display:flex; flex-wrap:wrap; gap:1.5rem; margin:.4rem 0 .2rem; }
+  .demo-ratio .r { font-size:.92rem; color:var(--ink-soft); }
+  .demo-ratio .r strong { font-size:1.1rem; }
+  .filters { display:flex; flex-wrap:wrap; gap:1rem; align-items:flex-end; background:var(--surface);
+             border:1px solid var(--line); border-radius:12px; padding:1rem 1.25rem; margin-bottom:1.25rem; }
+  .filters .fld { display:flex; flex-direction:column; gap:.25rem; }
+  .filters label { font-size:.72rem; text-transform:uppercase; letter-spacing:.03em; color:var(--soft); font-weight:700; }
+  .filters select { padding:.5rem .6rem; border:1px solid var(--line); border-radius:8px; font-size:.95rem;
+                    background:var(--surface); min-width:200px; max-width:70vw; }
+  /* Activity options carry long titles; cap the closed control so it doesn't balloon to full width. */
+  .filters select#activity { width:min(360px, 100%); max-width:100%; }
+  .filters .scope { margin-left:auto; color:var(--soft); font-size:.85rem; text-align:right; }
+  .rcard { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:1.25rem 1.5rem;
+          margin-bottom:1.25rem; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+  .rcard h2 { font-size:1.1rem; margin:0; }
+  .rcard .tag { font-size:.72rem; font-weight:700; color:var(--soft); }
+  .cardhead { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem; gap:1rem; }
+  .head-num { display:flex; align-items:baseline; gap:.6rem; flex-wrap:wrap; }
+  .big { font-size:2.2rem; font-weight:800; line-height:1; }
+  .meta { color:var(--soft); font-size:.85rem; }
+  table { width:100%; border-collapse:collapse; margin-top:.5rem; }
+  td, th { text-align:left; padding:.45rem .4rem; border-bottom:1px solid var(--line); font-size:.9rem; vertical-align:middle; }
+  th { color:var(--soft); font-size:.7rem; text-transform:uppercase; letter-spacing:.03em; }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .stmt { color:var(--soft); font-size:.82rem; }
+  code { background:var(--surface-3); padding:.05rem .35rem; border-radius:5px; font-size:.8rem; }
+  .bar { display:flex; height:10px; border-radius:5px; overflow:hidden; background:var(--surface-3); min-width:90px; }
+  .bar i { display:block; height:100%; }
+  .bar .t { background:var(--green); }
+  .bar .m { background:var(--line-strong); }
+  .bar .b { background:var(--red); }
+  .dims td:first-child { font-weight:600; }
+  .vlink { font-size:.82rem; font-weight:600; color:var(--accent); text-decoration:none; }
+  .kpis { display:flex; gap:1.5rem; flex-wrap:wrap; margin:.4rem 0 .2rem; }
+  .kpi .v { font-size:1.3rem; font-weight:700; }
+  .kpi .k { font-size:.75rem; color:var(--soft); }
+  .flags { margin-top:.4rem; display:flex; gap:.4rem; flex-wrap:wrap; }
+  .scale-note { color:var(--grey); font-size:.78rem; margin-top:.3rem; }
+  .legend dt { font-weight:700; font-size:.85rem; margin-top:.6rem; }
+  .legend dd { margin:.15rem 0 0; font-size:.85rem; color:var(--soft); }
+  /* --- Official ARTA / CO-CSM report --- */
+  .arta-official .sub { color:var(--soft); font-size:.85rem; margin:.3rem 0 0; max-width:60ch; }
+  .arta-actions { display:flex; flex-direction:column; align-items:flex-end; gap:.35rem; }
+  .chiprow { display:flex; flex-wrap:wrap; gap:.5rem; margin:.6rem 0 .2rem; }
+  .chip { background:var(--surface-3); border:1px solid var(--line); border-radius:999px;
+          padding:.18rem .7rem; font-size:.82rem; color:var(--soft); }
+  h3.sec { font-size:.95rem; margin:1.5rem 0 .5rem; padding-bottom:.3rem;
+           border-bottom:1px solid var(--line); color:var(--ink-soft); }
+  .band-chip { font-size:.66rem; font-weight:700; padding:.04rem .4rem; border-radius:5px; margin-left:.3rem; }
+  .cc-grid, .demo-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1rem 1.5rem; }
+  /* de-cluttered Citizen's Charter cards */
+  .cc-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1rem; }
+  .cc-card { border:1px solid var(--line); border-radius:11px; padding:.9rem 1.05rem; background:var(--surface); }
+  .cc-card .cc-q { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--soft); }
+  .cc-card .cc-big { font-size:2.1rem; font-weight:800; line-height:1.05; margin:.15rem 0 .05rem; }
+  .cc-card .cc-phrase { font-size:.9rem; color:var(--ink-soft); }
+  .cc-card .cc-top { font-size:.82rem; color:var(--soft); margin-top:.45rem; }
+  .cc-card .cc-base { font-size:.73rem; color:var(--grey); margin-top:.1rem; }
+  .cc-card .cc-details { margin-top:.55rem; }
+  .cc-card .cc-details > summary { font-size:.78rem; color:var(--accent); cursor:pointer; list-style:revert; }
+  .cc-card .cc-details table { width:100%; margin-top:.35rem; }
+  .cc-card .cc-details td { padding:.22rem .3rem; border-bottom:1px solid var(--line); font-size:.82rem; }
+  .cc-card .cc-details td.lbl { color:var(--ink-soft); cursor:help; }
+  .tblk h4 { font-size:.84rem; margin:0 0 .4rem; color:var(--soft); }
+  .tblk table { margin-top:0; }
+  .tblk td { padding:.3rem .4rem; border-bottom:1px solid var(--line); font-size:.86rem; }
+  .tblk .lbl { color:var(--ink-soft); }
+  .sharebar { display:flex; height:8px; border-radius:4px; overflow:hidden; background:var(--surface-3); min-width:70px; }
+  .sharebar i { display:block; height:100%; background:var(--accent,#6366f1); }
+  .pct { color:var(--soft); font-variant-numeric:tabular-nums; }
+  .cmtcols { display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; }
+  @media (max-width:640px){ .cmtcols { grid-template-columns:1fr; } }
+  .cmtlist { list-style:none; margin:.3rem 0 0; padding:0; }
+  .cmtlist li { font-size:.86rem; color:var(--soft); padding:.4rem .6rem; border-radius:8px;
+                background:var(--surface-2); border:1px solid var(--line); margin-bottom:.4rem; }
+  .cmtlist.good li { border-left:3px solid var(--green); }
+  .cmtlist.bad  li { border-left:3px solid var(--red); }
+</style>
+{% endblock %}
+
+{% block crumbs %}
+<nav class="crumbs" aria-label="Breadcrumb"><a href="/dashboard">Dashboard</a><span class="sep">›</span><span class="here">Reports</span></nav>
+{% endblock %}
+
+{% block content %}
+{% macro tally_block(title, items) %}
+  <div class="tblk">
+    <h4>{{ title }}</h4>
+    <div class="table-wrap">
+    <table>
+      {% for it in items %}
+      <tr>
+        <td class="lbl">{{ it.label }}</td>
+        <td class="num">{{ it.n|comma }}</td>
+        <td style="width:38%"><div class="sharebar" title="{{ it.pct }}%"><i style="width:{{ it.pct }}%"></i></div></td>
+        <td class="num pct">{{ it.pct }}%</td>
+      </tr>
+      {% endfor %}
+    </table>
+    </div>
+  </div>
+{% endmacro %}
+{% macro cc_card(qlabel, summ, items) %}
+  <div class="cc-card">
+    <div class="cc-q">{{ qlabel }}</div>
+    <div class="cc-big">{% if summ.pct is not none %}{{ summ.pct }}%{% else %}—{% endif %}</div>
+    <div class="cc-phrase">{{ summ.phrase }}</div>
+    {% if summ.top %}<div class="cc-top">Most common: “{{ summ.top.short }}” · {{ summ.top.pct }}%</div>{% endif %}
+    <div class="cc-base">Based on {{ summ.base|comma }} response(s){% if summ.base != summ.pos_n %} · {{ summ.pos_n|comma }} positive{% endif %}</div>
+    <details class="cc-details">
+      <summary>Full breakdown</summary>
+      <div class="table-wrap">
+      <table>
+        {% for it in items %}
+        <tr><td class="lbl" title="{{ it.label }}">{{ it.short }}</td><td class="num">{{ it.n|comma }}</td><td class="num pct">{{ it.pct }}%</td></tr>
+        {% endfor %}
+      </table>
+      </div>
+    </details>
+  </div>
+{% endmacro %}
+{% macro report_downloads(rtype, org, period, activity='') %}
+{% set act = ('&activity=' ~ (activity|urlencode)) if activity else '' %}
+<details class="dl">
+  <summary title="Download this report">⤓ Download</summary>
+  <div class="dl-menu">
+    <div class="dl-group">Official report</div>
+    <a href="/reports/export?type={{ rtype }}&org={{ org|urlencode }}&period={{ period|urlencode }}{{ act }}&fmt=docx" download>Word (.docx)</a>
+    <a href="/reports/export?type={{ rtype }}&org={{ org|urlencode }}&period={{ period|urlencode }}{{ act }}&fmt=pdf" download>PDF</a>
+    <a href="/reports/export?type={{ rtype }}&org={{ org|urlencode }}&period={{ period|urlencode }}{{ act }}&fmt=pptx" download>PowerPoint (.pptx)</a>
+    {% if rtype == 1 %}
+    <div class="dl-group">Official CO-CSM template</div>
+    <a href="/reports/export?type=1&org={{ org|urlencode }}&period={{ period|urlencode }}&fmt=docx&style=official" download>Word (.docx) — ARTA template</a>
+    <a href="/reports/export?type=1&org={{ org|urlencode }}&period={{ period|urlencode }}&fmt=pdf&style=official" download>PDF — ARTA template</a>
+    <div class="dl-group">Raw data</div>
+    <a href="/csm-blhsd/export?period={{ period|urlencode }}" download>Excel — BLHSD format</a>
+    {% elif rtype == 2 %}
+    <div class="dl-group">Raw data</div>
+    <a href="/reports/activities-export?org={{ org|urlencode }}&period={{ period|urlencode }}" download>Excel — activity list (MRR format)</a>
+    {% elif rtype == 3 %}
+    <div class="dl-group">Raw data</div>
+    <a href="/reports/export?type=3&org={{ org|urlencode }}&period={{ period|urlencode }}{{ act }}&fmt=xlsx" download>Excel (.xlsx) — the numbers</a>
+    {% endif %}
+  </div>
+</details>
+{% endmacro %}
+{% set band_cls = {'Outstanding':'b-good','Satisfactory':'b-good','Fair':'b-mid','Poor':'b-bad'} %}
+{% macro servqual_card(tag, title, v, stype) %}
+  <div class="rcard">
+    <div class="cardhead">
+      <div><span class="tag">{{ tag }}</span><h2>{{ title }}</h2></div>
+      {% if v.has_data %}<a class="vlink" href="/reports/verbatims?survey_type={{ stype }}&org={{ sel_org }}&period={{ sel_period }}">See verbatims →</a>{% endif %}
+    </div>
+    {% if v.has_data %}
+    <div class="head-num">
+      <span class="big">{{ v.overall.shown }}</span><span class="meta">/ 7</span>
+      {% if v.gap %}
+        <span class="badge {{ {'Exceeds':'b-good','Meets':'b-good','Needs Improvement':'b-bad'}.get(v.gap.label,'b-grey') }}">{{ v.gap.label }} expectation ({{ v.gap.shown }})</span>
+      {% endif %}
+      <span class="meta">overall perception · {{ v.respondents|comma }} respondent(s)</span>
+    </div>
+    {% if v.overall.flags %}
+    <div class="flags">{% for f in v.overall.flags %}
+      <span class="badge {{ 'b-mid' if 'low n' in f else 'b-info' }}">{{ f }}</span>{% endfor %}</div>
+    {% endif %}
+    <div class="kpis">
+      <div class="kpi"><div class="v">{{ v.expectation.shown }}</div><div class="k">Expectation (A) · n={{ v.expectation.n|comma }}</div></div>
+      <div class="kpi"><div class="v">{{ v.osq.shown }}
+        {% if v.osq.band %}<span class="badge {{ {'Excellent':'b-good','Good':'b-good','Fair':'b-mid','Poor':'b-bad'}.get(v.osq.band,'b-grey') }}">{{ v.osq.band }}</span>{% endif %}</div>
+        <div class="k">Overall service quality (C) · n={{ v.osq.n|comma }}</div></div>
+    </div>
+    <div class="table-wrap">
+    <table class="dims">
+      <tr><th>Dimension</th><th>Items</th><th class="num">Mean</th><th class="num">n</th></tr>
+      {% for d in v.dimensions %}
+      <tr>
+        <td>{{ d.dim }}{% if d.flags %} {% for f in d.flags %}{% if 'volatile' in f %}<span class="badge b-grey" title="single item — moves a lot">1-item</span>{% endif %}{% endfor %}{% endif %}</td>
+        <td class="stmt"><code>{{ d.members }}</code></td>
+        <td class="num">{{ d.shown }}</td>
+        <td class="num">{{ d.n|comma }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    </div>
+    <div class="scale-note">Overall = mean of the dimension means (dimension-weighted). Perception items run 1–7; OSQ (C) runs 1–4.</div>
+    {% else %}{{ empty_state("No responses in this scope.", icon="◔") }}{% endif %}
+  </div>
+{% endmacro %}
+
+{% set reports_meta = {
+  1: ('Type 1 · ARTA', 'ARTA Harmonized Client Satisfaction', 'The official citizen-satisfaction report for the bureau walk-in service (Citizen’s Charter + SQD0–SQD8).'),
+  2: ('Type 2 · Activity', 'Activity / Event Satisfaction (SERVQUAL)', 'The consolidated SERVQUAL report for every activity in this scope — dimensions, expectation gaps and the official summary, all activities combined.'),
+  3: ('Type 3 · Resource Person', 'Resource-person Satisfaction (SERVQUAL)', 'The consolidated SERVQUAL report for every resource person in this scope — dimensions, expectation gaps and the official summary, combined.'),
+} %}
+{% set rm = reports_meta[rtype] %}
+<span class="official">OFFICIAL REPORTS · for ARTA / SERVQUAL submissions</span>
+{{ page_header(rm[1]) }}
+<p class="lede">{{ rm[2] }} Every score is computed fresh from the raw answers, with item codes and denominators intact. For the plain-language read, use the <a href="/dashboard">dashboard</a>.</p>
+
+<!-- REPORT-TYPE SWITCHER -->
+<nav class="rtabs" aria-label="Report type">
+  {% for t in [1, 2, 3] %}
+  <a class="rtab {{ 'on' if rtype == t }}" {% if rtype == t %}aria-current="page"{% endif %}
+     href="/reports?type={{ t }}&org={{ sel_org|urlencode }}&period={{ sel_period|urlencode }}">{{ reports_meta[t][0] }}</a>
+  {% endfor %}
+</nav>
+
+<!-- FILTER BAR -->
+<form class="filters" method="get" action="/reports" id="filterForm">
+  <input type="hidden" name="type" value="{{ rtype }}">
+  <div class="fld">
+    <label for="org">Scope</label>
+    <select id="org" name="org" onchange="this.form.submit()">
+      {% for o in org_opts %}
+      <option value="{{ o.value }}" {{ 'selected' if o.value == sel_org }}>
+        {{ '— ' * o.depth }}{{ o.text }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="fld">
+    <label for="period">Period</label>
+    <select id="period" name="period" onchange="this.form.submit()">
+      <option value="all" {{ 'selected' if sel_period == 'all' or not sel_period }}>All time</option>
+      {% for g in period_opts %}
+      <optgroup label="{{ g.label }}">
+        {% for op in g.options %}
+        <option value="{{ op.value }}" {{ 'selected' if op.value == sel_period }}>{{ op.text }}</option>
+        {% endfor %}
+      </optgroup>
+      {% endfor %}
+    </select>
+  </div>
+  {% if rtype == 3 %}
+  <div class="fld">
+    <label for="activity">Activity</label>
+    <select id="activity" name="activity" onchange="this.form.submit()"
+            data-combobox data-combobox-placeholder="Search activities…">
+      <option value="">All activities</option>
+      {% for a in activity_opts %}
+      <option value="{{ a.value }}" {{ 'selected' if a.value == sel_activity }}>{{ a.text }} — {{ a.date|humandate }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% endif %}
+  <div class="scope">Showing<br><strong>{{ scope_label }}</strong></div>
+</form>
+
+{% if rtype == 1 %}
+<details class="disclosure rcard" style="padding:.9rem 1.25rem;">
+  <summary>How to read these numbers — bands, flags &amp; thresholds</summary>
+  <dl class="legend" style="margin:.4rem 0 0;">
+    <dt>Top-box % (Type 1 / ARTA)</dt>
+    <dd>Share of answers that are Agree or Strongly Agree. Bands: <strong>Outstanding</strong> ≥ 95% ·
+        <strong>Satisfactory</strong> 80–94.9% · <strong>Fair</strong> 60–79.9% · <strong>Poor</strong> &lt; 60%.</dd>
+    <dt>Overall service quality / OSQ (item C, 1–4)</dt>
+    <dd><strong>Excellent</strong> ≥ 3.25 · <strong>Good</strong> 2.5–3.24 · <strong>Fair</strong> 1.75–2.49 · <strong>Poor</strong> &lt; 1.75.</dd>
+    <dt>"low n" flag</dt>
+    <dd>Fewer than 10 responses behind this number — treat it as indicative, not conclusive.</dd>
+    <dt>Item codes</dt>
+    <dd><code>SQD0–SQD8</code> are the ARTA service-quality statements (shown beside each row).
+        Full statement text appears in each table row.</dd>
+  </dl>
+</details>
+{% endif %}
+
+{% if total_responses == 0 %}
+<div class="rcard">{{ empty_state("No responses recorded yet.", hint="Once people start scanning the QR codes and submitting ratings, their scores appear here.", icon="◔") }}</div>
+{% endif %}
+
+{% if rtype == 1 %}
+<!-- ============ TYPE 1 · OFFICIAL ARTA / CO-CSM REPORT ============ -->
+{% set ar = arta_report %}
+<div class="rcard arta-official">
+  <div class="cardhead">
+    <div><span class="tag">TYPE 1 · WALK-IN · CO-CSM</span><h2>ARTA Harmonized Client Satisfaction Report</h2>
+      <p class="sub">Bureau-wide citizen satisfaction (Citizen's Charter + SQD0–SQD8). The walk-in form is one
+        standing bureau-level form, so this report follows the <strong>period</strong> (above), not org scope.</p></div>
+    {% if ar.has_data %}
+    <div class="arta-actions">
+      <a class="vlink" href="/reports/verbatims?survey_type=1&org={{ sel_org }}&period={{ sel_period }}">See all verbatims →</a>
+      {{ report_downloads(1, sel_org, sel_period) }}
+    </div>{% endif %}
+  </div>
+  {% if not ar.has_data %}
+    {{ empty_state("No walk-in / ARTA responses in this period.", icon="◔") }}
+  {% else %}
+  <!-- headline -->
+  <div class="head-num">
+    <span class="big">{% if ar.overall is not none %}{{ '%.1f'|format(ar.overall) }}%{% else %}—{% endif %}</span>
+    {% if ar.overall_band %}<span class="badge {{ band_cls.get(ar.overall_band,'b-grey') }}">{{ ar.overall_band }}</span>{% endif %}
+    <span class="meta">overall service quality · top-box of SQD1–SQD8 · {{ ar.respondents|comma }} respondent(s)</span>
+  </div>
+  {% if ar.low_n %}<div class="flags"><span class="badge b-mid">low n — fewer than 10 respondents</span></div>{% endif %}
+  {% if ar.onsite_online %}<div class="chiprow">{% for o in ar.onsite_online %}<span class="chip">{{ o.label }}: <strong>{{ o.n|comma }}</strong> ({{ o.pct }}%)</span>{% endfor %}</div>{% endif %}
+
+  <!-- SQD distribution -->
+  <h3 class="sec">Service Quality Dimensions (SQD)</h3>
+  <div class="table-wrap">
+  <table class="resp-table">
+    <tr><th>Item</th><th>Statement</th><th>Distribution (SA·A · neither · D·SD)</th><th class="num">Top-box</th><th class="num">n</th></tr>
+    {% for d in ar.sqd %}
+    {% set total = d.top + d.mid + d.bot %}
+    <tr>
+      <td data-label="Item"><code>{{ d.item }}</code></td>
+      <td class="stmt" data-label="Statement">{{ d.text }}</td>
+      <td data-label="Distribution">
+        {% if total %}
+        <div class="bar" title="{{ d.top|comma }} agree · {{ d.mid|comma }} neither · {{ d.bot|comma }} disagree">
+          <i class="t" style="width:{{ (d.top/total*100)|round(1) }}%"></i>
+          <i class="m" style="width:{{ (d.mid/total*100)|round(1) }}%"></i>
+          <i class="b" style="width:{{ (d.bot/total*100)|round(1) }}%"></i>
+        </div>
+        {% else %}<span class="meta">—</span>{% endif %}
+      </td>
+      <td class="num" data-label="Top-box">{% if d.score is not none %}{{ d.score }}%{% if d.band %}<span class="band-chip badge {{ band_cls.get(d.band,'b-grey') }}">{{ d.band }}</span>{% endif %}{% else %}—{% endif %}</td>
+      <td class="num" data-label="n">{{ d.n|comma }}{% if d.na %} <span class="meta">(+{{ d.na|comma }} N/A)</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  </div>
+  <div class="scale-note">SQD0 = overall satisfaction (shown separately). Overall headline = top-box (Agree + Strongly Agree) pooled across SQD1–SQD8.</div>
+
+  <!-- Citizen's Charter -->
+  <h3 class="sec">Citizen's Charter (CC)</h3>
+  <div class="cc-cards">
+    {{ cc_card("CC1 · Awareness", ar.cc.cc1, ar.cc1) }}
+    {{ cc_card("CC2 · Visibility", ar.cc.cc2, ar.cc2) }}
+    {{ cc_card("CC3 · Helpfulness", ar.cc.cc3, ar.cc3) }}
+  </div>
+
+  <!-- Respondent profile -->
+  <h3 class="sec">Respondent profile</h3>
+  <div class="demo-grid">
+    {{ tally_block("Sex", ar.demo.sex) }}
+    {{ tally_block("Age group", ar.demo.age) }}
+    {{ tally_block("Client type", ar.demo.client_type) }}
+    {{ tally_block("Region of residence", ar.demo.region) }}
+    {{ tally_block("Service availed", ar.demo.service) }}
+  </div>
+
+  <!-- Comments -->
+  {% if ar.comments.total %}
+  <h3 class="sec">What clients said ({{ ar.comments.total|comma }})</h3>
+  <div class="cmtcols">
+    <div>
+      <h4 class="tblk" style="font-size:.84rem;color:var(--soft);margin:0 0 .3rem;">Appreciated</h4>
+      {% if ar.comments.positive %}<ul class="cmtlist good">{% for c in ar.comments.positive %}<li>{{ c.text }}</li>{% endfor %}</ul>
+      {% else %}<p class="meta">No comments tagged positive.</p>{% endif %}
+    </div>
+    <div>
+      <h4 class="tblk" style="font-size:.84rem;color:var(--soft);margin:0 0 .3rem;">To improve</h4>
+      {% if ar.comments.negative %}<ul class="cmtlist bad">{% for c in ar.comments.negative %}<li>{{ c.text }}</li>{% endfor %}</ul>
+      {% else %}<p class="meta">No comments tagged negative.</p>{% endif %}
+    </div>
+  </div>
+  {% if ar.comments.other %}<details style="margin-top:.6rem;"><summary class="meta">{{ ar.comments.other|length }} more comment(s) without a feedback tag</summary>
+    <ul class="cmtlist">{% for c in ar.comments.other %}<li>{{ c.text }}</li>{% endfor %}</ul></details>{% endif %}
+  {% endif %}
+  {% endif %}
+</div>
+
+{% else %}
+<!-- ============ TYPE 2 / 3 · CONSOLIDATED SERVQUAL REPORT ============ -->
+{% set v = sq %}
+<div class="rcard">
+  <div class="cardhead">
+    <div><span class="tag">{{ rm[0]|upper }}</span><h2>{{ rm[1] }}</h2></div>
+    <div class="arta-actions">
+      {% if v.has_data %}<a class="vlink" href="/reports/verbatims?survey_type={{ rtype }}&org={{ sel_org }}&period={{ sel_period }}{% if sel_activity %}&activity={{ sel_activity }}{% endif %}">{{ "See this activity's verbatims →" if sel_activity else "See all verbatims →" }}</a>{% endif %}
+      {% if rtype == 2 %}<a class="vlink" href="/reports/activities?org={{ sel_org }}&period={{ sel_period }}">View individual activity reports →</a>
+      {% if can_curate %}<a class="vlink" href="/reports/activities?org={{ sel_org }}&period={{ sel_period }}">Edit / merge activities →</a>{% endif %}{% endif %}
+      {% if v.has_data %}{{ report_downloads(rtype, sel_org, sel_period, sel_activity) }}{% endif %}
+    </div>
+  </div>
+  {% if not v.has_data %}
+    {{ empty_state("No responses in this scope.", icon="◔") }}
+  {% else %}
+  <div class="head-num">
+    <span class="big">{{ v.overall.shown }}</span><span class="meta">/ 7</span>
+    {% if v.gap %}<span class="badge {{ {'Exceeds':'b-good','Meets':'b-good','Needs Improvement':'b-bad'}.get(v.gap.label,'b-grey') }}">{{ v.gap.label }} expectation ({{ v.gap.shown }})</span>{% endif %}
+    <span class="meta">overall perception (dimension-weighted) · {{ v.respondents|comma }} respondent(s)</span>
+  </div>
+  {% if v.overall.flags %}<div class="flags">{% for f in v.overall.flags %}<span class="badge {{ 'b-mid' if 'low n' in f else 'b-info' }}">{{ f }}</span>{% endfor %}</div>{% endif %}
+
+  <!-- per-dimension grid -->
+  <div class="table-wrap">
+  <table class="dims">
+    <tr><th>Dimension</th><th>Items</th><th class="num">Mean</th><th class="num">vs expectation</th><th>Verdict</th><th class="num">n</th></tr>
+    {% for d in v.dimensions %}
+    <tr>
+      <td>{{ d.dim }}{% if d.flags %} {% for f in d.flags %}{% if 'volatile' in f %}<span class="badge b-grey" title="single item — moves a lot">1-item</span>{% endif %}{% endfor %}{% endif %}</td>
+      <td class="stmt"><code>{{ d.members }}</code></td>
+      <td class="num">{{ d.shown }}</td>
+      <td class="num">{{ d.gap_shown }}</td>
+      <td>{% if d.verdict %}<span class="badge {{ {'Exceeds':'b-good','Meets':'b-good','Needs Improvement':'b-bad'}.get(d.verdict,'b-grey') }}">{{ d.verdict }}</span>{% endif %}</td>
+      <td class="num">{{ d.n|comma }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  </div>
+
+  <!-- official summary -->
+  <div class="sq-summary">
+    <div class="s"><span class="k">Total</span><span class="v">{{ v.summary.total }}</span></div>
+    <div class="s"><span class="k">Average</span><span class="v">{{ v.summary.average }}</span></div>
+    <div class="s"><span class="k">Expectation</span><span class="v">{{ v.summary.expectation }}</span></div>
+    <div class="s"><span class="k">SERVQUAL</span><span class="v">{{ v.summary.servqual }}{% if v.summary.servqual_label %} <span class="badge {{ {'Exceeds':'b-good','Meets':'b-good','Needs Improvement':'b-bad'}.get(v.summary.servqual_label,'b-grey') }}" style="font-size:.62rem;">{{ v.summary.servqual_label }}</span>{% endif %}</span></div>
+    <div class="s"><span class="k">OSQ (item C)</span><span class="v">{{ v.summary.osq }}{% if v.summary.osq_band %} <span class="badge {{ {'Excellent':'b-good','Good':'b-good','Fair':'b-mid','Poor':'b-bad'}.get(v.summary.osq_band,'b-grey') }}" style="font-size:.62rem;">{{ v.summary.osq_band }}</span>{% endif %}</span></div>
+  </div>
+  <div class="scale-note">Total = sum of the five dimension means. Average = mean of the dimension means (= overall). SERVQUAL = Average − Expectation. Perception items run 1–7; OSQ (C) runs 1–4.</div>
+
+  <!-- demographics roll-up -->
+  {% if v.demo and v.demo.has %}
+  <h3 class="sec">Respondent profile</h3>
+  <div class="demo-ratio">
+    <div class="r">Male : Female — <strong>{{ v.demo.sex_ratio }}</strong> <span class="meta">({{ v.demo.sex_total|comma }} captured)</span></div>
+    <div class="r">DOH : Non-DOH — <strong>{{ v.demo.aff_ratio }}</strong> <span class="meta">({{ v.demo.aff_total|comma }} captured)</span></div>
+  </div>
+  <div class="scale-note">Captured from pre-registration and the rating form; not every respondent provides these.</div>
+  {% endif %}
+
+  <!-- Per-activity comments (feedback #53): an invited/outside activity is Form-3-only,
+       so it has no per-activity SERVQUAL page — its verbatims live here instead. Only
+       shown when a single activity is in focus; the all-RP roll-up stays uncluttered. -->
+  {% if sel_activity and story %}
+  <h3 class="sec" id="comments">In people's own words{% if story.total %} ({{ story.total|comma }}){% endif %}</h3>
+  {% if story.total %}
+  {{ s.panel(story, can_edit, request.url.path) }}
+  {% else %}
+  <p class="meta">No comments for this activity yet.</p>
+  {% endif %}
+  {% endif %}
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,41 @@
+name: Deploy to Hugging Face
+
+# Manual button only. Open this repo on the GitHub mobile site → Actions →
+# "Deploy to Hugging Face" → Run workflow. Nothing ships to prod automatically,
+# so a stray mobile commit can never deploy by accident.
+on:
+  workflow_dispatch:
+    inputs:
+      skip_backup:
+        description: "DANGER: skip the pre-deploy DB backup gate (only if backup infra is down)"
+        type: boolean
+        default: false
+
+# Never let two deploys overlap (each one restarts the live Space).
+concurrency:
+  group: hf-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # deploy_hf.py needs only huggingface_hub; pull_backup.py is stdlib-only.
+      - name: Install deploy dependency
+        run: pip install "huggingface_hub>=0.23"
+
+      - name: Deploy (runs the exact same routine as the local deploy_hf.py)
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}          # HF write token (user equityinhealth)
+          CSS_ADMIN_USER: ${{ secrets.CSS_ADMIN_USER }}  # for the pre-deploy backup gate
+          CSS_ADMIN_PASS: ${{ secrets.CSS_ADMIN_PASS }}
+          CSS_DEPLOY_STRICT_VERSION: "1"             # hard-abort if APP_VERSION wasn't bumped
+        run: |
+          python deploy_hf.py --yes ${{ inputs.skip_backup && '--skip-backup' || '' }}

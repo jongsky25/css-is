@@ -1,0 +1,277 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, empty_state %}
+{% import "_export.html" as ex %}
+{% block title %}People{% endblock %}
+{% block content %}
+<style>
+  .people-head { margin-bottom:.2rem; }
+  .people-head .lede { max-width:none; }
+  .admin-toggle { font-size:.8rem; }
+  .admin-toggle a { text-decoration:none; font-weight:600; padding:.3rem .7rem; border-radius:999px;
+                    border:1px solid var(--line); color:var(--soft); }
+  .admin-toggle a.on { background:var(--ink); color:var(--on-accent); border-color:var(--ink); }
+  .grid { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:1rem; margin-top:1rem; }
+  @media (max-width:860px){ .grid { grid-template-columns:repeat(2, minmax(0,1fr)); } }
+  @media (max-width:560px){ .grid { grid-template-columns:1fr; } }
+  .pcard { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1rem 1.1rem;
+           box-shadow:0 1px 3px rgba(20,30,50,.05); display:flex; flex-direction:column; gap:.7rem; }
+  .pcard.hidden { opacity:.6; border-style:dashed; }
+  .pcard .who { display:flex; gap:.7rem; align-items:center; text-decoration:none; color:inherit; }
+  .avatar { flex:0 0 auto; width:46px; height:46px; border-radius:50%; object-fit:cover; background:var(--line);
+            display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--soft); font-size:1rem; }
+  .who .nm { font-weight:700; line-height:1.2; }
+  .who .sec { font-size:.78rem; color:var(--soft); }
+  .scores { display:flex; gap:.6rem; }
+  .score { flex:1; border:1px solid var(--line); border-radius:10px; padding:.5rem .6rem; text-align:center; background:var(--surface); }
+  .score .v { font-size:1.35rem; font-weight:800; line-height:1; }
+  .score .k { font-size:.68rem; text-transform:uppercase; letter-spacing:.03em; color:var(--soft); margin-top:.2rem; }
+  .score.empty-s { color:var(--grey); }
+  .score.empty-s .v { color:var(--grey); }
+  .pcard form { margin:0; }
+  .hidebtn { font-size:.74rem; color:var(--soft); background:none; border:1px dashed var(--line);
+             border-radius:8px; padding:.3rem .6rem; cursor:pointer; width:100%; }
+  .hidebtn:hover { color:var(--red); border-color:var(--red-ln); }
+  .hidden-tag { font-size:.66rem; font-weight:700; color:var(--amber); }
+  .aff-filter { display:flex; gap:.4rem; margin:.2rem 0 .9rem; flex-wrap:wrap; }
+  .aff-filter a { text-decoration:none; font-size:.85rem; font-weight:600; color:var(--soft);
+                  border:1px solid var(--line); border-radius:999px; padding:.32rem .8rem; background:var(--surface); }
+  .aff-filter a:hover { border-color:var(--accent); color:var(--accent); }
+  .aff-filter a.on { background:var(--accent); border-color:var(--accent); color:var(--on-accent); }
+  .aff-filter .cnt { font-variant-numeric:tabular-nums; opacity:.7; font-weight:700; margin-left:.15rem; }
+  .score .v .u { font-size:.8rem; font-weight:700; color:var(--soft); }
+  .score .n { font-size:.66rem; color:var(--grey); margin-top:.25rem; font-variant-numeric:tabular-nums; }
+  /* sort control */
+  .sortbar { display:flex; align-items:center; gap:.45rem; margin:.2rem 0 .3rem; flex-wrap:wrap; }
+  .sortbar .lab { font-size:.78rem; font-weight:600; color:var(--soft); }
+  .sortbar a { text-decoration:none; font-size:.8rem; font-weight:600; color:var(--soft);
+               border:1px solid var(--line); border-radius:999px; padding:.28rem .7rem; background:var(--surface); }
+  .sortbar a:hover { border-color:var(--accent); color:var(--accent); }
+  .sortbar a.on { background:var(--ink); border-color:var(--ink); color:var(--on-accent); }
+  /* card readouts that replaced the steadiness line */
+  .strength { font-size:.84rem; line-height:1.35; color:var(--ink); }
+  .strength .lab { font-size:.64rem; font-weight:800; text-transform:uppercase; letter-spacing:.04em;
+                   color:var(--soft); margin-right:.3rem; }
+  .agree { font-size:.8rem; color:var(--soft); display:flex; align-items:center; gap:.4rem; flex-wrap:wrap; }
+  .agree .sp { font-weight:700; }
+  .agree .sp.good { color:var(--green); } .agree .sp.mid { color:var(--amber); } .agree .sp.bad { color:var(--red); }
+  .earlytag { font-size:.66rem; font-weight:700; color:var(--amber); background:var(--amber-bg);
+              border:1px solid var(--amber-ln); border-radius:999px; padding:.08rem .45rem; }
+  /* earned recognition badges */
+  .badges { display:flex; flex-wrap:wrap; gap:.35rem; margin-top:-.2rem; }
+  .pbadge { font-size:.66rem; font-weight:700; padding:.18rem .55rem; border-radius:999px;
+            border:1px solid transparent; white-space:nowrap; }
+  .pbadge[title] { cursor:help; }
+  .pbadge .ic { letter-spacing:-.04em; }
+  .pbadge.bg-gold { background:#fff7e6; color:#b7791f; border-color:#f6e0b5; }
+  .pbadge.bg-green { background:var(--green-bg); color:var(--green); border-color:var(--green-ln); }
+  .pbadge.bg-blue { background:var(--accent-bg); color:var(--accent); border-color:var(--blue-ln); }
+  .pbadge.bg-rose { background:#fff1f2; color:#be123c; border-color:#fecdd3; }
+  .pbadge.bg-violet { background:#f5f3ff; color:#6d28d9; border-color:#ddd6fe; }
+  .pbadge.bg-amber { background:#fffbeb; color:#b45309; border-color:#fde68a; }
+  .pbadge.bg-teal { background:#ecfeff; color:#0e7490; border-color:#bae6fd; }
+  .pbadge.bg-indigo { background:#eef2ff; color:#4338ca; border-color:#c7d2fe; }
+  .pbadge.bg-stone { background:#f5f5f4; color:#57534e; border-color:#e7e5e4; }
+  .pbadge.bg-fuchsia { background:#fdf4ff; color:#a21caf; border-color:#f5d0fe; }
+  a.pbadge { text-decoration:none; }
+  /* collective scope profile — warm + visual */
+  .scope-profile { border:1px solid var(--line); border-radius:18px; padding:1.2rem 1.4rem; margin:.2rem 0 1.3rem;
+                   background:linear-gradient(135deg,var(--accent-bg) 0%,var(--accent-bg) 55%,var(--surface) 100%);
+                   box-shadow:0 2px 10px rgba(20,40,80,.06); }
+  .scope-profile.band-excellent, .scope-profile.band-outstanding { background:linear-gradient(135deg,var(--green-bg) 0%,var(--green-bg) 60%,var(--surface) 100%); border-color:var(--green-ln); }
+  .sp-top { display:flex; gap:1.6rem; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+  .sp-intro { flex:1 1 360px; min-width:280px; }
+  .sp-title { font-size:1.35rem; font-weight:800; margin:0 0 .3rem; letter-spacing:-.01em; }
+  .sp-story { font-size:.95rem; line-height:1.55; color:var(--ink); margin:0 0 .8rem; }
+  .sp-story b { color:var(--ink); font-weight:800; }
+  .sp-bignums { display:flex; flex-wrap:wrap; gap:.5rem 1.3rem; }
+  .bn { font-size:.86rem; color:var(--soft); }
+  .bn b { font-size:1.45rem; font-weight:800; line-height:1; margin-right:.25rem; vertical-align:-1px; }
+  .bn-people b { color:var(--accent); } .bn-voices b { color:var(--green); } .bn-badges b { color:var(--amber); }
+  /* score gauge */
+  .sp-gauge { flex:0 0 230px; text-align:center; background:var(--surface); border:1px solid var(--line);
+              border-radius:14px; padding:.85rem 1rem; box-shadow:0 1px 4px rgba(20,30,50,.05); }
+  .g-num { font-size:2.6rem; font-weight:800; line-height:1; color:var(--green); }
+  .g-num small { font-size:1rem; font-weight:700; color:var(--soft); }
+  .g-bar { height:9px; border-radius:999px; background:var(--line); margin:.55rem 0 .45rem; overflow:hidden; }
+  .g-bar i { display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,var(--green),var(--green)); }
+  .g-meta { font-size:.74rem; color:var(--soft); }
+  .g-band { font-weight:800; color:var(--green); text-transform:uppercase; letter-spacing:.03em; }
+  /* how the gauge is computed, so the bare 0–7 bar is self-explaining (figure-axis standard) */
+  .g-note { font-size:.66rem; line-height:1.3; color:var(--grey); margin-top:.4rem; }
+  /* badge showcase */
+  .sp-showcase { display:flex; flex-wrap:wrap; align-items:center; gap:.4rem; margin-top:1rem;
+                 padding-top:.9rem; border-top:1px solid var(--line); }
+  .sc-lab { font-size:.7rem; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:var(--soft); margin-right:.2rem; }
+  .sp-showcase .pbadge { font-size:.72rem; }
+  .sc-ct { font-weight:800; margin-left:.15rem; padding:0 .3rem; border-radius:999px; background:rgba(0,0,0,.06); }
+  @media (max-width:560px){ .sp-gauge { flex-basis:100%; } }
+  /* badge chips in the showcase double as the filter */
+  .blchip { cursor:pointer; text-decoration:none; }
+  .blchip.all { font-size:.7rem; font-weight:700; padding:.22rem .6rem; border-radius:999px;
+                border:1px solid var(--line); color:var(--soft); background:var(--surface); }
+  .blchip.all.on, .blchip.all:hover { border-color:var(--accent); color:var(--accent); }
+  .pbadge.on { outline:2px solid var(--ink); outline-offset:1px; }
+  .sc-note { flex-basis:100%; font-size:.72rem; color:var(--soft); margin-top:.15rem; }
+  /* reliability / confidence meter */
+  .conf { display:flex; align-items:center; gap:.4rem; font-size:.76rem; color:var(--soft); }
+  .conf .dots { display:inline-flex; gap:2px; }
+  .conf .dots i { width:6px; height:6px; border-radius:50%; background:var(--line); }
+  .conf-vhigh .dots i.on, .conf-high .dots i.on { background:var(--green); }
+  .conf-good .dots i.on, .conf-fair .dots i.on { background:var(--accent); }
+  .conf-build .dots i.on { background:var(--amber); }
+  .conf-early .ctxt { color:var(--amber); font-weight:600; }
+  /* slim score bar — makes the meaningful decimals visible (scaled 5.5–7) */
+  .score .sbar { height:4px; border-radius:999px; background:var(--line); margin:.45rem .15rem .1rem; overflow:hidden; }
+  .score .sbar i { display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,var(--green),var(--green)); }
+  /* "+N more badges" hint */
+  .more-b { font-size:.68rem; font-weight:700; color:var(--soft); align-self:center; cursor:help; }
+</style>
+
+{% set band_cls = {'Outstanding':'b-good','Satisfactory':'b-good','Excellent':'b-good','Good':'b-good','Fair':'b-mid','Poor':'b-bad'} %}
+{% set base = '/dashboard/people?org=' ~ (sel_org|urlencode) ~ '&period=' ~ (sel_period|urlencode) %}
+{% set qpart = ('&q=' ~ (q|urlencode)) if q else '' %}
+{% set affpart = ('&aff=' ~ aff) if aff != 'all' else '' %}
+{% set sortpart = ('&sort=' ~ sel_sort) if sel_sort != 'ratings' else '' %}
+{% set badgepart = ('&badge=' ~ sel_badge) if sel_badge else '' %}
+<div class="people-head">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem;">
+    {{ page_header("People") }}
+    {{ ex.download('/dashboard/export?visual=people&org=' ~ (sel_org|urlencode) ~ '&period=' ~ (sel_period|urlencode) ~ '&aff=' ~ aff ~ '&sort=' ~ sel_sort ~ '&badge=' ~ sel_badge, 'Download') }}
+  </div>
+  <p class="lede">The people behind BLHSD — and the guest speakers who join them — seen through the eyes of
+    the clients they serve and the participants they teach. Every score here comes straight from real
+    feedback. Click a card for the full story.</p>
+  {% if admin %}<div class="admin-toggle"><span class="on">Admin view · hidden people shown</span></div>{% endif %}
+</div>
+<div class="aff-filter" role="group" aria-label="Filter by affiliation">
+  <a href="{{ base }}{{ qpart }}{{ sortpart }}{{ badgepart }}&aff=all" class="{{ 'on' if aff=='all' }}">All <span class="cnt">{{ aff_counts.all }}</span></a>
+  <a href="{{ base }}{{ qpart }}{{ sortpart }}{{ badgepart }}&aff=blhsd" class="{{ 'on' if aff=='blhsd' }}">BLHSD staff <span class="cnt">{{ aff_counts.blhsd }}</span></a>
+  <a href="{{ base }}{{ qpart }}{{ sortpart }}{{ badgepart }}&aff=external" class="{{ 'on' if aff=='external' }}">External <span class="cnt">{{ aff_counts.external }}</span></a>
+</div>
+
+<form class="searchbar" method="get" action="/dashboard/people">
+  <input type="hidden" name="org" value="{{ sel_org }}"><input type="hidden" name="period" value="{{ sel_period }}">
+  {% if aff != 'all' %}<input type="hidden" name="aff" value="{{ aff }}">{% endif %}
+  {% if sel_sort != 'ratings' %}<input type="hidden" name="sort" value="{{ sel_sort }}">{% endif %}
+  {% if sel_badge %}<input type="hidden" name="badge" value="{{ sel_badge }}">{% endif %}
+  {% if admin %}<input type="hidden" name="admin" value="1">{% endif %}
+  <input type="search" name="q" value="{{ q }}" placeholder="Search people by name…" aria-label="Search people by name">
+  <button type="submit">Search</button>
+  {% if q %}<a href="{{ base }}{{ affpart }}{{ sortpart }}{{ badgepart }}{{ '&admin=1' if admin }}">Clear</a>{% endif %}
+</form>
+
+{% if profile %}
+<section class="scope-profile {{ 'band-' ~ (profile.band|lower) if profile.band }}" aria-label="Scope profile">
+  <div class="sp-top">
+    <div class="sp-intro">
+      <h2 class="sp-title">{{ profile.headline }}</h2>
+      <p class="sp-story">{{ profile.story|safe }}</p>
+      <div class="sp-bignums">
+        <span class="bn bn-people"><b>{{ profile.people|comma }}</b> people</span>
+        <span class="bn bn-voices"><b>{{ profile.ratings|comma }}</b> voices</span>
+        <span class="bn bn-badges"><b>{{ profile.badges|comma }}</b> badges</span>
+      </div>
+    </div>
+    {% if profile.avg is not none %}
+    <div class="sp-gauge" title="Average rating, rating-weighted across {{ profile.ratings|comma }} responses">
+      <div class="g-num">{{ profile.avg }}<small>/7</small></div>
+      <div class="g-bar"><i style="width:{{ profile.avg_pct }}%"></i></div>
+      <div class="g-meta">{% if profile.band %}<span class="g-band">{{ profile.band }}</span>{% endif %}{% if profile.avg_topbox is not none %} · {{ profile.avg_topbox }}% gave top marks{% endif %}</div>
+      <div class="g-note">Mean of every 1–7 rating in view; bar fills 0 → 7. Top marks = rated 6 or 7.</div>
+    </div>
+    {% endif %}
+  </div>
+  {% if profile.showcase %}
+  <div class="sp-showcase">
+    <span class="sc-lab">Badges earned here · click to filter</span>
+    <a class="blchip all {{ 'on' if not sel_badge }}" href="{{ base }}{{ qpart }}{{ affpart }}{{ sortpart }}">All people</a>
+    {% for b in profile.showcase %}
+    <a class="pbadge {{ b.cls }}{{ ' on' if b.key == sel_badge }}" href="{{ base }}{{ qpart }}{{ affpart }}&badge={{ b.key }}&sort=score" title="{{ badge_defs[b.key].tip }} — click to see all {{ b.count }}"><span class="ic">{{ b.emoji }}</span> {{ b.label }} <span class="sc-ct">{{ b.count }}</span></a>
+    {% endfor %}
+    <span class="sc-note">More icons on a card = a higher level (up to 3)</span>
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+
+{% if cards %}
+<div class="sortbar" role="group" aria-label="Sort people">
+  <span class="lab">Sort by</span>
+  {% for key, label in [('ratings','Most ratings'), ('score','Highest score'), ('name','Name A–Z')] %}
+  <a href="{{ base }}{{ qpart }}{{ affpart }}{{ badgepart }}{{ ('&sort=' ~ key) if key != 'ratings' else '' }}" class="{{ 'on' if sel_sort==key }}">{{ label }}</a>
+  {% endfor %}
+  {% if sel_badge %}<span class="lab" style="margin-left:auto;">Filtered: {{ badge_defs[sel_badge].label }} · <a href="{{ base }}{{ qpart }}{{ affpart }}{{ sortpart }}">clear</a></span>{% endif %}
+</div>
+{% endif %}
+
+{% if not cards %}
+  {% set msg %}{% if q %}No people match “{{ q }}” in this scope.{% elif sel_badge %}No one has the “{{ badge_defs[sel_badge].label }}” badge in this scope.{% else %}No one has any ratings yet.{% endif %}{% endset %}
+  {{ empty_state(msg, icon="◔") }}
+{% else %}
+<div class="grid">
+  {% for c in cards %}
+  <div class="pcard {{ 'hidden' if c.hidden_public }}">
+    <a class="who" href="/dashboard/people/{{ c.id }}">
+      {% if c.has_photo %}
+        <img class="avatar" src="/photo/{{ c.id }}" alt="{{ c.name }}">
+      {% else %}
+        {% set parts = c.name.split() %}
+        <span class="avatar">{{ (parts[0][0] ~ (parts[-1][0] if parts|length > 1 else '')) | upper }}</span>
+      {% endif %}
+      <span>
+        <span class="nm">{% if q %}{{ c.name | replace(q, '<mark>' ~ q ~ '</mark>') | safe if q in c.name else c.name }}{% else %}{{ c.name }}{% endif %}</span><br>
+        <span class="sec">{{ c.org_path.split('/')[1:] | join(' / ') if c.org_path else ('External' if not c.is_internal else '—') }}</span>
+        {% if c.hidden_public %}<br><span class="hidden-tag">hidden from public</span>{% endif %}
+      </span>
+    </a>
+
+    {% set shown = c.all_badges %}
+    {% if sel_badge %}{% set shown = (c.all_badges | selectattr('key','equalto',sel_badge) | list) + (c.all_badges | rejectattr('key','equalto',sel_badge) | list) %}{% endif %}
+    {% if shown %}
+    <div class="badges">
+      {% for b in shown[:2] %}<a class="pbadge {{ b.cls }}{{ ' on' if b.key == sel_badge }}" href="{{ base }}{{ qpart }}{{ affpart }}&badge={{ b.key }}&sort=score" title="{{ b.tip }} — click to see everyone with it"><span class="ic">{{ b.icons }}</span> {{ b.label }}</a>{% endfor %}{% if shown|length > 2 %}<span class="more-b" title="{{ shown[2:]|map(attribute='label')|join(', ') }}">+{{ shown|length - 2 }}</span>{% endif %}
+    </div>
+    {% endif %}
+
+    {% set both = c.arta and c.rp %}
+    <div class="scores">
+      {% if c.arta %}
+      <div class="score" title="Walk-in top-box (Agree + Strongly Agree)"><div class="v">{{ c.arta.shown }}</div>
+        <div class="k">{% if both %}Walk-in <br>{% endif %}{% if c.arta.band %}<span class="badge {{ band_cls.get(c.arta.band,'b-grey') }}">{{ c.arta.band }}</span>{% endif %}</div>
+        <div class="n">{{ c.ratings|comma }} rating{{ '' if c.ratings == 1 else 's' }}</div></div>
+      {% endif %}
+      {% if c.rp %}
+      {# slim bar scaled 5.5–7 so the decimals that matter on this ceiling-bound scale are visible #}
+      {% set sw = ((c.rp.value - 5.5) / 1.5 * 100) | round | int %}
+      {% set sw = 6 if sw < 6 else (100 if sw > 100 else sw) %}
+      <div class="score" title="Speaker overall — the average across all nine SERVQUAL attributes, out of 7"><div class="v">{{ c.rp.shown }}<span class="u">/7</span></div>
+        <div class="sbar"><i style="width:{{ sw }}%"></i></div>
+        <div class="k">{% if both %}Speaker <br>{% endif %}{% if c.rp.band %}<span class="badge {{ band_cls.get(c.rp.band,'b-grey') }}">{{ c.rp.band }}</span>{% endif %}</div>
+        <div class="n">{{ c.ratings|comma }} rating{{ '' if c.ratings == 1 else 's' }}</div></div>
+      {% endif %}
+    </div>
+
+    <div class="conf conf-{{ c.confidence.level }}" title="{{ c.confidence.label }} — based on {{ c.ratings|comma }} rating{{ '' if c.ratings == 1 else 's' }}">
+      <span class="dots">{% for i in range(1, 6) %}<i class="{{ 'on' if c.confidence.dots >= i }}"></i>{% endfor %}</span>
+      <span class="ctxt">{{ c.confidence.label }}</span>
+    </div>
+
+    {% if c.strongest %}<div class="strength"><span class="lab">Known for</span>{{ c.strongest }}</div>{% endif %}
+    {% if not c.low_n and c.topbox is not none %}
+    <div class="agree">
+      <span>{{ c.topbox }}% rated {{ '6–7' if c.rp else 'Agree+' }}</span>
+      {% if c.spread and c.spread.label and c.spread.tone != 'unknown' %}<span>·</span><span class="sp {{ c.spread.tone }}">{{ c.spread.label }}</span>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if admin %}
+    <form method="post" action="/dashboard/people/{{ c.id }}/hide">
+      <input type="hidden" name="hide" value="{{ '0' if c.hidden_public else '1' }}">
+      <button class="hidebtn" type="submit">{{ 'Un-hide from public view' if c.hidden_public else 'Hide from public view' }}</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

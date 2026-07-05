@@ -1,0 +1,60 @@
+# Runtime artifacts (not source)
+requests.log
+requests.log.*
+outbox.log
+# SQLite WAL sidecar files (created once journal_mode=WAL is enabled)
+*.db-wal
+*.db-shm
+# Atoms cold-start cache (F3) — persisted next to the DB, ~95 MB, rebuildable
+*.atoms.pkl
+*.atoms.key
+_backups/
+css_is_demo.db
+__pycache__/
+*.pyc
+.qa_write_probe
+
+# Session signing key — sourced from CSS_SESSION_SECRET env on the Space; never commit
+.session_secret
+# Local admin creds for feedback.py / pull_backup.py (plaintext) — never commit
+.env.local
+# Ad-hoc DB safety snapshots (css_is.db.bak-pre-*, etc.) — local only
+*.db.bak*
+
+# Generated report/export outputs (the app produces these on demand — not source)
+CSM_Report_*.pdf
+CSM_Report_*.docx
+CSM Report CY*.pdf
+ANNEX-D-*.docx
+CSS-IS_Showcase.pptx
+*.md.docx
+
+# Scratch / temp working files (not part of the system)
+_h.txt
+_menu_tmp.py
+_probe.txt
+_trunc_test.bin
+_wtest.txt
+full.txt
+qa.txt
+pytest_full.log
+tmp/
+
+# Hugging Face manual-upload staging folder (rebuilt by build_hf_upload.ps1)
+hf_upload/
+
+# Local working notes / scratch docs (kept out of the repo)
+archive/
+
+# ── Real data & heavy reference material — NEVER push to GitHub ──────────────
+# The live DB (real citizen survey responses) lives on the HF bucket; this file
+# is only a local carrier/seed. deploy_hf.py ships code only under persistence.
+css_is.db
+*.sqlite
+*.sqlite3
+# Data-cleanup review exports contain real staff names (government PII).
+docs/archive/data-cleanup/
+# Reference decks/reports & source spreadsheets — real meeting material, heavy.
+CSS Reports_reference/
+CSS Spreadsheets.xlsx
+qa_slides/

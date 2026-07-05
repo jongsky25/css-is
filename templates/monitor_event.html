@@ -1,0 +1,226 @@
+{% extends "dash_layout.html" %}
+{% block title %}Monitor activity{% endblock %}
+
+{% block head %}
+<style>
+  .mwrap { max-width: 1000px; }
+  .mhead h1 { margin:.2rem 0 .15rem; font-size:1.55rem; }
+  .mmeta { color:var(--soft); font-size:.9rem; margin:0 0 .2rem; }
+  .mmeta strong { color:var(--ink); }
+  .cards { display:flex; flex-wrap:wrap; gap:.7rem; margin:1rem 0 1.1rem; }
+  .stat { flex:1 1 120px; border:1px solid var(--line); background:var(--surface); border-radius:12px;
+          padding:.7rem .85rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .stat .v { font-size:1.6rem; font-weight:800; line-height:1; }
+  .stat .k { font-size:.72rem; color:var(--soft); text-transform:uppercase; letter-spacing:.02em; margin-top:.25rem; }
+  .stat.done .v { color:var(--green); } .stat.part .v { color:var(--amber); }
+  .toolbar { display:flex; gap:.8rem; align-items:center; flex-wrap:wrap; margin:0 0 1rem; }
+  .toolbar a.btn { text-decoration:none; font-size:.85rem; font-weight:600; padding:.45rem .8rem;
+          border-radius:8px; border:1px solid var(--accent); color:var(--accent); background:var(--surface); }
+  .toolbar a.btn:hover { background:var(--accent-bg); }
+  .reglink { font-size:.82rem; color:var(--soft); }
+  .reglink code { background:var(--surface-2); border:1px solid var(--line); border-radius:7px;
+          padding:.25rem .5rem; color:var(--ink-soft); word-break:break-all; }
+  .note { font-size:.82rem; color:var(--grey); margin:.2rem 0 1rem; }
+  table.roster { width:100%; border-collapse:collapse; font-size:.88rem; }
+  table.roster th, table.roster td { padding:.55rem .5rem; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
+  table.roster th { font-size:.72rem; text-transform:uppercase; letter-spacing:.02em; color:var(--soft); font-weight:700; }
+  table.roster td.ctr, table.roster th.ctr { text-align:center; }
+  .who-name { font-weight:600; }
+  .who-removed { color:var(--grey); font-style:italic; }
+  .who-sub { color:var(--soft); font-size:.78rem; }
+  .badge { display:inline-block; font-size:.72rem; font-weight:700; padding:.12rem .55rem; border-radius:999px; white-space:nowrap; }
+  .badge.done { background:var(--green-bg); color:var(--green); border:1px solid var(--green-ln); }
+  .badge.part { background:var(--amber-bg); color:var(--amber); border:1px solid var(--amber-ln); }
+  .badge.none { background:var(--surface-2); color:var(--grey); border:1px solid var(--line); }
+  .empty { color:var(--grey); font-size:.92rem; border:1px dashed var(--line); border-radius:12px;
+           padding:1.4rem; text-align:center; }
+  .act-btn { font-size:.76rem; font-weight:600; padding:.25rem .55rem; margin:0 .25rem .25rem 0;
+             border-radius:7px; border:1px solid var(--accent); color:var(--accent);
+             background:var(--surface); cursor:pointer; }
+  .act-btn:hover { background:var(--accent-bg); }
+  .act-btn:disabled { opacity:.55; cursor:default; }
+  .act-btn.danger { border-color:var(--red-ln); color:var(--red); }
+  .act-btn.danger:hover { background:var(--red-bg); }
+  .flashmsg { border-radius:10px; padding:.6rem .85rem; margin:0 0 1rem; font-size:.9rem; border:1px solid; }
+  .flashmsg.ok { background:var(--green-bg); color:var(--green); border-color:var(--green-ln); }
+  .flashmsg.warn { background:var(--amber-bg); color:var(--amber); border-color:var(--amber-ln); }
+  .act-msg { display:inline-block; font-size:.76rem; color:var(--soft); }
+  .act-msg.ok { color:var(--green); } .act-msg.err { color:var(--amber); }
+  .live-dot { display:inline-block; width:.55em; height:.55em; border-radius:50%;
+              background:var(--green); vertical-align:middle; margin-left:.3em;
+              animation:livepulse 2s infinite; }
+  .live-dot.disconnected { background:var(--grey); animation:none; }
+  @keyframes livepulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+  #live-count.ticked { animation:livetick .35s ease; }
+  @keyframes livetick { 0%{transform:scale(1.22)} 100%{transform:scale(1)} }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mwrap">
+{% if not ev %}
+  <h1>Activity not found</h1>
+  <p class="mmeta">This activity link is no longer valid.</p>
+  <p><a href="/monitor">← Back to Monitor</a></p>
+{% else %}
+  <div class="mhead">
+    <p class="mmeta" style="margin-bottom:.1rem;"><a href="/monitor">Monitor</a> · Registration &amp; CSS status</p>
+    <h1>{{ ev.title }}</h1>
+    <p class="mmeta"><strong>{{ ev.event_date|humandaterange(ev.end_date) or "—" }}</strong>{% if ev.modality == 'online' %} · Online{% endif %}{% if ev.venue %} · {{ ev.venue }}{% endif %}{% if ev.organizer %} · {{ ev.organizer }}{% endif %}</p>
+    <p class="mmeta">
+      {% if is_closed %}
+        <span style="color:var(--red);">● Closed</span> — no longer accepting responses.
+      {% elif entry_window.close_at %}
+        <span style="color:var(--green);">● Open</span> until <strong>{{ entry_window.close_at|humandt }}</strong>.
+      {% else %}
+        <span style="color:var(--green);">● Open</span> — no closing date set.
+      {% endif %}
+    </p>
+  </div>
+
+  {% if flash == 'removed' %}<div class="flashmsg ok">Registrant entry removed.</div>
+  {% elif flash == 'hasresponses' %}<div class="flashmsg warn">That entry has already answered, so it can't be deleted — its ratings are part of the reports. Reopen and correct the activity instead, or leave it.</div>
+  {% elif flash == 'notfound' %}<div class="flashmsg warn">That entry was already gone.</div>{% endif %}
+
+  <div class="cards">
+    <div class="stat"><div class="v">{{ summ.registered }}</div><div class="k">Registered</div></div>
+    <div class="stat done"><div class="v" id="live-count">{{ summ.completed }}</div><div class="k">Completed CSS <span class="live-dot" id="live-dot"></span></div></div>
+    <div class="stat part"><div class="v">{{ summ.in_progress }}</div><div class="k">In progress</div></div>
+    <div class="stat"><div class="v">{{ summ.not_started }}</div><div class="k">Not started</div></div>
+    <div class="stat"><div class="v">{% if summ.completion_rate is not none %}{{ summ.completion_rate }}%{% else %}—{% endif %}</div><div class="k">Completion rate</div></div>
+  </div>
+
+  <div class="toolbar">
+    {% if report_url %}<a class="btn" href="{{ report_url }}#comments">💬 What people said →</a>{% endif %}
+    <a class="btn" href="/monitor/{{ ev.event_token }}/export">⬇ Export roster (XLSX)</a>
+    <a class="btn" href="/activities/{{ ev.event_token }}/manage">⚙ Manage activity</a>
+    <span class="reglink">Registration link: <code>{{ base_url }}/e/{{ ev.event_token }}</code></span>
+  </div>
+
+  <p class="note">“Completed” means the participant answered all {{ summ.n_forms }} feedback form{{ '' if summ.n_forms == 1 else 's' }} for this activity.{% if summ.unattributed %} {{ summ.unattributed }} response(s) came in by walk-in / QR / paper with no registrant — those are not listed below.{% endif %}</p>
+
+  {% if not people %}
+    <div class="empty">No one has registered for this activity yet. Share the registration link above so participants can sign in and answer the CSS.</div>
+  {% else %}
+  <table class="roster resp-table">
+    <thead>
+      <tr>
+        <th class="ctr">#</th>
+        <th>Participant</th>
+        <th>Contact</th>
+        <th class="ctr">Sex</th>
+        <th class="ctr">Affiliation</th>
+        <th>Registered</th>
+        <th>CSS status</th>
+        <th>Recovery link</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in people %}
+      {% set meta = status_meta[p.status] %}
+      <tr>
+        <td class="ctr" data-label="#">{{ loop.index }}</td>
+        <td data-label="Participant">
+          {% if p.purged %}
+            <div class="who-name who-removed">(identity removed)</div>
+            <div class="who-sub">PII purged after retention</div>
+          {% else %}
+            <div class="who-name">{{ p.name or "—" }}</div>
+            {% if p.email %}<div class="who-sub">{{ p.email }}</div>{% endif %}
+          {% endif %}
+        </td>
+        <td data-label="Contact">{% if p.purged %}<span class="who-sub">—</span>{% else %}{{ p.contact or "—" }}{% endif %}</td>
+        <td class="ctr" data-label="Sex">{{ p.sex or "—" }}</td>
+        <td class="ctr" data-label="Affiliation">{{ p.affiliation or "—" }}</td>
+        <td data-label="Registered">{{ p.consent_at or "—" }}</td>
+        <td data-label="CSS status">
+          <span class="badge {{ meta[1] }}">{{ meta[0] }}</span>
+          {% if p.n_forms %}<span class="who-sub"> {{ p.n_answered }}/{{ p.n_forms }}</span>{% endif %}
+        </td>
+        <td class="actions" data-label="Recovery link">
+          {% if p.purged %}
+            <span class="who-sub">—</span>
+          {% else %}
+            <button type="button" class="act-btn" data-act="copy" data-aid="{{ p.id }}">Copy link</button>
+            {% if p.email %}<button type="button" class="act-btn" data-act="resend" data-aid="{{ p.id }}">Resend email</button>{% endif %}
+            <span class="act-msg" data-aid="{{ p.id }}" aria-live="polite"></span>
+            {% if not p.n_answered %}
+            <form method="post" action="/monitor/{{ ev.event_token }}/attendee/{{ p.id }}/delete"
+                  style="display:inline;"
+                  onsubmit="return confirm('Remove this registrant entry? This permanently deletes the registration. Use it only for a test, duplicate, or no-show entry — it can\'t be undone.');">
+              <button type="submit" class="act-btn danger" title="Remove this entry (test / duplicate / no-show). Only available before they have answered.">Remove</button>
+            </form>
+            {% endif %}
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  <script>
+  (function () {
+    var tok = "{{ ev.event_token }}";
+    function msg(aid, text, cls) {
+      var el = document.querySelector('.act-msg[data-aid="' + aid + '"]');
+      if (el) { el.textContent = text; el.className = 'act-msg ' + (cls || ''); }
+    }
+    document.querySelectorAll('.act-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var aid = btn.getAttribute('data-aid');
+        var act = btn.getAttribute('data-act');
+        btn.disabled = true;
+        if (act === 'copy') {
+          msg(aid, 'Getting link…');
+          fetch('/monitor/' + tok + '/recovery-link/' + aid)
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+              if (!d.link) throw new Error();
+              if (navigator.clipboard && navigator.clipboard.writeText) {
+                return navigator.clipboard.writeText(d.link)
+                  .then(function () { msg(aid, 'Link copied to clipboard ✓', 'ok'); });
+              }
+              window.prompt('Copy this recovery link:', d.link);
+              msg(aid, 'Link ready', 'ok');
+            })
+            .catch(function () { msg(aid, 'Could not get link', 'err'); })
+            .finally(function () { btn.disabled = false; });
+        } else if (act === 'resend') {
+          msg(aid, 'Sending…');
+          fetch('/monitor/' + tok + '/resend/' + aid, {method: 'POST'})
+            .then(function (r) { return r.json(); })
+            .then(function (d) { msg(aid, d.detail || (d.sent ? 'Sent ✓' : 'Not sent'), d.sent ? 'ok' : 'err'); })
+            .catch(function () { msg(aid, 'Send failed', 'err'); })
+            .finally(function () { btn.disabled = false; });
+        }
+      });
+    });
+  })();
+  </script>
+  <script>
+  (function () {
+    var evToken = "{{ ev.event_token }}";
+    var countEl = document.getElementById('live-count');
+    var dotEl   = document.getElementById('live-dot');
+    if (!countEl || !window.EventSource) return;
+    var sse = new EventSource('/api/monitor/' + evToken + '/stream');
+    sse.onmessage = function (e) {
+      try {
+        var d = JSON.parse(e.data);
+        var prev = parseInt(countEl.textContent, 10);
+        countEl.textContent = d.count;
+        if (d.count !== prev) {
+          countEl.classList.remove('ticked');
+          void countEl.offsetWidth;
+          countEl.classList.add('ticked');
+        }
+      } catch (_) {}
+    };
+    sse.onopen  = function () { dotEl.classList.remove('disconnected'); };
+    sse.onerror = function () { dotEl.classList.add('disconnected'); };
+  })();
+  </script>
+{% endif %}
+</div>
+{% endblock %}

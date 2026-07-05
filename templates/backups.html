@@ -1,0 +1,181 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}Backups{% endblock %}
+{% block content %}
+<style>
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1.1rem 1.3rem;
+           margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .panel h2 { font-size:1rem; margin:0 0 .9rem; }
+  .badge { display:inline-flex; gap:.4rem; align-items:center; font-size:.82rem; font-weight:700;
+           padding:.3rem .8rem; border-radius:999px; border:1px solid; }
+  .badge.on  { color:var(--green); background:var(--green-bg); border-color:var(--green-ln); }
+  .badge.off { color:var(--soft); background:var(--surface-2); border-color:var(--line); }
+  .stat-row { display:flex; flex-wrap:wrap; gap:1.6rem; margin-top:.9rem; }
+  .stat .k { font-size:.68rem; text-transform:uppercase; letter-spacing:.03em; color:var(--soft); }
+  .stat .v { font-size:1.05rem; font-weight:700; font-variant-numeric:tabular-nums; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:1rem 1.3rem; }
+  label.fld { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.03em;
+              color:var(--soft); display:flex; flex-direction:column; gap:.3rem; }
+  label.fld input[type=number], label.fld input[type=time], label.fld select {
+              padding:.45rem .55rem; border:1px solid var(--line); border-radius:8px; font-size:.92rem; }
+  .check { display:flex; gap:.5rem; align-items:flex-start; font-size:.92rem; margin:.2rem 0 .4rem; }
+  .btn { background:var(--accent); color:var(--on-accent); border:none; border-radius:8px; padding:.6rem 1.1rem;
+         font-size:.92rem; font-weight:700; cursor:pointer; }
+  .btn:hover { filter:brightness(.95); }
+  .btn.ghost { background:var(--surface); color:var(--accent); border:1px solid var(--blue-ln); }
+  .btn.danger { background:var(--surface); color:var(--red); border:1px solid var(--red-ln); padding:.4rem .7rem; font-size:.82rem; }
+  .btn.sm { padding:.4rem .7rem; font-size:.82rem; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; padding:.55rem .5rem; border-bottom:1px solid var(--line); font-size:.88rem; vertical-align:middle; }
+  th { font-size:.68rem; text-transform:uppercase; letter-spacing:.03em; color:var(--soft); }
+  .kind { font-size:.68rem; font-weight:700; padding:.1rem .5rem; border-radius:999px; white-space:nowrap;
+          background:var(--blue-bg); color:var(--accent); border:1px solid var(--blue-ln); }
+  .kind.pre_restore { background:var(--amber-bg); color:var(--amber); border-color:var(--amber-ln); }
+  .ts { white-space:nowrap; font-variant-numeric:tabular-nums; color:var(--soft); }
+  .rowacts { display:flex; gap:.4rem; align-items:center; flex-wrap:wrap; }
+  .rowacts input[type=text] { width:6.5rem; padding:.35rem .45rem; border:1px solid var(--line); border-radius:7px; font-size:.8rem; }
+  .note { color:var(--soft); font-size:.82rem; }
+  .flash { border-radius:10px; padding:.7rem 1rem; margin-bottom:1rem; font-size:.9rem; font-weight:600; }
+  .flash.ok  { background:var(--green-bg); color:var(--green); border:1px solid var(--green-ln); }
+  .flash.bad { background:var(--red-bg); color:var(--red); border:1px solid var(--red-ln); }
+</style>
+
+{{ page_header("Backups", "Snapshot the whole database to a file you can keep or restore. Turn on a schedule and the app backs itself up automatically — pruning old snapshots and purging expired attendee details in the same run.") }}
+
+{% if msg %}<div class="flash ok">{{ msg }}</div>{% endif %}
+{% if err %}<div class="flash err">{{ err }}</div>{% endif %}
+
+<div class="panel">
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap;">
+    <div>
+      {% if info.cfg.enabled %}
+        <span class="badge on">● Scheduled backups ON — {{ info.freq_label }}</span>
+      {% else %}
+        <span class="badge off">○ Scheduled backups OFF</span>
+      {% endif %}
+    </div>
+    <form method="post" action="/admin/backups/now" style="margin:0;">
+      <button class="btn" type="submit">⤓ Back up now</button>
+    </form>
+  </div>
+  <div class="stat-row">
+    <div class="stat"><div class="k">Next scheduled</div><div class="v">{{ info.next_due.replace('T',' ') if info.next_due else '—' }}</div></div>
+    <div class="stat"><div class="k">Snapshots kept</div><div class="v">{{ info.count }}</div></div>
+    <div class="stat"><div class="k">Total size</div><div class="v">{{ info.total_human }}</div></div>
+    <div class="stat"><div class="k">Live database</div><div class="v">{{ info.db_human }}</div></div>
+  </div>
+  {% if info.cfg.last_backup_status %}
+  <p class="note" style="margin:.9rem 0 0;">Last run: {{ info.cfg.last_backup_status }}</p>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap;">
+    <h2 style="margin:0;">Off-site backups (GitHub)</h2>
+    {% if offsite_last and not offsite_stale %}
+      <span class="badge on">● Off-site copy current</span>
+    {% else %}
+      <span class="badge off">○ {{ 'No off-site backup seen yet' if not offsite_last else 'Off-site backup overdue' }}</span>
+    {% endif %}
+  </div>
+  <p class="note" style="margin:.5rem 0 0;">
+    A separate daily job on GitHub pulls an <strong>encrypted</strong> copy of the whole database to a
+    private GitHub repository — off Hugging Face and independent of any office computer. It runs on its
+    own even if this server or a staff PC is down, so a recent copy survives even a total Hugging&nbsp;Face
+    failure. Each successful run reports back here.
+  </p>
+  {% if offsite_stale %}
+  <p class="note" style="margin:.6rem 0 0; color:var(--amber); font-weight:600;">
+    ⚠ No successful off-site backup in the last 48 hours. Check the “Off-site prod backup” job in the
+    GitHub repository’s <em>Actions</em> tab.
+  </p>
+  {% endif %}
+  {% if offsite %}
+  <div class="table-wrap" style="margin-top:.9rem;">
+  <table class="resp-table">
+    <tr><th>When</th><th>Encrypted file</th><th>Where</th></tr>
+    {% for o in offsite %}
+    <tr>
+      <td class="ts" data-label="When">{{ o.ts.replace('T',' ') if o.ts else '—' }}</td>
+      <td class="note" data-label="Encrypted file" style="font-family:ui-monospace,monospace; font-size:.78rem;">{{ o.target_id or '—' }}</td>
+      <td data-label="Where"><span class="kind">GitHub · encrypted</span></td>
+    </tr>
+    {% endfor %}
+  </table>
+  </div>
+  {% else %}
+  <div class="note" style="margin-top:.8rem;">No off-site backup has reported in yet. The first one will appear here after the daily GitHub job next runs (or you trigger it manually).</div>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <h2>Schedule</h2>
+  <form method="post" action="/admin/backups/settings">
+    <label class="check">
+      <input type="checkbox" name="enabled" {{ 'checked' if info.cfg.enabled }}>
+      <span>Automatically back up on a schedule</span>
+    </label>
+    <div class="grid" style="margin-top:.6rem;">
+      <label class="fld">How often
+        <select name="freq">
+          {% for f in FREQS %}<option value="{{ f }}" {{ 'selected' if f == info.cfg.freq }}>{{ FREQ_LABEL[f] }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="fld">Time of day <span class="note" style="text-transform:none;">(daily / weekly)</span>
+        <input type="time" name="time" value="{{ info.cfg.time }}">
+      </label>
+      <label class="fld">Day of week <span class="note" style="text-transform:none;">(weekly)</span>
+        <select name="weekday">
+          {% for i in range(7) %}<option value="{{ i }}" {{ 'selected' if i == info.cfg.weekday }}>{{ WEEKDAYS[i] }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="fld">Keep newest
+        <input type="number" name="keep" min="1" max="999" value="{{ info.cfg.keep }}">
+      </label>
+    </div>
+    <label class="check" style="margin-top:1rem;">
+      <input type="checkbox" name="purge" {{ 'checked' if info.cfg.purge }}>
+      <span>Also purge expired attendee details (6-month retention rule) when a scheduled backup runs</span>
+    </label>
+    <div style="margin-top:1rem;"><button class="btn" type="submit">Save schedule</button></div>
+  </form>
+</div>
+
+<div class="panel">
+  <h2>Snapshots</h2>
+  {% if not snaps %}
+    <div class="note">No snapshots yet. Use <strong>Back up now</strong> above, or turn on a schedule.</div>
+  {% else %}
+  <div class="table-wrap">
+  <table class="resp-table">
+    <tr><th>When</th><th>Type</th><th>Size</th><th>File</th><th>Actions</th></tr>
+    {% for s in snaps %}
+    <tr>
+      <td class="ts" data-label="When">{{ s.when.replace('T',' ') if s.when else '—' }}</td>
+      <td data-label="Type"><span class="kind {{ s.kind }}">{{ 'pre-restore' if s.kind == 'pre_restore' else s.kind }}</span></td>
+      <td class="ts" data-label="Size">{{ s.human }}</td>
+      <td class="note" data-label="File" style="font-family:ui-monospace,monospace; font-size:.78rem;">{{ s.name }}</td>
+      <td data-label="Actions">
+        <div class="rowacts">
+          <a class="btn ghost sm" href="/admin/backups/download?name={{ s.name }}">Download</a>
+          <form method="post" action="/admin/backups/restore" class="rowacts" style="margin:0;"
+                onsubmit="return confirm('Restore the live database from this snapshot? The current data will be replaced (a safety snapshot is taken first).');">
+            <input type="hidden" name="name" value="{{ s.name }}">
+            <input type="text" name="confirm" placeholder="type RESTORE" aria-label="type RESTORE to confirm">
+            <button class="btn danger" type="submit">Restore</button>
+          </form>
+          <form method="post" action="/admin/backups/delete" style="margin:0;"
+                onsubmit="return confirm('Delete this snapshot file? This cannot be undone.');">
+            <input type="hidden" name="name" value="{{ s.name }}">
+            <button class="btn danger" type="submit">Delete</button>
+          </form>
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  </div>
+  <p class="note" style="margin-top:.8rem;">Pre-restore safety snapshots are never auto-pruned. Snapshots live in <code>_backups/scheduled/</code>.</p>
+  {% endif %}
+</div>
+{% endblock %}

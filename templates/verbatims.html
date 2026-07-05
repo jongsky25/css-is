@@ -1,0 +1,216 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, empty_state, chart_table %}
+{% import "_export.html" as ex %}
+{% import "_story.html" as story_macros %}
+{% block title %}Verbatims{% endblock %}
+
+{% block head %}
+<style>
+  .vb-lede { max-width:none; }
+  .vb-headline { font-size:1.05rem; line-height:1.5; color:var(--ink); background:var(--surface);
+                 border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:0 10px 10px 0;
+                 padding:.8rem 1rem; margin:0 0 1.3rem; }
+  .vb-headline b { font-weight:700; }
+  .vb-cols { display:grid; grid-template-columns:1fr 1fr; gap:1.1rem; }
+  @media (max-width:780px){ .vb-cols { grid-template-columns:1fr; } }
+  .vb-side { border-radius:12px; padding:.9rem 1rem; border:1px solid var(--line); }
+  .vb-side.appreciate { background:var(--green-bg); border-color:var(--green-ln); }
+  .vb-side.improve { background:var(--amber-bg); border-color:var(--amber-ln); }
+  .vb-side > h2 { margin:0 0 .2rem; font-size:.82rem; text-transform:uppercase; letter-spacing:.04em;
+                  display:flex; align-items:center; gap:.4rem; }
+  .vb-side.appreciate > h2 { color:var(--green); }
+  .vb-side.improve > h2 { color:var(--amber); }
+  .vb-side .side-sub { font-size:.8rem; color:var(--soft); margin:0 0 .8rem; }
+  .vb-theme { margin:0 0 .9rem; }
+  .vb-theme-h { font-size:.82rem; font-weight:700; color:var(--ink-soft); margin:0 0 .35rem;
+                padding-bottom:.2rem; border-bottom:1px dashed var(--line); }
+  .vb-card { background:var(--surface); border:1px solid var(--line); border-radius:10px;
+             padding:.55rem .75rem; margin:0 0 .5rem; box-shadow:0 1px 2px rgba(20,30,50,.04); }
+  .vb-quote { font-size:.95rem; line-height:1.45; color:var(--ink); display:flex; gap:.5rem; align-items:flex-start; }
+  .vb-dot { flex:0 0 auto; width:9px; height:9px; border-radius:50%; margin-top:.45rem; }
+  .vb-dot.appreciate { background:var(--green); }
+  .vb-dot.improve { background:var(--amber); }
+  .vb-dot.mixed { background:var(--accent); }
+  .vb-cite { display:block; font-size:.72rem; color:var(--grey); margin-top:.3rem; }
+  .vb-more > summary { cursor:pointer; font-size:.76rem; font-weight:700; color:var(--accent);
+                       list-style:none; margin-top:.2rem; }
+  .vb-more > summary::-webkit-details-marker { display:none; }
+  details.edit { margin-top:.35rem; }
+  details.edit > summary { list-style:none; cursor:pointer; font-size:.72rem; font-weight:700;
+                           color:var(--soft); user-select:none; }
+  details.edit > summary::-webkit-details-marker { display:none; }
+  details.edit > summary:hover { color:var(--accent); }
+  .editform { margin-top:.4rem; display:flex; flex-direction:column; gap:.4rem; }
+  .editform textarea { width:100%; min-height:3.4rem; padding:.5rem .6rem; border:1px solid var(--line);
+                       border-radius:8px; font:inherit; font-size:.9rem; }
+  .editform .row2 { display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
+  .editform button { padding:.35rem .75rem; border-radius:8px; border:1px solid var(--accent);
+                     background:var(--accent); color:var(--on-accent); font-weight:600; cursor:pointer; font-size:.8rem; }
+  .editform .note { font-size:.72rem; color:var(--grey); }
+</style>
+{% endblock %}
+
+{% block crumbs %}
+<nav class="crumbs" aria-label="Breadcrumb"><a href="/dashboard">Dashboard</a><span class="sep">›</span><a href="/reports{{ back_qs }}">Reports</a><span class="sep">›</span><span class="here">Verbatims</span></nav>
+{% endblock %}
+
+{% block content %}
+{% set ap = story.appreciate.buckets | rejectattr('key', 'equalto', '__other__') | selectattr('count') | list %}
+{% set im = story.improve.buckets | rejectattr('key', 'equalto', '__other__') | selectattr('count') | list %}
+
+{{ page_header(title ~ " — what people said") }}
+<p class="lede vb-lede">The actual words behind the score for this scope, grouped into themes and read as appreciation or as something to improve. Comments are read by people, never scored.
+{% if can_edit %} You can correct misspelled or unreadable text, or re-tag a comment if it landed on the wrong side — every change is recorded in the audit log.{% endif %}</p>
+
+<div class="row" style="margin-bottom:1rem; align-items:center;">
+  <nav class="pill-nav" aria-label="Filter by survey type">
+    {% for st_v, st_label in [(0, 'All'), (1, 'Walk-in'), (2, 'Events'), (3, 'Speakers')] %}
+    <a href="/reports/verbatims?survey_type={{ st_v }}&org={{ sel_org|urlencode }}&period={{ sel_period|urlencode }}"
+       class="{{ 'on' if survey_type == st_v }}" {% if survey_type == st_v %}aria-current="page"{% endif %}>{{ st_label }}</a>
+    {% endfor %}
+  </nav>
+  {% if total_comments %}<span style="margin-left:auto;">
+    {{ ex.download('/dashboard/export?visual=verbatims&survey_type=' ~ survey_type ~ '&org=' ~ (sel_org|urlencode) ~ '&period=' ~ (sel_period|urlencode) ~ '&grain=' ~ grain, 'Download') }}
+  </span>{% endif %}
+</div>
+
+{# ---- Tone of comments over time (3-way: appreciate / improve / mixed) ---- #}
+{% if sent and sent.breakdown and sent.breakdown.has_data %}
+{% set B = sent.breakdown.geom %}
+{% set apts = sent.breakdown.series_raw[0].points %}
+{% set n_charted = apts | sum(attribute='n') %}
+{% set dimcolors = ['var(--amber)', 'var(--accent)'] %}
+<div class="panel chart" style="margin-bottom:1.3rem;">
+  <div class="row" style="align-items:baseline; gap:.6rem;">
+    <h3 style="margin:0;">Tone of comments over time</h3>
+    <nav class="pill-nav" aria-label="Time grain" style="margin-left:auto;">
+      {% for g_v, g_lab in [('monthly','Monthly'), ('quarterly','Quarterly'), ('yearly','Yearly')] %}
+      <a href="/reports/verbatims?survey_type={{ survey_type }}&org={{ sel_org|urlencode }}&period={{ sel_period|urlencode }}&grain={{ g_v }}"
+         class="{{ 'on' if grain == g_v }}" {% if grain == g_v %}aria-current="page"{% endif %}>{{ g_lab }}</a>
+      {% endfor %}
+    </nav>
+  </div>
+  <p class="sublab">Across the whole history for this scope (the period filter doesn’t apply here), what share of comments read as appreciation, as an area to improve, or as mixed — good-but-bad — each {{ xtitle|lower }}. <span class="zoomnote">Full scale is 0–100%.</span> {{ sent.breakdown.read.text }}</p>
+  <svg viewBox="0 0 {{ B.W }} {{ B.H }}" role="img"
+       aria-label="Share of comments by tone over time: appreciation, areas to improve, and mixed">
+    {% for gl in B.grid %}
+      <line class="grid" x1="{{ B.padl }}" y1="{{ gl.y }}" x2="{{ B.W - 16 }}" y2="{{ gl.y }}"></line>
+      <text class="ylab" x="{{ B.padl - 6 }}" y="{{ gl.y + 3.5 }}">{{ gl.label }}</text>
+    {% endfor %}
+    <line class="axis" x1="{{ B.padl }}" y1="{{ B.axis_y }}" x2="{{ B.W - 16 }}" y2="{{ B.axis_y }}"></line>
+    {# Appreciation is the headline (main) line, drawn in green #}
+    {% if B.main_poly %}<polyline class="dimline" points="{{ B.main_poly }}" style="stroke:var(--green);stroke-width:3;opacity:1"></polyline>{% endif %}
+    {% for d in B.main_dots %}
+      <circle class="dot" cx="{{ d.x }}" cy="{{ d.y }}" r="3.5" style="stroke:var(--green)"
+        aria-label="{{ d.label }}: {{ d.value|round(0)|int }}% appreciation ({{ d.n }} comments)"></circle>
+    {% endfor %}
+    {% for dm in B.dims %}
+      <polyline class="dimline" points="{{ dm.poly }}" style="stroke:{{ dimcolors[loop.index0] }};stroke-width:3;opacity:1"></polyline>
+      {% if dm.endx %}<text class="endcap" x="{{ dm.endx - 6 }}" y="{{ dm.endy - 7 }}" text-anchor="end" style="fill:{{ dimcolors[loop.index0] }}">{{ dm.cur }}</text>{% endif %}
+    {% endfor %}
+    {% for lab in B.xlabels %}
+      {% if lab.show %}<text class="xlab" x="{{ lab.x }}" y="{{ B.axis_y + 16 }}">{{ lab.text }}</text>{% endif %}
+    {% endfor %}
+    <text class="axtitle" x="{{ B.xtitle_x }}" y="{{ B.xtitle_y }}" text-anchor="middle">{{ xtitle }}</text>
+    <text class="axtitle" x="{{ B.ytitle_x }}" y="{{ B.ytitle_y }}" text-anchor="middle" transform="rotate(-90 {{ B.ytitle_x }} {{ B.ytitle_y }})">Share of comments (%)</text>
+  </svg>
+  {% if B.dims_table %}
+    {% set bt_rows = [] %}
+    {% for i in range(B.main_table|length) %}{% set _ = bt_rows.append([B.main_table[i][0], B.main_table[i][1]] + B.dims_table.rows[i][1:]) %}{% endfor %}
+    {{ chart_table('Share of comments by tone, per ' ~ xtitle|lower, ['Period', 'Appreciation'] + B.dims_table.headers[1:], bt_rows) }}
+  {% endif %}
+  <div class="legend">
+    <span class="li"><i style="background:var(--green)"></i>Appreciation</span>
+    <span class="li"><i style="background:var(--amber)"></i>Areas to improve</span>
+    <span class="li"><i style="background:var(--accent)"></i>Mixed (good-but-bad)</span>
+  </div>
+  <p class="calcnote"><b>How it's computed:</b> every comment is sorted into exactly one of appreciation, an area to improve, or mixed (mentions both) by the same wording rules the summaries use; each line is that group’s share of all comments, that {{ xtitle|lower }}. The three shares add up to 100%. Manual re-tags are honoured.</p>
+  <p class="calcnote" style="font-style:italic;">Figure. Tone of comments over time, {{ crumbs[-1].label }} ({{ title }}), {{ apts[0].label }}–{{ apts[-1].label }} (N&nbsp;=&nbsp;{{ n_charted }} comments).</p>
+</div>
+{% endif %}
+
+{% if not story or story.total == 0 %}
+{{ empty_state("No written comments in this scope.", hint="A response can still count toward the score without leaving a comment.", icon="“”") }}
+{% else %}
+
+<p class="vb-headline">
+  {% if ap and im and ap[0].noun == im[0].noun %}
+    Overall, <b>{{ ap[0].noun }}</b> drew the most comment — both praise and wishes. The two sides are below in people’s own words.
+  {% elif ap and im %}
+    Overall, people most valued <b>{{ ap[0].noun }}</b>. The clearest wish was around <b>{{ im[0].noun }}</b>.
+  {% elif ap %}
+    The feedback here is mostly appreciation — especially for <b>{{ ap[0].noun }}</b>.
+  {% elif im %}
+    The feedback here centres on what to improve — especially <b>{{ im[0].noun }}</b>.
+  {% else %}
+    A mix of comments across the experience. The threads are grouped below in their own words.
+  {% endif %}
+  {% if can_edit %}<span style="display:block; font-size:.82rem; color:var(--soft); font-weight:400; margin-top:.3rem;">A “Mixed” comment mentions both a good point and something to improve — it appears in both columns on purpose.</span>{% endif %}
+</p>
+
+{# One quote card: sentiment dot, the words, source, optional re-tag + edit. #}
+{% macro card(q) %}
+<div class="vb-card">
+  <div class="vb-quote">
+    <span class="vb-dot {{ q.sentiment }}" aria-hidden="true"></span>
+    <span>“{{ q.text }}”{% if q.sentiment == 'mixed' %} <span class="mixed-badge" title="Mentions both a positive and something to improve — shown on both columns">Mixed</span>{% endif %}
+      <span class="vb-cite">{{ q.activity or q.topic or q.form_id }}{% if q.when %} · {{ q.when | humandate }}{% endif %}{% if q.item %} · note on {{ item_labels.get(q.item, q.item) }}{% endif %}</span>
+    </span>
+  </div>
+  {% if can_edit %}
+  {{ story_macros.retag_control(q, '/reports/verbatims' ~ self_qs) }}
+  <details class="edit">
+    <summary>✎ Fix wording</summary>
+    <form class="editform" method="post" action="/responses/{{ q.rid }}/edit-remark" data-loading="Saving…">
+      <input type="hidden" name="back" value="/reports/verbatims{{ self_qs }}">
+      {% if q.item %}<input type="hidden" name="item_id" value="{{ q.item }}">{% endif %}
+      <textarea name="text">{{ q.text }}</textarea>
+      <div class="row2">
+        <button type="submit">Save correction</button>
+        <span class="note">For fixing spelling or unreadable text only — audited.{% if q.item %} Leave empty to remove the note.{% endif %}</span>
+      </div>
+    </form>
+  </details>
+  {% endif %}
+</div>
+{% endmacro %}
+
+{# One side (appreciate / improve): themed groups, a few quotes each + expander. #}
+{% macro side(data, kind, label, sub) %}
+<section class="vb-side {{ kind }}">
+  <h2>{{ label }}</h2>
+  <p class="side-sub">{{ sub }}</p>
+  {% set shown = data.buckets | selectattr('count') | list %}
+  {% if shown %}
+    {% for b in shown %}
+    {# A digest, not a dump: show a few representative quotes per theme (the full
+       set is the Download). Cap the DOM so big scopes stay fast. #}
+    <div class="vb-theme">
+      <div class="vb-theme-h">{{ b.name }}</div>
+      {% for q in b.quotes[:3] %}{{ card(q) }}{% endfor %}
+      {% if b.quotes | length > 3 %}
+      <details class="vb-more">
+        <summary>More on {{ b.noun }}</summary>
+        {% for q in b.quotes[3:10] %}{{ card(q) }}{% endfor %}
+        {% if b.quotes | length > 10 %}
+        <p class="side-sub" style="font-style:italic; margin:.3rem 0 0;">More comments on {{ b.noun }} in this scope — use Download for the complete set.</p>
+        {% endif %}
+      </details>
+      {% endif %}
+    </div>
+    {% endfor %}
+  {% else %}
+    <p class="side-sub" style="font-style:italic;">Nothing on this side in this scope.</p>
+  {% endif %}
+</section>
+{% endmacro %}
+
+<div class="vb-cols">
+  {{ side(story.appreciate, 'appreciate', 'What people appreciated', 'The good people went out of their way to name.') }}
+  {{ side(story.improve, 'improve', 'What people would improve', 'Gently raised wishes and friction points.') }}
+</div>
+
+{% if can_edit %}<p class="muted small" style="margin-top:1rem;">Wrongly sorted? Re-tag a comment as Appreciated, Mixed (shows on both), or To improve — the change is saved for everyone and audited.</p>{% endif %}
+
+{% endif %}
+{% endblock %}

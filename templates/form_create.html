@@ -1,0 +1,230 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}Create activity survey{% endblock %}
+
+{% block head %}
+<style>
+  fieldset { border:1px solid var(--line); border-radius:10px; margin:0 0 1.25rem; padding:1rem 1.1rem; background:var(--surface); }
+  legend { font-weight:600; padding:0 .4rem; }
+  fieldset label { display:block; font-weight:600; margin:.6rem 0 .25rem; }
+  fieldset input[type=text], fieldset input[type=date], fieldset input[type=datetime-local], fieldset select {
+      width:100%; padding:.55rem .6rem; border:1px solid var(--line); border-radius:8px; font-size:1rem; background:var(--surface); }
+  .radio-row label { display:inline-flex; align-items:center; gap:.4rem; font-weight:500; margin-right:1.5rem; }
+  .hint { color:var(--soft); font-size:.85rem; margin-top:.25rem; font-weight:400; }
+  .locked { background:var(--surface-3); color:var(--soft); padding:.55rem .6rem; border-radius:8px; border:1px dashed var(--line); }
+  .speaker-row { display:grid; grid-template-columns:1fr 1fr auto; gap:.6rem; align-items:end; margin-bottom:.6rem; }
+  .speaker-row label { margin-top:0; }
+  @media (max-width:640px){ .speaker-row { grid-template-columns:1fr; align-items:stretch; } }
+  .win-row { display:flex; gap:.6rem; flex-wrap:wrap; align-items:center; }
+  @media (max-width:640px){ .win-row { flex-direction:column; align-items:stretch; }
+                            .win-row > span { text-align:center; } }
+  .btn-add { background:var(--accent-bg); color:var(--accent); border:1px solid var(--blue-ln); border-radius:8px; padding:.55rem .9rem; cursor:pointer; font-size:1rem; }
+  .btn-del { background:var(--red-bg); color:var(--red); border:1px solid var(--red-ln); border-radius:8px; padding:.55rem .9rem; cursor:pointer; }
+  .hidden { display:none; }
+</style>
+{% endblock %}
+
+{% block crumbs %}
+<nav class="crumbs" aria-label="Breadcrumb"><a href="/dashboard">Dashboard</a><span class="sep">›</span><span class="here">New survey</span></nav>
+{% endblock %}
+
+{% block content %}
+{% set f = form|default({}) %}
+<div style="max-width:760px;">
+  {{ page_header("Create activity survey") }}
+  <p class="lede">Bind the event's context once, generate the QR codes, and raters only have to rate.
+    Walk-in service instead? <a href="/arta">Get the standing walk-in (ARTA) QR</a>.</p>
+
+  {% if errors %}
+  <div class="errors" role="alert"><strong>Please fix:</strong>
+    <ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+
+  <form method="post" action="/create" data-loading="Creating survey…">
+
+    <fieldset>
+      <legend>1 · Event type</legend>
+      <div class="radio-row">
+        <label><input type="radio" name="event_type" value="bureau" {% if f.event_type|default('bureau') == 'bureau' %}checked{% endif %} onchange="onType(true)"> Bureau-organized activity</label>
+        <label><input type="radio" name="event_type" value="outside" {% if f.event_type|default('') == 'outside' %}checked{% endif %} onchange="onType(true)"> Outside event — we were invited</label>
+      </div>
+      <div class="hint" id="type-hint"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>2 · Activity details</legend>
+      <label for="activity_name">Activity name</label>
+      <input type="text" id="activity_name" name="activity_name" placeholder="e.g. Regional Immunization Forum" value="{{ f.activity_name|default('') }}">
+      <label for="event_date">Event date</label>
+      <div class="win-row">
+        <input type="date" id="event_date" name="event_date" class="win-field" style="flex:1; min-width:160px;"
+               data-echo data-placeholder="Start date"
+               value="{{ f.event_date|default('') }}" onchange="onStartDate()"
+               {% if date_min %}min="{{ date_min }}"{% endif %} {% if date_max %}max="{{ date_max }}"{% endif %}>
+        <span style="color:var(--soft);">to</span>
+        <input type="date" id="end_date" name="end_date" class="win-field" style="flex:1; min-width:160px;"
+               data-echo data-placeholder="End date (optional)"
+               value="{{ f.end_date|default('') }}"
+               {% if date_max %}max="{{ date_max }}"{% endif %}>
+      </div>
+      <div class="hint">The <strong>start date</strong> sets the reporting period (calendar year, Q1 = Jan–Mar …) — not today's encoding date.
+        Can't be more than 2 years ahead. Add an <strong>end date</strong> only for a multi-day activity; leave it blank for a single day.</div>
+      <label>Format</label>
+      <div class="radio-row">
+        <label><input type="radio" name="modality" value="f2f" {% if f.modality|default('f2f') == 'f2f' %}checked{% endif %} onchange="onModality()"> Face-to-face</label>
+        <label><input type="radio" name="modality" value="online" {% if f.modality|default('') == 'online' %}checked{% endif %} onchange="onModality()"> Online</label>
+      </div>
+      <label for="venue" id="venue-label">Venue</label>
+      <input type="text" id="venue" name="venue" placeholder="e.g. Bayview Hall, Davao City" value="{{ f.venue|default('') }}">
+      <div class="hint hidden" id="venue-hint">Optional — paste the meeting link or name the platform (e.g. Zoom, MS Teams). Leave blank if there isn't one.</div>
+      <label for="open_at">When can people answer? <span style="font-weight:400; color:var(--soft);">(optional)</span></label>
+      <div class="win-row">
+        <input type="date" id="open_at" name="open_at" class="win-field" style="flex:1; min-width:160px;" value="{{ (f.open_at|default(''))[:10] }}">
+        <span style="color:var(--soft);">until</span>
+        <input type="date" id="close_at" name="close_at" class="win-field" style="flex:1; min-width:160px;" value="{{ (f.close_at|default(''))[:10] }}">
+      </div>
+      <div class="hint"><strong>By default</strong> answering opens on the event date and stays open — leave this blank to
+        use that. To override: <strong>set only "until"</strong> = stop accepting answers after that day;
+        <strong>set both</strong> = accept answers only inside those dates.
+        <a href="#" id="win-time-toggle" onclick="toggleWinTime(event)" style="font-weight:600;">Add specific time</a></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>3 · Organizer</legend>
+      <div id="org-bureau">
+        <div class="locked">Auto-set: <strong>{{ blhsd_name }}</strong> (internal organizer) — derived, not typed by raters.</div>
+        <label for="section_id" style="margin-top:.7rem;">Organizing section</label>
+        <select id="section_id" name="section_id">
+          <option value="">— Bureau-wide (no specific section) —</option>
+          {% for s in sections %}<option value="{{ s.id }}" {% if f.section_id|default('') == s.id|string %}selected{% endif %}>{{ s.name }}</option>{% endfor %}
+        </select>
+        <div class="hint">Which section conducted this activity. Drives per-section and per-division reports. Pick one so it doesn't sit under “unassigned”.</div>
+      </div>
+      <div id="org-outside" class="hidden">
+        <label for="external_org">Organizing institution</label>
+        <input type="text" id="external_org" name="external_org" placeholder="e.g. Department of Health — Regional Office" value="{{ f.external_org|default('') }}">
+        <div class="hint">Entered once here; bound to every QR for this event.</div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>4 · Resource persons &amp; topics</legend>
+      <div class="hint" id="rp-hint">Each resource-person + topic pair becomes one ratable speaker review (Form 3).
+        <strong>Optional for a bureau-organized activity</strong> — leave it empty if there were no resource persons (you still get the event review). Required for an outside event.</div>
+      <div id="speakers"></div>
+      <button type="button" class="btn-add" onclick="addRow()">+ Add resource person</button>
+    </fieldset>
+
+    <fieldset id="qr-mode-section">
+      <legend>5 · QR mode</legend>
+      <div class="radio-row">
+        <label><input type="radio" name="qr_mode" value="combined" {% if f.qr_mode|default('combined') == 'combined' %}checked{% endif %}> One combined QR <span class="hint" id="qr-combined-hint">— attendees scan one code and are walked through the event review and every speaker in sequence. Best for printed posters.</span></label><br>
+        <label><input type="radio" name="qr_mode" value="separate" {% if f.qr_mode|default('') == 'separate' %}checked{% endif %}> Separate QR per speaker <span class="hint">— one code per topic; attendees rate only the session they scanned. Best for per-session handouts.</span></label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>6 · Response window</legend>
+      <div class="locked">Nothing to fill in here — the response window is whatever you set under “When can people answer?” in step 2 above. By default the survey opens on the event date and stays open until you close it.</div>
+    </fieldset>
+
+    <button type="submit" class="btn" style="font-size:1rem; padding:.7rem 1.4rem;">Generate QR &amp; save</button>
+    <div class="hint" style="margin-top:.5rem;">Saving creates the survey forms and shows their QR codes on the next
+      screen — nothing is sent anywhere automatically.</div>
+  </form>
+</div>
+
+<!-- RP registry passed from the server, used to populate each repeatable row -->
+<script>
+const RPS = [
+  {% for rp in resource_persons %}
+  { id: {{ rp.id }}, name: {{ rp.name|tojson }},
+    label: {{ (rp.name ~ (' — ' ~ rp.org_path if rp.is_internal and rp.org_path else (' — internal' if rp.is_internal else ' — external')))|tojson }} },
+  {% endfor %}
+];
+
+function optionsHtml() {
+  let h = '<option value="">— select resource person —</option>';
+  for (const r of RPS) h += `<option value="${r.id}">${r.label}</option>`;
+  return h;
+}
+
+function addRow(rpId, topic) {
+  const wrap = document.getElementById('speakers');
+  const row = document.createElement('div');
+  row.className = 'speaker-row';
+  row.innerHTML = `
+    <div><label>Resource person</label><select name="rp_id">${optionsHtml()}</select></div>
+    <div><label>Topic</label><input type="text" name="topic" placeholder="e.g. Cold-chain management"></div>
+    <div><button type="button" class="btn-del" onclick="this.closest('.speaker-row').remove()">Remove</button></div>`;
+  wrap.appendChild(row);
+  // Restore a previously-typed row after a validation error.
+  if (rpId) row.querySelector('select[name=rp_id]').value = rpId;
+  if (topic != null) row.querySelector('input[name=topic]').value = topic;
+}
+
+// The entry window is a plain date by default; "Add specific time" swaps the two
+// fields to datetime-local for the rare precise cutoff. Server widens a bare date
+// to the whole day (opens 00:00 / closes 23:59).
+function toggleWinTime(e) {
+  if (e) e.preventDefault();
+  const fields = document.querySelectorAll('.win-field');
+  const toDate = fields.length && fields[0].type === 'datetime-local';
+  fields.forEach(f => { f.type = toDate ? 'date' : 'datetime-local'; });
+  document.getElementById('win-time-toggle').textContent = toDate ? 'Add specific time' : 'Use dates only';
+}
+
+function onStartDate() {
+  // A multi-day activity's end can't fall before its start: keep the end-date
+  // picker's floor in step with whatever start is chosen.
+  const start = document.getElementById('event_date').value;
+  const end = document.getElementById('end_date');
+  if (end) {
+    end.min = start || '{{ date_min|default("") }}';
+    if (end.value && start && end.value < start) end.value = '';
+  }
+}
+
+function onModality() {
+  const online = document.querySelector('input[name=modality]:checked').value === 'online';
+  const venue = document.getElementById('venue');
+  document.getElementById('venue-label').textContent = online ? 'Platform / meeting link' : 'Venue';
+  venue.placeholder = online ? 'e.g. Zoom — https://zoom.us/j/…' : 'e.g. Bayview Hall, Davao City';
+  // The link/platform is optional for online events; venue is just a label for F2F.
+  document.getElementById('venue-hint').classList.toggle('hidden', !online);
+}
+
+function onType(userToggled) {
+  const outside = document.querySelector('input[name=event_type]:checked').value === 'outside';
+  document.getElementById('org-bureau').classList.toggle('hidden', outside);
+  document.getElementById('org-outside').classList.toggle('hidden', !outside);
+  // Outside events have no event review (Form 2), but combined still works — it
+  // sequences raters through each speaker. Keep the choice; reword the combined
+  // option and default to separate. Bureau keeps combined as its default.
+  const ch = document.getElementById('qr-combined-hint');
+  if (ch) ch.textContent = outside
+    ? '— attendees scan one code and rate every speaker on one page, submitting once. Best for printed posters.'
+    : '— attendees scan one code and are walked through the event review and every speaker in sequence. Best for printed posters.';
+  if (userToggled) {
+    const def = document.querySelector(`input[name=qr_mode][value="${outside ? 'separate' : 'combined'}"]`);
+    if (def) def.checked = true;
+  }
+  document.getElementById('type-hint').textContent = outside
+    ? 'Produces speaker reviews (Form 3) only — at least one resource person is required.'
+    : 'Produces an event review (Form 2), plus a per-speaker review (Form 3) for each resource person (optional).';
+}
+
+// Resource-person rows the user had typed before a validation error, if any.
+const SUBMITTED_SPEAKERS = {{ (f.speakers|default([]))|tojson }};
+
+onType();
+onModality();
+onStartDate();
+if (SUBMITTED_SPEAKERS.length) {
+  for (const [rpId, topic] of SUBMITTED_SPEAKERS) addRow(rpId, topic);
+} else {
+  addRow();   // start with one row
+}
+</script>
+{% endblock %}

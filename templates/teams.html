@@ -1,0 +1,101 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% import "_unit_badges.html" as ub %}
+{% import "_export.html" as ex %}
+{% block title %}Teams{% endblock %}
+{% block content %}
+<style>
+  .timefilter { display:flex; align-items:center; flex-wrap:wrap; gap:.4rem; margin:0 0 1.2rem; }
+  .timefilter .tf-lab { font-size:.8rem; font-weight:600; color:var(--soft); margin-right:.15rem; }
+  .timefilter a { font-size:.8rem; font-weight:600; text-decoration:none; color:var(--soft);
+                  border:1px solid var(--line); border-radius:999px; padding:.3rem .75rem; background:var(--surface); }
+  .timefilter a:hover { border-color:var(--accent); color:var(--accent); }
+  .timefilter a.on { background:var(--ink); border-color:var(--ink); color:var(--surface); }
+
+  .ucard { display:flex; align-items:center; gap:1rem; text-decoration:none; color:inherit;
+           border:1px solid var(--line); background:var(--surface); border-radius:14px; padding:.85rem 1.1rem;
+           box-shadow:var(--shadow); margin-bottom:.7rem; transition:border-color .12s; }
+  .ucard:hover { border-color:var(--accent); }
+  .ucard.bureau { background:var(--accent-bg); border-color:var(--blue-ln); }
+  .ucard .uglyph { width:46px; height:46px; border-radius:11px; background:var(--accent-bg); flex:0 0 auto;
+                   display:flex; align-items:center; justify-content:center; font-size:1.25rem; }
+  .ucard .umain { flex:1; min-width:0; }
+  .ucard .uname { font-weight:700; line-height:1.2; }
+  .ucard .umeta { font-size:.8rem; color:var(--soft); margin-top:.15rem; }
+  .ucard .ubadges { display:flex; gap:.25rem; flex-wrap:wrap; margin-top:.3rem; }
+  .ucard .ubadge { font-size:.92rem; } .ucard .ubadge .lbl { font-size:.66rem; color:var(--soft); }
+  .ucard .uscore { text-align:right; white-space:nowrap; flex:0 0 auto; }
+  .ucard .uscore .v { font-size:1.5rem; font-weight:800; line-height:1; }
+  .ucard .uscore .k { font-size:.66rem; color:var(--soft); text-transform:uppercase; letter-spacing:.03em; }
+  .ucard.muted { background:var(--surface-2); } .ucard.muted .uname { color:var(--soft); }
+  .ucard.muted .uscore .v { color:var(--grey); font-size:.85rem; font-weight:600; }
+
+  .group { margin:1.4rem 0 .5rem; }
+  .group h2 { font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; color:var(--soft); margin:0 0 .6rem; }
+  .seclist { margin-left:1.4rem; padding-left:1rem; border-left:2px solid var(--line); }
+  .seclist .ucard { padding:.65rem .9rem; } .seclist .uglyph { width:36px; height:36px; font-size:1rem; }
+  .seclist .uscore .v { font-size:1.2rem; }
+</style>
+
+{% macro band_class(band) %}{{ {'Excellent':'b-good','Good':'b-good','Fair':'b-mid','Poor':'b-bad'}.get(band,'b-grey') }}{% endmacro %}
+
+{% macro ucard(node, glyph, cls='') %}
+{% set c = node.card %}
+{% if c %}
+<a class="ucard {{ cls }}" href="/dashboard/teams/{{ node.unit.path }}">
+  <span class="uglyph" aria-hidden="true">{{ glyph }}</span>
+  <div class="umain">
+    <div class="uname">{{ node.unit.name }}</div>
+    <div class="umeta">{{ c.events|comma }} rated activit{{ 'y' if c.events == 1 else 'ies' }} · {{ c.respondents|comma }} people reached{% if c.met_pct is not none %} · {{ c.met_pct }}% met expectations{% endif %}</div>
+    {% if c.badges %}<div class="ubadges">{% for b in c.badges %}<span class="ubadge" title="{{ b.label }} — {{ b.tip }}">{{ b.icons }}</span>{% endfor %}</div>{% endif %}
+  </div>
+  <div class="uscore"><div class="v">{{ c.overall|round(1) }}<span class="badge {{ band_class(c.band) }}" style="margin-left:.3rem;vertical-align:.25rem;">{{ c.band }}</span></div><div class="k">avg of 7</div></div>
+</a>
+{% else %}
+<a class="ucard muted {{ cls }}" href="/dashboard/teams/{{ node.unit.path }}">
+  <span class="uglyph" aria-hidden="true">{{ glyph }}</span>
+  <div class="umain"><div class="uname">{{ node.unit.name }}</div><div class="umeta">No rated activities yet</div></div>
+  <div class="uscore"><div class="v">—</div></div>
+</a>
+{% endif %}
+{% endmacro %}
+
+<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem;">
+  {{ page_header("Teams") }}
+  {{ ex.download('/dashboard/export?visual=teams_index&period=' ~ sel_period, 'Download') }}
+</div>
+<p class="lede">How each unit's activities are landing — a coaching read for the whole bureau, each division, and each section. Open one to see its strengths, where to focus next, how it's trending, how it stands among its peers, and the badges it has earned.</p>
+
+{{ ub.legend(badge_legend) }}
+
+{% set ygroup = (period_opts | selectattr('label','equalto','Year') | list | first) %}
+{% if ygroup %}
+<div class="timefilter" role="group" aria-label="Filter by time">
+  <span class="tf-lab">Showing</span>
+  <a href="/dashboard/teams" class="{{ 'on' if sel_period == 'all' }}">All time</a>
+  {% for o in ygroup.options %}<a href="/dashboard/teams?period={{ o.value }}" class="{{ 'on' if sel_period == o.value }}">{{ o.text }}</a>{% endfor %}
+</div>
+{% endif %}
+
+{% if tree.bureau %}{{ ucard(tree.bureau, '🏛️', 'bureau') }}{% endif %}
+
+{% if tree.directorate and tree.directorate.card %}{{ ucard(tree.directorate, '⭐') }}{% endif %}
+
+{% for d in tree.divisions %}
+<div class="group">
+  {{ ucard({'unit': d.unit, 'card': d.card}, '🗂️') }}
+  {% if d.sections %}
+  <div class="seclist">
+    {% for snode in d.sections %}{{ ucard(snode, '👥') }}{% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endfor %}
+
+{% if tree.admin %}
+<div class="group">
+  <h2>Administrative sections</h2>
+  {% for snode in tree.admin %}{{ ucard(snode, '👥') }}{% endfor %}
+</div>
+{% endif %}
+{% endblock %}

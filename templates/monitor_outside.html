@@ -1,0 +1,129 @@
+{% extends "dash_layout.html" %}
+{% block title %}Response tracking — {{ ev.title }}{% endblock %}
+
+{% block head %}
+<style>
+  .twrap { max-width: 860px; }
+  .thead h1 { margin:.2rem 0 .15rem; font-size:1.5rem; }
+  .tmeta { color:var(--soft); font-size:.9rem; margin:0 0 .2rem; }
+  .tmeta strong { color:var(--ink); }
+  .badge.inv { background:var(--accent-bg); color:var(--accent); border:1px solid var(--blue-ln);
+               border-radius:999px; padding:.12rem .6rem; font-size:.74rem; font-weight:700; }
+  .tcard { background:var(--surface); border:1px solid var(--line); border-radius:14px;
+           padding:1.1rem 1.25rem; box-shadow:var(--shadow); margin-bottom:1rem; }
+  .tcard h2 { font-size:1.04rem; margin:0 0 .2rem; }
+  .tcard .hint { color:var(--soft); font-size:.82rem; margin:0 0 .8rem; }
+  .big { display:flex; align-items:baseline; gap:.6rem; }
+  .big .n { font-size:2.6rem; font-weight:800; line-height:1; }
+  .big .u { color:var(--soft); font-size:.9rem; }
+  .timing { color:var(--soft); font-size:.84rem; margin-top:.5rem; }
+  .timing strong { color:var(--ink); }
+  .sp-tbl { width:100%; border-collapse:collapse; }
+  .sp-tbl th, .sp-tbl td { padding:.5rem .4rem; border-top:1px solid var(--line); text-align:left; font-size:.9rem; }
+  .sp-tbl th { border-top:none; color:var(--soft); font-weight:600; font-size:.78rem; text-transform:uppercase; letter-spacing:.02em; }
+  .sp-tbl td.num, .sp-tbl th.num { text-align:right; white-space:nowrap; }
+  .sp-name { color:var(--grey); font-size:.78rem; }
+  .mix-row { display:grid; grid-template-columns:90px 1fr 46px; align-items:center; gap:.6rem; margin:.35rem 0; }
+  .mix-row .lbl { font-size:.84rem; color:var(--ink); }
+  .mix-row .track { height:12px; background:var(--surface-2); border:1px solid var(--line); border-radius:999px; overflow:hidden; }
+  .mix-row .fill { height:100%; background:var(--accent); }
+  .mix-row .fill.alt { background:var(--green); }
+  .mix-row .fill.grey { background:var(--grey); }
+  .mix-row .pct { text-align:right; font-size:.8rem; color:var(--soft); }
+  .mix-col { display:grid; grid-template-columns:1fr 1fr; gap:1.4rem; }
+  @media (max-width:620px){ .mix-col { grid-template-columns:1fr; } }
+  .spark { display:flex; align-items:flex-end; gap:3px; height:48px; margin:.3rem 0 .2rem; }
+  .spark .b { flex:1; background:var(--accent-bg); border:1px solid var(--blue-ln); border-bottom:none;
+              border-radius:3px 3px 0 0; min-height:3px; }
+  .spark-x { display:flex; gap:3px; }
+  .spark-x span { flex:1; text-align:center; font-size:.62rem; color:var(--grey); }
+  .empty { color:var(--grey); font-size:.9rem; }
+</style>
+{% endblock %}
+
+{% block crumbs %}
+<nav class="crumbs" aria-label="Breadcrumb"><a href="/monitor">Monitor</a><span class="sep">›</span><span class="here">Response tracking</span></nav>
+{% endblock %}
+
+{% block content %}
+<div class="twrap">
+  <div class="thead">
+    <h1>{{ ev.title }} <span class="badge inv">Invited activity</span></h1>
+    <p class="tmeta">{{ ev.event_date|humandaterange(ev.end_date) }} · organized by <strong>{{ ev.organizer or 'an outside body' }}</strong>{% if ev.modality == 'online' %} · <span class="badge blue">Online</span>{% endif %}{% if ev.venue %} · {{ ev.venue }}{% endif %}</p>
+    <p class="tmeta">This activity collects feedback <strong>anonymously</strong> — there are no participant names to show, only how many responses came in and the overall mix.
+      {% if report_url %}<a href="{{ report_url }}#comments">💬 What people said →</a> · {% endif %}<a href="/activities/{{ ev.event_token }}/manage">Manage this activity →</a></p>
+  </div>
+
+  <div class="tcard">
+    <h2>Responses so far</h2>
+    <div class="big"><span class="n">{{ t.total }}</span><span class="u">response{{ '' if t.total == 1 else 's' }} across {{ t.speakers|length }} speaker{{ '' if t.speakers|length == 1 else 's' }}</span></div>
+    {% if t.total %}
+    <div class="timing">First: <strong>{{ t.first_at|humandt }}</strong> · Latest: <strong>{{ t.last_at|humandt }}</strong></div>
+    {% if t.by_day %}
+    <div class="spark" title="Responses per day (most recent {{ t.by_day|length }} active days)">
+      {% set maxn = (t.by_day | map(attribute='n') | max) %}
+      {% for d in t.by_day | reverse %}
+      <div class="b" style="height:{{ (d.n * 100 / maxn) | round(0, 'ceil') }}%" title="{{ d.day }} · {{ d.n }}"></div>
+      {% endfor %}
+    </div>
+    <div class="spark-x"><span>{{ (t.by_day|last).day }}</span><span style="text-align:right;">{{ (t.by_day|first).day }}</span></div>
+    {% endif %}
+    {% else %}
+    <p class="empty" style="margin-top:.4rem;">No responses yet. Share the QR codes from the activity's manage page to start collecting.</p>
+    {% endif %}
+  </div>
+
+  <div class="tcard">
+    <h2>By speaker</h2>
+    {% if t.speakers %}
+    <table class="sp-tbl">
+      <tr><th>Speaker review</th><th class="num">Responses</th><th class="num">Latest</th></tr>
+      {% for s in t.speakers %}
+      <tr>
+        <td>{{ s.topic or 'Untitled' }}{% if s.rp_name %}<div class="sp-name">{{ s.rp_name }}</div>{% endif %}</td>
+        <td class="num">{{ s.responses }}</td>
+        <td class="num">{% if s.last_at %}{{ s.last_at|humandate }}{% else %}—{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+    <p class="empty">No speakers.</p>
+    {% endif %}
+  </div>
+
+  <div class="tcard">
+    <h2>Who responded <span style="font-weight:500; color:var(--soft); font-size:.82rem;">— anonymous mix</span></h2>
+    {% if t.demographics_suppressed %}
+    <p class="hint">Hidden until there are at least {{ t.min_demog_n }} responses, so a few answers can't single anyone out. {{ t.total }} so far.</p>
+    {% else %}
+    <p class="hint">Self-reported on the survey. The mix is over responses, not people, and no one is identified.</p>
+    {% set sexmap = {'M':('Male','fill'), 'F':('Female','fill alt'), 'Unknown':('Not specified','fill grey')} %}
+    {% set afmap = {'DOH':('DOH','fill'), 'NON-DOH':('Non-DOH','fill alt'), 'Unknown':('Not specified','fill grey')} %}
+    <div class="mix-col">
+      <div>
+        <h3 style="font-size:.84rem; color:var(--soft); margin:0 0 .3rem;">Sex</h3>
+        {% for key, meta in sexmap.items() %}
+        {% set v = t.sex[key] %}
+        <div class="mix-row">
+          <span class="lbl">{{ meta[0] }}</span>
+          <span class="track"><span class="{{ meta[1] }}" style="width:{{ (v * 100 / t.total) if t.total else 0 }}%; display:block;"></span></span>
+          <span class="pct">{{ v }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      <div>
+        <h3 style="font-size:.84rem; color:var(--soft); margin:0 0 .3rem;">Affiliation</h3>
+        {% for key, meta in afmap.items() %}
+        {% set v = t.affiliation[key] %}
+        <div class="mix-row">
+          <span class="lbl">{{ meta[0] }}</span>
+          <span class="track"><span class="{{ meta[1] }}" style="width:{{ (v * 100 / t.total) if t.total else 0 }}%; display:block;"></span></span>
+          <span class="pct">{{ v }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

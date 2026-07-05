@@ -1,0 +1,279 @@
+{% extends "dash_layout.html" %}
+{% block title %}Name cleanup{% endblock %}
+
+{% block head %}
+<style>
+  .cwrap { max-width: 1080px; }
+  .lead { color: var(--soft); margin: .2rem 0 1rem; max-width: 70ch; }
+  .banner { border-radius: 8px; padding: .7rem 1rem; margin-bottom: 1rem; font-size: .92rem; }
+  .banner.ok  { background: var(--green-bg); border: 1px solid var(--green-ln); color: var(--green); }
+  .banner.bad { background: var(--red-bg); border: 1px solid var(--red-ln); color: var(--red); }
+  .toolbar { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center;
+             background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+             padding: .75rem 1rem; margin-bottom: 1rem; position: sticky; top: .4rem; z-index: 5; }
+  .toolbar input.search { flex: 1 1 220px; padding: .45rem .6rem; border: 1px solid var(--line);
+             border-radius: 8px; font-size: .92rem; min-width: 160px; }
+  .chip { border: 1px solid var(--line); background: var(--surface); color: var(--soft); border-radius: 999px;
+          padding: .3rem .7rem; font-size: .8rem; font-weight: 600; cursor: pointer; }
+  .chip.on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+  .chip .ct { opacity: .7; font-weight: 700; }
+  .bulk { margin-left: auto; }
+  .bulk button, .restore button { padding: .4rem .8rem; border-radius: 8px; cursor: pointer;
+          font-size: .82rem; font-weight: 600; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+  .restore button { background: var(--amber-bg); border-color: var(--amber-ln); color: var(--amber); }
+  .bulk button.danger { background: var(--red-bg); border-color: var(--red-ln); color: var(--red); }
+  .flag.f-low { background:var(--amber-bg); color:var(--amber); border:1px solid var(--amber-ln); }
+  .row { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: .6rem .85rem;
+         margin-bottom: .5rem; }
+  .rhead { display: flex; align-items: center; gap: .7rem; flex-wrap: wrap; }
+  .nm { font-weight: 600; font-size: .98rem; }
+  .nm .rid { color: var(--grey); font-weight: 600; font-size: .8rem; margin-right: .35rem; }
+  .meta { color: var(--soft); font-size: .8rem; }
+  .badge { font-size: .68rem; font-weight: 700; padding: .08rem .45rem; border-radius: 999px;
+           text-transform: uppercase; letter-spacing: .03em; }
+  .b-int { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--blue-ln); }
+  .b-ext { background: var(--surface-2); color: var(--soft); border: 1px solid var(--line); }
+  .b-hid { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--blue-ln); }
+  .flag { font-size: .68rem; font-weight: 700; padding: .08rem .45rem; border-radius: 6px; }
+  .f-caps { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-ln); }
+  .f-hon  { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-ln); }
+  .f-ros  { background: var(--red-bg);   color: var(--red);   border: 1px solid var(--red-ln); }
+  .f-dup  { background: var(--blue-bg);  color: var(--accent); border: 1px solid var(--blue-ln); }
+  .acts { margin-left: auto; display: flex; gap: .35rem; flex-wrap: wrap; }
+  .acts button, .acts .tg { padding: .32rem .6rem; border-radius: 7px; cursor: pointer; font-size: .8rem;
+           font-weight: 600; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+  .acts button.go { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+  .acts button.warn { background: var(--surface); color: var(--red); border-color: var(--red-ln); }
+  .acts form { display: inline; margin: 0; }
+  details.panel2 { margin: 0; }
+  details.panel2 > summary { display: none; }   /* driven by the action-bar toggles */
+  details.panel2[open] { margin-top: .55rem; border-top: 1px dashed var(--line); padding-top: .55rem; }
+  .ptitle { font-size: .82rem; font-weight: 600; color: var(--accent); margin-bottom: .4rem; }
+  .pbody { padding: .55rem 0 .2rem; }
+  .pbody label { font-size: .82rem; color: var(--soft); }
+  .pbody input[type=text], .pbody select { padding: .35rem .5rem; border: 1px solid var(--line);
+           border-radius: 7px; font-size: .88rem; }
+  .dupe { display: inline-flex; align-items: center; gap: .4rem; background: var(--surface-2);
+          border: 1px solid var(--line); border-radius: 999px; padding: .15rem .15rem .15rem .7rem;
+          margin: .15rem .3rem .15rem 0; font-size: .82rem; }
+  .dupe button { padding: .22rem .55rem; border-radius: 999px; font-size: .75rem; font-weight: 700;
+          border: 1px solid var(--accent); background: var(--accent); color: var(--on-accent); cursor: pointer; }
+  .splitrow { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; padding: .25rem 0; }
+  .splitrow .pname { font-weight: 600; font-size: .88rem; min-width: 160px; }
+  .arrow { color: var(--grey); }
+  .muted { color: var(--soft); font-size: .82rem; }
+  .none { color: var(--grey); padding: 1.5rem; text-align: center; }
+</style>
+{% endblock %}
+
+{% block crumbs %}
+<div class="crumbs"><a href="/directory">Directory</a> › <span>Name cleanup</span></div>
+{% endblock %}
+
+{% block content %}
+<div class="cwrap">
+  <h1 style="margin:.2rem 0 .1rem;">Name cleanup <span class="muted">· external resource persons</span></h1>
+  <p class="lede">Final tidy-up of the external speaker roster. BLHSD staff are hidden (the plantilla
+     is already clean). The default <b>Needs action</b> view shows only what's left to fix —
+     ALL-CAPS names, rosters (several people in one field), duplicate candidates, and low-signal
+     records. Use <b>Archive all under 5 ratings</b> to clear the long tail, then <b>merge</b> the
+     remaining duplicates. Every action is audited; a restore point is taken before the first change.</p>
+
+  {% if msg %}<div class="banner ok">✓ {{ msg }}</div>{% endif %}
+  {% if err %}<div class="banner bad">⚠ {{ err }}</div>{% endif %}
+
+  <div class="toolbar">
+    <input class="search" id="q" type="text" placeholder="Search names…" autocomplete="off"
+           aria-label="Search names">
+    <span class="chip on" data-filter="pending">Needs action <span class="ct">{{ counts.pending }}</span></span>
+    <span class="chip" data-filter="roster">Rosters <span class="ct">{{ counts.roster }}</span></span>
+    <span class="chip" data-filter="dup">Has duplicate <span class="ct">{{ counts.dupes }}</span></span>
+    <span class="chip" data-filter="caps">ALL-CAPS <span class="ct">{{ counts.caps }}</span></span>
+    <span class="chip" data-filter="low">Under 5 ratings <span class="ct">{{ counts.low }}</span></span>
+    <span class="chip" data-filter="hidden">Hidden <span class="ct">{{ counts.hidden }}</span></span>
+    <span class="chip" data-filter="all">All external <span class="ct">{{ counts.total }}</span></span>
+    <span class="bulk">
+      <form method="post" action="/directory/cleanup/archive-low" style="display:inline"
+            onsubmit="return confirm('Archive every external record with under 5 ratings ({{ counts.low }})? They vanish from every view but stay in the database; un-archive any later.')">
+        <button type="submit" class="danger" title="Archive every external record with under 5 ratings">Archive all under 5 ratings ({{ counts.low }})</button>
+      </form>
+      <form method="post" action="/directory/cleanup/bulk-titlecase" style="display:inline">
+        <button type="submit" title="Proper-case every ALL-CAPS name at once">Aa Fix all ALL-CAPS</button>
+      </form>
+      <span class="restore">
+        <form method="post" action="/directory/cleanup/backup" style="display:inline">
+          <button type="submit" title="Save a restore point now">Save restore point</button>
+        </form>
+      </span>
+    </span>
+  </div>
+
+  <!-- one shared datalist powers every merge-target picker -->
+  <datalist id="people_dl">
+    {% for oid, oname in options %}<option value="{{ oid }} — {{ oname }}"></option>{% endfor %}
+  </datalist>
+
+  <div id="list">
+  {% for p in people %}
+    <div class="row" data-name="{{ p.name|lower }}"
+         data-f="{% if p.pending %}pending {% endif %}{% if p.caps %}caps {% endif %}{% if p.roster %}roster {% endif %}{% if p.dupes %}dup {% endif %}{% if p.low %}low {% endif %}{% if p.hidden %}hidden {% endif %}">
+      <div class="rhead">
+        <span class="nm"><span class="rid">#{{ p.id }}</span>{{ p.name }}</span>
+        {% if p.hidden %}<span class="badge b-hid">Hidden</span>{% endif %}
+        {% if p.caps %}<span class="flag f-caps">ALL-CAPS</span>{% endif %}
+        {% if p.roster %}<span class="flag f-ros">roster · {{ p.parts|length }}</span>{% endif %}
+        {% if p.dupes %}<span class="flag f-dup">{{ p.dupes|length }} dup</span>{% endif %}
+        {% if p.low and not p.hidden %}<span class="flag f-low">under 5</span>{% endif %}
+        <span class="meta">· {{ p.n }} rating{{ '' if p.n == 1 else 's' }}</span>
+
+        <span class="acts">
+          {% if p.caps and p.proper != p.name %}
+          <form method="post" action="/directory/cleanup/quickfix">
+            <input type="hidden" name="rp_id" value="{{ p.id }}"><input type="hidden" name="op" value="titlecase">
+            <button type="submit" title="Rename to: {{ p.proper }}">Aa “{{ p.proper }}”</button>
+          </form>
+          {% endif %}
+          {% if p.honorific and p.stripped != p.name %}
+          <form method="post" action="/directory/cleanup/quickfix">
+            <input type="hidden" name="rp_id" value="{{ p.id }}"><input type="hidden" name="op" value="strip">
+            <button type="submit" title="Rename to: {{ p.stripped }}">Strip “{{ p.stripped }}”</button>
+          </form>
+          {% endif %}
+          {% if not p.roster %}
+          <span class="tg" data-toggle="merge-{{ p.id }}">Merge…</span>
+          {% else %}
+          <span class="tg" data-toggle="split-{{ p.id }}">Split…</span>
+          {% endif %}
+          <span class="tg" data-toggle="rename-{{ p.id }}">Rename</span>
+          {% if p.hidden %}
+          <form method="post" action="/directory/cleanup/quickfix">
+            <input type="hidden" name="rp_id" value="{{ p.id }}"><input type="hidden" name="op" value="unarchive">
+            <button type="submit">Un-archive</button>
+          </form>
+          {% else %}
+          <form method="post" action="/directory/cleanup/quickfix" onsubmit="return confirm('Archive (hide) {{ p.name|e }}? Its forms vanish from every view but stay in the database.')">
+            <input type="hidden" name="rp_id" value="{{ p.id }}"><input type="hidden" name="op" value="archive">
+            <button type="submit" class="warn">Archive</button>
+          </form>
+          {% endif %}
+        </span>
+      </div>
+
+      <!-- rename panel -->
+      <details class="panel2" id="rename-{{ p.id }}">
+        <summary>Rename this record</summary>
+        <div class="pbody">
+          <div class="ptitle">Rename #{{ p.id }}</div>
+          <form method="post" action="/directory/cleanup/rename">
+            <input type="hidden" name="rp_id" value="{{ p.id }}">
+            <input type="text" name="name" value="{{ p.name }}" size="42">
+            <button type="submit" class="go" style="border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);border-radius:7px;padding:.35rem .8rem;cursor:pointer;font-weight:600;">Save</button>
+          </form>
+        </div>
+      </details>
+
+      {% if not p.roster %}
+      <!-- merge panel -->
+      <details class="panel2" id="merge-{{ p.id }}">
+        <summary>Merge another record into <b>#{{ p.id }} {{ p.name }}</b></summary>
+        <div class="pbody">
+          <div class="ptitle">Merge duplicates of <b>#{{ p.id }} {{ p.name }}</b></div>
+          {% if p.dupes %}
+          <div class="muted" style="margin-bottom:.3rem;">Likely the same person — one click to fold in (this record survives):</div>
+          {% for d in p.dupes %}
+          <span class="dupe">
+            <span>#{{ d.id }} {{ d.name }} <span class="muted">· {{ d.n }}</span>{% if d.internal %} <span class="badge b-int">BLHSD</span>{% endif %}</span>
+            <form method="post" action="/directory/cleanup/merge">
+              <input type="hidden" name="src_id" value="{{ d.id }}"><input type="hidden" name="dst_id" value="{{ p.id }}">
+              <button type="submit" title="Merge #{{ d.id }} into #{{ p.id }}">fold in ↦</button>
+            </form>
+          </span>
+          {% endfor %}
+          <div style="height:.4rem;"></div>
+          {% endif %}
+          <!-- generic: fold THIS record into a chosen target (the target survives) -->
+          <form method="post" action="/directory/cleanup/merge">
+            <input type="hidden" name="src_id" value="{{ p.id }}">
+            <label>Fold <b>this</b> record into another (the other becomes the survivor):
+              <input type="text" name="dst_pick" list="people_dl" placeholder="type a name or #id" autocomplete="off">
+            </label>
+            <button type="submit" class="go" style="border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);border-radius:7px;padding:.3rem .7rem;cursor:pointer;font-weight:600;">Merge</button>
+          </form>
+        </div>
+      </details>
+      {% else %}
+      <!-- split panel -->
+      <details class="panel2" id="split-{{ p.id }}">
+        <summary>Split this roster into {{ p.parts|length }} people (ratings duplicated to each)</summary>
+        <div class="pbody">
+          <div class="ptitle">Split into {{ p.parts|length }} people — set who each name is, then split (ratings duplicated to each)</div>
+          <form method="post" action="/directory/cleanup/split">
+            <input type="hidden" name="rp_id" value="{{ p.id }}">
+            {% for part in p.parts %}
+            <div class="splitrow">
+              <input type="hidden" name="part_name_{{ loop.index0 }}" value="{{ part.name }}">
+              <span class="pname">{{ part.name }}</span><span class="arrow">→</span>
+              <select name="part_target_{{ loop.index0 }}">
+                <option value="new">➕ new external person “{{ part.name }}”</option>
+                {% for oid, oname in options %}
+                <option value="{{ oid }}" {{ 'selected' if part.match_id == oid else '' }}>#{{ oid }} {{ oname }}</option>
+                {% endfor %}
+              </select>
+              <label class="muted"><input type="checkbox" name="part_skip_{{ loop.index0 }}" value="1"> skip</label>
+            </div>
+            {% endfor %}
+            <div style="margin-top:.5rem;">
+              <button type="submit" class="go" style="border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);border-radius:8px;padding:.4rem 1rem;cursor:pointer;font-weight:600;"
+                      onclick="return confirm('Split #{{ p.id }} {{ p.name|e }} into the chosen people? Ratings are duplicated to each; the roster record is then removed.')">Split & duplicate ratings</button>
+              <span class="muted">The roster record #{{ p.id }} is removed afterwards.</span>
+            </div>
+          </form>
+        </div>
+      </details>
+      {% endif %}
+    </div>
+  {% endfor %}
+  </div>
+  <div class="none" id="empty" style="display:none">No records match this filter.</div>
+</div>
+
+<script>
+(function () {
+  var q = document.getElementById('q');
+  var chips = Array.prototype.slice.call(document.querySelectorAll('.chip'));
+  var rows = Array.prototype.slice.call(document.querySelectorAll('#list .row'));
+  var empty = document.getElementById('empty');
+  var filter = 'pending';
+
+  function apply() {
+    var term = (q.value || '').trim().toLowerCase();
+    var shown = 0;
+    rows.forEach(function (r) {
+      var okF = filter === 'all' || (' ' + r.getAttribute('data-f') + ' ').indexOf(' ' + filter + ' ') >= 0;
+      var okQ = !term || r.getAttribute('data-name').indexOf(term) >= 0;
+      var show = okF && okQ;
+      r.style.display = show ? '' : 'none';
+      if (show) shown++;
+    });
+    empty.style.display = shown ? 'none' : '';
+  }
+  q.addEventListener('input', apply);
+  chips.forEach(function (c) {
+    c.addEventListener('click', function () {
+      chips.forEach(function (x) { x.classList.remove('on'); });
+      c.classList.add('on');
+      filter = c.getAttribute('data-filter');
+      apply();
+    });
+  });
+  // expand/collapse the per-row panels via the action toggles
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-toggle]');
+    if (!t) return;
+    var d = document.getElementById(t.getAttribute('data-toggle'));
+    if (d) { d.open = !d.open; if (d.open) d.scrollIntoView({block: 'nearest'}); }
+  });
+  apply();   // apply the default "Needs action" filter on load
+})();
+</script>
+{% endblock %}

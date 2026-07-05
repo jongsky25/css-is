@@ -1,0 +1,73 @@
+{# 3-way manual re-tag control for one quote (Appreciated / Mixed / To improve).
+   `q` is a story quote dict (rid, item, sentiment, overridden); posts to the shared
+   /dashboard/comment-tag route and returns to `back`. Mixed shows on both columns. #}
+{% macro retag_control(q, back) %}
+{% if q.rid is not none %}
+<div class="retag" data-retag data-rid="{{ q.rid }}" data-item="{{ q.item }}" data-back="{{ back }}" data-sentiment="{{ q.sentiment }}"{% if q.overridden %} data-overridden="1"{% endif %}>
+  <span class="retag-mark"{% if not q.overridden %} hidden{% endif %} title="Manually re-tagged">✓ re-tagged</span>
+  {% for opt, lab in [('appreciate', 'Appreciated'), ('mixed', 'Mixed'), ('improve', 'To improve')] %}
+  {% if opt != q.sentiment %}
+  <form method="post" action="/dashboard/comment-tag">
+    <input type="hidden" name="response_id" value="{{ q.rid }}">
+    <input type="hidden" name="item_id" value="{{ q.item }}">
+    <input type="hidden" name="tag" value="{{ opt }}">
+    <input type="hidden" name="back" value="{{ back }}">
+    <button type="submit" data-tag="{{ opt }}" data-label="{{ lab }}" title="Re-tag this comment as “{{ lab }}”">→ {{ lab }}</button>
+  </form>
+  {% endif %}
+  {% endfor %}
+</div>
+{% endif %}
+{% endmacro %}
+
+{# Shared verbatim story panel — used by Pulse callouts, People, and Activities.
+   Quotes are grouped into themes and split into appreciate / improve, shown as
+   pull-quotes (not a bullet list). Input `story` comes from di.story_panel(). #}
+{% macro panel(story, can_retag=false, back='') %}
+<div class="story">
+  {% if not story or story.total == 0 %}
+    <p class="story-empty">No written comments here yet — a rating can count toward the score without a comment.</p>
+  {% else %}
+  <div class="story-cols">
+    {% for side in ['appreciate', 'improve'] %}
+    {% set data = story[side] %}
+    {% set title = 'What people appreciate' if side == 'appreciate' else 'What people would like improved' %}
+    {% set other = 'improve' if side == 'appreciate' else 'appreciate' %}
+    <div class="story-side {{ side }}">
+      <h4>{{ title }}</h4>
+      {% if data.phrase %}<p class="story-headline">{{ data.phrase }}.</p>{% endif %}
+      {% set shown = data.buckets | selectattr('count') | list %}
+      {% if shown %}
+        {% for b in shown[:4] %}
+        <div class="theme">
+          <div class="theme-h">{{ b.count }} {{ 'comment' if b.count == 1 else 'comments' }} on {{ b.noun }}</div>
+          {% for q in b.quotes[:2] %}
+          <blockquote{% if q.sentiment == 'mixed' %} class="is-mixed"{% endif %}>“{{ q.text }}”{% if q.sentiment == 'mixed' %} <span class="mixed-badge" title="Mentions both a positive and something to improve — shown on both columns">Mixed</span>{% endif %}<cite title="{{ q.form_id }}">{{ q.activity or q.topic or q.form_id }}{% if q.when %} · {{ q.when | humandate }}{% endif %}</cite>
+            {% if can_retag %}{{ retag_control(q, back) }}{% endif %}
+          </blockquote>
+          {% endfor %}
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="story-empty">Nothing flagged on this side.</p>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% if can_retag %}<p class="retag-hint">Wrongly sorted? Re-tag a comment as Appreciated, Mixed (shows on both), or To improve — the change is saved for everyone.</p>{% endif %}
+  {% endif %}
+</div>
+{% endmacro %}
+
+{# Ranked horizontal dimension bars (highest → lowest), plain-language names. #}
+{% macro ranked_bars(rows, ymax) %}
+<div class="ranked">
+  {% for d in rows %}
+  <div class="row" title="{{ d.name }}: {{ d.shown }}{% if d.n %} · n={{ d.n }}{% endif %}">
+    <span class="lab">{{ d.name }}</span>
+    <span class="track"><span class="fill" style="width:{{ (d.value / ymax * 100) | round(1) }}%"></span></span>
+    <span class="val">{{ d.shown }}</span>
+  </div>
+  {% endfor %}
+</div>
+{% endmacro %}

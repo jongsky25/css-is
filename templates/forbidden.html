@@ -1,0 +1,14 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}No access{% endblock %}
+{% block content %}
+<div class="panel" style="border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1.4rem 1.6rem; box-shadow:0 1px 3px rgba(20,30,50,.05);">
+  {{ page_header("You don't have access to that") }}
+  <p class="lede">
+    Your role{% if request.state.user %} (<strong>{{ ROLE_LABELS.get(request.state.user.role, request.state.user.role) }}</strong>){% endif %}
+    can't perform this action{% if capability %} (<code>{{ capability }}</code>){% endif %}.
+    If you think you should have access, ask an administrator to adjust your role.
+  </p>
+  <p><a href="/dashboard">← Back to the dashboard</a></p>
+</div>
+{% endblock %}

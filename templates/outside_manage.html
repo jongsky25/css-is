@@ -1,0 +1,298 @@
+{% extends "dash_layout.html" %}
+{% block title %}Manage invited activity{% endblock %}
+
+{% block head %}
+<style>
+  .mwrap { max-width: 880px; }
+  .mhead h1 { margin:.2rem 0 .15rem; font-size:1.5rem; }
+  .mmeta { color:var(--soft); font-size:.9rem; margin:0 0 .2rem; }
+  .mmeta strong { color:var(--ink); }
+  .badge.inv { background:var(--accent-bg); color:var(--accent); border:1px solid var(--blue-ln);
+               border-radius:999px; padding:.12rem .6rem; font-size:.74rem; font-weight:700; }
+  .mcard { background:var(--surface); border:1px solid var(--line); border-radius:14px;
+           padding:1.1rem 1.25rem; box-shadow:var(--shadow); margin-bottom:1rem; }
+  .mcard h2 { font-size:1.04rem; margin:0 0 .2rem; }
+  .mcard .hint { color:var(--soft); font-size:.82rem; margin:0 0 .8rem; }
+  .qr-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:1rem; }
+  .qr-tile { text-align:center; border:1px solid var(--line); border-radius:12px; padding:.8rem; background:var(--surface-2); }
+  .qr-tile.combined { border-color:var(--blue-ln); background:var(--accent-bg); }
+  .qr-tile img { width:160px; height:160px; image-rendering:pixelated; }
+  .qr-tile .lbl { font-weight:600; font-size:.84rem; margin-bottom:.4rem; }
+  .qr-tile .url { font-size:.7rem; word-break:break-all; color:var(--grey); margin-top:.3rem; }
+  .sp-tbl { width:100%; border-collapse:collapse; }
+  .sp-tbl td { padding:.55rem .4rem; border-top:1px solid var(--line); vertical-align:middle; font-size:.9rem; }
+  .sp-tbl tr:first-child td { border-top:none; }
+  .sp-topic { display:flex; gap:.4rem; align-items:center; }
+  .sp-topic input { flex:1; min-width:120px; padding:.4rem .5rem; border:1px solid var(--line-strong); border-radius:8px; background:var(--surface); }
+  .sp-name { color:var(--grey); font-size:.78rem; }
+  .sp-resp { white-space:nowrap; color:var(--soft); font-size:.82rem; text-align:right; }
+  .sp-act { white-space:nowrap; text-align:right; }
+  .addform { display:grid; grid-template-columns:1fr 1fr auto; gap:.6rem; align-items:end; margin-top:.9rem;
+             border-top:1px dashed var(--line); padding-top:.9rem; }
+  .addform label { font-size:.78rem; font-weight:600; color:var(--soft); display:block; margin-bottom:.2rem; }
+  .addform select, .addform input { width:100%; padding:.45rem .55rem; border:1px solid var(--line-strong);
+             border-radius:8px; background:var(--surface); }
+  @media (max-width:620px){ .addform { grid-template-columns:1fr; align-items:stretch; } }
+  .win-row { display:flex; gap:.6rem; flex-wrap:wrap; align-items:end; }
+  .win-row label { font-size:.78rem; font-weight:600; color:var(--soft); display:block; margin-bottom:.2rem; }
+  .win-row input { padding:.45rem .55rem; border:1px solid var(--line-strong); border-radius:8px; background:var(--surface); }
+  .danger { border-color:var(--red-ln); }
+  .danger h2 { color:var(--red); }
+  .danger .row { display:flex; gap:1rem; flex-wrap:wrap; align-items:flex-start; }
+  .danger .row > form { flex:1; min-width:240px; }
+  .btn-warn { background:var(--amber-bg); color:var(--amber); border:1px solid var(--amber-ln); }
+  .btn-danger { background:var(--red-bg); color:var(--red); border:1px solid var(--red-ln); }
+  .btn-del { background:var(--red-bg); color:var(--red); border:1px solid var(--red-ln); border-radius:8px; padding:.3rem .6rem; font-size:.78rem; cursor:pointer; }
+  .empty { color:var(--grey); font-size:.86rem; }
+  .closedbar { border-color:var(--amber-ln); background:var(--amber-bg); }
+  .closedbar h2 { color:var(--amber); }
+  .closedbar .row { display:flex; gap:.6rem; flex-wrap:wrap; align-items:center; margin-top:.6rem; }
+  .locked-region[inert] { opacity:.5; }
+  .lockflag { display:inline-block; font-size:.74rem; font-weight:700; color:var(--amber);
+              background:var(--amber-bg); border:1px solid var(--amber-ln); border-radius:999px;
+              padding:.08rem .5rem; vertical-align:middle; margin-left:.4rem; }
+  @media print { .noprint { display:none !important; } .mcard { box-shadow:none; } }
+</style>
+{% endblock %}
+
+{% block crumbs %}
+<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span class="sep">›</span><span class="here">Manage activity</span></nav>
+{% endblock %}
+
+{% block content %}
+<div class="mwrap">
+  <div class="mhead">
+    <h1>{{ ev.title }} <span class="badge inv">Invited activity</span></h1>
+    <p class="mmeta">{{ ev.event_date|humandaterange(ev.end_date) }} · organized by <strong>{{ ev.organizer or 'an outside body' }}</strong>{% if ev.modality == 'online' %} · <span class="badge blue">Online</span>{% endif %}{% if ev.venue %} · {{ ev.venue }}{% endif %}</p>
+    <p class="mmeta">{{ speakers|length }} speaker review{{ '' if speakers|length == 1 else 's' }} · {{ responses_total }} response{{ '' if responses_total == 1 else 's' }} so far · <a href="/monitor/{{ ev.event_token }}">See responses →</a></p>
+  </div>
+
+  {% if is_archived %}
+  <div class="mcard danger">
+    <h2>This activity is archived</h2>
+    <p class="hint">It's hidden from your activity lists and from reports. Its responses are kept — you can bring it back any time.</p>
+    <form method="post" action="/activities/{{ ev.event_token }}/archive">
+      <input type="hidden" name="restore" value="1">
+      <button class="btn" type="submit">Restore this activity</button>
+    </form>
+  </div>
+  {% else %}
+
+  {% if is_closed %}
+  <div class="mcard closedbar">
+    <h2>This activity is closed</h2>
+    <p class="hint" style="margin-bottom:0;">New responses are stopped — on paper and online — and its details below are locked.
+      Everything stays in your reports. Reopen it only to back-enter a late form or fix a typo, then close it again.</p>
+    <div class="row">
+      {% if report_url and responses_total %}<a class="btn" href="{{ report_url }}">View resource-person results →</a>{% endif %}
+      <form method="post" action="/activities/{{ ev.event_token }}/reopen"
+            onsubmit="return confirm('Reopen this activity? Responses and paper entry will resume and its details become editable again.');">
+        <button class="btn-warn btn" type="submit">Reopen to make a correction</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if err == 'addspeaker' %}<div class="flash warn">Pick a resource person and type a topic to add a speaker.</div>{% endif %}
+  {% if err == 'renametopic' %}<div class="flash warn">A topic can't be blank.</div>{% endif %}
+  {% if err == 'hasresponses' %}<div class="flash warn">That speaker already has responses, so it can't be removed (its ratings would be lost). Close or archive the activity instead.</div>{% endif %}
+
+  <!-- QR codes (re-download / re-print any time) -->
+  <div class="mcard">
+    <h2>QR codes</h2>
+    <p class="hint">Scan to open the speaker reviews. The <strong>combined</strong> code walks a rater through every speaker in turn; each speaker also has its own code. Re-print this sheet whenever you add a speaker.</p>
+    {% if speakers %}
+    <div class="qr-grid">
+      {% if combined_qr %}
+      <div class="qr-tile combined">
+        <div class="lbl">Combined — all speakers</div>
+        <img src="{{ combined_qr }}" alt="Combined QR code">
+        <div class="url"><a href="{{ combined_url }}">{{ combined_url }}</a></div>
+      </div>
+      {% endif %}
+      {% for s in speakers %}
+      <div class="qr-tile">
+        <div class="lbl">{{ s.topic or 'Untitled' }}{% if s.rp_name %} — {{ s.rp_name }}{% endif %}</div>
+        <img src="{{ s.qr }}" alt="QR code for {{ s.topic }}">
+        <div class="url"><a href="{{ s.url }}">{{ s.url }}</a></div>
+      </div>
+      {% endfor %}
+    </div>
+    <p class="noprint" style="margin-top:.9rem;"><button class="btn ghost" onclick="window.print()">🖨 Print QR sheet</button></p>
+    {% else %}
+    <p class="empty">No speakers yet — add one below to generate a QR.</p>
+    {% endif %}
+  </div>
+
+  <!-- Editable cards — locked (inert) once the activity is closed -->
+  <div class="locked-region" {% if is_closed %}inert{% endif %}>
+
+  <!-- Speakers & topics -->
+  <div class="mcard" id="speakers">
+    <h2>Speakers &amp; topics{% if is_closed %}<span class="lockflag">🔒 locked</span>{% endif %}</h2>
+    <p class="hint">Rename a topic any time. You can remove a speaker only while it has no responses — once people have rated it, close or archive the activity instead.</p>
+    {% if speakers %}
+    <div class="table-wrap">
+    <table class="sp-tbl">
+      {% for s in speakers %}
+      <tr>
+        <td>
+          <form method="post" action="/activities/{{ ev.event_token }}/speakers/{{ s.id }}/rename" class="sp-topic">
+            <input type="text" name="topic" value="{{ s.topic or '' }}" aria-label="Topic">
+            <button class="btn ghost" type="submit" style="font-size:.78rem; padding:.3rem .6rem;">Save</button>
+          </form>
+          <div class="sp-name">{{ s.rp_name or 'No resource person' }}</div>
+        </td>
+        <td class="sp-resp">{{ s.responses }} response{{ '' if s.responses == 1 else 's' }}</td>
+        <td class="sp-act">
+          {% if s.responses %}
+          <span class="empty" role="img" aria-label="Locked — has responses, can't be removed" title="Has responses — remove is disabled">🔒</span>
+          {% else %}
+          <form method="post" action="/activities/{{ ev.event_token }}/speakers/{{ s.id }}/remove"
+                onsubmit="return confirm('Remove this speaker review? This can\'t be undone.');">
+            <button class="btn-del" type="submit">Remove</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+    </div>
+    {% else %}
+    <p class="empty">No speakers yet.</p>
+    {% endif %}
+
+    <form method="post" action="/activities/{{ ev.event_token }}/speakers" class="addform">
+      <div>
+        <label for="rp_id">Resource person</label>
+        <select id="rp_id" name="rp_id">
+          <option value="">— select —</option>
+          {% for rp in resource_persons %}
+          <option value="{{ rp.id }}">{{ rp.name }}{% if rp.is_internal and rp.org_path %} — {{ rp.org_path }}{% elif rp.is_internal %} — internal{% else %} — external{% endif %}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="topic">Topic</label>
+        <input type="text" id="topic" name="topic" placeholder="e.g. Cold-chain management">
+      </div>
+      <div><button class="btn" type="submit">+ Add speaker</button></div>
+    </form>
+  </div>
+
+  <!-- Entry window -->
+  <div class="mcard" id="dates">
+    <h2>Activity dates</h2>
+    <p class="hint">The <strong>start date</strong> sets the reporting period. Add an <strong>end date</strong>
+      only for a multi-day activity; leave it blank for a single day.</p>
+    {% if err == 'baddates' %}<div class="flash warn">Check the dates — the start must be a real date within 2 years, and the end can't fall before the start.</div>{% endif %}
+    {% if date_ok %}<div class="flash ok">Activity dates updated.</div>{% endif %}
+    <form method="post" action="/activities/{{ ev.event_token }}/dates" class="win-row">
+      <div>
+        <label for="ev_start">Start date</label>
+        <input type="date" id="ev_start" name="event_date" class="win-field" required
+               value="{{ ev.event_date }}" onchange="syncEndMin()"
+               {% if date_min %}min="{{ date_min }}"{% endif %} {% if date_max %}max="{{ date_max }}"{% endif %}>
+      </div>
+      <div>
+        <label for="ev_end">End date <span class="opt">optional</span></label>
+        <input type="date" id="ev_end" name="end_date" class="win-field"
+               value="{{ ev.end_date or '' }}" {% if date_max %}max="{{ date_max }}"{% endif %}>
+      </div>
+      <div><button class="btn" type="submit">Save dates</button></div>
+    </form>
+    <p class="empty" style="margin-top:.5rem;">Currently: {{ ev.event_date|humandaterange(ev.end_date) }}.</p>
+    <script>
+    function syncEndMin() {
+      var s = document.getElementById('ev_start'), e = document.getElementById('ev_end');
+      if (s && e) { e.min = s.value || ''; if (e.value && s.value && e.value < s.value) e.value = ''; }
+    }
+    syncEndMin();
+    </script>
+  </div>
+
+  <div class="mcard" id="window">
+    <h2>When feedback is open</h2>
+    <p class="hint">Dates this activity's speaker reviews accept answers — applies to every QR above.
+      <strong>Leave both blank</strong> = always open. <strong>Set only “closes”</strong> = open now, stop after that day.
+      <strong>Set both</strong> = answers only inside those dates.</p>
+    {% if err == 'badwindow' %}<div class="flash warn">The window must close <em>after</em> it opens — check the two dates.</div>{% endif %}
+    <form method="post" action="/activities/{{ ev.event_token }}/window" class="win-row">
+      <div>
+        <label for="open_at">Opens</label>
+        <input type="date" id="open_at" name="open_at" class="win-field" value="{{ (entry_window.open_at or '')[:10] }}">
+      </div>
+      <div>
+        <label for="close_at">Closes</label>
+        <input type="date" id="close_at" name="close_at" class="win-field" value="{{ (entry_window.close_at or '')[:10] }}">
+      </div>
+      <div><button class="btn" type="submit">Save window</button></div>
+    </form>
+    <p class="empty" style="margin-top:.5rem;">
+      {% if entry_window.open_at or entry_window.close_at %}
+      Currently: {{ entry_window.open_at|humandt or 'now' }} → {{ entry_window.close_at|humandt or 'no deadline' }}.
+      {% else %}Currently always open.{% endif %}
+    </p>
+  </div>
+
+  <!-- Comment raffle -->
+  <div class="mcard" id="raffle">
+    <h2>🎟️ Comment raffle
+      <span style="display:inline-block;font-size:.72rem;font-weight:700;padding:.1rem .55rem;border-radius:999px;vertical-align:middle;
+        {% if ev.raffle_enabled %}background:var(--green-bg);color:var(--green);border:1px solid var(--green-ln);{% else %}background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-ln);{% endif %}">{{ 'On' if ev.raffle_enabled else 'Off' }}</span>
+    </h2>
+    <p class="hint">A bit of fun: anyone who leaves a <strong>comment</strong> on a speaker review
+      gets a small <strong>claim code</strong> on their thank-you screen, and you can <strong>draw a random
+      winner</strong> on a big screen. These responses are anonymous, so the winner is identified by their
+      code — they show it to you (or paste it in chat) to claim the prize. Works for face-to-face and
+      online activities alike.</p>
+    <form method="post" action="/activities/{{ ev.event_token }}/raffle/settings">
+      <label style="display:flex;align-items:center;gap:.5rem;font-weight:600;">
+        <input type="checkbox" name="raffle_enabled" value="1" {{ 'checked' if ev.raffle_enabled }}>
+        Run a comment raffle for this activity
+      </label>
+      <div style="margin-top:.8rem;max-width:26rem;">
+        <label for="raffle_prize" style="font-size:.78rem;font-weight:600;color:var(--soft);display:block;margin-bottom:.2rem;">Prize (optional — shown to entrants)</label>
+        <input id="raffle_prize" name="raffle_prize" value="{{ ev.raffle_prize or '' }}" maxlength="200"
+               placeholder="e.g. a DOH tumbler" style="width:100%;padding:.45rem .55rem;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);">
+      </div>
+      <div style="margin-top:.8rem;display:flex;gap:.6rem;flex-wrap:wrap;">
+        <button class="btn" type="submit">Save raffle settings</button>
+        {% if ev.raffle_enabled %}
+        <a class="btn ghost" href="/activities/{{ ev.event_token }}/raffle" target="_blank" rel="noopener">Open draw screen ↗</a>
+        {% endif %}
+      </div>
+    </form>
+    {% if not ev.raffle_enabled %}
+    <p class="empty" style="margin-top:.6rem;">Turn it on and save to reveal the draw screen. Codes only start appearing on thank-you screens once it's on.</p>
+    {% endif %}
+  </div>
+
+  </div><!-- /locked-region -->
+
+  <!-- Close / Archive -->
+  <div class="mcard danger" id="danger">
+    <h2>Close or archive</h2>
+    <div class="row">
+      {% if is_closed %}
+      <div style="flex:1; min-width:240px;">
+        <p class="hint" style="margin-bottom:.5rem;"><strong>Already closed.</strong> Responses and editing are stopped.
+          Use <em>Reopen to make a correction</em> at the top of the page to resume.</p>
+      </div>
+      {% else %}
+      <form method="post" action="/activities/{{ ev.event_token }}/close"
+            onsubmit="return confirm('Close this activity now? New responses stop (paper and online) and its details lock. You can reopen it later to make a correction.');">
+        <p class="hint" style="margin-bottom:.5rem;"><strong>Close</strong> stops new responses now (paper and online) and locks the details above. Everything stays in your reports. Reversible.</p>
+        <button class="btn-warn btn" type="submit">Close responses now</button>
+      </form>
+      {% endif %}
+      <form method="post" action="/activities/{{ ev.event_token }}/archive"
+            onsubmit="return confirm('Archive this activity? It will be hidden from your lists and reports. You can restore it later.');">
+        <p class="hint" style="margin-bottom:.5rem;"><strong>Archive</strong> hides the whole activity from lists and reports. Reversible — its responses are kept.</p>
+        <button class="btn-danger btn" type="submit">Archive activity</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

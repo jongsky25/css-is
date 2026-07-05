@@ -1,0 +1,169 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}Feedback #{{ e.id }}{% endblock %}
+{% block content %}
+<style>
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1.1rem 1.3rem;
+           margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .panel h2 { font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; color:var(--soft);
+              margin:0 0 .8rem; font-weight:700; }
+  .crumbs { font-size:.85rem; margin-bottom:.5rem; }
+  .crumbs a { color:var(--accent); text-decoration:none; } .crumbs a:hover { text-decoration:underline; }
+  .head { display:flex; align-items:center; gap:.7rem; flex-wrap:wrap; }
+  .head h1 { margin:0; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:.9rem 1.6rem; }
+  @media (max-width:760px){ .grid { grid-template-columns:1fr; } }
+  .field { margin-bottom:.2rem; }
+  .field .k { font-size:.7rem; text-transform:uppercase; letter-spacing:.03em; color:var(--soft); margin-bottom:.15rem; }
+  .field .v { color:var(--ink); font-size:.92rem; word-break:break-word; }
+  .field .v.mono { font-family:ui-monospace,monospace; font-size:.8rem; color:var(--grey); }
+  .pageurl { color:var(--accent); text-decoration:none; word-break:break-all; }
+  .pageurl:hover { text-decoration:underline; }
+  .quote { background:var(--bg); border:1px solid var(--line); border-left:4px solid var(--accent);
+           border-radius:10px; padding:.9rem 1.1rem; color:var(--ink); line-height:1.55; font-size:1rem;
+           white-space:pre-wrap; }
+  .pill { font-size:.72rem; font-weight:700; padding:.18rem .6rem; border-radius:999px; border:1px solid var(--line);
+          background:var(--bg); white-space:nowrap; }
+  .pill.s-new { color:var(--ink-soft); }
+  .pill.s-reviewing { color:var(--amber); border-color:var(--amber-ln); background:var(--amber-bg); }
+  .pill.s-will { color:var(--accent); border-color:var(--line); background:var(--accent-bg); }
+  .pill.s-wont { color:var(--red); border-color:var(--red-ln); background:var(--red-bg); }
+  .pill.s-done { color:var(--green); border-color:var(--green-ln); background:var(--green-bg); }
+  .triage { display:flex; flex-wrap:wrap; gap:.55rem; align-items:flex-end; }
+  .triage label { display:flex; flex-direction:column; gap:.2rem; font-size:.72rem; color:var(--soft);
+                  text-transform:uppercase; letter-spacing:.03em; }
+  .triage select, .triage input { padding:.4rem .5rem; border:1px solid var(--line); border-radius:8px; font-size:.9rem;
+                                   background:var(--surface); color:var(--ink); }
+  .triage input.reply, .triage input.note { width:20rem; max-width:100%; }
+  .reply-list { list-style:none; margin:0; padding:0; }
+  .reply-list li { padding:.55rem .8rem; border:1px solid var(--line); border-left:4px solid var(--accent);
+                   border-radius:10px; margin-bottom:.5rem; background:var(--bg); }
+  .reply-list .rl-when { font-size:.74rem; color:var(--soft); margin-bottom:.2rem; }
+  .reply-list .rl-msg { font-size:.92rem; color:var(--ink); line-height:1.45; white-space:pre-wrap; }
+  .btn { padding:.42rem .8rem; border-radius:8px; border:1px solid var(--accent); background:var(--accent);
+         color:var(--on-accent); font-weight:600; cursor:pointer; font-size:.88rem; text-decoration:none; }
+  .btn.ghost { background:var(--surface); color:var(--soft); border-color:var(--line); }
+  .msg { background:var(--green-bg); border:1px solid var(--green-ln); color:var(--green); border-radius:10px;
+         padding:.6rem .8rem; font-size:.9rem; margin-bottom:1rem; }
+  .timeline { list-style:none; margin:0; padding:0; }
+  .timeline li { position:relative; padding:0 0 .9rem 1.1rem; border-left:2px solid var(--line); }
+  .timeline li:last-child { border-left-color:transparent; padding-bottom:0; }
+  .timeline li::before { content:""; position:absolute; left:-6px; top:.25rem; width:10px; height:10px;
+                         border-radius:50%; background:var(--accent); }
+  .timeline .t-when { font-size:.76rem; color:var(--soft); }
+  .timeline .t-what { font-size:.9rem; color:var(--ink); }
+  .timeline .t-what .arr { color:var(--soft); }
+  .empty { color:var(--grey); font-size:.9rem; }
+</style>
+
+{% set pill = {'New':'s-new','Reviewing':'s-reviewing','Will address':'s-will',
+               "Won't fix":'s-wont','Done':'s-done'} %}
+
+<div class="crumbs"><a href="/admin/feedback">‹ All feedback</a></div>
+<div class="head">
+  {{ page_header("Feedback #" ~ e.id) }}
+  <span class="pill {{ pill.get(e.status, 's-new') }}">{{ e.status }}</span>
+</div>
+<p class="lede">Everything this user captured when they left this in-page comment, plus how it has been triaged.</p>
+
+{% if msg %}<div class="msg">{{ msg }}</div>{% endif %}
+
+<div class="panel">
+  <h2>What they said</h2>
+  <div class="quote">{{ e.message }}</div>
+</div>
+
+<div class="panel">
+  <h2>Where &amp; who</h2>
+  <div class="grid">
+    <div class="field">
+      <div class="k">Submitted by</div>
+      <div class="v">{{ e.submitter or '—' }}</div>
+    </div>
+    <div class="field">
+      <div class="k">When</div>
+      <div class="v">{{ e.created_at|replace('T',' ') }}</div>
+    </div>
+    <div class="field" style="grid-column:1 / -1;">
+      <div class="k">Page</div>
+      <div class="v"><a class="pageurl" href="{{ e.page_url }}">{{ e.page_url }}</a></div>
+    </div>
+    {% if e.element_selector %}
+    <div class="field" style="grid-column:1 / -1;">
+      <div class="k">Exact element</div>
+      <div class="v mono">{{ e.element_selector }}</div>
+    </div>
+    {% endif %}
+    {% if region %}
+    <div class="field" style="grid-column:1 / -1;">
+      <div class="k">Captured spot</div>
+      <div class="v mono">
+        {%- if region.rect %}box {{ region.rect.w }}×{{ region.rect.h }} at ({{ region.rect.x }}, {{ region.rect.y }}){% endif -%}
+        {%- if region.viewport %} · screen {{ region.viewport.w }}×{{ region.viewport.h }}{% endif -%}
+        {%- if region.scroll %} · scrolled to ({{ region.scroll.x }}, {{ region.scroll.y }}){% endif -%}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Triage</h2>
+  <form method="post" action="/admin/feedback/{{ e.id }}" class="triage">
+    <input type="hidden" name="back" value="detail">
+    <label>Status
+      <select name="status" aria-label="Status">
+        {% for s in statuses %}<option value="{{ s }}" {{ 'selected' if s == e.status }}>{{ s }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Reply to submitter <span style="text-transform:none; font-weight:400;">(optional — they see this)</span>
+      <input class="reply" name="reply" value="" placeholder="A short, human note back to them">
+    </label>
+    <label>Internal note <span style="text-transform:none; font-weight:400;">(private)</span>
+      <input class="note" name="admin_note" value="{{ e.admin_note or '' }}" placeholder="What was done / decided">
+    </label>
+    <button class="btn" type="submit">Save</button>
+  </form>
+</div>
+
+<div class="panel">
+  <h2>What the submitter has seen</h2>
+  {% set replies = updates | selectattr('reply') | list %}
+  {% if replies %}
+  <ul class="reply-list">
+    {% for u in replies %}
+    <li>
+      <div class="rl-when">{{ u.ts|replace('T',' ') }} · {{ 'on submit' if u.kind == 'ack' else 'status → ' ~ (u.status or '') }}</div>
+      <div class="rl-msg">{{ u.reply }}</div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="empty">Nothing sent to the submitter yet beyond the automatic “we received it” acknowledgement.</p>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <h2>History</h2>
+  {% if history %}
+  <ul class="timeline">
+    {% for h in history %}
+    <li>
+      <div class="t-when">{{ h.ts|replace('T',' ') }} · {{ h.actor or 'system' }}</div>
+      <div class="t-what">
+        {%- if h.action == 'spot_feedback_add' -%}
+          Submitted
+        {%- elif h.action == 'spot_feedback_triage' -%}
+          Status <span class="arr">{{ h.before or '—' }} → {{ h.after or '—' }}</span>
+        {%- else -%}
+          {{ h.summary or h.action }}
+        {%- endif -%}
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="empty">No recorded activity yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

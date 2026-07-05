@@ -1,0 +1,316 @@
+#!/usr/bin/env python
+"""Canonical — and ONLY — deploy for the live Hugging Face Space `equityinhealth/office-connect`.
+
+    python deploy_hf.py            # interactive: confirms the live-DB swap
+    python deploy_hf.py --yes      # non-interactive: auto-confirm (also used when backgrounded)
+
+This is the whole shipping routine. There is NO GitHub step — git push is not how
+this app deploys, and the GitHub mirror is not part of the workflow. Shipping = run
+this script.
+
+Why upload_folder and not `git push`: the local repo and the Space's git repo have
+DISJOINT histories (no common ancestor) — `git push space main` is rejected and a
+force-push would WIPE the live Space. `upload_folder` adds one commit on top of the
+Space's current state (additive; preserves server-side files). See DEPLOY.md.
+
+What it does:
+  1. Legacy (no persistence): PULLS the live DB from ~/Downloads into css_is.db (the
+     carrier that ships). Under persistence this is skipped (the bucket is the truth).
+  2. Guards the version bump: aborts if APP_VERSION still equals the live version.
+  3. REDUNDANT-BACKUP GATE (persistence only): before the upload that restarts the
+     Space, forces a fresh live snapshot, confirms it actually wrote, and downloads +
+     integrity-checks a local copy — ABORTS if it can't, so a restart never discards
+     un-snapshotted writes (the 2026-06-25 data-loss condition). Override only with
+     --skip-backup / CSS_DEPLOY_SKIP_BACKUP=1. Needs CSS_ADMIN_USER/PASS (env/.env.local).
+  4. upload_folder of the runtime closure (incl. version.py).
+  5. Waits for RUNNING, then verifies /login shows the expected version.
+
+Auth: HF token cached at ~/.cache/huggingface/token (user equityinhealth).
+"""
+import os, sys, time, glob, shutil, sqlite3, urllib.request
+
+# Silence huggingface_hub's tqdm progress bars. When stdout is a pipe/file (every
+# backgrounded deploy), the upload bars don't get a carriage-return TTY — each
+# refresh writes a fresh line, so a single large file's upload spews tens of
+# thousands of identical "100%" lines (a multi-MB log) and buries the real status.
+os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
+
+# Force UTF-8 stdout: the status lines use ⚠️/✅, which crash under Windows' default
+# cp1252 codec when stdout is redirected (e.g. a background run).
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
+# Floor EVERY socket with a read timeout. huggingface_hub's HTTP client issues
+# upload/commit requests with no socket read timeout, so a stalled keep-alive
+# connection blocks the whole deploy FOREVER (observed 2026-06-22: the commit hung
+# for 20+ min with frozen CPU and a multi-MB progress-bar redraw storm). A default
+# timeout makes a stuck read raise and retry instead of hanging indefinitely.
+import socket
+socket.setdefaulttimeout(float(os.environ.get("HF_DEPLOY_TIMEOUT", "120")))
+
+# Optional verbose tracing (set HF_DEPLOY_DEBUG=1): stream every HF/urllib3 HTTP
+# request so we can see exactly which call stalls if a deploy misbehaves again.
+if os.environ.get("HF_DEPLOY_DEBUG"):
+    import logging
+    logging.basicConfig(level=logging.DEBUG, stream=sys.stdout,
+                        format="%(asctime)s %(name)s %(levelname)s %(message)s")
+    for n in ("huggingface_hub", "urllib3", "requests", "httpx", "httpcore"):
+        logging.getLogger(n).setLevel(logging.DEBUG)
+
+REPO_ID = "equityinhealth/office-connect"
+LIVE_BASE = f"https://{REPO_ID.replace('/', '-')}.hf.space"
+LOCAL_DB = "css_is.db"
+
+RUNTIME_PY = [
+    "app.py", "css_is_engine.py", "storage.py", "tzutil.py", "fix_timezone_history.py",
+    "dashboard_insights.py", "dashboard_export.py", "dashboard_docs.py", "report_docs.py",
+    "csm_report.py", "auth.py", "mailer.py", "backups.py", "retention.py", "monitoring.py",
+    "name_cleanup.py", "apply_speakers.py", "harmonize.py", "activity_admin.py",
+    "activity_messages.py", "certificate.py", "ratelimit.py", "i18n.py", "realtime.py",
+    "tours.py",
+]
+ALLOW = RUNTIME_PY + [
+    "version.py",            # drives the login version string
+    "css_is.db",             # the live DB carrier
+    "Dockerfile", "requirements.txt", "README.md",
+    "templates/**", "static/**", "assets/**",
+]
+IGNORE = ["**/__pycache__/**"]
+
+AUTO_YES = "--yes" in sys.argv or "-y" in sys.argv
+
+
+def _response_count(path):
+    try:
+        c = sqlite3.connect(path)
+        n = c.execute("SELECT COUNT(*) FROM response").fetchone()[0]
+        c.close()
+        return n
+    except Exception:
+        return "?"
+
+
+def _confirm(prompt):
+    """One Y/n confirm. Auto-yes when --yes or stdin isn't a TTY (backgrounded)."""
+    if AUTO_YES or not sys.stdin.isatty():
+        print(f"{prompt} [auto-yes]")
+        return True
+    return (input(f"{prompt} [Y/n] ").strip().lower() or "y") == "y"
+
+
+def pull_live_db():
+    """Swap in the newest live DB the user downloaded to ~/Downloads (the 'pull' step)."""
+    downloads = os.path.expanduser("~/Downloads")
+    cands = sorted(glob.glob(os.path.join(downloads, "css_is_*.db")),
+                   key=os.path.getmtime, reverse=True)
+    if not cands:
+        print(f"ℹ️  No css_is_*.db found in {downloads} — shipping the current local "
+              f"{LOCAL_DB} as-is ({_response_count(LOCAL_DB)} responses).")
+        return
+    newest = cands[0]
+    cur_m = os.path.getmtime(LOCAL_DB) if os.path.exists(LOCAL_DB) else 0
+    new_m = os.path.getmtime(newest)
+    fmt = lambda t: time.strftime("%Y-%m-%d %H:%M", time.localtime(t)) if t else "—"
+    print("Pulling the live DB:")
+    print(f"  downloaded : {os.path.basename(newest)}  ({fmt(new_m)}, "
+          f"{_response_count(newest)} responses)")
+    print(f"  local now  : {LOCAL_DB}  ({fmt(cur_m)}, {_response_count(LOCAL_DB)} responses)")
+    if new_m <= cur_m:
+        print("  → local DB is already at least as new; NOT swapping.")
+        return
+    if not _confirm("  → Swap the downloaded live DB into css_is.db before deploying?"):
+        print("  → keeping the current local DB.")
+        return
+    if os.path.exists(LOCAL_DB):
+        os.makedirs("_backups", exist_ok=True)
+        bak = os.path.join("_backups", f"css_is_{time.strftime('%Y%m%d_%H%M%S')}_predeploy.db")
+        shutil.copy2(LOCAL_DB, bak)
+    shutil.copy2(newest, LOCAL_DB)
+    print(f"  ✅ swapped in {os.path.basename(newest)} ({_response_count(LOCAL_DB)} responses).")
+
+
+def _fetch_live_login():
+    req = urllib.request.Request(f"{LIVE_BASE}/login", headers={"User-Agent": "deploy_hf"})
+    return urllib.request.urlopen(req, timeout=30).read().decode("utf-8", "ignore")
+
+
+def _load_env_local():
+    """Read KEY=VALUE lines from a gitignored .env.local next to this script (for
+    CSS_ADMIN_USER / CSS_ADMIN_PASS / CSS_BASE_URL). Env vars still win. Missing -> {}."""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env.local")
+    out = {}
+    try:
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    out[k.strip()] = v.strip()
+    except OSError:
+        return {}
+    return out
+
+
+def secure_predeploy_backup():
+    """REDUNDANT-BACKUP GATE — run BEFORE the upload that restarts the Space.
+
+    A deploy restarts the live Space, and boot-restore loads the newest BUCKET
+    snapshot. If the running container holds writes that were never snapshotted,
+    that restart silently discards them (this is exactly how the 2026-06-25 revert
+    lost ~1.5 days of data). So before shipping we FORCE a fresh, verified snapshot
+    of current live state and ABORT if we can't secure one — never restart blind.
+
+    Triggers the app's own 'Back up now' (admin-authenticated), confirms a NEW
+    snapshot actually appeared on the bucket, then downloads + integrity-checks a
+    local copy. Needs admin creds (env or .env.local). Override with --skip-backup
+    or CSS_DEPLOY_SKIP_BACKUP=1 only when you knowingly accept the risk."""
+    if "--skip-backup" in sys.argv or os.environ.get("CSS_DEPLOY_SKIP_BACKUP") == "1":
+        print("⚠️  Pre-deploy backup SKIPPED (--skip-backup / CSS_DEPLOY_SKIP_BACKUP=1). "
+              "A restart could discard any un-snapshotted live writes.\n")
+        return
+    try:
+        import pull_backup as pb
+    except Exception as e:
+        sys.exit(f"ABORT — can't import pull_backup for the pre-deploy backup ({e}). "
+                 "Fix it or re-run with --skip-backup if you accept the risk.")
+    fenv = _load_env_local()
+    base = (os.environ.get("CSS_BASE_URL") or fenv.get("CSS_BASE_URL") or LIVE_BASE).rstrip("/")
+    user = os.environ.get("CSS_ADMIN_USER") or fenv.get("CSS_ADMIN_USER")
+    pwd = os.environ.get("CSS_ADMIN_PASS") or fenv.get("CSS_ADMIN_PASS")
+    if not (user and pwd):
+        sys.exit("ABORT — pre-deploy backup needs admin creds (CSS_ADMIN_USER / "
+                 "CSS_ADMIN_PASS in env or .env.local). Set them, or re-run with "
+                 "--skip-backup to deploy without securing a fresh backup.")
+    print("Securing a fresh live backup before deploying (redundant-backup gate):")
+    try:
+        opener, _ = pb._opener()
+        pb.login(opener, base, user, pwd)
+        before = pb.list_snapshots(opener, base)
+        newest_before = before[0] if before else None
+        name = pb.make_fresh(opener, base)
+        if not name:
+            after = pb.list_snapshots(opener, base)
+            name = after[0] if after else None
+        if not name or name == newest_before:
+            sys.exit("ABORT — could not confirm a NEW live snapshot was written. The "
+                     "bucket snapshotter may be failing; do NOT restart the Space until "
+                     "this is resolved (that is the data-loss condition). "
+                     "Re-run with --skip-backup only if you accept the risk.")
+        out_dir = os.path.join("_backups", "pulled")
+        dst = pb.download(opener, base, name, out_dir)
+        info = pb.verify(dst)   # raises SystemExit if the file is corrupt
+        print(f"  ✅ fresh live snapshot secured + verified: {name} ({info})")
+        print(f"     local copy: {dst}\n")
+    except SystemExit:
+        raise
+    except Exception as e:
+        sys.exit(f"ABORT — pre-deploy backup FAILED ({e!r}). A restart could lose "
+                 "un-snapshotted live data; resolve this or re-run with --skip-backup.")
+
+
+def guard_version_bump(want):
+    """Abort if the live site already shows this version (forgot to bump APP_VERSION)."""
+    try:
+        html = _fetch_live_login()
+    except Exception as e:
+        print(f"ℹ️  Could not pre-check live version ({e}); proceeding.")
+        return
+    if want in html:
+        # CI/mobile deploys run non-interactively, where _confirm auto-yeses and
+        # would silently ship without a version bump — violating the standing rule
+        # that every deploy bumps APP_VERSION. In strict mode (set by the GitHub
+        # Action) a stale version is a hard abort instead.
+        if os.environ.get("CSS_DEPLOY_STRICT_VERSION") == "1":
+            sys.exit(f"ABORT — the live site already shows v{want}. Bump APP_VERSION in "
+                     "version.py and add a CHANGELOG entry before deploying (strict mode).")
+        print(f"\n⚠️  The live site ALREADY shows v{want} — looks like APP_VERSION wasn't "
+              f"bumped for this deploy. Bump version.py + add a CHANGELOG line first.")
+        if not _confirm("  Deploy anyway (e.g. you only changed the DB/assets)?"):
+            sys.exit("ABORT — bump the version, then re-run.")
+
+
+def main():
+    from huggingface_hub import HfApi
+    import version
+
+    api = HfApi()
+    print(f"Authenticated as: {api.whoami().get('name')}\n")
+
+    # Once the Space runs on bucket-backed persistence (CSS_PERSIST_DIR set), the
+    # live DB lives on the mounted bucket — NOT in this repo. The repo css_is.db
+    # is only a first-boot seed, so the old "pull the live DB and ship it as the
+    # carrier" step is retired: shipping a DB can no longer move live data, and
+    # pulling one risks reintroducing the very confusion that lost data before.
+    persist_on = False
+    try:
+        persist_on = "CSS_PERSIST_DIR" in api.get_space_variables(REPO_ID)
+    except Exception as e:
+        print(f"ℹ️  Could not read Space variables ({e}); assuming legacy carrier mode.")
+    # When persistence is active the repo css_is.db is a frozen seed that the
+    # Space IGNORES on every boot (the bucket is the source of truth). Re-uploading
+    # the 21.6 MB blob on every deploy is pointless AND committing it routinely
+    # stalls the upload for many minutes — so ship code only and skip it. The seed
+    # already on the Space from earlier deploys stays in place, untouched.
+    allow = list(ALLOW)
+    if persist_on:
+        allow = [f for f in allow if f != LOCAL_DB]
+        print("Persistence is ACTIVE (CSS_PERSIST_DIR set): the live DB lives on the "
+              "bucket; shipping code only — skipping the frozen css_is.db seed.\n")
+    else:
+        pull_live_db()
+
+    missing = [f for f in allow if "*" not in f and not os.path.exists(f)]
+    if missing:
+        sys.exit(f"ABORT — missing files: {missing}")
+
+    want = version.APP_VERSION
+    guard_version_bump(want)
+
+    if LOCAL_DB in allow:
+        db_mb = os.path.getsize(LOCAL_DB) / 1e6
+        print(f"\nShipping v{want} with css_is.db ({db_mb:.1f} MB, "
+              f"{_response_count(LOCAL_DB)} responses).")
+    else:
+        print(f"\nShipping v{want} (code only).")
+
+    # Under persistence a deploy RESTARTS the Space and boot-restore loads the
+    # newest bucket snapshot — so secure a fresh, verified one FIRST or abort.
+    if persist_on:
+        secure_predeploy_backup()
+
+    res = api.upload_folder(
+        folder_path=".", repo_id=REPO_ID, repo_type="space",
+        allow_patterns=allow, ignore_patterns=IGNORE,
+        commit_message=f"Deploy v{want}",
+    )
+    print(f"Uploaded. Space commit: {getattr(res, 'oid', res)}")
+
+    print("Waiting for the Space to rebuild...")
+    last = None
+    for _ in range(120):  # up to ~10 min
+        stage = api.get_space_runtime(REPO_ID).stage
+        if stage != last:
+            print(f"  stage = {stage}")
+            last = stage
+        if stage == "RUNNING":
+            break
+        if stage in ("BUILD_ERROR", "RUNTIME_ERROR", "CONFIG_ERROR"):
+            sys.exit(f"ABORT — Space entered {stage}; check the Space logs.")
+        time.sleep(5)
+
+    try:
+        ok = want in _fetch_live_login()
+        print(f"\nLive /login version check: {'OK' if ok else 'MISMATCH'} (expected v{want})")
+        if not ok:
+            sys.exit("ABORT — live page does not show the expected version yet.")
+    except Exception as e:
+        print(f"\nCould not verify /login automatically ({e}); check {LIVE_BASE}/login.")
+        return
+
+    print(f"\n✅ Deployed v{want} → {LIVE_BASE}")
+
+
+if __name__ == "__main__":
+    main()

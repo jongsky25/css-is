@@ -1,0 +1,32 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}Search{% endblock %}
+
+{% block content %}
+{{ page_header("Search", "Find any page or action and jump straight to it.") }}
+
+<form class="gsearch gsearch-page" action="/search" method="get" role="search">
+  <svg class="gs-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+  <input type="text" name="q" value="{{ q }}" class="gsearch-input" autocomplete="off"
+         placeholder="Search pages and actions…" aria-label="Search" autofocus>
+  <button type="submit" class="gs-go">Search</button>
+</form>
+
+{% if q %}
+<p class="search-meta">{{ results|length }} result{{ '' if results|length == 1 else 's' }} for “{{ q }}”.</p>
+{% endif %}
+
+<ul class="search-list">
+  {% for it in results %}
+  <li>
+    <a href="{{ it.url }}">
+      <span class="sl-title">{{ it.title }}</span>
+      <span class="sl-hint">{{ it.hint }}</span>
+      <span class="sl-tag">{{ it.section }}</span>
+    </a>
+  </li>
+  {% else %}
+  <li class="search-none">No matching page. Try another word.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

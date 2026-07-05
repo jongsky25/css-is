@@ -1,0 +1,74 @@
+{% extends "dash_layout.html" %}
+{% block title %}{{ 'Edit' if is_edit else 'Add' }} external resource person{% endblock %}
+
+{% block head %}
+<style>
+  .xwrap { max-width: 560px; }
+  .xcard { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:1.4rem 1.6rem;
+           box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .xcard h1 { font-size:1.3rem; margin:0 0 .2rem; }
+  .xcard .sub { color:var(--soft); font-size:.9rem; margin:0 0 1.2rem; }
+  .fld { margin-bottom:1rem; }
+  .fld label { display:block; font-size:.82rem; font-weight:600; color:var(--soft); margin-bottom:.3rem; }
+  .fld .opt { color:var(--grey); font-weight:400; }
+  .fld input, .fld select { width:100%; padding:.5rem .6rem; border:1px solid var(--line);
+            border-radius:8px; font-size:.95rem; background:var(--surface); box-sizing:border-box; }
+  .row2 { display:flex; gap:.8rem; }
+  .row2 .fld.hon { flex:0 0 130px; } .row2 .fld.nm { flex:1; }
+  .actions { display:flex; gap:.8rem; align-items:center; margin-top:1.3rem; }
+  .actions button { background:var(--accent); color:var(--on-accent); border:1px solid var(--accent); border-radius:8px;
+            padding:.55rem 1.2rem; font-weight:600; font-size:.95rem; cursor:pointer; }
+  .actions a.cancel { color:var(--soft); text-decoration:none; font-weight:600; font-size:.9rem; }
+  .hint { color:var(--grey); font-size:.82rem; margin-top:.3rem; }
+</style>
+{% endblock %}
+
+{% block crumbs %}
+<nav class="crumbs" aria-label="Breadcrumb"><a href="/dashboard">Dashboard</a><span class="sep">›</span><a href="/directory">Directory</a><span class="sep">›</span><span class="here">{{ 'Edit' if is_edit else 'Add' }} external resource person</span></nav>
+{% endblock %}
+
+{% block content %}
+<div class="xwrap">
+  <div class="xcard">
+    <h1>{{ 'Edit' if is_edit else 'Add' }} external resource person</h1>
+    <p class="sub">A guest speaker or trainer from outside the bureau. Capture their title, agency and email so reports and invitations are accurate.</p>
+
+    <form method="post" action="{{ '/directory/external/' ~ f.id if is_edit else '/directory/external' }}">
+      <div class="row2">
+        <div class="fld hon">
+          <label for="honorific">Title</label>
+          <select name="honorific" id="honorific">
+            <option value="">— none —</option>
+            {% for h in honorifics %}
+            <option value="{{ h }}" {{ 'selected' if f.honorific == h else '' }}>{{ h }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="fld nm">
+          <label for="name">Full name <span style="color:var(--red)">*</span></label>
+          <input type="text" name="name" id="name" value="{{ f.name }}" required autocomplete="off"
+                 placeholder="e.g. Maria Lourdes Gajitos">
+        </div>
+      </div>
+
+      <div class="fld">
+        <label for="agency">Agency / office <span class="opt">(optional)</span></label>
+        <input type="text" name="agency" id="agency" value="{{ f.agency }}" autocomplete="off"
+               placeholder="e.g. Department of Health — Regional Office">
+      </div>
+
+      <div class="fld">
+        <label for="email">Email address <span class="opt">(optional)</span></label>
+        <input type="email" name="email" id="email" value="{{ f.email }}" autocomplete="off"
+               placeholder="name@agency.gov.ph">
+        <div class="hint">Used for invitations and follow-up; never shown publicly.</div>
+      </div>
+
+      <div class="actions">
+        <button type="submit">{{ 'Save changes' if is_edit else 'Add resource person' }}</button>
+        <a class="cancel" href="/directory">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

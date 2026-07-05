@@ -1,0 +1,30 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}Walk-in (ARTA) feedback link{% endblock %}
+
+{% block crumbs %}
+<nav class="crumbs" aria-label="Breadcrumb"><a href="/dashboard">Dashboard</a><span class="sep">›</span><span class="here">Walk-in QR</span></nav>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:560px;">
+  {{ page_header("Walk-in feedback — standing QR") }}
+  <p class="lede">One permanent link for the whole bureau. Post it at the desk and share it online —
+    there's nothing to create per client. Running an event instead? <a href="/">Create an activity survey</a>.</p>
+
+  <div class="card" style="text-align:center; margin-bottom:1.25rem;">
+    <span class="equity-mark lg" role="img" aria-label="Equity in Health" style="display:inline-block; margin-bottom:.7rem;"></span>
+    <div style="font-weight:600; margin-bottom:.6rem;">{{ qr.title }}</div>
+    <img src="{{ qr.img }}" alt="Walk-in feedback QR code" style="width:240px; height:240px; image-rendering:pixelated;">
+    <div class="mono small" style="margin-top:.75rem; word-break:break-all;"><a href="{{ url }}">{{ url }}</a></div>
+  </div>
+
+  <div class="panel tint-blue" style="color:var(--accent-ink); font-size:.9rem;">
+    This single code stays open — <code>{{ form_id }}</code>. Every scan or visit is a fresh response, which:
+    <ul style="margin:.4rem 0 0; padding-left:1.2rem;">
+      <li>counts in the period of <strong>when the client submits</strong> (the transaction date), and</li>
+      <li>can name <strong>who served them</strong> on the form, so scores attribute to that staff member's section.</li>
+    </ul>
+  </div>
+</div>
+{% endblock %}

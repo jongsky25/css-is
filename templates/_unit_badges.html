@@ -1,0 +1,39 @@
+{# Shared Teams badge legend. Self-contained (own colours), so it renders identically
+   on the Teams index and a unit page without depending on page CSS. `items` is
+   di.unit_badge_legend() — ordered [{key,label,emoji,cls,tip}]. #}
+{% macro legend(items) %}
+<details class="ublegend">
+  <summary>🏅 What the badges mean</summary>
+  <style>
+    .ublegend { border:1px solid var(--line); background:var(--surface); border-radius:14px; padding:.4rem .9rem;
+                margin:0 0 1.1rem; box-shadow:var(--shadow); }
+    .ublegend > summary { cursor:pointer; font-weight:700; font-size:.92rem; padding:.5rem 0; list-style:none; }
+    .ublegend > summary::-webkit-details-marker { display:none; }
+    .ublegend > summary::before { content:"▸"; color:var(--grey); margin-right:.5rem; display:inline-block; transition:transform .15s; }
+    .ublegend[open] > summary::before { transform:rotate(90deg); }
+    .ubl-grid { display:grid; grid-template-columns:1fr 1fr; gap:.45rem 1.4rem; margin:.3rem 0 .6rem; }
+    @media (max-width:720px){ .ubl-grid { grid-template-columns:1fr; } }
+    .ubl-row { display:flex; gap:.6rem; align-items:baseline; font-size:.86rem; line-height:1.4; }
+    .ubl-b { flex:0 0 auto; display:inline-flex; align-items:center; gap:.25rem; font-size:.72rem; font-weight:700;
+             padding:.18rem .55rem; border-radius:999px; border:1px solid transparent; white-space:nowrap; }
+    .ubl-tip { color:var(--soft); }
+    .ubl-note { font-size:.78rem; color:var(--soft); margin:.2rem 0 .3rem; border-top:1px solid var(--line); padding-top:.5rem; }
+    .ublegend .bg-gold{background:#fff7e6;color:#b7791f;border-color:#f6e0b5;}
+    .ublegend .bg-green{background:#e9f9ef;color:#2f855a;border-color:#c2eed2;}
+    .ublegend .bg-blue{background:#eef5ff;color:#2b6cb0;border-color:#cfe0f5;}
+    .ublegend .bg-rose{background:#fff1f2;color:#be123c;border-color:#fecdd3;}
+    .ublegend .bg-violet{background:#f5f3ff;color:#6d28d9;border-color:#ddd6fe;}
+    .ublegend .bg-amber{background:#fffbeb;color:#b45309;border-color:#fde68a;}
+    .ublegend .bg-teal{background:#ecfeff;color:#0e7490;border-color:#bae6fd;}
+    .ublegend .bg-indigo{background:#eef2ff;color:#4338ca;border-color:#c7d2fe;}
+    .ublegend .bg-stone{background:#f5f5f4;color:#57534e;border-color:#e7e5e4;}
+    .ublegend .bg-fuchsia{background:#fdf4ff;color:#a21caf;border-color:#f5d0fe;}
+  </style>
+  <div class="ubl-grid">
+    {% for b in items %}
+    <div class="ubl-row"><span class="ubl-b {{ b.cls }}">{{ b.emoji }} {{ b.label }}</span><span class="ubl-tip">{{ b.tip }}</span></div>
+    {% endfor %}
+  </div>
+  <p class="ubl-note">More icons = a higher level (e.g. 😊😊😊 is the top tier). 🏆 Pacesetter is a single, top-of-cohort distinction. Units only earn a badge once they have enough feedback to be sure.</p>
+</details>
+{% endmacro %}

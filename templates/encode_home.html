@@ -1,0 +1,116 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, empty_state %}
+{% block title %}Paper entry{% endblock %}
+{% block content %}
+<style>
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1.1rem 1.3rem;
+           margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .walkin { display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;
+            border-color:var(--blue-ln); background:var(--blue-bg); }
+  .walkin .meta { color:var(--soft); font-size:.9rem; }
+  .walkin .meta strong { color:var(--ink); }
+  .btn { display:inline-block; text-decoration:none; font-weight:700; font-size:.92rem; color:var(--on-accent);
+         background:var(--accent); border-radius:10px; padding:.55rem 1.1rem; white-space:nowrap; }
+  .btn.ghost { background:var(--surface); color:var(--accent); border:1px solid var(--accent); }
+  .searchbar { margin-bottom:1rem; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; padding:.55rem .5rem; border-bottom:1px solid var(--line); font-size:.9rem; vertical-align:top; }
+  th { font-size:.68rem; text-transform:uppercase; letter-spacing:.03em; color:var(--soft); }
+  .fid { font-variant-numeric:tabular-nums; color:var(--soft); font-size:.82rem; white-space:nowrap; }
+  .subj { font-weight:600; }
+  .sub2 { color:var(--soft); font-size:.82rem; }
+  .kind { font-size:.68rem; font-weight:700; padding:.1rem .5rem; border-radius:999px;
+          background:var(--surface-3); color:var(--soft); border:1px solid var(--line); white-space:nowrap; }
+  .ncount { font-variant-numeric:tabular-nums; color:var(--soft); white-space:nowrap; }
+  .row-link { text-align:right; white-space:nowrap; }
+</style>
+
+<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap;">
+  <div>
+    {{ page_header("Paper entry") }}
+    <p class="lede">Key in responses transcribed from paper forms. Pick the form a stack of papers belongs to,
+    then enter them one after another — the form stays open so you can keep going.</p>
+  </div>
+  {% if can_manage %}
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+    <form method="post" action="/encode/lock-all" onsubmit="return confirm('Close all activities to encoding? They will remain in reports. This cannot be undone in bulk.')">
+      <button type="submit" class="btn ghost" style="white-space:nowrap;">🔒 Close all to encoding</button>
+    </form>
+    <a class="btn ghost" href="/" style="white-space:nowrap;">＋ New survey</a>
+  </div>
+  {% endif %}
+</div>
+
+{% if locked %}
+<div class="panel" style="border-color:var(--green-ln);background:var(--green-bg);padding:.75rem 1.2rem;font-size:.9rem;">
+  🔒 <strong>{{ locked }} activit{{ 'y' if locked == 1 else 'ies' }} closed to encoding.</strong>
+  Their data is unchanged and still appears in all reports.
+</div>
+{% endif %}
+
+{% if walkin_ctx %}
+<div class="panel walkin">
+  <div>
+    <div class="subj" style="font-size:1.05rem;">Walk-in service feedback (CO-CSM)</div>
+    <div class="meta">The standing bureau-wide form. <strong>{{ walkin_ctx.form_id }}</strong> ·
+      set the actual transaction date as you key each slip.</div>
+  </div>
+  <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;">
+    <a class="btn" href="/encode/{{ walkin_token }}">Enter walk-in slips →</a>
+  </div>
+</div>
+
+<div class="panel" style="border-color:var(--blue-ln);background:var(--blue-bg);padding:.8rem 1.2rem;font-size:.85rem;color:var(--soft);">
+  The <strong>BLHSD-format Excel export</strong> now lives on the
+  <a href="/reports?type=1">official ARTA report</a> — pick a period there, then “⤓ Export Excel”.
+</div>
+{% endif %}
+
+<div class="panel">
+  <form class="searchbar" method="get" action="/encode">
+    <input type="search" name="q" value="{{ q }}" placeholder="Find an event or speaker form — topic, name, venue, or form ID"
+           aria-label="Search event and speaker forms">
+    <button type="submit">Search</button>
+    {% if q %}<a href="/encode">Clear</a>{% endif %}
+    <span style="margin-left:auto; display:flex; gap:.3rem; align-items:center;">
+      <span class="muted" style="font-size:.78rem;">Sort</span>
+      <a href="/encode?q={{ q|urlencode }}&sort=date" class="{{ 'on' if sort=='date' }}"
+         style="font-size:.82rem; font-weight:600; text-decoration:none; padding:.25rem .65rem; border-radius:999px; border:1px solid var(--line); {{ 'background:var(--accent); color:var(--on-accent); border-color:var(--accent);' if sort=='date' else 'color:var(--soft);' }}">Date</a>
+      <a href="/encode?q={{ q|urlencode }}&sort=responses" class="{{ 'on' if sort=='responses' }}"
+         style="font-size:.82rem; font-weight:600; text-decoration:none; padding:.25rem .65rem; border-radius:999px; border:1px solid var(--line); {{ 'background:var(--accent); color:var(--on-accent); border-color:var(--accent);' if sort=='responses' else 'color:var(--soft);' }}">Responses</a>
+    </span>
+  </form>
+
+  {% if not results %}
+    {% set msg %}No event or speaker forms{% if q %} match “{{ q }}”{% endif %}.{% endset %}
+    {{ empty_state(msg, icon="◔") }}
+  {% else %}
+  <p class="muted" style="margin:.2rem 0 .8rem; font-size:.85rem;">
+    {% if recent %}Most recent forms — search above to find an older one.{% else %}{{ results|length }} match{{ '' if results|length == 1 else 'es' }}.{% endif %}
+  </p>
+  <div class="table-wrap">
+  <table class="resp-table">
+    <tr><th>Form</th><th>Subject</th><th>When</th><th>Public link</th><th>Responses recorded</th><th></th></tr>
+    {% for r in results %}
+    <tr>
+      <td data-label="Form"><span class="kind">{{ 'Event' if r.survey_type == 2 else 'Speaker' }}</span><br><span class="fid">{{ r.form_id }}</span></td>
+      <td data-label="Subject">
+        <span class="subj">{{ r.rp_name if r.survey_type == 3 and r.rp_name else (r.topic or 'Event review') }}</span>
+        <div class="sub2">{% if r.topic and r.survey_type == 3 %}{{ r.topic }} · {% endif %}{{ r.organizer or 'BLHSD' }}{% if r.modality == 'online' %} · <span class="badge blue">Online</span>{% endif %}{% if r.venue %} · {{ r.venue }}{% endif %}</div>
+      </td>
+      <td class="ncount" data-label="When">{{ r.event_date|humandate }}</td>
+      <td data-label="Public link">
+        {% if r.window == 'always' %}<span class="badge grey" title="No entry window set — the public link is always open">Always open</span>
+        {% elif r.window == 'open' %}<span class="badge green" title="Inside its entry window — respondents can submit">Open</span>
+        {% elif r.window == 'not_yet' %}<span class="badge amber" title="Opens {{ r.open_at|humandt }}">Not open yet</span>
+        {% else %}<span class="badge amber" title="Closed {{ r.close_at|humandt }} — paper entry still allowed">Closed</span>{% endif %}
+      </td>
+      <td class="ncount" data-label="Responses recorded">{{ r.response_count }}</td>
+      <td class="row-link" data-label=""><a class="btn ghost" href="/encode/{{ r.qr_token }}">Enter →</a></td>
+    </tr>
+    {% endfor %}
+  </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, empty_state %}
+{% block title %}Invited events{% endblock %}
+
+{% block head %}
+<style>
+  p.lede { max-width:none; }
+  .oe-list { list-style:none; margin:1rem 0 0; padding:0; }
+  .oe-card { border:1px solid var(--line); background:var(--surface); border-radius:14px;
+             padding:1rem 1.1rem; margin-bottom:.8rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .oe-top { display:flex; gap:1rem; align-items:baseline; justify-content:space-between; }
+  .oe-name { font-weight:700; font-size:1.05rem; }
+  .oe-meta { color:var(--soft); font-size:.8rem; margin-top:.15rem; }
+  .oe-rate { white-space:nowrap; text-align:right; }
+  .oe-rate .v { font-size:1.5rem; font-weight:800; line-height:1; }
+  .oe-rate .k { font-size:.66rem; color:var(--soft); text-transform:uppercase; }
+  .life { font-size:.66rem; font-weight:700; border-radius:999px; padding:.1rem .5rem; border:1px solid;
+          text-transform:uppercase; letter-spacing:.02em; margin-right:.5rem; vertical-align:middle; }
+  .life.upcoming  { color:var(--accent); background:var(--accent-bg); border-color:var(--blue-ln); }
+  .life.ongoing   { color:var(--green); background:var(--green-bg); border-color:var(--green-ln); }
+  .life.concluded { color:var(--soft); background:var(--surface-2); border-color:var(--line); }
+  .invited-badge { font-size:.62rem; font-weight:700; border-radius:999px; padding:.1rem .45rem;
+                   border:1px solid var(--amber-ln); color:var(--amber); background:var(--amber-bg);
+                   text-transform:uppercase; letter-spacing:.02em; margin-left:.5rem; vertical-align:middle; }
+  .oe-acts { display:flex; gap:.6rem; flex-wrap:wrap; margin-top:.7rem; }
+  .oe-acts a { font-size:.82rem; font-weight:600; text-decoration:none; color:var(--accent);
+               border:1px solid var(--blue-ln); border-radius:8px; padding:.32rem .7rem; }
+  .oe-acts a:hover { background:var(--accent-bg); }
+</style>
+{% endblock %}
+
+{% block content %}
+{{ page_header("Invited events") }}
+<p class="lede">Every <b>non-bureau</b> activity — events organized by an outside body where your staff served as resource persons. Unlike the Monitor (which shows only activities still registering or collecting), this list keeps <b>upcoming</b>, <b>ongoing</b> and <b>concluded</b> invited events together, so one never disappears after its survey window closes. These collect feedback anonymously, so each shows its response total rather than a registration roster.{% if is_admin %} You are seeing every invited event.{% else %} You are seeing the invited events you created.{% endif %}</p>
+
+{% if not events %}
+  {{ empty_state("No invited events yet", "When you create an activity organized by an outside body (an “invited” event), it will appear here — and stay here after it concludes.") }}
+  <p style="text-align:center; margin-top:.6rem;"><a class="btn" href="/create">Create an activity</a></p>
+{% else %}
+<ul class="oe-list">
+  {% for e in events %}
+  <li>
+    <div class="oe-card">
+      <div class="oe-top">
+        <div>
+          <div class="oe-name"><span class="life {{ e.lifecycle }}">{{ e.lifecycle }}</span>{{ e.title }}<span class="invited-badge">Invited</span></div>
+          <div class="oe-meta">{{ e.event_date|humandaterange(e.end_date) or "—" }}{% if e.modality == 'online' %} · Online{% endif %}{% if e.venue %} · {{ e.venue }}{% endif %}{% if e.organizer %} · {{ e.organizer }}{% endif %}</div>
+        </div>
+        <div class="oe-rate">
+          <div class="v">{{ e.responses }}</div>
+          <div class="k">Responses</div>
+        </div>
+      </div>
+      {% if e.event_token or (e.rp_results_url and e.responses) %}
+      <div class="oe-acts">
+        {% if e.rp_results_url and e.responses %}<a href="{{ e.rp_results_url }}">View resource-person results</a>{% endif %}
+        {% if e.event_token %}<a href="/activities/{{ e.event_token }}/manage">Manage</a>{% endif %}
+        {% if e.event_token and e.lifecycle in ('upcoming', 'ongoing') %}<a href="/monitor/{{ e.event_token }}">Monitor</a>{% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

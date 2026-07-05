@@ -1,0 +1,489 @@
+{% extends "public_layout.html" %}
+{% block title %}Survey — CSS-IS{% endblock %}
+
+{% block progress %}
+{% if ctx %}
+<div class="progress" data-progress-for="surveyform" aria-hidden="true"><div></div></div>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if not ctx %}
+<div class="pub-card">
+  <h1>{{ t('nf_title', lang) }}</h1>
+  <p class="muted">{{ t('nf_body', lang) }}</p>
+</div>
+{% else %}
+{% set ns = namespace(total=0) %}
+{% for group in spec.groups %}{% set ns.total = ns.total + group['items']|length %}{% endfor %}
+<div class="pub-card">
+  <div class="head" style="display:flex; justify-content:space-between; gap:1rem; align-items:flex-start;">
+    <div style="min-width:0;">
+      <h1 style="margin-top:0;">{{ t('title_service', lang) if ctx.survey_type == 1 else (t('title_event', lang) if ctx.survey_type == 2 else t('title_rp', lang)) }}</h1>
+      <div class="muted small" style="margin-bottom:.4rem;">
+        {% if ctx.rp_name and ctx.survey_type == 3 %}<strong style="color:var(--ink)">{{ ctx.rp_name }}</strong> · {% endif %}
+        {% if ctx.topic %}{{ ctx.topic }} · {% endif %}{{ ctx.organizer }}<br>
+        {{ ctx.event_date|humandaterange(ctx.end_date) }}{% if ctx.modality == 'online' %} · <span class="badge blue">Online</span>{% endif %}{% if ctx.venue %} · {{ ctx.venue }}{% endif %} · {{ ctx.form_id }}
+      </div>
+    </div>
+    {% if ctx.survey_type == 3 %}
+    <div class="avatar" style="width:64px;height:64px;font-size:1.2rem;" title="Profile picture of {{ ctx.rp_name }}">
+      {% if ctx.rp_photo %}<img src="{{ ctx.rp_photo }}" alt="{{ ctx.rp_name }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+      {% else %}{{ ctx.rp_initials or "👤" }}{% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <p class="muted small" style="margin:.2rem 0 1rem;">
+    {% if lang == 'fil' %}
+    {{ ns.total }} katanungan · humigit-kumulang {{ (ns.total / 6)|round(0, 'ceil')|int + 1 }} minuto ·
+    {{ t('q_required_note', lang) }}
+    {% else %}
+    {{ ns.total }} question{{ "s" if ns.total != 1 }} · about {{ (ns.total / 6)|round(0, 'ceil')|int + 1 }} minute{{ "s" if ns.total > 5 }} ·
+    {{ t('q_required_note', lang) }}
+    {% endif %}
+  </p>
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:.5rem; margin-bottom:.1rem;">
+    <div class="progress-note muted small" data-progress-note aria-live="polite"></div>
+    <button type="button" id="conv-toggle" class="conv-toggle-btn" aria-pressed="false">{{ t('conv_toggle_on', lang) }}</button>
+  </div>
+  <div id="conv-step-ctr" class="muted small" style="text-align:right; min-height:1.1em; margin-bottom:.35rem;" aria-live="polite"></div>
+
+  <form method="post" action="/r/{{ qr_token }}" id="surveyform" data-loading="Submitting…">
+    <input type="hidden" name="seq" value="{{ seq }}">
+    <input type="hidden" name="att" value="{{ att }}">
+
+    {% if spec.ask_served_by %}
+    <div class="group" style="margin-bottom:1.4rem;">
+      <div class="field">
+        <label for="f-served">{{ t('served_q', lang) }} <span class="opt">{{ t('optional', lang) }}</span></label>
+        <select id="f-served" name="served_by_rp_id">
+          <option value="">{{ t('served_none', lang) }}</option>
+          {% for s in staff %}<option value="{{ s.id }}">{{ s.name }}{% if s.org_path %} ({{ s.org_path }}){% endif %}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    {% endif %}
+
+    {# Demographics — captured on the rating form for walk-in / standalone surveys.
+       Event link-tree flows (att set) already collected these at pre-registration. #}
+    {% if not att %}
+    <fieldset style="border:none; padding:0; margin:0 0 1.5rem;" data-conv="demo">
+      <legend style="font-weight:700; font-size:.8rem; text-transform:uppercase; letter-spacing:.03em;
+                     color:var(--soft); border-bottom:1px solid var(--line); padding:0 0 .35rem; margin-bottom:1rem; width:100%;">
+        {{ t('about_you', lang) }}</legend>
+      <div class="field">
+        <label for="f-sex">{{ t('sex', lang) }}</label>
+        <select id="f-sex" name="sex" required>
+          <option value="" selected disabled>{{ t('select', lang) }}</option>
+          <option value="M">{{ t('male', lang) }}</option>
+          <option value="F">{{ t('female', lang) }}</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="f-affil">{{ t('affiliation', lang) }}</label>
+        <select id="f-affil" name="affil" required>
+          <option value="" selected disabled>{{ t('select', lang) }}</option>
+          <option value="DOH">DOH</option>
+          <option value="NON-DOH">{{ t('non_doh', lang) }}</option>
+        </select>
+      </div>
+    </fieldset>
+    {% endif %}
+
+    {% for group in spec.groups %}
+    <fieldset style="border:none; padding:0; margin:0 0 1.5rem;">
+      <legend style="font-weight:700; font-size:.8rem; text-transform:uppercase; letter-spacing:.03em;
+                     color:var(--soft); border-bottom:1px solid var(--line); padding:0 0 .35rem; margin-bottom:1rem; width:100%;">
+        {{ group.label }}</legend>
+      {% for item in group["items"] %}
+      <div class="item" data-conv-group="{{ group.label }}" style="margin-bottom:1.35rem;">
+        <div style="font-weight:550; margin-bottom:.45rem;">{{ loop.index }}. {{ item.text }}</div>
+        <div class="scale" role="radiogroup" aria-label="{{ item.text }}">
+          {# Render low→high, left→right (1…7 / Poor…Excellent) — matches the "1 = lowest /
+             7 = highest" caption below and normal reading order. #}
+          {% for val, lbl in item.scale|reverse %}
+          <label>
+            <input type="radio" name="{{ item.id }}" value="{{ val }}" data-rate="1" required>
+            <span class="seg">{% if lbl|string == val|string %}{{ val }}{% else %}{{ val }}<small>{{ lbl }}</small>{% endif %}</span>
+          </label>
+          {% endfor %}
+        </div>
+        {% if item.scale|length > 4 and item.scale[0][1]|string == item.scale[0][0]|string %}
+        <div class="scale-ends" aria-hidden="true"><span>{{ item.scale[-1][0] }} = {{ t('lowest', lang) }}</span><span>{{ item.scale[0][0] }} = {{ t('highest', lang) }}</span></div>
+        {% endif %}
+        {% if item.allow_na %}
+        <div class="na-row">
+          <input type="radio" id="na-{{ item.id }}" name="{{ item.id }}" value="na" data-rate="1" required>
+          <label for="na-{{ item.id }}">{{ t('na', lang) }}</label>
+        </div>
+        {% endif %}
+        <div class="note-wrap" data-item="{{ item.id }}" hidden>
+          <input type="text" class="note" name="note_{{ item.id }}"
+                 placeholder="{{ t('note_ph', lang) }}" aria-label="{{ t('note_ph', lang) }}"
+                 style="width:100%; padding:.45rem .55rem; border:1px solid var(--line); border-radius:8px; font-size:.85rem;">
+        </div>
+        <button type="button" class="add-note-btn" data-note-for="{{ item.id }}" aria-expanded="false">+ {{ t('add_note_lbl', lang) }}</button>
+      </div>
+      {% endfor %}
+    </fieldset>
+    {% endfor %}
+
+    <div class="group" data-conv="comments" style="margin-bottom:1.2rem;">
+      <div style="font-weight:700; font-size:.8rem; text-transform:uppercase; letter-spacing:.03em;
+                  color:var(--soft); border-bottom:1px solid var(--line); padding-bottom:.35rem; margin-bottom:.8rem;">
+        {{ t('comments', lang) }} <span style="text-transform:none; font-weight:400;">{{ t('optional', lang) }}</span></div>
+      <div id="branch-banner" class="branch-banner" hidden aria-live="polite"></div>
+      {% if spec.chips %}
+      <div class="chips" style="display:flex; flex-wrap:wrap; gap:.4rem; margin-bottom:.6rem; align-items:center;">
+        <span class="muted small" style="width:100%;">{{ t('chips_hint', lang) }}</span>
+        {% for word in spec.chips %}
+        <button type="button" class="chip" data-word="{{ word }}" onclick="toggleChip(this)"
+                style="font-size:.85rem; padding:.35rem .7rem; border:1px solid var(--line); background:var(--surface); border-radius:999px; cursor:pointer; min-height:34px;">{{ word }}</button>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <textarea name="remarks" rows="3" placeholder="{{ t('remarks_ph', lang) }}"
+                style="width:100%; padding:.55rem .6rem; border:1px solid var(--line); border-radius:8px; font-size:.95rem; font-family:inherit; resize:vertical;"></textarea>
+    </div>
+
+    <div id="conv-nav">
+      <button type="button" id="conv-prev">{{ t('conv_prev', lang) }}</button>
+      <button type="button" id="conv-next" class="btn">{{ t('conv_next', lang) }}</button>
+    </div>
+    <div id="survey-submit-wrap">
+      <button type="submit" class="btn block" style="font-size:1.05rem; padding:.85rem;">{{ t('submit', lang) }}</button>
+      <p class="muted small" style="text-align:center; margin:.6rem 0 0;">{{ t('anonymous', lang) }}</p>
+    </div>
+  </form>
+</div>
+
+<style>
+  .chip.active { background:var(--accent) !important; border-color:var(--accent) !important; color:var(--on-accent) !important; font-weight:600; }
+  @media (max-width:419px) {
+    .scale { flex-wrap:wrap; }
+    .scale label { flex:1 1 30%; }
+  }
+  .note-wrap { margin-top:.45rem; }
+  .note-prompted { border-color:var(--amber) !important; }
+  .add-note-btn {
+    background:none; border:none; color:var(--accent); cursor:pointer;
+    font-size:.78rem; padding:.28rem 0; margin-top:.15rem; display:block; line-height:1.3;
+  }
+  .add-note-btn:hover { text-decoration:underline; }
+  .branch-banner {
+    padding:.5rem .7rem; border-radius:8px; font-size:.88rem; margin-bottom:.6rem; font-weight:550;
+  }
+  .branch-banner.branch-improve { background:var(--amber-bg); border-left:3px solid var(--amber); color:var(--amber); }
+  .branch-banner.branch-great   { background:var(--green-bg);  border-left:3px solid var(--green); color:var(--green); }
+  /* ── Conversational mode ── */
+  .conv-toggle-btn {
+    font-size:.78rem; background:none; border:1px solid var(--line);
+    border-radius:999px; padding:.28rem .72rem; color:var(--soft);
+    cursor:pointer; white-space:nowrap; flex-shrink:0; line-height:1.4;
+  }
+  .conv-toggle-btn:hover { background:var(--surface); }
+  .conv-toggle-btn[aria-pressed="true"] { border-color:var(--accent); color:var(--accent); }
+  #conv-nav {
+    display:none; gap:.6rem; margin-bottom:.8rem;
+  }
+  #conv-nav button {
+    flex:1; padding:.65rem; border-radius:8px; font-size:.95rem;
+    cursor:pointer; font-family:inherit; text-align:center; white-space:nowrap;
+  }
+  #conv-prev { flex:1; background:none; color:var(--soft); border:1px solid var(--line); }
+  #conv-prev:hover { background:var(--surface); }
+  #conv-next { flex:2; }
+  .conv-ctx-header {
+    display:none; font-size:.72rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:.04em; color:var(--soft); margin-bottom:.5rem;
+  }
+  .conv-error { font-size:.82rem; color:var(--red); margin-top:.35rem; }
+  /* Conv mode: show only the current step */
+  .survey-conv .item { display:none; }
+  .survey-conv .item.conv-current { display:block; }
+  .survey-conv fieldset[data-conv="demo"] { display:none; }
+  .survey-conv fieldset[data-conv="demo"].conv-current { display:block; }
+  .survey-conv [data-conv="comments"] { display:none; }
+  .survey-conv [data-conv="comments"].conv-current { display:block; }
+  .survey-conv fieldset:not([data-conv="demo"]) > legend { display:none; }
+  .survey-conv fieldset:not([data-conv="demo"]) { margin-bottom:0 !important; }
+  .survey-conv .item.conv-current .conv-ctx-header { display:block; }
+  .survey-conv #survey-submit-wrap { display:none; }
+  .survey-conv #conv-nav { display:flex; }
+  .survey-conv [data-progress-note] { visibility:hidden; }
+</style>
+<script>
+// Quick-pick chips: tapping inserts/removes the word in the comments box.
+function toggleChip(btn) {
+  const word = btn.dataset.word;
+  const ta = document.querySelector('textarea[name=remarks]');
+  let parts = ta.value.split(',').map(s => s.trim()).filter(Boolean);
+  if (btn.classList.contains('active')) {
+    btn.classList.remove('active');
+    const i = parts.indexOf(word);
+    if (i !== -1) parts.splice(i, 1);
+  } else {
+    btn.classList.add('active');
+    if (!parts.includes(word)) parts.push(word);
+  }
+  ta.value = parts.join(', ');
+}
+</script>
+<script>
+// Skip logic: low-score note auto-expand + overall-quality remarks branch.
+(function () {
+  var form = document.getElementById('surveyform');
+  if (!form) return;
+  var S = {
+    noteLow:  {{ t('note_low_ph', lang)|tojson }},
+    noteHigh: {{ t('note_high_ph', lang)|tojson }},
+    noteDef:  {{ t('note_ph', lang)|tojson }},
+    addNote:  '+ ' + {{ t('add_note_lbl', lang)|tojson }},
+    rmNote:   '− ' + {{ t('remove_note_lbl', lang)|tojson }},
+    improve:  {{ t('branch_improve', lang)|tojson }},
+    great:    {{ t('branch_great', lang)|tojson }},
+    rLow:     {{ t('remarks_low_ph', lang)|tojson }},
+    rHigh:    {{ t('remarks_high_ph', lang)|tojson }},
+  };
+
+  // 1. Manual toggle: "+ Add a note" button.
+  form.addEventListener('click', function (e) {
+    var btn = e.target.closest('.add-note-btn');
+    if (!btn) return;
+    var wrap = form.querySelector('.note-wrap[data-item="' + btn.dataset.noteFor + '"]');
+    if (!wrap) return;
+    var opening = wrap.hasAttribute('hidden');
+    if (opening) {
+      wrap.removeAttribute('hidden');
+      btn.setAttribute('aria-expanded', 'true');
+      btn.textContent = S.rmNote;
+      var inp = wrap.querySelector('input');
+      if (inp) inp.focus();
+    } else {
+      wrap.setAttribute('hidden', '');
+      btn.setAttribute('aria-expanded', 'false');
+      btn.textContent = S.addNote;
+    }
+  });
+
+  // 2. Per-item: auto-expand note on low/high score (item C handled by banner below).
+  form.querySelectorAll('.item').forEach(function (item) {
+    if (item.querySelector('input[name="C"]')) return;
+    var rated = Array.from(item.querySelectorAll('input[type=radio][data-rate]'))
+                     .filter(function (r) { return r.value !== 'na'; });
+    var wrap = item.querySelector('.note-wrap');
+    var note = item.querySelector('.note');
+    var btn  = item.querySelector('.add-note-btn');
+    if (!rated.length || !wrap || !note) return;
+    var cnt  = rated.length;
+    var lowT = cnt >= 6 ? 3 : cnt >= 4 ? 2 : 1;
+    var hiT  = cnt >= 6 ? 5 : cnt >= 4 ? 4 : 3;
+    rated.forEach(function (r) {
+      r.addEventListener('change', function () {
+        var v = parseInt(r.value, 10);
+        if (v <= lowT) {
+          wrap.removeAttribute('hidden');
+          note.placeholder = S.noteLow;
+          note.classList.add('note-prompted');
+          if (btn) { btn.setAttribute('aria-expanded', 'true'); btn.textContent = S.rmNote; }
+        } else if (v >= hiT) {
+          wrap.removeAttribute('hidden');
+          note.placeholder = S.noteHigh;
+          note.classList.remove('note-prompted');
+          if (btn) { btn.setAttribute('aria-expanded', 'true'); btn.textContent = S.rmNote; }
+        } else {
+          note.placeholder = S.noteDef;
+          note.classList.remove('note-prompted');
+          if (!note.value) {
+            wrap.setAttribute('hidden', '');
+            if (btn) { btn.setAttribute('aria-expanded', 'false'); btn.textContent = S.addNote; }
+          }
+        }
+      });
+    });
+  });
+
+  // 3. Item C (overall quality) → contextual banner + remarks placeholder.
+  var cRated = Array.from(form.querySelectorAll('input[name="C"][data-rate]'))
+                    .filter(function (r) { return r.value !== 'na'; });
+  var banner = document.getElementById('branch-banner');
+  var ta     = form.querySelector('textarea[name=remarks]');
+  if (cRated.length && banner) {
+    cRated.forEach(function (r) {
+      r.addEventListener('change', function () {
+        var v = parseInt(r.value, 10);
+        if (v <= 2) {
+          banner.textContent = S.improve;
+          banner.className   = 'branch-banner branch-improve';
+        } else {
+          banner.textContent = S.great;
+          banner.className   = 'branch-banner branch-great';
+        }
+        banner.removeAttribute('hidden');
+        if (ta) ta.placeholder = v <= 2 ? S.rLow : S.rHigh;
+      });
+    });
+  }
+}());
+</script>
+<script>
+// Conversational mode: one question at a time with Prev/Next navigation.
+(function () {
+  var form = document.getElementById('surveyform');
+  if (!form) return;
+
+  var S = {
+    toggleOn:  {{ t('conv_toggle_on', lang)|tojson }},
+    toggleOff: {{ t('conv_toggle_off', lang)|tojson }},
+    prev:      {{ t('conv_prev', lang)|tojson }},
+    next:      {{ t('conv_next', lang)|tojson }},
+    stepLbl:   {{ t('conv_step_lbl', lang)|tojson }},
+    of:        {{ t('conv_of', lang)|tojson }},
+    submit:    {{ t('submit', lang)|tojson }},
+    required:  {{ t('conv_required', lang)|tojson }},
+  };
+
+  // Build flat step list: [demo?, item, item, …, comments?]
+  var steps = [];
+  var demoFs = form.querySelector('fieldset[data-conv="demo"]');
+  if (demoFs) steps.push({ el: demoFs, type: 'demo' });
+  form.querySelectorAll('.item').forEach(function (item) {
+    steps.push({ el: item, type: 'item' });
+  });
+  var commentsEl = form.querySelector('[data-conv="comments"]');
+  if (commentsEl) steps.push({ el: commentsEl, type: 'comments' });
+
+  var totalItems = steps.filter(function (s) { return s.type === 'item'; }).length;
+  var cur = 0;
+
+  var toggleBtn = document.getElementById('conv-toggle');
+  var navEl     = document.getElementById('conv-nav');
+  var prevBtn   = document.getElementById('conv-prev');
+  var nextBtn   = document.getElementById('conv-next');
+  var stepCtr   = document.getElementById('conv-step-ctr');
+
+  // Inject group-context headers into each item step (runs once on first activation).
+  var headersInjected = false;
+  function injectHeaders() {
+    if (headersInjected) return;
+    headersInjected = true;
+    steps.forEach(function (s) {
+      if (s.type !== 'item') return;
+      var h = document.createElement('div');
+      h.className = 'conv-ctx-header';
+      h.textContent = s.el.getAttribute('data-conv-group') || '';
+      s.el.insertBefore(h, s.el.firstChild);
+    });
+  }
+
+  function itemIndex(upTo) {
+    var n = 0;
+    for (var i = 0; i <= upTo; i++) {
+      if (steps[i] && steps[i].type === 'item') n++;
+    }
+    return n;
+  }
+
+  function goToStep(n) {
+    if (steps[cur]) steps[cur].el.classList.remove('conv-current');
+    cur = n;
+    if (steps[cur]) steps[cur].el.classList.add('conv-current');
+
+    var s = steps[cur];
+    var isLast = cur === steps.length - 1;
+
+    // Step counter
+    stepCtr.textContent = s.type === 'item'
+      ? S.stepLbl + ' ' + itemIndex(cur) + ' ' + S.of + ' ' + totalItems
+      : '';
+
+    // Prev: hidden on first step
+    prevBtn.style.visibility = cur === 0 ? 'hidden' : 'visible';
+
+    // Next label: "Submit" on last step
+    nextBtn.textContent = isLast ? S.submit : S.next;
+
+    // Clear any error on the step we just entered
+    var errEl = s.el.querySelector('.conv-error');
+    if (errEl) errEl.hidden = true;
+
+    // Scroll so the step counter is in view
+    stepCtr.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function validateStep(s) {
+    if (s.type === 'item') {
+      var radios = Array.from(s.el.querySelectorAll('input[type=radio][data-rate]'));
+      if (!radios.length) return true;
+      var answered = radios.some(function (r) { return r.checked; });
+      if (!answered) {
+        var errEl = s.el.querySelector('.conv-error');
+        if (!errEl) {
+          errEl = document.createElement('div');
+          errEl.className = 'conv-error';
+          errEl.textContent = S.required;
+          s.el.appendChild(errEl);
+        }
+        errEl.hidden = false;
+        return false;
+      }
+    } else if (s.type === 'demo') {
+      return Array.from(s.el.querySelectorAll('select[required]'))
+                  .every(function (sel) { return !!sel.value; });
+    }
+    return true;
+  }
+
+  prevBtn.addEventListener('click', function () {
+    if (cur > 0) goToStep(cur - 1);
+  });
+
+  nextBtn.addEventListener('click', function () {
+    if (cur === steps.length - 1) {
+      if (form.requestSubmit) form.requestSubmit(); else form.submit();
+      return;
+    }
+    if (!validateStep(steps[cur])) return;
+    goToStep(cur + 1);
+  });
+
+  // Auto-advance 450 ms after a radio is picked (feels conversational).
+  var autoTimer = null;
+  form.addEventListener('change', function (e) {
+    if (!form.classList.contains('survey-conv')) return;
+    if (e.target.type !== 'radio' || !e.target.dataset.rate) return;
+    if (!steps[cur] || steps[cur].type !== 'item') return;
+    if (autoTimer) clearTimeout(autoTimer);
+    autoTimer = setTimeout(function () {
+      autoTimer = null;
+      if (!validateStep(steps[cur])) return;
+      // A low/high rating (or a manually opened "+ Add a note") may have
+      // revealed a follow-up note field in this same step. Don't whisk the
+      // user past it — let them type and advance with Next.
+      if (steps[cur].el.querySelector('.note-wrap:not([hidden])')) return;
+      if (cur < steps.length - 1) goToStep(cur + 1);
+    }, 450);
+  });
+
+  // Toggle button activates / deactivates conv mode.
+  toggleBtn.addEventListener('click', function () {
+    if (form.classList.contains('survey-conv')) {
+      form.classList.remove('survey-conv');
+      if (steps[cur]) steps[cur].el.classList.remove('conv-current');
+      stepCtr.textContent = '';
+      toggleBtn.textContent = S.toggleOn;
+      toggleBtn.setAttribute('aria-pressed', 'false');
+    } else {
+      injectHeaders();
+      form.classList.add('survey-conv');
+      cur = 0;
+      goToStep(0);
+      toggleBtn.textContent = S.toggleOff;
+      toggleBtn.setAttribute('aria-pressed', 'true');
+    }
+  });
+}());
+</script>
+{% endif %}
+{% endblock %}

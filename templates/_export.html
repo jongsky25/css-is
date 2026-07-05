@@ -1,0 +1,23 @@
+{# Reusable "Download" dropdown for any visual. `base` is the export URL up to (but
+   not including) the &fmt= argument, e.g.
+   "/dashboard/export?visual=pulse&survey_type=1".
+   Each link sets a format; the server returns the file as an attachment, so the
+   browser downloads it without navigating away. Pure HTML/CSS — no JS. #}
+{% macro download(base, label='Download') %}
+<details class="dl">
+  <summary title="Download this visual">⤓ {{ label }}</summary>
+  {# One option per job (download-output-standard): PNG=image, PDF=narrative,
+     PPTX=deck, XLSX=data. JPEG (lossy duplicate of PNG) and CSV (plain-text
+     duplicate of XLSX) were pruned from the menu; their export endpoints still
+     work if hit directly. #}
+  <div class="dl-menu">
+    <div class="dl-group">Image</div>
+    <a href="{{ base }}&fmt=png" download>PNG image</a>
+    <div class="dl-group">Document</div>
+    <a href="{{ base }}&fmt=pdf" download>PDF</a>
+    <a href="{{ base }}&fmt=pptx" download>PowerPoint (.pptx)</a>
+    <div class="dl-group">Data table</div>
+    <a href="{{ base }}&fmt=xlsx" download>Excel (.xlsx)</a>
+  </div>
+</details>
+{% endmacro %}

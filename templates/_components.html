@@ -1,0 +1,122 @@
+{# =====================================================================
+   Shared Jinja macros — one way to render fields, flashes, crumbs, etc.
+   Import:  {% from "_components.html" import field, flash, crumbs, empty_state, page_header %}
+   ===================================================================== #}
+
+{% macro page_header(title, lede="") -%}
+<h1 class="page">{{ title }}</h1>
+{% if lede %}<p class="lede">{{ lede|safe }}</p>{% endif %}
+{%- endmacro %}
+
+{% macro field(name, label, value="", error=None, required=False, type="text",
+               help="", placeholder="", optional=False, attrs="") -%}
+<div class="field {{ 'invalid' if error }}">
+  <label for="f-{{ name }}">{{ label }}
+    {%- if optional %} <span class="opt">(optional)</span>{% endif -%}
+  </label>
+  {% if type == "textarea" -%}
+  <textarea id="f-{{ name }}" name="{{ name }}" placeholder="{{ placeholder }}"
+            {{ "required" if required }} {{ attrs|safe }}
+            {% if error %}aria-describedby="err-{{ name }}" aria-invalid="true"{% endif %}>{{ value or "" }}</textarea>
+  {%- else -%}
+  <input id="f-{{ name }}" type="{{ type }}" name="{{ name }}" value="{{ value or '' }}"
+         placeholder="{{ placeholder }}" {{ "required" if required }} {{ attrs|safe }}
+         {% if error %}aria-describedby="err-{{ name }}" aria-invalid="true"{% endif %}>
+  {%- endif %}
+  {% if error %}<div class="field-error" id="err-{{ name }}">{{ error }}</div>{% endif %}
+  {% if help %}<div class="help">{{ help }}</div>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro select_field(name, label, options, selected="", error=None, required=False,
+                      help="", optional=False, attrs="") -%}
+<div class="field {{ 'invalid' if error }}">
+  <label for="f-{{ name }}">{{ label }}
+    {%- if optional %} <span class="opt">(optional)</span>{% endif -%}
+  </label>
+  <select id="f-{{ name }}" name="{{ name }}" {{ "required" if required }} {{ attrs|safe }}
+          {% if error %}aria-describedby="err-{{ name }}" aria-invalid="true"{% endif %}>
+    {{ caller() if caller else "" }}
+    {%- for opt in options %}
+    <option value="{{ opt.value }}" {{ "selected" if opt.value|string == selected|string }}>{{ opt.text }}</option>
+    {%- endfor %}
+  </select>
+  {% if error %}<div class="field-error" id="err-{{ name }}">{{ error }}</div>{% endif %}
+  {% if help %}<div class="help">{{ help }}</div>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro flash(msg=None, err=None, info=None) -%}
+{% if msg %}<div class="flash ok" role="status">✓ {{ msg }}</div>{% endif %}
+{% if err %}<div class="flash err" role="alert">✕ {{ err }}</div>{% endif %}
+{% if info %}<div class="flash info" role="status">{{ info }}</div>{% endif %}
+{%- endmacro %}
+
+{% macro error_summary(errors) -%}
+{# errors: list of strings OR dict {field: message} #}
+{% if errors %}
+<div class="errors" role="alert">
+  <strong>Please fix the following:</strong>
+  <ul>
+    {% if errors is mapping %}
+      {% for fname, msg in errors.items() %}<li><a href="#f-{{ fname }}">{{ msg }}</a></li>{% endfor %}
+    {% else %}
+      {% for msg in errors %}<li>{{ msg }}</li>{% endfor %}
+    {% endif %}
+  </ul>
+</div>
+{% endif %}
+{%- endmacro %}
+
+{% macro crumbs(items) -%}
+{# items: list of (label, href) tuples; last item href may be None = current #}
+<nav class="crumbs" aria-label="Breadcrumb">
+  {%- for label, href in items -%}
+    {%- if href %}<a href="{{ href }}">{{ label }}</a><span class="sep">›</span>
+    {%- else %}<span class="here">{{ label }}</span>{% endif -%}
+  {%- endfor -%}
+</nav>
+{%- endmacro %}
+
+{% macro empty_state(title, hint="", icon="·") -%}
+<div class="empty-state">
+  <span class="big" aria-hidden="true">{{ icon }}</span>
+  <div>{{ title }}</div>
+  {% if hint %}<div class="hint">{{ hint }}</div>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro scale_group(item_name, options, checked=None, na=True, na_checked=False) -%}
+{# options: list of {value, label, sub} — equal-width segmented scale #}
+<div class="scale" role="radiogroup">
+  {%- for o in options %}
+  <label>
+    <input type="radio" name="{{ item_name }}" value="{{ o.value }}" data-rate="1"
+           {{ "checked" if checked|string == o.value|string }} required>
+    <span class="seg">{{ o.label }}{% if o.sub %}<small>{{ o.sub }}</small>{% endif %}</span>
+  </label>
+  {%- endfor %}
+</div>
+{% if na %}
+<div class="na-row">
+  <input type="radio" id="{{ item_name }}-na" name="{{ item_name }}" value="NA" data-rate="1"
+         {{ "checked" if na_checked }}>
+  <label for="{{ item_name }}-na">Not applicable</label>
+</div>
+{% endif %}
+{%- endmacro %}
+
+{% macro chart_table(caption, headers, rows) -%}
+{# Screen-reader-only data table mirroring a chart's numbers (WCAG 1.1.1). The chart
+   SVG carries role="img" + a short aria-label summary; this table is the full,
+   navigable fallback. First column of each row is its row header. #}
+<table class="sr-only chart-data">
+  <caption>{{ caption }}</caption>
+  <thead><tr>{% for h in headers %}<th scope="col">{{ h }}</th>{% endfor %}</tr></thead>
+  <tbody>
+  {%- for r in rows %}
+    <tr><th scope="row">{{ r[0] }}</th>{% for c in r[1:] %}<td>{{ c }}</td>{% endfor %}</tr>
+  {%- endfor %}
+  </tbody>
+</table>
+{%- endmacro %}

@@ -1,0 +1,115 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, empty_state %}
+{% block title %}My feedback{% endblock %}
+{% block content %}
+<style>
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1.1rem 1.3rem;
+           margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .fb-card { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1.1rem 1.3rem;
+             margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .fb-card.unread { border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-bg); }
+  .fb-card.archived { background:var(--bg); box-shadow:none; }
+  .fb-head { display:flex; align-items:center; justify-content:space-between; gap:.7rem; flex-wrap:wrap; margin-bottom:.6rem; }
+  .fb-when { color:var(--soft); font-size:.78rem; }
+  .new-flag { font-size:.66rem; font-weight:800; letter-spacing:.04em; text-transform:uppercase;
+              color:var(--accent); border:1px solid var(--line); background:var(--accent-bg);
+              border-radius:999px; padding:.1rem .5rem; margin-left:.4rem; }
+  .pill { font-size:.72rem; font-weight:700; padding:.18rem .6rem; border-radius:999px; border:1px solid var(--line);
+          background:var(--bg); white-space:nowrap; }
+  .pill.s-new { color:var(--ink-soft); }
+  .pill.s-reviewing { color:var(--amber); border-color:var(--amber-ln); background:var(--amber-bg); }
+  .pill.s-will { color:var(--accent); border-color:var(--line); background:var(--accent-bg); }
+  .pill.s-wont { color:var(--red); border-color:var(--red-ln); background:var(--red-bg); }
+  .pill.s-done { color:var(--green); border-color:var(--green-ln); background:var(--green-bg); }
+  .fb-quote { background:var(--bg); border:1px solid var(--line); border-left:4px solid var(--line);
+              border-radius:10px; padding:.7rem .95rem; color:var(--ink); line-height:1.5; white-space:pre-wrap;
+              margin-bottom:.7rem; }
+  .fb-where { font-size:.78rem; color:var(--soft); margin-bottom:.7rem; }
+  .fb-where a { color:var(--accent); text-decoration:none; word-break:break-all; }
+  .fb-where a:hover { text-decoration:underline; }
+  .trail { list-style:none; margin:.3rem 0 0; padding:0; }
+  .trail li { position:relative; padding:0 0 .85rem 1.1rem; border-left:2px solid var(--line); }
+  .trail li:last-child { border-left-color:transparent; padding-bottom:0; }
+  .trail li::before { content:""; position:absolute; left:-6px; top:.25rem; width:10px; height:10px;
+                      border-radius:50%; background:var(--accent); }
+  .trail .t-when { font-size:.74rem; color:var(--soft); }
+  .trail .t-status { font-size:.9rem; color:var(--ink); font-weight:600; }
+  .trail .t-reply { font-size:.92rem; color:var(--ink); line-height:1.5; margin-top:.2rem; white-space:pre-wrap; }
+  .fb-actions { display:flex; justify-content:flex-end; margin-top:.8rem; }
+  .fb-actions button { font:inherit; font-size:.8rem; font-weight:700; cursor:pointer;
+                       border:1px solid var(--line); background:var(--bg); color:var(--ink-soft);
+                       border-radius:999px; padding:.32rem .85rem; }
+  .fb-actions button:hover { border-color:var(--accent); color:var(--accent); }
+  .arch-wrap { margin-top:.6rem; }
+  .arch-wrap > summary { cursor:pointer; font-weight:700; color:var(--ink-soft); list-style:none;
+                         padding:.6rem .2rem; border-top:1px solid var(--line); }
+  .arch-wrap > summary::-webkit-details-marker { display:none; }
+  .arch-wrap > summary::before { content:"▸ "; color:var(--soft); }
+  .arch-wrap[open] > summary::before { content:"▾ "; }
+  .arch-note { color:var(--soft); font-size:.82rem; margin:.4rem 0 1rem; }
+  .empty { color:var(--grey); font-size:.95rem; padding:1.2rem 0; }
+</style>
+
+{% set pill = {'New':'s-new','Reviewing':'s-reviewing','Will address':'s-will',
+               "Won't fix":'s-wont','Done':'s-done'} %}
+
+{% macro fb_card(r, user_status, pill, archived=False) %}
+<div class="fb-card {{ 'unread' if r.unread }}{{ ' archived' if archived }}">
+  <div class="fb-head">
+    <div class="fb-when">Sent {{ r.created_at|replace('T',' ') }}{% if r.unread %}<span class="new-flag">New update</span>{% endif %}</div>
+    <span class="pill {{ pill.get(r.status, 's-new') }}">{{ user_status.get(r.status, r.status) }}</span>
+  </div>
+  <div class="fb-quote">{{ r.message }}</div>
+  <div class="fb-where">On <a href="{{ r.page_url }}">{{ r.page_url }}</a></div>
+  {% if r.updates %}
+  <ul class="trail">
+    {% for u in r.updates %}
+    <li>
+      <div class="t-when">{{ u.ts|replace('T',' ') }}</div>
+      <div class="t-status">
+        {%- if u.kind == 'ack' -%}Received{%- else -%}{{ user_status.get(u.status, u.status) }}{%- endif -%}
+      </div>
+      {% if u.reply %}<div class="t-reply">{{ u.reply }}</div>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  {% if archived %}
+  <div class="fb-actions">
+    <form method="post" action="/my/feedback/{{ r.id }}/unarchive">
+      <button type="submit">Restore to active</button>
+    </form>
+  </div>
+  {% elif r.resolved %}
+  <div class="fb-actions">
+    <form method="post" action="/my/feedback/{{ r.id }}/archive">
+      <button type="submit" title="Tuck this finished thread into your archive">Archive</button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% endmacro %}
+
+{{ page_header("My feedback", "The in-page notes you’ve sent, and where each one stands. We acknowledge every note the moment it arrives, then update you here at each step — right through to done. Once a note is settled you can archive it to keep this list tidy.") }}
+
+{% if rows %}
+  {% for r in rows %}{{ fb_card(r, user_status, pill) }}{% endfor %}
+{% elif not archived %}
+<div class="panel">
+  <p class="empty">You haven't sent any feedback yet. Spot something off on a page? Use the
+    💬 <strong>Send feedback</strong> button in the corner to flag the exact spot — it'll show up here.</p>
+</div>
+{% else %}
+<div class="panel">
+  {{ empty_state("No active notes right now.", hint="Everything you've sent is archived below.", icon="✓") }}
+</div>
+{% endif %}
+
+{% if archived %}
+<details class="arch-wrap">
+  <summary>Archived ({{ archived|length }})</summary>
+  <p class="arch-note">Settled notes you've tucked away. Restore any of them to the active list above.</p>
+  {% for r in archived %}{{ fb_card(r, user_status, pill, archived=True) }}{% endfor %}
+</details>
+{% endif %}
+{% endblock %}

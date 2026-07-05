@@ -1,0 +1,299 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, empty_state %}
+{% import "_story.html" as s %}
+{% import "_export.html" as ex %}
+{% block title %}Activities{% endblock %}
+{% block content %}
+<style>
+  /* The page description should span the full content width, not the app.css
+     60ch cap (which leaves it filling only ~half the page). Same specificity as
+     app.css p.lede, declared later here, so this wins. */
+  p.lede { max-width:none; }
+  /* Sticky so Edit/merge + Expand/Collapse (and Sort) stay reachable while
+     scrolling the long activity list. --stuck-top (set by app.js) is the bottom
+     edge of the topnav+scopebar stack, so this pins right below them even when
+     the nav wraps to two rows for admins; 105px is the one-row fallback. */
+  .sortbar { display:flex; gap:.4rem; align-items:center; flex-wrap:wrap; margin-bottom:1rem; font-size:.82rem;
+             position:sticky; top:var(--stuck-top, 105px); z-index:10; background:var(--bg); padding:.5rem 0;
+             border-bottom:1px solid var(--line); }
+  .sortbar .lbl { color:var(--soft); }
+  .sortbar a { text-decoration:none; color:var(--soft); padding:.25rem .65rem; border-radius:999px; border:1px solid var(--line); }
+  .sortbar a.on { background:var(--accent); color:var(--on-accent); border-color:var(--accent); }
+  .event { border:1px solid var(--line); background:var(--surface); border-radius:14px; margin-bottom:.8rem;
+           box-shadow:0 1px 3px rgba(20,30,50,.05); overflow:hidden; transition:box-shadow .15s, border-color .15s; }
+  .event:hover { box-shadow:0 3px 10px rgba(20,30,50,.1); border-color:var(--blue-ln); }
+  .ev-row { display:flex; gap:.6rem; align-items:center; padding:0 .5rem 0 1.1rem; }
+  .ev-link { flex:1; min-width:0; display:flex; gap:1rem; align-items:center; padding:.9rem .6rem .9rem 0;
+             text-decoration:none; color:inherit; }
+  .ev-go { color:var(--accent); font-weight:800; font-size:1.1rem; padding-right:.6rem; }
+  .ev-main { flex:1; min-width:0; }
+  .ev-name { font-weight:700; line-height:1.25; }
+  .ev-meta { font-size:.8rem; color:var(--soft); margin-top:.15rem; }
+  .ev-score { text-align:right; white-space:nowrap; }
+  .ev-score .v { font-size:1.4rem; font-weight:800; line-height:1; }
+  .ev-score .k { font-size:.66rem; color:var(--soft); text-transform:uppercase; }
+  .ev-score .osq { margin-top:.3rem; }
+  .pill-ext { font-size:.66rem; font-weight:700; color:var(--accent); background:var(--blue-bg);
+              border:1px solid var(--blue-ln); border-radius:999px; padding:.05rem .45rem; }
+  .pill-win { font-size:.66rem; font-weight:700; border-radius:999px; padding:.05rem .45rem; border:1px solid; }
+  .pill-win.open { color:var(--green); background:var(--green-bg); border-color:var(--green-ln); }
+  .pill-win.shut { color:var(--amber); background:var(--amber-bg); border-color:var(--amber-ln); }
+  /* Curate mode — checkboxes + sticky action bar */
+  .ev-check { display:none; margin-right:.2rem; }
+  body.curate-on .ev-check { display:inline-flex; }
+  body.curate-on .ev-row { background:var(--blue-bg); }
+  .sortbar a.curate-toggle { cursor:pointer; font-weight:700; color:var(--accent);
+    background:var(--blue-bg); border-color:var(--blue-ln); }
+  .sortbar a.curate-toggle.on { background:var(--accent); color:var(--on-accent); border-color:var(--accent); }
+  .curate-hint { font-size:.82rem; color:var(--soft); margin:-.4rem 0 1rem; }
+  .curate-bar { position:sticky; bottom:.6rem; z-index:6; background:var(--surface); border:1px solid var(--accent);
+    border-radius:12px; box-shadow:0 4px 16px rgba(20,30,50,.14); padding:.7rem .9rem; margin:.8rem 0; }
+  .cb-head { font-size:.85rem; color:var(--soft); margin-bottom:.5rem; }
+  .cb-head b { color:var(--ink); }
+  .cb-group { display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; padding:.55rem 0; border-top:1px dashed var(--line); }
+  .cb-group:first-of-type { border-top:0; padding-top:0; }
+  .cb-lab { font-weight:700; font-size:.8rem; flex-basis:8.5rem; }
+  .cb-help { flex-basis:100%; font-size:.74rem; color:var(--soft); margin-left:9rem; }
+  .curate-bar input[type=text], .curate-bar select { padding:.38rem .55rem; border:1px solid var(--line);
+    border-radius:8px; font-size:.85rem; }
+  .curate-bar button { padding:.42rem .75rem; border-radius:8px; border:1px solid var(--accent);
+    background:var(--accent); color:var(--on-accent); font-weight:600; cursor:pointer; font-size:.8rem; }
+  .curate-bar button.ghost { background:var(--surface); color:var(--soft); border-color:var(--line); }
+  .curate-bar button.danger { background:var(--red-bg); color:var(--red); border-color:var(--red-ln); }
+  .curate-bar button:disabled { opacity:.45; cursor:not-allowed; }
+  /* On a phone the five action groups stack so tall the sticky bar fills the whole
+     viewport, hiding the activity list behind it. Cap it to half the screen with
+     internal scroll so the list above stays visible, and let the cramped label /
+     input columns go full-width instead of squeezing into an 8.5rem gutter. */
+  @media (max-width:640px) {
+    .curate-bar { max-height:50vh; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
+    .cb-lab { flex-basis:100%; }
+    .cb-help { margin-left:0; }
+    .curate-bar input[type=text], .curate-bar select { flex:1; min-width:0; }
+  }
+  /* Transient success notification (pops after a rename/merge/re-file/archive) */
+  .curate-toast { position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%) translateY(.5rem);
+    z-index:1100; display:flex; align-items:center; gap:.5rem; background:var(--green-bg);
+    border:1px solid var(--green-ln); color:var(--green); padding:.65rem 1.1rem; border-radius:12px;
+    font-weight:600; font-size:.9rem; box-shadow:0 8px 24px rgba(20,30,50,.18); max-width:90vw;
+    opacity:0; transition:opacity .25s ease, transform .25s ease; }
+  .curate-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  .curate-toast .tick { font-size:1.05rem; }
+  /* Bottom navigation for the long activity list. The list runs to hundreds of
+     pages, so the pager carries a direct "jump to page" field and we repeat the
+     search prominently at the foot — paging one step at a time is the slow path. */
+  .pager { display:flex; gap:.55rem; align-items:center; justify-content:center; flex-wrap:wrap;
+           margin:1.4rem 0 .4rem; font-size:.85rem; }
+  .pager a { text-decoration:none; color:var(--accent); padding:.4rem .8rem; border-radius:999px;
+             border:1px solid var(--line); }
+  .pager a:hover { border-color:var(--accent); background:var(--blue-bg); }
+  .pager .page-info { color:var(--soft); }
+  .pager form.jump { display:inline-flex; gap:.35rem; align-items:center; }
+  .pager .jump label { color:var(--soft); }
+  .pager .jump input { width:4.6rem; padding:.35rem .5rem; border:1px solid var(--line);
+                       border-radius:8px; font-size:.85rem; text-align:center; }
+  .pager .jump button { padding:.35rem .75rem; border-radius:8px; border:1px solid var(--accent);
+                        background:var(--accent); color:var(--on-accent); font-weight:600; cursor:pointer; font-size:.8rem; }
+  .foot-search { margin:1.4rem auto .4rem; max-width:560px; text-align:center; padding:1rem 1.1rem;
+                 border:1px solid var(--line); border-radius:14px; background:var(--surface); }
+  .foot-search .fs-lbl { font-size:.9rem; color:var(--soft); margin-bottom:.6rem; }
+  .foot-search form { display:flex; gap:.5rem; align-items:center; justify-content:center; flex-wrap:wrap; }
+  .foot-search input[type=search] { flex:1; min-width:190px; max-width:340px; padding:.55rem .75rem;
+                                    border:1px solid var(--line); border-radius:10px; font-size:.9rem; }
+  .foot-search button { padding:.55rem 1rem; border-radius:10px; border:1px solid var(--accent);
+                        background:var(--accent); color:var(--on-accent); font-weight:600; cursor:pointer; }
+  .foot-search a.clear { font-size:.85rem; color:var(--soft); text-decoration:none; align-self:center; }
+</style>
+
+{% set band_cls = {'Excellent':'b-good','Good':'b-good','Fair':'b-mid','Poor':'b-bad'} %}
+{{ page_header("Activities") }}
+<p class="lede">Every activity with an event review, newest first. Open one to see how satisfied people were, whether it met what they walked in expecting, how the event itself rated area by area, how the people running it came across, and the story in their own words. Looking for how a specific resource person was rated? That lives on the <a href="/dashboard/people">People</a> page.</p>
+{% if ok %}<div id="okFlash" hidden>{{ ok }}</div>{% endif %}
+{% if err %}<div class="flash err" role="alert">{{ err }}</div>{% endif %}
+
+<form class="searchbar" method="get" action="/reports/activities">
+  <input type="hidden" name="org" value="{{ sel_org }}"><input type="hidden" name="period" value="{{ sel_period }}">
+  <input type="hidden" name="sort" value="{{ sort }}">
+  <input type="search" name="q" value="{{ q }}" placeholder="Search events or organizers…" aria-label="Search events or organizers">
+  <button type="submit">Search</button>
+  {% if q %}<a href="/reports/activities?sort={{ sort }}&org={{ sel_org|urlencode }}&period={{ sel_period|urlencode }}">Clear</a>{% endif %}
+</form>
+
+<div class="sortbar">
+  <span class="lbl">Sort by</span>
+  {% for key, lab in [('date','Date'),('score','Score'),('organizer','Organizer')] %}
+  <a href="/reports/activities?sort={{ key }}&org={{ sel_org|urlencode }}&period={{ sel_period|urlencode }}{{ '&q=' ~ (q|urlencode) if q }}" class="{{ 'on' if sort==key }}" {% if sort==key %}aria-current="true"{% endif %}>{{ lab }}</a>
+  {% endfor %}
+  <span style="margin-left:auto; display:flex; gap:.4rem;">
+    {% if can_curate %}<a class="curate-toggle" id="curateToggle" role="button" tabindex="0"
+       title="Select activities to rename, merge, re-file or archive">✎ Edit / merge</a>{% endif %}
+    <button type="button" class="btn ghost small" data-toggle-details="open">Expand all</button>
+    <button type="button" class="btn ghost small" data-toggle-details="close">Collapse all</button>
+  </span>
+</div>
+{% if can_curate %}<p class="curate-hint">Need to fix a messy title, combine duplicates, or move an activity to the right section? Click <b>✎ Edit / merge</b>, tick the activities, then pick an action.</p>{% endif %}
+
+{% if not events %}
+  {% set msg %}{% if q %}No events match “{{ q }}” in this scope.{% else %}No events with responses yet.{% endif %}{% endset %}
+  {{ empty_state(msg, icon="◔") }}
+{% endif %}
+
+{% for e in events %}
+<div class="event">
+  <div class="ev-row">
+    {% if can_curate %}<input class="ev-check" type="checkbox" name="ids" value="{{ e.id }}" form="curateForm"
+           aria-label="Select {{ e.name }}">{% endif %}
+    <a class="ev-link" href="/reports/activities/{{ e.id }}">
+      <span class="ev-main">
+        <div class="ev-name">{{ e.name }} {% if e.is_external %}<span class="pill-ext">external</span>{% endif %}
+          {% if e.open_at or e.close_at %}<span class="pill-win shut" title="Entry window: {{ e.open_at|humandt or 'now' }} → {{ e.close_at|humandt or 'no deadline' }}">entry window set</span>{% endif %}</div>
+        <div class="ev-meta">{{ e.date|humandate }}{% if e.modality == 'online' %} · <span class="badge blue">Online</span>{% endif %}{% if e.venue %} · {{ e.venue }}{% endif %} · {{ e.organizer }}{% if e.attendance %} · <strong>{{ e.attendance|comma }} attended</strong>{% if e.attendance_suspect %} <span title="Official figures are inconsistent (more responses than participants) — treat with caution">⚠</span>{% endif %}{% endif %} · {{ e.respondents|comma }} response(s)</div>
+      </span>
+      <span class="ev-score">
+        {% if e.f2 %}
+          <div class="v">{{ e.f2.overall_shown }}</div><div class="k">event /7</div>
+          {% if e.f2.osq_band %}<div class="osq"><span class="badge {{ band_cls.get(e.f2.osq_band,'b-grey') }}" title="Overall satisfaction (the survey's own overall question)">{{ e.f2.osq_band }}</span></div>{% endif %}
+        {% elif e.speakers %}
+          <div class="v">{{ e.speakers[0].shown }}</div><div class="k">top speaker /7</div>
+        {% endif %}
+      </span>
+      <span class="ev-go" aria-hidden="true">→</span>
+    </a>
+  </div>
+</div>
+{% endfor %}
+
+{% if pooled %}
+<div class="event pooled-row" style="opacity:.85;">
+  <div class="summary" style="display:flex; align-items:center; gap:.6rem; cursor:default; padding:.9rem 1.1rem;">
+    <span class="caret" aria-hidden="true" style="visibility:hidden;">▶</span>
+    <span class="ev-main">
+      <div class="ev-name">Other small activities (pooled)
+        <span class="pill-ext" title="These responses still count in every average and score. They are grouped here instead of being listed as {{ pooled.records|comma }} separate small events.">pooled</span></div>
+      <div class="ev-meta">{{ pooled.records|comma }} unlisted record(s) · {{ pooled.respondents|comma }} respondent(s) · included in all averages, not counted as events</div>
+    </span>
+    <span class="ev-score">
+      {% if pooled.overall_shown %}<div class="v">{{ pooled.overall_shown }}</div><div class="k">pooled /7</div>{% endif %}
+    </span>
+  </div>
+</div>
+{% endif %}
+
+{% if can_curate %}
+<div class="curate-bar" id="curateBar" hidden>
+  <div class="cb-head"><b id="cbN">0</b> <span id="cbWord">activities</span> selected — pick an action below.</div>
+  <form id="curateForm" method="post" action="/reports/activities/bulk">
+    <input type="hidden" name="org" value="{{ sel_org }}"><input type="hidden" name="period" value="{{ sel_period }}">
+    <input type="hidden" name="sort" value="{{ sort }}"><input type="hidden" name="q" value="{{ q }}"><input type="hidden" name="page" value="{{ page }}">
+    <div class="cb-group">
+      <span class="cb-lab">Rename / merge</span>
+      <input type="text" name="title" id="cbTitle" placeholder="One name for the selected…" maxlength="200" autocomplete="off">
+      <button type="submit" name="action" value="rename" class="cb-act" data-needs-title>Rename / merge →</button>
+      <span class="cb-help">Give the ticked activities one shared name — selecting several merges their labels into a single title.</span>
+    </div>
+    <div class="cb-group">
+      <span class="cb-lab">Re-file section</span>
+      <select name="section_id" id="cbSection">
+        <option value="">— pick a section —</option>
+        {% for s in sections %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+      </select>
+      <button type="submit" name="action" value="section" class="cb-act">Reassign →</button>
+      <button type="submit" name="action" value="untag" class="cb-act ghost">Untag (bureau-wide)</button>
+      <span class="cb-help">Move the ticked activities to the chosen section, or clear the section tag (back to bureau-wide).</span>
+    </div>
+    <div class="cb-group">
+      <span class="cb-lab">Apply both</span>
+      <button type="submit" name="action" value="all" class="cb-act" data-needs-any>Apply all changes →</button>
+      <span class="cb-help">Save the name <em>and</em> the section together in one step — fill in either or both above, then click here. A single undo reverses both.</span>
+    </div>
+    <div class="cb-group">
+      <span class="cb-lab">Export</span>
+      <button type="submit" name="action" value="export" class="cb-act"
+              formaction="/reports/activities/export-selected">⤓ Export selected (XLSX)</button>
+      <span class="cb-help">Download just the ticked activities as a spreadsheet (Type-2 inventory) — only those with an event review are included.</span>
+    </div>
+    <div class="cb-group">
+      <span class="cb-lab">Archive</span>
+      <button type="submit" name="action" value="archive" class="cb-act danger"
+              onclick="return confirm('Archive the selected activities? They will vanish from the dashboard (reversible by an admin).')">Archive</button>
+      <span class="cb-help">Hide junk or test activities from the dashboard. An admin can restore them later.</span>
+    </div>
+  </form>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById('curateToggle'), bar = document.getElementById('curateBar');
+  if (!btn || !bar) return;
+  var on = false;
+  var title = document.getElementById('cbTitle');
+  var section = document.getElementById('cbSection');
+  function refresh() {
+    var n = document.querySelectorAll('input[name=ids]:checked').length;
+    var c = document.getElementById('cbN'); if (c) c.textContent = n;
+    var w = document.getElementById('cbWord'); if (w) w.textContent = (n === 1 ? 'activity' : 'activities');
+    var hasTitle = title && title.value.trim().length > 0;
+    var hasSection = section && section.value.trim().length > 0;
+    bar.querySelectorAll('.cb-act').forEach(function (b) {
+      b.disabled = (n === 0)
+        || (b.hasAttribute('data-needs-title') && !hasTitle)
+        || (b.hasAttribute('data-needs-any') && !(hasTitle || hasSection));
+    });
+  }
+  function toggle() {
+    on = !on;
+    document.body.classList.toggle('curate-on', on);
+    bar.hidden = !on; btn.classList.toggle('on', on);
+    btn.textContent = on ? '✓ Done editing' : '✎ Edit / merge';
+    refresh();
+  }
+  btn.addEventListener('click', toggle);
+  btn.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+  document.addEventListener('change', function (e) { if (e.target && e.target.name === 'ids') refresh(); });
+  if (title) title.addEventListener('input', refresh);
+  if (section) section.addEventListener('change', refresh);
+}());
+// Success notification — pop a transient toast after a curate action succeeds.
+(function () {
+  var src = document.getElementById('okFlash');
+  if (!src || !src.textContent.trim()) return;
+  var t = document.createElement('div');
+  t.className = 'curate-toast';
+  t.setAttribute('role', 'status');
+  t.innerHTML = '<span class="tick" aria-hidden="true">✓</span><span></span>';
+  t.lastChild.textContent = src.textContent.trim();
+  document.body.appendChild(t);
+  requestAnimationFrame(function () { t.classList.add('show'); });
+  setTimeout(function () { t.classList.remove('show'); }, 3800);
+  setTimeout(function () { t.remove(); }, 4100);
+}());
+</script>
+{% endif %}
+
+{% if pages and pages > 1 %}
+{% set base = '/reports/activities?sort=' ~ sort ~ '&org=' ~ (sel_org|urlencode) ~ '&period=' ~ (sel_period|urlencode) ~ ('&q=' ~ (q|urlencode) if q else '') %}
+<div class="pager">
+  {% if page > 1 %}<a href="{{ base }}&page={{ page - 1 }}">← Newer</a>{% endif %}
+  <span class="page-info">Page {{ page }} of {{ pages }} · {{ total }} event(s)</span>
+  <form class="jump" method="get" action="/reports/activities">
+    <input type="hidden" name="sort" value="{{ sort }}"><input type="hidden" name="org" value="{{ sel_org }}">
+    <input type="hidden" name="period" value="{{ sel_period }}"><input type="hidden" name="q" value="{{ q }}">
+    <label for="pageJump">Jump to</label>
+    <input id="pageJump" type="number" name="page" min="1" max="{{ pages }}" value="{{ page }}"
+           inputmode="numeric" aria-label="Jump to page (1 to {{ pages }})" title="Enter a page from 1 to {{ pages }}">
+    <button type="submit">Go</button>
+  </form>
+  {% if page < pages %}<a href="{{ base }}&page={{ page + 1 }}">Older →</a>{% endif %}
+</div>
+
+<div class="foot-search">
+  <div class="fs-lbl">Looking for a specific activity? Searching is faster than paging through {{ pages }} pages.</div>
+  <form method="get" action="/reports/activities">
+    <input type="hidden" name="org" value="{{ sel_org }}"><input type="hidden" name="period" value="{{ sel_period }}">
+    <input type="hidden" name="sort" value="{{ sort }}">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search events or organizers…" aria-label="Search events or organizers">
+    <button type="submit">Search</button>
+    {% if q %}<a class="clear" href="/reports/activities?sort={{ sort }}&org={{ sel_org|urlencode }}&period={{ sel_period|urlencode }}">Clear</a>{% endif %}
+  </form>
+</div>
+{% endif %}
+{% endblock %}

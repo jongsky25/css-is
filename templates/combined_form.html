@@ -1,0 +1,174 @@
+{% extends "public_layout.html" %}
+{% block title %}Survey — CSS-IS{% endblock %}
+
+{% block content %}
+{% if not sections %}
+<div class="pub-card">
+  {% if closed_any %}
+  <h1 style="margin-top:0;">{{ t('cf_closed_title', lang) }}</h1>
+  <p class="muted">{{ t('cf_closed_body', lang) }}</p>
+  {% else %}
+  <h1 style="margin-top:0;">{{ t('nf_title', lang) }}</h1>
+  <p class="muted">{{ t('nf_body', lang) }}</p>
+  {% endif %}
+</div>
+{% else %}
+<div class="pub-card">
+  <h1 style="margin-top:0;">{{ t('title_rp', lang) }}</h1>
+  <div class="muted small" style="margin-bottom:.5rem;">
+    {% if event %}<strong style="color:var(--ink)">{{ event.title }}</strong> · {{ event.organizer }}<br>
+    {{ event.event_date|humandaterange(event.end_date) }}{% if event.modality == 'online' %} · <span class="badge blue">Online</span>{% endif %}{% if event.venue %} · {{ event.venue }}{% endif %}{% endif %}
+  </div>
+  <p class="muted small" style="margin:.2rem 0 1rem;">
+    {{ t('cf_rp_heading_intro', lang) }} {{ t('cf_there_is', lang) if sections|length == 1 else t('cf_there_are', lang) }}
+    <strong>{{ sections|length }}</strong> {{ t('cf_speaker_s', lang) if sections|length == 1 else t('cf_speakers_p', lang) }} —
+    {{ t('cf_tick_pre', lang) }} <em>"{{ t('cf_skip', lang) }}"</em> {{ t('cf_tick_post', lang) }}
+  </p>
+
+  <form method="post" action="/seq" id="combinedform" data-loading="Submitting…" data-validate novalidate>
+    <input type="hidden" name="tokens" value="{{ tokens }}">
+
+    {# Demographics — asked once for the whole activity (anonymous, standalone). #}
+    <fieldset class="aboutyou" style="border:none; padding:0; margin:0 0 1.5rem;">
+      <legend class="leg">{{ t('about_you', lang) }}</legend>
+      <div class="field">
+        <label for="f-sex">{{ t('sex', lang) }}</label>
+        <select id="f-sex" name="sex" required>
+          <option value="" selected disabled>{{ t('select', lang) }}</option>
+          <option value="M">{{ t('male', lang) }}</option>
+          <option value="F">{{ t('female', lang) }}</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="f-affil">{{ t('affiliation', lang) }}</label>
+        <select id="f-affil" name="affil" required>
+          <option value="" selected disabled>{{ t('select', lang) }}</option>
+          <option value="DOH">DOH</option>
+          <option value="NON-DOH">{{ t('non_doh', lang) }}</option>
+        </select>
+      </div>
+    </fieldset>
+
+    {% for s in sections %}
+    <div class="spk-section" data-token="{{ s.token }}">
+      <div class="spk-head">
+        <div class="spk-title">
+          <span class="spk-n">{{ loop.index }}</span>
+          <span>
+            {% if loop.length > 1 %}<span class="spk-eyebrow">{{ t('cf_speaker_label', lang) }} {{ loop.index }} {{ t('cf_of', lang) }} {{ loop.length }}</span>{% endif %}
+            <strong>{{ s.ctx.rp_name or s.ctx.topic or t('cf_rp_default', lang) }}</strong>
+            {% if s.ctx.rp_name and s.ctx.topic %}<span class="muted small"> · {{ s.ctx.topic }}</span>{% endif %}
+          </span>
+        </div>
+        <label class="skip"><input type="checkbox" class="skip-toggle"> {{ t('cf_skip', lang) }}</label>
+      </div>
+      <div class="spk-body">
+        {% for group in s.spec.groups %}
+        <fieldset style="border:none; padding:0; margin:0 0 1.1rem;">
+          <legend class="leg">{{ group.label }}</legend>
+          {% for item in group["items"] %}
+          <div class="item" style="margin-bottom:1.25rem;">
+            <div style="font-weight:550; margin-bottom:.45rem;">{{ loop.index }}. {{ item.text }}</div>
+            <div class="scale" role="radiogroup" aria-label="{{ item.text }}">
+              {% for val, lbl in item.scale|reverse %}
+              <label>
+                <input type="radio" name="{{ s.token }}::{{ item.id }}" value="{{ val }}" data-rate="1" required>
+                <span class="seg">{% if lbl|string == val|string %}{{ val }}{% else %}{{ val }}<small>{{ lbl }}</small>{% endif %}</span>
+              </label>
+              {% endfor %}
+            </div>
+            {% if item.scale|length > 4 and item.scale[0][1]|string == item.scale[0][0]|string %}
+            <div class="scale-ends" aria-hidden="true"><span>{{ item.scale[-1][0] }} = {{ t('lowest', lang) }}</span><span>{{ item.scale[0][0] }} = {{ t('highest', lang) }}</span></div>
+            {% endif %}
+            {% if item.allow_na %}
+            <div class="na-row">
+              <input type="radio" id="na-{{ s.token }}-{{ item.id }}" name="{{ s.token }}::{{ item.id }}" value="na" data-rate="1" required>
+              <label for="na-{{ s.token }}-{{ item.id }}">{{ t('na', lang) }}</label>
+            </div>
+            {% endif %}
+            <input type="text" class="note" name="note::{{ s.token }}::{{ item.id }}"
+                   placeholder="{{ t('note_ph', lang) }}" aria-label="{{ t('note_ph', lang) }}"
+                   style="width:100%; margin-top:.45rem; padding:.45rem .55rem; border:1px solid var(--line); border-radius:8px; font-size:.85rem;">
+          </div>
+          {% endfor %}
+        </fieldset>
+        {% endfor %}
+        <div class="field">
+          <label for="rmk-{{ s.token }}" class="muted small">{{ t('cf_comments_label', lang) }} <span class="opt">{{ t('optional', lang) }}</span></label>
+          {% if s.spec.chips %}
+          <div class="chips" style="display:flex; flex-wrap:wrap; gap:.4rem; margin:.15rem 0 .55rem; align-items:center;">
+            <span class="muted small" style="width:100%;">{{ t('chips_hint', lang) }}</span>
+            {% for word in s.spec.chips %}
+            <button type="button" class="chip" data-word="{{ word }}" onclick="toggleChip(this)"
+                    style="font-size:.85rem; padding:.35rem .7rem; border:1px solid var(--line); background:var(--surface); border-radius:999px; cursor:pointer; min-height:34px;">{{ word }}</button>
+            {% endfor %}
+          </div>
+          {% endif %}
+          <textarea id="rmk-{{ s.token }}" name="remarks::{{ s.token }}" rows="2"
+                    placeholder="{{ t('remarks_ph', lang) }}"
+                    style="width:100%; padding:.5rem .6rem; border:1px solid var(--line); border-radius:8px; font-size:.92rem; font-family:inherit; resize:vertical;"></textarea>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+    <button type="submit" class="btn block" style="font-size:1.05rem; padding:.85rem;">{{ t('submit', lang) }}</button>
+    <p class="muted small" style="text-align:center; margin:.6rem 0 0;">{{ t('anonymous', lang) }}</p>
+  </form>
+</div>
+
+<style>
+  .leg { font-weight:700; font-size:.8rem; text-transform:uppercase; letter-spacing:.03em;
+         color:var(--soft); border-bottom:1px solid var(--line); padding:0 0 .35rem; margin-bottom:1rem; width:100%; }
+  /* A bold accent stripe down the left edge makes each speaker read as a
+     distinct block when several stack on one page (spot feedback: "clearer
+     delineation between speakers"). */
+  .spk-section { border:1px solid var(--line); border-left:5px solid var(--accent); border-radius:14px;
+                 padding:1rem 1.1rem 1rem 1rem; margin:0 0 1.4rem; background:var(--surface); }
+  .spk-eyebrow { display:block; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em;
+                 color:var(--accent); margin-bottom:.1rem; }
+  .spk-head { display:flex; justify-content:space-between; align-items:center; gap:.8rem; flex-wrap:wrap;
+              margin-bottom:1rem; padding-bottom:.7rem; border-bottom:1px solid var(--line); }
+  .spk-title { display:flex; align-items:center; gap:.6rem; min-width:0; }
+  .spk-n { flex:0 0 auto; width:26px; height:26px; border-radius:50%; background:var(--accent-bg); color:var(--accent);
+           font-weight:700; font-size:.82rem; display:flex; align-items:center; justify-content:center; }
+  .skip { font-size:.84rem; color:var(--soft); display:inline-flex; align-items:center; gap:.4rem; cursor:pointer; white-space:nowrap; }
+  .spk-section.skipped { opacity:.55; background:var(--surface-2); }
+  .spk-section.skipped .spk-body { display:none; }
+  .chip.active { background:var(--accent) !important; border-color:var(--accent) !important; color:var(--on-accent) !important; font-weight:600; }
+  @media (max-width:419px){ .scale { flex-wrap:wrap; } .scale label { flex:1 1 30%; } }
+</style>
+<script>
+// Each speaker can be skipped: disabling its inputs drops them from validation AND
+// from the POST, so a skipped speaker records nothing on submit.
+document.querySelectorAll('.spk-section').forEach(function (sec) {
+  var toggle = sec.querySelector('.skip-toggle');
+  var body = sec.querySelector('.spk-body');
+  toggle.addEventListener('change', function () {
+    sec.classList.toggle('skipped', toggle.checked);
+    body.querySelectorAll('input, select, textarea').forEach(function (el) {
+      el.disabled = toggle.checked;
+    });
+  });
+});
+
+// Quick-pick chips: tapping inserts/removes the word in THIS section's comments box
+// (scoped to the chip's own .field, so each speaker's chips drive their own textarea).
+function toggleChip(btn) {
+  var word = btn.dataset.word;
+  var ta = btn.closest('.field').querySelector('textarea');
+  if (!ta) return;
+  var parts = ta.value.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+  if (btn.classList.contains('active')) {
+    btn.classList.remove('active');
+    var i = parts.indexOf(word);
+    if (i !== -1) parts.splice(i, 1);
+  } else {
+    btn.classList.add('active');
+    if (parts.indexOf(word) === -1) parts.push(word);
+  }
+  ta.value = parts.join(', ');
+}
+</script>
+{% endif %}
+{% endblock %}

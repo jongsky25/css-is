@@ -1,0 +1,663 @@
+{% extends "dash_layout.html" %}
+{% block title %}Home{% endblock %}
+
+{% block head %}
+<style>
+  .hwrap { max-width: 1000px; }
+  .hhead { display:flex; align-items:baseline; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
+  .hhead h1 { margin:.2rem 0 .1rem; font-size:1.7rem; }
+  .hsub { color:var(--soft); margin:.1rem 0 1.1rem; }
+  .rolechip { font-size:.72rem; font-weight:700; padding:.2rem .7rem; border-radius:999px;
+              background:var(--accent-bg); color:var(--accent); border:1px solid var(--blue-ln); white-space:nowrap; }
+
+  .stats { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:.7rem; margin-bottom:1.4rem; }
+  .stat { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:.8rem 1rem; }
+  .stat .lab { color:var(--soft); font-size:.78rem; }
+  .stat .val { font-size:1.6rem; font-weight:700; margin-top:.15rem; line-height:1.1; }
+  .stat .val small { font-size:.85rem; font-weight:600; color:var(--soft); }
+  .stat .sub { color:var(--grey); font-size:.72rem; margin-top:.1rem; }
+  /* single period toggle that drives every card */
+  .statbar { display:flex; align-items:center; gap:.55rem; margin-bottom:.7rem; }
+  .statbar-lab { font-size:.78rem; font-weight:600; color:var(--soft); }
+  .pbtns { display:inline-flex; gap:0; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  .pbtns button { font-size:.76rem; font-weight:600; color:var(--soft); cursor:pointer;
+                  background:var(--surface); border:none; border-left:1px solid var(--line);
+                  padding:.32rem .7rem; line-height:1.1; transition:background .1s,color .1s; }
+  .pbtns button:first-child { border-left:none; }
+  .pbtns button:hover { background:var(--accent-bg); color:var(--ink); }
+  .pbtns button.on { background:var(--accent); color:var(--on-accent); }
+
+  .mods { display:grid; grid-template-columns:repeat(auto-fit, minmax(250px,1fr)); gap:.8rem; }
+  .modcard { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:1.1rem 1.25rem;
+             box-shadow:var(--shadow); transition:border-color .12s, box-shadow .12s; }
+  .modcard:hover { border-color:var(--line-strong); box-shadow:var(--shadow-md); }
+  .modcard .ic { width:42px; height:42px; border-radius:10px; background:var(--accent-bg); color:var(--accent);
+                 display:flex; align-items:center; justify-content:center; margin-bottom:.6rem; }
+  .modcard .ic svg { width:23px; height:23px; }
+  .modcard a.title { font-size:1.08rem; font-weight:700; color:var(--ink); text-decoration:none; }
+  .modcard a.title:hover { color:var(--accent); }
+  .modcard .desc { color:var(--soft); font-size:.86rem; margin:.25rem 0 .7rem; line-height:1.45; }
+  .subs { display:flex; flex-wrap:wrap; gap:.4rem; }
+  .subs a { font-size:.78rem; font-weight:600; color:var(--accent); text-decoration:none;
+            padding:.22rem .6rem; border-radius:7px; border:1px solid var(--line); background:var(--surface-2); }
+  .subs a:hover { background:var(--accent-bg); border-color:var(--blue-ln); }
+  .hfoot { color:var(--grey); font-size:.82rem; margin-top:1.3rem; line-height:1.6; }
+
+  /* activity feed — upcoming + ongoing (top row) then recently concluded (full width) */
+  .feeds { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:.8rem; margin-bottom:1.4rem; }
+  .feeds-top { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:.8rem; margin-bottom:.8rem; }
+  .feeds-mine { margin-bottom:.8rem; }    /* "your recent activities" spans full width above the lifecycle feeds */
+  .feeds-done { margin-bottom:1.4rem; }   /* recently-concluded spans full width below the top row */
+  /* per-row monitor stat (registered / answered) on the right of a feed item */
+  .fi-stat { flex:0 0 auto; align-self:center; text-align:right; white-space:nowrap; color:var(--soft); font-size:.72rem; line-height:1.15; }
+  .fi-stat b { display:block; font-size:1.05rem; font-weight:800; color:var(--ink); }
+  .fi-stat.go b { color:var(--green); }
+  .fi-reg { font-weight:700; color:var(--accent); }
+  .feed { display:flex; flex-direction:column; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:1rem 1.1rem; box-shadow:var(--shadow); }
+  .feed h2 { font-size:.96rem; margin:0 0 .15rem; display:flex; align-items:center; gap:.45rem; }
+  .feed h2 svg { width:17px; height:17px; color:var(--accent); }
+  .feed .feed-sub { color:var(--soft); font-size:.78rem; margin:0 0 .7rem; }
+  .feed-head { display:flex; align-items:flex-start; justify-content:space-between; gap:.6rem; flex-wrap:wrap; }
+  .feed-title { display:flex; align-items:center; gap:.5rem; }
+  .feed-count { font-size:.68rem; font-weight:700; color:var(--soft); background:var(--surface-2);
+                border:1px solid var(--line); border-radius:999px; padding:.1rem .5rem; white-space:nowrap; }
+  .feed-count[hidden] { display:none; }
+  .feed-filters { display:inline-flex; border:1px solid var(--line); border-radius:7px; overflow:hidden; flex:0 0 auto; }
+  .feed-filters button { font-size:.72rem; font-weight:600; color:var(--soft); cursor:pointer; background:var(--surface);
+                         border:none; border-left:1px solid var(--line); padding:.28rem .55rem; line-height:1.1; transition:background .1s,color .1s; }
+  .feed-filters button:first-child { border-left:none; }
+  .feed-filters button:hover { background:var(--accent-bg); color:var(--ink); }
+  .feed-filters button.on { background:var(--accent); color:var(--on-accent); }
+
+  /* stable-height body: ~5 rows tall so the cards never push the modules down.
+     Desktop -> vertical inner scroll with a soft fade; mobile -> horizontal swipe pager. */
+  .feed-body { position:relative; flex:1 1 auto; min-height:0; }
+  .feed-scroll { max-height:17.5rem; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--line-strong) transparent; }
+  .feed-scroll::-webkit-scrollbar { width:7px; }
+  .feed-scroll::-webkit-scrollbar-thumb { background:var(--line-strong); border-radius:4px; border:2px solid var(--surface); }
+  .feed-scroll::-webkit-scrollbar-track { background:transparent; }
+  /* fade hint at the bottom while there's more to scroll; cleared at the end via .at-end */
+  .feed-body:not(.at-end) .feed-fade { content:''; position:absolute; left:0; right:7px; bottom:0; height:2.2rem; pointer-events:none;
+                 background:linear-gradient(to bottom, transparent, var(--surface)); }
+  .feed ul { list-style:none; margin:0; padding:0; }
+  .feed li { border-top:1px solid var(--line); }
+  .feed li:first-child { border-top:none; }
+  .feed-item { display:flex; align-items:baseline; gap:.6rem; padding:.5rem 0; text-decoration:none; color:inherit; }
+  .feed-item:hover .fi-name { color:var(--accent); }
+  .fi-date { flex:0 0 auto; font-size:.72rem; font-weight:700; color:var(--accent); font-variant-numeric:tabular-nums;
+             background:var(--accent-bg); border:1px solid var(--blue-ln); border-radius:6px; padding:.12rem .4rem; white-space:nowrap; }
+  .fi-body { min-width:0; }
+  .fi-name { font-size:.88rem; font-weight:600; line-height:1.3; }
+  .fi-meta { color:var(--grey); font-size:.74rem; margin-top:.1rem; }
+  .fi-speakers { color:var(--soft); }
+  .fi-speakers::before { content:"\1F464"; margin-right:.3rem; opacity:.7; }
+  .fi-go { flex:0 0 auto; color:var(--grey); font-size:1.1rem; line-height:1; align-self:center; transition:color .1s, transform .1s; }
+  .feed-item:hover .fi-go { color:var(--accent); transform:translateX(2px); }
+  .feed-empty { color:var(--grey); font-size:.84rem; padding:.6rem 0 .2rem; }
+  .feed-empty span { display:block; color:var(--soft); font-size:.78rem; margin-top:.15rem; }
+
+  /* "Your recent activities" row gains an inline Archive action for standalone
+     activities (a button can't nest inside the row's link, so it sits beside it). */
+  .mine-row { display:flex; align-items:stretch; gap:.4rem; }
+  .mine-row .feed-item { flex:1 1 auto; min-width:0; }
+  .mine-arch { flex:0 0 auto; align-self:center; }
+  .mine-arch button { font-size:.72rem; font-weight:600; color:var(--soft); cursor:pointer;
+                      background:var(--surface-2); border:1px solid var(--line); border-radius:7px;
+                      padding:.22rem .55rem; white-space:nowrap; line-height:1.1; }
+  .mine-arch button:hover { background:var(--accent-bg); border-color:var(--blue-ln); color:var(--ink); }
+  .mine-foot { margin-top:.5rem; font-size:.8rem; }
+  .mine-foot a { color:var(--accent); font-weight:600; text-decoration:none; }
+  .mine-foot a:hover { text-decoration:underline; }
+
+  /* swipe pager (mobile only) — pages of rows in a horizontal snap track */
+  .feed-pager { display:none; }
+  .feed-pager .feed-track { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
+                            scrollbar-width:none; gap:0; }
+  .feed-pager .feed-track::-webkit-scrollbar { display:none; }
+  .feed-pager .feed-page { flex:0 0 100%; min-width:100%; scroll-snap-align:start; }
+  .feed-nav { display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin-top:.5rem; }
+  .feed-nav .pg-ind { font-size:.74rem; font-weight:600; color:var(--soft); font-variant-numeric:tabular-nums; }
+  .feed-nav .pg-btns { display:inline-flex; gap:.4rem; }
+  .feed-nav button { width:30px; height:30px; border-radius:8px; border:1px solid var(--line); background:var(--surface);
+                     color:var(--ink); font-size:1.1rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .feed-nav button:hover:not(:disabled) { background:var(--accent-bg); border-color:var(--blue-ln); color:var(--accent); }
+  .feed-nav button:disabled { opacity:.4; cursor:default; }
+
+  @media (max-width:640px){
+    .stats { grid-template-columns:repeat(2,1fr); }
+    .feeds, .feeds-top { grid-template-columns:1fr; }
+    /* hand the body to the swipe pager; drop the vertical-scroll affordances */
+    .feed-scroll { max-height:none; overflow:visible; }
+    .feed-body:not(.at-end) .feed-fade { display:none; }
+    .feed-body.paged .feed-scroll { display:none; }
+    .feed-body.paged .feed-pager { display:block; }
+  }
+</style>
+{% endblock %}
+
+{% block crumbs %}{% endblock %}
+
+{% block content %}
+{% set u = request.state.user %}
+<div class="hwrap">
+  <div class="hhead">
+    <div>
+      <h1>What would you like to do{% if first_name %}, {{ first_name }}{% endif %}?</h1>
+      <p class="hsub">{{ blhsd_name or 'Bureau of Local Health Systems Development' }} · client satisfaction information system</p>
+    </div>
+    {% if u %}<span class="rolechip">{{ ROLE_LABELS.get(u.role, u.role) }}</span>{% endif %}
+  </div>
+
+  <!-- search-to-jump: type intent, click the link (no menu drilling) -->
+  <form class="gsearch" action="/search" method="get" role="search" data-search data-tour="search">
+    <svg class="gs-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+    <input type="text" name="q" class="gsearch-input" autocomplete="off" spellcheck="false"
+           placeholder="Search or jump to a page — people, trends, walk-in report, new survey…"
+           aria-label="Search or jump to a page">
+    <kbd class="gs-kbd">Ctrl K</kbd>
+    <ul class="gsearch-results" role="listbox" aria-label="Search results"></ul>
+  </form>
+
+  <!-- glanceable stats — one toggle flips all cards to the same window -->
+  {% set default_period = 'all' %}
+  {% set cards = [
+    {'metric':'responses',    'kind':'count', 'lab':'Responses',           'sub':'feedback received'},
+    {'metric':'people_rated', 'kind':'count', 'lab':'People rated',        'sub':'speakers &amp; staff with ratings'},
+    {'metric':'satisfaction', 'kind':'pct',   'lab':'Overall satisfaction','sub':'top ratings (top-2-box)'},
+    {'metric':'activities',   'kind':'count', 'lab':'Activities',          'sub':'events that collected feedback'}
+  ] %}
+  <div class="statbar" data-tour="period">
+    <span class="statbar-lab">Showing</span>
+    <div class="pbtns" id="periodToggle">
+      {% for key, label in periods %}
+      <button type="button" data-p="{{ key }}"{% if key == default_period %} class="on"{% endif %}>{{ label }}</button>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="stats" id="stats" data-tour="stats">
+    {% for c in cards %}
+    <div class="stat" data-metric="{{ c.metric }}" data-kind="{{ c.kind }}">
+      <div class="lab">{{ c.lab }}</div>
+      <div class="val">—</div>
+      <div class="sub">{{ c.sub|safe }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  <script>
+    window.HOME_STATS = {{ stats|tojson }};
+    (function () {
+      var data = window.HOME_STATS || {};
+      var period = "{{ default_period }}";
+      function renderAll() {
+        document.querySelectorAll('#stats .stat').forEach(function (card) {
+          var v = (data[card.dataset.metric] || {})[period];
+          var el = card.querySelector('.val');
+          if (v === null || v === undefined) { el.textContent = '—'; }
+          else if (card.dataset.kind === 'pct') { el.innerHTML = v + '<small>% positive</small>'; }
+          else { el.textContent = Number(v).toLocaleString(); }
+        });
+      }
+      document.querySelectorAll('#periodToggle button').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          period = btn.dataset.p;
+          document.querySelectorAll('#periodToggle button').forEach(function (b) { b.classList.remove('on'); });
+          btn.classList.add('on');
+          renderAll();
+        });
+      });
+      renderAll();
+    })();
+  </script>
+
+  {# "Your recent activities" — what THIS manager created, response counts + a link.
+     Surfaces outside events (Form 3 only, no event record) that the lifecycle feeds
+     below deliberately skip — so an activity you made is never invisible. #}
+  {% if my_activities %}
+  <div class="feeds-mine">
+    <div class="feed" id="mineFeed">
+      <div class="feed-title">
+        <h2><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>{{ 'Recent activities' if mine_all|default(false) else 'Your recent activities' }}</h2>
+        <span class="feed-count" hidden></span>
+      </div>
+      <p class="feed-sub">{% if mine_all|default(false) %}Every activity from the last 7 days — open one to manage it, or archive a standalone one.{% else %}Your activities from the last 7 days — open one to manage it or see responses.{% endif %}</p>
+      <div class="feed-body">
+        <div class="feed-scroll">
+          <ul>
+            {% for a in my_activities %}
+            <li>
+              <div class="mine-row">
+                <a class="feed-item" href="{{ a.link }}" title="{{ a.tip|default('Open this activity') }}">
+                  <span class="fi-date">{{ a.event_date|humandate }}</span>
+                  <span class="fi-body">
+                    <div class="fi-name">{{ a.topic or 'Untitled activity' }}</div>
+                    <div class="fi-meta">{% if a.modality == 'online' %}<span class="badge blue">Online</span> {% endif %}{% if a.event_kind == 'outside' %}<span class="badge amber">Invited</span>{% else %}{{ a.kind }}{% endif %}{% if not a.open %} · <span class="badge">Closed</span>{% endif %}{% if a.venue and a.modality != 'online' %} · {{ a.venue }}{% endif %}</div>
+                  </span>
+                  <span class="fi-stat{% if a.responses %} go{% endif %}"><b>{{ a.responses }}</b>{{ 'response' if a.responses == 1 else 'responses' }}</span>
+                  <span class="fi-go" aria-hidden="true">›</span>
+                </a>
+                {% if a.archivable %}
+                <form class="mine-arch" method="post" action="/activities/form/{{ a.fid }}/archive">
+                  <button type="submit" title="Archive this activity — it hides from all lists and counts, and is reversible from Archived activities.">Archive</button>
+                </form>
+                {% endif %}
+              </div>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        <div class="feed-fade"></div>
+      </div>
+      <p class="mine-foot"><a href="/activities/archived">View archived activities →</a></p>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- activity feed — what's coming up and what just wrapped -->
+  <div class="feeds-top">
+    <div class="feed" id="upcomingFeed">
+      <div class="feed-title">
+        <h2><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Upcoming activities</h2>
+        <span class="feed-count" hidden></span>
+      </div>
+      <p class="feed-sub">{% if can_monitor %}Not yet held — open one to see who has registered.{% else %}Scheduled for a future date.{% endif %}</p>
+      {% if upcoming %}
+      <div class="feed-body">
+        <div class="feed-scroll">
+          <ul>
+            {% for a in upcoming %}
+            {% set linkable = can_monitor and a.event_token %}
+            <li>
+              {% if linkable %}<a class="feed-item" href="/monitor/{{ a.event_token }}" title="See who registered">{% else %}<div class="feed-item">{% endif %}
+                <span class="fi-date">{{ a.event_date|humandate }}</span>
+                <span class="fi-body">
+                  <div class="fi-name">{{ a.topic or 'Untitled activity' }}</div>
+                  {% if a.modality == 'online' %}<div class="fi-meta"><span class="badge blue">Online</span>{% if a.venue %} {{ a.venue }}{% endif %}</div>{% elif a.venue %}<div class="fi-meta">{{ a.venue }}</div>{% endif %}
+                  {% if a.speakers %}<div class="fi-meta fi-speakers" title="Resource person{{ 's' if a.speakers|length > 1 }}">{{ a.speakers|join(', ') }}</div>{% endif %}
+                </span>
+                {% if a.event_token %}<span class="fi-stat"><b class="fi-reg">{{ a.n_registered }}</b>registered</span>{% endif %}
+                {% if linkable %}<span class="fi-go" aria-hidden="true">›</span>{% endif %}
+              {% if linkable %}</a>{% else %}</div>{% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        <div class="feed-fade"></div>
+      </div>
+      {% else %}
+      <p class="feed-empty">No upcoming activities.<span>New activities with a future date will appear here.</span></p>
+      {% endif %}
+    </div>
+
+    <div class="feed" id="ongoingFeed">
+      <div class="feed-title">
+        <h2><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Ongoing — CSS collecting</h2>
+        <span class="feed-count" hidden></span>
+      </div>
+      <p class="feed-sub">{% if can_monitor %}Happening now or window still open — open one to see who has answered.{% else %}Currently collecting feedback.{% endif %}</p>
+      {% if ongoing %}
+      <div class="feed-body">
+        <div class="feed-scroll">
+          <ul>
+            {% for a in ongoing %}
+            {% set href = a.link if a.standalone else ('/monitor/' ~ a.event_token if a.event_token else none) %}
+            {% set linkable = can_monitor and href %}
+            <li>
+              {% if mine_all %}<div class="mine-row">{% endif %}
+              {% if linkable %}<a class="feed-item" href="{{ href }}" title="{{ a.tip if a.standalone else 'See who answered the CSS' }}">{% else %}<div class="feed-item">{% endif %}
+                <span class="fi-date">{{ a.event_date|humandate }}</span>
+                <span class="fi-body">
+                  <div class="fi-name">{{ a.topic or 'Untitled activity' }}</div>
+                  <div class="fi-meta">{% if a.modality == 'online' %}<span class="badge blue">Online</span> {% endif %}{% if a.standalone %}{{ a.kind or 'Activity' }}{% else %}{{ a.registered }} registered{% endif %}{% if a.venue and a.modality != 'online' %} · {{ a.venue }}{% endif %}</div>
+                  {% if a.speakers %}<div class="fi-meta fi-speakers" title="Resource person{{ 's' if a.speakers|length > 1 }}">{{ a.speakers|join(', ') }}</div>{% endif %}
+                </span>
+                {% if a.standalone %}
+                <span class="fi-stat{% if a.responses %} go{% endif %}"><b>{{ a.responses }}</b>response{{ 's' if a.responses != 1 }}</span>
+                {% else %}
+                <span class="fi-stat{% if a.answered_any %} go{% endif %}"><b>{{ a.answered_any }}/{{ a.registered }}</b>answered CSS</span>
+                {% endif %}
+                {% if linkable %}<span class="fi-go" aria-hidden="true">›</span>{% endif %}
+              {% if linkable %}</a>{% else %}</div>{% endif %}
+              {% if mine_all %}
+              <form class="mine-arch" method="post" action="/activities/instance/{{ a.id }}/archive"
+                    onsubmit="return confirm('Archive this activity? It leaves every feed and report — reversible from Archived activities.');">
+                <button type="submit" title="Archive this activity — hides it from all lists, feeds and reports. Reversible.">Archive</button>
+              </form>
+              {% endif %}
+              {% if mine_all %}</div>{% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        <div class="feed-fade"></div>
+      </div>
+      {% else %}
+      <p class="feed-empty">Nothing collecting right now.<span>An activity appears here on its event day, while its feedback window is open.</span></p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="feeds-done">
+    <div class="feed" id="concludedFeed">
+      <div class="feed-head">
+        <div>
+          <div class="feed-title">
+            <h2><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>Recently concluded</h2>
+            <span class="feed-count" hidden></span>
+          </div>
+          <p class="feed-sub">Past activities with feedback — open the report.</p>
+        </div>
+        <div class="feed-filters" id="doneFilter" role="group" aria-label="Filter concluded activities">
+          <button type="button" data-days="7">Last week</button>
+          <button type="button" data-days="30" class="on">Last 30 days</button>
+          <button type="button" data-days="90">Last quarter</button>
+        </div>
+      </div>
+      <div class="feed-body">
+        <div class="feed-scroll">
+          <ul id="concludedList"></ul>
+          <p class="feed-empty" id="concludedEmpty" hidden>Nothing concluded in this period.<span>Try a wider window above.</span></p>
+        </div>
+        <div class="feed-fade"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Keeps a feed card a fixed height so the modules below never get pushed down.
+    // Desktop: vertical inner-scroll with a bottom fade. Mobile: a horizontal swipe
+    // pager (pages of PER rows). Re-callable — the concluded feed re-runs it on filter.
+    window.setupFeed = function (feedEl) {
+      if (!feedEl) return;
+      var body = feedEl.querySelector('.feed-body');
+      if (!body) return;                                  // empty-state cards have no body
+      var scroll = body.querySelector('.feed-scroll');
+      var srcUl = scroll && scroll.querySelector('ul');
+      var countEl = feedEl.querySelector('.feed-count');
+      var items = srcUl ? Array.prototype.slice.call(srcUl.children) : [];
+      var n = items.length;
+      var PER = 4;
+      var mq = window.matchMedia('(max-width:640px)');
+
+      if (countEl) { countEl.textContent = n; countEl.hidden = n === 0; }
+
+      function updateFade() {
+        if (!scroll) return;
+        var full = scroll.scrollHeight <= scroll.clientHeight + 1;
+        var atEnd = scroll.scrollHeight - scroll.scrollTop - scroll.clientHeight < 2;
+        body.classList.toggle('at-end', full || atEnd);
+      }
+      if (scroll && !scroll.__fadeBound) { scroll.__fadeBound = true; scroll.addEventListener('scroll', updateFade); }
+
+      var oldPager = body.querySelector('.feed-pager');   // rebuild fresh (content may have changed)
+      if (oldPager) oldPager.remove();
+
+      function buildPager() {
+        if (n === 0) return;
+        var pages = Math.ceil(n / PER);
+        var pager = document.createElement('div'); pager.className = 'feed-pager';
+        var track = document.createElement('div'); track.className = 'feed-track';
+        for (var p = 0; p < pages; p++) {
+          var page = document.createElement('div'); page.className = 'feed-page';
+          var pul = document.createElement('ul');
+          for (var i = p * PER; i < Math.min(n, (p + 1) * PER); i++) pul.appendChild(items[i].cloneNode(true));
+          page.appendChild(pul); track.appendChild(page);
+        }
+        pager.appendChild(track);
+        var nav = document.createElement('div'); nav.className = 'feed-nav';
+        var ind = document.createElement('span'); ind.className = 'pg-ind';
+        var btns = document.createElement('div'); btns.className = 'pg-btns';
+        var prev = document.createElement('button'); prev.type = 'button'; prev.setAttribute('aria-label', 'Previous page'); prev.textContent = '‹';
+        var next = document.createElement('button'); next.type = 'button'; next.setAttribute('aria-label', 'Next page'); next.textContent = '›';
+        btns.appendChild(prev); btns.appendChild(next);
+        nav.appendChild(ind); nav.appendChild(btns); pager.appendChild(nav);
+        body.appendChild(pager);
+
+        function cur() { return track.clientWidth ? Math.round(track.scrollLeft / track.clientWidth) : 0; }
+        function sync() {
+          var c = cur();
+          ind.textContent = (c * PER + 1) + '–' + Math.min(n, (c + 1) * PER) + ' of ' + n;
+          prev.disabled = c <= 0; next.disabled = c >= pages - 1;
+        }
+        prev.addEventListener('click', function () { track.scrollBy({ left: -track.clientWidth, behavior: 'smooth' }); });
+        next.addEventListener('click', function () { track.scrollBy({ left: track.clientWidth, behavior: 'smooth' }); });
+        track.addEventListener('scroll', sync);
+        sync();
+      }
+
+      function apply() {
+        if (mq.matches) {
+          body.classList.add('paged');
+          if (!body.querySelector('.feed-pager')) buildPager();
+        } else {
+          body.classList.remove('paged');
+          updateFade();
+        }
+      }
+      if (mq.addEventListener) mq.addEventListener('change', apply);
+      else if (mq.addListener) mq.addListener(apply);   // older Safari
+      apply();
+    };
+    document.addEventListener('DOMContentLoaded', function () {
+      window.setupFeed(document.getElementById('mineFeed'));
+      window.setupFeed(document.getElementById('upcomingFeed'));
+      window.setupFeed(document.getElementById('ongoingFeed'));
+    });
+  </script>
+
+  <script>
+    window.HOME_CONCLUDED = {{ concluded|tojson }};
+    window.HOME_TODAY = "{{ today }}";
+    (function () {
+      var data = window.HOME_CONCLUDED || [];
+      var listEl = document.getElementById('concludedList');
+      var emptyEl = document.getElementById('concludedEmpty');
+      var SHOW = 20;                      // most recent N within the chosen window (overflow is scroll/swipe)
+      var today = window.HOME_TODAY;
+      function cutoff(days) {             // 'YYYY-MM-DD' for today - days, off the server date
+        var d = new Date(today + 'T00:00:00');
+        d.setDate(d.getDate() - days);
+        return d.toISOString().slice(0, 10);
+      }
+      function esc(s) { var n = document.createElement('div'); n.textContent = s == null ? '' : s; return n.innerHTML; }
+      var FMT_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      function fmtDate(s) {            // 'YYYY-MM-DD' -> 'June 16, 2026' (display only; filtering uses raw ISO)
+        var p = String(s || '').slice(0, 10).split('-');
+        if (p.length !== 3 || !FMT_MONTHS[+p[1] - 1]) return s || '';
+        return FMT_MONTHS[+p[1] - 1] + ' ' + (+p[2]) + ', ' + p[0];
+      }
+      function render(days) {
+        var since = cutoff(days);
+        var rows = data.filter(function (a) { return a.event_date >= since; }).slice(0, SHOW);
+        listEl.innerHTML = rows.map(function (a) {
+          var online = a.modality === 'online' ? '<span class="badge blue">Online</span> ' : '';
+          var invited = a.invited ? '<span class="badge amber">Invited</span> ' : '';
+          var meta = online + invited + (a.venue ? esc(a.venue) + ' · ' : '') + a.responses + ' response' + (a.responses === 1 ? '' : 's');
+          var speakers = (a.speakers && a.speakers.length)
+            ? '<div class="fi-meta fi-speakers">' + a.speakers.map(esc).join(', ') + '</div>' : '';
+          var href = a.url || ('/reports/activities/' + a.id);
+          var tip = a.invited ? 'Open the resource-person results' : 'Open the activity report';
+          return '<li><a class="feed-item" href="' + href + '" title="' + tip + '">' +
+                 '<span class="fi-date">' + esc(fmtDate(a.event_date)) + '</span>' +
+                 '<span class="fi-body"><div class="fi-name">' + esc(a.topic || 'Untitled activity') + '</div>' +
+                 '<div class="fi-meta">' + meta + '</div>' + speakers + '</span>' +
+                 '<span class="fi-go" aria-hidden="true">›</span></a></li>';
+        }).join('');
+        emptyEl.hidden = rows.length > 0;
+        window.setupFeed(document.getElementById('concludedFeed'));   // refresh count + scroll/pager
+      }
+      document.querySelectorAll('#doneFilter button').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          document.querySelectorAll('#doneFilter button').forEach(function (b) { b.classList.remove('on'); });
+          btn.classList.add('on');
+          render(Number(btn.dataset.days));
+        });
+      });
+      render(30);   // default: last 30 days
+    })();
+  </script>
+
+  <!-- role-filtered task modules -->
+  <div class="mods" data-tour="modules">
+
+    <div class="modcard">
+      <div class="ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6"/><rect x="12" y="7" width="3" height="10"/><rect x="17" y="13" width="3" height="4"/></svg></div>
+      <a class="title" href="/dashboard">See how we're doing</a>
+      <p class="desc">Plain-language scores, people, teams and trends — no jargon, no item codes.</p>
+      <div class="subs">
+        <a href="/dashboard">Pulse</a>
+        <a href="/dashboard/people">People</a>
+        <a href="/dashboard/teams">Teams</a>
+        <a href="/dashboard/trends">Trends</a>
+        <a href="/dashboard/participation">Participation</a>
+      </div>
+    </div>
+
+    <div class="modcard">
+      <div class="ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M5 8V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-1"/><path d="M3 14h7"/><path d="M7 11l-3 3 3 3"/></svg></div>
+      <a class="title" href="/reports">Official reports</a>
+      <p class="desc">ARTA, activity &amp; resource-person SERVQUAL tables and written feedback, ready for submission.</p>
+      <div class="subs">
+        <a href="/reports?type=1">ARTA Walk-in</a>
+        <a href="/reports?type=2">Activities</a>
+        <a href="/reports?type=3">Resource Persons</a>
+        <a href="/reports/verbatims">Verbatims</a>
+        <a href="/shared">Shared materials</a>
+      </div>
+    </div>
+
+    {% if u and can(u.role, 'encode') %}
+    <div class="modcard">
+      <div class="ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="8" height="4" rx="1"/><path d="M8 5H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><path d="M9 12h6"/><path d="M9 16h4"/></svg></div>
+      <a class="title" href="/encode">Enter paper responses</a>
+      <p class="desc">Type in feedback that was collected on paper survey slips.</p>
+      <div class="subs"><a href="/encode">Open surveys</a></div>
+    </div>
+    {% endif %}
+
+    {% if u and can(u.role, 'create_activity') %}
+    <div class="modcard">
+      <div class="ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><path d="M14 17h6"/><path d="M17 14v6"/></svg></div>
+      <a class="title" href="/create">Run a survey</a>
+      <p class="desc">Create an activity, print its QR codes, track who answered and review invited events.</p>
+      <div class="subs">
+        <a href="/create">New activity</a>
+        <a href="/arta">Walk-in QR</a>
+        {% if can(u.role, 'manage_event') %}
+        <a href="/monitor">Monitor</a>
+        <a href="/activities/outside">Invited events</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if u and can(u.role, 'directory') %}
+    <div class="modcard">
+      <div class="ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M3 8h2M3 12h2M3 16h2"/><circle cx="12" cy="10" r="2"/><path d="M9 16c0-1.7 1.3-3 3-3s3 1.3 3 3"/></svg></div>
+      <a class="title" href="/directory">Directory &amp; people</a>
+      <p class="desc">Org units, staff and speakers — plus the quick name cleanup tool.</p>
+      <div class="subs">
+        <a href="/directory">Org tree</a>
+        <a href="/directory/cleanup">Name cleanup</a>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if u and can(u.role, 'manage_users') %}
+    <div class="modcard">
+      <div class="ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7.7 1.6 1.6 0 0 0-1.2 1.5v.2a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H1.5a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H7a1.6 1.6 0 0 0 1-1.5V1.5a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V7a1.6 1.6 0 0 0 1.5 1h.2a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg></div>
+      <a class="title" href="/admin/users">Administration</a>
+      <p class="desc">User accounts &amp; roles, the audit trail, backups, sharing, user feedback and system health.</p>
+      <div class="subs">
+        <a href="/admin/users">Users</a>
+        <a href="/admin/audit">Audit log</a>
+        <a href="/admin/backups">Backups</a>
+        <a href="/admin/sharing">Sharing</a>
+        {% if can(u.role, 'triage_feedback') %}<a href="/admin/feedback">Feedback</a>{% endif %}
+        <a href="/ops">Health</a>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <p class="hfoot">You're seeing the modules your role can use. Everything here is also in the menu at the top of every page.</p>
+</div>
+
+{% if snapshot %}
+{% set snap_band = {'Outstanding':'b-good','Satisfactory':'b-good','Excellent':'b-good','Good':'b-good','Fair':'b-mid','Poor':'b-bad'} %}
+<div class="snapshot-backdrop" id="snapshot-bd" hidden
+     role="dialog" aria-modal="true" aria-labelledby="snapshot-title">
+  <div class="snapshot-modal">
+    <div class="snapshot-hdr">
+      <h2 id="snapshot-title">Your snapshot, {{ snapshot.first_name }}</h2>
+      <button class="snapshot-close" id="snapshot-close" aria-label="Close">✕</button>
+    </div>
+
+    {% if snapshot.score %}
+    <div class="snapshot-score-row">
+      <span class="snapshot-value">{{ snapshot.score.shown }}</span>
+      <span class="badge {{ snap_band.get(snapshot.score.band, 'b-grey') }}">
+        {{ snapshot.score.band }}
+      </span>
+      <span class="snapshot-sub">
+        {% if snapshot.role == "rp" %}out of 7 · {% endif %}{{ snapshot.score.n }} responses
+      </span>
+    </div>
+    {% endif %}
+
+    {% if snapshot.trend_dir %}
+    <p class="snapshot-trend">
+      Trending <strong>{{ snapshot.trend_dir }}</strong> vs. last quarter
+    </p>
+    {% endif %}
+
+    {% if snapshot.standing %}
+    <p class="snapshot-standing">{{ snapshot.standing.standing }}</p>
+    {% endif %}
+
+    {% if snapshot.weakest_dim %}
+    <p class="snapshot-flag">
+      Area to watch: <strong>{{ snapshot.weakest_dim.name }}</strong>
+      ({{ snapshot.weakest_dim.shown }} / 7)
+    </p>
+    {% endif %}
+
+    <div class="snapshot-actions">
+      <a href="/dashboard" class="btn">Go to dashboard</a>
+      <button id="snapshot-optout" class="btn ghost">Don't show daily</button>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  var uid   = {{ snapshot.user_id }};
+  var today = "{{ today }}";
+  var KEY   = "css_snapshot_" + uid;
+  function getState() {
+    try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (_) { return {}; }
+  }
+  function setState(patch) {
+    var s = Object.assign(getState(), patch);
+    try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (_) {}
+  }
+  var s = getState();
+  if (s.optOut || s.seenDate === today) return;
+  var bd = document.getElementById("snapshot-bd");
+  bd.removeAttribute("hidden");
+  function close() { bd.setAttribute("hidden", ""); }
+  document.getElementById("snapshot-close").addEventListener("click", function () {
+    setState({ seenDate: today }); close();
+  });
+  document.getElementById("snapshot-optout").addEventListener("click", function () {
+    setState({ optOut: true }); close();
+  });
+  bd.addEventListener("click", function (e) {
+    if (e.target === bd) { setState({ seenDate: today }); close(); }
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { setState({ seenDate: today }); close(); }
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

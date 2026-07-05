@@ -1,0 +1,115 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, empty_state %}
+{% block title %}Feedback{% endblock %}
+{% block content %}
+<style>
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1.1rem 1.3rem;
+           margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; padding:.55rem .5rem; border-bottom:1px solid var(--line); font-size:.9rem; vertical-align:top; }
+  th { font-size:.7rem; text-transform:uppercase; letter-spacing:.03em; color:var(--soft); }
+  .when { color:var(--soft); font-size:.78rem; white-space:nowrap; }
+  .who { font-weight:600; font-size:.82rem; }
+  .msg-cell { max-width:30rem; }
+  .msg-cell .body { color:var(--ink); line-height:1.4; }
+  .open-link { display:inline-block; margin-top:.35rem; font-size:.78rem; font-weight:600;
+               color:var(--accent); text-decoration:none; }
+  .open-link:hover { text-decoration:underline; }
+  .pageurl { color:var(--accent); font-size:.78rem; text-decoration:none; word-break:break-all; }
+  .pageurl:hover { text-decoration:underline; }
+  .sel-el { color:var(--grey); font-size:.72rem; font-family:ui-monospace,monospace; word-break:break-all; margin-top:.15rem; }
+  .pill { font-size:.68rem; font-weight:700; padding:.12rem .5rem; border-radius:999px; border:1px solid var(--line); background:var(--bg); white-space:nowrap; }
+  .pill.s-new { color:var(--ink-soft); }
+  .pill.s-reviewing { color:var(--amber); border-color:var(--amber-ln); background:var(--amber-bg); }
+  .pill.s-will { color:var(--accent); border-color:var(--line); background:var(--accent-bg); }
+  .pill.s-wont { color:var(--red); border-color:var(--red-ln); background:var(--red-bg); }
+  .pill.s-done { color:var(--green); border-color:var(--green-ln); background:var(--green-bg); }
+  .triage { display:flex; flex-wrap:wrap; gap:.35rem; align-items:center; margin-top:.5rem; }
+  .triage select, .triage input { padding:.32rem .45rem; border:1px solid var(--line); border-radius:8px; font-size:.82rem; }
+  .triage input.reply { width:15rem; } .triage input.note { width:12rem; }
+  .btn { padding:.34rem .65rem; border-radius:8px; border:1px solid var(--accent); background:var(--accent);
+         color:var(--on-accent); font-weight:600; cursor:pointer; font-size:.82rem; text-decoration:none; }
+  .btn.ghost { background:var(--surface); color:var(--soft); border-color:var(--line); }
+  .chips { display:flex; flex-wrap:wrap; gap:.4rem; align-items:center; }
+  .chip { font-size:.78rem; font-weight:600; padding:.28rem .7rem; border-radius:999px; text-decoration:none;
+          border:1px solid var(--line); color:var(--soft); background:var(--surface); }
+  .chip.on { border-color:var(--accent); color:var(--accent); background:var(--accent-bg); }
+  .chip .n { font-weight:800; margin-left:.2rem; }
+  .toolbar { display:flex; gap:.8rem; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-bottom:.4rem; }
+  .msg { background:var(--green-bg); border:1px solid var(--green-ln); color:var(--green); border-radius:10px; padding:.6rem .8rem; font-size:.9rem; margin-bottom:1rem; }
+  .empty { color:var(--grey); font-size:.9rem; padding:1.2rem 0; }
+  .switch { display:flex; align-items:center; gap:.5rem; font-size:.86rem; color:var(--soft); }
+  .switch input { width:auto; }
+</style>
+
+{% set pill = {'New':'s-new','Reviewing':'s-reviewing','Will address':'s-will',
+               "Won't fix":'s-wont','Done':'s-done'} %}
+
+{{ page_header("Spot Feedback") }}
+<p class="lede">In-page comments and suggestions left by signed-in users. Each entry points to the
+  page — and the exact spot — it was about. Set a status and, when you like, send the person a short
+  reply — they see every status change on their <strong>My feedback</strong> page. The internal note stays private.</p>
+
+{% if msg %}<div class="msg">{{ msg }}</div>{% endif %}
+
+<div class="panel">
+  <form method="post" action="/admin/feedback/toggle" class="switch">
+    <label class="switch">
+      <input type="checkbox" name="spot_feedback_enabled" value="on" {{ 'checked' if accepting }}
+             onchange="this.form.submit()">
+      Accepting new feedback {% if accepting %}(on){% else %}(off — the Feedback button is hidden for everyone){% endif %}
+    </label>
+  </form>
+</div>
+
+<div class="panel">
+  <div class="toolbar">
+    <div class="chips">
+      <a class="chip {{ 'on' if not sel_status }}" href="/admin/feedback">All<span class="n">{{ total }}</span></a>
+      {% for s in statuses %}
+      <a class="chip {{ 'on' if sel_status == s }}" href="/admin/feedback?status={{ s|urlencode }}">{{ s }}<span class="n">{{ counts.get(s, 0) }}</span></a>
+      {% endfor %}
+    </div>
+    <a class="btn ghost" href="/admin/feedback/export{{ ('?status=' ~ sel_status|urlencode) if sel_status }}">⤓ Export Excel</a>
+  </div>
+
+  {% if rows %}
+  <table class="resp-table">
+    <thead><tr><th>When</th><th>Page &amp; spot</th><th>Feedback</th><th>Status &amp; triage</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+    <tr>
+      <td data-label="When">
+        <div class="when">{{ r.created_at|replace('T',' ') }}</div>
+        <div class="who">{{ r.submitter or '—' }}</div>
+      </td>
+      <td data-label="Page &amp; spot">
+        <a class="pageurl" href="{{ r.page_url }}{{ '#sf=' ~ r.id if '#' not in r.page_url }}">{{ r.page_url }}</a>
+        {% if r.element_selector %}<div class="sel-el">{{ r.element_selector }}</div>{% endif %}
+      </td>
+      <td class="msg-cell" data-label="Feedback">
+        <div class="body">{{ r.message }}</div>
+        <a class="open-link" href="/admin/feedback/view/{{ r.id }}">Open details ›</a>
+      </td>
+      <td data-label="Status &amp; triage">
+        <span class="pill {{ pill.get(r.status, 's-new') }}">{{ r.status }}</span>
+        <form method="post" action="/admin/feedback/{{ r.id }}" class="triage">
+          <input type="hidden" name="from_status" value="{{ sel_status }}">
+          <select name="status" aria-label="Status">
+            {% for s in statuses %}<option value="{{ s }}" {{ 'selected' if s == r.status }}>{{ s }}</option>{% endfor %}
+          </select>
+          <input class="reply" name="reply" value="" placeholder="Reply to submitter (optional)" aria-label="Reply to submitter">
+          <input class="note" name="admin_note" value="{{ r.admin_note or '' }}" placeholder="Internal note (private)" aria-label="Internal note">
+          <button class="btn" type="submit">Apply</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  {% if sel_status %}{{ empty_state("No feedback with status “" ~ sel_status ~ "”.", icon="💬") }}
+  {% else %}{{ empty_state("No feedback yet.", hint="Once users tap the 💬 Feedback button, submissions land here.", icon="💬") }}{% endif %}
+  {% endif %}
+</div>
+{% endblock %}

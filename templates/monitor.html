@@ -1,0 +1,108 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}Monitor{% endblock %}
+
+{% block head %}
+<style>
+  p.lede { max-width:none; }
+  .mon-list { list-style:none; margin:1rem 0 0; padding:0; }
+  .mon-card { display:block; text-decoration:none; color:inherit; border:1px solid var(--line);
+              background:var(--surface); border-radius:14px; padding:1rem 1.1rem; margin-bottom:.8rem;
+              box-shadow:0 1px 3px rgba(20,30,50,.05); transition:box-shadow .15s, border-color .15s; }
+  .mon-card:hover { box-shadow:0 3px 10px rgba(20,30,50,.1); border-color:var(--blue-ln); }
+  .mon-top { display:flex; gap:1rem; align-items:baseline; justify-content:space-between; }
+  .mon-name { font-weight:700; font-size:1.05rem; }
+  .mon-meta { color:var(--soft); font-size:.8rem; margin-top:.15rem; }
+  .mon-rate { white-space:nowrap; text-align:right; }
+  .mon-rate .v { font-size:1.5rem; font-weight:800; line-height:1; }
+  .mon-rate .k { font-size:.66rem; color:var(--soft); text-transform:uppercase; }
+  .life { font-size:.66rem; font-weight:700; border-radius:999px; padding:.1rem .5rem; border:1px solid;
+          text-transform:uppercase; letter-spacing:.02em; margin-right:.5rem; vertical-align:middle; }
+  .life.upcoming { color:var(--accent); background:var(--accent-bg); border-color:var(--blue-ln); }
+  .life.ongoing  { color:var(--green); background:var(--green-bg); border-color:var(--green-ln); }
+  .bar { height:8px; border-radius:999px; background:var(--surface-2); overflow:hidden;
+         display:flex; margin:.7rem 0 .55rem; border:1px solid var(--line); }
+  .bar .seg-done { background:var(--green); }
+  .bar .seg-part { background:var(--amber); }
+  .counts { display:flex; gap:1.1rem; flex-wrap:wrap; font-size:.82rem; color:var(--soft); }
+  .counts b { color:var(--ink); }
+  .dot { display:inline-block; width:.55rem; height:.55rem; border-radius:50%; margin-right:.3rem; vertical-align:baseline; }
+  .dot.done { background:var(--green); } .dot.part { background:var(--amber); } .dot.none { background:var(--grey); }
+  .empty { color:var(--grey); font-size:.92rem; border:1px dashed var(--line); border-radius:12px;
+           padding:1.4rem; text-align:center; margin-top:1rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+{{ page_header("Monitor") }}
+<p class="lede">Track who has registered for each activity through its public link, and how far they have got with the customer-satisfaction survey (CSS). Only activities that are <b>upcoming</b> (still registering) or <b>ongoing</b> (CSS collecting) appear here — once an activity concludes it moves to its report.{% if is_admin %} You are seeing every activity.{% else %} You are seeing the activities you created.{% endif %} Open one for the full participant roster, or export it.</p>
+
+{% if outside_events %}
+<h2 style="font-size:1.05rem; margin:1.4rem 0 .2rem;">Invited activities <span style="font-weight:500; color:var(--soft); font-size:.82rem;">— response tracking</span></h2>
+<p class="mon-meta" style="margin:0 0 .4rem;">Activities organized by an outside body where your staff were resource persons. These collect feedback <strong>anonymously</strong>, so there's no roster — just how many responses came in. Concluded ones move to <a href="/activities/outside">all invited events</a>.</p>
+<ul class="mon-list">
+  {% for e in outside_events %}
+  <li>
+    <a class="mon-card" href="/monitor/{{ e.event_token }}">
+      <div class="mon-top">
+        <div>
+          <div class="mon-name"><span class="life {{ e.lifecycle }}">{{ e.lifecycle }}</span>{{ e.title }}</div>
+          <div class="mon-meta">{{ e.event_date|humandaterange(e.end_date) or "—" }}{% if e.modality == 'online' %} · Online{% endif %}{% if e.venue %} · {{ e.venue }}{% endif %}{% if e.organizer %} · {{ e.organizer }}{% endif %}</div>
+        </div>
+        <div class="mon-rate">
+          <div class="v">{{ e.responses }}</div>
+          <div class="k">Responses</div>
+        </div>
+      </div>
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if not events %}
+  {% if not outside_events %}
+  <div class="empty">No upcoming or ongoing activities to monitor. Once you <a href="/create">create an activity</a> with a future date and participants register through its link, it will appear here.</div>
+  {% endif %}
+{% else %}
+<h2 style="font-size:1.05rem; margin:1.4rem 0 .2rem;">Bureau activities <span style="font-weight:500; color:var(--soft); font-size:.82rem;">— registration &amp; CSS</span></h2>
+<ul class="mon-list">
+  {% for e in events %}
+  <li>
+    <a class="mon-card" href="/monitor/{{ e.event_token }}">
+      <div class="mon-top">
+        <div>
+          <div class="mon-name"><span class="life {{ e.lifecycle }}">{{ e.lifecycle }}</span>{{ e.title }}</div>
+          <div class="mon-meta">{{ e.event_date|humandaterange(e.end_date) or "—" }}{% if e.modality == 'online' %} · Online{% endif %}{% if e.venue %} · {{ e.venue }}{% endif %}{% if e.organizer %} · {{ e.organizer }}{% endif %}</div>
+        </div>
+        <div class="mon-rate">
+          {% if e.lifecycle == 'upcoming' %}
+            <div class="v">{{ e.registered }}</div>
+            <div class="k">Registered</div>
+          {% else %}
+            <div class="v">{% if e.completion_rate is not none %}{{ e.completion_rate }}%{% else %}—{% endif %}</div>
+            <div class="k">CSS done</div>
+          {% endif %}
+        </div>
+      </div>
+      {% if e.registered %}
+        {% set done_pct = (e.completed * 100 / e.registered) %}
+        {% set part_pct = (e.in_progress * 100 / e.registered) %}
+        <div class="bar" title="{{ e.completed }} completed, {{ e.in_progress }} in progress, {{ e.not_started }} not started">
+          <div class="seg-done" style="width:{{ done_pct }}%"></div>
+          <div class="seg-part" style="width:{{ part_pct }}%"></div>
+        </div>
+      {% endif %}
+      <div class="counts">
+        <span><b>{{ e.registered }}</b> registered</span>
+        <span><span class="dot done"></span><b>{{ e.completed }}</b> completed</span>
+        <span><span class="dot part"></span><b>{{ e.in_progress }}</b> in progress</span>
+        <span><span class="dot none"></span><b>{{ e.not_started }}</b> not started</span>
+        {% if e.unattributed %}<span>· {{ e.unattributed }} walk-in / QR response(s)</span>{% endif %}
+      </div>
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

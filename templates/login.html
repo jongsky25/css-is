@@ -1,0 +1,62 @@
+{% extends "public_layout.html" %}
+{% block title %}{{ 'Set up' if first_run else 'Sign in' }} — CSS-IS{% endblock %}
+
+{% block content %}
+<div class="pub-card" style="max-width:380px; margin:8vh auto 0;">
+  <span class="equity-mark md" role="img" aria-label="Equity in Health"></span>
+  <div class="muted small" style="font-weight:700; letter-spacing:.03em; margin-top:.3rem;">CSS·IS</div>
+  {% if first_run %}
+    <h1 style="font-size:1.25rem; margin:.8rem 0 .2rem;">Set up the first account</h1>
+    <p class="muted small" style="margin:0 0 1.2rem;">No accounts exist yet. Create the first <strong>administrator</strong> — you can add more people and roles afterward.</p>
+    <div class="flash info">This one-time screen disappears once an admin exists.</div>
+  {% else %}
+    <h1 style="font-size:1.25rem; margin:.8rem 0 .2rem;">Sign in</h1>
+    <p class="muted small" style="margin:0 0 1.2rem;">Staff access to the CSS-IS dashboard and tools.</p>
+  {% endif %}
+
+  {% if err %}<div class="flash err" role="alert">{{ err }}</div>{% endif %}
+
+  <form method="post" action="/login" data-loading="Signing in…">
+    <input type="hidden" name="next" value="{{ next }}">
+    <div class="field">
+      <label for="username">Email</label>
+      <input id="username" name="username" type="email" autocomplete="username" autofocus required
+             placeholder="you@office.gov.ph">
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <div class="pw-wrap">
+        <input id="password" name="password" type="password" autocomplete="{{ 'new-password' if first_run else 'current-password' }}" required>
+        <button type="button" class="pw-toggle" data-pw-toggle aria-pressed="false" aria-label="Show password">Show</button>
+      </div>
+    </div>
+    <button type="submit" class="btn block" style="font-size:1rem; padding:.7rem;">{{ 'Create admin & sign in' if first_run else 'Sign in' }}</button>
+  </form>
+
+  {% if not first_run %}<div class="small" style="margin-top:.9rem; text-align:center;"><a href="/forgot">Forgot your password?</a></div>{% endif %}
+  <div class="muted" style="margin-top:1rem; font-size:.76rem; text-align:center;">Internal tool · sign-in required for everything except submitting a rating.</div>
+
+  {% set latest = CHANGELOG[0] if CHANGELOG else None %}
+  <div class="login-ver">
+    <details class="ver-pop">
+      <summary title="See what changed in this version">
+        <span class="ver-tag">v{{ APP_VERSION }}</span>
+        <span class="ver-link">What's new</span>
+      </summary>
+      {% if latest %}
+      <div class="ver-menu">
+        <div class="ver-head">
+          <strong>Version {{ latest.version }}</strong>
+          <span class="muted">{{ latest.date }}</span>
+        </div>
+        {% if latest.summary %}<p class="muted small ver-sum">{{ latest.summary }}</p>{% endif %}
+        <ul class="ver-list">
+          {% for c in latest.changes %}<li>{{ c }}</li>{% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </details>
+  </div>
+</div>
+{% endblock %}
+{% block foot %}{% endblock %}

@@ -1,0 +1,260 @@
+{% extends "public_layout.html" %}
+{% block title %}{% if ev %}{{ ev.title }} — {% endif %}CSS-IS{% endblock %}
+
+{% block head %}
+<style>
+  /* Link-tree lists & tiles — extracted from inline styles (visual parity intended). */
+  .sp-list { list-style:none; padding:0; margin:0 0 1rem; }
+  .sp-row { display:flex; align-items:center; gap:.6rem; padding:.4rem 0; }
+  .sp-av { width:38px; height:38px; border-radius:50%; flex:0 0 auto; }
+  img.sp-av { object-fit:cover; }
+  span.sp-av { background:var(--accent-bg); color:var(--accent); display:flex;
+               align-items:center; justify-content:center; font-weight:700; }
+  .sp-name { font-weight:600; }
+  .tile-list { list-style:none; padding:0; margin:0 0 1rem; }
+  .link-list { list-style:none; padding:0; margin:0; }
+  .tile { display:block; padding:.65rem .8rem; border:1px solid var(--line); border-radius:8px;
+          text-decoration:none; color:var(--ink); margin-bottom:.5rem; }
+  .tile.lg { padding:.75rem .9rem; }
+  .tile .go { float:right; color:var(--accent); font-weight:700; }
+  .tile.done { background:var(--green-bg, #eef9f1); border-color:var(--green-ln, #b7e3c4);
+               color:var(--ink); cursor:default; }
+  .tile.done .go { color:var(--green, #2f855a); }
+  .tile.done strong { color:var(--soft); font-weight:600; }
+</style>
+{% endblock %}
+
+{% set kind_meta = {
+  'program':      ('📋', t('lt_kind_program', lang)),
+  'slides':       ('🖼️', t('lt_kind_slides', lang)),
+  'registration': ('📝', t('lt_kind_registration', lang)),
+  'recording':    ('🎬', t('lt_kind_recording', lang)),
+  'certificate':  ('🏅', t('lt_kind_certificate', lang)),
+  'info':         ('🔗', t('lt_kind_info', lang)),
+  'other':        ('🔗', t('lt_kind_link', lang))
+} %}
+
+{% block content %}
+<div class="pub-card">
+{% if not ev %}
+  <h1 style="margin-top:0;">{{ t('lt_nf_title', lang) }}</h1>
+  <p class="muted">{{ t('lt_nf_body', lang) }}</p>
+{% else %}
+  <h1 style="margin-top:0;">{{ ev.title }}</h1>
+  <p class="muted small" style="margin:0 0 .25rem;"><strong style="color:var(--ink);">{{ ev.event_date|humandaterange(ev.end_date) }}</strong>{% if ev.modality == 'online' %} · <span class="badge blue">Online</span>{% endif %}{% if ev.venue %} · {{ ev.venue }}{% endif %}</p>
+  {% set org = ev.organizer or ev.lead_name %}
+  {% if org %}<p class="muted small" style="margin:0;">{{ org }}</p>{% endif %}
+  {% if can_manage %}<p class="small" style="margin:.4rem 0 0;"><a href="/activities/{{ ev.event_token }}/manage">⚙ Manage this activity →</a></p>{% endif %}
+
+  {% if attendee %}
+  <div class="flash ok" style="margin-top:1rem;">{{ t('lt_thanks_pre', lang) }}{% if attendee.name %}, {{ attendee.name }}{% endif %}{{ t('lt_thanks_post', lang) }}</div>
+  <p class="muted small" style="margin:-.5rem 0 1rem;">
+    {{ t('lt_not_you', lang) }} {{ (attendee.name or 'you').split(' ')[0] }}?
+    <a href="/e/{{ ev.event_token }}/forget">{{ t('lt_start_fresh', lang) }}</a>
+  </p>
+
+  {% if welcome_message %}
+  <div class="panel tint-blue" style="margin:0 0 1rem; padding:.85rem 1rem; white-space:pre-wrap; line-height:1.5;">{{ welcome_message }}</div>
+  {% endif %}
+
+  {% if speakers %}
+  <h2>{{ t('lt_resource_persons', lang) }}</h2>
+  <ul class="sp-list">
+    {% for s in speakers %}
+    <li class="sp-row">
+      {% if s.has_photo %}<img class="sp-av" src="/photo/{{ s.id }}" alt="" loading="lazy" decoding="async">
+      {% else %}<span class="sp-av">{{ (s.name or '?')[:1]|upper }}</span>{% endif %}
+      <span>
+        <div class="sp-name">{% if s.honorific %}{{ s.honorific }} {% endif %}{{ s.name }}</div>
+        {% if s.role %}<div class="muted small">{{ s.role }}{% if s.agency and not s.is_internal %} · {{ s.agency }}{% endif %}</div>{% endif %}
+      </span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% macro reslist(items) %}
+  <ul class="tile-list">
+    {% for r in items %}
+    {% set meta = kind_meta.get(r.kind, kind_meta['other']) %}
+    <li>
+      <a class="tile" href="{{ r.url }}" target="_blank" rel="noopener noreferrer">
+        <span class="muted small">{{ meta[0] }} {{ meta[1] }}</span><br>
+        <strong>{{ r.label }}</strong>{% if r.note %} <span class="muted small">— {{ r.note }}</span>{% endif %}
+        <span class="go" aria-hidden="true">↗</span>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endmacro %}
+
+  {% if resources_now %}
+  <h2>{{ t('lt_programme_resources', lang) }}</h2>
+  {{ reslist(resources_now) }}
+  {% endif %}
+
+  {% if completed and ending_message %}
+  <div class="panel tint-green" style="margin:0 0 1rem; padding:.85rem 1rem; white-space:pre-wrap; line-height:1.5;">{{ ending_message }}</div>
+  {% endif %}
+
+  {% if completed and ev.certificate_enabled and attendee %}
+  <div class="panel" style="margin:0 0 1rem; padding:.85rem 1rem;">
+    <p style="margin:0 0 .5rem; font-weight:650;">{{ t('lt_cert_heading', lang) }}</p>
+    <a class="btn" href="/e/{{ ev.event_token }}/certificate?fmt=pdf&att={{ attendee.id }}">{{ t('thanks_cert_pdf', lang) }}</a>
+  </div>
+  {% endif %}
+
+  {% if resources_after %}
+    {% if completed %}
+    <h2>{{ t('lt_unlocked', lang) }}</h2>
+    {{ reslist(resources_after) }}
+    {% else %}
+    <div class="panel tint-blue" style="margin:0 0 1rem; padding:.75rem .9rem; font-size:.9rem;">
+      🔒 <strong>{{ resources_after|length }} {{ t('lt_locked_resource', lang) if resources_after|length == 1 else t('lt_locked_resources_pl', lang) }}</strong>
+      {{ t('lt_locked_suffix', lang) }}
+    </div>
+    {% endif %}
+  {% endif %}
+
+  <h2>{{ t('lt_rate_this', lang) }}</h2>
+  {% if links %}
+  <ul class="link-list">
+    {% for l in links %}
+    {% if l.done %}
+    <li><div class="tile lg done">
+      <span class="muted small">{{ l.n }} {{ t('lt_n_of', lang) }} {{ total }} · {{ l.label }}</span><br>
+      <strong>{{ l.title }}</strong>{% if l.rp_name %} — {{ l.rp_name }}{% endif %}
+      <span class="go">✓ {{ t('lt_done', lang) }}</span>
+    </div></li>
+    {% else %}
+    <li><a class="tile lg" href="/r/{{ l.token }}?seq={{ tokens }}&att={{ attendee.id }}">
+      <span class="muted small">{{ l.n }} {{ t('lt_n_of', lang) }} {{ total }} · {{ l.label }}</span><br>
+      <strong>{{ l.title }}</strong>{% if l.rp_name %} — {{ l.rp_name }}{% endif %}
+      <span class="go" aria-hidden="true">→</span>
+    </a></li>
+    {% endif %}
+    {% endfor %}
+  </ul>
+  {% if completed %}
+  <p class="muted small">{{ t('lt_all_done', lang) }}</p>
+  {% else %}
+  <p class="muted small">{{ t('lt_each_hint', lang) }}</p>
+  {% endif %}
+  {% else %}
+  <p class="muted">{{ t('lt_no_forms', lang) }}</p>
+  {% endif %}
+
+  {% elif confirm %}
+  <hr style="border:none; border-top:1px solid var(--line); margin:1.2rem 0;">
+  <h2 style="margin-top:0;">{{ t('lt_is_this_you', lang) }}</h2>
+  <div class="panel tint-amber" style="line-height:1.5; margin:0 0 1rem;">
+    {{ t('lt_confirm_someone', lang) }} {% if confirm.existing_name %}{{ t('lt_confirm_named', lang) }} <strong>{{ confirm.existing_name }}</strong> {% endif %}{{ t('lt_confirm_registered', lang) }} <strong>{{ confirm.posted.email }}</strong>,
+    {{ t('lt_confirm_but', lang) }} <strong>{{ confirm.posted.name }}</strong>.
+    {{ t('lt_confirm_q', lang) }}
+  </div>
+  <form method="post" action="/e/{{ ev.event_token }}" style="display:flex; flex-direction:column; gap:.6rem;">
+    <input type="hidden" name="name" value="{{ confirm.posted.name }}">
+    <input type="hidden" name="email" value="{{ confirm.posted.email }}">
+    <input type="hidden" name="contact" value="{{ confirm.posted.contact or '' }}">
+    <input type="hidden" name="sex" value="{{ confirm.posted.sex }}">
+    <input type="hidden" name="affiliation" value="{{ confirm.posted.affiliation }}">
+    <input type="hidden" name="honorific" value="{{ confirm.posted.honorific or '' }}">
+    <input type="hidden" name="consent" value="on">
+    <button type="submit" name="resolve" value="resume" class="btn block" style="font-size:1rem; padding:.8rem;">{{ t('lt_yes_me', lang) }}</button>
+    <button type="submit" name="resolve" value="new" class="btn block ghost" style="font-size:1rem; padding:.8rem;">{{ t('lt_no_diff', lang) }}</button>
+  </form>
+  <p class="muted small" style="margin:.6rem 0 0;">{{ t('lt_shared_email', lang) }}</p>
+
+  {% else %}
+  <hr style="border:none; border-top:1px solid var(--line); margin:1.2rem 0;">
+  <h2 style="margin-top:0;">{{ t('lt_sign_in', lang) }}</h2>
+  {% if errors %}
+  <div class="errors" role="alert"><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>
+  {% endif %}
+  <form method="post" action="/e/{{ ev.event_token }}" data-loading="Saving…" data-validate novalidate>
+    <div class="field">
+      <label for="honorific">{{ t('lt_title_lbl', lang) }} <span class="opt">{{ t('optional', lang) }}</span></label>
+      <select id="honorific" name="honorific">
+        <option value="" {{ 'selected' if not posted.honorific }}>—</option>
+        {% for h in ["Mr.", "Ms.", "Mrs.", "Dr.", "Engr.", "Atty."] %}
+        <option value="{{ h }}" {{ 'selected' if posted.honorific == h }}>{{ h }}</option>
+        {% endfor %}
+      </select>
+      <p class="muted small" style="margin:.3rem 0 0;">{{ t('lt_cert_help', lang) }}</p>
+    </div>
+    <div class="field">
+      <label for="name">{{ t('lt_name_lbl', lang) }}</label>
+      <input type="text" id="name" name="name" value="{{ posted.name or '' }}" autocomplete="name" required>
+    </div>
+    <div class="field">
+      <label for="email">{{ t('lt_email_lbl', lang) }}</label>
+      <input type="email" id="email" name="email" value="{{ posted.email or '' }}" autocomplete="email" required>
+      <p id="dupe-notice" class="panel tint-blue" role="status" hidden
+         style="font-size:.85rem; line-height:1.4; margin:.5rem 0 0; color:var(--ink-soft);">
+        {{ t('lt_dupe_notice', lang) }}
+      </p>
+    </div>
+    <div class="field">
+      <label for="contact">{{ t('lt_contact_lbl', lang) }} <span class="opt">{{ t('optional', lang) }}</span></label>
+      <input type="text" id="contact" name="contact" value="{{ posted.contact or '' }}" autocomplete="tel" inputmode="tel" data-phone>
+    </div>
+    <div class="field">
+      <label for="sex">{{ t('sex', lang) }}</label>
+      <select id="sex" name="sex" required>
+        <option value="" {{ 'selected' if not posted.sex }} disabled>{{ t('select', lang) }}</option>
+        <option value="M" {{ 'selected' if posted.sex == 'M' }}>{{ t('male', lang) }}</option>
+        <option value="F" {{ 'selected' if posted.sex == 'F' }}>{{ t('female', lang) }}</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="affiliation">{{ t('affiliation', lang) }}</label>
+      <select id="affiliation" name="affiliation" required>
+        <option value="" {{ 'selected' if not posted.affiliation }} disabled>{{ t('select', lang) }}</option>
+        <option value="DOH" {{ 'selected' if posted.affiliation == 'DOH' }}>DOH</option>
+        <option value="NON-DOH" {{ 'selected' if posted.affiliation == 'NON-DOH' }}>{{ t('non_doh', lang) }}</option>
+      </select>
+    </div>
+
+    <div class="panel tint-blue" style="font-size:.85rem; line-height:1.45; color:var(--ink-soft); margin:1rem 0;">{{ consent_text }}</div>
+    <label style="display:flex; gap:.55rem; align-items:flex-start; margin:1rem 0; font-size:.92rem; font-weight:400;">
+      <input type="checkbox" name="consent" value="on" required style="margin-top:.2rem; width:1.05rem; height:1.05rem;">
+      <span>{{ t('lt_consent_label', lang) }}</span>
+    </label>
+    <button type="submit" class="btn block" style="font-size:1rem; padding:.8rem;">{{ t('lt_consent_submit', lang) }}</button>
+  </form>
+  <script>
+  (function () {
+    var form = document.querySelector('form[action="/e/{{ ev.event_token }}"]');
+    if (!form) return;
+    var email = form.querySelector('#email');
+    var notice = document.getElementById('dupe-notice');
+    var btn = form.querySelector('button[type="submit"]');
+    var timer = null;
+
+    // Live duplicate checker: reassure the participant that re-using their email
+    // resumes their registration rather than duplicating it. PII-free probe.
+    function check() {
+      var v = (email.value || '').trim();
+      if (!notice || !v || v.indexOf('@') < 0) { if (notice) notice.hidden = true; return; }
+      fetch('/e/{{ ev.event_token }}/check?email=' + encodeURIComponent(v))
+        .then(function (r) { return r.ok ? r.json() : {registered: false}; })
+        .then(function (d) { notice.hidden = !(d && d.registered); })
+        .catch(function () { notice.hidden = true; });
+    }
+    if (email) {
+      email.addEventListener('blur', check);
+      email.addEventListener('input', function () {
+        clearTimeout(timer); timer = setTimeout(check, 450);
+      });
+    }
+    // Guard against accidental double-submit creating a second request.
+    form.addEventListener('submit', function (e) {
+      if (e.defaultPrevented) return;
+      if (btn) { btn.disabled = true; }
+    });
+  })();
+  </script>
+  {% endif %}
+{% endif %}
+</div>
+{% endblock %}

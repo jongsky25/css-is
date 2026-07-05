@@ -1,0 +1,72 @@
+{% extends "public_layout.html" %}
+{% block title %}{{ t('thanks_title', lang) }}{% endblock %}
+
+{% block content %}
+<style>
+  .raffle-ticket { margin:1rem 0; padding:1rem 1.1rem; border-radius:14px;
+    background:linear-gradient(135deg,#fff7e6,#ffe9c7); border:1px solid var(--amber-ln,#e6b450);
+    box-shadow:0 4px 14px rgba(180,120,0,.12); }
+  .raffle-ticket .rt-emoji { font-size:1.9rem; line-height:1; }
+  .raffle-ticket .rt-head { margin:.25rem 0 .5rem; font-weight:800; font-size:1.06rem;
+    color:#9a6400; letter-spacing:.2px; }
+  .raffle-ticket .rt-codes { display:flex; flex-wrap:wrap; gap:.5rem; justify-content:center; }
+  .raffle-ticket .rt-code { font-family:ui-monospace,Menlo,Consolas,monospace; font-weight:800;
+    font-size:1.5rem; letter-spacing:.28em; padding:.35rem .7rem .35rem .95rem; border-radius:10px;
+    background:#fff; color:#7a4f00; border:2px dashed #e0a93a; }
+  .raffle-ticket .rt-note { margin:.6rem 0 0; font-size:.82rem; color:#7a5a1e; line-height:1.45; }
+</style>
+<div class="pub-card" style="text-align:center;">
+  <h1 style="margin-top:0; color:var(--green);">{{ t('thanks_h1', lang) }}</h1>
+  {% if combined_count is defined %}
+  <p class="muted">{% if combined_count %}{{ t('thanks_rp_feedback_for', lang) }} <strong>{{ combined_count }}</strong> {{ t('thanks_rp_person', lang) if combined_count == 1 else t('thanks_rp_persons', lang) }} {{ t('thanks_rp_was_recorded', lang) }}{% else %}{{ t('thanks_rp_none', lang) }}{% endif %}</p>
+  {% else %}
+  <p class="muted">{{ t('thanks_recorded_pre', lang) }}{% if ctx %} {{ t('thanks_recorded_for', lang) }} <strong>{{ ctx.form_id }}</strong>{% endif %}.</p>
+  {% endif %}
+  <p class="muted small">{{ t('thanks_anon_note', lang) }}</p>
+
+  {# Comment raffle: show the respondent their claim code(s) — their proof if drawn.
+     Bilingual inline so the public thank-you page stays in the chosen language
+     without new i18n keys. #}
+  {% set fil = (lang == 'fil') %}
+  {% set codes = (raffle_codes if (raffle_codes is defined and raffle_codes) else ([raffle_code] if (raffle_code is defined and raffle_code) else [])) %}
+  {% if codes %}
+  <div class="raffle-ticket">
+    <div class="rt-emoji" aria-hidden="true">🎟️</div>
+    <p class="rt-head">{{ 'Ikaw ay kasali sa raffle!' if fil else "You're entered in the raffle!" }}</p>
+    <div class="rt-codes">
+      {% for c in codes %}<span class="rt-code">{{ c }}</span>{% endfor %}
+    </div>
+    <p class="rt-note">
+      {% if fil %}
+        I-screenshot o tandaan ang {{ 'iyong code' if codes|length == 1 else 'mga code na ito' }}.
+        Kapag na-draw {{ 'ito' if codes|length == 1 else 'ang isa rito' }}{% if raffle_prize %} para sa <strong>{{ raffle_prize }}</strong>{% endif %},
+        ipakita {{ 'ito' if codes|length == 1 else 'ito' }} sa organizer para makuha ang premyo.
+      {% else %}
+        Screenshot or remember {{ 'this code' if codes|length == 1 else 'these codes' }}.
+        If {{ 'it' if codes|length == 1 else 'one of them' }} is drawn{% if raffle_prize %} for <strong>{{ raffle_prize }}</strong>{% endif %},
+        show it to the organizer to claim your prize.
+      {% endif %}
+    </p>
+  </div>
+  {% endif %}
+
+  {% if next_token %}
+    <a class="btn" style="margin-top:.6rem;" href="/r/{{ next_token }}?seq={{ seq }}{% if att %}&att={{ att }}{% endif %}">{{ t('thanks_continue', lang) }}</a>
+  {% elif event_token %}
+    <p style="font-weight:650; color:var(--green);">{{ t('thanks_all_done_event', lang) }}</p>
+    {% if ending_message %}
+    <div class="panel tint-green" style="margin:.8rem 0; padding:.85rem 1rem; text-align:left; white-space:pre-wrap; line-height:1.5;">{{ ending_message }}</div>
+    {% endif %}
+    {% if cert_ready %}
+    <div class="panel" style="margin:.8rem 0; padding:.85rem 1rem;">
+      <p style="margin:0 0 .5rem; font-weight:650;">{{ t('thanks_cert_heading', lang) }}</p>
+      <a class="btn" href="/e/{{ event_token }}/certificate?fmt=pdf{% if att %}&att={{ att }}{% endif %}">{{ t('thanks_cert_pdf', lang) }}</a>
+    </div>
+    {% endif %}
+    <a class="btn" style="margin-top:.2rem;" href="/e/{{ event_token }}{% if att %}?att={{ att }}{% endif %}">{{ t('thanks_back_activity', lang) }}</a>
+  {% elif seq %}
+    <p style="font-weight:650; color:var(--green);">{{ t('thanks_seq_done', lang) }}</p>
+    <a class="btn ghost" href="/seq?tokens={{ seq }}">{{ t('thanks_back_list', lang) }}</a>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,556 @@
+{% extends "dash_layout.html" %}
+{% block title %}Manage activity{% endblock %}
+
+{% set kind_meta = {
+  'program':     ('📋', 'Programme / Agenda'),
+  'slides':      ('🖼️', 'Slides / Materials'),
+  'registration':('📝', 'Registration'),
+  'recording':   ('🎬', 'Recording'),
+  'certificate': ('🏅', 'Certificate'),
+  'info':        ('🔗', 'Info link'),
+  'other':       ('🔗', 'Other')
+} %}
+
+{% block head %}
+<style>
+  .mwrap { max-width: 920px; }
+  .mhead h1 { margin:.2rem 0 .15rem; font-size:1.55rem; }
+  .mmeta { color:var(--soft); font-size:.9rem; margin:0 0 .2rem; }
+  .mmeta strong { color:var(--ink); }
+  .mby { color:var(--grey); font-size:.78rem; margin:.1rem 0 0; }
+  .mcard { background:var(--surface); border:1px solid var(--line); border-radius:14px;
+           padding:1.1rem 1.25rem; box-shadow:var(--shadow); margin-bottom:1rem; }
+  .mcard h2 { font-size:1.02rem; margin:0 0 .2rem; }
+  .mcard .hint { color:var(--soft); font-size:.82rem; margin:0 0 .8rem; }
+  .pubrow { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+  .pubrow code { background:var(--surface-2); border:1px solid var(--line); border-radius:7px;
+                 padding:.3rem .55rem; font-size:.82rem; color:var(--ink-soft); word-break:break-all; }
+  .customlink { margin-top:1rem; padding-top:.9rem; border-top:1px dashed var(--line); }
+  .customlink h3 { font-size:.92rem; margin:0 0 .2rem; }
+  .slugform { display:flex; align-items:center; gap:.4rem; flex-wrap:wrap; margin-top:.5rem; }
+  .slugform .slugpfx { color:var(--soft); font-size:.82rem; }
+  .slugform input { flex:1 1 14rem; min-width:10rem; padding:.45rem .55rem; border:1px solid var(--line);
+                    border-radius:8px; font-size:max(16px,.88rem); }
+  .slugform .rm { background:none; border:none; color:var(--soft); font-size:.8rem; cursor:pointer; text-decoration:underline; }
+  .chip-list { list-style:none; margin:0; padding:0; }
+  .chip-list li { display:flex; align-items:center; gap:.6rem; padding:.45rem 0; border-top:1px solid var(--line); }
+  .chip-list li:first-child { border-top:none; }
+  .sp-av { width:34px; height:34px; border-radius:50%; object-fit:cover; flex:0 0 auto;
+           background:var(--accent-bg); color:var(--accent); display:flex; align-items:center;
+           justify-content:center; font-size:.8rem; font-weight:700; }
+  .sp-name { font-weight:600; font-size:.9rem; }
+  .sp-role { color:var(--grey); font-size:.76rem; }
+  .res-tbl { width:100%; border-collapse:collapse; }
+  .res-tbl td { padding:.5rem .4rem; border-top:1px solid var(--line); vertical-align:top; font-size:.88rem; }
+  .res-tbl tr:first-child td { border-top:none; }
+  .res-kind { white-space:nowrap; color:var(--soft); font-size:.8rem; }
+  .res-lbl a { font-weight:600; color:var(--accent); text-decoration:none; }
+  .res-lbl a:hover { text-decoration:underline; }
+  .res-note { color:var(--grey); font-size:.78rem; margin-top:.1rem; }
+  .res-act { white-space:nowrap; text-align:right; }
+  .res-act button { font-size:.76rem; padding:.25rem .55rem; }
+  .addform { display:grid; grid-template-columns:160px 1fr; gap:.6rem .8rem; align-items:start; margin-top:.4rem; }
+  .addform .full { grid-column:1 / -1; }
+  .addform label { font-size:.78rem; font-weight:600; color:var(--soft); display:block; margin-bottom:.2rem; }
+  .addform input, .addform select, .addform textarea { width:100%; padding:.45rem .55rem; border:1px solid var(--line-strong);
+           border-radius:8px; background:var(--surface); }
+  .addform textarea { min-height:2.4rem; resize:vertical; }
+  .empty { color:var(--grey); font-size:.86rem; }
+  .msgblock { margin:0 0 1.1rem; }
+  .msglabel { display:block; font-size:.86rem; font-weight:700; color:var(--ink); margin:0 0 .4rem; }
+  .msglabel .opt { font-weight:400; color:var(--grey); }
+  .tones { display:flex; flex-wrap:wrap; gap:.4rem; margin:0 0 .45rem; }
+  .tone { font-size:.78rem; padding:.28rem .7rem; border:1px solid var(--line-strong);
+          border-radius:999px; background:var(--surface); color:var(--soft); cursor:pointer; }
+  .tone:hover { border-color:var(--accent); color:var(--accent); }
+  #msgForm textarea { width:100%; padding:.55rem .65rem; border:1px solid var(--line-strong);
+          border-radius:8px; background:var(--surface); color:var(--ink); resize:vertical;
+          font:inherit; line-height:1.45; }
+  .msgstatus { display:inline-flex; align-items:center; gap:.35rem; font-size:.8rem; font-weight:600;
+               color:var(--grey); }
+  .msgstatus.saving { color:var(--soft); } .msgstatus.ok { color:var(--green); }
+  .msgstatus.err { color:var(--red); }
+  .flash.warn { background:var(--amber-bg); border:1px solid var(--amber-ln); color:var(--amber);
+                padding:.6rem .8rem; border-radius:8px; font-size:.86rem; margin-bottom:.8rem; }
+  .badge { display:inline-block; font-size:.72rem; font-weight:600; padding:.1rem .5rem;
+           border-radius:999px; vertical-align:middle; }
+  .badge.done { background:var(--green-bg); color:var(--green); border:1px solid var(--green-ln); }
+  .badge.pending { background:var(--surface-2); color:var(--grey); border:1px solid var(--line); }
+  .badge.live { background:var(--green-bg); color:var(--green); border:1px solid var(--green-ln); }
+  .badge.off { background:var(--amber-bg); color:var(--amber); border:1px solid var(--amber-ln); }
+  .badge.after { background:var(--accent-bg); color:var(--accent); border:1px solid var(--line); margin-left:.4rem; }
+  .pubtoggle { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+  .pubtoggle button { font-size:.86rem; }
+  .flag { display:flex; align-items:center; gap:.45rem; font-size:.8rem; color:var(--soft); font-weight:500; }
+  .flag input { width:auto; }
+  @media (max-width:600px){ .addform { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set u = request.state.user %}
+<div class="mwrap">
+{% if not ev %}
+  <h1>Activity not found</h1>
+  <p class="mmeta">This activity link is no longer valid.</p>
+  <p><a href="/">← Back to home</a></p>
+{% else %}
+  <div class="mhead">
+    <p class="mmeta" style="margin-bottom:.1rem;"><a href="/">Home</a> · Manage activity</p>
+    <h1>{{ ev.title }}</h1>
+    <p class="mmeta"><strong>{{ ev.event_date|humandaterange(ev.end_date) }}</strong>{% if ev.modality == 'online' %} · <span class="badge blue">Online</span>{% endif %}{% if ev.venue %} · {{ ev.venue }}{% endif %}{% if ev.organizer %} · {{ ev.organizer }}{% endif %}</p>
+    {% if ev.created_by %}<p class="mby">Created by {{ ev.created_by }}</p>{% endif %}
+  </div>
+
+  {% if err == 'badlink' %}<div class="flash warn" style="margin-top:.8rem;">A link needs both a label and a valid web address (http/https).</div>{% endif %}
+
+  <!-- public page pointer -->
+  <div class="mcard" style="margin-top:1rem;">
+    <h2>The participant page</h2>
+    <p class="hint">This is the single page participants land on. After they register &amp; consent, they see the details, resource persons, your shared resources, and the feedback links.</p>
+    <div class="pubrow">
+      <a class="btn" href="/e/{{ ev.slug or ev.event_token }}" target="_blank" rel="noopener">Open public page ↗</a>
+      <code id="pubUrl">{{ base_url }}/e/{{ ev.slug or ev.event_token }}</code>
+      <button type="button" class="btn ghost small" onclick="navigator.clipboard&amp;&amp;navigator.clipboard.writeText(document.getElementById('pubUrl').textContent)">Copy link</button>
+    </div>
+
+    <!-- custom (vanity) link -->
+    <div id="customlink" class="customlink">
+      <h3>Custom link <span class="opt">(optional)</span></h3>
+      <p class="hint" style="margin:0;">Tailor the link to the activity so it's easier to share or read out loud — for example <code>les-quezon-june</code>. The original link{% if ev.slug %} (<code>{{ base_url }}/e/{{ ev.event_token }}</code>){% endif %} and any QR codes you've already printed keep working.</p>
+      {% if slug_ok %}<div class="flash ok" style="margin:.6rem 0 0;">Custom link saved.</div>{% endif %}
+      {% if slug_err %}<div class="flash err" style="margin:.6rem 0 0;">{{ slug_err }}</div>{% endif %}
+      <form method="post" action="/activities/{{ ev.event_token }}/slug" class="slugform">
+        <span class="slugpfx">{{ base_url }}/e/</span>
+        <input type="text" name="slug" value="{{ ev.slug or '' }}" placeholder="les-quezon-june"
+               pattern="[a-z0-9]+(-[a-z0-9]+)*" maxlength="40" autocapitalize="off"
+               autocorrect="off" spellcheck="false" aria-label="Custom link">
+        <button type="submit" class="btn small">Save</button>
+      </form>
+      {% if ev.slug %}
+      <form method="post" action="/activities/{{ ev.event_token }}/slug" style="margin-top:.35rem;">
+        <input type="hidden" name="slug" value="">
+        <button type="submit" class="rm">Remove custom link</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- organizer messages -->
+  <div class="mcard">
+    <h2>Messages to participants</h2>
+    <p class="hint">Speak to participants in your own words. Pick a tone to start from a draft, then edit freely.
+      Use <code>{name}</code> anywhere and it becomes the participant's first name.
+      <strong>Your changes save automatically</strong> — there's nothing to click.</p>
+    <form method="post" action="/activities/{{ ev.event_token }}/messages" id="msgForm">
+      <div class="msgblock">
+        <label class="msglabel">Welcome message <span class="opt">— seen when a participant registers</span></label>
+        <div class="tones" data-slot="welcome" data-target="welcomeMsg">
+          {% for t in tones %}<button type="button" class="tone" data-tone="{{ t }}">{{ tone_labels[t] }}</button>{% endfor %}
+        </div>
+        <textarea id="welcomeMsg" name="welcome_message" rows="4" maxlength="2000"
+                  placeholder="Leave blank to show no welcome message.">{{ welcome_message }}</textarea>
+      </div>
+      <div class="msgblock">
+        <label class="msglabel">Ending message <span class="opt">— auto-shown once they finish all the feedback</span></label>
+        <div class="tones" data-slot="ending" data-target="endingMsg">
+          {% for t in tones %}<button type="button" class="tone" data-tone="{{ t }}">{{ tone_labels[t] }}</button>{% endfor %}
+        </div>
+        <textarea id="endingMsg" name="ending_message" rows="4" maxlength="2000"
+                  placeholder="Leave blank to show no ending message.">{{ ending_message }}</textarea>
+      </div>
+      <span id="msgStatus" class="msgstatus" role="status" aria-live="polite">All changes save automatically.</span>
+      <noscript><button class="btn" type="submit">Save messages</button></noscript>
+    </form>
+  </div>
+
+  <!-- certificate of appearance -->
+  <div class="mcard" id="certificate">
+    <h2>Certificate of Appearance</h2>
+    <p class="hint">When enabled, a participant who has <strong>completed all of this activity's feedback</strong>
+      can download an auto-generated DOH Certificate of Appearance as a print-ready PDF.
+      The participant's name, the activity title, date and venue are filled in automatically; the
+      signatory's name, title and signature image come from the <a href="/directory">Directory</a>.
+      Only the bureau's <strong>signing authorities</strong> — Section Chiefs, Division Chiefs and the
+      Director — can be chosen as the signatory.</p>
+    <form method="post" action="/activities/{{ ev.event_token }}/certificate">
+      <label style="display:flex;align-items:center;gap:.5rem;font-weight:600;">
+        <input type="checkbox" name="certificate_enabled" value="1" {{ 'checked' if cert_enabled }}>
+        Offer a Certificate of Appearance for this activity
+      </label>
+      <div class="fgrid" style="grid-template-columns:1fr 1fr;margin-top:.8rem;">
+        <div>
+          <label for="signatory_rp_id">Signed by</label>
+          <select id="signatory_rp_id" name="signatory_rp_id">
+            <option value="">— choose a signatory —</option>
+            {% for s in signatories %}
+            <option value="{{ s.id }}" {{ 'selected' if cert_signatory_id == s.id }}>
+              {{ s.honorific ~ ' ' if s.honorific }}{{ s.name }}{% if s.position %} — {{ s.position }}{% endif %}{% if not s.has_signature %}  (no signature on file){% endif %}
+            </option>
+            {% endfor %}
+          </select>
+          <p class="hint" style="margin:.35rem 0 0;">Don't see a signature? Add one on the person's
+            <a href="/directory">Directory</a> record.</p>
+        </div>
+        <div>
+          <label for="certificate_verb">Wording</label>
+          <select id="certificate_verb" name="certificate_verb">
+            {% for v in cert_verbs %}
+            <option value="{{ v }}" {{ 'selected' if cert_verb == v }}>…{{ v }} the {{ '{activity}' }}</option>
+            {% endfor %}
+          </select>
+          <p class="hint" style="margin:.35rem 0 0;">How the certificate describes their participation.</p>
+        </div>
+      </div>
+      <div class="actions" style="margin-top:.8rem;">
+        <button class="btn" type="submit">Save certificate settings</button>
+      </div>
+    </form>
+  </div>
+  <!-- comment raffle -->
+  <div class="mcard" id="raffle">
+    <h2>🎟️ Comment raffle <span class="badge {{ 'live' if ev.raffle_enabled else 'off' }}">{{ 'On' if ev.raffle_enabled else 'Off' }}</span></h2>
+    <p class="hint">A bit of fun: anyone who leaves a <strong>comment</strong> on this
+      activity's feedback gets a small <strong>claim code</strong> on their thank-you screen, and you can
+      <strong>draw a random winner</strong> on a big screen. Registered participants are drawn by name;
+      walk-in / anonymous / online entries are identified by their code — works for face-to-face
+      and online activities alike.</p>
+    <form method="post" action="/activities/{{ ev.event_token }}/raffle/settings">
+      <label style="display:flex;align-items:center;gap:.5rem;font-weight:600;">
+        <input type="checkbox" name="raffle_enabled" value="1" {{ 'checked' if ev.raffle_enabled }}>
+        Run a comment raffle for this activity
+      </label>
+      <div style="margin-top:.8rem;max-width:26rem;">
+        <label for="raffle_prize" style="font-size:.78rem;font-weight:600;color:var(--soft);display:block;margin-bottom:.2rem;">Prize <span class="opt">(optional — shown to entrants)</span></label>
+        <input id="raffle_prize" name="raffle_prize" value="{{ ev.raffle_prize or '' }}" maxlength="200"
+               placeholder="e.g. a DOH tumbler" style="width:100%;padding:.45rem .55rem;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);">
+      </div>
+      <div class="actions" style="margin-top:.8rem;">
+        <button class="btn" type="submit">Save raffle settings</button>
+        {% if ev.raffle_enabled %}
+        <a class="btn ghost" href="/activities/{{ ev.event_token }}/raffle" target="_blank" rel="noopener">Open draw screen ↗</a>
+        {% endif %}
+      </div>
+    </form>
+    {% if not ev.raffle_enabled %}
+    <p class="empty" style="margin-top:.6rem;">Turn it on and save to reveal the draw screen. Codes only start appearing on thank-you screens once it's on.</p>
+    {% endif %}
+  </div>
+
+  <script id="msgDrafts" type="application/json">{{ msg_drafts|tojson }}</script>
+  <script>
+    (function () {
+      var drafts = JSON.parse(document.getElementById('msgDrafts').textContent);
+      document.querySelectorAll('.tones').forEach(function (bar) {
+        var slot = bar.dataset.slot, ta = document.getElementById(bar.dataset.target);
+        bar.querySelectorAll('.tone').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var text = (drafts[slot] || {})[btn.dataset.tone] || '';
+            if (ta.value.trim() && !confirm('Replace the current ' + slot + ' message with this draft?')) return;
+            ta.value = text;
+            ta.focus();
+          });
+        });
+      });
+
+      // Auto-save the participant messages — no button to forget, nothing to lose.
+      // Saves ~0.8s after you stop typing and when you click away; a status note
+      // confirms it. Before you submit ANY other form (add a resource, edit/move/
+      // delete a link) we flush a final save via sendBeacon, so a fast "type then
+      // Add resource" can't drop the last keystrokes.
+      var msgForm = document.getElementById('msgForm');
+      var status = document.getElementById('msgStatus');
+      if (msgForm) {
+        var fields = ['welcomeMsg', 'endingMsg']
+          .map(function (id) { return document.getElementById(id); })
+          .filter(Boolean);
+        var saved = fields.map(function (f) { return f.value; });
+        var timer = null;
+        function setStatus(text, cls) {
+          if (status) { status.textContent = text; status.className = 'msgstatus ' + (cls || ''); }
+        }
+        function dirty() {
+          return fields.some(function (f, i) { return f.value !== saved[i]; });
+        }
+        function body() {
+          var b = new URLSearchParams();
+          fields.forEach(function (f) { b.append(f.name, f.value); });
+          return b;
+        }
+        function save(viaBeacon) {
+          if (!dirty()) return;
+          var snapshot = fields.map(function (f) { return f.value; });
+          if (viaBeacon && navigator.sendBeacon) {
+            navigator.sendBeacon(msgForm.action, body());
+            saved = snapshot;
+            return;
+          }
+          setStatus('Saving…', 'saving');
+          fetch(msgForm.action, {
+            method: 'POST', credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'fetch',
+                       'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body().toString()
+          }).then(function (r) {
+            if (r.ok) { saved = snapshot; setStatus('Saved ✓', 'ok'); }
+            else { setStatus('Couldn’t save — will retry as you type.', 'err'); }
+          }).catch(function () {
+            setStatus('Couldn’t save — check your connection.', 'err');
+          });
+        }
+        fields.forEach(function (f) {
+          f.addEventListener('input', function () {
+            setStatus('Editing…', ''); clearTimeout(timer); timer = setTimeout(save, 800);
+          });
+          f.addEventListener('blur', function () { clearTimeout(timer); save(); });
+        });
+        document.querySelectorAll('form').forEach(function (form) {
+          if (form === msgForm) return;
+          form.addEventListener('submit', function () { clearTimeout(timer); save(true); });
+        });
+      }
+    })();
+  </script>
+
+  {% if not sharing_on %}
+  <div class="flash warn">Public sharing is turned off site-wide by an administrator, so these resources stay hidden on the participant page until it is switched back on.</div>
+  {% endif %}
+
+  {# ---- one resource bucket (a card) ---------------------------------------- #}
+  {% macro bucket_card(card_title, card_hint, items, after_flag, empty_msg, addph) %}
+  {% set tok = ev.event_token %}
+  {% set other = "Shared immediately" if after_flag else "After they finish feedback" %}
+  <div class="mcard">
+    <h2>{{ card_title }}</h2>
+    <p class="hint">{{ card_hint }}</p>
+    {% if items %}
+    <div class="table-wrap">
+    <table class="res-tbl">
+      {% for r in items %}
+      <tr>
+        {% set meta = kind_meta.get(r.kind, kind_meta['other']) %}
+        <td class="res-kind"><span aria-hidden="true">{{ meta[0] }}</span> {{ meta[1] }}</td>
+        <td class="res-lbl">
+          <a href="{{ r.url }}" target="_blank" rel="noopener noreferrer">{{ r.label }}</a>
+          {% if r.note %}<div class="res-note">{{ r.note }}</div>{% endif %}
+          {% if edit_id == r.id %}
+          <form method="post" action="/activities/{{ tok }}/links/{{ r.id }}" class="addform" style="margin-top:.6rem;">
+            <input type="hidden" name="visible_after_done" value="{{ '1' if after_flag else '0' }}">
+            <div><label>Type</label>
+              <select name="kind">{% for k in kinds %}<option value="{{ k }}" {{ 'selected' if k == r.kind }}>{{ kind_meta.get(k, kind_meta['other'])[1] }}</option>{% endfor %}</select>
+            </div>
+            <div><label>Label</label><input name="label" value="{{ r.label }}" required></div>
+            <div class="full"><label>Web address</label><input name="url" value="{{ r.url }}" required></div>
+            <div class="full"><label>Note (optional)</label><input name="note" value="{{ r.note or '' }}"></div>
+            <div class="full"><button class="btn" type="submit">Save changes</button>
+              <a class="btn ghost small" href="/activities/{{ tok }}/manage">Cancel</a></div>
+          </form>
+          {% endif %}
+        </td>
+        <td class="res-act">
+          {% if edit_id != r.id %}
+          <a class="btn ghost small" href="/activities/{{ tok }}/manage?edit={{ r.id }}">Edit</a>
+          <form method="post" action="/activities/{{ tok }}/links/{{ r.id }}" style="display:inline">
+            <input type="hidden" name="_action" value="move">
+            <button class="btn ghost small" type="submit" title="Move to “{{ other }}”">Move →</button>
+          </form>
+          <form method="post" action="/activities/{{ tok }}/links/{{ r.id }}" style="display:inline"
+                onsubmit="return confirm('Remove this link?')">
+            <input type="hidden" name="_action" value="delete">
+            <button class="btn danger small" type="submit">Delete</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+    </div>
+    {% else %}
+    <p class="empty">{{ empty_msg }}</p>
+    {% endif %}
+
+    <h3 style="font-size:.92rem; margin:1.1rem 0 .3rem;">Add to this card</h3>
+    <form method="post" action="/activities/{{ tok }}/links" class="addform">
+      <input type="hidden" name="visible_after_done" value="{{ '1' if after_flag else '0' }}">
+      <div>
+        <label>Type</label>
+        <select name="kind">
+          {% for k in kinds %}<option value="{{ k }}">{{ kind_meta.get(k, kind_meta['other'])[1] }}</option>{% endfor %}
+        </select>
+      </div>
+      <div><label>Label</label><input name="label" placeholder="{{ addph }}" required></div>
+      <div class="full"><label>Web address</label><input name="url" placeholder="https://…" required></div>
+      <div class="full"><label>Note <span class="opt">(optional)</span></label><input name="note" placeholder="e.g. updated after the session"></div>
+      <div class="full"><button class="btn" type="submit">Add resource</button></div>
+    </form>
+  </div>
+  {% endmacro %}
+
+  {{ bucket_card(
+       "Shared immediately",
+       "Programme, slides, a registration form, info links — anything participants can see as soon as they register and consent.",
+       resources_now, False,
+       "Nothing shared immediately yet.",
+       "e.g. Day 1 slide deck") }}
+
+  {{ bucket_card(
+       "Shared after they finish the feedback",
+       "Rewards for completing the survey — a certificate, the recording, etc. Each participant unlocks these only once they have submitted all of this activity's feedback forms.",
+       resources_after, True,
+       "Nothing in this card yet.",
+       "e.g. Certificate of participation") }}
+
+  <!-- resource persons (read-only) -->
+  <div class="mcard">
+    <h2>Resource persons</h2>
+    {% if speakers %}
+    <ul class="chip-list">
+      {% for s in speakers %}
+      <li>
+        {% if s.has_photo %}<img class="sp-av" src="/photo/{{ s.id }}" alt="">
+        {% else %}<span class="sp-av">{{ (s.name or '?')[:1]|upper }}</span>{% endif %}
+        <span>
+          <div class="sp-name">{% if s.honorific %}{{ s.honorific }} {% endif %}{{ s.name }}</div>
+          {% if s.role %}<div class="sp-role">{{ s.role }}{% if s.agency and not s.is_internal %} · {{ s.agency }}{% endif %}</div>{% endif %}
+        </span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty">No resource persons are attached to this activity.</p>
+    {% endif %}
+  </div>
+
+  <!-- activity dates (editable any time) -->
+  <div class="mcard" id="dates">
+    <h2>Activity dates</h2>
+    <p class="hint">The <strong>start date</strong> sets the reporting period (calendar year, Q1 = Jan–Mar …).
+      Add an <strong>end date</strong> only for a multi-day activity; leave it blank for a single day.
+      Changing the start date moves which period this activity counts in.</p>
+    {% if err == 'baddates' %}<div class="flash warn">Check the dates — the start must be a real date within 2 years, and the end can't fall before the start.</div>{% endif %}
+    {% if date_ok %}<div class="flash ok">Activity dates updated.</div>{% endif %}
+    <form method="post" action="/activities/{{ ev.event_token }}/dates" class="addform">
+      <div>
+        <label for="ev_start">Start date</label>
+        <input type="date" id="ev_start" name="event_date" class="win-field" required
+               value="{{ ev.event_date }}" onchange="syncEndMin()"
+               {% if date_min %}min="{{ date_min }}"{% endif %} {% if date_max %}max="{{ date_max }}"{% endif %}>
+      </div>
+      <div>
+        <label for="ev_end">End date <span class="opt">optional</span></label>
+        <input type="date" id="ev_end" name="end_date" class="win-field"
+               value="{{ ev.end_date or '' }}" {% if date_max %}max="{{ date_max }}"{% endif %}>
+      </div>
+      <div class="full">
+        <button class="btn" type="submit">Save dates</button>
+        <span class="empty" style="margin-left:.6rem;">Currently: {{ ev.event_date|humandaterange(ev.end_date) }}.</span>
+      </div>
+    </form>
+    <script>
+    // The end of a multi-day activity can't precede its start — keep the end
+    // picker's floor in step with the chosen start.
+    function syncEndMin() {
+      var s = document.getElementById('ev_start'), e = document.getElementById('ev_end');
+      if (s && e) { e.min = s.value || ''; if (e.value && s.value && e.value < s.value) e.value = ''; }
+    }
+    syncEndMin();
+    </script>
+  </div>
+
+  <!-- entry window (editable any time) -->
+  <div class="mcard" id="window">
+    <h2>When feedback is open</h2>
+    <p class="hint">Choose the dates during which this activity's feedback forms accept answers.
+      Applies to <strong>every</strong> feedback link below. <strong>Leave both blank</strong> = always open.
+      <strong>Set only “closes”</strong> = open now, stop accepting after that day.
+      <strong>Set both</strong> = accept answers only inside those dates. You can change this any time.</p>
+    {% if err == 'badwindow' %}<div class="flash warn">The window must close <em>after</em> it opens — check the two dates.</div>{% endif %}
+    <form method="post" action="/activities/{{ ev.event_token }}/window" class="addform">
+      <div>
+        <label for="open_at">Opens</label>
+        <input type="date" id="open_at" name="open_at" class="win-field" data-full="{{ entry_window.open_at or '' }}" value="{{ (entry_window.open_at or '')[:10] }}">
+      </div>
+      <div>
+        <label for="close_at">Closes</label>
+        <input type="date" id="close_at" name="close_at" class="win-field" data-full="{{ entry_window.close_at or '' }}" value="{{ (entry_window.close_at or '')[:10] }}">
+      </div>
+      <div class="full">
+        <button class="btn" type="submit">Save window</button>
+        <a href="#" id="win-time-toggle" onclick="toggleWinTime(event)" style="font-weight:600; margin-left:.6rem;">Add specific time</a>
+        {% if entry_window.open_at or entry_window.close_at %}
+        <span class="empty" style="margin-left:.6rem;">Currently: {{ entry_window.open_at|humandt or 'now' }} → {{ entry_window.close_at|humandt or 'no deadline' }}. Clear both fields and save to make it always open.</span>
+        {% else %}
+        <span class="empty" style="margin-left:.6rem;">Currently always open.</span>
+        {% endif %}
+      </div>
+    </form>
+    <script>
+    // Date-only by default; "Add specific time" swaps to datetime-local for a
+    // precise cutoff. The server widens a bare date to the whole day.
+    function toggleWinTime(e) {
+      if (e) e.preventDefault();
+      var fields = document.querySelectorAll('#window .win-field');
+      var toDatetime = fields.length && fields[0].type === 'date';
+      fields.forEach(function (f) {
+        if (toDatetime) { f.type = 'datetime-local'; if (f.dataset.full && f.dataset.full.indexOf('T') > -1) f.value = f.dataset.full.slice(0, 16); }
+        else { f.type = 'date'; f.value = (f.value || '').slice(0, 10); }
+      });
+      document.getElementById('win-time-toggle').textContent = toDatetime ? 'Use dates only' : 'Add specific time';
+    }
+    // If a precise (non day-boundary) time was already set, open in datetime mode.
+    (function () {
+      var fields = document.querySelectorAll('#window .win-field');
+      var precise = Array.prototype.some.call(fields, function (f) {
+        var v = f.dataset.full || '';
+        return v.indexOf('T') > -1 && !/T(00:00|23:59)$/.test(v);
+      });
+      if (precise) toggleWinTime();
+    })();
+    </script>
+  </div>
+
+  <!-- stop accepting responses now (no need to wait for the window to elapse) -->
+  <div class="mcard" id="danger" style="border-color:var(--red-ln);">
+    <h2 style="color:var(--red);">Stop accepting responses</h2>
+    {% if is_closed %}
+    <p class="hint">This activity is <strong>closed</strong> — new responses are stopped, on paper and online.
+      Everything already collected stays in your reports. Reopen it only to back-enter a late form or fix a typo, then close it again.</p>
+    <div style="display:flex; gap:.6rem; flex-wrap:wrap; align-items:center;">
+      {% if report_url and responses_total %}
+      <a class="btn" href="{{ report_url }}">View the report →</a>
+      {% endif %}
+      <form method="post" action="/activities/{{ ev.event_token }}/reopen" style="display:inline;"
+            onsubmit="return confirm('Reopen this activity? Responses and paper entry will resume.');">
+        <button class="btn ghost" type="submit">Reopen to make a correction</button>
+      </form>
+    </div>
+    {% else %}
+    <p class="hint"><strong>Close</strong> stops new responses immediately — both the public link and paper entry —
+      without waiting for the “closes” date above. Everything already collected stays in your reports. Reversible: you can reopen it any time.</p>
+    <form method="post" action="/activities/{{ ev.event_token }}/close"
+          onsubmit="return confirm('Close this activity now? New responses stop immediately (paper and online). You can reopen it later to make a correction.');">
+      <button class="btn danger" type="submit">Close survey now</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <!-- feedback forms (read-only) -->
+  <div class="mcard">
+    <h2>Feedback links</h2>
+    <p class="hint">Generated automatically — participants reach these from the public page after registering.</p>
+    {% if forms %}
+    <ul class="chip-list">
+      {% for f in forms %}
+      <li>
+        <span class="res-kind">{{ 'Event review' if f.survey_type == 2 else 'Speaker review' }}</span>
+        <span class="sp-name" style="font-weight:600;">{{ f.topic or f.rp_name or '—' }}{% if f.rp_name and f.survey_type == 3 %} — {{ f.rp_name }}{% endif %}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty">No feedback forms attached.</p>
+    {% endif %}
+  </div>
+{% endif %}
+</div>
+{% endblock %}

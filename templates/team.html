@@ -1,0 +1,316 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import empty_state %}
+{% import "_story.html" as s %}
+{% import "_unit_badges.html" as ub %}
+{% import "_export.html" as ex %}
+{% block title %}{{ unit.name }} — coaching{% endblock %}
+{% block content %}
+<style>
+  .crumbs { font-size:.85rem; margin-bottom:.8rem; color:var(--soft); }
+  .crumbs a { text-decoration:none; font-weight:600; } .crumbs .sep { margin:0 .35rem; color:var(--grey); }
+  .phead { display:flex; gap:1rem; align-items:center; margin-bottom:.8rem; }
+  .phead .uglyph { width:60px; height:60px; border-radius:14px; background:linear-gradient(135deg,var(--accent-bg),var(--accent-bg));
+                   display:flex; align-items:center; justify-content:center; font-size:1.6rem; flex:0 0 auto; }
+  .phead h1 { margin:0; font-size:1.5rem; }
+  .phead .sub { color:var(--soft); font-size:.9rem; }
+  .drill { display:flex; flex-wrap:wrap; gap:.4rem; margin:0 0 1rem; }
+  .drill a { font-size:.8rem; font-weight:600; text-decoration:none; color:var(--soft); border:1px solid var(--line);
+             border-radius:999px; padding:.28rem .7rem; background:var(--surface); }
+  .drill a:hover { border-color:var(--accent); color:var(--accent); }
+  .drill a.up { color:var(--accent); border-color:var(--blue-ln); background:var(--accent-bg); }
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1.1rem 1.3rem;
+           margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .panel h3 { margin:0 0 .2rem; font-size:1rem; } .panel .sublab { color:var(--soft); font-size:.82rem; margin:0 0 .8rem; }
+  .panel .hd { display:flex; justify-content:space-between; align-items:center; margin-bottom:.7rem; gap:1rem; }
+  .cons-line { font-size:.92rem; display:flex; gap:.5rem; align-items:flex-start; }
+  .cons-line .pill { flex:0 0 auto; font-size:.68rem; font-weight:700; padding:.12rem .5rem; border-radius:999px; border:1px solid; }
+  .cons-line.stable .pill { background:var(--green-bg); color:var(--green); border-color:var(--green-ln); }
+  .cons-line.volatile .pill { background:var(--amber-bg); color:var(--amber); border-color:var(--amber-ln); }
+  .cons-line.unknown .pill { background:var(--surface-3); color:var(--soft); border-color:var(--line); }
+  .lown { margin-top:.7rem; font-size:.82rem; color:var(--amber); background:var(--amber-bg);
+          border:1px solid var(--amber-ln); border-radius:8px; padding:.4rem .65rem; }
+
+  /* coach panel */
+  .coach { border:1px solid var(--line); border-radius:16px; padding:1.1rem 1.3rem; margin-bottom:1.1rem;
+           box-shadow:0 1px 3px rgba(20,30,50,.05); border-left:6px solid var(--accent); }
+  .coach.celebrate { background:var(--green-bg); border-color:var(--green-ln); border-left-color:var(--green); }
+  .coach.support   { background:var(--red-bg);   border-color:var(--red-ln);   border-left-color:var(--red); }
+  .coach.steady    { background:var(--amber-bg); border-color:var(--amber-ln); border-left-color:var(--amber); }
+  .coach.encourage { background:var(--blue-bg);  border-color:var(--blue-ln);  border-left-color:var(--accent); }
+  .coach-badge { display:inline-block; font-size:.66rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em;
+                 color:var(--on-accent); background:var(--accent); border-radius:999px; padding:.12rem .55rem; margin-bottom:.5rem; }
+  .coach.celebrate .coach-badge { background:var(--green); } .coach.support .coach-badge { background:var(--red); }
+  .coach.steady .coach-badge { background:var(--amber); }
+  .coach h3 { margin:.1rem 0 .8rem; font-size:1.2rem; }
+  .coach-col h4 { margin:0 0 .35rem; font-size:.8rem; text-transform:uppercase; letter-spacing:.03em; color:var(--green); }
+  .coach-col ul { margin:0; padding-left:1.1rem; } .coach-col li { margin:.25rem 0; line-height:1.45; font-size:.95rem; }
+  .coach-motiv { margin-top:.9rem; padding-top:.8rem; border-top:1px solid var(--line);
+                 font-size:1.05rem; font-weight:600; font-style:italic; }
+
+  /* earned badges */
+  .pbadges-row { display:flex; flex-wrap:wrap; gap:.35rem; margin-top:.45rem; }
+  .pbadge { display:inline-flex; align-items:center; gap:.18rem; font-size:.7rem; font-weight:700;
+            padding:.18rem .55rem; border-radius:999px; border:1px solid transparent; white-space:nowrap; }
+  .pbadge .ic { letter-spacing:-.04em; }
+  .pbadge.bg-gold{background:#fff7e6;color:#b7791f;border-color:#f6e0b5;}
+  .pbadge.bg-green{background:var(--green-bg);color:var(--green);border-color:var(--green-ln);}
+  .pbadge.bg-blue{background:#eef5ff;color:#2b6cb0;border-color:#cfe0f5;}
+  .pbadge.bg-rose{background:#fff1f2;color:#be123c;border-color:#fecdd3;}
+  .pbadge.bg-violet{background:#f5f3ff;color:#6d28d9;border-color:#ddd6fe;}
+  .pbadge.bg-amber{background:#fffbeb;color:#b45309;border-color:#fde68a;}
+  .pbadge.bg-teal{background:#ecfeff;color:#0e7490;border-color:#bae6fd;}
+  .pbadge.bg-indigo{background:#eef2ff;color:#4338ca;border-color:#c7d2fe;}
+  .pbadge.bg-stone{background:#f5f5f4;color:#57534e;border-color:#e7e5e4;}
+  .pbadge.bg-fuchsia{background:#fdf4ff;color:#a21caf;border-color:#f5d0fe;}
+
+  /* TA panel */
+  .ta { border:1px solid var(--blue-ln); background:linear-gradient(180deg,var(--accent-bg),var(--surface)); border-left:6px solid var(--accent);
+        border-radius:16px; padding:1.1rem 1.3rem; margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .ta-badge { display:inline-block; font-size:.66rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em;
+              color:var(--on-accent); background:var(--accent); border-radius:999px; padding:.14rem .6rem; margin-bottom:.5rem; }
+  .ta h3 { margin:.1rem 0 .4rem; font-size:1.2rem; }
+  .ta-diag { font-size:.95rem; line-height:1.55; color:var(--ink-soft); margin:0 0 .9rem; } .ta-diag .ctx { color:var(--ink); font-weight:600; }
+  .ta-actions h4, .ta-secondary h4 { font-size:.74rem; text-transform:uppercase; letter-spacing:.03em; color:var(--accent); margin:.2rem 0 .3rem; }
+  .ta-actions ul { margin:0; padding:0; list-style:none; }
+  .ta-actions li { position:relative; padding:.32rem 0 .32rem 1.5rem; font-size:.95rem; line-height:1.45; border-top:1px solid var(--line); }
+  .ta-actions li:first-child { border-top:none; }
+  .ta-actions li::before { content:"→"; position:absolute; left:.25rem; color:var(--accent); font-weight:800; }
+  .ta-secondary { margin-top:.9rem; padding-top:.8rem; border-top:1px solid var(--line); }
+  .ta-secondary ul { margin:.2rem 0 0; padding-left:1.15rem; } .ta-secondary li { font-size:.92rem; line-height:1.45; margin:.2rem 0; }
+  .ta-keep { margin:.9rem 0 0; padding-top:.8rem; border-top:1px solid var(--line); font-size:.92rem; color:var(--green); font-weight:600; }
+
+  /* activity profile banner (mirrors the Activities page) */
+  .activities-profile { border:1px solid var(--line); border-radius:16px; padding:1rem 1.1rem; margin:0 0 1.1rem;
+    background:linear-gradient(135deg,var(--accent-bg),var(--accent-bg)); box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .activities-profile.tone-good { background:linear-gradient(135deg,var(--green-bg),var(--accent-bg)); }
+  .activities-profile.tone-mid { background:linear-gradient(135deg,var(--amber-bg),var(--accent-bg)); }
+  .ap-headline { font-size:1.18rem; font-weight:800; color:var(--ink); }
+  .ap-story { font-size:.92rem; color:var(--ink-soft); margin-top:.2rem; }
+  .ap-stats { display:flex; gap:1.7rem; flex-wrap:wrap; margin:.85rem 0 .2rem; }
+  .ap-stat .apv { font-size:1.7rem; font-weight:800; line-height:1; color:var(--ink); }
+  .ap-stat .apv span { font-size:.7rem; color:var(--soft); font-weight:600; }
+  .ap-stat .apk { font-size:.68rem; text-transform:uppercase; letter-spacing:.03em; color:var(--soft); margin-top:.15rem; }
+  .ap-areas { display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.6rem; }
+  .area-chip { font-size:.74rem; font-weight:700; border-radius:999px; padding:.18rem .6rem; border:1px solid var(--line); background:var(--surface); }
+  .area-chip.up { color:var(--green); border-color:var(--green-ln); background:var(--green-bg); }
+  .area-chip.down { color:var(--amber); border-color:var(--amber-ln); background:var(--amber-bg); }
+
+  /* time filter */
+  .timefilter { display:flex; align-items:center; flex-wrap:wrap; gap:.4rem; margin:0 0 1rem; }
+  .timefilter .tf-lab { font-size:.8rem; font-weight:600; color:var(--soft); margin-right:.15rem; }
+  .timefilter a { font-size:.8rem; font-weight:600; text-decoration:none; color:var(--soft);
+                  border:1px solid var(--line); border-radius:999px; padding:.3rem .75rem; background:var(--surface); }
+  .timefilter a:hover { border-color:var(--accent); color:var(--accent); }
+  .timefilter a.on { background:var(--ink); border-color:var(--ink); color:var(--on-accent); }
+
+  /* year on year */
+  .yoy.yoy-good { border-left:6px solid var(--green); }
+  .yoy.yoy-bad { border-left:6px solid var(--red); }
+  .yoy.yoy-neutral { border-left:6px solid var(--amber); }
+  .yoy-insight { font-size:1.02rem; font-weight:600; line-height:1.5; color:var(--ink); margin:.1rem 0 .9rem; }
+  .ybars { display:flex; gap:.6rem; align-items:flex-end; height:120px; }
+  .ybars .yb { flex:1; max-width:80px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; }
+  .ybars .yv { font-size:.78rem; font-weight:700; margin-bottom:.25rem; }
+  .ybars .ybar { width:60%; max-width:42px; min-height:3px; border-radius:6px 6px 0 0; background:linear-gradient(180deg,#68b984,#2f855a); }
+  .ybars .yx { font-size:.72rem; color:var(--soft); margin-top:.35rem; }
+
+  /* standing vs siblings (one-column comparison) */
+  .peers .ps-line { font-size:.98rem; font-weight:600; color:var(--ink); margin:.1rem 0 1rem; }
+  .cmpgrid { display:grid; grid-template-columns:9.5rem 1fr; gap:.55rem .7rem; align-items:stretch; }
+  .cmp-h { font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.03em; color:var(--soft); align-self:end; padding-bottom:.2rem; }
+  .cmp-h.grp { text-align:center; }
+  .cmp-ax { display:flex; flex-direction:column; justify-content:center; }
+  .cmp-ax .ax-t { font-size:.86rem; font-weight:700; color:var(--ink); } .cmp-ax .ax-s { font-size:.72rem; color:var(--soft); }
+  .cmp-cell { background:var(--accent-bg); border:1px solid var(--blue-ln); border-radius:10px; padding:.5rem .65rem; text-align:center; }
+  .cmp-cell .rk { font-size:1.25rem; font-weight:800; color:var(--accent-ink); line-height:1.1; }
+  .cmp-cell .of { font-size:.7rem; color:var(--soft); }
+  .cmp-cell .st { font-size:.74rem; color:var(--soft); margin-top:.2rem; line-height:1.3; }
+  .cmp-cell .st .up { color:var(--green); font-weight:700; } .cmp-cell .st .dn { color:var(--red); font-weight:700; } .cmp-cell .st .mid { color:var(--soft); font-weight:600; }
+  .peers .premium-note { font-size:.76rem; color:var(--soft); margin:.7rem 0 0; }
+  @media (max-width:620px){ .cmpgrid { grid-template-columns:6.5rem 1fr; } .cmp-cell .rk{font-size:1.05rem;} }
+</style>
+
+{% set band_cls = {'Outstanding':'b-good','Satisfactory':'b-good','Excellent':'b-good','Good':'b-good','Fair':'b-mid','Poor':'b-bad'} %}
+{% set tbase = '/dashboard/teams/' ~ unit.path %}
+
+<nav class="crumbs" aria-label="Breadcrumb"><a href="/dashboard">Dashboard</a><span class="sep">›</span><a href="/dashboard/teams">Teams</a>{% if nav.parent %}<span class="sep">›</span><a href="/dashboard/teams/{{ nav.parent.path }}">{{ nav.parent.label }}</a>{% endif %}<span class="sep">›</span><span class="here">{{ unit.short or unit.name }}</span></nav>
+
+<div class="phead">
+  <span class="uglyph" aria-hidden="true">{{ '🏛️' if unit.level == 'bureau' else ('🗂️' if unit.level == 'division' else '👥') }}</span>
+  <div>
+    <h1>{{ unit.name }}</h1>
+    <div class="sub">{{ unit.level|capitalize }}{% if nav.parent %} · in {{ nav.parent.label }}{% endif %}{% if card %} · {{ card.events|comma }} rated activit{{ 'y' if card.events == 1 else 'ies' }}{% endif %}</div>
+    {% if badges %}
+    <div class="pbadges-row">
+      {% for b in badges %}<span class="pbadge {{ b.cls }}" title="{{ b.tip }}"><span class="ic">{{ b.icons }}</span> {{ b.label }}</span>{% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  {% if card %}
+  <div style="margin-left:auto;">
+    {{ ex.download('/dashboard/export?visual=team&team_path=' ~ (unit.path|urlencode) ~ '&grain=' ~ grain ~ '&period=' ~ sel_period, 'Download') }}
+  </div>
+  {% endif %}
+</div>
+
+{% if nav.children %}
+<div class="drill">
+  {% if nav.parent %}<a class="up" href="/dashboard/teams/{{ nav.parent.path }}"><span aria-hidden="true">↑</span> {{ nav.parent.label }}</a>{% endif %}
+  {% for ch in nav.children %}<a href="/dashboard/teams/{{ ch.path }}">{{ ch.label }}</a>{% endfor %}
+</div>
+{% endif %}
+
+{% if years %}
+<div class="timefilter" role="group" aria-label="Filter report by time">
+  <span class="tf-lab">Report for</span>
+  <a href="{{ tbase }}" class="{{ 'on' if sel_period == 'all' }}">All time</a>
+  {% for y in years %}<a href="{{ tbase }}?period=year:{{ y }}" class="{{ 'on' if sel_period == 'year:' ~ y }}">{{ y }}</a>{% endfor %}
+</div>
+{% endif %}
+
+{{ ub.legend(badge_legend) }}
+
+{% if no_data %}
+{% set _et = unit.name ~ ' has no rated activities' ~ (' in ' ~ period_label if sel_period != 'all' else '') ~ ' yet.' %}
+{{ empty_state(_et, "When its activities gather event reviews, its coaching read will appear here.") }}
+{% else %}
+
+<!-- collective coach -->
+{% if coach %}
+<div class="coach {{ coach.tone }}">
+  <span class="coach-badge">Coaching notes</span>
+  <h3>{{ coach.headline }}</h3>
+  <div class="coach-col praise">
+    <h4>✓ What's going well</h4>
+    <ul>{% for p in coach.praise %}<li>{{ p }}</li>{% endfor %}</ul>
+  </div>
+  <div class="coach-motiv">{{ coach.motivation }}</div>
+</div>
+{% endif %}
+
+<!-- where to focus next -->
+{% if ta %}
+<div class="ta">
+  <span class="ta-badge">Where to focus next</span>
+  <h3>Biggest opportunity: {{ ta.focus.area }}{% if not ta.even %} <span style="color:var(--soft);font-weight:600;font-size:1rem;">({{ ta.focus.score }} of 7)</span>{% endif %}</h3>
+  <p class="ta-diag">{{ ta.focus.diagnosis }}{% if ta.focus.context %} <span class="ctx">{{ ta.focus.context }}</span>{% endif %}</p>
+  {% if ta.focus.actions %}
+  <div class="ta-actions">
+    <h4>Try this</h4>
+    <ul>{% for a in ta.focus.actions %}<li>{{ a }}</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+  {% if ta.secondary %}
+  <div class="ta-secondary">
+    <h4>Also worth a look — {{ ta.secondary.area }} ({{ ta.secondary.score }} of 7)</h4>
+    <ul>{% for a in ta.secondary.actions[:2] %}<li>{{ a }}</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+  <p class="ta-keep">{{ ta.keep }}</p>
+</div>
+{% endif %}
+
+<!-- activity profile banner -->
+{% if profile %}
+<div class="activities-profile tone-{{ profile.tone }}">
+  <div class="ap-headline">{{ profile.headline }}</div>
+  {% if profile.story %}<div class="ap-story">{{ profile.story|safe }}</div>{% endif %}
+  <div class="ap-stats">
+    <div class="ap-stat"><div class="apv">{{ profile.activities|comma }}</div><div class="apk">activities</div></div>
+    <div class="ap-stat"><div class="apv">{{ profile.respondents|comma }}</div><div class="apk">people reached</div></div>
+    <div class="ap-stat"><div class="apv">{{ profile.avg }}<span>/7</span></div><div class="apk">{{ profile.band or 'experience' }}</div></div>
+    {% if profile.met_pct is not none %}
+    <div class="ap-stat"><div class="apv">{{ profile.met_pct }}%</div><div class="apk">met or beat expectations</div></div>
+    {% endif %}
+  </div>
+  {% if profile.strongest %}
+  <div class="ap-areas">
+    <span class="area-chip up" title="Strongest event area">▲ {{ profile.strongest.name }} · {{ profile.strongest.shown }}</span>
+    {% if profile.weakest %}<span class="area-chip down" title="Most room to grow">▼ {{ profile.weakest.name }} · {{ profile.weakest.shown }}</span>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- consistency -->
+{% if card %}
+<div class="panel">
+  {% set ck = 'stable' if card.consistency.stable else ('volatile' if card.consistency.known else 'unknown') %}
+  <div class="cons-line {{ ck }}">
+    <span class="pill">{{ 'Steady' if ck=='stable' else ('Variable' if ck=='volatile' else 'No read yet') }}</span>
+    <span>{{ card.consistency.phrase }}</span>
+  </div>
+  {% if card.low_n %}
+  <div class="lown">Based on only {{ card.respondents|comma }} response{{ '' if card.respondents == 1 else 's' }} — read this as an early hint, not a verdict.</div>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- year on year -->
+{% if yoy %}
+<div class="panel yoy yoy-{{ yoy.tone }}">
+  <div class="hd"><div><h3>Year on year</h3><p class="sublab">Are the unit's activities improving over time?</p></div></div>
+  <p class="yoy-insight">{{ yoy.insight }}</p>
+  {% if yoy.bars|length > 1 %}
+  <div class="ybars">
+    {% set ymx = yoy.bars|map(attribute='value')|max %}
+    {% for b in yoy.bars %}
+    <div class="yb" title="{{ b.label }}: {{ b.shown }} ({{ b.n|comma }} responses)">
+      <div class="yv">{{ b.shown }}</div>
+      <div class="ybar" style="height:{{ (b.value / ymx * 100) | round | int if ymx else 0 }}%"></div>
+      <div class="yx">{{ b.label }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- standing vs siblings -->
+{% if standing %}
+{% set g = standing.group %}
+<div class="panel peers">
+  <h3>How {{ unit.short or unit.name }} compares</h3>
+  <p class="ps-line">{{ standing.standing }}</p>
+  <div class="cmpgrid">
+    <div class="cmp-h"></div>
+    <div class="cmp-h grp">{{ standing.sibling_kind }}</div>
+
+    <div class="cmp-ax"><span class="ax-t">Overall standing</span><span class="ax-s">quality + how much it runs</span></div>
+    <div class="cmp-cell"><div class="rk">#{{ g.overall.rank }}</div><div class="of">of {{ g.n }}</div>
+      {% set r = g.overall.rank %}
+      <div class="st">{% if r == 1 %}<span class="up">highest</span>{% elif r * 2 <= g.n %}<span class="up">top half</span>{% elif r * 3 <= g.n * 2 %}<span class="mid">middle</span>{% else %}<span class="mid">developing</span>{% endif %}</div></div>
+
+    <div class="cmp-ax"><span class="ax-t">Rating quality</span><span class="ax-s">average score, out of 7</span></div>
+    <div class="cmp-cell"><div class="rk">#{{ g.quality.rank }}</div><div class="of">of {{ g.n }}</div>
+      <div class="st">{{ g.quality.my }} vs {{ g.quality.avg }} avg
+        {% if g.quality.diff > 0 %}<span class="up">(+{{ g.quality.diff }})</span>
+        {% elif g.quality.diff < 0 %}<span class="dn">({{ g.quality.diff }})</span>
+        {% else %}<span class="mid">(on par)</span>{% endif %}</div></div>
+
+    <div class="cmp-ax"><span class="ax-t">Activity volume</span><span class="ax-s">rated activities run</span></div>
+    <div class="cmp-cell"><div class="rk">#{{ g.engagement.rank }}</div><div class="of">of {{ g.n }}</div>
+      <div class="st">{{ g.engagement.my }} activit{{ 'y' if g.engagement.my == 1 else 'ies' }} · avg {{ g.engagement.avg }}</div></div>
+  </div>
+  <p class="premium-note"><b>Overall standing</b> blends rating quality with how many activities the unit runs — a unit that delivers more, and delivers it well, stands higher.</p>
+</div>
+{% endif %}
+
+<!-- event-dimension breakdown -->
+{% if breakdown %}
+<div class="panel">
+  <h3>What stood out across activities</h3>
+  <p class="sublab">Strongest to weakest, in plain terms (out of 7).</p>
+  {{ s.ranked_bars(breakdown, 7) }}
+</div>
+{% endif %}
+
+<!-- verbatim story -->
+<div class="panel">
+  <h3>In people's own words</h3>
+  <p class="sublab">Comments from this unit's activities, grouped by theme.</p>
+  {{ s.panel(story, true, request.url.path ~ ('?' ~ request.url.query if request.url.query else '')) }}
+</div>
+
+{% endif %}
+{% endblock %}

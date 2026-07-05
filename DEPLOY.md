@@ -1,0 +1,80 @@
+# Deployment & live-data rules
+
+> ## ⛔ THE WHOLE ROUTINE
+>
+> **Shipping = `python deploy_hf.py`. That is the entire deploy. There is NO
+> GitHub step.**
+>
+> Before running it, do the ONE manual thing only the live site can give you:
+> **download the current live DB** (Admin → Backups → Download) — it lands in your
+> `Downloads/` folder. `deploy_hf.py` finds it automatically and swaps it in.
+
+```
+# 1. Build your change; bump version.py (APP_VERSION) + add a CHANGELOG.md line; run tests.
+# 2. In the live app: Admin → Backups → Download  (saves css_is_<ts>_*.db to ~/Downloads)
+# 3. Ship:
+python deploy_hf.py        # finds that download, shows it, asks one Y/n, then deploys + verifies
+```
+
+That's it. No `git push`. The GitHub mirror is **not** part of this workflow — don't
+push to it as a routine step (only if you explicitly decide to, separately).
+
+## Why `upload_folder`, never `git push`
+
+The local repo and the Space's git repo have **completely separate histories** (no
+common ancestor), because every deploy is a server-side upload. So a `git push space
+main` is **rejected**, and a `git push --force space main` would **WIPE the live
+Space**. `upload_folder` (what `deploy_hf.py` runs) instead adds one commit **on top
+of** the Space's current state — additive, preserving server-side files
+(`.session_secret`, anything you didn't upload). It is the only method that has ever
+worked here. The `space` git remote is for *reading* only (`git fetch space`).
+
+## What `deploy_hf.py` does
+
+1. **Pulls the live DB.** Finds the newest `css_is_*.db` in `~/Downloads`, shows its
+   timestamp + response count next to your current local DB, and — after one Y/n
+   (auto-yes when run with `--yes` or backgrounded) — backs up the current DB to
+   `_backups/…_predeploy.db` and swaps the downloaded one into `css_is.db`. This
+   **replaces the old manual copy step.** If no download is found, or the local DB is
+   already newer, it ships the local DB unchanged.
+2. **Guards the version bump.** Aborts (with a confirm) if the live site already shows
+   `APP_VERSION` — i.e. you forgot to bump `version.py`.
+3. Uploads the runtime closure (`ALLOW` in the script) + `version.py` + `css_is.db`,
+   waits for `RUNNING`, then verifies `/login` shows the expected version.
+
+`deploy_hf.py` is the single source of truth for *what* uploads — change it, don't
+hand-roll `upload_folder` elsewhere. **Auth:** HF token cached at
+`~/.cache/huggingface/token` (user `equityinhealth`); `HfApi()` picks it up.
+
+> ⚠️ `build_hf_upload.ps1` is a DIFFERENT, **deprecated** model (omits `version.py`
+> + `css_is.db`, assumes `/data` persistence this Space does not use). Do not use it.
+
+## The live-data rule (why the pull matters)
+
+The Space serves exactly the `css_is.db` you upload (`CSS_DB` is unset, so the app
+reads the repo DB). **Any edit made on the live site after your last pull is lost on
+the next deploy** (and on any HF rebuild/sleep, which restores the last-uploaded DB).
+So always download a fresh backup right before deploying — `deploy_hf.py` automates
+the swap, but only from a file *you* downloaded, so the download must be current. This
+is how Spot Feedback tags were lost once: a stale DB was shipped.
+
+> The local DB is easily dirtied by running the app (logins, audit rows, atoms WAL).
+> Let `deploy_hf.py` pull a fresh live DB rather than shipping one polluted by local
+> test sessions. To reset manually: remove `css_is.db-wal`/`-shm`, then restore a
+> known-good DB.
+
+## Space configuration (must stay this way)
+
+- **`CSS_DB` UNSET** — the app reads the repo's `css_is.db`, which the upload delivers.
+  Do **not** enable persistent storage / point `CSS_DB` at `/data` (a different,
+  mutually exclusive model that would make the uploaded DB inert).
+- The startup `[live-db] WARNING …` (when `CSS_DB` is unset) is **expected/harmless**.
+- Keep **`CSS_SESSION_SECRET`** (logins survive rebuilds without a committed secret —
+  `.session_secret` is gitignored and NOT shipped), **`CSS_BASE_URL`**, and uvicorn
+  **`--proxy-headers`**.
+
+## Alternative model (NOT in use — do not mix)
+
+A persistent-storage model exists in code (`_ensure_live_db()` + `build_hf_upload.ps1`,
+DB lives only on `/data`). It's mutually exclusive with the upload_folder + DB-in-repo
+model above. We use the model above. Switching is a deliberate change, not a mix.

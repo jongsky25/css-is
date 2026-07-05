@@ -1,0 +1,208 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, chart_table %}
+{% import "_export.html" as ex %}
+{% block title %}Pulse{% endblock %}
+{% block content %}
+<style>
+  /* The intro reads as a full-width band aligned with the cards below, rather
+     than a narrow orphaned column. (p.lede beats the .lede cap in app.css.) */
+  p.lede { max-width:none; }
+  .vhead { display:flex; justify-content:space-between; align-items:flex-start; gap:.5rem; }
+  .pulse-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1.6rem; }
+  @media (max-width:780px){ .pulse-grid { grid-template-columns:1fr; } }
+  .vital { border:1px solid var(--line); border-radius:16px; padding:1.1rem 1.2rem; display:flex;
+           flex-direction:column; gap:.55rem; box-shadow:0 1px 3px rgba(20,30,50,.05);
+           cursor:pointer; transition:border-color .12s, box-shadow .12s; }
+  .vital:hover { border-color:var(--line-strong); box-shadow:var(--shadow-md); }
+  .vital .kicker { font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:var(--soft); }
+  .vital .num { display:flex; align-items:baseline; gap:.45rem; }
+  .vital .num b { font-size:2.6rem; font-weight:800; line-height:1; }
+  .vital .num .u { color:var(--soft); font-size:.9rem; }
+  /* sparkline + interactive dots (percent-positioned over the stretched SVG so the
+     dots stay round despite preserveAspectRatio="none") */
+  .vital .spark-wrap { position:relative; width:120px; height:38px; }
+  .vital .spark { width:120px; height:38px; display:block; }
+  .vital .spark polyline { fill:none; stroke:var(--accent); stroke-width:5; stroke-linecap:round; stroke-linejoin:round; vector-effect:non-scaling-stroke; }
+  .vital .spark-dot { position:absolute; width:9px; height:9px; margin:-4.5px 0 0 -4.5px; border-radius:50%;
+                      background:var(--surface); border:2px solid var(--accent); cursor:default; }
+  .vital .spark-dot.end { background:var(--accent); }
+  /* styled, dark-mode-safe hover card (pure CSS, no JS) */
+  .vital .spark-tip { position:absolute; left:50%; bottom:150%; transform:translateX(-50%);
+                      background:var(--surface); color:var(--ink); border:1px solid var(--line);
+                      border-radius:9px; box-shadow:var(--shadow-md); padding:.4rem .55rem; min-width:8.5rem;
+                      font-size:.72rem; line-height:1.35; white-space:nowrap; text-align:left; z-index:5;
+                      opacity:0; visibility:hidden; transition:opacity .1s; pointer-events:none; }
+  .vital .spark-tip b { display:block; font-weight:800; color:var(--ink); }
+  .vital .spark-tip .v { font-weight:700; color:var(--accent-ink); }
+  .vital .spark-tip .n { color:var(--soft); }
+  .vital .spark-dot:hover .spark-tip, .vital .spark-dot:focus-within .spark-tip { opacity:1; visibility:visible; }
+  /* always-on exact-progress chips */
+  .vital .spark-chips { display:flex; flex-wrap:wrap; align-items:baseline; gap:.15rem .15rem; font-size:.74rem; margin-top:.1rem; }
+  .vital .spark-chips .chip { color:var(--ink-soft); white-space:nowrap; }
+  .vital .spark-chips .chip i { color:var(--grey); font-style:normal; font-weight:700; margin-right:.12rem; }
+  .vital .spark-chips .chip:last-of-type { font-weight:800; color:var(--ink); }
+  .vital .spark-chips .sep { color:var(--line-strong); padding:0 .05rem; }
+  /* plain-language movement insight */
+  .vital .spark-delta { font-size:.8rem; font-weight:700; line-height:1.3; }
+  .vital .spark-delta.good { color:var(--green); } .vital .spark-delta.bad { color:var(--red); }
+  .vital .spark-delta.mid { color:var(--amber); }  .vital .spark-delta.neutral { color:var(--soft); }
+  /* scale caption so the numbers are self-explaining (figure-axis standard) */
+  .vital .spark-note { font-size:.68rem; line-height:1.3; color:var(--grey); margin-top:-.05rem; }
+  .vital .signal { font-size:.96rem; line-height:1.4; font-weight:600; color:var(--ink); }
+  .vital .quote { font-size:.86rem; color:var(--soft); font-style:italic; border-left:3px solid var(--line);
+                  padding-left:.65rem; margin-top:.1rem; }
+  .vital .foot { font-size:.74rem; color:var(--grey); margin-top:auto; }
+
+  /* expand-on-click detail */
+  .more { display:flex; align-items:center; gap:.35rem; font-size:.8rem; font-weight:700;
+          color:var(--accent); margin-top:.2rem; user-select:none; }
+  .more .chev { transition:transform .15s; }
+  .vital.open .more .chev { transform:rotate(90deg); }
+  .more .mlabel::after { content:"More details"; }
+  .vital.open .more .mlabel::after { content:"Hide details"; }
+  .insights { display:none; flex-direction:column; gap:.4rem; margin-top:.2rem;
+              border-top:1px dashed var(--line); padding-top:.7rem; }
+  .vital.open .insights { display:flex; }
+  .ins { font-size:.86rem; line-height:1.4; color:var(--ink-soft); padding-left:.6rem; border-left:3px solid var(--line); }
+  .ins b { display:block; font-size:.68rem; font-weight:800; text-transform:uppercase; letter-spacing:.04em;
+           color:var(--soft); margin-bottom:.05rem; }
+  .ins.good { border-left-color:var(--green); } .ins.mid { border-left-color:var(--amber); }
+  .ins.bad { border-left-color:var(--red); }   .ins.neutral { border-left-color:var(--grey); }
+
+  /* window buttons */
+  .winbar { display:flex; align-items:center; gap:.55rem; margin:.2rem 0 1.2rem; flex-wrap:wrap; }
+  .winbar-lab { font-size:.78rem; font-weight:600; color:var(--soft); }
+  .winbtns { display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  .winbtns a { font-size:.76rem; font-weight:600; color:var(--soft); text-decoration:none;
+               background:var(--surface); border-left:1px solid var(--line); padding:.32rem .7rem; line-height:1.1;
+               transition:background .1s,color .1s; }
+  .winbtns a:first-child { border-left:none; }
+  .winbtns a:hover { background:var(--accent-bg); color:var(--ink); }
+  .winbtns a.on { background:var(--accent); color:var(--on-accent); }
+
+  /* three summary cards */
+  .sum-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
+  @media (max-width:780px){ .sum-grid { grid-template-columns:1fr; } }
+  .sumcard { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1.1rem 1.25rem;
+             box-shadow:var(--shadow); }
+  .sumcard h2 { font-size:1.02rem; margin:0 0 .15rem; display:flex; align-items:center; gap:.45rem; }
+  .sumcard .tag { width:.7rem; height:.7rem; border-radius:50%; flex:0 0 auto; }
+  .sumcard.good .tag { background:var(--green); } .sumcard.watch .tag { background:var(--amber); }
+  .sumcard.overall .tag { background:var(--accent); }
+  .sumcard .hint { color:var(--soft); font-size:.8rem; margin:0 0 .7rem; }
+  .sumcard ul { margin:0; padding-left:1.05rem; }
+  .sumcard li { font-size:.9rem; line-height:1.5; color:var(--ink-soft); margin-bottom:.45rem; }
+  .sumcard.overall p { font-size:.95rem; line-height:1.55; color:var(--ink); margin:0; }
+</style>
+
+{{ page_header("Pulse") }}
+<p class="lede">
+  A one-glance health check of how people feel about the bureau's service. The three cards below are
+  the bureau's <strong>vital signs</strong> — one for each kind of feedback: clients at the
+  <em>walk-in</em> service desk, people at our <em>activities &amp; events</em>, and the
+  <em>resource persons</em> who speak at them. A green badge means things are going well; amber means
+  it's worth a look. <strong>Click any card</strong> to see the few things most worth knowing about it.
+</p>
+
+<div class="winbar">
+  <span class="winbar-lab">Showing</span>
+  <div class="winbtns">
+    {% for key, label in win_opts %}
+    <a href="?org={{ sel_org|urlencode }}&win={{ key }}"{% if key == sel_win %} class="on"{% endif %}>{{ label }}</a>
+    {% endfor %}
+  </div>
+  <span style="margin-left:auto">
+    {{ ex.download('/dashboard/export?visual=pulse&org=' ~ (sel_org|urlencode) ~ '&win=' ~ sel_win, 'Download') }}
+  </span>
+</div>
+
+{% set band_cls = {'good':'b-good','mid':'b-mid','bad':'b-bad','neutral':'b-grey'} %}
+<div class="pulse-grid">
+  {% for t in tiles %}
+  <div class="vital tone-{{ t.tone if t.has_data else 'neutral' }}{% if not t.insights %} static{% endif %}">
+    <div class="vhead">
+      <div class="kicker">{{ t.title }}</div>
+    </div>
+    {% if t.has_data %}
+      <div class="num">
+        <b>{{ t.headline }}</b><span class="u">{{ t.unit }}</span>
+        {% if t.band %}<span class="badge {{ band_cls.get(t.tone,'b-grey') }}">{{ t.band }}</span>{% endif %}
+      </div>
+      {% if t.micro_spark %}
+      {% set vlab = 'positive' if t.unit == '% positive' else 'of 7' %}
+      <div class="spark-wrap">
+        <svg class="spark" viewBox="0 0 100 100" preserveAspectRatio="none" role="img"
+             aria-label="Recent periods: {% for p in t.micro_pts %}{{ p.label }} {{ p.shown }}{% if not loop.last %}, {% endif %}{% endfor %}">
+          <title>Recent: {% for p in t.micro_pts %}{{ p.label }} {{ p.shown }}{% if not loop.last %} · {% endif %}{% endfor %}</title>
+          <polyline points="{{ t.micro_spark }}"></polyline>
+        </svg>
+        {% set sp_rows = [] %}
+        {% for p in t.micro_pts %}{% set _ = sp_rows.append([p.label, p.shown ~ ' ' ~ vlab]) %}{% endfor %}
+        {{ chart_table(t.title ~ ' — recent periods', ['Period', t.unit or 'Value'], sp_rows) }}
+        {% for p in t.micro_pts %}
+        <span class="spark-dot{% if loop.last %} end{% endif %}" style="left:{{ p.x }}%;top:{{ p.y }}%" tabindex="0">
+          <span class="spark-tip"><b>{{ p.label }}</b><span class="v">{{ p.shown }} {{ vlab }}</span> · <span class="n">{{ p.n|comma }} response(s)</span></span>
+        </span>
+        {% endfor %}
+      </div>
+      {% if t.micro_delta_text %}<div class="spark-delta {{ t.micro_delta_tone }}">{{ t.micro_delta_text }}</div>{% endif %}
+      <div class="spark-chips">
+        {% for p in t.micro_pts %}<span class="chip"><i>{{ p.short }}</i>{{ p.shown }}</span>{% if not loop.last %}<span class="sep">·</span>{% endif %}{% endfor %}
+      </div>
+      <div class="spark-note">Last 4 months · {% if t.unit == '% positive' %}% who rated the service positively (top-box){% else %}average rating out of 7{% endif %}</div>
+      {% endif %}
+      {% if t.signal %}<div class="signal">{{ t.signal }}</div>{% endif %}
+      {% if t.quote %}<div class="quote">“{{ t.quote }}”</div>{% endif %}
+      <div class="foot">{{ t.respondents|comma }} respondent(s)</div>
+      {% if t.insights %}
+      <div class="more"><span class="chev">▸</span> <span class="mlabel"></span></div>
+      <div class="insights">
+        {% for ins in t.insights %}
+        <div class="ins {{ ins.tone }}"><b>{{ ins.label }}</b>{{ ins.text }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% else %}
+      <div class="empty-state" style="padding:1rem 0;">
+        <div>No {{ t.title|lower }} responses in this window yet.</div>
+        <div class="hint">Try a wider time window, or they'll appear as ratings come in.</div>
+      </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+<div class="sum-grid">
+  <div class="sumcard good">
+    <h2><span class="tag"></span> What has been good</h2>
+    <ul>{% for s in summary.good %}<li>{{ s }}</li>{% endfor %}</ul>
+  </div>
+  <div class="sumcard watch">
+    <h2><span class="tag"></span> Worth looking at</h2>
+    <ul>{% for s in summary.watch %}<li>{{ s }}</li>{% endfor %}</ul>
+  </div>
+  <div class="sumcard overall">
+    <h2><span class="tag"></span> Overall pulse</h2>
+    <p>{{ summary.overall }}</p>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var cards = Array.prototype.slice.call(document.querySelectorAll('.vital'));
+    var expandable = cards.filter(function (c) { return c.querySelector('.more'); });
+    if (!expandable.length) return;
+    function toggleAll() {
+      var open = expandable.some(function (c) { return c.classList.contains('open'); });
+      expandable.forEach(function (c) { c.classList.toggle('open', !open); });
+    }
+    cards.forEach(function (card) {
+      if (!card.querySelector('.more')) return;
+      card.addEventListener('click', function (e) {
+        if (e.target.closest('a')) return;     // let the Save link work
+        toggleAll();                           // one click opens/closes every card
+      });
+    });
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,16 @@
+# CSS Information System — runtime + QA dependencies
+# Install:  pip install -r requirements.txt
+fastapi
+uvicorn[standard]
+python-multipart
+jinja2
+qrcode[pil]
+pandas
+matplotlib
+openpyxl
+python-pptx
+python-docx
+reportlab
+# --- QA / testing ---
+pytest
+httpx

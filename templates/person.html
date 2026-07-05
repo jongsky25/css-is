@@ -1,0 +1,435 @@
+{% extends "dash_layout.html" %}
+{% import "_story.html" as s %}
+{% import "_export.html" as ex %}
+{% block title %}{{ person.name }}{% endblock %}
+{% block content %}
+<style>
+  .crumb { font-size:.85rem; margin-bottom:.8rem; }
+  .crumb a { text-decoration:none; font-weight:600; }
+  .phead { display:flex; gap:1rem; align-items:center; margin-bottom:1rem; }
+  .phead .avatar { width:64px; height:64px; border-radius:50%; object-fit:cover; background:var(--line);
+                   display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--soft); font-size:1.4rem; }
+  .phead h1 { margin:0; font-size:1.5rem; }
+  .phead .sub { color:var(--soft); font-size:.9rem; }
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1.1rem 1.3rem;
+           margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .panel h3 { margin:0 0 .2rem; font-size:1rem; }
+  .panel .sublab { color:var(--soft); font-size:.82rem; margin:0 0 .8rem; }
+  .scorerow { display:flex; gap:1rem; flex-wrap:wrap; }
+  .bigscore { border:1px solid var(--line); border-radius:12px; padding:.7rem 1.1rem; background:var(--surface); }
+  .bigscore .v { font-size:2rem; font-weight:800; line-height:1; }
+  .bigscore .k { font-size:.74rem; color:var(--soft); text-transform:uppercase; letter-spacing:.03em; margin-top:.25rem; }
+  .cons-line { margin-top:.9rem; font-size:.9rem; display:flex; gap:.5rem; align-items:flex-start; }
+  .cons-line .pill { flex:0 0 auto; font-size:.68rem; font-weight:700; padding:.12rem .5rem; border-radius:999px; border:1px solid; }
+  .cons-line.stable .pill { background:var(--green-bg); color:var(--green); border-color:var(--green-ln); }
+  .cons-line.volatile .pill { background:var(--amber-bg); color:var(--amber); border-color:var(--amber-ln); }
+  .cons-line.unknown .pill { background:var(--surface-3); color:var(--soft); border-color:var(--line); }
+
+  .grain { display:flex; gap:.3rem; }
+  .grain a { font-size:.76rem; text-decoration:none; color:var(--soft); padding:.25rem .6rem; border-radius:999px; border:1px solid var(--line); }
+  .grain a.on { background:var(--accent); color:var(--on-accent); border-color:var(--accent); }
+  .panel .hd { display:flex; justify-content:space-between; align-items:center; margin-bottom:.7rem; gap:1rem; }
+
+  .strip { display:flex; gap:.5rem; align-items:flex-end; height:140px; padding-top:.5rem; }
+  .strip .col { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; }
+  .strip .bar { width:60%; max-width:46px; background:linear-gradient(180deg,var(--accent),var(--accent-ink)); border-radius:6px 6px 0 0; min-height:3px; }
+  .strip .v { font-size:.78rem; font-weight:700; margin-bottom:.25rem; }
+  .strip .x { font-size:.7rem; color:var(--soft); margin-top:.35rem; text-align:center; }
+
+  /* coach panel */
+  .coach { border:1px solid var(--line); border-radius:16px; padding:1.1rem 1.3rem; margin-bottom:1.1rem;
+           box-shadow:0 1px 3px rgba(20,30,50,.05); border-left:6px solid var(--accent); }
+  .coach.celebrate { background:var(--green-bg); border-color:var(--green-ln); border-left-color:var(--green); }
+  .coach.support   { background:var(--red-bg);   border-color:var(--red-ln);   border-left-color:var(--red); }
+  .coach.steady    { background:var(--amber-bg); border-color:var(--amber-ln); border-left-color:var(--amber); }
+  .coach.encourage { background:var(--blue-bg);  border-color:var(--blue-ln);  border-left-color:var(--accent); }
+  .coach-badge { display:inline-block; font-size:.66rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em;
+                 color:var(--on-accent); background:var(--accent); border-radius:999px; padding:.12rem .55rem; margin-bottom:.5rem; }
+  .coach.celebrate .coach-badge { background:var(--green); } .coach.support .coach-badge { background:var(--red); }
+  .coach.steady .coach-badge { background:var(--amber); }
+  .coach h3 { margin:.1rem 0 .8rem; font-size:1.2rem; }
+  .coach-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.1rem; }
+  @media (max-width:620px){ .coach-grid { grid-template-columns:1fr; } }
+  .coach-col h4 { margin:0 0 .35rem; font-size:.8rem; text-transform:uppercase; letter-spacing:.03em; }
+  .coach-col.praise h4 { color:var(--green); } .coach-col.focus h4 { color:var(--amber); }
+  .coach-col ul { margin:0; padding-left:1.1rem; } .coach-col li { margin:.25rem 0; line-height:1.45; font-size:.95rem; }
+  .coach-motiv { margin-top:.9rem; padding-top:.8rem; border-top:1px solid rgba(0,0,0,.07);
+                 font-size:1.05rem; font-weight:600; font-style:italic; }
+  .cmp { font-size:.8rem; font-weight:700; }
+  .cmp.above { color:var(--green); } .cmp.below { color:var(--red); } .cmp.around { color:var(--soft); }
+  .conf { margin-top:.7rem; font-size:.82rem; color:var(--amber); background:var(--amber-bg);
+          border:1px solid var(--amber-ln); border-radius:8px; padding:.4rem .65rem; }
+
+  /* earned badges (match the People grid) */
+  .pbadges-row { display:flex; flex-wrap:wrap; gap:.35rem; margin-top:.45rem; }
+  .pbadge { display:inline-flex; align-items:center; gap:.18rem; font-size:.7rem; font-weight:700;
+            padding:.18rem .55rem; border-radius:999px; border:1px solid transparent; white-space:nowrap; }
+  .pbadge .ic { letter-spacing:-.04em; }
+  .pbadge.bg-gold{background:#fff7e6;color:#b7791f;border-color:#f6e0b5;}
+  .pbadge.bg-green{background:var(--green-bg);color:var(--green);border-color:var(--green-ln);}
+  .pbadge.bg-blue{background:var(--accent-bg);color:var(--accent);border-color:var(--blue-ln);}
+  .pbadge.bg-rose{background:#fff1f2;color:#be123c;border-color:#fecdd3;}
+  .pbadge.bg-violet{background:#f5f3ff;color:#6d28d9;border-color:#ddd6fe;}
+  .pbadge.bg-amber{background:#fffbeb;color:#b45309;border-color:#fde68a;}
+  .pbadge.bg-teal{background:#ecfeff;color:#0e7490;border-color:#bae6fd;}
+  .pbadge.bg-indigo{background:#eef2ff;color:#4338ca;border-color:#c7d2fe;}
+  .pbadge.bg-stone{background:#f5f5f4;color:#57534e;border-color:#e7e5e4;}
+  .pbadge.bg-fuchsia{background:#fdf4ff;color:#a21caf;border-color:#f5d0fe;}
+
+  /* confidence dot meter (match the grid) */
+  .conf-meter { display:flex; align-items:center; gap:.4rem; font-size:.82rem; color:var(--soft); margin-top:.7rem; }
+  .conf-meter .dots { display:inline-flex; gap:3px; }
+  .conf-meter .dots i { width:8px; height:8px; border-radius:50%; background:var(--line); }
+  .conf-meter.conf-vhigh .dots i.on, .conf-meter.conf-high .dots i.on { background:var(--green); }
+  .conf-meter.conf-good .dots i.on, .conf-meter.conf-fair .dots i.on { background:var(--accent); }
+  .conf-meter.conf-build .dots i.on { background:var(--amber); }
+  .conf-meter.conf-early { color:var(--amber); }
+
+  /* technical-assistance advice panel */
+  .ta { border:1px solid var(--blue-ln); background:linear-gradient(180deg,var(--accent-bg),var(--surface)); border-left:6px solid var(--accent);
+        border-radius:16px; padding:1.1rem 1.3rem; margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .ta-badge { display:inline-block; font-size:.66rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em;
+              color:var(--on-accent); background:var(--accent); border-radius:999px; padding:.14rem .6rem; margin-bottom:.5rem; }
+  .ta h3 { margin:.1rem 0 .4rem; font-size:1.2rem; }
+  .ta-diag { font-size:.95rem; line-height:1.55; color:var(--ink-soft); margin:0 0 .9rem; }
+  .ta-diag .ctx { color:var(--ink); font-weight:600; }
+  .ta-actions h4, .ta-secondary h4 { font-size:.74rem; text-transform:uppercase; letter-spacing:.03em; color:var(--accent); margin:.2rem 0 .3rem; }
+  .ta-actions ul { margin:0; padding:0; list-style:none; }
+  .ta-actions li { position:relative; padding:.32rem 0 .32rem 1.5rem; font-size:.95rem; line-height:1.45; border-top:1px solid var(--line); }
+  .ta-actions li:first-child { border-top:none; }
+  .ta-actions li::before { content:"→"; position:absolute; left:.25rem; color:var(--accent); font-weight:800; }
+  .ta-secondary { margin-top:.9rem; padding-top:.8rem; border-top:1px solid var(--line); }
+  .ta-secondary ul { margin:.2rem 0 0; padding-left:1.15rem; } .ta-secondary li { font-size:.92rem; line-height:1.45; margin:.2rem 0; }
+  .ta-keep { margin:.9rem 0 0; padding-top:.8rem; border-top:1px solid var(--line); font-size:.92rem; color:var(--green); font-weight:600; }
+
+  /* time filter */
+  .timefilter { display:flex; align-items:center; flex-wrap:wrap; gap:.4rem; margin:0 0 1rem; }
+  .timefilter .tf-lab { font-size:.8rem; font-weight:600; color:var(--soft); margin-right:.15rem; }
+  .timefilter a { font-size:.8rem; font-weight:600; text-decoration:none; color:var(--soft);
+                  border:1px solid var(--line); border-radius:999px; padding:.3rem .75rem; background:var(--surface); }
+  .timefilter a:hover { border-color:var(--accent); color:var(--accent); }
+  .timefilter a.on { background:var(--ink); border-color:var(--ink); color:var(--on-accent); }
+
+  /* year on year */
+  .yoy.yoy-good { border-left:6px solid var(--green); }
+  .yoy.yoy-bad { border-left:6px solid var(--red); }
+  .yoy.yoy-neutral { border-left:6px solid var(--amber); }
+  .yoy-insight { font-size:1.02rem; font-weight:600; line-height:1.5; color:var(--ink); margin:.1rem 0 .9rem; }
+  .ybars { display:flex; gap:.6rem; align-items:flex-end; height:120px; }
+  .ybars .yb { flex:1; max-width:80px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; }
+  .ybars .yv { font-size:.78rem; font-weight:700; margin-bottom:.25rem; }
+  .ybars .ybar { width:60%; max-width:42px; min-height:3px; border-radius:6px 6px 0 0; background:linear-gradient(180deg,#68b984,#2f855a); }
+  .ybars .yx { font-size:.72rem; color:var(--soft); margin-top:.35rem; }
+
+  /* peer standing + contribution */
+  .peers .ps-line { font-size:.98rem; font-weight:600; color:var(--ink); margin:.1rem 0 1rem; }
+  /* three-axis comparison table: rows = Overall / Quality / Engagement, cols = Section / Bureau */
+  .cmpgrid { display:grid; grid-template-columns:9.5rem 1fr 1fr; gap:.55rem .7rem; align-items:stretch; }
+  .cmpgrid.one-col { grid-template-columns:9.5rem 1fr; }
+  .cmp-h { font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.03em; color:var(--soft);
+           align-self:end; padding-bottom:.2rem; }
+  .cmp-h.grp { text-align:center; }
+  .cmp-ax { display:flex; flex-direction:column; justify-content:center; }
+  .cmp-ax .ax-t { font-size:.86rem; font-weight:700; color:var(--ink); }
+  .cmp-ax .ax-s { font-size:.72rem; color:var(--soft); }
+  .cmp-cell { background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:.5rem .65rem; text-align:center; }
+  .cmp-cell.lead { background:var(--accent-bg); border-color:var(--blue-ln); }
+  .cmp-cell .rk { font-size:1.25rem; font-weight:800; color:var(--accent); line-height:1.1; }
+  .cmp-cell.lead .rk { color:var(--accent-ink); }
+  .cmp-cell .of { font-size:.7rem; color:var(--soft); }
+  .cmp-cell .st { font-size:.74rem; color:var(--soft); margin-top:.2rem; line-height:1.3; }
+  .cmp-cell .st .up { color:var(--green); font-weight:700; } .cmp-cell .st .dn { color:var(--red); font-weight:700; }
+  .cmp-cell .st .mid { color:var(--soft); font-weight:600; }
+  .cmp-cell.empty { background:var(--surface-2); color:var(--soft); display:flex; align-items:center; justify-content:center; font-size:.78rem; }
+  .peers .premium-note { font-size:.76rem; color:var(--soft); margin:.7rem 0 0; }
+  .peer-contrib { border-top:1px solid var(--line); padding-top:.8rem; margin-top:1rem; }
+  .peer-contrib h4 { margin:0 0 .3rem; font-size:.78rem; text-transform:uppercase; letter-spacing:.03em; color:var(--soft); }
+  .peer-contrib p { margin:0; font-size:.95rem; line-height:1.5; color:var(--ink-soft); }
+  .peer-contrib b { color:var(--ink); }
+  .peer-contrib .pc-foot { font-size:.82rem; color:var(--soft); margin-top:.3rem; }
+  @media (max-width:620px){ .cmpgrid { grid-template-columns:6.5rem 1fr 1fr; gap:.4rem; } .cmp-cell .rk{font-size:1.05rem;} }
+
+  /* RP-only engagements list */
+  .eng-list { list-style:none; margin:0; padding:0; }
+  .eng-list li { border-top:1px solid var(--line); }
+  .eng-list li:first-child { border-top:none; }
+  .eng-list a { display:flex; align-items:center; gap:1rem; padding:.7rem .15rem; text-decoration:none; color:inherit; }
+  .eng-list a:hover { background:var(--surface-2); border-radius:8px; }
+  .eng-main { flex:1; min-width:0; }
+  .eng-name { display:block; font-weight:700; font-size:.96rem; color:var(--ink); }
+  .eng-kind { display:inline-block; font-size:.62rem; font-weight:800; text-transform:uppercase; letter-spacing:.04em;
+              padding:.08rem .42rem; border-radius:999px; border:1px solid; margin-left:.4rem; vertical-align:middle; }
+  .eng-kind.k-invited { color:var(--accent); background:var(--accent-bg); border-color:var(--blue-ln); }
+  .eng-kind.k-bureau { color:var(--green); background:var(--green-bg); border-color:var(--green-ln); }
+  .eng-meta { display:block; font-size:.78rem; color:var(--soft); margin-top:.15rem; }
+  .eng-score { flex:0 0 auto; text-align:right; }
+  .eng-score .v { font-size:1.3rem; font-weight:800; color:var(--accent); }
+  .eng-score .u { font-size:.78rem; color:var(--soft); }
+  .eng-score .go { display:block; font-size:.72rem; color:var(--accent); font-weight:700; }
+</style>
+
+{% set band_cls = {'Outstanding':'b-good','Satisfactory':'b-good','Excellent':'b-good','Good':'b-good','Fair':'b-mid','Poor':'b-bad'} %}
+{% set ymax = 100 if role == 'arta' else 7 %}
+
+<nav class="crumbs" aria-label="Breadcrumb"><a href="/dashboard">Dashboard</a><span class="sep">›</span><a href="/dashboard/people">People</a><span class="sep">›</span><span class="here">{{ person.name }}</span></nav>
+
+<div class="phead">
+  {% if person.has_photo %}
+    <img class="avatar" src="/photo/{{ person.id }}" alt="{{ person.name }}">
+  {% else %}
+    {% set parts = person.name.split() %}
+    <span class="avatar">{{ (parts[0][0] ~ (parts[-1][0] if parts|length > 1 else '')) | upper }}</span>
+  {% endif %}
+  <div>
+    <h1>{{ person.name }}</h1>
+    <div class="sub">{{ person.org_path.split('/')[1:] | join(' / ') if person.org_path else ('External resource person' if not person.is_internal else '—') }}
+      {% if person.position %} · {{ person.position }}{% endif %}</div>
+    {% if badges %}
+    <div class="pbadges-row">
+      {% for b in badges %}<span class="pbadge {{ b.cls }}" title="{{ b.tip }}"><span class="ic">{{ b.icons }}</span> {{ b.label }}</span>{% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  <div style="margin-left:auto;">
+    {{ ex.download('/dashboard/export?visual=person&rp_id=' ~ person.id ~ '&grain=' ~ grain ~ '&period=' ~ sel_period, 'Download') }}
+  </div>
+</div>
+
+{% set pbase = '/dashboard/people/' ~ person.id ~ '?grain=' ~ grain %}
+{% if years %}
+<div class="timefilter" role="group" aria-label="Filter report by time">
+  <span class="tf-lab">Report for</span>
+  <a href="{{ pbase }}" class="{{ 'on' if sel_period == 'all' }}">All time</a>
+  {% for y in years %}
+  <a href="{{ pbase }}&period=year:{{ y }}" class="{{ 'on' if sel_period == 'year:' ~ y }}">{{ y }}</a>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if no_period_data %}
+<div class="panel"><p style="margin:0;color:var(--soft);">No ratings for {{ person.name }} in <strong>{{ period_label }}</strong>. Pick another year or “All time”.</p></div>
+{% endif %}
+
+<!-- scores + consistency -->
+{% if card %}
+<div class="panel">
+  {% if cmp %}<div style="margin-bottom:.6rem;"><span class="cmp {{ cmp.label }}">Scoring {{ cmp.phrase }}.</span></div>{% endif %}
+  <div class="scorerow">
+    {% if card.arta %}
+    <div class="bigscore"><div class="v">{{ card.arta.shown }}
+      {% if card.arta.band %}<span class="badge {{ band_cls.get(card.arta.band,'b-grey') }}">{{ card.arta.band }}</span>{% endif %}</div>
+      <div class="k">Walk-in service · {{ card.arta.n|comma }} ratings</div></div>
+    {% endif %}
+    {% if card.rp %}
+    <div class="bigscore"><div class="v">{{ card.rp.shown }}<span class="muted" style="font-size:1rem;">/7</span>
+      {% if card.rp.band %}<span class="badge {{ band_cls.get(card.rp.band,'b-grey') }}">{{ card.rp.band }}</span>{% endif %}</div>
+      <div class="k">As a speaker · {{ card.rp.n|comma }} ratings</div></div>
+    {% endif %}
+  </div>
+  {% if card.confidence %}
+  <div class="conf-meter conf-{{ card.confidence.level }}" title="Based on {{ card.ratings|comma }} rating{{ '' if card.ratings == 1 else 's' }}">
+    <span class="dots">{% for i in range(1, 6) %}<i class="{{ 'on' if card.confidence.dots >= i }}"></i>{% endfor %}</span>
+    <span>{{ card.confidence.label }} · {{ card.ratings|comma }} rating{{ '' if card.ratings == 1 else 's' }}</span>
+  </div>
+  {% endif %}
+  {% set ck = 'stable' if card.consistency.stable else ('volatile' if card.consistency.known else 'unknown') %}
+  <div class="cons-line {{ ck }}">
+    <span class="pill">{{ 'Steady' if ck=='stable' else ('Variable' if ck=='volatile' else 'No read yet') }}</span>
+    <span>{{ card.consistency.phrase }}</span>
+  </div>
+</div>
+{% endif %}
+
+<!-- per-activity engagements (invited + bureau-led) -->
+{% if engagements %}
+<div class="panel">
+  <div class="hd"><div><h3>Per-activity engagements</h3>
+    <p class="sublab">Activities since June 15, 2026 — open one for its own scorecard and downloads.</p></div></div>
+  <ul class="eng-list">
+    {% for e in engagements %}
+    <li><a href="/dashboard/people/{{ person.id }}/activity/{{ e.event_id }}">
+      <span class="eng-main">
+        <span class="eng-name">{{ e.name }}
+          <span class="eng-kind {{ 'k-invited' if e.is_external else 'k-bureau' }}">{{ 'Invited' if e.is_external else 'Bureau-led' }}</span></span>
+        <span class="eng-meta">{{ e.date|humandate }}{% if e.venue %} · {{ e.venue }}{% endif %} · {{ e.respondents }} response{{ '' if e.respondents == 1 else 's' }}</span>
+      </span>
+      <span class="eng-score"><span class="v">{{ e.shown }}</span><span class="u">/7</span><span class="go">View ›</span></span>
+    </a></li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<!-- year on year -->
+{% if yoy %}
+<div class="panel yoy yoy-{{ yoy.tone }}">
+  <div class="hd"><div><h3>Year on year</h3><p class="sublab">Are you improving over time?</p></div></div>
+  <p class="yoy-insight">{{ yoy.insight }}</p>
+  {% if yoy.bars|length > 1 %}
+  <div class="ybars">
+    {% set ymx = yoy.bars|map(attribute='value')|max %}
+    {% for b in yoy.bars %}
+    <div class="yb" title="{{ b.label }}: {{ b.shown }} ({{ b.n|comma }} ratings)">
+      <div class="yv">{{ b.shown }}</div>
+      <div class="ybar" style="height:{{ (b.value / ymx * 100) | round | int if ymx else 0 }}%"></div>
+      <div class="yx">{{ b.label }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- how you compare + contribution -->
+{% macro c_overall(d, lead=false) %}
+<div class="cmp-cell {{ 'lead' if lead }}">
+  <div class="rk">#{{ d.overall.rank }}</div><div class="of">of {{ d.n }}</div>
+  {% set top = [100 - d.overall.pct, 1]|max %}
+  <div class="st">{% if top <= 50 %}<span class="up">top {{ top }}%</span>{% else %}<span class="mid">developing</span>{% endif %}</div>
+</div>
+{% endmacro %}
+{% macro c_quality(d, lead=false) %}
+<div class="cmp-cell {{ 'lead' if lead }}">
+  <div class="rk">#{{ d.quality.rank }}</div><div class="of">of {{ d.n }}</div>
+  <div class="st">{{ d.quality.my }} vs {{ d.quality.avg }} avg
+    {% if d.quality.diff > 0 %}<span class="up">(+{{ d.quality.diff }})</span>
+    {% elif d.quality.diff < 0 %}<span class="dn">({{ d.quality.diff }})</span>
+    {% else %}<span class="mid">(on par)</span>{% endif %}
+    {% if d.quality.z is not none and (d.quality.z >= 0.3 or d.quality.z <= -0.3) %}
+      <br><span class="{{ 'up' if d.quality.z > 0 else 'dn' }}">≈{{ d.quality.z|abs }} SD {{ 'above' if d.quality.z > 0 else 'below' }}</span>{% endif %}
+  </div>
+</div>
+{% endmacro %}
+{% macro c_engagement(d, lead=false) %}
+<div class="cmp-cell {{ 'lead' if lead }}">
+  <div class="rk">#{{ d.engagement.rank }}</div><div class="of">of {{ d.n }}</div>
+  <div class="st">{{ d.engagement.my }} event{{ '' if d.engagement.my == 1 else 's' }} · avg {{ d.engagement.avg }}</div>
+</div>
+{% endmacro %}
+{% if peers %}
+{% set two = peers.section is not none %}
+<div class="panel peers">
+  <h3>How you compare</h3>
+  <p class="ps-line">{{ peers.standing }}</p>
+  <div class="cmpgrid {{ '' if two else 'one-col' }}">
+    <div class="cmp-h"></div>
+    {% if two %}<div class="cmp-h grp">{{ peers.section_name }} <span style="font-weight:600;">· your section</span></div>{% endif %}
+    <div class="cmp-h grp">Whole bureau</div>
+
+    <div class="cmp-ax"><span class="ax-t">Overall performance</span><span class="ax-s">quality + engagement</span></div>
+    {% if two %}{{ c_overall(peers.section, true) }}{% endif %}
+    {{ c_overall(peers.bureau, true) }}
+
+    <div class="cmp-ax"><span class="ax-t">Rating quality</span><span class="ax-s">average score, out of 7</span></div>
+    {% if two %}{{ c_quality(peers.section) }}{% endif %}
+    {{ c_quality(peers.bureau) }}
+
+    <div class="cmp-ax"><span class="ax-t">Engagement</span><span class="ax-s">events with ratings</span></div>
+    {% if two %}{{ c_engagement(peers.section) }}{% endif %}
+    {{ c_engagement(peers.bureau) }}
+  </div>
+  {% if not two and not peers.external %}
+  <p class="premium-note">You're the only rated resource person in {{ peers.section_name }}, so a section ranking isn't shown — the bureau comparison covers it.</p>
+  {% elif peers.external %}
+  <p class="premium-note">As an external resource person, you're compared against the whole bureau.</p>
+  {% endif %}
+  <p class="premium-note"><b>Overall performance</b> places a premium on engagement — the number of events you've gathered ratings across — as a measure of commitment to deliver technical assistance.</p>
+  <div class="peer-contrib">
+    <h4>Your contribution</h4>
+    <p>{{ peers.contribution|safe }}</p>
+  </div>
+</div>
+{% endif %}
+
+<!-- trend over time -->
+{% if trend %}
+<div class="panel">
+  <div class="hd">
+    <div><h3>Scores over time</h3>
+      <p class="sublab">{{ 'Walk-in top-box %' if role == 'arta' else 'Overall rating, out of 7' }}</p></div>
+    <div class="grain">
+      {% for g in ['monthly','quarterly','yearly'] %}
+      <a href="/dashboard/people/{{ person.id }}?grain={{ g }}{{ ('&period=' ~ sel_period) if sel_period != 'all' else '' }}" class="{{ 'on' if grain==g }}">{{ g|capitalize }}</a>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="strip">
+    {% for p in trend %}
+    {% if p.value is none %}
+    <div class="col" title="{{ p.label }}: no score (n={{ p.n|comma }})">
+      <div class="v">—</div>
+      <div class="bar" style="height:0"></div>
+      <div class="x">{{ p.label }}</div>
+    </div>
+    {% else %}
+    <div class="col" title="{{ p.label }}: {{ p.value|round(1) }} (n={{ p.n|comma }})">
+      <div class="v">{{ (p.value|round(0)|int ~ '%') if role=='arta' else p.value|round(1) }}</div>
+      <div class="bar" style="height:{{ (p.value / ymax * 100) | round(1) if ymax else 0 }}%"></div>
+      <div class="x">{{ p.label }}</div>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- dimension breakdown (speaker) -->
+{% if dims %}
+<div class="panel">
+  <h3>What stood out as a speaker</h3>
+  <p class="sublab">Strongest to weakest, in plain terms (out of 7).</p>
+  {{ s.ranked_bars(dims, 7) }}
+</div>
+{% endif %}
+
+<!-- ARTA item breakdown (server) -->
+{% if arta_items %}
+<div class="panel">
+  <h3>Walk-in experience, part by part</h3>
+  <p class="sublab">Share of clients who agreed, highest to lowest.</p>
+  {{ s.ranked_bars(arta_items, 100) }}
+</div>
+{% endif %}
+
+<!-- verbatim story -->
+<div class="panel">
+  <h3>In people's own words</h3>
+  <p class="sublab">Comments grouped by theme.</p>
+  {{ s.panel(story, true, request.url.path ~ ('?' ~ request.url.query if request.url.query else '')) }}
+</div>
+
+<!-- how to improve: personal coach -->
+{% if coach %}
+<div class="coach {{ coach.tone }}">
+  <span class="coach-badge">Coaching notes</span>
+  <h3>{{ coach.headline }}</h3>
+  <div class="coach-col praise">
+    <h4>✓ What's going well</h4>
+    <ul>{% for p in coach.praise %}<li>{{ p }}</li>{% endfor %}</ul>
+  </div>
+  <div class="coach-motiv">{{ coach.motivation }}</div>
+</div>
+{% endif %}
+
+<!-- how to improve: actionable technical-assistance coaching -->
+{% if ta %}
+<div class="ta">
+  <span class="ta-badge">Strengthen technical assistance</span>
+  <h3>Biggest opportunity: {{ ta.focus.area }}{% if not ta.even %} <span style="color:var(--soft);font-weight:600;font-size:1rem;">({{ ta.focus.score }} of 7)</span>{% endif %}</h3>
+  <p class="ta-diag">{{ ta.focus.diagnosis }}{% if ta.focus.context %} <span class="ctx">{{ ta.focus.context }}</span>{% endif %}</p>
+  {% if ta.focus.actions %}
+  <div class="ta-actions">
+    <h4>Try this</h4>
+    <ul>{% for a in ta.focus.actions %}<li>{{ a }}</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+  {% if ta.secondary %}
+  <div class="ta-secondary">
+    <h4>Also worth a look — {{ ta.secondary.area }} ({{ ta.secondary.score }} of 7)</h4>
+    <ul>{% for a in ta.secondary.actions[:2] %}<li>{{ a }}</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+  <p class="ta-keep">{{ ta.keep }}</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}Survey created{% endblock %}
+
+{% block crumbs %}
+<nav class="crumbs" aria-label="Breadcrumb"><a href="/dashboard">Dashboard</a><span class="sep">›</span><a href="/">New survey</a><span class="sep">›</span><span class="here">Created</span></nav>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:760px;">
+  <span class="equity-mark lg" role="img" aria-label="Equity in Health" style="display:block; margin:0 0 .6rem;"></span>
+  {{ page_header("✓ Survey created & saved") }}
+  <div class="flash ok">Saved. Scan a QR below to open the bound survey, or print this page for the venue.</div>
+
+  <div class="card" style="margin-bottom:1rem;">
+    <table class="list">
+      {% for row in summary %}
+      <tr><td class="muted" style="width:38%; font-weight:600;">{{ row.k }}</td><td>{{ row.v }}</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <h2>Forms created</h2>
+  <ul style="padding-left:0; list-style:none;">
+    {% for c in created %}
+    <li style="padding:.5rem .7rem; border:1px solid var(--line); border-radius:8px; margin-bottom:.4rem; display:flex; justify-content:space-between; gap:1rem; background:var(--surface);">
+      <span>{{ c.kind }} — {{ c.label }}</span><code>{{ c.form_id }}</code></li>
+    {% endfor %}
+  </ul>
+
+  <h2>QR code{{ "s" if qrs|length > 1 else "" }}</h2>
+  {% for q in qrs %}
+  <div class="card" style="text-align:center; margin-bottom:1rem;">
+    <div style="font-weight:600; margin-bottom:.5rem;">{{ q.title }}</div>
+    <img src="{{ q.img }}" alt="QR code for {{ q.title }}" style="width:220px; height:220px; image-rendering:pixelated;">
+    <div class="mono small" style="word-break:break-all; margin-top:.4rem;"><a href="{{ q.url }}">{{ q.url }}</a></div>
+  </div>
+  {% endfor %}
+
+  {% if event_token %}
+  <div class="card noprint" style="margin-bottom:1rem; border:1px solid var(--blue-ln); background:var(--accent-bg);">
+    <h2 style="margin-top:0;">Finishing touches <span style="font-weight:400; color:var(--soft);">— optional</span></h2>
+    <p style="margin:.2rem 0 .9rem;">Add a welcome &amp; closing message to participants, share resources
+      (programme, slides, recording), and turn on a certificate of appearance. You can do this now or any time before the event.</p>
+    <a class="btn" href="/activities/{{ event_token }}/manage">Add finishing touches →</a>
+  </div>
+  {% endif %}
+
+  <a class="btn ghost noprint" href="{{ back_href|default('/') }}">← Create another</a>
+  <button class="btn noprint" onclick="window.print()" style="margin-left:.5rem;">🖨 Print this page</button>
+</div>
+{% endblock %}

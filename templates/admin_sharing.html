@@ -1,0 +1,63 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}Sharing settings{% endblock %}
+
+{% block head %}
+<style>
+  .awrap { max-width: 760px; }
+  .awrap h1 { margin:.2rem 0 .15rem; font-size:1.55rem; }
+  .lede { color:var(--soft); margin:0 0 1.1rem; }
+  .acard { background:var(--surface); border:1px solid var(--line); border-radius:14px;
+           padding:1.1rem 1.25rem; box-shadow:var(--shadow); margin-bottom:1rem; }
+  .acard h2 { font-size:1.02rem; margin:0 0 .2rem; }
+  .acard .hint { color:var(--soft); font-size:.86rem; margin:0 0 .9rem; }
+  .switch { display:flex; align-items:center; gap:.55rem; font-weight:600; margin-bottom:.9rem; }
+  .switch input { width:1.1rem; height:1.1rem; }
+  .state { font-size:.82rem; font-weight:600; padding:.12rem .55rem; border-radius:999px; }
+  .state.on { background:var(--green-bg); color:var(--green); border:1px solid var(--green-ln); }
+  .state.off { background:var(--amber-bg); color:var(--amber); border:1px solid var(--amber-ln); }
+  .flash.ok { background:var(--green-bg); border:1px solid var(--green-ln); color:var(--green);
+              padding:.6rem .8rem; border-radius:8px; font-size:.86rem; margin-bottom:.8rem; }
+  .plist { list-style:none; margin:.3rem 0 0; padding:0; }
+  .plist li { padding:.4rem 0; border-top:1px solid var(--line); font-size:.9rem; }
+  .plist li:first-child { border-top:none; }
+  .plist .meta { color:var(--grey); font-size:.8rem; }
+  .empty { color:var(--grey); font-size:.88rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="awrap">
+  {{ page_header("Sharing settings", "The site-wide switch for the activity link-tree's public resource sharing.") }}
+
+  {% if msg %}<div class="flash ok">{{ msg }}</div>{% endif %}
+
+  <div class="acard">
+    <h2>Public resource sharing
+      <span class="state {{ 'on' if sharing_on else 'off' }}">{{ 'ON' if sharing_on else 'OFF' }}</span>
+    </h2>
+    <p class="hint">When ON, activities can share their programmes, slides, recordings and certificates with registered participants on the public link-tree page. When OFF, nothing is shared publicly — regardless of an activity's own resources. This is the master kill-switch.</p>
+    <form method="post" action="/admin/sharing">
+      <label class="switch"><input type="checkbox" name="public_sharing_enabled" value="on" {{ 'checked' if sharing_on }}> Allow public resource sharing</label>
+      <button class="btn" type="submit">Save</button>
+    </form>
+  </div>
+
+  <div class="acard">
+    <h2>Activities sharing materials</h2>
+    <p class="hint">Concluded activities that carry at least one shared-immediately resource (browsable on the Shared materials page).</p>
+    {% if published %}
+    <ul class="plist">
+      {% for e in published %}
+      <li>
+        <a href="/e/{{ e.event_token }}">{{ e.title }}</a> — {{ e.n_links }} resource{{ '' if e.n_links == 1 else 's' }}
+        <div class="meta">{{ e.event_date|humandate }}{% if e.venue %} · {{ e.venue }}{% endif %}</div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty">No activities are sharing resources right now.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,348 @@
+{% extends "dash_layout.html" %}
+{% import "_story.html" as s %}
+{% import "_export.html" as ex %}
+{% from "_components.html" import empty_state %}
+{% block title %}{% if ev %}{{ ev.name }}{% else %}Activity not found{% endif %}{% endblock %}
+{% block content %}
+<style>
+  p.lede { max-width:none; }
+  .crumb { font-size:.85rem; margin-bottom:.8rem; }
+  .crumb a { text-decoration:none; font-weight:600; color:var(--accent); }
+  /* Report header */
+  .rpt-head { display:flex; gap:1rem; align-items:flex-start; justify-content:space-between;
+    border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1.1rem 1.3rem;
+    margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .rpt-head h1 { margin:0; font-size:1.45rem; line-height:1.2; }
+  .rpt-head .meta { color:var(--soft); font-size:.88rem; margin-top:.35rem; }
+  .pill-ext { font-size:.66rem; font-weight:700; color:var(--accent); background:var(--blue-bg);
+    border:1px solid var(--blue-ln); border-radius:999px; padding:.05rem .45rem; }
+  .pill-win { font-size:.66rem; font-weight:700; border-radius:999px; padding:.05rem .45rem; border:1px solid;
+    color:var(--amber); background:var(--amber-bg); border-color:var(--amber-ln); }
+  /* Scorecard hero — every card is a flex column so the number sits up top and the
+     chip/caption sits flush at the bottom, lining the four cards up on a shared baseline
+     and filling the whole card height. */
+  .hero { display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1.1rem; align-items:stretch; }
+  .hero .card { flex:1 1 0; min-width:11rem; display:flex; flex-direction:column; border:1px solid var(--line);
+    border-radius:16px; padding:1.15rem 1.25rem 1.05rem; background:linear-gradient(135deg,var(--blue-bg),var(--surface));
+    box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .hero .card.grade.b-good { background:linear-gradient(135deg,var(--green-bg),var(--blue-bg)); }
+  .hero .card.grade.b-mid  { background:linear-gradient(135deg,var(--amber-bg),var(--blue-bg)); }
+  .hero .card.grade.b-bad  { background:linear-gradient(135deg,var(--red-bg),var(--blue-bg)); }
+  .hero .v { font-size:2.5rem; font-weight:800; line-height:1; color:var(--ink); display:flex; align-items:baseline; }
+  .hero .v span { font-size:.85rem; color:var(--soft); font-weight:600; margin-left:.12rem; }
+  .hero .k { font-size:.72rem; text-transform:uppercase; letter-spacing:.03em; color:var(--soft);
+    font-weight:700; margin-top:.4rem; line-height:1.25; }
+  .hero .foot { margin-top:auto; padding-top:.75rem; min-height:1.6rem; }
+  .hero .cap { font-size:.74rem; color:var(--soft); font-style:italic; }
+  .verdict { display:inline-block; font-size:.72rem; font-weight:800; border-radius:999px;
+    padding:.15rem .6rem; border:1px solid; }
+  .verdict.good { color:var(--green); background:var(--surface); border-color:var(--green-ln); }
+  .verdict.neutral { color:var(--accent-ink); background:var(--surface); border-color:var(--blue-ln); }
+  .verdict.bad { color:var(--amber); background:var(--surface); border-color:var(--amber-ln); }
+  /* Journey panel — the expected → experienced → satisfaction arc as mini-cards,
+     a verdict pill, and a plain-language note on what happened. */
+  .journey-panel { padding:1.05rem 1.3rem 1.15rem; border-left:6px solid var(--blue-ln); }
+  .journey-panel.good { border-left-color:var(--green-ln); }
+  .journey-panel.mid  { border-left-color:var(--amber-ln); }
+  .journey-panel.bad  { border-left-color:var(--red-ln); }
+  .journey { display:flex; align-items:center; gap:.65rem; flex-wrap:wrap; }
+  .jstep { text-align:center; min-width:6.4rem; background:var(--bg); border:1px solid var(--line);
+    border-radius:12px; padding:.55rem .7rem .6rem; }
+  .jk { font-size:.62rem; text-transform:uppercase; letter-spacing:.03em; color:var(--soft); font-weight:700; }
+  .jv { font-size:1.7rem; font-weight:800; line-height:1.05; color:var(--ink); margin-top:.1rem; }
+  .jv span { font-size:.7rem; color:var(--soft); font-weight:600; }
+  .jv.band { font-size:1.05rem; padding-top:.4rem; }
+  .jcap { font-size:.66rem; color:var(--soft); margin-top:.3rem; line-height:1.25; }
+  .jarrow { color:var(--grey); font-size:1.25rem; }
+  .jverdict { margin-left:auto; font-size:.82rem; font-weight:800; border-radius:999px; padding:.3rem .8rem; border:1px solid; }
+  .jverdict.beat { color:var(--green); background:var(--green-bg); border-color:var(--green-ln); }
+  .jverdict.met  { color:var(--accent-ink); background:var(--blue-bg); border-color:var(--blue-ln); }
+  .jverdict.below{ color:var(--amber); background:var(--amber-bg); border-color:var(--amber-ln); }
+  .journey-read { font-size:.92rem; color:var(--ink); line-height:1.55; margin:.95rem 0 0; }
+  /* Panel + SERVQUAL table */
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1.1rem 1.3rem;
+    margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .panel h3 { margin:0 0 .15rem; font-size:1.02rem; }
+  .panel .sublab { color:var(--soft); font-size:.82rem; margin:0 0 .9rem; }
+  table.sq { width:100%; border-collapse:collapse; font-size:.9rem; }
+  table.sq th { text-align:left; font-size:.66rem; text-transform:uppercase; letter-spacing:.03em;
+    color:var(--soft); font-weight:700; padding:.3rem .5rem; border-bottom:1px solid var(--line); }
+  table.sq th.num, table.sq td.num { text-align:right; white-space:nowrap; }
+  table.sq td { padding:.55rem .5rem; border-bottom:1px solid var(--line); vertical-align:middle; }
+  table.sq .dname { font-weight:700; color:var(--ink); }
+  table.sq .dsub { font-size:.76rem; color:var(--soft); }
+  .meter > i { position:absolute; left:0; top:0; bottom:0; border-radius:999px; background:linear-gradient(90deg,#4299e1,#2b6cb0); }
+  .score-v { font-weight:800; font-size:1rem; color:var(--ink); }
+  .gap.pos { color:var(--green); font-weight:700; } .gap.neg { color:var(--red); font-weight:700; }
+  .gap.zero { color:var(--soft); font-weight:700; }
+  .chip-v { font-size:.7rem; font-weight:700; border-radius:999px; padding:.12rem .5rem; border:1px solid; white-space:nowrap; }
+  .chip-v.good { color:var(--green); background:var(--green-bg); border-color:var(--green-ln); }
+  .chip-v.neutral { color:var(--accent-ink); background:var(--blue-bg); border-color:var(--blue-ln); }
+  .chip-v.bad { color:var(--amber); background:var(--amber-bg); border-color:var(--amber-ln); }
+  /* Score cell: the meter is the row's spine — it fills the space between the
+     dimension name and the figures, with a tick marking the section average. */
+  table.sq th.bar-h { width:42%; }
+  .scorecell { width:42%; }
+  .meterwrap { display:flex; align-items:center; gap:.7rem; }
+  .meter { position:relative; flex:1; min-width:90px; max-width:260px; height:9px; margin-top:0;
+    border-radius:999px; background:var(--surface-3); }
+  .meter > .tick { position:absolute; top:-3px; bottom:-3px; width:2px; border-radius:2px;
+    background:var(--ink); box-shadow:0 0 0 1.5px var(--surface); }
+  .score-v small { font-size:.7rem; color:var(--soft); font-weight:600; margin-left:.05rem; }
+  .vs-cell { position:relative; cursor:help; }
+  .vs-chip { display:inline-flex; align-items:center; gap:.18rem; font-size:.74rem; font-weight:800;
+    border-radius:999px; padding:.1rem .5rem; border:1px solid; white-space:nowrap; }
+  .vs-chip.good { color:var(--green); background:var(--green-bg); border-color:var(--green-ln); }
+  .vs-chip.bad { color:var(--amber); background:var(--amber-bg); border-color:var(--amber-ln); }
+  .vs-chip.flat { color:var(--soft); background:var(--bg); border-color:var(--line); }
+  .varr { font-size:.6rem; line-height:1; }
+  .vs-tip { display:none; position:absolute; right:0; top:100%; margin-top:.4rem; width:235px; z-index:20;
+    text-align:left; white-space:normal; font-size:.78rem; font-weight:500; line-height:1.45; color:var(--ink);
+    background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:.55rem .7rem;
+    box-shadow:0 6px 20px rgba(20,30,50,.16); }
+  .vs-cell:hover .vs-tip { display:block; }
+  /* "How this compares" panel */
+  .panel.compare { border-left:6px solid var(--blue-ln); }
+  .panel.compare.good { border-left-color:var(--green-ln); }
+  .panel.compare.bad  { border-left-color:var(--amber-ln); }
+  .cmp-rows { display:flex; flex-direction:column; gap:.5rem; margin:.2rem 0 .8rem; }
+  .cmp-row { display:flex; align-items:center; gap:.8rem; }
+  .cmp-lab { width:11rem; font-size:.84rem; font-weight:600; color:var(--ink); }
+  .cmp-row.muted .cmp-lab { color:var(--soft); font-weight:500; }
+  .cmp-bar { flex:1; height:13px; border-radius:999px; background:var(--surface-3); overflow:hidden; }
+  .cmp-bar > i { display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,#4299e1,#2b6cb0); }
+  .cmp-row.muted .cmp-bar > i { background:#a9b6c8; }
+  .cmp-v { width:3.4rem; text-align:right; font-weight:800; color:var(--ink); }
+  .cmp-v small { font-size:.66rem; color:var(--soft); font-weight:600; }
+  .cmp-read { font-size:.9rem; color:var(--ink); margin:.2rem 0 0; line-height:1.5; }
+  .d-chip { font-size:.78rem; font-weight:800; border-radius:999px; padding:.12rem .55rem; border:1px solid; margin-right:.15rem; }
+  .d-chip.good { color:var(--green); background:var(--green-bg); border-color:var(--green-ln); }
+  .d-chip.bad  { color:var(--amber); background:var(--amber-bg); border-color:var(--amber-ln); }
+  .d-chip.neutral { color:var(--accent-ink); background:var(--blue-bg); border-color:var(--blue-ln); }
+  /* Demographics */
+  .demo { display:flex; gap:1.5rem; flex-wrap:wrap; align-items:center; }
+  .demo .block { min-width:13rem; flex:1; }
+  .demo .ratio { font-size:1.4rem; font-weight:800; color:var(--ink); }
+  .demo .bar { display:flex; height:14px; border-radius:999px; overflow:hidden; margin-top:.5rem; border:1px solid var(--line); }
+  .demo .bar > i { display:block; height:100%; }
+  .demo .bar .m { background:#4299e1; } .demo .bar .f { background:#ec4899; }
+  .demo .bar .d { background:#2f855a; } .demo .bar .n { background:#a0aec0; }
+  .demo .lg { font-size:.76rem; color:var(--soft); margin-top:.35rem; display:flex; gap:.9rem; flex-wrap:wrap; }
+  .demo .lg b { color:var(--ink); }
+  .dot { display:inline-block; width:.6rem; height:.6rem; border-radius:50%; vertical-align:middle; margin-right:.25rem; }
+  .note-manual { font-size:.74rem; color:var(--amber); background:var(--amber-bg); border:1px solid var(--amber-ln);
+    border-radius:8px; padding:.2rem .5rem; display:inline-block; margin-left:.4rem; }
+  .winform { display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; margin:.4rem 0;
+    padding:.6rem .8rem; background:var(--bg); border:1px solid var(--line); border-radius:10px; }
+  .winform label { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--soft); }
+  .winform input { padding:.35rem .5rem; border:1px solid var(--line); border-radius:8px; font-size:.85rem; width:5rem; }
+  .winform button { padding:.4rem .7rem; border-radius:8px; border:1px solid var(--accent); background:var(--accent);
+    color:var(--on-accent); font-weight:600; cursor:pointer; font-size:.8rem; }
+  .errbar { background:var(--red-bg); border:1px solid var(--red-ln); color:var(--red); border-radius:10px;
+    padding:.55rem .8rem; font-size:.9rem; margin-bottom:1rem; }
+  @media print { .crumb, .winform button, .dl-btn { display:none; } }
+</style>
+
+{% if not ev %}
+<div class="crumb"><a href="/reports/activities">← Activities</a></div>
+<h1 class="page">Activity not found</h1>
+<p class="lede">This activity has no event review, or the link is out of date. Head back to the <a href="/reports/activities">Activities</a> list.</p>
+{% else %}
+{% set band_cls = {'Excellent':'b-good','Good':'b-good','Fair':'b-mid','Poor':'b-bad'} %}
+{% set verdict_tone = {'Exceeds Expectation':'good','Meets Expectation':'neutral','Below Expectation':'bad'} %}
+
+<div class="crumb"><a href="/reports/activities">← Activities</a></div>
+{% if err %}<div class="errbar">{{ err }}</div>{% endif %}
+
+<div class="rpt-head">
+  <div style="min-width:0;">
+    <h1>{{ ev.name }}
+      {% if ev.is_external %}<span class="pill-ext">external</span>{% endif %}
+      {% if ev.open_at or ev.close_at %}<span class="pill-win" title="Entry window: {{ ev.open_at|humandt or 'now' }} → {{ ev.close_at|humandt or 'no deadline' }}">entry window set</span>{% endif %}
+    </h1>
+    <div class="meta">{{ ev.date|humandate }}{% if ev.venue %} · {{ ev.venue }}{% endif %} · {{ ev.organizer }}{% if ev.attendance %} · <strong>{{ ev.attendance|comma }} attended</strong>{% endif %} · {{ ev.respondents|comma }} response(s)</div>
+  </div>
+  <span class="dl-btn">{{ ex.download('/dashboard/export?visual=event&event_id=' ~ ev.id, 'Download') }}</span>
+</div>
+
+{% set grade_tone = {'Excellent':'good','Good':'good','Fair':'neutral','Poor':'bad'} %}
+{% if report %}
+<div class="hero">
+  <div class="card grade {{ band_cls.get(report.osq_grade,'b-mid') }}">
+    <div class="v">{{ report.osq_shown }}<span>/4</span></div>
+    <div class="k">Overall Service Quality</div>
+    <div class="foot">{% if report.osq_grade %}<span class="verdict {{ grade_tone.get(report.osq_grade,'neutral') }}">{{ report.osq_grade }}</span>{% endif %}</div>
+  </div>
+  <div class="card">
+    <div class="v">{{ report.average_shown }}<span>/7</span></div>
+    <div class="k">Average perception</div>
+    <div class="foot">{% if report.servqual_verdict %}<span class="verdict {{ verdict_tone.get(report.servqual_verdict,'neutral') }}">SERVQUAL {{ report.servqual_shown }} · {{ report.servqual_verdict }}</span>{% endif %}</div>
+  </div>
+  <div class="card">
+    <div class="v">{{ report.expectation_shown }}<span>/7</span></div>
+    <div class="k">Expectation walking in</div>
+    <div class="foot"><span class="cap">what people hoped for</span></div>
+  </div>
+  <div class="card">
+    <div class="v">{{ report.respondents|comma }}</div>
+    <div class="k">Respondents</div>
+    <div class="foot"><span class="cap">shared their feedback</span></div>
+  </div>
+</div>
+{% endif %}
+
+{% if ev.f2 and ev.f2.journey and ev.f2.journey.experienced is not none %}
+{% set jn = ev.f2.journey %}
+<div class="panel journey-panel {{ jn.tone }}">
+  <div class="journey">
+    {% if jn.expected is not none %}
+    <div class="jstep">
+      <div class="jk">They expected</div>
+      <div class="jv">{{ jn.expected }}<span>/7</span></div>
+      <div class="jcap">hoped for walking in</div>
+    </div>
+    <div class="jarrow" aria-hidden="true">→</div>
+    {% endif %}
+    <div class="jstep">
+      <div class="jk">They experienced</div>
+      <div class="jv">{{ jn.experienced }}<span>/7</span></div>
+      <div class="jcap">how they rated it</div>
+    </div>
+    {% if jn.osq_band %}
+    <div class="jarrow" aria-hidden="true">→</div>
+    <div class="jstep">
+      <div class="jk">Satisfaction</div>
+      <div class="jv band">{{ jn.osq_band }}</div>
+      <div class="jcap">overall verdict</div>
+    </div>
+    {% endif %}
+    {% if jn.verdict_label %}<div class="jverdict {{ jn.verdict }}">{{ jn.verdict_label }}</div>{% endif %}
+  </div>
+  {% if ev.f2.read %}<p class="journey-read">{{ ev.f2.read.text }}</p>{% endif %}
+</div>
+{% endif %}
+
+{% if report %}
+{% if bench %}
+{% set ctone = 'good' if bench.overall.delta >= 0.10 else ('bad' if bench.overall.delta <= -0.10 else 'neutral') %}
+<div class="panel compare {{ ctone }}">
+  <h3>How this compares</h3>
+  <p class="sublab">Against the {{ bench.peers }} other activit{{ 'y' if bench.peers == 1 else 'ies' }} {{ bench.label }} ran in {{ bench.year }} ({{ bench.respondents|comma }} respondents in all).</p>
+  <div class="cmp-rows">
+    <div class="cmp-row">
+      <div class="cmp-lab">This activity</div>
+      <div class="cmp-bar"><i style="width:{{ (report.average / 7 * 100)|round(1) }}%;"></i></div>
+      <div class="cmp-v">{{ report.average_shown }}<small>/7</small></div>
+    </div>
+    <div class="cmp-row muted">
+      <div class="cmp-lab">{{ bench.short|capitalize }} · {{ bench.year }}</div>
+      <div class="cmp-bar"><i style="width:{{ bench.overall.pct|round(1) }}%;"></i></div>
+      <div class="cmp-v">{{ bench.overall.shown }}<small>/7</small></div>
+    </div>
+  </div>
+  <p class="cmp-read">
+    <span class="d-chip {{ ctone }}">{{ bench.overall.delta_shown }}</span>
+    {% if bench.overall.delta >= 0.10 %}above {{ bench.label }}'s average this year{% elif bench.overall.delta <= -0.10 %}below {{ bench.label }}'s average this year{% else %}right in line with {{ bench.label }}'s average this year{% endif %}.
+    Satisfaction here was <b>{{ report.osq_grade or '—' }}</b>{% if report.osq_shown != '—' %} ({{ report.osq_shown }}/4){% endif %}
+    versus <b>{{ bench.osq.band or '—' }}</b>{% if bench.osq.shown != '—' %} ({{ bench.osq.shown }}/4){% endif %} across the rest.
+  </p>
+</div>
+{% else %}
+<div class="panel">{{ empty_state("No section comparison yet", hint="This is the only activity " ~ scope_label ~ " has run in " ~ ev.date[:4] ~ " so far.", icon="⇄") }}</div>
+{% endif %}
+
+<div class="panel">
+  <h3>Service quality, dimension by dimension</h3>
+  <p class="sublab">Each SERVQUAL dimension scored 1–7. The SERVQUAL score is perception minus what people expected walking in.{% if bench %} The tick on each bar marks {{ bench.label }}'s {{ bench.year }} average.{% endif %}</p>
+  <table class="sq resp-table">
+    <thead>
+      <tr><th>Dimension</th><th class="bar-h">Score</th><th class="num">SERVQUAL score</th>{% if bench %}<th class="num">vs {{ bench.short|capitalize }}</th>{% endif %}<th>Interpretation</th></tr>
+    </thead>
+    <tbody>
+      {% for d in report.dims %}
+      <tr>
+        <td data-label="Dimension">
+          <div class="dname">{{ d.label }}</div>
+          {% if d.sub %}<div class="dsub">{{ d.sub }}</div>{% endif %}
+        </td>
+        <td class="scorecell" data-label="Score">
+          <div class="meterwrap">
+            <div class="meter"><i style="width:{{ d.pct }}%;"></i>{% if d.sec_pct is defined %}<span class="tick" style="left:{{ d.sec_pct }}%;" title="{{ bench.label }} {{ bench.year }} average: {{ d.sec_shown }}"></span>{% endif %}</div>
+            <span class="score-v">{{ d.shown }}<small>/7</small></span>
+          </div>
+        </td>
+        <td class="num" data-label="SERVQUAL score"><span class="gap {{ 'zero' if d.gap is none else ('pos' if d.gap > 0.005 else ('neg' if d.gap < -0.005 else 'zero')) }}">{{ d.gap_shown }}</span></td>
+        {% if bench %}<td class="num vs-cell" data-label="vs {{ bench.short|capitalize }}">{% if d.sec_delta is defined %}<span class="vs-chip {{ 'good' if d.sec_delta >= 0.05 else ('bad' if d.sec_delta <= -0.05 else 'flat') }}">{% if d.sec_delta >= 0.05 %}<span class="varr" aria-hidden="true">▲</span> {{ d.sec_delta_shown }}{% elif d.sec_delta <= -0.05 %}<span class="varr" aria-hidden="true">▼</span> {{ d.sec_delta_shown }}{% else %}≈{% endif %}</span><span class="vs-tip">{% if d.sec_delta >= 0.05 %}This activity scored <b>{{ d.shown }}/7</b> on “{{ d.label }}” — <b>higher</b> than {{ bench.label }}'s {{ bench.year }} average of {{ d.sec_shown }}/7. It did better here than the section's other activities.{% elif d.sec_delta <= -0.05 %}This activity scored <b>{{ d.shown }}/7</b> on “{{ d.label }}” — a little <b>below</b> {{ bench.label }}'s {{ bench.year }} average of {{ d.sec_shown }}/7. A bit of room to catch up with the section's other activities.{% else %}This activity scored <b>{{ d.shown }}/7</b> on “{{ d.label }}” — <b>about the same</b> as {{ bench.label }}'s {{ bench.year }} average of {{ d.sec_shown }}/7.{% endif %}</span>{% else %}<span class="dsub">—</span>{% endif %}</td>{% endif %}
+        <td data-label="Interpretation">{% if d.verdict %}<span class="chip-v {{ verdict_tone.get(d.verdict,'neutral') }}">{{ d.verdict }}</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="panel">{{ empty_state("No service-quality scores yet", hint="Dimension-by-dimension scores appear here once an event review (Form-2) is submitted.", icon="◔") }}</div>
+{% endif %}
+
+<div class="panel">
+  <h3>Who responded{% if demo and demo.manual %}<span class="note-manual">manual entry</span>{% endif %}</h3>
+  <p class="sublab">Respondent profile — captured at pre-registration, or entered manually for older activities.</p>
+  {% if demo %}
+  <div class="demo">
+    {% if demo.mf_ratio %}
+    <div class="block">
+      <div class="ratio">{{ demo.mf_ratio }}</div>
+      <div class="dsub">Male : Female</div>
+      <div class="bar"><i class="m" style="width:{{ demo.male_pct }}%;"></i><i class="f" style="width:{{ demo.female_pct }}%;"></i></div>
+      <div class="lg"><span><span class="dot" style="background:#4299e1;"></span>Male <b>{{ demo.male }}</b></span><span><span class="dot" style="background:#ec4899;"></span>Female <b>{{ demo.female }}</b></span></div>
+    </div>
+    {% endif %}
+    {% if demo.affil_ratio %}
+    <div class="block">
+      <div class="ratio">{{ demo.affil_ratio }}</div>
+      <div class="dsub">DOH : Non-DOH</div>
+      <div class="bar"><i class="d" style="width:{{ demo.doh_pct }}%;"></i><i class="n" style="width:{{ demo.nondoh_pct }}%;"></i></div>
+      <div class="lg"><span><span class="dot" style="background:#2f855a;"></span>DOH <b>{{ demo.doh }}</b></span><span><span class="dot" style="background:#a0aec0;"></span>Non-DOH <b>{{ demo.nondoh }}</b></span></div>
+    </div>
+    {% endif %}
+  </div>
+  {% else %}
+  {% set demo_msg %}No demographic data captured for this activity yet{% if can_manage %} — enter it below{% endif %}.{% endset %}
+  {{ empty_state(demo_msg, icon="◔") }}
+  {% endif %}
+
+  {% if can_manage %}
+  <details class="disclosure" style="margin-top:.9rem;">
+    <summary>⚙ Enter / correct demographics manually</summary>
+    <form class="winform" method="post" action="/reports/activities/{{ ev.id }}/demographics">
+      <label>Male <input type="number" min="0" name="male" value="{{ manual.male if manual.male is not none else '' }}"></label>
+      <label>Female <input type="number" min="0" name="female" value="{{ manual.female if manual.female is not none else '' }}"></label>
+      <label>DOH <input type="number" min="0" name="doh" value="{{ manual.doh if manual.doh is not none else '' }}"></label>
+      <label>Non-DOH <input type="number" min="0" name="nondoh" value="{{ manual.nondoh if manual.nondoh is not none else '' }}"></label>
+      <button type="submit">Save</button>
+      <span style="font-size:.74rem; color:var(--soft);">Leave a field blank to fall back to captured counts.</span>
+    </form>
+  </details>
+  {% endif %}
+</div>
+
+<div class="panel" id="comments">
+  <h3>In people's own words</h3>
+  {{ s.panel(story, true, request.url.path) }}
+</div>
+
+{% if can_manage %}
+<div class="panel">
+  <h3>Manage this activity</h3>
+  <p class="sublab">The organizing section drives per-section / per-division reports. It applies to this event's review and all its speaker forms.</p>
+  <form class="winform" method="post" action="/reports/activities/{{ ev.id }}/section" style="align-items:center;">
+    <label>Section</label>
+    <select name="section_id" style="width:auto; max-width:100%;">
+      <option value="">— Bureau-wide (unassigned) —</option>
+      {% for sec in sections %}<option value="{{ sec.id }}" {{ 'selected' if ev.section_id == sec.id }}>{{ sec.name }}</option>{% endfor %}
+    </select>
+    <button type="submit">Save section</button>
+  </form>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

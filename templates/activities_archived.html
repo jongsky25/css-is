@@ -1,0 +1,112 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, empty_state %}
+{% block title %}Archived activities{% endblock %}
+{% block content %}
+<style>
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1.1rem 1.3rem;
+           margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .arch-list { list-style:none; margin:0; padding:0; }
+  .arch-list li { display:flex; align-items:center; gap:.8rem; padding:.7rem 0; border-top:1px solid var(--line); }
+  .arch-list li:first-child { border-top:none; }
+  .a-date { flex:0 0 auto; font-size:.74rem; font-weight:700; color:var(--accent); font-variant-numeric:tabular-nums;
+            background:var(--accent-bg); border:1px solid var(--blue-ln); border-radius:6px; padding:.14rem .45rem; white-space:nowrap; }
+  .a-body { flex:1 1 auto; min-width:0; }
+  .a-name { font-size:.92rem; font-weight:600; line-height:1.3; }
+  .a-meta { color:var(--grey); font-size:.78rem; margin-top:.12rem; }
+  .a-stat { flex:0 0 auto; text-align:right; white-space:nowrap; color:var(--soft); font-size:.74rem; }
+  .a-stat b { color:var(--ink); font-weight:800; }
+  .a-restore button { flex:0 0 auto; font:inherit; font-size:.78rem; font-weight:700; cursor:pointer;
+                      border:1px solid var(--line); background:var(--bg); color:var(--ink-soft);
+                      border-radius:999px; padding:.32rem .85rem; }
+  .a-restore button:hover { border-color:var(--accent); color:var(--accent); }
+  .a-check { flex:0 0 auto; width:1.05rem; height:1.05rem; accent-color:var(--accent); cursor:pointer; }
+  body:not(.bulk-on) .a-check { display:none; }
+  .bulk-bar { position:sticky; top:var(--stuck-top,0); z-index:5; display:flex; align-items:center; gap:.8rem;
+              flex-wrap:wrap; background:var(--surface); border:1px solid var(--accent); border-radius:12px;
+              padding:.7rem 1rem; margin-bottom:1rem; box-shadow:0 2px 8px rgba(20,30,50,.08); }
+  .bulk-bar .bb-head { font-size:.86rem; font-weight:700; }
+  .bulk-bar .bb-head b { color:var(--accent); }
+  .curate-toggle { cursor:pointer; font-weight:700; color:var(--accent); border:1px solid var(--blue-ln);
+                   border-radius:999px; padding:.3rem .8rem; font-size:.82rem; background:var(--accent-bg); }
+  .curate-toggle:hover { background:var(--accent); color:var(--on-accent); border-color:var(--accent); }
+</style>
+
+{{ page_header("Archived activities") }}
+<p class="lede">Standalone activities you've put away — they're hidden from every list, feed and count, but
+  nothing was deleted. Restore any of them to bring it back, fully intact.{% if is_admin %} As an admin you see
+  every archived standalone activity, whoever created it.{% endif %}</p>
+
+{% if ok %}<div class="flash ok" role="status">{{ ok }}</div>{% endif %}
+{% if err %}<div class="flash err" role="alert">{{ err }}</div>{% endif %}
+
+{% if items %}
+<div class="sortbar" style="justify-content:flex-end;">
+  <a class="curate-toggle" id="bulkToggle" role="button" tabindex="0"
+     title="Tick several activities to restore them together">↺ Select to restore</a>
+</div>
+
+<div class="bulk-bar" id="bulkBar" hidden>
+  <span class="bb-head"><b id="bbN">0</b> <span id="bbWord">activities</span> selected</span>
+  <form id="restoreForm" method="post" action="/activities/archived/bulk">
+    <button type="submit" class="btn small">↺ Restore selected</button>
+  </form>
+</div>
+
+<div class="panel">
+  <ul class="arch-list">
+    {% for a in items %}
+    <li>
+      <input class="a-check" type="checkbox" name="ids" value="{{ a.fid }}" form="restoreForm"
+             aria-label="Select {{ a.topic or 'Untitled activity' }}">
+      <span class="a-date">{{ a.event_date|humandate }}</span>
+      <span class="a-body">
+        <div class="a-name">{{ a.topic or 'Untitled activity' }}</div>
+        <div class="a-meta">{% if a.modality == 'online' %}<span class="badge blue">Online</span> {% endif %}{{ a.kind }}{% if a.venue and a.modality != 'online' %} · {{ a.venue }}{% endif %}</div>
+      </span>
+      <span class="a-stat"><b>{{ a.responses }}</b> {{ 'response' if a.responses == 1 else 'responses' }}</span>
+      <form class="a-restore" method="post" action="/activities/form/{{ a.fid }}/archive">
+        <input type="hidden" name="restore" value="1">
+        <button type="submit" title="Bring this activity back into your lists">Restore</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+
+<script>
+(function () {
+  var btn = document.getElementById('bulkToggle'), bar = document.getElementById('bulkBar');
+  if (!btn || !bar) return;
+  var on = false;
+  function refresh() {
+    var n = document.querySelectorAll('input[name=ids]:checked').length;
+    var c = document.getElementById('bbN'); if (c) c.textContent = n;
+    var w = document.getElementById('bbWord'); if (w) w.textContent = (n === 1 ? 'activity' : 'activities');
+  }
+  function toggle() {
+    on = !on;
+    document.body.classList.toggle('bulk-on', on);
+    bar.hidden = !on;
+    btn.textContent = on ? '✕ Cancel' : '↺ Select to restore';
+    if (!on) {
+      document.querySelectorAll('input[name=ids]:checked').forEach(function (b) { b.checked = false; });
+      refresh();
+    }
+  }
+  btn.addEventListener('click', toggle);
+  btn.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+  document.addEventListener('change', function (e) { if (e.target && e.target.name === 'ids') refresh(); });
+  document.getElementById('restoreForm').addEventListener('submit', function (e) {
+    if (!document.querySelectorAll('input[name=ids]:checked').length) {
+      e.preventDefault();
+      alert('Tick at least one activity to restore.');
+    }
+  });
+})();
+</script>
+{% else %}
+<div class="panel">
+  {{ empty_state("No archived activities yet.", hint="When you archive a standalone activity from your home page, it lands here so you can restore it later.", icon="📦") }}
+</div>
+{% endif %}
+{% endblock %}

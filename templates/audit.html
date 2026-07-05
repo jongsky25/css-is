@@ -1,0 +1,156 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, empty_state %}
+{% block title %}Audit log{% endblock %}
+{% block content %}
+<style>
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1.1rem 1.3rem;
+           margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .chain { display:inline-flex; gap:.4rem; align-items:center; font-size:.85rem; font-weight:700;
+           padding:.35rem .8rem; border-radius:999px; border:1px solid; }
+  .chain.ok { color:var(--green); background:var(--green-bg); border-color:var(--green-ln); }
+  .chain.bad { color:var(--red); background:var(--red-bg); border-color:var(--red-ln); }
+  .filters { display:flex; gap:.6rem; align-items:flex-end; flex-wrap:wrap; margin-bottom:1rem; }
+  .filters label { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.03em;
+                   color:var(--soft); display:flex; flex-direction:column; gap:.25rem; }
+  .filters select { padding:.4rem .5rem; border:1px solid var(--line); border-radius:8px; font-size:.9rem; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; padding:.5rem .5rem; border-bottom:1px solid var(--line); font-size:.88rem; vertical-align:top; }
+  th { font-size:.68rem; text-transform:uppercase; letter-spacing:.03em; color:var(--soft); }
+  .act { font-size:.7rem; font-weight:700; padding:.1rem .5rem; border-radius:999px;
+         background:var(--blue-bg); color:var(--accent); border:1px solid var(--blue-ln); white-space:nowrap; }
+  /* Coarse colour grouping of action categories — token-backed, dark-mode safe.
+     people/feedback = blue · admin/data = amber · activities/records = green · other = neutral */
+  .act.t-amber   { background:var(--amber-bg); color:var(--amber); border-color:var(--amber-ln); }
+  .act.t-green   { background:var(--green-bg); color:var(--green); border-color:var(--green-ln); }
+  .act.t-neutral { background:var(--surface-2); color:var(--soft); border-color:var(--line); }
+  /* "What's been happening" breakdown */
+  .brk { display:grid; grid-template-columns:1.6fr 1fr; gap:1.4rem; align-items:start; }
+  @media (max-width:560px) { .brk { grid-template-columns:1fr; } }
+  .brk h3 { font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; color:var(--soft); font-weight:700; margin:0 0 .6rem; }
+  .brk ol { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.5rem; }
+  .brk .row { display:grid; grid-template-columns:1fr auto; gap:.6rem; align-items:center; font-size:.88rem; }
+  .brk .bar { grid-column:1/-1; height:6px; border-radius:999px; background:var(--surface-2); overflow:hidden; }
+  .brk .bar > span { display:block; height:100%; background:var(--accent); border-radius:999px; }
+  .brk .n { font-variant-numeric:tabular-nums; font-weight:700; color:var(--soft); }
+  .brk .who { overflow-wrap:anywhere; }
+  .ts { white-space:nowrap; color:var(--soft); font-variant-numeric:tabular-nums; }
+  .diff { margin-top:.3rem; font-size:.8rem; }
+  .diff .b { color:var(--red); text-decoration:line-through; }
+  .diff .a { color:var(--green); }
+  .who { font-weight:600; white-space:nowrap; }
+  .glance { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:.8rem; margin-top:.4rem; }
+  .gl { border:1px solid var(--line); border-radius:12px; padding:.7rem .85rem; background:var(--bg); }
+  .gl .h { font-size:.68rem; text-transform:uppercase; letter-spacing:.04em; color:var(--soft); font-weight:700; }
+  .gl .big { font-size:1.35rem; font-weight:800; font-variant-numeric:tabular-nums; margin:.15rem 0; line-height:1.1; }
+  .gl .sub { font-size:.8rem; color:var(--soft); }
+  .glead { font-size:.92rem; color:var(--ink); margin:0 0 .2rem; }
+</style>
+
+{{ page_header("Audit log", "Append-only record of every governance-relevant action. Each entry is hash-chained to the one before it, so tampering with history is detectable.") }}
+
+{% set cat_tint = {
+  'Sign-in':'', 'Feedback':'',
+  'Accounts':'t-amber', 'Data & backups':'t-amber', 'Sharing':'t-amber',
+  'Activities':'t-green', 'Comments':'t-green', 'Directory':'t-green',
+  'Other':'t-neutral'} %}
+
+{% if insights %}
+<div class="panel">
+  <h2 style="font-size:1rem; margin:0 0 .3rem;">At a glance</h2>
+  <p class="glead">
+    <strong>{{ insights.today }}</strong> action{{ '' if insights.today == 1 else 's' }} recorded today,
+    <strong>{{ insights.week }}</strong> in the last 7 days.
+    {% if insights.last %}Most recent: <span class="act {{ cat_tint.get(insights.last.action|audit_category, 't-neutral') }}" title="{{ insights.last.action }}">{{ insights.last.label }}</span> by <strong>{{ insights.last.who }}</strong> on {{ insights.last.ts.replace('T', ' ') }}.{% endif %}
+  </p>
+  <div class="glance">
+    <div class="gl"><div class="h">Today</div><div class="big">{{ insights.today }}</div><div class="sub">actions recorded</div></div>
+    <div class="gl"><div class="h">Last 7 days</div><div class="big">{{ insights.week }}</div><div class="sub">actions recorded</div></div>
+    <div class="gl"><div class="h">All time</div><div class="big">{{ '{:,}'.format(insights.total) }}</div><div class="sub">entries on file</div></div>
+    {% if insights.busiest %}<div class="gl"><div class="h">Busiest (7 days)</div><div class="big" style="font-size:1rem;">{{ insights.busiest.who }}</div><div class="sub">{{ insights.busiest.n }} action{{ '' if insights.busiest.n == 1 else 's' }}</div></div>{% endif %}
+    {% if insights.common %}<div class="gl"><div class="h">Most common (7 days)</div><div class="big" style="font-size:.95rem;"><span class="act {{ cat_tint.get(insights.common.action|audit_category, 't-neutral') }}" title="{{ insights.common.action }}">{{ insights.common.label }}</span></div><div class="sub">{{ insights.common.n }} time{{ '' if insights.common.n == 1 else 's' }}</div></div>{% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% if breakdown %}
+<div class="panel">
+  <h2 style="font-size:1rem; margin:0 0 .8rem;">What's been happening <span class="note" style="color:var(--soft); font-weight:400; font-size:.82rem;">· last {{ breakdown.days }} days</span></h2>
+  <div class="brk">
+    <div>
+      <h3>By kind of action</h3>
+      <ol>
+        {% for t in breakdown.by_type %}
+        <li>
+          <div class="row">
+            <span><span class="act {{ cat_tint.get(t.category, 't-neutral') }}" title="{{ t.action }}">{{ t.label }}</span></span>
+            <span class="n">{{ t.n }}</span>
+          </div>
+          <div class="bar"><span style="width:{{ t.pct }}%;"></span></div>
+        </li>
+        {% endfor %}
+      </ol>
+    </div>
+    <div>
+      <h3>Busiest people</h3>
+      <ol>
+        {% for a in breakdown.by_actor %}
+        <li class="row"><span class="who">{{ a.who }}</span><span class="n">{{ a.n }}</span></li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="panel" style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap;">
+  {% if chain_ok %}
+    <span class="chain ok"><span aria-hidden="true">✔</span> Chain intact — no tampering detected ({{ entries|length }} shown)</span>
+  {% else %}
+    <span class="chain bad"><span aria-hidden="true">⚠</span> CHAIN BROKEN at entry #{{ bad_id }} — history has been altered or rows deleted</span>
+    <span class="muted small" style="flex-basis:100%;">What to do: don't edit anything further; export the audit table, restore the most recent backup from <a href="/admin/backups">Backups</a>, and compare. Entries after #{{ bad_id }} can't be trusted.</span>
+  {% endif %}
+  <form class="filters" method="get" action="/admin/audit" style="margin:0;">
+    <label>Action
+      <select name="action" onchange="this.form.submit()">
+        <option value="">All actions</option>
+        {% for a in actions %}<option value="{{ a }}" {{ 'selected' if a == sel_action }}>{{ a|audit_label }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Actor
+      <select name="actor" onchange="this.form.submit()">
+        <option value="">Everyone</option>
+        {% for a in actors %}<option value="{{ a }}" {{ 'selected' if a == sel_actor }}>{{ a }}</option>{% endfor %}
+      </select>
+    </label>
+  </form>
+</div>
+
+<div class="panel">
+  {% if not entries %}
+    {% set msg %}No audit entries{% if sel_action or sel_actor %} for this filter{% endif %} yet.{% endset %}
+    {{ empty_state(msg, icon="◔") }}
+  {% else %}
+  <div class="table-wrap">
+  <table class="resp-table">
+    <tr><th>When</th><th>Who</th><th>Action</th><th>What</th></tr>
+    {% for e in entries %}
+    <tr>
+      <td class="ts" data-label="When">{{ e.ts.replace('T', ' ') }}</td>
+      <td class="who" data-label="Who">{{ e.actor }}{% if e.ip %}<details style="display:inline-block;"><summary style="list-style:none; cursor:pointer; font-weight:400; color:var(--grey); font-size:.7rem;">· ip</summary><span style="font-weight:400; color:var(--grey); font-size:.74rem;">{{ e.ip }}</span></details>{% endif %}</td>
+      <td data-label="Action"><span class="act {{ cat_tint.get(e.action|audit_category, 't-neutral') }}" title="{{ e.action }}">{{ e.action|audit_label }}</span></td>
+      <td data-label="What">
+        {{ e.summary }}
+        {% if e.before or e.after %}
+        <div class="diff">
+          {% if e.before %}<div class="b"><span style="text-decoration:none; color:var(--grey); font-size:.72rem;">was</span> “{{ e.before }}”</div>{% endif %}
+          {% if e.after %}<div class="a"><span style="color:var(--grey); font-size:.72rem;">now</span> “{{ e.after }}”</div>{% endif %}
+        </div>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,252 @@
+{% extends "dash_layout.html" %}
+{% block title %}Paper entry{% endblock %}
+{% block content %}
+<style>
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1.2rem 1.4rem;
+           margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); max-width:640px; }
+  .crumb { font-size:.85rem; margin-bottom:.6rem; }
+  .crumb a { text-decoration:none; }
+  .saved { display:flex; align-items:center; gap:.6rem; border:1px solid var(--green-ln);
+           background:var(--green-bg); color:var(--green); border-radius:12px;
+           padding:.6rem .9rem; margin-bottom:1rem; font-weight:600; font-size:.92rem; max-width:640px; }
+  .ctxhead h1 { font-size:1.25rem; margin:0 0 .2rem; }
+  .ctxhead .ctx { color:var(--soft); font-size:.9rem; margin-bottom:.4rem; }
+  .ctxhead .ctx strong { color:var(--ink); }
+  .winnote { font-size:.82rem; color:var(--amber); background:var(--amber-bg); border:1px solid var(--amber-ln);
+             border-radius:8px; padding:.4rem .7rem; margin-top:.4rem; }
+  .group { margin-bottom:1.3rem; }
+  .group > .glabel { font-weight:700; font-size:.8rem; text-transform:uppercase; letter-spacing:.03em;
+                     color:var(--soft); border-bottom:1px solid var(--line); padding-bottom:.35rem; margin-bottom:.8rem; }
+  .item { margin-bottom:1rem; }
+  .stmt { font-weight:500; margin-bottom:.45rem; }
+  .dim { display:inline-block; font-size:.66rem; font-weight:700; text-transform:uppercase; color:var(--accent);
+         background:var(--blue-bg); border:1px solid var(--blue-ln); border-radius:999px; padding:.05rem .5rem; margin-left:.4rem; }
+  .opts { display:flex; flex-wrap:wrap; gap:.35rem; }
+  .opts label { display:flex; align-items:center; gap:.3rem; border:1px solid var(--line); border-radius:8px;
+                padding:.35rem .55rem; cursor:pointer; font-size:.88rem; }
+  .opts input { accent-color:var(--accent); }
+  .opts label:has(input:checked) { border-color:var(--accent); background:var(--blue-bg); font-weight:600; }
+  .opts .na { color:var(--soft); background:var(--surface-2); }
+  .note { width:100%; margin-top:.4rem; padding:.35rem .5rem; border:1px solid var(--line); border-radius:8px; font-size:.85rem; }
+  .field { margin-bottom:1.1rem; }
+  .field label.flab { display:block; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.03em;
+                      color:var(--soft); margin-bottom:.3rem; }
+  input[type=date], select.served-by, select.csm-sel { padding:.5rem .6rem; border:1px solid var(--line); border-radius:8px;
+                                        font-size:.95rem; background:var(--surface); }
+  select.served-by, select.csm-sel { width:100%; }
+  input.csm-txt { width:100%; padding:.5rem .6rem; border:1px solid var(--line); border-radius:8px; font-size:.95rem; }
+  .csm-row { display:grid; grid-template-columns:1fr 1fr; gap:.7rem; }
+  .csm-row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:.7rem; }
+  @media (max-width:560px){ .csm-row, .csm-row3 { grid-template-columns:1fr; } }
+  .save .lbl-brief { display:none; }
+  @media (max-width:600px){ .save .lbl-full { display:none; } .save .lbl-brief { display:inline; }
+                            .savebar { flex-wrap:wrap; } }
+  textarea { width:100%; padding:.55rem .6rem; border:1px solid var(--line); border-radius:8px;
+             font-size:.95rem; font-family:inherit; resize:vertical; }
+  .actions { display:flex; gap:.7rem; align-items:center; }
+  button.save { font-size:1rem; font-weight:700; color:var(--on-accent); background:var(--accent); border:none;
+                border-radius:10px; padding:.7rem 1.3rem; cursor:pointer; }
+  .hint { font-size:.8rem; color:var(--soft); }
+</style>
+
+<nav class="crumbs" aria-label="Breadcrumb"><a href="/encode">Paper entry</a><span class="sep">›</span><span class="here">{{ ctx.form_id if ctx else 'Form' }}</span></nav>
+
+{% if not ctx %}
+<div class="panel"><h1 style="margin:0;">Form not found</h1>
+  <p class="muted">That link doesn’t match any saved form. <a href="/encode">Back to paper entry</a>.</p></div>
+{% else %}
+
+{% if saved %}
+<div class="saved">✔ Saved. {% if n %}{{ n }} entered this session.{% endif %} Keep going with the next paper form below.</div>
+{% endif %}
+
+<div class="panel">
+  <div class="ctxhead">
+    <h1>{{ "Walk-in service feedback" if ctx.survey_type == 1 else ("Event feedback" if ctx.survey_type == 2 else "Speaker feedback") }}</h1>
+    <div class="ctx">
+      {% if ctx.rp_name and ctx.survey_type == 3 %}<strong>{{ ctx.rp_name }}</strong> · {% endif %}
+      {% if ctx.topic %}{{ ctx.topic }} · {% endif %}{{ ctx.organizer }}<br>
+      {{ ctx.event_date|humandate }}{% if ctx.modality == 'online' %} · <span class="badge blue">Online</span>{% endif %}{% if ctx.venue %} · {{ ctx.venue }}{% endif %} · {{ ctx.form_id }}
+    </div>
+    {% if locked %}
+    <div class="winnote" style="background:var(--red-bg);color:var(--red);border-color:var(--red-ln);">
+      This activity is <strong>closed</strong> — it no longer accepts entries, on paper or online.
+      To add a late form, ask the organizer to reopen it from its manage page, then close it again.</div>
+    {% elif window != 'open' %}
+    <div class="winnote">Note: the public link for this form is {{ 'not open yet' if window == 'not_yet' else 'closed' }}.
+      Paper entry is still allowed — you’re keying collected forms after the fact.</div>
+    {% endif %}
+  </div>
+
+  {% if locked %}
+  <p style="margin:1rem 0 .2rem;"><a href="/encode" class="muted">← Back to paper entry</a></p>
+  {% else %}
+  <form method="post" action="/encode/{{ qr_token }}" data-loading="Saving…">
+    <input type="hidden" name="n" value="{{ n }}">
+
+    <div class="field">
+      <label class="flab" for="collected_on">Date collected
+        {% if ctx.survey_type == 1 %}(this sets the period the slip counts in){% endif %}</label>
+      <input type="date" id="collected_on" name="collected_on" value="{{ today }}" max="{{ today }}">
+      <div class="hint" style="margin-top:.25rem;">The date written on the paper slip — not today's encoding date.</div>
+    </div>
+
+    {% if spec.ask_served_by %}
+    <div class="field">
+      <label class="flab" for="served_by">Who served the client?</label>
+      <select id="served_by" name="served_by_rp_id" class="served-by">
+        <option value="">— not stated on the slip —</option>
+        {% for s in staff %}<option value="{{ s.id }}">{{ s.name }}{% if s.org_path %} ({{ s.org_path }}){% endif %}</option>{% endfor %}
+      </select>
+    </div>
+    {% endif %}
+
+    {% if spec.is_csm %}
+    {# ── CO-CSM: Respondent Information ─────────────────────────────── #}
+    <div class="group">
+      <div class="glabel">Respondent Information</div>
+
+      <div class="csm-row">
+        <div class="field">
+          <label class="flab" for="csm_service">Service Availed</label>
+          <input list="csm-services-list" id="csm_service" name="csm_service"
+                 class="csm-txt" placeholder="e.g. Technical Assistance" autocomplete="off">
+          <datalist id="csm-services-list">
+            {% for s in spec.services %}<option value="{{ s }}">{% endfor %}
+          </datalist>
+        </div>
+        <div class="field">
+          <label class="flab" for="csm_type_of_service">Type of Service</label>
+          <select id="csm_type_of_service" name="csm_type_of_service" class="csm-sel">
+            <option value="">— select —</option>
+            <option>External</option>
+            <option>Internal</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="csm-row">
+        <div class="field">
+          <label class="flab" for="csm_client_type">Client Type</label>
+          <select id="csm_client_type" name="csm_client_type" class="csm-sel">
+            <option value="">— select —</option>
+            <option>Government</option>
+            <option>Citizen</option>
+            <option>Business</option>
+            <option>Did not specify</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="flab" for="csm_version">On-Site / Online</label>
+          <select id="csm_version" name="csm_version" class="csm-sel">
+            <option value="">— select —</option>
+            <option>On-Site</option>
+            <option>Online</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="csm-row3">
+        <div class="field">
+          <label class="flab" for="csm_sex">Sex</label>
+          <select id="csm_sex" name="csm_sex" class="csm-sel">
+            <option value="">— select —</option>
+            <option>Male</option>
+            <option>Female</option>
+            <option>Did not specify</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="flab" for="csm_age">Age <span style="font-weight:400;font-size:.9em">(0 if not given)</span></label>
+          <input type="number" id="csm_age" name="csm_age" class="csm-txt"
+                 min="0" max="120" value="0" style="width:100%">
+        </div>
+        <div class="field">
+          <label class="flab" for="csm_region">Region of Residence</label>
+          <select id="csm_region" name="csm_region" class="csm-sel">
+            <option value="">— select —</option>
+            {% for r in spec.regions %}<option>{{ r }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="flab" for="csm_email">Email Address <span style="font-weight:400;font-size:.9em">(optional)</span></label>
+        <input type="email" id="csm_email" name="csm_email" class="csm-txt" placeholder="Leave blank if not provided">
+      </div>
+    </div>
+
+    {# ── CO-CSM: Citizen Charter ─────────────────────────────────────── #}
+    <div class="group">
+      <div class="glabel">Citizen Charter</div>
+
+      <div class="field">
+        <label class="flab" for="csm_cc1">CC1 — Awareness</label>
+        <select id="csm_cc1" name="csm_cc1" class="csm-sel">
+          <option value="">— select —</option>
+          {% for opt in spec.cc1_opts %}<option>{{ opt }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label class="flab" for="csm_cc2">CC2 — Visibility</label>
+        <select id="csm_cc2" name="csm_cc2" class="csm-sel">
+          <option value="">— select —</option>
+          {% for opt in spec.cc2_opts %}<option>{{ opt }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label class="flab" for="csm_cc3">CC3 — Helpfulness</label>
+        <select id="csm_cc3" name="csm_cc3" class="csm-sel">
+          <option value="">— select —</option>
+          {% for opt in spec.cc3_opts %}<option>{{ opt }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    {% endif %}
+
+    {% for group in spec.groups %}
+    <div class="group">
+      <div class="glabel">{{ group.label }}
+        {% if spec.groups|length > 1 %}<span style="float:right; font-weight:400; text-transform:none; letter-spacing:0;">section {{ loop.index }} of {{ spec.groups|length }}</span>{% endif %}</div>
+      {% for item in group["items"] %}
+      <div class="item">
+        <div class="stmt">{{ loop.index }}. {{ item.text }}{% if item.dim %}<span class="dim">{{ item.dim }}</span>{% endif %}</div>
+        <div class="opts">
+          {# Low→high, left→right — matches the respondent rating form's scale order. #}
+          {% for val, lbl in item.scale|reverse %}
+          <label><input type="radio" name="{{ item.id }}" value="{{ val }}">{{ lbl }}</label>
+          {% endfor %}
+          <label class="na"><input type="radio" name="{{ item.id }}" value="na" checked>N/A / blank</label>
+        </div>
+        <input type="text" class="note" name="note_{{ item.id }}" placeholder="Note written on the slip (optional)">
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+
+    <div class="group">
+      <div class="glabel">Comments &amp; suggestions (optional)</div>
+      <textarea name="remarks" rows="3" placeholder="Transcribe any free-text comment from the slip"></textarea>
+    </div>
+
+    {% if spec.is_csm %}
+    <div class="group">
+      <div class="glabel">Feedback Type (optional)</div>
+      <div class="opts">
+        <label><input type="radio" name="csm_feedback_type" value="Positive"> Positive</label>
+        <label><input type="radio" name="csm_feedback_type" value="Negative"> Negative</label>
+        <label><input type="radio" name="csm_feedback_type" value="" checked> Not specified</label>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="savebar" style="margin:.8rem -1.4rem -1.2rem;">
+      <button type="submit" class="save"><span class="lbl-full">Save &amp; enter next</span><span class="lbl-brief">Save →</span></button>
+      <span class="count">{% if n %}{{ n }} saved this session · {% endif %}unanswered questions are saved as N/A</span>
+      <a href="/encode" class="muted small" style="margin-left:auto; white-space:nowrap;">Done — back to forms</a>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

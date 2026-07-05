@@ -1,0 +1,79 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, empty_state %}
+{% block title %}Guide{% endblock %}
+
+{% block head %}
+<style>
+  .help-wrap { max-width: 820px; }
+  .help-search-wrap { position:relative; margin:0 0 1.2rem; }
+  .help-search { width:100%; font-size:.95rem; padding:.6rem .8rem .6rem 2.2rem;
+    border:1px solid var(--line); border-radius:var(--r2); background:var(--surface); color:var(--ink); }
+  .help-search:focus-visible { outline:none; box-shadow:var(--ring); border-color:var(--accent); }
+  .help-search-ic { position:absolute; left:.7rem; top:50%; transform:translateY(-50%);
+    width:18px; height:18px; color:var(--soft); pointer-events:none; }
+  .help-sec { margin-bottom:1rem; }
+  .help-sec-hd { display:flex; align-items:baseline; justify-content:space-between; gap:1rem;
+    flex-wrap:wrap; margin-bottom:.5rem; }
+  .help-sec-hd h2 { font-size:1.1rem; margin:0; color:var(--ink); }
+  .help-sec-hd a { font-size:.82rem; font-weight:600; color:var(--accent); text-decoration:none; white-space:nowrap; }
+  .help-sec-hd a:hover { text-decoration:underline; }
+  .help-dl { margin:0; display:grid; gap:.5rem; }
+  .help-dl dt { font-weight:600; color:var(--ink); font-size:.92rem; }
+  .help-dl dd { margin:.1rem 0 0; color:var(--ink-soft); font-size:.88rem; line-height:1.5; }
+  .help-empty[hidden] { display:none; }
+  @media print { .help-search-wrap, .help-sec-hd a { display:none; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="help-wrap">
+  {{ page_header("Guide", "A short walk-through of every page in the system. Open any page and look for the “?” button at the top right to replay its tour in context.") }}
+
+  {% if sections %}
+  <div class="help-search-wrap">
+    <svg class="help-search-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+    <input type="search" class="help-search" id="helpSearch" placeholder="Search the guide…"
+           autocomplete="off" spellcheck="false" aria-label="Search the guide">
+  </div>
+
+  <p class="empty-state help-empty" id="helpEmpty" hidden>No matching topics.</p>
+
+  {% for s in sections %}
+  <section class="card help-sec" data-help-sec
+           data-text="{{ (s.label ~ ' ' ~ (s.steps | map(attribute='title') | join(' ')) ~ ' ' ~ (s.steps | map(attribute='body') | join(' '))) | lower }}">
+    <div class="help-sec-hd">
+      <h2>{{ s.label }}</h2>
+      <a href="{{ s.url }}">Replay this tour in context →</a>
+    </div>
+    <dl class="help-dl">
+      {% for st in s.steps %}
+      <dt>{{ st.title }}</dt>
+      <dd>{{ st.body }}</dd>
+      {% endfor %}
+    </dl>
+  </section>
+  {% endfor %}
+  {% else %}
+  {{ empty_state("No guide topics are available for your account yet.") }}
+  {% endif %}
+</div>
+
+<script>
+(function () {
+  var input = document.getElementById("helpSearch");
+  if (!input) return;
+  var secs = Array.prototype.slice.call(document.querySelectorAll("[data-help-sec]"));
+  var empty = document.getElementById("helpEmpty");
+  input.addEventListener("input", function () {
+    var q = input.value.trim().toLowerCase();
+    var shown = 0;
+    secs.forEach(function (s) {
+      var hit = !q || s.getAttribute("data-text").indexOf(q) !== -1;
+      s.hidden = !hit;
+      if (hit) shown++;
+    });
+    if (empty) empty.hidden = shown !== 0;
+  });
+})();
+</script>
+{% endblock %}

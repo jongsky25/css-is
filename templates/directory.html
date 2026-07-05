@@ -1,0 +1,372 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}Directory{% endblock %}
+
+{% block head %}
+<style>
+  .dwrap { max-width:780px; }
+  .warn { background:var(--amber-bg); border:1px solid var(--amber-ln); color:var(--amber); border-radius:8px;
+          padding:.8rem 1rem; margin-bottom:1rem; }
+  .warn-actions { display:flex; gap:1rem; align-items:center; margin-top:.6rem; }
+  .warn .cancel { color:var(--soft); text-decoration:none; font-weight:600; }
+  .dcard { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:1.25rem 1.5rem;
+          margin-bottom:1.25rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .dcard h2 { font-size:1.1rem; margin:0 0 .25rem; }
+  .step { color:var(--grey); font-size:.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+  .hint { color:var(--soft); font-size:.85rem; margin:.2rem 0 .8rem; }
+  .dcard table { width:100%; border-collapse:collapse; margin-bottom:1rem; }
+  .dcard td, .dcard th { text-align:left; padding:.45rem .3rem; border-bottom:1px solid var(--line); font-size:.92rem; vertical-align:middle; }
+  .dcard th { color:var(--soft); font-size:.72rem; text-transform:uppercase; letter-spacing:.03em; }
+  .dcard td.empty { color:var(--soft); text-align:center; font-style:italic; padding:1rem .3rem; }
+  .avatar2 { width:40px; height:40px; border-radius:50%; background:var(--surface-3); border:1px solid var(--line);
+            display:inline-flex; align-items:center; justify-content:center; color:var(--grey); font-weight:700;
+            font-size:.9rem; overflow:hidden; }
+  .avatar2 img { width:100%; height:100%; object-fit:cover; }
+  form.add { display:flex; flex-wrap:wrap; gap:.5rem; align-items:center; border-top:1px dashed var(--line); padding-top:.9rem; }
+  form.add input[type=text], form.add select { padding:.45rem .55rem; border:1px solid var(--line);
+            border-radius:8px; font-size:.92rem; flex:1 1 150px; min-width:120px; background:var(--surface); }
+  .dcard button { padding:.45rem .9rem; border:1px solid transparent; border-radius:8px; cursor:pointer;
+           background:var(--accent); color:var(--on-accent); font-weight:600; font-size:.9rem; }
+  .dcard button.del { background:var(--surface); color:var(--red); border-color:var(--red-ln); padding:.3rem .6rem; font-size:.8rem; }
+  .pick .lbl { color:var(--accent); font-weight:600; cursor:pointer; font-size:.85rem; }
+  .rowlink { color:var(--accent); font-weight:600; cursor:pointer; font-size:.82rem; }
+  .addbtn { display:inline-block; background:var(--accent); color:var(--on-accent); font-weight:600; font-size:.9rem;
+            padding:.5rem 1rem; border-radius:8px; text-decoration:none; }
+  .grp { font-weight:700; font-size:.82rem; color:var(--soft); margin:.6rem 0 .2rem; }
+  .sub2 { color:var(--grey); font-size:.8rem; }
+  .tag { display:inline-block; font-size:.72rem; font-weight:700; padding:.1rem .5rem; border-radius:999px;
+         background:var(--accent-bg); color:var(--accent); border:1px solid var(--blue-ln); }
+  /* inline rename of divisions/sections */
+  .edt { display:none; }
+  tr.editing .disp { display:none; }
+  tr.editing .edt { display:inline-block; }
+  tr.editing input.edt { padding:.35rem .5rem; border:1px solid var(--line); border-radius:6px;
+         font-size:.9rem; width:100%; max-width:340px; background:var(--surface); }
+  tr.editing form.edt { display:inline; }
+  tr.editing .del-form { display:none; }
+  .acts { display:flex; gap:.6rem; align-items:center; }
+  .dsearch { position:relative; margin:0 0 .9rem; }
+  .dsearch input { width:100%; box-sizing:border-box; padding:.5rem .7rem .5rem 2rem; border:1px solid var(--line);
+            border-radius:8px; font-size:.92rem; background:var(--surface); }
+  .dsearch .ico { position:absolute; left:.65rem; top:50%; transform:translateY(-50%); color:var(--soft);
+            font-size:.9rem; pointer-events:none; }
+  tr.nomatch { display:none; }
+</style>
+{% endblock %}
+
+{% block crumbs %}
+<nav class="crumbs" aria-label="Breadcrumb"><a href="/dashboard">Dashboard</a><span class="sep">›</span><span class="here">Directory</span></nav>
+{% endblock %}
+
+{% block content %}
+<div class="dwrap">
+  {{ page_header("Directory") }}
+  <p class="lede">Build the organogram — bureau, divisions, then sections — and register staff &amp; resource persons.</p>
+  <p style="margin:-.4rem 0 1rem;"><a class="addbtn" href="/directory/cleanup">⚙ Name cleanup tool</a>
+     <span class="sub2">— proper-case, strip honorifics, merge duplicates &amp; split rosters fast.</span></p>
+  {% if err %}<div class="flash err" role="alert">{{ err }}</div>{% endif %}
+  {% if pending %}
+  <div class="warn" role="alert">
+    <strong>Possible duplicate.</strong> “{{ pending.name }}” looks similar to existing {{ pending.label }}{{ "s" if pending.matches|length > 1 else "" }}:
+    <strong>{{ pending.matches|join(', ') }}</strong>. Add it anyway?
+    <div class="warn-actions">
+      <form method="post" action="{{ pending.action }}" style="margin:0">
+        {% for k, v in pending.fields %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+        <input type="hidden" name="confirm" value="1">
+        <button type="submit">Add anyway</button>
+      </form>
+      <a class="cancel" href="/directory">Cancel</a>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- BUREAU -->
+  <div class="dcard">
+    <h2>Bureau</h2>
+    <p class="hint">The top of the organogram. Everything rolls up here.</p>
+    <form class="add" method="post" action="/directory/bureau" style="border-top:none; padding-top:0">
+      <input type="text" name="name" value="{{ org.bureau.name if org.bureau else '' }}" placeholder="Official bureau name" required>
+      <input type="text" name="short_name" value="{{ org.bureau.short_name if org.bureau and org.bureau.short_name else '' }}" placeholder="Short (e.g. BLHSD)">
+      <button type="submit">Save bureau</button>
+    </form>
+  </div>
+
+  <!-- OFFICE OF THE DIRECTOR (head office, above the divisions) -->
+  {% if org.directorate %}
+  {% set od = org.directorate %}
+  <div class="dcard">
+    <h2>Office of the Director</h2>
+    <p class="hint">The head office — the whole bureau rolls up to it. It sits <strong>above</strong> the divisions, not under any of them.</p>
+    <div class="table-wrap">
+    <table class="resp-table">
+      <tr><th>Office</th><th>Short</th><th>Path</th><th></th></tr>
+      <tr id="row-{{ od.id }}">
+        <td>
+          <span class="disp">{{ od.name }}</span>
+          <input class="edt" form="ef-{{ od.id }}" name="name" value="{{ od.name }}" placeholder="Office name" required>
+        </td>
+        <td>
+          <span class="disp">{{ od.short_name or "—" }}</span>
+          <input class="edt" form="ef-{{ od.id }}" name="short_name" value="{{ od.short_name or '' }}" placeholder="Short">
+        </td>
+        <td><code>{{ od.path|short_path }}</code></td>
+        <td>
+          <div class="acts">
+            <a class="rowlink disp" href="#" onclick="toggleEdit('{{ od.id }}'); return false;">Edit</a>
+            <form id="ef-{{ od.id }}" class="edt" method="post" action="/directory/unit/{{ od.id }}/edit" style="margin:0">
+              <button type="submit">Save</button>
+            </form>
+            <a class="rowlink edt" href="#" onclick="toggleEdit('{{ od.id }}'); return false;">Cancel</a>
+            <form class="del-form" method="post" action="/directory/unit/{{ od.id }}/delete" style="margin:0"
+                  onsubmit="return confirm('Remove “{{ od.name }}”?')"><button class="del">Remove</button></form>
+          </div>
+        </td>
+      </tr>
+    </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- STEP 1: DIVISIONS -->
+  <div class="dcard">
+    <div class="step">Step 1</div>
+    <h2>Divisions</h2>
+    <p class="hint">Name every division first.</p>
+    <div class="table-wrap">
+    <table class="resp-table">
+      <tr><th>Division</th><th>Short</th><th>Path</th><th></th></tr>
+      {% for d in org.divisions %}
+      <tr id="row-{{ d.id }}">
+        <td>
+          <span class="disp">{{ d.name }}</span>
+          <input class="edt" form="ef-{{ d.id }}" name="name" value="{{ d.name }}" placeholder="Division long name" required>
+        </td>
+        <td>
+          <span class="disp">{{ d.short_name or "—" }}</span>
+          <input class="edt" form="ef-{{ d.id }}" name="short_name" value="{{ d.short_name or '' }}" placeholder="Short">
+        </td>
+        <td><code>{{ d.path|short_path }}</code></td>
+        <td>
+          <div class="acts">
+            <a class="rowlink disp" href="#" onclick="toggleEdit('{{ d.id }}'); return false;">Edit</a>
+            <form id="ef-{{ d.id }}" class="edt" method="post" action="/directory/unit/{{ d.id }}/edit" style="margin:0">
+              <button type="submit">Save</button>
+            </form>
+            <a class="rowlink edt" href="#" onclick="toggleEdit('{{ d.id }}'); return false;">Cancel</a>
+            <form class="del-form" method="post" action="/directory/unit/{{ d.id }}/delete" style="margin:0"
+                  onsubmit="return confirm('Remove division “{{ d.name }}”?')"><button class="del">Remove</button></form>
+          </div>
+        </td>
+      </tr>
+      {% else %}<tr><td colspan="4" class="empty">No divisions yet.</td></tr>{% endfor %}
+    </table>
+    </div>
+    <form class="add" method="post" action="/directory/division">
+      <input type="text" name="name" placeholder="Division long name (e.g. Health Systems Monitoring and Evaluation Division)" required>
+      <input type="text" name="short_name" placeholder="Short (e.g. HSMED)">
+      <button type="submit">Add division</button>
+    </form>
+  </div>
+
+  <!-- STEP 2: SECTIONS -->
+  <div class="dcard">
+    <div class="step">Step 2</div>
+    <h2>Sections</h2>
+    <p class="hint">Add each section and choose its division — or mark it <strong>Administrative</strong> (directly under the bureau, no division).</p>
+    <div class="table-wrap">
+    <table class="resp-table">
+      <tr><th>Section</th><th>Short</th><th>Division</th><th></th></tr>
+      {% for d in org.divisions %}{% for s in d.sections %}
+      <tr id="row-{{ s.id }}">
+        <td>
+          <span class="disp">{{ s.name }}</span>
+          <input class="edt" form="ef-{{ s.id }}" name="name" value="{{ s.name }}" placeholder="Section long name" required>
+        </td>
+        <td>
+          <span class="disp">{{ s.short_name or "—" }}</span>
+          <input class="edt" form="ef-{{ s.id }}" name="short_name" value="{{ s.short_name or '' }}" placeholder="Short">
+        </td>
+        <td>{{ d.name }}</td>
+        <td>
+          <div class="acts">
+            <a class="rowlink disp" href="#" onclick="toggleEdit('{{ s.id }}'); return false;">Edit</a>
+            <form id="ef-{{ s.id }}" class="edt" method="post" action="/directory/unit/{{ s.id }}/edit" style="margin:0">
+              <button type="submit">Save</button>
+            </form>
+            <a class="rowlink edt" href="#" onclick="toggleEdit('{{ s.id }}'); return false;">Cancel</a>
+            <form class="del-form" method="post" action="/directory/unit/{{ s.id }}/delete" style="margin:0"
+                  onsubmit="return confirm('Remove section “{{ s.name }}”?')"><button class="del">Remove</button></form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}{% endfor %}
+      {% for s in org.admin_sections %}
+      <tr id="row-{{ s.id }}">
+        <td>
+          <span class="disp">{{ s.name }}</span>
+          <input class="edt" form="ef-{{ s.id }}" name="name" value="{{ s.name }}" placeholder="Section long name" required>
+        </td>
+        <td>
+          <span class="disp">{{ s.short_name or "—" }}</span>
+          <input class="edt" form="ef-{{ s.id }}" name="short_name" value="{{ s.short_name or '' }}" placeholder="Short">
+        </td>
+        <td><em>Administrative</em></td>
+        <td>
+          <div class="acts">
+            <a class="rowlink disp" href="#" onclick="toggleEdit('{{ s.id }}'); return false;">Edit</a>
+            <form id="ef-{{ s.id }}" class="edt" method="post" action="/directory/unit/{{ s.id }}/edit" style="margin:0">
+              <button type="submit">Save</button>
+            </form>
+            <a class="rowlink edt" href="#" onclick="toggleEdit('{{ s.id }}'); return false;">Cancel</a>
+            <form class="del-form" method="post" action="/directory/unit/{{ s.id }}/delete" style="margin:0"
+                  onsubmit="return confirm('Remove section “{{ s.name }}”?')"><button class="del">Remove</button></form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+    </div>
+    <form class="add" method="post" action="/directory/section">
+      <input type="text" name="name" placeholder="Section long name (e.g. Equity in Health and Special Concerns Section)" required>
+      <input type="text" name="short_name" placeholder="Short (e.g. Equity)">
+      <select name="division_id">
+        {% for d in org.divisions %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}
+        <option value="admin">Administrative — directly under the bureau</option>
+      </select>
+      <button type="submit">Add section</button>
+    </form>
+  </div>
+
+  <!-- INTERNAL STAFF -->
+  <div class="dcard">
+    <h2>Internal staff</h2>
+    <p class="hint">Assign each to a section, or to a division directly if they're a <strong>division chief</strong>, or to the administrative section. Use <strong>Edit</strong> to fill in position, designation, focus area, email, and employment type.</p>
+    <div class="dsearch"><span class="ico" aria-hidden="true">🔍</span><input type="text" placeholder="Search staff by name, position, section…" oninput="filterTable(this)" aria-label="Search internal staff"></div>
+    <div class="table-wrap">
+    <table class="resp-table">
+      <tr><th></th><th>Name</th><th>Position / designation</th><th>Assigned to</th><th>Type</th><th></th></tr>
+      {% for p in staff %}
+      <tr id="row-p{{ p.id }}">
+        <td><span class="avatar2">{% if p.has_photo %}<img src="/photo/{{ p.id }}?v={{ loop.index }}" alt="">{% else %}{{ p.name[0]|upper }}{% endif %}</span></td>
+        <td>{{ p.name }}{% if p.email %}<br><span class="sub2">{{ p.email }}</span>{% endif %}</td>
+        <td>{{ p.position or "—" }}{% if p.designation %}<br><span class="sub2">{{ p.designation }}</span>{% endif %}</td>
+        <td>{{ p.org_path|short_path or "—" }}</td>
+        <td>{% if p.employment_type %}<span class="tag">{{ EMP_LABEL.get(p.employment_type, p.employment_type) }}</span>{% else %}—{% endif %}</td>
+        <td><a class="rowlink" href="/directory/person/{{ p.id }}/edit">Edit</a></td>
+      </tr>
+      {% else %}<tr><td colspan="6" class="empty">No internal staff yet.</td></tr>{% endfor %}
+    </table>
+    </div>
+    <div style="border-top:1px dashed var(--line); padding-top:.9rem;">
+      <a class="addbtn" href="/directory/staff/new">＋ Add staff</a>
+    </div>
+  </div>
+
+  <!-- EXTERNAL RPs -->
+  <div class="dcard">
+    <h2>External resource persons</h2>
+    <p class="hint">Guest speakers and trainers from outside the bureau — with their title, agency and email.</p>
+    <div class="dsearch"><span class="ico" aria-hidden="true">🔍</span><input type="text" placeholder="Search resource persons by name, agency, email…" oninput="filterTable(this)" aria-label="Search external resource persons"></div>
+    <div class="table-wrap">
+    <table class="resp-table">
+      <tr><th></th><th>Name</th><th>Agency</th><th>Email</th><th></th><th></th></tr>
+      {% for p in external_rps %}
+      <tr id="row-p{{ p.id }}">
+        <td><span class="avatar2">{% if p.has_photo %}<img src="/photo/{{ p.id }}?v={{ loop.index }}" alt="">{% else %}{{ p.name[0]|upper }}{% endif %}</span></td>
+        <td>{{ (p.honorific ~ ' ') if p.honorific else '' }}{{ p.name }}</td>
+        <td class="sub2">{{ p.agency or '—' }}</td>
+        <td class="sub2">{{ p.email or '—' }}</td>
+        <td><a class="rowlink" href="/directory/external/{{ p.id }}/edit">Edit</a></td>
+        <td>
+          <form method="post" action="/directory/person/{{ p.id }}/photo" style="margin:0">
+            <input type="hidden" name="photo_data">
+            <label class="rowlink">{{ "Change photo" if p.has_photo else "Add photo" }}
+              <input type="file" accept="image/*" hidden onchange="onRowPick(this)"></label>
+          </form>
+        </td>
+      </tr>
+      {% else %}<tr><td colspan="6" class="empty">No external resource persons yet.</td></tr>{% endfor %}
+    </table>
+    </div>
+    <a class="addbtn" href="/directory/external/new">+ Add external resource person</a>
+  </div>
+
+  <!-- OUTSIDE ORGANIZERS -->
+  <div class="dcard">
+    <h2>Outside organizers</h2>
+    <div class="dsearch"><span class="ico" aria-hidden="true">🔍</span><input type="text" placeholder="Search organizers by name…" oninput="filterTable(this)" aria-label="Search outside organizers"></div>
+    <div class="table-wrap">
+    <table class="resp-table">
+      <tr><th>Name</th></tr>
+      {% for o in orgs %}<tr><td>{{ o.name }}</td></tr>
+      {% else %}<tr><td class="empty">No outside organizers yet.</td></tr>{% endfor %}
+    </table>
+    </div>
+    <form class="add" method="post" action="/directory/external-org">
+      <input type="text" name="name" placeholder="Agency / institution name" required>
+      <button type="submit">Add organizer</button>
+    </form>
+  </div>
+
+  <!-- START FRESH -->
+  <div class="dcard">
+    <h2>Start fresh</h2>
+    <p class="hint">Clears the sample data (org units, people, surveys, responses) and leaves just the bureau, so you can build your real organogram on a blank slate.</p>
+    <form method="post" action="/directory/clear-sample"
+          onsubmit="return confirm('This permanently deletes ALL directory entries, surveys, and responses, then recreates just the bureau. Continue?')">
+      <button type="submit" class="del" disabled title="Disabled to prevent accidental data loss">Clear sample data &amp; start fresh</button>
+    </form>
+  </div>
+</div>
+
+<script>
+function filterTable(input) {
+  const q = input.value.trim().toLowerCase();
+  const card = input.closest('.dcard');
+  const table = card.querySelector('.table-wrap table');
+  if (!table) return;
+  table.querySelectorAll('tr').forEach(tr => {
+    if (tr.querySelector('th')) return;            // keep header row
+    if (tr.querySelector('td.empty')) return;      // keep empty-state row
+    const hit = !q || tr.textContent.toLowerCase().includes(q);
+    tr.classList.toggle('nomatch', !hit);
+  });
+}
+function toggleEdit(id) {
+  const row = document.getElementById('row-' + id);
+  if (!row) return;
+  const on = row.classList.toggle('editing');
+  if (on) { const f = row.querySelector('input.edt'); if (f) f.focus(); }
+}
+function toDataURL(file, cb) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const max = 512;
+      let { width: w, height: h } = img;
+      if (w > max || h > max) { const s = Math.min(max / w, max / h); w = Math.round(w*s); h = Math.round(h*s); }
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      cb(c.toDataURL('image/jpeg', 0.85));
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+function onPick(input) {
+  if (!input.files[0]) return;
+  const form = input.closest('form');
+  toDataURL(input.files[0], d => {
+    form.querySelector('input[name=photo_data]').value = d;
+    form.querySelector('.preview').innerHTML = '<img src="' + d + '">';
+  });
+}
+function onRowPick(input) {
+  if (!input.files[0]) return;
+  const form = input.closest('form');
+  toDataURL(input.files[0], d => { form.querySelector('input[name=photo_data]').value = d; form.submit(); });
+}
+</script>
+{% endblock %}

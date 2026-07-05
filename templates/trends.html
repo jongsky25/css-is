@@ -1,0 +1,422 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, empty_state, chart_table %}
+{% import "_export.html" as ex %}
+{% block title %}Trends{% endblock %}
+{% block content %}
+<style>
+  .tabs { display:flex; gap:.4rem; flex-wrap:wrap; margin-bottom:.8rem; }
+  .tabs a { text-decoration:none; font-weight:600; font-size:.9rem; padding:.4rem .85rem; border-radius:999px;
+            border:1px solid var(--line); color:var(--soft); }
+  .tabs a.on { background:var(--accent); color:var(--on-accent); border-color:var(--accent); }
+  .controls { display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:.8rem; }
+  .pillrow { display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
+  .seg { display:flex; gap:.3rem; }
+  .seg a { font-size:.78rem; text-decoration:none; color:var(--soft); padding:.28rem .65rem; border-radius:999px; border:1px solid var(--line); }
+  .seg a.on { background:var(--ink); color:var(--on-accent); border-color:var(--ink); }
+  .seglab { font-size:.72rem; color:var(--soft); text-transform:uppercase; letter-spacing:.04em; margin-right:.1rem; }
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1.1rem 1.3rem;
+           margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  /* Consolidated "what's happening" headline (stability + latest move + movers in one) */
+  .read { border-left:5px solid var(--accent); }
+  .read.good { border-left-color:var(--green); background:var(--green-bg); }
+  .read.bad { border-left-color:var(--red); background:var(--red-bg); }
+  .read.neutral { border-left-color:var(--grey); }
+  .read-head { font-size:1.12rem; font-weight:700; line-height:1.35; display:flex; gap:.55rem; align-items:flex-start; }
+  .read-head .pill { flex:0 0 auto; font-size:.66rem; font-weight:700; padding:.16rem .55rem; border-radius:999px; border:1px solid; margin-top:.2rem; text-transform:uppercase; letter-spacing:.03em; }
+  .read.good .pill { background:var(--green-bg); color:var(--green); border-color:var(--green-ln); }
+  .read.bad .pill { background:var(--red-bg); color:var(--red); border-color:var(--red-ln); }
+  .read.neutral .pill { background:var(--surface-3); color:var(--soft); border-color:var(--line); }
+  .read-sub { color:var(--ink-soft); font-size:.93rem; line-height:1.5; margin-top:.55rem; }
+  .read-sub b.up { color:var(--green); } .read-sub b.down { color:var(--red); }
+  .chart svg { width:100%; height:auto; }
+  .chart .axis { stroke:var(--line); stroke-width:1; }
+  .chart .grid { stroke:var(--surface-3); stroke-width:1; }
+  .chart .ylab { font-size:10.5px; fill:var(--soft); text-anchor:end; }
+  .chart .mainline { fill:none; stroke:var(--accent); stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
+  .chart .ctl-band { fill:var(--surface-3); opacity:.7; }
+  .chart .conf { fill:var(--accent); opacity:.13; stroke:none; }
+  .chart .cl { stroke:#64748b; stroke-width:1.2; stroke-dasharray:5 4; }
+  .chart .lim { stroke:var(--line-strong); stroke-width:1; stroke-dasharray:2 3; }
+  .chart .ctl-lab { font-size:9px; fill:var(--grey); text-anchor:end; }
+  .chart .dot { fill:#fff; stroke:var(--accent); stroke-width:3; }
+  .chart .dot.sig { fill:var(--red); stroke:var(--red); }
+  .bandnote { color:var(--soft); font-size:.78rem; margin:.5rem 0 0; display:flex; gap:1.1rem; flex-wrap:wrap; }
+  .bandnote b { font-weight:600; color:var(--ink-soft); }
+  .bandnote .key { display:inline-flex; align-items:center; gap:.35rem; }
+  .bandnote .sw { width:16px; height:10px; border-radius:3px; display:inline-block; }
+  .bandnote .sw.band { background:var(--surface-3); border:1px solid var(--line-strong); }
+  .bandnote .sw.rib { background:var(--accent); opacity:.2; }
+  .bandnote .sw.sig { width:10px; height:10px; border-radius:50%; background:var(--red); }
+  .chart .dotlab { font-size:11.5px; font-weight:700; fill:var(--ink); text-anchor:middle; }
+  .chart .xlab { font-size:10.5px; fill:var(--soft); text-anchor:middle; }
+  .chart .dimline { fill:none; stroke-width:2; opacity:.85; }
+  .chart .dimline.flat { stroke:var(--line-strong); opacity:.55; stroke-width:1.5; }
+  .chart .dimline.up { stroke:var(--green); opacity:1; stroke-width:3; }
+  .chart .dimline.down { stroke:#d97706; opacity:1; stroke-width:3; }
+  .chart .endcap { font-size:10.5px; font-weight:700; }
+  .chart .endcap.up { fill:var(--green); } .chart .endcap.down { fill:var(--amber); }
+  .chart .lowline { stroke:var(--amber); } .chart .lowdot { stroke:var(--amber); }
+  .legend { display:flex; gap:.5rem 1rem; flex-wrap:wrap; margin-top:.6rem; font-size:.82rem; }
+  .legend span.li { display:inline-flex; align-items:center; gap:.35rem; color:var(--ink-soft); }
+  .legend span.li.flat { color:var(--grey); }
+  .legend span.li.mv { font-weight:700; }
+  /* clickable legend — spotlight individual lines */
+  .legend button.li { display:inline-flex; align-items:center; gap:.35rem; color:var(--ink-soft);
+    background:none; border:1px solid transparent; border-radius:8px; padding:.18rem .45rem;
+    font:inherit; cursor:pointer; transition:background .12s, opacity .12s; }
+  .legend button.li:hover { background:var(--surface-3); }
+  .legend button.li:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+  .legend button.li.on { background:var(--surface-3); border-color:var(--line); font-weight:700; }
+  .legend button.li.off { opacity:.5; }
+  .legendhint { color:var(--soft); font-style:italic; }
+  .legend.selecting + .legendclear, .legendclear { display:none; }
+  .legendclear.show { display:inline; background:none; border:none; color:var(--accent);
+    cursor:pointer; font:inherit; font-size:.8rem; text-decoration:underline; padding:0; margin-top:.4rem; }
+  .legend i { width:18px; height:3px; border-radius:2px; display:inline-block; }
+  .lcur { font-weight:700; color:var(--ink); }
+  .larr { font-weight:700; }
+  .larr.arr-up { color:var(--green); } .larr.arr-down { color:var(--red); } .larr.arr-flat { color:var(--soft); }
+  h3 { font-size:1rem; margin:0 0 .2rem; } .sublab { color:var(--soft); font-size:.82rem; margin:0 0 .8rem; }
+  .zoomnote { font-style:italic; }
+  /* "What's moving" callout above the per-area chart */
+  .movers { display:flex; flex-direction:column; gap:.5rem; margin:0 0 1rem; }
+  .mover { font-size:.92rem; line-height:1.45; padding:.6rem .85rem; border-radius:12px;
+           border:1px solid var(--line); background:var(--surface-2); }
+  .mover.up { border-color:var(--green-ln); background:var(--green-bg); }
+  .mover.down { border-color:var(--red-ln); background:var(--red-bg); }
+  .mover.flat { color:var(--soft); }
+  .mtag { display:inline-block; font-size:.66rem; font-weight:700; text-transform:uppercase;
+          letter-spacing:.04em; padding:.14rem .5rem; border-radius:999px; margin-right:.5rem; vertical-align:.06em; }
+  .mover.up .mtag { background:var(--green); color:#fff; }
+  .mover.down .mtag { background:var(--red); color:#fff; }
+  .chart .axtitle { font-size:11px; font-weight:600; fill:var(--soft); }
+  .calcnote { color:var(--soft); font-size:.78rem; margin:.5rem 0 0; }
+  .calcnote b { font-weight:600; color:var(--ink-soft); }
+  .chart-end-delta { display:inline-block; font-size:.78rem; font-weight:700;
+    margin:.3rem 0 .1rem; padding:.16rem .55rem; border-radius:999px; }
+  .chart-end-delta.up { background:var(--green-bg); color:var(--green); }
+  .chart-end-delta.down { background:var(--red-bg); color:var(--red); }
+  .chart-end-delta.flat { background:var(--surface-3); color:var(--soft); }
+</style>
+
+{{ page_header("Trends") }}
+<p class="lede">Is feedback getting better, holding steady, or slipping? This page follows the story over time. The headline is the <strong>share of people who rated us at the very top</strong> — it moves where a simple average can't — then we show which specific areas are climbing or need a little attention.</p>
+
+<div class="tabs">
+  {% for t, lab in [(1,'Walk-in service'),(2,'Activities & events'),(3,'Resource persons')] %}
+  <a href="/dashboard/trends?survey_type={{ t }}&grain={{ grain }}&metric={{ metric }}" class="{{ 'on' if survey_type==t }}">{{ lab }}</a>
+  {% endfor %}
+</div>
+
+{% if not tv.has_data %}
+  {{ empty_state("No feedback of this kind yet.", icon="◔") }}
+{% else %}
+
+{% set G = tv.geom %}
+{% set fullq = '&full=1' if not show_full else '' %}
+{# axis titles + 'how it's computed' notes (figure-axis standard) #}
+{% set xtitle = {'monthly':'Month','quarterly':'Quarter','yearly':'Year'}.get(grain,'Period') %}
+{% set ytitle = 'Share who rated it top (%)' if tv.pct else 'Average rating (out of 7)' %}
+{% set topnote = ('the share of all answers rated Agree or Strongly Agree (the top 2 of the 5-point scale)' if survey_type==1 else 'the share of all ratings that were 6 or 7 out of 7 (the top 2 boxes)') if tv.pct else 'the average rating across the dimensions, on the 1–7 scale' %}
+{% set lownote = 'the share of all answers rated Disagree or Strongly Disagree (the bottom 2 of the 5-point scale)' if survey_type==1 else 'the share of all ratings that were 1, 2 or 3 out of 7 (the bottom of the scale)' %}
+
+<div class="controls">
+  <div class="pillrow">
+    {% if survey_type in (2,3) %}
+    <span class="seglab">Show</span>
+    <div class="seg">
+      {% for m, lab in [('topbox','% rated top'),('mean','Average /7')] %}
+      <a href="/dashboard/trends?survey_type={{ survey_type }}&grain={{ grain }}&metric={{ m }}{{ '&full=1' if show_full else '' }}" class="{{ 'on' if metric==m }}">{{ lab }}</a>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <span class="seglab">By</span>
+    <div class="seg">
+      {% for g in ['monthly','quarterly','yearly'] %}
+      <a href="/dashboard/trends?survey_type={{ survey_type }}&grain={{ g }}&metric={{ metric }}{{ '&full=1' if show_full else '' }}{{ '&split=' ~ split if split else '' }}" class="{{ 'on' if grain==g }}">{{ g|capitalize }}</a>
+      {% endfor %}
+    </div>
+    {% if survey_type in (2,3) %}
+    <span class="seglab">Split</span>
+    <div class="seg">
+      {% for s, lab in [('','None'),('modality','Online vs F2F')] %}
+      <a href="/dashboard/trends?survey_type={{ survey_type }}&grain={{ grain }}&metric={{ metric }}{{ '&full=1' if show_full else '' }}{{ '&split=' ~ s if s else '' }}" class="{{ 'on' if split==s }}">{{ lab }}</a>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  <div class="pillrow">
+    {% if G.windowed or show_full %}
+    <div class="seg">
+      <a href="/dashboard/trends?survey_type={{ survey_type }}&grain={{ grain }}&metric={{ metric }}" class="{{ 'on' if not show_full }}">Recent</a>
+      <a href="/dashboard/trends?survey_type={{ survey_type }}&grain={{ grain }}&metric={{ metric }}&full=1" class="{{ 'on' if show_full }}">Full history ({{ G.full_n }})</a>
+    </div>
+    {% endif %}
+    {{ ex.download('/dashboard/export?visual=trends&survey_type=' ~ survey_type ~ '&grain=' ~ grain ~ '&org=' ~ (sel_org|urlencode) ~ '&period=' ~ (sel_period|urlencode) ~ ('&split=' ~ split if split else ''), 'Download') }}
+  </div>
+</div>
+
+{# ---- one consolidated "what's happening" read: SPC arc + latest move + movers ---- #}
+{% set cr = tv.control_read %}
+<div class="panel read {{ cr.tone if cr else tv.stability.tone }}">
+  <div class="read-head">
+    <span class="pill">{{ cr.label if cr else {'good':'Improving','bad':'Watch','neutral':'Steady'}.get(tv.stability.tone,'—') }}</span>
+    <span>{{ cr.headline if cr else tv.stability.phrase }}</span>
+  </div>
+  {% if cr and cr.detail %}<div class="read-sub">{{ cr.detail }}</div>{% endif %}
+  {% if movement %}
+  <div class="read-sub"><span aria-hidden="true">{{ {'good':'📈','bad':'📉','neutral':'➡️'}.get(movement.tone,'➡️') }}</span> <strong>Latest {{ 'quarter' if grain=='quarterly' else 'year' }}:</strong> {{ movement.headline }} {{ movement.takeaway }}</div>
+  {% endif %}
+  {% if tv.driver %}
+  <div class="read-sub"><span aria-hidden="true">🔍</span> <strong>What drove it:</strong> most of that move traces to <b class="{{ tv.driver.dir }}">{{ tv.driver.name }}</b> ({{ tv.driver.from_s }} → {{ tv.driver.to_s }}).</div>
+  {% endif %}
+  {% if tv.movers and (tv.movers.improved or tv.movers.watch) %}
+  <div class="read-sub">
+    {% if tv.movers.improved %}Most improved area: <b class="up">{{ tv.movers.improved.name }}</b> ({{ tv.movers.improved.from_s }} → {{ tv.movers.improved.to_s }}). {% endif %}
+    {% if tv.movers.watch %}Worth watching: <b class="down">{{ tv.movers.watch.name }}</b> ({{ tv.movers.watch.from_s }} → {{ tv.movers.watch.to_s }}).{% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<div class="panel chart">
+  <h3>Overall — {{ tv.title }}</h3>
+  <p class="sublab">{{ tv.unit if tv.pct else 'Average rating ' + tv.unit }} per {{ grain[:-2] if grain.endswith('ly') else grain }}.
+    <span class="zoomnote">{% if tv.pct %}Zoomed in — full scale is 0–100%.{% else %}Zoomed in — full scale is 1–7.{% endif %}{% if G.windowed %} Showing the last {{ G.shown_n }} of {{ G.full_n }} periods.{% endif %}</span></p>
+  <svg viewBox="0 0 {{ G.W }} {{ G.H }}" role="img"
+       aria-label="Line chart of overall {{ tv.title }} per period ({{ tv.unit }}): {% for d in G.main_dots %}{{ d.label }} {{ (d.value|round(0)|int ~ '%') if tv.pct else d.value|round(1) }}{% if not loop.last %}, {% endif %}{% endfor %}">
+    {% for gl in G.grid %}
+      <line class="grid" x1="{{ G.padl }}" y1="{{ gl.y }}" x2="{{ G.W - 16 }}" y2="{{ gl.y }}"></line>
+      <text class="ylab" x="{{ G.padl - 6 }}" y="{{ gl.y + 3.5 }}">{{ gl.label }}</text>
+    {% endfor %}
+    {# SPC control band (the 'usual range') behind everything #}
+    {% if G.control and (G.control.lcl_y - G.control.ucl_y) > 0.5 %}
+      <rect class="ctl-band" x="{{ G.control.x1 }}" y="{{ G.control.ucl_y }}" width="{{ G.control.x2 - G.control.x1 }}" height="{{ (G.control.lcl_y - G.control.ucl_y)|round(1) }}"></rect>
+    {% endif %}
+    {# per-period confidence ribbon under the line #}
+    {% if G.conf_poly %}<polygon class="conf" points="{{ G.conf_poly }}"></polygon>{% endif %}
+    {% if G.control %}
+      <line class="lim" x1="{{ G.control.x1 }}" y1="{{ G.control.ucl_y }}" x2="{{ G.control.x2 }}" y2="{{ G.control.ucl_y }}"></line>
+      <line class="lim" x1="{{ G.control.x1 }}" y1="{{ G.control.lcl_y }}" x2="{{ G.control.x2 }}" y2="{{ G.control.lcl_y }}"></line>
+      <line class="cl" x1="{{ G.control.x1 }}" y1="{{ G.control.cl_y }}" x2="{{ G.control.x2 }}" y2="{{ G.control.cl_y }}"></line>
+      <text class="ctl-lab" x="{{ G.control.lab_x }}" y="{{ G.control.ucl_y - 2.5 }}">usual high {{ G.control.ucl_label }}</text>
+      <text class="ctl-lab" x="{{ G.control.lab_x }}" y="{{ G.control.lcl_y + 9 }}">usual low {{ G.control.lcl_label }}</text>
+    {% endif %}
+    <line class="axis" x1="{{ G.padl }}" y1="{{ G.axis_y }}" x2="{{ G.W - 16 }}" y2="{{ G.axis_y }}"></line>
+    {% if G.main_poly %}<polyline class="mainline" points="{{ G.main_poly }}"></polyline>{% endif %}
+    {% for d in G.main_dots %}
+      <circle class="dot{{ ' sig' if d.signal }}" cx="{{ d.x }}" cy="{{ d.y }}" r="{{ 5.5 if d.signal else 4.5 }}"
+        data-tip="{{ d.label }}" data-val="{{ (d.value|round(0)|int ~ '%') if tv.pct else d.value|round(1) }}" data-n="{{ d.n }}"
+        aria-label="{{ d.label }}: {{ (d.value|round(0)|int ~ '%') if tv.pct else d.value|round(1) }} (n={{ d.n }}){{ ' — stands out from the usual range' if d.signal }}"></circle>
+      <text class="dotlab" x="{{ d.x }}" y="{{ d.y - 10 }}">{{ (d.value|round(0)|int ~ '%') if tv.pct else d.value|round(1) }}</text>
+    {% endfor %}
+    {% for lab in G.xlabels %}
+      {% if lab.show %}<text class="xlab" x="{{ lab.x }}" y="{{ G.axis_y + 16 }}">{{ lab.text }}</text>{% endif %}
+    {% endfor %}
+    <text class="axtitle" x="{{ G.xtitle_x }}" y="{{ G.xtitle_y }}" text-anchor="middle">{{ xtitle }}</text>
+    <text class="axtitle" x="{{ G.ytitle_x }}" y="{{ G.ytitle_y }}" text-anchor="middle" transform="rotate(-90 {{ G.ytitle_x }} {{ G.ytitle_y }})">{{ ytitle }}</text>
+  </svg>
+  {{ chart_table('Overall ' ~ tv.title ~ ' per ' ~ xtitle|lower ~ ' (' ~ tv.unit ~ ')', ['Period', tv.unit], G.main_table) }}
+  {% if G.control %}
+  <p class="bandnote">
+    <span class="key"><span class="sw band"></span><b>Usual range</b> — where the score normally sits</span>
+    {% if G.conf_poly %}<span class="key"><span class="sw rib"></span><b>Margin of error</b> — wider when fewer people responded</span>{% endif %}
+    {% if G.control.has_signal %}<span class="key"><span class="sw sig"></span><b>Stands out</b> — a genuine signal worth a look</span>{% endif %}
+  </p>
+  {% endif %}
+  <p class="calcnote"><b>How it's computed:</b> each point is {{ topnote }}, for that {{ xtitle|lower }}.</p>
+</div>
+
+{# ---- the flip side: share who rated LOW (catches detractor creep a high score hides) ---- #}
+{% if tv.unhappy_read %}{% set U = tv.unhappy_geom %}
+<div class="panel chart">
+  <h3>The flip side — who rated low</h3>
+  <p class="sublab">Share rating at the bottom of the scale. <span class="zoomnote">Zoomed in — full scale is 0–100%.</span> {{ tv.unhappy_read.text }}</p>
+  <svg viewBox="0 0 {{ U.W }} {{ U.H }}" role="img" aria-label="Trend of the share who rated low for {{ tv.title }}">
+    {% for gl in U.grid %}
+      <line class="grid" x1="{{ U.padl }}" y1="{{ gl.y }}" x2="{{ U.W - 16 }}" y2="{{ gl.y }}"></line>
+      <text class="ylab" x="{{ U.padl - 6 }}" y="{{ gl.y + 3.5 }}">{{ gl.label }}</text>
+    {% endfor %}
+    <line class="axis" x1="{{ U.padl }}" y1="{{ U.axis_y }}" x2="{{ U.W - 16 }}" y2="{{ U.axis_y }}"></line>
+    {% if U.main_poly %}<polyline class="mainline lowline" points="{{ U.main_poly }}"></polyline>{% endif %}
+    {% for d in U.main_dots %}
+      <circle class="dot lowdot" cx="{{ d.x }}" cy="{{ d.y }}" r="4"
+        data-tip="{{ d.label }}" data-val="{{ d.value|round(0)|int }}%" data-n="{{ d.n }}"
+        aria-label="{{ d.label }}: {{ d.value|round(0)|int }}% rated low (n={{ d.n }})"></circle>
+    {% endfor %}
+    {% for lab in U.xlabels %}
+      {% if lab.show %}<text class="xlab" x="{{ lab.x }}" y="{{ U.axis_y + 16 }}">{{ lab.text }}</text>{% endif %}
+    {% endfor %}
+    <text class="axtitle" x="{{ U.xtitle_x }}" y="{{ U.xtitle_y }}" text-anchor="middle">{{ xtitle }}</text>
+    <text class="axtitle" x="{{ U.ytitle_x }}" y="{{ U.ytitle_y }}" text-anchor="middle" transform="rotate(-90 {{ U.ytitle_x }} {{ U.ytitle_y }})">Share who rated low (%)</text>
+  </svg>
+  {{ chart_table('Share who rated ' ~ tv.title ~ ' low, per ' ~ xtitle|lower, ['Period', 'Share rated low'], U.main_table) }}
+  <p class="calcnote"><b>How it's computed:</b> each point is {{ lownote }}, for that {{ xtitle|lower }}.</p>
+</div>
+{% endif %}
+
+{% if tv.dimensions %}
+{% set has_mv = tv.movers and (tv.movers.improved or tv.movers.watch) %}
+<div class="panel chart byarea">
+  <h3>By area</h3>
+  <p class="sublab">Which parts are moving — {% if has_mv %}<b>bold</b> lines are the ones shifting, grey lines are holding steady{% else %}each line is one {{ 'item' if survey_type==1 else 'dimension' }}, in plain language{% endif %}. <span class="legendhint">Every name in the legend below is its own line — there are as many lines as names. Where areas score the same they overlap and can look like a single line; click a name to pull just that one out.</span></p>
+  <svg viewBox="0 0 {{ G.W }} {{ G.H }}" role="img"
+       aria-label="Per-area trend lines for {{ tv.title }}: {% for dm in G.dims %}{{ dm.name }}{% if not loop.last %}, {% endif %}{% endfor %}">
+    {% for gl in G.grid %}
+      <line class="grid" x1="{{ G.padl }}" y1="{{ gl.y }}" x2="{{ G.W - 16 }}" y2="{{ gl.y }}"></line>
+      <text class="ylab" x="{{ G.padl - 6 }}" y="{{ gl.y + 3.5 }}">{{ gl.label }}</text>
+    {% endfor %}
+    <line class="axis" x1="{{ G.padl }}" y1="{{ G.axis_y }}" x2="{{ G.W - 16 }}" y2="{{ G.axis_y }}"></line>
+    <g class="dimlines">
+    {% for dm in G.dims %}
+      {% set spot = 'var(--green)' if dm.role=='up' else ('#d97706' if dm.role=='down' else dm.color) %}
+      {% set dstroke = 'var(--green)' if dm.role=='up' else ('#d97706' if dm.role=='down' else ('#cbd5e1' if has_mv else dm.color)) %}
+      {% set dwidth = 3 if dm.role else (1.5 if has_mv else 2) %}
+      {% set dop = 1 if dm.role else (0.55 if has_mv else 0.85) %}
+      <polyline class="dimline" data-i="{{ loop.index0 }}" data-color="{{ spot }}"
+                data-dstroke="{{ dstroke }}" data-dwidth="{{ dwidth }}" data-dop="{{ dop }}"
+                points="{{ dm.poly }}" style="stroke:{{ dstroke }};stroke-width:{{ dwidth }};opacity:{{ dop }}"></polyline>
+    {% endfor %}
+    </g>
+    {% for lab in G.xlabels %}
+      {% if lab.show %}<text class="xlab" x="{{ lab.x }}" y="{{ G.axis_y + 16 }}">{{ lab.text }}</text>{% endif %}
+    {% endfor %}
+    <g class="endcaps">
+    {% for dm in G.dims %}{% if dm.role and dm.endx %}
+      <text class="endcap {{ dm.role }}" data-i="{{ loop.index0 }}" x="{{ dm.endx - 6 }}" y="{{ dm.endy - 7 }}" text-anchor="end">{{ dm.cur }} {{ '↑' if dm.role=='up' else '↓' }}</text>
+    {% endif %}{% endfor %}
+    </g>
+    <text class="axtitle" x="{{ G.xtitle_x }}" y="{{ G.xtitle_y }}" text-anchor="middle">{{ xtitle }}</text>
+    <text class="axtitle" x="{{ G.ytitle_x }}" y="{{ G.ytitle_y }}" text-anchor="middle" transform="rotate(-90 {{ G.ytitle_x }} {{ G.ytitle_y }})">{{ ytitle }}</text>
+  </svg>
+  {% if G.dims_table %}{{ chart_table('By area — ' ~ tv.title ~ ' per ' ~ xtitle|lower ~ ' (' ~ tv.unit ~ ')', G.dims_table.headers, G.dims_table.rows) }}{% endif %}
+  {% set unitword = 'item' if survey_type==1 else 'dimension' %}
+  <p class="calcnote"><b>How it's computed:</b> each line is one {{ unitword }}; each point is {% if tv.pct %}{{ topnote }}{% else %}the average rating on the 1–7 scale{% endif %} for that {{ unitword }}, that {{ xtitle|lower }}.</p>
+  <div class="legend byarea-legend">
+    {% for dm in G.dims %}{% set sw = 'var(--green)' if dm.role=='up' else ('#d97706' if dm.role=='down' else ('var(--line-strong)' if has_mv else dm.color)) %}{% set spot = 'var(--green)' if dm.role=='up' else ('#d97706' if dm.role=='down' else dm.color) %}<button type="button" class="li {{ 'mv' if dm.role else ('flat' if has_mv else '') }}" data-i="{{ loop.index0 }}" data-sw="{{ sw }}" style="--c:{{ spot }}" aria-pressed="false"><i style="background:{{ sw }}"></i>{{ dm.name }}{% if dm.cur %} <b class="lcur">{{ dm.cur }} <span class="larr arr-{{ {'↑':'up','↓':'down','→':'flat'}[dm.arrow] }}">{{ dm.arrow }}</span></b>{% endif %}</button>{% endfor %}
+  </div>
+  <button type="button" class="legendclear">Show all areas</button>
+</div>
+<script>
+(function () {
+  var root = document.querySelector('.panel.byarea');
+
+  if (!root) return;
+  var lines = Array.prototype.slice.call(root.querySelectorAll('.dimline'));
+  var caps  = Array.prototype.slice.call(root.querySelectorAll('.endcap'));
+  var btns  = Array.prototype.slice.call(root.querySelectorAll('.byarea-legend .li'));
+  var clear = root.querySelector('.legendclear');
+  var active = {};                                  // data-i -> true
+  function count() { return Object.keys(active).length; }
+  function render() {
+    var sel = count() > 0;
+    clear.classList.toggle('show', sel);
+    lines.forEach(function (l) {
+      var i = l.getAttribute('data-i');
+      if (!sel) {                                   // default: restore Phase-C look
+        l.style.stroke = l.dataset.dstroke;
+        l.style.strokeWidth = l.dataset.dwidth;
+        l.style.opacity = l.dataset.dop;
+      } else if (active[i]) {                        // spotlighted
+        l.style.stroke = l.dataset.color;
+        l.style.strokeWidth = 3;
+        l.style.opacity = 1;
+        l.parentNode.appendChild(l);                // bring to front
+      } else {                                       // dimmed
+        l.style.stroke = '#cbd5e1';
+        l.style.strokeWidth = 1.2;
+        l.style.opacity = 0.4;
+      }
+    });
+    caps.forEach(function (c) {
+      c.style.display = (!sel || active[c.getAttribute('data-i')]) ? '' : 'none';
+    });
+    btns.forEach(function (b) {
+      var i = b.getAttribute('data-i'), on = sel && active[i];
+      b.classList.toggle('on', !!on);
+      b.classList.toggle('off', sel && !on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      var s = b.querySelector('i');
+      if (s) s.style.background = (!sel) ? b.dataset.sw : (on ? b.style.getPropertyValue('--c') : '#cbd5e1');
+    });
+  }
+  btns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      var i = b.getAttribute('data-i');
+      if (active[i]) delete active[i]; else active[i] = true;
+      render();
+    });
+  });
+  clear.addEventListener('click', function () { active = {}; render(); });
+})();
+</script>
+{% endif %}
+
+{# ---- Phase D: segment split (online vs face-to-face) ---- #}
+{% if split == 'modality' %}
+{% if seg and seg.has_data %}{% set S = seg.geom %}
+<div class="panel chart">
+  <h3>By delivery format</h3>
+  <p class="sublab">The headline split by how the activity ran. The thick grey line is the overall figure; each coloured line is one format.
+    {% if seg.dropped %}<span class="zoomnote">({{ seg.dropped|join(', ') }} had too few responses in view to chart.)</span>{% endif %}</p>
+  {% if seg.read %}<div class="mover {{ 'down' if seg.read.tone=='watch' else 'flat' }}" style="margin-bottom:.9rem">{{ seg.read.text }}</div>{% endif %}
+  <svg viewBox="0 0 {{ S.W }} {{ S.H }}" role="img"
+       aria-label="Trend of {{ tv.title }} split by delivery format: {% for dm in S.dims %}{{ dm.name }}{% if not loop.last %}, {% endif %}{% endfor %}">
+    {% for gl in S.grid %}
+      <line class="grid" x1="{{ S.padl }}" y1="{{ gl.y }}" x2="{{ S.W - 16 }}" y2="{{ gl.y }}"></line>
+      <text class="ylab" x="{{ S.padl - 6 }}" y="{{ gl.y + 3.5 }}">{{ gl.label }}</text>
+    {% endfor %}
+    <line class="axis" x1="{{ S.padl }}" y1="{{ S.axis_y }}" x2="{{ S.W - 16 }}" y2="{{ S.axis_y }}"></line>
+    {# overall reference line, behind the segments #}
+    {% if S.main_poly %}<polyline class="dimline flat" points="{{ S.main_poly }}" style="stroke:#94a3b8;stroke-width:2.5;opacity:.6"></polyline>{% endif %}
+    {% for dm in S.dims %}
+      <polyline class="dimline" points="{{ dm.poly }}" style="stroke:{{ dm.color }};stroke-width:3;opacity:1"></polyline>
+      {% if dm.endx %}<text class="endcap" x="{{ dm.endx - 6 }}" y="{{ dm.endy - 7 }}" text-anchor="end" style="fill:{{ dm.color }}">{{ dm.cur }}</text>{% endif %}
+    {% endfor %}
+    {% for lab in S.xlabels %}
+      {% if lab.show %}<text class="xlab" x="{{ lab.x }}" y="{{ S.axis_y + 16 }}">{{ lab.text }}</text>{% endif %}
+    {% endfor %}
+    <text class="axtitle" x="{{ S.xtitle_x }}" y="{{ S.xtitle_y }}" text-anchor="middle">{{ xtitle }}</text>
+    <text class="axtitle" x="{{ S.ytitle_x }}" y="{{ S.ytitle_y }}" text-anchor="middle" transform="rotate(-90 {{ S.ytitle_x }} {{ S.ytitle_y }})">{{ ytitle }}</text>
+  </svg>
+  {% if S.dims_table %}{{ chart_table('By delivery format — ' ~ tv.title ~ ' per ' ~ xtitle|lower ~ ' (' ~ tv.unit ~ ')', S.dims_table.headers, S.dims_table.rows) }}{% endif %}
+  <div class="legend">
+    <span class="li flat"><i style="background:var(--grey-tone)"></i>Overall</span>
+    {% for dm in S.dims %}<span class="li"><i style="background:{{ dm.color }}"></i>{{ dm.name }}{% if dm.cur %} <b class="lcur">{{ dm.cur }}</b>{% endif %}</span>{% endfor %}
+  </div>
+  <p class="calcnote"><b>How it's computed:</b> each coloured line is {% if tv.pct %}{{ topnote }}{% else %}the average rating on the 1–7 scale{% endif %} for activities of that format, that {{ xtitle|lower }}. Formats with fewer than a handful of responses in the window are left off so a thin slice can't read as a trend.</p>
+</div>
+{% else %}
+<div class="panel"><p class="sublab" style="margin:0">Not enough of both formats to split this view{% if seg and seg.only %} — almost everything here was <b>{{ seg.only }}</b>{% endif %}. Try a coarser grain or the full history.</p></div>
+{% endif %}
+{% endif %}
+
+{# ---- Phase D: verbatim-sentiment trend (tone of the words over time) ---- #}
+{% if sent and sent.has_data %}{% set SN = sent.geom %}
+<div class="panel chart">
+  <h3>What people wrote — tone over time</h3>
+  <p class="sublab">Share of free-text comments that read as appreciation (vs. pointing to something to improve). <span class="zoomnote">Zoomed in — full scale is 0–100%.</span> {{ sent.read.text }}</p>
+  <svg viewBox="0 0 {{ SN.W }} {{ SN.H }}" role="img" aria-label="Trend of positive comment sentiment for {{ tv.title }}">
+    {% for gl in SN.grid %}
+      <line class="grid" x1="{{ SN.padl }}" y1="{{ gl.y }}" x2="{{ SN.W - 16 }}" y2="{{ gl.y }}"></line>
+      <text class="ylab" x="{{ SN.padl - 6 }}" y="{{ gl.y + 3.5 }}">{{ gl.label }}</text>
+    {% endfor %}
+    <line class="axis" x1="{{ SN.padl }}" y1="{{ SN.axis_y }}" x2="{{ SN.W - 16 }}" y2="{{ SN.axis_y }}"></line>
+    {% if SN.main_poly %}<polyline class="mainline" points="{{ SN.main_poly }}" style="stroke:var(--green)"></polyline>{% endif %}
+    {% for d in SN.main_dots %}
+      <circle class="dot" cx="{{ d.x }}" cy="{{ d.y }}" r="4" style="stroke:var(--green)"
+        data-tip="{{ d.label }}" data-val="{{ d.value|round(0)|int }}%" data-n="{{ d.n }}"
+        aria-label="{{ d.label }}: {{ d.value|round(0)|int }}% positive ({{ d.n }} comments)"></circle>
+    {% endfor %}
+    {% for lab in SN.xlabels %}
+      {% if lab.show %}<text class="xlab" x="{{ lab.x }}" y="{{ SN.axis_y + 16 }}">{{ lab.text }}</text>{% endif %}
+    {% endfor %}
+    <text class="axtitle" x="{{ SN.xtitle_x }}" y="{{ SN.xtitle_y }}" text-anchor="middle">{{ xtitle }}</text>
+    <text class="axtitle" x="{{ SN.ytitle_x }}" y="{{ SN.ytitle_y }}" text-anchor="middle" transform="rotate(-90 {{ SN.ytitle_x }} {{ SN.ytitle_y }})">Comments that read positive (%)</text>
+  </svg>
+  {{ chart_table('Share of comments reading as appreciation for ' ~ tv.title ~ ', per ' ~ xtitle|lower, ['Period', 'Positive comments'], SN.main_table) }}
+  <p class="calcnote"><b>How it's computed:</b> every comment is sorted into "appreciation" or "an area to improve" by the same wording rules the comment summaries use; each point is the share that read as appreciation, that {{ xtitle|lower }}. Manual re-tags are honoured.</p>
+</div>
+{% endif %}
+
+{% endif %}
+{% endblock %}

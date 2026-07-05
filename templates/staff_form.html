@@ -1,0 +1,293 @@
+{% extends "dash_layout.html" %}
+{% block title %}{{ "Edit staff" if is_edit else "Add staff" }}{% endblock %}
+
+{% block head %}
+<style>
+  .scard { max-width:620px; background:var(--surface); border:1px solid var(--line);
+          border-radius:12px; padding:1.5rem 1.75rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .warn { background:var(--amber-bg); border:1px solid var(--amber-ln); color:var(--amber); border-radius:8px;
+          padding:.8rem 1rem; margin-bottom:1rem; font-size:.92rem; }
+  .prow { display:flex; gap:1.25rem; align-items:flex-start; margin-bottom:1rem; }
+  .avatar3 { width:88px; height:88px; border-radius:50%; flex:0 0 auto; background:var(--surface-3);
+            border:1px solid var(--line); display:flex; align-items:center; justify-content:center;
+            color:var(--grey); font-weight:700; font-size:1.6rem; overflow:hidden; }
+  .avatar3 img { width:100%; height:100%; object-fit:cover; }
+  .pick .lbl { color:var(--accent); font-weight:600; cursor:pointer; font-size:.85rem; }
+  .linkbtn { background:none; border:none; color:var(--accent); font-weight:600; cursor:pointer;
+             padding:0; font-size:.85rem; margin-top:.35rem; display:block; }
+  .photoeditor { max-width:240px; margin:.4rem 0 .2rem; }
+  .stage { width:240px; height:240px; border-radius:50%; overflow:hidden; position:relative;
+           background:var(--surface-3); border:1px solid var(--line); touch-action:none;
+           cursor:grab; user-select:none; }
+  .stage:active { cursor:grabbing; }
+  .stage canvas { display:block; pointer-events:none; }
+  .zoomrow { display:flex; align-items:center; gap:.6rem; margin:.65rem 0 .15rem;
+             font-size:.85rem; color:var(--soft); }
+  .zoomrow input[type=range] { flex:1; accent-color:var(--accent); }
+  .ebtns { display:flex; gap:.75rem; align-items:center; margin-top:.5rem; }
+  .ebtns .done { background:var(--accent); color:var(--on-accent); border:none; border-radius:8px;
+                 padding:.4rem 1rem; font-weight:600; cursor:pointer; font-size:.85rem; }
+  .ebtns .ghost { background:none; border:none; color:var(--soft); font-weight:600;
+                  cursor:pointer; padding:0; font-size:.85rem; }
+  .scard label { display:block; font-weight:600; margin:.7rem 0 .25rem; font-size:.9rem; }
+  .scard input[type=text], .scard input[type=email], .scard select {
+      width:100%; padding:.55rem .6rem; border:1px solid var(--line); border-radius:8px; font-size:.95rem; background:var(--surface); }
+  .fgrid { display:grid; grid-template-columns:1fr 1fr; gap:0 1rem; }
+  @media (max-width:560px){ .fgrid { grid-template-columns:1fr; } }
+  .actions { margin-top:1.4rem; display:flex; gap:.75rem; align-items:center; }
+  .scard button { padding:.65rem 1.3rem; border:none; border-radius:8px; cursor:pointer;
+           background:var(--accent); color:var(--on-accent); font-weight:600; }
+  a.cancel { color:var(--soft); text-decoration:none; font-weight:600; }
+</style>
+{% endblock %}
+
+{% block crumbs %}
+<nav class="crumbs" aria-label="Breadcrumb"><a href="/dashboard">Dashboard</a><span class="sep">›</span><a href="/directory">Directory</a><span class="sep">›</span><span class="here">{{ "Edit staff" if is_edit else "Add staff" }}</span></nav>
+{% endblock %}
+
+{% block content %}
+<div class="scard">
+  <h1 style="margin:0 0 1rem; font-size:1.4rem;">{{ "Edit staff" if is_edit else "Add staff" }}</h1>
+  {% if dup %}
+  <div class="warn" role="alert"><strong>Possible duplicate.</strong> This looks similar to existing:
+    <strong>{{ dup|join(', ') }}</strong>. {{ "Save" if is_edit else "Add" }} anyway with the button below, or change the name.</div>
+  {% endif %}
+  <form method="post" action="{{ ('/directory/person/' ~ f.id ~ '/update') if is_edit else '/directory/person' }}" data-loading="Saving…">
+    {% if not is_edit %}<input type="hidden" name="kind" value="internal">{% endif %}
+    {% if dup %}<input type="hidden" name="confirm" value="1">{% endif %}
+    <input type="hidden" name="photo_data" value="{{ f.photo_data }}">
+    <div class="prow">
+      <span class="avatar3 preview">
+        {% if f.photo_data %}<img src="{{ f.photo_data }}" alt="">
+        {% elif f.has_photo and f.id %}<img src="/photo/{{ f.id }}?v=edit" alt="">
+        {% elif f.name %}{{ f.name[0]|upper }}
+        {% else %}+{% endif %}
+      </span>
+      <div>
+        <label>Profile photo</label>
+        <span class="pick"><label class="lbl">Choose / change photo<input type="file" accept="image/*" hidden onchange="onPick(this)"></label></span>
+        {% if f.photo_data or (f.has_photo and f.id) %}
+        <button type="button" class="linkbtn" id="adjustBtn">Adjust size &amp; position</button>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="photoeditor" id="photoEditor" hidden>
+      <div class="stage" id="cropStage">
+        <canvas id="cropCanvas" width="240" height="240"></canvas>
+      </div>
+      <div class="zoomrow">
+        <span>Zoom</span>
+        <input type="range" id="cropZoom" min="1" max="3" step="0.01" value="1" aria-label="Zoom photo">
+      </div>
+      <p class="hint" style="margin:.2rem 0 0;color:var(--muted);font-size:.82rem;">Drag the photo to reposition and use the slider to zoom. This is exactly how it appears as a circular avatar.</p>
+      <div class="ebtns">
+        <button type="button" class="done" id="cropDone">Done</button>
+      </div>
+    </div>
+
+    <div class="fgrid" style="grid-template-columns:140px 1fr;">
+      <div>
+        <label for="honorific">Title</label>
+        <select id="honorific" name="honorific">
+          <option value="">—</option>
+          {% for h in ["Mr.", "Ms.", "Mrs.", "Dr.", "Engr.", "Atty."] %}
+          <option value="{{ h }}" {{ 'selected' if f.honorific == h }}>{{ h }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="name">Full name</label>
+        <input type="text" id="name" name="name" value="{{ f.name }}" required>
+      </div>
+    </div>
+
+    <label for="org_unit_id">Assigned to</label>
+    <select id="org_unit_id" name="org_unit_id">
+      <option value="">— assign to —</option>
+      {% if org.directorate %}
+      <optgroup label="Office of the Director">
+        <option value="{{ org.directorate.id }}" {{ 'selected' if f.org_unit_id|string == org.directorate.id|string }}>{{ org.directorate.name }}</option>
+      </optgroup>
+      {% endif %}
+      <optgroup label="Division chiefs (whole division)">
+        {% for d in org.divisions %}<option value="{{ d.id }}" {{ 'selected' if f.org_unit_id|string == d.id|string }}>{{ d.name }} — chief</option>{% endfor %}
+      </optgroup>
+      {% for d in org.divisions %}{% if d.sections %}
+      <optgroup label="{{ d.short_name or d.name }} — sections">
+        {% for s in d.sections %}<option value="{{ s.id }}" {{ 'selected' if f.org_unit_id|string == s.id|string }}>{{ s.name }}</option>{% endfor %}
+      </optgroup>
+      {% endif %}{% endfor %}
+      {% if org.admin_sections %}
+      <optgroup label="Administrative (under bureau)">
+        {% for s in org.admin_sections %}<option value="{{ s.id }}" {{ 'selected' if f.org_unit_id|string == s.id|string }}>{{ s.name }}</option>{% endfor %}
+      </optgroup>
+      {% endif %}
+    </select>
+
+    <div class="fgrid">
+      <div>
+        <label for="employment_type">Employment type</label>
+        <select id="employment_type" name="employment_type">
+          <option value="">—</option>
+          <option value="plantilla" {{ 'selected' if f.employment_type == 'plantilla' }}>Plantilla</option>
+          <option value="job_order" {{ 'selected' if f.employment_type == 'job_order' }}>Job Order</option>
+          <option value="consultant" {{ 'selected' if f.employment_type == 'consultant' }}>Consultant</option>
+        </select>
+      </div>
+      <div>
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" value="{{ f.email }}">
+      </div>
+      <div>
+        <label for="position">Position</label>
+        <input type="text" id="position" name="position" value="{{ f.position }}" placeholder="e.g. Health Program Officer III">
+      </div>
+      <div>
+        <label for="designation">Designation</label>
+        <input type="text" id="designation" name="designation" value="{{ f.designation }}" placeholder="e.g. Section Head">
+      </div>
+    </div>
+
+    <label for="focus_area">Focus area / programme</label>
+    <input type="text" id="focus_area" name="focus_area" value="{{ f.focus_area }}">
+
+    <input type="hidden" name="signature_data" value="{{ f.signature_data }}">
+    <div class="sigfield" style="margin-top:1rem;">
+      <label>Signature <span class="opt" style="font-weight:400;color:var(--muted);">— used on Certificates of Appearance this person signs</span></label>
+      <div class="prow" style="align-items:flex-start;">
+        <span class="sigpreview" style="display:inline-flex;align-items:center;justify-content:center;min-width:180px;height:64px;border:1px dashed var(--border);border-radius:8px;background:#fff;padding:4px;">
+          {% if f.signature_data %}<img src="{{ f.signature_data }}" alt="" style="max-height:56px;max-width:240px;">
+          {% elif f.has_signature and f.id %}<img src="/directory/person/{{ f.id }}/signature.png?v=edit" alt="" style="max-height:56px;max-width:240px;">
+          {% else %}<span style="color:var(--muted);font-size:.85rem;">No signature</span>{% endif %}
+        </span>
+        <div>
+          <span class="pick"><label class="lbl">Upload signature image<input type="file" accept="image/png,image/jpeg" hidden onchange="onPickSig(this)"></label></span>
+          <p class="hint" style="margin:.4rem 0 0;">A PNG with a transparent background works best. Max ~5 MB.</p>
+          {% if f.has_signature %}
+          <label style="display:block;margin-top:.4rem;font-weight:400;"><input type="checkbox" name="remove_signature" value="1"> Remove the current signature</label>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="submit">{{ (("Save" if is_edit else "Add") ~ " anyway") if dup else ("Save changes" if is_edit else "Add staff") }}</button>
+      <a class="cancel" href="/directory">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+// ---- Profile photo: crop / zoom / reposition into the circular avatar ----
+const V = 240, OUT = 512;                 // editor viewport px, baked output px
+const editor = document.getElementById('photoEditor');
+const stage  = document.getElementById('cropStage');
+const cvs    = document.getElementById('cropCanvas');
+const cctx   = cvs.getContext('2d');
+const zoom   = document.getElementById('cropZoom');
+let crop = null;                          // { img, min, scale, ox, oy }
+
+function clampCrop() {
+  const w = crop.img.width*crop.scale, h = crop.img.height*crop.scale;
+  crop.ox = Math.min(0, Math.max(V - w, crop.ox));
+  crop.oy = Math.min(0, Math.max(V - h, crop.oy));
+}
+function renderCrop() {
+  if (!crop) return;
+  clampCrop();
+  cctx.clearRect(0, 0, V, V);
+  cctx.drawImage(crop.img, crop.ox, crop.oy, crop.img.width*crop.scale, crop.img.height*crop.scale);
+  bakeCrop();
+}
+function bakeCrop() {
+  const k = OUT/V;
+  const c = document.createElement('canvas'); c.width = OUT; c.height = OUT;
+  const x = c.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, OUT, OUT);
+  x.drawImage(crop.img, crop.ox*k, crop.oy*k, crop.img.width*crop.scale*k, crop.img.height*crop.scale*k);
+  const d = c.toDataURL('image/jpeg', 0.85);
+  document.querySelector('input[name=photo_data]').value = d;
+  document.querySelector('.preview').innerHTML = '<img src="' + d + '">';
+}
+function openCropEditor(src) {
+  const img = new Image();
+  img.onload = () => {
+    const min = Math.max(V/img.width, V/img.height);   // "cover" the circle at zoom 1
+    crop = { img, min, scale: min, ox: 0, oy: 0 };
+    crop.ox = (V - img.width*crop.scale)/2;            // start centred
+    crop.oy = (V - img.height*crop.scale)/2;
+    zoom.value = 1;
+    editor.hidden = false;
+    renderCrop();
+  };
+  img.src = src;
+}
+
+function onPick(input) {
+  if (!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = () => openCropEditor(reader.result);
+  reader.readAsDataURL(input.files[0]);
+}
+
+zoom.addEventListener('input', () => {
+  if (!crop) return;
+  const newScale = crop.min * parseFloat(zoom.value);
+  const cx = (V/2 - crop.ox)/crop.scale;               // keep viewport centre fixed
+  const cy = (V/2 - crop.oy)/crop.scale;
+  crop.scale = newScale;
+  crop.ox = V/2 - cx*newScale;
+  crop.oy = V/2 - cy*newScale;
+  renderCrop();
+});
+
+let drag = null;
+stage.addEventListener('pointerdown', (e) => {
+  if (!crop) return;
+  drag = { x: e.clientX, y: e.clientY, ox: crop.ox, oy: crop.oy };
+  stage.setPointerCapture(e.pointerId);
+});
+stage.addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  crop.ox = drag.ox + (e.clientX - drag.x);
+  crop.oy = drag.oy + (e.clientY - drag.y);
+  renderCrop();
+});
+stage.addEventListener('pointerup',     () => { drag = null; });
+stage.addEventListener('pointercancel', () => { drag = null; });
+
+document.getElementById('cropDone').addEventListener('click', () => { editor.hidden = true; });
+
+const adjustBtn = document.getElementById('adjustBtn');
+if (adjustBtn) {
+  adjustBtn.addEventListener('click', () => {
+    const existing = document.querySelector('input[name=photo_data]').value
+                  || document.querySelector('.preview img')?.getAttribute('src');
+    if (existing) openCropEditor(existing);
+  });
+}
+
+function onPickSig(input) {
+  if (!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const max = 600;
+      let { width: w, height: h } = img;
+      if (w > max || h > max) { const s = Math.min(max/w, max/h); w = Math.round(w*s); h = Math.round(h*s); }
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      const d = c.toDataURL('image/png');   // PNG keeps a transparent background
+      document.querySelector('input[name=signature_data]').value = d;
+      document.querySelector('.sigpreview').innerHTML = '<img src="' + d + '" style="max-height:56px;max-width:240px;">';
+      const rm = document.querySelector('input[name=remove_signature]');
+      if (rm) rm.checked = false;
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+</script>
+{% endblock %}

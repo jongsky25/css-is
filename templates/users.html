@@ -1,0 +1,162 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}Users{% endblock %}
+{% block content %}
+<style>
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1.1rem 1.3rem;
+           margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; padding:.55rem .5rem; border-bottom:1px solid var(--line); font-size:.92rem; vertical-align:middle; }
+  th { font-size:.7rem; text-transform:uppercase; letter-spacing:.03em; color:var(--soft); }
+  .sec { color:var(--soft); font-size:.8rem; }
+  .pill { font-size:.68rem; font-weight:700; padding:.12rem .5rem; border-radius:999px; border:1px solid var(--line); background:var(--bg); }
+  .pill.active { color:var(--green); border-color:var(--green-ln); background:var(--green-bg); }
+  .pill.pending { color:var(--amber); border-color:var(--amber-ln); background:var(--amber-bg); }
+  .pill.inactive { color:var(--soft); }
+  .pill.none { color:var(--red); border-color:var(--red-ln); background:var(--red-bg); }
+  form.inline { display:inline; margin:0; }
+  select, input { padding:.4rem .5rem; border:1px solid var(--line); border-radius:8px; font-size:.9rem; }
+  .btn { padding:.4rem .7rem; border-radius:8px; border:1px solid var(--accent); background:var(--accent); color:var(--on-accent); font-weight:600; cursor:pointer; font-size:.85rem; }
+  .btn.ghost { background:var(--surface); color:var(--soft); border-color:var(--line); }
+  .msg { background:var(--green-bg); border:1px solid var(--green-ln); color:var(--green); border-radius:10px; padding:.6rem .8rem; font-size:.9rem; margin-bottom:1rem; }
+  .err { background:var(--red-bg); border:1px solid var(--red-ln); color:var(--red); border-radius:10px; padding:.6rem .8rem; font-size:.9rem; margin-bottom:1rem; }
+  .linkbox { display:block; margin-top:.5rem; padding:.5rem .6rem; background:var(--surface); border:1px dashed var(--accent); border-radius:8px; font-size:.8rem; word-break:break-all; color:var(--ink); }
+  .coverage { font-weight:700; } .coverage .bar { display:inline-block; width:160px; height:10px; background:var(--surface-3); border-radius:6px; overflow:hidden; vertical-align:middle; margin-left:.5rem; }
+  .coverage .bar i { display:block; height:100%; background:linear-gradient(90deg,#48bb78,#2f855a); }
+  .emailwarn { color:var(--amber); font-size:.82rem; margin:.3rem 0 0; }
+  .noemail { color:var(--red); font-size:.8rem; }
+  .dsearch { position:relative; margin:0 0 .9rem; }
+  .dsearch input { width:100%; box-sizing:border-box; padding:.5rem .7rem .5rem 2rem; border:1px solid var(--line);
+            border-radius:8px; font-size:.92rem; background:var(--surface); }
+  .dsearch .ico { position:absolute; left:.65rem; top:50%; transform:translateY(-50%); color:var(--soft);
+            font-size:.9rem; pointer-events:none; }
+  tr.nomatch { display:none; }
+</style>
+
+{{ page_header("Users & roles") }}
+<p class="lede">Every internal staff member should have an account. Accounts use the person's <strong>email as their username</strong>. New accounts get the temporary password <strong>{{ default_password }}</strong> — the person signs in with it once and is then asked to set their own.</p>
+
+{% if msg %}<div class="msg">{{ msg }}{% if link %}<span class="linkbox">{{ link }}</span>{% endif %}</div>{% endif %}
+{% if err %}<div class="err">{{ err }}</div>{% endif %}
+
+<div class="panel">
+  <div class="coverage">{{ have }} of {{ total }} internal staff have an account
+    <span class="bar"><i style="width:{{ (have / total * 100) if total else 0 }}%"></i></span>
+  </div>
+</div>
+
+<div class="panel">
+  <h2 style="margin:.1rem 0 .8rem; font-size:1rem;">Staff accounts</h2>
+  <div class="dsearch"><span class="ico" aria-hidden="true">🔍</span><input type="text" placeholder="Search staff by name, email, section…" oninput="filterUsers(this)" aria-label="Search staff accounts"></div>
+  <div class="table-wrap">
+  <table class="resp-table">
+    <tr><th>Staff</th><th>Email</th><th>Account</th><th>Role</th><th></th></tr>
+    {% for r in rows %}
+    {% set a = r.account %}
+    <tr>
+      <td data-label="Staff"><strong>{{ r.name }}</strong><div class="sec">{{ r.org_path.split('/')[1:] | join(' / ') if r.org_path else '—' }}</div></td>
+      <td class="sec" data-label="Email">{{ r.email or '—' }}</td>
+      <td data-label="Account">
+        {% if not a %}<span class="pill none">No account</span>
+        {% elif not a.active %}<span class="pill inactive">Deactivated</span>
+        {% elif a.must_change %}<span class="pill pending">Temp password · not set yet</span>
+        {% else %}<span class="pill active">Active</span>{% endif %}
+      </td>
+      <td data-label="Role">
+        {% if a %}
+        <form method="post" action="/admin/users/{{ a.id }}/role" class="inline"
+              data-confirm="Change {{ r.name }}'s role? Their access updates immediately.">
+          <select name="role" aria-label="Role for {{ r.name }}">
+            {% for role in roles %}<option value="{{ role }}" {{ 'selected' if a.role==role }}>{{ role_labels[role] }}</option>{% endfor %}
+          </select>
+          <button class="btn ghost" type="submit">Apply</button>
+        </form>
+        {% else %}—{% endif %}
+      </td>
+      <td class="actions">
+        {% if not a %}
+          {% if r.email %}
+          <form method="post" action="/admin/users/invite" class="inline">
+            <input type="hidden" name="rp_id" value="{{ r.id }}">
+            <select name="role">{% for role in roles %}<option value="{{ role }}" {{ 'selected' if role=='viewer' }}>{{ role_labels[role] }}</option>{% endfor %}</select>
+            <button class="btn" type="submit">Create account</button>
+          </form>
+          {% else %}<span class="noemail">Add an email in the Directory first</span>{% endif %}
+        {% elif a.active %}
+          <form method="post" action="/admin/users/{{ a.id }}/reset-default" class="inline"
+                data-confirm="Reset {{ r.name }}'s password back to the temporary one? They'll set a new password on next sign-in.">
+            <button class="btn ghost" type="submit">Reset password</button></form>
+          <form method="post" action="/admin/users/{{ a.id }}/active" class="inline"
+                data-confirm="Deactivate {{ r.name }}'s account? They will no longer be able to sign in.">
+            <input type="hidden" name="active" value="0">
+            <button class="btn ghost" type="submit">Deactivate</button>
+          </form>
+        {% else %}
+          <form method="post" action="/admin/users/{{ a.id }}/active" class="inline">
+            <input type="hidden" name="active" value="1">
+            <button class="btn ghost" type="submit">Activate</button>
+          </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  </div>
+</div>
+
+{% if standalone %}
+<div class="panel">
+  <h2 style="margin:.1rem 0 .3rem; font-size:1rem;">Other accounts</h2>
+  <p class="sec" style="margin:0 0 .8rem;">Accounts not linked to a directory staff record (e.g. the initial administrator).</p>
+  <div class="table-wrap">
+  <table class="resp-table">
+    <tr><th>Email / username</th><th>Role</th><th>Status</th><th></th></tr>
+    {% for u in standalone %}
+    <tr>
+      <td data-label="Email / username"><strong>{{ u.username }}</strong>{% if u.id == request.state.user.id %} <span class="sec">(you)</span>{% endif %}</td>
+      <td data-label="Role">
+        <form method="post" action="/admin/users/{{ u.id }}/role" class="inline"
+              data-confirm="Change {{ u.username }}'s role? Their access updates immediately.">
+          <select name="role" aria-label="Role for {{ u.username }}">{% for role in roles %}<option value="{{ role }}" {{ 'selected' if u.role==role }}>{{ role_labels[role] }}</option>{% endfor %}</select>
+          <button class="btn ghost" type="submit">Apply</button>
+        </form>
+      </td>
+      <td data-label="Status">{% if not u.active %}<span class="pill inactive">Inactive</span>{% elif u.must_change %}<span class="pill pending">Temp password · not set yet</span>{% else %}<span class="pill active">Active</span>{% endif %}</td>
+      <td class="actions">
+        {% if u.active %}
+        <form method="post" action="/admin/users/{{ u.id }}/reset-default" class="inline"
+              data-confirm="Reset {{ u.username }}'s password back to the temporary one? They'll set a new password on next sign-in.">
+          <button class="btn ghost" type="submit">Reset password</button></form>
+        {% endif %}
+        <form method="post" action="/admin/users/{{ u.id }}/active" class="inline"
+              {% if u.active %}data-confirm="Deactivate {{ u.username }}? They will no longer be able to sign in."{% endif %}>
+          <input type="hidden" name="active" value="{{ '0' if u.active else '1' }}">
+          <button class="btn ghost" type="submit">{{ 'Deactivate' if u.active else 'Activate' }}</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  </div>
+</div>
+{% endif %}
+
+<div class="panel">
+  <p class="sec" style="margin:0;">
+    {% for r in roles %}<strong>{{ role_labels[r] }}</strong> — {{ role_blurb[r] }}<br>{% endfor %}
+  </p>
+</div>
+
+<script>
+function filterUsers(input) {
+  const q = input.value.trim().toLowerCase();
+  const table = input.closest('.panel').querySelector('.table-wrap table');
+  if (!table) return;
+  table.querySelectorAll('tr').forEach(tr => {
+    if (tr.querySelector('th')) return;            // keep header row
+    const hit = !q || tr.textContent.toLowerCase().includes(q);
+    tr.classList.toggle('nomatch', !hit);
+  });
+}
+</script>
+{% endblock %}

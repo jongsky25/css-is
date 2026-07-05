@@ -1,0 +1,123 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}System health{% endblock %}
+{% block content %}
+<style>
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1.1rem 1.3rem;
+           margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .panel h2 { font-size:1rem; margin:0 0 .9rem; }
+  /* Verdict banner */
+  .verdict { display:flex; gap:1rem; align-items:flex-start; border:1px solid var(--line); border-radius:16px;
+             padding:1.1rem 1.3rem; margin-bottom:1.1rem; }
+  .verdict.good  { border-color:var(--green-ln); background:var(--green-bg); }
+  .verdict.watch { border-color:var(--amber-ln); background:var(--amber-bg); }
+  .verdict.bad   { border-color:var(--red-ln);   background:var(--red-bg); }
+  .verdict .icon { font-size:1.8rem; line-height:1; }
+  .verdict .head { font-size:1.25rem; font-weight:800; margin:0; }
+  .verdict .sub  { color:var(--soft); margin:.25rem 0 0; font-size:.92rem; }
+  /* Health cards */
+  .signals { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1rem; }
+  .sig { border:1px solid var(--line); border-radius:14px; padding:.95rem 1.05rem; }
+  .sig .h   { font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; color:var(--soft); font-weight:700; }
+  .sig .big { font-size:1.5rem; font-weight:800; font-variant-numeric:tabular-nums; margin:.25rem 0; line-height:1.1; }
+  .sig .big .u { font-size:.85rem; font-weight:600; color:var(--soft); }
+  .sig .sub { font-size:.84rem; color:var(--soft); }
+  .sig.good { border-color:var(--green-ln); background:var(--green-bg); }
+  .sig.watch{ border-color:var(--amber-ln); background:var(--amber-bg); }
+  .sig.bad  { border-color:var(--red-ln);   background:var(--red-bg); }
+  .safety { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.6rem; }
+  .safety li { display:flex; gap:.55rem; align-items:flex-start; font-size:.92rem; }
+  .safety .dot { font-size:1rem; line-height:1.3; }
+  .safety .good .dot { color:var(--green); } .safety .watch .dot { color:var(--amber); }
+  .safety .bad .dot  { color:var(--red); }   .safety .neutral .dot { color:var(--soft); }
+  .refresh { font-size:.82rem; }
+  /* Recent sign-ins list */
+  .signins { list-style:none; margin:.9rem 0 0; padding:0; display:flex; flex-direction:column; gap:.45rem; }
+  .signins li { display:flex; justify-content:space-between; gap:1rem; font-size:.9rem;
+                border-top:1px solid var(--line); padding-top:.45rem; }
+  .signins li:first-child { border-top:0; padding-top:0; }
+  .signins .who { font-weight:600; overflow-wrap:anywhere; }
+  .signins .when { color:var(--soft); white-space:nowrap; }
+  .lastin { color:var(--soft); font-size:.88rem; margin:.2rem 0 0; }
+</style>
+
+{{ page_header("System health") }}
+<p class="lede">A plain-language look at how the app is doing right now — is it working, is it fast, and is your data safe. <a class="refresh" href="/ops">↻ Refresh</a></p>
+
+<div class="verdict {{ plain.verdict.tone }}">
+  <div class="icon" aria-hidden="true">{{ plain.verdict.icon }}</div>
+  <div>
+    <p class="head">{{ plain.verdict.head }}</p>
+    <p class="sub">{{ plain.verdict.sub }}</p>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Right now <span class="note" style="color:var(--soft); font-weight:400; font-size:.82rem;">· last 5 minutes</span></h2>
+  <div class="signals">
+    {% for c in plain.cards %}
+    <div class="sig {{ c.tone }}">
+      <div class="h">{{ c.label }}</div>
+      <div class="big">{{ c.big }}{% if c.unit %} <span class="u">{{ c.unit }}</span>{% endif %}</div>
+      <div class="sub">{{ c.sub }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="panel">
+  <h2>What's in the system <span class="note" style="color:var(--soft); font-weight:400; font-size:.82rem;">· totals to date</span></h2>
+  <div class="signals">
+    {% for c in inventory %}
+    <div class="sig neutral">
+      <div class="h">{{ c.label }}</div>
+      <div class="big">{{ c.big }}</div>
+      <div class="sub">{{ c.sub }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Who's using it <span class="note" style="color:var(--soft); font-weight:400; font-size:.82rem;">· sign-in activity</span></h2>
+  <div class="signals">
+    {% for c in people %}
+    <div class="sig neutral">
+      <div class="h">{{ c.label }}</div>
+      <div class="big">{{ c.big }}</div>
+      <div class="sub">{{ c.sub }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  <p class="lastin">Last sign-in: {{ last_login_line }}</p>
+  {% if recent_logins %}
+  <ul class="signins" aria-label="Recent sign-ins">
+    {% for r in recent_logins %}
+    <li><span class="who">{{ r.who }}</span><span class="when">{{ r.when }}</span></li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <h2>Lately <span class="note" style="color:var(--soft); font-weight:400; font-size:.82rem;">· last 7 days</span></h2>
+  <div class="signals">
+    {% for c in lately %}
+    <div class="sig neutral">
+      <div class="h">{{ c.label }}</div>
+      <div class="big">{{ c.big }}</div>
+      <div class="sub">{{ c.sub }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Is the data safe?</h2>
+  <ul class="safety">
+    {% for s in plain.safety %}
+    <li class="{{ s.tone }}"><span class="dot" aria-hidden="true">{% if s.tone == 'good' %}✔{% elif s.tone == 'bad' %}⚠{% elif s.tone == 'watch' %}●{% else %}·{% endif %}</span><span>{{ s.text }}</span></li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

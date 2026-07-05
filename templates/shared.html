@@ -1,0 +1,46 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import empty_state %}
+{% block title %}Shared materials{% endblock %}
+
+{% block head %}
+<style>
+  .swrap { max-width: 920px; }
+  .swrap h1 { margin:.2rem 0 .15rem; font-size:1.55rem; }
+  .lede { color:var(--soft); margin:0 0 1.1rem; }
+  .scard { background:var(--surface); border:1px solid var(--line); border-radius:14px;
+           padding:.95rem 1.1rem; box-shadow:var(--shadow); margin-bottom:.7rem;
+           display:flex; align-items:center; gap:.8rem; text-decoration:none; color:inherit; }
+  .scard:hover { border-color:var(--accent); }
+  .scard .body { flex:1 1 auto; min-width:0; }
+  .scard .title { font-weight:600; }
+  .scard .meta { color:var(--grey); font-size:.82rem; }
+  .scard .count { color:var(--accent); font-weight:600; font-size:.84rem; white-space:nowrap; }
+  .scard .go { color:var(--accent); font-weight:700; }
+  .empty { color:var(--grey); font-size:.92rem; padding:1.2rem 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="swrap">
+  <p class="lede" style="margin-bottom:.1rem;"><a href="/">Home</a> · Shared materials</p>
+  <h1>Shared materials</h1>
+  <p class="lede">Programmes, slides, recordings and certificates from concluded activities that organizers have chosen to share.</p>
+
+  {% if not sharing_on %}
+    {{ empty_state("Public sharing is currently turned off site-wide.", icon="🔒") }}
+  {% elif events %}
+    {% for e in events %}
+    <a class="scard" href="/e/{{ e.event_token }}">
+      <div class="body">
+        <div class="title">{{ e.title }}</div>
+        <div class="meta">{{ e.event_date|humandate }}{% if e.modality == 'online' %} · <span class="badge blue">Online</span>{% endif %}{% if e.venue %} · {{ e.venue }}{% endif %}{% if e.organizer %} · {{ e.organizer }}{% endif %}</div>
+      </div>
+      <span class="count">{{ e.n_links }} resource{{ '' if e.n_links == 1 else 's' }}</span>
+      <span class="go" aria-hidden="true">→</span>
+    </a>
+    {% endfor %}
+  {% else %}
+    {{ empty_state("No shared materials yet.", hint="They appear here once an activity is concluded and its organizer publishes its resources.", icon="📂") }}
+  {% endif %}
+</div>
+{% endblock %}
