@@ -1,5 +1,12 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-06 (v1.84 — Spot Feedback #54: third "Mixed" column on the Verbatims page)
+The Verbatims drill-down (`/reports/verbatims`) rendered two columns (Appreciate / Improve) and credited a "Mixed" comment to **both** sides. Feedback #54 asked for Mixed to be its own column. Change is scoped to this one page — the seven other `story_panel` callers keep the mixed-on-both-sides behaviour, gated behind a new flag.
+- **`dashboard_insights.py` `story_panel`** — new `split_mixed=False` param. When `True`, a mixed-sentiment quote routes to its own `mixed` bucket group instead of being duplicated across `appreciate`/`improve`. Return dict always carries a `mixed` group (empty unless split) — additive, so existing consumers are untouched.
+- **`app.py` `reports_verbatims`** — calls `story_panel(..., split_mixed=True)`.
+- **`templates/verbatims.html`** — three-column grid (`repeat(3, 1fr)`, stacks ≤1050px); new "Mixed — good and bad" column (accent-tinted); updated the explanatory copy / badge tooltips that said Mixed shows "on both columns".
+- **Tests** — `tests/test_verbatims_mixed_column.py`: split routes mixed to its own group (and off the two sides); default keeps it on both with an empty mixed group; the page renders all three column headers. Green.
+
 ## 2026-07-06 (v1.83 — Spot Feedback #56: per-submission "Responses" sheet in the SERVQUAL Excel)
 The Type 2/3 raw-data Excel (`servqual_xlsx`) carried only consolidated figures (Dimensions, Summary, Respondent profile) — no way to see the numbers behind them. Feedback #56 asked for "raw data or actual responses (disaggregated per submission) for each activity or resource person". Adds a per-submission sheet, honouring the report's existing activity/RP scope narrowing.
 - **`app.py`** — new pure helper `_servqual_response_rows(df, dim_map)`: one row per `response_id` with that respondent's own per-dimension means (each answered item counted once per person), their overall (mean of their dimension means), expectation (item A) and overall service quality (item C). `_servqual_official` attaches `block["responses"]` (metadata merged in), ordered oldest→newest. **Additive** — only the XLSX extract reads the key; DOCX/PDF/PPTX and the on-screen report ignore it.

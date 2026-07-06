@@ -378,20 +378,24 @@ def _phrase_for_side(buckets_sorted, side):
     return f"{n} {who} pointed to {bdef['improve']}"
 
 
-def story_panel(verbatims, overrides=None):
+def story_panel(verbatims, overrides=None, split_mixed=False):
     """Turn a scope's comments into a two-sided story grouped by theme. `overrides`
     is {(response_id, item): 'appreciate'|'improve'|'mixed'} from manual re-tags — a
     user's correction wins over the automatic classification.
 
-    A 'mixed' quote (good-but-bad / bad-but-good) is credited to BOTH sides and
-    carries q['sentiment'] == 'mixed' so the template can badge it — nothing hidden,
-    nothing misplaced.
+    A 'mixed' quote (good-but-bad / bad-but-good) carries q['sentiment'] == 'mixed'
+    so the template can badge it. By default it is credited to BOTH sides (nothing
+    hidden, nothing misplaced). With `split_mixed=True` it goes ONLY to its own
+    `mixed` group instead — for the Verbatims page's three-column layout
+    (Appreciate / Improve / Mixed), where Mixed gets a column of its own rather
+    than being duplicated across the two (feedback #54).
 
     Returns {total, appreciate:{phrase, buckets:[{key,name,noun,count,quotes}]},
-             improve:{...}} — pull-quote style, ready for the template."""
+             improve:{...}, mixed:{...}} — pull-quote style, ready for the template.
+    The `mixed` group is empty unless `split_mixed` is set."""
     overrides = overrides or {}
     quotes = _flatten_quotes(verbatims)
-    sides = {"appreciate": {}, "improve": {}}
+    sides = {"appreciate": {}, "improve": {}, "mixed": {}}
     for q in quotes:
         forced = overrides.get((q.get("rid"), q.get("item", "")))
         q["overridden"] = forced is not None      # so the template can flag a manual tag
@@ -399,7 +403,10 @@ def story_panel(verbatims, overrides=None):
                      else classify_quote(q["text"]))
         q["sentiment"] = sentiment                # 'appreciate' | 'improve' | 'mixed'
         keys = match_buckets(q["text"]) or ["__other__"]
-        targets = ("appreciate", "improve") if sentiment == "mixed" else (sentiment,)
+        if sentiment == "mixed":
+            targets = ("mixed",) if split_mixed else ("appreciate", "improve")
+        else:
+            targets = (sentiment,)
         for side in targets:
             for k in keys:
                 sides[side].setdefault(k, []).append(q)
@@ -423,7 +430,10 @@ def story_panel(verbatims, overrides=None):
     appreciate = pack(sides["appreciate"])
     side_name = "improve"
     improve = pack(sides["improve"])
-    return {"total": len(quotes), "appreciate": appreciate, "improve": improve}
+    side_name = "mixed"
+    mixed = pack(sides["mixed"])
+    return {"total": len(quotes), "appreciate": appreciate, "improve": improve,
+            "mixed": mixed}
 
 
 # =====================================================================
