@@ -2535,11 +2535,16 @@ def home(request: Request):
         # through the link-tree flow; the historical backlog never appears here.
         upcoming = st.upcoming_events(conn, limit=20)
         # Ongoing = bureau events (registration funnel) PLUS app-created standalone
-        # activities that have no event record (e.g. an invited speaker review) — the
-        # latter were silently absent, so a manager's open survey never "reflected
-        # here". Both shapes render in one feed; the standalone rows show a response
-        # count + open link instead of a registration funnel. Newest first.
-        ongoing = st.ongoing_events(conn, limit=20) + st.ongoing_standalone(conn, limit=20)
+        # activities that have no event record (e.g. an invited speaker review) PLUS
+        # invited/"outside" activities (Form-3 speakers under an event record) whose
+        # window is still open — the last shape fell through both other feeds and
+        # vanished from the home page once it aged off the 7-day "recent" strip, even
+        # while its /seq form kept collecting. All three render in one feed; the
+        # standalone/invited rows show a response count + a manage/open link instead
+        # of a registration funnel. Newest first.
+        ongoing = (st.ongoing_events(conn, limit=20)
+                   + st.ongoing_standalone(conn, limit=20)
+                   + st.ongoing_invited(conn, limit=20))
         ongoing.sort(key=lambda a: (a.get("event_date") or "", a["id"]), reverse=True)
         # "Your recent activities" — what THIS manager created, so an outside event
         # (Form 3 only, no event record) that the lifecycle feeds skip is still
