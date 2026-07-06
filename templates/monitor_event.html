@@ -32,6 +32,11 @@
   .badge.done { background:var(--green-bg); color:var(--green); border:1px solid var(--green-ln); }
   .badge.part { background:var(--amber-bg); color:var(--amber); border:1px solid var(--amber-ln); }
   .badge.none { background:var(--surface-2); color:var(--grey); border:1px solid var(--line); }
+  a.status-link { text-decoration:none; display:inline-flex; align-items:center; gap:.4rem; }
+  a.status-link .status-see { font-size:.74rem; font-weight:700; color:var(--accent); opacity:0; transition:opacity .12s; }
+  a.status-link:hover .status-see, a.status-link:focus .status-see { opacity:1; }
+  a.status-link:hover .badge { filter:brightness(.97); }
+  @media (hover:none) { a.status-link .status-see { opacity:1; } }
   .empty { color:var(--grey); font-size:.92rem; border:1px dashed var(--line); border-radius:12px;
            padding:1.4rem; text-align:center; }
   .act-btn { font-size:.76rem; font-weight:600; padding:.25rem .55rem; margin:0 .25rem .25rem 0;
@@ -134,8 +139,17 @@
         <td class="ctr" data-label="Affiliation">{{ p.affiliation or "—" }}</td>
         <td data-label="Registered">{{ p.consent_at or "—" }}</td>
         <td data-label="CSS status">
-          <span class="badge {{ meta[1] }}">{{ meta[0] }}</span>
-          {% if p.n_forms %}<span class="who-sub"> {{ p.n_answered }}/{{ p.n_forms }}</span>{% endif %}
+          {% if p.n_answered and not p.purged %}
+            <a class="status-link" href="/monitor/{{ ev.event_token }}/attendee/{{ p.id }}/response"
+               title="See this registrant's own answers and comments">
+              <span class="badge {{ meta[1] }}">{{ meta[0] }}</span>
+              {% if p.n_forms %}<span class="who-sub"> {{ p.n_answered }}/{{ p.n_forms }}</span>{% endif %}
+              <span class="status-see">View response →</span>
+            </a>
+          {% else %}
+            <span class="badge {{ meta[1] }}">{{ meta[0] }}</span>
+            {% if p.n_forms %}<span class="who-sub"> {{ p.n_answered }}/{{ p.n_forms }}</span>{% endif %}
+          {% endif %}
         </td>
         <td class="actions" data-label="Recovery link">
           {% if p.purged %}

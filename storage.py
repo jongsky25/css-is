@@ -1511,6 +1511,50 @@ def event_registration_summary(conn, event_id):
     }
 
 
+def attendee_response_detail(conn, event_id, attendee_id):
+    """Read-only: one link-tree registrant's OWN responses to this event's
+    non-archived forms — the data sitting behind their CSS status on the Monitor
+    roster. Returns a list, in link-tree order, of:
+
+        {response_id, form_instance_id, qr_token, form, survey_type, topic,
+         submitted_at,
+         answers: {item_id: {"value": float|None, "is_na": bool}},
+         item_remarks: {item_id: text},
+         remark: overall free-text comment or None}
+
+    Only rows carrying THIS attendee_id are returned, so it reflects solely what
+    this consented registrant submitted. Anonymous walk-in / QR / paper responses
+    (attendee_id NULL) are not attributable to anyone and never appear here.
+    Empty when the attendee has answered nothing (or attendee_id is falsy)."""
+    if not attendee_id:
+        return []
+    rows = conn.execute(
+        """SELECT r.id, r.form_instance_id, r.submitted_at, r.remarks,
+                  fi.qr_token, fi.form, fi.survey_type, fi.topic
+           FROM response r
+           JOIN event_form ef     ON ef.form_instance_id = r.form_instance_id
+           JOIN form_instance fi  ON fi.id = r.form_instance_id
+           WHERE ef.event_id = ? AND r.attendee_id = ?
+                 AND COALESCE(fi.archived, 0) = 0
+           ORDER BY ef.ordinal, r.submitted_at, r.id""",
+        (event_id, attendee_id)).fetchall()
+    out = []
+    for (rid, fiid, submitted, remark, qr_token, form, stype, topic) in rows:
+        answers = {item_id: {"value": value, "is_na": bool(is_na)}
+                   for (item_id, value, is_na) in conn.execute(
+                       "SELECT item_id, value, is_na FROM answer WHERE response_id=?",
+                       (rid,))}
+        item_remarks = {item_id: text for (item_id, text) in conn.execute(
+            "SELECT item_id, text FROM item_remark WHERE response_id=?", (rid,))}
+        out.append({
+            "response_id": rid, "form_instance_id": fiid, "qr_token": qr_token,
+            "form": form, "survey_type": stype, "topic": topic,
+            "submitted_at": submitted, "answers": answers,
+            "item_remarks": item_remarks, "remark": remark,
+        })
+    return out
+
+
 def list_events(conn, created_by=None, lifecycles=None):
     """Events newest-first for the monitor index, each enriched with its form count,
     registration funnel (registered / completed / in progress / not started) and its
@@ -1942,6 +1986,7 @@ _AUDIT_ACTIONS = {
     "outside_reopen":      ("Reopened an invited activity", "Activities"),
     "outside_archive":     ("Archived an invited activity", "Activities"),
     "resend_link":         ("Resent an activity link", "Activities"),
+    "attendee_view_response": ("Viewed a registrant's response", "Activities"),
     "speaker_cleanup":     ("Cleaned up speakers", "Activities"),
     "roster_split":        ("Split a roster", "Activities"),
     "external_wipe":       ("Wiped external resource persons", "Activities"),
