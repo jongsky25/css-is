@@ -1,5 +1,12 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-06 (v1.85 — Spot Feedback #57: open a registrant's own response from the Monitor page)
+The Monitor roster showed each registrant's CSS status but gave no way to see the response behind it. Feedback #57 asked for a click-through from a registrant to their actual ratings and comments. Read-only, back-office only, and scoped to registrants who answered via the link tree — anonymous walk-in/QR/paper responses (`attendee_id NULL`) are never attributable and never surface here.
+- **`storage.py`** — new read-only `attendee_response_detail(conn, event_id, attendee_id)`: that registrant's responses to the event's non-archived forms (answers, per-item notes, overall verbatim). Only rows carrying the given `attendee_id` are returned. No schema change.
+- **`app.py`** — new route `GET /monitor/{event_token}/attendee/{attendee_id}/response`, gated to the activity creator/admin (same gate as Monitor). Reuses `survey_spec` so wording and scale labels match what the rater saw (e.g. 5 → "Strongly agree", 4 → "Excellent"). The view is audited (`attendee_view_response`). A purged (identity-removed) registrant is shown as such with no answers surfaced.
+- **`templates/monitor_attendee_response.html`** (new) + **`monitor_event.html`** — the CSS-status cell links to the new page only for answered, non-purged registrants.
+- **Tests** — `tests/test_monitor.py`: only-own/attributed rows, N/A preserved, rendered answers + verbatim + item note, roster link present, creator-only redirect, purged identity hidden, audit entry written. Green.
+
 ## 2026-07-06 (v1.84 — Spot Feedback #54: third "Mixed" column on the Verbatims page)
 The Verbatims drill-down (`/reports/verbatims`) rendered two columns (Appreciate / Improve) and credited a "Mixed" comment to **both** sides. Feedback #54 asked for Mixed to be its own column. Change is scoped to this one page — the seven other `story_panel` callers keep the mixed-on-both-sides behaviour, gated behind a new flag.
 - **`dashboard_insights.py` `story_panel`** — new `split_mixed=False` param. When `True`, a mixed-sentiment quote routes to its own `mixed` bucket group instead of being duplicated across `appreciate`/`improve`. Return dict always carries a `mixed` group (empty unless split) — additive, so existing consumers are untouched.
