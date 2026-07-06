@@ -17,10 +17,26 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "1.82"
+APP_VERSION = "1.83"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "1.83",
+        "date": "July 6, 2026",
+        "summary": "The Resource Persons Excel download now includes a per-respondent “Responses” sheet — the actual scores behind each activity's numbers.",
+        "changes": [
+            "When you download the Excel (.xlsx) from Reports → Resource Persons, "
+            "there's a new “Responses” sheet listing one row per person who "
+            "answered — each respondent's own scores for the five service "
+            "dimensions, their overall, their expectation and overall-service-"
+            "quality ratings, plus when they answered, the activity, and any "
+            "comment they left. It follows whatever activity you've filtered to, "
+            "so you can pull the raw, per-submission data for a single activity or "
+            "resource person instead of only the combined averages. The other "
+            "sheets and all the report documents are unchanged.",
+        ],
+    },
     {
         "version": "1.82",
         "date": "July 5, 2026",
