@@ -6688,6 +6688,42 @@ def _servqual_block(df, dim_map):
     }
 
 
+def _servqual_response_rows(df, dim_map):
+    """One row per submission (feedback #56): that respondent's OWN per-dimension
+    mean, their overall (mean of their dimension means), expectation (item A) and
+    overall service quality (item C). This is the raw, disaggregated view behind
+    the consolidated SERVQUAL figures — each answered item counted once per person.
+
+    Returns {response_id: {"dims": {dim: mean}, "overall", "expectation", "osq"}}.
+    Pure (no DB) so it's unit-testable; metadata (when/activity/comment) is merged
+    in by the caller, which has the connection."""
+    if df is None or df.empty:
+        return {}
+    v = df[~df["is_na"]][["response_id", "item_id", "value"]].copy()
+    if v.empty:
+        return {}
+    v["item_id"] = v["item_id"].astype("object")
+    item_to_dim = {it: dim for dim, items in dim_map.items() for it in items}
+    v["__dim"] = v["item_id"].map(item_to_dim)
+    dim_order = list(dim_map.keys())
+    out = {}
+    dcols = v.dropna(subset=["__dim"])
+    if not dcols.empty:
+        for (rid, dim), val in dcols.groupby(
+                ["response_id", "__dim"], observed=True)["value"].mean().items():
+            out.setdefault(int(rid), {"dims": {}})["dims"][dim] = round(float(val), 2)
+    exp = v[v["item_id"] == "A"].groupby("response_id")["value"].mean()
+    osq = v[v["item_id"] == "C"].groupby("response_id")["value"].mean()
+    for rid in v["response_id"].unique():
+        rid = int(rid)
+        e = out.setdefault(rid, {"dims": {}})
+        dvals = [e["dims"][d] for d in dim_order if d in e["dims"]]
+        e["overall"] = round(sum(dvals) / len(dvals), 2) if dvals else None
+        e["expectation"] = round(float(exp[rid]), 2) if rid in exp.index else None
+        e["osq"] = round(float(osq[rid]), 2) if rid in osq.index else None
+    return out
+
+
 def _demo_view(d):
     """Format the captured M:F / DOH:Non-DOH tallies for the report header."""
     m, f = d.get("male", 0), d.get("female", 0)
@@ -6729,6 +6765,28 @@ def _servqual_official(df, dim_map, response_ids, conn):
         "servqual_label": block["gap"]["label"] if block["gap"] else None,
         "osq": block["osq"]["shown"], "osq_band": block["osq"]["band"],
     }
+    # Per-submission raw rows (feedback #56): the disaggregated numbers behind the
+    # consolidated figures — one row per respondent — enriched with each
+    # submission's timestamp, activity name and free-text comment. Ordered
+    # oldest→newest. Only the XLSX raw-data extract renders these; every other
+    # format (DOCX/PDF/PPTX, on-screen report) simply ignores the key.
+    rowmap = _servqual_response_rows(df, dim_map)
+    ctx = st.response_context_for_ids(conn, response_ids)
+    responses = []
+    for rid, r in rowmap.items():
+        m = ctx.get(rid, {})
+        responses.append({
+            "response_id": rid,
+            "when": m.get("when", ""),
+            "activity": m.get("activity", ""),
+            "dims": r.get("dims", {}),
+            "overall": r.get("overall"),
+            "expectation": r.get("expectation"),
+            "osq": r.get("osq"),
+            "comment": m.get("comment", ""),
+        })
+    responses.sort(key=lambda x: (x["when"], x["response_id"]))
+    block["responses"] = responses
     return block
 
 
