@@ -11,15 +11,17 @@
                  border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:0 10px 10px 0;
                  padding:.8rem 1rem; margin:0 0 1.3rem; }
   .vb-headline b { font-weight:700; }
-  .vb-cols { display:grid; grid-template-columns:1fr 1fr; gap:1.1rem; }
-  @media (max-width:780px){ .vb-cols { grid-template-columns:1fr; } }
+  .vb-cols { display:grid; grid-template-columns:repeat(3, 1fr); gap:1.1rem; }
+  @media (max-width:1050px){ .vb-cols { grid-template-columns:1fr; } }
   .vb-side { border-radius:12px; padding:.9rem 1rem; border:1px solid var(--line); }
   .vb-side.appreciate { background:var(--green-bg); border-color:var(--green-ln); }
   .vb-side.improve { background:var(--amber-bg); border-color:var(--amber-ln); }
+  .vb-side.mixed { background:var(--accent-bg); border-color:var(--accent); }
   .vb-side > h2 { margin:0 0 .2rem; font-size:.82rem; text-transform:uppercase; letter-spacing:.04em;
                   display:flex; align-items:center; gap:.4rem; }
   .vb-side.appreciate > h2 { color:var(--green); }
   .vb-side.improve > h2 { color:var(--amber); }
+  .vb-side.mixed > h2 { color:var(--accent); }
   .vb-side .side-sub { font-size:.8rem; color:var(--soft); margin:0 0 .8rem; }
   .vb-theme { margin:0 0 .9rem; }
   .vb-theme-h { font-size:.82rem; font-weight:700; color:var(--ink-soft); margin:0 0 .35rem;
@@ -145,7 +147,7 @@
   {% else %}
     A mix of comments across the experience. The threads are grouped below in their own words.
   {% endif %}
-  {% if can_edit %}<span style="display:block; font-size:.82rem; color:var(--soft); font-weight:400; margin-top:.3rem;">A “Mixed” comment mentions both a good point and something to improve — it appears in both columns on purpose.</span>{% endif %}
+  {% if can_edit %}<span style="display:block; font-size:.82rem; color:var(--soft); font-weight:400; margin-top:.3rem;">A “Mixed” comment mentions both a good point and something to improve — it sits in its own “Mixed” column.</span>{% endif %}
 </p>
 
 {# One quote card: sentiment dot, the words, source, optional re-tag + edit. #}
@@ -153,7 +155,7 @@
 <div class="vb-card">
   <div class="vb-quote">
     <span class="vb-dot {{ q.sentiment }}" aria-hidden="true"></span>
-    <span>“{{ q.text }}”{% if q.sentiment == 'mixed' %} <span class="mixed-badge" title="Mentions both a positive and something to improve — shown on both columns">Mixed</span>{% endif %}
+    <span>“{{ q.text }}”{% if q.sentiment == 'mixed' %} <span class="mixed-badge" title="Mentions both a positive and something to improve — shown in the Mixed column">Mixed</span>{% endif %}
       <span class="vb-cite">{{ q.activity or q.topic or q.form_id }}{% if q.when %} · {{ q.when | humandate }}{% endif %}{% if q.item %} · note on {{ item_labels.get(q.item, q.item) }}{% endif %}</span>
     </span>
   </div>
@@ -208,9 +210,10 @@
 <div class="vb-cols">
   {{ side(story.appreciate, 'appreciate', 'What people appreciated', 'The good people went out of their way to name.') }}
   {{ side(story.improve, 'improve', 'What people would improve', 'Gently raised wishes and friction points.') }}
+  {{ side(story.mixed, 'mixed', 'Mixed — good and bad', 'Comments that named a strength and a wish in the same breath.') }}
 </div>
 
-{% if can_edit %}<p class="muted small" style="margin-top:1rem;">Wrongly sorted? Re-tag a comment as Appreciated, Mixed (shows on both), or To improve — the change is saved for everyone and audited.</p>{% endif %}
+{% if can_edit %}<p class="muted small" style="margin-top:1rem;">Wrongly sorted? Re-tag a comment as Appreciated, Mixed (its own column), or To improve — the change is saved for everyone and audited.</p>{% endif %}
 
 {% endif %}
 {% endblock %}

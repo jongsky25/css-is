@@ -17,10 +17,24 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "1.83"
+APP_VERSION = "1.84"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "1.84",
+        "date": "July 6, 2026",
+        "summary": "The Verbatims page now shows a third “Mixed” column, so good-and-bad comments have a home of their own instead of appearing on both sides.",
+        "changes": [
+            "On Reports → Verbatims, comments used to sit in two columns — what "
+            "people appreciated and what they'd improve — and a “Mixed” comment "
+            "(one that names a strength and a wish in the same breath) was shown "
+            "in both. There's now a dedicated third “Mixed — good and bad” column, "
+            "so each comment appears once, in the column that fits it. Re-tagging a "
+            "comment still works the same way; a Mixed one simply moves to its own "
+            "column now.",
+        ],
+    },
     {
         "version": "1.83",
         "date": "July 6, 2026",

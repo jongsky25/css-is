@@ -7442,7 +7442,10 @@ def reports_verbatims(request: Request, survey_type: int = 0, org: str = "", per
         rids = df["response_id"].unique().tolist() if not df.empty else []
         verbatims = st.verbatims_for_responses(conn, rids)
         total_comments = len(verbatims)
-        story = di.story_panel(verbatims, st.get_comment_overrides(conn, rids))
+        # split_mixed: Mixed comments get their own column on this page (feedback
+        # #54), instead of being shown on both the Appreciate and Improve sides.
+        story = di.story_panel(verbatims, st.get_comment_overrides(conn, rids),
+                               split_mixed=True)
         # Tone-over-time: org-only scope (period dropped), one survey type — and the
         # same activity narrowing, so the trend matches the digest below it.
         sent = None
