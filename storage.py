@@ -2728,6 +2728,59 @@ def ongoing_standalone(conn, limit=20):
     return out
 
 
+def ongoing_invited(conn, limit=20):
+    """Invited / "outside" activities (event_kind='outside') that are CURRENTLY
+    collecting — the event day has arrived (date <= today) and the feedback window
+    is still open: close_at is in the future, or no close_at was ever set (the
+    public /seq form stays open until an explicit close, so the manager should keep
+    seeing it here until they close it). One row per event, newest first.
+
+    These activities have only Form-3 speaker reviews grouped under an event record,
+    so they fall through BOTH other ongoing feeds: `ongoing_events` needs a Form 2
+    (they have none) and `ongoing_standalone` needs NO event record (they have one).
+    Without this feed a still-open invited activity is unreachable from the home page
+    once it drops off the 7-day "recent activities" strip — live to respondents but
+    invisible to its manager. Each row shows the activity name, the total responses
+    across its speakers, and links to the activity's manage page."""
+    rows = conn.execute("""
+        SELECT e.id, e.event_token, e.title,
+               MIN(fi.event_date), MIN(fi.venue), MIN(fi.modality), MIN(fi.close_at),
+               MIN(fi.id),
+               (SELECT COUNT(*) FROM response r
+                  JOIN event_form ef2 ON ef2.form_instance_id = r.form_instance_id
+                 WHERE ef2.event_id = e.id)
+        FROM event e
+        JOIN event_form ef    ON ef.event_id = e.id
+        JOIN form_instance fi ON fi.id = ef.form_instance_id
+        WHERE e.event_kind = 'outside'
+              AND COALESCE(fi.archived, 0) = 0 AND COALESCE(fi.pooled, 0) = 0
+              AND fi.event_date <> ''
+              AND date(fi.event_date) <= date('now','localtime')
+              AND ( fi.close_at IS NULL OR datetime('now','localtime') <= fi.close_at )
+        GROUP BY e.id
+        ORDER BY MIN(fi.event_date) DESC, e.id DESC
+        LIMIT ?
+    """, (limit,)).fetchall()
+    out = []
+    for r in rows:
+        event_id, event_token = r[0], r[1]
+        out.append({
+            # `id` is a representative form of the event; the inline-archive route
+            # expands any event-bound form id to the whole event, so the admin
+            # Archive button on this row archives the entire invited activity.
+            "id": r[7], "event_date": r[3], "venue": r[4], "topic": r[2],
+            "modality": r[5] or "f2f", "close_at": r[6],
+            "kind": "Invited activity", "responses": r[8],
+            "speakers": event_speaker_names(conn, event_id),
+            "link": f"/activities/{event_token}/manage", "tip": "Manage this activity",
+            # Render in the template's standalone branch (response count + link),
+            # not the registration-funnel branch — invited activities have no funnel.
+            "standalone": True, "event_token": None,
+            "registered": None, "answered_any": None,
+        })
+    return out
+
+
 def activities_by_creator(conn, created_by, limit=6, archived=0, all_creators=False,
                           since_days=None):
     """The most recent activities a manager created, newest first, with a response

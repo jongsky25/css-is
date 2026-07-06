@@ -17,10 +17,27 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "1.85"
+APP_VERSION = "1.86"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "1.86",
+        "date": "July 6, 2026",
+        "summary": "An invited (“we were invited / outside”) activity now stays on the home “Ongoing” list for as long as its combined-QR form is still open, so you can always find and manage it.",
+        "changes": [
+            "Invited activities — the ones where your office was a guest and you "
+            "gather feedback through a single combined-QR link — used to drop off "
+            "the home page about a week after the event, even when the link was "
+            "still live and collecting answers. They never appeared under "
+            "“Upcoming” or “Ongoing”, only briefly under “Your recent activities”, "
+            "so an older-but-still-open one became impossible to reach. Now any "
+            "invited activity whose feedback window is still open shows under "
+            "“Ongoing — CSS collecting”, with its name, its running response count, "
+            "and a link straight to its Manage page. It leaves the list once you "
+            "close its window.",
+        ],
+    },
     {
         "version": "1.85",
         "date": "July 6, 2026",

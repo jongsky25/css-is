@@ -402,3 +402,83 @@ def test_combined_skipped_speaker_records_nothing(client, manager, db_path):
     c2 = st.speaker_response_count(conn, speakers[t2]["id"])
     conn.close()
     assert c1 == 1 and c2 == 0
+
+
+# --------------------------------------------------------------------------
+# Phase 5 — a still-open invited activity stays reachable on the home page.
+# An outside activity has only Form-3 speakers grouped under an event record, so
+# it falls through BOTH other ongoing feeds (`ongoing_events` needs a Form 2,
+# `ongoing_standalone` needs NO event). `ongoing_invited` keeps it in the home
+# "Ongoing" card for as long as its /seq window is open, linking to manage —
+# otherwise it vanishes from the home page once it ages off the 7-day strip while
+# its public form keeps collecting.
+# --------------------------------------------------------------------------
+
+def _set_window_all(db_path, event_id, close_at):
+    """Stamp the same close_at on every form of an outside event (they share a
+    window), the way the /close route does — but to an arbitrary instant."""
+    conn = st.connect(db_path)
+    for r in conn.execute("SELECT form_instance_id FROM event_form WHERE event_id=?",
+                          (event_id,)).fetchall():
+        st.set_response_window(conn, r[0], None, close_at)
+    conn.close()
+
+
+def test_ongoing_invited_lists_open_past_activity(manager, db_path):
+    name = "Ongoing Invited Open"
+    _make_outside(manager, db_path, name=name)          # past event date, no close_at
+    token = _outside_event(db_path, name)[1]
+    conn = st.connect(db_path)
+    rows = [a for a in st.ongoing_invited(conn) if a["topic"] == name]
+    conn.close()
+    assert len(rows) == 1, "the two speakers collapse to ONE ongoing row for the activity"
+    row = rows[0]
+    assert row["kind"] == "Invited activity"
+    assert row["standalone"] is True and row["event_token"] is None
+    assert row["link"] == f"/activities/{token}/manage"
+    assert row["tip"] == "Manage this activity"
+    assert row["responses"] == 0
+
+
+def test_ongoing_invited_excludes_future_activity(manager, db_path):
+    name = "Ongoing Invited Future"
+    _make_outside(manager, db_path, name=name, date="2027-06-15")   # not held yet
+    conn = st.connect(db_path)
+    names = [a["topic"] for a in st.ongoing_invited(conn)]
+    conn.close()
+    assert name not in names, "a future invited activity is upcoming, not ongoing"
+
+
+def test_ongoing_invited_excludes_closed_window(manager, db_path):
+    name = "Ongoing Invited Closed"
+    _make_outside(manager, db_path, name=name)
+    event_id = _outside_event(db_path, name)[0]
+    _set_window_all(db_path, event_id, "2026-06-13T00:00")   # window already elapsed
+    conn = st.connect(db_path)
+    names = [a["topic"] for a in st.ongoing_invited(conn)]
+    conn.close()
+    assert name not in names, "a closed invited activity leaves the ongoing feed"
+
+
+def test_ongoing_invited_included_while_window_open(manager, db_path):
+    name = "Ongoing Invited FutureWindow"
+    _make_outside(manager, db_path, name=name)
+    event_id = _outside_event(db_path, name)[0]
+    _set_window_all(db_path, event_id, "2099-12-31T23:59")   # window still open
+    conn = st.connect(db_path)
+    names = [a["topic"] for a in st.ongoing_invited(conn)]
+    conn.close()
+    assert name in names
+
+
+def test_home_ongoing_shows_open_invited_activity(manager, db_path):
+    """End-to-end: an invited activity whose event has passed but whose /seq window
+    is still open now surfaces on the home page, linking to its manage page — the
+    reported gap where the combined-QR link worked but the activity 'didn't reflect'
+    in Upcoming / Ongoing / Recent."""
+    name = "Home Ongoing Invited"
+    _make_outside(manager, db_path, name=name)          # past event date, still open
+    token = _outside_event(db_path, name)[1]
+    body = manager.get("/").text
+    assert name in body
+    assert f"/activities/{token}/manage" in body
