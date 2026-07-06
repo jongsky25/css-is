@@ -17,10 +17,27 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "1.84"
+APP_VERSION = "1.85"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "1.85",
+        "date": "July 6, 2026",
+        "summary": "On an activity's Monitor page, you can now click a participant's status to open their own answers — the exact ratings and comments they gave.",
+        "changes": [
+            "On the Monitor page for an activity, each participant who has "
+            "answered now has a clickable status. Open it to see that person's "
+            "own response — their rating for every question, any note they left "
+            "on a question, and their overall comment, shown just as they "
+            "answered. Only the activity's creator or an admin can open it. It "
+            "covers people who registered and answered through the activity "
+            "link; anonymous walk-in / QR / paper responses aren't tied to a "
+            "name, so they don't appear here. If someone's personal details "
+            "were removed under the data-retention policy, their row shows as "
+            "“identity removed” with no answers.",
+        ],
+    },
     {
         "version": "1.84",
         "date": "July 6, 2026",
