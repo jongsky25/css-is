@@ -1,9 +1,14 @@
 # Deployment & live-data rules
 
-> ## ⛔ THE WHOLE ROUTINE
+> 📱 **Deploying from a phone?** See [MOBILE.md](MOBILE.md) — the GitHub Actions
+> "Deploy to Hugging Face" button runs this same `deploy_hf.py` routine on
+> GitHub's servers (it is **not** a `git push` to the Space — the rule below
+> still holds). This page is the desktop flow.
+
+> ## ⛔ THE WHOLE ROUTINE (desktop)
 >
 > **Shipping = `python deploy_hf.py`. That is the entire deploy. There is NO
-> GitHub step.**
+> `git push`-to-the-Space step.**
 >
 > Before running it, do the ONE manual thing only the live site can give you:
 > **download the current live DB** (Admin → Backups → Download) — it lands in your
