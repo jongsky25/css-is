@@ -5688,6 +5688,84 @@ async def monitor_delete_attendee(request: Request, event_token: str, attendee_i
     return RedirectResponse(f"/monitor/{event_token}?flash={flash}", status_code=303)
 
 
+def _answer_readout(item, ans):
+    """Render one item's stored answer for the per-respondent view: map the raw
+    value back to the scale label the rater saw (e.g. 5 -> 'Strongly agree'),
+    keeping N/A and 'not answered' distinct."""
+    if ans is None:
+        return {"label": "— not answered", "value": None, "na": False, "missing": True}
+    if ans["is_na"] or ans["value"] is None:
+        return {"label": "N/A", "value": None, "na": True, "missing": False}
+    iv = int(round(ans["value"]))
+    label = next((sl for (sv, sl) in item["scale"] if sv == iv), str(ans["value"]))
+    return {"label": label, "value": iv, "na": False, "missing": False,
+            "show_value": label != str(iv)}
+
+
+def _response_readouts(conn, responses):
+    """Turn attendee_response_detail rows into template-ready readouts: each
+    response as its subject + submitted time + the survey's own groups/items with
+    this person's answers and any notes filled in. Reuses survey_spec so the
+    wording and scale labels exactly match what the rater was shown."""
+    out = []
+    for resp in responses:
+        ctx = st.get_form_context(conn, resp["qr_token"])
+        if not ctx:
+            continue
+        spec = survey_spec(ctx)
+        groups = []
+        for grp in spec["groups"]:
+            items = []
+            for item in grp["items"]:
+                items.append({
+                    "text": item["text"],
+                    "readout": _answer_readout(item, resp["answers"].get(item["id"])),
+                    "note": resp["item_remarks"].get(item["id"]),
+                })
+            groups.append({"label": grp["label"], "items": items})
+        out.append({
+            "form_id": ctx["form_id"], "subject": _subject_label(ctx),
+            "kind": spec.get("kind"), "submitted_at": resp["submitted_at"],
+            "groups": groups, "remark": resp["remark"],
+        })
+    return out
+
+
+@app.get("/monitor/{event_token}/attendee/{attendee_id}/response", response_class=HTMLResponse)
+def monitor_attendee_response(request: Request, event_token: str, attendee_id: int):
+    """One link-tree registrant's own survey answers — the data behind their CSS
+    status on the roster (feedback #57). Creator/admin only, same gate as the
+    Monitor page (which already shows registrant PII). Anonymous walk-in/QR/paper
+    responses carry no registrant and never reach here; a registrant whose PII was
+    purged under retention is shown as identity-removed with no answers surfaced,
+    keeping the app's deliberate rating/identity separation intact."""
+    conn = get_conn()
+    try:
+        ev = st.get_event(conn, event_token)
+        if not ev:
+            return RedirectResponse("/monitor", status_code=303)
+        if not _can_manage_event(request.state.user, ev):
+            return RedirectResponse("/monitor", status_code=303)
+        att = st.get_attendee(conn, attendee_id, event_id=ev["id"])
+        if not att:
+            return templates.TemplateResponse(request, "monitor_attendee_response.html",
+                {"ev": ev, "att": None, "show_scope": False}, status_code=404)
+        purged = bool(att.get("purged_at"))
+        readouts = [] if purged else _response_readouts(
+            conn, st.attendee_response_detail(conn, ev["id"], attendee_id))
+        if not purged:
+            who = att.get("name") or att.get("email") or f"#{attendee_id}"
+            _audit(request, conn, "attendee_view_response", target_type="attendee",
+                   target_id=attendee_id,
+                   summary=(f"Viewed {who}'s survey response for “{ev['title']}”."))
+    finally:
+        conn.close()
+    return templates.TemplateResponse(request, "monitor_attendee_response.html", {
+        "nav_active": "monitor", "show_scope": False, "ev": ev, "att": att,
+        "purged": purged, "readouts": readouts,
+    })
+
+
 @app.get("/monitor/{event_token}/export")
 def monitor_event_export(request: Request, event_token: str):
     """Download the registration roster + CSS status for one activity as an XLSX

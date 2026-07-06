@@ -435,3 +435,100 @@ def test_non_creator_cannot_delete_attendee(manager, db_path):
     conn = st.connect(db_path)
     assert st.get_attendee(conn, ghost) is not None             # untouched
     conn.close()
+
+
+# --------------------------------------------------------------------------
+# per-registrant response view (feedback #57): the data behind the CSS status
+# --------------------------------------------------------------------------
+
+def test_attendee_response_detail_only_own_and_attributed(tmp_path):
+    conn = _fresh(tmp_path)
+    eid, _tok, f2, f3 = _event_with_two_forms(conn)
+    a = st.add_attendee(conn, eid, name="Ana", email="a@x.com", consent_text="x")
+    st.record_response(conn, f2, [("A", 7), ("B6", 6), ("C", 4)],
+                       remarks="Great session, learned a lot.",
+                       item_remarks={"B6": "Very clear speaker."}, attendee_id=a)
+    # A different registrant's answer and an anonymous walk-in must NOT leak in.
+    b = st.add_attendee(conn, eid, name="Ben", email="b@x.com", consent_text="x")
+    st.record_response(conn, f2, [("B6", 3)], attendee_id=b)
+    st.record_response(conn, f2, [("B6", 2)])                    # anonymous, attendee_id NULL
+
+    detail = st.attendee_response_detail(conn, eid, a)
+    assert len(detail) == 1                                      # only the f2 she answered
+    d = detail[0]
+    assert d["form_instance_id"] == f2
+    assert d["answers"]["B6"] == {"value": 6.0, "is_na": False}
+    assert d["answers"]["A"]["value"] == 7.0
+    assert d["item_remarks"]["B6"] == "Very clear speaker."
+    assert d["remark"] == "Great session, learned a lot."
+    # An N/A answer is preserved as such, not dropped.
+    st.record_response(conn, f3, [("B1", None)], attendee_id=a)
+    f3_detail = [x for x in st.attendee_response_detail(conn, eid, a)
+                 if x["form_instance_id"] == f3][0]
+    assert f3_detail["answers"]["B1"] == {"value": None, "is_na": True}
+    # No attendee -> nothing.
+    assert st.attendee_response_detail(conn, eid, None) == []
+
+
+def _seed_event_with_response(db_path, created_by):
+    """One activity whose single registrant answered f2 with distinctive
+    ratings/comments — returns (token, attendee_id)."""
+    conn = st.connect(db_path)
+    try:
+        eid, tok, f2, _f3 = _event_with_two_forms(conn, created_by=created_by)
+        a = st.add_attendee(conn, eid, name="Reg One", email="r1@x.com",
+                            consent_text="x")
+        st.record_response(conn, f2, [("A", 7), ("B6", 6), ("C", 4)],
+                           remarks="Loved the facilitator.",
+                           item_remarks={"B6": "Knew the topic cold."}, attendee_id=a)
+    finally:
+        conn.close()
+    return tok, a
+
+
+def test_response_view_renders_answers_and_comment(manager, db_path):
+    tok, aid = _seed_event_with_response(db_path, "manager@test.local")
+    r = manager.get(f"/monitor/{tok}/attendee/{aid}/response")
+    assert r.status_code == 200
+    assert "Reg One" in r.text
+    assert "Excellent" in r.text                    # C=4 -> OSQ label, distinctive
+    assert "Loved the facilitator." in r.text       # the overall verbatim
+    assert "Knew the topic cold." in r.text         # the per-item note
+
+
+def test_roster_links_answered_registrant_to_response(manager, db_path):
+    tok, aid = _seed_event_with_response(db_path, "manager@test.local")
+    r = manager.get(f"/monitor/{tok}")
+    assert r.status_code == 200
+    assert f"/monitor/{tok}/attendee/{aid}/response" in r.text
+    assert "View response" in r.text
+
+
+def test_response_view_is_creator_only(manager, db_path):
+    tok, aid = _seed_event_with_response(db_path, "admin@test.local")  # not the manager's
+    r = manager.get(f"/monitor/{tok}/attendee/{aid}/response",
+                    follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == "/monitor"
+
+
+def test_response_view_hides_purged_identity(manager, db_path):
+    tok, aid = _seed_event_with_response(db_path, "manager@test.local")
+    conn = st.connect(db_path)
+    st.purge_expired_attendees(conn, "2999-01-01")               # null all PII
+    conn.close()
+    r = manager.get(f"/monitor/{tok}/attendee/{aid}/response")
+    assert r.status_code == 200
+    assert "identity removed" in r.text
+    assert "Excellent" not in r.text                             # ratings not surfaced
+    assert "Loved the facilitator." not in r.text
+    # And the roster no longer offers the link for a purged row.
+    assert f"/monitor/{tok}/attendee/{aid}/response" not in manager.get(f"/monitor/{tok}").text
+
+
+def test_response_view_records_audit(manager, db_path):
+    tok, aid = _seed_event_with_response(db_path, "manager@test.local")
+    manager.get(f"/monitor/{tok}/attendee/{aid}/response")
+    conn = st.connect(db_path)
+    actions = [a["action"] for a in st.list_audit(conn, action="attendee_view_response")]
+    conn.close()
+    assert "attendee_view_response" in actions

@@ -1,0 +1,117 @@
+{% extends "dash_layout.html" %}
+{% block title %}Registrant response{% endblock %}
+
+{% block head %}
+<style>
+  .rwrap { max-width: 860px; }
+  .rhead h1 { margin:.2rem 0 .15rem; font-size:1.5rem; }
+  .rmeta { color:var(--soft); font-size:.9rem; margin:0 0 .2rem; }
+  .rmeta strong { color:var(--ink); }
+  .who { border:1px solid var(--line); background:var(--surface); border-radius:12px;
+         padding:.85rem 1rem; margin:1rem 0 1.2rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .who .nm { font-size:1.1rem; font-weight:800; }
+  .who .sub { color:var(--soft); font-size:.85rem; margin-top:.15rem; }
+  .toolbar { display:flex; gap:.8rem; align-items:center; flex-wrap:wrap; margin:0 0 1.1rem; }
+  .toolbar a.btn { text-decoration:none; font-size:.85rem; font-weight:600; padding:.45rem .8rem;
+          border-radius:8px; border:1px solid var(--accent); color:var(--accent); background:var(--surface); }
+  .toolbar a.btn:hover { background:var(--accent-bg); }
+  .privacy { font-size:.8rem; color:var(--grey); margin:.2rem 0 1.2rem; }
+  .rcard { border:1px solid var(--line); background:var(--surface); border-radius:12px;
+           padding:1rem 1.1rem 1.15rem; margin:0 0 1.2rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .rcard h2 { font-size:1.05rem; margin:0 0 .1rem; }
+  .rcard .when { color:var(--soft); font-size:.82rem; margin:0 0 .8rem; }
+  .grp { margin:.9rem 0 .2rem; }
+  .grp .glabel { font-size:.72rem; text-transform:uppercase; letter-spacing:.03em;
+                 color:var(--soft); font-weight:700; margin:0 0 .35rem; }
+  table.ans { width:100%; border-collapse:collapse; font-size:.9rem; }
+  table.ans td { padding:.5rem .5rem; border-bottom:1px solid var(--line); vertical-align:top; }
+  table.ans td.q { color:var(--ink); }
+  table.ans td.a { text-align:right; white-space:nowrap; font-weight:700; width:9.5rem; }
+  .note { display:block; margin-top:.3rem; font-size:.82rem; color:var(--ink-soft);
+          border-left:3px solid var(--line); padding-left:.5rem; font-style:italic; }
+  .val { display:inline-block; }
+  .val .num { color:var(--soft); font-weight:700; margin-left:.3rem; }
+  .val.na { color:var(--grey); font-weight:600; }
+  .val.missing { color:var(--grey); font-weight:500; font-style:italic; }
+  .remark { margin-top:.9rem; border-top:1px dashed var(--line); padding-top:.7rem; }
+  .remark .glabel { font-size:.72rem; text-transform:uppercase; letter-spacing:.03em;
+                    color:var(--soft); font-weight:700; margin:0 0 .3rem; }
+  .remark p { margin:0; font-size:.95rem; }
+  .empty { color:var(--grey); font-size:.92rem; border:1px dashed var(--line); border-radius:12px;
+           padding:1.4rem; text-align:center; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="rwrap">
+{% if not att %}
+  <h1>Registrant not found</h1>
+  <p class="rmeta">This registrant is no longer on this activity's roster.</p>
+  <p><a href="/monitor/{{ ev.event_token }}">← Back to the roster</a></p>
+{% else %}
+  <div class="rhead">
+    <p class="rmeta"><a href="/monitor/{{ ev.event_token }}">Monitor</a> · <strong>{{ ev.title }}</strong> · Registrant response</p>
+    <h1>Response</h1>
+  </div>
+
+  <div class="toolbar">
+    <a class="btn" href="/monitor/{{ ev.event_token }}">← Back to the roster</a>
+  </div>
+
+  {% if purged %}
+    <div class="who">
+      <div class="nm who-removed" style="color:var(--grey);font-style:italic;">(identity removed)</div>
+      <div class="sub">This registrant's personal details were purged under the data-retention policy.</div>
+    </div>
+    <p class="empty">Their ratings still count in this activity's anonymous totals and reports,
+      but they can no longer be shown against a name.</p>
+  {% else %}
+    <div class="who">
+      <div class="nm">{{ att.name or "—" }}</div>
+      <div class="sub">
+        {% if att.email %}{{ att.email }}{% endif %}
+        {% if att.contact %} · {{ att.contact }}{% endif %}
+        {% if att.consent_at %} · registered {{ att.consent_at }}{% endif %}
+      </div>
+    </div>
+    <p class="privacy">Only the activity's creator or an admin can open this. Shown from their
+      consented registration — anonymous walk-in / QR / paper responses are never attributable here.</p>
+
+    {% if not readouts %}
+      <p class="empty">This registrant hasn't submitted any of this activity's feedback forms yet.</p>
+    {% else %}
+      {% for r in readouts %}
+      <div class="rcard">
+        <h2>{{ r.subject }}</h2>
+        <p class="when">{{ r.form_id }}{% if r.submitted_at %} · submitted {{ r.submitted_at }}{% endif %}</p>
+        {% for g in r.groups %}
+        <div class="grp">
+          <p class="glabel">{{ g.label }}</p>
+          <table class="ans">
+            {% for it in g['items'] %}
+            <tr>
+              <td class="q">{{ it.text }}{% if it.note %}<span class="note">“{{ it.note }}”</span>{% endif %}</td>
+              <td class="a">
+                {% set ro = it.readout %}
+                <span class="val{% if ro.na %} na{% elif ro.missing %} missing{% endif %}">
+                  {{ ro.label }}{% if ro.show_value %}<span class="num">({{ ro.value }})</span>{% endif %}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+        {% endfor %}
+        {% if r.remark %}
+        <div class="remark">
+          <p class="glabel">In their own words</p>
+          <p>“{{ r.remark }}”</p>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    {% endif %}
+  {% endif %}
+{% endif %}
+</div>
+{% endblock %}
