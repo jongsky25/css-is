@@ -284,6 +284,26 @@ def servqual_xlsx(sq, meta):
              [["Male : Female", demo["sex_ratio"], demo["sex_total"]],
               ["DOH : Non-DOH", demo["aff_ratio"], demo["aff_total"]]])
 
+    # Individual submissions — one row per respondent, the disaggregated raw data
+    # behind the consolidated numbers above (feedback #56). Each person's own
+    # dimension means, their overall, expectation (A) and overall service
+    # quality (C), plus when they answered, the activity, and any written comment.
+    resp = sq.get("responses") or []
+    if resp:
+        dim_names = [d["dim"] for d in sq["dimensions"]]
+        headers = (["#", "Submitted", "Activity"] + dim_names
+                   + ["Overall", "Expectation (A)", "Overall SQ (C)", "Comment"])
+        rows = []
+        for i, r in enumerate(resp, start=1):
+            dims = r.get("dims") or {}
+            rows.append([i, r.get("when", ""), r.get("activity", "")]
+                        + [dims.get(d) for d in dim_names]
+                        + [r.get("overall"), r.get("expectation"), r.get("osq"),
+                           r.get("comment", "")])
+        _tab(wb.create_sheet("Responses"),
+             "Individual submissions — each respondent's own scores (raw data)",
+             headers, rows)
+
     buf = io.BytesIO(); wb.save(buf); return buf.getvalue()
 
 

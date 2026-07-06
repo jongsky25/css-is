@@ -2464,6 +2464,41 @@ def verbatims_for_responses(conn, response_ids):
     return rows
 
 
+def response_context_for_ids(conn, response_ids):
+    """Per-response identity for an arbitrary set of responses — submitted time,
+    the human activity name, and any response-level comment — for EVERY response,
+    whether or not it left free text (unlike verbatims_for_responses, which is
+    comment-only). This is what the raw-data / per-submission export needs so each
+    row is labelled with when it came in and which activity it belongs to.
+
+    Returns {response_id: {"when": "YYYY-MM-DD HH:MM", "activity": str,
+                           "comment": str}}.
+    """
+    ids = [int(r) for r in response_ids]
+    if not ids:
+        return {}
+    out = {}
+    CHUNK = 900
+    for i in range(0, len(ids), CHUNK):
+        chunk = ids[i:i + CHUNK]
+        qmarks = ",".join("?" * len(chunk))
+        for rid, when, remarks, form, edate, fid, topic, etitle in conn.execute(f"""
+                SELECT r.id, r.submitted_at, r.remarks, fi.form, fi.event_date, fi.id,
+                       fi.topic, e.title
+                FROM response r
+                JOIN form_instance fi ON fi.id = r.form_instance_id
+                LEFT JOIN event_form ef ON ef.form_instance_id = fi.id
+                LEFT JOIN event e       ON e.id = ef.event_id
+                WHERE r.id IN ({qmarks})""", chunk):
+            # Same human activity name the verbatims drill-down uses: the real event
+            # title, else the talk/activity topic, else a plain-language family noun.
+            activity = (etitle or topic or "").strip() or form_noun(form)
+            out[rid] = {"when": (when or "")[:16].replace("T", " "),
+                        "activity": activity,
+                        "comment": (remarks or "").strip()}
+    return out
+
+
 def list_activity_instances(conn):
     """Every Type 2 (event review) and Type 3 (resource-person) form instance with
     the context bound at creation — the raw material the Activities view groups
