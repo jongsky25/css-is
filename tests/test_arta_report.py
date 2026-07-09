@@ -103,12 +103,29 @@ def test_demographics_and_age_bands():
 
 
 def test_comments_split_by_feedback_type():
-    rows = [_row(SUGGESTIONS="good", FEEDBACK_TYPE="Positive"),
-            _row(SUGGESTIONS="slow", FEEDBACK_TYPE="Negative"),
-            _row(SUGGESTIONS="ok", FEEDBACK_TYPE=""),
-            _row(SUGGESTIONS="", FEEDBACK_TYPE="Positive")]  # blank text dropped
+    rows = [_row(SUGGESTIONS="Very helpful", FEEDBACK_TYPE="Positive"),
+            _row(SUGGESTIONS="Too slow", FEEDBACK_TYPE="Negative"),
+            _row(SUGGESTIONS="Air-con was cold", FEEDBACK_TYPE=""),
+            _row(SUGGESTIONS="", FEEDBACK_TYPE="Positive"),      # blank text dropped
+            _row(SUGGESTIONS="none", FEEDBACK_TYPE="Negative"),  # throw-away dropped
+            _row(SUGGESTIONS="n/a", FEEDBACK_TYPE="")]           # throw-away dropped
     c = app._arta_official_report(rows)["comments"]
     assert c["total"] == 3
-    assert [x["text"] for x in c["positive"]] == ["good"]
-    assert [x["text"] for x in c["negative"]] == ["slow"]
-    assert [x["text"] for x in c["other"]] == ["ok"]
+    assert [x["text"] for x in c["positive"]] == ["Very helpful"]
+    assert [x["text"] for x in c["negative"]] == ["Too slow"]
+    assert [x["text"] for x in c["other"]] == ["Air-con was cold"]
+
+
+def test_comments_deduplicate_with_counts():
+    # Identical (case/whitespace-folded) answers collapse into one counted entry;
+    # throw-away answers are dropped; the raw meaningful count still totals them.
+    rows = [_row(SUGGESTIONS="Very helpful", FEEDBACK_TYPE="Positive"),
+            _row(SUGGESTIONS="very  helpful", FEEDBACK_TYPE="Positive"),
+            _row(SUGGESTIONS="VERY HELPFUL", FEEDBACK_TYPE="Positive"),
+            _row(SUGGESTIONS="Friendly staff", FEEDBACK_TYPE="Positive"),
+            _row(SUGGESTIONS="none", FEEDBACK_TYPE="Positive")]  # dropped
+    c = app._arta_official_report(rows)["comments"]
+    pos = c["positive"]
+    assert [(x["text"], x["count"]) for x in pos] == [("Very helpful", 3), ("Friendly staff", 1)]
+    assert c["positive_shown"] == 4 and c["positive_unique"] == 2
+    assert c["total"] == 4

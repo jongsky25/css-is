@@ -38,6 +38,13 @@ def _strip_period(s):
     return (s or "").rstrip(". ").strip()
 
 
+def _comment_text(q):
+    """A single deduplicated comment rendered for display: the verbatim, with a
+    ×N repeat count appended only when more than one respondent gave it."""
+    t = q["text"]
+    return f"{t}  (×{q['count']})" if q.get("count", 1) > 1 else t
+
+
 # =====================================================================
 # DOCX — complete tabular reference document
 # =====================================================================
@@ -172,13 +179,20 @@ def arta_docx(rep, meta):
 
     c = rep.get("comments") or {}
     if c.get("positive") or c.get("negative") or c.get("other"):
-        doc.add_heading(f"What clients said ({c['total']:,})", level=1)
+        doc.add_heading(f"What clients said ({c.get('total', 0):,})", level=1)
+        doc.add_paragraph(
+            "Every written comment is listed below, grouped by type. Identical "
+            "answers are shown once with a ×N repeat count.")
         for label, key in (("Appreciated", "positive"), ("To improve", "negative"),
                            ("Other comments", "other")):
             if c.get(key):
                 doc.add_paragraph(label, style="Heading 3")
                 for q in c[key]:
-                    doc.add_paragraph(q["text"], style="List Bullet")
+                    doc.add_paragraph(_comment_text(q), style="List Bullet")
+                more = c.get(key + "_unique", len(c[key])) - len(c[key])
+                if more > 0:
+                    p = doc.add_paragraph(f"…and {more:,} more unique comments")
+                    p.runs[0].italic = True
     return _save(doc)
 
 
@@ -220,6 +234,19 @@ def servqual_docx(sq, meta):
             ["Male : Female", demo["sex_ratio"], demo["sex_total"]],
             ["DOH : Non-DOH", demo["aff_ratio"], demo["aff_total"]],
         ], numeric_from=2)
+
+    c = sq.get("comments") or {}
+    if c.get("items"):
+        doc.add_heading(f"Respondent comments ({c.get('total', 0):,})", level=1)
+        doc.add_paragraph(
+            "Every written comment is listed below. Identical answers are shown "
+            "once with a ×N repeat count.")
+        for q in c["items"]:
+            doc.add_paragraph(_comment_text(q), style="List Bullet")
+        more = c.get("unique", len(c["items"])) - len(c["items"])
+        if more > 0:
+            p = doc.add_paragraph(f"…and {more:,} more unique comments")
+            p.runs[0].italic = True
     return _save(doc)
 
 
@@ -303,6 +330,17 @@ def servqual_xlsx(sq, meta):
         _tab(wb.create_sheet("Responses"),
              "Individual submissions — each respondent's own scores (raw data)",
              headers, rows)
+
+    # De-duplicated comment roll-up — every distinct written comment with how
+    # many respondents gave it, most-repeated first. A compact companion to the
+    # raw per-respondent Comment column above.
+    c = sq.get("comments") or {}
+    if c.get("items"):
+        _tab(wb.create_sheet("Comments"),
+             f"Respondent comments — de-duplicated ({c.get('total', 0)} total, "
+             f"{c.get('unique', 0)} unique)",
+             ["Comment", "Count"],
+             [[q["text"], q["count"]] for q in c["items"]])
 
     buf = io.BytesIO(); wb.save(buf); return buf.getvalue()
 
@@ -707,13 +745,15 @@ def arta_pdf(rep, meta):
     if pos or neg or other:
         block = [Paragraph("What clients said", st["h2"]),
                  Paragraph(_xml_escape(
-                     f"{c['total']:,} people left a written comment. A few are shown below."),
+                     f"{c.get('total', 0):,} people left a written comment; a few of the "
+                     "most common are shown below (×N marks repeated answers). The full "
+                     "de-duplicated list is in the DOCX reference."),
                      st["body"])]
         for label, quotes in (("Appreciated", pos), ("To improve", neg), ("Other comments", other)):
             if quotes:
                 block.append(Paragraph(f"<b>{label}</b>", st["note"]))
                 for q in quotes[:4]:
-                    block.append(Paragraph("“" + _xml_escape(q["text"]) + "”", st["body"]))
+                    block.append(Paragraph("“" + _xml_escape(_comment_text(q)) + "”", st["body"]))
         f.append(KeepTogether(block[:3]))
         f.extend(block[3:])
 
@@ -1045,7 +1085,7 @@ def arta_pptx(rep, meta):
     for label, key, color in (("Appreciated", "positive", _GOODP), ("To improve", "negative", _MIDP),
                               ("Comment", "other", _SOFTP)):
         for q in (rep["comments"].get(key) or [])[:2]:
-            items.append((q["text"], color, label))
+            items.append((_comment_text(q), color, label))
     if items:
         _quotes_slide(prs, meta, pg, "In their words", items)
         pg += 1
