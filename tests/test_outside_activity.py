@@ -460,24 +460,32 @@ def test_ongoing_invited_excludes_closed_window(manager, db_path):
     assert name not in names, "a closed invited activity leaves the ongoing feed"
 
 
-def test_ongoing_invited_excludes_activity_closed_earlier_today(manager, db_path):
-    """Spot Feedback #59: an activity closed EARLIER THE SAME DAY must leave the
-    Ongoing feed at once, not linger until midnight. close_at is stored 'T'-separated;
-    the feed compared it against datetime('now',…)'s space form, and a same-date text
-    compare puts ' ' before 'T' so `now <= close_at` stayed true all day. Uses today's
-    date so it exercises that flip (a past-date close is caught by the date part alone)."""
-    name = "Ongoing Invited ClosedToday"
+def test_ongoing_invited_honours_app_clock_not_container_zone(manager, db_path, monkeypatch):
+    """Spot Feedback #59: an activity closed EARLIER THE SAME DAY must leave the Ongoing
+    feed at once — and against the app's Asia/Manila clock (tzutil), NOT SQLite's
+    date/datetime('now','localtime'), which follows the container (UTC on Hugging Face)
+    and drifts ~8 h from the Manila-stamped close_at. Pin the app clock either side of an
+    08:57 close and the feed must flip, proving it reads the bound clock, not 'localtime'."""
+    name = "Ongoing Invited AppClock"
     _make_outside(manager, db_path, name=name)
     event_id = _outside_event(db_path, name)[0]
-    conn = st.connect(db_path)
-    today = conn.execute("SELECT date('now','localtime')").fetchone()[0]
-    conn.close()
-    # 00:00:01 today is in the past for any real "now" today, but shares its date.
-    _set_window_all(db_path, event_id, f"{today}T00:00:01")
+    _set_window_all(db_path, event_id, "2026-07-09T08:57:40")   # closed at 08:57 (Manila)
+
+    # App clock AFTER the close (10:35) → gone, even if the container's UTC 'localtime'
+    # would still read pre-close and (pre-fix) keep it "collecting".
+    monkeypatch.setattr(st, "_local_now", lambda: "2026-07-09T10:35:00")
+    monkeypatch.setattr(st, "_local_today", lambda: "2026-07-09")
     conn = st.connect(db_path)
     names = [a["topic"] for a in st.ongoing_invited(conn)]
     conn.close()
-    assert name not in names, "an activity closed earlier today must leave Ongoing now"
+    assert name not in names, "closed-before-now activity must leave Ongoing at once"
+
+    # App clock BEFORE the close (08:00) → still collecting.
+    monkeypatch.setattr(st, "_local_now", lambda: "2026-07-09T08:00:00")
+    conn = st.connect(db_path)
+    names = [a["topic"] for a in st.ongoing_invited(conn)]
+    conn.close()
+    assert name in names, "before the close it is still ongoing"
 
 
 def test_lifecycle_of_concluded_when_closed_earlier_same_day():

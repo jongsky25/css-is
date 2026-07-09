@@ -24,14 +24,17 @@ CHANGELOG = [
     {
         "version": "1.88",
         "date": "July 9, 2026",
-        "summary": "An activity you close now leaves the home “Ongoing” list right away, instead of lingering there until the next day.",
+        "summary": "An activity you close now leaves the home “Ongoing” list right away, instead of lingering there for hours.",
         "changes": [
             "When you closed an activity, the home dashboard could keep showing it "
-            "under “Ongoing — CSS collecting” for the rest of that day, even though "
-            "its reporting was already closed. It now drops off the Ongoing list the "
-            "moment you close it. (This was a time-of-day comparison quirk in the "
-            "dashboard only; the public response link itself was always closing on "
-            "time.)",
+            "under “Ongoing — CSS collecting” long after — sometimes until the next "
+            "day — even though its reporting was already closed. The dashboard was "
+            "reading the wrong clock (the server's, which runs on a different time "
+            "zone) to decide whether an activity was still collecting. It now uses "
+            "the same Philippine-time clock as the rest of the app, so a closed "
+            "activity drops off the Ongoing list the moment you close it. (The "
+            "public response link itself was always closing on time; only the "
+            "dashboard label lingered.)",
         ],
     },
     {

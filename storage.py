@@ -811,14 +811,16 @@ def event_css_done(conn, event_id):
     done once the LOCAL (Asia/Manila) calendar day has changed past its
     event_date, i.e. from the start of the day after the activity. No grace day,
     no stored flag. An event with a blank/missing date is never "done" (the safe
-    default). The 'localtime' qualifier makes the flip land on real local
-    midnight rather than UTC midnight."""
+    default). "Today" comes from the Manila clock (tzutil), so the flip lands on
+    real local midnight rather than the UTC container's midnight."""
     row = conn.execute("SELECT event_date FROM event WHERE id = ?",
                        (event_id,)).fetchone()
     if not row or not row[0]:
         return False
-    done = conn.execute("SELECT date('now','localtime') > date(?)",
-                        (row[0],)).fetchone()[0]
+    # Manila today vs the event day (see tzutil): SQLite 'localtime' is the UTC
+    # container zone, ~8 h off the Manila-stamped event_date.
+    done = conn.execute("SELECT ? > date(?)",
+                        (_local_today(), row[0])).fetchone()[0]
     return bool(done)
 
 
@@ -832,8 +834,8 @@ def list_shared_events(conn, limit=60):
         """SELECT id, event_token, title, event_date, venue, organizer, modality
            FROM event
            WHERE event_date IS NOT NULL AND event_date <> ''
-                 AND date('now','localtime') > date(event_date)
-           ORDER BY date(event_date) DESC, id DESC""").fetchall()
+                 AND ? > date(event_date)      -- Manila today (see tzutil), not UTC 'localtime'
+           ORDER BY date(event_date) DESC, id DESC""", (_local_today(),)).fetchall()
     out = []
     for r in rows:
         links = [l for l in list_event_links(conn, r[0]) if not l["visible_after_done"]]
@@ -1569,7 +1571,7 @@ def list_events(conn, created_by=None, lifecycles=None):
     if created_by:
         where, args = "WHERE e.created_by = ?", (created_by,)
     today = today_local(conn)
-    now = conn.execute("SELECT datetime('now','localtime')").fetchone()[0]
+    now = tz.now_iso()   # Manila clock (see tzutil), not SQLite 'localtime' (UTC container)
     rows = conn.execute(
         f"""SELECT e.id, e.event_token, e.title, e.event_date, e.venue,
                    e.organizer, e.modality, e.created_by,
@@ -2581,9 +2583,10 @@ def list_activity_instances(conn):
             for r in rows]
 
 
-# "Today" is the local (Asia/Manila, UTC+8) calendar day — the same rule the
-# rest of the app uses for the activity lifecycle. The 'localtime' qualifier is
-# required so the day flips at real local midnight, not UTC midnight.
+# "Today"/"now" are the local (Asia/Manila, UTC+8) calendar day and wall-clock — the
+# same Manila rule the rest of the app uses for the activity lifecycle. Callers pass
+# them in from tzutil (today_local / now_iso), never from SQLite 'localtime', so the
+# day flips at real local midnight, not the UTC container's midnight.
 def lifecycle_of(event_date, close_at, today, now, end_date=None):
     """Classify an activity's monitoring lifecycle from its dates (pure — pass in
     `today` = local YYYY-MM-DD and `now` = local 'YYYY-MM-DD HH:MM:SS' once, so a
@@ -2618,6 +2621,24 @@ def lifecycle_of(event_date, close_at, today, now, end_date=None):
     return "ongoing" if ed <= today <= last else "concluded"
 
 
+# The app's canonical clock is Asia/Manila (see tzutil): every stored timestamp —
+# event_date, close_at, submitted_at — is written in it. SQLite's date/datetime
+# ('now','localtime') follows the CONTAINER zone instead, which is UTC on a stock
+# Hugging Face image, so it drifts ~8 h from those stamps and would split the
+# activity day (and the "is the window still open?" test) on the wrong boundary.
+# The lifecycle feeds below therefore BIND the Manila clock in as parameters rather
+# than reaching for SQLite 'localtime'. `datetime(...)` still wraps close_at so the
+# stored 'T' separator normalises to the space form both sides then share.
+def _local_now():
+    """Manila 'now' as a naive ISO string, for binding into time comparisons."""
+    return tz.now_iso()
+
+
+def _local_today():
+    """Manila 'today' as 'YYYY-MM-DD', for binding into date comparisons."""
+    return tz.today_local().isoformat()
+
+
 def upcoming_events(conn, limit=6):
     """Type-2 activities dated AFTER today (strictly future) — the registration
     phase, soonest first, for the home 'Upcoming' feed. One row per event (the F2
@@ -2633,10 +2654,10 @@ def upcoming_events(conn, limit=6):
         LEFT JOIN event e       ON e.id = ef.event_id
         WHERE fi.survey_type = 2
               AND COALESCE(fi.archived, 0) = 0 AND COALESCE(fi.pooled, 0) = 0
-              AND fi.event_date <> '' AND date(fi.event_date) > date('now','localtime')
+              AND fi.event_date <> '' AND date(fi.event_date) > ?
         ORDER BY fi.event_date ASC, fi.id ASC
         LIMIT ?
-    """, (limit,)).fetchall()
+    """, (_local_today(), limit)).fetchall()
     out = []
     for r in rows:
         event_id = r[5]
@@ -2667,15 +2688,15 @@ def ongoing_events(conn, limit=20):
         WHERE fi.survey_type = 2
               AND COALESCE(fi.archived, 0) = 0 AND COALESCE(fi.pooled, 0) = 0
               AND fi.event_date <> ''
-              AND date(fi.event_date) <= date('now','localtime')
-              -- datetime(fi.close_at): close_at is 'T'-separated; wrap it so the compare
-              -- matches datetime('now',...)'s space form (' ' < 'T' would otherwise keep a
-              -- same-day-closed activity "collecting" until midnight).
-              AND ( (fi.close_at IS NOT NULL AND datetime('now','localtime') <= datetime(fi.close_at))
-                 OR (fi.close_at IS NULL AND date(fi.event_date) = date('now','localtime')) )
+              AND date(fi.event_date) <= ?                      -- Manila today
+              -- Window still open: close in the future (datetime() normalises close_at's
+              -- 'T' to the space form the bound Manila now shares), or no close set and
+              -- it is the event day. Bound clock, not SQLite 'localtime' — see _local_now.
+              AND ( (fi.close_at IS NOT NULL AND datetime(?) <= datetime(fi.close_at))
+                 OR (fi.close_at IS NULL AND date(fi.event_date) = ?) )
         ORDER BY fi.event_date DESC, fi.id ASC
         LIMIT ?
-    """, (limit,)).fetchall()
+    """, (_local_today(), _local_now(), _local_today(), limit)).fetchall()
     out = []
     for r in rows:
         summ = event_registration_summary(conn, r[5])
@@ -2712,15 +2733,15 @@ def ongoing_standalone(conn, limit=20):
               AND COALESCE(fi.archived, 0) = 0 AND COALESCE(fi.pooled, 0) = 0
               AND fi.survey_type IN (2, 3)
               AND fi.event_date <> ''
-              AND date(fi.event_date) <= date('now','localtime')
-              -- datetime(fi.close_at): close_at is stored 'T'-separated, so wrap it to
-              -- match datetime('now',...)'s space form; a raw text compare puts ' ' before
-              -- 'T' and keeps a same-day-closed activity "open" until midnight.
-              AND ( (fi.close_at IS NOT NULL AND datetime('now','localtime') <= datetime(fi.close_at))
-                 OR (fi.close_at IS NULL AND date(fi.event_date) = date('now','localtime')) )
+              AND date(fi.event_date) <= ?                      -- Manila today
+              -- Same open-window guard as ongoing_events, against the bound Manila clock
+              -- (see _local_now): close in the future — datetime() normalises close_at's
+              -- 'T' separator — or no close set and it is the event day.
+              AND ( (fi.close_at IS NOT NULL AND datetime(?) <= datetime(fi.close_at))
+                 OR (fi.close_at IS NULL AND date(fi.event_date) = ?) )
         ORDER BY fi.event_date DESC, fi.id DESC
         LIMIT ?
-    """, (limit,)).fetchall()
+    """, (_local_today(), _local_now(), _local_today(), limit)).fetchall()
     out = []
     for r in rows:
         rp_name = None
@@ -2767,15 +2788,16 @@ def ongoing_invited(conn, limit=20):
         WHERE e.event_kind = 'outside'
               AND COALESCE(fi.archived, 0) = 0 AND COALESCE(fi.pooled, 0) = 0
               AND fi.event_date <> ''
-              AND date(fi.event_date) <= date('now','localtime')
-              -- datetime(fi.close_at): normalise the 'T'-separated stored value to the
-              -- space form datetime('now',...) uses, or a same-date text compare (' ' <
-              -- 'T') reads a just-closed activity as still collecting until midnight.
-              AND ( fi.close_at IS NULL OR datetime('now','localtime') <= datetime(fi.close_at) )
+              AND date(fi.event_date) <= ?                      -- Manila today
+              -- Still collecting: no close set, or the close is in the future against the
+              -- bound Manila now (datetime() normalises close_at's stored 'T' separator).
+              -- Binding the app clock, not SQLite 'localtime', is what makes a just-closed
+              -- activity leave this feed immediately regardless of the container's zone.
+              AND ( fi.close_at IS NULL OR datetime(?) <= datetime(fi.close_at) )
         GROUP BY e.id
         ORDER BY MIN(fi.event_date) DESC, e.id DESC
         LIMIT ?
-    """, (limit,)).fetchall()
+    """, (_local_today(), _local_now(), limit)).fetchall()
     out = []
     for r in rows:
         event_id, event_token = r[0], r[1]
@@ -2900,11 +2922,14 @@ def activities_by_creator(conn, created_by, limit=6, archived=0, all_creators=Fa
     return items[:limit]
 
 
-def today_local(conn):
-    """Today's date as 'YYYY-MM-DD' in the server's local zone (Asia/Manila),
-    matching the `date('now','localtime')` boundary used for the activity
-    lifecycle — so the home feeds split on the same calendar day everywhere."""
-    return conn.execute("SELECT date('now','localtime')").fetchone()[0]
+def today_local(conn=None):
+    """Today's date as 'YYYY-MM-DD' in the app's local zone (Asia/Manila) — the same
+    Manila clock every stored timestamp uses, and the same boundary the lifecycle
+    feeds now split on. Derived from tzutil, NOT SQLite's date('now','localtime'):
+    the container runs in UTC (see tzutil), so 'localtime' there is ~8 h off and would
+    split the day on the wrong boundary. `conn` is accepted for call-site compatibility
+    but no longer used."""
+    return _local_today()
 
 
 # 'Recently concluded' is derived from build_events() in the route (not raw SQL):
