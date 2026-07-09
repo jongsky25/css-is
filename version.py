@@ -17,10 +17,27 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "1.88"
+APP_VERSION = "1.89"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "1.89",
+        "date": "July 9, 2026",
+        "summary": "Two labels now read more plainly: an “activity report” is now called a “customer satisfaction survey report,” and the “Verdict” column is now titled “Interpretation.”",
+        "changes": [
+            "Wherever the per-activity report was called an “activity report” — the "
+            "report’s title, the “View individual reports” link, and the downloadable "
+            "Word, Excel, PDF and PowerPoint versions — it is now called the "
+            "“Customer Satisfaction Survey Report.”",
+            "The service-quality table column that read “Verdict” (how each dimension "
+            "landed against what people expected) is now headed “Interpretation,” on "
+            "screen and in every download, along with the matching wording on the "
+            "activity, team and dashboard cards.",
+            "These are wording changes only — the scores, the way they are worked out, "
+            "and the saved responses are all exactly the same.",
+        ],
+    },
     {
         "version": "1.88",
         "date": "July 9, 2026",
