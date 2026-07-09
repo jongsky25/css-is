@@ -706,8 +706,9 @@ METHODS_PERSON = (
     "walk-in server's score is the top-box share (Agree + Strongly Agree). Peer ranks use the "
     "People-grid fair-adjusted scores within the section and the whole bureau; overall "
     "performance blends rating quality with engagement (the number of events delivered). "
-    "Coaching is auto-generated guidance to build on, not a personnel evaluation. Verbatim "
-    "comments are intentionally omitted from this file.")
+    "Coaching is auto-generated guidance to build on, not a personnel evaluation. Respondent "
+    "comments are the written feedback from this person's rated responses, de-duplicated with "
+    "a ×N repeat count.")
 
 
 def _strip_html(s):
@@ -902,6 +903,18 @@ def person_pdf(payload, vmeta):
         if ta.get("keep"):
             f.append(Paragraph(_esc(ta["keep"]), st["body"]))
 
+    c = payload.get("comments") or {}
+    if c.get("items"):
+        f.append(Paragraph(f"Respondent comments ({c.get('total', 0):,})", st["h2"]))
+        f.append(Paragraph(_esc(
+            "Every written comment is listed below. Identical answers are shown "
+            "once with a ×N repeat count."), st["body"]))
+        for q in c["items"]:
+            f.append(Paragraph("“" + _esc(rd._comment_text(q)) + "”", st["body"]))
+        more = c.get("unique", len(c["items"])) - len(c["items"])
+        if more > 0:
+            f.append(Paragraph(_esc(f"…and {more:,} more unique comments"), st["note"]))
+
     f.append(rd._box("Methods & notes", [Paragraph(_esc(METHODS_PERSON), st["note"])],
                      st, bg=colors.white))
     return rd._pdf_doc(meta, f)
@@ -963,6 +976,14 @@ def person_pptx(payload, vmeta):
     rd._methods_slide(prs, meta, pg, METHODS_PERSON,
                       f"Based on {N:,} ratings" + (f" · {loc}" if loc else ""))
     pg += 1
+
+    c = payload.get("comments") or {}
+    if c.get("items"):
+        # Comments about this person aren't typed positive/negative — one neutral
+        # column, most-repeated first, with ×N on any collapsed repeat.
+        items = [(rd._comment_text(q), rd._SOFTP, "Comment") for q in c["items"][:4]]
+        rd._quotes_slide(prs, meta, pg, "In their words", items)
+        pg += 1
 
     focus = None
     ta = payload.get("ta") or {}
@@ -1320,6 +1341,18 @@ def event_pdf(payload, vmeta):
         f.append(Paragraph(_esc("; ".join(parts) + (" (manually entered)" if demo.get("manual") else "") + "."),
                            st["body"]))
 
+    c = payload.get("comments") or {}
+    if c.get("items"):
+        f.append(Paragraph(f"Respondent comments ({c.get('total', 0):,})", st["h2"]))
+        f.append(Paragraph(_esc(
+            "Every written comment is listed below. Identical answers are shown "
+            "once with a ×N repeat count."), st["body"]))
+        for q in c["items"]:
+            f.append(Paragraph("“" + _esc(rd._comment_text(q)) + "”", st["body"]))
+        more = c.get("unique", len(c["items"])) - len(c["items"])
+        if more > 0:
+            f.append(Paragraph(_esc(f"…and {more:,} more unique comments"), st["note"]))
+
     f.append(rd._box("Methods & notes", [Paragraph(_esc(rd.METHODS_SQ), st["note"])], st, bg=colors.white))
     return rd._pdf_doc(meta, f)
 
@@ -1373,6 +1406,14 @@ def event_pptx(payload, vmeta):
     rd._methods_slide(prs, meta, pg, rd.METHODS_SQ,
                       f"Based on {N:,} responses" + (f" · {loc}" if loc else ""))
     pg += 1
+
+    c = payload.get("comments") or {}
+    if c.get("items"):
+        # SERVQUAL comments aren't typed positive/negative — one neutral column,
+        # most-repeated first, with ×N on any collapsed repeat.
+        items = [(rd._comment_text(q), rd._SOFTP, "Comment") for q in c["items"][:4]]
+        rd._quotes_slide(prs, meta, pg, "In their words", items)
+        pg += 1
 
     dims = [d for d in rep["dims"] if d.get("value") is not None]
     pts = [f"Overall service quality: {rep['osq_shown']}/4" + (f" ({rep['osq_grade']})" if rep.get("osq_grade") else "")]

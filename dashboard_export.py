@@ -689,6 +689,12 @@ def _tables(visual, payload):
             if ta.get("keep"):
                 trows.append({"Area": "Strength to keep", "Kind": "Keep", "Note": ta["keep"]})
             out.append(("Strengthen technical assistance", pd.DataFrame(trows)))
+        # De-duplicated respondent comments — every distinct written comment with
+        # how many people gave it, most-repeated first.
+        c = payload.get("comments") or {}
+        if c.get("items"):
+            out.append(("Respondent comments", pd.DataFrame(
+                [{"Comment": q["text"], "Count": q["count"]} for q in c["items"]])))
     elif visual == "event":
         rep = payload.get("report")
         if rep:
@@ -714,6 +720,12 @@ def _tables(visual, payload):
             drows.append({"Group": "DOH : Non-DOH", "Value": demo["affil_ratio"]})
         if drows:
             out.append(("Who responded", pd.DataFrame(drows)))
+        # De-duplicated respondent comments — every distinct written comment with
+        # how many people gave it, most-repeated first.
+        c = payload.get("comments") or {}
+        if c.get("items"):
+            out.append(("Respondent comments", pd.DataFrame(
+                [{"Comment": q["text"], "Count": q["count"]} for q in c["items"]])))
     elif visual == "trends":
         series = payload.get("series") or []
         rows = []

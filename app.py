@@ -8852,8 +8852,8 @@ def _visual_payload(conn, atoms, visual, p, place, gen, period_hint=None):
             return None, None
         if person.get("hidden_public") and not p.get("admin"):
             return None, None
-        # Full-breadth person report — everything the page shows EXCEPT the verbatim
-        # quotes (a named-person file shouldn't carry them off-screen). Honors the
+        # Full-breadth person report — everything the page shows, including the
+        # de-duplicated respondent comments (attached below). Honors the
         # year filter (`period`); role-aware (TA advice + peer standing are speaker
         # -only). Identity (badges, year-on-year) reads all-time; the panels follow
         # the chosen window. Mirrors the dashboard_person route.
@@ -8932,18 +8932,28 @@ def _visual_payload(conn, atoms, visual, p, place, gen, period_hint=None):
             title=title, person=person["name"], place=place, period=period_str,
             unit=("Top-box %" if role == "arta" else "Mean rating, 1–7"),
             notes=notes, generated_at=gen, n=n_ratings)
+        # De-duplicated respondent comments about this person — the on-screen person
+        # page shows a comments panel, so the download carries them too. Same rids the
+        # page reads: the union of this person's walk-in (arta) and speaker (rp) slice
+        # responses over the scoped atoms. Flat ×N list, matching the other reports.
+        p_rids = list(set(a["response_id"].tolist()) | set(r["response_id"].tolist()))
+        p_quotes = di._flatten_quotes(st.verbatims_for_responses(conn, p_rids))
+        p_grouped, p_shown, p_uniq = _dedup_remarks(
+            ((q["text"], "") for q in p_quotes), cap=_COMMENT_CAP)
         payload = {"trend": trend, "role": role, "ymax": ymax,
                    "breakdown": breakdown, "breakdown_ymax": bmax, "breakdown_title": btitle,
                    "card": card, "cmp": cmp, "coach": coach, "ta": ta, "yoy": yoy,
                    "peers": peers, "badges": badges, "scale": scale,
-                   "single": bool(single), "position": person.get("position")}
+                   "single": bool(single), "position": person.get("position"),
+                   "comments": {"items": p_grouped, "total": p_shown, "unique": p_uniq}}
         return payload, meta
 
     if visual == "event":
         # The per-activity SERVQUAL report — the full official scorecard (dimensions
         # vs expectation, TOTAL/AVERAGE/EXPECTATION/SERVQUAL/OSQ), the section
-        # benchmark (vs the unit's other activities that year), demographics and the
-        # "what happened" read. Mirrors the dashboard_activity route. NO verbatims.
+        # benchmark (vs the unit's other activities that year), demographics, the
+        # "what happened" read, and the de-duplicated respondent comments (added
+        # below). Mirrors the dashboard_activity route.
         events = di.build_events(atoms, st.list_activity_instances(conn))
         ev = next((e for e in events if p["event_id"] in e["instance_ids"]
                    or e["id"] == p["event_id"]), None)
@@ -8991,10 +9001,20 @@ def _visual_payload(conn, atoms, visual, p, place, gen, period_hint=None):
         # Speakers are NOT carried — the activity report page doesn't show them (each
         # has their own person report); a big training's 40+ speakers would also bury
         # both the figure and the tables.
+        # De-duplicated respondent comments for the report foot — the on-screen page
+        # shows a comments panel, so the download must carry them too. Flat ×N list
+        # (SERVQUAL comments aren't typed positive/negative), matching the other
+        # downloadable reports. Source is the SAME verbatims the page reads, so the
+        # download and the screen can never disagree.
+        quotes = di._flatten_quotes(st.verbatims_for_responses(conn, ev["response_ids"]))
+        grouped, shown, uniq = _dedup_remarks(
+            ((q["text"], "") for q in quotes), cap=_COMMENT_CAP)
+        comments = {"items": grouped, "total": shown, "unique": uniq}
         payload = {"ranked": ev.get("ranked") or [], "ymax": 7,
                    "report": report, "bench": bench, "demo": demo, "journey_read": journey_read,
                    "name": ev["name"], "date": ev["date"], "venue": ev.get("venue"),
-                   "organizer": ev.get("organizer"), "respondents": ev["respondents"]}
+                   "organizer": ev.get("organizer"), "respondents": ev["respondents"],
+                   "comments": comments}
         return payload, meta
 
     if visual == "trends":
