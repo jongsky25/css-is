@@ -73,6 +73,55 @@ def test_summary_funnel_and_rate(tmp_path):
     assert s["n_forms"] == 2
 
 
+def test_completed_never_exceeds_registered_with_walk_ins(tmp_path):
+    # The Monitor funnel (server render AND the live SSE payload) is
+    # event_registration_summary. 'completed' counts registrants who finished, so it
+    # is always bounded by 'registered' — unlike event_response_total (the value the
+    # old live stream pushed), which counts every response row including unattributed
+    # walk-in / QR / paper and can read higher than the number of people registered.
+    conn = _fresh(tmp_path)
+    eid, _tok, f2, f3 = _event_with_two_forms(conn)
+    a = st.add_attendee(conn, eid, name="Ana", email="a@x.com", consent_text="x")
+    st.record_response(conn, f2, [("B6", 6)], attendee_id=a)
+    st.record_response(conn, f3, [("SQD1", 6)], attendee_id=a)   # Ana completed
+    st.add_attendee(conn, eid, name="Cy", email="c@x.com", consent_text="x")  # not started
+    for _ in range(4):
+        st.record_response(conn, f2, [("B6", 5)])                # 4 unattributed walk-ins
+
+    s = st.event_registration_summary(conn, eid)
+    assert s["completed"] == 1 and s["registered"] == 2
+    assert s["completed"] <= s["registered"]         # the invariant, always
+    assert s["completion_rate"] <= 100
+    # The old live value would have shown 6 here (2 attributed + 4 walk-in),
+    # i.e. more "Completed" than "Registered". The funnel figure cannot.
+    assert st.event_response_total(conn, eid) == 6
+    assert s["completed"] < st.event_response_total(conn, eid)
+
+
+def test_completion_rate_hits_100_only_when_all_registrants_complete(tmp_path):
+    # 100% must mean truly complete: a near-complete event must not round up to 100.
+    assert st._completion_rate(0, 0) is None            # no registrants
+    assert st._completion_rate(1, 3) == 33
+    assert st._completion_rate(199, 200) == 99          # 99.5% must NOT round to 100
+    assert st._completion_rate(1999, 2000) == 99        # 99.95% still capped below 100
+    assert st._completion_rate(40, 40) == 100           # only when completed == registered
+    assert st._completion_rate(0, 5) == 0
+
+    # End to end through the summary: one registrant left unfinished => 99, not 100.
+    conn = _fresh(tmp_path)
+    eid, _tok, f2, _f3 = _event_with_two_forms(conn)
+    conn.execute("UPDATE form_instance SET archived=1 WHERE id=?", (_f3,))  # single form
+    conn.commit()
+    done = [st.add_attendee(conn, eid, name=f"P{i}", email=f"p{i}@x.com",
+                            consent_text="x") for i in range(199)]
+    for aid in done:
+        st.record_response(conn, f2, [("B6", 6)], attendee_id=aid)
+    st.add_attendee(conn, eid, name="Late", email="late@x.com", consent_text="x")  # 200th, unfinished
+    s = st.event_registration_summary(conn, eid)
+    assert s["registered"] == 200 and s["completed"] == 199
+    assert s["completion_rate"] == 99                   # not a misleading 100%
+
+
 def test_unattributed_responses_counted_separately(tmp_path):
     conn = _fresh(tmp_path)
     eid, _tok, f2, _f3 = _event_with_two_forms(conn)

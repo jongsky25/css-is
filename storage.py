@@ -1508,9 +1508,23 @@ def event_registration_summary(conn, event_id):
         "registered": registered, "completed": completed,
         "in_progress": in_progress, "not_started": not_started,
         "answered_any": completed + in_progress,
-        "completion_rate": round(completed * 100 / registered) if registered else None,
+        "completion_rate": _completion_rate(completed, registered),
         "unattributed": unattributed,
     }
+
+
+def _completion_rate(completed, registered):
+    """Completion as a whole-number percent, with the invariant the Monitor cards
+    rely on: it is None with no registrants, exactly 100 only when everyone
+    registered has completed, and otherwise strictly below 100 — a near-complete
+    event (e.g. 199/200) reads 99%, never rounding up to a misleading 100%. Since
+    'completed' is a subset of the registrant roster it can never exceed
+    'registered', so the rate is always in [0, 100]."""
+    if not registered:
+        return None
+    if completed >= registered:
+        return 100
+    return min(99, round(completed * 100 / registered))
 
 
 def attendee_response_detail(conn, event_id, attendee_id):

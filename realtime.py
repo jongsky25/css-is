@@ -24,6 +24,10 @@ def unsubscribe(event_id: int, q: asyncio.Queue) -> None:
             del _subs[event_id]
 
 
-async def broadcast(event_id: int, count: int) -> None:
+async def broadcast(event_id: int, payload) -> None:
+    """Push one update to every subscriber of this event. `payload` is the event's
+    registration-funnel summary dict (registered / completed / … / completion_rate),
+    so the Monitor cards can all move together and stay mutually consistent (e.g.
+    completed is never shown above registered)."""
     for q in list(_subs.get(event_id, [])):
-        await q.put(count)
+        await q.put(payload)
