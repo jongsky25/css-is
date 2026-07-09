@@ -7077,21 +7077,21 @@ _COMMENT_CAP = 50
 def _dedup_remarks(items, cap=None):
     """Collapse repeated free-text remarks into {text, count, type} entries.
 
-    `items` is an iterable of (text, feedback_type). Only blank / whitespace-only
-    answers are dropped — every real answer is kept (so the listing stays a
-    faithful record), but repeats collapse into one counted entry, which is
-    exactly what turns forty "none" answers into a single "none ×40" line.
-    Grouping folds case and internal whitespace, so "Great service" and
-    "great  service" count as one; the first-seen spelling is kept for display.
-    Sorted by count (desc) then order of first appearance. Returns
-    (grouped, shown_total, unique_total): `shown_total` is the number of non-blank
-    remarks (people), `unique_total` the distinct count before `cap`, and
-    `grouped` the (optionally capped) unique entries."""
+    `items` is an iterable of (text, feedback_type). Throw-away answers — blanks,
+    pure punctuation, and "none" / "n/a" / "wala" / "ok" and the like — are
+    dropped via `_meaningful_remark`, so the listing carries only real feedback.
+    Genuine repeats collapse into one counted entry: grouping folds case and
+    internal whitespace, so "Great service" and "great  service" count as one,
+    and the first-seen spelling is kept for display. Sorted by count (desc) then
+    order of first appearance. Returns (grouped, shown_total, unique_total):
+    `shown_total` is the number of meaningful remarks (people), `unique_total`
+    the distinct count before `cap`, and `grouped` the (optionally capped) unique
+    entries."""
     groups = {}
     order = shown_total = 0
     for text, ftype in items:
         t = " ".join((text or "").split())
-        if not t:
+        if not _meaningful_remark(t):
             continue
         shown_total += 1
         g = groups.get(t.casefold())

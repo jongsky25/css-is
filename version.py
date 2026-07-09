@@ -24,14 +24,15 @@ CHANGELOG = [
     {
         "version": "1.90",
         "date": "July 9, 2026",
-        "summary": "The downloadable reports now list every written comment at the bottom, with repeats grouped into one line and a “×N” count instead of the same answer over and over.",
+        "summary": "The downloadable reports now list the written comments at the bottom, with repeats grouped into one line and a “×N” count instead of the same answer over and over.",
         "changes": [
             "At the foot of the downloadable customer-satisfaction reports, the "
-            "comments people wrote are now listed in full. Identical answers are "
-            "shown once with a “×N” next to them — so forty people who wrote "
-            "“none” become a single “none ×40” line, and a repeated “Very helpful "
-            "staff” shows as “Very helpful staff ×3” — instead of the same comment "
-            "printed again and again.",
+            "comments people wrote are now listed together. Identical answers are "
+            "shown once with a “×N” next to them — so a repeated “Very helpful "
+            "staff” shows as “Very helpful staff ×3” instead of the same comment "
+            "printed again and again. Empty and throw-away answers (“none”, “n/a”, "
+            "“wala”, and the like) are left out, so the list carries only real "
+            "feedback.",
             "The Word walk-in (ARTA) report lists them grouped as Appreciated, To "
             "improve, and Other; the Word resource-person (SERVQUAL) report gains a "
             "new “Respondent comments” section it didn't have before; and the "
