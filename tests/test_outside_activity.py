@@ -460,6 +460,38 @@ def test_ongoing_invited_excludes_closed_window(manager, db_path):
     assert name not in names, "a closed invited activity leaves the ongoing feed"
 
 
+def test_ongoing_invited_excludes_activity_closed_earlier_today(manager, db_path):
+    """Spot Feedback #59: an activity closed EARLIER THE SAME DAY must leave the
+    Ongoing feed at once, not linger until midnight. close_at is stored 'T'-separated;
+    the feed compared it against datetime('now',…)'s space form, and a same-date text
+    compare puts ' ' before 'T' so `now <= close_at` stayed true all day. Uses today's
+    date so it exercises that flip (a past-date close is caught by the date part alone)."""
+    name = "Ongoing Invited ClosedToday"
+    _make_outside(manager, db_path, name=name)
+    event_id = _outside_event(db_path, name)[0]
+    conn = st.connect(db_path)
+    today = conn.execute("SELECT date('now','localtime')").fetchone()[0]
+    conn.close()
+    # 00:00:01 today is in the past for any real "now" today, but shares its date.
+    _set_window_all(db_path, event_id, f"{today}T00:00:01")
+    conn = st.connect(db_path)
+    names = [a["topic"] for a in st.ongoing_invited(conn)]
+    conn.close()
+    assert name not in names, "an activity closed earlier today must leave Ongoing now"
+
+
+def test_lifecycle_of_concluded_when_closed_earlier_same_day():
+    """lifecycle_of normalises the separator too: a space-form `now` (as the events
+    list passes via datetime('now','localtime')) after a 'T'-form close_at on the same
+    day is CONCLUDED, not ongoing."""
+    # closed at 08:57, viewed at 09:22 the same day → concluded
+    assert st.lifecycle_of("2026-06-24", "2026-07-09T08:57:40",
+                           "2026-07-09", "2026-07-09 09:22:00") == "concluded"
+    # still-open window (close in the future) stays ongoing across the separator
+    assert st.lifecycle_of("2026-06-24", "2026-07-09T23:59:00",
+                           "2026-07-09", "2026-07-09 09:22:00") == "ongoing"
+
+
 def test_ongoing_invited_included_while_window_open(manager, db_path):
     name = "Ongoing Invited FutureWindow"
     _make_outside(manager, db_path, name=name)

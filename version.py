@@ -17,10 +17,23 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "1.87"
+APP_VERSION = "1.88"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "1.88",
+        "date": "July 9, 2026",
+        "summary": "An activity you close now leaves the home “Ongoing” list right away, instead of lingering there until the next day.",
+        "changes": [
+            "When you closed an activity, the home dashboard could keep showing it "
+            "under “Ongoing — CSS collecting” for the rest of that day, even though "
+            "its reporting was already closed. It now drops off the Ongoing list the "
+            "moment you close it. (This was a time-of-day comparison quirk in the "
+            "dashboard only; the public response link itself was always closing on "
+            "time.)",
+        ],
+    },
     {
         "version": "1.87",
         "date": "July 9, 2026",

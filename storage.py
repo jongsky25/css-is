@@ -2605,7 +2605,13 @@ def lifecycle_of(event_date, close_at, today, now, end_date=None):
     if ed > today:
         return "upcoming"
     if close_at:
-        return "ongoing" if now <= close_at else "concluded"
+        # close_at is stored ISO with a 'T' separator; callers pass `now` with either
+        # a 'T' (tz.now_iso) or a space (SQLite datetime('now','localtime')). A text
+        # compare across a mismatched separator flips same-date order — ' ' (0x20)
+        # sorts before 'T' (0x54) — so a just-closed activity would read as still
+        # ongoing until midnight. Normalise both to one separator first.
+        return ("ongoing" if now.replace("T", " ") <= close_at.replace("T", " ")
+                else "concluded")
     # No explicit feedback deadline: a multi-day activity stays ongoing through
     # its last day (end_date); a single-day activity only on its event day.
     last = (end_date or ed)[:10]
@@ -2662,7 +2668,10 @@ def ongoing_events(conn, limit=20):
               AND COALESCE(fi.archived, 0) = 0 AND COALESCE(fi.pooled, 0) = 0
               AND fi.event_date <> ''
               AND date(fi.event_date) <= date('now','localtime')
-              AND ( (fi.close_at IS NOT NULL AND datetime('now','localtime') <= fi.close_at)
+              -- datetime(fi.close_at): close_at is 'T'-separated; wrap it so the compare
+              -- matches datetime('now',...)'s space form (' ' < 'T' would otherwise keep a
+              -- same-day-closed activity "collecting" until midnight).
+              AND ( (fi.close_at IS NOT NULL AND datetime('now','localtime') <= datetime(fi.close_at))
                  OR (fi.close_at IS NULL AND date(fi.event_date) = date('now','localtime')) )
         ORDER BY fi.event_date DESC, fi.id ASC
         LIMIT ?
@@ -2704,7 +2713,10 @@ def ongoing_standalone(conn, limit=20):
               AND fi.survey_type IN (2, 3)
               AND fi.event_date <> ''
               AND date(fi.event_date) <= date('now','localtime')
-              AND ( (fi.close_at IS NOT NULL AND datetime('now','localtime') <= fi.close_at)
+              -- datetime(fi.close_at): close_at is stored 'T'-separated, so wrap it to
+              -- match datetime('now',...)'s space form; a raw text compare puts ' ' before
+              -- 'T' and keeps a same-day-closed activity "open" until midnight.
+              AND ( (fi.close_at IS NOT NULL AND datetime('now','localtime') <= datetime(fi.close_at))
                  OR (fi.close_at IS NULL AND date(fi.event_date) = date('now','localtime')) )
         ORDER BY fi.event_date DESC, fi.id DESC
         LIMIT ?
@@ -2756,7 +2768,10 @@ def ongoing_invited(conn, limit=20):
               AND COALESCE(fi.archived, 0) = 0 AND COALESCE(fi.pooled, 0) = 0
               AND fi.event_date <> ''
               AND date(fi.event_date) <= date('now','localtime')
-              AND ( fi.close_at IS NULL OR datetime('now','localtime') <= fi.close_at )
+              -- datetime(fi.close_at): normalise the 'T'-separated stored value to the
+              -- space form datetime('now',...) uses, or a same-date text compare (' ' <
+              -- 'T') reads a just-closed activity as still collecting until midnight.
+              AND ( fi.close_at IS NULL OR datetime('now','localtime') <= datetime(fi.close_at) )
         GROUP BY e.id
         ORDER BY MIN(fi.event_date) DESC, e.id DESC
         LIMIT ?
