@@ -1,5 +1,17 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-09 (v1.89 — terminology: "activity report" → "customer satisfaction survey report"; "verdict" → "interpretation")
+Renamed two user-facing terms across the interface and the downloadable reports. Display strings only — no logic, data-key, or stored-data changes: CSS classes (`.verdict`, `.jverdict`), the `_servqual_verdict` helper, dict keys (`servqual_verdict`, `d["verdict"]`), and template variables are untouched, so scores and saved responses are identical. The word "activity" as an *event* (create/manage/close activity, the Activities list, the "Activity / Event Satisfaction" report type) is a distinct concept and was left as-is — only the phrase "activity report" changed.
+- **`app.py`** — the per-event report title fed to `dx.VisualMeta` (the header on the PDF/PPTX/PNG/XLSX export) is now `… — Customer Satisfaction Survey Report`.
+- **`templates/reports.html`** — the "View individual … reports →" link now reads "customer satisfaction survey reports"; the consolidated SERVQUAL dimension table column header is now "Interpretation".
+- **`templates/home.html`** — the home feed hover tooltip now opens "the customer satisfaction survey report".
+- **`templates/activity.html`** — the satisfaction-journey card caption "overall verdict" → "overall interpretation" (the per-dimension "Interpretation" header was already in place).
+- **`templates/team.html`** + **`dashboard_insights.py`** (`_confidence_note`, `confidence_phrase`) — the low-sample notes now say "an early hint, not an interpretation".
+- **`report_docs.py`** — the Word (`.docx`) and Excel (`.xlsx`) SERVQUAL dimension table header "Verdict" → "Interpretation".
+- **`dashboard_docs.py`** — the event PDF SERVQUAL dimension table header "Verdict" → "Interpretation".
+- **`dashboard_export.py`** — the Excel export's SERVQUAL sheet column key "Verdict" → "Interpretation".
+- **Verification** — `py_compile` clean on all edited modules; `tests/test_activity_report.py` passes. Rendered against a seeded demo DB: the activity report page and its `.xlsx`/`.pdf`/`.pptx` downloads show "Interpretation" (no "Verdict") and the "Customer Satisfaction Survey Report" title. (The `test_routes.py` failures in the sandbox are pre-existing — they need a delivered `css_is.db` fixture absent from the repo — and reproduce identically on the base branch.)
+
 ## 2026-07-09 (v1.88 — Spot Feedback #59: a closed activity lingered on the home "Ongoing" feed until the next day)
 Closing an activity ("reporting is already closed") left it under "Ongoing — CSS collecting" on the home dashboard for hours. Two compounding faults in the home "ongoing" feeds' time test, both because the feeds reached for SQLite's `date/datetime('now','localtime')` instead of the app's canonical clock:
 1. **Wrong timezone.** Every stored timestamp (`event_date`, `close_at`, `submitted_at`) is written in Asia/Manila via `tzutil` — precisely because the container runs in UTC (a Hugging Face Space; see `tzutil`'s own note). But `'localtime'` follows the *container* zone (UTC), so the feeds compared a UTC "now" against Manila-stamped `close_at` — an ~8 h skew that kept a just-closed activity "collecting" until UTC caught up.

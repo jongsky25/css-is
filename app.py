@@ -8923,7 +8923,7 @@ def _visual_payload(conn, atoms, visual, p, place, gen, period_hint=None):
         people = (f"{len(names)} resource persons" if len(names) > 3 else ", ".join(names)) or None
         n = report["respondents"] if report else ev["respondents"]
         meta = dx.VisualMeta(
-            title=f"{ev['name']} — Activity Report", person=people,
+            title=f"{ev['name']} — Customer Satisfaction Survey Report", person=people,
             place=(ev.get("venue") or ev.get("organizer") or place),
             period=ev["date"], unit="SERVQUAL perception, mean 1–7",
             notes=notes, generated_at=gen, n=n)

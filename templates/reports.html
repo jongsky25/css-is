@@ -389,7 +389,7 @@
     <div><span class="tag">{{ rm[0]|upper }}</span><h2>{{ rm[1] }}</h2></div>
     <div class="arta-actions">
       {% if v.has_data %}<a class="vlink" href="/reports/verbatims?survey_type={{ rtype }}&org={{ sel_org }}&period={{ sel_period }}{% if sel_activity %}&activity={{ sel_activity }}{% endif %}">{{ "See this activity's verbatims →" if sel_activity else "See all verbatims →" }}</a>{% endif %}
-      {% if rtype == 2 %}<a class="vlink" href="/reports/activities?org={{ sel_org }}&period={{ sel_period }}">View individual activity reports →</a>
+      {% if rtype == 2 %}<a class="vlink" href="/reports/activities?org={{ sel_org }}&period={{ sel_period }}">View individual customer satisfaction survey reports →</a>
       {% if can_curate %}<a class="vlink" href="/reports/activities?org={{ sel_org }}&period={{ sel_period }}">Edit / merge activities →</a>{% endif %}{% endif %}
       {% if v.has_data %}{{ report_downloads(rtype, sel_org, sel_period, sel_activity) }}{% endif %}
     </div>
@@ -407,7 +407,7 @@
   <!-- per-dimension grid -->
   <div class="table-wrap">
   <table class="dims">
-    <tr><th>Dimension</th><th>Items</th><th class="num">Mean</th><th class="num">vs expectation</th><th>Verdict</th><th class="num">n</th></tr>
+    <tr><th>Dimension</th><th>Items</th><th class="num">Mean</th><th class="num">vs expectation</th><th>Interpretation</th><th class="num">n</th></tr>
     {% for d in v.dimensions %}
     <tr>
       <td>{{ d.dim }}{% if d.flags %} {% for f in d.flags %}{% if 'volatile' in f %}<span class="badge b-grey" title="single item — moves a lot">1-item</span>{% endif %}{% endfor %}{% endif %}</td>

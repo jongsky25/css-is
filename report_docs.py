@@ -195,7 +195,7 @@ def servqual_docx(sq, meta):
     doc.add_heading("Service Quality Dimensions", level=1)
     _table_title(doc, 1, "Service-quality dimension scores and gap versus expectation",
                  meta, N=sq["respondents"])
-    _table(doc, ["Dimension", "Items", "Mean", "vs Expectation", "Verdict", "n"],
+    _table(doc, ["Dimension", "Items", "Mean", "vs Expectation", "Interpretation", "n"],
            [[d["dim"], d["members"], d["shown"], d.get("gap_shown", "—"),
              d.get("verdict") or "", d["n"]] for d in sq["dimensions"]], numeric_from=2)
 
@@ -262,7 +262,7 @@ def servqual_xlsx(sq, meta):
     # the gap/verdict stay as the shown strings (they carry the +/- and label).
     _tab(wb.create_sheet("Dimensions"),
          "Service-quality dimension scores and gap versus expectation",
-         ["Dimension", "Items", "Mean", "vs Expectation", "Verdict", "n"],
+         ["Dimension", "Items", "Mean", "vs Expectation", "Interpretation", "n"],
          [[d["dim"], d["members"], d.get("value"), d.get("gap_shown", "—"),
            d.get("verdict") or "", d["n"]] for d in sq["dimensions"]])
 
