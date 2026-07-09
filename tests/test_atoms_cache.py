@@ -223,10 +223,10 @@ def test_ttl_lapse_refreshes_in_background(atoms_db):
     assert A._atoms_state["built"] > built0        # rebuilt, timestamp advanced
 
 
-def _persist_and_wait(df, key, timeout=10.0):
+def _persist_and_wait(df, key, amax, timeout=10.0):
     """Force a snapshot write and block until the pickle exists on disk."""
     A._last_persist = 0.0                          # defeat the 5-min throttle
-    A._persist_atoms_async(df, key)
+    A._persist_atoms_async(df, key, amax)
     pkl, keyf = A._atoms_pkl_paths()
     deadline = time.time() + timeout
     while time.time() < deadline:
@@ -242,7 +242,7 @@ def test_pickle_hydrate_warms_cache(atoms_db):
     conn = st.connect(atoms_db)
     df = A.get_atoms(conn)                          # cold build
     key = A._atoms_state["key"]
-    _persist_and_wait(df, key)
+    _persist_and_wait(df, key, A._atoms_state["answer_maxid"])
     # simulate a restart: drop the in-process cache, then hydrate from the snapshot
     with A._atoms_lock:
         A._atoms_state.update({"key": None, "df": None, "built": 0.0,
@@ -259,7 +259,7 @@ def test_pickle_hydrate_ignores_stale_key(atoms_db):
     _append_submission(atoms_db, n_answers=5)
     conn = st.connect(atoms_db)
     df = A.get_atoms(conn)
-    _persist_and_wait(df, A._atoms_state["key"])
+    _persist_and_wait(df, A._atoms_state["key"], A._atoms_state["answer_maxid"])
     # data changes while "the server is down" → snapshot key no longer matches
     _append_submission(atoms_db, n_answers=3)
     with A._atoms_lock:
@@ -294,3 +294,107 @@ def test_concurrent_reads_never_see_partial(atoms_db):
     assert not errors
     # every concurrent caller saw a valid frame (old=5 or new=8), never None/partial
     assert all(isinstance(df, pd.DataFrame) and len(df) in (5, 8) for df in results)
+
+
+# --------------------------------------------------------------------------- #
+# Frame ⟷ high-water-mark consistency (the dropped-responses bug)
+#
+# The cache tracks a high-water mark of answer.id and appends only rows past it.
+# If the mark is ever read a moment AFTER the frame it labels, an answer another
+# connection commits in that gap lands past the frame but under the mark — so every
+# later `a.id > mark` append skips it for good. That silently stranded a whole run
+# of freshly-encoded responses on live (an outside activity's 286 answers were in
+# the DB but absent from the cached frame, so its Type-3 report showed nothing and
+# it dropped out of the activity picker). The fix: snapshot the mark FIRST and bound
+# the load to it, so frame and mark always cover exactly the same rows.
+# --------------------------------------------------------------------------- #
+
+def test_load_atoms_upto_partitions_cleanly(atoms_db):
+    """upto/after windows tile the answers with no gap and no overlap, so a frame
+    bounded to a mark plus the >mark append equals a from-scratch full load."""
+    _append_submission(atoms_db, n_answers=5)      # answers 1..5   (response 1)
+    _append_submission(atoms_db, n_answers=4)      # answers 6..9   (response 2)
+    _append_submission(atoms_db, n_answers=3)      # answers 10..12 (response 3)
+    conn = st.connect(atoms_db)
+    full = st.load_atoms(conn)
+    lo = st.load_atoms(conn, upto_answer_id=5)     # <= mark
+    hi = st.load_atoms(conn, after_answer_id=5)    # >  mark
+    win = st.load_atoms(conn, after_answer_id=5, upto_answer_id=9)  # one window
+    conn.close()
+    assert len(full) == 12 and len(lo) == 5 and len(hi) == 7
+    # lo ⊎ hi == full, exactly (disjoint cover — nothing dropped, nothing doubled)
+    assert (sorted(lo["response_id"].tolist() + hi["response_id"].tolist())
+            == sorted(full["response_id"].tolist()))
+    assert len(win) == 4                            # answers 6..9 only
+
+
+def test_build_snapshots_mark_before_load_so_a_race_commit_is_never_stranded(
+        atoms_db, monkeypatch):
+    """A commit that lands the instant the build snapshots the mark must be DEFERRED
+    (absent from this frame AND behind the mark), then picked up whole by the next
+    append — never lost. Pre-fix, the mark was read after the load, so such a commit
+    sat past the frame but under the mark and no `a.id > mark` append ever reloaded it."""
+    _append_submission(atoms_db, n_answers=5)      # baseline: answers 1..5, mark 5
+    conn = st.connect(atoms_db)
+    real_maxid = A._answer_maxid
+    state = {"fired": False, "pre_race_max": None}
+
+    def racing_maxid(c):
+        m = real_maxid(c)                          # mark snapshotted FIRST...
+        if not state["fired"]:                     # ...then a commit races in (once)
+            state["fired"] = True
+            state["pre_race_max"] = m
+            _append_submission(atoms_db, n_answers=3)   # answers 6..8, uncounted here
+        return m
+
+    monkeypatch.setattr(A, "_answer_maxid", racing_maxid)
+    df = A.get_atoms(conn)                          # cold build; race lands at snapshot
+    # Frame excludes the racing rows and the stored mark stays behind them → the two
+    # agree. (Pre-fix the mark would have jumped to 8 while the frame held only 5.)
+    assert len(df) == 5
+    assert A._atoms_state["answer_maxid"] == state["pre_race_max"] == 5
+    # Next request sees new data → background append loads (5, 8] and folds the
+    # deferred rows in. They were deferred, never dropped.
+    A.get_atoms(conn); _wait_rebuild()
+    fresh = A.get_atoms(conn)
+    conn.close()
+    assert len(fresh) == 8
+
+
+def test_hydrate_restores_persisted_mark(atoms_db):
+    """A v2 snapshot round-trips the frame WITH the mark it was built to, so the
+    warmed cache resumes appending from the right place (not a re-read MAX(id))."""
+    _append_submission(atoms_db, n_answers=5)
+    conn = st.connect(atoms_db)
+    df = A.get_atoms(conn)
+    key, mark = A._atoms_state["key"], A._atoms_state["answer_maxid"]
+    _persist_and_wait(df, key, mark)
+    with A._atoms_lock:
+        A._atoms_state.update({"key": None, "df": None, "built": 0.0,
+                               "answer_maxid": 0, "force_full": False,
+                               "rebuilding": False, "bg_full": False, "epoch": 0})
+    A._hydrate_atoms_from_pickle(conn)
+    conn.close()
+    assert A._atoms_state["df"] is not None and len(A._atoms_state["df"]) == 5
+    assert A._atoms_state["answer_maxid"] == mark   # mark restored from the sidecar
+
+
+def test_hydrate_ignores_legacy_sidecar(atoms_db):
+    """A tag-less sidecar — the format the pre-fix (buggy) persist path wrote, whose
+    frame may be short — is refused, so a stale/short pickle is dropped and rebuilt
+    clean rather than resurrected on restart."""
+    _append_submission(atoms_db, n_answers=5)
+    conn = st.connect(atoms_db)
+    df = A.get_atoms(conn)
+    key = A._atoms_state["key"]
+    pkl, keyf = A._atoms_pkl_paths()
+    df.to_pickle(pkl)
+    with open(keyf, "w") as f:                      # OLD format: bare repr(key)
+        f.write(repr(key))
+    with A._atoms_lock:
+        A._atoms_state.update({"key": None, "df": None, "built": 0.0,
+                               "answer_maxid": 0, "force_full": False,
+                               "rebuilding": False, "bg_full": False, "epoch": 0})
+    A._hydrate_atoms_from_pickle(conn)
+    conn.close()
+    assert A._atoms_state["df"] is None             # legacy sidecar ignored

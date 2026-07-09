@@ -3605,17 +3605,27 @@ WHERE COALESCE(fi.archived, 0) = 0          -- archived forms vanish from all an
 """
 
 
-def load_atoms(conn, after_answer_id=None):
+def load_atoms(conn, after_answer_id=None, upto_answer_id=None):
     """Return the atoms table in exactly the shape css_is_engine expects.
 
     after_answer_id: if given, load ONLY answers with id > that value
     (an incremental append). The transform is row-independent — assign_periods
     derives each row's period from its own event_date — so an incremental frame
-    concatenates cleanly onto a previously built one (old + new == full)."""
+    concatenates cleanly onto a previously built one (old + new == full).
+
+    upto_answer_id: if given, load ONLY answers with id <= that value. The caller
+    snapshots MAX(answer.id) BEFORE loading and passes it here, so the frame it
+    gets back covers EXACTLY answers up to that id — never a moving target. Pairing
+    the frame with the same high-water mark it was bounded to is what keeps the
+    incremental cache honest: any answer another connection commits after the
+    snapshot is > that id, excluded from this frame, and picked up cleanly by the
+    next (after_answer_id=that id) append instead of being silently skipped."""
     sql = _LOAD_SQL
     if after_answer_id is not None:
         # int() guard — never interpolate untrusted text into SQL.
         sql = sql + f"\n  AND a.id > {int(after_answer_id)}"
+    if upto_answer_id is not None:
+        sql = sql + f"\n  AND a.id <= {int(upto_answer_id)}"
     df = pd.read_sql_query(sql, conn)
     df["event_date"] = df["event_date"].astype(str)
     df["value"] = pd.to_numeric(df["value"], errors="coerce")

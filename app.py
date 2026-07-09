@@ -801,6 +801,15 @@ def get_atoms(conn):
     return _build_blocking(conn, key)
 
 
+def _answer_maxid(conn):
+    """Current high-water mark of answer.id. Always snapshot this BEFORE loading a
+    frame and bound the load to it (load_atoms(upto_answer_id=...)), so the frame and
+    the mark it is stored with cover exactly the same rows. Reading the mark AFTER the
+    load instead opens a gap: an answer committed in between lands past the frame but
+    under the mark, and every later incremental append (a.id > mark) skips it for good."""
+    return conn.execute("SELECT COALESCE(MAX(id),0) FROM answer").fetchone()[0]
+
+
 def _build_blocking(conn, key):
     """Full synchronous rebuild, holding the lock for its duration."""
     with _atoms_lock:
@@ -808,12 +817,13 @@ def _build_blocking(conn, key):
         # Another thread may have finished a matching build while we waited.
         if s["df"] is not None and s["key"] == key and not s["force_full"]:
             return s["df"]
-        df = st.load_atoms(conn)
-        amax = conn.execute("SELECT COALESCE(MAX(id),0) FROM answer").fetchone()[0]
+        # Snapshot the mark FIRST, then load up to it — frame and mark stay consistent.
+        amax = _answer_maxid(conn)
+        df = st.load_atoms(conn, upto_answer_id=amax)
         s.update(key=key, df=df, built=time.time(),
                  answer_maxid=amax, force_full=False, bg_full=False)
         _view_memo.clear()
-        _persist_atoms_async(df, key)        # F3: snapshot for a warm restart
+        _persist_atoms_async(df, key, amax)  # F3: snapshot for a warm restart
         return df
 
 
@@ -845,15 +855,21 @@ def _refresh_worker():
             after = s["answer_maxid"]
             want_full = s["bg_full"] or s["force_full"]
             start_epoch = s["epoch"]
+        # Snapshot the mark BEFORE loading and bound every load to it, so the frame
+        # we swap in covers exactly answers with id <= amax and the mark we store
+        # with it agrees. (Reading the mark after the load let a concurrently-
+        # committed answer fall past the frame but under the mark, so the next
+        # append — a.id > mark — skipped it permanently. That is what silently
+        # dropped a whole run of freshly-encoded responses from the live cache.)
+        amax = _answer_maxid(conn)
         if base is not None and not want_full and _is_pure_append(old_key, new_key):
-            add = st.load_atoms(conn, after_answer_id=after)          # ~100 ms
+            add = st.load_atoms(conn, after_answer_id=after, upto_answer_id=amax)  # ~100 ms
             # concat_atoms (not plain pd.concat) so the appended frame keeps its
             # category dtypes — pandas 3.0 widens mismatched categoricals to str,
             # which would silently re-bloat the cache after the first append.
             df = st.concat_atoms(base, add)
         else:
-            df = st.load_atoms(conn)                                  # full
-        amax = conn.execute("SELECT COALESCE(MAX(id),0) FROM answer").fetchone()[0]
+            df = st.load_atoms(conn, upto_answer_id=amax)             # full
         with _atoms_lock:
             if _atoms_state["epoch"] != start_epoch:
                 # A structural invalidation landed mid-build; discard this result and
@@ -869,7 +885,7 @@ def _refresh_worker():
             _prewarm_dashboard(df, conn)     # rebuild the hot views NOW, off the request path
         finally:
             _views_warming = False
-        _persist_atoms_async(df, new_key)    # F3: snapshot for a warm restart
+        _persist_atoms_async(df, new_key, amax)  # F3: snapshot for a warm restart
     except Exception:
         traceback.print_exc()
         with _atoms_lock:
@@ -891,10 +907,22 @@ def _atoms_pkl_paths():
     return DB + ".atoms.pkl", DB + ".atoms.key"
 
 
-def _persist_atoms_async(df, key):
+# Sidecar format tag. The frame is now bounded to a snapshotted answer high-water
+# mark and the sidecar records that exact mark (v2: "<tag>\n<repr(key)>\n<amax>"),
+# so hydration restores the frame WITH the mark it was built to instead of re-reading
+# MAX(id) — which, against a frame that a pre-fix build had left short, would have set
+# the mark past the missing rows and stranded them. Bumping this tag also makes any
+# older ("<repr(key)>" only) sidecar — including one written by the buggy path — fail
+# to match, so the stale pickle is dropped and rebuilt clean on the next boot.
+_ATOMS_PKL_TAG = "atoms-v2"
+
+
+def _persist_atoms_async(df, key, amax):
     """Throttled background pickle write (write cost ~1.9 s — never on a request).
     At most one in flight, at most once per 5 min; the first build after a restart
-    always writes (so a cold cache is captured promptly)."""
+    always writes (so a cold cache is captured promptly). `amax` is the answer
+    high-water mark the frame was bounded to; it is persisted so hydration pairs the
+    frame with its OWN mark, not a freshly-read (and possibly ahead-of-frame) one."""
     global _last_persist
     now = time.time()
     if now - _last_persist < 300:
@@ -906,7 +934,7 @@ def _persist_atoms_async(df, key):
             with _atoms_persist_lock:
                 df.to_pickle(pkl)
                 with open(keyf, "w") as f:
-                    f.write(repr(key))
+                    f.write(f"{_ATOMS_PKL_TAG}\n{repr(key)}\n{int(amax)}")
         except Exception:
             traceback.print_exc()
     threading.Thread(target=_w, name="atoms-persist", daemon=True).start()
@@ -920,11 +948,20 @@ def _hydrate_atoms_from_pickle(conn):
     try:
         if not (os.path.exists(pkl) and os.path.exists(keyf)):
             return
+        parts = open(keyf).read().split("\n")
+        # v2 sidecar: "<tag>\n<repr(key)>\n<amax>". Anything else (an older tag-less
+        # sidecar, incl. one left by the pre-fix build path) fails to match and is
+        # ignored, so a stale/short pickle is dropped and rebuilt clean.
+        if len(parts) != 3 or parts[0] != _ATOMS_PKL_TAG:
+            return
         key = _data_key(conn)
-        if open(keyf).read().strip() != repr(key):
+        if parts[1].strip() != repr(key):
             return
         df = pd.read_pickle(pkl)
-        amax = conn.execute("SELECT COALESCE(MAX(id),0) FROM answer").fetchone()[0]
+        # Pair the frame with the mark it was BUILT to (persisted), not a fresh
+        # MAX(id) read — the two agree when the key matches, and using the stored
+        # mark keeps the frame⟷mark invariant even if they ever didn't.
+        amax = int(parts[2].strip())
         with _atoms_lock:
             _atoms_state.update(key=key, df=df, built=time.time(),
                                 answer_maxid=amax, force_full=False,
