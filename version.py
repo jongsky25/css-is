@@ -17,10 +17,31 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "1.92"
+APP_VERSION = "1.93"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "1.93",
+        "date": "July 9, 2026",
+        "summary": "The activity Monitor now counts things correctly: “Completed” can never be higher than “Registered”, and it shows how many people answered without pre-registering.",
+        "changes": [
+            "On the Monitor page for an activity, the live “Completed CSS” number "
+            "was sometimes showing more than the number of people registered, and "
+            "would jump around when the page refreshed. It now always counts only "
+            "the registered people who finished, so “Completed” is never higher "
+            "than “Registered”, and all the boxes update together and stay in step.",
+            "“Completion rate” now reaches 100% only when everyone registered has "
+            "actually finished — an almost-complete activity reads 99%, not a "
+            "misleading 100%.",
+            "A new “Not pre-registered” box shows how many responses came in by "
+            "walk-in, QR, or paper with no registration. These were being counted "
+            "before but weren't shown on their own — so if someone answered without "
+            "using their registration link, you can now see it there (which is why "
+            "their name might still read “Not started”). The downloaded roster shows "
+            "the same figure.",
+        ],
+    },
     {
         "version": "1.92",
         "date": "July 9, 2026",
