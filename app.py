@@ -8852,8 +8852,8 @@ def _visual_payload(conn, atoms, visual, p, place, gen, period_hint=None):
             return None, None
         if person.get("hidden_public") and not p.get("admin"):
             return None, None
-        # Full-breadth person report — everything the page shows EXCEPT the verbatim
-        # quotes (a named-person file shouldn't carry them off-screen). Honors the
+        # Full-breadth person report — everything the page shows, including the
+        # de-duplicated respondent comments (attached below). Honors the
         # year filter (`period`); role-aware (TA advice + peer standing are speaker
         # -only). Identity (badges, year-on-year) reads all-time; the panels follow
         # the chosen window. Mirrors the dashboard_person route.
@@ -8932,11 +8932,20 @@ def _visual_payload(conn, atoms, visual, p, place, gen, period_hint=None):
             title=title, person=person["name"], place=place, period=period_str,
             unit=("Top-box %" if role == "arta" else "Mean rating, 1–7"),
             notes=notes, generated_at=gen, n=n_ratings)
+        # De-duplicated respondent comments about this person — the on-screen person
+        # page shows a comments panel, so the download carries them too. Same rids the
+        # page reads: the union of this person's walk-in (arta) and speaker (rp) slice
+        # responses over the scoped atoms. Flat ×N list, matching the other reports.
+        p_rids = list(set(a["response_id"].tolist()) | set(r["response_id"].tolist()))
+        p_quotes = di._flatten_quotes(st.verbatims_for_responses(conn, p_rids))
+        p_grouped, p_shown, p_uniq = _dedup_remarks(
+            ((q["text"], "") for q in p_quotes), cap=_COMMENT_CAP)
         payload = {"trend": trend, "role": role, "ymax": ymax,
                    "breakdown": breakdown, "breakdown_ymax": bmax, "breakdown_title": btitle,
                    "card": card, "cmp": cmp, "coach": coach, "ta": ta, "yoy": yoy,
                    "peers": peers, "badges": badges, "scale": scale,
-                   "single": bool(single), "position": person.get("position")}
+                   "single": bool(single), "position": person.get("position"),
+                   "comments": {"items": p_grouped, "total": p_shown, "unique": p_uniq}}
         return payload, meta
 
     if visual == "event":

@@ -17,10 +17,24 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "1.91"
+APP_VERSION = "1.92"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "1.92",
+        "date": "July 9, 2026",
+        "summary": "A resource person's individual report download (PDF, PowerPoint and Excel) now includes the written comments people left about them — matching what their page already shows.",
+        "changes": [
+            "Following the per-activity change, downloading a single person's "
+            "performance report now includes the written comments from their rated "
+            "responses at the bottom — the same ones shown on their page. Before, the "
+            "downloaded file left them out. The PDF and Excel gain a “Respondent "
+            "comments” section, and the PowerPoint gains an “In their words” slide, "
+            "with identical answers shown once and marked “×N”, and empty or "
+            "throw-away answers left out.",
+        ],
+    },
     {
         "version": "1.91",
         "date": "July 9, 2026",
