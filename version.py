@@ -17,10 +17,30 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "1.90"
+APP_VERSION = "1.91"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "1.91",
+        "date": "July 9, 2026",
+        "summary": "The download of a single activity's report (PDF, PowerPoint and Excel) now includes the written comments people left — the same ones shown on the activity's page.",
+        "changes": [
+            "When you open one activity's report and download it, the written "
+            "comments people left are now included at the bottom — before, only the "
+            "on-screen page showed them, and the downloaded file left them out. The "
+            "PDF and the Word/Excel-style downloads now carry a “Respondent "
+            "comments” section listing every written comment, with identical answers "
+            "shown once and marked “×N” (so a repeated “Very helpful” reads as “Very "
+            "helpful ×3”). Empty and throw-away answers (“none”, “n/a”, “wala”) are "
+            "left out, so the list is only real feedback.",
+            "The PowerPoint version gains an “In their words” slide with the most "
+            "common comments, and the Excel gets a tidy “Respondent comments” sheet "
+            "listing each distinct comment and how many people gave it. This matches "
+            "how the bureau-wide reports already show comments, so the per-activity "
+            "download and the on-screen page can never disagree.",
+        ],
+    },
     {
         "version": "1.90",
         "date": "July 9, 2026",

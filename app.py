@@ -8942,8 +8942,9 @@ def _visual_payload(conn, atoms, visual, p, place, gen, period_hint=None):
     if visual == "event":
         # The per-activity SERVQUAL report — the full official scorecard (dimensions
         # vs expectation, TOTAL/AVERAGE/EXPECTATION/SERVQUAL/OSQ), the section
-        # benchmark (vs the unit's other activities that year), demographics and the
-        # "what happened" read. Mirrors the dashboard_activity route. NO verbatims.
+        # benchmark (vs the unit's other activities that year), demographics, the
+        # "what happened" read, and the de-duplicated respondent comments (added
+        # below). Mirrors the dashboard_activity route.
         events = di.build_events(atoms, st.list_activity_instances(conn))
         ev = next((e for e in events if p["event_id"] in e["instance_ids"]
                    or e["id"] == p["event_id"]), None)
@@ -8991,10 +8992,20 @@ def _visual_payload(conn, atoms, visual, p, place, gen, period_hint=None):
         # Speakers are NOT carried — the activity report page doesn't show them (each
         # has their own person report); a big training's 40+ speakers would also bury
         # both the figure and the tables.
+        # De-duplicated respondent comments for the report foot — the on-screen page
+        # shows a comments panel, so the download must carry them too. Flat ×N list
+        # (SERVQUAL comments aren't typed positive/negative), matching the other
+        # downloadable reports. Source is the SAME verbatims the page reads, so the
+        # download and the screen can never disagree.
+        quotes = di._flatten_quotes(st.verbatims_for_responses(conn, ev["response_ids"]))
+        grouped, shown, uniq = _dedup_remarks(
+            ((q["text"], "") for q in quotes), cap=_COMMENT_CAP)
+        comments = {"items": grouped, "total": shown, "unique": uniq}
         payload = {"ranked": ev.get("ranked") or [], "ymax": 7,
                    "report": report, "bench": bench, "demo": demo, "journey_read": journey_read,
                    "name": ev["name"], "date": ev["date"], "venue": ev.get("venue"),
-                   "organizer": ev.get("organizer"), "respondents": ev["respondents"]}
+                   "organizer": ev.get("organizer"), "respondents": ev["respondents"],
+                   "comments": comments}
         return payload, meta
 
     if visual == "trends":
