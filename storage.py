@@ -1488,18 +1488,6 @@ def event_attendees_status(conn, event_id):
     return out
 
 
-def event_completed_count(conn, event_id):
-    """How many registrants have completed the CSS (answered every non-archived
-    form) — the figure the Monitor's 'Completed CSS' card shows. Kept in lock-step
-    with event_registration_summary()['completed'] (same roster source), so the
-    server render and the live SSE push can never disagree. It counts registrants,
-    so it is bounded by 'registered' — unlike event_response_total, which counts
-    every response row (including unattributed walk-in / QR / paper) and can exceed
-    the number of people registered."""
-    return sum(1 for p in event_attendees_status(conn, event_id)
-               if p["status"] == "completed")
-
-
 def event_registration_summary(conn, event_id):
     """Headline counts for an event's registration monitor: how many registered,
     and of those how many completed / are in progress / have not started, plus the
@@ -1520,9 +1508,23 @@ def event_registration_summary(conn, event_id):
         "registered": registered, "completed": completed,
         "in_progress": in_progress, "not_started": not_started,
         "answered_any": completed + in_progress,
-        "completion_rate": round(completed * 100 / registered) if registered else None,
+        "completion_rate": _completion_rate(completed, registered),
         "unattributed": unattributed,
     }
+
+
+def _completion_rate(completed, registered):
+    """Completion as a whole-number percent, with the invariant the Monitor cards
+    rely on: it is None with no registrants, exactly 100 only when everyone
+    registered has completed, and otherwise strictly below 100 — a near-complete
+    event (e.g. 199/200) reads 99%, never rounding up to a misleading 100%. Since
+    'completed' is a subset of the registrant roster it can never exceed
+    'registered', so the rate is always in [0, 100]."""
+    if not registered:
+        return None
+    if completed >= registered:
+        return 100
+    return min(99, round(completed * 100 / registered))
 
 
 def attendee_response_detail(conn, event_id, attendee_id):

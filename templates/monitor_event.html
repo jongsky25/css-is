@@ -88,11 +88,11 @@
   {% elif flash == 'notfound' %}<div class="flashmsg warn">That entry was already gone.</div>{% endif %}
 
   <div class="cards">
-    <div class="stat"><div class="v">{{ summ.registered }}</div><div class="k">Registered</div></div>
+    <div class="stat"><div class="v" id="stat-registered">{{ summ.registered }}</div><div class="k">Registered</div></div>
     <div class="stat done"><div class="v" id="live-count">{{ summ.completed }}</div><div class="k">Completed CSS <span class="live-dot" id="live-dot"></span></div></div>
-    <div class="stat part"><div class="v">{{ summ.in_progress }}</div><div class="k">In progress</div></div>
-    <div class="stat"><div class="v">{{ summ.not_started }}</div><div class="k">Not started</div></div>
-    <div class="stat"><div class="v">{% if summ.completion_rate is not none %}{{ summ.completion_rate }}%{% else %}—{% endif %}</div><div class="k">Completion rate</div></div>
+    <div class="stat part"><div class="v" id="stat-inprogress">{{ summ.in_progress }}</div><div class="k">In progress</div></div>
+    <div class="stat"><div class="v" id="stat-notstarted">{{ summ.not_started }}</div><div class="k">Not started</div></div>
+    <div class="stat"><div class="v" id="stat-rate">{% if summ.completion_rate is not none %}{{ summ.completion_rate }}%{% else %}—{% endif %}</div><div class="k">Completion rate</div></div>
   </div>
 
   <div class="toolbar">
@@ -218,13 +218,24 @@
     var countEl = document.getElementById('live-count');
     var dotEl   = document.getElementById('live-dot');
     if (!countEl || !window.EventSource) return;
+    var regEl  = document.getElementById('stat-registered');
+    var ipEl   = document.getElementById('stat-inprogress');
+    var nsEl   = document.getElementById('stat-notstarted');
+    var rateEl = document.getElementById('stat-rate');
     var sse = new EventSource('/api/monitor/' + evToken + '/stream');
+    // The stream carries the whole funnel, so every card moves together and the
+    // display never shows Completed above Registered (or a rate over 100%).
+    function setText(el, val) { if (el && val != null) el.textContent = val; }
     sse.onmessage = function (e) {
       try {
         var d = JSON.parse(e.data);
         var prev = parseInt(countEl.textContent, 10);
-        countEl.textContent = d.count;
-        if (d.count !== prev) {
+        setText(countEl, d.completed);
+        setText(regEl,   d.registered);
+        setText(ipEl,    d.in_progress);
+        setText(nsEl,    d.not_started);
+        setText(rateEl,  d.completion_rate == null ? '—' : d.completion_rate + '%');
+        if (d.completed !== prev && d.completed != null) {
           countEl.classList.remove('ticked');
           void countEl.offsetWidth;
           countEl.classList.add('ticked');
