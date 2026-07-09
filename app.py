@@ -6907,6 +6907,12 @@ def _servqual_official(df, dim_map, response_ids, conn):
         })
     responses.sort(key=lambda x: (x["when"], x["response_id"]))
     block["responses"] = responses
+    # De-duplicated free-text comments for the report bottom: one flat list —
+    # SERVQUAL comments aren't typed positive/negative — collapsing repeats into a
+    # count. The DOCX/XLSX render this; PDF/PPTX ignore the key.
+    grouped, shown, uniq = _dedup_remarks(
+        ((r.get("comment"), "") for r in responses), cap=_COMMENT_CAP)
+    block["comments"] = {"items": grouped, "total": shown, "unique": uniq}
     return block
 
 
@@ -7061,17 +7067,72 @@ def _arta_sqd_official(rows):
     return out, overall, pooled_n
 
 
-def _arta_comments(rows, limit=12):
-    pos, neg, other = [], [], []
+# Cap on how many *unique* comments each bucket lists in a report. High enough
+# that the complete-reference DOCX stays a genuine reference, bounded enough that
+# a busy bureau's export doesn't run to hundreds of pages; the renderers add an
+# "…and N more" note whenever a bucket has more uniques than this.
+_COMMENT_CAP = 50
+
+
+def _dedup_remarks(items, cap=None):
+    """Collapse repeated free-text remarks into {text, count, type} entries.
+
+    `items` is an iterable of (text, feedback_type). Only blank / whitespace-only
+    answers are dropped — every real answer is kept (so the listing stays a
+    faithful record), but repeats collapse into one counted entry, which is
+    exactly what turns forty "none" answers into a single "none ×40" line.
+    Grouping folds case and internal whitespace, so "Great service" and
+    "great  service" count as one; the first-seen spelling is kept for display.
+    Sorted by count (desc) then order of first appearance. Returns
+    (grouped, shown_total, unique_total): `shown_total` is the number of non-blank
+    remarks (people), `unique_total` the distinct count before `cap`, and
+    `grouped` the (optionally capped) unique entries."""
+    groups = {}
+    order = shown_total = 0
+    for text, ftype in items:
+        t = " ".join((text or "").split())
+        if not t:
+            continue
+        shown_total += 1
+        g = groups.get(t.casefold())
+        if g is None:
+            groups[t.casefold()] = {"text": t, "count": 1, "type": ftype or "", "_o": order}
+            order += 1
+        else:
+            g["count"] += 1
+    grouped = sorted(groups.values(), key=lambda g: (-g["count"], g["_o"]))
+    for g in grouped:
+        g.pop("_o", None)
+    unique_total = len(grouped)
+    if cap is not None:
+        grouped = grouped[:cap]
+    return grouped, shown_total, unique_total
+
+
+def _arta_comments(rows, cap=_COMMENT_CAP):
+    """De-duplicated free-text feedback for the ARTA report, split by feedback
+    type. Each bucket lists unique comments with a repeat count; per-bucket
+    `_shown` (meaningful raw remarks) and `_unique` (distinct before cap) let the
+    renderers show totals and an "…and N more" note."""
+    raw = {"positive": [], "negative": [], "other": []}
     for r in rows:
         t = (r.get("SUGGESTIONS") or "").strip()
         if not t:
             continue
         ft = (r.get("FEEDBACK_TYPE") or "").strip().lower()
-        bucket = pos if ft == "positive" else neg if ft == "negative" else other
-        bucket.append({"text": t, "type": r.get("FEEDBACK_TYPE") or ""})
-    return {"positive": pos[:limit], "negative": neg[:limit], "other": other[:limit],
-            "total": len(pos) + len(neg) + len(other)}
+        key = "positive" if ft == "positive" else "negative" if ft == "negative" else "other"
+        raw[key].append((t, r.get("FEEDBACK_TYPE") or ""))
+    out, total, unique = {}, 0, 0
+    for key in ("positive", "negative", "other"):
+        grouped, shown, uniq = _dedup_remarks(raw[key], cap=cap)
+        out[key] = grouped
+        out[key + "_shown"] = shown
+        out[key + "_unique"] = uniq
+        total += shown
+        unique += uniq
+    out["total"] = total
+    out["unique"] = unique
+    return out
 
 
 def _arta_official_report(rows):

@@ -17,10 +17,34 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "1.89"
+APP_VERSION = "1.90"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "1.90",
+        "date": "July 9, 2026",
+        "summary": "The downloadable reports now list every written comment at the bottom, with repeats grouped into one line and a “×N” count instead of the same answer over and over.",
+        "changes": [
+            "At the foot of the downloadable customer-satisfaction reports, the "
+            "comments people wrote are now listed in full. Identical answers are "
+            "shown once with a “×N” next to them — so forty people who wrote "
+            "“none” become a single “none ×40” line, and a repeated “Very helpful "
+            "staff” shows as “Very helpful staff ×3” — instead of the same comment "
+            "printed again and again.",
+            "The Word walk-in (ARTA) report lists them grouped as Appreciated, To "
+            "improve, and Other; the Word resource-person (SERVQUAL) report gains a "
+            "new “Respondent comments” section it didn't have before; and the "
+            "resource-person Excel gets a tidy “Comments” sheet with each distinct "
+            "comment and how many people gave it, next to the existing "
+            "one-row-per-person sheet.",
+            "The PDF and slide versions still show just a few of the most common "
+            "comments as a taste, but now mark repeats with “×N” too and point to "
+            "the Word file for the complete list. Very long comment lists are "
+            "capped with an “…and N more” note so a report never runs to hundreds "
+            "of pages.",
+        ],
+    },
     {
         "version": "1.89",
         "date": "July 9, 2026",
