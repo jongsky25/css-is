@@ -73,6 +73,32 @@ def test_summary_funnel_and_rate(tmp_path):
     assert s["n_forms"] == 2
 
 
+def test_completed_count_matches_summary_and_is_bounded(tmp_path):
+    # The Monitor "Completed CSS" card is server-rendered with summ.completed but
+    # updated live off event_completed_count — they must agree, and (unlike the raw
+    # response total the stream used to push) the live figure must never exceed the
+    # number of registrants, even when unattributed walk-in responses pile up.
+    conn = _fresh(tmp_path)
+    eid, _tok, f2, f3 = _event_with_two_forms(conn)
+    a = st.add_attendee(conn, eid, name="Ana", email="a@x.com", consent_text="x")
+    st.record_response(conn, f2, [("B6", 6)], attendee_id=a)
+    st.record_response(conn, f3, [("SQD1", 6)], attendee_id=a)   # Ana completed
+    st.add_attendee(conn, eid, name="Cy", email="c@x.com", consent_text="x")  # not started
+    # Four unattributed walk-in responses — these inflate event_response_total (the
+    # old live value) well past 'registered', but must not touch the completed card.
+    for _ in range(4):
+        st.record_response(conn, f2, [("B6", 5)])
+
+    s = st.event_registration_summary(conn, eid)
+    completed = st.event_completed_count(conn, eid)
+    assert completed == s["completed"] == 1          # tracks the header, exactly
+    assert completed <= s["registered"] == 2         # bounded by registrants
+    # The metric the buggy stream pushed would have shown 6 here (2 attributed
+    # responses + 4 walk-in) — more "Completed" than "Registered".
+    assert st.event_response_total(conn, eid) == 6
+    assert completed < st.event_response_total(conn, eid)
+
+
 def test_unattributed_responses_counted_separately(tmp_path):
     conn = _fresh(tmp_path)
     eid, _tok, f2, _f3 = _event_with_two_forms(conn)

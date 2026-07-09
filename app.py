@@ -4243,7 +4243,10 @@ async def submit_rating(request: Request, qr_token: str):
             st.mark_submission(conn, sid)           # log the offline-queue id (no-op if absent)
 
             if _live_ev:
-                _live_cnt = st.event_response_total(conn, _live_ev["id"])
+                # The Monitor "Completed CSS" card is a count of registrants who
+                # finished, not raw responses — push that so the live value matches
+                # the server-rendered summ.completed and never exceeds registered.
+                _live_cnt = st.event_completed_count(conn, _live_ev["id"])
                 await realtime.broadcast(_live_ev["id"], _live_cnt)
 
             # Comment raffle: if this activity runs one and the response carries a
@@ -4384,7 +4387,9 @@ async def submit_combined(request: Request):
             recorded += 1
             _ev_l = st.event_for_form_instance(conn, ctx["id"])
             if _ev_l:
-                _live_evs[_ev_l["id"]] = st.event_response_total(conn, _ev_l["id"])
+                # Same live metric as the single-form path: registrants completed,
+                # not raw responses (see the Monitor "Completed CSS" card).
+                _live_evs[_ev_l["id"]] = st.event_completed_count(conn, _ev_l["id"])
                 # One raffle entry per speaker this rater actually commented on
                 # (face-to-face or online).
                 if _ev_l.get("raffle_enabled"):
@@ -5612,7 +5617,9 @@ def monitor_event(request: Request, event_token: str, flash: str = ""):
 
 @app.get("/api/monitor/{event_token}/stream")
 async def monitor_live_stream(request: Request, event_token: str):
-    """SSE endpoint: pushes {"count": N} whenever a new response lands.
+    """SSE endpoint: pushes {"count": N} — the number of registrants who have
+    completed the CSS — whenever a response lands (the same metric the Monitor's
+    "Completed CSS" card is server-rendered with, so the two never disagree).
     Auth-gated to the same roles as the monitor page (creator or admin)."""
     conn = get_conn()
     try:
@@ -5620,7 +5627,11 @@ async def monitor_live_stream(request: Request, event_token: str):
         if not ev or not _can_manage_event(request.state.user, ev):
             return JSONResponse({"error": "forbidden"}, status_code=403)
         event_id = ev["id"]
-        initial = st.event_response_total(conn, event_id)
+        # Seed the live card with the SAME metric it displays — registrants who
+        # completed — so it matches the server-rendered summ.completed instead of
+        # jumping to the raw response total (which includes unattributed responses
+        # and could read higher than 'Registered').
+        initial = st.event_completed_count(conn, event_id)
     finally:
         conn.close()
 

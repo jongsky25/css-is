@@ -1488,6 +1488,18 @@ def event_attendees_status(conn, event_id):
     return out
 
 
+def event_completed_count(conn, event_id):
+    """How many registrants have completed the CSS (answered every non-archived
+    form) — the figure the Monitor's 'Completed CSS' card shows. Kept in lock-step
+    with event_registration_summary()['completed'] (same roster source), so the
+    server render and the live SSE push can never disagree. It counts registrants,
+    so it is bounded by 'registered' — unlike event_response_total, which counts
+    every response row (including unattributed walk-in / QR / paper) and can exceed
+    the number of people registered."""
+    return sum(1 for p in event_attendees_status(conn, event_id)
+               if p["status"] == "completed")
+
+
 def event_registration_summary(conn, event_id):
     """Headline counts for an event's registration monitor: how many registered,
     and of those how many completed / are in progress / have not started, plus the
