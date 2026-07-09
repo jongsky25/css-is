@@ -17,10 +17,43 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "1.86"
+APP_VERSION = "1.88"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "1.88",
+        "date": "July 9, 2026",
+        "summary": "An activity you close now leaves the home “Ongoing” list right away, instead of lingering there for hours.",
+        "changes": [
+            "When you closed an activity, the home dashboard could keep showing it "
+            "under “Ongoing — CSS collecting” long after — sometimes until the next "
+            "day — even though its reporting was already closed. The dashboard was "
+            "reading the wrong clock (the server's, which runs on a different time "
+            "zone) to decide whether an activity was still collecting. It now uses "
+            "the same Philippine-time clock as the rest of the app, so a closed "
+            "activity drops off the Ongoing list the moment you close it. (The "
+            "public response link itself was always closing on time; only the "
+            "dashboard label lingered.)",
+        ],
+    },
+    {
+        "version": "1.87",
+        "date": "July 9, 2026",
+        "summary": "Fixed a problem where an activity's newly encoded responses could disappear from its reports — the count showed on the Manage page, but the resource-person report came up empty and the activity was missing from the report's activity list.",
+        "changes": [
+            "For one invited activity, the Manage page correctly showed its 286 "
+            "responses, but opening “View resource-person results” said there were "
+            "none, the responses didn't appear in the Resource Persons report, and "
+            "the activity was missing from that report's activity picker. The "
+            "answers were safe in the database the whole time — they had slipped "
+            "out of the app's fast in-memory copy that the reports read from, "
+            "during a busy live-encoding session, and stayed out. The reports now "
+            "keep that fast copy exactly in step with what's saved, so freshly "
+            "encoded responses always show up, and any activity affected before "
+            "this fix is restored automatically.",
+        ],
+    },
     {
         "version": "1.86",
         "date": "July 6, 2026",
