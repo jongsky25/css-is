@@ -695,7 +695,7 @@ def _tables(visual, payload):
             out.append(("SERVQUAL — dimension by dimension", pd.DataFrame(
                 [{"Dimension": d["label"], "Score (/7)": _round(d["value"]),
                   "SERVQUAL gap": d.get("gap_shown", "—"), "vs section": d.get("sec_delta_shown", ""),
-                  "Verdict": d.get("verdict") or ""} for d in rep["dims"]])))
+                  "Interpretation": d.get("verdict") or ""} for d in rep["dims"]])))
             out.append(("SERVQUAL summary", pd.DataFrame([
                 {"Metric": "Total (sum of dimension means)", "Value": rep["total_shown"]},
                 {"Metric": "Average (mean of dimension means)", "Value": rep["average_shown"]},

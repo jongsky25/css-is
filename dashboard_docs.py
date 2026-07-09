@@ -1267,7 +1267,7 @@ def event_pdf(payload, vmeta):
 
     # dimension table — score, SERVQUAL gap, (vs section), verdict
     has_sec = any("sec_delta_shown" in d for d in rep["dims"])
-    headers = ["Dimension", "Score /7", "SERVQUAL gap"] + (["vs section"] if has_sec else []) + ["Verdict"]
+    headers = ["Dimension", "Score /7", "SERVQUAL gap"] + (["vs section"] if has_sec else []) + ["Interpretation"]
     rows = []
     for d in rep["dims"]:
         row = [d["label"], d["shown"], d.get("gap_shown", "—")]

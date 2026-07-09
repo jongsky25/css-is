@@ -2482,7 +2482,7 @@ def _confidence_note(n):
         return ("good", f"Backed by {n:,} responses — a solid, reliable read.")
     if n >= eng.N_MIN:
         return ("neutral", f"Backed by {n:,} responses — enough to be meaningful.")
-    return ("mid", f"Only {n:,} response(s) so far — treat this as an early hint, not a verdict.")
+    return ("mid", f"Only {n:,} response(s) so far — treat this as an early hint, not an interpretation.")
 
 
 def pulse_card_insights(atoms, survey_type):
@@ -3914,7 +3914,7 @@ def confidence_phrase(n):
     if n is None:
         return None
     if n < 5:
-        return f"Based on only {n} response(s) — treat this as an early hint, not a verdict."
+        return f"Based on only {n} response(s) — treat this as an early hint, not an interpretation."
     if n < eng.N_MIN:
         return f"Based on {n} responses — a small sample, so read it with some caution."
     return None

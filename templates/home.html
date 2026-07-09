@@ -475,7 +475,7 @@
           var speakers = (a.speakers && a.speakers.length)
             ? '<div class="fi-meta fi-speakers">' + a.speakers.map(esc).join(', ') + '</div>' : '';
           var href = a.url || ('/reports/activities/' + a.id);
-          var tip = a.invited ? 'Open the resource-person results' : 'Open the activity report';
+          var tip = a.invited ? 'Open the resource-person results' : 'Open the customer satisfaction survey report';
           return '<li><a class="feed-item" href="' + href + '" title="' + tip + '">' +
                  '<span class="fi-date">' + esc(fmtDate(a.event_date)) + '</span>' +
                  '<span class="fi-body"><div class="fi-name">' + esc(a.topic || 'Untitled activity') + '</div>' +
