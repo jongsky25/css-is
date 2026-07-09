@@ -5876,7 +5876,8 @@ def _build_monitor_xlsx(ev, people, summ, org_name):
               f"In progress: {summ['in_progress']}    ·    "
               f"Not started: {summ['not_started']}    ·    "
               f"Completion rate: "
-              f"{summ['completion_rate'] if summ['completion_rate'] is not None else '—'}%")
+              f"{summ['completion_rate'] if summ['completion_rate'] is not None else '—'}%"
+              f"    ·    Not pre-registered (walk-in / QR / paper): {summ['unattributed']}")
     for row, (text, fk) in enumerate([
             (org_name, dict(bold=True, size=14)),
             ("Activity Registration & CSS Status", dict(bold=True, size=11)),

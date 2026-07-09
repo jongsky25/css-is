@@ -13,6 +13,7 @@
   .stat .v { font-size:1.6rem; font-weight:800; line-height:1; }
   .stat .k { font-size:.72rem; color:var(--soft); text-transform:uppercase; letter-spacing:.02em; margin-top:.25rem; }
   .stat.done .v { color:var(--green); } .stat.part .v { color:var(--amber); }
+  .stat.walkin { border-style:dashed; } .stat.walkin .v { color:var(--accent); }
   .toolbar { display:flex; gap:.8rem; align-items:center; flex-wrap:wrap; margin:0 0 1rem; }
   .toolbar a.btn { text-decoration:none; font-size:.85rem; font-weight:600; padding:.45rem .8rem;
           border-radius:8px; border:1px solid var(--accent); color:var(--accent); background:var(--surface); }
@@ -93,6 +94,7 @@
     <div class="stat part"><div class="v" id="stat-inprogress">{{ summ.in_progress }}</div><div class="k">In progress</div></div>
     <div class="stat"><div class="v" id="stat-notstarted">{{ summ.not_started }}</div><div class="k">Not started</div></div>
     <div class="stat"><div class="v" id="stat-rate">{% if summ.completion_rate is not none %}{{ summ.completion_rate }}%{% else %}—{% endif %}</div><div class="k">Completion rate</div></div>
+    <div class="stat walkin" title="Walk-in / QR / paper responses that came in with no registration — counted separately from the registered funnel."><div class="v" id="stat-unattributed">{{ summ.unattributed }}</div><div class="k">Not pre-registered</div></div>
   </div>
 
   <div class="toolbar">
@@ -102,7 +104,7 @@
     <span class="reglink">Registration link: <code>{{ base_url }}/e/{{ ev.event_token }}</code></span>
   </div>
 
-  <p class="note">“Completed” means the participant answered all {{ summ.n_forms }} feedback form{{ '' if summ.n_forms == 1 else 's' }} for this activity.{% if summ.unattributed %} {{ summ.unattributed }} response(s) came in by walk-in / QR / paper with no registrant — those are not listed below.{% endif %}</p>
+  <p class="note">“Completed” means the participant answered all {{ summ.n_forms }} feedback form{{ '' if summ.n_forms == 1 else 's' }} for this activity.{% if summ.unattributed %} The “Not pre-registered” count is walk-in / QR / paper responses with no registrant — collected, but not tied to anyone above.{% endif %}</p>
 
   {% if not people %}
     <div class="empty">No one has registered for this activity yet. Share the registration link above so participants can sign in and answer the CSS.</div>
@@ -222,6 +224,7 @@
     var ipEl   = document.getElementById('stat-inprogress');
     var nsEl   = document.getElementById('stat-notstarted');
     var rateEl = document.getElementById('stat-rate');
+    var unaEl  = document.getElementById('stat-unattributed');
     var sse = new EventSource('/api/monitor/' + evToken + '/stream');
     // The stream carries the whole funnel, so every card moves together and the
     // display never shows Completed above Registered (or a rate over 100%).
@@ -235,6 +238,7 @@
         setText(ipEl,    d.in_progress);
         setText(nsEl,    d.not_started);
         setText(rateEl,  d.completion_rate == null ? '—' : d.completion_rate + '%');
+        setText(unaEl,   d.unattributed);
         if (d.completed !== prev && d.completed != null) {
           countEl.classList.remove('ticked');
           void countEl.offsetWidth;
