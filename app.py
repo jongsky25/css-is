@@ -4743,6 +4743,10 @@ def _manage_ctx(request, conn, ev):
         "date_min": dmin, "date_max": dmax,
         "forms": st.get_event_forms(conn, ev["id"]),
         "entry_window": st.get_event_window(conn, ev["id"]),
+        # Registration funnel counts, so the respondent-target card can pre-fill the
+        # current override and show the floor (completed + walk-ins) a new target
+        # may not go below.
+        "reg_summary": st.event_registration_summary(conn, ev["id"]),
         # Explicit "stopped now" state (close_event_now) — distinct from a merely
         # elapsed window; drives the closed banner + Reopen action below.
         "is_closed": st.event_is_closed(conn, ev["id"]),
@@ -5049,6 +5053,52 @@ async def activity_window_save(request: Request, event_token: str):
     finally:
         conn.close()
     return RedirectResponse(f"/activities/{event_token}/manage#window",
+                            status_code=303)
+
+
+@app.post("/activities/{event_token}/respondents")
+async def activity_respondents_save(request: Request, event_token: str):
+    """Set or clear the manager-entered respondent count for a managed activity —
+    the override denominator for its completion rate. Blank clears it (back to the
+    live registered count). A target below the activity's current respondent count
+    (completed + walk-ins) is REJECTED, so the rate can never be gamed below 100%
+    at save time. Creator-or-admin only, like the window/dates editors."""
+    posted = await _posted(request)
+    conn = get_conn()
+    try:
+        ev = st.get_event(conn, event_token)
+        if not ev:
+            return RedirectResponse("/", status_code=303)
+        if not _can_manage_event(request.state.user, ev):
+            return RedirectResponse(f"/e/{event_token}", status_code=303)
+        raw = (posted.get("respondent_target", "") or "").strip()
+        base = f"/activities/{event_token}/manage"
+        if not raw:
+            target = None
+        else:
+            try:
+                target = int(raw)
+            except ValueError:
+                return RedirectResponse(f"{base}?err=badtarget#respondents",
+                                        status_code=303)
+            if target < 0:
+                return RedirectResponse(f"{base}?err=badtarget#respondents",
+                                        status_code=303)
+            # Reject a denominator smaller than the people who have already
+            # responded — that would push completion past 100%.
+            summ = st.event_registration_summary(conn, ev["id"])
+            actual = summ["completed"] + summ["unattributed"]
+            if target < actual:
+                return RedirectResponse(f"{base}?err=targettoolow#respondents",
+                                        status_code=303)
+        stored = st.set_event_respondent_target(conn, ev["id"], target)
+        _audit(request, conn, "event_respondent_target_set", target_type="event",
+               target_id=ev["id"],
+               summary=(f"Set respondent target to {stored}." if stored
+                        else "Cleared respondent target (using live registered count)."))
+    finally:
+        conn.close()
+    return RedirectResponse(f"/activities/{event_token}/manage#respondents",
                             status_code=303)
 
 

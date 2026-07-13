@@ -127,6 +127,52 @@ def test_completion_rate_hits_100_only_when_all_registrants_complete(tmp_path):
     assert s["completion_rate"] == 99                   # not a misleading 100%
 
 
+def test_respondent_target_overrides_completion_denominator(tmp_path):
+    """A manager-entered respondent count replaces the registered denominator and
+    counts walk-ins toward the numerator, so an activity whose real attendance the
+    roster never captured reads honestly."""
+    conn = _fresh(tmp_path)
+    eid, tok, f2, _f3 = _event_with_two_forms(conn)
+    conn.execute("UPDATE form_instance SET archived=1 WHERE id=?", (_f3,))  # single form
+    conn.commit()
+    # 2 registrants complete, plus 3 walk-ins -> 5 respondents in.
+    for i in range(2):
+        aid = st.add_attendee(conn, eid, name=f"R{i}", email=f"r{i}@x.com", consent_text="x")
+        st.record_response(conn, f2, [("B6", 6)], attendee_id=aid)
+    for _ in range(3):
+        st.record_response(conn, f2, [("B6", 5)])
+
+    # No override yet: the default everyone-who-took-part rate,
+    # (completed + unattributed) / (registered + unattributed) = (2 + 3)/(2 + 3) = 100.
+    s = st.event_registration_summary(conn, eid)
+    assert s["denominator_source"] == "registered"
+    assert s["respondent_target"] is None
+    assert s["completion_rate"] == 100
+
+    # Override to 10 expected: (2 completed + 3 walk-ins) / 10 -> 50%.
+    assert st.set_event_respondent_target(conn, eid, 10) == 10
+    assert st.get_event(conn, tok)["respondent_target"] == 10
+    s = st.event_registration_summary(conn, eid)
+    assert s["denominator_source"] == "target"
+    assert s["respondent_target"] == 10
+    assert s["completion_rate"] == 50           # (2 + 3) / 10
+
+    # Clearing goes back to the live registered count.
+    assert st.set_event_respondent_target(conn, eid, None) is None
+    assert st.get_event(conn, tok)["respondent_target"] is None
+    assert st.event_registration_summary(conn, eid)["denominator_source"] == "registered"
+
+
+def test_completion_rate_target_clamps_at_100(tmp_path):
+    # The helper never reads above 100 even if a target is later exceeded, and is
+    # None when there is no denominator to divide by.
+    assert st._completion_rate_target(5, 10) == 50
+    assert st._completion_rate_target(10, 10) == 100
+    assert st._completion_rate_target(13, 10) == 100        # later drift never > 100%
+    assert st._completion_rate_target(0, 10) == 0
+    assert st._completion_rate_target(4, 0) is None         # no target -> no rate
+
+
 def test_unattributed_responses_counted_separately(tmp_path):
     conn = _fresh(tmp_path)
     eid, _tok, f2, _f3 = _event_with_two_forms(conn)
@@ -368,6 +414,73 @@ def test_non_creator_cannot_close(manager, db_path):
     r = manager.post(f"/activities/{tok}/close", follow_redirects=False)
     assert r.status_code == 303
     assert _is_closed(db_path, tok) is False
+
+
+def _respondent_target(db_path, tok):
+    conn = st.connect(db_path)
+    try:
+        return st.get_event(conn, tok)["respondent_target"]
+    finally:
+        conn.close()
+
+
+def test_respondent_target_route_sets_clears_and_rejects(manager, db_path):
+    """The manage-page editor: a creator sets the override, a below-actual value is
+    rejected (nothing saved), a non-number is rejected, and blank clears it."""
+    tok = _seed_event(db_path, "manager@test.local")   # 1 registrant answered f2 (in progress)
+
+    # The editor is offered on the manage page.
+    assert "Number of respondents" in manager.get(f"/activities/{tok}/manage").text
+
+    # Set a valid target -> saved, and the Monitor labels the rate card.
+    r = manager.post(f"/activities/{tok}/respondents", data={"respondent_target": "40"},
+                     follow_redirects=False)
+    assert r.status_code == 303 and "#respondents" in r.headers["location"]
+    assert _respondent_target(db_path, tok) == 40
+    assert "of 40 expected" in manager.get(f"/monitor/{tok}").text
+
+    # Below the actual respondent count (0 here, since nobody has *completed* both
+    # forms and there are no walk-ins) is fine; a negative / non-number is rejected.
+    r = manager.post(f"/activities/{tok}/respondents", data={"respondent_target": "-5"},
+                     follow_redirects=False)
+    assert "err=badtarget" in r.headers["location"]
+    assert _respondent_target(db_path, tok) == 40      # unchanged
+    r = manager.post(f"/activities/{tok}/respondents", data={"respondent_target": "abc"},
+                     follow_redirects=False)
+    assert "err=badtarget" in r.headers["location"]
+    assert _respondent_target(db_path, tok) == 40      # unchanged
+
+    # Blank clears the override.
+    r = manager.post(f"/activities/{tok}/respondents", data={"respondent_target": ""},
+                     follow_redirects=False)
+    assert r.status_code == 303
+    assert _respondent_target(db_path, tok) is None
+
+
+def test_respondent_target_rejects_below_actual(manager, db_path):
+    """A target below the responses already collected is refused, so completion can
+    never be gamed above 100% at save time."""
+    tok = _seed_event(db_path, "manager@test.local", answer_all=True)  # 1 completed
+    r = manager.post(f"/activities/{tok}/respondents", data={"respondent_target": "0"},
+                     follow_redirects=False)
+    assert "err=targettoolow" in r.headers["location"]
+    assert _respondent_target(db_path, tok) is None    # nothing saved
+
+
+def test_non_creator_cannot_set_respondent_target(manager, db_path):
+    tok = _seed_event(db_path, "admin@test.local")     # someone else's event
+    r = manager.post(f"/activities/{tok}/respondents", data={"respondent_target": "20"},
+                     follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == f"/e/{tok}"
+    assert _respondent_target(db_path, tok) is None
+
+
+def test_admin_can_set_respondent_target_on_any_event(admin, db_path):
+    tok = _seed_event(db_path, "manager@test.local")
+    r = admin.post(f"/activities/{tok}/respondents", data={"respondent_target": "25"},
+                   follow_redirects=False)
+    assert r.status_code == 303
+    assert _respondent_target(db_path, tok) == 25
 
 
 def test_monitor_shows_open_until_and_closed(manager, db_path):

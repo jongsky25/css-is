@@ -93,7 +93,7 @@
     <div class="stat done"><div class="v" id="live-count">{{ summ.completed }}</div><div class="k">Completed CSS <span class="live-dot" id="live-dot"></span></div></div>
     <div class="stat part"><div class="v" id="stat-inprogress">{{ summ.in_progress }}</div><div class="k">In progress</div></div>
     <div class="stat"><div class="v" id="stat-notstarted">{{ summ.not_started }}</div><div class="k">Not started</div></div>
-    <div class="stat" title="Share of everyone who took part who finished: (Completed CSS + Not pre-registered) out of (Registered + Not pre-registered). Each walk-in / QR / paper response counts as a completed submission."><div class="v" id="stat-rate">{% if summ.completion_rate is not none %}{{ summ.completion_rate }}%{% else %}—{% endif %}</div><div class="k">Completion rate</div></div>
+    <div class="stat" title="{% if summ.denominator_source == 'target' %}Measured against the respondent count entered on the manage page (walk-in answers counted in).{% else %}Share of everyone who took part who finished: (Completed CSS + Not pre-registered) out of (Registered + Not pre-registered). Each walk-in / QR / paper response counts as a completed submission.{% endif %}"><div class="v" id="stat-rate">{% if summ.completion_rate is not none %}{{ summ.completion_rate }}%{% else %}—{% endif %}</div><div class="k">Completion rate<span id="stat-rate-basis">{% if summ.denominator_source == 'target' %} · of {{ summ.respondent_target }} expected{% endif %}</span></div></div>
     <div class="stat walkin" title="Walk-in / QR / paper responses that came in with no registration — not tied to a name above, but each one counts as a completed response in the completion rate."><div class="v" id="stat-unattributed">{{ summ.unattributed }}</div><div class="k">Not pre-registered</div></div>
   </div>
 
@@ -224,6 +224,7 @@
     var ipEl   = document.getElementById('stat-inprogress');
     var nsEl   = document.getElementById('stat-notstarted');
     var rateEl = document.getElementById('stat-rate');
+    var basisEl = document.getElementById('stat-rate-basis');
     var unaEl  = document.getElementById('stat-unattributed');
     var sse = new EventSource('/api/monitor/' + evToken + '/stream');
     // The stream carries the whole funnel, so every card moves together and the
@@ -238,6 +239,9 @@
         setText(ipEl,    d.in_progress);
         setText(nsEl,    d.not_started);
         setText(rateEl,  d.completion_rate == null ? '—' : d.completion_rate + '%');
+        if (basisEl) basisEl.textContent =
+          (d.denominator_source === 'target' && d.respondent_target != null)
+            ? ' · of ' + d.respondent_target + ' expected' : '';
         setText(unaEl,   d.unattributed);
         if (d.completed !== prev && d.completed != null) {
           countEl.classList.remove('ticked');

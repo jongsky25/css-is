@@ -509,6 +509,33 @@
     </script>
   </div>
 
+  <!-- override the completion-rate denominator with a manager-entered respondent count -->
+  <div class="mcard" id="respondents">
+    <h2>Number of respondents</h2>
+    <p class="hint">By default the completion rate on the Monitor is measured against the people who
+      <strong>registered</strong> through this activity's link. If you know the real number of respondents —
+      including walk-in, QR or paper answers the roster never captured — enter it here and it becomes the
+      <strong>denominator</strong> for the completion rate (walk-in answers are then counted toward it too).
+      <strong>Leave blank</strong> to go back to the live registered count. You can change this any time.</p>
+    {% if err == 'badtarget' %}<div class="flash warn">Enter a whole number of respondents (0 or more), or leave it blank to clear.</div>{% endif %}
+    {% if err == 'targettoolow' %}<div class="flash warn">That's fewer than the {{ reg_summary.completed + reg_summary.unattributed }} response(s) already in — the number of respondents can't be below what's already been collected.</div>{% endif %}
+    <form method="post" action="/activities/{{ ev.event_token }}/respondents" class="addform">
+      <div>
+        <label for="respondent_target">Respondents</label>
+        <input type="number" id="respondent_target" name="respondent_target" min="{{ reg_summary.completed + reg_summary.unattributed }}" step="1"
+               value="{{ ev.respondent_target if ev.respondent_target is not none else '' }}" placeholder="e.g. 45">
+      </div>
+      <div class="full">
+        <button class="btn" type="submit">Save</button>
+        {% if ev.respondent_target is not none %}
+        <span class="empty" style="margin-left:.6rem;">Currently: completion measured against <strong>{{ ev.respondent_target }}</strong> respondent(s). Clear the field and save to use the live registered count.</span>
+        {% else %}
+        <span class="empty" style="margin-left:.6rem;">Currently using the live registered count ({{ reg_summary.registered }} registered).</span>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
   <!-- stop accepting responses now (no need to wait for the window to elapse) -->
   <div class="mcard" id="danger" style="border-color:var(--red-ln);">
     <h2 style="color:var(--red);">Stop accepting responses</h2>

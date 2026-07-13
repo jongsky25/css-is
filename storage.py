@@ -420,6 +420,15 @@ def _add_missing_columns(conn):
         conn.execute("ALTER TABLE event ADD COLUMN raffle_enabled INTEGER NOT NULL DEFAULT 0")
     if ev_cols and "raffle_prize" not in ev_cols:
         conn.execute("ALTER TABLE event ADD COLUMN raffle_prize TEXT")
+    # respondent_target: optional manager-entered "number of respondents" for an
+    # activity, used as the completion-rate DENOMINATOR in place of the live
+    # registered count. NULL (the default) = no override -> the Monitor computes
+    # completion the way it always has (completed / registered). When set, the
+    # rate becomes (completed + walk-ins) / respondent_target, so an organizer who
+    # knows the real attendance (including QR/paper/walk-in respondents the roster
+    # never captured) can make the figure honest. See event_registration_summary.
+    if ev_cols and "respondent_target" not in ev_cols:
+        conn.execute("ALTER TABLE event ADD COLUMN respondent_target INTEGER")
     # Each raffle draw is recorded so a multi-prize event can exclude prior winners,
     # the result survives a page refresh, and the draws are auditable. response_id
     # is the winning entry; the claim code is derived from it (claim_code), never
@@ -703,7 +712,8 @@ _EVENT_COLS = """
                e.welcome_message, e.ending_message, e.modality,
                COALESCE(e.certificate_enabled, 0), e.signatory_rp_id, e.certificate_verb,
                e.event_kind, e.slug,
-               COALESCE(e.raffle_enabled, 0), e.raffle_prize, e.end_date
+               COALESCE(e.raffle_enabled, 0), e.raffle_prize, e.end_date,
+               e.respondent_target
         FROM event e
         LEFT JOIN org_unit ou ON ou.id = e.lead_org_id
 """
@@ -723,7 +733,8 @@ def _event_row(row):
             "slug": row[16],
             "raffle_enabled": bool(row[17]),
             "raffle_prize": row[18],
-            "end_date": row[19]}
+            "end_date": row[19],
+            "respondent_target": row[20]}
 
 
 def set_event_messages(conn, event_id, welcome, ending):
@@ -1494,13 +1505,24 @@ def event_registration_summary(conn, event_id):
     completion rate. unattributed = responses to this event's forms that carry no
     registrant (walk-in/QR/paper) — surfaced so the funnel never hides them.
 
-    Completion rate is computed over EVERYONE who took part, not just the
-    pre-registered roster: the denominator is the registered roster PLUS the
-    not-pre-registered responses, and each of those walk-in/QR/paper responses is
-    itself treated as a completed submission (it is already an answer that came in).
-    So the rate is (completed + unattributed) / (registered + unattributed) — a
-    walk-in helps rather than hurts, and 100% is reached exactly when no REGISTERED
-    person is left unfinished (the extra unattributed term cancels in that case)."""
+    completion_rate has TWO modes, driven by the activity's respondent_target:
+      - No override (respondent_target is NULL): the rate is computed over EVERYONE
+        who took part, not just the pre-registered roster — the denominator is the
+        registered roster PLUS the not-pre-registered responses, and each of those
+        walk-in/QR/paper responses is itself treated as a completed submission (it
+        is already an answer that came in). So it is
+        (completed + unattributed) / (registered + unattributed): a walk-in helps
+        rather than hurts, and 100% is reached exactly when no REGISTERED person is
+        left unfinished (the extra unattributed term cancels in that case).
+      - Override set: the manager's entered respondent count is the denominator and
+        the numerator still counts walk-ins — (completed + unattributed) / target —
+        so an activity whose real attendance the roster never captured still reads
+        honestly. denominator_source tells the UI which mode is live.
+
+    NOTE (multi-form activities): 'unattributed' is a raw response-row count, so a
+    walk-in who answers two forms counts as two. For the common single-form
+    activity it equals people; treat the override numerator as approximate when an
+    activity has several forms."""
     people = event_attendees_status(conn, event_id)
     registered = len(people)
     completed = sum(1 for p in people if p["status"] == "completed")
@@ -1511,14 +1533,25 @@ def event_registration_summary(conn, event_id):
            JOIN event_form ef ON ef.form_instance_id = r.form_instance_id
            WHERE ef.event_id = ? AND r.attendee_id IS NULL""",
         (event_id,)).fetchone()[0]
+    target = conn.execute(
+        "SELECT respondent_target FROM event WHERE id = ?", (event_id,)).fetchone()[0]
+    if target:
+        completion_rate = _completion_rate_target(completed + unattributed, target)
+        denominator_source = "target"
+    else:
+        # Everyone who took part: walk-ins fold into both sides (see docstring).
+        completion_rate = _completion_rate(completed + unattributed,
+                                           registered + unattributed)
+        denominator_source = "registered"
     return {
         "n_forms": _event_form_count(conn, event_id),
         "registered": registered, "completed": completed,
         "in_progress": in_progress, "not_started": not_started,
         "answered_any": completed + in_progress,
-        "completion_rate": _completion_rate(completed + unattributed,
-                                            registered + unattributed),
+        "completion_rate": completion_rate,
         "unattributed": unattributed,
+        "respondent_target": target,
+        "denominator_source": denominator_source,
     }
 
 
@@ -1534,6 +1567,17 @@ def _completion_rate(done, total):
     if done >= total:
         return 100
     return min(99, round(done * 100 / total))
+
+
+def _completion_rate_target(numerator, target):
+    """Completion percent against a manager-entered respondent target. None when
+    the target is falsy (no denominator to divide by). Clamped to [0, 100] as a
+    defensive net: the save path rejects a target below the current respondent
+    count, but later responses can still push the numerator past a once-valid
+    target, and the card must never read above 100%."""
+    if not target:
+        return None
+    return min(100, round(numerator * 100 / target))
 
 
 def attendee_response_detail(conn, event_id, attendee_id):
@@ -3105,6 +3149,22 @@ def set_event_window(conn, event_id, open_at, close_at):
     """, (open_at or None, close_at or None, event_id))
     conn.commit()
     return cur.rowcount
+
+
+def set_event_respondent_target(conn, event_id, value):
+    """Set (or clear) an activity's manager-entered respondent count — the override
+    denominator for its completion rate (see event_registration_summary). A falsy /
+    None value clears the override (NULL), so the Monitor falls back to the live
+    registered count; a positive int is stored as-is. Returns the value stored
+    (int or None). The caller is responsible for rejecting a target below the
+    current respondent count — this setter only persists what it is given."""
+    stored = int(value) if value else None
+    if stored is not None and stored <= 0:
+        stored = None
+    conn.execute("UPDATE event SET respondent_target = ? WHERE id = ?",
+                 (stored, event_id))
+    conn.commit()
+    return stored
 
 
 def set_event_dates(conn, event_id, event_date, end_date):
