@@ -93,8 +93,8 @@
     <div class="stat done"><div class="v" id="live-count">{{ summ.completed }}</div><div class="k">Completed CSS <span class="live-dot" id="live-dot"></span></div></div>
     <div class="stat part"><div class="v" id="stat-inprogress">{{ summ.in_progress }}</div><div class="k">In progress</div></div>
     <div class="stat"><div class="v" id="stat-notstarted">{{ summ.not_started }}</div><div class="k">Not started</div></div>
-    <div class="stat"><div class="v" id="stat-rate">{% if summ.completion_rate is not none %}{{ summ.completion_rate }}%{% else %}—{% endif %}</div><div class="k">Completion rate</div></div>
-    <div class="stat walkin" title="Walk-in / QR / paper responses that came in with no registration — counted separately from the registered funnel."><div class="v" id="stat-unattributed">{{ summ.unattributed }}</div><div class="k">Not pre-registered</div></div>
+    <div class="stat" title="Share of everyone who took part who finished: (Completed CSS + Not pre-registered) out of (Registered + Not pre-registered). Each walk-in / QR / paper response counts as a completed submission."><div class="v" id="stat-rate">{% if summ.completion_rate is not none %}{{ summ.completion_rate }}%{% else %}—{% endif %}</div><div class="k">Completion rate</div></div>
+    <div class="stat walkin" title="Walk-in / QR / paper responses that came in with no registration — not tied to a name above, but each one counts as a completed response in the completion rate."><div class="v" id="stat-unattributed">{{ summ.unattributed }}</div><div class="k">Not pre-registered</div></div>
   </div>
 
   <div class="toolbar">
@@ -104,7 +104,7 @@
     <span class="reglink">Registration link: <code>{{ base_url }}/e/{{ ev.event_token }}</code></span>
   </div>
 
-  <p class="note">“Completed” means the participant answered all {{ summ.n_forms }} feedback form{{ '' if summ.n_forms == 1 else 's' }} for this activity.{% if summ.unattributed %} The “Not pre-registered” count is walk-in / QR / paper responses with no registrant — collected, but not tied to anyone above.{% endif %}</p>
+  <p class="note">“Completed” means the participant answered all {{ summ.n_forms }} feedback form{{ '' if summ.n_forms == 1 else 's' }} for this activity.{% if summ.unattributed %} The “Not pre-registered” count is walk-in / QR / paper responses with no registrant — not tied to anyone above, but each one counts as a completed response, so the completion rate is figured out of everyone who took part (registered plus these).{% endif %} The completion rate reaches 100% only when every registered person has finished.</p>
 
   {% if not people %}
     <div class="empty">No one has registered for this activity yet. Share the registration link above so participants can sign in and answer the CSS.</div>

@@ -17,10 +17,27 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "1.93"
+APP_VERSION = "1.94"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "1.94",
+        "date": "July 13, 2026",
+        "summary": "The activity Monitor’s “Completion rate” now counts everyone who took part — the people who answered without pre-registering are included, not set aside.",
+        "changes": [
+            "On an activity’s Monitor page, “Completion rate” used to look only at "
+            "the people who pre-registered. It now measures how many of EVERYONE who "
+            "took part finished: the walk-in / QR / paper responses (the “Not "
+            "pre-registered” box) are added in, and each of them counts as a "
+            "completed response. So a busy activity with lots of walk-ins now reads "
+            "a fairer, higher number instead of being pulled down by people the old "
+            "rate ignored.",
+            "The rate still reaches 100% only when every registered person has "
+            "actually finished — extra walk-in answers help the rate but can’t push "
+            "it to a misleading 100% on their own.",
+        ],
+    },
     {
         "version": "1.93",
         "date": "July 9, 2026",
