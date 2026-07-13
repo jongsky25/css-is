@@ -81,7 +81,7 @@
             <div class="k">Registered</div>
           {% else %}
             <div class="v">{% if e.completion_rate is not none %}{{ e.completion_rate }}%{% else %}—{% endif %}</div>
-            <div class="k">CSS done</div>
+            <div class="k">CSS done{% if e.denominator_source == 'target' %} · of {{ e.respondent_target }}{% endif %}</div>
           {% endif %}
         </div>
       </div>

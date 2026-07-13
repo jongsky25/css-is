@@ -17,10 +17,29 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "1.94"
+APP_VERSION = "1.95"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "1.95",
+        "date": "July 13, 2026",
+        "summary": "You can now enter the real number of respondents for an activity, so its completion rate is measured against the true attendance instead of only the people who registered online.",
+        "changes": [
+            "On an activity's Manage page there's a new “Number of respondents” box. "
+            "Fill it in when you know how many people actually took part — including "
+            "walk-in, QR or paper answers that never registered through the link — and "
+            "the Monitor's completion rate is measured against that number instead of "
+            "the online registration count. Leave it blank to go back to counting "
+            "against registrations, and you can change it any time.",
+            "When you've entered a number, the Monitor's completion-rate box shows "
+            "“of N expected” so everyone can see it's measured against the real "
+            "attendance, and walk-in answers are counted toward it.",
+            "You can't enter a number lower than the responses already collected, so "
+            "the completion rate can never be pushed above 100%. Section managers can "
+            "set this on their own activities; administrators on any activity.",
+        ],
+    },
     {
         "version": "1.94",
         "date": "July 13, 2026",
