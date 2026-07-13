@@ -91,6 +91,11 @@ def test_completed_never_exceeds_registered_with_walk_ins(tmp_path):
     s = st.event_registration_summary(conn, eid)
     assert s["completed"] == 1 and s["registered"] == 2
     assert s["completed"] <= s["registered"]         # the invariant, always
+    # Completion rate counts everyone who took part: each of the 4 walk-ins is a
+    # completed response, so it is (completed + unattributed) / (registered +
+    # unattributed) = (1 + 4) / (2 + 4) = 5/6 -> 83%, and always <= 100.
+    assert s["unattributed"] == 4
+    assert s["completion_rate"] == 83
     assert s["completion_rate"] <= 100
     # The old live value would have shown 6 here (2 attributed + 4 walk-in),
     # i.e. more "Completed" than "Registered". The funnel figure cannot.
@@ -130,7 +135,37 @@ def test_unattributed_responses_counted_separately(tmp_path):
     s = st.event_registration_summary(conn, eid)
     assert s["registered"] == 0
     assert s["unattributed"] == 1
-    assert s["completion_rate"] is None      # no registrants -> no rate
+    # No registrants, but one walk-in that answered -> everyone who took part is
+    # done, so (0 + 1) / (0 + 1) = 100%. The rate is only None with nobody at all.
+    assert s["completion_rate"] == 100
+
+
+def test_completion_rate_includes_not_pre_registered(tmp_path):
+    """The completion rate folds the not-pre-registered responses into BOTH the
+    numerator and the denominator: each walk-in / QR / paper answer counts as a
+    completed response out of everyone who took part."""
+    conn = _fresh(tmp_path)
+    eid, _tok, f2, _f3 = _event_with_two_forms(conn)
+    conn.execute("UPDATE form_instance SET archived=1 WHERE id=?", (_f3,))  # single form
+    conn.commit()
+    a = st.add_attendee(conn, eid, name="Ana", email="a@x.com", consent_text="x")
+    st.record_response(conn, f2, [("B6", 6)], attendee_id=a)                 # completed
+    st.add_attendee(conn, eid, name="Cy", email="c@x.com", consent_text="x")  # not started
+    st.record_response(conn, f2, [("B6", 5)])                               # 1 walk-in
+
+    s = st.event_registration_summary(conn, eid)
+    assert s["registered"] == 2 and s["completed"] == 1 and s["unattributed"] == 1
+    # (completed + unattributed) / (registered + unattributed) = 2/3 -> 67%.
+    assert s["completion_rate"] == 67
+
+    # 100% needs every REGISTERED person finished — walk-ins can't push it there
+    # on their own. Cy finishing (all registrants done) makes it (2 + 1)/(2 + 1).
+    st.record_response(conn, f2, [("B6", 6)],
+                       attendee_id=next(p["id"] for p in st.event_attendees_status(conn, eid)
+                                        if p["status"] == "not_started"))
+    s2 = st.event_registration_summary(conn, eid)
+    assert s2["completed"] == 2 and s2["registered"] == 2
+    assert s2["completion_rate"] == 100
 
 
 def test_archived_form_drops_out_of_denominator(tmp_path):
