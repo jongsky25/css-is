@@ -617,6 +617,16 @@ def _comma(n):
 templates.env.filters["comma"] = _comma
 
 
+def _slugify(text):
+    """Plain-ASCII, hyphen-separated filename stem for a QR download, e.g.
+    'Combined QR (one page — rate every speaker)' -> 'combined-qr-one-page-rate-every-speaker'."""
+    slug = re.sub(r"[^a-z0-9]+", "-", (text or "").lower()).strip("-")
+    return slug or "qr"
+
+
+templates.env.filters["slugify"] = _slugify
+
+
 def _humandate(d):
     """Display an ISO date as 'June 16, 2026' — month spelled out so dd/mm is
     never ambiguous. Accepts 'YYYY-MM-DD' or a longer 'YYYY-MM-DDTHH:MM' string

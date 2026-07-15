@@ -17,6 +17,7 @@
     <div style="font-weight:600; margin-bottom:.6rem;">{{ qr.title }}</div>
     <img src="{{ qr.img }}" alt="Walk-in feedback QR code" style="width:240px; height:240px; image-rendering:pixelated;">
     <div class="mono small" style="margin-top:.75rem; word-break:break-all;"><a href="{{ url }}">{{ url }}</a></div>
+    <div class="noprint" style="margin-top:.6rem;"><a class="btn ghost" href="{{ qr.img }}" download="qr-walkin.png">⤓ Download QR</a></div>
   </div>
 
   <div class="panel tint-blue" style="color:var(--accent-ink); font-size:.9rem;">
