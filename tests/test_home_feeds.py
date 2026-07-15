@@ -203,6 +203,86 @@ def test_ongoing_inline_archive_bureau_event_archives_all_forms(admin, db_path):
         conn.commit(); conn.close()
 
 
+def test_instance_archive_restore_round_trip_bureau_event(admin, db_path):
+    """The inline archive route also supports restore=1 for a bureau event: archiving
+    (as above) hides every bundled form, and posting restore=1 back at the same id
+    brings all of them back — closing the gap where an event archived from the
+    Ongoing feed or Recent activities had no way to be undone (spot-feedback #67)."""
+    conn = st.connect(db_path)
+    today = st.today_local(conn)
+    f2 = conn.execute(
+        "INSERT INTO form_instance(survey_type, form, qr_token, event_date, topic, "
+        "venue, created_by, close_at) VALUES (2,'F2',?,?,?,?,?,?)",
+        ("probe_restore_f2", today, "Probe Restore Event", "Probe Hall",
+         "probe@doh.gov.ph", today + "T23:59")).lastrowid
+    f3 = conn.execute(
+        "INSERT INTO form_instance(survey_type, form, qr_token, event_date, topic, "
+        "created_by, close_at) VALUES (3,'F3',?,?,?,?,?)",
+        ("probe_restore_f3", today, "Probe Restore Speaker",
+         "probe@doh.gov.ph", today + "T23:59")).lastrowid
+    ev = st.create_event(conn, "Probe Restore Event", today, venue="Probe Hall",
+                         form_instance_ids=[f2, f3])
+    conn.commit(); conn.close()
+    try:
+        p = admin.post(f"/activities/instance/{f2}/archive", follow_redirects=False)
+        assert p.status_code == 303 and p.headers["location"] == "/"
+        conn = st.connect(db_path)
+        rows = dict(conn.execute(
+            "SELECT id, archived FROM form_instance WHERE id IN (?,?)", (f2, f3)).fetchall())
+        conn.close()
+        assert rows[f2] == 1 and rows[f3] == 1
+
+        # It's now visible on the Archived activities page — previously event-bundled
+        # archives were invisible there (only standalone forms showed).
+        r = admin.get("/activities/archived")
+        assert "Probe Restore Event" in r.text
+        assert f"/activities/instance/{f2}/archive" in r.text
+
+        p2 = admin.post(f"/activities/instance/{f2}/archive", data={"restore": "1"},
+                        follow_redirects=False)
+        assert p2.status_code == 303 and p2.headers["location"] == "/activities/archived"
+        conn = st.connect(db_path)
+        rows = dict(conn.execute(
+            "SELECT id, archived FROM form_instance WHERE id IN (?,?)", (f2, f3)).fetchall())
+        conn.close()
+        assert rows[f2] == 0 and rows[f3] == 0, "restore must cover every bundled form"
+    finally:
+        conn = st.connect(db_path)
+        conn.execute("DELETE FROM event_form WHERE event_id=?", (ev["id"],))
+        conn.execute("DELETE FROM event WHERE id=?", (ev["id"],))
+        conn.execute("DELETE FROM form_instance WHERE id IN (?,?)", (f2, f3))
+        conn.commit(); conn.close()
+
+
+def test_recent_activities_strip_offers_archive_for_bureau_event(admin, db_path):
+    """'Recent activities' previously offered an inline Archive control only for
+    standalone forms; a full bureau event now gets one too — a bureau event drops
+    out of the Ongoing feed at the end of its event day (unless close_at is set),
+    so that used to be the ONLY window to archive it (spot-feedback #67: a same-day
+    duplicate with no responses had no reachable Archive button once it aged out)."""
+    conn = st.connect(db_path)
+    today = st.today_local(conn)
+    f2 = conn.execute(
+        "INSERT INTO form_instance(survey_type, form, qr_token, event_date, topic, "
+        "venue, created_by) VALUES (2,'F2',?,?,?,?,?)",
+        ("probe_recent_f2", today, "Probe Recent Event", "Probe Hall",
+         "admin@test.local")).lastrowid
+    ev = st.create_event(conn, "Probe Recent Event", today, venue="Probe Hall",
+                         form_instance_ids=[f2], created_by="admin@test.local")
+    conn.commit(); conn.close()
+    try:
+        r = admin.get("/")
+        assert r.status_code == 200
+        assert "Probe Recent Event" in r.text
+        assert f"/activities/instance/{f2}/archive" in r.text
+    finally:
+        conn = st.connect(db_path)
+        conn.execute("DELETE FROM event_form WHERE event_id=?", (ev["id"],))
+        conn.execute("DELETE FROM event WHERE id=?", (ev["id"],))
+        conn.execute("DELETE FROM form_instance WHERE id=?", (f2,))
+        conn.commit(); conn.close()
+
+
 def test_ongoing_inline_archive_requires_manage_permission(viewer, db_path):
     """A viewer (no create_activity) must not be able to archive via the inline route."""
     conn = st.connect(db_path)

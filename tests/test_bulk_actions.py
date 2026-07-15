@@ -111,3 +111,70 @@ def test_archived_page_renders_select_to_restore(admin):
     assert r.status_code == 200
     assert 'id="restoreForm"' in r.text
     assert "Select to restore" in r.text
+
+
+# ── Slice C: bulk restore of a bundled bureau event ────────────────────────
+
+def _make_archived_bureau_event(app_mod, owner):
+    """A throwaway archived bureau event (F2 review + one F3 speaker), owned by
+    `owner`. Returns (f2_id, f3_id, event_id)."""
+    conn = st.connect(app_mod.DB); st.init_db(conn)
+    today = st.today_local(conn)
+    f2 = conn.execute(
+        "INSERT INTO form_instance(survey_type, form, qr_token, event_date, topic, "
+        "created_by) VALUES (2,'F2',?,?,?,?)",
+        ("bulk_evt_f2", today, "Bulk-restore test event", owner)).lastrowid
+    f3 = conn.execute(
+        "INSERT INTO form_instance(survey_type, form, qr_token, event_date, topic, "
+        "created_by) VALUES (3,'F3',?,?,?,?)",
+        ("bulk_evt_f3", today, "Bulk-restore test speaker", owner)).lastrowid
+    ev = st.create_event(conn, "Bulk-restore test event", today,
+                         form_instance_ids=[f2, f3], created_by=owner)
+    st.set_form_archived(conn, f2, archived=True)
+    st.set_form_archived(conn, f3, archived=True)
+    conn.commit(); conn.close()
+    return f2, f3, ev["id"]
+
+
+def _archived_flags(app_mod, *fids):
+    conn = st.connect(app_mod.DB)
+    try:
+        return [st.form_archive_info(conn, fid)["archived"] for fid in fids]
+    finally:
+        conn.close()
+
+
+def test_bulk_restore_bureau_event_restores_every_bundled_form(manager, app_mod):
+    """Ticking the event's representative (F2) id restores the whole bundle, gated
+    on create_activity — a section_manager may do this for any event, mirroring the
+    single-item instance-archive route's permission model (no per-creator check)."""
+    f2, f3, ev_id = _make_archived_bureau_event(app_mod, "someone-else@test.local")
+    try:
+        r = manager.post("/activities/archived/bulk", data={"ids": str(f2)},
+                         follow_redirects=False)
+        assert r.status_code == 303
+        assert "/activities/archived?ok=" in r.headers["location"]
+        assert _archived_flags(app_mod, f2, f3) == [False, False]
+    finally:
+        conn = st.connect(app_mod.DB)
+        conn.execute("DELETE FROM event_form WHERE event_id=?", (ev_id,))
+        conn.execute("DELETE FROM event WHERE id=?", (ev_id,))
+        conn.execute("DELETE FROM form_instance WHERE id IN (?,?)", (f2, f3))
+        conn.commit(); conn.close()
+
+
+def test_bulk_restore_bureau_event_requires_manage_event(viewer, app_mod):
+    """A viewer (no manage_event/create_activity capability) is refused before any
+    row is even looked at, via the same base gate every archived-page action uses."""
+    f2, f3, ev_id = _make_archived_bureau_event(app_mod, "someone-else@test.local")
+    try:
+        r = viewer.post("/activities/archived/bulk", data={"ids": str(f2)},
+                        follow_redirects=False)
+        assert r.status_code == 403
+        assert _archived_flags(app_mod, f2, f3) == [True, True]
+    finally:
+        conn = st.connect(app_mod.DB)
+        conn.execute("DELETE FROM event_form WHERE event_id=?", (ev_id,))
+        conn.execute("DELETE FROM event WHERE id=?", (ev_id,))
+        conn.execute("DELETE FROM form_instance WHERE id IN (?,?)", (f2, f3))
+        conn.commit(); conn.close()

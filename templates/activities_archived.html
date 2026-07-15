@@ -32,9 +32,9 @@
 </style>
 
 {{ page_header("Archived activities") }}
-<p class="lede">Standalone activities you've put away — they're hidden from every list, feed and count, but
-  nothing was deleted. Restore any of them to bring it back, fully intact.{% if is_admin %} As an admin you see
-  every archived standalone activity, whoever created it.{% endif %}</p>
+<p class="lede">Activities you've put away — standalone forms and full bureau/outside events alike — are hidden
+  from every list, feed and count, but nothing was deleted. Restore any of them to bring it back, fully intact.
+  {% if is_admin %} As an admin you see every archived activity, whoever created it.{% endif %}</p>
 
 {% if ok %}<div class="flash ok" role="status">{{ ok }}</div>{% endif %}
 {% if err %}<div class="flash err" role="alert">{{ err }}</div>{% endif %}
@@ -64,7 +64,8 @@
         <div class="a-meta">{% if a.modality == 'online' %}<span class="badge blue">Online</span> {% endif %}{{ a.kind }}{% if a.venue and a.modality != 'online' %} · {{ a.venue }}{% endif %}</div>
       </span>
       <span class="a-stat"><b>{{ a.responses }}</b> {{ 'response' if a.responses == 1 else 'responses' }}</span>
-      <form class="a-restore" method="post" action="/activities/form/{{ a.fid }}/archive">
+      <form class="a-restore" method="post"
+            action="/activities/{{ 'form' if a.archivable else 'instance' }}/{{ a.fid }}/archive">
         <input type="hidden" name="restore" value="1">
         <button type="submit" title="Bring this activity back into your lists">Restore</button>
       </form>
@@ -106,7 +107,7 @@
 </script>
 {% else %}
 <div class="panel">
-  {{ empty_state("No archived activities yet.", hint="When you archive a standalone activity from your home page, it lands here so you can restore it later.", icon="📦") }}
+  {{ empty_state("No archived activities yet.", hint="When you archive an activity from your home page, it lands here so you can restore it later.", icon="📦") }}
 </div>
 {% endif %}
 {% endblock %}

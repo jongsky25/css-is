@@ -2899,9 +2899,10 @@ def activities_by_creator(conn, created_by, limit=6, archived=0, all_creators=Fa
     before the created_by column existed are unattributed and never appear.
 
     `archived` selects which side to list: 0 = the live strip (default), 1 = the
-    Archived page. Each row also carries `fid` (the form id) and `archivable` (True
-    only for a standalone form — no event — which is the only shape the per-form
-    archive route accepts; bureau events archive at the event level).
+    Archived page. Each row also carries `fid` (the form id), `archivable` (True
+    only for a standalone form — no event — the only shape the per-form archive
+    route accepts), and `has_event` (True for a bureau/outside event, which
+    archives/restores at the event level via the per-instance route instead).
 
     `all_creators` (admins only) drops the creator scope and lists every creator's
     activities — including the historical rows with no `created_by` — so an admin can
@@ -2960,9 +2961,9 @@ def activities_by_creator(conn, created_by, limit=6, archived=0, all_creators=Fa
              "event_kind": kind_ev, "responses": r[12],
              "open": (r[7] is None) or (now <= r[7]),
              # The per-form archive route only accepts standalone forms (no event);
-             # bureau/outside events archive at the event level. `fid` is the form id
-             # the route keys on.
-             "fid": r[0], "archivable": (tok is None)}
+             # bureau/outside events archive at the event level via the per-instance
+             # route instead (`has_event`). `fid` is the form id either route keys on.
+             "fid": r[0], "archivable": (tok is None), "has_event": tok is not None}
         # The usable link + its tooltip: a bureau event opens its registration/CSS
         # monitor; an outside activity opens its (registration-free) manage page; a
         # standalone form opens its public rating page.

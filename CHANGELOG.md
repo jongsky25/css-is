@@ -1,5 +1,51 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-15 (v1.96 — archive/restore reach bureau & outside events, not just standalone forms)
+
+Prompted by spot-feedback #67: a same-day duplicate bureau event (created by mistake, zero
+responses) had no reachable Archive button. The only inline archive on the Ongoing feed
+(`/activities/instance/<fid>/archive`, v1.74) requires the activity still be in that feed —
+which a bureau event with no `close_at` leaves at the end of its event day — and the "Your
+recent activities" strip's inline archive (`/activities/form/<fid>/archive`) explicitly
+refuses anything with an event record. Once an event ages out of Ongoing there was **no
+one-click Archive control left anywhere** (its own manage page's Archive button is
+`event_kind == 'outside'`-only). Separately, an event archived via the Ongoing feed or the
+Activities-page bulk action had **no restore path in the UI at all** — `/activities/archived`
+and its bulk-restore route both filtered to standalone forms only, even though the bulk
+archive action's own confirmation message claims "An admin can restore them."
+
+- **`storage.py` `activities_by_creator`** — new `has_event` field per row (`tok is not None`),
+  alongside the existing `archivable` (unchanged: standalone-only, drives the per-form route).
+  Lets a template pick the right archive/restore route per row shape.
+- **`app.py` `activity_inline_archive`** (`POST /activities/instance/{fid}/archive`) — now
+  accepts `restore=1`, mirroring every other archive route. Restore expands to the full
+  event bundle exactly like the archive direction does, via `st.set_form_archived`. Kept the
+  existing permission model (`create_activity`, no per-creator ownership check) for both
+  directions, since that already matched production behavior for archiving a bureau/outside
+  event from the Ongoing feed.
+- **`app.py` `/activities/archived`** (GET) — now lists rows where `archivable` **or**
+  `has_event` is true, so event-bundled archives are finally visible and restorable.
+- **`app.py` `/activities/archived/bulk`** — extended to detect `info["has_event"]` per ticked
+  id and, when set, expand to the event's full form bundle and restore it under the
+  `create_activity` gate; standalone rows keep the exact prior ownership-scoped behavior
+  (creator or admin) so `test_bulk_restore_skips_other_owners_form` still holds.
+- **`templates/home.html`** — "Your recent activities" now renders an Archive button for
+  event-bundled rows too (`a.has_event`, posting to the instance route with the same confirm
+  dialog the Ongoing feed uses), not only standalone ones (`a.archivable`, unchanged route).
+  Copy on both variants of the feed subtitle updated to drop "standalone".
+- **`templates/activities_archived.html`** — per-row Restore posts to
+  `/activities/form/<fid>/archive` for standalone rows (unchanged) or
+  `/activities/instance/<fid>/archive` for event-bundled ones (new); page copy no longer says
+  "Standalone activities."
+- **Tests** — `tests/test_home_feeds.py`: restore round-trip for a bureau event via the
+  instance route (archive → appears on Archived page → restore → both bundled forms come
+  back), and a new "Recent activities" render test confirming a bureau event gets an Archive
+  button. `tests/test_bulk_actions.py`: bulk-restore of a bundled event (both forms come back,
+  gated on `manage_event`/`create_activity`). Full existing suite green (589 passed; the one
+  `test_backups.py` failure and the `test_csm_official.py` collection error are pre-existing
+  environment artifacts unrelated to this change — reproduced identically with these changes
+  stashed out).
+
 ## 2026-07-13 (v1.95 — manager-entered respondent count as the completion-rate denominator)
 Builds on v1.94 (which folds the not-pre-registered responses into the rate). A section manager (on activities they created) or an admin (on any) can now **override the completion-rate denominator** with the real number of respondents, instead of being tied to the online-registration count. Even after v1.94 counts walk-ins, the denominator is still `registered + unattributed` — which misses attendees who took part but neither pre-registered nor left an attributable response; an organizer who knows the true headcount can now set it directly.
 
