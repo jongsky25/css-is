@@ -1,5 +1,33 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-15 (v1.97 — live "you already made this" heads-up on /create)
+
+Second half of the spot-feedback #67 fix. Root cause of the duplicate event that
+prompted v1.96: `POST /create` had zero duplicate-submission protection — no
+client-side disable-on-submit guard, no idempotency token, no server-side check.
+The two live duplicate pairs (26 minutes and 3 minutes apart, same creator, same
+title/date/venue/organizer) don't look like a reflexive double-click; more likely
+the creator didn't realize the first save had already succeeded and re-ran Create
+from scratch.
+
+Considered blocking the second submit server-side with an interstitial "are you
+sure?" page, but that changes what `POST /create` does on a matching title+date —
+and the existing test suite (test_modality.py, test_date_range.py,
+test_registration_dedup.py, test_event_e.py, test_certificate.py,
+test_date_handling.py) has ~25 cases across 6 files that legitimately recreate an
+identically-titled/dated activity under the same manager fixture within one test
+session (session-scoped shared DB), which is indistinguishable from the real
+duplicate case by title+date+creator alone. Blocking broke all of them. Went with
+a **live, non-blocking** check instead: it warns, it never blocks Save, so
+`POST /create`'s behavior is completely unchanged and every existing test still
+holds — including new tests that pin this down explicitly.
+
+- **`storage.py`** — new `find_recent_duplicate_event(conn, title, event_date, created_by, within_hours=6)`: the most recent event with the same title (case/space-insensitive) and date, made by the SAME creator inside the lookback window. Returns `{id, event_token, created_at, event_kind, responses}` or `None`.
+- **`app.py`** — new `GET /create/check-duplicate?activity_name=&event_date=` (JSON, login-required via the existing middleware): calls the storage helper for the signed-in user and returns `{"duplicate": null}` or the match with a human-readable timestamp (`_humandt`). Read-only, no side effects.
+- **`templates/form_create.html`** — new `#dupWarn` note box (hidden by default) and `checkDuplicate()`: a 500ms-debounced fetch fired on `activity_name` input / `event_date` change. On a hit it shows when the existing one was made, its response count, and a link straight to it (`/monitor/<token>` for a bureau event, `/activities/<token>/manage` for an outside one). Never touches form submission.
+- **`static/css/app.css`** — `.dup-warn`, amber-toned (a heads-up, not the red `.errors` block) since the form is otherwise valid and submitting is still allowed.
+- **Tests** — new `tests/test_create_duplicate_warning.py`: the storage matcher (same-creator hit, different-creator miss, different-date miss, outside-lookback-window miss), the JSON endpoint (hit, miss, login-required), and — the key regression guard — `test_create_still_allows_a_genuine_second_activity_with_the_same_name` locking in that `/create` itself is unchanged. Full suite green (589 passed; the same pre-existing `test_backups.py` failure and `test_csm_official.py` collection error as v1.96, both unrelated).
+
 ## 2026-07-15 (v1.96 — archive/restore reach bureau & outside events, not just standalone forms)
 
 Prompted by spot-feedback #67: a same-day duplicate bureau event (created by mistake, zero

@@ -17,10 +17,25 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "1.96"
+APP_VERSION = "1.97"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "1.97",
+        "date": "July 15, 2026",
+        "summary": "The create-activity screen now warns you if you already made an activity with that same name and date, before you save a duplicate.",
+        "changes": [
+            "As you type the activity name and date on the create screen, it "
+            "checks whether you already created an activity with that same name "
+            "on that same date recently, and shows a note with a link straight to "
+            "it — so an accidental double-click or a lost confirmation doesn't "
+            "quietly leave a second, empty copy behind.",
+            "This is only a heads-up: it never blocks Save. If it really is a "
+            "second, separate activity, just carry on — nothing changes about "
+            "how creating an activity works.",
+        ],
+    },
     {
         "version": "1.96",
         "date": "July 15, 2026",

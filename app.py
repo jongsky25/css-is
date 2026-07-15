@@ -2893,7 +2893,10 @@ async def create_survey(request: Request):
     if open_at and close_at and close_at <= open_at:
         errors.append("The entry window must close after it opens.")
 
-    if errors:
+    def _rerender_create_form(extra_ctx, status_code=400):
+        # Echo everything the user typed back into the form so a validation error
+        # never wipes their entries. Keep raw strings (not the None-coerced values)
+        # and preserve every resource-person row, including ones still being filled.
         conn = get_conn()
         try:
             _, blhsd_name, _ = st.get_or_create_blhsd(conn)
@@ -2905,9 +2908,6 @@ async def create_survey(request: Request):
             sections = st.list_org_units(conn2, level="section")
         finally:
             conn2.close()
-        # Echo everything the user typed back into the form so a validation error
-        # never wipes their entries. Keep raw strings (not the None-coerced values)
-        # and preserve every resource-person row, including ones still being filled.
         form = {
             "event_type": event_type,
             "section_id": section_id,
@@ -2923,11 +2923,14 @@ async def create_survey(request: Request):
             "speakers": list(zip(rp_ids, topics)),
         }
         dmin, dmax = _event_date_bounds()
-        return templates.TemplateResponse(request, "form_create.html", {
-            "blhsd_name": blhsd_name,
-            "resource_persons": rps, "errors": errors, "sections": sections,
-            "form": form, "date_min": dmin, "date_max": dmax,
-        }, status_code=400)
+        ctx = {"blhsd_name": blhsd_name, "resource_persons": rps, "sections": sections,
+               "form": form, "date_min": dmin, "date_max": dmax}
+        ctx.update(extra_ctx)
+        return templates.TemplateResponse(request, "form_create.html", ctx,
+                                          status_code=status_code)
+
+    if errors:
+        return _rerender_create_form({"errors": errors})
 
     conn = get_conn()
     try:
@@ -3031,6 +3034,27 @@ async def create_survey(request: Request):
         # closing messages, shared resources, certificate) so it isn't orphaned.
         "event_token": event_token,
     })
+
+
+@app.get("/create/check-duplicate")
+def create_check_duplicate(request: Request, activity_name: str = "", event_date: str = ""):
+    """Live probe behind the /create screen's duplicate heads-up (spot-feedback
+    #67: a same-day duplicate bureau event, created by mistake, left an empty
+    twin with no responses). Read-only, JSON, purely informational — it never
+    blocks Save, it only tells the create screen whether to show a "you already
+    made this" note. See storage.find_recent_duplicate_event for the match rule."""
+    conn = get_conn()
+    try:
+        dup = st.find_recent_duplicate_event(
+            conn, activity_name, event_date, request.state.user["username"])
+    finally:
+        conn.close()
+    if not dup:
+        return JSONResponse({"duplicate": None})
+    return JSONResponse({"duplicate": {
+        "event_token": dup["event_token"], "event_kind": dup["event_kind"],
+        "responses": dup["responses"], "created_at_human": _humandt(dup["created_at"]),
+    }})
 
 
 # ---------------------------------------------------------------------

@@ -41,6 +41,11 @@
   </div>
   {% endif %}
 
+  <!-- Filled in live by checkDuplicate() below when activity name + date match one
+       you already created recently — a heads-up, not a block: Save still works
+       either way, this just offers a shortcut to the existing activity instead. -->
+  <div class="dup-warn hidden" id="dupWarn" role="alert"></div>
+
   <form method="post" action="/create" data-loading="Creating survey…">
 
     <fieldset>
@@ -226,5 +231,40 @@ if (SUBMITTED_SPEAKERS.length) {
 } else {
   addRow();   // start with one row
 }
+
+// Live "you already made this" heads-up (spot-feedback #67): a same-day duplicate
+// activity created by mistake had no reachable Archive button once it aged off the
+// home feed, so catch the mistake here instead — before Save, not after. Purely
+// informational: it never blocks Save, it just offers a shortcut to the activity
+// that's already there. Debounced so it only fires once typing settles.
+let dupCheckTimer = null;
+function checkDuplicate() {
+  clearTimeout(dupCheckTimer);
+  dupCheckTimer = setTimeout(async () => {
+    const name = document.getElementById('activity_name').value.trim();
+    const date = document.getElementById('event_date').value;
+    const box = document.getElementById('dupWarn');
+    if (!name || !date) { box.classList.add('hidden'); return; }
+    let data;
+    try {
+      const resp = await fetch('/create/check-duplicate?activity_name='
+        + encodeURIComponent(name) + '&event_date=' + encodeURIComponent(date));
+      data = resp.ok ? await resp.json() : null;
+    } catch (e) { return; }                    // offline / hiccup — stay silent
+    const dup = data && data.duplicate;
+    if (!dup) { box.classList.add('hidden'); return; }
+    const link = dup.event_kind === 'outside'
+      ? '/activities/' + dup.event_token + '/manage' : '/monitor/' + dup.event_token;
+    const respLine = dup.responses
+      ? `, and it already has ${dup.responses} response${dup.responses === 1 ? '' : 's'}` : '';
+    box.innerHTML = `<strong>You already created “${name}” on this date</strong>`
+      + `<p>Made ${dup.created_at_human}${respLine}. If this was an accidental `
+      + `resubmit, open it instead of making a duplicate — otherwise just carry on.</p>`
+      + `<p><a class="btn small" href="${link}">Open the existing activity</a></p>`;
+    box.classList.remove('hidden');
+  }, 500);
+}
+document.getElementById('activity_name').addEventListener('input', checkDuplicate);
+document.getElementById('event_date').addEventListener('change', checkDuplicate);
 </script>
 {% endblock %}
