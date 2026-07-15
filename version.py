@@ -17,10 +17,42 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "1.95"
+APP_VERSION = "1.97"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "1.97",
+        "date": "July 15, 2026",
+        "summary": "The create-activity screen now warns you if you already made an activity with that same name and date, before you save a duplicate.",
+        "changes": [
+            "As you type the activity name and date on the create screen, it "
+            "checks whether you already created an activity with that same name "
+            "on that same date recently, and shows a note with a link straight to "
+            "it — so an accidental double-click or a lost confirmation doesn't "
+            "quietly leave a second, empty copy behind.",
+            "This is only a heads-up: it never blocks Save. If it really is a "
+            "second, separate activity, just carry on — nothing changes about "
+            "how creating an activity works.",
+        ],
+    },
+    {
+        "version": "1.96",
+        "date": "July 15, 2026",
+        "summary": "Archive a full activity — not just a standalone one — straight from “Your recent activities”, and restore it later from Archived activities.",
+        "changes": [
+            "A bureau or invited event now gets an Archive button on “Your recent "
+            "activities” too, not only a lone speaker review. Previously the only "
+            "place to archive a full activity was the “Ongoing” list, and that "
+            "button disappears once the activity's window closes — so a same-day "
+            "duplicate created by mistake, with no responses, had no Archive button "
+            "left anywhere once the next day arrived.",
+            "Archived activities now shows every archived activity, not just "
+            "standalone ones, with a working Restore button on each — including "
+            "ones archived from the Ongoing feed or in bulk from the Activities "
+            "page, which previously had no way back once put away.",
+        ],
+    },
     {
         "version": "1.95",
         "date": "July 13, 2026",

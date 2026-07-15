@@ -438,6 +438,14 @@ details.disclosure[open] > summary::before { transform:rotate(90deg); }
 .errors li { margin:.15rem 0; }
 .errors a { color:var(--red); }
 
+/* create-activity duplicate warning — amber (a heads-up, not a hard error): the
+   form is otherwise valid, so this offers a choice rather than blocking submit. */
+.dup-warn { background:var(--amber-bg); border:1px solid var(--amber-ln); color:var(--ink);
+            border-radius:var(--r2); padding:.7rem 1rem; margin-bottom:1rem; }
+.dup-warn strong { color:var(--amber); }
+.dup-warn p { margin:.4rem 0 0; }
+.dup-warn .hint { margin-top:.5rem; }
+
 /* rating scale — equal-width segmented control */
 .scale { display:flex; gap:6px; margin:.4rem 0 .2rem; }
 .scale label { flex:1 1 0; }

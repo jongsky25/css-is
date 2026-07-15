@@ -706,6 +706,33 @@ def create_event(conn, title, event_date, *, end_date=None, venue=None, organize
     return {"id": event_id, "event_token": token}
 
 
+def find_recent_duplicate_event(conn, title, event_date, created_by, within_hours=6):
+    """The most recently created event with the same title (case/space-insensitive)
+    and event date, made by the SAME creator within the last `within_hours` — the
+    shape of an accidental resubmit on /create (spot-feedback #67: the same manager
+    created a same-day duplicate 26 minutes after the original, leaving an empty
+    twin with zero responses; a second pair 3 minutes apart went unnoticed). The
+    create screen shows this as a "did you mean to create another one?" warning
+    instead of silently doubling the activity. Returns None if nothing matches."""
+    title = (title or "").strip()
+    if not title or not event_date or not created_by:
+        return None
+    cutoff = (tz.now_local() - timedelta(hours=within_hours)).isoformat(timespec="seconds")
+    row = conn.execute("""
+        SELECT e.id, e.event_token, e.created_at, e.event_kind,
+               (SELECT COUNT(*) FROM event_form ef JOIN response r
+                  ON r.form_instance_id = ef.form_instance_id WHERE ef.event_id = e.id)
+        FROM event e
+        WHERE lower(trim(e.title)) = lower(trim(?))
+              AND e.event_date = ? AND e.created_by = ? AND e.created_at >= ?
+        ORDER BY e.created_at DESC LIMIT 1
+    """, (title, event_date, created_by, cutoff)).fetchone()
+    if not row:
+        return None
+    return {"id": row[0], "event_token": row[1], "created_at": row[2],
+            "event_kind": row[3] or "bureau", "responses": row[4]}
+
+
 _EVENT_COLS = """
         SELECT e.id, e.event_token, e.title, e.event_date, e.venue, e.organizer,
                ou.name AS lead_name, e.created_by, COALESCE(e.public_share, 0),
@@ -2899,9 +2926,10 @@ def activities_by_creator(conn, created_by, limit=6, archived=0, all_creators=Fa
     before the created_by column existed are unattributed and never appear.
 
     `archived` selects which side to list: 0 = the live strip (default), 1 = the
-    Archived page. Each row also carries `fid` (the form id) and `archivable` (True
-    only for a standalone form — no event — which is the only shape the per-form
-    archive route accepts; bureau events archive at the event level).
+    Archived page. Each row also carries `fid` (the form id), `archivable` (True
+    only for a standalone form — no event — the only shape the per-form archive
+    route accepts), and `has_event` (True for a bureau/outside event, which
+    archives/restores at the event level via the per-instance route instead).
 
     `all_creators` (admins only) drops the creator scope and lists every creator's
     activities — including the historical rows with no `created_by` — so an admin can
@@ -2960,9 +2988,9 @@ def activities_by_creator(conn, created_by, limit=6, archived=0, all_creators=Fa
              "event_kind": kind_ev, "responses": r[12],
              "open": (r[7] is None) or (now <= r[7]),
              # The per-form archive route only accepts standalone forms (no event);
-             # bureau/outside events archive at the event level. `fid` is the form id
-             # the route keys on.
-             "fid": r[0], "archivable": (tok is None)}
+             # bureau/outside events archive at the event level via the per-instance
+             # route instead (`has_event`). `fid` is the form id either route keys on.
+             "fid": r[0], "archivable": (tok is None), "has_event": tok is not None}
         # The usable link + its tooltip: a bureau event opens its registration/CSS
         # monitor; an outside activity opens its (registration-free) manage page; a
         # standalone form opens its public rating page.

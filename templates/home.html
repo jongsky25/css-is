@@ -219,7 +219,7 @@
         <h2><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>{{ 'Recent activities' if mine_all|default(false) else 'Your recent activities' }}</h2>
         <span class="feed-count" hidden></span>
       </div>
-      <p class="feed-sub">{% if mine_all|default(false) %}Every activity from the last 7 days — open one to manage it, or archive a standalone one.{% else %}Your activities from the last 7 days — open one to manage it or see responses.{% endif %}</p>
+      <p class="feed-sub">{% if mine_all|default(false) %}Every activity from the last 7 days — open one to manage it, or archive it right here.{% else %}Your activities from the last 7 days — open one to manage it, see responses, or archive it right here.{% endif %}</p>
       <div class="feed-body">
         <div class="feed-scroll">
           <ul>
@@ -238,6 +238,11 @@
                 {% if a.archivable %}
                 <form class="mine-arch" method="post" action="/activities/form/{{ a.fid }}/archive">
                   <button type="submit" title="Archive this activity — it hides from all lists and counts, and is reversible from Archived activities.">Archive</button>
+                </form>
+                {% elif a.has_event %}
+                <form class="mine-arch" method="post" action="/activities/instance/{{ a.fid }}/archive"
+                      onsubmit="return confirm('Archive this activity? It leaves every feed and report — reversible from Archived activities.');">
+                  <button type="submit" title="Archive this activity — hides it from all lists, feeds and reports. Reversible.">Archive</button>
                 </form>
                 {% endif %}
               </div>

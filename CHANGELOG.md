@@ -1,5 +1,79 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-15 (v1.97 — live "you already made this" heads-up on /create)
+
+Second half of the spot-feedback #67 fix. Root cause of the duplicate event that
+prompted v1.96: `POST /create` had zero duplicate-submission protection — no
+client-side disable-on-submit guard, no idempotency token, no server-side check.
+The two live duplicate pairs (26 minutes and 3 minutes apart, same creator, same
+title/date/venue/organizer) don't look like a reflexive double-click; more likely
+the creator didn't realize the first save had already succeeded and re-ran Create
+from scratch.
+
+Considered blocking the second submit server-side with an interstitial "are you
+sure?" page, but that changes what `POST /create` does on a matching title+date —
+and the existing test suite (test_modality.py, test_date_range.py,
+test_registration_dedup.py, test_event_e.py, test_certificate.py,
+test_date_handling.py) has ~25 cases across 6 files that legitimately recreate an
+identically-titled/dated activity under the same manager fixture within one test
+session (session-scoped shared DB), which is indistinguishable from the real
+duplicate case by title+date+creator alone. Blocking broke all of them. Went with
+a **live, non-blocking** check instead: it warns, it never blocks Save, so
+`POST /create`'s behavior is completely unchanged and every existing test still
+holds — including new tests that pin this down explicitly.
+
+- **`storage.py`** — new `find_recent_duplicate_event(conn, title, event_date, created_by, within_hours=6)`: the most recent event with the same title (case/space-insensitive) and date, made by the SAME creator inside the lookback window. Returns `{id, event_token, created_at, event_kind, responses}` or `None`.
+- **`app.py`** — new `GET /create/check-duplicate?activity_name=&event_date=` (JSON, login-required via the existing middleware): calls the storage helper for the signed-in user and returns `{"duplicate": null}` or the match with a human-readable timestamp (`_humandt`). Read-only, no side effects.
+- **`templates/form_create.html`** — new `#dupWarn` note box (hidden by default) and `checkDuplicate()`: a 500ms-debounced fetch fired on `activity_name` input / `event_date` change. On a hit it shows when the existing one was made, its response count, and a link straight to it (`/monitor/<token>` for a bureau event, `/activities/<token>/manage` for an outside one). Never touches form submission.
+- **`static/css/app.css`** — `.dup-warn`, amber-toned (a heads-up, not the red `.errors` block) since the form is otherwise valid and submitting is still allowed.
+- **Tests** — new `tests/test_create_duplicate_warning.py`: the storage matcher (same-creator hit, different-creator miss, different-date miss, outside-lookback-window miss), the JSON endpoint (hit, miss, login-required), and — the key regression guard — `test_create_still_allows_a_genuine_second_activity_with_the_same_name` locking in that `/create` itself is unchanged. Full suite green (589 passed; the same pre-existing `test_backups.py` failure and `test_csm_official.py` collection error as v1.96, both unrelated).
+
+## 2026-07-15 (v1.96 — archive/restore reach bureau & outside events, not just standalone forms)
+
+Prompted by spot-feedback #67: a same-day duplicate bureau event (created by mistake, zero
+responses) had no reachable Archive button. The only inline archive on the Ongoing feed
+(`/activities/instance/<fid>/archive`, v1.74) requires the activity still be in that feed —
+which a bureau event with no `close_at` leaves at the end of its event day — and the "Your
+recent activities" strip's inline archive (`/activities/form/<fid>/archive`) explicitly
+refuses anything with an event record. Once an event ages out of Ongoing there was **no
+one-click Archive control left anywhere** (its own manage page's Archive button is
+`event_kind == 'outside'`-only). Separately, an event archived via the Ongoing feed or the
+Activities-page bulk action had **no restore path in the UI at all** — `/activities/archived`
+and its bulk-restore route both filtered to standalone forms only, even though the bulk
+archive action's own confirmation message claims "An admin can restore them."
+
+- **`storage.py` `activities_by_creator`** — new `has_event` field per row (`tok is not None`),
+  alongside the existing `archivable` (unchanged: standalone-only, drives the per-form route).
+  Lets a template pick the right archive/restore route per row shape.
+- **`app.py` `activity_inline_archive`** (`POST /activities/instance/{fid}/archive`) — now
+  accepts `restore=1`, mirroring every other archive route. Restore expands to the full
+  event bundle exactly like the archive direction does, via `st.set_form_archived`. Kept the
+  existing permission model (`create_activity`, no per-creator ownership check) for both
+  directions, since that already matched production behavior for archiving a bureau/outside
+  event from the Ongoing feed.
+- **`app.py` `/activities/archived`** (GET) — now lists rows where `archivable` **or**
+  `has_event` is true, so event-bundled archives are finally visible and restorable.
+- **`app.py` `/activities/archived/bulk`** — extended to detect `info["has_event"]` per ticked
+  id and, when set, expand to the event's full form bundle and restore it under the
+  `create_activity` gate; standalone rows keep the exact prior ownership-scoped behavior
+  (creator or admin) so `test_bulk_restore_skips_other_owners_form` still holds.
+- **`templates/home.html`** — "Your recent activities" now renders an Archive button for
+  event-bundled rows too (`a.has_event`, posting to the instance route with the same confirm
+  dialog the Ongoing feed uses), not only standalone ones (`a.archivable`, unchanged route).
+  Copy on both variants of the feed subtitle updated to drop "standalone".
+- **`templates/activities_archived.html`** — per-row Restore posts to
+  `/activities/form/<fid>/archive` for standalone rows (unchanged) or
+  `/activities/instance/<fid>/archive` for event-bundled ones (new); page copy no longer says
+  "Standalone activities."
+- **Tests** — `tests/test_home_feeds.py`: restore round-trip for a bureau event via the
+  instance route (archive → appears on Archived page → restore → both bundled forms come
+  back), and a new "Recent activities" render test confirming a bureau event gets an Archive
+  button. `tests/test_bulk_actions.py`: bulk-restore of a bundled event (both forms come back,
+  gated on `manage_event`/`create_activity`). Full existing suite green (589 passed; the one
+  `test_backups.py` failure and the `test_csm_official.py` collection error are pre-existing
+  environment artifacts unrelated to this change — reproduced identically with these changes
+  stashed out).
+
 ## 2026-07-13 (v1.95 — manager-entered respondent count as the completion-rate denominator)
 Builds on v1.94 (which folds the not-pre-registered responses into the rate). A section manager (on activities they created) or an admin (on any) can now **override the completion-rate denominator** with the real number of respondents, instead of being tied to the online-registration count. Even after v1.94 counts walk-ins, the denominator is still `registered + unattributed` — which misses attendees who took part but neither pre-registered nor left an attributable response; an organizer who knows the true headcount can now set it directly.
 

@@ -2893,7 +2893,10 @@ async def create_survey(request: Request):
     if open_at and close_at and close_at <= open_at:
         errors.append("The entry window must close after it opens.")
 
-    if errors:
+    def _rerender_create_form(extra_ctx, status_code=400):
+        # Echo everything the user typed back into the form so a validation error
+        # never wipes their entries. Keep raw strings (not the None-coerced values)
+        # and preserve every resource-person row, including ones still being filled.
         conn = get_conn()
         try:
             _, blhsd_name, _ = st.get_or_create_blhsd(conn)
@@ -2905,9 +2908,6 @@ async def create_survey(request: Request):
             sections = st.list_org_units(conn2, level="section")
         finally:
             conn2.close()
-        # Echo everything the user typed back into the form so a validation error
-        # never wipes their entries. Keep raw strings (not the None-coerced values)
-        # and preserve every resource-person row, including ones still being filled.
         form = {
             "event_type": event_type,
             "section_id": section_id,
@@ -2923,11 +2923,14 @@ async def create_survey(request: Request):
             "speakers": list(zip(rp_ids, topics)),
         }
         dmin, dmax = _event_date_bounds()
-        return templates.TemplateResponse(request, "form_create.html", {
-            "blhsd_name": blhsd_name,
-            "resource_persons": rps, "errors": errors, "sections": sections,
-            "form": form, "date_min": dmin, "date_max": dmax,
-        }, status_code=400)
+        ctx = {"blhsd_name": blhsd_name, "resource_persons": rps, "sections": sections,
+               "form": form, "date_min": dmin, "date_max": dmax}
+        ctx.update(extra_ctx)
+        return templates.TemplateResponse(request, "form_create.html", ctx,
+                                          status_code=status_code)
+
+    if errors:
+        return _rerender_create_form({"errors": errors})
 
     conn = get_conn()
     try:
@@ -3031,6 +3034,27 @@ async def create_survey(request: Request):
         # closing messages, shared resources, certificate) so it isn't orphaned.
         "event_token": event_token,
     })
+
+
+@app.get("/create/check-duplicate")
+def create_check_duplicate(request: Request, activity_name: str = "", event_date: str = ""):
+    """Live probe behind the /create screen's duplicate heads-up (spot-feedback
+    #67: a same-day duplicate bureau event, created by mistake, left an empty
+    twin with no responses). Read-only, JSON, purely informational — it never
+    blocks Save, it only tells the create screen whether to show a "you already
+    made this" note. See storage.find_recent_duplicate_event for the match rule."""
+    conn = get_conn()
+    try:
+        dup = st.find_recent_duplicate_event(
+            conn, activity_name, event_date, request.state.user["username"])
+    finally:
+        conn.close()
+    if not dup:
+        return JSONResponse({"duplicate": None})
+    return JSONResponse({"duplicate": {
+        "event_token": dup["event_token"], "event_kind": dup["event_kind"],
+        "responses": dup["responses"], "created_at_human": _humandt(dup["created_at"]),
+    }})
 
 
 # ---------------------------------------------------------------------
@@ -5440,40 +5464,59 @@ async def form_archive(request: Request, fid: int):
 
 @app.post("/activities/instance/{fid}/archive")
 async def activity_inline_archive(request: Request, fid: int):
-    """Archive one activity straight from the home Ongoing feed, where a manager spots
-    a test/stray activity that's still collecting. The feed mixes two shapes, so this
-    handles both off the row's form-instance id: a STANDALONE form archives just
-    itself, while a BUREAU event archives every form it bundles (the Type-2 review
-    plus its speaker Type-3s) so the whole activity leaves the feeds — mirroring the
-    Edit/merge bulk archive, with the same auto-backup + per-change undo journal.
-    Reversible from Archived activities. Admins + section managers (create_activity)."""
+    """Archive (or, with restore=1, restore) one activity straight from the home
+    Ongoing/Recent-activities feeds or the Archived page — where a manager spots a
+    test/stray activity that's still collecting, or wants to bring one back. The
+    feed mixes two shapes, so this handles both off the row's form-instance id: a
+    STANDALONE form acts on just itself, while a BUREAU/OUTSIDE event acts on every
+    form it bundles (the Type-2 review plus its speaker Type-3s) so the whole
+    activity moves together — mirroring the Edit/merge bulk archive. This is the
+    ONLY archive/restore path a bureau or outside event has: unlike a standalone
+    form (per-form route, ownership-checked) or an outside event's own manage page
+    (kind-restricted), this route reaches any event shape, gated only on the
+    create_activity capability — matching how it already worked for archiving.
+    Reversible either way."""
     if (r := _forbid(request, "create_activity")):
         return r
+    posted = await _posted(request)
+    restore = (posted.get("restore") or "") in ("1", "true", "on", "yes")
     conn = get_conn()
     try:
         ev = conn.execute(
             "SELECT event_id FROM event_form WHERE form_instance_id = ?", (fid,)).fetchone()
-        if ev:                                   # bureau/outside event: archive all its forms
+        if ev:                                   # bureau/outside event: act on all its forms
             inst = [r[0] for r in conn.execute(
                 "SELECT form_instance_id FROM event_form WHERE event_id = ?",
                 (ev[0],)).fetchall()]
         else:                                    # standalone form: just this one
             inst = [fid]
-        aa.ensure_backup()                       # one snapshot before the first write
-        batch = aa.new_batch()
-        if aa.archive_activities(conn, inst, request.state.user["username"], batch):
-            invalidate_atoms()                   # archived rows drop out of atoms/counts
+        if restore:
+            n = sum(st.set_form_archived(conn, i, archived=False) for i in inst)
+            if n:
+                invalidate_atoms()               # restored rows re-enter atoms/counts
+                _audit(request, conn, "activity_instance_restore", target_type="form_instance",
+                       target_id=fid, summary=f"Restored {n} activity form(s).")
+        else:
+            aa.ensure_backup()                   # one snapshot before the first write
+            batch = aa.new_batch()
+            if aa.archive_activities(conn, inst, request.state.user["username"], batch):
+                invalidate_atoms()               # archived rows drop out of atoms/counts
     finally:
         conn.close()
-    # Gone from the feed now — send the manager home.
-    return RedirectResponse("/", status_code=303)
+    # Archiving hides it from the feed -> send the manager home; restoring brings it
+    # back from the Archived page -> stay there.
+    return RedirectResponse(
+        "/activities/archived" if restore else "/", status_code=303)
 
 
 @app.post("/activities/archived/bulk")
 async def activities_archived_bulk(request: Request):
-    """Restore several standalone activities at once from the Archived page. Each
-    ticked form-instance is restored only if the actor may manage it (its creator,
-    or an admin) — the same per-row rule as the single Restore button."""
+    """Restore several archived activities at once from the Archived page. A ticked
+    STANDALONE form is restored only if the actor may manage it (its creator, or an
+    admin) — the same per-row rule as the single Restore button. A ticked BUREAU/
+    OUTSIDE event restores every form it bundles and is gated the same way the
+    inline archive/restore route is (create_activity; no per-creator ownership check
+    — matching how that route already treats event-level archiving)."""
     if (r := _forbid(request, "manage_event")):
         return r
     body = parse_qsl((await request.body()).decode("utf-8"), keep_blank_values=True)
@@ -5481,16 +5524,33 @@ async def activities_archived_bulk(request: Request):
     if not ids:
         return RedirectResponse("/activities/archived?err=" + quote(
             "Tick at least one activity to restore."), status_code=303)
+    can_event = auth.can(request.state.user["role"], "create_activity")
     conn = get_conn()
     restored, skipped = 0, 0
     try:
         for fid in ids:
             info = st.form_archive_info(conn, fid)
-            # Skip rows that vanished, are event-level (not standalone), or that this
-            # actor may not manage — mirrors the single-restore guard exactly.
-            if (not info or info["has_event"]
-                    or not _can_manage_event(
-                        request.state.user, {"created_by": info["created_by"]})):
+            if not info:
+                skipped += 1
+                continue
+            if info["has_event"]:
+                # Event-bundled: create_activity permission is enough (matches the
+                # inline archive/restore route); expand to every form it bundles.
+                if not can_event:
+                    skipped += 1
+                    continue
+                ev = conn.execute(
+                    "SELECT event_id FROM event_form WHERE form_instance_id = ?",
+                    (fid,)).fetchone()
+                inst = ([r[0] for r in conn.execute(
+                            "SELECT form_instance_id FROM event_form WHERE event_id = ?",
+                            (ev[0],)).fetchall()] if ev else [fid])
+                restored += sum(st.set_form_archived(conn, i, archived=False) for i in inst)
+                continue
+            # Standalone — the actor must be the creator, or an admin (mirrors the
+            # single-restore guard exactly).
+            if not _can_manage_event(
+                    request.state.user, {"created_by": info["created_by"]}):
                 skipped += 1
                 continue
             st.set_form_archived(conn, fid, archived=False)
@@ -5499,8 +5559,7 @@ async def activities_archived_bulk(request: Request):
             invalidate_atoms()               # restored rows re-enter atoms/counts
             _audit(request, conn, "form_archive", target_type="form_instance",
                    target_id="bulk",
-                   summary=f"Restored {restored} standalone activit"
-                           f"{'y' if restored == 1 else 'ies'} (bulk).")
+                   summary=f"Restored {restored} activity form(s) (bulk).")
     finally:
         conn.close()
     if restored:
@@ -5513,25 +5572,26 @@ async def activities_archived_bulk(request: Request):
 
 @app.get("/activities/archived", response_class=HTMLResponse)
 def activities_archived(request: Request, ok: str = "", err: str = ""):
-    """The manager's archived standalone activities, with a Restore button on each.
-    Admins see every archived standalone activity; a section_manager sees only the
-    ones they created — the same ownership rule as the home strip."""
+    """The manager's archived activities, with a Restore button on each — both
+    standalone forms and bureau/outside events (each still one row, the event's
+    representative form). Admins see every archived activity; a section_manager
+    sees only the ones they created — the same ownership rule as the home strip."""
     bail = _forbid(request, "manage_event")
     if bail:
         return bail
     user = request.state.user
     conn = get_conn()
     try:
-        # Admins see every archived standalone activity (any creator, including the
-        # historical rows with no created_by); a manager sees only their own.
+        # Admins see every archived activity (any creator, including the historical
+        # standalone rows with no created_by); a manager sees only their own.
         if user["role"] == "admin":
             items = [a for a in st.activities_by_creator(
                         conn, "", limit=200, archived=1, all_creators=True)
-                     if a.get("archivable")]
+                     if a.get("archivable") or a.get("has_event")]
         else:
             items = [a for a in st.activities_by_creator(
                         conn, user["username"], limit=200, archived=1)
-                     if a.get("archivable")]
+                     if a.get("archivable") or a.get("has_event")]
         items.sort(key=lambda x: (x.get("created_at") or "", x["id"]), reverse=True)
     finally:
         conn.close()
