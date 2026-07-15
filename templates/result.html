@@ -34,6 +34,7 @@
     <div style="font-weight:600; margin-bottom:.5rem;">{{ q.title }}</div>
     <img src="{{ q.img }}" alt="QR code for {{ q.title }}" style="width:220px; height:220px; image-rendering:pixelated;">
     <div class="mono small" style="word-break:break-all; margin-top:.4rem;"><a href="{{ q.url }}">{{ q.url }}</a></div>
+    <div class="noprint" style="margin-top:.5rem;"><a class="btn ghost" href="{{ q.img }}" download="qr-{{ q.title|slugify }}.png">⤓ Download QR</a></div>
   </div>
   {% endfor %}
 

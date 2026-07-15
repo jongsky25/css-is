@@ -19,6 +19,7 @@
   .qr-tile img { width:160px; height:160px; image-rendering:pixelated; }
   .qr-tile .lbl { font-weight:600; font-size:.84rem; margin-bottom:.4rem; }
   .qr-tile .url { font-size:.7rem; word-break:break-all; color:var(--grey); margin-top:.3rem; }
+  .qr-tile .dl { margin-top:.55rem; }
   .sp-tbl { width:100%; border-collapse:collapse; }
   .sp-tbl td { padding:.55rem .4rem; border-top:1px solid var(--line); vertical-align:middle; font-size:.9rem; }
   .sp-tbl tr:first-child td { border-top:none; }
@@ -108,6 +109,7 @@
         <div class="lbl">Combined — all speakers</div>
         <img src="{{ combined_qr }}" alt="Combined QR code">
         <div class="url"><a href="{{ combined_url }}">{{ combined_url }}</a></div>
+        <div class="dl noprint"><a class="btn ghost" href="{{ combined_qr }}" download="qr-combined.png">⤓ Download</a></div>
       </div>
       {% endif %}
       {% for s in speakers %}
@@ -115,6 +117,7 @@
         <div class="lbl">{{ s.topic or 'Untitled' }}{% if s.rp_name %} — {{ s.rp_name }}{% endif %}</div>
         <img src="{{ s.qr }}" alt="QR code for {{ s.topic }}">
         <div class="url"><a href="{{ s.url }}">{{ s.url }}</a></div>
+        <div class="dl noprint"><a class="btn ghost" href="{{ s.qr }}" download="qr-{{ (s.topic or 'speaker')|slugify }}.png">⤓ Download</a></div>
       </div>
       {% endfor %}
     </div>

@@ -17,10 +17,23 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "1.97"
+APP_VERSION = "1.98"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "1.98",
+        "date": "July 15, 2026",
+        "summary": "Every QR code now has its own “Download” button, so you can save the image straight to your phone or computer instead of only printing the whole page.",
+        "changes": [
+            "The QR codes shown after creating an activity, on an invited activity's "
+            "manage page, and on the standing Walk-in (ARTA) QR page now each have a "
+            "“⤓ Download” link right under the code. It saves that one QR as a PNG "
+            "image file, named after the activity or speaker it's for — no more "
+            "relying on Print or a manual “save image as” to get a usable copy for a "
+            "poster or handout.",
+        ],
+    },
     {
         "version": "1.97",
         "date": "July 15, 2026",
