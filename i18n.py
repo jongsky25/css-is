@@ -96,19 +96,22 @@ LIKERT5_FIL = [(5, "Lubos na sang-ayon"), (4, "Sang-ayon"), (3, "Hindi tiyak"),
                (2, "Hindi sang-ayon"), (1, "Lubos na hindi sang-ayon")]
 OSQ4_FIL = [(4, "Napakahusay"), (3, "Mahusay"), (2, "Katamtaman"), (1, "Mahina")]
 
-# Quick-pick comment chips — order mirrors app.REMARK_CHIPS. DRAFT.
+# Quick-pick comment chips — order and groups mirror app.REMARK_CHIPS. DRAFT.
 REMARK_CHIPS_FIL = {
     "servqual": [
-        "Maalam", "Handa", "Nakaka-engganyo", "Malinaw at madaling sundan",
-        "Matulungin", "Maayos", "Nagsimula sa oras", "Praktikal at kapaki-pakinabang",
-        "Lumampas sa oras", "Gusto ng mas maraming Q&A", "Mahirap sundan",
-        "Pwedeng pagbutihin ang lugar",
+        ("Maalam", None), ("Handa", None), ("Nakaka-engganyo", None),
+        ("Malinaw at madaling sundan", "clarity"), ("Matulungin", None),
+        ("Maayos", None), ("Nagsimula sa oras", "timing"),
+        ("Praktikal at kapaki-pakinabang", None), ("Lumampas sa oras", "timing"),
+        ("Gusto ng mas maraming Q&A", None), ("Mahirap sundan", "clarity"),
+        ("Pwedeng pagbutihin ang lugar", None),
     ],
     "arta": [
-        "Mabilis na serbisyo", "Magalang na tauhan", "Malinaw na panuto",
-        "Makatuwirang bayad", "Madaling proseso", "Mahabang paghihintay",
-        "Masyadong maraming hakbang", "Malabong kinakailangan",
-        "Mahirap hanapin ang impormasyon",
+        ("Mabilis na serbisyo", "speed"), ("Magalang na tauhan", None),
+        ("Malinaw na panuto", "clarity"), ("Makatuwirang bayad", None),
+        ("Madaling proseso", "process"), ("Mahabang paghihintay", "speed"),
+        ("Masyadong maraming hakbang", "process"), ("Malabong kinakailangan", "clarity"),
+        ("Mahirap hanapin ang impormasyon", None),
     ],
 }
 
@@ -166,8 +169,8 @@ UI = {
     # Comments block
     "comments": {"en": "Comments &amp; suggestions", "fil": "Mga puna at mungkahi"},
     "optional": {"en": "(optional)", "fil": "(opsyonal)"},
-    "chips_hint": {"en": "Tap a suggestion to add it, or write your own below:",
-                   "fil": "Pindutin ang isang mungkahi upang idagdag, o sumulat ng sarili mo sa ibaba:"},
+    "chips_hint": {"en": "Tap up to 3 suggestions to add them, or write your own below:",
+                   "fil": "Pindutin ang hanggang 3 mungkahi upang idagdag, o sumulat ng sarili mo sa ibaba:"},
     "remarks_ph": {"en": "Anything you'd like to add in your own words?",
                    "fil": "May nais ka pa bang idagdag sa sarili mong salita?"},
 
