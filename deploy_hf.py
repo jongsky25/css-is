@@ -297,15 +297,18 @@ def main():
     else:
         pull_live_db()
 
+    want = version.APP_VERSION
+    deployed_by = os.environ.get("GITHUB_ACTOR") or api.whoami().get("name") or "unknown"
+    write_build_info(want, deployed_by)   # stamps build_info.json — must run BEFORE
+                                          # the missing-files check below, since
+                                          # build_info.json is in ALLOW and doesn't
+                                          # exist on disk until this call creates it.
+
     missing = [f for f in allow if "*" not in f and not os.path.exists(f)]
     if missing:
         sys.exit(f"ABORT — missing files: {missing}")
 
-    want = version.APP_VERSION
     guard_version_bump(want)
-
-    deployed_by = os.environ.get("GITHUB_ACTOR") or api.whoami().get("name") or "unknown"
-    write_build_info(want, deployed_by)
 
     if LOCAL_DB in allow:
         db_mb = os.path.getsize(LOCAL_DB) / 1e6
