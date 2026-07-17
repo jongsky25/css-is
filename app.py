@@ -6376,19 +6376,58 @@ def _fmt_activity_date(d):
         return str(d)
 
 
-def _activity_css_seed(e):
-    """Factual one-liner of an activity's satisfaction result, to seed the MRR
-    'Relevant Findings' cell (the analyst expands the analysis columns by hand)."""
-    f2 = e.get("f2") or {}
-    parts = []
-    if f2.get("overall") is not None:
-        parts.append(f"Overall {f2.get('overall_shown')}/7")
-        if f2.get("expectation") is not None:
-            parts.append(f"SERVQUAL {f2['overall'] - f2['expectation']:+.2f}")
-    if f2.get("osq_band"):
-        parts.append(f"OSQ {f2.get('osq_shown')}/4 ({f2['osq_band']})")
-    parts.append(f"{int(e.get('respondents') or 0)} respondents")
-    return "  ·  ".join(parts)
+def _fmt_activity_date_full(d):
+    """Full-month date ("January 15, 2026") for the MRR official-report letterhead
+    — unlike `_fmt_activity_date` (abbreviated month, used in the inventory sheet)."""
+    if not d:
+        return ""
+    try:
+        return datetime.strptime(str(d)[:10], "%Y-%m-%d").strftime("%B %d, %Y")
+    except ValueError:
+        return str(d)
+
+
+_MRR_MODALITY_LABEL = {"online": "Virtual", "f2f": "Face-to-Face"}
+
+
+def _attach_activity_findings(atoms, conn, events):
+    """Attach the official SERVQUAL scorecard (`report`) and up to 5 verbatim
+    comment-box remarks (`comments`) to each event dict, for the MRR 'Relevant
+    Findings' cell. Mutates the dicts in place — callers must pass copies when
+    `events` came from the memoized view, never the cached dicts themselves."""
+    for e in events:
+        e["report"] = di.activity_servqual(atoms, e["instance_ids"])
+        verb = st.verbatims_for_responses(conn, e["response_ids"])
+        grouped, _, _ = _dedup_remarks(((v.get("remarks"), "") for v in verb), cap=5)
+        e["comments"] = [g["text"] for g in grouped]
+
+
+def _activity_relevant_findings(e):
+    """The MRR official-report 'Relevant Findings' cell for one activity: title,
+    date and modality; the official SERVQUAL score + verdict and Overall SERVQUAL
+    Rating + band; response-rate figures; and up to 5 verbatim remarks typed into
+    the form's free-text comment box (never the pre-selected rating options) —
+    already filtered clear of throwaway answers like "none" / "n/a" and deduped/
+    capped by `_attach_activity_findings`."""
+    report = e.get("report") or {}
+    respondents = int(e.get("respondents") or 0)
+    attendance = e.get("attendance")
+    rate = f"{respondents / attendance * 100:.0f}%" if attendance else "—"
+    lines = [
+        e.get("name") or "",
+        _fmt_activity_date_full(e.get("date")),
+        f"({_MRR_MODALITY_LABEL.get(e.get('modality'), 'Face-to-Face')})",
+        "",
+        f"SERVQUAL Score: {report.get('servqual_shown', '—')} ({report.get('servqual_verdict') or '—'})",
+        f"Overall SERVQUAL Rating: {report.get('osq_shown', '—')} ({report.get('osq_grade') or '—'})",
+        f"Response Rate: {rate}",
+        f"Total Number of Responses: {respondents}",
+        f"Total Number of Participants (Pax): {attendance if attendance else '—'}",
+        "",
+        "COMMENTS:",
+    ]
+    lines += [f"- {c}" for c in (e.get("comments") or [])]
+    return "\n".join(lines)
 
 
 # Resource hint per weakest SERVQUAL dimension (raw key), for the MRR Resources column.
@@ -6515,7 +6554,7 @@ def _build_activities_xlsx(events, meta):
     for i, e in enumerate(events, start=1):
         analysis, action, next_steps, resources = _activity_mrr_analysis(e)
         ws.cell(r, 1, i).alignment = ctr
-        ws.cell(r, 2, f"{e.get('name') or ''}\n{_activity_css_seed(e)}").alignment = topleft
+        ws.cell(r, 2, _activity_relevant_findings(e)).alignment = topleft
         ws.cell(r, 3, analysis).alignment = topleft
         ws.cell(r, 4, action).alignment = topleft
         ws.cell(r, 5, next_steps).alignment = topleft
@@ -6559,9 +6598,10 @@ def _build_activities_xlsx(events, meta):
         note_lines=[
             "One row per activity, oldest first. Sheet 1 is the AGENDA 4 analysis table; "
             "Sheet 2 is the activity inventory.",
-            "Each activity's result (in “Relevant Findings”) is its overall SERVQUAL score on a 1–7 "
-            "scale, the SERVQUAL gap (perception − expectation), the Overall Service Quality item "
-            "(1–4) with band, and the respondent count.",
+            "Each activity's “Relevant Findings” carries its title, date and modality; the official "
+            "SERVQUAL Score (perception − expectation) with verdict and Overall SERVQUAL Rating "
+            "(1–4) with band; the response rate, response count and participant (Pax) count; and up "
+            "to 5 verbatim comment-box remarks (throwaway answers like “none” / “n/a” are excluded).",
             "Analysis, Action, Next-Steps and Resources are drafted from the data for the analyst to "
             "finalise. Participants = the number of respondents who rated the activity.",
         ])
@@ -6582,6 +6622,7 @@ def reports_activities_export(request: Request, org: str = "", period: str = "al
         scoped = _scoped(atoms, org, period)
         events = [e for e in di.build_events(scoped, st.list_activity_instances(conn)) if e["f2"]]
         events.sort(key=lambda e: (e.get("date") or ""))   # chronological (oldest first)
+        _attach_activity_findings(atoms, conn, events)
         org_opts = _org_options(conn)
         place = next((x["text"] for x in org_opts if x["value"] == org), "Whole bureau")
         period_lbl = "All time" if (not period or period == "all") else period.split(":", 1)[1]
@@ -6621,12 +6662,13 @@ async def reports_activities_export_selected(request: Request):
         # Same unscoped event list the curate-bar checkboxes index by e.id.
         events = view_memo("events", ("", "all"),
                            lambda: di.build_events(atoms, st.list_activity_instances(conn)))
-        chosen = [e for e in events if e["id"] in ids and e["f2"]]
+        chosen = [dict(e) for e in events if e["id"] in ids and e["f2"]]
         chosen.sort(key=lambda e: (e.get("date") or ""))   # chronological
         if not chosen:
             return RedirectResponse("/reports/activities?err=" + quote(
                 "None of the selected activities carry an event review to export."),
                 status_code=303)
+        _attach_activity_findings(atoms, conn, chosen)
         try:
             _, org_name, _ = st.get_or_create_blhsd(conn)
         except Exception:
