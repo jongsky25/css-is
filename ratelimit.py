@@ -26,6 +26,7 @@ def _limits(bucket):
     defaults = {
         "check": (300, 60),      # email duplicate-check probe (cheap GET, on keystroke)
         "register": (120, 60),   # POST registration — generous for a busy venue NAT
+        "telemetry": (600, 60),  # UX telemetry batches — high-volume, low-value-per-request
     }
     raw = os.environ.get(f"CSS_RL_{bucket.upper()}")
     if raw and "/" in raw:

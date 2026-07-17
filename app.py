@@ -75,6 +75,7 @@ import version as ver
 import i18n
 import realtime
 import tours
+import ui_telemetry as ui_tel
 
 # The database file. Override with CSS_DB for a throwaway/demo instance so the
 # delivered css_is.db is never touched (mirrors CSS_BASE_URL / CSS_SMTP_*).
@@ -2317,6 +2318,78 @@ def ops(request: Request):
         "build": _load_build_info(),
         "show_scope": False, "nav_active": "",
     })
+
+
+# ---------------------------------------------------------------------
+# Passive UX-behavior telemetry ingest (docs/UX_TELEMETRY_HANDOFF_PLAN.md) —
+# static/js/telemetry.js batches sanitized dead-click / rage-click / pageview /
+# client-error events and beacons them here. Login-required (this path isn't
+# in _PUBLIC_*, so the auth-gate middleware already 401'd/redirected an
+# anonymous caller before this handler runs — the script only ever loads in
+# the signed-in dashboard shell anyway, see dash_layout.html). Best-effort:
+# never lets a telemetry problem surface to the user, and re-sanitizes every
+# field server-side — the client's own masking is never trusted alone.
+# ---------------------------------------------------------------------
+
+def _clean_telemetry_meta(meta):
+    """Keep meta small, string-valued, and re-sanitized — mirrors the OFIS
+    reference's cleanMeta()."""
+    if not isinstance(meta, dict):
+        return None
+    out = {}
+    if isinstance(meta.get("from"), str):
+        out["from"] = ui_tel.mask_route(meta["from"][:500])
+    if isinstance(meta.get("term"), str):
+        out["term"] = ui_tel.sanitize_text(meta["term"], max_len=80)
+    if isinstance(meta.get("name"), str):
+        out["name"] = meta["name"].strip()[:80] or None
+    if isinstance(meta.get("message"), str):
+        out["message"] = ui_tel.sanitize_text(meta["message"], max_len=80)
+    return {k: v for k, v in out.items() if v} or None
+
+
+@app.post("/telemetry")
+async def telemetry_ingest(request: Request):
+    ip = request.client.host if request.client else None
+    if not rl.allow("telemetry", ip):
+        return Response(status_code=204)
+    try:
+        body = await request.json()
+    except Exception:               # noqa: BLE001 — malformed beacon body
+        body = None
+    events = body.get("events") if isinstance(body, dict) else None
+    if not isinstance(events, list):
+        return Response(status_code=204)
+
+    user = request.state.user       # never None here — see docstring above
+    rows = []
+    for e in events[:ui_tel.MAX_BATCH]:
+        if not isinstance(e, dict):
+            continue
+        et = e.get("event_type")
+        if et not in ui_tel.UI_EVENT_TYPES:
+            continue
+        component = e.get("component")
+        rows.append({
+            "user_id": user["id"], "role": user["role"],
+            "session_id": str(e.get("session_id") or "")[:80] or "unknown",
+            "event_type": et,
+            "route": ui_tel.mask_route(str(e.get("route") or "/")[:500]),
+            "component": component.strip()[:120] if isinstance(component, str) and component.strip() else None,
+            "element_selector": ui_tel.sanitize_selector(e.get("element_selector")),
+            "element_text": ui_tel.sanitize_text(e.get("element_text"), max_len=300),
+            "meta": _clean_telemetry_meta(e.get("meta")),
+        })
+
+    if rows:
+        conn = get_conn()
+        try:
+            st.create_ui_events(conn, rows)
+        except Exception:           # noqa: BLE001 — telemetry must never break the caller
+            pass
+        finally:
+            conn.close()
+    return Response(status_code=204)
 
 
 # ---- in-process backup scheduler -------------------------------------------
