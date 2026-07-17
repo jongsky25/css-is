@@ -9,6 +9,8 @@ storage.usage_pulse() derives, with NO schema change, from the audit log
     created in the last 7 days.
 These lock the windowing, plus that /ops renders the new panels.
 """
+import json
+import os
 from datetime import timedelta
 import storage as st
 import tzutil as tz
@@ -93,3 +95,29 @@ def test_ops_page_renders_new_panels(admin):
     assert "Active now" in body
     assert "Lately" in body
     assert "Last sign-in:" in body
+
+
+def test_ops_build_panel_falls_back_without_build_info(admin):
+    """No build_info.json shipped (e.g. a local/dev run) — the Build panel still
+    renders, falling back to just the version.py APP_VERSION."""
+    import app as app_mod
+    assert not os.path.exists(app_mod.BUILD_INFO_PATH)
+    body = admin.get("/ops").text
+    assert "Build" in body
+    assert f"v{app_mod.ver.APP_VERSION}" in body
+    assert "no deploy record yet" in body
+
+
+def test_ops_build_panel_shows_deploy_telemetry(admin, tmp_path, monkeypatch):
+    """When deploy_hf.py has stamped build_info.json, /ops surfaces the shipped
+    version, commit, deployer, and timestamp from it."""
+    import app as app_mod
+    info = {"version": "9.99", "commit_short": "abc1234",
+            "deployed_at": "2026-07-17T10:15:00", "deployed_by": "alice"}
+    build_path = tmp_path / "build_info.json"
+    build_path.write_text(json.dumps(info), encoding="utf-8")
+    monkeypatch.setattr(app_mod, "BUILD_INFO_PATH", str(build_path))
+    body = admin.get("/ops").text
+    assert "v9.99" in body
+    assert "abc1234" in body
+    assert "alice" in body

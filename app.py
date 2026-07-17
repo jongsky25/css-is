@@ -2235,6 +2235,27 @@ def _ops_plain(snap, chain_ok, bad_id, bkinfo, last_backup, persist=None):
     return {"verdict": verdict, "cards": cards, "safety": safety}
 
 
+BUILD_INFO_PATH = "build_info.json"
+
+
+def _load_build_info():
+    """Read the deploy-time build_info.json (written by deploy_hf.py right before
+    it ships, so the file itself travels in the same bundle it describes). Missing
+    entirely on a local/dev run — falls back to just the version.py APP_VERSION
+    with no deploy metadata, so the /ops build panel never errors out."""
+    try:
+        with open(BUILD_INFO_PATH, encoding="utf-8") as f:
+            info = json.load(f)
+    except (OSError, ValueError):
+        info = {}
+    return {
+        "version": info.get("version") or ver.APP_VERSION,
+        "commit": info.get("commit_short"),
+        "deployed_at": _humandt(info.get("deployed_at")) if info.get("deployed_at") else None,
+        "deployed_by": info.get("deployed_by"),
+    }
+
+
 @app.get("/ops", response_class=HTMLResponse)
 def ops(request: Request):
     """Admin operations dashboard, in plain language — one overall verdict, four
@@ -2293,6 +2314,7 @@ def ops(request: Request):
         "plain": plain, "snap": snap, "inventory": inventory,
         "people": people, "last_login_line": last_login_line,
         "recent_logins": recent_logins, "lately": lately,
+        "build": _load_build_info(),
         "show_scope": False, "nav_active": "",
     })
 

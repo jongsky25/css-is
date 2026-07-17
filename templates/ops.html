@@ -53,6 +53,22 @@
 </div>
 
 <div class="panel">
+  <h2>Build</h2>
+  <div class="signals">
+    <div class="sig neutral">
+      <div class="h">Version</div>
+      <div class="big">v{{ build.version }}</div>
+      <div class="sub">{% if build.commit %}commit {{ build.commit }}{% else %}no deploy record yet{% endif %}</div>
+    </div>
+    <div class="sig neutral">
+      <div class="h">Deployed</div>
+      <div class="big">{{ build.deployed_at or '—' }}</div>
+      <div class="sub">{% if build.deployed_by %}by {{ build.deployed_by }}{% else %}local/dev run{% endif %}</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
   <h2>Right now <span class="note" style="color:var(--soft); font-weight:400; font-size:.82rem;">· last 5 minutes</span></h2>
   <div class="signals">
     {% for c in plain.cards %}
