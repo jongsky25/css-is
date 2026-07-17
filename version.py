@@ -17,10 +17,24 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "1.98"
+APP_VERSION = "1.99"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "1.99",
+        "date": "July 17, 2026",
+        "summary": "The Type 2 activity Excel download (MRR format) now lays out each activity's “Relevant Findings” the way the official report reads it — title, date, SERVQUAL scores, response counts and a short list of what people wrote.",
+        "changes": [
+            "On Reports → Activities → Download (Excel, MRR format), each activity's "
+            "“Relevant Findings” cell now reads as a single block: the activity title, "
+            "date and format (Virtual / Face-to-Face); its official SERVQUAL Score and "
+            "verdict, and Overall SERVQUAL Rating and grade; the response rate, total "
+            "responses and total participants; and, under “COMMENTS:”, up to 5 of the "
+            "actual comments people typed in — never the pre-set rating choices, and "
+            "with empty or throwaway answers like “none” or “n/a” left out.",
+        ],
+    },
     {
         "version": "1.98",
         "date": "July 15, 2026",

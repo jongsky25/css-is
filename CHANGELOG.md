@@ -1,6 +1,41 @@
 # CHANGELOG — Cowork revisions (surgical)
 
-## 2026-07-15 (v1.97 — live "you already made this" heads-up on /create)
+## 2026-07-17 (v1.99 — Type-2 activity XLSX "Relevant Findings" reformatted to the official MRR layout)
+
+The Type-2 activity inventory Excel download (`/reports/activities-export` and
+`/reports/activities/export-selected`, Sheet 1 `AGENDA 4_Sheet1`) had its
+"Relevant Findings" cell reformatted to match the official MRR report's
+letterhead layout, per a direct format spec from the bureau.
+
+- **`app.py`** — `_activity_relevant_findings(e)` (replaces `_activity_css_seed`)
+  builds the cell as: activity title / full date / modality, blank line,
+  `SERVQUAL Score: <gap> (<verdict>)` and `Overall SERVQUAL Rating: <OSQ>
+  (<band>)` (reusing `dashboard_insights.activity_servqual`, the same official
+  scorecard the per-activity report page already shows — so the export and the
+  screen can never disagree), `Response Rate:` / `Total Number of Responses:` /
+  `Total Number of Participants (Pax):`, blank line, then `COMMENTS:` with up
+  to 5 verbatim remarks typed into the form's free-text comment box (never the
+  pre-selected rating items).
+- New `_attach_activity_findings(atoms, conn, events)` mutates each event dict
+  in place with `report` (the SERVQUAL scorecard) and `comments` (deduplicated,
+  capped-at-5 remarks via the existing `_dedup_remarks`/`_meaningful_remark`
+  helpers, which already drop throwaway answers like "none"/"n/a"/"wala").
+  Called from both export routes before the connection closes, since the
+  comment fetch needs an open `conn`. The `export-selected` route's `events`
+  come from the memoized `view_memo("events", ...)` view, so `chosen` is built
+  as `[dict(e) for e in events if ...]` — copies, so the in-place mutation
+  never corrupts the shared cache.
+- New `_fmt_activity_date_full` (full month name, e.g. "January 15, 2026") for
+  the letterhead line, alongside the existing abbreviated `_fmt_activity_date`
+  used in Sheet 2's inventory table.
+- **Tests** — full suite green against a fresh empty DB (no regressions); the
+  new formatter and the `_dedup_remarks` cap/filter behavior were additionally
+  smoke-tested directly against fabricated event/report/comment payloads (no
+  new test file — no seeded fixture activity exists to assert the exact cell
+  text against end-to-end; the existing `test_bulk_actions.py` export-selected
+  test only checks that a workbook downloads, not cell content).
+
+PR #17.
 
 Second half of the spot-feedback #67 fix. Root cause of the duplicate event that
 prompted v1.96: `POST /create` had zero duplicate-submission protection — no
