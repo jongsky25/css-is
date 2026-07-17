@@ -24,10 +24,23 @@
   var MAX_DEPTH = 6;
 
   // Elements that legitimately do something when clicked — a click on/inside
-  // one is never "dead".
+  // one is never "dead". NOTE: deliberately does NOT include [data-tour] — unlike
+  // the OFIS reference (where a similar attribute marks individual controls),
+  // this app's data-tour tags whole page REGIONS (.statbar, #stats, .mods, the
+  // help menu — see templates/home.html/dash_layout.html), never just a button.
+  // Including it here was tried and verified wrong: it silently swallowed dead-
+  // click detection across most of the UI, since nearly every click has SOME
+  // data-tour ancestor. componentOf() below still uses data-tour, correctly,
+  // for its unrelated job — naming which region a click happened in.
+  // [tabindex] excludes tabindex="-1" specifically — dash_layout.html's shared
+  // <main id="maincontent" tabindex="-1"> skip-link target wraps EVERY page's
+  // content, so a bare [tabindex] match verified-wrong the same way [data-tour]
+  // did above: it silently swallowed dead-click detection app-wide (tabindex=-1
+  // means "focusable via script/skip-link", never "clicking this does something"
+  // — unlike tabindex="0"+, which does mean a custom interactive widget).
   var INTERACTIVE = 'a,button,input,select,textarea,label,summary,option,' +
     '[role="button"],[role="link"],[role="tab"],[role="menuitem"],[role="switch"],' +
-    '[role="checkbox"],[onclick],[tabindex],[data-tour],[contenteditable="true"]';
+    '[role="checkbox"],[onclick],[tabindex]:not([tabindex="-1"]),[contenteditable="true"]';
 
   // Our own Spot Feedback picker overlay (static/js/feedback.js) — never measure
   // clicks on/inside it as friction against itself.
