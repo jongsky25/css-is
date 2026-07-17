@@ -3995,16 +3995,28 @@ C_TEXT = "Overall, how would you rate the quality of {subject}?"
 # Optional quick-pick words for the comments box — the rater can tap these to
 # build a comment instead of typing from scratch. They just populate the free-text
 # `remarks`; nothing structured is stored, so no schema change.
+#
+# Each entry is (word, group). `group` is None for standalone chips, or a
+# shared key for chips that are opposites of each other (e.g. "Fast service"
+# / "Long wait") — the UI treats same-group chips as mutually exclusive and
+# caps the total number of active chips at MAX_REMARK_CHIPS.
+MAX_REMARK_CHIPS = 3
+
 REMARK_CHIPS = {
     "servqual": [
-        "Knowledgeable", "Well-prepared", "Engaging", "Clear and easy to follow",
-        "Helpful", "Well-organized", "Started on time", "Practical and useful",
-        "Ran over time", "Wanted more Q&A", "Hard to follow", "Venue could improve",
+        ("Knowledgeable", None), ("Well-prepared", None), ("Engaging", None),
+        ("Clear and easy to follow", "clarity"), ("Helpful", None),
+        ("Well-organized", None), ("Started on time", "timing"),
+        ("Practical and useful", None), ("Ran over time", "timing"),
+        ("Wanted more Q&A", None), ("Hard to follow", "clarity"),
+        ("Venue could improve", None),
     ],
     "arta": [
-        "Fast service", "Courteous staff", "Clear instructions", "Reasonable fees",
-        "Easy process", "Long wait", "Too many steps", "Unclear requirements",
-        "Hard to find information",
+        ("Fast service", "speed"), ("Courteous staff", None),
+        ("Clear instructions", "clarity"), ("Reasonable fees", None),
+        ("Easy process", "process"), ("Long wait", "speed"),
+        ("Too many steps", "process"), ("Unclear requirements", "clarity"),
+        ("Hard to find information", None),
     ],
 }
 
@@ -4168,7 +4180,7 @@ def rating_form(request: Request, qr_token: str, seq: str = "", att: str = ""):
             conn.close()
     return templates.TemplateResponse(request, "rating.html", {
         "ctx": ctx, "qr_token": qr_token, "spec": spec, "seq": seq, "att": att,
-        "staff": staff, "lang": lang,
+        "staff": staff, "lang": lang, "max_remark_chips": MAX_REMARK_CHIPS,
     })
 
 
@@ -4353,7 +4365,7 @@ def respondent_combined(request: Request, tokens: str = ""):
     status = 200 if sections else (403 if closed_any else 404)
     return templates.TemplateResponse(request, "combined_form.html", {
         "sections": sections, "tokens": tokens, "event": event,
-        "closed_any": closed_any, "lang": lang,
+        "closed_any": closed_any, "lang": lang, "max_remark_chips": MAX_REMARK_CHIPS,
     }, status_code=status)
 
 

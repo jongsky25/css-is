@@ -1,5 +1,18 @@
 /* CSS-IS progressive enhancement — tiny, no dependencies.
    Everything works without JS; this only adds comfort. */
+
+// ── Quick-pick comment chips: shared cap/dim helper ────────────────────────
+// Chip containers set data-max-chips (see rating.html / combined_form.html).
+// Dims the remaining inactive chips once that many are active. Shared so both
+// templates' toggleChip() and the draft-restore re-light logic below agree.
+window.refreshChipCap = function (container) {
+  if (!container) return;
+  var max = parseInt(container.dataset.maxChips || "0", 10);
+  if (!max) return;
+  var activeCount = container.querySelectorAll(".chip.active").length;
+  container.classList.toggle("at-max", activeCount >= max);
+};
+
 (function () {
   "use strict";
 
@@ -627,6 +640,9 @@
       var parts = ta.value.split(",").map(function (s) { return s.trim(); });
       if (parts.indexOf(chip.dataset.word) !== -1) chip.classList.add("active");
     });
+    // A draft saved before the chip cap existed may have more active chips
+    // than the current cap allows — dim the rest to match, same as a live tap.
+    form.querySelectorAll(".chips[data-max-chips]").forEach(window.refreshChipCap);
 
     form.dispatchEvent(new Event("change", { bubbles: true })); // refresh progress bar
   }

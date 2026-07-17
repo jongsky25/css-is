@@ -96,10 +96,12 @@
         <div class="field">
           <label for="rmk-{{ s.token }}" class="muted small">{{ t('cf_comments_label', lang) }} <span class="opt">{{ t('optional', lang) }}</span></label>
           {% if s.spec.chips %}
-          <div class="chips" style="display:flex; flex-wrap:wrap; gap:.4rem; margin:.15rem 0 .55rem; align-items:center;">
+          <div class="chips" data-max-chips="{{ max_remark_chips }}" style="display:flex; flex-wrap:wrap; gap:.4rem; margin:.15rem 0 .55rem; align-items:center;">
             <span class="muted small" style="width:100%;">{{ t('chips_hint', lang) }}</span>
-            {% for word in s.spec.chips %}
-            <button type="button" class="chip" data-word="{{ word }}" onclick="toggleChip(this)"
+            {% for word, group in s.spec.chips %}
+            <button type="button" class="chip" data-word="{{ word }}"
+                    {% if group %}data-group="{{ group }}"{% endif %}
+                    onclick="toggleChip(this)"
                     style="font-size:.85rem; padding:.35rem .7rem; border:1px solid var(--line); background:var(--surface); border-radius:999px; cursor:pointer; min-height:34px;">{{ word }}</button>
             {% endfor %}
           </div>
@@ -136,6 +138,7 @@
   .spk-section.skipped { opacity:.55; background:var(--surface-2); }
   .spk-section.skipped .spk-body { display:none; }
   .chip.active { background:var(--accent) !important; border-color:var(--accent) !important; color:var(--on-accent) !important; font-weight:600; }
+  .chips.at-max .chip:not(.active) { opacity:.4; cursor:not-allowed; }
   @media (max-width:419px){ .scale { flex-wrap:wrap; } .scale label { flex:1 1 30%; } }
 </style>
 <script>
@@ -154,8 +157,12 @@ document.querySelectorAll('.spk-section').forEach(function (sec) {
 
 // Quick-pick chips: tapping inserts/removes the word in THIS section's comments box
 // (scoped to the chip's own .field, so each speaker's chips drive their own textarea).
+// Chips sharing a data-group (e.g. "Fast service" / "Long wait") are mutually
+// exclusive, and each section's chip row caps how many chips can be active at
+// once (data-max-chips) — see refreshChipCap() in app.js.
 function toggleChip(btn) {
   var word = btn.dataset.word;
+  var container = btn.closest('.chips');
   var ta = btn.closest('.field').querySelector('textarea');
   if (!ta) return;
   var parts = ta.value.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
@@ -164,10 +171,24 @@ function toggleChip(btn) {
     var i = parts.indexOf(word);
     if (i !== -1) parts.splice(i, 1);
   } else {
+    // Free up the conflicting chip's slot BEFORE checking the cap, so swapping
+    // one opposite for the other works even when already at the limit.
+    var group = btn.dataset.group;
+    if (group && container) {
+      container.querySelectorAll('.chip.active[data-group="' + group + '"]').forEach(function (other) {
+        other.classList.remove('active');
+        var gi = parts.indexOf(other.dataset.word);
+        if (gi !== -1) parts.splice(gi, 1);
+      });
+    }
+    var max = parseInt((container && container.dataset.maxChips) || "0", 10);
+    var activeCount = container ? container.querySelectorAll('.chip.active').length : 0;
+    if (max && activeCount >= max) return; // at the cap — ignore the tap
     btn.classList.add('active');
     if (parts.indexOf(word) === -1) parts.push(word);
   }
   ta.value = parts.join(', ');
+  if (window.refreshChipCap) window.refreshChipCap(container);
 }
 </script>
 {% endif %}
