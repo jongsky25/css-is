@@ -2,12 +2,17 @@
 
 > ## ⛔ THE WHOLE ROUTINE
 >
-> **Shipping = `python deploy_hf.py`. That is the entire deploy. There is NO
-> GitHub step.**
+> **As of the `deploy-hf.yml` push trigger, merging a PR to `main` ships it —
+> automatically.** The GitHub Action runs the exact same `deploy_hf.py` routine
+> described below, using `CSS_ADMIN_USER`/`CSS_ADMIN_PASS`/`HF_TOKEN` secrets for
+> the parts that used to need a human at a keyboard. It still hard-aborts
+> (`CSS_DEPLOY_STRICT_VERSION`) if a merge forgot to bump `APP_VERSION` — bump the
+> version on every user-visible PR, same as always, or the auto-deploy fails loudly
+> instead of silently shipping unversioned. Watch the run: Actions → "Deploy to
+> Hugging Face".
 >
-> Before running it, do the ONE manual thing only the live site can give you:
-> **download the current live DB** (Admin → Backups → Download) — it lands in your
-> `Downloads/` folder. `deploy_hf.py` finds it automatically and swaps it in.
+> For a manual / local / retry deploy (e.g. `--skip-backup`, or shipping without a
+> PR), the old routine still works:
 
 ```
 # 1. Build your change; bump version.py (APP_VERSION) + add a CHANGELOG.md line; run tests.
@@ -16,8 +21,19 @@
 python deploy_hf.py        # finds that download, shows it, asks one Y/n, then deploys + verifies
 ```
 
-That's it. No `git push`. The GitHub mirror is **not** part of this workflow — don't
-push to it as a routine step (only if you explicitly decide to, separately).
+No `git push` needed for the local routine — the GitHub mirror's history is
+separate from the Space's (see below). The CI-triggered deploy is the one
+exception: it deploys straight off whatever's on `main`, so for that path
+merging IS the ship step.
+
+> ⚠️ **Doc/reality check needed:** a July 17, 2026 deploy run logged
+> `Persistence is ACTIVE (CSS_PERSIST_DIR set): the live DB lives on the bucket;
+> shipping code only — skipping the frozen css_is.db seed.` That's the
+> **persistent-storage model** this file's "Alternative model (NOT in use)"
+> section (bottom) says is *not* what's live — but the log says otherwise. Until
+> someone confirms which model the Space is actually running, don't trust this
+> file's DB-handling sections (the live-data rule, the backup-download step, the
+> "CSS_DB UNSET" config) at face value.
 
 ## Why `upload_folder`, never `git push`
 

@@ -1,9 +1,14 @@
 name: Deploy to Hugging Face
 
-# Manual button only. Open this repo on the GitHub mobile site → Actions →
-# "Deploy to Hugging Face" → Run workflow. Nothing ships to prod automatically,
-# so a stray mobile commit can never deploy by accident.
+# Fires automatically on every push to main (i.e. every merged PR), and can
+# still be run by hand — open this repo on the GitHub mobile site → Actions →
+# "Deploy to Hugging Face" → Run workflow (e.g. to retry, or to pass
+# skip_backup). Either way it's the same deploy_hf.py routine, so the
+# push-triggered auto-deploy still hard-aborts (CSS_DEPLOY_STRICT_VERSION
+# below) if a merge forgot to bump APP_VERSION in version.py.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       skip_backup:
