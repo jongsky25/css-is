@@ -1,22 +1,17 @@
 name: Deploy to Hugging Face
 
-# PUSH TRIGGER TEMPORARILY DISABLED (2026-07-17): the Space (equityinhealth/
-# office-connect) is wedged in RUNNING_BUILDING — stuck since the 01:47:55 UTC
-# v1.99 deploy, unresponsive to Factory rebuild via both the API and the HF
-# console. See the repo Discussion (huggingface.co/spaces/equityinhealth/
-# office-connect/discussions/1). Until HF confirms the Space is healthy again,
-# auto-firing a deploy on every merge would just stack more attempts against
-# the same stuck build queue. Re-enable by restoring the `push:` block below
-# once the Space is confirmed unstuck.
+# Auto-deploys on every push to main (re-enabled 2026-07-17 — the Space
+# (equityinhealth/office-connect) wedge that led to disabling this in #21 has
+# been confirmed cleared). Runs deploy_hf.py, which still hard-aborts
+# (CSS_DEPLOY_STRICT_VERSION below) if a merge forgot to bump APP_VERSION in
+# version.py, so a wedge or a missed version bump fails loudly instead of
+# silently shipping nothing / shipping unversioned.
 #
-# Manual runs still work via workflow_dispatch — open this repo on the GitHub
-# mobile site → Actions → "Deploy to Hugging Face" → Run workflow (e.g. to
-# retry, or to pass skip_backup). Either way it's the same deploy_hf.py
-# routine, so a manual run still hard-aborts (CSS_DEPLOY_STRICT_VERSION below)
-# if a merge forgot to bump APP_VERSION in version.py.
+# Manual runs also work via workflow_dispatch — Actions → "Deploy to Hugging
+# Face" → Run workflow (e.g. to retry, or to pass skip_backup).
 on:
-  # push:
-  #   branches: [main]
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       skip_backup:
