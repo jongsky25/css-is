@@ -1,0 +1,157 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}UX Insights{% endblock %}
+
+{% block head %}
+<style>
+  .uxwrap { max-width: 980px; }
+  .acard { background:var(--surface); border:1px solid var(--line); border-radius:14px;
+           padding:1.1rem 1.25rem; box-shadow:var(--shadow); margin-bottom:1rem; }
+  .acard h2 { font-size:1.02rem; margin:0 0 .2rem; }
+  .acard .hint { color:var(--soft); font-size:.86rem; margin:0 0 .9rem; }
+  .flash.err { background:var(--red-bg); border:1px solid var(--red-ln); color:var(--red);
+               padding:.6rem .8rem; border-radius:8px; font-size:.86rem; margin-bottom:.8rem; }
+  .flash.note { background:var(--amber-bg); border:1px solid var(--amber-ln); color:var(--amber);
+                padding:.6rem .8rem; border-radius:8px; font-size:.86rem; margin-bottom:.8rem; }
+  .windowbar { display:flex; align-items:center; gap:.6rem; margin-bottom:1rem; flex-wrap:wrap; }
+  .windowbar a { font-size:.86rem; padding:.3rem .7rem; border-radius:999px; border:1px solid var(--line); }
+  .windowbar a.active { background:var(--accent-bg,var(--blue-bg)); border-color:var(--accent-ln,var(--blue-ln)); font-weight:700; }
+  .totals { display:flex; gap:1.5rem; flex-wrap:wrap; font-size:.9rem; color:var(--soft); margin:0 0 1rem; }
+  .totals b { color:var(--ink); font-variant-numeric:tabular-nums; }
+  .opps { width:100%; border-collapse:collapse; font-size:.88rem; }
+  .opps th { text-align:left; color:var(--soft); font-weight:700; font-size:.76rem;
+             text-transform:uppercase; letter-spacing:.03em; padding:.4rem .6rem; border-bottom:1px solid var(--line); }
+  .opps td { padding:.55rem .6rem; border-bottom:1px solid var(--line); vertical-align:top; }
+  .opps tr:last-child td { border-bottom:none; }
+  .opp-route { font-family:monospace; font-size:.84rem; }
+  .opp-score { font-weight:800; font-variant-numeric:tabular-nums; }
+  .opp-signals { display:flex; gap:.5rem; flex-wrap:wrap; font-size:.78rem; color:var(--soft); }
+  .opp-hint { color:var(--soft); font-size:.84rem; margin-top:.3rem; }
+  .opp-fb { color:var(--amber); font-size:.82rem; margin-top:.25rem; }
+  .side-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1rem; }
+  .side-list { list-style:none; margin:0; padding:0; font-size:.86rem; }
+  .side-list li { display:flex; justify-content:space-between; gap:.6rem;
+                  padding:.35rem 0; border-top:1px solid var(--line); }
+  .side-list li:first-child { border-top:none; }
+  .side-list .k { font-family:monospace; overflow-wrap:anywhere; }
+  .side-list .v { color:var(--soft); white-space:nowrap; }
+  .empty { color:var(--grey); font-size:.9rem; }
+  .retform { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+  .retform input[type=number] { width:5rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="uxwrap">
+  {{ page_header("UX Insights", "Passive interface-friction telemetry, ranked into what to fix first — dead/rage clicks, failed searches, and client errors, correlated with Spot Feedback.") }}
+
+  {% if err %}<div class="flash err">{{ err }}</div>{% endif %}
+  {% if truncated %}<div class="flash note">This window has more events than fit in one read (showing the most recent {{ digest.totals.events }}) — the ranking below is based on that subset, not literally every event in the window.</div>{% endif %}
+
+  <div class="windowbar">
+    <span class="hint" style="color:var(--soft); font-size:.86rem;">Window:</span>
+    {% for d in (7, 30, 90) %}
+    <a href="/admin/ux-insights?days={{ d }}" class="{{ 'active' if days == d }}">{{ d }} days</a>
+    {% endfor %}
+  </div>
+
+  <div class="totals">
+    <span>Sessions <b>{{ digest.totals.sessions }}</b></span>
+    <span>Signed-in users <b>{{ digest.totals.users }}</b></span>
+    <span>Events <b>{{ digest.totals.events }}</b></span>
+  </div>
+
+  <div class="acard">
+    <h2>Ranked opportunities</h2>
+    <p class="hint">Highest-friction spots first — rage clicks weigh more than dead clicks, damped so one frustrated person can't top the board alone; a matching Spot Feedback comment boosts the score.</p>
+    {% if digest.opportunities %}
+    <table class="opps">
+      <thead><tr><th>#</th><th>Where</th><th>Score</th><th>Signals</th><th>Why</th></tr></thead>
+      <tbody>
+        {% for o in digest.opportunities %}
+        <tr>
+          <td>{{ o.rank }}</td>
+          <td>
+            <div class="opp-route">{{ o.route }}</div>
+            {% if o.component %}<div class="hint">{{ o.component }}</div>
+            {% elif o.selector %}<div class="hint">{{ o.selector }}</div>{% endif %}
+            {% if o.element_text %}<div class="hint">"{{ o.element_text }}"</div>{% endif %}
+          </td>
+          <td class="opp-score">{{ o.score }}</td>
+          <td>
+            <div class="opp-signals">
+              {% if o.signals.rage_clicks %}<span>{{ o.signals.rage_clicks }} rage-click(s)</span>{% endif %}
+              {% if o.signals.dead_clicks %}<span>{{ o.signals.dead_clicks }} dead-click(s)</span>{% endif %}
+              {% if o.signals.client_errors %}<span>{{ o.signals.client_errors }} error(s) on this route</span>{% endif %}
+              {% if o.signals.empty_searches %}<span>{{ o.signals.empty_searches }} failed search(es) on this route</span>{% endif %}
+              <span>{{ o.signals.sessions }} session(s) · {{ o.signals.users }} user(s)</span>
+            </div>
+          </td>
+          <td>
+            <div class="opp-hint">{{ o.hint }}</div>
+            {% if o.feedback %}<div class="opp-fb">💬 {{ o.feedback|length }} matching Spot Feedback comment(s)</div>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="empty">No repeated friction spotted in this window — either things are working, or not enough visits have happened yet to tell.</p>
+    {% endif %}
+  </div>
+
+  <div class="side-grid">
+    <div class="acard">
+      <h2>Top screens</h2>
+      {% if digest.top_screens %}
+      <ul class="side-list">
+        {% for s in digest.top_screens %}
+        <li><span class="k">{{ s.route }}</span><span class="v">{{ s.views }} view(s)</span></li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="empty">No pageviews recorded yet.</p>{% endif %}
+    </div>
+    <div class="acard">
+      <h2>Where people leave</h2>
+      {% if digest.dead_ends %}
+      <ul class="side-list">
+        {% for e in digest.dead_ends %}
+        <li><span class="k">{{ e.route }}</span><span class="v">{{ e.exits }} exit(s)</span></li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="empty">Not enough sessions yet.</p>{% endif %}
+    </div>
+    <div class="acard">
+      <h2>Failed searches</h2>
+      {% if digest.failed_searches %}
+      <ul class="side-list">
+        {% for f in digest.failed_searches %}
+        <li><span class="k">{{ f.term }}</span><span class="v">{{ f.count }}×</span></li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="empty">None recorded — no search UI reports this signal yet.</p>{% endif %}
+    </div>
+    <div class="acard">
+      <h2>Client errors</h2>
+      {% if digest.errors %}
+      <ul class="side-list">
+        {% for e in digest.errors %}
+        <li><span class="k">{{ e.route }} — {{ e.name }}</span><span class="v">{{ e.count }}×</span></li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="empty">None recorded in this window.</p>{% endif %}
+    </div>
+  </div>
+
+  <div class="acard">
+    <h2>Retention</h2>
+    <p class="hint">Passive UX events are behavioral data, not audit-of-record — they're purged past this window (currently enforced by running <code>python retention.py --ui-events</code>; not yet on an automatic schedule).</p>
+    <form class="retform" method="post" action="/admin/ux-insights/retention">
+      <label for="retention_days">Keep events for</label>
+      <input type="number" id="retention_days" name="retention_days" min="7" max="365" value="{{ retention_days }}">
+      <span>day(s)</span>
+      <button class="btn" type="submit">Save</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -76,6 +76,7 @@ import i18n
 import realtime
 import tours
 import ui_telemetry as ui_tel
+import retention as ret
 
 # The database file. Override with CSS_DB for a throwaway/demo instance so the
 # delivered css_is.db is never touched (mirrors CSS_BASE_URL / CSS_SMTP_*).
@@ -539,6 +540,10 @@ NAV_GROUPS = [
         {"key": "feedback", "url": "/admin/feedback", "label": "Feedback",
          "hint": "In-page comments from users",
          "kw": "feedback spot comments in-page triage suggestions board", "cap": "triage_feedback"},
+        {"key": "ux_insights", "url": "/admin/ux-insights", "label": "UX Insights",
+         "hint": "Ranked interface-friction opportunities",
+         "kw": "ux insights telemetry friction dead click rage click ranked opportunities "
+               "behavior passive analytics what to fix", "cap": "manage_users"},
         {"key": "ops", "url": "/ops", "label": "Ops",
          "hint": "Health & performance",
          "kw": "ops operations health performance metrics monitoring status uptime", "cap": "manage_users"},
@@ -2390,6 +2395,65 @@ async def telemetry_ingest(request: Request):
         finally:
             conn.close()
     return Response(status_code=204)
+
+
+# ---------------------------------------------------------------------
+# UX Insights (/admin/ux-insights) — the ranked "what to fix first" digest
+# over the passive telemetry above, correlated with Spot Feedback (see
+# ui_telemetry.build_digest). Admin-only: this lives under /admin, so the
+# existing auth-gate middleware already requires manage_users (_required_cap)
+# — no new gating code needed.
+# ---------------------------------------------------------------------
+
+UI_INSIGHTS_WINDOW_DAYS_DEFAULT = 30
+_UI_EVENT_FETCH_CAP = 5000   # digest fetch safety valve; log-worthy volume on its own
+
+
+@app.get("/admin/ux-insights", response_class=HTMLResponse)
+def ux_insights(request: Request, days: int = UI_INSIGHTS_WINDOW_DAYS_DEFAULT, err: str = ""):
+    days = max(1, min(days, 365))
+    conn = get_conn()
+    try:
+        since = (_now_local() - timedelta(days=days)).isoformat(timespec="seconds")
+        events = st.list_ui_events(conn, since=since, limit=_UI_EVENT_FETCH_CAP)
+        feedback = st.list_spot_feedback(conn)
+        retention_days = int(st.get_setting(
+            conn, "ui_telemetry_retention_days", str(ret.UI_EVENT_RETENTION_DAYS_DEFAULT)))
+    finally:
+        conn.close()
+    digest = ui_tel.build_digest(events, feedback, window_days=days,
+                                 now=_now_local().isoformat(timespec="seconds"))
+    truncated = len(events) >= _UI_EVENT_FETCH_CAP
+    return templates.TemplateResponse(request, "ux_insights.html", {
+        "digest": digest, "days": days, "retention_days": retention_days,
+        "truncated": truncated, "err": err,
+        "show_scope": False, "nav_active": "",
+    })
+
+
+@app.post("/admin/ux-insights/retention")
+async def ux_insights_save_retention(request: Request):
+    """Admin-configurable retention window for ui_event, read by
+    retention.py's --ui-events purge job (see docs/UX_TELEMETRY_HANDOFF_PLAN.md
+    step 6). This page only stores the setting — it does not itself purge
+    anything; the purge still runs via retention.py, same as attendee PII."""
+    posted = await _posted(request)
+    try:
+        days = int(posted.get("retention_days", ""))
+    except ValueError:
+        days = None
+    if days is None or not (7 <= days <= 365):
+        return RedirectResponse("/admin/ux-insights?err=" +
+                                quote("Retention must be a whole number of days between 7 and 365."),
+                                status_code=303)
+    conn = get_conn()
+    try:
+        st.set_setting(conn, "ui_telemetry_retention_days", str(days))
+        _audit(request, conn, "ui_telemetry_retention_changed", target_type="setting",
+               summary=f"UX telemetry retention window set to {days} day(s).")
+    finally:
+        conn.close()
+    return RedirectResponse("/admin/ux-insights", status_code=303)
 
 
 # ---- in-process backup scheduler -------------------------------------------

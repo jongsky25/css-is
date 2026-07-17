@@ -2006,15 +2006,31 @@ def _ui_event_row(r):
             "meta": meta}
 
 
-def list_ui_events(conn, limit=500):
-    """Most recent UX telemetry events, newest first — a plain read-back for now;
-    the ranked digest (aggregating these) is a follow-up. meta_json is parsed
-    back into `meta`."""
-    rows = conn.execute(
-        """SELECT id, created_at, user_id, role, session_id, event_type, route,
-                  component, element_selector, element_text, meta_json
-           FROM ui_event ORDER BY id DESC LIMIT ?""", (limit,)).fetchall()
+def list_ui_events(conn, since=None, limit=500):
+    """UX telemetry events, newest first. `since` (an ISO timestamp, same naive
+    local format as created_at) scopes to a rolling window — the ux_insights
+    digest passes one; a plain read-back for debugging omits it. meta_json is
+    parsed back into `meta`."""
+    sql = ("SELECT id, created_at, user_id, role, session_id, event_type, route, "
+           "component, element_selector, element_text, meta_json FROM ui_event")
+    params = []
+    if since:
+        sql += " WHERE created_at >= ?"
+        params.append(since)
+    sql += " ORDER BY id DESC LIMIT ?"
+    params.append(limit)
+    rows = conn.execute(sql, params).fetchall()
     return [_ui_event_row(r) for r in rows]
+
+
+def purge_stale_ui_events(conn, cutoff_iso):
+    """RETENTION enforcement for passive UX telemetry: delete every ui_event row
+    older than cutoff_iso. Unlike attendee PII (purge_expired_attendees), there
+    is no consent record to keep — this is behavioral data, not audit-of-record,
+    so the row is simply gone. Returns the number of rows deleted."""
+    cur = conn.execute("DELETE FROM ui_event WHERE created_at < ?", (cutoff_iso,))
+    conn.commit()
+    return cur.rowcount
 
 
 # ---------------------------------------------------------------------

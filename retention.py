@@ -1,37 +1,54 @@
 """
-CSS-IS attendee retention enforcement
-======================================
+CSS-IS retention enforcement
+==============================
 
-Feature E captures attendee identity (name / email / contact) + consent on the
-event link tree. Capturing PII turns anonymous feedback into personal data under
-the PH Data Privacy Act of 2012 (RA 10173), so it must not be kept indefinitely.
+Two independent retention jobs live in this script — same "purge what's past
+its window" shape, otherwise unrelated:
 
-THE RULE (decided with the user): attendee identity is retained for
-RETENTION_MONTHS months from the date consent was given, then PERMANENTLY
-DELETED. The attendee row is kept as a consent record (consent_at +
-consent_text + purged_at survive) but name/email/contact are nulled. The
-ratings themselves are never identifying — they live in response/answer and are
-analysed anonymously — so purging identity never loses a single rating.
+1. ATTENDEE PII (the original rule). Feature E captures attendee identity
+   (name / email / contact) + consent on the event link tree. Capturing PII
+   turns anonymous feedback into personal data under the PH Data Privacy Act
+   of 2012 (RA 10173), so it must not be kept indefinitely.
 
-This script enforces the rule. Run it on a schedule (the queued
-"performance monitoring + backups" task will wire it into the scheduled job;
-until then run it by hand or from cron / Task Scheduler):
+   THE RULE (decided with the user): attendee identity is retained for
+   RETENTION_MONTHS months from the date consent was given, then PERMANENTLY
+   DELETED. The attendee row is kept as a consent record (consent_at +
+   consent_text + purged_at survive) but name/email/contact are nulled. The
+   ratings themselves are never identifying — they live in response/answer and
+   are analysed anonymously — so purging identity never loses a single rating.
+   Every purge is written to the hash-chained audit_log as 'retention_purge'.
 
-    python retention.py            # purge with the default 6-month window
-    python retention.py --months 6 # explicit window
-    python retention.py --dry-run  # report what WOULD be purged, change nothing
+2. UX TELEMETRY (ui_event — docs/UX_TELEMETRY_HANDOFF_PLAN.md). Passive
+   dead-click/rage-click/pageview/error rows are behavioral data, not
+   audit-of-record, so they're purged past a rolling window (admin-configurable
+   via the ui_telemetry_retention_days app_setting) with no consent record kept
+   and no audit_log entry (see purge_stale_ui_events's docstring for why).
 
-Every purge is written to the hash-chained audit_log as 'retention_purge'.
+Run either on a schedule (the queued "performance monitoring + backups" task
+will wire this into the in-process scheduled job; until then run it by hand or
+from cron / Task Scheduler):
+
+    python retention.py                       # attendee PII, default 6-month window
+    python retention.py --months 6            # attendee PII, explicit window
+    python retention.py --ui-events           # ui_event, default/configured window
+    python retention.py --ui-events --days 30 # ui_event, explicit window
+    python retention.py --dry-run             # report what WOULD be purged, change nothing
 """
 
 from __future__ import annotations
 import argparse
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import storage as st
 import tzutil as tz
 
 RETENTION_MONTHS_DEFAULT = 6
+
+# UX telemetry (ui_event — docs/UX_TELEMETRY_HANDOFF_PLAN.md) is behavioral data,
+# not audit-of-record like the tables above, so it doesn't need indefinite
+# retention. Admin-configurable via the ui_telemetry_retention_days app_setting;
+# this is only the fallback when that setting is unset.
+UI_EVENT_RETENTION_DAYS_DEFAULT = 90
 
 
 def months_ago(months, now=None):
@@ -72,11 +89,49 @@ def run(db_path="css_is.db", months=RETENTION_MONTHS_DEFAULT, dry_run=False,
         conn.close()
 
 
+def purge_stale_ui_events(db_path="css_is.db", days=None, dry_run=False):
+    """Purge passive UX-telemetry rows (ui_event — docs/UX_TELEMETRY_HANDOFF_PLAN.md)
+    older than the retention window. `days` overrides; otherwise the window comes
+    from the ui_telemetry_retention_days app_setting (UI_EVENT_RETENTION_DAYS_DEFAULT
+    if that's never been set). Unlike attendee PII, there's no consent record to
+    keep and no audit_log entry — this is high-volume behavioral data, not
+    audit-of-record, and logging every purge would just add more of the same kind
+    of row this is trying to bound."""
+    conn = st.connect(db_path)
+    try:
+        st.init_db(conn)
+        window = days if days is not None else int(st.get_setting(
+            conn, "ui_telemetry_retention_days", str(UI_EVENT_RETENTION_DAYS_DEFAULT)))
+        cutoff = (tz.now_local() - timedelta(days=window)).isoformat(timespec="seconds")
+        if dry_run:
+            n = conn.execute("SELECT COUNT(*) FROM ui_event WHERE created_at < ?",
+                             (cutoff,)).fetchone()[0]
+            print(f"[dry-run] {n} ui_event row(s) older than {window} days "
+                  f"(before {cutoff}) would be purged.")
+            return n
+        n = st.purge_stale_ui_events(conn, cutoff)
+        print(f"Purged {n} ui_event row(s) older than {window} days.")
+        return n
+    finally:
+        conn.close()
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Purge expired attendee PII (retention rule).")
     ap.add_argument("--db", default="css_is.db", help="database file (default css_is.db)")
     ap.add_argument("--months", type=int, default=RETENTION_MONTHS_DEFAULT,
                     help=f"retention window in months (default {RETENTION_MONTHS_DEFAULT})")
     ap.add_argument("--dry-run", action="store_true", help="report only, change nothing")
+    ap.add_argument("--ui-events", action="store_true",
+                    help="purge stale ui_event rows (passive UX telemetry) instead of "
+                         "attendee PII")
+    ap.add_argument("--days", type=int, default=None,
+                    help="ui_event retention window in days (default: the "
+                         "ui_telemetry_retention_days app_setting, or "
+                         f"{UI_EVENT_RETENTION_DAYS_DEFAULT} if unset) — only used with "
+                         "--ui-events")
     args = ap.parse_args()
-    run(db_path=args.db, months=args.months, dry_run=args.dry_run)
+    if args.ui_events:
+        purge_stale_ui_events(db_path=args.db, days=args.days, dry_run=args.dry_run)
+    else:
+        run(db_path=args.db, months=args.months, dry_run=args.dry_run)
