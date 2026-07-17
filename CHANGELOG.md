@@ -1,5 +1,42 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-17 (v2.00 — Quick-pick comment chips capped at 3, opposite pairs mutually exclusive)
+
+Respondents could tap every canned "quick-pick" comment chip on a survey form at
+once (`REMARK_CHIPS` in `app.py`), producing walls of tags and, worse,
+self-contradictory pairs (e.g. "Fast service" + "Long wait" both landing in the
+same `remarks` free-text field).
+
+- **`app.py`** — `REMARK_CHIPS` restructured from a flat list of strings per
+  survey kind to a list of `(word, group)` pairs; `group` is `None` for
+  standalone chips or a shared key (`speed`, `process`, `clarity`, `timing`)
+  for chips that are opposites of each other. New `MAX_REMARK_CHIPS = 3`
+  constant, passed into the `rating.html` / `combined_form.html` render
+  contexts as `max_remark_chips`.
+- **`i18n.py`** — `REMARK_CHIPS_FIL` restructured with the same group keys,
+  index-aligned with `REMARK_CHIPS`; `chips_hint` copy (en + fil) updated to
+  mention the 3-chip limit.
+- **`templates/rating.html`, `templates/combined_form.html`** — chip loop
+  unpacks `(word, group)` and renders `data-group` / the container's
+  `data-max-chips`; `toggleChip()` in both templates now frees a conflicting
+  chip's slot (same `data-group`) before re-checking the cap, so tapping a
+  chip's opposite swaps it in even while already at the limit, and a `.chips.
+  at-max` CSS rule dims the remaining inactive chips once the cap is hit.
+- **`static/js/app.js`** — new shared `window.refreshChipCap(container)`
+  helper (reads `data-max-chips`, toggles `.at-max`), called from both
+  templates' `toggleChip()` and from the draft-resume chip re-lighting logic
+  so a resumed draft saved before this change (with more than 3 words) shows
+  the correct dimmed state.
+- No backend/schema change — `remarks` stays free text; the cap/conflict
+  rules are a chip-authoring aid only, so typing past 3 phrases by hand is
+  still allowed.
+- **Verified** with Playwright against the running app: cap enforcement,
+  opposite-pair swap-while-at-cap, and draft-resume re-hydration all behave
+  correctly; confirmed both `/r/<token>` and `/seq?tokens=...` render the new
+  markup.
+
+PR #18.
+
 ## 2026-07-17 (v1.99 — Type-2 activity XLSX "Relevant Findings" reformatted to the official MRR layout)
 
 The Type-2 activity inventory Excel download (`/reports/activities-export` and

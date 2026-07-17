@@ -17,10 +17,24 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "1.99"
+APP_VERSION = "2.00"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.00",
+        "date": "July 17, 2026",
+        "summary": "The suggested comment tags on the survey forms now cap at 3 at a time, and picking one no longer lets you keep an opposite tag active too (like “Fast service” and “Long wait” together).",
+        "changes": [
+            "On the comments box of a survey form, tapping a 4th suggested tag while "
+            "3 are already active is ignored (the rest dim to show you're at the "
+            "limit) — pick fewer, clearer tags instead of stacking on a wall of "
+            "them. Tags that mean opposite things (e.g. “Easy process” vs. “Too "
+            "many steps”, “Started on time” vs. “Ran over time”) now also swap "
+            "each other out automatically, so a comment can no longer end up "
+            "saying both at once.",
+        ],
+    },
     {
         "version": "1.99",
         "date": "July 17, 2026",
