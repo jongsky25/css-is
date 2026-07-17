@@ -17,10 +17,30 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.00"
+APP_VERSION = "2.01"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.01",
+        "date": "July 17, 2026",
+        "summary": "Admins can now see exactly which build is running on the Ops page, and a new "
+                   "“UX Insights” page shows where people are getting stuck on-screen — "
+                   "clicks that don't do anything, frustrated repeat-clicking, and searches that come "
+                   "back empty — ranked by how often it's happening.",
+        "changes": [
+            "The Ops page now shows a “Build” panel: the version currently running, "
+            "when it was deployed, and by whom — so you can always tell which build is "
+            "live without guessing.",
+            "A new Admin → UX Insights page quietly watches how the system is actually "
+            "used — clicks on things that don't respond, repeated frustrated clicking in "
+            "the same spot, and searches that come back empty — and turns that into a "
+            "ranked “what to fix first” list, matched up with anything people already "
+            "reported through Send Feedback.",
+            "Nothing personal is ever recorded — only which screen and which button or area, "
+            "never names, ids, or what someone typed.",
+        ],
+    },
     {
         "version": "2.00",
         "date": "July 17, 2026",

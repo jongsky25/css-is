@@ -1,5 +1,74 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-17 (v2.01 — Build telemetry + passive UX-behavior telemetry pipeline)
+
+Two additions, both admin-facing: which build is actually running (`/ops`), and a
+ranked "what to fix first" digest of passive interface-friction signals (`/admin/
+ux-insights`) — dead/rage clicks, failed searches, client errors — ported from
+`jongsky25/ofis-platform`'s `lib/telemetry.ts` + `Telemetry.tsx` + ingest/digest
+routes (commit `7a7e369`) per `docs/UX_TELEMETRY_HANDOFF_PLAN.md`, adapted to this
+app's Flask/Jinja/SQLite stack (that reference is Next.js + Supabase).
+
+- **`deploy_hf.py`** — new `write_build_info(version, deployed_by)` stamps
+  `build_info.json` (version, git commit SHA + short SHA, deploy timestamp,
+  deployer) right before `upload_folder`, added to `ALLOW` so it ships in the
+  same bundle it describes. `ui_telemetry.py` added to `RUNTIME_PY`.
+- **`app.py`** — new `_load_build_info()` reads `build_info.json` (falls back to
+  just `version.APP_VERSION` on a local/dev run with no deploy metadata). New
+  `POST /telemetry` ingest route: login-gated via the existing auth middleware,
+  rate-limited (`ratelimit.py`), caps batch size, re-sanitizes every field
+  server-side rather than trusting the client's own masking alone. New
+  `GET /admin/ux-insights` (admin-gated for free via the existing `/admin`-prefix
+  → `manage_users` cap) with a 7/30/90-day window switcher, plus
+  `POST /admin/ux-insights/retention` to save the admin-configurable retention
+  window. New `NAV_GROUPS` entries for both.
+- **`storage.py`** — new `ui_event` table (additive, mirrors the
+  `spot_feedback`/`audit_log` conventions) + `create_ui_events`/`list_ui_events`
+  (with a `since` window filter) + `purge_stale_ui_events`.
+- **`ui_telemetry.py`** (new) — the controlled event-type vocabulary, text/
+  selector sanitizers, `mask_route` (a generic segment-shape sibling to
+  `monitoring.bucket_path`'s hand-curated table; idempotent, so re-running it
+  server-side over an already-masked client value is safe), and the aggregation
+  half ported from `lib/telemetry.ts`: `top_routes`/`nav_flows`/`exit_routes`,
+  `empty_search_terms`/`errors_by_route`, `friction_by_target`/`friction_score`
+  (rage-weighted, user-damped), `correlate_feedback` (matches Spot Feedback by
+  route+selector), and `build_digest` (the ranked, feedback-boosted opportunity
+  list). All pure — plain dict rows in, no DB — so they're cheap to unit test.
+- **`static/js/telemetry.js`** (new) — vanilla-JS capture script (no client
+  router here, unlike the React reference): pageview, dead-click, rage-click,
+  client-error detection; `sessionStorage`-backed session id (a JS var would
+  fragment every full page load into its own "session"); ships via `sendBeacon`
+  with a `fetch`/`keepalive` fallback. Wired into `dash_layout.html`, signed-in
+  shell only.
+- **`templates/ops.html`** — new "Build" panel. **`templates/ux_insights.html`**
+  (new) — ranked opportunities table + top-screens/exit-routes/failed-searches/
+  errors side panels + the retention-window settings form.
+- **`retention.py`** — new `purge_stale_ui_events` (CLI: `--ui-events [--days N]`),
+  reading the `ui_telemetry_retention_days` app_setting (default 90 days) when
+  `--days` isn't given. Kept independent of the existing attendee-PII job
+  (different legal basis, months-based, audited) rather than merged — manual/
+  cron-invoked only, matching how that job already runs today (no in-process
+  scheduler exists for either yet).
+- **Fix found via manual verification** (not code review): running the app
+  locally and driving it with Playwright caught `INTERACTIVE`'s `[data-tour]` and
+  bare `[tabindex]` clauses — ported as-is from the OFIS reference — both
+  matching ancestors present on nearly every click in this app specifically
+  (`data-tour` tags whole page regions here, not individual controls; the shared
+  `<main tabindex="-1">` skip-link target wraps every page's content), which was
+  silently disabling single dead-click detection app-wide. Fixed by dropping
+  `[data-tour]` and scoping `[tabindex]` to `:not([tabindex="-1"])`.
+- **Tests** — 42+ new tests: pure sanitizer/`mask_route`/aggregation unit tests
+  (including OFIS's own ranking-acceptance case — a feedback-correlated hotspot
+  outranking a higher-raw-count one), storage round-trips, ingest-route RBAC/
+  validation/re-sanitization tests, retention purge tests, and digest-view RBAC/
+  rendering tests. Full suite: 634 passed (3 pre-existing failures unrelated to
+  this change, dependent on a large seeded production `css_is.db`).
+- Out of scope for this pass (matching the handoff doc's own suggested order):
+  wiring `retention.py --ui-events` into an automatic schedule — it's manual/
+  cron-invoked only right now, same as the existing attendee-PII purge.
+
+PR #26.
+
 ## 2026-07-17 (v2.00 — Quick-pick comment chips capped at 3, opposite pairs mutually exclusive)
 
 Respondents could tap every canned "quick-pick" comment chip on a survey form at
