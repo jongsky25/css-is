@@ -17,17 +17,19 @@ What it does:
   1. Legacy (no persistence): PULLS the live DB from ~/Downloads into css_is.db (the
      carrier that ships). Under persistence this is skipped (the bucket is the truth).
   2. Guards the version bump: aborts if APP_VERSION still equals the live version.
-  3. REDUNDANT-BACKUP GATE (persistence only): before the upload that restarts the
+  3. Stamps build_info.json (version, git commit, deployer, timestamp) — build
+     telemetry the live /ops admin dashboard reads to show which build is running.
+  4. REDUNDANT-BACKUP GATE (persistence only): before the upload that restarts the
      Space, forces a fresh live snapshot, confirms it actually wrote, and downloads +
      integrity-checks a local copy — ABORTS if it can't, so a restart never discards
      un-snapshotted writes (the 2026-06-25 data-loss condition). Override only with
      --skip-backup / CSS_DEPLOY_SKIP_BACKUP=1. Needs CSS_ADMIN_USER/PASS (env/.env.local).
-  4. upload_folder of the runtime closure (incl. version.py).
-  5. Waits for RUNNING, then verifies /login shows the expected version.
+  5. upload_folder of the runtime closure (incl. version.py, build_info.json).
+  6. Waits for RUNNING, then verifies /login shows the expected version.
 
 Auth: HF token cached at ~/.cache/huggingface/token (user equityinhealth).
 """
-import os, sys, time, glob, shutil, sqlite3, urllib.request
+import os, sys, time, glob, shutil, sqlite3, subprocess, json, urllib.request
 
 # Silence huggingface_hub's tqdm progress bars. When stdout is a pipe/file (every
 # backgrounded deploy), the upload bars don't get a carriage-return TTY — each
@@ -69,11 +71,12 @@ RUNTIME_PY = [
     "csm_report.py", "auth.py", "mailer.py", "backups.py", "retention.py", "monitoring.py",
     "name_cleanup.py", "apply_speakers.py", "harmonize.py", "activity_admin.py",
     "activity_messages.py", "certificate.py", "ratelimit.py", "i18n.py", "realtime.py",
-    "tours.py",
+    "tours.py", "ui_telemetry.py",
 ]
 ALLOW = RUNTIME_PY + [
     "version.py",            # drives the login version string
     "css_is.db",             # the live DB carrier
+    "build_info.json",       # build telemetry for the /ops admin dashboard
     "Dockerfile", "requirements.txt", "README.md",
     "templates/**", "static/**", "assets/**",
 ]
@@ -210,6 +213,39 @@ def secure_predeploy_backup():
                  "un-snapshotted live data; resolve this or re-run with --skip-backup.")
 
 
+def _git_commit():
+    """Full commit SHA of the checkout being shipped, or None outside a git repo
+    (e.g. a stripped-down CI checkout)."""
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "HEAD"],
+            cwd=os.path.dirname(os.path.abspath(__file__)),
+            stderr=subprocess.DEVNULL, timeout=10,
+        ).decode().strip()
+    except Exception:
+        return None
+
+
+def write_build_info(version, deployed_by):
+    """Stamp build_info.json with what THIS deploy is shipping — version, commit,
+    who ran it, and when — so the live /ops admin dashboard can show which build
+    is actually running. Written just before upload_folder (with build_info.json
+    in ALLOW) so the file ships as part of the same bundle it describes."""
+    import tzutil as tz
+    commit = _git_commit()
+    info = {
+        "version": version,
+        "commit": commit,
+        "commit_short": commit[:7] if commit else None,
+        "deployed_at": tz.now_local().isoformat(timespec="seconds"),
+        "deployed_by": deployed_by,
+    }
+    with open("build_info.json", "w", encoding="utf-8") as f:
+        json.dump(info, f, indent=2)
+    print(f"  build_info.json → v{version} @ {info['commit_short'] or 'unknown commit'} "
+          f"(deployed_by={deployed_by})")
+
+
 def guard_version_bump(want):
     """Abort if the live site already shows this version (forgot to bump APP_VERSION)."""
     try:
@@ -267,6 +303,9 @@ def main():
 
     want = version.APP_VERSION
     guard_version_bump(want)
+
+    deployed_by = os.environ.get("GITHUB_ACTOR") or api.whoami().get("name") or "unknown"
+    write_build_info(want, deployed_by)
 
     if LOCAL_DB in allow:
         db_mb = os.path.getsize(LOCAL_DB) / 1e6

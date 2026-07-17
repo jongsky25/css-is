@@ -22,6 +22,7 @@ and calculator stay cleanly separated -- storage remembers, the engine computes.
 
 from __future__ import annotations
 import hashlib
+import json
 import sqlite3
 import uuid
 import re
@@ -519,6 +520,34 @@ def _add_missing_columns(conn):
                client_submission_id TEXT PRIMARY KEY,
                created_at           TEXT NOT NULL
            )""")
+
+    # ui_event — passive UX-behavior telemetry (docs/UX_TELEMETRY_HANDOFF_PLAN.md;
+    # ported from jongsky25/ofis-platform's ui_event, commit 7a7e369). One row per
+    # interface interaction written best-effort from static/js/telemetry.js via
+    # POST /telemetry — pageviews, dead/rage clicks, failed searches, client errors.
+    # Distinct from spot_feedback above: that's what a user bothers to type up; this
+    # is what happens passively, so friction can eventually be ranked without anyone
+    # having to report it. Every text-bearing field is sanitized (route masked to a
+    # pattern, element text/selector capped and digit-masked) both client-side and
+    # again on ingest — see ui_telemetry.py.
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS ui_event (
+               id               INTEGER PRIMARY KEY,
+               created_at       TEXT NOT NULL,
+               user_id          INTEGER,
+               role             TEXT,
+               session_id       TEXT NOT NULL,
+               event_type       TEXT NOT NULL,
+               route            TEXT NOT NULL,
+               component        TEXT,
+               element_selector TEXT,
+               element_text     TEXT,
+               meta_json        TEXT
+           )""")
+    conn.execute("CREATE INDEX IF NOT EXISTS ui_event_type_created_idx "
+                 "ON ui_event(event_type, created_at)")
+    conn.execute("CREATE INDEX IF NOT EXISTS ui_event_route_created_idx "
+                 "ON ui_event(route, created_at)")
 
     # The Office of the Director heads the whole bureau — it is NOT one of the
     # administrative sections that sit beside the divisions. Promote it to its own
@@ -1939,6 +1968,69 @@ def get_rp(conn, rp_id):
     """Full record for one person (the directory edit page)."""
     people = list_resource_persons(conn)
     return next((p for p in people if p["id"] == rp_id), None)
+
+
+# ---------------------------------------------------------------------
+# UX telemetry — passive interface-friction signal (see ui_event in init_db
+# above + ui_telemetry.py for the vocabulary/sanitizers). Written best-effort,
+# batched, from POST /telemetry; read back for the future ranked digest.
+# ---------------------------------------------------------------------
+
+def create_ui_events(conn, events):
+    """Insert a batch of already-sanitized UX telemetry events (each a dict with
+    user_id, role, session_id, event_type, route, component, element_selector,
+    element_text, meta). Caller has already re-sanitized server-side — this just
+    stores the rows. One shared created_at per batch (they all arrived together)."""
+    if not events:
+        return
+    ts = tz.now_iso()
+    conn.executemany(
+        """INSERT INTO ui_event(created_at, user_id, role, session_id, event_type,
+               route, component, element_selector, element_text, meta_json)
+           VALUES (?,?,?,?,?,?,?,?,?,?)""",
+        [(ts, e.get("user_id"), e.get("role"), e["session_id"], e["event_type"],
+          e["route"], e.get("component"), e.get("element_selector"),
+          e.get("element_text"), json.dumps(e["meta"]) if e.get("meta") else None)
+         for e in events])
+    conn.commit()
+
+
+def _ui_event_row(r):
+    try:
+        meta = json.loads(r[10]) if r[10] else None
+    except ValueError:
+        meta = None
+    return {"id": r[0], "created_at": r[1], "user_id": r[2], "role": r[3],
+            "session_id": r[4], "event_type": r[5], "route": r[6],
+            "component": r[7], "element_selector": r[8], "element_text": r[9],
+            "meta": meta}
+
+
+def list_ui_events(conn, since=None, limit=500):
+    """UX telemetry events, newest first. `since` (an ISO timestamp, same naive
+    local format as created_at) scopes to a rolling window — the ux_insights
+    digest passes one; a plain read-back for debugging omits it. meta_json is
+    parsed back into `meta`."""
+    sql = ("SELECT id, created_at, user_id, role, session_id, event_type, route, "
+           "component, element_selector, element_text, meta_json FROM ui_event")
+    params = []
+    if since:
+        sql += " WHERE created_at >= ?"
+        params.append(since)
+    sql += " ORDER BY id DESC LIMIT ?"
+    params.append(limit)
+    rows = conn.execute(sql, params).fetchall()
+    return [_ui_event_row(r) for r in rows]
+
+
+def purge_stale_ui_events(conn, cutoff_iso):
+    """RETENTION enforcement for passive UX telemetry: delete every ui_event row
+    older than cutoff_iso. Unlike attendee PII (purge_expired_attendees), there
+    is no consent record to keep — this is behavioral data, not audit-of-record,
+    so the row is simply gone. Returns the number of rows deleted."""
+    cur = conn.execute("DELETE FROM ui_event WHERE created_at < ?", (cutoff_iso,))
+    conn.commit()
+    return cur.rowcount
 
 
 # ---------------------------------------------------------------------

@@ -2,6 +2,9 @@
 requests.log
 requests.log.*
 outbox.log
+# Build telemetry stamped by deploy_hf.py right before shipping (deploy-time
+# generated, not source) — read by /ops to show which build is running
+build_info.json
 # SQLite WAL sidecar files (created once journal_mode=WAL is enabled)
 *.db-wal
 *.db-shm

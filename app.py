@@ -75,6 +75,8 @@ import version as ver
 import i18n
 import realtime
 import tours
+import ui_telemetry as ui_tel
+import retention as ret
 
 # The database file. Override with CSS_DB for a throwaway/demo instance so the
 # delivered css_is.db is never touched (mirrors CSS_BASE_URL / CSS_SMTP_*).
@@ -538,6 +540,10 @@ NAV_GROUPS = [
         {"key": "feedback", "url": "/admin/feedback", "label": "Feedback",
          "hint": "In-page comments from users",
          "kw": "feedback spot comments in-page triage suggestions board", "cap": "triage_feedback"},
+        {"key": "ux_insights", "url": "/admin/ux-insights", "label": "UX Insights",
+         "hint": "Ranked interface-friction opportunities",
+         "kw": "ux insights telemetry friction dead click rage click ranked opportunities "
+               "behavior passive analytics what to fix", "cap": "manage_users"},
         {"key": "ops", "url": "/ops", "label": "Ops",
          "hint": "Health & performance",
          "kw": "ops operations health performance metrics monitoring status uptime", "cap": "manage_users"},
@@ -2235,6 +2241,27 @@ def _ops_plain(snap, chain_ok, bad_id, bkinfo, last_backup, persist=None):
     return {"verdict": verdict, "cards": cards, "safety": safety}
 
 
+BUILD_INFO_PATH = "build_info.json"
+
+
+def _load_build_info():
+    """Read the deploy-time build_info.json (written by deploy_hf.py right before
+    it ships, so the file itself travels in the same bundle it describes). Missing
+    entirely on a local/dev run — falls back to just the version.py APP_VERSION
+    with no deploy metadata, so the /ops build panel never errors out."""
+    try:
+        with open(BUILD_INFO_PATH, encoding="utf-8") as f:
+            info = json.load(f)
+    except (OSError, ValueError):
+        info = {}
+    return {
+        "version": info.get("version") or ver.APP_VERSION,
+        "commit": info.get("commit_short"),
+        "deployed_at": _humandt(info.get("deployed_at")) if info.get("deployed_at") else None,
+        "deployed_by": info.get("deployed_by"),
+    }
+
+
 @app.get("/ops", response_class=HTMLResponse)
 def ops(request: Request):
     """Admin operations dashboard, in plain language — one overall verdict, four
@@ -2293,8 +2320,140 @@ def ops(request: Request):
         "plain": plain, "snap": snap, "inventory": inventory,
         "people": people, "last_login_line": last_login_line,
         "recent_logins": recent_logins, "lately": lately,
+        "build": _load_build_info(),
         "show_scope": False, "nav_active": "",
     })
+
+
+# ---------------------------------------------------------------------
+# Passive UX-behavior telemetry ingest (docs/UX_TELEMETRY_HANDOFF_PLAN.md) —
+# static/js/telemetry.js batches sanitized dead-click / rage-click / pageview /
+# client-error events and beacons them here. Login-required (this path isn't
+# in _PUBLIC_*, so the auth-gate middleware already 401'd/redirected an
+# anonymous caller before this handler runs — the script only ever loads in
+# the signed-in dashboard shell anyway, see dash_layout.html). Best-effort:
+# never lets a telemetry problem surface to the user, and re-sanitizes every
+# field server-side — the client's own masking is never trusted alone.
+# ---------------------------------------------------------------------
+
+def _clean_telemetry_meta(meta):
+    """Keep meta small, string-valued, and re-sanitized — mirrors the OFIS
+    reference's cleanMeta()."""
+    if not isinstance(meta, dict):
+        return None
+    out = {}
+    if isinstance(meta.get("from"), str):
+        out["from"] = ui_tel.mask_route(meta["from"][:500])
+    if isinstance(meta.get("term"), str):
+        out["term"] = ui_tel.sanitize_text(meta["term"], max_len=80)
+    if isinstance(meta.get("name"), str):
+        out["name"] = meta["name"].strip()[:80] or None
+    if isinstance(meta.get("message"), str):
+        out["message"] = ui_tel.sanitize_text(meta["message"], max_len=80)
+    return {k: v for k, v in out.items() if v} or None
+
+
+@app.post("/telemetry")
+async def telemetry_ingest(request: Request):
+    ip = request.client.host if request.client else None
+    if not rl.allow("telemetry", ip):
+        return Response(status_code=204)
+    try:
+        body = await request.json()
+    except Exception:               # noqa: BLE001 — malformed beacon body
+        body = None
+    events = body.get("events") if isinstance(body, dict) else None
+    if not isinstance(events, list):
+        return Response(status_code=204)
+
+    user = request.state.user       # never None here — see docstring above
+    rows = []
+    for e in events[:ui_tel.MAX_BATCH]:
+        if not isinstance(e, dict):
+            continue
+        et = e.get("event_type")
+        if et not in ui_tel.UI_EVENT_TYPES:
+            continue
+        component = e.get("component")
+        rows.append({
+            "user_id": user["id"], "role": user["role"],
+            "session_id": str(e.get("session_id") or "")[:80] or "unknown",
+            "event_type": et,
+            "route": ui_tel.mask_route(str(e.get("route") or "/")[:500]),
+            "component": component.strip()[:120] if isinstance(component, str) and component.strip() else None,
+            "element_selector": ui_tel.sanitize_selector(e.get("element_selector")),
+            "element_text": ui_tel.sanitize_text(e.get("element_text"), max_len=300),
+            "meta": _clean_telemetry_meta(e.get("meta")),
+        })
+
+    if rows:
+        conn = get_conn()
+        try:
+            st.create_ui_events(conn, rows)
+        except Exception:           # noqa: BLE001 — telemetry must never break the caller
+            pass
+        finally:
+            conn.close()
+    return Response(status_code=204)
+
+
+# ---------------------------------------------------------------------
+# UX Insights (/admin/ux-insights) — the ranked "what to fix first" digest
+# over the passive telemetry above, correlated with Spot Feedback (see
+# ui_telemetry.build_digest). Admin-only: this lives under /admin, so the
+# existing auth-gate middleware already requires manage_users (_required_cap)
+# — no new gating code needed.
+# ---------------------------------------------------------------------
+
+UI_INSIGHTS_WINDOW_DAYS_DEFAULT = 30
+_UI_EVENT_FETCH_CAP = 5000   # digest fetch safety valve; log-worthy volume on its own
+
+
+@app.get("/admin/ux-insights", response_class=HTMLResponse)
+def ux_insights(request: Request, days: int = UI_INSIGHTS_WINDOW_DAYS_DEFAULT, err: str = ""):
+    days = max(1, min(days, 365))
+    conn = get_conn()
+    try:
+        since = (_now_local() - timedelta(days=days)).isoformat(timespec="seconds")
+        events = st.list_ui_events(conn, since=since, limit=_UI_EVENT_FETCH_CAP)
+        feedback = st.list_spot_feedback(conn)
+        retention_days = int(st.get_setting(
+            conn, "ui_telemetry_retention_days", str(ret.UI_EVENT_RETENTION_DAYS_DEFAULT)))
+    finally:
+        conn.close()
+    digest = ui_tel.build_digest(events, feedback, window_days=days,
+                                 now=_now_local().isoformat(timespec="seconds"))
+    truncated = len(events) >= _UI_EVENT_FETCH_CAP
+    return templates.TemplateResponse(request, "ux_insights.html", {
+        "digest": digest, "days": days, "retention_days": retention_days,
+        "truncated": truncated, "err": err,
+        "show_scope": False, "nav_active": "",
+    })
+
+
+@app.post("/admin/ux-insights/retention")
+async def ux_insights_save_retention(request: Request):
+    """Admin-configurable retention window for ui_event, read by
+    retention.py's --ui-events purge job (see docs/UX_TELEMETRY_HANDOFF_PLAN.md
+    step 6). This page only stores the setting — it does not itself purge
+    anything; the purge still runs via retention.py, same as attendee PII."""
+    posted = await _posted(request)
+    try:
+        days = int(posted.get("retention_days", ""))
+    except ValueError:
+        days = None
+    if days is None or not (7 <= days <= 365):
+        return RedirectResponse("/admin/ux-insights?err=" +
+                                quote("Retention must be a whole number of days between 7 and 365."),
+                                status_code=303)
+    conn = get_conn()
+    try:
+        st.set_setting(conn, "ui_telemetry_retention_days", str(days))
+        _audit(request, conn, "ui_telemetry_retention_changed", target_type="setting",
+               summary=f"UX telemetry retention window set to {days} day(s).")
+    finally:
+        conn.close()
+    return RedirectResponse("/admin/ux-insights", status_code=303)
 
 
 # ---- in-process backup scheduler -------------------------------------------

@@ -1,0 +1,347 @@
+"""
+CSS-IS UX telemetry — passive interface-friction signal.
+=========================================================
+
+Ported from jongsky25/ofis-platform's lib/telemetry.ts (commit 7a7e369, "Add
+passive UX-behavior telemetry with a ranked improvement digest") per
+docs/UX_TELEMETRY_HANDOFF_PLAN.md. Three halves, mirroring the reference:
+  1. Controlled vocabulary (UI_EVENT_TYPES).
+  2. Sanitizers — run client-side (static/js/telemetry.js) and again here as
+     defense-in-depth (the /telemetry ingest route in app.py calls these).
+  3. Pure aggregators + build_digest — take plain dict rows, no DB. build_digest
+     is the point of the whole system: a ranked, source-located,
+     feedback-correlated "what to fix" summary (see app.py's /admin/ux-insights).
+
+Distinct from Spot Feedback (storage.py's spot_feedback table): that's what a
+user bothers to type up. This is what happens passively — dead/rage clicks,
+failed searches, client errors — so friction can eventually be ranked without
+anyone having to report it.
+
+Everything here is PURE (no DB, no FastAPI import) so it's cheap to unit test
+and safe to import from both the /telemetry route and the digest view.
+"""
+from __future__ import annotations
+import re
+
+# ── Controlled vocabulary (a TEXT column, not a real enum — a new type needs
+# no migration). form_abandon has no detector wired yet (matching the OFIS
+# reference itself, which declares it but has never shipped detection either)
+# — kept in the vocabulary so a future capture-script addition needs no schema
+# change.
+UI_EVENT_TYPES = {
+    "pageview", "dead_click", "rage_click", "search_empty", "client_error", "form_abandon",
+}
+
+MAX_TEXT = 160
+MAX_SELECTOR = 1000
+MAX_BATCH = 50
+
+
+def sanitize_text(s, max_len=MAX_TEXT):
+    """Collapse whitespace, mask any run of 3+ digits (ids/phone numbers/amounts)
+    as '###', cap length. Mirrors lib/telemetry.ts's sanitizeText, minus the
+    OFIS-specific TIN pattern. Returns None for empty input."""
+    if not s:
+        return None
+    clean = re.sub(r"\s+", " ", str(s)).strip()
+    if not clean:
+        return None
+    clean = re.sub(r"\d{3,}", "###", clean).strip()
+    if not clean:
+        return None
+    return clean if len(clean) <= max_len else clean[:max_len] + "…"
+
+
+def sanitize_selector(s, max_len=MAX_SELECTOR):
+    """Trim + cap a CSS selector path (already built client-side)."""
+    if not s:
+        return None
+    clean = str(s).strip()
+    if not clean:
+        return None
+    return clean if len(clean) <= max_len else clean[:max_len]
+
+
+_DATE_RE = re.compile(r"^\d{4}-\d{2}(-\d{2})?$")
+_HEX_TOKEN_RE = re.compile(r"^[0-9a-f]{6,}$", re.IGNORECASE)
+_NUMERIC_ID_RE = re.compile(r"^\d+$")
+
+
+def mask_route(path):
+    """Turn a concrete pathname into a route PATTERN: numeric ids, hex tokens
+    (the /r/<token>, /e/<token>, /encode/<token> link shapes), and date segments
+    become {id} / {token} / {date}. Query string and fragment are dropped.
+
+    Same curly-brace convention as monitoring.bucket_path — that table is a
+    hand-curated per-route map (used for the /ops request-log breakdown); this
+    is its generic sibling, a catch-all segment-shape rule so a route not yet
+    added there still never carries a raw id/token into ui_event.
+
+    Idempotent: masking an already-masked route (e.g. what the client sent,
+    already masked by static/js/telemetry.js) is a no-op, since none of the
+    three patterns above match a literal '{id}'/'{token}'/'{date}' segment —
+    which is exactly what makes it safe to re-run here as the server-side
+    'never trust the client mask alone' pass."""
+    if not path:
+        return "/"
+    p = str(path)
+    cut = min((i for i in (p.find("?"), p.find("#")) if i >= 0), default=-1)
+    if cut >= 0:
+        p = p[:cut]
+    p = re.sub(r"^https?://[^/]+", "", p, flags=re.IGNORECASE)
+    if not p.startswith("/"):
+        p = "/" + p
+    segs = []
+    for seg in p.split("/"):
+        if not seg:
+            segs.append(seg)
+        elif _DATE_RE.match(seg):
+            segs.append("{date}")
+        elif _HEX_TOKEN_RE.match(seg):
+            segs.append("{token}")
+        elif _NUMERIC_ID_RE.match(seg):
+            segs.append("{id}")
+        else:
+            segs.append(seg)
+    masked = "/".join(segs)
+    if len(masked) > 1 and masked.endswith("/"):
+        masked = masked[:-1]
+    return masked
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Aggregation (pure — take plain dict rows, e.g. from storage.list_ui_events /
+# storage.list_spot_feedback). Built to RANK opportunities, not just count.
+# Mirrors lib/telemetry.ts's aggregation half; field names are this app's own
+# snake_case (user_id/session_id/element_selector/element_text), not a
+# mechanical rename of the TS camelCase.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def top_routes(rows, limit=10):
+    """Top screens by pageview count, with distinct sessions/users."""
+    by_route = {}
+    for r in rows:
+        if r["event_type"] != "pageview":
+            continue
+        e = by_route.setdefault(r["route"], {"views": 0, "sessions": set(), "users": set()})
+        e["views"] += 1
+        if r.get("session_id"):
+            e["sessions"].add(r["session_id"])
+        if r.get("user_id"):
+            e["users"].add(r["user_id"])
+    out = [{"route": route, "views": e["views"], "sessions": len(e["sessions"]),
+            "users": len(e["users"])} for route, e in by_route.items()]
+    out.sort(key=lambda x: (-x["views"], x["route"]))
+    return out[:limit]
+
+
+def nav_flows(rows, limit=15):
+    """Navigation flows from consecutive pageviews (meta.from -> route)."""
+    counts = {}
+    for r in rows:
+        if r["event_type"] != "pageview":
+            continue
+        frm = (r.get("meta") or {}).get("from")
+        if not frm or frm == r["route"]:
+            continue
+        key = (frm, r["route"])
+        counts[key] = counts.get(key, 0) + 1
+    out = [{"from": f, "to": t, "count": c} for (f, t), c in counts.items()]
+    out.sort(key=lambda x: -x["count"])
+    return out[:limit]
+
+
+def empty_search_terms(rows, limit=15):
+    """Search/filter terms that returned nothing, by frequency."""
+    counts = {}
+    for r in rows:
+        if r["event_type"] != "search_empty":
+            continue
+        term = (r.get("meta") or {}).get("term")
+        if not term:
+            continue
+        e = counts.setdefault(term, {"count": 0, "routes": set()})
+        e["count"] += 1
+        e["routes"].add(r["route"])
+    out = [{"term": t, "count": e["count"], "routes": sorted(e["routes"])}
+           for t, e in counts.items()]
+    out.sort(key=lambda x: (-x["count"], x["term"]))
+    return out[:limit]
+
+
+def errors_by_route(rows, limit=15):
+    """Client errors grouped by route + error name."""
+    counts = {}
+    for r in rows:
+        if r["event_type"] != "client_error":
+            continue
+        name = (r.get("meta") or {}).get("name") or "Error"
+        key = (r["route"], name)
+        counts[key] = counts.get(key, 0) + 1
+    out = [{"route": route, "name": name, "count": c} for (route, name), c in counts.items()]
+    out.sort(key=lambda x: -x["count"])
+    return out[:limit]
+
+
+def exit_routes(rows, limit=10):
+    """Where sessions end — the last pageview of each session is an 'exit' for
+    that route. created_at is a naive local ISO string throughout this app
+    (tz.now_iso()), so plain string comparison already sorts chronologically."""
+    last_by_session = {}
+    for r in rows:
+        if r["event_type"] != "pageview" or not r.get("session_id"):
+            continue
+        sid = r["session_id"]
+        at = r["created_at"]
+        cur = last_by_session.get(sid)
+        if not cur or at >= cur["at"]:
+            last_by_session[sid] = {"route": r["route"], "at": at}
+    counts = {}
+    for v in last_by_session.values():
+        counts[v["route"]] = counts.get(v["route"], 0) + 1
+    out = [{"route": route, "exits": n} for route, n in counts.items()]
+    out.sort(key=lambda x: (-x["exits"], x["route"]))
+    return out[:limit]
+
+
+# ── Friction (the ranked-opportunity core) ──────────────────────────────────
+
+def friction_by_target(rows):
+    """Group dead + rage clicks by route + component (source anchor)."""
+    by_key = {}
+    for r in rows:
+        if r["event_type"] not in ("dead_click", "rage_click"):
+            continue
+        component = r.get("component")
+        selector = r.get("element_selector")
+        key = (r["route"], component or selector or "?")
+        t = by_key.get(key)
+        if not t:
+            t = {"route": r["route"], "component": component,
+                 "element_text": r.get("element_text"), "selector": selector,
+                 "dead_clicks": 0, "rage_clicks": 0,
+                 "_sessions": set(), "_users": set()}
+            by_key[key] = t
+        if r["event_type"] == "rage_click":
+            t["rage_clicks"] += 1
+        else:
+            t["dead_clicks"] += 1
+        if r.get("session_id"):
+            t["_sessions"].add(r["session_id"])
+        if r.get("user_id"):
+            t["_users"].add(r["user_id"])
+        if not t["element_text"] and r.get("element_text"):
+            t["element_text"] = r["element_text"]
+    out = []
+    for t in by_key.values():
+        sessions, users = t.pop("_sessions"), t.pop("_users")
+        t["sessions"], t["users"] = len(sessions), len(users)
+        out.append(t)
+    return out
+
+
+def friction_score(target):
+    """Rank a friction target. Rage clicks weigh more than dead clicks (stronger
+    frustration), and the whole thing is DAMPED by distinct users so one
+    frustrated person can't top the board alone. Deterministic, unit-tested."""
+    base = target["rage_clicks"] * 3 + target["dead_clicks"]
+    users = target["users"]
+    weight = 1 if users >= 3 else (0.8 if users == 2 else 0.6)
+    return round(base * weight, 2)
+
+
+FEEDBACK_BOOST = 1.5   # a hotspot with a matching complaint jumps the queue.
+
+
+def correlate_feedback(targets, feedback):
+    """Attach explicit spot-feedback to friction targets. A hotspot people ALSO
+    complained about is the strongest 'fix this' signal, so matched feedback
+    both enriches and boosts the score downstream (in build_digest). Match on
+    masked route (feedback page_url -> mask_route) + exact selector; fall back
+    to a route-only match so a complaint on the same screen still associates.
+    `feedback` rows come from storage.list_spot_feedback (page_url,
+    element_selector, message, status, created_at)."""
+    prepared = [{"route": mask_route(f["page_url"]), "selector": f.get("element_selector"),
+                 "message": f["message"], "status": f.get("status"),
+                 "created_at": f["created_at"]} for f in feedback]
+    out = []
+    for t in targets:
+        exact = [f for f in prepared
+                 if f["route"] == t["route"] and t.get("selector") and f["selector"] == t["selector"]]
+        matched = exact if exact else [f for f in prepared if f["route"] == t["route"]]
+        out.append({**t, "feedback": [{"message": f["message"], "status": f["status"],
+                                       "created_at": f["created_at"]} for f in matched]})
+    return out
+
+
+# ── The digest — the human-facing deliverable ───────────────────────────────
+
+def _hint_for(o):
+    """One deterministic, human-orienting cause line per opportunity (no LLM in
+    the loop)."""
+    parts = []
+    if o["signals"]["rage_clicks"] > 0:
+        parts.append("Users rage-click this element — it looks interactive but does "
+                     "nothing. Make it actionable, or remove the affordance.")
+    elif o["signals"]["dead_clicks"] > 0:
+        parts.append("Users click here expecting an action; the element is inert.")
+    if o["signals"]["client_errors"] > 0:
+        parts.append("This screen also throws client-side errors.")
+    if o["feedback"]:
+        parts.append(f"{len(o['feedback'])} matching spot-feedback comment(s) — "
+                     "someone already reported this.")
+    return " ".join(parts) or "Recurring friction on this element."
+
+
+def build_digest(rows, feedback, *, window_days=None, now=None, limit=15):
+    """Build the ranked improvement digest. `rows` (ui_event) and `feedback`
+    (spot_feedback) are expected to already be scoped to the window by the
+    caller (SQL/storage filtering) — window_days/now only annotate `window`."""
+    sessions, users = set(), set()
+    for r in rows:
+        if r.get("session_id"):
+            sessions.add(r["session_id"])
+        if r.get("user_id"):
+            users.add(r["user_id"])
+
+    empty_by_route, error_by_route = {}, {}
+    for r in rows:
+        if r["event_type"] == "search_empty":
+            empty_by_route[r["route"]] = empty_by_route.get(r["route"], 0) + 1
+        elif r["event_type"] == "client_error":
+            error_by_route[r["route"]] = error_by_route.get(r["route"], 0) + 1
+
+    with_feedback = correlate_feedback(friction_by_target(rows), feedback)
+    scored = []
+    for t in with_feedback:
+        base = friction_score(t)
+        score = round(base * (FEEDBACK_BOOST if t["feedback"] else 1), 2)
+        partial = {
+            "route": t["route"], "component": t["component"],
+            "element_text": t["element_text"], "selector": t["selector"], "score": score,
+            "signals": {
+                "rage_clicks": t["rage_clicks"], "dead_clicks": t["dead_clicks"],
+                "empty_searches": empty_by_route.get(t["route"], 0),
+                "client_errors": error_by_route.get(t["route"], 0),
+                "sessions": t["sessions"], "users": t["users"],
+            },
+            "feedback": t["feedback"],
+        }
+        partial["hint"] = _hint_for(partial)
+        scored.append(partial)
+    scored.sort(key=lambda o: (-o["score"], -o["signals"]["rage_clicks"]))
+    scored = scored[:limit]
+    for i, o in enumerate(scored):
+        o["rank"] = i + 1
+
+    times = sorted(r["created_at"] for r in rows if r.get("created_at"))
+    return {
+        "window": {"days": window_days, "from": times[0] if times else None,
+                   "to": now or (times[-1] if times else None)},
+        "totals": {"sessions": len(sessions), "users": len(users), "events": len(rows)},
+        "opportunities": scored,
+        "dead_ends": exit_routes(rows),
+        "top_screens": top_routes(rows),
+        "failed_searches": empty_search_terms(rows),
+        "errors": errors_by_route(rows),
+    }
