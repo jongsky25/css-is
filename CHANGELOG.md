@@ -1,5 +1,53 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-18 (v2.02 — Downloadable UX handoff + the two dormant telemetry signals)
+
+Three additions to the UX telemetry system shipped in v2.01: a downloadable
+AI-analysis handoff, live `search_empty` dispatch, and a `form_abandon`
+detector.
+
+- **`ux_handoff.py`** (new, pure — no DB/FastAPI, same testability contract as
+  `ui_telemetry.py`) — builds the handoff payload over `build_digest()`:
+  `events_per_day`/`event_type_counts`, `pseudonymize_events` (drops
+  id/user_id, session ids → per-export `s1`/`s2`… pseudonyms, ≤200 most
+  recent), `map_routes_to_handlers` (masked route → app.py handler name, by
+  segment-shape match against route objects' `.path`/`.name`),
+  `feature_usage` (every NAV_GROUPS destination ranked by pageviews, with
+  rarely-used/NEVER-used buckets — the "redesign around what staff actually
+  use" section), `build_handoff` (adds `nav_flows`, which `build_digest`
+  deliberately omits) and `render_handoff_markdown` (deterministic, pipe-
+  escaped, self-describing: app context, vocabulary, sanitization semantics
+  and the analysis brief travel inside the file).
+- **`app.py`** — new `GET /admin/ux-insights/handoff?days=&fmt=md|json`
+  (admin-gated for free via the `/admin` prefix): same window clamp + fetch
+  block as `ux_insights`, audited like the Spot Feedback export, ships
+  `UX_Handoff_{days}d_{ts}.md`/`.json` as `Content-Disposition: attachment`.
+  `_clean_telemetry_meta` now also passes `meta.fields` (a small int — the
+  form_abandon touched-field count, clamped 1–500). UX Insights nav keywords
+  extended with "handoff export download ai".
+- **`static/js/telemetry.js`** — `form_abandon` detector: Map of form →
+  touched-field Set built from capture-phase `input`/`change`, cleared on
+  `submit`, emitted on `pagehide` only (a tab switch is not abandonment) with
+  `meta={fields: n}` — never field names or values. Search/filter forms opt
+  out via `[data-search]`/`[role="search"]`/`[data-telemetry-ignore]`; the
+  Spot Feedback overlay stays excluded.
+- **`static/js/search.js`** — dispatches `csi:search-empty` (the event
+  telemetry.js has listened for since v2.01) when a palette/inline query has
+  zero page hits AND the debounced `/api/search` fetch settles empty; once
+  per term per page load.
+- **`templates/_telemetry.html`** (new) — `search_empty_signal(term,
+  is_empty)` macro for server-rendered zero-result pages (waits for
+  DOMContentLoaded so the deferred telemetry.js listener exists first); used
+  by `search.html`, `encode_home.html`, `people.html`. `help.html`'s inline
+  topic filter dispatches the same event, debounced. `ux_insights.html`
+  gains the download control; `dash_layout.html` cache-busters bumped.
+- **Housekeeping** — `ux_handoff.py` registered in `deploy_hf.py`'s
+  `RUNTIME_PY`; `version.py` → 2.02 with a plain-language entry.
+- **Tests** — new `tests/test_ux_handoff.py` (pure fixtures); handoff-
+  endpoint coverage in `tests/test_ux_insights.py` incl. an end-to-end leak
+  test (raw digits POSTed through `/telemetry` never surface in the export);
+  `meta.fields` ingest coverage in `tests/test_telemetry_ingest.py`.
+
 ## 2026-07-17 (v2.01 — Build telemetry + passive UX-behavior telemetry pipeline)
 
 Two additions, both admin-facing: which build is actually running (`/ops`), and a

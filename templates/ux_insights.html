@@ -16,6 +16,8 @@
   .windowbar { display:flex; align-items:center; gap:.6rem; margin-bottom:1rem; flex-wrap:wrap; }
   .windowbar a { font-size:.86rem; padding:.3rem .7rem; border-radius:999px; border:1px solid var(--line); }
   .windowbar a.active { background:var(--accent-bg,var(--blue-bg)); border-color:var(--accent-ln,var(--blue-ln)); font-weight:700; }
+  .handoff-links { margin-left:auto; display:flex; gap:.4rem; }
+  .handoff-links a:first-child { font-weight:700; }
   .totals { display:flex; gap:1.5rem; flex-wrap:wrap; font-size:.9rem; color:var(--soft); margin:0 0 1rem; }
   .totals b { color:var(--ink); font-variant-numeric:tabular-nums; }
   .opps { width:100%; border-collapse:collapse; font-size:.88rem; }
@@ -53,7 +55,17 @@
     {% for d in (7, 30, 90) %}
     <a href="/admin/ux-insights?days={{ d }}" class="{{ 'active' if days == d }}">{{ d }} days</a>
     {% endfor %}
+    <span class="handoff-links">
+      <a href="/admin/ux-insights/handoff?days={{ days }}" download>⤓ Download handoff for AI analysis</a>
+      <a href="/admin/ux-insights/handoff?days={{ days }}&fmt=json" download>JSON</a>
+    </span>
   </div>
+  <p class="hint" style="color:var(--soft); font-size:.84rem; margin:-.4rem 0 1rem;">
+    The handoff is a single self-describing file of this window's telemetry —
+    give it to an AI assistant (e.g. Claude) to get ranked interface-improvement
+    recommendations. Everything in it is masked and pseudonymized; no names, ids
+    or typed content leave the system.
+  </p>
 
   <div class="totals">
     <span>Sessions <b>{{ digest.totals.sessions }}</b></span>

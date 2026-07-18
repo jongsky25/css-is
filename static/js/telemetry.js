@@ -253,9 +253,10 @@
     if (!(target.closest && target.closest(INTERACTIVE))) record("dead_click", { el: target });
   }, true);
 
-  // ── empty-search signal (dispatched by any search UI that wants to report
-  // it — none does yet, this just wires the listener so one can) + client
-  // errors ─────────────────────────────────────────────────────────────────
+  // ── empty-search signal (dispatched on window as a "csi:search-empty"
+  // CustomEvent by search.js, the /search fallback page, the encode/people
+  // list filters and the help topic filter whenever a query returns nothing)
+  // + client errors ────────────────────────────────────────────────────────
 
   window.addEventListener("csi:search-empty", function (e) {
     var term = e.detail && e.detail.term;
@@ -270,4 +271,49 @@
     var reasonMessage = reason && typeof reason.message === "string" ? reason.message : String(reason || "");
     record("client_error", { meta: { name: name, message: sanitizeText(reasonMessage, 80) } });
   });
+
+  // ── form abandonment — a form edited but never submitted when the page is
+  // left. Only the form element and a touched-field COUNT are recorded, never
+  // field names or values. Search/filter forms opt out ([data-search],
+  // [role="search"], [data-telemetry-ignore]) so routine filtering doesn't
+  // drown the signal; the Spot Feedback overlay is excluded like everywhere
+  // else. Emitted on pagehide only (a tab switch is not abandonment), then
+  // flushed explicitly — the queue's own pagehide flush (registered above)
+  // has already run by the time this handler fires ────────────────────────────
+
+  var IGNORED_FORMS = '[data-search],[role="search"],[data-telemetry-ignore]';
+  var dirtyForms = typeof Map !== "undefined" ? new Map() : null;
+
+  function formOf(target) {
+    if (!target || !target.closest || isOwnUi(target)) return null;
+    var form = target.closest("form");
+    if (!form || (form.matches && form.matches(IGNORED_FORMS))) return null;
+    return form;
+  }
+
+  function markDirty(e) {
+    if (!dirtyForms) return;
+    var form = formOf(e.target);
+    if (!form) return;
+    var fields = dirtyForms.get(form);
+    if (!fields) { fields = new Set(); dirtyForms.set(form, fields); }
+    fields.add(e.target);
+  }
+
+  if (dirtyForms) {
+    document.addEventListener("input", markDirty, true);
+    document.addEventListener("change", markDirty, true);
+    document.addEventListener("submit", function (e) {
+      var form = e.target;
+      if (form) dirtyForms.delete(form);
+    }, true);
+    window.addEventListener("pagehide", function () {
+      if (dirtyForms.size === 0) return;
+      dirtyForms.forEach(function (fields, form) {
+        record("form_abandon", { el: form, meta: { fields: fields.size } });
+      });
+      dirtyForms.clear();
+      flush();
+    });
+  }
 })();

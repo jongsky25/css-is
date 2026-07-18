@@ -17,10 +17,33 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.01"
+APP_VERSION = "2.02"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.02",
+        "date": "July 18, 2026",
+        "summary": "UX Insights can now be downloaded as a ready-to-share analysis file, "
+                   "shows which screens are used most and least, and now also notices "
+                   "searches that find nothing and forms people start but never submit.",
+        "changes": [
+            "The UX Insights page has a new “Download handoff for AI analysis” button. "
+            "It saves one file that explains itself — what the system is, what each "
+            "signal means, which screens see friction, and which screens are used most "
+            "and least — ready to hand to an AI assistant for concrete interface-"
+            "improvement suggestions. As always, nothing personal is in it: no names, "
+            "no ids, nothing anyone typed.",
+            "Searches that come back empty are now counted — the search palette, the "
+            "search page, the paper-entry and People filters, and the help guide all "
+            "report a search that found nothing, so the “Failed searches” panel finally "
+            "fills in and shows what people look for but can't find.",
+            "The system now also notices when someone starts filling in a form but "
+            "leaves the page without submitting it — recording only which form and how "
+            "many boxes were touched, never what was typed — so forms that quietly "
+            "lose people can be found and fixed.",
+        ],
+    },
     {
         "version": "2.01",
         "date": "July 17, 2026",

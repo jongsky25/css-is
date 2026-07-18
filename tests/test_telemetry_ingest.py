@@ -120,6 +120,28 @@ def test_telemetry_resanitizes_raw_route_and_text_server_side(viewer, db_path):
         _reset(conn); conn.close()
 
 
+def test_telemetry_form_abandon_keeps_field_count_only(viewer, db_path):
+    """form_abandon's meta carries a touched-field COUNT (clamped int); any
+    other meta keys a client might sneak in are dropped by the server-side
+    meta cleaner."""
+    conn = st.connect(db_path); st.init_db(conn); _reset(conn)
+    try:
+        r = viewer.post("/telemetry", json={"events": [
+            {"event_type": "form_abandon", "route": "/create", "session_id": "s1",
+             "element_selector": "form#createForm",
+             "meta": {"fields": 4, "values": "should never persist"}},
+            {"event_type": "form_abandon", "route": "/create", "session_id": "s1",
+             "meta": {"fields": 99999}},
+        ]})
+        assert r.status_code == 204
+        rows = st.list_ui_events(conn)
+        assert len(rows) == 2
+        assert rows[1]["meta"] == {"fields": 4}       # newest first; oldest last
+        assert rows[0]["meta"] == {"fields": 500}     # clamped
+    finally:
+        _reset(conn); conn.close()
+
+
 def test_telemetry_ignores_malformed_body(viewer, db_path):
     conn = st.connect(db_path); st.init_db(conn); _reset(conn)
     try:

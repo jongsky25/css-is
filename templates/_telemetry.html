@@ -1,0 +1,27 @@
+{# Passive-telemetry helpers (static/js/telemetry.js listens for these).
+
+   search_empty_signal(term, is_empty) — on a server-rendered results page,
+   report a search that returned nothing as a "csi:search-empty" CustomEvent.
+   Emits nothing unless the term is non-empty AND the results were empty. The
+   dispatch waits for DOMContentLoaded: this inline script runs during parsing,
+   before the deferred telemetry.js installs its listener — deferred scripts
+   are guaranteed to run first once DOMContentLoaded fires. The raw term is
+   fine to pass here; telemetry.js sanitizes it (digit-masking, length cap)
+   before it leaves the browser, and the server re-sanitizes on ingest. #}
+{% macro search_empty_signal(term, is_empty) -%}
+{% if term and is_empty %}
+<script>
+(function () {
+  function fire() {
+    try {
+      window.dispatchEvent(new CustomEvent("csi:search-empty",
+        { detail: { term: {{ term|tojson }} } }));
+    } catch (e) { /* telemetry is best-effort */ }
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", fire);
+  } else { fire(); }
+})();
+</script>
+{% endif %}
+{%- endmacro %}
