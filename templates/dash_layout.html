@@ -190,7 +190,7 @@
   </div>
 </div>
 <script>window.SEARCH_INDEX = {{ search_index_for(u)|tojson }};</script>
-<script src="/static/js/search.js?v=20260621a" defer></script>
+<script src="/static/js/search.js?v=20260718a" defer></script>
 {% endif %}
 {% if u and request.state.spot_feedback_enabled %}
 <button id="sfBtn" class="sf-float" type="button" aria-label="Send feedback about this page">💬 Send feedback</button>
@@ -201,7 +201,7 @@
 <script>window.PAGE_KEY="{{ cur }}";window.PAGE_TOUR={{ (tour_for(cur) or [])|tojson }};</script>
 <script src="/static/js/tour.js?v=20260621e" defer></script>
 {# Passive UX-behavior telemetry (docs/UX_TELEMETRY_HANDOFF_PLAN.md) — signed-in shell only. #}
-<script src="/static/js/telemetry.js?v=20260717a" defer></script>
+<script src="/static/js/telemetry.js?v=20260718a" defer></script>
 {% endif %}
 <script src="/static/js/app.js?v=20260622b" defer></script>
 </body>

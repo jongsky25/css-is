@@ -1,5 +1,6 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header, empty_state %}
+{% from "_telemetry.html" import search_empty_signal %}
 {% block title %}Paper entry{% endblock %}
 {% block content %}
 <style>
@@ -84,6 +85,7 @@
   {% if not results %}
     {% set msg %}No event or speaker forms{% if q %} match “{{ q }}”{% endif %}.{% endset %}
     {{ empty_state(msg, icon="◔") }}
+    {{ search_empty_signal(q|trim, true) }}
   {% else %}
   <p class="muted" style="margin:.2rem 0 .8rem; font-size:.85rem;">
     {% if recent %}Most recent forms — search above to find an older one.{% else %}{{ results|length }} match{{ '' if results|length == 1 else 'es' }}.{% endif %}

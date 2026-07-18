@@ -76,6 +76,7 @@ import i18n
 import realtime
 import tours
 import ui_telemetry as ui_tel
+import ux_handoff as uxh
 import retention as ret
 
 # The database file. Override with CSS_DB for a throwaway/demo instance so the
@@ -543,7 +544,8 @@ NAV_GROUPS = [
         {"key": "ux_insights", "url": "/admin/ux-insights", "label": "UX Insights",
          "hint": "Ranked interface-friction opportunities",
          "kw": "ux insights telemetry friction dead click rage click ranked opportunities "
-               "behavior passive analytics what to fix", "cap": "manage_users"},
+               "behavior passive analytics what to fix handoff export download ai",
+         "cap": "manage_users"},
         {"key": "ops", "url": "/ops", "label": "Ops",
          "hint": "Health & performance",
          "kw": "ops operations health performance metrics monitoring status uptime", "cap": "manage_users"},
@@ -2350,6 +2352,9 @@ def _clean_telemetry_meta(meta):
         out["name"] = meta["name"].strip()[:80] or None
     if isinstance(meta.get("message"), str):
         out["message"] = ui_tel.sanitize_text(meta["message"], max_len=80)
+    if isinstance(meta.get("fields"), int) and not isinstance(meta.get("fields"), bool):
+        # form_abandon: how many fields were touched — a count, never contents.
+        out["fields"] = max(1, min(meta["fields"], 500))
     return {k: v for k, v in out.items() if v} or None
 
 
@@ -2454,6 +2459,54 @@ async def ux_insights_save_retention(request: Request):
     finally:
         conn.close()
     return RedirectResponse("/admin/ux-insights", status_code=303)
+
+
+@app.get("/admin/ux-insights/handoff")
+def ux_insights_handoff(request: Request, days: int = UI_INSIGHTS_WINDOW_DAYS_DEFAULT,
+                        fmt: str = "md"):
+    """The downloadable AI-analysis handoff (ux_handoff.py): one self-describing
+    Markdown (or JSON) file over the same window as the digest view, meant to be
+    handed to an AI assistant for interface-improvement analysis. Admin-gated
+    for free via the /admin-prefix middleware, same as ux_insights. The export
+    is audited like the Spot Feedback XLSX export, and is strictly MORE private
+    than what's stored (user ids dropped, sessions pseudonymized)."""
+    days = max(1, min(days, 365))
+    fmt = fmt if fmt in ("md", "json") else "md"
+    conn = get_conn()
+    try:
+        since = (_now_local() - timedelta(days=days)).isoformat(timespec="seconds")
+        events = st.list_ui_events(conn, since=since, limit=_UI_EVENT_FETCH_CAP)
+        feedback = st.list_spot_feedback(conn)
+        retention_days = int(st.get_setting(
+            conn, "ui_telemetry_retention_days", str(ret.UI_EVENT_RETENTION_DAYS_DEFAULT)))
+        _audit(request, conn, "export", target_type="ui_event", target_id="all",
+               summary=f"Exported UX telemetry handoff ({days}-day window, "
+                       f"{len(events)} event(s), fmt={fmt}).")
+    finally:
+        conn.close()
+    now = _now_local()
+    nav_destinations = [(it["url"], it["label"], g["name"])
+                        for g in NAV_GROUPS for it in g["items"]]
+    app_routes = [(r.path, getattr(r, "name", "")) for r in app.routes
+                  if hasattr(r, "path")]
+    payload = uxh.build_handoff(
+        events, feedback, window_days=days,
+        now=now.isoformat(timespec="seconds"),
+        app_version=ver.APP_VERSION,
+        generated_at=now.isoformat(timespec="seconds"),
+        retention_days=retention_days,
+        truncated=len(events) >= _UI_EVENT_FETCH_CAP,
+        nav_destinations=nav_destinations, app_routes=app_routes)
+    stamp = now.strftime("%Y%m%d_%H%M%S")
+    if fmt == "json":
+        return Response(content=json.dumps(payload, ensure_ascii=False, indent=1),
+                        media_type="application/json",
+                        headers={"Content-Disposition":
+                                 f'attachment; filename="UX_Handoff_{days}d_{stamp}.json"'})
+    return Response(content=uxh.render_handoff_markdown(payload),
+                    media_type="text/markdown; charset=utf-8",
+                    headers={"Content-Disposition":
+                             f'attachment; filename="UX_Handoff_{days}d_{stamp}.md"'})
 
 
 # ---- in-process backup scheduler -------------------------------------------

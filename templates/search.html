@@ -1,5 +1,6 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header %}
+{% from "_telemetry.html" import search_empty_signal %}
 {% block title %}Search{% endblock %}
 
 {% block content %}
@@ -29,4 +30,5 @@
   <li class="search-none">No matching page. Try another word.</li>
   {% endfor %}
 </ul>
+{{ search_empty_signal(q|trim, results|length == 0) }}
 {% endblock %}

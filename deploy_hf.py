@@ -71,7 +71,7 @@ RUNTIME_PY = [
     "csm_report.py", "auth.py", "mailer.py", "backups.py", "retention.py", "monitoring.py",
     "name_cleanup.py", "apply_speakers.py", "harmonize.py", "activity_admin.py",
     "activity_messages.py", "certificate.py", "ratelimit.py", "i18n.py", "realtime.py",
-    "tours.py", "ui_telemetry.py",
+    "tours.py", "ui_telemetry.py", "ux_handoff.py",
 ]
 ALLOW = RUNTIME_PY + [
     "version.py",            # drives the login version string

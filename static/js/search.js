@@ -97,6 +97,18 @@
 
     // ---- DB async state --------------------------------------------------
     var _dbTimer = null, _dbCtrl = null, _dbQuery = "";
+    var _reportedEmpty = {};    // per-page dedup for the csi:search-empty signal
+
+    // Tell telemetry.js a search came up completely empty (page index AND DB
+    // records). Fired at most once per term per page load; the listener
+    // sanitizes the term before anything leaves the browser.
+    function _reportEmpty(raw) {
+      if (!raw || _reportedEmpty[raw]) return;
+      _reportedEmpty[raw] = true;
+      try {
+        window.dispatchEvent(new CustomEvent("csi:search-empty", { detail: { term: raw } }));
+      } catch (e) { /* telemetry is best-effort */ }
+    }
 
     function _removeLoadingRow() {
       var el = document.getElementById(loadingId);
@@ -165,6 +177,9 @@
             if (_dbQuery !== raw) return;
             _dbCtrl = null;
             _appendDBRows(Array.isArray(data) ? data : [], raw);
+            // The debounced DB fetch settling empty on top of zero page hits
+            // is the "this search truly found nothing" moment.
+            if (current.length === 0) _reportEmpty(raw);
           })
           .catch(function () { _removeLoadingRow(); });
       }, 200);

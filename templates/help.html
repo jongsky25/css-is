@@ -64,6 +64,9 @@
   if (!input) return;
   var secs = Array.prototype.slice.call(document.querySelectorAll("[data-help-sec]"));
   var empty = document.getElementById("helpEmpty");
+  // Report a topic search that found nothing to telemetry.js — debounced so
+  // half-typed queries don't fire, and at most once per term per page load.
+  var reportedEmpty = {}, emptyTimer = null;
   input.addEventListener("input", function () {
     var q = input.value.trim().toLowerCase();
     var shown = 0;
@@ -73,6 +76,15 @@
       if (hit) shown++;
     });
     if (empty) empty.hidden = shown !== 0;
+    if (emptyTimer) clearTimeout(emptyTimer);
+    if (q && shown === 0 && !reportedEmpty[q]) {
+      emptyTimer = setTimeout(function () {
+        reportedEmpty[q] = true;
+        try {
+          window.dispatchEvent(new CustomEvent("csi:search-empty", { detail: { term: q } }));
+        } catch (e) { /* telemetry is best-effort */ }
+      }, 600);
+    }
   });
 })();
 </script>
