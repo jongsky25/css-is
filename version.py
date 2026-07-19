@@ -17,10 +17,35 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.10"
+APP_VERSION = "2.11"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.11",
+        "date": "July 19, 2026",
+        "summary": "The Name cleanup page can now ask AI whether a likely-duplicate pair "
+                   "is really the same person — a quick hint next to the existing "
+                   "\"fold in\" merge button. Off by default, and merging always stays a "
+                   "human decision.",
+        "changes": [
+            "A new \"✨ Ask AI\" button beside each likely-duplicate suggestion on "
+            "Directory → Name cleanup asks AI whether the two names are the same "
+            "person, different people, or unclear, with a one-line reason — shown as "
+            "a hint chip next to the existing one-click \"fold in ↦\" merge button.",
+            "The suggestion is read-only: nothing merges on its own. Only clicking "
+            "the existing \"fold in\" button (which an admin already had to click) "
+            "actually combines two records, exactly as before.",
+            "Because this is the one AI feature that looks at people's names, it "
+            "ships switched off by default even after AI features are turned on "
+            "elsewhere — an administrator has to flip it on for this feature "
+            "specifically at Admin → AI, where it's clearly labeled.",
+            "The button is silently unavailable, with a plain note instead of an "
+            "error, if AI is off, not configured, or the daily limit has been "
+            "reached — Name cleanup's search, quick fixes and merging keep working "
+            "exactly as before either way.",
+        ],
+    },
     {
         "version": "2.10",
         "date": "July 19, 2026",
