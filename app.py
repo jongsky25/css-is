@@ -2892,7 +2892,7 @@ async def ux_insights_analyze(request: Request, days: int = UI_INSIGHTS_WINDOW_D
 # ---------------------------------------------------------------------
 
 AI_SETTING_KEYS = (["ai_daily_cap", "ai_log_prompts", "ai_log_retention_days",
-                    "ai_landing_default"]
+                    "ai_landing_default", "ai_fallback_enabled"]
                    + [f"ai_cap_{f}" for f in ai.FEATURES]
                    + [f"ai_feature_{f}" for f in ai.FEATURES])
 
@@ -2919,6 +2919,9 @@ def admin_ai(request: Request, feature: str = "", outcome: str = "", thumbs: str
         "settings": settings, "usage": usage,
         "global_cap": int(settings.get("ai_daily_cap") or ai.DAILY_CAP_DEFAULT),
         "cooldown_remaining": ai.cooldown_remaining(),
+        "groq_configured": ai.groq_configured(), "groq_model": ai.ai_groq_model(),
+        "groq_cooldown_remaining": ai.groq_cooldown_remaining(),
+        "fallback_enabled": settings.get("ai_fallback_enabled", "0") != "0",
         "outcomes": ai.OUTCOMES, "interactions": interactions,
         "sel_feature": feature, "sel_outcome": outcome, "sel_thumbs": thumbs,
         "err": err, "msg": msg, "show_scope": False, "nav_active": "",
@@ -2943,6 +2946,7 @@ async def admin_ai_settings(request: Request):
     log_prompts = "off" if posted.get("ai_log_prompts") == "off" else "masked"
     retention_days = _clamped_int("ai_log_retention_days", ret.AI_LOG_RETENTION_DAYS_DEFAULT, 7, 365)
     landing_default = "start" if posted.get("ai_landing_default") == "start" else "hub"
+    fallback_enabled = "1" if posted.get("ai_fallback_enabled") == "on" else "0"
 
     conn = get_conn()
     try:
@@ -2951,6 +2955,7 @@ async def admin_ai_settings(request: Request):
         st.set_setting(conn, "ai_log_prompts", log_prompts)
         st.set_setting(conn, "ai_log_retention_days", str(retention_days))
         st.set_setting(conn, "ai_landing_default", landing_default)
+        st.set_setting(conn, "ai_fallback_enabled", fallback_enabled)
         for feature in ai.FEATURES:
             cap = _clamped_int(f"ai_cap_{feature}", ai.FEATURE_DEFAULTS.get(feature, 20), 0, 1000)
             st.set_setting(conn, f"ai_cap_{feature}", str(cap))
@@ -2977,6 +2982,25 @@ async def admin_ai_test(request: Request):
                summary=f"AI test connection succeeded ({result['latency_ms']} ms, "
                        f"model {result['model']}).")
         msg = f"Connected — {result['latency_ms']} ms, model {result['model']}."
+        return RedirectResponse("/admin/ai?msg=" + quote(msg), status_code=303)
+    finally:
+        conn.close()
+
+
+@app.post("/admin/ai/test-groq")
+async def admin_ai_test_groq(request: Request):
+    conn = get_conn()
+    try:
+        try:
+            result = ai.test_groq_connection(conn, user=request.state.user)
+        except ai.AIError as e:
+            _audit(request, conn, "ai_test_groq_connection", target_type="ai",
+                   summary=f"Groq test connection failed: {e}")
+            return RedirectResponse("/admin/ai?err=" + quote(str(e)), status_code=303)
+        _audit(request, conn, "ai_test_groq_connection", target_type="ai",
+               summary=f"Groq test connection succeeded ({result['latency_ms']} ms, "
+                       f"model {result['model']}).")
+        msg = f"Groq connected — {result['latency_ms']} ms, model {result['model']}."
         return RedirectResponse("/admin/ai?msg=" + quote(msg), status_code=303)
     finally:
         conn.close()

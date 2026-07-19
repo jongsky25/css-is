@@ -81,6 +81,12 @@
       <span class="k">Mode <b>{{ mode }}</b></span>
       {% if cooldown_remaining %}<span class="pill warn">cooling down ({{ cooldown_remaining }}s left after a 429)</span>{% endif %}
     </div>
+    <div class="status-row">
+      <span class="k">Groq (fallback) <span class="pill {{ 'on' if groq_configured else 'off' }}">{{ 'configured' if groq_configured else 'not configured' }}</span></span>
+      <span class="k">Groq model <b>{{ groq_model }}</b></span>
+      <span class="k">Fallback <span class="pill {{ 'on' if fallback_enabled else 'off' }}">{{ 'enabled' if fallback_enabled else 'disabled' }}</span></span>
+      {% if groq_cooldown_remaining %}<span class="pill warn">Groq cooling down ({{ groq_cooldown_remaining }}s left after a 429)</span>{% endif %}
+    </div>
     <p class="hint" style="margin:0;">
       {% if not configured %}Set <code>CSS_GEMINI_API_KEY</code> on the server to enable any AI feature. Every feature already falls back to its current behavior with zero user-facing errors while unconfigured.{% else %}Today's usage against each feature's daily cap:{% endif %}
     </p>
@@ -98,8 +104,11 @@
       {% endfor %}
     </div>
     {% endif %}
-    <form method="post" action="/admin/ai/test" style="margin-top:1rem;">
+    <form method="post" action="/admin/ai/test" style="margin-top:1rem; display:inline-block;">
       <button class="btn ghost" type="submit" {{ 'disabled' if not configured }}>Test connection</button>
+    </form>
+    <form method="post" action="/admin/ai/test-groq" style="margin-top:1rem; display:inline-block;">
+      <button class="btn ghost" type="submit" {{ 'disabled' if not groq_configured }}>Test Groq connection</button>
     </form>
   </div>
 
@@ -142,6 +151,15 @@
             <option value="hub" {{ 'selected' if settings.get('ai_landing_default', 'hub') != 'start' }}>Classic hub</option>
             <option value="start" {{ 'selected' if settings.get('ai_landing_default') == 'start' }}>NL landing (/start)</option>
           </select>
+        </div>
+        <div class="field">
+          <label for="ai_fallback_enabled">Groq fallback (when Gemini's quota runs out)</label>
+          <label style="display:flex; align-items:center; gap:.4rem; font-size:.86rem;">
+            <input type="checkbox" id="ai_fallback_enabled" name="ai_fallback_enabled"
+                   {{ 'checked' if settings.get('ai_fallback_enabled', '0') != '0' }}>
+            <span>Enabled</span>
+          </label>
+          <div class="hint" style="margin:.2rem 0 0;">Never used for "harmonize", regardless of this toggle.</div>
         </div>
       </div>
 
@@ -197,12 +215,13 @@
     </div>
     {% if interactions %}
     <table class="log-table">
-      <thead><tr><th>When</th><th>Feature</th><th>Outcome</th><th>Latency</th><th>Rating</th><th>Detail</th></tr></thead>
+      <thead><tr><th>When</th><th>Feature</th><th>Provider</th><th>Outcome</th><th>Latency</th><th>Rating</th><th>Detail</th></tr></thead>
       <tbody>
         {% for r in interactions %}
         <tr>
           <td>{{ r.created_at|replace('T',' ') }}</td>
           <td>{{ r.feature }}</td>
+          <td>{{ r.provider }}</td>
           <td><span class="outcome-pill {{ r.outcome }}">{{ r.outcome }}</span></td>
           <td>{{ (r.latency_ms ~ ' ms') if r.latency_ms else '—' }}</td>
           <td>

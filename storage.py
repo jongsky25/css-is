@@ -616,6 +616,12 @@ def _add_missing_columns(conn):
                PRIMARY KEY (scope, scope_key, field)
            )""")
 
+    ai_cols = {row[1] for row in conn.execute("PRAGMA table_info(ai_interaction)")}
+    if "provider" not in ai_cols:
+        # docs/AI_FALLBACK_PLAN.md — which provider actually answered (NULL on
+        # every pre-existing row, treated as "gemini" when displayed).
+        conn.execute("ALTER TABLE ai_interaction ADD COLUMN provider TEXT")
+
     # The Office of the Director heads the whole bureau — it is NOT one of the
     # administrative sections that sit beside the divisions. Promote it to its own
     # 'office' level so org_structure surfaces it as the directorate (above the
@@ -2114,15 +2120,15 @@ def purge_stale_ui_events(conn, cutoff_iso):
 def create_ai_interaction(conn, *, user_id=None, role=None, feature, mode, model=None,
                           prompt_masked=None, response_masked=None, outcome,
                           destination=None, confidence=None, latency_ms=None,
-                          tokens_in=None, tokens_out=None, error=None):
+                          tokens_in=None, tokens_out=None, error=None, provider=None):
     ts = tz.now_iso()
     cur = conn.execute(
         """INSERT INTO ai_interaction(created_at, user_id, role, feature, mode, model,
                prompt_masked, response_masked, outcome, destination, confidence,
-               latency_ms, tokens_in, tokens_out, error)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+               latency_ms, tokens_in, tokens_out, error, provider)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (ts, user_id, role, feature, mode, model, prompt_masked, response_masked,
-         outcome, destination, confidence, latency_ms, tokens_in, tokens_out, error))
+         outcome, destination, confidence, latency_ms, tokens_in, tokens_out, error, provider))
     conn.commit()
     return cur.lastrowid
 
@@ -2171,7 +2177,8 @@ def _ai_interaction_row(r):
             "prompt_masked": r[7], "response_masked": r[8], "outcome": r[9],
             "destination": r[10], "confidence": r[11], "latency_ms": r[12],
             "tokens_in": r[13], "tokens_out": r[14], "error": r[15],
-            "rating": r[16], "rating_comment": r[17], "rated_at": r[18]}
+            "rating": r[16], "rating_comment": r[17], "rated_at": r[18],
+            "provider": r[19] or "gemini"}
 
 
 def list_ai_interactions(conn, feature=None, outcome=None, rating=None, since=None, limit=200):
@@ -2179,7 +2186,7 @@ def list_ai_interactions(conn, feature=None, outcome=None, rating=None, since=No
     surface on /admin/ai. Any of feature/outcome/rating/since narrows it."""
     sql = ("SELECT id, created_at, user_id, role, feature, mode, model, prompt_masked, "
            "response_masked, outcome, destination, confidence, latency_ms, tokens_in, "
-           "tokens_out, error, rating, rating_comment, rated_at FROM ai_interaction")
+           "tokens_out, error, rating, rating_comment, rated_at, provider FROM ai_interaction")
     where, params = [], []
     if feature:
         where.append("feature=?"); params.append(feature)

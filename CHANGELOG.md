@@ -1,5 +1,50 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-19 (v2.15 — Groq fallback AI provider)
+
+`docs/AI_FALLBACK_PLAN.md` (build spec, merged in #43) implemented as-is. Adds a
+second, free-tier provider (Groq) that `ai_core.ask()` tries automatically —
+only on the two "Gemini's quota is exhausted" branches (`AIBudgetExceeded`, or
+the 429-cooldown `AIUnavailable`), never on `AITimeout`/`AIBadResponse`.
+Admin opt-in, off by default; `harmonize` is hard-excluded regardless of the
+toggle. With no `CSS_GROQ_API_KEY` set, or `ai_fallback_enabled=0` (the
+shipped default), behavior is byte-for-byte identical to today.
+
+- **`ai_core.py`** — `CSS_GROQ_API_KEY`/`CSS_GROQ_MODEL` config
+  (`groq_configured()`, `ai_groq_model()`), `fallback_enabled(conn)` (the
+  `ai_fallback_enabled` setting), a separate Groq 429 cooldown
+  (`_GROQ_COOLDOWN_UNTIL`/`_groq_in_cooldown`/`_set_groq_cooldown`/
+  `groq_cooldown_remaining`/`reset_groq_cooldown`), `_http_generate_groq`
+  (mirrors `_http_generate`'s retry/timeout/schema contract against Groq's
+  OpenAI-compatible `chat/completions` endpoint), `_try_groq_fallback`
+  (feature/setting/config/rate-limit gate), and `_fold_groq_error`. `ask()`'s
+  `AIBudgetExceeded` and (newly split-out) `AIUnavailable` branches now
+  attempt the fallback before re-raising; `AITimeout`/`AIBadResponse` are
+  untouched. `_log_interaction`/`create_ai_interaction` gain a `provider`
+  kwarg (default `"gemini"`). New `test_groq_connection()` for the admin
+  smoke test.
+- **`storage.py`** — `ai_interaction.provider TEXT` column (guarded ALTER in
+  `_add_missing_columns`); `create_ai_interaction`, `_ai_interaction_row`,
+  `list_ai_interactions` thread it through (`_ai_interaction_row` reads NULL
+  as `"gemini"`).
+- **`ratelimit.py`** — `"ai_groq": (10, 60)` bucket, independent of the
+  existing `"ai"` bucket.
+- **`app.py`** — `admin_ai` passes Groq status (`groq_configured`,
+  `groq_model`, `groq_cooldown_remaining`, `fallback_enabled`) into the
+  template; `admin_ai_settings` reads/saves `ai_fallback_enabled`; new
+  `POST /admin/ai/test-groq` route mirroring `admin_ai_test`.
+- **`templates/admin_ai.html`** — a Groq status row, an `ai_fallback_enabled`
+  checkbox (with a note that `harmonize` is always excluded), a "Test Groq
+  connection" button, and a provider column on the interaction log.
+- **`tests/test_ai_core.py`** — 10 new tests: Groq success on budget-exceeded
+  and on Gemini 429 (the latter asserting Gemini's own cooldown survives);
+  two backward-compat regressions (no key / toggle off); Groq itself 429ing
+  (both cooldowns end up set, both failures folded into one logged error);
+  `AITimeout`/`AIBadResponse` never attempting Groq; `harmonize` never
+  attempting Groq; the `ai_groq` ratelimit bucket blocking the attempt.
+- **Deploy note:** `CSS_GROQ_API_KEY` still needs to be added as an HF Space
+  secret before this can do anything in production.
+
 ## 2026-07-19 (v2.14 — Fix AI: default Gemini model was deprecated; log 429 bodies)
 
 Live diagnosis (`/admin/ai` interaction log): the key was configured and mode
