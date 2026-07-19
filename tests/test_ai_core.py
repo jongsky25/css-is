@@ -22,6 +22,7 @@ import httpx
 import pytest
 
 import ai_core as ai
+import ratelimit as rl
 import retention as ret
 import storage as st
 import tzutil as tz
@@ -42,12 +43,14 @@ class _FakeResp:
 @pytest.fixture(autouse=True)
 def _ai_test_isolation(monkeypatch):
     ai.reset_cooldown()
+    ai.reset_groq_cooldown()
 
     def _boom(*a, **kw):
         raise AssertionError("a real httpx.post reached the network in an AI test — mock it")
     monkeypatch.setattr(httpx, "post", _boom)
     yield
     ai.reset_cooldown()
+    ai.reset_groq_cooldown()
 
 
 def _reset_ai(conn):
@@ -334,6 +337,215 @@ def test_ask_respects_ai_log_prompts_off(db_path, monkeypatch):
             "SELECT prompt_masked, response_masked FROM ai_interaction WHERE id=?",
             (interaction_id,)).fetchone()
         assert row[0] is None and row[1] is None
+    finally:
+        _reset_ai(conn); conn.close()
+
+
+# ---- Groq fallback (docs/AI_FALLBACK_PLAN.md) ----------------------------------
+
+def test_ask_budget_exceeded_falls_back_to_groq_success(db_path, monkeypatch):
+    monkeypatch.setenv("CSS_GEMINI_API_KEY", "test-key")
+    monkeypatch.setenv("CSS_GROQ_API_KEY", "groq-key")
+    conn = st.connect(db_path); st.init_db(conn); _reset_ai(conn)
+    try:
+        st.set_setting(conn, "ai_mode", "router")
+        st.set_setting(conn, "ai_cap_verbatim", "0")   # already exhausted
+        st.set_setting(conn, "ai_fallback_enabled", "1")
+
+        def fake_groq(prompt, **kw):
+            return {"text": "groq says hi", "parsed": None, "tokens_in": 1, "tokens_out": 1,
+                    "latency_ms": 5, "model": "groq-test"}
+        monkeypatch.setattr(ai, "_http_generate_groq", fake_groq)
+
+        result, interaction_id = ai.ask(conn, {"id": 1, "role": "admin"}, "verbatim", "hi")
+        assert result["text"] == "groq says hi"
+        row = conn.execute("SELECT outcome, provider FROM ai_interaction WHERE id=?",
+                           (interaction_id,)).fetchone()
+        assert row[0] == "ok"
+        assert row[1] == "groq"
+    finally:
+        _reset_ai(conn); conn.close()
+
+
+def test_ask_budget_exceeded_no_groq_key_is_unchanged(db_path, monkeypatch):
+    """Backward-compat regression: with no CSS_GROQ_API_KEY, behavior is
+    byte-for-byte today's — Groq is never even attempted."""
+    monkeypatch.setenv("CSS_GEMINI_API_KEY", "test-key")
+    monkeypatch.delenv("CSS_GROQ_API_KEY", raising=False)
+    conn = st.connect(db_path); st.init_db(conn); _reset_ai(conn)
+    try:
+        st.set_setting(conn, "ai_mode", "router")
+        st.set_setting(conn, "ai_cap_verbatim", "0")
+        st.set_setting(conn, "ai_fallback_enabled", "1")
+        called = []
+        monkeypatch.setattr(ai, "_http_generate_groq", lambda *a, **kw: called.append(1))
+
+        with pytest.raises(ai.AIBudgetExceeded):
+            ai.ask(conn, {"id": 1, "role": "admin"}, "verbatim", "hi")
+        assert not called
+        row = conn.execute("SELECT outcome, provider FROM ai_interaction ORDER BY id DESC LIMIT 1").fetchone()
+        assert row[0] == "fallback_budget"
+        assert row[1] == "gemini"
+    finally:
+        _reset_ai(conn); conn.close()
+
+
+def test_ask_budget_exceeded_fallback_disabled_is_unchanged(db_path, monkeypatch):
+    """Backward-compat regression: ai_fallback_enabled=0 (the shipped default)
+    means Groq is never attempted even with a key configured."""
+    monkeypatch.setenv("CSS_GEMINI_API_KEY", "test-key")
+    monkeypatch.setenv("CSS_GROQ_API_KEY", "groq-key")
+    conn = st.connect(db_path); st.init_db(conn); _reset_ai(conn)
+    try:
+        st.set_setting(conn, "ai_mode", "router")
+        st.set_setting(conn, "ai_cap_verbatim", "0")
+        st.set_setting(conn, "ai_fallback_enabled", "0")
+        called = []
+        monkeypatch.setattr(ai, "_http_generate_groq", lambda *a, **kw: called.append(1))
+
+        with pytest.raises(ai.AIBudgetExceeded):
+            ai.ask(conn, {"id": 1, "role": "admin"}, "verbatim", "hi")
+        assert not called
+    finally:
+        _reset_ai(conn); conn.close()
+
+
+def test_ask_gemini_429_falls_back_to_groq_keeps_gemini_cooldown(db_path, monkeypatch):
+    monkeypatch.setenv("CSS_GEMINI_API_KEY", "test-key")
+    monkeypatch.setenv("CSS_GROQ_API_KEY", "groq-key")
+    conn = st.connect(db_path); st.init_db(conn); _reset_ai(conn)
+    try:
+        st.set_setting(conn, "ai_mode", "router")
+        st.set_setting(conn, "ai_fallback_enabled", "1")
+
+        def gemini_boom(*a, **kw):
+            ai._set_cooldown()
+            raise ai.AIUnavailable("Gemini rate limit (429) — cooling down")
+        monkeypatch.setattr(ai, "_http_generate", gemini_boom)
+
+        def fake_groq(prompt, **kw):
+            return {"text": "groq ok", "parsed": None, "tokens_in": 1, "tokens_out": 1,
+                    "latency_ms": 5, "model": "groq-test"}
+        monkeypatch.setattr(ai, "_http_generate_groq", fake_groq)
+
+        result, interaction_id = ai.ask(conn, {"id": 1, "role": "admin"}, "verbatim", "hi")
+        assert result["text"] == "groq ok"
+        # A successful Groq call doesn't erase the fact Gemini is cooling down.
+        assert ai.cooldown_remaining() > 0
+        row = conn.execute("SELECT outcome, provider FROM ai_interaction WHERE id=?",
+                           (interaction_id,)).fetchone()
+        assert row[0] == "ok" and row[1] == "groq"
+    finally:
+        _reset_ai(conn); conn.close()
+
+
+def test_ask_gemini_429_groq_also_429s_folds_error(db_path, monkeypatch):
+    monkeypatch.setenv("CSS_GEMINI_API_KEY", "test-key")
+    monkeypatch.setenv("CSS_GROQ_API_KEY", "groq-key")
+    conn = st.connect(db_path); st.init_db(conn); _reset_ai(conn)
+    try:
+        st.set_setting(conn, "ai_mode", "router")
+        st.set_setting(conn, "ai_fallback_enabled", "1")
+
+        def gemini_boom(*a, **kw):
+            ai._set_cooldown()
+            raise ai.AIUnavailable("Gemini rate limit (429) — cooling down")
+        monkeypatch.setattr(ai, "_http_generate", gemini_boom)
+        # Groq's own real _http_generate_groq runs here, hitting the mocked
+        # httpx.post — proves Groq's 429 path sets its own cooldown too.
+        monkeypatch.setattr(httpx, "post", lambda *a, **kw: _FakeResp(429, text="groq rate limited"))
+
+        with pytest.raises(ai.AIUnavailable):
+            ai.ask(conn, {"id": 1, "role": "admin"}, "verbatim", "hi")
+
+        assert ai.cooldown_remaining() > 0
+        assert ai.groq_cooldown_remaining() > 0
+        row = conn.execute(
+            "SELECT outcome, error, provider FROM ai_interaction ORDER BY id DESC LIMIT 1").fetchone()
+        assert row[0] == "fallback_error"
+        assert "groq fallback failed" in row[1]
+        assert row[2] == "gemini"
+    finally:
+        _reset_ai(conn); conn.close()
+
+
+def test_ask_gemini_timeout_never_attempts_groq(db_path, monkeypatch):
+    monkeypatch.setenv("CSS_GEMINI_API_KEY", "test-key")
+    monkeypatch.setenv("CSS_GROQ_API_KEY", "groq-key")
+    conn = st.connect(db_path); st.init_db(conn); _reset_ai(conn)
+    try:
+        st.set_setting(conn, "ai_mode", "router")
+        st.set_setting(conn, "ai_fallback_enabled", "1")
+
+        def boom(*a, **kw):
+            raise ai.AITimeout("simulated timeout")
+        monkeypatch.setattr(ai, "_http_generate", boom)
+        called = []
+        monkeypatch.setattr(ai, "_http_generate_groq", lambda *a, **kw: called.append(1))
+
+        with pytest.raises(ai.AITimeout):
+            ai.ask(conn, {"id": 1, "role": "admin"}, "verbatim", "hi")
+        assert not called
+    finally:
+        _reset_ai(conn); conn.close()
+
+
+def test_ask_gemini_bad_response_never_attempts_groq(db_path, monkeypatch):
+    monkeypatch.setenv("CSS_GEMINI_API_KEY", "test-key")
+    monkeypatch.setenv("CSS_GROQ_API_KEY", "groq-key")
+    conn = st.connect(db_path); st.init_db(conn); _reset_ai(conn)
+    try:
+        st.set_setting(conn, "ai_mode", "router")
+        st.set_setting(conn, "ai_fallback_enabled", "1")
+
+        def boom(*a, **kw):
+            raise ai.AIBadResponse("model output did not match the response schema")
+        monkeypatch.setattr(ai, "_http_generate", boom)
+        called = []
+        monkeypatch.setattr(ai, "_http_generate_groq", lambda *a, **kw: called.append(1))
+
+        with pytest.raises(ai.AIBadResponse):
+            ai.ask(conn, {"id": 1, "role": "admin"}, "verbatim", "hi")
+        assert not called
+    finally:
+        _reset_ai(conn); conn.close()
+
+
+def test_ask_harmonize_never_uses_groq_fallback(db_path, monkeypatch):
+    monkeypatch.setenv("CSS_GEMINI_API_KEY", "test-key")
+    monkeypatch.setenv("CSS_GROQ_API_KEY", "groq-key")
+    conn = st.connect(db_path); st.init_db(conn); _reset_ai(conn)
+    try:
+        st.set_setting(conn, "ai_mode", "router")
+        st.set_setting(conn, "ai_feature_harmonize", "1")
+        st.set_setting(conn, "ai_cap_harmonize", "0")   # already exhausted
+        st.set_setting(conn, "ai_fallback_enabled", "1")
+        called = []
+        monkeypatch.setattr(ai, "_http_generate_groq", lambda *a, **kw: called.append(1))
+
+        with pytest.raises(ai.AIBudgetExceeded):
+            ai.ask(conn, {"id": 1, "role": "admin"}, "harmonize", "hi")
+        assert not called
+    finally:
+        _reset_ai(conn); conn.close()
+
+
+def test_ask_groq_ratelimit_exhausted_skips_fallback(db_path, monkeypatch):
+    monkeypatch.setenv("CSS_GEMINI_API_KEY", "test-key")
+    monkeypatch.setenv("CSS_GROQ_API_KEY", "groq-key")
+    conn = st.connect(db_path); st.init_db(conn); _reset_ai(conn)
+    try:
+        st.set_setting(conn, "ai_mode", "router")
+        st.set_setting(conn, "ai_cap_verbatim", "0")   # already exhausted
+        st.set_setting(conn, "ai_fallback_enabled", "1")
+        # Deny only the ai_groq bucket; the earlier "ai" burst check must still pass.
+        monkeypatch.setattr(rl, "allow", lambda bucket, key: bucket != "ai_groq")
+        called = []
+        monkeypatch.setattr(ai, "_http_generate_groq", lambda *a, **kw: called.append(1))
+
+        with pytest.raises(ai.AIBudgetExceeded):
+            ai.ask(conn, {"id": 1, "role": "admin"}, "verbatim", "hi")
+        assert not called
     finally:
         _reset_ai(conn); conn.close()
 

@@ -17,10 +17,29 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.14"
+APP_VERSION = "2.15"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.15",
+        "date": "July 19, 2026",
+        "summary": "Added a backup AI helper: if the main AI runs out of its free daily "
+                   "quota, the system can now automatically try a second, also-free "
+                   "service instead of just going quiet.",
+        "changes": [
+            "This backup only switches on when the main AI (Google) has used up its "
+            "free daily allowance or is being told to slow down — never for other kinds "
+            "of hiccups, and never for the directory-harmonizing feature, which keeps "
+            "its own stricter privacy rule regardless.",
+            "It is off by default. An administrator has to turn it on at Admin → AI, "
+            "and must also set up the backup service's own access key on the server "
+            "first for it to do anything.",
+            "The Admin → AI page now shows whether the backup service is set up, "
+            "whether it's turned on, and which service actually answered each request "
+            "in the interaction log.",
+        ],
+    },
     {
         "version": "2.14",
         "date": "July 19, 2026",

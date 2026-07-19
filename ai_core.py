@@ -1,5 +1,6 @@
 """
-ai_core.py — CSS-IS free-tier AI integration (Google Gemini).
+ai_core.py — CSS-IS free-tier AI integration (Google Gemini, with an
+optional Groq fallback).
 ================================================================
 docs/AI_INTEGRATION_PLAN.md Phase 0. The one module that ever talks to
 Gemini: config, budget, the HTTP call, the error taxonomy, interaction
@@ -25,6 +26,16 @@ Configure with:
     CSS_GEMINI_MODEL     (default gemini-2.5-flash)
     CSS_AI_TIMEOUT       (default 8.0 seconds, total request timeout)
     CSS_RL_AI            (ratelimit.py burst bucket override, "max/window")
+
+docs/AI_FALLBACK_PLAN.md adds a second, free-tier provider (Groq) that
+`ask()` tries automatically — but ONLY when Gemini's daily budget is
+exhausted or it 429s into its cooldown, never on a timeout or a malformed
+response. It is admin opt-in (`ai_fallback_enabled` setting, default off)
+and never applies to `harmonize` (which already sends resource-person names
+to Google under its own opt-in flag — doubling that exposure to a second
+vendor would undermine that feature's own privacy design). Configure with:
+    CSS_GROQ_API_KEY     (optional; enables the fallback provider)
+    CSS_GROQ_MODEL       (default llama-3.3-70b-versatile)
 """
 from __future__ import annotations
 
@@ -41,6 +52,9 @@ import tzutil as tz
 
 GEMINI_MODEL_DEFAULT = "gemini-2.5-flash"
 GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta"
+
+GROQ_MODEL_DEFAULT = "llama-3.3-70b-versatile"
+GROQ_API_BASE = "https://api.groq.com/openai/v1"
 
 # off < router < answers < assistant — each mode is a superset of the last,
 # so `mode_at_least(conn, "answers")` is true for both answers and assistant.
@@ -117,6 +131,18 @@ def ai_model():
     return os.environ.get("CSS_GEMINI_MODEL", GEMINI_MODEL_DEFAULT)
 
 
+def groq_configured():
+    return bool(os.environ.get("CSS_GROQ_API_KEY"))
+
+
+def ai_groq_model():
+    return os.environ.get("CSS_GROQ_MODEL", GROQ_MODEL_DEFAULT)
+
+
+def fallback_enabled(conn):
+    return st.get_setting(conn, "ai_fallback_enabled", "0") != "0"
+
+
 def ai_mode(conn):
     mode = st.get_setting(conn, "ai_mode", "off")
     return mode if mode in AI_MODES else "off"
@@ -159,6 +185,33 @@ def cooldown_remaining():
 def reset_cooldown():
     """Test hook."""
     _COOLDOWN_UNTIL[0] = 0.0
+
+
+# Separate cooldown state for Groq — kept apart from Gemini's above so a Groq
+# 429 doesn't get confused with Gemini's, and doesn't hammer Groq on repeat
+# quota hits.
+_GROQ_COOLDOWN_UNTIL = [0.0]
+
+
+def _groq_in_cooldown(now=None):
+    now = time.time() if now is None else now
+    return now < _GROQ_COOLDOWN_UNTIL[0]
+
+
+def _set_groq_cooldown(now=None):
+    now = time.time() if now is None else now
+    _GROQ_COOLDOWN_UNTIL[0] = now + _COOLDOWN_SECONDS
+
+
+def groq_cooldown_remaining():
+    """Seconds left in an active Groq 429 cooldown, 0 if none — for the
+    /admin/ai status card."""
+    return max(0, int(_GROQ_COOLDOWN_UNTIL[0] - time.time()))
+
+
+def reset_groq_cooldown():
+    """Test hook."""
+    _GROQ_COOLDOWN_UNTIL[0] = 0.0
 
 
 # ---------------------------------------------------------------------
@@ -305,11 +358,111 @@ def _http_generate(prompt, *, system=None, response_schema=None, temperature=0.2
 
 
 # ---------------------------------------------------------------------
+# Groq — the fallback provider (docs/AI_FALLBACK_PLAN.md). Only ever reached
+# from ask() when Gemini's quota/rate-limit is exhausted; mirrors
+# _http_generate's contract exactly (same raised errors, same return shape).
+# ---------------------------------------------------------------------
+
+def _http_generate_groq(prompt, *, system=None, response_schema=None, temperature=0.2,
+                         max_output_tokens=1024, timeout=8.0):
+    """One Groq chat-completion call (OpenAI-compatible endpoint). Same retry/
+    cooldown contract as _http_generate, against Groq's own, separate
+    cooldown state. Raises AIUnavailable (cooldown active) / AITimeout /
+    AIBadResponse. Returns {"text", "parsed", "tokens_in", "tokens_out",
+    "latency_ms", "model"}.
+    """
+    if _groq_in_cooldown():
+        raise AIUnavailable("cooling down after a recent Groq 429")
+
+    model = ai_groq_model()
+    sys_text = system or ""
+    if response_schema is not None:
+        sys_text = (sys_text + "\n\nRespond with ONLY a JSON object matching "
+                    f"this shape: {json.dumps(response_schema)}").strip()
+    messages = ([{"role": "system", "content": sys_text}] if sys_text else []) + \
+               [{"role": "user", "content": prompt}]
+    body = {"model": model, "messages": messages, "temperature": temperature,
+            "max_tokens": max_output_tokens}
+    if response_schema is not None:
+        body["response_format"] = {"type": "json_object"}
+    headers = {"Authorization": f"Bearer {os.environ.get('CSS_GROQ_API_KEY', '')}",
+               "Content-Type": "application/json"}
+    http_timeout = httpx.Timeout(timeout, connect=3.0)
+    url = f"{GROQ_API_BASE}/chat/completions"
+
+    start = time.monotonic()
+    resp = None
+    for attempt in (1, 2):
+        try:
+            resp = httpx.post(url, json=body, headers=headers, timeout=http_timeout)
+        except (httpx.TimeoutException, httpx.TransportError) as e:
+            if attempt == 2:
+                raise AITimeout("Groq request timed out") from e
+            continue
+        if resp.status_code == 429:
+            _set_groq_cooldown()
+            raise AIUnavailable(
+                f"Groq rate limit (429) — cooling down: {resp.text[:300]}")
+        if resp.status_code >= 500 and attempt == 1:
+            continue
+        break
+    latency_ms = int((time.monotonic() - start) * 1000)
+
+    if resp is None:
+        raise AITimeout("Groq request timed out")
+    if resp.status_code >= 500:
+        raise AIBadResponse(f"Groq returned {resp.status_code} after retry")
+    if resp.status_code != 200:
+        raise AIBadResponse(f"Groq returned {resp.status_code}: {resp.text[:300]}")
+    try:
+        data = resp.json()
+    except ValueError as e:
+        raise AIBadResponse("Groq response was not valid JSON") from e
+
+    choices = data.get("choices") or []
+    text = (choices[0].get("message") or {}).get("content", "") if choices else ""
+    parsed = None
+    if response_schema is not None:
+        if not text:
+            raise AIBadResponse("model returned no text for a schema-constrained call")
+        try:
+            parsed = json.loads(text)
+        except ValueError as e:
+            raise AIBadResponse("model output did not match the response schema") from e
+    usage = data.get("usage") or {}
+    return {"text": text, "parsed": parsed,
+            "tokens_in": usage.get("prompt_tokens"),
+            "tokens_out": usage.get("completion_tokens"),
+            "latency_ms": latency_ms, "model": model}
+
+
+def _try_groq_fallback(conn, *, feature, ip, prompt, system, response_schema,
+                        temperature, max_output_tokens, timeout):
+    """Attempt the Groq fallback for one Gemini quota/rate-limit failure.
+    Returns a result dict on success. Returns None *silently* if Groq isn't
+    applicable (excluded feature, disabled, not configured, rate-limited).
+    If Groq *was* applicable but itself raised AIError, that error
+    propagates — ask() decides how to fold it into the log line."""
+    if feature == "harmonize" or not fallback_enabled(conn) or not groq_configured():
+        return None
+    if not rl.allow("ai_groq", ip or "unknown"):
+        return None
+    return _http_generate_groq(prompt, system=system, response_schema=response_schema,
+                                temperature=temperature, max_output_tokens=max_output_tokens,
+                                timeout=timeout)
+
+
+def _fold_groq_error(base_msg, groq_exc):
+    return base_msg + (f"; groq fallback failed: {groq_exc}" if groq_exc else "")
+
+
+# ---------------------------------------------------------------------
 # Interaction logging + the two public entry points.
 # ---------------------------------------------------------------------
 
 def _log_interaction(conn, *, user, feature, mode, outcome, result=None, error=None,
-                      destination=None, confidence=None, prompt=None, log_prompts=True):
+                      destination=None, confidence=None, prompt=None, log_prompts=True,
+                      provider="gemini"):
     user_id = user.get("id") if user else None
     role = user.get("role") if user else None
     return st.create_ai_interaction(
@@ -321,7 +474,7 @@ def _log_interaction(conn, *, user, feature, mode, outcome, result=None, error=N
         latency_ms=(result or {}).get("latency_ms"),
         tokens_in=(result or {}).get("tokens_in"),
         tokens_out=(result or {}).get("tokens_out"),
-        error=error)
+        error=error, provider=provider)
 
 
 def ask(conn, user, feature, prompt, *, ip=None, system=None, response_schema=None,
@@ -355,8 +508,21 @@ def ask(conn, user, feature, prompt, *, ip=None, system=None, response_schema=No
     try:
         budget_check_and_consume(conn, feature)
     except AIBudgetExceeded as e:
+        fb, groq_exc = None, None
+        try:
+            fb = _try_groq_fallback(conn, feature=feature, ip=ip, prompt=prompt, system=system,
+                                     response_schema=response_schema, temperature=temperature,
+                                     max_output_tokens=max_output_tokens, timeout=timeout)
+        except AIError as ge:
+            groq_exc = ge
+        if fb is not None:
+            interaction_id = _log_interaction(conn, user=user, feature=feature, mode=mode,
+                                               outcome="ok", result=fb, prompt=prompt,
+                                               log_prompts=log_prompts, provider="groq")
+            return fb, interaction_id
         _log_interaction(conn, user=user, feature=feature, mode=mode, outcome="fallback_budget",
-                          error=str(e), prompt=prompt, log_prompts=log_prompts)
+                          error=_fold_groq_error(str(e), groq_exc), prompt=prompt,
+                          log_prompts=log_prompts)
         raise
 
     try:
@@ -366,6 +532,23 @@ def ask(conn, user, feature, prompt, *, ip=None, system=None, response_schema=No
     except AITimeout as e:
         _log_interaction(conn, user=user, feature=feature, mode=mode, outcome="fallback_timeout",
                           error=str(e), prompt=prompt, log_prompts=log_prompts)
+        raise
+    except AIUnavailable as e:
+        fb, groq_exc = None, None
+        try:
+            fb = _try_groq_fallback(conn, feature=feature, ip=ip, prompt=prompt, system=system,
+                                     response_schema=response_schema, temperature=temperature,
+                                     max_output_tokens=max_output_tokens, timeout=timeout)
+        except AIError as ge:
+            groq_exc = ge
+        if fb is not None:
+            interaction_id = _log_interaction(conn, user=user, feature=feature, mode=mode,
+                                               outcome="ok", result=fb, prompt=prompt,
+                                               log_prompts=log_prompts, provider="groq")
+            return fb, interaction_id
+        _log_interaction(conn, user=user, feature=feature, mode=mode, outcome="fallback_error",
+                          error=_fold_groq_error(str(e), groq_exc), prompt=prompt,
+                          log_prompts=log_prompts)
         raise
     except AIError as e:
         _log_interaction(conn, user=user, feature=feature, mode=mode, outcome="fallback_error",
@@ -415,4 +598,44 @@ def test_connection(conn, user=None):
         raise
 
     _log_interaction(conn, user=user, feature="test", mode=mode, outcome="ok", result=result)
+    return result
+
+
+def test_groq_connection(conn, user=None):
+    """The /admin/ai "Test Groq connection" egress smoke test: one tiny real
+    Groq call. Bypasses `ai_fallback_enabled` exactly like test_connection
+    bypasses the mode/feature gates — it must prove egress/config before
+    anything depends on it. Still budget- and rate-limited, and logged."""
+    mode = ai_mode(conn)
+    if not groq_configured():
+        _log_interaction(conn, user=user, feature="test", mode=mode, outcome="no_config",
+                          error="CSS_GROQ_API_KEY is not set", provider="groq")
+        raise AIUnavailable("CSS_GROQ_API_KEY is not set")
+
+    if not rl.allow("ai_groq", "admin-test"):
+        _log_interaction(conn, user=user, feature="test", mode=mode, outcome="fallback_error",
+                          error="AI burst rate limit exceeded", provider="groq")
+        raise AIUnavailable("AI request rate limit exceeded")
+
+    try:
+        budget_check_and_consume(conn, "test")
+    except AIBudgetExceeded as e:
+        _log_interaction(conn, user=user, feature="test", mode=mode, outcome="fallback_budget",
+                          error=str(e), provider="groq")
+        raise
+
+    try:
+        result = _http_generate_groq("Reply with the single word: OK.",
+                                     max_output_tokens=16, timeout=8.0)
+    except AITimeout as e:
+        _log_interaction(conn, user=user, feature="test", mode=mode, outcome="fallback_timeout",
+                          error=str(e), provider="groq")
+        raise
+    except AIError as e:
+        _log_interaction(conn, user=user, feature="test", mode=mode, outcome="fallback_error",
+                          error=str(e), provider="groq")
+        raise
+
+    _log_interaction(conn, user=user, feature="test", mode=mode, outcome="ok", result=result,
+                      provider="groq")
     return result
