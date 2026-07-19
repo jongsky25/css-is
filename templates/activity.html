@@ -140,7 +140,18 @@
     color:var(--on-accent); font-weight:600; cursor:pointer; font-size:.8rem; }
   .errbar { background:var(--red-bg); border:1px solid var(--red-ln); color:var(--red); border-radius:10px;
     padding:.55rem .8rem; font-size:.9rem; margin-bottom:1rem; }
-  @media print { .crumb, .winform button, .dl-btn { display:none; } }
+  .msgbar { background:var(--green-bg,var(--blue-bg)); border:1px solid var(--green-ln,var(--blue-ln));
+    color:var(--green,var(--accent-ink)); border-radius:10px; padding:.55rem .8rem;
+    font-size:.9rem; margin-bottom:1rem; }
+  .ai-verbatim-actions { display:flex; gap:.5rem; flex-wrap:wrap; margin:-.3rem 0 .8rem; }
+  .ai-verbatim-actions button { padding:.35rem .7rem; border-radius:999px; border:1px solid var(--line);
+    background:var(--accent-bg,var(--blue-bg)); border-color:var(--accent-ln,var(--blue-ln));
+    font-weight:700; font-size:.82rem; cursor:pointer; }
+  .ai-verbatim-actions button:disabled { opacity:.6; cursor:default; }
+  .ai-summary-panel { white-space:pre-wrap; font-size:.88rem; line-height:1.5; margin:0 0 .8rem;
+    border:1px solid var(--line); border-radius:10px; padding:.8rem 1rem; }
+  .ai-summary-panel ul { margin:0; padding-left:1.2rem; }
+  @media print { .crumb, .winform button, .dl-btn, .ai-verbatim-actions { display:none; } }
 </style>
 
 {% if not ev %}
@@ -153,6 +164,7 @@
 
 <div class="crumb"><a href="/reports/activities">← Activities</a></div>
 {% if err %}<div class="errbar">{{ err }}</div>{% endif %}
+{% if msg %}<div class="msgbar">{{ msg }}</div>{% endif %}
 
 <div class="rpt-head">
   <div style="min-width:0;">
@@ -327,6 +339,16 @@
 
 <div class="panel" id="comments">
   <h3>In people's own words</h3>
+  {% if can_manage and story.total %}
+  <div class="ai-verbatim-actions">
+    <form method="post" action="/reports/activities/{{ ev.id }}/ai-reanalyze" style="display:inline;">
+      <button type="submit" title="Re-run AI sentiment classification on comments not already manually re-tagged">✨ Re-analyze with AI</button>
+    </form>
+    <button type="button" id="aiSummaryBtn" data-event="{{ ev.id }}">✨ AI summary</button>
+    <span class="hint" id="aiSummaryStatus" hidden>Summarizing…</span>
+  </div>
+  <div id="aiSummaryResult"></div>
+  {% endif %}
   {{ s.panel(story, true, request.url.path) }}
 </div>
 
@@ -345,4 +367,6 @@
 </div>
 {% endif %}
 {% endif %}
+
+<script src="/static/js/activity_ai.js?v=20260719a" defer></script>
 {% endblock %}
