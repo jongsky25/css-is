@@ -17,10 +17,32 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.07"
+APP_VERSION = "2.08"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.08",
+        "date": "July 19, 2026",
+        "summary": "Report writers can now get an AI-drafted starting point for the parts that "
+                   "used to be written by hand or left as \"N/A\" — the activity Excel export's "
+                   "analysis columns, and the official CO-CSM report's Action Plan / Continuous "
+                   "Improvement sections — always editable, and the download never depends on AI.",
+        "changes": [
+            "A new \"✨ Draft with AI\" button on an activity's report writes an AI-drafted "
+            "Analysis / Action / Next Steps / Resources for that activity's \"AGENDA 4\" Excel "
+            "row, from its scores only (no comments, no personal data) — shown in editable boxes "
+            "right there so a manager or admin can review and Save before it's used.",
+            "A matching \"✨ Draft with AI\" button on the official CO-CSM report (Reports → "
+            "Type 1 · ARTA) drafts Section V (Agency Action Plan) and Section VI (Continuous "
+            "Improvement) from that period's scores and its most common \"areas to improve\" "
+            "comment themes, again editable and saved separately.",
+            "Both are opt-in prefills, not automatic rewrites: nothing changes until a manager "
+            "or admin clicks \"Draft with AI\", and downloading the Excel / Word / PDF report "
+            "always works exactly as before — it uses whatever was last saved, or today's "
+            "computed default / \"N/A\" if nothing ever was, even with AI off.",
+        ],
+    },
     {
         "version": "2.07",
         "date": "July 19, 2026",
