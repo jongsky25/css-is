@@ -1,11 +1,14 @@
-/* /start — the NL landing page (docs/AI_INTEGRATION_PLAN.md Phase 1).
+/* /start — the NL landing page (docs/AI_INTEGRATION_PLAN.md Phase 1-2).
  *
  * Posts the typed query to POST /api/ai/route. On {"kind":"navigate", ...} it
  * shows a result card (Go/Cancel + 👍/👎) and auto-navigates after ~1.5s. On
- * anything else — {"kind":"fallback"}, a non-2xx response, or the client-side
- * timeout firing before the server does — it falls back to the same keyword
- * palette engine search.js already attached to this page (window.CSSSearch),
- * so the box always answers something even with AI off/unconfigured/erroring.
+ * {"kind":"answer"|"help", ...} (Phase 2, answers-mode only) it shows the
+ * server-templated sentence or guide excerpt with the same 👍/👎, no
+ * auto-navigate. On anything else — {"kind":"fallback"}, a non-2xx response,
+ * or the client-side timeout firing before the server does — it falls back
+ * to the same keyword palette engine search.js already attached to this page
+ * (window.CSSSearch), so the box always answers something even with AI
+ * off/unconfigured/erroring.
  */
 (function () {
   "use strict";
@@ -67,6 +70,18 @@
     }
   }
 
+  function wireFeedback(card, interactionId) {
+    var fbBtns = card.querySelectorAll(".fb-btn");
+    for (var i = 0; i < fbBtns.length; i++) {
+      fbBtns[i].addEventListener("click", function (e) {
+        var btn = e.currentTarget;
+        sendFeedback(interactionId, btn.dataset.r);
+        for (var j = 0; j < fbBtns.length; j++) fbBtns[j].disabled = true;
+        btn.classList.add("fb-sent");
+      });
+    }
+  }
+
   function showCard(data, raw) {
     clearResults();
     var card = document.createElement("div");
@@ -87,16 +102,24 @@
       if (navTimer) { clearTimeout(navTimer); navTimer = null; }
       showFallback(raw);
     });
-    var fbBtns = card.querySelectorAll(".fb-btn");
-    for (var i = 0; i < fbBtns.length; i++) {
-      fbBtns[i].addEventListener("click", function (e) {
-        var btn = e.currentTarget;
-        sendFeedback(data.interaction_id, btn.dataset.r);
-        for (var j = 0; j < fbBtns.length; j++) fbBtns[j].disabled = true;
-        btn.classList.add("fb-sent");
-      });
-    }
+    wireFeedback(card, data.interaction_id);
     navTimer = setTimeout(function () { window.location.href = data.url; }, NAV_DELAY_MS);
+  }
+
+  function showAnswerCard(data) {
+    clearResults();
+    var card = document.createElement("div");
+    card.className = "start-card";
+    card.innerHTML =
+      '<p class="start-card-msg">' + esc(data.text) + "</p>" +
+      '<div class="start-card-actions">' +
+      (data.url ? '<a class="btn ghost" href="' + esc(data.url) + '">Open guide →</a>' : "") +
+      '<span class="start-fb">' +
+      '<button type="button" class="fb-btn" data-r="up" aria-label="Good answer">👍</button>' +
+      '<button type="button" class="fb-btn" data-r="down" aria-label="Not helpful">👎</button>' +
+      "</span></div>";
+    results.appendChild(card);
+    wireFeedback(card, data.interaction_id);
   }
 
   function ask(raw) {
@@ -117,6 +140,7 @@
       status.hidden = true;
       if (lastQuery !== raw) return;              // a newer query already superseded this one
       if (data && data.kind === "navigate") showCard(data, raw);
+      else if (data && (data.kind === "answer" || data.kind === "help")) showAnswerCard(data);
       else showFallback(raw);
     }).catch(function () {
       if (to) clearTimeout(to);

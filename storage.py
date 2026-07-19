@@ -2095,17 +2095,25 @@ def create_ai_interaction(conn, *, user_id=None, role=None, feature, mode, model
     return cur.lastrowid
 
 
-def update_ai_interaction_outcome(conn, interaction_id, outcome, *, destination=None, confidence=None):
+def update_ai_interaction_outcome(conn, interaction_id, outcome, *, destination=None,
+                                  confidence=None, feature=None):
     """Let a feature backfill router-only columns (destination/confidence) and/or
     override the outcome ai_core.ask() already logged — used by the NL router
     (docs/AI_INTEGRATION_PLAN.md Phase 1) when its own server-side validation
     rejects an otherwise-successful model response (unknown destination, or
     confidence below the floor): the call reached Gemini fine, but the answer
-    isn't trusted, so the log should read rejected_validation, not ok."""
+    isn't trusted, so the log should read rejected_validation, not ok.
+
+    `feature` reclassifies the logged feature after the fact — the single NL
+    router call is always billed/rate-limited under "nl_router" (it's one
+    physical Gemini call regardless of which `kind` it resolves to), but Phase
+    2's answer/help resolutions correct the log's feature column to
+    "nl_answer"/"nl_help" so /admin/ai's per-feature browser can tell them
+    apart from a plain navigation."""
     conn.execute(
         "UPDATE ai_interaction SET outcome=?, destination=COALESCE(?, destination), "
-        "confidence=COALESCE(?, confidence) WHERE id=?",
-        (outcome, destination, confidence, interaction_id))
+        "confidence=COALESCE(?, confidence), feature=COALESCE(?, feature) WHERE id=?",
+        (outcome, destination, confidence, feature, interaction_id))
     conn.commit()
 
 

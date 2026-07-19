@@ -17,10 +17,31 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.04"
+APP_VERSION = "2.05"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.05",
+        "date": "July 19, 2026",
+        "summary": "The assistant page (Start) can now answer a straight question in "
+                   "words — \"how many responses this month\" or \"how do I track a "
+                   "training\" — instead of only jumping to a page. Still off by "
+                   "default, and it always falls back the same way if anything goes "
+                   "wrong.",
+        "changes": [
+            "Typing a factual question on /start (like a response count or overall "
+            "satisfaction) now gets answered right there, computed the same way the "
+            "home page's own numbers are — the assistant only ever picks which number "
+            "you're asking for, it never makes one up.",
+            "Typing a \"how do I…\" question now gets answered with the matching "
+            "written guide's own text plus a link to open it, the same guide already "
+            "available from the “?” on every page.",
+            "Both are opt-in on top of the existing router mode (Admin → AI → "
+            "\"answers\"), only ever answer with pages and figures this account "
+            "could already reach on its own, and carry the same 👍/👎 feedback.",
+        ],
+    },
     {
         "version": "2.04",
         "date": "July 19, 2026",
