@@ -17,10 +17,36 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.11"
+APP_VERSION = "2.12"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.12",
+        "date": "July 19, 2026",
+        "summary": "The Start page's assistant can now remember the last few things you "
+                   "said and, once turned on to its highest level, offer to do a small set "
+                   "of tasks for you — starting a draft activity, archiving one, or "
+                   "exporting a report — but only ever after showing you exactly what it "
+                   "would do and waiting for you to confirm.",
+        "changes": [
+            "At the new \"assistant\" AI level, the Start page keeps a short memory of "
+            "the last few things you typed and what it answered, so a follow-up like "
+            "\"do it\" after a suggestion can be understood in context.",
+            "The assistant can now propose three things: start a new bureau activity "
+            "draft, archive one of your own recent activities, or export a report — "
+            "each shown as a plain-language confirmation card with Confirm and Cancel, "
+            "never done on its own.",
+            "Nothing is ever taken from what the AI says at face value: which activities "
+            "can be archived, which report types and formats are valid, and whether you "
+            "even have permission for that action are all checked against the real "
+            "system rules before the confirmation card is even shown — clicking Confirm "
+            "always goes through the exact same screen and checks as doing it by hand.",
+            "This is off unless an administrator raises the AI level to \"assistant\" at "
+            "Admin → AI; at the earlier levels (router/answers), the Start page works "
+            "exactly as it did before.",
+        ],
+    },
     {
         "version": "2.11",
         "date": "July 19, 2026",
