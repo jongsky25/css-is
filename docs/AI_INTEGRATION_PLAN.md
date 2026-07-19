@@ -108,7 +108,8 @@ thin caller obeying one contract:
 
 **`ai_core.py`** (new):
 - `ai_configured()` → `bool(os.environ.get("CSS_GEMINI_API_KEY"))`;
-  `ai_model()` → `CSS_GEMINI_MODEL`, default `gemini-2.0-flash`;
+  `ai_model()` → `CSS_GEMINI_MODEL`, default `gemini-2.5-flash` (was
+  `gemini-2.0-flash` until v2.14 — Google deprecated 2.0 free-tier quota);
   `ai_mode(conn)` → setting `ai_mode` ∈ `off|router|answers|assistant`
   (default **off**); `feature_enabled(conn, feature)`.
 - Errors: `AIError` ← `AIUnavailable` / `AIBudgetExceeded` / `AITimeout` /

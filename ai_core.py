@@ -22,7 +22,7 @@ allow-lists. This module's job stops at "here is what the model said."
 
 Configure with:
     CSS_GEMINI_API_KEY   (required to enable any AI feature)
-    CSS_GEMINI_MODEL     (default gemini-2.0-flash)
+    CSS_GEMINI_MODEL     (default gemini-2.5-flash)
     CSS_AI_TIMEOUT       (default 8.0 seconds, total request timeout)
     CSS_RL_AI            (ratelimit.py burst bucket override, "max/window")
 """
@@ -39,7 +39,7 @@ import ratelimit as rl
 import storage as st
 import tzutil as tz
 
-GEMINI_MODEL_DEFAULT = "gemini-2.0-flash"
+GEMINI_MODEL_DEFAULT = "gemini-2.5-flash"
 GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta"
 
 # off < router < answers < assistant — each mode is a superset of the last,
@@ -261,8 +261,13 @@ def _http_generate(prompt, *, system=None, response_schema=None, temperature=0.2
                 raise AITimeout("Gemini request timed out") from e
             continue
         if resp.status_code == 429:
+            # Include Google's reason in the log detail: a 429 can mean a real
+            # burst limit, but also "this model has zero free-tier quota"
+            # (deprecated model / unprovisioned key) — indistinguishable
+            # without the body, and the admin's fix differs for each.
             _set_cooldown()
-            raise AIUnavailable("Gemini rate limit (429) — cooling down")
+            raise AIUnavailable(
+                f"Gemini rate limit (429) — cooling down: {resp.text[:300]}")
         if resp.status_code >= 500 and attempt == 1:
             continue
         break

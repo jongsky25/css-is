@@ -1,5 +1,22 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-19 (v2.14 — Fix AI: default Gemini model was deprecated; log 429 bodies)
+
+Live diagnosis (`/admin/ai` interaction log): the key was configured and mode
+was `assistant`, yet the very first real call — and every call after — failed
+with `Gemini rate limit (429)`. A first-call 429 is quota `limit: 0`, not a
+burst limit: Google deprecated `gemini-2.0-flash` (June 1, 2026) and free-tier
+quota now only covers Gemini 2.5 models, so a free-tier key calling the old
+default is refused outright.
+
+- **`ai_core.py`** — `GEMINI_MODEL_DEFAULT` is now `gemini-2.5-flash` (was
+  `gemini-2.0-flash`; `CSS_GEMINI_MODEL` still overrides). The 429 branch of
+  `_http_generate` now appends the first 300 chars of Google's response body to
+  the `AIUnavailable` message, so the `ai_interaction` log distinguishes a real
+  burst limit from "this model has zero quota" — the ambiguity that made this
+  outage look like ordinary rate-limiting.
+- **`docs/AI_INTEGRATION_PLAN.md`** — default-model note updated to match.
+
 ## 2026-07-19 (v2.13 — Phase 10 of the AI integration plan: Filipino translation review)
 
 `docs/AI_INTEGRATION_PLAN.md` Phase 10, the lowest-priority, one-off phase — an
