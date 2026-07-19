@@ -17,10 +17,36 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.19"
+APP_VERSION = "2.20"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.20",
+        "date": "July 19, 2026",
+        "summary": "The backup AI helper (Groq) can now stand in as the only AI provider, "
+                   "not just a top-up, if the main AI (Google) has no access key set up at "
+                   "all — still off unless an administrator turns it on.",
+        "changes": [
+            "Previously, Groq only ever helped out for a moment when the main AI (Google) "
+            "ran out of its free daily quota — if Google's access key wasn't set up on the "
+            "server at all, every AI feature went straight to its ordinary non-AI behavior, "
+            "even with Groq's own key ready and the backup switched on. Groq can now run the "
+            "AI features entirely on its own in that situation.",
+            "Nothing changes about the on/off switches: an administrator still has to turn "
+            "on \"Fallback\" at Admin → AI and set up Groq's own access key on the server "
+            "for this to do anything, and the directory-harmonizing feature still never uses "
+            "Groq, exactly as before.",
+            "The AI mode switch (off / router / answers / assistant) and each feature's own "
+            "on/off flag still work exactly the same and still turn AI off entirely, for "
+            "either service, when set that way — this only changes what happens when Google's "
+            "key specifically is the thing that's missing.",
+            "The two real causes behind the past \"error 500\" incidents (the AI calls "
+            "briefly freezing the app, and a stray blank line in a pasted access key) were "
+            "already fixed in code both services share, so this change doesn't bring either "
+            "one back.",
+        ],
+    },
     {
         "version": "2.19",
         "date": "July 19, 2026",

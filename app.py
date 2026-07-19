@@ -1498,7 +1498,7 @@ async def login_submit(request: Request):
         # Rollback = flip either setting; /start links "Classic home" right back.
         if not force_reset and nxt == "/":
             redirect_to_start = (
-                ai.ai_configured() and ai.mode_at_least(conn, "router")
+                ai.ai_available(conn) and ai.mode_at_least(conn, "router")
                 and st.get_setting(conn, "ai_landing_default", "hub") == "start")
     finally:
         conn.close()
@@ -2930,7 +2930,8 @@ def admin_ai(request: Request, feature: str = "", outcome: str = "", thumbs: str
     finally:
         conn.close()
     return templates.TemplateResponse(request, "admin_ai.html", {
-        "configured": ai.ai_configured(), "model": ai.ai_model(), "mode": mode,
+        "configured": ai.ai_configured(), "ai_available": ai.ai_available(conn),
+        "model": ai.ai_model(), "mode": mode,
         "modes": ai.AI_MODES, "features": ai.FEATURES, "feature_defaults": ai.FEATURE_DEFAULTS,
         "feature_enabled_defaults": {f: ai.FEATURE_ENABLED_DEFAULT.get(f, "1") for f in ai.FEATURES},
         "settings": settings, "usage": usage,

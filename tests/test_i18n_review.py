@@ -128,9 +128,36 @@ def test_review_batch_ignores_a_key_it_never_asked_about(conn, monkeypatch):
 
 def test_main_reports_unconfigured_without_calling_ai(conn, monkeypatch, tmp_path, capsys):
     monkeypatch.delenv("CSS_GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("CSS_GROQ_API_KEY", raising=False)
     rc = tr.main(["--db", str(tmp_path / "unused.db"), "--limit", "1"])
     assert rc == 1
     assert "not set" in capsys.readouterr().err
+
+
+def test_main_runs_on_groq_alone_when_gemini_unconfigured(monkeypatch, tmp_path, capsys):
+    """Gemini being unconfigured no longer stops the CLI cold if an admin has
+    opted a Groq fallback into standalone use (ai_core.ai_available())."""
+    db = tmp_path / "t.db"
+    c = st.connect(str(db)); st.init_db(c)
+    monkeypatch.delenv("CSS_GEMINI_API_KEY", raising=False)
+    monkeypatch.setenv("CSS_GROQ_API_KEY", "groq-key")
+    st.set_setting(c, "ai_mode", "router")
+    st.set_setting(c, "ai_feature_i18n_review", "1")
+    st.set_setting(c, "ai_fallback_enabled", "1")
+    c.commit(); c.close()
+
+    def fake_groq(prompt, *, system=None, response_schema=None, temperature=0.2,
+                  max_output_tokens=1024, timeout=8.0):
+        import re
+        keys = re.findall(r"key: (\S+)", prompt)
+        suggestions = [{"key": k, "suggested_fil": f"REVISED {k}", "note": "n"} for k in keys]
+        return {"text": "{}", "parsed": {"suggestions": suggestions},
+                "tokens_in": 10, "tokens_out": 10, "latency_ms": 5, "model": "groq-test"}
+    monkeypatch.setattr(ai, "_http_generate_groq", fake_groq)
+
+    rc = tr.main(["--db", str(db), "--limit", "1"])
+    assert rc == 0
+    assert "not set" not in capsys.readouterr().err
 
 
 def test_main_reports_mode_off(conn, monkeypatch, tmp_path, capsys):

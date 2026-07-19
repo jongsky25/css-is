@@ -182,8 +182,9 @@ def main(argv=None):
     conn = st.connect(args.db)
     st.init_db(conn)
 
-    if not ai.ai_configured():
-        print("CSS_GEMINI_API_KEY is not set — nothing to review.", file=sys.stderr)
+    if not ai.ai_available(conn, FEATURE):
+        print("CSS_GEMINI_API_KEY is not set, and no Groq fallback (CSS_GROQ_API_KEY + "
+              "ai_fallback_enabled) is set up either — nothing to review.", file=sys.stderr)
         return 1
     if ai.ai_mode(conn) == "off":
         print("AI mode is 'off' (raise it at /admin/ai) — nothing to review.", file=sys.stderr)

@@ -88,9 +88,9 @@
       {% if groq_cooldown_remaining %}<span class="pill warn">Groq cooling down ({{ groq_cooldown_remaining }}s left after a 429)</span>{% endif %}
     </div>
     <p class="hint" style="margin:0;">
-      {% if not configured %}Set <code>CSS_GEMINI_API_KEY</code> on the server to enable any AI feature. Every feature already falls back to its current behavior with zero user-facing errors while unconfigured.{% else %}Today's usage against each feature's daily cap:{% endif %}
+      {% if configured %}Today's usage against each feature's daily cap:{% elif ai_available %}Gemini isn't configured — running on Groq alone (admin opt-in via <code>ai_fallback_enabled</code> below). Set <code>CSS_GEMINI_API_KEY</code> to restore Gemini as the primary provider. Today's usage against each feature's daily cap:{% else %}Set <code>CSS_GEMINI_API_KEY</code>, or <code>CSS_GROQ_API_KEY</code> plus the fallback toggle below, to enable any AI feature. Every feature already falls back to its current behavior with zero user-facing errors while unconfigured.{% endif %}
     </p>
-    {% if configured %}
+    {% if ai_available %}
     <div class="usage-grid">
       {% for f in features %}
       {% set cap = (settings.get('ai_cap_' ~ f) or feature_defaults[f]) | int %}
