@@ -17,10 +17,30 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.08"
+APP_VERSION = "2.09"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.09",
+        "date": "July 19, 2026",
+        "summary": "The admin Feedback board can now suggest a status, urgency, and a "
+                   "possible duplicate for a submission with one click — the admin always "
+                   "reviews and saves it themselves, nothing changes on its own.",
+        "changes": [
+            "A new \"✨ Suggest triage\" button on a feedback item's page asks AI for a "
+            "suggested status, an urgency (Low/Medium/High/Critical), and whether it looks "
+            "like a duplicate of another open item — with a short plain-language reason — "
+            "and fills those fields into the existing Save form for the admin to review "
+            "and submit (or change) themselves.",
+            "A suggested duplicate is only ever one of the other currently-open items — "
+            "the admin's own screen builds that list, so the suggestion can never point at "
+            "an item that wasn't actually shown to it.",
+            "Feedback text only ever leaves the server masked, and the button is silently "
+            "unavailable (with a plain notice, no error) if AI is off, not configured, or "
+            "the daily limit has been reached — the ordinary triage form always works.",
+        ],
+    },
     {
         "version": "2.08",
         "date": "July 19, 2026",

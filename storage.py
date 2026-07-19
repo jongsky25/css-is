@@ -493,6 +493,13 @@ def _add_missing_columns(conn):
     # a per-submitter view convenience — the admin board still sees everything.
     if sf_cols and "archived_at" not in sf_cols:
         conn.execute("ALTER TABLE spot_feedback ADD COLUMN archived_at TEXT")
+    # severity / duplicate_of: added for AI-assisted triage (AI integration plan
+    # Phase 6) — a suggested urgency and a possible duplicate's id, both always
+    # human-confirmed via the existing triage form before they're saved here.
+    if sf_cols and "severity" not in sf_cols:
+        conn.execute("ALTER TABLE spot_feedback ADD COLUMN severity TEXT")
+    if sf_cols and "duplicate_of" not in sf_cols:
+        conn.execute("ALTER TABLE spot_feedback ADD COLUMN duplicate_of INTEGER")
     # feedback_update — the phased "we heard you" trail the SUBMITTER sees: one
     # 'ack' row the moment they send it, then one 'status' row each time an admin
     # moves it along, optionally carrying a short heartfelt reply. Distinct from the
@@ -1160,6 +1167,10 @@ def delete_event_link(conn, link_id):
 # The triage workflow, in order. First value is the default for new submissions.
 SPOT_STATUSES = ["New", "Reviewing", "Will address", "Won't fix", "Done"]
 
+# Optional urgency tag an admin can set (by hand or from an AI suggestion, Phase 6
+# of the AI integration plan). No default — most items are never tagged.
+SPOT_SEVERITIES = ["Low", "Medium", "High", "Critical"]
+
 # Terminal statuses — a thread here is finished, so the submitter may archive it.
 SPOT_RESOLVED_STATUSES = ["Won't fix", "Done"]
 
@@ -1180,7 +1191,7 @@ SPOT_ACK_MESSAGE = ("Thank you for taking the time to flag this — we've receiv
 
 _SPOT_COLS = ("SELECT id, created_at, user_id, submitter, page_url, element_selector, "
               "region_json, message, status, admin_note, updated_at, submitter_seen_at, "
-              "archived_at "
+              "archived_at, severity, duplicate_of "
               "FROM spot_feedback")
 
 
@@ -1189,7 +1200,7 @@ def _spot_row(r):
             "page_url": r[4], "element_selector": r[5], "region_json": r[6],
             "message": r[7], "status": r[8], "admin_note": r[9],
             "updated_at": r[10], "submitter_seen_at": r[11],
-            "archived_at": r[12]}
+            "archived_at": r[12], "severity": r[13], "duplicate_of": r[14]}
 
 
 def _feedback_update_row(r):
@@ -1247,14 +1258,16 @@ def get_spot_feedback(conn, fid):
     return _spot_row(r) if r else None
 
 
-def update_spot_feedback(conn, fid, *, status, admin_note):
-    """Triage an entry: set its status + internal note and stamp updated_at.
-    The submitter-facing phase event (with any reply) is added separately via
-    add_feedback_update so the two trails stay distinct."""
+def update_spot_feedback(conn, fid, *, status, admin_note, severity=None, duplicate_of=None):
+    """Triage an entry: set its status + internal note (+ optional severity /
+    duplicate-of, Phase 6) and stamp updated_at. The submitter-facing phase
+    event (with any reply) is added separately via add_feedback_update so the
+    two trails stay distinct."""
     conn.execute(
-        "UPDATE spot_feedback SET status=?, admin_note=?, updated_at=? WHERE id=?",
-        (status, (admin_note or "").strip() or None,
-         tz.now_iso(), fid))
+        "UPDATE spot_feedback SET status=?, admin_note=?, severity=?, duplicate_of=?, "
+        "updated_at=? WHERE id=?",
+        (status, (admin_note or "").strip() or None, severity or None,
+         duplicate_of, tz.now_iso(), fid))
     conn.commit()
 
 
