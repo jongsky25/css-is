@@ -28,13 +28,16 @@ Configure with:
     CSS_RL_AI            (ratelimit.py burst bucket override, "max/window")
 
 docs/AI_FALLBACK_PLAN.md adds a second, free-tier provider (Groq) that
-`ask()` tries automatically — but ONLY when Gemini's daily budget is
-exhausted or it 429s into its cooldown, never on a timeout or a malformed
-response. It is admin opt-in (`ai_fallback_enabled` setting, default off)
-and never applies to `harmonize` (which already sends resource-person names
-to Google under its own opt-in flag — doubling that exposure to a second
-vendor would undermine that feature's own privacy design). Configure with:
-    CSS_GROQ_API_KEY     (optional; enables the fallback provider)
+`ask()` tries automatically when Gemini's daily budget is exhausted or it
+429s into its cooldown, never on a timeout or a malformed response. If
+Gemini isn't configured at all, Groq can also serve as the sole provider
+(see `ai_available()`) instead of every feature going straight to its
+deterministic fallback. Either way it is admin opt-in (`ai_fallback_enabled`
+setting, default off) and never applies to `harmonize` (which already sends
+resource-person names to Google under its own opt-in flag — doubling that
+exposure to a second vendor would undermine that feature's own privacy
+design). Configure with:
+    CSS_GROQ_API_KEY     (optional; enables Groq as fallback or sole provider)
     CSS_GROQ_MODEL       (default llama-3.3-70b-versatile)
 """
 from __future__ import annotations
@@ -152,6 +155,20 @@ def ai_groq_model():
 
 def fallback_enabled(conn):
     return st.get_setting(conn, "ai_fallback_enabled", "0") != "0"
+
+
+def ai_available(conn, feature=None):
+    """True if ask() could actually reach a provider for `feature`, ignoring
+    the mode/feature-flag/rate/budget gates checked separately. Gemini being
+    configured is always sufficient. Absent that, Groq can stand in on its
+    own — same admin opt-in (`ai_fallback_enabled`) and `harmonize` exclusion
+    as the Gemini-quota-exhausted fallback path, since those constraints are
+    about Groq itself, not about why Gemini wasn't reached."""
+    if ai_configured():
+        return True
+    if feature == "harmonize":
+        return False
+    return groq_configured() and fallback_enabled(conn)
 
 
 def ai_mode(conn):
@@ -505,7 +522,12 @@ def ask(conn, user, feature, prompt, *, ip=None, system=None, response_schema=No
     limit -> DB-backed daily budget -> the HTTP call. Every outcome (success
     or any failure) is logged to ai_interaction — budget is never consumed
     for a `no_config` or budget-exceeded refusal, since the call never
-    reached (or wasn't allowed to reach) Gemini.
+    reached (or wasn't allowed to reach) a provider.
+
+    Gemini is preferred whenever it's configured. If it isn't, but Groq is
+    (and an admin has opted into `ai_fallback_enabled`, and `feature` isn't
+    `harmonize`), Groq serves as the sole provider for this call instead of
+    raising `no_config` — see `ai_available()`.
 
     Returns (result, interaction_id) on success. Raises AIError on any
     failure — callers catch AIError and fall back to their existing
@@ -514,7 +536,10 @@ def ask(conn, user, feature, prompt, *, ip=None, system=None, response_schema=No
     mode = ai_mode(conn)
     log_prompts = st.get_setting(conn, "ai_log_prompts", "masked") != "off"
 
-    if not ai_configured() or mode == "off" or not feature_enabled(conn, feature):
+    gemini_ready = ai_configured()
+    groq_only = not gemini_ready and ai_available(conn, feature)
+
+    if not (gemini_ready or groq_only) or mode == "off" or not feature_enabled(conn, feature):
         _log_interaction(conn, user=user, feature=feature, mode=mode, outcome="no_config",
                           error="AI is not configured, mode is off, or this feature is disabled",
                           prompt=prompt, log_prompts=log_prompts)
@@ -524,6 +549,34 @@ def ask(conn, user, feature, prompt, *, ip=None, system=None, response_schema=No
         _log_interaction(conn, user=user, feature=feature, mode=mode, outcome="fallback_error",
                           error="AI burst rate limit exceeded", prompt=prompt, log_prompts=log_prompts)
         raise AIUnavailable("AI request rate limit exceeded")
+
+    if groq_only:
+        try:
+            budget_check_and_consume(conn, feature)
+        except AIBudgetExceeded as e:
+            _log_interaction(conn, user=user, feature=feature, mode=mode, outcome="fallback_budget",
+                              error=str(e), prompt=prompt, log_prompts=log_prompts)
+            raise
+        try:
+            fb = _try_groq_fallback(conn, feature=feature, ip=ip, prompt=prompt, system=system,
+                                     response_schema=response_schema, temperature=temperature,
+                                     max_output_tokens=max_output_tokens, timeout=timeout)
+        except AIError as e:
+            _log_interaction(conn, user=user, feature=feature, mode=mode, outcome="fallback_error",
+                              error=str(e), prompt=prompt, log_prompts=log_prompts)
+            raise
+        if fb is None:
+            # ai_available() already confirmed Groq is configured/opted-in/not
+            # harmonize, so the only way _try_groq_fallback still declines is
+            # its own ai_groq burst-ratelimit bucket.
+            err = "Groq request rate limit exceeded"
+            _log_interaction(conn, user=user, feature=feature, mode=mode, outcome="fallback_error",
+                              error=err, prompt=prompt, log_prompts=log_prompts)
+            raise AIUnavailable(err)
+        interaction_id = _log_interaction(conn, user=user, feature=feature, mode=mode,
+                                           outcome="ok", result=fb, prompt=prompt,
+                                           log_prompts=log_prompts, provider="groq")
+        return fb, interaction_id
 
     try:
         budget_check_and_consume(conn, feature)

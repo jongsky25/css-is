@@ -25,6 +25,23 @@ only ever catches `ai.AIError` and never observes which provider answered.
 bump, a layman `CHANGELOG` entry, full test suite green, and the acceptance
 checks below passed before merge.
 
+**Addendum (post-v2.19):** §2 originally said the pre-existing `no_config`
+gate (Gemini unconfigured/mode-off/feature-off) "must never reach Groq."
+That line described "Gemini not configured" and "AI is off" as the same
+kind of gate; they aren't. `ai_mode=off` and per-feature flags remain a hard
+stop for every provider — an admin decision that AI shouldn't run at all.
+"Gemini isn't configured" is not that: after this addendum, `ai_available()`
+lets Groq stand in as the *sole* provider when `CSS_GEMINI_API_KEY` is unset
+but `CSS_GROQ_API_KEY` + `ai_fallback_enabled` are, subject to the same
+`harmonize` exclusion as the quota-exhaustion fallback. The 500/503
+incidents in v2.16/v2.18/v2.19 were audited before this change shipped: both
+of the two that were app-code bugs (the event-loop-blocking synchronous
+`httpx` call, and the whitespace-tainted-env-var `InvalidURL` crash) were
+already fixed generically (`asyncio.to_thread` via `ask_async()`, and the
+`_env()` stripping helper) in code paths Groq already shared with Gemini, so
+this addendum doesn't reintroduce either. The v2.18 edge/ELB 503s were
+unrelated to provider choice.
+
 ---
 
 ## 0. Why

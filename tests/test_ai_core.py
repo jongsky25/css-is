@@ -600,6 +600,205 @@ def test_ask_groq_ratelimit_exhausted_skips_fallback(db_path, monkeypatch):
         _reset_ai(conn); conn.close()
 
 
+# ---- Groq as sole provider when Gemini isn't configured (post-v2.19 addendum,
+# docs/AI_FALLBACK_PLAN.md) --------------------------------------------------
+
+def test_ai_available_true_when_gemini_configured_regardless_of_groq(db_path, monkeypatch):
+    monkeypatch.setenv("CSS_GEMINI_API_KEY", "test-key")
+    monkeypatch.delenv("CSS_GROQ_API_KEY", raising=False)
+    conn = st.connect(db_path); st.init_db(conn); _reset_ai(conn)
+    try:
+        assert ai.ai_available(conn) is True
+    finally:
+        _reset_ai(conn); conn.close()
+
+
+def test_ai_available_groq_standalone_requires_key_and_opt_in(db_path, monkeypatch):
+    monkeypatch.delenv("CSS_GEMINI_API_KEY", raising=False)
+    conn = st.connect(db_path); st.init_db(conn); _reset_ai(conn)
+    try:
+        assert ai.ai_available(conn) is False   # neither key nor opt-in
+
+        monkeypatch.setenv("CSS_GROQ_API_KEY", "groq-key")
+        assert ai.ai_available(conn) is False   # key but no admin opt-in
+
+        st.set_setting(conn, "ai_fallback_enabled", "1")
+        assert ai.ai_available(conn) is True    # key + opt-in, no Gemini needed
+    finally:
+        _reset_ai(conn); conn.close()
+
+
+def test_ai_available_harmonize_excluded_even_with_groq_ready(db_path, monkeypatch):
+    monkeypatch.delenv("CSS_GEMINI_API_KEY", raising=False)
+    monkeypatch.setenv("CSS_GROQ_API_KEY", "groq-key")
+    conn = st.connect(db_path); st.init_db(conn); _reset_ai(conn)
+    try:
+        st.set_setting(conn, "ai_fallback_enabled", "1")
+        assert ai.ai_available(conn) is True
+        assert ai.ai_available(conn, "harmonize") is False
+        assert ai.ai_available(conn, "verbatim") is True
+    finally:
+        _reset_ai(conn); conn.close()
+
+
+def test_ask_groq_standalone_success_when_gemini_unconfigured(db_path, monkeypatch):
+    monkeypatch.delenv("CSS_GEMINI_API_KEY", raising=False)
+    monkeypatch.setenv("CSS_GROQ_API_KEY", "groq-key")
+    conn = st.connect(db_path); st.init_db(conn); _reset_ai(conn)
+    try:
+        st.set_setting(conn, "ai_mode", "router")
+        st.set_setting(conn, "ai_fallback_enabled", "1")
+        st.set_setting(conn, "ai_cap_verbatim", "10")
+
+        gemini_called = []
+        monkeypatch.setattr(ai, "_http_generate", lambda *a, **kw: gemini_called.append(1))
+        monkeypatch.setattr(ai, "_http_generate_groq", lambda *a, **kw: {
+            "text": "groq answer", "parsed": None, "tokens_in": 1, "tokens_out": 1,
+            "latency_ms": 5, "model": "groq-test"})
+
+        result, interaction_id = ai.ask(conn, {"id": 1, "role": "admin"}, "verbatim", "hi")
+        assert result["text"] == "groq answer"
+        assert not gemini_called   # Gemini was never even attempted
+
+        day = tz.today_local().isoformat()
+        assert conn.execute("SELECT calls FROM ai_budget WHERE day=? AND feature=?",
+                            (day, "verbatim")).fetchone()[0] == 1
+        row = conn.execute("SELECT outcome, provider FROM ai_interaction WHERE id=?",
+                           (interaction_id,)).fetchone()
+        assert row[0] == "ok" and row[1] == "groq"
+    finally:
+        _reset_ai(conn); conn.close()
+
+
+def test_ask_groq_standalone_not_offered_without_fallback_enabled(db_path, monkeypatch):
+    monkeypatch.delenv("CSS_GEMINI_API_KEY", raising=False)
+    monkeypatch.setenv("CSS_GROQ_API_KEY", "groq-key")
+    conn = st.connect(db_path); st.init_db(conn); _reset_ai(conn)
+    try:
+        st.set_setting(conn, "ai_mode", "router")   # ai_fallback_enabled left at its default (off)
+        groq_called = []
+        monkeypatch.setattr(ai, "_http_generate_groq", lambda *a, **kw: groq_called.append(1))
+
+        with pytest.raises(ai.AIUnavailable):
+            ai.ask(conn, {"id": 1, "role": "admin"}, "verbatim", "hi")
+        assert not groq_called
+        day = tz.today_local().isoformat()
+        assert conn.execute("SELECT calls FROM ai_budget WHERE day=? AND feature=?",
+                            (day, "verbatim")).fetchone() is None
+        outcome = conn.execute(
+            "SELECT outcome FROM ai_interaction ORDER BY id DESC LIMIT 1").fetchone()[0]
+        assert outcome == "no_config"
+    finally:
+        _reset_ai(conn); conn.close()
+
+
+def test_ask_groq_standalone_harmonize_still_excluded(db_path, monkeypatch):
+    monkeypatch.delenv("CSS_GEMINI_API_KEY", raising=False)
+    monkeypatch.setenv("CSS_GROQ_API_KEY", "groq-key")
+    conn = st.connect(db_path); st.init_db(conn); _reset_ai(conn)
+    try:
+        st.set_setting(conn, "ai_mode", "assistant")
+        st.set_setting(conn, "ai_fallback_enabled", "1")
+        st.set_setting(conn, "ai_feature_harmonize", "1")   # even if the per-feature flag is on
+        groq_called = []
+        monkeypatch.setattr(ai, "_http_generate_groq", lambda *a, **kw: groq_called.append(1))
+
+        with pytest.raises(ai.AIUnavailable):
+            ai.ask(conn, {"id": 1, "role": "admin"}, "harmonize", "hi")
+        assert not groq_called
+        outcome = conn.execute(
+            "SELECT outcome FROM ai_interaction ORDER BY id DESC LIMIT 1").fetchone()[0]
+        assert outcome == "no_config"
+    finally:
+        _reset_ai(conn); conn.close()
+
+
+def test_ask_groq_standalone_mode_off_still_blocks_everything(db_path, monkeypatch):
+    """mode=off remains a hard stop for every provider — it's an admin
+    decision that AI shouldn't run at all, not something specific to
+    Gemini being unreachable."""
+    monkeypatch.delenv("CSS_GEMINI_API_KEY", raising=False)
+    monkeypatch.setenv("CSS_GROQ_API_KEY", "groq-key")
+    conn = st.connect(db_path); st.init_db(conn); _reset_ai(conn)
+    try:
+        st.set_setting(conn, "ai_mode", "off")
+        st.set_setting(conn, "ai_fallback_enabled", "1")
+        with pytest.raises(ai.AIUnavailable):
+            ai.ask(conn, {"id": 1, "role": "admin"}, "verbatim", "hi")
+        outcome = conn.execute(
+            "SELECT outcome FROM ai_interaction ORDER BY id DESC LIMIT 1").fetchone()[0]
+        assert outcome == "no_config"
+    finally:
+        _reset_ai(conn); conn.close()
+
+
+def test_ask_groq_standalone_budget_exceeded_raises_and_logs(db_path, monkeypatch):
+    monkeypatch.delenv("CSS_GEMINI_API_KEY", raising=False)
+    monkeypatch.setenv("CSS_GROQ_API_KEY", "groq-key")
+    conn = st.connect(db_path); st.init_db(conn); _reset_ai(conn)
+    try:
+        st.set_setting(conn, "ai_mode", "router")
+        st.set_setting(conn, "ai_fallback_enabled", "1")
+        st.set_setting(conn, "ai_cap_verbatim", "0")   # already exhausted
+        groq_called = []
+        monkeypatch.setattr(ai, "_http_generate_groq", lambda *a, **kw: groq_called.append(1))
+
+        with pytest.raises(ai.AIBudgetExceeded):
+            ai.ask(conn, {"id": 1, "role": "admin"}, "verbatim", "hi")
+        assert not groq_called
+        outcome = conn.execute(
+            "SELECT outcome FROM ai_interaction ORDER BY id DESC LIMIT 1").fetchone()[0]
+        assert outcome == "fallback_budget"
+    finally:
+        _reset_ai(conn); conn.close()
+
+
+def test_ask_groq_standalone_ratelimit_exhausted_raises_unavailable(db_path, monkeypatch):
+    monkeypatch.delenv("CSS_GEMINI_API_KEY", raising=False)
+    monkeypatch.setenv("CSS_GROQ_API_KEY", "groq-key")
+    conn = st.connect(db_path); st.init_db(conn); _reset_ai(conn)
+    try:
+        st.set_setting(conn, "ai_mode", "router")
+        st.set_setting(conn, "ai_fallback_enabled", "1")
+        st.set_setting(conn, "ai_cap_verbatim", "10")
+        monkeypatch.setattr(rl, "allow", lambda bucket, key: bucket != "ai_groq")
+        groq_called = []
+        monkeypatch.setattr(ai, "_http_generate_groq", lambda *a, **kw: groq_called.append(1))
+
+        with pytest.raises(ai.AIUnavailable):
+            ai.ask(conn, {"id": 1, "role": "admin"}, "verbatim", "hi")
+        assert not groq_called
+        row = conn.execute(
+            "SELECT outcome, error FROM ai_interaction ORDER BY id DESC LIMIT 1").fetchone()
+        assert row[0] == "fallback_error"
+        assert "rate limit" in row[1]
+    finally:
+        _reset_ai(conn); conn.close()
+
+
+def test_ask_groq_standalone_error_propagates_and_logs(db_path, monkeypatch):
+    monkeypatch.delenv("CSS_GEMINI_API_KEY", raising=False)
+    monkeypatch.setenv("CSS_GROQ_API_KEY", "groq-key")
+    conn = st.connect(db_path); st.init_db(conn); _reset_ai(conn)
+    try:
+        st.set_setting(conn, "ai_mode", "router")
+        st.set_setting(conn, "ai_fallback_enabled", "1")
+        st.set_setting(conn, "ai_cap_verbatim", "10")
+
+        def boom(*a, **kw):
+            raise ai.AIBadResponse("Groq returned 503 after retry")
+        monkeypatch.setattr(ai, "_http_generate_groq", boom)
+
+        with pytest.raises(ai.AIBadResponse):
+            ai.ask(conn, {"id": 1, "role": "admin"}, "verbatim", "hi")
+        row = conn.execute(
+            "SELECT outcome, error FROM ai_interaction ORDER BY id DESC LIMIT 1").fetchone()
+        assert row[0] == "fallback_error"
+        assert "503" in row[1]
+    finally:
+        _reset_ai(conn); conn.close()
+
+
 # ---- storage helpers: feedback ownership ---------------------------------------
 
 def test_set_ai_feedback_ownership(db_path):
