@@ -11,6 +11,6 @@ openpyxl
 python-pptx
 python-docx
 reportlab
+httpx           # runtime: ai_core.py's Gemini client (docs/AI_INTEGRATION_PLAN.md)
 # --- QA / testing ---
 pytest
-httpx

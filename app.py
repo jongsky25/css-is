@@ -78,6 +78,7 @@ import tours
 import ui_telemetry as ui_tel
 import ux_handoff as uxh
 import retention as ret
+import ai_core as ai
 
 # The database file. Override with CSS_DB for a throwaway/demo instance so the
 # delivered css_is.db is never touched (mirrors CSS_BASE_URL / CSS_SMTP_*).
@@ -545,6 +546,11 @@ NAV_GROUPS = [
          "hint": "Ranked interface-friction opportunities",
          "kw": "ux insights telemetry friction dead click rage click ranked opportunities "
                "behavior passive analytics what to fix handoff export download ai",
+         "cap": "manage_users"},
+        {"key": "ai", "url": "/admin/ai", "label": "AI",
+         "hint": "Gemini mode, budget & interaction log",
+         "kw": "ai gemini assistant budget model llm nl router answers cap quota interaction "
+               "log feedback test connection",
          "cap": "manage_users"},
         {"key": "ops", "url": "/ops", "label": "Ops",
          "hint": "Health & performance",
@@ -2507,6 +2513,104 @@ def ux_insights_handoff(request: Request, days: int = UI_INSIGHTS_WINDOW_DAYS_DE
                     media_type="text/markdown; charset=utf-8",
                     headers={"Content-Disposition":
                              f'attachment; filename="UX_Handoff_{days}d_{stamp}.md"'})
+
+
+# ---------------------------------------------------------------------
+# AI console (/admin/ai) — docs/AI_INTEGRATION_PLAN.md Phase 0. Status +
+# settings + interaction-log browser for ai_core.py. Admin-only: this lives
+# under /admin, so the existing auth-gate middleware already requires
+# manage_users (_required_cap) — no new gating code needed, same as
+# ux_insights above.
+# ---------------------------------------------------------------------
+
+AI_SETTING_KEYS = (["ai_daily_cap", "ai_log_prompts", "ai_log_retention_days",
+                    "ai_landing_default"]
+                   + [f"ai_cap_{f}" for f in ai.FEATURES]
+                   + [f"ai_feature_{f}" for f in ai.FEATURES])
+
+
+@app.get("/admin/ai", response_class=HTMLResponse)
+def admin_ai(request: Request, feature: str = "", outcome: str = "", thumbs: str = "",
+            err: str = "", msg: str = ""):
+    conn = get_conn()
+    try:
+        mode = ai.ai_mode(conn)
+        settings = st.get_settings(conn, AI_SETTING_KEYS)
+        day = _today_local().isoformat()
+        usage = dict(conn.execute(
+            "SELECT feature, calls FROM ai_budget WHERE day=?", (day,)).fetchall())
+        rating = 1 if thumbs == "up" else (-1 if thumbs == "down" else None)
+        interactions = st.list_ai_interactions(
+            conn, feature=feature or None, outcome=outcome or None, rating=rating, limit=200)
+    finally:
+        conn.close()
+    return templates.TemplateResponse(request, "admin_ai.html", {
+        "configured": ai.ai_configured(), "model": ai.ai_model(), "mode": mode,
+        "modes": ai.AI_MODES, "features": ai.FEATURES, "feature_defaults": ai.FEATURE_DEFAULTS,
+        "settings": settings, "usage": usage,
+        "global_cap": int(settings.get("ai_daily_cap") or ai.DAILY_CAP_DEFAULT),
+        "cooldown_remaining": ai.cooldown_remaining(),
+        "outcomes": ai.OUTCOMES, "interactions": interactions,
+        "sel_feature": feature, "sel_outcome": outcome, "sel_thumbs": thumbs,
+        "err": err, "msg": msg, "show_scope": False, "nav_active": "",
+    })
+
+
+@app.post("/admin/ai/settings")
+async def admin_ai_settings(request: Request):
+    posted = await _posted(request)
+
+    def _clamped_int(key, default, lo, hi):
+        try:
+            n = int(posted.get(key, ""))
+        except ValueError:
+            n = default
+        return max(lo, min(n, hi))
+
+    mode = posted.get("ai_mode", "off")
+    if mode not in ai.AI_MODES:
+        mode = "off"
+    daily_cap = _clamped_int("ai_daily_cap", ai.DAILY_CAP_DEFAULT, 0, 1000)
+    log_prompts = "off" if posted.get("ai_log_prompts") == "off" else "masked"
+    retention_days = _clamped_int("ai_log_retention_days", ret.AI_LOG_RETENTION_DAYS_DEFAULT, 7, 365)
+    landing_default = "start" if posted.get("ai_landing_default") == "start" else "hub"
+
+    conn = get_conn()
+    try:
+        st.set_setting(conn, "ai_mode", mode)
+        st.set_setting(conn, "ai_daily_cap", str(daily_cap))
+        st.set_setting(conn, "ai_log_prompts", log_prompts)
+        st.set_setting(conn, "ai_log_retention_days", str(retention_days))
+        st.set_setting(conn, "ai_landing_default", landing_default)
+        for feature in ai.FEATURES:
+            cap = _clamped_int(f"ai_cap_{feature}", ai.FEATURE_DEFAULTS.get(feature, 20), 0, 1000)
+            st.set_setting(conn, f"ai_cap_{feature}", str(cap))
+            st.set_setting(conn, f"ai_feature_{feature}",
+                           "1" if posted.get(f"ai_feature_{feature}") == "on" else "0")
+        _audit(request, conn, "ai_settings_changed", target_type="setting",
+               summary=f"AI settings updated (mode={mode}, daily cap={daily_cap}).")
+    finally:
+        conn.close()
+    return RedirectResponse("/admin/ai", status_code=303)
+
+
+@app.post("/admin/ai/test")
+async def admin_ai_test(request: Request):
+    conn = get_conn()
+    try:
+        try:
+            result = ai.test_connection(conn, user=request.state.user)
+        except ai.AIError as e:
+            _audit(request, conn, "ai_test_connection", target_type="ai",
+                   summary=f"AI test connection failed: {e}")
+            return RedirectResponse("/admin/ai?err=" + quote(str(e)), status_code=303)
+        _audit(request, conn, "ai_test_connection", target_type="ai",
+               summary=f"AI test connection succeeded ({result['latency_ms']} ms, "
+                       f"model {result['model']}).")
+        msg = f"Connected — {result['latency_ms']} ms, model {result['model']}."
+        return RedirectResponse("/admin/ai?msg=" + quote(msg), status_code=303)
+    finally:
+        conn.close()
 
 
 # ---- in-process backup scheduler -------------------------------------------

@@ -1,5 +1,57 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-19 (v2.03 — Phase 0 of the AI integration plan: `ai_core.py` foundation)
+
+`docs/AI_INTEGRATION_PLAN.md` Phase 0: the module every future AI feature is
+a thin caller of. Ships with `ai_mode=off` — behavior is byte-for-byte
+unchanged; this is purely plumbing + the admin console to operate it.
+
+- **`ai_core.py`** (new) — the only module that ever calls Gemini. Config
+  gates (`ai_configured`/`ai_model`/`ai_mode`/`feature_enabled`); error
+  taxonomy (`AIError` ← `AIUnavailable`/`AIBudgetExceeded`/`AITimeout`/
+  `AIBadResponse`); `budget_check_and_consume` (atomic `BEGIN IMMEDIATE`
+  upsert+check+increment on `ai_budget`, keyed by local calendar date —
+  survives a restart, no scheduler needed); `_http_generate` (the sole
+  network call site — Gemini REST v1beta `generateContent` via `httpx.post`,
+  connect timeout 3s/total 8s default, retries once on 5xx/timeout, a 429
+  sets a 60s in-memory cooldown and never retries); `mask_for_log` (email +
+  digit-run masking, mirrors `ui_telemetry.sanitize_text`); `ask()` (the
+  single entry point — config/mode/feature gate → `ratelimit.allow("ai", ip)`
+  → budget consume → HTTP → `ai_interaction` log on every outcome, success or
+  fallback); `test_connection()` (the `/admin/ai` egress smoke test, bypasses
+  mode/feature gates since `ai_mode=off` is the shipped default).
+- **`storage.py`** — new `ai_interaction` (full call log incl. masked
+  prompt/response, outcome, latency/tokens, and a 👍/👎 `rating` column) and
+  `ai_budget` (day+feature keyed daily spend counter) tables in
+  `_add_missing_columns`; `create_ai_interaction`, `set_ai_feedback`
+  (row-ownership check), `list_ai_interactions` (feature/outcome/rating/since
+  filters), `purge_stale_ai_interactions`, `purge_stale_ai_budget`. Both
+  tables registered in `pull_backup.py`'s `_CHECK_TABLES`.
+- **`retention.py`** — `purge_stale_ai_log` (`--ai-log` CLI flag, mirrors
+  `--ui-events`): purges `ai_interaction` past `ai_log_retention_days`
+  (default 90) plus the matching stale `ai_budget` day-rows.
+- **`ratelimit.py`** — new `"ai"` burst bucket, `(20, 60)` default,
+  env-overridable via `CSS_RL_AI`.
+- **`app.py`** — `GET /admin/ai` (status card + settings form + interaction
+  log browser, filterable by feature/outcome/👍👎), `POST /admin/ai/settings`
+  (mode, global + per-feature daily caps, per-feature enable flags, prompt
+  logging on/off, log retention, post-login landing default — all
+  validated/clamped + `_audit`ed), `POST /admin/ai/test` (calls
+  `ai_core.test_connection`, audited either way). Admin-gated for free via
+  the existing `/admin` prefix in `_required_cap` — no new gating code.
+  `NAV_GROUPS` gains an Admin → AI entry.
+- **`templates/admin_ai.html`** (new) — modeled on `ux_insights.html` +
+  `feedback_board.html`: status card with per-feature usage bars vs caps and
+  a cooldown indicator, the settings form, and the log browser with
+  expandable masked prompt/response/error per row.
+- **Housekeeping** — `httpx` promoted from the QA section of
+  `requirements.txt` to a runtime dependency (this is the app's first
+  outbound HTTP call from a request handler); `ai_core.py` registered in
+  `deploy_hf.py`'s `RUNTIME_PY`; `version.py` → 2.03 with a plain-language
+  entry; `tests/test_ai_core.py` + `tests/test_ai_admin.py` (new) cover the
+  budget/cooldown/retry/masking contract and the admin console's RBAC +
+  settings clamp + audit trail.
+
 ## 2026-07-18 (v2.02 — Downloadable UX handoff + the two dormant telemetry signals)
 
 Three additions to the UX telemetry system shipped in v2.01: a downloadable

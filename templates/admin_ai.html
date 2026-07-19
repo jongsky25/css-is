@@ -1,0 +1,231 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}AI{% endblock %}
+
+{% block head %}
+<style>
+  .aiwrap { max-width: 1040px; }
+  .acard { background:var(--surface); border:1px solid var(--line); border-radius:14px;
+           padding:1.1rem 1.25rem; box-shadow:var(--shadow); margin-bottom:1rem; }
+  .acard h2 { font-size:1.02rem; margin:0 0 .2rem; }
+  .acard .hint { color:var(--soft); font-size:.86rem; margin:0 0 .9rem; }
+  .flash.err { background:var(--red-bg); border:1px solid var(--red-ln); color:var(--red);
+               padding:.6rem .8rem; border-radius:8px; font-size:.86rem; margin-bottom:.8rem; }
+  .flash.ok { background:var(--green-bg); border:1px solid var(--green-ln); color:var(--green);
+              padding:.6rem .8rem; border-radius:8px; font-size:.86rem; margin-bottom:.8rem; }
+  .status-row { display:flex; gap:1.4rem; flex-wrap:wrap; font-size:.9rem; margin-bottom:.9rem; }
+  .status-row .k { color:var(--soft); } .status-row b { font-variant-numeric:tabular-nums; }
+  .pill { font-size:.72rem; font-weight:700; padding:.15rem .55rem; border-radius:999px;
+          border:1px solid var(--line); background:var(--bg); }
+  .pill.on { color:var(--green); border-color:var(--green-ln); background:var(--green-bg); }
+  .pill.off { color:var(--red); border-color:var(--red-ln); background:var(--red-bg); }
+  .pill.warn { color:var(--amber); border-color:var(--amber-ln); background:var(--amber-bg); }
+  .usage-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:.7rem; margin-top:.6rem; }
+  .usage-item { font-size:.82rem; }
+  .usage-item .lbl { display:flex; justify-content:space-between; color:var(--soft); margin-bottom:.2rem; }
+  .usage-bar { height:6px; border-radius:4px; background:var(--line); overflow:hidden; }
+  .usage-bar > span { display:block; height:100%; background:var(--accent); }
+  .usage-bar.full > span { background:var(--red); }
+  .modeform { display:flex; flex-direction:column; gap:1rem; }
+  .mode-choices { display:flex; gap:.6rem; flex-wrap:wrap; }
+  .mode-choices label { border:1px solid var(--line); border-radius:10px; padding:.5rem .8rem;
+                         font-size:.86rem; cursor:pointer; display:flex; align-items:center; gap:.4rem; }
+  .mode-choices input:checked + span { font-weight:700; }
+  .feat-table { width:100%; border-collapse:collapse; font-size:.86rem; }
+  .feat-table th { text-align:left; color:var(--soft); font-weight:700; font-size:.74rem;
+                   text-transform:uppercase; letter-spacing:.03em; padding:.35rem .5rem; border-bottom:1px solid var(--line); }
+  .feat-table td { padding:.4rem .5rem; border-bottom:1px solid var(--line); }
+  .feat-table input[type=number] { width:5rem; }
+  .settings-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:.9rem; }
+  .field label { display:block; font-size:.8rem; color:var(--soft); margin-bottom:.25rem; }
+  .field input[type=number] { width:6rem; }
+  .btn { padding:.4rem .8rem; border-radius:8px; border:1px solid var(--accent); background:var(--accent);
+         color:var(--on-accent); font-weight:600; cursor:pointer; font-size:.86rem; }
+  .btn.ghost { background:var(--surface); color:var(--soft); border-color:var(--line); }
+  .filters { display:flex; gap:.6rem; flex-wrap:wrap; align-items:center; margin-bottom:.8rem; }
+  .filters select { padding:.3rem .5rem; border:1px solid var(--line); border-radius:8px; font-size:.84rem; }
+  .chips { display:flex; gap:.4rem; }
+  .chip { font-size:.78rem; font-weight:600; padding:.25rem .65rem; border-radius:999px; text-decoration:none;
+          border:1px solid var(--line); color:var(--soft); background:var(--surface); }
+  .chip.on { border-color:var(--accent); color:var(--accent); background:var(--accent-bg); }
+  .log-table { width:100%; border-collapse:collapse; font-size:.82rem; }
+  .log-table th { text-align:left; color:var(--soft); font-weight:700; font-size:.72rem;
+                  text-transform:uppercase; letter-spacing:.03em; padding:.35rem .5rem; border-bottom:1px solid var(--line); }
+  .log-table td { padding:.4rem .5rem; border-bottom:1px solid var(--line); vertical-align:top; }
+  .outcome-pill { font-size:.7rem; font-weight:700; padding:.1rem .5rem; border-radius:999px; border:1px solid var(--line); }
+  .outcome-pill.ok { color:var(--green); border-color:var(--green-ln); background:var(--green-bg); }
+  .outcome-pill.no_config { color:var(--soft); }
+  .outcome-pill.fallback_budget, .outcome-pill.fallback_timeout, .outcome-pill.fallback_error,
+  .outcome-pill.rejected_validation { color:var(--amber); border-color:var(--amber-ln); background:var(--amber-bg); }
+  .rate-up { color:var(--green); } .rate-down { color:var(--red); }
+  details.msg-detail summary { cursor:pointer; color:var(--accent); font-size:.78rem; }
+  details.msg-detail pre { white-space:pre-wrap; word-break:break-word; font-size:.78rem;
+                            background:var(--bg); border:1px solid var(--line); border-radius:8px;
+                            padding:.5rem; margin-top:.3rem; }
+  .empty { color:var(--grey); font-size:.9rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="aiwrap">
+  {{ page_header("AI", "Gemini free-tier integration — mode, per-feature budget, and every interaction logged so misbehavior can be diagnosed from here.") }}
+
+  {% if err %}<div class="flash err">{{ err }}</div>{% endif %}
+  {% if msg %}<div class="flash ok">{{ msg }}</div>{% endif %}
+
+  <div class="acard">
+    <h2>Status</h2>
+    <div class="status-row">
+      <span class="k">Key <span class="pill {{ 'on' if configured else 'off' }}">{{ 'configured' if configured else 'not configured' }}</span></span>
+      <span class="k">Model <b>{{ model }}</b></span>
+      <span class="k">Mode <b>{{ mode }}</b></span>
+      {% if cooldown_remaining %}<span class="pill warn">cooling down ({{ cooldown_remaining }}s left after a 429)</span>{% endif %}
+    </div>
+    <p class="hint" style="margin:0;">
+      {% if not configured %}Set <code>CSS_GEMINI_API_KEY</code> on the server to enable any AI feature. Every feature already falls back to its current behavior with zero user-facing errors while unconfigured.{% else %}Today's usage against each feature's daily cap:{% endif %}
+    </p>
+    {% if configured %}
+    <div class="usage-grid">
+      {% for f in features %}
+      {% set cap = (settings.get('ai_cap_' ~ f) or feature_defaults[f]) | int %}
+      {% set used = usage.get(f, 0) %}
+      <div class="usage-item">
+        <div class="lbl"><span>{{ f }}</span><span>{{ used }}/{{ cap }}</span></div>
+        <div class="usage-bar {{ 'full' if used >= cap }}">
+          <span style="width:{{ ((used / cap * 100) if cap else 100) | round(0, 'floor') }}%"></span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <form method="post" action="/admin/ai/test" style="margin-top:1rem;">
+      <button class="btn ghost" type="submit" {{ 'disabled' if not configured }}>Test connection</button>
+    </form>
+  </div>
+
+  <div class="acard">
+    <h2>Settings</h2>
+    <form class="modeform" method="post" action="/admin/ai/settings">
+      <div>
+        <label class="hint" style="display:block; margin-bottom:.4rem;">Mode — each rolls out incrementally; off is byte-for-byte today's app.</label>
+        <div class="mode-choices">
+          {% for m in modes %}
+          <label>
+            <input type="radio" name="ai_mode" value="{{ m }}" {{ 'checked' if mode == m }}>
+            <span>{{ m }}</span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="settings-grid">
+        <div class="field">
+          <label for="ai_daily_cap">Global daily cap (all features)</label>
+          <input type="number" id="ai_daily_cap" name="ai_daily_cap" min="0" max="1000"
+                 value="{{ settings.get('ai_daily_cap') or 150 }}">
+        </div>
+        <div class="field">
+          <label for="ai_log_retention_days">Log retention (days)</label>
+          <input type="number" id="ai_log_retention_days" name="ai_log_retention_days" min="7" max="365"
+                 value="{{ settings.get('ai_log_retention_days') or 90 }}">
+        </div>
+        <div class="field">
+          <label for="ai_log_prompts">Store masked prompts/responses</label>
+          <select id="ai_log_prompts" name="ai_log_prompts">
+            <option value="masked" {{ 'selected' if settings.get('ai_log_prompts', 'masked') != 'off' }}>Masked (recommended)</option>
+            <option value="off" {{ 'selected' if settings.get('ai_log_prompts') == 'off' }}>Off</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="ai_landing_default">Post-login landing</label>
+          <select id="ai_landing_default" name="ai_landing_default">
+            <option value="hub" {{ 'selected' if settings.get('ai_landing_default', 'hub') != 'start' }}>Classic hub</option>
+            <option value="start" {{ 'selected' if settings.get('ai_landing_default') == 'start' }}>NL landing (/start)</option>
+          </select>
+        </div>
+      </div>
+
+      <table class="feat-table">
+        <thead><tr><th>Feature</th><th>Enabled</th><th>Daily cap</th></tr></thead>
+        <tbody>
+          {% for f in features %}
+          <tr>
+            <td>{{ f }}</td>
+            <td>
+              <input type="checkbox" name="ai_feature_{{ f }}"
+                     {{ 'checked' if settings.get('ai_feature_' ~ f, '1') != '0' }}>
+            </td>
+            <td>
+              <input type="number" name="ai_cap_{{ f }}" min="0" max="1000"
+                     value="{{ settings.get('ai_cap_' ~ f) or feature_defaults[f] }}">
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div><button class="btn" type="submit">Save settings</button></div>
+    </form>
+  </div>
+
+  <div class="acard">
+    <h2>Interaction log</h2>
+    <p class="hint">Every AI call, success or fallback — the diagnose-from-logs surface. Prompts/responses are masked (digits, emails) before they're ever stored.</p>
+    <div class="filters">
+      <form method="get" action="/admin/ai" style="display:flex; gap:.5rem; align-items:center;">
+        <select name="feature" onchange="this.form.submit()">
+          <option value="">All features</option>
+          {% for f in features %}
+          <option value="{{ f }}" {{ 'selected' if sel_feature == f }}>{{ f }}</option>
+          {% endfor %}
+        </select>
+        <select name="outcome" onchange="this.form.submit()">
+          <option value="">All outcomes</option>
+          {% for o in outcomes %}
+          <option value="{{ o }}" {{ 'selected' if sel_outcome == o }}>{{ o }}</option>
+          {% endfor %}
+        </select>
+        <input type="hidden" name="thumbs" value="{{ sel_thumbs }}">
+      </form>
+      <div class="chips">
+        <a class="chip {{ 'on' if not sel_thumbs }}" href="/admin/ai?feature={{ sel_feature }}&outcome={{ sel_outcome }}">All</a>
+        <a class="chip {{ 'on' if sel_thumbs == 'up' }}" href="/admin/ai?feature={{ sel_feature }}&outcome={{ sel_outcome }}&thumbs=up">👍</a>
+        <a class="chip {{ 'on' if sel_thumbs == 'down' }}" href="/admin/ai?feature={{ sel_feature }}&outcome={{ sel_outcome }}&thumbs=down">👎 first</a>
+      </div>
+    </div>
+    {% if interactions %}
+    <table class="log-table">
+      <thead><tr><th>When</th><th>Feature</th><th>Outcome</th><th>Latency</th><th>Rating</th><th>Detail</th></tr></thead>
+      <tbody>
+        {% for r in interactions %}
+        <tr>
+          <td>{{ r.created_at|replace('T',' ') }}</td>
+          <td>{{ r.feature }}</td>
+          <td><span class="outcome-pill {{ r.outcome }}">{{ r.outcome }}</span></td>
+          <td>{{ (r.latency_ms ~ ' ms') if r.latency_ms else '—' }}</td>
+          <td>
+            {% if r.rating == 1 %}<span class="rate-up">👍</span>
+            {% elif r.rating == -1 %}<span class="rate-down">👎</span>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if r.error or r.prompt_masked or r.response_masked %}
+            <details class="msg-detail">
+              <summary>expand</summary>
+              {% if r.error %}<pre>{{ r.error }}</pre>{% endif %}
+              {% if r.prompt_masked %}<pre>PROMPT: {{ r.prompt_masked }}</pre>{% endif %}
+              {% if r.response_masked %}<pre>RESPONSE: {{ r.response_masked }}</pre>{% endif %}
+              {% if r.rating_comment %}<pre>FEEDBACK: {{ r.rating_comment }}</pre>{% endif %}
+            </details>
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="empty">No AI interactions logged yet{% if sel_feature or sel_outcome or sel_thumbs %} matching these filters{% endif %}.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

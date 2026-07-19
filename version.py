@@ -17,10 +17,30 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.02"
+APP_VERSION = "2.03"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.03",
+        "date": "July 19, 2026",
+        "summary": "Behind-the-scenes groundwork for optional AI features — nothing changes "
+                   "for anyone yet. A new Admin → AI page lets an administrator turn features "
+                   "on later, one at a time, with a daily usage cap and a full log of every "
+                   "call so nothing can run away unnoticed.",
+        "changes": [
+            "A new Admin → AI page shows whether an AI connection key is set up, lets an "
+            "administrator switch AI features on (starting off by default) and set a daily "
+            "limit on how many AI calls the system may make, and includes a “Test connection” "
+            "button to confirm it can actually reach the AI service.",
+            "Every AI call the system ever makes — and every time one is skipped or falls "
+            "back to the ordinary non-AI behavior — is written to a log on that page, so any "
+            "odd AI behavior can always be traced back and explained.",
+            "This release turns nothing on. With no AI features enabled (the default), the "
+            "system behaves exactly as it did before — this is purely the plumbing that later "
+            "AI features will be built on top of.",
+        ],
+    },
     {
         "version": "2.02",
         "date": "July 18, 2026",

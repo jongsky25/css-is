@@ -549,6 +549,47 @@ def _add_missing_columns(conn):
     conn.execute("CREATE INDEX IF NOT EXISTS ui_event_route_created_idx "
                  "ON ui_event(route, created_at)")
 
+    # ai_interaction / ai_budget — docs/AI_INTEGRATION_PLAN.md Phase 0. Every
+    # ai_core.ask()/test_connection() call writes one ai_interaction row,
+    # success or fallback, so misbehavior is diagnosed from logs (the point
+    # of the per-use 👍/👎 feedback columns — rating lives on the row rather
+    # than a separate table). ai_budget is the DB-backed daily spend counter
+    # ai_core.budget_check_and_consume reads/writes: keyed by local calendar
+    # date, so it survives a restart with no scheduler needed.
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS ai_interaction (
+               id               INTEGER PRIMARY KEY,
+               created_at       TEXT NOT NULL,
+               user_id          INTEGER,
+               role             TEXT,
+               feature          TEXT NOT NULL,
+               mode             TEXT NOT NULL,
+               model            TEXT,
+               prompt_masked    TEXT,
+               response_masked  TEXT,
+               outcome          TEXT NOT NULL,
+               destination      TEXT,
+               confidence       REAL,
+               latency_ms       INTEGER,
+               tokens_in        INTEGER,
+               tokens_out       INTEGER,
+               error            TEXT,
+               rating           INTEGER,
+               rating_comment   TEXT,
+               rated_at         TEXT
+           )""")
+    conn.execute("CREATE INDEX IF NOT EXISTS ai_interaction_feature_created_idx "
+                 "ON ai_interaction(feature, created_at)")
+    conn.execute("CREATE INDEX IF NOT EXISTS ai_interaction_rating_idx "
+                 "ON ai_interaction(rating)")
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS ai_budget (
+               day     TEXT NOT NULL,
+               feature TEXT NOT NULL,
+               calls   INTEGER NOT NULL DEFAULT 0,
+               PRIMARY KEY (day, feature)
+           )""")
+
     # The Office of the Director heads the whole bureau — it is NOT one of the
     # administrative sections that sit beside the divisions. Promote it to its own
     # 'office' level so org_structure surfaces it as the directorate (above the
@@ -2029,6 +2070,92 @@ def purge_stale_ui_events(conn, cutoff_iso):
     is no consent record to keep — this is behavioral data, not audit-of-record,
     so the row is simply gone. Returns the number of rows deleted."""
     cur = conn.execute("DELETE FROM ui_event WHERE created_at < ?", (cutoff_iso,))
+    conn.commit()
+    return cur.rowcount
+
+
+# ---------------------------------------------------------------------
+# AI interaction log + budget (docs/AI_INTEGRATION_PLAN.md Phase 0; see
+# ai_interaction/ai_budget in init_db above and ai_core.py for the caller).
+# ---------------------------------------------------------------------
+
+def create_ai_interaction(conn, *, user_id=None, role=None, feature, mode, model=None,
+                          prompt_masked=None, response_masked=None, outcome,
+                          destination=None, confidence=None, latency_ms=None,
+                          tokens_in=None, tokens_out=None, error=None):
+    ts = tz.now_iso()
+    cur = conn.execute(
+        """INSERT INTO ai_interaction(created_at, user_id, role, feature, mode, model,
+               prompt_masked, response_masked, outcome, destination, confidence,
+               latency_ms, tokens_in, tokens_out, error)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+        (ts, user_id, role, feature, mode, model, prompt_masked, response_masked,
+         outcome, destination, confidence, latency_ms, tokens_in, tokens_out, error))
+    conn.commit()
+    return cur.lastrowid
+
+
+def set_ai_feedback(conn, interaction_id, user_id, rating, comment=None, is_admin=False):
+    """Record 👍(1)/👎(-1) on an interaction, the per-use signal the AI plan
+    relies on to diagnose misbehavior from logs. Row-ownership check: only the
+    user the interaction was logged for may rate it, unless `is_admin`.
+    Returns True if a row was updated, False if not found / not owned."""
+    row = conn.execute("SELECT user_id FROM ai_interaction WHERE id=?",
+                       (interaction_id,)).fetchone()
+    if not row or (not is_admin and row[0] != user_id):
+        return False
+    cur = conn.execute(
+        "UPDATE ai_interaction SET rating=?, rating_comment=?, rated_at=? WHERE id=?",
+        (rating, comment, tz.now_iso(), interaction_id))
+    conn.commit()
+    return cur.rowcount > 0
+
+
+def _ai_interaction_row(r):
+    return {"id": r[0], "created_at": r[1], "user_id": r[2], "role": r[3],
+            "feature": r[4], "mode": r[5], "model": r[6],
+            "prompt_masked": r[7], "response_masked": r[8], "outcome": r[9],
+            "destination": r[10], "confidence": r[11], "latency_ms": r[12],
+            "tokens_in": r[13], "tokens_out": r[14], "error": r[15],
+            "rating": r[16], "rating_comment": r[17], "rated_at": r[18]}
+
+
+def list_ai_interactions(conn, feature=None, outcome=None, rating=None, since=None, limit=200):
+    """AI interaction log, newest first — the diagnose-from-user-feedback
+    surface on /admin/ai. Any of feature/outcome/rating/since narrows it."""
+    sql = ("SELECT id, created_at, user_id, role, feature, mode, model, prompt_masked, "
+           "response_masked, outcome, destination, confidence, latency_ms, tokens_in, "
+           "tokens_out, error, rating, rating_comment, rated_at FROM ai_interaction")
+    where, params = [], []
+    if feature:
+        where.append("feature=?"); params.append(feature)
+    if outcome:
+        where.append("outcome=?"); params.append(outcome)
+    if rating is not None:
+        where.append("rating=?"); params.append(rating)
+    if since:
+        where.append("created_at >= ?"); params.append(since)
+    if where:
+        sql += " WHERE " + " AND ".join(where)
+    sql += " ORDER BY id DESC LIMIT ?"
+    params.append(limit)
+    rows = conn.execute(sql, params).fetchall()
+    return [_ai_interaction_row(r) for r in rows]
+
+
+def purge_stale_ai_interactions(conn, cutoff_iso):
+    """RETENTION enforcement for the AI interaction log — same shape as
+    purge_stale_ui_events: behavioral/operational data, not audit-of-record."""
+    cur = conn.execute("DELETE FROM ai_interaction WHERE created_at < ?", (cutoff_iso,))
+    conn.commit()
+    return cur.rowcount
+
+
+def purge_stale_ai_budget(conn, cutoff_day):
+    """ai_budget rows are keyed by calendar day (a 'YYYY-MM-DD' string, not a
+    timestamp) — cutoff_day must be the same shape. Old daily-spend rows are
+    pure clutter once their day has passed retention; nothing reads them."""
+    cur = conn.execute("DELETE FROM ai_budget WHERE day < ?", (cutoff_day,))
     conn.commit()
     return cur.rowcount
 
