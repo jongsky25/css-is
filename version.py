@@ -17,10 +17,32 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.09"
+APP_VERSION = "2.10"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.10",
+        "date": "July 19, 2026",
+        "summary": "The welcome/ending messages an organizer sets up for an activity can now "
+                   "be personalized by AI in one click, tailored to that activity's own title, "
+                   "date, venue and modality — the five ready-made tone drafts are still there "
+                   "as the starting point and the fallback.",
+        "changes": [
+            "A new \"✨ Personalize with AI\" button next to each message's tone picker on an "
+            "activity's Manage page asks AI to write a fresh draft in the requested tone, using "
+            "only that activity's own details (title, date, venue, face-to-face/online) — never "
+            "any attendee's name or other personal data, since none is available to it.",
+            "The AI draft keeps the same {name} placeholder the tone-preset drafts use, so it "
+            "still greets each participant by their own first name once they view the page.",
+            "Nothing is saved automatically: the draft only fills the message box, and the "
+            "organizer's existing auto-save (or the Save button, without JavaScript) is what "
+            "actually keeps it — exactly like picking one of the five tone-preset drafts today.",
+            "The button is silently unavailable, with a plain note instead of an error, if AI "
+            "is off, not configured, or the daily limit has been reached — the tone-preset "
+            "drafts and manual editing keep working exactly as before either way.",
+        ],
+    },
     {
         "version": "2.09",
         "date": "July 19, 2026",
