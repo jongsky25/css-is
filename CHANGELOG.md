@@ -1,5 +1,38 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-19 (v2.16 — fix: unhandled 500 from a whitespace-tainted AI env var)
+
+Production incident: right after `CSS_GEMINI_API_KEY`/`CSS_GROQ_API_KEY` were
+added as HF Space secrets, `POST /api/ai/route` (the Start-page NL search bar)
+500'd. Traceback: `httpx.InvalidURL: Invalid non-printable ASCII character in
+URL, '\n' at position 75`, raised from `_http_generate`'s `httpx.post(url, …)`
+at `ai_core.py:311`, inside `ask()`. Root cause: `ai_model()` read
+`CSS_GEMINI_MODEL` via a bare `os.environ.get(...)` and interpolated it
+straight into the Gemini request URL; a trailing newline picked up when the
+model name was pasted into the secret produced a malformed URL.
+`httpx.InvalidURL` is a bare `Exception`, not a `TimeoutException`/
+`TransportError`, so `_http_generate`'s retry loop didn't catch it — it
+escaped `ask()`'s documented "every AI feature must fall back, never a
+user-facing error" contract entirely.
+
+- **`ai_core.py`** — new `_env(name, default="")` helper: strips the raw env
+  value, falls back to `default` if the result is empty. `ai_configured()`,
+  `ai_model()`, `groq_configured()`, `ai_groq_model()`, and the
+  `x-goog-api-key`/`Authorization` header reads in `_http_generate`/
+  `_http_generate_groq` all go through it now instead of a raw
+  `os.environ.get`. Belt-and-suspenders: both `_http_generate` and
+  `_http_generate_groq` now also catch `httpx.InvalidURL` around the
+  `httpx.post` call and re-raise as `AIBadResponse` (no retry — a malformed
+  URL is a config problem, not a transient one), so any future request-build
+  failure degrades the same way a bad HTTP response already does instead of
+  bubbling up raw.
+- **`tests/test_ai_core.py`** — 6 new tests: `CSS_GEMINI_MODEL`/
+  `CSS_GEMINI_API_KEY` whitespace is stripped (and actually reaches the
+  request that way); a whitespace-only model value falls back to
+  `GEMINI_MODEL_DEFAULT`; `httpx.InvalidURL` from either `_http_generate` or
+  `_http_generate_groq` surfaces as `AIBadResponse`, not an unhandled
+  exception.
+
 ## 2026-07-19 (v2.15 — Groq fallback AI provider)
 
 `docs/AI_FALLBACK_PLAN.md` (build spec, merged in #43) implemented as-is. Adds a

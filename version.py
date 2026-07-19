@@ -17,10 +17,27 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.15"
+APP_VERSION = "2.16"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.16",
+        "date": "July 19, 2026",
+        "summary": "Fixed a server error that could hit the AI search bar right after "
+                   "the AI service was newly set up on the server.",
+        "changes": [
+            "If the AI model name typed into the server's settings had picked up a "
+            "stray blank line or space (easy to do when pasting), the AI search bar "
+            "on the Start page could crash with a server error instead of just quietly "
+            "not answering. Those settings are now cleaned up automatically, so a "
+            "stray space or line break can no longer cause a crash.",
+            "As a second safety net, if a request to the AI service still somehow "
+            "can't be sent, the system now treats it the same as any other AI hiccup "
+            "— it quietly falls back to the ordinary search instead of showing an "
+            "error page.",
+        ],
+    },
     {
         "version": "2.15",
         "date": "July 19, 2026",

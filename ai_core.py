@@ -123,20 +123,30 @@ class AIBadResponse(AIError):
 # Config / mode / feature gates
 # ---------------------------------------------------------------------
 
+def _env(name, default=""):
+    """os.environ.get, stripped. A secret pasted into a hosting platform's
+    settings UI easily picks up a trailing newline/space; left unstripped,
+    that lands in the request URL or headers and httpx refuses to send it
+    (e.g. AttributeError-free but a hard `InvalidURL`/`LocalProtocolError`)
+    — exactly the kind of failure ask()'s AIError contract is supposed to
+    keep away from callers."""
+    return (os.environ.get(name) or "").strip() or default
+
+
 def ai_configured():
-    return bool(os.environ.get("CSS_GEMINI_API_KEY"))
+    return bool(_env("CSS_GEMINI_API_KEY"))
 
 
 def ai_model():
-    return os.environ.get("CSS_GEMINI_MODEL", GEMINI_MODEL_DEFAULT)
+    return _env("CSS_GEMINI_MODEL", GEMINI_MODEL_DEFAULT)
 
 
 def groq_configured():
-    return bool(os.environ.get("CSS_GROQ_API_KEY"))
+    return bool(_env("CSS_GROQ_API_KEY"))
 
 
 def ai_groq_model():
-    return os.environ.get("CSS_GROQ_MODEL", GROQ_MODEL_DEFAULT)
+    return _env("CSS_GROQ_MODEL", GROQ_MODEL_DEFAULT)
 
 
 def fallback_enabled(conn):
@@ -300,7 +310,7 @@ def _http_generate(prompt, *, system=None, response_schema=None, temperature=0.2
             "generationConfig": generation_config}
     if system:
         body["systemInstruction"] = {"parts": [{"text": system}]}
-    headers = {"x-goog-api-key": os.environ.get("CSS_GEMINI_API_KEY", ""),
+    headers = {"x-goog-api-key": _env("CSS_GEMINI_API_KEY"),
                "Content-Type": "application/json"}
     http_timeout = httpx.Timeout(timeout, connect=3.0)
 
@@ -313,6 +323,13 @@ def _http_generate(prompt, *, system=None, response_schema=None, temperature=0.2
             if attempt == 2:
                 raise AITimeout("Gemini request timed out") from e
             continue
+        except httpx.InvalidURL as e:
+            # A malformed model name (e.g. CSS_GEMINI_MODEL carrying a stray
+            # control character) fails at request-build time, before any
+            # network call — retrying won't help, so fail this call the same
+            # way a bad response would, instead of leaking past ask()'s
+            # AIError contract as a raw 500.
+            raise AIBadResponse(f"Gemini request could not be built: {e}") from e
         if resp.status_code == 429:
             # Include Google's reason in the log detail: a 429 can mean a real
             # burst limit, but also "this model has zero free-tier quota"
@@ -385,7 +402,7 @@ def _http_generate_groq(prompt, *, system=None, response_schema=None, temperatur
             "max_tokens": max_output_tokens}
     if response_schema is not None:
         body["response_format"] = {"type": "json_object"}
-    headers = {"Authorization": f"Bearer {os.environ.get('CSS_GROQ_API_KEY', '')}",
+    headers = {"Authorization": f"Bearer {_env('CSS_GROQ_API_KEY')}",
                "Content-Type": "application/json"}
     http_timeout = httpx.Timeout(timeout, connect=3.0)
     url = f"{GROQ_API_BASE}/chat/completions"
@@ -395,6 +412,8 @@ def _http_generate_groq(prompt, *, system=None, response_schema=None, temperatur
     for attempt in (1, 2):
         try:
             resp = httpx.post(url, json=body, headers=headers, timeout=http_timeout)
+        except httpx.InvalidURL as e:
+            raise AIBadResponse(f"Groq request could not be built: {e}") from e
         except (httpx.TimeoutException, httpx.TransportError) as e:
             if attempt == 2:
                 raise AITimeout("Groq request timed out") from e
