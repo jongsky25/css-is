@@ -1464,7 +1464,7 @@ async def login_submit(request: Request):
                     "first_run": True, "next": nxt, "show_scope": False,
                     "err": pw_bad or "Enter a valid email address for the first admin."},
                     status_code=400)
-            h, salt = auth.hash_password(password)
+            h, salt = await auth.hash_password_async(password)
             uid = st.create_admin_user(conn, username, h, salt, "admin", created_by="(first-run setup)")
             user = {"id": uid, "username": username, "role": "admin"}
             _ip = request.client.host if request.client else None
@@ -1473,7 +1473,7 @@ async def login_submit(request: Request):
             st.audit(conn, username, "login", ip=_ip, summary="signed in (first-run)")
         else:
             u = st.get_admin_user(conn, username)
-            if not u or not u["active"] or not auth.verify_password(password, u["pw_hash"], u["salt"]):
+            if not u or not u["active"] or not await auth.verify_password_async(password, u["pw_hash"], u["salt"]):
                 st.audit(conn, username or "(blank)", "login_failed",
                          ip=request.client.host if request.client else None,
                          summary="failed sign-in attempt")
@@ -1624,7 +1624,7 @@ async def set_password_submit(request: Request):
         return templates.TemplateResponse(request, "set_password.html", {
             "valid": True, "token": token, "email": u["username"], "mode": "invite",
             "err": pw_bad, "show_scope": False}, status_code=400)
-    h, salt = auth.hash_password(password)
+    h, salt = await auth.hash_password_async(password)
     conn = get_conn()
     try:
         st.set_admin_password(conn, u["id"], h, salt, activate=True)
@@ -1680,7 +1680,7 @@ async def reset_password_submit(request: Request):
         return templates.TemplateResponse(request, "set_password.html", {
             "valid": True, "token": token, "email": u["username"], "mode": "reset",
             "err": pw_bad, "show_scope": False}, status_code=400)
-    h, salt = auth.hash_password(password)
+    h, salt = await auth.hash_password_async(password)
     conn = get_conn()
     try:
         st.set_admin_password(conn, u["id"], h, salt, activate=True)
@@ -1757,7 +1757,7 @@ async def admin_users_reset_default(request: Request, user_id: int):
         u = st.get_admin_user_by_id(conn, user_id)
         if not u:
             return RedirectResponse("/admin/users?err=" + quote("No such account."), status_code=303)
-        h, salt = auth.hash_password(auth.DEFAULT_PASSWORD)
+        h, salt = await auth.hash_password_async(auth.DEFAULT_PASSWORD)
         st.set_admin_password(conn, u["id"], h, salt, activate=True, must_change=True)
         _audit(request, conn, "reset_password", target_type="user", target_id=u["username"],
                summary=f"Reset {u['username']} to the temporary pilot password")

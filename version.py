@@ -42,8 +42,12 @@ CHANGELOG = [
             "rest of the app keeps responding normally while an AI reply is awaited. "
             "One slow or stuck AI call can no longer take the whole app down for "
             "everyone else.",
-            "No change to what the AI features do or to how their results are used — "
-            "only to keep a slow AI service from freezing the app.",
+            "Sign-in got the same treatment: checking a password is deliberately slow "
+            "(for security), and doing it in-line briefly froze the app — noticeable "
+            "when automated bots hammer the sign-in page. Password checks now also run "
+            "off to the side, so a wave of sign-in attempts no longer stalls everyone.",
+            "No change to what the AI or sign-in features do or to how their results "
+            "are used — only to keep slow work from freezing the app.",
         ],
     },
     {

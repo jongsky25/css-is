@@ -43,6 +43,29 @@ Fix: move the blocking AI network call **off** the event loop.
   `ok` on a row visible to the caller connection, propagates `AIError`, and
   raises `AIUnavailable` when unconfigured.
 
+Same event-loop-stall class, second source: PBKDF2 sign-in hashing.
+
+- **`auth.py`** — `hash_password_async` / `verify_password_async` run the
+  deliberately-CPU-heavy PBKDF2 (`_ITERATIONS=200_000`, ~100-150ms/call) off the
+  event loop via `asyncio.to_thread`. In-line, it froze the single worker for the
+  whole hash — and bots hammer `/login` constantly, so each attempt was a stall
+  that could flap the load-balancer health check.
+- **`app.py`** — the four `async def` auth handlers (`login_submit`,
+  `set_password_submit`, `reset_password_submit`, `admin_users_reset_default`)
+  now `await` the off-loop hash. (`_provision_account`, reached only from the
+  rare admin-invite path, is left synchronous.)
+- **`tests/test_auth_async.py`** — parity of the async wrappers with the sync
+  hash/verify, and that the hash runs on a worker thread, not the event loop.
+
+Note on the underlying failure surface (from live diagnosis of the Space): the
+recurring "500" is emitted by the HF edge / AWS ELB, not the app — the single
+`cpu-basic` worker intermittently fails the load-balancer health check when its
+event loop stalls, and the LB then answers everyone with an edge 5xx until the
+target re-registers. The app is healthy and serves 200 whenever a request
+reaches it. These changes remove the two biggest in-app stall sources (AI HTTP
+calls and sign-in hashing); giving the single worker more headroom (a larger CPU
+tier) remains the complementary infrastructure-side lever.
+
 Operational note (separate from this code change): the live Space had
 `CSS_GEMINI_API_KEY` + `CSS_GEMINI_MODEL` + `CSS_GROQ_API_KEY` set. Removing the
 Gemini secret disables all AI at the config gate (`ai_configured()` is false, so
