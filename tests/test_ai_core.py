@@ -154,6 +154,56 @@ def test_success_after_one_5xx_retry(monkeypatch):
     assert len(calls) == 2
 
 
+# ---- env var hygiene: a pasted secret carrying a stray newline must never
+# reach httpx as a raw, unhandled crash (real incident: CSS_GEMINI_MODEL set
+# via a hosting platform's secrets UI with a trailing "\n" made the request
+# URL itself invalid, and httpx.InvalidURL isn't a TimeoutException/
+# TransportError, so it escaped ask()'s AIError contract as a bare 500). ----
+
+def test_model_env_var_trailing_newline_is_stripped(monkeypatch):
+    monkeypatch.setenv("CSS_GEMINI_MODEL", "gemini-2.5-flash\n")
+    assert ai.ai_model() == "gemini-2.5-flash"
+
+
+def test_api_key_env_var_whitespace_is_stripped(monkeypatch):
+    monkeypatch.setenv("CSS_GEMINI_API_KEY", "  a-real-key  \n")
+    assert ai.ai_configured() is True
+
+    def fake_post(url, *, json, headers, timeout):
+        assert headers["x-goog-api-key"] == "a-real-key"
+        return _FakeResp(200, payload={"candidates": [{"content": {"parts": [{"text": "ok"}]}}]})
+    monkeypatch.setattr(httpx, "post", fake_post)
+    result = ai._http_generate("hi")
+    assert result["text"] == "ok"
+
+
+def test_whitespace_only_model_env_var_falls_back_to_default(monkeypatch):
+    monkeypatch.setenv("CSS_GEMINI_MODEL", "   ")
+    assert ai.ai_model() == ai.GEMINI_MODEL_DEFAULT
+
+
+def test_invalid_url_from_bad_model_raises_ai_bad_response_not_a_crash(monkeypatch):
+    """Belt-and-suspenders: even if a malformed CSS_GEMINI_MODEL somehow still
+    reaches httpx (stripping is the primary fix), the InvalidURL it raises
+    must come back as an AIError like every other failure, never bubble up
+    raw."""
+    def fake_post(*a, **kw):
+        raise httpx.InvalidURL("Invalid non-printable ASCII character in URL")
+    monkeypatch.setattr(httpx, "post", fake_post)
+
+    with pytest.raises(ai.AIBadResponse):
+        ai._http_generate("hi")
+
+
+def test_groq_invalid_url_raises_ai_bad_response_not_a_crash(monkeypatch):
+    def fake_post(*a, **kw):
+        raise httpx.InvalidURL("Invalid non-printable ASCII character in URL")
+    monkeypatch.setattr(httpx, "post", fake_post)
+
+    with pytest.raises(ai.AIBadResponse):
+        ai._http_generate_groq("hi")
+
+
 # ---- feature gates -------------------------------------------------------------
 
 def test_feature_enabled_defaults_on_except_harmonize(db_path):
