@@ -368,3 +368,11 @@ wording for the `i18n.py` strings flagged "DRAFT". Lowest priority.
 - `templates/start.html`, `templates/admin_ai.html`, `static/js/start.js` (new)
 - `ratelimit.py` · `requirements.txt` · `deploy_hf.py` (`RUNTIME_PY` :68) ·
   `retention.py` · `pull_backup.py` · `version.py`
+
+## 7. Fallback provider
+
+`ask()`'s "try AI → on any `AIError` → deterministic fallback" contract
+(§1) has a second-provider option layered on top of it: see
+`docs/AI_FALLBACK_PLAN.md` for the Groq fallback that kicks in when
+Gemini's quota/rate-limit is exhausted. None of the decisions above changed
+by that addition — Gemini remains the primary, free-tier provider.
