@@ -27,9 +27,12 @@ def test_storage_roundtrip_and_status_filter(db_path):
         rows = st.list_spot_feedback(conn)
         assert [r["id"] for r in rows] == [b, a]                 # newest first
         assert st.get_spot_feedback(conn, a)["status"] == "New"  # default
-        st.update_spot_feedback(conn, a, status="Done", admin_note="fixed")
+        assert st.get_spot_feedback(conn, a)["severity"] is None
+        st.update_spot_feedback(conn, a, status="Done", admin_note="fixed",
+                                severity="High", duplicate_of=b)
         got = st.get_spot_feedback(conn, a)
         assert got["status"] == "Done" and got["admin_note"] == "fixed" and got["updated_at"]
+        assert got["severity"] == "High" and got["duplicate_of"] == b
         assert [r["id"] for r in st.list_spot_feedback(conn, status="Done")] == [a]
         assert st.spot_feedback_status_counts(conn) == {"New": 1, "Done": 1}
     finally:
@@ -95,6 +98,38 @@ def test_triage_updates_and_audits(admin, db_path):
         row = conn.execute("SELECT action FROM audit_log WHERE action='spot_feedback_triage' "
                            "ORDER BY id DESC LIMIT 1").fetchone()
         assert row is not None
+    finally:
+        _reset(conn); conn.close()
+
+
+def test_triage_saves_severity_and_duplicate_of(admin, db_path):
+    conn = st.connect(db_path); st.init_db(conn); _reset(conn)
+    try:
+        a = st.create_spot_feedback(conn, user_id=1, submitter="u@x", page_url="/d",
+                                    element_selector=None, region_json=None, message="m")
+        b = st.create_spot_feedback(conn, user_id=1, submitter="u@x", page_url="/d",
+                                    element_selector=None, region_json=None, message="dup of a")
+        conn.commit()
+        r = admin.post(f"/admin/feedback/{a}",
+                       data={"status": "Reviewing", "severity": "High",
+                             "duplicate_of": str(b)}, follow_redirects=False)
+        assert r.status_code == 303
+        got = st.get_spot_feedback(conn, a)
+        assert got["severity"] == "High" and got["duplicate_of"] == b
+    finally:
+        _reset(conn); conn.close()
+
+
+def test_triage_rejects_bogus_severity_and_non_numeric_duplicate_of(admin, db_path):
+    conn = st.connect(db_path); st.init_db(conn); _reset(conn)
+    try:
+        fid = st.create_spot_feedback(conn, user_id=1, submitter="u@x", page_url="/d",
+                                      element_selector=None, region_json=None, message="m")
+        admin.post(f"/admin/feedback/{fid}",
+                   data={"status": "Reviewing", "severity": "Extreme",
+                         "duplicate_of": "not-a-number"}, follow_redirects=False)
+        got = st.get_spot_feedback(conn, fid)
+        assert got["severity"] is None and got["duplicate_of"] is None
     finally:
         _reset(conn); conn.close()
 

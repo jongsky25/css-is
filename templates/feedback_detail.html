@@ -45,6 +45,18 @@
   .btn.ghost { background:var(--surface); color:var(--soft); border-color:var(--line); }
   .msg { background:var(--green-bg); border:1px solid var(--green-ln); color:var(--green); border-radius:10px;
          padding:.6rem .8rem; font-size:.9rem; margin-bottom:1rem; }
+  #ai-suggest-btn { font-size:.86rem; padding:.3rem .7rem; border-radius:999px; border:1px solid var(--line);
+                    background:var(--accent-bg,var(--blue-bg)); border-color:var(--accent-ln,var(--blue-ln));
+                    font-weight:700; cursor:pointer; }
+  #ai-suggest-btn:disabled { opacity:.6; cursor:default; }
+  .ai-suggestion { font-size:.88rem; color:var(--soft); margin:.6rem 0 0; display:none; }
+  .ai-suggestion.shown { display:block; }
+  .ai-suggestion .ai-reason { color:var(--ink); }
+  .ai-fb { display:inline-flex; gap:.3rem; margin-left:.5rem; }
+  .fb-btn { font-size:1.05rem; line-height:1; background:none; border:1px solid var(--line);
+            border-radius:8px; padding:.1rem .4rem; cursor:pointer; }
+  .fb-btn:hover:not(:disabled) { background:var(--accent-bg,var(--blue-bg)); }
+  .fb-btn.fb-sent { opacity:.55; }
   .timeline { list-style:none; margin:0; padding:0; }
   .timeline li { position:relative; padding:0 0 .9rem 1.1rem; border-left:2px solid var(--line); }
   .timeline li:last-child { border-left-color:transparent; padding-bottom:0; }
@@ -109,12 +121,22 @@
 
 <div class="panel">
   <h2>Triage</h2>
-  <form method="post" action="/admin/feedback/{{ e.id }}" class="triage">
+  <form method="post" action="/admin/feedback/{{ e.id }}" class="triage" id="triage-form">
     <input type="hidden" name="back" value="detail">
     <label>Status
-      <select name="status" aria-label="Status">
+      <select name="status" id="triage-status" aria-label="Status">
         {% for s in statuses %}<option value="{{ s }}" {{ 'selected' if s == e.status }}>{{ s }}</option>{% endfor %}
       </select>
+    </label>
+    <label>Severity <span style="text-transform:none; font-weight:400;">(optional)</span>
+      <select name="severity" id="triage-severity" aria-label="Severity">
+        <option value="">—</option>
+        {% for sv in severities %}<option value="{{ sv }}" {{ 'selected' if sv == e.severity }}>{{ sv }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Duplicate of # <span style="text-transform:none; font-weight:400;">(optional)</span>
+      <input name="duplicate_of" id="triage-duplicate-of" value="{{ e.duplicate_of or '' }}"
+             placeholder="Feedback id" style="width:6rem;">
     </label>
     <label>Reply to submitter <span style="text-transform:none; font-weight:400;">(optional — they see this)</span>
       <input class="reply" name="reply" value="" placeholder="A short, human note back to them">
@@ -123,7 +145,9 @@
       <input class="note" name="admin_note" value="{{ e.admin_note or '' }}" placeholder="What was done / decided">
     </label>
     <button class="btn" type="submit">Save</button>
+    <button type="button" class="btn ghost" id="ai-suggest-btn">✨ Suggest triage</button>
   </form>
+  <div class="ai-suggestion" id="ai-suggestion"></div>
 </div>
 
 <div class="panel">
@@ -166,4 +190,78 @@
   <p class="empty">No recorded activity yet.</p>
   {% endif %}
 </div>
+
+<script>
+(function () {
+  var btn = document.getElementById("ai-suggest-btn");
+  var box = document.getElementById("ai-suggestion");
+  if (!btn) return;
+
+  function esc(s) {
+    var d = document.createElement("div");
+    d.textContent = s == null ? "" : String(s);
+    return d.innerHTML;
+  }
+
+  function sendFeedback(interactionId, rating) {
+    var body = "interaction_id=" + encodeURIComponent(interactionId) +
+      "&rating=" + encodeURIComponent(rating);
+    var sent = false;
+    if (navigator.sendBeacon) {
+      try {
+        sent = navigator.sendBeacon("/api/ai/feedback",
+          new Blob([body], { type: "application/x-www-form-urlencoded" }));
+      } catch (e) { sent = false; }
+    }
+    if (!sent) {
+      fetch("/api/ai/feedback", {
+        method: "POST", body: body, keepalive: true,
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      }).catch(function () {});
+    }
+  }
+
+  btn.addEventListener("click", function () {
+    btn.disabled = true;
+    var origText = btn.textContent;
+    btn.textContent = "Thinking…";
+    fetch("/admin/feedback/{{ e.id }}/ai-suggest", { method: "POST" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.ok) {
+          if (data.status) document.getElementById("triage-status").value = data.status;
+          if (data.severity) document.getElementById("triage-severity").value = data.severity;
+          if (data.duplicate_of) document.getElementById("triage-duplicate-of").value = data.duplicate_of;
+          var fb = '<span class="ai-fb">' +
+            '<button type="button" class="fb-btn" data-r="up" aria-label="Helpful">👍</button>' +
+            '<button type="button" class="fb-btn" data-r="down" aria-label="Not helpful">👎</button>' +
+            '</span>';
+          box.innerHTML = 'Suggestion applied above — <span class="ai-reason">' +
+            esc(data.reason) + '</span>' + fb;
+          box.className = "ai-suggestion shown";
+          var fbBtns = box.querySelectorAll(".fb-btn");
+          for (var i = 0; i < fbBtns.length; i++) {
+            fbBtns[i].addEventListener("click", function (e) {
+              var b = e.currentTarget;
+              sendFeedback(data.interaction_id, b.dataset.r);
+              for (var j = 0; j < fbBtns.length; j++) fbBtns[j].disabled = true;
+              b.classList.add("fb-sent");
+            });
+          }
+        } else {
+          box.innerHTML = esc(data.notice);
+          box.className = "ai-suggestion shown";
+        }
+      })
+      .catch(function () {
+        box.innerHTML = "AI triage suggestions aren't available right now — set these fields by hand.";
+        box.className = "ai-suggestion shown";
+      })
+      .finally(function () {
+        btn.disabled = false;
+        btn.textContent = origText;
+      });
+  });
+})();
+</script>
 {% endblock %}
