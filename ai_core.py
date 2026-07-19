@@ -50,6 +50,7 @@ import time
 
 import httpx
 
+import qa_rules
 import ratelimit as rl
 import storage as st
 import tzutil as tz
@@ -499,9 +500,13 @@ def _fold_groq_error(base_msg, groq_exc):
 
 def _log_interaction(conn, *, user, feature, mode, outcome, result=None, error=None,
                       destination=None, confidence=None, prompt=None, log_prompts=True,
-                      provider="gemini"):
+                      provider="gemini", question=None):
     user_id = user.get("id") if user else None
     role = user.get("role") if user else None
+    # The clean, normalized user question (for the learned-rules FAQ miner in
+    # storage.top_questions). Only stored when prompt logging is on, since it's
+    # the same user-typed content the prompt-logging toggle governs.
+    question_norm = (qa_rules.normalize(question) or None) if (log_prompts and question) else None
     return st.create_ai_interaction(
         conn, user_id=user_id, role=role, feature=feature, mode=mode,
         model=(result or {}).get("model") or ai_model(),
@@ -511,11 +516,11 @@ def _log_interaction(conn, *, user, feature, mode, outcome, result=None, error=N
         latency_ms=(result or {}).get("latency_ms"),
         tokens_in=(result or {}).get("tokens_in"),
         tokens_out=(result or {}).get("tokens_out"),
-        error=error, provider=provider)
+        error=error, provider=provider, question_norm=question_norm)
 
 
 def ask(conn, user, feature, prompt, *, ip=None, system=None, response_schema=None,
-        temperature=0.2, max_output_tokens=1024, timeout=8.0):
+        temperature=0.2, max_output_tokens=1024, timeout=8.0, question=None):
     """The single entry point every AI feature calls.
 
     Gates in order: configured + mode != off + feature flag -> burst rate
@@ -575,7 +580,8 @@ def ask(conn, user, feature, prompt, *, ip=None, system=None, response_schema=No
             raise AIUnavailable(err)
         interaction_id = _log_interaction(conn, user=user, feature=feature, mode=mode,
                                            outcome="ok", result=fb, prompt=prompt,
-                                           log_prompts=log_prompts, provider="groq")
+                                           log_prompts=log_prompts, provider="groq",
+                                           question=question)
         return fb, interaction_id
 
     try:
@@ -591,7 +597,8 @@ def ask(conn, user, feature, prompt, *, ip=None, system=None, response_schema=No
         if fb is not None:
             interaction_id = _log_interaction(conn, user=user, feature=feature, mode=mode,
                                                outcome="ok", result=fb, prompt=prompt,
-                                               log_prompts=log_prompts, provider="groq")
+                                               log_prompts=log_prompts, provider="groq",
+                                               question=question)
             return fb, interaction_id
         _log_interaction(conn, user=user, feature=feature, mode=mode, outcome="fallback_budget",
                           error=_fold_groq_error(str(e), groq_exc), prompt=prompt,
@@ -617,7 +624,8 @@ def ask(conn, user, feature, prompt, *, ip=None, system=None, response_schema=No
         if fb is not None:
             interaction_id = _log_interaction(conn, user=user, feature=feature, mode=mode,
                                                outcome="ok", result=fb, prompt=prompt,
-                                               log_prompts=log_prompts, provider="groq")
+                                               log_prompts=log_prompts, provider="groq",
+                                               question=question)
             return fb, interaction_id
         _log_interaction(conn, user=user, feature=feature, mode=mode, outcome="fallback_error",
                           error=_fold_groq_error(str(e), groq_exc), prompt=prompt,
@@ -629,7 +637,8 @@ def ask(conn, user, feature, prompt, *, ip=None, system=None, response_schema=No
         raise
 
     interaction_id = _log_interaction(conn, user=user, feature=feature, mode=mode, outcome="ok",
-                                      result=result, prompt=prompt, log_prompts=log_prompts)
+                                      result=result, prompt=prompt, log_prompts=log_prompts,
+                                      question=question)
     return result, interaction_id
 
 
