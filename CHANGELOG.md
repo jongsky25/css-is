@@ -1,5 +1,45 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-19 (v2.18 — edge-retry shield against HF routing failures)
+
+Since ~12:35 UTC today (immediately after a Space visibility toggle), ~40-60%
+of requests to the Space's direct URL are answered by HF's infrastructure
+itself — first `503` from `server: awselb/2.0`, later HF's proxy 500 page,
+both with **no** Spaces-proxy headers — while the app replica stays healthy
+(control probes of other Spaces through the same edge are 100% consistent, so
+the poisoned route is specific to this subdomain). It survives container
+restart, redeploy, and pause/resume, and it aborted two auto-deploys at the
+`pull_backup` pre-deploy gate. HF-side fix is theirs to make; this ships the
+app-side shield.
+
+Key mechanism: the server now stamps `X-CSS-App: 1` on **every** response it
+produces (success, 4xx, even unhandled 500s via a new `Exception` handler). A
+5xx *without* that header is therefore proof the request never reached the
+app — which makes an automatic retry safe for any method, POSTs included.
+
+- **`app.py`** — `_metrics_gate` stamps `X-CSS-App: 1` on every response; new
+  `@app.exception_handler(Exception)` `_unhandled_error` returns the plain 500
+  WITH the marker (Starlette still re-raises, so tracebacks keep reaching the
+  log) — without this, an in-app crash on a POST would look retry-safe to the
+  service worker and could double-execute.
+- **`static/js/sw.js`** — new `fetchRetrying(req, retryNetworkErrors)`: up to
+  3 extra attempts with linear backoff on any 5xx lacking `x-css-app`.
+  Wired into all four request classes: static assets (inside the
+  stale-while-revalidate refresh), navigations (before the cache/offline
+  fallback), all other same-origin GETs (previously not intercepted), and —
+  new — non-GET writes, which are retried **only** on the provable edge-error
+  case, never on network errors (the Phase-2 offline queue + submission_id
+  dedup already covers those). `CACHE_VERSION` → v2.18-a.
+- **`pull_backup.py`** — `_with_retry` (6 attempts, linear backoff) around
+  `_get`/`_post`: edge 5xx (5xx without `X-CSS-App`) always retried; plain
+  network errors retried for GETs only. The 3xx-returned-as-value contract of
+  `_post(follow=False)` is preserved inside the retry wrapper.
+- **`deploy_hf.py`** — `_fetch_live_login` (version pre-check + post-deploy
+  verify) retries 5 times on any HTTP/URL error.
+- **`tests/test_pwa.py`** — 4 new tests: marker present on 200/3xx/404; marker
+  present on an unhandled-crash 500 (via a temp route + non-raising client);
+  sw.js contains the retry shield and intercepts writes.
+
 ## 2026-07-19 (v2.17 — fix: default Gemini model closed to new API keys)
 
 Follow-up to v2.14's model bump. The live site's newly created

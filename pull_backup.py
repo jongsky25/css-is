@@ -41,12 +41,47 @@ import os
 import re
 import sqlite3
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
 
 DEFAULT_BASE = "https://equityinhealth-office-connect.hf.space"
 SNAP_RE = re.compile(r"css_is_\d{8}_\d{6}_(?:manual|auto|pre_restore)\.db")
+
+# The hosting platform's proxy/LB can fail a request before it reaches the app
+# (observed July 2026: ~half of direct requests answered 500/503 by the edge
+# while the app was healthy — it aborted two deploys in a row). The app stamps
+# X-CSS-App on every response it produces, so a 5xx WITHOUT that header is
+# proof the app never saw the request: safe to retry, POSTs included.
+RETRY_ATTEMPTS = 6
+RETRY_DELAY_S = 2.0
+
+
+def _edge_5xx(err):
+    return (isinstance(err, urllib.error.HTTPError) and err.code >= 500
+            and not (err.headers or {}).get("X-CSS-App"))
+
+
+def _with_retry(attempt, *, network_too):
+    """Run `attempt` up to RETRY_ATTEMPTS times. Retries edge 5xx always;
+    network errors only when `network_too` (a dropped connection can't prove
+    the request never arrived, so writes don't get that retry)."""
+    last = None
+    for n in range(RETRY_ATTEMPTS):
+        if n:
+            time.sleep(RETRY_DELAY_S * n)
+        try:
+            return attempt()
+        except urllib.error.HTTPError as e:
+            if not _edge_5xx(e):
+                raise
+            last = e
+        except urllib.error.URLError as e:
+            if not network_too:
+                raise
+            last = e
+    raise last
 
 
 def _opener():
@@ -60,7 +95,7 @@ def _post(opener, url, fields, follow=True):
     req = urllib.request.Request(url, data=data, method="POST",
                                  headers={"User-Agent": "css-pull-backup"})
     if follow:
-        return opener.open(req, timeout=60)
+        return _with_retry(lambda: opener.open(req, timeout=60), network_too=False)
     # Manual no-follow so we can read the redirect Location.
     class _NoRedirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self, *a, **k):
@@ -68,15 +103,20 @@ def _post(opener, url, fields, follow=True):
     no = urllib.request.build_opener(_NoRedirect,
                                      *[h for h in opener.handlers
                                        if isinstance(h, urllib.request.HTTPCookieProcessor)])
-    try:
-        return no.open(req, timeout=60)
-    except urllib.error.HTTPError as e:
-        return e          # 3xx surfaces here with .headers["Location"]
+
+    def _attempt():
+        try:
+            return no.open(req, timeout=60)
+        except urllib.error.HTTPError as e:
+            if 300 <= e.code < 400:
+                return e          # 3xx surfaces here with .headers["Location"]
+            raise
+    return _with_retry(_attempt, network_too=False)
 
 
 def _get(opener, url):
     req = urllib.request.Request(url, headers={"User-Agent": "css-pull-backup"})
-    return opener.open(req, timeout=120)
+    return _with_retry(lambda: opener.open(req, timeout=120), network_too=True)
 
 
 def login(opener, base, user, password):
