@@ -63,6 +63,10 @@
   .tone { font-size:.78rem; padding:.28rem .7rem; border:1px solid var(--line-strong);
           border-radius:999px; background:var(--surface); color:var(--soft); cursor:pointer; }
   .tone:hover { border-color:var(--accent); color:var(--accent); }
+  .tone.ai-draft { border-color:var(--accent); color:var(--accent); font-weight:600; }
+  .tone.ai-draft[disabled] { opacity:.6; cursor:default; }
+  .ai-note { display:block; font-size:.76rem; color:var(--soft); margin:-.2rem 0 .45rem; }
+  .ai-note.err { color:var(--red); }
   #msgForm textarea { width:100%; padding:.55rem .65rem; border:1px solid var(--line-strong);
           border-radius:8px; background:var(--surface); color:var(--ink); resize:vertical;
           font:inherit; line-height:1.45; }
@@ -147,7 +151,9 @@
         <label class="msglabel">Welcome message <span class="opt">— seen when a participant registers</span></label>
         <div class="tones" data-slot="welcome" data-target="welcomeMsg">
           {% for t in tones %}<button type="button" class="tone" data-tone="{{ t }}">{{ tone_labels[t] }}</button>{% endfor %}
+          <button type="button" class="tone ai-draft" data-slot="welcome" data-target="welcomeMsg">✨ Personalize with AI</button>
         </div>
+        <span class="ai-note" data-slot="welcome" aria-live="polite" hidden></span>
         <textarea id="welcomeMsg" name="welcome_message" rows="4" maxlength="2000"
                   placeholder="Leave blank to show no welcome message.">{{ welcome_message }}</textarea>
       </div>
@@ -155,7 +161,9 @@
         <label class="msglabel">Ending message <span class="opt">— auto-shown once they finish all the feedback</span></label>
         <div class="tones" data-slot="ending" data-target="endingMsg">
           {% for t in tones %}<button type="button" class="tone" data-tone="{{ t }}">{{ tone_labels[t] }}</button>{% endfor %}
+          <button type="button" class="tone ai-draft" data-slot="ending" data-target="endingMsg">✨ Personalize with AI</button>
         </div>
+        <span class="ai-note" data-slot="ending" aria-live="polite" hidden></span>
         <textarea id="endingMsg" name="ending_message" rows="4" maxlength="2000"
                   placeholder="Leave blank to show no ending message.">{{ ending_message }}</textarea>
       </div>
@@ -241,15 +249,53 @@
   <script>
     (function () {
       var drafts = JSON.parse(document.getElementById('msgDrafts').textContent);
+      var lastTone = {};
       document.querySelectorAll('.tones').forEach(function (bar) {
         var slot = bar.dataset.slot, ta = document.getElementById(bar.dataset.target);
-        bar.querySelectorAll('.tone').forEach(function (btn) {
+        lastTone[slot] = 'personal';
+        bar.querySelectorAll('.tone[data-tone]').forEach(function (btn) {
           btn.addEventListener('click', function () {
+            lastTone[slot] = btn.dataset.tone;
             var text = (drafts[slot] || {})[btn.dataset.tone] || '';
             if (ta.value.trim() && !confirm('Replace the current ' + slot + ' message with this draft?')) return;
             ta.value = text;
+            ta.dispatchEvent(new Event('input'));
             ta.focus();
           });
+        });
+      });
+
+      // "Personalize with AI" — a fresh draft tailored to this activity's own
+      // details (title/date/venue/modality), in whichever tone was last
+      // picked above (default "personal"). Falls back quietly to a note next
+      // to the button; the static tone drafts above are unaffected either way.
+      document.querySelectorAll('.ai-draft').forEach(function (btn) {
+        var slot = btn.dataset.slot, ta = document.getElementById(btn.dataset.target);
+        var note = document.querySelector('.ai-note[data-slot="' + slot + '"]');
+        btn.addEventListener('click', function () {
+          if (ta.value.trim() && !confirm('Replace the current ' + slot + ' message with an AI-personalized draft?')) return;
+          btn.disabled = true;
+          if (note) { note.hidden = false; note.textContent = 'Personalizing…'; note.className = 'ai-note'; }
+          fetch(msgForm.action + '/ai-draft', {
+            method: 'POST', credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ slot: slot, tone: lastTone[slot] || 'personal' }).toString()
+          }).then(function (r) { return r.json().catch(function () { return {}; }); })
+            .then(function (data) {
+              btn.disabled = false;
+              if (data && data.ok && data.text) {
+                ta.value = data.text;
+                ta.dispatchEvent(new Event('input'));
+                ta.focus();
+                if (note) note.hidden = true;
+              } else if (note) {
+                note.textContent = data.notice || 'AI personalization isn’t available right now — pick a tone above instead.';
+                note.className = 'ai-note err';
+              }
+            }).catch(function () {
+              btn.disabled = false;
+              if (note) { note.textContent = 'AI personalization isn’t available right now — pick a tone above instead.'; note.className = 'ai-note err'; }
+            });
         });
       });
 
