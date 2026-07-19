@@ -590,6 +590,25 @@ def _add_missing_columns(conn):
                PRIMARY KEY (day, feature)
            )""")
 
+    # report_draft — docs/AI_INTEGRATION_PLAN.md Phase 5. AI-drafted (then
+    # possibly analyst-edited) report-narrative text, keyed by which report
+    # scope it belongs to (e.g. one activity's MRR columns, or one period's
+    # official-report closing sections). One row per (scope, scope_key,
+    # field); the latest write simply wins — unlike comment_override there is
+    # no human > ai precedence to protect, since an analyst editing an AI
+    # draft IS the expected refine-and-save flow. Overwritten in place, never
+    # appended, so unlike ai_interaction it needs no retention purge.
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS report_draft (
+               scope      TEXT NOT NULL,
+               scope_key  TEXT NOT NULL,
+               field      TEXT NOT NULL,
+               text       TEXT NOT NULL,
+               actor      TEXT NOT NULL,
+               updated_at TEXT NOT NULL,
+               PRIMARY KEY (scope, scope_key, field)
+           )""")
+
     # The Office of the Director heads the whole bureau — it is NOT one of the
     # administrative sections that sit beside the divisions. Promote it to its own
     # 'office' level so org_structure surfaces it as the directorate (above the
@@ -2180,6 +2199,64 @@ def purge_stale_ai_budget(conn, cutoff_day):
     cur = conn.execute("DELETE FROM ai_budget WHERE day < ?", (cutoff_day,))
     conn.commit()
     return cur.rowcount
+
+
+# ---------------------------------------------------------------------
+# Report-narrative drafts (docs/AI_INTEGRATION_PLAN.md Phase 5) — AI-drafted
+# (then possibly analyst-edited) text for one report section. Export routes
+# read whatever is saved here, falling back to the deterministic default when
+# nothing has been saved — export never depends on AI being available.
+# ---------------------------------------------------------------------
+
+def set_report_draft(conn, scope, scope_key, field, text, actor):
+    """Upsert one drafted/edited report-narrative field. `actor` is 'ai' for
+    an AI draft or the editing user's username for a human save."""
+    now = tz.now_iso()
+    conn.execute(
+        "INSERT INTO report_draft(scope, scope_key, field, text, actor, updated_at) "
+        "VALUES (?,?,?,?,?,?) "
+        "ON CONFLICT(scope, scope_key, field) DO UPDATE SET "
+        "text=excluded.text, actor=excluded.actor, updated_at=excluded.updated_at",
+        (scope, scope_key, field, text, actor, now))
+    conn.commit()
+
+
+def clear_report_draft(conn, scope, scope_key, field):
+    """Delete one field's saved draft, reverting it to its computed default —
+    the "leave blank to fall back" convention used by this edit form."""
+    conn.execute("DELETE FROM report_draft WHERE scope=? AND scope_key=? AND field=?",
+                (scope, scope_key, field))
+    conn.commit()
+
+
+def get_report_drafts(conn, scope, scope_key):
+    """{field: {"text", "actor", "updated_at"}} for one scope/scope_key."""
+    out = {}
+    for field, text, actor, updated_at in conn.execute(
+            "SELECT field, text, actor, updated_at FROM report_draft "
+            "WHERE scope=? AND scope_key=?", (scope, scope_key)):
+        out[field] = {"text": text, "actor": actor, "updated_at": updated_at}
+    return out
+
+
+def get_report_drafts_bulk(conn, scope, scope_keys):
+    """{scope_key: {field: {"text","actor","updated_at"}}} for many scope_keys
+    at once — the batch form of get_report_drafts, used when an export covers
+    many activities so it's one query instead of N."""
+    keys = list(dict.fromkeys(scope_keys))
+    if not keys:
+        return {}
+    out = {}
+    CHUNK = 900
+    for i in range(0, len(keys), CHUNK):
+        chunk = keys[i:i + CHUNK]
+        qmarks = ",".join("?" * len(chunk))
+        for scope_key, field, text, actor, updated_at in conn.execute(
+                f"SELECT scope_key, field, text, actor, updated_at FROM report_draft "
+                f"WHERE scope=? AND scope_key IN ({qmarks})", [scope] + chunk):
+            out.setdefault(scope_key, {})[field] = {
+                "text": text, "actor": actor, "updated_at": updated_at}
+    return out
 
 
 # ---------------------------------------------------------------------

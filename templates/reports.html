@@ -1,5 +1,5 @@
 {% extends "dash_layout.html" %}
-{% from "_components.html" import page_header, empty_state %}
+{% from "_components.html" import page_header, empty_state, flash %}
 {% import "_story.html" as s %}
 {% block title %}Reports{% endblock %}
 
@@ -97,6 +97,13 @@
                 background:var(--surface-2); border:1px solid var(--line); margin-bottom:.4rem; }
   .cmtlist.good li { border-left:3px solid var(--green); }
   .cmtlist.bad  li { border-left:3px solid var(--red); }
+  .draft-form { display:flex; flex-direction:column; align-items:stretch; gap:.6rem; margin-top:.6rem; max-width:70ch; }
+  .draft-form label { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--soft); }
+  .draft-form textarea { width:100%; margin-top:.25rem; padding:.5rem .6rem; border:1px solid var(--line);
+    border-radius:8px; font:inherit; font-size:.88rem; resize:vertical; }
+  .draft-form button { align-self:flex-start; padding:.4rem .7rem; border-radius:8px; border:1px solid var(--accent);
+    background:var(--accent); color:var(--on-accent); font-weight:600; cursor:pointer; font-size:.8rem; }
+  .draft-actor { font-size:.72rem; color:var(--soft); font-weight:400; text-transform:none; letter-spacing:normal; margin-left:.4rem; }
 </style>
 {% endblock %}
 
@@ -217,6 +224,7 @@
 {% set rm = reports_meta[rtype] %}
 <span class="official">OFFICIAL REPORTS · for ARTA / SERVQUAL submissions</span>
 {{ page_header(rm[1]) }}
+{{ flash(msg, err) }}
 <p class="lede">{{ rm[2] }} Every score is computed fresh from the raw answers, with item codes and denominators intact. For the plain-language read, use the <a href="/dashboard">dashboard</a>.</p>
 
 <!-- REPORT-TYPE SWITCHER -->
@@ -377,6 +385,32 @@
   </div>
   {% if ar.comments.other %}<details style="margin-top:.6rem;"><summary class="meta">{{ ar.comments.other|length }} more comment(s) without a feedback tag</summary>
     <ul class="cmtlist">{% for c in ar.comments.other %}<li>{{ c.text }}</li>{% endfor %}</ul></details>{% endif %}
+  {% endif %}
+
+  {% if can_curate %}
+  <h3 class="sec">Report narrative — Sections V–VI (official CO-CSM template)</h3>
+  <p class="stmt">Drafts the Agency Action Plan and Continuous Improvement sections of the downloadable
+    official template from this period's scores and comment themes. Edit and save below — the download
+    always uses what's saved here, or today's "N/A" / standing text if nothing's been saved.</p>
+  <form method="post" action="/reports/csm-draft" style="display:inline;">
+    <input type="hidden" name="period" value="{{ sel_period }}">
+    <button type="submit">✨ Draft with AI</button>
+  </form>
+  {% set ap = (csm_draft or {}).get('action_plan') or {} %}
+  {% set ci = (csm_draft or {}).get('continuous_improvement') or {} %}
+  <form class="draft-form" method="post" action="/reports/csm-draft/save">
+    <input type="hidden" name="period" value="{{ sel_period }}">
+    <label>V. Agency Action Plan
+      {% if ap.get('actor') %}<span class="draft-actor">last set by {{ ap.actor }}</span>{% endif %}
+      <textarea name="action_plan" rows="4">{{ ap.get('text') or '' }}</textarea>
+    </label>
+    <label>VI. Continuous Improvement
+      {% if ci.get('actor') %}<span class="draft-actor">last set by {{ ci.actor }}</span>{% endif %}
+      <textarea name="continuous_improvement" rows="4">{{ ci.get('text') or '' }}</textarea>
+    </label>
+    <button type="submit">Save</button>
+    <span class="meta">Leave a field blank to fall back to today's "N/A" / standing text.</span>
+  </form>
   {% endif %}
   {% endif %}
 </div>

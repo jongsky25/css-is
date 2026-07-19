@@ -151,7 +151,14 @@
   .ai-summary-panel { white-space:pre-wrap; font-size:.88rem; line-height:1.5; margin:0 0 .8rem;
     border:1px solid var(--line); border-radius:10px; padding:.8rem 1rem; }
   .ai-summary-panel ul { margin:0; padding-left:1.2rem; }
-  @media print { .crumb, .winform button, .dl-btn, .ai-verbatim-actions { display:none; } }
+  .draft-form { display:flex; flex-direction:column; align-items:stretch; gap:.6rem; margin-top:.6rem; }
+  .draft-form label { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--soft); }
+  .draft-form textarea { width:100%; margin-top:.25rem; padding:.5rem .6rem; border:1px solid var(--line);
+    border-radius:8px; font:inherit; font-size:.88rem; resize:vertical; }
+  .draft-form button { align-self:flex-start; padding:.4rem .7rem; border-radius:8px; border:1px solid var(--accent);
+    background:var(--accent); color:var(--on-accent); font-weight:600; cursor:pointer; font-size:.8rem; }
+  .draft-actor { font-size:.72rem; color:var(--soft); font-weight:400; text-transform:none; letter-spacing:normal; margin-left:.4rem; }
+  @media print { .crumb, .winform button, .dl-btn, .ai-verbatim-actions, .draft-form { display:none; } }
 </style>
 
 {% if not ev %}
@@ -363,6 +370,36 @@
       {% for sec in sections %}<option value="{{ sec.id }}" {{ 'selected' if ev.section_id == sec.id }}>{{ sec.name }}</option>{% endfor %}
     </select>
     <button type="submit">Save section</button>
+  </form>
+</div>
+
+<div class="panel">
+  <h3>Report narrative — MRR analysis columns</h3>
+  <p class="sublab">Feeds "AGENDA 4: Customer Satisfaction" in the Excel export (Analysis / Action / Next Steps /
+    Resources). Draft with AI from this activity's scores, then edit and save — the export always uses what's
+    saved here, or today's computed default if nothing's been saved.</p>
+  <form method="post" action="/reports/activities/{{ ev.id }}/ai-mrr-draft" style="display:inline;">
+    <button type="submit">✨ Draft with AI</button>
+  </form>
+  <form class="draft-form" method="post" action="/reports/activities/{{ ev.id }}/mrr-draft">
+    <label>Analysis / Recommendation
+      {% if mrr_fields.analysis.actor %}<span class="draft-actor">last set by {{ mrr_fields.analysis.actor }}</span>{% endif %}
+      <textarea name="analysis" rows="3">{{ mrr_fields.analysis.text }}</textarea>
+    </label>
+    <label>Action / Improvement Plan
+      {% if mrr_fields.action.actor %}<span class="draft-actor">last set by {{ mrr_fields.action.actor }}</span>{% endif %}
+      <textarea name="action" rows="2">{{ mrr_fields.action.text }}</textarea>
+    </label>
+    <label>Next Steps and Timeline
+      {% if mrr_fields.next_steps.actor %}<span class="draft-actor">last set by {{ mrr_fields.next_steps.actor }}</span>{% endif %}
+      <textarea name="next_steps" rows="2">{{ mrr_fields.next_steps.text }}</textarea>
+    </label>
+    <label>Resources Needed
+      {% if mrr_fields.resources.actor %}<span class="draft-actor">last set by {{ mrr_fields.resources.actor }}</span>{% endif %}
+      <textarea name="resources" rows="2">{{ mrr_fields.resources.text }}</textarea>
+    </label>
+    <button type="submit">Save</button>
+    <span class="hint">Leave a field blank to fall back to the computed default.</span>
   </form>
 </div>
 {% endif %}

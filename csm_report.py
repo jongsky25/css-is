@@ -19,6 +19,11 @@ data-driven & corrected (the submitted file's data bugs are not reproduced); the
 Overview date is period-accurate rather than the stale literal; and a couple of
 small italic clarity notes are ADDED after tables.
 
+Sections V and VI print `rep["action_plan_text"]` / `rep["continuous_improvement_text"]`
+when the caller supplies them (docs/AI_INTEGRATION_PLAN.md Phase 5's saved,
+possibly AI-drafted, report_draft rows), falling back to the original "N/A" /
+standing boilerplate otherwise — export itself never calls AI.
+
   * official_docx(rep, meta) -> bytes
   * official_pdf(rep, meta)  -> bytes
 """
@@ -394,9 +399,9 @@ def _docx_data(doc, rep, meta):
 def _docx_closing(doc, rep, meta):
     _heading(doc, "OVERALL REPORT ANALYSIS")
     _subheading(doc, "V. Results of the Agency Action Plan reported as of:")
-    doc.add_paragraph("N/A")
+    doc.add_paragraph(rep.get("action_plan_text") or "N/A")
     _subheading(doc, "VI. Continuous Agency Improvement Plan:")
-    doc.add_paragraph(_IMPROVEMENT)
+    doc.add_paragraph(rep.get("continuous_improvement_text") or _IMPROVEMENT)
     if rep.get("low_n"):
         _note(doc, f"Note on sample size — this period reflects N = {rep['respondents']} "
                    f"completed responses; results should be read with this base in mind.")
@@ -680,9 +685,9 @@ def official_pdf(rep, meta):
     # OVERALL REPORT ANALYSIS / V / VI
     f.append(_h2("OVERALL REPORT ANALYSIS", st))
     f.append(_sub("V. Results of the Agency Action Plan reported as of:", st))
-    f.append(Paragraph("N/A", st["body"]))
+    f.append(Paragraph(_esc(rep.get("action_plan_text") or "N/A"), st["body"]))
     f.append(_sub("VI. Continuous Agency Improvement Plan:", st))
-    f.append(Paragraph(_esc(_IMPROVEMENT), st["body"]))
+    f.append(Paragraph(_esc(rep.get("continuous_improvement_text") or _IMPROVEMENT), st["body"]))
     if rep.get("low_n"):
         f.append(_note_p(f"Note on sample size — this period reflects N = {rep['respondents']} "
                          "completed responses; results should be read with this base in mind.",
