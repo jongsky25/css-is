@@ -365,6 +365,12 @@ def _flatten_quotes(verbatims):
     return quotes
 
 
+# Public alias — docs/AI_INTEGRATION_PLAN.md Phase 4's AI re-analyze/summary
+# callers need the same flat (rid, item, text) quotes story_panel builds from,
+# without reaching into a name marked private.
+flatten_quotes = _flatten_quotes
+
+
 def _phrase_for_side(buckets_sorted, side):
     """A one-line headline for the appreciate / improve column."""
     if not buckets_sorted:

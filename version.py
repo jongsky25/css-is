@@ -17,10 +17,28 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.06"
+APP_VERSION = "2.07"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.07",
+        "date": "July 19, 2026",
+        "summary": "Activity reports can now use AI to double-check how comments are sorted "
+                   "(Appreciated / To improve / Mixed) and to write a quick 3-point summary — "
+                   "still off by default, and a person's own re-tag always wins over AI's.",
+        "changes": [
+            "A new \"Re-analyze with AI\" button on an activity's report re-checks how its "
+            "comments were sorted into Appreciated / To improve / Mixed, catching cases the "
+            "word-list missed — it never touches a comment a person has already re-tagged by "
+            "hand, and a human re-tag always wins if both ever disagree.",
+            "A new \"AI summary\" button writes a short 3-point takeaway from that same "
+            "activity's comments, grouped by topic the same way the page already groups them.",
+            "Both only ever see the comment text itself (masked the same way as elsewhere), "
+            "never who wrote it, and both are silently unavailable (with a plain notice, no "
+            "error) if AI is off, not configured, or the daily limit has been reached.",
+        ],
+    },
     {
         "version": "2.06",
         "date": "July 19, 2026",

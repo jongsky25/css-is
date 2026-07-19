@@ -2474,6 +2474,28 @@ def get_comment_overrides(conn, response_ids):
     return out
 
 
+def get_comment_overrides_with_actor(conn, response_ids):
+    """Same as get_comment_overrides but keeping `actor` alongside the tag ->
+    {(response_id, item_id): (tag, actor)}. Lets a caller tell a human re-tag
+    (actor != 'ai') apart from an earlier AI one or none at all — the
+    precedence an AI re-classify feature (docs/AI_INTEGRATION_PLAN.md Phase 4)
+    must respect: human > ai > lexicon, so it never overwrites a person's
+    correction."""
+    ids = [int(r) for r in response_ids]
+    if not ids:
+        return {}
+    out = {}
+    CHUNK = 900
+    for i in range(0, len(ids), CHUNK):
+        chunk = ids[i:i + CHUNK]
+        qmarks = ",".join("?" * len(chunk))
+        for rid, item_id, tag, actor in conn.execute(
+                f"SELECT response_id, item_id, tag, actor FROM comment_override "
+                f"WHERE response_id IN ({qmarks})", chunk):
+            out[(rid, item_id or "")] = (tag, actor)
+    return out
+
+
 # ---------------------------------------------------------------------
 # Admin accounts (RBAC). Passwords are hashed in auth.py; storage only keeps
 # the hash + salt. Roles: viewer / encoder / section_manager / admin.
