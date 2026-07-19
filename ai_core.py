@@ -64,6 +64,15 @@ FEATURE_DEFAULTS = {
 }
 FEATURES = tuple(FEATURE_DEFAULTS.keys())
 
+# Every feature defaults ENABLED ("1") once mode allows it, except the ones
+# listed here. "harmonize" (docs/AI_INTEGRATION_PLAN.md Phase 8) sends
+# resource_person names — professional-context personal data — to Google, so
+# it ships opt-in: an admin must flip it on at /admin/ai even after raising
+# the mode.
+FEATURE_ENABLED_DEFAULT = {
+    "harmonize": "0",
+}
+
 DAILY_CAP_DEFAULT = 150
 
 OUTCOMES = ("ok", "fallback_budget", "fallback_timeout", "fallback_error",
@@ -116,7 +125,8 @@ def mode_at_least(conn, floor):
 
 
 def feature_enabled(conn, feature):
-    return st.get_setting(conn, f"ai_feature_{feature}", "1") != "0"
+    default = FEATURE_ENABLED_DEFAULT.get(feature, "1")
+    return st.get_setting(conn, f"ai_feature_{feature}", default) != "0"
 
 
 # ---------------------------------------------------------------------

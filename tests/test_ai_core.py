@@ -151,6 +151,26 @@ def test_success_after_one_5xx_retry(monkeypatch):
     assert len(calls) == 2
 
 
+# ---- feature gates -------------------------------------------------------------
+
+def test_feature_enabled_defaults_on_except_harmonize(db_path):
+    """Every feature defaults enabled once mode/config allow it — except
+    "harmonize" (docs/AI_INTEGRATION_PLAN.md Phase 8), which sends directory
+    names to Google and so ships opt-in even with no setting written yet."""
+    conn = st.connect(db_path); st.init_db(conn); _reset_ai(conn)
+    try:
+        assert ai.feature_enabled(conn, "harmonize") is False
+        for f in ai.FEATURES:
+            if f != "harmonize":
+                assert ai.feature_enabled(conn, f) is True
+        st.set_setting(conn, "ai_feature_harmonize", "1")
+        assert ai.feature_enabled(conn, "harmonize") is True
+        st.set_setting(conn, "ai_feature_harmonize", "0")
+        assert ai.feature_enabled(conn, "harmonize") is False
+    finally:
+        _reset_ai(conn); conn.close()
+
+
 # ---- budget -------------------------------------------------------------------
 
 def test_budget_cap_one_blocks_second_call_counter_intact(db_path):

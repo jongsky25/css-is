@@ -62,6 +62,18 @@ def test_admin_ai_shows_not_configured_when_no_key(admin, db_path, monkeypatch):
     assert "not configured" in body
 
 
+def test_admin_ai_harmonize_checkbox_defaults_unchecked(admin, db_path):
+    """docs/AI_INTEGRATION_PLAN.md Phase 8: harmonize is the one feature that
+    must render unchecked with no setting saved yet, unlike every other
+    feature's checkbox (which defaults checked)."""
+    conn = st.connect(db_path); st.init_db(conn); _reset(conn); conn.close()
+    body = admin.get("/admin/ai").text
+    harmonize_row = body[body.index('name="ai_feature_harmonize"'):]
+    assert "checked" not in harmonize_row.split(">", 1)[0]
+    verbatim_row = body[body.index('name="ai_feature_verbatim"'):]
+    assert "checked" in verbatim_row.split(">", 1)[0]
+
+
 # ---- settings: save, clamp, invalid mode, audit ------------------------------
 
 def test_admin_ai_settings_save_and_clamp(admin, db_path):

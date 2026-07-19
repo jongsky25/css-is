@@ -150,10 +150,12 @@
         <tbody>
           {% for f in features %}
           <tr>
-            <td>{{ f }}</td>
+            <td>{{ f }}
+              {% if f == 'harmonize' %}<div class="hint" style="margin:0;">sends directory names to Google — off by default</div>{% endif %}
+            </td>
             <td>
               <input type="checkbox" name="ai_feature_{{ f }}"
-                     {{ 'checked' if settings.get('ai_feature_' ~ f, '1') != '0' }}>
+                     {{ 'checked' if settings.get('ai_feature_' ~ f, feature_enabled_defaults[f]) != '0' }}>
             </td>
             <td>
               <input type="number" name="ai_cap_{{ f }}" min="0" max="1000"
