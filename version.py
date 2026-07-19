@@ -17,10 +17,28 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.13"
+APP_VERSION = "2.14"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.14",
+        "date": "July 19, 2026",
+        "summary": "Fixed the AI features not working at all: the system was asking "
+                   "Google for an AI model that has been retired, so every request was "
+                   "being turned away. It now uses the current model.",
+        "changes": [
+            "Every AI feature (the Start page assistant, AI drafts, suggestions and "
+            "the rest) was failing quietly because the AI model the system asked "
+            "Google for is no longer offered on the free plan — Google was refusing "
+            "every single request. The system now asks for the current model, so the "
+            "AI features work again.",
+            "When Google turns a request away like this in the future, the AI log at "
+            "Admin → AI now records Google's own explanation of why, instead of a "
+            "generic \"rate limited\" note — so this kind of problem can be spotted "
+            "and named immediately next time.",
+        ],
+    },
     {
         "version": "2.13",
         "date": "July 19, 2026",
