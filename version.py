@@ -17,10 +17,30 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.05"
+APP_VERSION = "2.06"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.06",
+        "date": "July 19, 2026",
+        "summary": "The UX Insights page can now run its AI analysis right there with an "
+                   "\"Analyze now\" button, instead of only downloading a file to paste "
+                   "elsewhere — still admin-only, and the download link still works if "
+                   "AI is off or unavailable.",
+        "changes": [
+            "A new \"Analyze now\" button on Admin → UX Insights sends the same "
+            "telemetry handoff to the in-app assistant and shows the ranked "
+            "interface-improvement analysis directly on the page, with the same "
+            "👍/👎 feedback used elsewhere.",
+            "Nothing new leaves the server: it's the exact same masked, pseudonymized "
+            "handoff file the download link already builds — no names, ids, or typed "
+            "content.",
+            "If AI is off, not configured, or the daily limit has been reached, the "
+            "button says so and the existing download-and-paste flow keeps working "
+            "exactly as before.",
+        ],
+    },
     {
         "version": "2.05",
         "date": "July 19, 2026",

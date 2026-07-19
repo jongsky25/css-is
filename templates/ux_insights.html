@@ -40,6 +40,16 @@
   .empty { color:var(--grey); font-size:.9rem; }
   .retform { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
   .retform input[type=number] { width:5rem; }
+  .analyze-status { color:var(--soft); font-size:.86rem; margin:.5rem 0 0; }
+  .analyze-result { white-space:pre-wrap; font-size:.9rem; line-height:1.5;
+                    background:var(--bg,transparent); border:1px solid var(--line);
+                    border-radius:10px; padding:.9rem 1rem; margin-top:.8rem; }
+  .analyze-actions { display:flex; align-items:center; gap:.6rem; margin-top:.7rem; }
+  .analyze-fb { margin-left:auto; display:flex; gap:.3rem; }
+  .fb-btn { font-size:1.1rem; line-height:1; background:none; border:1px solid var(--line);
+            border-radius:8px; padding:.15rem .5rem; cursor:pointer; }
+  .fb-btn:hover:not(:disabled) { background:var(--accent-bg,var(--blue-bg)); }
+  .fb-btn.fb-sent { opacity:.55; }
 </style>
 {% endblock %}
 
@@ -66,6 +76,16 @@
     recommendations. Everything in it is masked and pseudonymized; no names, ids
     or typed content leave the system.
   </p>
+
+  <div class="acard" id="analyzeCard">
+    <h2>Analyze now</h2>
+    <p class="hint">Runs the same handoff through the in-app AI assistant and shows the analysis right here — off unless an admin has turned AI on at <a href="/admin/ai">/admin/ai</a>. If AI is off, unconfigured, or unavailable, use the download link above instead.</p>
+    <div class="analyze-actions">
+      <button class="btn" type="button" id="analyzeBtn" data-days="{{ days }}">Analyze now</button>
+      <span class="analyze-status" id="analyzeStatus" hidden>Analyzing…</span>
+    </div>
+    <div id="analyzeResult"></div>
+  </div>
 
   <div class="totals">
     <span>Sessions <b>{{ digest.totals.sessions }}</b></span>
@@ -166,4 +186,6 @@
     </form>
   </div>
 </div>
+
+<script src="/static/js/ux_insights.js?v=20260719a" defer></script>
 {% endblock %}
