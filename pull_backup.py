@@ -149,6 +149,8 @@ _CHECK_TABLES = [
     ("item_remark", "written comments", None),
     ("audit_log", "audit-log entries", "ts"),
     ("app_setting", "settings", None),
+    ("ai_interaction", "AI interactions", "created_at"),
+    ("ai_budget", "AI daily budget", None),
 ]
 
 

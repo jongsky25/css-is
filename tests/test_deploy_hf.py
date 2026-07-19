@@ -45,3 +45,10 @@ def test_build_info_written_before_missing_files_check():
         "write_build_info() must run BEFORE the missing-files check — "
         "otherwise build_info.json (in ALLOW) is reported missing and every "
         "deploy aborts (this exact regression happened once already)")
+
+
+def test_ai_core_is_in_runtime_py():
+    """ai_core.py must ship to the Space, or ai_mode can never leave 'off'
+    there (docs/AI_INTEGRATION_PLAN.md Phase 0 — 'every new .py module must
+    be added to RUNTIME_PY or the Space silently runs without it')."""
+    assert "ai_core.py" in deploy_hf.RUNTIME_PY
