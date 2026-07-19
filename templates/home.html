@@ -9,6 +9,11 @@
   .hsub { color:var(--soft); margin:.1rem 0 1.1rem; }
   .rolechip { font-size:.72rem; font-weight:700; padding:.2rem .7rem; border-radius:999px;
               background:var(--accent-bg); color:var(--accent); border:1px solid var(--blue-ln); white-space:nowrap; }
+  .hhead-actions { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+  .try-assistant { font-size:.82rem; font-weight:600; color:var(--accent); text-decoration:none;
+                    padding:.3rem .8rem; border-radius:999px; border:1px solid var(--blue-ln);
+                    background:var(--surface-2); white-space:nowrap; }
+  .try-assistant:hover { background:var(--accent-bg); }
 
   .stats { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:.7rem; margin-bottom:1.4rem; }
   .stat { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:.8rem 1rem; }
@@ -145,7 +150,10 @@
       <h1>What would you like to do{% if first_name %}, {{ first_name }}{% endif %}?</h1>
       <p class="hsub">{{ blhsd_name or 'Bureau of Local Health Systems Development' }} · client satisfaction information system</p>
     </div>
-    {% if u %}<span class="rolechip">{{ ROLE_LABELS.get(u.role, u.role) }}</span>{% endif %}
+    <div class="hhead-actions">
+      <a class="try-assistant" href="/start">✨ Try the assistant</a>
+      {% if u %}<span class="rolechip">{{ ROLE_LABELS.get(u.role, u.role) }}</span>{% endif %}
+    </div>
   </div>
 
   <!-- search-to-jump: type intent, click the link (no menu drilling) -->
