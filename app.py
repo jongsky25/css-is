@@ -2920,6 +2920,7 @@ def admin_ai(request: Request, feature: str = "", outcome: str = "", thumbs: str
     conn = get_conn()
     try:
         mode = ai.ai_mode(conn)
+        available = ai.ai_available(conn)
         settings = st.get_settings(conn, AI_SETTING_KEYS)
         day = _today_local().isoformat()
         usage = dict(conn.execute(
@@ -2930,7 +2931,7 @@ def admin_ai(request: Request, feature: str = "", outcome: str = "", thumbs: str
     finally:
         conn.close()
     return templates.TemplateResponse(request, "admin_ai.html", {
-        "configured": ai.ai_configured(), "ai_available": ai.ai_available(conn),
+        "configured": ai.ai_configured(), "ai_available": available,
         "model": ai.ai_model(), "mode": mode,
         "modes": ai.AI_MODES, "features": ai.FEATURES, "feature_defaults": ai.FEATURE_DEFAULTS,
         "feature_enabled_defaults": {f: ai.FEATURE_ENABLED_DEFAULT.get(f, "1") for f in ai.FEATURES},

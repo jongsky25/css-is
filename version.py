@@ -17,10 +17,27 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.20"
+APP_VERSION = "2.21"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.21",
+        "date": "July 19, 2026",
+        "summary": "Fixed Admin → AI crashing with a server error right after the previous "
+                   "release, on any server where the main AI (Google) has no access key set "
+                   "up but the backup AI (Groq) does.",
+        "changes": [
+            "The previous release's new \"is any AI available\" check was written to run "
+            "after the page had already finished reading from the database, and only hit "
+            "that mistake in the one specific setup this app happens to be running in — "
+            "main AI unset, backup AI set up — which is exactly why it slipped through "
+            "testing and only showed up on the live server. Admin → AI opens normally "
+            "again in every setup.",
+            "No other page or feature was affected — this was isolated to the Admin → AI "
+            "page itself.",
+        ],
+    },
     {
         "version": "2.20",
         "date": "July 19, 2026",
