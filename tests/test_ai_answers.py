@@ -38,6 +38,7 @@ def _no_real_network(monkeypatch):
 def _reset(conn):
     conn.execute("DELETE FROM ai_interaction")
     conn.execute("DELETE FROM ai_budget")
+    conn.execute("DELETE FROM learned_rule")  # seeded FAQ rules would preempt the model path
     conn.execute("DELETE FROM app_setting WHERE key LIKE 'ai_%'")
     conn.commit()
 

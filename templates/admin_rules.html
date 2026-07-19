@@ -1,0 +1,207 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash, empty_state %}
+{% block title %}Learned rules{% endblock %}
+{% block content %}
+<style>
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1.1rem 1.3rem;
+           margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .panel h2 { margin:0 0 .2rem; font-size:1.05rem; }
+  .panel .sub { color:var(--soft); font-size:.85rem; margin:0 0 .9rem; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; padding:.5rem .5rem; border-bottom:1px solid var(--line); font-size:.88rem; vertical-align:top; }
+  th { font-size:.68rem; text-transform:uppercase; letter-spacing:.03em; color:var(--soft); }
+  .q { font-weight:600; color:var(--ink); }
+  .kw { color:var(--grey); font-size:.75rem; margin-top:.15rem; }
+  .tgt { font-family:ui-monospace,monospace; font-size:.78rem; }
+  .pill { font-size:.66rem; font-weight:700; padding:.12rem .5rem; border-radius:999px;
+          border:1px solid var(--line); background:var(--bg); white-space:nowrap; }
+  .pill.k-navigate { color:var(--accent); border-color:var(--line); background:var(--accent-bg); }
+  .pill.k-answer  { color:var(--green); border-color:var(--green-ln); background:var(--green-bg); }
+  .pill.k-help    { color:var(--amber); border-color:var(--amber-ln); background:var(--amber-bg); }
+  .pill.src-seed { color:var(--soft); } .pill.src-promoted { color:var(--accent); } .pill.src-manual { color:var(--ink-soft); }
+  .pill.off { color:var(--red); border-color:var(--red-ln); background:var(--red-bg); }
+  .hits { font-weight:800; } .muted { color:var(--soft); }
+  .btn { padding:.3rem .6rem; border-radius:8px; border:1px solid var(--accent); background:var(--accent);
+         color:var(--on-accent); font-weight:600; cursor:pointer; font-size:.8rem; text-decoration:none; display:inline-block; }
+  .btn.ghost { background:var(--surface); color:var(--soft); border-color:var(--line); }
+  .btn.danger { border-color:var(--red-ln); color:var(--red); background:var(--red-bg); }
+  .rowacts { display:flex; gap:.35rem; flex-wrap:wrap; align-items:center; }
+  .rowacts form { display:inline; }
+  .stat-strip { display:flex; gap:1.4rem; flex-wrap:wrap; margin:.2rem 0 .3rem; }
+  .stat-strip .n { font-size:1.4rem; font-weight:800; color:var(--ink); }
+  .stat-strip .l { font-size:.72rem; text-transform:uppercase; letter-spacing:.03em; color:var(--soft); }
+  .addgrid { display:grid; grid-template-columns:1fr 1fr; gap:.6rem 1rem; align-items:end; }
+  .addgrid label { display:block; font-size:.72rem; text-transform:uppercase; letter-spacing:.03em;
+                   color:var(--soft); margin-bottom:.25rem; }
+  .addgrid input, .addgrid select { width:100%; padding:.4rem .5rem; border:1px solid var(--line);
+                   border-radius:8px; font-size:.88rem; background:var(--bg); color:var(--ink); }
+  .addgrid .full { grid-column:1 / -1; }
+  .flash.ok { background:var(--green-bg); border:1px solid var(--green-ln); color:var(--green); }
+  .flash.err { background:var(--red-bg); border:1px solid var(--red-ln); color:var(--red); }
+  .flash { border-radius:10px; padding:.55rem .8rem; font-size:.9rem; margin-bottom:.9rem; }
+  .toggle-line { display:flex; align-items:center; gap:.6rem; justify-content:space-between; flex-wrap:wrap; }
+  @media (max-width:640px){ .addgrid { grid-template-columns:1fr; } }
+</style>
+
+{{ page_header("Learned rules",
+   "Frequently-asked questions answered by the AI search bar <strong>without calling the model</strong> — saving daily AI budget and still working when AI is off. A rule maps a question to a page, a stat answer, or a help section; the answer is rendered the same way the model path renders it.") }}
+{{ flash(msg=msg, err=err) }}
+
+<div class="panel">
+  <div class="toggle-line">
+    <div>
+      <h2 style="margin:0">FAQ layer is {{ "ON" if rules_enabled else "OFF" }}</h2>
+      <p class="sub" style="margin:.2rem 0 0">When ON, a matching rule answers before the model is called. When OFF, every query goes straight to the model.</p>
+    </div>
+    <form method="post" action="/admin/rules/toggle">
+      <input type="hidden" name="ai_rules_enabled" value="{{ '0' if rules_enabled else '1' }}">
+      <button class="btn {{ 'danger' if rules_enabled else '' }}" type="submit">
+        {{ "Turn OFF" if rules_enabled else "Turn ON" }}</button>
+    </form>
+  </div>
+  <div class="stat-strip" style="margin-top:.9rem">
+    <div><div class="n">{{ rules|length }}</div><div class="l">Rules</div></div>
+    <div><div class="n">{{ rules|selectattr('enabled')|list|length }}</div><div class="l">Enabled</div></div>
+    <div><div class="n">{{ total_hits }}</div><div class="l">Answered without AI</div></div>
+    <div><div class="n">{{ candidates|length }}</div><div class="l">Candidate questions</div></div>
+  </div>
+</div>
+
+{# ── Candidate questions mined from the interaction log ─────────────────── #}
+<div class="panel">
+  <h2>Candidate questions</h2>
+  <p class="sub">Questions users actually asked (answered by the model), most-asked first. Promote one to a rule so the next time it's asked for free. Navigate candidates can be promoted in one click; for answer/help, pick the target.</p>
+  {% if candidates %}
+  <table>
+    <thead><tr><th>Question</th><th>Asked</th><th>Resolved as</th><th>Avg conf.</th><th></th></tr></thead>
+    <tbody>
+      {% for c in candidates %}
+      <tr>
+        <td class="q">{{ c.question }}</td>
+        <td class="hits">{{ c.count }}×</td>
+        <td>
+          {% if c.feature == 'nl_answer' %}<span class="pill k-answer">answer</span>
+          {% elif c.feature == 'nl_help' %}<span class="pill k-help">help</span>
+          {% else %}<span class="pill k-navigate">navigate</span>{% endif %}
+          {% if c.destination %}<span class="tgt">→ {{ c.destination }}</span>{% endif %}
+        </td>
+        <td class="muted">{{ "%.0f%%"|format(c.avg_confidence*100) if c.avg_confidence is not none else "—" }}</td>
+        <td class="rowacts">
+          {% if c.feature != 'nl_answer' and c.feature != 'nl_help' and c.destination %}
+          <form method="post" action="/admin/rules/create">
+            <input type="hidden" name="pattern" value="{{ c.question }}">
+            <input type="hidden" name="sample_query" value="{{ c.question }}">
+            <input type="hidden" name="kind" value="navigate">
+            <input type="hidden" name="target_key" value="{{ c.destination }}">
+            <input type="hidden" name="source" value="promoted">
+            <button class="btn" type="submit">Promote → {{ c.destination }}</button>
+          </form>
+          {% else %}
+          <button class="btn ghost" type="button"
+                  onclick="useCandidate('{{ c.question|replace("'", "\\'") }}', '{{ 'answer' if c.feature=='nl_answer' else 'help' if c.feature=='nl_help' else 'navigate' }}')">Use…</button>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  {{ empty_state("No candidates yet", "Once people use the AI search bar, their questions show up here to promote into rules.") }}
+  {% endif %}
+</div>
+
+{# ── Add a rule by hand ─────────────────────────────────────────────────── #}
+<div class="panel">
+  <h2>Add a rule</h2>
+  <p class="sub">Author a rule directly — e.g. seed the questions you already know people will ask.</p>
+  <form method="post" action="/admin/rules/create" id="addForm">
+    <input type="hidden" name="source" value="manual">
+    <div class="addgrid">
+      <div class="full">
+        <label for="a-pattern">Question</label>
+        <input id="a-pattern" name="pattern" required placeholder="how many responses this month">
+      </div>
+      <div>
+        <label for="a-kind">Kind</label>
+        <select id="a-kind" name="kind" onchange="syncTargets()">
+          {% for k in kinds %}<option value="{{ k }}">{{ k }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="a-target">Target</label>
+        <select id="a-target" name="target_key"></select>
+      </div>
+      <div class="full">
+        <label for="a-keywords">Alternate phrasings / keywords <span class="muted">(optional, space-separated — widens matching)</span></label>
+        <input id="a-keywords" name="keywords" placeholder="responses received submissions recently">
+      </div>
+    </div>
+    <div style="margin-top:.8rem"><button class="btn" type="submit">Add rule</button></div>
+  </form>
+</div>
+
+{# ── Live rules ─────────────────────────────────────────────────────────── #}
+<div class="panel">
+  <h2>Rules</h2>
+  {% if rules %}
+  <table>
+    <thead><tr><th>Question</th><th>Target</th><th>Source</th><th>Hits</th><th>State</th><th></th></tr></thead>
+    <tbody>
+      {% for r in rules %}
+      <tr>
+        <td>
+          <div class="q">{{ r.pattern }}</div>
+          {% if r.keywords %}<div class="kw">kw: {{ r.keywords }}</div>{% endif %}
+        </td>
+        <td>
+          <span class="pill k-{{ r.kind }}">{{ r.kind }}</span>
+          <div class="tgt">{{ r.target_key }}</div>
+        </td>
+        <td><span class="pill src-{{ r.source }}">{{ r.source }}</span></td>
+        <td class="hits">{{ r.hits }}{% if r.last_hit_at %}<div class="kw">last {{ r.last_hit_at[:10] }}</div>{% endif %}</td>
+        <td>{% if r.enabled %}<span class="pill k-answer">on</span>{% else %}<span class="pill off">off</span>{% endif %}</td>
+        <td class="rowacts">
+          <form method="post" action="/admin/rules/{{ r.id }}">
+            <input type="hidden" name="action" value="toggle">
+            <button class="btn ghost" type="submit">{{ "Disable" if r.enabled else "Enable" }}</button>
+          </form>
+          <form method="post" action="/admin/rules/{{ r.id }}"
+                onsubmit="return confirm('Delete this rule?')">
+            <input type="hidden" name="action" value="delete">
+            <button class="btn danger" type="submit">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  {{ empty_state("No rules yet", "Add one above, or promote a candidate question.") }}
+  {% endif %}
+</div>
+
+<script>
+  // Target options per kind, cap-filtered server-side for this admin — the same
+  // catalog _ai_try_rules validates against, so the form can only offer targets
+  // that will actually serve.
+  var RULE_TARGETS = {{ targets|tojson }};
+  function syncTargets() {
+    var kind = document.getElementById("a-kind").value;
+    var sel = document.getElementById("a-target");
+    sel.innerHTML = "";
+    (RULE_TARGETS[kind] || []).forEach(function (pair) {
+      var o = document.createElement("option");
+      o.value = pair[0]; o.textContent = pair[1] + " (" + pair[0] + ")";
+      sel.appendChild(o);
+    });
+  }
+  function useCandidate(question, kind) {
+    document.getElementById("a-pattern").value = question;
+    document.getElementById("a-kind").value = kind;
+    syncTargets();
+    document.getElementById("addForm").scrollIntoView({ behavior: "smooth", block: "center" });
+    document.getElementById("a-target").focus();
+  }
+  syncTargets();
+</script>
+{% endblock %}

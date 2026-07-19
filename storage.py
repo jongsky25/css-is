@@ -621,6 +621,43 @@ def _add_missing_columns(conn):
         # docs/AI_FALLBACK_PLAN.md — which provider actually answered (NULL on
         # every pre-existing row, treated as "gemini" when displayed).
         conn.execute("ALTER TABLE ai_interaction ADD COLUMN provider TEXT")
+    if "question_norm" not in ai_cols:
+        # The clean, normalized user question (qa_rules.normalize) — captured
+        # so the learned-rules layer can mine frequently-asked questions
+        # without parsing them back out of the masked router-prompt blob.
+        # NULL on every pre-existing row and whenever prompt logging is off.
+        conn.execute("ALTER TABLE ai_interaction ADD COLUMN question_norm TEXT")
+        conn.execute("CREATE INDEX IF NOT EXISTS ai_interaction_question_idx "
+                     "ON ai_interaction(question_norm)")
+
+    # learned_rule — the deterministic FAQ layer in front of the NL router
+    # (qa_rules.py, app.py's _ai_try_rules). One row per learned/seeded/
+    # hand-authored question->target mapping: a rule stores only a `kind`
+    # (navigate|answer|help) + `target_key`, never a URL or prose, so serving
+    # it reuses the router's own cap-filtered catalog and can never surface a
+    # screen/answer the user isn't allowed to see. `pattern` is the normalized
+    # question (qa_rules.normalize); `keywords` optionally widens matching.
+    # `source` is 'seed' | 'promoted' | 'manual'; `hits`/`last_hit_at` track
+    # how much AI spend each rule has saved.
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS learned_rule (
+               id           INTEGER PRIMARY KEY,
+               pattern      TEXT NOT NULL,
+               keywords     TEXT,
+               sample_query TEXT,
+               kind         TEXT NOT NULL,
+               target_key   TEXT NOT NULL,
+               enabled      INTEGER NOT NULL DEFAULT 1,
+               source       TEXT NOT NULL DEFAULT 'manual',
+               hits         INTEGER NOT NULL DEFAULT 0,
+               last_hit_at  TEXT,
+               notes        TEXT,
+               created_by   TEXT,
+               created_at   TEXT NOT NULL,
+               updated_at   TEXT NOT NULL
+           )""")
+    conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS learned_rule_uq "
+                 "ON learned_rule(kind, target_key, pattern)")
 
     # The Office of the Director heads the whole bureau — it is NOT one of the
     # administrative sections that sit beside the divisions. Promote it to its own
@@ -2120,15 +2157,17 @@ def purge_stale_ui_events(conn, cutoff_iso):
 def create_ai_interaction(conn, *, user_id=None, role=None, feature, mode, model=None,
                           prompt_masked=None, response_masked=None, outcome,
                           destination=None, confidence=None, latency_ms=None,
-                          tokens_in=None, tokens_out=None, error=None, provider=None):
+                          tokens_in=None, tokens_out=None, error=None, provider=None,
+                          question_norm=None):
     ts = tz.now_iso()
     cur = conn.execute(
         """INSERT INTO ai_interaction(created_at, user_id, role, feature, mode, model,
                prompt_masked, response_masked, outcome, destination, confidence,
-               latency_ms, tokens_in, tokens_out, error, provider)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+               latency_ms, tokens_in, tokens_out, error, provider, question_norm)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (ts, user_id, role, feature, mode, model, prompt_masked, response_masked,
-         outcome, destination, confidence, latency_ms, tokens_in, tokens_out, error, provider))
+         outcome, destination, confidence, latency_ms, tokens_in, tokens_out, error,
+         provider, question_norm))
     conn.commit()
     return cur.lastrowid
 
@@ -2178,7 +2217,7 @@ def _ai_interaction_row(r):
             "destination": r[10], "confidence": r[11], "latency_ms": r[12],
             "tokens_in": r[13], "tokens_out": r[14], "error": r[15],
             "rating": r[16], "rating_comment": r[17], "rated_at": r[18],
-            "provider": r[19] or "gemini"}
+            "provider": r[19] or "gemini", "question_norm": r[20]}
 
 
 def list_ai_interactions(conn, feature=None, outcome=None, rating=None, since=None, limit=200):
@@ -2186,7 +2225,8 @@ def list_ai_interactions(conn, feature=None, outcome=None, rating=None, since=No
     surface on /admin/ai. Any of feature/outcome/rating/since narrows it."""
     sql = ("SELECT id, created_at, user_id, role, feature, mode, model, prompt_masked, "
            "response_masked, outcome, destination, confidence, latency_ms, tokens_in, "
-           "tokens_out, error, rating, rating_comment, rated_at, provider FROM ai_interaction")
+           "tokens_out, error, rating, rating_comment, rated_at, provider, question_norm "
+           "FROM ai_interaction")
     where, params = [], []
     if feature:
         where.append("feature=?"); params.append(feature)
@@ -2219,6 +2259,156 @@ def purge_stale_ai_budget(conn, cutoff_day):
     cur = conn.execute("DELETE FROM ai_budget WHERE day < ?", (cutoff_day,))
     conn.commit()
     return cur.rowcount
+
+
+# ---------------------------------------------------------------------
+# Learned rules — the deterministic FAQ layer in front of the NL router
+# (qa_rules.py + app.py's _ai_try_rules). A rule maps a normalized question to
+# a {kind, target_key} the router already knows how to render server-side, so a
+# hit answers with zero AI spend. See the learned_rule table in
+# _add_missing_columns above.
+# ---------------------------------------------------------------------
+
+_LEARNED_RULE_COLS = ("SELECT id, pattern, keywords, sample_query, kind, target_key, "
+                      "enabled, source, hits, last_hit_at, notes, created_by, "
+                      "created_at, updated_at FROM learned_rule")
+
+
+def _learned_rule_row(r):
+    return {"id": r[0], "pattern": r[1], "keywords": r[2], "sample_query": r[3],
+            "kind": r[4], "target_key": r[5], "enabled": bool(r[6]), "source": r[7],
+            "hits": r[8], "last_hit_at": r[9], "notes": r[10], "created_by": r[11],
+            "created_at": r[12], "updated_at": r[13]}
+
+
+def create_learned_rule(conn, *, pattern, kind, target_key, keywords=None,
+                        sample_query=None, source="manual", enabled=True,
+                        notes=None, created_by=None):
+    """Add one FAQ rule. `pattern` should already be normalized
+    (qa_rules.normalize). Idempotent on (kind, target_key, pattern): a repeat
+    insert (e.g. re-seeding on startup) is ignored and returns the existing id
+    rather than raising on the unique index. Returns the rule id, or None if
+    the row existed and couldn't be re-read."""
+    now = tz.now_iso()
+    conn.execute(
+        """INSERT OR IGNORE INTO learned_rule(pattern, keywords, sample_query, kind,
+               target_key, enabled, source, hits, notes, created_by, created_at, updated_at)
+           VALUES (?,?,?,?,?,?,?,0,?,?,?,?)""",
+        (pattern, (keywords or "").strip() or None, sample_query, kind, target_key,
+         1 if enabled else 0, source, (notes or "").strip() or None, created_by, now, now))
+    conn.commit()
+    row = conn.execute("SELECT id FROM learned_rule WHERE kind=? AND target_key=? AND pattern=?",
+                       (kind, target_key, pattern)).fetchone()
+    return row[0] if row else None
+
+
+def list_learned_rules(conn, enabled=None):
+    """All rules, most-hit first then newest — the admin board order. `enabled`
+    (True/False) narrows to just the live or just the paused ones; the route's
+    matcher passes enabled=True so a paused rule never serves."""
+    sql = _LEARNED_RULE_COLS
+    params = []
+    if enabled is not None:
+        sql += " WHERE enabled=?"
+        params.append(1 if enabled else 0)
+    sql += " ORDER BY hits DESC, id DESC"
+    return [_learned_rule_row(r) for r in conn.execute(sql, params).fetchall()]
+
+
+def get_learned_rule(conn, rid):
+    r = conn.execute(_LEARNED_RULE_COLS + " WHERE id=?", (rid,)).fetchone()
+    return _learned_rule_row(r) if r else None
+
+
+def update_learned_rule(conn, rid, *, pattern=None, keywords=None, kind=None,
+                        target_key=None, enabled=None, notes=None):
+    """Edit one rule in place (any subset of fields) and stamp updated_at. Only
+    provided fields change — mirrors the COALESCE-by-arg style used elsewhere.
+    Returns True if a row was updated."""
+    sets, params = [], []
+    if pattern is not None:
+        sets.append("pattern=?"); params.append(pattern)
+    if keywords is not None:
+        sets.append("keywords=?"); params.append((keywords or "").strip() or None)
+    if kind is not None:
+        sets.append("kind=?"); params.append(kind)
+    if target_key is not None:
+        sets.append("target_key=?"); params.append(target_key)
+    if enabled is not None:
+        sets.append("enabled=?"); params.append(1 if enabled else 0)
+    if notes is not None:
+        sets.append("notes=?"); params.append((notes or "").strip() or None)
+    if not sets:
+        return False
+    sets.append("updated_at=?"); params.append(tz.now_iso())
+    params.append(rid)
+    cur = conn.execute("UPDATE learned_rule SET " + ", ".join(sets) + " WHERE id=?", params)
+    conn.commit()
+    return cur.rowcount > 0
+
+
+def delete_learned_rule(conn, rid):
+    cur = conn.execute("DELETE FROM learned_rule WHERE id=?", (rid,))
+    conn.commit()
+    return cur.rowcount > 0
+
+
+def bump_learned_rule_hit(conn, rid):
+    """Record that a rule just answered a question (its whole point: one more
+    question served without an AI call). Increments hits + stamps last_hit_at."""
+    conn.execute("UPDATE learned_rule SET hits=hits+1, last_hit_at=? WHERE id=?",
+                 (tz.now_iso(), rid))
+    conn.commit()
+
+
+def top_questions(conn, since=None, limit=50):
+    """Candidate feed for the /admin/rules 'promote' panel: model-answered
+    questions grouped by their normalized text, most-asked first. Only rows the
+    model actually resolved (outcome='ok', a real destination/feature) and that
+    the rules layer did NOT already serve (provider != 'rules') — those are the
+    questions worth turning into a zero-cost rule. Each group carries its
+    dominant destination + feature + a rough confidence/rating read so an admin
+    can promote with the right target pre-filled. Excludes questions that
+    already have a matching rule pattern."""
+    where = ["question_norm IS NOT NULL", "question_norm != ''",
+             "outcome = 'ok'", "(provider IS NULL OR provider != 'rules')"]
+    params = []
+    if since:
+        where.append("created_at >= ?"); params.append(since)
+    # One flat fetch, then aggregate in Python — cheaper to reason about than a
+    # window-function query and portable across SQLite versions.
+    rows = conn.execute(
+        "SELECT question_norm, confidence, rating, destination, feature "
+        "FROM ai_interaction WHERE " + " AND ".join(where) +
+        " ORDER BY id DESC", params).fetchall()
+    agg = {}
+    for qn, conf, rating, dest, feat in rows:
+        g = agg.get(qn)
+        if g is None:
+            g = agg[qn] = {"question": qn, "count": 0, "conf_sum": 0.0, "conf_n": 0,
+                           "net_rating": 0, "dests": {}, "feats": {}}
+        g["count"] += 1
+        if conf is not None:
+            g["conf_sum"] += conf; g["conf_n"] += 1
+        if rating:
+            g["net_rating"] += rating
+        if dest:
+            g["dests"][dest] = g["dests"].get(dest, 0) + 1
+        if feat:
+            g["feats"][feat] = g["feats"].get(feat, 0) + 1
+    out = []
+    have = {r[0] for r in conn.execute("SELECT pattern FROM learned_rule")}
+    for qn, g in agg.items():
+        if qn in have:
+            continue                                   # already a rule — not a candidate
+        dest = max(g["dests"], key=g["dests"].get) if g["dests"] else None
+        feat = max(g["feats"], key=g["feats"].get) if g["feats"] else None
+        out.append({
+            "question": qn, "count": g["count"],
+            "avg_confidence": (g["conf_sum"] / g["conf_n"]) if g["conf_n"] else None,
+            "net_rating": g["net_rating"], "destination": dest, "feature": feat})
+    out.sort(key=lambda x: (-x["count"], x["question"]))
+    return out[:limit]
 
 
 # ---------------------------------------------------------------------

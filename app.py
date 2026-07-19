@@ -79,6 +79,7 @@ import ui_telemetry as ui_tel
 import ux_handoff as uxh
 import retention as ret
 import ai_core as ai
+import qa_rules
 
 # The database file. Override with CSS_DB for a throwaway/demo instance so the
 # delivered css_is.db is never touched (mirrors CSS_BASE_URL / CSS_SMTP_*).
@@ -552,6 +553,11 @@ NAV_GROUPS = [
          "kw": "ai gemini assistant budget model llm nl router answers cap quota interaction "
                "log feedback test connection",
          "cap": "manage_users"},
+        {"key": "rules", "url": "/admin/rules", "label": "Learned rules",
+         "hint": "FAQ rules that answer without AI",
+         "kw": "learned rules faq frequently asked questions ai search bar non-ai deterministic "
+               "answers save credits budget promote candidate question mining teach",
+         "cap": "manage_users"},
         {"key": "ops", "url": "/ops", "label": "Ops",
          "hint": "Health & performance",
          "kw": "ops operations health performance metrics monitoring status uptime", "cap": "manage_users"},
@@ -905,6 +911,63 @@ templates.env.filters["audit_label"] = st.audit_label
 templates.env.filters["audit_category"] = st.audit_category
 
 
+# Pre-seeded learned rules (qa_rules.py / _ai_try_rules): the questions we
+# already know people will ask, mapped to the same target keys the NL router
+# resolves to — so a fresh install answers common FAQs with no model call from
+# day one. Each entry is (kind, target_key, canonical_question, [alt phrasings]).
+# The canonical question becomes the exact-match `pattern`; every alternate
+# phrasing folds into `keywords` so near-matches clear qa_rules.MATCH_THRESHOLD.
+# Only read-only kinds (navigate/answer/help) — actions stay model-only. Keys
+# must exist in ai_route_catalog / AI_ANSWER_SLOTS / tours.TOURS or the rule
+# harmlessly falls through at serve time.
+SEED_LEARNED_RULES = [
+    # ── Answers (templated stats over home_stats) ──────────────────────────
+    ("answer", "responses_30d", "how many responses this month",
+     ["responses last 30 days", "how many submissions recently", "responses received this month"]),
+    ("answer", "responses_ytd", "how many responses this year",
+     ["responses year to date", "responses so far this year"]),
+    ("answer", "responses_all", "how many responses in total",
+     ["total responses all time", "how many submissions overall"]),
+    ("answer", "satisfaction_30d", "what is our satisfaction this month",
+     ["satisfaction last 30 days", "satisfaction score recently"]),
+    ("answer", "satisfaction_all", "what is our overall satisfaction",
+     ["overall satisfaction all time", "satisfaction score overall"]),
+    ("answer", "activities_30d", "how many activities this month",
+     ["activities that collected feedback recently", "activities last 30 days"]),
+    ("answer", "activities_all", "how many activities in total",
+     ["total activities all time", "activities overall"]),
+    ("answer", "people_rated_30d", "how many people were rated this month",
+     ["staff rated recently", "resource persons rated last 30 days"]),
+    # ── Navigation (destination catalog; keys are role-filtered at serve) ──
+    ("navigate", "pulse", "open the dashboard", ["show the dashboard", "go to dashboard"]),
+    ("navigate", "trends", "show me trends", ["open trends", "trend charts"]),
+    ("navigate", "people", "open resource person scores",
+     ["staff and speaker ratings", "people dashboard"]),
+    ("navigate", "create", "create a new activity", ["start a new event", "add an activity"]),
+    ("navigate", "encode", "encode responses", ["enter survey responses", "input feedback"]),
+    ("navigate", "monitor", "monitor registrations", ["who has responded", "track responses"]),
+    ("navigate", "directory", "open the directory", ["list of staff and speakers", "org units"]),
+    ("navigate", "verbatims", "show verbatim comments", ["open comments", "read feedback comments"]),
+    # ── Help (guide sections) ──────────────────────────────────────────────
+    ("help", "create", "how do i create an activity", ["guide me through making an event"]),
+    ("help", "encode", "how do i encode responses", ["help with entering responses"]),
+]
+
+
+def _seed_learned_rules(conn):
+    """Insert SEED_LEARNED_RULES on a fresh install only. Skipped once the table
+    holds any rule, so an admin who deletes a seed (or has curated the set) never
+    has it resurrected on the next process start. create_learned_rule is
+    INSERT OR IGNORE on (kind,target_key,pattern), so this is safe regardless."""
+    if st.list_learned_rules(conn):
+        return
+    for kind, target_key, canonical, alts in SEED_LEARNED_RULES:
+        st.create_learned_rule(
+            conn, pattern=qa_rules.normalize(canonical), kind=kind, target_key=target_key,
+            keywords=" ".join([canonical] + list(alts)), sample_query=canonical,
+            source="seed", created_by="system")
+
+
 _schema_ready_for = set()    # DB paths whose schema has been ensured this process
 
 def get_conn():
@@ -915,6 +978,7 @@ def get_conn():
     if DB not in _schema_ready_for:
         st.init_db(conn)             # safe to re-run; also applies the venue migration
         st.seed_directory_if_empty(conn)
+        _seed_learned_rules(conn)    # FAQ rules for the AI search bar (fresh install only)
         _schema_ready_for.add(DB)
     return conn
 
@@ -3025,6 +3089,142 @@ async def admin_ai_test_groq(request: Request):
         conn.close()
 
 
+# ---------------------------------------------------------------------
+# Learned rules console (/admin/rules) — the deterministic FAQ layer for the
+# AI search bar (qa_rules.py + _ai_try_rules). Lists the live rules, mines the
+# interaction log for candidate questions to promote, and lets an admin author/
+# edit/enable/delete rules. Admin-only via the /admin prefix gate (same as
+# /admin/ai); each handler also forbids on manage_users defensively.
+# ---------------------------------------------------------------------
+
+def _rule_target_options(user):
+    """The valid {kind: [(key, label)]} a rule may point at, cap-filtered for
+    `user` — exactly the catalogs _ai_try_rules resolves against, so the admin
+    form can only offer targets that will actually serve. Answers aren't role-
+    filtered (bureau-wide aggregates), navigate/help are."""
+    return {
+        "navigate": [(d["key"], d["label"]) for d in ai_route_catalog(user)],
+        "answer": [(k, v["label"]) for k, v in AI_ANSWER_SLOTS.items()],
+        "help": [(s["key"], s["label"]) for s in help_catalog_for(user)],
+    }
+
+
+@app.get("/admin/rules", response_class=HTMLResponse)
+def admin_rules(request: Request, err: str = "", msg: str = ""):
+    if (r := _forbid(request, "manage_users")):
+        return r
+    conn = get_conn()
+    try:
+        rules = st.list_learned_rules(conn)
+        candidates = st.top_questions(conn, limit=50)
+        rules_enabled = st.get_setting(conn, "ai_rules_enabled", "1") != "0"
+        targets = _rule_target_options(request.state.user)
+        total_hits = sum(r["hits"] for r in rules)
+    finally:
+        conn.close()
+    return templates.TemplateResponse(request, "admin_rules.html", {
+        "rules": rules, "candidates": candidates, "rules_enabled": rules_enabled,
+        "targets": targets, "kinds": qa_rules.RULE_KINDS, "total_hits": total_hits,
+        "err": err, "msg": msg, "show_scope": False, "nav_active": "rules",
+    })
+
+
+def _valid_rule_target(user, kind, target_key):
+    """True if (kind, target_key) is a real, cap-allowed target for `user` —
+    the server-side guard so a hand-posted form can't install a rule pointing
+    at a screen/slot the user (or anyone) shouldn't reach."""
+    if kind not in qa_rules.RULE_KINDS:
+        return False
+    valid = {k for k, _ in _rule_target_options(user).get(kind, [])}
+    return target_key in valid
+
+
+@app.post("/admin/rules/toggle")
+async def admin_rules_toggle(request: Request):
+    """Master on/off for the whole FAQ layer (ai_rules_enabled). Off = every
+    query goes straight to the model, as before this feature existed."""
+    if (r := _forbid(request, "manage_users")):
+        return r
+    posted = await _posted(request)
+    on = posted.get("ai_rules_enabled") in ("on", "1", "true", "yes")
+    conn = get_conn()
+    try:
+        st.set_setting(conn, "ai_rules_enabled", "1" if on else "0")
+        _audit(request, conn, "ai_rules_switch", target_type="setting",
+               summary=f"Learned-rules FAQ layer turned {'ON' if on else 'OFF'}.")
+    finally:
+        conn.close()
+    return RedirectResponse("/admin/rules?msg=" + quote("Saved."), status_code=303)
+
+
+@app.post("/admin/rules/create")
+async def admin_rules_create(request: Request):
+    """Author a rule by hand, or promote a mined candidate (the promote button
+    posts here with the question + dominant target pre-filled)."""
+    if (r := _forbid(request, "manage_users")):
+        return r
+    posted = await _posted(request)
+    user = request.state.user
+    pattern = qa_rules.normalize(posted.get("pattern", ""))
+    kind = posted.get("kind", "")
+    target_key = (posted.get("target_key") or "").strip()
+    if not pattern or not _valid_rule_target(user, kind, target_key):
+        return RedirectResponse("/admin/rules?err=" + quote(
+            "Pick a question and a valid target for its kind."), status_code=303)
+    conn = get_conn()
+    try:
+        rid = st.create_learned_rule(
+            conn, pattern=pattern, kind=kind, target_key=target_key,
+            keywords=posted.get("keywords", ""), sample_query=posted.get("sample_query") or pattern,
+            source=posted.get("source") or "manual", created_by=user.get("username"),
+            notes=posted.get("notes"))
+        _audit(request, conn, "ai_rule_create", target_type="learned_rule", target_id=str(rid),
+               summary=f"Learned rule added: {kind}:{target_key} for “{pattern}”.")
+    finally:
+        conn.close()
+    return RedirectResponse("/admin/rules?msg=" + quote("Rule saved."), status_code=303)
+
+
+@app.post("/admin/rules/{rid}")
+async def admin_rules_edit(request: Request, rid: int):
+    """Edit, enable/disable, or delete one rule (action field picks which)."""
+    if (r := _forbid(request, "manage_users")):
+        return r
+    posted = await _posted(request)
+    user = request.state.user
+    action = posted.get("action", "save")
+    conn = get_conn()
+    try:
+        rule = st.get_learned_rule(conn, rid)
+        if not rule:
+            return RedirectResponse("/admin/rules?err=" + quote("No such rule."), status_code=303)
+        if action == "delete":
+            st.delete_learned_rule(conn, rid)
+            _audit(request, conn, "ai_rule_delete", target_type="learned_rule", target_id=str(rid),
+                   summary=f"Learned rule deleted: {rule['kind']}:{rule['target_key']}.")
+            return RedirectResponse("/admin/rules?msg=" + quote("Rule deleted."), status_code=303)
+        if action == "toggle":
+            st.update_learned_rule(conn, rid, enabled=not rule["enabled"])
+            _audit(request, conn, "ai_rule_toggle", target_type="learned_rule", target_id=str(rid),
+                   summary=f"Learned rule {'enabled' if not rule['enabled'] else 'disabled'}: "
+                           f"{rule['kind']}:{rule['target_key']}.")
+            return RedirectResponse("/admin/rules?msg=" + quote("Saved."), status_code=303)
+        # Full edit — validate any new kind/target the same way create does.
+        kind = posted.get("kind", rule["kind"])
+        target_key = (posted.get("target_key") or rule["target_key"]).strip()
+        pattern = qa_rules.normalize(posted.get("pattern", rule["pattern"]))
+        if not pattern or not _valid_rule_target(user, kind, target_key):
+            return RedirectResponse("/admin/rules?err=" + quote(
+                "Pick a question and a valid target for its kind."), status_code=303)
+        st.update_learned_rule(conn, rid, pattern=pattern, kind=kind, target_key=target_key,
+                               keywords=posted.get("keywords", ""), notes=posted.get("notes"))
+        _audit(request, conn, "ai_rule_edit", target_type="learned_rule", target_id=str(rid),
+               summary=f"Learned rule edited: {kind}:{target_key} for “{pattern}”.")
+    finally:
+        conn.close()
+    return RedirectResponse("/admin/rules?msg=" + quote("Rule saved."), status_code=303)
+
+
 # ---- in-process backup scheduler -------------------------------------------
 # A single background task wakes every minute and fires run_scheduled_job when
 # the stored schedule says a backup is due. No external cron needed. It is
@@ -3674,6 +3874,77 @@ def _ai_parse_history(raw):
     return out
 
 
+# Which ai_interaction.feature a rule-served answer is logged under, so
+# /admin/ai's per-feature browser groups them exactly like the model-served
+# equivalents (navigate stays nl_router, matching the router's own logging).
+_RULE_FEATURE = {"navigate": "nl_router", "answer": "nl_answer", "help": "nl_help"}
+
+
+def _ai_try_rules(conn, user, query, ip=None):
+    """The deterministic FAQ layer that runs BEFORE the model in /api/ai/route.
+
+    If a learned rule (qa_rules.match) resolves `query` to a target this user
+    is allowed to reach, answer it here — reusing the exact same server-side
+    render the router uses (destination catalog / AI_ANSWER_SLOTS / help
+    section) — and return the same JSON shape the model path returns, with a
+    zero-cost ai_interaction row (provider='rules'). No model call, no budget
+    spend, and it works even when ai_mode is 'off' or the daily budget is
+    exhausted — that's the whole point.
+
+    Returns the response dict (with interaction_id) on a hit, or None to fall
+    through to the model. Security is unchanged from the model path: a rule
+    stores only {kind, target_key}, and the key is validated against THIS
+    user's cap-filtered catalog, so a rule can never surface a screen/answer
+    the user isn't allowed to see; a stale/invalid key simply falls through.
+    """
+    if st.get_setting(conn, "ai_rules_enabled", "1") == "0":
+        return None
+    rules = st.list_learned_rules(conn, enabled=True)
+    if not rules:
+        return None
+    rule = qa_rules.match(query, rules)
+    if not rule:
+        return None
+    kind, key = rule.get("kind"), rule.get("target_key")
+
+    payload = None
+    if kind == "navigate":
+        dest = {d["key"]: d for d in ai_route_catalog(user)}.get(key)
+        if dest:
+            payload = {"kind": "navigate", "destination": dest["key"], "label": dest["label"],
+                       "hint": dest["hint"], "url": dest["url"], "reason": ""}
+    elif kind == "answer":
+        slot = AI_ANSWER_SLOTS.get(key)
+        if slot:
+            payload = {"kind": "answer", "label": slot["label"],
+                       "text": slot["render"](home_stats(conn))}
+    elif kind == "help":
+        section = {s["key"]: s for s in help_catalog_for(user)}.get(key)
+        if section:
+            payload = {"kind": "help", "label": section["label"],
+                       "text": " ".join(s["body"] for s in section["steps"][:2]),
+                       "url": section["replay_url"]}
+    if payload is None:
+        return None                                   # key not in this user's catalog → fall through
+
+    # Log a zero-cost row so /admin/ai shows the credit saving and 👍/👎 still
+    # works (set_ai_feedback keys off this interaction_id, same as the model
+    # path). Respect the ai_log_prompts toggle for the stored question.
+    log_prompts = st.get_setting(conn, "ai_log_prompts", "masked") != "off"
+    interaction_id = st.create_ai_interaction(
+        conn, user_id=user.get("id") if user else None,
+        role=user.get("role") if user else None,
+        feature=_RULE_FEATURE.get(kind, "nl_router"), mode=ai.ai_mode(conn),
+        outcome="ok", destination=(key if kind == "navigate" else None),
+        confidence=1.0, latency_ms=0, tokens_in=0, tokens_out=0, provider="rules",
+        question_norm=(qa_rules.normalize(query) or None) if log_prompts else None)
+    st.bump_learned_rule_hit(conn, rule["id"])
+    payload["confidence"] = 1.0
+    payload["interaction_id"] = interaction_id
+    payload["served_by"] = "rules"                    # lets the UI/telemetry tell FAQ hits apart
+    return payload
+
+
 @app.post("/api/ai/route")
 async def api_ai_route(request: Request):
     posted = await _posted(request)
@@ -3686,6 +3957,14 @@ async def api_ai_route(request: Request):
 
     conn = get_conn()
     try:
+        # Deterministic FAQ layer first: a learned rule answers frequently-asked
+        # questions with no model call (saves the daily AI budget and works even
+        # when AI is off). A miss falls through to the model path below,
+        # unchanged.
+        hit = _ai_try_rules(conn, user, query, ip=ip)
+        if hit is not None:
+            return JSONResponse(hit)
+
         catalog = ai_route_catalog(user)
         by_key = {d["key"]: d for d in catalog}
         include_answer = ai.mode_at_least(conn, "answers") and ai.feature_enabled(conn, "nl_answer")
@@ -3734,7 +4013,7 @@ async def api_ai_route(request: Request):
                 conn, user, "nl_router", prompt, ip=ip,
                 system=_ai_router_system_prompt(include_answer, include_help, include_action),
                 response_schema=_ai_router_schema(include_answer, include_help, include_action),
-                temperature=0.1, max_output_tokens=256, timeout=8.0)
+                temperature=0.1, max_output_tokens=256, timeout=8.0, question=query)
         except ai.AIError:
             return JSONResponse({"kind": "fallback"})
 

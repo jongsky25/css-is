@@ -17,10 +17,31 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.21"
+APP_VERSION = "2.22"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.22",
+        "date": "July 19, 2026",
+        "summary": "The AI search bar can now answer common questions instantly on its own, "
+                   "without spending an AI request — and it learns which questions to add "
+                   "from what people actually ask.",
+        "changes": [
+            "Frequently-asked questions (like \"open the dashboard\" or \"how many responses "
+            "this month\") are now answered by a saved list of question-and-answer rules "
+            "instead of the AI — so they come back instantly, keep working even when the AI "
+            "is turned off or has hit its daily limit, and don't use up any AI requests.",
+            "A starter set of these rules ships built-in, so the most common questions are "
+            "already covered from day one.",
+            "New Admin → Learned rules page: see how many questions were answered for free, "
+            "review the questions people actually asked (ranked by how often), and promote "
+            "any of them into a rule in one click — or add and edit rules by hand.",
+            "Every saved question is still shown its usual answer (a page, a quick statistic, "
+            "or a help tip) and can only ever point somewhere the person is already allowed "
+            "to go — the same safety checks the AI answers already use.",
+        ],
+    },
     {
         "version": "2.21",
         "date": "July 19, 2026",
