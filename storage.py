@@ -2095,6 +2095,20 @@ def create_ai_interaction(conn, *, user_id=None, role=None, feature, mode, model
     return cur.lastrowid
 
 
+def update_ai_interaction_outcome(conn, interaction_id, outcome, *, destination=None, confidence=None):
+    """Let a feature backfill router-only columns (destination/confidence) and/or
+    override the outcome ai_core.ask() already logged — used by the NL router
+    (docs/AI_INTEGRATION_PLAN.md Phase 1) when its own server-side validation
+    rejects an otherwise-successful model response (unknown destination, or
+    confidence below the floor): the call reached Gemini fine, but the answer
+    isn't trusted, so the log should read rejected_validation, not ok."""
+    conn.execute(
+        "UPDATE ai_interaction SET outcome=?, destination=COALESCE(?, destination), "
+        "confidence=COALESCE(?, confidence) WHERE id=?",
+        (outcome, destination, confidence, interaction_id))
+    conn.commit()
+
+
 def set_ai_feedback(conn, interaction_id, user_id, rating, comment=None, is_admin=False):
     """Record 👍(1)/👎(-1) on an interaction, the per-use signal the AI plan
     relies on to diagnose misbehavior from logs. Row-ownership check: only the

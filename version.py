@@ -17,10 +17,28 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.03"
+APP_VERSION = "2.04"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.04",
+        "date": "July 19, 2026",
+        "summary": "An optional new \"assistant\" page (Start) lets you type what you want in "
+                   "plain language and get taken straight there — still off by default, and it "
+                   "always falls back to the ordinary search if anything goes wrong.",
+        "changes": [
+            "A new /start page — reachable from \"✨ Try the assistant\" on the home hub — lets "
+            "you type a request like \"who answered yesterday's training\" and jump straight to "
+            "the matching page, with a quick 👍/👎 on whether the suggestion was right.",
+            "An administrator can turn this on from Admin → AI (the \"router\" mode) and choose "
+            "whether a fresh sign-in lands on this new page or the classic hub; either setting "
+            "can be flipped back at any time.",
+            "The assistant only ever offers pages this account is already allowed to open, and "
+            "if it's off, unavailable, or over its daily usage cap, the page quietly falls back "
+            "to the same keyword search used everywhere else — nothing ever breaks.",
+        ],
+    },
     {
         "version": "2.03",
         "date": "July 19, 2026",

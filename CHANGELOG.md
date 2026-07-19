@@ -1,5 +1,52 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-19 (v2.04 — Phase 1 of the AI integration plan: NL landing page + router mode)
+
+`docs/AI_INTEGRATION_PLAN.md` Phase 1, built on Phase 0's `ai_core.py`. Ships
+with `ai_mode` still defaulting to `off` — the new page always renders and
+always answers something, but the router itself is inert until an admin
+opts in from `/admin/ai`.
+
+- **`app.py`** — `ai_route_catalog(user)` (new): the NL router's
+  destination allow-list, same role/cap filtering as `search_index_for` but
+  keyed by `key` (what the router validates against) instead of flattened
+  by section. `GET /start` (any signed-in user, no new gating — renders
+  regardless of AI mode). `POST /api/ai/route`: builds the prompt from the
+  catalog, calls `ai.ask(feature="nl_router", response_schema=...)`,
+  then validates the model's `destination` against the catalog and its
+  `confidence` against a 0.5 floor server-side before ever building a URL —
+  the URL always comes from the catalog entry, never from model text; an
+  unknown destination or sub-floor confidence is logged as
+  `rejected_validation` (via the new `storage.update_ai_interaction_outcome`)
+  and falls back. `POST /api/ai/feedback`: 👍/👎 posted via
+  `sendBeacon`, rate-limited on the existing `"telemetry"` bucket (costs no
+  AI budget), ownership-checked in `storage.set_ai_feedback`.
+  `login_submit`: a fresh sign-in with `next=/` redirects to `/start` instead
+  of the hub when AI is configured, mode ≥ router, and the admin-set
+  `ai_landing_default` setting (added in Phase 0) is `start` — rollback is
+  flipping either setting back.
+- **`storage.py`** — `update_ai_interaction_outcome` (new): lets a feature
+  backfill the router-only `destination`/`confidence` columns and/or
+  override the outcome `ai_core.ask()` already logged, for the case where
+  the call reached Gemini fine but the feature's own server-side validation
+  doesn't trust the answer.
+- **`templates/start.html`** + **`static/js/start.js`** (new): a centered
+  "What do you want to do?" box in the `dash_layout` shell, greeting via the
+  existing `_account_first_name`, 4–6 suggestion chips from
+  `nav_groups_for(user)`. `start.js` copies `search.js`'s debounce/abort
+  pattern client-side (9s timeout vs. the server's 8s), shows a result card
+  with Go/Cancel + feedback chips and a ~1.5s auto-navigate, and falls back
+  to `window.CSSSearch` (the existing keyword palette engine) on any
+  non-`navigate` response, timeout, or network error.
+- **`templates/home.html`** — a "✨ Try the assistant" link to `/start`
+  beside the role chip.
+- **`tests/test_ai_router.py`** (new) — per-role destination routing;
+  prompt-injection (a mocked model steering a viewer to an admin-only
+  destination still falls back); malformed/out-of-catalog destinations and
+  sub-floor confidence rejected server-side; budget-exceeded falls back;
+  feedback ownership/RBAC; `/start` renders for all four roles; the login
+  redirect honors both settings and leaves a plain `next=/` alone otherwise.
+
 ## 2026-07-19 (v2.03 — Phase 0 of the AI integration plan: `ai_core.py` foundation)
 
 `docs/AI_INTEGRATION_PLAN.md` Phase 0: the module every future AI feature is
