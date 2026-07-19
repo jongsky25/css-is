@@ -39,6 +39,7 @@ vendor would undermine that feature's own privacy design). Configure with:
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import re
@@ -577,6 +578,78 @@ def ask(conn, user, feature, prompt, *, ip=None, system=None, response_schema=No
     interaction_id = _log_interaction(conn, user=user, feature=feature, mode=mode, outcome="ok",
                                       result=result, prompt=prompt, log_prompts=log_prompts)
     return result, interaction_id
+
+
+# ---------------------------------------------------------------------
+# Non-blocking wrappers for the async request handlers.
+#
+# ask()/test_connection() make a SYNCHRONOUS httpx call that can take up to the
+# full timeout plus one retry (~16s worst case). FastAPI's `async def` handlers
+# run on the single uvicorn worker's event loop — and that same loop is what
+# accepts new TCP connections. So a synchronous AI call made directly from an
+# async handler freezes the whole worker for the call's duration: uvicorn stops
+# accepting connections and the fronting proxy/load-balancer answers every other
+# in-flight request with an edge 5xx (503/500) that never reaches — and is never
+# logged by — this app. That is the mechanism behind the recurring "500" the AI
+# features triggered (most often via the landing-bar router, the hottest AI
+# path), and no amount of AIError handling inside the app can catch it, because
+# the error is emitted OUTSIDE the app.
+#
+# These wrappers run the blocking call in a worker thread (asyncio.to_thread) so
+# the event loop stays free to accept connections. sqlite connections are bound
+# to the thread that created them, so the wrapper opens its OWN short-lived
+# connection inside the thread (from the caller connection's own DB path) rather
+# than reusing the caller's. The returned interaction_id is a plain int the
+# caller can keep using on its own connection (the row is already committed by
+# the thread's connection before this returns).
+# ---------------------------------------------------------------------
+
+def _conn_db_path(conn):
+    """Filesystem path of `conn`'s main database, or None for an in-memory DB
+    (which can't be reopened by path in another thread)."""
+    try:
+        for _seq, name, file in conn.execute("PRAGMA database_list"):
+            if name == "main":
+                return file or None
+    except Exception:        # noqa: BLE001
+        pass
+    return None
+
+
+async def _run_off_loop(conn, fn, *args, **kwargs):
+    """Run blocking `fn(conn_like, *args, **kwargs)` off the event loop, giving
+    it a fresh thread-local connection. Falls back to a direct (in-thread) call
+    for an in-memory DB, which has no reopenable path — that path only happens
+    in tests, which already run off the request loop."""
+    path = _conn_db_path(conn)
+    if not path:
+        return fn(conn, *args, **kwargs)
+
+    def _run():
+        c = st.connect(path)
+        try:
+            return fn(c, *args, **kwargs)
+        finally:
+            c.close()
+
+    return await asyncio.to_thread(_run)
+
+
+async def ask_async(conn, user, feature, prompt, **kwargs):
+    """Non-blocking `ask()` for `async def` handlers — same contract (returns
+    (result, interaction_id) or raises AIError), but the blocking HTTP call
+    never freezes the event loop. See the module comment above."""
+    return await _run_off_loop(conn, ask, user, feature, prompt, **kwargs)
+
+
+async def test_connection_async(conn, user=None):
+    """Non-blocking `test_connection()` for the /admin/ai test button."""
+    return await _run_off_loop(conn, test_connection, user=user)
+
+
+async def test_groq_connection_async(conn, user=None):
+    """Non-blocking `test_groq_connection()` for the /admin/ai test button."""
+    return await _run_off_loop(conn, test_groq_connection, user=user)
 
 
 def test_connection(conn, user=None):

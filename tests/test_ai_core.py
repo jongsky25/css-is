@@ -646,3 +646,70 @@ def test_purge_stale_ai_log(db_path):
         assert conn.execute("SELECT COUNT(*) FROM ai_budget").fetchone()[0] == 1
     finally:
         _reset_ai(conn); conn.close()
+
+
+# ---- ask_async / test_connection_async: non-blocking wrappers ---------------
+# These run the blocking HTTP call in a worker thread so an `async def` handler
+# never freezes the event loop (a frozen loop stops uvicorn accepting new
+# connections, so the fronting proxy answers every other request with an edge
+# 5xx — the recurring "500" the AI features triggered).
+
+def test_ask_async_offloads_to_worker_thread_and_logs_ok(db_path, monkeypatch):
+    import asyncio
+    import threading
+    monkeypatch.setenv("CSS_GEMINI_API_KEY", "test-key")
+    conn = st.connect(db_path); st.init_db(conn); _reset_ai(conn)
+    try:
+        st.set_setting(conn, "ai_mode", "router")
+        st.set_setting(conn, "ai_cap_verbatim", "10")
+        st.set_setting(conn, "ai_daily_cap", "10")
+
+        seen = {}
+
+        def fake_http_generate(prompt, **kw):
+            seen["thread"] = threading.current_thread().name
+            return {"text": "answer", "parsed": None, "tokens_in": 1,
+                    "tokens_out": 1, "latency_ms": 5, "model": "gemini-test"}
+        monkeypatch.setattr(ai, "_http_generate", fake_http_generate)
+
+        result, interaction_id = asyncio.run(
+            ai.ask_async(conn, {"id": 1, "role": "admin"}, "verbatim", "hi"))
+
+        assert result["text"] == "answer"
+        # the blocking call ran OFF the main (event-loop) thread
+        assert seen["thread"] != threading.main_thread().name
+        # the row the worker thread's own connection committed is visible here
+        row = conn.execute("SELECT outcome FROM ai_interaction WHERE id=?",
+                           (interaction_id,)).fetchone()
+        assert row[0] == "ok"
+    finally:
+        _reset_ai(conn); conn.close()
+
+
+def test_ask_async_propagates_aierror(db_path, monkeypatch):
+    import asyncio
+    monkeypatch.setenv("CSS_GEMINI_API_KEY", "test-key")
+    conn = st.connect(db_path); st.init_db(conn); _reset_ai(conn)
+    try:
+        st.set_setting(conn, "ai_mode", "router")
+
+        def boom(prompt, **kw):
+            raise ai.AITimeout("nope")
+        monkeypatch.setattr(ai, "_http_generate", boom)
+
+        with pytest.raises(ai.AIError):
+            asyncio.run(ai.ask_async(conn, {"id": 1, "role": "admin"}, "verbatim", "hi"))
+    finally:
+        _reset_ai(conn); conn.close()
+
+
+def test_ask_async_unconfigured_raises_no_config(db_path, monkeypatch):
+    import asyncio
+    monkeypatch.delenv("CSS_GEMINI_API_KEY", raising=False)
+    conn = st.connect(db_path); st.init_db(conn); _reset_ai(conn)
+    try:
+        st.set_setting(conn, "ai_mode", "router")
+        with pytest.raises(ai.AIUnavailable):
+            asyncio.run(ai.ask_async(conn, {"id": 1, "role": "admin"}, "verbatim", "hi"))
+    finally:
+        _reset_ai(conn); conn.close()

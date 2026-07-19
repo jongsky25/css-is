@@ -17,10 +17,39 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.18"
+APP_VERSION = "2.19"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.19",
+        "date": "July 19, 2026",
+        "summary": "Fixed the real cause of the recurring \"error 500\" pages: the "
+                   "smart-assistant (AI) features could briefly freeze the whole app "
+                   "while waiting on the AI service, which made every other person's "
+                   "click fail. Those AI calls now run out of the way, so the app "
+                   "stays responsive for everyone.",
+        "changes": [
+            "The recurring \"error 500\" was traced to the AI features, not to the "
+            "hosting platform. The app runs as a single worker, and each AI request "
+            "(most often the smart search/assistant bar) was made in a way that "
+            "paused everything else the app was doing until the AI service replied — "
+            "up to about 15 seconds if the AI service was slow. During that pause the "
+            "app could not answer anyone else, so the hosting platform returned an "
+            "\"error 500\" to every other person mid-click. This is why the earlier "
+            "automatic-retry helper reduced but never removed the problem.",
+            "AI requests now run off to the side (on their own worker thread), so the "
+            "rest of the app keeps responding normally while an AI reply is awaited. "
+            "One slow or stuck AI call can no longer take the whole app down for "
+            "everyone else.",
+            "Sign-in got the same treatment: checking a password is deliberately slow "
+            "(for security), and doing it in-line briefly froze the app — noticeable "
+            "when automated bots hammer the sign-in page. Password checks now also run "
+            "off to the side, so a wave of sign-in attempts no longer stalls everyone.",
+            "No change to what the AI or sign-in features do or to how their results "
+            "are used — only to keep slow work from freezing the app.",
+        ],
+    },
     {
         "version": "2.18",
         "date": "July 19, 2026",

@@ -1464,7 +1464,7 @@ async def login_submit(request: Request):
                     "first_run": True, "next": nxt, "show_scope": False,
                     "err": pw_bad or "Enter a valid email address for the first admin."},
                     status_code=400)
-            h, salt = auth.hash_password(password)
+            h, salt = await auth.hash_password_async(password)
             uid = st.create_admin_user(conn, username, h, salt, "admin", created_by="(first-run setup)")
             user = {"id": uid, "username": username, "role": "admin"}
             _ip = request.client.host if request.client else None
@@ -1473,7 +1473,7 @@ async def login_submit(request: Request):
             st.audit(conn, username, "login", ip=_ip, summary="signed in (first-run)")
         else:
             u = st.get_admin_user(conn, username)
-            if not u or not u["active"] or not auth.verify_password(password, u["pw_hash"], u["salt"]):
+            if not u or not u["active"] or not await auth.verify_password_async(password, u["pw_hash"], u["salt"]):
                 st.audit(conn, username or "(blank)", "login_failed",
                          ip=request.client.host if request.client else None,
                          summary="failed sign-in attempt")
@@ -1624,7 +1624,7 @@ async def set_password_submit(request: Request):
         return templates.TemplateResponse(request, "set_password.html", {
             "valid": True, "token": token, "email": u["username"], "mode": "invite",
             "err": pw_bad, "show_scope": False}, status_code=400)
-    h, salt = auth.hash_password(password)
+    h, salt = await auth.hash_password_async(password)
     conn = get_conn()
     try:
         st.set_admin_password(conn, u["id"], h, salt, activate=True)
@@ -1680,7 +1680,7 @@ async def reset_password_submit(request: Request):
         return templates.TemplateResponse(request, "set_password.html", {
             "valid": True, "token": token, "email": u["username"], "mode": "reset",
             "err": pw_bad, "show_scope": False}, status_code=400)
-    h, salt = auth.hash_password(password)
+    h, salt = await auth.hash_password_async(password)
     conn = get_conn()
     try:
         st.set_admin_password(conn, u["id"], h, salt, activate=True)
@@ -1757,7 +1757,7 @@ async def admin_users_reset_default(request: Request, user_id: int):
         u = st.get_admin_user_by_id(conn, user_id)
         if not u:
             return RedirectResponse("/admin/users?err=" + quote("No such account."), status_code=303)
-        h, salt = auth.hash_password(auth.DEFAULT_PASSWORD)
+        h, salt = await auth.hash_password_async(auth.DEFAULT_PASSWORD)
         st.set_admin_password(conn, u["id"], h, salt, activate=True, must_change=True)
         _audit(request, conn, "reset_password", target_type="user", target_id=u["username"],
                summary=f"Reset {u['username']} to the temporary pilot password")
@@ -2174,7 +2174,7 @@ async def admin_feedback_ai_suggest(request: Request, fid: int):
             lines.append(f"{c['id']}: {snippet}")
         prompt = "\n".join(lines)
         try:
-            result, interaction_id = ai.ask(
+            result, interaction_id = await ai.ask_async(
                 conn, user, "feedback_triage", prompt, ip=ip,
                 system=_AI_FEEDBACK_TRIAGE_SYSTEM_PROMPT,
                 response_schema=_feedback_triage_ai_schema(),
@@ -2884,7 +2884,7 @@ async def ux_insights_analyze(request: Request, days: int = UI_INSIGHTS_WINDOW_D
             nav_destinations=nav_destinations, app_routes=app_routes)
         prompt = uxh.render_handoff_markdown(payload)
         try:
-            result, interaction_id = ai.ask(
+            result, interaction_id = await ai.ask_async(
                 conn, user, "ux_analysis", prompt, ip=ip,
                 system=_AI_UX_ANALYSIS_SYSTEM_PROMPT,
                 temperature=0.2, max_output_tokens=2048, timeout=30.0)
@@ -2990,7 +2990,7 @@ async def admin_ai_test(request: Request):
     conn = get_conn()
     try:
         try:
-            result = ai.test_connection(conn, user=request.state.user)
+            result = await ai.test_connection_async(conn, user=request.state.user)
         except ai.AIError as e:
             _audit(request, conn, "ai_test_connection", target_type="ai",
                    summary=f"AI test connection failed: {e}")
@@ -3009,7 +3009,7 @@ async def admin_ai_test_groq(request: Request):
     conn = get_conn()
     try:
         try:
-            result = ai.test_groq_connection(conn, user=request.state.user)
+            result = await ai.test_groq_connection_async(conn, user=request.state.user)
         except ai.AIError as e:
             _audit(request, conn, "ai_test_groq_connection", target_type="ai",
                    summary=f"Groq test connection failed: {e}")
@@ -3728,7 +3728,7 @@ async def api_ai_route(request: Request):
         prompt = "\n".join(prompt_parts)
 
         try:
-            result, interaction_id = ai.ask(
+            result, interaction_id = await ai.ask_async(
                 conn, user, "nl_router", prompt, ip=ip,
                 system=_ai_router_system_prompt(include_answer, include_help, include_action),
                 response_schema=_ai_router_schema(include_answer, include_help, include_action),
@@ -4813,7 +4813,7 @@ async def cleanup_ai_suggest(request: Request):
             f"({b['n']} rating{'s' if b['n'] != 1 else ''}"
             f"{', BLHSD staff' if b['internal'] else ''})")
         try:
-            result, interaction_id = ai.ask(
+            result, interaction_id = await ai.ask_async(
                 conn, user, "harmonize", prompt, ip=ip,
                 system=_AI_HARMONIZE_SYSTEM_PROMPT,
                 response_schema=_harmonize_ai_schema(),
@@ -6206,7 +6206,7 @@ async def activity_messages_ai_draft(request: Request, event_token: str):
         unavailable = JSONResponse({"ok": False,
             "notice": "AI personalization isn't available right now — pick a tone above instead."})
         try:
-            result, interaction_id = ai.ask(
+            result, interaction_id = await ai.ask_async(
                 conn, user, "messages", _messages_ai_prompt(ev, slot, tone), ip=ip,
                 system=_AI_MESSAGE_SYSTEM_PROMPT, response_schema=_messages_ai_schema(),
                 temperature=0.5, max_output_tokens=300, timeout=12.0)
@@ -9138,7 +9138,7 @@ async def csm_draft_ai(request: Request):
                                st.get_comment_overrides(conn, rids))
         themes = [(b["name"], b["count"]) for b in story["improve"]["buckets"][:5] if b["count"]]
         try:
-            result, _interaction_id = ai.ask(
+            result, _interaction_id = await ai.ask_async(
                 conn, user, "report_draft", _csm_draft_prompt(rep, themes), ip=ip,
                 system=REPORT_DRAFT_CSM_SYSTEM_PROMPT, response_schema=_csm_draft_schema(),
                 temperature=0.3, max_output_tokens=768, timeout=15.0)
@@ -10189,7 +10189,7 @@ async def activity_ai_reanalyze(request: Request, event_id: int):
             batch = eligible[start:start + VERBATIM_AI_BATCH_SIZE]
             prompt = "\n".join(f"{i}. {ai.mask_for_log(q['text'])}" for i, q in enumerate(batch))
             try:
-                result, _interaction_id = ai.ask(
+                result, _interaction_id = await ai.ask_async(
                     conn, user, "verbatim", prompt, ip=ip,
                     system=VERBATIM_AI_SYSTEM_PROMPT, response_schema=_verbatim_ai_schema(),
                     temperature=0.1, max_output_tokens=1024, timeout=20.0)
@@ -10259,7 +10259,7 @@ async def activity_ai_summary(request: Request, event_id: int):
         prompt = "\n".join(lines)
 
         try:
-            result, interaction_id = ai.ask(
+            result, interaction_id = await ai.ask_async(
                 conn, user, "verbatim", prompt, ip=ip,
                 system=("You write a 3-bullet plain-English takeaway from a summary of a "
                         "government survey activity's comments, already grouped by theme and "
@@ -10301,7 +10301,7 @@ async def activity_ai_mrr_draft(request: Request, event_id: int):
         if not ev:
             return RedirectResponse("/reports/activities", status_code=303)
         try:
-            result, _interaction_id = ai.ask(
+            result, _interaction_id = await ai.ask_async(
                 conn, user, "report_draft", _mrr_draft_prompt(ev), ip=ip,
                 system=REPORT_DRAFT_MRR_SYSTEM_PROMPT, response_schema=_mrr_draft_schema(),
                 temperature=0.3, max_output_tokens=512, timeout=15.0)

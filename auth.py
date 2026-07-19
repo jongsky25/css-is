@@ -16,6 +16,7 @@ Security notes (on the record):
 """
 
 from __future__ import annotations
+import asyncio
 import base64
 import hashlib
 import hmac
@@ -81,6 +82,21 @@ def verify_password(password, pw_hash, salt):
     """Constant-time check of a password against a stored hash+salt."""
     calc, _ = hash_password(password, salt)
     return hmac.compare_digest(calc, pw_hash)
+
+
+# PBKDF2 at _ITERATIONS is deliberately CPU-heavy (~100-150ms/call). Called
+# directly from an `async def` handler it blocks the single uvicorn worker's
+# event loop for that whole time — and a burst of sign-in attempts (bots hit
+# /login constantly) turns that into repeated stalls that fail the load
+# balancer's health check and trigger an edge 5xx storm for everyone. The async
+# wrappers run the hash off the event loop so login never freezes the worker.
+
+async def hash_password_async(password, salt=None):
+    return await asyncio.to_thread(hash_password, password, salt)
+
+
+async def verify_password_async(password, pw_hash, salt):
+    return await asyncio.to_thread(verify_password, password, pw_hash, salt)
 
 
 # ---------------------------------------------------------------------
