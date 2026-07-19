@@ -40,6 +40,17 @@
   .empty { color:var(--grey); font-size:.9rem; }
   .retform { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
   .retform input[type=number] { width:5rem; }
+  #ai-analyze-btn { font-size:.86rem; padding:.3rem .7rem; border-radius:999px; border:1px solid var(--line);
+                    background:var(--accent-bg,var(--blue-bg)); border-color:var(--accent-ln,var(--blue-ln));
+                    font-weight:700; cursor:pointer; }
+  #ai-analyze-btn:disabled { opacity:.6; cursor:default; }
+  .ai-result { white-space:pre-wrap; font-size:.9rem; line-height:1.5; margin:0 0 .8rem; }
+  .ai-result-actions { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+  .ai-fb { margin-left:auto; display:flex; gap:.3rem; }
+  .fb-btn { font-size:1.05rem; line-height:1; background:none; border:1px solid var(--line);
+            border-radius:8px; padding:.2rem .5rem; cursor:pointer; }
+  .fb-btn:hover:not(:disabled) { background:var(--accent-bg,var(--blue-bg)); }
+  .fb-btn.fb-sent { opacity:.55; }
 </style>
 {% endblock %}
 
@@ -56,6 +67,7 @@
     <a href="/admin/ux-insights?days={{ d }}" class="{{ 'active' if days == d }}">{{ d }} days</a>
     {% endfor %}
     <span class="handoff-links">
+      <button type="button" id="ai-analyze-btn" data-days="{{ days }}">✨ Analyze now</button>
       <a href="/admin/ux-insights/handoff?days={{ days }}" download>⤓ Download handoff for AI analysis</a>
       <a href="/admin/ux-insights/handoff?days={{ days }}&fmt=json" download>JSON</a>
     </span>
@@ -63,9 +75,12 @@
   <p class="hint" style="color:var(--soft); font-size:.84rem; margin:-.4rem 0 1rem;">
     The handoff is a single self-describing file of this window's telemetry —
     give it to an AI assistant (e.g. Claude) to get ranked interface-improvement
-    recommendations. Everything in it is masked and pseudonymized; no names, ids
-    or typed content leave the system.
+    recommendations, or click "Analyze now" to run that same analysis in-page.
+    Everything in it is masked and pseudonymized; no names, ids or typed
+    content leave the system.
   </p>
+
+  <div id="ai-analysis-results"></div>
 
   <div class="totals">
     <span>Sessions <b>{{ digest.totals.sessions }}</b></span>
@@ -166,4 +181,87 @@
     </form>
   </div>
 </div>
+
+<script>
+(function () {
+  var btn = document.getElementById("ai-analyze-btn");
+  var results = document.getElementById("ai-analysis-results");
+  if (!btn) return;
+
+  function esc(s) {
+    var d = document.createElement("div");
+    d.textContent = s == null ? "" : String(s);
+    return d.innerHTML;
+  }
+
+  function sendFeedback(interactionId, rating) {
+    var body = "interaction_id=" + encodeURIComponent(interactionId) +
+      "&rating=" + encodeURIComponent(rating);
+    var sent = false;
+    if (navigator.sendBeacon) {
+      try {
+        sent = navigator.sendBeacon("/api/ai/feedback",
+          new Blob([body], { type: "application/x-www-form-urlencoded" }));
+      } catch (e) { sent = false; }
+    }
+    if (!sent) {
+      fetch("/api/ai/feedback", {
+        method: "POST", body: body, keepalive: true,
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      }).catch(function () {});
+    }
+  }
+
+  function wireFeedback(card, interactionId) {
+    var fbBtns = card.querySelectorAll(".fb-btn");
+    for (var i = 0; i < fbBtns.length; i++) {
+      fbBtns[i].addEventListener("click", function (e) {
+        var b = e.currentTarget;
+        sendFeedback(interactionId, b.dataset.r);
+        for (var j = 0; j < fbBtns.length; j++) fbBtns[j].disabled = true;
+        b.classList.add("fb-sent");
+      });
+    }
+  }
+
+  function showCard(html) {
+    results.innerHTML = "";
+    var card = document.createElement("div");
+    card.className = "acard";
+    card.innerHTML = html;
+    results.appendChild(card);
+    return card;
+  }
+
+  btn.addEventListener("click", function () {
+    btn.disabled = true;
+    var origText = btn.textContent;
+    btn.textContent = "Analyzing…";
+    var days = btn.dataset.days || "30";
+    fetch("/admin/ux-insights/analyze?days=" + encodeURIComponent(days), { method: "POST" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.ok) {
+          var card = showCard(
+            '<h2>AI analysis</h2>' +
+            '<p class="ai-result">' + esc(data.text) + '</p>' +
+            '<div class="ai-result-actions"><span class="ai-fb">' +
+            '<button type="button" class="fb-btn" data-r="up" aria-label="Helpful">👍</button>' +
+            '<button type="button" class="fb-btn" data-r="down" aria-label="Not helpful">👎</button>' +
+            '</span></div>');
+          wireFeedback(card, data.interaction_id);
+        } else {
+          showCard('<h2>AI analysis</h2><p class="hint">' + esc(data.notice) + '</p>');
+        }
+      })
+      .catch(function () {
+        showCard('<h2>AI analysis</h2><p class="hint">AI analysis isn\'t available right now — use the download link below instead.</p>');
+      })
+      .finally(function () {
+        btn.disabled = false;
+        btn.textContent = origText;
+      });
+  });
+})();
+</script>
 {% endblock %}

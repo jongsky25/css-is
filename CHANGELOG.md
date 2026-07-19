@@ -1,5 +1,34 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-19 (v2.06 — Phase 3 of the AI integration plan: UX Insights "Analyze now")
+
+`docs/AI_INTEGRATION_PLAN.md` Phase 3, the lowest-risk real feature (admin-only,
+zero PII — the handoff payload is already pseudonymized). Ships with
+`ux_analysis` already present in `ai_core.FEATURE_DEFAULTS` (cap 5/day) since
+Phase 0, so no new setting/table/`admin_ai.html` changes were needed.
+
+- **`app.py`** — `POST /admin/ux-insights/analyze` (new, next to the existing
+  `GET /admin/ux-insights/handoff`): builds the identical `uxh.build_handoff(...)`
+  payload as the download route, renders it with `uxh.render_handoff_markdown`,
+  and hands that Markdown to `ai.ask(feature="ux_analysis", max_output_tokens=2048,
+  timeout=30.0)` with a short system prompt steering toward a concise,
+  numbered improvement write-up. Any `AIError` returns `{"ok": false, "notice":
+  ...}` pointing back at the existing download link — the feature never surfaces
+  an error, and export never depends on AI. A successful call is audited the
+  same way as the handoff download (`action="export"`). No new gating code:
+  inherits `manage_users` via the existing `/admin` prefix rule.
+- **`templates/ux_insights.html`** — "✨ Analyze now" button beside the
+  existing download links; inline `<script>` posts to the new route and
+  renders the result as an in-page card with 👍/👎 feedback chips, reusing the
+  same `sendBeacon`-first pattern as `static/js/start.js`'s feedback wiring
+  (posts to the existing generic `/api/ai/feedback`, no new feedback route).
+- **`version.py`** — `APP_VERSION` 2.05 → 2.06, CHANGELOG entry prepended.
+- **`tests/test_ux_analysis.py`** (new) — RBAC, success shape, `AIError` and
+  budget-exceeded fallback (both return `ok: false` with a notice, never an
+  error status), audit row, and an end-to-end leak test proving an unmasked
+  digit posted through `/telemetry` never reaches the prompt handed to
+  `ai_core.ask()`.
+
 ## 2026-07-19 (v2.04 — Phase 1 of the AI integration plan: NL landing page + router mode)
 
 `docs/AI_INTEGRATION_PLAN.md` Phase 1, built on Phase 0's `ai_core.py`. Ships
