@@ -1343,13 +1343,18 @@ async def _auth_gate(request: Request, call_next):
 async def _metrics_gate(request: Request, call_next):
     """Outermost wrapper (defined after the auth gate, so it runs first): time
     every request, count it by status, and write a structured log line. Records
-    a 500 if the handler raises. Never alters the response."""
+    a 500 if the handler raises. Also stamps X-CSS-App on every response — the
+    service worker (and pull_backup.py) treat a 5xx WITHOUT this header as
+    proof the request never reached the app (the hosting platform's LB/proxy
+    answered instead) and safely retry it; see _unhandled_error for why even a
+    crash 500 must carry it. Never otherwise alters the response."""
     start = time.perf_counter()
     mon.inc_inflight()
     status = 500
     try:
         resp = await call_next(request)
         status = resp.status_code
+        resp.headers["X-CSS-App"] = "1"
         return resp
     finally:
         dur_ms = (time.perf_counter() - start) * 1000.0
@@ -1358,6 +1363,18 @@ async def _metrics_gate(request: Request, call_next):
         mon.record(request.method, request.url.path, status, dur_ms,
                    ip=request.client.host if request.client else None,
                    user=user["username"] if user else None)
+
+
+@app.exception_handler(Exception)
+async def _unhandled_error(request: Request, exc: Exception):
+    """Stamp X-CSS-App even on an unhandled-crash 500. The service worker
+    retries any 5xx that LACKS this header (provably never reached the app —
+    it's the hosting edge failing); an app-originated crash must never look
+    like that, or a crashing POST could be re-sent and double-execute its side
+    effects. Starlette still re-raises after sending this, so the traceback
+    reaches the server log exactly as before."""
+    return Response("Internal Server Error", status_code=500,
+                    media_type="text/plain", headers={"X-CSS-App": "1"})
 
 
 def _audit(request, conn, action, **kw):

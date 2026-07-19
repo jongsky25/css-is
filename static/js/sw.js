@@ -8,8 +8,47 @@
  * whose name differs, so an old app-shell is purged the moment the new SW takes
  * over. Keep this in lockstep with version.py / the ?v= asset tokens.
  */
-const CACHE_VERSION = "v1.54-a";
+const CACHE_VERSION = "v2.18-a";
 const CACHE_NAME = "css-is-" + CACHE_VERSION;
+
+/* ── Edge-retry shield ─────────────────────────────────────────────────────────
+ * The hosting platform's proxy/LB can fail a request before it ever reaches the
+ * app (observed July 2026: ~half of all requests answered 500/503 by the edge
+ * while the app replica was perfectly healthy). The server stamps X-CSS-App on
+ * EVERY response it produces — success, 4xx, even unhandled 500s — so a 5xx
+ * WITHOUT that header is proof the app never saw the request, which makes a
+ * retry safe for any method, POST included (nothing was executed).
+ *
+ * Network errors (fetch rejection) carry no such proof — the request may have
+ * reached the server with only the response lost — so those are retried for
+ * GETs only, never for writes (the offline submit queue already covers survey
+ * POSTs, deduped server-side by submission_id). */
+const APP_MARK = "x-css-app";
+const EDGE_RETRIES = 3;          // extra attempts after the first
+const EDGE_DELAY_MS = 400;       // grows linearly per attempt
+
+function isEdgeError(res) {
+  return res.status >= 500 && !res.headers.get(APP_MARK);
+}
+
+async function fetchRetrying(req, retryNetworkErrors) {
+  let lastRes = null, lastErr = null;
+  for (let i = 0; i <= EDGE_RETRIES; i++) {
+    if (i) await new Promise((r) => setTimeout(r, EDGE_DELAY_MS * i));
+    try {
+      // Always fetch a clone so a body-carrying request stays re-sendable.
+      lastRes = await fetch(req.clone());
+      lastErr = null;
+    } catch (e) {
+      if (!retryNetworkErrors) throw e;
+      lastErr = e;
+      continue;
+    }
+    if (!isEdgeError(lastRes)) return lastRes;
+  }
+  if (lastErr) throw lastErr;
+  return lastRes;                // still an edge error after all retries
+}
 
 /* Public app shell. Bare paths (no ?v=) — the versioned asset requests the page
  * actually makes are picked up at runtime by stale-while-revalidate below. */
@@ -56,18 +95,23 @@ function isPublicNav(url) {
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-  // Phase 1 never intercepts writes — submit goes straight to the server.
-  if (req.method !== "GET") return;
-
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;  // cross-origin: leave alone
+
+  // Writes pass through to the network, but behind the edge-retry shield: a
+  // 5xx without the app's marker header is re-sent (it provably never reached
+  // the app), while an app response — or a network error — is never retried.
+  if (req.method !== "GET") {
+    event.respondWith(fetchRetrying(req, false));
+    return;
+  }
 
   // Static assets: stale-while-revalidate — instant from cache, refresh behind.
   if (isStaticAsset(url)) {
     event.respondWith(
       caches.open(CACHE_NAME).then((cache) =>
         cache.match(req).then((hit) => {
-          const network = fetch(req).then((res) => {
+          const network = fetchRetrying(req, true).then((res) => {
             if (res && res.ok) cache.put(req, res.clone());
             return res;
           }).catch(() => hit);
@@ -77,13 +121,14 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Navigations: network-first, fall back to a cached page, then the offline
-  // shell. Only public survey pages are stored, to bound the cache.
+  // Navigations: network-first (with edge retries), fall back to a cached
+  // page, then the offline shell. Only public survey pages are stored, to
+  // bound the cache.
   // NOTE: the Cache API rejects put()/match() on a request whose mode is
   // "navigate", so we key by the URL string (req.url) on both store and lookup.
   if (req.mode === "navigate") {
     event.respondWith(
-      fetch(req).then((res) => {
+      fetchRetrying(req, true).then((res) => {
         if (res && res.ok && isPublicNav(url)) {
           const copy = res.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(req.url, copy));
@@ -92,7 +137,12 @@ self.addEventListener("fetch", (event) => {
       }).catch(() =>
         caches.match(req.url).then((hit) => hit || caches.match("/static/offline.html")))
     );
+    return;
   }
+
+  // Every other same-origin GET (JSON APIs, exports, images): no caching,
+  // just the edge-retry shield.
+  event.respondWith(fetchRetrying(req, true));
 });
 
 /* ── Background Sync (PWA Phase 2) ──────────────────────────────────────────────

@@ -17,10 +17,34 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.17"
+APP_VERSION = "2.18"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.18",
+        "date": "July 19, 2026",
+        "summary": "The app now shields itself against the hosting platform's "
+                   "intermittent errors: when Hugging Face's own network layer "
+                   "drops a request before it ever reaches the app, the page now "
+                   "quietly retries instead of showing an error.",
+        "changes": [
+            "Hugging Face's network layer has been intermittently failing "
+            "requests before they reach the app at all — users saw random "
+            "\"error 500\" pages even though the app itself was healthy. The "
+            "app's built-in offline helper (the service worker) now recognizes "
+            "exactly that case and silently retries up to three times, so an "
+            "affected click almost always succeeds on its own.",
+            "This is safe even for form submissions: every real answer from the "
+            "app now carries a hidden marker, so a retry only ever happens when "
+            "it's provable the app never received the request in the first "
+            "place — nothing can be submitted twice.",
+            "The deploy pipeline got the same shield: the pre-deploy backup "
+            "step now retries through these platform hiccups instead of "
+            "aborting the whole deployment (which is what blocked two fixes "
+            "from shipping earlier today).",
+        ],
+    },
     {
         "version": "2.17",
         "date": "July 19, 2026",

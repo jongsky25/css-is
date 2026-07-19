@@ -29,7 +29,7 @@ What it does:
 
 Auth: HF token cached at ~/.cache/huggingface/token (user equityinhealth).
 """
-import os, sys, time, glob, shutil, sqlite3, subprocess, json, urllib.request
+import os, sys, time, glob, shutil, sqlite3, subprocess, json, urllib.error, urllib.request
 
 # Silence huggingface_hub's tqdm progress bars. When stdout is a pipe/file (every
 # backgrounded deploy), the upload bars don't get a carriage-return TTY — each
@@ -135,8 +135,18 @@ def pull_live_db():
 
 
 def _fetch_live_login():
+    # Retried: the hosting edge can 5xx a request the app never saw (it
+    # aborted two deploys in July 2026); a plain GET is always safe to re-send.
     req = urllib.request.Request(f"{LIVE_BASE}/login", headers={"User-Agent": "deploy_hf"})
-    return urllib.request.urlopen(req, timeout=30).read().decode("utf-8", "ignore")
+    last = None
+    for attempt in range(5):
+        if attempt:
+            time.sleep(2.0 * attempt)
+        try:
+            return urllib.request.urlopen(req, timeout=30).read().decode("utf-8", "ignore")
+        except (urllib.error.HTTPError, urllib.error.URLError) as e:
+            last = e
+    raise last
 
 
 def _load_env_local():

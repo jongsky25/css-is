@@ -131,3 +131,46 @@ def test_seq_replay_deduped(client, db_path):
     r2 = client.post("/seq", data=body)
     assert r2.status_code == 200
     assert r2.json().get("deduped") is True
+
+
+# ── Edge-retry shield (July 2026: the hosting edge 5xx'd requests the app never
+# saw — the SW retries any 5xx that lacks the app's X-CSS-App marker, so every
+# app-originated response must carry it, including crash 500s). ───────────────
+
+def test_every_response_carries_app_marker_header(client):
+    # success, redirect, and 4xx all stamp X-CSS-App
+    assert client.get("/login").headers.get("x-css-app") == "1"
+    assert client.get("/", follow_redirects=False).headers.get("x-css-app") == "1"
+    assert client.get("/no-such-page-zzz").headers.get("x-css-app") == "1"
+
+
+def test_unhandled_crash_500_still_carries_app_marker(app_mod):
+    # A 5xx WITHOUT the marker is the SW's "retry this, even a POST" signal —
+    # an in-app crash must never qualify, or a crashed write could re-execute.
+    # (Signed-in client: the auth gate would otherwise redirect the test route
+    # to /login before it can crash.)
+    from starlette.testclient import TestClient
+    import auth, storage as st
+    from tests.conftest import ROLE_USERS
+
+    @app_mod.app.get("/_test_boom_route")
+    def _boom():
+        raise RuntimeError("intentional test crash")
+
+    conn = st.connect(app_mod.DB)
+    u = st.get_admin_user(conn, ROLE_USERS["admin"]); conn.close()
+    c = TestClient(app_mod.app, raise_server_exceptions=False)
+    c.cookies.set(auth.COOKIE_NAME, auth.make_token(
+        {"id": u["id"], "username": u["username"], "role": u["role"]}))
+    r = c.get("/_test_boom_route")
+    assert r.status_code == 500
+    assert r.headers.get("x-css-app") == "1"
+
+
+def test_service_worker_has_edge_retry_shield(client):
+    sw = client.get("/sw.js").text
+    assert "x-css-app" in sw
+    assert "fetchRetrying" in sw
+    assert "isEdgeError" in sw
+    # writes are shielded too (no longer returned early before respondWith)
+    assert 'req.method !== "GET"' in sw
