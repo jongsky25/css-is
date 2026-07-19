@@ -1,5 +1,55 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-19 (v2.19 — AI calls no longer block the event loop → stop the recurring edge 500)
+
+Root-causes the recurring "error 500" that v2.18 shielded but never explained.
+v2.18 correctly observed the signature — `awselb/2.0` `503` and HF proxy `500`
+pages with **no** `X-CSS-App`/proxy headers, while the app replica looked
+healthy — and shipped a client-side service-worker retry. But the trigger is
+**in the app**, not (only) HF's edge: the AI-calling handlers are `async def`,
+yet `ai.ask()` → `_http_generate()` makes a **synchronous** `httpx.post`
+(connect 3s + total 8s + one retry ≈ up to ~16s). A blocking call on the event
+loop of the single uvicorn worker freezes uvicorn's own connection-accept loop,
+so for that window the replica accepts **no** new TCP connections and the
+fronting ELB/HF proxy answers every other in-flight request with an edge 5xx —
+exactly the observed 500/503. The hottest trigger is the landing-bar router
+(`POST /api/ai/route`, feature `nl_router`), confirmed firing on the live Space,
+so ordinary AI use intermittently 500s everyone else. This is why the v2.18
+retry reduced but never removed it, and why every prior in-app `AIError` fix
+couldn't: the 500 is emitted **outside** the app.
+
+Fix: move the blocking AI network call **off** the event loop.
+
+- **`ai_core.py`** — new `ask_async()` / `test_connection_async()` /
+  `test_groq_connection_async()` run the existing (synchronous) `ask()` /
+  `test_connection()` / `test_groq_connection()` in a worker thread via
+  `asyncio.to_thread`, so a slow or stuck AI reply can no longer freeze the
+  worker. sqlite connections are thread-bound, so the wrapper opens its **own**
+  short-lived connection inside the thread (from the caller connection's DB
+  path via `PRAGMA database_list`); the returned `interaction_id` is a plain int
+  the caller keeps using on its own connection (the row is already committed).
+  Same contract as before — returns `(result, interaction_id)` or raises
+  `AIError` — so callers' `except ai.AIError` fallbacks are unchanged. An
+  in-memory DB (tests only) has no reopenable path and falls back to a direct
+  in-thread call.
+- **`app.py`** — the 9 `ai.ask(...)` call sites (all in `async def` handlers:
+  `/api/ai/route`, `/admin/feedback/{fid}/ai-suggest`,
+  `/admin/ux-insights/analyze`, `/directory/cleanup/ai-suggest`,
+  `/activities/{token}/messages/ai-draft`, `/reports/csm-draft`,
+  `/reports/activities/{id}/ai-reanalyze`, `/ai-summary`, `/ai-mrr-draft`) now
+  `await ai.ask_async(...)`; the two `/admin/ai` test buttons `await` the async
+  test wrappers. No behavioural change beyond not blocking the loop.
+- **`tests/test_ai_core.py`** — `ask_async` offloads to a non-main thread, logs
+  `ok` on a row visible to the caller connection, propagates `AIError`, and
+  raises `AIUnavailable` when unconfigured.
+
+Operational note (separate from this code change): the live Space had
+`CSS_GEMINI_API_KEY` + `CSS_GEMINI_MODEL` + `CSS_GROQ_API_KEY` set. Removing the
+Gemini secret disables all AI at the config gate (`ai_configured()` is false, so
+`ask()` short-circuits before any HTTP call and every feature falls back to its
+deterministic behaviour) — the fastest way to stop the blocking calls
+immediately, independent of a redeploy.
+
 ## 2026-07-19 (v2.18 — edge-retry shield against HF routing failures)
 
 Since ~12:35 UTC today (immediately after a Space visibility toggle), ~40-60%
