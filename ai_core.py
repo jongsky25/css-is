@@ -23,7 +23,7 @@ allow-lists. This module's job stops at "here is what the model said."
 
 Configure with:
     CSS_GEMINI_API_KEY   (required to enable any AI feature)
-    CSS_GEMINI_MODEL     (default gemini-2.5-flash)
+    CSS_GEMINI_MODEL     (default gemini-3.5-flash)
     CSS_AI_TIMEOUT       (default 8.0 seconds, total request timeout)
     CSS_RL_AI            (ratelimit.py burst bucket override, "max/window")
 
@@ -50,7 +50,7 @@ import ratelimit as rl
 import storage as st
 import tzutil as tz
 
-GEMINI_MODEL_DEFAULT = "gemini-2.5-flash"
+GEMINI_MODEL_DEFAULT = "gemini-3.5-flash"
 GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta"
 
 GROQ_MODEL_DEFAULT = "llama-3.3-70b-versatile"

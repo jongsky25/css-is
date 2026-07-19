@@ -1,5 +1,18 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-19 (v2.17 — fix: default Gemini model closed to new API keys)
+
+Follow-up to v2.14's model bump. The live site's newly created
+`CSS_GEMINI_API_KEY` gets a 404 from Gemini for every call:
+`"This model models/gemini-2.5-flash is no longer available to new users."`
+— Google has closed `gemini-2.5-flash` to keys that didn't already use it.
+Per https://ai.google.dev/gemini-api/docs/models the current stable fast
+model is `gemini-3.5-flash`.
+
+- **`ai_core.py`** — `GEMINI_MODEL_DEFAULT` is now `gemini-3.5-flash` (was
+  `gemini-2.5-flash`); module docstring updated. `CSS_GEMINI_MODEL` still
+  overrides.
+
 ## 2026-07-19 (v2.16 — fix: unhandled 500 from a whitespace-tainted AI env var)
 
 Production incident: right after `CSS_GEMINI_API_KEY`/`CSS_GROQ_API_KEY` were

@@ -17,10 +17,26 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.16"
+APP_VERSION = "2.17"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.17",
+        "date": "July 19, 2026",
+        "summary": "The AI features now ask Google for its current model: the one the "
+                   "system was using is no longer offered to newly created access "
+                   "keys, so Google was turning every request away.",
+        "changes": [
+            "Google no longer offers the AI model the system was asking for "
+            "(gemini-2.5-flash) to newly created access keys — it answered every "
+            "request with \"this model is no longer available to new users.\" The "
+            "system now asks for Google's current model (gemini-3.5-flash) instead, "
+            "so the AI features work with a fresh access key.",
+            "If a different model is ever needed, the CSS_GEMINI_MODEL server "
+            "setting still overrides this default, same as before.",
+        ],
+    },
     {
         "version": "2.16",
         "date": "July 19, 2026",
