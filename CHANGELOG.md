@@ -1,5 +1,19 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-19 (v2.23 — deploy manifest was missing `qa_rules.py` → app crashed on startup)
+
+`ai_core.py` imports `qa_rules` at module load (the FAQ/learned-rules layer
+added in v2.22), but `qa_rules.py` was never added to `deploy_hf.py`'s
+`RUNTIME_PY` upload list. So the file exists in the repo and passes every local
+test, yet the deployed HF Space never received it — and on start-up
+`import ai_core as ai` (app.py) → `import qa_rules` (ai_core.py) raises
+`ModuleNotFoundError: No module named 'qa_rules'`, which aborts the whole
+uvicorn boot and takes the site down with a server error for everyone.
+
+Fix: add `"qa_rules.py"` to `RUNTIME_PY` in `deploy_hf.py` so it ships with
+every deploy. `qa_rules` only depends on the stdlib (`re`), so no further
+modules were missing.
+
 ## 2026-07-19 (v2.19 — AI calls no longer block the event loop → stop the recurring edge 500)
 
 Root-causes the recurring "error 500" that v2.18 shielded but never explained.

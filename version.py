@@ -17,10 +17,23 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.22"
+APP_VERSION = "2.23"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.23",
+        "date": "July 19, 2026",
+        "summary": "Fixed a start-up crash that could take the whole site offline after the "
+                   "previous release, caused by one of the new instant-answer files being "
+                   "left out of the upload.",
+        "changes": [
+            "The file that powers the new instant question-and-answer replies (added last "
+            "release) was not being included when the site is published, so the app could "
+            "fail to start and show a server error for everyone — it is now uploaded with "
+            "every deploy.",
+        ],
+    },
     {
         "version": "2.22",
         "date": "July 19, 2026",

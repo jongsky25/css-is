@@ -13,9 +13,13 @@ unit-tested end-to-end here — these two tests instead directly cover (1) that
 write_build_info() does what it claims, and (2) the specific ordering
 invariant that broke, so a future refactor can't silently reintroduce it.
 """
+import ast
+import os
 import re
 
 import deploy_hf
+
+REPO_ROOT = os.path.dirname(os.path.abspath(deploy_hf.__file__))
 
 
 def test_write_build_info_creates_expected_file(tmp_path, monkeypatch):
@@ -52,3 +56,65 @@ def test_ai_core_is_in_runtime_py():
     there (docs/AI_INTEGRATION_PLAN.md Phase 0 — 'every new .py module must
     be added to RUNTIME_PY or the Space silently runs without it')."""
     assert "ai_core.py" in deploy_hf.RUNTIME_PY
+
+
+def _first_party_modules():
+    """Names (without .py) of every module that lives in the repo root."""
+    return {
+        f[:-3]
+        for f in os.listdir(REPO_ROOT)
+        if f.endswith(".py") and not f.startswith("_")
+    }
+
+
+def _local_imports(pyfile, first_party):
+    """Top-level first-party modules imported by pyfile (`import X` / `from X import`)."""
+    tree = ast.parse(open(pyfile, encoding="utf-8").read())
+    deps = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                root = alias.name.split(".")[0]
+                if root in first_party:
+                    deps.add(root)
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            root = node.module.split(".")[0]
+            if root in first_party:
+                deps.add(root)
+    return deps
+
+
+def test_runtime_py_is_import_closed():
+    """Every first-party module imported (transitively) by a shipped module must
+    itself be in RUNTIME_PY — otherwise the Space receives a half-closure and
+    crashes on startup with ModuleNotFoundError.
+
+    This exact bug shipped once: ai_core.py imports qa_rules, but qa_rules.py
+    was missing from RUNTIME_PY, so `import ai_core` aborted the whole uvicorn
+    boot on the live Space ('No module named qa_rules'). version.py is uploaded
+    via ALLOW, so it counts as shipped too."""
+    first_party = _first_party_modules()
+    shipped = {name[:-3] for name in deploy_hf.RUNTIME_PY if name.endswith(".py")}
+    shipped.add("version")  # carried in ALLOW, not RUNTIME_PY
+
+    missing = {}
+    seen = set()
+    stack = list(shipped)
+    while stack:
+        mod = stack.pop()
+        if mod in seen:
+            continue
+        seen.add(mod)
+        path = os.path.join(REPO_ROOT, mod + ".py")
+        if not os.path.exists(path):
+            continue
+        for dep in _local_imports(path, first_party):
+            if dep not in shipped:
+                missing.setdefault(dep, set()).add(mod)
+            stack.append(dep)
+
+    assert not missing, (
+        "first-party modules imported by shipped code but absent from RUNTIME_PY "
+        "(add each to deploy_hf.RUNTIME_PY): "
+        + ", ".join(f"{m}.py (imported by {sorted(by)})" for m, by in sorted(missing.items()))
+    )
