@@ -17,10 +17,32 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.12"
+APP_VERSION = "2.13"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.13",
+        "date": "July 19, 2026",
+        "summary": "A new behind-the-scenes tool lets the office ask AI for a second "
+                   "opinion on the draft Filipino wording used in the public survey "
+                   "form — nothing changes automatically; a staff member still has to "
+                   "read each suggestion and decide whether to use it.",
+        "changes": [
+            "A new offline helper (not something respondents or staff see in the app) "
+            "can send the survey's draft Filipino text, side by side with the English "
+            "original, to AI and print back a suggested revision for each one, so the "
+            "bureau can review and tighten the wording faster.",
+            "It never edits the survey text itself and never shows anything to the "
+            "public — it only prints a report for a staff member to read, exactly like "
+            "asking a colleague to proofread a draft.",
+            "If a suggestion drops or changes a fill-in-the-blank part of a question "
+            "(like the name of the resource person), it is automatically flagged as "
+            "needing a manual fix rather than shown as ready to use.",
+            "Uses the same AI on/off switch, daily limits, and usage log as every "
+            "other AI feature at Admin → AI.",
+        ],
+    },
     {
         "version": "2.12",
         "date": "July 19, 2026",

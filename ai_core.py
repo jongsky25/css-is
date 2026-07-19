@@ -61,6 +61,7 @@ FEATURE_DEFAULTS = {
     "messages": 20,
     "harmonize": 20,
     "assistant_action": 15,
+    "i18n_review": 20,   # tools/i18n_review.py — one-off DRAFT-translation review
     "test": 5,   # the /admin/ai "Test connection" egress smoke test
 }
 FEATURES = tuple(FEATURE_DEFAULTS.keys())

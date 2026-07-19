@@ -1,5 +1,40 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-19 (v2.13 — Phase 10 of the AI integration plan: Filipino translation review)
+
+`docs/AI_INTEGRATION_PLAN.md` Phase 10, the lowest-priority, one-off phase — an
+offline dev tool rather than a web feature, so there is no route/RBAC surface.
+
+- **`tools/i18n_review.py`** (new) — CLI script (`python tools/i18n_review.py`)
+  that walks every DRAFT Filipino string in `i18n.py` (`B_TEXT_FIL`, `A_TEXT_FIL`,
+  `C_TEXT_FIL`, `CONSENT_TMPL_FIL`, `LIKERT5_FIL`, `OSQ4_FIL`, `REMARK_CHIPS_FIL`,
+  and the `UI` chrome dict — everything except the already-official
+  `ARTA_TEXT_FIL`), paired with its English source in `app.py`, and batches them
+  (20/call) through `ai.ask(feature="i18n_review", response_schema=...)` asking
+  for a natural, formal-register revision of each. Suggestions are validated
+  against a per-batch key allow-list (a key the model wasn't asked about is
+  dropped) and a placeholder-preservation check (a suggestion that drops or
+  rewrites a `{subject}`/`{months}` token is rejected with a "needs manual fix"
+  reason instead of being shown as usable) — same "model output is never
+  trusted" discipline as every other phase. The script only prints a
+  side-by-side report (optionally to `--out file.md`); it never writes back to
+  `i18n.py` — the office still copies in whatever wording it wants by hand.
+  Gates on the same `ai_configured()`/`ai_mode`/`feature_enabled()` checks as
+  every route-based feature, with a plain-language early-exit message for each.
+  Not added to `deploy_hf.py`'s `RUNTIME_PY`/`ALLOW` — it's a dev-machine-only
+  tool, never shipped to the Space, same as the existing `tools/contrast_check.py`.
+- **`ai_core.py`** — `"i18n_review": 20` added to `FEATURE_DEFAULTS`, which
+  automatically wires it into `/admin/ai`'s per-feature cap/flag settings (that
+  page iterates `ai.FEATURES`, no template change needed).
+- **`version.py`** — `APP_VERSION` 2.12 → 2.13, CHANGELOG entry prepended.
+- **`tests/test_i18n_review.py`** (new) — `build_review_items()` covers every
+  DRAFT group with unique keys and skips `ARTA_TEXT_FIL`; `review_batch()`
+  accepts a valid mocked suggestion, rejects one missing a required
+  placeholder, and ignores a key it never asked about (prompt-injection
+  guard); `main()`'s three early-exit gates (unconfigured, mode off, feature
+  disabled); an end-to-end run with `--limit`/`--out`; and that an `AIError`
+  mid-run is skipped and reported rather than crashing the script.
+
 ## 2026-07-19 (v2.06 — Phase 3 of the AI integration plan: UX Insights "Analyze now")
 
 `docs/AI_INTEGRATION_PLAN.md` Phase 3, the lowest-risk real feature (admin-only,
