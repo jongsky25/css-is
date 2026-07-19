@@ -62,6 +62,21 @@ def test_admin_ai_shows_not_configured_when_no_key(admin, db_path, monkeypatch):
     assert "not configured" in body
 
 
+def test_admin_ai_loads_with_gemini_unconfigured_and_groq_available(admin, db_path, monkeypatch):
+    """Regression: ai_available(conn) must be computed before the route's DB
+    connection is closed. Gemini unconfigured + Groq configured is exactly
+    the combination that made ai_available() fall through to a DB read
+    (fallback_enabled(conn)) instead of short-circuiting on ai_configured()
+    or groq_configured() alone — with no CSS_GROQ_API_KEY, the same call
+    short-circuits before ever touching the (by-then-closed) connection,
+    which is why that gap survived until a live Space with Groq configured
+    hit it as a 500 on every /admin/ai load."""
+    monkeypatch.delenv("CSS_GEMINI_API_KEY", raising=False)
+    monkeypatch.setenv("CSS_GROQ_API_KEY", "groq-key")
+    conn = st.connect(db_path); st.init_db(conn); _reset(conn); conn.close()
+    assert admin.get("/admin/ai").status_code == 200
+
+
 def test_admin_ai_harmonize_checkbox_defaults_unchecked(admin, db_path):
     """docs/AI_INTEGRATION_PLAN.md Phase 8: harmonize is the one feature that
     must render unchecked with no setting saved yet, unlike every other
