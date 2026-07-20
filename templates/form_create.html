@@ -41,9 +41,10 @@
   </div>
   {% endif %}
 
-  <!-- Filled in live by checkDuplicate() below when activity name + date match one
-       you already created recently — a heads-up, not a block: Save still works
-       either way, this just offers a shortcut to the existing activity instead. -->
+  <!-- Filled in live by checkDuplicate() below when activity name + date match an
+       existing activity (any creator, any age) — a heads-up, not a block: Save
+       still works either way, this just offers a shortcut to the existing
+       activity instead. -->
   <div class="dup-warn hidden" id="dupWarn" role="alert"></div>
 
   <form method="post" action="/create" data-loading="Creating survey…">
@@ -232,9 +233,11 @@ if (SUBMITTED_SPEAKERS.length) {
   addRow();   // start with one row
 }
 
-// Live "you already made this" heads-up (spot-feedback #67): a same-day duplicate
+// Live "this already exists" heads-up (spot-feedback #67): a same-day duplicate
 // activity created by mistake had no reachable Archive button once it aged off the
-// home feed, so catch the mistake here instead — before Save, not after. Purely
+// home feed, so catch the mistake here instead — before Save, not after. Matches on
+// title + date alone, regardless of who created the earlier one or how long ago, so
+// it also catches two different staff logging the same activity. Purely
 // informational: it never blocks Save, it just offers a shortcut to the activity
 // that's already there. Debounced so it only fires once typing settles.
 let dupCheckTimer = null;
@@ -257,8 +260,8 @@ function checkDuplicate() {
       ? '/activities/' + dup.event_token + '/manage' : '/monitor/' + dup.event_token;
     const respLine = dup.responses
       ? `, and it already has ${dup.responses} response${dup.responses === 1 ? '' : 's'}` : '';
-    box.innerHTML = `<strong>You already created “${name}” on this date</strong>`
-      + `<p>Made ${dup.created_at_human}${respLine}. If this was an accidental `
+    box.innerHTML = `<strong>“${name}” already exists on this date</strong>`
+      + `<p>Made ${dup.created_at_human}${respLine}. If this is an accidental `
       + `resubmit, open it instead of making a duplicate — otherwise just carry on.</p>`
       + `<p><a class="btn small" href="${link}">Open the existing activity</a></p>`;
     box.classList.remove('hidden');

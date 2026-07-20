@@ -4343,16 +4343,17 @@ async def create_survey(request: Request):
 
 
 @app.get("/create/check-duplicate")
-def create_check_duplicate(request: Request, activity_name: str = "", event_date: str = ""):
+def create_check_duplicate(activity_name: str = "", event_date: str = ""):
     """Live probe behind the /create screen's duplicate heads-up (spot-feedback
     #67: a same-day duplicate bureau event, created by mistake, left an empty
-    twin with no responses). Read-only, JSON, purely informational — it never
-    blocks Save, it only tells the create screen whether to show a "you already
-    made this" note. See storage.find_recent_duplicate_event for the match rule."""
+    twin with no responses). Matches on title + date alone — any creator, any
+    age — so it also catches two different staff logging the same activity.
+    Read-only, JSON, purely informational — it never blocks Save, it only tells
+    the create screen whether to show a "this already exists" note. See
+    storage.find_recent_duplicate_event for the match rule."""
     conn = get_conn()
     try:
-        dup = st.find_recent_duplicate_event(
-            conn, activity_name, event_date, request.state.user["username"])
+        dup = st.find_recent_duplicate_event(conn, activity_name, event_date)
     finally:
         conn.close()
     if not dup:
