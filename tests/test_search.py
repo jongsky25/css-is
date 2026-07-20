@@ -35,10 +35,11 @@ def test_nav_groups_track_the_index(app_mod):
     class U:
         def __init__(self, role): self.role = role
 
-    # viewer sees only the two ungated groups; admin sees them all
-    assert [g["name"] for g in app_mod.nav_groups_for(U("viewer"))] == ["Dashboard", "Reports"]
+    # viewer sees only the ungated groups; admin sees them all
+    assert [g["name"] for g in app_mod.nav_groups_for(U("viewer"))] == \
+        ["Dashboard", "Wellness", "Reports"]
     assert [g["name"] for g in app_mod.nav_groups_for(U("admin"))] == \
-        ["Dashboard", "Reports", "Data entry", "Manage", "Admin"]
+        ["Dashboard", "Wellness", "Reports", "Data entry", "Manage", "Admin"]
     # in_nav=False items stay out of the menu even when the cap is met
     admin_nav_urls = {it["url"] for g in app_mod.nav_groups_for(U("admin")) for it in g["items"]}
     assert "/directory/cleanup" not in admin_nav_urls

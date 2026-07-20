@@ -17,10 +17,32 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.24"
+APP_VERSION = "2.25"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.25",
+        "date": "July 20, 2026",
+        "summary": "New Wellness module: request your 2-hour weekly wellness break, have "
+                   "your section chief approve it, and grow a little companion plant as "
+                   "you take care of yourself.",
+        "changes": [
+            "After signing in you now choose between CSS (surveys & reports) and Wellness "
+            "— the new Wellness card on the home page and the Wellness menu both lead there.",
+            "Everyone gets 2 hours of wellness break per week (DM 2025-0135), requested "
+            "one hour at a time. The app won't let a week go over 2 hours, and denied or "
+            "withdrawn requests give the hour back.",
+            "Your section chief approves or denies requests from their own section; "
+            "administrators handle everyone else (and the chiefs' own requests).",
+            "After a break you answer a 2-minute check-in — how you felt before and after, "
+            "and what you did. That completes the break, earns points and badges, and "
+            "grows your companion plant through six stages.",
+            "Chiefs and administrators get a Wellness utilization dashboard (per section "
+            "and per person, week by week) and a downloadable register (CSV) for the "
+            "monitoring report.",
+        ],
+    },
     {
         "version": "2.24",
         "date": "July 20, 2026",

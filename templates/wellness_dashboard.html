@@ -1,0 +1,108 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, empty_state %}
+{% block title %}Wellness utilization{% endblock %}
+{% block content %}
+<style>
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px;
+           padding:1.2rem 1.4rem; margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .weekbar { display:flex; align-items:center; gap:.9rem; flex-wrap:wrap; margin-bottom:1.1rem; }
+  .weekbar a.nav { text-decoration:none; font-weight:800; border:1px solid var(--line); border-radius:10px;
+                   padding:.3rem .7rem; color:var(--ink-soft); background:var(--surface); }
+  .weekbar .cur { font-weight:800; }
+  .tiles { display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:.9rem; margin-bottom:1.1rem; }
+  .tile { border:1px solid var(--line); background:var(--surface); border-radius:14px; padding:.9rem 1rem; }
+  .tile .n { font-size:1.6rem; font-weight:800; }
+  .tile .l { color:var(--soft); font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; }
+  table.t { width:100%; border-collapse:collapse; }
+  .t td, .t th { padding:.5rem .6rem; border-bottom:1px solid var(--line); text-align:left; font-size:.9rem; }
+  .t td.num, .t th.num { text-align:right; }
+  .bar { height:8px; border-radius:999px; background:var(--bg); border:1px solid var(--line);
+         overflow:hidden; min-width:110px; }
+  .bar > span { display:block; height:100%; background:var(--accent); }
+  .pill { font-size:.72rem; font-weight:700; padding:.14rem .55rem; border-radius:999px; border:1px solid var(--line); }
+  .pill.warn { color:var(--amber); border-color:var(--amber-ln); background:var(--amber-bg); }
+  .muted { color:var(--soft); }
+  h2 { margin:.1rem 0 .7rem; font-size:1.05rem; }
+  .exp { margin-left:auto; }
+  .exp a { font-weight:700; }
+</style>
+
+{{ page_header("Wellness utilization", "How the bureau is using its 2-hour weekly wellness break — the live view behind the monitoring register.") }}
+
+<div class="weekbar">
+  <a class="nav" href="/wellness/dashboard?week={{ prev_week }}" aria-label="Previous week">‹</a>
+  <span class="cur">Week of {{ week_start }} – {{ week_end }}{% if is_current %} <span class="muted">(this week)</span>{% endif %}</span>
+  <a class="nav" href="/wellness/dashboard?week={{ next_week }}" aria-label="Next week">›</a>
+  <span class="exp"><a href="/wellness/export.csv">⬇ Download the register (CSV)</a></span>
+</div>
+
+<div class="tiles">
+  <div class="tile"><div class="n">{{ data.week_pct }}%</div><div class="l">Entitlement used</div>
+    <div class="muted" style="font-size:.78rem;">{{ data.week_used }} of {{ data.week_entitled }} h</div></div>
+  <div class="tile"><div class="n">{{ data.queue|length }}</div><div class="l">Pending requests</div></div>
+  <div class="tile"><div class="n">{% if data.reflect_rate is not none %}{{ data.reflect_rate }}%{% else %}—{% endif %}</div>
+    <div class="l">Reflections done</div>
+    <div class="muted" style="font-size:.78rem;">of all completed breaks</div></div>
+</div>
+
+<div class="panel">
+  <h2>By section</h2>
+  <table class="t">
+    <thead><tr><th>Section</th><th class="num">People</th><th class="num">Hours used</th>
+               <th class="num">Entitled</th><th style="width:30%">Utilization</th></tr></thead>
+    <tbody>
+    {% for s in data.sections %}
+      <tr>
+        <td>{{ s.section }}</td>
+        <td class="num">{{ s.people }}</td>
+        <td class="num">{{ s.used }}</td>
+        <td class="num">{{ s.entitled }}</td>
+        <td><div class="bar" role="img" aria-label="{{ s.pct }} percent used"><span style="width:{{ [s.pct, 100]|min }}%"></span></div></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="panel">
+  <h2>By person</h2>
+  <table class="t">
+    <thead><tr><th>Employee</th><th>Section</th><th class="num">Pending</th>
+               <th class="num">Approved</th><th class="num">Completed</th><th class="num">Left</th></tr></thead>
+    <tbody>
+    {% for r in data.rows %}
+      <tr>
+        <td>{{ r.name }}</td>
+        <td>{{ r.section }}</td>
+        <td class="num">{{ r.pending or "" }}</td>
+        <td class="num">{{ r.approved or "" }}</td>
+        <td class="num">{{ r.completed or "" }}</td>
+        <td class="num {{ 'muted' if not r.left }}">{{ r.left }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="panel">
+  <h2>Pending queue (all weeks)</h2>
+  {% if data.queue %}
+  <table class="t">
+    <thead><tr><th>Who</th><th>Section</th><th>Break</th><th>Activity</th><th class="num">Waiting</th></tr></thead>
+    <tbody>
+    {% for c in data.queue %}
+      <tr>
+        <td>{{ c.person_name }}</td>
+        <td>{{ c.section or "—" }}</td>
+        <td>{{ c.break_date }} · {{ c.start_time }}</td>
+        <td>{{ c.activity_label }}</td>
+        <td class="num">{% if c.age_days >= 2 %}<span class="pill warn">{{ c.age_days }} d</span>{% else %}{{ c.age_days }} d{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  {{ empty_state("Queue is clear", "Every request has been decided.", "✓") }}
+  {% endif %}
+</div>
+{% endblock %}

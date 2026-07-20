@@ -1,5 +1,45 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-20 (v2.25 — Wellness module: gamified 2-hour weekly wellness break, DM 2025-0135)
+
+New module alongside the CSS: after login the home page offers two doors —
+**CSS (surveys & reports)** and **Wellness (my 2-hour break)** — plus a
+"Wellness" nav group visible to every signed-in role.
+
+What it does:
+
+- **Break requests** (`/wellness/apply`): 1-hour slots against the DM's
+  2-hour weekly entitlement. `storage.create_wellness_claim` enforces the cap
+  (pending+approved+completed hours per Mon–Sun week, keyed on a `week_start`
+  column), rejects backdated/weekend/duplicate slots, and only offers the
+  DM's allowed activity categories.
+- **Section-chief approval** (`/wellness/approvals`): the approver is resolved
+  through the directory (`admin_user.rp_id → resource_person.org_unit_id`,
+  designation in {Section Head, Section Chief, Division Chief}) — not a role.
+  Admins are the fallback for unlinked accounts and for chiefs' own requests;
+  nobody decides their own claim. Decisions, filings, cancellations and
+  completions are all audited.
+- **Post-break check-in** (`/wellness/claims/{id}/complete`): mood before/after
+  (1–5), what they did, one takeaway → marks the claim completed and stores a
+  `wellness_reflection` row.
+- **Gamification**: points/level/streak are DERIVED from claim+reflection rows
+  (only badge awards persist in `wellness_badge`), so the fun layer can't
+  drift from the record. A six-stage inline-SVG companion plant grows with the
+  level on the hub (`/wellness`).
+- **Monitoring** (`/wellness/dashboard`, chiefs/admins): weekly utilization by
+  section and person, pending-queue aging, reflection completion — plus the
+  register export (`/wellness/export.csv`) for the Administrative Service's
+  monitoring database.
+
+Schema: three new tables (`wellness_claim`, `wellness_reflection`,
+`wellness_badge`) created idempotently in `init_db`. New templates
+`wellness_*.html`; new tests `tests/test_wellness.py` (13 tests: entitlement,
+approver routing, flow + points, in-handler RBAC, export).
+
+Note for rollout: accounts not linked to a directory person (`rp_id` NULL)
+show "—" as their section and their requests route to admins — linking
+accounts in Admin → Users makes the chief routing work.
+
 ## 2026-07-20 (v2.24 — duplicate-activity heads-up now matches across creators, not just same-login/6h)
 
 Spot-feedback report: a real duplicate ("DOH UHC Fund for Zero Balance Billing

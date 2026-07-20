@@ -27,7 +27,7 @@ import sqlite3
 import uuid
 import re
 import difflib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import pandas as pd
 import css_is_engine as eng
 import tzutil as tz  # local (PH) wall-clock — never stamp with the server clock
@@ -231,6 +231,44 @@ def init_db(conn):
     CREATE TABLE IF NOT EXISTS app_setting (     -- small key/value store for app config
         key   TEXT PRIMARY KEY,                  -- e.g. 'backup_enabled', 'backup_freq'
         value TEXT
+    );
+    """)
+    # --- Wellness module (DOH DM 2025-0135: the 2-hour weekly wellness break) ---
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS wellness_claim (  -- one row per requested 1-hour break
+        id          INTEGER PRIMARY KEY,
+        user_id     INTEGER NOT NULL REFERENCES admin_user(id),
+        week_start  TEXT NOT NULL,               -- Monday of the break's week 'YYYY-MM-DD' (entitlement key)
+        break_date  TEXT NOT NULL,               -- 'YYYY-MM-DD'
+        start_time  TEXT NOT NULL,               -- 'HH:MM' (24h)
+        hours       INTEGER NOT NULL DEFAULT 1,  -- always 1: the DM's 2 h/week is claimed in 1-h slots
+        activity    TEXT NOT NULL,               -- key into WELLNESS_ACTIVITIES (the DM's allowed list)
+        note        TEXT,
+        status      TEXT NOT NULL DEFAULT 'pending',  -- pending/approved/denied/cancelled/completed
+        decided_by  INTEGER REFERENCES admin_user(id),
+        decided_at  TEXT,
+        decide_note TEXT,                        -- approver's remark (e.g. reason for denial)
+        created_at  TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_wellness_claim_user_week ON wellness_claim(user_id, week_start);
+    CREATE INDEX IF NOT EXISTS idx_wellness_claim_status    ON wellness_claim(status);
+
+    CREATE TABLE IF NOT EXISTS wellness_reflection (  -- post-break check-in, one per claim
+        id            INTEGER PRIMARY KEY,
+        claim_id      INTEGER NOT NULL UNIQUE REFERENCES wellness_claim(id),
+        mood_before   INTEGER,                   -- 1-5 before the break
+        mood_after    INTEGER,                   -- 1-5 after
+        activity_done TEXT,                      -- what they actually did
+        takeaway      TEXT,                      -- one thing they're taking from it
+        submitted_at  TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS wellness_badge (  -- persisted awards (points/streaks are derived)
+        id         INTEGER PRIMARY KEY,
+        user_id    INTEGER NOT NULL REFERENCES admin_user(id),
+        badge      TEXT NOT NULL,                -- key into WELLNESS_BADGES
+        awarded_at TEXT,
+        UNIQUE(user_id, badge)
     );
     """)
     _add_missing_columns(conn)
@@ -4384,3 +4422,461 @@ def concat_atoms(base, add):
         else:
             cols[c] = pd.concat([b, a], ignore_index=True).array
     return pd.DataFrame(cols)
+
+
+# =====================================================================
+# Wellness module — the DOH DM 2025-0135 two-hour weekly wellness break.
+# Claims are filed in 1-hour slots (max 2/week), approved by the claimant's
+# section chief (resolved through the directory), closed out with a short
+# reflection, and rolled up for the Administrative Service's monitoring
+# register. Gamification (points / level / streak / avatar stage) is DERIVED
+# from the claim + reflection rows on every read — only badge awards persist —
+# so the fun layer can never drift out of sync with the underlying record.
+# =====================================================================
+
+WELLNESS_WEEKLY_HOURS = 2          # the DM's per-week entitlement
+WELLNESS_STATUSES = ("pending", "approved", "denied", "cancelled", "completed")
+# Statuses that consume the weekly entitlement (denied/cancelled free the hour).
+_WELLNESS_COUNTED = ("pending", "approved", "completed")
+
+# The DM's encouraged activities (smoking/vaping/alcohol are explicitly out).
+WELLNESS_ACTIVITIES = [
+    ("exercise",      "Physical exercise"),
+    ("meditation",    "Meditation & relaxation"),
+    ("mental_health", "Mental health activity / consultation"),
+    ("hobby",         "Hobby & creative recreation"),
+]
+
+# Designations (directory `resource_person.designation`) that make someone the
+# approving chief of their org unit — same vocabulary the certificate
+# signatories use (_SIGNATORY_DESIGNATIONS).
+_WELLNESS_CHIEF_DESIGNATIONS = ("section head", "section chief", "division chief")
+
+# Cumulative point thresholds for levels 1..6; the avatar stage == the level.
+WELLNESS_LEVELS = [0, 30, 75, 150, 250, 400]
+WELLNESS_STAGE_NAMES = ["Seed", "Sprout", "Seedling", "Budding", "In bloom", "Flourishing"]
+
+# Points: completed break +10, reflection +5, both hours in one week +5,
+# +2 per week of the current streak.
+WELLNESS_PTS_BREAK = 10
+WELLNESS_PTS_REFLECTION = 5
+WELLNESS_PTS_FULL_WEEK = 5
+WELLNESS_PTS_STREAK_WEEK = 2
+
+WELLNESS_BADGES = {
+    "first_break": ("First break", "Completed your first wellness break"),
+    "full_week":   ("Full week",   "Used the full 2 hours in one week"),
+    "reflect_5":   ("Reflective",  "Wrote 5 post-break reflections"),
+    "streak_4":    ("On a roll",   "Wellness breaks 4 weeks in a row"),
+    "streak_12":   ("Habit built", "Wellness breaks 12 weeks in a row"),
+}
+
+
+def wellness_week_start(d=None):
+    """Monday of `d`'s week (PH-local today when d is None), as 'YYYY-MM-DD'.
+    The whole module keys entitlement on this string."""
+    d = d or tz.today_local()
+    return (d - timedelta(days=d.weekday())).isoformat()
+
+
+def wellness_hours_used(conn, user_id, week_start):
+    """Hours of the week's entitlement already spoken for (pending + approved +
+    completed; denied/cancelled don't count)."""
+    qs = ",".join("?" * len(_WELLNESS_COUNTED))
+    return conn.execute(
+        f"SELECT COALESCE(SUM(hours),0) FROM wellness_claim "
+        f"WHERE user_id=? AND week_start=? AND status IN ({qs})",
+        (user_id, week_start, *_WELLNESS_COUNTED)).fetchone()[0]
+
+
+def create_wellness_claim(conn, user_id, break_date, start_time, activity, note=None):
+    """File a 1-hour break request. Validates the DM's rules and raises
+    ValueError with a human-readable reason; returns the new claim id."""
+    try:
+        d = date.fromisoformat((break_date or "").strip())
+    except ValueError:
+        raise ValueError("Pick a valid date for your break.")
+    start_time = (start_time or "").strip()
+    if not re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", start_time):
+        raise ValueError("Pick a valid start time (HH:MM).")
+    if activity not in dict(WELLNESS_ACTIVITIES):
+        raise ValueError("Pick one of the allowed wellness activities.")
+    if d < tz.today_local():
+        raise ValueError("Breaks are scheduled ahead — pick today or a future date.")
+    if d.weekday() >= 5:
+        raise ValueError("Wellness breaks are taken within the work week (Mon–Fri).")
+    ws = wellness_week_start(d)
+    if wellness_hours_used(conn, user_id, ws) + 1 > WELLNESS_WEEKLY_HOURS:
+        raise ValueError(f"That week's {WELLNESS_WEEKLY_HOURS}-hour wellness "
+                         "entitlement is already fully claimed.")
+    dup = conn.execute(
+        "SELECT 1 FROM wellness_claim WHERE user_id=? AND break_date=? AND "
+        "start_time=? AND status IN ('pending','approved','completed')",
+        (user_id, d.isoformat(), start_time)).fetchone()
+    if dup:
+        raise ValueError("You already have a break at that date and time.")
+    cur = conn.execute(
+        """INSERT INTO wellness_claim(user_id, week_start, break_date, start_time,
+                                      hours, activity, note, status, created_at)
+           VALUES (?,?,?,?,1,?,?,'pending',?)""",
+        (user_id, ws, d.isoformat(), start_time, activity,
+         (note or "").strip() or None, tz.now_iso()))
+    conn.commit()
+    return cur.lastrowid
+
+
+def get_wellness_claim(conn, claim_id):
+    row = conn.execute(
+        """SELECT c.id, c.user_id, c.week_start, c.break_date, c.start_time, c.hours,
+                  c.activity, c.note, c.status, c.decided_by, c.decided_at,
+                  c.decide_note, c.created_at, u.username,
+                  rp.name, ou.short_name, ou.path,
+                  r.id IS NOT NULL, r.mood_before, r.mood_after
+           FROM wellness_claim c
+           JOIN admin_user u ON u.id = c.user_id
+           LEFT JOIN resource_person rp ON rp.id = u.rp_id
+           LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id
+           LEFT JOIN wellness_reflection r ON r.claim_id = c.id
+           WHERE c.id=?""", (claim_id,)).fetchone()
+    if not row:
+        return None
+    return {"id": row[0], "user_id": row[1], "week_start": row[2],
+            "break_date": row[3], "start_time": row[4], "hours": row[5],
+            "activity": row[6], "activity_label": dict(WELLNESS_ACTIVITIES).get(row[6], row[6]),
+            "note": row[7], "status": row[8], "decided_by": row[9],
+            "decided_at": row[10], "decide_note": row[11], "created_at": row[12],
+            "username": row[13], "person_name": row[14] or row[13],
+            "section": row[15] or (row[16].rsplit("/", 1)[-1] if row[16] else None),
+            "has_reflection": bool(row[17]),
+            "mood_before": row[18], "mood_after": row[19]}
+
+
+def list_my_wellness_claims(conn, user_id, limit=25):
+    """The employee's own claims, newest break first."""
+    ids = [r[0] for r in conn.execute(
+        "SELECT id FROM wellness_claim WHERE user_id=? "
+        "ORDER BY break_date DESC, start_time DESC LIMIT ?", (user_id, limit))]
+    return [get_wellness_claim(conn, i) for i in ids]
+
+
+# ---- approver resolution ------------------------------------------------
+
+def get_wellness_approvers(conn, user_id):
+    """Account ids that may decide this employee's claims through the directory:
+    active accounts of section/division chiefs in the claimant's own org unit,
+    never the claimant themselves. Empty when the account has no directory link
+    or the unit has no chief with an account — those claims fall to admins."""
+    qs = ",".join("?" * len(_WELLNESS_CHIEF_DESIGNATIONS))
+    rows = conn.execute(f"""
+        SELECT DISTINCT ca.id
+        FROM admin_user me
+        JOIN resource_person mine  ON mine.id = me.rp_id
+        JOIN resource_person chief ON chief.org_unit_id = mine.org_unit_id
+                                   AND chief.is_internal = 1
+        JOIN admin_user ca ON ca.rp_id = chief.id AND ca.active = 1
+        WHERE me.id = ? AND ca.id != me.id
+          AND LOWER(TRIM(COALESCE(chief.designation,''))) IN ({qs})
+    """, (user_id, *_WELLNESS_CHIEF_DESIGNATIONS)).fetchall()
+    return [r[0] for r in rows]
+
+
+def is_wellness_approver(conn, user, claim_user_id):
+    """May `user` (the request's user dict) decide claims filed by
+    `claim_user_id`? Admins always may — they are the fallback for employees
+    without a directory link and for the chiefs' own claims. Nobody decides
+    their own claim."""
+    if user["id"] == claim_user_id:
+        return False
+    if user.get("role") == "admin":
+        return True
+    return user["id"] in get_wellness_approvers(conn, claim_user_id)
+
+
+def user_is_wellness_chief(conn, user):
+    """Does this user see the approvals queue at all? Admins, plus anyone whose
+    directory designation marks them a section/division chief."""
+    if user.get("role") == "admin":
+        return True
+    qs = ",".join("?" * len(_WELLNESS_CHIEF_DESIGNATIONS))
+    row = conn.execute(f"""
+        SELECT 1 FROM admin_user a JOIN resource_person rp ON rp.id = a.rp_id
+        WHERE a.id=? AND rp.is_internal=1
+          AND LOWER(TRIM(COALESCE(rp.designation,''))) IN ({qs}) LIMIT 1
+    """, (user["id"], *_WELLNESS_CHIEF_DESIGNATIONS)).fetchone()
+    return bool(row)
+
+
+def list_wellness_approvals(conn, user):
+    """Pending claims this user may decide, oldest break first. Admins see every
+    pending claim except their own; a chief sees their own unit's (again minus
+    their own — those go to an admin)."""
+    base = """
+        SELECT c.id FROM wellness_claim c
+        JOIN admin_user u ON u.id = c.user_id
+        LEFT JOIN resource_person rp ON rp.id = u.rp_id
+        WHERE c.status = 'pending' AND c.user_id != ?
+    """
+    if user.get("role") == "admin":
+        rows = conn.execute(base + " ORDER BY c.break_date, c.start_time",
+                            (user["id"],)).fetchall()
+    elif user_is_wellness_chief(conn, user):
+        rows = conn.execute(base + """
+          AND rp.org_unit_id IS NOT NULL
+          AND rp.org_unit_id = (SELECT r2.org_unit_id FROM admin_user a2
+                                JOIN resource_person r2 ON r2.id = a2.rp_id
+                                WHERE a2.id = ?)
+          ORDER BY c.break_date, c.start_time""", (user["id"], user["id"])).fetchall()
+    else:
+        rows = []
+    return [get_wellness_claim(conn, r[0]) for r in rows]
+
+
+def decide_wellness_claim(conn, claim_id, user, action, note=None):
+    """Approve or deny a pending claim. Raises ValueError (bad state/input) or
+    PermissionError (not this user's to decide). Returns the updated claim."""
+    claim = get_wellness_claim(conn, claim_id)
+    if not claim:
+        raise ValueError("That break request no longer exists.")
+    if claim["status"] != "pending":
+        raise ValueError("That break request has already been decided.")
+    if action not in ("approve", "deny"):
+        raise ValueError("Unknown decision.")
+    if not is_wellness_approver(conn, user, claim["user_id"]):
+        raise PermissionError("Only the claimant's section chief (or an admin) "
+                              "can decide this request.")
+    conn.execute(
+        "UPDATE wellness_claim SET status=?, decided_by=?, decided_at=?, decide_note=? "
+        "WHERE id=?",
+        ("approved" if action == "approve" else "denied", user["id"], tz.now_iso(),
+         (note or "").strip() or None, claim_id))
+    conn.commit()
+    return get_wellness_claim(conn, claim_id)
+
+
+def cancel_wellness_claim(conn, claim_id, user_id):
+    """The claimant withdraws their own request (pending or approved-but-not-
+    taken); the hour returns to the week's entitlement."""
+    claim = get_wellness_claim(conn, claim_id)
+    if not claim or claim["user_id"] != user_id:
+        raise ValueError("That break request isn't yours to cancel.")
+    if claim["status"] not in ("pending", "approved"):
+        raise ValueError("Only a pending or approved break can be cancelled.")
+    conn.execute("UPDATE wellness_claim SET status='cancelled' WHERE id=?", (claim_id,))
+    conn.commit()
+    return claim
+
+
+def complete_wellness_claim(conn, claim_id, user_id, mood_before, mood_after,
+                            activity_done, takeaway):
+    """Close out an approved break with its post-break reflection (they are one
+    move: answering the questions is what marks the break taken). Returns
+    (claim, newly_awarded_badges)."""
+    claim = get_wellness_claim(conn, claim_id)
+    if not claim or claim["user_id"] != user_id:
+        raise ValueError("That break request isn't yours.")
+    if claim["status"] != "approved":
+        raise ValueError("Only an approved break can be completed.")
+    if claim["break_date"] > tz.today_local().isoformat():
+        raise ValueError("You can check in once the break's day arrives.")
+    try:
+        mb, ma = int(mood_before), int(mood_after)
+    except (TypeError, ValueError):
+        raise ValueError("Rate your mood before and after (1–5).")
+    if not (1 <= mb <= 5 and 1 <= ma <= 5):
+        raise ValueError("Mood ratings go from 1 to 5.")
+    activity_done = (activity_done or "").strip()
+    if not activity_done:
+        raise ValueError("Tell us what you did on your break.")
+    conn.execute("UPDATE wellness_claim SET status='completed' WHERE id=?", (claim_id,))
+    conn.execute(
+        """INSERT INTO wellness_reflection(claim_id, mood_before, mood_after,
+                                           activity_done, takeaway, submitted_at)
+           VALUES (?,?,?,?,?,?)""",
+        (claim_id, mb, ma, activity_done, (takeaway or "").strip() or None, tz.now_iso()))
+    new_badges = wellness_award_badges(conn, user_id)
+    conn.commit()
+    return get_wellness_claim(conn, claim_id), new_badges
+
+
+# ---- gamification (derived) ----------------------------------------------
+
+def _wellness_counts(conn, user_id):
+    """The raw counts the points formula and badges share."""
+    completed = conn.execute(
+        "SELECT COUNT(*) FROM wellness_claim WHERE user_id=? AND status='completed'",
+        (user_id,)).fetchone()[0]
+    reflections = conn.execute(
+        "SELECT COUNT(*) FROM wellness_reflection r JOIN wellness_claim c "
+        "ON c.id = r.claim_id WHERE c.user_id=?", (user_id,)).fetchone()[0]
+    full_weeks = conn.execute(
+        "SELECT COUNT(*) FROM (SELECT week_start FROM wellness_claim "
+        "WHERE user_id=? AND status='completed' GROUP BY week_start "
+        "HAVING SUM(hours) >= ?)", (user_id, WELLNESS_WEEKLY_HOURS)).fetchone()[0]
+    return completed, reflections, full_weeks
+
+
+def wellness_streak(conn, user_id):
+    """Consecutive weeks with at least one completed break, counted back from
+    the current week — which doesn't break the streak while still in progress
+    (no completed break YET this week starts counting from last week)."""
+    weeks = {r[0] for r in conn.execute(
+        "SELECT DISTINCT week_start FROM wellness_claim "
+        "WHERE user_id=? AND status='completed'", (user_id,))}
+    if not weeks:
+        return 0
+    cur = date.fromisoformat(wellness_week_start())
+    if cur.isoformat() not in weeks:
+        cur -= timedelta(days=7)
+    streak = 0
+    while cur.isoformat() in weeks:
+        streak += 1
+        cur -= timedelta(days=7)
+    return streak
+
+
+def wellness_stats(conn, user_id):
+    """Everything the hub page shows: points, level, avatar stage, streak,
+    badges, and progress toward the next stage."""
+    completed, reflections, full_weeks = _wellness_counts(conn, user_id)
+    streak = wellness_streak(conn, user_id)
+    points = (completed * WELLNESS_PTS_BREAK + reflections * WELLNESS_PTS_REFLECTION
+              + full_weeks * WELLNESS_PTS_FULL_WEEK + streak * WELLNESS_PTS_STREAK_WEEK)
+    level = sum(1 for t in WELLNESS_LEVELS if points >= t)          # 1..6
+    stage = min(level, len(WELLNESS_STAGE_NAMES))
+    next_at = WELLNESS_LEVELS[level] if level < len(WELLNESS_LEVELS) else None
+    prev_at = WELLNESS_LEVELS[level - 1]
+    progress = 100 if next_at is None else round(
+        (points - prev_at) * 100 / (next_at - prev_at))
+    badges = [{"key": r[0], "awarded_at": r[1],
+               "label": WELLNESS_BADGES.get(r[0], (r[0], ""))[0],
+               "blurb": WELLNESS_BADGES.get(r[0], (r[0], ""))[1]}
+              for r in conn.execute(
+                  "SELECT badge, awarded_at FROM wellness_badge WHERE user_id=? "
+                  "ORDER BY awarded_at", (user_id,))]
+    return {"points": points, "level": level, "stage": stage,
+            "stage_name": WELLNESS_STAGE_NAMES[stage - 1],
+            "streak": streak, "completed": completed, "reflections": reflections,
+            "full_weeks": full_weeks, "badges": badges,
+            "next_at": next_at, "progress": progress}
+
+
+def wellness_award_badges(conn, user_id):
+    """Grant any newly earned badges (idempotent — UNIQUE(user_id,badge) makes
+    re-checks free). Returns the labels of badges awarded on THIS call. Does not
+    commit — callers commit with their surrounding write."""
+    completed, reflections, full_weeks = _wellness_counts(conn, user_id)
+    streak = wellness_streak(conn, user_id)
+    earned = []
+    if completed >= 1:
+        earned.append("first_break")
+    if full_weeks >= 1:
+        earned.append("full_week")
+    if reflections >= 5:
+        earned.append("reflect_5")
+    if streak >= 4:
+        earned.append("streak_4")
+    if streak >= 12:
+        earned.append("streak_12")
+    fresh = []
+    for b in earned:
+        cur = conn.execute(
+            "INSERT OR IGNORE INTO wellness_badge(user_id, badge, awarded_at) "
+            "VALUES (?,?,?)", (user_id, b, tz.now_iso()))
+        if cur.rowcount:
+            fresh.append(WELLNESS_BADGES[b][0])
+    return fresh
+
+
+# ---- monitoring dashboard + the submission register -----------------------
+
+def wellness_dashboard_data(conn, week_start):
+    """One week's utilization for the monitoring page: a per-person table with
+    section, hours by status and reflection state; a per-section rollup against
+    the 2 h/person entitlement; the all-weeks pending queue with its age; and
+    the overall reflection completion rate."""
+    people = conn.execute("""
+        SELECT u.id, u.username, rp.name, ou.short_name, ou.path,
+               COALESCE(SUM(CASE WHEN c.status='pending'   THEN c.hours END), 0),
+               COALESCE(SUM(CASE WHEN c.status='approved'  THEN c.hours END), 0),
+               COALESCE(SUM(CASE WHEN c.status='completed' THEN c.hours END), 0),
+               COUNT(r.id)
+        FROM admin_user u
+        LEFT JOIN resource_person rp ON rp.id = u.rp_id
+        LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id
+        LEFT JOIN wellness_claim c ON c.user_id = u.id AND c.week_start = ?
+        LEFT JOIN wellness_reflection r ON r.claim_id = c.id
+        WHERE u.active = 1
+        GROUP BY u.id ORDER BY ou.path, rp.name, u.username
+    """, (week_start,)).fetchall()
+    rows = [{"user_id": p[0], "username": p[1], "name": p[2] or p[1],
+             "section": p[3] or (p[4].rsplit("/", 1)[-1] if p[4] else "—"),
+             "pending": p[5], "approved": p[6], "completed": p[7],
+             "reflections": p[8],
+             "used": p[6] + p[7], "left": max(0, WELLNESS_WEEKLY_HOURS - p[6] - p[7])}
+            for p in people]
+    sections = {}
+    for r in rows:
+        s = sections.setdefault(r["section"], {"section": r["section"], "people": 0,
+                                               "used": 0, "completed": 0})
+        s["people"] += 1
+        s["used"] += r["used"]
+        s["completed"] += r["completed"]
+    for s in sections.values():
+        s["entitled"] = s["people"] * WELLNESS_WEEKLY_HOURS
+        s["pct"] = round(s["used"] * 100 / s["entitled"]) if s["entitled"] else 0
+    today = tz.today_local().isoformat()
+    queue = [dict(get_wellness_claim(conn, r[0]),
+                  age_days=(date.fromisoformat(today)
+                            - date.fromisoformat(r[1])).days)
+             for r in conn.execute(
+                 "SELECT id, date(created_at) FROM wellness_claim "
+                 "WHERE status='pending' ORDER BY created_at")]
+    done, reflected = conn.execute(
+        "SELECT COUNT(*), COUNT(r.id) FROM wellness_claim c "
+        "LEFT JOIN wellness_reflection r ON r.claim_id = c.id "
+        "WHERE c.status='completed'").fetchone()
+    total_used = sum(r["used"] for r in rows)
+    entitled = len(rows) * WELLNESS_WEEKLY_HOURS
+    return {"rows": rows,
+            "sections": sorted(sections.values(), key=lambda s: s["section"]),
+            "queue": queue,
+            "reflect_rate": round(reflected * 100 / done) if done else None,
+            "week_used": total_used, "week_entitled": entitled,
+            "week_pct": round(total_used * 100 / entitled) if entitled else 0}
+
+
+def wellness_export_rows(conn, date_from=None, date_to=None):
+    """The monitoring register (the Administrative Service's submission output):
+    one row per claim, chronological. Optional inclusive 'YYYY-MM-DD' bounds."""
+    where, args = "", []
+    if date_from:
+        where += " AND c.break_date >= ?"
+        args.append(date_from)
+    if date_to:
+        where += " AND c.break_date <= ?"
+        args.append(date_to)
+    rows = conn.execute(f"""
+        SELECT c.week_start, COALESCE(ou.short_name, ou.path, ''),
+               COALESCE(rp.name, u.username), c.break_date, c.start_time, c.hours,
+               c.activity, c.status, COALESCE(rpd.name, ud.username, ''),
+               r.id IS NOT NULL, r.mood_before, r.mood_after
+        FROM wellness_claim c
+        JOIN admin_user u ON u.id = c.user_id
+        LEFT JOIN resource_person rp ON rp.id = u.rp_id
+        LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id
+        LEFT JOIN admin_user ud ON ud.id = c.decided_by
+        LEFT JOIN resource_person rpd ON rpd.id = ud.rp_id
+        LEFT JOIN wellness_reflection r ON r.claim_id = c.id
+        WHERE 1=1 {where}
+        ORDER BY c.break_date, c.start_time, c.id
+    """, args).fetchall()
+    acts = dict(WELLNESS_ACTIVITIES)
+    out = []
+    for w in rows:
+        out.append({"week": w[0], "section": w[1] or "—", "employee": w[2],
+                    "date": w[3], "start_time": w[4], "hours": w[5],
+                    "activity": acts.get(w[6], w[6]), "status": w[7],
+                    "approved_by": w[8],
+                    "reflection_done": "yes" if w[9] else "no",
+                    "mood_before": w[10], "mood_after": w[11]})
+    return out
