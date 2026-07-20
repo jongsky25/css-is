@@ -30,6 +30,12 @@ one new chooser page, one onboarding flow, three columns, and wiring.
 4. The **CSS card** goes to the original CSS hub, still limited by role — but
    a **viewer** account is routed first to their **own people profile**, with
    their **section's profile** one tap away.
+5. The wellness **"Planned activity" selector is visual / image-based** —
+   illustrated cards that invoke a sense of wellness — instead of the current
+   plain-text radio list.
+6. Wellness approvals **escalate by rank**: staff → section chief (as today),
+   a **section chief's own claim → their division chief**, and a **division
+   chief's claim → the Director**.
 
 ---
 
@@ -191,7 +197,84 @@ a "My profile" (`/me`) entry; the search palette inherits both from
 * **i18n**: all new strings through the existing `i18n.py` mechanism; run
   `tools/i18n_review.py`.
 
-## 8. Build phases (each lands green on its own)
+## 7a. Wellness refinements (added in review)
+
+### 7a.1 — Visual activity selector on `/wellness/apply`
+
+The apply form's "Planned activity" field (`wellness_apply.html` ~39) is a
+bare radio list of the four `WELLNESS_ACTIVITIES`. Replace it with a grid of
+**illustrated activity cards** — each card an inline SVG scene (same
+no-external-assets rule as the avatars, PWA/offline-safe) over the label:
+
+| key | scene sketch | palette cue |
+|---|---|---|
+| `exercise`      | figure mid-stride, sun arc          | energizing warm |
+| `meditation`    | seated figure, lotus/ripple rings   | calm blue-green |
+| `mental_health` | head silhouette with leafy growth   | soft teal |
+| `hobby`         | brush + strings + book cluster      | creative violet |
+
+Mechanics: each card is a `<label>` wrapping the **same** hidden
+`<input type="radio" name="activity">` it has today — the POST payload,
+validation (`create_wellness_claim` allowed-keys check) and storage are
+untouched; this is purely presentational. Selected card gets a lifted/ringed
+state; cards are keyboard-operable (radios stay focusable), have full text
+labels (never image-only, for a11y and i18n), and a gentle hover float that
+`prefers-reduced-motion` disables. The SVG set lives in a
+`templates/_wellness_icons.html` macro so the hub and reflection pages can
+reuse the same iconography beside claim rows.
+
+### 7a.2 — Approval escalation chain (rank-aware approvers)
+
+Today `get_wellness_approvers` (~4564) resolves approvers as *any
+section/division chief in the claimant's own org unit*, and a chief's own
+claim falls through to the **admin fallback**. The requested rule is a proper
+chain of command:
+
+| claimant is… | approver |
+|---|---|
+| regular staff (no chief designation) | their **section chief** — current same-unit behavior, unchanged |
+| a **section chief / section head** | the **division chief** of the parent division |
+| a **division chief** | the **Director** |
+| the Director | admin fallback (unchanged — top of the chain) |
+
+Everything needed already exists in the schema:
+
+* **Rank** comes from `resource_person.designation` — the vocabulary is
+  already canonical (`_WELLNESS_CHIEF_DESIGNATIONS`, and `_SIGNATORY_RANK`
+  ~2055 already knows `director` > `division chief` > `section head/chief`).
+  Introduce one shared rank map in `storage.py` rather than a third copy.
+* **"Up" traversal** uses `org_unit.path` (`'BLHSD/HSMED/Equity'` —
+  bureau/division/section) exactly as the rollups do: the parent division of
+  a section is the `level='division'` unit whose path is the section's path
+  prefix; the Director sits in the `level='office'` directorate (see the
+  organogram builder ~1959).
+
+Rewrite `get_wellness_approvers` to: (1) rank the claimant by designation;
+(2) resolve the approver *unit* one rank up (staff → own unit's chiefs;
+section chief → parent division; division chief → the directorate/Director by
+designation); (3) return active accounts of matching-designation people in
+that unit, never self. Empty chain → the existing admin fallback in
+`is_wellness_approver` — no behavior change for unlinked accounts.
+
+Consequential updates (all in the wellness module, nothing outside it):
+
+* `list_wellness_approvals` (~4609) currently scopes a chief's queue to
+  *same `org_unit_id`* — it must become chain-aware, or a division chief
+  never sees their section chiefs' claims. Since the pending set is small,
+  the honest implementation is: fetch pending claims, keep those where
+  `user.id ∈ get_wellness_approvers(claim.user_id)` (admins keep seeing all).
+* `user_is_wellness_chief` (~4595) gates queue visibility by designation —
+  extend its designation set with `director` so the Director gets the
+  approvals nav/queue at all.
+* `wellness_hub`'s "your request goes to your section chief" copy becomes
+  rank-aware ("…to your division chief" / "…to the Director").
+* Tests: one per chain link (staff→section chief, section chief→division
+  chief, division chief→director, director→admin fallback), plus
+  cross-section isolation (a division chief sees *their* division's section
+  chiefs only) and the no-directory-link fallback (existing tests keep
+  passing).
+
+
 
 1. **Schema + storage** — the three columns (guarded ALTERs), profile/avatar
    helpers, species catalog constants + per-family stage names in
@@ -211,12 +294,21 @@ a "My profile" (`/me`) entry; the search palette inherits both from
    non-viewers unaffected.
 5. **Unify + edit** — wellness hub renders the chosen companion; `/me` page.
    Tests: default-plant fallback, rename flows.
-6. **Ship** — i18n review, `version.py` changelog entry (v2.26), QA playbook
+6. **Wellness refinements** (§7a — independent of 1–5, can land in either
+   order):
+   * **6a** visual activity selector — `_wellness_icons.html` + apply-form
+     card grid; POST contract unchanged, so only template tests move.
+   * **6b** approval escalation — shared rank map, chain-aware
+     `get_wellness_approvers` / `list_wellness_approvals` /
+     `user_is_wellness_chief`, rank-aware hub copy, chain-link tests.
+7. **Ship** — i18n review, `version.py` changelog entry (v2.26), QA playbook
    pass, `CHANGELOG.md`.
 
 ## 9. Out of scope (explicitly)
 
-* No role/capability changes — viewer stays read-only everywhere.
+* No role/capability changes — viewer stays read-only everywhere. (The
+  approval escalation in §7a.2 is *designation*-driven through the directory,
+  exactly like today's chief resolution — it touches no `ROLE_CAPS`.)
 * No new avatar *earning* mechanics beyond the existing wellness points; the
   species choice is cosmetic, growth stays derived.
 * No photo moderation/cropping pipeline — same raw upload path the directory
