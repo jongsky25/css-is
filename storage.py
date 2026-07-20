@@ -368,6 +368,18 @@ def _add_missing_columns(conn):
             conn.execute("ALTER TABLE admin_user ADD COLUMN rp_id INTEGER REFERENCES resource_person(id)")
         if "must_change" not in au_cols:
             conn.execute("ALTER TABLE admin_user ADD COLUMN must_change INTEGER NOT NULL DEFAULT 0")
+        # Staff onboarding + avatar companion (see
+        # docs/STAFF_ONBOARDING_AVATAR_PLAN.md). avatar_kind/avatar_name hold the
+        # adopted pet's species + given name (the SAME companion the wellness
+        # module grows); onboarded_at is NULL until the person completes the
+        # one-time /welcome flow — so every existing account is treated as
+        # "not yet onboarded" and sees it once after this update ships.
+        if "avatar_kind" not in au_cols:
+            conn.execute("ALTER TABLE admin_user ADD COLUMN avatar_kind TEXT")
+        if "avatar_name" not in au_cols:
+            conn.execute("ALTER TABLE admin_user ADD COLUMN avatar_name TEXT")
+        if "onboarded_at" not in au_cols:
+            conn.execute("ALTER TABLE admin_user ADD COLUMN onboarded_at TEXT")
         conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_admin_user_rp "
                      "ON admin_user(rp_id) WHERE rp_id IS NOT NULL")
     # Respondent demographics captured at Type-2 pre-registration. These are NON-PII
@@ -2906,10 +2918,12 @@ def _admin_row(r):
     return {"id": r[0], "username": r[1], "pw_hash": r[2], "salt": r[3],
             "role": r[4], "active": bool(r[5]), "must_change": bool(r[6]),
             "rp_id": r[7], "created_at": r[8], "created_by": r[9],
+            "avatar_kind": r[10], "avatar_name": r[11], "onboarded_at": r[12],
             "pending": (r[2] == "")}      # no password set yet => still invited
 
 
-_ADMIN_COLS = "id, username, pw_hash, salt, role, active, must_change, rp_id, created_at, created_by"
+_ADMIN_COLS = ("id, username, pw_hash, salt, role, active, must_change, rp_id, "
+               "created_at, created_by, avatar_kind, avatar_name, onboarded_at")
 
 
 def get_admin_user(conn, username):
@@ -2938,6 +2952,58 @@ def list_admin_users(conn):
 def admin_accounts_by_rp(conn):
     """{rp_id: account} for accounts linked to a directory person."""
     return {u["rp_id"]: u for u in list_admin_users(conn) if u["rp_id"] is not None}
+
+
+# ---- Staff onboarding + avatar profile (STAFF_ONBOARDING_AVATAR_PLAN.md) ----
+
+def set_user_avatar(conn, user_id, kind, name):
+    """Adopt (or change) an account's avatar companion: species + pet name.
+    Validates the species against the catalog and trims/caps the name. Raises
+    ValueError on an unknown species. Leaves onboarded_at alone."""
+    if not valid_avatar_kind(kind):
+        raise ValueError("Pick one of the available companions.")
+    conn.execute("UPDATE admin_user SET avatar_kind=?, avatar_name=? WHERE id=?",
+                 (kind, clean_avatar_name(name), user_id))
+    conn.commit()
+
+
+def mark_onboarded(conn, user_id, when=None):
+    """Stamp the account as having finished the one-time /welcome flow. Idempotent
+    — re-stamping just refreshes the timestamp; the redirect guard only cares
+    whether onboarded_at is NULL."""
+    conn.execute("UPDATE admin_user SET onboarded_at=? WHERE id=?",
+                 (when or tz.now_iso(), user_id))
+    conn.commit()
+
+
+def get_user_profile(conn, user_id):
+    """Everything the chooser / profile pages show about one account in a single
+    read: the account row (incl. avatar_kind/avatar_name/onboarded_at) plus,
+    when the account is linked to a directory person, that person's display
+    name, org path, designation and whether they have a profile photo. Returns
+    None for an unknown account. `avatar_kind` is normalized to the default
+    species when the account has not chosen one, so callers can always draw
+    something."""
+    acct = get_admin_user_by_id(conn, user_id)
+    if not acct:
+        return None
+    rp = get_rp(conn, acct["rp_id"]) if acct.get("rp_id") else None
+    return {
+        "user_id": acct["id"],
+        "username": acct["username"],
+        "role": acct["role"],
+        "rp_id": acct.get("rp_id"),
+        "avatar_kind": acct.get("avatar_kind") or AVATAR_DEFAULT,
+        "avatar_name": acct.get("avatar_name") or "",
+        "onboarded": bool(acct.get("onboarded_at")),
+        "onboarded_at": acct.get("onboarded_at"),
+        "person_name": (rp or {}).get("name") or "",
+        "org_unit_id": (rp or {}).get("org_unit_id"),
+        "org_path": (rp or {}).get("org_path"),
+        "designation": (rp or {}).get("designation"),
+        "has_photo": bool((rp or {}).get("has_photo")),
+        "hidden_public": bool((rp or {}).get("hidden_public")),
+    }
 
 
 def set_admin_active(conn, user_id, active):
@@ -4425,6 +4491,66 @@ def concat_atoms(base, add):
 
 
 # =====================================================================
+# Avatar companions — the named pet each staff member adopts at onboarding.
+# The SAME companion is the wellness module's growth mascot: an account picks a
+# SPECIES (avatar_kind) and NAMES it (avatar_name); the wellness point level
+# (1..6) is the growth STAGE the chosen species is drawn at. One companion
+# means the profile pet and the wellness mascot can never disagree. The art
+# itself is inline SVG in templates/_avatars.html (no external assets — keeps
+# the PWA offline-safe); here we keep only the catalog metadata and the
+# per-family stage-name arrays.
+# =====================================================================
+
+# Growth-stage names, one array of 6 per FAMILY, indexed by stage-1 (stage is
+# 1..6). Plants keep the original wellness vocabulary; animals grow through
+# their own life stages, both ending at "Flourishing".
+AVATAR_STAGE_NAMES = {
+    "plant":  ["Seed", "Sprout", "Seedling", "Budding", "In bloom", "Flourishing"],
+    "animal": ["Hatchling", "Little one", "Growing", "Spirited", "Full-grown", "Flourishing"],
+}
+
+# The species a staff member may adopt. `family` selects the stage-name array
+# and the idle-animation style; `label` is what the picker shows. List order is
+# picker order. Adding a species = one row here + its SVG in _avatars.html.
+AVATAR_CATALOG = [
+    {"key": "plant",  "label": "Blossom plant", "family": "plant"},
+    {"key": "cactus", "label": "Cactus",        "family": "plant"},
+    {"key": "bonsai", "label": "Bonsai",        "family": "plant"},
+    {"key": "cat",    "label": "Cat",           "family": "animal"},
+    {"key": "bird",   "label": "Bird",          "family": "animal"},
+    {"key": "turtle", "label": "Turtle",        "family": "animal"},
+]
+AVATAR_KEYS = {a["key"] for a in AVATAR_CATALOG}
+AVATAR_DEFAULT = "plant"          # accounts that never chose keep the classic plant
+AVATAR_NAME_MAXLEN = 24
+_AVATAR_FAMILY = {a["key"]: a["family"] for a in AVATAR_CATALOG}
+
+
+def valid_avatar_kind(kind):
+    """True if `kind` is a species we know how to draw."""
+    return kind in AVATAR_KEYS
+
+
+def avatar_family(kind):
+    """The family ('plant' / 'animal') of a species key. Unknown/None keys fall
+    back to the default species' family, so callers never KeyError."""
+    return _AVATAR_FAMILY.get(kind, _AVATAR_FAMILY[AVATAR_DEFAULT])
+
+
+def clean_avatar_name(name):
+    """Trim + length-cap a pet name for storage. Returns '' for blank input."""
+    return (name or "").strip()[:AVATAR_NAME_MAXLEN]
+
+
+def avatar_stage_name(kind, stage):
+    """The growth-stage label (e.g. 'In bloom') for a species at a 1..6 stage.
+    Clamps out-of-range stages so gamification drift can never index-error."""
+    names = AVATAR_STAGE_NAMES[avatar_family(kind)]
+    idx = max(1, min(int(stage or 1), len(names))) - 1
+    return names[idx]
+
+
+# =====================================================================
 # Wellness module — the DOH DM 2025-0135 two-hour weekly wellness break.
 # Claims are filed in 1-hour slots (max 2/week), approved by the claimant's
 # section chief (resolved through the directory), closed out with a short
@@ -4454,7 +4580,10 @@ _WELLNESS_CHIEF_DESIGNATIONS = ("section head", "section chief", "division chief
 
 # Cumulative point thresholds for levels 1..6; the avatar stage == the level.
 WELLNESS_LEVELS = [0, 30, 75, 150, 250, 400]
-WELLNESS_STAGE_NAMES = ["Seed", "Sprout", "Seedling", "Budding", "In bloom", "Flourishing"]
+# The classic plant vocabulary, kept as the wellness default. Single source of
+# truth: it IS the avatar catalog's plant-family array (see AVATAR_STAGE_NAMES),
+# so the mascot and the plant avatar always read the same stage names.
+WELLNESS_STAGE_NAMES = AVATAR_STAGE_NAMES["plant"]
 
 # Points: completed break +10, reflection +5, both hours in one week +5,
 # +2 per week of the current streak.
