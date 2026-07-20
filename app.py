@@ -1571,6 +1571,15 @@ async def login_submit(request: Request):
             redirect_to_start = (
                 ai.ai_available(conn) and ai.mode_at_least(conn, "router")
                 and st.get_setting(conn, "ai_landing_default", "hub") == "start")
+        # First sign-in after this update (onboarded_at is NULL) → the one-time
+        # /welcome flow (STAFF_ONBOARDING_AVATAR_PLAN.md §D3). Runs AFTER a
+        # temp-password reset (that path returns early below) and takes
+        # precedence over both a ?next= deep link and the /start opt-in — the
+        # deep link is carried through and honored right after onboarding.
+        needs_onboarding = False
+        if not force_reset:
+            acct = st.get_admin_user_by_id(conn, user["id"])
+            needs_onboarding = not (acct and acct.get("onboarded_at"))
     finally:
         conn.close()
     # Temporary-password account: don't issue a session — send them straight to the
@@ -1578,7 +1587,9 @@ async def login_submit(request: Request):
     if force_reset:
         token = auth.make_action_token(user["id"], auth.PURPOSE_RESET, reset_hash)
         return RedirectResponse("/reset-password?token=" + quote(token), status_code=303)
-    if redirect_to_start:
+    if needs_onboarding:
+        nxt = "/welcome" + (("?next=" + quote(nxt)) if nxt != "/" else "")
+    elif redirect_to_start:
         nxt = "/start"
     resp = RedirectResponse(nxt, status_code=303)
     resp.set_cookie(auth.COOKIE_NAME, auth.make_token(user),
@@ -3502,6 +3513,23 @@ def _account_first_name(conn, user):
     return token[:1].upper() + token[1:] if token else ""
 
 
+def _onboarding_redirect(request, conn):
+    """If the signed-in account hasn't finished the one-time /welcome flow,
+    return a RedirectResponse there (preserving the current path as ?next=);
+    else None. Used as a soft guard on the landing routes so a half-finished
+    onboarding can't be skipped by typing a URL — deep links stay reachable
+    once onboarding is done (STAFF_ONBOARDING_AVATAR_PLAN.md §D3)."""
+    user = getattr(request.state, "user", None)
+    if not user:
+        return None
+    acct = st.get_admin_user_by_id(conn, user["id"])
+    if acct and acct.get("onboarded_at"):
+        return None
+    nxt = request.url.path
+    dest = "/welcome" + (("?next=" + quote(nxt)) if nxt and nxt != "/" else "")
+    return RedirectResponse(dest, status_code=303)
+
+
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
     """Task-oriented home hub — 'what would you like to do?' Role-filtered module
@@ -3509,6 +3537,9 @@ def home(request: Request):
     managers straight on the create-activity form and everyone else on Pulse.)"""
     conn = get_conn()
     try:
+        onboard = _onboarding_redirect(request, conn)
+        if onboard:
+            return onboard
         _, blhsd_name, _ = st.get_or_create_blhsd(conn)
         stats = home_stats(conn)
         first_name = _account_first_name(conn, request.state.user)
@@ -3656,6 +3687,78 @@ def start_page(request: Request):
         "nav_active": "", "show_scope": False,
         "first_name": first_name, "suggestions": suggestions,
     })
+
+
+def _safe_next(raw):
+    """A local ?next= target, or '/'. Guards the onboarding redirect against an
+    open-redirect (only same-site absolute paths, never '//host' or a scheme)."""
+    nxt = (raw or "/").strip()
+    if not nxt.startswith("/") or nxt.startswith("//"):
+        return "/"
+    return nxt
+
+
+def _initials(name):
+    parts = (name or "").split()
+    if not parts:
+        return "·"
+    return (parts[0][0] + (parts[-1][0] if len(parts) > 1 else "")).upper()
+
+
+def _render_welcome(request, next="/", err="", form=None):
+    """Render the onboarding page. Shared by the GET route and the POST's
+    validation-error path (mirrors _wellness_apply_page)."""
+    conn = get_conn()
+    try:
+        profile = st.get_user_profile(conn, request.state.user["id"])
+        first_name = _account_first_name(conn, request.state.user)
+    finally:
+        conn.close()
+    has_person = bool(profile and profile.get("rp_id"))
+    return templates.TemplateResponse(request, "welcome.html", {
+        "nav_active": "", "show_scope": False,
+        "first_name": first_name, "profile": profile, "has_person": has_person,
+        "initials": _initials(profile.get("person_name") if profile else ""),
+        "catalog": st.AVATAR_CATALOG, "name_maxlen": st.AVATAR_NAME_MAXLEN,
+        "next": _safe_next(next), "err": err, "form": form or {},
+    })
+
+
+@app.get("/welcome", response_class=HTMLResponse)
+def welcome_form(request: Request, next: str = "/", err: str = ""):
+    """One-time onboarding (STAFF_ONBOARDING_AVATAR_PLAN.md Phase 2): confirm
+    profile + upload a photo (only when the account is linked to a directory
+    person), then adopt and name an avatar companion. Reachable any time, but
+    the login flow and the landing guard route first-time accounts here."""
+    return _render_welcome(request, next=next, err=err)
+
+
+@app.post("/welcome")
+async def welcome_submit(request: Request):
+    p = await _posted(request)
+    nxt = _safe_next(p.get("next"))
+    kind = (p.get("avatar_kind") or "").strip()
+    pet_name = (p.get("avatar_name") or "").strip()
+    if not st.valid_avatar_kind(kind):
+        return _render_welcome(request, next=nxt, err="Please pick a companion.", form=p)
+    if not pet_name:
+        return _render_welcome(request, next=nxt, err="Give your companion a name.", form=p)
+    photo = _decode_photo(p.get("photo_data", ""))
+    conn = get_conn()
+    try:
+        profile = st.get_user_profile(conn, request.state.user["id"])
+        if photo and profile and profile.get("rp_id"):
+            st.set_rp_photo(conn, profile["rp_id"], photo[0], photo[1])
+            _audit(request, conn, "profile_update", target_type="person",
+                   target_id=profile["rp_id"], summary="uploaded a profile photo during onboarding")
+        st.set_user_avatar(conn, request.state.user["id"], kind, pet_name)
+        st.mark_onboarded(conn, request.state.user["id"])
+        _audit(request, conn, "avatar_choose", target_type="user",
+               target_id=request.state.user["id"],
+               summary=f"adopted a {kind} companion named '{st.clean_avatar_name(pet_name)}'")
+    finally:
+        conn.close()
+    return RedirectResponse(nxt, status_code=303)
 
 
 @app.get("/search", response_class=HTMLResponse)
