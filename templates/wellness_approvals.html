@@ -1,0 +1,62 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash, empty_state %}
+{% block title %}Wellness approvals{% endblock %}
+{% block content %}
+<style>
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px;
+           padding:1.2rem 1.4rem; margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .q { width:100%; border-collapse:collapse; }
+  .q td, .q th { padding:.55rem .6rem; border-bottom:1px solid var(--line); text-align:left;
+                 font-size:.92rem; vertical-align:top; }
+  .who { font-weight:700; }
+  .sub { color:var(--soft); font-size:.78rem; }
+  .note { color:var(--ink-soft); font-size:.85rem; font-style:italic; }
+  .df { display:flex; gap:.4rem; align-items:center; flex-wrap:wrap; }
+  .df input { font:inherit; font-size:.82rem; padding:.3rem .5rem; border:1px solid var(--line);
+              border-radius:8px; background:var(--bg); color:var(--ink); width:150px; }
+  .df button { font:inherit; font-size:.8rem; font-weight:700; cursor:pointer; border-radius:999px;
+               padding:.3rem .8rem; border:1px solid var(--line); }
+  .df .ok  { background:var(--green-bg); color:var(--green); border-color:var(--green-ln); }
+  .df .no  { background:var(--red-bg); color:var(--red); border-color:var(--red-ln); }
+  .backbar { margin-bottom:1rem; display:flex; gap:.8rem; }
+</style>
+
+{{ page_header("Wellness approvals", "Break requests from your section, waiting on you. Approving keeps the week's 2-hour entitlement honest.") }}
+
+<div class="backbar">
+  <a href="/wellness">← My wellness</a>
+  <a href="/wellness/dashboard">Utilization dashboard</a>
+</div>
+
+{% if ok %}{{ flash(msg=ok) }}{% endif %}
+{% if err %}{{ flash(err=err) }}{% endif %}
+
+<div class="panel">
+  {% if queue %}
+  <table class="q">
+    <thead><tr><th>Who</th><th>When</th><th>Activity</th><th>Decision</th></tr></thead>
+    <tbody>
+    {% for c in queue %}
+      <tr>
+        <td>
+          <div class="who">{{ c.person_name }}</div>
+          <div class="sub">{{ c.section or "—" }} · filed {{ c.created_at|replace('T', ' ') }}</div>
+        </td>
+        <td>{{ c.break_date }} · {{ c.start_time }} ({{ c.hours }} h)</td>
+        <td>{{ c.activity_label }}{% if c.note %}<div class="note">“{{ c.note }}”</div>{% endif %}</td>
+        <td>
+          <form class="df" method="post" action="/wellness/claims/{{ c.id }}/decide">
+            <input type="text" name="note" placeholder="optional remark">
+            <button class="ok" type="submit" name="action" value="approve">Approve</button>
+            <button class="no" type="submit" name="action" value="deny">Deny</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  {{ empty_state("Nothing waiting", "No pending break requests right now.", "☀") }}
+  {% endif %}
+</div>
+{% endblock %}

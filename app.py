@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import base64
 import calendar
+import csv
 import io
 import asyncio
 import hmac
@@ -476,6 +477,12 @@ NAV_GROUPS = [
         {"key": "participation", "url": "/dashboard/participation", "label": "Participation",
          "hint": "Volume, coverage, blind spots",
          "kw": "participation volume coverage response rate blind spots reach counts", "cap": None},
+    ]},
+    {"name": "Wellness", "items": [
+        {"key": "wellness", "url": "/wellness", "label": "My wellness break",
+         "hint": "Apply for your 2-hour weekly wellness break",
+         "kw": "wellness break rest two hours weekly avatar plant points streak badges "
+               "exercise meditation mental health hobby dm 2025-0135", "cap": None},
     ]},
     {"name": "Reports", "items": [
         {"key": "reports", "url": "/reports?type=1", "label": "ARTA Walk-in",
@@ -11544,3 +11551,248 @@ def _build_qrs(created, qr_mode, base, event_token=None):
         out.append({"title": f"{c['kind']} — {c['label']} ({c['form_id']})",
                     "url": url, "img": _qr_data_uri(url)})
     return out
+
+
+# =====================================================================
+# Wellness module — the DOH DM 2025-0135 two-hour weekly wellness break.
+# Every signed-in employee gets the hub (no capability needed — the middleware
+# only requires login for /wellness*); the approvals queue, monitoring page and
+# register export check st.user_is_wellness_chief / is_wellness_approver
+# in-handler, because "section chief" is a directory fact, not a role.
+# =====================================================================
+
+def _wellness_forbid(request):
+    return templates.TemplateResponse(
+        request, "forbidden.html",
+        {"capability": "wellness approvals", "show_scope": False}, status_code=403)
+
+
+@app.get("/wellness", response_class=HTMLResponse)
+def wellness_hub(request: Request, cheer: str = "", badges: str = "", err: str = ""):
+    """The employee's wellness home: avatar + points/streak/badges, what's left
+    of this week's 2 hours, their claims, and (for chiefs/admins) the queue."""
+    user = request.state.user
+    conn = get_conn()
+    try:
+        stats = st.wellness_stats(conn, user["id"])
+        week = st.wellness_week_start()
+        used = st.wellness_hours_used(conn, user["id"], week)
+        claims = st.list_my_wellness_claims(conn, user["id"])
+        is_chief = st.user_is_wellness_chief(conn, user)
+        queue_n = len(st.list_wellness_approvals(conn, user)) if is_chief else 0
+    finally:
+        conn.close()
+    return templates.TemplateResponse(request, "wellness_hub.html", {
+        "nav_active": "wellness", "show_scope": False,
+        "stats": stats, "week_start": week, "used": used,
+        "left": max(0, st.WELLNESS_WEEKLY_HOURS - used),
+        "weekly_hours": st.WELLNESS_WEEKLY_HOURS,
+        "claims": claims, "is_chief": is_chief, "queue_n": queue_n,
+        "cheer": cheer, "cheer_badges": [b for b in badges.split("|") if b],
+        "err": err, "today": _today_local().isoformat(),
+    })
+
+
+def _wellness_apply_page(request, err="", form=None):
+    user = request.state.user
+    conn = get_conn()
+    try:
+        week = st.wellness_week_start()
+        used = st.wellness_hours_used(conn, user["id"], week)
+    finally:
+        conn.close()
+    return templates.TemplateResponse(request, "wellness_apply.html", {
+        "nav_active": "wellness", "show_scope": False,
+        "activities": st.WELLNESS_ACTIVITIES,
+        "left": max(0, st.WELLNESS_WEEKLY_HOURS - used),
+        "weekly_hours": st.WELLNESS_WEEKLY_HOURS,
+        "today": _today_local().isoformat(),
+        "err": err, "form": form or {},
+    }, status_code=400 if err else 200)
+
+
+@app.get("/wellness/apply", response_class=HTMLResponse)
+def wellness_apply_form(request: Request):
+    return _wellness_apply_page(request)
+
+
+@app.post("/wellness/apply")
+async def wellness_apply_submit(request: Request):
+    user = request.state.user
+    p = await _posted(request)
+    conn = get_conn()
+    try:
+        try:
+            claim_id = st.create_wellness_claim(
+                conn, user["id"], p.get("break_date", ""), p.get("start_time", ""),
+                p.get("activity", ""), p.get("note"))
+        except ValueError as e:
+            return _wellness_apply_page(request, err=str(e), form=p)
+        _audit(request, conn, "wellness_apply", target_type="wellness_claim",
+               target_id=claim_id,
+               summary=f"requested a wellness break on {p.get('break_date')} {p.get('start_time')}")
+    finally:
+        conn.close()
+    return RedirectResponse("/wellness?cheer=Break+requested+—+your+section+chief+will+see+it.",
+                            status_code=303)
+
+
+@app.post("/wellness/claims/{claim_id}/cancel")
+def wellness_cancel(request: Request, claim_id: int):
+    user = request.state.user
+    conn = get_conn()
+    try:
+        try:
+            st.cancel_wellness_claim(conn, claim_id, user["id"])
+        except ValueError as e:
+            return RedirectResponse(f"/wellness?err={quote(str(e))}", status_code=303)
+        _audit(request, conn, "wellness_cancel", target_type="wellness_claim",
+               target_id=claim_id, summary="withdrew a wellness break request")
+    finally:
+        conn.close()
+    return RedirectResponse("/wellness?cheer=Request+withdrawn+—+the+hour+is+back+in+your+week.",
+                            status_code=303)
+
+
+@app.get("/wellness/approvals", response_class=HTMLResponse)
+def wellness_approvals(request: Request, err: str = "", ok: str = ""):
+    user = request.state.user
+    conn = get_conn()
+    try:
+        if not st.user_is_wellness_chief(conn, user):
+            return _wellness_forbid(request)
+        queue = st.list_wellness_approvals(conn, user)
+    finally:
+        conn.close()
+    return templates.TemplateResponse(request, "wellness_approvals.html", {
+        "nav_active": "wellness", "show_scope": False,
+        "queue": queue, "err": err, "ok": ok,
+    })
+
+
+@app.post("/wellness/claims/{claim_id}/decide")
+async def wellness_decide(request: Request, claim_id: int):
+    user = request.state.user
+    p = await _posted(request)
+    action = p.get("action", "")
+    conn = get_conn()
+    try:
+        try:
+            claim = st.decide_wellness_claim(conn, claim_id, user, action, p.get("note"))
+        except PermissionError:
+            return _wellness_forbid(request)
+        except ValueError as e:
+            return RedirectResponse(f"/wellness/approvals?err={quote(str(e))}",
+                                    status_code=303)
+        verb = "approved" if action == "approve" else "denied"
+        _audit(request, conn, f"wellness_{action}", target_type="wellness_claim",
+               target_id=claim_id,
+               summary=f"{verb} {claim['person_name']}'s wellness break "
+                       f"on {claim['break_date']} {claim['start_time']}")
+    finally:
+        conn.close()
+    return RedirectResponse(f"/wellness/approvals?ok={quote(verb.capitalize() + ' — done.')}",
+                            status_code=303)
+
+
+@app.get("/wellness/claims/{claim_id}/complete", response_class=HTMLResponse)
+def wellness_reflect_form(request: Request, claim_id: int, err: str = ""):
+    user = request.state.user
+    conn = get_conn()
+    try:
+        claim = st.get_wellness_claim(conn, claim_id)
+    finally:
+        conn.close()
+    if not claim or claim["user_id"] != user["id"]:
+        return RedirectResponse("/wellness", status_code=303)
+    return templates.TemplateResponse(request, "wellness_reflect.html", {
+        "nav_active": "wellness", "show_scope": False,
+        "claim": claim, "err": err,
+    }, status_code=400 if err else 200)
+
+
+@app.post("/wellness/claims/{claim_id}/complete")
+async def wellness_reflect_submit(request: Request, claim_id: int):
+    user = request.state.user
+    p = await _posted(request)
+    conn = get_conn()
+    try:
+        before = st.wellness_stats(conn, user["id"])["points"]
+        try:
+            claim, new_badges = st.complete_wellness_claim(
+                conn, claim_id, user["id"], p.get("mood_before"), p.get("mood_after"),
+                p.get("activity_done"), p.get("takeaway"))
+        except ValueError as e:
+            return RedirectResponse(
+                f"/wellness/claims/{claim_id}/complete?err={quote(str(e))}",
+                status_code=303)
+        gained = st.wellness_stats(conn, user["id"])["points"] - before
+        _audit(request, conn, "wellness_complete", target_type="wellness_claim",
+               target_id=claim_id,
+               summary=f"completed a wellness break (+{gained} pts)")
+    finally:
+        conn.close()
+    cheer = f"+{gained} points — your companion loved that break!"
+    url = f"/wellness?cheer={quote(cheer)}"
+    if new_badges:
+        url += "&badges=" + quote("|".join(new_badges))
+    return RedirectResponse(url, status_code=303)
+
+
+@app.get("/wellness/dashboard", response_class=HTMLResponse)
+def wellness_dashboard(request: Request, week: str = ""):
+    """Utilization monitoring for chiefs/admins — the live view behind the
+    Administrative Service's register."""
+    user = request.state.user
+    conn = get_conn()
+    try:
+        if not st.user_is_wellness_chief(conn, user):
+            return _wellness_forbid(request)
+        try:
+            anchor = date.fromisoformat(week) if week else _today_local()
+        except ValueError:
+            anchor = _today_local()
+        ws = st.wellness_week_start(anchor)
+        data = st.wellness_dashboard_data(conn, ws)
+    finally:
+        conn.close()
+    monday = date.fromisoformat(ws)
+    return templates.TemplateResponse(request, "wellness_dashboard.html", {
+        "nav_active": "wellness", "show_scope": False,
+        "data": data, "week_start": ws,
+        "week_end": (monday + timedelta(days=6)).isoformat(),
+        "prev_week": (monday - timedelta(days=7)).isoformat(),
+        "next_week": (monday + timedelta(days=7)).isoformat(),
+        "is_current": ws == st.wellness_week_start(),
+        "weekly_hours": st.WELLNESS_WEEKLY_HOURS,
+    })
+
+
+@app.get("/wellness/export.csv")
+def wellness_export(request: Request, date_from: str = "", date_to: str = ""):
+    """The monitoring register as CSV — the submission output the DM's
+    utilization database asks the Administrative Service to keep."""
+    user = request.state.user
+    conn = get_conn()
+    try:
+        if not st.user_is_wellness_chief(conn, user):
+            return _wellness_forbid(request)
+        rows = st.wellness_export_rows(conn, date_from or None, date_to or None)
+        _audit(request, conn, "wellness_export",
+               summary=f"exported the wellness register ({len(rows)} rows)")
+    finally:
+        conn.close()
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow(["Week of", "Section", "Employee", "Date", "Start time", "Hours",
+                "Activity", "Status", "Approved by", "Reflection done",
+                "Mood before", "Mood after"])
+    for r in rows:
+        w.writerow([r["week"], r["section"], r["employee"], r["date"],
+                    r["start_time"], r["hours"], r["activity"], r["status"],
+                    r["approved_by"], r["reflection_done"],
+                    r["mood_before"] if r["mood_before"] is not None else "",
+                    r["mood_after"] if r["mood_after"] is not None else ""])
+    fname = f"wellness_register_{_today_local().isoformat()}.csv"
+    return Response(buf.getvalue(), media_type="text/csv",
+                    headers={"Content-Disposition": f'attachment; filename="{fname}"'})

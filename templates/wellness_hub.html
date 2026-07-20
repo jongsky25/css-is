@@ -1,0 +1,193 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash, empty_state %}
+{% block title %}Wellness{% endblock %}
+{% block content %}
+<style>
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px;
+           padding:1.2rem 1.4rem; margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .well-hero { display:flex; gap:1.6rem; align-items:center; flex-wrap:wrap; }
+  .avatar-box { flex:0 0 190px; text-align:center; }
+  .avatar-box svg { width:170px; height:190px; }
+  .plant-sway { transform-origin:60px 128px; animation:sway 5s ease-in-out infinite; }
+  @keyframes sway { 0%,100% { transform:rotate(-2deg);} 50% { transform:rotate(2deg);} }
+  @media (prefers-reduced-motion: reduce) { .plant-sway { animation:none; } }
+  .stage-name { font-weight:800; margin-top:.2rem; }
+  .stage-sub { color:var(--soft); font-size:.8rem; }
+  .hero-stats { flex:1 1 260px; min-width:240px; }
+  .statgrid { display:flex; gap:1.4rem; flex-wrap:wrap; margin:.5rem 0 .9rem; }
+  .stat .n { font-size:1.7rem; font-weight:800; line-height:1.1; }
+  .stat .l { color:var(--soft); font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; }
+  .bar { height:10px; border-radius:999px; background:var(--bg); border:1px solid var(--line); overflow:hidden; }
+  .bar > span { display:block; height:100%; background:var(--accent); border-radius:999px; }
+  .bar-lab { display:flex; justify-content:space-between; color:var(--soft); font-size:.78rem; margin-top:.3rem; }
+  .badges { display:flex; gap:.45rem; flex-wrap:wrap; margin-top:.9rem; }
+  .badge { font-size:.76rem; font-weight:700; border:1px solid var(--line); background:var(--accent-bg);
+           color:var(--accent); border-radius:999px; padding:.22rem .7rem; }
+  .badge[title] { cursor:help; }
+  .entitle { display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
+  .hourpips { display:flex; gap:.5rem; }
+  .pip { width:46px; height:14px; border-radius:999px; border:1px solid var(--line); background:var(--bg); }
+  .pip.used { background:var(--accent); border-color:var(--accent); }
+  .btn { display:inline-block; font:inherit; font-weight:700; text-decoration:none; cursor:pointer;
+         border:1px solid var(--accent); background:var(--accent); color:#fff;
+         border-radius:10px; padding:.55rem 1.1rem; }
+  .btn[aria-disabled="true"] { opacity:.45; pointer-events:none; }
+  .btn.ghost { background:var(--surface); color:var(--accent); }
+  .claims td, .claims th { padding:.5rem .6rem; border-bottom:1px solid var(--line); text-align:left; font-size:.92rem; }
+  .claims { width:100%; border-collapse:collapse; }
+  .pill { font-size:.72rem; font-weight:700; padding:.16rem .6rem; border-radius:999px; border:1px solid var(--line); white-space:nowrap; }
+  .pill.s-pending   { color:var(--amber); border-color:var(--amber-ln); background:var(--amber-bg); }
+  .pill.s-approved  { color:var(--accent); background:var(--accent-bg); }
+  .pill.s-completed { color:var(--green); border-color:var(--green-ln); background:var(--green-bg); }
+  .pill.s-denied    { color:var(--red); border-color:var(--red-ln); background:var(--red-bg); }
+  .pill.s-cancelled { color:var(--soft); background:var(--bg); }
+  .row-act form { display:inline; }
+  .row-act button, .row-act a { font:inherit; font-size:.78rem; font-weight:700; cursor:pointer; text-decoration:none;
+        border:1px solid var(--line); background:var(--bg); color:var(--ink-soft); border-radius:999px; padding:.24rem .7rem; }
+  .row-act a.go { border-color:var(--accent); color:var(--accent); background:var(--accent-bg); }
+  .celebrate { border:1px solid var(--green-ln); background:var(--green-bg); color:var(--green);
+               border-radius:12px; padding:.7rem 1rem; font-weight:700; margin-bottom:1rem; }
+  .chiefbar { display:flex; gap:.6rem; flex-wrap:wrap; margin-bottom:1.1rem; }
+</style>
+
+{{ page_header("Wellness break", "Your 2-hour weekly wellness break under DM 2025-0135 — take it, grow your companion.") }}
+
+{% if cheer %}{{ flash(msg=cheer) }}{% endif %}
+{% if err %}{{ flash(err=err) }}{% endif %}
+{% for b in cheer_badges %}
+<div class="celebrate">🏅 New badge: {{ b }}</div>
+{% endfor %}
+
+{% if is_chief %}
+<div class="chiefbar">
+  <a class="btn ghost" href="/wellness/approvals">Approvals queue{% if queue_n %} ({{ queue_n }}){% endif %}</a>
+  <a class="btn ghost" href="/wellness/dashboard">Utilization dashboard</a>
+</div>
+{% endif %}
+
+<div class="panel well-hero">
+  <div class="avatar-box">
+    {# The companion plant — 6 growth stages, drawn inline so the page has no
+       external assets. The stage is picked server-side from the level. #}
+    {% set s = stats.stage %}
+    <svg viewBox="0 0 120 140" role="img" aria-label="Your wellness companion: {{ stats.stage_name }} (stage {{ s }} of 6)">
+      {# pot #}
+      <path d="M38 112 L82 112 L77 134 L43 134 Z" fill="#b5714f"/>
+      <rect x="34" y="106" width="52" height="9" rx="4" fill="#c8825d"/>
+      <ellipse cx="60" cy="106" rx="22" ry="4.5" fill="#7a4a2f"/>
+      <g class="plant-sway">
+      {% if s == 1 %}
+        <ellipse cx="60" cy="103" rx="7" ry="4.6" fill="#e8d3a8"/>
+        <path d="M60 100 q3 -5 0 -8" stroke="#9caf70" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      {% endif %}
+      {% if s >= 2 %}
+        <path d="M60 106 C60 96 60 90 60 {{ 84 if s == 2 else (70 if s == 3 else 56) }}"
+              stroke="#4c8c3f" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <path d="M60 98 C52 96 47 90 46 84 C54 84 59 90 60 96 Z" fill="#5ea54e"/>
+        <path d="M60 98 C68 96 73 90 74 84 C66 84 61 90 60 96 Z" fill="#6fb85e"/>
+      {% endif %}
+      {% if s >= 3 %}
+        <path d="M60 84 C50 82 44 75 43 68 C53 68 59 75 60 82 Z" fill="#5ea54e"/>
+        <path d="M60 84 C70 82 76 75 77 68 C67 68 61 75 60 82 Z" fill="#6fb85e"/>
+      {% endif %}
+      {% if s >= 4 %}
+        <path d="M60 70 C51 68 46 62 45 56 C54 56 59 62 60 68 Z" fill="#5ea54e"/>
+        <path d="M60 70 C69 68 74 62 75 56 C66 56 61 62 60 68 Z" fill="#6fb85e"/>
+        {% if s == 4 %}
+        <circle cx="60" cy="52" r="5" fill="#d9799c"/>
+        <circle cx="48" cy="62" r="3.6" fill="#d9799c"/>
+        <circle cx="72" cy="62" r="3.6" fill="#d9799c"/>
+        {% endif %}
+      {% endif %}
+      {% if s >= 5 %}
+        {% for cx, cy, r in [(60, 48, 7), (46, 60, 5.4), (74, 60, 5.4)] %}
+        <g>
+          {% for a in [0, 60, 120, 180, 240, 300] %}
+          <ellipse cx="{{ cx }}" cy="{{ cy - r }}" rx="{{ r * 0.55 }}" ry="{{ r }}"
+                   fill="{{ '#e98cae' if loop.index is even else '#f2a9c4' }}"
+                   transform="rotate({{ a }} {{ cx }} {{ cy }})"/>
+          {% endfor %}
+          <circle cx="{{ cx }}" cy="{{ cy }}" r="{{ r * 0.62 }}" fill="#f6c445"/>
+        </g>
+        {% endfor %}
+      {% endif %}
+      {% if s >= 6 %}
+        <path d="M60 56 C46 54 38 46 37 38 C50 38 58 46 60 54 Z" fill="#4c8c3f"/>
+        <path d="M60 56 C74 54 82 46 83 38 C70 38 62 46 60 54 Z" fill="#5ea54e"/>
+        <g fill="#f6c445">
+          <path d="M30 30 l1.6 4 4 1.6 -4 1.6 -1.6 4 -1.6 -4 -4 -1.6 4 -1.6 Z"/>
+          <path d="M88 24 l1.4 3.4 3.4 1.4 -3.4 1.4 -1.4 3.4 -1.4 -3.4 -3.4 -1.4 3.4 -1.4 Z"/>
+          <path d="M84 48 l1 2.6 2.6 1 -2.6 1 -1 2.6 -1 -2.6 -2.6 -1 2.6 -1 Z"/>
+        </g>
+      {% endif %}
+      </g>
+    </svg>
+    <div class="stage-name">{{ stats.stage_name }}</div>
+    <div class="stage-sub">Stage {{ s }} of 6 · Level {{ stats.level }}</div>
+  </div>
+
+  <div class="hero-stats">
+    <div class="statgrid">
+      <div class="stat"><div class="n">{{ stats.points }}</div><div class="l">Points</div></div>
+      <div class="stat"><div class="n">{{ stats.streak }}</div><div class="l">Week streak</div></div>
+      <div class="stat"><div class="n">{{ stats.completed }}</div><div class="l">Breaks taken</div></div>
+      <div class="stat"><div class="n">{{ stats.reflections }}</div><div class="l">Reflections</div></div>
+    </div>
+    <div class="bar" role="progressbar" aria-valuenow="{{ stats.progress }}" aria-valuemin="0" aria-valuemax="100"
+         aria-label="Progress to the next growth stage"><span style="width:{{ stats.progress }}%"></span></div>
+    <div class="bar-lab">
+      <span>{{ stats.points }} pts</span>
+      <span>{% if stats.next_at %}next stage at {{ stats.next_at }}{% else %}fully grown 🌟{% endif %}</span>
+    </div>
+    {% if stats.badges %}
+    <div class="badges">
+      {% for b in stats.badges %}<span class="badge" title="{{ b.blurb }}">🏅 {{ b.label }}</span>{% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="panel entitle">
+  <div>
+    <strong>This week ({{ week_start }}):</strong>
+    <span style="color:var(--soft)">{{ used }} of {{ weekly_hours }} hours claimed</span>
+  </div>
+  <div class="hourpips" aria-hidden="true">
+    {% for i in range(weekly_hours) %}<span class="pip {{ 'used' if i < used }}"></span>{% endfor %}
+  </div>
+  <a class="btn" href="/wellness/apply" {% if left == 0 %}aria-disabled="true"{% endif %}>Request a 1-hour break</a>
+</div>
+
+<div class="panel">
+  <h2 style="margin:.1rem 0 .7rem; font-size:1.05rem;">My break requests</h2>
+  {% if claims %}
+  <table class="claims">
+    <thead><tr><th>Date</th><th>Time</th><th>Activity</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for c in claims %}
+      <tr>
+        <td>{{ c.break_date }}</td>
+        <td>{{ c.start_time }}</td>
+        <td>{{ c.activity_label }}</td>
+        <td><span class="pill s-{{ c.status }}">{{ c.status }}</span>
+            {% if c.status == 'denied' and c.decide_note %}<span style="color:var(--soft); font-size:.78rem;"> — {{ c.decide_note }}</span>{% endif %}</td>
+        <td class="row-act">
+          {% if c.status == 'approved' and c.break_date <= today %}
+            <a class="go" href="/wellness/claims/{{ c.id }}/complete">Check in ✓</a>
+          {% endif %}
+          {% if c.status in ('pending', 'approved') %}
+            <form method="post" action="/wellness/claims/{{ c.id }}/cancel"
+                  onsubmit="return confirm('Withdraw this break request?');">
+              <button type="submit">Withdraw</button>
+            </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  {{ empty_state("No break requests yet", "Request your first 1-hour wellness break — your companion is waiting to grow.", "🌱") }}
+  {% endif %}
+</div>
+{% endblock %}

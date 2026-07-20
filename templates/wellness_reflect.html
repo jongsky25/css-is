@@ -1,0 +1,64 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash, field %}
+{% block title %}How was your break?{% endblock %}
+{% block content %}
+<style>
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px;
+           padding:1.2rem 1.4rem; margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05);
+           max-width:640px; }
+  .whatwhen { color:var(--soft); margin-bottom:1rem; }
+  .field { margin-bottom:1rem; }
+  .field label { display:block; font-weight:700; margin-bottom:.3rem; }
+  .field input, .field textarea { width:100%; font:inherit; padding:.5rem .7rem; border:1px solid var(--line);
+           border-radius:10px; background:var(--bg); color:var(--ink); box-sizing:border-box; }
+  .field .help { color:var(--soft); font-size:.8rem; margin-top:.25rem; }
+  .moods { display:flex; gap:.45rem; }
+  .moods label { flex:1; text-align:center; border:1px solid var(--line); border-radius:12px;
+                 padding:.5rem .3rem; cursor:pointer; background:var(--bg); }
+  .moods input { position:absolute; opacity:0; }
+  .moods label:has(input:checked) { border-color:var(--accent); background:var(--accent-bg); }
+  .moods .face { font-size:1.3rem; display:block; }
+  .moods small { color:var(--soft); }
+  .btn { font:inherit; font-weight:700; cursor:pointer; border:1px solid var(--accent);
+         background:var(--accent); color:#fff; border-radius:10px; padding:.6rem 1.2rem; }
+  .grow-note { color:var(--soft); font-size:.82rem; margin-top:.9rem; }
+</style>
+
+{{ page_header("How was your break?", "Two minutes of check-in — it closes out the hour and feeds the wellness program's pulse.") }}
+
+<div class="panel">
+  {% if err %}{{ flash(err=err) }}{% endif %}
+  <div class="whatwhen">{{ claim.break_date }} · {{ claim.start_time }} — planned: <strong>{{ claim.activity_label }}</strong></div>
+
+  <form method="post" action="/wellness/claims/{{ claim.id }}/complete">
+    {% set faces = ['😖', '🙁', '😐', '🙂', '😄'] %}
+    <div class="field">
+      <label>How did you feel <em>before</em> the break?</label>
+      <div class="moods">
+        {% for i in range(1, 6) %}
+        <label><input type="radio" name="mood_before" value="{{ i }}" required>
+          <span class="face" aria-hidden="true">{{ faces[i-1] }}</span><small>{{ i }}</small></label>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="field">
+      <label>And <em>after</em>?</label>
+      <div class="moods">
+        {% for i in range(1, 6) %}
+        <label><input type="radio" name="mood_after" value="{{ i }}" required>
+          <span class="face" aria-hidden="true">{{ faces[i-1] }}</span><small>{{ i }}</small></label>
+        {% endfor %}
+      </div>
+    </div>
+
+    {{ field("activity_done", "What did you actually do?", required=True,
+             placeholder="e.g. 30-minute walk then stretching") }}
+    {{ field("takeaway", "One takeaway", type="textarea", optional=True,
+             placeholder="anything you noticed — energy, focus, mood…", attrs='rows="2"') }}
+
+    <button class="btn" type="submit">Finish check-in</button>
+    <a href="/wellness" style="margin-left:.8rem;">Back</a>
+    <p class="grow-note">Checking in completes the break — that's points for you and growth for your companion. 🌱</p>
+  </form>
+</div>
+{% endblock %}

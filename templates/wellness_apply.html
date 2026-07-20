@@ -1,0 +1,59 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash, field %}
+{% block title %}Request a wellness break{% endblock %}
+{% block content %}
+<style>
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px;
+           padding:1.2rem 1.4rem; margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05);
+           max-width:640px; }
+  .field { margin-bottom:1rem; }
+  .field label { display:block; font-weight:700; margin-bottom:.3rem; }
+  .field input, .field textarea { width:100%; font:inherit; padding:.5rem .7rem; border:1px solid var(--line);
+           border-radius:10px; background:var(--bg); color:var(--ink); box-sizing:border-box; }
+  .field .help { color:var(--soft); font-size:.8rem; margin-top:.25rem; }
+  .acts { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:.6rem; margin-bottom:1rem; }
+  .acts label { border:1px solid var(--line); border-radius:12px; padding:.65rem .8rem; cursor:pointer;
+                display:flex; gap:.55rem; align-items:center; background:var(--bg); }
+  .acts input { accent-color:var(--accent); }
+  .acts label:has(input:checked) { border-color:var(--accent); background:var(--accent-bg); }
+  .btn { font:inherit; font-weight:700; cursor:pointer; border:1px solid var(--accent);
+         background:var(--accent); color:#fff; border-radius:10px; padding:.6rem 1.2rem; }
+  .notallowed { color:var(--soft); font-size:.8rem; margin-top:.9rem; }
+  .left-note { font-weight:700; color:var(--accent); margin-bottom:1rem; }
+</style>
+
+{{ page_header("Request a wellness break",
+               "One hour at a time, up to " ~ weekly_hours ~ " hours a week — scheduled so your section keeps running.") }}
+
+<div class="panel">
+  {% if err %}{{ flash(err=err) }}{% endif %}
+  <div class="left-note">{{ left }} hour{{ 's' if left != 1 }} left this week.</div>
+
+  <form method="post" action="/wellness/apply">
+    {{ field("break_date", "Date", value=form.get("break_date", ""), type="date", required=True,
+             attrs='min="' ~ today ~ '"', help="A workday, today or later — breaks can't be filed backdated.") }}
+    {{ field("start_time", "Start time", value=form.get("start_time", ""), type="time", required=True,
+             help="Coordinate with your section so service isn't disrupted; it can't overlap your lunch break.") }}
+
+    <div class="field">
+      <label>Planned activity</label>
+      <div class="acts">
+        {% for key, label in activities %}
+        <label><input type="radio" name="activity" value="{{ key }}" required
+                      {{ "checked" if form.get("activity") == key }}> {{ label }}</label>
+        {% endfor %}
+      </div>
+    </div>
+
+    {{ field("note", "Note for your section chief", value=form.get("note", ""), type="textarea",
+             optional=True, placeholder="e.g. morning jog at the grounds, back by 10:00",
+             attrs='rows="2"') }}
+
+    <button class="btn" type="submit">Send to my section chief</button>
+    <a href="/wellness" style="margin-left:.8rem;">Cancel</a>
+
+    <p class="notallowed">Per DM 2025-0135, wellness breaks are for healthy activities —
+    smoking, vaping, alcohol and similar are not covered.</p>
+  </form>
+</div>
+{% endblock %}
