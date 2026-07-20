@@ -4,13 +4,16 @@ The live system twice ended up with a same-day, same-title, same-creator pair of
 events where the second was an accidental resubmit that left an empty twin (once
 26 minutes apart, once 3 minutes apart), and by the time anyone noticed the empty
 one had already aged off the "Ongoing" feed with no Archive button left anywhere.
+A follow-up report (a real-world DOH policy-orientation duplicate) showed the
+original same-creator/6-hour match rule missed the common case: two different
+staff logging the same activity, or a resubmit hours or days later — so the match
+now keys on title + date alone, regardless of who created it or when.
 
-This is a live, NON-blocking heads-up: /create/check-duplicate reports whether the
-signed-in user already made an event with this title + date recently, and the
-create screen's JS shows a note with a link to it — but /create itself is
-untouched, so submitting twice on purpose (a legitimate second activity that
-happens to share a name) still works exactly as before. See
-storage.find_recent_duplicate_event for the match rule.
+This is a live, NON-blocking heads-up: /create/check-duplicate reports whether an
+event with this title + date already exists, and the create screen's JS shows a
+note with a link to it — but /create itself is untouched, so submitting twice on
+purpose (a legitimate second activity that happens to share a name) still works
+exactly as before. See storage.find_recent_duplicate_event for the match rule.
 """
 import storage as st
 
@@ -36,41 +39,47 @@ def test_storage_finds_same_creator_same_title_and_date(manager, db_path):
     title = "Storage Dup — same creator"
     _bureau(manager, name=title)
     conn = st.connect(db_path)
-    dup = st.find_recent_duplicate_event(conn, title, "2026-06-15", "manager@test.local")
+    dup = st.find_recent_duplicate_event(conn, title, "2026-06-15")
     conn.close()
     assert dup is not None
     assert dup["responses"] == 0
     assert dup["event_kind"] == "bureau"
 
 
-def test_storage_ignores_a_different_creator(manager, db_path):
+def test_storage_finds_it_across_different_creators(admin, db_path):
+    # Two different staff logging the same activity is the common real-world
+    # case (e.g. a policy-orientation meeting entered by two encoders) — the
+    # match must not be scoped to "same login". This event is created by
+    # `admin`; find_recent_duplicate_event takes no creator identity at all.
     title = "Storage Dup — different creator"
-    _bureau(manager, name=title)
+    _bureau(admin, name=title)
     conn = st.connect(db_path)
-    dup = st.find_recent_duplicate_event(conn, title, "2026-06-15", "someone-else@test.local")
+    dup = st.find_recent_duplicate_event(conn, title, "2026-06-15")
     conn.close()
-    assert dup is None
+    assert dup is not None
 
 
 def test_storage_ignores_a_different_date(manager, db_path):
     title = "Storage Dup — different date"
     _bureau(manager, name=title, date="2026-06-15")
     conn = st.connect(db_path)
-    dup = st.find_recent_duplicate_event(conn, title, "2026-06-16", "manager@test.local")
+    dup = st.find_recent_duplicate_event(conn, title, "2026-06-16")
     conn.close()
     assert dup is None
 
 
-def test_storage_ignores_outside_the_lookback_window(manager, db_path):
-    title = "Storage Dup — outside window"
+def test_storage_finds_it_regardless_of_age(manager, db_path):
+    title = "Storage Dup — old resubmit"
     _bureau(manager, name=title)
     conn = st.connect(db_path)
-    # A negative window pushes the cutoff into the future, so even an event
-    # created this instant reads as "too old" — deterministic, no clock races.
-    dup = st.find_recent_duplicate_event(
-        conn, title, "2026-06-15", "manager@test.local", within_hours=-1)
+    # Backdate creation well outside the old 6-hour window — a delayed
+    # re-entry days later must still be flagged.
+    conn.execute("UPDATE event SET created_at = '2000-01-01T00:00:00' WHERE title = ?",
+                 (title,))
+    conn.commit()
+    dup = st.find_recent_duplicate_event(conn, title, "2026-06-15")
     conn.close()
-    assert dup is None, "a cutoff in the future should never match anything"
+    assert dup is not None
 
 
 # ── GET /create/check-duplicate ──────────────────────────────────────────────
@@ -96,6 +105,19 @@ def test_check_duplicate_endpoint_reports_the_existing_event(manager, db_path):
     assert dup["event_kind"] == "bureau"
     assert dup["responses"] == 0
     assert dup["created_at_human"]                 # a non-empty human-readable stamp
+
+
+def test_check_duplicate_endpoint_reports_it_across_different_creators(admin, manager):
+    # admin creates it, section_manager checks for it later — the endpoint must
+    # flag it regardless of who's asking or who made the original.
+    title = "Check-Duplicate Endpoint — cross-creator"
+    r = _bureau(admin, name=title)
+    assert r.status_code == 200, r.text[:600]
+
+    r = manager.get("/create/check-duplicate", params={
+        "activity_name": title, "event_date": "2026-06-15"})
+    assert r.status_code == 200
+    assert r.json()["duplicate"] is not None
 
 
 def test_check_duplicate_endpoint_requires_login(app_mod):

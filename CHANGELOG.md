@@ -1,5 +1,38 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-20 (v2.24 — duplicate-activity heads-up now matches across creators, not just same-login/6h)
+
+Spot-feedback report: a real duplicate ("DOH UHC Fund for Zero Balance Billing
+in LGU Hospital: POLICY ORIENTATION MEETING") was created and the /create
+screen's "you already made this" warning (spot-feedback #67) never fired.
+
+Root cause: `storage.find_recent_duplicate_event` only matched a duplicate
+made by the **same** `created_by` login, created within the last **6 hours**.
+That's the pattern the original spot-feedback #67 report described (one
+manager accidentally double-submitting), but it misses the more common
+real-world case — two different staff members independently logging the same
+activity, or the same activity re-entered a day or more later. Since the check
+is purely advisory (`POST /create` never calls it, and there's no DB unique
+constraint), any duplicate outside that narrow window was silently allowed
+through with no warning at all.
+
+Fix: `find_recent_duplicate_event(conn, title, event_date)` now matches on
+title (case/space-insensitive) + event date alone — no `created_by` filter,
+no time cutoff. `GET /create/check-duplicate` updated to match (drops the
+now-unused `request` param); `templates/form_create.html` copy updated from
+"You already created…" to "…already exists on this date" since the earlier
+activity may not be the current user's own. Still purely advisory — `/create`
+itself is unchanged, so a genuine second activity that happens to share a name
+still saves normally.
+
+Verified: `tests/test_create_duplicate_warning.py` updated — added a
+same-title/different-creator case (created by `admin`, found with no creator
+argument at all) and a same-title/backdated-creation case (created_at forced
+to year 2000, still found) in place of the old "ignores a different creator" /
+"ignores outside the lookback window" tests; added an HTTP-level test where
+one role creates the activity and a different role's `/create/check-duplicate`
+call still reports it. `tests/test_create_duplicate_warning.py` 10/10 pass.
+
 ## 2026-07-19 (v2.23 — deploy manifest was missing `qa_rules.py` → app crashed on startup)
 
 `ai_core.py` imports `qa_rules` at module load (the FAQ/learned-rules layer

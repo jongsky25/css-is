@@ -17,10 +17,27 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.23"
+APP_VERSION = "2.24"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.24",
+        "date": "July 20, 2026",
+        "summary": "The \"you already made this activity\" warning on the New survey screen "
+                   "now catches duplicates made by a different staff member too, not just "
+                   "your own.",
+        "changes": [
+            "Previously the duplicate warning only fired if the SAME signed-in account had "
+            "created a matching activity within the last 6 hours. A real case showed the "
+            "common duplicate isn't that — it's two different staff members entering the "
+            "same activity, or someone re-entering it a day or more later. The warning now "
+            "checks by activity name + date alone, no matter who created the earlier one or "
+            "how long ago.",
+            "Still just a heads-up: it never blocks Save. If it really is a second, separate "
+            "activity with the same name, you can carry on as before.",
+        ],
+    },
     {
         "version": "2.23",
         "date": "July 19, 2026",

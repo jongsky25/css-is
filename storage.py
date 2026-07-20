@@ -845,27 +845,28 @@ def create_event(conn, title, event_date, *, end_date=None, venue=None, organize
     return {"id": event_id, "event_token": token}
 
 
-def find_recent_duplicate_event(conn, title, event_date, created_by, within_hours=6):
+def find_recent_duplicate_event(conn, title, event_date):
     """The most recently created event with the same title (case/space-insensitive)
-    and event date, made by the SAME creator within the last `within_hours` — the
-    shape of an accidental resubmit on /create (spot-feedback #67: the same manager
-    created a same-day duplicate 26 minutes after the original, leaving an empty
-    twin with zero responses; a second pair 3 minutes apart went unnoticed). The
-    create screen shows this as a "did you mean to create another one?" warning
-    instead of silently doubling the activity. Returns None if nothing matches."""
+    and the same event date — the shape of an accidental resubmit on /create
+    (spot-feedback #67: the same manager created a same-day duplicate 26 minutes
+    after the original, leaving an empty twin with zero responses; a second pair
+    3 minutes apart went unnoticed). Matches regardless of who created it or how
+    long ago — a same-title, same-date pair is worth flagging even when two
+    different staff logged it, or one re-entered it days later. The create screen
+    shows this as a "did you mean to create another one?" warning instead of
+    silently doubling the activity. Returns None if nothing matches."""
     title = (title or "").strip()
-    if not title or not event_date or not created_by:
+    if not title or not event_date:
         return None
-    cutoff = (tz.now_local() - timedelta(hours=within_hours)).isoformat(timespec="seconds")
     row = conn.execute("""
         SELECT e.id, e.event_token, e.created_at, e.event_kind,
                (SELECT COUNT(*) FROM event_form ef JOIN response r
                   ON r.form_instance_id = ef.form_instance_id WHERE ef.event_id = e.id)
         FROM event e
         WHERE lower(trim(e.title)) = lower(trim(?))
-              AND e.event_date = ? AND e.created_by = ? AND e.created_at >= ?
+              AND e.event_date = ?
         ORDER BY e.created_at DESC LIMIT 1
-    """, (title, event_date, created_by, cutoff)).fetchone()
+    """, (title, event_date)).fetchone()
     if not row:
         return None
     return {"id": row[0], "event_token": row[1], "created_at": row[2],
