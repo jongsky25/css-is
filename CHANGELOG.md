@@ -1,5 +1,51 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-21 (v2.26 — Staff onboarding, avatar companion & two-card landing)
+
+Post-login rework in six self-contained phases (see
+`docs/STAFF_ONBOARDING_AVATAR_PLAN.md`). No role/capability changes; every deep
+link keeps working.
+
+What it does:
+
+- **One-time onboarding** (`/welcome`): first sign-in after this update (detected
+  by a new `admin_user.onboarded_at` column, NULL = not yet) walks the user
+  through an optional profile-photo upload (into their existing directory record
+  via `set_rp_photo`, so it shows on their people page) and adopting a **named
+  companion**. The login flow routes first-timers here *after* any temp-password
+  reset and *ahead of* the `/start` AI-landing opt-in, carrying `?next=` through;
+  a soft guard on `/` stops it being skipped by URL (deep links stay reachable).
+- **Avatar catalog** (`templates/_avatars.html`): inline-SVG art, 6 species
+  across a plant and an animal family × 6 growth stages, no external assets
+  (PWA/offline-safe). Plants sway, animals breathe, a tap bounces + sparkles,
+  hover shows the pet name; all motion honours `prefers-reduced-motion`. Two new
+  columns carry the choice: `admin_user.avatar_kind` / `avatar_name`.
+- **Two-card landing** (`/`): a calm chooser — greeting, photo, the companion,
+  and **Wellness** and **CSS** doors. The classic role-filtered hub moved verbatim
+  to `/css`; nav/search/help/router links swept accordingly.
+- **Viewer routing**: `_css_entry_for` sends a plain viewer linked to a visible
+  directory person to their own `/dashboard/people/<id>` first; a "This is your
+  profile" banner there links to their section (`/dashboard/teams/<path>`).
+  Fallbacks for hidden/unlinked people and non-viewer roles.
+- **Unified mascot + editor**: the wellness hub renders the *adopted* companion
+  (species from the profile, growth stage still derived from wellness points,
+  default plant when unchosen) instead of a hard-coded plant. A new **`/me`** page
+  re-picks or renames anytime.
+- **Wellness refinements**: the apply form's activity picker is now illustrated
+  inline-SVG cards (`templates/_wellness_icons.html`) behind the same radio
+  inputs — POST contract unchanged. Approvals escalate by directory rank
+  (`get_wellness_approvers` rewrite): staff → section chief → division chief →
+  Director → admin fallback, resolved through `org_unit.path`, with rank-aware
+  copy on the apply form.
+
+Schema: three guarded `ALTER TABLE admin_user` columns (`avatar_kind`,
+`avatar_name`, `onboarded_at`) added by `init_db` — existing databases migrate on
+first boot; every existing account sees the one-time onboarding on next sign-in.
+
+Tests: six new files (storage, onboarding flow, landing fork, viewer routing,
+profile edit, escalation) plus updates to existing wellness/tour/hub tests —
+full suite 955 passed.
+
 ## 2026-07-20 (v2.25 — Wellness module: gamified 2-hour weekly wellness break, DM 2025-0135)
 
 New module alongside the CSS: after login the home page offers two doors —
