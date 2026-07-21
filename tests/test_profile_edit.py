@@ -84,13 +84,91 @@ def test_me_updates_species_and_name(app_mod):
     c = _client(app_mod, uid, "pe-upd@test.local")
     r = c.post("/me", data={"avatar_kind": "cat", "avatar_name": "  Milo "},
                follow_redirects=False)
-    # Saving lands on the wellness break page so the updated mascot is visible.
-    assert r.status_code == 303 and r.headers["location"].startswith("/wellness")
+    # Saving closes the profile — lands back on the home chooser, not /me.
+    assert r.status_code == 303 and r.headers["location"].startswith("/?msg=")
     conn = st.connect(app_mod.DB)
     acct = st.get_admin_user_by_id(conn, uid)
     conn.execute("DELETE FROM admin_user WHERE id=?", (uid,)); conn.commit(); conn.close()
     assert acct["avatar_kind"] == "cat"
     assert acct["avatar_name"] == "Milo"      # trimmed
+
+
+# --- profile photo for every viewer + editable designation ------------------
+
+# A 1x1 transparent PNG as a data URL — the smallest valid image upload.
+_PNG_DATA_URL = (
+    "data:image/png;base64,"
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+)
+
+
+def test_unlinked_viewer_can_set_own_photo(app_mod):
+    """An account with no directory person (rp_id is NULL) can still upload a
+    profile photo — it lands on the account row and is served from /me/photo."""
+    uid = _fresh(app_mod, "pe-photo@test.local", "cat", "Milo")
+    c = _client(app_mod, uid, "pe-photo@test.local")
+    # The photo panel is offered even without a linked directory person.
+    assert 'name="photo_data"' in c.get("/me").text
+    r = c.post("/me", data={"avatar_kind": "cat", "avatar_name": "Milo",
+                            "photo_data": _PNG_DATA_URL}, follow_redirects=False)
+    assert r.status_code == 303
+    conn = st.connect(app_mod.DB)
+    stored = st.get_user_photo(conn, uid)
+    conn.close()
+    assert stored is not None and stored[1] == "image/png"
+    # And the account's own photo is served back to it.
+    assert c.get("/me/photo").status_code == 200
+    conn = st.connect(app_mod.DB)
+    conn.execute("DELETE FROM admin_user WHERE id=?", (uid,)); conn.commit(); conn.close()
+
+
+def test_me_saves_designation(app_mod):
+    uid = _fresh(app_mod, "pe-desig@test.local", "cat", "Milo")
+    c = _client(app_mod, uid, "pe-desig@test.local")
+    c.post("/me", data={"avatar_kind": "cat", "avatar_name": "Milo",
+                        "designation": "  Section Head "}, follow_redirects=False)
+    conn = st.connect(app_mod.DB)
+    prof = st.get_user_profile(conn, uid)
+    conn.close()
+    assert prof["designation"] == "Section Head"   # trimmed and persisted
+    # And it renders prefilled on the profile page for editing.
+    assert 'value="Section Head"' in c.get("/me").text
+    conn = st.connect(app_mod.DB)
+    conn.execute("DELETE FROM admin_user WHERE id=?", (uid,)); conn.commit(); conn.close()
+
+
+def test_me_designation_syncs_to_directory(app_mod):
+    """A directory-linked account's designation writes through to its
+    resource_person row (the field certificates read), and clearing it on the
+    profile clears it there too."""
+    conn = st.connect(app_mod.DB)
+    st.init_db(conn)
+    conn.execute("DELETE FROM admin_user WHERE username=?", ("pe-link@test.local",))
+    rp_id = st.add_rp(conn, "Linked Staffer", True, designation="Old Title")
+    h, salt = auth.hash_password("Test1234!")
+    uid = st.create_admin_user(conn, "pe-link@test.local", h, salt, "viewer",
+                               active=True, rp_id=rp_id)
+    st.set_user_avatar(conn, uid, "cat", "Milo")
+    st.mark_onboarded(conn, uid)
+    conn.commit(); conn.close()
+    c = _client(app_mod, uid, "pe-link@test.local")
+
+    # Edit on the profile → the directory row is updated.
+    c.post("/me", data={"avatar_kind": "cat", "avatar_name": "Milo",
+                        "designation": "Section Head"}, follow_redirects=False)
+    conn = st.connect(app_mod.DB)
+    assert st.get_rp(conn, rp_id)["designation"] == "Section Head"
+    assert st.get_user_profile(conn, uid)["designation"] == "Section Head"
+    conn.close()
+
+    # Clearing it on the profile clears the directory too.
+    c.post("/me", data={"avatar_kind": "cat", "avatar_name": "Milo",
+                        "designation": ""}, follow_redirects=False)
+    conn = st.connect(app_mod.DB)
+    assert st.get_rp(conn, rp_id)["designation"] in (None, "")
+    conn.execute("DELETE FROM admin_user WHERE id=?", (uid,))
+    conn.execute("DELETE FROM resource_person WHERE id=?", (rp_id,))
+    conn.commit(); conn.close()
 
 
 def test_me_requires_a_name(app_mod):

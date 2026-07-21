@@ -396,6 +396,17 @@ def _add_missing_columns(conn):
         # timestamp, so it's the one extra persisted care artifact.
         if "avatar_care_streak" not in au_cols:
             conn.execute("ALTER TABLE admin_user ADD COLUMN avatar_care_streak INTEGER")
+        # Self-service profile fields on the account itself, so EVERY viewer —
+        # not just accounts linked to a directory person — can set a profile
+        # photo and their own designation from the /me page. Linked accounts
+        # keep writing their photo/designation onto the directory row; these
+        # columns are the store for the unlinked ones.
+        if "photo" not in au_cols:
+            conn.execute("ALTER TABLE admin_user ADD COLUMN photo BLOB")
+        if "photo_mime" not in au_cols:
+            conn.execute("ALTER TABLE admin_user ADD COLUMN photo_mime TEXT")
+        if "designation" not in au_cols:
+            conn.execute("ALTER TABLE admin_user ADD COLUMN designation TEXT")
         conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_admin_user_rp "
                      "ON admin_user(rp_id) WHERE rp_id IS NOT NULL")
     # Respondent demographics captured at Type-2 pre-registration. These are NON-PII
@@ -2955,12 +2966,17 @@ def _admin_row(r):
             "rp_id": r[7], "created_at": r[8], "created_by": r[9],
             "avatar_kind": r[10], "avatar_name": r[11], "onboarded_at": r[12],
             "avatar_last_care_at": r[13], "avatar_care_streak": r[14] or 0,
+            "designation": r[15], "has_account_photo": bool(r[16]),
             "pending": (r[2] == "")}      # no password set yet => still invited
 
 
+# The account's own photo is a BLOB, so the shared row loader never SELECTs its
+# bytes (that would drag the whole image into every user-list read) — it takes a
+# cheap boolean instead; get_user_photo() fetches the bytes only when serving.
 _ADMIN_COLS = ("id, username, pw_hash, salt, role, active, must_change, rp_id, "
                "created_at, created_by, avatar_kind, avatar_name, onboarded_at, "
-               "avatar_last_care_at, avatar_care_streak")
+               "avatar_last_care_at, avatar_care_streak, designation, "
+               "(photo IS NOT NULL) AS has_account_photo")
 
 
 def get_admin_user(conn, username):
@@ -3064,6 +3080,17 @@ def get_user_profile(conn, user_id):
     if not acct:
         return None
     rp = get_rp(conn, acct["rp_id"]) if acct.get("rp_id") else None
+    rp_has_photo = bool((rp or {}).get("has_photo"))
+    account_has_photo = bool(acct.get("has_account_photo"))
+    # The photo shown on the profile/greeting: the directory picture when the
+    # account is linked and has one, otherwise the account's own uploaded photo
+    # (served from /me/photo). Every account can now carry a photo.
+    if rp_has_photo:
+        photo_url = f"/photo/{acct['rp_id']}"
+    elif account_has_photo:
+        photo_url = "/me/photo"
+    else:
+        photo_url = None
     return {
         "user_id": acct["id"],
         "username": acct["username"],
@@ -3079,8 +3106,14 @@ def get_user_profile(conn, user_id):
         "person_name": (rp or {}).get("name") or "",
         "org_unit_id": (rp or {}).get("org_unit_id"),
         "org_path": (rp or {}).get("org_path"),
-        "designation": (rp or {}).get("designation"),
-        "has_photo": bool((rp or {}).get("has_photo")),
+        # For a linked account the staff directory is authoritative (an admin
+        # may edit it there too, and /me writes through to it), so its value
+        # wins; an unlinked account uses the designation stored on the account.
+        "designation": ((rp or {}).get("designation") if rp
+                        else acct.get("designation")) or "",
+        "has_photo": rp_has_photo,
+        "account_has_photo": account_has_photo,
+        "photo_url": photo_url,
         "hidden_public": bool((rp or {}).get("hidden_public")),
     }
 
@@ -3154,6 +3187,33 @@ def set_rp_photo(conn, rp_id, blob, mime):
     """Store (or replace) a person's profile picture as bytes inside the db."""
     conn.execute("UPDATE resource_person SET photo=?, photo_mime=? WHERE id=?",
                  (sqlite3.Binary(blob), mime, rp_id))
+    conn.commit()
+
+
+def set_user_photo(conn, user_id, blob, mime):
+    """Store (or replace) an account's own profile picture. Used for accounts
+    that aren't linked to a directory person, so every viewer can still set a
+    photo from /me (linked accounts write to their resource_person row instead)."""
+    conn.execute("UPDATE admin_user SET photo=?, photo_mime=? WHERE id=?",
+                 (sqlite3.Binary(blob), mime, user_id))
+    conn.commit()
+
+
+def get_user_photo(conn, user_id):
+    """Return (bytes, mime) for an account's own photo, or None if it has none."""
+    row = conn.execute("SELECT photo, photo_mime FROM admin_user WHERE id=?",
+                       (user_id,)).fetchone()
+    if not row or row[0] is None:
+        return None
+    return bytes(row[0]), (row[1] or "image/jpeg")
+
+
+def set_user_designation(conn, user_id, designation):
+    """Set (or clear) the account's self-service designation shown on /me.
+    Trimmed; blank clears it. Kept on the account so unlinked viewers can fill
+    one in without touching the admin-managed directory."""
+    val = (designation or "").strip() or None
+    conn.execute("UPDATE admin_user SET designation=? WHERE id=?", (val, user_id))
     conn.commit()
 
 

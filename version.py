@@ -17,10 +17,29 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.42"
+APP_VERSION = "2.43"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.43",
+        "date": "July 21, 2026",
+        "summary": "My profile now lets everyone set a photo and their own "
+                   "designation, and saving takes you back to the home page.",
+        "changes": [
+            "Everyone can now set a profile photo from My profile — before, only "
+            "accounts tied to a staff-directory entry could. Your photo shows "
+            "beside your name and greeting.",
+            "My profile has a new Designation box you can fill in and update any "
+            "time (for example \"Section Head\"). For staff listed in the "
+            "directory it updates the directory entry too, so the two always "
+            "match (the designation used on certificates).",
+            "Saving your profile now returns you to the home page with a "
+            "\"Profile saved\" note. (This replaces the recent change that sent "
+            "you to the wellness break page — the profile now saves your photo "
+            "and designation too, so it returns you home.)",
+        ],
+    },
     {
         "version": "2.42",
         "date": "July 21, 2026",
