@@ -1,5 +1,26 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-21 (v2.40 — Hotfix: ship wellness_register.py; guard the deploy against unshipped boot imports)
+
+**Production hotfix.** The live Space was crashing on boot with
+`ModuleNotFoundError: No module named 'wellness_register'`. Root cause: v2.39 (#75)
+added `wellness_register.py` and an `import wellness_register` in `app.py`, but the
+new module was never added to `deploy_hf.py`'s `RUNTIME_PY` allowlist — the deploy
+ships an explicit file list, so the module never reached the Space while the import
+that needs it did. Every boot then died before serving, which in turn 503'd the
+pre-deploy backup gate and deadlocked further deploys.
+
+- **`deploy_hf.py`**: add `wellness_register.py` to `RUNTIME_PY` (the fix), and add
+  `_unshipped_local_imports(allow)` — parses every shipped `.py`'s TOP-LEVEL imports
+  and hard-aborts the deploy if any resolve to a repo-local module that isn't itself
+  shipped. This turns exactly this failure mode (a boot-time import with no shipped
+  module) into a loud pre-upload abort instead of a silent live crash. Verified: it
+  flags `wellness_register` against the pre-fix allowlist and is clean against the
+  fixed one.
+- **`version.py`**: `APP_VERSION` → `2.40` with a user-facing changelog entry (this
+  deploy is also the first to actually ship the Annex A Excel register live, since
+  both 2.39 deploys aborted at the backup gate).
+
 ## 2026-07-21 (Wellness register download → official "Annex A. Weekly Wellness Break Log" (Excel), consumed breaks only)
 
 The utilization dashboard's **"Download the register"** now produces the DM's

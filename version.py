@@ -17,10 +17,29 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.39"
+APP_VERSION = "2.40"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.40",
+        "date": "July 21, 2026",
+        "summary": "The wellness utilization dashboard's register download is now "
+                   "an Excel file in the official Annex A format, covering only the "
+                   "breaks people actually took — with a date-range filter.",
+        "changes": [
+            "On the wellness utilization dashboard, \"Download the register\" now "
+            "gives an Excel workbook laid out as the official \"Annex A. Weekly "
+            "Wellness Break Log\" (Name, Date/Time, Activity Type, Duration, "
+            "Usefulness Rating and Remarks) instead of the old plain CSV.",
+            "The register lists only breaks that were actually consumed "
+            "(completed); pending, approved-but-not-taken, denied and cancelled "
+            "requests are left off.",
+            "A From/To date filter scopes the download to any span — it defaults "
+            "to the week you're viewing, and clearing both dates exports the "
+            "whole register.",
+        ],
+    },
     {
         "version": "2.39",
         "date": "July 21, 2026",

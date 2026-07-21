@@ -72,6 +72,7 @@ RUNTIME_PY = [
     "name_cleanup.py", "apply_speakers.py", "harmonize.py", "activity_admin.py",
     "activity_messages.py", "certificate.py", "ratelimit.py", "i18n.py", "realtime.py",
     "tours.py", "ui_telemetry.py", "ux_handoff.py", "ai_core.py", "qa_rules.py",
+    "wellness_register.py",
 ]
 ALLOW = RUNTIME_PY + [
     "version.py",            # drives the login version string
@@ -277,6 +278,38 @@ def guard_version_bump(want):
             sys.exit("ABORT — bump the version, then re-run.")
 
 
+def _unshipped_local_imports(allow):
+    """Guard against the v2.39 wellness_register.py class of bug: a module that a
+    SHIPPED file imports at boot, but which itself was never added to the deploy
+    allowlist — so the Space boots straight into ModuleNotFoundError.
+
+    Parses every shipped .py, collects its TOP-LEVEL imports (lazy imports inside
+    functions don't run at boot, so they can't wedge startup), and reports any that
+    resolve to a repo-local module not itself shipped. Returns [(module, imported_by)]."""
+    import ast
+    local_mods = {f[:-3] for f in os.listdir(".") if f.endswith(".py")}
+    shipped = {f[:-3] for f in allow if f.endswith(".py")}
+    offenders = []
+    for mod in sorted(shipped):
+        path = mod + ".py"
+        if not os.path.exists(path):
+            continue
+        try:
+            tree = ast.parse(open(path, encoding="utf-8").read(), path)
+        except Exception:
+            continue
+        names = set()
+        for node in tree.body:  # module scope only
+            if isinstance(node, ast.Import):
+                names |= {a.name.split(".")[0] for a in node.names}
+            elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+                names.add(node.module.split(".")[0])
+        for n in sorted(names):
+            if n in local_mods and n not in shipped:
+                offenders.append((n, mod))
+    return offenders
+
+
 def main():
     from huggingface_hub import HfApi
     import version
@@ -317,6 +350,13 @@ def main():
     missing = [f for f in allow if "*" not in f and not os.path.exists(f)]
     if missing:
         sys.exit(f"ABORT — missing files: {missing}")
+
+    unshipped = _unshipped_local_imports(allow)
+    if unshipped:
+        detail = "; ".join(f"{m} (imported by {by}.py)" for m, by in unshipped)
+        sys.exit(f"ABORT — these local modules are imported at boot but are NOT in the "
+                 f"deploy allowlist, so the Space would crash with ModuleNotFoundError. "
+                 f"Add them to RUNTIME_PY: {detail}")
 
     guard_version_bump(want)
 
