@@ -122,6 +122,41 @@
     } catch (e) { /* no audio available — silently fine */ }
   }
 
+  /* ---- spontaneous species voices: soft, quieter than the tap sounds, played
+   * on their own from the idle loop (below) so a companion occasionally chirps
+   * / purrs / hoots without being touched. Each is a short low-gain motif. --- */
+  var VOICES = {
+    dog:       function () { blip(210, 0.12, 0, "square", 0.02); blip(170, 0.15, 0.13, "square", 0.02); },   // woof-woof
+    cat:       function () { blip(620, 0.16, 0, "sine", 0.022); blip(500, 0.18, 0.15, "sine", 0.02); },      // soft meow
+    rabbit:    function () { blip(940, 0.06, 0, "triangle", 0.018); },                                        // tiny squeak
+    bird:      function () { blip(1250, 0.07, 0, "sine", 0.02); blip(1600, 0.07, 0.08, "sine", 0.02); blip(1400, 0.08, 0.16, "sine", 0.018); }, // tweet
+    turtle:    function () { blip(150, 0.26, 0, "sine", 0.02); },                                             // low hum
+    fish:      function () { blip(680, 0.05, 0, "sine", 0.015); blip(520, 0.06, 0.07, "sine", 0.015); },      // blub
+    dolphin:   function () { blip(1650, 0.1, 0, "sine", 0.02); blip(2050, 0.1, 0.09, "sine", 0.02); },        // eee-ee
+    owl:       function () { blip(360, 0.17, 0, "sine", 0.024); blip(300, 0.22, 0.2, "sine", 0.024); },       // hoo-hoo
+    bat:       function () { blip(2300, 0.05, 0, "sine", 0.014); blip(2600, 0.05, 0.07, "sine", 0.013); },    // high squeak
+    plant:     function () { blip(470, 0.22, 0, "triangle", 0.014); }                                         // gentle rustle
+  };
+  function voice(kind, fam) {
+    var v = VOICES[kind] || (fam === "plant" ? VOICES.plant : null);
+    if (v) v();
+  }
+  /* A companion vocalizes on its own — but ONLY through an already-unlocked,
+   * running context. Autoplay policy forbids a timer from starting or resuming
+   * audio, so we never force it here: the first spontaneous sound can only come
+   * after the user has turned sound on (that toggle is the unlocking gesture) or
+   * otherwise interacted. Throttled per companion so it stays occasional. */
+  var VOICE_GAP = 15000;
+  function maybeVoice(w) {
+    if (!soundOn() || !audioCtx || audioCtx.state !== "running") return;
+    if (still() || document.hidden || asleep(w) || w._avAway) return;   // holder voices for it while exploring
+    var now = Date.now();
+    if (w._avNextVoice && now < w._avNextVoice) return;
+    if (Math.random() > 0.18) return;                  // ~1 in 6 eligible behaviors
+    w._avNextVoice = now + VOICE_GAP + Math.random() * VOICE_GAP;   // 15–30s min gap
+    try { voice(w.dataset.kind, w.classList.contains("fam-plant") ? "plant" : "animal"); } catch (e) {}
+  }
+
   /* ---- species repertoires: [class, how long the animation runs (ms)] ---- */
   var BEHAVIORS = {
     plant:     [["av-do-stretch", 1400]],
@@ -175,6 +210,7 @@
         w.classList.add(pick[0]);
         clearTimeout(w._avDoT);
         w._avDoT = setTimeout(function () { w.classList.remove(pick[0]); }, pick[1] + 80);
+        maybeVoice(w);                                 // occasionally vocalize, too
         tick();
       }, idleDelay(w));
     })();

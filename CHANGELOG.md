@@ -28,8 +28,17 @@ confirmation blip, which is why it read as "sounds don't work."
   and schedules the tones on the promise's resolution, when `currentTime` is live
   again. Same blips, same opt-in/off-by-default behavior. Verified against a
   suspended-context simulation of the iOS path.
-- **`templates/_avatars.html`**: bump the `avatars.js` asset token to `v=20260722b`
-  so returning devices fetch the fixed file.
+- **Spontaneous species voices** (`static/js/avatars.js`): companions now vocalize on
+  their own from the idle loop — soft, quiet, species-specific motifs (dog woof, cat
+  meow, bird tweet, owl hoot, dolphin eee, fish blub, plant rustle, …), throttled to
+  roughly one every 15–30 s per companion and paired with a visible idle behavior.
+  Gated behind the same opt-in sound toggle and the sleep / reduced-motion / hidden-tab
+  rules, and — because autoplay policy forbids a timer from starting audio — only ever
+  played through a context a user gesture has already unlocked (so the first
+  spontaneous sound follows the first interaction of the session; turning sound on
+  counts). Never forces or resumes a context on its own.
+- **`templates/_avatars.html`**: bump the `avatars.js` asset token to `v=20260722c`
+  so returning devices fetch the updated file.
 
 ## 2026-07-21 (v2.40 — Hotfix: ship wellness_register.py; guard the deploy against unshipped boot imports)
 
