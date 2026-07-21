@@ -4,7 +4,7 @@ validation, section-chief approver resolution, the apply→approve→reflect flo
 with its gamification side-effects, in-handler RBAC on the chief/admin pages,
 and the monitoring register export.
 """
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta
 
 import pytest
 
@@ -18,6 +18,14 @@ def _next_weekday(d):
     while d.weekday() >= 5:
         d += timedelta(days=1)
     return d
+
+
+def _future_weekday():
+    """A weekday comfortably in the future. Claim creation requires a minimum
+    lead time before the start (Spot Feedback #73), so tests that file at fixed
+    clock times must not use *today* — their time would read as 'in the past'
+    whenever the suite runs late in the day."""
+    return _next_weekday(tz.today_local() + timedelta(days=3))
 
 
 def _monday_this_week():
@@ -75,7 +83,7 @@ def _client_for_id(app_mod, uid):
 
 def test_third_hour_in_a_week_is_rejected(wellness_org):
     conn, emp = wellness_org["conn"], wellness_org["emp"]
-    d = _next_weekday(tz.today_local()).isoformat()
+    d = _future_weekday().isoformat()
     st.create_wellness_claim(conn, emp, d, "09:00", "exercise")
     st.create_wellness_claim(conn, emp, d, "15:00", "meditation")
     with pytest.raises(ValueError, match="entitlement"):
@@ -85,7 +93,7 @@ def test_third_hour_in_a_week_is_rejected(wellness_org):
 def test_denied_and_cancelled_hours_return_to_the_week(wellness_org):
     conn, emp, chief = wellness_org["conn"], wellness_org["emp"], wellness_org["chief"]
     u_chief = {"id": chief, "username": "w-chief@test.local", "role": "section_manager"}
-    d = _next_weekday(tz.today_local()).isoformat()
+    d = _future_weekday().isoformat()
     c1 = st.create_wellness_claim(conn, emp, d, "09:00", "exercise")
     c2 = st.create_wellness_claim(conn, emp, d, "15:00", "meditation")
     st.decide_wellness_claim(conn, c1, u_chief, "deny", "busy morning")
@@ -97,7 +105,7 @@ def test_denied_and_cancelled_hours_return_to_the_week(wellness_org):
 
 def test_claim_validation_rules(wellness_org):
     conn, emp = wellness_org["conn"], wellness_org["emp"]
-    d = _next_weekday(tz.today_local()).isoformat()
+    d = _future_weekday().isoformat()
     with pytest.raises(ValueError):                                 # bad date
         st.create_wellness_claim(conn, emp, "not-a-date", "09:00", "exercise")
     with pytest.raises(ValueError):                                 # bad time
@@ -111,6 +119,29 @@ def test_claim_validation_rules(wellness_org):
     st.create_wellness_claim(conn, emp, d, "09:00", "exercise")
     with pytest.raises(ValueError, match="already have a break"):   # duplicate slot
         st.create_wellness_claim(conn, emp, d, "09:00", "hobby")
+
+
+def test_break_needs_minimum_lead_time(wellness_org, monkeypatch):
+    """Spot Feedback #73: a break must be filed at least
+    WELLNESS_MIN_LEAD_MINUTES before it starts. Pin 'now' to a fixed weekday
+    morning so the window is deterministic regardless of when the suite runs."""
+    conn, emp = wellness_org["conn"], wellness_org["emp"]
+    fixed = datetime.combine(_monday_this_week(), time(10, 0))   # a Monday, 10:00
+    monkeypatch.setattr(tz, "now_local", lambda: fixed)
+    monkeypatch.setattr(tz, "today_local", lambda: fixed.date())
+    day = fixed.date().isoformat()
+    lead = st.WELLNESS_MIN_LEAD_MINUTES
+    # too soon: only (lead - 15) minutes ahead of the start
+    soon = (fixed + timedelta(minutes=lead - 15)).strftime("%H:%M")
+    with pytest.raises(ValueError, match="minutes before"):
+        st.create_wellness_claim(conn, emp, day, soon, "exercise")
+    # a start already passed today is caught by the same rule (date-only check
+    # used to let it through)
+    with pytest.raises(ValueError, match="minutes before"):
+        st.create_wellness_claim(conn, emp, day, "09:00", "exercise")
+    # comfortably ahead (lead + 60 min) is accepted
+    ok = (fixed + timedelta(minutes=lead + 60)).strftime("%H:%M")
+    assert st.create_wellness_claim(conn, emp, day, ok, "meditation")
 
 
 # ---------------------------------------------------------- approver routing
@@ -127,7 +158,7 @@ def test_chief_resolved_through_directory(wellness_org):
 def test_nobody_decides_their_own_claim(wellness_org):
     conn, chief = wellness_org["conn"], wellness_org["chief"]
     u_chief = {"id": chief, "username": "w-chief@test.local", "role": "section_manager"}
-    d = _next_weekday(tz.today_local()).isoformat()
+    d = _future_weekday().isoformat()
     own = st.create_wellness_claim(conn, chief, d, "09:00", "exercise")
     assert not st.is_wellness_approver(conn, u_chief, chief)
     with pytest.raises(PermissionError):
@@ -141,7 +172,7 @@ def test_chief_queue_holds_only_their_unit(wellness_org):
     conn, emp, chief, loner = (wellness_org["conn"], wellness_org["emp"],
                                wellness_org["chief"], wellness_org["loner"])
     u_chief = {"id": chief, "username": "w-chief@test.local", "role": "section_manager"}
-    d = _next_weekday(tz.today_local()).isoformat()
+    d = _future_weekday().isoformat()
     inside = st.create_wellness_claim(conn, emp, d, "09:00", "exercise")
     outside = st.create_wellness_claim(conn, loner, d, "09:00", "exercise")
     ids = [c["id"] for c in st.list_wellness_approvals(conn, u_chief)]
@@ -188,7 +219,7 @@ def test_approve_complete_reflect_awards_points_and_badges(app_mod, wellness_org
 
 def test_completion_guards(wellness_org):
     conn, emp = wellness_org["conn"], wellness_org["emp"]
-    d = _next_weekday(tz.today_local()).isoformat()
+    d = _future_weekday().isoformat()
     cid = st.create_wellness_claim(conn, emp, d, "09:00", "exercise")
     with pytest.raises(ValueError, match="approved"):   # still pending
         st.complete_wellness_claim(conn, cid, emp, 3, 4, "walk", None)
@@ -210,7 +241,7 @@ def test_http_apply_flow_and_hub(app_mod, wellness_org):
     # behind the SAME radio inputs (name="activity"), so the POST below is unchanged.
     assert "<svg" in r.text
     assert 'type="radio" name="activity" value="exercise"' in r.text
-    d = _next_weekday(tz.today_local()).isoformat()
+    d = _future_weekday().isoformat()
     r = c.post("/wellness/apply", data={"break_date": d, "start_time": "10:00",
                                         "activity": "exercise", "note": "jog"},
                follow_redirects=False)
@@ -262,7 +293,7 @@ def test_chief_pages_are_gated(app_mod, wellness_org, viewer, admin):
         for path in ("/wellness/approvals", "/wellness/dashboard"):
             assert c.get(path).status_code == 200, path
     # deciding someone else's claim from a non-approver account bounces
-    d = _next_weekday(tz.today_local()).isoformat()
+    d = _future_weekday().isoformat()
     conn = wellness_org["conn"]
     cid = st.create_wellness_claim(conn, wellness_org["emp"], d, "11:00", "exercise")
     loner_c = _client_for_id(app_mod, wellness_org["loner"])

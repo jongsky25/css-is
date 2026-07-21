@@ -41,7 +41,7 @@
     {{ field("break_date", "Date", value=form.get("break_date", ""), type="date", required=True,
              attrs='min="' ~ today ~ '"', help="A workday, today or later — breaks can't be filed backdated.") }}
     {{ field("start_time", "Start time", value=form.get("start_time", ""), type="time", required=True,
-             help="Coordinate with your section so service isn't disrupted; it can't overlap your lunch break.") }}
+             help="File it at least " ~ min_lead ~ " minutes ahead so your approver has time to see it. Coordinate with your section so service isn't disrupted; it can't overlap your lunch break.") }}
 
     <div class="field">
       <label>Planned activity</label>
