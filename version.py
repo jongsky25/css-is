@@ -17,12 +17,12 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.37"
+APP_VERSION = "2.38"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "2.37",
+        "version": "2.38",
         "date": "July 21, 2026",
         "summary": "Your wellness companion feels alive: it wanders on its own, "
                    "talks to you, can be petted — and watering plants finally "
@@ -51,7 +51,7 @@ CHANGELOG = [
         ],
     },
     {
-        "version": "2.36",
+        "version": "2.37",
         "date": "July 21, 2026",
         "summary": "A new dolphin joins the companion line-up, and the fish's "
                    "water no longer slides around while it swims.",
@@ -63,6 +63,31 @@ CHANGELOG = [
             "Fixed a glitch where the fish's little pool of water drifted across "
             "the card as the fish swam — the water now stays put while the fish "
             "(and the new dolphin) glide around it.",
+        ],
+    },
+    {
+        "version": "2.36",
+        "date": "July 21, 2026",
+        "summary": "Filing a wellness break is clearer: it names the exact person "
+                   "who'll approve it, lets you plan up to four weeks ahead, and "
+                   "asks a few more questions when you check in afterwards.",
+        "changes": [
+            "The request screen now shows the actual name of who it goes to (for "
+            "example, \"Send for approval of Ray Justin Ventura\") instead of the "
+            "generic \"section chief\" — so you know exactly who's deciding.",
+            "Picking \"Others\" for your activity now asks you to say what it is, "
+            "so the request and the records are never left vague.",
+            "You can now schedule a break for any workday in the next four weeks, "
+            "not just the current week. Each week still has its own 2-hour limit, "
+            "and the \"hours left\" note updates to match the date you pick.",
+            "The after-break check-in now also asks how useful the break was (1–5), "
+            "whether it helped you feel refreshed and manage stress, how it affected "
+            "your focus, and leaves room for suggestions — matching the DOH "
+            "post-activity report. Chiefs' register export gains a Usefulness column.",
+            "A small tuning to the \"Maximize AI\" assistant: grounded answers built "
+            "purely from your own numbers are now shown at a slightly more relaxed "
+            "confidence level, so more valid answers surface — it still never shows "
+            "an answer that isn't backed by your data.",
         ],
     },
     {

@@ -243,6 +243,7 @@ def init_db(conn):
         start_time  TEXT NOT NULL,               -- 'HH:MM' (24h)
         hours       INTEGER NOT NULL DEFAULT 1,  -- always 1: the DM's 2 h/week is claimed in 1-h slots
         activity    TEXT NOT NULL,               -- key into WELLNESS_ACTIVITIES (the DM's allowed list)
+        activity_other TEXT,                     -- when activity='other': what the person specified
         note        TEXT,
         status      TEXT NOT NULL DEFAULT 'pending',  -- pending/approved/denied/cancelled/completed
         decided_by  INTEGER REFERENCES admin_user(id),
@@ -260,6 +261,11 @@ def init_db(conn):
         mood_after    INTEGER,                   -- 1-5 after
         activity_done TEXT,                      -- what they actually did
         takeaway      TEXT,                      -- one thing they're taking from it
+        usefulness    INTEGER,                   -- 1-5 how useful the break was (Annex A scale)
+        felt_refreshed INTEGER,                  -- 0/1: did it help you feel refreshed/energized?
+        managed_stress INTEGER,                  -- 0/1: did it help you manage stress/anxiety?
+        focus_impact  TEXT,                      -- 'improved' | 'no_change' | 'worsened'
+        suggestions   TEXT,                      -- ideas for improving the program (optional)
         submitted_at  TEXT
     );
 
@@ -718,6 +724,25 @@ def _add_missing_columns(conn):
            )""")
     conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS learned_rule_uq "
                  "ON learned_rule(kind, target_key, pattern)")
+
+    # Wellness: free-text specification for the "Others" activity, and the richer
+    # post-break report fields (DOH Post-Activity Report). All nullable / additive,
+    # so pre-existing rows read as "not provided".
+    wc_cols = {row[1] for row in conn.execute("PRAGMA table_info(wellness_claim)")}
+    if wc_cols and "activity_other" not in wc_cols:
+        conn.execute("ALTER TABLE wellness_claim ADD COLUMN activity_other TEXT")
+    wr_cols = {row[1] for row in conn.execute("PRAGMA table_info(wellness_reflection)")}
+    if wr_cols:
+        if "usefulness" not in wr_cols:
+            conn.execute("ALTER TABLE wellness_reflection ADD COLUMN usefulness INTEGER")
+        if "felt_refreshed" not in wr_cols:
+            conn.execute("ALTER TABLE wellness_reflection ADD COLUMN felt_refreshed INTEGER")
+        if "managed_stress" not in wr_cols:
+            conn.execute("ALTER TABLE wellness_reflection ADD COLUMN managed_stress INTEGER")
+        if "focus_impact" not in wr_cols:
+            conn.execute("ALTER TABLE wellness_reflection ADD COLUMN focus_impact TEXT")
+        if "suggestions" not in wr_cols:
+            conn.execute("ALTER TABLE wellness_reflection ADD COLUMN suggestions TEXT")
 
     # The Office of the Director heads the whole bureau — it is NOT one of the
     # administrative sections that sit beside the divisions. Promote it to its own
@@ -4732,6 +4757,10 @@ def avatar_accessory_month():
 # =====================================================================
 
 WELLNESS_WEEKLY_HOURS = 2          # the DM's per-week entitlement
+# How far ahead a break can be scheduled: a rolling window of this many ISO weeks
+# starting with the current week. The 2 h/week cap still applies independently to
+# whichever week the chosen date falls in — this only bounds how far out you can plan.
+WELLNESS_WINDOW_WEEKS = 4
 # A break must be filed at least this many minutes before its start time, so the
 # approving chief has a real window to see and act on it before it happens
 # (Spot Feedback #73). Also stops same-day requests for a time that's already
@@ -4814,6 +4843,24 @@ def wellness_week_start(d=None):
     return (d - timedelta(days=d.weekday())).isoformat()
 
 
+def wellness_window_last_date(d=None):
+    """Last date a break can be scheduled for: the Friday of the last week in the
+    rolling WELLNESS_WINDOW_WEEKS-week window (current week + the next ones). Used
+    both to cap the apply-form date picker and to validate the request server-side."""
+    d = d or tz.today_local()
+    monday = d - timedelta(days=d.weekday())
+    # Monday of the last week in the window, then its Friday (weekday 4).
+    return monday + timedelta(days=(WELLNESS_WINDOW_WEEKS - 1) * 7 + 4)
+
+
+def wellness_window_weeks(d=None):
+    """The Monday-of-week ISO strings covered by the rolling window, in order."""
+    d = d or tz.today_local()
+    monday = d - timedelta(days=d.weekday())
+    return [(monday + timedelta(days=7 * i)).isoformat()
+            for i in range(WELLNESS_WINDOW_WEEKS)]
+
+
 def wellness_hours_used(conn, user_id, week_start):
     """Hours of the week's entitlement already spoken for (pending + approved +
     completed; denied/cancelled don't count)."""
@@ -4825,7 +4872,7 @@ def wellness_hours_used(conn, user_id, week_start):
 
 
 def create_wellness_claim(conn, user_id, break_date, start_time, activity,
-                          note=None, hours=1):
+                          note=None, hours=1, activity_other=None):
     """File a break request of `hours` hours (1 or 2 — the DM allows the whole
     weekly entitlement in one sitting). Validates the DM's rules and raises
     ValueError with a human-readable reason; returns the new claim id."""
@@ -4845,8 +4892,17 @@ def create_wellness_claim(conn, user_id, break_date, start_time, activity,
         raise ValueError("Pick a valid start time (HH:MM).")
     if activity not in dict(WELLNESS_ACTIVITIES):
         raise ValueError("Pick one of the allowed wellness activities.")
+    activity_other = (activity_other or "").strip() or None
+    if activity == "other" and not activity_other:
+        raise ValueError("Tell us what the 'Others' activity is.")
+    if activity != "other":
+        activity_other = None            # only meaningful for the "Others" option
     if d < tz.today_local():
         raise ValueError("Breaks are scheduled ahead — pick today or a future date.")
+    if d > wellness_window_last_date():
+        raise ValueError(
+            f"Breaks can be scheduled up to {WELLNESS_WINDOW_WEEKS} weeks ahead — "
+            "pick a date within the next few weeks.")
     if d.weekday() >= 5:
         raise ValueError("Wellness breaks are taken within the work week (Mon–Fri).")
     # Require a minimum lead time before the break's start so the approver has a
@@ -4877,9 +4933,10 @@ def create_wellness_claim(conn, user_id, break_date, start_time, activity,
         raise ValueError("You already have a break at that date and time.")
     cur = conn.execute(
         """INSERT INTO wellness_claim(user_id, week_start, break_date, start_time,
-                                      hours, activity, note, status, created_at)
-           VALUES (?,?,?,?,?,?,?,'pending',?)""",
-        (user_id, ws, d.isoformat(), start_time, hours, activity,
+                                      hours, activity, activity_other, note, status,
+                                      created_at)
+           VALUES (?,?,?,?,?,?,?,?,'pending',?)""",
+        (user_id, ws, d.isoformat(), start_time, hours, activity, activity_other,
          (note or "").strip() or None, tz.now_iso()))
     conn.commit()
     return cur.lastrowid
@@ -4891,7 +4948,9 @@ def get_wellness_claim(conn, claim_id):
                   c.activity, c.note, c.status, c.decided_by, c.decided_at,
                   c.decide_note, c.created_at, u.username,
                   rp.name, ou.short_name, ou.path,
-                  r.id IS NOT NULL, r.mood_before, r.mood_after
+                  r.id IS NOT NULL, r.mood_before, r.mood_after,
+                  c.activity_other, r.usefulness, r.felt_refreshed, r.managed_stress,
+                  r.focus_impact, r.suggestions
            FROM wellness_claim c
            JOIN admin_user u ON u.id = c.user_id
            LEFT JOIN resource_person rp ON rp.id = u.rp_id
@@ -4900,15 +4959,24 @@ def get_wellness_claim(conn, claim_id):
            WHERE c.id=?""", (claim_id,)).fetchone()
     if not row:
         return None
+    base_label = dict(WELLNESS_ACTIVITIES).get(row[6], row[6])
+    activity_other = row[20]
+    # For "Others", show what was specified, e.g. "Others — gardening".
+    activity_label = (f"{base_label} — {activity_other}"
+                      if row[6] == "other" and activity_other else base_label)
     return {"id": row[0], "user_id": row[1], "week_start": row[2],
             "break_date": row[3], "start_time": row[4], "hours": row[5],
-            "activity": row[6], "activity_label": dict(WELLNESS_ACTIVITIES).get(row[6], row[6]),
+            "activity": row[6], "activity_label": activity_label,
+            "activity_other": activity_other,
             "note": row[7], "status": row[8], "decided_by": row[9],
             "decided_at": row[10], "decide_note": row[11], "created_at": row[12],
             "username": row[13], "person_name": row[14] or row[13],
             "section": row[15] or (row[16].rsplit("/", 1)[-1] if row[16] else None),
             "has_reflection": bool(row[17]),
-            "mood_before": row[18], "mood_after": row[19]}
+            "mood_before": row[18], "mood_after": row[19],
+            "usefulness": row[21], "felt_refreshed": row[22],
+            "managed_stress": row[23], "focus_impact": row[24],
+            "suggestions": row[25]}
 
 
 def list_my_wellness_claims(conn, user_id, limit=25):
@@ -4958,6 +5026,51 @@ def _wellness_role_filled(conn, rank, org_path=None):
         params.append(org_path)
     return any(_wellness_rank(d, p) == rank
                for d, p in conn.execute(sql, params).fetchall())
+
+
+def _wellness_seat_name(conn, rank, org_path=None, exclude_uid=None):
+    """Name(s) of the internal person(s) filling `rank` in the given unit — the
+    same seat _wellness_role_filled tests, but returning who holds it so the apply
+    page can name the approver. Joins multiple holders with ' / '; returns None when
+    the seat is empty. Names the directory person even if they have no app account
+    yet (the claim still routes to the admin fallback until they're onboarded)."""
+    sql = ("SELECT rp.name, rp.designation, rp.position, a.id "
+           "FROM resource_person rp "
+           "LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id "
+           "LEFT JOIN admin_user a ON a.rp_id = rp.id "
+           "WHERE rp.is_internal = 1")
+    params = []
+    if org_path is not None:
+        sql += " AND ou.path = ?"
+        params.append(org_path)
+    names = []
+    for name, desig, pos, aid in conn.execute(sql, params).fetchall():
+        if aid is not None and aid == exclude_uid:
+            continue
+        if name and _wellness_rank(desig, pos) == rank and name not in names:
+            names.append(name)
+    return " / ".join(names) if names else None
+
+
+def wellness_approver_name(conn, user_id):
+    """The NAME of who decides THIS person's breaks, for the apply/hub copy
+    ('Send for approval of Ray Justin Ventura'). Mirrors wellness_approver_title's
+    rank/org-path walk but resolves the seat-holder's name; returns None when the
+    seat is unfilled or unresolvable so callers fall back to the role title."""
+    me = get_admin_user_by_id(conn, user_id)
+    rp = get_rp(conn, me["rp_id"]) if me and me.get("rp_id") else None
+    if not rp:
+        return None
+    rank = _wellness_rank(rp.get("designation"), rp.get("position"))
+    path = rp.get("org_path")
+    if rank == 0:                                   # staff -> section chief (same unit)
+        return _wellness_seat_name(conn, 1, org_path=path, exclude_uid=user_id)
+    if rank == 1:                                   # section chief -> division chief (parent)
+        parent = _wellness_parent_path(path)
+        return _wellness_seat_name(conn, 2, org_path=parent, exclude_uid=user_id) if parent else None
+    if rank == 2:                                   # division chief -> the Director
+        return _wellness_seat_name(conn, 3, exclude_uid=user_id)
+    return None
 
 
 def get_wellness_approvers(conn, user_id):
@@ -5095,10 +5208,29 @@ def cancel_wellness_claim(conn, claim_id, user_id):
     return claim
 
 
+WELLNESS_FOCUS_IMPACTS = ("improved", "no_change", "worsened")
+
+
+def _wellness_yesno(v):
+    """Parse a Yes/No form value to 1/0, or None when not answered."""
+    if v is None:
+        return None
+    s = str(v).strip().lower()
+    if s in ("1", "yes", "y", "true", "on"):
+        return 1
+    if s in ("0", "no", "n", "false", "off"):
+        return 0
+    return None
+
+
 def complete_wellness_claim(conn, claim_id, user_id, mood_before, mood_after,
-                            activity_done, takeaway):
+                            activity_done, takeaway, usefulness=None,
+                            felt_refreshed=None, managed_stress=None,
+                            focus_impact=None, suggestions=None):
     """Close out an approved break with its post-break reflection (they are one
-    move: answering the questions is what marks the break taken). Returns
+    move: answering the questions is what marks the break taken). The DOH
+    Post-Activity Report fields (usefulness, refreshed/stress, focus impact,
+    suggestions) are optional keyword args so older callers keep working. Returns
     (claim, newly_awarded_badges)."""
     claim = get_wellness_claim(conn, claim_id)
     if not claim or claim["user_id"] != user_id:
@@ -5116,12 +5248,29 @@ def complete_wellness_claim(conn, claim_id, user_id, mood_before, mood_after,
     activity_done = (activity_done or "").strip()
     if not activity_done:
         raise ValueError("Tell us what you did on your break.")
+    use = None
+    if usefulness not in (None, ""):
+        try:
+            use = int(usefulness)
+        except (TypeError, ValueError):
+            raise ValueError("Rate how useful the break was (1–5).")
+        if not (1 <= use <= 5):
+            raise ValueError("Usefulness goes from 1 to 5.")
+    refreshed = _wellness_yesno(felt_refreshed)
+    stress = _wellness_yesno(managed_stress)
+    focus = (focus_impact or "").strip().lower() or None
+    if focus is not None and focus not in WELLNESS_FOCUS_IMPACTS:
+        raise ValueError("Pick how the break affected your focus.")
     conn.execute("UPDATE wellness_claim SET status='completed' WHERE id=?", (claim_id,))
     conn.execute(
         """INSERT INTO wellness_reflection(claim_id, mood_before, mood_after,
-                                           activity_done, takeaway, submitted_at)
-           VALUES (?,?,?,?,?,?)""",
-        (claim_id, mb, ma, activity_done, (takeaway or "").strip() or None, tz.now_iso()))
+                                           activity_done, takeaway, usefulness,
+                                           felt_refreshed, managed_stress,
+                                           focus_impact, suggestions, submitted_at)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+        (claim_id, mb, ma, activity_done, (takeaway or "").strip() or None,
+         use, refreshed, stress, focus, (suggestions or "").strip() or None,
+         tz.now_iso()))
     new_badges = wellness_award_badges(conn, user_id)
     conn.commit()
     return get_wellness_claim(conn, claim_id), new_badges
@@ -5297,7 +5446,8 @@ def wellness_export_rows(conn, date_from=None, date_to=None):
         SELECT c.week_start, COALESCE(ou.short_name, ou.path, ''),
                COALESCE(rp.name, u.username), c.break_date, c.start_time, c.hours,
                c.activity, c.status, COALESCE(rpd.name, ud.username, ''),
-               r.id IS NOT NULL, r.mood_before, r.mood_after
+               r.id IS NOT NULL, r.mood_before, r.mood_after,
+               c.activity_other, r.usefulness
         FROM wellness_claim c
         JOIN admin_user u ON u.id = c.user_id
         LEFT JOIN resource_person rp ON rp.id = u.rp_id
@@ -5311,10 +5461,14 @@ def wellness_export_rows(conn, date_from=None, date_to=None):
     acts = dict(WELLNESS_ACTIVITIES)
     out = []
     for w in rows:
+        label = acts.get(w[6], w[6])
+        if w[6] == "other" and w[12]:
+            label = f"{label} — {w[12]}"
         out.append({"week": w[0], "section": w[1] or "—", "employee": w[2],
                     "date": w[3], "start_time": w[4], "hours": w[5],
-                    "activity": acts.get(w[6], w[6]), "status": w[7],
+                    "activity": label, "status": w[7],
                     "approved_by": w[8],
                     "reflection_done": "yes" if w[9] else "no",
-                    "mood_before": w[10], "mood_after": w[11]})
+                    "mood_before": w[10], "mood_after": w[11],
+                    "usefulness": w[13]})
     return out

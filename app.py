@@ -774,8 +774,15 @@ AI_ANSWER_SLOTS = {
 # Data-pack contents (bureau-wide, matching nl_answer's existing non-role-
 # filtered aggregate scope):
 #   • org totals (responses / satisfaction / activities / people-rated) from
-#     home_stats(), across the 30-day / YTD / all-time windows;
+#     home_stats(), across the 30-day / this-quarter / YTD / all-time windows;
+#   • by survey type: responses + satisfaction for ARTA / activity / RP surveys;
+#   • by SERVQUAL dimension (activity surveys): the five dimension top-2-box
+#     scores, using the LOCKED css_is_engine dimension map;
+#   • monthly trend: responses + satisfaction for the last few calendar months;
 #   • per-activity: activity name + date + response count + satisfaction;
+#   • by organizing unit (activity surveys): unit name + responses + satisfaction
+#     — org-unit names are organizational, not personal, data (already public on
+#     the dashboards), so this needs no opt-in;
 #   • per-resource-person: name + rating count + satisfaction — OPT-IN ONLY
 #     (`ai_answer_people`, default off), because resource-person names are
 #     professional-context personal data (same stance as `harmonize`).
@@ -785,6 +792,23 @@ AI_ANSWER_SLOTS = {
 AI_ANSWER_ENGINES = ("catalog", "maximize")
 _AI_PACK_ACTIVITY_LIMIT = 40   # bound the prompt: most recent N activities
 _AI_PACK_PEOPLE_LIMIT = 40     # bound the prompt: N most-rated resource persons
+_AI_PACK_UNIT_LIMIT = 12       # bound the prompt: N busiest organizing units
+_AI_PACK_MONTHS = 6            # bound the prompt: last N calendar months of trend
+
+# The two top-2-box scale rules, as one SQL CASE expression reused by every
+# pack aggregate that mixes survey types: ARTA (type 1) counts ratings >=4 on
+# its 1-5 scale; every other survey counts >=6 on its 1-7 scale. Identical to
+# the rule home_stats() uses, so pack numbers match the dashboards.
+_AI_TOPBOX_CASE = ("SUM(CASE WHEN (fi.survey_type=1 AND a.value>=4) "
+                   "OR (fi.survey_type<>1 AND a.value>=6) THEN 1 ELSE 0 END)")
+
+# Human labels for the three survey types, used wherever the pack breaks a
+# number down by survey_type.
+_AI_SURVEY_TYPE_LABELS = {
+    1: "ARTA (citizen's charter / frontline service)",
+    2: "Activity & event surveys",
+    3: "Resource-person ratings",
+}
 
 
 def ai_answer_engine(conn):
@@ -806,6 +830,12 @@ def _ai_pct(v):
     return f"{v}%" if v is not None else "n/a"
 
 
+def _ai_topbox(pos, n):
+    """Format a top-2-box positive share as a percent for the data pack, or
+    'n/a' when there are no valid answers behind it."""
+    return f"{round(pos * 100 / n)}%" if n else "n/a"
+
+
 def _ai_data_pack(conn, include_people=False):
     """Build the maximize engine's DATA PACK: a compact, PII-free plain-text
     snapshot of the bureau's own aggregate survey numbers, embedded in the
@@ -822,16 +852,81 @@ def _ai_data_pack(conn, include_people=False):
         "Every number below is an aggregate — there is no individual respondent "
         "data here.",
         "",
-        "ORG-WIDE TOTALS — shown as [last 30 days / year to date / all time]:",
+        "ORG-WIDE TOTALS — shown as [last 30 days / this quarter / year to "
+        "date / all time]:",
         f"- Responses collected: {stats['responses']['d30']} / "
+        f"{stats['responses']['quarter']} / "
         f"{stats['responses']['ytd']} / {stats['responses']['all']}",
         f"- Overall satisfaction: {_ai_pct(stats['satisfaction']['d30'])} / "
+        f"{_ai_pct(stats['satisfaction']['quarter'])} / "
         f"{_ai_pct(stats['satisfaction']['ytd'])} / {_ai_pct(stats['satisfaction']['all'])}",
         f"- Activities that collected feedback: {stats['activities']['d30']} / "
+        f"{stats['activities']['quarter']} / "
         f"{stats['activities']['ytd']} / {stats['activities']['all']}",
         f"- Resource persons rated: {stats['people_rated']['d30']} / "
+        f"{stats['people_rated']['quarter']} / "
         f"{stats['people_rated']['ytd']} / {stats['people_rated']['all']}",
     ]
+
+    # BY SURVEY TYPE — the same top-2-box rule as the org total, split three ways
+    # so the model can answer "how's ARTA doing vs our activities?".
+    trows = conn.execute(
+        "SELECT fi.survey_type, COUNT(a.id) AS n, " + _AI_TOPBOX_CASE + " AS pos "
+        "FROM answer a "
+        "JOIN response r ON r.id = a.response_id "
+        "JOIN form_instance fi ON fi.id = r.form_instance_id "
+        "WHERE COALESCE(a.is_na,0)=0 AND COALESCE(fi.archived,0)=0 "
+        "GROUP BY fi.survey_type ORDER BY fi.survey_type").fetchall()
+    if trows:
+        lines.append("")
+        lines.append("BY SURVEY TYPE (type — answers scored — satisfaction):")
+        for stype, n, pos in trows:
+            label = _AI_SURVEY_TYPE_LABELS.get(stype, f"type {stype}")
+            lines.append(f"- {label} — {n} — {_ai_topbox(pos, n)}")
+
+    # BY SERVQUAL DIMENSION (activity surveys, Form 2) — one consistent map, so
+    # the five dimension scores are comparable. Built from the LOCKED engine map
+    # (css_is_engine.DIM_MAP_FORM2) rather than hardcoding item ids here.
+    drows = conn.execute(
+        "SELECT a.item_id, COUNT(a.id) AS n, "
+        "SUM(CASE WHEN a.value>=6 THEN 1 ELSE 0 END) AS pos "
+        "FROM answer a "
+        "JOIN response r ON r.id = a.response_id "
+        "JOIN form_instance fi ON fi.id = r.form_instance_id "
+        "WHERE fi.survey_type=2 AND COALESCE(a.is_na,0)=0 AND COALESCE(fi.archived,0)=0 "
+        "GROUP BY a.item_id").fetchall()
+    if drows:
+        per_item = {item: (n, pos) for item, n, pos in drows}
+        dim_lines = []
+        for dim, items in eng.DIM_MAP_FORM2.items():
+            n = sum(per_item.get(it, (0, 0))[0] for it in items)
+            pos = sum(per_item.get(it, (0, 0))[1] for it in items)
+            if n:
+                dim_lines.append(f"- {dim} — {n} answers — {_ai_topbox(pos, n)}")
+        if dim_lines:
+            lines.append("")
+            lines.append("BY SERVQUAL DIMENSION (activity surveys — dimension — "
+                         "answers scored — satisfaction):")
+            lines.extend(dim_lines)
+
+    # MONTHLY TREND — responses + satisfaction per calendar month of the event's
+    # reporting date, most recent months only, listed oldest-first so the model
+    # reads the direction naturally.
+    mrows = conn.execute(
+        "SELECT substr(fi.event_date,1,7) AS ym, COUNT(DISTINCT r.id) AS responses, "
+        "COUNT(a.id) AS n, " + _AI_TOPBOX_CASE + " AS pos "
+        "FROM form_instance fi "
+        "JOIN response r ON r.form_instance_id = fi.id "
+        "LEFT JOIN answer a ON a.response_id = r.id AND COALESCE(a.is_na,0)=0 "
+        "WHERE COALESCE(fi.archived,0)=0 AND fi.event_date IS NOT NULL AND fi.event_date<>'' "
+        "GROUP BY ym ORDER BY ym DESC LIMIT ?",
+        (_AI_PACK_MONTHS,)).fetchall()
+    if mrows:
+        lines.append("")
+        lines.append(f"MONTHLY TREND (last {len(mrows)} months, oldest first — "
+                     "month — responses — satisfaction):")
+        for ym, responses, n, pos in reversed(mrows):
+            lines.append(f"- {ym} — {responses} responses — {_ai_topbox(pos, n)}")
 
     rows = conn.execute(
         "SELECT fi.topic, fi.event_date, COUNT(DISTINCT r.id) AS responses, "
@@ -848,9 +943,31 @@ def _ai_data_pack(conn, include_people=False):
         lines.append(f"PER-ACTIVITY (most recent {len(rows)} — name — date — "
                      "responses — satisfaction):")
         for topic, ev, responses, n, pos in rows:
-            sat = f"{round(pos * 100 / n)}%" if n else "n/a"
             lines.append(f"- {(topic or 'Untitled activity').strip()} — "
-                         f"{ev or 'undated'} — {responses} responses — {sat}")
+                         f"{ev or 'undated'} — {responses} responses — "
+                         f"{_ai_topbox(pos, n)}")
+
+    # BY ORGANIZING UNIT (activity surveys) — the busiest lead units by response
+    # volume. Unit names are organizational (already public on the dashboards),
+    # so this section is not gated behind the resource-person opt-in.
+    urows = conn.execute(
+        "SELECT COALESCE(NULLIF(ou.short_name,''), ou.name) AS unit, "
+        "COUNT(DISTINCT r.id) AS responses, COUNT(a.id) AS n, "
+        "SUM(CASE WHEN a.value>=6 THEN 1 ELSE 0 END) AS pos "
+        "FROM form_instance fi "
+        "JOIN org_unit ou ON ou.id = fi.lead_org_id "
+        "JOIN response r ON r.form_instance_id = fi.id "
+        "LEFT JOIN answer a ON a.response_id = r.id AND COALESCE(a.is_na,0)=0 "
+        "WHERE fi.survey_type = 2 AND COALESCE(fi.archived,0)=0 "
+        "GROUP BY ou.id ORDER BY responses DESC, unit LIMIT ?",
+        (_AI_PACK_UNIT_LIMIT,)).fetchall()
+    if urows:
+        lines.append("")
+        lines.append(f"BY ORGANIZING UNIT (top {len(urows)} by responses — unit — "
+                     "responses — satisfaction):")
+        for unit, responses, n, pos in urows:
+            lines.append(f"- {(unit or 'Unassigned').strip()} — "
+                         f"{responses} responses — {_ai_topbox(pos, n)}")
 
     if include_people:
         prows = conn.execute(
@@ -4244,6 +4361,18 @@ def api_search(request: Request, q: str = ""):
 
 AI_ROUTER_CONFIDENCE_FLOOR = 0.5
 
+# The "maximize" grounded-answer path (nl_answer_grounded) gets its OWN, lower
+# floor. Rationale: for navigation/actions/help/canned slots the confidence
+# number is the only guard against acting on a shaky guess, so it stays at 0.5.
+# But a grounded answer is already protected by two hard checks the confidence
+# number is not — the model must return grounded=true (it attests it used ONLY
+# numbers from the server-built DATA pack) and the answer text must be non-empty.
+# With those in place, a moderately-confident grounded answer is safe to show,
+# so we let the data-question path through at a lower bar to surface more real
+# answers instead of dropping to the keyword palette. It never relaxes
+# grounded=true, so it can never surface an invented number.
+AI_GROUNDED_CONFIDENCE_FLOOR = 0.35
+
 
 def _ai_router_schema(include_answer, include_help, include_action):
     kinds = ["navigate"]
@@ -4537,7 +4666,7 @@ async def api_ai_route(request: Request):
             # data question. Any failure (AIError, ungrounded, low confidence)
             # falls through to the canned slot render / keyword palette below,
             # so the assistant never errors and never invents a number.
-            if maximize and confidence >= AI_ROUTER_CONFIDENCE_FLOOR:
+            if maximize and confidence >= AI_GROUNDED_CONFIDENCE_FLOOR:
                 pack = _ai_data_pack(conn, include_people=ai_answer_people_enabled(conn))
                 grounded = None
                 try:
@@ -4555,7 +4684,7 @@ async def api_ai_route(request: Request):
                         gconf = float(grounded.get("confidence"))
                     except (TypeError, ValueError):
                         gconf = 0.0
-                    if grounded.get("grounded") and gtext and gconf >= AI_ROUTER_CONFIDENCE_FLOOR:
+                    if grounded.get("grounded") and gtext and gconf >= AI_GROUNDED_CONFIDENCE_FLOOR:
                         return JSONResponse({
                             "kind": "answer", "label": "Answer", "text": gtext,
                             "confidence": gconf, "interaction_id": gid,
@@ -12141,15 +12270,25 @@ def _wellness_apply_page(request, err="", form=None):
         week = st.wellness_week_start()
         used = st.wellness_hours_used(conn, user["id"], week)
         approver_title = st.wellness_approver_title(conn, user["id"])
+        approver_name = st.wellness_approver_name(conn, user["id"])
+        # Hours already spoken for in each week of the rolling window, so the form
+        # can show the RIGHT "hours left" for whichever date is picked (not just
+        # the current week). Weeks with no claims default to 0 client-side.
+        week_used = {w: st.wellness_hours_used(conn, user["id"], w)
+                     for w in st.wellness_window_weeks()}
     finally:
         conn.close()
     return templates.TemplateResponse(request, "wellness_apply.html", {
         "nav_active": "wellness", "show_scope": False,
         "activities": st.WELLNESS_ACTIVITIES, "approver_title": approver_title,
+        "approver_name": approver_name,
         "left": max(0, st.WELLNESS_WEEKLY_HOURS - used),
         "weekly_hours": st.WELLNESS_WEEKLY_HOURS,
         "min_lead": st.WELLNESS_MIN_LEAD_MINUTES,
         "today": _today_local().isoformat(),
+        "max_date": st.wellness_window_last_date().isoformat(),
+        "window_weeks": st.WELLNESS_WINDOW_WEEKS,
+        "week_used": week_used,
         "err": err, "form": form or {},
     }, status_code=400 if err else 200)
 
@@ -12168,16 +12307,18 @@ async def wellness_apply_submit(request: Request):
         try:
             claim_id = st.create_wellness_claim(
                 conn, user["id"], p.get("break_date", ""), p.get("start_time", ""),
-                p.get("activity", ""), p.get("note"), p.get("hours", "1"))
+                p.get("activity", ""), p.get("note"), p.get("hours", "1"),
+                activity_other=p.get("activity_other"))
         except ValueError as e:
             return _wellness_apply_page(request, err=str(e), form=p)
         _audit(request, conn, "wellness_apply", target_type="wellness_claim",
                target_id=claim_id,
                summary=f"requested a wellness break on {p.get('break_date')} {p.get('start_time')}")
-        approver_title = st.wellness_approver_title(conn, user["id"])
+        approver = (st.wellness_approver_name(conn, user["id"])
+                    or st.wellness_approver_title(conn, user["id"]))
     finally:
         conn.close()
-    cheer = quote(f"Break requested — {approver_title} will see it.")
+    cheer = quote(f"Break requested — {approver} will see it.")
     return RedirectResponse(f"/wellness?cheer={cheer}", status_code=303)
 
 
@@ -12265,7 +12406,10 @@ async def wellness_reflect_submit(request: Request, claim_id: int):
         try:
             claim, new_badges = st.complete_wellness_claim(
                 conn, claim_id, user["id"], p.get("mood_before"), p.get("mood_after"),
-                p.get("activity_done"), p.get("takeaway"))
+                p.get("activity_done"), p.get("takeaway"),
+                usefulness=p.get("usefulness"), felt_refreshed=p.get("felt_refreshed"),
+                managed_stress=p.get("managed_stress"), focus_impact=p.get("focus_impact"),
+                suggestions=p.get("suggestions"))
         except ValueError as e:
             return RedirectResponse(
                 f"/wellness/claims/{claim_id}/complete?err={quote(str(e))}",
@@ -12330,13 +12474,14 @@ def wellness_export(request: Request, date_from: str = "", date_to: str = ""):
     w = csv.writer(buf)
     w.writerow(["Week of", "Section", "Employee", "Date", "Start time", "Hours",
                 "Activity", "Status", "Approved by", "Reflection done",
-                "Mood before", "Mood after"])
+                "Mood before", "Mood after", "Usefulness"])
     for r in rows:
         w.writerow([r["week"], r["section"], r["employee"], r["date"],
                     r["start_time"], r["hours"], r["activity"], r["status"],
                     r["approved_by"], r["reflection_done"],
                     r["mood_before"] if r["mood_before"] is not None else "",
-                    r["mood_after"] if r["mood_after"] is not None else ""])
+                    r["mood_after"] if r["mood_after"] is not None else "",
+                    r["usefulness"] if r.get("usefulness") is not None else ""])
     fname = f"wellness_register_{_today_local().isoformat()}.csv"
     return Response(buf.getvalue(), media_type="text/csv",
                     headers={"Content-Disposition": f'attachment; filename="{fname}"'})
