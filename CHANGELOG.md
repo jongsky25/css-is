@@ -140,6 +140,27 @@ A 16th wellness companion and a fix for a long-standing swimmer glitch.
   for non-swimmers). Existing per-species × stage/month render sweeps cover the
   dolphin automatically.
 
+## 2026-07-21 (Wellness monitoring: the "By person" table shows only the viewer's own section)
+
+The utilization dashboard (`/wellness/dashboard`) listed **every** active employee
+in the bureau, so a section chief opening the page saw all sections in the "By
+person" card, not just the people they're concerned with. Now the whole
+per-viewer view is scoped to the chief's own unit — mirroring who they actually
+approve for (`list_wellness_approvals`).
+
+- **`wellness_dashboard_data(conn, week_start, user=None)`** (`storage.py`) gains
+  the viewer. New helpers `_wellness_dashboard_scope` (the viewer's
+  `org_unit.path`, or `None` for admins / accounts with no directory unit) and
+  `_wellness_in_scope` (a path is that unit or a descendant). A directory-linked
+  chief sees only their subtree: a **section chief** their section, a **division
+  chief** their whole division; **admins** and any unscoped call still see the
+  whole bureau. The By-person rows, the "By section" rollup, the week tiles and
+  the pending queue are all filtered together, so the page stays coherent.
+- The route (`app.py`) passes the request's `user` through; the `user=None`
+  default keeps existing callers/tests bureau-wide.
+- Tests: `tests/test_wellness_escalation.py` adds section-chief, division-chief
+  and admin scoping cases on the existing two-section chain fixture.
+
 ## 2026-07-21 (v2.36 — Wellness request UX: named approver, "Others" specify, 4-week window, richer post-activity report)
 
 Four changes to the DOH DM 2025-0135 wellness-break flow (`storage.py`, `app.py`,

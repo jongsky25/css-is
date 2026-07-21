@@ -148,3 +148,47 @@ def test_director_sees_the_approvals_queue(chain_org):
     assert st.user_is_wellness_chief(conn, {"id": chain_org["divchief"], "role": "section_manager"})
     # a plain staff member does NOT
     assert not st.user_is_wellness_chief(conn, {"id": chain_org["staffx"], "role": "viewer"})
+
+
+# --- the "By person" monitoring table is scoped to the viewer's unit ---------
+
+def _esc_names(data):
+    """The ESC-fixture people shown in a dashboard payload's By-person rows."""
+    return {r["name"] for r in data["rows"] if r["name"].startswith("ESC ")}
+
+
+def test_dashboard_by_person_scopes_to_the_viewers_section(chain_org):
+    """A section chief's monitoring dashboard lists only their own section — the
+    people they're concerned with — not every employee in the bureau."""
+    conn = chain_org["conn"]
+    wk = st.wellness_week_start(st.date(2026, 1, 5))
+    u_chiefx = {"id": chain_org["chiefX"], "role": "section_manager"}
+    data = st.wellness_dashboard_data(conn, wk, u_chiefx)
+    assert _esc_names(data) == {"ESC ChiefX", "ESC Staffx"}
+    # neither the sibling section nor the tiers above leak in
+    assert "ESC ChiefY" not in _esc_names(data)
+    assert "ESC DivChief" not in _esc_names(data)
+    # the per-section rollup is scoped too — just this one section
+    assert {s["section"] for s in data["sections"]} == {"SecX"}
+
+
+def test_dashboard_by_person_gives_a_division_chief_the_whole_division(chain_org):
+    """A division chief oversees every section beneath them, so their dashboard
+    spans both sections of the division — but not the directorate above."""
+    conn = chain_org["conn"]
+    wk = st.wellness_week_start(st.date(2026, 1, 5))
+    u_div = {"id": chain_org["divchief"], "role": "section_manager"}
+    names = _esc_names(st.wellness_dashboard_data(conn, wk, u_div))
+    assert {"ESC ChiefX", "ESC ChiefY", "ESC Staffx", "ESC DivChief"} <= names
+    assert "ESC Director" not in names          # the directorate is above the division
+
+
+def test_dashboard_by_person_is_unscoped_for_admins(chain_org):
+    """Admins monitor the whole bureau — no unit restriction — so every ESC
+    person, across sections and tiers, appears."""
+    conn = chain_org["conn"]
+    wk = st.wellness_week_start(st.date(2026, 1, 5))
+    u_admin = {"id": chain_org["director"], "role": "admin"}
+    names = _esc_names(st.wellness_dashboard_data(conn, wk, u_admin))
+    assert {"ESC ChiefX", "ESC ChiefY", "ESC Staffx", "ESC DivChief",
+            "ESC Director"} <= names

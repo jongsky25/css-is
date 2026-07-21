@@ -12480,7 +12480,7 @@ def wellness_dashboard(request: Request, week: str = ""):
         except ValueError:
             anchor = _today_local()
         ws = st.wellness_week_start(anchor)
-        data = st.wellness_dashboard_data(conn, ws)
+        data = st.wellness_dashboard_data(conn, ws, user)
     finally:
         conn.close()
     monday = date.fromisoformat(ws)
