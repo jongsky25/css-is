@@ -3886,7 +3886,7 @@ def _css_entry_for(user, conn):
 
 
 @app.get("/", response_class=HTMLResponse)
-def choose(request: Request):
+def choose(request: Request, msg: str = ""):
     """The post-login chooser — 'what would you like to do?' Two doors, Wellness
     and CSS (STAFF_ONBOARDING_AVATAR_PLAN.md Phase 3). Greets the user with their
     photo/companion; guards the one-time onboarding so it can't be skipped by
@@ -3908,7 +3908,7 @@ def choose(request: Request):
         conn.close()
     role = request.state.user["role"]
     return templates.TemplateResponse(request, "choose.html", {
-        "nav_active": "", "show_scope": False,
+        "nav_active": "", "show_scope": False, "msg": msg,
         "first_name": first_name, "profile": profile,
         "initials": _initials(profile.get("person_name") if profile else ""),
         "css_url": css_url, "wstats": wstats,
@@ -4175,6 +4175,22 @@ def me_form(request: Request, msg: str = "", err: str = ""):
     return _render_me(request, msg=msg, err=err)
 
 
+@app.get("/me/photo")
+def me_photo(request: Request):
+    """Serve the signed-in account's OWN profile photo (for accounts not linked
+    to a directory person, whose picture lives on the account row rather than at
+    the public /photo/{rp_id}). Own-photo only — no id in the URL to enumerate."""
+    conn = get_conn()
+    try:
+        photo = st.get_user_photo(conn, request.state.user["id"])
+    finally:
+        conn.close()
+    if not photo:
+        return Response(status_code=404)
+    return Response(content=photo[0], media_type=photo[1],
+                    headers={"Cache-Control": "no-cache"})
+
+
 @app.post("/me")
 async def me_submit(request: Request):
     p = await _posted(request)
@@ -4185,23 +4201,33 @@ async def me_submit(request: Request):
     if not pet_name:
         return _render_me(request, err="Give your companion a name.")
     photo = _decode_photo(p.get("photo_data", ""))
+    designation = (p.get("designation") or "").strip()
+    uid = request.state.user["id"]
     conn = get_conn()
     try:
-        profile = st.get_user_profile(conn, request.state.user["id"])
-        if photo and profile and profile.get("rp_id"):
-            st.set_rp_photo(conn, profile["rp_id"], photo[0], photo[1])
-            _audit(request, conn, "profile_update", target_type="person",
-                   target_id=profile["rp_id"], summary="updated their profile photo")
-        st.set_user_avatar(conn, request.state.user["id"], kind, pet_name)
+        profile = st.get_user_profile(conn, uid)
+        if photo:
+            # Linked accounts keep their photo on the directory row (so it shows
+            # on their people page); everyone else stores it on the account, so
+            # every viewer can set their own photo.
+            if profile and profile.get("rp_id"):
+                st.set_rp_photo(conn, profile["rp_id"], photo[0], photo[1])
+                _audit(request, conn, "profile_update", target_type="person",
+                       target_id=profile["rp_id"], summary="updated their profile photo")
+            else:
+                st.set_user_photo(conn, uid, photo[0], photo[1])
+                _audit(request, conn, "profile_update", target_type="user",
+                       target_id=uid, summary="updated their profile photo")
+        st.set_user_designation(conn, uid, designation)
+        st.set_user_avatar(conn, uid, kind, pet_name)
         _audit(request, conn, "avatar_choose", target_type="user",
-               target_id=request.state.user["id"],
+               target_id=uid,
                summary=f"set companion to {kind} named '{st.clean_avatar_name(pet_name)}'")
     finally:
         conn.close()
-    # After renaming/changing the companion, land on the wellness break page so
-    # the person sees their updated mascot right where it grows.
-    return RedirectResponse("/wellness?cheer=" + quote("Companion saved."),
-                            status_code=303)
+    # Close the profile after saving: land back on the home chooser with a
+    # confirmation, rather than re-opening the /me editor.
+    return RedirectResponse("/?msg=" + quote("Profile saved."), status_code=303)
 
 
 @app.post("/avatar/care")

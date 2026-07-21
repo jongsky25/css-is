@@ -43,27 +43,33 @@
   <form method="post" action="/me" enctype="application/x-www-form-urlencoded">
     <input type="hidden" name="photo_data" id="photo_data" value="">
 
-    {% if has_person %}
     <div class="panel">
-      <h2>Photo &amp; name</h2>
+      <h2>Photo{% if has_person %} &amp; name{% endif %}</h2>
       <div class="field photo-row">
         <span id="photoPrev" class="photo-prev">
-          {% if profile.has_photo %}<img src="/photo/{{ profile.rp_id }}?v=me" alt=""
+          {% if profile.photo_url %}<img src="{{ profile.photo_url }}?v=me" alt=""
                style="width:100%;height:100%;border-radius:50%;object-fit:cover;">{% else %}{{ initials }}{% endif %}
         </span>
         <div>
           <label>Profile photo</label>
           <span class="lbl">Choose / change photo<input type="file" accept="image/*" hidden onchange="onPickPhoto(this)"></span>
-          <p class="hint">Shown on your people page and beside your name.</p>
+          <p class="hint">Shown beside your name{% if has_person %} and on your people page{% endif %}.</p>
         </div>
       </div>
+      {% if has_person %}
       <div class="field">
         <label for="display_name">Your name</label>
         <input type="text" id="display_name" value="{{ profile.person_name }}" readonly>
         <p class="hint">From the staff directory — ask an administrator to correct it.</p>
       </div>
+      {% endif %}
+      <div class="field">
+        <label for="designation">Designation</label>
+        <input type="text" id="designation" name="designation" maxlength="120"
+               value="{{ profile.designation }}" placeholder="e.g. Section Head">
+        <p class="hint">Your functional role — fill it in and update it any time.</p>
+      </div>
     </div>
-    {% endif %}
 
     <div class="panel">
       <h2>Your companion</h2>
