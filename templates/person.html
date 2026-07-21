@@ -195,6 +195,21 @@
   </div>
 </div>
 
+{% if is_self is defined and is_self %}
+{# Viewing your OWN profile — the landing a viewer's CSS card sends them to
+   (STAFF_ONBOARDING_AVATAR_PLAN.md §D5). Offer the one tap to their section. #}
+<div class="self-banner" style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;
+     border:1px solid var(--accent-ln, var(--line));background:var(--accent-bg);
+     border-radius:12px;padding:.6rem .9rem;margin:0 0 1rem;">
+  <span aria-hidden="true">👋</span>
+  <strong>This is your profile.</strong>
+  {% if person.org_path %}
+  <a href="/dashboard/teams/{{ person.org_path }}" style="margin-left:auto;font-weight:700;color:var(--accent);">
+    View your section&apos;s profile →</a>
+  {% endif %}
+</div>
+{% endif %}
+
 {% set pbase = '/dashboard/people/' ~ person.id ~ '?grain=' ~ grain %}
 {% if years %}
 <div class="timefilter" role="group" aria-label="Filter report by time">

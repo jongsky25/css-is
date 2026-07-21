@@ -3533,9 +3533,19 @@ def _onboarding_redirect(request, conn):
 
 
 def _css_entry_for(user, conn):
-    """Where the chooser's CSS card should point for this user. Phase 3: always
-    the hub. Phase 4 sends plain viewers to their own person profile first
-    (STAFF_ONBOARDING_AVATAR_PLAN.md §D5)."""
+    """Where the chooser's CSS card should point for this user
+    (STAFF_ONBOARDING_AVATAR_PLAN.md §D5). A plain VIEWER who is linked to a
+    usable directory person lands on their OWN person profile first (their
+    section is one tap away via the banner there); everyone else — and any
+    viewer without a usable record — goes to the hub. The hub itself stays
+    reachable for viewers regardless; this only changes where the card *lands*."""
+    if not user or user.get("role") != "viewer":
+        return "/css"
+    profile = st.get_user_profile(conn, user["id"])
+    # A viewer can't see a hidden_public person page (dashboard_person bounces
+    # non-admins off it), so route there only for a linked, visible record.
+    if profile and profile.get("rp_id") and not profile.get("hidden_public"):
+        return f"/dashboard/people/{profile['rp_id']}"
     return "/css"
 
 
@@ -10102,6 +10112,11 @@ def dashboard_person(request: Request, rp_id: int, grain: str = "monthly", perio
         events = view_memo("events", ("", "all"),
                            lambda: di.build_events(atoms_all, st.list_activity_instances(conn)))
         engagements = di.rp_activity_engagements(events, rp_id)
+        # Are they viewing THEIR OWN profile? (Drives the "your section" banner —
+        # the second half of the viewer's CSS entry, STAFF_ONBOARDING_AVATAR_PLAN
+        # §D5.) Cheap: one account read we already do elsewhere.
+        acct = st.get_admin_user_by_id(conn, request.state.user["id"])
+        is_self = bool(acct and acct.get("rp_id") == rp_id)
     finally:
         conn.close()
     return templates.TemplateResponse(request, "person.html", {
@@ -10112,6 +10127,7 @@ def dashboard_person(request: Request, rp_id: int, grain: str = "monthly", perio
         "coach": coach, "cmp": cmp, "ta": ta, "badges": badges,
         "yoy": yoy, "peers": peers, "years": years, "engagements": engagements,
         "sel_period": period, "period_label": ("All time" if period == "all" else period.split(":", 1)[1]),
+        "is_self": is_self,
     })
 
 
