@@ -65,13 +65,15 @@
 </div>
 {% endif %}
 
-<div class="panel well-hero">
+<div class="panel well-hero av-play">
   <div class="avatar-box">
     {# The mascot IS the adopted companion (STAFF_ONBOARDING_AVATAR_PLAN.md §D2):
        one shared inline-SVG set, species from the profile, growth stage derived
-       from the wellness level. #}
+       from the wellness level, mood from the cosmetic care layer. It can be
+       dragged anywhere inside this hero panel (.av-play). #}
     {% set s = stats.stage %}
-    {{ avatar(avatar_kind, s, name=avatar_name, size=170, interactive=true) }}
+    {{ avatar(avatar_kind, s, name=avatar_name, size=170, interactive=true,
+              mood=avatar_mood, care=true, drag=true) }}
     <div class="stage-name">{{ avatar_name or stats.stage_name }}</div>
     <div class="stage-sub">{{ stats.stage_name }} · Stage {{ s }} of 6 · Level {{ stats.level }}</div>
     <a class="rename-link" href="/me">Rename or change your companion →</a>

@@ -42,7 +42,8 @@
     </div>
     {% if profile and profile.avatar_name %}
     <div class="ch-pet">
-      {{ avatar(profile.avatar_kind, (wstats.stage if wstats else 1), name=profile.avatar_name, size=96, interactive=true) }}
+      {{ avatar(profile.avatar_kind, (wstats.stage if wstats else 1), name=profile.avatar_name, size=96, interactive=true,
+                mood=profile.avatar_mood) }}
     </div>
     {% endif %}
   </div>
