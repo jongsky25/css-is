@@ -90,6 +90,36 @@ def test_third_hour_in_a_week_is_rejected(wellness_org):
         st.create_wellness_claim(conn, emp, d, "16:00", "hobby")
 
 
+def test_two_hour_break_in_one_claim(wellness_org):
+    """The DM allows the whole 2-hour weekly entitlement in a single sitting."""
+    conn, emp = wellness_org["conn"], wellness_org["emp"]
+    d = _future_weekday().isoformat()
+    cid = st.create_wellness_claim(conn, emp, d, "09:00", "exercise", hours=2)
+    ws = st.wellness_week_start(date.fromisoformat(d))
+    assert st.wellness_hours_used(conn, emp, ws) == 2
+    assert st.get_wellness_claim(conn, cid)["hours"] == 2
+    # The full entitlement is spent — no further hour fits that week.
+    with pytest.raises(ValueError, match="entitlement"):
+        st.create_wellness_claim(conn, emp, d, "15:00", "meditation")
+
+
+def test_two_hour_claim_rejected_when_only_one_hour_left(wellness_org):
+    conn, emp = wellness_org["conn"], wellness_org["emp"]
+    d = _future_weekday().isoformat()
+    st.create_wellness_claim(conn, emp, d, "09:00", "exercise")     # 1 hour used
+    with pytest.raises(ValueError, match="Only 1 hour left"):
+        st.create_wellness_claim(conn, emp, d, "15:00", "meditation", hours=2)
+
+
+def test_break_length_bounds(wellness_org):
+    conn, emp = wellness_org["conn"], wellness_org["emp"]
+    d = _future_weekday().isoformat()
+    with pytest.raises(ValueError, match="1 to 2 hours"):
+        st.create_wellness_claim(conn, emp, d, "09:00", "exercise", hours=3)
+    with pytest.raises(ValueError, match="1 to 2 hours"):
+        st.create_wellness_claim(conn, emp, d, "09:00", "exercise", hours=0)
+
+
 def test_denied_and_cancelled_hours_return_to_the_week(wellness_org):
     conn, emp, chief = wellness_org["conn"], wellness_org["emp"], wellness_org["chief"]
     u_chief = {"id": chief, "username": "w-chief@test.local", "role": "section_manager"}
@@ -241,14 +271,16 @@ def test_http_apply_flow_and_hub(app_mod, wellness_org):
     # behind the SAME radio inputs (name="activity"), so the POST below is unchanged.
     assert "<svg" in r.text
     assert 'type="radio" name="activity" value="exercise"' in r.text
+    # the break-length picker offers both 1- and 2-hour options
+    assert 'name="hours" value="1"' in r.text and 'name="hours" value="2"' in r.text
     d = _future_weekday().isoformat()
+    # take the whole 2-hour entitlement in a single claim
     r = c.post("/wellness/apply", data={"break_date": d, "start_time": "10:00",
-                                        "activity": "exercise", "note": "jog"},
+                                        "activity": "exercise", "note": "jog",
+                                        "hours": "2"},
                follow_redirects=False)
     assert r.status_code == 303
-    c.post("/wellness/apply", data={"break_date": d, "start_time": "14:00",
-                                    "activity": "meditation"}, follow_redirects=False)
-    # third hour that week: the form re-renders with the entitlement error
+    # no hours left this week: the form re-renders with the entitlement error
     r = c.post("/wellness/apply", data={"break_date": d, "start_time": "16:00",
                                         "activity": "hobby"})
     assert r.status_code == 400 and "entitlement" in r.text

@@ -24,6 +24,14 @@
   .acts input { position:absolute; opacity:0; width:1px; height:1px; }
   .acts label:has(input:checked) { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg); }
   .acts label:focus-within { outline:2px solid var(--accent); outline-offset:2px; }
+  .lens { display:flex; gap:.6rem; margin-bottom:1rem; }
+  .lens label { flex:1; border:2px solid var(--line); border-radius:12px; padding:.6rem;
+                cursor:pointer; background:var(--bg); text-align:center; font-weight:700;
+                transition:border-color .15s; }
+  .lens input { position:absolute; opacity:0; width:1px; height:1px; }
+  .lens label:has(input:checked) { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg); }
+  .lens label:focus-within { outline:2px solid var(--accent); outline-offset:2px; }
+  .lens label.disabled { opacity:.45; cursor:not-allowed; }
   .btn { font:inherit; font-weight:700; cursor:pointer; border:1px solid var(--accent);
          background:var(--accent); color:#fff; border-radius:10px; padding:.6rem 1.2rem; }
   .notallowed { color:var(--soft); font-size:.8rem; margin-top:.9rem; }
@@ -31,7 +39,7 @@
 </style>
 
 {{ page_header("Request a wellness break",
-               "One hour at a time, up to " ~ weekly_hours ~ " hours a week — scheduled so your section keeps running.") }}
+               "Up to " ~ weekly_hours ~ " hours a week, in one or two sittings — scheduled so your section keeps running.") }}
 
 <div class="panel">
   {% if err %}{{ flash(err=err) }}{% endif %}
@@ -42,6 +50,25 @@
              attrs='min="' ~ today ~ '"', help="A workday, today or later — breaks can't be filed backdated.") }}
     {{ field("start_time", "Start time", value=form.get("start_time", ""), type="time", required=True,
              help="File it at least " ~ min_lead ~ " minutes ahead so your approver has time to see it. Coordinate with your section so service isn't disrupted; it can't overlap your lunch break.") }}
+
+    <div class="field">
+      <label>Break length</label>
+      <div class="lens" role="radiogroup" aria-label="Break length">
+        <label>
+          <input type="radio" name="hours" value="1" required
+                 {{ "checked" if form.get("hours", "1") == "1" }}>
+          1 hour
+        </label>
+        <label class="{{ 'disabled' if left < 2 }}"
+               title="{{ 'Only 1 hour left this week' if left < 2 else '' }}">
+          <input type="radio" name="hours" value="2"
+                 {{ "checked" if form.get("hours") == "2" }}
+                 {{ "disabled" if left < 2 }}>
+          2 hours
+        </label>
+      </div>
+      <div class="help">Take your whole {{ weekly_hours }}-hour entitlement at once, or split it across the week.</div>
+    </div>
 
     <div class="field">
       <label>Planned activity</label>

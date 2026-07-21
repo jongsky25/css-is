@@ -108,19 +108,20 @@
   <div class="hourpips" aria-hidden="true">
     {% for i in range(weekly_hours) %}<span class="pip {{ 'used' if i < used }}"></span>{% endfor %}
   </div>
-  <a class="btn" href="/wellness/apply" {% if left == 0 %}aria-disabled="true"{% endif %}>Request a 1-hour break</a>
+  <a class="btn" href="/wellness/apply" {% if left == 0 %}aria-disabled="true"{% endif %}>Request a break</a>
 </div>
 
 <div class="panel">
   <h2 style="margin:.1rem 0 .7rem; font-size:1.05rem;">My break requests</h2>
   {% if claims %}
   <table class="claims">
-    <thead><tr><th>Date</th><th>Time</th><th>Activity</th><th>Status</th><th></th></tr></thead>
+    <thead><tr><th>Date</th><th>Time</th><th>Length</th><th>Activity</th><th>Status</th><th></th></tr></thead>
     <tbody>
     {% for c in claims %}
       <tr>
         <td>{{ c.break_date }}</td>
         <td>{{ c.start_time }}</td>
+        <td>{{ c.hours }} h</td>
         <td>{{ c.activity_label }}</td>
         <td><span class="pill s-{{ c.status }}">{{ c.status }}</span>
             {% if c.status == 'denied' and c.decide_note %}<span style="color:var(--soft); font-size:.78rem;"> — {{ c.decide_note }}</span>{% endif %}</td>
@@ -140,7 +141,7 @@
     </tbody>
   </table>
   {% else %}
-  {{ empty_state("No break requests yet", "Request your first 1-hour wellness break — your companion is waiting to grow.", "🌱") }}
+  {{ empty_state("No break requests yet", "Request your first wellness break — your companion is waiting to grow.", "🌱") }}
   {% endif %}
 </div>
 {% endblock %}

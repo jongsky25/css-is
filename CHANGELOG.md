@@ -1,5 +1,24 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-21 (v2.31 — Wellness break can be claimed 2 hours in one sitting)
+
+The DM's 2-hour weekly entitlement can now be taken as a single 2-hour break,
+not only two separate 1-hour claims.
+
+- **`create_wellness_claim`** (`storage.py`): new `hours` parameter (default 1,
+  so existing callers/tests are unaffected). Validated to `1..WELLNESS_WEEKLY_HOURS`;
+  the weekly-entitlement guard now checks `used + hours` and returns a precise
+  "Only N hour(s) left" message when a 2-hour claim won't fit the remaining
+  balance. The INSERT stores the chosen `hours` instead of a hard-coded `1`.
+- **Apply form** (`templates/wellness_apply.html`, `app.py`): new "Break length"
+  radio (1 hour / 2 hours); the 2-hour option is disabled when fewer than 2 hours
+  remain that week. The route forwards `p.get("hours")` to `create_wellness_claim`.
+- **Hub** (`templates/wellness_hub.html`): break-requests table gains a "Length"
+  column showing each claim's hours; length-specific copy ("1-hour break") made
+  length-agnostic.
+- Tests (`tests/test_wellness.py`): new `test_two_hour_break_in_one_claim`,
+  `test_two_hour_claim_rejected_when_only_one_hour_left`, `test_break_length_bounds`.
+
 ## 2026-07-21 (v2.30 — Wellness breaks need a 30-minute lead time)
 
 Addresses live Spot Feedback #73 ("minimum time … to request before said time

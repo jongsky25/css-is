@@ -4773,9 +4773,18 @@ def wellness_hours_used(conn, user_id, week_start):
         (user_id, week_start, *_WELLNESS_COUNTED)).fetchone()[0]
 
 
-def create_wellness_claim(conn, user_id, break_date, start_time, activity, note=None):
-    """File a 1-hour break request. Validates the DM's rules and raises
+def create_wellness_claim(conn, user_id, break_date, start_time, activity,
+                          note=None, hours=1):
+    """File a break request of `hours` hours (1 or 2 — the DM allows the whole
+    weekly entitlement in one sitting). Validates the DM's rules and raises
     ValueError with a human-readable reason; returns the new claim id."""
+    try:
+        hours = int(hours)
+    except (TypeError, ValueError):
+        raise ValueError("Pick a valid break length.")
+    if hours < 1 or hours > WELLNESS_WEEKLY_HOURS:
+        raise ValueError(
+            f"A break is 1 to {WELLNESS_WEEKLY_HOURS} hours long.")
     try:
         d = date.fromisoformat((break_date or "").strip())
     except ValueError:
@@ -4800,9 +4809,15 @@ def create_wellness_claim(conn, user_id, break_date, start_time, activity, note=
             f"File a break at least {WELLNESS_MIN_LEAD_MINUTES} minutes before it "
             "starts, so your approver has time to see it.")
     ws = wellness_week_start(d)
-    if wellness_hours_used(conn, user_id, ws) + 1 > WELLNESS_WEEKLY_HOURS:
-        raise ValueError(f"That week's {WELLNESS_WEEKLY_HOURS}-hour wellness "
-                         "entitlement is already fully claimed.")
+    used = wellness_hours_used(conn, user_id, ws)
+    if used + hours > WELLNESS_WEEKLY_HOURS:
+        left = WELLNESS_WEEKLY_HOURS - used
+        if left <= 0:
+            raise ValueError(f"That week's {WELLNESS_WEEKLY_HOURS}-hour wellness "
+                             "entitlement is already fully claimed.")
+        raise ValueError(
+            f"Only {left} hour{'s' if left != 1 else ''} left in that week's "
+            f"{WELLNESS_WEEKLY_HOURS}-hour entitlement.")
     dup = conn.execute(
         "SELECT 1 FROM wellness_claim WHERE user_id=? AND break_date=? AND "
         "start_time=? AND status IN ('pending','approved','completed')",
@@ -4812,8 +4827,8 @@ def create_wellness_claim(conn, user_id, break_date, start_time, activity, note=
     cur = conn.execute(
         """INSERT INTO wellness_claim(user_id, week_start, break_date, start_time,
                                       hours, activity, note, status, created_at)
-           VALUES (?,?,?,?,1,?,?,'pending',?)""",
-        (user_id, ws, d.isoformat(), start_time, activity,
+           VALUES (?,?,?,?,?,?,?,'pending',?)""",
+        (user_id, ws, d.isoformat(), start_time, hours, activity,
          (note or "").strip() or None, tz.now_iso()))
     conn.commit()
     return cur.lastrowid
