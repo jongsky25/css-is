@@ -31,6 +31,9 @@ def _limits(bucket):
                                  # budget (that's DB-backed in ai_budget so it survives restarts)
         "ai_groq": (10, 60),     # Groq fallback calls specifically — separate abuse throttle,
                                  # independent of Gemini's own budget/rate limiting
+        "care": (60, 60),        # avatar water/feed taps — the per-user cooldown in
+                                 # storage.record_avatar_care is the real gate; this
+                                 # only blunts scripted hammering of the endpoint
     }
     raw = os.environ.get(f"CSS_RL_{bucket.upper()}")
     if raw and "/" in raw:
