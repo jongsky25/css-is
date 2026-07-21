@@ -29,7 +29,13 @@
   var results = document.getElementById("startResults");
   if (!form || !input || !results) return;
 
-  var CLIENT_TIMEOUT_MS = 9000;   // server-side timeout is 8s (ai_core.ask default)
+  // Server-side timeout is 8s per model call (ai_core.ask default). The
+  // "maximize" answer engine makes a SECOND grounded call after the router, so
+  // that page gets a longer client budget before it degrades to the keyword
+  // palette; every other mode keeps the snappy 9s. Either way a timeout just
+  // shows the palette — never an error.
+  var CLIENT_TIMEOUT_MS =
+    (form.getAttribute("data-answer-engine") === "maximize") ? 15000 : 9000;
   var NAV_DELAY_MS = 1500;
   var HISTORY_MAX = 6;            // exchanges kept (user+assistant pairs), tab-local only
   var lastQuery = "";

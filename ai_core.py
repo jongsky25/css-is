@@ -78,6 +78,10 @@ _MODE_RANK = {m: i for i, m in enumerate(AI_MODES)}
 FEATURE_DEFAULTS = {
     "nl_router": 80,
     "nl_answer": 80,
+    "nl_answer_grounded": 40,   # "maximize" engine: a grounded answer composed
+                                # from the server-built aggregate data pack.
+                                # Costs a second model call on top of nl_router,
+                                # so it gets its own (lower) cap.
     "nl_help": 40,
     "ux_analysis": 5,
     "verbatim": 30,

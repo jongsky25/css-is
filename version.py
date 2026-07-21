@@ -17,10 +17,33 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.34"
+APP_VERSION = "2.35"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.35",
+        "date": "July 21, 2026",
+        "summary": "New \"Maximize AI\" option lets the assistant answer more of "
+                   "your questions straight from your own survey numbers — with a "
+                   "one-click admin switch to turn it on or keep the safe basics.",
+        "changes": [
+            "The assistant's Q&A used to only recognise a short list of fixed "
+            "questions (like \"how many responses this month\"). That list is now "
+            "longer, and there's a new \"Maximize AI\" mode that lets it answer "
+            "free-form questions — comparisons, which activity scored highest, how "
+            "a resource person is rated — using only your own aggregate numbers.",
+            "Admins choose the behaviour on the AI console (/admin/ai): "
+            "\"Canned catalog\" (the safe, fixed stats — still the default) or "
+            "\"Maximize AI\" (compose from your data). It has its own daily budget "
+            "cap, and if anything goes wrong it quietly falls back to the fixed "
+            "stats — you never see an error and it never makes a number up.",
+            "The assistant is told to answer only from the numbers it's given and "
+            "to say when it doesn't have the data. It never sees attendee names or "
+            "emails. Resource-person names are included only if an admin ticks the "
+            "extra opt-in box, the same care taken elsewhere for staff names.",
+        ],
+    },
     {
         "version": "2.34",
         "date": "July 21, 2026",
