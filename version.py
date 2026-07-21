@@ -17,10 +17,25 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.41"
+APP_VERSION = "2.42"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.42",
+        "date": "July 21, 2026",
+        "summary": "On the wellness utilization dashboard, the \"By person\" list "
+                   "now shows only the people a chief actually oversees — their own "
+                   "section — instead of everyone in the bureau.",
+        "changes": [
+            "When a section or division chief opens the wellness utilization "
+            "dashboard, the \"By person\" table (and the section summary, the "
+            "week totals and the pending-requests list) now covers only their own "
+            "area: a section chief sees just their section, a division chief sees "
+            "every section under them. Administrators still see the whole bureau, "
+            "exactly as before.",
+        ],
+    },
     {
         "version": "2.41",
         "date": "July 21, 2026",
