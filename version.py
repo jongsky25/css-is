@@ -17,10 +17,29 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.26"
+APP_VERSION = "2.27"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.27",
+        "date": "July 21, 2026",
+        "summary": "Your companion comes alive: nine new pets to adopt, prettier "
+                   "artwork, and you can now water your plant or feed your animal.",
+        "changes": [
+            "Nine new companions joined the family: sunflower, fern, mushroom and "
+            "succulent on the plant side; dog, rabbit, fish, owl and bat on the animal side.",
+            "Every companion got a glow-up — richer colors, expressive eyes, and its own "
+            "personality: the dog wags and jumps, the rabbit peeks shyly, the owl watches "
+            "your cursor, the bat flutters around, and the succulent... stays wonderfully chill.",
+            "You can now care for your pet on the Wellness page: water a plant or feed an "
+            "animal and watch it react — a cared-for companion looks happy, a neglected one droops.",
+            "Caring is just for fun: your companion still grows only from your wellness "
+            "break points, exactly as before.",
+            "You can pick up your companion and move it around its home on the Wellness page.",
+            "All the new movement respects your device's reduced-motion setting.",
+        ],
+    },
     {
         "version": "2.26",
         "date": "July 21, 2026",
