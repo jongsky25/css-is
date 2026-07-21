@@ -5391,11 +5391,44 @@ def _award_badge(conn, user_id, key, when=None):
 
 # ---- monitoring dashboard + the submission register -----------------------
 
-def wellness_dashboard_data(conn, week_start):
+def _wellness_dashboard_scope(conn, user):
+    """The org_unit.path a viewer's monitoring is limited to, or None for the
+    whole bureau. Admins (and any account with no directory org unit) monitor
+    everyone; a directory-linked chief monitors only their own unit's subtree —
+    a section chief their section, a division chief their whole division — so the
+    dashboard mirrors who they actually approve for (list_wellness_approvals)
+    instead of every section."""
+    if not user or user.get("role") == "admin":
+        return None
+    row = conn.execute("""
+        SELECT ou.path FROM admin_user a
+        JOIN resource_person rp ON rp.id = a.rp_id
+        JOIN org_unit ou ON ou.id = rp.org_unit_id
+        WHERE a.id = ? LIMIT 1
+    """, (user["id"],)).fetchone()
+    return row[0] if row and row[0] else None
+
+
+def _wellness_in_scope(path, scope_path):
+    """Is org path `path` inside `scope_path` (that unit or a descendant)? A None
+    scope means bureau-wide, so everything is in scope."""
+    if not scope_path:
+        return True
+    return path == scope_path or (bool(path) and path.startswith(scope_path + "/"))
+
+
+def wellness_dashboard_data(conn, week_start, user=None):
     """One week's utilization for the monitoring page: a per-person table with
     section, hours by status and reflection state; a per-section rollup against
     the 2 h/person entitlement; the all-weeks pending queue with its age; and
-    the overall reflection completion rate."""
+    the overall reflection completion rate.
+
+    When `user` is a directory-linked chief the whole view is scoped to their own
+    unit's subtree (see _wellness_dashboard_scope) so the "By person" table — and
+    the section rollup, week tiles and pending queue derived from it — shows only
+    the section(s) they are concerned with, not every employee. Admins and an
+    unscoped call see the whole bureau."""
+    scope_path = _wellness_dashboard_scope(conn, user)
     people = conn.execute("""
         SELECT u.id, u.username, rp.name, ou.short_name, ou.path,
                COALESCE(SUM(CASE WHEN c.status='pending'   THEN c.hours END), 0),
@@ -5410,12 +5443,14 @@ def wellness_dashboard_data(conn, week_start):
         WHERE u.active = 1
         GROUP BY u.id ORDER BY ou.path, rp.name, u.username
     """, (week_start,)).fetchall()
+    people = [p for p in people if _wellness_in_scope(p[4], scope_path)]
     rows = [{"user_id": p[0], "username": p[1], "name": p[2] or p[1],
              "section": p[3] or (p[4].rsplit("/", 1)[-1] if p[4] else "—"),
              "pending": p[5], "approved": p[6], "completed": p[7],
              "reflections": p[8],
              "used": p[6] + p[7], "left": max(0, WELLNESS_WEEKLY_HOURS - p[6] - p[7])}
             for p in people]
+    in_scope = {r["user_id"] for r in rows}
     sections = {}
     for r in rows:
         s = sections.setdefault(r["section"], {"section": r["section"], "people": 0,
@@ -5433,6 +5468,8 @@ def wellness_dashboard_data(conn, week_start):
              for r in conn.execute(
                  "SELECT id, date(created_at) FROM wellness_claim "
                  "WHERE status='pending' ORDER BY created_at")]
+    if scope_path:
+        queue = [c for c in queue if c["user_id"] in in_scope]
     done, reflected = conn.execute(
         "SELECT COUNT(*), COUNT(r.id) FROM wellness_claim c "
         "LEFT JOIN wellness_reflection r ON r.claim_id = c.id "
