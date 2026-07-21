@@ -17,12 +17,12 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.28"
+APP_VERSION = "2.29"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "2.28",
+        "version": "2.29",
         "date": "July 21, 2026",
         "summary": "Companions now sleep at night, dress for the season, and reward "
                    "devoted caretakers with a badge — plus optional gentle sounds.",
@@ -42,7 +42,7 @@ CHANGELOG = [
         ],
     },
     {
-        "version": "2.27",
+        "version": "2.28",
         "date": "July 21, 2026",
         "summary": "Your companion comes alive: nine new pets to adopt, prettier "
                    "artwork, and you can now water your plant or feed your animal.",
@@ -58,6 +58,21 @@ CHANGELOG = [
             "break points, exactly as before.",
             "You can pick up your companion and move it around its home on the Wellness page.",
             "All the new movement respects your device's reduced-motion setting.",
+        ],
+    },
+    {
+        "version": "2.27",
+        "date": "July 21, 2026",
+        "summary": "Small fixes: the wellness break form's picture cards no longer overlap "
+                   "text, there's a new “Others” option, and a duplicate set of cards on the "
+                   "CSS page is gone.",
+        "changes": [
+            "Fixed the wellness break request form so an activity's picture and label no "
+            "longer overlap the note field below it.",
+            "Added an “Others” option to the wellness break activity picker for requests "
+            "that don't fit the other categories.",
+            "Removed a duplicate set of “CSS” and “Wellness” cards that was showing again "
+            "after you'd already picked one and reached the CSS page.",
         ],
     },
     {
