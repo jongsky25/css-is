@@ -48,13 +48,36 @@
 
   /* ---- opt-in sound: tiny WebAudio blips, OFF until toggled ------------- */
   var SOUND_KEY = "css-av-sound";
-  var audioCtx = null;
+  var audioCtx = null, audioUnlocked = false;
   function soundOn() {
     try { return localStorage.getItem(SOUND_KEY) === "on"; } catch (e) { return false; }
   }
+  /* Create the context lazily (inside the user gesture that calls play) and
+   * unlock it. iOS Safari — and any browser after the tab is backgrounded /
+   * the phone is locked, routine on the mobile PWA — starts a context
+   * "suspended" and only truly runs it once a source node has been started AND
+   * resume() has been called from within a gesture, so we kick a one-sample
+   * silent buffer here to satisfy that rule. Returns the ctx, or null when
+   * WebAudio is unavailable. */
+  function ensureAudioCtx() {
+    if (!audioCtx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      try { audioCtx = new AC(); } catch (e) { return null; }
+    }
+    if (!audioUnlocked) {
+      try {
+        var src = audioCtx.createBufferSource();
+        src.buffer = audioCtx.createBuffer(1, 1, 22050);
+        src.connect(audioCtx.destination);
+        src.start(0);
+        audioUnlocked = true;
+      } catch (e) { /* best-effort unlock; resume() below still runs */ }
+    }
+    return audioCtx;
+  }
   function blip(freq, dur, delay, type, gain) {
-    // one short enveloped tone; the context is created lazily inside a user
-    // gesture (autoplay policy) and only ever when sound is toggled on
+    // one short enveloped tone, scheduled on the now-running context
     var t = audioCtx.currentTime + (delay || 0);
     var osc = audioCtx.createOscillator(), g = audioCtx.createGain();
     osc.type = type || "sine";
@@ -65,25 +88,73 @@
     osc.connect(g); g.connect(audioCtx.destination);
     osc.start(t); osc.stop(t + dur + 0.02);
   }
+  function emit(what, fam) {
+    if (what === "tap") {
+      if (fam === "plant") { blip(520, 0.18, 0, "triangle"); }
+      else { blip(740, 0.1); blip(980, 0.12, 0.09); }        // cheerful chirp
+    } else if (what === "water") {
+      blip(900, 0.09, 0, "sine", 0.03); blip(640, 0.12, 0.14, "sine", 0.03);   // plip-plip
+    } else if (what === "feed") {
+      blip(300, 0.09, 0, "square", 0.022); blip(260, 0.1, 0.14, "square", 0.022); // nom-nom
+    } else if (what === "badge") {
+      blip(523, 0.12); blip(659, 0.12, 0.11); blip(784, 0.2, 0.22);            // little arpeggio
+    } else if (what === "pet") {
+      if (fam === "cat") { blip(110, 0.3, 0, "triangle", 0.03); blip(110, 0.3, 0.35, "triangle", 0.03); } // purr-purr
+      else { blip(400, 0.16, 0, "sine", 0.03); blip(520, 0.2, 0.18, "sine", 0.03); }                      // contented coo
+    }
+  }
   function play(what, fam) {
     if (!soundOn()) return;
+    var ctx = ensureAudioCtx();
+    if (!ctx) return;
+    // Only schedule once the clock is actually advancing. A freshly-created or
+    // OS-suspended context reports "suspended" with a FROZEN currentTime, so
+    // scheduling tones then lands them in the past and they play silently —
+    // that was the "sounds don't work" bug (every first blip on iOS, and any
+    // blip after the tab regained focus). resume() is kicked here inside the
+    // gesture; we emit on its resolution, when currentTime is live again.
     try {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx.state === "suspended") audioCtx.resume();
-      if (what === "tap") {
-        if (fam === "plant") { blip(520, 0.18, 0, "triangle"); }
-        else { blip(740, 0.1); blip(980, 0.12, 0.09); }        // cheerful chirp
-      } else if (what === "water") {
-        blip(900, 0.09, 0, "sine", 0.03); blip(640, 0.12, 0.14, "sine", 0.03);   // plip-plip
-      } else if (what === "feed") {
-        blip(300, 0.09, 0, "square", 0.022); blip(260, 0.1, 0.14, "square", 0.022); // nom-nom
-      } else if (what === "badge") {
-        blip(523, 0.12); blip(659, 0.12, 0.11); blip(784, 0.2, 0.22);            // little arpeggio
-      } else if (what === "pet") {
-        if (fam === "cat") { blip(110, 0.3, 0, "triangle", 0.03); blip(110, 0.3, 0.35, "triangle", 0.03); } // purr-purr
-        else { blip(400, 0.16, 0, "sine", 0.03); blip(520, 0.2, 0.18, "sine", 0.03); }                      // contented coo
+      if (ctx.state === "running") {
+        emit(what, fam);
+      } else {
+        ctx.resume().then(function () { emit(what, fam); }).catch(function () {});
       }
     } catch (e) { /* no audio available — silently fine */ }
+  }
+
+  /* ---- spontaneous species voices: soft, quieter than the tap sounds, played
+   * on their own from the idle loop (below) so a companion occasionally chirps
+   * / purrs / hoots without being touched. Each is a short low-gain motif. --- */
+  var VOICES = {
+    dog:       function () { blip(210, 0.12, 0, "square", 0.02); blip(170, 0.15, 0.13, "square", 0.02); },   // woof-woof
+    cat:       function () { blip(620, 0.16, 0, "sine", 0.022); blip(500, 0.18, 0.15, "sine", 0.02); },      // soft meow
+    rabbit:    function () { blip(940, 0.06, 0, "triangle", 0.018); },                                        // tiny squeak
+    bird:      function () { blip(1250, 0.07, 0, "sine", 0.02); blip(1600, 0.07, 0.08, "sine", 0.02); blip(1400, 0.08, 0.16, "sine", 0.018); }, // tweet
+    turtle:    function () { blip(150, 0.26, 0, "sine", 0.02); },                                             // low hum
+    fish:      function () { blip(680, 0.05, 0, "sine", 0.015); blip(520, 0.06, 0.07, "sine", 0.015); },      // blub
+    dolphin:   function () { blip(1650, 0.1, 0, "sine", 0.02); blip(2050, 0.1, 0.09, "sine", 0.02); },        // eee-ee
+    owl:       function () { blip(360, 0.17, 0, "sine", 0.024); blip(300, 0.22, 0.2, "sine", 0.024); },       // hoo-hoo
+    bat:       function () { blip(2300, 0.05, 0, "sine", 0.014); blip(2600, 0.05, 0.07, "sine", 0.013); },    // high squeak
+    plant:     function () { blip(470, 0.22, 0, "triangle", 0.014); }                                         // gentle rustle
+  };
+  function voice(kind, fam) {
+    var v = VOICES[kind] || (fam === "plant" ? VOICES.plant : null);
+    if (v) v();
+  }
+  /* A companion vocalizes on its own — but ONLY through an already-unlocked,
+   * running context. Autoplay policy forbids a timer from starting or resuming
+   * audio, so we never force it here: the first spontaneous sound can only come
+   * after the user has turned sound on (that toggle is the unlocking gesture) or
+   * otherwise interacted. Throttled per companion so it stays occasional. */
+  var VOICE_GAP = 15000;
+  function maybeVoice(w) {
+    if (!soundOn() || !audioCtx || audioCtx.state !== "running") return;
+    if (still() || document.hidden || asleep(w) || w._avAway) return;   // holder voices for it while exploring
+    var now = Date.now();
+    if (w._avNextVoice && now < w._avNextVoice) return;
+    if (Math.random() > 0.18) return;                  // ~1 in 6 eligible behaviors
+    w._avNextVoice = now + VOICE_GAP + Math.random() * VOICE_GAP;   // 15–30s min gap
+    try { voice(w.dataset.kind, w.classList.contains("fam-plant") ? "plant" : "animal"); } catch (e) {}
   }
 
   /* ---- species repertoires: [class, how long the animation runs (ms)] ---- */
@@ -139,6 +210,7 @@
         w.classList.add(pick[0]);
         clearTimeout(w._avDoT);
         w._avDoT = setTimeout(function () { w.classList.remove(pick[0]); }, pick[1] + 80);
+        maybeVoice(w);                                 // occasionally vocalize, too
         tick();
       }, idleDelay(w));
     })();
