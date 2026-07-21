@@ -4779,6 +4779,21 @@ WELLNESS_ACTIVITIES = [
     ("other",         "Others"),
 ]
 
+# The bureau's full Office/Unit name as it must read on the DM's official
+# "Annex A. Weekly Wellness Break Log" register.
+WELLNESS_OFFICE_UNIT = "Bureau of Local Health Systems Development"
+
+# Our activity keys -> the Annex A "Activity Type" column's six official
+# categories (Physical Exercise, Relaxation, Wellness Consult, Recreation,
+# Arts, Others). Anything unmapped falls back to "Others".
+WELLNESS_ANNEX_ACTIVITY = {
+    "exercise":      "Physical Exercise",
+    "meditation":    "Relaxation",
+    "mental_health": "Wellness Consult",
+    "hobby":         "Recreation",
+    "other":         "Others",
+}
+
 # Approval escalates by directory RANK (STAFF_ONBOARDING_AVATAR_PLAN.md §7a.2):
 # staff -> section chief -> division chief -> Director, with admins the catch-all
 # above the Director and for anyone off the chain. The "up one level" hop walks
@@ -5447,7 +5462,7 @@ def wellness_export_rows(conn, date_from=None, date_to=None):
                COALESCE(rp.name, u.username), c.break_date, c.start_time, c.hours,
                c.activity, c.status, COALESCE(rpd.name, ud.username, ''),
                r.id IS NOT NULL, r.mood_before, r.mood_after,
-               c.activity_other, r.usefulness
+               c.activity_other, r.usefulness, r.takeaway
         FROM wellness_claim c
         JOIN admin_user u ON u.id = c.user_id
         LEFT JOIN resource_person rp ON rp.id = u.rp_id
@@ -5464,13 +5479,19 @@ def wellness_export_rows(conn, date_from=None, date_to=None):
         label = acts.get(w[6], w[6])
         if w[6] == "other" and w[12]:
             label = f"{label} — {w[12]}"
+        # Annex A category (the DM's official 6-way activity type). "Others" carries
+        # the free-text specification the same way the label does.
+        annex = WELLNESS_ANNEX_ACTIVITY.get(w[6], "Others")
+        if w[6] == "other" and w[12]:
+            annex = f"{annex} — {w[12]}"
         out.append({"week": w[0], "section": w[1] or "—", "employee": w[2],
                     "date": w[3], "start_time": w[4], "hours": w[5],
-                    "activity": label, "status": w[7],
+                    "activity": label, "activity_key": w[6],
+                    "activity_annex": annex, "status": w[7],
                     "approved_by": w[8],
                     "reflection_done": "yes" if w[9] else "no",
                     "mood_before": w[10], "mood_after": w[11],
-                    "usefulness": w[13]})
+                    "usefulness": w[13], "remarks": w[14]})
     return out
 
 

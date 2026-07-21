@@ -12492,32 +12492,142 @@ def wellness_dashboard(request: Request, week: str = ""):
     })
 
 
-@app.get("/wellness/export.csv")
+def _fmt_reg_date(iso):
+    """'2026-04-27' -> 'April 27, 2026' for the register's masthead; the raw
+    string (or an em dash) if it isn't a clean ISO date."""
+    try:
+        d = date.fromisoformat(iso)
+    except (TypeError, ValueError):
+        return iso or "—"
+    return f"{d:%B} {d.day}, {d.year}"
+
+
+def _wellness_period_label(date_from, date_to, dates):
+    """The 'Weekly Covered' line: the caller's explicit bounds when given,
+    otherwise the span actually present in the register (earliest–latest)."""
+    lo = date_from or (dates[0] if dates else None)
+    hi = date_to or (dates[-1] if dates else None)
+    if not lo and not hi:
+        return "—"
+    if lo == hi:
+        return _fmt_reg_date(lo)
+    return f"{_fmt_reg_date(lo)} – {_fmt_reg_date(hi)}"
+
+
+def _build_wellness_register_xlsx(rows, date_from=None, date_to=None):
+    """The DM's official 'Annex A. Weekly Wellness Break Log' as an Excel
+    workbook — the exact seven-column register, one row per break actually
+    consumed (completed). `rows` are already filtered to consumed breaks."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Weekly Wellness Break Log"
+    thin = Side(style="thin", color="9AA1AC")
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    hdr_fill = PatternFill("solid", fgColor="1F4E79")
+    ctr = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    left = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    ncols = 7
+
+    dates = sorted(r["date"] for r in rows if r["date"])
+    period = _wellness_period_label(date_from, date_to, dates)
+
+    # Masthead — mirrors the printed form's heading block.
+    masthead = [
+        ("Annex A. Weekly Wellness Break Log", Font(bold=True, size=14)),
+        (f"Office/Unit: {st.WELLNESS_OFFICE_UNIT}", Font(bold=True, size=11)),
+        (f"Weekly Covered: {period}", Font(size=11)),
+        ("", None),
+    ]
+    for i, (text, font) in enumerate(masthead, start=1):
+        ws.merge_cells(start_row=i, start_column=1, end_row=i, end_column=ncols)
+        c = ws.cell(i, 1, text)
+        if font:
+            c.font = font
+        c.alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+
+    headers = [
+        "No.", "Name of Personnel", "Wellness Break Availed (Date/Time)",
+        "Activity Type (Physical Exercise, Relaxation, Wellness Consult, "
+        "Recreation, Arts, Others)",
+        "Duration (Minutes)", "Usefulness Rating (1-5)", "Remarks/ Observations",
+    ]
+    hrow = len(masthead) + 1
+    for i, h in enumerate(headers, start=1):
+        c = ws.cell(hrow, i, h)
+        c.font = Font(bold=True, color="FFFFFF")
+        c.fill = hdr_fill
+        c.alignment = ctr
+        c.border = border
+
+    r = hrow + 1
+    for i, row in enumerate(rows, start=1):
+        when = row["date"] or ""
+        if row["start_time"]:
+            when = f"{when} · {row['start_time']}".strip(" ·")
+        duration = int(row["hours"] * 60) if row["hours"] is not None else ""
+        cells = [
+            i, row["employee"] or "", when, row["activity_annex"], duration,
+            row["usefulness"] if row["usefulness"] is not None else "",
+            row["remarks"] or "",
+        ]
+        for col, val in enumerate(cells, start=1):
+            c = ws.cell(r, col, val)
+            c.alignment = ctr if col in (1, 3, 5, 6) else left
+            c.border = border
+        r += 1
+    if not rows:
+        ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=ncols)
+        ws.cell(r, 1, "No wellness breaks have been consumed for this period yet."
+                ).alignment = ctr
+        r += 1
+
+    note = ("*Duration (Minutes): actual time spent for the wellness activity; "
+            "Usefulness Rating (1-5): 1 - not useful, 2 - slightly useful, "
+            "3 - moderately useful, 4 - very useful, 5 - highly useful; "
+            "Remarks/Observations: optional notes on experience, scheduling issues, "
+            "or operational concerns")
+    frow = r + 1
+    ws.merge_cells(start_row=frow, start_column=1, end_row=frow, end_column=ncols)
+    c = ws.cell(frow, 1, note)
+    c.font = Font(size=9, italic=True, color="404756")
+    c.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
+    ws.row_dimensions[frow].height = 46
+
+    for i, w in enumerate([5, 26, 26, 40, 13, 14, 30], start=1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+    ws.freeze_panes = f"A{hrow + 1}"
+    ws.print_title_rows = f"{hrow}:{hrow}"
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
+@app.get("/wellness/export.xlsx")
 def wellness_export(request: Request, date_from: str = "", date_to: str = ""):
-    """The monitoring register as CSV — the submission output the DM's
-    utilization database asks the Administrative Service to keep."""
+    """The monitoring register as the DM's official 'Annex A. Weekly Wellness
+    Break Log' (Excel) — the submission output the utilization database asks the
+    Administrative Service to keep. Only breaks actually CONSUMED (completed) are
+    listed; pending/approved/denied/cancelled claims are left off the register."""
     user = request.state.user
     conn = get_conn()
     try:
         if not st.user_is_wellness_chief(conn, user):
             return _wellness_forbid(request)
         rows = st.wellness_export_rows(conn, date_from or None, date_to or None)
+        rows = [r for r in rows if r["status"] == "completed"]
         _audit(request, conn, "wellness_export",
-               summary=f"exported the wellness register ({len(rows)} rows)")
+               summary=f"exported the wellness register ({len(rows)} consumed breaks)")
     finally:
         conn.close()
-    buf = io.StringIO()
-    w = csv.writer(buf)
-    w.writerow(["Week of", "Section", "Employee", "Date", "Start time", "Hours",
-                "Activity", "Status", "Approved by", "Reflection done",
-                "Mood before", "Mood after", "Usefulness"])
-    for r in rows:
-        w.writerow([r["week"], r["section"], r["employee"], r["date"],
-                    r["start_time"], r["hours"], r["activity"], r["status"],
-                    r["approved_by"], r["reflection_done"],
-                    r["mood_before"] if r["mood_before"] is not None else "",
-                    r["mood_after"] if r["mood_after"] is not None else "",
-                    r["usefulness"] if r.get("usefulness") is not None else ""])
-    fname = f"wellness_register_{_today_local().isoformat()}.csv"
-    return Response(buf.getvalue(), media_type="text/csv",
-                    headers={"Content-Disposition": f'attachment; filename="{fname}"'})
+    data = _build_wellness_register_xlsx(rows, date_from or None, date_to or None)
+    fname = f"Weekly_Wellness_Break_Log_{_today_local().isoformat()}.xlsx"
+    return Response(
+        content=data,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{fname}"'},
+    )

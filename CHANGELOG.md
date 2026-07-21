@@ -1,5 +1,36 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-21 (Wellness register download → official "Annex A. Weekly Wellness Break Log" (Excel), consumed breaks only)
+
+The utilization dashboard's **"Download the register"** now produces the DM's
+official **Annex A. Weekly Wellness Break Log** as an Excel workbook instead of
+the ad-hoc CSV, and lists **only breaks actually consumed (completed)** —
+pending/approved/denied/cancelled claims are left off, since they were never
+availed.
+
+- **`/wellness/export.xlsx`** replaces `/wellness/export.csv` (`app.py`). New
+  `_build_wellness_register_xlsx` renders the exact seven-column form — No., Name
+  of Personnel, Wellness Break Availed (Date/Time), Activity Type, Duration
+  (Minutes), Usefulness Rating (1-5), Remarks/Observations — under the
+  "Annex A. Weekly Wellness Break Log" masthead (Office/Unit + auto "Weekly
+  Covered" span) and the form's footnote. Duration is `hours × 60`; the takeaway
+  reflection fills Remarks. Helpers `_fmt_reg_date` / `_wellness_period_label`.
+- **Annex A activity mapping** (`storage.py`): `WELLNESS_ANNEX_ACTIVITY` maps our
+  keys to the form's six official categories (Physical Exercise, Relaxation,
+  Wellness Consult, Recreation, Arts, Others); `WELLNESS_OFFICE_UNIT` carries the
+  bureau's full name. `wellness_export_rows` now also returns `activity_key`,
+  `activity_annex`, and the `remarks` takeaway.
+- **Dashboard download control** (`templates/wellness_dashboard.html`) points at
+  the new route and adds a **From/To date-range filter** (a small GET form) so the
+  register can be scoped to any span. It defaults to the currently-viewed week —
+  matching the Annex A weekly form and tracking the week nav — and clearing both
+  fields exports the full register. The `date_from`/`date_to` query params were
+  already honored by `wellness_export_rows`; the endpoint drives the exported
+  "Weekly Covered" masthead from whichever bounds are supplied.
+- Tests updated (`tests/test_wellness.py`): the register export test loads the
+  workbook, asserts the Annex A masthead/columns and the mapped row, and confirms
+  a still-pending break never reaches the register.
+
 ## 2026-07-21 (v2.39 — Wellness: downloadable monthly break register (PDF) per person)
 
 Each employee can now download their own **monthly wellness-break register** as a

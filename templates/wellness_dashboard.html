@@ -23,8 +23,14 @@
   .pill.warn { color:var(--amber); border-color:var(--amber-ln); background:var(--amber-bg); }
   .muted { color:var(--soft); }
   h2 { margin:.1rem 0 .7rem; font-size:1.05rem; }
-  .exp { margin-left:auto; }
-  .exp a { font-weight:700; }
+  .reg-dl { margin-left:auto; display:flex; align-items:flex-end; gap:.55rem; flex-wrap:wrap; }
+  .reg-dl label { display:flex; flex-direction:column; gap:.2rem; font-size:.68rem; font-weight:700;
+                  text-transform:uppercase; letter-spacing:.04em; color:var(--soft); }
+  .reg-dl input[type=date] { font:inherit; font-size:.82rem; padding:.28rem .45rem; color:var(--ink-soft);
+                  border:1px solid var(--line); border-radius:9px; background:var(--surface); }
+  .reg-dl button { font:inherit; font-weight:800; cursor:pointer; padding:.4rem .8rem; color:var(--ink-soft);
+                  border:1px solid var(--line); border-radius:10px; background:var(--surface); }
+  .reg-dl button:hover { border-color:var(--accent); color:var(--accent); }
 </style>
 
 {{ page_header("Wellness utilization", "How the bureau is using its 2-hour weekly wellness break — the live view behind the monitoring register.") }}
@@ -33,7 +39,12 @@
   <a class="nav" href="/wellness/dashboard?week={{ prev_week }}" aria-label="Previous week">‹</a>
   <span class="cur">Week of {{ week_start }} – {{ week_end }}{% if is_current %} <span class="muted">(this week)</span>{% endif %}</span>
   <a class="nav" href="/wellness/dashboard?week={{ next_week }}" aria-label="Next week">›</a>
-  <span class="exp"><a href="/wellness/export.csv">⬇ Download the register (CSV)</a></span>
+  <form class="reg-dl" method="get" action="/wellness/export.xlsx"
+        title="Downloads the Annex A register of consumed breaks. Clear both dates to export the full register.">
+    <label>From <input type="date" name="date_from" value="{{ week_start }}"></label>
+    <label>To <input type="date" name="date_to" value="{{ week_end }}"></label>
+    <button type="submit">⬇ Download the register (Excel)</button>
+  </form>
 </div>
 
 <div class="tiles">
