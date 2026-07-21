@@ -1,5 +1,16 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-21 (v2.42 — ship the wellness "By person" section scoping)
+
+Version bump so the deploy's strict-version gate ships #74 (already merged): the
+wellness utilization dashboard's **By person** table — plus the section rollup,
+week tiles and pending queue — is scoped to the viewing chief's own org-unit
+subtree (`_wellness_dashboard_scope` / `_wellness_in_scope` in `storage.py`),
+instead of listing every active employee. A section chief sees their section, a
+division chief their whole division; admins remain bureau-wide. Code shipped in
+#74; this bump adds `APP_VERSION = "2.42"` and the plain-language `version.py`
+entry the login "What's new" reads.
+
 ## 2026-07-21 (v2.40 — Hotfix: ship wellness_register.py; guard the deploy against unshipped boot imports)
 
 **Production hotfix.** The live Space was crashing on boot with
