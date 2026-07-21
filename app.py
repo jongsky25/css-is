@@ -10603,6 +10603,11 @@ def dashboard_activity(request: Request, event_id: int, err: str = "", msg: str 
         report = di.activity_servqual(atoms, ev["instance_ids"])
         story = di.story_panel(st.verbatims_for_responses(conn, ev["response_ids"]),
                                st.get_comment_overrides(conn, ev["response_ids"]))
+        # Section managers / admins can fix the wording of collected comments for
+        # encoding (Spot Feedback #70). The digest above shows only a handful, so
+        # the editor below lists the COMPLETE set — every comment stays reachable.
+        can_edit = auth.can(request.state.user["role"], "edit_data")
+        edit_comments = st.activity_editable_comments(conn, ev["response_ids"]) if can_edit else []
         captured = st.demographics_for_responses(conn, ev["response_ids"])
         manual = st.get_activity_demographics(conn, event_id)
         demo = di.activity_demographics(captured, manual)
@@ -10641,6 +10646,7 @@ def dashboard_activity(request: Request, event_id: int, err: str = "", msg: str 
         "mrr_fields": mrr_fields,
         "scope_label": scope_label,
         "can_manage": auth.can(request.state.user["role"], "create_activity"),
+        "can_edit": can_edit, "edit_comments": edit_comments,
     })
 
 

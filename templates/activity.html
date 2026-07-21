@@ -158,7 +158,20 @@
   .draft-form button { align-self:flex-start; padding:.4rem .7rem; border-radius:8px; border:1px solid var(--accent);
     background:var(--accent); color:var(--on-accent); font-weight:600; cursor:pointer; font-size:.8rem; }
   .draft-actor { font-size:.72rem; color:var(--soft); font-weight:400; text-transform:none; letter-spacing:normal; margin-left:.4rem; }
-  @media print { .crumb, .winform button, .dl-btn, .ai-verbatim-actions, .draft-form { display:none; } }
+  /* Per-activity "edit the words" encoder (Spot Feedback #70) */
+  .comment-encode { margin-top:1rem; border-top:1px dashed var(--line); padding-top:.8rem; }
+  .comment-encode > summary { cursor:pointer; font-weight:600; color:var(--accent); }
+  .comment-encode .sublab { margin:.5rem 0 .8rem; }
+  .encode-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.9rem; }
+  .encode-list > li { border:1px solid var(--line); border-radius:10px; padding:.7rem .8rem; background:var(--surface); }
+  .encode-cite { font-size:.74rem; color:var(--soft); margin-bottom:.35rem; }
+  .comment-encode .editform textarea { width:100%; padding:.5rem .6rem; border:1px solid var(--line);
+    border-radius:8px; font:inherit; font-size:.9rem; resize:vertical; }
+  .encode-row { display:flex; gap:.6rem; align-items:center; margin-top:.4rem; flex-wrap:wrap; }
+  .encode-row button { padding:.4rem .8rem; border-radius:8px; border:1px solid var(--accent);
+    background:var(--accent); color:var(--on-accent); font-weight:600; cursor:pointer; font-size:.82rem; }
+  .encode-row .hint { font-size:.76rem; color:var(--soft); }
+  @media print { .crumb, .winform button, .dl-btn, .ai-verbatim-actions, .draft-form, .comment-encode { display:none; } }
 </style>
 
 {% if not ev %}
@@ -357,6 +370,36 @@
   <div id="aiSummaryResult"></div>
   {% endif %}
   {{ s.panel(story, true, request.url.path) }}
+
+  {% if can_edit %}
+  <details class="comment-encode">
+    <summary>✎ Edit the words (for encoding)</summary>
+    <p class="sublab">Fix a misspelling or unreadable text in a collected comment — for encoding only.
+      Ratings are never changed, only the words, and every edit is recorded in the audit log.
+      This lists <strong>every</strong> comment on this activity, not just the ones highlighted above.</p>
+    {% if edit_comments %}
+    <ol class="encode-list">
+      {% for c in edit_comments %}
+      <li>
+        <div class="encode-cite">{{ c.activity or c.form_id }}{% if c.when %} · {{ c.when }}{% endif %}
+          · {% if c.kind == 'overall' %}overall comment{% else %}note on {{ c.item_id }}{% endif %}</div>
+        <form class="editform" method="post" action="/responses/{{ c.response_id }}/edit-remark" data-loading="Saving…">
+          <input type="hidden" name="back" value="{{ request.url.path }}#comments">
+          {% if c.item_id %}<input type="hidden" name="item_id" value="{{ c.item_id }}">{% endif %}
+          <textarea name="text" rows="2">{{ c.text }}</textarea>
+          <div class="encode-row">
+            <button type="submit">Save correction</button>
+            <span class="hint">{% if c.item_id %}Leave empty to remove the note.{% else %}Fixes the wording only — audited.{% endif %}</span>
+          </div>
+        </form>
+      </li>
+      {% endfor %}
+    </ol>
+    {% else %}
+    <p class="story-empty">No written comments to edit on this activity yet.</p>
+    {% endif %}
+  </details>
+  {% endif %}
 </div>
 
 {% if can_manage %}

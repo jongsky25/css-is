@@ -1,5 +1,64 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-21 (v2.34 — Edit verbatim comments on the activity report, for encoding)
+
+Addresses live Spot Feedback #70 ("i wanted to edit manually the people's own
+words, for encoding only") — filed on `/reports/activities/…#comments`.
+
+The audited edit route (`POST /responses/{id}/edit-remark`, `edit_data` only,
+before/after logged) already existed and was exposed on `/reports/verbatims`, but
+NOT on the per-activity report — whose `#comments` section renders only the
+curated digest (`_story.html`, at most 4 themes × 2 quotes per side, re-tag only).
+So a user reading one activity's comments had no way to fix the words there.
+
+- **New `storage.activity_editable_comments(conn, response_ids)`**: a flat,
+  newest-first list of every respondent-written comment across a set of responses
+  (each overall remark + each free-text item note), shaped one-entry-per-edit-box.
+  `item_id` is `''` for the overall comment (the blank-item_id contract the edit
+  route already uses to update `response.remarks`). Encoding metadata items
+  (`SEX`/`AFFIL`/`RESPONSE_NO`) are excluded — they aren't anyone's words.
+- **Activity report** (`app.py`, `templates/activity.html`): the `#comments`
+  section gains an "✎ Edit the words (for encoding)" panel, shown only to
+  `edit_data` holders (section heads + admins). Unlike the digest above it, this
+  lists the COMPLETE set, so any comment is reachable; each box posts to the
+  existing edit-remark route with `back` returning to `#comments`.
+- Tests (`tests/test_activity_editable_comments.py`): storage-level coverage of
+  inclusion/exclusion, the blank-item_id contract, and an edit round-trip; plus
+  HTTP tests that the panel shows for a manager and is hidden from a viewer.
+
+## 2026-07-21 (v2.33 — Wellness approver routing names the real chief, not "an administrator")
+
+Addresses live Spot Feedback #76 ("if staff → send to section chief, if section
+chief → division chief, if division chief → director"). The escalation chain
+already existed, but resolved to nobody against real directory data, so the apply
+page read "Send to an administrator" for people who clearly sit under a chief.
+
+Two root causes, both in `storage.py`:
+
+- **The Director was invisible to the chain.** Section heads and division chiefs
+  carry a functional `designation` ("Section Head" / "Division Chief"), but the
+  Director's leadership lives in `position` ("Director IV") with a blank
+  `designation`. Rank was read from `designation` only, via an exact-match lookup,
+  so a division chief escalated to nobody. `_wellness_rank` now takes
+  `(designation, position)` and matches case-insensitively as a substring — reading
+  `position` too, but only for "director" (a section head's position is often
+  "Chief Health Program Officer", which must not read as a division chief).
+  `_wellness_accounts_by_designation` → `_wellness_accounts_at_rank`, and
+  `user_is_wellness_chief` now uses the same rank logic, so the Director both
+  approves a division chief's break and sees the queue.
+- **The copy hid the chain until everyone was onboarded.** `wellness_approver_title`
+  returned "an administrator" whenever the approver had no app account yet — which
+  was almost always, since only one chief has signed in. It now names the
+  org-correct approver as long as that seat is *filled in the directory* (new
+  `_wellness_role_filled`), independent of whether that person has logged in. The
+  actual claim still routes to the admin fallback until the chief is onboarded, so
+  nothing gets stuck; the copy just tells staff who the request is *for*.
+
+- Tests (`tests/test_wellness.py`): new `wellness_chain` fixture plus
+  `test_escalation_walks_each_tier` (Director matched by position),
+  `test_director_and_chiefs_see_the_queue`, and
+  `test_title_names_the_seat_even_without_an_account`.
+
 ## 2026-07-21 (v2.32 — fix: Gemini "thinking" starved structured-output calls)
 
 Symptom: after switching the default model to `gemini-3.5-flash`, every
