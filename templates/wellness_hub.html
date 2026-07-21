@@ -73,7 +73,9 @@
        dragged anywhere inside this hero panel (.av-play). #}
     {% set s = stats.stage %}
     {{ avatar(avatar_kind, s, name=avatar_name, size=170, interactive=true,
-              mood=avatar_mood, care=true, drag=true) }}
+              mood=avatar_mood, care=true, drag=true,
+              person=avatar_person, care_streak=avatar_care_streak,
+              last_care=avatar_last_care) }}
     <div class="stage-name">{{ avatar_name or stats.stage_name }}</div>
     <div class="stage-sub">{{ stats.stage_name }} · Stage {{ s }} of 6 · Level {{ stats.level }}</div>
     <a class="rename-link" href="/me">Rename or change your companion →</a>

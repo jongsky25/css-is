@@ -3048,6 +3048,7 @@ def get_user_profile(conn, user_id):
         "avatar_name": acct.get("avatar_name") or "",
         "avatar_last_care_at": acct.get("avatar_last_care_at"),
         "avatar_mood": avatar_mood(acct.get("avatar_last_care_at")),
+        "avatar_care_streak": acct.get("avatar_care_streak") or 0,
         "onboarded": bool(acct.get("onboarded_at")),
         "onboarded_at": acct.get("onboarded_at"),
         "person_name": (rp or {}).get("name") or "",

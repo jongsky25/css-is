@@ -287,3 +287,81 @@ def test_fish_art_no_longer_embeds_its_own_water(app_mod):
         '{% from "_avatars_art.html" import species_art %}{{ species_art(kind, 4, 0) }}')
     assert "avg-water" not in tpl.render(kind="fish")
     assert "avg-water" not in tpl.render(kind="dolphin")
+
+
+# --- watering visibility (CSS contract) --------------------------------------
+
+def _defs_css(app_mod):
+    return app_mod.templates.env.from_string(
+        '{% from "_avatars.html" import avatar_defs %}{{ avatar_defs() }}').render()
+
+
+def test_watering_droplet_css_contract(app_mod):
+    # Regression: the base hide must target the drop PATHS, not the .av-drops
+    # group — a child animating its opacity inside an opacity:0 parent stays
+    # invisible, which made watering show no droplets on every plant.
+    css = _defs_css(app_mod)
+    assert ".av-drops path { opacity:0; }" in css
+    assert ".av-food, .av-drops {" not in css          # group no longer in the hide list
+    # and the succulent (whose animation:none outranks av-perk) has its own
+    # higher-specificity watered response
+    assert '.avwrap[data-kind="succulent"].av-caring-water .avstage' in css
+
+
+def test_defs_carry_new_behavior_css(app_mod):
+    # the roam gaits, petting, and explore overlay all ship in avatar_defs()
+    css = _defs_css(app_mod)
+    for marker in ("av-trot", "av-bound", "av-plod", "av-do-zoom",
+                   "av-heart", "av-nuzzle", "av-explore-layer", "z-index:14",
+                   "pointer-events:none"):
+        assert marker in css, f"missing {marker} in avatar_defs()"
+
+
+# --- personality data attributes ---------------------------------------------
+
+def test_avatar_macro_personality_attrs(app_mod):
+    tpl = app_mod.templates.env.from_string(
+        '{% from "_avatars.html" import avatar %}'
+        '{{ avatar("dog", 3, name="Rex", interactive=true, care=true,'
+        ' person=person, care_streak=streak, last_care=last) }}')
+    out = tpl.render(person="Maria", streak=5, last="2026-07-21T09:00:00")
+    assert 'data-person="Maria"' in out
+    assert 'data-care-streak="5"' in out
+    assert 'data-last-care="2026-07-21T09:00:00"' in out
+    bare = tpl.render(person="", streak=0, last="")
+    for attr in ("data-person", "data-care-streak", "data-last-care"):
+        assert attr not in bare                        # optional: absent when empty
+
+
+def test_explore_button_only_for_swimmers(app_mod):
+    tpl = app_mod.templates.env.from_string(
+        '{% from "_avatars.html" import avatar %}'
+        '{{ avatar(kind, 3, name="P", interactive=true, care=care) }}')
+    assert "av-explore-btn" in tpl.render(kind="fish", care=True)
+    assert "av-explore-btn" in tpl.render(kind="dolphin", care=True)
+    assert "av-explore-btn" not in tpl.render(kind="dog", care=True)     # no water to swim
+    assert "av-explore-btn" not in tpl.render(kind="fish", care=False)   # hub-only surface
+
+
+def test_wellness_hub_renders_personality_markers(viewer, app_mod):
+    conn = st.connect(app_mod.DB)
+    conn.execute("UPDATE admin_user SET avatar_kind='fish', avatar_name='Bubbles' "
+                 "WHERE username='viewer@test.local'")
+    conn.commit(); conn.close()
+    r = viewer.get("/wellness")
+    assert r.status_code == 200
+    assert "av-explore-btn" in r.text                  # swimmer gets the 🌊 toggle
+    # the care data attributes appear once the account has actually cared
+    r2 = viewer.post("/avatar/care", data={"action": "feed"})
+    assert r2.status_code == 200
+    r3 = viewer.get("/wellness")
+    assert "data-care-streak=" in r3.text
+    assert "data-last-care=" in r3.text
+
+
+def test_profile_includes_care_streak(conn):
+    uid = _mk_account(conn, "streak-prof@test.local")
+    assert st.get_user_profile(conn, uid)["avatar_care_streak"] == 0
+    st.record_avatar_care(conn, uid, now=NOW)
+    st.record_avatar_care(conn, uid, now=NOW + timedelta(days=1))
+    assert st.get_user_profile(conn, uid)["avatar_care_streak"] == 2

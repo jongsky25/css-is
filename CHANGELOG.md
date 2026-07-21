@@ -1,5 +1,42 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-21 (v2.37 — Lifelike companions: watering fix, roaming, page-wide swim, personality)
+
+The companion layer grows from "animated sticker" into something that feels a
+little alive. Also fixes the long-standing invisible-watering bug.
+
+- **Fix: watering was invisible.** `_avatars.html` hid the `.av-drops` GROUP
+  (`opacity:0`) while the care animation animated only its `path` children — a
+  child can never out-opacity an `opacity:0` parent, so no plant ever showed
+  falling droplets. The hide now targets `.av-drops path` (the `av-drop`
+  keyframes own the visibility window, same pattern as `.av-spark`). Also the
+  succulent's `animation:none` kill rule (specificity 3) outranked the watering
+  perk (2), so it showed nothing when watered — a specificity-4 exception now
+  gives it a species-true `av-plump` response.
+- **Ground roaming** (`avatars.js` `WALKERS`/`startWalk`): dog, cat, rabbit,
+  bird and turtle wander their `.av-play` panel autonomously — travel on the
+  `.avmove` layer only (drag owns the wrap transform), live-recomputed bounds,
+  species gaits (`av-do-trot/zoom/bound/plod`, deliberately not in `ALL_DO`),
+  dog zoomies, rabbit hop chains. The idle loop yields while a leg is underway
+  (`_avBusy`), and a drag resets the roam offset so grab and art agree.
+- **Page-wide swim** (wellness hub only): a 🌊 toggle on fish/dolphin lifts the
+  REAL svg into a `position:fixed` `pointer-events:none` overlay (z-index 14 —
+  under the sticky chrome) inside a class-carrying holder (`avwrap fam-animal`
+  + data attrs, since every descendant selector dies when the art leaves its
+  wrap); it swims viewport waypoints, the dolphin leaps, tap-or-toggle sends it
+  home. Preference in localStorage `css-av-explore`; hard-restored on
+  reduced-motion, sleep, or care.
+- **Personality**: tap bubble now speaks — time-of-day greeting personalized
+  via new `data-person`, care memory ("I missed you…", thanks after care) via
+  `data-last-care`, streak lines via `data-care-streak` (all new optional
+  `avatar()` macro args; wellness route passes them; `get_user_profile` now
+  returns `avatar_care_streak`). Dog/cat/bird join the owl in pointer-watching
+  (subtler ±8°), a fast pointer near the dog triggers an excited wag, and
+  press-and-hold pets the companion (hearts, `av-nuzzle` wiggle, opt-in purr).
+- **Tests**: CSS-contract assertions for the watering fix and new keyframes,
+  macro personality attrs, swimmer-only explore button, hub markers, profile
+  care-streak field. APP_VERSION → 2.37.
+
 ## 2026-07-21 (v2.36 — Dolphin companion + swimmer water-drift fix)
 
 A 16th wellness companion and a fix for a long-standing swimmer glitch.
