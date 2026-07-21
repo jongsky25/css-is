@@ -5472,3 +5472,74 @@ def wellness_export_rows(conn, date_from=None, date_to=None):
                     "mood_before": w[10], "mood_after": w[11],
                     "usefulness": w[13]})
     return out
+
+
+# ---- personal monthly register (the downloadable PDF) -------------------
+# A person's own record of the breaks they availed, one calendar month at a
+# time, laid out like the DOH monitoring form (see wellness_register.py). Only
+# breaks that were actually granted count — approved or completed; pending,
+# denied and cancelled are not breaks taken.
+_WELLNESS_AVAILED = ("approved", "completed")
+
+
+def wellness_availed_months(conn, user_id):
+    """Months in which this person has an availed (approved/completed) break,
+    newest first, with a count — drives the hub's register download picker.
+    Each item: {'ym','year','month','label','count'}."""
+    qs = ",".join("?" * len(_WELLNESS_AVAILED))
+    rows = conn.execute(
+        f"SELECT substr(break_date,1,7) AS ym, COUNT(*) FROM wellness_claim "
+        f"WHERE user_id=? AND status IN ({qs}) "
+        f"GROUP BY ym ORDER BY ym DESC", (user_id, *_WELLNESS_AVAILED)).fetchall()
+    out = []
+    for ym, n in rows:
+        try:
+            y, m = int(ym[:4]), int(ym[5:7])
+        except (TypeError, ValueError):
+            continue
+        out.append({"ym": ym, "year": y, "month": m,
+                    "label": f"{_MONTH_NAMES[m - 1]} {y}", "count": n})
+    return out
+
+
+_MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July",
+                "August", "September", "October", "November", "December"]
+
+
+def wellness_person_month(conn, user_id, year, month):
+    """Everything the monthly register PDF needs for one person and month: their
+    name and office, and the availed (approved/completed) breaks in that month,
+    each carrying the deciding approver's name. Days are chronological."""
+    ym = f"{int(year):04d}-{int(month):02d}"
+    prof = get_user_profile(conn, user_id)
+    name = (prof or {}).get("person_name") or (prof or {}).get("username") or ""
+    office = ""
+    if prof and prof.get("org_unit_id"):
+        row = conn.execute(
+            "SELECT short_name, path, name FROM org_unit WHERE id=?",
+            (prof["org_unit_id"],)).fetchone()
+        if row:
+            office = (row[0] or (row[1].rsplit("/", 1)[-1] if row[1] else "")
+                      or row[2] or "")
+    qs = ",".join("?" * len(_WELLNESS_AVAILED))
+    rows = conn.execute(
+        f"""SELECT c.break_date, c.start_time, c.hours, c.activity, c.activity_other,
+                   c.status, COALESCE(rpd.name, ud.username, '')
+            FROM wellness_claim c
+            LEFT JOIN admin_user ud ON ud.id = c.decided_by
+            LEFT JOIN resource_person rpd ON rpd.id = ud.rp_id
+            WHERE c.user_id=? AND substr(c.break_date,1,7)=?
+              AND c.status IN ({qs})
+            ORDER BY c.break_date, c.start_time, c.id""",
+        (user_id, ym, *_WELLNESS_AVAILED)).fetchall()
+    acts = dict(WELLNESS_ACTIVITIES)
+    entries = []
+    for r in rows:
+        label = acts.get(r[3], r[3])
+        if r[3] == "other" and r[4]:
+            label = f"{label} — {r[4]}"
+        entries.append({"date": r[0], "start_time": r[1], "hours": r[2],
+                        "activity_label": label, "status": r[5],
+                        "approver": r[6] or ""})
+    return {"name": name, "office": office, "year": int(year), "month": int(month),
+            "entries": entries}

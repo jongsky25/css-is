@@ -17,10 +17,32 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.38"
+APP_VERSION = "2.39"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.39",
+        "date": "July 21, 2026",
+        "summary": "You can now download a monthly PDF of your own wellness "
+                   "breaks — one file per month, laid out like the paper "
+                   "monitoring form, with approvals shown as \"Digitally "
+                   "approved and signed\".",
+        "changes": [
+            "Your wellness page now has a \"Monthly register (PDF)\" download. "
+            "Pick a month and get a print-ready copy of the breaks you availed "
+            "that month, set out like the official Monday-to-Friday monitoring "
+            "form with a \"Name\" and \"Office\" header.",
+            "In the approver box of each week, instead of a blank line to sign, "
+            "the register reads \"Digitally approved and signed\" over the name "
+            "of whoever approved it — because the approval already happened "
+            "inside the system.",
+            "The download only appears for months where you actually took a "
+            "break, and only lists breaks that were approved or completed "
+            "(withdrawn or denied ones don't show). It's your own record: "
+            "everyone downloads only their own, no special role needed.",
+        ],
+    },
     {
         "version": "2.38",
         "date": "July 21, 2026",

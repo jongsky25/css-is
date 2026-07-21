@@ -113,6 +113,26 @@
   <a class="btn" href="/wellness/apply" {% if left == 0 %}aria-disabled="true"{% endif %}>Request a break</a>
 </div>
 
+{% if register_months %}
+<div class="panel entitle">
+  <div>
+    <strong>Monthly register (PDF)</strong>
+    <span style="color:var(--soft); display:block; font-size:.85rem;">
+      Your record of breaks availed — approvals show as “Digitally approved and signed”.</span>
+  </div>
+  <form method="get" action="/wellness/register.pdf" style="display:flex; gap:.6rem; align-items:center; flex-wrap:wrap;">
+    <label class="sr-only" for="reg-month">Month</label>
+    <select id="reg-month" name="month"
+            style="font:inherit; padding:.5rem .7rem; border:1px solid var(--line); border-radius:10px; background:var(--surface); color:var(--ink);">
+      {% for m in register_months %}
+      <option value="{{ m.ym }}">{{ m.label }} ({{ m.count }})</option>
+      {% endfor %}
+    </select>
+    <button class="btn ghost" type="submit">⬇ Download</button>
+  </form>
+</div>
+{% endif %}
+
 <div class="panel">
   <h2 style="margin:.1rem 0 .7rem; font-size:1.05rem;">My break requests</h2>
   {% if claims %}

@@ -583,3 +583,74 @@ def test_home_shows_the_two_doors(viewer):
     assert r.status_code == 200
     assert "Wellness — my 2-hour break" in r.text
     assert 'href="/wellness"' in r.text
+
+
+# ---------------------------------------------- monthly register (PDF) --------
+
+def _seed_availed(conn, uid, chief, break_date, start_time, status, activity="exercise"):
+    """Insert a break in a known state, decided by `chief` — the register only
+    lists availed (approved/completed) breaks, so tests need real decided rows."""
+    ws = st.wellness_week_start(date.fromisoformat(break_date))
+    conn.execute(
+        "INSERT INTO wellness_claim(user_id, week_start, break_date, start_time,"
+        " hours, activity, status, decided_by, decided_at, created_at)"
+        " VALUES (?,?,?,?,1,?,?,?,?,?)",
+        (uid, ws, break_date, start_time, activity, status, chief,
+         tz.now_iso(), tz.now_iso()))
+    conn.commit()
+
+
+def test_availed_months_and_person_month(wellness_org):
+    import wellness_register as wreg
+    conn, emp, chief = wellness_org["conn"], wellness_org["emp"], wellness_org["chief"]
+    _seed_availed(conn, emp, chief, "2026-03-03", "10:00", "completed")
+    _seed_availed(conn, emp, chief, "2026-03-17", "14:00", "approved", activity="hobby")
+    _seed_availed(conn, emp, chief, "2026-04-07", "09:00", "completed")
+    # a denied break must NOT count as availed
+    _seed_availed(conn, emp, chief, "2026-03-24", "11:00", "denied")
+
+    months = st.wellness_availed_months(conn, emp)
+    yms = [m["ym"] for m in months]
+    assert yms == ["2026-04", "2026-03"]          # newest first
+    mar = next(m for m in months if m["ym"] == "2026-03")
+    assert mar["count"] == 2 and mar["label"] == "March 2026"
+
+    data = st.wellness_person_month(conn, emp, 2026, 3)
+    assert data["name"] == "W-Test Employee" and data["office"] == "WSec"
+    assert len(data["entries"]) == 2              # the denied one is excluded
+    assert {e["date"] for e in data["entries"]} == {"2026-03-03", "2026-03-17"}
+    assert all(e["approver"] == "W-Test Chief" for e in data["entries"])
+
+    pdf = wreg.render_month_pdf(data)
+    assert pdf[:4] == b"%PDF"
+    assert wreg.filename(data) == "Wellness-Register-Employee-2026-03.pdf"
+
+
+def test_register_pdf_download_and_hub_control(app_mod, wellness_org):
+    conn, emp, chief = wellness_org["conn"], wellness_org["emp"], wellness_org["chief"]
+    _seed_availed(conn, emp, chief, "2026-03-10", "10:00", "completed")
+    c = _client_for_id(app_mod, emp)
+
+    # the hub offers the monthly-register download once a break is availed
+    r = c.get("/wellness")
+    assert r.status_code == 200
+    assert "/wellness/register.pdf" in r.text and "March 2026" in r.text
+
+    # a real month yields a PDF attachment
+    r = c.get("/wellness/register.pdf?month=2026-03")
+    assert r.status_code == 200
+    assert r.headers["content-type"] == "application/pdf"
+    assert "Wellness-Register-Employee-2026-03.pdf" in r.headers["content-disposition"]
+    assert r.content[:4] == b"%PDF"
+
+    # a month with nothing availed bounces back to the hub with a message
+    r = c.get("/wellness/register.pdf?month=2025-01", follow_redirects=False)
+    assert r.status_code == 303 and "err=" in r.headers["location"]
+
+
+def test_register_pdf_is_self_service_only(app_mod, wellness_org):
+    # a viewer with no availed breaks still reaches the route (no chief gate),
+    # they just get redirected because there is nothing to render
+    c = _client_for_id(app_mod, wellness_org["loner"])
+    r = c.get("/wellness/register.pdf", follow_redirects=False)
+    assert r.status_code == 303
