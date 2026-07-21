@@ -83,6 +83,54 @@ def test_record_care_unknown_account(conn):
     assert res["counted"] is False
 
 
+# --- care day-streak + the Devoted caretaker badge ---------------------------
+
+def _care_on_days(conn, uid, days):
+    """Care once per day for `days` consecutive days ending at NOW+days."""
+    out = None
+    for d in range(days):
+        out = st.record_avatar_care(conn, uid, now=NOW + timedelta(days=d))
+    return out
+
+
+def test_streak_counts_consecutive_days(conn):
+    uid = _mk_account(conn, "streak-run@test.local")
+    assert _care_on_days(conn, uid, 3)["streak"] == 3
+    # a second counted care the SAME day (outside the 6h cooldown) keeps it
+    same_day = st.record_avatar_care(conn, uid, now=NOW + timedelta(days=2, hours=7))
+    assert same_day["counted"] is True
+    assert same_day["streak"] == 3
+    # a >1-day gap resets to 1
+    lapsed = st.record_avatar_care(conn, uid, now=NOW + timedelta(days=6))
+    assert lapsed["streak"] == 1
+
+
+def test_streak_survives_uncounted_taps(conn):
+    uid = _mk_account(conn, "streak-tap@test.local")
+    _care_on_days(conn, uid, 2)
+    spam = st.record_avatar_care(conn, uid, now=NOW + timedelta(days=1, hours=1))
+    assert spam["counted"] is False
+    assert spam["streak"] == 2                        # unmoved by cooldown taps
+
+
+def test_badge_awarded_once_at_seven_days(conn):
+    uid = _mk_account(conn, "streak-badge@test.local")
+    conn.execute("DELETE FROM wellness_badge WHERE user_id=?", (uid,))
+    conn.commit()
+    results = [st.record_avatar_care(conn, uid, now=NOW + timedelta(days=d))
+               for d in range(8)]
+    assert results[5]["badge"] is None                # day 6: not yet
+    assert results[6]["streak"] == 7
+    assert results[6]["badge"] == st.WELLNESS_BADGES["avatar_care_7"][0]
+    assert results[7]["badge"] is None                # already held — never re-fires
+    n = conn.execute("SELECT COUNT(*) FROM wellness_badge WHERE user_id=? AND badge=?",
+                     (uid, "avatar_care_7")).fetchone()[0]
+    assert n == 1
+    # and it shows up in the wellness hub's badge row
+    badges = st.wellness_stats(conn, uid)["badges"]
+    assert any(b["key"] == "avatar_care_7" for b in badges)
+
+
 def test_profile_carries_mood(conn):
     uid = _mk_account(conn, "care-prof@test.local")
     assert st.get_user_profile(conn, uid)["avatar_mood"] == "droopy"
@@ -129,6 +177,16 @@ def test_care_endpoint_action_optional(viewer, app_mod):
     assert r.status_code == 200 and r.json()["ok"] is True
 
 
+def test_care_endpoint_reports_streak_and_badge(viewer, app_mod):
+    conn = st.connect(app_mod.DB)
+    conn.execute("UPDATE admin_user SET avatar_kind='dog', avatar_last_care_at=NULL, "
+                 "avatar_care_streak=NULL WHERE username='viewer@test.local'")
+    conn.commit(); conn.close()
+    body = viewer.post("/avatar/care", data={"action": "feed"}).json()
+    assert body["streak"] == 1
+    assert body["badge"] is None
+
+
 # --- rendered surfaces -------------------------------------------------------
 
 def test_wellness_hub_renders_care_ui(viewer, app_mod):
@@ -160,7 +218,28 @@ def test_every_species_and_stage_renders(app_mod):
         for stage in range(1, 7):
             svg = tpl.render(kind=a["key"], stage=stage)
             assert "avmove" in svg and "avstage" in svg, (a["key"], stage)
+            assert "av-zzz" in svg, (a["key"], stage)   # the sleep Zzz layer
             assert "None" not in svg and "Undefined" not in svg, (a["key"], stage)
+
+
+def test_every_species_and_month_renders(app_mod):
+    # seasonal accessories: every species × every month (and bare month 0)
+    tpl = app_mod.templates.env.from_string(
+        '{% from "_avatars_art.html" import species_art %}{{ species_art(kind, 4, m) }}')
+    for a in st.AVATAR_CATALOG:
+        for m in range(0, 13):
+            svg = tpl.render(kind=a["key"], m=m)
+            assert "None" not in svg and "Undefined" not in svg, (a["key"], m)
+            if m:
+                assert "av-acc" in svg, (a["key"], m)   # accessory present
+
+
+def test_sound_toggle_rendered_with_care(app_mod):
+    tpl = app_mod.templates.env.from_string(
+        '{% from "_avatars.html" import avatar %}'
+        '{{ avatar("dog", 3, name="Rex", interactive=true, care=true) }}')
+    out = tpl.render()
+    assert "av-sound-btn" in out and 'aria-pressed="false"' in out
 
 
 def test_avatar_macro_family_and_care_button(app_mod):

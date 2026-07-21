@@ -17,10 +17,30 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.27"
+APP_VERSION = "2.28"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.28",
+        "date": "July 21, 2026",
+        "summary": "Companions now sleep at night, dress for the season, and reward "
+                   "devoted caretakers with a badge — plus optional gentle sounds.",
+        "changes": [
+            "Companions doze off between 9 pm and 6 am on your device — eyes closed, "
+            "little Zzz floating up. A tap gently wakes them for a moment. The bat, "
+            "being nocturnal, stays wide awake at night.",
+            "Every companion wears a small seasonal accessory that changes each month — "
+            "a santa hat in December, hearts in February, a rain hat for June — and "
+            "potted plants get a matching ribbon on their pot.",
+            "Care for your companion seven days in a row and you earn the new "
+            "“Devoted caretaker” badge (just for fun — points still come only from "
+            "wellness breaks).",
+            "A new sound button next to Water/Feed adds soft chirps and plips when you "
+            "play with your companion — it's off unless you turn it on, and your choice "
+            "is remembered.",
+        ],
+    },
     {
         "version": "2.27",
         "date": "July 21, 2026",

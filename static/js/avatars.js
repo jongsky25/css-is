@@ -24,6 +24,64 @@
   var mq = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
   function still() { return !!(mq && mq.matches); }
 
+  /* ---- night-time sleep: 9pm-6am on the viewer's clock ------------------ */
+  function isNight() {
+    var h = new Date().getHours();
+    return h >= 21 || h < 6;
+  }
+  function asleep(w) { return w.classList.contains("av-asleep"); }
+  function refreshSleep(w) {
+    // The bat is nocturnal — night is its active time, so it never sleeps here
+    // (a bat that dozed all workday would never be seen awake at the office).
+    var should = isNight() && w.dataset.kind !== "bat" &&
+                 !(w._avWakeUntil && Date.now() < w._avWakeUntil);
+    w.classList.toggle("av-asleep", should);
+  }
+  function wake(w) {
+    if (!isNight() || w.dataset.kind === "bat") return;
+    w._avWakeUntil = Date.now() + 45000;               // stirs for a bit, then dozes off
+    w.classList.remove("av-asleep");
+    clearTimeout(w._avSleepT);
+    w._avSleepT = setTimeout(function () { refreshSleep(w); }, 45500);
+  }
+
+  /* ---- opt-in sound: tiny WebAudio blips, OFF until toggled ------------- */
+  var SOUND_KEY = "css-av-sound";
+  var audioCtx = null;
+  function soundOn() {
+    try { return localStorage.getItem(SOUND_KEY) === "on"; } catch (e) { return false; }
+  }
+  function blip(freq, dur, delay, type, gain) {
+    // one short enveloped tone; the context is created lazily inside a user
+    // gesture (autoplay policy) and only ever when sound is toggled on
+    var t = audioCtx.currentTime + (delay || 0);
+    var osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+    osc.type = type || "sine";
+    osc.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain || 0.04, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.start(t); osc.stop(t + dur + 0.02);
+  }
+  function play(what, fam) {
+    if (!soundOn()) return;
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      if (what === "tap") {
+        if (fam === "plant") { blip(520, 0.18, 0, "triangle"); }
+        else { blip(740, 0.1); blip(980, 0.12, 0.09); }        // cheerful chirp
+      } else if (what === "water") {
+        blip(900, 0.09, 0, "sine", 0.03); blip(640, 0.12, 0.14, "sine", 0.03);   // plip-plip
+      } else if (what === "feed") {
+        blip(300, 0.09, 0, "square", 0.022); blip(260, 0.1, 0.14, "square", 0.022); // nom-nom
+      } else if (what === "badge") {
+        blip(523, 0.12); blip(659, 0.12, 0.11); blip(784, 0.2, 0.22);            // little arpeggio
+      }
+    } catch (e) { /* no audio available — silently fine */ }
+  }
+
   /* ---- species repertoires: [class, how long the animation runs (ms)] ---- */
   var BEHAVIORS = {
     plant:     [["av-do-stretch", 1400]],
@@ -67,7 +125,7 @@
     (function tick() {
       w._avIdleT = setTimeout(function () {
         if (!w.isConnected) return;                    // removed from the page
-        if (still() || document.hidden) { tick(); return; }
+        if (still() || document.hidden || asleep(w)) { tick(); return; }
         var pick = reps[Math.floor(Math.random() * reps.length)];
         w.classList.remove.apply(w.classList, ALL_DO); // clear any leftover
         void w.offsetWidth;                            // restart CSS animations
@@ -92,7 +150,7 @@
     (function hop() {
       w._avRoamT = setTimeout(function () {
         if (!w.isConnected) return;
-        if (still() || document.hidden) { hop(); return; }
+        if (still() || document.hidden || asleep(w)) { hop(); return; }
         var x, y, flip;
         if (kind === "fish") {
           var p = fig8[leg++ % fig8.length];
@@ -135,9 +193,11 @@
 
   /* ---- tap: happy bounce + sparkle + name bubble ------------------------ */
   document.addEventListener("click", function (e) {
-    if (e.target.closest(".av-care-btn")) return;      // care has its own handler
+    if (e.target.closest(".av-care-btn") || e.target.closest(".av-sound-btn")) return;
     var w = e.target.closest(".avwrap[data-interactive]");
     if (!w || w._avDragMoved) return;                  // a drag is not a tap
+    wake(w);                                           // a tap stirs a sleeper
+    play("tap", w.classList.contains("fam-plant") ? "plant" : "animal");
     w.classList.remove("happy");
     void w.offsetWidth;                                // force reflow => restart
     w.classList.add("happy");
@@ -163,6 +223,8 @@
     if (!w) return;
     var action = btn.getAttribute("data-care-action") || "";
     var cls = action === "water" ? "av-caring-water" : "av-caring-feed";
+    wake(w);                                           // being cared for stirs a sleeper
+    play(action, null);
     w.classList.remove("av-caring-water", "av-caring-feed");
     void w.offsetWidth;
     w.classList.add(cls);
@@ -174,10 +236,43 @@
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: "action=" + encodeURIComponent(action)
       }).then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (res) { if (res && res.ok && res.mood) w.dataset.mood = res.mood; })
+        .then(function (res) {
+          if (!res || !res.ok) return;
+          if (res.mood) w.dataset.mood = res.mood;
+          if (res.badge) badgeToast(w, res.badge);
+        })
         .catch(function () {});                        // offline: cosmetic anyway
     } catch (err) { /* fetch unavailable: animation already played */ }
   });
+
+  /* a freshly-earned badge floats up over the companion (the permanent chip
+     appears in the wellness hub's badge row on the next load) */
+  function badgeToast(w, label) {
+    var t = document.createElement("span");
+    t.className = "av-badge-toast";
+    t.textContent = "🏅 " + label;
+    w.appendChild(t);
+    play("badge", null);
+    setTimeout(function () { t.remove(); }, 4200);     // also covers reduced-motion
+  }
+
+  /* ---- sound toggle (off by default, remembered per device) ------------- */
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest(".av-sound-btn");
+    if (!btn) return;
+    var on = !soundOn();
+    try { localStorage.setItem(SOUND_KEY, on ? "on" : "off"); } catch (err) {}
+    syncSoundBtns();
+    if (on) play("tap", "animal");                     // audible confirmation
+  });
+  function syncSoundBtns() {
+    var on = soundOn();
+    var btns = document.querySelectorAll(".av-sound-btn");
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].setAttribute("aria-pressed", on ? "true" : "false");
+      btns[i].textContent = on ? "🔊" : "🔇";
+    }
+  }
 
   /* ---- drag around the .av-play area ------------------------------------ */
   var POS_KEY = "css-av-pos";
@@ -244,11 +339,18 @@
       var w = wraps[i];
       if (w._av) continue;
       w._av = true;
+      refreshSleep(w);
       startIdle(w);
       startRoam(w);
       initDrag(w);
     }
+    syncSoundBtns();
   }
+  // re-evaluate bedtime every 5 minutes so the page crosses 9pm/6am live
+  setInterval(function () {
+    var wraps = document.querySelectorAll(".avwrap[data-kind]");
+    for (var i = 0; i < wraps.length; i++) refreshSleep(wraps[i]);
+  }, 300000);
   if (mq && mq.addEventListener) {
     mq.addEventListener("change", function () {
       if (!still()) return;

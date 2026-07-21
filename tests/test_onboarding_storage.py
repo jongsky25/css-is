@@ -32,7 +32,7 @@ def _mk_account(conn, username, role="viewer", rp_id=None):
 def test_new_columns_exist(conn):
     cols = {row[1] for row in conn.execute("PRAGMA table_info(admin_user)")}
     assert {"avatar_kind", "avatar_name", "onboarded_at",
-            "avatar_last_care_at"} <= cols
+            "avatar_last_care_at", "avatar_care_streak"} <= cols
 
 
 def test_migration_is_idempotent(conn):

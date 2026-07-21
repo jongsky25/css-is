@@ -385,6 +385,11 @@ def _add_missing_columns(conn):
         # so the wellness gamification record stays the only source of growth.
         if "avatar_last_care_at" not in au_cols:
             conn.execute("ALTER TABLE admin_user ADD COLUMN avatar_last_care_at TEXT")
+        # Consecutive calendar days of care — feeds the "Devoted caretaker"
+        # badge only, never points. Can't be derived from the single last-care
+        # timestamp, so it's the one extra persisted care artifact.
+        if "avatar_care_streak" not in au_cols:
+            conn.execute("ALTER TABLE admin_user ADD COLUMN avatar_care_streak INTEGER")
         conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_admin_user_rp "
                      "ON admin_user(rp_id) WHERE rp_id IS NOT NULL")
     # Respondent demographics captured at Type-2 pre-registration. These are NON-PII
@@ -2924,13 +2929,13 @@ def _admin_row(r):
             "role": r[4], "active": bool(r[5]), "must_change": bool(r[6]),
             "rp_id": r[7], "created_at": r[8], "created_by": r[9],
             "avatar_kind": r[10], "avatar_name": r[11], "onboarded_at": r[12],
-            "avatar_last_care_at": r[13],
+            "avatar_last_care_at": r[13], "avatar_care_streak": r[14] or 0,
             "pending": (r[2] == "")}      # no password set yet => still invited
 
 
 _ADMIN_COLS = ("id, username, pw_hash, salt, role, active, must_change, rp_id, "
                "created_at, created_by, avatar_kind, avatar_name, onboarded_at, "
-               "avatar_last_care_at")
+               "avatar_last_care_at, avatar_care_streak")
 
 
 def get_admin_user(conn, username):
@@ -2979,23 +2984,38 @@ def record_avatar_care(conn, user_id, now=None):
     layer. Care only *counts* once per AVATAR_CARE_COOLDOWN_HOURS — a repeat tap
     inside the window still gets its animation client-side but leaves the
     timestamp (and therefore the mood decay clock) unmoved, so tap-spamming
-    can't pin the pet at 'happy' forever. Returns
-    {"counted": bool, "mood": str, "last_care_at": iso}."""
+    can't pin the pet at 'happy' forever.
+
+    A counted care also advances the consecutive-day streak (same day: keeps
+    it, next day: +1, gap: back to 1); seven days running earns the one-time
+    'Devoted caretaker' wellness badge — cosmetic like the mood, never points.
+    Returns {"counted", "mood", "last_care_at", "streak", "badge"} where badge
+    is the freshly-awarded label or None."""
     now_dt = now or tz.now_local()
     acct = get_admin_user_by_id(conn, user_id)
     if not acct:
-        return {"counted": False, "mood": "droopy", "last_care_at": None}
+        return {"counted": False, "mood": "droopy", "last_care_at": None,
+                "streak": 0, "badge": None}
     last = acct.get("avatar_last_care_at")
     last_dt = _parse_care_ts(last)
     if last_dt and (now_dt - last_dt) < timedelta(hours=AVATAR_CARE_COOLDOWN_HOURS):
         return {"counted": False, "mood": avatar_mood(last, now=now_dt),
-                "last_care_at": last}
+                "last_care_at": last, "streak": acct.get("avatar_care_streak") or 0,
+                "badge": None}
+    if last_dt and last_dt.date() == now_dt.date():
+        streak = acct.get("avatar_care_streak") or 1        # second care today
+    elif last_dt and last_dt.date() == now_dt.date() - timedelta(days=1):
+        streak = (acct.get("avatar_care_streak") or 0) + 1  # kept it going
+    else:
+        streak = 1                                          # first care / lapsed
     stamp = now_dt.isoformat(timespec="seconds")
-    conn.execute("UPDATE admin_user SET avatar_last_care_at=? WHERE id=?",
-                 (stamp, user_id))
+    conn.execute("UPDATE admin_user SET avatar_last_care_at=?, avatar_care_streak=? "
+                 "WHERE id=?", (stamp, streak, user_id))
+    badge = _award_badge(conn, user_id, "avatar_care_7",
+                         when=stamp) if streak >= 7 else None
     conn.commit()
     return {"counted": True, "mood": avatar_mood(stamp, now=now_dt),
-            "last_care_at": stamp}
+            "last_care_at": stamp, "streak": streak, "badge": badge}
 
 
 def mark_onboarded(conn, user_id, when=None):
@@ -4649,6 +4669,13 @@ def avatar_care_verb(kind):
     return "water" if avatar_family(kind) == "plant" else "feed"
 
 
+def avatar_accessory_month():
+    """Current month 1..12 (PH wall-clock) — picks the companion's seasonal
+    accessory. A function, not a constant, so a long-running process rolls
+    over at midnight of the 1st without a restart."""
+    return tz.now_local().month
+
+
 # =====================================================================
 # Wellness module — the DOH DM 2025-0135 two-hour weekly wellness break.
 # Claims are filed in 1-hour slots (max 2/week), approved by the claimant's
@@ -4718,6 +4745,9 @@ WELLNESS_BADGES = {
     "reflect_5":   ("Reflective",  "Wrote 5 post-break reflections"),
     "streak_4":    ("On a roll",   "Wellness breaks 4 weeks in a row"),
     "streak_12":   ("Habit built", "Wellness breaks 12 weeks in a row"),
+    # Awarded by record_avatar_care, not wellness_award_badges: it tracks the
+    # companion-care day streak (cosmetic layer), not the break record.
+    "avatar_care_7": ("Devoted caretaker", "Cared for your companion 7 days in a row"),
 }
 
 
@@ -5063,12 +5093,21 @@ def wellness_award_badges(conn, user_id):
         earned.append("streak_12")
     fresh = []
     for b in earned:
-        cur = conn.execute(
-            "INSERT OR IGNORE INTO wellness_badge(user_id, badge, awarded_at) "
-            "VALUES (?,?,?)", (user_id, b, tz.now_iso()))
-        if cur.rowcount:
-            fresh.append(WELLNESS_BADGES[b][0])
+        label = _award_badge(conn, user_id, b)
+        if label:
+            fresh.append(label)
     return fresh
+
+
+def _award_badge(conn, user_id, key, when=None):
+    """Persist one badge award. Idempotent (INSERT OR IGNORE against the
+    UNIQUE(user_id, badge) constraint); returns the badge LABEL only when this
+    call actually inserted it — i.e. exactly once per user per badge — else
+    None. Does NOT commit; the caller's surrounding write commits."""
+    cur = conn.execute(
+        "INSERT OR IGNORE INTO wellness_badge(user_id, badge, awarded_at) "
+        "VALUES (?,?,?)", (user_id, key, when or tz.now_iso()))
+    return WELLNESS_BADGES[key][0] if cur.rowcount else None
 
 
 # ---- monitoring dashboard + the submission register -----------------------

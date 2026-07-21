@@ -453,6 +453,7 @@ templates.env.globals["t"] = i18n.t
 # many templates and must never depend on a route remembering to pass these.
 templates.env.globals["avatar_family"] = st.avatar_family
 templates.env.globals["avatar_care_verb"] = st.avatar_care_verb
+templates.env.globals["avatar_month"] = st.avatar_accessory_month
 
 
 # =====================================================================
@@ -3893,7 +3894,8 @@ async def avatar_care(request: Request):
     finally:
         conn.close()
     return JSONResponse({"ok": True, "counted": res["counted"], "mood": res["mood"],
-                         "last_care_at": res["last_care_at"]})
+                         "last_care_at": res["last_care_at"],
+                         "streak": res["streak"], "badge": res["badge"]})
 
 
 @app.get("/search", response_class=HTMLResponse)
