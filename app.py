@@ -11884,7 +11884,7 @@ async def wellness_apply_submit(request: Request):
         try:
             claim_id = st.create_wellness_claim(
                 conn, user["id"], p.get("break_date", ""), p.get("start_time", ""),
-                p.get("activity", ""), p.get("note"))
+                p.get("activity", ""), p.get("note"), p.get("hours", "1"))
         except ValueError as e:
             return _wellness_apply_page(request, err=str(e), form=p)
         _audit(request, conn, "wellness_apply", target_type="wellness_claim",
@@ -11910,7 +11910,7 @@ def wellness_cancel(request: Request, claim_id: int):
                target_id=claim_id, summary="withdrew a wellness break request")
     finally:
         conn.close()
-    return RedirectResponse("/wellness?cheer=Request+withdrawn+—+the+hour+is+back+in+your+week.",
+    return RedirectResponse("/wellness?cheer=Request+withdrawn+—+those+hours+are+back+in+your+week.",
                             status_code=303)
 
 

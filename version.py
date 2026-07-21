@@ -17,10 +17,24 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.30"
+APP_VERSION = "2.31"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.31",
+        "date": "July 21, 2026",
+        "summary": "You can now take your whole 2-hour wellness break in one "
+                   "sitting, instead of only one hour at a time.",
+        "changes": [
+            "The wellness break request form now lets you choose a 1-hour or a "
+            "2-hour break, so you can take both of your weekly hours at once if "
+            "you'd rather.",
+            "The 2-hour option is offered only when you still have both hours "
+            "left for the week; once an hour is used, you can add just the one "
+            "that's left.",
+        ],
+    },
     {
         "version": "2.30",
         "date": "July 21, 2026",
