@@ -12263,15 +12263,25 @@ def _wellness_apply_page(request, err="", form=None):
         week = st.wellness_week_start()
         used = st.wellness_hours_used(conn, user["id"], week)
         approver_title = st.wellness_approver_title(conn, user["id"])
+        approver_name = st.wellness_approver_name(conn, user["id"])
+        # Hours already spoken for in each week of the rolling window, so the form
+        # can show the RIGHT "hours left" for whichever date is picked (not just
+        # the current week). Weeks with no claims default to 0 client-side.
+        week_used = {w: st.wellness_hours_used(conn, user["id"], w)
+                     for w in st.wellness_window_weeks()}
     finally:
         conn.close()
     return templates.TemplateResponse(request, "wellness_apply.html", {
         "nav_active": "wellness", "show_scope": False,
         "activities": st.WELLNESS_ACTIVITIES, "approver_title": approver_title,
+        "approver_name": approver_name,
         "left": max(0, st.WELLNESS_WEEKLY_HOURS - used),
         "weekly_hours": st.WELLNESS_WEEKLY_HOURS,
         "min_lead": st.WELLNESS_MIN_LEAD_MINUTES,
         "today": _today_local().isoformat(),
+        "max_date": st.wellness_window_last_date().isoformat(),
+        "window_weeks": st.WELLNESS_WINDOW_WEEKS,
+        "week_used": week_used,
         "err": err, "form": form or {},
     }, status_code=400 if err else 200)
 
@@ -12290,16 +12300,18 @@ async def wellness_apply_submit(request: Request):
         try:
             claim_id = st.create_wellness_claim(
                 conn, user["id"], p.get("break_date", ""), p.get("start_time", ""),
-                p.get("activity", ""), p.get("note"), p.get("hours", "1"))
+                p.get("activity", ""), p.get("note"), p.get("hours", "1"),
+                activity_other=p.get("activity_other"))
         except ValueError as e:
             return _wellness_apply_page(request, err=str(e), form=p)
         _audit(request, conn, "wellness_apply", target_type="wellness_claim",
                target_id=claim_id,
                summary=f"requested a wellness break on {p.get('break_date')} {p.get('start_time')}")
-        approver_title = st.wellness_approver_title(conn, user["id"])
+        approver = (st.wellness_approver_name(conn, user["id"])
+                    or st.wellness_approver_title(conn, user["id"]))
     finally:
         conn.close()
-    cheer = quote(f"Break requested — {approver_title} will see it.")
+    cheer = quote(f"Break requested — {approver} will see it.")
     return RedirectResponse(f"/wellness?cheer={cheer}", status_code=303)
 
 
@@ -12387,7 +12399,10 @@ async def wellness_reflect_submit(request: Request, claim_id: int):
         try:
             claim, new_badges = st.complete_wellness_claim(
                 conn, claim_id, user["id"], p.get("mood_before"), p.get("mood_after"),
-                p.get("activity_done"), p.get("takeaway"))
+                p.get("activity_done"), p.get("takeaway"),
+                usefulness=p.get("usefulness"), felt_refreshed=p.get("felt_refreshed"),
+                managed_stress=p.get("managed_stress"), focus_impact=p.get("focus_impact"),
+                suggestions=p.get("suggestions"))
         except ValueError as e:
             return RedirectResponse(
                 f"/wellness/claims/{claim_id}/complete?err={quote(str(e))}",
@@ -12452,13 +12467,14 @@ def wellness_export(request: Request, date_from: str = "", date_to: str = ""):
     w = csv.writer(buf)
     w.writerow(["Week of", "Section", "Employee", "Date", "Start time", "Hours",
                 "Activity", "Status", "Approved by", "Reflection done",
-                "Mood before", "Mood after"])
+                "Mood before", "Mood after", "Usefulness"])
     for r in rows:
         w.writerow([r["week"], r["section"], r["employee"], r["date"],
                     r["start_time"], r["hours"], r["activity"], r["status"],
                     r["approved_by"], r["reflection_done"],
                     r["mood_before"] if r["mood_before"] is not None else "",
-                    r["mood_after"] if r["mood_after"] is not None else ""])
+                    r["mood_after"] if r["mood_after"] is not None else "",
+                    r["usefulness"] if r.get("usefulness") is not None else ""])
     fname = f"wellness_register_{_today_local().isoformat()}.csv"
     return Response(buf.getvalue(), media_type="text/csv",
                     headers={"Content-Disposition": f'attachment; filename="{fname}"'})
