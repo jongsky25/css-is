@@ -48,13 +48,36 @@
 
   /* ---- opt-in sound: tiny WebAudio blips, OFF until toggled ------------- */
   var SOUND_KEY = "css-av-sound";
-  var audioCtx = null;
+  var audioCtx = null, audioUnlocked = false;
   function soundOn() {
     try { return localStorage.getItem(SOUND_KEY) === "on"; } catch (e) { return false; }
   }
+  /* Create the context lazily (inside the user gesture that calls play) and
+   * unlock it. iOS Safari — and any browser after the tab is backgrounded /
+   * the phone is locked, routine on the mobile PWA — starts a context
+   * "suspended" and only truly runs it once a source node has been started AND
+   * resume() has been called from within a gesture, so we kick a one-sample
+   * silent buffer here to satisfy that rule. Returns the ctx, or null when
+   * WebAudio is unavailable. */
+  function ensureAudioCtx() {
+    if (!audioCtx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      try { audioCtx = new AC(); } catch (e) { return null; }
+    }
+    if (!audioUnlocked) {
+      try {
+        var src = audioCtx.createBufferSource();
+        src.buffer = audioCtx.createBuffer(1, 1, 22050);
+        src.connect(audioCtx.destination);
+        src.start(0);
+        audioUnlocked = true;
+      } catch (e) { /* best-effort unlock; resume() below still runs */ }
+    }
+    return audioCtx;
+  }
   function blip(freq, dur, delay, type, gain) {
-    // one short enveloped tone; the context is created lazily inside a user
-    // gesture (autoplay policy) and only ever when sound is toggled on
+    // one short enveloped tone, scheduled on the now-running context
     var t = audioCtx.currentTime + (delay || 0);
     var osc = audioCtx.createOscillator(), g = audioCtx.createGain();
     osc.type = type || "sine";
@@ -65,23 +88,36 @@
     osc.connect(g); g.connect(audioCtx.destination);
     osc.start(t); osc.stop(t + dur + 0.02);
   }
+  function emit(what, fam) {
+    if (what === "tap") {
+      if (fam === "plant") { blip(520, 0.18, 0, "triangle"); }
+      else { blip(740, 0.1); blip(980, 0.12, 0.09); }        // cheerful chirp
+    } else if (what === "water") {
+      blip(900, 0.09, 0, "sine", 0.03); blip(640, 0.12, 0.14, "sine", 0.03);   // plip-plip
+    } else if (what === "feed") {
+      blip(300, 0.09, 0, "square", 0.022); blip(260, 0.1, 0.14, "square", 0.022); // nom-nom
+    } else if (what === "badge") {
+      blip(523, 0.12); blip(659, 0.12, 0.11); blip(784, 0.2, 0.22);            // little arpeggio
+    } else if (what === "pet") {
+      if (fam === "cat") { blip(110, 0.3, 0, "triangle", 0.03); blip(110, 0.3, 0.35, "triangle", 0.03); } // purr-purr
+      else { blip(400, 0.16, 0, "sine", 0.03); blip(520, 0.2, 0.18, "sine", 0.03); }                      // contented coo
+    }
+  }
   function play(what, fam) {
     if (!soundOn()) return;
+    var ctx = ensureAudioCtx();
+    if (!ctx) return;
+    // Only schedule once the clock is actually advancing. A freshly-created or
+    // OS-suspended context reports "suspended" with a FROZEN currentTime, so
+    // scheduling tones then lands them in the past and they play silently —
+    // that was the "sounds don't work" bug (every first blip on iOS, and any
+    // blip after the tab regained focus). resume() is kicked here inside the
+    // gesture; we emit on its resolution, when currentTime is live again.
     try {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx.state === "suspended") audioCtx.resume();
-      if (what === "tap") {
-        if (fam === "plant") { blip(520, 0.18, 0, "triangle"); }
-        else { blip(740, 0.1); blip(980, 0.12, 0.09); }        // cheerful chirp
-      } else if (what === "water") {
-        blip(900, 0.09, 0, "sine", 0.03); blip(640, 0.12, 0.14, "sine", 0.03);   // plip-plip
-      } else if (what === "feed") {
-        blip(300, 0.09, 0, "square", 0.022); blip(260, 0.1, 0.14, "square", 0.022); // nom-nom
-      } else if (what === "badge") {
-        blip(523, 0.12); blip(659, 0.12, 0.11); blip(784, 0.2, 0.22);            // little arpeggio
-      } else if (what === "pet") {
-        if (fam === "cat") { blip(110, 0.3, 0, "triangle", 0.03); blip(110, 0.3, 0.35, "triangle", 0.03); } // purr-purr
-        else { blip(400, 0.16, 0, "sine", 0.03); blip(520, 0.2, 0.18, "sine", 0.03); }                      // contented coo
+      if (ctx.state === "running") {
+        emit(what, fam);
+      } else {
+        ctx.resume().then(function () { emit(what, fam); }).catch(function () {});
       }
     } catch (e) { /* no audio available — silently fine */ }
   }

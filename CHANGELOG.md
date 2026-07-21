@@ -11,6 +11,26 @@ division chief their whole division; admins remain bureau-wide. Code shipped in
 #74; this bump adds `APP_VERSION = "2.42"` and the plain-language `version.py`
 entry the login "What's new" reads.
 
+## 2026-07-21 (Fix: companion sounds were silent on mobile / Safari)
+
+The opt-in companion sounds (`static/js/avatars.js`) never played for most users —
+the wellness hub is a mobile PWA, and on iOS Safari (plus any browser after the tab
+is backgrounded or the phone is locked) a `WebAudio` context starts/returns
+**suspended**, with a frozen `currentTime`. The old code called `audioCtx.resume()`
+without awaiting it and then scheduled every tone against that frozen clock, so the
+notes landed in the past and played silently — including the very first sound-toggle
+confirmation blip, which is why it read as "sounds don't work."
+
+- **`static/js/avatars.js`**: added `ensureAudioCtx()` — creates the context lazily
+  inside the user gesture and unlocks it with a one-sample silent buffer (the source
+  node iOS requires to truly start a context). `play()` now emits immediately only
+  when the context is already `running`; otherwise it calls `resume()` (in-gesture)
+  and schedules the tones on the promise's resolution, when `currentTime` is live
+  again. Same blips, same opt-in/off-by-default behavior. Verified against a
+  suspended-context simulation of the iOS path.
+- **`templates/_avatars.html`**: bump the `avatars.js` asset token to `v=20260722b`
+  so returning devices fetch the fixed file.
+
 ## 2026-07-21 (v2.40 — Hotfix: ship wellness_register.py; guard the deploy against unshipped boot imports)
 
 **Production hotfix.** The live Space was crashing on boot with
