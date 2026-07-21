@@ -42,6 +42,10 @@ CHANGELOG = [
             "to say when it doesn't have the data. It never sees attendee names or "
             "emails. Resource-person names are included only if an admin ticks the "
             "extra opt-in box, the same care taken elsewhere for staff names.",
+            "The most common questions (\"how many responses this year\", \"how "
+            "are we doing\", \"how many trainings this month\") are now answered "
+            "instantly from a built-in list — no AI needed — so they stay fast, "
+            "cost nothing, and keep working even when AI is switched off.",
         ],
     },
     {

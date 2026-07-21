@@ -1111,22 +1111,52 @@ templates.env.filters["audit_category"] = st.audit_category
 # harmlessly falls through at serve time.
 SEED_LEARNED_RULES = [
     # ── Answers (templated stats over home_stats) ──────────────────────────
+    # Each phrasing people actually type is its OWN focused rule so it wins by
+    # exact match (score 1.0) and pays no AI budget. Keywords stay short on
+    # purpose: qa_rules.score() is |query|/|rule tokens|, so a keyword-stuffed
+    # rule LOWERS its own paraphrase score — coverage comes from more tight
+    # rules, not fatter ones. Every target_key must exist in AI_ANSWER_SLOTS
+    # (test_ai_learned_rules guards this) or the rule harmlessly falls through.
+    #   Responses collected
     ("answer", "responses_30d", "how many responses this month",
      ["responses last 30 days", "how many submissions recently", "responses received this month"]),
     ("answer", "responses_ytd", "how many responses this year",
      ["responses year to date", "responses so far this year"]),
     ("answer", "responses_all", "how many responses in total",
      ["total responses all time", "how many submissions overall"]),
+    #   Overall satisfaction
     ("answer", "satisfaction_30d", "what is our satisfaction this month",
      ["satisfaction last 30 days", "satisfaction score recently"]),
+    ("answer", "satisfaction_30d", "how are we doing",
+     ["how are we doing lately", "are we doing well recently"]),
+    ("answer", "satisfaction_ytd", "what is our satisfaction this year",
+     ["satisfaction year to date", "satisfaction score this year"]),
     ("answer", "satisfaction_all", "what is our overall satisfaction",
      ["overall satisfaction all time", "satisfaction score overall"]),
+    ("answer", "satisfaction_all", "what is our satisfaction score",
+     ["how satisfied are people", "what is our overall rating"]),
+    #   Activities that collected feedback (training / event / session synonyms)
     ("answer", "activities_30d", "how many activities this month",
      ["activities that collected feedback recently", "activities last 30 days"]),
+    ("answer", "activities_30d", "how many trainings this month",
+     ["how many events this month", "how many sessions this month"]),
+    ("answer", "activities_ytd", "how many activities this year",
+     ["activities year to date", "trainings this year"]),
     ("answer", "activities_all", "how many activities in total",
      ["total activities all time", "activities overall"]),
+    ("answer", "activities_all", "how many trainings have we done",
+     ["how many events in total", "total trainings overall"]),
+    #   People (resource persons / staff / speakers) rated
     ("answer", "people_rated_30d", "how many people were rated this month",
      ["staff rated recently", "resource persons rated last 30 days"]),
+    ("answer", "people_rated_30d", "how many speakers were rated this month",
+     ["resource persons rated recently", "how many staff rated lately"]),
+    ("answer", "people_rated_ytd", "how many people were rated this year",
+     ["staff rated this year", "resource persons rated year to date"]),
+    ("answer", "people_rated_all", "how many people were rated in total",
+     ["total people rated all time", "resource persons rated overall"]),
+    ("answer", "people_rated_all", "how many resource persons were rated",
+     ["how many speakers were rated", "how many staff have been rated"]),
     # ── Navigation (destination catalog; keys are role-filtered at serve) ──
     ("navigate", "pulse", "open the dashboard", ["show the dashboard", "go to dashboard"]),
     ("navigate", "trends", "show me trends", ["open trends", "trend charts"]),

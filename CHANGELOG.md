@@ -32,10 +32,20 @@ fallback, no PII, no SQL from the model).
   mode allows a longer client timeout (two model calls) before degrading to the
   keyword palette; every other mode keeps the snappy 9s budget.
 - **`ai_core.py`**: registered `nl_answer_grounded` (its own daily cap, default 40).
+- **Seeded FAQ rules** (`SEED_LEARNED_RULES`, `app.py`): enriched the
+  deterministic FAQ layer that answers *ahead* of the model — added rules for
+  the new YTD/all-time slots and for common phrasings/synonyms (trainings /
+  events / sessions, staff / speakers / resource persons, "how are we doing").
+  On a fresh install these deflect the most frequent data questions with **zero
+  AI budget** (and keep answering when AI is off). Kept focused per phrasing on
+  purpose: `qa_rules.score()` penalises keyword-stuffed rules, so coverage comes
+  from more tight rules, not fatter ones.
 - **`tests/test_ai_answers_grounded.py`** (new): grounded happy path; every
   fallback mode; the engine is genuinely gated by both the toggle and the
   feature flag; and the data pack withholds resource-person names unless opted
-  in and never leaks an email.
+  in and never leaks an email. **`tests/test_ai_learned_rules.py`**: the seeded
+  answer rules all point at real slots, and ten common paraphrases resolve to
+  the right stat with no model call.
 
 ## 2026-07-21 (v2.34 — Edit verbatim comments on the activity report, for encoding)
 
