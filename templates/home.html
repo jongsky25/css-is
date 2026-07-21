@@ -509,30 +509,6 @@
     })();
   </script>
 
-  <!-- CSS vs Wellness — the two doors after signing in -->
-  <style>
-    .doors { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:1rem; margin:0 0 1.4rem; }
-    .door { display:flex; gap:.9rem; align-items:center; text-decoration:none; border:1px solid var(--line);
-            background:var(--surface); border-radius:16px; padding:1rem 1.2rem;
-            box-shadow:0 1px 3px rgba(20,30,50,.05); }
-    .door:hover { border-color:var(--accent); }
-    .door .em { font-size:1.9rem; }
-    .door .t { font-weight:800; color:var(--ink); }
-    .door .d { color:var(--soft); font-size:.85rem; }
-  </style>
-  <div class="doors">
-    <a class="door" href="#css-modules">
-      <span class="em" aria-hidden="true">📊</span>
-      <span><span class="t">CSS — surveys &amp; reports</span><br>
-        <span class="d">Client satisfaction: dashboards, activities, official reports.</span></span>
-    </a>
-    <a class="door" href="/wellness">
-      <span class="em" aria-hidden="true">🌱</span>
-      <span><span class="t">Wellness — my 2-hour break</span><br>
-        <span class="d">Request your weekly wellness break and grow your companion.</span></span>
-    </a>
-  </div>
-
   <!-- role-filtered task modules -->
   <div class="mods" id="css-modules" data-tour="modules">
 
