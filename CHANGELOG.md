@@ -25,6 +25,50 @@ thinking, which is why it was fine.
   call pins thinking + widens the budget while a Gemini-2.5 call disables
   thinking without widening it.
 
+## 2026-07-21 (E4.1 — PSGC crosswalk infrastructure)
+
+Foundational geography plumbing: the PSA republishes the Philippine Standard
+Geographic Code (PSGC) every quarter, and codes move between vintages (provinces
+created, municipalities reclassified as cities, and the wholesale 9→10-digit
+renumbering PSA did in 2019). A raw code is only meaningful within its own
+vintage, so this lands FIRST — every later geographic load maps its own
+vintage's codes onto our canonical geo through it.
+
+- **`psgc.py`** (new module, self-contained — no `storage` import): owns three
+  tables and the public contract.
+  - `dim_geo` — one row per **canonical place** with a stable surrogate key
+    (`geo_sk`) minted once and never reused; the identity downstream facts point
+    at. Tracks `canonical_code`/`canonical_name` (latest vintage seen),
+    denormalised `region/province/citymun` ancestry, `first/last_vintage`, and
+    an `active` flag (0 once a place drops out of the newest vintage).
+  - `dim_psgc_crosswalk` — one row per **(vintage, published code)** carrying
+    the `geo_sk` it denotes, the PSA correspondence code, resolved parent, and
+    `match_method`/`match_confidence` so every linkage is auditable.
+  - `psgc_vintage` — registry of loaded publications (label, publication date,
+    dominant code width, row count, source).
+  - **`resolve_geo(conn, vintage, code) → geo_sk`** — the contract every later
+    load calls. Plus `resolve_geo_any_vintage`, `geo_row`, `current_code`.
+  - **Boundary-free hierarchy**: parents are found by stripped-code prefix
+    nesting (an ancestor's significant digits prefix every descendant's code),
+    which holds for both 9- and 10-digit formats with no segment arithmetic.
+  - **Resolution ladder** per row: exact prior code → PSA correspondence code
+    (bridges the renumber) → same level+parent+normalised name (bridges a pure
+    recode; folds accents and `Sto.`/`Sta.` abbreviations) → new place.
+  - `read_publication()` parses a PSA `.xlsx`/`.csv` by fuzzy header detection
+    (column wording has drifted across vintages); pandas imported lazily so the
+    schema/resolve paths need only the stdlib.
+- **`import_psgc.py`** (new CLI): idempotent per-vintage loader
+  (`--file … --vintage 2024Q4`), plus `--list` and `--resolve`. Re-loading a
+  vintage cleanly replaces its crosswalk rows without disturbing other vintages'
+  canonical places.
+- **`storage.py`**: `init_db` now calls `psgc.ensure_schema(conn)`, so every
+  database — fresh or migrated — carries the geo dimension.
+- Tests (`tests/test_psgc.py`): 31 cases — schema idempotency, code/level/name
+  helpers, boundary-free nesting (9- and 10-digit), single-load parent chain +
+  ancestry, and the full resolution ladder across vintages (exact / correspondence
+  / name+parent / new), same-vintage idempotent reload, `active` transitions
+  (and that an older reload never deactivates current places), and the file parser.
+
 ## 2026-07-21 (v2.31 — Wellness break can be claimed 2 hours in one sitting)
 
 The DM's 2-hour weekly entitlement can now be taken as a single 2-hour break,
