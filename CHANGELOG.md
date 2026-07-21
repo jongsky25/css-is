@@ -1,5 +1,35 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-21 (v2.36 — Wellness request UX: named approver, "Others" specify, 4-week window, richer post-activity report)
+
+Four changes to the DOH DM 2025-0135 wellness-break flow (`storage.py`, `app.py`,
+`templates/wellness_apply.html`, `templates/wellness_reflect.html`), plus the
+version bump that ships the prior undeployed main commit (grounded-answer
+confidence tuning, #69) alongside it.
+
+- **Named approver** (`wellness_approver_name` / `_wellness_seat_name`, `storage.py`):
+  resolves the actual seat-holder's name up the same rank/org-path chain
+  `wellness_approver_title` walks. The apply page shows "Send for approval of
+  &lt;name&gt;", falling back to the role title when the seat is unfilled. Wired
+  through `_wellness_apply_page` and the submit cheer.
+- **"Others" requires a specification**: new nullable `wellness_claim.activity_other`
+  column (guarded additive migration in `_add_missing_columns`). `create_wellness_claim`
+  requires it when `activity == "other"` and clears it otherwise; `get_wellness_claim`
+  and the CSV export fold it into the activity label ("Others — gardening"). The form
+  reveals + requires the field only when "Others" is picked.
+- **Rolling 4-week request window**: `WELLNESS_WINDOW_WEEKS = 4`,
+  `wellness_window_last_date()` / `wellness_window_weeks()`. `create_wellness_claim`
+  rejects dates past the window (server-side source of truth); the apply page gets a
+  date `max`, a per-week `hours_used` map, and a small script so the "hours left" note
+  and the 2-hour option track the selected date's week. The 2h/week cap is unchanged
+  and still keyed per week.
+- **Richer post-break check-in** (Key fields from the DOH Post-Activity Report):
+  new nullable `wellness_reflection` columns `usefulness` (1–5), `felt_refreshed`,
+  `managed_stress`, `focus_impact`, `suggestions`. `complete_wellness_claim` takes them
+  as optional keyword args (older callers/tests unaffected) with range validation; the
+  reflect template adds the fields; the register CSV export gains a Usefulness column.
+- Tests: new coverage in `tests/test_wellness.py` for all four; escalation suite unaffected.
+
 ## 2026-07-21 (v2.35 — "Maximize AI": grounded free-form answers over your own data)
 
 The assistant's Q&A (`nl_answer`) was classify-only: the model picked one of a
