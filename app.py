@@ -606,7 +606,9 @@ def search_index_for(user):
     out = [{"title": "What to do", "hint": "Wellness or CSS", "url": "/", "section": "Go to",
             "kw": "home start landing chooser what to do wellness css"},
            {"title": "CSS hub", "hint": "Main hub", "url": "/css", "section": "Go to",
-            "kw": "css hub main launcher overview dashboards reports surveys"}]
+            "kw": "css hub main launcher overview dashboards reports surveys"},
+           {"title": "My profile", "hint": "Photo, avatar & pet name", "url": "/me", "section": "Go to",
+            "kw": "my profile me avatar companion pet name photo picture rename change"}]
     for g in NAV_GROUPS:
         for it in g["items"]:
             if _cap_ok(user, it["cap"]):
@@ -3808,6 +3810,55 @@ async def welcome_submit(request: Request):
     finally:
         conn.close()
     return RedirectResponse(nxt, status_code=303)
+
+
+def _render_me(request, msg="", err=""):
+    conn = get_conn()
+    try:
+        profile = st.get_user_profile(conn, request.state.user["id"])
+    finally:
+        conn.close()
+    return templates.TemplateResponse(request, "me.html", {
+        "nav_active": "", "show_scope": False,
+        "profile": profile, "has_person": bool(profile and profile.get("rp_id")),
+        "initials": _initials(profile.get("person_name") if profile else ""),
+        "catalog": st.AVATAR_CATALOG, "name_maxlen": st.AVATAR_NAME_MAXLEN,
+        "msg": msg, "err": err,
+    })
+
+
+@app.get("/me", response_class=HTMLResponse)
+def me_form(request: Request, msg: str = "", err: str = ""):
+    """Edit your profile after onboarding (STAFF_ONBOARDING_AVATAR_PLAN.md §D6):
+    photo, avatar species and pet name — so the one-time /welcome choice is never
+    a trap."""
+    return _render_me(request, msg=msg, err=err)
+
+
+@app.post("/me")
+async def me_submit(request: Request):
+    p = await _posted(request)
+    kind = (p.get("avatar_kind") or "").strip()
+    pet_name = (p.get("avatar_name") or "").strip()
+    if not st.valid_avatar_kind(kind):
+        return _render_me(request, err="Please pick a companion.")
+    if not pet_name:
+        return _render_me(request, err="Give your companion a name.")
+    photo = _decode_photo(p.get("photo_data", ""))
+    conn = get_conn()
+    try:
+        profile = st.get_user_profile(conn, request.state.user["id"])
+        if photo and profile and profile.get("rp_id"):
+            st.set_rp_photo(conn, profile["rp_id"], photo[0], photo[1])
+            _audit(request, conn, "profile_update", target_type="person",
+                   target_id=profile["rp_id"], summary="updated their profile photo")
+        st.set_user_avatar(conn, request.state.user["id"], kind, pet_name)
+        _audit(request, conn, "avatar_choose", target_type="user",
+               target_id=request.state.user["id"],
+               summary=f"set companion to {kind} named '{st.clean_avatar_name(pet_name)}'")
+    finally:
+        conn.close()
+    return RedirectResponse("/me?msg=" + quote("Saved."), status_code=303)
 
 
 @app.get("/search", response_class=HTMLResponse)
@@ -11733,6 +11784,7 @@ def wellness_hub(request: Request, cheer: str = "", badges: str = "", err: str =
     conn = get_conn()
     try:
         stats = st.wellness_stats(conn, user["id"])
+        profile = st.get_user_profile(conn, user["id"])
         week = st.wellness_week_start()
         used = st.wellness_hours_used(conn, user["id"], week)
         claims = st.list_my_wellness_claims(conn, user["id"])
@@ -11740,9 +11792,17 @@ def wellness_hub(request: Request, cheer: str = "", badges: str = "", err: str =
         queue_n = len(st.list_wellness_approvals(conn, user)) if is_chief else 0
     finally:
         conn.close()
+    # The mascot IS the adopted companion (STAFF_ONBOARDING_AVATAR_PLAN.md §D2):
+    # its species picks the art, and the derived wellness stage its growth. The
+    # stage NAME follows the species' family (plants "Seed…Flourishing", animals
+    # their own), overriding wellness_stats' plant-only default.
+    avatar_kind = (profile or {}).get("avatar_kind") or st.AVATAR_DEFAULT
+    avatar_name = (profile or {}).get("avatar_name") or ""
+    stats = dict(stats, stage_name=st.avatar_stage_name(avatar_kind, stats["stage"]))
     return templates.TemplateResponse(request, "wellness_hub.html", {
         "nav_active": "wellness", "show_scope": False,
         "stats": stats, "week_start": week, "used": used,
+        "avatar_kind": avatar_kind, "avatar_name": avatar_name,
         "left": max(0, st.WELLNESS_WEEKLY_HOURS - used),
         "weekly_hours": st.WELLNESS_WEEKLY_HOURS,
         "claims": claims, "is_chief": is_chief, "queue_n": queue_n,

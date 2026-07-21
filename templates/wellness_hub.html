@@ -1,18 +1,18 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header, flash, empty_state %}
+{% from "_avatars.html" import avatar, avatar_defs %}
 {% block title %}Wellness{% endblock %}
 {% block content %}
+{{ avatar_defs() }}
 <style>
   .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px;
            padding:1.2rem 1.4rem; margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
   .well-hero { display:flex; gap:1.6rem; align-items:center; flex-wrap:wrap; }
   .avatar-box { flex:0 0 190px; text-align:center; }
-  .avatar-box svg { width:170px; height:190px; }
-  .plant-sway { transform-origin:60px 128px; animation:sway 5s ease-in-out infinite; }
-  @keyframes sway { 0%,100% { transform:rotate(-2deg);} 50% { transform:rotate(2deg);} }
-  @media (prefers-reduced-motion: reduce) { .plant-sway { animation:none; } }
   .stage-name { font-weight:800; margin-top:.2rem; }
   .stage-sub { color:var(--soft); font-size:.8rem; }
+  .rename-link { display:inline-block; margin-top:.35rem; font-size:.78rem; font-weight:700;
+                 color:var(--accent); text-decoration:none; }
   .hero-stats { flex:1 1 260px; min-width:240px; }
   .statgrid { display:flex; gap:1.4rem; flex-wrap:wrap; margin:.5rem 0 .9rem; }
   .stat .n { font-size:1.7rem; font-weight:800; line-height:1.1; }
@@ -67,63 +67,14 @@
 
 <div class="panel well-hero">
   <div class="avatar-box">
-    {# The companion plant — 6 growth stages, drawn inline so the page has no
-       external assets. The stage is picked server-side from the level. #}
+    {# The mascot IS the adopted companion (STAFF_ONBOARDING_AVATAR_PLAN.md §D2):
+       one shared inline-SVG set, species from the profile, growth stage derived
+       from the wellness level. #}
     {% set s = stats.stage %}
-    <svg viewBox="0 0 120 140" role="img" aria-label="Your wellness companion: {{ stats.stage_name }} (stage {{ s }} of 6)">
-      {# pot #}
-      <path d="M38 112 L82 112 L77 134 L43 134 Z" fill="#b5714f"/>
-      <rect x="34" y="106" width="52" height="9" rx="4" fill="#c8825d"/>
-      <ellipse cx="60" cy="106" rx="22" ry="4.5" fill="#7a4a2f"/>
-      <g class="plant-sway">
-      {% if s == 1 %}
-        <ellipse cx="60" cy="103" rx="7" ry="4.6" fill="#e8d3a8"/>
-        <path d="M60 100 q3 -5 0 -8" stroke="#9caf70" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-      {% endif %}
-      {% if s >= 2 %}
-        <path d="M60 106 C60 96 60 90 60 {{ 84 if s == 2 else (70 if s == 3 else 56) }}"
-              stroke="#4c8c3f" stroke-width="4" fill="none" stroke-linecap="round"/>
-        <path d="M60 98 C52 96 47 90 46 84 C54 84 59 90 60 96 Z" fill="#5ea54e"/>
-        <path d="M60 98 C68 96 73 90 74 84 C66 84 61 90 60 96 Z" fill="#6fb85e"/>
-      {% endif %}
-      {% if s >= 3 %}
-        <path d="M60 84 C50 82 44 75 43 68 C53 68 59 75 60 82 Z" fill="#5ea54e"/>
-        <path d="M60 84 C70 82 76 75 77 68 C67 68 61 75 60 82 Z" fill="#6fb85e"/>
-      {% endif %}
-      {% if s >= 4 %}
-        <path d="M60 70 C51 68 46 62 45 56 C54 56 59 62 60 68 Z" fill="#5ea54e"/>
-        <path d="M60 70 C69 68 74 62 75 56 C66 56 61 62 60 68 Z" fill="#6fb85e"/>
-        {% if s == 4 %}
-        <circle cx="60" cy="52" r="5" fill="#d9799c"/>
-        <circle cx="48" cy="62" r="3.6" fill="#d9799c"/>
-        <circle cx="72" cy="62" r="3.6" fill="#d9799c"/>
-        {% endif %}
-      {% endif %}
-      {% if s >= 5 %}
-        {% for cx, cy, r in [(60, 48, 7), (46, 60, 5.4), (74, 60, 5.4)] %}
-        <g>
-          {% for a in [0, 60, 120, 180, 240, 300] %}
-          <ellipse cx="{{ cx }}" cy="{{ cy - r }}" rx="{{ r * 0.55 }}" ry="{{ r }}"
-                   fill="{{ '#e98cae' if loop.index is even else '#f2a9c4' }}"
-                   transform="rotate({{ a }} {{ cx }} {{ cy }})"/>
-          {% endfor %}
-          <circle cx="{{ cx }}" cy="{{ cy }}" r="{{ r * 0.62 }}" fill="#f6c445"/>
-        </g>
-        {% endfor %}
-      {% endif %}
-      {% if s >= 6 %}
-        <path d="M60 56 C46 54 38 46 37 38 C50 38 58 46 60 54 Z" fill="#4c8c3f"/>
-        <path d="M60 56 C74 54 82 46 83 38 C70 38 62 46 60 54 Z" fill="#5ea54e"/>
-        <g fill="#f6c445">
-          <path d="M30 30 l1.6 4 4 1.6 -4 1.6 -1.6 4 -1.6 -4 -4 -1.6 4 -1.6 Z"/>
-          <path d="M88 24 l1.4 3.4 3.4 1.4 -3.4 1.4 -1.4 3.4 -1.4 -3.4 -3.4 -1.4 3.4 -1.4 Z"/>
-          <path d="M84 48 l1 2.6 2.6 1 -2.6 1 -1 2.6 -1 -2.6 -2.6 -1 2.6 -1 Z"/>
-        </g>
-      {% endif %}
-      </g>
-    </svg>
-    <div class="stage-name">{{ stats.stage_name }}</div>
-    <div class="stage-sub">Stage {{ s }} of 6 · Level {{ stats.level }}</div>
+    {{ avatar(avatar_kind, s, name=avatar_name, size=170, interactive=true) }}
+    <div class="stage-name">{{ avatar_name or stats.stage_name }}</div>
+    <div class="stage-sub">{{ stats.stage_name }} · Stage {{ s }} of 6 · Level {{ stats.level }}</div>
+    <a class="rename-link" href="/me">Rename or change your companion →</a>
   </div>
 
   <div class="hero-stats">
