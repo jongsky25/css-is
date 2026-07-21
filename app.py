@@ -603,8 +603,12 @@ def search_index_for(user):
     """Flat list of every destination this user may open — the search palette's
     index. Includes search-only items (in_nav False) the top nav omits. Built
     server-side so a user never even receives links they aren't allowed to use."""
-    out = [{"title": "Home", "hint": "Main hub", "url": "/", "section": "Go to",
-            "kw": "home start hub main launcher overview"}]
+    out = [{"title": "What to do", "hint": "Wellness or CSS", "url": "/", "section": "Go to",
+            "kw": "home start landing chooser what to do wellness css"},
+           {"title": "CSS hub", "hint": "Main hub", "url": "/css", "section": "Go to",
+            "kw": "css hub main launcher overview dashboards reports surveys"},
+           {"title": "My profile", "hint": "Photo, avatar & pet name", "url": "/me", "section": "Go to",
+            "kw": "my profile me avatar companion pet name photo picture rename change"}]
     for g in NAV_GROUPS:
         for it in g["items"]:
             if _cap_ok(user, it["cap"]):
@@ -623,8 +627,8 @@ def ai_route_catalog(user):
     offered a screen this user can't open), but keyed by `key` since that's
     what the router validates the model's answer against and builds the final
     URL from server-side; model output never supplies a URL directly."""
-    out = [{"key": "home", "label": "Home", "hint": "Main hub", "url": "/",
-            "kw": "home start hub main launcher overview"}]
+    out = [{"key": "home", "label": "CSS hub", "hint": "Main hub", "url": "/css",
+            "kw": "home start hub main launcher overview css dashboards reports"}]
     for g in NAV_GROUPS:
         for it in g["items"]:
             if _cap_ok(user, it["cap"]):
@@ -639,7 +643,7 @@ def help_catalog_for(user):
     the answers-mode NL router (docs/AI_INTEGRATION_PLAN.md Phase 2): a `help_key`
     the router picks can never point at a screen this user isn't already allowed
     to open, exactly like ai_route_catalog's `destination`."""
-    meta = {"home": ("Home", None, "/")}
+    meta = {"home": ("Home", None, "/css")}
     for g in NAV_GROUPS:
         for it in g["items"]:
             meta[it["key"]] = (it["label"], it["cap"], it["url"])
@@ -1571,6 +1575,15 @@ async def login_submit(request: Request):
             redirect_to_start = (
                 ai.ai_available(conn) and ai.mode_at_least(conn, "router")
                 and st.get_setting(conn, "ai_landing_default", "hub") == "start")
+        # First sign-in after this update (onboarded_at is NULL) → the one-time
+        # /welcome flow (STAFF_ONBOARDING_AVATAR_PLAN.md §D3). Runs AFTER a
+        # temp-password reset (that path returns early below) and takes
+        # precedence over both a ?next= deep link and the /start opt-in — the
+        # deep link is carried through and honored right after onboarding.
+        needs_onboarding = False
+        if not force_reset:
+            acct = st.get_admin_user_by_id(conn, user["id"])
+            needs_onboarding = not (acct and acct.get("onboarded_at"))
     finally:
         conn.close()
     # Temporary-password account: don't issue a session — send them straight to the
@@ -1578,7 +1591,9 @@ async def login_submit(request: Request):
     if force_reset:
         token = auth.make_action_token(user["id"], auth.PURPOSE_RESET, reset_hash)
         return RedirectResponse("/reset-password?token=" + quote(token), status_code=303)
-    if redirect_to_start:
+    if needs_onboarding:
+        nxt = "/welcome" + (("?next=" + quote(nxt)) if nxt != "/" else "")
+    elif redirect_to_start:
         nxt = "/start"
     resp = RedirectResponse(nxt, status_code=303)
     resp.set_cookie(auth.COOKIE_NAME, auth.make_token(user),
@@ -3502,11 +3517,78 @@ def _account_first_name(conn, user):
     return token[:1].upper() + token[1:] if token else ""
 
 
+def _onboarding_redirect(request, conn):
+    """If the signed-in account hasn't finished the one-time /welcome flow,
+    return a RedirectResponse there (preserving the current path as ?next=);
+    else None. Used as a soft guard on the landing routes so a half-finished
+    onboarding can't be skipped by typing a URL — deep links stay reachable
+    once onboarding is done (STAFF_ONBOARDING_AVATAR_PLAN.md §D3)."""
+    user = getattr(request.state, "user", None)
+    if not user:
+        return None
+    acct = st.get_admin_user_by_id(conn, user["id"])
+    if acct and acct.get("onboarded_at"):
+        return None
+    nxt = request.url.path
+    dest = "/welcome" + (("?next=" + quote(nxt)) if nxt and nxt != "/" else "")
+    return RedirectResponse(dest, status_code=303)
+
+
+def _css_entry_for(user, conn):
+    """Where the chooser's CSS card should point for this user
+    (STAFF_ONBOARDING_AVATAR_PLAN.md §D5). A plain VIEWER who is linked to a
+    usable directory person lands on their OWN person profile first (their
+    section is one tap away via the banner there); everyone else — and any
+    viewer without a usable record — goes to the hub. The hub itself stays
+    reachable for viewers regardless; this only changes where the card *lands*."""
+    if not user or user.get("role") != "viewer":
+        return "/css"
+    profile = st.get_user_profile(conn, user["id"])
+    # A viewer can't see a hidden_public person page (dashboard_person bounces
+    # non-admins off it), so route there only for a linked, visible record.
+    if profile and profile.get("rp_id") and not profile.get("hidden_public"):
+        return f"/dashboard/people/{profile['rp_id']}"
+    return "/css"
+
+
 @app.get("/", response_class=HTMLResponse)
+def choose(request: Request):
+    """The post-login chooser — 'what would you like to do?' Two doors, Wellness
+    and CSS (STAFF_ONBOARDING_AVATAR_PLAN.md Phase 3). Greets the user with their
+    photo/companion; guards the one-time onboarding so it can't be skipped by
+    typing the URL."""
+    conn = get_conn()
+    try:
+        onboard = _onboarding_redirect(request, conn)
+        if onboard:
+            return onboard
+        profile = st.get_user_profile(conn, request.state.user["id"])
+        first_name = _account_first_name(conn, request.state.user)
+        css_url = _css_entry_for(request.state.user, conn)
+        # A light wellness teaser (points/streak) beside the Wellness door.
+        try:
+            wstats = st.wellness_stats(conn, request.state.user["id"])
+        except Exception:
+            wstats = None
+    finally:
+        conn.close()
+    role = request.state.user["role"]
+    return templates.TemplateResponse(request, "choose.html", {
+        "nav_active": "", "show_scope": False,
+        "first_name": first_name, "profile": profile,
+        "initials": _initials(profile.get("person_name") if profile else ""),
+        "css_url": css_url, "wstats": wstats,
+        "role_label": auth.ROLE_LABELS.get(role, role),
+        "role_blurb": auth.ROLE_BLURB.get(role, ""),
+    })
+
+
+@app.get("/css", response_class=HTMLResponse)
 def home(request: Request):
-    """Task-oriented home hub — 'what would you like to do?' Role-filtered module
-    cards + a glanceable stats strip. (Replaces the old behaviour of landing
-    managers straight on the create-activity form and everyone else on Pulse.)"""
+    """The CSS hub — role-filtered module cards + a glanceable stats strip. One
+    of the two doors off the `/` chooser (STAFF_ONBOARDING_AVATAR_PLAN.md Phase
+    3); formerly served at `/`. Reachable as a deep link even before onboarding
+    (the one-time /welcome guard lives only on the chooser)."""
     conn = get_conn()
     try:
         _, blhsd_name, _ = st.get_or_create_blhsd(conn)
@@ -3656,6 +3738,127 @@ def start_page(request: Request):
         "nav_active": "", "show_scope": False,
         "first_name": first_name, "suggestions": suggestions,
     })
+
+
+def _safe_next(raw):
+    """A local ?next= target, or '/'. Guards the onboarding redirect against an
+    open-redirect (only same-site absolute paths, never '//host' or a scheme)."""
+    nxt = (raw or "/").strip()
+    if not nxt.startswith("/") or nxt.startswith("//"):
+        return "/"
+    return nxt
+
+
+def _initials(name):
+    parts = (name or "").split()
+    if not parts:
+        return "·"
+    return (parts[0][0] + (parts[-1][0] if len(parts) > 1 else "")).upper()
+
+
+def _render_welcome(request, next="/", err="", form=None):
+    """Render the onboarding page. Shared by the GET route and the POST's
+    validation-error path (mirrors _wellness_apply_page)."""
+    conn = get_conn()
+    try:
+        profile = st.get_user_profile(conn, request.state.user["id"])
+        first_name = _account_first_name(conn, request.state.user)
+    finally:
+        conn.close()
+    has_person = bool(profile and profile.get("rp_id"))
+    return templates.TemplateResponse(request, "welcome.html", {
+        "nav_active": "", "show_scope": False,
+        "first_name": first_name, "profile": profile, "has_person": has_person,
+        "initials": _initials(profile.get("person_name") if profile else ""),
+        "catalog": st.AVATAR_CATALOG, "name_maxlen": st.AVATAR_NAME_MAXLEN,
+        "next": _safe_next(next), "err": err, "form": form or {},
+    })
+
+
+@app.get("/welcome", response_class=HTMLResponse)
+def welcome_form(request: Request, next: str = "/", err: str = ""):
+    """One-time onboarding (STAFF_ONBOARDING_AVATAR_PLAN.md Phase 2): confirm
+    profile + upload a photo (only when the account is linked to a directory
+    person), then adopt and name an avatar companion. Reachable any time, but
+    the login flow and the landing guard route first-time accounts here."""
+    return _render_welcome(request, next=next, err=err)
+
+
+@app.post("/welcome")
+async def welcome_submit(request: Request):
+    p = await _posted(request)
+    nxt = _safe_next(p.get("next"))
+    kind = (p.get("avatar_kind") or "").strip()
+    pet_name = (p.get("avatar_name") or "").strip()
+    if not st.valid_avatar_kind(kind):
+        return _render_welcome(request, next=nxt, err="Please pick a companion.", form=p)
+    if not pet_name:
+        return _render_welcome(request, next=nxt, err="Give your companion a name.", form=p)
+    photo = _decode_photo(p.get("photo_data", ""))
+    conn = get_conn()
+    try:
+        profile = st.get_user_profile(conn, request.state.user["id"])
+        if photo and profile and profile.get("rp_id"):
+            st.set_rp_photo(conn, profile["rp_id"], photo[0], photo[1])
+            _audit(request, conn, "profile_update", target_type="person",
+                   target_id=profile["rp_id"], summary="uploaded a profile photo during onboarding")
+        st.set_user_avatar(conn, request.state.user["id"], kind, pet_name)
+        st.mark_onboarded(conn, request.state.user["id"])
+        _audit(request, conn, "avatar_choose", target_type="user",
+               target_id=request.state.user["id"],
+               summary=f"adopted a {kind} companion named '{st.clean_avatar_name(pet_name)}'")
+    finally:
+        conn.close()
+    return RedirectResponse(nxt, status_code=303)
+
+
+def _render_me(request, msg="", err=""):
+    conn = get_conn()
+    try:
+        profile = st.get_user_profile(conn, request.state.user["id"])
+    finally:
+        conn.close()
+    return templates.TemplateResponse(request, "me.html", {
+        "nav_active": "", "show_scope": False,
+        "profile": profile, "has_person": bool(profile and profile.get("rp_id")),
+        "initials": _initials(profile.get("person_name") if profile else ""),
+        "catalog": st.AVATAR_CATALOG, "name_maxlen": st.AVATAR_NAME_MAXLEN,
+        "msg": msg, "err": err,
+    })
+
+
+@app.get("/me", response_class=HTMLResponse)
+def me_form(request: Request, msg: str = "", err: str = ""):
+    """Edit your profile after onboarding (STAFF_ONBOARDING_AVATAR_PLAN.md §D6):
+    photo, avatar species and pet name — so the one-time /welcome choice is never
+    a trap."""
+    return _render_me(request, msg=msg, err=err)
+
+
+@app.post("/me")
+async def me_submit(request: Request):
+    p = await _posted(request)
+    kind = (p.get("avatar_kind") or "").strip()
+    pet_name = (p.get("avatar_name") or "").strip()
+    if not st.valid_avatar_kind(kind):
+        return _render_me(request, err="Please pick a companion.")
+    if not pet_name:
+        return _render_me(request, err="Give your companion a name.")
+    photo = _decode_photo(p.get("photo_data", ""))
+    conn = get_conn()
+    try:
+        profile = st.get_user_profile(conn, request.state.user["id"])
+        if photo and profile and profile.get("rp_id"):
+            st.set_rp_photo(conn, profile["rp_id"], photo[0], photo[1])
+            _audit(request, conn, "profile_update", target_type="person",
+                   target_id=profile["rp_id"], summary="updated their profile photo")
+        st.set_user_avatar(conn, request.state.user["id"], kind, pet_name)
+        _audit(request, conn, "avatar_choose", target_type="user",
+               target_id=request.state.user["id"],
+               summary=f"set companion to {kind} named '{st.clean_avatar_name(pet_name)}'")
+    finally:
+        conn.close()
+    return RedirectResponse("/me?msg=" + quote("Saved."), status_code=303)
 
 
 @app.get("/search", response_class=HTMLResponse)
@@ -9960,6 +10163,11 @@ def dashboard_person(request: Request, rp_id: int, grain: str = "monthly", perio
         events = view_memo("events", ("", "all"),
                            lambda: di.build_events(atoms_all, st.list_activity_instances(conn)))
         engagements = di.rp_activity_engagements(events, rp_id)
+        # Are they viewing THEIR OWN profile? (Drives the "your section" banner —
+        # the second half of the viewer's CSS entry, STAFF_ONBOARDING_AVATAR_PLAN
+        # §D5.) Cheap: one account read we already do elsewhere.
+        acct = st.get_admin_user_by_id(conn, request.state.user["id"])
+        is_self = bool(acct and acct.get("rp_id") == rp_id)
     finally:
         conn.close()
     return templates.TemplateResponse(request, "person.html", {
@@ -9970,6 +10178,7 @@ def dashboard_person(request: Request, rp_id: int, grain: str = "monthly", perio
         "coach": coach, "cmp": cmp, "ta": ta, "badges": badges,
         "yoy": yoy, "peers": peers, "years": years, "engagements": engagements,
         "sel_period": period, "period_label": ("All time" if period == "all" else period.split(":", 1)[1]),
+        "is_self": is_self,
     })
 
 
@@ -11575,6 +11784,7 @@ def wellness_hub(request: Request, cheer: str = "", badges: str = "", err: str =
     conn = get_conn()
     try:
         stats = st.wellness_stats(conn, user["id"])
+        profile = st.get_user_profile(conn, user["id"])
         week = st.wellness_week_start()
         used = st.wellness_hours_used(conn, user["id"], week)
         claims = st.list_my_wellness_claims(conn, user["id"])
@@ -11582,9 +11792,17 @@ def wellness_hub(request: Request, cheer: str = "", badges: str = "", err: str =
         queue_n = len(st.list_wellness_approvals(conn, user)) if is_chief else 0
     finally:
         conn.close()
+    # The mascot IS the adopted companion (STAFF_ONBOARDING_AVATAR_PLAN.md §D2):
+    # its species picks the art, and the derived wellness stage its growth. The
+    # stage NAME follows the species' family (plants "Seed…Flourishing", animals
+    # their own), overriding wellness_stats' plant-only default.
+    avatar_kind = (profile or {}).get("avatar_kind") or st.AVATAR_DEFAULT
+    avatar_name = (profile or {}).get("avatar_name") or ""
+    stats = dict(stats, stage_name=st.avatar_stage_name(avatar_kind, stats["stage"]))
     return templates.TemplateResponse(request, "wellness_hub.html", {
         "nav_active": "wellness", "show_scope": False,
         "stats": stats, "week_start": week, "used": used,
+        "avatar_kind": avatar_kind, "avatar_name": avatar_name,
         "left": max(0, st.WELLNESS_WEEKLY_HOURS - used),
         "weekly_hours": st.WELLNESS_WEEKLY_HOURS,
         "claims": claims, "is_chief": is_chief, "queue_n": queue_n,
@@ -11599,11 +11817,12 @@ def _wellness_apply_page(request, err="", form=None):
     try:
         week = st.wellness_week_start()
         used = st.wellness_hours_used(conn, user["id"], week)
+        approver_title = st.wellness_approver_title(conn, user["id"])
     finally:
         conn.close()
     return templates.TemplateResponse(request, "wellness_apply.html", {
         "nav_active": "wellness", "show_scope": False,
-        "activities": st.WELLNESS_ACTIVITIES,
+        "activities": st.WELLNESS_ACTIVITIES, "approver_title": approver_title,
         "left": max(0, st.WELLNESS_WEEKLY_HOURS - used),
         "weekly_hours": st.WELLNESS_WEEKLY_HOURS,
         "today": _today_local().isoformat(),
@@ -11631,10 +11850,11 @@ async def wellness_apply_submit(request: Request):
         _audit(request, conn, "wellness_apply", target_type="wellness_claim",
                target_id=claim_id,
                summary=f"requested a wellness break on {p.get('break_date')} {p.get('start_time')}")
+        approver_title = st.wellness_approver_title(conn, user["id"])
     finally:
         conn.close()
-    return RedirectResponse("/wellness?cheer=Break+requested+—+your+section+chief+will+see+it.",
-                            status_code=303)
+    cheer = quote(f"Break requested — {approver_title} will see it.")
+    return RedirectResponse(f"/wellness?cheer={cheer}", status_code=303)
 
 
 @app.post("/wellness/claims/{claim_id}/cancel")

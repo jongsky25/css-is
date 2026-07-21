@@ -77,6 +77,6 @@ def test_your_recent_strip_badges_invited_events(manager, db_path, app_mod):
     from datetime import timedelta
     recent = (app_mod._today_local() - timedelta(days=2)).isoformat()
     _make_outside(manager, db_path, "Recent Invited Strip ABC", recent)
-    home = manager.get("/").text
+    home = manager.get("/css").text
     assert "Recent Invited Strip ABC" in home
     assert '<span class="badge amber">Invited</span>' in home

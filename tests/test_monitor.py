@@ -309,7 +309,7 @@ def test_ongoing_picks_event_day_and_open_window(tmp_path):
 
 
 def test_home_renders_ongoing_feed(manager):
-    r = manager.get("/")
+    r = manager.get("/css")
     assert r.status_code == 200
     assert "Ongoing — CSS collecting" in r.text
 

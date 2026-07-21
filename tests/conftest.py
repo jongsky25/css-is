@@ -39,7 +39,12 @@ def app_mod(tmp_path_factory):
     conn.execute("DELETE FROM admin_user"); conn.commit()
     h, salt = auth.hash_password(PW)
     for role, username in ROLE_USERS.items():
-        st.create_admin_user(conn, username, h, salt, role, created_by="test", active=True)
+        uid = st.create_admin_user(conn, username, h, salt, role, created_by="test", active=True)
+        # The seeded role accounts represent ESTABLISHED users (post first-run):
+        # stamp them onboarded so the landing (`/`) renders the hub instead of
+        # diverting to the one-time /welcome flow. Tests that exercise onboarding
+        # reset onboarded_at to NULL on the account they need fresh.
+        st.mark_onboarded(conn, uid)
     # a pending invited account (no password) for invite/reset token tests
     st.create_admin_user(conn, "pending@test.local", "", "", "viewer",
                          created_by="test", active=False)

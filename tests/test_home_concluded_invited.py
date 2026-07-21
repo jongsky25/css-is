@@ -34,7 +34,7 @@ def test_concluded_invited_f3_activity_appears_and_links_to_rp_report(manager, a
     conn.commit(); conn.close()
     app_mod.invalidate_atoms()                        # rebuild atoms on next request
 
-    rows = _concluded_payload(manager.get("/").text)
+    rows = _concluded_payload(manager.get("/css").text)
     hit = next((a for a in rows if a.get("topic") == "Invited Concluded ZZZ"), None)
     assert hit is not None, "a concluded invited F3 activity must appear in the strip"
     # #48: it links to its resource-person results (Type-3 report narrowed to this
@@ -50,7 +50,7 @@ def test_bureau_f2_events_still_link_to_their_report(manager):
     # and are NOT badged invited. Asserted against the delivered DB's real activities
     # (no fabricated F2 — an incomplete one would just exercise the report's own
     # rendering, not this rule).
-    rows = _concluded_payload(manager.get("/").text)
+    rows = _concluded_payload(manager.get("/css").text)
     bureau = [a for a in rows if not a["invited"]]
     assert bureau, "the delivered DB should have concluded Form-2 events"
     for a in bureau:

@@ -90,7 +90,7 @@ def test_home_renders_the_strip_for_its_creator(manager, app_mod):
                                   created_by="manager@test.local")
     st.record_response(conn, fid, [("SQD1", 6)])
     conn.commit(); conn.close()
-    r = manager.get("/")
+    r = manager.get("/css")
     assert r.status_code == 200
     assert "Your recent activities" in r.text
     assert "Strip Probe Activity" in r.text

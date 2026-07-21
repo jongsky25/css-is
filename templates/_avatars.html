@@ -1,0 +1,255 @@
+{#
+  Avatar companions — inline-SVG art for the 6 catalogue species across 6 growth
+  stages (storage.AVATAR_CATALOG / AVATAR_STAGE_NAMES). No external assets, so the
+  set is PWA/offline-safe exactly like the original wellness plant it grew out of.
+
+  Usage (import avatar + avatar_defs, call avatar_defs() once per page for the
+  shared CSS + tap JS, then avatar(kind, stage, name, size, interactive) per pet).
+
+  The companion is shared with the wellness module: kind picks the species,
+  stage (1..6) is the wellness growth level. Plants sway; animals breathe.
+  A tap adds a short .happy bounce; hover shows the pet's name. All motion is
+  disabled under prefers-reduced-motion.
+#}
+
+{% macro avatar_defs() %}
+<style>
+  .avwrap { display:inline-block; text-align:center; }
+  .avwrap svg { display:block; }
+  .avstage { transform-box:fill-box; transform-origin:50% 92%; }
+  .fam-plant  .avstage { animation:av-sway 5s ease-in-out infinite; }
+  .fam-animal .avstage { animation:av-breathe 3.6s ease-in-out infinite; transform-origin:50% 80%; }
+  @keyframes av-sway   { 0%,100%{ transform:rotate(-2deg);} 50%{ transform:rotate(2deg);} }
+  @keyframes av-breathe{ 0%,100%{ transform:scale(1);} 50%{ transform:scale(1.045);} }
+  .avwrap.happy .avstage { animation:av-bounce .6s ease; }
+  @keyframes av-bounce { 0%,100%{ transform:translateY(0) scale(1);} 30%{ transform:translateY(-9px) scale(1.06);} 60%{ transform:translateY(0) scale(.97);} }
+  .av-spark { opacity:0; }
+  .avwrap.happy .av-spark { animation:av-spark .6s ease; }
+  @keyframes av-spark { 0%{ opacity:0; transform:scale(.4);} 40%{ opacity:1;} 100%{ opacity:0; transform:scale(1.3);} }
+  .avwrap[data-interactive] { cursor:pointer; }
+  .av-bubble { display:inline-block; margin-top:.35rem; font-size:.82rem; font-weight:800;
+               color:var(--accent); opacity:0; transition:opacity .15s; min-height:1.1em; }
+  .avwrap[data-interactive]:hover .av-bubble,
+  .avwrap[data-interactive]:focus-visible .av-bubble { opacity:1; }
+  .av-bubble.show { opacity:1; }
+  @media (prefers-reduced-motion: reduce) {
+    .fam-plant .avstage, .fam-animal .avstage, .avwrap.happy .avstage { animation:none; }
+    .avwrap.happy .av-spark { animation:none; opacity:0; }
+  }
+</style>
+<script>
+  // Delegated so it also covers avatars rendered after load (the picker swaps them).
+  document.addEventListener("click", function (e) {
+    var w = e.target.closest(".avwrap[data-interactive]");
+    if (!w) return;
+    w.classList.remove("happy");           // restart the animation on repeat taps
+    void w.offsetWidth;                    // force reflow
+    w.classList.add("happy");
+    var b = w.querySelector(".av-bubble");
+    if (b) { b.classList.add("show"); clearTimeout(w._t); w._t = setTimeout(function(){ b.classList.remove("show"); }, 1400); }
+  });
+  document.addEventListener("animationend", function (e) {
+    if (e.animationName === "av-bounce") e.target.closest(".avwrap")?.classList.remove("happy");
+  });
+</script>
+{% endmacro %}
+
+
+{#-- one species at a stage; returns just the <svg> so pickers/heroes can size it --#}
+{% macro avatar_svg(kind, stage) %}
+{% set s = [[stage|int, 6]|min, 1]|max %}
+<svg viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false">
+  <g class="avstage">
+  {% if kind == "plant" %}{{ _plant(s) }}
+  {% elif kind == "cactus" %}{{ _cactus(s) }}
+  {% elif kind == "bonsai" %}{{ _bonsai(s) }}
+  {% elif kind == "cat" %}{{ _cat(s) }}
+  {% elif kind == "bird" %}{{ _bird(s) }}
+  {% elif kind == "turtle" %}{{ _turtle(s) }}
+  {% else %}{{ _plant(s) }}{% endif %}
+  </g>
+  <g class="av-spark" fill="#f6c445">
+    <path d="M22 26 l1.6 4 4 1.6 -4 1.6 -1.6 4 -1.6 -4 -4 -1.6 4 -1.6 Z"/>
+    <path d="M98 34 l1.3 3.2 3.2 1.3 -3.2 1.3 -1.3 3.2 -1.3 -3.2 -3.2 -1.3 3.2 -1.3 Z"/>
+    <path d="M92 18 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1 Z"/>
+  </g>
+</svg>
+{% endmacro %}
+
+
+{#-- full interactive avatar with name bubble; the family class drives idle motion --#}
+{% macro avatar(kind, stage, name="", size=170, interactive=false) %}
+{% set fam = "fam-animal" if kind in ("cat", "bird", "turtle") else "fam-plant" %}
+<span class="avwrap {{ fam }}" {% if interactive %}data-interactive tabindex="0" role="button"
+      aria-label="{{ name or 'Your companion' }} — tap to play"{% else %}aria-hidden="true"{% endif %}
+      style="width:{{ size }}px;">
+  <span style="display:block;width:{{ size }}px;height:{{ (size * 1.16)|round|int }}px;">
+    {{ avatar_svg(kind, stage) }}
+  </span>
+  {% if name %}<span class="av-bubble">{{ name }}</span>{% endif %}
+</span>
+{% endmacro %}
+
+
+{# ============================ the species art ============================ #}
+{# Each returns SVG body only. Growth = size + features accruing with stage,
+   reading as "your companion grows up" — the same idea as the wellness plant. #}
+
+{% macro _plant(s) %}
+  <path d="M38 112 L82 112 L77 134 L43 134 Z" fill="#b5714f"/>
+  <rect x="34" y="106" width="52" height="9" rx="4" fill="#c8825d"/>
+  <ellipse cx="60" cy="106" rx="22" ry="4.5" fill="#7a4a2f"/>
+  {% if s == 1 %}
+    <ellipse cx="60" cy="103" rx="7" ry="4.6" fill="#e8d3a8"/>
+    <path d="M60 100 q3 -5 0 -8" stroke="#9caf70" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  {% endif %}
+  {% if s >= 2 %}
+    <path d="M60 106 C60 96 60 90 60 {{ 84 if s == 2 else (70 if s == 3 else 56) }}"
+          stroke="#4c8c3f" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M60 98 C52 96 47 90 46 84 C54 84 59 90 60 96 Z" fill="#5ea54e"/>
+    <path d="M60 98 C68 96 73 90 74 84 C66 84 61 90 60 96 Z" fill="#6fb85e"/>
+  {% endif %}
+  {% if s >= 3 %}
+    <path d="M60 84 C50 82 44 75 43 68 C53 68 59 75 60 82 Z" fill="#5ea54e"/>
+    <path d="M60 84 C70 82 76 75 77 68 C67 68 61 75 60 82 Z" fill="#6fb85e"/>
+  {% endif %}
+  {% if s >= 4 %}
+    <path d="M60 70 C51 68 46 62 45 56 C54 56 59 62 60 68 Z" fill="#5ea54e"/>
+    <path d="M60 70 C69 68 74 62 75 56 C66 56 61 62 60 68 Z" fill="#6fb85e"/>
+    {% if s == 4 %}
+    <circle cx="60" cy="52" r="5" fill="#d9799c"/>
+    <circle cx="48" cy="62" r="3.6" fill="#d9799c"/>
+    <circle cx="72" cy="62" r="3.6" fill="#d9799c"/>
+    {% endif %}
+  {% endif %}
+  {% if s >= 5 %}
+    {% for cx, cy, r in [(60, 48, 7), (46, 60, 5.4), (74, 60, 5.4)] %}
+    <g>
+      {% for a in [0, 60, 120, 180, 240, 300] %}
+      <ellipse cx="{{ cx }}" cy="{{ cy - r }}" rx="{{ r * 0.55 }}" ry="{{ r }}"
+               fill="{{ '#e98cae' if loop.index is even else '#f2a9c4' }}"
+               transform="rotate({{ a }} {{ cx }} {{ cy }})"/>
+      {% endfor %}
+      <circle cx="{{ cx }}" cy="{{ cy }}" r="{{ r * 0.62 }}" fill="#f6c445"/>
+    </g>
+    {% endfor %}
+  {% endif %}
+  {% if s >= 6 %}
+    <path d="M60 56 C46 54 38 46 37 38 C50 38 58 46 60 54 Z" fill="#4c8c3f"/>
+    <path d="M60 56 C74 54 82 46 83 38 C70 38 62 46 60 54 Z" fill="#5ea54e"/>
+  {% endif %}
+{% endmacro %}
+
+{% macro _cactus(s) %}
+  {% set h = 78 - (s - 1) * 8 %}
+  <path d="M38 112 L82 112 L77 134 L43 134 Z" fill="#c98a55"/>
+  <rect x="34" y="106" width="52" height="9" rx="4" fill="#dda069"/>
+  <ellipse cx="60" cy="106" rx="22" ry="4.5" fill="#8a5a2f"/>
+  {# main trunk grows taller with stage #}
+  <rect x="51" y="{{ h }}" width="18" height="{{ 106 - h }}" rx="9" fill="#4f9d52"/>
+  <rect x="51" y="{{ h }}" width="7" height="{{ 106 - h }}" rx="7" fill="#5fb262"/>
+  {% if s >= 2 %}<path d="M53 92 q-14 -1 -14 -14 l0 -6" stroke="#4f9d52" stroke-width="10" fill="none" stroke-linecap="round"/>{% endif %}
+  {% if s >= 3 %}<path d="M67 86 q14 -1 14 -14 l0 -8" stroke="#4f9d52" stroke-width="10" fill="none" stroke-linecap="round"/>{% endif %}
+  {% if s >= 4 %}
+    {% for x in [54, 60, 66] %}<line x1="{{ x }}" y1="{{ h + 4 }}" x2="{{ x }}" y2="102" stroke="#3c7d40" stroke-width="1" stroke-dasharray="2 5"/>{% endfor %}
+  {% endif %}
+  {% if s >= 5 %}<circle cx="60" cy="{{ h }}" r="6" fill="#f28fb0"/><circle cx="60" cy="{{ h }}" r="2.6" fill="#f6c445"/>{% endif %}
+  {% if s >= 6 %}
+    <circle cx="39" cy="72" r="5" fill="#f28fb0"/><circle cx="81" cy="66" r="5" fill="#f7b24a"/>
+    <circle cx="39" cy="72" r="2.1" fill="#fff2c9"/><circle cx="81" cy="66" r="2.1" fill="#fff2c9"/>
+  {% endif %}
+{% endmacro %}
+
+{% macro _bonsai(s) %}
+  <path d="M34 116 L86 116 L80 130 L40 130 Z" fill="#7c6b8f"/>
+  <rect x="30" y="110" width="60" height="9" rx="4" fill="#93809f"/>
+  <ellipse cx="60" cy="110" rx="26" ry="4.5" fill="#5a4a6b"/>
+  {# trunk + canopy grow with stage #}
+  <path d="M60 108 C58 96 66 92 62 {{ 92 - (s * 6) }}" stroke="#7a5230" stroke-width="6" fill="none" stroke-linecap="round"/>
+  {% if s >= 2 %}<path d="M61 96 C70 92 74 90 78 88" stroke="#7a5230" stroke-width="4.5" fill="none" stroke-linecap="round"/>{% endif %}
+  {% if s >= 3 %}<path d="M60 90 C50 88 44 86 40 84" stroke="#7a5230" stroke-width="4" fill="none" stroke-linecap="round"/>{% endif %}
+  {% set top = 92 - (s * 6) %}
+  <ellipse cx="62" cy="{{ top }}" rx="{{ 8 + s * 2 }}" ry="{{ 6 + s }}" fill="#4c8c3f"/>
+  {% if s >= 2 %}<ellipse cx="80" cy="86" rx="{{ 6 + s }}" ry="6" fill="#5ea54e"/>{% endif %}
+  {% if s >= 3 %}<ellipse cx="40" cy="82" rx="{{ 6 + s }}" ry="6" fill="#5ea54e"/>{% endif %}
+  {% if s >= 4 %}<ellipse cx="62" cy="{{ top - 6 }}" rx="{{ 10 + s }}" ry="7" fill="#6fb85e"/>{% endif %}
+  {% if s >= 5 %}{% for cx, cy in [(56, top-4), (70, 84), (46, 80)] %}<circle cx="{{ cx }}" cy="{{ cy }}" r="2.4" fill="#f2a9c4"/>{% endfor %}{% endif %}
+  {% if s >= 6 %}
+    <ellipse cx="62" cy="{{ top - 12 }}" rx="16" ry="7" fill="#4c8c3f"/>
+    {% for cx, cy in [(60, top-13), (72, 82), (48, 82), (80, 86)] %}<circle cx="{{ cx }}" cy="{{ cy }}" r="2.6" fill="#f2a9c4"/>{% endfor %}
+  {% endif %}
+{% endmacro %}
+
+{% macro _cat(s) %}
+  {% set sc = 0.62 + (s - 1) * 0.076 %}
+  <g transform="translate(60 96) scale({{ '%.3f'|format(sc) }}) translate(-60 -96)">
+    <ellipse cx="60" cy="120" rx="26" ry="9" fill="#00000010"/>
+    <path d="M40 118 Q34 92 46 84 L74 84 Q86 92 80 118 Z" fill="#f0a24a"/>
+    <path d="M46 86 l-6 -16 12 6 Z" fill="#f0a24a"/><path d="M74 86 l6 -16 -12 6 Z" fill="#f0a24a"/>
+    <path d="M47 84 l-3.5 -9 6.5 3 Z" fill="#f6c79a"/><path d="M73 84 l3.5 -9 -6.5 3 Z" fill="#f6c79a"/>
+    <circle cx="60" cy="80" r="19" fill="#f4ad5b"/>
+    <circle cx="53" cy="78" r="2.6" fill="#3a2a1a"/><circle cx="67" cy="78" r="2.6" fill="#3a2a1a"/>
+    <path d="M60 82 l-2.5 3 h5 Z" fill="#c9607a"/>
+    {% if s >= 2 %}
+      <path d="M60 85 q-4 3 -8 2 M60 85 q4 3 8 2" stroke="#3a2a1a" stroke-width="1" fill="none"/>
+      <line x1="46" y1="80" x2="33" y2="78" stroke="#d9b48a" stroke-width="1"/><line x1="46" y1="82" x2="34" y2="83" stroke="#d9b48a" stroke-width="1"/>
+      <line x1="74" y1="80" x2="87" y2="78" stroke="#d9b48a" stroke-width="1"/><line x1="74" y1="82" x2="86" y2="83" stroke="#d9b48a" stroke-width="1"/>
+    {% endif %}
+    {% if s >= 3 %}<path d="M80 110 Q94 104 90 90" stroke="#f0a24a" stroke-width="7" fill="none" stroke-linecap="round"/>{% endif %}
+    {% if s >= 4 %}<path d="M52 74 l3 -4 3 4 M62 74 l3 -4 3 4" stroke="#c98a3a" stroke-width="1.4" fill="none"/>{% endif %}
+    {% if s >= 5 %}<path d="M50 66 h20 l-3 -6 h-14 Z" fill="#c9607a"/><circle cx="60" cy="60" r="2.6" fill="#f6c445"/>{% endif %}
+    {% if s >= 6 %}<path d="M46 54 l3.4 7 7.6 1 -5.5 5.4 1.3 7.6 -6.8 -3.6 -6.8 3.6 1.3 -7.6 -5.5 -5.4 7.6 -1 Z" transform="translate(14 -2) scale(.8)" fill="#f6c445"/>{% endif %}
+  </g>
+{% endmacro %}
+
+{% macro _bird(s) %}
+  {% set sc = 0.6 + (s - 1) * 0.08 %}
+  <g transform="translate(60 98) scale({{ '%.3f'|format(sc) }}) translate(-60 -98)">
+    <ellipse cx="60" cy="122" rx="22" ry="7" fill="#00000010"/>
+    {% if s == 1 %}
+      <ellipse cx="60" cy="98" rx="18" ry="16" fill="#8fd3d0"/>
+      <path d="M60 112 q-8 8 -18 6 q6 -6 4 -12 Z" fill="#cfeceb"/>
+    {% else %}
+      <path d="M42 100 Q40 76 60 74 Q80 76 78 100 Q70 116 60 116 Q50 116 42 100 Z" fill="#8fd3d0"/>
+      <path d="M60 76 Q46 82 48 104 Q56 114 60 114 Z" fill="#b7e6e4"/>
+    {% endif %}
+    <circle cx="60" cy="78" r="13" fill="#9fdad7"/>
+    <circle cx="56" cy="76" r="2.4" fill="#2c3a3a"/>
+    <path d="M69 78 l9 -3 -9 -3 Z" fill="#f2a63a"/>
+    {% if s >= 2 %}<path d="M63 76 l2.4 2 -2.4 2 Z" fill="#f2a63a"/>{% endif %}
+    {% if s >= 3 %}<path d="M44 96 Q30 92 26 82 Q40 84 48 92 Z" fill="#6fc0bd"/>{% endif %}
+    {% if s >= 4 %}<path d="M76 96 Q90 92 94 82 Q80 84 72 92 Z" fill="#6fc0bd"/>{% endif %}
+    {% if s >= 5 %}
+      <path d="M50 116 l-3 8 M60 118 l0 8 M70 116 l3 8" stroke="#f2a63a" stroke-width="2" stroke-linecap="round"/>
+      <path d="M52 66 q8 -8 16 0" stroke="#f2a63a" stroke-width="2" fill="none"/>
+    {% endif %}
+    {% if s >= 6 %}
+      <path d="M60 62 q-3 -10 3 -14 q2 8 6 8 q-4 3 -3 9 Z" fill="#f2a63a"/>
+      <circle cx="34" cy="58" r="2.2" fill="#f6c445"/><circle cx="90" cy="60" r="2.2" fill="#f6c445"/>
+    {% endif %}
+  </g>
+{% endmacro %}
+
+{% macro _turtle(s) %}
+  {% set sc = 0.62 + (s - 1) * 0.074 %}
+  <g transform="translate(60 100) scale({{ '%.3f'|format(sc) }}) translate(-60 -100)">
+    <ellipse cx="60" cy="120" rx="30" ry="8" fill="#00000010"/>
+    <ellipse cx="38" cy="112" rx="7" ry="5" fill="#8bc58a"/><ellipse cx="82" cy="112" rx="7" ry="5" fill="#8bc58a"/>
+    <ellipse cx="90" cy="96" rx="9" ry="7" fill="#8bc58a"/>
+    <circle cx="93" cy="94" r="1.6" fill="#2c3a2c"/>
+    {% if s >= 2 %}<path d="M96 92 q3 0 3 3" stroke="#5a8a58" stroke-width="1" fill="none"/>{% endif %}
+    {# shell grows domed + patterned with stage #}
+    <path d="M30 104 Q34 {{ 88 - s * 3 }} 60 {{ 84 - s * 4 }} Q86 {{ 88 - s * 3 }} 90 104 Z" fill="#4f9d6b"/>
+    <path d="M34 104 Q40 {{ 92 - s * 3 }} 60 {{ 88 - s * 4 }} Q80 {{ 92 - s * 3 }} 86 104 Z" fill="#63b57f"/>
+    {% if s >= 3 %}
+      <path d="M60 {{ 88 - s * 4 }} L60 104 M44 100 L{{ 60 }} {{ 90 - s * 2 }} L76 100" stroke="#3c7d54" stroke-width="1.4" fill="none"/>
+    {% endif %}
+    {% if s >= 4 %}
+      {% for cx, cy in [(50, 98), (70, 98), (60, 96)] %}<path d="M{{ cx }} {{ cy }} l3 0 -1.5 -3 Z" fill="#3c7d54"/>{% endfor %}
+    {% endif %}
+    {% if s >= 5 %}<path d="M52 96 h16 l-2 -4 h-12 Z" fill="#edd7a1"/>{% endif %}
+    {% if s >= 6 %}
+      <path d="M60 {{ 84 - s * 4 }} l1.6 4 4 .6 -3 3 .8 4.2 -3.4 -2 -3.4 2 .8 -4.2 -3 -3 4 -.6 Z" fill="#f6c445"/>
+    {% endif %}
+  </g>
+{% endmacro %}

@@ -1,0 +1,107 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import flash %}
+{% from "_avatars.html" import avatar_svg, avatar_defs %}
+{% block title %}My profile{% endblock %}
+{% block content %}
+{{ avatar_defs() }}
+<style>
+  .me-wrap { max-width:760px; margin:0 auto; }
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px;
+           padding:1.3rem 1.5rem; margin-bottom:1.2rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .panel h2 { font-size:1.1rem; margin:.1rem 0 1rem; }
+  .field { margin-bottom:1rem; }
+  .field label { display:block; font-weight:700; margin-bottom:.3rem; }
+  .field input[type=text] { width:100%; font:inherit; padding:.55rem .7rem; border:1px solid var(--line);
+                            border-radius:10px; background:var(--bg); color:var(--ink); box-sizing:border-box; }
+  .hint { color:var(--soft); font-size:.83rem; margin:.2rem 0 0; }
+  .photo-row { display:flex; gap:1.1rem; align-items:center; flex-wrap:wrap; }
+  .photo-prev { width:88px; height:88px; border-radius:50%; object-fit:cover; background:var(--line);
+                display:inline-flex; align-items:center; justify-content:center; font-weight:800; color:var(--soft); font-size:1.4rem; }
+  .lbl { display:inline-block; font-weight:700; cursor:pointer; border:1px solid var(--accent); color:var(--accent);
+         background:var(--accent-bg); border-radius:10px; padding:.5rem 1rem; }
+  .avgrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:.8rem; }
+  .avcard { position:relative; border:2px solid var(--line); border-radius:14px; padding:.6rem .4rem .5rem;
+            text-align:center; cursor:pointer; background:var(--bg); transition:border-color .15s, transform .1s; }
+  .avcard:hover { transform:translateY(-2px); }
+  .avcard svg { width:90px; height:104px; }
+  .avcard .nm { font-weight:700; font-size:.86rem; margin-top:.2rem; }
+  .avcard .fam { color:var(--soft); font-size:.72rem; text-transform:uppercase; letter-spacing:.03em; }
+  .avcard input { position:absolute; opacity:0; width:1px; height:1px; }
+  .avcard:has(input:checked) { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg); }
+  .avcard:focus-within { outline:2px solid var(--accent); outline-offset:2px; }
+  .av-sway-c { transform-origin:50% 90%; animation:av-sway 5s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce){ .av-sway-c { animation:none; } }
+  .btn { display:inline-block; font:inherit; font-weight:800; cursor:pointer; border:1px solid var(--accent);
+         background:var(--accent); color:#fff; border-radius:10px; padding:.65rem 1.5rem; }
+  .actions { text-align:center; }
+</style>
+
+<div class="me-wrap">
+  <h1 style="text-align:center;margin:.3rem 0 1.2rem;">My profile</h1>
+  {% if msg %}{{ flash(msg=msg) }}{% endif %}
+  {% if err %}{{ flash(err=err) }}{% endif %}
+
+  <form method="post" action="/me" enctype="application/x-www-form-urlencoded">
+    <input type="hidden" name="photo_data" id="photo_data" value="">
+
+    {% if has_person %}
+    <div class="panel">
+      <h2>Photo &amp; name</h2>
+      <div class="field photo-row">
+        <span id="photoPrev" class="photo-prev">
+          {% if profile.has_photo %}<img src="/photo/{{ profile.rp_id }}?v=me" alt=""
+               style="width:100%;height:100%;border-radius:50%;object-fit:cover;">{% else %}{{ initials }}{% endif %}
+        </span>
+        <div>
+          <label>Profile photo</label>
+          <span class="lbl">Choose / change photo<input type="file" accept="image/*" hidden onchange="onPickPhoto(this)"></span>
+          <p class="hint">Shown on your people page and beside your name.</p>
+        </div>
+      </div>
+      <div class="field">
+        <label for="display_name">Your name</label>
+        <input type="text" id="display_name" value="{{ profile.person_name }}" readonly>
+        <p class="hint">From the staff directory — ask an administrator to correct it.</p>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="panel">
+      <h2>Your companion</h2>
+      <div class="avgrid" role="radiogroup" aria-label="Choose your companion">
+        {% for a in catalog %}
+        <label class="avcard" title="{{ a.label }}">
+          <input type="radio" name="avatar_kind" value="{{ a.key }}"
+                 {{ 'checked' if a.key == profile.avatar_kind }} required>
+          <span class="{{ 'av-sway-c' if a.family == 'plant' else '' }}" style="display:inline-block;">{{ avatar_svg(a.key, 2) }}</span>
+          <div class="nm">{{ a.label }}</div>
+          <div class="fam">{{ a.family }}</div>
+        </label>
+        {% endfor %}
+      </div>
+      <div class="field" style="margin-top:1.1rem;">
+        <label for="avatar_name">Pet name</label>
+        <input type="text" id="avatar_name" name="avatar_name" maxlength="{{ name_maxlen }}"
+               value="{{ profile.avatar_name }}" required>
+        <p class="hint">Up to {{ name_maxlen }} characters.</p>
+      </div>
+    </div>
+
+    <div class="actions"><button class="btn" type="submit">Save changes</button></div>
+  </form>
+</div>
+
+<script>
+  function onPickPhoto(inp){
+    var f = inp.files && inp.files[0]; if(!f) return;
+    if (f.size > 5000000){ alert("That image is a bit large — please choose one under 5 MB."); inp.value=""; return; }
+    var r = new FileReader();
+    r.onload = function(){
+      document.getElementById("photo_data").value = r.result;
+      document.getElementById("photoPrev").innerHTML =
+        '<img src="'+r.result+'" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
+    };
+    r.readAsDataURL(f);
+  }
+</script>
+{% endblock %}

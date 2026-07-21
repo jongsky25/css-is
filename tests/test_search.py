@@ -70,7 +70,7 @@ def test_search_page_respects_role(viewer):
 
 
 def test_landing_wires_the_search_box(admin):
-    r = admin.get("/")
+    r = admin.get("/css")
     assert r.status_code == 200
     assert 'data-search' in r.text                       # inline box present
     assert "window.SEARCH_INDEX" in r.text               # palette index injected
