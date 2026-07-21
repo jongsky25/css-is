@@ -39,15 +39,17 @@
 </style>
 
 {{ page_header("Request a wellness break",
-               "Up to " ~ weekly_hours ~ " hours a week, in one or two sittings — scheduled so your section keeps running.") }}
+               "Up to " ~ weekly_hours ~ " hours a week, in one or two sittings — plan up to " ~ window_weeks ~ " weeks ahead so your section keeps running.") }}
 
 <div class="panel">
   {% if err %}{{ flash(err=err) }}{% endif %}
-  <div class="left-note">{{ left }} hour{{ 's' if left != 1 }} left this week.</div>
+  <div class="left-note" id="leftNote"
+       data-week-used='{{ week_used|tojson }}' data-weekly="{{ weekly_hours }}">{{ left }} hour{{ 's' if left != 1 }} left that week.</div>
 
   <form method="post" action="/wellness/apply">
     {{ field("break_date", "Date", value=form.get("break_date", ""), type="date", required=True,
-             attrs='min="' ~ today ~ '"', help="A workday, today or later — breaks can't be filed backdated.") }}
+             attrs='min="' ~ today ~ '" max="' ~ max_date ~ '"',
+             help="Any workday from today up to " ~ window_weeks ~ " weeks ahead — breaks can't be filed backdated.") }}
     {{ field("start_time", "Start time", value=form.get("start_time", ""), type="time", required=True,
              help="File it at least " ~ min_lead ~ " minutes ahead so your approver has time to see it. Coordinate with your section so service isn't disrupted; it can't overlap your lunch break.") }}
 
@@ -59,9 +61,9 @@
                  {{ "checked" if form.get("hours", "1") == "1" }}>
           1 hour
         </label>
-        <label class="{{ 'disabled' if left < 2 }}"
-               title="{{ 'Only 1 hour left this week' if left < 2 else '' }}">
-          <input type="radio" name="hours" value="2"
+        <label id="hours2Label" class="{{ 'disabled' if left < 2 }}"
+               title="{{ 'Only 1 hour left that week' if left < 2 else '' }}">
+          <input type="radio" name="hours" value="2" id="hours2Input"
                  {{ "checked" if form.get("hours") == "2" }}
                  {{ "disabled" if left < 2 }}>
           2 hours
@@ -82,17 +84,82 @@
         </label>
         {% endfor %}
       </div>
+      <div class="field" id="otherSpecifyRow" style="display:none; margin-top:.2rem;">
+        <label for="activity_other">Please specify</label>
+        <input type="text" name="activity_other" id="activity_other"
+               value="{{ form.get('activity_other', '') }}" maxlength="120"
+               placeholder="what the 'Others' activity is">
+      </div>
     </div>
 
-    {{ field("note", "Note for " ~ (approver_title or "your section chief"), value=form.get("note", ""), type="textarea",
+    {{ field("note", "Note for " ~ (approver_name or approver_title or "your section chief"), value=form.get("note", ""), type="textarea",
              optional=True, placeholder="e.g. morning jog at the grounds, back by 10:00",
              attrs='rows="2"') }}
 
-    <button class="btn" type="submit">Send to {{ approver_title or "my section chief" }}</button>
+    <button class="btn" type="submit">{% if approver_name %}Send for approval of {{ approver_name }}{% else %}Send to {{ approver_title or "my section chief" }}{% endif %}</button>
     <a href="/wellness" style="margin-left:.8rem;">Cancel</a>
 
     <p class="notallowed">Per DM 2025-0135, wellness breaks are for healthy activities —
     smoking, vaping, alcohol and similar are not covered.</p>
   </form>
 </div>
+
+<script>
+(function () {
+  var note = document.getElementById("leftNote");
+  var dateInput = document.querySelector('input[name="break_date"]');
+  var hours2Label = document.getElementById("hours2Label");
+  var hours2Input = document.getElementById("hours2Input");
+  var weekly = parseInt(note && note.dataset.weekly, 10) || 2;
+  var weekUsed = {};
+  try { weekUsed = JSON.parse((note && note.dataset.weekUsed) || "{}"); } catch (e) {}
+
+  // Monday (YYYY-MM-DD) of the week containing an ISO date string, in UTC so the
+  // day-of-week math never shifts across the local timezone.
+  function mondayOf(iso) {
+    var p = iso.split("-");
+    var d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]));
+    var dow = d.getUTCDay();                 // 0=Sun..6=Sat
+    d.setUTCDate(d.getUTCDate() - ((dow + 6) % 7));
+    return d.toISOString().slice(0, 10);
+  }
+
+  function refresh() {
+    var iso = dateInput && dateInput.value;
+    if (!iso) return;                        // keep the server-rendered current-week note
+    var used = weekUsed[mondayOf(iso)] || 0;
+    var left = Math.max(0, weekly - used);
+    if (note) note.textContent = left + " hour" + (left === 1 ? "" : "s") + " left that week.";
+    if (hours2Input) {
+      var disable = left < 2;
+      hours2Input.disabled = disable;
+      if (hours2Label) {
+        hours2Label.classList.toggle("disabled", disable);
+        hours2Label.title = disable ? "Only " + left + " hour left that week" : "";
+      }
+      if (disable && hours2Input.checked) {
+        var one = document.querySelector('input[name="hours"][value="1"]');
+        if (one) one.checked = true;
+      }
+    }
+  }
+  if (dateInput) dateInput.addEventListener("change", refresh);
+
+  // "Others" needs a specification; reveal + require it only when chosen.
+  var otherRow = document.getElementById("otherSpecifyRow");
+  var otherField = document.getElementById("activity_other");
+  function syncOther() {
+    var picked = document.querySelector('input[name="activity"]:checked');
+    var isOther = picked && picked.value === "other";
+    if (otherRow) otherRow.style.display = isOther ? "" : "none";
+    if (otherField) otherField.required = !!isOther;
+  }
+  document.querySelectorAll('input[name="activity"]').forEach(function (r) {
+    r.addEventListener("change", syncOther);
+  });
+
+  refresh();
+  syncOther();
+})();
+</script>
 {% endblock %}

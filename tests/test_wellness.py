@@ -460,6 +460,124 @@ def test_register_export(app_mod, wellness_org, admin):
     assert r.status_code == 200 and "WSec" in r.text
 
 
+# ---------------------------------------- "Others" activity needs a specification
+
+def test_other_activity_requires_and_stores_specification(wellness_org):
+    conn, emp = wellness_org["conn"], wellness_org["emp"]
+    d = _future_weekday().isoformat()
+    # "other" with no specification is rejected
+    with pytest.raises(ValueError, match="Others"):
+        st.create_wellness_claim(conn, emp, d, "09:00", "other")
+    with pytest.raises(ValueError, match="Others"):
+        st.create_wellness_claim(conn, emp, d, "09:00", "other", activity_other="  ")
+    # with a specification it is stored and surfaced in the label
+    cid = st.create_wellness_claim(conn, emp, d, "10:00", "other",
+                                   activity_other="community gardening")
+    claim = st.get_wellness_claim(conn, cid)
+    assert claim["activity_other"] == "community gardening"
+    assert claim["activity_label"] == "Others — community gardening"
+    # a non-"other" activity never keeps a stray specification
+    cid2 = st.create_wellness_claim(conn, emp, d, "11:00", "exercise",
+                                    activity_other="ignored")
+    assert st.get_wellness_claim(conn, cid2)["activity_other"] is None
+
+
+# ---------------------------------------------- rolling 4-week request window
+
+def test_request_allowed_across_the_month(wellness_org):
+    """A break can be filed for a future week within the window; each week keeps
+    its own 2-hour cap, independent of the current week."""
+    conn, emp = wellness_org["conn"], wellness_org["emp"]
+    next_week = _next_weekday(_monday_this_week() + timedelta(days=7))
+    d = next_week.isoformat()
+    cid = st.create_wellness_claim(conn, emp, d, "09:00", "exercise", hours=2)
+    ws = st.wellness_week_start(next_week)
+    assert st.wellness_hours_used(conn, emp, ws) == 2
+    # the current week is untouched by next week's claim
+    assert st.wellness_hours_used(conn, emp, st.wellness_week_start()) == 0
+
+
+def test_request_beyond_window_is_rejected(wellness_org):
+    conn, emp = wellness_org["conn"], wellness_org["emp"]
+    # a workday past the last week of the rolling window
+    beyond = _next_weekday(_monday_this_week()
+                           + timedelta(days=st.WELLNESS_WINDOW_WEEKS * 7))
+    assert beyond > st.wellness_window_last_date()
+    with pytest.raises(ValueError, match="weeks ahead"):
+        st.create_wellness_claim(conn, emp, beyond.isoformat(), "09:00", "exercise")
+
+
+# ------------------------------------------- richer post-activity report fields
+
+def test_completion_records_post_activity_fields(app_mod, wellness_org):
+    conn, emp, chief = wellness_org["conn"], wellness_org["emp"], wellness_org["chief"]
+    u_chief = {"id": chief, "username": "w-chief@test.local", "role": "section_manager"}
+    monday = _monday_this_week().isoformat()
+    ws = st.wellness_week_start(date.fromisoformat(monday))
+    cid = conn.execute(
+        "INSERT INTO wellness_claim(user_id, week_start, break_date, start_time,"
+        " hours, activity, status, created_at) VALUES (?,?,?,?,1,'exercise','approved',?)",
+        (emp, ws, monday, "09:00", tz.now_iso())).lastrowid
+    conn.commit()
+    st.complete_wellness_claim(
+        conn, cid, emp, 2, 4, "brisk walk", "felt lighter",
+        usefulness="5", felt_refreshed="1", managed_stress="0",
+        focus_impact="improved", suggestions="more shaded areas")
+    claim = st.get_wellness_claim(conn, cid)
+    assert claim["usefulness"] == 5
+    assert claim["felt_refreshed"] == 1 and claim["managed_stress"] == 0
+    assert claim["focus_impact"] == "improved"
+    assert claim["suggestions"] == "more shaded areas"
+
+
+def test_completion_validates_new_fields(wellness_org):
+    conn, emp = wellness_org["conn"], wellness_org["emp"]
+    monday = _monday_this_week().isoformat()
+    ws = st.wellness_week_start(date.fromisoformat(monday))
+
+    def _fresh(start):
+        return conn.execute(
+            "INSERT INTO wellness_claim(user_id, week_start, break_date, start_time,"
+            " hours, activity, status, created_at) VALUES (?,?,?,?,1,'exercise','approved',?)",
+            (emp, ws, monday, start, tz.now_iso())).lastrowid
+
+    c1 = _fresh("09:00")
+    with pytest.raises(ValueError, match="Usefulness"):
+        st.complete_wellness_claim(conn, c1, emp, 2, 4, "walk", None, usefulness="9")
+    c2 = _fresh("10:00")
+    with pytest.raises(ValueError, match="focus"):
+        st.complete_wellness_claim(conn, c2, emp, 2, 4, "walk", None, focus_impact="great")
+    # the new fields are optional — the legacy 6-arg call still works
+    c3 = _fresh("11:00")
+    st.complete_wellness_claim(conn, c3, emp, 2, 4, "walk", None)
+    assert st.get_wellness_claim(conn, c3)["status"] == "completed"
+
+
+# --------------------------------------------------- approver named, not generic
+
+def test_approver_name_resolves_seat_holder(wellness_chain):
+    conn, w = wellness_chain["conn"], wellness_chain
+    # staff -> section chief and section chief -> division chief are org-scoped,
+    # so they name exactly the one seat holder in that unit.
+    assert st.wellness_approver_name(conn, w["emp"]) == "WC-SecHead"
+    assert st.wellness_approver_name(conn, w["sechead"]) == "WC-DivChief"
+    # division chief -> the Director is searched bureau-wide (the top tier has no
+    # org scope), so just assert our Director is named among them.
+    assert "WC-Director" in (st.wellness_approver_name(conn, w["divchief"]) or "")
+    # the Director sits at the top — no named approver, callers fall back to title
+    assert st.wellness_approver_name(conn, w["director"]) is None
+
+
+def test_apply_page_names_the_approver(app_mod, wellness_org):
+    c = _client_for_id(app_mod, wellness_org["emp"])
+    r = c.get("/wellness/apply")
+    assert r.status_code == 200
+    # the section chief's actual name appears on the submit button
+    assert "W-Test Chief" in r.text
+    # the "Others" specify field is present for progressive reveal
+    assert 'name="activity_other"' in r.text
+
+
 def test_home_shows_the_two_doors(viewer):
     r = viewer.get("/")
     assert r.status_code == 200

@@ -19,6 +19,17 @@
   .moods label:has(input:checked) { border-color:var(--accent); background:var(--accent-bg); }
   .moods .face { font-size:1.3rem; display:block; }
   .moods small { color:var(--soft); }
+  .rate { display:flex; gap:.4rem; }
+  .rate label { flex:1; text-align:center; border:1px solid var(--line); border-radius:12px;
+                padding:.5rem .3rem; cursor:pointer; background:var(--bg); font-weight:700; }
+  .rate input { position:absolute; opacity:0; }
+  .rate label:has(input:checked) { border-color:var(--accent); background:var(--accent-bg); }
+  .choice { display:flex; gap:.5rem; flex-wrap:wrap; }
+  .choice label { flex:1; min-width:110px; text-align:center; border:1px solid var(--line);
+                  border-radius:12px; padding:.5rem .4rem; cursor:pointer; background:var(--bg);
+                  font-weight:700; }
+  .choice input { position:absolute; opacity:0; }
+  .choice label:has(input:checked) { border-color:var(--accent); background:var(--accent-bg); }
   .btn { font:inherit; font-weight:700; cursor:pointer; border:1px solid var(--accent);
          background:var(--accent); color:#fff; border-radius:10px; padding:.6rem 1.2rem; }
   .grow-note { color:var(--soft); font-size:.82rem; margin-top:.9rem; }
@@ -51,10 +62,46 @@
       </div>
     </div>
 
+    <div class="field">
+      <label>How useful was the break? <small style="font-weight:400;color:var(--soft)">(1 = not useful, 5 = highly useful)</small></label>
+      <div class="rate">
+        {% for i in range(1, 6) %}
+        <label><input type="radio" name="usefulness" value="{{ i }}" required>{{ i }}</label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Did the break help you feel more refreshed or energized?</label>
+      <div class="choice">
+        <label><input type="radio" name="felt_refreshed" value="1" required> Yes</label>
+        <label><input type="radio" name="felt_refreshed" value="0"> No</label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Did it help you manage stress or anxiety?</label>
+      <div class="choice">
+        <label><input type="radio" name="managed_stress" value="1" required> Yes</label>
+        <label><input type="radio" name="managed_stress" value="0"> No</label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>How did it affect your ability to focus and perform tasks?</label>
+      <div class="choice">
+        <label><input type="radio" name="focus_impact" value="improved" required> Improved</label>
+        <label><input type="radio" name="focus_impact" value="no_change"> No change</label>
+        <label><input type="radio" name="focus_impact" value="worsened"> Worsened</label>
+      </div>
+    </div>
+
     {{ field("activity_done", "What did you actually do?", required=True,
              placeholder="e.g. 30-minute walk then stretching") }}
     {{ field("takeaway", "One takeaway", type="textarea", optional=True,
              placeholder="anything you noticed — energy, focus, mood…", attrs='rows="2"') }}
+    {{ field("suggestions", "Suggestions for improving future wellness breaks", type="textarea", optional=True,
+             placeholder="optional — ideas for the program", attrs='rows="2"') }}
 
     <button class="btn" type="submit">Finish check-in</button>
     <a href="/wellness" style="margin-left:.8rem;">Back</a>
