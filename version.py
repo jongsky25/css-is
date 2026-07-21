@@ -17,10 +17,23 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.31"
+APP_VERSION = "2.32"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.32",
+        "date": "July 21, 2026",
+        "summary": "Fixed the AI helpers quietly falling back to their non-AI "
+                   "answers after the switch to Google's newer Gemini model.",
+        "changes": [
+            "Google's newer AI models silently spend part of each reply on "
+            "hidden \"thinking\", which was crowding out the actual answer and "
+            "making the AI search bar and other AI features drop back to their "
+            "non-AI behaviour. The system now keeps that thinking to a minimum "
+            "and leaves room for the real answer, so the AI features work again.",
+        ],
+    },
     {
         "version": "2.31",
         "date": "July 21, 2026",

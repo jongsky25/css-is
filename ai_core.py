@@ -57,6 +57,12 @@ import tzutil as tz
 
 GEMINI_MODEL_DEFAULT = "gemini-3.5-flash"
 GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta"
+# Gemini 2.5+/3.x "thinking" tokens are spent from the SAME maxOutputTokens
+# budget as the visible answer. Our structured calls set small token limits
+# sized for a compact JSON reply, so on the Gemini-3 path (where thinking can
+# only be lowered, not switched off) we add this much headroom on top of the
+# caller's limit to leave room for the now-minimal reasoning.
+THINKING_HEADROOM_TOKENS = 1024
 
 GROQ_MODEL_DEFAULT = "llama-3.3-70b-versatile"
 GROQ_API_BASE = "https://api.groq.com/openai/v1"
@@ -306,6 +312,29 @@ def mask_for_log(text):
 # The HTTP call — the ONLY function AI tests ever mock (never the network).
 # ---------------------------------------------------------------------
 
+def _thinking_config(model):
+    """Gemini 2.5+ and 3.x turn "thinking" ON by default, and those thinking
+    tokens are spent from the SAME maxOutputTokens budget as the visible
+    answer — so a small token limit sized for a compact JSON reply gets starved
+    by default ("high") thinking, and the schema-constrained call comes back
+    truncated ("model output did not match the response schema") or empty.
+    (Groq's Llama has no thinking, which is why the same calls worked there.)
+    Pin thinking to its floor for these short structured calls. The knob and
+    its floor differ by model family, and the two are mutually exclusive —
+    sending both in one request is a 400.
+
+    Returns a `thinkingConfig` dict, or None for a model with no thinking knob.
+    """
+    m = (model or "").lower()
+    if m.startswith("gemini-3"):
+        # Gemini 3 can't fully disable thinking; "minimal" is the floor and is
+        # supported on Flash/Flash-Lite, "low" is the safe floor elsewhere.
+        return {"thinkingLevel": "minimal" if "flash" in m else "low"}
+    if m.startswith(("gemini-2.5", "gemini-2.0")):
+        return {"thinkingBudget": 0}   # 0 fully disables thinking on 2.x
+    return None
+
+
 def _http_generate(prompt, *, system=None, response_schema=None, temperature=0.2,
                     max_output_tokens=1024, timeout=8.0):
     """One Gemini `generateContent` call. Connect timeout is fixed at 3s; total
@@ -322,6 +351,14 @@ def _http_generate(prompt, *, system=None, response_schema=None, temperature=0.2
     model = ai_model()
     url = f"{GEMINI_API_BASE}/models/{model}:generateContent"
     generation_config = {"temperature": temperature, "maxOutputTokens": max_output_tokens}
+    thinking = _thinking_config(model)
+    if thinking is not None:
+        generation_config["thinkingConfig"] = thinking
+        if "thinkingLevel" in thinking:
+            # Gemini 3 shares the token budget between thinking and the answer;
+            # give the answer its full requested size plus room for the (now
+            # minimal) reasoning, so structured JSON isn't cut off mid-object.
+            generation_config["maxOutputTokens"] = max_output_tokens + THINKING_HEADROOM_TOKENS
     if response_schema is not None:
         generation_config["responseMimeType"] = "application/json"
         generation_config["responseSchema"] = response_schema
