@@ -44,8 +44,9 @@ def test_help_manual_renders(admin):
     r = admin.get("/help")
     assert r.status_code == 200
     assert "Guide" in r.text
-    # the Home tour section + its replay-in-context link
+    # the Home tour section + its replay-in-context link (the hub moved to /css
+    # in the onboarding fork — the tour markup lives there now)
     assert ">Home<" in r.text
-    assert "/?tour=1" in r.text
+    assert "/css?tour=1" in r.text
     # the searchable section markers the filter JS keys on
     assert "data-help-sec" in r.text

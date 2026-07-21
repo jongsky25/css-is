@@ -603,8 +603,10 @@ def search_index_for(user):
     """Flat list of every destination this user may open — the search palette's
     index. Includes search-only items (in_nav False) the top nav omits. Built
     server-side so a user never even receives links they aren't allowed to use."""
-    out = [{"title": "Home", "hint": "Main hub", "url": "/", "section": "Go to",
-            "kw": "home start hub main launcher overview"}]
+    out = [{"title": "What to do", "hint": "Wellness or CSS", "url": "/", "section": "Go to",
+            "kw": "home start landing chooser what to do wellness css"},
+           {"title": "CSS hub", "hint": "Main hub", "url": "/css", "section": "Go to",
+            "kw": "css hub main launcher overview dashboards reports surveys"}]
     for g in NAV_GROUPS:
         for it in g["items"]:
             if _cap_ok(user, it["cap"]):
@@ -623,8 +625,8 @@ def ai_route_catalog(user):
     offered a screen this user can't open), but keyed by `key` since that's
     what the router validates the model's answer against and builds the final
     URL from server-side; model output never supplies a URL directly."""
-    out = [{"key": "home", "label": "Home", "hint": "Main hub", "url": "/",
-            "kw": "home start hub main launcher overview"}]
+    out = [{"key": "home", "label": "CSS hub", "hint": "Main hub", "url": "/css",
+            "kw": "home start hub main launcher overview css dashboards reports"}]
     for g in NAV_GROUPS:
         for it in g["items"]:
             if _cap_ok(user, it["cap"]):
@@ -639,7 +641,7 @@ def help_catalog_for(user):
     the answers-mode NL router (docs/AI_INTEGRATION_PLAN.md Phase 2): a `help_key`
     the router picks can never point at a screen this user isn't already allowed
     to open, exactly like ai_route_catalog's `destination`."""
-    meta = {"home": ("Home", None, "/")}
+    meta = {"home": ("Home", None, "/css")}
     for g in NAV_GROUPS:
         for it in g["items"]:
             meta[it["key"]] = (it["label"], it["cap"], it["url"])
@@ -3530,16 +3532,53 @@ def _onboarding_redirect(request, conn):
     return RedirectResponse(dest, status_code=303)
 
 
+def _css_entry_for(user, conn):
+    """Where the chooser's CSS card should point for this user. Phase 3: always
+    the hub. Phase 4 sends plain viewers to their own person profile first
+    (STAFF_ONBOARDING_AVATAR_PLAN.md §D5)."""
+    return "/css"
+
+
 @app.get("/", response_class=HTMLResponse)
-def home(request: Request):
-    """Task-oriented home hub — 'what would you like to do?' Role-filtered module
-    cards + a glanceable stats strip. (Replaces the old behaviour of landing
-    managers straight on the create-activity form and everyone else on Pulse.)"""
+def choose(request: Request):
+    """The post-login chooser — 'what would you like to do?' Two doors, Wellness
+    and CSS (STAFF_ONBOARDING_AVATAR_PLAN.md Phase 3). Greets the user with their
+    photo/companion; guards the one-time onboarding so it can't be skipped by
+    typing the URL."""
     conn = get_conn()
     try:
         onboard = _onboarding_redirect(request, conn)
         if onboard:
             return onboard
+        profile = st.get_user_profile(conn, request.state.user["id"])
+        first_name = _account_first_name(conn, request.state.user)
+        css_url = _css_entry_for(request.state.user, conn)
+        # A light wellness teaser (points/streak) beside the Wellness door.
+        try:
+            wstats = st.wellness_stats(conn, request.state.user["id"])
+        except Exception:
+            wstats = None
+    finally:
+        conn.close()
+    role = request.state.user["role"]
+    return templates.TemplateResponse(request, "choose.html", {
+        "nav_active": "", "show_scope": False,
+        "first_name": first_name, "profile": profile,
+        "initials": _initials(profile.get("person_name") if profile else ""),
+        "css_url": css_url, "wstats": wstats,
+        "role_label": auth.ROLE_LABELS.get(role, role),
+        "role_blurb": auth.ROLE_BLURB.get(role, ""),
+    })
+
+
+@app.get("/css", response_class=HTMLResponse)
+def home(request: Request):
+    """The CSS hub — role-filtered module cards + a glanceable stats strip. One
+    of the two doors off the `/` chooser (STAFF_ONBOARDING_AVATAR_PLAN.md Phase
+    3); formerly served at `/`. Reachable as a deep link even before onboarding
+    (the one-time /welcome guard lives only on the chooser)."""
+    conn = get_conn()
+    try:
         _, blhsd_name, _ = st.get_or_create_blhsd(conn)
         stats = home_stats(conn)
         first_name = _account_first_name(conn, request.state.user)

@@ -519,6 +519,6 @@ def test_home_ongoing_shows_open_invited_activity(manager, db_path):
     name = "Home Ongoing Invited"
     _make_outside(manager, db_path, name=name)          # past event date, still open
     token = _outside_event(db_path, name)[1]
-    body = manager.get("/").text
+    body = manager.get("/css").text
     assert name in body
     assert f"/activities/{token}/manage" in body

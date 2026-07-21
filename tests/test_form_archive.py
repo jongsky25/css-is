@@ -84,7 +84,7 @@ def test_admin_home_strip_shows_archive_for_anothers_form(admin, db_path):
     """The admin home strip lists every recent activity, so a standalone one created
     by someone else renders its per-form Archive button."""
     fid = _make_standalone(db_path, "someoneelse@test.local", "Standalone — on admin home")
-    r = admin.get("/")
+    r = admin.get("/css")
     assert r.status_code == 200
     assert "Recent activities" in r.text          # admin relabel of the strip
     assert f"/activities/form/{fid}/archive" in r.text

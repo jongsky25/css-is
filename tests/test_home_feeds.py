@@ -14,7 +14,7 @@ import storage as st
 
 
 def test_home_renders_both_feeds(admin):
-    r = admin.get("/")
+    r = admin.get("/css")
     assert r.status_code == 200
     assert "Upcoming activities" in r.text
     assert "Recently concluded" in r.text
@@ -25,7 +25,7 @@ def test_home_renders_both_feeds(admin):
 def test_home_greets_user_by_first_name(admin):
     # The admin test account is admin@test.local (no directory link), so the
     # greeting derives 'Admin' from the email local part.
-    r = admin.get("/")
+    r = admin.get("/css")
     assert "What would you like to do, Admin?" in r.text
 
 
@@ -38,7 +38,7 @@ def test_recently_concluded_links_resolve(admin):
     narrowed to that activity. We follow each item's own `url`, which encodes that
     rule."""
     import json
-    r = admin.get("/")
+    r = admin.get("/css")
     assert r.status_code == 200
     blob = r.text.split("window.HOME_CONCLUDED =", 1)[1].split(";", 1)[0]
     items = json.loads(blob)
@@ -149,7 +149,7 @@ def test_ongoing_inline_archive_standalone(admin, db_path):
     conn.commit(); conn.close()
     try:
         # The feed renders the row with its inline archive control.
-        r = admin.get("/")
+        r = admin.get("/css")
         assert r.status_code == 200
         assert f"/activities/instance/{fid}/archive" in r.text
         # Archiving it from the feed hides it.
@@ -160,7 +160,7 @@ def test_ongoing_inline_archive_standalone(admin, db_path):
             "SELECT archived FROM form_instance WHERE id=?", (fid,)).fetchone()[0]
         conn.close()
         assert archived == 1
-        assert f"/activities/instance/{fid}/archive" not in admin.get("/").text
+        assert f"/activities/instance/{fid}/archive" not in admin.get("/css").text
     finally:
         conn = st.connect(db_path)
         conn.execute("DELETE FROM form_instance WHERE id=?", (fid,))
@@ -271,7 +271,7 @@ def test_recent_activities_strip_offers_archive_for_bureau_event(admin, db_path)
                          form_instance_ids=[f2], created_by="admin@test.local")
     conn.commit(); conn.close()
     try:
-        r = admin.get("/")
+        r = admin.get("/css")
         assert r.status_code == 200
         assert "Probe Recent Event" in r.text
         assert f"/activities/instance/{f2}/archive" in r.text
