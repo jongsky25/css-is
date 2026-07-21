@@ -483,6 +483,43 @@ def test_register_export(app_mod, wellness_org, admin):
     # the dashboard shows the same week
     r = admin.get(f"/wellness/dashboard?week={monday}")
     assert r.status_code == 200 and "WSec" in r.text
+    # the dashboard's download control carries the date-range filter
+    assert 'action="/wellness/export.xlsx"' in r.text
+    assert 'name="date_from"' in r.text and 'name="date_to"' in r.text
+
+
+def test_register_export_date_range(app_mod, wellness_org, admin):
+    conn, emp = wellness_org["conn"], wellness_org["emp"]
+    monday = _monday_this_week()
+    ws = st.wellness_week_start(monday)
+    early = monday.isoformat()
+    late = (monday + timedelta(days=2)).isoformat()
+    for d, t in ((early, "10:00"), (late, "15:00")):
+        conn.execute(
+            "INSERT INTO wellness_claim(user_id, week_start, break_date, start_time,"
+            " hours, activity, status, created_at) VALUES (?,?,?,?,1,'exercise','completed',?)",
+            (emp, ws, d, t, tz.now_iso()))
+    conn.commit()
+
+    from openpyxl import load_workbook
+
+    def register(**params):
+        r = admin.get("/wellness/export.xlsx", params=params)
+        assert r.status_code == 200
+        sh = load_workbook(io.BytesIO(r.content)).active
+        return "\n".join("|".join("" if c.value is None else str(c.value) for c in row)
+                         for row in sh.iter_rows())
+
+    # bound the range to the early day only -> the late break is filtered out
+    text = register(date_from=early, date_to=early)
+    assert early in text and late not in text
+    # the requested bounds drive the "Weekly Covered" masthead
+    assert f"Weekly Covered: {app_mod._fmt_reg_date(early)}" in text
+    # widening the upper bound brings the late break back in
+    text = register(date_from=early, date_to=late)
+    assert early in text and late in text
+    # an open lower bound (date_to only) still filters the far side
+    assert late not in register(date_to=early)
 
 
 # ---------------------------------------- "Others" activity needs a specification

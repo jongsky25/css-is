@@ -20,8 +20,13 @@ availed.
   Wellness Consult, Recreation, Arts, Others); `WELLNESS_OFFICE_UNIT` carries the
   bureau's full name. `wellness_export_rows` now also returns `activity_key`,
   `activity_annex`, and the `remarks` takeaway.
-- **Dashboard link** (`templates/wellness_dashboard.html`) points at the new
-  route and reads "Download the register (Excel)".
+- **Dashboard download control** (`templates/wellness_dashboard.html`) points at
+  the new route and adds a **From/To date-range filter** (a small GET form) so the
+  register can be scoped to any span. It defaults to the currently-viewed week —
+  matching the Annex A weekly form and tracking the week nav — and clearing both
+  fields exports the full register. The `date_from`/`date_to` query params were
+  already honored by `wellness_export_rows`; the endpoint drives the exported
+  "Weekly Covered" masthead from whichever bounds are supplied.
 - Tests updated (`tests/test_wellness.py`): the register export test loads the
   workbook, asserts the Annex A masthead/columns and the mapped row, and confirms
   a still-pending break never reaches the register.
