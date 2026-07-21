@@ -4625,6 +4625,8 @@ AVATAR_CATALOG = [
      "blurb": "Shy — twitches and peeks"},
     {"key": "fish",       "label": "Fish",          "family": "animal",
      "blurb": "Serene — glides and bubbles"},
+    {"key": "dolphin",    "label": "Dolphin",       "family": "animal",
+     "blurb": "Joyful — swims and leaps"},
     {"key": "owl",        "label": "Owl",           "family": "animal",
      "blurb": "Watchful — follows your pointer"},
     {"key": "bat",        "label": "Bat",           "family": "animal",
@@ -4634,6 +4636,10 @@ AVATAR_KEYS = {a["key"] for a in AVATAR_CATALOG}
 AVATAR_DEFAULT = "plant"          # accounts that never chose keep the classic plant
 AVATAR_NAME_MAXLEN = 24
 _AVATAR_FAMILY = {a["key"]: a["family"] for a in AVATAR_CATALOG}
+# Species that live in water and roam by swimming (avatars.js glides them around
+# a fixed home-water backdrop). Kept here so the template and the JS can never
+# disagree on who gets the water surface drawn behind them.
+AVATAR_SWIMMERS = {"fish", "dolphin"}
 
 
 def valid_avatar_kind(kind):
@@ -4645,6 +4651,13 @@ def avatar_family(kind):
     """The family ('plant' / 'animal') of a species key. Unknown/None keys fall
     back to the default species' family, so callers never KeyError."""
     return _AVATAR_FAMILY.get(kind, _AVATAR_FAMILY[AVATAR_DEFAULT])
+
+
+def avatar_is_swimmer(kind):
+    """True for water species (fish, dolphin) — the ones avatars.js swims around
+    a static home-water backdrop. avatar_svg draws that backdrop OUTSIDE the
+    roaming layer so it stays put while the creature glides."""
+    return kind in AVATAR_SWIMMERS
 
 
 def clean_avatar_name(name):

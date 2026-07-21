@@ -453,6 +453,7 @@ templates.env.globals["t"] = i18n.t
 # many templates and must never depend on a route remembering to pass these.
 templates.env.globals["avatar_family"] = st.avatar_family
 templates.env.globals["avatar_care_verb"] = st.avatar_care_verb
+templates.env.globals["avatar_is_swimmer"] = st.avatar_is_swimmer
 templates.env.globals["avatar_month"] = st.avatar_accessory_month
 
 

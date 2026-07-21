@@ -1,6 +1,6 @@
 {#
   Avatar companions — the frame around the inline-SVG art in _avatars_art.html
-  (15 catalogue species × 6 growth stages, storage.AVATAR_CATALOG). Everything
+  (16 catalogue species × 6 growth stages, storage.AVATAR_CATALOG). Everything
   is inline SVG + one first-party script, so the set stays PWA/offline-safe.
 
   Usage: import avatar + avatar_defs (and avatar_svg for pickers), call
@@ -174,7 +174,7 @@
   }
 </style>
 {#-- shared gradient defs, ONCE per page. Zero-size (not display:none — that
-     breaks gradient references) with ids prefixed avg- so 15 picker cards
+     breaks gradient references) with ids prefixed avg- so 16 picker cards
      never collide. --#}
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
   <defs>
@@ -258,9 +258,13 @@
       <stop offset="0" stop-color="#b3aede"/><stop offset="1" stop-color="#8d86c9"/></linearGradient>
     <linearGradient id="avg-batwing" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#6b6494"/><stop offset="1" stop-color="#474168"/></linearGradient>
+    <linearGradient id="avg-dolphin" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7fb6d4"/><stop offset="1" stop-color="#4a7fa6"/></linearGradient>
+    <linearGradient id="avg-dolphin2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eaf4fa"/><stop offset="1" stop-color="#c2dced"/></linearGradient>
   </defs>
 </svg>
-<script src="/static/js/avatars.js?v=20260721b" defer></script>
+<script src="/static/js/avatars.js?v=20260721c" defer></script>
 {% endmacro %}
 
 
@@ -268,6 +272,15 @@
 {% macro avatar_svg(kind, stage) %}
 {% set s = [[stage|int, 6]|min, 1]|max %}
 <svg viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false">
+  {#-- swimmers glide (the JS moves .avmove), so their home water is drawn
+       HERE, behind and OUTSIDE the moving layer, and stays put while the
+       creature swims around it (avatars.js/_avatars_art rely on this split). --#}
+  {% if avatar_is_swimmer(kind) %}
+  <g class="av-water" aria-hidden="true">
+    <ellipse cx="60" cy="118" rx="31" ry="9" fill="url(#avg-water)"/>
+    <path d="M34 114 q6 -3 12 0 q6 3 12 0 q6 -3 12 0 q6 3 12 0" stroke="#ffffff55" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  </g>
+  {% endif %}
   <g class="avmove">
     <g class="avstage">{{ species_art(kind, s, avatar_month()) }}</g>
     {% if avatar_family(kind) == "plant" %}

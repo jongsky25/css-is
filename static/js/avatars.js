@@ -6,8 +6,9 @@
  *  - the IDLE PERSONALITY loop: every visible companion periodically performs a
  *    random behavior from its species' repertoire by toggling an av-do-* class
  *    (the animations themselves are CSS keyframes in avatar_defs());
- *  - the ROAMING engine for the two species that travel (bat flies, fish swims
- *    a lazy figure-eight) by easing the svg's .avmove group between waypoints;
+ *  - the ROAMING engine for the species that travel (bat flies; fish and
+ *    dolphin swim a lazy figure-eight) by easing the .avmove group between
+ *    waypoints, leaving the swimmers' static water backdrop behind it;
  *  - the OWL's pointer-follow (its facial disc turns toward the cursor);
  *  - CARE actions: the water/feed button plays the droplet/treat animation and
  *    POSTs /avatar/care so the mood survives reloads (offline failures are
@@ -100,6 +101,8 @@
     rabbit:    [["av-do-ear", 800], ["av-do-ear2", 900], ["av-do-blink", 500],
                 ["av-do-hop", 900], ["av-do-peek", 1700]],
     fish:      [["av-do-bubbles", 1800], ["av-do-fin", 900], ["av-do-blink", 600]],
+    dolphin:   [["av-do-bubbles", 1800], ["av-do-fin", 900], ["av-do-blink", 600],
+                ["av-do-hop", 900]],
     owl:       [["av-do-slowblink", 1300], ["av-do-turn", 2600], ["av-do-flap", 1200]],
     bat:       [["av-do-flap", 1200], ["av-do-blink", 500], ["av-do-ear", 800]]
   };
@@ -137,14 +140,15 @@
     })();
   }
 
-  /* ---- roaming: the bat flies, the fish swims -------------------------- */
+  /* ---- roaming: the bat flies, the fish & dolphin swim ----------------- */
   function startRoam(w) {
     var kind = w.dataset.kind;
-    if (kind !== "bat" && kind !== "fish") return;
+    var swims = kind === "fish" || kind === "dolphin";
+    if (kind !== "bat" && !swims) return;
     var move = w.querySelector(".avmove");
     if (!move) return;
     move.style.transformOrigin = "50% 50%";
-    /* the fish repeats a lazy figure-eight; the bat picks random waypoints */
+    /* swimmers repeat a lazy figure-eight; the bat picks random waypoints */
     var fig8 = [[16, -5, -1], [0, -10, -1], [-16, -5, 1], [0, 0, 1]];
     var leg = 0;
     (function hop() {
@@ -152,7 +156,7 @@
         if (!w.isConnected) return;
         if (still() || document.hidden || asleep(w)) { hop(); return; }
         var x, y, flip;
-        if (kind === "fish") {
+        if (swims) {
           var p = fig8[leg++ % fig8.length];
           x = p[0]; y = p[1]; flip = p[2];
         } else {
@@ -166,7 +170,7 @@
         move.style.transition = "transform 2.4s ease-in-out";
         move.style.transform = "translate(" + x + "px," + y + "px) scale(" + flip + ",1)";
         hop();
-      }, kind === "fish" ? 2600 : 2600 + Math.random() * 2600);
+      }, swims ? 2600 : 2600 + Math.random() * 2600);
     })();
   }
 

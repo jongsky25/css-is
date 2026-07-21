@@ -1,5 +1,5 @@
 """
-Avatar companions — care/mood layer + the 15-species art surface.
+Avatar companions — care/mood layer + the 16-species art surface.
 
 Covers the derived mood (avatar_mood), the once-per-cooldown counting rule
 (record_avatar_care), the POST /avatar/care endpoint, and a render sweep of
@@ -251,3 +251,39 @@ def test_avatar_macro_family_and_care_button(app_mod):
     fern = tpl.render(kind="fern")
     assert "fam-plant" in fern and 'data-care-action="water"' in fern
     assert 'data-mood="okay"' in fern
+
+
+# --- dolphin + the swimmer water backdrop ------------------------------------
+
+def test_dolphin_in_catalog_and_swims():
+    d = next((a for a in st.AVATAR_CATALOG if a["key"] == "dolphin"), None)
+    assert d is not None and d["family"] == "animal"
+    assert st.valid_avatar_kind("dolphin")
+    assert st.avatar_care_verb("dolphin") == "feed"     # an animal is fed
+    assert st.avatar_is_swimmer("dolphin") is True
+    assert st.avatar_is_swimmer("fish") is True
+    assert st.avatar_is_swimmer("cat") is False
+
+
+def test_swimmer_water_backdrop_is_static_and_behind(app_mod):
+    # Regression: the fish/dolphin "home water" used to sit INSIDE .avmove and
+    # drifted across the SVG as the creature swam. avatar_svg must now draw it
+    # once, BEHIND and OUTSIDE the moving layer, so it stays put.
+    tpl = app_mod.templates.env.from_string(
+        '{% from "_avatars.html" import avatar_svg %}{{ avatar_svg(kind, 4) }}')
+    for kind in ("fish", "dolphin"):
+        svg = tpl.render(kind=kind)
+        assert 'class="av-water"' in svg, kind
+        assert svg.index("av-water") < svg.index("avmove"), kind   # behind + static
+    # non-swimmers never get a water surface
+    for kind in ("plant", "cat", "bat", "owl"):
+        assert 'class="av-water"' not in tpl.render(kind=kind), kind
+
+
+def test_fish_art_no_longer_embeds_its_own_water(app_mod):
+    # species_art must not draw the water itself anymore (avatar_svg owns it),
+    # else a swimming fish would carry a second, moving bowl.
+    tpl = app_mod.templates.env.from_string(
+        '{% from "_avatars_art.html" import species_art %}{{ species_art(kind, 4, 0) }}')
+    assert "avg-water" not in tpl.render(kind="fish")
+    assert "avg-water" not in tpl.render(kind="dolphin")

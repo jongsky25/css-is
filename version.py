@@ -17,10 +17,25 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.35"
+APP_VERSION = "2.36"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.36",
+        "date": "July 21, 2026",
+        "summary": "A new dolphin joins the companion line-up, and the fish's "
+                   "water no longer slides around while it swims.",
+        "changes": [
+            "You can now adopt a dolphin as your wellness companion — it swims "
+            "and leaps around its pool, blinks, blows bubbles, and is fed like "
+            "the other animals. Pick it on your profile page (/me) alongside the "
+            "other species.",
+            "Fixed a glitch where the fish's little pool of water drifted across "
+            "the card as the fish swam — the water now stays put while the fish "
+            "(and the new dolphin) glide around it.",
+        ],
+    },
     {
         "version": "2.35",
         "date": "July 21, 2026",

@@ -1,5 +1,29 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-21 (v2.36 — Dolphin companion + swimmer water-drift fix)
+
+A 16th wellness companion and a fix for a long-standing swimmer glitch.
+
+- **New species: dolphin** (`storage.AVATAR_CATALOG`, `_avatars_art.html`
+  `_dolphin`, `avatars.js`). An `animal`-family companion (so it is *fed*) that
+  **swims** — it shares the fish's figure-eight roam and adds an `av-do-hop`
+  leap to its idle repertoire, blinks, flicks its tail fluke, and blows
+  bubbles. Fully data-driven: it flows through the `/me` picker, `valid_avatar_kind`
+  validation, and the care endpoint with no per-route changes. New gradients
+  `avg-dolphin` / `avg-dolphin2`.
+- **Fix: swimmer water no longer drifts.** The fish's "home water" backdrop was
+  drawn *inside* the roaming `.avmove` group, so it slid across the SVG as the
+  fish swam — contradicting its own "stays put" comment. `avatar_svg` now draws
+  the water once, **behind and outside** the moving layer, gated by a new
+  `storage.avatar_is_swimmer(kind)` helper (also a Jinja global) so the template
+  and `avatars.js` can never disagree on who swims. Applies to the fish and the
+  new dolphin.
+- **Tests** (`test_avatar_care.py`, `test_onboarding_storage.py`): catalog is
+  now 16 species; new checks that the dolphin is a fed swimmer and that the
+  water backdrop renders once, static, and behind the moving layer (and never
+  for non-swimmers). Existing per-species × stage/month render sweeps cover the
+  dolphin automatically.
+
 ## 2026-07-21 (v2.35 — "Maximize AI": grounded free-form answers over your own data)
 
 The assistant's Q&A (`nl_answer`) was classify-only: the model picked one of a

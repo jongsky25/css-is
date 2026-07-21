@@ -60,10 +60,11 @@ def test_catalog_has_both_families():
     assert st.AVATAR_DEFAULT in st.AVATAR_KEYS
 
 
-def test_catalog_has_fifteen_species_with_blurbs():
-    assert len(st.AVATAR_CATALOG) == 15
-    assert len(st.AVATAR_KEYS) == 15          # keys are unique
+def test_catalog_has_sixteen_species_with_blurbs():
+    assert len(st.AVATAR_CATALOG) == 16
+    assert len(st.AVATAR_KEYS) == 16          # keys are unique
     assert all(a.get("blurb") for a in st.AVATAR_CATALOG)
+    assert "dolphin" in st.AVATAR_KEYS        # the water-roaming companion
 
 
 def test_valid_avatar_kind():
