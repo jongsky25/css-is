@@ -1,5 +1,51 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-21 (v2.29 — Companion sleep cycle, care-streak badge, monthly accessories, opt-in sound)
+
+Follow-up round on the v2.28 companion release:
+
+- **Sleep cycle** (`static/js/avatars.js`, `templates/_avatars.html`): companions doze
+  9 pm–6 am on the viewer's device clock — lids close (`.av-asleep .av-lid`), a Zzz group
+  floats, the idle/roaming engines pause. A tap or care action wakes them for ~45 s.
+  The bat is exempt (nocturnal — night is its active time).
+- **"Devoted caretaker" badge** (`storage.py`): new `admin_user.avatar_care_streak`
+  column counts consecutive care days (same-day keeps, next-day +1, gap resets);
+  7 in a row awards `avatar_care_7` once through the existing `wellness_badge` table
+  via a shared `_award_badge` helper (`INSERT OR IGNORE` idempotency, also reused by
+  `wellness_award_badges`). `/avatar/care` returns `streak` + fresh `badge` label; the
+  client floats a toast, the hub badge row shows it permanently. No points.
+- **Monthly accessories** (`templates/_avatars_art.html`): `_accessory(m)` draws 12
+  head-worn designs anchored inside each species' `.av-head` (so they ride tilts and
+  chews); headless potted plants get a month-tinted `_pot_bow` on the rim. The month
+  resolves per render via the new `avatar_month` Jinja global (`avatar_accessory_month`).
+- **Opt-in sound** (`static/js/avatars.js`): WebAudio-synthesized blips (tap chirp,
+  water plips, feed noms, badge arpeggio) behind a 🔇/🔊 toggle next to the care
+  button — off by default, remembered in `localStorage`, context created lazily on a
+  user gesture. No audio assets, offline-safe.
+- Tests: streak/badge/accessory/zzz/sound coverage in `tests/test_avatar_care.py`;
+  SW cache `v2.19-b`.
+
+## 2026-07-21 (v2.28 — Companion glow-up: 15 species, personality engine, care play)
+
+The avatar companion system, rebuilt (PR #61):
+
+- **Art** (`templates/_avatars_art.html`, new): all 15 species as detailed inline SVG —
+  shared `avg-*` gradients emitted once by `avatar_defs()`, expressive lidded eyes,
+  named part groups (`.av-head`/`.av-tail`/`.av-ear-l/r`/`.av-wing-l/r`/…) — behind a
+  public `species_art()` dispatcher. Nine new species: sunflower, fern, mushroom,
+  succulent / dog, rabbit, fish, owl, bat (catalog rows in `storage.AVATAR_CATALOG`).
+- **Personality engine** (`static/js/avatars.js`, new): per-species random idle
+  behaviors (CSS keyframes toggled by `av-do-*` classes); the bat flies and the fish
+  swims a figure-eight on a new `.avmove` layer; the owl's facial disc follows the
+  pointer. All motion gated on `prefers-reduced-motion` and page visibility.
+- **Care = cosmetic mood** (`storage.py`, `app.py`): `admin_user.avatar_last_care_at` +
+  `POST /avatar/care` (6 h counting cooldown, `care` ratelimit bucket); mood
+  happy/okay/droopy derived on read, drives styling only — growth stays strictly
+  wellness-points-derived. Water/feed buttons with droplet/treat animations; the hub
+  mascot is draggable inside its hero panel (`.av-play`, localStorage position).
+- `avatar_family`/`avatar_care_verb` Jinja globals replace the hardcoded species
+  tuple in the `avatar()` macro; pickers show all 15 species with blurbs.
+
 ## 2026-07-21 (v2.27 — Wellness activity-card fix + duplicate landing cards removed)
 
 Two small follow-ups to v2.26, bundled into one version bump:

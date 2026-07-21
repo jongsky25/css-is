@@ -31,7 +31,8 @@ def _mk_account(conn, username, role="viewer", rp_id=None):
 
 def test_new_columns_exist(conn):
     cols = {row[1] for row in conn.execute("PRAGMA table_info(admin_user)")}
-    assert {"avatar_kind", "avatar_name", "onboarded_at"} <= cols
+    assert {"avatar_kind", "avatar_name", "onboarded_at",
+            "avatar_last_care_at", "avatar_care_streak"} <= cols
 
 
 def test_migration_is_idempotent(conn):
@@ -59,9 +60,17 @@ def test_catalog_has_both_families():
     assert st.AVATAR_DEFAULT in st.AVATAR_KEYS
 
 
+def test_catalog_has_fifteen_species_with_blurbs():
+    assert len(st.AVATAR_CATALOG) == 15
+    assert len(st.AVATAR_KEYS) == 15          # keys are unique
+    assert all(a.get("blurb") for a in st.AVATAR_CATALOG)
+
+
 def test_valid_avatar_kind():
     assert st.valid_avatar_kind("cat")
     assert st.valid_avatar_kind("plant")
+    assert st.valid_avatar_kind("bat")
+    assert st.valid_avatar_kind("succulent")
     assert not st.valid_avatar_kind("dragon")
     assert not st.valid_avatar_kind(None)
     assert not st.valid_avatar_kind("")
@@ -70,6 +79,10 @@ def test_valid_avatar_kind():
 def test_avatar_family_falls_back_for_unknown():
     assert st.avatar_family("cat") == "animal"
     assert st.avatar_family("bonsai") == "plant"
+    assert st.avatar_family("fish") == "animal"
+    assert st.avatar_family("bat") == "animal"
+    assert st.avatar_family("mushroom") == "plant"
+    assert st.avatar_family("sunflower") == "plant"
     # unknown/None never KeyErrors — falls back to the default species' family
     assert st.avatar_family("dragon") == st.avatar_family(st.AVATAR_DEFAULT)
     assert st.avatar_family(None) == st.avatar_family(st.AVATAR_DEFAULT)

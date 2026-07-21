@@ -447,6 +447,14 @@ templates.env.globals["CHANGELOG"] = ver.CHANGELOG
 # Templates call  {{ t('slug', lang) }}; `lang` is passed per public render.
 templates.env.globals["t"] = i18n.t
 
+# Avatar-companion helpers for the shared macros in _avatars.html: the family
+# drives each species' idle-motion class and the care verb picks the water/feed
+# button. Globals (not per-render context) because the macros are imported into
+# many templates and must never depend on a route remembering to pass these.
+templates.env.globals["avatar_family"] = st.avatar_family
+templates.env.globals["avatar_care_verb"] = st.avatar_care_verb
+templates.env.globals["avatar_month"] = st.avatar_accessory_month
+
 
 # =====================================================================
 # Navigation index — the SINGLE source of truth for "where can you go".
@@ -3859,6 +3867,35 @@ async def me_submit(request: Request):
     finally:
         conn.close()
     return RedirectResponse("/me?msg=" + quote("Saved."), status_code=303)
+
+
+@app.post("/avatar/care")
+async def avatar_care(request: Request):
+    """Water (plant) / feed (animal) the companion — the cosmetic mood layer.
+    The client always plays the care animation; this endpoint just records the
+    action so the mood survives reloads. storage.record_avatar_care enforces the
+    once-per-cooldown counting rule, so repeat taps return counted=false and are
+    harmless; the rate limiter only blunts scripted hammering."""
+    ip = request.client.host if request.client else None
+    if not rl.allow("care", ip):
+        return JSONResponse({"ok": False, "error": "rate_limited"}, status_code=429)
+    p = await _posted(request)
+    conn = get_conn()
+    try:
+        profile = st.get_user_profile(conn, request.state.user["id"])
+        if not profile:
+            return JSONResponse({"ok": False, "error": "no_profile"}, status_code=400)
+        action = (p.get("action") or "").strip()
+        expected = st.avatar_care_verb(profile["avatar_kind"])
+        if action and action != expected:
+            # you water plants and feed animals — never the other way round
+            return JSONResponse({"ok": False, "error": "wrong_action"}, status_code=400)
+        res = st.record_avatar_care(conn, request.state.user["id"])
+    finally:
+        conn.close()
+    return JSONResponse({"ok": True, "counted": res["counted"], "mood": res["mood"],
+                         "last_care_at": res["last_care_at"],
+                         "streak": res["streak"], "badge": res["badge"]})
 
 
 @app.get("/search", response_class=HTMLResponse)
@@ -11798,11 +11835,13 @@ def wellness_hub(request: Request, cheer: str = "", badges: str = "", err: str =
     # their own), overriding wellness_stats' plant-only default.
     avatar_kind = (profile or {}).get("avatar_kind") or st.AVATAR_DEFAULT
     avatar_name = (profile or {}).get("avatar_name") or ""
+    avatar_mood = (profile or {}).get("avatar_mood") or "droopy"
     stats = dict(stats, stage_name=st.avatar_stage_name(avatar_kind, stats["stage"]))
     return templates.TemplateResponse(request, "wellness_hub.html", {
         "nav_active": "wellness", "show_scope": False,
         "stats": stats, "week_start": week, "used": used,
         "avatar_kind": avatar_kind, "avatar_name": avatar_name,
+        "avatar_mood": avatar_mood,
         "left": max(0, st.WELLNESS_WEEKLY_HOURS - used),
         "weekly_hours": st.WELLNESS_WEEKLY_HOURS,
         "claims": claims, "is_chief": is_chief, "queue_n": queue_n,

@@ -380,6 +380,16 @@ def _add_missing_columns(conn):
             conn.execute("ALTER TABLE admin_user ADD COLUMN avatar_name TEXT")
         if "onboarded_at" not in au_cols:
             conn.execute("ALTER TABLE admin_user ADD COLUMN onboarded_at TEXT")
+        # When the companion was last cared for (watered/fed). Purely cosmetic:
+        # it drives the pet's mood (happy/okay/droopy), never the growth stage,
+        # so the wellness gamification record stays the only source of growth.
+        if "avatar_last_care_at" not in au_cols:
+            conn.execute("ALTER TABLE admin_user ADD COLUMN avatar_last_care_at TEXT")
+        # Consecutive calendar days of care — feeds the "Devoted caretaker"
+        # badge only, never points. Can't be derived from the single last-care
+        # timestamp, so it's the one extra persisted care artifact.
+        if "avatar_care_streak" not in au_cols:
+            conn.execute("ALTER TABLE admin_user ADD COLUMN avatar_care_streak INTEGER")
         conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_admin_user_rp "
                      "ON admin_user(rp_id) WHERE rp_id IS NOT NULL")
     # Respondent demographics captured at Type-2 pre-registration. These are NON-PII
@@ -2919,11 +2929,13 @@ def _admin_row(r):
             "role": r[4], "active": bool(r[5]), "must_change": bool(r[6]),
             "rp_id": r[7], "created_at": r[8], "created_by": r[9],
             "avatar_kind": r[10], "avatar_name": r[11], "onboarded_at": r[12],
+            "avatar_last_care_at": r[13], "avatar_care_streak": r[14] or 0,
             "pending": (r[2] == "")}      # no password set yet => still invited
 
 
 _ADMIN_COLS = ("id, username, pw_hash, salt, role, active, must_change, rp_id, "
-               "created_at, created_by, avatar_kind, avatar_name, onboarded_at")
+               "created_at, created_by, avatar_kind, avatar_name, onboarded_at, "
+               "avatar_last_care_at, avatar_care_streak")
 
 
 def get_admin_user(conn, username):
@@ -2967,6 +2979,45 @@ def set_user_avatar(conn, user_id, kind, name):
     conn.commit()
 
 
+def record_avatar_care(conn, user_id, now=None):
+    """Log a care action (watering a plant / feeding an animal) for the mood
+    layer. Care only *counts* once per AVATAR_CARE_COOLDOWN_HOURS — a repeat tap
+    inside the window still gets its animation client-side but leaves the
+    timestamp (and therefore the mood decay clock) unmoved, so tap-spamming
+    can't pin the pet at 'happy' forever.
+
+    A counted care also advances the consecutive-day streak (same day: keeps
+    it, next day: +1, gap: back to 1); seven days running earns the one-time
+    'Devoted caretaker' wellness badge — cosmetic like the mood, never points.
+    Returns {"counted", "mood", "last_care_at", "streak", "badge"} where badge
+    is the freshly-awarded label or None."""
+    now_dt = now or tz.now_local()
+    acct = get_admin_user_by_id(conn, user_id)
+    if not acct:
+        return {"counted": False, "mood": "droopy", "last_care_at": None,
+                "streak": 0, "badge": None}
+    last = acct.get("avatar_last_care_at")
+    last_dt = _parse_care_ts(last)
+    if last_dt and (now_dt - last_dt) < timedelta(hours=AVATAR_CARE_COOLDOWN_HOURS):
+        return {"counted": False, "mood": avatar_mood(last, now=now_dt),
+                "last_care_at": last, "streak": acct.get("avatar_care_streak") or 0,
+                "badge": None}
+    if last_dt and last_dt.date() == now_dt.date():
+        streak = acct.get("avatar_care_streak") or 1        # second care today
+    elif last_dt and last_dt.date() == now_dt.date() - timedelta(days=1):
+        streak = (acct.get("avatar_care_streak") or 0) + 1  # kept it going
+    else:
+        streak = 1                                          # first care / lapsed
+    stamp = now_dt.isoformat(timespec="seconds")
+    conn.execute("UPDATE admin_user SET avatar_last_care_at=?, avatar_care_streak=? "
+                 "WHERE id=?", (stamp, streak, user_id))
+    badge = _award_badge(conn, user_id, "avatar_care_7",
+                         when=stamp) if streak >= 7 else None
+    conn.commit()
+    return {"counted": True, "mood": avatar_mood(stamp, now=now_dt),
+            "last_care_at": stamp, "streak": streak, "badge": badge}
+
+
 def mark_onboarded(conn, user_id, when=None):
     """Stamp the account as having finished the one-time /welcome flow. Idempotent
     — re-stamping just refreshes the timestamp; the redirect guard only cares
@@ -2995,6 +3046,8 @@ def get_user_profile(conn, user_id):
         "rp_id": acct.get("rp_id"),
         "avatar_kind": acct.get("avatar_kind") or AVATAR_DEFAULT,
         "avatar_name": acct.get("avatar_name") or "",
+        "avatar_last_care_at": acct.get("avatar_last_care_at"),
+        "avatar_mood": avatar_mood(acct.get("avatar_last_care_at")),
         "onboarded": bool(acct.get("onboarded_at")),
         "onboarded_at": acct.get("onboarded_at"),
         "person_name": (rp or {}).get("name") or "",
@@ -4510,15 +4563,41 @@ AVATAR_STAGE_NAMES = {
 }
 
 # The species a staff member may adopt. `family` selects the stage-name array
-# and the idle-animation style; `label` is what the picker shows. List order is
-# picker order. Adding a species = one row here + its SVG in _avatars.html.
+# and the idle-animation style; `label` is what the picker shows and `blurb` is
+# the one-line personality note under it. List order is picker order. Adding a
+# species = one row here + its SVG macro in _avatars_art.html + its behavior
+# entry in static/js/avatars.js.
 AVATAR_CATALOG = [
-    {"key": "plant",  "label": "Blossom plant", "family": "plant"},
-    {"key": "cactus", "label": "Cactus",        "family": "plant"},
-    {"key": "bonsai", "label": "Bonsai",        "family": "plant"},
-    {"key": "cat",    "label": "Cat",           "family": "animal"},
-    {"key": "bird",   "label": "Bird",          "family": "animal"},
-    {"key": "turtle", "label": "Turtle",        "family": "animal"},
+    {"key": "plant",      "label": "Blossom plant", "family": "plant",
+     "blurb": "Classic — sways and blooms"},
+    {"key": "cactus",     "label": "Cactus",        "family": "plant",
+     "blurb": "Tough — thrives on little"},
+    {"key": "bonsai",     "label": "Bonsai",        "family": "plant",
+     "blurb": "Patient — shaped over years"},
+    {"key": "sunflower",  "label": "Sunflower",     "family": "plant",
+     "blurb": "Cheerful — follows the light"},
+    {"key": "fern",       "label": "Fern",          "family": "plant",
+     "blurb": "Graceful — fronds ripple"},
+    {"key": "mushroom",   "label": "Mushroom",      "family": "plant",
+     "blurb": "Quirky — wobbles and puffs"},
+    {"key": "succulent",  "label": "Succulent",     "family": "plant",
+     "blurb": "Chill — barely bothered"},
+    {"key": "cat",        "label": "Cat",           "family": "animal",
+     "blurb": "Independent — flicks and stretches"},
+    {"key": "bird",       "label": "Bird",          "family": "animal",
+     "blurb": "Chirpy — hops and preens"},
+    {"key": "turtle",     "label": "Turtle",        "family": "animal",
+     "blurb": "Steady — slow but sure"},
+    {"key": "dog",        "label": "Dog",           "family": "animal",
+     "blurb": "Loyal — wags and jumps"},
+    {"key": "rabbit",     "label": "Rabbit",        "family": "animal",
+     "blurb": "Shy — twitches and peeks"},
+    {"key": "fish",       "label": "Fish",          "family": "animal",
+     "blurb": "Serene — glides and bubbles"},
+    {"key": "owl",        "label": "Owl",           "family": "animal",
+     "blurb": "Watchful — follows your pointer"},
+    {"key": "bat",        "label": "Bat",           "family": "animal",
+     "blurb": "Playful — flies around"},
 ]
 AVATAR_KEYS = {a["key"] for a in AVATAR_CATALOG}
 AVATAR_DEFAULT = "plant"          # accounts that never chose keep the classic plant
@@ -4548,6 +4627,53 @@ def avatar_stage_name(kind, stage):
     names = AVATAR_STAGE_NAMES[avatar_family(kind)]
     idx = max(1, min(int(stage or 1), len(names))) - 1
     return names[idx]
+
+
+# --- Companion mood (cosmetic care layer) ------------------------------------
+# Watering a plant / feeding an animal stamps admin_user.avatar_last_care_at;
+# the mood is DERIVED from how long ago that was, on every read, exactly like
+# the wellness stage is derived from points — nothing else persists. Mood never
+# feeds back into points or stage: neglecting the pet only makes it droop.
+
+AVATAR_CARE_COOLDOWN_HOURS = 6    # care counts at most once per window
+AVATAR_MOOD_HAPPY_HOURS = 24      # cared for within a day  -> happy
+AVATAR_MOOD_OKAY_HOURS = 72       # within three days       -> okay; beyond -> droopy
+AVATAR_MOODS = ("happy", "okay", "droopy")
+
+
+def _parse_care_ts(value):
+    """A stored care stamp as a datetime, or None for blank/garbage — never
+    raises, so a hand-edited DB can't break every profile read."""
+    try:
+        return datetime.fromisoformat(value) if value else None
+    except (TypeError, ValueError):
+        return None
+
+
+def avatar_mood(last_care_at, now=None):
+    """'happy' / 'okay' / 'droopy' from the last-care stamp. A pet never cared
+    for starts droopy — the first watering/feeding is the hook."""
+    last = _parse_care_ts(last_care_at)
+    if not last:
+        return "droopy"
+    age = (now or tz.now_local()) - last
+    if age < timedelta(hours=AVATAR_MOOD_HAPPY_HOURS):
+        return "happy"
+    if age < timedelta(hours=AVATAR_MOOD_OKAY_HOURS):
+        return "okay"
+    return "droopy"
+
+
+def avatar_care_verb(kind):
+    """What caring for this species means: plants are watered, animals fed."""
+    return "water" if avatar_family(kind) == "plant" else "feed"
+
+
+def avatar_accessory_month():
+    """Current month 1..12 (PH wall-clock) — picks the companion's seasonal
+    accessory. A function, not a constant, so a long-running process rolls
+    over at midnight of the 1st without a restart."""
+    return tz.now_local().month
 
 
 # =====================================================================
@@ -4619,6 +4745,9 @@ WELLNESS_BADGES = {
     "reflect_5":   ("Reflective",  "Wrote 5 post-break reflections"),
     "streak_4":    ("On a roll",   "Wellness breaks 4 weeks in a row"),
     "streak_12":   ("Habit built", "Wellness breaks 12 weeks in a row"),
+    # Awarded by record_avatar_care, not wellness_award_badges: it tracks the
+    # companion-care day streak (cosmetic layer), not the break record.
+    "avatar_care_7": ("Devoted caretaker", "Cared for your companion 7 days in a row"),
 }
 
 
@@ -4964,12 +5093,21 @@ def wellness_award_badges(conn, user_id):
         earned.append("streak_12")
     fresh = []
     for b in earned:
-        cur = conn.execute(
-            "INSERT OR IGNORE INTO wellness_badge(user_id, badge, awarded_at) "
-            "VALUES (?,?,?)", (user_id, b, tz.now_iso()))
-        if cur.rowcount:
-            fresh.append(WELLNESS_BADGES[b][0])
+        label = _award_badge(conn, user_id, b)
+        if label:
+            fresh.append(label)
     return fresh
+
+
+def _award_badge(conn, user_id, key, when=None):
+    """Persist one badge award. Idempotent (INSERT OR IGNORE against the
+    UNIQUE(user_id, badge) constraint); returns the badge LABEL only when this
+    call actually inserted it — i.e. exactly once per user per badge — else
+    None. Does NOT commit; the caller's surrounding write commits."""
+    cur = conn.execute(
+        "INSERT OR IGNORE INTO wellness_badge(user_id, badge, awarded_at) "
+        "VALUES (?,?,?)", (user_id, key, when or tz.now_iso()))
+    return WELLNESS_BADGES[key][0] if cur.rowcount else None
 
 
 # ---- monitoring dashboard + the submission register -----------------------

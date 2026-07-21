@@ -31,11 +31,10 @@
   .avcard svg { width:90px; height:104px; }
   .avcard .nm { font-weight:700; font-size:.86rem; margin-top:.2rem; }
   .avcard .fam { color:var(--soft); font-size:.72rem; text-transform:uppercase; letter-spacing:.03em; }
+  .avcard .blurb { color:var(--soft); font-size:.72rem; margin-top:.1rem; }
   .avcard input { position:absolute; opacity:0; width:1px; height:1px; }
   .avcard:has(input:checked) { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg); }
   .avcard:focus-within { outline:2px solid var(--accent); outline-offset:2px; }
-  .av-sway-c { transform-origin:50% 90%; animation:av-sway 5s ease-in-out infinite; }
-  @media (prefers-reduced-motion: reduce){ .av-sway-c { animation:none; } }
   .btn { display:inline-block; font:inherit; font-weight:800; cursor:pointer; border:1px solid var(--accent);
          background:var(--accent); color:#fff; border-radius:10px; padding:.65rem 1.5rem; }
   .actions { text-align:center; margin-top:.4rem; }
@@ -84,6 +83,7 @@
           <span class="{{ 'av-sway-c' if a.family == 'plant' else '' }}" style="display:inline-block;">{{ avatar_svg(a.key, 2) }}</span>
           <div class="nm">{{ a.label }}</div>
           <div class="fam">{{ a.family }}</div>
+          <div class="blurb">{{ a.blurb }}</div>
         </label>
         {% endfor %}
       </div>
