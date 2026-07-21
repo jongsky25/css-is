@@ -4243,6 +4243,18 @@ def api_search(request: Request, q: str = ""):
 
 AI_ROUTER_CONFIDENCE_FLOOR = 0.5
 
+# The "maximize" grounded-answer path (nl_answer_grounded) gets its OWN, lower
+# floor. Rationale: for navigation/actions/help/canned slots the confidence
+# number is the only guard against acting on a shaky guess, so it stays at 0.5.
+# But a grounded answer is already protected by two hard checks the confidence
+# number is not — the model must return grounded=true (it attests it used ONLY
+# numbers from the server-built DATA pack) and the answer text must be non-empty.
+# With those in place, a moderately-confident grounded answer is safe to show,
+# so we let the data-question path through at a lower bar to surface more real
+# answers instead of dropping to the keyword palette. It never relaxes
+# grounded=true, so it can never surface an invented number.
+AI_GROUNDED_CONFIDENCE_FLOOR = 0.35
+
 
 def _ai_router_schema(include_answer, include_help, include_action):
     kinds = ["navigate"]
@@ -4536,7 +4548,7 @@ async def api_ai_route(request: Request):
             # data question. Any failure (AIError, ungrounded, low confidence)
             # falls through to the canned slot render / keyword palette below,
             # so the assistant never errors and never invents a number.
-            if maximize and confidence >= AI_ROUTER_CONFIDENCE_FLOOR:
+            if maximize and confidence >= AI_GROUNDED_CONFIDENCE_FLOOR:
                 pack = _ai_data_pack(conn, include_people=ai_answer_people_enabled(conn))
                 grounded = None
                 try:
@@ -4554,7 +4566,7 @@ async def api_ai_route(request: Request):
                         gconf = float(grounded.get("confidence"))
                     except (TypeError, ValueError):
                         gconf = 0.0
-                    if grounded.get("grounded") and gtext and gconf >= AI_ROUTER_CONFIDENCE_FLOOR:
+                    if grounded.get("grounded") and gtext and gconf >= AI_GROUNDED_CONFIDENCE_FLOOR:
                         return JSONResponse({
                             "kind": "answer", "label": "Answer", "text": gtext,
                             "confidence": gconf, "interaction_id": gid,

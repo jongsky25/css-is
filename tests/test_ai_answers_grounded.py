@@ -113,6 +113,56 @@ def test_maximize_returns_grounded_prose(admin, db_path, monkeypatch):
         _reset(conn); conn.close()
 
 
+def test_maximize_moderate_confidence_grounded_is_shown(admin, db_path, monkeypatch):
+    """A grounded=true answer whose self-reported confidence sits between the
+    grounded floor (0.35) and the stricter router floor (0.5) is now surfaced as
+    model prose — grounded=true + non-empty text are the real guards, so a
+    moderately-confident real answer no longer drops to the canned palette."""
+    conn = st.connect(db_path); st.init_db(conn); _reset(conn)
+    try:
+        _configure_maximize(conn, monkeypatch)
+        conn.commit(); conn.close()
+        monkeypatch.setattr(app_mod, "home_stats", lambda conn: FAKE_STATS)
+        _mock_router_then_grounded(
+            monkeypatch,
+            # router itself only moderately sure this is a data question (0.4):
+            # still clears the grounded floor, so the grounded call is attempted.
+            router_fields={"answer_slot": "data_question", "confidence": 0.4},
+            grounded={"answer": "Satisfaction is 88% over the last 30 days.",
+                      "grounded": True, "confidence": 0.4})
+        r = admin.post("/api/ai/route", data={"q": "how have we been doing lately"})
+        body = r.json()
+        assert body["kind"] == "answer"
+        assert body["served_by"] == "grounded"
+        assert body["text"] == "Satisfaction is 88% over the last 30 days."
+        conn = st.connect(db_path)
+        assert _rows(conn, "nl_answer_grounded") == [("ok",)]
+    finally:
+        _reset(conn); conn.close()
+
+
+def test_maximize_below_grounded_floor_still_rejected(admin, db_path, monkeypatch):
+    """The floor still exists — a grounded answer under 0.35 is rejected, so the
+    loosening didn't remove the confidence guard, only lowered it."""
+    conn = st.connect(db_path); st.init_db(conn); _reset(conn)
+    try:
+        _configure_maximize(conn, monkeypatch)
+        conn.commit(); conn.close()
+        monkeypatch.setattr(app_mod, "home_stats", lambda conn: FAKE_STATS)
+        _mock_router_then_grounded(
+            monkeypatch,
+            router_fields={"answer_slot": "responses_30d", "confidence": 0.9},
+            grounded={"answer": "maybe 42?", "grounded": True, "confidence": 0.3})
+        r = admin.post("/api/ai/route", data={"q": "how many responses this month"})
+        body = r.json()
+        assert body.get("served_by") != "grounded"
+        assert "42" in body["text"]              # canned fallback
+        conn = st.connect(db_path)
+        assert _rows(conn, "nl_answer_grounded") == [("rejected_validation",)]
+    finally:
+        _reset(conn); conn.close()
+
+
 # ---- fallbacks: grounded call fails -> canned slot render ----------------------
 
 def test_maximize_ungrounded_falls_back_to_canned_slot(admin, db_path, monkeypatch):
