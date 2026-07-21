@@ -3313,6 +3313,37 @@ def verbatims_for_responses(conn, response_ids):
     return rows
 
 
+# item_remark ids that are encoding metadata (a physical form's response number,
+# demographic tallies), never a respondent's own words — excluded from the
+# per-activity "edit the words" editor.
+_NON_COMMENT_ITEMS = ("SEX", "AFFIL", "RESPONSE_NO")
+
+
+def activity_editable_comments(conn, response_ids):
+    """Flat, newest-first list of every respondent-written comment across a set of
+    responses, shaped for the per-activity "edit the words" (encoding) editor —
+    one entry per editable text box. Unlike the story panel (a curated digest that
+    shows only a handful), this is the COMPLETE set, so any comment can be fixed.
+
+    Each entry:
+        {response_id, item_id, text, kind, activity, when, form_id}
+    `item_id` is '' for the response's overall comment — posting to
+    /responses/{id}/edit-remark with a blank item_id updates `response.remarks`;
+    otherwise it's the item code for a per-item note. Demographic / metadata items
+    (SEX/AFFIL/RESPONSE_NO) are never words, so they're excluded."""
+    out = []
+    for v in verbatims_for_responses(conn, response_ids):
+        base = {"response_id": v["response_id"], "activity": v["activity"],
+                "when": v["when"], "form_id": v["form_id"]}
+        if (v.get("remarks") or "").strip():
+            out.append({**base, "item_id": "", "text": v["remarks"], "kind": "overall"})
+        for item_id, text in (v.get("notes") or {}).items():
+            if item_id in _NON_COMMENT_ITEMS or not (text or "").strip():
+                continue
+            out.append({**base, "item_id": item_id, "text": text, "kind": "item"})
+    return out
+
+
 def response_context_for_ids(conn, response_ids):
     """Per-response identity for an arbitrary set of responses — submitted time,
     the human activity name, and any response-level comment — for EVERY response,
