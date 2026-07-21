@@ -17,10 +17,27 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.32"
+APP_VERSION = "2.33"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.33",
+        "date": "July 21, 2026",
+        "summary": "Wellness break requests now correctly name who they go to — "
+                   "your section chief, division chief, or the Director — instead "
+                   "of defaulting to “an administrator.”",
+        "changes": [
+            "The break request form now shows the right approver for your place in "
+            "the office: staff see “your section chief,” a section head sees "
+            "“your division chief,” and a division chief sees “the Director.”",
+            "It names that approver as long as the role is filled in the staff "
+            "directory, even before that person has signed in for the first time — "
+            "so section heads no longer see the request going to “an administrator.”",
+            "The Director is now recognised from their official title, so requests "
+            "from a division chief route to the Director as intended.",
+        ],
+    },
     {
         "version": "2.32",
         "date": "July 21, 2026",

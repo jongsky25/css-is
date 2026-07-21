@@ -209,6 +209,109 @@ def test_chief_queue_holds_only_their_unit(wellness_org):
     assert inside in ids and outside not in ids
 
 
+# -------------------------------------------------- escalation up the full chain
+
+@pytest.fixture()
+def wellness_chain(app_mod):
+    """A full division -> section -> directorate slice with an account at every
+    tier, so escalation can be walked end to end (Spot Feedback #76). Crucially
+    the Director carries their rank in `position` ('Director IV'), NOT in
+    `designation` — mirroring the real directory, where an exact designation
+    match found nobody."""
+    conn = st.connect(app_mod.DB)
+    st.init_db(conn)
+
+    def _wipe():
+        # SCOPED to this fixture's namespace. The Director tier is searched
+        # GLOBALLY (no org filter), so a leaked 'Director IV' account would
+        # pollute other files' escalation tests — clean up at BOTH ends.
+        conn.execute("DELETE FROM wellness_claim WHERE user_id IN "
+                     "(SELECT id FROM admin_user WHERE username LIKE 'wc-%@test.local')")
+        conn.execute("DELETE FROM admin_user WHERE username LIKE 'wc-%@test.local'")
+        conn.execute("DELETE FROM resource_person WHERE name LIKE 'WC-%'")
+        conn.execute("DELETE FROM org_unit WHERE path LIKE 'TC/%' OR path = 'TC'")
+        conn.commit()
+    _wipe()
+
+    def unit(name, short, level, path):
+        return conn.execute(
+            "INSERT INTO org_unit(name, short_name, level, path) VALUES (?,?,?,?)",
+            (name, short, level, path)).lastrowid
+
+    def person(name, desig, pos, org):
+        return conn.execute(
+            "INSERT INTO resource_person(name, is_internal, org_unit_id, designation, position) "
+            "VALUES (?,1,?,?,?)", (name, org, desig, pos)).lastrowid
+
+    unit("Test Bureau", "TC", "bureau", "TC")
+    u_od = unit("Office of the Director", "OD", "office", "TC/OD")
+    u_div = unit("Test Division", "TDIV", "division", "TC/TDIV")
+    u_sec = unit("Test Section", "TSEC", "section", "TC/TDIV/TSEC")
+
+    # Director's leadership lives in `position`, designation left blank on purpose.
+    rp_dir = person("WC-Director", None, "Director IV", u_od)
+    rp_div = person("WC-DivChief", "Division Chief", "Medical Officer V", u_div)
+    rp_sec = person("WC-SecHead", "Section Head", "Chief Health Program Officer", u_sec)
+    rp_emp = person("WC-Employee", None, "Health Program Officer II", u_sec)
+
+    h, salt = "x", "y"
+    mk = lambda uname, role, rp: st.create_admin_user(conn, uname, h, salt, role, rp_id=rp)
+    director = mk("wc-dir@test.local", "section_manager", rp_dir)
+    divchief = mk("wc-div@test.local", "section_manager", rp_div)
+    sechead = mk("wc-sec@test.local", "section_manager", rp_sec)
+    emp = mk("wc-emp@test.local", "viewer", rp_emp)
+    conn.commit()
+    yield {"conn": conn, "director": director, "divchief": divchief,
+           "sechead": sechead, "emp": emp, "rp_sec": rp_sec}
+    _wipe()
+    conn.close()
+
+
+def test_escalation_walks_each_tier(wellness_chain):
+    """staff -> section head -> division chief -> Director, one hop per rank."""
+    conn, w = wellness_chain["conn"], wellness_chain
+    assert st.get_wellness_approvers(conn, w["emp"]) == [w["sechead"]]
+    assert st.get_wellness_approvers(conn, w["sechead"]) == [w["divchief"]]
+    # the Director is matched by POSITION ('Director IV'), not designation —
+    # the exact-match bug this fix corrects.
+    assert st.get_wellness_approvers(conn, w["divchief"]) == [w["director"]]
+    # the Director sits at the top: nobody here, admins are the fallback.
+    assert st.get_wellness_approvers(conn, w["director"]) == []
+    u_admin = {"id": 0, "role": "admin"}
+    assert st.is_wellness_approver(conn, u_admin, w["director"])
+
+
+def test_director_and_chiefs_see_the_queue(wellness_chain):
+    """Everyone who can approve SOMEONE reaches the approvals queue — including
+    the Director, whose rank is carried in `position`."""
+    conn = wellness_chain["conn"]
+    for key in ("sechead", "divchief", "director"):
+        u = {"id": wellness_chain[key], "role": "section_manager"}
+        assert st.user_is_wellness_chief(conn, u), key
+    # a plain employee does not
+    assert not st.user_is_wellness_chief(
+        conn, {"id": wellness_chain["emp"], "role": "viewer"})
+
+
+def test_title_names_the_seat_even_without_an_account(wellness_chain):
+    """The apply-page copy names the org-correct approver as long as that seat is
+    filled in the directory — it must not fall back to 'an administrator' just
+    because the chief has no app account yet (the reported symptom)."""
+    conn, w = wellness_chain["conn"], wellness_chain
+    assert st.wellness_approver_title(conn, w["emp"]) == "your section chief"
+    assert st.wellness_approver_title(conn, w["sechead"]) == "your division chief"
+    assert st.wellness_approver_title(conn, w["divchief"]) == "the Director"
+    assert st.wellness_approver_title(conn, w["director"]) == "an administrator"
+
+    # Drop the division chief's ACCOUNT but keep the person in the directory:
+    # the section head's copy still reads 'your division chief' (the seat is
+    # filled), while the actual claim now escalates to the admin fallback.
+    conn.execute("DELETE FROM admin_user WHERE id=?", (w["divchief"],))
+    conn.commit()
+    assert st.wellness_approver_title(conn, w["sechead"]) == "your division chief"
+    assert st.get_wellness_approvers(conn, w["sechead"]) == []
+
+
 # ------------------------------------------- the full flow + gamification
 
 def test_approve_complete_reflect_awards_points_and_badges(app_mod, wellness_org):
