@@ -14,12 +14,13 @@
   .field .help { color:var(--soft); font-size:.8rem; margin-top:.25rem; }
   .acts { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:.7rem; margin-bottom:1rem; }
   .acts label { position:relative; border:2px solid var(--line); border-radius:14px; padding:.7rem .6rem .6rem;
-                cursor:pointer; background:var(--bg); text-align:center; display:block;
+                cursor:pointer; background:var(--bg); text-align:center;
+                display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
                 transition:border-color .15s, transform .12s; }
   .acts label:hover { transform:translateY(-2px); }
   @media (prefers-reduced-motion: reduce) { .acts label:hover { transform:none; } }
-  .acts .ic { width:64px; height:64px; margin:0 auto .35rem; }
-  .acts .t { font-weight:700; font-size:.86rem; line-height:1.2; }
+  .acts .ic { display:block; width:64px; height:64px; margin:0 auto .35rem; flex:0 0 auto; }
+  .acts .t { display:block; font-weight:700; font-size:.86rem; line-height:1.2; }
   .acts input { position:absolute; opacity:0; width:1px; height:1px; }
   .acts label:has(input:checked) { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg); }
   .acts label:focus-within { outline:2px solid var(--accent); outline-offset:2px; }
