@@ -17,10 +17,25 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.26"
+APP_VERSION = "2.27"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.27",
+        "date": "July 21, 2026",
+        "summary": "Small fixes: the wellness break form's picture cards no longer overlap "
+                   "text, there's a new “Others” option, and a duplicate set of cards on the "
+                   "CSS page is gone.",
+        "changes": [
+            "Fixed the wellness break request form so an activity's picture and label no "
+            "longer overlap the note field below it.",
+            "Added an “Others” option to the wellness break activity picker for requests "
+            "that don't fit the other categories.",
+            "Removed a duplicate set of “CSS” and “Wellness” cards that was showing again "
+            "after you'd already picked one and reached the CSS page.",
+        ],
+    },
     {
         "version": "2.26",
         "date": "July 21, 2026",

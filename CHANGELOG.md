@@ -1,5 +1,18 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-21 (v2.27 — Wellness activity-card fix + duplicate landing cards removed)
+
+Two small follow-ups to v2.26, bundled into one version bump:
+
+- **Wellness apply form** (`templates/wellness_apply.html`, `templates/_wellness_icons.html`,
+  `storage.py`): the activity picker's icon/label `<span>`s defaulted to `display:inline`, so
+  the 64px icon sizing was ignored and labels spilled past the card border into the note field
+  below. Now laid out as a flex column so the icon and label stay inside the card. Also added an
+  "Others" activity option (with its own icon) for requests that don't fit the four presets.
+- **`/css` hub** (`templates/home.html`): removed the duplicate "CSS — surveys & reports" /
+  "Wellness — my 2-hour break" door cards, which repeated the same two cards already shown on
+  the `/` chooser landing page.
+
 ## 2026-07-21 (v2.26 — Staff onboarding, avatar companion & two-card landing)
 
 Post-login rework in six self-contained phases (see
