@@ -17,10 +17,30 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.25"
+APP_VERSION = "2.26"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.26",
+        "date": "July 21, 2026",
+        "summary": "A friendlier welcome: the first time you sign in you set up your "
+                   "profile and adopt a named companion, then choose where to go from a "
+                   "simple home page.",
+        "changes": [
+            "The first time you sign in after this update, a quick welcome screen lets you "
+            "add a profile photo and adopt a companion — a plant or an animal — and give it a name.",
+            "Signing in now opens a simple “what would you like to do?” page with two "
+            "cards: Wellness and CSS.",
+            "Your companion is the same little friend that grows on the Wellness page as you "
+            "take your breaks; you can rename it or pick a different one any time from “My profile”.",
+            "View-only accounts open straight to their own results page, with their section "
+            "one tap away.",
+            "The wellness break form now uses friendly pictures to choose your activity.",
+            "Wellness break requests follow the chain of command: a section chief's own "
+            "request goes to their division chief, and a division chief's to the Director.",
+        ],
+    },
     {
         "version": "2.25",
         "date": "July 20, 2026",
