@@ -17,10 +17,23 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.40"
+APP_VERSION = "2.41"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.41",
+        "date": "July 21, 2026",
+        "summary": "After you rename or change your companion on your profile, "
+                   "saving now takes you straight to the wellness break page so you "
+                   "can see your updated companion right where it grows.",
+        "changes": [
+            "When you rename your companion or pick a different one on \"My "
+            "profile\" and press Save, you now land on the wellness break page — "
+            "where your companion lives and grows — instead of staying on the "
+            "profile form. Your changes are saved exactly as before.",
+        ],
+    },
     {
         "version": "2.40",
         "date": "July 21, 2026",
