@@ -3106,9 +3106,11 @@ def get_user_profile(conn, user_id):
         "person_name": (rp or {}).get("name") or "",
         "org_unit_id": (rp or {}).get("org_unit_id"),
         "org_path": (rp or {}).get("org_path"),
-        # The account's own designation wins (the one edited on /me); a linked
-        # account with none yet falls back to its directory designation.
-        "designation": acct.get("designation") or (rp or {}).get("designation") or "",
+        # For a linked account the staff directory is authoritative (an admin
+        # may edit it there too, and /me writes through to it), so its value
+        # wins; an unlinked account uses the designation stored on the account.
+        "designation": ((rp or {}).get("designation") if rp
+                        else acct.get("designation")) or "",
         "has_photo": rp_has_photo,
         "account_has_photo": account_has_photo,
         "photo_url": photo_url,

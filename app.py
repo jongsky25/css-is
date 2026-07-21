@@ -4219,6 +4219,15 @@ async def me_submit(request: Request):
                 _audit(request, conn, "profile_update", target_type="user",
                        target_id=uid, summary="updated their profile photo")
         st.set_user_designation(conn, uid, designation)
+        # Keep the staff directory in sync: a linked account's designation is
+        # the same field the directory shows on certificates/signatory lines, so
+        # write it through (a blank clears it on both sides).
+        if profile and profile.get("rp_id"):
+            st.update_rp(conn, profile["rp_id"], designation=designation or None)
+            _audit(request, conn, "profile_update", target_type="person",
+                   target_id=profile["rp_id"],
+                   summary=f"updated their designation to '{designation}'"
+                           if designation else "cleared their designation")
         st.set_user_avatar(conn, uid, kind, pet_name)
         _audit(request, conn, "avatar_choose", target_type="user",
                target_id=uid,

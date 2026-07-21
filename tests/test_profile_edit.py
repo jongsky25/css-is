@@ -137,6 +137,40 @@ def test_me_saves_designation(app_mod):
     conn.execute("DELETE FROM admin_user WHERE id=?", (uid,)); conn.commit(); conn.close()
 
 
+def test_me_designation_syncs_to_directory(app_mod):
+    """A directory-linked account's designation writes through to its
+    resource_person row (the field certificates read), and clearing it on the
+    profile clears it there too."""
+    conn = st.connect(app_mod.DB)
+    st.init_db(conn)
+    conn.execute("DELETE FROM admin_user WHERE username=?", ("pe-link@test.local",))
+    rp_id = st.add_rp(conn, "Linked Staffer", True, designation="Old Title")
+    h, salt = auth.hash_password("Test1234!")
+    uid = st.create_admin_user(conn, "pe-link@test.local", h, salt, "viewer",
+                               active=True, rp_id=rp_id)
+    st.set_user_avatar(conn, uid, "cat", "Milo")
+    st.mark_onboarded(conn, uid)
+    conn.commit(); conn.close()
+    c = _client(app_mod, uid, "pe-link@test.local")
+
+    # Edit on the profile → the directory row is updated.
+    c.post("/me", data={"avatar_kind": "cat", "avatar_name": "Milo",
+                        "designation": "Section Head"}, follow_redirects=False)
+    conn = st.connect(app_mod.DB)
+    assert st.get_rp(conn, rp_id)["designation"] == "Section Head"
+    assert st.get_user_profile(conn, uid)["designation"] == "Section Head"
+    conn.close()
+
+    # Clearing it on the profile clears the directory too.
+    c.post("/me", data={"avatar_kind": "cat", "avatar_name": "Milo",
+                        "designation": ""}, follow_redirects=False)
+    conn = st.connect(app_mod.DB)
+    assert st.get_rp(conn, rp_id)["designation"] in (None, "")
+    conn.execute("DELETE FROM admin_user WHERE id=?", (uid,))
+    conn.execute("DELETE FROM resource_person WHERE id=?", (rp_id,))
+    conn.commit(); conn.close()
+
+
 def test_me_requires_a_name(app_mod):
     uid = _fresh(app_mod, "pe-noname@test.local", "cat", "Milo")
     c = _client(app_mod, uid, "pe-noname@test.local")
