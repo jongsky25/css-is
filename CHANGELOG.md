@@ -1,5 +1,30 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-21 (v2.32 — fix: Gemini "thinking" starved structured-output calls)
+
+Symptom: after switching the default model to `gemini-3.5-flash`, every
+schema-constrained AI call fell back with `AIBadResponse("model output did not
+match the response schema")` (or an empty response), while the same calls had
+worked on Groq's Llama. "Test connection" still passed because it sends no
+`response_schema` and never checks that any text came back.
+
+Cause: Gemini 2.5+/3.x enable "thinking" by default, and on Gemini 3 those
+thinking tokens are drawn from the SAME `maxOutputTokens` budget as the visible
+answer. Our structured calls set deliberately small limits sized for a compact
+JSON reply (the NL router uses 256), so default ("high") thinking starved the
+JSON and it came back truncated → `json.loads` failed. Groq's Llama has no
+thinking, which is why it was fine.
+
+- **`ai_core.py`** — new `_thinking_config(model)`: pins thinking to its floor
+  per model family (`thinkingLevel: minimal|low` for `gemini-3*`, the two
+  mutually exclusive with `thinkingBudget: 0` for `gemini-2.x`). `_http_generate`
+  now sends `thinkingConfig`, and on the Gemini-3 path widens `maxOutputTokens`
+  by `THINKING_HEADROOM_TOKENS` (1024) so the caller's intended answer size is
+  preserved with room for the (now minimal) reasoning. Groq path unchanged.
+- **`tests/test_ai_core.py`** — cover the per-family config and that a Gemini-3
+  call pins thinking + widens the budget while a Gemini-2.5 call disables
+  thinking without widening it.
+
 ## 2026-07-21 (v2.31 — Wellness break can be claimed 2 hours in one sitting)
 
 The DM's 2-hour weekly entitlement can now be taken as a single 2-hour break,

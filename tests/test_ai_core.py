@@ -81,6 +81,52 @@ def test_mask_for_log_caps_length():
     assert masked.endswith("…")
 
 
+# ---- thinking-budget guard: Gemini 2.5+/3.x spend "thinking" tokens from the
+# same maxOutputTokens budget as the answer, so our small structured calls were
+# starved and came back as truncated/empty JSON (worked on Groq, which has no
+# thinking). _http_generate must pin thinking to its floor and, on Gemini 3,
+# widen the token budget so the JSON answer isn't cut off. ------------------
+
+def test_thinking_config_by_model_family():
+    assert ai._thinking_config("gemini-3.5-flash") == {"thinkingLevel": "minimal"}
+    assert ai._thinking_config("gemini-3-pro") == {"thinkingLevel": "low"}
+    assert ai._thinking_config("gemini-2.5-flash") == {"thinkingBudget": 0}
+    assert ai._thinking_config("gemini-2.0-flash") == {"thinkingBudget": 0}
+    assert ai._thinking_config("some-other-model") is None
+
+
+def test_gemini3_call_pins_thinking_and_widens_token_budget(monkeypatch):
+    monkeypatch.setenv("CSS_GEMINI_MODEL", "gemini-3.5-flash")
+    seen = {}
+
+    def fake_post(url, *, json, headers, timeout):
+        seen["gc"] = json["generationConfig"]
+        return _FakeResp(200, payload={"candidates": [{"content": {"parts": [{"text": '{"a": 1}'}]}}]})
+    monkeypatch.setattr(httpx, "post", fake_post)
+
+    ai._http_generate("hi", response_schema={"type": "object"}, max_output_tokens=256)
+    gc = seen["gc"]
+    assert gc["thinkingConfig"] == {"thinkingLevel": "minimal"}
+    # answer size (256) preserved, plus headroom for the minimal reasoning.
+    assert gc["maxOutputTokens"] == 256 + ai.THINKING_HEADROOM_TOKENS
+
+
+def test_gemini25_call_disables_thinking_without_widening_budget(monkeypatch):
+    monkeypatch.setenv("CSS_GEMINI_MODEL", "gemini-2.5-flash")
+    seen = {}
+
+    def fake_post(url, *, json, headers, timeout):
+        seen["gc"] = json["generationConfig"]
+        return _FakeResp(200, payload={"candidates": [{"content": {"parts": [{"text": "ok"}]}}]})
+    monkeypatch.setattr(httpx, "post", fake_post)
+
+    ai._http_generate("hi", max_output_tokens=256)
+    gc = seen["gc"]
+    assert gc["thinkingConfig"] == {"thinkingBudget": 0}
+    # thinking is off on 2.x, so no headroom needed — budget stays as asked.
+    assert gc["maxOutputTokens"] == 256
+
+
 # ---- _http_generate: retry / 429 / timeout contract -------------------------
 
 def test_success_parses_text_schema_and_usage(monkeypatch):
