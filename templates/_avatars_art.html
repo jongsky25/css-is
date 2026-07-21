@@ -1,6 +1,6 @@
 {#
   Avatar companions — the species ART ONLY (split out of _avatars.html so the
-  frame/macros stay readable now that the catalog is 15 species × 6 stages).
+  frame/macros stay readable now that the catalog is 16 species × 6 stages).
 
   Import surface: species_art(kind, stage) — Jinja2 does not export
   underscore-prefixed macros across files, so this public dispatcher is the one
@@ -17,7 +17,7 @@
     .av-food             the species' hidden treat (feeding arc)
     .av-soil/.av-soilwet pot soil + its darker watered overlay
   Gradients live in ONE shared defs block emitted by avatar_defs() in
-  _avatars.html (ids avg-*) — never per-svg, or 15 pickers-cards would collide.
+  _avatars.html (ids avg-*) — never per-svg, or 16 pickers-cards would collide.
 
   Growth stays the original idea: features accrete across {% if s >= N %} gates
   so the companion visibly grows up with the wellness level.
@@ -40,6 +40,7 @@
 {% elif kind == "dog" %}{{ _dog(s, m) }}
 {% elif kind == "rabbit" %}{{ _rabbit(s, m) }}
 {% elif kind == "fish" %}{{ _fish(s, m) }}
+{% elif kind == "dolphin" %}{{ _dolphin(s, m) }}
 {% elif kind == "owl" %}{{ _owl(s, m) }}
 {% elif kind == "bat" %}{{ _bat(s, m) }}
 {% else %}{{ _plant(s, m) }}{% endif %}
@@ -747,9 +748,8 @@
 
 {% macro _fish(s, m=0) %}
   {% set sc = 0.62 + (s - 1) * 0.074 %}
-  {# home water — stays put while the fish itself glides around it #}
-  <ellipse cx="60" cy="118" rx="31" ry="9" fill="url(#avg-water)"/>
-  <path d="M34 114 q6 -3 12 0 q6 3 12 0 q6 -3 12 0 q6 3 12 0" stroke="#ffffff55" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  {# home water is drawn by avatar_svg() OUTSIDE the roaming layer, so it stays
+     put while the fish glides around it (avatar_is_swimmer gate). #}
   <g transform="translate(60 92) scale({{ '%.3f'|format(sc) }}) translate(-60 -92)">
     {# flowy tail fin #}
     <g class="av-fin-t">
@@ -791,6 +791,61 @@
       <path d="M88 28 l4 1 -2 3 Z" fill="#e8b04a"/>
       <path d="M96 32 l3.4 2 -3 2 Z" fill="#d98a2a"/>
       <path d="M92 38 l3 1 -1.6 2.6 Z" fill="#e8b04a"/>
+    </g>
+  </g>
+{% endmacro %}
+
+
+{% macro _dolphin(s, m=0) %}
+  {% set sc = 0.62 + (s - 1) * 0.074 %}
+  {# home water is drawn by avatar_svg() OUTSIDE the roaming layer (see _fish):
+     the dolphin glides/leaps around it while the surface stays put. #}
+  <g transform="translate(60 92) scale({{ '%.3f'|format(sc) }}) translate(-60 -92)">
+    {# broad tail fluke — flicks on the .av-fin-t idle #}
+    <g class="av-fin-t">
+      <path d="M46 92 Q33 82 27 78 Q37 86 40 90 Q34 96 27 101 Q37 99 46 94 Z" fill="url(#avg-dolphin)"/>
+      {% if s >= 5 %}
+      <path d="M40 89 Q30 80 23 78 M40 93 Q31 99 24 102" stroke="url(#avg-dolphin)" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+      {% endif %}
+    </g>
+    {# dorsal fin, curved back over the shoulders #}
+    <path d="M58 75 Q60 60 73 63 Q67 71 66 76 Z" fill="url(#avg-dolphin)"/>
+    {# streamlined body + lighter belly #}
+    <path d="M44 99 C36 87 47 74 65 74 C81 74 91 82 94 87 C90 88.6 86 89 82 89
+             C87 94 85 100 78 103 C66 108 50 106 44 99 Z" fill="url(#avg-dolphin)"/>
+    <path d="M50 100 C48 94 53 88 63 87 C74 86 82 90 85 93 C80 101 63 104 50 100 Z" fill="url(#avg-dolphin2)"/>
+    <path d="M50 84 Q60 78 74 80" stroke="#ffffff48" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    {# pectoral fin (waves gently as the belly fin) #}
+    <g class="av-fin-b">
+      <path d="M60 99 Q57 108 64 110 Q65 103 67 100 Z" fill="url(#avg-dolphin)"/>
+    </g>
+    {# beak / rostrum + a smiling mouth line #}
+    <path d="M90 86.5 l10 1.4 -8 3 Z" fill="url(#avg-dolphin)"/>
+    <path d="M84 90 q5 2 9 2.4" stroke="#2c4a5e" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+    {% if s >= 3 %}
+    <circle cx="58" cy="86" r="1" fill="#ffffff55"/><circle cx="66" cy="92" r=".9" fill="#ffffff55"/>
+    <circle cx="52" cy="90" r=".8" fill="#ffffff55"/>
+    {% endif %}
+    <g class="av-head">
+      {{ _eye(75, 84, 3, "#22303c", "#5f95b8") }}
+      <ellipse cx="80" cy="90" rx="1.8" ry="1" fill="#bfe0ef" opacity=".6"/>
+      {% if s >= 5 %}<ellipse cx="70" cy="90" rx="2.2" ry="1.2" fill="#f2b8a0" opacity=".45"/>{% endif %}
+      {{ _accessory(m, 70, 72, 0.55) }}
+    </g>
+    {% if s >= 6 %}
+    <path d="M64 70 l1.6 -6 3 4 3 -4 1.6 6 Z" fill="url(#avg-sun)"/>
+    {% endif %}
+    {# breath bubbles rising from the blowhole on the serene idle #}
+    <g class="av-bubbles" stroke="#a8d8f0" fill="none" stroke-width="1.2">
+      <circle cx="66" cy="66" r="2.3"/>
+      <circle cx="70" cy="57" r="1.6"/>
+      <circle cx="67" cy="49" r="1.1"/>
+    </g>
+    {# hidden treat: a little fish (the feeding arc animates this group) #}
+    <g class="av-food">
+      <ellipse cx="93" cy="32" rx="6" ry="3.4" fill="url(#avg-fish)"/>
+      <path d="M98 32 l5 -3 -1 3 1 3 Z" fill="#e5731f"/>
+      <circle cx="90" cy="31.4" r=".8" fill="#221a14"/>
     </g>
   </g>
 {% endmacro %}

@@ -17,10 +17,54 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.36"
+APP_VERSION = "2.38"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.38",
+        "date": "July 21, 2026",
+        "summary": "Your wellness companion feels alive: it wanders on its own, "
+                   "talks to you, can be petted — and watering plants finally "
+                   "shows the water.",
+        "changes": [
+            "Fixed: watering a plant never showed the falling droplets (they "
+            "were drawn but kept invisible by a styling slip), and the "
+            "succulent showed no reaction at all. Every plant now visibly "
+            "drinks — the succulent gives a satisfied little plump.",
+            "Ground companions (dog, cat, rabbit, bird, turtle) now wander "
+            "around their wellness-hub play area on their own — the dog trots "
+            "and does the occasional zoomies, the cat strolls and sits, the "
+            "rabbit hops, the turtle plods.",
+            "Fish and dolphin get a 🌊 button: let them out and they swim "
+            "around the whole wellness page (never blocking your clicks). Tap "
+            "the swimmer or the button to call them home; the choice is "
+            "remembered.",
+            "Your companion now talks to you: it greets you by name and time "
+            "of day, thanks you after care, remembers being neglected (\"I "
+            "missed you…\"), and celebrates care streaks.",
+            "Dogs, cats and birds watch your mouse move (the dog gets excited "
+            "if you zip past), and pressing-and-holding your companion pets it "
+            "— little hearts float up, with an optional soft purr if sounds "
+            "are on.",
+            "As always, every new motion respects your reduced-motion setting.",
+        ],
+    },
+    {
+        "version": "2.37",
+        "date": "July 21, 2026",
+        "summary": "A new dolphin joins the companion line-up, and the fish's "
+                   "water no longer slides around while it swims.",
+        "changes": [
+            "You can now adopt a dolphin as your wellness companion — it swims "
+            "and leaps around its pool, blinks, blows bubbles, and is fed like "
+            "the other animals. Pick it on your profile page (/me) alongside the "
+            "other species.",
+            "Fixed a glitch where the fish's little pool of water drifted across "
+            "the card as the fish swam — the water now stays put while the fish "
+            "(and the new dolphin) glide around it.",
+        ],
+    },
     {
         "version": "2.36",
         "date": "July 21, 2026",

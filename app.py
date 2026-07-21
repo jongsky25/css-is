@@ -453,6 +453,7 @@ templates.env.globals["t"] = i18n.t
 # many templates and must never depend on a route remembering to pass these.
 templates.env.globals["avatar_family"] = st.avatar_family
 templates.env.globals["avatar_care_verb"] = st.avatar_care_verb
+templates.env.globals["avatar_is_swimmer"] = st.avatar_is_swimmer
 templates.env.globals["avatar_month"] = st.avatar_accessory_month
 
 
@@ -12242,12 +12243,18 @@ def wellness_hub(request: Request, cheer: str = "", badges: str = "", err: str =
     avatar_kind = (profile or {}).get("avatar_kind") or st.AVATAR_DEFAULT
     avatar_name = (profile or {}).get("avatar_name") or ""
     avatar_mood = (profile or {}).get("avatar_mood") or "droopy"
+    # the companion greets its person by first name and remembers being cared
+    # for (avatars.js phrase engine reads these off data-* attributes)
+    avatar_person = ((profile or {}).get("person_name") or "").split(" ")[0]
+    avatar_care_streak = (profile or {}).get("avatar_care_streak") or 0
+    avatar_last_care = (profile or {}).get("avatar_last_care_at") or ""
     stats = dict(stats, stage_name=st.avatar_stage_name(avatar_kind, stats["stage"]))
     return templates.TemplateResponse(request, "wellness_hub.html", {
         "nav_active": "wellness", "show_scope": False,
         "stats": stats, "week_start": week, "used": used,
         "avatar_kind": avatar_kind, "avatar_name": avatar_name,
-        "avatar_mood": avatar_mood,
+        "avatar_mood": avatar_mood, "avatar_person": avatar_person,
+        "avatar_care_streak": avatar_care_streak, "avatar_last_care": avatar_last_care,
         "left": max(0, st.WELLNESS_WEEKLY_HOURS - used),
         "weekly_hours": st.WELLNESS_WEEKLY_HOURS,
         "claims": claims, "is_chief": is_chief, "queue_n": queue_n,

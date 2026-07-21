@@ -1,5 +1,66 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-21 (v2.38 — Lifelike companions: watering fix, roaming, page-wide swim, personality)
+
+The companion layer grows from "animated sticker" into something that feels a
+little alive. Also fixes the long-standing invisible-watering bug.
+
+- **Fix: watering was invisible.** `_avatars.html` hid the `.av-drops` GROUP
+  (`opacity:0`) while the care animation animated only its `path` children — a
+  child can never out-opacity an `opacity:0` parent, so no plant ever showed
+  falling droplets. The hide now targets `.av-drops path` (the `av-drop`
+  keyframes own the visibility window, same pattern as `.av-spark`). Also the
+  succulent's `animation:none` kill rule (specificity 3) outranked the watering
+  perk (2), so it showed nothing when watered — a specificity-4 exception now
+  gives it a species-true `av-plump` response.
+- **Ground roaming** (`avatars.js` `WALKERS`/`startWalk`): dog, cat, rabbit,
+  bird and turtle wander their `.av-play` panel autonomously — travel on the
+  `.avmove` layer only (drag owns the wrap transform), live-recomputed bounds,
+  species gaits (`av-do-trot/zoom/bound/plod`, deliberately not in `ALL_DO`),
+  dog zoomies, rabbit hop chains. The idle loop yields while a leg is underway
+  (`_avBusy`), and a drag resets the roam offset so grab and art agree.
+- **Page-wide swim** (wellness hub only): a 🌊 toggle on fish/dolphin lifts the
+  REAL svg into a `position:fixed` `pointer-events:none` overlay (z-index 14 —
+  under the sticky chrome) inside a class-carrying holder (`avwrap fam-animal`
+  + data attrs, since every descendant selector dies when the art leaves its
+  wrap); it swims viewport waypoints, the dolphin leaps, tap-or-toggle sends it
+  home. Preference in localStorage `css-av-explore`; hard-restored on
+  reduced-motion, sleep, or care.
+- **Personality**: tap bubble now speaks — time-of-day greeting personalized
+  via new `data-person`, care memory ("I missed you…", thanks after care) via
+  `data-last-care`, streak lines via `data-care-streak` (all new optional
+  `avatar()` macro args; wellness route passes them; `get_user_profile` now
+  returns `avatar_care_streak`). Dog/cat/bird join the owl in pointer-watching
+  (subtler ±8°), a fast pointer near the dog triggers an excited wag, and
+  press-and-hold pets the companion (hearts, `av-nuzzle` wiggle, opt-in purr).
+- **Tests**: CSS-contract assertions for the watering fix and new keyframes,
+  macro personality attrs, swimmer-only explore button, hub markers, profile
+  care-streak field. APP_VERSION → 2.37.
+
+## 2026-07-21 (v2.37 — Dolphin companion + swimmer water-drift fix)
+
+A 16th wellness companion and a fix for a long-standing swimmer glitch.
+
+- **New species: dolphin** (`storage.AVATAR_CATALOG`, `_avatars_art.html`
+  `_dolphin`, `avatars.js`). An `animal`-family companion (so it is *fed*) that
+  **swims** — it shares the fish's figure-eight roam and adds an `av-do-hop`
+  leap to its idle repertoire, blinks, flicks its tail fluke, and blows
+  bubbles. Fully data-driven: it flows through the `/me` picker, `valid_avatar_kind`
+  validation, and the care endpoint with no per-route changes. New gradients
+  `avg-dolphin` / `avg-dolphin2`.
+- **Fix: swimmer water no longer drifts.** The fish's "home water" backdrop was
+  drawn *inside* the roaming `.avmove` group, so it slid across the SVG as the
+  fish swam — contradicting its own "stays put" comment. `avatar_svg` now draws
+  the water once, **behind and outside** the moving layer, gated by a new
+  `storage.avatar_is_swimmer(kind)` helper (also a Jinja global) so the template
+  and `avatars.js` can never disagree on who swims. Applies to the fish and the
+  new dolphin.
+- **Tests** (`test_avatar_care.py`, `test_onboarding_storage.py`): catalog is
+  now 16 species; new checks that the dolphin is a fed swimmer and that the
+  water backdrop renders once, static, and behind the moving layer (and never
+  for non-swimmers). Existing per-species × stage/month render sweeps cover the
+  dolphin automatically.
+
 ## 2026-07-21 (v2.36 — Wellness request UX: named approver, "Others" specify, 4-week window, richer post-activity report)
 
 Four changes to the DOH DM 2025-0135 wellness-break flow (`storage.py`, `app.py`,
