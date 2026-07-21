@@ -1,5 +1,52 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-21 (v2.35 — "Maximize AI": grounded free-form answers over your own data)
+
+The assistant's Q&A (`nl_answer`) was classify-only: the model picked one of a
+short, fixed list of stat slots and the server rendered a templated sentence —
+it never composed prose and never saw the numbers. Two changes lift that
+ceiling while keeping every existing guardrail (opt-in, budget-capped, graceful
+fallback, no PII, no SQL from the model).
+
+- **Expanded canned catalog** (`AI_ANSWER_SLOTS`, `app.py`): added year-to-date
+  and all-time slots for satisfaction / activities / people-rated, all rendered
+  from figures `home_stats` already computes. Pure additions — the classify-only
+  "catalog" engine is unchanged and remains the default.
+- **New "maximize" engine** (`nl_answer_grounded`): when an admin switches the
+  answer engine to *Maximize AI*, a router `kind=answer` triggers a second,
+  separately-capped model call. The server assembles a compact, PII-free **data
+  pack** — org-wide totals (`home_stats`), per-activity response counts +
+  satisfaction, and (opt-in only) per-resource-person scores — and the model
+  composes an answer **strictly** from it, instructed to say it doesn't have the
+  data otherwise. The user's text is data, never instructions; the model writes
+  no SQL and sees no row-level data.
+- **Graceful fallback preserved**: any failure of the grounded call (`AIError`,
+  `grounded=false`, low confidence, client timeout) falls through to the canned
+  slot render / keyword palette — the assistant never errors and never invents a
+  number. The grounded call logs its own `nl_answer_grounded` row for `/admin/ai`.
+- **Admin toggle** (`admin_ai.html`, `/admin/ai/settings`): *Answer engine*
+  (Canned catalog / Maximize AI) plus an *Include resource-person ratings*
+  opt-in (default off — resource-person names are personal data, same stance as
+  `harmonize`). New settings `ai_answer_engine`, `ai_answer_people`.
+- **`start.js`/`start.html`**: the NL landing page reports the engine so maximize
+  mode allows a longer client timeout (two model calls) before degrading to the
+  keyword palette; every other mode keeps the snappy 9s budget.
+- **`ai_core.py`**: registered `nl_answer_grounded` (its own daily cap, default 40).
+- **Seeded FAQ rules** (`SEED_LEARNED_RULES`, `app.py`): enriched the
+  deterministic FAQ layer that answers *ahead* of the model — added rules for
+  the new YTD/all-time slots and for common phrasings/synonyms (trainings /
+  events / sessions, staff / speakers / resource persons, "how are we doing").
+  On a fresh install these deflect the most frequent data questions with **zero
+  AI budget** (and keep answering when AI is off). Kept focused per phrasing on
+  purpose: `qa_rules.score()` penalises keyword-stuffed rules, so coverage comes
+  from more tight rules, not fatter ones.
+- **`tests/test_ai_answers_grounded.py`** (new): grounded happy path; every
+  fallback mode; the engine is genuinely gated by both the toggle and the
+  feature flag; and the data pack withholds resource-person names unless opted
+  in and never leaks an email. **`tests/test_ai_learned_rules.py`**: the seeded
+  answer rules all point at real slots, and ten common paraphrases resolve to
+  the right stat with no model call.
+
 ## 2026-07-21 (v2.34 — Edit verbatim comments on the activity report, for encoding)
 
 Addresses live Spot Feedback #70 ("i wanted to edit manually the people's own

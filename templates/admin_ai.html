@@ -161,6 +161,23 @@
           </label>
           <div class="hint" style="margin:.2rem 0 0;">Never used for "harmonize", regardless of this toggle.</div>
         </div>
+        <div class="field">
+          <label for="ai_answer_engine">Answer engine (assistant Q&amp;A)</label>
+          <select id="ai_answer_engine" name="ai_answer_engine">
+            <option value="catalog" {{ 'selected' if settings.get('ai_answer_engine', 'catalog') != 'maximize' }}>Canned catalog — safe, fixed stats</option>
+            <option value="maximize" {{ 'selected' if settings.get('ai_answer_engine') == 'maximize' }}>Maximize AI — compose from your data</option>
+          </select>
+          <div class="hint" style="margin:.2rem 0 0;">Maximize lets the assistant answer free-form questions from your own aggregate survey numbers (never attendee names/emails). Uses the "nl_answer_grounded" budget; falls back to the canned stats on any failure.</div>
+        </div>
+        <div class="field">
+          <label for="ai_answer_people">Include resource-person ratings (Maximize)</label>
+          <label style="display:flex; align-items:center; gap:.4rem; font-size:.86rem;">
+            <input type="checkbox" id="ai_answer_people" name="ai_answer_people"
+                   {{ 'checked' if settings.get('ai_answer_people', '0') != '0' }}>
+            <span>Enabled</span>
+          </label>
+          <div class="hint" style="margin:.2rem 0 0;">Adds resource-person names + their scores to the Maximize data — off by default, like "harmonize", since those names are personal data.</div>
+        </div>
       </div>
 
       <table class="feat-table">

@@ -42,7 +42,8 @@
   <h1>What do you want to do{% if first_name %}, {{ first_name }}{% endif %}?</h1>
   <p class="start-sub">Type what you're after — I'll take you there.</p>
 
-  <form id="startForm" class="start-box" role="search">
+  <form id="startForm" class="start-box" role="search"
+        data-answer-engine="{{ answer_engine|default('catalog') }}">
     <input type="text" id="startInput" class="start-input" autocomplete="off" spellcheck="false"
            placeholder="e.g. who answered yesterday's training" aria-label="What do you want to do?">
   </form>
@@ -61,5 +62,5 @@
   <p class="start-classic"><a href="/css">Classic home →</a></p>
 </div>
 
-<script src="/static/js/start.js?v=20260719c" defer></script>
+<script src="/static/js/start.js?v=20260721a" defer></script>
 {% endblock %}

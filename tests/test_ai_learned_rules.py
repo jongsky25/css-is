@@ -14,6 +14,8 @@ import httpx
 import pytest
 
 import ai_core as ai
+import app as app_mod
+import qa_rules
 import storage as st
 
 
@@ -196,6 +198,44 @@ def test_admin_rules_gated_and_create(admin, viewer, db_path):
                    for x in rules)
     finally:
         _reset(conn); conn.close()
+
+
+# ── 8. Seeded FAQ rules: valid targets + deterministic paraphrase coverage ────
+
+def test_seed_answer_rules_point_at_real_slots():
+    """Every seeded answer rule must resolve to a real AI_ANSWER_SLOTS key, or it
+    would silently fall through at serve time (the miner can't catch a typo)."""
+    for kind, target_key, canonical, alts in app_mod.SEED_LEARNED_RULES:
+        if kind == "answer":
+            assert target_key in app_mod.AI_ANSWER_SLOTS, \
+                f"seed rule {canonical!r} points at unknown answer slot {target_key!r}"
+
+
+def test_seed_rules_deflect_common_questions_without_the_model():
+    """The whole point of enriching the seeds: common phrasings resolve to the
+    right stat via qa_rules.match (no model call, no AI budget). Build rule dicts
+    exactly as _seed_learned_rules would persist them, then match paraphrases."""
+    rules = [{"pattern": qa_rules.normalize(canonical), "kind": kind,
+              "target_key": target_key,
+              "keywords": " ".join([canonical] + list(alts)), "enabled": True}
+             for (kind, target_key, canonical, alts) in app_mod.SEED_LEARNED_RULES]
+    cases = {
+        "how many responses this month": "responses_30d",
+        "how many responses this year": "responses_ytd",
+        "how many responses in total": "responses_all",
+        "what is our satisfaction this year": "satisfaction_ytd",
+        "how are we doing": "satisfaction_30d",
+        "how many trainings this month": "activities_30d",
+        "how many activities this year": "activities_ytd",
+        "how many people were rated this year": "people_rated_ytd",
+        "how many people were rated in total": "people_rated_all",
+        "how many resource persons were rated": "people_rated_all",
+    }
+    for query, expected_slot in cases.items():
+        hit = qa_rules.match(query, rules)
+        assert hit is not None, f"{query!r} unexpectedly fell through to the model"
+        assert hit["target_key"] == expected_slot, \
+            f"{query!r} -> {hit['target_key']!r}, expected {expected_slot!r}"
 
 
 def test_admin_rules_create_rejects_invalid_target(admin, db_path):
