@@ -4571,6 +4571,7 @@ WELLNESS_ACTIVITIES = [
     ("meditation",    "Meditation & relaxation"),
     ("mental_health", "Mental health activity / consultation"),
     ("hobby",         "Hobby & creative recreation"),
+    ("other",         "Others"),
 ]
 
 # Designations (directory `resource_person.designation`) that make someone the
