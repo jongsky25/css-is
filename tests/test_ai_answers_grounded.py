@@ -113,6 +113,56 @@ def test_maximize_returns_grounded_prose(admin, db_path, monkeypatch):
         _reset(conn); conn.close()
 
 
+def test_maximize_moderate_confidence_grounded_is_shown(admin, db_path, monkeypatch):
+    """A grounded=true answer whose self-reported confidence sits between the
+    grounded floor (0.35) and the stricter router floor (0.5) is now surfaced as
+    model prose — grounded=true + non-empty text are the real guards, so a
+    moderately-confident real answer no longer drops to the canned palette."""
+    conn = st.connect(db_path); st.init_db(conn); _reset(conn)
+    try:
+        _configure_maximize(conn, monkeypatch)
+        conn.commit(); conn.close()
+        monkeypatch.setattr(app_mod, "home_stats", lambda conn: FAKE_STATS)
+        _mock_router_then_grounded(
+            monkeypatch,
+            # router itself only moderately sure this is a data question (0.4):
+            # still clears the grounded floor, so the grounded call is attempted.
+            router_fields={"answer_slot": "data_question", "confidence": 0.4},
+            grounded={"answer": "Satisfaction is 88% over the last 30 days.",
+                      "grounded": True, "confidence": 0.4})
+        r = admin.post("/api/ai/route", data={"q": "how have we been doing lately"})
+        body = r.json()
+        assert body["kind"] == "answer"
+        assert body["served_by"] == "grounded"
+        assert body["text"] == "Satisfaction is 88% over the last 30 days."
+        conn = st.connect(db_path)
+        assert _rows(conn, "nl_answer_grounded") == [("ok",)]
+    finally:
+        _reset(conn); conn.close()
+
+
+def test_maximize_below_grounded_floor_still_rejected(admin, db_path, monkeypatch):
+    """The floor still exists — a grounded answer under 0.35 is rejected, so the
+    loosening didn't remove the confidence guard, only lowered it."""
+    conn = st.connect(db_path); st.init_db(conn); _reset(conn)
+    try:
+        _configure_maximize(conn, monkeypatch)
+        conn.commit(); conn.close()
+        monkeypatch.setattr(app_mod, "home_stats", lambda conn: FAKE_STATS)
+        _mock_router_then_grounded(
+            monkeypatch,
+            router_fields={"answer_slot": "responses_30d", "confidence": 0.9},
+            grounded={"answer": "maybe 42?", "grounded": True, "confidence": 0.3})
+        r = admin.post("/api/ai/route", data={"q": "how many responses this month"})
+        body = r.json()
+        assert body.get("served_by") != "grounded"
+        assert "42" in body["text"]              # canned fallback
+        conn = st.connect(db_path)
+        assert _rows(conn, "nl_answer_grounded") == [("rejected_validation",)]
+    finally:
+        _reset(conn); conn.close()
+
+
 # ---- fallbacks: grounded call fails -> canned slot render ----------------------
 
 def test_maximize_ungrounded_falls_back_to_canned_slot(admin, db_path, monkeypatch):
@@ -239,6 +289,54 @@ def test_data_pack_excludes_people_by_default(db_path):
         assert "ORG-WIDE TOTALS" in pack
         assert "PER-RESOURCE-PERSON" not in pack
         assert "@" not in pack                 # no email ever leaks in
+    finally:
+        conn.close()
+
+
+def _seed_activity(conn, *, topic, unit_short, event_date, ratings):
+    """Insert one Form-2 (activity/SERVQUAL) survey with an organizing unit and
+    one response whose B1..B9 answers are given by `ratings` (item -> value).
+    Returns nothing; commits so a fresh connection sees it."""
+    cur = conn.execute(
+        "INSERT INTO org_unit(name, short_name, level, path) VALUES(?,?,?,?)",
+        (f"{unit_short} Full Name", unit_short, "section", f"BUR/{unit_short}"))
+    ou_id = cur.lastrowid
+    cur = conn.execute(
+        "INSERT INTO form_instance(survey_type, form, qr_token, event_date, "
+        "lead_org_id, topic) VALUES(2,'F2',?,?,?,?)",
+        (f"tok-{topic}", event_date, ou_id, topic))
+    fi_id = cur.lastrowid
+    cur = conn.execute(
+        "INSERT INTO response(form_instance_id, submitted_at) VALUES(?,?)",
+        (fi_id, event_date + "T09:00"))
+    r_id = cur.lastrowid
+    for item, val in ratings.items():
+        conn.execute("INSERT INTO answer(response_id, item_id, value) VALUES(?,?,?)",
+                     (r_id, item, val))
+    conn.commit()
+
+
+def test_data_pack_breakdown_sections_render(db_path):
+    """The added breakdowns (survey type, SERVQUAL dimension, monthly trend,
+    per-activity, organizing unit) appear once Form-2 activity data exists, and
+    the quarter column is surfaced — all still PII-free."""
+    conn = st.connect(db_path); st.init_db(conn)
+    try:
+        # B6 is Assurance and scores top-box (7); B1 (Reliability) is below the
+        # 1-7 top-2-box cut (5), so the two dimensions read differently.
+        _seed_activity(conn, topic="Nutrition Webinar", unit_short="HPU",
+                       event_date="2026-05-10",
+                       ratings={"B1": 5, "B2": 6, "B5": 7, "B6": 7, "B8": 6})
+        pack = app_mod._ai_data_pack(conn, include_people=False)
+        assert "this quarter" in pack                    # quarter column surfaced
+        assert "BY SURVEY TYPE" in pack
+        assert "Activity & event surveys" in pack
+        assert "BY SERVQUAL DIMENSION" in pack
+        assert "Reliability" in pack and "Assurance" in pack
+        assert "MONTHLY TREND" in pack and "2026-05" in pack
+        assert "PER-ACTIVITY" in pack and "Nutrition Webinar" in pack
+        assert "BY ORGANIZING UNIT" in pack and "HPU" in pack
+        assert "@" not in pack                            # never leaks an email
     finally:
         conn.close()
 
