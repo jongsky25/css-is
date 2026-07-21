@@ -4198,7 +4198,10 @@ async def me_submit(request: Request):
                summary=f"set companion to {kind} named '{st.clean_avatar_name(pet_name)}'")
     finally:
         conn.close()
-    return RedirectResponse("/me?msg=" + quote("Saved."), status_code=303)
+    # After renaming/changing the companion, land on the wellness break page so
+    # the person sees their updated mascot right where it grows.
+    return RedirectResponse("/wellness?cheer=" + quote("Companion saved."),
+                            status_code=303)
 
 
 @app.post("/avatar/care")

@@ -84,7 +84,8 @@ def test_me_updates_species_and_name(app_mod):
     c = _client(app_mod, uid, "pe-upd@test.local")
     r = c.post("/me", data={"avatar_kind": "cat", "avatar_name": "  Milo "},
                follow_redirects=False)
-    assert r.status_code == 303 and r.headers["location"].startswith("/me?msg=")
+    # Saving lands on the wellness break page so the updated mascot is visible.
+    assert r.status_code == 303 and r.headers["location"].startswith("/wellness")
     conn = st.connect(app_mod.DB)
     acct = st.get_admin_user_by_id(conn, uid)
     conn.execute("DELETE FROM admin_user WHERE id=?", (uid,)); conn.commit(); conn.close()
