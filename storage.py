@@ -272,12 +272,6 @@ def init_db(conn):
     );
     """)
     _add_missing_columns(conn)
-    # PSGC crosswalk infrastructure (E4.1): dim_geo + dim_psgc_crosswalk +
-    # psgc_vintage. Kept in its own module (psgc.py owns the DDL); wiring the
-    # call here means every database — fresh or migrated — carries the geo
-    # dimension every later geographic load maps its own vintage's codes onto.
-    import psgc
-    psgc.ensure_schema(conn)
     conn.commit()
 
 
