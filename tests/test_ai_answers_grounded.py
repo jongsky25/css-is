@@ -293,6 +293,54 @@ def test_data_pack_excludes_people_by_default(db_path):
         conn.close()
 
 
+def _seed_activity(conn, *, topic, unit_short, event_date, ratings):
+    """Insert one Form-2 (activity/SERVQUAL) survey with an organizing unit and
+    one response whose B1..B9 answers are given by `ratings` (item -> value).
+    Returns nothing; commits so a fresh connection sees it."""
+    cur = conn.execute(
+        "INSERT INTO org_unit(name, short_name, level, path) VALUES(?,?,?,?)",
+        (f"{unit_short} Full Name", unit_short, "section", f"BUR/{unit_short}"))
+    ou_id = cur.lastrowid
+    cur = conn.execute(
+        "INSERT INTO form_instance(survey_type, form, qr_token, event_date, "
+        "lead_org_id, topic) VALUES(2,'F2',?,?,?,?)",
+        (f"tok-{topic}", event_date, ou_id, topic))
+    fi_id = cur.lastrowid
+    cur = conn.execute(
+        "INSERT INTO response(form_instance_id, submitted_at) VALUES(?,?)",
+        (fi_id, event_date + "T09:00"))
+    r_id = cur.lastrowid
+    for item, val in ratings.items():
+        conn.execute("INSERT INTO answer(response_id, item_id, value) VALUES(?,?,?)",
+                     (r_id, item, val))
+    conn.commit()
+
+
+def test_data_pack_breakdown_sections_render(db_path):
+    """The added breakdowns (survey type, SERVQUAL dimension, monthly trend,
+    per-activity, organizing unit) appear once Form-2 activity data exists, and
+    the quarter column is surfaced — all still PII-free."""
+    conn = st.connect(db_path); st.init_db(conn)
+    try:
+        # B6 is Assurance and scores top-box (7); B1 (Reliability) is below the
+        # 1-7 top-2-box cut (5), so the two dimensions read differently.
+        _seed_activity(conn, topic="Nutrition Webinar", unit_short="HPU",
+                       event_date="2026-05-10",
+                       ratings={"B1": 5, "B2": 6, "B5": 7, "B6": 7, "B8": 6})
+        pack = app_mod._ai_data_pack(conn, include_people=False)
+        assert "this quarter" in pack                    # quarter column surfaced
+        assert "BY SURVEY TYPE" in pack
+        assert "Activity & event surveys" in pack
+        assert "BY SERVQUAL DIMENSION" in pack
+        assert "Reliability" in pack and "Assurance" in pack
+        assert "MONTHLY TREND" in pack and "2026-05" in pack
+        assert "PER-ACTIVITY" in pack and "Nutrition Webinar" in pack
+        assert "BY ORGANIZING UNIT" in pack and "HPU" in pack
+        assert "@" not in pack                            # never leaks an email
+    finally:
+        conn.close()
+
+
 def test_data_pack_includes_people_when_opted_in(db_path):
     conn = st.connect(db_path); st.init_db(conn)
     try:
