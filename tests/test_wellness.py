@@ -4,6 +4,7 @@ validation, section-chief approver resolution, the apply→approve→reflect flo
 with its gamification side-effects, in-handler RBAC on the chief/admin pages,
 and the monitoring register export.
 """
+import io
 from datetime import date, datetime, time, timedelta
 
 import pytest
@@ -420,7 +421,7 @@ def test_http_approve_and_reflect(app_mod, wellness_org):
 def test_chief_pages_are_gated(app_mod, wellness_org, viewer, admin):
     # a viewer with no chief designation: hub yes, chief pages no
     assert viewer.get("/wellness").status_code == 200
-    for path in ("/wellness/approvals", "/wellness/dashboard", "/wellness/export.csv"):
+    for path in ("/wellness/approvals", "/wellness/dashboard", "/wellness/export.xlsx"):
         assert viewer.get(path).status_code == 403, path
     # admins and directory-resolved chiefs both pass
     chief_c = _client_for_id(app_mod, wellness_org["chief"])
@@ -445,16 +446,40 @@ def test_register_export(app_mod, wellness_org, admin):
         " hours, activity, status, created_at) VALUES (?,?,?,?,1,'meditation','approved',?)",
         (emp, ws, monday, "13:00", tz.now_iso())).lastrowid
     conn.commit()
-    st.complete_wellness_claim(conn, cid, emp, 1, 5, "breathing exercises", "calm")
-    r = admin.get("/wellness/export.csv")
+    st.complete_wellness_claim(conn, cid, emp, 1, 5, "breathing exercises", "calm",
+                               usefulness=4)
+    # a still-pending break must NOT reach the register — only consumed breaks count
+    conn.execute(
+        "INSERT INTO wellness_claim(user_id, week_start, break_date, start_time,"
+        " hours, activity, status, created_at) VALUES (?,?,?,?,2,'exercise','pending',?)",
+        (emp, ws, monday, "09:00", tz.now_iso()))
+    conn.commit()
+
+    r = admin.get("/wellness/export.xlsx")
     assert r.status_code == 200
-    assert r.headers["content-type"].startswith("text/csv")
-    head, *rows = r.text.strip().splitlines()
-    for col in ("Week of", "Section", "Employee", "Date", "Hours", "Activity",
-                "Status", "Approved by", "Reflection done", "Mood before"):
-        assert col in head
-    ours = [x for x in rows if "W-Test Employee" in x]
-    assert ours and "Meditation" in ours[0] and "yes" in ours[0]
+    assert r.headers["content-type"].startswith(
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+    from openpyxl import load_workbook
+    sh = load_workbook(io.BytesIO(r.content)).active
+    grid = [[c.value for c in row] for row in sh.iter_rows()]
+    text = "\n".join("|".join("" if v is None else str(v) for v in row) for row in grid)
+    # the Annex A masthead and its seven columns
+    assert "Annex A. Weekly Wellness Break Log" in text
+    assert "Bureau of Local Health Systems Development" in text
+    for col in ("No.", "Name of Personnel", "Wellness Break Availed (Date/Time)",
+                "Duration (Minutes)", "Usefulness Rating (1-5)", "Remarks/ Observations"):
+        assert col in text, col
+    # exactly the one consumed break, mapped into the Annex A layout
+    ours = [row for row in grid if (row[1] or "") == "W-Test Employee"]
+    assert len(ours) == 1
+    row = ours[0]
+    assert row[3] == "Relaxation"   # meditation -> Annex A "Relaxation"
+    assert row[4] == 60             # 1 hour -> 60 minutes
+    assert row[5] == 4             # usefulness rating
+    assert row[6] == "calm"        # takeaway -> Remarks/Observations
+    # the pending 09:00 break never appears on the register
+    assert "09:00" not in text
     # the dashboard shows the same week
     r = admin.get(f"/wellness/dashboard?week={monday}")
     assert r.status_code == 200 and "WSec" in r.text
