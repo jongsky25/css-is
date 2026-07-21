@@ -1,5 +1,32 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-21 (v2.39 — Wellness: downloadable monthly break register (PDF) per person)
+
+Each employee can now download their own **monthly wellness-break register** as a
+print-ready PDF from their wellness page — the record of the breaks they availed
+that month, laid out like the DOH monitoring form (Name / Office header + a
+Monday–Friday grid, one two-row "Approved By" block per week). Because approval
+already happened inside the system, the signature area is filled with **"Digitally
+approved and signed"** (over the deciding approver's name) instead of a blank line.
+
+- **New `wellness_register.py`**: `render_month_pdf(data)` builds the form-faithful
+  grid with reportlab (weekday cells SPAN their week's "Approved By" line, exactly
+  like the paper form); days outside the month are shaded, completed breaks marked ✓.
+  `filename()` / `month_title()` helpers. Issued as PDF only (never editable), matching
+  `certificate.py`'s pattern.
+- **Storage** (`storage.py`): `wellness_availed_months()` lists the months a person has
+  an availed (approved/completed) break, newest first, with counts — drives the picker;
+  `wellness_person_month()` returns that month's breaks plus the person's name/office and
+  each break's deciding approver. Denied/cancelled/pending are excluded (not breaks taken).
+- **Route** (`app.py`): `GET /wellness/register.pdf?month=YYYY-MM` — self-service (every
+  employee downloads their OWN register, no chief/admin gate), defaults to the current
+  month, redirects back to the hub with a message when nothing was availed, and audits the
+  download.
+- **Hub** (`templates/wellness_hub.html`): a "Monthly register (PDF)" panel with a month
+  dropdown + download button, shown only once the person has availed a break.
+- Tests: new coverage in `tests/test_wellness.py` for the two storage helpers, the PDF
+  bytes/filename, the HTTP download + empty-month redirect, and self-service access.
+
 ## 2026-07-21 (v2.38 — Lifelike companions: watering fix, roaming, page-wide swim, personality)
 
 The companion layer grows from "animated sticker" into something that feels a

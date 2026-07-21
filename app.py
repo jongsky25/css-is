@@ -71,6 +71,7 @@ import harmonize as hz
 import activity_admin as aa
 import activity_messages as amsg
 import certificate as cert
+import wellness_register as wreg
 import ratelimit as rl
 import version as ver
 import i18n
@@ -12234,6 +12235,7 @@ def wellness_hub(request: Request, cheer: str = "", badges: str = "", err: str =
         claims = st.list_my_wellness_claims(conn, user["id"])
         is_chief = st.user_is_wellness_chief(conn, user)
         queue_n = len(st.list_wellness_approvals(conn, user)) if is_chief else 0
+        register_months = st.wellness_availed_months(conn, user["id"])
     finally:
         conn.close()
     # The mascot IS the adopted companion (STAFF_ONBOARDING_AVATAR_PLAN.md §D2):
@@ -12258,6 +12260,7 @@ def wellness_hub(request: Request, cheer: str = "", badges: str = "", err: str =
         "left": max(0, st.WELLNESS_WEEKLY_HOURS - used),
         "weekly_hours": st.WELLNESS_WEEKLY_HOURS,
         "claims": claims, "is_chief": is_chief, "queue_n": queue_n,
+        "register_months": register_months,
         "cheer": cheer, "cheer_badges": [b for b in badges.split("|") if b],
         "err": err, "today": _today_local().isoformat(),
     })
@@ -12425,6 +12428,39 @@ async def wellness_reflect_submit(request: Request, claim_id: int):
     if new_badges:
         url += "&badges=" + quote("|".join(new_badges))
     return RedirectResponse(url, status_code=303)
+
+
+@app.get("/wellness/register.pdf")
+def wellness_register_pdf(request: Request, month: str = ""):
+    """A person's own monthly wellness-break register as a print-ready PDF —
+    the breaks they availed that month laid out like the DOH monitoring form,
+    with each approval shown as 'Digitally approved and signed'. Self-service:
+    every employee can download their OWN record (no chief/admin gate)."""
+    user = request.state.user
+    today = _today_local()
+    m = (month or "").strip()
+    if re.fullmatch(r"\d{4}-\d{2}", m):
+        year, mon = int(m[:4]), int(m[5:7])
+        if not (1 <= mon <= 12):
+            year, mon = today.year, today.month
+    else:
+        year, mon = today.year, today.month
+    conn = get_conn()
+    try:
+        data = st.wellness_person_month(conn, user["id"], year, mon)
+        if not data["entries"]:
+            msg = quote(f"No wellness breaks were availed in "
+                        f"{wreg.month_title(year, mon)} — nothing to download yet.")
+            return RedirectResponse(f"/wellness?err={msg}", status_code=303)
+        _audit(request, conn, "wellness_register_pdf",
+               summary=f"downloaded their wellness register for "
+                       f"{wreg.month_title(year, mon)} ({len(data['entries'])} breaks)")
+    finally:
+        conn.close()
+    pdf = wreg.render_month_pdf(data)
+    fn = wreg.filename(data)
+    return Response(content=pdf, media_type="application/pdf",
+                    headers={"Content-Disposition": f'attachment; filename="{fn}"'})
 
 
 @app.get("/wellness/dashboard", response_class=HTMLResponse)
