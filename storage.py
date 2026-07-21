@@ -4578,6 +4578,26 @@ WELLNESS_ACTIVITIES = [
 # signatories use (_SIGNATORY_DESIGNATIONS).
 _WELLNESS_CHIEF_DESIGNATIONS = ("section head", "section chief", "division chief")
 
+# Approval escalates by directory RANK (STAFF_ONBOARDING_AVATAR_PLAN.md §7a.2):
+# staff -> section chief -> division chief -> Director, with admins the catch-all
+# above the Director and for anyone off the chain. Rank comes from the
+# designation; the "up one level" hop walks org_unit.path (section -> its parent
+# division -> the directorate). Every designation that can approve SOMEONE — used
+# to gate who even sees the approvals queue.
+_WELLNESS_RANK = {"director": 3, "division chief": 2,
+                  "section head": 1, "section chief": 1}
+_WELLNESS_APPROVER_DESIGNATIONS = ("section head", "section chief",
+                                   "division chief", "director")
+
+
+def _wellness_rank(designation):
+    return _WELLNESS_RANK.get((designation or "").strip().lower(), 0)
+
+
+def _wellness_parent_path(path):
+    """The org path one level up ('A/B/C' -> 'A/B'), or None at the top."""
+    return path.rsplit("/", 1)[0] if path and "/" in path else None
+
 # Cumulative point thresholds for levels 1..6; the avatar stage == the level.
 WELLNESS_LEVELS = [0, 30, 75, 150, 250, 400]
 # The classic plant vocabulary, kept as the wellness default. Single source of
@@ -4690,30 +4710,58 @@ def list_my_wellness_claims(conn, user_id, limit=25):
 
 # ---- approver resolution ------------------------------------------------
 
+def _wellness_accounts_by_designation(conn, desigs, org_path=None, exclude_uid=None):
+    """Active accounts of internal people holding one of `desigs`, optionally
+    restricted to an exact org_unit.path. The building block of the escalation
+    chain."""
+    qs = ",".join("?" * len(desigs))
+    sql = (f"SELECT DISTINCT a.id FROM admin_user a "
+           f"JOIN resource_person rp ON rp.id = a.rp_id AND rp.is_internal = 1 "
+           f"LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id "
+           f"WHERE a.active = 1 AND LOWER(TRIM(COALESCE(rp.designation,''))) IN ({qs})")
+    params = list(desigs)
+    if org_path is not None:
+        sql += " AND ou.path = ?"
+        params.append(org_path)
+    return [r[0] for r in conn.execute(sql, params).fetchall() if r[0] != exclude_uid]
+
+
 def get_wellness_approvers(conn, user_id):
-    """Account ids that may decide this employee's claims through the directory:
-    active accounts of section/division chiefs in the claimant's own org unit,
-    never the claimant themselves. Empty when the account has no directory link
-    or the unit has no chief with an account — those claims fall to admins."""
-    qs = ",".join("?" * len(_WELLNESS_CHIEF_DESIGNATIONS))
-    rows = conn.execute(f"""
-        SELECT DISTINCT ca.id
-        FROM admin_user me
-        JOIN resource_person mine  ON mine.id = me.rp_id
-        JOIN resource_person chief ON chief.org_unit_id = mine.org_unit_id
-                                   AND chief.is_internal = 1
-        JOIN admin_user ca ON ca.rp_id = chief.id AND ca.active = 1
-        WHERE me.id = ? AND ca.id != me.id
-          AND LOWER(TRIM(COALESCE(chief.designation,''))) IN ({qs})
-    """, (user_id, *_WELLNESS_CHIEF_DESIGNATIONS)).fetchall()
-    return [r[0] for r in rows]
+    """Account ids that may decide this person's claims, one rank UP the chain of
+    command (STAFF_ONBOARDING_AVATAR_PLAN.md §7a.2):
+      * regular staff        -> their section chief(s), same unit
+      * a section chief/head -> the division chief of the parent division
+      * a division chief      -> the Director
+      * the Director (or an unlinked account) -> nobody here; admins are the
+        fallback (see is_wellness_approver).
+    Never the claimant themselves."""
+    me = get_admin_user_by_id(conn, user_id)
+    if not me or not me.get("rp_id"):
+        return []
+    rp = get_rp(conn, me["rp_id"])
+    if not rp:
+        return []
+    rank = _wellness_rank(rp.get("designation"))
+    path = rp.get("org_path")
+    if rank == 0:                                   # staff -> section chief (same unit)
+        return _wellness_accounts_by_designation(
+            conn, ("section head", "section chief"), org_path=path, exclude_uid=user_id)
+    if rank == 1:                                   # section chief -> division chief (parent)
+        parent = _wellness_parent_path(path)
+        if not parent:
+            return []
+        return _wellness_accounts_by_designation(
+            conn, ("division chief",), org_path=parent, exclude_uid=user_id)
+    if rank == 2:                                   # division chief -> the Director
+        return _wellness_accounts_by_designation(
+            conn, ("director",), exclude_uid=user_id)
+    return []                                       # Director -> admin fallback
 
 
 def is_wellness_approver(conn, user, claim_user_id):
     """May `user` (the request's user dict) decide claims filed by
-    `claim_user_id`? Admins always may — they are the fallback for employees
-    without a directory link and for the chiefs' own claims. Nobody decides
-    their own claim."""
+    `claim_user_id`? Admins always may — they are the fallback above the Director
+    and for accounts off the chain. Nobody decides their own claim."""
     if user["id"] == claim_user_id:
         return False
     if user.get("role") == "admin":
@@ -4723,41 +4771,48 @@ def is_wellness_approver(conn, user, claim_user_id):
 
 def user_is_wellness_chief(conn, user):
     """Does this user see the approvals queue at all? Admins, plus anyone whose
-    directory designation marks them a section/division chief."""
+    directory designation can approve SOMEONE — section head/chief, division
+    chief, or the Director (who decides a division chief's own breaks)."""
     if user.get("role") == "admin":
         return True
-    qs = ",".join("?" * len(_WELLNESS_CHIEF_DESIGNATIONS))
+    qs = ",".join("?" * len(_WELLNESS_APPROVER_DESIGNATIONS))
     row = conn.execute(f"""
         SELECT 1 FROM admin_user a JOIN resource_person rp ON rp.id = a.rp_id
         WHERE a.id=? AND rp.is_internal=1
           AND LOWER(TRIM(COALESCE(rp.designation,''))) IN ({qs}) LIMIT 1
-    """, (user["id"], *_WELLNESS_CHIEF_DESIGNATIONS)).fetchone()
+    """, (user["id"], *_WELLNESS_APPROVER_DESIGNATIONS)).fetchone()
     return bool(row)
 
 
 def list_wellness_approvals(conn, user):
     """Pending claims this user may decide, oldest break first. Admins see every
-    pending claim except their own; a chief sees their own unit's (again minus
-    their own — those go to an admin)."""
-    base = """
-        SELECT c.id FROM wellness_claim c
-        JOIN admin_user u ON u.id = c.user_id
-        LEFT JOIN resource_person rp ON rp.id = u.rp_id
-        WHERE c.status = 'pending' AND c.user_id != ?
-    """
+    pending claim except their own; a chief sees exactly the claims the
+    escalation chain routes to them (their section's staff, or — for a division
+    chief — their division's section chiefs, etc.). Own claims are excluded (they
+    escalate one level further)."""
+    ids = [r[0] for r in conn.execute(
+        "SELECT id FROM wellness_claim WHERE status='pending' AND user_id != ? "
+        "ORDER BY break_date, start_time", (user["id"],)).fetchall()]
+    claims = [get_wellness_claim(conn, i) for i in ids]
     if user.get("role") == "admin":
-        rows = conn.execute(base + " ORDER BY c.break_date, c.start_time",
-                            (user["id"],)).fetchall()
-    elif user_is_wellness_chief(conn, user):
-        rows = conn.execute(base + """
-          AND rp.org_unit_id IS NOT NULL
-          AND rp.org_unit_id = (SELECT r2.org_unit_id FROM admin_user a2
-                                JOIN resource_person r2 ON r2.id = a2.rp_id
-                                WHERE a2.id = ?)
-          ORDER BY c.break_date, c.start_time""", (user["id"], user["id"])).fetchall()
-    else:
-        rows = []
-    return [get_wellness_claim(conn, r[0]) for r in rows]
+        return claims
+    if not user_is_wellness_chief(conn, user):
+        return []
+    return [c for c in claims if user["id"] in get_wellness_approvers(conn, c["user_id"])]
+
+
+def wellness_approver_title(conn, user_id):
+    """Human label for who decides THIS person's breaks, for the apply/hub copy:
+    'your section chief' / 'your division chief' / 'the Director', or 'an
+    administrator' when the chain resolves to nobody (top of the chain, or an
+    unlinked account)."""
+    if not get_wellness_approvers(conn, user_id):
+        return "an administrator"
+    me = get_admin_user_by_id(conn, user_id)
+    rp = get_rp(conn, me["rp_id"]) if me and me.get("rp_id") else None
+    rank = _wellness_rank((rp or {}).get("designation"))
+    return {0: "your section chief", 1: "your division chief",
+            2: "the Director"}.get(rank, "an administrator")
 
 
 def decide_wellness_claim(conn, claim_id, user, action, note=None):

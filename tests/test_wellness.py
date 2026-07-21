@@ -206,6 +206,10 @@ def test_http_apply_flow_and_hub(app_mod, wellness_org):
     assert r.status_code == 200 and "avwrap" in r.text
     r = c.get("/wellness/apply")
     assert r.status_code == 200
+    # Phase 6a: the activity selector is now illustrated cards — inline SVG icons
+    # behind the SAME radio inputs (name="activity"), so the POST below is unchanged.
+    assert "<svg" in r.text
+    assert 'type="radio" name="activity" value="exercise"' in r.text
     d = _next_weekday(tz.today_local()).isoformat()
     r = c.post("/wellness/apply", data={"break_date": d, "start_time": "10:00",
                                         "activity": "exercise", "note": "jog"},

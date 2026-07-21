@@ -11817,11 +11817,12 @@ def _wellness_apply_page(request, err="", form=None):
     try:
         week = st.wellness_week_start()
         used = st.wellness_hours_used(conn, user["id"], week)
+        approver_title = st.wellness_approver_title(conn, user["id"])
     finally:
         conn.close()
     return templates.TemplateResponse(request, "wellness_apply.html", {
         "nav_active": "wellness", "show_scope": False,
-        "activities": st.WELLNESS_ACTIVITIES,
+        "activities": st.WELLNESS_ACTIVITIES, "approver_title": approver_title,
         "left": max(0, st.WELLNESS_WEEKLY_HOURS - used),
         "weekly_hours": st.WELLNESS_WEEKLY_HOURS,
         "today": _today_local().isoformat(),
@@ -11849,10 +11850,11 @@ async def wellness_apply_submit(request: Request):
         _audit(request, conn, "wellness_apply", target_type="wellness_claim",
                target_id=claim_id,
                summary=f"requested a wellness break on {p.get('break_date')} {p.get('start_time')}")
+        approver_title = st.wellness_approver_title(conn, user["id"])
     finally:
         conn.close()
-    return RedirectResponse("/wellness?cheer=Break+requested+—+your+section+chief+will+see+it.",
-                            status_code=303)
+    cheer = quote(f"Break requested — {approver_title} will see it.")
+    return RedirectResponse(f"/wellness?cheer={cheer}", status_code=303)
 
 
 @app.post("/wellness/claims/{claim_id}/cancel")
