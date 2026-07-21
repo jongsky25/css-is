@@ -27,7 +27,7 @@ import sqlite3
 import uuid
 import re
 import difflib
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, time
 import pandas as pd
 import css_is_engine as eng
 import tzutil as tz  # local (PH) wall-clock — never stamp with the server clock
@@ -4687,6 +4687,11 @@ def avatar_accessory_month():
 # =====================================================================
 
 WELLNESS_WEEKLY_HOURS = 2          # the DM's per-week entitlement
+# A break must be filed at least this many minutes before its start time, so the
+# approving chief has a real window to see and act on it before it happens
+# (Spot Feedback #73). Also stops same-day requests for a time that's already
+# passed.
+WELLNESS_MIN_LEAD_MINUTES = 30
 WELLNESS_STATUSES = ("pending", "approved", "denied", "cancelled", "completed")
 # Statuses that consume the weekly entitlement (denied/cancelled free the hour).
 _WELLNESS_COUNTED = ("pending", "approved", "completed")
@@ -4784,6 +4789,16 @@ def create_wellness_claim(conn, user_id, break_date, start_time, activity, note=
         raise ValueError("Breaks are scheduled ahead — pick today or a future date.")
     if d.weekday() >= 5:
         raise ValueError("Wellness breaks are taken within the work week (Mon–Fri).")
+    # Require a minimum lead time before the break's start so the approver has a
+    # window to act (Spot Feedback #73). Combining date + time also rejects a
+    # same-day request for a start that's already passed — which the date-only
+    # check above lets through.
+    starts_at = datetime.combine(d, time.fromisoformat(start_time))
+    earliest = tz.now_local() + timedelta(minutes=WELLNESS_MIN_LEAD_MINUTES)
+    if starts_at < earliest:
+        raise ValueError(
+            f"File a break at least {WELLNESS_MIN_LEAD_MINUTES} minutes before it "
+            "starts, so your approver has time to see it.")
     ws = wellness_week_start(d)
     if wellness_hours_used(conn, user_id, ws) + 1 > WELLNESS_WEEKLY_HOURS:
         raise ValueError(f"That week's {WELLNESS_WEEKLY_HOURS}-hour wellness "

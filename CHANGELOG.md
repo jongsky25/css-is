@@ -1,5 +1,24 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-21 (v2.30 — Wellness breaks need a 30-minute lead time)
+
+Addresses live Spot Feedback #73 ("minimum time … to request before said time
+of wellness break").
+
+- **Minimum lead time** (`storage.py`): new `WELLNESS_MIN_LEAD_MINUTES = 30`
+  constant; `create_wellness_claim` now combines `break_date` + `start_time` into
+  a local datetime and rejects anything earlier than `tz.now_local() + 30 min`, so
+  the approving chief has a real window to act. This also closes a latent gap —
+  the prior guard compared the **date only** (`d < today_local()`), which accepted
+  a same-day request for a start time that had already passed.
+- **Apply form** (`templates/wellness_apply.html`, `app.py`): the start-time field's
+  help text now states the rule, driven by the constant (`min_lead`) so the copy
+  stays in sync with what's enforced.
+- Tests (`tests/test_wellness.py`): new `test_break_needs_minimum_lead_time` (clock
+  pinned via `monkeypatch` for determinism); existing claim tests moved to a future
+  weekday (`_future_weekday`) so their fixed clock times don't read as "in the past"
+  when the suite runs late in the day.
+
 ## 2026-07-21 (v2.29 — Companion sleep cycle, care-streak badge, monthly accessories, opt-in sound)
 
 Follow-up round on the v2.28 companion release:

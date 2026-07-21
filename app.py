@@ -11864,6 +11864,7 @@ def _wellness_apply_page(request, err="", form=None):
         "activities": st.WELLNESS_ACTIVITIES, "approver_title": approver_title,
         "left": max(0, st.WELLNESS_WEEKLY_HOURS - used),
         "weekly_hours": st.WELLNESS_WEEKLY_HOURS,
+        "min_lead": st.WELLNESS_MIN_LEAD_MINUTES,
         "today": _today_local().isoformat(),
         "err": err, "form": form or {},
     }, status_code=400 if err else 200)
