@@ -1,5 +1,41 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-23 (Fix: a multi-session summit's CSS results 404'd after closing)
+
+**Symptom.** An organizer closed a regional BHW summit (created as several
+activities — e.g. a morning plenary and an afternoon workshop — on the SAME day,
+at the SAME venue, organized by the SAME unit) and clicked the Manage/Monitor
+page's **"View the report"** link, but got a 404 (or, on the resource-person side,
+an empty "this activity" report) for every session except one. The CSS results were
+never lost — only the link to them was broken.
+
+**Root cause.** `dashboard_insights.build_events` deliberately collapses forms that
+share a date + venue + organizer into ONE activity (an event review + its speaker
+reviews), keyed on the LOWEST form id in the group (`_event_group_key`). But when
+two *distinct* event records share that key — the multi-session case — each
+session's report link is still built from THAT session's own min form id
+(`storage.event_report_url` / `event_rp_results_url`). For every session but the one
+owning the group minimum, that id is a **member** of the merged group, not its
+**representative**. The report consumers matched only `e["id"] == event_id`, so the
+member-id link found no activity and 404'd. (The per-person engagement report at the
+bottom of `_person_report` already matched membership too — the other consumers just
+hadn't been brought in line.)
+
+- **`app.py`** — new `_match_event(events, event_id)` helper matches a build_events
+  activity by its representative id **or** any of its member form-instance ids, and
+  is now used by `dashboard_activity` (the `/reports/activities/{id}` SERVQUAL page)
+  and `_event_or_404` (its AI re-analyze / summary / MRR-draft actions). The helper
+  keys stay per-event (unchanged, still what `test_event_report_url_follows_the_responses`
+  pins) — only the *lookup* is made merge-aware.
+- **`app.py`** — `_rp_activity_scope` (the Resource-person report's Activity filter,
+  shared with its verbatims drill-down) now resolves a member id to its option before
+  falling back to the empty view, so the Type-3 link engages on the merged activity.
+- **Tests** — new `tests/test_summit_merged_results.py`: two same-day/venue/organizer
+  sessions, close the second, then **follow** its report link end-to-end and assert a
+  200 with a rendered scorecard (a URL-string assertion alone never caught the 404),
+  plus a unit check of the member-id resolution in `_rp_activity_scope`. Verified the
+  HTTP test fails (404) without the fix.
+
 ## 2026-07-21 (v2.42 — ship the wellness "By person" section scoping)
 
 Version bump so the deploy's strict-version gate ships #74 (already merged): the
