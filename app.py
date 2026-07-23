@@ -9888,13 +9888,38 @@ def _rp_activity_scope(opts, activity):
 
     The last case returns an EMPTY id list, never None — so a stale/mismatched id
     yields an empty, clearly-labelled view instead of silently widening to the whole
-    bureau (feedback #51)."""
+    bureau (feedback #51).
+
+    An option's value is its build_events REPRESENTATIVE id (the lowest form id in
+    its group). Activities that share a date + venue + organizer — e.g. several
+    sessions of one summit — collapse into one group, so a link built from a single
+    event's own min form id (event_rp_results_url) can carry a MEMBER id that is not
+    the representative. Resolve any such member id to its option before giving up, so
+    the filter engages on the (merged) activity instead of showing an empty view."""
     if not activity:
         return "", "", None
     pick = next((a for a in opts if a["value"] == activity), None)
+    if not pick and str(activity).isdigit():
+        aid = int(activity)
+        pick = next((a for a in opts if aid in a["instance_ids"]), None)
     if pick:
         return pick["value"], pick["text"], list(pick["instance_ids"])
     return activity, "this activity", []
+
+
+def _match_event(events, event_id):
+    """Find the build_events activity an id refers to — matching either its
+    representative id OR any of its member form-instance ids.
+
+    Several activities sharing a date + venue + organizer (e.g. sessions of one
+    summit) collapse into a single build_events group keyed on the LOWEST form id.
+    A report link built from one event's own min form id (event_report_url /
+    event_rp_results_url) therefore carries a MEMBER id of that group, not its
+    representative — so a plain `e["id"] == event_id` match misses it and the report
+    404s. Matching membership too keeps those links resolving to the (merged) report.
+    Same rule already used inline for the per-person engagement report."""
+    return next((e for e in events
+                 if e["id"] == event_id or event_id in e["instance_ids"]), None)
 
 
 @app.get("/reports", response_class=HTMLResponse)
@@ -11034,7 +11059,7 @@ def dashboard_activity(request: Request, event_id: int, err: str = "", msg: str 
         atoms = get_atoms(conn)
         events = view_memo("events", ("", "all"),
                            lambda: di.build_events(atoms, st.list_activity_instances(conn)))
-        ev = next((e for e in events if e["id"] == event_id), None)
+        ev = _match_event(events, event_id)
         if not ev or not ev["f2"]:
             return templates.TemplateResponse(request, "activity.html",
                                               {"nav_active": "activities", "ev": None},
@@ -11122,7 +11147,7 @@ def _event_or_404(conn, event_id):
     atoms = get_atoms(conn)
     events = view_memo("events", ("", "all"),
                        lambda: di.build_events(atoms, st.list_activity_instances(conn)))
-    ev = next((e for e in events if e["id"] == event_id), None)
+    ev = _match_event(events, event_id)
     return ev if (ev and ev["f2"]) else None
 
 
