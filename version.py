@@ -17,10 +17,27 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.43"
+APP_VERSION = "2.44"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.44",
+        "date": "July 23, 2026",
+        "summary": "Fixed a \"page not found\" error when opening the results of a "
+                   "big event that was run as several sessions on the same day.",
+        "changes": [
+            "When an activity is set up as several sessions on the same day, at the "
+            "same venue, run by the same office (for example a summit with a morning "
+            "plenary and an afternoon workshop), closing a session and clicking "
+            "\"View the report\" now opens its satisfaction results instead of "
+            "showing a \"page not found\" error. The results were always saved — "
+            "only the link to them was broken.",
+            "Those sessions are shown together as one activity's results, matching "
+            "how the event already appears in your Activities list and on the home "
+            "page.",
+        ],
+    },
     {
         "version": "2.43",
         "date": "July 21, 2026",
