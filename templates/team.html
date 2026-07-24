@@ -219,6 +219,9 @@
     <div class="ap-stat"><div class="apv">{{ profile.activities|comma }}</div><div class="apk">activities</div></div>
     <div class="ap-stat"><div class="apv">{{ profile.respondents|comma }}</div><div class="apk">people reached</div></div>
     <div class="ap-stat"><div class="apv">{{ profile.avg }}<span>/7</span></div><div class="apk">{{ profile.band or 'experience' }}</div></div>
+    {% if card.quality and card.quality.index is not none %}
+    <div class="ap-stat"><div class="apv">{{ "%.0f"|format(card.quality.index) }}<span>/100</span></div><div class="apk">quality index</div></div>
+    {% endif %}
     {% if profile.met_pct is not none %}
     <div class="ap-stat"><div class="apv">{{ profile.met_pct }}%</div><div class="apk">met or beat expectations</div></div>
     {% endif %}
@@ -281,25 +284,27 @@
       {% set r = g.overall.rank %}
       <div class="st">{% if r == 1 %}<span class="up">highest</span>{% elif r * 2 <= g.n %}<span class="up">top half</span>{% elif r * 3 <= g.n * 2 %}<span class="mid">middle</span>{% else %}<span class="mid">developing</span>{% endif %}</div></div>
 
-    <div class="cmp-ax"><span class="ax-t">Rating quality</span><span class="ax-s">average rating out of 7 (to 3 dp)</span></div>
+    <div class="cmp-ax"><span class="ax-t">Rating quality</span><span class="ax-s">quality index, 0–100</span></div>
     <div class="cmp-cell"><div class="rk">#{{ g.quality.rank }}</div><div class="of">of {{ g.n }}</div>
-      <div class="st">{{ "%.3f"|format(g.quality.my) }} vs {{ "%.3f"|format(g.quality.avg) }} avg
-        {% if g.quality.diff > 0 %}<span class="up">(+{{ "%.3f"|format(g.quality.diff) }})</span>
-        {% elif g.quality.diff < 0 %}<span class="dn">({{ "%.3f"|format(g.quality.diff) }})</span>
+      <div class="st">{{ "%.1f"|format(g.quality.my) }} vs {{ "%.1f"|format(g.quality.avg) }} avg
+        {% if g.quality.diff > 0 %}<span class="up">(+{{ "%.1f"|format(g.quality.diff) }})</span>
+        {% elif g.quality.diff < 0 %}<span class="dn">({{ "%.1f"|format(g.quality.diff) }})</span>
         {% else %}<span class="mid">(on par)</span>{% endif %}
+        <br><span class="mid">detailed {{ "%.2f"|format(g.quality.servqual) }}/7{% if g.quality.osq is not none %} · overall {{ "%.2f"|format(g.quality.osq) }}/4{% endif %}</span>
         {% if g.quality.low_n %}<br><span class="mid">only {{ g.quality.my_n }} rating{{ '' if g.quality.my_n == 1 else 's' }} — ranked below fully-rated units</span>{% endif %}</div></div>
 
-    <div class="cmp-ax"><span class="ax-t">Activity volume</span><span class="ax-s">rated activities run</span></div>
+    <div class="cmp-ax"><span class="ax-t">Engagement</span><span class="ax-s">activities run + people reached</span></div>
     <div class="cmp-cell"><div class="rk">#{{ g.engagement.rank }}</div><div class="of">of {{ g.n }}</div>
-      <div class="st">{{ g.engagement.my }} activit{{ 'y' if g.engagement.my == 1 else 'ies' }} · avg {{ g.engagement.avg }}</div></div>
+      <div class="st">{{ g.engagement.acts }} activit{{ 'y' if g.engagement.acts == 1 else 'ies' }} · {{ g.engagement.resp }} rating{{ '' if g.engagement.resp == 1 else 's' }}<br><span class="mid">avg {{ g.engagement.avg_acts }} activities · {{ g.engagement.avg_resp }} ratings</span></div></div>
   </div>
-  <p class="premium-note"><b>Overall standing</b> blends rating quality with how many activities the unit runs — a unit that delivers more, and delivers it well, stands higher.</p>
+  <p class="premium-note"><b>Overall standing</b> blends how well a unit is rated with how much it delivers and how many people it reaches — a unit that delivers more, reaches more, and delivers it well stands higher.</p>
   <details class="disclosure" style="margin:.5rem 0 .25rem;">
     <summary>How is this computed?</summary>
     <div class="premium-note" style="margin-top:.4rem;">
-      <p><b>Rating quality</b> ranks this unit on its <b>average rating out of 7</b> — the exact number shown here, to 3 decimals. The rank is that score and nothing else: no hidden weighting, so two units that both show 6.4 are separated only by the finer decimals (e.g. 6.417 vs 6.392). Higher average = better rank.</p>
-      <p><b>How many activities a unit runs doesn't change its quality rank</b> — that lives on the <b>Activity volume</b> axis instead, so it's never counted twice. The one guard: with fewer than {{ n_min or 10 }} ratings the sample is too thin to trust, so the unit ranks below every fully-rated unit rather than topping the list on a lucky handful.</p>
-      <p><b>Overall standing</b> blends the two — {{ w_quality or 45 }}% quality, {{ w_engagement or 55 }}% activity volume — which is why a unit's quality rank and overall rank can differ.</p>
+      <p><b>Rating quality</b> is a single <b>0–100 index</b> built from <b>every satisfaction question</b>: the nine detailed questions (rated 1–7) and the one "overall, how would you rate the quality?" question (rated 1–4). Each answer is put on the same 0–100 scale (its lowest possible answer = 0, its highest = 100) so the two scales combine fairly, and every question counts equally. The only question left out is the very first one — what people <i>expected</i> going in — because that's a baseline, not a rating. The components are shown beneath the index (detailed x.xx/7, overall x.xx/4). The unit is ranked on this index, so the number shown is exactly what the rank is based on.</p>
+      <p><b>How many activities a unit runs doesn't change its quality index</b> — that lives on the <b>Engagement</b> axis instead, so it's never counted twice. The one guard: with fewer than {{ n_min or 10 }} ratings the sample is too thin to trust, so the unit ranks below every fully-rated unit rather than topping the list on a lucky handful.</p>
+      <p><b>Engagement</b> now rewards two things equally ({{ eng_w_acts or 50 }}/{{ eng_w_resp or 50 }}): how many activities the unit ran (delivering technical assistance) and how many people rated them (the reach of that work).</p>
+      <p><b>Overall standing</b> blends the two — {{ w_quality or 45 }}% quality, {{ w_engagement or 55 }}% engagement — which is why a unit's quality rank and overall rank can differ.</p>
     </div>
   </details>
 </div>

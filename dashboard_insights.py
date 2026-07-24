@@ -725,6 +725,17 @@ def person_card(atoms, person, *, pre=None, rp_event_overalls=None):
     rising = stability_phrase(_tr, scale=("mean7" if has_rp else "pct"))["tone"] == "good"
     _rvals = [p["value"] for p in _tr if p.get("value") is not None]
     rise_mag = (_rvals[-1] - _rvals[0]) if len(_rvals) >= 2 else 0.0   # how big the recent climb is
+    # Combined Quality Index (0-100) over all ten satisfaction questions (nine
+    # SERVQUAL B-items + the OSQ), for resource-person speakers. servqual is the
+    # familiar /7 mean, osq the /4 overall-quality question — both kept as the
+    # index's components for display. ARTA-only servers have no B/C battery.
+    if has_rp:
+        qi_val, qi_n = eng.quality_index(r)
+        _osq = eng.osq_C(r)
+        quality = {"index": qi_val, "servqual": rp_value,
+                   "osq": (_osq.value if _osq.value is not None else None), "n": qi_n}
+    else:
+        quality = None
     return {
         "id": person["id"], "name": person["name"],
         "is_internal": person["is_internal"], "org_path": person.get("org_path"),
@@ -739,7 +750,7 @@ def person_card(atoms, person, *, pre=None, rp_event_overalls=None):
         "dim_values": extras["dim_values"],
         "events": events, "primary": "rp" if has_rp else "arta",
         "rising": rising, "rise": rise_mag,
-        "consistency": cons,
+        "consistency": cons, "quality": quality,
     }
 
 
@@ -1176,6 +1187,13 @@ def year_over_year(atoms, person, role):
 PERF_W_QUALITY = 0.45
 PERF_W_ENGAGEMENT = 0.55
 
+# Engagement blends how many activities/sessions were run (effort / commitment to
+# deliver) with how many people rated them (reach / impact). Equal weight — a
+# unit or person that both delivers often AND reaches many ranks highest. Volume
+# no longer sits inside quality; it lives here.
+ENG_W_ACTIVITIES = 0.5
+ENG_W_RESPONDENTS = 0.5
+
 
 def _pctile(values, v):
     """Percentile standing of v within values: share of the group at or below v,
@@ -1184,32 +1202,33 @@ def _pctile(values, v):
     return (sum(1 for x in values if x <= v) / n * 100.0) if n else 0.0
 
 
-def _engagement_perf(c):
-    return c.get("events", 0)
+def _quality_index_of(c):
+    """The card's combined Quality Index (0-100), or 0 when absent."""
+    v = (c.get("quality") or {}).get("index")
+    return v if v is not None else 0.0
 
 
 def _quality_rank_key(c):
-    """Sort key for the QUALITY axis — the raw /7 rating people actually see, with a
-    low-sample guard: anyone with fewer than N_MIN ratings sorts BELOW every
-    sufficiently-rated peer (so a 7.0-from-2-ratings can't top a 6.4-from-500), and
-    within each tier the higher raw mean ranks higher. Volume is deliberately NOT
-    folded into quality here — it lives only on the engagement axis, so the quality
-    rank always matches the average score shown to the user (display == basis)."""
+    """Sort key for the QUALITY axis — the combined Quality Index (0-100 over all ten
+    satisfaction questions: nine SERVQUAL + the OSQ), with a low-sample guard: anyone
+    with fewer than N_MIN ratings sorts BELOW every sufficiently-rated peer (so a
+    perfect-from-2-ratings can't top a strong-from-500), and within each tier the
+    higher index ranks higher. Volume is NOT folded into quality — it lives only on
+    the engagement axis, so the quality rank matches the index shown (display == basis)."""
     enough = 1 if c.get("ratings", 0) >= eng.N_MIN else 0
-    return (enough, c["rp"]["value"])
+    return (enough, _quality_index_of(c))
 
 
 def _standing(me, peers):
-    """Rank `me` within a peer set on three axes — QUALITY (the average rating people
-    see, with a low-sample guard), ENGAGEMENT (events delivered) and an OVERALL
-    composite that puts a premium on engagement — and attach the gap-vs-average stats
-    that make each standing concrete. Assumes me ∈ peers and every peer has an `rp`
-    score. Quality ranks on the raw /7 mean (NOT the volume-adjusted `adj`), so the
-    rank always matches the score shown; volume influences only engagement/overall."""
+    """Rank `me` within a peer set on three axes — QUALITY (the combined Quality Index,
+    with a low-sample guard), ENGAGEMENT (a 50/50 blend of activities run and people
+    reached) and an OVERALL composite that puts a premium on engagement — and attach
+    the gap-vs-average stats that make each standing concrete. Assumes me ∈ peers and
+    every peer has an `rp` score. Quality ranks on the index shown, so the rank always
+    matches the score; volume influences only engagement/overall."""
     n = len(peers)
-    # Quality: rank on the raw /7 score people recognise (low-n guarded), described
-    # against this group's average and spread. The rank basis IS the displayed number
-    # — no hidden volume weighting on this axis (that belongs to engagement).
+    # Quality: rank on the combined Quality Index (low-n guarded), described against
+    # this group's average and spread. The rank basis IS the displayed index.
     my_key = _quality_rank_key(me)
     q_rank = sum(1 for c in peers if _quality_rank_key(c) > my_key) + 1
 
@@ -1220,35 +1239,47 @@ def _standing(me, peers):
         return (sum(1 for x in peers if _quality_rank_key(x) <= k) / n * 100.0) if n else 0.0
 
     q_pct = round(_qpct(me))
-    raw_vals = [c["rp"]["value"] for c in peers]
-    grp_avg = statistics.mean(raw_vals)
-    my_raw = me["rp"]["value"]
-    diff = my_raw - grp_avg
-    sd = statistics.pstdev(raw_vals) if n >= 2 else 0.0
+    idx_vals = [_quality_index_of(c) for c in peers]
+    grp_avg = statistics.mean(idx_vals)
+    my_idx = _quality_index_of(me)
+    diff = my_idx - grp_avg
+    sd = statistics.pstdev(idx_vals) if n >= 2 else 0.0
     z = (diff / sd) if sd > 1e-9 else None
-    # Engagement: rank on number of rated events — commitment to deliver TA.
-    ev_vals = [_engagement_perf(c) for c in peers]
-    my_ev = _engagement_perf(me)
-    e_rank = sum(1 for c in peers if _engagement_perf(c) > my_ev) + 1
-    e_pct = round(_pctile(ev_vals, my_ev))
-    avg_ev = statistics.mean(ev_vals)
-    # Overall: weighted blend of the two percentile standings (premium on events).
+    myq = me.get("quality") or {}
+    # Engagement: 50/50 percentile blend of activities run and respondents reached.
+    act_vals = [c.get("events", 0) for c in peers]
+    resp_vals = [c.get("ratings", 0) for c in peers]
+
+    def _eng_score(c):
+        return (ENG_W_ACTIVITIES * _pctile(act_vals, c.get("events", 0))
+                + ENG_W_RESPONDENTS * _pctile(resp_vals, c.get("ratings", 0)))
+
+    my_eng = _eng_score(me)
+    e_rank = sum(1 for c in peers if _eng_score(c) > my_eng) + 1
+    e_pct = round(my_eng)
+    # Overall: weighted blend of the two percentile standings (premium on engagement).
     def perf(c):
-        return (PERF_W_QUALITY * _qpct(c)
-                + PERF_W_ENGAGEMENT * _pctile(ev_vals, _engagement_perf(c)))
+        return (PERF_W_QUALITY * _qpct(c) + PERF_W_ENGAGEMENT * _eng_score(c))
     perfs = {id(c): perf(c) for c in peers}
     my_perf = perfs[id(me)]
     o_rank = sum(1 for c in peers if perfs[id(c)] > my_perf) + 1
     o_pct = round(sum(1 for c in peers if perfs[id(c)] <= my_perf) / n * 100) if n else 0
     return {
         "n": n,
-        # avg/my/diff carry 3 decimals so equal-to-1dp scores are visibly distinct and
-        # the rank is self-explanatory; my_n/low_n expose the sample behind the score.
-        "quality": {"rank": q_rank, "pct": q_pct, "avg": round(grp_avg, 3),
-                    "my": round(my_raw, 3), "diff": round(diff, 3),
+        # Quality is the combined index (0-100, 1 dp); servqual (/7) and osq (/4) are
+        # its components; my_n/low_n expose the sample behind it.
+        "quality": {"rank": q_rank, "pct": q_pct, "avg": round(grp_avg, 1),
+                    "my": round(my_idx, 1), "diff": round(diff, 1),
+                    "servqual": (round(myq["servqual"], 2) if myq.get("servqual") is not None else None),
+                    "osq": (round(myq["osq"], 2) if myq.get("osq") is not None else None),
                     "my_n": me.get("ratings", 0), "low_n": me.get("ratings", 0) < eng.N_MIN,
                     "z": (round(z, 1) if z is not None else None)},
-        "engagement": {"rank": e_rank, "pct": e_pct, "avg": round(avg_ev, 1), "my": my_ev},
+        # Engagement carries both counts (activities + respondents) and their peer means;
+        # the rank/pct are on the 50/50 blend.
+        "engagement": {"rank": e_rank, "pct": e_pct,
+                       "acts": me.get("events", 0), "resp": me.get("ratings", 0),
+                       "avg_acts": round(statistics.mean(act_vals), 1) if act_vals else 0,
+                       "avg_resp": round(statistics.mean(resp_vals), 1) if resp_vals else 0},
         "overall": {"rank": o_rank, "pct": o_pct},
     }
 
@@ -2082,6 +2113,13 @@ def unit_card(atoms, unit, instances=None, *, pre_events=None, prior=None):
                      / len(judged) * 100) if judged else None)
     osq_vals = [e["f2"]["osq"] for e in f2 if e["f2"].get("osq") is not None]
     osq = (sum(osq_vals) / len(osq_vals)) if osq_vals else None
+    # Combined Quality Index (0-100) over all ten satisfaction questions (nine
+    # SERVQUAL B-items + the OSQ), per-respondent — the quality axis basis. servqual
+    # (/7) and osq (/4, per-respondent mean) are kept as its display components.
+    qi_val, qi_n = eng.quality_index(f2_atoms)
+    _osq_c = eng.osq_C(f2_atoms)
+    quality = {"index": qi_val, "servqual": overall,
+               "osq": (_osq_c.value if _osq_c.value is not None else None), "n": qi_n}
     # Cross-ACTIVITY consistency (spread of per-event overalls — not per respondent).
     per_event = [e["f2"]["overall"] for e in f2 if e["f2"].get("overall") is not None]
     cons = consistency(per_event, scale="mean7")
@@ -2107,7 +2145,7 @@ def unit_card(atoms, unit, instances=None, *, pre_events=None, prior=None):
         "spread": {"sd": (round(sd, 2) if sd is not None else None)},
         "consistency": cons, "rising": rising, "rise": rise_mag,
         "ratings": respondents, "low_n": respondents < eng.N_MIN,
-        "primary": "rp", "adj": adj,
+        "primary": "rp", "adj": adj, "quality": quality,
     }
 
 

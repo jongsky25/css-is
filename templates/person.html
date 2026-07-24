@@ -238,7 +238,7 @@
     {% if card.rp %}
     <div class="bigscore"><div class="v">{{ card.rp.shown }}<span class="muted" style="font-size:1rem;">/7</span>
       {% if card.rp.band %}<span class="badge {{ band_cls.get(card.rp.band,'b-grey') }}">{{ card.rp.band }}</span>{% endif %}</div>
-      <div class="k">As a speaker · {{ card.rp.n|comma }} ratings</div></div>
+      <div class="k">As a speaker · {{ card.rp.n|comma }} ratings{% if card.quality and card.quality.index is not none %} · quality index {{ "%.0f"|format(card.quality.index) }}/100{% endif %}</div></div>
     {% endif %}
   </div>
   {% if card.confidence %}
@@ -306,10 +306,11 @@
 {% macro c_quality(d, lead=false) %}
 <div class="cmp-cell {{ 'lead' if lead }}">
   <div class="rk">#{{ d.quality.rank }}</div><div class="of">of {{ d.n }}</div>
-  <div class="st">{{ "%.3f"|format(d.quality.my) }} vs {{ "%.3f"|format(d.quality.avg) }} avg
-    {% if d.quality.diff > 0 %}<span class="up">(+{{ "%.3f"|format(d.quality.diff) }})</span>
-    {% elif d.quality.diff < 0 %}<span class="dn">({{ "%.3f"|format(d.quality.diff) }})</span>
+  <div class="st">{{ "%.1f"|format(d.quality.my) }} vs {{ "%.1f"|format(d.quality.avg) }} avg
+    {% if d.quality.diff > 0 %}<span class="up">(+{{ "%.1f"|format(d.quality.diff) }})</span>
+    {% elif d.quality.diff < 0 %}<span class="dn">({{ "%.1f"|format(d.quality.diff) }})</span>
     {% else %}<span class="mid">(on par)</span>{% endif %}
+    <br><span class="mid">detailed {{ "%.2f"|format(d.quality.servqual) }}/7{% if d.quality.osq is not none %} · overall {{ "%.2f"|format(d.quality.osq) }}/4{% endif %}</span>
     {% if d.quality.low_n %}<br><span class="mid">only {{ d.quality.my_n }} rating{{ '' if d.quality.my_n == 1 else 's' }} — ranked below fully-rated peers</span>{% endif %}
     {% if d.quality.z is not none and (d.quality.z >= 0.3 or d.quality.z <= -0.3) %}
       <br><span class="{{ 'up' if d.quality.z > 0 else 'dn' }}">≈{{ d.quality.z|abs }} SD {{ 'above' if d.quality.z > 0 else 'below' }}</span>{% endif %}
@@ -319,7 +320,7 @@
 {% macro c_engagement(d, lead=false) %}
 <div class="cmp-cell {{ 'lead' if lead }}">
   <div class="rk">#{{ d.engagement.rank }}</div><div class="of">of {{ d.n }}</div>
-  <div class="st">{{ d.engagement.my }} event{{ '' if d.engagement.my == 1 else 's' }} · avg {{ d.engagement.avg }}</div>
+  <div class="st">{{ d.engagement.acts }} event{{ '' if d.engagement.acts == 1 else 's' }} · {{ d.engagement.resp }} rating{{ '' if d.engagement.resp == 1 else 's' }}<br><span class="mid">avg {{ d.engagement.avg_acts }} events · {{ d.engagement.avg_resp }} ratings</span></div>
 </div>
 {% endmacro %}
 {% if peers %}
@@ -336,11 +337,11 @@
     {% if two %}{{ c_overall(peers.section, true) }}{% endif %}
     {{ c_overall(peers.bureau, true) }}
 
-    <div class="cmp-ax"><span class="ax-t">Rating quality</span><span class="ax-s">average rating out of 7 (to 3 dp)</span></div>
+    <div class="cmp-ax"><span class="ax-t">Rating quality</span><span class="ax-s">quality index, 0–100</span></div>
     {% if two %}{{ c_quality(peers.section) }}{% endif %}
     {{ c_quality(peers.bureau) }}
 
-    <div class="cmp-ax"><span class="ax-t">Engagement</span><span class="ax-s">events with ratings</span></div>
+    <div class="cmp-ax"><span class="ax-t">Engagement</span><span class="ax-s">events run + people reached</span></div>
     {% if two %}{{ c_engagement(peers.section) }}{% endif %}
     {{ c_engagement(peers.bureau) }}
   </div>
@@ -349,13 +350,14 @@
   {% elif peers.external %}
   <p class="premium-note">As an external resource person, you're compared against the whole bureau.</p>
   {% endif %}
-  <p class="premium-note"><b>Overall performance</b> places a premium on engagement — the number of events you've gathered ratings across — as a measure of commitment to deliver technical assistance.</p>
+  <p class="premium-note"><b>Overall performance</b> blends how well you're rated with how much you deliver and how many people you reach.</p>
   <details class="disclosure" style="margin:.5rem 0 .25rem;">
     <summary>How is this computed?</summary>
     <div class="premium-note" style="margin-top:.4rem;">
-      <p><b>Rating quality</b> ranks you on your <b>average rating out of 7</b> — the exact number shown here, to 3 decimals. The rank is that score and nothing else: no hidden weighting, so two people who both show 6.4 are separated only by the finer decimals (e.g. 6.417 vs 6.392). Higher average = better rank.</p>
-      <p><b>How many people rated you doesn't change your quality rank</b> — that lives on the <b>Engagement</b> axis instead, so it's never counted twice. The one guard: with fewer than {{ n_min or 10 }} ratings the sample is too thin to trust, so you're ranked below everyone with a full sample rather than allowed to top the list on a lucky handful.</p>
-      <p><b>Overall performance</b> blends the two — {{ w_quality or 45 }}% your quality standing, {{ w_engagement or 55 }}% your engagement standing — which is why a strong-quality rank and a strong-overall rank can differ.</p>
+      <p><b>Rating quality</b> is a single <b>0–100 index</b> built from <b>every satisfaction question</b>: the nine detailed questions (rated 1–7) and the one "overall, how would you rate the quality?" question (rated 1–4). Each answer is put on the same 0–100 scale (its lowest possible answer = 0, its highest = 100) so the two scales combine fairly, and every question counts equally. The only question left out is the very first one — what you <i>expected</i> going in — because that's a baseline, not a rating. The two components are shown beneath the index (detailed x.xx/7, overall x.xx/4). You're ranked on this index, so the number you see is exactly what the rank is based on.</p>
+      <p><b>How many people rated you doesn't change your quality index</b> — that lives on the <b>Engagement</b> axis instead, so it's never counted twice. The one guard: with fewer than {{ n_min or 10 }} ratings the sample is too thin to trust, so you're ranked below everyone with a full sample rather than topping the list on a lucky handful.</p>
+      <p><b>Engagement</b> now rewards two things equally ({{ eng_w_acts or 50 }}/{{ eng_w_resp or 50 }}): how many events you've been rated across (showing up to deliver) and how many people rated you (the reach of that work).</p>
+      <p><b>Overall performance</b> blends the two — {{ w_quality or 45 }}% quality, {{ w_engagement or 55 }}% engagement — which is why a strong-quality rank and a strong-overall rank can differ.</p>
     </div>
   </details>
   <div class="peer-contrib">

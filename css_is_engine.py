@@ -52,6 +52,15 @@ DIM_MAP_FORM3 = {
 }
 OSQ_BANDS = [(1, 1.75, "Poor"), (1.75, 2.5, "Fair"), (2.5, 3.25, "Good"), (3.25, 4.001, "Excellent")]
 
+# The full satisfaction battery on Forms 2 & 3, for the combined Quality Index:
+# the nine SERVQUAL perception questions (1-7) PLUS the single OSQ "overall
+# quality" question (C, 1-4). The expectation question (A) is deliberately NOT
+# here — it is a baseline, not a satisfaction rating. Every question is scored
+# equally after each is rescaled to 0-100 (see quality_index).
+SERVQUAL_ITEMS = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9"]  # 1-7
+OSQ_ITEM = "C"                                                           # 1-4
+QUALITY_SCALE_MAX = {**{it: 7 for it in SERVQUAL_ITEMS}, OSQ_ITEM: 4}    # per-item scale top
+
 
 def band(value, table):
     """Return the band label for a value, or None if there is no value."""
@@ -202,6 +211,31 @@ def osq_C(df):
     if n == 0:
         return Metric(None, 0, "OSQ answers", ["no data"])
     return Metric(float(sub["value"].mean()), n, "overall-service-quality answers")
+
+
+def quality_index(df):
+    """The combined Quality Index (0-100) for a slice of Form-2/3 answers.
+
+    Every satisfaction question counts equally as one question: the nine SERVQUAL
+    perception items (B1-B9, 1-7) and the single OSQ overall-quality item (C, 1-4).
+    Each answer is min-max rescaled to 0-100 — (v-1)/(max-1)*100, so the lowest
+    possible answer = 0 and the highest = 100 on BOTH scales, letting the 1-7 and
+    1-4 questions combine fairly. We take each respondent's mean across the
+    questions they answered (equal weight per question; a respondent who skipped
+    the OSQ simply scores on their B answers), then average across respondents.
+    The expectation question (A) is excluded. Returns (index_0_100, n_respondents);
+    (None, 0) when the slice has no scorable answer.
+    """
+    items = SERVQUAL_ITEMS + [OSQ_ITEM]
+    sub = df[(df["item_id"].isin(items)) & (~df["is_na"])]
+    if sub.empty:
+        return None, 0
+    tops = sub["item_id"].map(QUALITY_SCALE_MAX)          # 7 for B*, 4 for C
+    norm = (sub["value"] - 1) / (tops - 1) * 100.0        # min-max to 0-100
+    per_resp = norm.groupby(sub["response_id"]).mean()    # equal weight per answered question
+    if per_resp.empty:
+        return None, 0
+    return float(per_resp.mean()), int(per_resp.size)
 
 
 # =====================================================================
