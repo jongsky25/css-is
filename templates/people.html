@@ -243,13 +243,22 @@
         <div class="n">{{ c.ratings|comma }} rating{{ '' if c.ratings == 1 else 's' }}</div></div>
       {% endif %}
       {% if c.rp %}
-      {# slim bar scaled 5.5–7 so the decimals that matter on this ceiling-bound scale are visible #}
+      {% if c.quality and c.quality.index is not none %}
+      {# slim bar scaled 50–100 so differences on this ceiling-bound index are visible #}
+      {% set sw = ((c.quality.index - 50) / 50 * 100) | round | int %}
+      {% set sw = 6 if sw < 6 else (100 if sw > 100 else sw) %}
+      <div class="score" title="Quality index (0–100) over all ten satisfaction questions — nine detailed (1–7) + the overall-quality question (1–4)"><div class="v">{{ c.quality.shown }}<span class="u">/100</span></div>
+        <div class="sbar"><i style="width:{{ sw }}%"></i></div>
+        <div class="k">{% if both %}Speaker <br>{% endif %}{% if c.quality.band %}<span class="badge {{ band_cls.get(c.quality.band,'b-grey') }}">{{ c.quality.band }}</span>{% endif %}</div>
+        <div class="n">{{ c.ratings|comma }} rating{{ '' if c.ratings == 1 else 's' }}</div></div>
+      {% else %}
       {% set sw = ((c.rp.value - 5.5) / 1.5 * 100) | round | int %}
       {% set sw = 6 if sw < 6 else (100 if sw > 100 else sw) %}
       <div class="score" title="Speaker overall — the average across all nine SERVQUAL attributes, out of 7"><div class="v">{{ c.rp.shown }}<span class="u">/7</span></div>
         <div class="sbar"><i style="width:{{ sw }}%"></i></div>
         <div class="k">{% if both %}Speaker <br>{% endif %}{% if c.rp.band %}<span class="badge {{ band_cls.get(c.rp.band,'b-grey') }}">{{ c.rp.band }}</span>{% endif %}</div>
         <div class="n">{{ c.ratings|comma }} rating{{ '' if c.ratings == 1 else 's' }}</div></div>
+      {% endif %}
       {% endif %}
     </div>
 

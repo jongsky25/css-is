@@ -17,10 +17,29 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.46"
+APP_VERSION = "2.47"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.47",
+        "date": "July 24, 2026",
+        "summary": "The 0–100 quality index is now the headline score everywhere — "
+                   "on cards, profiles, and the score-over-time and year-on-year charts.",
+        "changes": [
+            "A resource person's and a unit's main score is now the combined quality "
+            "index (0–100) — the same all-questions measure the ranking uses — instead "
+            "of the detailed 1–7 average. The 1–7 detailed rating and the 1–4 overall "
+            "question are still shown beneath it as the two parts that make it up.",
+            "The \"scores over time\" and \"year on year\" charts (on screen and in the "
+            "PDF, PowerPoint and Excel downloads) now plot the quality index, so the "
+            "trend you see matches the headline number.",
+            "The people and teams lists, and the \"how you compare to the average\" "
+            "read, all use the quality index too, so every quality number on the site "
+            "is now on the same 0–100 scale. Walk-in service scores keep their own "
+            "0–100 top-box percentage as before.",
+        ],
+    },
     {
         "version": "2.46",
         "date": "July 24, 2026",

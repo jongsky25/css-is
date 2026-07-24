@@ -117,6 +117,18 @@ def band7(value):
     return eng.band(value, SEVEN_BANDS) if value is not None else None
 
 
+def band_index(value):
+    """Band label for the 0-100 Quality Index (the headline quality metric)."""
+    return eng.band(value, eng.QUALITY_INDEX_BANDS) if value is not None else None
+
+
+def _qi_metric(df):
+    """The Quality Index as a Metric, so it can serve as a _trend / year_over_year
+    scorer (headline + trends are on the index, a 0-100 'pct'-scale metric)."""
+    idx, n = eng.quality_index(df)
+    return eng.Metric(idx, n, "quality index")
+
+
 # =====================================================================
 # PERIODS — month / quarter / year, derived straight from event_date so the
 # dashboard can offer a finer grain than the engine's stored columns.
@@ -719,21 +731,25 @@ def person_card(atoms, person, *, pre=None, rp_event_overalls=None):
     _pslice = r if has_rp else a
     events = int(_pslice["form_instance_id"].nunique()) if _has(_pslice) else 0
     # Recent direction (powers the "on the rise" badge): improving over recent months?
+    # The headline metric is the Quality Index for speakers (0-100), the top-box %
+    # for walk-in servers — both 0-100, so the trend reads on the "pct" scale.
     _slice = r if has_rp else a
-    _scorer = (lambda d: eng.overall_perception(d, eng.DIM_MAP_FORM3)) if has_rp else eng.arta_topbox
+    _scorer = _qi_metric if has_rp else eng.arta_topbox
     _tr = _trend(_last_periods(_slice, "monthly", 6), "monthly", _scorer)
-    rising = stability_phrase(_tr, scale=("mean7" if has_rp else "pct"))["tone"] == "good"
+    rising = stability_phrase(_tr, scale="pct")["tone"] == "good"
     _rvals = [p["value"] for p in _tr if p.get("value") is not None]
     rise_mag = (_rvals[-1] - _rvals[0]) if len(_rvals) >= 2 else 0.0   # how big the recent climb is
     # Combined Quality Index (0-100) over all ten satisfaction questions (nine
-    # SERVQUAL B-items + the OSQ), for resource-person speakers. servqual is the
-    # familiar /7 mean, osq the /4 overall-quality question — both kept as the
+    # SERVQUAL B-items + the OSQ) — the headline quality metric for speakers. servqual
+    # is the familiar /7 mean, osq the /4 overall-quality question — both kept as the
     # index's components for display. ARTA-only servers have no B/C battery.
     if has_rp:
         qi_val, qi_n = eng.quality_index(r)
         _osq = eng.osq_C(r)
         quality = {"index": qi_val, "servqual": rp_value,
-                   "osq": (_osq.value if _osq.value is not None else None), "n": qi_n}
+                   "osq": (_osq.value if _osq.value is not None else None), "n": qi_n,
+                   "shown": (f"{qi_val:.0f}" if qi_val is not None else None),
+                   "band": band_index(qi_val)}
     else:
         quality = None
     return {
@@ -1020,7 +1036,7 @@ def person_trend(atoms, person, grain):
     speaker ratings, else walk-in server)."""
     r = rp_slice(atoms, person["id"])
     if _has(r):
-        return _trend(r, grain, lambda d: eng.overall_perception(d, eng.DIM_MAP_FORM3)), "rp"
+        return _trend(r, grain, _qi_metric), "rp"          # headline metric = Quality Index (0-100)
     a = arta_slice(atoms, person["id"])
     if _has(a):
         return _trend(a, grain, eng.arta_topbox), "arta"
@@ -1152,17 +1168,19 @@ def year_over_year(atoms, person, role):
     slc = rp_slice(atoms, person["id"]) if role == "rp" else arta_slice(atoms, person["id"])
     if not _has(slc):
         return None
-    scorer = (lambda d: eng.overall_perception(d, eng.DIM_MAP_FORM3)) if role == "rp" else eng.arta_topbox
+    # Headline metric per role: the Quality Index (0-100) for speakers, the top-box %
+    # for walk-in servers — both 0-100, so the year-on-year read is on that scale.
+    scorer = _qi_metric if role == "rp" else eng.arta_topbox
     pts = [p for p in _trend(slc, "yearly", scorer) if p["value"] is not None]
     pts.sort(key=lambda p: p["key"])
-    fmt = (lambda v: f"{v:.0f}%") if role == "arta" else (lambda v: f"{v:.1f}")
+    fmt = (lambda v: f"{v:.0f}%") if role == "arta" else (lambda v: f"{v:.0f}")
     bars = [{"label": p["label"], "value": p["value"], "shown": fmt(p["value"]), "n": p.get("n")} for p in pts]
     if len(pts) < 2:
         return {"bars": bars, "insight": "Not enough years yet to compare — this is the baseline.",
                 "tone": "neutral", "delta": None}
     last, prev = pts[-1], pts[-2]
     delta = last["value"] - prev["value"]
-    thr = 1.5 if role == "arta" else 0.1
+    thr = 1.5
     if delta >= thr:
         tone = "good"
         insight = (f"You're improving — up from {fmt(prev['value'])} in {prev['label']} "
@@ -2119,15 +2137,16 @@ def unit_card(atoms, unit, instances=None, *, pre_events=None, prior=None):
     qi_val, qi_n = eng.quality_index(f2_atoms)
     _osq_c = eng.osq_C(f2_atoms)
     quality = {"index": qi_val, "servqual": overall,
-               "osq": (_osq_c.value if _osq_c.value is not None else None), "n": qi_n}
+               "osq": (_osq_c.value if _osq_c.value is not None else None), "n": qi_n,
+               "shown": (f"{qi_val:.0f}" if qi_val is not None else None),
+               "band": band_index(qi_val)}
     # Cross-ACTIVITY consistency (spread of per-event overalls — not per respondent).
     per_event = [e["f2"]["overall"] for e in f2 if e["f2"].get("overall") is not None]
     cons = consistency(per_event, scale="mean7")
     sd = (statistics.pstdev(per_event) if len(per_event) >= 2 else None)
-    # Recent momentum: monthly trend of the unit's event-about overall.
-    _tr = _trend(_last_periods(f2_atoms, "monthly", 6), "monthly",
-                 lambda d: eng.overall_perception(d, EVENT_DIMS_FORM2))
-    rising = stability_phrase(_tr, scale="mean7")["tone"] == "good"
+    # Recent momentum: monthly trend of the unit's Quality Index (the headline metric).
+    _tr = _trend(_last_periods(f2_atoms, "monthly", 6), "monthly", _qi_metric)
+    rising = stability_phrase(_tr, scale="pct")["tone"] == "good"
     _rv = [p["value"] for p in _tr if p.get("value") is not None]
     rise_mag = (_rv[-1] - _rv[0]) if len(_rv) >= 2 else 0.0
     return {
@@ -2154,7 +2173,7 @@ def unit_coach(card, trend, breakdown):
     coach_notes, in a 'this unit's activities' voice. Same return shape so the coach
     panel markup is reused verbatim. Encouraging, never shaming."""
     short = card["short"]
-    sp = stability_phrase(trend, "mean7")
+    sp = stability_phrase(trend, "pct")          # trend is the 0-100 Quality Index
     cons = card.get("consistency") or {}
     strongest = breakdown[0] if breakdown else None
     weakest = breakdown[-1] if breakdown and len(breakdown) > 1 else None
@@ -2249,26 +2268,25 @@ def unit_standing(card, siblings, sibling_kind):
 
 
 def unit_year_over_year(atoms, org_prefix):
-    """Year-on-year of a unit's activity experience (event-about overall /7). Same
-    {bars,insight,tone,delta} shape as year_over_year, so the panel is reused."""
+    """Year-on-year of a unit's activity Quality Index (0-100, the headline metric).
+    Same {bars,insight,tone,delta} shape as year_over_year, so the panel is reused."""
     slc = eng.scope(atoms, org_prefix=org_prefix or None, survey_type=2)
     if not _has(slc):
         return None
-    scorer = lambda d: eng.overall_perception(d, EVENT_DIMS_FORM2)
-    pts = [p for p in _trend(slc, "yearly", scorer) if p["value"] is not None]
+    pts = [p for p in _trend(slc, "yearly", _qi_metric) if p["value"] is not None]
     pts.sort(key=lambda p: p["key"])
-    fmt = lambda v: f"{v:.1f}"
+    fmt = lambda v: f"{v:.0f}"
     bars = [{"label": p["label"], "value": p["value"], "shown": fmt(p["value"]), "n": p.get("n")} for p in pts]
     if len(pts) < 2:
         return {"bars": bars, "insight": "Not enough years yet to compare — this is the baseline.",
                 "tone": "neutral", "delta": None}
     last, prev = pts[-1], pts[-2]
     delta = last["value"] - prev["value"]
-    if delta >= 0.1:
+    if delta >= 1.5:
         tone = "good"
         insight = (f"The unit's activities are improving — up from {fmt(prev['value'])} in {prev['label']} "
                    f"to {fmt(last['value'])} in {last['label']}.")
-    elif delta <= -0.1:
+    elif delta <= -1.5:
         tone = "bad"
         insight = (f"A dip this year — {fmt(prev['value'])} in {prev['label']} down to {fmt(last['value'])} "
                    f"in {last['label']}. A small reset usually turns it around.")
@@ -3925,7 +3943,7 @@ SQD_TIP = {
     "SQD8": "confirming the client got exactly what they came for closes strong",
 }
 
-_CMP_THRESH = {"pct": 3.0, "mean7": 0.2}
+_CMP_THRESH = {"pct": 3.0, "mean7": 0.2, "index": 3.0}
 
 # Honorifics to skip when addressing someone by first name in the coach panel.
 _HONORIFICS = {"dr", "dra", "prof", "engr", "atty", "mr", "ms", "mrs", "hon", "rev", "sir", "maam", "ma'am"}
@@ -3941,12 +3959,13 @@ def _first_name(name):
 
 
 def benchmark_value(atoms, role):
-    """The peer average for a role across the given (already-scoped) atoms."""
+    """The peer average for a role across the given (already-scoped) atoms. For
+    resource people the headline is the Quality Index (0-100), so the benchmark is
+    the bureau-wide index; for walk-in servers it's the ARTA top-box %."""
     if role == "rp":
-        m = overall_perception_default(atoms, 3)
-    else:
-        m = eng.arta_topbox(atoms[atoms["survey_type"] == 1])
-    return m.value
+        idx, _ = eng.quality_index(atoms[atoms["survey_type"] == 3])
+        return idx
+    return eng.arta_topbox(atoms[atoms["survey_type"] == 1]).value
 
 
 def overall_perception_default(atoms, survey_type):
@@ -3960,7 +3979,7 @@ def compare_to_average(value, avg, scale):
         return None
     diff = value - avg
     thr = _CMP_THRESH.get(scale, 0.2)
-    avg_s = f"{avg:.0f}%" if scale == "pct" else f"{avg:.1f}"
+    avg_s = f"{avg:.0f}%" if scale == "pct" else (f"{avg:.0f}" if scale == "index" else f"{avg:.1f}")
     if diff > thr:
         label, word = "above", "above"
     elif diff < -thr:
@@ -4032,7 +4051,7 @@ def coach_notes(person, card, trend, role, breakdown, cmp):
     Praise-forward and never punitive; the goal is motivation, not a verdict."""
     name = person.get("name") or "This person"
     first = _first_name(name)
-    scale = "pct" if role == "arta" else "mean7"
+    scale = "pct"          # both the Quality Index (rp) and ARTA top-box are 0-100
     sp = stability_phrase(trend, scale)
     cons = card.get("consistency") or {}
     strongest = breakdown[0] if breakdown else None

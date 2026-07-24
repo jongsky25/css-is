@@ -60,6 +60,10 @@ OSQ_BANDS = [(1, 1.75, "Poor"), (1.75, 2.5, "Fair"), (2.5, 3.25, "Good"), (3.25,
 SERVQUAL_ITEMS = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9"]  # 1-7
 OSQ_ITEM = "C"                                                           # 1-4
 QUALITY_SCALE_MAX = {**{it: 7 for it in SERVQUAL_ITEMS}, OSQ_ITEM: 4}    # per-item scale top
+# Bands for the 0-100 Quality Index — the SEVEN_BANDS /7 thresholds mapped onto the
+# 0-100 scale via (b-1)/6*100 (4.0->50, 5.5->75, 6.25->87.5), so the index's
+# Poor/Fair/Good/Excellent line up with how the /7 mean was always banded.
+QUALITY_INDEX_BANDS = [(0, 50, "Poor"), (50, 75, "Fair"), (75, 87.5, "Good"), (87.5, 100.001, "Excellent")]
 
 
 def band(value, table):
