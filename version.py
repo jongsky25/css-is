@@ -17,10 +17,30 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.44"
+APP_VERSION = "2.45"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.45",
+        "date": "July 24, 2026",
+        "summary": "\"Rating quality\" now ranks on the average rating you actually "
+                   "see, and a new \"How is this computed?\" note explains every rank.",
+        "changes": [
+            "On a person's or a unit's page, the \"Rating quality\" rank is now based "
+            "on the average rating shown — nothing hidden. The score is shown to three "
+            "decimals, so two people or units that both looked like \"6.4\" are ranked "
+            "by the finer difference (for example 6.417 vs 6.392) instead of appearing "
+            "tied. Higher average, better rank.",
+            "How many ratings or activities you have no longer changes your quality "
+            "rank — that now counts only under Engagement, so it is never counted "
+            "twice. The one safeguard: with fewer than ten ratings the sample is too "
+            "thin to trust, so it is ranked below everyone with a full sample rather "
+            "than topping the list on a lucky handful.",
+            "A new \"How is this computed?\" drop-down on both the person and the unit "
+            "comparison explains, in plain words, how each rank is worked out.",
+        ],
+    },
     {
         "version": "2.44",
         "date": "July 23, 2026",

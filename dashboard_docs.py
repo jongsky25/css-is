@@ -703,9 +703,12 @@ def pulse_pptx(payload, vmeta):
 METHODS_PERSON = (
     "Scores are computed fresh from this person's ratings in the window shown. A speaker's "
     "score is the mean of per-respondent overall ratings across all nine attributes (1–7); a "
-    "walk-in server's score is the top-box share (Agree + Strongly Agree). Peer ranks use the "
-    "People-grid fair-adjusted scores within the section and the whole bureau; overall "
-    "performance blends rating quality with engagement (the number of events delivered). "
+    "walk-in server's score is the top-box share (Agree + Strongly Agree). The rating-quality "
+    "rank is on that average rating itself (shown to 3 decimals), within the section and the "
+    "whole bureau — the rank matches the score shown, with no volume weighting; people with "
+    "fewer than ten ratings rank below fully-rated peers. How many events a person is rated "
+    "across is a separate engagement axis; overall performance blends the two "
+    "(45% quality, 55% engagement). "
     "Coaching is auto-generated guidance to build on, not a personnel evaluation. Respondent "
     "comments are the written feedback from this person's rated responses, de-duplicated with "
     "a ×N repeat count.")
@@ -820,7 +823,12 @@ def _person_peer_grid(peers, st):
 
     def rk(side, axis):
         d = peers.get(side)
-        return f"#{d[axis]['rank']} of {d['n']}" if d else "—"
+        if not d:
+            return "—"
+        base = f"#{d[axis]['rank']} of {d['n']}"
+        # Quality ranks on the average rating itself — show that score (3 dp) so the
+        # rank matches the number, same as the dashboard.
+        return f"{base} · {d['quality']['my']:.3f}/7" if axis == "quality" else base
 
     headers = ["Axis"] + (["Section"] if two else []) + ["Whole bureau"]
     rows = []
@@ -968,7 +976,7 @@ def person_pptx(payload, vmeta):
     if b:
         rd._stats_slide(prs, meta, pg, "How they rank in the bureau", [
             ("Overall", f"#{b['overall']['rank']} of {b['n']}"),
-            ("Quality", f"#{b['quality']['rank']}"),
+            ("Quality", f"#{b['quality']['rank']} · {b['quality']['my']:.3f}/7"),
             ("Engagement", f"#{b['engagement']['rank']}"),
         ])
         pg += 1
@@ -1439,8 +1447,11 @@ def event_pptx(payload, vmeta):
 METHODS_TEAM = (
     "Scores are the unit's activity (Form-2) ratings — the mean of per-respondent overall ratings "
     "across the nine attributes (1–7); the breakdown uses the event-about dimensions. Standing ranks "
-    "the unit against its sibling units (sections vs sections, divisions vs divisions) on rating "
-    "quality and engagement (activities run). Coaching is auto-generated guidance to build on, not a "
+    "the unit against its sibling units (sections vs sections, divisions vs divisions). Rating quality "
+    "ranks on the unit's average rating itself (shown to 3 decimals) — the rank matches the score, with "
+    "no volume weighting; units with fewer than ten ratings rank below fully-rated units. How many "
+    "activities a unit runs is a separate engagement axis; overall standing blends the two "
+    "(45% quality, 55% engagement). Coaching is auto-generated guidance to build on, not a "
     "performance evaluation. Verbatim comments are intentionally omitted from this file.")
 
 
@@ -1464,7 +1475,7 @@ def _team_standing_grid(standing, st):
         return None
     n = grp["n"]
     rows = [["Overall performance", f"#{grp['overall']['rank']} of {n}"],
-            ["Rating quality", f"#{grp['quality']['rank']} of {n}"],
+            ["Rating quality", f"#{grp['quality']['rank']} of {n} · {grp['quality']['my']:.3f}/7"],
             ["Engagement (activities)", f"#{grp['engagement']['rank']} of {n}"]]
     return rd._pdf_grid(["Axis", "Rank"], rows, [9 * cm, 7 * cm], st, numeric_from=1)
 
@@ -1587,7 +1598,7 @@ def team_pptx(payload, vmeta):
     if grp:
         rd._stats_slide(prs, meta, pg, "How this unit ranks", [
             ("Overall", f"#{grp['overall']['rank']} of {grp['n']}"),
-            ("Quality", f"#{grp['quality']['rank']}"),
+            ("Quality", f"#{grp['quality']['rank']} · {grp['quality']['my']:.3f}/7"),
             ("Engagement", f"#{grp['engagement']['rank']}"),
         ])
         pg += 1
