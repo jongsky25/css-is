@@ -1188,22 +1188,38 @@ def _engagement_perf(c):
     return c.get("events", 0)
 
 
-def _quality_perf(c):
-    return c.get("adj", 0)
+def _quality_rank_key(c):
+    """Sort key for the QUALITY axis — the raw /7 rating people actually see, with a
+    low-sample guard: anyone with fewer than N_MIN ratings sorts BELOW every
+    sufficiently-rated peer (so a 7.0-from-2-ratings can't top a 6.4-from-500), and
+    within each tier the higher raw mean ranks higher. Volume is deliberately NOT
+    folded into quality here — it lives only on the engagement axis, so the quality
+    rank always matches the average score shown to the user (display == basis)."""
+    enough = 1 if c.get("ratings", 0) >= eng.N_MIN else 0
+    return (enough, c["rp"]["value"])
 
 
 def _standing(me, peers):
-    """Rank `me` within a peer set on three axes — QUALITY (fair-adjusted score),
-    ENGAGEMENT (events delivered) and an OVERALL-performance composite that puts a
-    premium on engagement — and attach the gap-vs-average stats that make each
-    standing concrete. Assumes me ∈ peers and every peer has an `rp` score."""
+    """Rank `me` within a peer set on three axes — QUALITY (the average rating people
+    see, with a low-sample guard), ENGAGEMENT (events delivered) and an OVERALL
+    composite that puts a premium on engagement — and attach the gap-vs-average stats
+    that make each standing concrete. Assumes me ∈ peers and every peer has an `rp`
+    score. Quality ranks on the raw /7 mean (NOT the volume-adjusted `adj`), so the
+    rank always matches the score shown; volume influences only engagement/overall."""
     n = len(peers)
-    # Quality: rank on the fair-adjusted score, but describe it with the raw /7
-    # score people recognise, against this group's average and spread.
-    adj_vals = [_quality_perf(c) for c in peers]
-    my_adj = _quality_perf(me)
-    q_rank = sum(1 for c in peers if _quality_perf(c) > my_adj) + 1
-    q_pct = round(_pctile(adj_vals, my_adj))
+    # Quality: rank on the raw /7 score people recognise (low-n guarded), described
+    # against this group's average and spread. The rank basis IS the displayed number
+    # — no hidden volume weighting on this axis (that belongs to engagement).
+    my_key = _quality_rank_key(me)
+    q_rank = sum(1 for c in peers if _quality_rank_key(c) > my_key) + 1
+
+    def _qpct(c):
+        """Percentile on the quality sort key — coherent with q_rank and reused by
+        the overall blend, so 'overall' combines the SAME quality the user sees."""
+        k = _quality_rank_key(c)
+        return (sum(1 for x in peers if _quality_rank_key(x) <= k) / n * 100.0) if n else 0.0
+
+    q_pct = round(_qpct(me))
     raw_vals = [c["rp"]["value"] for c in peers]
     grp_avg = statistics.mean(raw_vals)
     my_raw = me["rp"]["value"]
@@ -1218,7 +1234,7 @@ def _standing(me, peers):
     avg_ev = statistics.mean(ev_vals)
     # Overall: weighted blend of the two percentile standings (premium on events).
     def perf(c):
-        return (PERF_W_QUALITY * _pctile(adj_vals, _quality_perf(c))
+        return (PERF_W_QUALITY * _qpct(c)
                 + PERF_W_ENGAGEMENT * _pctile(ev_vals, _engagement_perf(c)))
     perfs = {id(c): perf(c) for c in peers}
     my_perf = perfs[id(me)]
@@ -1226,8 +1242,11 @@ def _standing(me, peers):
     o_pct = round(sum(1 for c in peers if perfs[id(c)] <= my_perf) / n * 100) if n else 0
     return {
         "n": n,
-        "quality": {"rank": q_rank, "pct": q_pct, "avg": round(grp_avg, 1),
-                    "my": round(my_raw, 1), "diff": round(diff, 1),
+        # avg/my/diff carry 3 decimals so equal-to-1dp scores are visibly distinct and
+        # the rank is self-explanatory; my_n/low_n expose the sample behind the score.
+        "quality": {"rank": q_rank, "pct": q_pct, "avg": round(grp_avg, 3),
+                    "my": round(my_raw, 3), "diff": round(diff, 3),
+                    "my_n": me.get("ratings", 0), "low_n": me.get("ratings", 0) < eng.N_MIN,
                     "z": (round(z, 1) if z is not None else None)},
         "engagement": {"rank": e_rank, "pct": e_pct, "avg": round(avg_ev, 1), "my": my_ev},
         "overall": {"rank": o_rank, "pct": o_pct},

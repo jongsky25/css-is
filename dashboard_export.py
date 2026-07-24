@@ -662,7 +662,11 @@ def _tables(visual, payload):
         if peers:
             def _rk(side, axis):
                 d = peers.get(side)
-                return f"#{d[axis]['rank']} of {d['n']}" if d else "—"
+                if not d:
+                    return "—"
+                base = f"#{d[axis]['rank']} of {d['n']}"
+                # Quality ranks on the average rating itself — show that score (3 dp).
+                return f"{base} · {d['quality']['my']:.3f}/7" if axis == "quality" else base
             out.append(("Peer standing (rank)", pd.DataFrame([
                 {"Axis": "Overall performance", "Section": _rk("section", "overall"),
                  "Bureau": _rk("bureau", "overall")},
@@ -809,7 +813,8 @@ def _tables(visual, payload):
         if grp:
             out.append(("Standing among siblings", pd.DataFrame([
                 {"Axis": "Overall performance", "Rank": f"#{grp['overall']['rank']} of {grp['n']}"},
-                {"Axis": "Rating quality", "Rank": f"#{grp['quality']['rank']} of {grp['n']}"},
+                {"Axis": "Rating quality",
+                 "Rank": f"#{grp['quality']['rank']} of {grp['n']} · {grp['quality']['my']:.3f}/7"},
                 {"Axis": "Engagement (activities)", "Rank": f"#{grp['engagement']['rank']} of {grp['n']}"},
             ])))
         coach = payload.get("coach") or {}

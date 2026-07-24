@@ -306,10 +306,11 @@
 {% macro c_quality(d, lead=false) %}
 <div class="cmp-cell {{ 'lead' if lead }}">
   <div class="rk">#{{ d.quality.rank }}</div><div class="of">of {{ d.n }}</div>
-  <div class="st">{{ d.quality.my }} vs {{ d.quality.avg }} avg
-    {% if d.quality.diff > 0 %}<span class="up">(+{{ d.quality.diff }})</span>
-    {% elif d.quality.diff < 0 %}<span class="dn">({{ d.quality.diff }})</span>
+  <div class="st">{{ "%.3f"|format(d.quality.my) }} vs {{ "%.3f"|format(d.quality.avg) }} avg
+    {% if d.quality.diff > 0 %}<span class="up">(+{{ "%.3f"|format(d.quality.diff) }})</span>
+    {% elif d.quality.diff < 0 %}<span class="dn">({{ "%.3f"|format(d.quality.diff) }})</span>
     {% else %}<span class="mid">(on par)</span>{% endif %}
+    {% if d.quality.low_n %}<br><span class="mid">only {{ d.quality.my_n }} rating{{ '' if d.quality.my_n == 1 else 's' }} — ranked below fully-rated peers</span>{% endif %}
     {% if d.quality.z is not none and (d.quality.z >= 0.3 or d.quality.z <= -0.3) %}
       <br><span class="{{ 'up' if d.quality.z > 0 else 'dn' }}">≈{{ d.quality.z|abs }} SD {{ 'above' if d.quality.z > 0 else 'below' }}</span>{% endif %}
   </div>
@@ -335,7 +336,7 @@
     {% if two %}{{ c_overall(peers.section, true) }}{% endif %}
     {{ c_overall(peers.bureau, true) }}
 
-    <div class="cmp-ax"><span class="ax-t">Rating quality</span><span class="ax-s">average score, out of 7</span></div>
+    <div class="cmp-ax"><span class="ax-t">Rating quality</span><span class="ax-s">average rating out of 7 (to 3 dp)</span></div>
     {% if two %}{{ c_quality(peers.section) }}{% endif %}
     {{ c_quality(peers.bureau) }}
 
@@ -349,6 +350,14 @@
   <p class="premium-note">As an external resource person, you're compared against the whole bureau.</p>
   {% endif %}
   <p class="premium-note"><b>Overall performance</b> places a premium on engagement — the number of events you've gathered ratings across — as a measure of commitment to deliver technical assistance.</p>
+  <details class="disclosure" style="margin:.5rem 0 .25rem;">
+    <summary>How is this computed?</summary>
+    <div class="premium-note" style="margin-top:.4rem;">
+      <p><b>Rating quality</b> ranks you on your <b>average rating out of 7</b> — the exact number shown here, to 3 decimals. The rank is that score and nothing else: no hidden weighting, so two people who both show 6.4 are separated only by the finer decimals (e.g. 6.417 vs 6.392). Higher average = better rank.</p>
+      <p><b>How many people rated you doesn't change your quality rank</b> — that lives on the <b>Engagement</b> axis instead, so it's never counted twice. The one guard: with fewer than {{ n_min or 10 }} ratings the sample is too thin to trust, so you're ranked below everyone with a full sample rather than allowed to top the list on a lucky handful.</p>
+      <p><b>Overall performance</b> blends the two — {{ w_quality or 45 }}% your quality standing, {{ w_engagement or 55 }}% your engagement standing — which is why a strong-quality rank and a strong-overall rank can differ.</p>
+    </div>
+  </details>
   <div class="peer-contrib">
     <h4>Your contribution</h4>
     <p>{{ peers.contribution|safe }}</p>
