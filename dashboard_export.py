@@ -172,14 +172,19 @@ def _fig_person_single(payload, meta):
     to the bureau) and give the dimension breakdown the full width."""
     card = payload.get("card") or {}
     rp = card.get("rp") or {}
+    quality = card.get("quality") or {}
     cmp = payload.get("cmp") or {}
     ymax = payload["ymax"]
     fig = _new_fig(9.6, 5.4)
-    # Headline scorecard (text only — no chart).
-    score = rp.get("shown", "—")
-    band = rp.get("band")
-    n = rp.get("n", 0)
-    fig.text(0.07, 0.79, f"{score}" + ("" if payload.get("scale") == "pct" else " / 7"),
+    # Headline scorecard (text only — no chart). For a speaker the headline is the
+    # 0-100 Quality Index; for a walk-in server it's the top-box %.
+    is_index = payload.get("scale") == "index" and quality.get("shown")
+    if is_index:
+        score, band, n, suffix = quality["shown"], quality.get("band"), rp.get("n", 0), " / 100"
+    else:
+        score, band, n = rp.get("shown", "—"), rp.get("band"), rp.get("n", 0)
+        suffix = "" if payload.get("scale") == "pct" else " / 7"
+    fig.text(0.07, 0.79, f"{score}{suffix}",
              fontsize=27, fontweight="bold", color=INK)
     if band:
         fig.text(0.07, 0.725, band, fontsize=12, fontweight="bold", color=ACCENT)
@@ -635,9 +640,16 @@ def _tables(visual, payload):
         if payload.get("single"):
             # One-time engagement: a timeline row is meaningless — summarise the session.
             rp = (payload.get("card") or {}).get("rp") or {}
+            quality = (payload.get("card") or {}).get("quality") or {}
             cmp = payload.get("cmp") or {}
-            row = {"Score": _round(rp.get("value")), "Band": rp.get("band") or "",
-                   "Respondents (n)": rp.get("n", 0)}
+            if quality.get("index") is not None:
+                row = {"Quality index (/100)": _round(quality["index"]), "Band": quality.get("band") or "",
+                       "Detailed (/7)": _round(quality.get("servqual")),
+                       "Overall (/4)": (_round(quality["osq"]) if quality.get("osq") is not None else ""),
+                       "Respondents (n)": quality.get("n", 0)}
+            else:
+                row = {"Score": _round(rp.get("value")), "Band": rp.get("band") or "",
+                       "Respondents (n)": rp.get("n", 0)}
             if cmp.get("avg") is not None:
                 row["Bureau average"] = _round(cmp["avg"])
                 row["Difference"] = f"{cmp['diff']:+.1f}"
@@ -802,7 +814,7 @@ def _tables(visual, payload):
         trend = payload.get("trend") or []
         if trend:
             out.append(("Activity scores over time", pd.DataFrame(
-                [{"Period": p["label"], "Score (/7)": _round(p["value"]), "Responses (n)": p.get("n", 0)}
+                [{"Period": p["label"], "Quality index (/100)": _round(p["value"]), "Responses (n)": p.get("n", 0)}
                  for p in trend])))
         bd = payload.get("breakdown") or []
         if bd:
@@ -811,7 +823,7 @@ def _tables(visual, payload):
         ybars = (payload.get("yoy") or {}).get("bars") or []
         if len(ybars) > 1:
             out.append(("Year on year", pd.DataFrame(
-                [{"Year": b["label"], "Score (/7)": b.get("shown"), "Ratings (n)": b.get("n", 0)}
+                [{"Year": b["label"], "Quality index (/100)": b.get("shown"), "Ratings (n)": b.get("n", 0)}
                  for b in ybars])))
         grp = (payload.get("standing") or {}).get("group") or {}
         if grp:

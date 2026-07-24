@@ -236,9 +236,15 @@
       <div class="k">Walk-in service · {{ card.arta.n|comma }} ratings</div></div>
     {% endif %}
     {% if card.rp %}
+    {% if card.quality and card.quality.index is not none %}
+    <div class="bigscore"><div class="v">{{ card.quality.shown }}<span class="muted" style="font-size:1rem;">/100</span>
+      {% if card.quality.band %}<span class="badge {{ band_cls.get(card.quality.band,'b-grey') }}">{{ card.quality.band }}</span>{% endif %}</div>
+      <div class="k">As a speaker · quality index · {{ card.rp.n|comma }} ratings<br><span class="muted">detailed {{ "%.2f"|format(card.quality.servqual) }}/7{% if card.quality.osq is not none %} · overall {{ "%.2f"|format(card.quality.osq) }}/4{% endif %}</span></div></div>
+    {% else %}
     <div class="bigscore"><div class="v">{{ card.rp.shown }}<span class="muted" style="font-size:1rem;">/7</span>
       {% if card.rp.band %}<span class="badge {{ band_cls.get(card.rp.band,'b-grey') }}">{{ card.rp.band }}</span>{% endif %}</div>
-      <div class="k">As a speaker · {{ card.rp.n|comma }} ratings{% if card.quality and card.quality.index is not none %} · quality index {{ "%.0f"|format(card.quality.index) }}/100{% endif %}</div></div>
+      <div class="k">As a speaker · {{ card.rp.n|comma }} ratings</div></div>
+    {% endif %}
     {% endif %}
   </div>
   {% if card.confidence %}
@@ -372,7 +378,7 @@
 <div class="panel">
   <div class="hd">
     <div><h3>Scores over time</h3>
-      <p class="sublab">{{ 'Walk-in top-box %' if role == 'arta' else 'Overall rating, out of 7' }}</p></div>
+      <p class="sublab">{{ 'Walk-in top-box %' if role == 'arta' else 'Quality index (0–100)' }}</p></div>
     <div class="grain">
       {% for g in ['monthly','quarterly','yearly'] %}
       <a href="/dashboard/people/{{ person.id }}?grain={{ g }}{{ ('&period=' ~ sel_period) if sel_period != 'all' else '' }}" class="{{ 'on' if grain==g }}">{{ g|capitalize }}</a>
@@ -388,8 +394,8 @@
       <div class="x">{{ p.label }}</div>
     </div>
     {% else %}
-    <div class="col" title="{{ p.label }}: {{ p.value|round(1) }} (n={{ p.n|comma }})">
-      <div class="v">{{ (p.value|round(0)|int ~ '%') if role=='arta' else p.value|round(1) }}</div>
+    <div class="col" title="{{ p.label }}: {{ p.value|round(0)|int }} (n={{ p.n|comma }})">
+      <div class="v">{{ (p.value|round(0)|int ~ '%') if role=='arta' else p.value|round(0)|int }}</div>
       <div class="bar" style="height:{{ (p.value / ymax * 100) | round(1) if ymax else 0 }}%"></div>
       <div class="x">{{ p.label }}</div>
     </div>

@@ -723,16 +723,27 @@ def _person_pct(payload):
     return payload.get("role") == "arta"
 
 
+def _person_index(payload):
+    # A resource person's headline + trend is now the 0-100 Quality Index.
+    return payload.get("role") == "rp"
+
+
 def _person_score(payload):
     card = payload.get("card") or {}
-    if payload.get("role") == "rp" and card.get("rp"):
-        return card["rp"]["shown"] + "/7", card["rp"].get("band")
+    if payload.get("role") == "rp":
+        q = card.get("quality") or {}
+        if q.get("shown"):
+            return q["shown"] + "/100", q.get("band")
+        if card.get("rp"):
+            return card["rp"]["shown"] + "/7", card["rp"].get("band")
     if card.get("arta"):
         return card["arta"]["shown"], card["arta"].get("band")
     return "—", None
 
 
-def _ylabel_person(pct):
+def _ylabel_person(pct, index=False):
+    if index:
+        return "Quality index (0–100)"
     return "Top-box positive (%)" if pct else "Mean rating (1–7)"
 
 
@@ -741,16 +752,17 @@ def _chart_person_trend(payload):
     labels = [p["label"] for p in trend]
     vals = [p.get("value") for p in trend]
     pct = _person_pct(payload)
+    idx = _person_index(payload)
     ymax = payload.get("ymax", 7)
     fig, ax = _plt.subplots()
     ax.plot(range(len(vals)), [v if v is not None else float("nan") for v in vals],
             "-o", color=_C["bar"], lw=2.4, ms=5)
     ax.set_ylim(0, ymax * 1.12)
-    ax.set_ylabel(_ylabel_person(pct)); ax.set_xlabel("Period")
+    ax.set_ylabel(_ylabel_person(pct, idx)); ax.set_xlabel("Period")
     sh = _thin(len(labels), 10)
     if sh:
         ax.set_xticks(sh); ax.set_xticklabels([labels[i] for i in sh])
-    fmt = (lambda v: f"{v:.0f}%") if pct else (lambda v: f"{v:.1f}")
+    fmt = (lambda v: f"{v:.0f}%") if pct else ((lambda v: f"{v:.0f}") if idx else (lambda v: f"{v:.1f}"))
     for i in sh:
         if vals[i] is not None:
             ax.annotate(fmt(vals[i]), (i, vals[i]), textcoords="offset points", xytext=(0, 8),
@@ -787,12 +799,13 @@ def _chart_person_yoy(payload):
     labels = [b["label"] for b in bars]
     vals = [b["value"] for b in bars]
     pct = _person_pct(payload)
-    ymax = 100 if pct else 7
+    idx = _person_index(payload)
+    ymax = 100 if (pct or idx) else 7
     fig, ax = _plt.subplots()
     bb = ax.bar(range(len(vals)), vals, color=_C["good"], width=0.55)
     ax.set_xticks(range(len(labels))); ax.set_xticklabels(labels)
     ax.set_ylim(0, ymax * 1.12)
-    ax.set_ylabel(_ylabel_person(pct)); ax.set_xlabel("Year")
+    ax.set_ylabel(_ylabel_person(pct, idx)); ax.set_xlabel("Year")
     for b, bar in zip(bars, bb):
         ax.text(bar.get_x() + bar.get_width() / 2, b["value"] + ymax * 0.02, b["shown"],
                 ha="center", va="bottom", fontsize=9, color=_C["ink"])
@@ -1588,9 +1601,15 @@ def team_pptx(payload, vmeta):
         return base + (f" (N = {N:,})" if N else "")
 
     pg = 1
-    band = card.get("band")
-    rd._hero(prs, meta, pg, card["rp"]["shown"] + "/7",
-             ("Activity rating" + (f" · {band}" if band else ""))
+    q = card.get("quality") or {}
+    if q.get("shown"):
+        hero_v, hero_band = q["shown"] + "/100", q.get("band")
+        sub_lead = "Quality index"
+    else:
+        hero_v, hero_band = card["rp"]["shown"] + "/7", card.get("band")
+        sub_lead = "Activity rating"
+    rd._hero(prs, meta, pg, hero_v,
+             (sub_lead + (f" · {hero_band}" if hero_band else ""))
              + f"\n{card.get('events', 0)} activities · {N:,} respondents")
     pg += 1
 

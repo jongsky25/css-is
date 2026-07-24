@@ -49,7 +49,7 @@
     <div class="umeta">{{ c.events|comma }} rated activit{{ 'y' if c.events == 1 else 'ies' }} · {{ c.respondents|comma }} people reached{% if c.met_pct is not none %} · {{ c.met_pct }}% met expectations{% endif %}</div>
     {% if c.badges %}<div class="ubadges">{% for b in c.badges %}<span class="ubadge" title="{{ b.label }} — {{ b.tip }}">{{ b.icons }}</span>{% endfor %}</div>{% endif %}
   </div>
-  <div class="uscore"><div class="v">{{ c.overall|round(1) }}<span class="badge {{ band_class(c.band) }}" style="margin-left:.3rem;vertical-align:.25rem;">{{ c.band }}</span></div><div class="k">avg of 7</div></div>
+  <div class="uscore">{% if c.quality and c.quality.index is not none %}<div class="v">{{ c.quality.shown }}<span class="badge {{ band_class(c.quality.band) }}" style="margin-left:.3rem;vertical-align:.25rem;">{{ c.quality.band }}</span></div><div class="k">quality index /100</div>{% else %}<div class="v">{{ c.overall|round(1) }}<span class="badge {{ band_class(c.band) }}" style="margin-left:.3rem;vertical-align:.25rem;">{{ c.band }}</span></div><div class="k">avg of 7</div>{% endif %}</div>
 </a>
 {% else %}
 <a class="ucard muted {{ cls }}" href="/dashboard/teams/{{ node.unit.path }}">

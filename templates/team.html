@@ -218,9 +218,11 @@
   <div class="ap-stats">
     <div class="ap-stat"><div class="apv">{{ profile.activities|comma }}</div><div class="apk">activities</div></div>
     <div class="ap-stat"><div class="apv">{{ profile.respondents|comma }}</div><div class="apk">people reached</div></div>
-    <div class="ap-stat"><div class="apv">{{ profile.avg }}<span>/7</span></div><div class="apk">{{ profile.band or 'experience' }}</div></div>
     {% if card.quality and card.quality.index is not none %}
-    <div class="ap-stat"><div class="apv">{{ "%.0f"|format(card.quality.index) }}<span>/100</span></div><div class="apk">quality index</div></div>
+    <div class="ap-stat"><div class="apv">{{ card.quality.shown }}<span>/100</span></div><div class="apk">quality index{{ ' · ' ~ card.quality.band if card.quality.band }}</div></div>
+    <div class="ap-stat"><div class="apv">{{ profile.avg }}<span>/7</span></div><div class="apk">detailed rating</div></div>
+    {% else %}
+    <div class="ap-stat"><div class="apv">{{ profile.avg }}<span>/7</span></div><div class="apk">{{ profile.band or 'experience' }}</div></div>
     {% endif %}
     {% if profile.met_pct is not none %}
     <div class="ap-stat"><div class="apv">{{ profile.met_pct }}%</div><div class="apk">met or beat expectations</div></div>

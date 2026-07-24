@@ -10635,10 +10635,11 @@ def dashboard_person(request: Request, rp_id: int, grain: str = "monthly", perio
             rids = list(set(di.arta_slice(atoms, rp_id)["response_id"].tolist())
                         | set(di.rp_slice(atoms, rp_id)["response_id"].tolist()))
             breakdown = dims if role == "rp" else arta_items
-            scale = "mean7" if role == "rp" else "pct"
+            scale = "index" if role == "rp" else "pct"
             cmp = coach = ta = None
             if card:
-                pv = card["rp"]["value"] if role == "rp" else (card["arta"]["value"] if card["arta"] else None)
+                pv = (card["quality"]["index"] if role == "rp"
+                      else (card["arta"]["value"] if card["arta"] else None))
                 bench = view_memo("benchmark", (period, role), lambda: di.benchmark_value(atoms, role))
                 cmp = di.compare_to_average(pv, bench, scale)
                 coach = di.coach_notes(person, card, trend, role, breakdown, cmp)
@@ -10724,8 +10725,8 @@ def dashboard_person_activity(request: Request, rp_id: int, event_id: int):
         card = di.person_card(scoped, person)
         dims = di.person_dimensions(scoped, person)
         cmp = ta = None
-        if card and card.get("rp"):
-            cmp = di.compare_to_average(card["rp"]["value"], di.benchmark_value(atoms, "rp"), "mean7")
+        if card and card.get("rp") and card.get("quality"):
+            cmp = di.compare_to_average(card["quality"]["index"], di.benchmark_value(atoms, "rp"), "index")
             ta = di.ta_advice(dims, di.bureau_dims(atoms))
         rids = [int(x) for x in scoped["response_id"].dropna().unique().tolist()]
         story = di.story_panel(st.verbatims_for_responses(conn, rids),
@@ -10926,8 +10927,7 @@ def dashboard_team(request: Request, org_path: str, grain: str = "monthly", peri
         breakdown = card["areas"] if card else []
         if card:
             f2_atoms = u_atoms[u_atoms["survey_type"] == 2]
-            trend = di._trend(di._last_periods(f2_atoms, "monthly", 12), "monthly",
-                              lambda d: eng.overall_perception(d, di.EVENT_DIMS_FORM2))
+            trend = di._trend(di._last_periods(f2_atoms, "monthly", 12), "monthly", di._qi_metric)
             coach = di.unit_coach(card, trend, breakdown)
             parent = unit["path"].rsplit("/", 1)[0] if "/" in unit["path"] else ""
             is_bureau_parent = org["bureau"] and parent == org["bureau"]["path"]
@@ -11742,13 +11742,15 @@ def _visual_payload(conn, atoms, visual, p, place, gen, period_hint=None):
         dims = di.person_dimensions(atoms, person)
         arta_items = di.person_arta_items(atoms, person)
         if role == "rp":
-            breakdown, bmax, btitle, ymax = dims, 7, "Strongest to weakest (of 7)", 7
+            # breakdown (dimensions) stays /7; the trend chart (ymax) is the 0-100 index.
+            breakdown, bmax, btitle, ymax = dims, 7, "Strongest to weakest (of 7)", 100
         else:
             breakdown, bmax, btitle, ymax = arta_items, 100, "Walk-in, part by part (%)", 100
-        scale = "mean7" if role == "rp" else "pct"
+        scale = "index" if role == "rp" else "pct"
         cmp = coach = ta = peers = None
         if card:
-            pv = card["rp"]["value"] if role == "rp" else (card["arta"]["value"] if card["arta"] else None)
+            pv = ((card.get("quality") or {}).get("index") if role == "rp"
+                  else (card["arta"]["value"] if card["arta"] else None))
             # For a single activity, `atoms` is the one-session slice — so the bureau
             # benchmark (and the TA "vs the norm" context) must read off the FULL atoms,
             # not the slice, or the comparison degenerates to the score vs itself.
@@ -11777,7 +11779,9 @@ def _visual_payload(conn, atoms, visual, p, place, gen, period_hint=None):
             if card.get("arta"):
                 notes.append(f"As server (walk-in): {card['arta']['shown']} from {card['arta']['n']} ratings.")
             if card.get("rp"):
-                notes.append(f"As speaker: {card['rp']['shown']} of 7 from {card['rp']['n']} ratings.")
+                _q = card.get("quality") or {}
+                _idx = f"quality index {_q['shown']}/100 · " if _q.get("shown") else ""
+                notes.append(f"As speaker: {_idx}detailed {card['rp']['shown']}/7 from {card['rp']['n']} ratings.")
         notes.append(dx.METHOD_NOTE)
         n_ratings = (card or card_all).get("ratings", 0)
         if single:
@@ -11791,7 +11795,7 @@ def _visual_payload(conn, atoms, visual, p, place, gen, period_hint=None):
             period_str = period_hint or di.span_label(dates)
         meta = dx.VisualMeta(
             title=title, person=person["name"], place=place, period=period_str,
-            unit=("Top-box %" if role == "arta" else "Mean rating, 1–7"),
+            unit=("Top-box %" if role == "arta" else "Quality index, 0–100"),
             notes=notes, generated_at=gen, n=n_ratings)
         # De-duplicated respondent comments about this person — the on-screen person
         # page shows a comments panel, so the download carries them too. Same rids the
@@ -12019,8 +12023,7 @@ def _visual_payload(conn, atoms, visual, p, place, gen, period_hint=None):
         profile = di.activities_profile(f2, pooled, di._short(unit["path"]) or unit["name"])
         breakdown = card["areas"]
         f2_atoms = u_atoms[u_atoms["survey_type"] == 2]
-        trend = di._trend(di._last_periods(f2_atoms, p["grain"], 12), p["grain"],
-                          lambda d: eng.overall_perception(d, di.EVENT_DIMS_FORM2))
+        trend = di._trend(di._last_periods(f2_atoms, p["grain"], 12), p["grain"], di._qi_metric)
         coach = di.unit_coach(card, trend, breakdown)
         parent = unit["path"].rsplit("/", 1)[0] if "/" in unit["path"] else ""
         is_bureau_parent = org_struct["bureau"] and parent == org_struct["bureau"]["path"]
@@ -12041,9 +12044,9 @@ def _visual_payload(conn, atoms, visual, p, place, gen, period_hint=None):
         meta = dx.VisualMeta(
             title=f"{unit['name']} — Team Report",
             place=di._short(unit["path"]) or unit["name"],
-            period=period_hint or span, unit="Activities — mean rating, 1–7",
+            period=period_hint or span, unit="Activities — quality index, 0–100",
             notes=notes, generated_at=gen, n=card["respondents"])
-        payload = {"role": "rp", "ymax": 7, "trend": trend, "breakdown": breakdown,
+        payload = {"role": "rp", "ymax": 100, "trend": trend, "breakdown": breakdown,
                    "breakdown_ymax": 7, "breakdown_title": "Strongest to weakest event area (of 7)",
                    "card": card, "coach": coach, "ta": ta, "yoy": yoy, "standing": standing,
                    "profile": profile, "short": card["short"]}
