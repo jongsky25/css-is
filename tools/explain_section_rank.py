@@ -8,13 +8,12 @@ the same way the `/dashboard/teams` route wires them (see app.py `_build_unit_ca
 and `_sibling_cards`). Because sections are ranked BUREAU-WIDE, every section card
 is built against one shared bureau prior, then ranked together.
 
-It exists to answer the recurring question "our section shows 6.4 like everyone
-else, so why did it rank 4th on quality (yet 2nd overall)?" — by printing the
-finer decimals the 1-dp card rounds away: quality ranks on the average rating
-itself (shown to 3 dp), so two 6.4 units are separated by their finer decimals;
-volume lives only on engagement (activities run); and the 45/55 quality/engagement
-blend produces the overall rank. The legacy volume-adjusted score (`adj`) is shown
-only for comparison — it no longer drives the ranking.
+It prints why each section lands where it does: quality ranks on the combined
+Quality Index (0-100 over all ten satisfaction questions — nine detailed /7 + the
+overall-quality /4, each rescaled to 0-100, equal weight, expectation excluded),
+with its /7 and /4 components; engagement is a 50/50 blend of activities run and
+respondents reached; and the 45/55 quality/engagement blend produces the overall
+rank. Low-sample units (< N_MIN ratings) sort below fully-rated ones.
 
 Run (from the repo root, where css_is.db lives):
     python tools/explain_section_rank.py                    # all-time, every section
@@ -100,66 +99,74 @@ def main(argv=None):
                  f"'{args.period}' — need >=2 to rank.")
 
     # --- Reproduce _standing's three rankings across the whole cohort ------------
-    # Quality ranks on the RAW average (di._quality_rank_key), with a low-n guard.
-    ev_vals = [c.get("events", 0) for c in peers]
+    # Quality ranks on the combined Quality Index (di._quality_rank_key), low-n guarded.
+    # Engagement is a 50/50 percentile blend of activities and respondents.
+    act_vals = [c.get("events", 0) for c in peers]
+    resp_vals = [c.get("ratings", 0) for c in peers]
 
     def qkey(c):
-        return di._quality_rank_key(c)          # (enough_sample, raw_value)
+        return di._quality_rank_key(c)          # (enough_sample, quality_index)
 
     def qpct(c):
         k = qkey(c)
         return sum(1 for x in peers if qkey(x) <= k) / len(peers) * 100.0
 
-    def perf(c):  # overall composite: engagement-heavy blend of percentiles
-        return (di.PERF_W_QUALITY * qpct(c)
-                + di.PERF_W_ENGAGEMENT * _pctile(ev_vals, c.get("events", 0)))
+    def eng_score(c):
+        return (di.ENG_W_ACTIVITIES * _pctile(act_vals, c.get("events", 0))
+                + di.ENG_W_RESPONDENTS * _pctile(resp_vals, c.get("ratings", 0)))
+
+    def perf(c):
+        return di.PERF_W_QUALITY * qpct(c) + di.PERF_W_ENGAGEMENT * eng_score(c)
 
     rows = []
     for c in peers:
+        q = c.get("quality") or {}
         q_rank = sum(1 for x in peers if qkey(x) > qkey(c)) + 1
-        e_rank = sum(1 for x in peers if x.get("events", 0) > c.get("events", 0)) + 1
+        e_rank = sum(1 for x in peers if eng_score(x) > eng_score(c)) + 1
         o_rank = sum(1 for x in peers if perf(x) > perf(c)) + 1
         rows.append({
             "name": c.get("short") or c.get("name"),
-            "raw": c["rp"]["value"], "n": c["respondents"], "adj": c.get("adj", 0),
-            "low_n": c.get("ratings", 0) < eng.N_MIN,
-            "events": c.get("events", 0), "perf": perf(c),
+            "index": q.get("index") or 0.0, "servqual": q.get("servqual"), "osq": q.get("osq"),
+            "n": c["respondents"], "low_n": c.get("ratings", 0) < eng.N_MIN,
+            "events": c.get("events", 0), "perf": perf(c), "eng": eng_score(c),
             "q_rank": q_rank, "e_rank": e_rank, "o_rank": o_rank,
-            "q_pct": round(qpct(c)), "e_pct": round(_pctile(ev_vals, c.get("events", 0))),
+            "q_pct": round(qpct(c)), "e_pct": round(eng_score(c)),
             "path": c["path"],
         })
 
     rows.sort(key=lambda r: r["o_rank"])
     n = len(rows)
-    grp_avg = sum(r["raw"] for r in rows) / n
+    grp_avg = sum(r["index"] for r in rows) / n
 
     print(f"\nScope: {args.period}   Sections ranked: {n}   "
           f"Low-sample threshold (N_MIN): {eng.N_MIN} ratings")
-    print(f"Cohort raw-average: {grp_avg:.3f} of 7   "
+    print(f"Cohort quality index: {grp_avg:.1f}/100   "
           f"Overall blend: {int(di.PERF_W_QUALITY*100)}% quality / "
-          f"{int(di.PERF_W_ENGAGEMENT*100)}% engagement\n")
+          f"{int(di.PERF_W_ENGAGEMENT*100)}% engagement   "
+          f"Engagement blend: {int(di.ENG_W_ACTIVITIES*100)}% acts / "
+          f"{int(di.ENG_W_RESPONDENTS*100)}% resp\n")
 
-    hdr = (f"{'section':<22}{'avg/7':>8}{'resp':>6}{'lowN':>6}"
-           f"{'Qrank':>7}{'acts':>6}{'Erank':>7}{'perf':>8}{'Orank':>7}{'adj*':>8}")
+    hdr = (f"{'section':<20}{'index':>7}{'/7':>6}{'/4':>5}{'resp':>6}{'lowN':>6}"
+           f"{'Qrank':>7}{'acts':>6}{'Erank':>7}{'perf':>7}{'Orank':>7}")
     print(hdr)
     print("-" * len(hdr))
     for r in rows:
         star = "  <--" if (args.section and args.section.lower() in r["name"].lower()) else ""
-        print(f"{r['name'][:22]:<22}{r['raw']:>8.3f}{r['n']:>6}{('yes' if r['low_n'] else '-'):>6}"
-              f"{r['q_rank']:>7}{r['events']:>6}{r['e_rank']:>7}"
-              f"{r['perf']:>8.1f}{r['o_rank']:>7}{r['adj']:>8.2f}{star}")
+        sq = f"{r['servqual']:.2f}" if r["servqual"] is not None else "-"
+        osq = f"{r['osq']:.2f}" if r["osq"] is not None else "-"
+        print(f"{r['name'][:20]:<20}{r['index']:>7.1f}{sq:>6}{osq:>5}{r['n']:>6}"
+              f"{('yes' if r['low_n'] else '-'):>6}{r['q_rank']:>7}{r['events']:>6}"
+              f"{r['e_rank']:>7}{r['perf']:>7.1f}{r['o_rank']:>7}{star}")
 
     print("\nHow to read this:")
-    print("  * 'avg/7' is the unit's average rating (3 dp) — the number shown on the card")
-    print("    AND the basis of the quality rank. Two units that both read 6.4 on a")
-    print("    1-dp card are separated here by the finer decimals.")
-    print("  * Qrank ranks purely on 'avg/7'. Volume does NOT enter quality; units with")
-    print(f"    fewer than {eng.N_MIN} ratings (lowN=yes) sort below all fully-rated units.")
-    print("  * Orank ranks on 'perf' = 45%*(quality pctile) + 55%*(engagement pctile).")
-    print("    Engagement = activities run ('acts'), so a unit can rank lower on quality")
-    print("    yet higher overall by running more activities.")
-    print("  * 'adj*' is the LEGACY volume-adjusted score (no longer used for ranking),")
-    print("    shown only for comparison with how ranks used to be computed.\n")
+    print("  * 'index' is the combined Quality Index (0-100) over all ten satisfaction")
+    print("    questions (nine detailed /7 + the overall-quality /4), each rescaled to")
+    print("    0-100, equal weight, expectation excluded. It IS the quality-rank basis.")
+    print("  * '/7' and '/4' are its components (detailed SERVQUAL mean, overall OSQ mean).")
+    print(f"  * Qrank ranks on 'index'; units with fewer than {eng.N_MIN} ratings (lowN=yes)")
+    print("    sort below all fully-rated units.")
+    print("  * Erank ranks on a 50/50 blend of activities ('acts') and respondents ('resp').")
+    print("  * Orank ranks on 'perf' = 45%*(quality pctile) + 55%*(engagement blend).\n")
 
     if args.section:
         me = next((r for r in rows if args.section.lower() in r["name"].lower()), None)
@@ -168,13 +175,15 @@ def main(argv=None):
             return
         print(f"Spotlight: {me['name']}")
         lown = f"  [LOW SAMPLE: {me['n']} < {eng.N_MIN} — ranked below fully-rated units]" if me["low_n"] else ""
-        print(f"  Quality  : #{me['q_rank']} of {n}  (avg {me['raw']:.3f}/7 vs cohort "
-              f"{grp_avg:.3f}, {me['q_pct']}th pct){lown}")
-        print(f"  Engagement: #{me['e_rank']} of {n}  ({me['events']} activities, "
-              f"{me['e_pct']}th pct)")
+        comp = (f"detailed {me['servqual']:.2f}/7"
+                + (f", overall {me['osq']:.2f}/4" if me["osq"] is not None else ""))
+        print(f"  Quality  : #{me['q_rank']} of {n}  (index {me['index']:.1f}/100 vs cohort "
+              f"{grp_avg:.1f}, {me['q_pct']}th pct; {comp}){lown}")
+        print(f"  Engagement: #{me['e_rank']} of {n}  ({me['events']} activities, {me['n']} "
+              f"respondents, blend {me['eng']:.0f}/100)")
         print(f"  Overall  : #{me['o_rank']} of {n}  (perf {me['perf']:.1f} = "
               f"0.45*{me['q_pct']} + 0.55*{me['e_pct']})")
-        ahead_q = [f"{r['name']} ({r['raw']:.3f})" for r in rows if r['q_rank'] < me['q_rank']]
+        ahead_q = [f"{r['name']} ({r['index']:.1f})" for r in rows if r['q_rank'] < me['q_rank']]
         if ahead_q:
             print(f"  Ahead of it on quality: {', '.join(ahead_q)}")
         print()

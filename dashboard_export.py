@@ -665,8 +665,12 @@ def _tables(visual, payload):
                 if not d:
                     return "—"
                 base = f"#{d[axis]['rank']} of {d['n']}"
-                # Quality ranks on the average rating itself — show that score (3 dp).
-                return f"{base} · {d['quality']['my']:.3f}/7" if axis == "quality" else base
+                # Quality ranks on the combined index — show index + components.
+                if axis == "quality":
+                    q = d["quality"]
+                    comp = f"{q['servqual']:.2f}/7" + (f", {q['osq']:.2f}/4" if q.get("osq") is not None else "")
+                    return f"{base} · idx {q['my']:.1f} ({comp})"
+                return base
             out.append(("Peer standing (rank)", pd.DataFrame([
                 {"Axis": "Overall performance", "Section": _rk("section", "overall"),
                  "Bureau": _rk("bureau", "overall")},
@@ -814,8 +818,11 @@ def _tables(visual, payload):
             out.append(("Standing among siblings", pd.DataFrame([
                 {"Axis": "Overall performance", "Rank": f"#{grp['overall']['rank']} of {grp['n']}"},
                 {"Axis": "Rating quality",
-                 "Rank": f"#{grp['quality']['rank']} of {grp['n']} · {grp['quality']['my']:.3f}/7"},
-                {"Axis": "Engagement (activities)", "Rank": f"#{grp['engagement']['rank']} of {grp['n']}"},
+                 "Rank": (f"#{grp['quality']['rank']} of {grp['n']} · idx {grp['quality']['my']:.1f} "
+                          f"({grp['quality']['servqual']:.2f}/7"
+                          + (f", {grp['quality']['osq']:.2f}/4" if grp['quality'].get('osq') is not None else "") + ")")},
+                {"Axis": "Engagement (acts + resp)",
+                 "Rank": f"#{grp['engagement']['rank']} of {grp['n']} · {grp['engagement']['acts']} acts · {grp['engagement']['resp']} resp"},
             ])))
         coach = payload.get("coach") or {}
         crows = [{"Type": "What's going well", "Note": s} for s in (coach.get("praise") or [])]

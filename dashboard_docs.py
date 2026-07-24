@@ -701,14 +701,15 @@ def pulse_pptx(payload, vmeta):
 # =====================================================================
 
 METHODS_PERSON = (
-    "Scores are computed fresh from this person's ratings in the window shown. A speaker's "
-    "score is the mean of per-respondent overall ratings across all nine attributes (1–7); a "
-    "walk-in server's score is the top-box share (Agree + Strongly Agree). The rating-quality "
-    "rank is on that average rating itself (shown to 3 decimals), within the section and the "
-    "whole bureau — the rank matches the score shown, with no volume weighting; people with "
-    "fewer than ten ratings rank below fully-rated peers. How many events a person is rated "
-    "across is a separate engagement axis; overall performance blends the two "
-    "(45% quality, 55% engagement). "
+    "Scores are computed fresh from this person's ratings in the window shown. The rating-quality "
+    "rank is on a combined Quality Index (0–100) over all ten satisfaction questions — the nine "
+    "detailed attributes (1–7) and the overall-quality question (1–4) — each answer rescaled to "
+    "0–100 so the scales combine fairly and every question counts equally; the expectation "
+    "question is excluded. The detailed /7 mean and the /4 overall question are shown as the "
+    "index's components. The rank matches the index shown, within the section and the whole "
+    "bureau, with no volume weighting; people with fewer than ten ratings rank below fully-rated "
+    "peers. Engagement blends how many events a person is rated across with how many people rated "
+    "them (50/50); overall performance blends quality and engagement (45% / 55%). "
     "Coaching is auto-generated guidance to build on, not a personnel evaluation. Respondent "
     "comments are the written feedback from this person's rated responses, de-duplicated with "
     "a ×N repeat count.")
@@ -818,6 +819,15 @@ def _na_person_summary(payload):
     return " ".join(bits) or "Performance summary."
 
 
+def _quality_cell(q):
+    """'idx NN.N (detailed x.xx/7, overall x.xx/4)' — the combined Quality Index plus
+    its two components, so a report row shows the ranked number and what built it."""
+    comp = f"{q['servqual']:.2f}/7"
+    if q.get("osq") is not None:
+        comp += f", {q['osq']:.2f}/4"
+    return f"idx {q['my']:.1f} ({comp})"
+
+
 def _person_peer_grid(peers, st):
     two = peers.get("section") is not None
 
@@ -826,9 +836,9 @@ def _person_peer_grid(peers, st):
         if not d:
             return "—"
         base = f"#{d[axis]['rank']} of {d['n']}"
-        # Quality ranks on the average rating itself — show that score (3 dp) so the
+        # Quality ranks on the combined index — show the index + components so the
         # rank matches the number, same as the dashboard.
-        return f"{base} · {d['quality']['my']:.3f}/7" if axis == "quality" else base
+        return f"{base} · {_quality_cell(d['quality'])}" if axis == "quality" else base
 
     headers = ["Axis"] + (["Section"] if two else []) + ["Whole bureau"]
     rows = []
@@ -976,7 +986,7 @@ def person_pptx(payload, vmeta):
     if b:
         rd._stats_slide(prs, meta, pg, "How they rank in the bureau", [
             ("Overall", f"#{b['overall']['rank']} of {b['n']}"),
-            ("Quality", f"#{b['quality']['rank']} · {b['quality']['my']:.3f}/7"),
+            ("Quality", f"#{b['quality']['rank']} · {_quality_cell(b['quality'])}"),
             ("Engagement", f"#{b['engagement']['rank']}"),
         ])
         pg += 1
@@ -1445,14 +1455,17 @@ def event_pptx(payload, vmeta):
 # =====================================================================
 
 METHODS_TEAM = (
-    "Scores are the unit's activity (Form-2) ratings — the mean of per-respondent overall ratings "
-    "across the nine attributes (1–7); the breakdown uses the event-about dimensions. Standing ranks "
-    "the unit against its sibling units (sections vs sections, divisions vs divisions). Rating quality "
-    "ranks on the unit's average rating itself (shown to 3 decimals) — the rank matches the score, with "
-    "no volume weighting; units with fewer than ten ratings rank below fully-rated units. How many "
-    "activities a unit runs is a separate engagement axis; overall standing blends the two "
-    "(45% quality, 55% engagement). Coaching is auto-generated guidance to build on, not a "
-    "performance evaluation. Verbatim comments are intentionally omitted from this file.")
+    "Scores are the unit's activity (Form-2) ratings; the breakdown uses the event-about dimensions. "
+    "Standing ranks the unit against its sibling units (sections vs sections, divisions vs divisions). "
+    "Rating quality ranks on a combined Quality Index (0–100) over all ten satisfaction questions — the "
+    "nine detailed attributes (1–7) and the overall-quality question (1–4) — each answer rescaled to "
+    "0–100 so the scales combine fairly and every question counts equally; the expectation question is "
+    "excluded. The detailed /7 mean and the /4 overall question are shown as the index's components. "
+    "The rank matches the index shown, with no volume weighting; units with fewer than ten ratings rank "
+    "below fully-rated units. Engagement blends how many activities the unit ran with how many people "
+    "rated them (50/50); overall standing blends quality and engagement (45% / 55%). Coaching is "
+    "auto-generated guidance to build on, not a performance evaluation. Verbatim comments are "
+    "intentionally omitted from this file.")
 
 
 def _na_team_summary(payload):
@@ -1475,7 +1488,7 @@ def _team_standing_grid(standing, st):
         return None
     n = grp["n"]
     rows = [["Overall performance", f"#{grp['overall']['rank']} of {n}"],
-            ["Rating quality", f"#{grp['quality']['rank']} of {n} · {grp['quality']['my']:.3f}/7"],
+            ["Rating quality", f"#{grp['quality']['rank']} of {n} · {_quality_cell(grp['quality'])}"],
             ["Engagement (activities)", f"#{grp['engagement']['rank']} of {n}"]]
     return rd._pdf_grid(["Axis", "Rank"], rows, [9 * cm, 7 * cm], st, numeric_from=1)
 
@@ -1598,7 +1611,7 @@ def team_pptx(payload, vmeta):
     if grp:
         rd._stats_slide(prs, meta, pg, "How this unit ranks", [
             ("Overall", f"#{grp['overall']['rank']} of {grp['n']}"),
-            ("Quality", f"#{grp['quality']['rank']} · {grp['quality']['my']:.3f}/7"),
+            ("Quality", f"#{grp['quality']['rank']} · {_quality_cell(grp['quality'])}"),
             ("Engagement", f"#{grp['engagement']['rank']}"),
         ])
         pg += 1

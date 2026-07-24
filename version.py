@@ -17,10 +17,33 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.45"
+APP_VERSION = "2.46"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.46",
+        "date": "July 24, 2026",
+        "summary": "Rating quality now counts every satisfaction question (including "
+                   "the \"overall quality\" one), and Engagement now counts both "
+                   "activities run and people reached.",
+        "changes": [
+            "\"Rating quality\" is now a single 0–100 index built from ALL the "
+            "satisfaction questions on a person's or unit's surveys — the nine "
+            "detailed questions (rated 1–7) and the one \"overall, how would you "
+            "rate the quality?\" question (rated 1–4), which was previously left "
+            "out. Every question counts equally, and the only one still excluded is "
+            "the first — what people expected going in — because that's a starting "
+            "point, not a rating. The familiar detailed score (x.xx/7) and the "
+            "overall-quality score (x.xx/4) are shown as the two parts of the index.",
+            "\"Engagement\" now rewards two things equally: how many activities or "
+            "sessions were run, AND how many people rated them. Before, only the "
+            "number of activities counted — so a unit that reached far more people "
+            "now gets credit for that reach.",
+            "The \"How is this computed?\" note on each person and unit page has been "
+            "updated to explain both changes in plain language.",
+        ],
+    },
     {
         "version": "2.45",
         "date": "July 24, 2026",

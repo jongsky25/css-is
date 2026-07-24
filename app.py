@@ -10683,6 +10683,8 @@ def dashboard_person(request: Request, rp_id: int, grain: str = "monthly", perio
         "is_self": is_self,
         "n_min": eng.N_MIN, "w_quality": round(di.PERF_W_QUALITY * 100),
         "w_engagement": round(di.PERF_W_ENGAGEMENT * 100),
+        "eng_w_acts": round(di.ENG_W_ACTIVITIES * 100),
+        "eng_w_resp": round(di.ENG_W_RESPONDENTS * 100),
     })
 
 
@@ -10956,6 +10958,8 @@ def dashboard_team(request: Request, org_path: str, grain: str = "monthly", peri
         "period_label": ("All time" if period == "all" else period.split(":", 1)[1]),
         "n_min": eng.N_MIN, "w_quality": round(di.PERF_W_QUALITY * 100),
         "w_engagement": round(di.PERF_W_ENGAGEMENT * 100),
+        "eng_w_acts": round(di.ENG_W_ACTIVITIES * 100),
+        "eng_w_resp": round(di.ENG_W_RESPONDENTS * 100),
     })
 
 
