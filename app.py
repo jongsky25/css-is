@@ -12306,6 +12306,12 @@ def wellness_hub(request: Request, cheer: str = "", badges: str = "", err: str =
         profile = st.get_user_profile(conn, user["id"])
         week = st.wellness_week_start()
         used = st.wellness_hours_used(conn, user["id"], week)
+        # Whether ANY week in the rolling request window still has room — the
+        # current week alone (`used`/`left` below) isn't enough to gate the
+        # "Request a break" link, since a future week can still be wide open.
+        can_request = any(
+            st.wellness_hours_used(conn, user["id"], w) < st.WELLNESS_WEEKLY_HOURS
+            for w in st.wellness_window_weeks())
         claims = st.list_my_wellness_claims(conn, user["id"])
         is_chief = st.user_is_wellness_chief(conn, user)
         queue_n = len(st.list_wellness_approvals(conn, user)) if is_chief else 0
@@ -12332,7 +12338,7 @@ def wellness_hub(request: Request, cheer: str = "", badges: str = "", err: str =
         "avatar_mood": avatar_mood, "avatar_person": avatar_person,
         "avatar_care_streak": avatar_care_streak, "avatar_last_care": avatar_last_care,
         "left": max(0, st.WELLNESS_WEEKLY_HOURS - used),
-        "weekly_hours": st.WELLNESS_WEEKLY_HOURS,
+        "weekly_hours": st.WELLNESS_WEEKLY_HOURS, "can_request": can_request,
         "claims": claims, "is_chief": is_chief, "queue_n": queue_n,
         "register_months": register_months,
         "cheer": cheer, "cheer_badges": [b for b in badges.split("|") if b],

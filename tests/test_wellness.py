@@ -5,6 +5,7 @@ with its gamification side-effects, in-handler RBAC on the chief/admin pages,
 and the monitoring register export.
 """
 import io
+import re
 from datetime import date, datetime, time, timedelta
 
 import pytest
@@ -557,6 +558,34 @@ def test_request_allowed_across_the_month(wellness_org):
     assert st.wellness_hours_used(conn, emp, ws) == 2
     # the current week is untouched by next week's claim
     assert st.wellness_hours_used(conn, emp, st.wellness_week_start()) == 0
+
+
+def test_hub_link_stays_enabled_once_a_future_week_is_open(app_mod, wellness_org):
+    """Using up this week's 2 hours must not lock the 'Request a break' link —
+    the apply flow still accepts a claim for any open week in the rolling
+    window, so the hub link should only disable when EVERY week in the
+    window is full."""
+    conn, emp = wellness_org["conn"], wellness_org["emp"]
+    monday = _monday_this_week().isoformat()
+    ws = st.wellness_week_start(date.fromisoformat(monday))
+    conn.execute(
+        "INSERT INTO wellness_claim(user_id, week_start, break_date, start_time,"
+        " hours, activity, status, created_at) VALUES (?,?,?,?,2,'exercise','approved',?)",
+        (emp, ws, monday, "09:00", tz.now_iso()))
+    conn.commit()
+    assert st.wellness_hours_used(conn, emp, ws) == st.WELLNESS_WEEKLY_HOURS
+    c = _client_for_id(app_mod, emp)
+    r = c.get("/wellness")
+    assert r.status_code == 200
+    m = re.search(r'<a class="btn" href="/wellness/apply"[^>]*>', r.text)
+    assert m and "aria-disabled" not in m.group(0)
+    # a next-week claim is still accepted through the real HTTP flow
+    next_week = _next_weekday(_monday_this_week() + timedelta(days=7))
+    r = c.post("/wellness/apply", data={"break_date": next_week.isoformat(),
+                                        "start_time": "10:00", "activity": "exercise",
+                                        "note": "jog", "hours": "1"},
+               follow_redirects=False)
+    assert r.status_code == 303
 
 
 def test_request_beyond_window_is_rejected(wellness_org):
