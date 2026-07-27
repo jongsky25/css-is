@@ -17,10 +17,24 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.47"
+APP_VERSION = "2.48"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.48",
+        "date": "July 27, 2026",
+        "summary": "Fixed the wellness \"Request a break\" button locking up once "
+                   "your current week's 2 hours were used, even if you meant to "
+                   "request a future week.",
+        "changes": [
+            "Using up this week's 2-hour wellness entitlement no longer disables "
+            "the \"Request a break\" button on your wellness page. You could always "
+            "file a request for any open week up to four weeks ahead — the button "
+            "just wasn't letting you get to the form. It now only locks once every "
+            "week in that four-week window is fully claimed.",
+        ],
+    },
     {
         "version": "2.47",
         "date": "July 24, 2026",

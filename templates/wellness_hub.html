@@ -110,7 +110,7 @@
   <div class="hourpips" aria-hidden="true">
     {% for i in range(weekly_hours) %}<span class="pip {{ 'used' if i < used }}"></span>{% endfor %}
   </div>
-  <a class="btn" href="/wellness/apply" {% if left == 0 %}aria-disabled="true"{% endif %}>Request a break</a>
+  <a class="btn" href="/wellness/apply" {% if not can_request %}aria-disabled="true"{% endif %}>Request a break</a>
 </div>
 
 {% if register_months %}
