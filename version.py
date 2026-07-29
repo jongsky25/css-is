@@ -17,10 +17,26 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.48"
+APP_VERSION = "2.49"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.49",
+        "date": "July 29, 2026",
+        "summary": "The Resource-person report can now download a PowerPoint roster, "
+                   "one slide per activity, filterable by quarter.",
+        "changes": [
+            "The Type 3 (Resource Person) report has a new \"PowerPoint — "
+            "per-activity roster (Form 3.0)\" download. It builds a slide for each "
+            "activity in the selected scope, listing every resource person who "
+            "spoke at it with their Overall Service Quality rating and SERVQUAL "
+            "score — matching the paper Form 3.0 roster sheet.",
+            "The download honors the report page's existing quarter (and Activity) "
+            "filter, so choosing a quarter and downloading gives a deck with just "
+            "that quarter's activities.",
+        ],
+    },
     {
         "version": "2.48",
         "date": "July 27, 2026",
