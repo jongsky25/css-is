@@ -10105,6 +10105,55 @@ def reports_export(request: Request, type: int = 1, fmt: str = "docx",
     )
 
 
+@app.get("/reports/rp-roster-export")
+def reports_rp_roster_export(request: Request, org: str = "", period: str = "all",
+                             activity: str = ""):
+    """Download the Type-3 resource-person roster as PowerPoint: one slide per
+    activity (Form 3.0 style), listing every resource person scored on it with
+    their Overall Service Quality and SERVQUAL Score. Honors the same org/period
+    (quarter) scope as the on-screen report, and narrows to one activity when the
+    Activity filter is set — same scoping rules as /reports/export."""
+    if (r := _forbid(request, "view")): return r
+    conn = get_conn()
+    try:
+        atoms = get_atoms(conn)
+        org_opts = _org_options(conn)
+        scope_label = _scope_label(org, period, org_opts)
+        place = next((x["text"] for x in org_opts if x["value"] == org), "Whole bureau")
+        period_lbl = "All time" if (not period or period == "all") else period.split(":", 1)[1]
+        sdf_atoms = atoms
+        if activity:            # narrow the deck to one activity, like other RP downloads
+            pick = next((a for a in _rp_activity_options(conn, atoms)
+                        if a["value"] == activity), None)
+            if pick:
+                sdf_atoms = atoms[atoms["form_instance_id"].isin(set(pick["instance_ids"]))]
+                scope_label = f"{scope_label} · {pick['text']}"
+        scoped = _scoped(sdf_atoms, org, period)
+        events = [e for e in di.build_events(scoped, st.list_activity_instances(conn))
+                 if e["speakers"]]
+        events.sort(key=lambda e: (e.get("date") or ""))   # chronological, oldest first
+        for e in events:
+            e["date_shown"] = _humandate(e.get("date"))
+        try:
+            _, org_name, _ = st.get_or_create_blhsd(conn)
+        except Exception:
+            org_name = "CSS-IS"
+        meta = {"title": "Resource-person Roster (per activity)", "scope": scope_label,
+               "place": place, "period": period_lbl,
+               "generated": _now_local().strftime("%Y-%m-%d %H:%M"), "source": org_name}
+        data = report_docs.rp_roster_pptx(events, meta)
+        _audit(request, conn, "export", target_type="report_doc", target_id="type3_roster",
+              summary=f"Exported resource-person roster (PPTX, {len(events)} activities) · {scope_label}")
+    finally:
+        conn.close()
+    fname = f"ResourcePersonRoster_{_now_local().strftime('%Y%m%d_%H%M%S')}.pptx"
+    return Response(
+        content=data,
+        media_type=_REPORT_FMT["pptx"],
+        headers={"Content-Disposition": f'attachment; filename="{fname}"'},
+    )
+
+
 @app.post("/reports/csm-draft")
 async def csm_draft_ai(request: Request):
     """"Draft with AI" for the official CO-CSM report's Section V (Agency

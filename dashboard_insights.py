@@ -1627,11 +1627,23 @@ def build_events(atoms, instances):
             v = _overall(m3, c3, eng.DIM_MAP_FORM3)
             if v is None:
                 continue
+            exp_v = m3.get("A")
+            osq_v = m3.get("C")
+            gap = (v - exp_v) if exp_v is not None else None
             speakers.append({
                 "name": f3["rp_name"] or "Speaker", "topic": f3["topic"],
                 "rp_id": f3["rp_id"], "hidden": f3.get("rp_hidden"),
+                "instance_id": f3["id"],
                 "value": v, "shown": f"{v:.1f}", "band": band7(v),
                 "respondents": len(_resp_ids([f3["id"]])),
+                # Per-speaker Overall Service Quality (item C, 1-4) and SERVQUAL
+                # gap (dimension average minus expectation A) — same fields and
+                # formatting activity_servqual() uses for the whole-activity
+                # summary, just scoped to this one resource person's own form.
+                "osq": osq_v, "osq_shown": (f"{osq_v:.2f}" if osq_v is not None else "—"),
+                "osq_band": _band_view(osq_v, eng.OSQ_BANDS),
+                "gap": gap, "gap_shown": (f"{gap:+.2f}" if gap is not None else "—"),
+                "verdict": _servqual_verdict(gap),
             })
         speakers.sort(key=lambda s: -s["value"])
 

@@ -980,6 +980,92 @@ def _stats_slide(prs, meta, page, headline, stats):
     _footer(s, meta, page)
 
 
+def _table_cell(cell, text, *, bold=False, size=11, color="1C2330",
+                align=PP_ALIGN.LEFT, fill=None):
+    cell.text = "" if text is None else str(text)
+    cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+    cell.margin_left = Inches(0.08)
+    cell.margin_right = Inches(0.08)
+    cell.margin_top = Inches(0.03)
+    cell.margin_bottom = Inches(0.03)
+    if fill:
+        cell.fill.solid()
+        cell.fill.fore_color.rgb = _PRGB.from_string(fill)
+    p = cell.text_frame.paragraphs[0]
+    p.alignment = align
+    r = p.runs[0] if p.runs else p.add_run()
+    r.font.size = _PPt(size)
+    r.font.bold = bold
+    r.font.color.rgb = _PRGB.from_string(color)
+
+
+def _table_slide(prs, meta, page, headline, headers, rows, sub=None, aligns=None,
+                 col_widths=None):
+    """A data-table slide (native pptx table, not a picture, so it stays
+    selectable/editable) — header band, optional subhead, a striped table,
+    footer. Used for rosters where the data itself is the content, not a chart."""
+    s = _slide(prs)
+    _header(s, headline)
+    top = 1.45
+    if sub:
+        _txt(s, sub, 0.6, 1.2, 12.1, 0.45, size=13, color="5A6473")
+        top = 1.82
+    aligns = aligns or [PP_ALIGN.LEFT] * len(headers)
+    left, width = 0.6, _SW - 1.2
+    n_rows, n_cols = len(rows) + 1, len(headers)
+    row_h = min(0.46, max(0.32, (_SH - 0.7 - top) / max(n_rows, 1)))
+    shape = s.shapes.add_table(n_rows, n_cols, Inches(left), Inches(top),
+                               Inches(width), Inches(row_h * n_rows))
+    table = shape.table
+    if col_widths:
+        total = sum(col_widths)
+        for i, w in enumerate(col_widths):
+            table.columns[i].width = Inches(width * w / total)
+    for c, h in enumerate(headers):
+        _table_cell(table.cell(0, c), h, bold=True, size=12, color="FFFFFF",
+                    align=aligns[c], fill=_ACCENT)
+    for r, row in enumerate(rows, start=1):
+        bg = "FFFFFF" if r % 2 else _CARDBG
+        for c, val in enumerate(row):
+            _table_cell(table.cell(r, c), val, size=11, align=aligns[c], fill=bg)
+    _footer(s, meta, page)
+    return s
+
+
+def rp_roster_pptx(events, meta):
+    """Per-activity resource-person roster deck — mirrors the paper 'Form 3.0
+    (Resource Person)' sheet: one slide per activity, a table of every scored
+    resource person with their Overall Service Quality (item C band) and
+    SERVQUAL Score (dimension average minus expectation, with verdict).
+    `events` is a list of build_events()-shaped dicts (each with a `speakers`
+    list already carrying osq_shown/osq_band/gap_shown/verdict) — already
+    filtered to the chosen org/period/activity scope by the caller."""
+    prs = _ppt_new()
+    _title_slide(prs, meta)
+    slides = [(e, [sp for sp in e.get("speakers") or [] if sp.get("value") is not None])
+              for e in events]
+    slides = [(e, sp) for e, sp in slides if sp]
+    if not slides:
+        _txt(_slide(prs), "No resource-person activities in this scope.",
+             0.8, 3, 11.7, 1, size=20)
+        return _ppt_save(prs)
+
+    pg = 1
+    for e, speakers in slides:
+        pg += 1
+        sub = "  ·  ".join(x for x in (e.get("date_shown"), e.get("venue")) if x) or None
+        rows = []
+        for i, sp in enumerate(speakers, start=1):
+            osq = sp["osq_shown"] + (f" ({sp['osq_band']})" if sp.get("osq_band") else "")
+            sq = sp["gap_shown"] + (f" ({sp['verdict']})" if sp.get("verdict") else "")
+            rows.append([i, sp["name"], osq, sq])
+        _table_slide(prs, meta, pg, e.get("name") or "Activity",
+                     ["#", "Staff Name", "Overall Service Quality", "SERVQUAL Score"], rows,
+                     sub=sub, aligns=[PP_ALIGN.RIGHT, PP_ALIGN.LEFT, PP_ALIGN.CENTER, PP_ALIGN.CENTER],
+                     col_widths=[0.6, 3.6, 2.8, 3.0])
+    return _ppt_save(prs)
+
+
 def _takeaways_slide(prs, meta, page, points, focus):
     s = _slide(prs)
     _bg(s, _DEEP)

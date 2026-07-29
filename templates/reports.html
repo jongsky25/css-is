@@ -169,6 +169,8 @@
     {% elif rtype == 3 %}
     <div class="dl-group">Raw data</div>
     <a href="/reports/export?type=3&org={{ org|urlencode }}&period={{ period|urlencode }}{{ act }}&fmt=xlsx" download>Excel (.xlsx) — the numbers</a>
+    <div class="dl-group">Resource-person roster</div>
+    <a href="/reports/rp-roster-export?org={{ org|urlencode }}&period={{ period|urlencode }}{{ act }}" download>PowerPoint — per-activity roster (Form 3.0)</a>
     {% endif %}
   </div>
 </details>
