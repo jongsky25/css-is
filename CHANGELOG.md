@@ -1,5 +1,34 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-30 (v2.52 — admin-only "Merge (any date)" for activities)
+
+**Symptom.** Two Activities-page cards for what was really one event, logged under
+two different dates 6 days apart (212 responses vs. 76). The existing "Rename /
+merge" action could give them the same title but never combined them into one card,
+because `dashboard_insights._event_group_key` groups strictly by the exact
+`(event_date, venue, lead_org/organizer)` tuple — a shared label doesn't change the
+group key.
+
+**Fix.** `activity_admin.merge_activities` is a new curate op, distinct from
+`rename_activities`: it repoints every response from the ticked duplicates onto the
+instance with the most responses, deletes the emptied rows (reusing
+`harmonize.apply_activity_clusters`), then re-dates the survivor to whatever the
+operator typed. Gated behind a new `merge_activity` capability (admin only —
+`auth.ROLE_CAPS`); the `/reports/activities/bulk` route rejects the `merge` action
+for any other role and validates the corrected date server-side.
+`harmonize.undo_batch` gained the `fi_event_date` journal kind so the re-date is
+reversible along with the rest of the batch, same as every other curate op here.
+
+- **`templates/activities.html`** — new "Merge (any date)" group on the bulk-edit
+  bar, rendered only when `can_merge`. Its submit button runs `confirmMerge()`,
+  which reads each ticked checkbox's `data-date` and, if they don't already match,
+  shows a `confirm()` naming the specific differing dates before allowing the post.
+- **Tests** — `tests/test_activity_merge_across_dates.py`: the helper combines
+  responses + re-dates + undoes correctly; the bulk route lets an admin merge across
+  dates, rejects a section manager, and rejects a malformed corrected date.
+- Superseded an earlier standalone `merge_activities.py` CLI draft of the same idea
+  — the logic now lives in `activity_admin.py` and is reachable from the UI instead.
+
 ## 2026-07-23 (Fix: a multi-session summit's CSS results 404'd after closing)
 
 **Symptom.** An organizer closed a regional BHW summit (created as several

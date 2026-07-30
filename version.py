@@ -17,10 +17,34 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.51"
+APP_VERSION = "2.52"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.52",
+        "date": "July 30, 2026",
+        "summary": "Admins can now merge activities that were accidentally logged "
+                   "under two different dates into one — the Activities page's "
+                   "existing merge only ever combined the names.",
+        "changes": [
+            "On the Activities page's ✎ Edit / merge bar, administrators now see a "
+            "new “Merge (any date)” action alongside the existing “Rename / "
+            "merge”. Tick the duplicate activities, type one shared title and the "
+            "corrected date, and it actually combines their responses into a "
+            "single activity dated what you entered — fixing the case where the "
+            "same real event was typed in twice under two different dates.",
+            "The regular “Rename / merge” only ever gave activities a matching "
+            "name — it could never combine them if their dates didn't already "
+            "match, since the Activities page always lists a same-dated event as "
+            "one card. “Merge (any date)” is the one action that can cross that "
+            "gap.",
+            "Because this can fold two events' responses together, it's admin-"
+            "only, and it double-checks with you first: if the ticked activities "
+            "don't already share a date, it names the exact dates involved and "
+            "asks you to confirm before doing anything.",
+        ],
+    },
     {
         "version": "2.51",
         "date": "July 30, 2026",

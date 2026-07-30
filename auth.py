@@ -50,7 +50,8 @@ ROLE_CAPS = {
     "encoder":         {"view", "encode"},
     "section_manager": {"view", "encode", "edit_data", "create_activity", "manage_event"},
     "admin":           {"view", "encode", "edit_data", "create_activity", "manage_event",
-                        "directory", "hide", "manage_users", "wipe", "triage_feedback"},
+                        "directory", "hide", "manage_users", "wipe", "triage_feedback",
+                        "merge_activity"},
 }
 
 
