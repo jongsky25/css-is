@@ -1683,7 +1683,19 @@ def build_events(atoms, instances):
             mf, cf = _means_counts([i["id"] for i in f3s])
             ranked = _ranked(mf, cf, eng.DIM_MAP_FORM3)
 
-        resp_set = _resp_ids(all_ids)
+        # The card's respondent count/response_ids should match what's actually
+        # SCORED and shown for this event. When there's a real Form-2 score
+        # (f2_block) — the activity's own review — respondents must be F2-only:
+        # folding in incidental Type-3 speaker reviews that happen to share the
+        # same date+venue+org purely by grouping-key coincidence silently inflated
+        # "N response(s)" next to a score computed from the F2 alone (speakers are
+        # rated separately on the People page since the 2026-06-12 decoupling).
+        # When there's NO usable F2 score (no F2 forms, or an F2 with zero actual
+        # answers), the card falls back to showing a speaker's score instead (see
+        # the template's `elif e.speakers` branch) — so respondents falls back to
+        # the whole group too, matching whatever's actually displayed.
+        resp_scope_ids = [i["id"] for i in f2s] if f2_block else all_ids
+        resp_set = _resp_ids(resp_scope_ids)
         respondents = len(resp_set)
         if respondents == 0:
             continue
