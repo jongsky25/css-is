@@ -1,5 +1,26 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-30 (v2.54 — admin "Just fix the date" for activities)
+
+**Why.** The v2.52 "Merge (any date)" action only ever runs against 2+ activities —
+it repoints responses AND re-dates the survivor in one step, so it has no path for
+correcting a date on an activity that has nothing to merge into (including its own
+survivor right after a merge, if the corrected date typed in at merge time turns
+out to be wrong).
+
+- **`activity_admin.set_activity_date`** — new curate op: updates `event_date` on
+  one or more Type-2 (F2) instances directly, no merge involved. Same admin gate as
+  `merge_activities` (`auth.ROLE_CAPS['merge_activity']`), journaled
+  (`fi_event_date`, already supported by `harmonize.undo_batch` since v2.52) and
+  audited (`activity_redate`).
+- **`app.py`** — `/reports/activities/bulk` gains a `redate` action, admin-only,
+  server-side date validation, same as `merge`.
+- **`templates/activities.html`** — new "Just fix the date →" button next to
+  "Merge into one →" in the "Merge (any date)" group; only needs a date (no title,
+  no 2-activity minimum) and confirms before submitting.
+- **Tests** — `tests/test_activity_merge_across_dates.py` gains coverage for the
+  helper + undo, the admin-only gate, and bad-date rejection.
+
 ## 2026-07-30 (v2.52 — admin-only "Merge (any date)" for activities)
 
 **Symptom.** Two Activities-page cards for what was really one event, logged under

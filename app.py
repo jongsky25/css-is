@@ -11579,7 +11579,9 @@ async def activity_bulk(request: Request):
 
     "merge" is admin-only (auth.ROLE_CAPS['merge_activity']): unlike "rename" it
     doesn't just relabel — it actually combines the ticked activities' responses
-    onto one survivor and re-dates it, even across different original dates."""
+    onto one survivor and re-dates it, even across different original dates.
+    "redate" is the same admin gate, for when there's just a wrong date to fix
+    on one or more activities — no second activity to merge into needed."""
     if (r := _forbid(request, "create_activity")):
         return r
     body = parse_qsl((await request.body()).decode("utf-8"), keep_blank_values=True)
@@ -11596,11 +11598,11 @@ async def activity_bulk(request: Request):
         scope[key] = msg
         return RedirectResponse("/reports/activities?" + urlencode(scope), status_code=303)
 
-    if action not in ("rename", "section", "untag", "archive", "all", "merge") or not ids:
+    if action not in ("rename", "section", "untag", "archive", "all", "merge", "redate") or not ids:
         return _back("err", "Pick at least one activity and an action.")
-    if action == "merge" and not auth.can(request.state.user["role"], "merge_activity"):
-        return _back("err", "Only admins can merge activities across dates.")
-    if action == "merge" and merge_date and not _valid_date(merge_date):
+    if action in ("merge", "redate") and not auth.can(request.state.user["role"], "merge_activity"):
+        return _back("err", "Only admins can change an activity's date.")
+    if action in ("merge", "redate") and merge_date and not _valid_date(merge_date):
         return _back("err", "The corrected date isn't a real YYYY-MM-DD date.")
     actor = request.state.user["username"]
     conn = get_conn()
@@ -11644,6 +11646,17 @@ async def activity_bulk(request: Request):
             if n_merged:
                 return f"combined into one activity dated {_humandate(merge_date)}", ""
             return "", "nothing to merge — need a title, a corrected date, and 2+ selected"
+
+        def _do_redate():
+            f2_ids = _f2_instance_ids(conn, inst)
+            if not f2_ids:
+                return "", "the selection carries no event review to date"
+            n = aa.set_activity_date(conn, f2_ids, merge_date, actor, batch)
+            invalidate_views()
+            invalidate_atoms()                   # event_date drives the reporting period
+            if n:
+                return f"redated to {_humandate(merge_date)}", ""
+            return "", "already dated that"
 
         def _do_section(untag=False):
             sections = {s["id"]: s for s in st.list_org_units(conn, level="section")}
@@ -11693,6 +11706,12 @@ async def activity_bulk(request: Request):
                 return _back("err", "Type a title and a corrected date to merge.")
             ok, err = _do_merge()
             ok_msg = f"Merged {nlabel} {ok.split(' ', 1)[1]}." if ok else ""
+            err_msg = "" if ok else f"No change — {err}."
+        elif action == "redate":
+            if not merge_date:
+                return _back("err", "Pick a corrected date.")
+            ok, err = _do_redate()
+            ok_msg = f"Updated {nlabel} {ok.split(' ', 1)[1]}." if ok else ""
             err_msg = "" if ok else f"No change — {err}."
         else:                                    # archive
             n = aa.archive_activities(conn, inst, actor, batch)

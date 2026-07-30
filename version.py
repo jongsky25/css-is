@@ -17,10 +17,24 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.53"
+APP_VERSION = "2.54"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.54",
+        "date": "July 30, 2026",
+        "summary": "Admins can now fix just an activity's date without merging it "
+                   "into anything else.",
+        "changes": [
+            "On the Activities page's ✎ Edit / merge bar, admins now have a "
+            "“Just fix the date →” button next to “Merge into one”. Tick one "
+            "or more activities, set the date, and it corrects just that — no "
+            "combining, no title change.",
+            "Before this, correcting a wrong date required merging the activity "
+            "into a second one even when there was nothing to actually merge.",
+        ],
+    },
     {
         "version": "2.53",
         "date": "July 30, 2026",
