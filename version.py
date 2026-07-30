@@ -17,10 +17,24 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.49"
+APP_VERSION = "2.50"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.50",
+        "date": "July 30, 2026",
+        "summary": "Fixed the resource-person roster PowerPoint listing the same "
+                   "person more than once on an activity that had several sessions.",
+        "changes": [
+            "When a resource person ran more than one session within the same "
+            "activity (e.g. several batches of the same training on the same "
+            "date and venue), the PowerPoint roster listed them once per session "
+            "with different scores, instead of once for the activity. They now "
+            "appear once, with their Overall Service Quality and SERVQUAL Score "
+            "combined across all their sessions in that activity.",
+        ],
+    },
     {
         "version": "2.49",
         "date": "July 29, 2026",

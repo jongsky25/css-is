@@ -1620,26 +1620,38 @@ def build_events(atoms, instances):
                 }
                 gap_sentence = _gap_sentence(m2.get("A"), overall_v)
 
-        # Per-speaker F3s
-        speakers = []
+        # Per-speaker F3s. A resource person can carry more than one F3 form in
+        # the SAME event group (e.g. several batches/sessions run on the same
+        # date + venue) — the date+venue+organizer grouping key above has no
+        # finer-grained way to tell those sessions apart. Group by rp_id FIRST
+        # and combine that person's forms with the ordinary combining rule
+        # (_means_counts over all their instance ids), so a person appears
+        # ONCE per event with one score, not once per session.
+        by_rp = {}
         for f3 in f3s:
-            m3, c3 = _means_counts([f3["id"]])
+            by_rp.setdefault(f3["rp_id"], []).append(f3)
+        speakers = []
+        for rp_id, forms in by_rp.items():
+            ids = [f["id"] for f in forms]
+            m3, c3 = _means_counts(ids)
             v = _overall(m3, c3, eng.DIM_MAP_FORM3)
             if v is None:
                 continue
             exp_v = m3.get("A")
             osq_v = m3.get("C")
             gap = (v - exp_v) if exp_v is not None else None
+            topics = [f["topic"] for f in forms if f.get("topic")]
+            uniq_topics = list(dict.fromkeys(topics))   # de-dup, keep order
             speakers.append({
-                "name": f3["rp_name"] or "Speaker", "topic": f3["topic"],
-                "rp_id": f3["rp_id"], "hidden": f3.get("rp_hidden"),
-                "instance_id": f3["id"],
+                "name": forms[0]["rp_name"] or "Speaker", "topic": "; ".join(uniq_topics),
+                "rp_id": rp_id, "hidden": forms[0].get("rp_hidden"),
+                "instance_ids": ids,
                 "value": v, "shown": f"{v:.1f}", "band": band7(v),
-                "respondents": len(_resp_ids([f3["id"]])),
+                "respondents": len(_resp_ids(ids)),
                 # Per-speaker Overall Service Quality (item C, 1-4) and SERVQUAL
                 # gap (dimension average minus expectation A) — same fields and
                 # formatting activity_servqual() uses for the whole-activity
-                # summary, just scoped to this one resource person's own form.
+                # summary, just scoped to this one resource person's own forms.
                 "osq": osq_v, "osq_shown": (f"{osq_v:.2f}" if osq_v is not None else "—"),
                 "osq_band": _band_view(osq_v, eng.OSQ_BANDS),
                 "gap": gap, "gap_shown": (f"{gap:+.2f}" if gap is not None else "—"),

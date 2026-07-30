@@ -108,6 +108,30 @@ def test_rp_roster_export_lists_every_speaker_per_activity(manager, app_mod):
         assert row[3] not in ("", "—")
 
 
+def test_rp_roster_export_merges_one_persons_multiple_sessions(manager, app_mod):
+    """A resource person who ran more than one session within the same activity
+    (same date + venue — e.g. several batches of the same training) must appear
+    ONCE on that activity's slide, not once per session. Regression for a real
+    prod roster that listed the same name 2-3x with different scores because the
+    date+venue grouping can't otherwise tell sessions of the same person apart."""
+    db_path = app_mod.DB
+    rp1 = _two_internal_rps(db_path)[0]
+    _ev, (f3a, f3b) = _make_bureau_multi(
+        manager, db_path, "RP Roster Merge", "2026-05-18", "RP Roster Test Venue Merge",
+        [rp1, rp1], ["Batch 1", "Batch 2"])
+    _add_responses(db_path, f3a, _F3_ANSWERS_A, 3)
+    _add_responses(db_path, f3b, _F3_ANSWERS_B, 3)
+    app_mod.invalidate_atoms()
+
+    r = manager.get("/reports/rp-roster-export", params={"period": "quarter:2026-Q2"})
+    assert r.status_code == 200
+    slides = _pptx_slides(r.content)
+    slide = _slide_for(slides, "RP Roster Merge")
+    header, *rows = slide["rows"]
+    assert len(rows) == 1                        # one person, one row — not two
+    assert rows[0][3] not in ("", "—")
+
+
 def test_rp_roster_export_honors_quarter_filter(manager, app_mod):
     """An activity outside the requested quarter contributes no slide."""
     db_path = app_mod.DB
