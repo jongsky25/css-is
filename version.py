@@ -17,10 +17,29 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.54"
+APP_VERSION = "2.55"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.55",
+        "date": "July 30, 2026",
+        "summary": "Fixed an activity's response count sometimes including "
+                   "unrelated resource-person reviews from the same date.",
+        "changes": [
+            "On the Activities page, an activity's shown response count could "
+            "include responses to a completely different resource person's "
+            "review — if that review happened to be logged under the same date "
+            "and section, with no venue set, it silently added its responses "
+            "to the activity's own count without changing the score shown "
+            "beside it. The count now reflects only the activity's own "
+            "responses.",
+            "This only affected the number shown next to an activity's score "
+            "on cards and its own report page — the score itself, and every "
+            "official report, were never affected (they already counted "
+            "correctly).",
+        ],
+    },
     {
         "version": "2.54",
         "date": "July 30, 2026",

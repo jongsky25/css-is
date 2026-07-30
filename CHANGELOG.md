@@ -1,5 +1,41 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-07-30 (v2.55 — fix inflated activity respondent counts)
+
+**Symptom.** An activity card showed 212 responses next to a score of 6.0/7 — but
+the score was computed from a single response. Investigation (comparing a month of
+production backups against `harmonize_undo` journal entries and the app's own
+`build_events`/`load_atoms` code, run directly against a pre-incident snapshot)
+traced it to `dashboard_insights.build_events`: `_event_group_key` groups Type-2
+(activity review) and Type-3 (speaker review) forms together whenever they share
+`(event_date, venue, lead_org_id)` — including when venue is blank, which most
+activities' is. The group's `respondents`/`response_ids` summed responses across
+**every** form in the group, so 11 unrelated speaker-review forms for 5 different
+resource persons (sharing the same date/section/blank-venue by pure coincidence)
+inflated one activity's response count from 1 to 212. The score next to it was
+unaffected — `f2_block`/`activity_servqual` already filtered to `survey_type==2`
+internally — only the displayed count (and everything downstream of
+`response_ids`: verbatims, demographics, comment overrides, weighted averages) was
+wrong.
+
+**Fix.** `build_events` now scopes `respondents`/`response_ids` to the Type-2 ids
+only when the event has a real F2 score (`f2_block` is truthy) — matching what's
+actually shown. When there's no usable F2 score (no F2 forms, or an F2 with zero
+answers), it falls back to the whole group, matching the template's own fallback
+to a speaker's score in that case (`elif e.speakers`) — this preserves existing
+behavior for F2-less/F2-empty activities (confirmed via the RP roster/report test
+suite, which exercises exactly that shape).
+
+- **`dashboard_insights.py`** — `build_events`'s respondent-scoping logic, as above.
+  Every downstream consumer (`app.py`'s verbatims/demographics/comment-override/
+  export code, the aggregate weighted-average functions later in this file) reads
+  from the same `e["respondents"]`/`e["response_ids"]`, so fixing the one source
+  fixes all of them — no other call site needed touching.
+- **Tests** — `tests/test_activity_respondents_excludes_speakers.py`: a Type-2
+  activity sharing a date/section/blank-venue with two resource persons' Type-3
+  reviews now reports only its own 1 response, not 13; a pure Type-3 "outside
+  engagement" (no Type-2 at all) still correctly counts its own speaker responses.
+
 ## 2026-07-30 (v2.54 — admin "Just fix the date" for activities)
 
 **Why.** The v2.52 "Merge (any date)" action only ever runs against 2+ activities —
