@@ -108,6 +108,59 @@ def test_rp_roster_export_lists_every_speaker_per_activity(manager, app_mod):
         assert row[3] not in ("", "—")
 
 
+def test_rp_roster_export_merges_one_persons_multiple_sessions(manager, app_mod):
+    """A resource person who ran more than one session within the same activity
+    (same date + venue — e.g. several batches of the same training) must appear
+    ONCE on that activity's slide, not once per session. Regression for a real
+    prod roster that listed the same name 2-3x with different scores because the
+    date+venue grouping can't otherwise tell sessions of the same person apart."""
+    db_path = app_mod.DB
+    rp1 = _two_internal_rps(db_path)[0]
+    _ev, (f3a, f3b) = _make_bureau_multi(
+        manager, db_path, "RP Roster Merge", "2026-05-18", "RP Roster Test Venue Merge",
+        [rp1, rp1], ["Batch 1", "Batch 2"])
+    _add_responses(db_path, f3a, _F3_ANSWERS_A, 3)
+    _add_responses(db_path, f3b, _F3_ANSWERS_B, 3)
+    app_mod.invalidate_atoms()
+
+    r = manager.get("/reports/rp-roster-export", params={"period": "quarter:2026-Q2"})
+    assert r.status_code == 200
+    slides = _pptx_slides(r.content)
+    slide = _slide_for(slides, "RP Roster Merge")
+    header, *rows = slide["rows"]
+    assert len(rows) == 1                        # one person, one row — not two
+    assert rows[0][3] not in ("", "—")
+
+
+def test_rp_roster_export_omits_the_director(manager, app_mod):
+    """The Director rotates too fast to be a meaningful named roster entry —
+    always left off the per-activity roster, identified live by position
+    ('Director...') rather than a per-person flag, so it applies to whoever
+    holds the role without needing to be re-applied on turnover."""
+    db_path = app_mod.DB
+    rp1 = _two_internal_rps(db_path)[0]
+    conn = st.connect(db_path)
+    sec = conn.execute("SELECT id FROM org_unit WHERE level='section' LIMIT 1").fetchone()[0]
+    director_id = st.add_rp(conn, "Test Director Person", is_internal=True,
+                            org_unit_id=sec, position="Director IV")
+    conn.close()
+
+    _ev, (f3_speaker, f3_director) = _make_bureau_multi(
+        manager, db_path, "RP Roster Director Test", "2026-05-19",
+        "RP Roster Test Venue Director", [rp1, director_id], ["Session One", "Director remarks"])
+    _add_responses(db_path, f3_speaker, _F3_ANSWERS_A, 3)
+    _add_responses(db_path, f3_director, _F3_ANSWERS_B, 3)
+    app_mod.invalidate_atoms()
+
+    r = manager.get("/reports/rp-roster-export", params={"period": "quarter:2026-Q2"})
+    assert r.status_code == 200
+    slides = _pptx_slides(r.content)
+    slide = _slide_for(slides, "RP Roster Director Test")
+    header, *rows = slide["rows"]
+    assert len(rows) == 1                         # only the non-director speaker
+    assert "Test Director Person" not in [row[1] for row in rows]
+
+
 def test_rp_roster_export_honors_quarter_filter(manager, app_mod):
     """An activity outside the requested quarter contributes no slide."""
     db_path = app_mod.DB
