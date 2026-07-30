@@ -344,6 +344,11 @@ def _add_missing_columns(conn):
         # link-tree flow). NULL on every walk-in/QR/legacy response. load_atoms
         # never selects this column, so ratings stay analytically anonymous.
         conn.execute("ALTER TABLE response ADD COLUMN attendee_id INTEGER REFERENCES attendee(id)")
+    if "archived_at" not in resp_cols:
+        # Reversible per-response archive (mirrors form_instance.archived) — for the
+        # standing Type-1 walk-in form, where a whole-form archive can't reach a single
+        # bad/duplicate/test submission. NULL = active; a timestamp = archived.
+        conn.execute("ALTER TABLE response ADD COLUMN archived_at TEXT")
     rp_cols = {row[1] for row in conn.execute("PRAGMA table_info(resource_person)")}
     for col, decl in (("position", "TEXT"), ("designation", "TEXT"),
                       ("focus_area", "TEXT"), ("email", "TEXT"),
@@ -2698,6 +2703,8 @@ _AUDIT_ACTIONS = {
     "activity_archive":    ("Archived an activity", "Activities"),
     "archive_activities":  ("Archived activities", "Activities"),
     "form_archive":        ("Archived/restored a form", "Activities"),
+    "walkin_entry_edit":   ("Edited a walk-in entry", "Activities"),
+    "walkin_entry_archive": ("Archived/restored a walk-in entry", "Activities"),
     "harmonize_merge":     ("Merged activities", "Activities"),
     "manual_entry":        ("Keyed in a paper response", "Activities"),
     "tag_section":         ("Tagged an activity's section", "Activities"),
@@ -2831,6 +2838,125 @@ def update_item_remark(conn, response_id, item_id, text):
         conn.execute("DELETE FROM item_remark WHERE id=?", (row[0],))
     conn.commit()
     return True, row[1]
+
+
+# ---------------------------------------------------------------------
+# Walk-in (Type-1 / ARTA) entry manager — admin-only. The standing walk-in form
+# has no per-instance activity page (it's one permanent form, not created per
+# transaction), so this is the only place a bad/miskeyed/duplicate individual
+# response can be corrected or reversibly put away.
+# ---------------------------------------------------------------------
+
+# item_remark rows tied to a Type-1 response are either a CO-CSM metadata field
+# (this list) or a per-item note keyed by the SQD item_id it's about.
+CSM_META_FIELDS = ["RESPONSE_NO", "SERVICE", "TYPE_OF_SERVICE", "CLIENT_TYPE", "EMAIL",
+                   "SEX", "AGE", "REGION", "VERSION", "CC1", "CC2", "CC3", "FEEDBACK_TYPE"]
+
+
+def walkin_entries_page(conn, page=1, per_page=50, include_archived=False):
+    """Paginated list of individual Type-1 responses, newest first, for the entries
+    manager. Returns (rows, total_count)."""
+    page = max(1, page)
+    where = "WHERE fi.survey_type = 1" + ("" if include_archived else " AND r.archived_at IS NULL")
+    total = conn.execute(
+        f"SELECT COUNT(*) FROM response r JOIN form_instance fi ON fi.id = r.form_instance_id {where}"
+    ).fetchone()[0]
+    rows = conn.execute(f"""
+        SELECT r.id, r.submitted_at, sb.name, r.archived_at,
+               (SELECT value FROM answer WHERE response_id = r.id AND item_id = 'SQD0'),
+               (SELECT text FROM item_remark WHERE response_id = r.id AND item_id = 'RESPONSE_NO'),
+               (SELECT text FROM item_remark WHERE response_id = r.id AND item_id = 'SERVICE'),
+               (SELECT text FROM item_remark WHERE response_id = r.id AND item_id = 'CLIENT_TYPE')
+        FROM response r
+        JOIN form_instance fi ON fi.id = r.form_instance_id
+        LEFT JOIN resource_person sb ON sb.id = r.served_by_rp_id
+        {where}
+        ORDER BY r.submitted_at DESC, r.id DESC
+        LIMIT ? OFFSET ?
+    """, (per_page, (page - 1) * per_page)).fetchall()
+    return [{"id": r[0], "submitted_at": r[1], "served_by_name": r[2], "archived": bool(r[3]),
+             "sqd0": r[4], "response_no": r[5], "service": r[6], "client_type": r[7]}
+            for r in rows], total
+
+
+def get_walkin_entry(conn, response_id):
+    """Everything the entries editor needs for one Type-1 response: its SQD ratings,
+    per-item notes, CO-CSM metadata, overall remarks, served-by and archived state.
+    Returns None if it doesn't exist or isn't a Type-1 response."""
+    row = conn.execute("""
+        SELECT r.id, r.submitted_at, r.remarks, r.served_by_rp_id, r.archived_at, fi.survey_type
+        FROM response r JOIN form_instance fi ON fi.id = r.form_instance_id
+        WHERE r.id = ?
+    """, (response_id,)).fetchone()
+    if not row or row[5] != 1:
+        return None
+    answers = {a[0]: {"value": a[1], "is_na": bool(a[2])} for a in conn.execute(
+        "SELECT item_id, value, is_na FROM answer WHERE response_id = ?", (response_id,)).fetchall()}
+    remark_rows = dict(conn.execute(
+        "SELECT item_id, text FROM item_remark WHERE response_id = ?", (response_id,)).fetchall())
+    metadata = {f: remark_rows.get(f, "") for f in CSM_META_FIELDS}
+    item_notes = {k: v for k, v in remark_rows.items() if k not in CSM_META_FIELDS}
+    return {"id": row[0], "submitted_at": row[1], "remarks": row[2],
+            "served_by_rp_id": row[3], "archived": bool(row[4]),
+            "answers": answers, "metadata": metadata, "item_notes": item_notes}
+
+
+def update_walkin_entry(conn, response_id, submitted_at, served_by_rp_id, remarks,
+                        ratings, remark_fields):
+    """Full edit of one Type-1 response: submission date, served-by, overall remarks,
+    SQD0-8 ratings (`ratings` = {item_id: value_or_None}), and every item_remark row —
+    both CO-CSM metadata and per-item notes (`remark_fields` = {item_id: text}, blank
+    text deletes the row). Returns False if the response isn't a Type-1 response."""
+    row = conn.execute(
+        "SELECT fi.survey_type FROM response r JOIN form_instance fi ON fi.id = r.form_instance_id "
+        "WHERE r.id = ?", (response_id,)).fetchone()
+    if not row or row[0] != 1:
+        return False
+    conn.execute(
+        "UPDATE response SET submitted_at=?, served_by_rp_id=?, remarks=? WHERE id=?",
+        (submitted_at, served_by_rp_id, (remarks or "").strip() or None, response_id))
+    for item_id, value in ratings.items():
+        is_na = value is None
+        stored = None if is_na else float(value)
+        existing = conn.execute(
+            "SELECT id FROM answer WHERE response_id=? AND item_id=?",
+            (response_id, item_id)).fetchone()
+        if existing:
+            conn.execute("UPDATE answer SET value=?, is_na=? WHERE id=?",
+                        (stored, int(is_na), existing[0]))
+        else:
+            # Older/legacy responses can be missing a row for an item added since
+            # (e.g. SQD0 on an old walk-in slip) — insert it rather than silently
+            # dropping the edit.
+            conn.execute(
+                "INSERT INTO answer(response_id, item_id, value, is_na) VALUES (?,?,?,?)",
+                (response_id, item_id, stored, int(is_na)))
+    for item_id, text in remark_fields.items():
+        text = (text or "").strip()
+        existing = conn.execute(
+            "SELECT id FROM item_remark WHERE response_id=? AND item_id=?",
+            (response_id, item_id)).fetchone()
+        if text:
+            if existing:
+                conn.execute("UPDATE item_remark SET text=? WHERE id=?", (text, existing[0]))
+            else:
+                conn.execute(
+                    "INSERT INTO item_remark(response_id, item_id, text) VALUES (?,?,?)",
+                    (response_id, item_id, text))
+        elif existing:
+            conn.execute("DELETE FROM item_remark WHERE id=?", (existing[0],))
+    conn.commit()
+    return True
+
+
+def set_response_archived(conn, response_id, archived):
+    """Archive (hide from every report/analytic) or restore one Type-1 response.
+    Reversible — the response-level counterpart to `set_form_archived`. Returns
+    rows updated."""
+    cur = conn.execute("UPDATE response SET archived_at=? WHERE id=?",
+                       (tz.now_iso() if archived else None, response_id))
+    conn.commit()
+    return cur.rowcount
 
 
 def set_comment_override(conn, response_id, item_id, tag, actor=None):
@@ -4600,6 +4726,7 @@ LEFT JOIN org_unit olead     ON olead.id  = fi.lead_org_id
 LEFT JOIN org_unit orp       ON orp.id    = rp.org_unit_id
 LEFT JOIN external_organizer xo ON xo.id  = fi.organizer_external_id
 WHERE COALESCE(fi.archived, 0) = 0          -- archived forms vanish from all analytics
+  AND r.archived_at IS NULL                 -- archived individual responses too (Type-1 entries)
 """
 
 
