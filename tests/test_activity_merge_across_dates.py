@@ -120,3 +120,84 @@ def test_bulk_merge_route_rejects_bad_corrected_date(admin, app_mod):
     }, follow_redirects=False)
     assert r.status_code == 303
     assert "err=" in r.headers["location"]
+
+
+def _make_single(app_mod, sec_id, event_date="2026-05-26"):
+    conn = st.connect(app_mod.DB)
+    try:
+        fid = st.create_form_instance(conn, survey_type=2, form="F2", event_date=event_date,
+                                      venue="Zoom", lead_org_id=sec_id,
+                                      topic="Updating DOH Representatives on Local Health Systems Policies and Programs")
+        for _ in range(3):
+            st.record_response(conn, fid, [("A", 6), ("C", 6)])
+        conn.commit()
+    finally:
+        conn.close()
+    return fid
+
+
+def test_set_activity_date_helper_corrects_one_activity_and_undoes(app_mod):
+    sec_id = _section_id(app_mod)
+    fid = _make_single(app_mod, sec_id, "2026-05-26")
+    conn = st.connect(app_mod.DB)
+    try:
+        aa.ensure_backup(app_mod.DB)
+        batch = aa.new_batch()
+        n = aa.set_activity_date(conn, [fid], "2026-05-20", "test@test.local", batch)
+        conn.commit()
+        assert n == 1
+        row = conn.execute("SELECT event_date FROM form_instance WHERE id=?", (fid,)).fetchone()
+        assert row[0] == "2026-05-20"
+
+        undone = hz.undo_batch(conn, batch)
+        assert undone > 0
+        row = conn.execute("SELECT event_date FROM form_instance WHERE id=?", (fid,)).fetchone()
+        assert row[0] == "2026-05-26"
+    finally:
+        conn.close()
+
+
+def test_bulk_redate_route_requires_admin_not_section_manager(manager, app_mod):
+    sec_id = _section_id(app_mod)
+    fid = _make_single(app_mod, sec_id, "2026-05-26")
+    r = manager.post("/reports/activities/bulk", data={
+        "ids": str(fid), "action": "redate", "merge_date": "2026-05-20",
+    }, follow_redirects=False)
+    assert r.status_code == 303
+    assert "err=" in r.headers["location"]
+    conn = st.connect(app_mod.DB)
+    try:
+        row = conn.execute("SELECT event_date FROM form_instance WHERE id=?", (fid,)).fetchone()
+        assert row[0] == "2026-05-26"                 # unchanged
+    finally:
+        conn.close()
+
+
+def test_bulk_redate_route_admin_corrects_single_activity(admin, app_mod):
+    sec_id = _section_id(app_mod)
+    fid = _make_single(app_mod, sec_id, "2026-05-26")
+    r = admin.post("/reports/activities/bulk", data={
+        "ids": str(fid), "action": "redate", "merge_date": "2026-05-20",
+    }, follow_redirects=False)
+    assert r.status_code == 303
+    assert "ok=" in r.headers["location"]
+    conn = st.connect(app_mod.DB)
+    try:
+        row = conn.execute("SELECT event_date, topic FROM form_instance WHERE id=?", (fid,)).fetchone()
+        assert row[0] == "2026-05-20"
+        # redate never touches the title/responses — only rename/merge do
+        assert row[1] == "Updating DOH Representatives on Local Health Systems Policies and Programs"
+        n = conn.execute("SELECT COUNT(*) FROM response WHERE form_instance_id=?", (fid,)).fetchone()[0]
+        assert n == 3
+    finally:
+        conn.close()
+
+
+def test_bulk_redate_route_rejects_bad_date(admin, app_mod):
+    sec_id = _section_id(app_mod)
+    fid = _make_single(app_mod, sec_id, "2026-05-26")
+    r = admin.post("/reports/activities/bulk", data={
+        "ids": str(fid), "action": "redate", "merge_date": "not-a-date",
+    }, follow_redirects=False)
+    assert r.status_code == 303
+    assert "err=" in r.headers["location"]

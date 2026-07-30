@@ -123,6 +123,41 @@ def merge_activities(conn, f2_ids, title, event_date, actor, batch):
     return merged, deleted
 
 
+def set_activity_date(conn, f2_ids, event_date, actor, batch):
+    """Correct the event_date on one or more event-review (F2) activities directly
+    — no second activity to merge into needed. This is the other half of "the
+    date is wrong": `merge_activities` combines two records AND fixes the date in
+    one step, but sometimes there's nothing to combine, just a typo/import error
+    to correct after the fact (including on an activity that was itself just the
+    survivor of a merge). Same admin gate as merge (auth.ROLE_CAPS['merge_activity']).
+
+    Journaled ("fi_event_date") and reversible via harmonize.undo_batch, same as
+    every other curate op here."""
+    conn.execute(hz._UNDO_DDL)
+    event_date = (event_date or "").strip()
+    f2_ids = list(dict.fromkeys(f2_ids or []))     # de-dup, keep order
+    if not f2_ids or not event_date:
+        return 0
+    rows = conn.execute(
+        f"SELECT id FROM form_instance WHERE id IN ({','.join('?' * len(f2_ids))}) AND survey_type=2",
+        f2_ids).fetchall()
+    ids = [r[0] for r in rows]
+    changed = 0
+    for fid in ids:
+        old = conn.execute("SELECT event_date FROM form_instance WHERE id=?", (fid,)).fetchone()[0]
+        if old == event_date:
+            continue
+        hz._journal(conn, batch, "fi_event_date", fid, {"old": old, "new": event_date})
+        conn.execute("UPDATE form_instance SET event_date=? WHERE id=?", (event_date, fid))
+        changed += 1
+    if changed:
+        st.audit(conn, actor, "activity_redate", target_type="form_instance",
+                 target_id=ids[0], summary=f"Corrected {changed} activity date(s) to {event_date}.",
+                 after=event_date)
+        conn.commit()
+    return changed
+
+
 def archive_activities(conn, instance_ids, actor, batch):
     """Hide the selected activities' forms from the dashboard (archived=1)."""
     conn.execute(hz._UNDO_DDL)

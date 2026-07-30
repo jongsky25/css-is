@@ -196,8 +196,10 @@
       <span class="cb-lab">Merge (any date)</span>
       <input type="date" name="merge_date" id="cbMergeDate">
       <button type="submit" name="action" value="merge" class="cb-act danger" id="cbMergeBtn"
-              data-needs-title data-needs-date onclick="return confirmMerge()">Merge into one →</button>
-      <span class="cb-help">Admin only. Actually combines the ticked activities' responses onto one record and re-dates it to what you enter above — use this (not Rename / merge) when the same real event was logged twice under different dates. Uses the title typed in <b>Rename / merge</b> above as the merged record's name.</span>
+              data-needs-title data-needs-date data-min2 onclick="return confirmMerge()">Merge into one →</button>
+      <button type="submit" name="action" value="redate" class="cb-act ghost" id="cbRedateBtn"
+              data-needs-date onclick="return confirmRedate()">Just fix the date →</button>
+      <span class="cb-help">Admin only. <b>Merge into one →</b> actually combines the ticked activities' responses onto one record and re-dates it to what you enter above — use it (not Rename / merge) when the same real event was logged twice under different dates; it uses the title typed in <b>Rename / merge</b> above. <b>Just fix the date →</b> corrects the date on the ticked activity/activities without combining anything — for when there's nothing to merge, just a wrong date.</span>
     </div>
     {% endif %}
     <div class="cb-group">
@@ -248,7 +250,7 @@
       b.disabled = (n === 0)
         || (b.hasAttribute('data-needs-title') && !hasTitle)
         || (b.hasAttribute('data-needs-date') && !hasDate)
-        || (b.hasAttribute('data-needs-date') && n < 2)
+        || (b.hasAttribute('data-min2') && n < 2)
         || (b.hasAttribute('data-needs-any') && !(hasTitle || hasSection));
     });
   }
@@ -283,6 +285,12 @@ function confirmMerge() {
   }
   return confirm('Merge the selected activities into one record dated '
     + (document.getElementById('cbMergeDate').value || '(the date you entered)') + '? This cannot be undone from the UI.');
+}
+function confirmRedate() {
+  var n = document.querySelectorAll('input[name=ids]:checked').length;
+  var date = document.getElementById('cbMergeDate').value || '(the date you entered)';
+  return confirm('Set the date to ' + date + ' for the selected '
+    + n + ' activit' + (n === 1 ? 'y' : 'ies') + '? This only corrects the date — nothing is combined.');
 }
 // Success notification — pop a transient toast after a curate action succeeds.
 (function () {
