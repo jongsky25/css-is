@@ -3,11 +3,14 @@
 Section managers use these to tidy the activity data the dashboard groups by
 date + office: rename (merge) messy activity titles to one canonical name, and
 retag / untag / reassign which section an activity belongs to (plus archive junk).
+`rename_activities` only relabels — it cannot combine rows across different
+dates/offices, since the dashboard groups on that exact tuple. `merge_activities`
+is the one op that can, by actually repointing responses onto a survivor
+instance; it's admin-only (see auth.ROLE_CAPS['merge_activity']) because it can
+silently fold two different real-world sessions into one if misused.
 
 Everything reuses the harmonize journal + backup machinery (harmonize.py), so every
-change is audited and undoable via `harmonize.undo_batch`. No schema changes — this
-is the lightweight option agreed with the user (it cannot combine activities across
-different dates/offices, only relabel and retag what's there).
+change is audited and undoable via `harmonize.undo_batch`. No schema changes.
 """
 import datetime as _dt
 
@@ -73,6 +76,51 @@ def retag_section(conn, instance_ids, org_id, actor, batch, label):
                  after=label)
         conn.commit()
     return changed
+
+
+def merge_activities(conn, f2_ids, title, event_date, actor, batch):
+    """Combine 2+ event-review (F2) activities into ONE, even across different
+    dates/venues/offices — the one curate op `rename_activities` deliberately
+    can't do (see module docstring). Every response on the ticked instances
+    other than the survivor is repointed onto it (most responses first, so the
+    fewest rows move), the emptied duplicates are deleted, and the survivor is
+    stamped with the given title and corrected date.
+
+    Admin-only in the UI (auth.ROLE_CAPS['merge_activity']) — the caller is
+    responsible for warning the operator when the selection doesn't already
+    share one date, since this is the one op here that can silently fold
+    attendance from two different real-world sessions into one row if misused.
+
+    Reuses harmonize.apply_activity_clusters, so the response repoints + the
+    deleted duplicate(s) are journaled and reversible via harmonize.undo_batch,
+    same as every other curate op in this file."""
+    conn.execute(hz._UNDO_DDL)
+    title = (title or "").strip()
+    event_date = (event_date or "").strip()
+    f2_ids = list(dict.fromkeys(f2_ids or []))     # de-dup, keep order
+    if len(f2_ids) < 2 or not title or not event_date:
+        return 0, 0
+    rows = conn.execute(
+        f"SELECT id FROM form_instance WHERE id IN ({','.join('?' * len(f2_ids))}) AND survey_type=2",
+        f2_ids).fetchall()
+    ids = [r[0] for r in rows]
+    if len(ids) < 2:
+        return 0, 0
+    counts = {i: conn.execute("SELECT COUNT(*) FROM response WHERE form_instance_id=?",
+                              (i,)).fetchone()[0] for i in ids}
+    anchor = max(ids, key=lambda i: (counts[i], -i))   # most responses stays; ties -> lowest id
+    dels = [i for i in ids if i != anchor]
+    cluster = {"anchor_id": anchor, "delete_ids": dels, "canonical": title}
+    merged, deleted = hz.apply_activity_clusters(conn, [cluster], batch, actor=actor)
+    old_date = conn.execute("SELECT event_date FROM form_instance WHERE id=?", (anchor,)).fetchone()[0]
+    if old_date != event_date:
+        hz._journal(conn, batch, "fi_event_date", anchor, {"old": old_date, "new": event_date})
+        conn.execute("UPDATE form_instance SET event_date=? WHERE id=?", (event_date, anchor))
+    st.audit(conn, actor, "activity_merge", target_type="form_instance", target_id=anchor,
+             summary=f"Merged {len(ids)} activities into “{title}” dated {event_date} (kept #{anchor}).",
+             after=f"{title} ({event_date})")
+    conn.commit()
+    return merged, deleted
 
 
 def archive_activities(conn, instance_ids, actor, batch):

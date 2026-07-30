@@ -52,7 +52,7 @@ ROLE_CAPS = {
     "section_manager": {"view", "encode", "edit_data", "create_activity", "manage_event"},
     "admin":           {"view", "encode", "edit_data", "create_activity", "manage_event",
                         "directory", "hide", "manage_users", "wipe", "triage_feedback",
-                        "manage_walkin_entries"},
+                        "manage_walkin_entries", "merge_activity"},
 }
 
 

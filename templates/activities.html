@@ -142,7 +142,7 @@
 <div class="event">
   <div class="ev-row">
     {% if can_curate %}<input class="ev-check" type="checkbox" name="ids" value="{{ e.id }}" form="curateForm"
-           aria-label="Select {{ e.name }}">{% endif %}
+           data-date="{{ e.date }}" aria-label="Select {{ e.name }}">{% endif %}
     <a class="ev-link" href="/reports/activities/{{ e.id }}">
       <span class="ev-main">
         <div class="ev-name">{{ e.name }} {% if e.is_external %}<span class="pill-ext">external</span>{% endif %}
@@ -191,6 +191,15 @@
       <button type="submit" name="action" value="rename" class="cb-act" data-needs-title>Rename / merge →</button>
       <span class="cb-help">Give the ticked activities one shared name — selecting several merges their labels into a single title.</span>
     </div>
+    {% if can_merge %}
+    <div class="cb-group">
+      <span class="cb-lab">Merge (any date)</span>
+      <input type="date" name="merge_date" id="cbMergeDate">
+      <button type="submit" name="action" value="merge" class="cb-act danger" id="cbMergeBtn"
+              data-needs-title data-needs-date onclick="return confirmMerge()">Merge into one →</button>
+      <span class="cb-help">Admin only. Actually combines the ticked activities' responses onto one record and re-dates it to what you enter above — use this (not Rename / merge) when the same real event was logged twice under different dates. Uses the title typed in <b>Rename / merge</b> above as the merged record's name.</span>
+    </div>
+    {% endif %}
     <div class="cb-group">
       <span class="cb-lab">Re-file section</span>
       <select name="section_id" id="cbSection">
@@ -227,15 +236,19 @@
   var on = false;
   var title = document.getElementById('cbTitle');
   var section = document.getElementById('cbSection');
+  var mergeDate = document.getElementById('cbMergeDate');
   function refresh() {
     var n = document.querySelectorAll('input[name=ids]:checked').length;
     var c = document.getElementById('cbN'); if (c) c.textContent = n;
     var w = document.getElementById('cbWord'); if (w) w.textContent = (n === 1 ? 'activity' : 'activities');
     var hasTitle = title && title.value.trim().length > 0;
     var hasSection = section && section.value.trim().length > 0;
+    var hasDate = mergeDate && mergeDate.value.trim().length > 0;
     bar.querySelectorAll('.cb-act').forEach(function (b) {
       b.disabled = (n === 0)
         || (b.hasAttribute('data-needs-title') && !hasTitle)
+        || (b.hasAttribute('data-needs-date') && !hasDate)
+        || (b.hasAttribute('data-needs-date') && n < 2)
         || (b.hasAttribute('data-needs-any') && !(hasTitle || hasSection));
     });
   }
@@ -251,7 +264,26 @@
   document.addEventListener('change', function (e) { if (e.target && e.target.name === 'ids') refresh(); });
   if (title) title.addEventListener('input', refresh);
   if (section) section.addEventListener('change', refresh);
+  if (mergeDate) mergeDate.addEventListener('input', refresh);
 }());
+// Merge across dates warns explicitly when the ticked activities don't already
+// share one event date — the whole point of this action is to fold together
+// activities logged under different dates, but a careless multi-select could
+// just as easily catch two genuinely different sessions.
+function confirmMerge() {
+  var dates = Array.from(document.querySelectorAll('input[name=ids]:checked'))
+    .map(function (cb) { return cb.getAttribute('data-date'); })
+    .filter(Boolean);
+  var uniq = Array.from(new Set(dates));
+  if (uniq.length > 1) {
+    return confirm('These activities have DIFFERENT dates (' + uniq.join(', ') + ').\n\n'
+      + 'Merging will combine all their responses into ONE activity dated '
+      + (document.getElementById('cbMergeDate').value || '(the date you entered)') + '.\n\n'
+      + 'Are you sure you want to do this?');
+  }
+  return confirm('Merge the selected activities into one record dated '
+    + (document.getElementById('cbMergeDate').value || '(the date you entered)') + '? This cannot be undone from the UI.');
+}
 // Success notification — pop a transient toast after a curate action succeeds.
 (function () {
   var src = document.getElementById('okFlash');
