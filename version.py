@@ -17,10 +17,27 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.52"
+APP_VERSION = "2.53"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.53",
+        "date": "July 30, 2026",
+        "summary": "Admins can now fix or archive an individual walk-in (Type 1 "
+                   "ARTA) response, not just whole activities.",
+        "changes": [
+            "New \"Manage entries\" page (linked from the Walk-in QR page) lists "
+            "every walk-in/online client response one by one, newest first.",
+            "An admin can edit a single response in full — the submission date, "
+            "who served the client, the CO-CSM respondent details, the Citizen's "
+            "Charter answers, and every SQD rating and comment.",
+            "An admin can also archive a bad, duplicate, or test response — it "
+            "drops out of every report and count immediately, and can be "
+            "restored later. This is admin-only; it doesn't change what other "
+            "roles can do.",
+        ],
+    },
     {
         "version": "2.52",
         "date": "July 30, 2026",

@@ -10,7 +10,8 @@
 <div style="max-width:560px;">
   {{ page_header("Walk-in feedback — standing QR") }}
   <p class="lede">One permanent link for the whole bureau. Post it at the desk and share it online —
-    there's nothing to create per client. Running an event instead? <a href="/">Create an activity survey</a>.</p>
+    there's nothing to create per client. Running an event instead? <a href="/">Create an activity survey</a>.
+    {% if can_manage_entries %} Need to fix or archive a submitted slip? <a href="/arta/entries">Manage entries</a>.{% endif %}</p>
 
   <div class="card" style="text-align:center; margin-bottom:1.25rem;">
     <span class="equity-mark lg" role="img" aria-label="Equity in Health" style="display:inline-block; margin-bottom:.7rem;"></span>

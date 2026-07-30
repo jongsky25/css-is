@@ -41,7 +41,8 @@ ROLE_BLURB = {
     "viewer": "View everything; cannot create or edit.",
     "encoder": "Viewer + manual/paper data entry.",
     "section_manager": "Encoder + edit data, create activities, response windows, link trees, reports.",
-    "admin": "Full access, including the directory, hiding people, and managing users.",
+    "admin": "Full access, including the directory, hiding people, managing users, and editing/"
+             "archiving individual walk-in (Type 1) entries.",
 }
 
 # Capability map. Every gated action checks one of these names.
@@ -51,7 +52,7 @@ ROLE_CAPS = {
     "section_manager": {"view", "encode", "edit_data", "create_activity", "manage_event"},
     "admin":           {"view", "encode", "edit_data", "create_activity", "manage_event",
                         "directory", "hide", "manage_users", "wipe", "triage_feedback",
-                        "merge_activity"},
+                        "manage_walkin_entries", "merge_activity"},
 }
 
 

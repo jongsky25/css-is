@@ -5073,7 +5073,108 @@ def arta_screen(request: Request):
           "url": url, "img": _qr_data_uri(url)}
     return templates.TemplateResponse(request, "arta_link.html", {
         "qr": qr, "form_id": walkin["form_id"], "url": url,
+        "can_manage_entries": auth.can(request.state.user["role"], "manage_walkin_entries"),
     })
+
+
+# ---------------------------------------------------------------------
+# Walk-in entries manager — admin-only. The standing Type-1 form has no
+# per-instance activity page, so this is the only place to fix a miskeyed slip
+# or reversibly archive a duplicate/test walk-in submission.
+# ---------------------------------------------------------------------
+
+_WALKIN_SQD = ["SQD0"] + list(eng.ARTA_HEADLINE_ITEMS)
+
+
+@app.get("/arta/entries", response_class=HTMLResponse)
+def arta_entries(request: Request, page: int = 1, archived: int = 0):
+    if (r := _forbid(request, "manage_walkin_entries")):
+        return r
+    per_page = 50
+    conn = get_conn()
+    try:
+        rows, total = st.walkin_entries_page(conn, page=page, per_page=per_page,
+                                             include_archived=bool(archived))
+    finally:
+        conn.close()
+    pages = max(1, -(-total // per_page))
+    return templates.TemplateResponse(request, "arta_entries.html", {
+        "rows": rows, "page": page, "pages": pages, "total": total,
+        "archived": bool(archived),
+    })
+
+
+@app.get("/arta/entries/{response_id}", response_class=HTMLResponse)
+def arta_entry_edit(request: Request, response_id: int, saved: int = 0):
+    if (r := _forbid(request, "manage_walkin_entries")):
+        return r
+    conn = get_conn()
+    try:
+        entry = st.get_walkin_entry(conn, response_id)
+        staff = [p for p in st.list_resource_persons(conn) if p["is_internal"]]
+    finally:
+        conn.close()
+    if not entry:
+        return RedirectResponse("/arta/entries", status_code=303)
+    items = [{"id": i, "text": ARTA_TEXT[i]} for i in _WALKIN_SQD]
+    return templates.TemplateResponse(request, "arta_entry_edit.html", {
+        "entry": entry, "items": items, "staff": staff, "saved": bool(saved),
+        "regions": CSM_REGIONS, "cc1_opts": CSM_CC1_OPTS, "cc2_opts": CSM_CC2_OPTS,
+        "cc3_opts": CSM_CC3_OPTS, "services": CSM_SERVICES, "likert5": LIKERT5,
+    })
+
+
+@app.post("/arta/entries/{response_id}")
+async def arta_entry_save(request: Request, response_id: int):
+    if (r := _forbid(request, "manage_walkin_entries")):
+        return r
+    posted = await _posted(request)
+    conn = get_conn()
+    try:
+        entry = st.get_walkin_entry(conn, response_id)
+        if not entry:
+            return RedirectResponse("/arta/entries", status_code=303)
+        ratings = {}
+        for item_id in _WALKIN_SQD:
+            raw = posted.get(item_id, "na")
+            ratings[item_id] = None if raw == "na" else float(raw)
+        remark_fields = {item_id: posted.get(f"note_{item_id}", "") for item_id in _WALKIN_SQD}
+        for field in st.CSM_META_FIELDS:
+            remark_fields[field] = posted.get(f"meta_{field}", "")
+        served_raw = posted.get("served_by_rp_id", "").strip()
+        served_by = int(served_raw) if served_raw.isdigit() else None
+        collected = (posted.get("collected_on") or "").strip()
+        submitted_at = f"{collected}T12:00:00" if re.match(r"^\d{4}-\d{2}-\d{2}$", collected) \
+            else entry["submitted_at"]
+        st.update_walkin_entry(conn, response_id, submitted_at, served_by,
+                               posted.get("remarks", ""), ratings, remark_fields)
+        invalidate_atoms()          # edited ratings/tags change what existing rows score
+        _audit(request, conn, "walkin_entry_edit", target_type="response", target_id=response_id,
+               summary=f"Edited walk-in entry #{response_id}.")
+    finally:
+        conn.close()
+    return RedirectResponse(f"/arta/entries/{response_id}?saved=1", status_code=303)
+
+
+@app.post("/arta/entries/{response_id}/archive")
+async def arta_entry_archive(request: Request, response_id: int):
+    if (r := _forbid(request, "manage_walkin_entries")):
+        return r
+    posted = await _posted(request)
+    restore = (posted.get("restore") or "") in ("1", "true", "on", "yes")
+    conn = get_conn()
+    try:
+        entry = st.get_walkin_entry(conn, response_id)
+        if not entry:
+            return RedirectResponse("/arta/entries", status_code=303)
+        st.set_response_archived(conn, response_id, archived=not restore)
+        invalidate_atoms()          # archived responses must vanish from analytics immediately
+        _audit(request, conn, "walkin_entry_archive", target_type="response", target_id=response_id,
+               summary=("Restored" if restore else "Archived") + f" walk-in entry #{response_id}.")
+    finally:
+        conn.close()
+    return RedirectResponse("/arta/entries" if restore else "/arta/entries?archived=0",
+                            status_code=303)
 
 
 # ---------------------------------------------------------------------
