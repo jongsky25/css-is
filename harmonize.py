@@ -476,6 +476,8 @@ def undo_batch(conn, batch):
             conn.execute("UPDATE form_instance SET archived=0 WHERE id=?", (ref_id,))
         elif kind == "fi_lead_org":
             conn.execute("UPDATE form_instance SET lead_org_id=? WHERE id=?", (p["old"], ref_id))
+        elif kind == "fi_event_date":
+            conn.execute("UPDATE form_instance SET event_date=? WHERE id=?", (p["old"], ref_id))
         elif kind == "resp_repoint":
             conn.execute("UPDATE response SET form_instance_id=? WHERE id=?", (p["old_fi"], ref_id))
         elif kind == "fi_delete":

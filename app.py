@@ -11109,6 +11109,7 @@ def dashboard_activities(request: Request, sort: str = "date", org: str = "", pe
         "nav_active": "activities_edit", "events": events, "sort": sort, "q": q, "err": err, "ok": ok,
         "page": page, "pages": pages, "total": total, "sections": sections,
         "can_curate": auth.can(request.state.user["role"], "create_activity"),
+        "can_merge": auth.can(request.state.user["role"], "merge_activity"),
         "pooled": (pooled if (page == 1 and not q) else None), **sctx,
     })
 
@@ -11472,14 +11473,19 @@ async def activity_section(request: Request, event_id: int):
 @app.post("/reports/activities/bulk")
 async def activity_bulk(request: Request):
     """Section-manager curate actions over many selected activities at once:
-    rename/merge titles, reassign section, untag (bureau-wide), or archive. Reuses
-    the harmonize journal (auto-backup + per-change undo). Section managers + admins."""
+    rename/merge titles, reassign section, or archive. Reuses the harmonize
+    journal (auto-backup + per-change undo). Section managers + admins.
+
+    "merge" is admin-only (auth.ROLE_CAPS['merge_activity']): unlike "rename" it
+    doesn't just relabel — it actually combines the ticked activities' responses
+    onto one survivor and re-dates it, even across different original dates."""
     if (r := _forbid(request, "create_activity")):
         return r
     body = parse_qsl((await request.body()).decode("utf-8"), keep_blank_values=True)
     action = next((v for k, v in body if k == "action"), "")
     title = next((v for k, v in body if k == "title"), "")
     sid = next((v for k, v in body if k == "section_id"), "")
+    merge_date = next((v for k, v in body if k == "merge_date"), "").strip()
     ids = [int(v) for k, v in body if k == "ids" and v.isdigit()]
 
     # Preserve the list position/scope the curator was on, so "Done" returns them
@@ -11489,8 +11495,12 @@ async def activity_bulk(request: Request):
         scope[key] = msg
         return RedirectResponse("/reports/activities?" + urlencode(scope), status_code=303)
 
-    if action not in ("rename", "section", "untag", "archive", "all") or not ids:
+    if action not in ("rename", "section", "untag", "archive", "all", "merge") or not ids:
         return _back("err", "Pick at least one activity and an action.")
+    if action == "merge" and not auth.can(request.state.user["role"], "merge_activity"):
+        return _back("err", "Only admins can merge activities across dates.")
+    if action == "merge" and merge_date and not _valid_date(merge_date):
+        return _back("err", "The corrected date isn't a real YYYY-MM-DD date.")
     actor = request.state.user["username"]
     conn = get_conn()
     try:
@@ -11519,6 +11529,20 @@ async def activity_bulk(request: Request):
                 return f"renamed to “{title.strip()}”", ""
             return "", ("the name was unchanged — already named that, "
                         "or carries no event review to rename")
+
+        def _do_merge():
+            # Unlike rename, this can combine activities that started on
+            # different dates — every ticked F2's responses land on one
+            # survivor, re-dated to what the admin typed.
+            f2_ids = _f2_instance_ids(conn, inst)
+            if len(f2_ids) < 2:
+                return "", "pick at least 2 activities with an event review to merge"
+            n_merged, n_deleted = aa.merge_activities(conn, f2_ids, title, merge_date, actor, batch)
+            invalidate_views()
+            invalidate_atoms()                   # responses repointed + a duplicate deleted
+            if n_merged:
+                return f"combined into one activity dated {_humandate(merge_date)}", ""
+            return "", "nothing to merge — need a title, a corrected date, and 2+ selected"
 
         def _do_section(untag=False):
             sections = {s["id"]: s for s in st.list_org_units(conn, level="section")}
@@ -11562,6 +11586,12 @@ async def activity_bulk(request: Request):
         elif action in ("section", "untag"):
             ok, err = _do_section(untag=(action == "untag"))
             ok_msg = f"Re-filed {nlabel} {ok.split(' ', 1)[1]}." if ok else ""
+            err_msg = "" if ok else f"No change — {err}."
+        elif action == "merge":
+            if not title.strip() or not merge_date:
+                return _back("err", "Type a title and a corrected date to merge.")
+            ok, err = _do_merge()
+            ok_msg = f"Merged {nlabel} {ok.split(' ', 1)[1]}." if ok else ""
             err_msg = "" if ok else f"No change — {err}."
         else:                                    # archive
             n = aa.archive_activities(conn, inst, actor, batch)
