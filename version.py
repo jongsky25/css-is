@@ -17,10 +17,28 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.50"
+APP_VERSION = "2.51"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.51",
+        "date": "July 30, 2026",
+        "summary": "The Director is no longer individually tracked in CSS "
+                   "rankings and reports — a standing rule, not a one-time fix, "
+                   "so it applies to whoever holds the role.",
+        "changes": [
+            "Whoever currently holds the Director position is left out of the "
+            "People rankings, their own scored profile page, the “resource "
+            "person to watch” insight, and the per-activity roster "
+            "PowerPoint. This is detected from their position/title, not a "
+            "manual per-person setting, so it keeps applying automatically "
+            "when the Director changes — nothing to remember to re-flag.",
+            "Their survey responses still count toward every bureau-wide "
+            "average as before; only the individually-named rankings/reports "
+            "changed.",
+        ],
+    },
     {
         "version": "2.50",
         "date": "July 30, 2026",

@@ -3878,9 +3878,11 @@ def _css_entry_for(user, conn):
     if not user or user.get("role") != "viewer":
         return "/css"
     profile = st.get_user_profile(conn, user["id"])
-    # A viewer can't see a hidden_public person page (dashboard_person bounces
-    # non-admins off it), so route there only for a linked, visible record.
-    if profile and profile.get("rp_id") and not profile.get("hidden_public"):
+    # A viewer can't see a hidden_public (or Director) person page
+    # (dashboard_person bounces non-admins off it), so route there only for a
+    # linked, visible record.
+    if (profile and profile.get("rp_id") and not profile.get("hidden_public")
+            and not st.is_bureau_director(profile)):
         return f"/dashboard/people/{profile['rp_id']}"
     return "/css"
 
@@ -10129,8 +10131,13 @@ def reports_rp_roster_export(request: Request, org: str = "", period: str = "all
                 sdf_atoms = atoms[atoms["form_instance_id"].isin(set(pick["instance_ids"]))]
                 scope_label = f"{scope_label} · {pick['text']}"
         scoped = _scoped(sdf_atoms, org, period)
-        events = [e for e in di.build_events(scoped, st.list_activity_instances(conn))
-                 if e["speakers"]]
+        events = [dict(e, speakers=[sp for sp in e["speakers"] if not sp.get("is_director")])
+                 for e in di.build_events(scoped, st.list_activity_instances(conn))]
+        # The Director rotates too fast to be meaningfully tracked as a named
+        # roster entry — always left off this per-activity roster (still
+        # counted in every bureau-wide aggregate, since this only touches the
+        # display list, not the atoms the aggregate scores are computed from).
+        events = [e for e in events if e["speakers"]]
         events.sort(key=lambda e: (e.get("date") or ""))   # chronological, oldest first
         for e in events:
             e["date_shown"] = _humandate(e.get("date"))
@@ -10644,7 +10651,7 @@ def dashboard_person(request: Request, rp_id: int, grain: str = "monthly", perio
         person = st.get_rp(conn, rp_id)
         if not person:
             return RedirectResponse("/dashboard/people", status_code=303)
-        if person.get("hidden_public") and not admin:
+        if (person.get("hidden_public") or st.is_bureau_director(person)) and not admin:
             return RedirectResponse("/dashboard/people", status_code=303)
         # All-time identity (role, year filter, year-on-year, badges) — memoized per
         # person so every period view of the same person shares it.
@@ -10760,7 +10767,7 @@ def dashboard_person_activity(request: Request, rp_id: int, event_id: int):
         if not person:
             return RedirectResponse("/dashboard/people", status_code=303)
         admin = auth.can(request.state.user["role"], "hide")
-        if person.get("hidden_public") and not admin:
+        if (person.get("hidden_public") or st.is_bureau_director(person)) and not admin:
             return RedirectResponse("/dashboard/people", status_code=303)
         events = view_memo("events", ("", "all"),
                            lambda: di.build_events(atoms, st.list_activity_instances(conn)))
@@ -11760,7 +11767,7 @@ def _visual_payload(conn, atoms, visual, p, place, gen, period_hint=None):
         person = st.get_rp(conn, p["rp_id"])
         if not person:
             return None, None
-        if person.get("hidden_public") and not p.get("admin"):
+        if (person.get("hidden_public") or st.is_bureau_director(person)) and not p.get("admin"):
             return None, None
         # Full-breadth person report — everything the page shows, including the
         # de-duplicated respondent comments (attached below). Honors the

@@ -2117,6 +2117,20 @@ _SIGNATORY_RANK = {"director": 0, "division chief": 1,
                    "section head": 2, "section chief": 2}
 
 
+def is_bureau_director(person):
+    """True if this directory person currently holds the Director role — i.e.
+    the bureau head, whoever that is at any given time (the role turns over
+    faster than anyone remembers to re-flag a new occupant by hand). Same
+    'director' in position/designation match as is_eligible_signatory, used
+    to automatically exclude the Director from per-person CSS rankings and
+    reports — a standing rule, not a per-person toggle, so it never needs to
+    be re-applied when the Director changes. `person` is a
+    list_resource_persons() dict (or anything carrying position/designation)."""
+    desig = (person.get("designation") or "").strip().lower()
+    posn = (person.get("position") or "").strip().lower()
+    return "director" in posn or "director" in desig
+
+
 def is_eligible_signatory(person):
     """True if a directory person may sign a Certificate of Appearance — i.e.
     they hold a Section Chief, Division Chief, or Director role. `person` is a
@@ -3111,6 +3125,10 @@ def get_user_profile(conn, user_id):
         # wins; an unlinked account uses the designation stored on the account.
         "designation": ((rp or {}).get("designation") if rp
                         else acct.get("designation")) or "",
+        # position rides along too (unlinked accounts have none) so callers
+        # can apply is_bureau_director() — the Director's title lives here,
+        # not in designation (see is_bureau_director).
+        "position": (rp or {}).get("position") or "",
         "has_photo": rp_has_photo,
         "account_has_photo": account_has_photo,
         "photo_url": photo_url,
@@ -3477,7 +3495,8 @@ def list_activity_instances(conn):
                fi.lead_org_id, olead.path, olead.name,
                fi.organizer_external_id, xo.name, fi.created_at,
                fi.open_at, fi.close_at, fi.attendance, COALESCE(fi.attendance_suspect,0),
-               fi.modality, fi.end_date, COALESCE(fi.encoding_locked, 0)
+               fi.modality, fi.end_date, COALESCE(fi.encoding_locked, 0),
+               rp.position, rp.designation
         FROM form_instance fi
         LEFT JOIN resource_person rp   ON rp.id  = fi.rp_id
         LEFT JOIN org_unit olead       ON olead.id = fi.lead_org_id
@@ -3498,7 +3517,10 @@ def list_activity_instances(conn):
              "end_date": r[21],
              # Per-form "locked to encoding" flag — an event is CLOSED when every
              # one of its (non-archived) forms is locked; see event_is_closed.
-             "encoding_locked": bool(r[22])}
+             "encoding_locked": bool(r[22]),
+             # position/designation ride along so callers can apply
+             # is_bureau_director() without a second query per speaker.
+             "rp_position": r[23], "rp_designation": r[24]}
             for r in rows]
 
 

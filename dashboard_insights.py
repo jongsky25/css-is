@@ -921,6 +921,17 @@ def _rp_event_overalls(t3):
     return out
 
 
+def _is_director(person):
+    """Mirrors storage.is_bureau_director (kept local — this module works on
+    plain dicts already fetched by the caller, never touches storage/DB
+    directly). The Director rotates too fast to track individually, so this
+    is checked live off position/designation rather than a stored flag that
+    would need re-applying on every handover."""
+    desig = (person.get("designation") or "").strip().lower()
+    posn = (person.get("position") or "").strip().lower()
+    return "director" in posn or "director" in desig
+
+
 def people_grid(atoms, staff, include_hidden=False):
     """Cards for everyone with at least one rating. Hidden people are dropped
     from the public grid unless include_hidden (admin) is set. Each card gets a
@@ -940,7 +951,7 @@ def people_grid(atoms, staff, include_hidden=False):
     ev_by_rp = _rp_event_overalls(t3) if _has(t3) else {}
     cards = []
     for p in staff:
-        if p.get("hidden_public") and not include_hidden:
+        if (p.get("hidden_public") or _is_director(p)) and not include_hidden:
             continue
         card = person_card(atoms, p, pre=(by_served.get(p["id"]), by_rp.get(p["id"])),
                            rp_event_overalls=ev_by_rp.get(p["id"], []))
@@ -1642,9 +1653,18 @@ def build_events(atoms, instances):
             gap = (v - exp_v) if exp_v is not None else None
             topics = [f["topic"] for f in forms if f.get("topic")]
             uniq_topics = list(dict.fromkeys(topics))   # de-dup, keep order
+            # Whether this speaker is the bureau Director — the position
+            # turns over, so this is read live off position/designation
+            # (storage.is_bureau_director's own check) rather than a stored
+            # per-person flag. Callers that shouldn't rank/list the Director
+            # (e.g. the roster export) filter on this; build_events() itself
+            # stays unfiltered so other consumers are unaffected.
+            posn = (forms[0].get("rp_position") or "").strip().lower()
+            desig = (forms[0].get("rp_designation") or "").strip().lower()
             speakers.append({
                 "name": forms[0]["rp_name"] or "Speaker", "topic": "; ".join(uniq_topics),
                 "rp_id": rp_id, "hidden": forms[0].get("rp_hidden"),
+                "is_director": "director" in posn or "director" in desig,
                 "instance_ids": ids,
                 "value": v, "shown": f"{v:.1f}", "band": band7(v),
                 "respondents": len(_resp_ids(ids)),
@@ -4185,7 +4205,7 @@ def worth_looking_at(atoms, staff):
 
     # 3) A resource person whose scores swing a lot between sessions.
     for p in staff:
-        if p.get("hidden_public"):
+        if p.get("hidden_public") or _is_director(p):
             continue
         r = rp_slice(atoms, p["id"])
         if not _has(r):
