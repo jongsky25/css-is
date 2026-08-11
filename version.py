@@ -17,10 +17,46 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.56"
+APP_VERSION = "2.57"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.57",
+        "date": "August 11, 2026",
+        "summary": "The activity Excel download (MRR format) now reads differently "
+                   "for every activity, and its comments lead with what people "
+                   "actually wrote.",
+        "changes": [
+            "In the activity list download, the \"Action / Improvement Plan\", "
+            "\"Next Steps and Timeline\" and \"Resources Needed\" columns used to "
+            "repeat the same few sentences down the whole sheet — Next Steps was "
+            "the same paragraph on every single row. Each activity now gets its "
+            "own: the plan names the dimension that actually scored lowest and "
+            "matches how hard it fell, the timeline is pinned to that activity's "
+            "real date and names the activity, and the resources match whether it "
+            "was run face-to-face or online and how many people attended.",
+            "The draft now reads all five service-quality dimensions instead of "
+            "three, so \"Knowledgeable organizers\" and \"Clear & reassuring\" can "
+            "be named as the area to work on — before, every activity in the "
+            "bureau had to pick from the same three.",
+            "An activity that did well is no longer told to fix something. It gets "
+            "a \"no area needs correcting\" note and a line on keeping the standard.",
+            "In the COMMENTS box of each row, the words people TYPED now come "
+            "first — including the notes they wrote under a specific question, "
+            "which the download used to leave out entirely.",
+            "The tap-to-add feedback options (\"Knowledgeable\", \"Engaging\", and "
+            "so on) no longer crowd out real comments. They only fill the space "
+            "left over when an activity has few written comments, they are clearly "
+            "marked as a picked option with the number of people who chose it, and "
+            "the sheet spreads them out so the same option doesn't appear on every "
+            "activity.",
+            "An activity with nothing written now says so, instead of showing an "
+            "empty \"COMMENTS:\" heading.",
+            "The MRR draft shown on an activity's own page now matches the "
+            "download exactly — it was quietly drafting from less information.",
+        ],
+    },
     {
         "version": "2.56",
         "date": "August 11, 2026",

@@ -1,5 +1,62 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-08-11 (v2.57 — the MRR activity workbook stops repeating itself, row to row)
+
+**Symptom.** Every row of `AGENDA 4_Sheet1` in the activity Excel download read
+the same. Three separate causes:
+
+1. **Next Steps and Timeline** was a *hardcoded constant string* in
+   `_activity_mrr_analysis` — byte-identical on 100% of rows, always.
+2. **Action** and **Resources Needed** were keyed on the weakest dimension of
+   `e["ranked"]`, which for an activity carries only **three** dimensions
+   (`EVENT_DIMS_FORM2` drops Assurance and Empathy), so the whole bureau drew
+   from at most three strings each. The `Assurance`/`Empathy` entries in
+   `_MRR_RESOURCE` were unreachable. `Action` also borrowed `di.DIM_TA`, which is
+   second-person coaching written for a *resource person* ("Rehearse the
+   opening", "Test your slides") — the wrong register for an improvement plan
+   about an activity.
+3. **The COMMENTS block** filled with quick-pick chips. `rating.html`'s
+   tap-to-add chips (`REMARK_CHIPS` / `i18n.REMARK_CHIPS_FIL`) write their words
+   straight into the free-text `remarks` box, so a stored "verbatim" is often
+   just the canned options — and dedup only ran *within* one activity, so the
+   same phrases repeated down every row while real typed comments were pushed
+   past the cap of 5. Per-item notes (`v["notes"]`), which are always typed, were
+   never read at all.
+
+**Fix.** Same two routes, same workbook shape, same saved-draft precedence.
+
+- **`app.py`** — `_split_chip_remark` splits a remark into tapped options and
+  typed words (a mix counts on both sides, so using the chips never costs someone
+  their written comment); `_CHIP_CANON` folds the Filipino chip list onto its
+  English twin by position so one activity's tally isn't split by language.
+  `_attach_chip_picks` sets `comments` (typed only, now including item notes) and
+  `chip_picks` (count-ordered options). `_activity_comment_lines` fills the five
+  slots with typed words first and only backfills with options, labelled as such;
+  a workbook-level `spread` dict rotates which options backfill, and each row
+  leaves at least one of its own options unclaimed so the rotation can't stall.
+- **`app.py`** — `_activity_mrr_profile` reads the **five**-dimension scorecard
+  (`report`, already attached before the workbook is built) and derives severity,
+  a runner-up, response rate, modality and the one improvable option enough
+  respondents picked. The four columns are generated from that profile:
+  `_MRR_ACTION` (dimension × severity, Tangible × modality, in MRR register),
+  a timeline pinned to the activity's own date/quarter/name, and resources sized
+  to modality and crowd. An evenly strong activity gets a sustaining line, never
+  a correction. Deterministic — a re-export of unchanged data is unchanged.
+- **`app.py`** — the activity page grafted `report` and the option tally onto its
+  event copy before drafting; without it the on-screen MRR form would have drafted
+  from less than the download, breaking the promise in its own comment. The AI
+  draft path (`_mrr_draft_prompt`) gets the same evidence — scorecard, rate,
+  modality, option tally — but still never sees a typed comment.
+- **`storage.py`** — `NON_COMMENT_ITEMS` public alias, so the export can skip
+  encoding metadata (`SEX`/`AFFIL`/`RESPONSE_NO`) without reaching into a private
+  name.
+- **`tests/test_mrr_export_nuance.py`** — 13 tests: typed words outrank options,
+  item notes count as typed, options are always labelled, the backfill rotates
+  across rows and only repeats when a row has nothing else, a full cell spends no
+  chip budget, the four columns differ across three activities, the timeline
+  carries each activity's own date, resources split on modality, and the page
+  preview matches the download.
+
 ## 2026-08-11 (v2.56 — activity forms stop reading as if they rate a person; dashboard labels match the questions)
 
 **Symptom.** Forms 2 (activity) and 3 (resource person) shared one set of
