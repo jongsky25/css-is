@@ -73,7 +73,9 @@ def test_build_review_items_covers_every_draft_group_with_unique_keys():
     assert len(keys) == len(set(keys)), "duplicate review keys"
     prefixes = {k.split(".")[0].split("[")[0] for k in keys}
     assert prefixes >= {"B_TEXT_FIL", "A_TEXT_FIL", "C_TEXT_FIL", "CONSENT_TMPL_FIL",
-                        "LIKERT5_FIL", "OSQ4_FIL", "REMARK_CHIPS_FIL", "UI"}
+                        "LIKERT5_FIL", "OSQ4_FIL", "REMARK_CHIPS_FIL", "UI",
+                        "B_TEXT_ACTIVITY_FIL", "A_TEXT_ACTIVITY_FIL",
+                        "C_TEXT_ACTIVITY_FIL"}
 
 
 def test_build_review_items_skips_official_arta_wording():
@@ -85,6 +87,17 @@ def test_build_review_items_pairs_english_source_correctly():
     items = {i["key"]: i for i in tr.build_review_items()}
     assert items["B_TEXT_FIL.B1"]["en"] == "{subject} delivered the session as promised and announced."
     assert "{subject}" in items["B_TEXT_FIL.B1"]["fil"]
+
+
+def test_build_review_items_covers_activity_wording_without_a_placeholder():
+    """The Type-2 (activity) strings are a separate review pair, and carry no
+    {subject} — the title lives in the form header, not in the sentence."""
+    items = {i["key"]: i for i in tr.build_review_items()}
+    assert items["B_TEXT_ACTIVITY_FIL.B5"]["en"] == \
+        "The organizers were responsive and willing to address questions and needs."
+    for key in ("B_TEXT_ACTIVITY_FIL.B5", "A_TEXT_ACTIVITY_FIL", "C_TEXT_ACTIVITY_FIL"):
+        assert "{subject}" not in items[key]["en"]
+        assert "{subject}" not in items[key]["fil"]
 
 
 # ---- review_batch: allow-list + placeholder validation ----------------------
@@ -107,6 +120,16 @@ def test_review_batch_rejects_suggestion_missing_a_placeholder(conn, monkeypatch
     out = tr.review_batch(conn, items)
     assert out["B_TEXT_FIL.B1"]["ok"] is False
     assert "placeholder" in out["B_TEXT_FIL.B1"]["reason"]
+
+
+def test_review_batch_accepts_activity_wording_with_no_placeholder(conn, monkeypatch):
+    """The Type-2 strings have no {subject} to preserve, so a plain suggestion
+    must pass — the placeholder check only applies where the English has one."""
+    _configure(conn, monkeypatch)
+    _mock_suggestions(monkeypatch)  # plain "REVISED <key>" — no {subject} token
+    items = [i for i in tr.build_review_items() if i["key"] == "B_TEXT_ACTIVITY_FIL.B5"]
+    out = tr.review_batch(conn, items)
+    assert out["B_TEXT_ACTIVITY_FIL.B5"]["ok"] is True
 
 
 def test_review_batch_ignores_a_key_it_never_asked_about(conn, monkeypatch):
