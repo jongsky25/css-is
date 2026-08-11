@@ -3548,6 +3548,10 @@ def verbatims_for_responses(conn, response_ids):
 # per-activity "edit the words" editor.
 _NON_COMMENT_ITEMS = ("SEX", "AFFIL", "RESPONSE_NO")
 
+# Public alias — the MRR export reads item notes as verbatims too and needs the
+# same exclusion list, without reaching into a name marked private.
+NON_COMMENT_ITEMS = _NON_COMMENT_ITEMS
+
 
 def activity_editable_comments(conn, response_ids):
     """Flat, newest-first list of every respondent-written comment across a set of
