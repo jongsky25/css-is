@@ -6,8 +6,9 @@ The admin/staff UI stays in English.
 
 WHY THIS FILE EXISTS: so the bureau can review and refine every Filipino string
 in ONE place. English remains the source of truth in app.py (the question
-constants ARTA_TEXT / B_TEXT / scales live there, owned by the bureau); this
-module only adds the Filipino counterparts plus the static UI strings.
+constants ARTA_TEXT / B_TEXT / B_TEXT_ACTIVITY / scales live there, owned by the
+bureau); this module only adds the Filipino counterparts plus the static UI
+strings.
 
 TRANSLATION STATUS: SQD items use the official ARTA Harmonized CSM Tagalog
 wording; everything else is a plain-language DRAFT marked below — the office
@@ -77,6 +78,24 @@ B_TEXT_FIL = {
 A_TEXT_FIL = "Bago ang kaganapang ito, gaano kataas ang iyong inaasahan kay/sa {subject}?"  # DRAFT
 C_TEXT_FIL = "Sa kabuuan, paano mo iri-rate ang kalidad ni/ng {subject}?"  # DRAFT
 
+# SERVQUAL items as Type 2 asks them — about the ACTIVITY, not a person. Same
+# keys and same meaning as B_TEXT_ACTIVITY in app.py, and deliberately WITHOUT
+# the {subject} placeholder (the activity's title sits in the form header). DRAFT.
+B_TEXT_ACTIVITY_FIL = {
+    "B1": "Naihatid ang aktibidad ayon sa ipinangako at inanunsyo.",
+    "B2": "Ang mga nilalaman at impormasyong ibinahagi ay tumpak at maaasahan.",
+    "B3": "Sinunod ng aktibidad ang iskedyul at programa.",
+    "B4": "Sa kabuuan, maaasahan ang naging takbo ng aktibidad.",
+    "B5": "Ang mga tagapag-organisa ay bukas at handang tumugon sa mga katanungan "
+          "at pangangailangan.",
+    "B6": "Ang aktibidad ay pinangasiwaan ng mga taong maalam at mahusay.",
+    "B7": "Malinaw na naipaabot ang impormasyon sa aktibidad at nagbigay ito ng kumpiyansa.",
+    "B8": "Binigyan ng maingat na atensyon ang mga kalahok sa buong aktibidad.",
+    "B9": "Ang mga materyales, lugar, at presentasyon ay angkop at malinaw.",
+}
+A_TEXT_ACTIVITY_FIL = "Bago ito nagsimula, gaano kataas ang iyong inaasahan sa aktibidad na ito?"  # DRAFT
+C_TEXT_ACTIVITY_FIL = "Sa kabuuan, paano mo iri-rate ang kalidad ng aktibidad na ito?"  # DRAFT
+
 # RA-10173 consent notice template — format(months=N) before use.  DRAFT
 CONSENT_TMPL_FIL = (
     "Kinokolekta namin ang inyong pangalan, email, at (opsyonal) numero ng kontak "
@@ -138,6 +157,11 @@ UI = {
     "title_service": {"en": "Service feedback", "fil": "Puna sa serbisyo"},
     "title_event": {"en": "Event feedback", "fil": "Puna sa kaganapan"},
     "title_rp": {"en": "Resource-person feedback", "fil": "Puna sa tagapagsalita"},
+
+    # Stands in for the {subject} of the Type-3 statements when the form has no
+    # resource-person name on file yet — so the sentences still read as being
+    # about a person, in the rater's own language. DRAFT.
+    "subject_rp": {"en": "the resource person", "fil": "tagapagsalita"},
 
     # Intro line pieces
     "q_required_note": {

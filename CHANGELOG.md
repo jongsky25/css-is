@@ -1,5 +1,99 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-08-11 (v2.56 — activity forms stop reading as if they rate a person; dashboard labels match the questions)
+
+**Symptom.** Forms 2 (activity) and 3 (resource person) shared one set of
+statements in `app.B_TEXT`/`A_TEXT`/`C_TEXT` with a `{subject}` placeholder that
+`survey_spec()` filled with the resource person's name on F3 and the *activity's
+title* on F2. The statements are written about a human, so an activity form
+rendered "15th Learning Exchange Session was responsive and willing to address
+questions and needs", "… was knowledgeable and competent in the subject", "…
+gave caring attention to participants". Two defects shared that root cause: the
+title was also redundant (`rating.html`/`combined_form.html` already show it in
+the header, so it repeated on all eleven questions), and an F3 form with no
+`rp_name` fell back to the activity title — an event's name inside a question
+about a person.
+
+**Fix.** Type 2 gets its own wording; Type 3's is untouched. Item ids, scales,
+N/A handling and the dimension maps are unchanged, and each item keeps the
+meaning it had, so nothing recalculates and past F2 results stay comparable.
+
+- **`app.py`** — new `B_TEXT_ACTIVITY` / `A_TEXT_ACTIVITY` / `C_TEXT_ACTIVITY`
+  beside the existing constants, deliberately with **no** `{subject}` token.
+  `survey_spec()` picks them on `survey_type == 2` (same shape as the existing
+  `fil` dict swap). The F3 no-name fallback is now a localised
+  `i18n.t("subject_rp", lang)` — English text was leaking into the Tagalog
+  statements ("Si/Ang the resource person ay maalam…") when it was hardcoded.
+  A small `_say()` helper capitalises a rendered statement so the lower-case
+  generic subjects ("the resource person", "this activity") read correctly both
+  at the start of a sentence and mid-sentence. Every consumer — `rating.html`,
+  `combined_form.html`, the monitor's per-attendee view, the encode/staff paths
+  — renders `spec`, so all of them inherit this.
+- **`i18n.py`** — `B_TEXT_ACTIVITY_FIL` / `A_TEXT_ACTIVITY_FIL` /
+  `C_TEXT_ACTIVITY_FIL`, marked DRAFT like the rest of the Filipino strings.
+- **`tools/i18n_review.py`** — the new maps join the bureau review batch. The
+  existing placeholder check already tolerates strings with no placeholder
+  (`if needed and …`), which is what the F2 wording is.
+- **Tests** — `tests/test_survey_wording.py`: F2 carries none of the person
+  phrasings and never repeats the activity title (English and Filipino); F3
+  wording is byte-identical to before; a nameless F3 says "the resource person"
+  (and "tagapagsalita" in Filipino, never the English phrase);
+  both forms still emit the same ids/scales/N-A/dimensions, and language changes
+  only labels, never stored values. `tests/test_i18n_review.py` covers the new
+  review keys and that a no-placeholder suggestion is accepted.
+
+### Part 2 — the dashboard's dimension labels
+
+**Symptom.** `dashboard_insights.DIM_LABELS_*` / `DIM_CONCERN_*` described a
+different set of B-items than the app asks. Their comments cite the column
+headers in `CSS Spreadsheets.xlsx` (not in the repo), which evidently describes
+the bureau's original instrument: F2 B6 = organizers polite, B7 = sensitive to
+participants' needs, B8 = facility appearance. `eng.DIM_MAP_FORM2` matches
+*that* instrument exactly. `app.B_TEXT` never did — its own comment calls it
+"sensible default text" — so the labels have been describing questions nobody
+was asked, on **both** forms: item B6 ("knowledgeable and competent") was
+reported as "Courteous organizers", and F3's B9 ("the materials, venue, and
+presentation…") as "Neat & well-presented — well dressed and appears neat".
+
+**Fix (labels only — no number moves).** Every label and concern phrase is now
+written from the items its dimension actually contains, i.e.
+`app.B_TEXT_ACTIVITY` / `app.B_TEXT` grouped by `eng.DIM_MAP_FORM2` /
+`DIM_MAP_FORM3`. A header comment names those two as the only source of truth.
+
+| Dimension | Was | Now |
+|---|---|---|
+| F2 Reliability | Met its objectives | Delivered as promised |
+| F2 Assurance | Courteous organizers | Knowledgeable organizers |
+| F2 Empathy | Attentive to participants | Clear & reassuring |
+| F2 Tangible | Venue & set-up | Attention & set-up |
+| F3 Reliability | Clear & well-prepared | Delivered as promised |
+| F3 Assurance | Confident & credible | Knowledgeable & clear |
+| F3 Tangible | Neat & well-presented | Materials & venue |
+
+F2/F3 Responsiveness and F3 Empathy already described their items and are
+unchanged.
+
+- **`dashboard_insights.py`** — the four label/concern dicts, plus two stale
+  comments that asserted the old item meanings (the `build_events` note on why
+  the event score excludes Assurance/Empathy, and the `EVENT_DIM_LABELS` alias
+  note claiming Tangible is "the materials and the venue/facilities").
+- **Tests** — `tests/test_dimension_labels.py`: every dimension has exactly one
+  label and one concern; each label shares vocabulary with the items it covers
+  (a heuristic — the explicit assertions naming each corrected label are the
+  real guard); F2's Tangible label names both of its items; and the scoring maps
+  are asserted unchanged, since this was a display-only change.
+
+**Known, deliberately not fixed.** `eng.DIM_MAP_FORM2`'s Tangible bucket
+averages B8 ("caring attention to participants") with B9 ("materials, venue, and
+presentation") into one number — two different constructs, which is why the
+honest label is compound. Grouping F2 like F3 (Assurance = B6+B7, Empathy = B8,
+Tangible = B9) would make every bucket coherent, but `overall_perception` is the
+mean of *dimension* means and the Activities page scores `EVENT_DIMS_FORM2`
+(Assurance/Empathy excluded), so B8 would drop out of the event score and
+Tangible would become B9 alone — moving every historical activity's published
+score, by roughly ±0.3 of 7 wherever B8 and B9 diverge. The map is marked LOCKED
+for that reason; changing it is a bureau decision, not a code cleanup.
+
 ## 2026-07-30 (v2.55 — fix inflated activity respondent counts)
 
 **Symptom.** An activity card showed 212 responses next to a score of 6.0/7 — but

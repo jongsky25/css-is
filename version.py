@@ -17,10 +17,47 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.55"
+APP_VERSION = "2.56"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.56",
+        "date": "August 11, 2026",
+        "summary": "Activity feedback forms now ask about the activity instead of "
+                   "reading as though they were asking about a person, and the "
+                   "dashboard now names each score after what it really measures.",
+        "changes": [
+            "On an activity's feedback form, the questions used to be written "
+            "about a person with the activity's name dropped in — so a "
+            "respondent read \"15th Learning Exchange Session was responsive "
+            "and willing to address questions and needs\". The activity form "
+            "now has its own wording: \"The organizers were responsive and "
+            "willing to address questions and needs\", \"The activity kept to "
+            "the schedule and program\", and so on.",
+            "The activity's title no longer repeats inside all eleven "
+            "questions — it stays in the form's heading, where it already was.",
+            "Resource-person forms are unchanged. The one exception: a "
+            "resource-person form with no name recorded yet used to borrow the "
+            "activity's title; it now simply says \"the resource person\" "
+            "(\"tagapagsalita\" on a Filipino form).",
+            "Every question still means exactly what it meant before, so "
+            "scores, reports and past results are unaffected and remain "
+            "directly comparable.",
+            "On the dashboard, several score names described questions the "
+            "forms do not ask — a speaker's \"Materials & venue\" score was "
+            "labelled \"Neat & well-presented\", and an activity's score for "
+            "knowledgeable organizers was labelled \"Courteous organizers\". "
+            "Each score is now named after the questions it is actually "
+            "averaging. Only the names changed; every number is the same.",
+            "One activity score, \"Attention & set-up\", now says so plainly: "
+            "it averages a question about attention to participants together "
+            "with one about materials and the venue. It always did — the old "
+            "name mentioned only the venue.",
+            "The Filipino version of the new activity wording is a draft, "
+            "pending the office's review like the rest of the translation.",
+        ],
+    },
     {
         "version": "2.55",
         "date": "July 30, 2026",

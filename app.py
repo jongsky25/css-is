@@ -5960,8 +5960,10 @@ def serve_photo(rp_id: int):
 #   Types 2 & 3    : A  = expectation (1-7),
 #                    B1..B9 = SERVQUAL perception (1-7; 0/N-A allowed),
 #                    C  = overall service quality (1-4, OSQ_BANDS).
-# B1..B9 are the SAME items for F2 and F3 — only the dimension GROUPING differs
-# (that is calculator-side, via eng.DIM_MAP_FORM2 / DIM_MAP_FORM3).
+# B1..B9 are the SAME items for F2 and F3: same ids, same scales, same meaning
+# per item. Two things differ — the dimension GROUPING (calculator-side, via
+# eng.DIM_MAP_FORM2 / DIM_MAP_FORM3) and the display WORDING (F2 asks about the
+# activity, F3 about the person; see B_TEXT / B_TEXT_ACTIVITY below).
 #
 # The statement wording is sensible default text the bureau owns and can refine
 # here in one place; the engine never reads the words, only the item_id + value.
@@ -6149,7 +6151,8 @@ def _csm_period_heading(period):
     return {"heading": "All Periods", "cy": "", "year": "", "label": "All Periods",
             "phrase": "all responses on record", "as_of": "this period"}
 
-# {subject} = the activity (F2) or the resource person (F3).
+# {subject} = the resource person (F3). Form 2 rates the ACTIVITY and uses the
+# *_ACTIVITY variants below instead — see the note there.
 B_TEXT = {
     "B1": "{subject} delivered the session as promised and announced.",
     "B2": "The content from {subject} was accurate and dependable.",
@@ -6163,6 +6166,29 @@ B_TEXT = {
 }
 A_TEXT = "Before this event, how high were your expectations of {subject}?"
 C_TEXT = "Overall, how would you rate the quality of {subject}?"
+
+# Form 2 rates the ACTIVITY, not a person. The statements above are written
+# about a human, so dropping an activity title into them reads as nonsense
+# ("15th Learning Exchange Session was knowledgeable and competent"). These say
+# the same thing about the event instead, and carry NO {subject} placeholder —
+# the activity's title is already in the form header (rating.html /
+# combined_form.html), so repeating it on all eleven questions adds nothing.
+#
+# Same keys, same meaning item-for-item as B_TEXT, so a B-item's answer means
+# what it always meant and past Form 2 results stay comparable.
+B_TEXT_ACTIVITY = {
+    "B1": "The activity was delivered as promised and announced.",
+    "B2": "The information and content shared were accurate and dependable.",
+    "B3": "The activity kept to the schedule and program.",
+    "B4": "Overall, the activity ran reliably.",
+    "B5": "The organizers were responsive and willing to address questions and needs.",
+    "B6": "The activity was handled by knowledgeable and competent people.",
+    "B7": "Information during the activity was communicated clearly and gave confidence.",
+    "B8": "Participants were given caring attention throughout the activity.",
+    "B9": "The materials, venue, and presentation were appropriate and clear.",
+}
+A_TEXT_ACTIVITY = "Before it began, how high were your expectations of this activity?"
+C_TEXT_ACTIVITY = "Overall, how would you rate the quality of this activity?"
 
 # Optional quick-pick words for the comments box — the rater can tap these to
 # build a comment instead of typing from scratch. They just populate the free-text
@@ -6201,10 +6227,18 @@ def survey_spec(ctx, lang="en"):
     languages, so a recorded answer never depends on the language the rater used.
     """
     fil = lang == "fil"
+    # Type 2 asks about the activity, Type 3 about a person — different wording,
+    # same item_ids and scales (the calculator only ever reads ids + values).
+    activity = ctx["survey_type"] == 2
     arta_text = {**ARTA_TEXT, **i18n.ARTA_TEXT_FIL} if fil else ARTA_TEXT
-    b_text = {**B_TEXT, **i18n.B_TEXT_FIL} if fil else B_TEXT
-    a_text = i18n.A_TEXT_FIL if fil else A_TEXT
-    c_text = i18n.C_TEXT_FIL if fil else C_TEXT
+    if activity:
+        b_text = {**B_TEXT_ACTIVITY, **i18n.B_TEXT_ACTIVITY_FIL} if fil else B_TEXT_ACTIVITY
+        a_text = i18n.A_TEXT_ACTIVITY_FIL if fil else A_TEXT_ACTIVITY
+        c_text = i18n.C_TEXT_ACTIVITY_FIL if fil else C_TEXT_ACTIVITY
+    else:
+        b_text = {**B_TEXT, **i18n.B_TEXT_FIL} if fil else B_TEXT
+        a_text = i18n.A_TEXT_FIL if fil else A_TEXT
+        c_text = i18n.C_TEXT_FIL if fil else C_TEXT
     likert5 = i18n.LIKERT5_FIL if fil else LIKERT5
     osq4 = i18n.OSQ4_FIL if fil else OSQ4
     chips = i18n.REMARK_CHIPS_FIL if fil else REMARK_CHIPS
@@ -6223,25 +6257,35 @@ def survey_spec(ctx, lang="en"):
             "groups": [{"label": i18n.t("grp_arta", lang), "items": items}],
         }
 
-    # Types 2 & 3 share the SERVQUAL capture form; subject differs.
-    subject = ctx["rp_name"] if ctx["survey_type"] == 3 and ctx["rp_name"] else \
-        (ctx["topic"] or "this activity")
+    # Types 2 & 3 share the SERVQUAL capture form; subject differs. A Type-3 form
+    # with no name on file says "the resource person" (localised) — never the
+    # activity title, which would put an event's name in a question about a person.
+    subject = (ctx["rp_name"] or str(i18n.t("subject_rp", lang))) \
+        if ctx["survey_type"] == 3 else (ctx["topic"] or "this activity")
     dim_map = eng.DIM_MAP_FORM2 if ctx["form"] == "F2" else eng.DIM_MAP_FORM3
     item_dim = {it: dim for dim, its in dim_map.items() for it in its}
 
-    b_items = [{"id": i, "text": b_text[i].format(subject=subject), "scale": SCALE7,
+    def _say(tmpl):
+        """Fill in the subject, then capitalise the sentence. A name arrives
+        already capitalised, but the generic fallbacks ('the resource person',
+        'this activity') are lower-case so they read correctly mid-sentence —
+        this fixes the ones that land at the start of a statement."""
+        text = tmpl.format(subject=subject)
+        return text[:1].upper() + text[1:]
+
+    b_items = [{"id": i, "text": _say(b_text[i]), "scale": SCALE7,
                 "allow_na": True, "dim": item_dim.get(i)} for i in
                ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9"]]
     return {
         "kind": "servqual", "subject": subject, "chips": chips["servqual"],
         "groups": [
             {"label": i18n.t("grp_expectation", lang), "items": [
-                {"id": "A", "text": a_text.format(subject=subject), "scale": SCALE7,
+                {"id": "A", "text": _say(a_text), "scale": SCALE7,
                  "allow_na": True, "dim": None}]},
             {"label": i18n.t("grp_experience", lang),
              "items": b_items},
             {"label": i18n.t("grp_overall", lang), "items": [
-                {"id": "C", "text": c_text.format(subject=subject), "scale": osq4,
+                {"id": "C", "text": _say(c_text), "scale": osq4,
                  "allow_na": True, "dim": None}]},
         ],
     }

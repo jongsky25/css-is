@@ -82,6 +82,15 @@ def build_review_items():
         items.append({"key": f"B_TEXT_FIL.{k}", "en": app_mod.B_TEXT[k], "fil": fil})
     items.append({"key": "A_TEXT_FIL", "en": app_mod.A_TEXT, "fil": i18n.A_TEXT_FIL})
     items.append({"key": "C_TEXT_FIL", "en": app_mod.C_TEXT, "fil": i18n.C_TEXT_FIL})
+    # The Type-2 (activity) wording of the same items. No {subject} placeholder
+    # by design, which the placeholder check below already tolerates.
+    for k, fil in i18n.B_TEXT_ACTIVITY_FIL.items():
+        items.append({"key": f"B_TEXT_ACTIVITY_FIL.{k}",
+                      "en": app_mod.B_TEXT_ACTIVITY[k], "fil": fil})
+    items.append({"key": "A_TEXT_ACTIVITY_FIL", "en": app_mod.A_TEXT_ACTIVITY,
+                  "fil": i18n.A_TEXT_ACTIVITY_FIL})
+    items.append({"key": "C_TEXT_ACTIVITY_FIL", "en": app_mod.C_TEXT_ACTIVITY,
+                  "fil": i18n.C_TEXT_ACTIVITY_FIL})
     # CONSENT_TEXT is already .format()-ed with the real retention period;
     # CONSENT_TMPL_FIL still carries the raw {months} placeholder. Reviewing
     # against the formatted English is fine — the placeholder check below
