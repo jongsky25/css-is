@@ -56,36 +56,49 @@ SQD_CONCERN = {
 # Plain names for the SERVQUAL dimensions — the public never sees "B6"/"Tangible".
 # The SAME five dimensions read DIFFERENTLY on each form: Form 2 asks about the
 # CONDUCT OF THE ACTIVITY (the event and the people organizing it); Form 3 asks
-# about the RESOURCE PERSON (the individual speaker). The underlying B-items are
-# worded differently per form (see the column headers in CSS Spreadsheets.xlsx),
-# so each form gets its own labels rather than a shared generic set.
+# about the RESOURCE PERSON (the individual speaker), so each form gets its own
+# labels rather than a shared generic set.
+#
+# EVERY LABEL BELOW MUST DESCRIBE THE ITEMS ITS DIMENSION ACTUALLY CONTAINS —
+# i.e. app.B_TEXT_ACTIVITY (Form 2) / app.B_TEXT (Form 3) grouped by
+# eng.DIM_MAP_FORM2 / DIM_MAP_FORM3. These two are the only source of truth; if
+# you change a question's wording or a dimension's items, re-read the label here.
+# (They were originally written from the column headers in CSS Spreadsheets.xlsx,
+# which describes a DIFFERENT set of B-items than the questions this app asks —
+# hence "Courteous organizers" over an item about competence, and "well dressed
+# and appears neat" over an item about materials and the venue. Corrected in
+# v2.56 to match the questions people are actually answering.)
 DIM_LABELS_F2 = {        # Form 2 — how the activity itself was run
-    "Reliability":    "Met its objectives",        # B1–B4: goals met, time, organized, knowledgeable speakers
-    "Responsiveness": "Organizers ready to help",  # B5: organizers prompt and willing to help
-    "Assurance":      "Courteous organizers",       # B6: organizers were polite
-    "Empathy":        "Attentive to participants",  # B7: sensitive to participants' needs
-    "Tangible":       "Venue & set-up",             # B8–B9: facility appearance, amenities
+    "Reliability":    "Delivered as promised",     # B1–B4: as announced, accurate, on schedule, reliable
+    "Responsiveness": "Organizers ready to help",  # B5: organizers responsive to questions and needs
+    "Assurance":      "Knowledgeable organizers",  # B6: handled by knowledgeable, competent people
+    "Empathy":        "Clear & reassuring",        # B7: communicated clearly, gave confidence
+    # NOTE: this bucket really does average two different things — B8 is about
+    # caring attention to participants, B9 about materials and the venue. The
+    # label names both rather than pretending it is only the venue; the grouping
+    # itself is eng.DIM_MAP_FORM2's (LOCKED — changing it moves published scores).
+    "Tangible":       "Attention & set-up",        # B8–B9: attention to participants, materials/venue
 }
 DIM_CONCERN_F2 = {
-    "Reliability":    "meeting the activity's objectives",
+    "Reliability":    "delivering the activity as promised",
     "Responsiveness": "organizers being ready to help",
-    "Assurance":      "the organizers' courtesy",
-    "Empathy":        "attentiveness to participants",
-    "Tangible":       "the venue and set-up",
+    "Assurance":      "the organizers' knowledge and competence",
+    "Empathy":        "how clearly things were communicated",
+    "Tangible":       "attention to participants and the set-up",
 }
 DIM_LABELS_F3 = {        # Form 3 — how the resource person came across
-    "Reliability":    "Clear & well-prepared",      # B1–B4: clear, gave insight, well-versed, prepared
-    "Responsiveness": "Open to questions",          # B5: accommodating to questions
-    "Assurance":      "Confident & credible",        # B6–B7: polite, professional and confident delivery
-    "Empathy":        "Attentive to the audience",   # B8: sensitive to participants' needs
-    "Tangible":       "Neat & well-presented",       # B9: well dressed and appears neat
+    "Reliability":    "Delivered as promised",      # B1–B4: as announced, accurate, on schedule, reliable
+    "Responsiveness": "Open to questions",          # B5: responsive to questions and needs
+    "Assurance":      "Knowledgeable & clear",      # B6–B7: knowledgeable/competent, clear, inspired confidence
+    "Empathy":        "Attentive to the audience",  # B8: gave caring attention to participants
+    "Tangible":       "Materials & venue",          # B9: materials, venue and presentation
 }
 DIM_CONCERN_F3 = {
-    "Reliability":    "clarity and preparation",
+    "Reliability":    "delivering the session as promised",
     "Responsiveness": "openness to questions",
-    "Assurance":      "confidence and credibility",
+    "Assurance":      "knowledge and clarity",
     "Empathy":        "attentiveness to the audience",
-    "Tangible":       "a neat, professional appearance",
+    "Tangible":       "the materials and venue",
 }
 # Generic aliases default to the resource-person set: the person-centric views
 # (People grid, person detail, bureau benchmarks) are all Form 3.
@@ -1601,10 +1614,14 @@ def build_events(atoms, instances):
         if f2s:
             f2_ids = [i["id"] for i in f2s]
             m2, c2 = _means_counts(f2_ids)
-            # Event score uses the event-about dimensions only — Assurance (B6)
-            # and Empathy (B7) read as judgments of the people running it, so they
-            # are scored and shown separately (matches the Pulse rule, and is what
-            # Form 2 actually asks the event itself about).
+            # Event score uses the event-about dimensions only — Assurance (B6,
+            # "handled by knowledgeable and competent people") and Empathy (B7,
+            # how clearly things were communicated) read as judgments of the
+            # people running it, so they are scored and shown separately
+            # (matches the Pulse rule). Caveat worth knowing when reading this:
+            # B8 ("caring attention to participants") is also a people-shaped
+            # item, but eng.DIM_MAP_FORM2 files it under Tangible, so it counts
+            # toward the event score rather than the people split.
             overall_v = _overall(m2, c2, EVENT_DIMS_FORM2)
             ranked = _ranked(m2, c2, EVENT_DIMS_FORM2, EVENT_DIM_LABELS)
             if overall_v is not None:
@@ -1958,10 +1975,10 @@ def _gap_sentence(expectation, experience):
             f"right about where they hoped.")
 
 
-# Event-context dimension wording. On a Form 2 *event* review, the Tangible items
-# (B8/B9) are about the materials and the venue/facilities — so on the Activities
-# page we name it "Materials & venue", not the speaker-oriented "presentation".
-# Form 2 event-about labels — kept as aliases for the build_events call sites.
+# Event-context dimension wording: the Activities page reads a Form 2 *event*
+# review, so it uses the Form 2 labels. Plain aliases — the F2 set is already
+# written against the activity's own questions, so there is nothing to override
+# here. Kept as named aliases for the build_events call sites.
 EVENT_DIM_LABELS = DIM_LABELS_F2
 EVENT_DIM_CONCERN = DIM_CONCERN_F2
 

@@ -24,8 +24,9 @@ CHANGELOG = [
     {
         "version": "2.56",
         "date": "August 11, 2026",
-        "summary": "Activity feedback forms now ask about the activity, instead of "
-                   "reading as though they were asking about a person.",
+        "summary": "Activity feedback forms now ask about the activity instead of "
+                   "reading as though they were asking about a person, and the "
+                   "dashboard now names each score after what it really measures.",
         "changes": [
             "On an activity's feedback form, the questions used to be written "
             "about a person with the activity's name dropped in — so a "
@@ -43,6 +44,16 @@ CHANGELOG = [
             "Every question still means exactly what it meant before, so "
             "scores, reports and past results are unaffected and remain "
             "directly comparable.",
+            "On the dashboard, several score names described questions the "
+            "forms do not ask — a speaker's \"Materials & venue\" score was "
+            "labelled \"Neat & well-presented\", and an activity's score for "
+            "knowledgeable organizers was labelled \"Courteous organizers\". "
+            "Each score is now named after the questions it is actually "
+            "averaging. Only the names changed; every number is the same.",
+            "One activity score, \"Attention & set-up\", now says so plainly: "
+            "it averages a question about attention to participants together "
+            "with one about materials and the venue. It always did — the old "
+            "name mentioned only the venue.",
             "The Filipino version of the new activity wording is a draft, "
             "pending the office's review like the rest of the translation.",
         ],
