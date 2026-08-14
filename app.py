@@ -13466,11 +13466,28 @@ def _wa_file_page(request, period_start="", change_of=None, err="", form=None):
     try:
         approver_title = st.approver_title_for(conn, user["id"])
         approver_name = st.approver_name_for(conn, user["id"])
+        open_ps = st.work_arrangement_open_periods()
         open_periods = [
             {"period_start": ps,
              "label": st.work_arrangement_period_label(ps),
              "deadline_label": st.work_arrangement_deadline_label(ps)}
-            for ps in st.work_arrangement_open_periods()]
+            for ps in open_ps]
+        # Everyone ELSE's section coverage for each open period, so the form can
+        # warn live as the day is picked. Advisory only — it never gates the
+        # submit button (see storage.work_arrangement_coverage_note).
+        org_path = st._wa_org_path(conn, user["id"])
+        coverage = {}
+        if org_path:
+            for ps in open_ps:
+                cov = st.work_arrangement_coverage(conn, org_path, ps,
+                                                   exclude_user_id=user["id"])
+                coverage[ps] = {
+                    "others": cov["headcount"],
+                    "days": [{"name": d["name"], "offsite": d["offsite"],
+                              "cww": d["cww"], "wfh": d["wfh"],
+                              "onsite": d["onsite"]}
+                             for d in cov["weekdays"]],
+                }
     finally:
         conn.close()
     if change_of:
@@ -13481,7 +13498,7 @@ def _wa_file_page(request, period_start="", change_of=None, err="", form=None):
         "types": st.WORK_ARRANGEMENT_TYPES,
         "weekdays": st.WORK_ARRANGEMENT_WEEKDAYS,
         "day_types": list(st._WA_DAY_TYPES),
-        "legend": st.WORK_ARRANGEMENT_LEGEND,
+        "legend": st.WORK_ARRANGEMENT_LEGEND, "coverage": coverage,
         "approver_title": approver_title, "approver_name": approver_name,
         "open_periods": open_periods, "change_of": change_of,
         "period_start": period_start or (open_periods[0]["period_start"]
@@ -13594,3 +13611,75 @@ def work_arrangement_cancel(request: Request, wa_id: int):
         conn.close()
     return RedirectResponse(
         "/work-arrangement?ok=" + quote("Request withdrawn."), status_code=303)
+
+
+@app.get("/work-arrangement/approvals", response_class=HTMLResponse)
+def work_arrangement_approvals(request: Request, ok: str = "", err: str = ""):
+    """The chief's queue. Each row carries a coverage verdict, but both buttons
+    stay live either way — a thin Friday is the chief's call to make."""
+    user = request.state.user
+    conn = get_conn()
+    try:
+        if not st.user_is_approving_chief(conn, user):
+            return _wa_forbid(request)
+        queue = st.list_work_arrangement_approvals(conn, user)
+    finally:
+        conn.close()
+    return templates.TemplateResponse(request, "work_arrangement_approvals.html", {
+        "nav_active": "work_arrangement", "show_scope": False,
+        "queue": queue, "ok": ok, "err": err,
+    })
+
+
+@app.post("/work-arrangement/{wa_id}/decide")
+async def work_arrangement_decide(request: Request, wa_id: int):
+    user = request.state.user
+    p = await _posted(request)
+    action = p.get("action", "")
+    conn = get_conn()
+    try:
+        try:
+            row = st.decide_work_arrangement(conn, wa_id, user, action,
+                                             p.get("note"))
+        except PermissionError:
+            return _wa_forbid(request)
+        except ValueError as e:
+            return RedirectResponse(
+                f"/work-arrangement/approvals?err={quote(str(e))}",
+                status_code=303)
+        _audit(request, conn, f"work_arrangement_{row['status']}",
+               target_type="work_arrangement", target_id=wa_id,
+               summary=(f"{row['status']} {row['person_name']}'s "
+                        f"{row['arrangement']} for {row['period_label']}"))
+        msg = (f"{row['person_name']} — {row['arrangement']} for "
+               f"{row['period_label']} {row['status']}.")
+    finally:
+        conn.close()
+    return RedirectResponse(f"/work-arrangement/approvals?ok={quote(msg)}",
+                            status_code=303)
+
+
+@app.get("/work-arrangement/schedule", response_class=HTMLResponse)
+def work_arrangement_schedule(request: Request, period: str = ""):
+    """The period's ANNEX C on screen, plus who is on-site each weekday. Scoped
+    to the chief's own unit subtree; admins see the whole bureau."""
+    user = request.state.user
+    conn = get_conn()
+    try:
+        if not st.user_is_approving_chief(conn, user):
+            return _wa_forbid(request)
+        ps = period or (st.work_arrangement_open_periods() or
+                        [st.work_arrangement_period()])[0]
+        try:
+            data = st.work_arrangement_period_summary(conn, ps, user)
+        except ValueError:
+            return RedirectResponse("/work-arrangement/schedule", status_code=303)
+    finally:
+        conn.close()
+    return templates.TemplateResponse(request, "work_arrangement_schedule.html", {
+        "nav_active": "work_arrangement", "show_scope": False,
+        "d": data, "legend": st.WORK_ARRANGEMENT_LEGEND,
+        "prev_period": st.work_arrangement_prev_period(ps),
+        "next_period": st.work_arrangement_next_period(ps),
+        "weekdays": st.WORK_ARRANGEMENT_WEEKDAYS,
+    })

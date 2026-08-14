@@ -6283,3 +6283,276 @@ def cancel_work_arrangement(conn, wa_id, user_id):
                  (wa_id,))
     conn.commit()
     return get_work_arrangement(conn, wa_id)
+
+
+# ---- approval --------------------------------------------------------------
+
+def decide_work_arrangement(conn, wa_id, user, action, note=None):
+    """Approve or deny a pending arrangement. Raises ValueError (bad state or
+    input) or PermissionError (not this user's to decide). Returns the updated
+    row.
+
+    Approving a CHANGE retires the row it replaces in the same transaction, so
+    the "one approved per period" index is never momentarily violated and the
+    person is never momentarily without a schedule."""
+    row = get_work_arrangement(conn, wa_id)
+    if not row:
+        raise ValueError("That work arrangement request no longer exists.")
+    if row["status"] != "pending":
+        raise ValueError("That request has already been decided.")
+    if action not in ("approve", "deny"):
+        raise ValueError("Unknown decision.")
+    if not is_approver_for(conn, user, row["user_id"]):
+        raise PermissionError("That request isn't yours to decide.")
+    status = "approved" if action == "approve" else "denied"
+    note = (note or "").strip() or None
+    try:
+        if status == "approved" and row["supersedes_id"]:
+            conn.execute("UPDATE work_arrangement SET status='superseded' "
+                         "WHERE id=? AND status='approved'",
+                         (row["supersedes_id"],))
+        conn.execute(
+            "UPDATE work_arrangement SET status=?, decided_by=?, decided_at=?, "
+            "decide_note=? WHERE id=?",
+            (status, user["id"], tz.now_iso(), note, wa_id))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    return get_work_arrangement(conn, wa_id)
+
+
+def list_work_arrangement_approvals(conn, user):
+    """Pending arrangements this user may decide, earliest period first. Admins
+    see every pending request except their own; a chief sees exactly what the
+    escalation chain routes to them. Each row carries its coverage verdict, so
+    the queue can flag a decision that would empty a section before it is made
+    rather than after."""
+    rows = conn.execute(
+        _WA_SELECT + " WHERE w.status='pending' AND w.user_id != ? "
+        "ORDER BY w.period_start, w.id", (user["id"],)).fetchall()
+    out = [get_work_arrangement(conn, r[0]) for r in rows]
+    if user.get("role") != "admin":
+        if not user_is_approving_chief(conn, user):
+            return []
+        out = [w for w in out
+               if user["id"] in get_approvers_for(conn, w["user_id"])]
+    for w in out:
+        w["coverage_flag"] = work_arrangement_coverage_flag(conn, w)
+    return out
+
+
+# ---- section coverage — advice, never a block ------------------------------
+
+def work_arrangement_coverage(conn, org_path, period_start, exclude_user_id=None):
+    """Per-weekday staffing for ONE section in one period.
+
+    Scope is the EXACT org path, not the subtree: "who is left in my section on
+    Friday" is the operational question, and rolling a whole division up would
+    hide an empty section behind a full one.
+
+    CWW and WFH are counted apart on purpose. A compressed-workweek day off
+    removes a person entirely; someone working from home is still working, just
+    not in the building. "Nobody on-site" and "nobody working" are different
+    problems and the copy has to be able to say which.
+
+    Live rows only (pending + approved) — a denied or withdrawn filing frees its
+    day again. Where a person holds both an approved row and a pending change,
+    the PENDING one counts: that is the state being asked about.
+
+    Returns {"headcount": n, "weekdays": [{idx, name, cww, wfh, offsite,
+    onsite, names}, ...]} — five entries, Monday to Friday. Only accounts take
+    part, so headcount is the set of people who could file."""
+    people = conn.execute("""
+        SELECT a.id, COALESCE(rp.name, a.username)
+        FROM admin_user a
+        JOIN resource_person rp ON rp.id = a.rp_id AND rp.is_internal = 1
+        JOIN org_unit ou ON ou.id = rp.org_unit_id
+        WHERE a.active = 1 AND ou.path = ?
+    """, (org_path or "",)).fetchall()
+    people = [(uid, name) for uid, name in people if uid != exclude_user_id]
+    ids = {uid for uid, _n in people}
+    names = dict(people)
+
+    qs = ",".join("?" * len(_WA_LIVE))
+    rows = conn.execute(
+        f"SELECT user_id, arrangement, weekday, status FROM work_arrangement "
+        f"WHERE period_start=? AND status IN ({qs}) ORDER BY id",
+        (period_start, *_WA_LIVE)).fetchall()
+    # A pending change outranks the approved row it would replace.
+    picked = {}
+    for uid, arrangement, weekday, status in rows:
+        if uid not in ids:
+            continue
+        if status == "pending" or uid not in picked:
+            picked[uid] = (arrangement, weekday)
+
+    weekdays = []
+    for idx, name in WORK_ARRANGEMENT_WEEKDAYS:
+        cww = [names[u] for u, (a, w) in picked.items() if a == "CWW" and w == idx]
+        wfh = [names[u] for u, (a, w) in picked.items() if a == "WFH" and w == idx]
+        weekdays.append({
+            "idx": idx, "name": name,
+            "cww": len(cww), "wfh": len(wfh),
+            "offsite": len(cww) + len(wfh),
+            "onsite": len(people) - len(cww) - len(wfh),
+            "names": sorted(cww + wfh),
+        })
+    return {"headcount": len(people), "weekdays": weekdays}
+
+
+def _wa_org_path(conn, user_id):
+    """The section path an account sits in, or None when they aren't linked to
+    the directory (coverage is meaningless for them)."""
+    row = conn.execute("""
+        SELECT ou.path FROM admin_user a
+        JOIN resource_person rp ON rp.id = a.rp_id
+        JOIN org_unit ou ON ou.id = rp.org_unit_id
+        WHERE a.id = ? LIMIT 1
+    """, (user_id,)).fetchone()
+    return row[0] if row and row[0] else None
+
+
+def work_arrangement_coverage_note(conn, user_id, period_start, arrangement,
+                                   weekday):
+    """The one-line advisory for a hypothetical pick, as the employee sees it
+    while choosing a day. Returns "" when there is nothing worth saying.
+
+    This NEVER raises and is never consulted by create_work_arrangement — a thin
+    day is the section chief's call, not the database's."""
+    if arrangement not in _WA_DAY_TYPES or weekday is None:
+        return ""
+    path = _wa_org_path(conn, user_id)
+    if not path:
+        return ""
+    cov = work_arrangement_coverage(conn, path, period_start,
+                                    exclude_user_id=user_id)
+    day = cov["weekdays"][weekday]
+    others = cov["headcount"]                    # already excludes this person
+    if others <= 0 or day["offsite"] <= 0:
+        return ""
+    left = day["onsite"] - 1                     # this person would be off too
+    who = f"{day['offsite']} of {others}"
+    if left <= 0:
+        return (f"{who} others in your section are already off on {day['name']} — "
+                f"adding yours would leave nobody on-site that day.")
+    return (f"{who} others in your section are already off on {day['name']}. "
+            f"Filing this leaves {left} on-site.")
+
+
+def work_arrangement_coverage_flag(conn, row):
+    """The approver's verdict on one pending request: a short phrase when
+    approving it would leave the section thin or empty on that weekday, else "".
+    Same computation as the employee's note — one function behind both, so the
+    two can never contradict each other."""
+    if row.get("arrangement") not in _WA_DAY_TYPES or row.get("weekday") is None:
+        return ""
+    path = row.get("org_path")
+    if not path:
+        return ""
+    cov = work_arrangement_coverage(conn, path, row["period_start"],
+                                    exclude_user_id=row["user_id"])
+    day = cov["weekdays"][row["weekday"]]
+    left = day["onsite"]                         # this person is excluded already
+    if left <= 0:
+        return f"Approving leaves nobody on-site on {day['name']}"
+    if left == 1:
+        return f"Only 1 on-site on {day['name']} after this"
+    return ""
+
+
+# ---- the period roster (the ANNEX C body, on screen and in print) ----------
+
+def work_arrangement_roster(conn, period_start, user=None):
+    """Every participating account for a period, filed or not, ordered the way
+    ANNEX C groups them (by division/section, then name).
+
+    This reads FROM admin_user outward, not from work_arrangement inward, which
+    is the whole point: the blanks ARE the information. Someone who never filed
+    appears as a row with no arrangement, so the Admin Officer has a chase list
+    before the deadline instead of 23 silent gaps after it.
+
+    Scoped to a chief's own unit subtree (see _org_scope_for_user); admins and an
+    unscoped call see the whole bureau."""
+    scope = _org_scope_for_user(conn, user) if user else None
+    rows = conn.execute("""
+        SELECT a.id, a.username, rp.name, rp.position, ou.short_name, ou.path
+        FROM admin_user a
+        LEFT JOIN resource_person rp ON rp.id = a.rp_id
+        LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id
+        WHERE a.active = 1
+        ORDER BY ou.path, rp.name, a.username
+    """).fetchall()
+    live = {}
+    qs = ",".join("?" * len(_WA_LIVE))
+    for r in conn.execute(
+            _WA_SELECT + f" WHERE w.period_start=? AND w.status IN ({qs})",
+            (period_start, *_WA_LIVE)).fetchall():
+        w = _wa_hydrate(r)
+        # An approved row is what's in force; a pending one is only ever shown
+        # as such, so let 'approved' win when a person holds both.
+        if w["user_id"] not in live or w["status"] == "approved":
+            live[w["user_id"]] = w
+    out = []
+    for uid, username, name, position, short_name, path in rows:
+        if not _path_in_scope(path, scope):
+            continue
+        w = live.get(uid)
+        out.append({
+            "user_id": uid, "name": name or username,
+            "position": position or "", "section": short_name or "",
+            "org_path": path or "",
+            "arrangement": w["arrangement"] if w else "",
+            "arrangement_label": w["arrangement_label"] if w else "",
+            "weekday": w["weekday"] if w else None,
+            "remarks": w["remarks"] if w else "",
+            "status": w["status"] if w else "",
+            "id": w["id"] if w else None,
+            "filed": bool(w),
+            "approved": bool(w and w["status"] == "approved"),
+        })
+    return out
+
+
+def work_arrangement_period_summary(conn, period_start, user=None):
+    """Roster + per-section coverage + the tiles the schedule page leads with.
+    `thinnest` is the weekday with the fewest people on-site across the sections
+    in view — the Friday problem, surfaced before it is submitted rather than
+    noticed in a spreadsheet afterwards."""
+    roster = work_arrangement_roster(conn, period_start, user)
+    paths = []
+    for r in roster:
+        if r["org_path"] and r["org_path"] not in paths:
+            paths.append(r["org_path"])
+    sections = []
+    for path in paths:
+        cov = work_arrangement_coverage(conn, path, period_start)
+        if not cov["headcount"]:
+            continue
+        short = next((r["section"] for r in roster if r["org_path"] == path), "")
+        sections.append({"org_path": path, "section": short or path, **cov})
+    # Bureau-wide tally across the sections in view, for the coverage panel.
+    totals = []
+    for idx, name in WORK_ARRANGEMENT_WEEKDAYS:
+        onsite = sum(s["weekdays"][idx]["onsite"] for s in sections)
+        offsite = sum(s["weekdays"][idx]["offsite"] for s in sections)
+        totals.append({"idx": idx, "name": name, "onsite": onsite,
+                       "offsite": offsite,
+                       "empty_sections": [s["section"] for s in sections
+                                          if s["weekdays"][idx]["onsite"] <= 0]})
+    thinnest = min(totals, key=lambda t: t["onsite"]) if totals else None
+    deadline = work_arrangement_deadline(period_start)
+    return {
+        "period_start": period_start,
+        "period_label": work_arrangement_period_label(period_start),
+        "deadline": deadline,
+        "deadline_label": work_arrangement_deadline_label(period_start),
+        "deadline_passed": tz.today_local() > deadline,
+        "roster": roster, "sections": sections, "totals": totals,
+        "thinnest": thinnest,
+        "headcount": len(roster),
+        "filed": sum(1 for r in roster if r["filed"]),
+        "approved": sum(1 for r in roster if r["approved"]),
+        "pending": sum(1 for r in roster if r["filed"] and not r["approved"]),
+        "unfiled": [r["name"] for r in roster if not r["filed"]],
+    }

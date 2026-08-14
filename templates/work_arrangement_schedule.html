@@ -1,0 +1,143 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, empty_state %}
+{% block title %}Work arrangement schedule{% endblock %}
+{% block content %}
+<style>
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px;
+           padding:1.2rem 1.4rem; margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .periodbar { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:.4rem; }
+  .periodbar a { font-weight:700; text-decoration:none; }
+  .periodbar .now { font-size:1.15rem; font-weight:800; }
+  .deadline { color:var(--soft); font-size:.84rem; margin-bottom:1rem; }
+  .deadline.gone { color:var(--red); font-weight:700; }
+  .tiles { display:flex; gap:1.6rem; flex-wrap:wrap; margin-bottom:.4rem; }
+  .tile .n { font-size:1.7rem; font-weight:800; line-height:1.1; }
+  .tile .l { color:var(--soft); font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; }
+  .tile .n.warn { color:var(--amber); }
+  .tile .n.bad { color:var(--red); }
+  .t { width:100%; border-collapse:collapse; }
+  .t td, .t th { padding:.5rem .6rem; border-bottom:1px solid var(--line); text-align:left;
+                 font-size:.92rem; }
+  .t th { color:var(--soft); font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; }
+  .bar { height:10px; border-radius:999px; background:var(--bg); border:1px solid var(--line);
+         overflow:hidden; min-width:120px; }
+  .bar > span { display:block; height:100%; background:var(--accent); border-radius:999px; }
+  .bar > span.bad { background:var(--red); }
+  .pill { font-size:.72rem; font-weight:700; padding:.16rem .6rem; border-radius:999px;
+          border:1px solid var(--line); white-space:nowrap; }
+  .pill.warn       { color:var(--amber); border-color:var(--amber-ln); background:var(--amber-bg); }
+  .pill.empty      { color:var(--red); border-color:var(--red-ln); background:var(--red-bg); }
+  .pill.s-approved { color:var(--green); border-color:var(--green-ln); background:var(--green-bg); }
+  .pill.s-pending  { color:var(--amber); border-color:var(--amber-ln); background:var(--amber-bg); }
+  .unfiled td { color:var(--soft); font-style:italic; }
+  .btn { display:inline-block; font:inherit; font-weight:700; text-decoration:none; cursor:pointer;
+         border:1px solid var(--accent); background:var(--surface); color:var(--accent);
+         border-radius:10px; padding:.5rem 1rem; }
+  .dl { display:flex; gap:.6rem; flex-wrap:wrap; margin-top:.9rem; }
+  .legend { color:var(--soft); font-size:.78rem; line-height:1.4; margin-top:.9rem; }
+  .backbar { margin-bottom:1rem; display:flex; gap:.8rem; }
+</style>
+
+{{ page_header("Work arrangement schedule",
+               "ANNEX C for one half-month period, and who that leaves on-site each weekday.") }}
+
+<div class="backbar">
+  <a href="/work-arrangement">← My work arrangement</a>
+  <a href="/work-arrangement/approvals">Approvals queue</a>
+</div>
+
+<div class="panel">
+  <div class="periodbar">
+    <a href="/work-arrangement/schedule?period={{ prev_period }}">‹ earlier</a>
+    <span class="now">{{ d.period_label }}</span>
+    <a href="/work-arrangement/schedule?period={{ next_period }}">later ›</a>
+  </div>
+  <div class="deadline {{ 'gone' if d.deadline_passed }}">
+    {% if d.deadline_passed %}Filing closed {{ d.deadline_label }}{% else %}Filing closes {{ d.deadline_label }}{% endif %}
+  </div>
+
+  <div class="tiles">
+    <div class="tile">
+      <div class="n {{ 'warn' if d.filed < d.headcount }}">{{ d.filed }} of {{ d.headcount }}</div>
+      <div class="l">Filed</div>
+    </div>
+    <div class="tile">
+      <div class="n">{{ d.approved }}</div><div class="l">Approved</div>
+    </div>
+    <div class="tile">
+      <div class="n {{ 'warn' if d.pending }}">{{ d.pending }}</div>
+      <div class="l">Waiting{% if d.deadline_passed and d.pending %} (past deadline){% endif %}</div>
+    </div>
+    {% if d.thinnest %}
+    <div class="tile">
+      <div class="n {{ 'bad' if d.thinnest.onsite <= 0 else ('warn' if d.thinnest.onsite <= 1) }}">
+        {{ d.thinnest.name }} · {{ d.thinnest.onsite }}</div>
+      <div class="l">Thinnest day (on-site)</div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<div class="panel">
+  <h3 style="margin-top:0;">Coverage by weekday</h3>
+  <table class="t">
+    <thead><tr><th>Day</th><th>On-site</th><th>Off-site</th><th></th><th></th></tr></thead>
+    <tbody>
+    {% for t in d.totals %}
+      <tr>
+        <td>{{ t.name }}</td>
+        <td>{{ t.onsite }}</td>
+        <td>{{ t.offsite }}</td>
+        <td style="width:35%;">
+          {% set total = t.onsite + t.offsite %}
+          <div class="bar"><span class="{{ 'bad' if t.onsite <= 0 }}"
+               style="width: {{ ((t.onsite / total * 100) if total else 0)|round(0, 'floor') }}%;"></span></div>
+        </td>
+        <td>
+          {% if t.empty_sections %}
+            <span class="pill empty">nobody on-site: {{ t.empty_sections|join(", ") }}</span>
+          {% elif t.onsite and t.offsite > t.onsite %}
+            <span class="pill warn">more off than on</span>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% if d.unfiled %}
+  <p class="legend"><b>Not yet filed ({{ d.unfiled|length }}):</b> {{ d.unfiled|join(", ") }}</p>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <h3 style="margin-top:0;">ANNEX C — {{ d.period_label }}</h3>
+  {% if d.roster %}
+  <table class="t">
+    <thead><tr><th>No.</th><th>Name</th><th>Position</th><th>Division/Unit</th>
+               <th>Work Arrangement</th><th>Remarks</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for r in d.roster %}
+      <tr class="{{ '' if r.filed else 'unfiled' }}">
+        <td>{{ loop.index }}</td>
+        <td>{{ r.name }}</td>
+        <td>{{ r.position or "—" }}</td>
+        <td>{{ r.section or "—" }}</td>
+        <td>{{ r.arrangement or "—" }}</td>
+        <td>{{ r.remarks or "—" }}</td>
+        <td>
+          {% if r.filed %}<span class="pill s-{{ r.status }}">{{ r.status }}</span>
+          {% else %}<span class="pill">not yet filed</span>{% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  {{ empty_state("Nobody in view", "No accounts fall under your section for this period.", "🗓") }}
+  {% endif %}
+  <p class="legend">{{ legend }}</p>
+  <p class="legend">Only approved arrangements print on the downloaded annex. Anyone still
+  showing "not yet filed" is a blank row on the form — chase them before the deadline.</p>
+</div>
+{% endblock %}

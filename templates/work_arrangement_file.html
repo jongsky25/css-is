@@ -38,6 +38,9 @@
   .was { border:1px solid var(--amber-ln); background:var(--amber-bg); color:var(--amber);
          border-radius:12px; padding:.6rem .8rem; margin-bottom:1rem; font-size:.9rem; }
   .was b { color:inherit; }
+  .cov { border:1px solid var(--amber-ln); background:var(--amber-bg); color:var(--amber);
+         border-radius:12px; padding:.6rem .8rem; margin:.2rem 0 1rem; font-size:.88rem; }
+  .cov.empty { border-color:var(--red-ln); background:var(--red-bg); color:var(--red); }
   .legend { color:var(--soft); font-size:.78rem; margin-top:.9rem; line-height:1.4; }
 </style>
 
@@ -114,6 +117,10 @@
       <div class="help">The day repeats every week of the period — "Friday Day off" means every Friday.</div>
     </div>
 
+    {# Advisory only: it never disables the button. A thin day is the section
+       chief's call, and they see the same figure on their queue. #}
+    <div class="cov" id="covNote" data-coverage='{{ coverage|tojson }}' hidden></div>
+
     {{ field("note", "Note for " ~ (approver_name or approver_title or "your section chief"),
              value=form.get("note", ""), type="textarea", optional=True,
              placeholder="e.g. childcare on Wednesdays, or a medical reason worth flagging",
@@ -156,7 +163,52 @@
   document.querySelectorAll('input[name="arrangement"]').forEach(function (r) {
     r.addEventListener("change", syncWeekday);
   });
+
+  // Live section coverage for the day being considered. The server sends
+  // everyone ELSE's tally per period, so we add the tentative pick here.
+  var covBox = document.getElementById("covNote");
+  var coverage = {};
+  try { coverage = JSON.parse((covBox && covBox.dataset.coverage) || "{}"); } catch (e) {}
+
+  function pickedValue(name) {
+    var el = document.querySelector('input[name="' + name + '"]:checked');
+    return el ? el.value : "";
+  }
+
+  function refreshCoverage() {
+    if (!covBox) return;
+    var code = pickedValue("arrangement");
+    var day = pickedValue("weekday");
+    var period = pickedValue("period_start") ||
+                 (document.querySelector('input[name="period_start"]') || {}).value || "";
+    var cov = coverage[period];
+    if (DAY_TYPES.indexOf(code) === -1 || day === "" || !cov) {
+      covBox.hidden = true;
+      return;
+    }
+    var d = cov.days[parseInt(day, 10)];
+    if (!d || !cov.others || !d.offsite) { covBox.hidden = true; return; }
+    var left = d.onsite - 1;                     // this person would be off too
+    var parts = [];
+    if (d.cww) parts.push(d.cww + " day off");
+    if (d.wfh) parts.push(d.wfh + " WFH");
+    var detail = parts.length ? " (" + parts.join(", ") + ")" : "";
+    covBox.textContent = left <= 0
+      ? "⚠ " + d.offsite + " of " + cov.others + " others in your section are already off on " +
+        d.name + detail + " — adding yours would leave nobody on-site that day."
+      : "⚠ " + d.offsite + " of " + cov.others + " others in your section are already off on " +
+        d.name + detail + ". Filing this leaves " + left + " on-site.";
+    covBox.classList.toggle("empty", left <= 0);
+    covBox.hidden = false;
+  }
+  ["arrangement", "weekday", "period_start"].forEach(function (n) {
+    document.querySelectorAll('input[name="' + n + '"]').forEach(function (r) {
+      r.addEventListener("change", refreshCoverage);
+    });
+  });
+
   syncWeekday();
+  refreshCoverage();
 })();
 </script>
 {% endblock %}
