@@ -1,0 +1,144 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash, empty_state %}
+{% from "_work_arrangement_icons.html" import arrangement_icon %}
+{% block title %}Work arrangement{% endblock %}
+{% block content %}
+<style>
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px;
+           padding:1.2rem 1.4rem; margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .periods { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:1.1rem;
+             margin-bottom:1.1rem; }
+  .pcard { border:1px solid var(--line); background:var(--surface); border-radius:16px;
+           padding:1.1rem 1.3rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .pcard h3 { margin:0 0 .15rem; font-size:1.1rem; }
+  .deadline { color:var(--soft); font-size:.82rem; margin-bottom:.9rem; }
+  .deadline.soon { color:var(--amber); font-weight:700; }
+  .deadline.gone { color:var(--red); font-weight:700; }
+  .current { display:flex; gap:.9rem; align-items:center; margin-bottom:.9rem; }
+  .current .ic { width:52px; height:52px; flex:0 0 auto; }
+  .current .code { font-weight:800; font-size:1rem; }
+  .current .rem { color:var(--soft); font-size:.85rem; }
+  .btn { display:inline-block; font:inherit; font-weight:700; text-decoration:none; cursor:pointer;
+         border:1px solid var(--accent); background:var(--accent); color:#fff;
+         border-radius:10px; padding:.55rem 1.1rem; }
+  .btn.ghost { background:var(--surface); color:var(--accent); }
+  .pill { font-size:.72rem; font-weight:700; padding:.16rem .6rem; border-radius:999px;
+          border:1px solid var(--line); white-space:nowrap; }
+  .pill.s-pending    { color:var(--amber); border-color:var(--amber-ln); background:var(--amber-bg); }
+  .pill.s-approved   { color:var(--green); border-color:var(--green-ln); background:var(--green-bg); }
+  .pill.s-denied     { color:var(--red); border-color:var(--red-ln); background:var(--red-bg); }
+  .pill.s-cancelled  { color:var(--soft); background:var(--bg); }
+  .pill.s-superseded { color:var(--soft); background:var(--bg); }
+  .row-act form { display:inline; }
+  .row-act button, .row-act a { font:inherit; font-size:.78rem; font-weight:700; cursor:pointer;
+        text-decoration:none; border:1px solid var(--line); background:var(--bg); color:var(--ink-soft);
+        border-radius:999px; padding:.24rem .7rem; }
+  .row-act a.go { border-color:var(--accent); color:var(--accent); background:var(--accent-bg); }
+  .hist { width:100%; border-collapse:collapse; }
+  .hist td, .hist th { padding:.5rem .6rem; border-bottom:1px solid var(--line); text-align:left;
+                       font-size:.92rem; }
+  .note { color:var(--ink-soft); font-size:.85rem; font-style:italic; }
+  .chiefbar { display:flex; gap:.6rem; flex-wrap:wrap; margin-bottom:1.1rem; }
+  .legend { color:var(--soft); font-size:.78rem; line-height:1.4; }
+</style>
+
+{{ page_header("Work arrangement",
+               "Your ANNEX C schedule — regular on-site, compressed workweek, or a day working from home. One arrangement per half-month period.") }}
+
+{% if ok %}{{ flash(msg=ok) }}{% endif %}
+{% if err %}{{ flash(err=err) }}{% endif %}
+
+{% if is_chief %}
+<div class="chiefbar">
+  <a class="btn ghost" href="/work-arrangement/approvals">Approvals queue</a>
+  <a class="btn ghost" href="/work-arrangement/schedule">Period schedule</a>
+</div>
+{% endif %}
+
+{% if periods %}
+<div class="periods">
+  {% for p in periods %}
+  <div class="pcard">
+    <h3>{{ p.label }}</h3>
+    <div class="deadline {% if p.days_left < 0 %}gone{% elif p.days_left <= 3 %}soon{% endif %}">
+      File by {{ p.deadline_label }}{% if p.days_left > 1 %} — {{ p.days_left }} days left{% elif p.days_left == 1 %} — tomorrow{% elif p.days_left == 0 %} — today{% endif %}
+    </div>
+
+    {% if p.approved %}
+    <div class="current">
+      <span class="ic">{{ arrangement_icon(p.approved.arrangement) }}</span>
+      <div>
+        <div class="code">{{ p.approved.arrangement }} — {{ p.approved.arrangement_label }}
+          <span class="pill s-approved">approved</span></div>
+        <div class="rem">{{ p.approved.remarks or "Regular week, no nominated day" }}</div>
+      </div>
+    </div>
+      {% if p.pending %}
+      <p class="note">A change to <b>{{ p.pending.arrangement }}{% if p.pending.remarks %} · {{ p.pending.remarks }}{% endif %}</b>
+      is waiting for approval. The arrangement above stays in force until it's decided.</p>
+      <span class="row-act">
+        <form method="post" action="/work-arrangement/{{ p.pending.id }}/cancel">
+          <button type="submit">Withdraw the change</button>
+        </form>
+      </span>
+      {% else %}
+      <a class="btn ghost" href="/work-arrangement/{{ p.approved.id }}/change">Request a change</a>
+      {% endif %}
+
+    {% elif p.pending %}
+    <div class="current">
+      <span class="ic">{{ arrangement_icon(p.pending.arrangement) }}</span>
+      <div>
+        <div class="code">{{ p.pending.arrangement }} — {{ p.pending.arrangement_label }}
+          <span class="pill s-pending">waiting for approval</span></div>
+        <div class="rem">{{ p.pending.remarks or "Regular week, no nominated day" }}</div>
+      </div>
+    </div>
+    <p class="note">With {{ approver }}.</p>
+    <span class="row-act">
+      <form method="post" action="/work-arrangement/{{ p.pending.id }}/cancel">
+        <button type="submit">Withdraw</button>
+      </form>
+    </span>
+
+    {% else %}
+    <p class="note">Nothing filed for this period yet.</p>
+    <a class="btn" href="/work-arrangement/file?period={{ p.period_start }}">File it now</a>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="panel">
+  {{ empty_state("Nothing open for filing",
+                 "Filing closes on the Friday before each period begins. Check back after the next cut-off.", "🗓") }}
+</div>
+{% endif %}
+
+{% if history %}
+<div class="panel">
+  <h3 style="margin-top:0;">Earlier periods</h3>
+  <table class="hist">
+    <thead><tr><th>Period</th><th>Arrangement</th><th>Remarks</th><th>Status</th><th>Decided by</th></tr></thead>
+    <tbody>
+    {% for h in history %}
+      <tr>
+        <td>{{ h.period_label }}</td>
+        <td>{{ h.arrangement }}{% if h.is_change %} <span class="note">(change)</span>{% endif %}</td>
+        <td>{{ h.remarks or "—" }}</td>
+        <td><span class="pill s-{{ h.status }}">{{ h.status }}</span></td>
+        <td>{{ h.decided_by_name or "—" }}{% if h.decide_note %}<div class="note">“{{ h.decide_note }}”</div>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<div class="panel">
+  <p class="legend">{{ legend }}</p>
+  <p class="legend">Filing closes on the Friday before a period begins, so the schedule is settled
+  before the period it covers starts. Once approved, an arrangement is the schedule in force —
+  ask for a change and it stays that way until your approver decides.</p>
+</div>
+{% endblock %}

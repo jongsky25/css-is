@@ -494,6 +494,14 @@ NAV_GROUPS = [
          "kw": "wellness break rest two hours weekly avatar plant points streak badges "
                "exercise meditation mental health hobby dm 2025-0135", "cap": None},
     ]},
+    {"name": "Work arrangement", "items": [
+        {"key": "work_arrangement", "url": "/work-arrangement",
+         "label": "My work arrangement",
+         "hint": "File your on-site / CWW / WFH schedule for the half-month",
+         "kw": "work arrangement annex c annex-c cww compressed workweek wfh work from "
+               "home remote telework regular on-site onsite day off schedule roster "
+               "semi-monthly half month alternative work arrangement awa", "cap": None},
+    ]},
     {"name": "Reports", "items": [
         {"key": "reports", "url": "/reports?type=1", "label": "ARTA Walk-in",
          "hint": "Official ARTA / CO-CSM citizen satisfaction",
@@ -3889,10 +3897,10 @@ def _css_entry_for(user, conn):
 
 @app.get("/", response_class=HTMLResponse)
 def choose(request: Request, msg: str = ""):
-    """The post-login chooser — 'what would you like to do?' Two doors, Wellness
-    and CSS (STAFF_ONBOARDING_AVATAR_PLAN.md Phase 3). Greets the user with their
-    photo/companion; guards the one-time onboarding so it can't be skipped by
-    typing the URL."""
+    """The post-login chooser — 'what would you like to do?' Three doors:
+    Wellness, Work arrangement and CSS (STAFF_ONBOARDING_AVATAR_PLAN.md Phase 3).
+    Greets the user with their photo/companion; guards the one-time onboarding so
+    it can't be skipped by typing the URL."""
     conn = get_conn()
     try:
         onboard = _onboarding_redirect(request, conn)
@@ -3906,6 +3914,17 @@ def choose(request: Request, msg: str = ""):
             wstats = st.wellness_stats(conn, request.state.user["id"])
         except Exception:
             wstats = None
+        # ...and the same for the work arrangement door: the nearest period still
+        # open for filing, and whether they've dealt with it yet.
+        try:
+            wa_open = st.work_arrangement_open_periods()
+            wa_period = wa_open[0] if wa_open else None
+            wa_now = (st.my_work_arrangement_for(conn, request.state.user["id"], wa_period)
+                      or st.my_pending_work_arrangement(conn, request.state.user["id"], wa_period)
+                      ) if wa_period else None
+            wa_label = st.work_arrangement_period_label(wa_period) if wa_period else ""
+        except Exception:
+            wa_now, wa_label = None, ""
     finally:
         conn.close()
     role = request.state.user["role"]
@@ -3914,6 +3933,7 @@ def choose(request: Request, msg: str = ""):
         "first_name": first_name, "profile": profile,
         "initials": _initials(profile.get("person_name") if profile else ""),
         "css_url": css_url, "wstats": wstats,
+        "wa_now": wa_now, "wa_label": wa_label,
         "role_label": auth.ROLE_LABELS.get(role, role),
         "role_blurb": auth.ROLE_BLURB.get(role, ""),
     })
@@ -13382,3 +13402,195 @@ def wellness_export(request: Request, date_from: str = "", date_to: str = ""):
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f'attachment; filename="{fname}"'},
     )
+
+
+# =====================================================================
+# Work arrangement module — ANNEX C, the internal work arrangement schedule.
+# Every signed-in employee gets the hub and the filing form (the middleware only
+# requires login for /work-arrangement*); the approvals queue, the period
+# schedule and the annex exports check st.user_is_approving_chief /
+# st.is_approver_for in-handler, for the same reason wellness does — "section
+# chief" is a directory fact, not one of the four roles.
+# =====================================================================
+
+def _wa_forbid(request):
+    return templates.TemplateResponse(
+        request, "forbidden.html",
+        {"capability": "work arrangement approvals", "show_scope": False},
+        status_code=403)
+
+
+@app.get("/work-arrangement", response_class=HTMLResponse)
+def work_arrangement_hub(request: Request, ok: str = "", err: str = ""):
+    """The employee's schedule home: one card per period still open for filing,
+    what they have in force, and the deadline spelled out in full."""
+    user = request.state.user
+    conn = get_conn()
+    try:
+        periods = []
+        for ps in st.work_arrangement_open_periods():
+            periods.append({
+                "period_start": ps,
+                "label": st.work_arrangement_period_label(ps),
+                "deadline": st.work_arrangement_deadline(ps),
+                "deadline_label": st.work_arrangement_deadline_label(ps),
+                "days_left": (st.work_arrangement_deadline(ps)
+                              - _today_local()).days,
+                "approved": st.my_work_arrangement_for(conn, user["id"], ps),
+                "pending": st.my_pending_work_arrangement(conn, user["id"], ps),
+            })
+        history = st.list_my_work_arrangements(conn, user["id"])
+        approver = (st.approver_name_for(conn, user["id"])
+                    or st.approver_title_for(conn, user["id"]))
+        is_chief = st.user_is_approving_chief(conn, user)
+    finally:
+        conn.close()
+    # The history table repeats whatever the cards already show for the open
+    # periods, so list only what the cards don't cover.
+    open_keys = {p["period_start"] for p in periods}
+    history = [h for h in history if h["period_start"] not in open_keys]
+    return templates.TemplateResponse(request, "work_arrangement_hub.html", {
+        "nav_active": "work_arrangement", "show_scope": False,
+        "periods": periods, "history": history, "approver": approver,
+        "is_chief": is_chief, "legend": st.WORK_ARRANGEMENT_LEGEND,
+        "ok": ok, "err": err,
+    })
+
+
+def _wa_file_page(request, period_start="", change_of=None, err="", form=None):
+    """The filing form, which doubles as the change form: `change_of` is the
+    approved arrangement being replaced, so one template and one validation path
+    serve both."""
+    user = request.state.user
+    conn = get_conn()
+    try:
+        approver_title = st.approver_title_for(conn, user["id"])
+        approver_name = st.approver_name_for(conn, user["id"])
+        open_periods = [
+            {"period_start": ps,
+             "label": st.work_arrangement_period_label(ps),
+             "deadline_label": st.work_arrangement_deadline_label(ps)}
+            for ps in st.work_arrangement_open_periods()]
+    finally:
+        conn.close()
+    if change_of:
+        open_periods = [p for p in open_periods
+                        if p["period_start"] == change_of["period_start"]]
+    return templates.TemplateResponse(request, "work_arrangement_file.html", {
+        "nav_active": "work_arrangement", "show_scope": False,
+        "types": st.WORK_ARRANGEMENT_TYPES,
+        "weekdays": st.WORK_ARRANGEMENT_WEEKDAYS,
+        "day_types": list(st._WA_DAY_TYPES),
+        "legend": st.WORK_ARRANGEMENT_LEGEND,
+        "approver_title": approver_title, "approver_name": approver_name,
+        "open_periods": open_periods, "change_of": change_of,
+        "period_start": period_start or (open_periods[0]["period_start"]
+                                         if open_periods else ""),
+        "err": err, "form": form or {},
+    }, status_code=400 if err else 200)
+
+
+@app.get("/work-arrangement/file", response_class=HTMLResponse)
+def work_arrangement_file_form(request: Request, period: str = ""):
+    return _wa_file_page(request, period_start=period)
+
+
+@app.post("/work-arrangement/file")
+async def work_arrangement_file_submit(request: Request):
+    user = request.state.user
+    p = await _posted(request)
+    conn = get_conn()
+    try:
+        try:
+            wa_id = st.create_work_arrangement(
+                conn, user["id"], p.get("period_start", ""),
+                p.get("arrangement", ""), p.get("weekday"), p.get("note"))
+        except ValueError as e:
+            return _wa_file_page(request, period_start=p.get("period_start", ""),
+                                 err=str(e), form=p)
+        row = st.get_work_arrangement(conn, wa_id)
+        _audit(request, conn, "work_arrangement_file",
+               target_type="work_arrangement", target_id=wa_id,
+               summary=(f"filed {row['arrangement']} "
+                        f"{row['remarks'] or 'for the whole week'} for "
+                        f"{row['period_label']}"))
+        approver = (st.approver_name_for(conn, user["id"])
+                    or st.approver_title_for(conn, user["id"]))
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"/work-arrangement?ok={quote(f'Work arrangement filed — {approver} will see it.')}",
+        status_code=303)
+
+
+@app.get("/work-arrangement/{wa_id}/change", response_class=HTMLResponse)
+def work_arrangement_change_form(request: Request, wa_id: int):
+    user = request.state.user
+    conn = get_conn()
+    try:
+        row = st.get_work_arrangement(conn, wa_id)
+    finally:
+        conn.close()
+    # Only the person it belongs to may change it — storage enforces this too,
+    # but there is no reason to render someone else's schedule into a form.
+    if not row or row["user_id"] != user["id"]:
+        return _wa_forbid(request)
+    if row["status"] != "approved":
+        return RedirectResponse(
+            "/work-arrangement?err=" + quote(
+                "Only an approved work arrangement can be changed."),
+            status_code=303)
+    return _wa_file_page(request, period_start=row["period_start"], change_of=row)
+
+
+@app.post("/work-arrangement/{wa_id}/change")
+async def work_arrangement_change_submit(request: Request, wa_id: int):
+    user = request.state.user
+    p = await _posted(request)
+    conn = get_conn()
+    try:
+        current = st.get_work_arrangement(conn, wa_id)
+        try:
+            new_id = st.request_work_arrangement_change(
+                conn, wa_id, user["id"], p.get("arrangement", ""),
+                p.get("weekday"), p.get("note"))
+        except PermissionError:
+            return _wa_forbid(request)
+        except ValueError as e:
+            return _wa_file_page(request,
+                                 period_start=(current or {}).get("period_start", ""),
+                                 change_of=current, err=str(e), form=p)
+        row = st.get_work_arrangement(conn, new_id)
+        _audit(request, conn, "work_arrangement_change",
+               target_type="work_arrangement", target_id=new_id,
+               summary=(f"asked to change {row['period_label']} from "
+                        f"{current['arrangement']} to {row['arrangement']} "
+                        f"{row['remarks'] or ''}".strip()))
+        approver = (st.approver_name_for(conn, user["id"])
+                    or st.approver_title_for(conn, user["id"]))
+    finally:
+        conn.close()
+    return RedirectResponse(
+        "/work-arrangement?ok=" + quote(
+            f"Change requested — {approver} will see it. Your current "
+            f"arrangement stays in force until it's approved."),
+        status_code=303)
+
+
+@app.post("/work-arrangement/{wa_id}/cancel")
+def work_arrangement_cancel(request: Request, wa_id: int):
+    user = request.state.user
+    conn = get_conn()
+    try:
+        try:
+            st.cancel_work_arrangement(conn, wa_id, user["id"])
+        except ValueError as e:
+            return RedirectResponse(
+                f"/work-arrangement?err={quote(str(e))}", status_code=303)
+        _audit(request, conn, "work_arrangement_cancel",
+               target_type="work_arrangement", target_id=wa_id,
+               summary="withdrew a work arrangement request")
+    finally:
+        conn.close()
+    return RedirectResponse(
+        "/work-arrangement?ok=" + quote("Request withdrawn."), status_code=303)

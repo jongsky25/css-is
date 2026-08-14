@@ -277,6 +277,42 @@ def init_db(conn):
         UNIQUE(user_id, badge)
     );
     """)
+    # --- Work arrangement module (ANNEX C: the semi-monthly internal work
+    # arrangement schedule — who is on-site, compressed, or working from home) ---
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS work_arrangement (  -- one live row per person per half-month
+        id           INTEGER PRIMARY KEY,
+        user_id      INTEGER NOT NULL REFERENCES admin_user(id),
+        period_start TEXT NOT NULL,               -- 'YYYY-MM-01' or 'YYYY-MM-16' (the period key)
+        arrangement  TEXT NOT NULL,               -- 'REG' | 'CWW' | 'WFH' (WORK_ARRANGEMENT_TYPES)
+        weekday      INTEGER,                     -- 0=Mon..4=Fri; NULL for REG (no day applies).
+                                                  -- CWW: the day OFF. WFH: the day worked remotely.
+                                                  -- The nominated day recurs every week of the
+                                                  -- period, exactly as the paper form reads.
+        note         TEXT,                        -- the requester's own reason, if any
+        status       TEXT NOT NULL DEFAULT 'pending',  -- see WORK_ARRANGEMENT_STATUSES
+        -- Set when this row is a staff-initiated CHANGE to an already-approved
+        -- arrangement: the id of the row it replaces. The old row stays 'approved'
+        -- (it is still the schedule in force) until this one is approved, at which
+        -- point it flips to 'superseded'. NULL on an original filing.
+        supersedes_id INTEGER REFERENCES work_arrangement(id),
+        decided_by   INTEGER REFERENCES admin_user(id),
+        decided_at   TEXT,
+        decide_note  TEXT,                        -- approver's remark (e.g. reason for denial)
+        created_at   TEXT
+    );
+    -- Two partial constraints, not one: a person may hold at most one APPROVED
+    -- arrangement per period AND at most one PENDING row against it (the change
+    -- request), which is exactly "one schedule in force plus one change in
+    -- flight". Denied/cancelled/superseded rows stay as the audit trail and fall
+    -- outside both, so re-filing after a denial still works.
+    CREATE UNIQUE INDEX IF NOT EXISTS ux_work_arrangement_approved
+        ON work_arrangement(user_id, period_start) WHERE status = 'approved';
+    CREATE UNIQUE INDEX IF NOT EXISTS ux_work_arrangement_pending
+        ON work_arrangement(user_id, period_start) WHERE status = 'pending';
+    CREATE INDEX IF NOT EXISTS idx_work_arrangement_period
+        ON work_arrangement(period_start, status);
+    """)
     _add_missing_columns(conn)
     conn.commit()
 
@@ -4959,6 +4995,12 @@ def avatar_accessory_month():
     return tz.now_local().month
 
 
+# The bureau's full name as it must read on any official form we generate
+# (the wellness Annex A register, the ANNEX C work arrangement schedule).
+# One constant so two forms can never drift apart.
+BUREAU_NAME = "Bureau of Local Health Systems Development"
+
+
 # =====================================================================
 # Org chain of command — shared approval routing.
 #
@@ -5251,7 +5293,7 @@ WELLNESS_ACTIVITIES = [
 
 # The bureau's full Office/Unit name as it must read on the DM's official
 # "Annex A. Weekly Wellness Break Log" register.
-WELLNESS_OFFICE_UNIT = "Bureau of Local Health Systems Development"
+WELLNESS_OFFICE_UNIT = BUREAU_NAME
 
 # Our activity keys -> the Annex A "Activity Type" column's six official
 # categories (Physical Exercise, Relaxation, Wellness Consult, Recreation,
@@ -5846,3 +5888,398 @@ def wellness_person_month(conn, user_id, year, month):
                         "approver": r[6] or ""})
     return {"name": name, "office": office, "year": int(year), "month": int(month),
             "entries": entries}
+
+
+# =====================================================================
+# Work arrangement module — ANNEX C, the internal work arrangement schedule.
+#
+# Every staff member files ONE arrangement per half-month period (the 1st–15th
+# and the 16th–end of month, the two sheets the bureau circulates): REG for a
+# regular 5-day on-site week, CWW for a compressed workweek with one weekday
+# off, or WFH for one day worked from home. The nominated weekday recurs every
+# week of the period, exactly as the paper form reads.
+#
+# Filing closes on the Friday BEFORE a period begins, so the schedule is settled
+# before the period it governs starts. Once approved an arrangement is the
+# schedule in force and is never edited in place: the employee — and only the
+# employee — requests a change, which files a successor row that supersedes the
+# original once the same approver signs off.
+#
+# Approval routes through the shared org chain (see "Org chain of command"
+# above): staff to their section chief, a section chief to their division chief.
+#
+# Coverage is the one rule here that WARNS rather than blocks. A section with
+# nobody on-site on a Friday is a real operational problem, but it is the
+# chief's call to make, not the database's — so section coverage is computed by
+# a separate read-only function and surfaced as advice at both ends (the
+# employee sees it while picking a day, the chief sees it on the queue), and
+# never raises.
+# =====================================================================
+
+# (code, short label, the long form used on the picker cards and the legend)
+WORK_ARRANGEMENT_TYPES = [
+    ("REG", "Regular",            "Regular 5-day on-site schedule"),
+    ("CWW", "Compressed workweek", "Compressed workweek — one weekday off"),
+    ("WFH", "Work from home",     "Work from home, one day a week"),
+]
+WORK_ARRANGEMENT_LABELS = {c: short for c, short, _long in WORK_ARRANGEMENT_TYPES}
+# Only these two nominate a weekday; REG applies to the whole week.
+_WA_DAY_TYPES = ("CWW", "WFH")
+
+WORK_ARRANGEMENT_WEEKDAYS = [(0, "Monday"), (1, "Tuesday"), (2, "Wednesday"),
+                             (3, "Thursday"), (4, "Friday")]
+_WA_DAY_NAMES = [name for _i, name in WORK_ARRANGEMENT_WEEKDAYS]
+
+WORK_ARRANGEMENT_STATUSES = ("pending", "approved", "denied", "cancelled",
+                             "superseded")
+# Rows that occupy a person's period. A denied or withdrawn filing frees it
+# again; a superseded one has already been replaced.
+_WA_LIVE = ("pending", "approved")
+
+# Filing and changes close on the last Friday BEFORE a period begins.
+WORK_ARRANGEMENT_DEADLINE_WEEKDAY = 4          # 0=Mon .. 4=Fri
+# How many periods are accepting filings at once: the next one and the one after,
+# so people can plan a month out. The CURRENT period is never among them — its
+# deadline was the Friday before it started.
+WORK_ARRANGEMENT_OPEN_PERIODS = 2
+
+# The legend exactly as it prints at the foot of ANNEX C. Do not reflow.
+WORK_ARRANGEMENT_LEGEND = ("*CWW- compressed workweek, -WFH- Work from Home(1Day) , "
+                           "REG-Regular 5-day on-site schedule")
+
+
+# ---- semi-monthly periods and the filing deadline -------------------------
+
+def work_arrangement_period(d=None):
+    """The half-month period a date falls in, keyed by its first day:
+    'YYYY-MM-01' for the 1st–15th, 'YYYY-MM-16' for the 16th–end of month.
+    An ISO date rather than a synthetic '2026-08-A' key so it sorts, parses and
+    compares like every other date in the schema — the same trick
+    wellness_claim.week_start uses to key entitlement on a Monday."""
+    d = d or tz.today_local()
+    return date(d.year, d.month, 1 if d.day <= 15 else 16).isoformat()
+
+
+def work_arrangement_period_bounds(period_start):
+    """(first day, last day) of a period. The second half runs to whatever the
+    month's real last day is — 28, 29, 30 or 31."""
+    s = date.fromisoformat(period_start)
+    if s.day == 1:
+        return s, s.replace(day=15)
+    # First of next month, minus a day = this month's last day.
+    nxt = (s.replace(day=28) + timedelta(days=7)).replace(day=1)
+    return s, nxt - timedelta(days=1)
+
+
+def work_arrangement_period_label(period_start):
+    """'August 1-15, 2026' / 'August 16-31, 2026' — the wording the source
+    ANNEX C sheets use as their titles, so ours match byte for byte."""
+    s, e = work_arrangement_period_bounds(period_start)
+    return f"{_MONTH_NAMES[s.month - 1]} {s.day}-{e.day}, {s.year}"
+
+
+def work_arrangement_next_period(period_start):
+    s = date.fromisoformat(period_start)
+    if s.day == 1:
+        return s.replace(day=16).isoformat()
+    return (s.replace(day=28) + timedelta(days=7)).replace(day=1).isoformat()
+
+
+def work_arrangement_prev_period(period_start):
+    s = date.fromisoformat(period_start)
+    if s.day == 16:
+        return s.replace(day=1).isoformat()
+    return (s - timedelta(days=1)).replace(day=16).isoformat()
+
+
+def work_arrangement_deadline(period_start):
+    """The last Friday STRICTLY before the period begins — when filing and
+    changes close for it. 'Strictly': a period that itself starts on a Friday
+    closes the Friday prior, not on its own first day."""
+    d = date.fromisoformat(period_start) - timedelta(days=1)
+    return d - timedelta(days=(d.weekday() - WORK_ARRANGEMENT_DEADLINE_WEEKDAY) % 7)
+
+
+def work_arrangement_open_periods(d=None, ahead=WORK_ARRANGEMENT_OPEN_PERIODS):
+    """The periods still accepting filings, earliest first. Note what this
+    implies and the UI must say plainly: once a period has BEGUN it is closed,
+    because its deadline was the Friday before it started. On August 20 you are
+    filing for September, not fixing the second half of August."""
+    d = d or tz.today_local()
+    ps = work_arrangement_period(d)
+    out = []
+    # The current period is normally already closed, so allow a couple of hops
+    # before the first open one; deadlines only move later from there.
+    for _ in range(ahead + 2):
+        if d <= work_arrangement_deadline(ps):
+            out.append(ps)
+            if len(out) >= ahead:
+                break
+        ps = work_arrangement_next_period(ps)
+    return out
+
+
+def work_arrangement_period_workdays(period_start):
+    """The Mon–Fri dates inside a period, as (date, weekday index). A nominated
+    weekday recurs 2–3 times in a half-month — 'Friday Day off' means EVERY
+    Friday in the period — so the schedule view and the printed annex need the
+    actual dates, not just the day name."""
+    s, e = work_arrangement_period_bounds(period_start)
+    out, d = [], s
+    while d <= e:
+        if d.weekday() < 5:
+            out.append((d, d.weekday()))
+        d += timedelta(days=1)
+    return out
+
+
+def _wa_friday(d):
+    """'Friday, August 14, 2026' — deadlines are always quoted in full, because
+    'the 14th' is ambiguous the week you read it."""
+    return f"Friday, {_MONTH_NAMES[d.month - 1]} {d.day}, {d.year}"
+
+
+def work_arrangement_deadline_label(period_start):
+    return _wa_friday(work_arrangement_deadline(period_start))
+
+
+# ---- validation + derived text --------------------------------------------
+
+def _wa_remarks(arrangement, weekday, note=None):
+    """The ANNEX C Remarks cell. The source file's hidden dropdown list is just
+    weekday x {Day off, WFH}, so this is derived from the two stored columns and
+    never kept as its own text — one fewer thing that can contradict the record.
+    The person's own note is appended after it."""
+    base = ""
+    if weekday is not None and 0 <= weekday < len(_WA_DAY_NAMES):
+        if arrangement == "CWW":
+            base = f"{_WA_DAY_NAMES[weekday]} Day off"
+        elif arrangement == "WFH":
+            base = f"{_WA_DAY_NAMES[weekday]} WFH"
+    note = (note or "").strip()
+    return f"{base} — {note}" if base and note else (base or note)
+
+
+def _wa_validate(arrangement, weekday):
+    """Shared field checks for both filing and changing. Returns the cleaned
+    (arrangement, weekday); raises ValueError with copy a person can act on."""
+    arrangement = (arrangement or "").strip().upper()
+    if arrangement not in WORK_ARRANGEMENT_LABELS:
+        raise ValueError("Pick a work arrangement: regular, compressed workweek, "
+                         "or work from home.")
+    if arrangement not in _WA_DAY_TYPES:
+        return arrangement, None            # a regular week nominates no day
+    try:
+        weekday = int(weekday)
+    except (TypeError, ValueError):
+        raise ValueError("Pick which weekday this applies to — Monday to Friday.")
+    if not 0 <= weekday <= 4:
+        raise ValueError("Work arrangements are set within the work week (Mon–Fri).")
+    return arrangement, weekday
+
+
+def _wa_check_period_open(period_start, d=None):
+    """Return the period key if it is still accepting filings, else raise with a
+    message that names BOTH the deadline that was missed and the next period the
+    person can still file for — a refusal that doesn't say what to do instead is
+    just a dead end."""
+    d = d or tz.today_local()
+    ps = (period_start or "").strip()
+    try:
+        date.fromisoformat(ps)
+    except ValueError:
+        raise ValueError("Pick a valid half-month period.")
+    open_ps = work_arrangement_open_periods(d)
+    if ps in open_ps:
+        return ps
+    if open_ps and ps > open_ps[-1]:
+        raise ValueError(
+            f"{work_arrangement_period_label(ps)} isn't open for filing yet — "
+            f"the schedule is set a period or two at a time. You can file for "
+            f"{work_arrangement_period_label(open_ps[-1])} now.")
+    msg = (f"The deadline for {work_arrangement_period_label(ps)} was "
+           f"{work_arrangement_deadline_label(ps)}.")
+    if open_ps:
+        msg += (f" You can file for {work_arrangement_period_label(open_ps[0])} "
+                f"until {work_arrangement_deadline_label(open_ps[0])}.")
+    raise ValueError(msg)
+
+
+# ---- reads ----------------------------------------------------------------
+
+_WA_SELECT = """
+    SELECT w.id, w.user_id, w.period_start, w.arrangement, w.weekday, w.note,
+           w.status, w.supersedes_id, w.decided_by, w.decided_at, w.decide_note,
+           w.created_at, u.username, rp.name, rp.position,
+           ou.short_name, ou.path, COALESCE(rpd.name, ud.username, '')
+    FROM work_arrangement w
+    JOIN admin_user u ON u.id = w.user_id
+    LEFT JOIN resource_person rp ON rp.id = u.rp_id
+    LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id
+    LEFT JOIN admin_user ud ON ud.id = w.decided_by
+    LEFT JOIN resource_person rpd ON rpd.id = ud.rp_id
+"""
+
+
+def _wa_hydrate(row):
+    """One DB row -> the flat dict every caller and template reads. Labels and
+    the Remarks text are derived here so the screen, the queue and the printed
+    annex can never word the same record differently."""
+    (wid, user_id, period_start, arrangement, weekday, note, status,
+     supersedes_id, decided_by, decided_at, decide_note, created_at,
+     username, name, position, short_name, path, decided_by_name) = row
+    return {
+        "id": wid, "user_id": user_id, "period_start": period_start,
+        "period_label": work_arrangement_period_label(period_start),
+        "deadline_label": work_arrangement_deadline_label(period_start),
+        "arrangement": arrangement,
+        "arrangement_label": WORK_ARRANGEMENT_LABELS.get(arrangement, arrangement),
+        "weekday": weekday,
+        "weekday_name": _WA_DAY_NAMES[weekday] if weekday is not None else "",
+        "remarks": _wa_remarks(arrangement, weekday, note),
+        "note": note, "status": status, "supersedes_id": supersedes_id,
+        "is_change": supersedes_id is not None,
+        "decided_by": decided_by, "decided_by_name": decided_by_name,
+        "decided_at": decided_at, "decide_note": decide_note,
+        "created_at": created_at, "username": username,
+        "person_name": name or username, "position": position or "",
+        "section": short_name or "", "org_path": path or "",
+    }
+
+
+def get_work_arrangement(conn, wa_id):
+    """One arrangement, hydrated. When it is a change request, `replaces`
+    carries a short summary of the row still in force, so the approver sees the
+    delta rather than just the destination."""
+    row = conn.execute(_WA_SELECT + " WHERE w.id = ?", (wa_id,)).fetchone()
+    if not row:
+        return None
+    out = _wa_hydrate(row)
+    if out["supersedes_id"]:
+        prev = conn.execute(
+            "SELECT arrangement, weekday, note FROM work_arrangement WHERE id=?",
+            (out["supersedes_id"],)).fetchone()
+        if prev:
+            out["replaces"] = {
+                "arrangement": prev[0],
+                "arrangement_label": WORK_ARRANGEMENT_LABELS.get(prev[0], prev[0]),
+                "weekday": prev[1],
+                "remarks": _wa_remarks(prev[0], prev[1], prev[2]),
+            }
+    return out
+
+
+def list_my_work_arrangements(conn, user_id, limit=12):
+    """The person's own filings, newest period first — their record and the
+    trail of anything denied, withdrawn or superseded along the way."""
+    rows = conn.execute(
+        _WA_SELECT + " WHERE w.user_id = ? ORDER BY w.period_start DESC, w.id DESC "
+        "LIMIT ?", (user_id, limit)).fetchall()
+    return [_wa_hydrate(r) for r in rows]
+
+
+def _wa_one_by_status(conn, user_id, period_start, status):
+    row = conn.execute(
+        _WA_SELECT + " WHERE w.user_id = ? AND w.period_start = ? AND w.status = ?",
+        (user_id, period_start, status)).fetchone()
+    return _wa_hydrate(row) if row else None
+
+
+def my_work_arrangement_for(conn, user_id, period_start):
+    """The APPROVED arrangement for a period — the schedule actually in force."""
+    return _wa_one_by_status(conn, user_id, period_start, "approved")
+
+
+def my_pending_work_arrangement(conn, user_id, period_start):
+    """The in-flight filing or change for a period, if any."""
+    return _wa_one_by_status(conn, user_id, period_start, "pending")
+
+
+# ---- writes ---------------------------------------------------------------
+
+def create_work_arrangement(conn, user_id, period_start, arrangement,
+                            weekday=None, note=None):
+    """File this person's work arrangement for one half-month period. Validates
+    ANNEX C's rules and raises ValueError with a human-readable reason; returns
+    the new row id.
+
+    Section coverage is deliberately NOT checked here. A thin day is a warning
+    both the employee and the approving chief see, never a block — see
+    work_arrangement_coverage_note."""
+    arrangement, weekday = _wa_validate(arrangement, weekday)
+    ps = _wa_check_period_open(period_start)
+    if my_work_arrangement_for(conn, user_id, ps):
+        raise ValueError(
+            f"You already have an approved work arrangement for "
+            f"{work_arrangement_period_label(ps)}. Use “Request a change” to "
+            f"file a different one.")
+    if my_pending_work_arrangement(conn, user_id, ps):
+        raise ValueError(
+            f"You already have a work arrangement waiting for approval for "
+            f"{work_arrangement_period_label(ps)}. Withdraw it first if you "
+            f"want to file something different.")
+    cur = conn.execute(
+        """INSERT INTO work_arrangement(user_id, period_start, arrangement,
+                                        weekday, note, status, created_at)
+           VALUES (?,?,?,?,?,'pending',?)""",
+        (user_id, ps, arrangement, weekday, (note or "").strip() or None,
+         tz.now_iso()))
+    conn.commit()
+    return cur.lastrowid
+
+
+def request_work_arrangement_change(conn, wa_id, user_id, arrangement,
+                                    weekday=None, note=None):
+    """Ask to change an arrangement that has already been approved. Only the
+    person it belongs to may start this — a chief or an admin cannot rewrite
+    someone's schedule for them.
+
+    The approved row is left alone and stays in force; this files a SUCCESSOR
+    that supersedes it only once the same approver signs off. So at no point is
+    the person without a schedule, and a denied change simply leaves the
+    original standing."""
+    current = get_work_arrangement(conn, wa_id)
+    if not current:
+        raise ValueError("That work arrangement no longer exists.")
+    if current["user_id"] != user_id:
+        raise PermissionError(
+            "Only the person a work arrangement belongs to can change it.")
+    if current["status"] != "approved":
+        raise ValueError(
+            "That request hasn't been approved yet — withdraw it and file "
+            "again instead of changing it.")
+    arrangement, weekday = _wa_validate(arrangement, weekday)
+    ps = _wa_check_period_open(current["period_start"])
+    if my_pending_work_arrangement(conn, user_id, ps):
+        raise ValueError(
+            "You already have a change waiting for approval for this period.")
+    if arrangement == current["arrangement"] and weekday == current["weekday"]:
+        raise ValueError("That is the arrangement you already have — pick a "
+                         "different one.")
+    cur = conn.execute(
+        """INSERT INTO work_arrangement(user_id, period_start, arrangement,
+                                        weekday, note, status, supersedes_id,
+                                        created_at)
+           VALUES (?,?,?,?,?,'pending',?,?)""",
+        (user_id, ps, arrangement, weekday, (note or "").strip() or None,
+         wa_id, tz.now_iso()))
+    conn.commit()
+    return cur.lastrowid
+
+
+def cancel_work_arrangement(conn, wa_id, user_id):
+    """Withdraw a request that is still waiting for approval. On an original
+    filing this frees the period to be filed again; on a change request the
+    arrangement it would have replaced simply stays in force."""
+    row = get_work_arrangement(conn, wa_id)
+    if not row:
+        raise ValueError("That work arrangement no longer exists.")
+    if row["user_id"] != user_id:
+        raise ValueError("That isn't your work arrangement to withdraw.")
+    if row["status"] != "pending":
+        raise ValueError("Only a request still waiting for approval can be "
+                         "withdrawn.")
+    conn.execute("UPDATE work_arrangement SET status='cancelled' WHERE id=?",
+                 (wa_id,))
+    conn.commit()
+    return get_work_arrangement(conn, wa_id)
