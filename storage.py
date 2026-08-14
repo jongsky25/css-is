@@ -6556,3 +6556,91 @@ def work_arrangement_period_summary(conn, period_start, user=None):
         "pending": sum(1 for r in roster if r["filed"] and not r["approved"]),
         "unfiled": [r["name"] for r in roster if not r["filed"]],
     }
+
+
+# ---- the printed annex -----------------------------------------------------
+
+def work_arrangement_export_rows(conn, period_start):
+    """The ANNEX C body for one period: one row per participating account,
+    numbered, grouped by division/section then name — the order the source
+    sheets use.
+
+    Only APPROVED arrangements print. Pending, denied and unfiled people appear
+    with the Work Arrangement and Remarks cells BLANK, which is exactly how the
+    real sheet reads when someone hasn't been dealt with — the difference is
+    that here the blank is a fact the system can also show you before you
+    submit, not one discovered afterwards.
+
+    Both the workbook and the PDF read this, so the two can never disagree."""
+    rows = work_arrangement_roster(conn, period_start)
+    out = []
+    for i, r in enumerate(rows, start=1):
+        approved = r["approved"]
+        out.append({
+            "no": i,
+            "name": r["name"],
+            "position": r["position"],
+            "division_unit": r["section"],
+            "arrangement": r["arrangement"] if approved else "",
+            "remarks": r["remarks"] if approved else "",
+            "filed": r["filed"],
+            "status": r["status"],
+        })
+    return out
+
+
+def work_arrangement_signatories(conn, user_id=None):
+    """Who signs the annex.
+
+    Names turn over faster than anyone remembers to edit a constant, so both are
+    resolved from live data rather than hardcoded — nothing else in this repo
+    hardcodes a person's name and this shouldn't be the first thing that does.
+
+      * Approved by — the directory's Director (org rank 3).
+      * Prepared by — the app_setting override if an admin has pinned one,
+        otherwise whoever is generating the export.
+    """
+    approved_name = _org_seat_name(conn, 3) or ""
+    approved_title = ""
+    if approved_name:
+        row = conn.execute(
+            "SELECT position, designation FROM resource_person "
+            "WHERE name = ? AND is_internal = 1 LIMIT 1",
+            (approved_name.split(" / ")[0],)).fetchone()
+        if row:
+            approved_title = row[0] or row[1] or ""
+    s = get_settings(conn, ["wa_prepared_by_name", "wa_prepared_by_title"])
+    prepared_name = (s.get("wa_prepared_by_name") or "").strip()
+    prepared_title = (s.get("wa_prepared_by_title") or "").strip()
+    if not prepared_name and user_id:
+        me = get_admin_user_by_id(conn, user_id)
+        rp = get_rp(conn, me["rp_id"]) if me and me.get("rp_id") else None
+        if rp:
+            prepared_name = rp.get("name") or ""
+            prepared_title = prepared_title or rp.get("position") or ""
+        elif me:
+            prepared_name = me.get("username") or ""
+    return {
+        "prepared_by": {"name": prepared_name, "title": prepared_title},
+        "approved_by": {"name": approved_name, "title": approved_title},
+    }
+
+
+def work_arrangement_annex_data(conn, period_start, user_id=None):
+    """Everything either annex format needs, in one dict."""
+    return {
+        "period_start": period_start,
+        "period_label": work_arrangement_period_label(period_start),
+        "office_unit": BUREAU_NAME,
+        "legend": WORK_ARRANGEMENT_LEGEND,
+        "rows": work_arrangement_export_rows(conn, period_start),
+        **work_arrangement_signatories(conn, user_id),
+    }
+
+
+def work_arrangement_month_periods(ym):
+    """The two half-month periods of 'YYYY-MM'. The bureau circulates ANNEX C as
+    one file with a sheet per half, so the export can offer a whole month."""
+    y, m = ym.split("-")
+    first = f"{int(y):04d}-{int(m):02d}-01"
+    return [first, work_arrangement_next_period(first)]

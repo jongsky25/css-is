@@ -72,6 +72,7 @@ import activity_admin as aa
 import activity_messages as amsg
 import certificate as cert
 import wellness_register as wreg
+import work_arrangement_annex as wanx
 import ratelimit as rl
 import version as ver
 import i18n
@@ -13683,3 +13684,66 @@ def work_arrangement_schedule(request: Request, period: str = ""):
         "next_period": st.work_arrangement_next_period(ps),
         "weekdays": st.WORK_ARRANGEMENT_WEEKDAYS,
     })
+
+
+def _wa_annex_periods(conn, user, period, month):
+    """Which period(s) an annex download covers: one, or both halves of a month
+    (the two-sheet file the bureau actually circulates). Raises ValueError on a
+    malformed key so the route can bounce rather than 500."""
+    if month:
+        keys = st.work_arrangement_month_periods(month)
+    else:
+        keys = [period or (st.work_arrangement_open_periods() or
+                           [st.work_arrangement_period()])[0]]
+    return [st.work_arrangement_annex_data(conn, k, user["id"]) for k in keys]
+
+
+@app.get("/work-arrangement/annex-c.xlsx")
+def work_arrangement_annex_xlsx(request: Request, period: str = "", month: str = ""):
+    """ANNEX C as the Excel workbook the bureau submits — a sheet per half-month
+    period, the six columns, the legend verbatim and the signature block."""
+    user = request.state.user
+    conn = get_conn()
+    try:
+        if not st.user_is_approving_chief(conn, user):
+            return _wa_forbid(request)
+        try:
+            periods = _wa_annex_periods(conn, user, period, month)
+        except ValueError:
+            return RedirectResponse("/work-arrangement/schedule", status_code=303)
+        _audit(request, conn, "work_arrangement_export",
+               summary=(f"exported ANNEX C for "
+                        f"{', '.join(p['period_label'] for p in periods)}"))
+    finally:
+        conn.close()
+    data = wanx.render_xlsx(periods)
+    fname = wanx.filename(periods[0]["period_start"], "xlsx", month=month or None)
+    return Response(
+        content=data,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{fname}"'},
+    )
+
+
+@app.get("/work-arrangement/annex-c.pdf")
+def work_arrangement_annex_pdf(request: Request, period: str = "", month: str = ""):
+    """The same annex, print-ready (A4 landscape — six columns don't fit
+    portrait)."""
+    user = request.state.user
+    conn = get_conn()
+    try:
+        if not st.user_is_approving_chief(conn, user):
+            return _wa_forbid(request)
+        try:
+            periods = _wa_annex_periods(conn, user, period, month)
+        except ValueError:
+            return RedirectResponse("/work-arrangement/schedule", status_code=303)
+        _audit(request, conn, "work_arrangement_export",
+               summary=(f"exported ANNEX C (PDF) for "
+                        f"{', '.join(p['period_label'] for p in periods)}"))
+    finally:
+        conn.close()
+    data = wanx.render_pdf(periods)
+    fname = wanx.filename(periods[0]["period_start"], "pdf", month=month or None)
+    return Response(content=data, media_type="application/pdf",
+                    headers={"Content-Disposition": f'attachment; filename="{fname}"'})
