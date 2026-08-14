@@ -4960,6 +4960,246 @@ def avatar_accessory_month():
 
 
 # =====================================================================
+# Org chain of command — shared approval routing.
+#
+# Who approves you is a fact about the ORG CHART, not about what you are
+# asking for, so this block is shared by every module that needs a decision
+# routed upwards: the wellness break (DM 2025-0135) and the semi-monthly
+# work arrangement schedule (ANNEX C) both hang off it. Keeping one copy is
+# deliberate — the rank-matching rules below encode a bug that took a round
+# trip to find (see the note on _org_rank), and a second copy would be a
+# second place for it to come back.
+# =====================================================================
+
+# Approval escalates by directory RANK (STAFF_ONBOARDING_AVATAR_PLAN.md §7a.2):
+# staff -> section chief -> division chief -> Director, with admins the catch-all
+# above the Director and for anyone off the chain. The "up one level" hop walks
+# org_unit.path (section -> its parent division -> the directorate).
+#
+# Rank is read from BOTH `designation` and `position`, matched case-insensitively
+# as a substring, because real directory data is uneven (Spot Feedback #76):
+#   * section heads / division chiefs carry a clean functional `designation`
+#     ("Section Head" / "Division Chief");
+#   * the Director carries NO such designation — the plantilla title "Director IV"
+#     lives in `position` — so an exact designation match never found them, and
+#     everyone under a division chief escalated to nobody -> "an administrator".
+# We deliberately do NOT match a bare "chief" in `position`: many section heads
+# hold the position "Chief Health Program Officer", which must not read as a
+# division chief.
+def _org_rank(designation, position=None):
+    d = (designation or "").strip().lower()
+    p = (position or "").strip().lower()
+    if "director" in d or "director" in p:
+        return 3
+    if "division chief" in d:
+        return 2
+    if "section head" in d or "section chief" in d:
+        return 1
+    return 0
+
+
+def _org_parent_path(path):
+    """The org path one level up ('A/B/C' -> 'A/B'), or None at the top."""
+    return path.rsplit("/", 1)[0] if path and "/" in path else None
+
+
+# ---- approver resolution ------------------------------------------------
+
+def _org_accounts_at_rank(conn, rank, org_path=None, exclude_uid=None):
+    """Active accounts whose directory role resolves to `rank` (see
+    _org_rank), optionally restricted to an exact org_unit.path. The building
+    block of the escalation chain. Rank is computed in Python from designation +
+    position so the Director (leadership in `position`, not `designation`) is
+    found like anyone else."""
+    sql = ("SELECT a.id, rp.designation, rp.position FROM admin_user a "
+           "JOIN resource_person rp ON rp.id = a.rp_id AND rp.is_internal = 1 "
+           "LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id "
+           "WHERE a.active = 1")
+    params = []
+    if org_path is not None:
+        sql += " AND ou.path = ?"
+        params.append(org_path)
+    out = []
+    for aid, desig, pos in conn.execute(sql, params).fetchall():
+        if aid != exclude_uid and _org_rank(desig, pos) == rank:
+            out.append(aid)
+    return out
+
+
+def _org_role_filled(conn, rank, org_path=None):
+    """Does ANY internal person (account or not) hold `rank` in the given unit?
+    Used for the apply-page copy: we name the org-correct approver ("your division
+    chief") whenever that seat is filled in the directory, even if that person has
+    no app account yet — the claim still gets handled by the admin fallback until
+    they're onboarded, so this tells staff who it's *for*, not who happens to be
+    clickable today."""
+    sql = ("SELECT rp.designation, rp.position FROM resource_person rp "
+           "LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id "
+           "WHERE rp.is_internal = 1")
+    params = []
+    if org_path is not None:
+        sql += " AND ou.path = ?"
+        params.append(org_path)
+    return any(_org_rank(d, p) == rank
+               for d, p in conn.execute(sql, params).fetchall())
+
+
+def _org_seat_name(conn, rank, org_path=None, exclude_uid=None):
+    """Name(s) of the internal person(s) filling `rank` in the given unit — the
+    same seat _org_role_filled tests, but returning who holds it so the apply
+    page can name the approver. Joins multiple holders with ' / '; returns None when
+    the seat is empty. Names the directory person even if they have no app account
+    yet (the claim still routes to the admin fallback until they're onboarded)."""
+    sql = ("SELECT rp.name, rp.designation, rp.position, a.id "
+           "FROM resource_person rp "
+           "LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id "
+           "LEFT JOIN admin_user a ON a.rp_id = rp.id "
+           "WHERE rp.is_internal = 1")
+    params = []
+    if org_path is not None:
+        sql += " AND ou.path = ?"
+        params.append(org_path)
+    names = []
+    for name, desig, pos, aid in conn.execute(sql, params).fetchall():
+        if aid is not None and aid == exclude_uid:
+            continue
+        if name and _org_rank(desig, pos) == rank and name not in names:
+            names.append(name)
+    return " / ".join(names) if names else None
+
+
+def approver_name_for(conn, user_id):
+    """The NAME of who decides THIS person's requests, for the apply/hub copy
+    ('Send for approval of Ray Justin Ventura'). Mirrors approver_title_for's
+    rank/org-path walk but resolves the seat-holder's name; returns None when the
+    seat is unfilled or unresolvable so callers fall back to the role title."""
+    me = get_admin_user_by_id(conn, user_id)
+    rp = get_rp(conn, me["rp_id"]) if me and me.get("rp_id") else None
+    if not rp:
+        return None
+    rank = _org_rank(rp.get("designation"), rp.get("position"))
+    path = rp.get("org_path")
+    if rank == 0:                                   # staff -> section chief (same unit)
+        return _org_seat_name(conn, 1, org_path=path, exclude_uid=user_id)
+    if rank == 1:                                   # section chief -> division chief (parent)
+        parent = _org_parent_path(path)
+        return _org_seat_name(conn, 2, org_path=parent, exclude_uid=user_id) if parent else None
+    if rank == 2:                                   # division chief -> the Director
+        return _org_seat_name(conn, 3, exclude_uid=user_id)
+    return None
+
+
+def get_approvers_for(conn, user_id):
+    """Account ids that may decide this person's requests — a wellness break, a
+    work arrangement, anything routed by rank — one level UP the chain of command
+    (STAFF_ONBOARDING_AVATAR_PLAN.md §7a.2):
+      * regular staff        -> their section chief(s), same unit
+      * a section chief/head -> the division chief of the parent division
+      * a division chief      -> the Director
+      * the Director (or an unlinked account) -> nobody here; admins are the
+        fallback (see is_approver_for).
+    Never the requester themselves."""
+    me = get_admin_user_by_id(conn, user_id)
+    if not me or not me.get("rp_id"):
+        return []
+    rp = get_rp(conn, me["rp_id"])
+    if not rp:
+        return []
+    rank = _org_rank(rp.get("designation"), rp.get("position"))
+    path = rp.get("org_path")
+    if rank == 0:                                   # staff -> section chief (same unit)
+        return _org_accounts_at_rank(conn, 1, org_path=path, exclude_uid=user_id)
+    if rank == 1:                                   # section chief -> division chief (parent)
+        parent = _org_parent_path(path)
+        if not parent:
+            return []
+        return _org_accounts_at_rank(conn, 2, org_path=parent, exclude_uid=user_id)
+    if rank == 2:                                   # division chief -> the Director
+        return _org_accounts_at_rank(conn, 3, exclude_uid=user_id)
+    return []                                       # Director -> admin fallback
+
+
+def is_approver_for(conn, user, subject_user_id):
+    """May `user` (the request's user dict) decide requests filed by
+    `subject_user_id`? Admins always may — they are the fallback above the
+    Director and for accounts off the chain. Nobody decides their own request."""
+    if user["id"] == subject_user_id:
+        return False
+    if user.get("role") == "admin":
+        return True
+    return user["id"] in get_approvers_for(conn, subject_user_id)
+
+
+def user_is_approving_chief(conn, user):
+    """Does this user see an approvals queue at all? Admins, plus anyone whose
+    directory role can approve SOMEONE — section head/chief, division chief, or
+    the Director (who decides a division chief's own requests). Rank is read from
+    designation + position (see _org_rank) so the Director qualifies."""
+    if user.get("role") == "admin":
+        return True
+    row = conn.execute("""
+        SELECT rp.designation, rp.position FROM admin_user a
+        JOIN resource_person rp ON rp.id = a.rp_id
+        WHERE a.id=? AND rp.is_internal=1 LIMIT 1
+    """, (user["id"],)).fetchone()
+    return bool(row) and _org_rank(row[0], row[1]) >= 1
+
+
+def approver_title_for(conn, user_id):
+    """Human label for who decides THIS person's requests, for the apply/hub copy:
+    'your section chief' / 'your division chief' / 'the Director', or 'an
+    administrator' at the top of the chain / for an unlinked account.
+
+    This names the org-correct approver as long as that seat is FILLED in the
+    directory (see _org_role_filled) — it doesn't require that person to have
+    an app account yet. That's deliberate (Spot Feedback #76): a section head used
+    to read "an administrator" because their division chief wasn't onboarded,
+    which hid the real chain. Until the chief is onboarded the claim is still
+    handled by the admin fallback; the copy just tells staff who it's *for*."""
+    me = get_admin_user_by_id(conn, user_id)
+    rp = get_rp(conn, me["rp_id"]) if me and me.get("rp_id") else None
+    if not rp:
+        return "an administrator"
+    rank = _org_rank(rp.get("designation"), rp.get("position"))
+    path = rp.get("org_path")
+    if rank == 0 and _org_role_filled(conn, 1, org_path=path):
+        return "your section chief"
+    if rank == 1:
+        parent = _org_parent_path(path)
+        if parent and _org_role_filled(conn, 2, org_path=parent):
+            return "your division chief"
+    if rank == 2 and _org_role_filled(conn, 3):
+        return "the Director"
+    return "an administrator"
+
+
+def _org_scope_for_user(conn, user):
+    """The org_unit.path a viewer's monitoring is limited to, or None for the
+    whole bureau. Admins (and any account with no directory org unit) monitor
+    everyone; a directory-linked chief monitors only their own unit's subtree —
+    a section chief their section, a division chief their whole division — so the
+    dashboard mirrors who they actually approve for (list_wellness_approvals)
+    instead of every section."""
+    if not user or user.get("role") == "admin":
+        return None
+    row = conn.execute("""
+        SELECT ou.path FROM admin_user a
+        JOIN resource_person rp ON rp.id = a.rp_id
+        JOIN org_unit ou ON ou.id = rp.org_unit_id
+        WHERE a.id = ? LIMIT 1
+    """, (user["id"],)).fetchone()
+    return row[0] if row and row[0] else None
+
+
+def _path_in_scope(path, scope_path):
+    """Is org path `path` inside `scope_path` (that unit or a descendant)? A None
+    scope means bureau-wide, so everything is in scope."""
+    if not scope_path:
+        return True
+    return path == scope_path or (bool(path) and path.startswith(scope_path + "/"))
+
+
+# =====================================================================
 # Wellness module — the DOH DM 2025-0135 two-hour weekly wellness break.
 # Claims are filed in 1-hour slots (max 2/week), approved by the claimant's
 # section chief (resolved through the directory), closed out with a short
@@ -4968,6 +5208,23 @@ def avatar_accessory_month():
 # from the claim + reflection rows on every read — only badge awards persist —
 # so the fun layer can never drift out of sync with the underlying record.
 # =====================================================================
+
+# The approval chain is shared org-chart machinery (see "Org chain of
+# command" above). These names are kept because the wellness call sites in
+# app.py, its templates and its test suite all speak them — they are bound to
+# the SAME functions, not copies of them.
+_wellness_rank             = _org_rank
+_wellness_parent_path      = _org_parent_path
+_wellness_accounts_at_rank = _org_accounts_at_rank
+_wellness_role_filled      = _org_role_filled
+_wellness_seat_name        = _org_seat_name
+_wellness_dashboard_scope  = _org_scope_for_user
+_wellness_in_scope         = _path_in_scope
+wellness_approver_name     = approver_name_for
+get_wellness_approvers     = get_approvers_for
+is_wellness_approver       = is_approver_for
+user_is_wellness_chief     = user_is_approving_chief
+wellness_approver_title    = approver_title_for
 
 WELLNESS_WEEKLY_HOURS = 2          # the DM's per-week entitlement
 # How far ahead a break can be scheduled: a rolling window of this many ISO weeks
@@ -5007,36 +5264,6 @@ WELLNESS_ANNEX_ACTIVITY = {
     "other":         "Others",
 }
 
-# Approval escalates by directory RANK (STAFF_ONBOARDING_AVATAR_PLAN.md §7a.2):
-# staff -> section chief -> division chief -> Director, with admins the catch-all
-# above the Director and for anyone off the chain. The "up one level" hop walks
-# org_unit.path (section -> its parent division -> the directorate).
-#
-# Rank is read from BOTH `designation` and `position`, matched case-insensitively
-# as a substring, because real directory data is uneven (Spot Feedback #76):
-#   * section heads / division chiefs carry a clean functional `designation`
-#     ("Section Head" / "Division Chief");
-#   * the Director carries NO such designation — the plantilla title "Director IV"
-#     lives in `position` — so an exact designation match never found them, and
-#     everyone under a division chief escalated to nobody -> "an administrator".
-# We deliberately do NOT match a bare "chief" in `position`: many section heads
-# hold the position "Chief Health Program Officer", which must not read as a
-# division chief.
-def _wellness_rank(designation, position=None):
-    d = (designation or "").strip().lower()
-    p = (position or "").strip().lower()
-    if "director" in d or "director" in p:
-        return 3
-    if "division chief" in d:
-        return 2
-    if "section head" in d or "section chief" in d:
-        return 1
-    return 0
-
-
-def _wellness_parent_path(path):
-    """The org path one level up ('A/B/C' -> 'A/B'), or None at the top."""
-    return path.rsplit("/", 1)[0] if path and "/" in path else None
 
 # Cumulative point thresholds for levels 1..6; the avatar stage == the level.
 WELLNESS_LEVELS = [0, 30, 75, 150, 250, 400]
@@ -5215,147 +5442,6 @@ def list_my_wellness_claims(conn, user_id, limit=25):
     return [get_wellness_claim(conn, i) for i in ids]
 
 
-# ---- approver resolution ------------------------------------------------
-
-def _wellness_accounts_at_rank(conn, rank, org_path=None, exclude_uid=None):
-    """Active accounts whose directory role resolves to `rank` (see
-    _wellness_rank), optionally restricted to an exact org_unit.path. The building
-    block of the escalation chain. Rank is computed in Python from designation +
-    position so the Director (leadership in `position`, not `designation`) is
-    found like anyone else."""
-    sql = ("SELECT a.id, rp.designation, rp.position FROM admin_user a "
-           "JOIN resource_person rp ON rp.id = a.rp_id AND rp.is_internal = 1 "
-           "LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id "
-           "WHERE a.active = 1")
-    params = []
-    if org_path is not None:
-        sql += " AND ou.path = ?"
-        params.append(org_path)
-    out = []
-    for aid, desig, pos in conn.execute(sql, params).fetchall():
-        if aid != exclude_uid and _wellness_rank(desig, pos) == rank:
-            out.append(aid)
-    return out
-
-
-def _wellness_role_filled(conn, rank, org_path=None):
-    """Does ANY internal person (account or not) hold `rank` in the given unit?
-    Used for the apply-page copy: we name the org-correct approver ("your division
-    chief") whenever that seat is filled in the directory, even if that person has
-    no app account yet — the claim still gets handled by the admin fallback until
-    they're onboarded, so this tells staff who it's *for*, not who happens to be
-    clickable today."""
-    sql = ("SELECT rp.designation, rp.position FROM resource_person rp "
-           "LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id "
-           "WHERE rp.is_internal = 1")
-    params = []
-    if org_path is not None:
-        sql += " AND ou.path = ?"
-        params.append(org_path)
-    return any(_wellness_rank(d, p) == rank
-               for d, p in conn.execute(sql, params).fetchall())
-
-
-def _wellness_seat_name(conn, rank, org_path=None, exclude_uid=None):
-    """Name(s) of the internal person(s) filling `rank` in the given unit — the
-    same seat _wellness_role_filled tests, but returning who holds it so the apply
-    page can name the approver. Joins multiple holders with ' / '; returns None when
-    the seat is empty. Names the directory person even if they have no app account
-    yet (the claim still routes to the admin fallback until they're onboarded)."""
-    sql = ("SELECT rp.name, rp.designation, rp.position, a.id "
-           "FROM resource_person rp "
-           "LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id "
-           "LEFT JOIN admin_user a ON a.rp_id = rp.id "
-           "WHERE rp.is_internal = 1")
-    params = []
-    if org_path is not None:
-        sql += " AND ou.path = ?"
-        params.append(org_path)
-    names = []
-    for name, desig, pos, aid in conn.execute(sql, params).fetchall():
-        if aid is not None and aid == exclude_uid:
-            continue
-        if name and _wellness_rank(desig, pos) == rank and name not in names:
-            names.append(name)
-    return " / ".join(names) if names else None
-
-
-def wellness_approver_name(conn, user_id):
-    """The NAME of who decides THIS person's breaks, for the apply/hub copy
-    ('Send for approval of Ray Justin Ventura'). Mirrors wellness_approver_title's
-    rank/org-path walk but resolves the seat-holder's name; returns None when the
-    seat is unfilled or unresolvable so callers fall back to the role title."""
-    me = get_admin_user_by_id(conn, user_id)
-    rp = get_rp(conn, me["rp_id"]) if me and me.get("rp_id") else None
-    if not rp:
-        return None
-    rank = _wellness_rank(rp.get("designation"), rp.get("position"))
-    path = rp.get("org_path")
-    if rank == 0:                                   # staff -> section chief (same unit)
-        return _wellness_seat_name(conn, 1, org_path=path, exclude_uid=user_id)
-    if rank == 1:                                   # section chief -> division chief (parent)
-        parent = _wellness_parent_path(path)
-        return _wellness_seat_name(conn, 2, org_path=parent, exclude_uid=user_id) if parent else None
-    if rank == 2:                                   # division chief -> the Director
-        return _wellness_seat_name(conn, 3, exclude_uid=user_id)
-    return None
-
-
-def get_wellness_approvers(conn, user_id):
-    """Account ids that may decide this person's claims, one rank UP the chain of
-    command (STAFF_ONBOARDING_AVATAR_PLAN.md §7a.2):
-      * regular staff        -> their section chief(s), same unit
-      * a section chief/head -> the division chief of the parent division
-      * a division chief      -> the Director
-      * the Director (or an unlinked account) -> nobody here; admins are the
-        fallback (see is_wellness_approver).
-    Never the claimant themselves."""
-    me = get_admin_user_by_id(conn, user_id)
-    if not me or not me.get("rp_id"):
-        return []
-    rp = get_rp(conn, me["rp_id"])
-    if not rp:
-        return []
-    rank = _wellness_rank(rp.get("designation"), rp.get("position"))
-    path = rp.get("org_path")
-    if rank == 0:                                   # staff -> section chief (same unit)
-        return _wellness_accounts_at_rank(conn, 1, org_path=path, exclude_uid=user_id)
-    if rank == 1:                                   # section chief -> division chief (parent)
-        parent = _wellness_parent_path(path)
-        if not parent:
-            return []
-        return _wellness_accounts_at_rank(conn, 2, org_path=parent, exclude_uid=user_id)
-    if rank == 2:                                   # division chief -> the Director
-        return _wellness_accounts_at_rank(conn, 3, exclude_uid=user_id)
-    return []                                       # Director -> admin fallback
-
-
-def is_wellness_approver(conn, user, claim_user_id):
-    """May `user` (the request's user dict) decide claims filed by
-    `claim_user_id`? Admins always may — they are the fallback above the Director
-    and for accounts off the chain. Nobody decides their own claim."""
-    if user["id"] == claim_user_id:
-        return False
-    if user.get("role") == "admin":
-        return True
-    return user["id"] in get_wellness_approvers(conn, claim_user_id)
-
-
-def user_is_wellness_chief(conn, user):
-    """Does this user see the approvals queue at all? Admins, plus anyone whose
-    directory role can approve SOMEONE — section head/chief, division chief, or
-    the Director (who decides a division chief's own breaks). Rank is read from
-    designation + position (see _wellness_rank) so the Director qualifies."""
-    if user.get("role") == "admin":
-        return True
-    row = conn.execute("""
-        SELECT rp.designation, rp.position FROM admin_user a
-        JOIN resource_person rp ON rp.id = a.rp_id
-        WHERE a.id=? AND rp.is_internal=1 LIMIT 1
-    """, (user["id"],)).fetchone()
-    return bool(row) and _wellness_rank(row[0], row[1]) >= 1
-
-
 def list_wellness_approvals(conn, user):
     """Pending claims this user may decide, oldest break first. Admins see every
     pending claim except their own; a chief sees exactly the claims the
@@ -5368,37 +5454,9 @@ def list_wellness_approvals(conn, user):
     claims = [get_wellness_claim(conn, i) for i in ids]
     if user.get("role") == "admin":
         return claims
-    if not user_is_wellness_chief(conn, user):
+    if not user_is_approving_chief(conn, user):
         return []
-    return [c for c in claims if user["id"] in get_wellness_approvers(conn, c["user_id"])]
-
-
-def wellness_approver_title(conn, user_id):
-    """Human label for who decides THIS person's breaks, for the apply/hub copy:
-    'your section chief' / 'your division chief' / 'the Director', or 'an
-    administrator' at the top of the chain / for an unlinked account.
-
-    This names the org-correct approver as long as that seat is FILLED in the
-    directory (see _wellness_role_filled) — it doesn't require that person to have
-    an app account yet. That's deliberate (Spot Feedback #76): a section head used
-    to read "an administrator" because their division chief wasn't onboarded,
-    which hid the real chain. Until the chief is onboarded the claim is still
-    handled by the admin fallback; the copy just tells staff who it's *for*."""
-    me = get_admin_user_by_id(conn, user_id)
-    rp = get_rp(conn, me["rp_id"]) if me and me.get("rp_id") else None
-    if not rp:
-        return "an administrator"
-    rank = _wellness_rank(rp.get("designation"), rp.get("position"))
-    path = rp.get("org_path")
-    if rank == 0 and _wellness_role_filled(conn, 1, org_path=path):
-        return "your section chief"
-    if rank == 1:
-        parent = _wellness_parent_path(path)
-        if parent and _wellness_role_filled(conn, 2, org_path=parent):
-            return "your division chief"
-    if rank == 2 and _wellness_role_filled(conn, 3):
-        return "the Director"
-    return "an administrator"
+    return [c for c in claims if user["id"] in get_approvers_for(conn, c["user_id"])]
 
 
 def decide_wellness_claim(conn, claim_id, user, action, note=None):
@@ -5411,7 +5469,7 @@ def decide_wellness_claim(conn, claim_id, user, action, note=None):
         raise ValueError("That break request has already been decided.")
     if action not in ("approve", "deny"):
         raise ValueError("Unknown decision.")
-    if not is_wellness_approver(conn, user, claim["user_id"]):
+    if not is_approver_for(conn, user, claim["user_id"]):
         raise PermissionError("Only the claimant's section chief (or an admin) "
                               "can decide this request.")
     conn.execute(
@@ -5604,32 +5662,6 @@ def _award_badge(conn, user_id, key, when=None):
 
 # ---- monitoring dashboard + the submission register -----------------------
 
-def _wellness_dashboard_scope(conn, user):
-    """The org_unit.path a viewer's monitoring is limited to, or None for the
-    whole bureau. Admins (and any account with no directory org unit) monitor
-    everyone; a directory-linked chief monitors only their own unit's subtree —
-    a section chief their section, a division chief their whole division — so the
-    dashboard mirrors who they actually approve for (list_wellness_approvals)
-    instead of every section."""
-    if not user or user.get("role") == "admin":
-        return None
-    row = conn.execute("""
-        SELECT ou.path FROM admin_user a
-        JOIN resource_person rp ON rp.id = a.rp_id
-        JOIN org_unit ou ON ou.id = rp.org_unit_id
-        WHERE a.id = ? LIMIT 1
-    """, (user["id"],)).fetchone()
-    return row[0] if row and row[0] else None
-
-
-def _wellness_in_scope(path, scope_path):
-    """Is org path `path` inside `scope_path` (that unit or a descendant)? A None
-    scope means bureau-wide, so everything is in scope."""
-    if not scope_path:
-        return True
-    return path == scope_path or (bool(path) and path.startswith(scope_path + "/"))
-
-
 def wellness_dashboard_data(conn, week_start, user=None):
     """One week's utilization for the monitoring page: a per-person table with
     section, hours by status and reflection state; a per-section rollup against
@@ -5637,11 +5669,11 @@ def wellness_dashboard_data(conn, week_start, user=None):
     the overall reflection completion rate.
 
     When `user` is a directory-linked chief the whole view is scoped to their own
-    unit's subtree (see _wellness_dashboard_scope) so the "By person" table — and
+    unit's subtree (see _org_scope_for_user) so the "By person" table — and
     the section rollup, week tiles and pending queue derived from it — shows only
     the section(s) they are concerned with, not every employee. Admins and an
     unscoped call see the whole bureau."""
-    scope_path = _wellness_dashboard_scope(conn, user)
+    scope_path = _org_scope_for_user(conn, user)
     people = conn.execute("""
         SELECT u.id, u.username, rp.name, ou.short_name, ou.path,
                COALESCE(SUM(CASE WHEN c.status='pending'   THEN c.hours END), 0),
@@ -5656,7 +5688,7 @@ def wellness_dashboard_data(conn, week_start, user=None):
         WHERE u.active = 1
         GROUP BY u.id ORDER BY ou.path, rp.name, u.username
     """, (week_start,)).fetchall()
-    people = [p for p in people if _wellness_in_scope(p[4], scope_path)]
+    people = [p for p in people if _path_in_scope(p[4], scope_path)]
     rows = [{"user_id": p[0], "username": p[1], "name": p[2] or p[1],
              "section": p[3] or (p[4].rsplit("/", 1)[-1] if p[4] else "—"),
              "pending": p[5], "approved": p[6], "completed": p[7],

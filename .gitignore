@@ -16,6 +16,8 @@ css_is_demo.db
 __pycache__/
 *.pyc
 .qa_write_probe
+# Local virtualenv for running the test suite (see LOCAL_RUN.md) — never source
+.venv/
 
 # Session signing key — sourced from CSS_SESSION_SECRET env on the Space; never commit
 .session_secret
