@@ -1,0 +1,649 @@
+"""
+Work arrangement module (ANNEX C) — the semi-monthly internal work schedule:
+period and deadline arithmetic, field validation, the staff-initiated change
+flow, approver routing through the shared org chain, the advisory (never
+blocking) coverage warnings, in-handler RBAC, and both annex exports.
+"""
+import io
+import sqlite3
+from datetime import date, timedelta
+
+import pytest
+
+import storage as st
+import tzutil as tz
+import work_arrangement_annex as wanx
+
+
+# --------------------------------------------------------------- fixtures ---
+
+@pytest.fixture()
+def wa_org(app_mod):
+    """A section with a chief, SIX staff (so the '4 of 6' coverage copy is
+    exercised with real numbers), a division chief above it, and a loner with no
+    directory link. Fresh rows per test; work_arrangement is wiped so period
+    occupancy and coverage start from zero."""
+    conn = st.connect(app_mod.DB)
+    st.init_db(conn)
+    conn.execute("DELETE FROM work_arrangement")
+    conn.execute("DELETE FROM admin_user WHERE username LIKE 'wa-%@test.local'")
+    conn.execute("DELETE FROM resource_person WHERE name LIKE 'WA-Test %'")
+    for path in ("TEST/WA/WASec", "TEST/WA"):
+        conn.execute("DELETE FROM org_unit WHERE path = ?", (path,))
+    div = conn.execute(
+        "INSERT INTO org_unit(name, short_name, level, path) "
+        "VALUES ('WA Test Division','WADiv','division','TEST/WA')").lastrowid
+    unit = conn.execute(
+        "INSERT INTO org_unit(name, short_name, level, path) "
+        "VALUES ('WA Test Section','WASec','section','TEST/WA/WASec')").lastrowid
+
+    def person(label, org, position, designation=None, role="viewer"):
+        rp = conn.execute(
+            "INSERT INTO resource_person(name, is_internal, org_unit_id, position, "
+            "designation) VALUES (?, 1, ?, ?, ?)",
+            (f"WA-Test {label}", org, position, designation)).lastrowid
+        return st.create_admin_user(conn, f"wa-{label.lower()}@test.local",
+                                    "x", "y", role, rp_id=rp)
+
+    dchief = person("DivChief", div, "Division Chief", "Division Chief",
+                    "section_manager")
+    chief = person("Chief", unit, "CHPO", "Section Head", "section_manager")
+    staff = [person(f"Staff{i}", unit, "HPO II") for i in range(6)]
+    loner = st.create_admin_user(conn, "wa-loner@test.local", "x", "y", "viewer")
+    conn.commit()
+    # A REAL admin account, not a synthetic {"id": 0} — decided_by is a foreign
+    # key, so a decision has to be attributable to an account that exists.
+    admin_row = st.get_admin_user(conn, "admin@test.local")
+    yield {"conn": conn, "unit": unit, "div": div, "path": "TEST/WA/WASec",
+           "dchief": dchief, "chief": chief, "staff": staff, "loner": loner,
+           "admin": {"id": admin_row["id"], "role": "admin"}}
+    conn.execute("DELETE FROM work_arrangement")
+    conn.execute("DELETE FROM admin_user WHERE username LIKE 'wa-%@test.local'")
+    conn.execute("DELETE FROM resource_person WHERE name LIKE 'WA-Test %'")
+    for path in ("TEST/WA/WASec", "TEST/WA"):
+        conn.execute("DELETE FROM org_unit WHERE path = ?", (path,))
+    conn.commit()
+    conn.close()
+
+
+def _client_for_id(app_mod, uid):
+    from starlette.testclient import TestClient
+    import auth
+    conn = st.connect(app_mod.DB)
+    u = st.get_admin_user_by_id(conn, uid)
+    conn.close()
+    c = TestClient(app_mod.app, raise_server_exceptions=True)
+    c.cookies.set(auth.COOKIE_NAME, auth.make_token(
+        {"id": u["id"], "username": u["username"], "role": u["role"]}))
+    return c
+
+
+def _open(n=0):
+    return st.work_arrangement_open_periods()[n]
+
+
+def _u(uid, role="viewer"):
+    return {"id": uid, "role": role}
+
+
+# --------------------------------------------------- periods and deadlines ---
+
+def test_period_key_splits_the_month_at_the_16th():
+    assert st.work_arrangement_period(date(2026, 8, 1)) == "2026-08-01"
+    assert st.work_arrangement_period(date(2026, 8, 15)) == "2026-08-01"
+    assert st.work_arrangement_period(date(2026, 8, 16)) == "2026-08-16"
+    assert st.work_arrangement_period(date(2026, 8, 31)) == "2026-08-16"
+
+
+@pytest.mark.parametrize("ps,last,label", [
+    ("2026-08-01", 15, "August 1-15, 2026"),
+    ("2026-08-16", 31, "August 16-31, 2026"),      # the source sheets' titles
+    ("2026-09-16", 30, "September 16-30, 2026"),
+    ("2026-02-16", 28, "February 16-28, 2026"),
+    ("2028-02-16", 29, "February 16-29, 2028"),    # leap year
+])
+def test_period_bounds_and_label(ps, last, label):
+    start, end = st.work_arrangement_period_bounds(ps)
+    assert start.isoformat() == ps
+    assert end.day == last
+    assert st.work_arrangement_period_label(ps) == label
+
+
+def test_periods_step_across_a_year_boundary():
+    assert st.work_arrangement_next_period("2026-12-16") == "2027-01-01"
+    assert st.work_arrangement_prev_period("2027-01-01") == "2026-12-16"
+    for ps in ("2026-08-01", "2026-08-16", "2026-12-16", "2027-01-01"):
+        assert st.work_arrangement_prev_period(
+            st.work_arrangement_next_period(ps)) == ps
+
+
+@pytest.mark.parametrize("ps,deadline", [
+    ("2026-08-16", "2026-08-14"),      # period starts Sunday -> Friday before
+    ("2026-09-01", "2026-08-28"),      # period starts Tuesday
+    ("2027-01-01", "2026-12-25"),      # period starts ON a Friday -> Friday PRIOR
+])
+def test_deadline_is_the_friday_before_the_period(ps, deadline):
+    d = st.work_arrangement_deadline(ps)
+    assert d.isoformat() == deadline
+    assert d.weekday() == 4                                  # always a Friday
+    assert d < date.fromisoformat(ps)                        # always strictly before
+
+
+def test_filing_window_closes_the_day_after_the_deadline(monkeypatch):
+    """The deadline Friday itself is still open; the Saturday after is not, and
+    a period that has already begun is never open."""
+    def at(d):
+        monkeypatch.setattr(tz, "today_local", lambda: d)
+        return st.work_arrangement_open_periods()
+
+    assert "2026-08-16" in at(date(2026, 8, 13))             # Thursday before
+    assert "2026-08-16" in at(date(2026, 8, 14))             # the deadline itself
+    assert "2026-08-16" not in at(date(2026, 8, 15))         # the day after
+    # ...and once inside the period it stays shut.
+    assert at(date(2026, 8, 20))[0] == "2026-09-01"
+
+
+# ----------------------------------------------------- field validation ------
+
+def test_reg_takes_no_weekday(wa_org):
+    conn, emp = wa_org["conn"], wa_org["staff"][0]
+    wa = st.create_work_arrangement(conn, emp, _open(), "REG", weekday=3)
+    assert st.get_work_arrangement(conn, wa)["weekday"] is None
+    assert st.get_work_arrangement(conn, wa)["remarks"] == ""
+
+
+def test_day_types_require_a_weekday(wa_org):
+    conn, emp = wa_org["conn"], wa_org["staff"][0]
+    for arrangement in ("CWW", "WFH"):
+        with pytest.raises(ValueError, match="Monday to Friday"):
+            st.create_work_arrangement(conn, emp, _open(), arrangement)
+
+
+@pytest.mark.parametrize("weekday", [5, 6, -1, 99])
+def test_weekday_must_be_within_the_work_week(wa_org, weekday):
+    conn, emp = wa_org["conn"], wa_org["staff"][0]
+    with pytest.raises(ValueError, match="work week"):
+        st.create_work_arrangement(conn, emp, _open(), "CWW", weekday)
+
+
+def test_unknown_arrangement_is_rejected(wa_org):
+    conn, emp = wa_org["conn"], wa_org["staff"][0]
+    with pytest.raises(ValueError, match="work arrangement"):
+        st.create_work_arrangement(conn, emp, _open(), "HYBRID", 1)
+
+
+@pytest.mark.parametrize("arrangement,weekday,note,expected", [
+    ("CWW", 4, None, "Friday Day off"),
+    ("WFH", 2, None, "Wednesday WFH"),
+    ("REG", None, None, ""),
+    ("CWW", 4, "for approval from OSEC", "Friday Day off — for approval from OSEC"),
+])
+def test_remarks_match_the_annex_wording(arrangement, weekday, note, expected):
+    assert st._wa_remarks(arrangement, weekday, note) == expected
+
+
+def test_filing_for_a_closed_period_names_the_next_one(wa_org):
+    conn, emp = wa_org["conn"], wa_org["staff"][0]
+    closed = st.work_arrangement_prev_period(_open())
+    with pytest.raises(ValueError) as e:
+        st.create_work_arrangement(conn, emp, closed, "REG")
+    msg = str(e.value)
+    assert "deadline" in msg
+    assert st.work_arrangement_period_label(closed) in msg
+    # a refusal has to say what to do instead
+    assert st.work_arrangement_period_label(_open()) in msg
+
+
+def test_filing_too_far_ahead_is_refused(wa_org):
+    conn, emp = wa_org["conn"], wa_org["staff"][0]
+    far = _open(1)
+    for _ in range(2):
+        far = st.work_arrangement_next_period(far)
+    with pytest.raises(ValueError, match="isn't open for filing yet"):
+        st.create_work_arrangement(conn, emp, far, "REG")
+
+
+# ------------------------------------------------------------ uniqueness ----
+
+def test_one_live_arrangement_per_person_per_period(wa_org):
+    conn, emp, ps = wa_org["conn"], wa_org["staff"][0], _open()
+    st.create_work_arrangement(conn, emp, ps, "WFH", 4)
+    with pytest.raises(ValueError, match="waiting for approval"):
+        st.create_work_arrangement(conn, emp, ps, "CWW", 0)
+
+
+def test_the_partial_index_backstops_a_double_submit(wa_org):
+    """The Python pre-check says it in English; the index is what actually
+    holds if two submits race."""
+    conn, emp, ps = wa_org["conn"], wa_org["staff"][0], _open()
+    st.create_work_arrangement(conn, emp, ps, "WFH", 4)
+    with pytest.raises(sqlite3.IntegrityError):
+        conn.execute(
+            "INSERT INTO work_arrangement(user_id, period_start, arrangement, "
+            "weekday, status) VALUES (?,?,'CWW',0,'pending')", (emp, ps))
+    conn.rollback()
+    # ...but a decided row is outside the constraint, so history accumulates.
+    conn.execute(
+        "INSERT INTO work_arrangement(user_id, period_start, arrangement, "
+        "weekday, status) VALUES (?,?,'CWW',0,'denied')", (emp, ps))
+    conn.commit()
+
+
+def test_withdrawing_or_being_denied_frees_the_period(wa_org):
+    conn, emp, ps = wa_org["conn"], wa_org["staff"][0], _open()
+    first = st.create_work_arrangement(conn, emp, ps, "WFH", 4)
+    st.cancel_work_arrangement(conn, first, emp)
+    assert st.my_pending_work_arrangement(conn, emp, ps) is None
+
+    second = st.create_work_arrangement(conn, emp, ps, "CWW", 0)
+    st.decide_work_arrangement(conn, second, wa_org["admin"], "deny")
+    third = st.create_work_arrangement(conn, emp, ps, "REG")
+    assert st.get_work_arrangement(conn, third)["status"] == "pending"
+
+
+def test_only_a_pending_request_can_be_withdrawn(wa_org):
+    conn, emp, ps = wa_org["conn"], wa_org["staff"][0], _open()
+    wa = st.create_work_arrangement(conn, emp, ps, "REG")
+    with pytest.raises(ValueError, match="isn't your work arrangement"):
+        st.cancel_work_arrangement(conn, wa, wa_org["staff"][1])
+    st.decide_work_arrangement(conn, wa, wa_org["admin"], "approve")
+    with pytest.raises(ValueError, match="waiting for approval"):
+        st.cancel_work_arrangement(conn, wa, emp)
+
+
+# ------------------------------------------------ staff-initiated changes ----
+
+def _approved(org, uid, arrangement="WFH", weekday=4, ps=None):
+    conn, ps = org["conn"], ps or _open()
+    wa = st.create_work_arrangement(conn, uid, ps, arrangement, weekday)
+    st.decide_work_arrangement(conn, wa, org["admin"], "approve")
+    return wa
+
+
+def test_a_change_leaves_the_original_in_force_until_decided(wa_org):
+    conn, emp, ps = wa_org["conn"], wa_org["staff"][0], _open()
+    orig = _approved(wa_org, emp)
+    chg = st.request_work_arrangement_change(conn, orig, emp, "CWW", 0)
+
+    assert st.get_work_arrangement(conn, chg)["supersedes_id"] == orig
+    assert st.get_work_arrangement(conn, chg)["is_change"]
+    # the schedule in force has not moved
+    assert st.my_work_arrangement_for(conn, emp, ps)["id"] == orig
+    assert st.get_work_arrangement(conn, orig)["status"] == "approved"
+
+
+def test_approving_a_change_supersedes_the_original(wa_org):
+    conn, emp, ps = wa_org["conn"], wa_org["staff"][0], _open()
+    orig = _approved(wa_org, emp)
+    chg = st.request_work_arrangement_change(conn, orig, emp, "CWW", 0)
+    st.decide_work_arrangement(conn, chg, wa_org["admin"], "approve")
+
+    assert st.get_work_arrangement(conn, orig)["status"] == "superseded"
+    live = st.my_work_arrangement_for(conn, emp, ps)
+    assert live["id"] == chg and live["remarks"] == "Monday Day off"
+    # exactly one approved row survives for the period
+    assert conn.execute(
+        "SELECT COUNT(*) FROM work_arrangement WHERE user_id=? AND period_start=? "
+        "AND status='approved'", (emp, ps)).fetchone()[0] == 1
+
+
+@pytest.mark.parametrize("action", ["deny", "cancel"])
+def test_a_rejected_change_leaves_the_original_standing(wa_org, action):
+    conn, emp, ps = wa_org["conn"], wa_org["staff"][0], _open()
+    orig = _approved(wa_org, emp)
+    chg = st.request_work_arrangement_change(conn, orig, emp, "CWW", 0)
+    if action == "deny":
+        st.decide_work_arrangement(conn, chg, wa_org["admin"], "deny")
+    else:
+        st.cancel_work_arrangement(conn, chg, emp)
+
+    assert st.my_work_arrangement_for(conn, emp, ps)["id"] == orig
+    assert st.my_work_arrangement_for(conn, emp, ps)["remarks"] == "Friday WFH"
+
+
+def test_only_the_owner_may_start_a_change(wa_org):
+    conn, emp, ps = wa_org["conn"], wa_org["staff"][0], _open()
+    orig = _approved(wa_org, emp)
+    # not the section chief, and not an admin — a schedule is the person's own
+    with pytest.raises(PermissionError):
+        st.request_work_arrangement_change(conn, orig, wa_org["chief"], "REG")
+
+
+def test_a_pending_request_is_withdrawn_not_changed(wa_org):
+    conn, emp, ps = wa_org["conn"], wa_org["staff"][0], _open()
+    wa = st.create_work_arrangement(conn, emp, ps, "WFH", 4)
+    with pytest.raises(ValueError, match="withdraw it and file again"):
+        st.request_work_arrangement_change(conn, wa, emp, "REG")
+
+
+def test_one_change_in_flight_at_a_time_and_no_no_ops(wa_org):
+    conn, emp, ps = wa_org["conn"], wa_org["staff"][0], _open()
+    orig = _approved(wa_org, emp)
+    with pytest.raises(ValueError, match="already have"):
+        st.request_work_arrangement_change(conn, orig, emp, "WFH", 4)
+    st.request_work_arrangement_change(conn, orig, emp, "CWW", 0)
+    with pytest.raises(ValueError, match="already have a change waiting"):
+        st.request_work_arrangement_change(conn, orig, emp, "REG")
+
+
+def test_a_change_after_the_deadline_is_refused(wa_org, monkeypatch):
+    conn, emp, ps = wa_org["conn"], wa_org["staff"][0], _open()
+    orig = _approved(wa_org, emp)
+    past = st.work_arrangement_deadline(ps) + timedelta(days=1)
+    monkeypatch.setattr(tz, "today_local", lambda: past)
+    with pytest.raises(ValueError, match="deadline"):
+        st.request_work_arrangement_change(conn, orig, emp, "CWW", 0)
+
+
+# ------------------------------------------------------ approver routing ----
+
+def test_escalation_uses_the_shared_org_chain(wa_org):
+    conn = wa_org["conn"]
+    assert st.get_approvers_for(conn, wa_org["staff"][0]) == [wa_org["chief"]]
+    # a section chief escalates to the division chief, never to themselves
+    assert st.get_approvers_for(conn, wa_org["chief"]) == [wa_org["dchief"]]
+    # nobody off the chain resolves; admins are the fallback
+    assert st.get_approvers_for(conn, wa_org["loner"]) == []
+    assert st.is_approver_for(conn, wa_org["admin"], wa_org["loner"])
+
+
+def test_the_wellness_names_are_the_same_functions():
+    """Phase 0 bound the old names to the shared implementations rather than
+    copying them. If someone un-aliases these, the two modules drift apart."""
+    for old, new in [
+        (st._wellness_rank, st._org_rank),
+        (st._wellness_parent_path, st._org_parent_path),
+        (st._wellness_accounts_at_rank, st._org_accounts_at_rank),
+        (st._wellness_role_filled, st._org_role_filled),
+        (st._wellness_seat_name, st._org_seat_name),
+        (st._wellness_dashboard_scope, st._org_scope_for_user),
+        (st._wellness_in_scope, st._path_in_scope),
+        (st.wellness_approver_name, st.approver_name_for),
+        (st.get_wellness_approvers, st.get_approvers_for),
+        (st.is_wellness_approver, st.is_approver_for),
+        (st.user_is_wellness_chief, st.user_is_approving_chief),
+        (st.wellness_approver_title, st.approver_title_for),
+    ]:
+        assert old is new
+
+
+def test_queue_is_scoped_to_what_the_chain_routes(wa_org):
+    conn, ps = wa_org["conn"], _open()
+    mine = st.create_work_arrangement(conn, wa_org["staff"][0], ps, "REG")
+    chiefs_own = st.create_work_arrangement(conn, wa_org["chief"], ps, "REG")
+    st.create_work_arrangement(conn, wa_org["loner"], ps, "REG")
+
+    queue = st.list_work_arrangement_approvals(
+        conn, _u(wa_org["chief"], "section_manager"))
+    ids = [w["id"] for w in queue]
+    assert mine in ids
+    assert chiefs_own not in ids                     # escalates one level further
+    # ...and it lands with the division chief instead
+    dq = [w["id"] for w in st.list_work_arrangement_approvals(
+        conn, _u(wa_org["dchief"], "section_manager"))]
+    assert chiefs_own in dq and mine not in dq
+    # a plain viewer sees no queue at all
+    assert st.list_work_arrangement_approvals(conn, _u(wa_org["staff"][1])) == []
+
+
+def test_decide_guards_state_and_authority(wa_org):
+    conn, ps = wa_org["conn"], _open()
+    wa = st.create_work_arrangement(conn, wa_org["staff"][0], ps, "REG")
+    with pytest.raises(PermissionError):
+        st.decide_work_arrangement(conn, wa, _u(wa_org["staff"][1]), "approve")
+    with pytest.raises(ValueError, match="Unknown decision"):
+        st.decide_work_arrangement(conn, wa, wa_org["admin"], "maybe")
+
+    row = st.decide_work_arrangement(conn, wa, wa_org["admin"], "approve",
+                                     "keeps Tuesday covered")
+    assert row["status"] == "approved"
+    assert row["decided_at"] and row["decide_note"] == "keeps Tuesday covered"
+    with pytest.raises(ValueError, match="already been decided"):
+        st.decide_work_arrangement(conn, wa, wa_org["admin"], "deny")
+
+
+# ---------------------------------------------------------------- coverage ---
+
+def test_coverage_counts_cww_and_wfh_apart(wa_org):
+    conn, ps, path = wa_org["conn"], _open(), wa_org["path"]
+    for i in range(3):
+        _approved(wa_org, wa_org["staff"][i], "CWW", 4)
+    _approved(wa_org, wa_org["staff"][3], "WFH", 4)
+
+    cov = st.work_arrangement_coverage(conn, path, ps)
+    fri = cov["weekdays"][4]
+    assert (fri["cww"], fri["wfh"], fri["offsite"]) == (3, 1, 4)
+    assert cov["headcount"] == 7                     # 6 staff + the section chief
+    assert fri["onsite"] == 3
+    assert cov["weekdays"][0]["offsite"] == 0        # Monday untouched
+
+
+def test_coverage_ignores_denied_and_withdrawn_rows(wa_org):
+    conn, ps, path = wa_org["conn"], _open(), wa_org["path"]
+    _approved(wa_org, wa_org["staff"][0], "CWW", 4)
+    denied = st.create_work_arrangement(conn, wa_org["staff"][1], ps, "CWW", 4)
+    st.decide_work_arrangement(conn, denied, wa_org["admin"], "deny")
+    withdrawn = st.create_work_arrangement(conn, wa_org["staff"][2], ps, "CWW", 4)
+    st.cancel_work_arrangement(conn, withdrawn, wa_org["staff"][2])
+
+    assert st.work_arrangement_coverage(conn, path, ps)["weekdays"][4]["offsite"] == 1
+
+
+def test_a_pending_change_outranks_the_row_it_replaces(wa_org):
+    """Coverage answers "what is being asked for", so an in-flight change is the
+    state the chief is deciding on."""
+    conn, ps, path = wa_org["conn"], _open(), wa_org["path"]
+    emp = wa_org["staff"][0]
+    orig = _approved(wa_org, emp, "CWW", 4)
+    st.request_work_arrangement_change(conn, orig, emp, "CWW", 0)
+
+    cov = st.work_arrangement_coverage(conn, path, ps)
+    assert cov["weekdays"][4]["offsite"] == 0        # no longer off on Friday
+    assert cov["weekdays"][0]["offsite"] == 1        # off on Monday instead
+
+
+def test_coverage_warns_but_never_blocks(wa_org):
+    """The whole point of the rule: a thin day is advice, not a refusal."""
+    conn, ps, path = wa_org["conn"], _open(), wa_org["path"]
+    for i in range(3):
+        _approved(wa_org, wa_org["staff"][i], "CWW", 4)
+    _approved(wa_org, wa_org["staff"][3], "WFH", 4)
+
+    emp = wa_org["staff"][4]
+    note = st.work_arrangement_coverage_note(conn, emp, ps, "CWW", 4)
+    assert "Friday" in note and "4 of 6" in note
+
+    # ...and it still goes through, and can still be approved.
+    wa = st.create_work_arrangement(conn, emp, ps, "CWW", 4)
+    assert st.decide_work_arrangement(
+        conn, wa, wa_org["admin"], "approve")["status"] == "approved"
+    assert st.work_arrangement_coverage(conn, path, ps)["weekdays"][4]["onsite"] == 2
+
+
+def test_coverage_flag_escalates_to_nobody_on_site(wa_org):
+    """The section is 7 (six staff + the chief). With five already off on
+    Friday, the sixth filing leaves only the chief, and the chief filing leaves
+    nobody at all."""
+    conn, ps = wa_org["conn"], _open()
+    for i in range(5):
+        _approved(wa_org, wa_org["staff"][i], "CWW", 4)
+
+    def flag_for(uid):
+        wa = st.create_work_arrangement(conn, uid, ps, "CWW", 4)
+        return st.work_arrangement_coverage_flag(
+            conn, st.get_work_arrangement(conn, wa))
+
+    assert flag_for(wa_org["staff"][5]) == "Only 1 on-site on Friday after this"
+    assert flag_for(wa_org["chief"]) == "Approving leaves nobody on-site on Friday"
+
+
+def test_coverage_is_silent_for_reg_and_the_undirectoried(wa_org):
+    conn, ps = wa_org["conn"], _open()
+    assert st.work_arrangement_coverage_note(
+        conn, wa_org["staff"][0], ps, "REG", None) == ""
+    assert st.work_arrangement_coverage_note(
+        conn, wa_org["loner"], ps, "CWW", 4) == ""
+
+
+# ------------------------------------------------------ roster and exports ---
+
+def test_the_roster_shows_people_who_never_filed(wa_org):
+    """The blanks are the information — the whole reason the export reads from
+    admin_user outward rather than from work_arrangement inward."""
+    conn, ps = wa_org["conn"], _open()
+    _approved(wa_org, wa_org["staff"][0], "WFH", 4)
+
+    d = st.work_arrangement_period_summary(conn, ps,
+                                           _u(wa_org["chief"], "section_manager"))
+    assert d["filed"] == 1 and d["headcount"] == 7
+    assert "WA-Test Staff5" in d["unfiled"]
+    assert d["thinnest"]["name"] == "Friday"
+
+
+def test_export_prints_only_approved_rows(wa_org):
+    conn, ps = wa_org["conn"], _open()
+    _approved(wa_org, wa_org["staff"][0], "CWW", 4)
+    st.create_work_arrangement(conn, wa_org["staff"][1], ps, "WFH", 2)   # pending
+
+    rows = {r["name"]: r for r in st.work_arrangement_export_rows(conn, ps)}
+    assert rows["WA-Test Staff0"]["arrangement"] == "CWW"
+    assert rows["WA-Test Staff0"]["remarks"] == "Friday Day off"
+    # pending and unfiled people are PRESENT, with both cells blank
+    assert rows["WA-Test Staff1"]["arrangement"] == ""
+    assert rows["WA-Test Staff1"]["remarks"] == ""
+    assert rows["WA-Test Staff5"]["arrangement"] == ""
+    assert [r["no"] for r in st.work_arrangement_export_rows(conn, ps)][:3] == [1, 2, 3]
+
+
+def test_only_accounts_appear_on_the_annex(wa_org):
+    """Product decision: staff without an app account are out of scope."""
+    conn, ps = wa_org["conn"], _open()
+    conn.execute(
+        "INSERT INTO resource_person(name, is_internal, org_unit_id, position) "
+        "VALUES ('WA-Test NoAccount', 1, ?, 'GIP')", (wa_org["unit"],))
+    conn.commit()
+    names = [r["name"] for r in st.work_arrangement_export_rows(conn, ps)]
+    assert "WA-Test NoAccount" not in names
+
+
+def test_annex_xlsx_reproduces_the_form(wa_org, app_mod):
+    from openpyxl import load_workbook
+    conn, ps = wa_org["conn"], _open()
+    _approved(wa_org, wa_org["staff"][0], "CWW", 4)
+
+    r = _client_for_id(app_mod, wa_org["chief"]).get(
+        f"/work-arrangement/annex-c.xlsx?period={ps}")
+    assert r.status_code == 200
+    assert "spreadsheetml" in r.headers["content-type"]
+    assert "ANNEX-C-Work-Arrangement" in r.headers["content-disposition"]
+
+    wb = load_workbook(io.BytesIO(r.content))
+    assert wb.sheetnames == [st.work_arrangement_period_label(ps)]
+    flat = "\n".join(
+        " | ".join("" if c is None else str(c) for c in row)
+        for row in wb.active.iter_rows(values_only=True))
+    for probe in ["ANNEX C", "INTERNAL WORK ARRANGEMENT SCHEDULE",
+                  st.BUREAU_NAME, st.work_arrangement_period_label(ps),
+                  st.WORK_ARRANGEMENT_LEGEND,          # verbatim, not reflowed
+                  "Prepared by:", "Approved by:",
+                  "WA-Test Staff0 | HPO II | WASec | CWW | Friday Day off"]:
+        assert probe in flat, probe
+    for header in wanx.HEADERS:
+        assert header in flat
+
+
+def test_annex_xlsx_month_gives_both_halves(wa_org, app_mod):
+    from openpyxl import load_workbook
+    ps = _open()
+    r = _client_for_id(app_mod, wa_org["chief"]).get(
+        f"/work-arrangement/annex-c.xlsx?month={ps[:7]}")
+    assert r.status_code == 200
+    assert load_workbook(io.BytesIO(r.content)).sheetnames == [
+        st.work_arrangement_period_label(f"{ps[:7]}-01"),
+        st.work_arrangement_period_label(f"{ps[:7]}-16")]
+
+
+def test_annex_pdf_downloads(wa_org, app_mod):
+    conn, ps = wa_org["conn"], _open()
+    _approved(wa_org, wa_org["staff"][0], "WFH", 4)
+    r = _client_for_id(app_mod, wa_org["chief"]).get(
+        f"/work-arrangement/annex-c.pdf?period={ps}")
+    assert r.status_code == 200
+    assert r.headers["content-type"] == "application/pdf"
+    assert r.content[:4] == b"%PDF"
+
+
+def test_a_malformed_month_redirects_rather_than_500s(wa_org, app_mod):
+    r = _client_for_id(app_mod, wa_org["chief"]).get(
+        "/work-arrangement/annex-c.xlsx?month=nonsense", follow_redirects=False)
+    assert r.status_code == 303
+
+
+# ------------------------------------------------------------------- RBAC ---
+
+@pytest.mark.parametrize("path", [
+    "/work-arrangement/approvals", "/work-arrangement/schedule",
+    "/work-arrangement/annex-c.xlsx", "/work-arrangement/annex-c.pdf",
+])
+def test_chief_only_pages_are_gated(wa_org, app_mod, path):
+    assert _client_for_id(app_mod, wa_org["staff"][0]).get(path).status_code == 403
+    assert _client_for_id(app_mod, wa_org["chief"]).get(path).status_code == 200
+
+
+def test_everyone_signed_in_gets_the_hub_and_the_form(wa_org, app_mod):
+    c = _client_for_id(app_mod, wa_org["staff"][0])
+    assert c.get("/work-arrangement").status_code == 200
+    assert c.get("/work-arrangement/file").status_code == 200
+
+
+def test_a_non_approver_cannot_decide_over_http(wa_org, app_mod):
+    conn, ps = wa_org["conn"], _open()
+    wa = st.create_work_arrangement(conn, wa_org["staff"][0], ps, "REG")
+    r = _client_for_id(app_mod, wa_org["staff"][1]).post(
+        f"/work-arrangement/{wa}/decide", data={"action": "approve"})
+    assert r.status_code == 403
+    assert st.get_work_arrangement(conn, wa)["status"] == "pending"
+
+
+# ------------------------------------------------------- pages and wiring ---
+
+def test_file_page_carries_live_coverage_data(wa_org, app_mod):
+    conn, ps = wa_org["conn"], _open()
+    _approved(wa_org, wa_org["staff"][0], "CWW", 4)
+    r = _client_for_id(app_mod, wa_org["staff"][1]).get("/work-arrangement/file")
+    assert r.status_code == 200
+    assert "data-coverage=" in r.text
+
+
+def test_approvals_page_flags_thin_coverage_without_disabling_the_buttons(
+        wa_org, app_mod):
+    conn, ps = wa_org["conn"], _open()
+    for i in range(5):
+        _approved(wa_org, wa_org["staff"][i], "CWW", 4)
+    st.create_work_arrangement(conn, wa_org["staff"][5], ps, "CWW", 4)
+
+    r = _client_for_id(app_mod, wa_org["chief"]).get("/work-arrangement/approvals")
+    assert r.status_code == 200
+    assert "on-site on Friday" in r.text
+    assert 'value="approve"' in r.text and 'value="deny"' in r.text
+    assert "disabled" not in r.text
+
+
+def test_schedule_page_lists_the_unfiled(wa_org, app_mod):
+    r = _client_for_id(app_mod, wa_org["chief"]).get("/work-arrangement/schedule")
+    assert r.status_code == 200
+    assert "not yet filed" in r.text
+
+
+def test_landing_page_offers_the_third_door(wa_org, app_mod):
+    r = _client_for_id(app_mod, wa_org["staff"][0]).get("/")
+    assert r.status_code == 200
+    assert 'href="/work-arrangement"' in r.text
+
+
+def test_nav_and_search_expose_the_module(app_mod):
+    class U:
+        role = "viewer"
+    urls = {it["url"] for g in app_mod.nav_groups_for(U()) for it in g["items"]}
+    assert "/work-arrangement" in urls
+    assert "/work-arrangement" in {it["url"] for it in app_mod.search_index_for(U())}

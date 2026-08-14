@@ -1,5 +1,92 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-08-14 (v2.58 — the ANNEX C work arrangement schedule becomes a record, not a spreadsheet)
+
+**Symptom.** BLHSD maintained its Internal Work Arrangement Schedule (ANNEX C) as
+a hand-kept Excel file, one sheet per half-month, 45 staff. Reviewing the live
+file (`August 16_31_2026.xlsx`) surfaced four failure modes, all of them
+structural rather than clerical:
+
+1. **23 of 45 rows blank** on the Aug 1–15 sheet. The period was never finished
+   and nothing in the file makes an unfilled row distinguishable from a
+   deliberate one.
+2. **No approval trail.** One row read *"With requst WFH due to medical
+   condition, for approval from OSEC"* — a pending decision parked in a
+   free-text cell, with no record of who decides it or when.
+3. **Identity drift.** "Ventura, Ray Justine" on one sheet, "Ray Justin" on the
+   other. Two spellings of one person, in one workbook.
+4. **No coverage check.** 18 of 45 staff (40%) off-site every Friday; Tuesday had
+   2. Nothing surfaces that at the moment someone picks their day — the only
+   moment it is cheap to change.
+
+**Fix.** A new module built on the wellness module's shape (per-employee,
+date-keyed, status machine, approver resolved from the org chart, official-form
+export), because that pattern already solves this problem in this codebase.
+
+- **`storage.py`** — the shared **"Org chain of command"** section, lifted out of
+  the wellness block: `_org_rank`, `_org_parent_path`, `_org_accounts_at_rank`,
+  `_org_role_filled`, `_org_seat_name`, `approver_name_for`, `get_approvers_for`,
+  `is_approver_for`, `user_is_approving_chief`, `approver_title_for`,
+  `_org_scope_for_user`, `_path_in_scope`. Who approves you is a fact about the
+  org chart, not about what you are asking for. The old `wellness_*` names are
+  bound as module-level aliases — the SAME functions, not copies — so every call
+  site and both wellness suites keep working untouched. (An alias is an identity
+  binding: `monkeypatch.setattr(st, "get_approvers_for", ...)` would not affect
+  `st.get_wellness_approvers`. Nothing patches these today.)
+- **`storage.py`** — the `work_arrangement` table. `period_start`
+  (`'YYYY-MM-01'`/`'YYYY-MM-16'`) keys the period the way `wellness_claim.week_start`
+  keys a week. **Two** partial unique indexes, not one: at most one `approved`
+  AND at most one `pending` per person per period — one schedule in force plus
+  one change in flight. Denied, withdrawn and superseded rows fall outside both,
+  so the trail accumulates and re-filing after a denial still works.
+- **`storage.py`** — the deadline is the last Friday **strictly** before a period
+  begins (a period starting on a Friday closes the Friday prior). A period that
+  has begun is closed. Every refusal names both the missed deadline and the next
+  open period.
+- **`storage.py`** — the Remarks cell ("Friday Day off", "Wednesday WFH") is
+  **derived** from `arrangement` + `weekday`, never stored. The source file's
+  hidden `Lists` sheet is exactly that cross product.
+- **`storage.py`** — changes are staff-initiated only, and file a successor with
+  `supersedes_id` rather than editing in place. Approving one retires its
+  predecessor in the same transaction, so the "one approved per period" index is
+  never momentarily violated. Fixes (2).
+- **`storage.py`** — `work_arrangement_coverage` is the first **advisory** rule in
+  the codebase: `create_work_arrangement` never consults it and it never raises.
+  CWW and WFH are counted apart (a compressed day off removes a person; a WFH
+  person is still working). Scope is the exact section path, not the subtree — a
+  division rollup would hide an empty section behind a full one. One function
+  behind both the employee's live note and the chief's queue flag, so the two
+  cannot contradict each other. Addresses (4).
+- **`storage.py`** — `work_arrangement_roster` reads **FROM `admin_user` outward**,
+  not from `work_arrangement` inward. The blanks are the information: someone who
+  never filed is a named row, not a silent gap. Fixes (1).
+- **`work_arrangement_annex.py`** (new) — both annex builders in one module,
+  because the masthead, the six columns, the verbatim legend and the signature
+  block must be identical across Excel and PDF. Excel gets a sheet per half-month
+  (`?month=` renders both halves, the file the bureau circulates); the PDF is A4
+  **landscape**, since six columns do not fit portrait. Signatories resolve from
+  live directory data — the Director via the shared org chain, the preparer from
+  an `app_setting` override or the exporting user. Nothing else in this repo
+  hardcodes a person's name. Names coming from `resource_person` fixes (3).
+- **`app.py`** — hub, filing form (which doubles as the change form), change and
+  withdraw posts, approvals queue, decide, period schedule, and the two annex
+  downloads. Chief-only pages gate in-handler on `st.user_is_approving_chief`,
+  the wellness precedent, because "section chief" is a directory fact and not one
+  of the four roles — so `_required_cap()` needs no entry. New nav group and a
+  third door on the landing chooser.
+- **`deploy_hf.py`** — `work_arrangement_annex.py` added to `RUNTIME_PY`. A module
+  imported by `app.py` but missing there is a production `ModuleNotFoundError`
+  (see the v2.40 hotfix).
+- **`tests/test_work_arrangement.py`** (new, 64 tests) — period and deadline
+  arithmetic across leap years, year boundaries and a period that starts on a
+  Friday; validation; the partial index as a race backstop; the full change flow
+  including denied-and-cancelled leaving the original standing; escalation
+  through the shared chain; an identity guard that the wellness aliases are the
+  same objects; coverage warning **and** the filing still succeeding and being
+  approvable; RBAC; both exports asserted against the form's actual text.
+  `tests/test_search.py` and `tests/test_routes.py` pick up the new nav group
+  and routes.
+
 ## 2026-08-11 (v2.57 — the MRR activity workbook stops repeating itself, row to row)
 
 **Symptom.** Every row of `AGENDA 4_Sheet1` in the activity Excel download read

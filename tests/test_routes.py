@@ -13,6 +13,8 @@ GET_ROUTES = [
     "/reports?type=2", "/reports?type=3",
     "/reports/verbatims", "/directory", "/directory/staff/new",
     "/arta", "/encode", "/admin/users", "/admin/audit",
+    "/work-arrangement", "/work-arrangement/file", "/work-arrangement/approvals",
+    "/work-arrangement/schedule",
 ]
 
 @pytest.mark.parametrize("path", GET_ROUTES)

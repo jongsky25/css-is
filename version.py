@@ -17,10 +17,50 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.57"
+APP_VERSION = "2.58"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.58",
+        "date": "August 14, 2026",
+        "summary": "New Work Arrangement module: file your ANNEX C schedule "
+                   "for each half of the month, ask to change it, and let the "
+                   "system produce the annex the bureau submits.",
+        "changes": [
+            "There is now a third door after you sign in, beside Wellness and "
+            "CSS: Work arrangement. Tell the system whether you are on a "
+            "regular 5-day on-site week (REG), a compressed workweek with a day "
+            "off (CWW), or working from home one day (WFH) — and which day.",
+            "You file once per half-month period, the same 1st-to-15th and "
+            "16th-to-end-of-month halves as the paper form. Your section chief "
+            "approves it; if you are a section chief, your division chief does.",
+            "Filing closes on the Friday before a period begins, so the "
+            "schedule is settled before the period starts. The page always "
+            "tells you the exact deadline and how many days are left, and if "
+            "you miss one it tells you which period you can still file for.",
+            "Already approved and something changed? Ask for a change. Only you "
+            "can start one — nobody can rewrite your schedule for you — and the "
+            "arrangement you already have stays in force until your approver "
+            "decides, so a denied change simply leaves things as they were.",
+            "While you pick your day you will see how many people in your "
+            "section are already off then, for example \"4 of 6 others in your "
+            "section are already off on Friday. Filing this leaves 1 on-site.\" "
+            "It is there to inform you, never to stop you.",
+            "Your section chief sees the same picture on the approvals queue, "
+            "flagged when approving would leave nobody on-site that day. The "
+            "decision is still theirs to make.",
+            "Chiefs and admins get a schedule page for each period: who has "
+            "filed, who has not yet, and how many people are on-site each "
+            "weekday. Anyone who has not filed shows up by name, so they can be "
+            "chased before the deadline instead of appearing as a blank row "
+            "afterwards.",
+            "ANNEX C itself now comes out of the system — as an Excel file (a "
+            "sheet per half-month, or the whole month in one file) and as a "
+            "print-ready PDF, with the legend and the Prepared by / Approved by "
+            "block already filled in from the directory.",
+        ],
+    },
     {
         "version": "2.57",
         "date": "August 11, 2026",
