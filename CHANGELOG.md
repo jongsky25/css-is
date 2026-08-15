@@ -1,5 +1,54 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-08-15 (v2.62 — the August 16-31 ANNEX C schedule, transcribed)
+
+### The period the module arrived too late for
+
+**Symptom.** `/work-arrangement/schedule` for August 16-31, 2026 shows 45 blank
+rows, and the workbook and PDF exports print the same. The bureau's real
+schedule for the period exists — it was filled in, submitted and signed on the
+Excel sheet the office has always circulated — but the ANNEX C module only
+shipped at v2.59, part-way through the month, so nobody had filed anything in
+the app for a period that was already decided on paper.
+
+**Why it could not simply be re-filed.** Filing closes on the last Friday
+*before* a period begins — Friday, August 14 for this one — and
+`storage.create_work_arrangement` refuses a closed period by design
+(`_wa_check_period_open`). That refusal is correct for staff and wrong for a
+transcription of a form already approved, and there is no admin "file on behalf"
+path. So the sheet is written in as approved rows directly, each carrying its
+provenance in `decide_note`.
+
+**Fix.** New `work_arrangement_backfill.py`: the 45 sheet rows as a constant,
+plus an idempotent apply that runs once at boot from `app.get_conn()`, guarded
+by an `app_setting` marker.
+
+* **42 arrangements** — 4 REG, 5 CWW, 33 WFH — with the weekday the Remarks cell
+  nominates. Remarks are not stored: `storage._wa_remarks` re-derives them, so
+  the printed annex reproduces the sheet's wording only if the stored
+  arrangement and weekday are right. The tests check exactly that.
+* **2 No AWA tags** — Sales ("...for approval from OSEC") and Bagos ("Leave") —
+  inserted with `effective_from` set to **the period**, not to whatever period
+  today falls in. `set_work_arrangement_noawa` uses today's, which would have
+  reached back over August 1-15 and quietly altered an annex already submitted.
+* **1 row left blank.** Orpilla is blank on the sheet with no reason given, and
+  stays blank. The difference between "no arrangement, and here's why" and
+  "nobody chased this" is the only signal the Admin Officer has, and inventing a
+  reason would erase it.
+
+**Non-destructive, in either order.** Anyone already holding a live arrangement
+or No AWA tag for the period is skipped, so a real filing or an admin's
+correction outranks the transcription whichever lands first. People are matched
+to accounts on order-free name tokens (the sheet writes "Delmendo, Eric" and
+"Medel Alexander R."; the directory holds "Eric Delmendo"). A row whose best
+match does not clear the runner-up is reported, never guessed — a wrong schedule
+on the annex is worse than a missing one, because only the missing one is
+visible. `--dry-run` prints the match report and writes nothing.
+
+31 tests in `tests/test_work_arrangement_backfill.py`; the module is registered
+in `deploy_hf.RUNTIME_PY` (`test_runtime_py_is_import_closed` catches the
+half-closure that would otherwise crash the Space on boot).
+
 ## 2026-08-15 (v2.61 — the directory search that did nothing on a phone; archiving people who left; the team comes from the org chart)
 
 ### The staff search box that looked dead
