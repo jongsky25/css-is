@@ -206,6 +206,18 @@ table.list tr:hover td { background:var(--surface-2); }
   table.resp-table td.actions { display:flex; flex-wrap:wrap; gap:.4rem; padding-top:.5rem; }
 }
 
+/* A row a page's search box filtered out. This lives HERE, right after the
+   responsive-table block and outside its media query, because that block is
+   what breaks it anywhere else: `table.resp-table tr { display:block }` is more
+   specific than a bare `tr.nomatch`, so the same rule written in a page's own
+   <style> quietly stopped hiding rows under 640px and the search box read as
+   dead on a phone. The second selector matches that specificity; the shared
+   `.no-hits` row is the empty state a filter with no matches reveals. */
+tr.nomatch, table.resp-table tr.nomatch { display:none; }
+tr.no-hits { display:none; }
+tr.no-hits.show, table.resp-table tr.no-hits.show { display:table-row; }
+@media (max-width:640px) { table.resp-table tr.no-hits.show { display:block; } }
+
 .crumbs { font-size:var(--fs-sm); color:var(--soft); margin:.2rem 0 .8rem; }
 .crumbs a { color:var(--soft); text-decoration:none; }
 .crumbs a:hover { color:var(--accent); text-decoration:underline; }

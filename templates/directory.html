@@ -50,7 +50,12 @@
             border-radius:8px; font-size:.92rem; background:var(--surface); }
   .dsearch .ico { position:absolute; left:.65rem; top:50%; transform:translateY(-50%); color:var(--soft);
             font-size:.9rem; pointer-events:none; }
-  tr.nomatch { display:none; }
+  /* tr.nomatch / tr.no-hits are in app.css — they have to outrank the
+     responsive-table rules, which a page-local copy does not. */
+  .arch .avatar2, .arch td { opacity:.72; }
+  .arch-why { color:var(--soft); font-size:.8rem; }
+  .dcard button.restore { background:var(--surface); color:var(--accent); border-color:var(--blue-ln);
+            padding:.3rem .6rem; font-size:.8rem; }
 </style>
 {% endblock %}
 
@@ -65,6 +70,7 @@
   <p style="margin:-.4rem 0 1rem;"><a class="addbtn" href="/directory/cleanup">⚙ Name cleanup tool</a>
      <span class="sub2">— proper-case, strip honorifics, merge duplicates &amp; split rosters fast.</span></p>
   {% if err %}<div class="flash err" role="alert">{{ err }}</div>{% endif %}
+  {% if msg %}<div class="flash ok" role="status">{{ msg }}</div>{% endif %}
   {% if pending %}
   <div class="warn" role="alert">
     <strong>Possible duplicate.</strong> “{{ pending.name }}” looks similar to existing {{ pending.label }}{{ "s" if pending.matches|length > 1 else "" }}:
@@ -250,11 +256,25 @@
         <td><span class="avatar2">{% if p.has_photo %}<img src="/photo/{{ p.id }}?v={{ loop.index }}" alt="">{% else %}{{ p.name[0]|upper }}{% endif %}</span></td>
         <td>{{ p.name }}{% if p.email %}<br><span class="sub2">{{ p.email }}</span>{% endif %}</td>
         <td>{{ p.position or "—" }}{% if p.designation %}<br><span class="sub2">{{ p.designation }}</span>{% endif %}</td>
-        <td>{{ p.org_path|short_path or "—" }}</td>
+        <!-- The unit's FULL name rides along under the short path: it is what
+             someone types when they search ("Section 4", "Equity"), and the
+             short path alone made those searches come back empty. -->
+        <td>{{ p.org_path|short_path or "—" }}
+          {% if unit_names.get(p.org_path) %}<br><span class="sub2">{{ unit_names[p.org_path] }}</span>{% endif %}</td>
         <td>{% if p.employment_type %}<span class="tag">{{ EMP_LABEL.get(p.employment_type, p.employment_type) }}</span>{% else %}—{% endif %}</td>
-        <td><a class="rowlink" href="/directory/person/{{ p.id }}/edit">Edit</a></td>
+        <td>
+          <div class="acts">
+            <a class="rowlink" href="/directory/person/{{ p.id }}/edit">Edit</a>
+            <form method="post" action="/directory/person/{{ p.id }}/archive" style="margin:0"
+                  data-name="{{ p.name }}" onsubmit="return askArchive(this)">
+              <input type="hidden" name="reason">
+              <button class="del" type="submit">Archive</button>
+            </form>
+          </div>
+        </td>
       </tr>
       {% else %}<tr><td colspan="6" class="empty">No internal staff yet.</td></tr>{% endfor %}
+      <tr class="no-hits"><td colspan="6" class="empty">No staff match that search.</td></tr>
     </table>
     </div>
     <div style="border-top:1px dashed var(--line); padding-top:.9rem;">
@@ -286,6 +306,7 @@
         </td>
       </tr>
       {% else %}<tr><td colspan="6" class="empty">No external resource persons yet.</td></tr>{% endfor %}
+      <tr class="no-hits"><td colspan="6" class="empty">No resource persons match that search.</td></tr>
     </table>
     </div>
     <a class="addbtn" href="/directory/external/new">+ Add external resource person</a>
@@ -300,12 +321,54 @@
       <tr><th>Name</th></tr>
       {% for o in orgs %}<tr><td>{{ o.name }}</td></tr>
       {% else %}<tr><td class="empty">No outside organizers yet.</td></tr>{% endfor %}
+      <tr class="no-hits"><td class="empty">No organizers match that search.</td></tr>
     </table>
     </div>
     <form class="add" method="post" action="/directory/external-org">
       <input type="text" name="name" placeholder="Agency / institution name" required>
       <button type="submit">Add organizer</button>
     </form>
+  </div>
+
+  <!-- ARCHIVED (people who have left the bureau) -->
+  <div class="dcard" id="archived">
+    <h2>Archived <span class="sub2">({{ archived|length }})</span></h2>
+    <p class="hint">People who have left — resigned, retired or transferred out. They keep every
+      rating, report and certificate they earned, but they no longer appear as current staff and
+      can't be picked as a speaker, served-by or signatory. <strong>Restore</strong> puts someone
+      back; re-enabling their sign-in stays a separate step on <a href="/admin/users">Users</a>.</p>
+    {% if archived %}
+    <div class="dsearch"><span class="ico" aria-hidden="true">🔍</span><input type="text" placeholder="Search archived people by name, section, reason…" oninput="filterTable(this)" aria-label="Search archived people"></div>
+    <div class="table-wrap">
+    <table class="resp-table">
+      <tr><th></th><th>Name</th><th>Was</th><th>Archived</th><th></th></tr>
+      {% for p in archived %}
+      <tr class="arch" id="row-p{{ p.id }}">
+        <td><span class="avatar2">{% if p.has_photo %}<img src="/photo/{{ p.id }}?v={{ loop.index }}" alt="">{% else %}{{ p.name[0]|upper }}{% endif %}</span></td>
+        <td>{{ p.name }}{% if p.email %}<br><span class="sub2">{{ p.email }}</span>{% endif %}</td>
+        <td>
+          {% if p.is_internal %}{{ p.position or p.designation or "Staff" }}
+            {% if p.org_path %}<br><span class="sub2">{{ p.org_path|short_path }}{% if unit_names.get(p.org_path) %} — {{ unit_names[p.org_path] }}{% endif %}</span>{% endif %}
+          {% else %}<span class="sub2">External — {{ p.agency or "no agency on file" }}</span>{% endif %}
+        </td>
+        <td class="arch-why">{{ p.archived_at[:10] if p.archived_at else "—" }}
+          {% if p.archived_reason %}<br>{{ p.archived_reason }}{% endif %}</td>
+        <td>
+          <form method="post" action="/directory/person/{{ p.id }}/archive" style="margin:0"
+                onsubmit="return confirm('Restore “{{ p.name }}” to the directory?')">
+            <input type="hidden" name="restore" value="1">
+            <button class="restore" type="submit">Restore</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+      <tr class="no-hits"><td colspan="5" class="empty">Nobody archived matches that search.</td></tr>
+    </table>
+    </div>
+    {% else %}
+    <p class="sub2">Nobody is archived. Use <strong>Archive</strong> on a staff row above when
+      someone leaves the bureau.</p>
+    {% endif %}
   </div>
 
   <!-- START FRESH -->
@@ -325,12 +388,34 @@ function filterTable(input) {
   const card = input.closest('.dcard');
   const table = card.querySelector('.table-wrap table');
   if (!table) return;
+  let hits = 0, rows = 0;
   table.querySelectorAll('tr').forEach(tr => {
     if (tr.querySelector('th')) return;            // keep header row
-    if (tr.querySelector('td.empty')) return;      // keep empty-state row
+    if (tr.classList.contains('no-hits')) return;  // handled below
+    if (tr.querySelector('td.empty')) return;      // keep "nothing here yet" row
+    rows++;
     const hit = !q || tr.textContent.toLowerCase().includes(q);
+    if (hit) hits++;
     tr.classList.toggle('nomatch', !hit);
   });
+  // Say so, rather than leaving a header over blank space — a table that just
+  // empties itself reads like the search box is broken.
+  const none = table.querySelector('tr.no-hits');
+  if (none) none.classList.toggle('show', rows > 0 && hits === 0);
+}
+// Confirm an archive and capture the optional reason in one step. One prompt is
+// enough: cancelling it cancels the archive, and the reason ("Resigned 31 Jul")
+// is the thing anyone reading the archive later actually wants to know.
+function askArchive(form) {
+  const why = prompt(
+    'Archive “' + form.dataset.name + '”?\n\n' +
+    'They stop appearing as current staff and in every speaker, served-by and ' +
+    'signatory picker, and their sign-in is deactivated. Past ratings, reports ' +
+    'and certificates are untouched, and you can restore them at any time.\n\n' +
+    'Reason (optional, e.g. "Resigned 31 Jul 2026"):', '');
+  if (why === null) return false;          // cancelled
+  form.querySelector('input[name=reason]').value = why;
+  return true;
 }
 function toggleEdit(id) {
   const row = document.getElementById('row-' + id);

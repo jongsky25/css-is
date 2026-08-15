@@ -78,7 +78,9 @@ def init_db(conn):
         focus_area      TEXT,           -- programme / area of responsibility
         email           TEXT,
         employment_type TEXT,           -- 'plantilla' / 'job_order' / 'consultant'
-        hidden_public   INTEGER NOT NULL DEFAULT 0  -- 1 = admin hid this person's scores from the public People view
+        hidden_public   INTEGER NOT NULL DEFAULT 0, -- 1 = admin hid this person's scores from the public People view
+        archived_at     TEXT,           -- resigned/transferred out: NULL = current, a timestamp = archived
+        archived_reason TEXT            -- free-text note kept with the archive ('Resigned 31 Jul 2026')
     );
 
     CREATE TABLE IF NOT EXISTS external_organizer (
@@ -435,6 +437,17 @@ def _add_missing_columns(conn):
         conn.execute("ALTER TABLE resource_person ADD COLUMN signature_mime TEXT")
     if "hidden_public" not in rp_cols:
         conn.execute("ALTER TABLE resource_person ADD COLUMN hidden_public INTEGER NOT NULL DEFAULT 0")
+    # Reversible archive for people who left the bureau (resigned, retired,
+    # transferred out). NULL = currently with the bureau; a timestamp = archived.
+    # An archive is NOT a delete: the row stays, so every certificate, rating and
+    # report that names this person keeps resolving. What it does is take them
+    # out of the CURRENT roster — the directory's staff table, every speaker /
+    # served-by / signatory picker, and the org chain of command — so a resigned
+    # section head can never be offered as this week's approver.
+    if "archived_at" not in rp_cols:
+        conn.execute("ALTER TABLE resource_person ADD COLUMN archived_at TEXT")
+    if "archived_reason" not in rp_cols:
+        conn.execute("ALTER TABLE resource_person ADD COLUMN archived_reason TEXT")
     # admin_user.rp_id (links a login account to a directory person). The unique
     # index is created here (not in the CREATE TABLE script) so it runs only after
     # the column is guaranteed to exist, on both fresh and migrated databases.
@@ -2151,27 +2164,39 @@ def clear_sample_data(conn):
     get_or_create_blhsd(conn)
 
 
-def list_resource_persons(conn):
+def list_resource_persons(conn, include_archived=False):
     """All people who can be picked as a speaker: internal staff + external RPs.
 
     Returns dicts so a template can show the source. RP source per the spec is
     internal staff (directory) AND external RPs (registry) -- both live in the
     resource_person table, split by is_internal.
+
+    ARCHIVED PEOPLE ARE OUT BY DEFAULT. Someone who has left the bureau must not
+    be offerable as this week's speaker, served-by or certificate signatory, and
+    the default is what every picker gets, so the safe answer is the one you get
+    without thinking about it. Pass include_archived=True where the list is used
+    to RESOLVE HISTORY rather than to choose someone now — get_rp, the People
+    grid, participation and the exports all have to keep naming a person whose
+    ratings are still on the record. `archived` rides along on every dict so
+    those callers can label the row instead of dropping it.
     """
-    rows = conn.execute("""
+    rows = conn.execute(f"""
         SELECT rp.id, rp.name, rp.is_internal, rp.org_unit_id, ou.path,
                rp.photo IS NOT NULL, rp.position, rp.designation,
                rp.focus_area, rp.email, rp.employment_type, rp.hidden_public,
-               rp.honorific, rp.agency, rp.signature IS NOT NULL
+               rp.honorific, rp.agency, rp.signature IS NOT NULL,
+               rp.archived_at, rp.archived_reason
         FROM resource_person rp
         LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id
+        {"" if include_archived else "WHERE rp.archived_at IS NULL"}
         ORDER BY rp.is_internal DESC, rp.name
     """).fetchall()
     return [{"id": r[0], "name": r[1], "is_internal": bool(r[2]),
              "org_unit_id": r[3], "org_path": r[4], "has_photo": bool(r[5]),
              "position": r[6], "designation": r[7], "focus_area": r[8],
              "email": r[9], "employment_type": r[10], "hidden_public": bool(r[11]),
-             "honorific": r[12], "agency": r[13], "has_signature": bool(r[14])}
+             "honorific": r[12], "agency": r[13], "has_signature": bool(r[14]),
+             "archived": bool(r[15]), "archived_at": r[15], "archived_reason": r[16]}
             for r in rows]
 
 
@@ -2262,8 +2287,10 @@ def set_rp_hidden(conn, rp_id, hidden):
 
 
 def get_rp(conn, rp_id):
-    """Full record for one person (the directory edit page)."""
-    people = list_resource_persons(conn)
+    """Full record for one person (the directory edit page). Resolves ARCHIVED
+    people too: every certificate, rating and approval trail that already names
+    someone has to keep resolving after they leave."""
+    people = list_resource_persons(conn, include_archived=True)
     return next((p for p in people if p["id"] == rp_id), None)
 
 
@@ -3103,7 +3130,8 @@ def system_inventory(conn):
     return {
         "accounts_active": one("SELECT COUNT(*) FROM admin_user WHERE active=1"),
         "accounts_total": one("SELECT COUNT(*) FROM admin_user"),
-        "staff": one("SELECT COUNT(*) FROM resource_person WHERE is_internal=1"),
+        "staff": one("SELECT COUNT(*) FROM resource_person "
+                     "WHERE is_internal=1 AND archived_at IS NULL"),
         "activities": one("SELECT COUNT(*) FROM event"),
         "attendees": one("SELECT COUNT(*) FROM attendee"),
         "responses": one("SELECT COUNT(*) FROM response"),
@@ -3390,6 +3418,48 @@ def update_rp(conn, rp_id, *, name=_UNSET, org_unit_id=_UNSET, position=_UNSET,
     conn.execute("UPDATE resource_person SET " + ", ".join(f"{k}=?" for k, _ in sets) +
                  " WHERE id=?", [v for _, v in sets] + [rp_id])
     conn.commit()
+
+
+def set_rp_archived(conn, rp_id, archived, reason=None, when=None):
+    """Archive (or restore) a directory person — the admin's answer to "this one
+    resigned". Returns {"ok", "msg", "account"} where `account` is the username
+    of the sign-in account that was deactivated along with them, if any.
+
+    Archiving deactivates the person's linked login: someone who has left the
+    bureau should not still be able to sign in, and leaving that to a second trip
+    through Admin -> Users is how it gets forgotten.
+
+    Restoring deliberately does NOT re-enable that login. Re-granting access is a
+    decision about permissions, not about a directory row, so it stays an explicit
+    act on the accounts page — restoring is for fixing a mis-click or a rehire,
+    and neither should quietly hand back a session.
+    """
+    rp = get_rp(conn, rp_id)
+    if not rp:
+        return {"ok": False, "msg": "That person is no longer in the directory.", "account": None}
+    if archived and rp["archived"]:
+        return {"ok": True, "msg": f"{rp['name']} is already archived.", "account": None}
+    if not archived and not rp["archived"]:
+        return {"ok": True, "msg": f"{rp['name']} is already active.", "account": None}
+    conn.execute("UPDATE resource_person SET archived_at=?, archived_reason=? WHERE id=?",
+                 ((when or tz.now_iso()) if archived else None,
+                  (reason or "").strip() or None if archived else None, rp_id))
+    account = None
+    if archived:
+        row = conn.execute("SELECT id, username FROM admin_user WHERE rp_id=? AND active=1",
+                           (rp_id,)).fetchone()
+        if row:
+            conn.execute("UPDATE admin_user SET active=0 WHERE id=?", (row[0],))
+            account = row[1]
+    conn.commit()
+    if archived:
+        msg = f"{rp['name']} archived."
+        if account:
+            msg += f" Their sign-in ({account}) was deactivated too."
+        return {"ok": True, "msg": msg, "account": account}
+    return {"ok": True, "msg": (f"{rp['name']} restored to the directory. Re-enable their "
+                                "sign-in from Admin → Users if they need one."),
+            "account": None}
 
 
 def set_rp_photo(conn, rp_id, blob, mime):
@@ -5090,7 +5160,7 @@ def _org_accounts_at_rank(conn, rank, org_path=None, exclude_uid=None):
     sql = ("SELECT a.id, rp.designation, rp.position FROM admin_user a "
            "JOIN resource_person rp ON rp.id = a.rp_id AND rp.is_internal = 1 "
            "LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id "
-           "WHERE a.active = 1")
+           "WHERE a.active = 1 AND rp.archived_at IS NULL")
     params = []
     if org_path is not None:
         sql += " AND ou.path = ?"
@@ -5111,7 +5181,7 @@ def _org_role_filled(conn, rank, org_path=None):
     clickable today."""
     sql = ("SELECT rp.designation, rp.position FROM resource_person rp "
            "LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id "
-           "WHERE rp.is_internal = 1")
+           "WHERE rp.is_internal = 1 AND rp.archived_at IS NULL")
     params = []
     if org_path is not None:
         sql += " AND ou.path = ?"
@@ -5130,7 +5200,7 @@ def _org_seat_name(conn, rank, org_path=None, exclude_uid=None):
            "FROM resource_person rp "
            "LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id "
            "LEFT JOIN admin_user a ON a.rp_id = rp.id "
-           "WHERE rp.is_internal = 1")
+           "WHERE rp.is_internal = 1 AND rp.archived_at IS NULL")
     params = []
     if org_path is not None:
         sql += " AND ou.path = ?"
@@ -5249,45 +5319,69 @@ def approver_title_for(conn, user_id):
     return "an administrator"
 
 
-def _org_scope_for_user(conn, user):
-    """The org_unit.path a viewer's monitoring is limited to, or None for the
-    whole bureau. Admins (and any account with no directory org unit) monitor
-    everyone; a directory-linked chief monitors only their own unit's subtree —
-    a section chief their section, a division chief their whole division — so the
-    dashboard mirrors who they actually approve for (list_wellness_approvals)
-    instead of every section."""
-    if not user or user.get("role") == "admin":
-        return None
-    row = conn.execute("""
-        SELECT ou.path FROM admin_user a
-        JOIN resource_person rp ON rp.id = a.rp_id
-        JOIN org_unit ou ON ou.id = rp.org_unit_id
-        WHERE a.id = ? LIMIT 1
-    """, (user["id"],)).fetchone()
-    return row[0] if row and row[0] else None
-
-
 def team_scope_for_user(conn, user):
     """(scope_path, kind) for a page that shows one person their TEAM.
 
     Returns kind "bureau" (scope_path None — everything), "unit" (scope_path is
     an org_unit.path subtree), or "none" (no team at all).
 
-    This exists because _org_scope_for_user above collapses two very different
-    situations onto the same None: an admin, who is *meant* to see the whole
-    bureau, and an account with no directory link or no org unit, which simply
-    has no team to show. Returning None for both is safe there only because
-    every caller sits behind a route guard (user_is_approving_chief) that has
-    already excluded unlinked staff.
+    THE DIRECTORY DECIDES THE TEAM, NOT THE ACCOUNT ROLE. Where someone sits on
+    the org chart is a fact about the bureau; "admin" is a fact about what the
+    app lets them administer, and the two answer different questions. This used
+    to short-circuit on role == "admin" and hand back the whole bureau, so a
+    section head who also administers the app opened the wellness register and
+    the AWA schedule on all five sections instead of their own — the team view
+    stopped being a team view for exactly the people most likely to hold the
+    admin role. Resolving the directory FIRST fixes that at the source, for every
+    caller at once, rather than page by page.
 
-    A landing page shown to EVERY signed-in user has no such guard by design, so
-    the distinction has to be drawn here: an unlinked account resolves to "none"
-    and its caller must render a personal view, never a bureau-wide roster of
-    everyone's wellness and work-arrangement filings."""
-    if _user_role_of(user) == "admin":
-        return None, "bureau"
-    path = _org_scope_for_user(conn, user)
-    return (path, "unit") if path else (None, "none")
+    The order is therefore:
+
+      * linked to a directory person holding the DIRECTOR seat (org rank 3) ->
+        "bureau". The Director's team really is the whole bureau, and their own
+        unit (the Office of the Director) is not it.
+      * linked to a directory person with an org unit -> "unit", that unit's
+        subtree. A section head gets their section, a division chief their whole
+        division — whatever their app role happens to be.
+      * no directory link, or linked to someone with no unit -> role decides:
+        "bureau" for an admin (a system administrator with no seat on the org
+        chart is the one account that still needs the bureau-wide view), "none"
+        for everyone else.
+
+    The "none" case is why this function exists at all: _org_scope_for_user
+    collapses "no team" and "the whole bureau" onto the same None, and
+    _path_in_scope(path, None) is True for everything. That is safe for the
+    monitoring pages, which sit behind a route guard (user_is_approving_chief)
+    that has already excluded unlinked staff — but a landing page shown to EVERY
+    signed-in user has no such guard by design, so an unlinked account has to
+    resolve to "none" here and its caller must render a personal view, never a
+    bureau-wide roster of everyone's filings."""
+    row = conn.execute("""
+        SELECT ou.path, rp.designation, rp.position
+        FROM admin_user a
+        JOIN resource_person rp ON rp.id = a.rp_id
+        LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id
+        WHERE a.id = ? AND rp.archived_at IS NULL LIMIT 1
+    """, (user["id"],)).fetchone() if user else None
+    if row:
+        path, designation, position = row
+        if _org_rank(designation, position) >= 3:      # the Director
+            return None, "bureau"
+        if path:
+            return path, "unit"
+    return (None, "bureau") if _user_role_of(user) == "admin" else (None, "none")
+
+
+def _org_scope_for_user(conn, user):
+    """The org_unit.path a viewer's monitoring is limited to, or None for the
+    whole bureau — team_scope_for_user's answer with the "no team" case folded
+    back onto None.
+
+    Every caller of THIS name sits behind a chief-only route guard, so folding
+    "none" onto "bureau-wide" is safe here and only here; anything shown to every
+    signed-in user must call team_scope_for_user and handle "none" itself."""
+    scope, _kind = team_scope_for_user(conn, user)
+    return scope
 
 
 def _user_role_of(user):
@@ -5551,20 +5645,39 @@ def list_my_wellness_claims(conn, user_id, limit=25):
 
 
 def list_wellness_approvals(conn, user):
-    """Pending claims this user may decide, oldest break first. Admins see every
-    pending claim except their own; a chief sees exactly the claims the
-    escalation chain routes to them (their section's staff, or — for a division
-    chief — their division's section chiefs, etc.). Own claims are excluded (they
-    escalate one level further)."""
+    """Pending claims this user may decide, oldest break first. A chief sees
+    exactly the claims the escalation chain routes to them (their section's
+    staff, or — for a division chief — their division's section chiefs, etc.).
+    Own claims are excluded (they escalate one level further).
+
+    Admins are the fallback ABOVE the chain, not a bypass around it, so an admin
+    who also holds a seat on the org chart gets their own chain's claims plus the
+    orphans — the pending claims no chief can reach, because the claimant is
+    unlinked, sits under an unfilled seat, or is the Director. Without that split
+    a section head who administers the app opened a queue holding all five
+    sections' routine claims; with it, nothing is stranded and nothing routine
+    leaks sideways. An admin with no directory seat still sees every orphan,
+    which is every claim they used to see minus the ones with a real chief."""
     ids = [r[0] for r in conn.execute(
         "SELECT id FROM wellness_claim WHERE status='pending' AND user_id != ? "
         "ORDER BY break_date, start_time", (user["id"],)).fetchall()]
     claims = [get_wellness_claim(conn, i) for i in ids]
-    if user.get("role") == "admin":
-        return claims
-    if not user_is_approving_chief(conn, user):
+    return _mine_or_orphaned(conn, user, claims, lambda c: c["user_id"])
+
+
+def _mine_or_orphaned(conn, user, rows, subject_of):
+    """The approval-queue filter shared by the wellness break and the work
+    arrangement: rows the chain routes to `user`, plus — for an admin — the rows
+    it routes to nobody. See list_wellness_approvals for why."""
+    is_admin = user.get("role") == "admin"
+    if not is_admin and not user_is_approving_chief(conn, user):
         return []
-    return [c for c in claims if user["id"] in get_approvers_for(conn, c["user_id"])]
+    out = []
+    for r in rows:
+        approvers = get_approvers_for(conn, subject_of(r))
+        if user["id"] in approvers or (is_admin and not approvers):
+            out.append(r)
+    return out
 
 
 def decide_wellness_claim(conn, claim_id, user, action, note=None):
@@ -5851,7 +5964,7 @@ def wellness_week_rollup(conn, week_start, user=None):
         LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id
         LEFT JOIN wellness_claim c ON c.user_id = u.id AND c.week_start = ?
         LEFT JOIN wellness_reflection r ON r.claim_id = c.id
-        WHERE u.active = 1
+        WHERE u.active = 1 AND rp.archived_at IS NULL
         GROUP BY u.id ORDER BY ou.path, rp.name, u.username
     """, (week_start,)).fetchall()
     people = [p for p in people if _path_in_scope(p[4], scope_path)]
@@ -6615,20 +6728,18 @@ def decide_work_arrangement(conn, wa_id, user, action, note=None):
 
 
 def list_work_arrangement_approvals(conn, user):
-    """Pending arrangements this user may decide, earliest period first. Admins
-    see every pending request except their own; a chief sees exactly what the
-    escalation chain routes to them. Each row carries its coverage verdict, so
-    the queue can flag a decision that would empty a section before it is made
-    rather than after."""
+    """Pending arrangements this user may decide, earliest period first. A chief
+    sees exactly what the escalation chain routes to them; an admin additionally
+    sees the requests it routes to nobody (see list_wellness_approvals — the same
+    rule, so the two queues can't disagree about who decides what). Each row
+    carries its coverage verdict, so the queue can flag a decision that would
+    empty a section before it is made rather than after."""
     rows = conn.execute(
         _WA_SELECT + " WHERE w.status='pending' AND w.user_id != ? "
         "ORDER BY w.period_start, w.id", (user["id"],)).fetchall()
-    out = [get_work_arrangement(conn, r[0]) for r in rows]
-    if user.get("role") != "admin":
-        if not user_is_approving_chief(conn, user):
-            return []
-        out = [w for w in out
-               if user["id"] in get_approvers_for(conn, w["user_id"])]
+    out = _mine_or_orphaned(conn, user,
+                            [get_work_arrangement(conn, r[0]) for r in rows],
+                            lambda w: w["user_id"])
     for w in out:
         w["coverage_flag"] = work_arrangement_coverage_flag(conn, w)
     return out
@@ -6666,7 +6777,7 @@ def work_arrangement_coverage(conn, org_path, period_start, exclude_user_id=None
         FROM admin_user a
         JOIN resource_person rp ON rp.id = a.rp_id AND rp.is_internal = 1
         JOIN org_unit ou ON ou.id = rp.org_unit_id
-        WHERE a.active = 1 AND ou.path = ?
+        WHERE a.active = 1 AND rp.archived_at IS NULL AND ou.path = ?
     """, (org_path or "",)).fetchall()
     people = [(uid, name) for uid, name in people if uid != exclude_user_id]
     # `tagged` is identical for every org path in a period, so a caller looping
@@ -6786,7 +6897,7 @@ def work_arrangement_roster(conn, period_start, user=None, tagged=None):
         FROM admin_user a
         LEFT JOIN resource_person rp ON rp.id = a.rp_id
         LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id
-        WHERE a.active = 1
+        WHERE a.active = 1 AND rp.archived_at IS NULL
         ORDER BY ou.path, rp.name, a.username
     """).fetchall()
     live = {}
