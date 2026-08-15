@@ -448,6 +448,41 @@ def _cell(row, weekly, me_id, *, face=False):
 _WA_TONE = {"approved": "green", "pending": "amber", "noawa": "accent", "": "soft"}
 
 
+def _awa_team_block(conn, user, me, period_start, *, settled, summary=None):
+    """The team half of the AWA card for ONE period: the roster as faces, the
+    on-site-by-weekday bars, and the slides derived from them.
+
+    `settled` says this period's filing closed long ago — it is being worked,
+    not chased — which is what the unfiled rows get called."""
+    if summary is None:
+        summary = st.work_arrangement_period_summary(conn, period_start, user)
+    headcount = summary["headcount"]
+    faces = [{**_face(r, me_id=me["user_id"]),
+              "arrangement_label": r["arrangement_label"],
+              "weekday_name": _weekday_name(r["weekday"]),
+              "status": r["status"], "filed": r["filed"],
+              "noawa": r.get("noawa", False),
+              "tone": ("accent" if r.get("noawa")
+                       else _WA_TONE.get(r["status"], "soft")),
+              "tip": (f"{r['arrangement_label'] or 'Not filed yet'}"
+                      f"{' · ' + r['status'] if r['status'] else ''}"),
+              "aria": (f"{r['name']} — "
+                       f"{r['arrangement_label'] or 'nothing filed'}"
+                       f"{', ' + r['status'] if r['status'] else ''}.")}
+             for r in summary["roster"]]
+    pct = round(summary["filed"] * 100 / headcount) if headcount else 0
+    return {
+        "period_start": summary["period_start"],
+        "period_label": summary["period_label"],
+        "headcount": headcount, "filed": summary["filed"],
+        "approved": summary["approved"], "pending": summary["pending"],
+        "unfiled": summary["unfiled"], "noawa": summary["noawa"],
+        "pct": pct, "ring": di.ring_geom(pct), "faces": faces,
+        "coverage": di.bars_geom(summary["totals"], headcount),
+        "insights": _awa_insights(summary, settled=settled),
+    }
+
+
 def _awa_panel_build(conn, *, me, user, today, kind):
     open_ps = st.work_arrangement_open_periods()
     ps_file = open_ps[0] if open_ps else None
@@ -462,8 +497,16 @@ def _awa_panel_build(conn, *, me, user, today, kind):
                 "weekday_name": _weekday_name((cur or {}).get("weekday")),
                 "status": (cur or {}).get("status"), "filed": bool(cur)}
 
+    # The fortnight being WORKED — who is on-site on Tuesday. This is the
+    # operational question and the card leads with it; it is never the period
+    # open for filing, whose deadline falls before it even starts, so it needs
+    # its own summary rather than a slice of the filing one.
+    now = None
+    if kind != "none":
+        now = _awa_team_block(conn, user, me, ps_now, settled=True)
+
     if not ps_file:
-        return {"team": None,
+        return {"now": now, "team": None,
                 "personal": {"state": "none_open", "in_force": in_force,
                              "period_label": None}}
 
@@ -490,56 +533,45 @@ def _awa_panel_build(conn, *, me, user, today, kind):
 
     team = None
     if kind != "none":
-        headcount = summary["headcount"]
-        faces = [{**_face(r, me_id=me["user_id"]),
-                  "arrangement_label": r["arrangement_label"],
-                  "weekday_name": _weekday_name(r["weekday"]),
-                  "status": r["status"], "filed": r["filed"],
-                  "noawa": r.get("noawa", False),
-                  "tone": ("accent" if r.get("noawa")
-                           else _WA_TONE.get(r["status"], "soft")),
-                  "tip": (f"{r['arrangement_label'] or 'Not filed yet'}"
-                          f"{' · ' + r['status'] if r['status'] else ''}"),
-                  "aria": (f"{r['name']} — "
-                           f"{r['arrangement_label'] or 'nothing filed'}"
-                           f"{', ' + r['status'] if r['status'] else ''}.")}
-                 for r in summary["roster"]]
-        pct = round(summary["filed"] * 100 / headcount) if headcount else 0
-        team = {
-            "state": state, "period_label": summary["period_label"],
-            "deadline_label": summary["deadline_label"], "days_left": days_left,
-            "headcount": headcount, "filed": summary["filed"],
-            "approved": summary["approved"], "pending": summary["pending"],
-            "unfiled": summary["unfiled"], "noawa": summary["noawa"],
-            "pct": pct, "ring": di.ring_geom(pct), "faces": faces,
-            "coverage": di.bars_geom(summary["totals"], headcount),
-            "insights": _awa_insights(summary),
-        }
-    return {"team": team, "personal": personal}
+        team = {**_awa_team_block(conn, user, me, ps_file, settled=False,
+                                  summary=summary),
+                "state": state, "deadline_label": summary["deadline_label"],
+                "days_left": days_left}
+    return {"now": now, "team": team, "personal": personal}
 
 
-def _awa_insights(summary):
+def _awa_insights(summary, *, settled=False):
     """The AWA card's later slides, all derived from the period summary already
     in hand — no extra query for any of them.
 
     Three questions the filing bar cannot answer: what people chose, which day
-    the office empties out, and which section is still chasing."""
+    the office empties out, and which section is still chasing.
+
+    `settled` is a period already being worked rather than one still being
+    filed for, so the rows are counted the same way but named for a fortnight
+    whose deadline is long past."""
     roster = summary["roster"]
     filed = [r for r in roster if r["filed"] and not r.get("noawa")]
 
     # ---- what people chose ---------------------------------------------
+    # `choice` marks the rows that are an actual arrangement someone picked.
+    # The two that are not — "No AWA" and the unfiled — are counted in the mix
+    # but must stay out of "most common", or a barely-filed period reports
+    # "Not filed yet is the most common arrangement", which is not one at all.
     counts = {}
     for r in filed:
         counts[r["arrangement"]] = counts.get(r["arrangement"], 0) + 1
     noawa = sum(1 for r in roster if r.get("noawa"))
     unfiled = sum(1 for r in roster if not r["filed"] and not r.get("noawa"))
     mix_rows = [{"label": st.WORK_ARRANGEMENT_LABELS.get(code, code),
-                 "long": long, "n": counts.get(code, 0)}
+                 "long": long, "n": counts.get(code, 0), "choice": True}
                 for code, _short, long in st.WORK_ARRANGEMENT_TYPES]
-    mix_rows.append({"label": st.WORK_ARRANGEMENT_NOAWA,
+    mix_rows.append({"label": st.WORK_ARRANGEMENT_NOAWA, "choice": False,
                      "long": "Out of the schedule this period", "n": noawa})
-    mix_rows.append({"label": "Not filed yet", "long": "Still to file",
-                     "n": unfiled})
+    mix_rows.append({"label": "Nothing filed" if settled else "Not filed yet",
+                     "long": ("No arrangement on record for this period"
+                              if settled else "Still to file"),
+                     "n": unfiled, "choice": False})
     mix_total = sum(m["n"] for m in mix_rows) or 1
     mix = [{**m, "pct": round(m["n"] * 100 / mix_total)}
            for m in mix_rows if m["n"] or m["label"] != st.WORK_ARRANGEMENT_NOAWA]
@@ -573,19 +605,15 @@ def _awa_insights(summary):
          for s in sections.values()),
         key=lambda s: (s["pct"], s["section"]))
 
-    # "Most common" is a statement about what people CHOSE, so the two rows that
-    # are not choices — "No AWA" and the people who haven't filed — are out of
-    # the running. Left in, a half-filed period always reports "Not filed yet is
-    # the most common arrangement", which is not an arrangement at all.
-    chosen = [m for m in mix
-              if m["label"] not in (st.WORK_ARRANGEMENT_NOAWA, "Not filed yet")]
+    chosen = [m for m in mix if m["choice"]]
     top = max(chosen, key=lambda m: m["n"]) if chosen else None
     filed_n = sum(m["n"] for m in chosen)
     busiest = max(day_off["bars"], key=lambda b: b["n"]) if day_off["bars"] else None
     behind = by_section[0] if len(by_section) > 1 else None
     return {
         "mix": mix, "day_off": day_off, "by_section": by_section,
-        "mix_table": {"caption": "Arrangements filed for this period",
+        "mix_table": {"caption": ("Arrangements in force this period" if settled
+                                  else "Arrangements filed for this period"),
                       "headers": ["Arrangement", "People"],
                       "rows": [[m["label"], str(m["n"])] for m in mix]},
         "section_table": {"caption": "Filing progress by section",
@@ -594,7 +622,8 @@ def _awa_insights(summary):
                                     str(s["people"])] for s in by_section]},
         "said": {
             "mix": (f"{top['label']} is the most common choice — {top['n']} of "
-                    f"the {filed_n} filed so far."
+                    f"the {filed_n} "
+                    f"{'on an arrangement' if settled else 'filed so far'}."
                     if top and top["n"] else None),
             "day_off": (f"{busiest['name']} is the emptiest day — "
                         f"{busiest['n']} away." if busiest and busiest["n"] else None),

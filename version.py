@@ -17,10 +17,32 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.65"
+APP_VERSION = "2.66"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.66",
+        "date": "August 15, 2026",
+        "summary": "The Alternative Work Arrangement card on your home page "
+                   "now shows where the team actually is this fortnight, "
+                   "instead of only counting who has filed for the next one.",
+        "changes": [
+            "The card led with the fortnight open for filing — so it could "
+            "say “0 of 10 filed for September 1-15” and tell you nothing at "
+            "all about the fortnight your team is working right now. It now "
+            "opens on the current fortnight: who is on-site each weekday, "
+            "what everyone is on, and the day the office empties out.",
+            "Filing is still there, one line down, as the deadline it is: "
+            "which fortnight, by when, and how many have filed so far.",
+            "The next fortnight's charts only appear once somebody has "
+            "actually filed for it. Before, three empty charts sat between "
+            "you and the fortnight you were working.",
+            "Everything on the card is your own section or division, exactly "
+            "as before — this changes which dates it covers, not who it "
+            "covers.",
+        ],
+    },
     {
         "version": "2.65",
         "date": "August 15, 2026",

@@ -304,18 +304,28 @@ def test_wellness_panel_carries_faces_rings_and_an_sr_table(world):
     assert "percent" in team["aria_label"]
 
 
-def test_awa_panel_leads_with_the_period_open_for_filing(world):
-    """Not the period in force: its deadline is the Friday before it starts, so
-    by the time it is current it is closed and affords no action."""
+def test_awa_panel_carries_the_worked_fortnight_and_the_filed_one_apart(world):
+    """Two different fortnights, and the card needs both. `team` is the period
+    open for filing — the only one that affords action, since a period's
+    deadline is the Friday before it starts. `now` and `in_force` are the
+    fortnight being WORKED, which is what the card leads with."""
     p = _payload(world, "ana")["panels"]["awa"]
     open_ps = st.work_arrangement_open_periods()
+    worked = st.work_arrangement_period_label(st.work_arrangement_schedule_period())
 
     assert p["personal"]["period_label"] == st.work_arrangement_period_label(open_ps[0])
-    assert p["personal"]["in_force"]["period_label"] == \
-        st.work_arrangement_period_label(st.work_arrangement_period())
     assert p["personal"]["state"] in ("open", "closing_today")
+    assert p["personal"]["in_force"]["period_label"] == worked
+
+    assert p["team"]["period_label"] == st.work_arrangement_period_label(open_ps[0])
     assert p["team"]["headcount"] >= 1
     assert p["team"]["coverage"]["table"]["headers"][0] == "Weekday"
+
+    # The worked fortnight is a summary of its own, never a slice of the filing
+    # one — they cover different dates and different rosters.
+    assert p["now"]["period_label"] == worked
+    assert p["now"]["period_label"] != p["team"]["period_label"]
+    assert p["now"]["coverage"]["table"]["headers"][0] == "Weekday"
 
 
 def test_awa_team_view_always_carries_the_coverage_chart(world):

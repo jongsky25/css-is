@@ -699,6 +699,34 @@ def test_hub_shows_the_next_period_on_a_worked_out_weekend(wa_org, app_mod, monk
     assert "August 1-15, 2026" not in r.text
 
 
+def test_landing_team_card_leads_with_the_fortnight_being_worked(
+        wa_org, app_mod, monkeypatch):
+    """The team panel used to be built entirely from the period open for
+    filing, so on August 15 a chief saw September's empty roster and nothing
+    at all about the fortnight their team was about to work."""
+    conn, emp, ps = wa_org["conn"], wa_org["staff"][0], "2026-08-16"
+    chief = wa_org["chief"]
+    st.mark_onboarded(conn, chief)
+    _at(monkeypatch, date(2026, 8, 14))            # Aug 16-31 still open then
+    _approved(wa_org, emp, "WFH", 2, ps=ps)
+    _at(monkeypatch, date(2026, 8, 15))            # Saturday
+
+    html = _client_for_id(app_mod, chief).get("/").text
+    assert "Now: <strong>August 16-31, 2026</strong>" in html
+    assert "Who is on-site now, by weekday" in html
+    # ...and the filing period is still there, framed as the deadline it is.
+    assert "Filing for <strong>September 1-15, 2026</strong>" in html
+    # Nothing filed for September yet, so its three preview charts stay out of
+    # the way rather than sitting empty in front of the fortnight being worked.
+    assert "Who would be on-site once filed" not in html
+
+    # File for September and the previews earn their place back.
+    _approved(wa_org, emp, "CWW", 0, ps="2026-09-01")
+    html = _client_for_id(app_mod, chief).get("/").text
+    assert "Who would be on-site once filed" in html
+    assert "What people filed" in html
+
+
 def test_schedule_page_opens_on_the_worked_period_not_the_filing_one(
         wa_org, app_mod, monkeypatch):
     _at(monkeypatch, date(2026, 8, 15))            # Saturday
