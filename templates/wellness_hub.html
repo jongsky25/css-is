@@ -25,6 +25,18 @@
            color:var(--accent); border-radius:999px; padding:.22rem .7rem; }
   .badge[title] { cursor:help; }
   .entitle { display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
+  /* The whole "this week" card is the hit area, not just its button. People were
+     clicking the status text and the hour pips — the part that states the problem
+     — and nothing happened (33 dead clicks / 9 users in the 30-day telemetry, with
+     10 matching spot-feedback comments). This is the stretched-link pattern: the
+     REAL anchor grows to cover the card, so there is still exactly one tab stop
+     and one accessible name. Scoped to .tappable on purpose — the monthly-register
+     panel below is also .entitle and holds a <select> that must stay clickable. */
+  .entitle.tappable { position:relative; cursor:pointer; transition:border-color .15s, box-shadow .15s; }
+  .entitle.tappable:hover, .entitle.tappable:focus-within { border-color:var(--accent); box-shadow:var(--shadow-md); }
+  .entitle.tappable .btn::after { content:""; position:absolute; inset:0; border-radius:inherit; }
+  /* The card's own content must stay above the overlay to keep text selectable. */
+  .entitle.tappable > div { position:relative; z-index:1; }
   .hourpips { display:flex; gap:.5rem; }
   .pip { width:46px; height:14px; border-radius:999px; border:1px solid var(--line); background:var(--bg); }
   .pip.used { background:var(--accent); border-color:var(--accent); }
@@ -102,7 +114,7 @@
   </div>
 </div>
 
-<div class="panel entitle">
+<div class="panel entitle{{ ' tappable' if can_request }}">
   <div>
     <strong>This week ({{ week_start }}):</strong>
     <span style="color:var(--soft)">{{ used }} of {{ weekly_hours }} hours claimed</span>
@@ -110,7 +122,17 @@
   <div class="hourpips" aria-hidden="true">
     {% for i in range(weekly_hours) %}<span class="pip {{ 'used' if i < used }}"></span>{% endfor %}
   </div>
-  <a class="btn" href="/wellness/apply" {% if not can_request %}aria-disabled="true"{% endif %}>Request a break</a>
+  {% if can_request %}
+  <a class="btn" href="/wellness/apply">Request a break</a>
+  {% else %}
+  {#-- Not a link when there is nothing to request. It used to stay an <a href>
+       carrying aria-disabled, and while the CSS rule's pointer-events:none did
+       stop a mouse, the anchor was still focusable and Enter still navigated —
+       so keyboard and screen-reader users were told it was disabled and then
+       taken to the form anyway. A span has nothing to activate. --#}
+  <span class="btn" aria-disabled="true"
+        title="You've claimed every hour available in the next {{ window_weeks }} weeks.">Request a break</span>
+  {% endif %}
 </div>
 
 {% if register_months %}

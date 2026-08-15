@@ -28,6 +28,33 @@ when it was already done. Nothing server-side changed; the cooldown rule and
 `record_avatar_care`'s contract are untouched, and all 29 `test_avatar_care.py`
 tests still pass. `avatars.js` cache-buster bumped to `?v=20260815a`.
 
+### The "this week" card that was a dead target
+
+**Symptom.** Friction rank 7 in the same telemetry: **33 dead-clicks from 9
+users** on the wellness hub's *"This week (…): 0 of 2 hours claimed · Request a
+break"* panel, with **10 matching Spot Feedback comments**. Only the trailing
+button was clickable. People clicked the status text and the hour pips — the part
+that *states the problem* — and nothing happened.
+
+**Fix.** The stretched-link pattern (`wellness_hub.html`): the real anchor grows
+via `::after { position:absolute; inset:0 }` to cover the card, so the whole
+panel becomes the hit area while there is still exactly **one** tab stop and one
+accessible name. No JS, no duplicate link. Scoped to a new `.tappable` class on
+purpose — the monthly-register panel below is *also* `.panel.entitle` and holds a
+`<select>` that must stay operable under any overlay.
+
+**Secondary bug fixed in the same markup.** The button was an `<a href>` carrying
+`aria-disabled="true"` when nothing could be requested. The CSS rule's
+`pointer-events:none` stopped a *mouse*, but the anchor stayed focusable and
+Enter still navigated — so keyboard and screen-reader users were told the control
+was disabled and then taken to the form anyway. It now renders as a `<span>` in
+that state, with a title naming the real window (`window_weeks`, passed from
+`app.py` so the copy can't drift from the `can_request` computation).
+
+Two regression tests added to `tests/test_wellness.py` — one asserting the card
+carries exactly one anchor to `/wellness/apply`, one asserting the disabled state
+exposes no `href` at all.
+
 ### The rename
 
 **Why.** The name described one of three things the system now does. After the

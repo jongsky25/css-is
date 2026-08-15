@@ -745,3 +745,50 @@ def test_register_pdf_is_self_service_only(app_mod, wellness_org):
     c = _client_for_id(app_mod, wellness_org["loner"])
     r = c.get("/wellness/register.pdf", follow_redirects=False)
     assert r.status_code == 303
+
+
+# ---------------------------------------------------------------------------
+# UX friction #7 — the "this week" card was a dead target
+# ---------------------------------------------------------------------------
+# 30-day telemetry: 33 dead clicks from 9 users on the card body (friction rank
+# 7), with 10 matching Spot Feedback comments. Only the trailing button was
+# clickable; people clicked the status text and the hour pips. The card is now a
+# stretched-link, which must NOT introduce a second tab stop, and the disabled
+# state must stop being a real anchor.
+
+def _week_card(html):
+    """The 'This week (…)' panel, sliced out of the hub so assertions can't be
+    satisfied by some other link elsewhere on the page."""
+    start = html.index("This week (")
+    start = html.rindex('<div class="panel entitle', 0, start)
+    return html[start:html.index("</div>", html.index("Request a break"))]
+
+
+def test_week_card_is_one_stretched_link(app_mod, wellness_org):
+    c = _client_for_id(app_mod, wellness_org["emp"])
+    card = _week_card(c.get("/wellness").text)
+
+    # the card advertises itself as clickable...
+    assert "entitle tappable" in card
+    # ...via exactly ONE anchor — the stretched-link overlay must not add a
+    # second focusable control over the same destination
+    assert card.count('href="/wellness/apply"') == 1
+    assert card.count("<a ") == 1
+
+
+def test_week_card_disabled_state_is_not_a_link(app_mod, wellness_org):
+    """With every hour in the rolling window claimed there is nothing to request.
+    The control used to stay an <a href> carrying aria-disabled: the CSS
+    pointer-events:none stopped a mouse, but it was still focusable and Enter
+    still navigated, so keyboard and screen-reader users were told it was
+    disabled and then taken to the form anyway."""
+    conn, emp, chief = wellness_org["conn"], wellness_org["emp"], wellness_org["chief"]
+    for ws in st.wellness_window_weeks():
+        for hour in ("09:00", "14:00"):                 # 2 h = the whole week
+            _seed_availed(conn, emp, chief, ws, hour, "approved")
+
+    card = _week_card(_client_for_id(app_mod, emp).get("/wellness").text)
+
+    assert 'href="/wellness/apply"' not in card         # nothing to activate
+    assert 'aria-disabled="true"' in card               # still announced as off
+    assert "tappable" not in card                       # and not advertised as clickable

@@ -13031,6 +13031,9 @@ def wellness_hub(request: Request, cheer: str = "", badges: str = "", err: str =
         "avatar_care_streak": avatar_care_streak, "avatar_last_care": avatar_last_care,
         "left": max(0, st.WELLNESS_WEEKLY_HOURS - used),
         "weekly_hours": st.WELLNESS_WEEKLY_HOURS, "can_request": can_request,
+        # Named so the "nothing left to request" copy states the same window
+        # can_request is actually computed over (st.wellness_window_weeks()).
+        "window_weeks": st.WELLNESS_WINDOW_WEEKS,
         "claims": claims, "is_chief": is_chief, "queue_n": queue_n,
         "register_months": register_months,
         "cheer": cheer, "cheer_badges": [b for b in badges.split("|") if b],

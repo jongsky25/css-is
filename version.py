@@ -28,6 +28,12 @@ CHANGELOG = [
                    "and nothing you saved has changed. Your companion also "
                    "answers back properly now when it has already been fed.",
         "changes": [
+            "On the wellness page, the whole “This week — 0 of 2 hours "
+            "claimed” box now takes you to the request form. Before, only the "
+            "small button did, so clicking the words themselves did nothing.",
+            "When you have already claimed every hour available, that button is "
+            "now properly switched off instead of still opening the form when "
+            "reached by keyboard.",
             "Your companion now always says something when you water or feed "
             "it. If you had already cared for it recently it says so — before, "
             "it went quiet, which made the button look broken when it had "
