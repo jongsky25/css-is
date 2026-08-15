@@ -26,8 +26,11 @@ would show an unlinked account every wellness and work-arrangement filing in the
 bureau. When kind == "none" the team builders are not called at all and every
 panel's "team" is None.
 
-An `admin` role buys nothing here. Bureau-wide is reached one way only — by
-being recorded at the bureau-level org unit, whose subtree is everyone.
+An `admin` role buys nothing here. Bureau-wide (kind == "bureau") is reached two
+ways, neither of them a role: being recorded at the bureau-level org unit, whose
+subtree is everyone, or holding an explicit 'all' grant on the account
+(storage.BUREAU_ACCESS_LEVELS). A work-arrangement-only grant deliberately does
+NOT widen this page — it spans all three modules, wellness included.
 """
 from __future__ import annotations
 
@@ -671,7 +674,9 @@ def team_view_data(conn, user, *, get_atoms, view_memo,
     index = view_memo("oc_activity_index", (),
                       lambda: _activity_index(conn, atoms, view_memo, today))
 
-    scope_label = _scope_label(conn, scope_path, roll["rows"]) if kind == "unit" else None
+    scope_label = ("the whole bureau" if kind == "bureau"
+                   else _scope_label(conn, scope_path, roll["rows"])
+                   if kind == "unit" else None)
 
     return {
         "me": me,

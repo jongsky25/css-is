@@ -50,7 +50,7 @@
   <div class="dsearch"><span class="ico" aria-hidden="true">🔍</span><input type="text" placeholder="Search staff by name, email, section…" oninput="filterUsers(this)" aria-label="Search staff accounts"></div>
   <div class="table-wrap">
   <table class="resp-table">
-    <tr><th>Staff</th><th>Email</th><th>Account</th><th>Role</th><th></th></tr>
+    <tr><th>Staff</th><th>Email</th><th>Account</th><th>Role</th><th>Sees</th><th></th></tr>
     {% for r in rows %}
     {% set a = r.account %}
     <tr>
@@ -68,6 +68,21 @@
               data-confirm="Change {{ r.name }}'s role? Their access updates immediately.">
           <select name="role" aria-label="Role for {{ r.name }}">
             {% for role in roles %}<option value="{{ role }}" {{ 'selected' if a.role==role }}>{{ role_labels[role] }}</option>{% endfor %}
+          </select>
+          <button class="btn ghost" type="submit">Apply</button>
+        </form>
+        {% else %}—{% endif %}
+      </td>
+      {#-- How far this account may SEE. Separate from role on purpose: a role is
+           what you may DO, and scope otherwise comes from the directory. --#}
+      <td data-label="Sees">
+        {% if a %}
+        <form method="post" action="/admin/users/{{ a.id }}/bureau-access" class="inline"
+              data-confirm="Change what {{ r.name }} can see? This takes effect on their next page load.">
+          <select name="bureau_access" aria-label="Bureau-wide access for {{ r.name }}">
+            {% for level, label in bureau_levels %}
+            <option value="{{ level }}" {{ 'selected' if a.bureau_access==level }}>{{ label }}</option>
+            {% endfor %}
           </select>
           <button class="btn ghost" type="submit">Apply</button>
         </form>
@@ -110,7 +125,7 @@
   <p class="sec" style="margin:0 0 .8rem;">Accounts not linked to a directory staff record (e.g. the initial administrator).</p>
   <div class="table-wrap">
   <table class="resp-table">
-    <tr><th>Email / username</th><th>Role</th><th>Status</th><th></th></tr>
+    <tr><th>Email / username</th><th>Role</th><th>Sees</th><th>Status</th><th></th></tr>
     {% for u in standalone %}
     <tr>
       <td data-label="Email / username"><strong>{{ u.username }}</strong>{% if u.id == request.state.user.id %} <span class="sec">(you)</span>{% endif %}</td>
@@ -118,6 +133,17 @@
         <form method="post" action="/admin/users/{{ u.id }}/role" class="inline"
               data-confirm="Change {{ u.username }}'s role? Their access updates immediately.">
           <select name="role" aria-label="Role for {{ u.username }}">{% for role in roles %}<option value="{{ role }}" {{ 'selected' if u.role==role }}>{{ role_labels[role] }}</option>{% endfor %}</select>
+          <button class="btn ghost" type="submit">Apply</button>
+        </form>
+      </td>
+      <td data-label="Sees">
+        <form method="post" action="/admin/users/{{ u.id }}/bureau-access" class="inline"
+              data-confirm="Change what {{ u.username }} can see? This takes effect on their next page load.">
+          <select name="bureau_access" aria-label="Bureau-wide access for {{ u.username }}">
+            {% for level, label in bureau_levels %}
+            <option value="{{ level }}" {{ 'selected' if u.bureau_access==level }}>{{ label }}</option>
+            {% endfor %}
+          </select>
           <button class="btn ghost" type="submit">Apply</button>
         </form>
       </td>
@@ -144,6 +170,21 @@
 <div class="panel">
   <p class="sec" style="margin:0;">
     {% for r in roles %}<strong>{{ role_labels[r] }}</strong> — {{ role_blurb[r] }}<br>{% endfor %}
+  </p>
+</div>
+
+<div class="panel">
+  <p class="sec" style="margin:0;">
+    <strong>“Sees”</strong> is how far an account looks, which is a separate
+    question from what it may do. By default everyone sees their own unit from
+    the <strong>directory</strong> — their section, or their whole division for a
+    division chief — and no role widens that.<br>
+    <strong>Work arrangement, bureau-wide</strong> — the team schedule and the
+    ANNEX C print cover every section. For whoever consolidates the bureau's
+    fortnightly submission; it does not open anyone's wellness claims, and it
+    does not make them an approver.<br>
+    <strong>Everything, bureau-wide</strong> — every section, in all three
+    modules, including the wellness register.
   </p>
 </div>
 

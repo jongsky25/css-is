@@ -577,7 +577,8 @@ NAV_GROUPS = [
          "label": "Team schedule",
          "hint": "Who is on-site each weekday, and who hasn't filed",
          "kw": "team schedule roster coverage on-site onsite weekday annex c chase list "
-               "unfiled who is in office friday", "cap": "chief"},
+               "unfiled who is in office friday print export whole bureau",
+         "cap": "wa_schedule"},
         {"key": "work_arrangement_approvals", "url": "/work-arrangement/approvals",
          "label": "Approvals",
          "hint": "Work arrangements waiting on your decision",
@@ -645,6 +646,18 @@ def _user_role(user):
     return getattr(user, "role", None)
 
 
+def _user_bureau_access(user):
+    """The account's bureau-wide grant off the request user, tolerating the same
+    dict-or-object shapes _user_role does. The middleware stamps this on the user
+    dict per request (from the row, not the cookie); anything without it — a
+    stand-in in a test, a user built before sign-in — reads as no grant."""
+    if user is None:
+        return ""
+    if isinstance(user, dict):
+        return user.get("bureau_access") or ""
+    return getattr(user, "bureau_access", "") or ""
+
+
 def _cap_ok(user, cap, is_chief=False):
     """True if `user` may see an item requiring `cap` (None = any logged-in user).
 
@@ -653,9 +666,18 @@ def _cap_ok(user, cap, is_chief=False):
     directory-RANK lookup rather than an account role, so it can't be answered
     from the user dict alone. The request middleware resolves it once per request
     into request.state.is_chief and the caller passes it down — that keeps this
-    function pure and free of a database handle."""
+    function pure and free of a database handle.
+
+    `cap="wa_schedule"` is the same idea for the work-arrangement schedule and
+    its ANNEX C download: every chief, plus anyone holding a bureau-wide
+    work-arrangement grant, whose level the middleware stashes on the user dict
+    (storage.user_can_view_work_arrangement_schedule is the server-side twin of
+    this test — this one only decides whether the LINK is shown)."""
     if cap == "chief":
         return bool(is_chief) or _user_role(user) == "admin"
+    if cap == "wa_schedule":
+        return (bool(is_chief) or _user_role(user) == "admin"
+                or _user_bureau_access(user) in ("awa", "all"))
     return cap is None or auth.can(_user_role(user), cap)
 
 
@@ -1819,6 +1841,14 @@ async def _auth_gate(request: Request, call_next):
             # already open, rather than per nav render.
             request.state.is_chief = st.user_is_approving_chief(
                 conn, request.state.user)
+            # How far this account may SEE (BUREAU_ACCESS_LEVELS). Read from the
+            # row, not from the session cookie that minted this user dict: a
+            # revoked grant has to take effect on the next request, not whenever
+            # the cookie happens to expire. Stashed on the user dict so _cap_ok
+            # stays pure and the nav needs no second runtime flag threaded
+            # through every caller.
+            request.state.user["bureau_access"] = st.bureau_access_of(
+                conn, request.state.user)
         finally:
             conn.close()
     if _is_public(path):
@@ -2212,6 +2242,7 @@ def admin_users(request: Request, err: str = "", link: str = "", msg: str = ""):
     return templates.TemplateResponse(request, "users.html", {
         "rows": rows, "standalone": standalone, "have": have, "total": len(rows),
         "roles": auth.ROLES, "role_labels": auth.ROLE_LABELS, "role_blurb": auth.ROLE_BLURB,
+        "bureau_levels": st.BUREAU_ACCESS_LEVELS,
         "email_configured": mailer.email_configured(), "default_password": auth.DEFAULT_PASSWORD,
         "err": err, "link": link, "msg": msg, "show_scope": False, "nav_active": "",
     })
@@ -2294,6 +2325,40 @@ async def admin_users_role(request: Request, user_id: int):
     finally:
         conn.close()
     return RedirectResponse("/admin/users", status_code=303)
+
+
+@app.post("/admin/users/{user_id}/bureau-access")
+async def admin_users_bureau_access(request: Request, user_id: int):
+    """Grant or revoke bureau-wide sight (storage.BUREAU_ACCESS_LEVELS).
+
+    Audited like a role change, and for the same reason: this is the one setting
+    that lets an account see beyond the unit the directory puts it in, so who
+    widened whose view — and when — has to be answerable afterwards."""
+    if (r := _forbid(request, "manage_users")):
+        return r
+    p = await _posted(request)
+    level = p.get("bureau_access", "")
+    conn = get_conn()
+    try:
+        target = next((u for u in st.list_admin_users(conn) if u["id"] == user_id), None)
+        if not target or not st.valid_bureau_access(level):
+            return RedirectResponse(
+                "/admin/users?err=" + quote("Pick one of the access levels."),
+                status_code=303)
+        before = target.get("bureau_access", "")
+        if level != before:
+            st.set_bureau_access(conn, user_id, level)
+            _audit(request, conn, "change_bureau_access", target_type="user",
+                   target_id=target["username"],
+                   summary=(f"Bureau-wide access for {target['username']}: "
+                            f"{st.BUREAU_ACCESS_LABELS[before]} → "
+                            f"{st.BUREAU_ACCESS_LABELS[level]}"),
+                   before=before, after=level)
+    finally:
+        conn.close()
+    return RedirectResponse(
+        "/admin/users?msg=" + quote(f"Now sees: {st.BUREAU_ACCESS_LABELS[level]}."),
+        status_code=303)
 
 
 @app.post("/admin/users/{user_id}/active")
@@ -13583,6 +13648,10 @@ def work_arrangement_hub(request: Request, ok: str = "", err: str = ""):
         approver = (st.approver_name_for(conn, user["id"])
                     or st.approver_title_for(conn, user["id"]))
         is_chief = st.user_is_approving_chief(conn, user)
+        # Seeing the whole bureau's schedule and approving for anyone are two
+        # different things — the Admin Officer who prints ANNEX C is not
+        # thereby anyone's approver — so the hub's two buttons are gated apart.
+        can_schedule = st.user_can_view_work_arrangement_schedule(conn, user)
     finally:
         conn.close()
     # The history table repeats whatever the cards already show for the open
@@ -13592,7 +13661,8 @@ def work_arrangement_hub(request: Request, ok: str = "", err: str = ""):
     return templates.TemplateResponse(request, "work_arrangement_hub.html", {
         "nav_active": "work_arrangement", "show_scope": False,
         "periods": periods, "history": history, "approver": approver,
-        "is_chief": is_chief, "legend": st.WORK_ARRANGEMENT_LEGEND,
+        "is_chief": is_chief, "can_schedule": can_schedule,
+        "legend": st.WORK_ARRANGEMENT_LEGEND,
         "noawa": noawa, "noawa_label": st.WORK_ARRANGEMENT_NOAWA,
         "ok": ok, "err": err,
     })
@@ -13802,13 +13872,19 @@ async def work_arrangement_decide(request: Request, wa_id: int):
 
 @app.get("/work-arrangement/schedule", response_class=HTMLResponse)
 def work_arrangement_schedule(request: Request, period: str = ""):
-    """The period's ANNEX C on screen, plus who is on-site each weekday. Scoped
-    to the chief's own unit subtree; admins see the whole bureau."""
+    """The period's ANNEX C on screen, plus who is on-site each weekday.
+
+    Scoped to the viewer's own directory unit subtree, or the whole bureau for an
+    account holding a bureau-wide work-arrangement grant (that is what the grant
+    is for: consolidating the fortnight's submission). Open to every approving
+    chief and to grant holders — who are not thereby approvers, so the queue link
+    is gated separately below."""
     user = request.state.user
     conn = get_conn()
     try:
-        if not st.user_is_approving_chief(conn, user):
+        if not st.user_can_view_work_arrangement_schedule(conn, user):
             return _wa_forbid(request)
+        is_chief = st.user_is_approving_chief(conn, user)
         ps = period or (st.work_arrangement_open_periods() or
                         [st.work_arrangement_period()])[0]
         try:
@@ -13825,6 +13901,7 @@ def work_arrangement_schedule(request: Request, period: str = ""):
         "weekdays": st.WORK_ARRANGEMENT_WEEKDAYS,
         "noawa_label": st.WORK_ARRANGEMENT_NOAWA,
         "is_admin": user.get("role") == "admin",
+        "is_chief": is_chief,
     })
 
 
@@ -13847,7 +13924,7 @@ def work_arrangement_annex_xlsx(request: Request, period: str = "", month: str =
     user = request.state.user
     conn = get_conn()
     try:
-        if not st.user_is_approving_chief(conn, user):
+        if not st.user_can_view_work_arrangement_schedule(conn, user):
             return _wa_forbid(request)
         try:
             periods = _wa_annex_periods(conn, user, period, month)
@@ -13874,7 +13951,7 @@ def work_arrangement_annex_pdf(request: Request, period: str = "", month: str = 
     user = request.state.user
     conn = get_conn()
     try:
-        if not st.user_is_approving_chief(conn, user):
+        if not st.user_can_view_work_arrangement_schedule(conn, user):
             return _wa_forbid(request)
         try:
             periods = _wa_annex_periods(conn, user, period, month)

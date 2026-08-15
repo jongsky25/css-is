@@ -225,7 +225,8 @@ def init_db(conn):
         must_change INTEGER NOT NULL DEFAULT 0,  -- 1 = temp password, force a reset on next sign-in
         rp_id       INTEGER REFERENCES resource_person(id),  -- the directory staff this account belongs to
         created_at  TEXT,
-        created_by  TEXT                         -- username of the admin/process that made it
+        created_by  TEXT,                        -- username of the admin/process that made it
+        bureau_access TEXT NOT NULL DEFAULT ''   -- '' / 'awa' / 'all' (BUREAU_ACCESS_LEVELS)
     );
 
     CREATE TABLE IF NOT EXISTS app_setting (     -- small key/value store for app config
@@ -477,6 +478,16 @@ def _add_missing_columns(conn):
             conn.execute("ALTER TABLE admin_user ADD COLUMN photo_mime TEXT")
         if "designation" not in au_cols:
             conn.execute("ALTER TABLE admin_user ADD COLUMN designation TEXT")
+        # An EXPLICIT grant of bureau-wide sight (BUREAU_ACCESS_LEVELS). Scope
+        # otherwise comes from the directory — the unit a person is recorded in
+        # — and a role does not widen it. Some seats genuinely need more than
+        # their own unit (the Admin Officer consolidating ANNEX C for the whole
+        # bureau), and this is how they get it: named, per account, revocable,
+        # and visible in the audit log, rather than a role quietly meaning
+        # "everyone".
+        if "bureau_access" not in au_cols:
+            conn.execute("ALTER TABLE admin_user ADD COLUMN bureau_access TEXT "
+                         "NOT NULL DEFAULT ''")
         conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_admin_user_rp "
                      "ON admin_user(rp_id) WHERE rp_id IS NOT NULL")
     # Respondent demographics captured at Type-2 pre-registration. These are NON-PII
@@ -837,6 +848,8 @@ def _add_missing_columns(conn):
         conn.execute("""UPDATE org_unit SET level='office'
                         WHERE level='section' AND name LIKE 'Office of the Director%'""")
         conn.commit()
+
+    _seed_bureau_access(conn)
 
 
 # ---------------------------------------------------------------------
@@ -3172,6 +3185,7 @@ def _admin_row(r):
             "avatar_kind": r[10], "avatar_name": r[11], "onboarded_at": r[12],
             "avatar_last_care_at": r[13], "avatar_care_streak": r[14] or 0,
             "designation": r[15], "has_account_photo": bool(r[16]),
+            "bureau_access": r[17] or "",
             "pending": (r[2] == "")}      # no password set yet => still invited
 
 
@@ -3181,7 +3195,8 @@ def _admin_row(r):
 _ADMIN_COLS = ("id, username, pw_hash, salt, role, active, must_change, rp_id, "
                "created_at, created_by, avatar_kind, avatar_name, onboarded_at, "
                "avatar_last_care_at, avatar_care_streak, designation, "
-               "(photo IS NOT NULL) AS has_account_photo")
+               "(photo IS NOT NULL) AS has_account_photo, "
+               "COALESCE(bureau_access, '')")
 
 
 def get_admin_user(conn, username):
@@ -3341,6 +3356,99 @@ def set_admin_username(conn, user_id, username):
 def set_admin_role(conn, user_id, role):
     conn.execute("UPDATE admin_user SET role=? WHERE id=?", (role, user_id))
     conn.commit()
+
+
+# ---- bureau-wide access (an explicit grant, never a side effect of a role) ---
+
+# What one account may see beyond its own directory unit.
+#   ''    — nothing extra. The directory decides, which is the default and the
+#           right answer for almost everyone.
+#   'awa' — work arrangement only: the bureau's whole ANNEX C on screen and in
+#           print. The Admin Officer consolidating the fortnight's submission
+#           needs every section; they do not need anyone's wellness claims.
+#   'all' — every scoped view: work arrangement, the wellness register and the
+#           landing page's team view.
+# Deliberately NOT a role. A role is a set of things you may DO; this is how far
+# you may SEE, it is granted per account, and it shows up in the audit log when
+# it changes.
+BUREAU_ACCESS_LEVELS = [
+    ("", "Their own unit only"),
+    ("awa", "Work arrangement, bureau-wide"),
+    ("all", "Everything, bureau-wide"),
+]
+BUREAU_ACCESS_LABELS = dict(BUREAU_ACCESS_LEVELS)
+
+
+def valid_bureau_access(level):
+    return level in BUREAU_ACCESS_LABELS
+
+
+def set_bureau_access(conn, user_id, level):
+    """Grant or revoke bureau-wide sight. Raises ValueError on an unknown level."""
+    if not valid_bureau_access(level):
+        raise ValueError("Unknown bureau access level.")
+    conn.execute("UPDATE admin_user SET bureau_access=? WHERE id=?", (level, user_id))
+    conn.commit()
+
+
+def bureau_access_of(conn, user):
+    """This account's grant, read fresh from the row.
+
+    Read from the DATABASE, never from the request user dict: that dict comes
+    out of the signed session cookie, which was minted at sign-in and would keep
+    asserting a grant for as long as the cookie lives — including after an admin
+    revoked it."""
+    if not user:
+        return ""
+    row = conn.execute("SELECT COALESCE(bureau_access, '') FROM admin_user WHERE id=?",
+                       (user.get("id"),)).fetchone()
+    return (row[0] if row else "") or ""
+
+
+# The grants the bureau asked for by name, applied once each when the account
+# exists. Keyed per username, not one global marker: an account that hasn't been
+# created yet still gets its grant on a later start, and one that was revoked in
+# Admin → Users stays revoked instead of being re-granted by the next deploy.
+BUREAU_ACCESS_SEED = [
+    # The Admin Officer consolidates ANNEX C for the whole bureau, so he needs
+    # every section's schedule on screen and in print — and nothing else.
+    ("armedel@doh.gov.ph", "awa", None),
+    # Bureau-wide across all three modules, with the administrator role.
+    ("ray@gmail.com", "all", "admin"),
+]
+
+
+def _seed_bureau_access(conn):
+    """Apply BUREAU_ACCESS_SEED once per named account. Never overwrites a level
+    an administrator has since chosen: the marker is written the first time the
+    account is seen, whatever happens to the grant afterwards."""
+    for username, level, role in BUREAU_ACCESS_SEED:
+        marker = f"bureau_access_seeded:{username.lower()}"
+        if get_setting(conn, marker):
+            continue
+        row = conn.execute(
+            "SELECT id, role, COALESCE(bureau_access,'') FROM admin_user "
+            "WHERE lower(username)=?", (username.lower(),)).fetchone()
+        if not row:
+            continue                      # not created yet — try again next start
+        uid, cur_role, cur_level = row
+        if cur_level != level:
+            conn.execute("UPDATE admin_user SET bureau_access=? WHERE id=?",
+                         (level, uid))
+        if role and cur_role != role:
+            conn.execute("UPDATE admin_user SET role=? WHERE id=?", (role, uid))
+        set_setting(conn, marker, tz.now_iso())
+        conn.commit()
+
+
+def user_sees_whole_bureau(conn, user, area=None):
+    """Does this account's grant cover `area` ('awa', 'wellness', or None for a
+    view that spans modules)? 'all' covers everything; 'awa' covers only the work
+    arrangement, and only when the caller says that is what it is showing."""
+    level = bureau_access_of(conn, user)
+    if level == "all":
+        return True
+    return level == "awa" and area == "awa"
 
 
 def set_admin_password(conn, user_id, pw_hash, salt, activate=True, must_change=False):
@@ -5221,6 +5329,22 @@ def user_is_approving_chief(conn, user):
     return bool(row) and _org_rank(row[0], row[1]) >= 1
 
 
+def user_can_view_work_arrangement_schedule(conn, user):
+    """Who may open the team schedule and download ANNEX C.
+
+    Every approving chief (they need the roster they decide on), plus anyone
+    holding a bureau-wide work-arrangement grant — the Admin Officer who
+    consolidates the fortnight's submission has to see and print every section
+    without being anybody's approver.
+
+    Kept apart from user_is_approving_chief on purpose: this grant is about
+    SIGHT. Letting it decide the approvals queue as well would hand someone the
+    power to approve their colleagues' schedules as a side effect of being asked
+    to print them."""
+    return (user_is_approving_chief(conn, user)
+            or user_sees_whole_bureau(conn, user, "awa"))
+
+
 def approver_title_for(conn, user_id):
     """Human label for who decides THIS person's requests, for the apply/hub copy:
     'your section chief' / 'your division chief' / 'the Director', or 'an
@@ -5249,7 +5373,7 @@ def approver_title_for(conn, user_id):
     return "an administrator"
 
 
-def _org_scope_for_user(conn, user):
+def _org_scope_for_user(conn, user, *, area=None):
     """The org_unit.path a viewer's monitoring is limited to, or None for the
     whole bureau.
 
@@ -5261,6 +5385,10 @@ def _org_scope_for_user(conn, user):
     users, edit rules, run exports — and was never evidence of standing over
     every section's wellness and work-arrangement filings.
 
+    The one way past your own unit is an EXPLICIT per-account grant
+    (BUREAU_ACCESS_LEVELS), which callers qualify with `area` so a work-
+    arrangement grant widens the ANNEX C and nothing else.
+
     None still means bureau-wide, and an account with NO directory org unit still
     resolves to it: every caller of this helper sits behind a chief-only route
     guard (user_is_approving_chief) that has already excluded unlinked staff, and
@@ -5268,6 +5396,8 @@ def _org_scope_for_user(conn, user):
     shown to every signed-in user must use team_scope_for_user instead — see its
     docstring."""
     if not user:
+        return None
+    if user_sees_whole_bureau(conn, user, area):
         return None
     row = conn.execute("""
         SELECT ou.path FROM admin_user a
@@ -5281,10 +5411,14 @@ def _org_scope_for_user(conn, user):
 def team_scope_for_user(conn, user):
     """(scope_path, kind) for a page that shows one person their TEAM.
 
-    Returns kind "unit" (scope_path is an org_unit.path subtree) or "none" (no
-    team at all). There is deliberately no bureau-wide kind: your team is the
-    unit the DIRECTORY puts you in, and someone recorded at the bureau-level unit
-    already gets everything through the subtree test in _path_in_scope.
+    Returns kind "unit" (scope_path is an org_unit.path subtree), "bureau"
+    (scope_path None — everyone), or "none" (no team at all).
+
+    Your team is the unit the DIRECTORY puts you in. "bureau" is not something a
+    role can buy: it is reached either by being recorded at the bureau-level unit
+    (the subtree test in _path_in_scope does the rest) or by an explicit
+    'all' grant on the account — this page spans all three modules, so a work-
+    arrangement-only grant deliberately does not widen it.
 
     This exists because _org_scope_for_user above answers None for an account
     with no directory link — safe there only because every one of its callers
@@ -5293,6 +5427,8 @@ def team_scope_for_user(conn, user):
     guard by design, so the distinction has to be drawn here: an unlinked account
     resolves to "none" and its caller must render a personal view, never a
     bureau-wide roster of everyone's wellness and work-arrangement filings."""
+    if user_sees_whole_bureau(conn, user):
+        return None, "bureau"
     path = _org_scope_for_user(conn, user)
     return (path, "unit") if path else (None, "none")
 
@@ -5833,10 +5969,11 @@ def wellness_week_rollup(conn, week_start, user=None):
 
     Scoping is _org_scope_for_user's: everyone sees their own directory unit's
     subtree, whatever their app role; an unscoped call (user=None) sees the
-    bureau. Callers that show this to EVERY user must resolve scope with
-    team_scope_for_user first — see its docstring for why None is not a safe
-    default there."""
-    scope_path = _org_scope_for_user(conn, user)
+    bureau. Wellness is health information, so only a full 'all' grant widens it
+    — a bureau-wide WORK-ARRANGEMENT grant deliberately does not. Callers that
+    show this to EVERY user must resolve scope with team_scope_for_user first —
+    see its docstring for why None is not a safe default there."""
+    scope_path = _org_scope_for_user(conn, user, area="wellness")
     people = conn.execute("""
         SELECT u.id, u.username, rp.name, ou.short_name, ou.path,
                COALESCE(SUM(CASE WHEN c.status='pending'   THEN c.hours END), 0),
@@ -5925,7 +6062,10 @@ def wellness_pattern(conn, week_start, user=None, weeks=WELLNESS_PATTERN_WEEKS,
     Scoping is wellness_week_rollup's, for the same reason — a landing page must
     resolve scope with team_scope_for_user first. `only_user_id` is the one
     exception: it is ONE person's own history, so no scope filter applies (you
-    may always see yourself, wherever the directory puts you)."""
+    may always see yourself, wherever the directory puts you).
+
+    Wellness, so a bureau-wide work-arrangement grant does not widen it — see
+    wellness_week_rollup."""
     first_week = (date.fromisoformat(week_start)
                   - timedelta(weeks=max(1, weeks) - 1)).isoformat()
     sql = """
@@ -5946,7 +6086,7 @@ def wellness_pattern(conn, week_start, user=None, weeks=WELLNESS_PATTERN_WEEKS,
         args.append(only_user_id)
     rows = conn.execute(sql, args).fetchall()
     if only_user_id is None:
-        scope_path = _org_scope_for_user(conn, user)
+        scope_path = _org_scope_for_user(conn, user, area="wellness")
         rows = [r for r in rows if _path_in_scope(r[6], scope_path)]
 
     slots = [{"key": k, "label": lab} for k, lab, _lo, _hi in WELLNESS_SLOTS]
@@ -6909,10 +7049,11 @@ def work_arrangement_roster(conn, period_start, user=None, tagged=None):
     appears as a row with no arrangement, so the Admin Officer has a chase list
     before the deadline instead of 23 silent gaps after it.
 
-    Scoped to the viewer's own directory unit subtree (see _org_scope_for_user);
-    an unscoped call (user=None) — which is what the ANNEX C export makes — sees
-    the whole bureau."""
-    scope = _org_scope_for_user(conn, user) if user else None
+    Scoped to the viewer's own directory unit subtree (see _org_scope_for_user),
+    widened by a bureau-wide work-arrangement grant; an unscoped call
+    (user=None) — which is what the ANNEX C export makes — sees the whole
+    bureau."""
+    scope = _org_scope_for_user(conn, user, area="awa") if user else None
     rows = conn.execute("""
         SELECT a.id, a.username, rp.name, rp.position, ou.short_name, ou.path,
                a.rp_id, (rp.photo IS NOT NULL), a.avatar_kind

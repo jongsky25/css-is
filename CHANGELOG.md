@@ -1,5 +1,47 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-08-15 (v2.62 — bureau-wide sight, granted per account)
+
+### The seat that legitimately needs every section
+
+v2.61 made the directory the basis of scope: you see the unit you are recorded
+in, and no role widens that. That is right for almost everyone and wrong for one
+real job — whoever consolidates the bureau's fortnightly ANNEX C has to see and
+print every section's work arrangement, and the previous answer ("be an admin")
+is exactly the conflation v2.61 removed.
+
+**`admin_user.bureau_access`** is the explicit alternative. Two levels beyond the
+default of nothing:
+
+* `'awa'` — the work arrangement only: the team schedule and both ANNEX C
+  downloads cover every section.
+* `'all'` — every scoped view, wellness register and landing page included.
+
+Set per account in **Admin → Users** ("Sees", beside the role), audited as
+`change_bureau_access` exactly like a role change, and revocable. It is read from
+the row on every request, never from the session cookie that minted the user
+dict — a revoked grant must stop working on the next page load, not whenever the
+cookie happens to expire.
+
+Callers ask for what they are showing — `_org_scope_for_user(conn, user,
+area="awa"|"wellness")` — so the narrow grant widens the ANNEX C and nothing
+else. `team_scope_for_user` regains its "bureau" kind, reachable now by an `'all'`
+grant or by a directory record at the bureau-level unit; a work-arrangement grant
+deliberately does not widen the landing page, which spans all three modules.
+
+**Sight is not authority.** `user_can_view_work_arrangement_schedule` (chiefs +
+grant holders) is kept apart from `user_is_approving_chief` (chiefs only), so the
+schedule, its ANNEX C download and its nav entry open for a grant holder while
+the approvals queue stays shut — and the queue link is dropped from the hub and
+the schedule page for them rather than left to 403. Wellness stays out of the
+narrow grant entirely: those are health records, and printing a schedule is not a
+reason to read them.
+
+Granted on first start after each account exists, per username, so an
+administrator who revokes a grant does not find it back after the next deploy:
+`armedel@doh.gov.ph` → work arrangement bureau-wide; `ray@gmail.com` → everything
+bureau-wide, with the administrator role.
+
 ## 2026-08-15 (v2.61 — the landing page: bigger companion, named faces, swipeable insight decks, directory-based scope)
 
 ### The role was standing in for the directory
