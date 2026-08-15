@@ -1,5 +1,73 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-08-15 (v2.64 — the activities card says whose work it is showing, and gains its deck)
+
+### Creating an activity is not taking part in it
+
+The landing page's activities card qualified a row three ways: you SPOKE at it
+(`form_instance.rp_id`), you CREATED it (`form_instance.created_by`), or your
+section ORGANISED it (`form_instance.lead_org_id`). Personal was `spoke OR
+created`; team added the organising unit.
+
+`created_by` records who filled in the form. That is a fact about the app, not
+about whose work the activity was — and an administrator sets activities up for
+sections all over the bureau. Every one of those landed on that administrator's
+own card, and on their section's team card, for an activity their section had
+nothing to do with. The page has no chief-only route guard by design, so there
+was nothing behind which that could hide.
+
+The predicate is now one function, `office_connect._css_roles`, shared by the
+list and the deck so the two can never disagree about which activities count:
+
+* **Me** is speaker-only. It is the one view whose claim is about YOU, so it is
+  the narrowest of the three. The heading says so now: *"Activities you spoke
+  at"*.
+* **Team** is the organising unit's subtree, plus anything one of the team
+  actually spoke at — a teammate speaking at another section's event is real
+  work done by a real teammate, and a section head wants it.
+* **Creating never qualifies a row.** "Organised" survives as a chip on a row
+  that already qualified: worth saying out loud, never a reason to be in the
+  list.
+
+One deliberate consequence: an activity with no `lead_org_id` whose only link
+was a teammate's `created_by` now drops out of the team view. Anything a
+teammate actually spoke at still shows.
+
+`/monitor`, `/activities/outside`, `/activities/archived` and the `/css`
+"Your recent activities" strip are untouched. Those are *management* feeds —
+they exist so whoever created an activity can open, monitor and archive it, and
+filtering an admin's own creations out of them by section would take away the
+handle on work they are responsible for.
+
+### The card everyone else already had
+
+Activities was the one panel with nothing to read past the list. It is now a
+deck like wellness and AWA, over a **365-day** window — the list stays at 90
+days, because three bars is not a trend and the deck is answering a different
+question.
+
+* **Month by month** — activities per calendar month (`di.count_bars_geom`).
+  "Busiest" is claimed only when ONE month holds the top; on a tie the
+  superlative is false, and picking whichever month sorted first is how a chart
+  ends up disagreeing with the sentence printed under it.
+* **How they were rated** — the band mix. An activity below `eng.N_MIN`
+  responses is counted in its own row rather than quietly graded, so the mix
+  stays a statement about ratings that hold up. On the personal card the band is
+  YOUR speaker rating, read from the new per-event `speakers_by_rp` map: the
+  event review rates the event, and handing you its score because you happened
+  to speak there is exactly the claim to avoid.
+* **Who spoke most** — team members only. An outside resource person topping
+  your section's list is true but useless; the slide is asking who among us is
+  carrying the speaking.
+* **Reach** — responses collected, average per activity, the biggest one.
+
+No new query and no new geometry helper: everything comes off the memoised,
+scope-free `_activity_index` already in hand, the same discipline `_awa_insights`
+follows. No new CSS and no new JS either — `deck`/`deck_slide`, the local
+`count_bars` macro, `ul.mix` and `.stat-row` were all already on the page, and
+`deck.js` self-disables on a single-slide deck, so an account with nothing to
+show still degrades to the plain list.
+
 ## 2026-08-15 (v2.63 — landing-page decks, and bureau-wide sight granted per account)
 
 ### The seat that legitimately needs every section

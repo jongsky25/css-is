@@ -214,27 +214,40 @@ def test_warm_index_does_not_leak_between_viewers(world, order):
 
 # --- the CSS predicate ------------------------------------------------------
 
-def test_personal_matches_speaker_and_creator_roles(world):
+def test_personal_is_speaking_only(world):
+    """"Me" is the one view whose claim is about YOU, so it is the narrowest:
+    speaker matches, nothing else. Ana both filed and spoke at hers, and only
+    the speaking is what puts it on her card."""
     p = _payload(world, "ana")
     rows = p["panels"]["css"]["personal"]["rows"]
     assert [r["name"] for r in rows] == ["Ana's activity"]
-    # she filed it AND spoke at it, so both roles are named
-    assert rows[0]["roles"] == ["ran", "spoke"]
+    assert rows[0]["roles"] == ["spoke"]
     assert p["panels"]["css"]["personal"]["linked"] is True
 
 
-def test_personal_still_works_without_a_directory_link(world):
-    """An account with no rp_id can never match as a speaker, but creator
-    matching is on the username and still works."""
+def test_creating_an_activity_does_not_put_it_on_your_own_card(world):
+    """`created_by` records who filled in the form, which is a fact about the
+    app, not about whose work the activity was."""
+    conn = world["conn"]
+    conn.execute("UPDATE form_instance SET created_by=? WHERE id=?",
+                 ("oc-ana@test.local", world["fi_b"]))
+    conn.commit()
+
+    rows = _payload(world, "ana")["panels"]["css"]["personal"]["rows"]
+    assert "Ben's activity" not in [r["name"] for r in rows]
+
+
+def test_personal_is_empty_without_a_directory_link(world):
+    """An account with no rp_id can never match as a speaker, and creating is
+    no longer a way in — so an unlinked account matches nothing at all. The
+    card's own empty state is what explains why."""
     conn = world["conn"]
     conn.execute("UPDATE form_instance SET created_by=? WHERE id=?",
                  ("oc-none@test.local", world["fi_a"]))
     conn.commit()
 
     p = _payload(world, "unlinked")
-    rows = p["panels"]["css"]["personal"]["rows"]
-    assert [r["name"] for r in rows] == ["Ana's activity"]
-    assert rows[0]["roles"] == ["ran"]
+    assert p["panels"]["css"]["personal"]["rows"] == []
     assert p["panels"]["css"]["personal"]["linked"] is False
 
 
@@ -245,12 +258,150 @@ def test_team_rows_say_how_each_one_qualified(world):
     assert row["who"] == ["OC-Ana"]
 
 
+def test_an_admin_filing_for_another_section_stays_out_of_both_views(world):
+    """THE REGRESSION THIS SUITE EXISTS FOR. An administrator sets activities up
+    for sections all over the bureau; `created_by` used to qualify a row on its
+    own, so every one of them landed on that administrator's card and on their
+    section's. The organising unit is what decides."""
+    conn = world["conn"]
+    # the S1-seated admin files S10's activity. Nobody from S1 speaks at it.
+    conn.execute("UPDATE form_instance SET created_by=? WHERE id=?",
+                 ("oc-adm-s1@test.local", world["fi_b"]))
+    conn.commit()
+
+    p = _payload(world, "admin_s1")
+    assert p["scope"]["path"] == "OCT/D1/S1"
+    names = [r["name"] for r in p["panels"]["css"]["team"]["rows"]]
+    assert "Ben's activity" not in names   # S10's, and filing it changes nothing
+    assert names == ["Ana's activity"]     # S1's own is still there
+    assert p["panels"]["css"]["personal"]["rows"] == []   # they spoke at neither
+
+
+def test_a_teammate_speaking_elsewhere_still_counts_for_the_team(world):
+    """The other half of the rule: work your people actually did at another
+    section's event is still your team's work."""
+    conn = world["conn"]
+    events = [_event(world["fi_b"], instance_ids=[world["fi_b"]],
+                     name="S10's activity",
+                     speakers=[{"rp_id": world["rp_ana"], "name": "OC-Ana",
+                                "value": 6.6, "shown": "6.6",
+                                "band": "Excellent", "hidden": False}])]
+    p = _payload(world, "ana", memo=_memo_with(events))
+    row = p["panels"]["css"]["team"]["rows"][0]
+    assert row["name"] == "S10's activity"
+    assert row["roles"] == ["spoke"]        # not ours to run, but ours who spoke
+    assert row["who"] == ["OC-Ana"]
+
+
+def test_a_row_that_qualified_still_says_who_organised_it(world):
+    """"Organised" survives as a CHIP on a row that already qualified — worth
+    saying out loud, never a reason to be in the list."""
+    row = _payload(world, "ana")["panels"]["css"]["team"]["rows"][0]
+    assert "ran" in row["roles"]           # Ana filed it and Ana's section ran it
+
+
 def test_no_internal_sets_leak_into_the_payload(world):
-    """rp_ids/creators/lead_paths are matching machinery, not display data —
-    and sets aren't JSON-serialisable, so they must not reach the template."""
+    """rp_ids/creators/lead_paths/speakers_by_rp are matching machinery, not
+    display data — and sets aren't JSON-serialisable, so they must not reach the
+    template."""
     for scope in ("personal", "team"):
         for row in _payload(world, "ana")["panels"]["css"][scope]["rows"]:
-            assert not ({"rp_ids", "creators", "lead_paths"} & set(row))
+            assert not ({"rp_ids", "creators", "lead_paths",
+                         "speakers_by_rp"} & set(row))
+
+
+# --- the CSS insights deck --------------------------------------------------
+
+def test_insights_read_the_same_activities_the_list_does(world):
+    """The deck is built from the ids the predicate let through, so it can never
+    disagree with the rows above it about which activities count."""
+    p = _payload(world, "ana")
+    assert p["panels"]["css"]["team"]["insights"]["total"] == 1
+    assert p["panels"]["css"]["personal"]["insights"]["total"] == 1
+
+
+def test_insights_are_none_when_there_is_nothing_to_draw(world):
+    """An empty chart reads as "the data is broken" rather than "nothing has
+    happened yet" — so there is no chart at all."""
+    assert _payload(world, "unlinked")["panels"]["css"]["personal"]["insights"] is None
+
+
+def test_every_insight_chart_ships_its_screen_reader_table(world):
+    ins = _payload(world, "ana")["panels"]["css"]["team"]["insights"]
+    for table in (ins["volume"]["table"], ins["mix_table"], ins["speakers_table"]):
+        assert table["headers"] and table["rows"]
+        assert table["caption"]
+
+
+def test_insights_emit_tones_never_colours(world):
+    """A hex here breaks 35 of the 36 theme x accent combinations."""
+    assert "#" not in repr(_payload(world, "ana")["panels"]["css"]["team"]["insights"])
+
+
+def test_the_volume_chart_spans_a_year_not_the_list_window(world):
+    """Three bars is not a trend. The list stays at 90 days; the deck answers a
+    different question."""
+    ins = _payload(world, "ana")["panels"]["css"]["team"]["insights"]
+    assert len(ins["volume"]["bars"]) == oc.INSIGHT_MONTHS
+    assert ins["window_days"] == oc.INSIGHT_DAYS
+
+
+def test_no_busiest_month_is_claimed_on_a_tie(world):
+    """On a tie the superlative is simply false, and picking whichever month
+    sorted first is how a chart ends up disagreeing with its own caption."""
+    speaker = {"rp_id": world["rp_ana"], "name": "OC-Ana", "value": 6.6,
+               "shown": "6.6", "band": "Excellent", "hidden": False}
+    events = [_event(world["fi_a"], instance_ids=[world["fi_a"]], date="2026-08-10",
+                     name="August one", speakers=[speaker]),
+              _event(world["fi_b"], instance_ids=[world["fi_b"]], date="2026-07-10",
+                     name="July one", speakers=[speaker])]
+    ins = _payload(world, "ana", memo=_memo_with(events))["panels"]["css"]["team"]["insights"]
+    assert ins["total"] == 2
+    assert "busiest" not in ins["said"]["volume"]
+    assert ins["said"]["volume"].endswith(".")
+
+
+def test_who_spoke_most_ranks_the_team_not_outsiders(world):
+    """An outside resource person topping your section's list is true but
+    useless — the slide is asking who among US is carrying the speaking."""
+    events = [_event(world["fi_a"], instance_ids=[world["fi_a"]],
+                     name="Ana's activity",
+                     speakers=[{"rp_id": world["rp_ana"], "name": "OC-Ana",
+                                "value": 6.6, "shown": "6.6",
+                                "band": "Excellent", "hidden": False},
+                               {"rp_id": 99999, "name": "Someone external",
+                                "value": 7.0, "shown": "7.0",
+                                "band": "Excellent", "hidden": False}])]
+    ins = _payload(world, "ana", memo=_memo_with(events))["panels"]["css"]["team"]["insights"]
+    assert [s["label"] for s in ins["speakers"]] == ["OC-Ana"]
+    assert "OC-Ana spoke at the most" in ins["said"]["speakers"]
+
+
+def test_the_personal_rating_slide_reads_your_score_not_the_events(world):
+    """The event review rates the EVENT. Handing you its score because you
+    happened to speak there is the misleading claim to avoid."""
+    events = [_event(world["fi_a"], instance_ids=[world["fi_a"]], overall=6.9,
+                     band="Excellent", name="Ana's activity",
+                     speakers=[{"rp_id": world["rp_ana"], "name": "OC-Ana",
+                                "value": 4.9, "shown": "4.9", "band": "Fair",
+                                "hidden": False}])]
+    p = _payload(world, "ana", memo=_memo_with(events))
+    mine = {m["label"]: m["n"] for m in p["panels"]["css"]["personal"]["insights"]["mix"]}
+    team = {m["label"]: m["n"] for m in p["panels"]["css"]["team"]["insights"]["mix"]}
+    assert mine["Fair"] == 1 and mine["Excellent"] == 0       # her own speaker band
+    assert team["Excellent"] == 1 and team["Fair"] == 0       # the event's band
+
+
+def test_a_thin_activity_is_counted_apart_from_the_bands(world):
+    """A score nobody can read is not a "Poor" and not an "Excellent" — it gets
+    its own row so the band mix stays a statement about ratings that hold up."""
+    events = [_event(world["fi_a"], instance_ids=[world["fi_a"]],
+                     name="Thin activity", respondents=3, overall=7.0)]
+    ins = _payload(world, "ana", memo=_memo_with(events))["panels"]["css"]["team"]["insights"]
+    mix = {m["label"]: m["n"] for m in ins["mix"]}
+    assert mix["Too few responses to read"] == 1
+    assert mix["Excellent"] == 0
+    assert ins["said"]["mix"] is None      # nothing rated well enough to say so
 
 
 # --- scores -----------------------------------------------------------------

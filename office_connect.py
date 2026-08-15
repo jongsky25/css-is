@@ -47,6 +47,14 @@ WINDOW_DAYS = 90
 RECENT_N = 6
 UPCOMING_N = 5
 
+# How far back the ACTIVITY INSIGHTS look. Deliberately longer than the list:
+# three bars is not a trend, and a section that runs one activity a month has
+# nothing to read at 90 days. The list still shows the last 90 — the deck is
+# answering a different question ("what does a year of us look like?").
+INSIGHT_DAYS = 365
+# Above this many months the x-axis labels stop being readable at card width.
+INSIGHT_MONTHS = 12
+
 # Score band -> semantic tone token. band7() returns a bare label string, so the
 # mapping is ours to own. Never a colour: the template resolves tone -> var(--x).
 _BAND_TONE = {"Excellent": "green", "Good": "green", "Fair": "amber", "Poor": "red"}
@@ -109,7 +117,7 @@ def _activity_index(conn, atoms, view_memo, today):
     lead = {i["id"]: i.get("lead_path") for i in insts}
     made = {i["id"]: i.get("created_by") for i in insts}
 
-    by_event, by_rp, by_creator, recent = {}, {}, {}, []
+    by_event, by_rp, by_creator, recent, order = {}, {}, {}, [], []
     cut = (today - timedelta(days=WINDOW_DAYS)).isoformat()
     for e in events:
         ids = e.get("instance_ids") or []
@@ -143,9 +151,17 @@ def _activity_index(conn, atoms, view_memo, today):
                     else f"/reports?type=3&activity={e['id']}"),
             "f3_only": not f2,
             "speaker_names": [s["name"] for s in speakers],
+            # Per-speaker scores, kept so the PERSONAL deck can read your own
+            # rating instead of the event's Form-2 overall. Crediting you with
+            # the whole activity's score is the misleading claim to avoid: the
+            # event review rates the event, not the person who spoke at it.
+            "speakers_by_rp": {s["rp_id"]: {"name": s["name"], "value": s["value"],
+                                            "shown": s["shown"], "band": s["band"]}
+                               for s in speakers if s.get("rp_id")},
             "rp_ids": rp_ids, "creators": creators, "lead_paths": paths,
         }
         by_event[e["id"]] = row
+        order.append(e["id"])
         for rp in rp_ids:
             by_rp.setdefault(rp, []).append(e["id"])
         for u in creators:
@@ -155,6 +171,10 @@ def _activity_index(conn, atoms, view_memo, today):
     # build_events is already newest-first; keep that order.
     return {"by_event": by_event, "by_rp": by_rp, "by_creator": by_creator,
             "recent": recent,
+            # Every event id, newest-first. `recent` is the 90-day head of this;
+            # the insights walk the whole list and cut it themselves, which is
+            # what lets the deck span a year without a second pass over events.
+            "order": order,
             # instance_id -> org path, kept so the upcoming feed (which cannot
             # come from build_events — see _upcoming) can scope-filter without
             # re-running the instances query.
@@ -193,8 +213,8 @@ def _upcoming(conn, index, scope, kind, *, limit=UPCOMING_N):
 # panels
 # --------------------------------------------------------------------------
 
-def _css_panel(conn, index, *, me, roll_rows, scope, kind):
-    """Activities, personal and team.
+def _css_roles(ev, *, rp_ids, users, scope, personal):
+    """Which links tie this activity to the viewer, or to the viewer's team.
 
     THE PREDICATE IS THE WHOLE DESIGN HERE. There is no staff->activity
     attendance relation in this schema: `attendee` rows are external registrants
@@ -202,34 +222,64 @@ def _css_panel(conn, index, *, me, roll_rows, scope, kind):
     activity only as SPEAKER (form_instance.rp_id), CREATOR (created_by, a
     username) or via the ORGANISING UNIT (lead_org_id).
 
-    So personal = spoke OR created. Organiser-unit is deliberately excluded from
-    the personal view: "my section ran it" is not "I was involved", and blurring
-    the two is exactly the misleading claim to avoid. The team view adds it,
-    because there it means precisely what it says.
+    CREATING AN ACTIVITY NEVER QUALIFIES IT. `created_by` records who filled in
+    the form, which is a fact about the app, not about whose work the activity
+    was: an administrator sets activities up for sections all over the bureau,
+    and every one of them used to land on that administrator's own card and on
+    their section's. What the organising unit says is what counts, and this page
+    has no route guard behind which to hide getting that wrong.
+
+    So:
+      * PERSONAL is speaker-only. "I ran the form" is not "I was involved", and
+        neither is "my section ran it" — the personal view is the one place a
+        claim is about YOU, so it stays the narrowest of the three.
+      * TEAM is the organising unit's subtree, plus anything one of the team
+        actually spoke at (a section head wants their people's engagements at
+        another section's event, which is real work done by real teammates).
+
+    "ran" survives only as a CHIP on a row that already qualified — worth saying
+    out loud, never a reason to be in the list.
     """
+    if personal:
+        return {"spoke"} if ev["rp_ids"] & rp_ids else set()
+    roles = set()
+    if any(st._path_in_scope(p, scope) for p in ev["lead_paths"]):
+        roles.add("unit")
+    if ev["rp_ids"] & rp_ids:
+        roles.add("spoke")
+    if not roles:
+        return roles
+    if ev["creators"] & users:
+        roles.add("ran")
+    return roles
+
+
+def _css_panel(conn, index, *, me, roll_rows, scope, kind, today):
+    """Activities, personal and team. See `_css_roles` for the predicate."""
     by_event = index["by_event"]
 
     def _row(eid, roles):
         r = dict(by_event[eid])
         r.pop("rp_ids", None), r.pop("creators", None), r.pop("lead_paths", None)
+        r.pop("speakers_by_rp", None)
         r["roles"] = sorted(roles)
         return r
 
     # ---- personal -------------------------------------------------------
-    mine = {}
-    for eid in index["by_rp"].get(me.get("rp_id"), []) if me.get("rp_id") else []:
-        mine.setdefault(eid, set()).add("spoke")
-    for eid in index["by_creator"].get(me.get("username"), []):
-        mine.setdefault(eid, set()).add("ran")
-    personal_rows = [_row(eid, roles) for eid, roles in mine.items()
-                     if eid in index["recent"]]
-    personal_rows.sort(key=lambda r: r["date"], reverse=True)
+    my_rp = {me["rp_id"]} if me.get("rp_id") else set()
+    my_ids = [eid for eid in index["order"]
+              if _css_roles(by_event[eid], rp_ids=my_rp, users=set(),
+                            scope=scope, personal=True)]
+    personal_rows = [_row(eid, {"spoke"}) for eid in my_ids
+                     if eid in set(index["recent"])]
 
     personal = {
         "rows": personal_rows[:RECENT_N],
         "total": len(personal_rows),
         "linked": bool(me.get("rp_id")),
         "window_days": WINDOW_DAYS,
+        "insights": _css_insights(index, my_ids, today, rp_ids=my_rp, names={},
+                                  personal=True),
     }
 
     # ---- team -----------------------------------------------------------
@@ -238,25 +288,193 @@ def _css_panel(conn, index, *, me, roll_rows, scope, kind):
         team_rp_ids = {r["rp_id"] for r in roll_rows if r.get("rp_id")}
         team_users = {r["username"] for r in roll_rows if r.get("username")}
         names = {r["rp_id"]: r["name"] for r in roll_rows if r.get("rp_id")}
-        team_rows = []
-        for eid in index["recent"]:
+        team_ids, team_rows = [], []
+        recent = set(index["recent"])
+        for eid in index["order"]:
             ev = by_event[eid]
-            roles = set()
-            if any(st._path_in_scope(p, scope) for p in ev["lead_paths"]):
-                roles.add("unit")
-            spoke = ev["rp_ids"] & team_rp_ids
-            if spoke:
-                roles.add("spoke")
-            if ev["creators"] & team_users:
-                roles.add("ran")
+            roles = _css_roles(ev, rp_ids=team_rp_ids, users=team_users,
+                               scope=scope, personal=False)
             if not roles:
                 continue
+            team_ids.append(eid)
+            if eid not in recent:
+                continue
             row = _row(eid, roles)
-            row["who"] = sorted(names[r] for r in spoke if r in names)
+            row["who"] = sorted(names[r] for r in ev["rp_ids"] & team_rp_ids
+                                if r in names)
             team_rows.append(row)
         team = {"rows": team_rows[:RECENT_N], "total": len(team_rows),
-                "window_days": WINDOW_DAYS}
+                "window_days": WINDOW_DAYS,
+                "insights": _css_insights(index, team_ids, today,
+                                          rp_ids=team_rp_ids, names=names,
+                                          personal=False)}
     return {"team": team, "personal": personal}
+
+
+# The seven-point bands, worst last, as `band7` names them. Kept in rank order
+# rather than sorted by count so a reader can see the shape of the distribution
+# at a glance instead of re-reading the labels every time it changes.
+_CSS_BANDS = ["Excellent", "Good", "Fair", "Poor"]
+_CSS_TOO_FEW = "Too few responses to read"
+_CSS_UNRATED = "No ratings yet"
+# How many people the "who spoke most" slide ranks before it stops. Past this the
+# bars are a hairline each and the slide has stopped answering its own question.
+_CSS_TOP_SPEAKERS = 8
+
+
+def _month_keys(today, n):
+    """The last `n` calendar months, oldest first, as (year, month) pairs."""
+    out, y, m = [], today.year, today.month
+    for _ in range(n):
+        out.append((y, m))
+        y, m = (y - 1, 12) if m == 1 else (y, m - 1)
+    return list(reversed(out))
+
+
+def _month_label(key):
+    return f"{_MON[key[1] - 1]} {key[0]}"
+
+
+def _css_insights(index, ids, today, *, rp_ids, names, personal):
+    """The Activities card's later slides.
+
+    Every number comes off the index already in hand — the same discipline as
+    `_awa_insights`, and the reason this deck costs no extra query. `ids` is the
+    already-scoped, newest-first list of event ids the caller's own predicate
+    let through, so the deck can never disagree with the list above it about
+    which activities count.
+
+    Returns None when there is nothing to draw. An empty chart reads as "the
+    data is broken" rather than "nothing has happened yet", which is what the
+    slide's own empty state says properly.
+    """
+    by_event = index["by_event"]
+    cut = (today - timedelta(days=INSIGHT_DAYS)).isoformat()
+    rows = [by_event[eid] for eid in ids if by_event[eid]["date"] >= cut]
+    if not rows:
+        return None
+    total = len(rows)
+
+    # ---- how many, month by month ---------------------------------------
+    keys = _month_keys(today, INSIGHT_MONTHS)
+    per_month = {k: 0 for k in keys}
+    for r in rows:
+        try:
+            d = date.fromisoformat(r["date"])
+        except ValueError:
+            continue
+        k = (d.year, d.month)
+        if k in per_month:
+            per_month[k] += 1
+    volume = di.count_bars_geom(
+        [{"name": _month_label(k), "short": _MON[k[1] - 1], "n": per_month[k]}
+         for k in keys],
+        caption=("Activities you spoke at, by month" if personal
+                 else "Activities by month"),
+        key_header="Month", value_header="Activities")
+
+    # ---- how they were rated --------------------------------------------
+    # For the personal deck the band is YOUR speaker rating, never the event's
+    # Form-2 overall: the event review rates the event, and handing you its
+    # score because you happened to speak there is the claim to avoid.
+    counts = {b: 0 for b in _CSS_BANDS}
+    too_few = unrated = 0
+    for r in rows:
+        if personal:
+            mine = next((r["speakers_by_rp"][rp] for rp in rp_ids
+                         if rp in r["speakers_by_rp"]), None)
+            band = (mine or {}).get("band")
+        else:
+            band = r["band"]
+        if not band:
+            unrated += 1
+        elif r["low_n"]:
+            too_few += 1
+        elif band in counts:
+            counts[band] += 1
+        else:
+            unrated += 1
+    mix_rows = [{"label": b, "long": f"Rated {b.lower()}", "n": counts[b]}
+                for b in _CSS_BANDS]
+    if too_few:
+        mix_rows.append({"label": _CSS_TOO_FEW,
+                         "long": f"Fewer than {eng.N_MIN} responses",
+                         "n": too_few})
+    if unrated:
+        mix_rows.append({"label": _CSS_UNRATED,
+                         "long": "Nobody has rated these yet", "n": unrated})
+    rated = sum(counts.values())
+    mix = [{**m, "pct": round(m["n"] * 100 / total)} for m in mix_rows]
+
+    # ---- who spoke most --------------------------------------------------
+    # Only the team's own people are ranked. An outside resource person topping
+    # your section's list is true but useless — the slide is asking who among us
+    # is carrying the speaking, and `names` is exactly the roster.
+    speakers = None
+    if not personal and names:
+        roster, tally = set(names), {}
+        for r in rows:
+            for rp in r["rp_ids"] & roster:
+                tally[rp] = tally.get(rp, 0) + 1
+        ranked = sorted(tally.items(), key=lambda kv: (-kv[1], names[kv[0]]))
+        if ranked:
+            top_n = ranked[0][1]
+            speakers = [{"label": names[rp], "long": f"{n} of {total} activities",
+                         "n": n, "pct": round(n * 100 / top_n)}
+                        for rp, n in ranked[:_CSS_TOP_SPEAKERS]]
+
+    # ---- reach ------------------------------------------------------------
+    responses = sum(r["respondents"] for r in rows)
+    thin = sum(1 for r in rows if r["low_n"])
+    biggest = max(r["respondents"] for r in rows)
+    reach = {"responses": responses, "activities": total,
+             "avg": round(responses / total) if total else 0,
+             "thin": thin, "n_min": eng.N_MIN, "biggest": biggest,
+             # Pre-grouped for the tiles. A four-figure count set as "1240" is
+             # read as a year before it is read as a number.
+             "responses_shown": f"{responses:,}", "biggest_shown": f"{biggest:,}"}
+
+    # "Busiest" only when ONE month holds the top. On a tie the superlative is
+    # simply false, and picking whichever month sorted first is how a chart ends
+    # up disagreeing with the sentence printed under it.
+    peaks = [b for b in volume["bars"] if b["n"] and b["n"] == volume["ymax"]]
+    busiest = peaks[0] if len(peaks) == 1 else None
+    top_band = max((m for m in mix if m["label"] in counts), key=lambda m: m["n"],
+                   default=None)
+    return {
+        "window_days": INSIGHT_DAYS, "months": INSIGHT_MONTHS,
+        "total": total, "since": _month_label(keys[0]),
+        "volume": volume,
+        "mix": mix,
+        "mix_table": {"caption": ("How your activities were rated" if personal
+                                 else "How the team's activities were rated"),
+                      "headers": ["Rating", "Activities"],
+                      "rows": [[m["label"], str(m["n"])] for m in mix]},
+        "speakers": speakers,
+        "speakers_table": ({"caption": "Activities spoken at, by person",
+                            "headers": ["Person", "Activities"],
+                            "rows": [[s["label"], str(s["n"])] for s in speakers]}
+                           if speakers else None),
+        "reach": reach,
+        "said": {
+            "volume": (f"{total} activit{'y' if total == 1 else 'ies'} since "
+                       f"{_month_label(keys[0])}"
+                       + (f" — {busiest['name']} was the busiest with "
+                          f"{busiest['n']}." if busiest else ".")),
+            "mix": (f"{top_band['label']} is the most common rating — "
+                    f"{top_band['n']} of the {rated} with enough responses."
+                    if top_band and top_band["n"] and rated else None),
+            "speakers": (f"{speakers[0]['label']} spoke at the most — "
+                         f"{speakers[0]['n']} of the {total}."
+                         if speakers else None),
+            "reach": (f"{reach['responses_shown']} "
+                      f"response{'' if responses == 1 else 's'} "
+                      f"across {total} activit{'y' if total == 1 else 'ies'}"
+                      + (f" · {thin} still below the {eng.N_MIN}-response mark."
+                         if thin else ".")
+                      if responses else None),
+        },
+    }
 
 
 def _wellness_panel(conn, *, me, user, roll, week_start, kind):
@@ -687,7 +905,7 @@ def team_view_data(conn, user, *, get_atoms, view_memo,
                                         week_start=week_start, kind=kind),
             "awa": _awa_panel_build(conn, me=me, user=user, today=today, kind=kind),
             "css": {**_css_panel(conn, index, me=me, roll_rows=roll["rows"],
-                                 scope=scope_path, kind=kind),
+                                 scope=scope_path, kind=kind, today=today),
                     "upcoming": _upcoming(conn, index, scope_path, kind)},
         },
         "notes": notes,

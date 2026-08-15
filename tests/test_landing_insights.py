@@ -12,6 +12,7 @@ Three layers, tested apart:
 """
 from __future__ import annotations
 
+import contextlib
 from datetime import date, timedelta
 
 import pytest
@@ -281,6 +282,63 @@ def test_a_deck_slide_says_what_its_chart_means(app_mod, team):
 
     assert "Wednesday" in html                      # the peak day, said out loud
     assert 'class="deck-say"' in html
+
+
+@contextlib.contextmanager
+def an_activity_of_ours(app_mod, path="LFTEAM/D1/S1"):
+    """Point one already-rated activity from the sample data at the section the
+    landing-page tests put the admin in, so the Activities card has something
+    real to read. Retagging is what `/reports/activities` -> "Set section" does,
+    so this is the same shape as the production path — no fabricated atoms.
+
+    Nests INSIDE `in_the_directory`, which is what creates the unit."""
+    conn = st.connect(app_mod.DB)
+    st.init_db(conn)
+    row = conn.execute(
+        "SELECT fi.id, fi.lead_org_id, fi.event_date FROM form_instance fi"
+        " WHERE fi.survey_type IN (2, 3) AND COALESCE(fi.archived,0) = 0"
+        " AND EXISTS (SELECT 1 FROM response r WHERE r.form_instance_id = fi.id)"
+        " ORDER BY fi.survey_type LIMIT 1").fetchone()
+    if not row:
+        pytest.skip("the sample database carries no rated activity to retag")
+    fi_id, was_org, was_date = row
+    unit = conn.execute("SELECT id FROM org_unit WHERE path=?", (path,)).fetchone()
+    today = date.today().isoformat()
+    conn.execute("UPDATE form_instance SET lead_org_id=?, event_date=? WHERE id=?",
+                 (unit[0], today, fi_id))
+    conn.commit()
+    app_mod.invalidate_atoms(); app_mod.invalidate_views()
+    try:
+        yield fi_id
+    finally:
+        conn.execute("UPDATE form_instance SET lead_org_id=?, event_date=? WHERE id=?",
+                     (was_org, was_date, fi_id))
+        conn.commit()
+        app_mod.invalidate_atoms(); app_mod.invalidate_views()
+        conn.close()
+
+
+def test_the_activities_card_is_a_deck_too(app_mod):
+    """The Activities card was the one panel with no reading past the list.
+    Every slide still owes a screen reader its table and the reader a sentence."""
+    with in_the_directory(app_mod, "admin@test.local"), an_activity_of_ours(app_mod):
+        html = _auth_client(app_mod, "admin").get("/").text
+
+    assert "Activities your team ran or spoke at" in html
+    for slide in ("Month by month", "How they were rated", "Reach"):
+        assert slide in html
+    assert "Activities by month" in html          # the volume chart's sr caption
+    assert 'class="deck-say"' in html
+
+
+def test_the_me_view_says_it_is_about_speaking(app_mod):
+    """"Activities you ran or spoke at" promised more than the view now shows —
+    the heading has to say what the rule actually is."""
+    with in_the_directory(app_mod, "admin@test.local"):
+        html = _auth_client(app_mod, "admin").get("/?view=me").text
+
+    assert "Activities you spoke at" in html
+    assert "Activities you ran or spoke at" not in html
 
 
 def test_the_awa_card_leads_with_the_dates_it_covers(app_mod):

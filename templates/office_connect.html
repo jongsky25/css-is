@@ -463,11 +463,17 @@
     {# ---------------- CSS ---------------- #}
     {% set c = d.panels.css %}
     {% set cv = c.personal if (me_view or not c.team) else c.team %}
+    {% set ci = cv.insights %}
     <section class="oc-card" data-tour="oc-css">
-      <h2>{% if me_view or not c.team %}Activities you ran or spoke at
+      <h2>{% if me_view or not c.team %}Activities you spoke at
           {% else %}Activities your team ran or spoke at{% endif %}</h2>
-      <p class="sub">Last {{ cv.window_days }} days</p>
+      <p class="sub">Last {{ cv.window_days }} days{% if not (me_view or not c.team) %} ·
+        {{ d.scope.label }}{% endif %}</p>
 
+      {% call deck((("Activities — " ~ d.scope.label) if not (me_view or not c.team)
+                    else "Activities you spoke at")) %}
+
+      {% call deck_slide("Recent", caption=false) %}
       {% if cv.rows %}
       <ul class="oc-list">
         {% for r in cv.rows %}
@@ -484,7 +490,7 @@
               <span class="sc-soft">No ratings yet</span>
             {% endif %}
             {% for role in r.roles %}
-              <span class="oc-chip">{{ {"ran":"Organised","spoke":"Spoke","unit":"Your section ran this"}[role] }}</span>
+              <span class="oc-chip">{{ {"ran":"Organised","spoke":"Spoke","unit":"Your team ran this"}[role] }}</span>
             {% endfor %}
             {% if r.who %}<span>{{ r.who|join(", ") }}</span>{% endif %}
           </div>
@@ -500,11 +506,11 @@
                          hint="Your account isn’t linked to a directory record, so we can’t tell which activities you spoke at.") }}
         {% else %}
           {{ empty_state(title="Nothing in the last 90 days",
-                         hint="Activities you speak at or create show up here.") }}
+                         hint="Activities you speak at show up here.") }}
         {% endif %}
       {% else %}
         {{ empty_state(title="Nothing in the last 90 days",
-                       hint="Activities your section runs, or that one of you speaks at, show up here.") }}
+                       hint="Activities your team runs, or that one of you speaks at, show up here.") }}
       {% endif %}
 
       {% if c.upcoming %}
@@ -521,6 +527,63 @@
       {#-- Load-bearing. There is no attendance relation in this system, so
            without this line the panel reads as an attendance log and is wrong. --#}
       <p class="foot">Attendance isn’t recorded here — only who ran an activity and who spoke at it.</p>
+      {% endcall %}
+
+      {% if ci %}
+      {% call deck_slide("Month by month") %}
+        {{ count_bars(ci.volume) }}
+        {% if ci.said.volume %}<p class="deck-say">{{ ci.said.volume }}</p>{% endif %}
+      {% endcall %}
+
+      {% call deck_slide("How they were rated") %}
+        <ul class="mix">
+          {% for m in ci.mix %}
+          <li><span class="lab" title="{{ m.long }}">{{ m.label }}</span>
+            <span class="track"><i style="width:{{ m.pct }}%"></i></span>
+            <span class="n">{{ m.n }}</span></li>
+          {% endfor %}
+        </ul>
+        {{ chart_table(ci.mix_table.caption, ci.mix_table.headers, ci.mix_table.rows) }}
+        {% if ci.said.mix %}<p class="deck-say">{{ ci.said.mix }}</p>
+        {% else %}
+          {{ empty_state(title="Nothing rated yet",
+                         hint="A rating needs at least " ~ ci.reach.n_min ~ " responses before it can be read.") }}
+        {% endif %}
+      {% endcall %}
+
+      {% if ci.speakers %}
+      {% call deck_slide("Who spoke most") %}
+        <ul class="mix">
+          {% for s in ci.speakers %}
+          <li><span class="lab" title="{{ s.long }}">{{ s.label }}</span>
+            <span class="track"><i style="width:{{ s.pct }}%"></i></span>
+            <span class="n">{{ s.n }}</span></li>
+          {% endfor %}
+        </ul>
+        {{ chart_table(ci.speakers_table.caption, ci.speakers_table.headers,
+                       ci.speakers_table.rows) }}
+        {% if ci.said.speakers %}<p class="deck-say">{{ ci.said.speakers }}</p>{% endif %}
+      {% endcall %}
+      {% endif %}
+
+      {% call deck_slide("Reach") %}
+        <div class="stat-row">
+          <div class="s"><div class="v">{{ ci.reach.responses_shown }}</div>
+            <div class="k">responses collected</div></div>
+          <div class="s"><div class="v">{{ ci.reach.avg }}</div>
+            <div class="k">average per activity</div></div>
+          <div class="s"><div class="v">{{ ci.reach.biggest_shown }}</div>
+            <div class="k">the biggest one</div></div>
+        </div>
+        {% if ci.said.reach %}<p class="deck-say">{{ ci.said.reach }}</p>
+        {% else %}
+          {{ empty_state(title="No responses yet",
+                         hint="Reach fills in once people start answering the rating forms.") }}
+        {% endif %}
+      {% endcall %}
+      {% endif %}
+
+      {% endcall %}
     </section>
 
   </div>
