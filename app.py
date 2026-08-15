@@ -60,6 +60,9 @@ import css_is_engine as eng
 import storage as st
 import dashboard_insights as di
 import dashboard_export as dx
+# The Office Connect landing payload. It takes get_atoms/view_memo as arguments
+# rather than importing them back out of here, so the dependency stays one-way.
+import office_connect as oc
 import report_docs
 import csm_report
 import auth

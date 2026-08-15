@@ -2608,6 +2608,83 @@ def _spark_points(points, scale):
 
 
 # =====================================================================
+# Office Connect landing-page geometry. Same contract as _svg_geom/_count_geom:
+# every number the template needs is computed HERE, so the markup only draws the
+# strings it is handed. Neither emits a colour — callers pass semantic tone
+# tokens ("green"/"accent"/"amber"/"red"/"soft") that the template maps to CSS
+# custom properties once, which is what keeps 3 themes x 6 accents working.
+# =====================================================================
+
+def ring_geom(pct, r=18, sw=4):
+    """stroke-dasharray geometry for a progress ring (a person's hours used, a
+    team's filed share). `dash`/`gap` are the two halves of the dasharray; the
+    circle is drawn rotated -90deg by CSS so it starts at twelve o'clock."""
+    pct = 0.0 if pct is None else float(pct)
+    frac = min(100.0, max(0.0, pct)) / 100.0
+    circ = 2 * math.pi * r
+    return {"size": 2 * (r + sw), "cx": r + sw, "cy": r + sw, "r": r, "sw": sw,
+            "circ": round(circ, 2), "dash": round(circ * frac, 2),
+            "gap": round(circ * (1 - frac), 2), "pct": round(pct)}
+
+
+def bars_geom(totals, headcount, *, thin_at=1):
+    """Stacked Mon-Fri columns for work-arrangement coverage.
+
+    `totals` is work_arrangement_period_summary's list of
+    {idx, name, onsite, offsite, empty_sections}. Stacked rather than grouped so
+    every bar is the same height (= headcount) and the eye reads the ON-SITE
+    FRACTION directly instead of comparing two free-floating bars.
+
+    A column at or below `thin_at` on-site turns amber, and zero turns red — the
+    Friday problem, visible without reading a number. Returns the coordinates
+    plus the aria label and the `chart_table` rows, so a caller never has to
+    re-derive the numbers for the screen-reader fallback."""
+    W, H, padl, padr, padt, padb = 460, 190, 34, 12, 10, 34
+    plotw, ploth = W - padl - padr, H - padt - padb
+    axis_y = padt + ploth
+    ymax = max(1, headcount or 0)
+    n = len(totals) or 1
+    slot = plotw / n
+    bw = min(28.0, slot * 0.55)
+    bars, rows = [], []
+    for i, t in enumerate(totals):
+        onsite, offsite = t.get("onsite", 0), t.get("offsite", 0)
+        x = padl + slot * i + (slot - bw) / 2
+        h_on = ploth * (onsite / ymax)
+        h_off = ploth * (offsite / ymax)
+        tone = "green" if onsite > thin_at else ("amber" if onsite else "red")
+        empty = t.get("empty_sections") or []
+        bars.append({
+            "idx": t.get("idx", i), "name": t["name"], "short": t["name"][:3],
+            "x": round(x, 1), "w": round(bw, 1), "label_x": round(x + bw / 2, 1),
+            "onsite": {"n": onsite, "y": round(axis_y - h_on, 1),
+                       "h": round(h_on, 1), "tone": tone},
+            "offsite": {"n": offsite, "y": round(axis_y - h_on - h_off, 1),
+                        "h": round(h_off, 1), "tone": "soft"},
+            "thin": onsite <= thin_at, "empty_sections": empty,
+        })
+        rows.append([t["name"], str(onsite), str(offsite), ", ".join(empty) or "—"])
+    grid = [{"y": round(axis_y - ploth * f, 1), "label": str(round(ymax * f))}
+            for f in (0, 0.5, 1)]
+    thinnest = min(bars, key=lambda b: b["onsite"]["n"]) if bars else None
+    label = "; ".join(f"{b['name']} {b['onsite']['n']} of {ymax}" for b in bars)
+    return {
+        "W": W, "H": H, "padl": padl, "axis_y": round(axis_y, 1), "ymax": ymax,
+        "bars": bars, "grid": grid,
+        "thinnest": ({"name": thinnest["name"], "onsite": thinnest["onsite"]["n"],
+                      "tone": thinnest["onsite"]["tone"]} if thinnest else None),
+        "xtitle_x": round(padl + plotw / 2, 1), "xtitle_y": H - 4,
+        "ytitle_x": 11, "ytitle_y": round(padt + ploth / 2, 1),
+        "aria_label": f"People on-site each weekday, out of {ymax}: {label}."
+                      if bars else "No coverage data for this period.",
+        "table": {"caption": "On-site coverage by weekday",
+                  "headers": ["Weekday", "On-site", "Off-site",
+                              "Sections with nobody on-site"],
+                  "rows": rows},
+    }
+
+
+# =====================================================================
 # PULSE — name-free "things to know". Every statement below is an AGGREGATE read
 # of a survey type; it never names a person or a specific activity. The vital
 # cards expand to these, and the three summary cards are built from the same kind

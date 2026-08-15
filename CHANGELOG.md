@@ -28,6 +28,64 @@ when it was already done. Nothing server-side changed; the cooldown rule and
 `record_avatar_care`'s contract are untouched, and all 29 `test_avatar_care.py`
 tests still pass. `avatars.js` cache-buster bumped to `?v=20260815a`.
 
+### The Team View data layer (`office_connect.py`)
+
+No user-visible change yet — this is the payload the landing page will render,
+built and tested ahead of the page itself so the page can be pure markup.
+
+**One public function**, `team_view_data(conn, user, *, get_atoms, view_memo)`,
+returning `{me, scope, panels: {wellness, awa, css}, notes}` with each panel
+carrying a `team` and a `personal` view.
+
+**Why a new module.** `dashboard_insights` is deliberately `conn`-free and pure;
+`storage` has the connection but knows nothing about the atoms cache; `app.py` is
+already ~13.8k lines and this is how it got there. The cache primitives are
+**injected rather than imported**, which keeps the dependency one-way (no
+circular import) and — usefully — lets the tests hand it a fabricated events list
+through the memo seam, so the activity predicates are testable without seeding a
+whole atoms DataFrame.
+
+**Scope is the safety-critical part.** `team` is `None`, not an empty dict, when
+the viewer has no team — there is no code path where an unlinked account receives
+a team payload at all. The team builders are not merely filtered, they are **not
+called**, because passing such a user to `wellness_week_rollup` or
+`work_arrangement_period_summary` is bureau-wide by contract.
+
+**"Involved in an activity" is defined by what the schema can actually support.**
+There is no staff→activity attendance relation — `attendee` rows are external
+registrants with no account link — so *personal* means **spoke at OR created**.
+Organiser-unit is deliberately excluded there: "my section ran it" is not "I was
+involved". The *team* view adds it, because there it means exactly what it says,
+and every row records which relation qualified it (`unit` / `spoke` / `ran`).
+
+**The activity index** is memoised bureau-wide and viewer-**independent**; all
+filtering happens per request against the viewer's own resolved scope, so there
+is no per-team cache entry for a key bug to expose. Two tests drive the same
+payload through a *warm* dict-backed memo in both request orders to prove it.
+
+Other details worth noting: `build_events` carries no org path or creator (it
+groups atoms, not rows), so both are joined back from `list_activity_instances`;
+upcoming activities cannot come from `build_events` at all, since it drops
+zero-respondent events and an activity that hasn't happened has none; low-n
+scores are shown muted rather than hidden; an f3-only activity links to the
+type-3 report because `/reports/activities/{id}` 404s without a Form-2 block; and
+the AWA panel leads with the period **open for filing** rather than the one in
+force, whose deadline has already passed.
+
+**Geometry** (`ring_geom`, `bars_geom`) went into `dashboard_insights.py` beside
+`_svg_geom` / `_count_geom`, keeping the house rule that templates only draw
+strings handed to them. Neither emits a colour — callers get semantic tone tokens
+(`green`/`accent`/`amber`/`red`/`soft`) that the template maps once, which is
+what keeps 3 themes × 6 accents working. Both return their `chart_table` rows
+alongside the coordinates.
+
+**One deploy fix caught by the suite:** `office_connect.py` had to be added to
+`deploy_hf.RUNTIME_PY`. `test_runtime_py_is_import_closed` asserts the shipped
+file set is import-closed, so without it the Hugging Face deploy would have
+shipped an `app.py` whose import fails at startup.
+
+19 new tests in `tests/test_office_connect.py`.
+
 ### Groundwork for the Team View (storage layer)
 
 No user-visible change; five small `storage.py` changes the landing page needs,
