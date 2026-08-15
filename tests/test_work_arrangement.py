@@ -643,6 +643,46 @@ def test_landing_page_offers_the_third_door(wa_org, app_mod):
     assert 'href="/work-arrangement"' in r.text
 
 
+def test_hub_leads_with_the_current_in_force_schedule(wa_org, app_mod, monkeypatch):
+    """The period actually happening now must appear on the hub even once
+    it's closed for filing — and only there, not duplicated into history."""
+    emp, ps = wa_org["staff"][0], "2026-09-01"
+    _at(monkeypatch, date(2026, 8, 26))            # Sept 1-15 still open then
+    _approved(wa_org, emp, "CWW", 4, ps=ps)
+    _at(monkeypatch, date(2026, 9, 3))             # now inside Sept 1-15
+
+    r = _client_for_id(app_mod, emp).get("/work-arrangement")
+    assert r.status_code == 200
+    assert "Current schedule" in r.text
+    label = st.work_arrangement_period_label(ps)
+    assert label in r.text
+    assert "in force" in r.text
+    assert r.text.count(label) == 1
+
+
+def test_hub_current_schedule_says_so_when_nothing_was_filed(wa_org, app_mod, monkeypatch):
+    _at(monkeypatch, date(2026, 9, 3))             # Sept 1-15, nothing filed
+    r = _client_for_id(app_mod, wa_org["staff"][0]).get("/work-arrangement")
+    assert r.status_code == 200
+    assert "Nothing was filed for this period" in r.text
+
+
+def test_home_door_shows_the_in_force_arrangement_not_just_the_filing_window(
+        wa_org, app_mod, monkeypatch):
+    """Regression: the door used to report only the next open-for-filing
+    period, so a schedule already in force for TODAY never showed there."""
+    emp, ps = wa_org["staff"][0], "2026-09-01"
+    st.mark_onboarded(wa_org["conn"], emp)     # skip /welcome, land on the doors
+    _at(monkeypatch, date(2026, 8, 26))
+    _approved(wa_org, emp, "CWW", 4, ps=ps)
+    _at(monkeypatch, date(2026, 9, 3))
+
+    r = _client_for_id(app_mod, emp).get("/")
+    assert r.status_code == 200
+    assert "Now: " + st.work_arrangement_period_label(ps) in r.text
+    assert "CWW" in r.text
+
+
 def test_nav_and_search_expose_the_module(app_mod):
     class U:
         role = "viewer"

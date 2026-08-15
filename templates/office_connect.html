@@ -551,9 +551,10 @@
       <span class="t">Alternative Work Arrangement — CWW / WFH</span>
       <div class="d">File your on-site, compressed or work-from-home schedule for the half-month.</div>
       {% if wa_label %}
-      <span class="meta">{{ wa_label }} ·
-        {% if wa_now %}{{ wa_now.arrangement_label }}{% if wa_now.status == 'pending' %} (waiting){% endif %}
-        {% else %}not filed yet{% endif %}</span>
+      <span class="meta">Now: {{ wa_label }} ·
+        {% if wa_now %}{{ wa_now.arrangement_label }}{% if wa_now.status == 'pending' %} (awaiting approval){% endif %}
+        {% else %}nothing filed{% endif %}
+        {% if wa_file_label and not wa_file_filed %} · file for {{ wa_file_label }}{% endif %}</span>
       {% endif %}
     </a>
     <a class="door" href="{{ css_url }}">
