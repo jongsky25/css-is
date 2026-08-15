@@ -110,6 +110,51 @@ def test_bulk_merge_route_admin_merges_across_dates(admin, app_mod):
         conn.close()
 
 
+def test_bulk_merge_sees_an_activity_created_after_the_view_was_cached(admin, app_mod):
+    """A just-created activity is not "no longer in this view".
+
+    get_atoms deliberately serves a stale-but-serviceable frame while it rebuilds
+    in the background, and the events view is memoised against the frame it was
+    built from — so for one refresh, rows added moments ago are missing from it.
+    Curators hit that window exactly when they are most likely to act: right
+    after creating or importing the pair they mean to merge. The route used to
+    tell them their selection had vanished; it now rebuilds once before saying
+    so.
+
+    The stale view is pinned by hand rather than raced for: the background
+    rebuild may or may not have landed by the time the request arrives, and a
+    test that only fails on the unlucky ordering is how this got missed."""
+    import app as A
+    import dashboard_insights as di
+
+    conn = st.connect(app_mod.DB)
+    try:
+        stale = di.build_events(A.get_atoms(conn), st.list_activity_instances(conn))
+    finally:
+        conn.close()
+
+    sec_id = _section_id(app_mod)
+    big, small = _make_pair(app_mod, sec_id)
+    assert not any(e["id"] in (big, small) for e in stale)     # built before they existed
+    A._view_memo[("events", A._atoms_state["key"], "", "all")] = stale
+
+    r = admin.post("/reports/activities/bulk", data={
+        "ids": [str(big), str(small)], "action": "merge",
+        "title": "Updating DOH Representatives on Local Health Systems Policies and Programs",
+        "merge_date": "2026-05-26",
+    }, follow_redirects=False)
+    assert r.status_code == 303
+    assert "ok=" in r.headers["location"], r.headers["location"]
+
+    conn = st.connect(app_mod.DB)
+    try:
+        rows = conn.execute("SELECT id, event_date FROM form_instance WHERE id IN (?,?)",
+                            (big, small)).fetchall()
+        assert rows == [(big, "2026-05-26")]                   # the merge really ran
+    finally:
+        conn.close()
+
+
 def test_bulk_merge_route_rejects_bad_corrected_date(admin, app_mod):
     sec_id = _section_id(app_mod)
     big, small = _make_pair(app_mod, sec_id)

@@ -64,6 +64,29 @@ rather than reading the CSS:
   their containing block, escape the track's clipping, and drag the document four
   screens wide from slide 5's static position.
 
+### "The selected activities are no longer in this view" — when they were
+
+**Symptom.** An admin creates or imports a pair of duplicate activities, ticks
+them on /reports/activities and picks Merge, and the bar refuses: *the selected
+activities are no longer in this view*. Trying again a moment later works. Found
+as an order-dependent test failure — `test_bulk_merge_route_admin_merges_across_dates`
+passed alone and failed after any test that had already loaded a page.
+
+**Cause.** The bulk route validated the ticked ids against the memoised `events`
+view. `get_atoms` deliberately serves a stale-but-serviceable frame while it
+rebuilds in the background, and `view_memo` keys on the frame a view was built
+from — so for one refresh, rows added moments ago are absent from that view. Run
+alone the test cold-starts (a blocking build, so fresh); after any earlier
+request there is a warm frame to serve instead. The window is small but lands
+exactly when a curator is most likely to act: right after creating the thing they
+mean to merge.
+
+**Fix.** On a total miss, `invalidate_atoms()` and re-resolve once before
+concluding the selection is gone. A hit still costs nothing.
+`test_bulk_merge_sees_an_activity_created_after_the_view_was_cached` pins the
+stale view by hand rather than racing for it — a test that only fails on the
+unlucky ordering is how this got missed.
+
 ### Faces you can put a name to, and a companion worth looking at
 
 The team wall was pictures with no names — the only label was a native `title=`

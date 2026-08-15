@@ -45,6 +45,9 @@ CHANGELOG = [
             "directory — your section, your division — instead of from having "
             "an administrator account. If you need a wider view, your directory "
             "record is what to change.",
+            "Fixed: ticking two activities you had just added and choosing "
+            "“Merge” could refuse with “the selected activities are no longer in "
+            "this view”, and only work if you tried again a moment later.",
         ],
     },
     {

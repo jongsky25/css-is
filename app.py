@@ -12211,11 +12211,25 @@ async def activity_bulk(request: Request):
     actor = request.state.user["username"]
     conn = get_conn()
     try:
-        atoms = get_atoms(conn)
-        events = view_memo("events", ("", "all"),
-                           lambda: di.build_events(atoms, st.list_activity_instances(conn)))
-        by_id = {e["id"]: e for e in events}
+        def _events():
+            atoms = get_atoms(conn)
+            return view_memo("events", ("", "all"),
+                             lambda: di.build_events(atoms,
+                                                     st.list_activity_instances(conn)))
+
+        by_id = {e["id"]: e for e in _events()}
         chosen = [by_id[i] for i in ids if i in by_id]
+        if not chosen:
+            # Not necessarily gone — possibly just not visible YET. get_atoms
+            # deliberately serves a stale-but-serviceable frame while it rebuilds
+            # in the background, and view_memo keys on the frame it was built
+            # from, so an activity created moments ago is absent from this view
+            # for one refresh. Curators hit that window exactly when they are
+            # most likely to act: right after creating or importing the thing
+            # they mean to merge. Rebuild once, and only then say it is gone.
+            invalidate_atoms()
+            by_id = {e["id"]: e for e in _events()}
+            chosen = [by_id[i] for i in ids if i in by_id]
         if not chosen:
             return _back("err", "The selected activities are no longer in this view.")
         aa.ensure_backup()                       # one snapshot before the first write
