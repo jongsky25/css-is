@@ -152,6 +152,22 @@ def test_only_user_id_is_a_persons_own_history(team):
     assert mine["by_day"][0]["n"] == 1             # Monday
 
 
+def test_someone_who_left_the_bureau_is_out_of_the_pattern(team):
+    """The wall of faces on the card excludes archived people, so the eight weeks
+    behind it must too — otherwise one card's two halves disagree about who is on
+    the team. Their own history stays their own to read."""
+    conn = team["conn"]
+    rp_id = st.get_admin_user_by_id(conn, team["one"])["rp_id"]
+    st.set_rp_archived(conn, rp_id, True, reason="resigned")
+    try:
+        pat = st.wellness_pattern(conn, team["week"], _u(conn, team["two"]))
+        assert pat["claims"] == 1                  # only the S2 person's own
+        mine = st.wellness_pattern(conn, team["week"], only_user_id=team["one"])
+        assert mine["claims"] == 4                 # ...but theirs is still theirs
+    finally:
+        st.set_rp_archived(conn, rp_id, False)
+
+
 def test_the_window_is_the_last_n_weeks(team):
     conn = team["conn"]
     pat = st.wellness_pattern(conn, team["week"], _u(conn, team["one"]), weeks=1)

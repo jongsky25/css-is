@@ -76,6 +76,7 @@ import activity_messages as amsg
 import certificate as cert
 import wellness_register as wreg
 import work_arrangement_annex as wanx
+import work_arrangement_backfill as wabf
 import ratelimit as rl
 import version as ver
 import i18n
@@ -1423,6 +1424,7 @@ def get_conn():
         st.init_db(conn)             # safe to re-run; also applies the venue migration
         st.seed_directory_if_empty(conn)
         _seed_learned_rules(conn)    # FAQ rules for the AI search bar (fresh install only)
+        wabf.run_once(conn)          # ANNEX C Aug 16-31, 2026 — one-shot, marker-guarded
         _schema_ready_for.add(DB)
     return conn
 
@@ -1907,6 +1909,37 @@ def _audit(request, conn, action, **kw):
     actor = user["username"] if user else "(anonymous)"
     ip = request.client.host if request.client else None
     st.audit(conn, actor, action, ip=ip, **kw)
+
+
+def _person_name(conn, account_id):
+    """Display name for an account, for notification copy. Falls back to the
+    account's username (its email) when there's no linked directory record."""
+    u = st.get_admin_user_by_id(conn, account_id)
+    if not u:
+        return None
+    rp = st.get_rp(conn, u["rp_id"]) if u.get("rp_id") else None
+    return (rp["name"] if rp else None) or u["username"]
+
+
+def _notify_account(conn, account_id, subject, body):
+    """Best-effort email to an admin account by id. Never raises — a missing
+    account, missing email, or send failure must never break the request that
+    triggered it (mailer.send() itself already never raises)."""
+    try:
+        u = st.get_admin_user_by_id(conn, account_id)
+        if u and u.get("username"):
+            mailer.send(u["username"], subject, body)
+    except Exception:                                 # noqa: BLE001 - notify, don't crash
+        pass
+
+
+def _notify_email(email, subject, body):
+    """Best-effort email to a known address. Never raises."""
+    try:
+        if email:
+            mailer.send(email, subject, body)
+    except Exception:                                 # noqa: BLE001 - notify, don't crash
+        pass
 
 
 def _forbid(request, capability):
@@ -2674,6 +2707,9 @@ async def admin_feedback_triage(request: Request, fid: int):
                 actor = request.state.user["username"]
                 st.add_feedback_update(conn, fid, status=status, reply=reply,
                                        kind="status", actor=actor)
+                subj, body = mailer.feedback_update_message(
+                    entry["submitter"], status, reply, f"{_base_url(request)}/my/feedback")
+                _notify_email(entry["submitter"], subj, body)
             _audit(request, conn, "spot_feedback_triage", target_type="spot_feedback",
                    target_id=fid, summary=f"#{fid}: {entry['status']} → {status}",
                    before=entry["status"], after=status)
@@ -4201,7 +4237,9 @@ def home(request: Request):
         acct_snap = st.get_admin_user_by_id(conn, request.state.user["id"])
         rp_id_snap = acct_snap.get("rp_id") if acct_snap else None
         if rp_id_snap:
-            staff_all = st.list_resource_persons(conn)
+            # include_archived: this resolves the signed-in person's OWN card from
+            # their ratings, which outlive their time at the bureau.
+            staff_all = st.list_resource_persons(conn, include_archived=True)
             person_snap = next((p for p in staff_all if p["id"] == rp_id_snap), None)
             # person_card returns None when the person has no ratings at all; only
             # surface the snapshot once there's a reliable score (≥ N_MIN ratings).
@@ -5198,6 +5236,19 @@ async def create_survey(request: Request):
                                   form_instance_ids=created_ids,
                                   created_by=request.state.user["username"])
             event_token = ev["event_token"]
+            monitor_link = f"{_base_url(request)}/monitor/{event_token}"
+            creator_uid = request.state.user["id"]
+            creator_name = _person_name(conn, creator_uid) or request.state.user["username"]
+            subj, body = mailer.event_created_message(creator_name, activity_name,
+                                                       event_date, monitor_link)
+            _notify_email(request.state.user["username"], subj, body)
+            for chief_id in st.org_unit_chiefs(conn, lead_id):
+                if chief_id == creator_uid:
+                    continue
+                chief_name = _person_name(conn, chief_id)
+                subj, body = mailer.event_section_notify_message(
+                    chief_name, creator_name, activity_name, event_date, monitor_link)
+                _notify_account(conn, chief_id, subj, body)
         else:
             st.create_event(conn, activity_name, event_date, end_date=end_date,
                             venue=venue, modality=modality, organizer=organizer_label,
@@ -5409,24 +5460,36 @@ async def _posted(request):
 
 
 @app.get("/directory", response_class=HTMLResponse)
-def directory(request: Request, err: str = ""):
-    return _render_directory(request, err=err)
+def directory(request: Request, err: str = "", msg: str = ""):
+    return _render_directory(request, err=err, msg=msg)
 
 
-def _render_directory(request, err="", pending=None):
+def _render_directory(request, err="", pending=None, msg=""):
     conn = get_conn()
     try:
         org = st.org_structure(conn)
-        people = st.list_resource_persons(conn)
+        # include_archived so the page can show the archive AS A SECTION of the
+        # directory; the live tables filter it back out below. Everywhere else
+        # the default (archived excluded) is what a picker should get.
+        people = st.list_resource_persons(conn, include_archived=True)
         orgs = st.list_external_organizers(conn)
+        # path -> the unit's full name. The staff table shows the SHORT path
+        # ("HSMED/S4"), which is unsearchable: nobody types "S4" when looking for
+        # Section 4. The long name goes under it so the search box matches what
+        # people actually know the section as.
+        unit_names = {u["path"]: u["name"] for u in st.list_org_units(conn)}
     finally:
         conn.close()
+    live = [p for p in people if not p["archived"]]
     return templates.TemplateResponse(request, "directory.html", {
         "org": org,
-        "staff": [p for p in people if p["is_internal"]],
-        "external_rps": [p for p in people if not p["is_internal"]],
+        "staff": [p for p in live if p["is_internal"]],
+        "external_rps": [p for p in live if not p["is_internal"]],
+        "archived": [p for p in people if p["archived"]],
+        "unit_names": unit_names,
         "orgs": orgs,
         "err": err,
+        "msg": msg,
         "pending": pending,
     })
 
@@ -5709,6 +5772,35 @@ async def directory_update_person(request: Request, rp_id: int):
         conn.close()
     dest = f"/directory?err={quote(warn)}#row-p{rp_id}" if warn else f"/directory#row-p{rp_id}"
     return RedirectResponse(dest, status_code=303)
+
+
+@app.post("/directory/person/{rp_id}/archive")
+async def directory_archive_person(request: Request, rp_id: int):
+    """Archive someone who has left the bureau (resigned, retired, transferred),
+    or restore them. Reversible, and never a delete: their ratings, the
+    certificates they signed and the activities they spoke at all stay exactly as
+    they are — what changes is that they stop being offered as CURRENT staff.
+
+    Admin-only by virtue of the /directory prefix, which the auth gate maps to
+    the `directory` capability."""
+    p = await _posted(request)
+    restore = p.get("restore") == "1"
+    conn = get_conn()
+    try:
+        res = st.set_rp_archived(conn, rp_id, archived=not restore,
+                                 reason=p.get("reason", ""))
+        if res["ok"]:
+            _audit(request, conn, "directory_restore" if restore else "directory_archive",
+                   target_type="person", target_id=rp_id,
+                   summary=("restored person #%d to the directory" % rp_id if restore
+                            else "archived person #%d%s" % (
+                                rp_id, f" ({p.get('reason', '').strip()})"
+                                if p.get("reason", "").strip() else "")))
+    finally:
+        conn.close()
+    key = "msg" if res["ok"] else "err"
+    return RedirectResponse(f"/directory?{key}={quote(res['msg'])}#archived",
+                            status_code=303)
 
 
 @app.post("/directory/person/{rp_id}/photo")
@@ -7248,7 +7340,7 @@ def _signatory_choices(conn, current_id):
     selection is never silently dropped)."""
     people = st.list_signatories(conn)
     if current_id and not any(p["id"] == current_id for p in people):
-        keep = next((p for p in st.list_resource_persons(conn)
+        keep = next((p for p in st.list_resource_persons(conn, include_archived=True)
                      if p["id"] == current_id and p["is_internal"]), None)
         if keep:
             people = people + [keep]
@@ -11283,7 +11375,7 @@ def _prewarm_dashboard(df, conn):
     for w in ("all", "ytd", "quarter", "d30"):
         _try(lambda w=w: view_memo("pulse", ("", w), lambda: _pulse_build(df, "", w)))
     try:
-        staff = st.list_resource_persons(conn)
+        staff = st.list_resource_persons(conn, include_archived=True)
         for admin in (True, False):
             _try(lambda admin=admin: view_memo(
                 "people", ("", "all", admin),
@@ -11351,7 +11443,7 @@ def dashboard_people(request: Request, org: str = "", period: str = "all", q: st
     conn = get_conn()
     try:
         atoms = get_atoms(conn)
-        staff = st.list_resource_persons(conn)
+        staff = st.list_resource_persons(conn, include_archived=True)
         cards = view_memo("people", (org, period, admin),
                           lambda: di.people_grid(_scoped(atoms, org, period), staff,
                                                  include_hidden=admin))
@@ -11414,7 +11506,7 @@ def dashboard_person(request: Request, rp_id: int, grain: str = "monthly", perio
             return RedirectResponse("/dashboard/people", status_code=303)
         # All-time identity (role, year filter, year-on-year, badges) — memoized per
         # person so every period view of the same person shares it.
-        staff = st.list_resource_persons(conn)
+        staff = st.list_resource_persons(conn, include_archived=True)
         grid_all = view_memo("people", ("", "all", admin),
                              lambda: di.people_grid(_scoped(atoms_all, "", "all"), staff, include_hidden=admin))
         def _ident():
@@ -12509,7 +12601,7 @@ def dashboard_participation(request: Request, org: str = "", period: str = "all"
 
         def _build_participation():
             insts = st.list_activity_instances(conn)
-            staff = st.list_resource_persons(conn)
+            staff = st.list_resource_persons(conn, include_archived=True)
             org_struct = _scoped_org_struct(st.org_structure(conn), org)  # tree within scope
             s_insts, s_staff = _scope_lists(insts, staff, org, period)
             scoped = _scoped(atoms, org, period)                          # org + period
@@ -12652,7 +12744,7 @@ def _visual_payload(conn, atoms, visual, p, place, gen, period_hint=None):
             yoy, badges = None, []
         else:
             yoy = di.year_over_year(atoms_all, person, role) if period == "all" else None
-            staff = st.list_resource_persons(conn)
+            staff = st.list_resource_persons(conn, include_archived=True)
             grid_all = di.people_grid(_scoped(atoms_all, "", "all"), staff, include_hidden=admin)
             gcard = next((c for c in grid_all if c["id"] == p["rp_id"]), None)
             badges = (gcard["all_badges"] if gcard else []) if period == "all" else []
@@ -12851,7 +12943,7 @@ def _visual_payload(conn, atoms, visual, p, place, gen, period_hint=None):
         grain = p["grain"]
         org = p.get("org", "")
         insts = st.list_activity_instances(conn)
-        staff = st.list_resource_persons(conn)
+        staff = st.list_resource_persons(conn, include_archived=True)
         org_struct = _scoped_org_struct(st.org_structure(conn), org)
         s_insts, s_staff = _scope_lists(insts, staff, org, p.get("period"))
         # Downloads aren't windowed — give the file the full history. `atoms` is
@@ -12983,7 +13075,7 @@ def _visual_payload(conn, atoms, visual, p, place, gen, period_hint=None):
         # The People roster — every rated person's scores + badges, honoring the
         # page's filters (org/period scoping is already applied to `atoms`; affiliation
         # / sort / badge are applied here). Data-first: a leaderboard chart + the table.
-        staff = st.list_resource_persons(conn)
+        staff = st.list_resource_persons(conn, include_archived=True)
         cards = di.people_grid(atoms, staff, include_hidden=p.get("admin"))
         aff, sort_k, badge = p.get("aff", "all"), p.get("sort", "ratings"), p.get("badge", "")
         if badge in di.BADGE_DEFS:
@@ -13291,6 +13383,15 @@ async def wellness_apply_submit(request: Request):
                summary=f"requested a wellness break on {p.get('break_date')} {p.get('start_time')}")
         approver = (st.wellness_approver_name(conn, user["id"])
                     or st.wellness_approver_title(conn, user["id"]))
+        claimant_name = _person_name(conn, user["id"]) or user["username"]
+        approvals_link = f"{_base_url(request)}/wellness/approvals"
+        claim = st.get_wellness_claim(conn, claim_id)
+        for approver_id in st.get_approvers_for(conn, user["id"]):
+            approver_name = _person_name(conn, approver_id)
+            subj, body = mailer.wellness_pending_message(
+                approver_name, claimant_name, claim["break_date"], claim["start_time"],
+                claim["hours"], approvals_link)
+            _notify_account(conn, approver_id, subj, body)
     finally:
         conn.close()
     cheer = quote(f"Break requested — {approver} will see it.")
@@ -13349,6 +13450,10 @@ async def wellness_decide(request: Request, claim_id: int):
                target_id=claim_id,
                summary=f"{verb} {claim['person_name']}'s wellness break "
                        f"on {claim['break_date']} {claim['start_time']}")
+        subj, body = mailer.wellness_decided_message(
+            claim["person_name"], verb, claim["break_date"], claim["decide_note"],
+            f"{_base_url(request)}/wellness")
+        _notify_account(conn, claim["user_id"], subj, body)
     finally:
         conn.close()
     return RedirectResponse(f"/wellness/approvals?ok={quote(verb.capitalize() + ' — done.')}",
@@ -13744,6 +13849,14 @@ async def work_arrangement_file_submit(request: Request):
                         f"{row['period_label']}"))
         approver = (st.approver_name_for(conn, user["id"])
                     or st.approver_title_for(conn, user["id"]))
+        requester_name = _person_name(conn, user["id"]) or user["username"]
+        approvals_link = f"{_base_url(request)}/work-arrangement/approvals"
+        for approver_id in st.get_approvers_for(conn, user["id"]):
+            approver_name = _person_name(conn, approver_id)
+            subj, body = mailer.awa_pending_message(
+                approver_name, requester_name, row["period_label"],
+                row["arrangement_label"], approvals_link)
+            _notify_account(conn, approver_id, subj, body)
     finally:
         conn.close()
     return RedirectResponse(
@@ -13796,6 +13909,14 @@ async def work_arrangement_change_submit(request: Request, wa_id: int):
                         f"{row['remarks'] or ''}".strip()))
         approver = (st.approver_name_for(conn, user["id"])
                     or st.approver_title_for(conn, user["id"]))
+        requester_name = _person_name(conn, user["id"]) or user["username"]
+        approvals_link = f"{_base_url(request)}/work-arrangement/approvals"
+        for approver_id in st.get_approvers_for(conn, user["id"]):
+            approver_name = _person_name(conn, approver_id)
+            subj, body = mailer.awa_pending_message(
+                approver_name, requester_name, row["period_label"],
+                row["arrangement_label"], approvals_link)
+            _notify_account(conn, approver_id, subj, body)
     finally:
         conn.close()
     return RedirectResponse(
@@ -13864,6 +13985,10 @@ async def work_arrangement_decide(request: Request, wa_id: int):
                         f"{row['arrangement']} for {row['period_label']}"))
         msg = (f"{row['person_name']} — {row['arrangement']} for "
                f"{row['period_label']} {row['status']}.")
+        subj, body = mailer.awa_decided_message(
+            row["person_name"], row["status"], row["period_label"],
+            row["decide_note"], f"{_base_url(request)}/work-arrangement")
+        _notify_account(conn, row["user_id"], subj, body)
     finally:
         conn.close()
     return RedirectResponse(f"/work-arrangement/approvals?ok={quote(msg)}",

@@ -17,17 +17,38 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.62"
+APP_VERSION = "2.63"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "2.62",
+        "version": "2.63",
         "date": "August 15, 2026",
-        "summary": "An account can now be given bureau-wide sight on purpose — "
-                   "so whoever consolidates ANNEX C can see and print every "
-                   "section's work arrangement.",
+        "summary": "Your home page now shows more than one reading of each card "
+                   "\u2014 swipe them \u2014 and an account can be given "
+                   "bureau-wide sight on purpose, so whoever consolidates ANNEX C "
+                   "can see and print every section.",
         "changes": [
+            "Your companion is half again as big on the home page, and so is "
+            "every stage of the growth strip, so the differences between them "
+            "are actually worth looking at.",
+            "Hover or tab onto anyone in your team's row of pictures and their "
+            "name pops up, with what they filed. No more guessing who is who.",
+            "The wellness and work-arrangement cards are now swipeable. Swipe "
+            "(or use the arrows) for the day and time your team actually takes "
+            "breaks, what they do with them, whether the break helped, which "
+            "arrangement people filed, and the weekday your office empties out.",
+            "“Team filing” is now called Alternative Work Arrangement, and the "
+            "card leads with the fortnight it covers — the same dates the "
+            "printed ANNEX C sheet carries.",
+            "Who you see on the home page, on the wellness register and on the "
+            "work-arrangement schedule comes from your record in the directory "
+            "— your section, your division. An administrator account with no "
+            "seat on the org chart no longer sees everyone automatically; when "
+            "it needs to, say so with the new “Sees” setting below.",
+            "Fixed: ticking two activities you had just added and choosing "
+            "“Merge” could refuse with “the selected activities are no longer in "
+            "this view”, and only work if you tried again a moment later.",
             "New in Admin \u2192 Users: a \u201cSees\u201d setting beside each "
             "account's role. Leave it alone and people see their own unit, from "
             "the directory. Set it to \u201cWork arrangement, bureau-wide\u201d "
@@ -45,32 +66,70 @@ CHANGELOG = [
         ],
     },
     {
+        "version": "2.62",
+        "date": "August 15, 2026",
+        "summary": "The August 16-31 work arrangement schedule is now in the "
+                   "system, copied from the sheet the bureau submitted.",
+        "changes": [
+            "The ANNEX C schedule for August 16-31, 2026 now shows on the team "
+            "schedule page and in the workbook and PDF exports, instead of 45 "
+            "blank rows. It was copied from the sheet that was already "
+            "submitted and signed — the module only arrived part-way through "
+            "the month, so nobody had filed for this period in the app.",
+            "The two people with no arrangement but a stated reason — one "
+            "awaiting an OSEC decision, one on leave — carry that reason in "
+            "the Remarks column, so their blank row says why it is blank.",
+            "Nothing you filed yourself was touched. If you had already filed "
+            "for the second half of August, or an administrator had corrected "
+            "your row, that is what still stands.",
+        ],
+    },
+    {
         "version": "2.61",
         "date": "August 15, 2026",
-        "summary": "Your home page now shows more than one reading of each "
-                   "card — swipe them — and who you can see there comes from "
-                   "the directory, not from your account type.",
+        "summary": "The directory's staff search works again — including on a "
+                   "phone. You can archive staff who have left. And your team "
+                   "now comes from the directory, so a section head sees their "
+                   "section even if they also administer the app.",
         "changes": [
-            "Your companion is half again as big on the home page, and so is "
-            "every stage of the growth strip, so the differences between them "
-            "are actually worth looking at.",
-            "Hover or tab onto anyone in your team's row of pictures and their "
-            "name pops up, with what they filed. No more guessing who is who.",
-            "The wellness and work-arrangement cards are now swipeable. Swipe "
-            "(or use the arrows) for the day and time your team actually takes "
-            "breaks, what they do with them, whether the break helped, which "
-            "arrangement people filed, and the weekday your office empties out.",
-            "“Team filing” is now called Alternative Work Arrangement, and the "
-            "card leads with the fortnight it covers — the same dates the "
-            "printed ANNEX C sheet carries.",
-            "Who you see on the home page, on the wellness register and on the "
-            "work-arrangement schedule now comes from your record in the "
-            "directory — your section, your division — instead of from having "
-            "an administrator account. If you need a wider view, your directory "
-            "record is what to change.",
-            "Fixed: ticking two activities you had just added and choosing "
-            "“Merge” could refuse with “the selected activities are no longer in "
-            "this view”, and only work if you tried again a moment later.",
+            "The search box on the Directory page works on a phone again. It "
+            "was correctly picking out who matched and then showing every row "
+            "anyway, so it looked like nothing was happening. The same fix "
+            "covers the search on Users & roles.",
+            "You can now search staff by the section they are in — “Section 4” "
+            "or “Equity” — not just by the short code. Each row shows the "
+            "section's full name, which is what you were typing.",
+            "When a search matches nobody the table says so, instead of leaving "
+            "a heading over an empty space that reads like a broken box.",
+            "Staff who have left the bureau can now be archived. Use Archive on "
+            "their row in the Directory, with an optional note such as "
+            "“Resigned 31 Jul 2026”.",
+            "Archiving is not deleting. Everything they earned stays — their "
+            "ratings, the reports they appear in, the certificates they signed. "
+            "What changes is that they stop showing as current staff and can no "
+            "longer be picked as a speaker, as who served a client, or as a "
+            "certificate signatory. They also stop being offered as anyone's "
+            "approver, so a resigned section head is no longer sent this week's "
+            "wellness requests.",
+            "Archiving someone also switches off their sign-in. Restoring them "
+            "puts them back in the directory but deliberately does not hand the "
+            "sign-in back — turn that on again from Admin → Users if they need "
+            "it.",
+            "Everyone archived is listed at the bottom of the Directory, with "
+            "when and why, and a Restore button.",
+            "Your team is now taken from the directory rather than from your "
+            "account type. If you are a section head who also administers the "
+            "app, your home page, the wellness monitoring register and the work "
+            "arrangement schedule now show your section — not all five. Before, "
+            "holding the administrator role quietly widened all three to the "
+            "whole bureau.",
+            "The Director still sees the whole bureau, and so does an "
+            "administrator account with no place on the org chart, so nothing "
+            "loses its bureau-wide view.",
+            "Approval queues follow the same rule: you get the requests the "
+            "chain of command sends you. Administrators additionally get the "
+            "ones that reach nobody — someone with no section, or an unfilled "
+            "chief's seat — so no request is ever left with no one to decide it.",
         ],
     },
     {

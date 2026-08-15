@@ -1,6 +1,6 @@
 # CHANGELOG — Cowork revisions (surgical)
 
-## 2026-08-15 (v2.62 — bureau-wide sight, granted per account)
+## 2026-08-15 (v2.63 — landing-page decks, and bureau-wide sight granted per account)
 
 ### The seat that legitimately needs every section
 
@@ -42,37 +42,29 @@ administrator who revokes a grant does not find it back after the next deploy:
 `armedel@doh.gov.ph` → work arrangement bureau-wide; `ray@gmail.com` → everything
 bureau-wide, with the administrator role.
 
-## 2026-08-15 (v2.61 — the landing page: bigger companion, named faces, swipeable insight decks, directory-based scope)
+### The landing page: bigger companion, named faces, swipeable insight decks
 
-### The role was standing in for the directory
+### The last thing the role still stood in for
 
-**Symptom.** An `admin` account saw every section's wellness and work-arrangement
-filings on the landing page, on the wellness register and on the AWA schedule —
-including sections it has nothing to do with. The scope line read "the whole
-bureau" for someone whose directory record puts them in one section.
+v2.61 (#100) made the directory decide the team, arrived at independently and
+from the other end: it resolves the org chart first, seats the Director as the
+one directory role whose team really is the bureau, and keeps `"bureau"` for an
+`admin` with no seat on the org chart. This branch reached the same conclusion by
+a different route, so the merge keeps that structure — single source of truth in
+`team_scope_for_user`, `_org_scope_for_user` folding "none" back onto None, the
+`archived_at IS NULL` filter — and changes exactly one thing on top of it.
 
-**Cause.** `storage._org_scope_for_user` short-circuited on
-`user["role"] == "admin"` and returned None (bureau-wide) before ever looking at
-the directory; `team_scope_for_user` did the same and answered a third kind,
-`"bureau"`. An app role is a permission to operate the system — grant users, edit
-rules, run exports — and was being read as standing over everyone's filings.
+**That last admin fallback is gone.** An account with no seat on the org chart
+now resolves to `"none"` like any other unlinked account, and reaches the bureau
+only through the explicit grant above. The reach is identical for the one account
+that genuinely needs it; what changes is that it is now named, audited and
+revocable rather than implied by a role. `ray@gmail.com` — the system
+administrator this fallback existed for — is seeded with the `'all'` grant, so
+nothing is lost on deploy.
 
-**Fix.** Both helpers now resolve the org unit from `resource_person → org_unit`
-for every account, whatever its role. `team_scope_for_user` returns only `"unit"`
-or `"none"`; the `"bureau"` kind is gone, and with it the `kind == "bureau"`
-branches in `office_connect`. Bureau-wide is still reachable, but only the way
-the directory says it: `_path_in_scope` is a subtree test, so a record at the
-`level='bureau'` unit covers every section beneath it.
-
-Deliberately unchanged: approval routing (`list_wellness_approvals`,
-`list_work_arrangement_approvals` carry their own admin branch and never call
-this helper, so admins remain the fallback approver for staff with no chief), and
-the printed ANNEX C export, which calls `work_arrangement_roster` with no user at
-all and stays bureau-wide.
-
-Consequence worth stating: an admin whose directory record sits below the bureau
-level now monitors their own subtree on those two pages. The fix for them is
-their directory record, not their account type.
+Callers pass the module they are showing (`area="awa"` / `"wellness"`), which is
+what lets a work-arrangement grant widen the ANNEX C without touching the
+wellness register.
 
 ### One card, one number, four unasked questions
 
@@ -142,6 +134,153 @@ per-stage artwork reads as different plants rather than the same green blob.
 **Alternative Work Arrangement**, and the card leads with the dates it covers,
 reusing `work_arrangement_period_label` so the card and the printed ANNEX C sheet
 name the same fortnight.
+## 2026-08-15 (v2.62 — the August 16-31 ANNEX C schedule, transcribed)
+
+### The period the module arrived too late for
+
+**Symptom.** `/work-arrangement/schedule` for August 16-31, 2026 shows 45 blank
+rows, and the workbook and PDF exports print the same. The bureau's real
+schedule for the period exists — it was filled in, submitted and signed on the
+Excel sheet the office has always circulated — but the ANNEX C module only
+shipped at v2.59, part-way through the month, so nobody had filed anything in
+the app for a period that was already decided on paper.
+
+**Why it could not simply be re-filed.** Filing closes on the last Friday
+*before* a period begins — Friday, August 14 for this one — and
+`storage.create_work_arrangement` refuses a closed period by design
+(`_wa_check_period_open`). That refusal is correct for staff and wrong for a
+transcription of a form already approved, and there is no admin "file on behalf"
+path. So the sheet is written in as approved rows directly, each carrying its
+provenance in `decide_note`.
+
+**Fix.** New `work_arrangement_backfill.py`: the 45 sheet rows as a constant,
+plus an idempotent apply that runs once at boot from `app.get_conn()`, guarded
+by an `app_setting` marker.
+
+* **42 arrangements** — 4 REG, 5 CWW, 33 WFH — with the weekday the Remarks cell
+  nominates. Remarks are not stored: `storage._wa_remarks` re-derives them, so
+  the printed annex reproduces the sheet's wording only if the stored
+  arrangement and weekday are right. The tests check exactly that.
+* **2 No AWA tags** — Sales ("...for approval from OSEC") and Bagos ("Leave") —
+  inserted with `effective_from` set to **the period**, not to whatever period
+  today falls in. `set_work_arrangement_noawa` uses today's, which would have
+  reached back over August 1-15 and quietly altered an annex already submitted.
+* **1 row left blank.** Orpilla is blank on the sheet with no reason given, and
+  stays blank. The difference between "no arrangement, and here's why" and
+  "nobody chased this" is the only signal the Admin Officer has, and inventing a
+  reason would erase it.
+
+**Non-destructive, in either order.** Anyone already holding a live arrangement
+or No AWA tag for the period is skipped, so a real filing or an admin's
+correction outranks the transcription whichever lands first. People are matched
+to accounts on order-free name tokens (the sheet writes "Delmendo, Eric" and
+"Medel Alexander R."; the directory holds "Eric Delmendo"). A row whose best
+match does not clear the runner-up is reported, never guessed — a wrong schedule
+on the annex is worse than a missing one, because only the missing one is
+visible. `--dry-run` prints the match report and writes nothing.
+
+31 tests in `tests/test_work_arrangement_backfill.py`; the module is registered
+in `deploy_hf.RUNTIME_PY` (`test_runtime_py_is_import_closed` catches the
+half-closure that would otherwise crash the Space on boot).
+
+## 2026-08-15 (v2.61 — the directory search that did nothing on a phone; archiving people who left; the team comes from the org chart)
+
+### The staff search box that looked dead
+
+**Symptom.** "The search button in the directory to search internal staff is not
+working." Two independent faults, and they fail in different places.
+
+**Cause 1 — it did nothing at all under 640px.** `filterTable()` flags a
+non-matching row `.nomatch`, and `tr.nomatch { display:none }` was written in
+`directory.html`'s own `<style>`. Under 640px `app.css` turns those tables into
+stacked cards with `table.resp-table tr { display:block }` — specificity (0,1,2)
+against the page-local rule's (0,1,1). The rows were flagged correctly and stayed
+on screen anyway. Measured in a real browser: 16 rows flagged `.nomatch`, 19 of
+20 still visible at 600px wide. `users.html` carried the identical bug.
+
+**Cause 2 — searching by section found nobody.** The "Assigned to" cell rendered
+only `_short_path` ("HSMED/S4"). Nobody looks for a colleague by typing "S4";
+they type "Section 4" or "Equity", and both matched zero rows against a
+placeholder that promises "name, position, section…".
+
+**Fix.** The hide rule moves to `app.css` as
+`tr.nomatch, table.resp-table tr.nomatch { display:none }` — declared right after
+the responsive-table block that outranks it, and outside its media query — and
+both page-local copies are deleted. The staff row now carries the unit's full
+name under the short path, from a `path -> name` map built in `_render_directory`.
+A shared `tr.no-hits` row says "No staff match that search" instead of leaving a
+header over blank space.
+
+Guarded by `tests/test_directory_search.py`, including two structural tests that
+were mutation-checked: putting the rule back inside the media query, or
+reintroducing the page-local copy, each fails them.
+
+### Archiving people who have left
+
+**Ask.** "If there are staff that resigned, I as an admin should be able to put
+them on archive."
+
+**Design — an archive is not a delete.** `resource_person` gains `archived_at` +
+`archived_reason`. The row stays, so every certificate, rating and report that
+names that person keeps resolving; what goes away is their place on the CURRENT
+roster.
+
+The load-bearing decision is the DEFAULT: `list_resource_persons(conn)` now
+excludes archived people, and callers that resolve HISTORY rather than choose
+someone now pass `include_archived=True` (`get_rp`, the People grid, the person
+page, participation, the exports). Defaulting the other way would have meant
+finding every picker; defaulting this way means a picker gets the safe answer
+without anyone thinking about it, and the nine history call sites are named in
+the docstring.
+
+Archived people also drop out of the org chain of command
+(`_org_accounts_at_rank`, `_org_role_filled`, `_org_seat_name`), the wellness and
+AWA rosters, and the directory headcount — so a resigned section head is never
+offered as this week's approver.
+
+Archiving deactivates the person's linked sign-in. Restoring deliberately does
+NOT re-enable it: re-granting access is a decision about permissions, not about a
+directory row, and the copy says where to do it.
+
+### The team comes from the directory, not from the account role
+
+**Ask.** "The basis of the team assignment should be the directory, not the user.
+I am an admin so I see everything, but that should not be the case — I should
+only see my team as section head, which is Section 4."
+
+**Cause.** `_org_scope_for_user` opened with `if user.get("role") == "admin":
+return None` — bureau-wide — before it ever looked at the directory. Where
+someone sits on the org chart and what the app lets them administer answer
+different questions, and collapsing them meant the team view stopped being a team
+view for exactly the people most likely to hold the admin role. Verified in the
+running app: the Section 4 head's landing page, wellness register and AWA
+schedule showed all 19 staff.
+
+**Fix.** `team_scope_for_user` is now the single resolver and reads the directory
+first: the Director seat (org rank 3, which `_org_rank` finds in `position`) gets
+"bureau"; anyone else with an org unit gets that unit's subtree whatever their
+role; only an account with no directory seat falls back to the role, where admin
+still means bureau. `_org_scope_for_user` becomes a thin wrapper that folds "no
+team" back onto None for its chief-guarded callers. Same account after the fix:
+Section 4 only, on all three pages. An admin with no directory seat still sees
+all 19.
+
+The approval queues follow the same rule. `list_wellness_approvals` and
+`list_work_arrangement_approvals` shared a `role == "admin" -> see everything`
+branch; they now share `_mine_or_orphaned`, which gives everyone the requests the
+chain routes to them and gives an admin the ORPHANS on top — the requests that
+reach nobody because the claimant is unlinked, sits under an unfilled seat, or is
+the Director. Admins stay the fallback ABOVE the chain rather than a bypass
+around it, so nothing is stranded and nothing routine leaks sideways.
+
+### Verification
+
+`qa_preflight.py` GREEN, `qa_smoke.py` ALL PASSED, and the full pytest run
+matches the pre-change baseline exactly (the same 16 failures, all from this
+checkout shipping an empty `css_is.db`). 20 new tests across
+`test_directory_archive.py`, `test_directory_search.py` and `test_team_scope.py`.
+All three fixes were also driven end-to-end in a real browser against a seeded
+five-section bureau.
 
 ## 2026-08-15 (v2.60 — CSS-IS becomes Office Connect; the companion answers back)
 
