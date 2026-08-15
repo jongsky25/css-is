@@ -19,6 +19,9 @@
   .oc-hi h1 { margin:0; font-size:1.45rem; }
   .oc-hi p { margin:.15rem 0 0; color:var(--soft); font-size:.9rem; }
   .oc-hero .grow { flex:1 1 auto; }
+  .oc-pet { text-align:center; flex:0 0 auto; }
+  .oc-pet-edit { display:inline-block; margin-top:.25rem; font-size:.76rem; font-weight:700;
+                 color:var(--accent); text-decoration:none; }
 
   /* Team | Me — the same segmented control the display-settings menu uses, so
      it already reads as a switch. Real links, so it works without JS. */
@@ -128,8 +131,8 @@
     .oc-hero { gap:.7rem; } .oc-hi h1 { font-size:1.25rem; }
     /* The companion's box is an inline width the macro writes, so a phone-sized
        cap has to out-specify it. Keep the 1.16 art ratio the macro uses. */
-    .oc-pet .avwrap, .oc-pet .avwrap > span { width:84px !important; }
-    .oc-pet .avwrap > span { height:97px !important; }
+    .oc-pet .avwrap, .oc-pet .avwrap > span { width:130px !important; }
+    .oc-pet .avwrap > span { height:151px !important; }
   }
 </style>
 
@@ -174,10 +177,11 @@
     </div>
     {% if profile and profile.avatar_name %}
     <div class="oc-pet">
-      {#-- Half again the old 72px: the per-stage artwork carries real detail
-           (a leaf count, a shell pattern) that was being thrown away. --#}
+      {#-- Bumped again from 108: the per-stage artwork carries real detail
+           (a leaf count, a shell pattern) that was still hard to make out. --#}
       {{ avatar(profile.avatar_kind, (wstats.stage if wstats else 1), name=profile.avatar_name,
-                size=108, interactive=true, mood=profile.avatar_mood) }}
+                size=150, interactive=true, mood=profile.avatar_mood) }}
+      <a class="oc-pet-edit" href="/me">Change companion →</a>
     </div>
     {% endif %}
     <span class="grow"></span>
