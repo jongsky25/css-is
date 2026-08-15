@@ -25,8 +25,14 @@ CHANGELOG = [
         "version": "2.60",
         "date": "August 15, 2026",
         "summary": "The system has a new name — Office Connect. Nothing moved "
-                   "and nothing you saved has changed.",
+                   "and nothing you saved has changed. Your companion also "
+                   "answers back properly now when it has already been fed.",
         "changes": [
+            "Your companion now always says something when you water or feed "
+            "it. If you had already cared for it recently it says so — before, "
+            "it went quiet, which made the button look broken when it had "
+            "actually worked. This was far and away the thing people were most "
+            "often clicking over and over.",
             "CSS-IS is now called Office Connect. The old name described only "
             "the client satisfaction survey, but the system now also carries "
             "your wellness break and your work arrangement, so it needed a name "

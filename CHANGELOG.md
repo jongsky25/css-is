@@ -1,6 +1,34 @@
 # CHANGELOG — Cowork revisions (surgical)
 
-## 2026-08-15 (v2.60 — CSS-IS becomes Office Connect)
+## 2026-08-15 (v2.60 — CSS-IS becomes Office Connect; the companion answers back)
+
+### The care button that looked broken
+
+**Symptom.** The single largest friction source in the app, by a wide margin.
+The 30-day UX telemetry ranks "Feed Nori Miguel" at friction score **351** (78
+rage-clicks, 5 users) and "Water FernFern" at **117** (26 rage-clicks, 3 users) —
+first and third of fifteen. Eleven Spot Feedback comments matched, among them
+"Not watering" and "Di gumagana smh sakin ayaw asar."
+
+**Cause.** `static/js/avatars.js` flashed a thank-you bubble **only when the
+POST came back `counted: true`**. `counted` is false inside
+`AVATAR_CARE_COOLDOWN_HOURS` (6 h) — which is a *success*, not a failure: the
+companion has already been cared for. But the client said nothing at all, so the
+tap read as a dead button and people tapped again, and again.
+
+Worse for anyone on `prefers-reduced-motion`: `_avatars.html:202-207` sets
+`animation:none !important` on everything matching `[class*="av-"]`, which
+suppresses the watering/feeding animation too. Those users got **no feedback of
+any kind** — no animation, no bubble. (The bubble itself survives, being
+opacity-only, which is what makes it the right place to fix this.)
+
+**Fix.** One call site: always flash a bubble, with the wording carrying the
+state — "Ahh, thank you! 💧" when the care counted, "Still nicely watered 💧"
+when it was already done. Nothing server-side changed; the cooldown rule and
+`record_avatar_care`'s contract are untouched, and all 29 `test_avatar_care.py`
+tests still pass. `avatars.js` cache-buster bumped to `?v=20260815a`.
+
+### The rename
 
 **Why.** The name described one of three things the system now does. After the
 wellness module (v2.25) and ANNEX C (v2.58), a staff member signs in as often for
