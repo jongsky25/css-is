@@ -28,6 +28,17 @@ CHANGELOG = [
                    "and nothing you saved has changed. Your companion also "
                    "answers back properly now when it has already been fed.",
         "changes": [
+            "The menu is now four groups — Wellness, CSS, AWA and "
+            "Administrator — instead of seven. Wellness comes first because it "
+            "is the page staff open most.",
+            "Six pages that already existed but were in no menu at all are now "
+            "listed: applying for a break, wellness team monitoring and "
+            "approvals, and filing, team schedule and approvals for your work "
+            "arrangement. If you were reaching these by bookmark, they now have "
+            "a home.",
+            "The CSS menu groups its pages under small headings — See how "
+            "we're doing, Official reports, Run a survey, Data entry — so a "
+            "long list is easier to scan.",
             "On the wellness page, the whole “This week — 0 of 2 hours "
             "claimed” box now takes you to the request form. Before, only the "
             "small button did, so clicking the words themselves did nothing.",

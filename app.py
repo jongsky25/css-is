@@ -472,8 +472,34 @@ templates.env.globals["avatar_month"] = st.avatar_accessory_month
 #   in_nav— show in the top nav (default True); False = searchable only
 # =====================================================================
 NAV_GROUPS = [
-    {"name": "Dashboard", "items": [
+    # ---- 1. Wellness -----------------------------------------------------
+    # First by usage, not by accident: /wellness draws more traffic than any
+    # other screen in the app (30-day telemetry: 348 views, 17 of 18 users —
+    # more than the whole Reports group). Its team pages existed but appeared
+    # in no menu at all until now.
+    {"name": "Wellness", "items": [
+        {"key": "wellness", "url": "/wellness", "label": "My wellness break",
+         "hint": "Apply for your 2-hour weekly wellness break",
+         "kw": "wellness break rest two hours weekly avatar plant points streak badges "
+               "exercise meditation mental health hobby dm 2025-0135", "cap": None},
+        {"key": "wellness_apply", "url": "/wellness/apply", "label": "Apply for a break",
+         "hint": "Book your hours for this week or the next few",
+         "kw": "apply request book wellness break hours slot schedule claim file", "cap": None},
+        {"key": "wellness_team", "url": "/wellness/dashboard", "label": "Team monitoring",
+         "hint": "How your section is using its wellness hours",
+         "kw": "wellness monitoring dashboard team section utilization register rollup "
+               "who availed reflection rate", "cap": "chief"},
+        {"key": "wellness_approvals", "url": "/wellness/approvals", "label": "Approvals",
+         "hint": "Wellness breaks waiting on your decision",
+         "kw": "wellness approvals approve decide queue pending requests waiting chief",
+         "cap": "chief"},
+    ]},
+    # ---- 2. CSS ----------------------------------------------------------
+    # Sixteen destinations, so they carry `section` labels and render as
+    # headed blocks inside the one dropdown (see nav_groups_for).
+    {"name": "CSS", "items": [
         {"key": "pulse", "url": "/dashboard", "label": "Pulse",
+         "section": "See how we're doing",
          "hint": "How service quality is doing right now",
          "kw": "pulse overview service quality servqual scores satisfaction current snapshot", "cap": None},
         {"key": "people", "url": "/dashboard/people", "label": "People",
@@ -488,23 +514,8 @@ NAV_GROUPS = [
         {"key": "participation", "url": "/dashboard/participation", "label": "Participation",
          "hint": "Volume, coverage, blind spots",
          "kw": "participation volume coverage response rate blind spots reach counts", "cap": None},
-    ]},
-    {"name": "Wellness", "items": [
-        {"key": "wellness", "url": "/wellness", "label": "My wellness break",
-         "hint": "Apply for your 2-hour weekly wellness break",
-         "kw": "wellness break rest two hours weekly avatar plant points streak badges "
-               "exercise meditation mental health hobby dm 2025-0135", "cap": None},
-    ]},
-    {"name": "Work arrangement", "items": [
-        {"key": "work_arrangement", "url": "/work-arrangement",
-         "label": "My work arrangement",
-         "hint": "File your on-site / CWW / WFH schedule for the half-month",
-         "kw": "work arrangement annex c annex-c cww compressed workweek wfh work from "
-               "home remote telework regular on-site onsite day off schedule roster "
-               "semi-monthly half month alternative work arrangement awa", "cap": None},
-    ]},
-    {"name": "Reports", "items": [
         {"key": "reports", "url": "/reports?type=1", "label": "ARTA Walk-in",
+         "section": "Official reports",
          "hint": "Official ARTA / CO-CSM citizen satisfaction",
          "kw": "arta walk-in walkin citizen satisfaction csm cocsm official report red tape", "cap": None},
         {"key": "activities", "url": "/reports?type=2", "label": "Activities",
@@ -524,14 +535,8 @@ NAV_GROUPS = [
         {"key": "shared", "url": "/shared", "label": "Shared materials",
          "hint": "Resources from concluded activities",
          "kw": "shared materials resources files downloads concluded activities public", "cap": None},
-    ]},
-    {"name": "Data entry", "items": [
-        {"key": "encode", "url": "/encode", "label": "Paper entry",
-         "hint": "Type in paper survey slips",
-         "kw": "encode paper entry data entry type slips manual responses input", "cap": "encode"},
-    ]},
-    {"name": "Manage", "items": [
         {"key": "create", "url": "/create", "label": "New survey",
+         "section": "Run a survey",
          "hint": "Create an activity & its QR codes",
          "kw": "create new survey activity event qr code make add setup", "cap": "create_activity"},
         {"key": "arta", "url": "/arta", "label": "Walk-in QR",
@@ -545,28 +550,44 @@ NAV_GROUPS = [
          "hint": "All non-bureau / invited activities",
          "kw": "invited outside non-bureau nonbureau external events activities resource person "
                "concluded list all find missing speaker review f3 organized by another", "cap": "manage_event"},
+        {"key": "encode", "url": "/encode", "label": "Paper entry",
+         "section": "Data entry",
+         "hint": "Type in paper survey slips",
+         "kw": "encode paper entry data entry type slips manual responses input", "cap": "encode"},
     ]},
-    {"name": "Admin", "items": [
-        {"key": "directory", "url": "/directory", "label": "Directory",
-         "hint": "Org units, staff & speakers",
-         "kw": "directory org units staff speakers people tree organization roster", "cap": "directory"},
-        {"key": "cleanup", "url": "/directory/cleanup", "label": "Name cleanup",
-         "hint": "Quick speaker/name dedup tool",
-         "kw": "name cleanup dedup duplicate merge speakers harmonize fix names", "cap": "directory",
-         "in_nav": False},
-        {"key": "users", "url": "/admin/users", "label": "Users",
-         "hint": "Accounts & roles",
-         "kw": "users accounts roles permissions manage logins members", "cap": "manage_users"},
-        {"key": "audit", "url": "/admin/audit", "label": "Audit",
-         "hint": "Tamper-evident change log",
-         "kw": "audit log trail history changes tamper evident security", "cap": "manage_users"},
-        {"key": "backups", "url": "/admin/backups", "label": "Backups",
-         "hint": "Snapshots & schedule",
-         "kw": "backups snapshots restore schedule export data safety", "cap": "manage_users"},
-        {"key": "sharing", "url": "/admin/sharing", "label": "Sharing",
-         "hint": "Public resource sharing switch",
-         "kw": "sharing public switch resource share toggle external", "cap": "manage_users"},
+    # ---- 3. AWA (work arrangement) ---------------------------------------
+    # Named AWA because that is what the bureau calls it; the keywords keep
+    # "work arrangement", "CWW" and "WFH" findable in the palette.
+    {"name": "AWA", "items": [
+        {"key": "work_arrangement", "url": "/work-arrangement",
+         "label": "My work arrangement",
+         "hint": "File your on-site / CWW / WFH schedule for the half-month",
+         "kw": "work arrangement annex c annex-c cww compressed workweek wfh work from "
+               "home remote telework regular on-site onsite day off schedule roster "
+               "semi-monthly half month alternative work arrangement awa", "cap": None},
+        {"key": "work_arrangement_file", "url": "/work-arrangement/file",
+         "label": "File / change my schedule",
+         "hint": "Choose your arrangement for a half-month period",
+         "kw": "file change amend work arrangement awa cww wfh schedule period submit "
+               "request day off", "cap": None},
+        {"key": "work_arrangement_schedule", "url": "/work-arrangement/schedule",
+         "label": "Team schedule",
+         "hint": "Who is on-site each weekday, and who hasn't filed",
+         "kw": "team schedule roster coverage on-site onsite weekday annex c chase list "
+               "unfiled who is in office friday", "cap": "chief"},
+        {"key": "work_arrangement_approvals", "url": "/work-arrangement/approvals",
+         "label": "Approvals",
+         "hint": "Work arrangements waiting on your decision",
+         "kw": "work arrangement approvals approve decide queue pending waiting chief awa",
+         "cap": "chief"},
+    ]},
+    # ---- 4. Administrator ------------------------------------------------
+    # Ordered by real usage inside the group: /admin/ai is the 4th busiest
+    # screen in the app (53 views/30d) while Audit (2) and Sharing (1) are the
+    # least-used of everything. Name cleanup stays search-only (0 views).
+    {"name": "Administrator", "items": [
         {"key": "feedback", "url": "/admin/feedback", "label": "Feedback",
+         "section": "Day to day",
          "hint": "In-page comments from users",
          "kw": "feedback spot comments in-page triage suggestions board", "cap": "triage_feedback"},
         {"key": "ux_insights", "url": "/admin/ux-insights", "label": "UX Insights",
@@ -584,9 +605,29 @@ NAV_GROUPS = [
          "kw": "learned rules faq frequently asked questions ai search bar non-ai deterministic "
                "answers save credits budget promote candidate question mining teach",
          "cap": "manage_users"},
+        {"key": "directory", "url": "/directory", "label": "Directory",
+         "hint": "Org units, staff & speakers",
+         "kw": "directory org units staff speakers people tree organization roster", "cap": "directory"},
+        {"key": "cleanup", "url": "/directory/cleanup", "label": "Name cleanup",
+         "hint": "Quick speaker/name dedup tool",
+         "kw": "name cleanup dedup duplicate merge speakers harmonize fix names", "cap": "directory",
+         "in_nav": False},
+        {"key": "users", "url": "/admin/users", "label": "Users",
+         "section": "Setup & records",
+         "hint": "Accounts & roles",
+         "kw": "users accounts roles permissions manage logins members", "cap": "manage_users"},
+        {"key": "backups", "url": "/admin/backups", "label": "Backups",
+         "hint": "Snapshots & schedule",
+         "kw": "backups snapshots restore schedule export data safety", "cap": "manage_users"},
         {"key": "ops", "url": "/ops", "label": "Ops",
          "hint": "Health & performance",
          "kw": "ops operations health performance metrics monitoring status uptime", "cap": "manage_users"},
+        {"key": "audit", "url": "/admin/audit", "label": "Audit",
+         "hint": "Tamper-evident change log",
+         "kw": "audit log trail history changes tamper evident security", "cap": "manage_users"},
+        {"key": "sharing", "url": "/admin/sharing", "label": "Sharing",
+         "hint": "Public resource sharing switch",
+         "kw": "sharing public switch resource share toggle external", "cap": "manage_users"},
     ]},
 ]
 
@@ -601,24 +642,55 @@ def _user_role(user):
     return getattr(user, "role", None)
 
 
-def _cap_ok(user, cap):
-    """True if `user` may see an item requiring `cap` (None = any logged-in user)."""
+def _cap_ok(user, cap, is_chief=False):
+    """True if `user` may see an item requiring `cap` (None = any logged-in user).
+
+    `cap="chief"` is the one capability that isn't in auth.ROLE_CAPS: the wellness
+    and work-arrangement team pages gate on storage.user_is_approving_chief, a
+    directory-RANK lookup rather than an account role, so it can't be answered
+    from the user dict alone. The request middleware resolves it once per request
+    into request.state.is_chief and the caller passes it down — that keeps this
+    function pure and free of a database handle."""
+    if cap == "chief":
+        return bool(is_chief) or _user_role(user) == "admin"
     return cap is None or auth.can(_user_role(user), cap)
 
 
-def nav_groups_for(user):
+def nav_groups_for(user, is_chief=False):
     """Visible top-nav groups for this user — in_nav items they're allowed to open.
-    Groups with no visible items are dropped. Drives the menus in dash_layout."""
+    Groups with no visible items are dropped. Drives the menus in dash_layout.
+
+    Items carry an optional `section` label; consecutive items sharing one are
+    rendered under a heading inside the dropdown. That's what lets CSS hold
+    sixteen destinations in one group without becoming an undifferentiated list.
+    `sections` is precomputed here (ordered, cap-filtered) so the template just
+    loops — and so an empty section can never render a stray heading."""
     out = []
     for g in NAV_GROUPS:
-        items = [it for it in g["items"]
-                 if it.get("in_nav", True) and _cap_ok(user, it["cap"])]
-        if items:
-            out.append({"name": g["name"], "items": items})
+        # A `section` label is written once, on the first item of its run, and
+        # carries to the items after it. Resolve that BEFORE cap-filtering:
+        # filtering first would orphan a run whose label happened to sit on an
+        # item this user can't see (e.g. "Run a survey" lives on New survey,
+        # which needs create_activity, while Monitor after it needs manage_event).
+        labelled, current = [], ""
+        for it in g["items"]:
+            current = it.get("section", current)
+            if it.get("in_nav", True) and _cap_ok(user, it["cap"], is_chief):
+                labelled.append((current, it))
+        if not labelled:
+            continue
+        sections, by_name = [], {}
+        for name, it in labelled:
+            if name not in by_name:
+                by_name[name] = {"name": name, "items": []}
+                sections.append(by_name[name])
+            by_name[name]["items"].append(it)
+        out.append({"name": g["name"], "items": [it for _n, it in labelled],
+                    "sections": sections})
     return out
 
 
-def search_index_for(user):
+def search_index_for(user, is_chief=False):
     """Flat list of every destination this user may open — the search palette's
     index. Includes search-only items (in_nav False) the top nav omits. Built
     server-side so a user never even receives links they aren't allowed to use."""
@@ -630,7 +702,7 @@ def search_index_for(user):
             "kw": "my profile me avatar companion pet name photo picture rename change"}]
     for g in NAV_GROUPS:
         for it in g["items"]:
-            if _cap_ok(user, it["cap"]):
+            if _cap_ok(user, it["cap"], is_chief):
                 out.append({"title": it["label"], "hint": it["hint"], "url": it["url"],
                             "section": g["name"], "kw": it["kw"]})
     return out
@@ -640,7 +712,7 @@ templates.env.globals["nav_groups_for"] = nav_groups_for
 templates.env.globals["search_index_for"] = search_index_for
 
 
-def ai_route_catalog(user):
+def ai_route_catalog(user, is_chief=False):
     """Destination catalog for the NL router (docs/AI_INTEGRATION_PLAN.md Phase 1)
     — the same role/cap allow-list as search_index_for (the model is never
     offered a screen this user can't open), but keyed by `key` since that's
@@ -650,13 +722,13 @@ def ai_route_catalog(user):
             "kw": "home start hub main launcher overview css dashboards reports"}]
     for g in NAV_GROUPS:
         for it in g["items"]:
-            if _cap_ok(user, it["cap"]):
+            if _cap_ok(user, it["cap"], is_chief):
                 out.append({"key": it["key"], "label": it["label"], "hint": it["hint"],
                             "url": it["url"], "kw": it["kw"]})
     return out
 
 
-def help_catalog_for(user):
+def help_catalog_for(user, is_chief=False):
     """Cap-filtered guide sections — tours.TOURS content paired with each page's
     label/cap/url off NAV_GROUPS, the same shape /help itself renders. Shared with
     the answers-mode NL router (docs/AI_INTEGRATION_PLAN.md Phase 2): a `help_key`
@@ -669,7 +741,7 @@ def help_catalog_for(user):
     out = []
     for key, steps in tours.TOURS.items():
         label, cap, url = meta.get(key, (key.replace("_", " ").title(), None, "/"))
-        if not _cap_ok(user, cap):
+        if not _cap_ok(user, cap, is_chief):
             continue
         replay_url = url + ("&" if "?" in url else "?") + "tour=1"
         out.append({"key": key, "label": label, "url": url, "replay_url": replay_url, "steps": steps})
@@ -1723,6 +1795,7 @@ async def _auth_gate(request: Request, call_next):
     request.state.user = _user_from_request(request)
     request.state.spot_feedback_enabled = False
     request.state.feedback_unread = 0
+    request.state.is_chief = False
     path = request.url.path
     # Expose the Spot Feedback switch to every page a signed-in staff member sees
     # — including PUBLIC attendee pages (the live survey, the "not open yet" and
@@ -1736,6 +1809,13 @@ async def _auth_gate(request: Request, call_next):
             # Unread count for the "My feedback" bell (their own submissions only).
             request.state.feedback_unread = st.count_unread_feedback(
                 conn, request.state.user["id"])
+            # Does this account approve for anyone? The wellness/AWA team pages
+            # gate on this at RUNTIME (a directory-rank lookup), not on a role
+            # capability, so NAV_GROUPS can't filter them with `cap` alone —
+            # see _cap_ok's "chief" branch. Resolved once here, on the connection
+            # already open, rather than per nav render.
+            request.state.is_chief = st.user_is_approving_chief(
+                conn, request.state.user)
         finally:
             conn.close()
     if _is_public(path):
@@ -4096,7 +4176,8 @@ def start_page(request: Request):
                          if ai.mode_at_least(conn, "answers") else "catalog")
     finally:
         conn.close()
-    suggestions = [it for g in nav_groups_for(request.state.user) for it in g["items"]][:6]
+    suggestions = [it for g in nav_groups_for(request.state.user, request.state.is_chief)
+                   for it in g["items"]][:6]
     return templates.TemplateResponse(request, "start.html", {
         "nav_active": "", "show_scope": False, "answer_engine": answer_engine,
         "first_name": first_name, "suggestions": suggestions,
@@ -4296,7 +4377,7 @@ def search_page(request: Request, q: str = ""):
     """No-JS fallback for the search palette: server-renders the same role-aware
     link list. The live palette (search.js) handles the JS-on experience; this
     keeps 'search or jump to' working when scripts are off."""
-    idx = search_index_for(request.state.user)
+    idx = search_index_for(request.state.user, request.state.is_chief)
     ql = q.strip().lower()
     if ql:
         results = [it for it in idx
@@ -4315,7 +4396,7 @@ def help_page(request: Request):
     the two can never drift. Sections are cap-filtered to what the user may open;
     each links back to its page with ?tour=1 to replay the tour in context."""
     sections = [{"key": s["key"], "label": s["label"], "url": s["replay_url"], "steps": s["steps"]}
-                for s in help_catalog_for(request.state.user)]
+                for s in help_catalog_for(request.state.user, request.state.is_chief)]
     return templates.TemplateResponse(request, "help.html", {
         "nav_active": "", "show_scope": False, "sections": sections,
     })
@@ -4540,7 +4621,7 @@ def _ai_parse_history(raw):
 _RULE_FEATURE = {"navigate": "nl_router", "answer": "nl_answer", "help": "nl_help"}
 
 
-def _ai_try_rules(conn, user, query, ip=None):
+def _ai_try_rules(conn, user, query, ip=None, is_chief=False):
     """The deterministic FAQ layer that runs BEFORE the model in /api/ai/route.
 
     If a learned rule (qa_rules.match) resolves `query` to a target this user
@@ -4569,7 +4650,7 @@ def _ai_try_rules(conn, user, query, ip=None):
 
     payload = None
     if kind == "navigate":
-        dest = {d["key"]: d for d in ai_route_catalog(user)}.get(key)
+        dest = {d["key"]: d for d in ai_route_catalog(user, is_chief)}.get(key)
         if dest:
             payload = {"kind": "navigate", "destination": dest["key"], "label": dest["label"],
                        "hint": dest["hint"], "url": dest["url"], "reason": ""}
@@ -4579,7 +4660,7 @@ def _ai_try_rules(conn, user, query, ip=None):
             payload = {"kind": "answer", "label": slot["label"],
                        "text": slot["render"](home_stats(conn))}
     elif kind == "help":
-        section = {s["key"]: s for s in help_catalog_for(user)}.get(key)
+        section = {s["key"]: s for s in help_catalog_for(user, is_chief)}.get(key)
         if section:
             payload = {"kind": "help", "label": section["label"],
                        "text": " ".join(s["body"] for s in section["steps"][:2]),
@@ -4621,11 +4702,12 @@ async def api_ai_route(request: Request):
         # questions with no model call (saves the daily AI budget and works even
         # when AI is off). A miss falls through to the model path below,
         # unchanged.
-        hit = _ai_try_rules(conn, user, query, ip=ip)
+        hit = _ai_try_rules(conn, user, query, ip=ip,
+                            is_chief=request.state.is_chief)
         if hit is not None:
             return JSONResponse(hit)
 
-        catalog = ai_route_catalog(user)
+        catalog = ai_route_catalog(user, request.state.is_chief)
         by_key = {d["key"]: d for d in catalog}
         include_answer = ai.mode_at_least(conn, "answers") and ai.feature_enabled(conn, "nl_answer")
         # "maximize" engine is only actually reachable when its own feature flag
@@ -4636,7 +4718,7 @@ async def api_ai_route(request: Request):
         include_help = ai.mode_at_least(conn, "answers") and ai.feature_enabled(conn, "nl_help")
         include_action = (ai.mode_at_least(conn, "assistant")
                           and ai.feature_enabled(conn, "assistant_action"))
-        help_sections = help_catalog_for(user) if include_help else []
+        help_sections = help_catalog_for(user, request.state.is_chief) if include_help else []
         help_by_key = {s["key"]: s for s in help_sections}
         action_catalog = ai_action_catalog(user) if include_action else {}
         archive_candidates = (ai_archive_candidates(conn, user)

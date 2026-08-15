@@ -28,6 +28,51 @@ when it was already done. Nothing server-side changed; the cooldown rule and
 `record_avatar_care`'s contract are untouched, and all 29 `test_avatar_care.py`
 tests still pass. `avatars.js` cache-buster bumped to `?v=20260815a`.
 
+### Seven nav groups become four
+
+**Why.** The menu had **seven** groups (Dashboard, Wellness, Work arrangement,
+Reports, Data entry, Manage, Admin) for what are really four products — two of
+them holding a single item each. Worse, six pages that exist and work appeared in
+**no menu at all**: `/wellness/apply`, `/wellness/dashboard`,
+`/wellness/approvals`, `/work-arrangement/file`, `/work-arrangement/schedule`,
+`/work-arrangement/approvals`. They were reachable only by typing the URL or
+through an in-page link.
+
+**Now: Wellness · CSS · AWA · Administrator.** Order follows measured usage, not
+org-chart tidiness — `/wellness` draws 348 views from 17 of 18 users in 30 days,
+more than the entire Reports group. Within Administrator the same rule applies:
+`/admin/ai` (53 views, 4th busiest screen in the app) leads, Audit (2) and
+Sharing (1) trail.
+
+**Sub-sections inside a dropdown.** CSS holds sixteen destinations, which as a
+flat list would be worse than what it replaced. Items now carry an optional
+`section` label, written **once** on the first item of a run and inherited by the
+rest, rendered as headings inside the menu: *See how we're doing · Official
+reports · Run a survey · Data entry*. Two details that matter:
+
+- The label is resolved **before** cap-filtering. Filtering first would orphan a
+  run whose label happened to sit on an item the viewer can't open — "Run a
+  survey" lives on New survey (`create_activity`) while Monitor after it needs
+  `manage_event`.
+- A section whose every item is capped away disappears rather than leaving a
+  stray heading (an encoder sees Paper entry but no empty "Run a survey").
+
+**A capability that isn't a role.** The four team pages gate at runtime on
+`storage.user_is_approving_chief` — a directory *rank* lookup, not an account
+role — so `NAV_GROUPS`'s `cap` field could not express them. They now carry
+`cap="chief"`, resolved once per request in the auth middleware into
+`request.state.is_chief` (on the connection it already had open) and passed down
+to `nav_groups_for` / `search_index_for` / `ai_route_catalog` / `help_catalog_for`.
+All four surfaces stay in lockstep, so a plain staff member is never handed a
+link they cannot open — and the ⌘K palette, `/search`, `/help`, `/start`'s
+suggestions and the NL router all learned about the six newly-surfaced pages for
+free, because `NAV_GROUPS` remains the single source of truth.
+
+Four new tests in `tests/test_search.py`: the group shape and section ordering,
+the `chief` cap gating nav *and* the search index together, empty sections
+vanishing, and the rendered markup (the data-level assertions alone don't prove
+`dash_layout` draws it).
+
 ### The "this week" card that was a dead target
 
 **Symptom.** Friction rank 7 in the same telemetry: **33 dead-clicks from 9

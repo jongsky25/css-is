@@ -35,15 +35,55 @@ def test_nav_groups_track_the_index(app_mod):
     class U:
         def __init__(self, role): self.role = role
 
-    # viewer sees only the ungated groups; admin sees them all
+    # Four product groups, Wellness first (it is the busiest screen in the app).
+    # A viewer meets no admin cap, so Administrator drops out entirely.
     assert [g["name"] for g in app_mod.nav_groups_for(U("viewer"))] == \
-        ["Dashboard", "Wellness", "Work arrangement", "Reports"]
+        ["Wellness", "CSS", "AWA"]
     assert [g["name"] for g in app_mod.nav_groups_for(U("admin"))] == \
-        ["Dashboard", "Wellness", "Work arrangement", "Reports",
-         "Data entry", "Manage", "Admin"]
+        ["Wellness", "CSS", "AWA", "Administrator"]
     # in_nav=False items stay out of the menu even when the cap is met
     admin_nav_urls = {it["url"] for g in app_mod.nav_groups_for(U("admin")) for it in g["items"]}
     assert "/directory/cleanup" not in admin_nav_urls
+
+    # CSS carries its sixteen destinations as headed sections, in this order;
+    # every item lands in exactly one and `items` stays the flat union.
+    css = next(g for g in app_mod.nav_groups_for(U("admin")) if g["name"] == "CSS")
+    assert [s["name"] for s in css["sections"]] == \
+        ["See how we're doing", "Official reports", "Run a survey", "Data entry"]
+    assert sum(len(s["items"]) for s in css["sections"]) == len(css["items"])
+    # a single-section group renders as one unnamed block, i.e. a plain list
+    awa = next(g for g in app_mod.nav_groups_for(U("viewer")) if g["name"] == "AWA")
+    assert [s["name"] for s in awa["sections"]] == [""]
+
+    # A section whose every item is capped away must vanish, not leave a stray
+    # heading: an encoder can reach Paper entry but none of "Run a survey".
+    enc = next(g for g in app_mod.nav_groups_for(U("encoder")) if g["name"] == "CSS")
+    assert [s["name"] for s in enc["sections"]] == \
+        ["See how we're doing", "Official reports", "Data entry"]
+    assert all(s["items"] for s in enc["sections"])
+
+
+def test_chief_cap_gates_the_team_pages(app_mod):
+    """The wellness/AWA team pages gate at runtime on directory RANK, not on an
+    account role, so NAV_GROUPS marks them cap="chief" and the request middleware
+    supplies the answer. A plain viewer must not even be handed the links."""
+    class U:
+        def __init__(self, role): self.role = role
+
+    team_urls = {"/wellness/dashboard", "/wellness/approvals",
+                 "/work-arrangement/schedule", "/work-arrangement/approvals"}
+
+    def urls(user, is_chief):
+        return {it["url"] for g in app_mod.nav_groups_for(user, is_chief) for it in g["items"]}
+
+    assert not (team_urls & urls(U("viewer"), False))    # ordinary staff: none
+    assert team_urls <= urls(U("viewer"), True)          # a section chief: all four
+    assert team_urls <= urls(U("admin"), False)          # admins always, chief flag or not
+
+    # the search palette must make the same call, or the two drift apart
+    idx = {e["url"] for e in app_mod.search_index_for(U("viewer"), False)}
+    assert not (team_urls & idx)
+    assert team_urls <= {e["url"] for e in app_mod.search_index_for(U("viewer"), True)}
 
 
 def test_search_page_requires_login(app_mod):
@@ -151,3 +191,18 @@ def test_api_search_people(admin, app_mod):
     assert "People" in sections
     titles = [it["title"] for it in data if it["section"] == "People"]
     assert any("Zirconium" in t for t in titles)
+
+
+def test_rendered_nav_shows_groups_and_sections(admin):
+    """The data-level assertions above don't prove dash_layout renders it. Guard
+    the actual markup: four group summaries, and CSS's sub-headings present."""
+    html = admin.get("/dashboard").text
+    for group in ("Wellness", "CSS", "AWA", "Administrator"):
+        assert f"<summary>{group}</summary>" in html, group
+    for sec in ("Official reports", "Run a survey", "Data entry", "Setup &amp; records"):
+        assert f'<div class="msec">{sec}</div>' in html, sec
+    # (the "See how we're doing" heading renders with Jinja's escaped apostrophe)
+    assert '<div class="msec">See how we&#39;re doing</div>' in html
+    # the old seven-group shape is gone
+    assert "<summary>Data entry</summary>" not in html
+    assert "<summary>Manage</summary>" not in html

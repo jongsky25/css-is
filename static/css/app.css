@@ -261,6 +261,12 @@ details.disclosure[open] > summary::before { transform:rotate(90deg); }
 .navgroup .menu a:hover { background:var(--bg); }
 .navgroup .menu a[aria-current="page"] { background:var(--blue-bg); color:var(--accent-ink); font-weight:700; }
 .navgroup .menu .mhint { display:block; font-size:.72rem; color:var(--soft); font-weight:400; }
+/* Sub-headings inside a dropdown. The CSS group carries sixteen destinations —
+   without these it would be an undifferentiated list. Presentational only: the
+   grouping that matters for assistive tech is the group's own <details>. */
+.navgroup .menu .msec { font-size:.68rem; text-transform:uppercase; letter-spacing:.05em;
+        color:var(--grey); font-weight:800; padding:.5rem .7rem .2rem; }
+.navgroup .menu .msec:first-child { padding-top:.2rem; }
 
 .topnav .right { margin-left:auto; display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
 .whoami { font-size:.76rem; color:var(--ink); font-weight:600; background:var(--bg);
@@ -341,6 +347,12 @@ details.disclosure[open] > summary::before { transform:rotate(90deg); }
         overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
   .mobile-menu .mgroup { font-size:.72rem; text-transform:uppercase; letter-spacing:.04em;
         color:var(--soft); margin:.6rem 0 .2rem; font-weight:700; }
+  /* Indented one step under .mgroup so the two levels stay distinguishable in
+     the flat hamburger list. Only the heading is indented — a `~ a` rule here
+     would leak the indent onto every later link in the menu, including groups
+     that have no sections at all. */
+  .mobile-menu .msec { font-size:.68rem; letter-spacing:.03em; color:var(--grey);
+        margin:.45rem 0 .1rem .6rem; font-weight:700; }
   .mobile-menu a { display:block; padding:.5rem .6rem; border-radius:var(--r1); text-decoration:none;
         color:var(--ink); font-weight:550; }
   .mobile-menu a:hover { background:var(--bg); }
