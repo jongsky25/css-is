@@ -1,5 +1,5 @@
 """
-CSS-IS storage
+Office Connect storage
 ==============
 
 The part that REMEMBERS. A single database file on your laptop that holds:

@@ -1,5 +1,5 @@
 """
-CSS-IS backups
+Office Connect backups
 ==============
 
 Self-contained backup engine for the single SQLite database, driven from the

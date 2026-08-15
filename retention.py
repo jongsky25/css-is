@@ -1,5 +1,5 @@
 """
-CSS-IS retention enforcement
+Office Connect retention enforcement
 ==============================
 
 Two independent retention jobs live in this script — same "purge what's past

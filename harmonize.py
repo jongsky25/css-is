@@ -1,5 +1,5 @@
 """
-CSS-IS data harmonization engine — entity resolution over respondent-typed
+Office Connect data harmonization engine — entity resolution over respondent-typed
 activity titles and speaker names.
 
 The problem (measured on the production db): F2 "event review" titles were

@@ -1,5 +1,5 @@
 """
-CSS-IS mailer — sends account emails (invite + password reset).
+Office Connect mailer — sends account emails (invite + password reset).
 
 Honest by design: if SMTP isn't configured, it does NOT pretend to send. It
 records the message to an outbox log and reports sent=False, so the caller can
@@ -78,11 +78,11 @@ def send(to, subject, body):
 # ---- message composers ------------------------------------------------------
 
 def invite_message(name, link, inviter=None):
-    subject = "Your CSS-IS account — set your password"
+    subject = "Your Office Connect account — set your password"
     who = f" by {inviter}" if inviter else ""
     body = (f"Hello {name or 'there'},\n\n"
-            f"An account was created for you{who} on the CSS-IS Client Satisfaction "
-            f"system. To finish setting it up, choose your password here:\n\n"
+            f"An account was created for you{who} on Office Connect, the bureau's "
+            f"staff system. To finish setting it up, choose your password here:\n\n"
             f"  {link}\n\n"
             f"This link expires in 7 days. If you weren't expecting this, you can "
             f"ignore this message.\n")
@@ -90,9 +90,9 @@ def invite_message(name, link, inviter=None):
 
 
 def reset_message(name, link):
-    subject = "CSS-IS — reset your password"
+    subject = "Office Connect — reset your password"
     body = (f"Hello {name or 'there'},\n\n"
-            f"We received a request to reset your CSS-IS password. Set a new one here:\n\n"
+            f"We received a request to reset your Office Connect password. Set a new one here:\n\n"
             f"  {link}\n\n"
             f"This link expires in 1 hour. If you didn't request this, you can safely "
             f"ignore this message — your password won't change.\n")

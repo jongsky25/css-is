@@ -132,7 +132,7 @@ def test_handoff_markdown_attachment_with_seeded_data(admin, db_path):
     assert cd.startswith('attachment; filename="UX_Handoff_30d_')
     assert cd.endswith('.md"')
     body = r.text
-    assert "# CSS-IS UX Telemetry Handoff" in body
+    assert "# Office Connect UX Telemetry Handoff" in body
     assert "/directory/person/{id}/edit" in body      # the seeded hotspot
     assert "## 6. Feature usage & coverage" in body
     # session ids are pseudonymized, user ids dropped outright

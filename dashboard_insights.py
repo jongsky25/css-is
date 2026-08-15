@@ -1,5 +1,5 @@
 """
-CSS-IS dashboard insights
+Office Connect dashboard insights
 =========================
 
 The plain-language layer. The engine (css_is_engine) turns atoms into numbers;

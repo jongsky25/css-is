@@ -1,5 +1,5 @@
 """
-CSS-IS UX telemetry handoff — a downloadable, self-describing analysis brief.
+Office Connect UX telemetry handoff — a downloadable, self-describing analysis brief.
 =============================================================================
 
 The presentation layer over ui_telemetry.py's digest: GET /admin/ux-insights/
@@ -35,7 +35,7 @@ RARELY_USED_MAX_VIEWS = 3
 SAMPLE_CAP = 200
 
 APP_CONTEXT_MD = """\
-CSS-IS is the BLHSD (Bureau of Local Health Systems Development, Philippine
+Office Connect is the BLHSD (Bureau of Local Health Systems Development, Philippine
 Department of Health) Customer Satisfaction Survey Information System: staff
 create survey activities, respondents scan QR codes to rate services
 (CSM/SERVQUAL), and staff monitor responses, manage rosters and directories,
@@ -310,7 +310,7 @@ def render_handoff_markdown(payload):
     out = []
     add = out.append
 
-    add("# CSS-IS UX Telemetry Handoff — for AI-assisted interface review\n")
+    add("# Office Connect UX Telemetry Handoff — for AI-assisted interface review\n")
     add(f"Generated {p['generated_at']} · app version {p['app_version']} · "
         f"window: last {w['days']} day(s) ({w['from'] or '—'} → {w['to'] or '—'}) · "
         f"{p['totals']['events']} event(s) from {p['totals']['sessions']} session(s) / "

@@ -1,5 +1,5 @@
 """
-CSS-IS calculator
+Office Connect calculator
 =================
 
 What this does, in one sentence:

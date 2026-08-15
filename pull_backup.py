@@ -227,7 +227,7 @@ def verify(path):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Pull the live CSS-IS database locally.")
+    ap = argparse.ArgumentParser(description="Pull the live Office Connect database locally.")
     ap.add_argument("--base", default=os.environ.get("CSS_BASE_URL", DEFAULT_BASE),
                     help="live site root URL")
     ap.add_argument("--user", default=os.environ.get("CSS_ADMIN_USER"),

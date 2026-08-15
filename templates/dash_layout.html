@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{% block title %}Dashboard{% endblock %} — CSS-IS</title>
+<title>{% block title %}Dashboard{% endblock %} — Office Connect</title>
 {# Set theme + text size before first paint so the choice never flashes. #}
 <script>(function(){try{var d=document.documentElement;var t=localStorage.getItem("theme");if(t!=="dark"&&t!=="light"&&t!=="contrast"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light";}d.setAttribute("data-theme",t);var s=localStorage.getItem("textscale");if(s!=="sm"&&s!=="lg"&&s!=="md"){s="md";}d.setAttribute("data-textscale",s);var dn=localStorage.getItem("density");if(dn!=="compact"&&dn!=="cozy"){dn="cozy";}d.setAttribute("data-density",dn);var ac=localStorage.getItem("accent");if(["blue","teal","violet","emerald","rose","amber"].indexOf(ac)<0){ac="blue";}d.setAttribute("data-accent",ac);}catch(e){}})();</script>
 <link rel="stylesheet" href="/static/css/app.css?v=20260622b">
@@ -37,7 +37,7 @@
 
 <nav class="topnav" aria-label="Main">
   <div class="inner">
-    <a class="brand" href="/" title="Equity in Health · CSS-IS"><span class="equity-mark sm" aria-hidden="true" style="margin-right:.4rem;"></span>CSS<span>·</span>IS</a>
+    <a class="brand" href="/" title="Equity in Health · Office Connect"><span class="equity-mark sm" aria-hidden="true" style="margin-right:.4rem;"></span>Office<span>·</span>Connect</a>
 
     <div class="navgroups">
       {% for g in nav_groups %}

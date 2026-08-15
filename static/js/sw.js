@@ -1,4 +1,4 @@
-/* CSS-IS service worker — Phase 1 (installable PWA + offline app-shell load).
+/* Office Connect service worker — Phase 1 (installable PWA + offline app-shell load).
  *
  * Scope: served from "/sw.js" (root) so it controls the whole origin. It does
  * NOT touch submissions — POSTs pass straight through to the network. Offline

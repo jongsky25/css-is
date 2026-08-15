@@ -1,5 +1,5 @@
 """
-CSS-IS UX telemetry — passive interface-friction signal.
+Office Connect UX telemetry — passive interface-friction signal.
 =========================================================
 
 Ported from jongsky25/ofis-platform's lib/telemetry.ts (commit 7a7e369, "Add

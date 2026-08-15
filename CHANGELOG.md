@@ -1,5 +1,47 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-08-15 (v2.60 — CSS-IS becomes Office Connect)
+
+**Why.** The name described one of three things the system now does. After the
+wellness module (v2.25) and ANNEX C (v2.58), a staff member signs in as often for
+a two-hour break or a work arrangement as for a survey report — but the product
+still announced itself as the Client Satisfaction Survey Information System. The
+name had stopped describing the thing.
+
+**Scope — the shell only.** This is a rename of what people read, not of what the
+machine runs on. Deliberately left alone:
+
+- **`css_is.db`** (~100 references across `app.py`, `backups.py`, `pull_backup.py`,
+  `daily_backup.py`, `setup_db.py`, `migrate.py`, `deploy_hf.py`, `Dockerfile`,
+  `.gitignore`) — renaming the database file orphans every existing deployment
+  and every backup path.
+- **`css_is_engine.py`** (imported as `eng` by 21 modules) — the SERVQUAL/CSM
+  calculator. A pure internal identifier; no user ever sees it.
+- **`CSS_*` environment variables** (`CSS_DB`, `CSS_BASE_URL`, `CSS_SMTP_*`,
+  `CSS_GEMINI_API_KEY`, `CSS_OFFSITE_DIR`, `CSS_NO_SCHEDULER`) — a deployment
+  contract.
+- **The `/css` route and the name "CSS"** — that is the Client Satisfaction
+  Survey, a real programme with a real name, and it keeps it. Office Connect is
+  the building; CSS is one of the rooms.
+- **`sw.js`'s `css-is-` cache-name prefix** — changing it silently invalidates
+  the app-shell cache of every installed client.
+- **`~/CSS-IS-prod-backups`** (`daily_backup.py`) — an on-disk path on the ops
+  machine with existing history behind it.
+
+**Changed.** The wordmark and `<title>` in `dash_layout.html` and
+`public_layout.html`; the sign-in screen; the eight public-form page titles; the
+two account emails in `mailer.py`; the PWA manifest `name`/`short_name`
+(`app.py:6353`) and `static/offline.html`; the FastAPI app title; the report and
+export source lines (`dashboard_export.py`, `report_docs.py`, `csm_report.py`);
+the bilingual `thanks_title` in `i18n.py` (both `en` and `fil`); the UX handoff
+brief header in `ux_handoff.py` and its two asserting tests; and the module
+docstrings.
+
+**Verification.** `qa_preflight.py` GREEN. `pytest`: 1174 passed, with the same
+16 pre-existing failures before and after the change (they need a seeded
+`css_is.db`, which is gitignored) — a before/after diff of the failure list is
+empty, so the rename introduced no regressions.
+
 ## 2026-08-15 (v2.59 — "No AWA": the blank row learns to say why)
 
 **Symptom.** v2.58 left two rows of the source ANNEX C with nowhere to go, and

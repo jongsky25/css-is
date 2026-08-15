@@ -1,5 +1,5 @@
 """
-CSS-IS dashboard export
+Office Connect dashboard export
 =======================
 
 Turns any dashboard visual into a STANDALONE, fully-captioned artifact the user
@@ -9,7 +9,7 @@ can download — as an image (PNG / JPEG), a document (PDF), an editable data ta
 "Standalone" is the whole point: a downloaded chart must make sense on its own,
 away from the screen. So every export carries the same caption standard:
 
-    CSS-IS Visual Caption Standard
+    Office Connect Visual Caption Standard
     ------------------------------
     Title    — what is measured            (e.g. "Walk-in Service Satisfaction — Pulse")
     Subtitle — Person · Place · Time        (whichever apply, in that order)
@@ -77,7 +77,7 @@ class VisualMeta:
     period: str = ""
     unit: str = ""
     notes: list = field(default_factory=list)
-    source: str = "CSS-IS Client Satisfaction System"
+    source: str = "Office Connect Client Satisfaction System"
     generated_at: str = ""
     n: int = None                               # sample size, shown on the title as (N = …)
 

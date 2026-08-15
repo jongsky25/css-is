@@ -179,7 +179,7 @@ def test_build_handoff_sample_can_be_excluded():
 
 def test_markdown_contains_every_section_header():
     md = uxh.render_handoff_markdown(_handoff(_rows()))
-    for header in ("# CSS-IS UX Telemetry Handoff",
+    for header in ("# Office Connect UX Telemetry Handoff",
                    "## 1. What this app is", "## 2. How to read this data",
                    "## 3. Your task", "## 4. Ranked friction opportunities",
                    "## 5. Traffic & flows", "## 6. Feature usage & coverage",

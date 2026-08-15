@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""WCAG 2.2 AA contrast audit for the CSS-IS design tokens.
+"""WCAG 2.2 AA contrast audit for the Office Connect design tokens.
 
 Phase 1 / 1C of the UI improvement plan. Parses the colour tokens out of
 static/css/app.css, resolves every accent x theme combination the way the CSS
@@ -162,7 +162,7 @@ def main() -> int:
         line = f"  dark badge.{name:<7} {ratio:4.2f}:1  [{fg} on {bg}]"
         (badge_fails if ratio < 4.5 else infos).append(line if ratio < 4.5 else line + "  (ok)")
 
-    print("=== CSS-IS WCAG AA contrast audit ===")
+    print("=== Office Connect WCAG AA contrast audit ===")
     print(f"checked {len(THEMES)*len(ACCENTS)} accent x theme combos + {len(DARK_BADGES)} dark badges\n")
 
     if fails:

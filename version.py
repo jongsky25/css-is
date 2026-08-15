@@ -17,10 +17,28 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.59"
+APP_VERSION = "2.60"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.60",
+        "date": "August 15, 2026",
+        "summary": "The system has a new name — Office Connect. Nothing moved "
+                   "and nothing you saved has changed.",
+        "changes": [
+            "CSS-IS is now called Office Connect. The old name described only "
+            "the client satisfaction survey, but the system now also carries "
+            "your wellness break and your work arrangement, so it needed a name "
+            "that covers all three.",
+            "You will see the new name on the sign-in screen, at the top of "
+            "every page, on the app icon if you installed it to your phone, and "
+            "in account emails.",
+            "The Client Satisfaction Survey itself keeps its name, and so does "
+            "everything inside it — the same reports, the same scores, the same "
+            "links. Every page you have bookmarked still works.",
+        ],
+    },
     {
         "version": "2.59",
         "date": "August 15, 2026",

@@ -1,5 +1,5 @@
 """
-Demo for the CSS-IS calculator.
+Demo for the Office Connect calculator.
 
 Run:  python demo.py
 

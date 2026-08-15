@@ -1,5 +1,5 @@
 """
-CSS-IS web app — form-creation screen (first clickable screen)
+Office Connect web app — form-creation screen (first clickable screen)
 ==============================================================
 
 The section-manager screen that creates an activity survey and generates the
@@ -423,7 +423,7 @@ CONSENT_TEXT_FIL = i18n.CONSENT_TMPL_FIL.format(months=RETENTION_MONTHS)
 # directory staff form. Used to address a participant on their certificate.
 _HONORIFICS = ("Mr.", "Ms.", "Mrs.", "Dr.", "Engr.", "Atty.")
 
-app = FastAPI(title="CSS-IS — Create activity survey")
+app = FastAPI(title="Office Connect — Create activity survey")
 templates = Jinja2Templates(
     directory=os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates"))
 # Shared stylesheet/JS for every screen (UX redesign 2026-06). Same dir-resolution
@@ -2671,7 +2671,7 @@ def _build_spot_feedback_xlsx(rows, sel=""):
             ws.cell(row=r, column=c, value=row.get(key) or "").alignment = wrap
     _xlsx_about_sheet(
         wb, title="Spot Feedback — page comments & suggestions",
-        org="CSS-IS", place="All dashboard pages",
+        org="Office Connect", place="All dashboard pages",
         period=(f"Status: {sel}" if sel else "All statuses"),
         n=len(rows), n_label="Submissions (N)",
         note_lines=[
@@ -6350,8 +6350,8 @@ def web_manifest(request: Request, start: str = "/"):
     if not start.startswith("/") or start.startswith("//"):
         start = "/"
     manifest = {
-        "name": "CSS-IS — Client Satisfaction Survey",
-        "short_name": "CSS-IS",
+        "name": "Office Connect — Client Satisfaction Survey",
+        "short_name": "Office Connect",
         "description": "Answer and collect Client Satisfaction Survey responses.",
         "start_url": start,
         "scope": "/",
@@ -10622,7 +10622,7 @@ def reports_export(request: Request, type: int = 1, fmt: str = "docx",
         try:
             _, org_name, _ = st.get_or_create_blhsd(conn)
         except Exception:
-            org_name = "CSS-IS"
+            org_name = "Office Connect"
         meta = {"title": _REPORT_TITLES[rtype], "scope": scope_label,
                 "place": place, "period": period_lbl,
                 "generated": _now_local().strftime("%Y-%m-%d %H:%M"), "source": org_name}
@@ -10720,7 +10720,7 @@ def reports_rp_roster_export(request: Request, org: str = "", period: str = "all
         try:
             _, org_name, _ = st.get_or_create_blhsd(conn)
         except Exception:
-            org_name = "CSS-IS"
+            org_name = "Office Connect"
         meta = {"title": "Resource-person Roster (per activity)", "scope": scope_label,
                "place": place, "period": period_lbl,
                "generated": _now_local().strftime("%Y-%m-%d %H:%M"), "source": org_name}
