@@ -53,6 +53,10 @@
   .noawa-offer { margin-bottom:1.1rem; }
   .noawa-offer summary { cursor:pointer; font-weight:700; color:var(--accent); font-size:.9rem; }
   .noawa-offer .note { margin:.5rem 0 0; }
+  .panel.now { border-color:var(--accent); border-width:2px; padding:1.3rem 1.5rem; }
+  .panel.now h3 { font-size:1.25rem; }
+  .section-lbl { color:var(--soft); font-size:.78rem; font-weight:700; text-transform:uppercase;
+                 letter-spacing:.04em; margin:0 0 .5rem; }
 </style>
 
 {{ page_header("Work arrangement",
@@ -71,8 +75,9 @@
 {% endif %}
 
 {% if noawa %}
-{# A live tag replaces the period cards: there is no arrangement to file while
-   it stands, and it carries itself into each new period. #}
+{# A live tag replaces the current-schedule panel and the period cards: there
+   is no arrangement to file or be in force while it stands, and it carries
+   itself into each new period. #}
 <div class="panel noawa">
   <h3>{{ noawa_label }} — no alternative work arrangement</h3>
   <p class="reason">“{{ noawa.remark }}”</p>
@@ -91,7 +96,46 @@
 </div>
 {% else %}
 
+{#-- What's actually in force right now — the schedule someone is working
+     today — leads the page. It is never in `periods` (filing for a period
+     always closes before the period itself begins), so it needs its own
+     panel rather than a spot in that grid. #}
+<div class="panel now">
+  <h3 style="margin:0 0 .15rem;">Current schedule
+    <span class="note" style="font-weight:400;">— {{ current.label }}</span></h3>
+  {% if current.approved %}
+  <div class="current" style="margin-top:.7rem;">
+    <span class="ic">{{ arrangement_icon(current.approved.arrangement) }}</span>
+    <div>
+      <div class="code">{{ current.approved.arrangement }} — {{ current.approved.arrangement_label }}
+        <span class="pill s-approved">in force</span></div>
+      <div class="rem">{{ current.approved.remarks or "Regular week, no nominated day" }}</div>
+    </div>
+  </div>
+    {% if current.pending %}
+    <p class="note">A change to <b>{{ current.pending.arrangement }}{% if current.pending.remarks %} · {{ current.pending.remarks }}{% endif %}</b>
+    is still waiting on {{ approver }} — filed before the deadline but not decided before this
+    period began. The arrangement above stays in force until it's decided.</p>
+    {% endif %}
+  {% elif current.pending %}
+  <div class="current" style="margin-top:.7rem;">
+    <span class="ic">{{ arrangement_icon(current.pending.arrangement) }}</span>
+    <div>
+      <div class="code">{{ current.pending.arrangement }} — {{ current.pending.arrangement_label }}
+        <span class="pill s-pending">still waiting on {{ approver }}</span></div>
+      <div class="rem">{{ current.pending.remarks or "Regular week, no nominated day" }}</div>
+    </div>
+  </div>
+  <p class="note">Filed before the deadline but not decided before this period began — nothing is
+  formally in force for you yet this period.</p>
+  {% else %}
+  <p class="note" style="margin-top:.7rem;">Nothing was filed for this period before its deadline —
+  you're on the regular on-site schedule for {{ current.label }} unless your section says otherwise.</p>
+  {% endif %}
+</div>
+
 {% if periods %}
+<h3 class="section-lbl">Open for filing</h3>
 <div class="periods">
   {% for p in periods %}
   <div class="pcard">
