@@ -28,6 +28,12 @@ CHANGELOG = [
                    "and nothing you saved has changed. Your companion also "
                    "answers back properly now when it has already been fed.",
         "changes": [
+            "Your home page now shows how your team is doing instead of just "
+            "asking where you want to go: who has filed their wellness break "
+            "and their work arrangement this period, and the recent activities "
+            "your section ran, with their ratings. Tap “Me” to see just your "
+            "own. The three buttons you used before are still there, "
+            "underneath.",
             "The menu is now four groups — Wellness, CSS, AWA and "
             "Administrator — instead of seven. Wellness comes first because it "
             "is the page staff open most.",

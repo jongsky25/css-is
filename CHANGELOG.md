@@ -28,6 +28,56 @@ when it was already done. Nothing server-side changed; the cooldown rule and
 `record_avatar_care`'s contract are untouched, and all 29 `test_avatar_care.py`
 tests still pass. `avatars.js` cache-buster bumped to `?v=20260815a`.
 
+### `/` becomes the Team View
+
+The landing page people actually see. `/` was the most-visited screen in the app
+(520 views in 30 days, all 18 users) **and** its second-highest exit point: it
+routed and did nothing else. People dead-clicked the greeting itself — 19 times,
+with 17 matching Spot Feedback comments — expecting it to do something.
+
+**Now:** greeting and companion, a **Team | Me** toggle, three panels, then the
+three doors exactly as before.
+
+- **Wellness** — a wall of faces (pictures, not names, by request), each ringed
+  by the hours they've used against the 2-hour entitlement, over "9 of 14 have
+  filed · 64% of hours used".
+- **Work arrangement** — a stacked Approved/Pending/Not-filed bar, the same face
+  wall, a Mon–Fri on-site coverage chart with the thinnest day called out, and a
+  named chase list. It leads with the period **open for filing**, not the one in
+  force, because the in-force period's deadline has already passed and a landing
+  page leading with it could only ever say "too late".
+- **CSS** — recent activities with their ratings, each row saying *why* it is
+  listed (`Organised` / `Spoke` / `Your section ran this`), plus what's coming
+  up. Low-n scores are shown muted with an explicit "too few to read" chip rather
+  than hidden.
+
+**The toggle is a real link**, not JavaScript — `/` and `/?view=me` — matching
+how the rest of the app degrades. It appears only for someone who *has* a team:
+an account with no directory link gets the personal view and an explainer, never
+a Team tab that could only ever be empty.
+
+**Copy that carries a schema limit.** A permanent footnote reads *"Attendance
+isn't recorded here — only who ran an activity and who spoke at it."* There is no
+staff→activity attendance relation in this system, so without that line the panel
+reads as an attendance log and is simply wrong. A test asserts the page never
+says "you attended".
+
+**The page cannot lock anyone out.** If the payload build fails for any reason
+the handler logs it and falls back to the greeting plus the three doors — which
+is exactly the page this one replaced. The one-time onboarding guard stays
+precisely where it was.
+
+`templates/choose.html` is deleted; `office_connect.html` and a `_faces.html`
+partial replace it. Every colour resolves from a tone token the Python side
+chose, and a test slices out the page's own `<style>` block and fails on any
+literal hex — with 3 themes × 6 accents × 2 densities, a hardcoded colour is
+wrong in nearly every combination.
+
+11 new tests across `test_landing_fork.py` (doors, toggle, panels, the
+attendance disclaimer, token discipline), `test_a11y_charts.py` (the faces wall
+is pictures-not-names, so its `chart_table` really is the accessible reading of
+it) and `test_routes.py` (`/?view=me` joins the smoke list).
+
 ### The Team View data layer (`office_connect.py`)
 
 No user-visible change yet — this is the payload the landing page will render,

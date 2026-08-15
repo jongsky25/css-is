@@ -3980,11 +3980,19 @@ def _css_entry_for(user, conn):
 
 
 @app.get("/", response_class=HTMLResponse)
-def choose(request: Request, msg: str = ""):
-    """The post-login chooser — 'what would you like to do?' Three doors:
-    Wellness, Work arrangement and CSS (STAFF_ONBOARDING_AVATAR_PLAN.md Phase 3).
-    Greets the user with their photo/companion; guards the one-time onboarding so
-    it can't be skipped by typing the URL."""
+def choose(request: Request, msg: str = "", view: str = "team"):
+    """The Office Connect landing page — how your team is doing across all three
+    modules, with a personal view one tap away, and the three doors still on it.
+
+    Replaces the old "what would you like to do?" chooser, which was the most
+    visited screen in the app and also its second-highest exit point: it routed
+    and did nothing else, and people dead-clicked the greeting itself expecting
+    it to do something (30-day telemetry, 19 dead clicks / 17 spot-feedback).
+
+    The heavy lifting is office_connect.team_view_data; this handler is scope
+    plumbing plus the three door teasers. The one-time onboarding guard stays
+    exactly where it was — it must not become skippable by typing the URL."""
+    view = "me" if view == "me" else "team"
     conn = get_conn()
     try:
         onboard = _onboarding_redirect(request, conn)
@@ -3993,6 +4001,15 @@ def choose(request: Request, msg: str = ""):
         profile = st.get_user_profile(conn, request.state.user["id"])
         first_name = _account_first_name(conn, request.state.user)
         css_url = _css_entry_for(request.state.user, conn)
+        try:
+            data = oc.team_view_data(conn, request.state.user,
+                                     get_atoms=get_atoms, view_memo=view_memo)
+        except Exception:
+            # The landing page must never be the reason someone can't sign in.
+            # Losing the panels still leaves the greeting and the three doors,
+            # which is exactly the page this one replaced.
+            traceback.print_exc()
+            data = None
         # A light wellness teaser (points/streak) beside the Wellness door.
         try:
             wstats = st.wellness_stats(conn, request.state.user["id"])
@@ -4012,7 +4029,7 @@ def choose(request: Request, msg: str = ""):
     finally:
         conn.close()
     role = request.state.user["role"]
-    return templates.TemplateResponse(request, "choose.html", {
+    return templates.TemplateResponse(request, "office_connect.html", {
         "nav_active": "", "show_scope": False, "msg": msg,
         "first_name": first_name, "profile": profile,
         "initials": _initials(profile.get("person_name") if profile else ""),
@@ -4020,6 +4037,7 @@ def choose(request: Request, msg: str = ""):
         "wa_now": wa_now, "wa_label": wa_label,
         "role_label": auth.ROLE_LABELS.get(role, role),
         "role_blurb": auth.ROLE_BLURB.get(role, ""),
+        "d": data, "view": view,
     })
 
 
