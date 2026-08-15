@@ -258,7 +258,9 @@ def test_the_landing_cards_are_decks_with_more_than_one_view(app_mod, team):
     assert html.count('class="deck-slide"') >= 4
     assert "When breaks happen" in html
     assert "What people do with it" in html
-    assert "The day people are away" in html
+    # The AWA card's day-off reading is of the fortnight being WORKED; the
+    # filing period's equivalent only appears once somebody has filed for it.
+    assert "The day the office empties now" in html
     # the swipe track is native CSS, so the deck works with JS switched off
     assert 'class="deck-track"' in html
     assert "deck.js" in html
