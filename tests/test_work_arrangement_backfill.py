@@ -299,6 +299,25 @@ def test_two_accounts_with_one_name_leave_the_row_for_a_human(bf_org):
     assert "ambiguous" in rec["why"]
 
 
+def test_an_archived_person_neither_matches_nor_blocks_the_one_who_replaced_them(bf_org):
+    """Someone who has left does not print on the annex (the roster excludes
+    them), so matching one would file a row nobody sees — and would take the name
+    from whoever holds the seat now."""
+    conn, ids = bf_org["conn"], bf_org["ids"]
+    unit = conn.execute("SELECT id FROM org_unit WHERE path = 'TEST/BF'").fetchone()[0]
+    old = conn.execute(
+        "INSERT INTO resource_person(name, is_internal, org_unit_id, position, "
+        "archived_at) VALUES ('Catherine Dimaano', 1, ?, 'Nurse III', ?)",
+        (unit, tz.now_iso())).lastrowid
+    st.create_admin_user(conn, "bf-dimaano-old@test.local", "x", "y", "viewer",
+                         rp_id=old)
+    conn.commit()
+    rec = next(r for r in wabf.resolve(conn) if r["name"] == "Dimaano, Catherine")
+    assert rec["user_id"] == ids["dimaano"]     # not ambiguous, and not the leaver
+    wabf.apply(conn)
+    assert _live(conn, ids["dimaano"]) == ("WFH", 3, "approved")
+
+
 def test_the_boot_hook_survives_a_broken_backfill(bf_org, monkeypatch):
     """An annex row missing is a bug; an app that will not start is an outage."""
     conn = bf_org["conn"]

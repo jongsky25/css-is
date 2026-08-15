@@ -172,13 +172,18 @@ _MARGIN = 0.06
 
 
 def _accounts(conn):
-    """Active accounts that could appear on the annex, with their directory name."""
+    """Accounts that could appear on the annex, with their directory name.
+
+    The WHERE clause is deliberately the same as work_arrangement_roster's: an
+    archived person (resigned, transferred out) does not print on the annex, so
+    letting one match here would both file a row nobody ever sees and — worse —
+    take the name away from whoever is still in that seat."""
     return conn.execute("""
         SELECT a.id, COALESCE(rp.name, a.username), ou.short_name
         FROM admin_user a
         LEFT JOIN resource_person rp ON rp.id = a.rp_id
         LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id
-        WHERE a.active = 1
+        WHERE a.active = 1 AND rp.archived_at IS NULL
     """).fetchall()
 
 
