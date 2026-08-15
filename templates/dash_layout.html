@@ -83,6 +83,7 @@
         {% endfor %}
         {% if u %}
         <div class="mgroup">{{ u.username }} · {{ ROLE_LABELS.get(u.role, u.role) }}</div>
+        <a href="/me">My profile — photo, avatar &amp; pet name</a>
         <a href="/logout">Log out</a>
         {% endif %}
       </div>
@@ -139,7 +140,7 @@
       {% endif %}
       {% if u %}
       <a class="fb-bell{{ ' has-unread' if request.state.feedback_unread }}" href="/my/feedback" title="Notifications — updates on your feedback" aria-label="Notifications{{ ' — %d new update(s) on your feedback'|format(request.state.feedback_unread) if request.state.feedback_unread else ' — updates on your feedback' }}">🔔{% if request.state.feedback_unread %}<span class="fb-badge">{{ request.state.feedback_unread }}</span>{% endif %}</a>
-      <span class="whoami" title="{{ ROLE_LABELS.get(u.role, u.role) }}">{{ u.username }} · {{ ROLE_LABELS.get(u.role, u.role) }}</span>
+      <a class="whoami" href="/me" title="My profile — {{ ROLE_LABELS.get(u.role, u.role) }}">{{ u.username }} · {{ ROLE_LABELS.get(u.role, u.role) }}</a>
       <a href="/logout" class="logout">Log out</a>{% endif %}
     </div>
   </div>

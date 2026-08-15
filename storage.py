@@ -6595,6 +6595,27 @@ def work_arrangement_period_workdays(period_start):
     return out
 
 
+def work_arrangement_schedule_period(d=None):
+    """The period whose schedule people actually need to SEE — what the hub,
+    the landing card and the team schedule open on.
+
+    Normally that is the calendar period today falls in. But a period stops
+    being the answer once it has no workdays left: on Saturday the 15th nobody
+    will work another day under the 1st–15th arrangement, so the schedule worth
+    showing is already the 16th-to-end-of-month one.
+
+    Deliberately NOT work_arrangement_period(), which answers the calendar
+    question — which half of the month is this date in — and is what filing
+    deadlines, the "No AWA" intervals and the annex key on. Rolling those
+    forward early would change what people may file and which period a tag
+    covers; this changes only what a page opens on."""
+    d = d or tz.today_local()
+    ps = work_arrangement_period(d)
+    if any(day >= d for day, _wd in work_arrangement_period_workdays(ps)):
+        return ps
+    return work_arrangement_next_period(ps)
+
+
 def _wa_friday(d):
     """'Friday, August 14, 2026' — deadlines are always quoted in full, because
     'the 14th' is ambiguous the week you read it."""

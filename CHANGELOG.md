@@ -1,6 +1,6 @@
 # CHANGELOG — Cowork revisions (surgical)
 
-## 2026-08-15 (v2.64 — the activities card says whose work it is showing, and gains its deck)
+## 2026-08-15 (v2.66 — the organising section decides which activities you see)
 
 ### Creating an activity is not taking part in it
 

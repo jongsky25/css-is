@@ -4116,17 +4116,26 @@ def choose(request: Request, msg: str = "", view: str = "team"):
             wstats = st.wellness_stats(conn, request.state.user["id"])
         except Exception:
             wstats = None
-        # ...and the same for the work arrangement door: the nearest period still
-        # open for filing, and whether they've dealt with it yet.
+        # ...and the same for the work arrangement door. What's IN FORCE right
+        # now leads — that is the schedule someone is actually working today —
+        # with whatever's open for filing next as a secondary hint, only when
+        # there's still something to do about it.
         try:
+            uid = request.state.user["id"]
+            wa_period = st.work_arrangement_schedule_period()
+            wa_now = (st.my_work_arrangement_for(conn, uid, wa_period)
+                      or st.my_pending_work_arrangement(conn, uid, wa_period))
+            wa_label = st.work_arrangement_period_label(wa_period)
             wa_open = st.work_arrangement_open_periods()
-            wa_period = wa_open[0] if wa_open else None
-            wa_now = (st.my_work_arrangement_for(conn, request.state.user["id"], wa_period)
-                      or st.my_pending_work_arrangement(conn, request.state.user["id"], wa_period)
-                      ) if wa_period else None
-            wa_label = st.work_arrangement_period_label(wa_period) if wa_period else ""
+            wa_file_period = wa_open[0] if wa_open else None
+            wa_file_label = (st.work_arrangement_period_label(wa_file_period)
+                             if wa_file_period else "")
+            wa_file_filed = bool(wa_file_period and (
+                st.my_work_arrangement_for(conn, uid, wa_file_period)
+                or st.my_pending_work_arrangement(conn, uid, wa_file_period)))
         except Exception:
             wa_now, wa_label = None, ""
+            wa_file_label, wa_file_filed = "", False
     finally:
         conn.close()
     role = request.state.user["role"]
@@ -4137,6 +4146,7 @@ def choose(request: Request, msg: str = "", view: str = "team"):
         "initials": _initials(profile.get("person_name") if profile else ""),
         "css_url": css_url, "wstats": wstats,
         "wa_now": wa_now, "wa_label": wa_label,
+        "wa_file_label": wa_file_label, "wa_file_filed": wa_file_filed,
         "role_label": auth.ROLE_LABELS.get(role, role),
         "role_blurb": auth.ROLE_BLURB.get(role, ""),
         "d": data, "view": view,
@@ -13728,15 +13738,24 @@ def _wa_forbid(request):
 
 @app.get("/work-arrangement", response_class=HTMLResponse)
 def work_arrangement_hub(request: Request, ok: str = "", err: str = ""):
-    """The employee's schedule home: one card per period still open for filing,
-    what they have in force, and the deadline spelled out in full."""
+    """The employee's schedule home. What's IN FORCE right now leads the page —
+    that's the schedule someone is actually working today — followed by
+    whatever period(s) are still open for filing, and the deadline spelled out
+    in full."""
     user = request.state.user
     conn = get_conn()
     try:
-        # A live "No AWA" tag replaces the period cards outright — there is no
-        # arrangement to file while it stands, so offering the form would only
-        # lead to a refusal.
+        # A live "No AWA" tag replaces the current-schedule panel and the period
+        # cards outright — there is no arrangement to file or be in force while
+        # it stands, so either would only lead to a refusal.
         noawa = st.get_work_arrangement_noawa(conn, user["id"])
+        now_ps = st.work_arrangement_schedule_period()
+        current = {
+            "period_start": now_ps,
+            "label": st.work_arrangement_period_label(now_ps),
+            "approved": st.my_work_arrangement_for(conn, user["id"], now_ps),
+            "pending": st.my_pending_work_arrangement(conn, user["id"], now_ps),
+        }
         periods = []
         for ps in st.work_arrangement_open_periods():
             periods.append({
@@ -13759,13 +13778,14 @@ def work_arrangement_hub(request: Request, ok: str = "", err: str = ""):
         can_schedule = st.user_can_view_work_arrangement_schedule(conn, user)
     finally:
         conn.close()
-    # The history table repeats whatever the cards already show for the open
-    # periods, so list only what the cards don't cover.
-    open_keys = {p["period_start"] for p in periods}
+    # The history table repeats whatever the current-schedule panel and the
+    # open-period cards already show, so list only what neither covers.
+    open_keys = {p["period_start"] for p in periods} | {now_ps}
     history = [h for h in history if h["period_start"] not in open_keys]
     return templates.TemplateResponse(request, "work_arrangement_hub.html", {
         "nav_active": "work_arrangement", "show_scope": False,
-        "periods": periods, "history": history, "approver": approver,
+        "current": current, "periods": periods, "history": history,
+        "approver": approver,
         "is_chief": is_chief, "can_schedule": can_schedule,
         "legend": st.WORK_ARRANGEMENT_LEGEND,
         "noawa": noawa, "noawa_label": st.WORK_ARRANGEMENT_NOAWA,
@@ -14010,8 +14030,10 @@ def work_arrangement_schedule(request: Request, period: str = ""):
         if not st.user_can_view_work_arrangement_schedule(conn, user):
             return _wa_forbid(request)
         is_chief = st.user_is_approving_chief(conn, user)
-        ps = period or (st.work_arrangement_open_periods() or
-                        [st.work_arrangement_period()])[0]
+        # Default to the period actually being worked — who is on-site now —
+        # not the one still open for filing; the ‹ earlier / later › nav
+        # reaches that one just as easily.
+        ps = period or st.work_arrangement_schedule_period()
         try:
             data = st.work_arrangement_period_summary(conn, ps, user)
         except ValueError:
@@ -14037,8 +14059,9 @@ def _wa_annex_periods(conn, user, period, month):
     if month:
         keys = st.work_arrangement_month_periods(month)
     else:
-        keys = [period or (st.work_arrangement_open_periods() or
-                           [st.work_arrangement_period()])[0]]
+        # No period given means "the one we'd be printing now" — the schedule
+        # being worked, not the next one open for filing, which is still blank.
+        keys = [period or st.work_arrangement_schedule_period()]
     return [st.work_arrangement_annex_data(conn, k, user["id"]) for k in keys]
 
 
