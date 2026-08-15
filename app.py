@@ -4136,7 +4136,9 @@ def home(request: Request):
         acct_snap = st.get_admin_user_by_id(conn, request.state.user["id"])
         rp_id_snap = acct_snap.get("rp_id") if acct_snap else None
         if rp_id_snap:
-            staff_all = st.list_resource_persons(conn)
+            # include_archived: this resolves the signed-in person's OWN card from
+            # their ratings, which outlive their time at the bureau.
+            staff_all = st.list_resource_persons(conn, include_archived=True)
             person_snap = next((p for p in staff_all if p["id"] == rp_id_snap), None)
             # person_card returns None when the person has no ratings at all; only
             # surface the snapshot once there's a reliable score (≥ N_MIN ratings).
@@ -5344,24 +5346,36 @@ async def _posted(request):
 
 
 @app.get("/directory", response_class=HTMLResponse)
-def directory(request: Request, err: str = ""):
-    return _render_directory(request, err=err)
+def directory(request: Request, err: str = "", msg: str = ""):
+    return _render_directory(request, err=err, msg=msg)
 
 
-def _render_directory(request, err="", pending=None):
+def _render_directory(request, err="", pending=None, msg=""):
     conn = get_conn()
     try:
         org = st.org_structure(conn)
-        people = st.list_resource_persons(conn)
+        # include_archived so the page can show the archive AS A SECTION of the
+        # directory; the live tables filter it back out below. Everywhere else
+        # the default (archived excluded) is what a picker should get.
+        people = st.list_resource_persons(conn, include_archived=True)
         orgs = st.list_external_organizers(conn)
+        # path -> the unit's full name. The staff table shows the SHORT path
+        # ("HSMED/S4"), which is unsearchable: nobody types "S4" when looking for
+        # Section 4. The long name goes under it so the search box matches what
+        # people actually know the section as.
+        unit_names = {u["path"]: u["name"] for u in st.list_org_units(conn)}
     finally:
         conn.close()
+    live = [p for p in people if not p["archived"]]
     return templates.TemplateResponse(request, "directory.html", {
         "org": org,
-        "staff": [p for p in people if p["is_internal"]],
-        "external_rps": [p for p in people if not p["is_internal"]],
+        "staff": [p for p in live if p["is_internal"]],
+        "external_rps": [p for p in live if not p["is_internal"]],
+        "archived": [p for p in people if p["archived"]],
+        "unit_names": unit_names,
         "orgs": orgs,
         "err": err,
+        "msg": msg,
         "pending": pending,
     })
 
@@ -5644,6 +5658,35 @@ async def directory_update_person(request: Request, rp_id: int):
         conn.close()
     dest = f"/directory?err={quote(warn)}#row-p{rp_id}" if warn else f"/directory#row-p{rp_id}"
     return RedirectResponse(dest, status_code=303)
+
+
+@app.post("/directory/person/{rp_id}/archive")
+async def directory_archive_person(request: Request, rp_id: int):
+    """Archive someone who has left the bureau (resigned, retired, transferred),
+    or restore them. Reversible, and never a delete: their ratings, the
+    certificates they signed and the activities they spoke at all stay exactly as
+    they are — what changes is that they stop being offered as CURRENT staff.
+
+    Admin-only by virtue of the /directory prefix, which the auth gate maps to
+    the `directory` capability."""
+    p = await _posted(request)
+    restore = p.get("restore") == "1"
+    conn = get_conn()
+    try:
+        res = st.set_rp_archived(conn, rp_id, archived=not restore,
+                                 reason=p.get("reason", ""))
+        if res["ok"]:
+            _audit(request, conn, "directory_restore" if restore else "directory_archive",
+                   target_type="person", target_id=rp_id,
+                   summary=("restored person #%d to the directory" % rp_id if restore
+                            else "archived person #%d%s" % (
+                                rp_id, f" ({p.get('reason', '').strip()})"
+                                if p.get("reason", "").strip() else "")))
+    finally:
+        conn.close()
+    key = "msg" if res["ok"] else "err"
+    return RedirectResponse(f"/directory?{key}={quote(res['msg'])}#archived",
+                            status_code=303)
 
 
 @app.post("/directory/person/{rp_id}/photo")
@@ -7183,7 +7226,7 @@ def _signatory_choices(conn, current_id):
     selection is never silently dropped)."""
     people = st.list_signatories(conn)
     if current_id and not any(p["id"] == current_id for p in people):
-        keep = next((p for p in st.list_resource_persons(conn)
+        keep = next((p for p in st.list_resource_persons(conn, include_archived=True)
                      if p["id"] == current_id and p["is_internal"]), None)
         if keep:
             people = people + [keep]
@@ -11218,7 +11261,7 @@ def _prewarm_dashboard(df, conn):
     for w in ("all", "ytd", "quarter", "d30"):
         _try(lambda w=w: view_memo("pulse", ("", w), lambda: _pulse_build(df, "", w)))
     try:
-        staff = st.list_resource_persons(conn)
+        staff = st.list_resource_persons(conn, include_archived=True)
         for admin in (True, False):
             _try(lambda admin=admin: view_memo(
                 "people", ("", "all", admin),
@@ -11286,7 +11329,7 @@ def dashboard_people(request: Request, org: str = "", period: str = "all", q: st
     conn = get_conn()
     try:
         atoms = get_atoms(conn)
-        staff = st.list_resource_persons(conn)
+        staff = st.list_resource_persons(conn, include_archived=True)
         cards = view_memo("people", (org, period, admin),
                           lambda: di.people_grid(_scoped(atoms, org, period), staff,
                                                  include_hidden=admin))
@@ -11349,7 +11392,7 @@ def dashboard_person(request: Request, rp_id: int, grain: str = "monthly", perio
             return RedirectResponse("/dashboard/people", status_code=303)
         # All-time identity (role, year filter, year-on-year, badges) — memoized per
         # person so every period view of the same person shares it.
-        staff = st.list_resource_persons(conn)
+        staff = st.list_resource_persons(conn, include_archived=True)
         grid_all = view_memo("people", ("", "all", admin),
                              lambda: di.people_grid(_scoped(atoms_all, "", "all"), staff, include_hidden=admin))
         def _ident():
@@ -12430,7 +12473,7 @@ def dashboard_participation(request: Request, org: str = "", period: str = "all"
 
         def _build_participation():
             insts = st.list_activity_instances(conn)
-            staff = st.list_resource_persons(conn)
+            staff = st.list_resource_persons(conn, include_archived=True)
             org_struct = _scoped_org_struct(st.org_structure(conn), org)  # tree within scope
             s_insts, s_staff = _scope_lists(insts, staff, org, period)
             scoped = _scoped(atoms, org, period)                          # org + period
@@ -12573,7 +12616,7 @@ def _visual_payload(conn, atoms, visual, p, place, gen, period_hint=None):
             yoy, badges = None, []
         else:
             yoy = di.year_over_year(atoms_all, person, role) if period == "all" else None
-            staff = st.list_resource_persons(conn)
+            staff = st.list_resource_persons(conn, include_archived=True)
             grid_all = di.people_grid(_scoped(atoms_all, "", "all"), staff, include_hidden=admin)
             gcard = next((c for c in grid_all if c["id"] == p["rp_id"]), None)
             badges = (gcard["all_badges"] if gcard else []) if period == "all" else []
@@ -12772,7 +12815,7 @@ def _visual_payload(conn, atoms, visual, p, place, gen, period_hint=None):
         grain = p["grain"]
         org = p.get("org", "")
         insts = st.list_activity_instances(conn)
-        staff = st.list_resource_persons(conn)
+        staff = st.list_resource_persons(conn, include_archived=True)
         org_struct = _scoped_org_struct(st.org_structure(conn), org)
         s_insts, s_staff = _scope_lists(insts, staff, org, p.get("period"))
         # Downloads aren't windowed — give the file the full history. `atoms` is
@@ -12904,7 +12947,7 @@ def _visual_payload(conn, atoms, visual, p, place, gen, period_hint=None):
         # The People roster — every rated person's scores + badges, honoring the
         # page's filters (org/period scoping is already applied to `atoms`; affiliation
         # / sort / badge are applied here). Data-first: a leaderboard chart + the table.
-        staff = st.list_resource_persons(conn)
+        staff = st.list_resource_persons(conn, include_archived=True)
         cards = di.people_grid(atoms, staff, include_hidden=p.get("admin"))
         aff, sort_k, badge = p.get("aff", "all"), p.get("sort", "ratings"), p.get("badge", "")
         if badge in di.BADGE_DEFS:
