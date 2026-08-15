@@ -76,6 +76,7 @@ import activity_messages as amsg
 import certificate as cert
 import wellness_register as wreg
 import work_arrangement_annex as wanx
+import work_arrangement_backfill as wabf
 import ratelimit as rl
 import version as ver
 import i18n
@@ -1401,6 +1402,7 @@ def get_conn():
         st.init_db(conn)             # safe to re-run; also applies the venue migration
         st.seed_directory_if_empty(conn)
         _seed_learned_rules(conn)    # FAQ rules for the AI search bar (fresh install only)
+        wabf.run_once(conn)          # ANNEX C Aug 16-31, 2026 — one-shot, marker-guarded
         _schema_ready_for.add(DB)
     return conn
 

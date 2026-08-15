@@ -17,10 +17,29 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.60"
+APP_VERSION = "2.61"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.61",
+        "date": "August 15, 2026",
+        "summary": "The August 16-31 work arrangement schedule is now in the "
+                   "system, copied from the sheet the bureau submitted.",
+        "changes": [
+            "The ANNEX C schedule for August 16-31, 2026 now shows on the team "
+            "schedule page and in the workbook and PDF exports, instead of 45 "
+            "blank rows. It was copied from the sheet that was already "
+            "submitted and signed — the module only arrived part-way through "
+            "the month, so nobody had filed for this period in the app.",
+            "The two people with no arrangement but a stated reason — one "
+            "awaiting an OSEC decision, one on leave — carry that reason in "
+            "the Remarks column, so their blank row says why it is blank.",
+            "Nothing you filed yourself was touched. If you had already filed "
+            "for the second half of August, or an administrator had corrected "
+            "your row, that is what still stands.",
+        ],
+    },
     {
         "version": "2.60",
         "date": "August 15, 2026",
