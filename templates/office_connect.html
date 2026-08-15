@@ -137,12 +137,41 @@
 </style>
 
 {% set tone_txt = {"green":"sc-green","amber":"sc-amber","red":"sc-red","soft":"sc-soft","accent":"sc-soft"} %}
-{% set tone_fill = {"green":"f-green","amber":"f-amber","red":"f-red","soft":"f-soft"} %}
 {% set me_view = view == "me" %}
 
 {#-- A single-series tally, drawn from count_bars_geom. The tallest column is the
      only one in the accent colour: with one series there is nothing to tell
      apart, so colour's remaining job is pointing at the answer. --#}
+{#-- On-site vs off-site per weekday. Rendered for two different fortnights —
+     the one being worked and the one being filed for — so it is a macro. --#}
+{% macro cov_chart(g) %}
+{% set tone_fill = {"green":"f-green","amber":"f-amber","red":"f-red","soft":"f-soft"} %}
+<div class="oc-cov">
+  <svg viewBox="0 0 {{ g.W }} {{ g.H }}" role="img" aria-label="{{ g.aria_label }}">
+    {% for gl in g.grid %}
+    <line class="grid" x1="{{ g.padl }}" y1="{{ gl.y }}" x2="{{ g.W - 12 }}" y2="{{ gl.y }}"></line>
+    <text class="ylab" x="{{ g.padl - 5 }}" y="{{ gl.y + 3.5 }}">{{ gl.label }}</text>
+    {% endfor %}
+    <line class="axis" x1="{{ g.padl }}" y1="{{ g.axis_y }}" x2="{{ g.W - 12 }}" y2="{{ g.axis_y }}"></line>
+    {% for b in g.bars %}
+    <rect class="{{ tone_fill[b.offsite.tone] }}" x="{{ b.x }}" y="{{ b.offsite.y }}"
+          width="{{ b.w }}" height="{{ b.offsite.h }}" rx="2"></rect>
+    <rect class="{{ tone_fill[b.onsite.tone] }}" x="{{ b.x }}" y="{{ b.onsite.y }}"
+          width="{{ b.w }}" height="{{ b.onsite.h }}" rx="2"></rect>
+    <text class="xlab" x="{{ b.label_x }}" y="{{ g.axis_y + 14 }}">{{ b.short }}</text>
+    {% endfor %}
+    <text class="axtitle" x="{{ g.xtitle_x }}" y="{{ g.xtitle_y }}" text-anchor="middle">Weekday</text>
+    <text class="axtitle" x="{{ g.ytitle_x }}" y="{{ g.ytitle_y }}" text-anchor="middle"
+          transform="rotate(-90 {{ g.ytitle_x }} {{ g.ytitle_y }})">People on-site</text>
+  </svg>
+  {{ chart_table(g.table.caption, g.table.headers, g.table.rows) }}
+</div>
+{% if g.thinnest %}
+<p class="deck-say"><strong>{{ g.thinnest.name }}</strong> is thinnest —
+  {{ g.thinnest.onsite }} on-site.</p>
+{% endif %}
+{% endmacro %}
+
 {% macro count_bars(g) %}
 <div class="oc-cov">
   <svg viewBox="0 0 {{ g.W }} {{ g.H }}" role="img" aria-label="{{ g.aria_label }}">
@@ -362,15 +391,53 @@
           {% else %}<a href="/work-arrangement">Open work arrangement →</a>{% endif %}</p>
       {% else %}
         <h2>Alternative Work Arrangement</h2>
-        {#-- The dates the filing COVERS lead the card. period_label is the same
-             string ANNEX C titles itself with ("August 1-15, 2026"), so the card
-             and the printed sheet name the same fortnight. --#}
-        <p class="sub">For <strong>{{ a.team.period_label }}</strong> ·
-          {% if a.team.state == "closing_today" %}closes today{% else %}file by {{ a.team.deadline_label }}
-          ({{ a.team.days_left }} {{ 'day' if a.team.days_left == 1 else 'days' }} left){% endif %}</p>
+        {#-- The fortnight being WORKED leads the card — where the team actually
+             is this week is the question people open this page with. What is
+             open for filing is a deadline to meet, so it follows as a second
+             line. period_label is the same string ANNEX C titles itself with
+             ("August 16-31, 2026"), so card and printed sheet agree. --#}
+        {% if a.now %}
+        <p class="sub">Now: <strong>{{ a.now.period_label }}</strong></p>
+        {% endif %}
+        <p class="sub">Filing for <strong>{{ a.team.period_label }}</strong> ·
+          {% if a.team.state == "closing_today" %}closes today{% else %}by {{ a.team.deadline_label }}
+          ({{ a.team.days_left }} {{ 'day' if a.team.days_left == 1 else 'days' }} left){% endif %} ·
+          {{ a.team.filed }} of {{ a.team.headcount }} filed</p>
         {% set ai = a.team.insights %}
-        {% call deck("Alternative Work Arrangement — " ~ a.team.period_label) %}
+        {% call deck("Alternative Work Arrangement — " ~ (a.now.period_label if a.now else a.team.period_label)) %}
 
+        {#-- ---- the fortnight being worked ---- --#}
+        {% if a.now %}
+        {% set ni = a.now.insights %}
+
+        {% if a.now.coverage %}
+        {% call deck_slide("Who is on-site now, by weekday") %}
+        {{ cov_chart(a.now.coverage) }}
+        {% endcall %}
+        {% endif %}
+
+        {% call deck_slide("What the team is on now", caption=false) %}
+        <div class="oc-big">{{ a.now.period_label }}</div>
+        <ul class="mix">
+          {% for m in ni.mix %}
+          <li><span class="lab" title="{{ m.long }}">{{ m.label }}</span>
+            <span class="track"><i style="width:{{ m.pct }}%"></i></span>
+            <span class="n">{{ m.n }}</span></li>
+          {% endfor %}
+        </ul>
+        {{ chart_table(ni.mix_table.caption, ni.mix_table.headers, ni.mix_table.rows) }}
+        {{ faces(a.now.faces, rings=false) }}
+        {% if ni.said.mix %}<p class="deck-say">{{ ni.said.mix }}</p>{% endif %}
+        {% endcall %}
+
+        {% call deck_slide("The day the office empties now") %}
+          {{ count_bars(ni.day_off) }}
+          <p class="deck-say">{% if ni.said.day_off %}{{ ni.said.day_off }}
+            {% else %}Nobody is away from their desk this fortnight.{% endif %}</p>
+        {% endcall %}
+        {% endif %}
+
+        {#-- ---- the fortnight being filed for ---- --#}
         {% call deck_slide("Who has filed", caption=false) %}
         <div class="oc-big">{{ a.team.filed }} <small>of {{ a.team.headcount }} filed</small></div>
         {% if a.team.headcount %}
@@ -394,37 +461,17 @@
         {% endif %}
         {% endcall %}
 
-        {% if a.team.coverage %}
-        {% call deck_slide("Who is on-site, by weekday") %}
-        {% set g = a.team.coverage %}
-        <div class="oc-cov">
-          <svg viewBox="0 0 {{ g.W }} {{ g.H }}" role="img" aria-label="{{ g.aria_label }}">
-            {% for gl in g.grid %}
-            <line class="grid" x1="{{ g.padl }}" y1="{{ gl.y }}" x2="{{ g.W - 12 }}" y2="{{ gl.y }}"></line>
-            <text class="ylab" x="{{ g.padl - 5 }}" y="{{ gl.y + 3.5 }}">{{ gl.label }}</text>
-            {% endfor %}
-            <line class="axis" x1="{{ g.padl }}" y1="{{ g.axis_y }}" x2="{{ g.W - 12 }}" y2="{{ g.axis_y }}"></line>
-            {% for b in g.bars %}
-            <rect class="{{ tone_fill[b.offsite.tone] }}" x="{{ b.x }}" y="{{ b.offsite.y }}"
-                  width="{{ b.w }}" height="{{ b.offsite.h }}" rx="2"></rect>
-            <rect class="{{ tone_fill[b.onsite.tone] }}" x="{{ b.x }}" y="{{ b.onsite.y }}"
-                  width="{{ b.w }}" height="{{ b.onsite.h }}" rx="2"></rect>
-            <text class="xlab" x="{{ b.label_x }}" y="{{ g.axis_y + 14 }}">{{ b.short }}</text>
-            {% endfor %}
-            <text class="axtitle" x="{{ g.xtitle_x }}" y="{{ g.xtitle_y }}" text-anchor="middle">Weekday</text>
-            <text class="axtitle" x="{{ g.ytitle_x }}" y="{{ g.ytitle_y }}" text-anchor="middle"
-                  transform="rotate(-90 {{ g.ytitle_x }} {{ g.ytitle_y }})">People on-site</text>
-          </svg>
-          {{ chart_table(g.table.caption, g.table.headers, g.table.rows) }}
-        </div>
-        {% if g.thinnest %}
-        <p class="deck-say"><strong>{{ g.thinnest.name }}</strong> is thinnest —
-          {{ g.thinnest.onsite }} on-site.</p>
-        {% endif %}
+        {#-- What the NEXT fortnight will look like is only worth a slide once
+             somebody has actually filed for it. Before that these three read
+             as three empty charts in a row, between the reader and the
+             fortnight they are actually working. --#}
+        {% if a.team.filed and a.team.coverage %}
+        {% call deck_slide("Who would be on-site once filed") %}
+        {{ cov_chart(a.team.coverage) }}
         {% endcall %}
         {% endif %}
 
-        {% if ai %}
+        {% if ai and a.team.filed %}
         {% call deck_slide("What people filed") %}
           <ul class="mix">
             {% for m in ai.mix %}
