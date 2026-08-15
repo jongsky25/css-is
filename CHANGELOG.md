@@ -28,6 +28,54 @@ when it was already done. Nothing server-side changed; the cooldown rule and
 `record_avatar_care`'s contract are untouched, and all 29 `test_avatar_care.py`
 tests still pass. `avatars.js` cache-buster bumped to `?v=20260815a`.
 
+### Groundwork for the Team View (storage layer)
+
+No user-visible change; five small `storage.py` changes the landing page needs,
+each defensible on its own.
+
+**1. `team_scope_for_user` — the one that matters.** `_org_scope_for_user`
+collapses two very different situations onto the same `None`: an admin, who is
+*meant* to see the whole bureau, and an account with **no directory link**, which
+has no team at all. `_path_in_scope(path, None)` is `True` for everything, so
+`None` means "show me everyone". That is safe today only because every caller
+sits behind `user_is_approving_chief`, which has already excluded unlinked staff.
+
+The Team View is shown to **every** signed-in user with no such guard by design.
+Without this helper, an unlinked account would have seen every wellness and
+work-arrangement filing in the bureau. `team_scope_for_user` returns an explicit
+`(scope_path, kind)` where `kind` is `bureau` / `unit` / `none`, so "no team" can
+never be mistaken for "all teams".
+
+**2. `wellness_week_rollup`, split out of `wellness_dashboard_data`.** The parent
+also builds an all-weeks pending queue: it selects *every* pending claim in the
+bureau, hydrates each one with its own `get_wellness_claim` call, and only then
+filters by scope. Correct for the monitoring page; far too expensive for a page
+every user loads at every sign-in. The rollup is the cheap half — one query, no
+queue, no bureau-wide reflection rate. `wellness_dashboard_data` now calls it and
+adds the queue on top, so the monitoring register and the landing page cannot
+quietly disagree about a section's hours (asserted directly in the new tests).
+
+**3. Face columns, joined not queried.** `wellness_week_rollup` and
+`work_arrangement_roster` now carry `rp_id`, `has_photo` and `avatar_kind` (plus
+`position` / `designation` on the former) as joined columns, so drawing a grid of
+people costs no additional query per person.
+
+**4. `fi.created_by` on `list_activity_instances`.** The creator is one of the
+few relations tying a *staff member* to an activity — attendees are external
+registrants with no account link — and it wasn't being selected.
+
+**5. One redundant query per section removed.** `work_arrangement_period_summary`
+loops over org paths calling `work_arrangement_coverage`, and each call re-ran
+`_wa_noawa_for_period` with identical arguments. The set is per-*period*, not
+per-section, so it is now looked up once and passed in. For a section-scoped
+chief that saves one query; for a bureau-wide view it removes one per section.
+
+New `tests/test_team_scope.py` (8 tests): scope resolution for linked staff,
+admins and the unlinked case; that `_path_in_scope` does not leak across sibling
+sections (`…/S1` must not match `…/S10`); the rollup's scoping and face columns;
+that the split kept `wellness_dashboard_data` numerically identical; the roster
+columns; and the creator column.
+
 ### Seven nav groups become four
 
 **Why.** The menu had **seven** groups (Dashboard, Wellness, Work arrangement,
