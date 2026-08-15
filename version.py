@@ -17,10 +17,43 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.63"
+APP_VERSION = "2.64"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.64",
+        "date": "August 15, 2026",
+        "summary": "Both the home page and the work arrangement page now lead "
+                   "with the schedule you're actually working today, not just "
+                   "the next period open for filing. Your companion is bigger "
+                   "in the header, and there's a way back to your profile from "
+                   "every page again.",
+        "changes": [
+            "The work arrangement page now opens with a “Current "
+            "schedule” panel showing what's in force for today's "
+            "half-month, ahead of the cards for whatever period is still open "
+            "for filing. Before, the period you were actually working could "
+            "only be found — unlabeled — in the history table further down "
+            "the page.",
+            "The Alternative Work Arrangement card on the home page leads the "
+            "same way: your current in-force arrangement first, with the "
+            "filing deadline mentioned only when you still have something to "
+            "file.",
+            "A section or division chief's team schedule page now opens on "
+            "today's period by default, instead of the next one open for "
+            "filing — the ‹ earlier / later › links still reach "
+            "that one just as easily.",
+            "Your companion is bigger in the page header — 150px on "
+            "desktop, 130px on a phone — undoing a mobile sizing slip "
+            "that had it capped at 84px regardless of the size requested. A "
+            "“Change companion” link now sits beside it.",
+            "“My profile” (avatar, pet name, photo) is reachable "
+            "from every page again — from the username pill in the "
+            "header and from the mobile menu — after dropping out of the "
+            "visible nav when the home page was redone.",
+        ],
+    },
     {
         "version": "2.63",
         "date": "August 15, 2026",
