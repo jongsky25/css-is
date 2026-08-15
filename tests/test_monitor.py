@@ -729,3 +729,212 @@ def test_response_view_records_audit(manager, db_path):
     actions = [a["action"] for a in st.list_audit(conn, action="attendee_view_response")]
     conn.close()
     assert "attendee_view_response" in actions
+
+
+# --------------------------------------------------------------------------
+# who a management feed shows — the ORGANISING section, not the app role
+# --------------------------------------------------------------------------
+#
+# /monitor and /activities/outside used to short-circuit on role == "admin" for
+# the whole bureau and fall back to created_by for everyone else. Both halves
+# were wrong at once: a section head who also administers the app monitored
+# every section, and an administrator filing an activity FOR another section
+# carried it on their list for good while the section running it never saw it.
+#
+# Every helper below opens, commits and CLOSES before handing control back. The
+# app opens its own connection per request against the same file, and a reader
+# left open across a request is how this suite deadlocks on "database is locked".
+
+import contextlib
+import sqlite3
+
+
+def _unit(db_path, path):
+    """The org unit at `path`, created once. Returns its id."""
+    conn = st.connect(db_path)
+    try:
+        row = conn.execute("SELECT id FROM org_unit WHERE path=?", (path,)).fetchone()
+        if row:
+            return row[0]
+        short = path.rsplit("/", 1)[-1]
+        uid = conn.execute(
+            "INSERT INTO org_unit(name, short_name, level, path) VALUES (?,?,?,?)",
+            (short, short, "section", path)).lastrowid
+        conn.commit()
+        return uid
+    finally:
+        conn.close()
+
+
+def _person(db_path, name, path):
+    # The unit is resolved BEFORE the connection opens. Nesting a second
+    # connection inside an open write is the other way this suite deadlocks.
+    org = _unit(db_path, path)
+    conn = st.connect(db_path)
+    try:
+        rp = conn.execute(
+            "INSERT INTO resource_person(name, is_internal, org_unit_id) VALUES (?,1,?)",
+            (name, org)).lastrowid
+        conn.commit()
+        return rp
+    finally:
+        conn.close()
+
+
+@contextlib.contextmanager
+def _seated(app_mod, username, path, *, name="SC-Seat"):
+    """Place an account in a directory unit for one test, and undo it after —
+    app_mod's database is session-scoped, and a stray directory link silently
+    changes what every later test can see."""
+    rp = _person(app_mod.DB, name, path)
+    conn = st.connect(app_mod.DB)
+    try:
+        u = st.get_admin_user(conn, username)
+        was = conn.execute("SELECT rp_id FROM admin_user WHERE id=?",
+                           (u["id"],)).fetchone()[0]
+        conn.execute("UPDATE admin_user SET rp_id=? WHERE id=?", (rp, u["id"]))
+        conn.commit()
+    finally:
+        conn.close()
+    try:
+        yield {"rp_id": rp, "unit_id": _unit(app_mod.DB, path), "user_id": u["id"]}
+    finally:
+        conn = st.connect(app_mod.DB)
+        try:
+            conn.execute("UPDATE admin_user SET rp_id=? WHERE id=?", (was, u["id"]))
+            conn.commit()
+            # Best effort. A test that seeded a Form 3 against this person leaves
+            # a real foreign key behind, and unlinking the ACCOUNT is what
+            # actually restores the scope — the stray directory row is inert.
+            try:
+                conn.execute("DELETE FROM resource_person WHERE id=?", (rp,))
+                conn.commit()
+            except sqlite3.IntegrityError:
+                conn.rollback()
+        finally:
+            conn.close()
+
+
+def _seed_scoped_event(db_path, created_by, *, lead_org_id=None, rp_id=None,
+                       kind="bureau", event_date="2099-01-01"):
+    """One event owned by `lead_org_id` (bureau) or spoken at by `rp_id`
+    (invited). An invited activity carries NO organising unit — that is exactly
+    how the app creates one, and it is why the speaker's section has to answer."""
+    conn = st.connect(db_path)
+    try:
+        ids = [st.create_form_instance(conn, 3, "F3", event_date, topic="Talk",
+                                       rp_id=rp_id, lead_org_id=lead_org_id)]
+        if kind == "bureau":
+            ids.insert(0, st.create_form_instance(conn, 2, "F2", event_date,
+                                                  topic="Event review",
+                                                  lead_org_id=lead_org_id))
+        ev = st.create_event(conn, "Scoped activity", event_date,
+                             lead_org_id=lead_org_id, form_instance_ids=ids,
+                             created_by=created_by, event_kind=kind)
+        return ev["event_token"]
+    finally:
+        conn.close()
+
+
+def test_event_in_team_scope_needs_no_database():
+    """The predicate itself, away from any route."""
+    ours = {"lead_path": "A/S1", "rp_paths": []}
+    theirs = {"lead_path": "A/S9", "rp_paths": []}
+    spoke = {"lead_path": None, "rp_paths": ["A/S1/Team"]}
+    assert st.event_in_team_scope(ours, "A/S1")
+    assert not st.event_in_team_scope(theirs, "A/S1")
+    assert st.event_in_team_scope(spoke, "A/S1")          # a descendant counts
+    assert not st.event_in_team_scope({"lead_path": None, "rp_paths": []}, "A/S1")
+    assert st.event_in_team_scope(theirs, None)           # None scope = bureau-wide
+    # S1 must not swallow S10 — the boundary a bare startswith gets wrong
+    assert not st.event_in_team_scope({"lead_path": "A/S10", "rp_paths": []}, "A/S1")
+
+
+def test_list_events_drops_what_is_outside_the_team_scope(tmp_path):
+    conn = _fresh(tmp_path)
+    try:
+        mine = conn.execute("INSERT INTO org_unit(name, short_name, level, path)"
+                            " VALUES ('S1','S1','section','TS/S1')").lastrowid
+        yours = conn.execute("INSERT INTO org_unit(name, short_name, level, path)"
+                             " VALUES ('S9','S9','section','TS/S9')").lastrowid
+        for org in (mine, yours):
+            f2 = st.create_form_instance(conn, 2, "F2", "2026-06-12",
+                                         topic="Review", lead_org_id=org)
+            st.create_event(conn, f"Event {org}", "2026-06-12", lead_org_id=org,
+                            form_instance_ids=[f2], created_by="anyone@x.local")
+        conn.commit()
+        scoped = st.list_events(conn, team_scope=("TS/S1", "unit"))
+        assert [e["lead_path"] for e in scoped] == ["TS/S1"]
+        assert len(st.list_events(conn)) == 2            # unscoped still sees both
+    finally:
+        conn.close()
+
+
+def test_an_admin_filing_for_another_section_does_not_keep_it_on_their_monitor(
+        app_mod, admin, db_path):
+    """The regression this section exists for. Creating an activity is a fact
+    about the app, not about whose work it is."""
+    other = _unit(db_path, "SCOPE/D1/S9")
+    with _seated(app_mod, "admin@test.local", "SCOPE/D1/S1") as me:
+        theirs = _seed_scoped_event(db_path, "admin@test.local", lead_org_id=other)
+        ours = _seed_scoped_event(db_path, "someone@else.local",
+                                  lead_org_id=me["unit_id"])
+        html = admin.get("/monitor").text
+        assert theirs not in html          # S9's, however typed it in
+        assert ours in html                # S1's, whoever typed it in
+
+
+def test_a_sibling_section_is_not_a_prefix_match_on_the_feed(app_mod, admin, db_path):
+    sib = _unit(db_path, "SCOPE/D1/S10")
+    with _seated(app_mod, "admin@test.local", "SCOPE/D1/S1"):
+        tok = _seed_scoped_event(db_path, "admin@test.local", lead_org_id=sib)
+        assert tok not in admin.get("/monitor").text
+
+
+def test_an_invited_activity_is_placed_by_the_speakers_section(
+        app_mod, admin, db_path):
+    """An invited activity has no organising unit of ours at all, so the section
+    whose person was invited is the only thing that can place it — and is also
+    the right answer."""
+    far_rp = _person(db_path, "SC-Far", "SCOPE/D2/S8")
+    with _seated(app_mod, "admin@test.local", "SCOPE/D1/S1") as me:
+        ours = _seed_scoped_event(db_path, "someone@else.local",
+                                  rp_id=me["rp_id"], kind="outside")
+        theirs = _seed_scoped_event(db_path, "admin@test.local",
+                                    rp_id=far_rp, kind="outside")
+        html = admin.get("/activities/outside").text
+        assert ours in html                # one of ours was the resource person
+        assert theirs not in html          # nobody of ours was, however filed it
+
+
+def test_an_unlinked_account_still_sees_what_it_created(admin, db_path):
+    """No directory record means no team to scope by, and _path_in_scope(p, None)
+    is True for everything — so it falls back to what this account created
+    rather than to the whole bureau. Blanking a management page is a lockout,
+    not a safety measure."""
+    mine = _seed_scoped_event(db_path, "admin@test.local")
+    theirs = _seed_scoped_event(db_path, "someone@else.local")
+    html = admin.get("/monitor").text          # the seeded accounts carry no rp_id
+    assert mine in html
+    assert theirs not in html
+
+
+def test_a_bureau_grant_is_how_a_seat_gets_every_section_back(
+        app_mod, admin, db_path):
+    """The named, audited, revocable way past your own unit — a role is not."""
+    far = _unit(db_path, "SCOPE/D3/S7")
+    with _seated(app_mod, "admin@test.local", "SCOPE/D1/S1") as me:
+        tok = _seed_scoped_event(db_path, "someone@else.local", lead_org_id=far)
+        assert tok not in admin.get("/monitor").text          # seated in S1
+
+        conn = st.connect(db_path)
+        try:
+            st.set_bureau_access(conn, me["user_id"], "all")
+        finally:
+            conn.close()
+        try:
+            assert tok in admin.get("/monitor").text
+        finally:
+            conn = st.connect(db_path)
+            st.set_bureau_access(conn, me["user_id"], "")
+            conn.close()

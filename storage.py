@@ -1989,16 +1989,42 @@ def attendee_response_detail(conn, event_id, attendee_id):
     return out
 
 
-def list_events(conn, created_by=None, lifecycles=None):
+def event_in_team_scope(ev, scope_path):
+    """Is this activity the viewer's team's, for the MANAGEMENT feeds?
+
+    The same rule the landing card uses: the ORGANISING unit is inside the
+    scope, or one of the team spoke at it. `created_by` is deliberately not part
+    of it — it records who filled in the form, which is a fact about the app
+    rather than about whose work the activity was, and an administrator files
+    activities for sections all over the bureau.
+
+    The speaker half is not a nicety here, it is the only thing that can answer
+    for an INVITED (outside) activity: those are created with no organising unit
+    at all — neither the event row nor its Form 3s carry one, because the
+    organiser is an external body. The section whose person was invited is the
+    section that owns the engagement, which is also the right answer.
+
+    A None scope_path is bureau-wide and lets everything through (_path_in_scope).
+    """
+    if _path_in_scope(ev.get("lead_path"), scope_path):
+        return True
+    return any(_path_in_scope(p, scope_path) for p in (ev.get("rp_paths") or ()))
+
+
+def list_events(conn, created_by=None, lifecycles=None, team_scope=None):
     """Events newest-first for the monitor index, each enriched with its form count,
     registration funnel (registered / completed / in progress / not started) and its
     `lifecycle` (upcoming / ongoing / concluded — see lifecycle_of).
-    created_by, when given, limits the list to events a particular manager created
-    (admins pass None to see all). lifecycles, when given (e.g. {'upcoming','ongoing'}),
+    created_by, when given, limits the list to events a particular manager created.
+    lifecycles, when given (e.g. {'upcoming','ongoing'}),
     keeps only events in those states — the strict rule keeps the monitor list to
-    activities still worth monitoring. Per-event rollups reuse
-    event_registration_summary — fine at the bureau's event volume and keeps the
-    'completed' rule in one place."""
+    activities still worth monitoring.
+    team_scope, when given, is the (scope_path, kind) pair from
+    team_scope_for_user: rows outside that team are dropped by
+    event_in_team_scope. It is applied BEFORE the per-event rollups, so the
+    expensive work stays proportional to what is actually shown. Per-event
+    rollups reuse event_registration_summary — fine at the bureau's event volume
+    and keeps the 'completed' rule in one place."""
     where, args = "", ()
     if created_by:
         where, args = "WHERE e.created_by = ?", (created_by,)
@@ -2010,8 +2036,17 @@ def list_events(conn, created_by=None, lifecycles=None):
                    (SELECT fi.close_at FROM event_form ef
                       JOIN form_instance fi ON fi.id = ef.form_instance_id
                       WHERE ef.event_id = e.id AND fi.survey_type = 2 LIMIT 1) AS close_at,
-                   e.event_kind, e.end_date
+                   e.event_kind, e.end_date, olead.path,
+                   -- the home units of the INTERNAL people who spoke at it, which
+                   -- is all an invited activity has to be scoped by. Paths never
+                   -- contain a comma, so the concat is safe to split.
+                   (SELECT group_concat(DISTINCT ou.path) FROM event_form ef2
+                      JOIN form_instance fi2 ON fi2.id = ef2.form_instance_id
+                      JOIN resource_person rp ON rp.id = fi2.rp_id
+                      JOIN org_unit ou ON ou.id = rp.org_unit_id
+                     WHERE ef2.event_id = e.id AND COALESCE(rp.is_internal, 0) = 1)
             FROM event e
+            LEFT JOIN org_unit olead ON olead.id = e.lead_org_id
             {where}
             ORDER BY date(e.event_date) DESC, e.id DESC""",
         args).fetchall()
@@ -2020,13 +2055,16 @@ def list_events(conn, created_by=None, lifecycles=None):
         life = lifecycle_of(r[3], r[8], today, now, end_date=r[10])
         if lifecycles and life not in lifecycles:
             continue
-        summ = event_registration_summary(conn, r[0])
-        out.append({
+        ev = {
             "id": r[0], "event_token": r[1], "title": r[2], "event_date": r[3],
             "end_date": r[10], "venue": r[4], "organizer": r[5], "modality": r[6] or "f2f",
             "created_by": r[7], "lifecycle": life, "event_kind": r[9] or "bureau",
-            **summ,
-        })
+            "lead_path": r[11],
+            "rp_paths": [p for p in (r[12] or "").split(",") if p],
+        }
+        if team_scope and not event_in_team_scope(ev, team_scope[0]):
+            continue
+        out.append({**ev, **event_registration_summary(conn, r[0])})
     return out
 
 

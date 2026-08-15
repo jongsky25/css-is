@@ -17,10 +17,49 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.66"
+APP_VERSION = "2.67"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.67",
+        "date": "August 15, 2026",
+        "summary": "Everywhere the system lists activities, the section that RAN "
+                   "one is now what decides who sees it — your home page, the "
+                   "Monitor and the invited-events page alike. The activities "
+                   "card is also swipeable now, like the two beside it.",
+        "changes": [
+            "“Me” now shows only the activities you actually spoke at. "
+            "Filling in the form for an activity no longer counts as taking part "
+            "in it.",
+            "An activity set up by an administrator for another section no "
+            "longer appears on your team's card. What decides is the section "
+            "that ran it, not who typed it in.",
+            "Your team's card still includes an activity another section ran, "
+            "when one of your people spoke at it — that is your team's work "
+            "too.",
+            "The activities card is now swipeable. Swipe (or use the arrows) for "
+            "how many activities a month you have run over the past year, how "
+            "they were rated, who among you spoke most, and how many people "
+            "answered.",
+            "The rating slide counts an activity with too few responses "
+            "separately, instead of quietly grading it — and on your own "
+            "card it reads your speaker rating, not the whole activity's score.",
+            "Monitor and the invited-events page follow the same rule now. They "
+            "used to show an administrator every activity in the bureau and "
+            "everyone else only what they had typed in; both pages now show "
+            "your team's activities.",
+            "For an invited event there is no section of ours that ran it, so "
+            "it is placed by the section of whoever was invited to speak.",
+            "A seat that genuinely needs every section — whoever consolidates "
+            "for the whole bureau — gets it from the “Sees” setting in "
+            "Admin → Users, which is recorded and can be taken back, "
+            "rather than from holding the administrator role.",
+            "If your account isn't linked to a directory record yet, Monitor "
+            "still shows you what you created, so nobody is locked out of "
+            "their own work.",
+        ],
+    },
     {
         "version": "2.66",
         "date": "August 15, 2026",

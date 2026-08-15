@@ -33,7 +33,7 @@ def test_landing_renders_all_three_doors_for_every_role(app_mod, role):
 @pytest.mark.parametrize("role", ["viewer", "encoder", "section_manager", "admin"])
 def test_personal_view_renders_for_every_role(app_mod, role):
     mine = _auth_client(app_mod, role).get("/?view=me").text
-    assert "Activities you ran or spoke at" in mine
+    assert "Activities you spoke at" in mine
     assert "Your wellness break" in mine
 
 
