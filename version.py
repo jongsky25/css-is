@@ -24,10 +24,10 @@ CHANGELOG = [
     {
         "version": "2.66",
         "date": "August 15, 2026",
-        "summary": "The activities card on your home page now says exactly whose "
-                   "work it is showing — your team's, or the ones you spoke "
-                   "at — and it is swipeable, like the wellness and work "
-                   "arrangement cards beside it.",
+        "summary": "Everywhere the system lists activities, the section that RAN "
+                   "one is now what decides who sees it — your home page, the "
+                   "Monitor and the invited-events page alike. The activities "
+                   "card is also swipeable now, like the two beside it.",
         "changes": [
             "“Me” now shows only the activities you actually spoke at. "
             "Filling in the form for an activity no longer counts as taking part "
@@ -45,6 +45,19 @@ CHANGELOG = [
             "The rating slide counts an activity with too few responses "
             "separately, instead of quietly grading it — and on your own "
             "card it reads your speaker rating, not the whole activity's score.",
+            "Monitor and the invited-events page follow the same rule now. They "
+            "used to show an administrator every activity in the bureau and "
+            "everyone else only what they had typed in; both pages now show "
+            "your team's activities.",
+            "For an invited event there is no section of ours that ran it, so "
+            "it is placed by the section of whoever was invited to speak.",
+            "A seat that genuinely needs every section — whoever consolidates "
+            "for the whole bureau — gets it from the “Sees” setting in "
+            "Admin → Users, which is recorded and can be taken back, "
+            "rather than from holding the administrator role.",
+            "If your account isn't linked to a directory record yet, Monitor "
+            "still shows you what you created, so nobody is locked out of "
+            "their own work.",
         ],
     },
     {

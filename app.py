@@ -1965,6 +1965,35 @@ def _can_manage_event(user, ev):
         bool(ev.get("created_by")) and ev["created_by"] == user["username"])
 
 
+def _event_feed_scope(conn, user):
+    """(created_by, team_scope, kind) for the activity MANAGEMENT feeds —
+    /monitor and /activities/outside. Feed to st.list_events.
+
+    THE DIRECTORY DECIDES, NOT THE ROLE — the same principle the wellness
+    register, the ANNEX C and the landing page already run on. These two feeds
+    used to short-circuit on `role == "admin"` for the whole bureau and fall
+    back to `created_by` for everyone else, which got both halves wrong at once:
+    a section head who also administers the app monitored every section instead
+    of their own, and an administrator filing an activity FOR another section
+    carried it around on their list for good while the section actually running
+    it never saw it.
+
+    Now the organising unit answers (st.event_in_team_scope), and an account
+    that genuinely needs every section gets there by the named, audited
+    bureau_access grant rather than by holding a role.
+
+    The one fallback: an account the directory does not place has no team to
+    scope by, and `_path_in_scope(path, None)` is True for everything, so
+    scoping it would hand it the whole bureau. It falls back to what it created
+    — exactly what it saw before. Blanking a management page is a lockout, not a
+    safety measure.
+    """
+    scope_path, kind = st.team_scope_for_user(conn, user)
+    if kind == "none":
+        return user["username"], None, kind
+    return None, (scope_path, kind), kind
+
+
 def _safe_url(raw):
     """A user-supplied resource URL, normalized, only if it is a plain http(s)
     link — guards the link tree against javascript:/data: href injection. Returns
@@ -8254,16 +8283,15 @@ MONITOR_STATUS = {
 @app.get("/monitor", response_class=HTMLResponse)
 def monitor_index(request: Request):
     """Index of activities to monitor: registered / answered / completion at a
-    glance. Admins see every activity; a section_manager sees only the ones they
-    created (the same ownership rule as managing an activity)."""
+    glance. Scoped to the viewer's TEAM — see `_event_feed_scope`."""
     user = request.state.user
     conn = get_conn()
     try:
-        owner = None if user["role"] == "admin" else user["username"]
+        owner, team_scope, scope_kind = _event_feed_scope(conn, user)
         # Strict rule: monitoring is for activities still worth watching — upcoming
         # (registering) and ongoing (CSS collecting). Concluded activities drop off
         # to their report; the historical backlog never had registrations at all.
-        all_events = st.list_events(conn, created_by=owner,
+        all_events = st.list_events(conn, created_by=owner, team_scope=team_scope,
                                     lifecycles={"upcoming", "ongoing"})
         # The registration funnel only exists for bureau activities (who registered +
         # answered). Outside ("invited") activities have no registration, so they get
@@ -8277,7 +8305,7 @@ def monitor_index(request: Request):
     return templates.TemplateResponse(request, "monitor.html", {
         "nav_active": "monitor", "show_scope": False, "events": events,
         "outside_events": outside_events,
-        "is_admin": user["role"] == "admin", "status_meta": MONITOR_STATUS,
+        "scope_kind": scope_kind, "status_meta": MONITOR_STATUS,
     })
 
 
@@ -8288,15 +8316,17 @@ def outside_events_index(request: Request):
     its survey window closes: the Monitor is lifecycle-filtered to upcoming/ongoing,
     and the home "Recently concluded" strip is Form-2-only (outside events are often
     Form-3-only), so a concluded invited event was only findable via /reports/activities.
-    This page is its stable home. Admins see all; a section_manager sees only the ones
-    they created — the same ownership rule as Monitor/manage."""
+    This page is its stable home. Scoped to the viewer's TEAM — see
+    `_event_feed_scope`; for an invited activity that means the section of the
+    person who was invited, since there is no organising unit on one."""
     if (r := _forbid(request, "manage_event")):
         return r
     user = request.state.user
     conn = get_conn()
     try:
-        owner = None if user["role"] == "admin" else user["username"]
-        all_events = st.list_events(conn, created_by=owner)        # no lifecycle filter
+        owner, team_scope, scope_kind = _event_feed_scope(conn, user)
+        # no lifecycle filter — a concluded invited event still belongs here
+        all_events = st.list_events(conn, created_by=owner, team_scope=team_scope)
         events = [e for e in all_events if e.get("event_kind") == "outside"]
         for e in events:
             e["responses"] = st.event_response_total(conn, e["id"])
@@ -8307,7 +8337,7 @@ def outside_events_index(request: Request):
         conn.close()
     return templates.TemplateResponse(request, "outside_events.html", {
         "nav_active": "outside", "show_scope": False, "events": events,
-        "is_admin": user["role"] == "admin",
+        "scope_kind": scope_kind,
     })
 
 

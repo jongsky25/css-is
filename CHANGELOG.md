@@ -33,11 +33,45 @@ One deliberate consequence: an activity with no `lead_org_id` whose only link
 was a teammate's `created_by` now drops out of the team view. Anything a
 teammate actually spoke at still shows.
 
-`/monitor`, `/activities/outside`, `/activities/archived` and the `/css`
-"Your recent activities" strip are untouched. Those are *management* feeds —
-they exist so whoever created an activity can open, monitor and archive it, and
-filtering an admin's own creations out of them by section would take away the
-handle on work they are responsible for.
+### The same rule on the management feeds
+
+`/monitor` and `/activities/outside` short-circuited on `role == "admin"` for
+the whole bureau and fell back to `created_by` for everyone else. Both halves
+were wrong at once: a section head who also administers the app monitored every
+section instead of their own, and an administrator filing an activity FOR
+another section carried it on their list for good while the section actually
+running it never saw it.
+
+`app._event_feed_scope` now resolves `st.team_scope_for_user` and hands
+`st.list_events` a `team_scope`, filtered by `st.event_in_team_scope` —
+the organising unit, or one of the team spoke at it. Applied before the
+per-event registration rollups, so the expensive work stays proportional to
+what is shown.
+
+The speaker half is not a nicety here, it is the only thing that can answer for
+an INVITED activity: `create_survey`'s outside branch passes no `lead_org_id`
+at all — not on the `event` row and not on its Form 3s, because the organiser is
+an external body. The section whose person was invited is the section that owns
+the engagement, which is also the right answer. `list_events` grows
+`lead_path` and `rp_paths` (the internal speakers' home units) to answer both.
+
+Two deliberate exits from the rule:
+
+* An account the DIRECTORY does not place falls back to `created_by` — exactly
+  what it saw before. `_path_in_scope(path, None)` is True for everything, so
+  scoping an unplaced account would hand it the bureau; and blanking a
+  management page is a lockout, not a safety measure.
+* A seat that genuinely needs every section reaches it through the
+  `bureau_access` grant from v2.63 — named, audited, revocable — rather than by
+  holding a role. Same principle v2.61 established for the directory.
+
+`_can_manage_event` (creator-or-admin) is untouched, so a direct link to
+`/monitor/{token}` or `/activities/{token}/manage` still works for whoever set
+an activity up. It is the LIST that is now scoped, not the handle.
+
+`/activities/archived` and the `/css` "Your recent activities" strip stay
+creator-scoped: those are about picking your own work back up, not about
+surveying a team's.
 
 ### The card everyone else already had
 
