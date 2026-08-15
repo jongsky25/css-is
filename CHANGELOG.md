@@ -1,5 +1,331 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-08-15 (v2.60 — CSS-IS becomes Office Connect; the companion answers back)
+
+### The care button that looked broken
+
+**Symptom.** The single largest friction source in the app, by a wide margin.
+The 30-day UX telemetry ranks "Feed Nori Miguel" at friction score **351** (78
+rage-clicks, 5 users) and "Water FernFern" at **117** (26 rage-clicks, 3 users) —
+first and third of fifteen. Eleven Spot Feedback comments matched, among them
+"Not watering" and "Di gumagana smh sakin ayaw asar."
+
+**Cause.** `static/js/avatars.js` flashed a thank-you bubble **only when the
+POST came back `counted: true`**. `counted` is false inside
+`AVATAR_CARE_COOLDOWN_HOURS` (6 h) — which is a *success*, not a failure: the
+companion has already been cared for. But the client said nothing at all, so the
+tap read as a dead button and people tapped again, and again.
+
+Worse for anyone on `prefers-reduced-motion`: `_avatars.html:202-207` sets
+`animation:none !important` on everything matching `[class*="av-"]`, which
+suppresses the watering/feeding animation too. Those users got **no feedback of
+any kind** — no animation, no bubble. (The bubble itself survives, being
+opacity-only, which is what makes it the right place to fix this.)
+
+**Fix.** One call site: always flash a bubble, with the wording carrying the
+state — "Ahh, thank you! 💧" when the care counted, "Still nicely watered 💧"
+when it was already done. Nothing server-side changed; the cooldown rule and
+`record_avatar_care`'s contract are untouched, and all 29 `test_avatar_care.py`
+tests still pass. `avatars.js` cache-buster bumped to `?v=20260815a`.
+
+### The companion's growth ladder
+
+The avatar has had six growth stages since it shipped, but only ever showed the
+one you were on. Nothing on screen said the others existed, what they looked
+like, or how to reach them — and the 30-day telemetry says people could not even
+tell whether *caring* for it was working (see the care-button fix below).
+
+All six stages of **your own species** now render side by side: reached ones in
+colour, locked ones dimmed with the point threshold that unlocks them, and "You
+are here" on the current one. Beneath sits the progress bar to the next stage and
+a plain list of what actually earns points — take a break **+10**, write a
+reflection **+5**, use your full 2 hours **+5**, each streak week **+2**.
+
+Two deliberate details:
+
+- **Everything is derived.** The stages come from `AVATAR_STAGE_NAMES`, the
+  thresholds from `WELLNESS_LEVELS`, and the how-it-grows list is read straight
+  off the `WELLNESS_PTS_*` constants via `avatar_growth_actions()`. The
+  explanation cannot drift from the arithmetic it describes — there is a test
+  asserting each number comes from its constant.
+- **Caring for it is named as *not* being a way to level up.** Watering or
+  feeding earns the *Devoted caretaker* badge, not points. Listing it alongside
+  the four scoring actions without saying so would have implied a fifth route to
+  growth that does not exist.
+
+Shown on the new landing page and on `/me` — where you pick the companion in the
+first place, which is exactly where not knowing how it grows was most obvious.
+
+### `/` becomes the Team View
+
+The landing page people actually see. `/` was the most-visited screen in the app
+(520 views in 30 days, all 18 users) **and** its second-highest exit point: it
+routed and did nothing else. People dead-clicked the greeting itself — 19 times,
+with 17 matching Spot Feedback comments — expecting it to do something.
+
+**Now:** greeting and companion, a **Team | Me** toggle, three panels, then the
+three doors exactly as before.
+
+- **Wellness** — a wall of faces (pictures, not names, by request), each ringed
+  by the hours they've used against the 2-hour entitlement, over "9 of 14 have
+  filed · 64% of hours used".
+- **Work arrangement** — a stacked Approved/Pending/Not-filed bar, the same face
+  wall, a Mon–Fri on-site coverage chart with the thinnest day called out, and a
+  named chase list. It leads with the period **open for filing**, not the one in
+  force, because the in-force period's deadline has already passed and a landing
+  page leading with it could only ever say "too late".
+- **CSS** — recent activities with their ratings, each row saying *why* it is
+  listed (`Organised` / `Spoke` / `Your section ran this`), plus what's coming
+  up. Low-n scores are shown muted with an explicit "too few to read" chip rather
+  than hidden.
+
+**The toggle is a real link**, not JavaScript — `/` and `/?view=me` — matching
+how the rest of the app degrades. It appears only for someone who *has* a team:
+an account with no directory link gets the personal view and an explainer, never
+a Team tab that could only ever be empty.
+
+**Copy that carries a schema limit.** A permanent footnote reads *"Attendance
+isn't recorded here — only who ran an activity and who spoke at it."* There is no
+staff→activity attendance relation in this system, so without that line the panel
+reads as an attendance log and is simply wrong. A test asserts the page never
+says "you attended".
+
+**The page cannot lock anyone out.** If the payload build fails for any reason
+the handler logs it and falls back to the greeting plus the three doors — which
+is exactly the page this one replaced. The one-time onboarding guard stays
+precisely where it was.
+
+`templates/choose.html` is deleted; `office_connect.html` and a `_faces.html`
+partial replace it. Every colour resolves from a tone token the Python side
+chose, and a test slices out the page's own `<style>` block and fails on any
+literal hex — with 3 themes × 6 accents × 2 densities, a hardcoded colour is
+wrong in nearly every combination.
+
+11 new tests across `test_landing_fork.py` (doors, toggle, panels, the
+attendance disclaimer, token discipline), `test_a11y_charts.py` (the faces wall
+is pictures-not-names, so its `chart_table` really is the accessible reading of
+it) and `test_routes.py` (`/?view=me` joins the smoke list).
+
+### The Team View data layer (`office_connect.py`)
+
+No user-visible change yet — this is the payload the landing page will render,
+built and tested ahead of the page itself so the page can be pure markup.
+
+**One public function**, `team_view_data(conn, user, *, get_atoms, view_memo)`,
+returning `{me, scope, panels: {wellness, awa, css}, notes}` with each panel
+carrying a `team` and a `personal` view.
+
+**Why a new module.** `dashboard_insights` is deliberately `conn`-free and pure;
+`storage` has the connection but knows nothing about the atoms cache; `app.py` is
+already ~13.8k lines and this is how it got there. The cache primitives are
+**injected rather than imported**, which keeps the dependency one-way (no
+circular import) and — usefully — lets the tests hand it a fabricated events list
+through the memo seam, so the activity predicates are testable without seeding a
+whole atoms DataFrame.
+
+**Scope is the safety-critical part.** `team` is `None`, not an empty dict, when
+the viewer has no team — there is no code path where an unlinked account receives
+a team payload at all. The team builders are not merely filtered, they are **not
+called**, because passing such a user to `wellness_week_rollup` or
+`work_arrangement_period_summary` is bureau-wide by contract.
+
+**"Involved in an activity" is defined by what the schema can actually support.**
+There is no staff→activity attendance relation — `attendee` rows are external
+registrants with no account link — so *personal* means **spoke at OR created**.
+Organiser-unit is deliberately excluded there: "my section ran it" is not "I was
+involved". The *team* view adds it, because there it means exactly what it says,
+and every row records which relation qualified it (`unit` / `spoke` / `ran`).
+
+**The activity index** is memoised bureau-wide and viewer-**independent**; all
+filtering happens per request against the viewer's own resolved scope, so there
+is no per-team cache entry for a key bug to expose. Two tests drive the same
+payload through a *warm* dict-backed memo in both request orders to prove it.
+
+Other details worth noting: `build_events` carries no org path or creator (it
+groups atoms, not rows), so both are joined back from `list_activity_instances`;
+upcoming activities cannot come from `build_events` at all, since it drops
+zero-respondent events and an activity that hasn't happened has none; low-n
+scores are shown muted rather than hidden; an f3-only activity links to the
+type-3 report because `/reports/activities/{id}` 404s without a Form-2 block; and
+the AWA panel leads with the period **open for filing** rather than the one in
+force, whose deadline has already passed.
+
+**Geometry** (`ring_geom`, `bars_geom`) went into `dashboard_insights.py` beside
+`_svg_geom` / `_count_geom`, keeping the house rule that templates only draw
+strings handed to them. Neither emits a colour — callers get semantic tone tokens
+(`green`/`accent`/`amber`/`red`/`soft`) that the template maps once, which is
+what keeps 3 themes × 6 accents working. Both return their `chart_table` rows
+alongside the coordinates.
+
+**One deploy fix caught by the suite:** `office_connect.py` had to be added to
+`deploy_hf.RUNTIME_PY`. `test_runtime_py_is_import_closed` asserts the shipped
+file set is import-closed, so without it the Hugging Face deploy would have
+shipped an `app.py` whose import fails at startup.
+
+19 new tests in `tests/test_office_connect.py`.
+
+### Groundwork for the Team View (storage layer)
+
+No user-visible change; five small `storage.py` changes the landing page needs,
+each defensible on its own.
+
+**1. `team_scope_for_user` — the one that matters.** `_org_scope_for_user`
+collapses two very different situations onto the same `None`: an admin, who is
+*meant* to see the whole bureau, and an account with **no directory link**, which
+has no team at all. `_path_in_scope(path, None)` is `True` for everything, so
+`None` means "show me everyone". That is safe today only because every caller
+sits behind `user_is_approving_chief`, which has already excluded unlinked staff.
+
+The Team View is shown to **every** signed-in user with no such guard by design.
+Without this helper, an unlinked account would have seen every wellness and
+work-arrangement filing in the bureau. `team_scope_for_user` returns an explicit
+`(scope_path, kind)` where `kind` is `bureau` / `unit` / `none`, so "no team" can
+never be mistaken for "all teams".
+
+**2. `wellness_week_rollup`, split out of `wellness_dashboard_data`.** The parent
+also builds an all-weeks pending queue: it selects *every* pending claim in the
+bureau, hydrates each one with its own `get_wellness_claim` call, and only then
+filters by scope. Correct for the monitoring page; far too expensive for a page
+every user loads at every sign-in. The rollup is the cheap half — one query, no
+queue, no bureau-wide reflection rate. `wellness_dashboard_data` now calls it and
+adds the queue on top, so the monitoring register and the landing page cannot
+quietly disagree about a section's hours (asserted directly in the new tests).
+
+**3. Face columns, joined not queried.** `wellness_week_rollup` and
+`work_arrangement_roster` now carry `rp_id`, `has_photo` and `avatar_kind` (plus
+`position` / `designation` on the former) as joined columns, so drawing a grid of
+people costs no additional query per person.
+
+**4. `fi.created_by` on `list_activity_instances`.** The creator is one of the
+few relations tying a *staff member* to an activity — attendees are external
+registrants with no account link — and it wasn't being selected.
+
+**5. One redundant query per section removed.** `work_arrangement_period_summary`
+loops over org paths calling `work_arrangement_coverage`, and each call re-ran
+`_wa_noawa_for_period` with identical arguments. The set is per-*period*, not
+per-section, so it is now looked up once and passed in. For a section-scoped
+chief that saves one query; for a bureau-wide view it removes one per section.
+
+New `tests/test_team_scope.py` (8 tests): scope resolution for linked staff,
+admins and the unlinked case; that `_path_in_scope` does not leak across sibling
+sections (`…/S1` must not match `…/S10`); the rollup's scoping and face columns;
+that the split kept `wellness_dashboard_data` numerically identical; the roster
+columns; and the creator column.
+
+### Seven nav groups become four
+
+**Why.** The menu had **seven** groups (Dashboard, Wellness, Work arrangement,
+Reports, Data entry, Manage, Admin) for what are really four products — two of
+them holding a single item each. Worse, six pages that exist and work appeared in
+**no menu at all**: `/wellness/apply`, `/wellness/dashboard`,
+`/wellness/approvals`, `/work-arrangement/file`, `/work-arrangement/schedule`,
+`/work-arrangement/approvals`. They were reachable only by typing the URL or
+through an in-page link.
+
+**Now: Wellness · CSS · AWA · Administrator.** Order follows measured usage, not
+org-chart tidiness — `/wellness` draws 348 views from 17 of 18 users in 30 days,
+more than the entire Reports group. Within Administrator the same rule applies:
+`/admin/ai` (53 views, 4th busiest screen in the app) leads, Audit (2) and
+Sharing (1) trail.
+
+**Sub-sections inside a dropdown.** CSS holds sixteen destinations, which as a
+flat list would be worse than what it replaced. Items now carry an optional
+`section` label, written **once** on the first item of a run and inherited by the
+rest, rendered as headings inside the menu: *See how we're doing · Official
+reports · Run a survey · Data entry*. Two details that matter:
+
+- The label is resolved **before** cap-filtering. Filtering first would orphan a
+  run whose label happened to sit on an item the viewer can't open — "Run a
+  survey" lives on New survey (`create_activity`) while Monitor after it needs
+  `manage_event`.
+- A section whose every item is capped away disappears rather than leaving a
+  stray heading (an encoder sees Paper entry but no empty "Run a survey").
+
+**A capability that isn't a role.** The four team pages gate at runtime on
+`storage.user_is_approving_chief` — a directory *rank* lookup, not an account
+role — so `NAV_GROUPS`'s `cap` field could not express them. They now carry
+`cap="chief"`, resolved once per request in the auth middleware into
+`request.state.is_chief` (on the connection it already had open) and passed down
+to `nav_groups_for` / `search_index_for` / `ai_route_catalog` / `help_catalog_for`.
+All four surfaces stay in lockstep, so a plain staff member is never handed a
+link they cannot open — and the ⌘K palette, `/search`, `/help`, `/start`'s
+suggestions and the NL router all learned about the six newly-surfaced pages for
+free, because `NAV_GROUPS` remains the single source of truth.
+
+Four new tests in `tests/test_search.py`: the group shape and section ordering,
+the `chief` cap gating nav *and* the search index together, empty sections
+vanishing, and the rendered markup (the data-level assertions alone don't prove
+`dash_layout` draws it).
+
+### The "this week" card that was a dead target
+
+**Symptom.** Friction rank 7 in the same telemetry: **33 dead-clicks from 9
+users** on the wellness hub's *"This week (…): 0 of 2 hours claimed · Request a
+break"* panel, with **10 matching Spot Feedback comments**. Only the trailing
+button was clickable. People clicked the status text and the hour pips — the part
+that *states the problem* — and nothing happened.
+
+**Fix.** The stretched-link pattern (`wellness_hub.html`): the real anchor grows
+via `::after { position:absolute; inset:0 }` to cover the card, so the whole
+panel becomes the hit area while there is still exactly **one** tab stop and one
+accessible name. No JS, no duplicate link. Scoped to a new `.tappable` class on
+purpose — the monthly-register panel below is *also* `.panel.entitle` and holds a
+`<select>` that must stay operable under any overlay.
+
+**Secondary bug fixed in the same markup.** The button was an `<a href>` carrying
+`aria-disabled="true"` when nothing could be requested. The CSS rule's
+`pointer-events:none` stopped a *mouse*, but the anchor stayed focusable and
+Enter still navigated — so keyboard and screen-reader users were told the control
+was disabled and then taken to the form anyway. It now renders as a `<span>` in
+that state, with a title naming the real window (`window_weeks`, passed from
+`app.py` so the copy can't drift from the `can_request` computation).
+
+Two regression tests added to `tests/test_wellness.py` — one asserting the card
+carries exactly one anchor to `/wellness/apply`, one asserting the disabled state
+exposes no `href` at all.
+
+### The rename
+
+**Why.** The name described one of three things the system now does. After the
+wellness module (v2.25) and ANNEX C (v2.58), a staff member signs in as often for
+a two-hour break or a work arrangement as for a survey report — but the product
+still announced itself as the Client Satisfaction Survey Information System. The
+name had stopped describing the thing.
+
+**Scope — the shell only.** This is a rename of what people read, not of what the
+machine runs on. Deliberately left alone:
+
+- **`css_is.db`** (~100 references across `app.py`, `backups.py`, `pull_backup.py`,
+  `daily_backup.py`, `setup_db.py`, `migrate.py`, `deploy_hf.py`, `Dockerfile`,
+  `.gitignore`) — renaming the database file orphans every existing deployment
+  and every backup path.
+- **`css_is_engine.py`** (imported as `eng` by 21 modules) — the SERVQUAL/CSM
+  calculator. A pure internal identifier; no user ever sees it.
+- **`CSS_*` environment variables** (`CSS_DB`, `CSS_BASE_URL`, `CSS_SMTP_*`,
+  `CSS_GEMINI_API_KEY`, `CSS_OFFSITE_DIR`, `CSS_NO_SCHEDULER`) — a deployment
+  contract.
+- **The `/css` route and the name "CSS"** — that is the Client Satisfaction
+  Survey, a real programme with a real name, and it keeps it. Office Connect is
+  the building; CSS is one of the rooms.
+- **`sw.js`'s `css-is-` cache-name prefix** — changing it silently invalidates
+  the app-shell cache of every installed client.
+- **`~/CSS-IS-prod-backups`** (`daily_backup.py`) — an on-disk path on the ops
+  machine with existing history behind it.
+
+**Changed.** The wordmark and `<title>` in `dash_layout.html` and
+`public_layout.html`; the sign-in screen; the eight public-form page titles; the
+two account emails in `mailer.py`; the PWA manifest `name`/`short_name`
+(`app.py:6353`) and `static/offline.html`; the FastAPI app title; the report and
+export source lines (`dashboard_export.py`, `report_docs.py`, `csm_report.py`);
+the bilingual `thanks_title` in `i18n.py` (both `en` and `fil`); the UX handoff
+brief header in `ux_handoff.py` and its two asserting tests; and the module
+docstrings.
+
+**Verification.** `qa_preflight.py` GREEN. `pytest`: 1174 passed, with the same
+16 pre-existing failures before and after the change (they need a seeded
+`css_is.db`, which is gitignored) — a before/after diff of the failure list is
+empty, so the rename introduced no regressions.
+
 ## 2026-08-15 (v2.59 — "No AWA": the blank row learns to say why)
 
 **Symptom.** v2.58 left two rows of the source ANNEX C with nowhere to go, and

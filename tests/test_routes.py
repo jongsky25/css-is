@@ -8,7 +8,7 @@ import pytest
 # (path-template, builds-with-sample-ids). status must be < 500 and not the
 # login redirect (i.e. the page actually rendered for an authorized admin).
 GET_ROUTES = [
-    "/", "/dashboard", "/reports/activities", "/dashboard/people",
+    "/", "/?view=me", "/dashboard", "/reports/activities", "/dashboard/people",
     "/dashboard/teams", "/dashboard/trends", "/dashboard/participation", "/reports",
     "/reports?type=2", "/reports?type=3",
     "/reports/verbatims", "/directory", "/directory/staff/new",

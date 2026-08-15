@@ -65,7 +65,7 @@ def _docx_base(meta):
         r = doc.add_paragraph().add_run(meta["scope"])
         r.italic = True
     fr = doc.add_paragraph().add_run(
-        f"Generated {meta.get('generated', '')} · Source: {meta.get('source', 'CSS-IS')}")
+        f"Generated {meta.get('generated', '')} · Source: {meta.get('source', 'Office Connect')}")
     fr.italic = True
     fr.font.size = Pt(9)
     fr.font.color.rgb = _GREY
@@ -708,7 +708,7 @@ def _pdf_head(st, meta):
         out.append(Paragraph(_xml_escape(meta["scope"]), st["scope"]))
     out.append(Paragraph(
         f"Generated {_xml_escape(meta.get('generated', ''))} · Source: "
-        f"{_xml_escape(meta.get('source', 'CSS-IS'))}", st["foot"]))
+        f"{_xml_escape(meta.get('source', 'Office Connect'))}", st["foot"]))
     return out
 
 
@@ -880,7 +880,7 @@ def _txt(slide, text, l, t, w, h, size=18, bold=False, color="1C2330",
 
 def _footer(slide, meta, page, dark=False):
     col = "8FA8C4" if dark else "9AA3AF"
-    left = f"{meta.get('source', 'CSS-IS')}  -  {meta.get('scope', '')}"
+    left = f"{meta.get('source', 'Office Connect')}  -  {meta.get('scope', '')}"
     _txt(slide, left, 0.55, _SH - 0.48, 11.2, 0.4, size=9, color=col, anchor=MSO_ANCHOR.MIDDLE)
     _txt(slide, str(page), _SW - 1.1, _SH - 0.48, 0.6, 0.4, size=9, color=col,
          align=PP_ALIGN.RIGHT, anchor=MSO_ANCHOR.MIDDLE)
@@ -916,7 +916,7 @@ def _title_slide(prs, meta):
     _txt(s, meta["title"], 0.8, 2.0, 11.7, 2.4, size=40, bold=True, color="FFFFFF")
     if meta.get("scope"):
         _txt(s, meta["scope"], 0.8, 4.3, 11.7, 0.6, size=18, color="D6E4F0")
-    _txt(s, f"Generated {meta.get('generated', '')} - {meta.get('source', 'CSS-IS')}",
+    _txt(s, f"Generated {meta.get('generated', '')} - {meta.get('source', 'Office Connect')}",
          0.8, 6.7, 11.7, 0.4, size=11, color="8FA8C4")
 
 

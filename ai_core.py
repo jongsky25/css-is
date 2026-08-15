@@ -1,5 +1,5 @@
 """
-ai_core.py — CSS-IS free-tier AI integration (Google Gemini, with an
+ai_core.py — Office Connect free-tier AI integration (Google Gemini, with an
 optional Groq fallback).
 ================================================================
 docs/AI_INTEGRATION_PLAN.md Phase 0. The one module that ever talks to

@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{% block title %}Dashboard{% endblock %} — CSS-IS</title>
+<title>{% block title %}Dashboard{% endblock %} — Office Connect</title>
 {# Set theme + text size before first paint so the choice never flashes. #}
 <script>(function(){try{var d=document.documentElement;var t=localStorage.getItem("theme");if(t!=="dark"&&t!=="light"&&t!=="contrast"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light";}d.setAttribute("data-theme",t);var s=localStorage.getItem("textscale");if(s!=="sm"&&s!=="lg"&&s!=="md"){s="md";}d.setAttribute("data-textscale",s);var dn=localStorage.getItem("density");if(dn!=="compact"&&dn!=="cozy"){dn="cozy";}d.setAttribute("data-density",dn);var ac=localStorage.getItem("accent");if(["blue","teal","violet","emerald","rose","amber"].indexOf(ac)<0){ac="blue";}d.setAttribute("data-accent",ac);}catch(e){}})();</script>
-<link rel="stylesheet" href="/static/css/app.css?v=20260622b">
+<link rel="stylesheet" href="/static/css/app.css?v=20260815a">
 {% block head %}{% endblock %}
 </head>
 <body>
@@ -21,6 +21,14 @@
               'shared' if path == '/shared' else
               'encode' if path.startswith('/encode') else
               'home' if path == '/css' else
+              'wellness_apply' if path.startswith('/wellness/apply') else
+              'wellness_team' if path.startswith('/wellness/dashboard') else
+              'wellness_approvals' if path.startswith('/wellness/approvals') else
+              'wellness' if path.startswith('/wellness') else
+              'work_arrangement_file' if path.startswith('/work-arrangement/file') else
+              'work_arrangement_schedule' if path.startswith('/work-arrangement/schedule') else
+              'work_arrangement_approvals' if path.startswith('/work-arrangement/approvals') else
+              'work_arrangement' if path.startswith('/work-arrangement') else
               'create' if path == '/create' else
               'arta' if path == '/arta' else
               'cleanup' if path.startswith('/directory/cleanup') else
@@ -33,11 +41,11 @@
               'ops' if path == '/ops' else '') %}
 {# Menus + search palette both render from nav_groups_for/search_index_for in
    app.py — one source of truth, so they can never drift apart. #}
-{% set nav_groups = nav_groups_for(u) %}
+{% set nav_groups = nav_groups_for(u, request.state.is_chief) %}
 
 <nav class="topnav" aria-label="Main">
   <div class="inner">
-    <a class="brand" href="/" title="Equity in Health · CSS-IS"><span class="equity-mark sm" aria-hidden="true" style="margin-right:.4rem;"></span>CSS<span>·</span>IS</a>
+    <a class="brand" href="/" title="Equity in Health · Office Connect"><span class="equity-mark sm" aria-hidden="true" style="margin-right:.4rem;"></span>Office<span>·</span>Connect</a>
 
     <div class="navgroups">
       {% for g in nav_groups %}
@@ -45,9 +53,15 @@
       <details class="navgroup {{ 'current' if group_cur }}">
         <summary>{{ g.name }}</summary>
         <div class="menu">
-          {% for it in g['items'] %}
+          {# Sections come precomputed and cap-filtered from nav_groups_for, so an
+             empty one can never leave a stray heading behind. A single unnamed
+             section (the common case) renders as a plain list, exactly as before. #}
+          {% for sec in g['sections'] %}
+          {% if sec.name %}<div class="msec">{{ sec.name }}</div>{% endif %}
+          {% for it in sec['items'] %}
           <a href="{{ it.url }}" {% if cur == it.key %}aria-current="page"{% endif %}>{{ it.label }}
             <span class="mhint">{{ it.hint }}</span></a>
+          {% endfor %}
           {% endfor %}
         </div>
       </details>
@@ -60,8 +74,11 @@
       <div class="mobile-menu">
         {% for g in nav_groups %}
         <div class="mgroup">{{ g.name }}</div>
-        {% for it in g['items'] %}
+        {% for sec in g['sections'] %}
+        {% if sec.name %}<div class="msec">{{ sec.name }}</div>{% endif %}
+        {% for it in sec['items'] %}
         <a href="{{ it.url }}" {% if cur == it.key %}aria-current="page"{% endif %}>{{ it.label }}</a>
+        {% endfor %}
         {% endfor %}
         {% endfor %}
         {% if u %}
@@ -189,7 +206,7 @@
     <ul class="palette-results" id="cmdkResults" role="listbox" aria-label="Results"></ul>
   </div>
 </div>
-<script>window.SEARCH_INDEX = {{ search_index_for(u)|tojson }};</script>
+<script>window.SEARCH_INDEX = {{ search_index_for(u, request.state.is_chief)|tojson }};</script>
 <script src="/static/js/search.js?v=20260718a" defer></script>
 {% endif %}
 {% if u and request.state.spot_feedback_enabled %}
@@ -203,6 +220,6 @@
 {# Passive UX-behavior telemetry (docs/UX_TELEMETRY_HANDOFF_PLAN.md) — signed-in shell only. #}
 <script src="/static/js/telemetry.js?v=20260718a" defer></script>
 {% endif %}
-<script src="/static/js/app.js?v=20260622b" defer></script>
+<script src="/static/js/app.js?v=20260815a" defer></script>
 </body>
 </html>

@@ -76,3 +76,22 @@ def test_deploy2_pages_have_sr_tables(admin):
         if 'role="img"' in html and "<svg" in html:
             # at least one genuine data chart -> at least one SR table
             assert 'sr-only chart-data' in html, f"no SR table on {path}"
+
+
+def test_landing_charts_carry_their_sr_tables(admin):
+    """Same contract as Trends: anything drawn as role="img" on the Office
+    Connect landing page ships a navigable data table beside it. The faces wall
+    is the reason this matters most — it is deliberately pictures-not-names, so
+    the table IS the accessible reading of it."""
+    html = admin.get("/").text
+    if 'role="img"' in html:
+        assert "sr-only chart-data" in html
+        assert "<caption>" in html
+
+
+def test_landing_faces_are_labelled_individually(admin):
+    """Each face is its own role="img" with the person's name in the label —
+    a wall of unlabelled circles would be unreadable without sight."""
+    html = admin.get("/").text
+    if 'class="face' in html:
+        assert 'class="face' in html and "aria-label=" in html

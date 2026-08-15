@@ -1,5 +1,5 @@
 """
-CSS-IS monitoring
+Office Connect monitoring
 =================
 
 In-process performance monitoring — the four golden signals (latency, traffic,

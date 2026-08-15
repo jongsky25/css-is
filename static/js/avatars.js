@@ -606,8 +606,18 @@
           if (res.mood) w.dataset.mood = res.mood;
           if (res.last_care_at) w.dataset.lastCare = res.last_care_at;
           if (typeof res.streak === "number") w.dataset.careStreak = String(res.streak);
-          if (res.counted) bubbleFlash(w, action === "water" ? "Ahh, thank you! 💧"
-                                                            : "Yum! Thank you! 😋", 2200);
+          // ALWAYS say something back. `counted` is false inside the 6-hour
+          // cooldown (storage.AVATAR_CARE_COOLDOWN_HOURS) — that is a success,
+          // not a failure, but saying nothing read as a dead button: it was the
+          // app's single biggest friction source (78 + 26 rage clicks over 8
+          // users, and spot feedback saying "Not watering" / "Di gumagana").
+          // Under prefers-reduced-motion the care animation is suppressed too
+          // (_avatars.html "animation:none !important"), so this bubble is the
+          // ONLY feedback those users get at all.
+          bubbleFlash(w, res.counted
+            ? (action === "water" ? "Ahh, thank you! 💧" : "Yum! Thank you! 😋")
+            : (action === "water" ? "Still nicely watered 💧" : "Still full, thank you! 😋"),
+            2200);
           if (res.badge) badgeToast(w, res.badge);
         })
         .catch(function () {});                        // offline: cosmetic anyway

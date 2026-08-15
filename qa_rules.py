@@ -1,5 +1,5 @@
 """
-CSS-IS learned-question matcher — the deterministic FAQ layer that sits in
+Office Connect learned-question matcher — the deterministic FAQ layer that sits in
 front of the NL router (app.py's /api/ai/route, docs/AI_INTEGRATION_PLAN.md).
 
 Why this exists

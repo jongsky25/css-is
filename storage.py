@@ -1,5 +1,5 @@
 """
-CSS-IS storage
+Office Connect storage
 ==============
 
 The part that REMEMBERS. A single database file on your laptop that holds:
@@ -3691,7 +3691,7 @@ def list_activity_instances(conn):
                fi.organizer_external_id, xo.name, fi.created_at,
                fi.open_at, fi.close_at, fi.attendance, COALESCE(fi.attendance_suspect,0),
                fi.modality, fi.end_date, COALESCE(fi.encoding_locked, 0),
-               rp.position, rp.designation
+               rp.position, rp.designation, fi.created_by
         FROM form_instance fi
         LEFT JOIN resource_person rp   ON rp.id  = fi.rp_id
         LEFT JOIN org_unit olead       ON olead.id = fi.lead_org_id
@@ -3715,7 +3715,12 @@ def list_activity_instances(conn):
              "encoding_locked": bool(r[22]),
              # position/designation ride along so callers can apply
              # is_bureau_director() without a second query per speaker.
-             "rp_position": r[23], "rp_designation": r[24]}
+             "rp_position": r[23], "rp_designation": r[24],
+             # The account username that filed this form (nullable on historical
+             # rows). Joinable to admin_user.username — one of the few relations
+             # tying a STAFF MEMBER to an activity, since attendees are external
+             # registrants with no account link.
+             "created_by": r[25]}
             for r in rows]
 
 
@@ -5262,6 +5267,38 @@ def _org_scope_for_user(conn, user):
     return row[0] if row and row[0] else None
 
 
+def team_scope_for_user(conn, user):
+    """(scope_path, kind) for a page that shows one person their TEAM.
+
+    Returns kind "bureau" (scope_path None — everything), "unit" (scope_path is
+    an org_unit.path subtree), or "none" (no team at all).
+
+    This exists because _org_scope_for_user above collapses two very different
+    situations onto the same None: an admin, who is *meant* to see the whole
+    bureau, and an account with no directory link or no org unit, which simply
+    has no team to show. Returning None for both is safe there only because
+    every caller sits behind a route guard (user_is_approving_chief) that has
+    already excluded unlinked staff.
+
+    A landing page shown to EVERY signed-in user has no such guard by design, so
+    the distinction has to be drawn here: an unlinked account resolves to "none"
+    and its caller must render a personal view, never a bureau-wide roster of
+    everyone's wellness and work-arrangement filings."""
+    if _user_role_of(user) == "admin":
+        return None, "bureau"
+    path = _org_scope_for_user(conn, user)
+    return (path, "unit") if path else (None, "none")
+
+
+def _user_role_of(user):
+    """Role out of a request user dict (or an object with .role); None if absent."""
+    if not user:
+        return None
+    if isinstance(user, dict):
+        return user.get("role")
+    return getattr(user, "role", None)
+
+
 def _path_in_scope(path, scope_path):
     """Is org path `path` inside `scope_path` (that unit or a descendant)? A None
     scope means bureau-wide, so everything is in scope."""
@@ -5695,6 +5732,50 @@ def wellness_stats(conn, user_id):
             "next_at": next_at, "progress": progress}
 
 
+def avatar_growth_ladder(kind, stats):
+    """The six growth stages of ONE species, with where this person stands.
+
+    Pure presentation over what wellness_stats already derives — no new state,
+    nothing persisted, so it cannot drift from the points that actually drive the
+    avatar. Returns one entry per stage:
+
+        {stage, name, points_at, reached, current}
+
+    `points_at` is the cumulative point threshold from WELLNESS_LEVELS, which is
+    what makes the ladder honest: a locked stage shows the number that unlocks
+    it rather than a vague "keep going".
+
+    Exists because the companion's growth was invisible — you could see the
+    creature you had, but not the one you were working toward, and nothing on
+    screen said how it grew."""
+    stage_now = (stats or {}).get("stage", 1)
+    return [{"stage": i + 1,
+             "name": avatar_stage_name(kind, i + 1),
+             "points_at": pts,
+             "reached": (i + 1) <= stage_now,
+             "current": (i + 1) == stage_now}
+            for i, pts in enumerate(WELLNESS_LEVELS)]
+
+
+def avatar_growth_actions(kind):
+    """How the companion grows, read straight off the scoring constants so the
+    explanation can never disagree with the arithmetic. `care` is the cosmetic
+    day-streak, which earns a badge rather than points — said plainly rather than
+    left to look like a fifth way to level up."""
+    return {
+        "points": [
+            {"label": "Take a wellness break", "points": WELLNESS_PTS_BREAK},
+            {"label": "Write a reflection afterwards", "points": WELLNESS_PTS_REFLECTION},
+            {"label": f"Use your full {WELLNESS_WEEKLY_HOURS} hours in a week",
+             "points": WELLNESS_PTS_FULL_WEEK},
+            {"label": "Each week of an unbroken streak", "points": WELLNESS_PTS_STREAK_WEEK},
+        ],
+        "care": {"verb": avatar_care_verb(kind),
+                 "badge": WELLNESS_BADGES["avatar_care_7"][0],
+                 "blurb": WELLNESS_BADGES["avatar_care_7"][1]},
+    }
+
+
 def wellness_award_badges(conn, user_id):
     """Grant any newly earned badges (idempotent — UNIQUE(user_id,badge) makes
     re-checks free). Returns the labels of badges awarded on THIS call. Does not
@@ -5733,24 +5814,38 @@ def _award_badge(conn, user_id, key, when=None):
 
 # ---- monitoring dashboard + the submission register -----------------------
 
-def wellness_dashboard_data(conn, week_start, user=None):
-    """One week's utilization for the monitoring page: a per-person table with
-    section, hours by status and reflection state; a per-section rollup against
-    the 2 h/person entitlement; the all-weeks pending queue with its age; and
-    the overall reflection completion rate.
+def wellness_week_rollup(conn, week_start, user=None):
+    """One week's hours per person, in the viewer's scope — one query, no writes.
 
-    When `user` is a directory-linked chief the whole view is scoped to their own
-    unit's subtree (see _org_scope_for_user) so the "By person" table — and
-    the section rollup, week tiles and pending queue derived from it — shows only
-    the section(s) they are concerned with, not every employee. Admins and an
-    unscoped call see the whole bureau."""
+    This is the cheap half of wellness_dashboard_data: the per-person rows and
+    the per-section rollup, WITHOUT the all-weeks pending queue (which scans
+    every pending claim in the bureau and hydrates each one individually before
+    filtering by scope) or the bureau-wide reflection rate. Both are right for
+    the monitoring page and far too expensive for a landing page that every user
+    loads at every sign-in.
+
+    wellness_dashboard_data now calls THIS and adds the queue on top, so the
+    monitoring register and the landing page can never quietly disagree about
+    how many hours a section used.
+
+    `rp_id` / `has_photo` / `avatar_kind` / `position` / `designation` ride along
+    as joined columns — no extra query — so a caller drawing faces can resolve
+    each person's picture (or their companion, or their initials) and apply
+    is_bureau_director() without a second pass.
+
+    Scoping is _org_scope_for_user's: a directory-linked chief sees their own
+    unit subtree, admins and an unscoped call see the bureau. Callers that show
+    this to EVERY user must resolve scope with team_scope_for_user first — see
+    its docstring for why None is not a safe default there."""
     scope_path = _org_scope_for_user(conn, user)
     people = conn.execute("""
         SELECT u.id, u.username, rp.name, ou.short_name, ou.path,
                COALESCE(SUM(CASE WHEN c.status='pending'   THEN c.hours END), 0),
                COALESCE(SUM(CASE WHEN c.status='approved'  THEN c.hours END), 0),
                COALESCE(SUM(CASE WHEN c.status='completed' THEN c.hours END), 0),
-               COUNT(r.id)
+               COUNT(r.id),
+               u.rp_id, (rp.photo IS NOT NULL), u.avatar_kind,
+               rp.position, rp.designation
         FROM admin_user u
         LEFT JOIN resource_person rp ON rp.id = u.rp_id
         LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id
@@ -5762,11 +5857,13 @@ def wellness_dashboard_data(conn, week_start, user=None):
     people = [p for p in people if _path_in_scope(p[4], scope_path)]
     rows = [{"user_id": p[0], "username": p[1], "name": p[2] or p[1],
              "section": p[3] or (p[4].rsplit("/", 1)[-1] if p[4] else "—"),
+             "org_path": p[4] or "",
              "pending": p[5], "approved": p[6], "completed": p[7],
              "reflections": p[8],
-             "used": p[6] + p[7], "left": max(0, WELLNESS_WEEKLY_HOURS - p[6] - p[7])}
+             "used": p[6] + p[7], "left": max(0, WELLNESS_WEEKLY_HOURS - p[6] - p[7]),
+             "rp_id": p[9], "has_photo": bool(p[10]), "avatar_kind": p[11],
+             "position": p[12] or "", "designation": p[13] or ""}
             for p in people]
-    in_scope = {r["user_id"] for r in rows}
     sections = {}
     for r in rows:
         s = sections.setdefault(r["section"], {"section": r["section"], "people": 0,
@@ -5777,6 +5874,30 @@ def wellness_dashboard_data(conn, week_start, user=None):
     for s in sections.values():
         s["entitled"] = s["people"] * WELLNESS_WEEKLY_HOURS
         s["pct"] = round(s["used"] * 100 / s["entitled"]) if s["entitled"] else 0
+    total_used = sum(r["used"] for r in rows)
+    entitled = len(rows) * WELLNESS_WEEKLY_HOURS
+    return {"rows": rows,
+            "sections": sorted(sections.values(), key=lambda s: s["section"]),
+            "scope_path": scope_path,
+            "week_used": total_used, "week_entitled": entitled,
+            "week_pct": round(total_used * 100 / entitled) if entitled else 0}
+
+
+def wellness_dashboard_data(conn, week_start, user=None):
+    """One week's utilization for the monitoring page: a per-person table with
+    section, hours by status and reflection state; a per-section rollup against
+    the 2 h/person entitlement; the all-weeks pending queue with its age; and
+    the overall reflection completion rate.
+
+    When `user` is a directory-linked chief the whole view is scoped to their own
+    unit's subtree (see _org_scope_for_user) so the "By person" table — and
+    the section rollup, week tiles and pending queue derived from it — shows only
+    the section(s) they are concerned with, not every employee. Admins and an
+    unscoped call see the whole bureau."""
+    roll = wellness_week_rollup(conn, week_start, user)
+    rows, sections = roll["rows"], {s["section"]: s for s in roll["sections"]}
+    scope_path = roll["scope_path"]
+    in_scope = {r["user_id"] for r in rows}
     today = tz.today_local().isoformat()
     queue = [dict(get_wellness_claim(conn, r[0]),
                   age_days=(date.fromisoformat(today)
@@ -5790,14 +5911,12 @@ def wellness_dashboard_data(conn, week_start, user=None):
         "SELECT COUNT(*), COUNT(r.id) FROM wellness_claim c "
         "LEFT JOIN wellness_reflection r ON r.claim_id = c.id "
         "WHERE c.status='completed'").fetchone()
-    total_used = sum(r["used"] for r in rows)
-    entitled = len(rows) * WELLNESS_WEEKLY_HOURS
     return {"rows": rows,
             "sections": sorted(sections.values(), key=lambda s: s["section"]),
             "queue": queue,
             "reflect_rate": round(reflected * 100 / done) if done else None,
-            "week_used": total_used, "week_entitled": entitled,
-            "week_pct": round(total_used * 100 / entitled) if entitled else 0}
+            "week_used": roll["week_used"], "week_entitled": roll["week_entitled"],
+            "week_pct": roll["week_pct"]}
 
 
 def wellness_export_rows(conn, date_from=None, date_to=None):
@@ -6517,7 +6636,8 @@ def list_work_arrangement_approvals(conn, user):
 
 # ---- section coverage — advice, never a block ------------------------------
 
-def work_arrangement_coverage(conn, org_path, period_start, exclude_user_id=None):
+def work_arrangement_coverage(conn, org_path, period_start, exclude_user_id=None,
+                              tagged=None):
     """Per-weekday staffing for ONE section in one period.
 
     Scope is the EXACT org path, not the subtree: "who is left in my section on
@@ -6549,7 +6669,11 @@ def work_arrangement_coverage(conn, org_path, period_start, exclude_user_id=None
         WHERE a.active = 1 AND ou.path = ?
     """, (org_path or "",)).fetchall()
     people = [(uid, name) for uid, name in people if uid != exclude_user_id]
-    tagged = _wa_noawa_for_period(conn, period_start)
+    # `tagged` is identical for every org path in a period, so a caller looping
+    # over sections passes it in once instead of paying this query per section
+    # (see work_arrangement_period_summary).
+    if tagged is None:
+        tagged = _wa_noawa_for_period(conn, period_start)
     excluded = sum(1 for uid, _n in people if uid in tagged)
     people = [(uid, name) for uid, name in people if uid not in tagged]
     ids = {uid for uid, _n in people}
@@ -6644,7 +6768,7 @@ def work_arrangement_coverage_flag(conn, row):
 
 # ---- the period roster (the ANNEX C body, on screen and in print) ----------
 
-def work_arrangement_roster(conn, period_start, user=None):
+def work_arrangement_roster(conn, period_start, user=None, tagged=None):
     """Every participating account for a period, filed or not, ordered the way
     ANNEX C groups them (by division/section, then name).
 
@@ -6657,7 +6781,8 @@ def work_arrangement_roster(conn, period_start, user=None):
     unscoped call see the whole bureau."""
     scope = _org_scope_for_user(conn, user) if user else None
     rows = conn.execute("""
-        SELECT a.id, a.username, rp.name, rp.position, ou.short_name, ou.path
+        SELECT a.id, a.username, rp.name, rp.position, ou.short_name, ou.path,
+               a.rp_id, (rp.photo IS NOT NULL), a.avatar_kind
         FROM admin_user a
         LEFT JOIN resource_person rp ON rp.id = a.rp_id
         LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id
@@ -6674,14 +6799,20 @@ def work_arrangement_roster(conn, period_start, user=None):
         # as such, so let 'approved' win when a person holds both.
         if w["user_id"] not in live or w["status"] == "approved":
             live[w["user_id"]] = w
-    tagged = _wa_noawa_for_period(conn, period_start)
+    if tagged is None:
+        tagged = _wa_noawa_for_period(conn, period_start)
     out = []
-    for uid, username, name, position, short_name, path in rows:
+    for (uid, username, name, position, short_name, path,
+         rp_id, has_photo, avatar_kind) in rows:
         if not _path_in_scope(path, scope):
             continue
         base = {"user_id": uid, "name": name or username,
                 "position": position or "", "section": short_name or "",
-                "org_path": path or ""}
+                "org_path": path or "",
+                # Joined, not a second query: enough for a caller to draw this
+                # person's face (directory photo -> companion -> initials).
+                "rp_id": rp_id, "has_photo": bool(has_photo),
+                "avatar_kind": avatar_kind}
         tag = tagged.get(uid)
         if tag:
             # A stated reason outranks any stale filing: the person told us they
@@ -6713,14 +6844,20 @@ def work_arrangement_period_summary(conn, period_start, user=None):
     `thinnest` is the weekday with the fewest people on-site across the sections
     in view — the Friday problem, surfaced before it is submitted rather than
     noticed in a spreadsheet afterwards."""
-    roster = work_arrangement_roster(conn, period_start, user)
+    # The "No AWA" set is per-PERIOD, not per-section, so look it up once and
+    # hand it to the roster and to every coverage call. It used to be re-queried
+    # inside each of them: for a section-scoped chief that was a small waste, but
+    # for a bureau-wide view it was one redundant query per section on top of
+    # coverage's own two.
+    tagged = _wa_noawa_for_period(conn, period_start)
+    roster = work_arrangement_roster(conn, period_start, user, tagged=tagged)
     paths = []
     for r in roster:
         if r["org_path"] and r["org_path"] not in paths:
             paths.append(r["org_path"])
     sections = []
     for path in paths:
-        cov = work_arrangement_coverage(conn, path, period_start)
+        cov = work_arrangement_coverage(conn, path, period_start, tagged=tagged)
         if not cov["headcount"]:
             continue
         short = next((r["section"] for r in roster if r["org_path"] == path), "")

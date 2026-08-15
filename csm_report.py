@@ -438,7 +438,7 @@ def official_docx(rep, meta):
     _docx_data(doc, rep, meta)
     _docx_closing(doc, rep, meta)
     fr = doc.add_paragraph()
-    _run(fr, f"Generated {meta.get('generated', '')} · Source: {meta.get('source', 'CSS-IS')}",
+    _run(fr, f"Generated {meta.get('generated', '')} · Source: {meta.get('source', 'Office Connect')}",
          italic=True, size=8, color=_GREY)
     return _rd._save(doc)
 

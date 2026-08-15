@@ -1,0 +1,365 @@
+{% extends "dash_layout.html" %}
+{% from "_avatars.html" import avatar, avatar_defs %}
+{% from "_components.html" import flash, chart_table, empty_state %}
+{% from "_faces.html" import face_defs, faces %}
+{% from "_growth.html" import growth_defs, growth %}
+{% block title %}Home{% endblock %}
+{% block content %}
+{{ avatar_defs() }}
+{{ face_defs() }}
+{{ growth_defs() }}
+<style>
+  .oc { max-width:1040px; margin:0 auto; }
+  .oc-hero { display:flex; gap:1rem; align-items:center; flex-wrap:wrap;
+             margin:.4rem 0 1rem; }
+  .oc-photo { width:56px; height:56px; border-radius:50%; object-fit:cover;
+              background:var(--surface-3); display:inline-flex; align-items:center;
+              justify-content:center; font-weight:800; color:var(--soft); flex:0 0 auto; }
+  .oc-hi h1 { margin:0; font-size:1.45rem; }
+  .oc-hi p { margin:.15rem 0 0; color:var(--soft); font-size:.9rem; }
+  .oc-hero .grow { flex:1 1 auto; }
+
+  /* Team | Me — the same segmented control the display-settings menu uses, so
+     it already reads as a switch. Real links, so it works without JS. */
+  .oc-seg { display:inline-flex; border:1px solid var(--line); border-radius:var(--rpill);
+            overflow:hidden; background:var(--surface); }
+  .oc-seg a { padding:.35rem .95rem; font-size:.85rem; font-weight:700; text-decoration:none;
+              color:var(--soft); }
+  .oc-seg a[aria-current="true"] { background:var(--accent); color:var(--on-accent); }
+  .oc-scope { color:var(--soft); font-size:.85rem; margin:0 0 1rem; }
+
+  .oc-panels { display:grid; grid-template-columns:repeat(auto-fit, minmax(320px,1fr));
+               gap:1rem; align-items:start; }
+  .oc-card { background:var(--surface); border:1px solid var(--line); border-radius:var(--r3);
+             padding:1rem 1.1rem; box-shadow:var(--shadow); }
+  .oc-card h2 { margin:0 0 .15rem; font-size:1.02rem; }
+  .oc-card .sub { color:var(--soft); font-size:.82rem; margin:0 0 .75rem; }
+  .oc-card .foot { margin:.75rem 0 0; font-size:.76rem; color:var(--grey); }
+  .oc-card .foot a { color:var(--accent); }
+  .oc-big { font-size:1.55rem; font-weight:800; line-height:1.1; }
+  .oc-big small { font-size:.8rem; font-weight:600; color:var(--soft); }
+
+  /* activity rows */
+  .oc-list { list-style:none; margin:0; padding:0; }
+  .oc-list li { border-top:1px solid var(--line); padding:.5rem 0; }
+  .oc-list li:first-child { border-top:0; }
+  .oc-list a.t { font-weight:700; color:var(--ink); text-decoration:none; }
+  .oc-list a.t:hover { color:var(--accent); text-decoration:underline; }
+  .oc-meta { color:var(--soft); font-size:.76rem; margin-top:.12rem;
+             display:flex; gap:.4rem; flex-wrap:wrap; align-items:center; }
+  .oc-score { font-weight:800; font-size:.9rem; }
+  .sc-green { color:var(--green); } .sc-amber { color:var(--amber); }
+  .sc-red { color:var(--red); } .sc-soft { color:var(--soft); }
+  .oc-chip { font-size:.68rem; font-weight:700; border-radius:var(--rpill);
+             padding:.05rem .45rem; border:1px solid var(--line);
+             background:var(--surface-2); color:var(--soft); }
+
+  /* stacked filing bar */
+  .oc-bar { display:flex; height:12px; border-radius:var(--rpill); overflow:hidden;
+            background:var(--surface-3); margin:.5rem 0 .35rem; }
+  .oc-bar i { display:block; height:100%; }
+  .bg-green { background:var(--green); } .bg-amber { background:var(--amber); }
+  .bg-accent { background:var(--accent); } .bg-soft { background:var(--line-strong); }
+  .oc-key { display:flex; gap:.7rem; flex-wrap:wrap; font-size:.72rem; color:var(--soft); }
+  .oc-key i { display:inline-block; width:9px; height:9px; border-radius:3px;
+              margin-right:.22rem; vertical-align:baseline; }
+
+  /* weekday coverage */
+  .oc-cov svg { width:100%; height:auto; }
+  .oc-cov .grid { stroke:var(--surface-3); stroke-width:1; }
+  .oc-cov .axis { stroke:var(--line); stroke-width:1; }
+  .oc-cov .ylab, .oc-cov .xlab { font-size:10px; fill:var(--soft); }
+  .oc-cov .ylab { text-anchor:end; } .oc-cov .xlab { text-anchor:middle; }
+  .oc-cov .axtitle { font-size:10px; fill:var(--grey); }
+  .oc-cov .f-green { fill:var(--green); } .oc-cov .f-amber { fill:var(--amber); }
+  .oc-cov .f-red { fill:var(--red); } .oc-cov .f-soft { fill:var(--surface-3); }
+
+  .doors { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr));
+           gap:1rem; margin-top:1.4rem; }
+  .door { display:block; text-decoration:none; border:1px solid var(--line);
+          background:var(--surface); border-radius:18px; padding:1.1rem 1.2rem;
+          box-shadow:var(--shadow); transition:border-color .15s, transform .12s, box-shadow .15s; }
+  .door:hover, .door:focus-visible { border-color:var(--accent); transform:translateY(-3px);
+          box-shadow:var(--shadow-md); }
+  .door .em { font-size:1.8rem; display:block; margin-bottom:.35rem; }
+  .door .t { font-weight:800; color:var(--ink); font-size:1.03rem; }
+  .door .d { color:var(--soft); font-size:.85rem; margin-top:.25rem; }
+  .door .meta { margin-top:.6rem; font-size:.76rem; font-weight:700; color:var(--accent);
+                background:var(--accent-bg); border-radius:var(--rpill);
+                padding:.15rem .6rem; display:inline-block; }
+  @media (max-width:640px) { .oc-hero { gap:.7rem; } .oc-hi h1 { font-size:1.25rem; } }
+</style>
+
+{% set tone_txt = {"green":"sc-green","amber":"sc-amber","red":"sc-red","soft":"sc-soft","accent":"sc-soft"} %}
+{% set tone_fill = {"green":"f-green","amber":"f-amber","red":"f-red","soft":"f-soft"} %}
+{% set me_view = view == "me" %}
+
+<div class="oc">
+  {% if msg %}{{ flash(msg=msg) }}{% endif %}
+
+  <div class="oc-hero">
+    <span class="oc-photo">
+      {% if profile and profile.photo_url %}
+        <img src="{{ profile.photo_url }}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+      {% else %}{{ initials }}{% endif %}
+    </span>
+    <div class="oc-hi">
+      <h1>Hi{% if first_name %}, {{ first_name }}{% endif %} 👋</h1>
+      <p>{{ role_label }}</p>
+    </div>
+    {% if profile and profile.avatar_name %}
+    <div class="oc-pet">
+      {{ avatar(profile.avatar_kind, (wstats.stage if wstats else 1), name=profile.avatar_name,
+                size=72, interactive=true, mood=profile.avatar_mood) }}
+    </div>
+    {% endif %}
+    <span class="grow"></span>
+    {% if d and d.scope.kind != "none" %}
+    <div class="oc-seg" role="group" aria-label="Whose information to show">
+      <a href="/" {% if not me_view %}aria-current="true"{% endif %}>Team</a>
+      <a href="/?view=me" {% if me_view %}aria-current="true"{% endif %}>Me</a>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if d %}
+    {% if d.scope.kind != "none" and not me_view %}
+    <p class="oc-scope">Showing <strong>{{ d.scope.label }}</strong>{% if d.scope.size %} — {{ d.scope.size }}
+      {{ 'person' if d.scope.size == 1 else 'people' }}{% endif %}.</p>
+    {% endif %}
+    {% for n in d.notes %}
+      <div class="panel tint-blue" style="margin-bottom:1rem;">
+        {{ n.text }} <a href="{{ n.url }}">{{ n.cta }}</a>
+      </div>
+    {% endfor %}
+
+  <div class="oc-panels">
+
+    {# ---------------- Wellness ---------------- #}
+    {% set w = d.panels.wellness %}
+    <section class="oc-card" data-tour="oc-wellness">
+      {% if me_view or not w.team %}
+        <h2>Your wellness break</h2>
+        <p class="sub">Week of {{ w.personal.week_start }}</p>
+        <div class="oc-big">{{ w.personal.used }} <small>of {{ w.personal.weekly_hours }} hours claimed</small></div>
+        {% if w.personal.stats %}
+        <p class="sub" style="margin-top:.5rem;">{{ w.personal.stats.points }} pts ·
+          {{ w.personal.stats.streak }}-week streak · {{ w.personal.stats.stage_name }}</p>
+        {% endif %}
+        <p class="foot"><a href="/wellness">Open wellness →</a></p>
+      {% else %}
+        <h2>Wellness this week</h2>
+        <p class="sub">Week of {{ w.team.week_start }}</p>
+        <div class="oc-big">{{ w.team.filed }} <small>of {{ w.team.people }} have filed ·
+          {{ w.team.pct }}% of hours used</small></div>
+        {% if w.team.cells %}
+          {{ faces(w.team.cells) }}
+          {{ chart_table("Wellness break hours this week, by person",
+                         w.team.table.headers, w.team.table.rows) }}
+          <div class="oc-key">
+            {% for l in w.team.legend %}
+            <span><i class="bg-{{ 'soft' if l.tone == 'soft' else l.tone }}"></i>{{ l.label }}</span>
+            {% endfor %}
+          </div>
+        {% else %}
+          {{ empty_state(title="Nobody on the roster yet",
+                         hint="People appear here once their account is linked to the directory.") }}
+        {% endif %}
+        <p class="foot"><a href="/wellness">Open wellness →</a></p>
+      {% endif %}
+    </section>
+
+    {# ---------------- Work arrangement ---------------- #}
+    {% set a = d.panels.awa %}
+    <section class="oc-card" data-tour="oc-awa">
+      {% if a.personal.state == "none_open" %}
+        <h2>Work arrangement</h2>
+        <p class="sub">Nothing is open for filing right now.</p>
+        {% if a.personal.in_force and a.personal.in_force.filed %}
+        <p class="sub">In force now: <strong>{{ a.personal.in_force.period_label }}</strong> —
+          {{ a.personal.in_force.arrangement_label }}{% if a.personal.in_force.weekday_name %},
+          {{ a.personal.in_force.weekday_name }} off{% endif %}.</p>
+        {% endif %}
+      {% elif me_view or not a.team %}
+        <h2>Your work arrangement</h2>
+        <p class="sub">Filing for {{ a.personal.period_label }} ·
+          {% if a.personal.state == "closing_today" %}closes today{% else %}by {{ a.personal.deadline_label }}{% endif %}</p>
+        {% if a.personal.noawa %}
+          <div class="oc-big"><small>Marked “No AWA” for this period.</small></div>
+        {% elif a.personal.filed %}
+          <div class="oc-big">{{ a.personal.arrangement_label }}
+            <small>{% if a.personal.weekday_name %}{{ a.personal.weekday_name }} off · {% endif %}{{ a.personal.status }}</small></div>
+        {% else %}
+          <div class="oc-big"><small>You haven’t filed yet.</small></div>
+        {% endif %}
+        {% if a.personal.in_force and a.personal.in_force.filed %}
+        <p class="sub" style="margin-top:.5rem;">In force now:
+          {{ a.personal.in_force.arrangement_label }}{% if a.personal.in_force.weekday_name %},
+          {{ a.personal.in_force.weekday_name }} off{% endif %}.</p>
+        {% endif %}
+        <p class="foot">
+          {% if a.personal.can_file %}<a href="/work-arrangement/file">File yours →</a>
+          {% else %}<a href="/work-arrangement">Open work arrangement →</a>{% endif %}</p>
+      {% else %}
+        <h2>Team filing</h2>
+        <p class="sub">{{ a.team.period_label }} ·
+          {% if a.team.state == "closing_today" %}closes today{% else %}by {{ a.team.deadline_label }}
+          ({{ a.team.days_left }} {{ 'day' if a.team.days_left == 1 else 'days' }} left){% endif %}</p>
+        <div class="oc-big">{{ a.team.filed }} <small>of {{ a.team.headcount }} filed</small></div>
+        {% if a.team.headcount %}
+        <div class="oc-bar" role="img"
+             aria-label="{{ a.team.approved }} approved, {{ a.team.pending }} pending, {{ a.team.headcount - a.team.filed }} not filed, out of {{ a.team.headcount }}.">
+          {% set hc = a.team.headcount %}
+          <i class="bg-green" style="width:{{ (a.team.approved * 100 / hc)|round(1) }}%"></i>
+          <i class="bg-amber" style="width:{{ (a.team.pending * 100 / hc)|round(1) }}%"></i>
+          <i class="bg-soft" style="width:{{ ((hc - a.team.filed) * 100 / hc)|round(1) }}%"></i>
+        </div>
+        <div class="oc-key">
+          <span><i class="bg-green"></i>Approved {{ a.team.approved }}</span>
+          <span><i class="bg-amber"></i>Pending {{ a.team.pending }}</span>
+          <span><i class="bg-soft"></i>Not filed {{ a.team.headcount - a.team.filed }}</span>
+        </div>
+        {% endif %}
+        {{ faces(a.team.faces, rings=false) }}
+
+        {% if a.team.coverage %}
+        {% set g = a.team.coverage %}
+        <div class="oc-cov" style="margin-top:.6rem;">
+          <svg viewBox="0 0 {{ g.W }} {{ g.H }}" role="img" aria-label="{{ g.aria_label }}">
+            {% for gl in g.grid %}
+            <line class="grid" x1="{{ g.padl }}" y1="{{ gl.y }}" x2="{{ g.W - 12 }}" y2="{{ gl.y }}"></line>
+            <text class="ylab" x="{{ g.padl - 5 }}" y="{{ gl.y + 3.5 }}">{{ gl.label }}</text>
+            {% endfor %}
+            <line class="axis" x1="{{ g.padl }}" y1="{{ g.axis_y }}" x2="{{ g.W - 12 }}" y2="{{ g.axis_y }}"></line>
+            {% for b in g.bars %}
+            <rect class="{{ tone_fill[b.offsite.tone] }}" x="{{ b.x }}" y="{{ b.offsite.y }}"
+                  width="{{ b.w }}" height="{{ b.offsite.h }}" rx="2"></rect>
+            <rect class="{{ tone_fill[b.onsite.tone] }}" x="{{ b.x }}" y="{{ b.onsite.y }}"
+                  width="{{ b.w }}" height="{{ b.onsite.h }}" rx="2"></rect>
+            <text class="xlab" x="{{ b.label_x }}" y="{{ g.axis_y + 14 }}">{{ b.short }}</text>
+            {% endfor %}
+            <text class="axtitle" x="{{ g.xtitle_x }}" y="{{ g.xtitle_y }}" text-anchor="middle">Weekday</text>
+            <text class="axtitle" x="{{ g.ytitle_x }}" y="{{ g.ytitle_y }}" text-anchor="middle"
+                  transform="rotate(-90 {{ g.ytitle_x }} {{ g.ytitle_y }})">People on-site</text>
+          </svg>
+          {{ chart_table(g.table.caption, g.table.headers, g.table.rows) }}
+          {% if g.thinnest %}
+          <p class="sub" style="margin:.3rem 0 0;"><strong>{{ g.thinnest.name }}</strong> is thinnest —
+            {{ g.thinnest.onsite }} on-site.</p>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        {% if a.team.unfiled %}
+        <p class="foot">Still to file: {{ a.team.unfiled[:6]|join(", ") }}{% if a.team.unfiled|length > 6 %}
+          and {{ a.team.unfiled|length - 6 }} more{% endif %}.</p>
+        {% endif %}
+        <p class="foot"><a href="/work-arrangement/schedule">Open the team schedule →</a></p>
+      {% endif %}
+    </section>
+
+    {# ---------------- CSS ---------------- #}
+    {% set c = d.panels.css %}
+    {% set cv = c.personal if (me_view or not c.team) else c.team %}
+    <section class="oc-card" data-tour="oc-css">
+      <h2>{% if me_view or not c.team %}Activities you ran or spoke at
+          {% else %}Activities your team ran or spoke at{% endif %}</h2>
+      <p class="sub">Last {{ cv.window_days }} days</p>
+
+      {% if cv.rows %}
+      <ul class="oc-list">
+        {% for r in cv.rows %}
+        <li>
+          <a class="t" href="{{ r.url }}">{{ r.name }}</a>
+          <div class="oc-meta">
+            <span>{{ r.date }}</span>
+            {% if r.score is not none %}
+              <span class="oc-score {{ tone_txt[r.tone] }}">{{ r.shown }}</span>
+              {% if r.score_kind == "speaker" %}<span class="oc-chip">speaker rating</span>{% endif %}
+              {% if r.low_n %}<span class="oc-chip">{{ r.respondents }} responses — too few to read</span>
+              {% else %}<span>{{ r.respondents }} responses</span>{% endif %}
+            {% else %}
+              <span class="sc-soft">No ratings yet</span>
+            {% endif %}
+            {% for role in r.roles %}
+              <span class="oc-chip">{{ {"ran":"Organised","spoke":"Spoke","unit":"Your section ran this"}[role] }}</span>
+            {% endfor %}
+            {% if r.who %}<span>{{ r.who|join(", ") }}</span>{% endif %}
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% if cv.total > cv.rows|length %}
+      <p class="foot">{{ cv.total - cv.rows|length }} more in the last {{ cv.window_days }} days.</p>
+      {% endif %}
+      {% elif me_view or not c.team %}
+        {% if not c.personal.linked %}
+          {{ empty_state(title="We can’t match you to activities yet",
+                         hint="Your account isn’t linked to a directory record, so we can’t tell which activities you spoke at.") }}
+        {% else %}
+          {{ empty_state(title="Nothing in the last 90 days",
+                         hint="Activities you speak at or create show up here.") }}
+        {% endif %}
+      {% else %}
+        {{ empty_state(title="Nothing in the last 90 days",
+                       hint="Activities your section runs, or that one of you speaks at, show up here.") }}
+      {% endif %}
+
+      {% if c.upcoming %}
+      <p class="sub" style="margin:.9rem 0 .2rem; font-weight:700; color:var(--ink);">Coming up</p>
+      <ul class="oc-list">
+        {% for u in c.upcoming %}
+        <li><a class="t" href="{{ u.url }}">{{ u.name }}</a>
+          <div class="oc-meta"><span>{{ u.date }}</span>
+            <span>{{ u.registered }} registered</span></div></li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+
+      {#-- Load-bearing. There is no attendance relation in this system, so
+           without this line the panel reads as an attendance log and is wrong. --#}
+      <p class="foot">Attendance isn’t recorded here — only who ran an activity and who spoke at it.</p>
+    </section>
+
+  </div>
+  {% endif %}
+
+  {# ---------------- how your companion grows ---------------- #}
+  {% if ladder %}
+  <section class="oc-card" style="margin-top:1.4rem;" data-tour="oc-growth">
+    <h2>{% if profile and profile.avatar_name %}How {{ profile.avatar_name }} grows
+        {% else %}How your companion grows{% endif %}</h2>
+    <p class="sub">Six stages. Wellness breaks are what move you along.</p>
+    {{ growth(profile.avatar_kind if profile and profile.avatar_kind else "plant",
+              ladder, growth_how, wstats,
+              pet_name=(profile.avatar_name if profile else "")) }}
+  </section>
+  {% endif %}
+
+  {# ---------------- the three doors ---------------- #}
+  <div class="doors">
+    <a class="door" href="/wellness">
+      <span class="em" aria-hidden="true">🌱</span>
+      <span class="t">Wellness — my 2-hour break</span>
+      <div class="d">Request your weekly wellness break and grow your companion.</div>
+      {% if wstats %}<span class="meta">{{ wstats.points }} pts · {{ wstats.streak }}-week streak</span>{% endif %}
+    </a>
+    <a class="door" href="/work-arrangement">
+      <span class="em" aria-hidden="true">🗓️</span>
+      <span class="t">Work arrangement — CWW / WFH</span>
+      <div class="d">File your on-site, compressed or work-from-home schedule for the half-month.</div>
+      {% if wa_label %}
+      <span class="meta">{{ wa_label }} ·
+        {% if wa_now %}{{ wa_now.arrangement_label }}{% if wa_now.status == 'pending' %} (waiting){% endif %}
+        {% else %}not filed yet{% endif %}</span>
+      {% endif %}
+    </a>
+    <a class="door" href="{{ css_url }}">
+      <span class="em" aria-hidden="true">📊</span>
+      <span class="t">CSS — surveys &amp; reports</span>
+      <div class="d">Client satisfaction: dashboards, activities and official reports.</div>
+      <span class="meta">{{ role_label }}</span>
+    </a>
+  </div>
+</div>
+{% endblock %}

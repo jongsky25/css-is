@@ -277,7 +277,7 @@ UI = {
     # ---------------------------------------------------------------------------
     # Thanks page (thanks.html)
     # ---------------------------------------------------------------------------
-    "thanks_title": {"en": "Thank you — CSS-IS", "fil": "Salamat — CSS-IS"},
+    "thanks_title": {"en": "Thank you — Office Connect", "fil": "Salamat — Office Connect"},
     "thanks_h1": {"en": "✓ Thank you!", "fil": "✓ Salamat!"},
     "thanks_rp_feedback_for": {"en": "Your feedback for", "fil": "Naitala ang inyong puna para sa"},
     "thanks_rp_person": {"en": "resource person", "fil": "tagapagsalita"},

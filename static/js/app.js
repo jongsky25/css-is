@@ -1,4 +1,4 @@
-/* CSS-IS progressive enhancement — tiny, no dependencies.
+/* Office Connect progressive enhancement — tiny, no dependencies.
    Everything works without JS; this only adds comfort. */
 
 // ── Quick-pick comment chips: shared cap/dim helper ────────────────────────

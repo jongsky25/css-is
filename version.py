@@ -17,10 +17,61 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.59"
+APP_VERSION = "2.60"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.60",
+        "date": "August 15, 2026",
+        "summary": "The system has a new name — Office Connect. Nothing moved "
+                   "and nothing you saved has changed. Your companion also "
+                   "answers back properly now when it has already been fed.",
+        "changes": [
+            "You can now see all six growth stages of your companion — the ones "
+            "you've reached and the ones still ahead, with the points each one "
+            "needs — plus a plain list of what earns those points. It's on your "
+            "home page and on your profile.",
+            "Your home page now shows how your team is doing instead of just "
+            "asking where you want to go: who has filed their wellness break "
+            "and their work arrangement this period, and the recent activities "
+            "your section ran, with their ratings. Tap “Me” to see just your "
+            "own. The three buttons you used before are still there, "
+            "underneath.",
+            "The menu is now four groups — Wellness, CSS, AWA and "
+            "Administrator — instead of seven. Wellness comes first because it "
+            "is the page staff open most.",
+            "Six pages that already existed but were in no menu at all are now "
+            "listed: applying for a break, wellness team monitoring and "
+            "approvals, and filing, team schedule and approvals for your work "
+            "arrangement. If you were reaching these by bookmark, they now have "
+            "a home.",
+            "The CSS menu groups its pages under small headings — See how "
+            "we're doing, Official reports, Run a survey, Data entry — so a "
+            "long list is easier to scan.",
+            "On the wellness page, the whole “This week — 0 of 2 hours "
+            "claimed” box now takes you to the request form. Before, only the "
+            "small button did, so clicking the words themselves did nothing.",
+            "When you have already claimed every hour available, that button is "
+            "now properly switched off instead of still opening the form when "
+            "reached by keyboard.",
+            "Your companion now always says something when you water or feed "
+            "it. If you had already cared for it recently it says so — before, "
+            "it went quiet, which made the button look broken when it had "
+            "actually worked. This was far and away the thing people were most "
+            "often clicking over and over.",
+            "CSS-IS is now called Office Connect. The old name described only "
+            "the client satisfaction survey, but the system now also carries "
+            "your wellness break and your work arrangement, so it needed a name "
+            "that covers all three.",
+            "You will see the new name on the sign-in screen, at the top of "
+            "every page, on the app icon if you installed it to your phone, and "
+            "in account emails.",
+            "The Client Satisfaction Survey itself keeps its name, and so does "
+            "everything inside it — the same reports, the same scores, the same "
+            "links. Every page you have bookmarked still works.",
+        ],
+    },
     {
         "version": "2.59",
         "date": "August 15, 2026",

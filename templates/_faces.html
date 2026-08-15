@@ -1,0 +1,87 @@
+{#
+  The people wall — one circular mark per teammate, used by both the wellness
+  and the work-arrangement panels.
+
+  Pictures, not names, by request. Precedence is the same everywhere in the app:
+  directory photo -> the person's companion avatar -> initials. A teammate's
+  ACCOUNT photo is deliberately unreachable (/me/photo is own-photo-only, "no id
+  in the URL to enumerate"), so the companion carries the middle case — which
+  happens to put the avatar people are growing in front of the team that shares
+  it.
+
+  Every colour comes from a TONE TOKEN the Python side chose
+  ("green"/"accent"/"amber"/"red"/"soft"), resolved to a custom property in one
+  place below. A literal hex here would break 35 of the 36 theme x accent
+  combinations.
+
+  The names live in the aria-label and in the panel's chart_table fallback, so
+  the wall reads as a picture to the eye and as a list to a screen reader.
+#}
+{% from "_avatars.html" import avatar_svg %}
+
+{% macro face_defs() %}
+<style>
+  .faces { display:flex; flex-wrap:wrap; gap:.55rem; margin:.2rem 0 .1rem; }
+  .face { position:relative; width:52px; height:52px; flex:0 0 auto; }
+  .face .ring { position:absolute; inset:0; transform:rotate(-90deg); }
+  .face .ring circle { fill:none; stroke-linecap:round; }
+  .face .track { stroke:var(--surface-3); }
+  .face .pic { position:absolute; inset:6px; border-radius:50%; overflow:hidden;
+               background:var(--surface-2); display:flex; align-items:center;
+               justify-content:center; font-weight:800; font-size:.78rem;
+               color:var(--soft); }
+  .face .pic img, .face .pic svg { width:100%; height:100%; object-fit:cover; display:block; }
+  .face.is-none .pic { opacity:.55; }
+  .face.is-me::after { content:""; position:absolute; inset:-3px; border-radius:50%;
+                       border:2px solid var(--accent); }
+  .face .chk { position:absolute; right:-1px; bottom:-1px; width:16px; height:16px;
+               border-radius:50%; background:var(--green); color:var(--on-accent);
+               font-size:.62rem; line-height:16px; text-align:center; font-weight:900;
+               border:2px solid var(--surface); }
+  /* tone -> colour, resolved once */
+  .tone-green  { stroke:var(--green);  }
+  .tone-accent { stroke:var(--accent); }
+  .tone-amber  { stroke:var(--amber);  }
+  .tone-red    { stroke:var(--red);    }
+  .tone-soft   { stroke:var(--line-strong); }
+  .faces-more { align-self:center; color:var(--soft); font-size:.8rem; font-weight:700; }
+</style>
+{% endmacro %}
+
+{#-- One person. `c` needs: name, initials, photo_url, avatar_kind, tone, is_me,
+     aria, and (optionally) ring + a done flag. --#}
+{% macro face(c, ring=None, done=false) %}
+<span class="face{{ ' is-me' if c.is_me }}{{ ' is-none' if c.tone == 'soft' }}"
+      role="img" aria-label="{{ c.aria or c.name }}" title="{{ c.aria or c.name }}">
+  {% if ring %}
+  <svg class="ring" viewBox="0 0 {{ ring.size }} {{ ring.size }}" aria-hidden="true">
+    <circle class="track" cx="{{ ring.cx }}" cy="{{ ring.cy }}" r="{{ ring.r }}"
+            stroke-width="{{ ring.sw }}"></circle>
+    {% if ring.dash > 0 %}
+    <circle class="tone-{{ c.tone }}" cx="{{ ring.cx }}" cy="{{ ring.cy }}" r="{{ ring.r }}"
+            stroke-width="{{ ring.sw }}"
+            stroke-dasharray="{{ ring.dash }} {{ ring.gap }}"></circle>
+    {% endif %}
+  </svg>
+  {% endif %}
+  <span class="pic">
+    {% if c.photo_url %}<img src="{{ c.photo_url }}" alt="" loading="lazy" decoding="async">
+    {% elif c.avatar_kind %}{{ avatar_svg(c.avatar_kind, 4) }}
+    {% else %}{{ c.initials }}{% endif %}
+  </span>
+  {% if done %}<span class="chk" aria-hidden="true">✓</span>{% endif %}
+</span>
+{% endmacro %}
+
+{#-- A capped wall. Beyond `limit` we say "+N more" rather than paginating: the
+     full, sortable list already exists on the module's own team page. --#}
+{% macro faces(cells, limit=18, rings=true) %}
+<div class="faces">
+  {% for c in cells[:limit] %}
+    {{ face(c, ring=(c.ring if rings else None), done=(c.state == 'completed')) }}
+  {% endfor %}
+  {% if cells|length > limit %}
+  <span class="faces-more">+{{ cells|length - limit }} more</span>
+  {% endif %}
+</div>
+{% endmacro %}

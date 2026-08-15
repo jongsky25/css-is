@@ -1,5 +1,5 @@
 """
-CSS-IS auth — minimal, stdlib-only authentication + role-based access control.
+Office Connect auth — minimal, stdlib-only authentication + role-based access control.
 
 What it does:
   * hashes passwords with PBKDF2-HMAC-SHA256 + a per-user salt (no dependencies),

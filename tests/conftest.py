@@ -1,5 +1,5 @@
 """
-Shared fixtures for the CSS-IS HTTP test suite.
+Shared fixtures for the Office Connect HTTP test suite.
 
 Strategy
 --------

@@ -365,3 +365,60 @@ def test_profile_includes_care_streak(conn):
     st.record_avatar_care(conn, uid, now=NOW)
     st.record_avatar_care(conn, uid, now=NOW + timedelta(days=1))
     assert st.get_user_profile(conn, uid)["avatar_care_streak"] == 2
+
+
+# ---------------------------------------------------------------------------
+# The growth ladder — "what am I working toward, and how do I get there?"
+# ---------------------------------------------------------------------------
+# The companion had six growth stages from the start, but only ever showed the
+# one you were on. Nothing said the others existed or how to reach them.
+
+def test_growth_ladder_marks_where_you_are(app_mod):
+    ladder = st.avatar_growth_ladder("turtle", {"stage": 3})
+
+    assert [s["stage"] for s in ladder] == [1, 2, 3, 4, 5, 6]
+    assert [s["points_at"] for s in ladder] == st.WELLNESS_LEVELS
+    assert [s["reached"] for s in ladder] == [True, True, True, False, False, False]
+    assert [s["current"] for s in ladder].count(True) == 1
+    assert next(s for s in ladder if s["current"])["stage"] == 3
+    # names follow the SPECIES family, not a single hardcoded set
+    assert ladder[0]["name"] == st.avatar_stage_name("turtle", 1)
+    assert st.avatar_growth_ladder("cactus", {"stage": 1})[0]["name"] != ladder[0]["name"]
+
+
+def test_growth_ladder_survives_missing_or_odd_stats(app_mod):
+    """Gamification is derived on every read, so a caller may have no stats at
+    all (a brand-new account) — the ladder must still render, at stage 1."""
+    for stats in (None, {}, {"stage": 0}, {"stage": 99}):
+        ladder = st.avatar_growth_ladder("plant", stats)
+        assert len(ladder) == 6
+        assert all(s["name"] for s in ladder)
+
+
+def test_growth_actions_are_read_from_the_scoring_constants(app_mod):
+    """The explanation must not be able to drift from the arithmetic that
+    actually drives the avatar."""
+    how = st.avatar_growth_actions("cat")
+    pts = {a["points"] for a in how["points"]}
+
+    assert st.WELLNESS_PTS_BREAK in pts
+    assert st.WELLNESS_PTS_REFLECTION in pts
+    assert st.WELLNESS_PTS_STREAK_WEEK in pts
+    assert str(st.WELLNESS_WEEKLY_HOURS) in " ".join(a["label"] for a in how["points"])
+    # you FEED an animal and WATER a plant
+    assert how["care"]["verb"] == st.avatar_care_verb("cat")
+    assert st.avatar_growth_actions("fern")["care"]["verb"] != how["care"]["verb"]
+    # care earns a badge, not points — said plainly so it doesn't read as a
+    # fifth way to level up
+    assert how["care"]["badge"] == st.WELLNESS_BADGES["avatar_care_7"][0]
+
+
+def test_landing_and_profile_both_show_the_ladder(app_mod):
+    from tests.conftest import _auth_client
+    c = _auth_client(app_mod, "admin")
+    for path in ("/", "/me"):
+        html = c.get(path).text
+        assert "gl-strip" in html, path
+        assert "grows" in html, path
+        # every locked stage advertises the threshold that unlocks it
+        assert "pts" in html, path
