@@ -28,6 +28,34 @@ when it was already done. Nothing server-side changed; the cooldown rule and
 `record_avatar_care`'s contract are untouched, and all 29 `test_avatar_care.py`
 tests still pass. `avatars.js` cache-buster bumped to `?v=20260815a`.
 
+### The companion's growth ladder
+
+The avatar has had six growth stages since it shipped, but only ever showed the
+one you were on. Nothing on screen said the others existed, what they looked
+like, or how to reach them — and the 30-day telemetry says people could not even
+tell whether *caring* for it was working (see the care-button fix below).
+
+All six stages of **your own species** now render side by side: reached ones in
+colour, locked ones dimmed with the point threshold that unlocks them, and "You
+are here" on the current one. Beneath sits the progress bar to the next stage and
+a plain list of what actually earns points — take a break **+10**, write a
+reflection **+5**, use your full 2 hours **+5**, each streak week **+2**.
+
+Two deliberate details:
+
+- **Everything is derived.** The stages come from `AVATAR_STAGE_NAMES`, the
+  thresholds from `WELLNESS_LEVELS`, and the how-it-grows list is read straight
+  off the `WELLNESS_PTS_*` constants via `avatar_growth_actions()`. The
+  explanation cannot drift from the arithmetic it describes — there is a test
+  asserting each number comes from its constant.
+- **Caring for it is named as *not* being a way to level up.** Watering or
+  feeding earns the *Devoted caretaker* badge, not points. Listing it alongside
+  the four scoring actions without saying so would have implied a fifth route to
+  growth that does not exist.
+
+Shown on the new landing page and on `/me` — where you pick the companion in the
+first place, which is exactly where not knowing how it grows was most obvious.
+
 ### `/` becomes the Team View
 
 The landing page people actually see. `/` was the most-visited screen in the app

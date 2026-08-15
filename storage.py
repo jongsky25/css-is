@@ -5732,6 +5732,50 @@ def wellness_stats(conn, user_id):
             "next_at": next_at, "progress": progress}
 
 
+def avatar_growth_ladder(kind, stats):
+    """The six growth stages of ONE species, with where this person stands.
+
+    Pure presentation over what wellness_stats already derives — no new state,
+    nothing persisted, so it cannot drift from the points that actually drive the
+    avatar. Returns one entry per stage:
+
+        {stage, name, points_at, reached, current}
+
+    `points_at` is the cumulative point threshold from WELLNESS_LEVELS, which is
+    what makes the ladder honest: a locked stage shows the number that unlocks
+    it rather than a vague "keep going".
+
+    Exists because the companion's growth was invisible — you could see the
+    creature you had, but not the one you were working toward, and nothing on
+    screen said how it grew."""
+    stage_now = (stats or {}).get("stage", 1)
+    return [{"stage": i + 1,
+             "name": avatar_stage_name(kind, i + 1),
+             "points_at": pts,
+             "reached": (i + 1) <= stage_now,
+             "current": (i + 1) == stage_now}
+            for i, pts in enumerate(WELLNESS_LEVELS)]
+
+
+def avatar_growth_actions(kind):
+    """How the companion grows, read straight off the scoring constants so the
+    explanation can never disagree with the arithmetic. `care` is the cosmetic
+    day-streak, which earns a badge rather than points — said plainly rather than
+    left to look like a fifth way to level up."""
+    return {
+        "points": [
+            {"label": "Take a wellness break", "points": WELLNESS_PTS_BREAK},
+            {"label": "Write a reflection afterwards", "points": WELLNESS_PTS_REFLECTION},
+            {"label": f"Use your full {WELLNESS_WEEKLY_HOURS} hours in a week",
+             "points": WELLNESS_PTS_FULL_WEEK},
+            {"label": "Each week of an unbroken streak", "points": WELLNESS_PTS_STREAK_WEEK},
+        ],
+        "care": {"verb": avatar_care_verb(kind),
+                 "badge": WELLNESS_BADGES["avatar_care_7"][0],
+                 "blurb": WELLNESS_BADGES["avatar_care_7"][1]},
+    }
+
+
 def wellness_award_badges(conn, user_id):
     """Grant any newly earned badges (idempotent — UNIQUE(user_id,badge) makes
     re-checks free). Returns the labels of badges awarded on THIS call. Does not

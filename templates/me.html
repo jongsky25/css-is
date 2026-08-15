@@ -1,9 +1,11 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import flash %}
 {% from "_avatars.html" import avatar_svg, avatar_defs %}
+{% from "_growth.html" import growth_defs, growth %}
 {% block title %}My profile{% endblock %}
 {% block content %}
 {{ avatar_defs() }}
+{{ growth_defs() }}
 <style>
   .me-wrap { max-width:760px; margin:0 auto; }
   .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px;
@@ -95,6 +97,18 @@
 
     <div class="actions"><button class="btn" type="submit">Save changes</button></div>
   </form>
+
+  {#-- Picking a companion here without being told how it grows was the gap:
+       you could choose the creature but not see where it was going. --#}
+  {% if ladder %}
+  <div class="panel">
+    <h2>{% if profile and profile.avatar_name %}How {{ profile.avatar_name }} grows
+        {% else %}How your companion grows{% endif %}</h2>
+    {{ growth(profile.avatar_kind if profile and profile.avatar_kind else "plant",
+              ladder, growth_how, wstats,
+              pet_name=(profile.avatar_name if profile else "")) }}
+  </div>
+  {% endif %}
 </div>
 
 <script>

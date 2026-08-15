@@ -4029,6 +4029,7 @@ def choose(request: Request, msg: str = "", view: str = "team"):
     finally:
         conn.close()
     role = request.state.user["role"]
+    avatar_kind = (profile or {}).get("avatar_kind") or st.AVATAR_DEFAULT
     return templates.TemplateResponse(request, "office_connect.html", {
         "nav_active": "", "show_scope": False, "msg": msg,
         "first_name": first_name, "profile": profile,
@@ -4038,6 +4039,10 @@ def choose(request: Request, msg: str = "", view: str = "team"):
         "role_label": auth.ROLE_LABELS.get(role, role),
         "role_blurb": auth.ROLE_BLURB.get(role, ""),
         "d": data, "view": view,
+        # The companion's growth was invisible: you could see the creature you
+        # had but not the one you were working toward, nor how it got there.
+        "ladder": st.avatar_growth_ladder(avatar_kind, wstats),
+        "growth_how": st.avatar_growth_actions(avatar_kind),
     })
 
 
@@ -4281,13 +4286,23 @@ def _render_me(request, msg="", err=""):
     conn = get_conn()
     try:
         profile = st.get_user_profile(conn, request.state.user["id"])
+        # Same growth ladder the landing page shows: picking a companion here and
+        # not being told how it grows is exactly the gap this closes.
+        try:
+            wstats = st.wellness_stats(conn, request.state.user["id"])
+        except Exception:
+            wstats = None
     finally:
         conn.close()
+    kind = (profile or {}).get("avatar_kind") or st.AVATAR_DEFAULT
     return templates.TemplateResponse(request, "me.html", {
         "nav_active": "", "show_scope": False,
         "profile": profile, "has_person": bool(profile and profile.get("rp_id")),
         "initials": _initials(profile.get("person_name") if profile else ""),
         "catalog": st.AVATAR_CATALOG, "name_maxlen": st.AVATAR_NAME_MAXLEN,
+        "wstats": wstats,
+        "ladder": st.avatar_growth_ladder(kind, wstats),
+        "growth_how": st.avatar_growth_actions(kind),
         "msg": msg, "err": err,
     })
 

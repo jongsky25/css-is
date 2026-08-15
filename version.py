@@ -28,6 +28,10 @@ CHANGELOG = [
                    "and nothing you saved has changed. Your companion also "
                    "answers back properly now when it has already been fed.",
         "changes": [
+            "You can now see all six growth stages of your companion — the ones "
+            "you've reached and the ones still ahead, with the points each one "
+            "needs — plus a plain list of what earns those points. It's on your "
+            "home page and on your profile.",
             "Your home page now shows how your team is doing instead of just "
             "asking where you want to go: who has filed their wellness break "
             "and their work arrangement this period, and the recent activities "

@@ -2,10 +2,12 @@
 {% from "_avatars.html" import avatar, avatar_defs %}
 {% from "_components.html" import flash, chart_table, empty_state %}
 {% from "_faces.html" import face_defs, faces %}
+{% from "_growth.html" import growth_defs, growth %}
 {% block title %}Home{% endblock %}
 {% block content %}
 {{ avatar_defs() }}
 {{ face_defs() }}
+{{ growth_defs() }}
 <style>
   .oc { max-width:1040px; margin:0 auto; }
   .oc-hero { display:flex; gap:1rem; align-items:center; flex-wrap:wrap;
@@ -320,6 +322,18 @@
     </section>
 
   </div>
+  {% endif %}
+
+  {# ---------------- how your companion grows ---------------- #}
+  {% if ladder %}
+  <section class="oc-card" style="margin-top:1.4rem;" data-tour="oc-growth">
+    <h2>{% if profile and profile.avatar_name %}How {{ profile.avatar_name }} grows
+        {% else %}How your companion grows{% endif %}</h2>
+    <p class="sub">Six stages. Wellness breaks are what move you along.</p>
+    {{ growth(profile.avatar_kind if profile and profile.avatar_kind else "plant",
+              ladder, growth_how, wstats,
+              pet_name=(profile.avatar_name if profile else "")) }}
+  </section>
   {% endif %}
 
   {# ---------------- the three doors ---------------- #}
