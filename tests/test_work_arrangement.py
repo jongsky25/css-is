@@ -145,6 +145,31 @@ def test_filing_window_closes_the_day_after_the_deadline(monkeypatch):
     assert at(date(2026, 8, 20))[0] == "2026-09-01"
 
 
+@pytest.mark.parametrize("today,shows", [
+    (date(2026, 8, 13), "2026-08-01"),   # Thursday, mid-period
+    (date(2026, 8, 14), "2026-08-01"),   # the period's LAST workday — still it
+    (date(2026, 8, 15), "2026-08-16"),   # Saturday, nothing left to work -> next
+    (date(2026, 8, 16), "2026-08-16"),   # Sunday, already the new period
+    (date(2026, 8, 29), "2026-08-16"),   # Saturday, but Mon the 31st is to come
+    (date(2026, 8, 30), "2026-08-16"),   # Sunday, likewise
+    (date(2026, 8, 31), "2026-08-16"),   # Monday, the period's last workday
+    (date(2026, 9, 1), "2026-09-01"),
+])
+def test_the_schedule_shown_rolls_forward_once_a_period_is_worked_out(today, shows):
+    """A period stops being the one to show the moment it has no workdays left
+    — on Saturday the 15th nobody works another day under the 1st-15th
+    arrangement. The CALENDAR period is deliberately unmoved by this."""
+    assert st.work_arrangement_schedule_period(today) == shows
+
+
+def test_the_calendar_period_is_not_rolled_forward(monkeypatch):
+    """Filing deadlines, "No AWA" intervals and the annex all key on the
+    calendar period; rolling it early would change what people may file."""
+    _at(monkeypatch, date(2026, 8, 15))
+    assert st.work_arrangement_period() == "2026-08-01"
+    assert st.work_arrangement_schedule_period() == "2026-08-16"
+
+
 # ----------------------------------------------------- field validation ------
 
 def test_reg_takes_no_weekday(wa_org):
@@ -658,6 +683,28 @@ def test_hub_leads_with_the_current_in_force_schedule(wa_org, app_mod, monkeypat
     assert label in r.text
     assert "in force" in r.text
     assert r.text.count(label) == 1
+
+
+def test_hub_shows_the_next_period_on_a_worked_out_weekend(wa_org, app_mod, monkeypatch):
+    """Saturday August 15: the 1st-15th has no workdays left, so the hub must
+    already lead with the 16th-31st — the schedule about to be worked."""
+    emp, ps = wa_org["staff"][0], "2026-08-16"
+    _at(monkeypatch, date(2026, 8, 14))            # Aug 16-31 still open then
+    _approved(wa_org, emp, "WFH", 2, ps=ps)
+    _at(monkeypatch, date(2026, 8, 15))            # Saturday
+
+    r = _client_for_id(app_mod, emp).get("/work-arrangement")
+    assert r.status_code == 200
+    assert "August 16-31, 2026" in r.text
+    assert "August 1-15, 2026" not in r.text
+
+
+def test_schedule_page_opens_on_the_worked_period_not_the_filing_one(
+        wa_org, app_mod, monkeypatch):
+    _at(monkeypatch, date(2026, 8, 15))            # Saturday
+    r = _client_for_id(app_mod, wa_org["chief"]).get("/work-arrangement/schedule")
+    assert r.status_code == 200
+    assert "August 16-31, 2026" in r.text
 
 
 def test_hub_current_schedule_says_so_when_nothing_was_filed(wa_org, app_mod, monkeypatch):
