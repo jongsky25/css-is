@@ -451,7 +451,7 @@ _WA_TONE = {"approved": "green", "pending": "amber", "noawa": "accent", "": "sof
 def _awa_panel_build(conn, *, me, user, today, kind):
     open_ps = st.work_arrangement_open_periods()
     ps_file = open_ps[0] if open_ps else None
-    ps_now = st.work_arrangement_period()
+    ps_now = st.work_arrangement_schedule_period()
 
     try:
         cur = st.my_work_arrangement_for(conn, me["user_id"], ps_now)
