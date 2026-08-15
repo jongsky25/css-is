@@ -5251,12 +5251,23 @@ def approver_title_for(conn, user_id):
 
 def _org_scope_for_user(conn, user):
     """The org_unit.path a viewer's monitoring is limited to, or None for the
-    whole bureau. Admins (and any account with no directory org unit) monitor
-    everyone; a directory-linked chief monitors only their own unit's subtree —
-    a section chief their section, a division chief their whole division — so the
-    dashboard mirrors who they actually approve for (list_wellness_approvals)
-    instead of every section."""
-    if not user or user.get("role") == "admin":
+    whole bureau.
+
+    THE DIRECTORY DECIDES, NOT THE APP ROLE. Whoever you are, you monitor your
+    own org_unit subtree: a section chief their section, a division chief their
+    whole division, someone whose directory record sits at the BUREAU-level unit
+    the whole bureau (the path test below is a subtree test, so that falls out
+    for free). An `admin` role is a permission to operate the system — grant
+    users, edit rules, run exports — and was never evidence of standing over
+    every section's wellness and work-arrangement filings.
+
+    None still means bureau-wide, and an account with NO directory org unit still
+    resolves to it: every caller of this helper sits behind a chief-only route
+    guard (user_is_approving_chief) that has already excluded unlinked staff, and
+    the bureau-wide exports call the underlying queries with user=None. A page
+    shown to every signed-in user must use team_scope_for_user instead — see its
+    docstring."""
+    if not user:
         return None
     row = conn.execute("""
         SELECT ou.path FROM admin_user a
@@ -5270,33 +5281,20 @@ def _org_scope_for_user(conn, user):
 def team_scope_for_user(conn, user):
     """(scope_path, kind) for a page that shows one person their TEAM.
 
-    Returns kind "bureau" (scope_path None — everything), "unit" (scope_path is
-    an org_unit.path subtree), or "none" (no team at all).
+    Returns kind "unit" (scope_path is an org_unit.path subtree) or "none" (no
+    team at all). There is deliberately no bureau-wide kind: your team is the
+    unit the DIRECTORY puts you in, and someone recorded at the bureau-level unit
+    already gets everything through the subtree test in _path_in_scope.
 
-    This exists because _org_scope_for_user above collapses two very different
-    situations onto the same None: an admin, who is *meant* to see the whole
-    bureau, and an account with no directory link or no org unit, which simply
-    has no team to show. Returning None for both is safe there only because
-    every caller sits behind a route guard (user_is_approving_chief) that has
-    already excluded unlinked staff.
-
-    A landing page shown to EVERY signed-in user has no such guard by design, so
-    the distinction has to be drawn here: an unlinked account resolves to "none"
-    and its caller must render a personal view, never a bureau-wide roster of
-    everyone's wellness and work-arrangement filings."""
-    if _user_role_of(user) == "admin":
-        return None, "bureau"
+    This exists because _org_scope_for_user above answers None for an account
+    with no directory link — safe there only because every one of its callers
+    sits behind a route guard (user_is_approving_chief) that has already excluded
+    unlinked staff. A landing page shown to EVERY signed-in user has no such
+    guard by design, so the distinction has to be drawn here: an unlinked account
+    resolves to "none" and its caller must render a personal view, never a
+    bureau-wide roster of everyone's wellness and work-arrangement filings."""
     path = _org_scope_for_user(conn, user)
     return (path, "unit") if path else (None, "none")
-
-
-def _user_role_of(user):
-    """Role out of a request user dict (or an object with .role); None if absent."""
-    if not user:
-        return None
-    if isinstance(user, dict):
-        return user.get("role")
-    return getattr(user, "role", None)
 
 
 def _path_in_scope(path, scope_path):
@@ -5833,10 +5831,11 @@ def wellness_week_rollup(conn, week_start, user=None):
     each person's picture (or their companion, or their initials) and apply
     is_bureau_director() without a second pass.
 
-    Scoping is _org_scope_for_user's: a directory-linked chief sees their own
-    unit subtree, admins and an unscoped call see the bureau. Callers that show
-    this to EVERY user must resolve scope with team_scope_for_user first — see
-    its docstring for why None is not a safe default there."""
+    Scoping is _org_scope_for_user's: everyone sees their own directory unit's
+    subtree, whatever their app role; an unscoped call (user=None) sees the
+    bureau. Callers that show this to EVERY user must resolve scope with
+    team_scope_for_user first — see its docstring for why None is not a safe
+    default there."""
     scope_path = _org_scope_for_user(conn, user)
     people = conn.execute("""
         SELECT u.id, u.username, rp.name, ou.short_name, ou.path,
@@ -5881,6 +5880,139 @@ def wellness_week_rollup(conn, week_start, user=None):
             "scope_path": scope_path,
             "week_used": total_used, "week_entitled": entitled,
             "week_pct": round(total_used * 100 / entitled) if entitled else 0}
+
+
+# ---- the habit behind the week --------------------------------------------
+
+# Eight weeks: long enough that a weekday pattern is a pattern rather than last
+# week repeated, short enough to still describe how the team works NOW.
+WELLNESS_PATTERN_WEEKS = 8
+
+# Start-time buckets. Coarse on purpose — the useful question is "morning or
+# afternoon, before or after lunch", not which of nine start times won.
+WELLNESS_SLOTS = [("early", "Before 10", 0, 10), ("mid", "10am-12nn", 10, 12),
+                  ("lunch", "12nn-2pm", 12, 14), ("late", "After 2pm", 14, 24)]
+
+_WELL_DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
+                   "Saturday", "Sunday"]
+
+
+def _wellness_slot_index(start_time):
+    """Which WELLNESS_SLOTS bucket a 'HH:MM' start time falls in."""
+    try:
+        hour = int(str(start_time).split(":")[0])
+    except (ValueError, AttributeError, IndexError):
+        return 0
+    for i, (_key, _label, lo, hi) in enumerate(WELLNESS_SLOTS):
+        if lo <= hour < hi:
+            return i
+    return len(WELLNESS_SLOTS) - 1
+
+
+def wellness_pattern(conn, week_start, user=None, weeks=WELLNESS_PATTERN_WEEKS,
+                     *, only_user_id=None):
+    """WHEN breaks are actually taken, over the last `weeks` weeks.
+
+    The week rollup above answers "who has filed this week"; this answers the
+    question a chief asks next — which day and hour the team actually protects,
+    what they do with it, and whether it helps. Counts only, no geometry and no
+    HTML: the caller turns these into bars (see dashboard_insights).
+
+    Only APPROVED and COMPLETED claims count. A pending request is a plan, and a
+    denied or cancelled one never happened; putting either in a pattern would
+    describe intentions as behaviour.
+
+    Scoping is wellness_week_rollup's, for the same reason — a landing page must
+    resolve scope with team_scope_for_user first. `only_user_id` is the one
+    exception: it is ONE person's own history, so no scope filter applies (you
+    may always see yourself, wherever the directory puts you)."""
+    first_week = (date.fromisoformat(week_start)
+                  - timedelta(weeks=max(1, weeks) - 1)).isoformat()
+    sql = """
+        SELECT c.break_date, c.start_time, c.hours, c.activity, c.week_start,
+               c.user_id, ou.path, r.mood_before, r.mood_after, r.felt_refreshed,
+               r.id
+        FROM wellness_claim c
+        JOIN admin_user u ON u.id = c.user_id
+        LEFT JOIN resource_person rp ON rp.id = u.rp_id
+        LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id
+        LEFT JOIN wellness_reflection r ON r.claim_id = c.id
+        WHERE c.week_start >= ? AND c.week_start <= ?
+          AND c.status IN ('approved', 'completed')
+    """
+    args = [first_week, week_start]
+    if only_user_id is not None:
+        sql += " AND c.user_id = ?"
+        args.append(only_user_id)
+    rows = conn.execute(sql, args).fetchall()
+    if only_user_id is None:
+        scope_path = _org_scope_for_user(conn, user)
+        rows = [r for r in rows if _path_in_scope(r[6], scope_path)]
+
+    slots = [{"key": k, "label": lab} for k, lab, _lo, _hi in WELLNESS_SLOTS]
+    days = [{"idx": i, "name": n, "short": n[:3], "n": 0}
+            for i, n in enumerate(_WELL_DAY_NAMES)]
+    grid = [[0] * len(slots) for _ in _WELL_DAY_NAMES]
+    slot_counts = [0] * len(slots)
+    by_activity, by_week, people = {}, {}, set()
+    hours = 0
+    moods, refreshed, reflected, answered = [], 0, 0, 0
+
+    week_keys = [(date.fromisoformat(week_start) - timedelta(weeks=i)).isoformat()
+                 for i in range(max(1, weeks) - 1, -1, -1)]
+    for k in week_keys:
+        by_week[k] = {"week_start": k, "people": set(), "hours": 0}
+
+    for (break_date, start_time, hrs, activity, wk, uid, _path,
+         mood_before, mood_after, felt, reflection_id) in rows:
+        try:
+            day = date.fromisoformat(str(break_date)[:10]).weekday()
+        except ValueError:
+            continue
+        slot = _wellness_slot_index(start_time)
+        days[day]["n"] += 1
+        grid[day][slot] += 1
+        slot_counts[slot] += 1
+        hours += hrs or 0
+        people.add(uid)
+        label = dict(WELLNESS_ACTIVITIES).get(activity, "Others")
+        by_activity[label] = by_activity.get(label, 0) + 1
+        if wk in by_week:
+            by_week[wk]["people"].add(uid)
+            by_week[wk]["hours"] += hrs or 0
+        if mood_before is not None and mood_after is not None:
+            moods.append(mood_after - mood_before)
+        if reflection_id is not None:
+            reflected += 1
+            answered += 1 if felt is not None else 0
+            refreshed += 1 if felt else 0
+
+    for i, s in enumerate(slots):
+        s["n"] = slot_counts[i]
+    peak_day = max(days, key=lambda d: d["n"]) if any(d["n"] for d in days) else None
+    peak_slot = max(slots, key=lambda s: s["n"]) if any(s["n"] for s in slots) else None
+    return {
+        "weeks": max(1, weeks), "first_week": first_week, "week_start": week_start,
+        "claims": sum(d["n"] for d in days), "hours": hours,
+        "people": len(people),
+        "by_day": days, "by_slot": slots, "grid": grid,
+        "by_activity": sorted(({"label": k, "n": v} for k, v in by_activity.items()),
+                              key=lambda a: (-a["n"], a["label"])),
+        "by_week": [{"week_start": k, "people": len(v["people"]), "hours": v["hours"]}
+                    for k, v in by_week.items()],
+        "peak_day": peak_day, "peak_slot": peak_slot,
+        "mood": {
+            # `refreshed_pct` is out of the people who ANSWERED that question,
+            # not out of every reflection — the field is optional, and counting
+            # a blank as a "no" would read as dissatisfaction that nobody voiced.
+            "reflections": reflected,
+            "delta": round(sum(moods) / len(moods), 1) if moods else None,
+            "moods": len(moods),
+            "refreshed_pct": (round(refreshed * 100 / answered)
+                              if answered else None),
+            "answered": answered,
+        },
+    }
 
 
 def wellness_dashboard_data(conn, week_start, user=None):
@@ -6777,8 +6909,9 @@ def work_arrangement_roster(conn, period_start, user=None, tagged=None):
     appears as a row with no arrangement, so the Admin Officer has a chase list
     before the deadline instead of 23 silent gaps after it.
 
-    Scoped to a chief's own unit subtree (see _org_scope_for_user); admins and an
-    unscoped call see the whole bureau."""
+    Scoped to the viewer's own directory unit subtree (see _org_scope_for_user);
+    an unscoped call (user=None) — which is what the ANNEX C export makes — sees
+    the whole bureau."""
     scope = _org_scope_for_user(conn, user) if user else None
     rows = conn.execute("""
         SELECT a.id, a.username, rp.name, rp.position, ou.short_name, ou.path,

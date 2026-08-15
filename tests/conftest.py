@@ -11,7 +11,7 @@ Strategy
   which is exactly what a real browser carries after /login.
 """
 from __future__ import annotations
-import os, shutil, tempfile, importlib
+import contextlib, os, shutil, tempfile, importlib
 import pytest
 
 PW = "Test1234!"
@@ -91,6 +91,45 @@ def _auth_client(app_mod, role):
     c = TestClient(app_mod.app, raise_server_exceptions=True)
     c.cookies.set(auth.COOKIE_NAME, auth.make_token(user))
     return c
+
+@contextlib.contextmanager
+def in_the_directory(app_mod, *usernames, path="LFTEAM/D1/S1"):
+    """Place these accounts in one directory unit for the duration of a test.
+
+    The seeded role accounts carry no rp_id, and the DIRECTORY — not the app
+    role — is what decides whose filings a page shows (storage.team_scope_for_user),
+    so without this they have no team and the landing page renders the personal
+    view. Everything is undone on the way out: app_mod's database is session-
+    scoped, and a stray directory link would silently change what every later
+    test's admin can see."""
+    import storage as st
+    conn = st.connect(app_mod.DB)
+    st.init_db(conn)
+    unit = conn.execute(
+        "INSERT INTO org_unit(name, short_name, level, path) VALUES (?,?,?,?)",
+        ("LF Section", "LF-S1", "section", path)).lastrowid
+    before, made = {}, []
+    try:
+        for username in usernames:
+            u = st.get_admin_user(conn, username)
+            before[u["id"]] = conn.execute(
+                "SELECT rp_id FROM admin_user WHERE id=?", (u["id"],)).fetchone()[0]
+            rp = conn.execute(
+                "INSERT INTO resource_person(name, is_internal, org_unit_id)"
+                " VALUES (?,1,?)", (f"LF-{username.split('@')[0]}", unit)).lastrowid
+            made.append(rp)
+            conn.execute("UPDATE admin_user SET rp_id=? WHERE id=?", (rp, u["id"]))
+        conn.commit()
+        yield
+    finally:
+        for uid, rp_id in before.items():
+            conn.execute("UPDATE admin_user SET rp_id=? WHERE id=?", (rp_id, uid))
+        for rp in made:
+            conn.execute("DELETE FROM resource_person WHERE id=?", (rp,))
+        conn.execute("DELETE FROM org_unit WHERE id=?", (unit,))
+        conn.commit()
+        conn.close()
+
 
 @pytest.fixture
 def viewer(app_mod):          return _auth_client(app_mod, "viewer")

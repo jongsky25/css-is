@@ -1,6 +1,6 @@
 {% extends "dash_layout.html" %}
 {% from "_avatars.html" import avatar, avatar_defs %}
-{% from "_components.html" import flash, chart_table, empty_state %}
+{% from "_components.html" import flash, chart_table, empty_state, deck, deck_slide, deck_defs %}
 {% from "_faces.html" import face_defs, faces %}
 {% from "_growth.html" import growth_defs, growth %}
 {% block title %}Home{% endblock %}
@@ -8,11 +8,12 @@
 {{ avatar_defs() }}
 {{ face_defs() }}
 {{ growth_defs() }}
+{{ deck_defs() }}
 <style>
   .oc { max-width:1040px; margin:0 auto; }
   .oc-hero { display:flex; gap:1rem; align-items:center; flex-wrap:wrap;
              margin:.4rem 0 1rem; }
-  .oc-photo { width:56px; height:56px; border-radius:50%; object-fit:cover;
+  .oc-photo { width:72px; height:72px; border-radius:50%; object-fit:cover;
               background:var(--surface-3); display:inline-flex; align-items:center;
               justify-content:center; font-weight:800; color:var(--soft); flex:0 0 auto; }
   .oc-hi h1 { margin:0; font-size:1.45rem; }
@@ -30,8 +31,12 @@
 
   .oc-panels { display:grid; grid-template-columns:repeat(auto-fit, minmax(320px,1fr));
                gap:1rem; align-items:start; }
+  /* min-width:0 is load-bearing: a grid item sizes to its max-content by
+     default, and a deck's max-content is every slide side by side — without it
+     the card stretches to five slides wide and the whole PAGE scrolls
+     sideways instead of the track inside it. */
   .oc-card { background:var(--surface); border:1px solid var(--line); border-radius:var(--r3);
-             padding:1rem 1.1rem; box-shadow:var(--shadow); }
+             padding:1rem 1.1rem; box-shadow:var(--shadow); min-width:0; }
   .oc-card h2 { margin:0 0 .15rem; font-size:1.02rem; }
   .oc-card .sub { color:var(--soft); font-size:.82rem; margin:0 0 .75rem; }
   .oc-card .foot { margin:.75rem 0 0; font-size:.76rem; color:var(--grey); }
@@ -73,6 +78,38 @@
   .oc-cov .axtitle { font-size:10px; fill:var(--grey); }
   .oc-cov .f-green { fill:var(--green); } .oc-cov .f-amber { fill:var(--amber); }
   .oc-cov .f-red { fill:var(--red); } .oc-cov .f-soft { fill:var(--surface-3); }
+  /* single-series tally: one accent column for the answer, the rest quiet */
+  .oc-cov .f-accent { fill:var(--accent); }
+  .oc-cov .val { font-size:10px; font-weight:700; fill:var(--soft); text-anchor:middle; }
+
+  /* day x start-time heat grid. Intensity is one accent at four opacities —
+     a second hue here would invent a meaning the data doesn't have. */
+  .heat svg { width:100%; height:auto; }
+  .heat rect { fill:var(--accent); }
+  .heat .s0 { fill:var(--surface-3); }
+  .heat .s1 { opacity:.25; } .heat .s2 { opacity:.5; }
+  .heat .s3 { opacity:.75; } .heat .s4 { opacity:1; }
+  .heat text { font-size:10px; fill:var(--soft); }
+  .heat .rowlab { text-anchor:end; }
+  .heat .collab { text-anchor:middle; }
+  .heat .n { text-anchor:middle; font-weight:700; fill:var(--ink); }
+  .heat .n.on { fill:var(--on-accent); }
+
+  /* a labelled share list — used where a stacked bar would need more distinct
+     colours than the token palette honestly has (5 activities, 4 arrangements) */
+  .mix { list-style:none; margin:.2rem 0 0; padding:0; }
+  .mix li { display:grid; grid-template-columns:minmax(84px,36%) 1fr auto;
+            align-items:center; gap:.5rem; font-size:.8rem; padding:.2rem 0; }
+  .mix .lab { color:var(--ink); }
+  .mix .track { height:9px; border-radius:var(--rpill); background:var(--surface-3);
+                overflow:hidden; }
+  .mix .track i { display:block; height:100%; background:var(--accent); }
+  .mix .n { font-weight:800; font-variant-numeric:tabular-nums; color:var(--soft); }
+
+  /* two or three numbers that ARE the slide (mood, totals) */
+  .stat-row { display:flex; gap:1.2rem; flex-wrap:wrap; margin:.3rem 0 0; }
+  .stat-row .s .v { font-size:1.35rem; font-weight:800; line-height:1.1; }
+  .stat-row .s .k { font-size:.74rem; color:var(--soft); }
 
   .doors { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr));
            gap:1rem; margin-top:1.4rem; }
@@ -87,12 +124,40 @@
   .door .meta { margin-top:.6rem; font-size:.76rem; font-weight:700; color:var(--accent);
                 background:var(--accent-bg); border-radius:var(--rpill);
                 padding:.15rem .6rem; display:inline-block; }
-  @media (max-width:640px) { .oc-hero { gap:.7rem; } .oc-hi h1 { font-size:1.25rem; } }
+  @media (max-width:640px) {
+    .oc-hero { gap:.7rem; } .oc-hi h1 { font-size:1.25rem; }
+    /* The companion's box is an inline width the macro writes, so a phone-sized
+       cap has to out-specify it. Keep the 1.16 art ratio the macro uses. */
+    .oc-pet .avwrap, .oc-pet .avwrap > span { width:84px !important; }
+    .oc-pet .avwrap > span { height:97px !important; }
+  }
 </style>
 
 {% set tone_txt = {"green":"sc-green","amber":"sc-amber","red":"sc-red","soft":"sc-soft","accent":"sc-soft"} %}
 {% set tone_fill = {"green":"f-green","amber":"f-amber","red":"f-red","soft":"f-soft"} %}
 {% set me_view = view == "me" %}
+
+{#-- A single-series tally, drawn from count_bars_geom. The tallest column is the
+     only one in the accent colour: with one series there is nothing to tell
+     apart, so colour's remaining job is pointing at the answer. --#}
+{% macro count_bars(g) %}
+<div class="oc-cov">
+  <svg viewBox="0 0 {{ g.W }} {{ g.H }}" role="img" aria-label="{{ g.aria_label }}">
+    {% for gl in g.grid %}
+    <line class="grid" x1="{{ g.padl }}" y1="{{ gl.y }}" x2="{{ g.W - 12 }}" y2="{{ gl.y }}"></line>
+    <text class="ylab" x="{{ g.padl - 5 }}" y="{{ gl.y + 3.5 }}">{{ gl.label }}</text>
+    {% endfor %}
+    <line class="axis" x1="{{ g.padl }}" y1="{{ g.axis_y }}" x2="{{ g.W - 12 }}" y2="{{ g.axis_y }}"></line>
+    {% for b in g.bars %}
+    <rect class="{{ 'f-accent' if b.tone == 'accent' else 'f-soft' }}" x="{{ b.x }}"
+          y="{{ b.y }}" width="{{ b.w }}" height="{{ b.h }}" rx="3"></rect>
+    {% if b.n %}<text class="val" x="{{ b.label_x }}" y="{{ b.value_y }}">{{ b.n }}</text>{% endif %}
+    <text class="xlab" x="{{ b.label_x }}" y="{{ g.axis_y + 14 }}">{{ b.short }}</text>
+    {% endfor %}
+  </svg>
+  {{ chart_table(g.table.caption, g.table.headers, g.table.rows) }}
+</div>
+{% endmacro %}
 
 <div class="oc">
   {% if msg %}{{ flash(msg=msg) }}{% endif %}
@@ -109,8 +174,10 @@
     </div>
     {% if profile and profile.avatar_name %}
     <div class="oc-pet">
+      {#-- Half again the old 72px: the per-stage artwork carries real detail
+           (a leaf count, a shell pattern) that was being thrown away. --#}
       {{ avatar(profile.avatar_kind, (wstats.stage if wstats else 1), name=profile.avatar_name,
-                size=72, interactive=true, mood=profile.avatar_mood) }}
+                size=108, interactive=true, mood=profile.avatar_mood) }}
     </div>
     {% endif %}
     <span class="grow"></span>
@@ -141,30 +208,119 @@
       {% if me_view or not w.team %}
         <h2>Your wellness break</h2>
         <p class="sub">Week of {{ w.personal.week_start }}</p>
-        <div class="oc-big">{{ w.personal.used }} <small>of {{ w.personal.weekly_hours }} hours claimed</small></div>
-        {% if w.personal.stats %}
-        <p class="sub" style="margin-top:.5rem;">{{ w.personal.stats.points }} pts ·
-          {{ w.personal.stats.streak }}-week streak · {{ w.personal.stats.stage_name }}</p>
-        {% endif %}
+        {% set ins = w.personal.insights %}
+        {% call deck("Your wellness break") %}
+          {% call deck_slide("This week", caption=false) %}
+            <div class="oc-big">{{ w.personal.used }} <small>of {{ w.personal.weekly_hours }} hours claimed</small></div>
+            {% if w.personal.stats %}
+            <p class="sub" style="margin-top:.5rem;">{{ w.personal.stats.points }} pts ·
+              {{ w.personal.stats.streak }}-week streak · {{ w.personal.stats.stage_name }}</p>
+            {% endif %}
+          {% endcall %}
+          {% if ins %}
+            {% call deck_slide("The day you take it") %}
+              {{ count_bars(ins.days) }}
+              {% if ins.said.when %}<p class="deck-say">{{ ins.said.when }}</p>{% endif %}
+            {% endcall %}
+            {% call deck_slide("Your last " ~ ins.weeks_back ~ " weeks") %}
+              {{ count_bars(ins.week_trend) }}
+              <p class="deck-say">{{ ins.claims }} break{{ '' if ins.claims == 1 else 's' }}
+                since {{ ins.since }}{% if ins.said.mood %} · {{ ins.said.mood }}{% endif %}</p>
+            {% endcall %}
+          {% endif %}
+        {% endcall %}
         <p class="foot"><a href="/wellness">Open wellness →</a></p>
       {% else %}
         <h2>Wellness this week</h2>
-        <p class="sub">Week of {{ w.team.week_start }}</p>
-        <div class="oc-big">{{ w.team.filed }} <small>of {{ w.team.people }} have filed ·
-          {{ w.team.pct }}% of hours used</small></div>
-        {% if w.team.cells %}
-          {{ faces(w.team.cells) }}
-          {{ chart_table("Wellness break hours this week, by person",
-                         w.team.table.headers, w.team.table.rows) }}
-          <div class="oc-key">
-            {% for l in w.team.legend %}
-            <span><i class="bg-{{ 'soft' if l.tone == 'soft' else l.tone }}"></i>{{ l.label }}</span>
-            {% endfor %}
-          </div>
-        {% else %}
-          {{ empty_state(title="Nobody on the roster yet",
-                         hint="People appear here once their account is linked to the directory.") }}
-        {% endif %}
+        <p class="sub">Week of {{ w.team.week_start }} · {{ d.scope.label }}</p>
+        {% set ins = w.team.insights %}
+        {% call deck("Wellness — " ~ d.scope.label) %}
+
+          {% call deck_slide("Filed this week", caption=false) %}
+            <div class="oc-big">{{ w.team.filed }} <small>of {{ w.team.people }} have filed ·
+              {{ w.team.pct }}% of hours used</small></div>
+            {% if w.team.cells %}
+              {{ faces(w.team.cells) }}
+              {{ chart_table("Wellness break hours this week, by person",
+                             w.team.table.headers, w.team.table.rows) }}
+              <div class="oc-key">
+                {% for l in w.team.legend %}
+                <span><i class="bg-{{ 'soft' if l.tone == 'soft' else l.tone }}"></i>{{ l.label }}</span>
+                {% endfor %}
+              </div>
+            {% else %}
+              {{ empty_state(title="Nobody on the roster yet",
+                             hint="People appear here once their account is linked to the directory.") }}
+            {% endif %}
+          {% endcall %}
+
+          {% if ins %}
+          {% call deck_slide("When breaks happen") %}
+            {% set h = ins.when %}
+            <div class="heat">
+              <svg viewBox="0 0 {{ h.W }} {{ h.H }}" role="img" aria-label="{{ h.aria_label }}">
+                {% for r in h.rows %}
+                <text class="rowlab" x="{{ h.labw - 8 }}" y="{{ r.y }}">{{ r.label }}</text>
+                {% endfor %}
+                {% for c in h.cells %}
+                <rect class="s{{ c.step }}" x="{{ c.x }}" y="{{ c.y }}" width="{{ c.w }}"
+                      height="{{ c.h }}" rx="5"></rect>
+                {% if c.n %}
+                <text class="n{{ ' on' if c.step >= 3 }}" x="{{ c.x + c.w / 2 }}"
+                      y="{{ c.y + c.h / 2 + 4 }}">{{ c.n }}</text>
+                {% endif %}
+                {% endfor %}
+                {% for col in h.cols %}
+                <text class="collab" x="{{ col.x }}" y="{{ h.col_y }}">{{ col.label }}</text>
+                {% endfor %}
+              </svg>
+            </div>
+            {{ chart_table(h.table.caption, h.table.headers, h.table.rows) }}
+            {% if ins.said.when %}<p class="deck-say">{{ ins.said.when }}</p>{% endif %}
+          {% endcall %}
+
+          {% call deck_slide("What people do with it") %}
+            <ul class="mix">
+              {% for a in ins.activity %}
+              <li><span class="lab">{{ a.label }}</span>
+                <span class="track"><i style="width:{{ a.pct }}%"></i></span>
+                <span class="n">{{ a.n }}</span></li>
+              {% endfor %}
+            </ul>
+            {{ chart_table(ins.activity_table.caption, ins.activity_table.headers,
+                           ins.activity_table.rows) }}
+            <p class="deck-say">{{ ins.claims }} breaks over the last
+              {{ ins.weeks_back }} weeks, by {{ ins.people }}
+              {{ 'person' if ins.people == 1 else 'people' }}.</p>
+          {% endcall %}
+
+          {% call deck_slide("Did it help") %}
+            <div class="stat-row">
+              <div class="s"><div class="v">{{ ins.mood.reflections }}</div>
+                <div class="k">reflections filed</div></div>
+              {% if ins.mood.delta is not none %}
+              <div class="s"><div class="v">{{ '+' if ins.mood.delta > 0 }}{{ ins.mood.delta }}</div>
+                <div class="k">mood, before → after</div></div>
+              {% endif %}
+              {% if ins.mood.refreshed_pct is not none %}
+              <div class="s"><div class="v">{{ ins.mood.refreshed_pct }}%</div>
+                <div class="k">felt refreshed</div></div>
+              {% endif %}
+            </div>
+            {% if ins.said.mood %}<p class="deck-say">{{ ins.said.mood }}</p>
+            {% else %}
+              {{ empty_state(title="No reflections yet",
+                             hint="The short check-in after a break is what fills this in.") }}
+            {% endif %}
+          {% endcall %}
+
+          {% call deck_slide("Taking part, week by week") %}
+            {{ count_bars(ins.week_trend) }}
+            {% if ins.said.weeks %}<p class="deck-say">{{ ins.said.weeks }}</p>{% endif %}
+          {% endcall %}
+          {% endif %}
+
+        {% endcall %}
         <p class="foot"><a href="/wellness">Open wellness →</a></p>
       {% endif %}
     </section>
@@ -173,7 +329,7 @@
     {% set a = d.panels.awa %}
     <section class="oc-card" data-tour="oc-awa">
       {% if a.personal.state == "none_open" %}
-        <h2>Work arrangement</h2>
+        <h2>Alternative Work Arrangement</h2>
         <p class="sub">Nothing is open for filing right now.</p>
         {% if a.personal.in_force and a.personal.in_force.filed %}
         <p class="sub">In force now: <strong>{{ a.personal.in_force.period_label }}</strong> —
@@ -181,9 +337,9 @@
           {{ a.personal.in_force.weekday_name }} off{% endif %}.</p>
         {% endif %}
       {% elif me_view or not a.team %}
-        <h2>Your work arrangement</h2>
-        <p class="sub">Filing for {{ a.personal.period_label }} ·
-          {% if a.personal.state == "closing_today" %}closes today{% else %}by {{ a.personal.deadline_label }}{% endif %}</p>
+        <h2>Your Alternative Work Arrangement</h2>
+        <p class="sub"><strong>{{ a.personal.period_label }}</strong> ·
+          {% if a.personal.state == "closing_today" %}closes today{% else %}file by {{ a.personal.deadline_label }}{% endif %}</p>
         {% if a.personal.noawa %}
           <div class="oc-big"><small>Marked “No AWA” for this period.</small></div>
         {% elif a.personal.filed %}
@@ -201,10 +357,17 @@
           {% if a.personal.can_file %}<a href="/work-arrangement/file">File yours →</a>
           {% else %}<a href="/work-arrangement">Open work arrangement →</a>{% endif %}</p>
       {% else %}
-        <h2>Team filing</h2>
-        <p class="sub">{{ a.team.period_label }} ·
-          {% if a.team.state == "closing_today" %}closes today{% else %}by {{ a.team.deadline_label }}
+        <h2>Alternative Work Arrangement</h2>
+        {#-- The dates the filing COVERS lead the card. period_label is the same
+             string ANNEX C titles itself with ("August 1-15, 2026"), so the card
+             and the printed sheet name the same fortnight. --#}
+        <p class="sub">For <strong>{{ a.team.period_label }}</strong> ·
+          {% if a.team.state == "closing_today" %}closes today{% else %}file by {{ a.team.deadline_label }}
           ({{ a.team.days_left }} {{ 'day' if a.team.days_left == 1 else 'days' }} left){% endif %}</p>
+        {% set ai = a.team.insights %}
+        {% call deck("Alternative Work Arrangement — " ~ a.team.period_label) %}
+
+        {% call deck_slide("Who has filed", caption=false) %}
         <div class="oc-big">{{ a.team.filed }} <small>of {{ a.team.headcount }} filed</small></div>
         {% if a.team.headcount %}
         <div class="oc-bar" role="img"
@@ -221,10 +384,16 @@
         </div>
         {% endif %}
         {{ faces(a.team.faces, rings=false) }}
+        {% if a.team.unfiled %}
+        <p class="foot">Still to file: {{ a.team.unfiled[:6]|join(", ") }}{% if a.team.unfiled|length > 6 %}
+          and {{ a.team.unfiled|length - 6 }} more{% endif %}.</p>
+        {% endif %}
+        {% endcall %}
 
         {% if a.team.coverage %}
+        {% call deck_slide("Who is on-site, by weekday") %}
         {% set g = a.team.coverage %}
-        <div class="oc-cov" style="margin-top:.6rem;">
+        <div class="oc-cov">
           <svg viewBox="0 0 {{ g.W }} {{ g.H }}" role="img" aria-label="{{ g.aria_label }}">
             {% for gl in g.grid %}
             <line class="grid" x1="{{ g.padl }}" y1="{{ gl.y }}" x2="{{ g.W - 12 }}" y2="{{ gl.y }}"></line>
@@ -243,17 +412,50 @@
                   transform="rotate(-90 {{ g.ytitle_x }} {{ g.ytitle_y }})">People on-site</text>
           </svg>
           {{ chart_table(g.table.caption, g.table.headers, g.table.rows) }}
-          {% if g.thinnest %}
-          <p class="sub" style="margin:.3rem 0 0;"><strong>{{ g.thinnest.name }}</strong> is thinnest —
-            {{ g.thinnest.onsite }} on-site.</p>
-          {% endif %}
         </div>
+        {% if g.thinnest %}
+        <p class="deck-say"><strong>{{ g.thinnest.name }}</strong> is thinnest —
+          {{ g.thinnest.onsite }} on-site.</p>
+        {% endif %}
+        {% endcall %}
         {% endif %}
 
-        {% if a.team.unfiled %}
-        <p class="foot">Still to file: {{ a.team.unfiled[:6]|join(", ") }}{% if a.team.unfiled|length > 6 %}
-          and {{ a.team.unfiled|length - 6 }} more{% endif %}.</p>
+        {% if ai %}
+        {% call deck_slide("What people filed") %}
+          <ul class="mix">
+            {% for m in ai.mix %}
+            <li><span class="lab" title="{{ m.long }}">{{ m.label }}</span>
+              <span class="track"><i style="width:{{ m.pct }}%"></i></span>
+              <span class="n">{{ m.n }}</span></li>
+            {% endfor %}
+          </ul>
+          {{ chart_table(ai.mix_table.caption, ai.mix_table.headers, ai.mix_table.rows) }}
+          {% if ai.said.mix %}<p class="deck-say">{{ ai.said.mix }}</p>{% endif %}
+        {% endcall %}
+
+        {% call deck_slide("The day people are away") %}
+          {{ count_bars(ai.day_off) }}
+          <p class="deck-say">{% if ai.said.day_off %}{{ ai.said.day_off }}
+            {% else %}Nobody has filed a day away yet this period.{% endif %}</p>
+        {% endcall %}
+
+        {% if ai.by_section|length > 1 %}
+        {% call deck_slide("Filing, by section") %}
+          <ul class="mix">
+            {% for s in ai.by_section %}
+            <li><span class="lab">{{ s.section }}</span>
+              <span class="track"><i style="width:{{ s.pct }}%"></i></span>
+              <span class="n">{{ s.filed }}/{{ s.people }}</span></li>
+            {% endfor %}
+          </ul>
+          {{ chart_table(ai.section_table.caption, ai.section_table.headers,
+                         ai.section_table.rows) }}
+          {% if ai.said.sections %}<p class="deck-say">{{ ai.said.sections }}</p>{% endif %}
+        {% endcall %}
         {% endif %}
+        {% endif %}
+
+        {% endcall %}
         <p class="foot"><a href="/work-arrangement/schedule">Open the team schedule →</a></p>
       {% endif %}
     </section>
@@ -346,7 +548,7 @@
     </a>
     <a class="door" href="/work-arrangement">
       <span class="em" aria-hidden="true">🗓️</span>
-      <span class="t">Work arrangement — CWW / WFH</span>
+      <span class="t">Alternative Work Arrangement — CWW / WFH</span>
       <div class="d">File your on-site, compressed or work-from-home schedule for the half-month.</div>
       {% if wa_label %}
       <span class="meta">{{ wa_label }} ·
@@ -362,4 +564,7 @@
     </a>
   </div>
 </div>
+{#-- Arrows, dots and left/right keys for the card decks. The tracks already
+     swipe without it — this is the mouse-and-keyboard half. --#}
+<script src="/static/js/deck.js?v=20260815a" defer></script>
 {% endblock %}

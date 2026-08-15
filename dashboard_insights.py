@@ -2684,6 +2684,123 @@ def bars_geom(totals, headcount, *, thin_at=1):
     }
 
 
+def count_bars_geom(items, *, caption, unit_label="", value_header="Count",
+                    key_header="Item"):
+    """One-series columns for a plain tally — breaks per weekday, day-offs per
+    weekday, people taking part per week.
+
+    `items` is [{"name", "short"?, "n"}]. The tallest column is toned "accent"
+    and the rest "soft": with a single series there is nothing to tell apart by
+    colour, so the only honest job colour has left is pointing at the answer the
+    reader came for. Same contract as bars_geom — coordinates, tone TOKENS, an
+    aria label and the chart_table rows, never a colour and never HTML."""
+    W, H, padl, padr, padt, padb = 460, 170, 34, 12, 10, 34
+    plotw, ploth = W - padl - padr, H - padt - padb
+    axis_y = padt + ploth
+    vals = [max(0, int(i.get("n") or 0)) for i in items]
+    ymax = max(1, max(vals) if vals else 1)
+    n = len(items) or 1
+    slot = plotw / n
+    bw = min(30.0, slot * 0.6)
+    top = max(vals) if vals else 0
+    bars, rows = [], []
+    for i, item in enumerate(items):
+        v = vals[i]
+        x = padl + slot * i + (slot - bw) / 2
+        h = ploth * (v / ymax)
+        bars.append({
+            "name": item["name"], "short": item.get("short") or item["name"][:3],
+            "n": v, "x": round(x, 1), "w": round(bw, 1),
+            "y": round(axis_y - h, 1), "h": round(h, 1),
+            "label_x": round(x + bw / 2, 1),
+            "value_y": round(axis_y - h - 4, 1),
+            "tone": "accent" if (v and v == top) else "soft",
+            "peak": bool(v and v == top),
+        })
+        rows.append([item["name"], str(v)])
+    grid = [{"y": round(axis_y - ploth * f, 1), "label": str(round(ymax * f))}
+            for f in (0, 0.5, 1)]
+    said = "; ".join(f"{b['name']} {b['n']}" for b in bars)
+    return {
+        "W": W, "H": H, "padl": padl, "axis_y": round(axis_y, 1), "ymax": ymax,
+        "bars": bars, "grid": grid,
+        "total": sum(vals), "empty": not any(vals),
+        "aria_label": (f"{caption}{(' in ' + unit_label) if unit_label else ''}: "
+                       f"{said}." if any(vals) else f"{caption}: nothing yet."),
+        "table": {"caption": caption, "headers": [key_header, value_header],
+                  "rows": rows},
+    }
+
+
+# How many shades a heat grid uses. Four steps plus "none": beyond that the eye
+# stops ranking the cells and starts guessing at them.
+HEAT_STEPS = 4
+
+
+def _heat_step(value, top):
+    """0 for nothing, else 1..HEAT_STEPS with the busiest cell at the top."""
+    if not value:
+        return 0
+    if top <= 1:
+        return HEAT_STEPS
+    return 1 + int((value - 1) * (HEAT_STEPS - 1) / (top - 1))
+
+
+def heat_geom(grid, row_labels, col_labels, *, caption, cell_noun="breaks"):
+    """A day x time-of-day heat grid.
+
+    `grid[r][c]` is a count. Cells carry an intensity STEP (0..HEAT_STEPS), never
+    a colour — the template maps a step to one custom property, so the grid is
+    right in all 36 theme x accent combinations. Rows that are entirely empty are
+    dropped (a wellness break has never been taken on a Sunday; a permanently
+    blank Sunday row just makes the used days smaller).
+
+    Returns the peak cell too, because that is the sentence the card actually
+    wants: "most breaks land Wednesday, before 10"."""
+    keep = [r for r, row in enumerate(grid) if any(row)]
+    if not keep:                       # nothing filed yet — draw the empty week
+        keep = list(range(len(grid)))
+    cw, ch, gap = 62, 30, 4
+    labw = 74
+    rows_out, cells, table_rows = [], [], []
+    top = max((v for row in grid for v in row), default=0)
+    for i, r in enumerate(keep):
+        y = i * (ch + gap)
+        rows_out.append({"label": row_labels[r], "y": y + ch / 2 + 4})
+        table_rows.append([row_labels[r]] + [str(v) for v in grid[r]])
+        for c, v in enumerate(grid[r]):
+            cells.append({
+                "row": row_labels[r], "col": col_labels[c], "n": v,
+                "x": labw + c * (cw + gap), "y": y, "w": cw, "h": ch,
+                # Spread 1..HEAT_STEPS across the range actually present: the
+                # quietest used cell is never invisible and the busiest is always
+                # full strength, whether the peak is 3 breaks or 300.
+                "step": _heat_step(v, top),
+                "aria": f"{row_labels[r]}, {col_labels[c]}: {v}",
+            })
+    W = labw + len(col_labels) * (cw + gap)
+    H = len(keep) * (ch + gap) + 18
+    peak = max(cells, key=lambda c: c["n"]) if cells else None
+    if peak and not peak["n"]:
+        peak = None
+    return {
+        "W": W, "H": H, "labw": labw, "cw": cw, "ch": ch, "gap": gap,
+        "cells": cells, "rows": rows_out,
+        "cols": [{"label": lab, "x": labw + c * (cw + gap) + cw / 2}
+                 for c, lab in enumerate(col_labels)],
+        "col_y": len(keep) * (ch + gap) + 11,
+        "max": top, "total": sum(c["n"] for c in cells),
+        "peak": ({"row": peak["row"], "col": peak["col"], "n": peak["n"]}
+                 if peak else None),
+        "aria_label": (f"{caption}: busiest is {peak['row']}, {peak['col']}, "
+                       f"with {peak['n']} {cell_noun}."
+                       if peak else f"{caption}: nothing yet."),
+        "table": {"caption": caption,
+                  "headers": ["Day"] + list(col_labels),
+                  "rows": table_rows},
+    }
+
+
 # =====================================================================
 # PULSE — name-free "things to know". Every statement below is an AGGREGATE read
 # of a survey type; it never names a person or a specific activity. The vital

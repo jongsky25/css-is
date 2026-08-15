@@ -21,23 +21,43 @@
 
 {% macro face_defs() %}
 <style>
-  .faces { display:flex; flex-wrap:wrap; gap:.55rem; margin:.2rem 0 .1rem; }
-  .face { position:relative; width:52px; height:52px; flex:0 0 auto; }
+  .faces { display:flex; flex-wrap:wrap; gap:.65rem; margin:.2rem 0 .1rem; }
+  /* Bigger than the old 52px: a face has to be recognisable as a PERSON, which
+     is the whole reason this is a picture and not a list of names. */
+  .face { position:relative; width:66px; height:66px; flex:0 0 auto; }
   .face .ring { position:absolute; inset:0; transform:rotate(-90deg); }
   .face .ring circle { fill:none; stroke-linecap:round; }
   .face .track { stroke:var(--surface-3); }
-  .face .pic { position:absolute; inset:6px; border-radius:50%; overflow:hidden;
+  .face .pic { position:absolute; inset:7px; border-radius:50%; overflow:hidden;
                background:var(--surface-2); display:flex; align-items:center;
-               justify-content:center; font-weight:800; font-size:.78rem;
+               justify-content:center; font-weight:800; font-size:.95rem;
                color:var(--soft); }
   .face .pic img, .face .pic svg { width:100%; height:100%; object-fit:cover; display:block; }
   .face.is-none .pic { opacity:.55; }
   .face.is-me::after { content:""; position:absolute; inset:-3px; border-radius:50%;
                        border:2px solid var(--accent); }
-  .face .chk { position:absolute; right:-1px; bottom:-1px; width:16px; height:16px;
+  .face .chk { position:absolute; right:-1px; bottom:-1px; width:19px; height:19px;
                border-radius:50%; background:var(--green); color:var(--on-accent);
-               font-size:.62rem; line-height:16px; text-align:center; font-weight:900;
+               font-size:.7rem; line-height:19px; text-align:center; font-weight:900;
                border:2px solid var(--surface); }
+
+  /* The name, on hover and on keyboard focus. A picture nobody can put a name to
+     is a decoration; the native title= took a second to appear, never appeared
+     on touch, and could not be styled. This replaces it. */
+  .face-tip { position:absolute; left:50%; bottom:calc(100% + 6px); transform:translateX(-50%);
+              z-index:5; pointer-events:none; opacity:0; visibility:hidden;
+              background:var(--ink); color:var(--surface); border-radius:8px;
+              padding:.3rem .5rem; font-size:.72rem; line-height:1.25;
+              white-space:nowrap; text-align:center; box-shadow:var(--shadow-md);
+              transition:opacity .12s ease; }
+  .face-tip b { display:block; font-weight:800; }
+  .face-tip i { font-style:normal; opacity:.75; }
+  .face:hover .face-tip, .face:focus-visible .face-tip { opacity:1; visibility:visible; }
+  .face:focus-visible { outline:2px solid var(--accent); outline-offset:3px; border-radius:50%; }
+  /* A wall is a flex row, so the first and last tips would overhang the card. */
+  .face:first-child .face-tip { left:0; transform:none; }
+  .face:last-child .face-tip { left:auto; right:0; transform:none; }
+  @media (prefers-reduced-motion:reduce) { .face-tip { transition:none; } }
   /* tone -> colour, resolved once */
   .tone-green  { stroke:var(--green);  }
   .tone-accent { stroke:var(--accent); }
@@ -49,10 +69,14 @@
 {% endmacro %}
 
 {#-- One person. `c` needs: name, initials, photo_url, avatar_kind, tone, is_me,
-     aria, and (optionally) ring + a done flag. --#}
+     aria, and (optionally) tip, section, ring + a done flag.
+
+     tabindex="0" is deliberate on a role="img": the name popup has to be
+     reachable without a mouse, and a wall of faces is exactly the case where a
+     keyboard user cannot otherwise find out who anyone is. --#}
 {% macro face(c, ring=None, done=false) %}
 <span class="face{{ ' is-me' if c.is_me }}{{ ' is-none' if c.tone == 'soft' }}"
-      role="img" aria-label="{{ c.aria or c.name }}" title="{{ c.aria or c.name }}">
+      role="img" aria-label="{{ c.aria or c.name }}" tabindex="0">
   {% if ring %}
   <svg class="ring" viewBox="0 0 {{ ring.size }} {{ ring.size }}" aria-hidden="true">
     <circle class="track" cx="{{ ring.cx }}" cy="{{ ring.cy }}" r="{{ ring.r }}"
@@ -70,6 +94,10 @@
     {% else %}{{ c.initials }}{% endif %}
   </span>
   {% if done %}<span class="chk" aria-hidden="true">✓</span>{% endif %}
+  {#-- aria-hidden: the same words are already in the wrapper's aria-label, and
+       announcing them twice is worse than not styling them at all. --#}
+  <span class="face-tip" aria-hidden="true"><b>{{ c.name }}{{ ' (you)' if c.is_me }}</b>
+    {%- if c.tip %}<i>{{ c.tip }}</i>{% elif c.section %}<i>{{ c.section }}</i>{% endif %}</span>
 </span>
 {% endmacro %}
 

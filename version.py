@@ -17,10 +17,36 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.60"
+APP_VERSION = "2.61"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.61",
+        "date": "August 15, 2026",
+        "summary": "Your home page now shows more than one reading of each "
+                   "card — swipe them — and who you can see there comes from "
+                   "the directory, not from your account type.",
+        "changes": [
+            "Your companion is half again as big on the home page, and so is "
+            "every stage of the growth strip, so the differences between them "
+            "are actually worth looking at.",
+            "Hover or tab onto anyone in your team's row of pictures and their "
+            "name pops up, with what they filed. No more guessing who is who.",
+            "The wellness and work-arrangement cards are now swipeable. Swipe "
+            "(or use the arrows) for the day and time your team actually takes "
+            "breaks, what they do with them, whether the break helped, which "
+            "arrangement people filed, and the weekday your office empties out.",
+            "“Team filing” is now called Alternative Work Arrangement, and the "
+            "card leads with the fortnight it covers — the same dates the "
+            "printed ANNEX C sheet carries.",
+            "Who you see on the home page, on the wellness register and on the "
+            "work-arrangement schedule now comes from your record in the "
+            "directory — your section, your division — instead of from having "
+            "an administrator account. If you need a wider view, your directory "
+            "record is what to change.",
+        ],
+    },
     {
         "version": "2.60",
         "date": "August 15, 2026",

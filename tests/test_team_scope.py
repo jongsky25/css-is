@@ -3,10 +3,16 @@ Team-scope resolution — the guard that keeps the Office Connect landing page
 from showing one person another team's filings.
 
 The landing page shows EVERY signed-in user their team, with no chief-only route
-guard in front of it. That removes the assumption `_org_scope_for_user` was
-written under (see its docstring: "Admins — and any account with no directory
-org unit — monitor everyone"), so an account with no directory link must resolve
-to "no team" rather than falling through to the whole bureau.
+guard in front of it. That removes the assumption `_org_scope_for_user` is
+written under — an account with no directory org unit monitors everyone — so an
+account with no directory link must resolve to "no team" here rather than falling
+through to the whole bureau.
+
+The DIRECTORY is what decides the team, not the app role. An `admin` role is a
+permission to operate the system; it is not standing over every section's
+wellness and work-arrangement filings, and it no longer grants a bureau-wide
+view. Bureau-wide is reached one way: by being recorded at a unit the sections
+hang off, whose subtree is everyone.
 """
 from __future__ import annotations
 
@@ -25,10 +31,12 @@ def org(app_mod):
     conn.execute("DELETE FROM resource_person WHERE name LIKE 'TS-%'")
     conn.execute("DELETE FROM org_unit WHERE path LIKE 'TSCOPE%'")
     units = {}
-    for path, short in (("TSCOPE/D1/S1", "S1"), ("TSCOPE/D2/S2", "S2")):
+    for path, short, level in (("TSCOPE", "TSCOPE", "division"),
+                               ("TSCOPE/D1/S1", "S1", "section"),
+                               ("TSCOPE/D2/S2", "S2", "section")):
         units[path] = conn.execute(
             "INSERT INTO org_unit(name, short_name, level, path) VALUES (?,?,?,?)",
-            (short, short, "section", path)).lastrowid
+            (short, short, level, path)).lastrowid
     def person(name, unit, designation=""):
         return conn.execute(
             "INSERT INTO resource_person(name, is_internal, org_unit_id, designation)"
@@ -36,6 +44,10 @@ def org(app_mod):
     s1_rp = person("TS-One", units["TSCOPE/D1/S1"])
     s1_chief_rp = person("TS-One Chief", units["TSCOPE/D1/S1"], "Section Head")
     s2_rp = person("TS-Two", units["TSCOPE/D2/S2"])
+    s1_adm_rp = person("TS-One Admin", units["TSCOPE/D1/S1"])
+    # No designation: a seat title here would enter the bureau-wide org chain and
+    # change who other suites' escalation tests resolve as an approver.
+    top_rp = person("TS-Top", units["TSCOPE"])
     mk = lambda u, role, rp: st.create_admin_user(conn, u, "x", "y", role, rp_id=rp)
     out = {
         "conn": conn,
@@ -44,6 +56,10 @@ def org(app_mod):
         "s2": mk("ts-s2@test.local", "viewer", s2_rp),
         "unlinked": st.create_admin_user(conn, "ts-none@test.local", "x", "y", "viewer"),
         "admin": st.create_admin_user(conn, "ts-adm@test.local", "x", "y", "admin"),
+        # an admin-role account the DIRECTORY places in one section, and a
+        # viewer-role account the directory places above both sections
+        "s1_admin": mk("ts-s1adm@test.local", "admin", s1_adm_rp),
+        "top": mk("ts-top@test.local", "viewer", top_rp),
     }
     conn.commit()
     yield out
@@ -62,15 +78,40 @@ def test_linked_staff_scope_to_their_own_unit(org):
         assert (scope, kind) == (path, "unit")
 
 
-def test_admin_scopes_to_the_whole_bureau(org):
+def test_the_directory_decides_the_team_not_the_app_role(org):
+    """An `admin` role is a permission to operate the system, not standing over
+    every section's filings. An admin the directory places in S1 gets S1 —
+    exactly what a viewer in the same seat gets."""
     conn = org["conn"]
-    assert st.team_scope_for_user(conn, _u(conn, org["admin"])) == (None, "bureau")
+    assert st.team_scope_for_user(conn, _u(conn, org["s1_admin"])) == \
+        ("TSCOPE/D1/S1", "unit")
+    assert st._org_scope_for_user(conn, _u(conn, org["s1_admin"])) == "TSCOPE/D1/S1"
+
+
+def test_a_seat_above_the_sections_sees_every_section_below_it(org):
+    """Scope is a pure path-SUBTREE test, so someone recorded at an ancestor unit
+    — a division, or the bureau-level unit every section hangs off — sees
+    everything beneath it. That is now the only route to a bureau-wide view, and
+    it comes from the directory."""
+    conn = org["conn"]
+    scope, kind = st.team_scope_for_user(conn, _u(conn, org["top"]))
+    assert (scope, kind) == ("TSCOPE", "unit")
+    assert st._path_in_scope("TSCOPE/D1/S1", scope) is True
+    assert st._path_in_scope("TSCOPE/D2/S2", scope) is True
+
+
+def test_admin_with_no_directory_link_gets_no_team_either(org):
+    """The role used to be a shortcut to the whole bureau. It no longer is: an
+    admin with nothing in the directory has no team to show, and the landing page
+    must offer the personal view and the 'link your profile' note instead."""
+    conn = org["conn"]
+    assert st.team_scope_for_user(conn, _u(conn, org["admin"])) == (None, "none")
 
 
 def test_unlinked_account_gets_no_team_not_the_bureau(org):
     """The whole point of the helper. _org_scope_for_user returns None here —
-    indistinguishable from an admin — which would have shown this account every
-    wellness and work-arrangement filing in the bureau."""
+    indistinguishable from an unscoped bureau-wide call — which would have shown
+    this account every wellness and work-arrangement filing in the bureau."""
     conn = org["conn"]
     user = _u(conn, org["unlinked"])
 
@@ -108,10 +149,18 @@ def test_week_rollup_is_scoped_and_carries_face_columns(org):
                 "org_path", "used", "left"):
         assert key in row, key
 
-    # an admin sees both sections
-    all_names = {r["name"] for r in
-                 st.wellness_week_rollup(conn, week, _u(conn, org["admin"]))["rows"]}
-    assert {"TS-One", "TS-Two"} <= all_names
+    # an ADMIN-role account the directory places in S1 sees S1 and nothing else
+    adm_names = {r["name"] for r in
+                 st.wellness_week_rollup(conn, week, _u(conn, org["s1_admin"]))["rows"]}
+    assert "TS-One" in adm_names
+    assert "TS-Two" not in adm_names
+
+    # a seat above both sections sees both; an unscoped call still sees everyone
+    top_names = {r["name"] for r in
+                 st.wellness_week_rollup(conn, week, _u(conn, org["top"]))["rows"]}
+    assert {"TS-One", "TS-Two"} <= top_names
+    assert {"TS-One", "TS-Two"} <= {r["name"] for r in
+                                    st.wellness_week_rollup(conn, week)["rows"]}
 
 
 def test_dashboard_data_still_agrees_with_the_rollup(org):
@@ -142,7 +191,7 @@ def test_roster_carries_face_columns_without_a_second_query(org):
     assert roster, "expected the viewer's own section on the roster"
     for key in ("rp_id", "has_photo", "avatar_kind"):
         assert key in roster[0], key
-    assert {r["name"] for r in roster} == {"TS-One", "TS-One Chief"}
+    assert {r["name"] for r in roster} == {"TS-One", "TS-One Chief", "TS-One Admin"}
 
 
 def test_activity_instances_expose_the_creator(app_mod):

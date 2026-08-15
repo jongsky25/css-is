@@ -1,5 +1,83 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-08-15 (v2.61 — the landing page: bigger companion, named faces, swipeable insight decks, directory-based scope)
+
+### The role was standing in for the directory
+
+**Symptom.** An `admin` account saw every section's wellness and work-arrangement
+filings on the landing page, on the wellness register and on the AWA schedule —
+including sections it has nothing to do with. The scope line read "the whole
+bureau" for someone whose directory record puts them in one section.
+
+**Cause.** `storage._org_scope_for_user` short-circuited on
+`user["role"] == "admin"` and returned None (bureau-wide) before ever looking at
+the directory; `team_scope_for_user` did the same and answered a third kind,
+`"bureau"`. An app role is a permission to operate the system — grant users, edit
+rules, run exports — and was being read as standing over everyone's filings.
+
+**Fix.** Both helpers now resolve the org unit from `resource_person → org_unit`
+for every account, whatever its role. `team_scope_for_user` returns only `"unit"`
+or `"none"`; the `"bureau"` kind is gone, and with it the `kind == "bureau"`
+branches in `office_connect`. Bureau-wide is still reachable, but only the way
+the directory says it: `_path_in_scope` is a subtree test, so a record at the
+`level='bureau'` unit covers every section beneath it.
+
+Deliberately unchanged: approval routing (`list_wellness_approvals`,
+`list_work_arrangement_approvals` carry their own admin branch and never call
+this helper, so admins remain the fallback approver for staff with no chief), and
+the printed ANNEX C export, which calls `work_arrangement_roster` with no user at
+all and stays bureau-wide.
+
+Consequence worth stating: an admin whose directory record sits below the bureau
+level now monitors their own subtree on those two pages. The fix for them is
+their directory record, not their account type.
+
+### One card, one number, four unasked questions
+
+The wellness and AWA cards each led with a count and stopped there. Everything
+else the data knows — which day and hour breaks actually land on, what people do
+with them, whether the reflection says it helped, which arrangement people chose,
+which weekday the office empties — was either one click away or nowhere.
+
+Both team cards are now **decks**: a native `scroll-snap` track that swipes with
+no JavaScript at all, with arrows, dots and ←/→ keys added on top by
+`static/js/deck.js` (nothing is rendered that would be dead without it). Five
+readings each, every chart still shipping its `chart_table` screen-reader
+fallback, and every slide carrying a one-sentence reading computed in Python —
+"Most breaks land Wednesday, before 10", "Friday is the emptiest day — 2 away".
+
+New and reused pieces: `storage.wellness_pattern` (one query, eight weeks,
+approved + completed only — a pending request is a plan, not behaviour),
+`dashboard_insights.count_bars_geom` and `heat_geom` (coordinates, tone tokens,
+aria label and data table, same contract as `bars_geom`). The AWA slides needed
+no new query at all: arrangement mix, day-away distribution and per-section
+progress are all derived from the period summary already in hand.
+
+**Two layout traps worth remembering**, both found by measuring the rendered page
+rather than reading the CSS:
+
+* A deck inside a grid makes the *page* scroll sideways. A grid item sizes to its
+  max-content, and a deck's max-content is every slide side by side —
+  `min-width:0` on `.oc-card` is load-bearing.
+* `.sr-only` is `position:absolute`, so without `position:relative` on
+  `.deck-track` the screen-reader chart tables take the `.deck` outside it as
+  their containing block, escape the track's clipping, and drag the document four
+  screens wide from slide 5's static position.
+
+### Faces you can put a name to, and a companion worth looking at
+
+The team wall was pictures with no names — the only label was a native `title=`
+that takes a second to appear and never appears on touch. Marks are now 66px
+(was 52) and carry a styled name popup on hover **and on keyboard focus**, with
+the person's status under the name. The companion is 108px in the hero (was 72)
+and each growth stage is 92px (was 64), which is the point at which the
+per-stage artwork reads as different plants rather than the same green blob.
+
+"Team filing" — which named the action rather than the thing — is now
+**Alternative Work Arrangement**, and the card leads with the dates it covers,
+reusing `work_arrangement_period_label` so the card and the printed ANNEX C sheet
+name the same fortnight.
+
 ## 2026-08-15 (v2.60 — CSS-IS becomes Office Connect; the companion answers back)
 
 ### The care button that looked broken
