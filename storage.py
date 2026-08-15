@@ -5172,6 +5172,32 @@ def _org_accounts_at_rank(conn, rank, org_path=None, exclude_uid=None):
     return out
 
 
+_ORG_LEVEL_RANK = {"section": 1, "division": 2, "bureau": 3}
+
+
+def org_unit_chiefs(conn, org_unit_id):
+    """Account ids of the chief(s) who head `org_unit_id` (its own path, not
+    one level up — unlike get_approvers_for). Used to notify a section/division
+    when something happens under it (e.g. a new event). [] if the unit is
+    unknown or its level doesn't map to a chief rank."""
+    if not org_unit_id:
+        return []
+    row = conn.execute("SELECT level, path FROM org_unit WHERE id=?",
+                       (org_unit_id,)).fetchone()
+    if not row:
+        return []
+    level, path = row
+    rank = _ORG_LEVEL_RANK.get(level)
+    if not rank:
+        return []
+    if rank == 3:
+        # Mirror get_approvers_for's own escalation to the Director: don't
+        # restrict by path, since the Director's directory record isn't
+        # reliably tied to a specific org_unit.
+        return _org_accounts_at_rank(conn, 3)
+    return _org_accounts_at_rank(conn, rank, org_path=path)
+
+
 def _org_role_filled(conn, rank, org_path=None):
     """Does ANY internal person (account or not) hold `rank` in the given unit?
     Used for the apply-page copy: we name the org-correct approver ("your division

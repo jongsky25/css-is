@@ -109,3 +109,69 @@ def recovery_message(name, link, event_title=None):
             f"  {link}\n\n"
             f"Keep this link to yourself — it's tied to your registration.\n")
     return subject, body
+
+
+# ---- action-needed notifications --------------------------------------------
+
+def event_created_message(creator_name, title, event_date, link):
+    subject = f"Event created — {title}"
+    body = (f"Hello {creator_name or 'there'},\n\n"
+            f"Your event “{title}” on {event_date} was created. "
+            f"Manage it here:\n\n"
+            f"  {link}\n")
+    return subject, body
+
+
+def event_section_notify_message(chief_name, creator_name, title, event_date, link):
+    subject = f"New event under your section — {title}"
+    body = (f"Hello {chief_name or 'there'},\n\n"
+            f"{creator_name} created a new event under your section: "
+            f"“{title}” on {event_date}.\n\n"
+            f"  {link}\n")
+    return subject, body
+
+
+def wellness_pending_message(approver_name, claimant_name, break_date, start_time, hours, link):
+    subject = f"Wellness break needs your approval — {claimant_name}"
+    body = (f"Hello {approver_name or 'there'},\n\n"
+            f"{claimant_name} requested a {hours}-hour wellness break on "
+            f"{break_date} at {start_time}. It's waiting on your decision:\n\n"
+            f"  {link}\n")
+    return subject, body
+
+
+def wellness_decided_message(claimant_name, action, break_date, note, link):
+    subject = f"Your wellness break was {action} — {break_date}"
+    note_line = f"\nNote: {note}\n" if note else ""
+    body = (f"Hello {claimant_name or 'there'},\n\n"
+            f"Your wellness break on {break_date} was {action}.\n{note_line}\n"
+            f"  {link}\n")
+    return subject, body
+
+
+def awa_pending_message(approver_name, requester_name, period_label, arrangement, link):
+    subject = f"Work arrangement needs your approval — {requester_name}"
+    body = (f"Hello {approver_name or 'there'},\n\n"
+            f"{requester_name} filed a {arrangement} work arrangement for "
+            f"{period_label}. It's waiting on your decision:\n\n"
+            f"  {link}\n")
+    return subject, body
+
+
+def awa_decided_message(requester_name, action, period_label, note, link):
+    subject = f"Your work arrangement was {action} — {period_label}"
+    note_line = f"\nNote: {note}\n" if note else ""
+    body = (f"Hello {requester_name or 'there'},\n\n"
+            f"Your work arrangement for {period_label} was {action}.\n{note_line}\n"
+            f"  {link}\n")
+    return subject, body
+
+
+def feedback_update_message(submitter_name, status, reply, link):
+    subject = f"Update on your Spot Feedback — {status}"
+    reply_line = f"\n“{reply}”\n" if (reply or "").strip() else ""
+    body = (f"Hello {submitter_name or 'there'},\n\n"
+            f"There's an update on the feedback you sent. Status: {status}.\n"
+            f"{reply_line}\n"
+            f"  {link}\n")
+    return subject, body
