@@ -17,10 +17,45 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.58"
+APP_VERSION = "2.59"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.59",
+        "date": "August 15, 2026",
+        "summary": "You can now say you have no work arrangement, and why — for "
+                   "leave, or while waiting on a decision from outside the "
+                   "bureau. It stays until you remove it.",
+        "changes": [
+            "Some people have no alternative work arrangement in a period and a "
+            "reason for it: on leave, or waiting on an approval from OSEC. On "
+            "the old spreadsheet those rows were simply blank, which looked "
+            "exactly like a row nobody had got round to filling in.",
+            "Mark yourself “No AWA” with a short reason and it prints on "
+            "ANNEX C as No AWA with that reason beside it — so your row says "
+            "something, and a blank row now means only one thing: nobody has "
+            "filed yet.",
+            "It needs no approval and takes effect immediately, so unlike a work "
+            "arrangement it is not tied to the Friday deadline. If something "
+            "comes up in the middle of a period, you can record it that day.",
+            "It carries into each new period on its own, reason and all, until "
+            "you or an admin removes it — there is nothing to re-file every "
+            "fortnight.",
+            "Changing the reason later does not rewrite the past: a period whose "
+            "annex has already gone out keeps the wording it was submitted with.",
+            "An admin can record it for someone who is not signing in — useful "
+            "for a long leave — and every such action names who did it and for "
+            "whom in the audit trail.",
+            "People marked No AWA drop out of the on-site counts entirely rather "
+            "than being counted as present. Someone on leave was never going to "
+            "be at a desk on Friday, so leaving them in made the coverage figures "
+            "read better than they were.",
+            "While you are marked No AWA, filing a work arrangement asks you to "
+            "remove the mark first, rather than quietly deleting the reason you "
+            "gave.",
+        ],
+    },
     {
         "version": "2.58",
         "date": "August 14, 2026",

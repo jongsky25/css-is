@@ -1,5 +1,73 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-08-15 (v2.59 — "No AWA": the blank row learns to say why)
+
+**Symptom.** v2.58 left two rows of the source ANNEX C with nowhere to go, and
+they are the same shape:
+
+1. **Bagos, Jesel** — Remarks read `Leave`. No arrangement, no way to record why.
+2. **Sales, Miriam Cecilia** — *"With requst WFH due to medical condition, for
+   approval from OSEC"*. A decision pending **outside** the bureau, arriving
+   mid-period, long after the Friday deadline had shut.
+
+Both printed as blank rows, indistinguishable from someone who simply never
+filed — reintroducing, for these two cases, exactly the ambiguity the module was
+built to remove. (2) was additionally the one case where the deadline had a real
+cost: the system could only say no.
+
+**Fix.** One mechanism for both: a standing **`No AWA`** tag carrying free text.
+It is a statement of fact rather than a request for a schedule, so it needs no
+approver and no filing window — which is what lets it cover a mid-period
+situation without inventing an override.
+
+- **`storage.py`** — `work_arrangement_noawa`, stored as an **interval**
+  (`effective_from` / `effective_to`) rather than a row per period. Carry-over is
+  then structural: an interval spans every period between its ends, so nothing
+  runs at a period boundary and there is no rollover job to fail silently. Same
+  partial-unique-index trick as the arrangement table
+  (`ux_wa_noawa_live … WHERE effective_to IS NULL`), so closed intervals fall
+  outside it and the history of past reasons accumulates.
+- **`storage.py`** — rewording **closes the current interval and opens a new
+  one** from the current period. A period whose annex has already been submitted
+  keeps the wording it went out with. Rewording *within* the period it started in
+  corrects in place instead, since there is no history to preserve yet.
+- **`storage.py`** — `_wa_noawa_may_act`: the person or an admin, symmetric with
+  who may remove it. An admin has to be able to record a long leave for someone
+  who is not signing in; a peer or even their section chief cannot speak for
+  them.
+- **`storage.py`** — the tag takes effect from the period you are **in**, not the
+  next one open for filing. That is the whole point for case (2).
+- **`storage.py`** — three integration points. `work_arrangement_roster` merges
+  the tag in and lets it **outrank a stale filing** (the stated reason is the
+  truth); `work_arrangement_export_rows` prints `No AWA` + the reason;
+  `work_arrangement_coverage` drops tagged people from the denominator
+  **entirely** — not on-site, not off-site. Someone on leave was never going to
+  be at a desk on Friday, and counting them either way misstates the figure the
+  warning exists to report. `work_arrangement_period_summary` drops them from
+  "filed n of m" too, and surfaces them as their own list so a shrinking
+  headcount is visible rather than mysterious.
+- **`storage.py`** — filing while tagged is **refused**, naming the Remove
+  action, rather than silently clearing the tag. Deleting someone's stated reason
+  as a side effect of an unrelated action is the kind of surprise that costs
+  trust in the record.
+- **`app.py`** — `POST /work-arrangement/no-awa` and `…/remove`. Authority lives
+  in storage, so the self path and the admin path are one code path with one
+  rule; both audit with the subject named, because an admin acting for someone
+  else has to be attributable.
+- **`templates/`** — the hub collapses to a single card while a tag is live (no
+  point offering a form that would only refuse), with an unobtrusive
+  `<details>` offer when there isn't one. The schedule page gains a `No AWA`
+  pill, the excluded-from-the-counts note, and per-row admin set/remove controls.
+- **`work_arrangement_annex.py`** — unchanged. It renders whatever the rows
+  carry, so both the workbook and the PDF picked this up for free.
+- **`tests/test_work_arrangement.py`** — 16 new tests (80 total). The ones worth
+  keeping honest: persistence across five periods **with nothing run in
+  between** (if it ever fails, the tag has quietly become per-period); rewording
+  later leaving the old period's wording intact; `test_noawa_needs_no_approval_and_ignores_the_deadline`,
+  which asserts a filing is refused at that same moment and the tag is not — if
+  that ever starts raising, case (2) has no path again; and the coverage flag
+  thresholds re-derived against the smaller section rather than just re-run.
+
 ## 2026-08-14 (v2.58 — the ANNEX C work arrangement schedule becomes a record, not a spreadsheet)
 
 **Symptom.** BLHSD maintained its Internal Work Arrangement Schedule (ANNEX C) as

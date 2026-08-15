@@ -13428,6 +13428,10 @@ def work_arrangement_hub(request: Request, ok: str = "", err: str = ""):
     user = request.state.user
     conn = get_conn()
     try:
+        # A live "No AWA" tag replaces the period cards outright — there is no
+        # arrangement to file while it stands, so offering the form would only
+        # lead to a refusal.
+        noawa = st.get_work_arrangement_noawa(conn, user["id"])
         periods = []
         for ps in st.work_arrangement_open_periods():
             periods.append({
@@ -13454,6 +13458,7 @@ def work_arrangement_hub(request: Request, ok: str = "", err: str = ""):
         "nav_active": "work_arrangement", "show_scope": False,
         "periods": periods, "history": history, "approver": approver,
         "is_chief": is_chief, "legend": st.WORK_ARRANGEMENT_LEGEND,
+        "noawa": noawa, "noawa_label": st.WORK_ARRANGEMENT_NOAWA,
         "ok": ok, "err": err,
     })
 
@@ -13683,6 +13688,8 @@ def work_arrangement_schedule(request: Request, period: str = ""):
         "prev_period": st.work_arrangement_prev_period(ps),
         "next_period": st.work_arrangement_next_period(ps),
         "weekdays": st.WORK_ARRANGEMENT_WEEKDAYS,
+        "noawa_label": st.WORK_ARRANGEMENT_NOAWA,
+        "is_admin": user.get("role") == "admin",
     })
 
 
@@ -13747,3 +13754,65 @@ def work_arrangement_annex_pdf(request: Request, period: str = "", month: str = 
     fname = wanx.filename(periods[0]["period_start"], "pdf", month=month or None)
     return Response(content=data, media_type="application/pdf",
                     headers={"Content-Disposition": f'attachment; filename="{fname}"'})
+
+
+@app.post("/work-arrangement/no-awa")
+async def work_arrangement_noawa_set(request: Request):
+    """Record (or reword) "No AWA" — no alternative work arrangement, and why.
+    No approval and no deadline: it is a statement of fact, which is what lets it
+    cover something that comes up mid-period after filing has closed.
+
+    Either the person or an admin may act; storage owns that rule, so the
+    self path and the admin path are one code path."""
+    user = request.state.user
+    p = await _posted(request)
+    subject = int(p.get("user_id") or user["id"])
+    back = p.get("back") or "/work-arrangement"
+    conn = get_conn()
+    try:
+        try:
+            tag = st.set_work_arrangement_noawa(conn, subject, p.get("remark"), user)
+        except PermissionError:
+            return _wa_forbid(request)
+        except ValueError as e:
+            return RedirectResponse(f"{back}?err={quote(str(e))}", status_code=303)
+        who = st.get_admin_user_by_id(conn, subject)
+        name = (st.get_rp(conn, who["rp_id"]) or {}).get("name") if who and who.get("rp_id") else None
+        _audit(request, conn, "work_arrangement_noawa_set",
+               target_type="admin_user", target_id=subject,
+               summary=(f"marked {name or (who or {}).get('username', subject)} "
+                        f"“{st.WORK_ARRANGEMENT_NOAWA}” — {tag['remark']}"))
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"{back}?ok={quote('Recorded — this carries into each new period until you remove it.')}",
+        status_code=303)
+
+
+@app.post("/work-arrangement/no-awa/remove")
+async def work_arrangement_noawa_remove(request: Request):
+    """Lift the tag from this period on. Earlier periods keep it, so an annex
+    already submitted still reads the way it was submitted."""
+    user = request.state.user
+    p = await _posted(request)
+    subject = int(p.get("user_id") or user["id"])
+    back = p.get("back") or "/work-arrangement"
+    conn = get_conn()
+    try:
+        try:
+            st.end_work_arrangement_noawa(conn, subject, user)
+        except PermissionError:
+            return _wa_forbid(request)
+        except ValueError as e:
+            return RedirectResponse(f"{back}?err={quote(str(e))}", status_code=303)
+        who = st.get_admin_user_by_id(conn, subject)
+        name = (st.get_rp(conn, who["rp_id"]) or {}).get("name") if who and who.get("rp_id") else None
+        _audit(request, conn, "work_arrangement_noawa_remove",
+               target_type="admin_user", target_id=subject,
+               summary=(f"lifted “{st.WORK_ARRANGEMENT_NOAWA}” for "
+                        f"{name or (who or {}).get('username', subject)}"))
+    finally:
+        conn.close()
+    return RedirectResponse(
+        f"{back}?ok={quote('Removed — you can file a work arrangement again.')}",
+        status_code=303)

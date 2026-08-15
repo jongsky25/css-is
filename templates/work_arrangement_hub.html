@@ -40,6 +40,19 @@
   .note { color:var(--ink-soft); font-size:.85rem; font-style:italic; }
   .chiefbar { display:flex; gap:.6rem; flex-wrap:wrap; margin-bottom:1.1rem; }
   .legend { color:var(--soft); font-size:.78rem; line-height:1.4; }
+  .noawa { border-color:var(--amber-ln); background:var(--amber-bg); }
+  .noawa h3 { margin:0 0 .3rem; color:var(--amber); }
+  .noawa .reason { font-size:1.05rem; font-weight:700; margin:.2rem 0 .6rem; }
+  .editrow { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; margin-top:.7rem; }
+  .editrow input { flex:1 1 260px; font:inherit; padding:.45rem .6rem; border:1px solid var(--line);
+                   border-radius:9px; background:var(--bg); color:var(--ink); }
+  .editrow button, .noawa button { font:inherit; font-size:.85rem; font-weight:700; cursor:pointer;
+        border:1px solid var(--accent); background:var(--surface); color:var(--accent);
+        border-radius:9px; padding:.45rem .9rem; }
+  .noawa button.danger { border-color:var(--line); color:var(--ink-soft); }
+  .noawa-offer { margin-bottom:1.1rem; }
+  .noawa-offer summary { cursor:pointer; font-weight:700; color:var(--accent); font-size:.9rem; }
+  .noawa-offer .note { margin:.5rem 0 0; }
 </style>
 
 {{ page_header("Work arrangement",
@@ -54,6 +67,27 @@
   <a class="btn ghost" href="/work-arrangement/schedule">Period schedule</a>
 </div>
 {% endif %}
+
+{% if noawa %}
+{# A live tag replaces the period cards: there is no arrangement to file while
+   it stands, and it carries itself into each new period. #}
+<div class="panel noawa">
+  <h3>{{ noawa_label }} — no alternative work arrangement</h3>
+  <p class="reason">“{{ noawa.remark }}”</p>
+  <p class="note">In force since {{ noawa.effective_from_label }}, and carried into every
+  period from here until it's removed. It shows on ANNEX C as
+  <b>{{ noawa_label }}</b> with that reason beside it, so your row never reads as
+  simply unfilled.</p>
+  <form method="post" action="/work-arrangement/no-awa" class="editrow">
+    <input type="text" name="remark" value="{{ noawa.remark }}" maxlength="200"
+           aria-label="Reason">
+    <button type="submit">Update the reason</button>
+  </form>
+  <form method="post" action="/work-arrangement/no-awa/remove" style="margin-top:.6rem;">
+    <button type="submit" class="danger">Remove — I have an arrangement to file</button>
+  </form>
+</div>
+{% else %}
 
 {% if periods %}
 <div class="periods">
@@ -113,6 +147,20 @@
   {{ empty_state("Nothing open for filing",
                  "Filing closes on the Friday before each period begins. Check back after the next cut-off.", "🗓") }}
 </div>
+{% endif %}
+
+<details class="noawa-offer">
+  <summary>No work arrangement at all this period?</summary>
+  <p class="note">If you're on leave, or waiting on a decision from outside the bureau,
+  say so here instead of leaving your row blank. It needs no approval, takes effect
+  straight away — so it works even after the filing deadline — and stays until you
+  remove it.</p>
+  <form method="post" action="/work-arrangement/no-awa" class="editrow">
+    <input type="text" name="remark" maxlength="200" required
+           placeholder="e.g. on leave, or awaiting OSEC approval" aria-label="Reason">
+    <button type="submit">Mark me {{ noawa_label }}</button>
+  </form>
+</details>
 {% endif %}
 
 {% if history %}

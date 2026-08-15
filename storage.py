@@ -312,6 +312,35 @@ def init_db(conn):
         ON work_arrangement(user_id, period_start) WHERE status = 'pending';
     CREATE INDEX IF NOT EXISTS idx_work_arrangement_period
         ON work_arrangement(period_start, status);
+
+    -- "No AWA" — a standing statement that someone has NO alternative work
+    -- arrangement, and why: on leave, awaiting a decision from OSEC, and so on.
+    -- Unlike a filed arrangement this is not per-period and not approved. It
+    -- simply holds from the period it starts in until someone ends it, which is
+    -- what lets it cover a situation arising mid-period, after filing closed —
+    -- the one case the Friday deadline otherwise had no answer for.
+    CREATE TABLE IF NOT EXISTS work_arrangement_noawa (
+        id             INTEGER PRIMARY KEY,
+        user_id        INTEGER NOT NULL REFERENCES admin_user(id),
+        remark         TEXT NOT NULL,      -- free text: why there is no arrangement
+        effective_from TEXT NOT NULL,      -- period_start it begins in
+        effective_to   TEXT,               -- period_start it stops applying FROM;
+                                           -- NULL = still in force. An interval
+                                           -- spans every period between its ends,
+                                           -- so carry-over needs nothing to run
+                                           -- at a period boundary.
+        created_by     INTEGER REFERENCES admin_user(id),   -- the person, or an admin
+        created_at     TEXT,
+        ended_by       INTEGER REFERENCES admin_user(id),
+        ended_at       TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_wa_noawa_user
+        ON work_arrangement_noawa(user_id, effective_from);
+    -- At most one tag in force per person, the same partial-index trick the
+    -- arrangement table uses: closed intervals fall outside it, so the history
+    -- of past reasons accumulates instead of being overwritten.
+    CREATE UNIQUE INDEX IF NOT EXISTS ux_wa_noawa_live
+        ON work_arrangement_noawa(user_id) WHERE effective_to IS NULL;
     """)
     _add_missing_columns(conn)
     conn.commit()
@@ -5932,6 +5961,10 @@ _WA_DAY_NAMES = [name for _i, name in WORK_ARRANGEMENT_WEEKDAYS]
 
 WORK_ARRANGEMENT_STATUSES = ("pending", "approved", "denied", "cancelled",
                              "superseded")
+# The label for someone with no alternative work arrangement, printed verbatim in
+# the Work Arrangement column of ANNEX C. One constant so the screen, the workbook
+# and the PDF cannot word it three ways.
+WORK_ARRANGEMENT_NOAWA = "No AWA"
 # Rows that occupy a person's period. A denied or withdrawn filing frees it
 # again; a superseded one has already been replaced.
 _WA_LIVE = ("pending", "approved")
@@ -6208,6 +6241,13 @@ def create_work_arrangement(conn, user_id, period_start, arrangement,
     work_arrangement_coverage_note."""
     arrangement, weekday = _wa_validate(arrangement, weekday)
     ps = _wa_check_period_open(period_start)
+    # Refuse rather than silently dropping the tag: someone stated a reason they
+    # have no arrangement, and deleting that as a side effect of an unrelated
+    # action is the kind of surprise that costs trust in the record.
+    if get_work_arrangement_noawa(conn, user_id, ps):
+        raise ValueError(
+            "You're currently marked “No AWA”. Remove that first if you're "
+            "filing a work arrangement again.")
     if my_work_arrangement_for(conn, user_id, ps):
         raise ValueError(
             f"You already have an approved work arrangement for "
@@ -6285,6 +6325,139 @@ def cancel_work_arrangement(conn, wa_id, user_id):
     return get_work_arrangement(conn, wa_id)
 
 
+# ---- "No AWA": a standing tag, not a filing ---------------------------------
+#
+# Some people have no alternative work arrangement and a reason for it: on leave,
+# or waiting on a decision made outside the bureau (the source ANNEX C had both —
+# "Leave", and "for approval from OSEC"). On the spreadsheet those read as blank
+# rows, indistinguishable from someone who simply never filed.
+#
+# A tag is a statement of fact rather than a request for a schedule, so it needs
+# no approver and no filing window — which is also what lets it cover a situation
+# that arises mid-period, after the Friday deadline has closed. It is stored as an
+# INTERVAL so it carries into each new period on its own, and editing the reason
+# closes the old interval and opens a new one: a submitted August annex keeps what
+# it said in August even if the wording changes in September.
+
+def _wa_noawa_hydrate(row):
+    (nid, user_id, remark, eff_from, eff_to, created_by, created_at,
+     ended_by, ended_at) = row
+    return {
+        "id": nid, "user_id": user_id, "remark": remark,
+        "effective_from": eff_from,
+        "effective_from_label": work_arrangement_period_label(eff_from),
+        "effective_to": eff_to, "created_by": created_by,
+        "created_at": created_at, "ended_by": ended_by, "ended_at": ended_at,
+        "arrangement": WORK_ARRANGEMENT_NOAWA,
+    }
+
+
+_WA_NOAWA_COLS = ("id, user_id, remark, effective_from, effective_to, "
+                  "created_by, created_at, ended_by, ended_at")
+
+
+def get_work_arrangement_noawa(conn, user_id, period_start=None):
+    """The tag in force for a period (the current one by default), or None. An
+    interval covers a period when it started on or before it and hasn't ended by
+    then — so a tag set in August is still there in September without anything
+    having run in between."""
+    ps = period_start or work_arrangement_period()
+    row = conn.execute(
+        f"SELECT {_WA_NOAWA_COLS} FROM work_arrangement_noawa "
+        "WHERE user_id = ? AND effective_from <= ? "
+        "AND (effective_to IS NULL OR ? < effective_to) "
+        "ORDER BY effective_from DESC LIMIT 1",
+        (user_id, ps, ps)).fetchone()
+    return _wa_noawa_hydrate(row) if row else None
+
+
+def _wa_noawa_for_period(conn, period_start):
+    """{user_id: tag} for everyone tagged in one period — one query behind the
+    roster, the coverage tally and both exports, so they cannot disagree."""
+    rows = conn.execute(
+        f"SELECT {_WA_NOAWA_COLS} FROM work_arrangement_noawa "
+        "WHERE effective_from <= ? AND (effective_to IS NULL OR ? < effective_to) "
+        "ORDER BY effective_from",
+        (period_start, period_start)).fetchall()
+    return {r[1]: _wa_noawa_hydrate(r) for r in rows}
+
+
+def _wa_noawa_may_act(actor, user_id):
+    """Either the person themselves or an admin. Deliberately symmetric with who
+    may remove it: an admin has to be able to record a leave for someone who
+    isn't logging in, and nobody else should be able to speak for them."""
+    return bool(actor) and (actor.get("id") == user_id
+                            or actor.get("role") == "admin")
+
+
+def set_work_arrangement_noawa(conn, user_id, remark, actor):
+    """Start the tag, or replace its reason. Takes effect immediately — there is
+    no approval step and no deadline. Returns the live tag.
+
+    Replacing the reason ends the current interval and opens a new one from the
+    current period rather than editing in place, so a period whose annex has
+    already gone out keeps the wording it was submitted with."""
+    if not _wa_noawa_may_act(actor, user_id):
+        raise PermissionError(
+            "Only the person themselves or an administrator can record this.")
+    remark = (remark or "").strip()
+    if not remark:
+        raise ValueError("Say why there's no work arrangement — a short reason "
+                         "is what makes the blank row on the form mean something.")
+    ps = work_arrangement_period()
+    now = tz.now_iso()
+    live = conn.execute(
+        "SELECT id, remark, effective_from FROM work_arrangement_noawa "
+        "WHERE user_id = ? AND effective_to IS NULL", (user_id,)).fetchone()
+    try:
+        if live:
+            if live[1] == remark:
+                return get_work_arrangement_noawa(conn, user_id, ps)
+            if live[2] == ps:
+                # Started this period and reworded within it — no history to keep
+                # yet, so just correct it rather than opening a second interval.
+                conn.execute(
+                    "UPDATE work_arrangement_noawa SET remark = ? WHERE id = ?",
+                    (remark, live[0]))
+                conn.commit()
+                return get_work_arrangement_noawa(conn, user_id, ps)
+            conn.execute(
+                "UPDATE work_arrangement_noawa SET effective_to = ?, ended_by = ?, "
+                "ended_at = ? WHERE id = ?", (ps, actor.get("id"), now, live[0]))
+        conn.execute(
+            "INSERT INTO work_arrangement_noawa(user_id, remark, effective_from, "
+            "created_by, created_at) VALUES (?,?,?,?,?)",
+            (user_id, remark, ps, actor.get("id"), now))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    return get_work_arrangement_noawa(conn, user_id, ps)
+
+
+def end_work_arrangement_noawa(conn, user_id, actor):
+    """Remove the tag from the current period on. Earlier periods keep it, so a
+    form already submitted still reads the way it was submitted."""
+    if not _wa_noawa_may_act(actor, user_id):
+        raise PermissionError(
+            "Only the person themselves or an administrator can remove this.")
+    live = conn.execute(
+        "SELECT id, effective_from FROM work_arrangement_noawa "
+        "WHERE user_id = ? AND effective_to IS NULL", (user_id,)).fetchone()
+    if not live:
+        raise ValueError("There's no “No AWA” to remove.")
+    ps = work_arrangement_period()
+    if live[1] >= ps:
+        # Never applied to a completed period, so there is nothing to preserve.
+        conn.execute("DELETE FROM work_arrangement_noawa WHERE id = ?", (live[0],))
+    else:
+        conn.execute(
+            "UPDATE work_arrangement_noawa SET effective_to = ?, ended_by = ?, "
+            "ended_at = ? WHERE id = ?",
+            (ps, actor.get("id"), tz.now_iso(), live[0]))
+    conn.commit()
+
+
 # ---- approval --------------------------------------------------------------
 
 def decide_work_arrangement(conn, wa_id, user, action, note=None):
@@ -6360,9 +6533,14 @@ def work_arrangement_coverage(conn, org_path, period_start, exclude_user_id=None
     day again. Where a person holds both an approved row and a pending change,
     the PENDING one counts: that is the state being asked about.
 
-    Returns {"headcount": n, "weekdays": [{idx, name, cww, wfh, offsite,
-    onsite, names}, ...]} — five entries, Monday to Friday. Only accounts take
-    part, so headcount is the set of people who could file."""
+    Anyone tagged "No AWA" drops out entirely — not on-site, not off-site, just
+    out of the denominator. Someone on leave was never going to be at a desk on
+    Friday, and counting them either way misstates the coverage this whole
+    warning exists to report.
+
+    Returns {"headcount": n, "excluded": n, "weekdays": [{idx, name, cww, wfh,
+    offsite, onsite, names}, ...]} — five entries, Monday to Friday. Only
+    accounts take part, so headcount is the set of people who could file."""
     people = conn.execute("""
         SELECT a.id, COALESCE(rp.name, a.username)
         FROM admin_user a
@@ -6371,6 +6549,9 @@ def work_arrangement_coverage(conn, org_path, period_start, exclude_user_id=None
         WHERE a.active = 1 AND ou.path = ?
     """, (org_path or "",)).fetchall()
     people = [(uid, name) for uid, name in people if uid != exclude_user_id]
+    tagged = _wa_noawa_for_period(conn, period_start)
+    excluded = sum(1 for uid, _n in people if uid in tagged)
+    people = [(uid, name) for uid, name in people if uid not in tagged]
     ids = {uid for uid, _n in people}
     names = dict(people)
 
@@ -6398,7 +6579,7 @@ def work_arrangement_coverage(conn, org_path, period_start, exclude_user_id=None
             "onsite": len(people) - len(cww) - len(wfh),
             "names": sorted(cww + wfh),
         })
-    return {"headcount": len(people), "weekdays": weekdays}
+    return {"headcount": len(people), "excluded": excluded, "weekdays": weekdays}
 
 
 def _wa_org_path(conn, user_id):
@@ -6493,15 +6674,27 @@ def work_arrangement_roster(conn, period_start, user=None):
         # as such, so let 'approved' win when a person holds both.
         if w["user_id"] not in live or w["status"] == "approved":
             live[w["user_id"]] = w
+    tagged = _wa_noawa_for_period(conn, period_start)
     out = []
     for uid, username, name, position, short_name, path in rows:
         if not _path_in_scope(path, scope):
             continue
+        base = {"user_id": uid, "name": name or username,
+                "position": position or "", "section": short_name or "",
+                "org_path": path or ""}
+        tag = tagged.get(uid)
+        if tag:
+            # A stated reason outranks any stale filing: the person told us they
+            # have no arrangement, and that is not a gap to chase.
+            out.append({**base, "arrangement": WORK_ARRANGEMENT_NOAWA,
+                        "arrangement_label": WORK_ARRANGEMENT_NOAWA,
+                        "weekday": None, "remarks": tag["remark"],
+                        "status": "noawa", "id": None, "filed": True,
+                        "approved": True, "noawa": True})
+            continue
         w = live.get(uid)
         out.append({
-            "user_id": uid, "name": name or username,
-            "position": position or "", "section": short_name or "",
-            "org_path": path or "",
+            **base,
             "arrangement": w["arrangement"] if w else "",
             "arrangement_label": w["arrangement_label"] if w else "",
             "weekday": w["weekday"] if w else None,
@@ -6510,6 +6703,7 @@ def work_arrangement_roster(conn, period_start, user=None):
             "id": w["id"] if w else None,
             "filed": bool(w),
             "approved": bool(w and w["status"] == "approved"),
+            "noawa": False,
         })
     return out
 
@@ -6550,9 +6744,13 @@ def work_arrangement_period_summary(conn, period_start, user=None):
         "deadline_passed": tz.today_local() > deadline,
         "roster": roster, "sections": sections, "totals": totals,
         "thinnest": thinnest,
-        "headcount": len(roster),
-        "filed": sum(1 for r in roster if r["filed"]),
-        "approved": sum(1 for r in roster if r["approved"]),
+        # People tagged "No AWA" are out of the schedule entirely, so they are
+        # not part of the "filed n of m" denominator either — counting them
+        # would make the period look permanently incomplete.
+        "headcount": sum(1 for r in roster if not r.get("noawa")),
+        "noawa": [r["name"] for r in roster if r.get("noawa")],
+        "filed": sum(1 for r in roster if r["filed"] and not r.get("noawa")),
+        "approved": sum(1 for r in roster if r["approved"] and not r.get("noawa")),
         "pending": sum(1 for r in roster if r["filed"] and not r["approved"]),
         "unfiled": [r["name"] for r in roster if not r["filed"]],
     }
@@ -6565,25 +6763,27 @@ def work_arrangement_export_rows(conn, period_start):
     numbered, grouped by division/section then name — the order the source
     sheets use.
 
-    Only APPROVED arrangements print. Pending, denied and unfiled people appear
-    with the Work Arrangement and Remarks cells BLANK, which is exactly how the
-    real sheet reads when someone hasn't been dealt with — the difference is
-    that here the blank is a fact the system can also show you before you
-    submit, not one discovered afterwards.
+    Only APPROVED arrangements print, plus "No AWA" for anyone carrying a tag.
+    Pending, denied and unfiled people appear with the Work Arrangement and
+    Remarks cells BLANK — which is exactly how the real sheet reads when someone
+    hasn't been dealt with, except that now a blank means only one thing. A
+    person who has no arrangement and a reason for it says so on the form
+    instead of looking identical to a person nobody chased.
 
     Both the workbook and the PDF read this, so the two can never disagree."""
     rows = work_arrangement_roster(conn, period_start)
     out = []
     for i, r in enumerate(rows, start=1):
-        approved = r["approved"]
+        shown = r["approved"]              # covers 'No AWA' too — it needs no approval
         out.append({
             "no": i,
             "name": r["name"],
             "position": r["position"],
             "division_unit": r["section"],
-            "arrangement": r["arrangement"] if approved else "",
-            "remarks": r["remarks"] if approved else "",
+            "arrangement": r["arrangement"] if shown else "",
+            "remarks": r["remarks"] if shown else "",
             "filed": r["filed"],
+            "noawa": r.get("noawa", False),
             "status": r["status"],
         })
     return out

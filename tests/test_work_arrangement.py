@@ -25,6 +25,7 @@ def wa_org(app_mod):
     occupancy and coverage start from zero."""
     conn = st.connect(app_mod.DB)
     st.init_db(conn)
+    conn.execute("DELETE FROM work_arrangement_noawa")
     conn.execute("DELETE FROM work_arrangement")
     conn.execute("DELETE FROM admin_user WHERE username LIKE 'wa-%@test.local'")
     conn.execute("DELETE FROM resource_person WHERE name LIKE 'WA-Test %'")
@@ -57,6 +58,7 @@ def wa_org(app_mod):
     yield {"conn": conn, "unit": unit, "div": div, "path": "TEST/WA/WASec",
            "dchief": dchief, "chief": chief, "staff": staff, "loner": loner,
            "admin": {"id": admin_row["id"], "role": "admin"}}
+    conn.execute("DELETE FROM work_arrangement_noawa")
     conn.execute("DELETE FROM work_arrangement")
     conn.execute("DELETE FROM admin_user WHERE username LIKE 'wa-%@test.local'")
     conn.execute("DELETE FROM resource_person WHERE name LIKE 'WA-Test %'")
@@ -647,3 +649,265 @@ def test_nav_and_search_expose_the_module(app_mod):
     urls = {it["url"] for g in app_mod.nav_groups_for(U()) for it in g["items"]}
     assert "/work-arrangement" in urls
     assert "/work-arrangement" in {it["url"] for it in app_mod.search_index_for(U())}
+
+
+# ------------------------------------------------------------- "No AWA" ------
+
+def _at(monkeypatch, d):
+    monkeypatch.setattr(tz, "today_local", lambda: d)
+
+
+def test_noawa_needs_a_reason(wa_org):
+    conn, emp = wa_org["conn"], wa_org["staff"][0]
+    for blank in ("", "   ", None):
+        with pytest.raises(ValueError, match="Say why"):
+            st.set_work_arrangement_noawa(conn, emp, blank, _u(emp))
+
+
+def test_noawa_carries_into_later_periods_with_nothing_run(wa_org):
+    """The whole point of storing it as an interval: no rollover step exists, so
+    if this ever fails the tag has quietly become per-period."""
+    conn, emp = wa_org["conn"], wa_org["staff"][0]
+    tag = st.set_work_arrangement_noawa(conn, emp, "on leave", _u(emp))
+
+    # It starts in the period we are IN, not the next one open for filing —
+    # that is what lets it cover something that comes up mid-period.
+    assert tag["effective_from"] == st.work_arrangement_period()
+    p = tag["effective_from"]
+    for _ in range(5):
+        assert st.get_work_arrangement_noawa(conn, emp, p)["remark"] == "on leave"
+        p = st.work_arrangement_next_period(p)
+    # ...but it does not reach backwards into a period already submitted.
+    assert st.get_work_arrangement_noawa(
+        conn, emp, st.work_arrangement_prev_period(tag["effective_from"])) is None
+
+
+def test_rewording_later_keeps_what_the_old_period_said(wa_org, monkeypatch):
+    """An annex already submitted has to keep the wording it went out with."""
+    conn, emp, ps = wa_org["conn"], wa_org["staff"][0], _open()
+    st.set_work_arrangement_noawa(conn, emp, "awaiting OSEC approval", _u(emp))
+
+    later = st.work_arrangement_next_period(st.work_arrangement_next_period(ps))
+    _at(monkeypatch, date.fromisoformat(later))
+    st.set_work_arrangement_noawa(conn, emp, "OSEC approved, filing next period",
+                                  _u(emp))
+
+    assert st.get_work_arrangement_noawa(
+        conn, emp, ps)["remark"] == "awaiting OSEC approval"
+    assert st.get_work_arrangement_noawa(
+        conn, emp, later)["remark"] == "OSEC approved, filing next period"
+    # two intervals, exactly one of them still open
+    assert conn.execute(
+        "SELECT COUNT(*) FROM work_arrangement_noawa WHERE user_id=?",
+        (emp,)).fetchone()[0] == 2
+    assert conn.execute(
+        "SELECT COUNT(*) FROM work_arrangement_noawa "
+        "WHERE user_id=? AND effective_to IS NULL", (emp,)).fetchone()[0] == 1
+
+
+def test_rewording_within_the_same_period_corrects_in_place(wa_org):
+    """No history to preserve yet, so a typo fix shouldn't leave a stub behind."""
+    conn, emp = wa_org["conn"], wa_org["staff"][0]
+    st.set_work_arrangement_noawa(conn, emp, "on leave", _u(emp))
+    st.set_work_arrangement_noawa(conn, emp, "on maternity leave", _u(emp))
+    assert conn.execute(
+        "SELECT COUNT(*) FROM work_arrangement_noawa WHERE user_id=?",
+        (emp,)).fetchone()[0] == 1
+    assert st.get_work_arrangement_noawa(conn, emp)["remark"] == "on maternity leave"
+
+
+def test_removal_lifts_it_from_here_on_and_leaves_history(wa_org, monkeypatch):
+    conn, emp, ps = wa_org["conn"], wa_org["staff"][0], _open()
+    st.set_work_arrangement_noawa(conn, emp, "on leave", _u(emp))
+
+    later = st.work_arrangement_next_period(st.work_arrangement_next_period(ps))
+    _at(monkeypatch, date.fromisoformat(later))
+    st.end_work_arrangement_noawa(conn, emp, _u(emp))
+
+    assert st.get_work_arrangement_noawa(conn, emp, later) is None
+    assert st.get_work_arrangement_noawa(conn, emp, ps)["remark"] == "on leave"
+    with pytest.raises(ValueError, match="no .No AWA. to remove"):
+        st.end_work_arrangement_noawa(conn, emp, _u(emp))
+
+
+def test_only_one_tag_can_be_live_at_a_time(wa_org):
+    conn, emp = wa_org["conn"], wa_org["staff"][0]
+    st.set_work_arrangement_noawa(conn, emp, "on leave", _u(emp))
+    with pytest.raises(sqlite3.IntegrityError):
+        conn.execute(
+            "INSERT INTO work_arrangement_noawa(user_id, remark, effective_from) "
+            "VALUES (?,'second','2099-01-01')", (emp,))
+    conn.rollback()
+
+
+def test_the_person_or_an_admin_may_act_and_nobody_else(wa_org):
+    conn, emp, peer = wa_org["conn"], wa_org["staff"][0], wa_org["staff"][1]
+    # a peer cannot speak for someone — nor can their section chief
+    for actor in (_u(peer), _u(wa_org["chief"], "section_manager")):
+        with pytest.raises(PermissionError):
+            st.set_work_arrangement_noawa(conn, emp, "on leave", actor)
+
+    # an admin can record it for someone who isn't logging in
+    st.set_work_arrangement_noawa(conn, emp, "on leave", wa_org["admin"])
+    assert st.get_work_arrangement_noawa(conn, emp)["remark"] == "on leave"
+    with pytest.raises(PermissionError):
+        st.end_work_arrangement_noawa(conn, emp, _u(peer))
+    st.end_work_arrangement_noawa(conn, emp, _u(emp))       # ...and they can lift it
+    assert st.get_work_arrangement_noawa(conn, emp) is None
+
+
+def test_noawa_needs_no_approval_and_ignores_the_deadline(wa_org, monkeypatch):
+    """The case this exists for: something comes up mid-period, long after
+    filing closed. If this ever starts raising, Sales' OSEC situation has no
+    path through the system again."""
+    conn, emp, ps = wa_org["conn"], wa_org["staff"][0], _open()
+    inside = st.work_arrangement_period_bounds(ps)[0] + timedelta(days=3)
+    _at(monkeypatch, inside)
+    assert st.work_arrangement_deadline(ps) < inside          # filing has closed
+    with pytest.raises(ValueError, match="deadline"):
+        st.create_work_arrangement(conn, emp, ps, "WFH", 4)
+
+    tag = st.set_work_arrangement_noawa(conn, emp, "hospitalised", _u(emp))
+    assert tag["remark"] == "hospitalised"
+    assert st.get_work_arrangement_noawa(conn, emp, ps)         # in force immediately
+    # ...and it never reaches an approver
+    assert st.list_work_arrangement_approvals(conn, wa_org["admin"]) == []
+
+
+def test_filing_while_tagged_is_refused_and_says_how(wa_org):
+    conn, emp, ps = wa_org["conn"], wa_org["staff"][0], _open()
+    st.set_work_arrangement_noawa(conn, emp, "on leave", _u(emp))
+    with pytest.raises(ValueError, match="Remove that first"):
+        st.create_work_arrangement(conn, emp, ps, "WFH", 4)
+    # lifting it hands the period back
+    st.end_work_arrangement_noawa(conn, emp, _u(emp))
+    assert st.create_work_arrangement(conn, emp, ps, "WFH", 4)
+
+
+def test_tagged_people_leave_the_coverage_denominator(wa_org):
+    """A section of 7 with one person on leave is a section of 6 — they were
+    never going to be at a desk on Friday, and counting them either way
+    misstates what this warning is for."""
+    conn, ps, path = wa_org["conn"], _open(), wa_org["path"]
+    before = st.work_arrangement_coverage(conn, path, ps)
+    assert before["headcount"] == 7 and before["excluded"] == 0
+    assert before["weekdays"][4]["onsite"] == 7
+
+    st.set_work_arrangement_noawa(conn, wa_org["staff"][0], "on leave", _u(wa_org["staff"][0]))
+    after = st.work_arrangement_coverage(conn, path, ps)
+    assert after["headcount"] == 6 and after["excluded"] == 1
+    assert after["weekdays"][4]["onsite"] == 6      # not on-site AND not off-site
+    assert after["weekdays"][4]["offsite"] == 0
+
+
+def test_the_flag_thresholds_move_with_the_smaller_section(wa_org):
+    """Six people once one is tagged, so it takes one fewer Friday absence to
+    reach 'nobody on-site' than the seven-person case does."""
+    conn, ps = wa_org["conn"], _open()
+    st.set_work_arrangement_noawa(conn, wa_org["staff"][0], "on leave", _u(wa_org["staff"][0]))
+    for i in range(1, 5):
+        _approved(wa_org, wa_org["staff"][i], "CWW", 4)
+
+    def flag_for(uid):
+        wa = st.create_work_arrangement(conn, uid, ps, "CWW", 4)
+        return st.work_arrangement_coverage_flag(
+            conn, st.get_work_arrangement(conn, wa))
+
+    assert flag_for(wa_org["staff"][5]) == "Only 1 on-site on Friday after this"
+    assert flag_for(wa_org["chief"]) == "Approving leaves nobody on-site on Friday"
+
+
+def test_a_tagged_person_is_not_a_chase_list_gap(wa_org):
+    conn, ps = wa_org["conn"], _open()
+    emp = wa_org["staff"][0]
+    st.set_work_arrangement_noawa(conn, emp, "on leave", _u(emp))
+
+    d = st.work_arrangement_period_summary(conn, ps,
+                                           _u(wa_org["chief"], "section_manager"))
+    assert "WA-Test Staff0" in d["noawa"]
+    assert "WA-Test Staff0" not in d["unfiled"]
+    assert d["headcount"] == 6                       # out of "filed n of m" too
+    row = next(r for r in d["roster"] if r["name"] == "WA-Test Staff0")
+    assert row["filed"] and row["noawa"]
+    assert row["arrangement"] == st.WORK_ARRANGEMENT_NOAWA
+
+
+def test_a_tag_outranks_a_stale_filing(wa_org):
+    """Someone files, then goes on leave. The stated reason is the truth."""
+    conn, ps, emp = wa_org["conn"], _open(), wa_org["staff"][0]
+    _approved(wa_org, emp, "WFH", 4)
+    st.set_work_arrangement_noawa(conn, emp, "on leave", _u(emp))
+
+    row = next(r for r in st.work_arrangement_export_rows(conn, ps)
+               if r["name"] == "WA-Test Staff0")
+    assert row["arrangement"] == st.WORK_ARRANGEMENT_NOAWA
+    assert row["remarks"] == "on leave"
+
+
+def test_the_annex_distinguishes_no_awa_from_never_filed(wa_org, app_mod):
+    """The Bagos/Sales shape: a stated reason prints, a genuine gap stays blank.
+    On the source spreadsheet these two looked identical."""
+    from openpyxl import load_workbook
+    conn, ps = wa_org["conn"], _open()
+    st.set_work_arrangement_noawa(conn, wa_org["staff"][0], "Leave", _u(wa_org["staff"][0]))
+    st.set_work_arrangement_noawa(conn, wa_org["staff"][1],
+                                  "with request WFH due to medical condition, "
+                                  "for approval from OSEC", _u(wa_org["staff"][1]))
+    # staff[2] files nothing at all
+
+    rows = {r["name"]: r for r in st.work_arrangement_export_rows(conn, ps)}
+    assert rows["WA-Test Staff0"]["arrangement"] == "No AWA"
+    assert rows["WA-Test Staff0"]["remarks"] == "Leave"
+    assert "OSEC" in rows["WA-Test Staff1"]["remarks"]
+    assert rows["WA-Test Staff2"]["arrangement"] == ""       # genuinely unfilled
+    assert rows["WA-Test Staff2"]["remarks"] == ""
+
+    c = _client_for_id(app_mod, wa_org["chief"])
+    wb = load_workbook(io.BytesIO(
+        c.get(f"/work-arrangement/annex-c.xlsx?period={ps}").content))
+    flat = "\n".join(" | ".join("" if v is None else str(v) for v in row)
+                     for row in wb.active.iter_rows(values_only=True))
+    assert "WA-Test Staff0 | HPO II | WASec | No AWA | Leave" in flat
+    assert "OSEC" in flat
+
+    pdf = c.get(f"/work-arrangement/annex-c.pdf?period={ps}")
+    assert pdf.status_code == 200 and pdf.content[:4] == b"%PDF"
+
+
+def test_noawa_over_http(wa_org, app_mod):
+    conn, emp = wa_org["conn"], wa_org["staff"][0]
+    c = _client_for_id(app_mod, emp)
+
+    assert c.post("/work-arrangement/no-awa", data={"remark": "on leave"},
+                  follow_redirects=False).status_code == 303
+    hub = c.get("/work-arrangement").text
+    assert "on leave" in hub and "no alternative work arrangement" in hub
+    assert "File it now" not in hub          # the period cards step aside
+
+    # a peer cannot act for them
+    assert _client_for_id(app_mod, wa_org["staff"][1]).post(
+        "/work-arrangement/no-awa",
+        data={"user_id": emp, "remark": "x"}).status_code == 403
+
+    assert c.post("/work-arrangement/no-awa/remove",
+                  follow_redirects=False).status_code == 303
+    assert st.get_work_arrangement_noawa(conn, emp) is None
+
+
+def test_admin_can_tag_someone_from_the_schedule_page(wa_org, app_mod):
+    conn, emp = wa_org["conn"], wa_org["staff"][0]
+    admin_c = _client_for_id(app_mod, wa_org["admin"]["id"])
+    page = admin_c.get("/work-arrangement/schedule")
+    assert page.status_code == 200 and 'name="user_id"' in page.text
+
+    r = admin_c.post("/work-arrangement/no-awa",
+                     data={"user_id": emp, "remark": "on leave",
+                           "back": "/work-arrangement/schedule"},
+                     follow_redirects=False)
+    assert r.status_code == 303 and "/work-arrangement/schedule" in r.headers["location"]
+    assert st.get_work_arrangement_noawa(conn, emp)["remark"] == "on leave"
+    # attributable: an admin acting for someone else names them in the trail
+    summary = conn.execute(
+        "SELECT summary FROM audit_log WHERE action='work_arrangement_noawa_set' "
+        "ORDER BY id DESC LIMIT 1").fetchone()[0]
+    assert "WA-Test Staff0" in summary and "on leave" in summary

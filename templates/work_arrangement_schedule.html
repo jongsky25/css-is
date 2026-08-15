@@ -29,7 +29,14 @@
   .pill.empty      { color:var(--red); border-color:var(--red-ln); background:var(--red-bg); }
   .pill.s-approved { color:var(--green); border-color:var(--green-ln); background:var(--green-bg); }
   .pill.s-pending  { color:var(--amber); border-color:var(--amber-ln); background:var(--amber-bg); }
+  .pill.s-noawa    { color:var(--amber); border-color:var(--amber-ln); background:var(--amber-bg); }
   .unfiled td { color:var(--soft); font-style:italic; }
+  .rowform { display:flex; gap:.35rem; align-items:center; }
+  .rowform input { font:inherit; font-size:.78rem; padding:.22rem .45rem; border:1px solid var(--line);
+                   border-radius:7px; background:var(--bg); color:var(--ink); width:150px; }
+  .rowform button { font:inherit; font-size:.75rem; font-weight:700; cursor:pointer;
+                    border:1px solid var(--line); background:var(--bg); color:var(--ink-soft);
+                    border-radius:999px; padding:.2rem .6rem; }
   .btn { display:inline-block; font:inherit; font-weight:700; text-decoration:none; cursor:pointer;
          border:1px solid var(--accent); background:var(--surface); color:var(--accent);
          border-radius:10px; padding:.5rem 1rem; }
@@ -113,6 +120,10 @@
   {% if d.unfiled %}
   <p class="legend"><b>Not yet filed ({{ d.unfiled|length }}):</b> {{ d.unfiled|join(", ") }}</p>
   {% endif %}
+  {% if d.noawa %}
+  <p class="legend"><b>{{ noawa_label }} ({{ d.noawa|length }}):</b> {{ d.noawa|join(", ") }} —
+  out of the counts above entirely, since they have no arrangement to be on-site or off-site under.</p>
+  {% endif %}
 </div>
 
 <div class="panel">
@@ -120,7 +131,8 @@
   {% if d.roster %}
   <table class="t">
     <thead><tr><th>No.</th><th>Name</th><th>Position</th><th>Division/Unit</th>
-               <th>Work Arrangement</th><th>Remarks</th><th>Status</th></tr></thead>
+               <th>Work Arrangement</th><th>Remarks</th><th>Status</th>
+               {% if is_admin %}<th>{{ noawa_label }}</th>{% endif %}</tr></thead>
     <tbody>
     {% for r in d.roster %}
       <tr class="{{ '' if r.filed else 'unfiled' }}">
@@ -131,9 +143,30 @@
         <td>{{ r.arrangement or "—" }}</td>
         <td>{{ r.remarks or "—" }}</td>
         <td>
-          {% if r.filed %}<span class="pill s-{{ r.status }}">{{ r.status }}</span>
+          {% if r.noawa %}<span class="pill s-noawa">{{ noawa_label }}</span>
+          {% elif r.filed %}<span class="pill s-{{ r.status }}">{{ r.status }}</span>
           {% else %}<span class="pill">not yet filed</span>{% endif %}
         </td>
+        {% if is_admin %}
+        {# Admin can record a leave for someone who isn't logging in — the same
+           action the person can take for themselves. #}
+        <td>
+          {% if r.noawa %}
+          <form class="rowform" method="post" action="/work-arrangement/no-awa/remove">
+            <input type="hidden" name="user_id" value="{{ r.user_id }}">
+            <input type="hidden" name="back" value="/work-arrangement/schedule?period={{ d.period_start }}">
+            <button type="submit">Remove</button>
+          </form>
+          {% else %}
+          <form class="rowform" method="post" action="/work-arrangement/no-awa">
+            <input type="hidden" name="user_id" value="{{ r.user_id }}">
+            <input type="hidden" name="back" value="/work-arrangement/schedule?period={{ d.period_start }}">
+            <input type="text" name="remark" maxlength="200" required placeholder="reason">
+            <button type="submit">Mark</button>
+          </form>
+          {% endif %}
+        </td>
+        {% endif %}
       </tr>
     {% endfor %}
     </tbody>
