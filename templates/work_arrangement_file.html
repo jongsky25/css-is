@@ -1,0 +1,214 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash, field %}
+{% from "_work_arrangement_icons.html" import arrangement_icon %}
+{% block title %}{% if change_of %}Request a change{% else %}File your work arrangement{% endif %}{% endblock %}
+{% block content %}
+<style>
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px;
+           padding:1.2rem 1.4rem; margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05);
+           max-width:660px; }
+  .field { margin-bottom:1rem; }
+  .field label { display:block; font-weight:700; margin-bottom:.3rem; }
+  .field input, .field textarea { width:100%; font:inherit; padding:.5rem .7rem; border:1px solid var(--line);
+           border-radius:10px; background:var(--bg); color:var(--ink); box-sizing:border-box; }
+  .field .help { color:var(--soft); font-size:.8rem; margin-top:.25rem; }
+  .acts { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:.7rem; margin-bottom:.6rem; }
+  .acts label { position:relative; border:2px solid var(--line); border-radius:14px; padding:.7rem .6rem .6rem;
+                cursor:pointer; background:var(--bg); text-align:center;
+                display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+                transition:border-color .15s, transform .12s; }
+  .acts label:hover { transform:translateY(-2px); }
+  @media (prefers-reduced-motion: reduce) { .acts label:hover { transform:none; } }
+  .acts .ic { display:block; width:64px; height:64px; margin:0 auto .35rem; flex:0 0 auto; }
+  .acts .t { display:block; font-weight:700; font-size:.88rem; line-height:1.2; }
+  .acts .s { display:block; color:var(--soft); font-size:.74rem; margin-top:.2rem; line-height:1.25; }
+  .acts input { position:absolute; opacity:0; width:1px; height:1px; }
+  .acts label:has(input:checked) { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg); }
+  .acts label:focus-within { outline:2px solid var(--accent); outline-offset:2px; }
+  .lens { display:flex; gap:.5rem; margin-bottom:.5rem; flex-wrap:wrap; }
+  .lens label { flex:1; min-width:88px; position:relative; border:2px solid var(--line); border-radius:12px;
+                padding:.55rem .4rem; cursor:pointer; background:var(--bg); text-align:center;
+                font-weight:700; font-size:.88rem; transition:border-color .15s; }
+  .lens input { position:absolute; opacity:0; width:1px; height:1px; }
+  .lens label:has(input:checked) { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg); }
+  .lens label:focus-within { outline:2px solid var(--accent); outline-offset:2px; }
+  .lens .sub { display:block; font-weight:500; color:var(--soft); font-size:.72rem; margin-top:.15rem; }
+  .btn { font:inherit; font-weight:700; cursor:pointer; border:1px solid var(--accent);
+         background:var(--accent); color:#fff; border-radius:10px; padding:.6rem 1.2rem; }
+  .was { border:1px solid var(--amber-ln); background:var(--amber-bg); color:var(--amber);
+         border-radius:12px; padding:.6rem .8rem; margin-bottom:1rem; font-size:.9rem; }
+  .was b { color:inherit; }
+  .cov { border:1px solid var(--amber-ln); background:var(--amber-bg); color:var(--amber);
+         border-radius:12px; padding:.6rem .8rem; margin:.2rem 0 1rem; font-size:.88rem; }
+  .cov.empty { border-color:var(--red-ln); background:var(--red-bg); color:var(--red); }
+  .legend { color:var(--soft); font-size:.78rem; margin-top:.9rem; line-height:1.4; }
+</style>
+
+{% if change_of %}
+  {{ page_header("Request a change",
+                 "Your current arrangement stays in force until " ~ (approver_name or approver_title or "your section chief") ~ " approves the change.") }}
+{% else %}
+  {{ page_header("File your work arrangement",
+                 "One arrangement per half-month period. Filing closes on the Friday before a period begins, so the schedule is settled before the period starts.") }}
+{% endif %}
+
+<div class="panel">
+  {% if err %}{{ flash(err=err) }}{% endif %}
+
+  {% if change_of %}
+  <div class="was">
+    In force for <b>{{ change_of.period_label }}</b>:
+    <b>{{ change_of.arrangement }} — {{ change_of.arrangement_label }}</b>{% if change_of.remarks %} ({{ change_of.remarks }}){% endif %}.
+    If the change is denied, this stays as it is.
+  </div>
+  {% endif %}
+
+  {% if not open_periods %}
+    {{ flash(err="Nothing is open for filing right now. Check back after the next cut-off.") }}
+  {% else %}
+  <form method="post" action="{% if change_of %}/work-arrangement/{{ change_of.id }}/change{% else %}/work-arrangement/file{% endif %}">
+
+    {% if change_of %}
+      <input type="hidden" name="period_start" value="{{ change_of.period_start }}">
+    {% else %}
+    <div class="field">
+      <label>Which period</label>
+      <div class="lens" role="radiogroup" aria-label="Which period">
+        {% for p in open_periods %}
+        <label>
+          <input type="radio" name="period_start" value="{{ p.period_start }}" required
+                 {{ "checked" if (form.get("period_start") or period_start) == p.period_start }}>
+          {{ p.label }}
+          <span class="sub">file by {{ p.deadline_label }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="field">
+      <label>Work arrangement</label>
+      <div class="acts" role="radiogroup" aria-label="Work arrangement">
+        {% for code, short, long in types %}
+        <label title="{{ long }}">
+          <input type="radio" name="arrangement" value="{{ code }}" required
+                 {{ "checked" if (form.get("arrangement") or (change_of.arrangement if change_of else "")) == code }}>
+          <span class="ic">{{ arrangement_icon(code) }}</span>
+          <span class="t">{{ code }} — {{ short }}</span>
+          <span class="s">{{ long }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# Only CWW and WFH nominate a day; the picker stays hidden (and unrequired)
+       for REG so a regular week never demands one. #}
+    <div class="field" id="weekdayRow" style="display:none;">
+      <label id="weekdayLabel">Which weekday</label>
+      <div class="lens" role="radiogroup" aria-labelledby="weekdayLabel">
+        {% for idx, name in weekdays %}
+        <label>
+          <input type="radio" name="weekday" value="{{ idx }}"
+                 {{ "checked" if (form.get("weekday") or (change_of.weekday|string if change_of and change_of.weekday is not none else "")) == idx|string }}>
+          {{ name }}
+        </label>
+        {% endfor %}
+      </div>
+      <div class="help">The day repeats every week of the period — "Friday Day off" means every Friday.</div>
+    </div>
+
+    {# Advisory only: it never disables the button. A thin day is the section
+       chief's call, and they see the same figure on their queue. #}
+    <div class="cov" id="covNote" data-coverage='{{ coverage|tojson }}' hidden></div>
+
+    {{ field("note", "Note for " ~ (approver_name or approver_title or "your section chief"),
+             value=form.get("note", ""), type="textarea", optional=True,
+             placeholder="e.g. childcare on Wednesdays, or a medical reason worth flagging",
+             attrs='rows="2"') }}
+
+    <button class="btn" type="submit">
+      {%- if change_of %}Send the change to {{ approver_name or approver_title or "my section chief" }}
+      {%- elif approver_name %}Send for approval of {{ approver_name }}
+      {%- else %}Send to {{ approver_title or "my section chief" }}{% endif -%}
+    </button>
+    <a href="/work-arrangement" style="margin-left:.8rem;">Cancel</a>
+
+    <p class="legend">{{ legend }}</p>
+  </form>
+  {% endif %}
+</div>
+
+<script>
+(function () {
+  // CWW and WFH nominate a weekday; REG covers the whole week and must not ask
+  // for one — reveal and require the picker only for the day-based arrangements.
+  var DAY_TYPES = {{ day_types|tojson }};
+  var row = document.getElementById("weekdayRow");
+  var label = document.getElementById("weekdayLabel");
+  var days = document.querySelectorAll('input[name="weekday"]');
+
+  function syncWeekday() {
+    var picked = document.querySelector('input[name="arrangement"]:checked');
+    var code = picked ? picked.value : "";
+    var needsDay = DAY_TYPES.indexOf(code) !== -1;
+    if (row) row.style.display = needsDay ? "" : "none";
+    if (label) label.textContent = code === "CWW" ? "Which weekday is your day off"
+                                 : code === "WFH" ? "Which weekday do you work from home"
+                                 : "Which weekday";
+    days.forEach(function (d) {
+      d.required = needsDay;
+      if (!needsDay) d.checked = false;   // don't submit a stale day with REG
+    });
+  }
+  document.querySelectorAll('input[name="arrangement"]').forEach(function (r) {
+    r.addEventListener("change", syncWeekday);
+  });
+
+  // Live section coverage for the day being considered. The server sends
+  // everyone ELSE's tally per period, so we add the tentative pick here.
+  var covBox = document.getElementById("covNote");
+  var coverage = {};
+  try { coverage = JSON.parse((covBox && covBox.dataset.coverage) || "{}"); } catch (e) {}
+
+  function pickedValue(name) {
+    var el = document.querySelector('input[name="' + name + '"]:checked');
+    return el ? el.value : "";
+  }
+
+  function refreshCoverage() {
+    if (!covBox) return;
+    var code = pickedValue("arrangement");
+    var day = pickedValue("weekday");
+    var period = pickedValue("period_start") ||
+                 (document.querySelector('input[name="period_start"]') || {}).value || "";
+    var cov = coverage[period];
+    if (DAY_TYPES.indexOf(code) === -1 || day === "" || !cov) {
+      covBox.hidden = true;
+      return;
+    }
+    var d = cov.days[parseInt(day, 10)];
+    if (!d || !cov.others || !d.offsite) { covBox.hidden = true; return; }
+    var left = d.onsite - 1;                     // this person would be off too
+    var parts = [];
+    if (d.cww) parts.push(d.cww + " day off");
+    if (d.wfh) parts.push(d.wfh + " WFH");
+    var detail = parts.length ? " (" + parts.join(", ") + ")" : "";
+    covBox.textContent = left <= 0
+      ? "⚠ " + d.offsite + " of " + cov.others + " others in your section are already off on " +
+        d.name + detail + " — adding yours would leave nobody on-site that day."
+      : "⚠ " + d.offsite + " of " + cov.others + " others in your section are already off on " +
+        d.name + detail + ". Filing this leaves " + left + " on-site.";
+    covBox.classList.toggle("empty", left <= 0);
+    covBox.hidden = false;
+  }
+  ["arrangement", "weekday", "period_start"].forEach(function (n) {
+    document.querySelectorAll('input[name="' + n + '"]').forEach(function (r) {
+      r.addEventListener("change", refreshCoverage);
+    });
+  });
+
+  syncWeekday();
+  refreshCoverage();
+})();
+</script>
+{% endblock %}

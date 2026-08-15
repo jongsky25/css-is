@@ -1,0 +1,49 @@
+{#
+  Illustrated icons for the three ANNEX C work arrangements. Inline SVG scenes —
+  no external assets, PWA/offline-safe like the wellness activity icons — one per
+  WORK_ARRANGEMENT_TYPES code, each carrying its own palette cue so the three
+  cards read apart at a glance rather than by their labels alone.
+
+  Usage: {% from "_work_arrangement_icons.html" import arrangement_icon %}
+         {{ arrangement_icon("WFH") }}
+#}
+
+{% macro arrangement_icon(code) %}
+<svg viewBox="0 0 80 80" width="100%" height="100%" role="img" aria-hidden="true" focusable="false">
+{% if code == "REG" %}
+  {# steady blue — the office block, lit up all five days #}
+  <circle cx="40" cy="40" r="38" fill="#e8eef8"/>
+  <rect x="24" y="22" width="32" height="40" rx="3" fill="#5b7fb5"/>
+  <rect x="29" y="28" width="7" height="7" rx="1" fill="#fdfdfd"/>
+  <rect x="40" y="28" width="7" height="7" rx="1" fill="#fdfdfd"/>
+  <rect x="29" y="39" width="7" height="7" rx="1" fill="#fdfdfd"/>
+  <rect x="40" y="39" width="7" height="7" rx="1" fill="#fdfdfd"/>
+  <rect x="35" y="50" width="10" height="12" rx="1.5" fill="#3f5f8f"/>
+  <line x1="18" y1="62" x2="62" y2="62" stroke="#3f5f8f" stroke-width="3" stroke-linecap="round"/>
+{% elif code == "CWW" %}
+  {# amber — a week grid with one day crossed out, the compressed day off #}
+  <circle cx="40" cy="40" r="38" fill="#fdf3e0"/>
+  <rect x="18" y="24" width="44" height="34" rx="4" fill="#fdfdfd" stroke="#d9962c" stroke-width="2.5"/>
+  <line x1="18" y1="33" x2="62" y2="33" stroke="#d9962c" stroke-width="2.5"/>
+  <line x1="26" y1="20" x2="26" y2="28" stroke="#d9962c" stroke-width="3" stroke-linecap="round"/>
+  <line x1="54" y1="20" x2="54" y2="28" stroke="#d9962c" stroke-width="3" stroke-linecap="round"/>
+  {% for x in [24, 33, 42] %}<rect x="{{ x }}" y="40" width="6" height="6" rx="1" fill="#f0cf95"/>{% endfor %}
+  {% for x in [24, 33] %}<rect x="{{ x }}" y="49" width="6" height="6" rx="1" fill="#f0cf95"/>{% endfor %}
+  <line x1="50" y1="39" x2="59" y2="48" stroke="#c4611f" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="59" y1="39" x2="50" y2="48" stroke="#c4611f" stroke-width="3.5" stroke-linecap="round"/>
+{% elif code == "WFH" %}
+  {# green — a house with a desk lamp on, working but not in the building #}
+  <circle cx="40" cy="40" r="38" fill="#e6f2e8"/>
+  <path d="M40 20 L64 40 L58 40 L58 62 L22 62 L22 40 L16 40 Z" fill="#4e9163"/>
+  <rect x="30" y="44" width="20" height="18" rx="2" fill="#fdfdfd"/>
+  <rect x="33" y="48" width="14" height="9" rx="1" fill="#cbe3d2"/>
+  <circle cx="40" cy="34" r="4.5" fill="#fdfdfd"/>
+  <line x1="40" y1="30" x2="40" y2="26" stroke="#f6b24a" stroke-width="2" stroke-linecap="round"/>
+  <line x1="35" y1="32" x2="32" y2="29" stroke="#f6b24a" stroke-width="2" stroke-linecap="round"/>
+  <line x1="45" y1="32" x2="48" y2="29" stroke="#f6b24a" stroke-width="2" stroke-linecap="round"/>
+{% else %}
+  <circle cx="40" cy="40" r="38" fill="#eceff4"/>
+  <text x="40" y="48" text-anchor="middle" font-size="26" font-weight="700" fill="#6b7280">{{ code }}</text>
+{% endif %}
+</svg>
+{% endmacro %}

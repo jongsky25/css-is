@@ -277,6 +277,71 @@ def init_db(conn):
         UNIQUE(user_id, badge)
     );
     """)
+    # --- Work arrangement module (ANNEX C: the semi-monthly internal work
+    # arrangement schedule — who is on-site, compressed, or working from home) ---
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS work_arrangement (  -- one live row per person per half-month
+        id           INTEGER PRIMARY KEY,
+        user_id      INTEGER NOT NULL REFERENCES admin_user(id),
+        period_start TEXT NOT NULL,               -- 'YYYY-MM-01' or 'YYYY-MM-16' (the period key)
+        arrangement  TEXT NOT NULL,               -- 'REG' | 'CWW' | 'WFH' (WORK_ARRANGEMENT_TYPES)
+        weekday      INTEGER,                     -- 0=Mon..4=Fri; NULL for REG (no day applies).
+                                                  -- CWW: the day OFF. WFH: the day worked remotely.
+                                                  -- The nominated day recurs every week of the
+                                                  -- period, exactly as the paper form reads.
+        note         TEXT,                        -- the requester's own reason, if any
+        status       TEXT NOT NULL DEFAULT 'pending',  -- see WORK_ARRANGEMENT_STATUSES
+        -- Set when this row is a staff-initiated CHANGE to an already-approved
+        -- arrangement: the id of the row it replaces. The old row stays 'approved'
+        -- (it is still the schedule in force) until this one is approved, at which
+        -- point it flips to 'superseded'. NULL on an original filing.
+        supersedes_id INTEGER REFERENCES work_arrangement(id),
+        decided_by   INTEGER REFERENCES admin_user(id),
+        decided_at   TEXT,
+        decide_note  TEXT,                        -- approver's remark (e.g. reason for denial)
+        created_at   TEXT
+    );
+    -- Two partial constraints, not one: a person may hold at most one APPROVED
+    -- arrangement per period AND at most one PENDING row against it (the change
+    -- request), which is exactly "one schedule in force plus one change in
+    -- flight". Denied/cancelled/superseded rows stay as the audit trail and fall
+    -- outside both, so re-filing after a denial still works.
+    CREATE UNIQUE INDEX IF NOT EXISTS ux_work_arrangement_approved
+        ON work_arrangement(user_id, period_start) WHERE status = 'approved';
+    CREATE UNIQUE INDEX IF NOT EXISTS ux_work_arrangement_pending
+        ON work_arrangement(user_id, period_start) WHERE status = 'pending';
+    CREATE INDEX IF NOT EXISTS idx_work_arrangement_period
+        ON work_arrangement(period_start, status);
+
+    -- "No AWA" — a standing statement that someone has NO alternative work
+    -- arrangement, and why: on leave, awaiting a decision from OSEC, and so on.
+    -- Unlike a filed arrangement this is not per-period and not approved. It
+    -- simply holds from the period it starts in until someone ends it, which is
+    -- what lets it cover a situation arising mid-period, after filing closed —
+    -- the one case the Friday deadline otherwise had no answer for.
+    CREATE TABLE IF NOT EXISTS work_arrangement_noawa (
+        id             INTEGER PRIMARY KEY,
+        user_id        INTEGER NOT NULL REFERENCES admin_user(id),
+        remark         TEXT NOT NULL,      -- free text: why there is no arrangement
+        effective_from TEXT NOT NULL,      -- period_start it begins in
+        effective_to   TEXT,               -- period_start it stops applying FROM;
+                                           -- NULL = still in force. An interval
+                                           -- spans every period between its ends,
+                                           -- so carry-over needs nothing to run
+                                           -- at a period boundary.
+        created_by     INTEGER REFERENCES admin_user(id),   -- the person, or an admin
+        created_at     TEXT,
+        ended_by       INTEGER REFERENCES admin_user(id),
+        ended_at       TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_wa_noawa_user
+        ON work_arrangement_noawa(user_id, effective_from);
+    -- At most one tag in force per person, the same partial-index trick the
+    -- arrangement table uses: closed intervals fall outside it, so the history
+    -- of past reasons accumulates instead of being overwritten.
+    CREATE UNIQUE INDEX IF NOT EXISTS ux_wa_noawa_live
+        ON work_arrangement_noawa(user_id) WHERE effective_to IS NULL;
+    """)
     _add_missing_columns(conn)
     conn.commit()
 
@@ -4959,6 +5024,252 @@ def avatar_accessory_month():
     return tz.now_local().month
 
 
+# The bureau's full name as it must read on any official form we generate
+# (the wellness Annex A register, the ANNEX C work arrangement schedule).
+# One constant so two forms can never drift apart.
+BUREAU_NAME = "Bureau of Local Health Systems Development"
+
+
+# =====================================================================
+# Org chain of command — shared approval routing.
+#
+# Who approves you is a fact about the ORG CHART, not about what you are
+# asking for, so this block is shared by every module that needs a decision
+# routed upwards: the wellness break (DM 2025-0135) and the semi-monthly
+# work arrangement schedule (ANNEX C) both hang off it. Keeping one copy is
+# deliberate — the rank-matching rules below encode a bug that took a round
+# trip to find (see the note on _org_rank), and a second copy would be a
+# second place for it to come back.
+# =====================================================================
+
+# Approval escalates by directory RANK (STAFF_ONBOARDING_AVATAR_PLAN.md §7a.2):
+# staff -> section chief -> division chief -> Director, with admins the catch-all
+# above the Director and for anyone off the chain. The "up one level" hop walks
+# org_unit.path (section -> its parent division -> the directorate).
+#
+# Rank is read from BOTH `designation` and `position`, matched case-insensitively
+# as a substring, because real directory data is uneven (Spot Feedback #76):
+#   * section heads / division chiefs carry a clean functional `designation`
+#     ("Section Head" / "Division Chief");
+#   * the Director carries NO such designation — the plantilla title "Director IV"
+#     lives in `position` — so an exact designation match never found them, and
+#     everyone under a division chief escalated to nobody -> "an administrator".
+# We deliberately do NOT match a bare "chief" in `position`: many section heads
+# hold the position "Chief Health Program Officer", which must not read as a
+# division chief.
+def _org_rank(designation, position=None):
+    d = (designation or "").strip().lower()
+    p = (position or "").strip().lower()
+    if "director" in d or "director" in p:
+        return 3
+    if "division chief" in d:
+        return 2
+    if "section head" in d or "section chief" in d:
+        return 1
+    return 0
+
+
+def _org_parent_path(path):
+    """The org path one level up ('A/B/C' -> 'A/B'), or None at the top."""
+    return path.rsplit("/", 1)[0] if path and "/" in path else None
+
+
+# ---- approver resolution ------------------------------------------------
+
+def _org_accounts_at_rank(conn, rank, org_path=None, exclude_uid=None):
+    """Active accounts whose directory role resolves to `rank` (see
+    _org_rank), optionally restricted to an exact org_unit.path. The building
+    block of the escalation chain. Rank is computed in Python from designation +
+    position so the Director (leadership in `position`, not `designation`) is
+    found like anyone else."""
+    sql = ("SELECT a.id, rp.designation, rp.position FROM admin_user a "
+           "JOIN resource_person rp ON rp.id = a.rp_id AND rp.is_internal = 1 "
+           "LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id "
+           "WHERE a.active = 1")
+    params = []
+    if org_path is not None:
+        sql += " AND ou.path = ?"
+        params.append(org_path)
+    out = []
+    for aid, desig, pos in conn.execute(sql, params).fetchall():
+        if aid != exclude_uid and _org_rank(desig, pos) == rank:
+            out.append(aid)
+    return out
+
+
+def _org_role_filled(conn, rank, org_path=None):
+    """Does ANY internal person (account or not) hold `rank` in the given unit?
+    Used for the apply-page copy: we name the org-correct approver ("your division
+    chief") whenever that seat is filled in the directory, even if that person has
+    no app account yet — the claim still gets handled by the admin fallback until
+    they're onboarded, so this tells staff who it's *for*, not who happens to be
+    clickable today."""
+    sql = ("SELECT rp.designation, rp.position FROM resource_person rp "
+           "LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id "
+           "WHERE rp.is_internal = 1")
+    params = []
+    if org_path is not None:
+        sql += " AND ou.path = ?"
+        params.append(org_path)
+    return any(_org_rank(d, p) == rank
+               for d, p in conn.execute(sql, params).fetchall())
+
+
+def _org_seat_name(conn, rank, org_path=None, exclude_uid=None):
+    """Name(s) of the internal person(s) filling `rank` in the given unit — the
+    same seat _org_role_filled tests, but returning who holds it so the apply
+    page can name the approver. Joins multiple holders with ' / '; returns None when
+    the seat is empty. Names the directory person even if they have no app account
+    yet (the claim still routes to the admin fallback until they're onboarded)."""
+    sql = ("SELECT rp.name, rp.designation, rp.position, a.id "
+           "FROM resource_person rp "
+           "LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id "
+           "LEFT JOIN admin_user a ON a.rp_id = rp.id "
+           "WHERE rp.is_internal = 1")
+    params = []
+    if org_path is not None:
+        sql += " AND ou.path = ?"
+        params.append(org_path)
+    names = []
+    for name, desig, pos, aid in conn.execute(sql, params).fetchall():
+        if aid is not None and aid == exclude_uid:
+            continue
+        if name and _org_rank(desig, pos) == rank and name not in names:
+            names.append(name)
+    return " / ".join(names) if names else None
+
+
+def approver_name_for(conn, user_id):
+    """The NAME of who decides THIS person's requests, for the apply/hub copy
+    ('Send for approval of Ray Justin Ventura'). Mirrors approver_title_for's
+    rank/org-path walk but resolves the seat-holder's name; returns None when the
+    seat is unfilled or unresolvable so callers fall back to the role title."""
+    me = get_admin_user_by_id(conn, user_id)
+    rp = get_rp(conn, me["rp_id"]) if me and me.get("rp_id") else None
+    if not rp:
+        return None
+    rank = _org_rank(rp.get("designation"), rp.get("position"))
+    path = rp.get("org_path")
+    if rank == 0:                                   # staff -> section chief (same unit)
+        return _org_seat_name(conn, 1, org_path=path, exclude_uid=user_id)
+    if rank == 1:                                   # section chief -> division chief (parent)
+        parent = _org_parent_path(path)
+        return _org_seat_name(conn, 2, org_path=parent, exclude_uid=user_id) if parent else None
+    if rank == 2:                                   # division chief -> the Director
+        return _org_seat_name(conn, 3, exclude_uid=user_id)
+    return None
+
+
+def get_approvers_for(conn, user_id):
+    """Account ids that may decide this person's requests — a wellness break, a
+    work arrangement, anything routed by rank — one level UP the chain of command
+    (STAFF_ONBOARDING_AVATAR_PLAN.md §7a.2):
+      * regular staff        -> their section chief(s), same unit
+      * a section chief/head -> the division chief of the parent division
+      * a division chief      -> the Director
+      * the Director (or an unlinked account) -> nobody here; admins are the
+        fallback (see is_approver_for).
+    Never the requester themselves."""
+    me = get_admin_user_by_id(conn, user_id)
+    if not me or not me.get("rp_id"):
+        return []
+    rp = get_rp(conn, me["rp_id"])
+    if not rp:
+        return []
+    rank = _org_rank(rp.get("designation"), rp.get("position"))
+    path = rp.get("org_path")
+    if rank == 0:                                   # staff -> section chief (same unit)
+        return _org_accounts_at_rank(conn, 1, org_path=path, exclude_uid=user_id)
+    if rank == 1:                                   # section chief -> division chief (parent)
+        parent = _org_parent_path(path)
+        if not parent:
+            return []
+        return _org_accounts_at_rank(conn, 2, org_path=parent, exclude_uid=user_id)
+    if rank == 2:                                   # division chief -> the Director
+        return _org_accounts_at_rank(conn, 3, exclude_uid=user_id)
+    return []                                       # Director -> admin fallback
+
+
+def is_approver_for(conn, user, subject_user_id):
+    """May `user` (the request's user dict) decide requests filed by
+    `subject_user_id`? Admins always may — they are the fallback above the
+    Director and for accounts off the chain. Nobody decides their own request."""
+    if user["id"] == subject_user_id:
+        return False
+    if user.get("role") == "admin":
+        return True
+    return user["id"] in get_approvers_for(conn, subject_user_id)
+
+
+def user_is_approving_chief(conn, user):
+    """Does this user see an approvals queue at all? Admins, plus anyone whose
+    directory role can approve SOMEONE — section head/chief, division chief, or
+    the Director (who decides a division chief's own requests). Rank is read from
+    designation + position (see _org_rank) so the Director qualifies."""
+    if user.get("role") == "admin":
+        return True
+    row = conn.execute("""
+        SELECT rp.designation, rp.position FROM admin_user a
+        JOIN resource_person rp ON rp.id = a.rp_id
+        WHERE a.id=? AND rp.is_internal=1 LIMIT 1
+    """, (user["id"],)).fetchone()
+    return bool(row) and _org_rank(row[0], row[1]) >= 1
+
+
+def approver_title_for(conn, user_id):
+    """Human label for who decides THIS person's requests, for the apply/hub copy:
+    'your section chief' / 'your division chief' / 'the Director', or 'an
+    administrator' at the top of the chain / for an unlinked account.
+
+    This names the org-correct approver as long as that seat is FILLED in the
+    directory (see _org_role_filled) — it doesn't require that person to have
+    an app account yet. That's deliberate (Spot Feedback #76): a section head used
+    to read "an administrator" because their division chief wasn't onboarded,
+    which hid the real chain. Until the chief is onboarded the claim is still
+    handled by the admin fallback; the copy just tells staff who it's *for*."""
+    me = get_admin_user_by_id(conn, user_id)
+    rp = get_rp(conn, me["rp_id"]) if me and me.get("rp_id") else None
+    if not rp:
+        return "an administrator"
+    rank = _org_rank(rp.get("designation"), rp.get("position"))
+    path = rp.get("org_path")
+    if rank == 0 and _org_role_filled(conn, 1, org_path=path):
+        return "your section chief"
+    if rank == 1:
+        parent = _org_parent_path(path)
+        if parent and _org_role_filled(conn, 2, org_path=parent):
+            return "your division chief"
+    if rank == 2 and _org_role_filled(conn, 3):
+        return "the Director"
+    return "an administrator"
+
+
+def _org_scope_for_user(conn, user):
+    """The org_unit.path a viewer's monitoring is limited to, or None for the
+    whole bureau. Admins (and any account with no directory org unit) monitor
+    everyone; a directory-linked chief monitors only their own unit's subtree —
+    a section chief their section, a division chief their whole division — so the
+    dashboard mirrors who they actually approve for (list_wellness_approvals)
+    instead of every section."""
+    if not user or user.get("role") == "admin":
+        return None
+    row = conn.execute("""
+        SELECT ou.path FROM admin_user a
+        JOIN resource_person rp ON rp.id = a.rp_id
+        JOIN org_unit ou ON ou.id = rp.org_unit_id
+        WHERE a.id = ? LIMIT 1
+    """, (user["id"],)).fetchone()
+    return row[0] if row and row[0] else None
+
+
+def _path_in_scope(path, scope_path):
+    """Is org path `path` inside `scope_path` (that unit or a descendant)? A None
+    scope means bureau-wide, so everything is in scope."""
+    if not scope_path:
+        return True
+    return path == scope_path or (bool(path) and path.startswith(scope_path + "/"))
+
+
 # =====================================================================
 # Wellness module — the DOH DM 2025-0135 two-hour weekly wellness break.
 # Claims are filed in 1-hour slots (max 2/week), approved by the claimant's
@@ -4968,6 +5279,23 @@ def avatar_accessory_month():
 # from the claim + reflection rows on every read — only badge awards persist —
 # so the fun layer can never drift out of sync with the underlying record.
 # =====================================================================
+
+# The approval chain is shared org-chart machinery (see "Org chain of
+# command" above). These names are kept because the wellness call sites in
+# app.py, its templates and its test suite all speak them — they are bound to
+# the SAME functions, not copies of them.
+_wellness_rank             = _org_rank
+_wellness_parent_path      = _org_parent_path
+_wellness_accounts_at_rank = _org_accounts_at_rank
+_wellness_role_filled      = _org_role_filled
+_wellness_seat_name        = _org_seat_name
+_wellness_dashboard_scope  = _org_scope_for_user
+_wellness_in_scope         = _path_in_scope
+wellness_approver_name     = approver_name_for
+get_wellness_approvers     = get_approvers_for
+is_wellness_approver       = is_approver_for
+user_is_wellness_chief     = user_is_approving_chief
+wellness_approver_title    = approver_title_for
 
 WELLNESS_WEEKLY_HOURS = 2          # the DM's per-week entitlement
 # How far ahead a break can be scheduled: a rolling window of this many ISO weeks
@@ -4994,7 +5322,7 @@ WELLNESS_ACTIVITIES = [
 
 # The bureau's full Office/Unit name as it must read on the DM's official
 # "Annex A. Weekly Wellness Break Log" register.
-WELLNESS_OFFICE_UNIT = "Bureau of Local Health Systems Development"
+WELLNESS_OFFICE_UNIT = BUREAU_NAME
 
 # Our activity keys -> the Annex A "Activity Type" column's six official
 # categories (Physical Exercise, Relaxation, Wellness Consult, Recreation,
@@ -5007,36 +5335,6 @@ WELLNESS_ANNEX_ACTIVITY = {
     "other":         "Others",
 }
 
-# Approval escalates by directory RANK (STAFF_ONBOARDING_AVATAR_PLAN.md §7a.2):
-# staff -> section chief -> division chief -> Director, with admins the catch-all
-# above the Director and for anyone off the chain. The "up one level" hop walks
-# org_unit.path (section -> its parent division -> the directorate).
-#
-# Rank is read from BOTH `designation` and `position`, matched case-insensitively
-# as a substring, because real directory data is uneven (Spot Feedback #76):
-#   * section heads / division chiefs carry a clean functional `designation`
-#     ("Section Head" / "Division Chief");
-#   * the Director carries NO such designation — the plantilla title "Director IV"
-#     lives in `position` — so an exact designation match never found them, and
-#     everyone under a division chief escalated to nobody -> "an administrator".
-# We deliberately do NOT match a bare "chief" in `position`: many section heads
-# hold the position "Chief Health Program Officer", which must not read as a
-# division chief.
-def _wellness_rank(designation, position=None):
-    d = (designation or "").strip().lower()
-    p = (position or "").strip().lower()
-    if "director" in d or "director" in p:
-        return 3
-    if "division chief" in d:
-        return 2
-    if "section head" in d or "section chief" in d:
-        return 1
-    return 0
-
-
-def _wellness_parent_path(path):
-    """The org path one level up ('A/B/C' -> 'A/B'), or None at the top."""
-    return path.rsplit("/", 1)[0] if path and "/" in path else None
 
 # Cumulative point thresholds for levels 1..6; the avatar stage == the level.
 WELLNESS_LEVELS = [0, 30, 75, 150, 250, 400]
@@ -5215,147 +5513,6 @@ def list_my_wellness_claims(conn, user_id, limit=25):
     return [get_wellness_claim(conn, i) for i in ids]
 
 
-# ---- approver resolution ------------------------------------------------
-
-def _wellness_accounts_at_rank(conn, rank, org_path=None, exclude_uid=None):
-    """Active accounts whose directory role resolves to `rank` (see
-    _wellness_rank), optionally restricted to an exact org_unit.path. The building
-    block of the escalation chain. Rank is computed in Python from designation +
-    position so the Director (leadership in `position`, not `designation`) is
-    found like anyone else."""
-    sql = ("SELECT a.id, rp.designation, rp.position FROM admin_user a "
-           "JOIN resource_person rp ON rp.id = a.rp_id AND rp.is_internal = 1 "
-           "LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id "
-           "WHERE a.active = 1")
-    params = []
-    if org_path is not None:
-        sql += " AND ou.path = ?"
-        params.append(org_path)
-    out = []
-    for aid, desig, pos in conn.execute(sql, params).fetchall():
-        if aid != exclude_uid and _wellness_rank(desig, pos) == rank:
-            out.append(aid)
-    return out
-
-
-def _wellness_role_filled(conn, rank, org_path=None):
-    """Does ANY internal person (account or not) hold `rank` in the given unit?
-    Used for the apply-page copy: we name the org-correct approver ("your division
-    chief") whenever that seat is filled in the directory, even if that person has
-    no app account yet — the claim still gets handled by the admin fallback until
-    they're onboarded, so this tells staff who it's *for*, not who happens to be
-    clickable today."""
-    sql = ("SELECT rp.designation, rp.position FROM resource_person rp "
-           "LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id "
-           "WHERE rp.is_internal = 1")
-    params = []
-    if org_path is not None:
-        sql += " AND ou.path = ?"
-        params.append(org_path)
-    return any(_wellness_rank(d, p) == rank
-               for d, p in conn.execute(sql, params).fetchall())
-
-
-def _wellness_seat_name(conn, rank, org_path=None, exclude_uid=None):
-    """Name(s) of the internal person(s) filling `rank` in the given unit — the
-    same seat _wellness_role_filled tests, but returning who holds it so the apply
-    page can name the approver. Joins multiple holders with ' / '; returns None when
-    the seat is empty. Names the directory person even if they have no app account
-    yet (the claim still routes to the admin fallback until they're onboarded)."""
-    sql = ("SELECT rp.name, rp.designation, rp.position, a.id "
-           "FROM resource_person rp "
-           "LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id "
-           "LEFT JOIN admin_user a ON a.rp_id = rp.id "
-           "WHERE rp.is_internal = 1")
-    params = []
-    if org_path is not None:
-        sql += " AND ou.path = ?"
-        params.append(org_path)
-    names = []
-    for name, desig, pos, aid in conn.execute(sql, params).fetchall():
-        if aid is not None and aid == exclude_uid:
-            continue
-        if name and _wellness_rank(desig, pos) == rank and name not in names:
-            names.append(name)
-    return " / ".join(names) if names else None
-
-
-def wellness_approver_name(conn, user_id):
-    """The NAME of who decides THIS person's breaks, for the apply/hub copy
-    ('Send for approval of Ray Justin Ventura'). Mirrors wellness_approver_title's
-    rank/org-path walk but resolves the seat-holder's name; returns None when the
-    seat is unfilled or unresolvable so callers fall back to the role title."""
-    me = get_admin_user_by_id(conn, user_id)
-    rp = get_rp(conn, me["rp_id"]) if me and me.get("rp_id") else None
-    if not rp:
-        return None
-    rank = _wellness_rank(rp.get("designation"), rp.get("position"))
-    path = rp.get("org_path")
-    if rank == 0:                                   # staff -> section chief (same unit)
-        return _wellness_seat_name(conn, 1, org_path=path, exclude_uid=user_id)
-    if rank == 1:                                   # section chief -> division chief (parent)
-        parent = _wellness_parent_path(path)
-        return _wellness_seat_name(conn, 2, org_path=parent, exclude_uid=user_id) if parent else None
-    if rank == 2:                                   # division chief -> the Director
-        return _wellness_seat_name(conn, 3, exclude_uid=user_id)
-    return None
-
-
-def get_wellness_approvers(conn, user_id):
-    """Account ids that may decide this person's claims, one rank UP the chain of
-    command (STAFF_ONBOARDING_AVATAR_PLAN.md §7a.2):
-      * regular staff        -> their section chief(s), same unit
-      * a section chief/head -> the division chief of the parent division
-      * a division chief      -> the Director
-      * the Director (or an unlinked account) -> nobody here; admins are the
-        fallback (see is_wellness_approver).
-    Never the claimant themselves."""
-    me = get_admin_user_by_id(conn, user_id)
-    if not me or not me.get("rp_id"):
-        return []
-    rp = get_rp(conn, me["rp_id"])
-    if not rp:
-        return []
-    rank = _wellness_rank(rp.get("designation"), rp.get("position"))
-    path = rp.get("org_path")
-    if rank == 0:                                   # staff -> section chief (same unit)
-        return _wellness_accounts_at_rank(conn, 1, org_path=path, exclude_uid=user_id)
-    if rank == 1:                                   # section chief -> division chief (parent)
-        parent = _wellness_parent_path(path)
-        if not parent:
-            return []
-        return _wellness_accounts_at_rank(conn, 2, org_path=parent, exclude_uid=user_id)
-    if rank == 2:                                   # division chief -> the Director
-        return _wellness_accounts_at_rank(conn, 3, exclude_uid=user_id)
-    return []                                       # Director -> admin fallback
-
-
-def is_wellness_approver(conn, user, claim_user_id):
-    """May `user` (the request's user dict) decide claims filed by
-    `claim_user_id`? Admins always may — they are the fallback above the Director
-    and for accounts off the chain. Nobody decides their own claim."""
-    if user["id"] == claim_user_id:
-        return False
-    if user.get("role") == "admin":
-        return True
-    return user["id"] in get_wellness_approvers(conn, claim_user_id)
-
-
-def user_is_wellness_chief(conn, user):
-    """Does this user see the approvals queue at all? Admins, plus anyone whose
-    directory role can approve SOMEONE — section head/chief, division chief, or
-    the Director (who decides a division chief's own breaks). Rank is read from
-    designation + position (see _wellness_rank) so the Director qualifies."""
-    if user.get("role") == "admin":
-        return True
-    row = conn.execute("""
-        SELECT rp.designation, rp.position FROM admin_user a
-        JOIN resource_person rp ON rp.id = a.rp_id
-        WHERE a.id=? AND rp.is_internal=1 LIMIT 1
-    """, (user["id"],)).fetchone()
-    return bool(row) and _wellness_rank(row[0], row[1]) >= 1
-
-
 def list_wellness_approvals(conn, user):
     """Pending claims this user may decide, oldest break first. Admins see every
     pending claim except their own; a chief sees exactly the claims the
@@ -5368,37 +5525,9 @@ def list_wellness_approvals(conn, user):
     claims = [get_wellness_claim(conn, i) for i in ids]
     if user.get("role") == "admin":
         return claims
-    if not user_is_wellness_chief(conn, user):
+    if not user_is_approving_chief(conn, user):
         return []
-    return [c for c in claims if user["id"] in get_wellness_approvers(conn, c["user_id"])]
-
-
-def wellness_approver_title(conn, user_id):
-    """Human label for who decides THIS person's breaks, for the apply/hub copy:
-    'your section chief' / 'your division chief' / 'the Director', or 'an
-    administrator' at the top of the chain / for an unlinked account.
-
-    This names the org-correct approver as long as that seat is FILLED in the
-    directory (see _wellness_role_filled) — it doesn't require that person to have
-    an app account yet. That's deliberate (Spot Feedback #76): a section head used
-    to read "an administrator" because their division chief wasn't onboarded,
-    which hid the real chain. Until the chief is onboarded the claim is still
-    handled by the admin fallback; the copy just tells staff who it's *for*."""
-    me = get_admin_user_by_id(conn, user_id)
-    rp = get_rp(conn, me["rp_id"]) if me and me.get("rp_id") else None
-    if not rp:
-        return "an administrator"
-    rank = _wellness_rank(rp.get("designation"), rp.get("position"))
-    path = rp.get("org_path")
-    if rank == 0 and _wellness_role_filled(conn, 1, org_path=path):
-        return "your section chief"
-    if rank == 1:
-        parent = _wellness_parent_path(path)
-        if parent and _wellness_role_filled(conn, 2, org_path=parent):
-            return "your division chief"
-    if rank == 2 and _wellness_role_filled(conn, 3):
-        return "the Director"
-    return "an administrator"
+    return [c for c in claims if user["id"] in get_approvers_for(conn, c["user_id"])]
 
 
 def decide_wellness_claim(conn, claim_id, user, action, note=None):
@@ -5411,7 +5540,7 @@ def decide_wellness_claim(conn, claim_id, user, action, note=None):
         raise ValueError("That break request has already been decided.")
     if action not in ("approve", "deny"):
         raise ValueError("Unknown decision.")
-    if not is_wellness_approver(conn, user, claim["user_id"]):
+    if not is_approver_for(conn, user, claim["user_id"]):
         raise PermissionError("Only the claimant's section chief (or an admin) "
                               "can decide this request.")
     conn.execute(
@@ -5604,32 +5733,6 @@ def _award_badge(conn, user_id, key, when=None):
 
 # ---- monitoring dashboard + the submission register -----------------------
 
-def _wellness_dashboard_scope(conn, user):
-    """The org_unit.path a viewer's monitoring is limited to, or None for the
-    whole bureau. Admins (and any account with no directory org unit) monitor
-    everyone; a directory-linked chief monitors only their own unit's subtree —
-    a section chief their section, a division chief their whole division — so the
-    dashboard mirrors who they actually approve for (list_wellness_approvals)
-    instead of every section."""
-    if not user or user.get("role") == "admin":
-        return None
-    row = conn.execute("""
-        SELECT ou.path FROM admin_user a
-        JOIN resource_person rp ON rp.id = a.rp_id
-        JOIN org_unit ou ON ou.id = rp.org_unit_id
-        WHERE a.id = ? LIMIT 1
-    """, (user["id"],)).fetchone()
-    return row[0] if row and row[0] else None
-
-
-def _wellness_in_scope(path, scope_path):
-    """Is org path `path` inside `scope_path` (that unit or a descendant)? A None
-    scope means bureau-wide, so everything is in scope."""
-    if not scope_path:
-        return True
-    return path == scope_path or (bool(path) and path.startswith(scope_path + "/"))
-
-
 def wellness_dashboard_data(conn, week_start, user=None):
     """One week's utilization for the monitoring page: a per-person table with
     section, hours by status and reflection state; a per-section rollup against
@@ -5637,11 +5740,11 @@ def wellness_dashboard_data(conn, week_start, user=None):
     the overall reflection completion rate.
 
     When `user` is a directory-linked chief the whole view is scoped to their own
-    unit's subtree (see _wellness_dashboard_scope) so the "By person" table — and
+    unit's subtree (see _org_scope_for_user) so the "By person" table — and
     the section rollup, week tiles and pending queue derived from it — shows only
     the section(s) they are concerned with, not every employee. Admins and an
     unscoped call see the whole bureau."""
-    scope_path = _wellness_dashboard_scope(conn, user)
+    scope_path = _org_scope_for_user(conn, user)
     people = conn.execute("""
         SELECT u.id, u.username, rp.name, ou.short_name, ou.path,
                COALESCE(SUM(CASE WHEN c.status='pending'   THEN c.hours END), 0),
@@ -5656,7 +5759,7 @@ def wellness_dashboard_data(conn, week_start, user=None):
         WHERE u.active = 1
         GROUP BY u.id ORDER BY ou.path, rp.name, u.username
     """, (week_start,)).fetchall()
-    people = [p for p in people if _wellness_in_scope(p[4], scope_path)]
+    people = [p for p in people if _path_in_scope(p[4], scope_path)]
     rows = [{"user_id": p[0], "username": p[1], "name": p[2] or p[1],
              "section": p[3] or (p[4].rsplit("/", 1)[-1] if p[4] else "—"),
              "pending": p[5], "approved": p[6], "completed": p[7],
@@ -5814,3 +5917,930 @@ def wellness_person_month(conn, user_id, year, month):
                         "approver": r[6] or ""})
     return {"name": name, "office": office, "year": int(year), "month": int(month),
             "entries": entries}
+
+
+# =====================================================================
+# Work arrangement module — ANNEX C, the internal work arrangement schedule.
+#
+# Every staff member files ONE arrangement per half-month period (the 1st–15th
+# and the 16th–end of month, the two sheets the bureau circulates): REG for a
+# regular 5-day on-site week, CWW for a compressed workweek with one weekday
+# off, or WFH for one day worked from home. The nominated weekday recurs every
+# week of the period, exactly as the paper form reads.
+#
+# Filing closes on the Friday BEFORE a period begins, so the schedule is settled
+# before the period it governs starts. Once approved an arrangement is the
+# schedule in force and is never edited in place: the employee — and only the
+# employee — requests a change, which files a successor row that supersedes the
+# original once the same approver signs off.
+#
+# Approval routes through the shared org chain (see "Org chain of command"
+# above): staff to their section chief, a section chief to their division chief.
+#
+# Coverage is the one rule here that WARNS rather than blocks. A section with
+# nobody on-site on a Friday is a real operational problem, but it is the
+# chief's call to make, not the database's — so section coverage is computed by
+# a separate read-only function and surfaced as advice at both ends (the
+# employee sees it while picking a day, the chief sees it on the queue), and
+# never raises.
+# =====================================================================
+
+# (code, short label, the long form used on the picker cards and the legend)
+WORK_ARRANGEMENT_TYPES = [
+    ("REG", "Regular",            "Regular 5-day on-site schedule"),
+    ("CWW", "Compressed workweek", "Compressed workweek — one weekday off"),
+    ("WFH", "Work from home",     "Work from home, one day a week"),
+]
+WORK_ARRANGEMENT_LABELS = {c: short for c, short, _long in WORK_ARRANGEMENT_TYPES}
+# Only these two nominate a weekday; REG applies to the whole week.
+_WA_DAY_TYPES = ("CWW", "WFH")
+
+WORK_ARRANGEMENT_WEEKDAYS = [(0, "Monday"), (1, "Tuesday"), (2, "Wednesday"),
+                             (3, "Thursday"), (4, "Friday")]
+_WA_DAY_NAMES = [name for _i, name in WORK_ARRANGEMENT_WEEKDAYS]
+
+WORK_ARRANGEMENT_STATUSES = ("pending", "approved", "denied", "cancelled",
+                             "superseded")
+# The label for someone with no alternative work arrangement, printed verbatim in
+# the Work Arrangement column of ANNEX C. One constant so the screen, the workbook
+# and the PDF cannot word it three ways.
+WORK_ARRANGEMENT_NOAWA = "No AWA"
+# Rows that occupy a person's period. A denied or withdrawn filing frees it
+# again; a superseded one has already been replaced.
+_WA_LIVE = ("pending", "approved")
+
+# Filing and changes close on the last Friday BEFORE a period begins.
+WORK_ARRANGEMENT_DEADLINE_WEEKDAY = 4          # 0=Mon .. 4=Fri
+# How many periods are accepting filings at once: the next one and the one after,
+# so people can plan a month out. The CURRENT period is never among them — its
+# deadline was the Friday before it started.
+WORK_ARRANGEMENT_OPEN_PERIODS = 2
+
+# The legend exactly as it prints at the foot of ANNEX C. Do not reflow.
+WORK_ARRANGEMENT_LEGEND = ("*CWW- compressed workweek, -WFH- Work from Home(1Day) , "
+                           "REG-Regular 5-day on-site schedule")
+
+
+# ---- semi-monthly periods and the filing deadline -------------------------
+
+def work_arrangement_period(d=None):
+    """The half-month period a date falls in, keyed by its first day:
+    'YYYY-MM-01' for the 1st–15th, 'YYYY-MM-16' for the 16th–end of month.
+    An ISO date rather than a synthetic '2026-08-A' key so it sorts, parses and
+    compares like every other date in the schema — the same trick
+    wellness_claim.week_start uses to key entitlement on a Monday."""
+    d = d or tz.today_local()
+    return date(d.year, d.month, 1 if d.day <= 15 else 16).isoformat()
+
+
+def work_arrangement_period_bounds(period_start):
+    """(first day, last day) of a period. The second half runs to whatever the
+    month's real last day is — 28, 29, 30 or 31."""
+    s = date.fromisoformat(period_start)
+    if s.day == 1:
+        return s, s.replace(day=15)
+    # First of next month, minus a day = this month's last day.
+    nxt = (s.replace(day=28) + timedelta(days=7)).replace(day=1)
+    return s, nxt - timedelta(days=1)
+
+
+def work_arrangement_period_label(period_start):
+    """'August 1-15, 2026' / 'August 16-31, 2026' — the wording the source
+    ANNEX C sheets use as their titles, so ours match byte for byte."""
+    s, e = work_arrangement_period_bounds(period_start)
+    return f"{_MONTH_NAMES[s.month - 1]} {s.day}-{e.day}, {s.year}"
+
+
+def work_arrangement_next_period(period_start):
+    s = date.fromisoformat(period_start)
+    if s.day == 1:
+        return s.replace(day=16).isoformat()
+    return (s.replace(day=28) + timedelta(days=7)).replace(day=1).isoformat()
+
+
+def work_arrangement_prev_period(period_start):
+    s = date.fromisoformat(period_start)
+    if s.day == 16:
+        return s.replace(day=1).isoformat()
+    return (s - timedelta(days=1)).replace(day=16).isoformat()
+
+
+def work_arrangement_deadline(period_start):
+    """The last Friday STRICTLY before the period begins — when filing and
+    changes close for it. 'Strictly': a period that itself starts on a Friday
+    closes the Friday prior, not on its own first day."""
+    d = date.fromisoformat(period_start) - timedelta(days=1)
+    return d - timedelta(days=(d.weekday() - WORK_ARRANGEMENT_DEADLINE_WEEKDAY) % 7)
+
+
+def work_arrangement_open_periods(d=None, ahead=WORK_ARRANGEMENT_OPEN_PERIODS):
+    """The periods still accepting filings, earliest first. Note what this
+    implies and the UI must say plainly: once a period has BEGUN it is closed,
+    because its deadline was the Friday before it started. On August 20 you are
+    filing for September, not fixing the second half of August."""
+    d = d or tz.today_local()
+    ps = work_arrangement_period(d)
+    out = []
+    # The current period is normally already closed, so allow a couple of hops
+    # before the first open one; deadlines only move later from there.
+    for _ in range(ahead + 2):
+        if d <= work_arrangement_deadline(ps):
+            out.append(ps)
+            if len(out) >= ahead:
+                break
+        ps = work_arrangement_next_period(ps)
+    return out
+
+
+def work_arrangement_period_workdays(period_start):
+    """The Mon–Fri dates inside a period, as (date, weekday index). A nominated
+    weekday recurs 2–3 times in a half-month — 'Friday Day off' means EVERY
+    Friday in the period — so the schedule view and the printed annex need the
+    actual dates, not just the day name."""
+    s, e = work_arrangement_period_bounds(period_start)
+    out, d = [], s
+    while d <= e:
+        if d.weekday() < 5:
+            out.append((d, d.weekday()))
+        d += timedelta(days=1)
+    return out
+
+
+def _wa_friday(d):
+    """'Friday, August 14, 2026' — deadlines are always quoted in full, because
+    'the 14th' is ambiguous the week you read it."""
+    return f"Friday, {_MONTH_NAMES[d.month - 1]} {d.day}, {d.year}"
+
+
+def work_arrangement_deadline_label(period_start):
+    return _wa_friday(work_arrangement_deadline(period_start))
+
+
+# ---- validation + derived text --------------------------------------------
+
+def _wa_remarks(arrangement, weekday, note=None):
+    """The ANNEX C Remarks cell. The source file's hidden dropdown list is just
+    weekday x {Day off, WFH}, so this is derived from the two stored columns and
+    never kept as its own text — one fewer thing that can contradict the record.
+    The person's own note is appended after it."""
+    base = ""
+    if weekday is not None and 0 <= weekday < len(_WA_DAY_NAMES):
+        if arrangement == "CWW":
+            base = f"{_WA_DAY_NAMES[weekday]} Day off"
+        elif arrangement == "WFH":
+            base = f"{_WA_DAY_NAMES[weekday]} WFH"
+    note = (note or "").strip()
+    return f"{base} — {note}" if base and note else (base or note)
+
+
+def _wa_validate(arrangement, weekday):
+    """Shared field checks for both filing and changing. Returns the cleaned
+    (arrangement, weekday); raises ValueError with copy a person can act on."""
+    arrangement = (arrangement or "").strip().upper()
+    if arrangement not in WORK_ARRANGEMENT_LABELS:
+        raise ValueError("Pick a work arrangement: regular, compressed workweek, "
+                         "or work from home.")
+    if arrangement not in _WA_DAY_TYPES:
+        return arrangement, None            # a regular week nominates no day
+    try:
+        weekday = int(weekday)
+    except (TypeError, ValueError):
+        raise ValueError("Pick which weekday this applies to — Monday to Friday.")
+    if not 0 <= weekday <= 4:
+        raise ValueError("Work arrangements are set within the work week (Mon–Fri).")
+    return arrangement, weekday
+
+
+def _wa_check_period_open(period_start, d=None):
+    """Return the period key if it is still accepting filings, else raise with a
+    message that names BOTH the deadline that was missed and the next period the
+    person can still file for — a refusal that doesn't say what to do instead is
+    just a dead end."""
+    d = d or tz.today_local()
+    ps = (period_start or "").strip()
+    try:
+        date.fromisoformat(ps)
+    except ValueError:
+        raise ValueError("Pick a valid half-month period.")
+    open_ps = work_arrangement_open_periods(d)
+    if ps in open_ps:
+        return ps
+    if open_ps and ps > open_ps[-1]:
+        raise ValueError(
+            f"{work_arrangement_period_label(ps)} isn't open for filing yet — "
+            f"the schedule is set a period or two at a time. You can file for "
+            f"{work_arrangement_period_label(open_ps[-1])} now.")
+    msg = (f"The deadline for {work_arrangement_period_label(ps)} was "
+           f"{work_arrangement_deadline_label(ps)}.")
+    if open_ps:
+        msg += (f" You can file for {work_arrangement_period_label(open_ps[0])} "
+                f"until {work_arrangement_deadline_label(open_ps[0])}.")
+    raise ValueError(msg)
+
+
+# ---- reads ----------------------------------------------------------------
+
+_WA_SELECT = """
+    SELECT w.id, w.user_id, w.period_start, w.arrangement, w.weekday, w.note,
+           w.status, w.supersedes_id, w.decided_by, w.decided_at, w.decide_note,
+           w.created_at, u.username, rp.name, rp.position,
+           ou.short_name, ou.path, COALESCE(rpd.name, ud.username, '')
+    FROM work_arrangement w
+    JOIN admin_user u ON u.id = w.user_id
+    LEFT JOIN resource_person rp ON rp.id = u.rp_id
+    LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id
+    LEFT JOIN admin_user ud ON ud.id = w.decided_by
+    LEFT JOIN resource_person rpd ON rpd.id = ud.rp_id
+"""
+
+
+def _wa_hydrate(row):
+    """One DB row -> the flat dict every caller and template reads. Labels and
+    the Remarks text are derived here so the screen, the queue and the printed
+    annex can never word the same record differently."""
+    (wid, user_id, period_start, arrangement, weekday, note, status,
+     supersedes_id, decided_by, decided_at, decide_note, created_at,
+     username, name, position, short_name, path, decided_by_name) = row
+    return {
+        "id": wid, "user_id": user_id, "period_start": period_start,
+        "period_label": work_arrangement_period_label(period_start),
+        "deadline_label": work_arrangement_deadline_label(period_start),
+        "arrangement": arrangement,
+        "arrangement_label": WORK_ARRANGEMENT_LABELS.get(arrangement, arrangement),
+        "weekday": weekday,
+        "weekday_name": _WA_DAY_NAMES[weekday] if weekday is not None else "",
+        "remarks": _wa_remarks(arrangement, weekday, note),
+        "note": note, "status": status, "supersedes_id": supersedes_id,
+        "is_change": supersedes_id is not None,
+        "decided_by": decided_by, "decided_by_name": decided_by_name,
+        "decided_at": decided_at, "decide_note": decide_note,
+        "created_at": created_at, "username": username,
+        "person_name": name or username, "position": position or "",
+        "section": short_name or "", "org_path": path or "",
+    }
+
+
+def get_work_arrangement(conn, wa_id):
+    """One arrangement, hydrated. When it is a change request, `replaces`
+    carries a short summary of the row still in force, so the approver sees the
+    delta rather than just the destination."""
+    row = conn.execute(_WA_SELECT + " WHERE w.id = ?", (wa_id,)).fetchone()
+    if not row:
+        return None
+    out = _wa_hydrate(row)
+    if out["supersedes_id"]:
+        prev = conn.execute(
+            "SELECT arrangement, weekday, note FROM work_arrangement WHERE id=?",
+            (out["supersedes_id"],)).fetchone()
+        if prev:
+            out["replaces"] = {
+                "arrangement": prev[0],
+                "arrangement_label": WORK_ARRANGEMENT_LABELS.get(prev[0], prev[0]),
+                "weekday": prev[1],
+                "remarks": _wa_remarks(prev[0], prev[1], prev[2]),
+            }
+    return out
+
+
+def list_my_work_arrangements(conn, user_id, limit=12):
+    """The person's own filings, newest period first — their record and the
+    trail of anything denied, withdrawn or superseded along the way."""
+    rows = conn.execute(
+        _WA_SELECT + " WHERE w.user_id = ? ORDER BY w.period_start DESC, w.id DESC "
+        "LIMIT ?", (user_id, limit)).fetchall()
+    return [_wa_hydrate(r) for r in rows]
+
+
+def _wa_one_by_status(conn, user_id, period_start, status):
+    row = conn.execute(
+        _WA_SELECT + " WHERE w.user_id = ? AND w.period_start = ? AND w.status = ?",
+        (user_id, period_start, status)).fetchone()
+    return _wa_hydrate(row) if row else None
+
+
+def my_work_arrangement_for(conn, user_id, period_start):
+    """The APPROVED arrangement for a period — the schedule actually in force."""
+    return _wa_one_by_status(conn, user_id, period_start, "approved")
+
+
+def my_pending_work_arrangement(conn, user_id, period_start):
+    """The in-flight filing or change for a period, if any."""
+    return _wa_one_by_status(conn, user_id, period_start, "pending")
+
+
+# ---- writes ---------------------------------------------------------------
+
+def create_work_arrangement(conn, user_id, period_start, arrangement,
+                            weekday=None, note=None):
+    """File this person's work arrangement for one half-month period. Validates
+    ANNEX C's rules and raises ValueError with a human-readable reason; returns
+    the new row id.
+
+    Section coverage is deliberately NOT checked here. A thin day is a warning
+    both the employee and the approving chief see, never a block — see
+    work_arrangement_coverage_note."""
+    arrangement, weekday = _wa_validate(arrangement, weekday)
+    ps = _wa_check_period_open(period_start)
+    # Refuse rather than silently dropping the tag: someone stated a reason they
+    # have no arrangement, and deleting that as a side effect of an unrelated
+    # action is the kind of surprise that costs trust in the record.
+    if get_work_arrangement_noawa(conn, user_id, ps):
+        raise ValueError(
+            "You're currently marked “No AWA”. Remove that first if you're "
+            "filing a work arrangement again.")
+    if my_work_arrangement_for(conn, user_id, ps):
+        raise ValueError(
+            f"You already have an approved work arrangement for "
+            f"{work_arrangement_period_label(ps)}. Use “Request a change” to "
+            f"file a different one.")
+    if my_pending_work_arrangement(conn, user_id, ps):
+        raise ValueError(
+            f"You already have a work arrangement waiting for approval for "
+            f"{work_arrangement_period_label(ps)}. Withdraw it first if you "
+            f"want to file something different.")
+    cur = conn.execute(
+        """INSERT INTO work_arrangement(user_id, period_start, arrangement,
+                                        weekday, note, status, created_at)
+           VALUES (?,?,?,?,?,'pending',?)""",
+        (user_id, ps, arrangement, weekday, (note or "").strip() or None,
+         tz.now_iso()))
+    conn.commit()
+    return cur.lastrowid
+
+
+def request_work_arrangement_change(conn, wa_id, user_id, arrangement,
+                                    weekday=None, note=None):
+    """Ask to change an arrangement that has already been approved. Only the
+    person it belongs to may start this — a chief or an admin cannot rewrite
+    someone's schedule for them.
+
+    The approved row is left alone and stays in force; this files a SUCCESSOR
+    that supersedes it only once the same approver signs off. So at no point is
+    the person without a schedule, and a denied change simply leaves the
+    original standing."""
+    current = get_work_arrangement(conn, wa_id)
+    if not current:
+        raise ValueError("That work arrangement no longer exists.")
+    if current["user_id"] != user_id:
+        raise PermissionError(
+            "Only the person a work arrangement belongs to can change it.")
+    if current["status"] != "approved":
+        raise ValueError(
+            "That request hasn't been approved yet — withdraw it and file "
+            "again instead of changing it.")
+    arrangement, weekday = _wa_validate(arrangement, weekday)
+    ps = _wa_check_period_open(current["period_start"])
+    if my_pending_work_arrangement(conn, user_id, ps):
+        raise ValueError(
+            "You already have a change waiting for approval for this period.")
+    if arrangement == current["arrangement"] and weekday == current["weekday"]:
+        raise ValueError("That is the arrangement you already have — pick a "
+                         "different one.")
+    cur = conn.execute(
+        """INSERT INTO work_arrangement(user_id, period_start, arrangement,
+                                        weekday, note, status, supersedes_id,
+                                        created_at)
+           VALUES (?,?,?,?,?,'pending',?,?)""",
+        (user_id, ps, arrangement, weekday, (note or "").strip() or None,
+         wa_id, tz.now_iso()))
+    conn.commit()
+    return cur.lastrowid
+
+
+def cancel_work_arrangement(conn, wa_id, user_id):
+    """Withdraw a request that is still waiting for approval. On an original
+    filing this frees the period to be filed again; on a change request the
+    arrangement it would have replaced simply stays in force."""
+    row = get_work_arrangement(conn, wa_id)
+    if not row:
+        raise ValueError("That work arrangement no longer exists.")
+    if row["user_id"] != user_id:
+        raise ValueError("That isn't your work arrangement to withdraw.")
+    if row["status"] != "pending":
+        raise ValueError("Only a request still waiting for approval can be "
+                         "withdrawn.")
+    conn.execute("UPDATE work_arrangement SET status='cancelled' WHERE id=?",
+                 (wa_id,))
+    conn.commit()
+    return get_work_arrangement(conn, wa_id)
+
+
+# ---- "No AWA": a standing tag, not a filing ---------------------------------
+#
+# Some people have no alternative work arrangement and a reason for it: on leave,
+# or waiting on a decision made outside the bureau (the source ANNEX C had both —
+# "Leave", and "for approval from OSEC"). On the spreadsheet those read as blank
+# rows, indistinguishable from someone who simply never filed.
+#
+# A tag is a statement of fact rather than a request for a schedule, so it needs
+# no approver and no filing window — which is also what lets it cover a situation
+# that arises mid-period, after the Friday deadline has closed. It is stored as an
+# INTERVAL so it carries into each new period on its own, and editing the reason
+# closes the old interval and opens a new one: a submitted August annex keeps what
+# it said in August even if the wording changes in September.
+
+def _wa_noawa_hydrate(row):
+    (nid, user_id, remark, eff_from, eff_to, created_by, created_at,
+     ended_by, ended_at) = row
+    return {
+        "id": nid, "user_id": user_id, "remark": remark,
+        "effective_from": eff_from,
+        "effective_from_label": work_arrangement_period_label(eff_from),
+        "effective_to": eff_to, "created_by": created_by,
+        "created_at": created_at, "ended_by": ended_by, "ended_at": ended_at,
+        "arrangement": WORK_ARRANGEMENT_NOAWA,
+    }
+
+
+_WA_NOAWA_COLS = ("id, user_id, remark, effective_from, effective_to, "
+                  "created_by, created_at, ended_by, ended_at")
+
+
+def get_work_arrangement_noawa(conn, user_id, period_start=None):
+    """The tag in force for a period (the current one by default), or None. An
+    interval covers a period when it started on or before it and hasn't ended by
+    then — so a tag set in August is still there in September without anything
+    having run in between."""
+    ps = period_start or work_arrangement_period()
+    row = conn.execute(
+        f"SELECT {_WA_NOAWA_COLS} FROM work_arrangement_noawa "
+        "WHERE user_id = ? AND effective_from <= ? "
+        "AND (effective_to IS NULL OR ? < effective_to) "
+        "ORDER BY effective_from DESC LIMIT 1",
+        (user_id, ps, ps)).fetchone()
+    return _wa_noawa_hydrate(row) if row else None
+
+
+def _wa_noawa_for_period(conn, period_start):
+    """{user_id: tag} for everyone tagged in one period — one query behind the
+    roster, the coverage tally and both exports, so they cannot disagree."""
+    rows = conn.execute(
+        f"SELECT {_WA_NOAWA_COLS} FROM work_arrangement_noawa "
+        "WHERE effective_from <= ? AND (effective_to IS NULL OR ? < effective_to) "
+        "ORDER BY effective_from",
+        (period_start, period_start)).fetchall()
+    return {r[1]: _wa_noawa_hydrate(r) for r in rows}
+
+
+def _wa_noawa_may_act(actor, user_id):
+    """Either the person themselves or an admin. Deliberately symmetric with who
+    may remove it: an admin has to be able to record a leave for someone who
+    isn't logging in, and nobody else should be able to speak for them."""
+    return bool(actor) and (actor.get("id") == user_id
+                            or actor.get("role") == "admin")
+
+
+def set_work_arrangement_noawa(conn, user_id, remark, actor):
+    """Start the tag, or replace its reason. Takes effect immediately — there is
+    no approval step and no deadline. Returns the live tag.
+
+    Replacing the reason ends the current interval and opens a new one from the
+    current period rather than editing in place, so a period whose annex has
+    already gone out keeps the wording it was submitted with."""
+    if not _wa_noawa_may_act(actor, user_id):
+        raise PermissionError(
+            "Only the person themselves or an administrator can record this.")
+    remark = (remark or "").strip()
+    if not remark:
+        raise ValueError("Say why there's no work arrangement — a short reason "
+                         "is what makes the blank row on the form mean something.")
+    ps = work_arrangement_period()
+    now = tz.now_iso()
+    live = conn.execute(
+        "SELECT id, remark, effective_from FROM work_arrangement_noawa "
+        "WHERE user_id = ? AND effective_to IS NULL", (user_id,)).fetchone()
+    try:
+        if live:
+            if live[1] == remark:
+                return get_work_arrangement_noawa(conn, user_id, ps)
+            if live[2] == ps:
+                # Started this period and reworded within it — no history to keep
+                # yet, so just correct it rather than opening a second interval.
+                conn.execute(
+                    "UPDATE work_arrangement_noawa SET remark = ? WHERE id = ?",
+                    (remark, live[0]))
+                conn.commit()
+                return get_work_arrangement_noawa(conn, user_id, ps)
+            conn.execute(
+                "UPDATE work_arrangement_noawa SET effective_to = ?, ended_by = ?, "
+                "ended_at = ? WHERE id = ?", (ps, actor.get("id"), now, live[0]))
+        conn.execute(
+            "INSERT INTO work_arrangement_noawa(user_id, remark, effective_from, "
+            "created_by, created_at) VALUES (?,?,?,?,?)",
+            (user_id, remark, ps, actor.get("id"), now))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    return get_work_arrangement_noawa(conn, user_id, ps)
+
+
+def end_work_arrangement_noawa(conn, user_id, actor):
+    """Remove the tag from the current period on. Earlier periods keep it, so a
+    form already submitted still reads the way it was submitted."""
+    if not _wa_noawa_may_act(actor, user_id):
+        raise PermissionError(
+            "Only the person themselves or an administrator can remove this.")
+    live = conn.execute(
+        "SELECT id, effective_from FROM work_arrangement_noawa "
+        "WHERE user_id = ? AND effective_to IS NULL", (user_id,)).fetchone()
+    if not live:
+        raise ValueError("There's no “No AWA” to remove.")
+    ps = work_arrangement_period()
+    if live[1] >= ps:
+        # Never applied to a completed period, so there is nothing to preserve.
+        conn.execute("DELETE FROM work_arrangement_noawa WHERE id = ?", (live[0],))
+    else:
+        conn.execute(
+            "UPDATE work_arrangement_noawa SET effective_to = ?, ended_by = ?, "
+            "ended_at = ? WHERE id = ?",
+            (ps, actor.get("id"), tz.now_iso(), live[0]))
+    conn.commit()
+
+
+# ---- approval --------------------------------------------------------------
+
+def decide_work_arrangement(conn, wa_id, user, action, note=None):
+    """Approve or deny a pending arrangement. Raises ValueError (bad state or
+    input) or PermissionError (not this user's to decide). Returns the updated
+    row.
+
+    Approving a CHANGE retires the row it replaces in the same transaction, so
+    the "one approved per period" index is never momentarily violated and the
+    person is never momentarily without a schedule."""
+    row = get_work_arrangement(conn, wa_id)
+    if not row:
+        raise ValueError("That work arrangement request no longer exists.")
+    if row["status"] != "pending":
+        raise ValueError("That request has already been decided.")
+    if action not in ("approve", "deny"):
+        raise ValueError("Unknown decision.")
+    if not is_approver_for(conn, user, row["user_id"]):
+        raise PermissionError("That request isn't yours to decide.")
+    status = "approved" if action == "approve" else "denied"
+    note = (note or "").strip() or None
+    try:
+        if status == "approved" and row["supersedes_id"]:
+            conn.execute("UPDATE work_arrangement SET status='superseded' "
+                         "WHERE id=? AND status='approved'",
+                         (row["supersedes_id"],))
+        conn.execute(
+            "UPDATE work_arrangement SET status=?, decided_by=?, decided_at=?, "
+            "decide_note=? WHERE id=?",
+            (status, user["id"], tz.now_iso(), note, wa_id))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    return get_work_arrangement(conn, wa_id)
+
+
+def list_work_arrangement_approvals(conn, user):
+    """Pending arrangements this user may decide, earliest period first. Admins
+    see every pending request except their own; a chief sees exactly what the
+    escalation chain routes to them. Each row carries its coverage verdict, so
+    the queue can flag a decision that would empty a section before it is made
+    rather than after."""
+    rows = conn.execute(
+        _WA_SELECT + " WHERE w.status='pending' AND w.user_id != ? "
+        "ORDER BY w.period_start, w.id", (user["id"],)).fetchall()
+    out = [get_work_arrangement(conn, r[0]) for r in rows]
+    if user.get("role") != "admin":
+        if not user_is_approving_chief(conn, user):
+            return []
+        out = [w for w in out
+               if user["id"] in get_approvers_for(conn, w["user_id"])]
+    for w in out:
+        w["coverage_flag"] = work_arrangement_coverage_flag(conn, w)
+    return out
+
+
+# ---- section coverage — advice, never a block ------------------------------
+
+def work_arrangement_coverage(conn, org_path, period_start, exclude_user_id=None):
+    """Per-weekday staffing for ONE section in one period.
+
+    Scope is the EXACT org path, not the subtree: "who is left in my section on
+    Friday" is the operational question, and rolling a whole division up would
+    hide an empty section behind a full one.
+
+    CWW and WFH are counted apart on purpose. A compressed-workweek day off
+    removes a person entirely; someone working from home is still working, just
+    not in the building. "Nobody on-site" and "nobody working" are different
+    problems and the copy has to be able to say which.
+
+    Live rows only (pending + approved) — a denied or withdrawn filing frees its
+    day again. Where a person holds both an approved row and a pending change,
+    the PENDING one counts: that is the state being asked about.
+
+    Anyone tagged "No AWA" drops out entirely — not on-site, not off-site, just
+    out of the denominator. Someone on leave was never going to be at a desk on
+    Friday, and counting them either way misstates the coverage this whole
+    warning exists to report.
+
+    Returns {"headcount": n, "excluded": n, "weekdays": [{idx, name, cww, wfh,
+    offsite, onsite, names}, ...]} — five entries, Monday to Friday. Only
+    accounts take part, so headcount is the set of people who could file."""
+    people = conn.execute("""
+        SELECT a.id, COALESCE(rp.name, a.username)
+        FROM admin_user a
+        JOIN resource_person rp ON rp.id = a.rp_id AND rp.is_internal = 1
+        JOIN org_unit ou ON ou.id = rp.org_unit_id
+        WHERE a.active = 1 AND ou.path = ?
+    """, (org_path or "",)).fetchall()
+    people = [(uid, name) for uid, name in people if uid != exclude_user_id]
+    tagged = _wa_noawa_for_period(conn, period_start)
+    excluded = sum(1 for uid, _n in people if uid in tagged)
+    people = [(uid, name) for uid, name in people if uid not in tagged]
+    ids = {uid for uid, _n in people}
+    names = dict(people)
+
+    qs = ",".join("?" * len(_WA_LIVE))
+    rows = conn.execute(
+        f"SELECT user_id, arrangement, weekday, status FROM work_arrangement "
+        f"WHERE period_start=? AND status IN ({qs}) ORDER BY id",
+        (period_start, *_WA_LIVE)).fetchall()
+    # A pending change outranks the approved row it would replace.
+    picked = {}
+    for uid, arrangement, weekday, status in rows:
+        if uid not in ids:
+            continue
+        if status == "pending" or uid not in picked:
+            picked[uid] = (arrangement, weekday)
+
+    weekdays = []
+    for idx, name in WORK_ARRANGEMENT_WEEKDAYS:
+        cww = [names[u] for u, (a, w) in picked.items() if a == "CWW" and w == idx]
+        wfh = [names[u] for u, (a, w) in picked.items() if a == "WFH" and w == idx]
+        weekdays.append({
+            "idx": idx, "name": name,
+            "cww": len(cww), "wfh": len(wfh),
+            "offsite": len(cww) + len(wfh),
+            "onsite": len(people) - len(cww) - len(wfh),
+            "names": sorted(cww + wfh),
+        })
+    return {"headcount": len(people), "excluded": excluded, "weekdays": weekdays}
+
+
+def _wa_org_path(conn, user_id):
+    """The section path an account sits in, or None when they aren't linked to
+    the directory (coverage is meaningless for them)."""
+    row = conn.execute("""
+        SELECT ou.path FROM admin_user a
+        JOIN resource_person rp ON rp.id = a.rp_id
+        JOIN org_unit ou ON ou.id = rp.org_unit_id
+        WHERE a.id = ? LIMIT 1
+    """, (user_id,)).fetchone()
+    return row[0] if row and row[0] else None
+
+
+def work_arrangement_coverage_note(conn, user_id, period_start, arrangement,
+                                   weekday):
+    """The one-line advisory for a hypothetical pick, as the employee sees it
+    while choosing a day. Returns "" when there is nothing worth saying.
+
+    This NEVER raises and is never consulted by create_work_arrangement — a thin
+    day is the section chief's call, not the database's."""
+    if arrangement not in _WA_DAY_TYPES or weekday is None:
+        return ""
+    path = _wa_org_path(conn, user_id)
+    if not path:
+        return ""
+    cov = work_arrangement_coverage(conn, path, period_start,
+                                    exclude_user_id=user_id)
+    day = cov["weekdays"][weekday]
+    others = cov["headcount"]                    # already excludes this person
+    if others <= 0 or day["offsite"] <= 0:
+        return ""
+    left = day["onsite"] - 1                     # this person would be off too
+    who = f"{day['offsite']} of {others}"
+    if left <= 0:
+        return (f"{who} others in your section are already off on {day['name']} — "
+                f"adding yours would leave nobody on-site that day.")
+    return (f"{who} others in your section are already off on {day['name']}. "
+            f"Filing this leaves {left} on-site.")
+
+
+def work_arrangement_coverage_flag(conn, row):
+    """The approver's verdict on one pending request: a short phrase when
+    approving it would leave the section thin or empty on that weekday, else "".
+    Same computation as the employee's note — one function behind both, so the
+    two can never contradict each other."""
+    if row.get("arrangement") not in _WA_DAY_TYPES or row.get("weekday") is None:
+        return ""
+    path = row.get("org_path")
+    if not path:
+        return ""
+    cov = work_arrangement_coverage(conn, path, row["period_start"],
+                                    exclude_user_id=row["user_id"])
+    day = cov["weekdays"][row["weekday"]]
+    left = day["onsite"]                         # this person is excluded already
+    if left <= 0:
+        return f"Approving leaves nobody on-site on {day['name']}"
+    if left == 1:
+        return f"Only 1 on-site on {day['name']} after this"
+    return ""
+
+
+# ---- the period roster (the ANNEX C body, on screen and in print) ----------
+
+def work_arrangement_roster(conn, period_start, user=None):
+    """Every participating account for a period, filed or not, ordered the way
+    ANNEX C groups them (by division/section, then name).
+
+    This reads FROM admin_user outward, not from work_arrangement inward, which
+    is the whole point: the blanks ARE the information. Someone who never filed
+    appears as a row with no arrangement, so the Admin Officer has a chase list
+    before the deadline instead of 23 silent gaps after it.
+
+    Scoped to a chief's own unit subtree (see _org_scope_for_user); admins and an
+    unscoped call see the whole bureau."""
+    scope = _org_scope_for_user(conn, user) if user else None
+    rows = conn.execute("""
+        SELECT a.id, a.username, rp.name, rp.position, ou.short_name, ou.path
+        FROM admin_user a
+        LEFT JOIN resource_person rp ON rp.id = a.rp_id
+        LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id
+        WHERE a.active = 1
+        ORDER BY ou.path, rp.name, a.username
+    """).fetchall()
+    live = {}
+    qs = ",".join("?" * len(_WA_LIVE))
+    for r in conn.execute(
+            _WA_SELECT + f" WHERE w.period_start=? AND w.status IN ({qs})",
+            (period_start, *_WA_LIVE)).fetchall():
+        w = _wa_hydrate(r)
+        # An approved row is what's in force; a pending one is only ever shown
+        # as such, so let 'approved' win when a person holds both.
+        if w["user_id"] not in live or w["status"] == "approved":
+            live[w["user_id"]] = w
+    tagged = _wa_noawa_for_period(conn, period_start)
+    out = []
+    for uid, username, name, position, short_name, path in rows:
+        if not _path_in_scope(path, scope):
+            continue
+        base = {"user_id": uid, "name": name or username,
+                "position": position or "", "section": short_name or "",
+                "org_path": path or ""}
+        tag = tagged.get(uid)
+        if tag:
+            # A stated reason outranks any stale filing: the person told us they
+            # have no arrangement, and that is not a gap to chase.
+            out.append({**base, "arrangement": WORK_ARRANGEMENT_NOAWA,
+                        "arrangement_label": WORK_ARRANGEMENT_NOAWA,
+                        "weekday": None, "remarks": tag["remark"],
+                        "status": "noawa", "id": None, "filed": True,
+                        "approved": True, "noawa": True})
+            continue
+        w = live.get(uid)
+        out.append({
+            **base,
+            "arrangement": w["arrangement"] if w else "",
+            "arrangement_label": w["arrangement_label"] if w else "",
+            "weekday": w["weekday"] if w else None,
+            "remarks": w["remarks"] if w else "",
+            "status": w["status"] if w else "",
+            "id": w["id"] if w else None,
+            "filed": bool(w),
+            "approved": bool(w and w["status"] == "approved"),
+            "noawa": False,
+        })
+    return out
+
+
+def work_arrangement_period_summary(conn, period_start, user=None):
+    """Roster + per-section coverage + the tiles the schedule page leads with.
+    `thinnest` is the weekday with the fewest people on-site across the sections
+    in view — the Friday problem, surfaced before it is submitted rather than
+    noticed in a spreadsheet afterwards."""
+    roster = work_arrangement_roster(conn, period_start, user)
+    paths = []
+    for r in roster:
+        if r["org_path"] and r["org_path"] not in paths:
+            paths.append(r["org_path"])
+    sections = []
+    for path in paths:
+        cov = work_arrangement_coverage(conn, path, period_start)
+        if not cov["headcount"]:
+            continue
+        short = next((r["section"] for r in roster if r["org_path"] == path), "")
+        sections.append({"org_path": path, "section": short or path, **cov})
+    # Bureau-wide tally across the sections in view, for the coverage panel.
+    totals = []
+    for idx, name in WORK_ARRANGEMENT_WEEKDAYS:
+        onsite = sum(s["weekdays"][idx]["onsite"] for s in sections)
+        offsite = sum(s["weekdays"][idx]["offsite"] for s in sections)
+        totals.append({"idx": idx, "name": name, "onsite": onsite,
+                       "offsite": offsite,
+                       "empty_sections": [s["section"] for s in sections
+                                          if s["weekdays"][idx]["onsite"] <= 0]})
+    thinnest = min(totals, key=lambda t: t["onsite"]) if totals else None
+    deadline = work_arrangement_deadline(period_start)
+    return {
+        "period_start": period_start,
+        "period_label": work_arrangement_period_label(period_start),
+        "deadline": deadline,
+        "deadline_label": work_arrangement_deadline_label(period_start),
+        "deadline_passed": tz.today_local() > deadline,
+        "roster": roster, "sections": sections, "totals": totals,
+        "thinnest": thinnest,
+        # People tagged "No AWA" are out of the schedule entirely, so they are
+        # not part of the "filed n of m" denominator either — counting them
+        # would make the period look permanently incomplete.
+        "headcount": sum(1 for r in roster if not r.get("noawa")),
+        "noawa": [r["name"] for r in roster if r.get("noawa")],
+        "filed": sum(1 for r in roster if r["filed"] and not r.get("noawa")),
+        "approved": sum(1 for r in roster if r["approved"] and not r.get("noawa")),
+        "pending": sum(1 for r in roster if r["filed"] and not r["approved"]),
+        "unfiled": [r["name"] for r in roster if not r["filed"]],
+    }
+
+
+# ---- the printed annex -----------------------------------------------------
+
+def work_arrangement_export_rows(conn, period_start):
+    """The ANNEX C body for one period: one row per participating account,
+    numbered, grouped by division/section then name — the order the source
+    sheets use.
+
+    Only APPROVED arrangements print, plus "No AWA" for anyone carrying a tag.
+    Pending, denied and unfiled people appear with the Work Arrangement and
+    Remarks cells BLANK — which is exactly how the real sheet reads when someone
+    hasn't been dealt with, except that now a blank means only one thing. A
+    person who has no arrangement and a reason for it says so on the form
+    instead of looking identical to a person nobody chased.
+
+    Both the workbook and the PDF read this, so the two can never disagree."""
+    rows = work_arrangement_roster(conn, period_start)
+    out = []
+    for i, r in enumerate(rows, start=1):
+        shown = r["approved"]              # covers 'No AWA' too — it needs no approval
+        out.append({
+            "no": i,
+            "name": r["name"],
+            "position": r["position"],
+            "division_unit": r["section"],
+            "arrangement": r["arrangement"] if shown else "",
+            "remarks": r["remarks"] if shown else "",
+            "filed": r["filed"],
+            "noawa": r.get("noawa", False),
+            "status": r["status"],
+        })
+    return out
+
+
+def work_arrangement_signatories(conn, user_id=None):
+    """Who signs the annex.
+
+    Names turn over faster than anyone remembers to edit a constant, so both are
+    resolved from live data rather than hardcoded — nothing else in this repo
+    hardcodes a person's name and this shouldn't be the first thing that does.
+
+      * Approved by — the directory's Director (org rank 3).
+      * Prepared by — the app_setting override if an admin has pinned one,
+        otherwise whoever is generating the export.
+    """
+    approved_name = _org_seat_name(conn, 3) or ""
+    approved_title = ""
+    if approved_name:
+        row = conn.execute(
+            "SELECT position, designation FROM resource_person "
+            "WHERE name = ? AND is_internal = 1 LIMIT 1",
+            (approved_name.split(" / ")[0],)).fetchone()
+        if row:
+            approved_title = row[0] or row[1] or ""
+    s = get_settings(conn, ["wa_prepared_by_name", "wa_prepared_by_title"])
+    prepared_name = (s.get("wa_prepared_by_name") or "").strip()
+    prepared_title = (s.get("wa_prepared_by_title") or "").strip()
+    if not prepared_name and user_id:
+        me = get_admin_user_by_id(conn, user_id)
+        rp = get_rp(conn, me["rp_id"]) if me and me.get("rp_id") else None
+        if rp:
+            prepared_name = rp.get("name") or ""
+            prepared_title = prepared_title or rp.get("position") or ""
+        elif me:
+            prepared_name = me.get("username") or ""
+    return {
+        "prepared_by": {"name": prepared_name, "title": prepared_title},
+        "approved_by": {"name": approved_name, "title": approved_title},
+    }
+
+
+def work_arrangement_annex_data(conn, period_start, user_id=None):
+    """Everything either annex format needs, in one dict."""
+    return {
+        "period_start": period_start,
+        "period_label": work_arrangement_period_label(period_start),
+        "office_unit": BUREAU_NAME,
+        "legend": WORK_ARRANGEMENT_LEGEND,
+        "rows": work_arrangement_export_rows(conn, period_start),
+        **work_arrangement_signatories(conn, user_id),
+    }
+
+
+def work_arrangement_month_periods(ym):
+    """The two half-month periods of 'YYYY-MM'. The bureau circulates ANNEX C as
+    one file with a sheet per half, so the export can offer a whole month."""
+    y, m = ym.split("-")
+    first = f"{int(y):04d}-{int(m):02d}-01"
+    return [first, work_arrangement_next_period(first)]
