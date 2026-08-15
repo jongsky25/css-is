@@ -85,6 +85,18 @@ def test_chief_cap_gates_the_team_pages(app_mod):
     assert not (team_urls & idx)
     assert team_urls <= {e["url"] for e in app_mod.search_index_for(U("viewer"), True)}
 
+    # A bureau-wide WORK-ARRANGEMENT grant is offered the schedule it exists for
+    # — and only that. Not the approvals queue (sight is not authority) and not
+    # the wellness register (that grant is a different, wider one).
+    class G:
+        def __init__(self, role, access):
+            self.role, self.bureau_access = role, access
+
+    granted = urls(G("viewer", "awa"), False)
+    assert "/work-arrangement/schedule" in granted
+    assert "/work-arrangement/approvals" not in granted
+    assert "/wellness/dashboard" not in granted
+
 
 def test_search_page_requires_login(app_mod):
     # a fresh, cookie-less client — the shared `client` fixture accumulates a

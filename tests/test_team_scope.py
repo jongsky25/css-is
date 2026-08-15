@@ -3,10 +3,16 @@ Team-scope resolution — the guard that keeps the Office Connect landing page
 from showing one person another team's filings.
 
 The landing page shows EVERY signed-in user their team, with no chief-only route
-guard in front of it. That removes the assumption `_org_scope_for_user` was
-written under (see its docstring: "Admins — and any account with no directory
-org unit — monitor everyone"), so an account with no directory link must resolve
-to "no team" rather than falling through to the whole bureau.
+guard in front of it. That removes the assumption `_org_scope_for_user` is
+written under — an account with no directory org unit monitors everyone — so an
+account with no directory link must resolve to "no team" here rather than falling
+through to the whole bureau.
+
+The DIRECTORY is what decides the team, not the app role. An `admin` role is a
+permission to operate the system; it is not standing over every section's
+wellness and work-arrangement filings, and it no longer grants a bureau-wide
+view. Bureau-wide is reached one way: by being recorded at a unit the sections
+hang off, whose subtree is everyone.
 """
 from __future__ import annotations
 
@@ -96,11 +102,22 @@ def test_linked_staff_scope_to_their_own_unit(org):
         assert (scope, kind) == (path, "unit")
 
 
-def test_admin_scopes_to_the_whole_bureau(org):
-    """An admin with no seat on the org chart — a system administrator — is the
-    one account that still gets the bureau-wide view."""
+def test_an_admin_with_no_seat_has_no_team_until_it_is_granted(org):
+    """The role is not a way to see everyone, not even for a system administrator
+    with no seat on the org chart. They get the personal view and the "link your
+    profile" note — and, when they genuinely need the bureau, an explicit
+    bureau_access grant that is set per account, audited and revocable
+    (BUREAU_ACCESS_LEVELS; see tests/test_bureau_access.py). Same reach as the
+    old role shortcut, named rather than implied."""
     conn = org["conn"]
-    assert st.team_scope_for_user(conn, _u(conn, org["admin"])) == (None, "bureau")
+    admin = _u(conn, org["admin"])
+    assert st.team_scope_for_user(conn, admin) == (None, "none")
+
+    st.set_bureau_access(conn, org["admin"], "all")
+    try:
+        assert st.team_scope_for_user(conn, admin) == (None, "bureau")
+    finally:
+        st.set_bureau_access(conn, org["admin"], "")
 
 
 def test_the_directory_outranks_the_account_role(org):
@@ -134,8 +151,8 @@ def test_the_director_still_gets_the_whole_bureau(org):
 
 def test_unlinked_account_gets_no_team_not_the_bureau(org):
     """The whole point of the helper. _org_scope_for_user returns None here —
-    indistinguishable from an admin — which would have shown this account every
-    wellness and work-arrangement filing in the bureau."""
+    indistinguishable from an unscoped bureau-wide call — which would have shown
+    this account every wellness and work-arrangement filing in the bureau."""
     conn = org["conn"]
     user = _u(conn, org["unlinked"])
 
@@ -208,10 +225,19 @@ def test_week_rollup_is_scoped_and_carries_face_columns(org):
                 "org_path", "used", "left"):
         assert key in row, key
 
-    # an admin sees both sections
-    all_names = {r["name"] for r in
-                 st.wellness_week_rollup(conn, week, _u(conn, org["admin"]))["rows"]}
-    assert {"TS-One", "TS-Two"} <= all_names
+    # an ADMIN-role account the directory places in S1 sees S1 and nothing else
+    adm_names = {r["name"] for r in
+                 st.wellness_week_rollup(conn, week,
+                                         _u(conn, org["s1_chief_admin"]))["rows"]}
+    assert "TS-One" in adm_names
+    assert "TS-Two" not in adm_names
+
+    # the Director sees both; so does an unscoped call (the bureau-wide exports)
+    dir_names = {r["name"] for r in
+                 st.wellness_week_rollup(conn, week, _u(conn, org["director"]))["rows"]}
+    assert {"TS-One", "TS-Two"} <= dir_names
+    assert {"TS-One", "TS-Two"} <= {r["name"] for r in
+                                    st.wellness_week_rollup(conn, week)["rows"]}
 
 
 def test_dashboard_data_still_agrees_with_the_rollup(org):

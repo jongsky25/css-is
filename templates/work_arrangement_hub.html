@@ -61,10 +61,12 @@
 {% if ok %}{{ flash(msg=ok) }}{% endif %}
 {% if err %}{{ flash(err=err) }}{% endif %}
 
-{% if is_chief %}
+{#-- Gated apart: seeing (and printing) the schedule is not the same power as
+     deciding on it, so a bureau-wide viewer gets the second button only. --#}
+{% if is_chief or can_schedule %}
 <div class="chiefbar">
-  <a class="btn ghost" href="/work-arrangement/approvals">Approvals queue</a>
-  <a class="btn ghost" href="/work-arrangement/schedule">Period schedule</a>
+  {% if is_chief %}<a class="btn ghost" href="/work-arrangement/approvals">Approvals queue</a>{% endif %}
+  {% if can_schedule %}<a class="btn ghost" href="/work-arrangement/schedule">Period schedule</a>{% endif %}
 </div>
 {% endif %}
 

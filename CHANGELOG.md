@@ -1,5 +1,139 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-08-15 (v2.63 — landing-page decks, and bureau-wide sight granted per account)
+
+### The seat that legitimately needs every section
+
+v2.61 made the directory the basis of scope: you see the unit you are recorded
+in, and no role widens that. That is right for almost everyone and wrong for one
+real job — whoever consolidates the bureau's fortnightly ANNEX C has to see and
+print every section's work arrangement, and the previous answer ("be an admin")
+is exactly the conflation v2.61 removed.
+
+**`admin_user.bureau_access`** is the explicit alternative. Two levels beyond the
+default of nothing:
+
+* `'awa'` — the work arrangement only: the team schedule and both ANNEX C
+  downloads cover every section.
+* `'all'` — every scoped view, wellness register and landing page included.
+
+Set per account in **Admin → Users** ("Sees", beside the role), audited as
+`change_bureau_access` exactly like a role change, and revocable. It is read from
+the row on every request, never from the session cookie that minted the user
+dict — a revoked grant must stop working on the next page load, not whenever the
+cookie happens to expire.
+
+Callers ask for what they are showing — `_org_scope_for_user(conn, user,
+area="awa"|"wellness")` — so the narrow grant widens the ANNEX C and nothing
+else. `team_scope_for_user` regains its "bureau" kind, reachable now by an `'all'`
+grant or by a directory record at the bureau-level unit; a work-arrangement grant
+deliberately does not widen the landing page, which spans all three modules.
+
+**Sight is not authority.** `user_can_view_work_arrangement_schedule` (chiefs +
+grant holders) is kept apart from `user_is_approving_chief` (chiefs only), so the
+schedule, its ANNEX C download and its nav entry open for a grant holder while
+the approvals queue stays shut — and the queue link is dropped from the hub and
+the schedule page for them rather than left to 403. Wellness stays out of the
+narrow grant entirely: those are health records, and printing a schedule is not a
+reason to read them.
+
+Granted on first start after each account exists, per username, so an
+administrator who revokes a grant does not find it back after the next deploy:
+`armedel@doh.gov.ph` → work arrangement bureau-wide; `ray@gmail.com` → everything
+bureau-wide, with the administrator role.
+
+### The landing page: bigger companion, named faces, swipeable insight decks
+
+### The last thing the role still stood in for
+
+v2.61 (#100) made the directory decide the team, arrived at independently and
+from the other end: it resolves the org chart first, seats the Director as the
+one directory role whose team really is the bureau, and keeps `"bureau"` for an
+`admin` with no seat on the org chart. This branch reached the same conclusion by
+a different route, so the merge keeps that structure — single source of truth in
+`team_scope_for_user`, `_org_scope_for_user` folding "none" back onto None, the
+`archived_at IS NULL` filter — and changes exactly one thing on top of it.
+
+**That last admin fallback is gone.** An account with no seat on the org chart
+now resolves to `"none"` like any other unlinked account, and reaches the bureau
+only through the explicit grant above. The reach is identical for the one account
+that genuinely needs it; what changes is that it is now named, audited and
+revocable rather than implied by a role. `ray@gmail.com` — the system
+administrator this fallback existed for — is seeded with the `'all'` grant, so
+nothing is lost on deploy.
+
+Callers pass the module they are showing (`area="awa"` / `"wellness"`), which is
+what lets a work-arrangement grant widen the ANNEX C without touching the
+wellness register.
+
+### One card, one number, four unasked questions
+
+The wellness and AWA cards each led with a count and stopped there. Everything
+else the data knows — which day and hour breaks actually land on, what people do
+with them, whether the reflection says it helped, which arrangement people chose,
+which weekday the office empties — was either one click away or nowhere.
+
+Both team cards are now **decks**: a native `scroll-snap` track that swipes with
+no JavaScript at all, with arrows, dots and ←/→ keys added on top by
+`static/js/deck.js` (nothing is rendered that would be dead without it). Five
+readings each, every chart still shipping its `chart_table` screen-reader
+fallback, and every slide carrying a one-sentence reading computed in Python —
+"Most breaks land Wednesday, before 10", "Friday is the emptiest day — 2 away".
+
+New and reused pieces: `storage.wellness_pattern` (one query, eight weeks,
+approved + completed only — a pending request is a plan, not behaviour),
+`dashboard_insights.count_bars_geom` and `heat_geom` (coordinates, tone tokens,
+aria label and data table, same contract as `bars_geom`). The AWA slides needed
+no new query at all: arrangement mix, day-away distribution and per-section
+progress are all derived from the period summary already in hand.
+
+**Two layout traps worth remembering**, both found by measuring the rendered page
+rather than reading the CSS:
+
+* A deck inside a grid makes the *page* scroll sideways. A grid item sizes to its
+  max-content, and a deck's max-content is every slide side by side —
+  `min-width:0` on `.oc-card` is load-bearing.
+* `.sr-only` is `position:absolute`, so without `position:relative` on
+  `.deck-track` the screen-reader chart tables take the `.deck` outside it as
+  their containing block, escape the track's clipping, and drag the document four
+  screens wide from slide 5's static position.
+
+### "The selected activities are no longer in this view" — when they were
+
+**Symptom.** An admin creates or imports a pair of duplicate activities, ticks
+them on /reports/activities and picks Merge, and the bar refuses: *the selected
+activities are no longer in this view*. Trying again a moment later works. Found
+as an order-dependent test failure — `test_bulk_merge_route_admin_merges_across_dates`
+passed alone and failed after any test that had already loaded a page.
+
+**Cause.** The bulk route validated the ticked ids against the memoised `events`
+view. `get_atoms` deliberately serves a stale-but-serviceable frame while it
+rebuilds in the background, and `view_memo` keys on the frame a view was built
+from — so for one refresh, rows added moments ago are absent from that view. Run
+alone the test cold-starts (a blocking build, so fresh); after any earlier
+request there is a warm frame to serve instead. The window is small but lands
+exactly when a curator is most likely to act: right after creating the thing they
+mean to merge.
+
+**Fix.** On a total miss, `invalidate_atoms()` and re-resolve once before
+concluding the selection is gone. A hit still costs nothing.
+`test_bulk_merge_sees_an_activity_created_after_the_view_was_cached` pins the
+stale view by hand rather than racing for it — a test that only fails on the
+unlucky ordering is how this got missed.
+
+### Faces you can put a name to, and a companion worth looking at
+
+The team wall was pictures with no names — the only label was a native `title=`
+that takes a second to appear and never appears on touch. Marks are now 66px
+(was 52) and carry a styled name popup on hover **and on keyboard focus**, with
+the person's status under the name. The companion is 108px in the hero (was 72)
+and each growth stage is 92px (was 64), which is the point at which the
+per-stage artwork reads as different plants rather than the same green blob.
+
+"Team filing" — which named the action rather than the thing — is now
+**Alternative Work Arrangement**, and the card leads with the dates it covers,
+reusing `work_arrangement_period_label` so the card and the printed ANNEX C sheet
+name the same fortnight.
 ## 2026-08-15 (v2.62 — the August 16-31 ANNEX C schedule, transcribed)
 
 ### The period the module arrived too late for

@@ -14,7 +14,7 @@ import pytest
 
 import auth
 import storage as st
-from tests.conftest import _auth_client
+from tests.conftest import _auth_client, in_the_directory as _in_the_directory
 
 
 @pytest.mark.parametrize("role", ["viewer", "encoder", "section_manager", "admin"])
@@ -41,8 +41,9 @@ def test_team_toggle_appears_only_when_there_is_a_team(app_mod):
     """The toggle is a real link, not JS. It is offered only to someone who HAS
     a team: an account with no directory link resolves to no team at all, and
     showing it a Team tab that could only ever be empty would be a lie."""
-    admin = _auth_client(app_mod, "admin").get("/").text
-    assert 'href="/?view=me"' in admin                 # bureau-wide, so a team exists
+    with _in_the_directory(app_mod, "admin@test.local"):
+        admin = _auth_client(app_mod, "admin").get("/").text
+        assert 'href="/?view=me"' in admin             # in the directory, so a team
 
     conn = st.connect(app_mod.DB)
     st.init_db(conn)
@@ -54,6 +55,15 @@ def test_team_toggle_appears_only_when_there_is_a_team(app_mod):
         page = _auth_client(app_mod, "viewer").get("/").text
         assert 'href="/?view=me"' not in page
         assert "directory record" in page              # the explainer instead
+
+
+def test_an_admin_role_alone_is_not_a_team(app_mod):
+    """The role used to be a shortcut to a bureau-wide roster. It is not one now:
+    an admin with no directory record gets the personal view and the explainer,
+    the same as any other unlinked account."""
+    page = _auth_client(app_mod, "admin").get("/").text
+    assert 'href="/?view=me"' not in page
+    assert "directory record" in page
 
 
 def test_landing_never_calls_activities_attendance(app_mod):
@@ -143,13 +153,15 @@ def test_css_hub_is_not_jailed_by_onboarding(app_mod):
 
 
 def test_team_view_renders_all_three_panels(app_mod):
-    """An admin scopes bureau-wide, so every team panel has something to draw.
-    Guards the markup, not just the payload: the data layer is unit-tested in
-    test_office_connect.py, but nothing there proves the template renders it."""
-    html = _auth_client(app_mod, "admin").get("/").text
+    """A viewer the directory places in a section has a team, so every team panel
+    has something to draw. Guards the markup, not just the payload: the data
+    layer is unit-tested in test_office_connect.py, but nothing there proves the
+    template renders it."""
+    with _in_the_directory(app_mod, "admin@test.local", "encoder@test.local"):
+        html = _auth_client(app_mod, "admin").get("/").text
 
     assert "Wellness this week" in html
-    assert "Team filing" in html
+    assert "Alternative Work Arrangement" in html
     assert "Activities your team ran or spoke at" in html
     assert 'class="faces"' in html                     # the people wall
     assert 'class="oc-bar"' in html                    # the stacked filing bar

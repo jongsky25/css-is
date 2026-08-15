@@ -92,6 +92,7 @@ def world(app_mod):
 
     rp_a = person("OC-Ana", "OCT/D1/S1")
     rp_b = person("OC-Ben", "OCT/D1/S10")
+    rp_c = person("OC-Cy", "OCT/D1/S1")
 
     def account(u, role, rp=None):
         return st.create_admin_user(conn, u, "x", "y", role, rp_id=rp)
@@ -100,6 +101,8 @@ def world(app_mod):
     b = account("oc-ben@test.local", "viewer", rp_b)
     unlinked = account("oc-none@test.local", "viewer")
     admin = account("oc-adm@test.local", "admin")
+    # an admin-ROLE account the DIRECTORY puts in S1 — the role buys no extra reach
+    admin_s1 = account("oc-adm-s1@test.local", "admin", rp_c)
 
     def instance(tok, path, created_by):
         return conn.execute(
@@ -111,7 +114,8 @@ def world(app_mod):
     fi_b = instance("oc-tok-b", "OCT/D1/S10", "oc-ben@test.local")
     conn.commit()
     yield {"conn": conn, "ana": a, "ben": b, "unlinked": unlinked, "admin": admin,
-           "rp_ana": rp_a, "rp_ben": rp_b, "fi_a": fi_a, "fi_b": fi_b}
+           "admin_s1": admin_s1, "rp_ana": rp_a, "rp_ben": rp_b, "rp_cy": rp_c,
+           "fi_a": fi_a, "fi_b": fi_b}
     conn.close()
 
 
@@ -143,8 +147,20 @@ def _payload(world, who, memo=None):
 def test_scope_resolves_per_viewer(world):
     assert _payload(world, "ana")["scope"]["kind"] == "unit"
     assert _payload(world, "ana")["scope"]["path"] == "OCT/D1/S1"
-    assert _payload(world, "admin")["scope"]["kind"] == "bureau"
     assert _payload(world, "unlinked")["scope"]["kind"] == "none"
+
+
+def test_the_directory_decides_the_scope_not_the_app_role(world):
+    """An admin the directory places in S1 gets S1 — the same team Ana gets, and
+    nothing from S10. An admin with no directory record has no team at all,
+    exactly like any other unlinked account."""
+    adm = _payload(world, "admin_s1")
+    assert adm["scope"]["kind"] == "unit"
+    assert adm["scope"]["path"] == "OCT/D1/S1"
+    assert "OC-Ben" not in repr(adm)
+
+    assert _payload(world, "admin")["scope"]["kind"] == "none"
+    assert _payload(world, "admin")["panels"]["wellness"]["team"] is None
 
 
 def test_unlinked_account_gets_no_team_payload_at_all(world):
@@ -302,12 +318,12 @@ def test_awa_panel_leads_with_the_period_open_for_filing(world):
     assert p["team"]["coverage"]["table"]["headers"][0] == "Weekday"
 
 
-def test_awa_bureau_view_defers_the_per_section_coverage_chart(world):
-    """Bureau-wide, coverage costs a query fan-out per section; the counts carry
-    the panel and the full chart stays one click away."""
-    p = _payload(world, "admin")["panels"]["awa"]
+def test_awa_team_view_always_carries_the_coverage_chart(world):
+    """Every team view is now a directory unit — there is no bureau-wide fan-out
+    to defer — so the weekday coverage chart is always built."""
+    p = _payload(world, "admin_s1")["panels"]["awa"]
     assert p["team"] is not None
-    assert p["team"]["coverage"] is None
+    assert p["team"]["coverage"]["bars"], "expected Mon-Fri bars for a unit scope"
 
 
 # --- geometry ---------------------------------------------------------------

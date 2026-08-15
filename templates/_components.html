@@ -106,6 +106,92 @@
 {% endif %}
 {%- endmacro %}
 
+{#
+  A DECK — one card, several readings of the same thing, swiped through.
+
+  A card can only lead with one number, but the question behind it usually has
+  three or four honest readings ("who filed" is not "which day the office
+  empties"). Stacking them all makes an unreadable card; a deck keeps the lead
+  reading in place and puts the rest one swipe away.
+
+  The track is a native horizontal scroll-snap area, so touch swipe and a
+  trackpad work with NO JavaScript at all. deck.js adds the arrows, the dots and
+  the ←/→ keys on top; nothing is rendered that would be dead without it.
+
+  Usage:
+    {% call deck("Wellness") %}
+      {% call deck_slide("This week") %}…{% endcall %}
+      {% call deck_slide("When breaks happen") %}…{% endcall %}
+    {% endcall %}
+#}
+{% macro deck_defs() %}
+<style>
+  .deck { position:relative; min-width:0; }
+  /* padding + an equal negative margin: a horizontal scroll box clips
+     vertically too (overflow-x:auto forces overflow-y:auto), which would cut the
+     top off a face's name popup. The padding gives the popup room INSIDE the
+     clip box; the margin puts the track back where it was. */
+  /* position:relative is load-bearing, not decoration. The screen-reader chart
+     tables are .sr-only, i.e. position:absolute — so without a positioned track
+     their containing block is the .deck outside it, they escape the track's
+     clipping, and a table sitting at slide 5's static position drags the whole
+     PAGE four screens wide. Containing them here puts them back inside the clip. */
+  .deck-track { position:relative; display:flex; overflow-x:auto;
+                scroll-snap-type:x mandatory;
+                -webkit-overflow-scrolling:touch; scroll-behavior:smooth;
+                scrollbar-width:none; gap:0;
+                padding-top:52px; margin-top:-52px; }
+  .deck-track::-webkit-scrollbar { display:none; }
+  /* Equal-height slides: the track is as tall as its tallest slide, so the card
+     never resizes under the reader's thumb mid-swipe. */
+  .deck-slide { flex:0 0 100%; min-width:100%; scroll-snap-align:start;
+                padding:0 2px 0 0; }
+  .deck-cap { font-size:.72rem; font-weight:800; letter-spacing:.04em;
+              text-transform:uppercase; color:var(--soft); margin:0 0 .4rem; }
+  .deck-nav { display:flex; align-items:center; justify-content:space-between;
+              gap:.6rem; margin-top:.7rem; }
+  .deck-dots { display:inline-flex; gap:.3rem; align-items:center; }
+  .deck-dots button { width:8px; height:8px; padding:0; border:0; cursor:pointer;
+                      border-radius:50%; background:var(--line-strong);
+                      transition:width .15s, background .15s; }
+  .deck-dots button[aria-current="true"] { width:20px; border-radius:4px;
+                                           background:var(--accent); }
+  .deck-btns { display:inline-flex; gap:.4rem; }
+  .deck-btns button { width:30px; height:30px; border-radius:8px; cursor:pointer;
+                      border:1px solid var(--line); background:var(--surface);
+                      color:var(--ink); font-size:1.1rem; line-height:1;
+                      display:flex; align-items:center; justify-content:center; }
+  .deck-btns button:hover:not(:disabled) { background:var(--accent-bg);
+                      border-color:var(--accent); color:var(--accent); }
+  .deck-btns button:disabled { opacity:.4; cursor:default; }
+  .deck-ind { font-size:.74rem; font-weight:700; color:var(--soft);
+              font-variant-numeric:tabular-nums; }
+  /* The one-line reading of the slide's chart. Said in words because a chart
+     nobody can summarise is a chart nobody acted on. */
+  .deck-say { margin:.5rem 0 0; font-size:.82rem; color:var(--ink);
+              background:var(--surface-2); border-radius:10px; padding:.4rem .6rem; }
+  @media (prefers-reduced-motion:reduce) {
+    .deck-track { scroll-behavior:auto; }
+    .deck-dots button { transition:none; }
+  }
+</style>
+{% endmacro %}
+
+{% macro deck(label) %}
+<div class="deck" data-deck role="group" aria-roledescription="carousel"
+     aria-label="{{ label }}">
+  <div class="deck-track">{{ caller() }}</div>
+</div>
+{% endmacro %}
+
+{% macro deck_slide(title, caption=true) %}
+<section class="deck-slide" role="group" aria-roledescription="slide"
+         aria-label="{{ title }}">
+  {% if caption %}<p class="deck-cap">{{ title }}</p>{% endif %}
+  {{ caller() }}
+</section>
+{% endmacro %}
+
 {% macro chart_table(caption, headers, rows) -%}
 {# Screen-reader-only data table mirroring a chart's numbers (WCAG 1.1.1). The chart
    SVG carries role="img" + a short aria-label summary; this table is the full,

@@ -17,10 +17,54 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.62"
+APP_VERSION = "2.63"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.63",
+        "date": "August 15, 2026",
+        "summary": "Your home page now shows more than one reading of each card "
+                   "\u2014 swipe them \u2014 and an account can be given "
+                   "bureau-wide sight on purpose, so whoever consolidates ANNEX C "
+                   "can see and print every section.",
+        "changes": [
+            "Your companion is half again as big on the home page, and so is "
+            "every stage of the growth strip, so the differences between them "
+            "are actually worth looking at.",
+            "Hover or tab onto anyone in your team's row of pictures and their "
+            "name pops up, with what they filed. No more guessing who is who.",
+            "The wellness and work-arrangement cards are now swipeable. Swipe "
+            "(or use the arrows) for the day and time your team actually takes "
+            "breaks, what they do with them, whether the break helped, which "
+            "arrangement people filed, and the weekday your office empties out.",
+            "“Team filing” is now called Alternative Work Arrangement, and the "
+            "card leads with the fortnight it covers — the same dates the "
+            "printed ANNEX C sheet carries.",
+            "Who you see on the home page, on the wellness register and on the "
+            "work-arrangement schedule comes from your record in the directory "
+            "— your section, your division. An administrator account with no "
+            "seat on the org chart no longer sees everyone automatically; when "
+            "it needs to, say so with the new “Sees” setting below.",
+            "Fixed: ticking two activities you had just added and choosing "
+            "“Merge” could refuse with “the selected activities are no longer in "
+            "this view”, and only work if you tried again a moment later.",
+            "New in Admin \u2192 Users: a \u201cSees\u201d setting beside each "
+            "account's role. Leave it alone and people see their own unit, from "
+            "the directory. Set it to \u201cWork arrangement, bureau-wide\u201d "
+            "and they get every section's team schedule and the ANNEX C print; "
+            "set it to \u201cEverything, bureau-wide\u201d and they see every "
+            "section across all three modules.",
+            "Alexander Medel now sees and prints the whole bureau's work "
+            "arrangement. It does not open anyone's wellness claims, and it does "
+            "not make him an approver \u2014 seeing a schedule and deciding on "
+            "one are separate.",
+            "ray@gmail.com is now an administrator who sees every section "
+            "everywhere.",
+            "Changing what an account can see is written to the audit log, the "
+            "same as changing its role, and can be taken back at any time.",
+        ],
+    },
     {
         "version": "2.62",
         "date": "August 15, 2026",

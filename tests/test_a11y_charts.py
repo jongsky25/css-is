@@ -4,6 +4,7 @@ Deploy 1 scope: the skip-link (both layouts) + the `chart_table` macro wired to 
 five Trends charts via `_svg_geom`'s new main_table / dims_table.
 """
 import dashboard_insights as di
+from tests.conftest import in_the_directory
 
 
 def test_svg_geom_emits_sr_tables():
@@ -78,20 +79,25 @@ def test_deploy2_pages_have_sr_tables(admin):
             assert 'sr-only chart-data' in html, f"no SR table on {path}"
 
 
-def test_landing_charts_carry_their_sr_tables(admin):
+def test_landing_charts_carry_their_sr_tables(admin, app_mod):
     """Same contract as Trends: anything drawn as role="img" on the Office
     Connect landing page ships a navigable data table beside it. The faces wall
     is the reason this matters most — it is deliberately pictures-not-names, so
-    the table IS the accessible reading of it."""
-    html = admin.get("/").text
+    the table IS the accessible reading of it.
+
+    The viewer has to be IN THE DIRECTORY: the team panels — and so every chart
+    on this page — are scoped to the org unit the directory puts you in."""
+    with in_the_directory(app_mod, "admin@test.local"):
+        html = admin.get("/").text
     if 'role="img"' in html:
         assert "sr-only chart-data" in html
         assert "<caption>" in html
 
 
-def test_landing_faces_are_labelled_individually(admin):
+def test_landing_faces_are_labelled_individually(admin, app_mod):
     """Each face is its own role="img" with the person's name in the label —
     a wall of unlabelled circles would be unreadable without sight."""
-    html = admin.get("/").text
+    with in_the_directory(app_mod, "admin@test.local"):
+        html = admin.get("/").text
     if 'class="face' in html:
         assert 'class="face' in html and "aria-label=" in html

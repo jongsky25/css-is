@@ -18,16 +18,23 @@ tests pass a no-op memo.
 
 SCOPE IS THE SAFETY-CRITICAL PART. This page has no chief-only route guard —
 every signed-in user sees their own team by design — so it resolves scope with
-`storage.team_scope_for_user`, which distinguishes "no team" (an account with no
-directory link) from "the whole bureau" (an admin). `_org_scope_for_user`
-collapses both onto None, and `_path_in_scope(path, None)` is True for
-everything, so using it directly here would show an unlinked account every
-wellness and work-arrangement filing in the bureau. When kind == "none" the team
-builders are not called at all and every panel's "team" is None.
+`storage.team_scope_for_user`: the team is the org unit the DIRECTORY puts you
+in, and an account with no directory link resolves to "none" rather than to the
+bureau. `_org_scope_for_user` answers None for that unlinked case, and
+`_path_in_scope(path, None)` is True for everything, so using it directly here
+would show an unlinked account every wellness and work-arrangement filing in the
+bureau. When kind == "none" the team builders are not called at all and every
+panel's "team" is None.
+
+An `admin` role buys nothing here. Bureau-wide (kind == "bureau") is reached two
+ways, neither of them a role: being recorded at the bureau-level org unit, whose
+subtree is everyone, or holding an explicit 'all' grant on the account
+(storage.BUREAU_ACCESS_LEVELS). A work-arrangement-only grant deliberately does
+NOT widen this page — it spans all three modules, wellness included.
 """
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import date, timedelta
 
 import css_is_engine as eng
 import dashboard_insights as di
@@ -235,8 +242,7 @@ def _css_panel(conn, index, *, me, roll_rows, scope, kind):
         for eid in index["recent"]:
             ev = by_event[eid]
             roles = set()
-            if kind == "bureau" or any(st._path_in_scope(p, scope)
-                                       for p in ev["lead_paths"]):
+            if any(st._path_in_scope(p, scope) for p in ev["lead_paths"]):
                 roles.add("unit")
             spoke = ev["rp_ids"] & team_rp_ids
             if spoke:
@@ -253,8 +259,9 @@ def _css_panel(conn, index, *, me, roll_rows, scope, kind):
     return {"team": team, "personal": personal}
 
 
-def _wellness_panel(conn, *, me, roll, week_start, kind):
-    """This week's break hours — a wall of faces, not a table of names."""
+def _wellness_panel(conn, *, me, user, roll, week_start, kind):
+    """This week's break hours — a wall of faces, not a table of names — plus the
+    eight-week habit behind it, which is what the card's later slides read."""
     weekly = st.WELLNESS_WEEKLY_HOURS
     try:
         stats = st.wellness_stats(conn, me["user_id"])
@@ -265,6 +272,9 @@ def _wellness_panel(conn, *, me, roll, week_start, kind):
         "week_start": week_start, "weekly_hours": weekly,
         "stats": stats,
         "used": 0, "left": weekly, "ring": di.ring_geom(0), "state": "none",
+        "insights": _wellness_insights(
+            st.wellness_pattern(conn, week_start, only_user_id=me["user_id"]),
+            whose="you"),
     }
     my_row = next((r for r in roll["rows"] if r["user_id"] == me["user_id"]), None)
     if my_row:
@@ -296,8 +306,103 @@ def _wellness_panel(conn, *, me, roll, week_start, kind):
                 "rows": [[c["name"], c["section"], str(c["used"]),
                           str(c["left"]), c["status_label"]] for c in cells],
             },
+            "insights": _wellness_insights(
+                st.wellness_pattern(conn, week_start, user), whose="the team"),
         }
     return {"team": team, "personal": personal}
+
+
+_MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+
+def _short_date(iso):
+    try:
+        d = date.fromisoformat(str(iso)[:10])
+    except ValueError:
+        return str(iso)
+    return f"{_MON[d.month - 1]} {d.day}"
+
+
+def _wellness_insights(pat, *, whose):
+    """The wellness card's later slides: geometry + one plain sentence each.
+
+    Returns None when there is nothing to draw. An empty chart is worse than no
+    chart — it reads as "the data is broken" rather than "nobody has filed yet",
+    which is what the slide's own empty state says properly."""
+    if not pat or not pat["claims"]:
+        return None
+    yours = whose == "you"
+    day_names = [d["name"] for d in pat["by_day"]]
+    slot_names = [s["label"] for s in pat["by_slot"]]
+
+    when = di.heat_geom(pat["grid"], day_names, slot_names,
+                        caption="Wellness breaks by day and start time")
+    days = di.count_bars_geom(pat["by_day"],
+                              caption="Wellness breaks by weekday",
+                              key_header="Weekday", value_header="Breaks")
+    weeks = di.count_bars_geom(
+        [{"name": _short_date(w["week_start"]), "short": _short_date(w["week_start"]),
+          "n": w["people"]} for w in pat["by_week"]],
+        caption=("Weeks you took a break" if yours
+                 else "People taking a break each week"),
+        key_header="Week of", value_header=("Breaks" if yours else "People"))
+
+    total = sum(a["n"] for a in pat["by_activity"]) or 1
+    activity = [{**a, "pct": round(a["n"] * 100 / total)}
+                for a in pat["by_activity"]]
+    activity_table = {
+        "caption": "What people did on their wellness break",
+        "headers": ["Activity", "Breaks"],
+        "rows": [[a["label"], str(a["n"])] for a in activity],
+    }
+
+    peak, mood = when["peak"], pat["mood"]
+    said = {
+        "when": ((f"You take yours {peak['row']}, {peak['col'].lower()}."
+                  if yours else
+                  f"Most breaks land {peak['row']}, {peak['col'].lower()}.")
+                 if peak else None),
+        "days": (f"{pat['peak_day']['name']} is the most protected day — "
+                 f"{pat['peak_day']['n']} of {pat['claims']} breaks."
+                 if pat["peak_day"] and pat["peak_day"]["n"] else None),
+        "weeks": (f"{pat['people']} {'week' if yours else 'people'} "
+                  f"{'with a break' if yours else 'took a break'} over "
+                  f"{pat['weeks']} weeks." if not yours else
+                  f"{pat['claims']} breaks over the last {pat['weeks']} weeks."),
+        "mood": _mood_sentence(mood, yours=yours),
+    }
+    return {"weeks_back": pat["weeks"], "claims": pat["claims"],
+            "hours": pat["hours"], "people": pat["people"],
+            "since": _short_date(pat["first_week"]),
+            "when": when, "days": days, "week_trend": weeks,
+            "activity": activity, "activity_table": activity_table,
+            "mood": mood, "said": said}
+
+
+def _mood_sentence(mood, *, yours):
+    """How the break landed, said only as far as the answers support.
+
+    Two separate questions with two separate denominators, so they get two
+    separate clauses — and no clause at all when nobody has filled that part of
+    the reflection in."""
+    who = "you" if yours else "people"
+    parts = []
+    if mood.get("delta") is not None and mood.get("moods"):
+        if mood["delta"] > 0:
+            parts.append(f"{who} finish {mood['delta']} points better than "
+                         f"{'you' if yours else 'they'} started")
+        elif mood["delta"] == 0:
+            parts.append(f"{who} finish about where {'you' if yours else 'they'} started")
+        else:
+            parts.append(f"{who} finish {abs(mood['delta'])} points lower than "
+                         f"{'you' if yours else 'they'} started")
+    if mood.get("refreshed_pct") is not None:
+        parts.append(f"{mood['refreshed_pct']}% felt refreshed "
+                     f"({mood['answered']} answered)")
+    if not parts:
+        return None
+    return (" · ".join(parts)).capitalize() + "."
 
 
 _WELL_STATE = {
@@ -332,6 +437,9 @@ def _cell(row, weekly, me_id, *, face=False):
     }
     if face:
         out.update(_face(row, me_id=me_id))
+        # The second line of the hover/focus name popup. Built here, not in the
+        # template, so the wall and the chart_table fallback say the same thing.
+        out["tip"] = f"{used} of {weekly} h · {label}"
     else:
         out["name"], out["section"] = row["name"], row.get("section", "")
     return out
@@ -390,6 +498,8 @@ def _awa_panel_build(conn, *, me, user, today, kind):
                   "noawa": r.get("noawa", False),
                   "tone": ("accent" if r.get("noawa")
                            else _WA_TONE.get(r["status"], "soft")),
+                  "tip": (f"{r['arrangement_label'] or 'Not filed yet'}"
+                          f"{' · ' + r['status'] if r['status'] else ''}"),
                   "aria": (f"{r['name']} — "
                            f"{r['arrangement_label'] or 'nothing filed'}"
                            f"{', ' + r['status'] if r['status'] else ''}.")}
@@ -402,13 +512,115 @@ def _awa_panel_build(conn, *, me, user, today, kind):
             "approved": summary["approved"], "pending": summary["pending"],
             "unfiled": summary["unfiled"], "noawa": summary["noawa"],
             "pct": pct, "ring": di.ring_geom(pct), "faces": faces,
-            # Bureau-wide, the per-section coverage fan-out is one extra query
-            # per section; the counts alone carry the panel and the full weekday
-            # chart stays one click away on /work-arrangement/schedule.
-            "coverage": (di.bars_geom(summary["totals"], headcount)
-                         if kind == "unit" else None),
+            "coverage": di.bars_geom(summary["totals"], headcount),
+            "insights": _awa_insights(summary),
         }
     return {"team": team, "personal": personal}
+
+
+def _awa_insights(summary):
+    """The AWA card's later slides, all derived from the period summary already
+    in hand — no extra query for any of them.
+
+    Three questions the filing bar cannot answer: what people chose, which day
+    the office empties out, and which section is still chasing."""
+    roster = summary["roster"]
+    filed = [r for r in roster if r["filed"] and not r.get("noawa")]
+
+    # ---- what people chose ---------------------------------------------
+    counts = {}
+    for r in filed:
+        counts[r["arrangement"]] = counts.get(r["arrangement"], 0) + 1
+    noawa = sum(1 for r in roster if r.get("noawa"))
+    unfiled = sum(1 for r in roster if not r["filed"] and not r.get("noawa"))
+    mix_rows = [{"label": st.WORK_ARRANGEMENT_LABELS.get(code, code),
+                 "long": long, "n": counts.get(code, 0)}
+                for code, _short, long in st.WORK_ARRANGEMENT_TYPES]
+    mix_rows.append({"label": st.WORK_ARRANGEMENT_NOAWA,
+                     "long": "Out of the schedule this period", "n": noawa})
+    mix_rows.append({"label": "Not filed yet", "long": "Still to file",
+                     "n": unfiled})
+    mix_total = sum(m["n"] for m in mix_rows) or 1
+    mix = [{**m, "pct": round(m["n"] * 100 / mix_total)}
+           for m in mix_rows if m["n"] or m["label"] != st.WORK_ARRANGEMENT_NOAWA]
+
+    # ---- which day people are away -------------------------------------
+    # The stored weekday is the day OFF (CWW) or the day at home (WFH); either
+    # way it is the day that person is not at their desk, which is the whole
+    # question a section chief has about the fortnight.
+    away = {idx: 0 for idx, _n in st.WORK_ARRANGEMENT_WEEKDAYS}
+    for r in filed:
+        if r.get("weekday") is not None:
+            away[r["weekday"]] = away.get(r["weekday"], 0) + 1
+    day_off = di.count_bars_geom(
+        [{"name": name, "short": name[:3], "n": away.get(idx, 0)}
+         for idx, name in st.WORK_ARRANGEMENT_WEEKDAYS],
+        caption="People away from their desk, by weekday",
+        key_header="Weekday", value_header="People away")
+
+    # ---- who is still chasing ------------------------------------------
+    sections = {}
+    for r in roster:
+        if r.get("noawa"):
+            continue
+        s = sections.setdefault(r["section"] or "—",
+                                {"section": r["section"] or "—",
+                                 "people": 0, "filed": 0})
+        s["people"] += 1
+        s["filed"] += 1 if r["filed"] else 0
+    by_section = sorted(
+        ({**s, "pct": round(s["filed"] * 100 / s["people"]) if s["people"] else 0}
+         for s in sections.values()),
+        key=lambda s: (s["pct"], s["section"]))
+
+    # "Most common" is a statement about what people CHOSE, so the two rows that
+    # are not choices — "No AWA" and the people who haven't filed — are out of
+    # the running. Left in, a half-filed period always reports "Not filed yet is
+    # the most common arrangement", which is not an arrangement at all.
+    chosen = [m for m in mix
+              if m["label"] not in (st.WORK_ARRANGEMENT_NOAWA, "Not filed yet")]
+    top = max(chosen, key=lambda m: m["n"]) if chosen else None
+    filed_n = sum(m["n"] for m in chosen)
+    busiest = max(day_off["bars"], key=lambda b: b["n"]) if day_off["bars"] else None
+    behind = by_section[0] if len(by_section) > 1 else None
+    return {
+        "mix": mix, "day_off": day_off, "by_section": by_section,
+        "mix_table": {"caption": "Arrangements filed for this period",
+                      "headers": ["Arrangement", "People"],
+                      "rows": [[m["label"], str(m["n"])] for m in mix]},
+        "section_table": {"caption": "Filing progress by section",
+                          "headers": ["Section", "Filed", "People"],
+                          "rows": [[s["section"], str(s["filed"]),
+                                    str(s["people"])] for s in by_section]},
+        "said": {
+            "mix": (f"{top['label']} is the most common choice — {top['n']} of "
+                    f"the {filed_n} filed so far."
+                    if top and top["n"] else None),
+            "day_off": (f"{busiest['name']} is the emptiest day — "
+                        f"{busiest['n']} away." if busiest and busiest["n"] else None),
+            "sections": (f"{behind['section']} is furthest behind — "
+                         f"{behind['filed']} of {behind['people']} filed."
+                         if behind and behind["pct"] < 100 else None),
+        },
+    }
+
+
+def _scope_label(conn, scope_path, rows):
+    """What to call the team on the scope line.
+
+    The unit's OWN name, looked up on org_unit.path (UNIQUE, so one indexed
+    row). Naming it after the first roster row's section was fine while a scope
+    was always one section, but a division — or the bureau-level unit, which is
+    now the only route to a bureau-wide view — spans several, and the first one
+    alphabetically is not what the viewer is looking at."""
+    if not scope_path:
+        return "your team"
+    row = conn.execute(
+        "SELECT short_name, name FROM org_unit WHERE path=? LIMIT 1",
+        (scope_path,)).fetchone()
+    if row and (row[0] or row[1]):
+        return row[0] or row[1]
+    return rows[0]["section"] if rows else "your team"
 
 
 def _weekday_name(idx):
@@ -463,7 +675,7 @@ def team_view_data(conn, user, *, get_atoms, view_memo,
                       lambda: _activity_index(conn, atoms, view_memo, today))
 
     scope_label = ("the whole bureau" if kind == "bureau"
-                   else (roll["rows"][0]["section"] if roll["rows"] else "your team")
+                   else _scope_label(conn, scope_path, roll["rows"])
                    if kind == "unit" else None)
 
     return {
@@ -471,7 +683,7 @@ def team_view_data(conn, user, *, get_atoms, view_memo,
         "scope": {"path": scope_path, "kind": kind, "label": scope_label,
                   "size": len(roll["rows"])},
         "panels": {
-            "wellness": _wellness_panel(conn, me=me, roll=roll,
+            "wellness": _wellness_panel(conn, me=me, user=user, roll=roll,
                                         week_start=week_start, kind=kind),
             "awa": _awa_panel_build(conn, me=me, user=user, today=today, kind=kind),
             "css": {**_css_panel(conn, index, me=me, roll_rows=roll["rows"],
