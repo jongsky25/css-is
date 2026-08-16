@@ -581,11 +581,11 @@
           {{ empty_state(title="We can’t match you to activities yet",
                          hint="Your account isn’t linked to a directory record, so we can’t tell which activities you spoke at.") }}
         {% else %}
-          {{ empty_state(title="Nothing in the last 90 days",
+          {{ empty_state(title="Nothing in the last " ~ cv.window_days ~ " days",
                          hint="Activities you speak at show up here.") }}
         {% endif %}
       {% else %}
-        {{ empty_state(title="Nothing in the last 90 days",
+        {{ empty_state(title="Nothing in the last " ~ cv.window_days ~ " days",
                        hint="Activities your team runs, or that one of you speaks at, show up here.") }}
       {% endif %}
 

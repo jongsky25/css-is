@@ -17,10 +17,31 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.68"
+APP_VERSION = "2.69"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.69",
+        "date": "August 16, 2026",
+        "summary": "The activities card on your home page said “Last 90 "
+                   "days” but its charts were reading a whole year. They "
+                   "now cover the same 90 days as the list above them.",
+        "changes": [
+            "Swipe past the list and every chart — how many a month, how they "
+            "were rated, who spoke most, how many answered — now covers "
+            "exactly the 90 days the card says it does. Before, the heading "
+            "stayed on screen claiming 90 days while the charts quietly "
+            "showed twelve months.",
+            "The month chart now shows only the months those 90 days actually "
+            "touch, and says the date it counts from — “2 activities since "
+            "May 18” — so there is no guessing where the window starts.",
+            "A month is only called the busiest when the 90 days cover it "
+            "from the first to the last day. Today's month is always only "
+            "part-counted, so calling it the busiest would be comparing half "
+            "a month against whole ones.",
+        ],
+    },
     {
         "version": "2.68",
         "date": "August 16, 2026",

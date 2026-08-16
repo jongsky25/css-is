@@ -47,13 +47,11 @@ WINDOW_DAYS = 90
 RECENT_N = 6
 UPCOMING_N = 5
 
-# How far back the ACTIVITY INSIGHTS look. Deliberately longer than the list:
-# three bars is not a trend, and a section that runs one activity a month has
-# nothing to read at 90 days. The list still shows the last 90 — the deck is
-# answering a different question ("what does a year of us look like?").
-INSIGHT_DAYS = 365
-# Above this many months the x-axis labels stop being readable at card width.
-INSIGHT_MONTHS = 12
+# The ACTIVITY INSIGHTS read the same window as the list, deliberately bound to
+# it rather than restated. The card carries ONE window claim in its header, and a
+# deck that quietly covered a different period than the rows above it made that
+# header a lie on four slides out of five.
+INSIGHT_DAYS = WINDOW_DAYS
 
 # Score band -> semantic tone token. band7() returns a bare label string, so the
 # mapping is ours to own. Never a colour: the template resolves tone -> var(--x).
@@ -322,13 +320,23 @@ _CSS_UNRATED = "No ratings yet"
 _CSS_TOP_SPEAKERS = 8
 
 
-def _month_keys(today, n):
-    """The last `n` calendar months, oldest first, as (year, month) pairs."""
-    out, y, m = [], today.year, today.month
-    for _ in range(n):
-        out.append((y, m))
-        y, m = (y - 1, 12) if m == 1 else (y, m - 1)
-    return list(reversed(out))
+def _month_span(cut, today):
+    """Every calendar month the window touches, oldest first, as
+    ((year, month), whole) pairs.
+
+    `whole` says the window covers that month end to end. A 90-day window starts
+    and ends mid-month, so its first and last buckets count part of a month
+    against months counted in full — which is fine to DRAW (the bar is a true
+    count of what happened in the window) but not fine to rank. See the
+    "busiest" guard in _css_insights.
+    """
+    out, y, m = [], cut.year, cut.month
+    while (y, m) <= (today.year, today.month):
+        first = date(y, m, 1)
+        last = date(y + (m == 12), (m % 12) + 1, 1) - timedelta(days=1)
+        out.append(((y, m), cut <= first and today >= last))
+        y, m = (y + 1, 1) if m == 12 else (y, m + 1)
+    return out
 
 
 def _month_label(key):
@@ -349,14 +357,17 @@ def _css_insights(index, ids, today, *, rp_ids, names, personal):
     slide's own empty state says properly.
     """
     by_event = index["by_event"]
-    cut = (today - timedelta(days=INSIGHT_DAYS)).isoformat()
+    cut_date = today - timedelta(days=INSIGHT_DAYS)
+    cut = cut_date.isoformat()
     rows = [by_event[eid] for eid in ids if by_event[eid]["date"] >= cut]
     if not rows:
         return None
     total = len(rows)
 
     # ---- how many, month by month ---------------------------------------
-    keys = _month_keys(today, INSIGHT_MONTHS)
+    span = _month_span(cut_date, today)
+    keys = [k for k, _whole in span]
+    whole = {k for k, w in span if w}
     per_month = {k: 0 for k in keys}
     for r in rows:
         try:
@@ -434,16 +445,20 @@ def _css_insights(index, ids, today, *, rp_ids, names, personal):
              # read as a year before it is read as a number.
              "responses_shown": f"{responses:,}", "biggest_shown": f"{biggest:,}"}
 
-    # "Busiest" only when ONE month holds the top. On a tie the superlative is
-    # simply false, and picking whichever month sorted first is how a chart ends
-    # up disagreeing with the sentence printed under it.
+    # "Busiest" only when ONE month holds the top AND the window covers that
+    # month end to end. On a tie the superlative is simply false, and picking
+    # whichever month sorted first is how a chart ends up disagreeing with the
+    # sentence printed under it. A PARTIAL month leading is not a fact about a
+    # month at all — a 90-day window ends mid-month, so August could "win" on
+    # sixteen days against July's thirty-one.
     peaks = [b for b in volume["bars"] if b["n"] and b["n"] == volume["ymax"]]
-    busiest = peaks[0] if len(peaks) == 1 else None
+    busiest = (peaks[0] if len(peaks) == 1
+               and keys[volume["bars"].index(peaks[0])] in whole else None)
     top_band = max((m for m in mix if m["label"] in counts), key=lambda m: m["n"],
                    default=None)
     return {
-        "window_days": INSIGHT_DAYS, "months": INSIGHT_MONTHS,
-        "total": total, "since": _month_label(keys[0]),
+        "window_days": INSIGHT_DAYS, "months": len(keys),
+        "total": total, "since": _short_date(cut),
         "volume": volume,
         "mix": mix,
         "mix_table": {"caption": ("How your activities were rated" if personal
@@ -458,7 +473,7 @@ def _css_insights(index, ids, today, *, rp_ids, names, personal):
         "reach": reach,
         "said": {
             "volume": (f"{total} activit{'y' if total == 1 else 'ies'} since "
-                       f"{_month_label(keys[0])}"
+                       f"{_short_date(cut)}"
                        + (f" — {busiest['name']} was the busiest with "
                           f"{busiest['n']}." if busiest else ".")),
             "mix": (f"{top_band['label']} is the most common rating — "

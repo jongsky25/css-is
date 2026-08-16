@@ -1,5 +1,55 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-08-16 (v2.69 — the activities deck reads the window its header claims)
+
+v2.67 gave the Activities card an insights deck and set it to a 365-day window,
+on the reasoning that three bars is not a trend. The card's header — `Last 90
+days · <scope>` — sits **above** the deck, not inside a slide, so it stays on
+screen while the reader swipes. Four slides out of five were therefore labelled
+with a window they did not use. The longer window may have been the better
+chart; it was not the window the card promised, and the promise is what a reader
+acts on.
+
+`INSIGHT_DAYS` is now **bound to** `WINDOW_DAYS` rather than restated, so the
+two cannot drift apart again:
+
+```python
+INSIGHT_DAYS = WINDOW_DAYS
+```
+
+### The month chart, at 90 days
+
+`INSIGHT_MONTHS = 12` is gone. `_month_span(cut, today)` returns the calendar
+months the window actually touches — three or four, depending on where in the
+month today falls — each flagged `whole` when the window covers it end to end.
+
+That flag exists because of a claim the chart cannot support on its own. A
+90-day window starts and ends mid-month, so its first and last buckets count
+part of a month against months counted in full. Drawing them is fine — each bar
+is a true count of what happened *inside the window*. Ranking them is not:
+today's month could "win" on sixteen days against last month's thirty-one. So
+the "busiest" sentence now requires the leading month to be **whole**, on top of
+the existing single-holder rule from v2.67:
+
+```python
+peaks = [b for b in volume["bars"] if b["n"] and b["n"] == volume["ymax"]]
+busiest = (peaks[0] if len(peaks) == 1
+           and keys[volume["bars"].index(peaks[0])] in whole else None)
+```
+
+`since` is now the cut date itself (`"May 18"`) rather than the first bucket's
+month, so the sentence under the chart states the window's real start instead of
+implying it: *"2 activities since May 18."*
+
+### Smaller things in the same area
+
+* The two "Nothing in the last 90 days" empty states hardcoded the number while
+  everything around them read `window_days`. They now read the constant too.
+* `tests/test_office_connect.py::_payload` takes an optional `today`. Anything
+  asserting on the window passes it: left to the real clock, a test with fixed
+  event dates passes today and silently stops exercising anything the day those
+  dates age out of the 90-day cut.
+
 ## 2026-08-15 (v2.67 — the organising section decides which activities you see)
 
 ### Creating an activity is not taking part in it
