@@ -11,6 +11,8 @@ guard, so a mistake there shows one section another section's filings.
 """
 from __future__ import annotations
 
+from datetime import date
+
 import pandas as pd
 import pytest
 
@@ -136,10 +138,14 @@ def _events_for(world):
     ]
 
 
-def _payload(world, who, memo=None):
+def _payload(world, who, memo=None, today=None):
+    """`today` is worth passing for anything that asserts on the WINDOW: left to
+    the real clock, a test with fixed event dates passes today and silently stops
+    exercising anything the day those dates age out of the 90-day cut."""
     conn = world["conn"]
     return oc.team_view_data(conn, _u(conn, world[who]), get_atoms=_atoms,
-                             view_memo=memo or _memo_with(_events_for(world)))
+                             view_memo=memo or _memo_with(_events_for(world)),
+                             **({"today": today} if today else {}))
 
 
 # --- scope ------------------------------------------------------------------
@@ -338,27 +344,77 @@ def test_insights_emit_tones_never_colours(world):
     assert "#" not in repr(_payload(world, "ana")["panels"]["css"]["team"]["insights"])
 
 
-def test_the_volume_chart_spans_a_year_not_the_list_window(world):
-    """Three bars is not a trend. The list stays at 90 days; the deck answers a
-    different question."""
-    ins = _payload(world, "ana")["panels"]["css"]["team"]["insights"]
-    assert len(ins["volume"]["bars"]) == oc.INSIGHT_MONTHS
-    assert ins["window_days"] == oc.INSIGHT_DAYS
+def test_the_deck_reads_the_same_window_as_the_list(world):
+    """THE CARD MAKES ONE WINDOW CLAIM, in its header, and it has to be true on
+    every slide under it. The deck used to quietly cover a year while the header
+    said "Last 90 days", so four slides out of five were mislabelled."""
+    cv = _payload(world, "ana")["panels"]["css"]["team"]
+    assert oc.INSIGHT_DAYS == oc.WINDOW_DAYS
+    assert cv["insights"]["window_days"] == cv["window_days"]
+
+
+def test_the_volume_chart_covers_only_the_months_the_window_touches(world):
+    """A 90-day window spans three or four calendar months depending on where in
+    the month today falls — never a fixed twelve."""
+    ins = _payload(world, "ana", today=date(2026, 8, 16))["panels"]["css"]["team"]["insights"]
+    bars = [b["short"] for b in ins["volume"]["bars"]]
+    assert bars == ["May", "Jun", "Jul", "Aug"]          # cut lands 2026-05-18
+    assert len(ins["volume"]["bars"]) == ins["months"]
+    assert ins["since"] == "May 18"                      # said out loud, not implied
+
+
+def test_month_span_flags_the_partial_ends(world):
+    """The first and last buckets of a 90-day window are part-months. Fine to
+    draw — the bar is a true count of what happened inside the window — but not
+    fine to rank, which is what the `whole` flag is for."""
+    span = oc._month_span(date(2026, 5, 18), date(2026, 8, 16))
+    assert [k for k, _w in span] == [(2026, 5), (2026, 6), (2026, 7), (2026, 8)]
+    assert [w for _k, w in span] == [False, True, True, False]
+
+    # a window landing exactly on month boundaries has no partial end
+    span = oc._month_span(date(2026, 6, 1), date(2026, 7, 31))
+    assert [w for _k, w in span] == [True, True]
+
+
+_SPEAKER = {"name": "OC-Ana", "value": 6.6, "shown": "6.6",
+            "band": "Excellent", "hidden": False}
+
+
+def _on(world, *dates):
+    """One event per date, all spoken at by Ana, so only the month matters."""
+    speaker = {**_SPEAKER, "rp_id": world["rp_ana"]}
+    return [_event(world["fi_a"] if i else world["fi_b"], name=f"Activity {i}",
+                   instance_ids=[world["fi_a"] if i else world["fi_b"]],
+                   date=d, speakers=[speaker])
+            for i, d in enumerate(dates)]
 
 
 def test_no_busiest_month_is_claimed_on_a_tie(world):
     """On a tie the superlative is simply false, and picking whichever month
     sorted first is how a chart ends up disagreeing with its own caption."""
-    speaker = {"rp_id": world["rp_ana"], "name": "OC-Ana", "value": 6.6,
-               "shown": "6.6", "band": "Excellent", "hidden": False}
-    events = [_event(world["fi_a"], instance_ids=[world["fi_a"]], date="2026-08-10",
-                     name="August one", speakers=[speaker]),
-              _event(world["fi_b"], instance_ids=[world["fi_b"]], date="2026-07-10",
-                     name="July one", speakers=[speaker])]
-    ins = _payload(world, "ana", memo=_memo_with(events))["panels"]["css"]["team"]["insights"]
+    ins = _payload(world, "ana", memo=_memo_with(_on(world, "2026-07-10", "2026-06-10")),
+                   today=date(2026, 8, 16))["panels"]["css"]["team"]["insights"]
     assert ins["total"] == 2
     assert "busiest" not in ins["said"]["volume"]
     assert ins["said"]["volume"].endswith(".")
+
+
+def test_no_busiest_month_is_claimed_for_a_part_month(world):
+    """A 90-day window ends mid-month, so August can "win" on sixteen days
+    against July's thirty-one. That is not a fact about a month."""
+    # August leads the chart outright — and is still not called the busiest,
+    # because today is the 16th and the window only covers half of it.
+    ins = _payload(world, "ana", memo=_memo_with(_on(world, "2026-08-10", "2026-07-10")),
+                   today=date(2026, 8, 16))["panels"]["css"]["team"]["insights"]
+    aug = next(b for b in ins["volume"]["bars"] if b["short"] == "Aug")
+    assert aug["n"] == 1 and aug["peak"] is True          # it does lead the chart
+    assert "busiest" not in ins["said"]["volume"]
+
+    # a WHOLE month leading is said out loud
+    ins = _payload(world, "ana",
+                   memo=_memo_with(_on(world, "2026-07-10", "2026-07-20")),
+                   today=date(2026, 8, 16))["panels"]["css"]["team"]["insights"]
+    assert "Jul 2026 was the busiest with 2." in ins["said"]["volume"]
 
 
 def test_who_spoke_most_ranks_the_team_not_outsiders(world):
