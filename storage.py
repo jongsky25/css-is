@@ -491,6 +491,16 @@ def _add_missing_columns(conn):
             conn.execute("ALTER TABLE admin_user ADD COLUMN photo_mime TEXT")
         if "designation" not in au_cols:
             conn.execute("ALTER TABLE admin_user ADD COLUMN designation TEXT")
+        # The account holder's own handwritten signature — drawn with a finger or
+        # stylus on /me, or uploaded onto their directory row by an admin. Same
+        # linked/unlinked split as the photo above: linked accounts keep theirs on
+        # resource_person.signature (the field certificates already sign with),
+        # these columns are the store for the unlinked ones. Sensitive (forgery
+        # risk) — never served at a public URL, only back to its owner.
+        if "signature" not in au_cols:
+            conn.execute("ALTER TABLE admin_user ADD COLUMN signature BLOB")
+        if "signature_mime" not in au_cols:
+            conn.execute("ALTER TABLE admin_user ADD COLUMN signature_mime TEXT")
         # An EXPLICIT grant of bureau-wide sight (BUREAU_ACCESS_LEVELS). Scope
         # otherwise comes from the directory — the unit a person is recorded in
         # — and a role does not widen it. Some seats genuinely need more than
@@ -3251,18 +3261,20 @@ def _admin_row(r):
             "avatar_kind": r[10], "avatar_name": r[11], "onboarded_at": r[12],
             "avatar_last_care_at": r[13], "avatar_care_streak": r[14] or 0,
             "designation": r[15], "has_account_photo": bool(r[16]),
-            "bureau_access": r[17] or "",
+            "bureau_access": r[17] or "", "has_account_signature": bool(r[18]),
             "pending": (r[2] == "")}      # no password set yet => still invited
 
 
-# The account's own photo is a BLOB, so the shared row loader never SELECTs its
-# bytes (that would drag the whole image into every user-list read) — it takes a
-# cheap boolean instead; get_user_photo() fetches the bytes only when serving.
+# The account's own photo and signature are BLOBs, so the shared row loader never
+# SELECTs their bytes (that would drag whole images into every user-list read) —
+# it takes cheap booleans instead; get_user_photo()/get_user_signature() fetch the
+# bytes only when serving.
 _ADMIN_COLS = ("id, username, pw_hash, salt, role, active, must_change, rp_id, "
                "created_at, created_by, avatar_kind, avatar_name, onboarded_at, "
                "avatar_last_care_at, avatar_care_streak, designation, "
                "(photo IS NOT NULL) AS has_account_photo, "
-               "COALESCE(bureau_access, '')")
+               "COALESCE(bureau_access, ''), "
+               "(signature IS NOT NULL) AS has_account_signature")
 
 
 def get_admin_user(conn, username):
@@ -3377,6 +3389,9 @@ def get_user_profile(conn, user_id):
         photo_url = "/me/photo"
     else:
         photo_url = None
+    # Same linked-first precedence for the signature the account signs with, so
+    # /me can show what is currently on file (the bytes are never returned here).
+    has_signature = bool((rp or {}).get("has_signature")) or bool(acct.get("has_account_signature"))
     return {
         "user_id": acct["id"],
         "username": acct["username"],
@@ -3390,6 +3405,7 @@ def get_user_profile(conn, user_id):
         "onboarded": bool(acct.get("onboarded_at")),
         "onboarded_at": acct.get("onboarded_at"),
         "person_name": (rp or {}).get("name") or "",
+        "has_signature": has_signature,
         "org_unit_id": (rp or {}).get("org_unit_id"),
         "org_path": (rp or {}).get("org_path"),
         # For a linked account the staff directory is authoritative (an admin
@@ -3673,6 +3689,46 @@ def get_rp_signature(conn, rp_id):
     if not row or row[0] is None:
         return None
     return bytes(row[0]), (row[1] or "image/png")
+
+
+def set_user_signature(conn, user_id, blob, mime):
+    """Store (or replace) an account's own signature image. Used for accounts
+    that aren't linked to a directory person, so every viewer can still sign
+    from /me (linked accounts write to their resource_person row instead)."""
+    conn.execute("UPDATE admin_user SET signature=?, signature_mime=? WHERE id=?",
+                 (sqlite3.Binary(blob), mime, user_id))
+    conn.commit()
+
+
+def clear_user_signature(conn, user_id):
+    """Remove an account's own stored signature image."""
+    conn.execute("UPDATE admin_user SET signature=NULL, signature_mime=NULL WHERE id=?",
+                 (user_id,))
+    conn.commit()
+
+
+def get_user_signature(conn, user_id):
+    """Return (bytes, mime) for an account's own signature, or None."""
+    row = conn.execute("SELECT signature, signature_mime FROM admin_user WHERE id=?",
+                       (user_id,)).fetchone()
+    if not row or row[0] is None:
+        return None
+    return bytes(row[0]), (row[1] or "image/png")
+
+
+def user_signature(conn, user_id):
+    """The signature to sign WITH for an account: the directory row's when the
+    account is linked and has one, otherwise the account's own. Same precedence
+    get_user_profile uses for the profile photo, so a person has one signature
+    whichever page they drew it on. Returns (bytes, mime) or None."""
+    acct = get_admin_user_by_id(conn, user_id)
+    if not acct:
+        return None
+    if acct.get("rp_id"):
+        sig = get_rp_signature(conn, acct["rp_id"])
+        if sig:
+            return sig
+    return get_user_signature(conn, user_id)
 
 
 # ---------------------------------------------------------------------
@@ -6465,7 +6521,7 @@ def wellness_person_month(conn, user_id, year, month):
     qs = ",".join("?" * len(_WELLNESS_AVAILED))
     rows = conn.execute(
         f"""SELECT c.break_date, c.start_time, c.hours, c.activity, c.activity_other,
-                   c.status, COALESCE(rpd.name, ud.username, '')
+                   c.status, COALESCE(rpd.name, ud.username, ''), c.decided_by
             FROM wellness_claim c
             LEFT JOIN admin_user ud ON ud.id = c.decided_by
             LEFT JOIN resource_person rpd ON rpd.id = ud.rp_id
@@ -6474,14 +6530,22 @@ def wellness_person_month(conn, user_id, year, month):
             ORDER BY c.break_date, c.start_time, c.id""",
         (user_id, ym, *_WELLNESS_AVAILED)).fetchall()
     acts = dict(WELLNESS_ACTIVITIES)
+    # One signature read per approver, not one per break: a month is usually a
+    # handful of breaks all signed by the same chief, and the image is a blob.
+    sigs = {}
+    for uid in {r[7] for r in rows if r[7]}:
+        sigs[uid] = user_signature(conn, uid)
     entries = []
     for r in rows:
         label = acts.get(r[3], r[3])
         if r[3] == "other" and r[4]:
             label = f"{label} — {r[4]}"
+        sig = sigs.get(r[7])
         entries.append({"date": r[0], "start_time": r[1], "hours": r[2],
                         "activity_label": label, "status": r[5],
-                        "approver": r[6] or ""})
+                        "approver": r[6] or "",
+                        "approver_signature": sig[0] if sig else None,
+                        "approver_signature_mime": sig[1] if sig else None})
     return {"name": name, "office": office, "year": int(year), "month": int(month),
             "entries": entries}
 

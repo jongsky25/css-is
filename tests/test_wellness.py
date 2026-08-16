@@ -4,6 +4,7 @@ validation, section-chief approver resolution, the apply→approve→reflect flo
 with its gamification side-effects, in-handler RBAC on the chief/admin pages,
 and the monitoring register export.
 """
+import base64
 import io
 import re
 from datetime import date, datetime, time, timedelta
@@ -737,6 +738,99 @@ def test_register_pdf_download_and_hub_control(app_mod, wellness_org):
     # a month with nothing availed bounces back to the hub with a message
     r = c.get("/wellness/register.pdf?month=2025-01", follow_redirects=False)
     assert r.status_code == 303 and "err=" in r.headers["location"]
+
+
+# A real (tiny) PNG — the pad exports PNG, and the register only embeds what
+# reportlab can actually open.
+_PNG = base64.b64decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==")
+
+
+def test_person_month_carries_the_approvers_signature(wellness_org):
+    """The register data must hand the renderer the DECIDING chief's signature —
+    read once per approver, not once per break."""
+    conn, emp, chief = wellness_org["conn"], wellness_org["emp"], wellness_org["chief"]
+    chief_rp = st.get_admin_user_by_id(conn, chief)["rp_id"]
+    st.set_rp_signature(conn, chief_rp, _PNG, "image/png")
+    _seed_availed(conn, emp, chief, "2026-03-03", "10:00", "completed")
+    _seed_availed(conn, emp, chief, "2026-03-10", "10:00", "approved")
+
+    data = st.wellness_person_month(conn, emp, 2026, 3)
+    assert len(data["entries"]) == 2
+    for e in data["entries"]:
+        assert e["approver_signature"] == _PNG
+        assert e["approver_signature_mime"] == "image/png"
+    # one blob object shared by both entries: the read is per approver, not per break
+    assert data["entries"][0]["approver_signature"] is data["entries"][1]["approver_signature"]
+
+
+def test_person_month_falls_back_to_the_account_signature(wellness_org):
+    """A chief with no directory row signs from their account instead."""
+    conn, emp, loner = wellness_org["conn"], wellness_org["emp"], wellness_org["loner"]
+    st.set_user_signature(conn, loner, _PNG, "image/png")
+    _seed_availed(conn, emp, loner, "2026-05-06", "10:00", "completed")
+
+    data = st.wellness_person_month(conn, emp, 2026, 5)
+    assert data["entries"][0]["approver_signature"] == _PNG
+
+
+def test_person_month_without_a_signature_carries_none(wellness_org):
+    conn, emp, chief = wellness_org["conn"], wellness_org["emp"], wellness_org["chief"]
+    _seed_availed(conn, emp, chief, "2026-03-03", "10:00", "completed")
+    data = st.wellness_person_month(conn, emp, 2026, 3)
+    assert data["entries"][0]["approver_signature"] is None
+
+
+def test_day_cell_signs_on_the_day_of_the_break(wellness_org):
+    """The signature belongs to the DAY, not the week: the flowable sits in the
+    weekday cell, and the week's left band is only the form's label."""
+    import wellness_register as wreg
+    from reportlab.platypus import Image
+    entry = {"date": "2026-03-03", "start_time": "10:00", "hours": 1,
+             "activity_label": "Physical exercise", "status": "completed",
+             "approver": "W-Test Chief",
+             "approver_signature": _PNG, "approver_signature_mime": "image/png"}
+    flows = wreg.build_day_cell([entry], 78, 20)
+    assert any(isinstance(f, Image) for f in flows)
+    text = " ".join(getattr(f, "text", "") for f in flows)
+    assert "W-Test Chief" in text and "Digitally approved and signed" in text
+    assert wreg._approver_html([entry]) == "Approved By:"
+
+    # no signature on file: same cell, image dropped, stamp intact
+    entry = dict(entry, approver_signature=None, approver_signature_mime=None)
+    flows = wreg.build_day_cell([entry], 78, 20)
+    assert not any(isinstance(f, Image) for f in flows)
+    text = " ".join(getattr(f, "text", "") for f in flows)
+    assert "W-Test Chief" in text and "Digitally approved and signed" in text
+
+
+def test_register_pdf_embeds_the_signature_on_the_day(wellness_org):
+    """End to end: a signed approval puts an image in the PDF; an unsigned one
+    still prints the name over the stamp, and the download never fails."""
+    import wellness_register as wreg
+    conn, emp, chief = wellness_org["conn"], wellness_org["emp"], wellness_org["chief"]
+    chief_rp = st.get_admin_user_by_id(conn, chief)["rp_id"]
+    _seed_availed(conn, emp, chief, "2026-03-03", "10:00", "completed")
+
+    unsigned = wreg.render_month_pdf(st.wellness_person_month(conn, emp, 2026, 3))
+    assert unsigned[:4] == b"%PDF" and b"/Subtype /Image" not in unsigned
+
+    st.set_rp_signature(conn, chief_rp, _PNG, "image/png")
+    signed = wreg.render_month_pdf(st.wellness_person_month(conn, emp, 2026, 3))
+    assert signed[:4] == b"%PDF" and b"/Subtype /Image" in signed
+
+
+def test_register_pdf_survives_a_corrupt_signature(wellness_org):
+    """A blob that won't open must degrade to the text stamp, not 500 the
+    download — the register is the employee's own record, not the chief's."""
+    import wellness_register as wreg
+    conn, emp, chief = wellness_org["conn"], wellness_org["emp"], wellness_org["chief"]
+    chief_rp = st.get_admin_user_by_id(conn, chief)["rp_id"]
+    st.set_rp_signature(conn, chief_rp, b"not an image at all", "image/png")
+    _seed_availed(conn, emp, chief, "2026-03-03", "10:00", "completed")
+
+    pdf = wreg.render_month_pdf(st.wellness_person_month(conn, emp, 2026, 3))
+    assert pdf[:4] == b"%PDF" and b"/Subtype /Image" not in pdf
 
 
 def test_register_pdf_is_self_service_only(app_mod, wellness_org):

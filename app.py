@@ -4481,6 +4481,22 @@ def me_photo(request: Request):
                     headers={"Cache-Control": "no-cache"})
 
 
+@app.get("/me/signature.png")
+def me_signature(request: Request):
+    """Serve the signed-in account's OWN signature, so /me can show what is on
+    file. A signature is sensitive (forgery risk) — unlike the photo it is never
+    public and never addressable by id: you only ever get your own, uncached."""
+    conn = get_conn()
+    try:
+        sig = st.user_signature(conn, request.state.user["id"])
+    finally:
+        conn.close()
+    if not sig:
+        return Response(status_code=404)
+    return Response(content=sig[0], media_type=sig[1],
+                    headers={"Cache-Control": "no-store"})
+
+
 @app.post("/me")
 async def me_submit(request: Request):
     p = await _posted(request)
@@ -4491,6 +4507,10 @@ async def me_submit(request: Request):
     if not pet_name:
         return _render_me(request, err="Give your companion a name.")
     photo = _decode_photo(p.get("photo_data", ""))
+    # The signature pad only fills signature_data when someone actually drew
+    # something, so saving the profile never wipes a signature by accident.
+    signature = _decode_signature(p.get("signature_data", ""))
+    drop_signature = p.get("remove_signature") == "1"
     designation = (p.get("designation") or "").strip()
     uid = request.state.user["id"]
     conn = get_conn()
@@ -4508,6 +4528,29 @@ async def me_submit(request: Request):
                 st.set_user_photo(conn, uid, photo[0], photo[1])
                 _audit(request, conn, "profile_update", target_type="user",
                        target_id=uid, summary="updated their profile photo")
+        # The signature signs real documents (the wellness register today, the
+        # Certificate of Appearance when this person is the named signatory), so
+        # it follows the photo's rule: a linked account signs from its directory
+        # row, an unlinked one from the account. A drawn signature replaces
+        # whatever was there; the remove box clears both sides.
+        # Signing again beats the remove box: it is the later, more deliberate
+        # act, and the pad already unchecks the box when someone draws.
+        if signature or drop_signature:
+            linked = bool(profile and profile.get("rp_id"))
+            if signature and linked:
+                st.set_rp_signature(conn, profile["rp_id"], signature[0], signature[1])
+                _audit(request, conn, "profile_update", target_type="person",
+                       target_id=profile["rp_id"], summary="updated their signature")
+            elif signature:
+                st.set_user_signature(conn, uid, signature[0], signature[1])
+                _audit(request, conn, "profile_update", target_type="user",
+                       target_id=uid, summary="updated their signature")
+            else:
+                st.clear_user_signature(conn, uid)
+                if linked:
+                    st.clear_rp_signature(conn, profile["rp_id"])
+                _audit(request, conn, "profile_update", target_type="user",
+                       target_id=uid, summary="removed their signature")
         st.set_user_designation(conn, uid, designation)
         # Keep the staff directory in sync: a linked account's designation is
         # the same field the directory shows on certificates/signatory lines, so
@@ -5499,6 +5542,24 @@ def _decode_photo(data_url):
     if not raw or len(raw) > 5_000_000:     # guard against a runaway upload
         return None
     return raw, mime
+
+
+_PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
+
+
+def _decode_signature(data_url):
+    """A drawn signature data-URL -> (bytes, 'image/png'), or None. Stricter than
+    _decode_photo, which takes the browser's word for the type: this blob gets
+    drawn onto a register and a certificate, so only a real PNG is accepted (magic
+    bytes, not the declared mime) and the cap is small — the pad exports a trimmed
+    transparent PNG that runs to tens of KB, never megabytes."""
+    got = _decode_photo(data_url)
+    if not got:
+        return None
+    raw, mime = got
+    if mime != "image/png" or not raw.startswith(_PNG_MAGIC) or len(raw) > 800_000:
+        return None
+    return raw, "image/png"
 
 
 async def _posted(request):
@@ -13559,8 +13620,10 @@ async def wellness_reflect_submit(request: Request, claim_id: int):
 def wellness_register_pdf(request: Request, month: str = ""):
     """A person's own monthly wellness-break register as a print-ready PDF —
     the breaks they availed that month laid out like the DOH monitoring form,
-    with each approval shown as 'Digitally approved and signed'. Self-service:
-    every employee can download their OWN record (no chief/admin gate)."""
+    each one signed in its own day cell by the chief who approved it (their
+    drawn signature, or their name over 'Digitally approved and signed' when
+    they have none on file). Self-service: every employee can download their
+    OWN record (no chief/admin gate)."""
     user = request.state.user
     today = _today_local()
     m = (month or "").strip()

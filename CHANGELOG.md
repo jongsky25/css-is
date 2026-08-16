@@ -1,5 +1,92 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-08-16 (v2.70 — a drawn signature, stamped on the day it approves)
+
+Two gaps, one change. The monthly wellness register signed **per week**: a
+left-hand "Approved By" band held the approver's name and the italic stand-in
+"Digitally approved and signed", so a week with two breaks decided by two chiefs
+collapsed both into one line and a reader could not tell which approval covered
+which day. And a signature could only enter the system as an **image file an
+administrator uploaded** onto a directory record (`templates/staff_form.html`) —
+a chief could not produce one from their own phone.
+
+### Capture: a signing box on `/me`
+
+`templates/me.html` gains a **My signature** panel inside the existing profile
+form, so it saves with everything else and needs no new write endpoint. A
+`<canvas>` with `touch-action:none` (without it the first finger stroke scrolls
+the page instead of drawing), Pointer Events + `setPointerCapture` — the idiom
+already used by the photo crop editor and `static/js/avatars.js` — Undo and
+Clear, a high-DPI backing store, and midpoint-quadratic smoothing so a finger
+stroke is not a polygon.
+
+Strokes are kept as point arrays, not baked into the canvas. That buys Undo
+(`strokes.pop()`), survival across resize/orientation, and an exact **geometric**
+trim: the export's bounding box comes from the points, not from a pixel scan. On
+submit the ink is redrawn at up to 600px wide on a **transparent** background and
+written to a hidden `signature_data` field as a PNG data URI — the same
+mechanism `photo_data` has always used, so no multipart dependency appears.
+
+**An untouched pad writes nothing.** Saving the profile can never wipe a
+signature by accident; only the explicit *Remove my signature* box clears one.
+
+### Storage: one signature per person
+
+- **`admin_user.signature` / `signature_mime`** (`storage._add_missing_columns`),
+  beside the existing `photo` columns and for the same reason: accounts with no
+  directory row need somewhere to keep one. `_ADMIN_COLS` gains a cheap
+  `(signature IS NOT NULL)` boolean **appended** — `_admin_row` is positional.
+- **`set_user_signature` / `clear_user_signature` / `get_user_signature`**, and
+  **`user_signature(conn, user_id)`** which resolves *what this account signs
+  with*: the directory row's signature when linked, the account's otherwise —
+  the precedence `get_user_profile` already uses for the photo.
+- Linked accounts therefore write to `resource_person.signature`, **the field
+  certificates already sign with**. That is deliberate: one signature per person,
+  not two that can disagree. Consequence: a chief who draws one will see it on
+  Certificates of Appearance they sign, replacing any scan uploaded for them.
+- **`GET /me/signature.png`** serves it back to its owner only — no id in the
+  URL to enumerate, `Cache-Control: no-store`, matching the deliberately stricter
+  treatment of `/directory/person/{id}/signature.png` ("forgery risk").
+- **`_decode_signature`** (`app.py`) tightens `_decode_photo` for this one blob:
+  PNG by **magic bytes**, not by the mime the browser declares, capped at 800 KB.
+
+### The register signs the day, not the week
+
+- `storage.wellness_person_month` selects `c.decided_by` and resolves each
+  **distinct** approver's signature once into the entries as
+  `approver_signature` / `approver_signature_mime`. One blob per approver per
+  month, not one per break.
+- `wellness_register.build_day_cell(entries, max_w, max_h)` returns a flowable
+  list per weekday: the break line, the approver's signature image, then their
+  name over "Digitally approved and signed". `_signature_image` sizes it from
+  `ImageReader.getSize()` to the ~85pt column (78×20pt), passes a **fresh
+  `BytesIO` per `Image`** (platypus reads the stream eagerly, so a shared one
+  comes up empty on the second cell) with `mask="auto"` so the transparent
+  background stays transparent, and returns `None` on any failure — a corrupt
+  blob degrades to the text stamp rather than 500-ing the download.
+- `_approver_html` shrinks to the paper form's `"Approved By:"` caption. The
+  two-row week block and its SPANs are unchanged, so the form's shape survives.
+- **No approver with a signature = no change.** Name over the italic stamp, as
+  before, which is what every already-approved break in the database renders as.
+
+### Note for the bureau
+
+`/wellness/register.pdf` is self-service by design — no chief gate. It now hands
+each employee a print-resolution image of their approving chief's signature. That
+is inherent to signing the register; `/me/signature.png` and the directory
+preview both stay authenticated.
+
+### Tests
+
+`tests/test_wellness.py` — the signature reaches the entries and is read once per
+approver; the account-row fallback for an unlinked approver; `build_day_cell`
+puts an `Image` in the day's cell and keeps the stamp without one; the PDF
+carries `/Subtype /Image` only when signed; a corrupt blob still renders.
+`tests/test_profile_edit.py` — the pad renders (including `touch-action:none`, a
+silent phone-breaker otherwise); an unlinked viewer can draw and fetch their own;
+a blank submit does not wipe; a non-PNG is rejected; a linked account's drawing
+lands on the directory row and the remove box clears it.
+
 ## 2026-08-16 (v2.69 — the activities deck reads the window its header claims)
 
 v2.67 gave the Activities card an insights deck and set it to a 365-day window,

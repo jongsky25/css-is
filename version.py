@@ -17,10 +17,38 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.69"
+APP_VERSION = "2.70"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.70",
+        "date": "August 16, 2026",
+        "summary": "Sign with your finger. Draw your signature once on “My "
+                   "profile” and it is stamped on the wellness breaks you "
+                   "approve — on the day of each break, not once a week.",
+        "changes": [
+            "“My profile” has a signing box. Draw your signature with a finger, "
+            "a stylus or a mouse — on a phone as easily as on a PC — press Save, "
+            "and it is kept for you. Undo takes back a stroke, Clear starts "
+            "over, and you can replace or remove it any time. There is no file "
+            "to scan or upload, and nobody has to do it for you.",
+            "On the monthly wellness register, each break now carries the "
+            "signature of the chief who approved it, inside that day's box. "
+            "Before, one “Approved By” line covered a whole week, so a week "
+            "approved by two people could not be told apart.",
+            "A chief who has not drawn a signature yet changes nothing: their "
+            "name still prints over “Digitally approved and signed”, exactly as "
+            "the register has always read.",
+            "One signature per person: if you are named as the signatory on a "
+            "Certificate of Appearance, the signature you drew is the one that "
+            "prints there too — replacing any image an administrator uploaded "
+            "for you.",
+            "Your signature is never public. Only you can see it on your "
+            "profile, and it is shown to nobody else except as the signature "
+            "printed on what you have signed.",
+        ],
+    },
     {
         "version": "2.69",
         "date": "August 16, 2026",
