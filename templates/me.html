@@ -35,6 +35,21 @@
   .btn { display:inline-block; font:inherit; font-weight:800; cursor:pointer; border:1px solid var(--accent);
          background:var(--accent); color:#fff; border-radius:10px; padding:.65rem 1.5rem; }
   .actions { text-align:center; }
+  /* Signature pad. touch-action:none is load-bearing on a phone: without it the
+     first finger stroke scrolls the page instead of drawing. */
+  .sigpad { position:relative; border:1px dashed var(--line); border-radius:12px; background:#fff;
+            height:170px; touch-action:none; overflow:hidden; }
+  .sigpad canvas { display:block; width:100%; height:100%; cursor:crosshair; }
+  .sigpad .rule { position:absolute; left:8%; right:8%; bottom:34px; border-bottom:1px solid #d9dee7; }
+  .sigpad .ph { position:absolute; left:0; right:0; bottom:12px; text-align:center; color:#9aa3b2;
+                font-size:.82rem; pointer-events:none; }
+  .sigpad.inked .ph { display:none; }
+  .sigtools { display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; margin-top:.6rem; }
+  .sigtools button { font:inherit; font-weight:700; cursor:pointer; border:1px solid var(--line);
+                     background:var(--bg); color:var(--ink); border-radius:10px; padding:.45rem 1rem; }
+  .sigcur { margin-bottom:.7rem; }
+  .sigcur img { max-height:64px; max-width:260px; background:#fff; border:1px solid var(--line);
+                border-radius:10px; padding:4px; }
 </style>
 
 <div class="me-wrap">
@@ -42,8 +57,9 @@
   {% if msg %}{{ flash(msg=msg) }}{% endif %}
   {% if err %}{{ flash(err=err) }}{% endif %}
 
-  <form method="post" action="/me" enctype="application/x-www-form-urlencoded">
+  <form method="post" action="/me" enctype="application/x-www-form-urlencoded" id="meForm">
     <input type="hidden" name="photo_data" id="photo_data" value="">
+    <input type="hidden" name="signature_data" id="signature_data" value="">
 
     <div class="panel">
       <h2>Photo{% if has_person %} &amp; name{% endif %}</h2>
@@ -71,6 +87,35 @@
                value="{{ profile.designation }}" placeholder="e.g. Section Head">
         <p class="hint">Your functional role — fill it in and update it any time.</p>
       </div>
+    </div>
+
+    {#-- Sign with a finger or stylus: the register a chief approves shows this
+         drawing on the day of each break, so it must be capturable on a phone
+         without a scanner, a file to upload, or an administrator. --#}
+    <div class="panel">
+      <h2>My signature</h2>
+      {% if profile.has_signature %}
+      <div class="sigcur">
+        <img src="/me/signature.png?v=me" alt="Your signature currently on file">
+        <p class="hint">On file now. Sign again below to replace it.</p>
+      </div>
+      {% endif %}
+      <div class="sigpad" id="sigPad">
+        <canvas id="sigCanvas"></canvas>
+        <span class="rule"></span>
+        <span class="ph">Sign here — draw with your finger, stylus or mouse</span>
+      </div>
+      <div class="sigtools">
+        <button type="button" id="sigUndo">Undo stroke</button>
+        <button type="button" id="sigClear">Clear</button>
+        {% if profile.has_signature %}
+        <label style="font-weight:400;"><input type="checkbox" name="remove_signature" value="1">
+          Remove my signature</label>
+        {% endif %}
+      </div>
+      <p class="hint">Used where you sign inside the system — the wellness break
+        register you approve stamps it on the day of each break. It is never shown
+        publicly, and only you can see it here.</p>
     </div>
 
     <div class="panel">
@@ -123,5 +168,106 @@
     };
     r.readAsDataURL(f);
   }
+
+  /* ---- Signature pad -------------------------------------------------------
+     Strokes are kept as point arrays rather than baked straight into the canvas,
+     so Undo can drop the last one and repaint, and so the export can be redrawn
+     at print resolution and trimmed to the ink. Pointer Events cover finger,
+     stylus and mouse in one path (same idiom as the photo crop editor). */
+  (function () {
+    var pad = document.getElementById("sigPad");
+    var cv = document.getElementById("sigCanvas");
+    if (!pad || !cv) return;
+    var ctx = cv.getContext("2d");
+    var strokes = [], cur = null, w = 0, h = 0;
+
+    function resize() {
+      var dpr = window.devicePixelRatio || 1;
+      w = pad.clientWidth; h = pad.clientHeight;
+      cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      repaint();
+    }
+    function line(ctx2, pts) {
+      if (!pts.length) return;
+      ctx2.beginPath();
+      if (pts.length === 1) {                    // a tap is a dot, not nothing
+        ctx2.arc(pts[0].x, pts[0].y, ctx2.lineWidth / 2, 0, Math.PI * 2);
+        ctx2.fill(); return;
+      }
+      ctx2.moveTo(pts[0].x, pts[0].y);
+      for (var i = 1; i < pts.length - 1; i++) { // midpoint curve = no polygon look
+        var mx = (pts[i].x + pts[i + 1].x) / 2, my = (pts[i].y + pts[i + 1].y) / 2;
+        ctx2.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+      }
+      ctx2.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+      ctx2.stroke();
+    }
+    function style(ctx2, width) {
+      ctx2.lineWidth = width; ctx2.lineCap = "round"; ctx2.lineJoin = "round";
+      ctx2.strokeStyle = "#12203a"; ctx2.fillStyle = "#12203a";
+    }
+    function repaint() {
+      ctx.clearRect(0, 0, w, h);
+      style(ctx, 2.2);
+      for (var i = 0; i < strokes.length; i++) line(ctx, strokes[i]);
+      pad.classList.toggle("inked", strokes.length > 0);
+    }
+    function at(e) {
+      var r = cv.getBoundingClientRect();
+      return { x: e.clientX - r.left, y: e.clientY - r.top };
+    }
+    cv.addEventListener("pointerdown", function (e) {
+      cur = [at(e)]; strokes.push(cur);
+      cv.setPointerCapture(e.pointerId);
+      repaint(); e.preventDefault();
+    });
+    cv.addEventListener("pointermove", function (e) {
+      if (!cur) return;
+      cur.push(at(e)); repaint(); e.preventDefault();
+    });
+    function end() { cur = null; }
+    cv.addEventListener("pointerup", end);
+    cv.addEventListener("pointercancel", end);
+
+    document.getElementById("sigUndo").addEventListener("click", function () {
+      strokes.pop(); repaint();
+    });
+    document.getElementById("sigClear").addEventListener("click", function () {
+      strokes = []; repaint();
+    });
+    window.addEventListener("resize", resize);
+    resize();
+
+    /* Export on submit: trim to the ink's bounding box (a signature drawn in the
+       corner should not carry half a page of blank with it), then redraw at up to
+       600px wide on a transparent background — PNG, like the uploaded signatures. */
+    var form = document.getElementById("meForm");
+    if (!form) return;
+    form.addEventListener("submit", function () {
+      if (!strokes.length) return;               // drew nothing: leave the field
+      var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      strokes.forEach(function (s) {
+        s.forEach(function (p) {
+          if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
+          if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y;
+        });
+      });
+      var pad2 = 6;
+      minX = Math.max(0, minX - pad2); minY = Math.max(0, minY - pad2);
+      maxX = Math.min(w, maxX + pad2); maxY = Math.min(h, maxY + pad2);
+      var bw = Math.max(1, maxX - minX), bh = Math.max(1, maxY - minY);
+      var scale = Math.min(600 / bw, 3);
+      var out = document.createElement("canvas");
+      out.width = Math.round(bw * scale); out.height = Math.round(bh * scale);
+      var octx = out.getContext("2d");
+      octx.setTransform(scale, 0, 0, scale, -minX * scale, -minY * scale);
+      style(octx, 2.2);
+      strokes.forEach(function (s) { line(octx, s); });
+      document.getElementById("signature_data").value = out.toDataURL("image/png");
+      var rm = document.querySelector("input[name=remove_signature]");
+      if (rm) rm.checked = false;                // signing again is not removing
+    });
+  })();
 </script>
 {% endblock %}
