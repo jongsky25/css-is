@@ -720,11 +720,22 @@ def _awa_panel_build(conn, *, me, user, today, kind):
     # open for filing, whose deadline falls before it even starts, so it needs
     # its own summary rather than a slice of the filing one.
     now = None
+    day = None
     if kind != "none":
         now = _awa_team_block(conn, user, me, ps_now, settled=True)
+        # ...and the single day, which is what someone opening the page at 9am
+        # actually wants. On a weekend nobody is scheduled, so show the Monday
+        # rather than an empty card nobody can act on.
+        d = today
+        if d.weekday() >= 5:
+            d = st.work_arrangement_day_step(d, 1)
+        day = st.work_arrangement_day(conn, d, user)
+        day["is_today"] = (d == today)
+        day["faces"] = [_face(r, me_id=me["user_id"])
+                        for r in day["groups"]["onsite"]]
 
     if not ps_file:
-        return {"now": now, "team": None,
+        return {"now": now, "day": day, "team": None,
                 "personal": {"state": "none_open", "in_force": in_force,
                              "period_label": None}}
 
@@ -755,7 +766,7 @@ def _awa_panel_build(conn, *, me, user, today, kind):
                                   summary=summary),
                 "state": state, "deadline_label": summary["deadline_label"],
                 "days_left": days_left}
-    return {"now": now, "team": team, "personal": personal}
+    return {"now": now, "day": day, "team": team, "personal": personal}
 
 
 def _awa_insights(summary, *, settled=False):

@@ -17,10 +17,39 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.67"
+APP_VERSION = "2.68"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.68",
+        "date": "August 16, 2026",
+        "summary": "New page: who is in the office, day by day — by name. See "
+                   "who is at their desk today, and for anyone who isn't, "
+                   "whether they are off or working from home.",
+        "changes": [
+            "AWA → “Who's in the office” answers the question the "
+            "fortnightly schedule never did: on a given day, who is actually "
+            "in. Everyone is listed by name under In the office, Working from "
+            "home, or Day off.",
+            "Step through the days with ‹ previous / next ›, or pick a date. "
+            "Weekends are skipped, since nobody is scheduled on them.",
+            "Anyone marked No AWA is listed with the reason they gave, and "
+            "anyone who never filed is listed separately rather than being "
+            "counted as present — a blank row is not a person at their desk.",
+            "This page is open to everyone, not just section heads. Knowing "
+            "whether a colleague is in before you walk over is not the same "
+            "as reading the filing progress, which stays with the chiefs. You "
+            "see your own section or division, the same as everywhere else.",
+            "Your home page now leads its Alternative Work Arrangement card "
+            "with today: how many are in, who is away, and a link to the full "
+            "day view.",
+            "It shows the schedule people filed, not attendance — the system "
+            "has never recorded who actually came in. Public holidays and "
+            "work suspensions aren't known to it either, so those still show "
+            "as ordinary working days.",
+        ],
+    },
     {
         "version": "2.67",
         "date": "August 15, 2026",

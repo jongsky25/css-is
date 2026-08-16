@@ -1,0 +1,145 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, empty_state %}
+{% from "_work_arrangement_icons.html" import arrangement_icon %}
+{% block title %}Who's in the office{% endblock %}
+{% block content %}
+<style>
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px;
+           padding:1.2rem 1.4rem; margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .backbar { margin-bottom:1rem; display:flex; gap:.8rem; flex-wrap:wrap; }
+  .daybar { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:.4rem; }
+  .daybar a { font-weight:700; text-decoration:none; }
+  .daybar .now { font-size:1.15rem; font-weight:800; }
+  .daybar form { margin-left:auto; display:flex; gap:.5rem; align-items:center; }
+  .daybar input[type=date] { font:inherit; font-size:.85rem; padding:.3rem .5rem;
+        border:1px solid var(--line); border-radius:9px; background:var(--bg); color:var(--ink); }
+  .daybar button { font:inherit; font-size:.8rem; font-weight:700; cursor:pointer;
+        border:1px solid var(--line); background:var(--bg); color:var(--ink-soft);
+        border-radius:999px; padding:.28rem .8rem; }
+  .period { color:var(--soft); font-size:.84rem; margin-bottom:1rem; }
+  .tiles { display:flex; gap:1.6rem; flex-wrap:wrap; }
+  .tile .n { font-size:1.7rem; font-weight:800; line-height:1.1; }
+  .tile .l { color:var(--soft); font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; }
+  .tile .n.good { color:var(--green); }
+  .tile .n.warn { color:var(--amber); }
+  .grp { display:flex; gap:.7rem; align-items:center; margin:0 0 .2rem; }
+  .grp .ic { width:34px; height:34px; flex:0 0 auto; }
+  .grp h3 { margin:0; font-size:1.05rem; }
+  .grp .n { font-weight:800; color:var(--soft); }
+  .means { color:var(--soft); font-size:.8rem; margin:0 0 .8rem 2.9rem; }
+  .t { width:100%; border-collapse:collapse; }
+  .t td, .t th { padding:.5rem .6rem; border-bottom:1px solid var(--line); text-align:left;
+                 font-size:.92rem; }
+  .t th { color:var(--soft); font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; }
+  .t td.who { font-weight:700; }
+  .pill { font-size:.72rem; font-weight:700; padding:.16rem .6rem; border-radius:999px;
+          border:1px solid var(--line); white-space:nowrap; }
+  .pill.s-pending { color:var(--amber); border-color:var(--amber-ln); background:var(--amber-bg); }
+  .reason { color:var(--ink-soft); font-size:.85rem; font-style:italic; }
+  .legend { color:var(--soft); font-size:.78rem; line-height:1.4; margin-top:.9rem; }
+</style>
+
+{{ page_header("Who's in the office",
+               "One day at a time: who is on-site, who is working from home, and who is off.") }}
+
+<div class="backbar">
+  <a href="/work-arrangement">← My work arrangement</a>
+  {#-- The chief's fortnight view. Linked only when they can actually open it,
+       since a link that can only 403 is worse than no link. --#}
+  {% if can_schedule %}<a href="/work-arrangement/schedule">Team schedule (fortnight)</a>{% endif %}
+</div>
+
+<div class="panel">
+  <div class="daybar">
+    <a href="/work-arrangement/day?day={{ prev_day }}">‹ previous day</a>
+    <span class="now">{{ d.date_label }}</span>
+    <a href="/work-arrangement/day?day={{ next_day }}">next day ›</a>
+    <form method="get" action="/work-arrangement/day">
+      <input type="date" name="day" value="{{ d.date_iso }}" aria-label="Pick a date">
+      <button type="submit">Go</button>
+      {% if d.date_iso != today %}<a href="/work-arrangement/day">Today</a>{% endif %}
+    </form>
+  </div>
+  <div class="period">From the ANNEX C schedule for {{ d.period_label }}.</div>
+
+  {% if d.kind == "none" %}
+    {{ empty_state("We can't tell who your colleagues are",
+                   "Your account isn't linked to a directory record yet, so we don't know which section to show you. Add it on My profile.", "🗓") }}
+    <p><a href="/me">Complete your profile →</a></p>
+  {% elif d.is_weekend %}
+    {{ empty_state("It's the weekend",
+                   "Nobody is scheduled on a Saturday or Sunday. Use ‹ previous day / next day › to step to a working day.", "🗓") }}
+  {% else %}
+  <div class="tiles">
+    <div class="tile">
+      <div class="n good">{{ d.counts.onsite }}</div><div class="l">In the office</div>
+    </div>
+    <div class="tile">
+      <div class="n">{{ d.counts.wfh }}</div><div class="l">Working from home</div>
+    </div>
+    <div class="tile">
+      <div class="n">{{ d.counts.dayoff }}</div><div class="l">Day off</div>
+    </div>
+    {% if d.counts.noawa %}
+    <div class="tile"><div class="n">{{ d.counts.noawa }}</div><div class="l">No AWA</div></div>
+    {% endif %}
+    {% if d.counts.unfiled %}
+    <div class="tile">
+      <div class="n warn">{{ d.counts.unfiled }}</div><div class="l">Nothing filed</div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+{% if d.kind != "none" and not d.is_weekend %}
+{#-- One panel per group, skipping the empty ones: a heading over nothing reads
+     as a broken box, and "Day off (0)" is not information anyone needs. --#}
+{% for key, heading, means in groups %}
+  {% set people = d.groups[key] %}
+  {% if people %}
+  <div class="panel">
+    <div class="grp">
+      {#-- REG stands in for "in the office"; the other three have their own art. --#}
+      <span class="ic">{{ arrangement_icon("REG" if key in ("onsite", "unfiled")
+                                           else ("WFH" if key == "wfh" else "CWW")) }}</span>
+      <h3>{{ heading }}</h3>
+      <span class="n">{{ people|length }}</span>
+    </div>
+    <p class="means">{{ means }}</p>
+    <table class="t">
+      <thead><tr><th>Name</th><th>Position</th><th>Section</th>
+                 <th>{% if key == "noawa" %}Reason{% else %}Arrangement{% endif %}</th></tr></thead>
+      <tbody>
+      {% for p in people %}
+        <tr>
+          <td class="who">{{ p.name }}</td>
+          <td>{{ p.position or "—" }}</td>
+          <td>{{ p.section or "—" }}</td>
+          <td>
+            {% if key == "noawa" %}<span class="reason">{{ p.remarks or "—" }}</span>
+            {% elif key == "unfiled" %}—
+            {% else %}{{ p.arrangement_label or p.arrangement }}
+              {% if p.remarks %}<div class="reason">{{ p.remarks }}</div>{% endif %}
+              {#-- A filing still waiting on a chief is not yet the schedule of
+                   record, so say so rather than presenting it as settled. --#}
+              {% if p.status == "pending" %}<span class="pill s-pending">not yet approved</span>{% endif %}
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+{% endfor %}
+{% endif %}
+
+<div class="panel">
+  <p class="legend">{{ legend }}</p>
+  <p class="legend">This is the schedule people filed, not an attendance record — the
+  system never tracks who actually came in. A nominated day recurs: someone off on
+  Fridays is off <b>every</b> Friday in the fortnight. Public holidays and work
+  suspensions aren't known to the system, so they still show as ordinary working days.</p>
+</div>
+{% endblock %}
