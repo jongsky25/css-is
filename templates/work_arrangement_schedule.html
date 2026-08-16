@@ -50,6 +50,7 @@
 
 <div class="backbar">
   <a href="/work-arrangement">← My work arrangement</a>
+  <a href="/work-arrangement/day">Who's in the office today</a>
   {#-- A bureau-wide viewer reaches this page without being anyone's approver,
        and a link that can only 403 is worse than no link. --#}
   {% if is_chief %}<a href="/work-arrangement/approvals">Approvals queue</a>{% endif %}

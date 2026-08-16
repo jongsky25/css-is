@@ -6654,10 +6654,24 @@ def work_arrangement_schedule_period(d=None):
     return work_arrangement_next_period(ps)
 
 
+# Monday..Sunday. _WA_DAY_NAMES is the WORKING week and stops at Friday, but a
+# day view can be pointed at a Saturday and still has to name it.
+_WA_ALL_DAY_NAMES = _WA_DAY_NAMES + ["Saturday", "Sunday"]
+
+
+def work_arrangement_date_label(d):
+    """'Tuesday, August 18, 2026'. A date is always quoted with its weekday
+    spelled out, because 'the 18th' is ambiguous the week you read it — and
+    because the weekday is the half that decides who is off."""
+    return (f"{_WA_ALL_DAY_NAMES[d.weekday()]}, {_MONTH_NAMES[d.month - 1]} "
+            f"{d.day}, {d.year}")
+
+
 def _wa_friday(d):
-    """'Friday, August 14, 2026' — deadlines are always quoted in full, because
-    'the 14th' is ambiguous the week you read it."""
-    return f"Friday, {_MONTH_NAMES[d.month - 1]} {d.day}, {d.year}"
+    """A deadline, quoted in full. Deadlines are always Fridays by
+    construction (work_arrangement_deadline), so this is the general date
+    label — kept as its own name because the callers are about deadlines."""
+    return work_arrangement_date_label(d)
 
 
 def work_arrangement_deadline_label(period_start):
@@ -7305,6 +7319,90 @@ def work_arrangement_roster(conn, period_start, user=None, tagged=None):
             "approved": bool(w and w["status"] == "approved"),
             "noawa": False,
         })
+    return out
+
+
+# ---- one calendar day (who is actually in the office) ---------------------
+
+# What an arrangement means on ONE date, in the order the day view lists them:
+# present first, then the two kinds of absence, then the two kinds of nothing
+# on record. (key, heading, what it means)
+WORK_ARRANGEMENT_DAY_GROUPS = [
+    ("onsite",  "In the office",     "On-site for the day"),
+    ("wfh",     "Working from home", "Working, but not in the building"),
+    ("dayoff",  "Day off",           "Compressed workweek — not working today"),
+    ("noawa",   WORK_ARRANGEMENT_NOAWA,
+     "Out of the schedule entirely, with a stated reason"),
+    ("unfiled", "Nothing filed",
+     "No arrangement on record — expected on-site unless their section says otherwise"),
+]
+
+
+def _wa_day_state(row, weekday):
+    """Which group one roster row falls in on a given weekday.
+
+    The nominated weekday RECURS: "Friday Day off" is EVERY Friday in the
+    fortnight, not one of them. That is the whole reason a day-by-day view can
+    be derived from a fortnightly filing and needs nothing stored per date."""
+    if row.get("noawa"):
+        return "noawa"
+    if not row.get("filed"):
+        return "unfiled"
+    if row.get("arrangement") in _WA_DAY_TYPES and row.get("weekday") == weekday:
+        # CWW's nominated day is a day OFF; WFH's is a day worked from home.
+        # Conflating them would report someone on leave as reachable.
+        return "dayoff" if row["arrangement"] == "CWW" else "wfh"
+    return "onsite"
+
+
+def work_arrangement_day_step(day, delta):
+    """The next or previous WORKING day — Friday steps to Monday, never into a
+    weekend nobody is scheduled for."""
+    d = day + timedelta(days=delta)
+    while d.weekday() >= 5:
+        d += timedelta(days=delta)
+    return d
+
+
+def work_arrangement_day(conn, day, user=None):
+    """Who is physically in the office on ONE date, by name — and for whoever
+    is not, whether that is a day off or a day working from home.
+
+    Derived entirely from the fortnight's ANNEX C filings (see _wa_day_state),
+    so it reports the schedule of RECORD, not attendance: this app has no
+    attendance relation and must not be read as one. There is also no holiday
+    or work-suspension concept anywhere in the system, so a declared non-working
+    day still reads here as an ordinary one.
+
+    SCOPE — the load-bearing part. Every other work-arrangement read sits behind
+    the chief guard; this one is shown to every signed-in user, so it resolves
+    scope itself and stops on "none" rather than calling the roster.
+    work_arrangement_roster scopes through _org_scope_for_user, which folds an
+    unlinked account's "no team" onto None — the same None that means
+    bureau-wide — so falling through would hand someone with no directory
+    record every section in the bureau. Guarding here rather than in the
+    handler keeps that true for whoever calls this next."""
+    day = day if isinstance(day, date) else date.fromisoformat(str(day))
+    ps = work_arrangement_period(day)
+    out = {
+        "date": day, "date_iso": day.isoformat(),
+        "date_label": work_arrangement_date_label(day),
+        "weekday": day.weekday(), "weekday_name": _WA_ALL_DAY_NAMES[day.weekday()],
+        "is_weekend": day.weekday() >= 5,
+        "period_start": ps, "period_label": work_arrangement_period_label(ps),
+        "kind": "bureau",
+        "groups": {k: [] for k, _h, _m in WORK_ARRANGEMENT_DAY_GROUPS},
+    }
+    if user is not None:
+        _scope, out["kind"] = team_scope_for_user(conn, user, area="awa")
+    # An unlinked account has no team to show, and a weekend has nobody
+    # scheduled. Both are empty for different reasons the caller can tell apart.
+    if out["kind"] != "none" and not out["is_weekend"]:
+        for r in work_arrangement_roster(conn, ps, user):
+            state = _wa_day_state(r, day.weekday())
+            out["groups"][state].append({**r, "day_state": state})
+    out["counts"] = {k: len(v) for k, v in out["groups"].items()}
+    out["headcount"] = sum(out["counts"].values())
     return out
 
 

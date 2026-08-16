@@ -766,6 +766,141 @@ def test_nav_and_search_expose_the_module(app_mod):
     assert "/work-arrangement" in {it["url"] for it in app_mod.search_index_for(U())}
 
 
+# ------------------------------------------------- one day, by name ---------
+# Aug 16-31 2026 is a fortnight with TWO Fridays (the 21st and the 28th), which
+# is what makes it the right period to prove the recurrence on.
+
+_DAY_PS = "2026-08-16"
+_FILE_BY = date(2026, 8, 14)          # on or before the Aug 16-31 deadline
+
+
+def _where(d, uid):
+    """Which group a person landed in — exactly one, or None if absent."""
+    found = [k for k, people in d["groups"].items()
+             if any(p["user_id"] == uid for p in people)]
+    assert len(found) <= 1, f"{uid} appears in {found}"
+    return found[0] if found else None
+
+
+def test_a_nominated_day_off_recurs_on_every_such_weekday(wa_org, monkeypatch):
+    """The whole basis of the view: a fortnightly filing resolves to specific
+    dates because "Friday Day off" means EVERY Friday, not one of them."""
+    conn, emp = wa_org["conn"], wa_org["staff"][0]
+    _at(monkeypatch, _FILE_BY)
+    _approved(wa_org, emp, "CWW", 4, ps=_DAY_PS)          # Fridays off
+
+    for friday in (date(2026, 8, 21), date(2026, 8, 28)):
+        assert _where(st.work_arrangement_day(conn, friday), emp) == "dayoff"
+    for other in (date(2026, 8, 20), date(2026, 8, 27), date(2026, 8, 17)):
+        assert _where(st.work_arrangement_day(conn, other), emp) == "onsite"
+
+
+def test_a_day_off_is_told_apart_from_a_day_worked_from_home(wa_org, monkeypatch):
+    """Conflating the two would report someone on leave as reachable."""
+    conn = wa_org["conn"]
+    off, home = wa_org["staff"][0], wa_org["staff"][1]
+    _at(monkeypatch, _FILE_BY)
+    _approved(wa_org, off, "CWW", 2, ps=_DAY_PS)          # Wednesday off
+    _approved(wa_org, home, "WFH", 2, ps=_DAY_PS)         # Wednesday from home
+
+    wed = st.work_arrangement_day(conn, date(2026, 8, 19))
+    assert _where(wed, off) == "dayoff"
+    assert _where(wed, home) == "wfh"
+    assert wed["counts"]["dayoff"] == 1 and wed["counts"]["wfh"] == 1
+    # Everyone lands in exactly one group, so the groups partition the roster.
+    assert sum(wed["counts"].values()) == wed["headcount"]
+
+    tue = st.work_arrangement_day(conn, date(2026, 8, 18))
+    assert _where(tue, off) == "onsite" and _where(tue, home) == "onsite"
+
+
+def test_nothing_filed_is_never_counted_as_in_the_office(wa_org, monkeypatch):
+    """A blank row is not a person at their desk. Folding the unfiled into
+    "in the office" would overstate the count with people nobody has heard
+    from — the exact gap the chase list exists to close."""
+    conn, emp = wa_org["conn"], wa_org["staff"][0]
+    _at(monkeypatch, _FILE_BY)
+    st.set_work_arrangement_noawa(conn, wa_org["staff"][1], "on leave",
+                                  _u(wa_org["staff"][1]))
+
+    d = st.work_arrangement_day(conn, date(2026, 8, 18))
+    assert _where(d, emp) == "unfiled"                    # never filed
+    assert _where(d, wa_org["staff"][1]) == "noawa"
+    assert d["counts"]["onsite"] == 0
+    tagged = d["groups"]["noawa"][0]
+    assert tagged["remarks"] == "on leave"                # the reason travels
+
+
+def test_nobody_is_scheduled_on_a_weekend(wa_org, monkeypatch):
+    conn = wa_org["conn"]
+    _at(monkeypatch, _FILE_BY)
+    _approved(wa_org, wa_org["staff"][0], "REG", ps=_DAY_PS)
+
+    sat = st.work_arrangement_day(conn, date(2026, 8, 22))
+    assert sat["is_weekend"] and sat["headcount"] == 0
+    assert all(not p for p in sat["groups"].values())
+    # ...and the arrows step over it rather than landing on it.
+    assert st.work_arrangement_day_step(date(2026, 8, 21), 1) == date(2026, 8, 24)
+    assert st.work_arrangement_day_step(date(2026, 8, 24), -1) == date(2026, 8, 21)
+
+
+def test_an_unlinked_account_is_shown_nobody_not_everybody(wa_org, monkeypatch):
+    """The guard that matters. This page has no chief route guard, and
+    work_arrangement_roster scopes through _org_scope_for_user, which folds "no
+    team" onto the same None that means bureau-wide. If work_arrangement_day
+    ever stops resolving scope itself, an account with no directory record sees
+    every section in the bureau."""
+    conn = wa_org["conn"]
+    _at(monkeypatch, _FILE_BY)
+    _approved(wa_org, wa_org["staff"][0], "CWW", 4, ps=_DAY_PS)
+
+    d = st.work_arrangement_day(conn, date(2026, 8, 18), _u(wa_org["loner"]))
+    assert d["kind"] == "none"
+    assert d["headcount"] == 0
+    assert "WA-Test" not in repr(d["groups"])             # not one colleague
+
+
+def test_the_day_view_is_open_to_everyone_unlike_the_team_schedule(
+        wa_org, app_mod, monkeypatch):
+    """Asserted together so the difference stays deliberate: knowing whether a
+    colleague is in is not the same power as reading the filing progress and
+    printing ANNEX C."""
+    _at(monkeypatch, date(2026, 8, 18))
+    c = _client_for_id(app_mod, wa_org["staff"][0])
+    assert c.get("/work-arrangement/day").status_code == 200
+    assert c.get("/work-arrangement/schedule").status_code == 403
+
+
+def test_the_day_view_names_people_and_bounces_a_bad_date(
+        wa_org, app_mod, monkeypatch):
+    conn, emp = wa_org["conn"], wa_org["staff"][0]
+    _at(monkeypatch, _FILE_BY)
+    _approved(wa_org, emp, "WFH", 4, ps=_DAY_PS)
+    _at(monkeypatch, date(2026, 8, 18))
+    c = _client_for_id(app_mod, wa_org["chief"])
+
+    html = c.get("/work-arrangement/day?day=2026-08-21").text
+    assert "Friday, August 21, 2026" in html
+    assert "Working from home" in html
+    assert "WA-Test Staff0" in html                       # by name, not a count
+
+    r = c.get("/work-arrangement/day?day=not-a-date", follow_redirects=False)
+    assert r.status_code == 303                           # bounces, never 500s
+
+
+def test_landing_card_leads_with_who_is_in_today(wa_org, app_mod, monkeypatch):
+    conn, chief = wa_org["conn"], wa_org["chief"]
+    st.mark_onboarded(conn, chief)
+    _at(monkeypatch, _FILE_BY)
+    _approved(wa_org, wa_org["staff"][0], "CWW", 1, ps=_DAY_PS)   # Tuesday off
+    _at(monkeypatch, date(2026, 8, 18))                            # a Tuesday
+
+    html = _client_for_id(app_mod, chief).get("/").text
+    assert "in the office today" in html
+    assert "Tuesday, August 18, 2026" in html
+    assert 'href="/work-arrangement/day"' in html
+
+
 # ------------------------------------------------------------- "No AWA" ------
 
 def _at(monkeypatch, d):

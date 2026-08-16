@@ -406,6 +406,31 @@
         {% set ai = a.team.insights %}
         {% call deck("Alternative Work Arrangement — " ~ (a.now.period_label if a.now else a.team.period_label)) %}
 
+        {#-- ---- one day, by name ----
+             The card's first answer, because "who is in right now" beats any
+             fortnight aggregate for the person opening this page at 9am. --#}
+        {% if a.day and not a.day.is_weekend %}
+        {% call deck_slide("Who is in the office", caption=false) %}
+        <div class="oc-big">{{ a.day.counts.onsite }}
+          <small>in the office {% if a.day.is_today %}today{% else %}on {{ a.day.weekday_name }}{% endif %}</small></div>
+        <p class="sub" style="margin:.15rem 0 .5rem;">{{ a.day.date_label }}</p>
+        <div class="oc-key">
+          <span><i class="bg-green"></i>In the office {{ a.day.counts.onsite }}</span>
+          <span><i class="bg-accent"></i>From home {{ a.day.counts.wfh }}</span>
+          <span><i class="bg-amber"></i>Day off {{ a.day.counts.dayoff }}</span>
+          {% if a.day.counts.noawa %}<span><i class="bg-soft"></i>No AWA {{ a.day.counts.noawa }}</span>{% endif %}
+          {% if a.day.counts.unfiled %}<span><i class="bg-soft"></i>Nothing filed {{ a.day.counts.unfiled }}</span>{% endif %}
+        </div>
+        {{ faces(a.day.faces, rings=false) }}
+        {% set away = a.day.groups.wfh + a.day.groups.dayoff %}
+        {% if away %}
+        <p class="foot">Not in: {{ away[:5]|map(attribute="name")|join(", ") }}{% if away|length > 5 %}
+          and {{ away|length - 5 }} more{% endif %}.</p>
+        {% endif %}
+        <p class="foot"><a href="/work-arrangement/day">Who's in, day by day →</a></p>
+        {% endcall %}
+        {% endif %}
+
         {#-- ---- the fortnight being worked ---- --#}
         {% if a.now %}
         {% set ni = a.now.insights %}

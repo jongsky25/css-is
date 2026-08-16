@@ -574,6 +574,14 @@ NAV_GROUPS = [
          "hint": "Choose your arrangement for a half-month period",
          "kw": "file change amend work arrangement awa cww wfh schedule period submit "
                "request day off", "cap": None},
+        # Open to everyone (cap None): "is Maria in today" is a question about a
+        # colleague you are about to walk over to, not a chief's report.
+        {"key": "work_arrangement_day", "url": "/work-arrangement/day",
+         "label": "Who's in the office",
+         "hint": "Who is on-site, working from home, or off — one day at a time",
+         "kw": "who is in the office today day daily on-site onsite present absent "
+               "away out day off wfh work from home working remotely desk reachable "
+               "in out attendance roster whereabouts", "cap": None},
         {"key": "work_arrangement_schedule", "url": "/work-arrangement/schedule",
          "label": "Team schedule",
          "hint": "Who is on-site each weekday, and who hasn't filed",
@@ -14079,6 +14087,44 @@ def work_arrangement_schedule(request: Request, period: str = ""):
         "noawa_label": st.WORK_ARRANGEMENT_NOAWA,
         "is_admin": user.get("role") == "admin",
         "is_chief": is_chief,
+    })
+
+
+@app.get("/work-arrangement/day", response_class=HTMLResponse)
+def work_arrangement_day(request: Request, day: str = ""):
+    """Who is in the office on ONE day, by name — and for whoever is not,
+    whether that is a day off or a day working from home.
+
+    Deliberately NOT gated like the schedule page. "Is Maria in today?" is a
+    question anyone in the bureau has about a colleague they are about to walk
+    over to, and the answer is already on a sheet pinned up in the office. What
+    stays gated is the chief's view of it: filing progress, the chase list and
+    the ANNEX C print. Login is the whole guard here, which the middleware
+    already applies to /work-arrangement*.
+
+    Because there is no chief guard, scope is resolved inside
+    storage.work_arrangement_day rather than here — see its docstring for why
+    an unlinked account must not fall through to the roster."""
+    user = request.state.user
+    try:
+        d = date.fromisoformat(day) if day else _today_local()
+    except ValueError:
+        # A hand-typed or stale date bounces to today rather than 500-ing.
+        return RedirectResponse("/work-arrangement/day", status_code=303)
+    conn = get_conn()
+    try:
+        data = st.work_arrangement_day(conn, d, user)
+        can_schedule = st.user_can_view_work_arrangement_schedule(conn, user)
+    finally:
+        conn.close()
+    return templates.TemplateResponse(request, "work_arrangement_day.html", {
+        "nav_active": "work_arrangement", "show_scope": False,
+        "d": data, "groups": st.WORK_ARRANGEMENT_DAY_GROUPS,
+        "legend": st.WORK_ARRANGEMENT_LEGEND,
+        "prev_day": st.work_arrangement_day_step(d, -1).isoformat(),
+        "next_day": st.work_arrangement_day_step(d, 1).isoformat(),
+        "today": _today_local().isoformat(),
+        "can_schedule": can_schedule,
     })
 
 
