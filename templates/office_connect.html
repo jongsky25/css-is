@@ -33,16 +33,28 @@
   .oc-scope { color:var(--soft); font-size:.85rem; margin:0 0 1rem; }
 
   .oc-panels { display:grid; grid-template-columns:repeat(auto-fit, minmax(320px,1fr));
-               gap:1rem; align-items:start; }
+               gap:1rem; }
   /* min-width:0 is load-bearing: a grid item sizes to its max-content by
      default, and a deck's max-content is every slide side by side — without it
      the card stretches to five slides wide and the whole PAGE scrolls
-     sideways instead of the track inside it. */
+     sideways instead of the track inside it.
+     display:flex + column: the grid row's cross-axis default (stretch) makes
+     every card in a row match the tallest one — on a wide screen the Wellness
+     and AWA cards routinely differ by a full deck's worth of content, and
+     without stretch the shorter card just leaves a blank gap in the PAGE
+     background before the next row starts. Flex-column here lets the "foot"
+     link absorb that leftover height (margin-top:auto below) instead of it
+     sitting inside the card as dead air under the deck. */
   .oc-card { background:var(--surface); border:1px solid var(--line); border-radius:var(--r3);
-             padding:1rem 1.1rem; box-shadow:var(--shadow); min-width:0; }
+             padding:1rem 1.1rem; box-shadow:var(--shadow); min-width:0;
+             display:flex; flex-direction:column; }
   .oc-card h2 { margin:0 0 .15rem; font-size:1.02rem; }
   .oc-card .sub { color:var(--soft); font-size:.82rem; margin:0 0 .75rem; }
   .oc-card .foot { margin:.75rem 0 0; font-size:.76rem; color:var(--grey); }
+  /* Direct child only: this is the card's own trailing "Open X ->" link, not
+     one of the little footnotes tucked inside a deck slide (those aren't flex
+     items of .oc-card, so margin-top:auto would just collapse to 0 on them). */
+  .oc-card > .foot { margin-top:auto; }
   .oc-card .foot a { color:var(--accent); }
   .oc-big { font-size:1.55rem; font-weight:800; line-height:1.1; }
   .oc-big small { font-size:.8rem; font-weight:600; color:var(--soft); }

@@ -1,5 +1,46 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-08-24 (v2.71 — the home cards fit a personal computer)
+
+The `office_connect.html` landing page ("Office·Connect", the `/` route) lays
+its three cards out in `.oc-panels`, a `repeat(auto-fit, minmax(320px,1fr))`
+grid. On a phone the cards stack one per row, so nothing was ever visibly
+wrong there. On a laptop/desktop viewport the grid renders two columns, and
+the Wellness and Alternative Work Arrangement cards sit side by side in row
+one — and their content heights routinely disagree: Wellness's `deck` (see
+`_components.html`) and AWA's `deck` each size to their own tallest slide, and
+in Team view those tallest slides differ by a coverage chart's worth of
+height. `.oc-panels` had `align-items:start`, so CSS Grid left each card at
+its own natural height instead of stretching it to the row's — the shorter
+card just stopped, and the *row track* (sized to the taller card regardless)
+left a blank stripe of plain page background before the next row of cards
+began. Checked both Team and Me view at 1440/1280/1024/900px: Team view shows
+it clearly (richer decks, more mismatch); Me view is milder but the same
+mechanism applies whenever a scope's AWA/CSS content outgrows Wellness's.
+
+**Fix, `templates/office_connect.html`:** drop `align-items:start` (default
+`stretch` applies), and make `.oc-card` a column flexbox so the leftover
+height has somewhere sane to go — `.oc-card > .foot` (the card's own trailing
+"Open X →" link, a **direct** child) gets `margin-top:auto` and is pushed to
+the bottom, absorbing the gap instead of leaving it as dead air in the middle
+of the card or as a stripe of bare page beneath it. Deliberately scoped to the
+direct child: the several other `.foot` footnotes tucked inside individual
+`deck-slide`s (e.g. the "Not in: …" / "Attendance isn't recorded here" lines)
+are not flex items of `.oc-card` and keep their normal `.75rem` top margin
+unchanged — a descendant selector there would have collapsed that spacing to
+0 for no visual benefit.
+
+**Verified:** ran the app locally (seeded via `seed_dashboard_demo.py`, an
+admin account linked to a directory person with speaking history) and
+screenshotted `/` and `/?view=me` with Playwright at 1440/1280/1024/900/375px.
+Before the fix, the Team view's Wellness/AWA row left a ~190px blank gap above
+the "Activities…" card at 1440px; after, both cards' bottoms align and the
+next card starts right after the row, at every desktop width tested, with no
+horizontal overflow (`scrollWidth == clientWidth` throughout) and no change at
+375px (single column, nothing to stretch against). `pytest tests/
+test_office_connect.py` still green (36 tests) — the change is presentational
+only, no template logic moved.
+
 ## 2026-08-16 (v2.70 — a drawn signature, stamped on the day it approves)
 
 Two gaps, one change. The monthly wellness register signed **per week**: a
