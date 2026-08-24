@@ -17,10 +17,23 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.71"
+APP_VERSION = "2.72"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.72",
+        "date": "August 24, 2026",
+        "summary": "The “Activities” card on the home page now fills the "
+                   "row instead of sitting at half width.",
+        "changes": [
+            "The home page shows three cards: Wellness, Alternative Work "
+            "Arrangement, and Activities. On a laptop or desktop screen the "
+            "first two sit side by side, and Activities used to be left "
+            "underneath at half width with empty space beside it. It now "
+            "stretches across the full row, in both Team and Me view.",
+        ],
+    },
     {
         "version": "2.71",
         "date": "August 24, 2026",

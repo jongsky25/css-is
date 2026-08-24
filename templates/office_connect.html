@@ -34,6 +34,12 @@
 
   .oc-panels { display:grid; grid-template-columns:repeat(auto-fit, minmax(320px,1fr));
                gap:1rem; }
+  /* Always exactly 3 cards (wellness, AWA, CSS). At the container's max width
+     (980px, .wrap) minmax(320px,1fr) never fits more than 2 columns, so the
+     3rd card is always the odd one out — left in column 1 alone, half the
+     row's width, with the rest of the row bare. Span it across instead of
+     leaving it stranded at half width. */
+  .oc-panels > .oc-card:last-child { grid-column:1 / -1; }
   /* min-width:0 is load-bearing: a grid item sizes to its max-content by
      default, and a deck's max-content is every slide side by side — without it
      the card stretches to five slides wide and the whole PAGE scrolls

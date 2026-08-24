@@ -1,5 +1,30 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-08-24 (v2.72 — the lone card spans the row)
+
+Follow-up to v2.71. `.oc-panels` (`templates/office_connect.html`) always
+renders exactly three `.oc-card` children — Wellness, Alternative Work
+Arrangement, then CSS/Activities — in a `repeat(auto-fit, minmax(320px,1fr))`
+grid. The container's own cap (`.wrap`, 980px) means that grid can never fit
+a third 320px+ column (3×320 + 2×16 gap = 992 > 980), so on any laptop/desktop
+width the layout is always exactly 2 columns, and the 3rd card always lands
+alone in column 1 of row 2 — at half the row's width, with the other half of
+the row sitting empty beside it. Reported directly off a screenshot showing
+the "Activities" card boxed in at half width next to open space.
+
+**Fix:** `.oc-panels > .oc-card:last-child { grid-column:1 / -1; }` — spans
+the last card from the first grid line to the last, whatever the actual
+column count turns out to be. Safe at every width: on mobile (1 column) it's
+a no-op: `1 / -1` still just means the whole (only) row. Scoped to
+`:last-child` rather than a count-based selector because the card order is
+fixed by the template, not data — there are always exactly three.
+
+**Verified:** re-ran the same seeded-data Playwright pass as v2.71 (Team and
+Me view, 1440/1280/1024/900/375px) — the Activities card now spans the full
+row at every desktop width, mobile is unchanged (single column already), no
+horizontal overflow introduced, and `pytest tests/test_office_connect.py`
+still green (36 tests).
+
 ## 2026-08-24 (v2.71 — the home cards fit a personal computer)
 
 The `office_connect.html` landing page ("Office·Connect", the `/` route) lays
