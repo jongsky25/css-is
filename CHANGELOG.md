@@ -1,5 +1,44 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-08-26 (v2.73 — approvals visibility on the home page and nav bell)
+
+Reported directly by a chief who approves both wellness breaks and Alternative
+Work Arrangement (AWA) requests: finding out whether anything needed a
+decision meant opening `/wellness/approvals` or `/work-arrangement/approvals`
+blind, since neither the home page nor the nav bell hinted at it either way.
+Two PRs (#115, #116) closed that gap; this entry — and the version bump —
+covers both, since #115 shipped without one.
+
+**#115 — home page banner + door badges (`office_connect.py`,
+`templates/office_connect.html`):** `team_view_data()` gained
+`_approvals_waiting()`, which counts pending items in both queues for an
+approving chief and (when non-zero) adds an amber `notes` panel at the top of
+`/` plus a matching badge on the Wellness/AWA door cards, each linking
+straight into the relevant queue. Empty queues render nothing extra — no
+permanent fixture.
+
+**#116 — the nav bell (`storage.py`, `app.py`, `templates/_components.html`,
+`templates/dash_layout.html`, `templates/public_layout.html`,
+`static/css/app.css`):** the bell used to be a single link to `/my/feedback`
+with an unread-feedback badge only. `storage.pending_approval_counts()` is now
+the shared source both the home-page banner and the bell read from a chief's
+"waiting on me" totals. Two new `admin_user` columns
+(`wellness_seen_at`, `wa_seen_at` — the requester-side twin of
+`spot_feedback.submitter_seen_at`) drive `unseen_wellness_decisions()` /
+`unseen_work_arrangement_decisions()`, so a requester also hears "your break
+was approved/denied" in the bell until they reopen `/wellness` or
+`/work-arrangement` (which marks it seen, mirroring `/my/feedback`). The bell
+itself became a small `details`/`summary` popover (`notif_bell()` macro,
+reusing the existing settings/help-menu dropdown mechanics) listing every
+active item, each linking straight to its page.
+
+**Verified:** `pytest tests/test_office_connect.py tests/test_landing_fork.py
+tests/test_wellness.py tests/test_wellness_escalation.py
+tests/test_work_arrangement.py tests/test_notifications.py` green on both;
+manual `TestClient` runs seeding a chief with one pending item in each queue
+and a requester with one decided-but-unseen item in each, confirming the
+banner/badges/bell text, links, and clearing-on-visit all behave.
+
 ## 2026-08-24 (v2.72 — the lone card spans the row)
 
 Follow-up to v2.71. `.oc-panels` (`templates/office_connect.html`) always
