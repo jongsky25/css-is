@@ -906,6 +906,28 @@ def _weekday_name(idx):
 # the payload
 # --------------------------------------------------------------------------
 
+def _approvals_waiting(conn, user):
+    """Requests waiting on THIS approver's decision, across the wellness and
+    work-arrangement queues — the two share one chief gate
+    (storage.user_is_approving_chief / its user_is_wellness_chief alias), so
+    an AWA approver and a wellness approver are the same person here. None
+    for anyone who isn't an approving chief, and None when both queues are
+    empty, so callers can treat "nothing to show" as a single falsy check.
+
+    Reuses list_wellness_approvals / list_work_arrangement_approvals — the
+    exact functions the queue pages themselves call — so this count can never
+    promise something the queue doesn't have. Queues are small (pending
+    requests, not history), so counting via the list is cheap enough to run
+    on every home-page load for a chief."""
+    if not st.user_is_approving_chief(conn, user):
+        return None
+    wellness = len(st.list_wellness_approvals(conn, user))
+    awa = len(st.list_work_arrangement_approvals(conn, user))
+    if not (wellness or awa):
+        return None
+    return {"wellness": wellness, "awa": awa, "total": wellness + awa}
+
+
 def team_view_data(conn, user, *, get_atoms, view_memo,
                    today=None, week_start=None):
     """Everything the Office Connect landing page renders, in one pass."""
@@ -936,6 +958,26 @@ def team_view_data(conn, user, *, get_atoms, view_memo,
             "url": "/me", "cta": "Complete your profile",
         })
 
+    # Approvals waiting on YOU — surfaced before any click into either queue,
+    # so a chief who approves both wellness and AWA doesn't have to open each
+    # one blind just to find out whether there's anything to decide.
+    approvals = _approvals_waiting(conn, user)
+    if approvals:
+        if approvals["wellness"]:
+            n = approvals["wellness"]
+            notes.append({
+                "key": "wellness_approvals", "tone": "amber",
+                "text": f"{n} wellness break{'' if n == 1 else 's'} waiting on your decision.",
+                "url": "/wellness/approvals", "cta": "Review",
+            })
+        if approvals["awa"]:
+            n = approvals["awa"]
+            notes.append({
+                "key": "awa_approvals", "tone": "amber",
+                "text": f"{n} work arrangement request{'' if n == 1 else 's'} waiting on your decision.",
+                "url": "/work-arrangement/approvals", "cta": "Review",
+            })
+
     # The team roster, fresh (never memoised — its only sane key is the scope
     # path, which is exactly the hazard, and view_memo's key tracks the atoms,
     # which do not count admin_user: a new hire would go unnoticed).
@@ -964,4 +1006,5 @@ def team_view_data(conn, user, *, get_atoms, view_memo,
                     "upcoming": _upcoming(conn, index, scope_path, kind)},
         },
         "notes": notes,
+        "approvals": approvals,
     }

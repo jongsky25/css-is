@@ -145,6 +145,9 @@
   .door .meta { margin-top:.6rem; font-size:.76rem; font-weight:700; color:var(--accent);
                 background:var(--accent-bg); border-radius:var(--rpill);
                 padding:.15rem .6rem; display:inline-block; }
+  /* same pill, amber — reserved for "this needs your decision", never for a
+     plain status readout, so the colour keeps meaning "waiting on you". */
+  .door .meta.warn { color:var(--amber); background:var(--amber-bg); }
   @media (max-width:640px) {
     .oc-hero { gap:.7rem; } .oc-hi h1 { font-size:1.25rem; }
     /* The companion's box is an inline width the macro writes, so a phone-sized
@@ -246,7 +249,7 @@
       {{ 'person' if d.scope.size == 1 else 'people' }}{% endif %}.</p>
     {% endif %}
     {% for n in d.notes %}
-      <div class="panel tint-blue" style="margin-bottom:1rem;">
+      <div class="panel tint-{{ n.tone|default('blue') }}" style="margin-bottom:1rem;">
         {{ n.text }} <a href="{{ n.url }}">{{ n.cta }}</a>
       </div>
     {% endfor %}
@@ -697,17 +700,21 @@
 
   {# ---------------- the three doors ---------------- #}
   <div class="doors">
-    <a class="door" href="/wellness">
+    <a class="door" href="{{ '/wellness/approvals' if d and d.approvals and d.approvals.wellness else '/wellness' }}">
       <span class="em" aria-hidden="true">🌱</span>
       <span class="t">Wellness — my 2-hour break</span>
       <div class="d">Request your weekly wellness break and grow your companion.</div>
-      {% if wstats %}<span class="meta">{{ wstats.points }} pts · {{ wstats.streak }}-week streak</span>{% endif %}
+      {% if d and d.approvals and d.approvals.wellness %}
+      <span class="meta warn">{{ d.approvals.wellness }} waiting on your decision</span>
+      {% elif wstats %}<span class="meta">{{ wstats.points }} pts · {{ wstats.streak }}-week streak</span>{% endif %}
     </a>
-    <a class="door" href="/work-arrangement">
+    <a class="door" href="{{ '/work-arrangement/approvals' if d and d.approvals and d.approvals.awa else '/work-arrangement' }}">
       <span class="em" aria-hidden="true">🗓️</span>
       <span class="t">Alternative Work Arrangement — CWW / WFH</span>
       <div class="d">File your on-site, compressed or work-from-home schedule for the half-month.</div>
-      {% if wa_label %}
+      {% if d and d.approvals and d.approvals.awa %}
+      <span class="meta warn">{{ d.approvals.awa }} waiting on your decision</span>
+      {% elif wa_label %}
       <span class="meta">Now: {{ wa_label }} ·
         {% if wa_now %}{{ wa_now.arrangement_label }}{% if wa_now.status == 'pending' %} (awaiting approval){% endif %}
         {% else %}nothing filed{% endif %}
