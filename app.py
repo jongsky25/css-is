@@ -1823,6 +1823,71 @@ def _required_cap(path):
     return None
 
 
+def _decision_summary(noun, statuses):
+    """'Your wellness break was approved.' / '3 of your wellness breaks were
+    decided — 2 approved, 1 denied.' — the requester-facing nav-bell line for a
+    list of 'approved'/'denied' statuses, newest first (only the count and mix
+    matter here, not which one is newest)."""
+    n = len(statuses)
+    if n == 1:
+        return f"Your {noun} was {statuses[0]}"
+    approved = sum(1 for s in statuses if s == "approved")
+    denied = n - approved
+    bits = []
+    if approved:
+        bits.append(f"{approved} approved")
+    if denied:
+        bits.append(f"{denied} denied")
+    return f"{n} of your {noun}s were decided — {', '.join(bits)}"
+
+
+def _notification_items(conn, user, feedback_unread):
+    """The nav bell's dropdown rows for this signed-in account: unread spot-
+    feedback replies, approvals waiting on them as a chief, and unseen
+    decisions on their own wellness/AWA requests. Each item is
+    {"text", "url", "count"}; the bell's badge is the sum of every item's
+    count. Every count here comes from the same functions the destination
+    pages themselves use (count_unread_feedback — passed in, already computed
+    by the caller — pending_approval_counts, unseen_wellness/
+    work_arrangement_decisions), so the bell can never promise something the
+    destination doesn't have.
+
+    Queried on every authenticated request, same as count_unread_feedback
+    already was — these are small, per-user queries, not table scans."""
+    items = []
+    if feedback_unread:
+        items.append({
+            "text": f"{feedback_unread} update{'' if feedback_unread == 1 else 's'} on your feedback",
+            "url": "/my/feedback", "count": feedback_unread,
+        })
+    approvals = st.pending_approval_counts(conn, user)
+    if approvals["wellness"]:
+        n = approvals["wellness"]
+        items.append({
+            "text": f"{n} wellness break{'' if n == 1 else 's'} waiting on your decision",
+            "url": "/wellness/approvals", "count": n,
+        })
+    if approvals["awa"]:
+        n = approvals["awa"]
+        items.append({
+            "text": f"{n} work arrangement request{'' if n == 1 else 's'} waiting on your decision",
+            "url": "/work-arrangement/approvals", "count": n,
+        })
+    wellness_decided = st.unseen_wellness_decisions(conn, user["id"])
+    if wellness_decided:
+        items.append({
+            "text": _decision_summary("wellness break", wellness_decided),
+            "url": "/wellness", "count": len(wellness_decided),
+        })
+    wa_decided = st.unseen_work_arrangement_decisions(conn, user["id"])
+    if wa_decided:
+        items.append({
+            "text": _decision_summary("work arrangement request", wa_decided),
+            "url": "/work-arrangement", "count": len(wa_decided),
+        })
+    return items
+
+
 @app.middleware("http")
 async def _auth_gate(request: Request, call_next):
     """Gate every non-public route behind a valid session, then enforce the
@@ -1831,6 +1896,8 @@ async def _auth_gate(request: Request, call_next):
     request.state.spot_feedback_enabled = False
     request.state.feedback_unread = 0
     request.state.is_chief = False
+    request.state.notifications = []
+    request.state.notif_count = 0
     path = request.url.path
     # Expose the Spot Feedback switch to every page a signed-in staff member sees
     # — including PUBLIC attendee pages (the live survey, the "not open yet" and
@@ -1851,6 +1918,13 @@ async def _auth_gate(request: Request, call_next):
             # already open, rather than per nav render.
             request.state.is_chief = st.user_is_approving_chief(
                 conn, request.state.user)
+            # Nav bell: unread feedback + approvals waiting on this account as a
+            # chief + unseen decisions on its own wellness/AWA requests, all in
+            # one list so the bell can show more than "you have feedback news".
+            request.state.notifications = _notification_items(
+                conn, request.state.user, request.state.feedback_unread)
+            request.state.notif_count = sum(
+                n["count"] for n in request.state.notifications)
             # How far this account may SEE (BUREAU_ACCESS_LEVELS). Read from the
             # row, not from the session cookie that minted this user dict: a
             # revoked grant has to take effect on the next request, not whenever
@@ -13403,6 +13477,9 @@ def wellness_hub(request: Request, cheer: str = "", badges: str = "", err: str =
             st.wellness_hours_used(conn, user["id"], w) < st.WELLNESS_WEEKLY_HOURS
             for w in st.wellness_window_weeks())
         claims = st.list_my_wellness_claims(conn, user["id"])
+        # Opening the hub is "I looked at my requests" — clears the nav bell's
+        # "your break was decided" notice, same as /my/feedback clears its own.
+        st.mark_wellness_seen(conn, user["id"])
         is_chief = st.user_is_wellness_chief(conn, user)
         queue_n = len(st.list_wellness_approvals(conn, user)) if is_chief else 0
         register_months = st.wellness_availed_months(conn, user["id"])
@@ -13870,6 +13947,9 @@ def work_arrangement_hub(request: Request, ok: str = "", err: str = ""):
                 "pending": st.my_pending_work_arrangement(conn, user["id"], ps),
             })
         history = st.list_my_work_arrangements(conn, user["id"])
+        # Opening the hub is "I looked at my requests" — clears the nav bell's
+        # "your request was decided" notice, same as /my/feedback clears its own.
+        st.mark_work_arrangement_seen(conn, user["id"])
         approver = (st.approver_name_for(conn, user["id"])
                     or st.approver_title_for(conn, user["id"]))
         is_chief = st.user_is_approving_chief(conn, user)

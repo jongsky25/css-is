@@ -287,10 +287,15 @@ details.disclosure[open] > summary::before { transform:rotate(90deg); }
 a.whoami:hover { border-color:var(--accent); }
 .topnav .right a.logout { font-weight:700; color:var(--accent); font-size:.85rem; text-decoration:none; }
 
-/* Notification bell — the inbound side of Spot Feedback: links to the submitter's
-   own feedback + updates, with an unread badge. Distinct from the 💬 compose button
-   (.sf-float) so "see your updates" never reads as "send feedback".
-   Used in both the dashboard topnav and the public top bar. */
+/* Notification bell — one popover for everything waiting on this account:
+   unread Spot Feedback replies, approvals queued for them as a chief, and
+   decisions on their own wellness/AWA requests they haven't seen yet.
+   Distinct from the 💬 compose button (.sf-float) so "see your updates" never
+   reads as "send feedback". Used in both the dashboard topnav and the public
+   top bar; markup+badge logic lives once in the notif_bell() macro. */
+.fb-bell-wrap { position:relative; }
+.fb-bell-wrap > summary { list-style:none; cursor:pointer; }
+.fb-bell-wrap > summary::-webkit-details-marker { display:none; }
 .fb-bell { position:relative; display:inline-flex; align-items:center; justify-content:center;
            width:2rem; height:2rem; border-radius:var(--rpill); text-decoration:none; font-size:1rem;
            border:1px solid var(--line); background:var(--bg); line-height:1; }
@@ -301,6 +306,15 @@ a.whoami:hover { border-color:var(--accent); }
 .fb-badge { position:absolute; top:-.35rem; right:-.35rem; min-width:1.05rem; height:1.05rem; padding:0 .25rem;
             border-radius:999px; background:var(--accent); color:var(--on-accent); font-size:.66rem;
             font-weight:800; display:flex; align-items:center; justify-content:center; }
+.notif-menu { position:absolute; right:0; top:calc(100% + 6px); z-index:40; min-width:250px; max-width:320px;
+              background:var(--surface); border:1px solid var(--line); border-radius:var(--r2);
+              box-shadow:var(--shadow-md); padding:.35rem; display:flex; flex-direction:column; }
+.notif-item { display:block; padding:.55rem .6rem; border-radius:var(--r1); text-decoration:none;
+              color:var(--ink); font-size:.84rem; line-height:1.35; }
+.notif-item:hover { background:var(--bg); color:var(--accent); }
+.notif-item:focus-visible { outline:none; box-shadow:var(--ring); }
+.notif-item + .notif-item { border-top:1px solid var(--line); margin-top:.1rem; padding-top:.6rem; }
+.notif-empty { padding:.5rem .6rem; color:var(--soft); font-size:.82rem; }
 
 /* display-settings popover (topnav + public) — theme + text size */
 .settings { position:relative; }

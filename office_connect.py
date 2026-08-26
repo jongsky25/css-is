@@ -911,18 +911,14 @@ def _approvals_waiting(conn, user):
     work-arrangement queues — the two share one chief gate
     (storage.user_is_approving_chief / its user_is_wellness_chief alias), so
     an AWA approver and a wellness approver are the same person here. None
-    for anyone who isn't an approving chief, and None when both queues are
-    empty, so callers can treat "nothing to show" as a single falsy check.
+    when both queues are empty (including for anyone who isn't an approving
+    chief), so callers can treat "nothing to show" as a single falsy check.
 
-    Reuses list_wellness_approvals / list_work_arrangement_approvals — the
-    exact functions the queue pages themselves call — so this count can never
-    promise something the queue doesn't have. Queues are small (pending
-    requests, not history), so counting via the list is cheap enough to run
-    on every home-page load for a chief."""
-    if not st.user_is_approving_chief(conn, user):
-        return None
-    wellness = len(st.list_wellness_approvals(conn, user))
-    awa = len(st.list_work_arrangement_approvals(conn, user))
+    storage.pending_approval_counts is the single source of truth here — the
+    nav bell (app.py's auth middleware) calls the same function, so the two
+    can never disagree about what's waiting."""
+    counts = st.pending_approval_counts(conn, user)
+    wellness, awa = counts["wellness"], counts["awa"]
     if not (wellness or awa):
         return None
     return {"wellness": wellness, "awa": awa, "total": wellness + awa}

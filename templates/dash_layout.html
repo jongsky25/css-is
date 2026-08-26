@@ -10,6 +10,7 @@
 {% block head %}{% endblock %}
 </head>
 <body>
+{% from "_components.html" import notif_bell %}
 <a class="skip-link" href="#maincontent">Skip to content</a>
 {% set u = request.state.user %}
 {% set path = request.url.path %}
@@ -139,7 +140,7 @@
       </details>
       {% endif %}
       {% if u %}
-      <a class="fb-bell{{ ' has-unread' if request.state.feedback_unread }}" href="/my/feedback" title="Notifications — updates on your feedback" aria-label="Notifications{{ ' — %d new update(s) on your feedback'|format(request.state.feedback_unread) if request.state.feedback_unread else ' — updates on your feedback' }}">🔔{% if request.state.feedback_unread %}<span class="fb-badge">{{ request.state.feedback_unread }}</span>{% endif %}</a>
+      {{ notif_bell(request.state.notifications, request.state.notif_count) }}
       <a class="whoami" href="/me" title="My profile — {{ ROLE_LABELS.get(u.role, u.role) }}">{{ u.username }} · {{ ROLE_LABELS.get(u.role, u.role) }}</a>
       <a href="/logout" class="logout">Log out</a>{% endif %}
     </div>

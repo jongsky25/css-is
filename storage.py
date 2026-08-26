@@ -511,6 +511,15 @@ def _add_missing_columns(conn):
         if "bureau_access" not in au_cols:
             conn.execute("ALTER TABLE admin_user ADD COLUMN bureau_access TEXT "
                          "NOT NULL DEFAULT ''")
+        # When this account last opened its own wellness / work-arrangement hub —
+        # the requester-side twin of spot_feedback.submitter_seen_at. Drives the
+        # nav bell's "your request was decided" notice: a decided row newer than
+        # this timestamp is unseen. NULL (never opened) counts as "everything
+        # decided so far is unseen", same convention as submitter_seen_at.
+        if "wellness_seen_at" not in au_cols:
+            conn.execute("ALTER TABLE admin_user ADD COLUMN wellness_seen_at TEXT")
+        if "wa_seen_at" not in au_cols:
+            conn.execute("ALTER TABLE admin_user ADD COLUMN wa_seen_at TEXT")
         conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_admin_user_rp "
                      "ON admin_user(rp_id) WHERE rp_id IS NOT NULL")
     # Respondent demographics captured at Type-2 pre-registration. These are NON-PII
@@ -5519,6 +5528,23 @@ def user_is_approving_chief(conn, user):
     return bool(row) and _org_rank(row[0], row[1]) >= 1
 
 
+def pending_approval_counts(conn, user):
+    """{'wellness': n, 'awa': n} — items in the two approval queues actually
+    routed to this user right now. {'wellness':0,'awa':0} for anyone who isn't
+    an approving chief, so callers never have to check user_is_approving_chief
+    themselves first.
+
+    Single source of truth for every place that teases "something's waiting on
+    you" — the home page banner and the nav bell both call this, so neither can
+    ever show a number the real queue (list_wellness_approvals /
+    list_work_arrangement_approvals — the exact functions the queue pages
+    themselves call) disagrees with."""
+    if not user_is_approving_chief(conn, user):
+        return {"wellness": 0, "awa": 0}
+    return {"wellness": len(list_wellness_approvals(conn, user)),
+            "awa": len(list_work_arrangement_approvals(conn, user))}
+
+
 def user_can_view_work_arrangement_schedule(conn, user):
     """Who may open the team schedule and download ANNEX C.
 
@@ -5924,6 +5950,28 @@ def _mine_or_orphaned(conn, user, rows, subject_of):
         if user["id"] in approvers or (is_admin and not approvers):
             out.append(r)
     return out
+
+
+def unseen_wellness_decisions(conn, user_id):
+    """Statuses ('approved'/'denied') of MY OWN wellness break requests decided
+    since I last opened /wellness, newest first — empty if none. The requester
+    side of the approvals queue: what happened to what I filed, feeding the nav
+    bell the same way count_unread_feedback feeds it for spot feedback."""
+    rows = conn.execute(
+        "SELECT w.status FROM wellness_claim w JOIN admin_user a ON a.id = w.user_id "
+        "WHERE w.user_id=? AND w.status IN ('approved','denied') "
+        "AND w.decided_at IS NOT NULL "
+        "AND (a.wellness_seen_at IS NULL OR w.decided_at > a.wellness_seen_at) "
+        "ORDER BY w.decided_at DESC", (user_id,)).fetchall()
+    return [r[0] for r in rows]
+
+
+def mark_wellness_seen(conn, user_id):
+    """Stamp now as this account's last look at /wellness — clears the nav
+    bell's 'your break was decided' notice."""
+    conn.execute("UPDATE admin_user SET wellness_seen_at=? WHERE id=?",
+                 (tz.now_iso(), user_id))
+    conn.commit()
 
 
 def decide_wellness_claim(conn, claim_id, user, action, note=None):
@@ -7177,6 +7225,27 @@ def list_work_arrangement_approvals(conn, user):
     for w in out:
         w["coverage_flag"] = work_arrangement_coverage_flag(conn, w)
     return out
+
+
+def unseen_work_arrangement_decisions(conn, user_id):
+    """Statuses ('approved'/'denied') of MY OWN work-arrangement requests
+    decided since I last opened /work-arrangement, newest first — empty if
+    none. See unseen_wellness_decisions — same idea, the AWA twin."""
+    rows = conn.execute(
+        "SELECT w.status FROM work_arrangement w JOIN admin_user a ON a.id = w.user_id "
+        "WHERE w.user_id=? AND w.status IN ('approved','denied') "
+        "AND w.decided_at IS NOT NULL "
+        "AND (a.wa_seen_at IS NULL OR w.decided_at > a.wa_seen_at) "
+        "ORDER BY w.decided_at DESC", (user_id,)).fetchall()
+    return [r[0] for r in rows]
+
+
+def mark_work_arrangement_seen(conn, user_id):
+    """Stamp now as this account's last look at /work-arrangement — clears the
+    nav bell's 'your request was decided' notice."""
+    conn.execute("UPDATE admin_user SET wa_seen_at=? WHERE id=?",
+                 (tz.now_iso(), user_id))
+    conn.commit()
 
 
 # ---- section coverage — advice, never a block ------------------------------
