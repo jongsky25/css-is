@@ -52,6 +52,28 @@
 {% if info %}<div class="flash info" role="status">{{ info }}</div>{% endif %}
 {%- endmacro %}
 
+{% macro notif_bell(items, count) -%}
+{# The nav bell — a popover of everything waiting on this account: unread spot-
+   feedback replies, approvals queued for them as a chief, and decisions on
+   their own wellness/AWA requests they haven't seen yet. `items` is
+   request.state.notifications ({text, url, count}); `count` is the badge
+   total. Same details/summary popover mechanics as the display-settings and
+   help menus, with its own chrome (.notif-menu/.notif-item in app.css). #}
+<details class="fb-bell-wrap">
+  <summary class="fb-bell{{ ' has-unread' if count }}" title="Notifications"
+           aria-label="Notifications{{ ' — %d new'|format(count) if count else '' }}">🔔{% if count %}<span class="fb-badge">{{ count }}</span>{% endif %}</summary>
+  <div class="notif-menu">
+    {% if items %}
+      {% for n in items %}
+      <a class="notif-item" href="{{ n.url }}">{{ n.text }}</a>
+      {% endfor %}
+    {% else %}
+      <div class="notif-empty">Nothing new.</div>
+    {% endif %}
+  </div>
+</details>
+{%- endmacro %}
+
 {% macro error_summary(errors) -%}
 {# errors: list of strings OR dict {field: message} #}
 {% if errors %}

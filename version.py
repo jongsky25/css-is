@@ -17,10 +17,24 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.72"
+APP_VERSION = "2.73"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.73",
+        "date": "August 26, 2026",
+        "summary": "Approvers of wellness breaks or work arrangements now see "
+                   "what's waiting on them without opening the queue first.",
+        "changes": [
+            "If you approve wellness breaks or work arrangements, the home "
+            "page now shows how many requests are waiting for your "
+            "decision, with a link straight to them.",
+            "The notification bell (🔔) shows that same count from any "
+            "page, and now also tells you once your own wellness break or "
+            "work arrangement request has been approved or denied.",
+        ],
+    },
     {
         "version": "2.72",
         "date": "August 24, 2026",
