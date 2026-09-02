@@ -17,10 +17,29 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.73"
+APP_VERSION = "2.74"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.74",
+        "date": "September 2, 2026",
+        "summary": "An alternative work arrangement is now one day a week, "
+                   "counted by the calendar week rather than by the period.",
+        "changes": [
+            "You can only have one work-from-home or day-off in any one "
+            "week (Monday to Friday). Regular on-site weeks are not "
+            "affected.",
+            "This is now counted across the 15th/16th split. If Monday the "
+            "14th is your work-from-home day, the 16th, 17th and 18th are "
+            "in the same week and cannot be — even though they are filed "
+            "for under the next period.",
+            "If a day is already taken, filing says which week it clashes "
+            "with and which day you already have, so you can pick another "
+            "one. Arrangements approved before this change stay as they "
+            "are.",
+        ],
+    },
     {
         "version": "2.73",
         "date": "August 26, 2026",

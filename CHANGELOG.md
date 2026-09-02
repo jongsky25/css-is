@@ -1,5 +1,67 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-02 (v2.74 — one alternative work arrangement per calendar week)
+
+Reported by the author against the September calendar: filing is one row per
+person per half-month period, and `ux_work_arrangement_approved` /
+`ux_work_arrangement_pending` enforce that — but a period boundary falls in the
+MIDDLE of a working week. September 1-15 and September 16-30 both own part of
+the week of the 14th, so "Monday WFH" for the first half and "Wednesday WFH"
+for the second half are two separate, individually legal filings that together
+put two alternative work arrangement days into one week. Nothing in the module
+looked across the boundary, because nothing in the module was framed in weeks.
+
+**`storage.py`** — `_wa_install_week_guard()` adds two GENERATED (VIRTUAL)
+columns to `work_arrangement`, `week_head` and `week_tail`: the Mondays of the
+first and last calendar weeks the nominated weekday actually falls in inside its
+period. Derived in SQL from `period_start` and `weekday` rather than stored, so
+they cannot drift out of step with the filing — the same reasoning `_wa_remarks`
+gives for deriving the Remarks cell. Note they are only visible to
+`PRAGMA table_xinfo`, not `table_info`.
+
+Because periods never overlap, the later filing's first week is the only one
+that can meet the earlier filing's last week, so comparing the two ends of each
+range decides the question exactly — no need to enumerate the weeks between.
+That is what `trg_wa_one_per_week_ins` / `_upd` do (BEFORE INSERT and BEFORE
+UPDATE, guarded on `weekday IS NOT NULL AND status IN ('pending','approved')`),
+and `work_arrangement_week_conflict()` reads the same two columns to find the
+clashing row for a message a person can act on. `work_arrangement_weeks()` and
+`work_arrangement_week_label()` are the Python twins.
+
+Wired in at both ends the author asked for, plus the database: filing
+(`create_work_arrangement`), changing (`request_work_arrangement_change`,
+judged on the day it ASKS for, since a change can walk into a boundary week the
+filed day stayed clear of) and approval (`decide_work_arrangement`) all call
+`_wa_check_week_free()` first; the trigger is the backstop for any path that
+does not.
+
+Deliberate calls:
+- **A pending filing holds its week** (`_WA_LIVE`, as the per-period rule
+  already does). Letting a second through would only queue a clash for the
+  chief. Denied, withdrawn and superseded rows release it again.
+- **REG is exempt at both ends** — it nominates no day, so it neither takes a
+  week nor is refused one.
+- **Rows filed before this rule are left alone.** The triggers judge writes, not
+  what is already on the books; an approval that would newly double up a week is
+  refused, which is how such a pair gets cleared rather than compounded.
+- **A change request is not its own clash** — the row it supersedes sits in the
+  same period, and same-period rows are excluded (the per-period indexes own
+  that case), otherwise nothing could ever be changed.
+
+**`templates/work_arrangement_file.html`** — the weekday picker's help line now
+states the rule before someone hits the refusal.
+
+**`tests/test_work_arrangement.py`** — a new section covering the September
+example end to end, the weekday that stops short of the boundary week (Wednesday
+in September 1-15 ends on the 9th and legitimately leaves the week of the 14th
+free), CWW-vs-WFH, per-person scope, pending/withdrawn/denied, the change and
+approval gates, both triggers, the refusal's wording, the HTTP path, and the
+generated columns held to the Python arithmetic across year ends and a leap
+February. 154 pass in that file; the 6 failures in the wider suite
+(`test_ai_report_draft`, `test_home_feeds`, `test_integrity`, `test_search`)
+predate this branch and are the demo `setup_db.py` seed standing in for the
+delivered database.
+
 ## 2026-08-26 (v2.73 — approvals visibility on the home page and nav bell)
 
 Reported directly by a chief who approves both wellness breaks and Alternative
