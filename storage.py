@@ -346,7 +346,94 @@ def init_db(conn):
         ON work_arrangement_noawa(user_id) WHERE effective_to IS NULL;
     """)
     _add_missing_columns(conn)
+    _wa_install_week_guard(conn)
     conn.commit()
+
+
+# --- the "one AWA day a week" guard, in SQL ---------------------------------
+#
+# A nominated weekday recurs every week of its period, so a filing occupies a
+# RANGE of calendar weeks. Two filings clash when those ranges overlap. Within
+# one period ux_work_arrangement_approved/_pending already allow only a single
+# filing, so the only clash left is ACROSS periods — and it is a real one,
+# because a half-month boundary cuts through the middle of a working week:
+# Monday the 14th belongs to the 1st-15th period while Wednesday the 16th
+# belongs to the 16th-30th one, yet both fall in the same Mon-Fri week.
+#
+# Since periods never overlap, the later filing's FIRST week is the only one
+# that can meet the earlier filing's LAST week — so comparing just the two ends
+# of each range decides it exactly, with no need to enumerate the weeks between.
+#
+# Both ends are GENERATED columns rather than stored ones: derived from
+# period_start and weekday on every read, they cannot drift out of step with the
+# filing the way a cached copy could — the same reasoning as _wa_remarks.
+
+# Monday of the week holding the FIRST occurrence of `weekday` in the period:
+# step forward from period_start to that weekday, then back to its Monday.
+_WA_WEEK_HEAD_SQL = (
+    "date(date(period_start, '+' || "
+    "((weekday - (CAST(strftime('%w', period_start) AS INTEGER) + 6) % 7 + 7) % 7)"
+    " || ' days'), '-' || weekday || ' days')")
+
+# The period's last day: the 15th, or whatever the month's real end is.
+_WA_PERIOD_END_SQL = (
+    "CASE WHEN substr(period_start, 9, 2) = '01' "
+    "THEN date(period_start, '+14 days') "
+    "ELSE date(period_start, 'start of month', '+1 month', '-1 day') END")
+
+# Monday of the week holding the LAST occurrence: step back from the period's
+# end to that weekday, then back to its Monday.
+_WA_WEEK_TAIL_SQL = (
+    f"date(date({_WA_PERIOD_END_SQL}, '-' || "
+    f"(((CAST(strftime('%w', {_WA_PERIOD_END_SQL}) AS INTEGER) + 6) % 7"
+    " - weekday + 7) % 7) || ' days'), '-' || weekday || ' days')")
+
+# The refusal a person should never see: create_work_arrangement and
+# decide_work_arrangement both check first and raise something explanatory. This
+# is the backstop for any path that does not.
+_WA_WEEK_GUARD_BODY = """
+      SELECT RAISE(ABORT,
+                   'work_arrangement: one alternative work arrangement per week')
+       WHERE EXISTS (
+             SELECT 1 FROM work_arrangement w
+              WHERE w.user_id = NEW.user_id
+                AND w.status IN ('pending', 'approved')
+                AND w.weekday IS NOT NULL
+                -- Same period is the other indexes' business, and a change
+                -- request legitimately sits alongside the row it replaces.
+                AND w.period_start <> NEW.period_start
+                AND w.id <> NEW.id
+                AND (w.week_head IN (NEW.week_head, NEW.week_tail)
+                  OR w.week_tail IN (NEW.week_head, NEW.week_tail)));
+"""
+
+
+def _wa_install_week_guard(conn):
+    """Add the two derived week-boundary columns and the trigger that enforces
+    one alternative work arrangement per calendar week.
+
+    Separate from _add_missing_columns because a GENERATED column cannot be
+    written in CREATE TABLE for a database that already exists — it has to be
+    ALTERed in either way — so the columns and the trigger that reads them are
+    installed together, in one place, for new and old databases alike."""
+    # table_xinfo, not table_info: the latter hides VIRTUAL generated columns,
+    # so it would report them missing on every boot and re-ALTER them.
+    cols = {row[1] for row in conn.execute("PRAGMA table_xinfo(work_arrangement)")}
+    if "week_head" not in cols:
+        conn.execute("ALTER TABLE work_arrangement ADD COLUMN week_head TEXT "
+                     f"GENERATED ALWAYS AS ({_WA_WEEK_HEAD_SQL}) VIRTUAL")
+    if "week_tail" not in cols:
+        conn.execute("ALTER TABLE work_arrangement ADD COLUMN week_tail TEXT "
+                     f"GENERATED ALWAYS AS ({_WA_WEEK_TAIL_SQL}) VIRTUAL")
+    # REG nominates no day and is exempt; a denied, withdrawn or superseded row
+    # has already let its week go. Filings that predate this rule are left
+    # exactly as they stand — the guard only judges what is written from now on.
+    for name, event in (("ins", "INSERT"), ("upd", "UPDATE")):
+        conn.execute(
+            f"CREATE TRIGGER IF NOT EXISTS trg_wa_one_per_week_{name} "
+            f"BEFORE {event} ON work_arrangement "
+            "WHEN NEW.weekday IS NOT NULL AND NEW.status IN ('pending', 'approved') "
+            f"BEGIN {_WA_WEEK_GUARD_BODY} END")
 
 
 def _add_missing_columns(conn):
@@ -6792,6 +6879,33 @@ def work_arrangement_deadline_label(period_start):
 
 # ---- validation + derived text --------------------------------------------
 
+def work_arrangement_weeks(period_start, weekday):
+    """(first, last) Monday of the calendar weeks a nominated weekday actually
+    falls in inside a period — the Python twin of the week_head/week_tail
+    columns, and what the readable refusals are built from.
+
+    Not simply the period's own first and last week: a Wednesday filing for
+    September 1-15, 2026 runs out on the 9th, so it never reaches the week the
+    15th sits in and leaves that week free for the period after it.
+    """
+    days = [d for d, wd in work_arrangement_period_workdays(period_start)
+            if wd == weekday]
+    if not days:                       # Mon-Fri always recurs in a half-month
+        return None, None
+    return (days[0] - timedelta(days=weekday), days[-1] - timedelta(days=weekday))
+
+
+def work_arrangement_week_label(monday):
+    """'September 14-18, 2026' — the working week, named the way the period
+    labels are, so a refusal about a week reads like the rest of the module."""
+    fri = monday + timedelta(days=4)
+    if monday.month == fri.month:
+        return (f"{_MONTH_NAMES[monday.month - 1]} {monday.day}-{fri.day}, "
+                f"{fri.year}")
+    return (f"{_MONTH_NAMES[monday.month - 1]} {monday.day} - "
+            f"{_MONTH_NAMES[fri.month - 1]} {fri.day}, {fri.year}")
+
+
 def _wa_remarks(arrangement, weekday, note=None):
     """The ANNEX C Remarks cell. The source file's hidden dropdown list is just
     weekday x {Day off, WFH}, so this is derived from the two stored columns and
@@ -6942,6 +7056,67 @@ def my_pending_work_arrangement(conn, user_id, period_start):
     return _wa_one_by_status(conn, user_id, period_start, "pending")
 
 
+def work_arrangement_week_conflict(conn, user_id, period_start, arrangement,
+                                   weekday, exclude_id=None):
+    """The live filing in ANOTHER period whose nominated day shares a Mon-Fri
+    week with the one described, or None. The returned row carries `week_start`
+    (the Monday they collide in) and `clash_date` (the day already spoken for),
+    so the caller can say which week and which day rather than just "no".
+
+    An alternative work arrangement is one day a week. Inside a period that is
+    already true — there is only ever one filing — but a half-month period ends
+    mid-week, so the week of the 14th to the 18th is half in one period and half
+    in the next, and two separate filings can land in it. This is the only place
+    that can happen, and the only thing this looks for.
+
+    REG nominates no day and never conflicts, in either direction."""
+    if arrangement not in _WA_DAY_TYPES or weekday is None:
+        return None
+    head, tail = work_arrangement_weeks(period_start, weekday)
+    if head is None:
+        return None
+    qs = ",".join("?" * len(_WA_LIVE))
+    sql = (_WA_SELECT + f" WHERE w.user_id = ? AND w.status IN ({qs}) "
+           "AND w.weekday IS NOT NULL AND w.period_start <> ? "
+           "AND (w.week_head IN (?, ?) OR w.week_tail IN (?, ?))")
+    args = [user_id, *_WA_LIVE, period_start,
+            head.isoformat(), tail.isoformat(),
+            head.isoformat(), tail.isoformat()]
+    if exclude_id is not None:        # re-checking a row against everything else
+        sql += " AND w.id <> ?"
+        args.append(exclude_id)
+    rows = conn.execute(sql + " ORDER BY w.period_start LIMIT 1", args).fetchall()
+    if not rows:
+        return None
+    other = _wa_hydrate(rows[0])
+    o_head, o_tail = work_arrangement_weeks(other["period_start"],
+                                            other["weekday"])
+    shared = o_head if o_head in (head, tail) else o_tail
+    other["week_start"] = shared
+    other["clash_date"] = shared + timedelta(days=other["weekday"])
+    return other
+
+
+def _wa_check_week_free(conn, user_id, period_start, arrangement, weekday,
+                        exclude_id=None):
+    """Raise the refusal a person can act on if this filing would be their
+    second alternative work arrangement day in one week."""
+    other = work_arrangement_week_conflict(conn, user_id, period_start,
+                                           arrangement, weekday, exclude_id)
+    if not other:
+        return
+    standing = ("already approved" if other["status"] == "approved"
+                else "already waiting for approval")
+    raise ValueError(
+        f"That would be your second work arrangement day in the week of "
+        f"{work_arrangement_week_label(other['week_start'])}. "
+        f"{_wa_remarks(other['arrangement'], other['weekday'])} on "
+        f"{work_arrangement_date_label(other['clash_date'])} is {standing} "
+        f"under {other['period_label']}, and that week runs across both "
+        f"periods. An alternative work arrangement is one day a week — pick a "
+        f"weekday outside that week, or change the other filing first.")
+
+
 # ---- writes ---------------------------------------------------------------
 
 def create_work_arrangement(conn, user_id, period_start, arrangement,
@@ -6972,6 +7147,10 @@ def create_work_arrangement(conn, user_id, period_start, arrangement,
             f"You already have a work arrangement waiting for approval for "
             f"{work_arrangement_period_label(ps)}. Withdraw it first if you "
             f"want to file something different.")
+    # One AWA day a week, counting across the period boundary that splits a
+    # working week in two. A filing still waiting for approval holds its week:
+    # letting a second one through would only queue up a clash for the chief.
+    _wa_check_week_free(conn, user_id, ps, arrangement, weekday)
     cur = conn.execute(
         """INSERT INTO work_arrangement(user_id, period_start, arrangement,
                                         weekday, note, status, created_at)
@@ -7010,6 +7189,9 @@ def request_work_arrangement_change(conn, wa_id, user_id, arrangement,
     if arrangement == current["arrangement"] and weekday == current["weekday"]:
         raise ValueError("That is the arrangement you already have — pick a "
                          "different one.")
+    # Changing a day can walk INTO a boundary week the old day stayed clear of,
+    # so the weekly rule is checked against the new day, not the filed one.
+    _wa_check_week_free(conn, user_id, ps, arrangement, weekday)
     cur = conn.execute(
         """INSERT INTO work_arrangement(user_id, period_start, arrangement,
                                         weekday, note, status, supersedes_id,
@@ -7191,6 +7373,14 @@ def decide_work_arrangement(conn, wa_id, user, action, note=None):
         raise ValueError("Unknown decision.")
     if not is_approver_for(conn, user, row["user_id"]):
         raise PermissionError("That request isn't yours to decide.")
+    # Filing already refuses a second day in one week, so this should never
+    # fire — unless the clashing row predates the rule or was written around it.
+    # Better the approver learns that here than signs off a schedule the annex
+    # would then have to print twice in one week.
+    if action == "approve":
+        _wa_check_week_free(conn, row["user_id"], row["period_start"],
+                            row["arrangement"], row["weekday"],
+                            exclude_id=wa_id)
     status = "approved" if action == "approve" else "denied"
     note = (note or "").strip() or None
     try:
