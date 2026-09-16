@@ -1,5 +1,21 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-16 (v2.77 — the profile-photo picker never opened on some devices)
+
+Reported by the user: mobile users couldn't choose their own photo. The
+self-service photo picker on `/me` and `/welcome` wrapped its hidden
+`<input type="file">` in `<span class="lbl">` instead of `<label class="lbl">`
+— a plain `<span>` has no native click-proxy behavior for a nested input, so
+tapping the "Choose photo" text never opened the picker. There was no
+mobile-specific CSS (media query, `pointer-events`, `touch-action`) at fault;
+it was plain markup. The admin-facing pickers (`staff_form.html`,
+`directory.html`) already used the correct `<label>` pattern, which is why
+only the employee self-service pages — the ones people actually use from a
+phone — looked broken.
+
+**`templates/me.html`** / **`templates/welcome.html`** — `<span class="lbl">`
+→ `<label class="lbl">` around each photo-picker's hidden file input.
+
 ## 2026-09-16 (v2.76 — the reopened period was missing from the filing form)
 
 Reported by the author against the live site right after v2.75 shipped: an
