@@ -344,6 +344,17 @@ def init_db(conn):
     -- of past reasons accumulates instead of being overwritten.
     CREATE UNIQUE INDEX IF NOT EXISTS ux_wa_noawa_live
         ON work_arrangement_noawa(user_id) WHERE effective_to IS NULL;
+
+    -- An admin's temporary exception to the Friday filing deadline: reopens
+    -- one period for everyone, so people can file or change their own
+    -- arrangement for it past the normal cutoff. One row per period; closing
+    -- it again deletes the row rather than leaving an "off" one lying around.
+    CREATE TABLE IF NOT EXISTS work_arrangement_reopen (
+        period_start TEXT PRIMARY KEY,
+        reopened_by  INTEGER REFERENCES admin_user(id),
+        reopened_at  TEXT,
+        note         TEXT                  -- admin's reason, shown to filers
+    );
     """)
     _add_missing_columns(conn)
     _wa_install_week_guard(conn)
@@ -6939,11 +6950,64 @@ def _wa_validate(arrangement, weekday):
     return arrangement, weekday
 
 
-def _wa_check_period_open(period_start, d=None):
+def get_work_arrangement_reopen(conn, period_start):
+    """The admin override row for this period, or None if it isn't reopened."""
+    row = conn.execute(
+        "SELECT period_start, reopened_by, reopened_at, note "
+        "FROM work_arrangement_reopen WHERE period_start=?", (period_start,)
+    ).fetchone()
+    if not row:
+        return None
+    return {"period_start": row[0], "reopened_by": row[1],
+            "reopened_at": row[2], "note": row[3]}
+
+
+def list_work_arrangement_reopens(conn):
+    """Every period an admin has reopened, most recent period first — for the
+    admin console and for folding into the periods a person sees as fileable."""
+    rows = conn.execute(
+        "SELECT r.period_start, r.reopened_by, r.reopened_at, r.note, "
+        "       COALESCE(rp.name, u.username, '') AS reopened_by_name "
+        "FROM work_arrangement_reopen r "
+        "LEFT JOIN admin_user u ON u.id = r.reopened_by "
+        "LEFT JOIN resource_person rp ON rp.id = u.rp_id "
+        "ORDER BY r.period_start DESC"
+    ).fetchall()
+    return [{"period_start": r[0], "reopened_by": r[1], "reopened_at": r[2],
+             "note": r[3], "reopened_by_name": r[4]} for r in rows]
+
+
+def set_work_arrangement_reopen(conn, period_start, admin_user_id, note=None):
+    """Reopen `period_start` for filing again, past its own Friday deadline.
+    Setting it again (e.g. to change the note) just refreshes who and when."""
+    conn.execute(
+        "INSERT INTO work_arrangement_reopen(period_start, reopened_by, "
+        "                                    reopened_at, note) "
+        "VALUES (?,?,?,?) "
+        "ON CONFLICT(period_start) DO UPDATE SET "
+        "  reopened_by=excluded.reopened_by, reopened_at=excluded.reopened_at, "
+        "  note=excluded.note",
+        (period_start, admin_user_id, tz.now_iso(),
+         (note or "").strip() or None))
+    conn.commit()
+
+
+def clear_work_arrangement_reopen(conn, period_start):
+    """Close a period back up — undoes set_work_arrangement_reopen."""
+    conn.execute("DELETE FROM work_arrangement_reopen WHERE period_start=?",
+                 (period_start,))
+    conn.commit()
+
+
+def _wa_check_period_open(conn, period_start, d=None):
     """Return the period key if it is still accepting filings, else raise with a
     message that names BOTH the deadline that was missed and the next period the
     person can still file for — a refusal that doesn't say what to do instead is
-    just a dead end."""
+    just a dead end.
+
+    An admin's reopen override (work_arrangement_reopen) short-circuits this:
+    a period an admin has temporarily reopened is accepted even though its own
+    Friday deadline has passed."""
     d = d or tz.today_local()
     ps = (period_start or "").strip()
     try:
@@ -6951,7 +7015,7 @@ def _wa_check_period_open(period_start, d=None):
     except ValueError:
         raise ValueError("Pick a valid half-month period.")
     open_ps = work_arrangement_open_periods(d)
-    if ps in open_ps:
+    if ps in open_ps or get_work_arrangement_reopen(conn, ps):
         return ps
     if open_ps and ps > open_ps[-1]:
         raise ValueError(
@@ -7129,7 +7193,7 @@ def create_work_arrangement(conn, user_id, period_start, arrangement,
     both the employee and the approving chief see, never a block — see
     work_arrangement_coverage_note."""
     arrangement, weekday = _wa_validate(arrangement, weekday)
-    ps = _wa_check_period_open(period_start)
+    ps = _wa_check_period_open(conn, period_start)
     # Refuse rather than silently dropping the tag: someone stated a reason they
     # have no arrangement, and deleting that as a side effect of an unrelated
     # action is the kind of surprise that costs trust in the record.
@@ -7182,7 +7246,7 @@ def request_work_arrangement_change(conn, wa_id, user_id, arrangement,
             "That request hasn't been approved yet — withdraw it and file "
             "again instead of changing it.")
     arrangement, weekday = _wa_validate(arrangement, weekday)
-    ps = _wa_check_period_open(current["period_start"])
+    ps = _wa_check_period_open(conn, current["period_start"])
     if my_pending_work_arrangement(conn, user_id, ps):
         raise ValueError(
             "You already have a change waiting for approval for this period.")

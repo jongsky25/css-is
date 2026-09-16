@@ -641,6 +641,11 @@ NAV_GROUPS = [
         {"key": "sharing", "url": "/admin/sharing", "label": "Sharing",
          "hint": "Public resource sharing switch",
          "kw": "sharing public switch resource share toggle external", "cap": "manage_users"},
+        {"key": "wa_reopen", "url": "/admin/work-arrangement", "label": "AWA filing",
+         "hint": "Temporarily reopen a closed filing period",
+         "kw": "awa work arrangement reopen deadline override filing period cww wfh "
+               "annex c closed open late",
+         "cap": "manage_users"},
     ]},
 ]
 
@@ -13935,7 +13940,9 @@ def work_arrangement_hub(request: Request, ok: str = "", err: str = ""):
             "pending": st.my_pending_work_arrangement(conn, user["id"], now_ps),
         }
         periods = []
-        for ps in st.work_arrangement_open_periods():
+        open_ps = st.work_arrangement_open_periods()
+        seen_ps = set(open_ps)
+        for ps in open_ps:
             periods.append({
                 "period_start": ps,
                 "label": st.work_arrangement_period_label(ps),
@@ -13945,7 +13952,30 @@ def work_arrangement_hub(request: Request, ok: str = "", err: str = ""):
                               - _today_local()).days,
                 "approved": st.my_work_arrangement_for(conn, user["id"], ps),
                 "pending": st.my_pending_work_arrangement(conn, user["id"], ps),
+                "reopened": False,
             })
+        # An admin's temporary reopen (see /admin/work-arrangement) puts an
+        # otherwise-closed period back on the hub too — that's the whole point
+        # of the override: people file it themselves, nobody files on their
+        # behalf.
+        for row in st.list_work_arrangement_reopens(conn):
+            ps = row["period_start"]
+            if ps in seen_ps:
+                continue
+            seen_ps.add(ps)
+            periods.append({
+                "period_start": ps,
+                "label": st.work_arrangement_period_label(ps),
+                "deadline": st.work_arrangement_deadline(ps),
+                "deadline_label": st.work_arrangement_deadline_label(ps),
+                "days_left": (st.work_arrangement_deadline(ps)
+                              - _today_local()).days,
+                "approved": st.my_work_arrangement_for(conn, user["id"], ps),
+                "pending": st.my_pending_work_arrangement(conn, user["id"], ps),
+                "reopened": True,
+                "reopen_note": row["note"] or "",
+            })
+        periods.sort(key=lambda p: p["period_start"])
         history = st.list_my_work_arrangements(conn, user["id"])
         # Opening the hub is "I looked at my requests" — clears the nav bell's
         # "your request was decided" notice, same as /my/feedback clears its own.
@@ -14194,6 +14224,78 @@ async def work_arrangement_decide(request: Request, wa_id: int):
         conn.close()
     return RedirectResponse(f"/work-arrangement/approvals?ok={quote(msg)}",
                             status_code=303)
+
+
+@app.get("/admin/work-arrangement", response_class=HTMLResponse)
+def admin_work_arrangement(request: Request, ok: str = "", err: str = ""):
+    """Lets an admin temporarily reopen a period whose Friday filing deadline
+    has already passed — the escape hatch for "I need to update my AWA but
+    the window already closed." Lists the current period plus a few before
+    it; periods still open on their own never need this and aren't shown."""
+    if (r := _forbid(request, "manage_users")):
+        return r
+    conn = get_conn()
+    try:
+        open_ps = set(st.work_arrangement_open_periods())
+        overrides = {row["period_start"]: row
+                     for row in st.list_work_arrangement_reopens(conn)}
+        periods, ps = [], st.work_arrangement_period()
+        for _ in range(4):
+            if ps not in open_ps:
+                ov = overrides.get(ps)
+                periods.append({
+                    "period_start": ps,
+                    "label": st.work_arrangement_period_label(ps),
+                    "deadline_label": st.work_arrangement_deadline_label(ps),
+                    "reopened": bool(ov),
+                    "reopen_note": (ov or {}).get("note") or "",
+                    "reopened_by_name": (ov or {}).get("reopened_by_name") or "",
+                    "reopened_at": (ov or {}).get("reopened_at") or "",
+                })
+            ps = st.work_arrangement_prev_period(ps)
+        periods.reverse()
+    finally:
+        conn.close()
+    return templates.TemplateResponse(request, "admin_work_arrangement.html", {
+        "periods": periods, "ok": ok, "err": err, "show_scope": False,
+        "nav_active": "wa_reopen",
+    })
+
+
+@app.post("/admin/work-arrangement/reopen")
+async def admin_work_arrangement_reopen(request: Request):
+    if (r := _forbid(request, "manage_users")):
+        return r
+    user = request.state.user
+    posted = await _posted(request)
+    period_start = (posted.get("period_start") or "").strip()
+    action = posted.get("action", "")
+    conn = get_conn()
+    try:
+        try:
+            date.fromisoformat(period_start)
+        except ValueError:
+            return RedirectResponse(
+                "/admin/work-arrangement?err=" + quote("Pick a valid period."),
+                status_code=303)
+        label = st.work_arrangement_period_label(period_start)
+        if action == "close":
+            st.clear_work_arrangement_reopen(conn, period_start)
+            _audit(request, conn, "work_arrangement_reopen_cleared",
+                   target_type="setting",
+                   summary=f"Closed the temporary reopen for {label}.")
+            msg = f"{label} is closed to filing again."
+        else:
+            note = (posted.get("note") or "").strip() or None
+            st.set_work_arrangement_reopen(conn, period_start, user["id"], note)
+            _audit(request, conn, "work_arrangement_reopen_set",
+                   target_type="setting",
+                   summary=f"Temporarily reopened {label} for filing.")
+            msg = f"{label} is reopened for filing."
+    finally:
+        conn.close()
+    return RedirectResponse(
+        "/admin/work-arrangement?ok=" + quote(msg), status_code=303)
 
 
 @app.get("/work-arrangement/schedule", response_class=HTMLResponse)
