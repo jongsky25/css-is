@@ -1,5 +1,48 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-16 (v2.78 — account creation/reset moves to emailed invite links)
+
+`HARDENING.md` item 3 ("Revert pilot auth → emailed invite links + SMTP") —
+the code half of it. `mailer.py`/`_invite_link`/`_reset_link` already existed
+but weren't wired up; new accounts were still handed the shared
+`auth.DEFAULT_PASSWORD` ("12345678") and `/forgot` just told users to ask an
+admin.
+
+**`app.py`** — `_provision_account` now creates the account pending
+(`active=False`, no password) and emails an invite link via
+`mailer.invite_message`/`mailer.send`, instead of hashing in the default
+password. `admin_users_reset_default` now emails a `_reset_link`
+(`mailer.reset_message`) rather than resetting the account back onto the
+default password — the existing password keeps working until the link is
+used, same as self-service `/forgot`. `_account_redirect` now also forwards
+`link` on the redirect so the Users page can show the raw link when
+`mailer.email_configured()` is false (SMTP not set up yet — nothing is lost,
+it just isn't emailed).
+
+**Templates** — `forgot.html` gets a real email-entry form (previously just
+static "ask your admin" text with no way to actually request a reset) that
+branches on whether SMTP is configured. `users.html`: added a `pending`
+("Invited · link not used yet") status pill + "Resend invite" action,
+relabeled "Reset password" to "Send reset link" with updated confirm copy,
+dropped the now-inaccurate temp-password lede text.
+
+**`auth.py`** — `DEFAULT_PASSWORD` kept only for accounts that still carry it
+(so the existing forced-reset-on-login path keeps working); comment updated
+to say it's legacy, not the provisioning path anymore.
+
+**Verified:** `tests/test_auth_rbac.py::test_admin_reset_sends_a_reset_link_and_keeps_old_password_until_used`
+replaces the old default-password-reset assertion (old password stays valid
+until the emailed link is followed); full `pytest tests/` run clean aside
+from pre-existing failures that need the real production `css_is.db` (not
+present in this checkout) — none touch auth/mailer/users. Version bumped to
+**2.78**.
+
+Still open (can't be done from here — needs the Space owner): add
+`CSS_SMTP_HOST`/`CSS_SMTP_PORT`/`CSS_SMTP_USER`/`CSS_SMTP_PASS`/`CSS_SMTP_FROM`/`CSS_SMTP_TLS`
+secrets to the Hugging Face Space. `mailer.py` is provider-agnostic — Brevo's
+SMTP relay (`smtp-relay.brevo.com:587`) or any other SMTP provider works with
+no further code change.
+
 ## 2026-09-16 (v2.77 — the profile-photo picker never opened on some devices)
 
 Reported by the user: mobile users couldn't choose their own photo. The

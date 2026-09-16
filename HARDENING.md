@@ -56,28 +56,25 @@ confirm you stay logged in (proves `CSS_SESSION_SECRET` is sticking).
 
 ---
 
-## 3. Revert pilot auth → emailed invite links + SMTP  (code + your SMTP creds)
+## 3. Revert pilot auth → emailed invite links + SMTP  (your SMTP creds)
 
-**Current pilot behaviour** (`auth.DEFAULT_PASSWORD = "12345678"` + `must_change`):
-new/reset accounts get the known temp password, so anyone who knows the
-convention can sign into a freshly-created account until the user sets their own.
-Acceptable for an internal LAN pilot **only**.
+**Done — code side:** account creation and admin "Reset password" now email an
+invite/reset link (`_provision_account`, `/admin/users/{id}/reset-default` in
+[app.py](app.py)) instead of handing out `auth.DEFAULT_PASSWORD = "12345678"`.
+Self-service `/forgot` now has a real form and sends a reset link too. Until
+SMTP is configured, `mailer.send()` can't deliver — the link is shown to the
+admin on the Users page instead (never silently lost).
 
-To productionise (the invite-link machinery — `/set-password`, `mailer.py`,
-`_invite_link` — already exists, it just isn't the active path):
+**Still needed — your side:** add SMTP secrets to the Space (Settings →
+Variables and secrets) so `mailer.email_configured()` flips on and links
+actually get emailed: `CSS_SMTP_HOST`, `CSS_SMTP_PORT` (587), `CSS_SMTP_USER`,
+`CSS_SMTP_PASS`, `CSS_SMTP_FROM`, `CSS_SMTP_TLS` (1). Any SMTP-compatible
+provider works (e.g. Brevo's SMTP relay: host `smtp-relay.brevo.com`, port
+587, user = your Brevo login email, pass = your Brevo SMTP key). No code
+change needed — sending starts the moment `CSS_SMTP_HOST` is set.
 
-1. Add SMTP secrets to the Space (Settings → Variables and secrets):
-   `CSS_SMTP_HOST`, `CSS_SMTP_PORT` (587), `CSS_SMTP_USER`, `CSS_SMTP_PASS`,
-   `CSS_SMTP_FROM`, `CSS_SMTP_TLS` (1).
-2. **Code change (ask Claude):** switch account creation
-   ([app.py](app.py) `~1070`) and "Reset password"
-   ([app.py](app.py) `~1232`) to **email an invite/reset link** instead of
-   setting `12345678`; point `/forgot` at the email flow rather than
-   "contact your administrator."
-3. Once live, stop handing out the default password entirely.
-
-This one needs your real SMTP credentials to test end-to-end, so it's best done
-when you're actually ready to cut over.
+Once live, restart/rebuild the Space and verify: invite a test account from
+`/admin/users` and confirm the email arrives.
 
 ---
 
@@ -85,5 +82,5 @@ when you're actually ready to cut over.
 
 - [ ] 1. HF token rotated
 - [ ] 2. `CSS_SESSION_SECRET`, `CSS_BASE_URL`, `CSS_SECURE_COOKIES` set on the Space
-- [ ] 3. Pilot auth reverted to invite links + SMTP
+- [ ] 3. Pilot auth reverted to invite links + SMTP (SMTP secrets still needed — code shipped)
 - [x] Cookie `Secure` support in code (`CSS_SECURE_COOKIES`, off by default) — shipped

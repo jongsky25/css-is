@@ -2267,9 +2267,10 @@ def _reset_link(request, uid, pw_hash):
 
 
 def _provision_account(conn, request, rp, role, inviter):
-    """Create an account for a directory staff member with the pilot temporary
-    password (must_change). No email/link needed: the admin tells the person the
-    default password and they set their own on first sign-in."""
+    """Create a pending account for a directory staff member and email them an
+    invite link to set their own password (no default password handed out).
+    If email isn't configured, the invite link is returned so the admin can
+    share it directly."""
     email = (rp.get("email") or "").strip()
     if not auth.valid_email(email):
         return {"ok": False, "msg": f"{rp.get('name', 'This person')} needs a valid email in the directory first."}
@@ -2279,10 +2280,12 @@ def _provision_account(conn, request, rp, role, inviter):
         return {"ok": False, "msg": "That email already has an account."}
     if st.get_admin_user_by_rp(conn, rp["id"]):
         return {"ok": False, "msg": "This staff member already has an account."}
-    h, salt = auth.hash_password(auth.DEFAULT_PASSWORD)
-    st.create_admin_user(conn, email, h, salt, role, created_by=inviter,
-                         rp_id=rp["id"], active=True, must_change=True)
-    return {"ok": True, "email": email}
+    uid = st.create_admin_user(conn, email, "", "", role, created_by=inviter,
+                               rp_id=rp["id"], active=False)
+    link = _invite_link(request, uid, "")
+    subj, body = mailer.invite_message(rp.get("name"), link, inviter)
+    result = mailer.send(email, subj, body)
+    return {"ok": True, "email": email, "sent": result["sent"], "link": link}
 
 
 @app.get("/set-password", response_class=HTMLResponse)
@@ -2392,7 +2395,7 @@ def admin_users(request: Request, err: str = "", link: str = "", msg: str = ""):
         "rows": rows, "standalone": standalone, "have": have, "total": len(rows),
         "roles": auth.ROLES, "role_labels": auth.ROLE_LABELS, "role_blurb": auth.ROLE_BLURB,
         "bureau_levels": st.BUREAU_ACCESS_LEVELS,
-        "email_configured": mailer.email_configured(), "default_password": auth.DEFAULT_PASSWORD,
+        "email_configured": mailer.email_configured(),
         "err": err, "link": link, "msg": msg, "show_scope": False, "nav_active": "",
     })
 
@@ -2401,7 +2404,10 @@ def _account_redirect(res):
     """Redirect back to the users page with a success or error message."""
     if not res.get("ok"):
         return RedirectResponse("/admin/users?err=" + quote(res["msg"]), status_code=303)
-    return RedirectResponse("/admin/users?msg=" + quote(res["msg"]), status_code=303)
+    url = "/admin/users?msg=" + quote(res["msg"])
+    if res.get("link"):
+        url += "&link=" + quote(res["link"])
+    return RedirectResponse(url, status_code=303)
 
 
 @app.post("/admin/users/invite")
@@ -2423,9 +2429,11 @@ async def admin_users_invite(request: Request):
         if res.get("ok"):
             _audit(request, conn, "create_account", target_type="user", target_id=res["email"],
                    summary=f"Created {role} account for {rp['name']} ({res['email']}) "
-                           f"with the temporary pilot password")
-            res["msg"] = (f"Account created for {res['email']}. Temporary password: "
-                          f"{auth.DEFAULT_PASSWORD} — they'll set their own on first sign-in.")
+                           f"and sent an invite link")
+            if res.get("sent"):
+                res["msg"] = f"Account created for {res['email']}. An invite email was sent so they can set their password."
+            else:
+                res["msg"] = f"Account created for {res['email']}. Email isn't configured — share this link with them to set their password:"
     finally:
         conn.close()
     return _account_redirect(res)
@@ -2433,8 +2441,9 @@ async def admin_users_invite(request: Request):
 
 @app.post("/admin/users/{user_id}/reset-default")
 async def admin_users_reset_default(request: Request, user_id: int):
-    """Forgot-password (pilot): reset an account back to the temporary password so
-    the person can sign in with it and choose a new one."""
+    """Admin-triggered password reset: email the account a reset link (same
+    mechanism as self-service /forgot). Their current password keeps working
+    until they follow the link and choose a new one."""
     if (r := _forbid(request, "manage_users")):
         return r
     conn = get_conn()
@@ -2442,12 +2451,16 @@ async def admin_users_reset_default(request: Request, user_id: int):
         u = st.get_admin_user_by_id(conn, user_id)
         if not u:
             return RedirectResponse("/admin/users?err=" + quote("No such account."), status_code=303)
-        h, salt = await auth.hash_password_async(auth.DEFAULT_PASSWORD)
-        st.set_admin_password(conn, u["id"], h, salt, activate=True, must_change=True)
+        link = _reset_link(request, u["id"], u["pw_hash"])
+        subj, body = mailer.reset_message(u["username"], link)
+        result = mailer.send(u["username"], subj, body)
         _audit(request, conn, "reset_password", target_type="user", target_id=u["username"],
-               summary=f"Reset {u['username']} to the temporary pilot password")
-        res = {"ok": True, "msg": (f"Password for {u['username']} reset to {auth.DEFAULT_PASSWORD}. "
-                                   f"They'll set a new one on next sign-in.")}
+               summary=f"Sent {u['username']} a password reset link")
+        if result["sent"]:
+            res = {"ok": True, "msg": f"Reset link emailed to {u['username']}."}
+        else:
+            res = {"ok": True, "link": link,
+                   "msg": f"Email isn't configured — share this link with {u['username']} to reset their password:"}
     finally:
         conn.close()
     return _account_redirect(res)

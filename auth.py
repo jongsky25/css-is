@@ -184,10 +184,10 @@ PURPOSE_INVITE = "invite"        # first-time password set (pending account)
 PURPOSE_RESET = "reset"          # forgot-password
 _ACTION_MAX_AGE = {PURPOSE_INVITE: 7 * 24 * 3600, PURPOSE_RESET: 60 * 60}
 
-# Pilot mode: accounts are handed out with this temporary password and a
-# "must change" flag, so no email/link is needed. The person signs in with it
-# once and is immediately forced to choose their own. NOT for production — when
-# the system is finalized, switch back to per-person invite links + real email.
+# Legacy pilot password: new accounts are no longer provisioned with this (they
+# get an emailed invite link instead — see app._provision_account). Kept so any
+# account still carrying it (must_change=True) continues to force a reset on
+# sign-in rather than being locked out.
 DEFAULT_PASSWORD = "12345678"
 
 

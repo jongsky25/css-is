@@ -5,8 +5,23 @@
 <div class="pub-card" style="max-width:400px; margin:8vh auto 0;">
   <div style="font-weight:800; font-size:1.1rem;">CSS<span style="color:var(--accent);">·</span>IS</div>
   <h1 style="font-size:1.25rem; margin:.8rem 0 .2rem;">Forgot your password?</h1>
-  <p class="muted small" style="margin:0 0 1rem;">Ask your administrator to reset your account. They'll set it back to the temporary password, and the next time you sign in you'll be asked to choose a new one.</p>
-  <div class="flash info">No email needed — your administrator can do this from the Users page in seconds.</div>
+  {% if configured %}
+    {% if sent %}
+      <p class="muted small" style="margin:0 0 1rem;">If that email has an account, we've sent a link to reset the password. Check your inbox (and spam folder) — the link expires in an hour.</p>
+    {% else %}
+      <p class="muted small" style="margin:0 0 1rem;">Enter your account email and we'll send you a link to reset your password.</p>
+      <form method="post" action="/forgot" data-loading="Sending…">
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" autocomplete="username" autofocus required>
+        </div>
+        <button type="submit" class="btn block" style="font-size:1rem; padding:.7rem;">Send reset link</button>
+      </form>
+    {% endif %}
+  {% else %}
+    <p class="muted small" style="margin:0 0 1rem;">Ask your administrator to reset your account. They'll send you a link, and you'll choose a new password when you follow it.</p>
+    <div class="flash info">Email isn't set up yet — your administrator can send you a reset link from the Users page.</div>
+  {% endif %}
   <div class="small" style="margin-top:1.1rem; text-align:center;"><a href="/login">Back to sign in</a></div>
 </div>
 {% endblock %}
