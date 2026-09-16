@@ -17,10 +17,29 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.76"
+APP_VERSION = "2.77"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.77",
+        "date": "September 16, 2026",
+        "summary": "Accounts are now set up and recovered by emailed link "
+                   "instead of a shared temporary password.",
+        "changes": [
+            "Creating a staff account now emails them a link to choose "
+            "their own password, instead of everyone starting on the "
+            "same temporary one.",
+            "\"Forgot your password?\" now really works by email: enter "
+            "your address and, if you have an account, a reset link is "
+            "sent to you.",
+            "An admin's \"Send reset link\" on the Users page emails the "
+            "person a link too — their old password keeps working until "
+            "they use it.",
+            "Until email is fully set up on this server, these links are "
+            "shown to the admin on the Users page to pass along directly.",
+        ],
+    },
     {
         "version": "2.76",
         "date": "September 16, 2026",

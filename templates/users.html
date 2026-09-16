@@ -35,7 +35,7 @@
 </style>
 
 {{ page_header("Users & roles") }}
-<p class="lede">Every internal staff member should have an account. Accounts use the person's <strong>email as their username</strong>. New accounts get the temporary password <strong>{{ default_password }}</strong> — the person signs in with it once and is then asked to set their own.</p>
+<p class="lede">Every internal staff member should have an account. Accounts use the person's <strong>email as their username</strong>. Creating an account emails them an invite link to set their own password{% if not email_configured %} — email isn't configured yet, so you'll get a link here to share with them instead{% endif %}.</p>
 
 {% if msg %}<div class="msg">{{ msg }}{% if link %}<span class="linkbox">{{ link }}</span>{% endif %}</div>{% endif %}
 {% if err %}<div class="err">{{ err }}</div>{% endif %}
@@ -59,6 +59,7 @@
       <td class="sec" data-label="Email">{{ r.email or '—' }}</td>
       <td data-label="Account">
         {% if not a %}<span class="pill none">No account</span>
+        {% elif a.pending %}<span class="pill pending">Invited · link not used yet</span>
         {% elif not a.active %}<span class="pill inactive">Deactivated</span>
         {% elif a.must_change %}<span class="pill pending">Temp password · not set yet</span>
         {% else %}<span class="pill active">Active</span>{% endif %}
@@ -98,10 +99,14 @@
             <button class="btn" type="submit">Create account</button>
           </form>
           {% else %}<span class="noemail">Add an email in the Directory first</span>{% endif %}
+        {% elif a.pending %}
+          <form method="post" action="/admin/users/{{ a.id }}/reset-default" class="inline"
+                data-confirm="Resend the invite link to {{ r.name }}?">
+            <button class="btn ghost" type="submit">Resend invite</button></form>
         {% elif a.active %}
           <form method="post" action="/admin/users/{{ a.id }}/reset-default" class="inline"
-                data-confirm="Reset {{ r.name }}'s password back to the temporary one? They'll set a new password on next sign-in.">
-            <button class="btn ghost" type="submit">Reset password</button></form>
+                data-confirm="Send {{ r.name }} a password reset link? Their current password keeps working until they use it.">
+            <button class="btn ghost" type="submit">Send reset link</button></form>
           <form method="post" action="/admin/users/{{ a.id }}/active" class="inline"
                 data-confirm="Deactivate {{ r.name }}'s account? They will no longer be able to sign in.">
             <input type="hidden" name="active" value="0">
@@ -148,12 +153,12 @@
           <button class="btn ghost" type="submit">Apply</button>
         </form>
       </td>
-      <td data-label="Status">{% if not u.active %}<span class="pill inactive">Inactive</span>{% elif u.must_change %}<span class="pill pending">Temp password · not set yet</span>{% else %}<span class="pill active">Active</span>{% endif %}</td>
+      <td data-label="Status">{% if u.pending %}<span class="pill pending">Invited · link not used yet</span>{% elif not u.active %}<span class="pill inactive">Inactive</span>{% elif u.must_change %}<span class="pill pending">Temp password · not set yet</span>{% else %}<span class="pill active">Active</span>{% endif %}</td>
       <td class="actions">
-        {% if u.active %}
+        {% if u.pending or u.active %}
         <form method="post" action="/admin/users/{{ u.id }}/reset-default" class="inline"
-              data-confirm="Reset {{ u.username }}'s password back to the temporary one? They'll set a new password on next sign-in.">
-          <button class="btn ghost" type="submit">Reset password</button></form>
+              data-confirm="{{ 'Resend the invite link to ' + u.username + '?' if u.pending else 'Send ' + u.username + ' a password reset link? Their current password keeps working until they use it.' }}">
+          <button class="btn ghost" type="submit">{{ 'Resend invite' if u.pending else 'Send reset link' }}</button></form>
         {% endif %}
         <form method="post" action="/admin/users/{{ u.id }}/active" class="inline"
               {% if u.active %}data-confirm="Deactivate {{ u.username }}? They will no longer be able to sign in."{% endif %}>

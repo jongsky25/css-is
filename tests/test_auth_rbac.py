@@ -175,21 +175,31 @@ def test_temp_reset_clears_must_change_and_signs_in(app_mod, client):
                      follow_redirects=False)
     assert r3.status_code == 303 and "/reset-password" not in r3.headers["location"]
 
-def test_admin_reset_to_default_recreates_temp_password(admin, app_mod):
-    """The admin 'Reset password' action puts an account back on the temp password
-    with must_change set (the forgot-password path)."""
+def test_admin_reset_sends_a_reset_link_and_keeps_old_password_until_used(admin, app_mod):
+    """The admin 'Send reset link' action emails (or, unconfigured, hands back) a
+    reset link; the account's existing password keeps working until it's used."""
     uid = _make_temp_account(app_mod, "temp3@test.local")
     # user sets a real password first
     conn = st.connect(app_mod.DB)
     h, salt = auth.hash_password("RealPass12")
     st.set_admin_password(conn, uid, h, salt); conn.commit(); conn.close()
-    # admin resets it
+    # admin sends a reset link — SMTP isn't configured in tests, so the link
+    # comes back on the redirect instead of being emailed
     r = admin.post(f"/admin/users/{uid}/reset-default", follow_redirects=False)
     assert r.status_code == 303
+    assert "link=" in r.headers["location"]
+    token = r.headers["location"].split("token%3D", 1)[1].split("&", 1)[0]
     conn = st.connect(app_mod.DB)
     u = st.get_admin_user_by_id(conn, uid); conn.close()
-    assert u["must_change"] is True
-    assert auth.verify_password(auth.DEFAULT_PASSWORD, u["pw_hash"], u["salt"])
+    # old password still works — nothing changes until the link is followed
+    assert auth.verify_password("RealPass12", u["pw_hash"], u["salt"])
+    new_pw = "AfterReset99"
+    r2 = admin.post("/reset-password", data={"token": token, "password": new_pw},
+                    follow_redirects=False)
+    assert r2.status_code == 303
+    conn = st.connect(app_mod.DB)
+    u = st.get_admin_user_by_id(conn, uid); conn.close()
+    assert auth.verify_password(new_pw, u["pw_hash"], u["salt"])
 
 def test_reset_default_requires_manage_users(viewer, app_mod):
     uid = _make_temp_account(app_mod, "temp4@test.local")
