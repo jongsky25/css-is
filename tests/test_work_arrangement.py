@@ -27,6 +27,7 @@ def wa_org(app_mod):
     st.init_db(conn)
     conn.execute("DELETE FROM work_arrangement_noawa")
     conn.execute("DELETE FROM work_arrangement")
+    conn.execute("DELETE FROM work_arrangement_reopen")
     conn.execute("DELETE FROM admin_user WHERE username LIKE 'wa-%@test.local'")
     conn.execute("DELETE FROM resource_person WHERE name LIKE 'WA-Test %'")
     for path in ("TEST/WA/WASec", "TEST/WA"):
@@ -60,6 +61,7 @@ def wa_org(app_mod):
            "admin": {"id": admin_row["id"], "role": "admin"}}
     conn.execute("DELETE FROM work_arrangement_noawa")
     conn.execute("DELETE FROM work_arrangement")
+    conn.execute("DELETE FROM work_arrangement_reopen")
     conn.execute("DELETE FROM admin_user WHERE username LIKE 'wa-%@test.local'")
     conn.execute("DELETE FROM resource_person WHERE name LIKE 'WA-Test %'")
     for path in ("TEST/WA/WASec", "TEST/WA"):
@@ -615,6 +617,28 @@ def test_a_change_after_the_deadline_is_refused(wa_org, monkeypatch):
         st.request_work_arrangement_change(conn, orig, emp, "CWW", 0)
 
 
+# ------------------------------------------------- admin reopen override ----
+
+def test_an_admin_reopen_lets_filing_past_the_deadline(wa_org, monkeypatch):
+    conn, emp, ps = wa_org["conn"], wa_org["staff"][0], _open()
+    past = st.work_arrangement_deadline(ps) + timedelta(days=1)
+    monkeypatch.setattr(tz, "today_local", lambda: past)
+    with pytest.raises(ValueError, match="deadline"):
+        st.create_work_arrangement(conn, emp, ps, "REG")
+
+    st.set_work_arrangement_reopen(conn, ps, wa_org["admin"]["id"], "late request")
+    assert st.get_work_arrangement_reopen(conn, ps)["note"] == "late request"
+    assert [r["period_start"] for r in st.list_work_arrangement_reopens(conn)] == [ps]
+
+    wa_id = st.create_work_arrangement(conn, emp, ps, "REG")
+    assert st.get_work_arrangement(conn, wa_id)["period_start"] == ps
+
+    st.clear_work_arrangement_reopen(conn, ps)
+    assert st.get_work_arrangement_reopen(conn, ps) is None
+    with pytest.raises(ValueError, match="deadline"):
+        st.create_work_arrangement(conn, wa_org["staff"][1], ps, "REG")
+
+
 # ------------------------------------------------------ approver routing ----
 
 def test_escalation_uses_the_shared_org_chain(wa_org):
@@ -883,6 +907,46 @@ def test_a_non_approver_cannot_decide_over_http(wa_org, app_mod):
         f"/work-arrangement/{wa}/decide", data={"action": "approve"})
     assert r.status_code == 403
     assert st.get_work_arrangement(conn, wa)["status"] == "pending"
+
+
+def test_only_an_admin_reaches_the_reopen_console(wa_org, app_mod):
+    staff = _client_for_id(app_mod, wa_org["staff"][0])
+    assert staff.get("/admin/work-arrangement").status_code == 403
+    assert staff.post("/admin/work-arrangement/reopen",
+                      data={"period_start": _open(), "action": "reopen"}
+                      ).status_code == 403
+    admin = _client_for_id(app_mod, wa_org["admin"]["id"])
+    assert admin.get("/admin/work-arrangement").status_code == 200
+
+
+def test_reopening_over_http_lets_the_employee_file_it_themselves(
+        wa_org, app_mod, monkeypatch):
+    conn, emp, ps = wa_org["conn"], wa_org["staff"][0], _open()
+    past = st.work_arrangement_deadline(ps) + timedelta(days=1)
+    monkeypatch.setattr(tz, "today_local", lambda: past)
+
+    staff = _client_for_id(app_mod, emp)
+    admin = _client_for_id(app_mod, wa_org["admin"]["id"])
+
+    r = admin.post("/admin/work-arrangement/reopen",
+                   data={"period_start": ps, "action": "reopen",
+                         "note": "late request"}, follow_redirects=False)
+    assert r.status_code == 303
+    assert st.get_work_arrangement_reopen(conn, ps) is not None
+
+    hub = staff.get("/work-arrangement")
+    assert "Reopened by an admin" in hub.text
+
+    r = staff.post("/work-arrangement/file",
+                   data={"period_start": ps, "arrangement": "REG"},
+                   follow_redirects=False)
+    assert r.status_code == 303
+    assert st.my_pending_work_arrangement(conn, emp, ps) is not None
+
+    admin.post("/admin/work-arrangement/reopen",
+              data={"period_start": ps, "action": "close"},
+              follow_redirects=False)
+    assert st.get_work_arrangement_reopen(conn, ps) is None
 
 
 # ------------------------------------------------------- pages and wiring ---
