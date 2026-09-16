@@ -17,10 +17,22 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.76"
+APP_VERSION = "2.77"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.77",
+        "date": "September 16, 2026",
+        "summary": "Choosing a profile photo now works on your phone, not "
+                   "just on a computer.",
+        "changes": [
+            "On My profile and the first-time welcome screen, tapping "
+            "“Choose a photo” did nothing on some devices — the button "
+            "wasn't actually wired up to open your photo picker. It now "
+            "opens every time, on a phone the same as on a desktop.",
+        ],
+    },
     {
         "version": "2.76",
         "date": "September 16, 2026",
