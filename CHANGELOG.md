@@ -1,5 +1,32 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-16 (v2.76 — the reopened period was missing from the filing form)
+
+Reported by the author against the live site right after v2.75 shipped: an
+admin reopened a closed period from `/admin/work-arrangement`, the hub
+correctly showed it as "Reopened by an admin," but clicking through to
+`/work-arrangement/file` — the actual filing form — didn't offer it as a
+"Which period" choice at all. v2.75 only folded the reopened period into
+`work_arrangement_hub`'s `periods` list; `_wa_file_page` (`app.py`), which
+builds the form independently, still called only
+`st.work_arrangement_open_periods()` and had never heard of the override.
+
+**`app.py`** — `_wa_file_page` now also calls
+`st.list_work_arrangement_reopens(conn)` and unions those period keys into
+`open_ps` before building `open_periods` (and before the coverage loop, so a
+reopened period gets its own coverage warnings too, same as a normally-open
+one). Each period dict carries a `reopened` flag.
+
+**`work_arrangement_file.html`** — a reopened choice's subtext reads
+"reopened by an admin" instead of "file by \<date long past\>", which would
+otherwise print a deadline that already came and went.
+
+Test: `test_reopening_over_http_lets_the_employee_file_it_themselves` (added
+in v2.75) exercised the POST directly and would never have caught this — it
+now also GETs `/work-arrangement/file` first and asserts the period actually
+renders as a selectable radio choice, which is what the hub's "File it now"
+link actually depends on.
+
 ## 2026-09-16 (v2.75 — an admin can temporarily reopen a closed AWA period)
 
 Requested by the author: filing for a work-arrangement (AWA/ANNEX C) period

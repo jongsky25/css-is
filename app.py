@@ -14014,10 +14014,17 @@ def _wa_file_page(request, period_start="", change_of=None, err="", form=None):
         approver_title = st.approver_title_for(conn, user["id"])
         approver_name = st.approver_name_for(conn, user["id"])
         open_ps = st.work_arrangement_open_periods()
+        # Fold in any period an admin has temporarily reopened past its own
+        # deadline (see /admin/work-arrangement) — otherwise it would be
+        # visible on the hub as fileable but have no matching choice here.
+        reopened_ps = {row["period_start"]
+                       for row in st.list_work_arrangement_reopens(conn)}
+        open_ps = sorted(set(open_ps) | reopened_ps)
         open_periods = [
             {"period_start": ps,
              "label": st.work_arrangement_period_label(ps),
-             "deadline_label": st.work_arrangement_deadline_label(ps)}
+             "deadline_label": st.work_arrangement_deadline_label(ps),
+             "reopened": ps in reopened_ps}
             for ps in open_ps]
         # Everyone ELSE's section coverage for each open period, so the form can
         # warn live as the day is picked. Advisory only — it never gates the

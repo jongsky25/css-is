@@ -937,6 +937,13 @@ def test_reopening_over_http_lets_the_employee_file_it_themselves(
     hub = staff.get("/work-arrangement")
     assert "Reopened by an admin" in hub.text
 
+    # The filing form's own "Which period" picker has to offer the reopened
+    # period too — the hub's "File it now" link is worthless if the form it
+    # lands on doesn't actually list the period as choosable.
+    file_form = staff.get("/work-arrangement/file")
+    assert f'value="{ps}"' in file_form.text
+    assert "reopened by an admin" in file_form.text
+
     r = staff.post("/work-arrangement/file",
                    data={"period_start": ps, "arrangement": "REG"},
                    follow_redirects=False)
