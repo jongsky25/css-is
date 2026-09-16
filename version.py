@@ -17,10 +17,22 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.75"
+APP_VERSION = "2.76"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.76",
+        "date": "September 16, 2026",
+        "summary": "A period an admin reopened for filing now actually shows "
+                   "up as a choice on the filing form.",
+        "changes": [
+            "The Work Arrangement hub already showed a reopened period as "
+            "fileable, but the filing form itself still only listed the "
+            "normal upcoming periods — so the reopened one had nowhere to "
+            "go. It now appears there too, marked “reopened by an admin.”",
+        ],
+    },
     {
         "version": "2.75",
         "date": "September 16, 2026",

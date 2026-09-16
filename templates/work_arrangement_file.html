@@ -79,7 +79,11 @@
           <input type="radio" name="period_start" value="{{ p.period_start }}" required
                  {{ "checked" if (form.get("period_start") or period_start) == p.period_start }}>
           {{ p.label }}
+          {% if p.reopened %}
+          <span class="sub">reopened by an admin</span>
+          {% else %}
           <span class="sub">file by {{ p.deadline_label }}</span>
+          {% endif %}
         </label>
         {% endfor %}
       </div>
