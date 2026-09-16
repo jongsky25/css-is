@@ -1,5 +1,40 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-16 (v2.75 — an admin can temporarily reopen a closed AWA period)
+
+Requested by the author: filing for a work-arrangement (AWA/ANNEX C) period
+closes on the Friday before it begins (`_wa_check_period_open`), by design —
+"once a period has BEGUN it is closed" (`work_arrangement_open_periods`). That
+left no path back in once the deadline passed, not even for an admin, so a
+late or missed filing had nowhere to go.
+
+**`storage.py`** — a new table, `work_arrangement_reopen`, holds at most one
+row per period: who reopened it, when, and an optional note.
+`get_work_arrangement_reopen` / `set_work_arrangement_reopen` /
+`clear_work_arrangement_reopen` / `list_work_arrangement_reopens` are its
+accessors. `_wa_check_period_open` now takes `conn` (both call sites —
+`create_work_arrangement`, `request_work_arrangement_change` — updated to pass
+it) and treats a period with an active override as open, alongside the normal
+deadline check.
+
+**`app.py`** — a new admin console, `/admin/work-arrangement` (GET) and
+`/admin/work-arrangement/reopen` (POST), gated on `manage_users` like every
+other `/admin/*` page, listing the current period plus the few before it and
+letting an admin reopen or close each one, with an audit-logged summary either
+way. The employee's own `/work-arrangement` hub folds any reopened period into
+its normal `periods` list (deduped against `work_arrangement_open_periods`) so
+it shows up as an ordinary fileable card — labeled "Reopened by an admin" in
+`work_arrangement_hub.html` — rather than something an admin files on their
+behalf.
+
+Tests: `test_an_admin_reopen_lets_filing_past_the_deadline` (storage-level),
+`test_only_an_admin_reaches_the_reopen_console` and
+`test_reopening_over_http_lets_the_employee_file_it_themselves` (HTTP-level).
+The `wa_org` fixture now also wipes `work_arrangement_reopen` between tests —
+without it, a period left reopened by one test (all tests share the same
+real-world "current" period start) silently let a later test's deadline
+check pass.
+
 ## 2026-09-02 (v2.74 — one alternative work arrangement per calendar week)
 
 Reported by the author against the September calendar: filing is one row per
