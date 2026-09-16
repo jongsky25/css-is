@@ -17,12 +17,12 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.77"
+APP_VERSION = "2.78"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "2.77",
+        "version": "2.78",
         "date": "September 16, 2026",
         "summary": "Accounts are now set up and recovered by emailed link "
                    "instead of a shared temporary password.",
@@ -38,6 +38,18 @@ CHANGELOG = [
             "they use it.",
             "Until email is fully set up on this server, these links are "
             "shown to the admin on the Users page to pass along directly.",
+        ],
+    },
+    {
+        "version": "2.77",
+        "date": "September 16, 2026",
+        "summary": "Choosing a profile photo now works on your phone, not "
+                   "just on a computer.",
+        "changes": [
+            "On My profile and the first-time welcome screen, tapping "
+            "“Choose a photo” did nothing on some devices — the button "
+            "wasn't actually wired up to open your photo picker. It now "
+            "opens every time, on a phone the same as on a desktop.",
         ],
     },
     {

@@ -1,6 +1,6 @@
 # CHANGELOG — Cowork revisions (surgical)
 
-## 2026-09-16 (v2.77 — account creation/reset moves to emailed invite links)
+## 2026-09-16 (v2.78 — account creation/reset moves to emailed invite links)
 
 `HARDENING.md` item 3 ("Revert pilot auth → emailed invite links + SMTP") —
 the code half of it. `mailer.py`/`_invite_link`/`_reset_link` already existed
@@ -35,13 +35,29 @@ replaces the old default-password-reset assertion (old password stays valid
 until the emailed link is followed); full `pytest tests/` run clean aside
 from pre-existing failures that need the real production `css_is.db` (not
 present in this checkout) — none touch auth/mailer/users. Version bumped to
-**2.77**.
+**2.78**.
 
 Still open (can't be done from here — needs the Space owner): add
 `CSS_SMTP_HOST`/`CSS_SMTP_PORT`/`CSS_SMTP_USER`/`CSS_SMTP_PASS`/`CSS_SMTP_FROM`/`CSS_SMTP_TLS`
 secrets to the Hugging Face Space. `mailer.py` is provider-agnostic — Brevo's
 SMTP relay (`smtp-relay.brevo.com:587`) or any other SMTP provider works with
 no further code change.
+
+## 2026-09-16 (v2.77 — the profile-photo picker never opened on some devices)
+
+Reported by the user: mobile users couldn't choose their own photo. The
+self-service photo picker on `/me` and `/welcome` wrapped its hidden
+`<input type="file">` in `<span class="lbl">` instead of `<label class="lbl">`
+— a plain `<span>` has no native click-proxy behavior for a nested input, so
+tapping the "Choose photo" text never opened the picker. There was no
+mobile-specific CSS (media query, `pointer-events`, `touch-action`) at fault;
+it was plain markup. The admin-facing pickers (`staff_form.html`,
+`directory.html`) already used the correct `<label>` pattern, which is why
+only the employee self-service pages — the ones people actually use from a
+phone — looked broken.
+
+**`templates/me.html`** / **`templates/welcome.html`** — `<span class="lbl">`
+→ `<label class="lbl">` around each photo-picker's hidden file input.
 
 ## 2026-09-16 (v2.76 — the reopened period was missing from the filing form)
 
