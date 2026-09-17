@@ -1,5 +1,29 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-17 (v2.80 — SMTP over IPv6 was unreachable on the Space)
+
+Found via the v2.79 error surfacing: the live Space's Gmail SMTP attempt was
+failing with `[Errno 101] Network is unreachable`. `smtp.gmail.com` resolves
+to both IPv4 and IPv6 addresses; Hugging Face's container gets assigned an
+IPv6 address with no actual IPv6 route out, so `smtplib.SMTP()` picked the
+IPv6 address first and failed instantly, never falling back to the IPv4
+address that works.
+
+**`mailer.py`** — new `_ipv4_only_getaddrinfo()` wraps `socket.getaddrinfo`
+to request `AF_INET` only. `send()` swaps it in (via `try`/`finally`, so it's
+always restored even on failure) for just the duration of the SMTP
+connection attempt. The hostname passed to `smtplib.SMTP()` is unchanged, so
+TLS certificate validation still checks the real domain — only address
+resolution is filtered.
+
+**Verified:** new `tests/test_mailer.py` (the filter keeps only `AF_INET`
+results against a fake mixed-family resolver; `socket.getaddrinfo` is
+confirmed restored to the original after both a successful and a failed
+`send()`, with `smtplib.SMTP` faked out so no real network call happens);
+full affected-test run (`test_mailer.py`, `test_auth_rbac.py`,
+`test_notifications.py`, `test_account_email_sync.py`) green. Version
+bumped to **2.80**.
+
 ## 2026-09-17 (v2.79 — a failed send no longer looks like "not configured")
 
 Found while live-debugging the v2.78 SMTP rollout: `mailer.send()` returns

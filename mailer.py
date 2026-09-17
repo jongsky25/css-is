@@ -18,12 +18,23 @@ Configure with environment variables:
 from __future__ import annotations
 import os
 import smtplib
+import socket
 from datetime import datetime
 from email.message import EmailMessage
 
 import tzutil as tz
 
 _OUTBOX = os.path.join(os.path.dirname(os.path.abspath(__file__)), "outbox.log")
+
+
+def _ipv4_only_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    """Some hosting sandboxes assign the container an IPv6 address with no
+    default IPv6 route, so a connection to a host that resolves to IPv6 (e.g.
+    Gmail's SMTP servers) fails instantly with "Network is unreachable" —
+    before ever trying the IPv4 address that would actually work. Filtering
+    resolution to IPv4-only sidesteps that; the hostname itself is untouched,
+    so TLS certificate validation still checks the real domain name."""
+    return socket.getaddrinfo(host, port, socket.AF_INET, type, proto, flags)
 
 
 def email_configured():
@@ -61,7 +72,9 @@ def send(to, subject, body):
     msg["To"] = to
     msg["Subject"] = subject
     msg.set_content(body)
+    orig_getaddrinfo = socket.getaddrinfo
     try:
+        socket.getaddrinfo = _ipv4_only_getaddrinfo
         with smtplib.SMTP(host, port, timeout=15) as s:
             if use_tls:
                 s.starttls()
@@ -73,6 +86,8 @@ def send(to, subject, body):
     except Exception as e:                       # noqa: BLE001 - report, don't crash a request
         _record(to, subject, body, f"SEND FAILED: {e}")
         return {"sent": False, "detail": f"Email send failed: {e}"}
+    finally:
+        socket.getaddrinfo = orig_getaddrinfo
 
 
 # ---- message composers ------------------------------------------------------
