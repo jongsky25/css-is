@@ -1,5 +1,54 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-17 (v2.83 — mail leaves over HTTPS; the Space blocks SMTP outright)
+
+**Root cause, finally established.** Port 465 timed out exactly like 587 did.
+Two different ports, both *timing out* rather than being refused, while
+outbound HTTPS works fine (`ai_core.py` reaches Gemini from the same
+container) — that is a firewall silently dropping outbound SMTP, not anything
+provider- or code-specific. **No SMTP provider can ever work on this Space**,
+which retroactively explains the original Brevo failure too: that was
+configured as Brevo *SMTP* on port 587, the same blocked port. The
+DKIM/DNS-authentication theory chased at the time was a misdiagnosis, and the
+v2.80–v2.82 SMTP fixes (IPv4-only resolution, the recursion repair, port 465)
+were all treating a symptom that could never resolve.
+
+**`mailer.py` — new preferred transport, HTTPS relay.** `send()` now picks a
+transport: `CSS_MAIL_RELAY_URL` + `CSS_MAIL_RELAY_SECRET` set → POST the
+message to a Google Apps Script web app bound to the sending mailbox, which
+sends it through Gmail; otherwise fall through to the existing SMTP path,
+retained unchanged for networks that permit it (the LAN pilot). Uses `httpx`,
+already a runtime dependency. `email_configured()` now means "any transport
+can send" and splits into `relay_configured()` / `smtp_configured()`, so every
+existing caller and all the "share this link instead" fallback copy keeps
+working untouched. Because the mail genuinely originates from the
+`doh.gov.ph` Workspace mailbox, Google signs it — so the third-party-sender
+DNS authentication that blocked us earlier is moot.
+
+`follow_redirects=True` is load-bearing: an Apps Script `/exec` URL answers
+302 across to `script.googleusercontent.com`, and only that second response
+carries the JSON. `httpx` does not follow redirects by default, so omitting it
+would make every send read as a failure. Failure replies are translated for
+the admin rather than dumped raw — a non-JSON 200 (Google's sign-in page) is
+reported as the web app's access level not being set to "Anyone", which is the
+setup slip that actually causes it.
+
+**`docs/MAIL_RELAY_SETUP.md`** — NEW: why SMTP can't work here, the ~20-line
+Apps Script to paste, deployment settings, the three Space secrets, and a
+symptom→cause table. ~5 minutes, no DNS records, no Google Cloud project.
+**`HARDENING.md`** item 3 rewritten to point at it and to warn off `CSS_SMTP_*`
+on this Space.
+
+**Verified:** 14 tests in `tests/test_mailer.py` (relay preferred over SMTP
+when both are set; `follow_redirects` asserted explicitly; payload shape;
+unauthorized / non-JSON / transport-failure reporting; `relay_configured()`
+needing both vars). Plus — because mocked tests gave false confidence twice
+this week — an **end-to-end run against a real local HTTP server** that
+reproduces Apps Script's 302-then-JSON behaviour, confirming `mailer.send()`
+completes the real round trip and the relay receives the exact payload. Still
+unverified: delivery from the Space itself, which needs the relay deployed.
+Version bumped to **2.83**.
+
 ## 2026-09-17 (v2.82 — support Gmail's port 465 as an alternate)
 
 After v2.81's fix, the reset email now times out on port 587 (`Email send

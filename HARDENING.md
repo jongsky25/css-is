@@ -56,22 +56,29 @@ confirm you stay logged in (proves `CSS_SESSION_SECRET` is sticking).
 
 ---
 
-## 3. Revert pilot auth → emailed invite links + SMTP  (your SMTP creds)
+## 3. Revert pilot auth → emailed invite links  (deploy the mail relay)
 
 **Done — code side:** account creation and admin "Reset password" now email an
 invite/reset link (`_provision_account`, `/admin/users/{id}/reset-default` in
 [app.py](app.py)) instead of handing out `auth.DEFAULT_PASSWORD = "12345678"`.
-Self-service `/forgot` now has a real form and sends a reset link too. Until
-SMTP is configured, `mailer.send()` can't deliver — the link is shown to the
-admin on the Users page instead (never silently lost).
+Self-service `/forgot` now has a real form and sends a reset link too. Until a
+mail transport is configured, `mailer.send()` can't deliver — the link is shown
+to the admin on the Users page instead (never silently lost).
 
-**Still needed — your side:** add SMTP secrets to the Space (Settings →
-Variables and secrets) so `mailer.email_configured()` flips on and links
-actually get emailed: `CSS_SMTP_HOST`, `CSS_SMTP_PORT` (587), `CSS_SMTP_USER`,
-`CSS_SMTP_PASS`, `CSS_SMTP_FROM`, `CSS_SMTP_TLS` (1). Any SMTP-compatible
-provider works (e.g. Brevo's SMTP relay: host `smtp-relay.brevo.com`, port
-587, user = your Brevo login email, pass = your Brevo SMTP key). No code
-change needed — sending starts the moment `CSS_SMTP_HOST` is set.
+> ⚠️ **SMTP cannot work on this Space.** Its network blocks outbound SMTP on
+> every port — `smtp.gmail.com:587` and `:465` both hang until the client
+> timeout, while outbound HTTPS is fine (it's how `ai_core.py` reaches Gemini).
+> This is not provider-specific: Gmail, Brevo and anything else will fail the
+> same way. Do not spend time on `CSS_SMTP_*` here; they're kept in `mailer.py`
+> only for networks that do allow SMTP, like the original LAN pilot.
+
+**Still needed — your side:** deploy the HTTPS mail relay and set
+`CSS_MAIL_RELAY_URL` + `CSS_MAIL_RELAY_SECRET` on the Space. Full steps
+(~5 minutes, no DNS records, no Google Cloud project) are in
+[docs/MAIL_RELAY_SETUP.md](docs/MAIL_RELAY_SETUP.md). Because the mail then
+genuinely originates from the `doh.gov.ph` Workspace mailbox, Google handles
+SPF/DKIM itself — which is also why the third-party-sender DNS authentication
+we couldn't arrange is no longer needed.
 
 Once live, restart/rebuild the Space and verify: invite a test account from
 `/admin/users` and confirm the email arrives.
@@ -82,5 +89,5 @@ Once live, restart/rebuild the Space and verify: invite a test account from
 
 - [ ] 1. HF token rotated
 - [ ] 2. `CSS_SESSION_SECRET`, `CSS_BASE_URL`, `CSS_SECURE_COOKIES` set on the Space
-- [ ] 3. Pilot auth reverted to invite links + SMTP (SMTP secrets still needed — code shipped)
+- [ ] 3. Pilot auth reverted to invite links (code shipped; deploy the mail relay — [docs/MAIL_RELAY_SETUP.md](docs/MAIL_RELAY_SETUP.md))
 - [x] Cookie `Secure` support in code (`CSS_SECURE_COOKIES`, off by default) — shipped
