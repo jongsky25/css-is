@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.79"
+APP_VERSION = "2.80"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.80",
+        "date": "September 17, 2026",
+        "summary": "Fixed account invite/reset emails failing to send on "
+                   "this server with a \"network unreachable\" error.",
+        "changes": [
+            "Invite and password-reset emails now connect over IPv4, "
+            "working around a hosting quirk where this server's network "
+            "path for the newer address format wasn't working.",
+        ],
+    },
     {
         "version": "2.79",
         "date": "September 17, 2026",
