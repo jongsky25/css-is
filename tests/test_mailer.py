@@ -88,3 +88,56 @@ def test_send_restores_getaddrinfo_after_failure(monkeypatch):
     assert result["sent"] is False
     assert "Network is unreachable" in result["detail"]
     assert socket.getaddrinfo is orig, "getaddrinfo must be restored even after a failed send"
+
+
+def test_send_uses_smtp_ssl_on_port_465_without_starttls(monkeypatch):
+    """Port 465 is implicit TLS from connect — using plain SMTP + starttls()
+    on it talks the wrong protocol to the server and fails/hangs."""
+    monkeypatch.setenv("CSS_SMTP_HOST", "smtp.example.com")
+    monkeypatch.setenv("CSS_SMTP_PORT", "465")
+    plain_smtp_used = []
+
+    class _FakeSMTP:
+        def __init__(self, *a, **kw):
+            plain_smtp_used.append(True)
+
+    class _FakeSMTP_SSL:
+        def __init__(self, host, port, timeout=15):
+            assert port == 465
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def starttls(self):
+            raise AssertionError("starttls() must not be called on port 465 (already encrypted)")
+        def login(self, u, p): pass
+        def send_message(self, msg): pass
+
+    monkeypatch.setattr(mailer.smtplib, "SMTP", _FakeSMTP)
+    monkeypatch.setattr(mailer.smtplib, "SMTP_SSL", _FakeSMTP_SSL)
+    result = mailer.send("to@example.com", "subj", "body")
+    assert result["sent"] is True, result["detail"]
+    assert not plain_smtp_used, "port 465 must use SMTP_SSL, not plain SMTP"
+
+
+def test_send_uses_starttls_on_port_587(monkeypatch):
+    monkeypatch.setenv("CSS_SMTP_HOST", "smtp.example.com")
+    monkeypatch.setenv("CSS_SMTP_PORT", "587")
+    ssl_used = []
+
+    class _FakeSMTP:
+        def __init__(self, host, port, timeout=15):
+            assert port == 587
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def starttls(self): pass
+        def login(self, u, p): pass
+        def send_message(self, msg): pass
+
+    class _FakeSMTP_SSL:
+        def __init__(self, *a, **kw):
+            ssl_used.append(True)
+
+    monkeypatch.setattr(mailer.smtplib, "SMTP", _FakeSMTP)
+    monkeypatch.setattr(mailer.smtplib, "SMTP_SSL", _FakeSMTP_SSL)
+    result = mailer.send("to@example.com", "subj", "body")
+    assert result["sent"] is True, result["detail"]
+    assert not ssl_used, "port 587 must use plain SMTP + starttls, not SMTP_SSL"

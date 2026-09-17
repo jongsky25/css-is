@@ -8,11 +8,13 @@ SMTP environment variables are set — no code change needed.
 
 Configure with environment variables:
     CSS_SMTP_HOST   (required to enable sending)
-    CSS_SMTP_PORT   (default 587)
+    CSS_SMTP_PORT   (default 587 = STARTTLS; 465 = implicit TLS/SSL from
+                     connect, auto-detected — no other config needed)
     CSS_SMTP_USER   (login user; also the default From)
     CSS_SMTP_PASS   (login password)
     CSS_SMTP_FROM   (From address; defaults to CSS_SMTP_USER)
-    CSS_SMTP_TLS    ("1"/"0", default "1" = STARTTLS)
+    CSS_SMTP_TLS    ("1"/"0", default "1" = STARTTLS; ignored on port 465,
+                     which is always encrypted)
 """
 
 from __future__ import annotations
@@ -81,8 +83,12 @@ def send(to, subject, body):
     msg.set_content(body)
     try:
         socket.getaddrinfo = _ipv4_only_getaddrinfo
-        with smtplib.SMTP(host, port, timeout=15) as s:
-            if use_tls:
+        # Port 465 is implicit TLS from the first byte (SMTP_SSL); STARTTLS
+        # (port 587 and friends) upgrades a plain connection after EHLO.
+        # Mixing them up talks the wrong protocol to the server.
+        smtp_cls = smtplib.SMTP_SSL if port == 465 else smtplib.SMTP
+        with smtp_cls(host, port, timeout=15) as s:
+            if use_tls and port != 465:
                 s.starttls()
             if user and pw:
                 s.login(user, pw)

@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.81"
+APP_VERSION = "2.82"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.82",
+        "date": "September 17, 2026",
+        "summary": "Added support for Gmail's alternate secure-email port, "
+                   "in case the usual one is blocked on this server.",
+        "changes": [
+            "If invite/reset emails keep timing out, an admin can now set "
+            "the mail port to 465 instead of 587 — the app automatically "
+            "uses the right connection method for whichever port is set.",
+        ],
+    },
     {
         "version": "2.81",
         "date": "September 17, 2026",

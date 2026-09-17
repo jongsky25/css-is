@@ -1,5 +1,31 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-17 (v2.82 — support Gmail's port 465 as an alternate)
+
+After v2.81's fix, the reset email now times out on port 587 (`Email send
+failed: timed out`) instead of erroring instantly — the connection is being
+established (IPv4 resolves fine per v2.80/v2.81) but no response ever comes
+back within the 15s timeout, the classic signature of a firewall silently
+dropping outbound traffic on that port, likely a spam-prevention policy on
+the Hugging Face Space's network. Port 465 (Gmail's other SMTP port) is
+worth trying as an alternate path.
+
+**`mailer.py`** — `send()` now auto-detects the connection method by port:
+465 uses `smtplib.SMTP_SSL` (implicit TLS from connect, no `starttls()`
+call — calling `starttls()` on an already-encrypted connection talks the
+wrong protocol to the server), any other port keeps the existing
+`smtplib.SMTP` + `starttls()` (gated by `CSS_SMTP_TLS`) path unchanged. No
+new env var — just set `CSS_SMTP_PORT=465` to switch.
+
+**Verified:** new `tests/test_mailer.py` cases confirm port 465 always uses
+`SMTP_SSL` and never calls `starttls()`, and port 587 keeps using plain
+`SMTP` + `starttls()` and never touches `SMTP_SSL`; full affected-test run
+green. **Not independently verified live** — this session's own sandbox
+also can't reach `smtp.gmail.com` on either 587 or 465 (agent sandboxes
+commonly restrict raw outbound TCP to an HTTPS proxy), so whether 465
+actually gets through on the Space's network is still an open question for
+the next live retest. Version bumped to **2.82**.
+
 ## 2026-09-17 (v2.81 — the v2.80 IPv4 fix recursed into itself)
 
 Reported immediately after v2.80 deployed: reset email now failed with
