@@ -1,5 +1,40 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-17 (v2.81 — the v2.80 IPv4 fix recursed into itself)
+
+Reported immediately after v2.80 deployed: reset email now failed with
+`Email send failed: maximum recursion depth exceeded`. Self-inflicted bug in
+the v2.80 patch itself: `_ipv4_only_getaddrinfo` resolved the real resolver
+by looking up `socket.getaddrinfo` **by name** at call time — but `send()`
+had already reassigned `socket.getaddrinfo` to `_ipv4_only_getaddrinfo`
+itself before the SMTP connection runs, so the function called itself
+forever the moment anything (smtplib, internally) actually invoked address
+resolution.
+
+**`mailer.py`** — added a module-level `_real_getaddrinfo = socket.getaddrinfo`
+captured once at import time, before `send()` can ever patch the module
+attribute. `_ipv4_only_getaddrinfo` now calls `_real_getaddrinfo` directly
+instead of the (patchable) `socket.getaddrinfo` name; `send()`'s `finally`
+restores via the same captured reference.
+
+**`tests/test_mailer.py`** — the previous test suite passed despite this bug:
+it asserted `socket.getaddrinfo is mailer._ipv4_only_getaddrinfo` (an
+identity check) but never actually *called* it during the fake SMTP
+connection, so the infinite recursion was never exercised. Rewritten:
+`test_ipv4_only_getaddrinfo_does_not_recurse_once_patched_onto_socket`
+reproduces the exact failure shape (patches `socket.getaddrinfo` onto the
+helper, then calls it) — confirmed this fails with `RecursionError` against
+the old code and passes against the fix. The two `send()`-level tests now
+actually invoke `socket.getaddrinfo(...)` inside the fake SMTP connection
+(resolving `127.0.0.1`, no real network needed) instead of only checking
+identity.
+
+**Verified:** `pytest tests/test_mailer.py tests/test_auth_rbac.py
+tests/test_notifications.py tests/test_account_email_sync.py
+tests/test_ops_usage.py` green; manually confirmed the old buggy pattern
+reproduces `RecursionError` and the fixed one resolves `smtp.gmail.com` to
+IPv4-only addresses live, with no recursion. Version bumped to **2.81**.
+
 ## 2026-09-17 (v2.80 — SMTP over IPv6 was unreachable on the Space)
 
 Found via the v2.79 error surfacing: the live Space's Gmail SMTP attempt was
