@@ -17,10 +17,23 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.78"
+APP_VERSION = "2.79"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.79",
+        "date": "September 17, 2026",
+        "summary": "An admin now sees the real reason an invite or reset "
+                   "email failed to send, instead of a misleading "
+                   "\"email isn't configured\" message.",
+        "changes": [
+            "If email IS set up but the actual send fails (wrong "
+            "password, blocked connection, etc.), the Users page now "
+            "shows that real error next to the link, instead of "
+            "wrongly saying email was never configured.",
+        ],
+    },
     {
         "version": "2.78",
         "date": "September 16, 2026",

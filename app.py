@@ -2285,7 +2285,8 @@ def _provision_account(conn, request, rp, role, inviter):
     link = _invite_link(request, uid, "")
     subj, body = mailer.invite_message(rp.get("name"), link, inviter)
     result = mailer.send(email, subj, body)
-    return {"ok": True, "email": email, "sent": result["sent"], "link": link}
+    return {"ok": True, "email": email, "sent": result["sent"], "link": link,
+            "detail": result.get("detail")}
 
 
 @app.get("/set-password", response_class=HTMLResponse)
@@ -2432,8 +2433,11 @@ async def admin_users_invite(request: Request):
                            f"and sent an invite link")
             if res.get("sent"):
                 res["msg"] = f"Account created for {res['email']}. An invite email was sent so they can set their password."
-            else:
+            elif not mailer.email_configured():
                 res["msg"] = f"Account created for {res['email']}. Email isn't configured — share this link with them to set their password:"
+            else:
+                res["msg"] = (f"Account created for {res['email']}, but the invite email failed to send "
+                              f"({res.get('detail') or 'unknown error'}). Share this link with them instead:")
     finally:
         conn.close()
     return _account_redirect(res)
@@ -2458,9 +2462,13 @@ async def admin_users_reset_default(request: Request, user_id: int):
                summary=f"Sent {u['username']} a password reset link")
         if result["sent"]:
             res = {"ok": True, "msg": f"Reset link emailed to {u['username']}."}
-        else:
+        elif not mailer.email_configured():
             res = {"ok": True, "link": link,
                    "msg": f"Email isn't configured — share this link with {u['username']} to reset their password:"}
+        else:
+            res = {"ok": True, "link": link,
+                   "msg": (f"The reset email to {u['username']} failed to send "
+                           f"({result.get('detail') or 'unknown error'}). Share this link instead:")}
     finally:
         conn.close()
     return _account_redirect(res)

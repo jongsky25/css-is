@@ -205,3 +205,19 @@ def test_reset_default_requires_manage_users(viewer, app_mod):
     uid = _make_temp_account(app_mod, "temp4@test.local")
     r = viewer.post(f"/admin/users/{uid}/reset-default", follow_redirects=False)
     assert r.status_code == 403
+
+def test_admin_reset_surfaces_send_failure_detail_not_unconfigured(admin, app_mod, monkeypatch):
+    """When SMTP IS configured but the actual send blows up (bad creds, network
+    block, etc.), the admin must see the real error — not the generic 'email
+    isn't configured' message, which would send them chasing the wrong fix."""
+    import mailer
+    uid = _make_temp_account(app_mod, "temp5@test.local")
+    monkeypatch.setattr(mailer, "email_configured", lambda: True)
+    monkeypatch.setattr(mailer, "send", lambda *a, **kw:
+                        {"sent": False, "detail": "Email send failed: (535, b'bad creds')"})
+    r = admin.post(f"/admin/users/{uid}/reset-default", follow_redirects=False)
+    assert r.status_code == 303
+    from urllib.parse import unquote
+    location = unquote(r.headers["location"])
+    assert "isn't configured" not in location
+    assert "bad creds" in location
