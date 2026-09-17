@@ -1,5 +1,28 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-17 (v2.79 — a failed send no longer looks like "not configured")
+
+Found while live-debugging the v2.78 SMTP rollout: `mailer.send()` returns
+`sent: False` both when SMTP genuinely isn't configured (`CSS_SMTP_HOST`
+unset) and when it IS configured but the actual send throws (bad
+credentials, connection refused, etc.) — but the two `app.py` call sites
+(`admin_users_invite`, `admin_users_reset_default`) showed the identical
+"Email isn't configured" message either way, hiding the real error and
+sending the admin chasing the wrong fix (re-checking env vars that were
+already correct).
+
+**`app.py`** — `_provision_account` now also returns `mailer.send()`'s
+`detail` string. Both call sites check `mailer.email_configured()` to tell
+the two cases apart: truly unconfigured keeps the existing "share this
+link" message, but a configured-and-failed send now shows the real
+exception text (e.g. an SMTP auth error) alongside the fallback link.
+
+**Verified:** new `tests/test_auth_rbac.py::test_admin_reset_surfaces_send_failure_detail_not_unconfigured`
+(monkeypatches `mailer.email_configured`→True and `mailer.send` to fail
+with a detail, asserts the redirect carries the real error text and not
+the generic "isn't configured" copy); full affected-test run clean. Version
+bumped to **2.79**.
+
 ## 2026-09-16 (v2.78 — account creation/reset moves to emailed invite links)
 
 `HARDENING.md` item 3 ("Revert pilot auth → emailed invite links + SMTP") —
