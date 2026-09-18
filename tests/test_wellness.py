@@ -177,6 +177,49 @@ def test_break_needs_minimum_lead_time(wellness_org, monkeypatch):
     assert st.create_wellness_claim(conn, emp, day, ok, "meditation")
 
 
+def test_overlapping_break_is_rejected_even_with_a_different_start_time(wellness_org):
+    """The duplicate check used to key on an exact start_time match, so two
+    claims that actually overlap in time (09:00-10:00 and 09:30-10:30) slipped
+    through as long as their start times weren't identical."""
+    conn, emp = wellness_org["conn"], wellness_org["emp"]
+    d = _future_weekday().isoformat()
+    st.create_wellness_claim(conn, emp, d, "09:00", "exercise")
+    with pytest.raises(ValueError, match="already have a break"):
+        st.create_wellness_claim(conn, emp, d, "09:30", "hobby")
+    st.create_wellness_claim(conn, emp, d, "10:00", "meditation")  # back-to-back is fine
+
+
+def test_wellness_day_slots_agrees_with_create_wellness_claim(wellness_org, monkeypatch):
+    """The apply form's slot picker (wellness_day_slots) must never offer a
+    start time create_wellness_claim would then reject — lead time, lunch
+    flagging, and a same-day overlap all have to read the same way from both."""
+    conn, emp = wellness_org["conn"], wellness_org["emp"]
+    fixed = datetime.combine(_monday_this_week(), time(10, 0))   # a Monday, 10:00
+    monkeypatch.setattr(tz, "now_local", lambda: fixed)
+    monkeypatch.setattr(tz, "today_local", lambda: fixed.date())
+    today = fixed.date()
+
+    slots = {s["time"]: s for s in st.wellness_day_slots(conn, emp, today, 1)}
+    assert slots["09:00"]["ok"] is False                    # already in the past
+    assert slots["12:30"]["ok"] is True and slots["12:30"]["lunch"] is True
+    assert slots["15:00"]["lunch"] is False
+
+    # book one hour at 15:00; the entitlement still allows a second, but the
+    # slots that would overlap the booked hour must close
+    st.create_wellness_claim(conn, emp, today.isoformat(), "15:00", "exercise")
+    slots = {s["time"]: s for s in st.wellness_day_slots(conn, emp, today, 1)}
+    for overlapping in ("14:30", "15:00", "15:30"):
+        assert slots[overlapping]["ok"] is False
+        with pytest.raises(ValueError, match="already have a break"):
+            st.create_wellness_claim(conn, emp, today.isoformat(), overlapping, "hobby")
+    assert slots["16:00"]["ok"] is True
+    st.create_wellness_claim(conn, emp, today.isoformat(), "16:00", "hobby")
+
+    # entitlement now fully claimed: every remaining slot closes
+    slots = {s["time"]: s for s in st.wellness_day_slots(conn, emp, today, 1)}
+    assert all(not s["ok"] for s in slots.values())
+
+
 # ---------------------------------------------------------- approver routing
 
 def test_chief_resolved_through_directory(wellness_org):

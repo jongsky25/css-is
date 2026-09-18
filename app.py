@@ -13857,6 +13857,19 @@ def _wellness_apply_page(request, err="", form=None):
         # the current week). Weeks with no claims default to 0 client-side.
         week_used = {w: st.wellness_hours_used(conn, user["id"], w)
                      for w in st.wellness_window_weeks()}
+        # The date strip + slot grid on the apply form: every weekday in the
+        # window, and for each one, every start time create_wellness_claim
+        # would actually accept for a 1-hour vs. a 2-hour break — computed
+        # server-side so the picker can never offer a choice the POST rejects.
+        window_dates = st.wellness_window_dates()
+        day_fmt = "%#d" if os.name == "nt" else "%-d"
+        date_pills = [{"iso": d.isoformat(), "dow": d.strftime("%a"),
+                       "day": d.strftime(day_fmt)} for d in window_dates]
+        slots_by_date = {
+            d.isoformat(): {str(h): st.wellness_day_slots(conn, user["id"], d, h)
+                            for h in (1, 2)}
+            for d in window_dates
+        }
     finally:
         conn.close()
     return templates.TemplateResponse(request, "wellness_apply.html", {
@@ -13870,6 +13883,8 @@ def _wellness_apply_page(request, err="", form=None):
         "max_date": st.wellness_window_last_date().isoformat(),
         "window_weeks": st.WELLNESS_WINDOW_WEEKS,
         "week_used": week_used,
+        "date_pills": date_pills,
+        "slots_by_date": slots_by_date,
         "err": err, "form": form or {},
     }, status_code=400 if err else 200)
 
