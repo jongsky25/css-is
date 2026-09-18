@@ -17,10 +17,22 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.83"
+APP_VERSION = "2.84"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.84",
+        "date": "September 18, 2026",
+        "summary": "Account invite and password-reset emails now look like "
+                   "a formal, official message instead of plain text.",
+        "changes": [
+            "The email you get to set up your account or reset your "
+            "password is now a proper formatted message with the Office "
+            "Connect name and a clear button, instead of a bare wall of "
+            "text.",
+        ],
+    },
     {
         "version": "2.83",
         "date": "September 17, 2026",

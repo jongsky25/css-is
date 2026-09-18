@@ -1,5 +1,46 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-18 (v2.84 — formal HTML invite/reset emails)
+
+User request, right after confirming v2.83's relay actually delivers: design
+the invite/reset emails to look formal instead of plain text.
+
+**`mailer.py`** — new `_email_html()` builds a branded HTML shell: header
+("Office Connect" + "Bureau of Local Health Systems Development"), greeting,
+heading, intro, a bulletproof table-based CTA button (`_button_html()`),
+expiry note, plain-URL fallback, and a footer. Built to email-HTML rules, not
+web-HTML rules — no `<style>` block (many clients strip it), no flexbox/grid,
+every rule inline, layout via `<table>` so it degrades safely in Outlook's
+Word rendering engine. `invite_message()`/`reset_message()` now return
+`(subject, text, html)` instead of `(subject, text)`; the three call sites in
+`app.py` updated accordingly. `send()` gained an optional `html=` kwarg —
+omitted, behavior is unchanged (plain-text-only, exactly as every other
+composer — event/wellness/AWA/feedback notifications — still sends). SMTP
+path uses `msg.add_alternative(html, subtype="html")` for a proper
+multipart/alternative message; the relay path adds `"html"` to the JSON
+payload. `name`/`inviter` are HTML-escaped before interpolation.
+
+**`docs/MAIL_RELAY_SETUP.md`** — Apps Script snippet updated to read
+`body.html` and set `htmlBody` on `MailApp.sendEmail` when present (falls
+back to plain-text-only when absent, matching the JS `if (body.html)` check
+already documented). Added a callout for anyone who already deployed the
+v2.83 script: paste the updated code, then **Deploy → Manage deployments →
+New version → Deploy** — editing alone doesn't reach the live URL.
+
+Branding correction mid-build: initial draft led the header with the old
+"CSS·IS" mark (matching `forgot.html`/`set_password.html`); the user
+clarified the product is Office Connect now, not CSS-IS. Header now leads
+with "Office Connect" only.
+
+**Verified:** 21 tests in `tests/test_mailer.py` (subject/text/html shape;
+HTML escaping of `name`/`inviter`; SMTP multipart with a real `text/html`
+part; no-html calls stay non-multipart; relay payload carries `html` and
+falls back to `""` — matching the Apps Script's falsy check — when omitted).
+Rendered both templates with a headless-Chromium screenshot to check the
+actual visual result rather than trust the markup, then re-verified after
+the branding fix. Full relay round trip re-confirmed against a real local
+HTTP server. Full affected-test run green. Version bumped to **2.84**.
+
 ## 2026-09-17 (v2.83 — mail leaves over HTTPS; the Space blocks SMTP outright)
 
 **Root cause, finally established.** Port 465 timed out exactly like 587 did.

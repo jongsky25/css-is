@@ -2283,8 +2283,8 @@ def _provision_account(conn, request, rp, role, inviter):
     uid = st.create_admin_user(conn, email, "", "", role, created_by=inviter,
                                rp_id=rp["id"], active=False)
     link = _invite_link(request, uid, "")
-    subj, body = mailer.invite_message(rp.get("name"), link, inviter)
-    result = mailer.send(email, subj, body)
+    subj, body, html = mailer.invite_message(rp.get("name"), link, inviter)
+    result = mailer.send(email, subj, body, html=html)
     return {"ok": True, "email": email, "sent": result["sent"], "link": link,
             "detail": result.get("detail")}
 
@@ -2336,8 +2336,8 @@ async def forgot_submit(request: Request):
         u = st.get_admin_user(conn, email) if auth.valid_email(email) else None
         if u:
             link = _reset_link(request, u["id"], u["pw_hash"])
-            subj, body = mailer.reset_message(email, link)
-            mailer.send(email, subj, body)        # outbox-logged if SMTP not configured
+            subj, body, html = mailer.reset_message(email, link)
+            mailer.send(email, subj, body, html=html)   # outbox-logged if SMTP not configured
     finally:
         conn.close()
     # Always the same response — never reveal whether the email exists.
@@ -2456,8 +2456,8 @@ async def admin_users_reset_default(request: Request, user_id: int):
         if not u:
             return RedirectResponse("/admin/users?err=" + quote("No such account."), status_code=303)
         link = _reset_link(request, u["id"], u["pw_hash"])
-        subj, body = mailer.reset_message(u["username"], link)
-        result = mailer.send(u["username"], subj, body)
+        subj, body, html = mailer.reset_message(u["username"], link)
+        result = mailer.send(u["username"], subj, body, html=html)
         _audit(request, conn, "reset_password", target_type="user", target_id=u["username"],
                summary=f"Sent {u['username']} a password reset link")
         if result["sent"]:

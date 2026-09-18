@@ -265,3 +265,115 @@ def test_relay_needs_both_url_and_secret(monkeypatch):
     monkeypatch.delenv("CSS_MAIL_RELAY_SECRET", raising=False)
     assert mailer.relay_configured() is False
     assert mailer.email_configured() is False
+
+
+# ---- HTML template (invite_message / reset_message) --------------------------
+
+def test_invite_message_returns_subject_text_html():
+    subject, text, html = mailer.invite_message("Juan Dela Cruz", "https://x/set-password?token=abc",
+                                                 inviter="admin@doh.gov.ph")
+    assert "set your password" in subject.lower()
+    # plain text keeps the original wording/shape (still used for SMTP + outbox log)
+    assert "Juan Dela Cruz" in text
+    assert "https://x/set-password?token=abc" in text
+    assert "7 days" in text
+    # html carries the same content plus the branded shell
+    assert "<!DOCTYPE html>" in html
+    assert "Office Connect" in html
+    assert "Juan Dela Cruz" in html
+    assert "https://x/set-password?token=abc" in html
+    assert "Set your password" in html
+    assert "admin@doh.gov.ph" in html
+
+
+def test_reset_message_returns_subject_text_html():
+    subject, text, html = mailer.reset_message("Juan Dela Cruz", "https://x/reset-password?token=xyz")
+    assert "reset your password" in subject.lower()
+    assert "https://x/reset-password?token=xyz" in text
+    assert "1 hour" in text
+    assert "<!DOCTYPE html>" in html
+    assert "https://x/reset-password?token=xyz" in html
+    assert "Reset your password" in html
+
+
+def test_email_html_escapes_untrusted_name():
+    """name/inviter come from directory data an admin controls, not attacker
+    input, but escaping is cheap and correct — a stray '&' or '<' in a real
+    name must not break the HTML structure or inject markup."""
+    subject, text, html = mailer.invite_message("Anne & Bo <ops>", "https://x/link", inviter=None)
+    assert "Anne & Bo <ops>" in text                # plain text: untouched
+    assert "<ops>" not in html                      # html: never raw
+    assert "Anne &amp; Bo &lt;ops&gt;" in html       # html: escaped
+
+
+def test_send_passes_html_through_to_smtp_multipart(monkeypatch):
+    monkeypatch.setenv("CSS_SMTP_HOST", "smtp.example.com")
+    sent = {}
+
+    class _FakeSMTP:
+        def __init__(self, host, port, timeout=15): pass
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def starttls(self): pass
+        def login(self, u, p): pass
+        def send_message(self, msg): sent["msg"] = msg
+
+    monkeypatch.setattr(mailer.smtplib, "SMTP", _FakeSMTP)
+    _, text, html = mailer.reset_message("Juan", "https://x/reset")
+    result = mailer.send("to@example.com", "subj", text, html=html)
+    assert result["sent"] is True, result["detail"]
+    msg = sent["msg"]
+    assert msg.is_multipart()
+    html_parts = [p for p in msg.walk() if p.get_content_type() == "text/html"]
+    assert html_parts, "expected a text/html alternative part"
+    assert "Reset your password" in html_parts[0].get_content()
+
+
+def test_send_without_html_stays_plain_text_smtp(monkeypatch):
+    """No html= arg (every other composer) must keep sending plain-only,
+    exactly as before — this is what all the non-account notifications rely on."""
+    monkeypatch.setenv("CSS_SMTP_HOST", "smtp.example.com")
+    sent = {}
+
+    class _FakeSMTP:
+        def __init__(self, host, port, timeout=15): pass
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def starttls(self): pass
+        def login(self, u, p): pass
+        def send_message(self, msg): sent["msg"] = msg
+
+    monkeypatch.setattr(mailer.smtplib, "SMTP", _FakeSMTP)
+    result = mailer.send("to@example.com", "subj", "plain body only")
+    assert result["sent"] is True, result["detail"]
+    assert not sent["msg"].is_multipart()
+
+
+def test_relay_payload_carries_html(monkeypatch):
+    _relay_env(monkeypatch)
+    captured = {}
+
+    def _fake_post(url, **kw):
+        captured["json"] = kw.get("json")
+        return _FakeResponse(200, {"ok": True})
+
+    monkeypatch.setattr(mailer.httpx, "post", _fake_post)
+    _, text, html = mailer.reset_message("Juan", "https://x/reset")
+    mailer.send("to@example.com", "subj", text, html=html)
+    assert captured["json"]["html"] == html
+    assert captured["json"]["text"] == text
+
+
+def test_relay_payload_html_is_empty_string_when_not_given(monkeypatch):
+    """The Apps Script checks `if (body.html)`, which is falsy for "" — so
+    omitting html must send an empty string, not crash on a missing key."""
+    _relay_env(monkeypatch)
+    captured = {}
+
+    def _fake_post(url, **kw):
+        captured["json"] = kw.get("json")
+        return _FakeResponse(200, {"ok": True})
+
+    monkeypatch.setattr(mailer.httpx, "post", _fake_post)
+    mailer.send("to@example.com", "subj", "plain body only")
+    assert captured["json"]["html"] == ""

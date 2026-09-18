@@ -44,12 +44,16 @@ function doPost(e) {
     if (!body.to || !body.subject) {
       return reply({ ok: false, error: 'missing to/subject' });
     }
-    MailApp.sendEmail({
+    const message = {
       to: body.to,
       subject: body.subject,
       body: body.text || '',
       name: body.fromName || 'Office Connect',
-    });
+    };
+    if (body.html) {
+      message.htmlBody = body.html;
+    }
+    MailApp.sendEmail(message);
     return reply({ ok: true });
   } catch (err) {
     return reply({ ok: false, error: String(err) });
@@ -64,6 +68,13 @@ function reply(obj) {
 ```
 
 4. Name the project something recognisable, e.g. `Office Connect mail relay`.
+
+> **Already deployed an earlier version of this script?** Paste the updated
+> code in (it adds the `if (body.html) { message.htmlBody = body.html; }`
+> block — everything else is unchanged), save, then **Deploy → Manage
+> deployments** → pencil icon on your existing deployment → **Version: New
+> version** → **Deploy**. Editing the code alone does not update the live
+> `/exec` URL.
 
 ## Step 2 — deploy it
 
