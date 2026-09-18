@@ -115,6 +115,21 @@ def test_wellness_apply_notifies_the_approver(app_mod, notif_org, sent):
     assert "/wellness/approvals" in sent[0]["body"]
 
 
+def test_wellness_apply_respects_the_feature_toggle(app_mod, notif_org, sent):
+    conn = notif_org["conn"]
+    st.set_email_feature(conn, "wellness_approval", False)
+    conn.commit()
+    c = _client_for(app_mod, notif_org["staff"])
+    d = _future_weekday().isoformat()
+    r = c.post("/wellness/apply", data={"break_date": d, "start_time": "10:00",
+                                        "activity": "exercise", "hours": "1"},
+               follow_redirects=False)
+    assert r.status_code == 303
+    assert sent == []
+    st.set_email_feature(conn, "wellness_approval", True)
+    conn.commit()
+
+
 def test_wellness_decide_notifies_the_claimant(app_mod, notif_org, sent):
     conn = notif_org["conn"]
     d = _future_weekday().isoformat()
@@ -220,6 +235,27 @@ def test_feedback_reply_notifies_the_submitter(admin, db_path, sent):
         conn.commit(); conn.close()
 
 
+def test_feedback_reply_respects_the_feature_toggle(admin, db_path, sent):
+    conn = st.connect(db_path)
+    st.set_setting(conn, "spot_feedback_enabled", "1")
+    st.set_email_feature(conn, "feedback_update", False)
+    fid = st.create_spot_feedback(conn, user_id=1, submitter="ntf-staff@test.local",
+                                  page_url="/dashboard", element_selector=".c",
+                                  region_json=None, message="looks off")
+    conn.commit()
+    try:
+        r = admin.post(f"/admin/feedback/{fid}",
+                       data={"status": "Reviewing", "reply": "on it", "from_status": ""},
+                       follow_redirects=False)
+        assert r.status_code == 303
+        assert sent == []
+    finally:
+        st.set_email_feature(conn, "feedback_update", True)
+        conn.execute("DELETE FROM feedback_update WHERE feedback_id=?", (fid,))
+        conn.execute("DELETE FROM spot_feedback WHERE id=?", (fid,))
+        conn.commit(); conn.close()
+
+
 # --------------------------------------------------------- registration -----
 
 def test_registration_confirms_by_email(app_mod, manager, db_path, sent):
@@ -243,6 +279,31 @@ def test_registration_confirms_by_email(app_mod, manager, db_path, sent):
     assert "registered" in sent[0]["subject"].lower()
     assert "NTF Registration Forum" in sent[0]["subject"]
     assert f"/e/{tok}/resume?rt=" in sent[0]["body"]
+
+
+def test_registration_confirmation_respects_the_feature_toggle(app_mod, manager, db_path, sent):
+    import re
+    conn = st.connect(db_path)
+    st.set_email_feature(conn, "registration_confirmed", False)
+    conn.commit(); conn.close()
+    rp = st.connect(db_path).execute(
+        "SELECT id FROM resource_person WHERE is_internal=1 LIMIT 1").fetchone()
+    r = manager.post("/create", data={
+        "event_type": "bureau", "activity_name": "NTF Toggle-Off Forum",
+        "event_date": "2026-07-09", "venue": "Hall A", "qr_mode": "combined",
+        "rp_id": str(rp[0]), "topic": "Keynote",
+    }, follow_redirects=True)
+    tok = re.search(r"/e/([0-9a-f]{12})", r.text).group(1)
+    sent.clear()   # drop the event-created notification, only care about registration
+    r = manager.post(f"/e/{tok}", data={
+        "name": "Leo Cruz", "email": "ntf-leo@test.local", "sex": "M",
+        "affiliation": "DOH", "consent": "on"}, follow_redirects=False)
+    assert r.status_code == 303
+    assert r.headers.get("location") is not None   # request still succeeds
+    assert sent == []
+    conn = st.connect(db_path)
+    st.set_email_feature(conn, "registration_confirmed", True)
+    conn.commit(); conn.close()
 
 
 def test_resubmitting_a_registration_does_not_re_email(app_mod, manager, db_path, sent):
@@ -407,3 +468,31 @@ def test_nothing_sent_when_smtp_unconfigured(app_mod, notif_org, monkeypatch):
     # mailer.send() itself still gets called (it's the one that no-ops/logs to
     # the outbox) — the point is the request handler never raises either way.
     assert mailer.email_configured() is False
+
+
+# ------------------------------------------------------------- always-on ---
+
+def test_always_on_account_mail_ignores_every_feature_flag(admin, db_path, sent):
+    """Account-recovery mail (A1-A4) never goes through the gated funnels, so
+    turning every single feature key off must not touch it (D3)."""
+    conn = st.connect(db_path)
+    for key in mailer.FEATURES:
+        st.set_email_feature(conn, key, False)
+    conn.commit()
+    rp_id = conn.execute(
+        "INSERT INTO resource_person(name, is_internal, email) "
+        "VALUES ('NTF-Test Invitee', 1, 'ntf-invitee@test.local')").lastrowid
+    conn.commit()
+    try:
+        r = admin.post("/admin/users/invite",
+                       data={"rp_id": str(rp_id), "role": "viewer"},
+                       follow_redirects=False)
+        assert r.status_code == 303
+        assert len(sent) == 1
+        assert sent[0]["to"] == "ntf-invitee@test.local"
+    finally:
+        for key in mailer.FEATURES:
+            st.set_email_feature(conn, key, True)
+        conn.execute("DELETE FROM admin_user WHERE username='ntf-invitee@test.local'")
+        conn.execute("DELETE FROM resource_person WHERE id=?", (rp_id,))
+        conn.commit(); conn.close()

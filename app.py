@@ -2010,11 +2010,17 @@ def _person_name(conn, account_id):
     return (rp["name"] if rp else None) or u["username"]
 
 
-def _notify_account(conn, account_id, subject, body, html=None):
+# Every gateable email goes through one of the three helpers below. A direct
+# mailer.send() in this file means account/recovery mail, which is never
+# admin-disableable (see docs/ADMIN_EMAIL_FEATURES_PLAN.md, D3).
+
+def _notify_account(conn, account_id, subject, body, html=None, feature=None):
     """Best-effort email to an admin account by id. Never raises — a missing
     account, missing email, or send failure must never break the request that
     triggered it (mailer.send() itself already never raises)."""
     try:
+        if feature and not st.email_feature_enabled(conn, feature):
+            return
         u = st.get_admin_user_by_id(conn, account_id)
         if u and u.get("username"):
             mailer.send(u["username"], subject, body, html=html)
@@ -2022,18 +2028,20 @@ def _notify_account(conn, account_id, subject, body, html=None):
         pass
 
 
-def _notify_email(email, subject, body, html=None):
+def _notify_email(conn, email, subject, body, html=None, feature=None):
     """Best-effort email to a known address. Never raises."""
     try:
+        if feature and not st.email_feature_enabled(conn, feature):
+            return
         if email:
             mailer.send(email, subject, body, html=html)
     except Exception:                                 # noqa: BLE001 - notify, don't crash
         pass
 
 
-def _mail_after_response(email, subject, body, html=None):
+def _mail_after_response(conn, email, subject, body, html=None, feature=None):
     """A BackgroundTask that sends this email once the response is already on
-    its way to the browser.
+    its way to the browser, or None if the feature is off.
 
     For the PARTICIPANT-facing sends (registration confirmation, the
     certificate-ready notice, the live raffle draw). A send costs a round trip
@@ -2042,7 +2050,13 @@ def _mail_after_response(email, subject, body, html=None):
     draw screen waiting on its JSON. Deferring it keeps a slow or unreachable
     relay from ever showing up as a slow page. The admin-side notifications
     stay inline: they are low-frequency, and there the actor is better served
-    by the send finishing before the page says it saved."""
+    by the send finishing before the page says it saved.
+
+    The feature check happens here, at call time, while `conn` is still open
+    — not inside the deferred task, which runs after the request handler's
+    `finally: conn.close()`."""
+    if feature and not st.email_feature_enabled(conn, feature):
+        return None
     return BackgroundTask(mailer.send, email, subject, body, html=html)
 
 
@@ -2872,7 +2886,8 @@ async def admin_feedback_triage(request: Request, fid: int):
                                        kind="status", actor=actor)
                 subj, body, html = mailer.feedback_update_message(
                     entry["submitter"], status, reply, f"{_base_url(request)}/my/feedback")
-                _notify_email(entry["submitter"], subj, body, html=html)
+                _notify_email(conn, entry["submitter"], subj, body, html=html,
+                             feature="feedback_update")
             _audit(request, conn, "spot_feedback_triage", target_type="spot_feedback",
                    target_id=fid, summary=f"#{fid}: {entry['status']} → {status}",
                    before=entry["status"], after=status)
@@ -5488,14 +5503,16 @@ async def create_survey(request: Request):
             creator_name = _person_name(conn, creator_uid) or request.state.user["username"]
             subj, body, html = mailer.event_created_message(creator_name, activity_name,
                                                              event_date, monitor_link)
-            _notify_email(request.state.user["username"], subj, body, html=html)
+            _notify_email(conn, request.state.user["username"], subj, body, html=html,
+                         feature="event_created")
             for chief_id in st.org_unit_chiefs(conn, lead_id):
                 if chief_id == creator_uid:
                     continue
                 chief_name = _person_name(conn, chief_id)
                 subj, body, html = mailer.event_section_notify_message(
                     chief_name, creator_name, activity_name, event_date, monitor_link)
-                _notify_account(conn, chief_id, subj, body, html=html)
+                _notify_account(conn, chief_id, subj, body, html=html,
+                               feature="event_section_notify")
         else:
             st.create_event(conn, activity_name, event_date, end_date=end_date,
                             venue=venue, modality=modality, organizer=organizer_label,
@@ -7116,7 +7133,8 @@ async def submit_rating(request: Request, qr_token: str):
                         subj, body, html = mailer.certificate_ready_message(
                             att_row["name"], cert_link, ev["title"])
                         cert_mail = _mail_after_response(
-                            att_row["email"], subj, body, html=html)
+                            conn, att_row["email"], subj, body, html=html,
+                            feature="certificate_ready")
     finally:
         conn.close()
 
@@ -7504,25 +7522,26 @@ async def event_consent(request: Request, event_token: str):
         event_id = ev["id"]
         event_title, event_date, venue = ev.get("title"), ev.get("event_date"), ev.get("venue")
         event_token_for_link = ev.get("event_token") or event_token
+        confirm_mail = None
+        # A NEW registration only. This endpoint is public and its rate limit is
+        # deliberately loose (120 POSTs/min per IP — a whole venue shares one NAT),
+        # so mailing on every submission would let a script aim ~120 messages a
+        # minute at any address it likes and burn the relay's ~1500/day quota
+        # (docs/MAIL_RELAY_SETUP.md) — taking invites and password resets down with
+        # it. Dedup already collapses a repeat submission into a resume, so keying
+        # the send to "a row was actually created" caps it at one message per
+        # address per activity. Someone who lost their link re-submits and lands
+        # back in their registration anyway, and the organizer can re-send it from
+        # the monitor roster.
+        if registered_now and email and mailer.email_configured():
+            token = auth.make_recovery_token(attendee_id)
+            reg_link = f"{_base_url(request)}/e/{event_token_for_link}/resume?rt={quote(token)}"
+            subj, body, html = mailer.registration_confirmed_message(
+                name, reg_link, event_title, event_date, venue)
+            confirm_mail = _mail_after_response(conn, email, subj, body, html=html,
+                                                feature="registration_confirmed")
     finally:
         conn.close()
-    confirm_mail = None
-    # A NEW registration only. This endpoint is public and its rate limit is
-    # deliberately loose (120 POSTs/min per IP — a whole venue shares one NAT),
-    # so mailing on every submission would let a script aim ~120 messages a
-    # minute at any address it likes and burn the relay's ~1500/day quota
-    # (docs/MAIL_RELAY_SETUP.md) — taking invites and password resets down with
-    # it. Dedup already collapses a repeat submission into a resume, so keying
-    # the send to "a row was actually created" caps it at one message per
-    # address per activity. Someone who lost their link re-submits and lands
-    # back in their registration anyway, and the organizer can re-send it from
-    # the monitor roster.
-    if registered_now and email and mailer.email_configured():
-        token = auth.make_recovery_token(attendee_id)
-        reg_link = f"{_base_url(request)}/e/{event_token_for_link}/resume?rt={quote(token)}"
-        subj, body, html = mailer.registration_confirmed_message(
-            name, reg_link, event_title, event_date, venue)
-        confirm_mail = _mail_after_response(email, subj, body, html=html)
     # Re-enter the same page with a valid attendee session -> rating links show.
     resp = RedirectResponse(f"/e/{event_token}?att={attendee_id}", status_code=303)
     resp.background = confirm_mail
@@ -8183,7 +8202,8 @@ async def raffle_draw(request: Request, event_token: str):
             win_link = f"{_base_url(request)}/e/{ev['event_token']}"
             subj, body, html = mailer.raffle_winner_message(
                 winner["name"], ev["title"], prize, win_link)
-            win_mail = _mail_after_response(winner["email"], subj, body, html=html)
+            win_mail = _mail_after_response(conn, winner["email"], subj, body, html=html,
+                                            feature="raffle_winner")
         # The winner's email is deliberately NOT in this payload: the draw
         # screen is projected at the venue, and it only ever needs the claim
         # code and (when there is one) the name.
@@ -13705,7 +13725,8 @@ async def wellness_apply_submit(request: Request):
             subj, body, html = mailer.wellness_pending_message(
                 approver_name, claimant_name, claim["break_date"], claim["start_time"],
                 claim["hours"], approvals_link, approve_link=approve_link, deny_link=deny_link)
-            _notify_account(conn, approver_id, subj, body, html=html)
+            _notify_account(conn, approver_id, subj, body, html=html,
+                           feature="wellness_approval")
     finally:
         conn.close()
     cheer = quote(f"Break requested — {approver} will see it.")
@@ -13754,7 +13775,8 @@ def _decide_wellness_and_notify(conn, request, claim_id, user, action, note):
     subj, body, html = mailer.wellness_decided_message(
         claim["person_name"], verb, claim["break_date"], claim["decide_note"],
         f"{_base_url(request)}/wellness")
-    _notify_account(conn, claim["user_id"], subj, body, html=html)
+    _notify_account(conn, claim["user_id"], subj, body, html=html,
+                   feature="wellness_decided")
     return claim, verb
 
 
@@ -14289,7 +14311,8 @@ async def work_arrangement_file_submit(request: Request):
             subj, body, html = mailer.awa_pending_message(
                 approver_name, requester_name, row["period_label"],
                 row["arrangement_label"], approvals_link)
-            _notify_account(conn, approver_id, subj, body, html=html)
+            _notify_account(conn, approver_id, subj, body, html=html,
+                           feature="awa_approval")
     finally:
         conn.close()
     return RedirectResponse(
@@ -14349,7 +14372,8 @@ async def work_arrangement_change_submit(request: Request, wa_id: int):
             subj, body, html = mailer.awa_pending_message(
                 approver_name, requester_name, row["period_label"],
                 row["arrangement_label"], approvals_link)
-            _notify_account(conn, approver_id, subj, body, html=html)
+            _notify_account(conn, approver_id, subj, body, html=html,
+                           feature="awa_approval")
     finally:
         conn.close()
     return RedirectResponse(
@@ -14421,7 +14445,8 @@ async def work_arrangement_decide(request: Request, wa_id: int):
         subj, body, html = mailer.awa_decided_message(
             row["person_name"], row["status"], row["period_label"],
             row["decide_note"], f"{_base_url(request)}/work-arrangement")
-        _notify_account(conn, row["user_id"], subj, body, html=html)
+        _notify_account(conn, row["user_id"], subj, body, html=html,
+                       feature="awa_decided")
     finally:
         conn.close()
     return RedirectResponse(f"/work-arrangement/approvals?ok={quote(msg)}",
@@ -14498,7 +14523,8 @@ async def admin_work_arrangement_reopen(request: Request):
                 staff_name = _person_name(conn, staffer["id"])
                 subj, body, html = mailer.work_arrangement_reopened_message(
                     staff_name, label, file_link, note)
-                mailer.send(staffer["username"], subj, body, html=html)
+                _notify_email(conn, staffer["username"], subj, body, html=html,
+                             feature="awa_reopened")
             msg = f"{label} is reopened for filing."
     finally:
         conn.close()

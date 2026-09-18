@@ -1,5 +1,42 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-18 (v2.89 — admin email control center, Phase 2: wire the gate into the three funnels)
+
+Second of six phases (docs/ADMIN_EMAIL_FEATURES_PLAN.md). `app.py`'s three
+mail funnels — `_notify_account`, `_notify_email`, `_mail_after_response` —
+gain a `feature=` argument and check `st.email_feature_enabled(conn, feature)`
+before sending; all 11 transactional call sites (event created, event
+section-notify, registration confirmed, certificate ready, raffle winner,
+wellness approval/decided, work arrangement approval/decided/reopened,
+Spot Feedback update) now pass their key.
+
+`_notify_email` and `_mail_after_response` gain `conn` as their first
+argument — both are called while `conn` is open at every site (checked, not
+assumed). `_mail_after_response` checks the flag at call time rather than
+inside its deferred `BackgroundTask`, since that task runs after the request
+handler's `finally: conn.close()` — a check deferred into the task would hit
+a closed connection. One call site (`registration_confirmed`, `app.py`
+`/e/{event_token}` POST) had its send moved from after `conn.close()` to
+before it, since `_mail_after_response` now needs `conn` open to check the
+flag.
+
+Row #10 (filing reopened) moves off its stray direct `mailer.send()` onto
+`_notify_email`, completing the invariant that every gateable email goes
+through one of the three funnels — now stated as a comment above them.
+Account/recovery mail (invite, password reset, registration-link re-send)
+stays on direct `mailer.send()` calls, untouched and never gated (D3).
+
+Still no visible behavior change: every `email_feature.*` setting defaults to
+on, and nothing yet exposes a way to turn one off (that's Phase 4's
+`/admin/email` console). Extended `tests/test_notifications.py` to assert a
+send happens with a feature on and is skipped with it off, for the wellness,
+registration, and feedback paths, plus one asserting the four always-on
+sends ignore every feature flag. Also fixed a latent test-isolation bug in
+Phase 1's `test_features_are_independent` (`tests/test_email_admin.py`),
+which flipped `wellness_approval` off and never reset it — harmless while
+nothing read the flag, but now leaks into any later test in the same
+session.
+
 ## 2026-09-18 (v2.88 — admin email control center, Phase 1: settings + catalog)
 
 First of six phases (docs/ADMIN_EMAIL_FEATURES_PLAN.md) building an
