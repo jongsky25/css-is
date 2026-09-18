@@ -189,6 +189,8 @@ def send(to, subject, body, html=None):
 # _note_box_html) IS escaped internally — pass those as plain, unescaped text.
 
 _ACCENT = "#1040a0"
+_GREEN = "#1a7f37"
+_RED = "#b42318"
 _INK = "#1b2230"
 _SOFT = "#5a6473"
 _BORDER = "#e2e8f0"
@@ -200,9 +202,9 @@ def _e(value):
     return htmlmod.escape(str(value)) if value is not None else ""
 
 
-def _button_html(label, link):
+def _button_html(label, link, color=None):
     return (f'<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:26px 0;">'
-            f'<tr><td style="border-radius:8px; background:{_ACCENT};">'
+            f'<tr><td style="border-radius:8px; background:{color or _ACCENT};">'
             f'<a href="{link}" target="_blank" style="display:inline-block; padding:13px 28px; '
             f'font-family:Arial,Helvetica,sans-serif; font-size:15px; font-weight:700; '
             f'color:#ffffff; text-decoration:none; border-radius:8px;">{htmlmod.escape(label)}</a>'
@@ -220,10 +222,18 @@ def _note_box_html(label, text):
             f'color:{_INK};">{htmlmod.escape(text)}</p></td></tr></table>')
 
 
-def _email_html(greeting, heading, intro, cta_label, link, footnote="", extra_html=""):
-    button = _button_html(cta_label, link)
+def _email_html(greeting, heading, intro, cta_label=None, link=None, footnote="", extra_html=""):
+    """`cta_label`/`link` are the shell's own single call-to-action button — most
+    composers pass both. Omit them (leave both None) when `extra_html` already
+    supplies its own action button(s) and no further "click here" / "paste this
+    link" fallback should be shown (e.g. the wellness decide-by-email buttons,
+    which are the only thing this recipient should be able to click)."""
+    button = _button_html(cta_label, link) if (cta_label and link) else ""
     footnote_html = (f'<p style="margin:0; font-family:Arial,Helvetica,sans-serif; font-size:13px; '
                       f'line-height:1.6; color:{_SOFT};">{htmlmod.escape(footnote)}</p>') if footnote else ""
+    paste_link_html = (f'<p style="margin:22px 0 0; font-family:Arial,Helvetica,sans-serif; font-size:12px; '
+                        f'line-height:1.5; color:{_SOFT}; word-break:break-all;">Or paste this link into your '
+                        f'browser:<br><a href="{link}" style="color:{_ACCENT};">{link}</a></p>') if link else ""
     return f"""<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
@@ -242,7 +252,7 @@ def _email_html(greeting, heading, intro, cta_label, link, footnote="", extra_ht
   {extra_html}
   {button}
   {footnote_html}
-  <p style="margin:22px 0 0; font-family:Arial,Helvetica,sans-serif; font-size:12px; line-height:1.5; color:{_SOFT}; word-break:break-all;">Or paste this link into your browser:<br><a href="{link}" style="color:{_ACCENT};">{link}</a></p>
+  {paste_link_html}
 </td></tr>
 <tr><td style="padding:16px 32px; background:{_BG}; border-top:1px solid {_BORDER}; border-radius:0 0 12px 12px;">
   <p style="margin:0; font-family:Arial,Helvetica,sans-serif; font-size:12px; color:{_SOFT};">This is an automated message from Office Connect. Please do not reply to this email.</p>
@@ -353,35 +363,42 @@ def wellness_pending_message(approver_name, claimant_name, break_date, start_tim
                               approve_link=None, deny_link=None):
     """`approve_link`/`deny_link` are optional one-click decide-by-email links
     (see auth.make_wellness_decide_token) that open a confirm page and require
-    no login; `link` is always included as the dashboard fallback."""
+    no login. When given, they're the only thing this email asks the approver
+    to click — `link` (the approvals dashboard) is dropped entirely rather than
+    shown as a second, redundant link. `link` is used as the sole call to
+    action only when approve_link/deny_link aren't given."""
     subject = f"Wellness break needs your approval — {claimant_name}"
-    action_block = ""
+    intro = (f"{claimant_name} requested a {hours}-hour wellness break on "
+             f"{break_date} at {start_time}. It's waiting on your decision.")
     if approve_link and deny_link:
-        action_block = (f"Approve:\n  {approve_link}\n\n"
-                        f"Deny:\n  {deny_link}\n\n"
-                        f"(These links expire in 14 days and ask you to confirm before "
-                        f"deciding anything.)\n\n")
-    body = (f"Hello {approver_name or 'there'},\n\n"
-            f"{claimant_name} requested a {hours}-hour wellness break on "
-            f"{break_date} at {start_time}. It's waiting on your decision.\n\n"
-            f"{action_block}"
-            f"Or review it in the dashboard:\n  {link}\n")
-    extra_html = ""
-    if approve_link and deny_link:
+        body = (f"Hello {approver_name or 'there'},\n\n{intro}\n\n"
+                f"Approve:\n  {approve_link}\n\n"
+                f"Deny:\n  {deny_link}\n\n"
+                f"(These links expire in 14 days and ask you to confirm before "
+                f"deciding anything.)\n")
         extra_html = (
-            _button_html("Approve", approve_link) + _button_html("Deny", deny_link)
+            _button_html("Approve", approve_link, color=_GREEN)
+            + _button_html("Deny", deny_link, color=_RED)
             + f'<p style="margin:0 0 4px; font-family:Arial,Helvetica,sans-serif; font-size:12px; '
               f'color:{_SOFT};">These links expire in 14 days and ask you to confirm before deciding anything.</p>'
         )
-    html = _email_html(
-        greeting=f"Hi {approver_name or 'there'},",
-        heading="Wellness break needs your approval",
-        intro=(f"{_e(claimant_name)} requested a {_e(hours)}-hour wellness break on "
-               f"{_e(break_date)} at {_e(start_time)}. It's waiting on your decision."),
-        cta_label="Review in the dashboard" if extra_html else "Review request",
-        link=link,
-        extra_html=extra_html,
-    )
+        html = _email_html(
+            greeting=f"Hi {approver_name or 'there'},",
+            heading="Wellness break needs your approval",
+            intro=(f"{_e(claimant_name)} requested a {_e(hours)}-hour wellness break on "
+                   f"{_e(break_date)} at {_e(start_time)}. It's waiting on your decision."),
+            extra_html=extra_html,
+        )
+    else:
+        body = f"Hello {approver_name or 'there'},\n\n{intro}\n\n  {link}\n"
+        html = _email_html(
+            greeting=f"Hi {approver_name or 'there'},",
+            heading="Wellness break needs your approval",
+            intro=(f"{_e(claimant_name)} requested a {_e(hours)}-hour wellness break on "
+                   f"{_e(break_date)} at {_e(start_time)}. It's waiting on your decision."),
+            cta_label="Review request",
+            link=link,
+        )
     return subject, body, html
 
 
