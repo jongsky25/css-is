@@ -13922,7 +13922,7 @@ async def wellness_cancel(request: Request, claim_id: int):
     conn = get_conn()
     try:
         try:
-            st.cancel_wellness_claim(conn, claim_id, user["id"], reason=reason)
+            claim = st.cancel_wellness_claim(conn, claim_id, user["id"], reason=reason)
         except ValueError as e:
             return RedirectResponse(f"/wellness?err={quote(str(e))}", status_code=303)
         summary = "withdrew a wellness break request"
@@ -13930,6 +13930,21 @@ async def wellness_cancel(request: Request, claim_id: int):
             summary += f": {reason}"
         _audit(request, conn, "wellness_cancel", target_type="wellness_claim",
                target_id=claim_id, summary=summary)
+        # Tell the approver it's off their plate (Spot Feedback #75: "how will
+        # I know if the approver was notified of my cancellation?"). If it was
+        # already approved, that's specifically whoever approved it — they're
+        # the one now expecting a break that isn't happening; if it was still
+        # pending, it's whoever the request would have routed to.
+        claimant_name = _person_name(conn, user["id"]) or user["username"]
+        notify_ids = ([claim["decided_by"]] if claim["status"] == "approved" and claim["decided_by"]
+                      else st.get_approvers_for(conn, user["id"]))
+        for approver_id in notify_ids:
+            approver_name = _person_name(conn, approver_id)
+            subj, body, html = mailer.wellness_cancelled_message(
+                approver_name, claimant_name, claim["break_date"], claim["start_time"],
+                claim["hours"], reason, f"{_base_url(request)}/wellness/dashboard")
+            _notify_account(conn, approver_id, subj, body, html=html,
+                           feature="wellness_cancelled")
     finally:
         conn.close()
     return RedirectResponse("/wellness?cheer=Request+withdrawn+—+those+hours+are+back+in+your+week.",

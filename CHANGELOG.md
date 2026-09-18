@@ -1,5 +1,37 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-18 (v3.00 — the approver is now told when a break is withdrawn)
+
+Spot Feedback #75: "how will I know if the approver was notified of my
+cancellation?" Filing a break already emails the approver
+(`wellness_approval`) and a decision already emails the claimant back
+(`wellness_decided`) — withdrawal was the missing third leg, notifying no
+one.
+
+**`mailer.py`** — new `wellness_cancelled_message(approver_name,
+claimant_name, break_date, start_time, hours, reason, link)`, folding in
+v2.99's `cancel_reason` when given (`_note_box_html`, same as a denial's
+`decide_note`). Registered as `"wellness_cancelled"` in `FEATURES`
+(admin-toggleable from `/admin/email` like every other transactional email,
+no template changes needed — that page already renders from the catalog)
+and in `_PREVIEWS` (the admin preview/test-send catalog).
+
+**`app.py`** — `POST /wellness/claims/{claim_id}/cancel` now works out who
+to tell: if the claim was already `approved`, specifically whoever approved
+it (`claim["decided_by"]` — they're the one now expecting a break that
+isn't happening); if still `pending`, whoever it would have routed to
+(`get_approvers_for`, the same set the original apply notified).
+
+**`tests/test_notifications.py`** —
+`test_wellness_cancel_of_a_pending_claim_notifies_the_approver` and
+`test_wellness_cancel_of_an_approved_claim_notifies_the_decider`.
+**`tests/test_email_admin.py`**'s catalog-completeness tests (every
+`FEATURES` key needs a label/hint/group and a working preview sample) now
+cover the new key too — full `tests/test_notifications.py`,
+`tests/test_email_admin.py`, `tests/test_mailer.py`,
+`tests/test_wellness.py` and `tests/test_wellness_escalation.py` suites
+(over 190 tests) pass.
+
 ## 2026-09-18 (v2.99 — a documented reason when withdrawing a wellness break)
 
 Spot Feedback #77: "Pop up window to record why withdrawing or cancelling

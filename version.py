@@ -17,10 +17,23 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.99"
+APP_VERSION = "3.00"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.00",
+        "date": "September 18, 2026",
+        "summary": "Withdrawing a wellness break now tells the approver, so "
+                   "you're not left wondering if they know.",
+        "changes": [
+            "When you withdraw a wellness break request, the approver — "
+            "whoever approved it, or whoever it was waiting on — now gets "
+            "an email saying it's off their plate, including your reason "
+            "if you gave one. An admin can turn this off from the Email "
+            "screen like any other notification.",
+        ],
+    },
     {
         "version": "2.99",
         "date": "September 18, 2026",
