@@ -83,6 +83,24 @@ window.refreshChipCap = function (container) {
     });
   });
 
+  /* 5b. Nav dropdowns anchor to their trigger's left edge (.menu { left:0 }),
+        which is fine near the left of the bar but runs a wide menu off the
+        right edge of the screen for a group sitting further along the row —
+        the later items become unreachable with no scrollbar to reveal them.
+        Flip to right-anchored only when the left anchor would overflow, so
+        groups that already fit are untouched. */
+  document.querySelectorAll("details.navgroup").forEach(function (d) {
+    d.addEventListener("toggle", function () {
+      var menu = d.querySelector(".menu");
+      if (!menu) return;
+      if (!d.open) { menu.classList.remove("menu-flip"); return; }
+      menu.classList.remove("menu-flip");
+      if (menu.getBoundingClientRect().right > window.innerWidth) {
+        menu.classList.add("menu-flip");
+      }
+    });
+  });
+
   /* 6. Display settings popover: theme (light/dark/contrast) + text size
         (sm/md/lg). Buttons write <html data-theme>/<html data-textscale> and
         persist to localStorage; the pre-paint script in <head> applies the

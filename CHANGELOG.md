@@ -1,5 +1,26 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-18 (v2.95 — a right-edge nav dropdown ran off the screen)
+
+Reported by the user (Spot Feedback #93): "yung dropdown lumalagpas sa
+screen di na makita ang ibang choices" — a top-nav dropdown on
+`/dashboard/participation` overflowed the screen, hiding its other choices.
+`.navgroup .menu` (`static/css/app.css`) always anchors `left:0` against its
+trigger `<summary>`, growing rightward with no viewport-edge awareness. For
+a nav group sitting close to the right side of the bar — common once enough
+groups are visible for a role to not all fit on one row before the
+`780px` hamburger breakpoint — the menu's right side ran past the window
+edge with nothing to scroll it into view.
+
+**`static/js/app.js`** — a new `toggle` listener on every `details.navgroup`
+checks the opened `.menu`'s `getBoundingClientRect().right` against
+`window.innerWidth` and adds a `menu-flip` class when it would overflow,
+clearing it again on close.
+**`static/css/app.css`** — `.navgroup .menu.menu-flip { left:auto; right:0; }`
+anchors the menu to its trigger's right edge instead, so a menu that would
+have overflowed opens leftward and stays fully on-screen; menus that
+already fit are untouched.
+
 ## 2026-09-18 (v2.94 — admin email control center, Phase 7: timing parameters)
 
 `docs/ADMIN_EMAIL_FEATURES_PLAN.md` §12. The six schedule/delay values that

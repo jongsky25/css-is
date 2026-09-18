@@ -17,10 +17,26 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.94"
+APP_VERSION = "2.95"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.95",
+        "date": "September 18, 2026",
+        "summary": "A top-menu dropdown that opened near the right edge of "
+                   "the screen no longer runs off the side, hiding its "
+                   "other choices.",
+        "changes": [
+            "Menus in the top navigation bar always opened toward the "
+            "right of their button. For a menu sitting close to the right "
+            "edge of the screen (e.g. on a narrower laptop window), that "
+            "pushed part of the menu off-screen with no way to reach the "
+            "hidden choices. Such a menu now opens toward the left instead "
+            "whenever opening toward the right would run off-screen, so "
+            "every choice stays visible.",
+        ],
+    },
     {
         "version": "2.94",
         "date": "September 18, 2026",
