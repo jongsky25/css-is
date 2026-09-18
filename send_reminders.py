@@ -53,11 +53,18 @@ import storage as st
 import tzutil as tz
 
 
+_NO_BASE_URL = ("CSS_BASE_URL is not set, so reminder emails would carry no "
+                "usable link — skipping. Set it to the site's public origin.")
+
+
 def _base_url():
+    """The public origin for the links in these emails, or None when it isn't
+    configured. Deliberately NOT a SystemExit: run() is also called from the
+    app's own scheduler loop (app._scheduler_loop), and SystemExit is a
+    BaseException — an `except Exception` guard would not hold it, so a
+    missing env var would take the whole scheduler down with it."""
     url = os.environ.get("CSS_BASE_URL")
-    if not url:
-        raise SystemExit("CSS_BASE_URL must be set so reminder emails carry a real link.")
-    return url.rstrip("/")
+    return url.rstrip("/") if url else None
 
 
 def _person_name(conn, account_id):
@@ -370,13 +377,17 @@ def send_approvals_digest(conn, base, dry_run=False):
 
 def run(db_path="css_is.db", dry_run=False, jobs=None):
     """Run the selected jobs (all of them if `jobs` is None/empty). Returns a
-    {job_name: emails_sent} report."""
+    {job_name: emails_sent} report — empty when there is no CSS_BASE_URL to
+    build links with, which is a skip, not a failure."""
+    base = _base_url()
+    if not base:
+        print(_NO_BASE_URL)
+        return {}
     jobs = set(jobs) if jobs else set(_ALL_JOBS)
     conn = st.connect(db_path)
     report = {}
     try:
         st.init_db(conn)
-        base = _base_url()
         if "events" in jobs:
             report["events"] = remind_tomorrows_events(conn, base, dry_run=dry_run)
         if "wellness_expiry" in jobs:
@@ -423,6 +434,12 @@ def main():
                               ("csm_activity", args.csm_activity),
                               ("wellness_file", args.wellness_file),
                               ("awa_file", args.awa_file)) if flag}
+    # run() treats a missing CSS_BASE_URL as a skip, because the in-process
+    # caller must not be killed by it. On the command line it IS a failure:
+    # exit non-zero so a cron/Task Scheduler run reports it instead of
+    # looking like a quiet night with nothing to send.
+    if not _base_url():
+        raise SystemExit(_NO_BASE_URL)
     report = run(db_path=args.db, dry_run=args.dry_run, jobs=jobs or None)
     for job, n in report.items():
         print(f"{job}: {n} email(s) {'would be ' if args.dry_run else ''}sent")

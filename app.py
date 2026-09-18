@@ -68,6 +68,7 @@ import report_docs
 import csm_report
 import auth
 import mailer
+import send_reminders
 import backups as bk
 import monitoring as mon
 import name_cleanup as ncl
@@ -3945,6 +3946,28 @@ async def admin_rules_edit(request: Request, rid: int):
 
 _SCHED_TICK = 60          # seconds between due-checks
 
+# The daily reminder sweep (send_reminders.py) rides this same loop. There is
+# no cron on the Space — it is a container, not a server anyone can add a
+# crontab to — so a "run it from cron" script would simply never run in
+# production. The individual jobs already gate themselves to the right day
+# (the weekly digest, the filing nudges), so this only has to fire the sweep
+# ONCE PER LOCAL DAY and let each job decide whether today is its day.
+_REMINDER_SETTING = "reminders_last_run_date"
+# Not at midnight: the first tick at or after this local hour, so a day-before
+# reminder lands in the morning rather than in the small hours.
+_REMINDER_HOUR = 7
+
+
+def _reminders_due(conn, now=None):
+    """True when today's reminder sweep hasn't run yet and it's late enough in
+    the day to send. The marker is a stored DATE, not an in-process flag: a
+    Space restarts often, and an in-memory one would re-send on every restart."""
+    now = now or _now_local()
+    if now.hour < _REMINDER_HOUR:
+        return False
+    return st.get_setting(conn, _REMINDER_SETTING) != now.date().isoformat()
+
+
 async def _scheduler_loop():
     while True:
         try:
@@ -3956,11 +3979,20 @@ async def _scheduler_loop():
                 bk.ensure_schedule_anchor(conn)
                 cfg = bk.read_config(conn)
                 due = bk.is_due(cfg, cfg["last_backup_at"])
+                reminders_due = _reminders_due(conn)
+                if reminders_due:
+                    # Claim the day BEFORE running: a crash mid-sweep must not
+                    # replay the whole sweep on the next tick, a minute later.
+                    # Each job's own marker column decides what it still owes.
+                    st.set_setting(conn, _REMINDER_SETTING,
+                                   _now_local().date().isoformat())
             finally:
                 conn.close()
             if due:
                 # blocking sqlite/file work off the event loop
                 await asyncio.to_thread(bk.run_scheduled_job, DB)
+            if reminders_due:
+                await asyncio.to_thread(send_reminders.run, DB)
         except Exception:         # noqa: BLE001 — never let the loop die
             pass
         await asyncio.sleep(_SCHED_TICK)

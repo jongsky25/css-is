@@ -17,10 +17,39 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.85"
+APP_VERSION = "2.86"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.86",
+        "date": "September 18, 2026",
+        "summary": "The system now sends the reminders and confirmations "
+                   "people used to have to chase by hand.",
+        "changes": [
+            "Registering for an activity now sends you a confirmation email "
+            "with your own link back to it, and finishing an activity's "
+            "feedback emails you your Certificate of Appearance.",
+            "A raffle winner who registered with an email address is told "
+            "they won, instead of only finding out if they were watching "
+            "the draw screen.",
+            "The day before an activity, everyone registered for it — plus "
+            "the organizer and their section chief — gets a reminder.",
+            "Once an activity's feedback closes, its results are emailed to "
+            "the organizer and their chief, and each resource person is sent "
+            "their own results for the session they ran.",
+            "Chiefs get a Monday summary of every wellness break and work "
+            "arrangement still waiting on their decision, and a nudge if a "
+            "request has been sitting unanswered long enough that its "
+            "approve/deny link is about to expire.",
+            "Staff who haven't used the week's wellness break are reminded "
+            "the day before it lapses, and staff who haven't filed a work "
+            "arrangement are reminded the day before the deadline. Anyone "
+            "marked \"No AWA\" is left out of that one.",
+            "When an admin reopens a closed work-arrangement period, the "
+            "staff who still need to file are told it's open again.",
+        ],
+    },
     {
         "version": "2.85",
         "date": "September 18, 2026",

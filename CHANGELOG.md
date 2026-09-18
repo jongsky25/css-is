@@ -1,5 +1,58 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-18 (v2.86 — the rest of the email automation, and a daily sweep)
+
+User asked what else could be automated in the sending, picked seven of the
+gaps off that list, and added four more: the CSM results for both the resource
+person and the activity ("only for those involved"), and reminders to file
+wellness and AWA. Built one by one, a commit each.
+
+**Fired from an action (`app.py`)** — registration confirmation (with the
+attendee's own recovery link, so it doubles as the way back in);
+Certificate-of-Appearance delivery the moment an attendee completes an
+activity's feedback; the raffle winner's notification; and, when an admin
+reopens a closed AWA period, a note to the staff who still owe a filing.
+
+**`send_reminders.py` (new)** — the scheduled half, seven jobs behind
+independent flags with `--dry-run`: day-before activity reminders (registrants
++ creator + section chief), the wellness decide-link expiry nudge, a weekly
+pending-approvals digest, CSM results to the RP and to the activity's
+creator/chief, and the two filing nudges. Each job gates itself on the right
+day, so the sweep is safe to run daily with no flags.
+
+**Scheduling** — first cut assumed an external cron, the way `retention.py`
+and `daily_backup.py` are run. That is wrong for the Space: it is a container,
+not a server anyone can add a crontab to, so a cron-only script would never
+have run in production. The sweep now rides the existing in-process scheduler
+(`app._scheduler_loop`, which already fires backups "no external cron
+needed"), once per local day from `_REMINDER_HOUR`, claiming the day in an
+`app_setting` BEFORE running so a crash can't replay it a minute later. The
+CLI still works unchanged for a manual or off-Space run. `send_reminders.py`
+added to `deploy_hf.py`'s `RUNTIME_PY` — the deploy ships an allow-list, so a
+new runtime module that is not on it simply is not there in production.
+
+**Idempotency** — every send that could otherwise repeat carries a marker:
+`attendee.certificate_emailed_at`, `form_instance.csm_results_emailed_at`,
+`event.csm_results_emailed_at`, `wellness_claim.decide_reminded_at`. The
+date-window jobs stay deliberately days wide so a missed run still lands; the
+markers, not the window, are what keep a reminder to one.
+
+**Pre-merge self-review turned up five fixes**, all in their own commit. The
+registration confirmation was sent on EVERY submission of a public endpoint
+rate-limited at 120 POSTs/min/IP — a script could have aimed ~120 messages a
+minute at any address and exhausted the relay's ~1500/day quota, taking
+invites and password resets down with it; it now sends only when a row is
+actually created, which dedup already bounds to one per address per activity.
+`staff_without_work_arrangement` was nudging people the app refuses filings
+from (tagged "No AWA") and skipping people whose only filing was denied (a
+denied row frees the period again) — it now follows `work_arrangement_roster`'s
+own rules, archived directory people included. The wellness expiry reminder's
+window is three days wide and was re-sending for each of them. The approvals
+digest re-listed the same pending rows every run, so it is weekly now. And the
+three participant-facing sends ran inline, charging the relay's 30 s timeout
+to someone tapping Submit at a venue or to the draw screen waiting on its
+JSON — they ride a `BackgroundTask` now; admin-side sends stay inline.
+
 ## 2026-09-18 (v2.84 — formal HTML emails, invite/reset then everything else)
 
 User request, right after confirming v2.83's relay actually delivers: design

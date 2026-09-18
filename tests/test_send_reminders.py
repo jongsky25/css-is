@@ -160,10 +160,14 @@ def test_dry_run_sends_nothing(tmp_path, sent, capsys):
     assert "dry-run" in capsys.readouterr().out
 
 
-def test_base_url_required(monkeypatch):
+def test_no_base_url_is_a_skip_not_an_exit(tmp_path, sent, monkeypatch):
+    """run() is called from app._scheduler_loop, whose guard is `except
+    Exception` — a SystemExit here (BaseException) would escape it and take
+    the whole scheduler, backups included, down with it."""
     monkeypatch.delenv("CSS_BASE_URL", raising=False)
-    with pytest.raises(SystemExit):
-        sr._base_url()
+    assert sr._base_url() is None
+    assert sr.run(db_path=str(tmp_path / "nobase.db")) == {}
+    assert sent == []
 
 
 def test_run_uses_css_base_url(tmp_path, sent, monkeypatch):
@@ -179,6 +183,28 @@ def test_run_uses_css_base_url(tmp_path, sent, monkeypatch):
     report = sr.run(db_path=str(tmp_path / "reminders2.db"), jobs={"events"})
     assert report == {"events": 1}
     assert sent[0]["to"] == "envcheck@test.local"
+
+
+# ------------------------------------------------- the app's daily sweep ---
+
+def test_scheduler_fires_the_sweep_once_a_day(app_mod, db_path, monkeypatch):
+    """There is no cron on the Space, so the sweep rides the app's own
+    scheduler loop. It has to fire once per local day and then stop — the
+    loop re-checks every 60 s."""
+    from datetime import datetime
+    conn = st.connect(db_path)
+    st.set_setting(conn, app_mod._REMINDER_SETTING, "")
+    day = datetime(2026, 9, 18, app_mod._REMINDER_HOUR, 30)
+    assert app_mod._reminders_due(conn, day) is True
+    # Too early in the day -> not yet, so nothing lands at 00:01.
+    assert app_mod._reminders_due(conn, day.replace(hour=1)) is False
+    # Once the day is claimed, every later tick that day is a no-op.
+    st.set_setting(conn, app_mod._REMINDER_SETTING, day.date().isoformat())
+    assert app_mod._reminders_due(conn, day) is False
+    assert app_mod._reminders_due(conn, day.replace(hour=23)) is False
+    # ...and it comes round again tomorrow.
+    assert app_mod._reminders_due(conn, day.replace(day=19)) is True
+    conn.close()
 
 
 # --------------------------------------------------------- wellness expiry ---
