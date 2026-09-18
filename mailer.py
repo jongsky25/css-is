@@ -598,6 +598,28 @@ def work_arrangement_reopened_message(name, period_label, link, note=None):
     return subject, body, html
 
 
+def wellness_file_reminder_message(name, deadline_label, link):
+    """Returns (subject, plain_text_body, html_body). A nudge, timed the day
+    before the Mon-Fri window closes, for someone who hasn't used any of this
+    week's wellness entitlement yet — unused hours don't carry over."""
+    subject = "Reminder: file your wellness break this week"
+    body = (f"Hello {name or 'there'},\n\n"
+            f"You haven't used this week's wellness break entitlement yet. "
+            f"Breaks can only be scheduled Monday through Friday, so any hours "
+            f"left unused by {deadline_label} won't carry over.\n\n"
+            f"  {link}\n")
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="Your wellness break is still unused",
+        intro=(f"You haven't used this week's wellness break entitlement yet. "
+               f"Breaks can only be scheduled Monday through Friday, so any "
+               f"hours left unused by {_e(deadline_label)} won't carry over."),
+        cta_label="File a wellness break",
+        link=link,
+    )
+    return subject, body, html
+
+
 def awa_pending_message(approver_name, requester_name, period_label, arrangement, link):
     subject = f"Work arrangement needs your approval — {requester_name}"
     body = (f"Hello {approver_name or 'there'},\n\n"

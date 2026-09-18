@@ -6004,6 +6004,19 @@ def wellness_window_weeks(d=None):
             for i in range(WELLNESS_WINDOW_WEEKS)]
 
 
+def staff_without_wellness_claim_this_week(conn, week_start):
+    """Active accounts with no counted (pending/approved/completed)
+    wellness_claim for this week — the "you have unused wellness hours" nudge's
+    audience. Someone who's used even part of the entitlement isn't nudged
+    again; only those who haven't touched it at all this week."""
+    qs = ",".join("?" * len(_WELLNESS_COUNTED))
+    rows = conn.execute(
+        f"SELECT id, username FROM admin_user WHERE active = 1 AND id NOT IN "
+        f"  (SELECT user_id FROM wellness_claim WHERE week_start=? AND status IN ({qs})) "
+        f"ORDER BY username", (week_start, *_WELLNESS_COUNTED)).fetchall()
+    return [{"id": r[0], "username": r[1]} for r in rows]
+
+
 def wellness_hours_used(conn, user_id, week_start):
     """Hours of the week's entitlement already spoken for (pending + approved +
     completed; denied/cancelled don't count)."""

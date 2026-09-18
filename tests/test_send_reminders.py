@@ -407,3 +407,40 @@ def test_no_csm_activity_email_without_a_response(tmp_path, sent):
     n = sr.send_csm_results_to_activity(conn, "https://css.example")
     assert n == 0
     assert sent == []
+
+
+# ------------------------------------------------------- wellness (file) ---
+
+def _a_thursday():
+    d = tz.today_local()
+    while d.weekday() != 3:
+        d += timedelta(days=1)
+    return d
+
+
+def test_wellness_file_reminder_only_fires_on_thursday(tmp_path, sent, monkeypatch):
+    conn = _fresh(tmp_path)
+    st.create_admin_user(conn, "sr-file-wed@test.local", "x", "y", "viewer")
+    conn.commit()
+    wednesday = _a_thursday() - timedelta(days=1)
+    monkeypatch.setattr(tz, "today_local", lambda: wednesday)
+    n = sr.remind_wellness_to_file(conn, "https://css.example")
+    assert n == 0
+    assert sent == []
+
+
+def test_wellness_file_reminder_nudges_non_filers_only(tmp_path, sent, monkeypatch):
+    conn = _fresh(tmp_path)
+    st.create_admin_user(conn, "sr-file-nofile@test.local", "x", "y", "viewer")
+    filer = st.create_admin_user(conn, "sr-file-filed@test.local", "x", "y", "viewer")
+    conn.commit()
+    thursday = _a_thursday()
+    monkeypatch.setattr(tz, "today_local", lambda: thursday)
+    friday = thursday + timedelta(days=1)
+    st.create_wellness_claim(conn, filer, friday.isoformat(), "10:00", "exercise")
+    n = sr.remind_wellness_to_file(conn, "https://css.example")
+    assert n == 1
+    assert sent[0]["to"] == "sr-file-nofile@test.local"
+    assert "wellness break" in sent[0]["subject"].lower()
+    assert "/wellness/apply" in sent[0]["body"]
+    assert friday.isoformat() in sent[0]["body"]

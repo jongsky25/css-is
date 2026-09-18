@@ -27,6 +27,8 @@ times of day; with no flags at all, every job runs):
                       login — the results page is not public).
   --csm-activity      Email an activity's creator + section chief its overall
                       CSM results once concluded.
+  --wellness-file     Nudge staff who haven't used any of this week's wellness
+                      break entitlement yet, the day before it lapses.
 
 Requires CSS_BASE_URL (same as the live app — see app.py's _base_url) so the
 links in these emails point at the real site; a mail transport configured per
@@ -35,7 +37,7 @@ mailer.py (CSS_MAIL_RELAY_* or CSS_SMTP_*); nothing is sent if neither is set.
 from __future__ import annotations
 import argparse
 import os
-from datetime import timedelta
+from datetime import date, timedelta
 from urllib.parse import quote
 
 import auth
@@ -116,7 +118,7 @@ def remind_tomorrows_events(conn, base, dry_run=False):
     return sent
 
 
-_ALL_JOBS = {"events", "wellness_expiry", "digest", "csm_rp", "csm_activity"}
+_ALL_JOBS = {"events", "wellness_expiry", "digest", "csm_rp", "csm_activity", "wellness_file"}
 
 # How many days before a wellness decide link (auth._WELLNESS_DECIDE_MAX_AGE)
 # expires the approver gets re-notified, if the claim is still pending then.
@@ -238,6 +240,34 @@ def send_csm_results_to_activity(conn, base, dry_run=False):
     return sent
 
 
+# Weekday (Mon=0..Fri=4) the "you haven't filed a wellness break" nudge fires
+# on — the day before the Mon-Fri window closes, so a daily cron run only
+# nudges once a week, not every day of it.
+_WELLNESS_FILE_REMINDER_WEEKDAY = 3   # Thursday
+
+
+def remind_wellness_to_file(conn, base, dry_run=False):
+    """Nudge staff who haven't used any of this week's 2-hour wellness
+    entitlement yet — breaks can only be scheduled Monday-Friday, so unused
+    hours lapse once the week's Friday passes."""
+    today = tz.today_local()
+    if today.weekday() != _WELLNESS_FILE_REMINDER_WEEKDAY:
+        return 0
+    week_start = st.wellness_week_start(today)
+    friday_label = (date.fromisoformat(week_start) + timedelta(days=4)).isoformat()
+    link = f"{base}/wellness/apply"
+    sent = 0
+    for staffer in st.staff_without_wellness_claim_this_week(conn, week_start):
+        name = _person_name(conn, staffer["id"])
+        subj, body, html = mailer.wellness_file_reminder_message(name, friday_label, link)
+        if dry_run:
+            print(f"[dry-run] wellness file reminder -> {staffer['username']}")
+        else:
+            mailer.send(staffer["username"], subj, body, html=html)
+        sent += 1
+    return sent
+
+
 def send_approvals_digest(conn, base, dry_run=False):
     """One email per approver bundling EVERY wellness break and work
     arrangement still awaiting their decision — a catch-all in case an
@@ -303,6 +333,8 @@ def run(db_path="css_is.db", dry_run=False, jobs=None):
             report["csm_rp"] = send_csm_results_to_rps(conn, base, dry_run=dry_run)
         if "csm_activity" in jobs:
             report["csm_activity"] = send_csm_results_to_activity(conn, base, dry_run=dry_run)
+        if "wellness_file" in jobs:
+            report["wellness_file"] = remind_wellness_to_file(conn, base, dry_run=dry_run)
     finally:
         conn.close()
     return report
@@ -322,13 +354,16 @@ def main():
                     help="Email resource persons their own CSM results once concluded.")
     ap.add_argument("--csm-activity", action="store_true",
                     help="Email an activity's creator/chief its overall CSM results.")
+    ap.add_argument("--wellness-file", action="store_true",
+                    help="Nudge staff who haven't filed a wellness break this week.")
     args = ap.parse_args()
 
     jobs = {j for j, flag in (("events", args.events),
                               ("wellness_expiry", args.wellness_expiry),
                               ("digest", args.digest),
                               ("csm_rp", args.csm_rp),
-                              ("csm_activity", args.csm_activity)) if flag}
+                              ("csm_activity", args.csm_activity),
+                              ("wellness_file", args.wellness_file)) if flag}
     report = run(db_path=args.db, dry_run=args.dry_run, jobs=jobs or None)
     for job, n in report.items():
         print(f"{job}: {n} email(s) {'would be ' if args.dry_run else ''}sent")
