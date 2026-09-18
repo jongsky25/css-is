@@ -199,6 +199,13 @@ The first pass covered routes, RBAC, input-abuse, integrity, and one perf check.
   sheets/slides/headers and non-empty data — not merely that export didn't throw.
 - **HTML/markup validity & error paths:** every 4xx/5xx path renders a proper page (no raw
   tracebacks leaked); 404/403/closed-window pages are correct.
+- **Admin email console (`/admin/email`, docs/ADMIN_EMAIL_FEATURES_PLAN.md):** turn a
+  transactional feature OFF, trigger its send site (e.g. file a wellness break to trigger
+  `wellness_approval`), and confirm three things together: no mail actually goes out, the
+  console's Recent sends table shows a `skipped_off` row for it, and turning the feature back
+  ON makes the same action send normally again. Repeat once for a scheduled job (toggle a
+  `job_*` key off, run `python send_reminders.py --dry-run`, confirm it prints
+  `skipped (turned off in /admin/email)` and is absent from the report rather than showing 0).
 
 ---
 

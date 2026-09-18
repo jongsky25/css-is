@@ -1,5 +1,75 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-18 (v2.93 — admin email control center, Phase 6: the send log)
+
+Sixth and final phase (docs/ADMIN_EMAIL_FEATURES_PLAN.md). `storage.py` adds
+`email_log` (following the `ai_interaction` precedent: `id`, `created_at`,
+`feature`, `recipient`, `subject`, `status`, `detail`, indexed on
+`created_at` and `feature`) plus `log_email_send`/`recent_email_sends`/
+`purge_stale_email_log`. `status` is `sent`/`failed`/`not_configured`/
+`skipped_off`; `mailer.py` gains `send_status(result)` to classify a
+`mailer.send()` result into the first three (never `skipped_off` — that's
+decided by the caller before a send is even attempted).
+
+Every write site now logs one row per attempt: the three Phase-2 funnels
+(`_notify_account`/`_notify_email` write `skipped_off` when the feature is
+off, else the real result; `_mail_after_response`'s background send logs
+through a new `_send_and_log` helper that opens its own connection, since
+the background task runs after the request handler's `finally:
+conn.close()`), the four always-on account/recovery sends (invite, both
+reset paths, registration-link resend), and a new `send_reminders._send()`
+wrapper replacing all ten of that module's bare `mailer.send()` calls — a
+disabled scheduled job never reaches its function at all (Phase 3's `run()`
+already drops it from the job set), so there is no `skipped_off` case at
+that level, only `sent`/`failed`/`not_configured`.
+
+`retention.py` gains `purge_stale_email_log` (`--email-log` CLI flag),
+90-day default via the new `email_log_retention_days` app_setting —
+`recipient` is personal data, which is the whole reason this table has a
+retention window. `/admin/email` renders the newest 50 rows at the bottom of
+the console with a colored-dot status (`/ops`'s idiom), each labeled with
+its feature's human-readable name.
+
+New tests across `tests/test_email_admin.py` (send_status classification,
+`log_email_send`/`recent_email_sends`/`purge_stale_email_log`, the console
+rendering recent sends), `tests/test_notifications.py` (a real send writes
+a `sent` row; a disabled feature writes `skipped_off`), and
+`tests/test_send_reminders.py` (a scheduled send writes a `job_events` row).
+Also a `docs/QA_PLAYBOOK.md` pass: turn a feature off, trigger it, confirm
+no mail + a `skipped_off` row, turn it back on.
+
+## 2026-09-18 (v2.92 — admin email control center, Phase 5: preview + test-send)
+
+Fifth of six phases (docs/ADMIN_EMAIL_FEATURES_PLAN.md). `mailer.py` gains
+`sample_message(key)` — `(subject, plain_text_body, html_or_None)` built by
+calling the REAL composer with representative sample data, one lambda per
+key in a new `_PREVIEWS` dict covering all 18 `FEATURES` keys plus the 3
+`ALWAYS_ON` keys (21 total, matching the composer count exactly). `preview
+(key)` wraps it down to `(subject, html)`, wrapping a plain-text-only
+composer's body (`recovery_message` has no HTML variant) in a minimal HTML
+shell so every key still previews as a renderable page. A preview can never
+drift from what actually sends, because it calls the same composer function.
+
+`app.py` adds `GET /admin/email/preview/{key}` (renders the sample HTML
+directly, for an `<iframe>` on the console; 404s on an unknown key) and
+`POST /admin/email/test` (composes the sample and sends it to the
+**requesting admin's own** `username` — never an address from the posted
+form, so this route can never be turned into an open relay; says so instead
+of pretending when `email_configured()` is False). Both `_forbid` on
+`manage_users` like every other handler in this module.
+
+`templates/admin_email.html` gains a `row()` macro shared by all three
+groups: each row now has a "Send test to me" button beside its toggle, and a
+`<details>` disclosure that lazy-loads the preview iframe on open — no
+JavaScript, consistent with the rest of the console.
+
+Two new RBAC rows in `tests/test_auth_rbac.py` (`/admin/email/preview/<key>`
+GET, `/admin/email/test` POST). New Phase-5 tests in
+`tests/test_email_admin.py`: every `FEATURES`/`ALWAYS_ON` key has a working
+sample (the one test that stops a future composer from being cataloged
+without a preview), an unknown key 404s/errors cleanly, and test-send proves
+it ignores any address posted alongside `key`.
+
 ## 2026-09-18 (v2.91 — admin email control center, Phase 4: the /admin/email console)
 
 Fourth of six phases (docs/ADMIN_EMAIL_FEATURES_PLAN.md). Adds the human

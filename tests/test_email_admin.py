@@ -1,14 +1,24 @@
 """
 Admin email control center (docs/ADMIN_EMAIL_FEATURES_PLAN.md).
 Phase 1: the per-feature on/off setting and the mailer.py catalog it reads
-against. Phase 4: the /admin/email console built on top of it.
+against. Phase 4: the /admin/email console built on top of it. Phase 5:
+preview + test-send. Phase 6: the send log.
 """
+from datetime import timedelta
+
 import mailer
+import retention
 import storage as st
+import tzutil as tz
 
 
 def _reset(conn):
     conn.execute("DELETE FROM app_setting WHERE key LIKE 'email_feature.%'")
+    conn.commit()
+
+
+def _reset_log(conn):
+    conn.execute("DELETE FROM email_log")
     conn.commit()
 
 
@@ -91,6 +101,23 @@ def test_admin_email_lists_every_row(admin):
         assert label in body
 
 
+def test_admin_email_shows_recent_sends(admin, db_path):
+    conn = st.connect(db_path)
+    try:
+        _reset_log(conn)
+        st.log_email_send(conn, "event_created", "row@test.local", "A subject", "sent")
+        st.log_email_send(conn, "wellness_approval", "row2@test.local", "B subject",
+                          "skipped_off")
+        body = admin.get("/admin/email").text
+        assert "row@test.local" in body
+        assert "row2@test.local" in body
+        assert "A subject" in body
+        assert "skipped off" in body       # status word, underscore replaced with space
+    finally:
+        _reset_log(conn)
+        conn.close()
+
+
 def test_admin_email_requires_manage_users(viewer):
     assert viewer.get("/admin/email").status_code == 403
     assert viewer.post("/admin/email/toggle", data={"key": "event_created", "on": "0"}).status_code == 403
@@ -126,4 +153,163 @@ def test_admin_email_toggle_rejects_unknown_key(admin, db_path):
         assert conn.execute(
             "SELECT 1 FROM app_setting WHERE key LIKE 'email_feature.%'").fetchone() is None
     finally:
+        conn.close()
+
+
+# ---- mailer.sample_message / preview (Phase 5) ------------------------------
+
+def test_every_feature_and_always_on_key_has_a_working_sample():
+    """The one test that stops a future composer from being added to the
+    catalog without a preview sample."""
+    for key in list(mailer.FEATURES) + list(mailer.ALWAYS_ON):
+        result = mailer.preview(key)
+        assert result is not None, key
+        subject, html = result
+        assert subject and isinstance(subject, str), key
+        assert html and mailer._SAMPLE_LINK in html, key
+
+
+def test_sample_message_matches_preview_subject():
+    for key in list(mailer.FEATURES) + list(mailer.ALWAYS_ON):
+        subject, _body, _html = mailer.sample_message(key)
+        assert subject == mailer.preview(key)[0], key
+
+
+def test_preview_none_on_unknown_key():
+    assert mailer.preview("not_a_real_feature") is None
+    assert mailer.sample_message("not_a_real_feature") is None
+
+
+# ---- /admin/email/preview + /admin/email/test (Phase 5) ---------------------
+
+def test_admin_email_preview_renders_sample_html(admin):
+    r = admin.get("/admin/email/preview/event_created")
+    assert r.status_code == 200
+    assert mailer._SAMPLE_LINK in r.text
+
+
+def test_admin_email_preview_404s_on_unknown_key(admin):
+    assert admin.get("/admin/email/preview/not_a_real_feature").status_code == 404
+
+
+def test_admin_email_preview_requires_manage_users(viewer):
+    assert viewer.get("/admin/email/preview/event_created").status_code == 403
+
+
+def test_admin_email_test_sends_only_to_the_requesting_admin(admin, monkeypatch):
+    """A `to`/`email` field posted alongside `key` must never be honored —
+    test-send only ever goes to the signed-in admin's own address, so this
+    route can never be turned into an open relay."""
+    calls = []
+    monkeypatch.setattr(mailer, "email_configured", lambda: True)
+    monkeypatch.setattr(mailer, "send",
+                        lambda *a, **kw: calls.append(a) or {"sent": True, "detail": "ok"})
+    r = admin.post("/admin/email/test",
+                   data={"key": "event_created", "to": "attacker@evil.example"},
+                   follow_redirects=False)
+    assert r.status_code == 303
+    assert "msg=" in r.headers["location"]
+    assert len(calls) == 1
+    assert calls[0][0] == "admin@test.local"
+
+
+def test_admin_email_test_not_configured_says_so(admin, monkeypatch):
+    monkeypatch.setattr(mailer, "email_configured", lambda: False)
+    r = admin.post("/admin/email/test", data={"key": "event_created"}, follow_redirects=False)
+    assert r.status_code == 303
+    assert "err=" in r.headers["location"]
+
+
+def test_admin_email_test_rejects_unknown_key(admin, monkeypatch):
+    monkeypatch.setattr(mailer, "email_configured", lambda: True)
+    r = admin.post("/admin/email/test", data={"key": "not_a_real_feature"},
+                   follow_redirects=False)
+    assert r.status_code == 303
+    assert "err=" in r.headers["location"]
+
+
+def test_admin_email_test_requires_manage_users(viewer):
+    assert viewer.post("/admin/email/test", data={"key": "event_created"}).status_code == 403
+
+
+# ---- mailer.send_status (Phase 6) -------------------------------------------
+
+def test_send_status_sent(monkeypatch):
+    assert mailer.send_status({"sent": True, "detail": "Email sent."}) == "sent"
+
+
+def test_send_status_not_configured(monkeypatch):
+    monkeypatch.setattr(mailer, "email_configured", lambda: False)
+    assert mailer.send_status({"sent": False, "detail": "x"}) == "not_configured"
+
+
+def test_send_status_failed(monkeypatch):
+    monkeypatch.setattr(mailer, "email_configured", lambda: True)
+    assert mailer.send_status({"sent": False, "detail": "x"}) == "failed"
+
+
+# ---- storage.log_email_send / recent_email_sends / purge (Phase 6) ---------
+
+def test_log_email_send_and_recent_email_sends(db_path):
+    conn = st.connect(db_path)
+    try:
+        _reset_log(conn)
+        st.log_email_send(conn, "event_created", "a@test.local", "Subj", "sent")
+        st.log_email_send(conn, "wellness_approval", "b@test.local", "Subj2", "skipped_off")
+        rows = st.recent_email_sends(conn, limit=10)
+        assert len(rows) == 2
+        assert rows[0]["feature"] == "wellness_approval"      # newest first
+        assert rows[0]["status"] == "skipped_off"
+        assert rows[1]["status"] == "sent"
+    finally:
+        _reset_log(conn)
+        conn.close()
+
+
+def test_recent_email_sends_respects_limit(db_path):
+    conn = st.connect(db_path)
+    try:
+        _reset_log(conn)
+        for i in range(5):
+            st.log_email_send(conn, "event_created", f"a{i}@test.local", "S", "sent")
+        assert len(st.recent_email_sends(conn, limit=3)) == 3
+    finally:
+        _reset_log(conn)
+        conn.close()
+
+
+def test_purge_stale_email_log_removes_old_keeps_new(db_path):
+    conn = st.connect(db_path)
+    try:
+        _reset_log(conn)
+        old_ts = (tz.now_local() - timedelta(days=200)).isoformat()
+        conn.execute(
+            "INSERT INTO email_log(created_at, feature, recipient, subject, status) "
+            "VALUES (?,?,?,?,?)", (old_ts, "event_created", "old@test.local", "Old", "sent"))
+        conn.commit()
+        st.log_email_send(conn, "event_created", "new@test.local", "New", "sent")
+        cutoff = (tz.now_local() - timedelta(days=90)).isoformat()
+        n = st.purge_stale_email_log(conn, cutoff)
+        assert n == 1
+        remaining = {r["recipient"] for r in st.recent_email_sends(conn, limit=10)}
+        assert remaining == {"new@test.local"}
+    finally:
+        _reset_log(conn)
+        conn.close()
+
+
+def test_retention_purge_stale_email_log_dry_run_changes_nothing(db_path):
+    conn = st.connect(db_path)
+    try:
+        _reset_log(conn)
+        old_ts = (tz.now_local() - timedelta(days=200)).isoformat()
+        conn.execute(
+            "INSERT INTO email_log(created_at, feature, recipient, subject, status) "
+            "VALUES (?,?,?,?,?)", (old_ts, "event_created", "old@test.local", "Old", "sent"))
+        conn.commit()
+        n = retention.purge_stale_email_log(db_path=db_path, days=90, dry_run=True)
+        assert n == 1
+        assert len(st.recent_email_sends(conn, limit=10)) == 1   # untouched
+    finally:
+        _reset_log(conn)
         conn.close()

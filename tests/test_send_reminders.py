@@ -94,6 +94,29 @@ def test_reminds_creator_and_registrant(tmp_path, sent):
     assert "tomorrow" in reg_mail["subject"].lower()
 
 
+def test_reminders_write_email_log_rows(tmp_path, sent):
+    """docs/ADMIN_EMAIL_FEATURES_PLAN.md Phase 6 — every scheduled send goes
+    through send_reminders._send, which writes one email_log row per attempt."""
+    conn = _fresh(tmp_path)
+    st.create_admin_user(conn, "creator2@test.local", "x", "y", "section_manager")
+    conn.commit()
+    f = st.create_form_instance(conn, 2, "F2", _tomorrow(), topic="Log Forum")
+    ev = st.create_event(conn, "Log Forum", _tomorrow(), form_instance_ids=[f],
+                         created_by="creator2@test.local")
+    st.register_attendee(conn, ev["id"], name="Reg Person",
+                         email="reglog@test.local", consent_text="x")
+    conn.commit()
+    n = sr.remind_tomorrows_events(conn, "https://css.example")
+    assert n == 2
+    rows = st.recent_email_sends(conn, limit=10)
+    logged = {r["recipient"] for r in rows}
+    assert {"creator2@test.local", "reglog@test.local"} <= logged
+    assert all(r["feature"] == "job_events" for r in rows
+              if r["recipient"] in ("creator2@test.local", "reglog@test.local"))
+    assert all(r["status"] == "sent" for r in rows
+              if r["recipient"] in ("creator2@test.local", "reglog@test.local"))
+
+
 def test_creator_who_is_also_chief_gets_one_email(tmp_path, sent):
     conn = _fresh(tmp_path)
     unit = conn.execute(

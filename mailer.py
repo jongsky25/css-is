@@ -174,6 +174,17 @@ def send(to, subject, body, html=None):
         socket.getaddrinfo = _real_getaddrinfo
 
 
+def send_status(result):
+    """Classify a mailer.send() result dict into the email_log status
+    vocabulary (docs/ADMIN_EMAIL_FEATURES_PLAN.md Phase 6): 'sent', 'failed',
+    or 'not_configured'. Never 'skipped_off' — that's decided by the caller
+    BEFORE send() is even attempted, since a disabled feature makes no
+    attempt at all."""
+    if result["sent"]:
+        return "sent"
+    return "not_configured" if not email_configured() else "failed"
+
+
 # ---- HTML template (all composers below share this shell) -------------------
 #
 # Email HTML is a different discipline from web HTML: no <style> block (many
@@ -841,3 +852,97 @@ ALWAYS_ON = {
         "Registration link re-send",
         "A participant's only way back into a lost registration."),
 }
+
+
+# ---- Preview samples (Phase 5) ----------------------------------------------
+#
+# One sample per key, each a zero-arg callable that calls the REAL composer
+# above with representative sample data — a preview can never drift from what
+# actually sends, because it IS what sends. Covers every FEATURES key plus
+# every ALWAYS_ON key (tests/test_email_admin.py loops over both catalogs and
+# asserts a sample exists for each one).
+
+_SAMPLE_LINK = "https://example.invalid/sample"
+
+_PREVIEWS = {
+    "event_created": lambda: event_created_message(
+        "Jane Dela Cruz", "Basic Life Support Training", "October 2, 2026", _SAMPLE_LINK),
+    "event_section_notify": lambda: event_section_notify_message(
+        "Maria Santos", "Jane Dela Cruz", "Basic Life Support Training",
+        "October 2, 2026", _SAMPLE_LINK),
+    "registration_confirmed": lambda: registration_confirmed_message(
+        "Juan Reyes", _SAMPLE_LINK, "Basic Life Support Training",
+        event_date="October 2, 2026", venue="DOH Conference Room"),
+    "certificate_ready": lambda: certificate_ready_message(
+        "Juan Reyes", _SAMPLE_LINK, "Basic Life Support Training"),
+    "raffle_winner": lambda: raffle_winner_message(
+        "Juan Reyes", "Basic Life Support Training", "a tumbler", _SAMPLE_LINK),
+    "wellness_approval": lambda: wellness_pending_message(
+        "Maria Santos", "Juan Reyes", "October 2, 2026", "10:00 AM", 2, _SAMPLE_LINK,
+        approve_link=_SAMPLE_LINK, deny_link=_SAMPLE_LINK),
+    "wellness_decided": lambda: wellness_decided_message(
+        "Juan Reyes", "approved", "October 2, 2026", None, _SAMPLE_LINK),
+    "awa_approval": lambda: awa_pending_message(
+        "Maria Santos", "Juan Reyes", "October 1-15, 2026", "work-from-home", _SAMPLE_LINK),
+    "awa_decided": lambda: awa_decided_message(
+        "Juan Reyes", "approved", "October 1-15, 2026", None, _SAMPLE_LINK),
+    "awa_reopened": lambda: work_arrangement_reopened_message(
+        "Juan Reyes", "October 1-15, 2026", _SAMPLE_LINK),
+    "feedback_update": lambda: feedback_update_message(
+        "Juan Reyes", "resolved", "Thanks for flagging this — fixed.", _SAMPLE_LINK),
+    "job_events": lambda: event_reminder_message(
+        "Juan Reyes", "Basic Life Support Training", "October 2, 2026",
+        "DOH Conference Room", _SAMPLE_LINK),
+    "job_wellness_expiry": lambda: wellness_pending_reminder_message(
+        "Maria Santos", "Juan Reyes", "October 2, 2026", "10:00 AM", 2, _SAMPLE_LINK,
+        approve_link=_SAMPLE_LINK, deny_link=_SAMPLE_LINK),
+    "job_digest": lambda: approvals_digest_message(
+        "Maria Santos", ["Juan Reyes — 2h, October 2, 2026"],
+        ["Juan Reyes — work-from-home, October 1-15, 2026"], _SAMPLE_LINK, _SAMPLE_LINK),
+    "job_csm_rp": lambda: csm_rp_results_message(
+        "Dr. Ana Lopez", "Infection Control 101", "Basic Life Support Training", _SAMPLE_LINK),
+    "job_csm_activity": lambda: csm_activity_results_message(
+        "Jane Dela Cruz", "Basic Life Support Training", _SAMPLE_LINK),
+    "job_wellness_file": lambda: wellness_file_reminder_message(
+        "Juan Reyes", "Friday", _SAMPLE_LINK),
+    "job_awa_file": lambda: work_arrangement_file_reminder_message(
+        "Juan Reyes", "October 1-15, 2026", "Friday", _SAMPLE_LINK),
+    # Always-on (ALWAYS_ON keys, not FEATURES — never toggleable, but still
+    # previewable so an admin can see what they're not allowed to turn off).
+    "invite": lambda: invite_message("Juan Reyes", _SAMPLE_LINK, inviter="Maria Santos"),
+    "reset": lambda: reset_message("Juan Reyes", _SAMPLE_LINK),
+    "recovery": lambda: recovery_message(
+        "Juan Reyes", _SAMPLE_LINK, "Basic Life Support Training"),
+}
+
+
+def sample_message(key):
+    """(subject, plain_text_body, html_or_None) for `key`, built by calling
+    the REAL composer with sample data — a preview or test-send can never
+    drift from what actually sends, because it IS what sends. None for a key
+    with no sample. `html` is None for a plain-text-only composer
+    (`recovery_message` — see app.py's registration-link re-send, which calls
+    mailer.send with no html= at all)."""
+    fn = _PREVIEWS.get(key)
+    if fn is None:
+        return None
+    result = fn()
+    if len(result) == 3:
+        return result
+    subject, body = result
+    return subject, body, None
+
+
+def preview(key):
+    """(subject, html) for `key` — see sample_message(). A plain-text-only
+    composer's body is wrapped in a minimal HTML shell so every key still
+    previews as a renderable page."""
+    sample = sample_message(key)
+    if sample is None:
+        return None
+    subject, body, html = sample
+    if html is None:
+        html = (f'<!DOCTYPE html><html><head><meta charset="utf-8"></head>'
+                f'<body style="font-family:Arial,Helvetica,sans-serif; white-space:pre-wrap;">'
+                f'{htmlmod.escape(body)}</body></html>')
+    return subject, html
