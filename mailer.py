@@ -383,6 +383,26 @@ def raffle_winner_message(name, event_title, prize, link):
     return subject, body, html
 
 
+def event_reminder_message(name, title, event_date, venue, link):
+    """Returns (subject, plain_text_body, html_body). Sent the day before an
+    activity to a registrant, its creator, or its section chief — `link` is
+    whichever page fits the recipient (their registration, or the monitor)."""
+    when = f" tomorrow, {event_date}" if event_date else " tomorrow"
+    where = f" at {venue}" if venue else ""
+    subject = f"Reminder — {title} is tomorrow"
+    body = (f"Hello {name or 'there'},\n\n"
+            f"“{title}” is happening{when}{where}.\n\n"
+            f"  {link}\n")
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="Your activity is tomorrow",
+        intro=f"&ldquo;{_e(title)}&rdquo; is happening{_e(when)}{_e(where)}.",
+        cta_label="View details",
+        link=link,
+    )
+    return subject, body, html
+
+
 def event_created_message(creator_name, title, event_date, link):
     subject = f"Event created — {title}"
     body = (f"Hello {creator_name or 'there'},\n\n"

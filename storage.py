@@ -1257,6 +1257,25 @@ def get_event(conn, event_token):
     return _event_row(row) if row else None
 
 
+def list_events_on_date(conn, event_date):
+    """Every event (bureau or outside) whose event_date is exactly this day —
+    the "happening tomorrow" query for the scheduled reminder job. A multi-day
+    activity only matches on its start date, same as everywhere else event_date
+    is treated as the day-of."""
+    rows = conn.execute(_EVENT_COLS + " WHERE e.event_date = ? ORDER BY e.id",
+                        (event_date,)).fetchall()
+    return [_event_row(r) for r in rows]
+
+
+def event_lead_org_id(conn, event_id):
+    """The org unit an event was filed under (lead_org_id), or None. Not part
+    of the _event_row shape (which only carries the resolved org NAME), so a
+    caller that needs to look up that unit's chiefs (org_unit_chiefs) queries
+    it here instead."""
+    row = conn.execute("SELECT lead_org_id FROM event WHERE id=?", (event_id,)).fetchone()
+    return row[0] if row else None
+
+
 # A slug is lowercase letters/digits in hyphen-joined words (no leading/trailing
 # or doubled hyphens): "les-quezon-june", "lhsi-2026". Short reserved words that
 # are top-level route names are refused so a vanity link can never read like one.
