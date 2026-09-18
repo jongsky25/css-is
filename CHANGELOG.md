@@ -1,5 +1,29 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-18 (v2.96 — a date field's calendar didn't always open on click)
+
+Reported by the user (Spot Feedback #83): "there are times not clickable" on
+`#collected_on` (Date collected) on the paper-entry form. Every
+`input[type=date]` on the site is enhanced client-side (`static/js/app.js`'s
+"Locale-proof date fields") by overlaying an invisible, full-size native
+`<input>` on top of a fixed-format display box, so the ISO value stays
+locale-proof. But a *native* date input itself splits clicks into a text
+zone (focuses only) and a narrow calendar-icon zone (actually opens the
+picker) — a split that no longer lines up with anything visible once the
+control is stretched invisibly over the display box, so a click on most of
+the box silently did nothing. Encoding many paper forms in a row (this
+report's `?n=2` in the URL) means hitting that field over and over, which is
+what surfaced it.
+
+**`static/js/app.js`** — where `HTMLInputElement.prototype.showPicker`
+exists (current Chrome/Edge/Safari), the real input's `pointer-events` is
+now set to `none` and a `click` handler on the wrapper calls
+`input.focus()` + `input.showPicker()` directly, so any click anywhere in
+the box opens the calendar — the icon/text split no longer matters. Skipped
+entirely in "raw" mode (the "Add specific time" datetime-local toggle),
+where the real control is visible and already directly clickable, and on
+browsers without `showPicker()`, where behavior is unchanged from before.
+
 ## 2026-09-18 (v2.95 — a right-edge nav dropdown ran off the screen)
 
 Reported by the user (Spot Feedback #93): "yung dropdown lumalagpas sa

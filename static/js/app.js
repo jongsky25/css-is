@@ -1027,17 +1027,36 @@ window.cssToast = window.cssToast || function (msg) {
     }
 
     var placeholder = input.getAttribute("data-placeholder") || "Pick a date";
+    // A native date input splits a click into a text zone (focuses only) and a
+    // narrow calendar-icon zone (actually opens the picker). Stretched invisible
+    // over the display box here, that split no longer lines up with anything the
+    // user can see, so a click on most of the box did nothing — reported as
+    // "there are times [it's] not clickable" (Spot Feedback #83). Where
+    // showPicker() exists we skip the split entirely: the real input stops
+    // taking clicks and any click in the box opens the picker directly.
+    var canShowPicker = !!input.showPicker;
+
     function sync() {
       if (input.type !== "date") {                         // swapped to datetime-local → show native
         wrap.classList.add("raw");
+        input.style.pointerEvents = "";                     // reveal the real control to clicks
         if (echo) echo.textContent = "";
         return;
       }
       wrap.classList.remove("raw");
+      if (canShowPicker) input.style.pointerEvents = "none";
       var s = shortFmt(input.value);
       disp.textContent = s || placeholder;
       disp.classList.toggle("empty", !s);
       if (echo) echo.textContent = longFmt(input.value);
+    }
+
+    if (canShowPicker) {
+      wrap.addEventListener("click", function () {
+        if (wrap.classList.contains("raw")) return;        // native control is visible here already
+        input.focus();
+        try { input.showPicker(); } catch (_) {}
+      });
     }
 
     input.addEventListener("input", sync);

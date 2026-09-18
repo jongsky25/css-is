@@ -17,10 +17,23 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.95"
+APP_VERSION = "2.96"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.96",
+        "date": "September 18, 2026",
+        "summary": "Date fields (like Date collected on paper entry) now "
+                   "always open their calendar when you tap or click them.",
+        "changes": [
+            "A date field sometimes didn't respond when tapped or clicked, "
+            "depending on exactly where on the field you touched — most of "
+            "the field looked clickable but only a sliver near the edge "
+            "actually opened the calendar. Every date field now opens its "
+            "calendar no matter where in the field you tap or click.",
+        ],
+    },
     {
         "version": "2.95",
         "date": "September 18, 2026",
