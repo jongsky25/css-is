@@ -1145,6 +1145,21 @@ def get_settings(conn, keys):
         f"SELECT key, value FROM app_setting WHERE key IN ({qs})", tuple(keys))}
 
 
+# ---- Per-feature email on/off (docs/ADMIN_EMAIL_FEATURES_PLAN.md) -----------
+# One app_setting row per gateable email feature (mailer.FEATURES). Not yet
+# read anywhere — Phase 2 wires these into app.py's send helpers.
+
+def email_feature_enabled(conn, key):
+    """True unless an admin has turned this email feature off. Unknown keys
+    read as ON: a typo in a feature key must never silently swallow a real
+    send."""
+    return get_setting(conn, f"email_feature.{key}", "1") != "0"
+
+
+def set_email_feature(conn, key, on):
+    set_setting(conn, f"email_feature.{key}", "1" if on else "0")
+
+
 # ---------------------------------------------------------------------
 # Events (the link-tree grouping) + attendee identity / consent capture
 # ---------------------------------------------------------------------

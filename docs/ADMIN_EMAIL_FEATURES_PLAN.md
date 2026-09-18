@@ -1,6 +1,6 @@
 # Admin email control center — implementation plan
 
-**Status:** planned, not started. Build follows this plan phase by phase.
+**Status:** Phase 1 done (v2.87). Build follows this plan phase by phase.
 **Owner:** avincentpatrick
 **Why:** Office Connect now sends 21 distinct emails (account/auth, event
 lifecycle, wellness, work arrangement, CSM results, Spot Feedback, and the

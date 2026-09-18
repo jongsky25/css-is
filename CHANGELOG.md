@@ -1,5 +1,26 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-18 (v2.87 — admin email control center, Phase 1: settings + catalog)
+
+First of six phases (docs/ADMIN_EMAIL_FEATURES_PLAN.md) building an
+`/admin/email` console to turn each of the app's 18 gateable email features
+on or off individually, instead of the only current option — unplugging the
+mail transport entirely, which silences invites and password resets too.
+
+No behavior change: this phase only adds the building block. `storage.py`
+gains `email_feature_enabled(conn, key)` / `set_email_feature(conn, key,
+on)` over a new `email_feature.<key>` app_setting row per feature, defaulting
+to on so nothing sends differently until an admin actually flips something.
+`mailer.py` gains the `FEATURES` catalog (label/hint/group for all 18 keys —
+11 transactional, 7 one-per-scheduled-job) and `ALWAYS_ON` (invite, password
+reset, registration-link re-send — permanently non-disableable, since
+turning any of those off could lock someone out of their own account
+recovery). `mailer.py` stays free of any DB import, per the plan's design
+call — the catalog is data, not a settings read.
+
+Nothing calls the new gate yet — Phase 2 wires it into the app's three send
+helpers (`_notify_account`, `_notify_email`, `_mail_after_response`).
+
 ## 2026-09-18 (v2.86 — the rest of the email automation, and a daily sweep)
 
 User asked what else could be automated in the sending, picked seven of the
