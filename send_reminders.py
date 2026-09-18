@@ -77,6 +77,17 @@ def _person_name(conn, account_id):
     return (rp["name"] if rp else None) or u["username"]
 
 
+def _send(conn, feature, to, subj, body, html=None):
+    """mailer.send() + an email_log row (docs/ADMIN_EMAIL_FEATURES_PLAN.md
+    Phase 6). Every call site here is a real attempt worth logging — a
+    disabled job never reaches its function at all (run() drops it from
+    `jobs` before any job function runs), so there is no 'skipped_off' case
+    to handle at this level."""
+    result = mailer.send(to, subj, body, html=html)
+    st.log_email_send(conn, feature, to, subj, mailer.send_status(result), result.get("detail"))
+    return result
+
+
 def remind_tomorrows_events(conn, base, dry_run=False):
     """Email every registrant + the creator/section chief a reminder for each
     activity happening tomorrow. Self-limiting: an activity's event_date only
@@ -96,7 +107,7 @@ def remind_tomorrows_events(conn, base, dry_run=False):
             if dry_run:
                 print(f"[dry-run] event reminder -> {creator['username']} ({ev['title']})")
             else:
-                mailer.send(creator["username"], subj, body, html=html)
+                _send(conn, JOB_FEATURE["events"], creator["username"], subj, body, html=html)
             notified_accounts.add(creator["id"])
             sent += 1
 
@@ -113,7 +124,7 @@ def remind_tomorrows_events(conn, base, dry_run=False):
             if dry_run:
                 print(f"[dry-run] event reminder -> {chief['username']} ({ev['title']})")
             else:
-                mailer.send(chief["username"], subj, body, html=html)
+                _send(conn, JOB_FEATURE["events"], chief["username"], subj, body, html=html)
             notified_accounts.add(chief_id)
             sent += 1
 
@@ -127,7 +138,7 @@ def remind_tomorrows_events(conn, base, dry_run=False):
             if dry_run:
                 print(f"[dry-run] event reminder -> {att['email']} ({ev['title']})")
             else:
-                mailer.send(att["email"], subj, body, html=html)
+                _send(conn, JOB_FEATURE["events"], att["email"], subj, body, html=html)
             sent += 1
     return sent
 
@@ -182,7 +193,8 @@ def remind_wellness_expiring(conn, base, dry_run=False):
                 print(f"[dry-run] wellness expiry reminder -> {approver['username']} "
                       f"(claim {claim_id})")
             else:
-                mailer.send(approver["username"], subj, body, html=html)
+                _send(conn, JOB_FEATURE["wellness_expiry"], approver["username"], subj, body,
+                     html=html)
             sent += 1
             reminded += 1
         # Only once something actually went out: a claim whose chain has no
@@ -227,7 +239,7 @@ def send_csm_results_to_rps(conn, base, dry_run=False):
         if dry_run:
             print(f"[dry-run] CSM results (RP) -> {account['username']} ({row['topic']})")
         else:
-            mailer.send(account["username"], subj, body, html=html)
+            _send(conn, JOB_FEATURE["csm_rp"], account["username"], subj, body, html=html)
             st.mark_form_csm_results_emailed(conn, row["form_id"])
         sent += 1
     return sent
@@ -254,7 +266,8 @@ def send_csm_results_to_activity(conn, base, dry_run=False):
             if dry_run:
                 print(f"[dry-run] CSM results (activity) -> {creator['username']} ({ev['title']})")
             else:
-                mailer.send(creator["username"], subj, body, html=html)
+                _send(conn, JOB_FEATURE["csm_activity"], creator["username"], subj, body,
+                     html=html)
             notified_accounts.add(creator["id"])
             sent += 1
 
@@ -270,7 +283,7 @@ def send_csm_results_to_activity(conn, base, dry_run=False):
             if dry_run:
                 print(f"[dry-run] CSM results (activity) -> {chief['username']} ({ev['title']})")
             else:
-                mailer.send(chief["username"], subj, body, html=html)
+                _send(conn, JOB_FEATURE["csm_activity"], chief["username"], subj, body, html=html)
             notified_accounts.add(chief_id)
             sent += 1
 
@@ -302,7 +315,7 @@ def remind_wellness_to_file(conn, base, dry_run=False):
         if dry_run:
             print(f"[dry-run] wellness file reminder -> {staffer['username']}")
         else:
-            mailer.send(staffer["username"], subj, body, html=html)
+            _send(conn, JOB_FEATURE["wellness_file"], staffer["username"], subj, body, html=html)
         sent += 1
     return sent
 
@@ -329,7 +342,7 @@ def remind_awa_to_file(conn, base, dry_run=False):
         if dry_run:
             print(f"[dry-run] AWA file reminder -> {staffer['username']} ({label})")
         else:
-            mailer.send(staffer["username"], subj, body, html=html)
+            _send(conn, JOB_FEATURE["awa_file"], staffer["username"], subj, body, html=html)
         sent += 1
     return sent
 
@@ -381,7 +394,7 @@ def send_approvals_digest(conn, base, dry_run=False):
             print(f"[dry-run] approvals digest -> {approver['username']} "
                   f"({len(wellness_lines)} wellness, {len(awa_lines)} AWA)")
         else:
-            mailer.send(approver["username"], subj, body, html=html)
+            _send(conn, JOB_FEATURE["digest"], approver["username"], subj, body, html=html)
         sent += 1
     return sent
 

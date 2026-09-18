@@ -30,6 +30,12 @@ its window" shape, otherwise unrelated:
    audit_log entry. ai_budget's stale day-rows are purged alongside it — once
    a day is past retention nothing reads its spend count anymore.
 
+4. EMAIL SEND LOG (email_log — docs/ADMIN_EMAIL_FEATURES_PLAN.md Phase 6).
+   Same shape again: operational log, not audit-of-record, purged past a
+   rolling window (email_log_retention_days app_setting, default 90 days)
+   with no audit_log entry. `recipient` is personal data — that's the whole
+   reason this table has a retention window rather than growing forever.
+
 Run any of these on a schedule (the queued "performance monitoring + backups" task
 will wire this into the in-process scheduled job; until then run it by hand or
 from cron / Task Scheduler):
@@ -40,6 +46,8 @@ from cron / Task Scheduler):
     python retention.py --ui-events --days 30 # ui_event, explicit window
     python retention.py --ai-log              # ai_interaction (+ai_budget), default/configured window
     python retention.py --ai-log --days 30    # ai_interaction (+ai_budget), explicit window
+    python retention.py --email-log           # email_log, default/configured window
+    python retention.py --email-log --days 30 # email_log, explicit window
     python retention.py --dry-run             # report what WOULD be purged, change nothing
 """
 
@@ -153,6 +161,34 @@ def purge_stale_ai_log(db_path="css_is.db", days=None, dry_run=False):
         conn.close()
 
 
+EMAIL_LOG_RETENTION_DAYS_DEFAULT = 90
+
+
+def purge_stale_email_log(db_path="css_is.db", days=None, dry_run=False):
+    """Purge email_log rows past the retention window
+    (docs/ADMIN_EMAIL_FEATURES_PLAN.md Phase 6). Same shape as
+    purge_stale_ai_log: operational log, not audit-of-record — no consent
+    record to keep, no audit_log entry. `recipient` is personal data, which
+    is exactly why this exists."""
+    conn = st.connect(db_path)
+    try:
+        st.init_db(conn)
+        window = days if days is not None else int(st.get_setting(
+            conn, "email_log_retention_days", str(EMAIL_LOG_RETENTION_DAYS_DEFAULT)))
+        cutoff_ts = (tz.now_local() - timedelta(days=window)).isoformat(timespec="seconds")
+        if dry_run:
+            n = conn.execute("SELECT COUNT(*) FROM email_log WHERE created_at < ?",
+                             (cutoff_ts,)).fetchone()[0]
+            print(f"[dry-run] {n} email_log row(s) older than {window} days "
+                  f"(before {cutoff_ts}) would be purged.")
+            return n
+        n = st.purge_stale_email_log(conn, cutoff_ts)
+        print(f"Purged {n} email_log row(s) older than {window} days.")
+        return n
+    finally:
+        conn.close()
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Purge expired attendee PII (retention rule).")
     ap.add_argument("--db", default="css_is.db", help="database file (default css_is.db)")
@@ -165,13 +201,17 @@ if __name__ == "__main__":
     ap.add_argument("--ai-log", action="store_true",
                     help="purge stale ai_interaction rows (+ matching ai_budget day-rows) "
                          "instead of attendee PII")
+    ap.add_argument("--email-log", action="store_true",
+                    help="purge stale email_log rows instead of attendee PII")
     ap.add_argument("--days", type=int, default=None,
-                    help="retention window in days for --ui-events or --ai-log (default: "
-                         "the matching app_setting, or the module default if unset)")
+                    help="retention window in days for --ui-events, --ai-log or --email-log "
+                         "(default: the matching app_setting, or the module default if unset)")
     args = ap.parse_args()
     if args.ui_events:
         purge_stale_ui_events(db_path=args.db, days=args.days, dry_run=args.dry_run)
     elif args.ai_log:
         purge_stale_ai_log(db_path=args.db, days=args.days, dry_run=args.dry_run)
+    elif args.email_log:
+        purge_stale_email_log(db_path=args.db, days=args.days, dry_run=args.dry_run)
     else:
         run(db_path=args.db, months=args.months, dry_run=args.dry_run)

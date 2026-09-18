@@ -38,6 +38,15 @@
   details.preview summary { cursor:pointer; color:var(--accent); font-size:.8rem; font-weight:600; }
   details.preview iframe { width:100%; height:420px; margin-top:.5rem; border:1px solid var(--line);
                             border-radius:8px; background:#fff; }
+  .log-table { width:100%; border-collapse:collapse; font-size:.82rem; }
+  .log-table th { text-align:left; color:var(--soft); font-weight:700; font-size:.72rem;
+                  text-transform:uppercase; letter-spacing:.03em; padding:.35rem .5rem;
+                  border-bottom:1px solid var(--line); }
+  .log-table td { padding:.4rem .5rem; border-bottom:1px solid var(--line); vertical-align:top; }
+  .dot { font-size:.85rem; }
+  .dot.sent { color:var(--green); } .dot.failed { color:var(--red); }
+  .dot.skipped_off { color:var(--amber); } .dot.not_configured { color:var(--soft); }
+  .status-word { font-size:.78rem; color:var(--soft); }
 </style>
 {% endblock %}
 
@@ -109,6 +118,31 @@
     <h2>Always on</h2>
     <p class="hint">Account access mail. Never disableable here — turning any of these off could lock someone out of their own account. Still previewable and test-sendable, so an admin can see what they're not allowed to turn off.</p>
     {% for key, (label, why) in always_on %}{{ row(key, label, why) }}{% endfor %}
+  </div>
+
+  <div class="acard">
+    <h2>Recent sends</h2>
+    <p class="hint">The newest 50 attempts, across every feature above — including ones turned off (shown as "skipped").</p>
+    {% if recent_sends %}
+    <table class="log-table">
+      <thead><tr><th></th><th>When</th><th>Feature</th><th>To</th><th>Subject</th></tr></thead>
+      <tbody>
+        {% for r in recent_sends %}
+        <tr>
+          <td><span class="dot {{ r.status }}" title="{{ r.status }}">{% if r.status == 'sent' %}✔{% elif r.status == 'failed' %}⚠{% elif r.status == 'skipped_off' %}●{% else %}·{% endif %}</span></td>
+          <td>{{ r.created_at|replace('T', ' ') }}</td>
+          <td>{{ r.label }}</td>
+          <td>{{ r.recipient or '—' }}</td>
+          <td>{{ r.subject or '—' }}
+            {% if r.status != 'sent' %}<div class="status-word">{{ r.status.replace('_', ' ') }}{% if r.detail %} — {{ r.detail }}{% endif %}</div>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="hint">Nothing sent yet.</p>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

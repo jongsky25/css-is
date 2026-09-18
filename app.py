@@ -2017,18 +2017,26 @@ def _person_name(conn, account_id):
 
 # Every gateable email goes through one of the three helpers below. A direct
 # mailer.send() in this file means account/recovery mail, which is never
-# admin-disableable (see docs/ADMIN_EMAIL_FEATURES_PLAN.md, D3).
+# admin-disableable (see docs/ADMIN_EMAIL_FEATURES_PLAN.md, D3). Each helper
+# also writes one email_log row per attempt (Phase 6) — 'skipped_off' when
+# the feature is off, else mailer.send_status() of the actual result.
 
 def _notify_account(conn, account_id, subject, body, html=None, feature=None):
     """Best-effort email to an admin account by id. Never raises — a missing
     account, missing email, or send failure must never break the request that
     triggered it (mailer.send() itself already never raises)."""
     try:
-        if feature and not st.email_feature_enabled(conn, feature):
-            return
         u = st.get_admin_user_by_id(conn, account_id)
-        if u and u.get("username"):
-            mailer.send(u["username"], subject, body, html=html)
+        to = u["username"] if u and u.get("username") else None
+        if feature and not st.email_feature_enabled(conn, feature):
+            if to:
+                st.log_email_send(conn, feature, to, subject, "skipped_off")
+            return
+        if to:
+            result = mailer.send(to, subject, body, html=html)
+            if feature:
+                st.log_email_send(conn, feature, to, subject,
+                                  mailer.send_status(result), result.get("detail"))
     except Exception:                                 # noqa: BLE001 - notify, don't crash
         pass
 
@@ -2037,11 +2045,31 @@ def _notify_email(conn, email, subject, body, html=None, feature=None):
     """Best-effort email to a known address. Never raises."""
     try:
         if feature and not st.email_feature_enabled(conn, feature):
+            if email:
+                st.log_email_send(conn, feature, email, subject, "skipped_off")
             return
         if email:
-            mailer.send(email, subject, body, html=html)
+            result = mailer.send(email, subject, body, html=html)
+            if feature:
+                st.log_email_send(conn, feature, email, subject,
+                                  mailer.send_status(result), result.get("detail"))
     except Exception:                                 # noqa: BLE001 - notify, don't crash
         pass
+
+
+def _send_and_log(feature, email, subject, body, html=None):
+    """BackgroundTask target for _mail_after_response: send, then record the
+    attempt. Opens its OWN connection — this runs after the request handler's
+    `finally: conn.close()`, so the request's `conn` is already gone by the
+    time this fires."""
+    result = mailer.send(email, subject, body, html=html)
+    conn = get_conn()
+    try:
+        st.log_email_send(conn, feature, email, subject,
+                          mailer.send_status(result), result.get("detail"))
+    finally:
+        conn.close()
+    return result
 
 
 def _mail_after_response(conn, email, subject, body, html=None, feature=None):
@@ -2061,8 +2089,10 @@ def _mail_after_response(conn, email, subject, body, html=None, feature=None):
     — not inside the deferred task, which runs after the request handler's
     `finally: conn.close()`."""
     if feature and not st.email_feature_enabled(conn, feature):
+        if feature:
+            st.log_email_send(conn, feature, email, subject, "skipped_off")
         return None
-    return BackgroundTask(mailer.send, email, subject, body, html=html)
+    return BackgroundTask(_send_and_log, feature, email, subject, body, html=html)
 
 
 def _forbid(request, capability):
@@ -2330,6 +2360,8 @@ def _provision_account(conn, request, rp, role, inviter):
     link = _invite_link(request, uid, "")
     subj, body, html = mailer.invite_message(rp.get("name"), link, inviter)
     result = mailer.send(email, subj, body, html=html)
+    st.log_email_send(conn, "invite", email, subj,
+                      mailer.send_status(result), result.get("detail"))
     return {"ok": True, "email": email, "sent": result["sent"], "link": link,
             "detail": result.get("detail")}
 
@@ -2382,7 +2414,9 @@ async def forgot_submit(request: Request):
         if u:
             link = _reset_link(request, u["id"], u["pw_hash"])
             subj, body, html = mailer.reset_message(email, link)
-            mailer.send(email, subj, body, html=html)   # outbox-logged if SMTP not configured
+            result = mailer.send(email, subj, body, html=html)   # outbox-logged if SMTP not configured
+            st.log_email_send(conn, "reset", email, subj,
+                              mailer.send_status(result), result.get("detail"))
     finally:
         conn.close()
     # Always the same response — never reveal whether the email exists.
@@ -2503,6 +2537,8 @@ async def admin_users_reset_default(request: Request, user_id: int):
         link = _reset_link(request, u["id"], u["pw_hash"])
         subj, body, html = mailer.reset_message(u["username"], link)
         result = mailer.send(u["username"], subj, body, html=html)
+        st.log_email_send(conn, "reset", u["username"], subj,
+                          mailer.send_status(result), result.get("detail"))
         _audit(request, conn, "reset_password", target_type="user", target_id=u["username"],
                summary=f"Sent {u['username']} a password reset link")
         if result["sent"]:
@@ -3972,6 +4008,7 @@ def admin_email(request: Request, msg: str = "", err: str = ""):
     conn = get_conn()
     try:
         settings = st.get_settings(conn, [f"email_feature.{k}" for k in mailer.FEATURES])
+        recent_sends = st.recent_email_sends(conn, limit=50)
     finally:
         conn.close()
     states = {k: settings.get(f"email_feature.{k}", "1") != "0" for k in mailer.FEATURES}
@@ -3979,12 +4016,17 @@ def admin_email(request: Request, msg: str = "", err: str = ""):
                      in mailer.FEATURES.items() if group == "transactional"]
     scheduled = [(k, label, hint, states[k]) for k, (label, hint, group)
                 in mailer.FEATURES.items() if group == "scheduled"]
+    labels = {k: v[0] for k, v in mailer.FEATURES.items()}
+    labels.update({k: v[0] for k, v in mailer.ALWAYS_ON.items()})
+    for row in recent_sends:
+        row["label"] = labels.get(row["feature"], row["feature"])
     return templates.TemplateResponse(request, "admin_email.html", {
         "email_configured": mailer.email_configured(),
         "relay_configured": mailer.relay_configured(),
         "smtp_configured": mailer.smtp_configured(),
         "transactional": transactional, "scheduled": scheduled,
         "always_on": list(mailer.ALWAYS_ON.items()),
+        "recent_sends": recent_sends,
         "msg": msg, "err": err, "show_scope": False, "nav_active": "email",
     })
 
@@ -8871,6 +8913,8 @@ def monitor_resend_link(request: Request, event_token: str, attendee_id: int):
     res = mailer.send(email, subject, body)
     conn = get_conn()
     try:
+        st.log_email_send(conn, "recovery", email, subject,
+                          mailer.send_status(res), res.get("detail"))
         _audit(request, conn, "resend_link", target_type="attendee",
                target_id=attendee_id,
                summary=f"Resent registration link to {email} for “{title}”.")

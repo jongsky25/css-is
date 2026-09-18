@@ -496,3 +496,39 @@ def test_always_on_account_mail_ignores_every_feature_flag(admin, db_path, sent)
         conn.execute("DELETE FROM admin_user WHERE username='ntf-invitee@test.local'")
         conn.execute("DELETE FROM resource_person WHERE id=?", (rp_id,))
         conn.commit(); conn.close()
+
+
+# --------------------------------------------------- email send log (Phase 6) ---
+
+def test_notify_writes_a_sent_row_to_email_log(app_mod, notif_org, sent):
+    conn = notif_org["conn"]
+    c = _client_for(app_mod, notif_org["staff"])
+    d = _future_weekday().isoformat()
+    r = c.post("/wellness/apply", data={"break_date": d, "start_time": "10:00",
+                                        "activity": "exercise", "hours": "1"},
+               follow_redirects=False)
+    assert r.status_code == 303
+    row = next(x for x in st.recent_email_sends(conn, limit=5)
+              if x["feature"] == "wellness_approval")
+    assert row["status"] == "sent"
+    assert row["recipient"] == "ntf-chief@test.local"
+
+
+def test_notify_writes_skipped_off_row_when_feature_disabled(app_mod, notif_org, sent):
+    conn = notif_org["conn"]
+    st.set_email_feature(conn, "wellness_approval", False)
+    conn.commit()
+    c = _client_for(app_mod, notif_org["staff"])
+    d = _future_weekday().isoformat()
+    try:
+        r = c.post("/wellness/apply", data={"break_date": d, "start_time": "10:00",
+                                            "activity": "exercise", "hours": "1"},
+                   follow_redirects=False)
+        assert r.status_code == 303
+        assert sent == []
+        row = next(x for x in st.recent_email_sends(conn, limit=5)
+                  if x["feature"] == "wellness_approval")
+        assert row["status"] == "skipped_off"
+    finally:
+        st.set_email_feature(conn, "wellness_approval", True)
+        conn.commit()

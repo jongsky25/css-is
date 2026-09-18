@@ -174,6 +174,17 @@ def send(to, subject, body, html=None):
         socket.getaddrinfo = _real_getaddrinfo
 
 
+def send_status(result):
+    """Classify a mailer.send() result dict into the email_log status
+    vocabulary (docs/ADMIN_EMAIL_FEATURES_PLAN.md Phase 6): 'sent', 'failed',
+    or 'not_configured'. Never 'skipped_off' — that's decided by the caller
+    BEFORE send() is even attempted, since a disabled feature makes no
+    attempt at all."""
+    if result["sent"]:
+        return "sent"
+    return "not_configured" if not email_configured() else "failed"
+
+
 # ---- HTML template (all composers below share this shell) -------------------
 #
 # Email HTML is a different discipline from web HTML: no <style> block (many

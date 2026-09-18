@@ -1,5 +1,43 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-18 (v2.93 — admin email control center, Phase 6: the send log)
+
+Sixth and final phase (docs/ADMIN_EMAIL_FEATURES_PLAN.md). `storage.py` adds
+`email_log` (following the `ai_interaction` precedent: `id`, `created_at`,
+`feature`, `recipient`, `subject`, `status`, `detail`, indexed on
+`created_at` and `feature`) plus `log_email_send`/`recent_email_sends`/
+`purge_stale_email_log`. `status` is `sent`/`failed`/`not_configured`/
+`skipped_off`; `mailer.py` gains `send_status(result)` to classify a
+`mailer.send()` result into the first three (never `skipped_off` — that's
+decided by the caller before a send is even attempted).
+
+Every write site now logs one row per attempt: the three Phase-2 funnels
+(`_notify_account`/`_notify_email` write `skipped_off` when the feature is
+off, else the real result; `_mail_after_response`'s background send logs
+through a new `_send_and_log` helper that opens its own connection, since
+the background task runs after the request handler's `finally:
+conn.close()`), the four always-on account/recovery sends (invite, both
+reset paths, registration-link resend), and a new `send_reminders._send()`
+wrapper replacing all ten of that module's bare `mailer.send()` calls — a
+disabled scheduled job never reaches its function at all (Phase 3's `run()`
+already drops it from the job set), so there is no `skipped_off` case at
+that level, only `sent`/`failed`/`not_configured`.
+
+`retention.py` gains `purge_stale_email_log` (`--email-log` CLI flag),
+90-day default via the new `email_log_retention_days` app_setting —
+`recipient` is personal data, which is the whole reason this table has a
+retention window. `/admin/email` renders the newest 50 rows at the bottom of
+the console with a colored-dot status (`/ops`'s idiom), each labeled with
+its feature's human-readable name.
+
+New tests across `tests/test_email_admin.py` (send_status classification,
+`log_email_send`/`recent_email_sends`/`purge_stale_email_log`, the console
+rendering recent sends), `tests/test_notifications.py` (a real send writes
+a `sent` row; a disabled feature writes `skipped_off`), and
+`tests/test_send_reminders.py` (a scheduled send writes a `job_events` row).
+Also a `docs/QA_PLAYBOOK.md` pass: turn a feature off, trigger it, confirm
+no mail + a `skipped_off` row, turn it back on.
+
 ## 2026-09-18 (v2.92 — admin email control center, Phase 5: preview + test-send)
 
 Fifth of six phases (docs/ADMIN_EMAIL_FEATURES_PLAN.md). `mailer.py` gains

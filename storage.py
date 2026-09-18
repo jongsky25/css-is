@@ -900,6 +900,27 @@ def _add_missing_columns(conn):
                PRIMARY KEY (day, feature)
            )""")
 
+    # email_log — docs/ADMIN_EMAIL_FEATURES_PLAN.md Phase 6. One row per email
+    # ATTEMPT (not just successes) across the three notify funnels, the four
+    # always-on account/recovery sends, and every scheduled reminder job —
+    # same shape/precedent as ai_interaction: an operational log an admin can
+    # read to answer "why didn't I get that email", not audit-of-record, so it
+    # is retention-purged (retention.py's purge_stale_email_log) rather than
+    # kept forever. `status` is one of sent/failed/not_configured/skipped_off;
+    # `recipient` is personal data, which is exactly why it's capped at 90 days.
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS email_log (
+               id         INTEGER PRIMARY KEY,
+               created_at TEXT NOT NULL,
+               feature    TEXT NOT NULL,
+               recipient  TEXT,
+               subject    TEXT,
+               status     TEXT NOT NULL,
+               detail     TEXT
+           )""")
+    conn.execute("CREATE INDEX IF NOT EXISTS email_log_created_idx ON email_log(created_at)")
+    conn.execute("CREATE INDEX IF NOT EXISTS email_log_feature_idx ON email_log(feature)")
+
     # report_draft — docs/AI_INTEGRATION_PLAN.md Phase 5. AI-drafted (then
     # possibly analyst-edited) report-narrative text, keyed by which report
     # scope it belongs to (e.g. one activity's MRR columns, or one period's
@@ -1146,8 +1167,8 @@ def get_settings(conn, keys):
 
 
 # ---- Per-feature email on/off (docs/ADMIN_EMAIL_FEATURES_PLAN.md) -----------
-# One app_setting row per gateable email feature (mailer.FEATURES). Not yet
-# read anywhere — Phase 2 wires these into app.py's send helpers.
+# One app_setting row per gateable email feature (mailer.FEATURES). Read by
+# app.py's three send funnels and send_reminders.run() (Phases 2-3).
 
 def email_feature_enabled(conn, key):
     """True unless an admin has turned this email feature off. Unknown keys
@@ -1158,6 +1179,38 @@ def email_feature_enabled(conn, key):
 
 def set_email_feature(conn, key, on):
     set_setting(conn, f"email_feature.{key}", "1" if on else "0")
+
+
+# ---- Email send log (docs/ADMIN_EMAIL_FEATURES_PLAN.md Phase 6) ------------
+
+def log_email_send(conn, feature, recipient, subject, status, detail=None):
+    """One row per email attempt. `status` is 'sent' / 'failed' /
+    'not_configured' / 'skipped_off' (see mailer.send_status for the first
+    three; 'skipped_off' is decided by the caller before send() is even
+    attempted, since a disabled feature makes no send attempt at all)."""
+    conn.execute(
+        "INSERT INTO email_log(created_at, feature, recipient, subject, status, detail) "
+        "VALUES (?,?,?,?,?,?)",
+        (tz.now_iso(), feature, recipient, subject, status, detail))
+    conn.commit()
+
+
+def recent_email_sends(conn, limit=50):
+    """The email log, newest first — the /admin/email console's send history."""
+    rows = conn.execute(
+        "SELECT id, created_at, feature, recipient, subject, status, detail "
+        "FROM email_log ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
+    return [{"id": r[0], "created_at": r[1], "feature": r[2], "recipient": r[3],
+             "subject": r[4], "status": r[5], "detail": r[6]} for r in rows]
+
+
+def purge_stale_email_log(conn, cutoff_iso):
+    """RETENTION enforcement for the email log — same shape as
+    purge_stale_ai_interactions: operational log, not audit-of-record.
+    `recipient` is personal data, which is exactly why this exists."""
+    cur = conn.execute("DELETE FROM email_log WHERE created_at < ?", (cutoff_iso,))
+    conn.commit()
+    return cur.rowcount
 
 
 # ---------------------------------------------------------------------
