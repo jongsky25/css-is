@@ -1,5 +1,31 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-18 (v2.97 — a light 3D lean for the wellness companion)
+
+Spot Feedback #82: "make the pet 3d." Full 3D rendering is out of scope for a
+spot fix, so this is a scoped, cosmetic polish in the same spirit rather
+than a 3D engine: a tilt-card lean plus a contact shadow.
+
+`templates/_avatars.html` (`avatar_defs()`) — `.avwrap` gets `perspective:
+700px`; its SVG gets a permanent `filter:drop-shadow(...)` for a soft
+"lifted off the page" contact shadow. The `avatar()` macro's inner sizing
+`<span>` (already wrapping just the SVG) is now `.av-tiltstage`, the element
+the lean rotates.
+
+`static/js/avatars.js` — folded into the existing "curiosity" `pointermove`
++ `requestAnimationFrame` loop (the one that already turns the owl/dog/cat/
+bird's head toward the cursor) rather than adding a second global listener.
+For any `.avwrap[data-interactive]`, while the pointer is within the
+companion's own bounding box, `.av-tiltstage` gets `rotateY`/`rotateX` set
+from the pointer's offset from center (±10°/±8°), transition-free for
+responsive tracking; leaving the box clears the transform with a `.35s`
+settle transition. Runs for every species (not just the WATCH list used by
+the head-turn), gated by the same `prefers-reduced-motion` check as
+everything else in the file. Verified independent of the `.avwrap[data-drag]`
+positioning transform used by the wellness hub's drag-to-move (different
+element: outer `.avwrap` vs inner `.av-tiltstage`), and confirmed both work
+together with Playwright.
+
 ## 2026-09-18 (v2.96 — a date field's calendar didn't always open on click)
 
 Reported by the user (Spot Feedback #83): "there are times not clickable" on

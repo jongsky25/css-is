@@ -17,10 +17,24 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.96"
+APP_VERSION = "2.97"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.97",
+        "date": "September 18, 2026",
+        "summary": "Your wellness companion now leans toward your cursor "
+                   "for a bit more depth, with a soft shadow underneath.",
+        "changes": [
+            "Your companion on the Wellness page (and on the home screen) "
+            "now leans gently in 3D toward your mouse pointer while it's "
+            "hovering over it, and sits above a soft shadow — a small bit "
+            "of extra life on top of its usual sway and idle animations. "
+            "Turned off automatically if your device is set to reduce "
+            "motion.",
+        ],
+    },
     {
         "version": "2.96",
         "date": "September 18, 2026",
