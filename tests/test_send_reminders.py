@@ -35,16 +35,6 @@ def _tomorrow():
     return (tz.today_local() + timedelta(days=1)).isoformat()
 
 
-def _next_weekday(d):
-    while d.weekday() >= 5:
-        d += timedelta(days=1)
-    return d
-
-
-def _future_weekday():
-    return _next_weekday(tz.today_local() + timedelta(days=3))
-
-
 def _wellness_org(conn):
     """A section with a chief + one staff member, directory-linked — enough
     for get_approvers_for to route the staffer's claim to the chief."""
@@ -217,7 +207,7 @@ def test_disabled_job_is_absent_from_the_report_and_sends_nothing(
     conn = st.connect(db)
     st.init_db(conn)
     chief, staff = _wellness_org(conn)
-    st.create_wellness_claim(conn, staff, _future_weekday().isoformat(), "10:00", "exercise")
+    st.create_wellness_claim(conn, staff, on_digest_day.isoformat(), "10:00", "exercise")
     st.set_email_feature(conn, "job_digest", False)
     conn.commit()
     conn.close()
@@ -233,7 +223,7 @@ def test_enabled_job_is_unaffected_by_the_gate(tmp_path, sent, monkeypatch, on_d
     conn = st.connect(db)
     st.init_db(conn)
     chief, staff = _wellness_org(conn)
-    st.create_wellness_claim(conn, staff, _future_weekday().isoformat(), "10:00", "exercise")
+    st.create_wellness_claim(conn, staff, on_digest_day.isoformat(), "10:00", "exercise")
     conn.commit()
     conn.close()
 
@@ -249,7 +239,7 @@ def test_dry_run_names_a_disabled_job_instead_of_running_it(
     conn = st.connect(db)
     st.init_db(conn)
     chief, staff = _wellness_org(conn)
-    st.create_wellness_claim(conn, staff, _future_weekday().isoformat(), "10:00", "exercise")
+    st.create_wellness_claim(conn, staff, on_digest_day.isoformat(), "10:00", "exercise")
     st.set_email_feature(conn, "job_digest", False)
     conn.commit()
     conn.close()
@@ -335,10 +325,10 @@ def test_scheduler_fires_the_sweep_once_a_day(app_mod, db_path, monkeypatch):
 
 # --------------------------------------------------------- wellness expiry ---
 
-def test_reminds_approver_of_expiring_wellness_claim(tmp_path, sent):
+def test_reminds_approver_of_expiring_wellness_claim(tmp_path, sent, future_weekday):
     conn = _fresh(tmp_path)
     chief, staff = _wellness_org(conn)
-    claim_id = st.create_wellness_claim(conn, staff, _future_weekday().isoformat(),
+    claim_id = st.create_wellness_claim(conn, staff, future_weekday,
                                         "10:00", "exercise")
     _backdate_claim(conn, claim_id, days=12)   # within the 11-14 day reminder window
     n = sr.remind_wellness_expiring(conn, "https://css.example")
@@ -348,13 +338,13 @@ def test_reminds_approver_of_expiring_wellness_claim(tmp_path, sent):
     assert "action=approve" in sent[0]["body"] and "action=deny" in sent[0]["body"]
 
 
-def test_reminds_an_expiring_claim_only_once(tmp_path, sent):
+def test_reminds_an_expiring_claim_only_once(tmp_path, sent, future_weekday):
     """The catch-up window is days wide so a cron that misses a day still
     gets the reminder out — which means the claim matches it again tomorrow,
     and only decide_reminded_at stops the approver being nagged daily."""
     conn = _fresh(tmp_path)
     chief, staff = _wellness_org(conn)
-    claim_id = st.create_wellness_claim(conn, staff, _future_weekday().isoformat(),
+    claim_id = st.create_wellness_claim(conn, staff, future_weekday,
                                         "10:00", "exercise")
     _backdate_claim(conn, claim_id, days=12)
     assert sr.remind_wellness_expiring(conn, "https://css.example") == 1
@@ -362,12 +352,12 @@ def test_reminds_an_expiring_claim_only_once(tmp_path, sent):
     assert len(sent) == 1
 
 
-def test_does_not_remind_too_early_or_too_late(tmp_path, sent):
+def test_does_not_remind_too_early_or_too_late(tmp_path, sent, future_weekday):
     conn = _fresh(tmp_path)
     chief, staff = _wellness_org(conn)
-    fresh_id = st.create_wellness_claim(conn, staff, _future_weekday().isoformat(),
+    fresh_id = st.create_wellness_claim(conn, staff, future_weekday,
                                         "10:00", "exercise")
-    old_id = st.create_wellness_claim(conn, staff, _future_weekday().isoformat(),
+    old_id = st.create_wellness_claim(conn, staff, future_weekday,
                                       "11:00", "exercise")
     _backdate_claim(conn, old_id, days=20)     # link already expired, not "about to"
     # fresh_id is left at age 0 — nowhere near expiry either.
@@ -376,10 +366,10 @@ def test_does_not_remind_too_early_or_too_late(tmp_path, sent):
     assert sent == []
 
 
-def test_does_not_remind_a_decided_claim(tmp_path, sent):
+def test_does_not_remind_a_decided_claim(tmp_path, sent, future_weekday):
     conn = _fresh(tmp_path)
     chief, staff = _wellness_org(conn)
-    claim_id = st.create_wellness_claim(conn, staff, _future_weekday().isoformat(),
+    claim_id = st.create_wellness_claim(conn, staff, future_weekday,
                                         "10:00", "exercise")
     _backdate_claim(conn, claim_id, days=12, status="approved")
     n = sr.remind_wellness_expiring(conn, "https://css.example")
@@ -405,7 +395,7 @@ def on_digest_day(monkeypatch):
 def test_digest_bundles_wellness_and_awa_for_one_approver(tmp_path, sent, on_digest_day):
     conn = _fresh(tmp_path)
     chief, staff = _wellness_org(conn)
-    st.create_wellness_claim(conn, staff, _future_weekday().isoformat(), "10:00", "exercise")
+    st.create_wellness_claim(conn, staff, on_digest_day.isoformat(), "10:00", "exercise")
     period = st.work_arrangement_open_periods()[0]
     st.create_work_arrangement(conn, staff, period, "reg")
     n = sr.send_approvals_digest(conn, "https://css.example")
@@ -416,12 +406,12 @@ def test_digest_bundles_wellness_and_awa_for_one_approver(tmp_path, sent, on_dig
     assert "/work-arrangement/approvals" in sent[0]["body"]
 
 
-def test_digest_does_not_go_out_on_other_days(tmp_path, sent, monkeypatch):
+def test_digest_does_not_go_out_on_other_days(tmp_path, sent, monkeypatch, future_weekday):
     """Undecided items stay pending, so an ungated digest would re-list the
     same rows every single morning."""
     conn = _fresh(tmp_path)
     chief, staff = _wellness_org(conn)
-    st.create_wellness_claim(conn, staff, _future_weekday().isoformat(), "10:00", "exercise")
+    st.create_wellness_claim(conn, staff, future_weekday, "10:00", "exercise")
     digest_weekday = sr.PARAMS["digest_weekday"][1]
     d = tz.today_local()
     while d.weekday() == digest_weekday:
@@ -443,7 +433,7 @@ def test_digest_skips_approver_with_nothing_pending(tmp_path, sent, on_digest_da
 def test_digest_omits_already_decided_items(tmp_path, sent, on_digest_day):
     conn = _fresh(tmp_path)
     chief, staff = _wellness_org(conn)
-    claim_id = st.create_wellness_claim(conn, staff, _future_weekday().isoformat(),
+    claim_id = st.create_wellness_claim(conn, staff, on_digest_day.isoformat(),
                                         "10:00", "exercise")
     st.decide_wellness_claim(conn, claim_id, {"id": chief, "role": "section_manager"}, "approve")
     n = sr.send_approvals_digest(conn, "https://css.example")

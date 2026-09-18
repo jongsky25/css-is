@@ -8,24 +8,11 @@ with a chief + staff account, cleaned up per test.
 """
 from __future__ import annotations
 
-from datetime import timedelta
-
 import pytest
 
 import auth
 import mailer
 import storage as st
-import tzutil as tz
-
-
-def _next_weekday(d):
-    while d.weekday() >= 5:
-        d += timedelta(days=1)
-    return d
-
-
-def _future_weekday():
-    return _next_weekday(tz.today_local() + timedelta(days=3))
 
 
 def _wipe(conn):
@@ -102,9 +89,9 @@ def _client_for(app_mod, uid):
 
 # --------------------------------------------------------------- wellness ---
 
-def test_wellness_apply_notifies_the_approver(app_mod, notif_org, sent):
+def test_wellness_apply_notifies_the_approver(app_mod, notif_org, sent, future_weekday):
     c = _client_for(app_mod, notif_org["staff"])
-    d = _future_weekday().isoformat()
+    d = future_weekday
     r = c.post("/wellness/apply", data={"break_date": d, "start_time": "10:00",
                                         "activity": "exercise", "hours": "1"},
                follow_redirects=False)
@@ -115,12 +102,12 @@ def test_wellness_apply_notifies_the_approver(app_mod, notif_org, sent):
     assert "/wellness/approvals" in sent[0]["body"]
 
 
-def test_wellness_apply_respects_the_feature_toggle(app_mod, notif_org, sent):
+def test_wellness_apply_respects_the_feature_toggle(app_mod, notif_org, sent, future_weekday):
     conn = notif_org["conn"]
     st.set_email_feature(conn, "wellness_approval", False)
     conn.commit()
     c = _client_for(app_mod, notif_org["staff"])
-    d = _future_weekday().isoformat()
+    d = future_weekday
     r = c.post("/wellness/apply", data={"break_date": d, "start_time": "10:00",
                                         "activity": "exercise", "hours": "1"},
                follow_redirects=False)
@@ -130,9 +117,9 @@ def test_wellness_apply_respects_the_feature_toggle(app_mod, notif_org, sent):
     conn.commit()
 
 
-def test_wellness_decide_notifies_the_claimant(app_mod, notif_org, sent):
+def test_wellness_decide_notifies_the_claimant(app_mod, notif_org, sent, future_weekday):
     conn = notif_org["conn"]
-    d = _future_weekday().isoformat()
+    d = future_weekday
     claim_id = st.create_wellness_claim(conn, notif_org["staff"], d, "10:00", "exercise")
     c = _client_for(app_mod, notif_org["chief"])
     r = c.post(f"/wellness/claims/{claim_id}/decide", data={"action": "approve"},
@@ -454,13 +441,13 @@ def test_raffle_draw_no_email_for_anonymous_winner(admin, db_path, sent):
 
 # --------------------------------------------------------- SMTP unconfigured ---
 
-def test_nothing_sent_when_smtp_unconfigured(app_mod, notif_org, monkeypatch):
+def test_nothing_sent_when_smtp_unconfigured(app_mod, notif_org, monkeypatch, future_weekday):
     """Default test env has no CSS_SMTP_HOST — every new call site must degrade
     exactly like the existing /forgot flow (no crash, no real send attempt)."""
     calls = []
     monkeypatch.setattr(mailer, "send", lambda *a, **kw: calls.append(a) or {"sent": False})
     c = _client_for(app_mod, notif_org["staff"])
-    d = _future_weekday().isoformat()
+    d = future_weekday
     r = c.post("/wellness/apply", data={"break_date": d, "start_time": "10:00",
                                         "activity": "exercise", "hours": "1"},
                follow_redirects=False)
@@ -500,10 +487,10 @@ def test_always_on_account_mail_ignores_every_feature_flag(admin, db_path, sent)
 
 # --------------------------------------------------- email send log (Phase 6) ---
 
-def test_notify_writes_a_sent_row_to_email_log(app_mod, notif_org, sent):
+def test_notify_writes_a_sent_row_to_email_log(app_mod, notif_org, sent, future_weekday):
     conn = notif_org["conn"]
     c = _client_for(app_mod, notif_org["staff"])
-    d = _future_weekday().isoformat()
+    d = future_weekday
     r = c.post("/wellness/apply", data={"break_date": d, "start_time": "10:00",
                                         "activity": "exercise", "hours": "1"},
                follow_redirects=False)
@@ -514,12 +501,12 @@ def test_notify_writes_a_sent_row_to_email_log(app_mod, notif_org, sent):
     assert row["recipient"] == "ntf-chief@test.local"
 
 
-def test_notify_writes_skipped_off_row_when_feature_disabled(app_mod, notif_org, sent):
+def test_notify_writes_skipped_off_row_when_feature_disabled(app_mod, notif_org, sent, future_weekday):
     conn = notif_org["conn"]
     st.set_email_feature(conn, "wellness_approval", False)
     conn.commit()
     c = _client_for(app_mod, notif_org["staff"])
-    d = _future_weekday().isoformat()
+    d = future_weekday
     try:
         r = c.post("/wellness/apply", data={"break_date": d, "start_time": "10:00",
                                             "activity": "exercise", "hours": "1"},

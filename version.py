@@ -17,10 +17,38 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.95"
+APP_VERSION = "2.97"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.97",
+        "date": "September 18, 2026",
+        "summary": "Wellness breaks can now only be requested for a day in "
+                   "the current work week, not weeks ahead.",
+        "changes": [
+            "Filing a wellness break used to let you plan up to 4 weeks "
+            "ahead. It's now limited to the current Monday-to-Friday work "
+            "week, so plans stay close to when you'll actually take them "
+            "and don't need to be cancelled or moved as the week changes.",
+            "The \"Request a break\" button on the wellness page now turns "
+            "off as soon as this week's 2 hours are fully claimed, since "
+            "there's no longer a future week to fall back on.",
+        ],
+    },
+    {
+        "version": "2.96",
+        "date": "September 18, 2026",
+        "summary": "The wellness break form's time slots can now be paired "
+                   "with an exact minute, for anyone who needs one that "
+                   "isn't on the half-hour.",
+        "changes": [
+            "The new time-slot grid only offered times on the hour or "
+            "half-hour. A \"Need a specific minute?\" box next to it now "
+            "lets you type any exact time (like 9:16 or 2:11 PM) instead — "
+            "it's checked against the same rules when you submit.",
+        ],
+    },
     {
         "version": "2.95",
         "date": "September 18, 2026",
