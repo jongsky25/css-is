@@ -17,10 +17,22 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.97"
+APP_VERSION = "2.98"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.98",
+        "date": "September 18, 2026",
+        "summary": "The wellness break request form now starts with today's "
+                   "date already filled in.",
+        "changes": [
+            "The Date field on \"Request a wellness break\" used to open "
+            "blank, so you had to pick a date even though today is almost "
+            "always what you want. It now starts on today's date — still "
+            "change it if you're planning a break for a later day.",
+        ],
+    },
     {
         "version": "2.97",
         "date": "September 18, 2026",

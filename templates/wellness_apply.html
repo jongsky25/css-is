@@ -47,7 +47,7 @@
        data-week-used='{{ week_used|tojson }}' data-weekly="{{ weekly_hours }}">{{ left }} hour{{ 's' if left != 1 }} left that week.</div>
 
   <form method="post" action="/wellness/apply">
-    {{ field("break_date", "Date", value=form.get("break_date", ""), type="date", required=True,
+    {{ field("break_date", "Date", value=form.get("break_date", today), type="date", required=True,
              attrs='min="' ~ today ~ '" max="' ~ max_date ~ '"',
              help="Any workday from today up to " ~ window_weeks ~ " weeks ahead — breaks can't be filed backdated.") }}
     {{ field("start_time", "Start time", value=form.get("start_time", ""), type="time", required=True,

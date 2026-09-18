@@ -1,5 +1,25 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-18 (v2.98 — the wellness break form defaulted its date to blank)
+
+Spot Feedback #81: "Might be easier if the default date is today?" on
+`/wellness/apply`. `templates/wellness_apply.html`'s `Date` field rendered
+`value=form.get("break_date", "")` — blank on a fresh visit, requiring a
+manual pick even though today is the overwhelmingly common case (`min` is
+already today; breaks can't be backdated).
+
+**`templates/wellness_apply.html`** — one-line change:
+`form.get("break_date", "")` → `form.get("break_date", today)`. `form` still
+wins after a validation-error re-render (the user's own prior pick is
+preserved, not overwritten), so this only changes the very first, blank
+visit. The page's own JS (`refresh()`, called unconditionally on load)
+already reads `dateInput.value` to show the right "N hours left that week"
+note and enable/disable the 2-hour option; it previously no-op'd on a blank
+value, so this also makes that computation run immediately on load instead
+of only after the user's first manual date change — recomputing the exact
+same numbers the server already rendered for the current week, so no
+visible change there.
+
 ## 2026-09-18 (v2.97 — a light 3D lean for the wellness companion)
 
 Spot Feedback #82: "make the pet 3d." Full 3D rendering is out of scope for a
