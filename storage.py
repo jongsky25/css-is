@@ -252,6 +252,7 @@ def init_db(conn):
         decided_by  INTEGER REFERENCES admin_user(id),
         decided_at  TEXT,
         decide_note TEXT,                        -- approver's remark (e.g. reason for denial)
+        cancel_reason TEXT,                      -- claimant's own remark when withdrawing (optional)
         created_at  TEXT
     );
     CREATE INDEX IF NOT EXISTS idx_wellness_claim_user_week ON wellness_claim(user_id, week_start);
@@ -995,6 +996,10 @@ def _add_missing_columns(conn):
         # The reminder window is days wide so a cron that misses a day still
         # catches the claim; this column is what keeps it to ONE reminder.
         conn.execute("ALTER TABLE wellness_claim ADD COLUMN decide_reminded_at TEXT")
+    if wc_cols and "cancel_reason" not in wc_cols:
+        # Spot Feedback #77: a documented reason when the claimant withdraws
+        # their own request (mirrors decide_note, the approver's side of it).
+        conn.execute("ALTER TABLE wellness_claim ADD COLUMN cancel_reason TEXT")
     wr_cols = {row[1] for row in conn.execute("PRAGMA table_info(wellness_reflection)")}
     if wr_cols:
         if "usefulness" not in wr_cols:
@@ -6240,7 +6245,7 @@ def get_wellness_claim(conn, claim_id):
                   rp.name, ou.short_name, ou.path,
                   r.id IS NOT NULL, r.mood_before, r.mood_after,
                   c.activity_other, r.usefulness, r.felt_refreshed, r.managed_stress,
-                  r.focus_impact, r.suggestions
+                  r.focus_impact, r.suggestions, c.cancel_reason
            FROM wellness_claim c
            JOIN admin_user u ON u.id = c.user_id
            LEFT JOIN resource_person rp ON rp.id = u.rp_id
@@ -6266,7 +6271,7 @@ def get_wellness_claim(conn, claim_id):
             "mood_before": row[18], "mood_after": row[19],
             "usefulness": row[21], "felt_refreshed": row[22],
             "managed_stress": row[23], "focus_impact": row[24],
-            "suggestions": row[25]}
+            "suggestions": row[25], "cancel_reason": row[26]}
 
 
 def list_my_wellness_claims(conn, user_id, limit=25):
@@ -6357,15 +6362,18 @@ def decide_wellness_claim(conn, claim_id, user, action, note=None):
     return get_wellness_claim(conn, claim_id)
 
 
-def cancel_wellness_claim(conn, claim_id, user_id):
+def cancel_wellness_claim(conn, claim_id, user_id, reason=""):
     """The claimant withdraws their own request (pending or approved-but-not-
-    taken); the hour returns to the week's entitlement."""
+    taken); the hour returns to the week's entitlement. `reason` (Spot
+    Feedback #77: "documentation" for why) is optional and the claimant's
+    own, same shape as decide_note is the approver's."""
     claim = get_wellness_claim(conn, claim_id)
     if not claim or claim["user_id"] != user_id:
         raise ValueError("That break request isn't yours to cancel.")
     if claim["status"] not in ("pending", "approved"):
         raise ValueError("Only a pending or approved break can be cancelled.")
-    conn.execute("UPDATE wellness_claim SET status='cancelled' WHERE id=?", (claim_id,))
+    conn.execute("UPDATE wellness_claim SET status='cancelled', cancel_reason=? WHERE id=?",
+                 ((reason or "").strip() or None, claim_id))
     conn.commit()
     return claim
 

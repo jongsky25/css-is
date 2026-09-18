@@ -1,5 +1,38 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-18 (v2.99 — a documented reason when withdrawing a wellness break)
+
+Spot Feedback #77: "Pop up window to record why withdrawing or cancelling
+the wellness break for documentation." `wellness_claim` already carries
+`decide_note` for the approver's side of a decision (e.g. a denial reason)
+but had nothing analogous for the claimant's own withdrawal.
+
+**`storage.py`** — new `cancel_reason TEXT` column (`CREATE TABLE` +
+additive `ALTER TABLE` migration, same pattern as the other nullable
+wellness columns). `cancel_wellness_claim(conn, claim_id, user_id,
+reason="")` now stores it (trimmed, `None` when blank); `get_wellness_claim`
+returns it.
+
+**`app.py`** — `POST /wellness/claims/{claim_id}/cancel` is now `async`,
+reads an optional `reason` field via `_posted()`, passes it through, and
+folds it into the `wellness_cancel` audit summary when given.
+
+**`templates/wellness_hub.html`** — the Withdraw button's `onsubmit` swaps
+`confirm('Withdraw this break request?')` for a `window.prompt(...)` asking
+why (the "pop up window" asked for); `null` (Cancel on the prompt) still
+backs out of the withdrawal exactly as `confirm()` did, an empty answer
+still withdraws with no reason recorded. The reason shows next to the
+`cancelled` status pill afterward, mirroring how a denial's `decide_note`
+already shows next to `denied`.
+
+**`tests/test_wellness.py`** — `test_cancel_reason_is_recorded_and_optional`
+(direct `storage` call, present-and-trimmed vs. absent) and
+`test_http_withdraw_records_reason` (through the actual endpoint). Verified
+live end-to-end (file a break → withdraw with a reason → the reason shows
+on `/wellness` next to "cancelled" → the audit log carries it too) and the
+full `tests/test_wellness.py` + `tests/test_wellness_escalation.py` suites
+(55 tests) pass unchanged otherwise.
+
 ## 2026-09-18 (v2.98 — the wellness break form defaulted its date to blank)
 
 Spot Feedback #81: "Might be easier if the default date is today?" on

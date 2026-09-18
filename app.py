@@ -13915,16 +13915,21 @@ async def wellness_apply_submit(request: Request):
 
 
 @app.post("/wellness/claims/{claim_id}/cancel")
-def wellness_cancel(request: Request, claim_id: int):
+async def wellness_cancel(request: Request, claim_id: int):
+    p = await _posted(request)
+    reason = (p.get("reason") or "").strip()
     user = request.state.user
     conn = get_conn()
     try:
         try:
-            st.cancel_wellness_claim(conn, claim_id, user["id"])
+            st.cancel_wellness_claim(conn, claim_id, user["id"], reason=reason)
         except ValueError as e:
             return RedirectResponse(f"/wellness?err={quote(str(e))}", status_code=303)
+        summary = "withdrew a wellness break request"
+        if reason:
+            summary += f": {reason}"
         _audit(request, conn, "wellness_cancel", target_type="wellness_claim",
-               target_id=claim_id, summary="withdrew a wellness break request")
+               target_id=claim_id, summary=summary)
     finally:
         conn.close()
     return RedirectResponse("/wellness?cheer=Request+withdrawn+—+those+hours+are+back+in+your+week.",

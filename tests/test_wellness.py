@@ -136,6 +136,35 @@ def test_denied_and_cancelled_hours_return_to_the_week(wellness_org):
     st.create_wellness_claim(conn, emp, d, "16:00", "hobby")       # fits again
 
 
+def test_cancel_reason_is_recorded_and_optional(wellness_org):
+    """Spot Feedback #77: a documented reason on withdrawal, same shape as
+    decide_note (the approver's side) — present when given, blank when not."""
+    conn, emp = wellness_org["conn"], wellness_org["emp"]
+    d = _future_weekday().isoformat()
+    c1 = st.create_wellness_claim(conn, emp, d, "09:00", "exercise")
+    c2 = st.create_wellness_claim(conn, emp, d, "15:00", "meditation")
+    st.cancel_wellness_claim(conn, c1, emp, reason="  urgent office matter  ")
+    st.cancel_wellness_claim(conn, c2, emp)                        # no reason given
+    claim1 = st.get_wellness_claim(conn, c1)
+    claim2 = st.get_wellness_claim(conn, c2)
+    assert claim1["status"] == "cancelled"
+    assert claim1["cancel_reason"] == "urgent office matter"       # trimmed
+    assert claim2["cancel_reason"] is None
+
+
+def test_http_withdraw_records_reason(app_mod, wellness_org):
+    conn, emp = wellness_org["conn"], wellness_org["emp"]
+    d = _future_weekday().isoformat()
+    claim_id = st.create_wellness_claim(conn, emp, d, "09:00", "exercise")
+    c = _client_for_id(app_mod, emp)
+    r = c.post(f"/wellness/claims/{claim_id}/cancel",
+               data={"reason": "urgent work came up"}, follow_redirects=False)
+    assert r.status_code == 303
+    claim = st.get_wellness_claim(conn, claim_id)
+    assert claim["status"] == "cancelled"
+    assert claim["cancel_reason"] == "urgent work came up"
+
+
 def test_claim_validation_rules(wellness_org):
     conn, emp = wellness_org["conn"], wellness_org["emp"]
     d = _future_weekday().isoformat()
