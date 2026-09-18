@@ -19,6 +19,8 @@ GATED = [
     ("/arta",                   "get",  "create_activity"),
     ("/encode",                 "get",  "encode"),
     ("/arta/entries",           "get",  "manage_walkin_entries"),
+    ("/admin/email",            "get",  "manage_users"),
+    ("/admin/email/toggle",     "post", "manage_users"),
 ]
 ROLES = ["viewer", "encoder", "section_manager", "admin"]
 

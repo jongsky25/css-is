@@ -643,6 +643,11 @@ NAV_GROUPS = [
         {"key": "sharing", "url": "/admin/sharing", "label": "Sharing",
          "hint": "Public resource sharing switch",
          "kw": "sharing public switch resource share toggle external", "cap": "manage_users"},
+        {"key": "email", "url": "/admin/email", "label": "Email",
+         "hint": "Turn email notifications on or off",
+         "kw": "email mail notifications toggle switch off preview test outbox "
+               "reminders digest csm wellness awa feedback invite reset",
+         "cap": "manage_users"},
         {"key": "wa_reopen", "url": "/admin/work-arrangement", "label": "AWA filing",
          "hint": "Temporarily reopen a closed filing period",
          "kw": "awa work arrangement reopen deadline override filing period cww wfh "
@@ -3950,6 +3955,58 @@ async def admin_rules_edit(request: Request, rid: int):
     finally:
         conn.close()
     return RedirectResponse("/admin/rules?msg=" + quote("Rule saved."), status_code=303)
+
+
+# ---------------------------------------------------------------------
+# Email console (/admin/email) — docs/ADMIN_EMAIL_FEATURES_PLAN.md Phase 4.
+# The human interface over the per-feature toggles Phases 1-3 wired into the
+# three send funnels and the seven scheduled jobs. Modeled on /admin/rules
+# (gating) and /admin/ai (layout); every handler forbids on manage_users
+# defensively, same reasoning as /admin/rules (see D8).
+# ---------------------------------------------------------------------
+
+@app.get("/admin/email", response_class=HTMLResponse)
+def admin_email(request: Request, msg: str = "", err: str = ""):
+    if (r := _forbid(request, "manage_users")):
+        return r
+    conn = get_conn()
+    try:
+        settings = st.get_settings(conn, [f"email_feature.{k}" for k in mailer.FEATURES])
+    finally:
+        conn.close()
+    states = {k: settings.get(f"email_feature.{k}", "1") != "0" for k in mailer.FEATURES}
+    transactional = [(k, label, hint, states[k]) for k, (label, hint, group)
+                     in mailer.FEATURES.items() if group == "transactional"]
+    scheduled = [(k, label, hint, states[k]) for k, (label, hint, group)
+                in mailer.FEATURES.items() if group == "scheduled"]
+    return templates.TemplateResponse(request, "admin_email.html", {
+        "email_configured": mailer.email_configured(),
+        "relay_configured": mailer.relay_configured(),
+        "smtp_configured": mailer.smtp_configured(),
+        "transactional": transactional, "scheduled": scheduled,
+        "always_on": list(mailer.ALWAYS_ON.items()),
+        "msg": msg, "err": err, "show_scope": False, "nav_active": "email",
+    })
+
+
+@app.post("/admin/email/toggle")
+async def admin_email_toggle(request: Request):
+    if (r := _forbid(request, "manage_users")):
+        return r
+    posted = await _posted(request)
+    key = posted.get("key", "")
+    if key not in mailer.FEATURES:
+        return RedirectResponse("/admin/email?err=" + quote("Unknown feature."), status_code=303)
+    on = posted.get("on") in ("on", "1", "true", "yes")
+    label = mailer.FEATURES[key][0]
+    conn = get_conn()
+    try:
+        st.set_email_feature(conn, key, on)
+        _audit(request, conn, "email_feature_toggle", target_type="setting", target_id=key,
+               summary=f"{label} email turned {'ON' if on else 'OFF'}.")
+    finally:
+        conn.close()
+    return RedirectResponse("/admin/email?msg=" + quote("Saved."), status_code=303)
 
 
 # ---- in-process backup scheduler -------------------------------------------
