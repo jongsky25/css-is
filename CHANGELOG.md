@@ -1,5 +1,34 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-18 (v2.94 — admin email control center, Phase 7: timing parameters)
+
+`docs/ADMIN_EMAIL_FEATURES_PLAN.md` §12. The six schedule/delay values that
+decide *when* a scheduled reminder fires — day-before-event lead time,
+wellness decide-link expiry lead time, the digest's and the wellness-filing
+nudge's weekday, the CSM results announcement delay, and the AWA filing
+nudge's lead time — were plain module constants in `send_reminders.py` with
+no admin UI. `send_reminders.py` adds a `PARAMS` catalog (`key -> (label,
+default, lo, hi)`) and a `_param(conn, key)` reader that pulls the current
+value from a new `email_param.<key>` app_setting, clamped to `[lo, hi]`,
+falling back to `default` on anything missing or unparseable. Every job
+function that used to close over a module constant (`remind_tomorrows_events`,
+`remind_wellness_expiring`, `send_csm_results_to_rps`/
+`send_csm_results_to_activity`, `_baseline_once`, `remind_wellness_to_file`,
+`remind_awa_to_file`, `send_approvals_digest`) now calls `_param()` instead.
+
+`/admin/email` gains a "Timing" card — one field per `PARAMS` key (a weekday
+dropdown for the two weekday knobs, a clamped number input for the rest)
+plus the previously admin-invisible `email_log_retention_days`, posting to a
+new `POST /admin/email/params` that follows `/admin/ai/settings`'s
+clamped-int pattern and audits the change as `email_params_changed`.
+
+`tests/test_send_reminders.py`'s digest-day fixtures read the new default
+off `send_reminders.PARAMS["digest_weekday"]` instead of the removed
+`_DIGEST_WEEKDAY` constant. `tests/test_email_admin.py` and
+`tests/test_send_reminders.py` (73 tests) pass unchanged.
+
+---
+
 ## 2026-09-18 (v2.93 — admin email control center, Phase 6: the send log)
 
 Sixth and final phase (docs/ADMIN_EMAIL_FEATURES_PLAN.md). `storage.py` adds

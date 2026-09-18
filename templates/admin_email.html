@@ -114,6 +114,43 @@
     {% for key, label, hint, on in scheduled %}{{ row(key, label, hint, on) }}{% endfor %}
   </div>
 
+  <div class="acard">
+    <h2>Timing</h2>
+    <p class="hint">How far ahead, how often, and how long — the schedule the jobs above run on. Changes take effect on the next daily sweep.</p>
+    <form method="post" action="/admin/email/params">
+      {% for key, label, lo, hi, value in params %}
+      <div class="fblock">
+        <div class="frow">
+          <div class="lbl" style="font-weight:600; font-size:.88rem;">{{ label }}</div>
+          {% if key.endswith('_weekday') %}
+          <select name="{{ key }}" class="ghost" style="padding:.3rem .5rem; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:inherit;">
+            {% for wd, wdname in [(0,'Monday'),(1,'Tuesday'),(2,'Wednesday'),(3,'Thursday'),(4,'Friday'),(5,'Saturday'),(6,'Sunday')] %}
+            <option value="{{ wd }}" {{ 'selected' if wd == value else '' }}>{{ wdname }}</option>
+            {% endfor %}
+          </select>
+          {% else %}
+          <input type="number" name="{{ key }}" value="{{ value }}" min="{{ lo }}" max="{{ hi }}"
+                 style="width:5rem; padding:.3rem .5rem; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:inherit;">
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+      <div class="fblock">
+        <div class="frow">
+          <div>
+            <div class="lbl" style="font-weight:600; font-size:.88rem;">Send-log retention (days)</div>
+            <div class="fhint">Recent-sends rows above older than this are purged by the daily retention sweep.</div>
+          </div>
+          <input type="number" name="email_log_retention_days" value="{{ retention_days }}" min="7" max="365"
+                 style="width:5rem; padding:.3rem .5rem; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:inherit;">
+        </div>
+      </div>
+      <div class="fblock">
+        <button class="btn" type="submit">Save timing</button>
+      </div>
+    </form>
+  </div>
+
   <div class="acard always-on">
     <h2>Always on</h2>
     <p class="hint">Account access mail. Never disableable here — turning any of these off could lock someone out of their own account. Still previewable and test-sendable, so an admin can see what they're not allowed to turn off.</p>

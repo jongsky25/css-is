@@ -2,7 +2,7 @@
 
 **Status:** Phase 1 done (v2.88). Phase 2 done (v2.89). Phase 3 done (v2.90).
 Phase 4 done (v2.91). Phase 5 done (v2.92). Phase 6 done (v2.93) — all six
-phases shipped.
+original phases shipped. Phase 7 done (v2.94) — see §12.
 Build follows this plan phase by phase.
 **Owner:** avincentpatrick
 **Why:** Office Connect now sends 21 distinct emails (account/auth, event
@@ -493,3 +493,38 @@ turn a feature off → trigger it → confirm no mail, an `email_log` row of
   queue and a scheduler slot, and would want its own plan.
 * **No changes to the composers themselves** — every message keeps its
   current wording, so nothing in this plan alters what a recipient reads.
+
+## 12. Phase 7 — timing parameters (v2.94)
+
+Phases 1-6 gave every scheduled job an on/off switch, but the six
+schedule/delay values that decide *when* each one fires stayed plain Python
+module constants in `send_reminders.py` (lead time for the day-before event
+reminder, days-before-expiry for the wellness decide-link reminder, the
+digest's and the wellness-filing-nudge's weekday, the CSM results delay, the
+work-arrangement filing nudge's lead time) — no admin UI, no `app_setting`
+row, a code change and a deploy for something as small as moving the digest
+from Monday to Friday. `email_log_retention_days` was a step ahead of the
+other five: it already had `get_setting`/`set_setting` plumbing (`retention.py`)
+but, unlike its `ui_telemetry_retention_days` and `ai_log_retention_days`
+siblings, no field on any admin page.
+
+This phase closes both gaps the same way Phase 1 closed the on/off gap —
+new `app_setting` rows, no new table:
+
+* `send_reminders.PARAMS`: `key -> (label, default, lo, hi)` for the six
+  schedule constants, stored as `email_param.<key>` and read through
+  `send_reminders._param(conn, key)`, which clamps to `[lo, hi]` and falls
+  back to `default` on a missing or unparseable value — a job can never be
+  pushed to a nonsensical schedule by a bad setting.
+* `/admin/email` gains a "Timing" card (a plain form, no per-row toggle) with
+  one field per `PARAMS` key plus `email_log_retention_days`, posting to
+  `POST /admin/email/params` — same clamped-int pattern as `/admin/ai/settings`.
+* Every call site that used to read a module constant now calls `_param(conn,
+  ...)` instead: `remind_tomorrows_events`, `remind_wellness_expiring`,
+  `send_csm_results_to_rps`/`send_csm_results_to_activity` (and
+  `_baseline_once`, which shares the CSM delay), `remind_wellness_to_file`,
+  `remind_awa_to_file`, `send_approvals_digest`.
+
+Out of scope, same reasoning as §11: still no per-user preferences, no
+template/wording editor, and no new transports or retry queue — this phase
+only makes existing *timing* knobs admin-visible.

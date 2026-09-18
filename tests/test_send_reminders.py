@@ -394,8 +394,9 @@ def on_digest_day(monkeypatch):
     """Pin "today" to the weekday the digest goes out on. The same pending
     items sit in the queue until they're decided, so the digest is weekly —
     every test of it has to be on its day."""
+    digest_weekday = sr.PARAMS["digest_weekday"][1]
     d = tz.today_local()
-    while d.weekday() != sr._DIGEST_WEEKDAY:
+    while d.weekday() != digest_weekday:
         d += timedelta(days=1)
     monkeypatch.setattr(tz, "today_local", lambda: d)
     return d
@@ -421,8 +422,9 @@ def test_digest_does_not_go_out_on_other_days(tmp_path, sent, monkeypatch):
     conn = _fresh(tmp_path)
     chief, staff = _wellness_org(conn)
     st.create_wellness_claim(conn, staff, _future_weekday().isoformat(), "10:00", "exercise")
+    digest_weekday = sr.PARAMS["digest_weekday"][1]
     d = tz.today_local()
-    while d.weekday() == sr._DIGEST_WEEKDAY:
+    while d.weekday() == digest_weekday:
         d += timedelta(days=1)
     monkeypatch.setattr(tz, "today_local", lambda: d)
     n = sr.send_approvals_digest(conn, "https://css.example")

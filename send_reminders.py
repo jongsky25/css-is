@@ -93,7 +93,8 @@ def remind_tomorrows_events(conn, base, dry_run=False):
     activity happening tomorrow. Self-limiting: an activity's event_date only
     ever equals "tomorrow" on one calendar day, so a once-daily run can't
     double-remind the same activity."""
-    tomorrow = (tz.today_local() + timedelta(days=1)).isoformat()
+    lead_days = _param(conn, "event_reminder_lead_days")
+    tomorrow = (tz.today_local() + timedelta(days=lead_days)).isoformat()
     sent = 0
     for ev in st.list_events_on_date(conn, tomorrow):
         monitor_link = f"{base}/monitor/{ev['event_token']}"
@@ -157,9 +158,36 @@ JOB_FEATURE = {
     "awa_file": "job_awa_file",
 }
 
-# How many days before a wellness decide link (auth._WELLNESS_DECIDE_MAX_AGE)
-# expires the approver gets re-notified, if the claim is still pending then.
-_WELLNESS_REMIND_DAYS_BEFORE_EXPIRY = 3
+# Admin-tunable schedule/delay knobs for the jobs below (/admin/email "Timing"
+# card). key -> (label, default, lo, hi). Stored as app_setting
+# "email_param.<key>"; read through _param() so a bad/missing value falls
+# back to the default instead of ever raising. Weekdays are Mon=0..Sun=6.
+PARAMS = {
+    "event_reminder_lead_days": (
+        "Day-before activity reminder: days ahead", 1, 1, 14),
+    "wellness_expiry_days_before": (
+        "Wellness decide-link expiry reminder: days before expiry", 3, 1, 13),
+    "digest_weekday": (
+        "Weekly pending-approvals digest: weekday", 0, 0, 6),
+    "csm_results_delay_days": (
+        "CSM results announcement: delay after activity concludes (days)", 3, 0, 30),
+    "wellness_file_weekday": (
+        "Wellness filing nudge: weekday", 3, 0, 6),
+    "awa_file_lead_days": (
+        "Work arrangement filing nudge: days before deadline", 1, 1, 14),
+}
+
+
+def _param(conn, key):
+    """An admin-tunable schedule param's current value, clamped to its
+    PARAMS range so a hand-edited or stale setting can't push a job outside
+    sane bounds."""
+    _label, default, lo, hi = PARAMS[key]
+    try:
+        n = int(st.get_setting(conn, f"email_param.{key}", str(default)))
+    except (TypeError, ValueError):
+        n = default
+    return max(lo, min(n, hi))
 
 
 def remind_wellness_expiring(conn, base, dry_run=False):
@@ -169,7 +197,7 @@ def remind_wellness_expiring(conn, base, dry_run=False):
     would be about to stop verifying anyway. Marked per claim once sent, so
     the days-wide catch-up window can't turn into a daily nag."""
     max_age_days = auth._WELLNESS_DECIDE_MAX_AGE // 86400
-    min_age_days = max_age_days - _WELLNESS_REMIND_DAYS_BEFORE_EXPIRY
+    min_age_days = max_age_days - _param(conn, "wellness_expiry_days_before")
     dash_link = f"{base}/wellness/approvals"
     sent = 0
     for claim_id in st.list_stale_pending_wellness_claims(conn, min_age_days, max_age_days):
@@ -205,23 +233,13 @@ def remind_wellness_expiring(conn, base, dry_run=False):
     return sent
 
 
-# How long after an activity ends (when it set no explicit response-window
-# close_at) to wait before announcing CSM results — gives respondents time
-# to actually answer first.
-_CSM_RESULTS_DELAY_DAYS = 3
-
-# Weekday (Mon=0) the pending-approvals digest goes out on. Monday: the
-# queue as it stands at the start of the work week.
-_DIGEST_WEEKDAY = 0
-
-
 def send_csm_results_to_rps(conn, base, dry_run=False):
     """Email a resource person their own CSM results once their session's
     feedback has concluded. Only sent when the RP has a login (an
     admin_user account) — the results page requires signing in, so there's
     nowhere useful to send an external speaker with no account."""
     sent = 0
-    for row in st.list_concluded_rp_forms_pending_csm_email(conn, _CSM_RESULTS_DELAY_DAYS):
+    for row in st.list_concluded_rp_forms_pending_csm_email(conn, _param(conn, "csm_results_delay_days")):
         # No account = no way to reach the (login-gated) results page yet — leave
         # unmarked so this is retried once the RP does get one, rather than a
         # skip that can no longer notify them if that ever changes.
@@ -250,7 +268,7 @@ def send_csm_results_to_activity(conn, base, dry_run=False):
     once concluded — mirrors send_csm_results_to_rps, but the per-activity
     summary rather than one speaker's own numbers."""
     sent = 0
-    for event_id in st.list_concluded_events_pending_csm_email(conn, _CSM_RESULTS_DELAY_DAYS):
+    for event_id in st.list_concluded_events_pending_csm_email(conn, _param(conn, "csm_results_delay_days")):
         ev = st.get_event_by_id(conn, event_id)
         report_path = st.event_report_url(conn, event_id)
         if not ev or not report_path:
@@ -292,18 +310,12 @@ def send_csm_results_to_activity(conn, base, dry_run=False):
     return sent
 
 
-# Weekday (Mon=0..Fri=4) the "you haven't filed a wellness break" nudge fires
-# on — the day before the Mon-Fri window closes, so a daily cron run only
-# nudges once a week, not every day of it.
-_WELLNESS_FILE_REMINDER_WEEKDAY = 3   # Thursday
-
-
 def remind_wellness_to_file(conn, base, dry_run=False):
     """Nudge staff who haven't used any of this week's 2-hour wellness
     entitlement yet — breaks can only be scheduled Monday-Friday, so unused
     hours lapse once the week's Friday passes."""
     today = tz.today_local()
-    if today.weekday() != _WELLNESS_FILE_REMINDER_WEEKDAY:
+    if today.weekday() != _param(conn, "wellness_file_weekday"):
         return 0
     week_start = st.wellness_week_start(today)
     friday_label = (date.fromisoformat(week_start) + timedelta(days=4)).isoformat()
@@ -329,7 +341,8 @@ def remind_awa_to_file(conn, base, dry_run=False):
     if not open_periods:
         return 0
     period_start = open_periods[0]
-    if today != st.work_arrangement_deadline(period_start) - timedelta(days=1):
+    lead_days = _param(conn, "awa_file_lead_days")
+    if today != st.work_arrangement_deadline(period_start) - timedelta(days=lead_days):
         return 0
     label = st.work_arrangement_period_label(period_start)
     deadline_label = st.work_arrangement_deadline_label(period_start)
@@ -357,7 +370,7 @@ def send_approvals_digest(conn, base, dry_run=False):
     Weekly, not daily: the same items stay pending until they're decided, so
     a digest on every run would re-list them every morning and train people
     to ignore it. Gated to one weekday, like the filing nudges below."""
-    if tz.today_local().weekday() != _DIGEST_WEEKDAY:
+    if tz.today_local().weekday() != _param(conn, "digest_weekday"):
         return 0
     wellness_by_approver = {}
     for (claim_id,) in conn.execute("SELECT id FROM wellness_claim WHERE status='pending' ORDER BY id"):
@@ -412,13 +425,14 @@ def _baseline_once(conn, dry_run=False):
     A no-op on every later run."""
     if st.get_setting(conn, _BASELINE_SETTING) == "1":
         return
+    delay_days = _param(conn, "csm_results_delay_days")
     if dry_run:
-        events = st.list_concluded_events_pending_csm_email(conn, _CSM_RESULTS_DELAY_DAYS)
-        forms = st.list_concluded_rp_forms_pending_csm_email(conn, _CSM_RESULTS_DELAY_DAYS)
+        events = st.list_concluded_events_pending_csm_email(conn, delay_days)
+        forms = st.list_concluded_rp_forms_pending_csm_email(conn, delay_days)
         print(f"[dry-run] would baseline {len(events)} past activity/activities and "
               f"{len(forms)} speaker session(s) as already-announced, sending nothing")
         return
-    n_events, n_forms = st.baseline_csm_results_emailed(conn, _CSM_RESULTS_DELAY_DAYS)
+    n_events, n_forms = st.baseline_csm_results_emailed(conn, delay_days)
     st.set_setting(conn, _BASELINE_SETTING, "1")
     print(f"Baselined {n_events} past activity/activities and {n_forms} speaker "
           f"session(s) as already-announced (no email sent for the back catalogue).")
