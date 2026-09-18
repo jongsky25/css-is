@@ -7037,6 +7037,20 @@ def clear_work_arrangement_reopen(conn, period_start):
     conn.commit()
 
 
+def staff_without_work_arrangement(conn, period_start):
+    """Active accounts with no work_arrangement row (any status) for this
+    period — the people an admin's reopen actually reaches: they missed the
+    original deadline entirely, so they're the ones who need to know filing
+    is open again. Someone who already filed (and may just want to change it)
+    is not nudged again here."""
+    rows = conn.execute(
+        "SELECT id, username FROM admin_user "
+        "WHERE active = 1 AND id NOT IN "
+        "  (SELECT user_id FROM work_arrangement WHERE period_start = ?) "
+        "ORDER BY username", (period_start,)).fetchall()
+    return [{"id": r[0], "username": r[1]} for r in rows]
+
+
 def _wa_check_period_open(conn, period_start, d=None):
     """Return the period key if it is still accepting filings, else raise with a
     message that names BOTH the deadline that was missed and the next period the

@@ -10,6 +10,7 @@ from datetime import date, timedelta
 
 import pytest
 
+import mailer
 import storage as st
 import tzutil as tz
 import work_arrangement_annex as wanx
@@ -954,6 +955,41 @@ def test_reopening_over_http_lets_the_employee_file_it_themselves(
               data={"period_start": ps, "action": "close"},
               follow_redirects=False)
     assert st.get_work_arrangement_reopen(conn, ps) is None
+
+
+def test_staff_without_work_arrangement_excludes_filers(wa_org):
+    conn, ps = wa_org["conn"], _open()
+    st.create_work_arrangement(conn, wa_org["staff"][0], ps, "REG")
+    non_filers = {r["id"] for r in st.staff_without_work_arrangement(conn, ps)}
+    assert wa_org["staff"][0] not in non_filers
+    assert wa_org["staff"][1] in non_filers
+    assert wa_org["loner"] in non_filers
+
+
+def test_reopen_emails_only_staff_who_did_not_file(wa_org, app_mod, monkeypatch):
+    conn, ps = wa_org["conn"], _open()
+    # staff[0] filed before the deadline; everyone else missed it.
+    st.create_work_arrangement(conn, wa_org["staff"][0], ps, "REG")
+    past = st.work_arrangement_deadline(ps) + timedelta(days=1)
+    monkeypatch.setattr(tz, "today_local", lambda: past)
+
+    calls = []
+    monkeypatch.setattr(mailer, "send", lambda to, subject, body, html=None:
+                        calls.append({"to": to, "subject": subject, "body": body})
+                        or {"sent": True})
+    admin = _client_for_id(app_mod, wa_org["admin"]["id"])
+    r = admin.post("/admin/work-arrangement/reopen",
+                   data={"period_start": ps, "action": "reopen", "note": "late request"},
+                   follow_redirects=False)
+    assert r.status_code == 303
+    recipients = {c["to"] for c in calls}
+    assert "wa-staff0@test.local" not in recipients     # already filed -> not nudged
+    assert "wa-staff1@test.local" in recipients
+    assert "wa-loner@test.local" in recipients
+    mail = next(c for c in calls if c["to"] == "wa-loner@test.local")
+    assert "reopened" in mail["subject"].lower()
+    assert "/work-arrangement/file" in mail["body"]
+    assert "late request" in mail["body"]
 
 
 # ------------------------------------------------------- pages and wiring ---

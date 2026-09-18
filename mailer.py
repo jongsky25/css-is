@@ -489,6 +489,29 @@ def wellness_decided_message(claimant_name, action, break_date, note, link):
     return subject, body, html
 
 
+def work_arrangement_reopened_message(name, period_label, link, note=None):
+    """Returns (subject, plain_text_body, html_body). Sent to staff who missed
+    the period's own filing deadline, once an admin temporarily reopens it."""
+    subject = f"Work arrangement filing reopened — {period_label}"
+    note_line = f"\nNote from admin: {note}\n" if note else ""
+    body = (f"Hello {name or 'there'},\n\n"
+            f"You didn't file a work arrangement for {period_label} before its "
+            f"deadline. An admin has temporarily reopened it, so you can still "
+            f"file now.\n{note_line}\n"
+            f"  {link}\n")
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="Filing reopened",
+        intro=(f"You didn't file a work arrangement for {_e(period_label)} before "
+               f"its deadline. An admin has temporarily reopened it, so you can "
+               f"still file now."),
+        cta_label="File your work arrangement",
+        link=link,
+        extra_html=_note_box_html("Note from admin", note) if note else "",
+    )
+    return subject, body, html
+
+
 def awa_pending_message(approver_name, requester_name, period_label, arrangement, link):
     subject = f"Work arrangement needs your approval — {requester_name}"
     body = (f"Hello {approver_name or 'there'},\n\n"

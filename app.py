@@ -14422,6 +14422,12 @@ async def admin_work_arrangement_reopen(request: Request):
             _audit(request, conn, "work_arrangement_reopen_set",
                    target_type="setting",
                    summary=f"Temporarily reopened {label} for filing.")
+            file_link = f"{_base_url(request)}/work-arrangement/file"
+            for staffer in st.staff_without_work_arrangement(conn, period_start):
+                staff_name = _person_name(conn, staffer["id"])
+                subj, body, html = mailer.work_arrangement_reopened_message(
+                    staff_name, label, file_link, note)
+                mailer.send(staffer["username"], subj, body, html=html)
             msg = f"{label} is reopened for filing."
     finally:
         conn.close()
