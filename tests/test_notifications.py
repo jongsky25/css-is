@@ -220,6 +220,48 @@ def test_feedback_reply_notifies_the_submitter(admin, db_path, sent):
         conn.commit(); conn.close()
 
 
+# --------------------------------------------------------- registration -----
+
+def test_registration_confirms_by_email(app_mod, manager, db_path, sent):
+    import re
+    rp = st.connect(db_path).execute(
+        "SELECT id FROM resource_person WHERE is_internal=1 LIMIT 1").fetchone()
+    r = manager.post("/create", data={
+        "event_type": "bureau", "activity_name": "NTF Registration Forum",
+        "event_date": "2026-07-09", "venue": "Hall A", "qr_mode": "combined",
+        "rp_id": str(rp[0]), "topic": "Keynote",
+    }, follow_redirects=True)
+    assert r.status_code == 200
+    tok = re.search(r"/e/([0-9a-f]{12})", r.text).group(1)
+    sent.clear()   # drop the event-created notification, only care about registration
+    r = manager.post(f"/e/{tok}", data={
+        "name": "Gia Cruz", "email": "ntf-gia@test.local", "sex": "F",
+        "affiliation": "DOH", "consent": "on"}, follow_redirects=False)
+    assert r.status_code == 303
+    assert len(sent) == 1
+    assert sent[0]["to"] == "ntf-gia@test.local"
+    assert "registered" in sent[0]["subject"].lower()
+    assert "NTF Registration Forum" in sent[0]["subject"]
+    assert f"/e/{tok}/resume?rt=" in sent[0]["body"]
+
+
+def test_registration_without_email_transport_does_not_crash(app_mod, manager, db_path, monkeypatch):
+    import re
+    monkeypatch.setattr(mailer, "email_configured", lambda: False)
+    rp = st.connect(db_path).execute(
+        "SELECT id FROM resource_person WHERE is_internal=1 LIMIT 1").fetchone()
+    r = manager.post("/create", data={
+        "event_type": "bureau", "activity_name": "NTF No-Mail Forum",
+        "event_date": "2026-07-10", "venue": "Hall A", "qr_mode": "combined",
+        "rp_id": str(rp[0]), "topic": "Keynote",
+    }, follow_redirects=True)
+    tok = re.search(r"/e/([0-9a-f]{12})", r.text).group(1)
+    r = manager.post(f"/e/{tok}", data={
+        "name": "Hu Nguyen", "email": "ntf-hu@test.local", "sex": "M",
+        "affiliation": "NON-DOH", "consent": "on"}, follow_redirects=False)
+    assert r.status_code == 303
+
+
 # --------------------------------------------------------- SMTP unconfigured ---
 
 def test_nothing_sent_when_smtp_unconfigured(app_mod, notif_org, monkeypatch):

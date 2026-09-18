@@ -313,6 +313,30 @@ def recovery_message(name, link, event_title=None):
     return subject, body
 
 
+def registration_confirmed_message(name, link, event_title, event_date=None, venue=None):
+    """Returns (subject, plain_text_body, html_body). Sent right after an
+    attendee registers (or resumes a lost registration) for an event."""
+    when = f" on {event_date}" if event_date else ""
+    where = f" at {venue}" if venue else ""
+    subject = f"You're registered — {event_title}"
+    body = (f"Hello {name or 'there'},\n\n"
+            f"You're registered for “{event_title}”{when}{where}. Keep this personal "
+            f"link — it's how you get back to your registration and leave feedback:\n\n"
+            f"  {link}\n\n"
+            f"If you didn't request this, you can ignore this message.\n")
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="You're registered",
+        intro=(f"You're registered for &ldquo;{_e(event_title)}&rdquo;{_e(when)}{_e(where)}. "
+               f"Keep the link below — it's how you get back to your registration and "
+               f"leave feedback."),
+        cta_label="View your registration",
+        link=link,
+        footnote="If you didn't request this, you can safely ignore this message.",
+    )
+    return subject, body, html
+
+
 # ---- action-needed notifications --------------------------------------------
 # Each returns (subject, plain_text_body, html_body), same shape as invite/reset.
 

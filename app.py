@@ -7440,8 +7440,16 @@ async def event_consent(request: Request, event_token: str):
                 sex=sex, affiliation=affiliation, honorific=honorific,
                 consent_text=CONSENT_TEXT, ip=ip)
         event_id = ev["id"]
+        event_title, event_date, venue = ev.get("title"), ev.get("event_date"), ev.get("venue")
+        event_token_for_link = ev.get("event_token") or event_token
     finally:
         conn.close()
+    if email and mailer.email_configured():
+        token = auth.make_recovery_token(attendee_id)
+        reg_link = f"{_base_url(request)}/e/{event_token_for_link}/resume?rt={quote(token)}"
+        subj, body, html = mailer.registration_confirmed_message(
+            name, reg_link, event_title, event_date, venue)
+        mailer.send(email, subj, body, html=html)
     # Re-enter the same page with a valid attendee session -> rating links show.
     resp = RedirectResponse(f"/e/{event_token}?att={attendee_id}", status_code=303)
     # Remember this device so a returning participant who loses the ?att= link is
