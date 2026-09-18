@@ -209,6 +209,18 @@ def _button_html(label, link):
             f'</td></tr></table>')
 
 
+def _list_html(rows):
+    items = "".join(
+        f'<li style="margin:0 0 6px; font-family:Arial,Helvetica,sans-serif; '
+        f'font-size:14px; color:{_INK};">{htmlmod.escape(r)}</li>' for r in rows)
+    return f'<ul style="margin:0 0 18px; padding-left:20px;">{items}</ul>'
+
+
+def _section_label_html(text):
+    return (f'<p style="margin:0 0 6px; font-family:Arial,Helvetica,sans-serif; '
+            f'font-size:13px; font-weight:700; color:{_INK};">{htmlmod.escape(text)}</p>')
+
+
 def _note_box_html(label, text):
     """A shaded callout for an admin remark or a reply quote — e.g. the note
     on a decided wellness/AWA request, or a reply to Spot Feedback."""
@@ -573,6 +585,53 @@ def awa_decided_message(requester_name, action, period_label, note, link):
         cta_label="View details",
         link=link,
         extra_html=_note_box_html("Note", note) if note else "",
+    )
+    return subject, body, html
+
+
+def approvals_digest_message(approver_name, wellness_lines, awa_lines, wellness_link, awa_link):
+    """Returns (subject, plain_text_body, html_body). A catch-all bundling
+    EVERY wellness break and work arrangement still awaiting this approver's
+    decision — in case an individual notification for one of them was missed
+    or lost. `wellness_lines`/`awa_lines` are already-formatted one-line
+    summaries, oldest-request-first; either may be empty (never both, or the
+    caller shouldn't have sent this)."""
+    subject = "Your pending approvals"
+    txt_parts = []
+    if wellness_lines:
+        txt_parts.append("Wellness breaks awaiting your decision:\n"
+                         + "\n".join(f"  - {l}" for l in wellness_lines))
+    if awa_lines:
+        txt_parts.append("Work arrangements awaiting your decision:\n"
+                         + "\n".join(f"  - {l}" for l in awa_lines))
+    body = (f"Hello {approver_name or 'there'},\n\n"
+            f"You have requests still waiting on your decision.\n\n"
+            + "\n\n".join(txt_parts) + "\n\n"
+            + (f"Wellness approvals: {wellness_link}\n" if wellness_lines else "")
+            + (f"Work arrangement approvals: {awa_link}\n" if awa_lines else ""))
+
+    extra_html = ""
+    if wellness_lines:
+        extra_html += _section_label_html(
+            f"Wellness breaks ({len(wellness_lines)})") + _list_html(wellness_lines)
+    if awa_lines:
+        extra_html += _section_label_html(
+            f"Work arrangements ({len(awa_lines)})") + _list_html(awa_lines)
+    if wellness_lines and awa_lines:
+        extra_html += _button_html("Review work arrangement approvals", awa_link)
+        cta_label, link = "Review wellness approvals", wellness_link
+    elif wellness_lines:
+        cta_label, link = "Review wellness approvals", wellness_link
+    else:
+        cta_label, link = "Review work arrangement approvals", awa_link
+
+    html = _email_html(
+        greeting=f"Hi {approver_name or 'there'},",
+        heading="Your pending approvals",
+        intro="You have requests still waiting on your decision.",
+        cta_label=cta_label,
+        link=link,
+        extra_html=extra_html,
     )
     return subject, body, html
 

@@ -19,6 +19,9 @@ times of day; with no flags at all, every job runs):
                       activities happening TOMORROW.
   --wellness-expiry   Re-notify the approver of a still-pending wellness break
                       whose one-click decide link is about to expire.
+  --digest            One email per approver bundling every wellness break AND
+                      work arrangement still awaiting their decision — a
+                      catch-all in case an individual notification was missed.
 
 Requires CSS_BASE_URL (same as the live app — see app.py's _base_url) so the
 links in these emails point at the real site; a mail transport configured per
@@ -108,7 +111,7 @@ def remind_tomorrows_events(conn, base, dry_run=False):
     return sent
 
 
-_ALL_JOBS = {"events", "wellness_expiry"}
+_ALL_JOBS = {"events", "wellness_expiry", "digest"}
 
 # How many days before a wellness decide link (auth._WELLNESS_DECIDE_MAX_AGE)
 # expires the approver gets re-notified, if the claim is still pending then.
@@ -149,6 +152,52 @@ def remind_wellness_expiring(conn, base, dry_run=False):
     return sent
 
 
+def send_approvals_digest(conn, base, dry_run=False):
+    """One email per approver bundling EVERY wellness break and work
+    arrangement still awaiting their decision — a catch-all in case an
+    individual pending-approval notification was missed or lost. Skips an
+    approver who has nothing pending; never sent to someone with an empty
+    digest."""
+    wellness_by_approver = {}
+    for (claim_id,) in conn.execute("SELECT id FROM wellness_claim WHERE status='pending' ORDER BY id"):
+        claim = st.get_wellness_claim(conn, claim_id)
+        if not claim:
+            continue
+        line = (f"{claim['person_name']} — {claim['break_date']} {claim['start_time']} "
+               f"({claim['hours']}h)")
+        for approver_id in st.get_approvers_for(conn, claim["user_id"]):
+            wellness_by_approver.setdefault(approver_id, []).append(line)
+
+    awa_by_approver = {}
+    for (wa_id,) in conn.execute("SELECT id FROM work_arrangement WHERE status='pending' ORDER BY id"):
+        wa = st.get_work_arrangement(conn, wa_id)
+        if not wa:
+            continue
+        line = f"{wa['person_name']} — {wa['period_label']} ({wa['arrangement_label']})"
+        for approver_id in st.get_approvers_for(conn, wa["user_id"]):
+            awa_by_approver.setdefault(approver_id, []).append(line)
+
+    wellness_link = f"{base}/wellness/approvals"
+    awa_link = f"{base}/work-arrangement/approvals"
+    sent = 0
+    for approver_id in set(wellness_by_approver) | set(awa_by_approver):
+        approver = st.get_admin_user_by_id(conn, approver_id)
+        if not approver or not approver.get("username"):
+            continue
+        approver_name = _person_name(conn, approver_id)
+        wellness_lines = wellness_by_approver.get(approver_id, [])
+        awa_lines = awa_by_approver.get(approver_id, [])
+        subj, body, html = mailer.approvals_digest_message(
+            approver_name, wellness_lines, awa_lines, wellness_link, awa_link)
+        if dry_run:
+            print(f"[dry-run] approvals digest -> {approver['username']} "
+                  f"({len(wellness_lines)} wellness, {len(awa_lines)} AWA)")
+        else:
+            mailer.send(approver["username"], subj, body, html=html)
+        sent += 1
+    return sent
+
+
 def run(db_path="css_is.db", dry_run=False, jobs=None):
     """Run the selected jobs (all of them if `jobs` is None/empty). Returns a
     {job_name: emails_sent} report."""
@@ -162,6 +211,8 @@ def run(db_path="css_is.db", dry_run=False, jobs=None):
             report["events"] = remind_tomorrows_events(conn, base, dry_run=dry_run)
         if "wellness_expiry" in jobs:
             report["wellness_expiry"] = remind_wellness_expiring(conn, base, dry_run=dry_run)
+        if "digest" in jobs:
+            report["digest"] = send_approvals_digest(conn, base, dry_run=dry_run)
     finally:
         conn.close()
     return report
@@ -175,10 +226,13 @@ def main():
     ap.add_argument("--events", action="store_true", help="Tomorrow's event reminders.")
     ap.add_argument("--wellness-expiry", action="store_true",
                     help="Re-notify approvers of soon-to-expire pending wellness breaks.")
+    ap.add_argument("--digest", action="store_true",
+                    help="Send each approver a digest of everything still pending on them.")
     args = ap.parse_args()
 
     jobs = {j for j, flag in (("events", args.events),
-                              ("wellness_expiry", args.wellness_expiry)) if flag}
+                              ("wellness_expiry", args.wellness_expiry),
+                              ("digest", args.digest)) if flag}
     report = run(db_path=args.db, dry_run=args.dry_run, jobs=jobs or None)
     for job, n in report.items():
         print(f"{job}: {n} email(s) {'would be ' if args.dry_run else ''}sent")

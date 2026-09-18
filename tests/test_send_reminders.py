@@ -219,3 +219,38 @@ def test_does_not_remind_a_decided_claim(tmp_path, sent):
     n = sr.remind_wellness_expiring(conn, "https://css.example")
     assert n == 0
     assert sent == []
+
+
+# ------------------------------------------------------------------ digest ---
+
+def test_digest_bundles_wellness_and_awa_for_one_approver(tmp_path, sent):
+    conn = _fresh(tmp_path)
+    chief, staff = _wellness_org(conn)
+    st.create_wellness_claim(conn, staff, _future_weekday().isoformat(), "10:00", "exercise")
+    period = st.work_arrangement_open_periods()[0]
+    st.create_work_arrangement(conn, staff, period, "reg")
+    n = sr.send_approvals_digest(conn, "https://css.example")
+    assert n == 1
+    assert sent[0]["to"] == "sr-w-chief@test.local"
+    assert "pending approvals" in sent[0]["subject"].lower()
+    assert "/wellness/approvals" in sent[0]["body"]
+    assert "/work-arrangement/approvals" in sent[0]["body"]
+
+
+def test_digest_skips_approver_with_nothing_pending(tmp_path, sent):
+    conn = _fresh(tmp_path)
+    _wellness_org(conn)
+    n = sr.send_approvals_digest(conn, "https://css.example")
+    assert n == 0
+    assert sent == []
+
+
+def test_digest_omits_already_decided_items(tmp_path, sent):
+    conn = _fresh(tmp_path)
+    chief, staff = _wellness_org(conn)
+    claim_id = st.create_wellness_claim(conn, staff, _future_weekday().isoformat(),
+                                        "10:00", "exercise")
+    st.decide_wellness_claim(conn, claim_id, {"id": chief, "role": "section_manager"}, "approve")
+    n = sr.send_approvals_digest(conn, "https://css.example")
+    assert n == 0
+    assert sent == []
