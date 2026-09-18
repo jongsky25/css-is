@@ -14,9 +14,11 @@ Windows Task Scheduler, the same way retention.py and daily_backup.py are:
 Jobs (each independently selectable so they can be scheduled at different
 times of day; with no flags at all, every job runs):
 
-  --events    Email every registrant with an address on file, plus the
-              activity's creator and section chief, a reminder for activities
-              happening TOMORROW.
+  --events            Email every registrant with an address on file, plus the
+                      activity's creator and section chief, a reminder for
+                      activities happening TOMORROW.
+  --wellness-expiry   Re-notify the approver of a still-pending wellness break
+                      whose one-click decide link is about to expire.
 
 Requires CSS_BASE_URL (same as the live app — see app.py's _base_url) so the
 links in these emails point at the real site; a mail transport configured per
@@ -106,10 +108,51 @@ def remind_tomorrows_events(conn, base, dry_run=False):
     return sent
 
 
+_ALL_JOBS = {"events", "wellness_expiry"}
+
+# How many days before a wellness decide link (auth._WELLNESS_DECIDE_MAX_AGE)
+# expires the approver gets re-notified, if the claim is still pending then.
+_WELLNESS_REMIND_DAYS_BEFORE_EXPIRY = 3
+
+
+def remind_wellness_expiring(conn, base, dry_run=False):
+    """Re-notify the approver of any still-pending wellness break whose
+    one-click decide link is about to expire. The reminder mints a FRESH
+    token (a new 14-day window), not a resend of the original — the old one
+    would be about to stop verifying anyway."""
+    max_age_days = auth._WELLNESS_DECIDE_MAX_AGE // 86400
+    min_age_days = max_age_days - _WELLNESS_REMIND_DAYS_BEFORE_EXPIRY
+    dash_link = f"{base}/wellness/approvals"
+    sent = 0
+    for claim_id in st.list_stale_pending_wellness_claims(conn, min_age_days, max_age_days):
+        claim = st.get_wellness_claim(conn, claim_id)
+        if not claim or claim["status"] != "pending":
+            continue
+        for approver_id in st.get_approvers_for(conn, claim["user_id"]):
+            approver = st.get_admin_user_by_id(conn, approver_id)
+            if not approver or not approver.get("username"):
+                continue
+            approver_name = _person_name(conn, approver_id)
+            token = auth.make_wellness_decide_token(claim_id, approver_id)
+            decide_base = f"{base}/wellness/decide/{claim_id}?token={quote(token)}"
+            subj, body, html = mailer.wellness_pending_reminder_message(
+                approver_name, claim["person_name"], claim["break_date"],
+                claim["start_time"], claim["hours"], dash_link,
+                approve_link=f"{decide_base}&action=approve",
+                deny_link=f"{decide_base}&action=deny")
+            if dry_run:
+                print(f"[dry-run] wellness expiry reminder -> {approver['username']} "
+                      f"(claim {claim_id})")
+            else:
+                mailer.send(approver["username"], subj, body, html=html)
+            sent += 1
+    return sent
+
+
 def run(db_path="css_is.db", dry_run=False, jobs=None):
     """Run the selected jobs (all of them if `jobs` is None/empty). Returns a
     {job_name: emails_sent} report."""
-    jobs = set(jobs) if jobs else {"events"}
+    jobs = set(jobs) if jobs else set(_ALL_JOBS)
     conn = st.connect(db_path)
     report = {}
     try:
@@ -117,6 +160,8 @@ def run(db_path="css_is.db", dry_run=False, jobs=None):
         base = _base_url()
         if "events" in jobs:
             report["events"] = remind_tomorrows_events(conn, base, dry_run=dry_run)
+        if "wellness_expiry" in jobs:
+            report["wellness_expiry"] = remind_wellness_expiring(conn, base, dry_run=dry_run)
     finally:
         conn.close()
     return report
@@ -128,9 +173,12 @@ def main():
     ap.add_argument("--dry-run", action="store_true",
                     help="Print what would be sent; send nothing.")
     ap.add_argument("--events", action="store_true", help="Tomorrow's event reminders.")
+    ap.add_argument("--wellness-expiry", action="store_true",
+                    help="Re-notify approvers of soon-to-expire pending wellness breaks.")
     args = ap.parse_args()
 
-    jobs = {j for j, flag in (("events", args.events),) if flag}
+    jobs = {j for j, flag in (("events", args.events),
+                              ("wellness_expiry", args.wellness_expiry)) if flag}
     report = run(db_path=args.db, dry_run=args.dry_run, jobs=jobs or None)
     for job, n in report.items():
         print(f"{job}: {n} email(s) {'would be ' if args.dry_run else ''}sent")

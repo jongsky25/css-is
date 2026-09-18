@@ -472,6 +472,37 @@ def wellness_pending_message(approver_name, claimant_name, break_date, start_tim
     return subject, body, html
 
 
+def wellness_pending_reminder_message(approver_name, claimant_name, break_date, start_time,
+                                      hours, link, approve_link=None, deny_link=None):
+    """Returns (subject, plain_text_body, html_body). A follow-up to
+    wellness_pending_message for a claim that's still undecided as its
+    one-click decide link nears expiry — the links here are freshly minted
+    (a new 14-day window), not the original ones."""
+    subject = f"Reminder: wellness break still needs your approval — {claimant_name}"
+    action_block = ""
+    if approve_link and deny_link:
+        action_block = (f"Approve:\n  {approve_link}\n\n"
+                        f"Deny:\n  {deny_link}\n\n")
+    body = (f"Hello {approver_name or 'there'},\n\n"
+            f"{claimant_name}'s {hours}-hour wellness break on {break_date} at "
+            f"{start_time} is still waiting on your decision.\n\n"
+            f"{action_block}"
+            f"Or review it in the dashboard:\n  {link}\n")
+    extra_html = ""
+    if approve_link and deny_link:
+        extra_html = _button_html("Approve", approve_link) + _button_html("Deny", deny_link)
+    html = _email_html(
+        greeting=f"Hi {approver_name or 'there'},",
+        heading="Still waiting on your decision",
+        intro=(f"{_e(claimant_name)}'s {_e(hours)}-hour wellness break on "
+               f"{_e(break_date)} at {_e(start_time)} is still waiting on your decision."),
+        cta_label="Review in the dashboard" if extra_html else "Review request",
+        link=link,
+        extra_html=extra_html,
+    )
+    return subject, body, html
+
+
 def wellness_decided_message(claimant_name, action, break_date, note, link):
     subject = f"Your wellness break was {action} — {break_date}"
     note_line = f"\nNote: {note}\n" if note else ""

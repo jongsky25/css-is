@@ -35,6 +35,46 @@ def _tomorrow():
     return (tz.today_local() + timedelta(days=1)).isoformat()
 
 
+def _next_weekday(d):
+    while d.weekday() >= 5:
+        d += timedelta(days=1)
+    return d
+
+
+def _future_weekday():
+    return _next_weekday(tz.today_local() + timedelta(days=3))
+
+
+def _wellness_org(conn):
+    """A section with a chief + one staff member, directory-linked — enough
+    for get_approvers_for to route the staffer's claim to the chief."""
+    unit = conn.execute(
+        "INSERT INTO org_unit(name, short_name, level, path) "
+        "VALUES ('SR Wellness Section','SRW','section','TEST/SR/Wellness')").lastrowid
+    chief_rp = conn.execute(
+        "INSERT INTO resource_person(name, is_internal, org_unit_id, designation) "
+        "VALUES ('SR Wellness Chief', 1, ?, 'Section Head')", (unit,)).lastrowid
+    staff_rp = conn.execute(
+        "INSERT INTO resource_person(name, is_internal, org_unit_id) "
+        "VALUES ('SR Wellness Staff', 1, ?)", (unit,)).lastrowid
+    chief = st.create_admin_user(conn, "sr-w-chief@test.local", "x", "y",
+                                 "section_manager", rp_id=chief_rp)
+    staff = st.create_admin_user(conn, "sr-w-staff@test.local", "x", "y",
+                                 "viewer", rp_id=staff_rp)
+    conn.commit()
+    return chief, staff
+
+
+def _backdate_claim(conn, claim_id, days, status=None):
+    old = (tz.now_local() - timedelta(days=days)).isoformat()
+    if status:
+        conn.execute("UPDATE wellness_claim SET created_at=?, status=? WHERE id=?",
+                    (old, status, claim_id))
+    else:
+        conn.execute("UPDATE wellness_claim SET created_at=? WHERE id=?", (old, claim_id))
+    conn.commit()
+
+
 def test_reminds_creator_and_registrant(tmp_path, sent):
     conn = _fresh(tmp_path)
     st.create_admin_user(conn, "creator@test.local", "x", "y", "section_manager")
@@ -139,3 +179,43 @@ def test_run_uses_css_base_url(tmp_path, sent, monkeypatch):
     report = sr.run(db_path=str(tmp_path / "reminders2.db"), jobs={"events"})
     assert report == {"events": 1}
     assert sent[0]["to"] == "envcheck@test.local"
+
+
+# --------------------------------------------------------- wellness expiry ---
+
+def test_reminds_approver_of_expiring_wellness_claim(tmp_path, sent):
+    conn = _fresh(tmp_path)
+    chief, staff = _wellness_org(conn)
+    claim_id = st.create_wellness_claim(conn, staff, _future_weekday().isoformat(),
+                                        "10:00", "exercise")
+    _backdate_claim(conn, claim_id, days=12)   # within the 11-14 day reminder window
+    n = sr.remind_wellness_expiring(conn, "https://css.example")
+    assert n == 1
+    assert sent[0]["to"] == "sr-w-chief@test.local"
+    assert "still needs your approval" in sent[0]["subject"].lower()
+    assert "action=approve" in sent[0]["body"] and "action=deny" in sent[0]["body"]
+
+
+def test_does_not_remind_too_early_or_too_late(tmp_path, sent):
+    conn = _fresh(tmp_path)
+    chief, staff = _wellness_org(conn)
+    fresh_id = st.create_wellness_claim(conn, staff, _future_weekday().isoformat(),
+                                        "10:00", "exercise")
+    old_id = st.create_wellness_claim(conn, staff, _future_weekday().isoformat(),
+                                      "11:00", "exercise")
+    _backdate_claim(conn, old_id, days=20)     # link already expired, not "about to"
+    # fresh_id is left at age 0 — nowhere near expiry either.
+    n = sr.remind_wellness_expiring(conn, "https://css.example")
+    assert n == 0
+    assert sent == []
+
+
+def test_does_not_remind_a_decided_claim(tmp_path, sent):
+    conn = _fresh(tmp_path)
+    chief, staff = _wellness_org(conn)
+    claim_id = st.create_wellness_claim(conn, staff, _future_weekday().isoformat(),
+                                        "10:00", "exercise")
+    _backdate_claim(conn, claim_id, days=12, status="approved")
+    n = sr.remind_wellness_expiring(conn, "https://css.example")
+    assert n == 0
+    assert sent == []

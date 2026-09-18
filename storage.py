@@ -6007,6 +6007,21 @@ def create_wellness_claim(conn, user_id, break_date, start_time, activity,
     return cur.lastrowid
 
 
+def list_stale_pending_wellness_claims(conn, min_age_days, max_age_days):
+    """Pending wellness_claim ids whose age (off created_at — when the original
+    approval email went out, not the break date) falls in [min_age_days,
+    max_age_days) — a one-day-wide window sized for a daily cron job, so a
+    claim that's still pending is caught in this window exactly once rather
+    than every day for the rest of its life."""
+    newest = (tz.now_local() - timedelta(days=min_age_days)).isoformat()
+    oldest = (tz.now_local() - timedelta(days=max_age_days)).isoformat()
+    rows = conn.execute(
+        "SELECT id FROM wellness_claim WHERE status='pending' "
+        "AND created_at > ? AND created_at <= ? ORDER BY id",
+        (oldest, newest)).fetchall()
+    return [r[0] for r in rows]
+
+
 def get_wellness_claim(conn, claim_id):
     row = conn.execute(
         """SELECT c.id, c.user_id, c.week_start, c.break_date, c.start_time, c.hours,
