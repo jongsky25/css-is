@@ -17,10 +17,22 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.88"
+APP_VERSION = "2.89"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.89",
+        "date": "September 18, 2026",
+        "summary": "More groundwork for the upcoming admin email on/off screen "
+                   "— still no visible change.",
+        "changes": [
+            "No visible change yet — the system can now actually skip a "
+            "notification email once an admin turns it off; there just isn't "
+            "a switch to flip yet, so every email keeps sending exactly as "
+            "before.",
+        ],
+    },
     {
         "version": "2.88",
         "date": "September 18, 2026",

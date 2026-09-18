@@ -440,10 +440,10 @@ def test_notify_helpers_pass_html_through(monkeypatch):
     calls = []
     monkeypatch.setattr(app_mod.mailer, "send",
                         lambda *a, **kw: calls.append((a, kw)) or {"sent": True, "detail": "ok"})
-    app_mod._notify_email("to@example.com", "subj", "text body", html="<p>hi</p>")
+    class _FakeConn: pass
+    app_mod._notify_email(_FakeConn(), "to@example.com", "subj", "text body", html="<p>hi</p>")
     assert calls[-1][1].get("html") == "<p>hi</p>"
 
-    class _FakeConn: pass
     monkeypatch.setattr(app_mod.st, "get_admin_user_by_id",
                         lambda conn, uid: {"username": "acct@example.com"})
     app_mod._notify_account(_FakeConn(), 1, "subj", "text body", html="<p>hi2</p>")

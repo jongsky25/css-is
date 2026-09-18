@@ -49,6 +49,7 @@ def test_features_are_independent(db_path):
         assert st.email_feature_enabled(conn, "wellness_approval") is False
         assert st.email_feature_enabled(conn, "wellness_decided") is True
     finally:
+        _reset(conn)
         conn.close()
 
 
