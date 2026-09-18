@@ -17,18 +17,34 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.87"
+APP_VERSION = "2.88"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "2.87",
+        "version": "2.88",
         "date": "September 18, 2026",
         "summary": "Behind-the-scenes groundwork for an upcoming admin screen "
                    "to turn individual system emails on or off.",
         "changes": [
             "No visible change yet — this lays the foundation for an admin "
             "control panel over which automatic emails the system sends.",
+        ],
+    },
+    {
+        "version": "2.87",
+        "date": "September 18, 2026",
+        "summary": "Results emails now only cover activities that finish from "
+                   "now on, not everything already in the records.",
+        "changes": [
+            "Yesterday's new \"CSM results are ready\" emails treated every "
+            "activity ever recorded as one nobody had been told about yet, so "
+            "the first run could have written to every organizer, chief and "
+            "resource person about activities that finished months or years "
+            "ago.",
+            "Everything already on file is now marked as accounted for, "
+            "quietly and with no email sent. Activities that finish from here "
+            "on are announced exactly as intended.",
         ],
     },
     {

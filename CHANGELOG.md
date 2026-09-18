@@ -1,6 +1,6 @@
 # CHANGELOG — Cowork revisions (surgical)
 
-## 2026-09-18 (v2.87 — admin email control center, Phase 1: settings + catalog)
+## 2026-09-18 (v2.88 — admin email control center, Phase 1: settings + catalog)
 
 First of six phases (docs/ADMIN_EMAIL_FEATURES_PLAN.md) building an
 `/admin/email` console to turn each of the app's 18 gateable email features
@@ -20,6 +20,35 @@ call — the catalog is data, not a settings read.
 
 Nothing calls the new gate yet — Phase 2 wires it into the app's three send
 helpers (`_notify_account`, `_notify_email`, `_mail_after_response`).
+
+## 2026-09-18 (v2.87 — baseline the CSM back catalogue, don't announce it)
+
+Caught while verifying the v2.86 deploy, not before it: the two CSM results
+jobs ask "has this been emailed yet?" and have no floor on how far back they
+look. On a database that predates them the honest answer for the ENTIRE back
+catalogue is "no" — so the first sweep would mail every organizer, every
+section chief and every speaker-with-a-login about every activity the bureau
+has ever run, in one burst, against a relay capped at ~1500 recipients a day
+(`docs/MAIL_RELAY_SETUP.md`). Hitting that cap doesn't just spam people; it is
+also the day invites and password resets stop going out.
+
+The v2.86 container restarted at 15:47 PH, and `_scheduler_loop`'s first
+iteration runs immediately with no initial sleep, so the sweep fired on boot
+(`_REMINDER_HOUR` is 7; it was 15). Whether anything actually left the building
+depends on `CSS_BASE_URL` being set on the Space — `run()` skips entirely
+without it — which is not observable from outside. The Friday-only jobs
+(digest is Monday, wellness-file is Thursday) did not fire either way.
+
+**`storage.baseline_csm_results_emailed()`** — stamps every activity and
+Type-3 form that has ALREADY concluded as though its results email had gone
+out, sending nothing. Reuses the two `list_concluded_*` queries so "what gets
+baselined" is exactly "what the first sweep would have mailed"; anything still
+running keeps its NULL and is picked up normally when it concludes.
+
+**`send_reminders._baseline_once()`** — runs before any CSM job can send,
+guarded by a `csm_results_baselined` app_setting rather than being done at
+column-add time, so it is still correct on a database that took the columns in
+the v2.86 deploy. `--dry-run` reports the counts and changes nothing.
 
 ## 2026-09-18 (v2.86 — the rest of the email automation, and a daily sweep)
 
