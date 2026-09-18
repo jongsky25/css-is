@@ -586,6 +586,31 @@ def wellness_decided_message(claimant_name, action, break_date, note, link):
     return subject, body, html
 
 
+def wellness_cancelled_message(approver_name, claimant_name, break_date, start_time,
+                               hours, reason, link):
+    """Returns (subject, plain_text_body, html_body). Sent to the approver when
+    a claimant withdraws their own break — the pending decider if it hadn't
+    been decided yet, or whoever approved it if it had (Spot Feedback #75:
+    "how will I know if the approver was notified of my cancellation?")."""
+    subject = f"Wellness break withdrawn — {claimant_name}"
+    reason_line = f"\nReason given: {reason}\n" if reason else ""
+    body = (f"Hello {approver_name or 'there'},\n\n"
+            f"{claimant_name} withdrew their {hours}-hour wellness break on "
+            f"{break_date} at {start_time}. No action is needed from you.\n"
+            f"{reason_line}\n"
+            f"  {link}\n")
+    html = _email_html(
+        greeting=f"Hi {approver_name or 'there'},",
+        heading="Wellness break withdrawn",
+        intro=(f"{_e(claimant_name)} withdrew their {_e(hours)}-hour wellness break on "
+               f"{_e(break_date)} at {_e(start_time)}. No action is needed from you."),
+        cta_label="View in the dashboard",
+        link=link,
+        extra_html=_note_box_html("Reason given", reason) if reason else "",
+    )
+    return subject, body, html
+
+
 def work_arrangement_reopened_message(name, period_label, link, note=None):
     """Returns (subject, plain_text_body, html_body). Sent to staff who missed
     the period's own filing deadline, once an admin temporarily reopens it."""
@@ -789,6 +814,10 @@ FEATURES = {
         "Wellness decision result",
         "The claimant is told their wellness break was approved or denied.",
         "transactional"),
+    "wellness_cancelled": (
+        "Wellness break withdrawn",
+        "The approver is told when a claimant withdraws their own request.",
+        "transactional"),
     "awa_approval": (
         "Work arrangement approval needed",
         "The approver is told a work arrangement is waiting on their decision.",
@@ -882,6 +911,9 @@ _PREVIEWS = {
         approve_link=_SAMPLE_LINK, deny_link=_SAMPLE_LINK),
     "wellness_decided": lambda: wellness_decided_message(
         "Juan Reyes", "approved", "October 2, 2026", None, _SAMPLE_LINK),
+    "wellness_cancelled": lambda: wellness_cancelled_message(
+        "Maria Santos", "Juan Reyes", "October 2, 2026", "10:00 AM", 1,
+        "urgent office matter", _SAMPLE_LINK),
     "awa_approval": lambda: awa_pending_message(
         "Maria Santos", "Juan Reyes", "October 1-15, 2026", "work-from-home", _SAMPLE_LINK),
     "awa_decided": lambda: awa_decided_message(

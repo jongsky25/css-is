@@ -40,7 +40,8 @@ ROLE_LABELS = {
 ROLE_BLURB = {
     "viewer": "View everything; cannot create or edit.",
     "encoder": "Viewer + manual/paper data entry.",
-    "section_manager": "Encoder + edit data, create activities, response windows, link trees, reports.",
+    "section_manager": "Encoder + edit data, create activities, response windows, link trees, "
+                       "reports, adding external resource persons.",
     "admin": "Full access, including the directory, hiding people, managing users, and editing/"
              "archiving individual walk-in (Type 1) entries.",
 }
@@ -49,10 +50,11 @@ ROLE_BLURB = {
 ROLE_CAPS = {
     "viewer":          {"view"},
     "encoder":         {"view", "encode"},
-    "section_manager": {"view", "encode", "edit_data", "create_activity", "manage_event"},
+    "section_manager": {"view", "encode", "edit_data", "create_activity", "manage_event",
+                        "add_external_rp"},
     "admin":           {"view", "encode", "edit_data", "create_activity", "manage_event",
                         "directory", "hide", "manage_users", "wipe", "triage_feedback",
-                        "manage_walkin_entries", "merge_activity"},
+                        "manage_walkin_entries", "merge_activity", "add_external_rp"},
 }
 
 

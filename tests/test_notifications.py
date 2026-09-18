@@ -131,6 +131,42 @@ def test_wellness_decide_notifies_the_claimant(app_mod, notif_org, sent, future_
     assert "/wellness" in sent[0]["body"]
 
 
+def test_wellness_cancel_of_a_pending_claim_notifies_the_approver(app_mod, notif_org, sent, future_weekday):
+    """Spot Feedback #75: the claimant asked whether the approver gets told
+    when they withdraw. A still-pending claim notifies whoever it would have
+    routed to (same chief the original apply notified)."""
+    conn = notif_org["conn"]
+    d = future_weekday
+    claim_id = st.create_wellness_claim(conn, notif_org["staff"], d, "10:00", "exercise")
+    c = _client_for(app_mod, notif_org["staff"])
+    r = c.post(f"/wellness/claims/{claim_id}/cancel", data={"reason": "urgent work came up"},
+               follow_redirects=False)
+    assert r.status_code == 303
+    assert len(sent) == 1
+    assert sent[0]["to"] == "ntf-chief@test.local"
+    assert "withdrawn" in sent[0]["subject"].lower()
+    assert "urgent work came up" in sent[0]["body"]
+
+
+def test_wellness_cancel_of_an_approved_claim_notifies_the_decider(app_mod, notif_org, sent, future_weekday):
+    """Once approved, the specific approver who decided it — not the general
+    chain — is the one now expecting a break that isn't happening."""
+    conn = notif_org["conn"]
+    d = future_weekday
+    claim_id = st.create_wellness_claim(conn, notif_org["staff"], d, "10:00", "exercise")
+    chief_c = _client_for(app_mod, notif_org["chief"])
+    chief_c.post(f"/wellness/claims/{claim_id}/decide", data={"action": "approve"},
+                follow_redirects=False)
+    sent.clear()                                    # only care about the cancel notice
+    staff_c = _client_for(app_mod, notif_org["staff"])
+    r = staff_c.post(f"/wellness/claims/{claim_id}/cancel", data={},
+                     follow_redirects=False)
+    assert r.status_code == 303
+    assert len(sent) == 1
+    assert sent[0]["to"] == "ntf-chief@test.local"
+    assert "withdrawn" in sent[0]["subject"].lower()
+
+
 # ------------------------------------------------------------- work arrangement
 
 def test_awa_file_notifies_the_approver(app_mod, notif_org, sent):

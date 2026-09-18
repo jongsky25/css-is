@@ -168,14 +168,15 @@
         <td>{{ c.hours }} h</td>
         <td>{{ c.activity_label }}</td>
         <td><span class="pill s-{{ c.status }}">{{ c.status }}</span>
-            {% if c.status == 'denied' and c.decide_note %}<span style="color:var(--soft); font-size:.78rem;"> — {{ c.decide_note }}</span>{% endif %}</td>
+            {% if c.status == 'denied' and c.decide_note %}<span style="color:var(--soft); font-size:.78rem;"> — {{ c.decide_note }}</span>{% endif %}
+            {% if c.status == 'cancelled' and c.cancel_reason %}<span style="color:var(--soft); font-size:.78rem;"> — {{ c.cancel_reason }}</span>{% endif %}</td>
         <td class="row-act">
           {% if c.status == 'approved' and c.break_date <= today %}
             <a class="go" href="/wellness/claims/{{ c.id }}/complete">Check in ✓</a>
           {% endif %}
           {% if c.status in ('pending', 'approved') %}
-            <form method="post" action="/wellness/claims/{{ c.id }}/cancel"
-                  onsubmit="return confirm('Withdraw this break request?');">
+            <form method="post" action="/wellness/claims/{{ c.id }}/cancel" onsubmit="return withdrawPrompt(this);">
+              <input type="hidden" name="reason">
               <button type="submit">Withdraw</button>
             </form>
           {% endif %}
@@ -188,4 +189,18 @@
   {{ empty_state("No break requests yet", "Request your first wellness break — your companion is waiting to grow.", "🌱") }}
   {% endif %}
 </div>
+
+<script>
+  // Spot Feedback #77: capture an optional reason when withdrawing, for the
+  // section's own record — shown back next to the cancelled status above.
+  // A plain prompt() is the "pop up window" asked for, with no confirm()
+  // needed on top of it: Cancel on the prompt backs out of the withdrawal
+  // (same as before), OK with nothing typed still withdraws, just unlabeled.
+  function withdrawPrompt(form) {
+    var reason = window.prompt("Withdraw this break request. Why (optional)?");
+    if (reason === null) return false;
+    form.querySelector('input[name="reason"]').value = reason.trim();
+    return true;
+  }
+</script>
 {% endblock %}

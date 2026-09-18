@@ -17,10 +17,94 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.97"
+APP_VERSION = "3.03"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.03",
+        "date": "September 18, 2026",
+        "summary": "A Section Manager can now add an outside resource person "
+                   "directly from New survey, without needing an admin.",
+        "changes": [
+            "Creating a survey with a guest speaker who isn't already in "
+            "the directory used to be a dead end for a Section Manager — "
+            "adding a new external resource person required the "
+            "Directory, which is admin-only. There's now a \u201c+ Add an "
+            "external resource person\u201d link right on the New survey "
+            "screen that a Section Manager can use themselves, without "
+            "getting the rest of Directory's admin tools.",
+        ],
+    },
+    {
+        "version": "3.02",
+        "date": "September 18, 2026",
+        "summary": "Withdrawing a wellness break now tells the approver, so "
+                   "you're not left wondering if they know.",
+        "changes": [
+            "When you withdraw a wellness break request, the approver — "
+            "whoever approved it, or whoever it was waiting on — now gets "
+            "an email saying it's off their plate, including your reason "
+            "if you gave one. An admin can turn this off from the Email "
+            "screen like any other notification.",
+        ],
+    },
+    {
+        "version": "3.01",
+        "date": "September 18, 2026",
+        "summary": "Withdrawing a wellness break now asks why, for a record "
+                   "of it.",
+        "changes": [
+            "Withdrawing a wellness break request now offers an optional "
+            "box to say why (e.g. urgent work came up). It's shown right "
+            "next to that request's \"cancelled\" status afterward, and "
+            "withdrawing still works exactly the same if you leave it "
+            "blank.",
+        ],
+    },
+    {
+        "version": "3.00",
+        "date": "September 18, 2026",
+        "summary": "Your wellness companion now leans toward your cursor "
+                   "for a bit more depth, with a soft shadow underneath.",
+        "changes": [
+            "Your companion on the Wellness page (and on the home screen) "
+            "now leans gently in 3D toward your mouse pointer while it's "
+            "hovering over it, and sits above a soft shadow — a small bit "
+            "of extra life on top of its usual sway and idle animations. "
+            "Turned off automatically if your device is set to reduce "
+            "motion.",
+        ],
+    },
+    {
+        "version": "2.99",
+        "date": "September 18, 2026",
+        "summary": "Date fields (like Date collected on paper entry) now "
+                   "always open their calendar when you tap or click them.",
+        "changes": [
+            "A date field sometimes didn't respond when tapped or clicked, "
+            "depending on exactly where on the field you touched — most of "
+            "the field looked clickable but only a sliver near the edge "
+            "actually opened the calendar. Every date field now opens its "
+            "calendar no matter where in the field you tap or click.",
+        ],
+    },
+    {
+        "version": "2.98",
+        "date": "September 18, 2026",
+        "summary": "A top-menu dropdown that opened near the right edge of "
+                   "the screen no longer runs off the side, hiding its "
+                   "other choices.",
+        "changes": [
+            "Menus in the top navigation bar always opened toward the "
+            "right of their button. For a menu sitting close to the right "
+            "edge of the screen (e.g. on a narrower laptop window), that "
+            "pushed part of the menu off-screen with no way to reach the "
+            "hidden choices. Such a menu now opens toward the left instead "
+            "whenever opening toward the right would run off-screen, so "
+            "every choice stays visible.",
+        ],
+    },
     {
         "version": "2.97",
         "date": "September 18, 2026",

@@ -24,7 +24,7 @@
 {% endblock %}
 
 {% block crumbs %}
-<nav class="crumbs" aria-label="Breadcrumb"><a href="/dashboard">Dashboard</a><span class="sep">›</span><a href="/directory">Directory</a><span class="sep">›</span><span class="here">{{ 'Edit' if is_edit else 'Add' }} external resource person</span></nav>
+<nav class="crumbs" aria-label="Breadcrumb"><a href="/dashboard">Dashboard</a><span class="sep">›</span><a href="{{ back }}">{{ 'Directory' if back == '/directory' else 'Back' }}</a><span class="sep">›</span><span class="here">{{ 'Edit' if is_edit else 'Add' }} external resource person</span></nav>
 {% endblock %}
 
 {% block content %}
@@ -34,6 +34,7 @@
     <p class="sub">A guest speaker or trainer from outside the bureau. Capture their title, agency and email so reports and invitations are accurate.</p>
 
     <form method="post" action="{{ '/directory/external/' ~ f.id if is_edit else '/directory/external' }}">
+      <input type="hidden" name="back" value="{{ back }}">
       <div class="row2">
         <div class="fld hon">
           <label for="honorific">Title</label>
@@ -66,7 +67,7 @@
 
       <div class="actions">
         <button type="submit">{{ 'Save changes' if is_edit else 'Add resource person' }}</button>
-        <a class="cancel" href="/directory">Cancel</a>
+        <a class="cancel" href="{{ back }}">Cancel</a>
       </div>
     </form>
   </div>

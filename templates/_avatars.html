@@ -27,8 +27,15 @@
 {% macro avatar_defs() %}
 <style>
   .avwrap { display:inline-block; text-align:center; position:relative;
-            --av-sway:5s; --av-breathe:3.6s; }
-  .avwrap svg { display:block; overflow:visible; }
+            --av-sway:5s; --av-breathe:3.6s; perspective:700px; }
+  .avwrap svg { display:block; overflow:visible;
+                filter:drop-shadow(0 8px 6px rgba(20,30,50,.16)); }
+  /* Whole-body 3D lean toward the cursor (avatars.js "curiosity" loop sets the
+     rotateX/rotateY inline; perspective above is what makes them read as depth
+     rather than a flat skew). Species.js clears the transition while actively
+     tracking so the lean stays snappy, and turns it back on only to settle
+     flat again once the pointer leaves — see the pointermove handler. */
+  .av-tiltstage { transform-style:preserve-3d; will-change:transform; }
   .avmove  { transform-box:fill-box; will-change:transform; }
   .avstage { transform-box:fill-box; transform-origin:50% 92%; }
   .fam-plant  .avstage { animation:av-sway var(--av-sway) ease-in-out infinite; }
@@ -354,7 +361,7 @@
       {% if interactive %}data-interactive tabindex="0" role="button"
       aria-label="{{ name or 'Your companion' }} — tap to play"{% else %}aria-hidden="true"{% endif %}
       style="width:{{ size }}px;">
-  <span style="display:block;width:{{ size }}px;height:{{ (size * 1.16)|round|int }}px;">
+  <span class="av-tiltstage" style="display:block;width:{{ size }}px;height:{{ (size * 1.16)|round|int }}px;">
     {{ avatar_svg(kind, stage) }}
   </span>
   {% if name %}<span class="av-bubble">{{ name }}</span>{% endif %}

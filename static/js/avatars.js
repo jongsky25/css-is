@@ -462,8 +462,37 @@
       watchRaf = null;
       var wraps = document.querySelectorAll(".avwrap[data-kind]");
       for (var i = 0; i < wraps.length; i++) {
-        var wr = wraps[i], spec = WATCH[wr.dataset.kind];
-        if (!spec || asleep(wr) || wr._avAway) continue;
+        var wr = wraps[i];
+        if (asleep(wr) || wr._avAway) continue;
+
+        // ---- 3D lean: any interactive companion leans toward the cursor
+        // while it's over the companion's own box (Spot Feedback #82, "make
+        // the pet 3d") — a tilt-card effect, not species curiosity, so it
+        // runs for every kind, not just the WATCH list below.
+        if (wr.hasAttribute("data-interactive")) {
+          var stage = wr.querySelector(".av-tiltstage");
+          if (stage) {
+            var sr = wr.getBoundingClientRect();
+            var within = sr.width > 0 &&
+              e.clientX >= sr.left && e.clientX <= sr.right &&
+              e.clientY >= sr.top && e.clientY <= sr.bottom;
+            if (within) {
+              var lx = (e.clientX - (sr.left + sr.width / 2)) / (sr.width / 2);
+              var ly = (e.clientY - (sr.top + sr.height / 2)) / (sr.height / 2);
+              stage.style.transition = "";
+              stage.style.transform = "rotateY(" + (lx * 10).toFixed(1) + "deg) " +
+                                       "rotateX(" + (ly * -8).toFixed(1) + "deg)";
+              stage._avTilted = true;
+            } else if (stage._avTilted) {
+              stage.style.transition = "transform .35s cubic-bezier(.22,1,.36,1)";
+              stage.style.transform = "";
+              stage._avTilted = false;
+            }
+          }
+        }
+
+        var spec = WATCH[wr.dataset.kind];
+        if (!spec) continue;
         var h = wr.querySelector(".av-head");
         if (!h) continue;
         var r = h.getBoundingClientRect();

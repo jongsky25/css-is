@@ -1,5 +1,190 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-18 (v3.03 — a section manager can add an external resource person)
+
+Spot Feedback #90: "How can I add Resource Persons who are not from BLHSD?"
+The `/create` speaker picker already lists external resource persons
+alongside internal staff, but adding a *new* one lived entirely under
+`/directory/*`, whose `_required_cap` gate is the coarse `"directory"`
+capability — admin-only, covering org units, internal staff, archiving and
+name-cleanup all at once. A `section_manager` (who already holds
+`create_activity`) had no way to add the outside speaker they needed for
+their own event, short of asking an admin.
+
+**`auth.py`** — new `"add_external_rp"` capability, granted to
+`section_manager` and `admin` (kept separate from `admin`'s blanket
+`"directory"`, so it has to be listed explicitly there too).
+**`app.py`**'s `_required_cap` now special-cases `/directory/external/new`
+and `/directory/external` (the *add* routes only) to require
+`"add_external_rp"` instead of falling through to `"directory"` — editing an
+existing external RP (`/directory/external/{id}/edit`) stays under the
+general, admin-only check, matching the narrower ask.
+
+Since a section manager can't open `/directory` itself, the add
+form's post-save redirect and its crumbs/cancel link now follow a `back`
+query/hidden-field param (validated same-site-relative,
+`_safe_back`) instead of a hardcoded `/directory` — so submitting the form
+doesn't hand them a 403. **`templates/form_create.html`** adds a
+"+ Add an external resource person" link next to the speaker picker
+(`target="_blank"`, `back=/create`, with a hint to reload afterward — a new
+tab so their in-progress survey form isn't lost). **`templates/
+external_rp_form.html`** threads `back` through the same way for the edit
+form too (unused there today, but keeps the two forms in sync); admin's
+existing Directory → Add flow is unaffected (default `back` is still
+`/directory`).
+
+**`tests/test_auth_rbac.py`** —
+`test_section_manager_can_add_external_rp_but_not_open_directory`: a
+section manager can open the add form and successfully create an external
+RP (verified in the DB, `is_internal=0`), redirected to the `back` target —
+while `/directory`, `/directory/staff/new` and editing an existing external
+RP all still 403 them. Full `tests/test_auth_rbac.py` (75 tests, all roles ×
+all gated paths) plus `tests/test_directory_archive.py`,
+`tests/test_directory_search.py`, `tests/test_create_duplicate_warning.py`,
+`tests/test_bureau_no_rp.py` and `tests/test_outside_activity.py` pass.
+
+## 2026-09-18 (v3.02 — the approver is now told when a break is withdrawn)
+
+Spot Feedback #75: "how will I know if the approver was notified of my
+cancellation?" Filing a break already emails the approver
+(`wellness_approval`) and a decision already emails the claimant back
+(`wellness_decided`) — withdrawal was the missing third leg, notifying no
+one.
+
+**`mailer.py`** — new `wellness_cancelled_message(approver_name,
+claimant_name, break_date, start_time, hours, reason, link)`, folding in
+v3.01's `cancel_reason` when given (`_note_box_html`, same as a denial's
+`decide_note`). Registered as `"wellness_cancelled"` in `FEATURES`
+(admin-toggleable from `/admin/email` like every other transactional email,
+no template changes needed — that page already renders from the catalog)
+and in `_PREVIEWS` (the admin preview/test-send catalog).
+
+**`app.py`** — `POST /wellness/claims/{claim_id}/cancel` now works out who
+to tell: if the claim was already `approved`, specifically whoever approved
+it (`claim["decided_by"]` — they're the one now expecting a break that
+isn't happening); if still `pending`, whoever it would have routed to
+(`get_approvers_for`, the same set the original apply notified).
+
+**`tests/test_notifications.py`** —
+`test_wellness_cancel_of_a_pending_claim_notifies_the_approver` and
+`test_wellness_cancel_of_an_approved_claim_notifies_the_decider`.
+**`tests/test_email_admin.py`**'s catalog-completeness tests (every
+`FEATURES` key needs a label/hint/group and a working preview sample) now
+cover the new key too — full `tests/test_notifications.py`,
+`tests/test_email_admin.py`, `tests/test_mailer.py`,
+`tests/test_wellness.py` and `tests/test_wellness_escalation.py` suites
+(over 190 tests) pass.
+
+## 2026-09-18 (v3.01 — a documented reason when withdrawing a wellness break)
+
+Spot Feedback #77: "Pop up window to record why withdrawing or cancelling
+the wellness break for documentation." `wellness_claim` already carries
+`decide_note` for the approver's side of a decision (e.g. a denial reason)
+but had nothing analogous for the claimant's own withdrawal.
+
+**`storage.py`** — new `cancel_reason TEXT` column (`CREATE TABLE` +
+additive `ALTER TABLE` migration, same pattern as the other nullable
+wellness columns). `cancel_wellness_claim(conn, claim_id, user_id,
+reason="")` now stores it (trimmed, `None` when blank); `get_wellness_claim`
+returns it.
+
+**`app.py`** — `POST /wellness/claims/{claim_id}/cancel` is now `async`,
+reads an optional `reason` field via `_posted()`, passes it through, and
+folds it into the `wellness_cancel` audit summary when given.
+
+**`templates/wellness_hub.html`** — the Withdraw button's `onsubmit` swaps
+`confirm('Withdraw this break request?')` for a `window.prompt(...)` asking
+why (the "pop up window" asked for); `null` (Cancel on the prompt) still
+backs out of the withdrawal exactly as `confirm()` did, an empty answer
+still withdraws with no reason recorded. The reason shows next to the
+`cancelled` status pill afterward, mirroring how a denial's `decide_note`
+already shows next to `denied`.
+
+**`tests/test_wellness.py`** — `test_cancel_reason_is_recorded_and_optional`
+(direct `storage` call, present-and-trimmed vs. absent) and
+`test_http_withdraw_records_reason` (through the actual endpoint). Verified
+live end-to-end (file a break → withdraw with a reason → the reason shows
+on `/wellness` next to "cancelled" → the audit log carries it too) and the
+full `tests/test_wellness.py` + `tests/test_wellness_escalation.py` suites
+(55 tests) pass unchanged otherwise.
+
+## 2026-09-18 (v3.00 — a light 3D lean for the wellness companion)
+
+Spot Feedback #82: "make the pet 3d." Full 3D rendering is out of scope for a
+spot fix, so this is a scoped, cosmetic polish in the same spirit rather
+than a 3D engine: a tilt-card lean plus a contact shadow.
+
+`templates/_avatars.html` (`avatar_defs()`) — `.avwrap` gets `perspective:
+700px`; its SVG gets a permanent `filter:drop-shadow(...)` for a soft
+"lifted off the page" contact shadow. The `avatar()` macro's inner sizing
+`<span>` (already wrapping just the SVG) is now `.av-tiltstage`, the element
+the lean rotates.
+
+`static/js/avatars.js` — folded into the existing "curiosity" `pointermove`
++ `requestAnimationFrame` loop (the one that already turns the owl/dog/cat/
+bird's head toward the cursor) rather than adding a second global listener.
+For any `.avwrap[data-interactive]`, while the pointer is within the
+companion's own bounding box, `.av-tiltstage` gets `rotateY`/`rotateX` set
+from the pointer's offset from center (±10°/±8°), transition-free for
+responsive tracking; leaving the box clears the transform with a `.35s`
+settle transition. Runs for every species (not just the WATCH list used by
+the head-turn), gated by the same `prefers-reduced-motion` check as
+everything else in the file. Verified independent of the `.avwrap[data-drag]`
+positioning transform used by the wellness hub's drag-to-move (different
+element: outer `.avwrap` vs inner `.av-tiltstage`), and confirmed both work
+together with Playwright.
+
+## 2026-09-18 (v2.99 — a date field's calendar didn't always open on click)
+
+Reported by the user (Spot Feedback #83): "there are times not clickable" on
+`#collected_on` (Date collected) on the paper-entry form. Every
+`input[type=date]` on the site is enhanced client-side (`static/js/app.js`'s
+"Locale-proof date fields") by overlaying an invisible, full-size native
+`<input>` on top of a fixed-format display box, so the ISO value stays
+locale-proof. But a *native* date input itself splits clicks into a text
+zone (focuses only) and a narrow calendar-icon zone (actually opens the
+picker) — a split that no longer lines up with anything visible once the
+control is stretched invisibly over the display box, so a click on most of
+the box silently did nothing. Encoding many paper forms in a row (this
+report's `?n=2` in the URL) means hitting that field over and over, which is
+what surfaced it.
+
+**`static/js/app.js`** — where `HTMLInputElement.prototype.showPicker`
+exists (current Chrome/Edge/Safari), the real input's `pointer-events` is
+now set to `none` and a `click` handler on the wrapper calls
+`input.focus()` + `input.showPicker()` directly, so any click anywhere in
+the box opens the calendar — the icon/text split no longer matters. Skipped
+entirely in "raw" mode (the "Add specific time" datetime-local toggle),
+where the real control is visible and already directly clickable, and on
+browsers without `showPicker()`, where behavior is unchanged from before.
+
+## 2026-09-18 (v2.98 — a right-edge nav dropdown ran off the screen)
+
+Reported by the user (Spot Feedback #93): "yung dropdown lumalagpas sa
+screen di na makita ang ibang choices" — a top-nav dropdown on
+`/dashboard/participation` overflowed the screen, hiding its other choices.
+`.navgroup .menu` (`static/css/app.css`) always anchors `left:0` against its
+trigger `<summary>`, growing rightward with no viewport-edge awareness. For
+a nav group sitting close to the right side of the bar — common once enough
+groups are visible for a role to not all fit on one row before the
+`780px` hamburger breakpoint — the menu's right side ran past the window
+edge with nothing to scroll it into view.
+
+**`static/js/app.js`** — a new `toggle` listener on every `details.navgroup`
+checks the opened `.menu`'s `getBoundingClientRect().right` against
+`window.innerWidth` and adds a `menu-flip` class when it would overflow,
+clearing it again on close.
+**`static/css/app.css`** — `.navgroup .menu.menu-flip { left:auto; right:0; }`
+anchors the menu to its trigger's right edge instead, so a menu that would
+have overflowed opens leftward and stays fully on-screen; menus that
+already fit are untouched.
+
+*(Spot Feedback #81, "the wellness break date defaults to blank," was fixed
+as a one-line change on top of the old `<input type=date>` field in an
+earlier draft of this branch — superseded before merging by the date-pill
+picker below, whose own `loop.first` default covers the same case. No
+separate diff for it here.)*
+
 ## 2026-09-18 (v2.97 — wellness breaks: current work week only, down from 4 weeks)
 
 Policy change: plans made weeks ahead were routinely getting cancelled or

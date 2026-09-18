@@ -1820,6 +1820,13 @@ def _required_cap(path):
     ('/' is intentionally None — its route redirects non-creators to /dashboard.)"""
     if path.startswith("/admin"):
         return "manage_users"
+    # Adding a new external resource person is narrower than the rest of
+    # Directory (org units, internal staff, archiving) — Spot Feedback #90:
+    # a section manager can create activities but couldn't add the outside
+    # speaker they needed for one. Editing an existing external RP stays
+    # under the general "directory" check below, admin-only.
+    if path in ("/directory/external/new", "/directory/external"):
+        return "add_external_rp"
     if path.startswith("/directory"):
         return "directory"
     if path in ("/create", "/arta"):
@@ -6307,24 +6314,34 @@ def _external_f(values, rp_id=None):
     return f
 
 
-def _render_external_form(request, f, is_edit):
+def _render_external_form(request, f, is_edit, back="/directory"):
     return templates.TemplateResponse(request, "external_rp_form.html", {
         "f": f, "is_edit": is_edit, "honorifics": ncl.HONORIFIC_CHOICES,
-        "nav_active": "directory", "show_scope": False,
+        "nav_active": "directory", "show_scope": False, "back": back,
     })
 
 
+def _safe_back(v, default="/directory"):
+    """A `back` param a section manager (no "directory" cap) can actually
+    land on — only a same-site relative path, never the bare default someone
+    without directory access can't open."""
+    v = (v or "").strip()
+    return v if v.startswith("/") and not v.startswith("//") else default
+
+
 @app.get("/directory/external/new", response_class=HTMLResponse)
-def directory_external_new(request: Request):
-    return _render_external_form(request, _external_f({}), is_edit=False)
+def directory_external_new(request: Request, back: str = "/directory"):
+    return _render_external_form(request, _external_f({}), is_edit=False,
+                                 back=_safe_back(back))
 
 
 @app.post("/directory/external")
 async def directory_external_add(request: Request):
     p = await _posted(request)
     name = (p.get("name", "") or "").strip()
+    back = _safe_back(p.get("back"))
     if not name:
-        return RedirectResponse("/directory/external/new", status_code=303)
+        return RedirectResponse(f"/directory/external/new?back={quote(back)}", status_code=303)
     g = lambda k: (p.get(k, "") or "").strip() or None
     conn = get_conn()
     try:
@@ -6334,7 +6351,7 @@ async def directory_external_add(request: Request):
                summary=f"added external '{name}'")
     finally:
         conn.close()
-    return RedirectResponse("/directory", status_code=303)
+    return RedirectResponse(back, status_code=303)
 
 
 @app.get("/directory/external/{rp_id}/edit", response_class=HTMLResponse)
@@ -13929,16 +13946,36 @@ async def wellness_apply_submit(request: Request):
 
 
 @app.post("/wellness/claims/{claim_id}/cancel")
-def wellness_cancel(request: Request, claim_id: int):
+async def wellness_cancel(request: Request, claim_id: int):
+    p = await _posted(request)
+    reason = (p.get("reason") or "").strip()
     user = request.state.user
     conn = get_conn()
     try:
         try:
-            st.cancel_wellness_claim(conn, claim_id, user["id"])
+            claim = st.cancel_wellness_claim(conn, claim_id, user["id"], reason=reason)
         except ValueError as e:
             return RedirectResponse(f"/wellness?err={quote(str(e))}", status_code=303)
+        summary = "withdrew a wellness break request"
+        if reason:
+            summary += f": {reason}"
         _audit(request, conn, "wellness_cancel", target_type="wellness_claim",
-               target_id=claim_id, summary="withdrew a wellness break request")
+               target_id=claim_id, summary=summary)
+        # Tell the approver it's off their plate (Spot Feedback #75: "how will
+        # I know if the approver was notified of my cancellation?"). If it was
+        # already approved, that's specifically whoever approved it — they're
+        # the one now expecting a break that isn't happening; if it was still
+        # pending, it's whoever the request would have routed to.
+        claimant_name = _person_name(conn, user["id"]) or user["username"]
+        notify_ids = ([claim["decided_by"]] if claim["status"] == "approved" and claim["decided_by"]
+                      else st.get_approvers_for(conn, user["id"]))
+        for approver_id in notify_ids:
+            approver_name = _person_name(conn, approver_id)
+            subj, body, html = mailer.wellness_cancelled_message(
+                approver_name, claimant_name, claim["break_date"], claim["start_time"],
+                claim["hours"], reason, f"{_base_url(request)}/wellness/dashboard")
+            _notify_account(conn, approver_id, subj, body, html=html,
+                           feature="wellness_cancelled")
     finally:
         conn.close()
     return RedirectResponse("/wellness?cheer=Request+withdrawn+—+those+hours+are+back+in+your+week.",

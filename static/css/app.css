@@ -268,6 +268,9 @@ details.disclosure[open] > summary::before { transform:rotate(90deg); }
 .navgroup .menu { position:absolute; top:calc(100% + 4px); left:0; min-width:200px;
         background:var(--surface); border:1px solid var(--line); border-radius:var(--r2);
         box-shadow:var(--shadow-md); padding:.35rem; z-index:30; }
+/* Set by app.js when the left-anchored menu above would run off the right
+   edge of the screen — flips the anchor so every item stays reachable. */
+.navgroup .menu.menu-flip { left:auto; right:0; }
 .navgroup .menu a { display:block; padding:.45rem .7rem; border-radius:var(--r1);
         text-decoration:none; color:var(--ink); font-size:.9rem; font-weight:550; }
 .navgroup .menu a:hover { background:var(--bg); }
