@@ -25,6 +25,8 @@ times of day; with no flags at all, every job runs):
   --csm-rp            Email a resource person their own CSM results once their
                       session's feedback has concluded (only if they have a
                       login — the results page is not public).
+  --csm-activity      Email an activity's creator + section chief its overall
+                      CSM results once concluded.
 
 Requires CSS_BASE_URL (same as the live app — see app.py's _base_url) so the
 links in these emails point at the real site; a mail transport configured per
@@ -114,7 +116,7 @@ def remind_tomorrows_events(conn, base, dry_run=False):
     return sent
 
 
-_ALL_JOBS = {"events", "wellness_expiry", "digest", "csm_rp"}
+_ALL_JOBS = {"events", "wellness_expiry", "digest", "csm_rp", "csm_activity"}
 
 # How many days before a wellness decide link (auth._WELLNESS_DECIDE_MAX_AGE)
 # expires the approver gets re-notified, if the claim is still pending then.
@@ -190,6 +192,52 @@ def send_csm_results_to_rps(conn, base, dry_run=False):
     return sent
 
 
+def send_csm_results_to_activity(conn, base, dry_run=False):
+    """Email an activity's creator + section chief its overall CSM results
+    once concluded — mirrors send_csm_results_to_rps, but the per-activity
+    summary rather than one speaker's own numbers."""
+    sent = 0
+    for event_id in st.list_concluded_events_pending_csm_email(conn, _CSM_RESULTS_DELAY_DAYS):
+        ev = st.get_event_by_id(conn, event_id)
+        report_path = st.event_report_url(conn, event_id)
+        if not ev or not report_path:
+            continue
+        link = f"{base}{report_path}"
+        notified_accounts = set()
+
+        creator = st.get_admin_user(conn, ev["created_by"]) if ev.get("created_by") else None
+        if creator and creator.get("username"):
+            creator_name = _person_name(conn, creator["id"]) or creator["username"]
+            subj, body, html = mailer.csm_activity_results_message(
+                creator_name, ev["title"], link)
+            if dry_run:
+                print(f"[dry-run] CSM results (activity) -> {creator['username']} ({ev['title']})")
+            else:
+                mailer.send(creator["username"], subj, body, html=html)
+            notified_accounts.add(creator["id"])
+            sent += 1
+
+        lead_org_id = st.event_lead_org_id(conn, event_id)
+        for chief_id in st.org_unit_chiefs(conn, lead_org_id):
+            if chief_id in notified_accounts:
+                continue
+            chief = st.get_admin_user_by_id(conn, chief_id)
+            if not chief or not chief.get("username"):
+                continue
+            chief_name = _person_name(conn, chief_id)
+            subj, body, html = mailer.csm_activity_results_message(chief_name, ev["title"], link)
+            if dry_run:
+                print(f"[dry-run] CSM results (activity) -> {chief['username']} ({ev['title']})")
+            else:
+                mailer.send(chief["username"], subj, body, html=html)
+            notified_accounts.add(chief_id)
+            sent += 1
+
+        if not dry_run:
+            st.mark_event_csm_results_emailed(conn, event_id)
+    return sent
+
+
 def send_approvals_digest(conn, base, dry_run=False):
     """One email per approver bundling EVERY wellness break and work
     arrangement still awaiting their decision — a catch-all in case an
@@ -253,6 +301,8 @@ def run(db_path="css_is.db", dry_run=False, jobs=None):
             report["digest"] = send_approvals_digest(conn, base, dry_run=dry_run)
         if "csm_rp" in jobs:
             report["csm_rp"] = send_csm_results_to_rps(conn, base, dry_run=dry_run)
+        if "csm_activity" in jobs:
+            report["csm_activity"] = send_csm_results_to_activity(conn, base, dry_run=dry_run)
     finally:
         conn.close()
     return report
@@ -270,12 +320,15 @@ def main():
                     help="Send each approver a digest of everything still pending on them.")
     ap.add_argument("--csm-rp", action="store_true",
                     help="Email resource persons their own CSM results once concluded.")
+    ap.add_argument("--csm-activity", action="store_true",
+                    help="Email an activity's creator/chief its overall CSM results.")
     args = ap.parse_args()
 
     jobs = {j for j, flag in (("events", args.events),
                               ("wellness_expiry", args.wellness_expiry),
                               ("digest", args.digest),
-                              ("csm_rp", args.csm_rp)) if flag}
+                              ("csm_rp", args.csm_rp),
+                              ("csm_activity", args.csm_activity)) if flag}
     report = run(db_path=args.db, dry_run=args.dry_run, jobs=jobs or None)
     for job, n in report.items():
         print(f"{job}: {n} email(s) {'would be ' if args.dry_run else ''}sent")

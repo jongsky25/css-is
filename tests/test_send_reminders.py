@@ -333,3 +333,77 @@ def test_no_email_when_rp_has_no_login_but_retries_once_they_do(tmp_path, sent):
     n2 = sr.send_csm_results_to_rps(conn, "https://css.example")
     assert n2 == 1
     assert sent[0]["to"] == "sr-speaker@test.local"
+
+
+# --------------------------------------------------------- CSM (activity) ---
+
+def _bureau_event_for_csm(conn, event_date, *, close_at=None, answered=True,
+                          created_by="sr-a-creator@test.local", lead_org_id=None):
+    f = st.create_form_instance(conn, 2, "F2", event_date, topic="SR CSM Bureau",
+                                lead_org_id=lead_org_id)
+    if close_at is not None:
+        st.set_response_window(conn, f, None, close_at)
+    ev = st.create_event(conn, "SR CSM Bureau Activity", event_date, form_instance_ids=[f],
+                         created_by=created_by, lead_org_id=lead_org_id)
+    if answered:
+        st.record_response(conn, f, [("A", 6)])
+    conn.commit()
+    return ev, f
+
+
+def test_emails_creator_and_chief_once_window_closes(tmp_path, sent):
+    conn = _fresh(tmp_path)
+    st.create_admin_user(conn, "sr-a-creator@test.local", "x", "y", "section_manager")
+    conn.commit()
+    past_close = (tz.now_local() - timedelta(hours=1)).isoformat(timespec="minutes")
+    ev, _f = _bureau_event_for_csm(conn, "2026-01-05", close_at=past_close)
+    n = sr.send_csm_results_to_activity(conn, "https://css.example")
+    assert n == 1
+    assert sent[0]["to"] == "sr-a-creator@test.local"
+    assert "csm results" in sent[0]["subject"].lower()
+    assert "/reports/activities/" in sent[0]["body"]
+    # Idempotent: a second run doesn't re-email the same event.
+    n2 = sr.send_csm_results_to_activity(conn, "https://css.example")
+    assert n2 == 0
+    assert len(sent) == 1
+
+
+def test_emails_creator_and_a_different_chief(tmp_path, sent):
+    conn = _fresh(tmp_path)
+    unit = conn.execute(
+        "INSERT INTO org_unit(name, short_name, level, path) "
+        "VALUES ('SR CSM Section','SRC','section','TEST/SR/Csm')").lastrowid
+    chief_rp = conn.execute(
+        "INSERT INTO resource_person(name, is_internal, org_unit_id, designation) "
+        "VALUES ('SR CSM Chief', 1, ?, 'Section Head')", (unit,)).lastrowid
+    st.create_admin_user(conn, "sr-csm-chief@test.local", "x", "y",
+                         "section_manager", rp_id=chief_rp)
+    st.create_admin_user(conn, "sr-a-creator@test.local", "x", "y", "section_manager")
+    conn.commit()
+    past_close = (tz.now_local() - timedelta(hours=1)).isoformat(timespec="minutes")
+    _bureau_event_for_csm(conn, "2026-01-06", close_at=past_close, lead_org_id=unit)
+    n = sr.send_csm_results_to_activity(conn, "https://css.example")
+    assert n == 2
+    assert {c["to"] for c in sent} == {"sr-a-creator@test.local", "sr-csm-chief@test.local"}
+
+
+def test_no_csm_activity_email_before_delay_elapses(tmp_path, sent):
+    conn = _fresh(tmp_path)
+    st.create_admin_user(conn, "sr-a-creator@test.local", "x", "y", "section_manager")
+    conn.commit()
+    recent_date = (tz.now_local() - timedelta(days=1)).date().isoformat()
+    _bureau_event_for_csm(conn, recent_date)
+    n = sr.send_csm_results_to_activity(conn, "https://css.example")
+    assert n == 0
+    assert sent == []
+
+
+def test_no_csm_activity_email_without_a_response(tmp_path, sent):
+    conn = _fresh(tmp_path)
+    st.create_admin_user(conn, "sr-a-creator@test.local", "x", "y", "section_manager")
+    conn.commit()
+    old_date = (tz.now_local() - timedelta(days=4)).date().isoformat()
+    _bureau_event_for_csm(conn, old_date, answered=False)
+    n = sr.send_csm_results_to_activity(conn, "https://css.example")
+    assert n == 0
+    assert sent == []

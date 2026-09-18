@@ -707,6 +707,11 @@ def _add_missing_columns(conn):
     # allowing many NULLs.
     if ev_cols and "slug" not in ev_cols:
         conn.execute("ALTER TABLE event ADD COLUMN slug TEXT")
+    if ev_cols and "csm_results_emailed_at" not in ev_cols:
+        # Set once the scheduled reminder job (send_reminders.py) has emailed the
+        # activity's creator/section chief its overall CSM results — makes the
+        # send idempotent regardless of how often that job runs.
+        conn.execute("ALTER TABLE event ADD COLUMN csm_results_emailed_at TEXT")
     conn.execute(
         "CREATE UNIQUE INDEX IF NOT EXISTS ux_event_slug ON event(slug) WHERE slug IS NOT NULL")
     # Comment raffle (opt-in per activity; face-to-face or online): when on, a
@@ -4974,6 +4979,41 @@ def mark_form_csm_results_emailed(conn, form_instance_id):
     form, so a later run of the reminder job never sends it twice."""
     conn.execute("UPDATE form_instance SET csm_results_emailed_at = ? WHERE id = ?",
                 (tz.now_iso(), form_instance_id))
+    conn.commit()
+
+
+def list_concluded_events_pending_csm_email(conn, delay_days):
+    """Event ids whose overall CSM picture is ready to summarize for the
+    organizer: at least one response in, not yet emailed, and concluded —
+    either the shared response window (get_event_window) closed, or (when no
+    window was set) it's been `delay_days` since the activity ended."""
+    now = tz.now_iso()
+    date_cutoff = (tz.now_local() - timedelta(days=delay_days)).date().isoformat()
+    rows = conn.execute(
+        """SELECT e.id FROM event e
+           WHERE e.csm_results_emailed_at IS NULL
+             AND EXISTS (SELECT 1 FROM response r
+                         JOIN event_form ef ON ef.form_instance_id = r.form_instance_id
+                         WHERE ef.event_id = e.id)
+           ORDER BY e.id""").fetchall()
+    out = []
+    for (eid,) in rows:
+        win = get_event_window(conn, eid)
+        if win["close_at"]:
+            concluded = win["close_at"] <= now
+        else:
+            ev = get_event_by_id(conn, eid)
+            concluded = bool(ev) and (ev.get("end_date") or ev.get("event_date") or "9999") <= date_cutoff
+        if concluded:
+            out.append(eid)
+    return out
+
+
+def mark_event_csm_results_emailed(conn, event_id):
+    """Record that the organizer's overall-CSM-results email went out for this
+    event, so a later run of the reminder job never sends it twice."""
+    conn.execute("UPDATE event SET csm_results_emailed_at = ? WHERE id = ?",
+                (tz.now_iso(), event_id))
     conn.commit()
 
 

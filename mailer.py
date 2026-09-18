@@ -437,6 +437,27 @@ def csm_rp_results_message(rp_name, topic, event_title, link):
     return subject, body, html
 
 
+def csm_activity_results_message(name, title, link):
+    """Returns (subject, plain_text_body, html_body). Sent once to an
+    activity's creator/section chief after its overall CSM/feedback picture
+    has concluded — enough responses are in and the response window (or a
+    grace period past the activity's end) has passed."""
+    subject = f"CSM results are ready — {title}"
+    body = (f"Hello {name or 'there'},\n\n"
+            f"The Client Satisfaction Measurement results for “{title}” are "
+            f"ready to view.\n\n"
+            f"  {link}\n")
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="CSM results are ready",
+        intro=(f"The Client Satisfaction Measurement results for "
+               f"&ldquo;{_e(title)}&rdquo; are ready to view."),
+        cta_label="View results",
+        link=link,
+    )
+    return subject, body, html
+
+
 def event_created_message(creator_name, title, event_date, link):
     subject = f"Event created — {title}"
     body = (f"Hello {creator_name or 'there'},\n\n"
