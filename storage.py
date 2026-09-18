@@ -6017,10 +6017,11 @@ user_is_wellness_chief     = user_is_approving_chief
 wellness_approver_title    = approver_title_for
 
 WELLNESS_WEEKLY_HOURS = 2          # the DM's per-week entitlement
-# How far ahead a break can be scheduled: a rolling window of this many ISO weeks
-# starting with the current week. The 2 h/week cap still applies independently to
-# whichever week the chosen date falls in — this only bounds how far out you can plan.
-WELLNESS_WINDOW_WEEKS = 4
+# How far ahead a break can be scheduled, in ISO weeks starting with the
+# current week. Kept at 1 (current work week only) on purpose: letting people
+# plan weeks out just meant more of those plans got cancelled or rescheduled
+# as the week actually arrived. The 2 h/week cap is unaffected either way.
+WELLNESS_WINDOW_WEEKS = 1
 # A break must be filed at least this many minutes before its start time, so the
 # approving chief has a real window to see and act on it before it happens
 # (Spot Feedback #73). Also stops same-day requests for a time that's already
@@ -6176,8 +6177,8 @@ def create_wellness_claim(conn, user_id, break_date, start_time, activity,
         raise ValueError("Breaks are scheduled ahead — pick today or a future date.")
     if d > wellness_window_last_date():
         raise ValueError(
-            f"Breaks can be scheduled up to {WELLNESS_WINDOW_WEEKS} weeks ahead — "
-            "pick a date within the next few weeks.")
+            "Breaks can only be scheduled within the current work week — "
+            "pick a date through this Friday.")
     if d.weekday() >= 5:
         raise ValueError("Wellness breaks are taken within the work week (Mon–Fri).")
     # Require a minimum lead time before the break's start so the approver has a

@@ -1,5 +1,50 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-18 (v2.97 — wellness breaks: current work week only, down from 4 weeks)
+
+Policy change: plans made weeks ahead were routinely getting cancelled or
+rescheduled by the time the week actually arrived, so the scheduling window
+shrinks to the current work week only.
+
+- **`storage.py`**: `WELLNESS_WINDOW_WEEKS` goes from `4` to `1`. Every
+  window-derived helper (`wellness_window_last_date`, `wellness_window_weeks`,
+  `wellness_window_dates`) was already built purely off this constant (see
+  v2.95), so no other window logic needed to change. Reworded the
+  beyond-window `ValueError` (was "up to N weeks ahead" — bad grammar and a
+  false "next few weeks" framing at N=1) to "within the current work week."
+- **`app.py` / `templates/wellness_apply.html`, `wellness_hub.html`**: copy
+  that interpolated `window_weeks` ("plan up to 1 weeks ahead", "the next 1
+  weeks") reworded for a single-week policy; dropped the now-dead
+  `window_weeks` template context key from both pages (neither template
+  reads it anymore). `wellness_hub`'s `can_request` check already scaled
+  correctly (it was written generically over `wellness_window_weeks()`) — with
+  the window at 1 week, exhausting the current week's entitlement now
+  disables the "Request a break" link immediately, since there's no future
+  week left to fall back on.
+- **Test infra** (`tests/conftest.py`, new `future_weekday` fixture): the
+  wellness/notifications/reminders suites each had their own copy of a
+  `_future_weekday()` helper (`today + 3 days, rolled to the next weekday`).
+  Under a 4-week window that was always safely in-window; under a 1-week
+  window it rolls into *next* week on 5 of 7 real calendar days (Wed through
+  Sun), which would make the suite flaky depending on what day it's run.
+  Replaced with one shared fixture that freezes the wall clock to the
+  current ISO week's Monday morning and returns that week's Wednesday —
+  deterministic regardless of the real day, and immune to the separate
+  minimum-lead-time rule since it's never "today." Updated every call site
+  across `tests/test_wellness.py`, `tests/test_notifications.py`,
+  `tests/test_send_reminders.py`, and one similarly-patterned inline date
+  computation in `tests/test_team_scope.py`; removed the three now-dead
+  local helper copies. Tests that freeze "today" for their own reasons
+  (`on_digest_day`) use that pinned date directly instead of layering a
+  second, conflicting clock freeze on top.
+- **Test coverage**: `test_request_allowed_across_the_month` and
+  `test_hub_link_stays_enabled_once_a_future_week_is_open` asserted the old
+  "a future week is still bookable" behavior directly, so their premise is
+  now false — removed / replaced with
+  `test_hub_link_disables_once_the_current_week_is_fully_claimed`, which
+  asserts the new behavior (link disables immediately; a next-week claim is
+  rejected through the real HTTP flow).
+
 ## 2026-09-18 (v2.96 — wellness apply form: exact-time fallback next to the slot grid)
 
 Follow-up to v2.95: the new time-slot grid only offers 30-minute-aligned

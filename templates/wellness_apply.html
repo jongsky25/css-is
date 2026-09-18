@@ -60,7 +60,7 @@
 </style>
 
 {{ page_header("Request a wellness break",
-               "Up to " ~ weekly_hours ~ " hours a week, in one or two sittings — plan up to " ~ window_weeks ~ " weeks ahead so your section keeps running.") }}
+               "Up to " ~ weekly_hours ~ " hours a week, in one or two sittings — filed within the current work week so plans don't go stale.") }}
 
 <div class="panel">
   {% if err %}{{ flash(err=err) }}{% endif %}
@@ -81,7 +81,7 @@
         </label>
         {% endfor %}
       </div>
-      <div class="help">Any workday from today up to {{ window_weeks }} weeks ahead — breaks can't be filed backdated.</div>
+      <div class="help">Any remaining workday this week, through Friday — breaks can't be filed backdated, and next week opens once it's the current week.</div>
     </div>
 
     <div class="field">
