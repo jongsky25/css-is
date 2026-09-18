@@ -17,10 +17,32 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.93"
+APP_VERSION = "2.94"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.94",
+        "date": "September 18, 2026",
+        "summary": "The Email screen now lets an admin adjust the timing of "
+                   "the scheduled reminders, not just turn them on or off.",
+        "changes": [
+            "A new Timing section on the Email screen lets an admin change "
+            "how many days ahead the day-before activity reminder goes out, "
+            "how many days before its link expires the wellness approval "
+            "reminder fires, which weekday the pending-approvals digest and "
+            "the wellness filing nudge go out on, how many days after an "
+            "activity ends its CSM results are announced, and how many days "
+            "before the deadline the work-arrangement filing nudge fires. "
+            "These were previously fixed in the code with no way to change "
+            "them without a new release.",
+            "The same section also exposes how many days the Email screen's "
+            "send history is kept before being cleared out (previously "
+            "fixed at 90 days with no admin control), matching the "
+            "retention settings already available for AI logs and UI "
+            "activity logs.",
+        ],
+    },
     {
         "version": "2.93",
         "date": "September 18, 2026",

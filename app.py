@@ -4009,6 +4009,9 @@ def admin_email(request: Request, msg: str = "", err: str = ""):
     try:
         settings = st.get_settings(conn, [f"email_feature.{k}" for k in mailer.FEATURES])
         recent_sends = st.recent_email_sends(conn, limit=50)
+        param_values = {k: send_reminders._param(conn, k) for k in send_reminders.PARAMS}
+        retention_days = int(st.get_setting(
+            conn, "email_log_retention_days", str(ret.EMAIL_LOG_RETENTION_DAYS_DEFAULT)))
     finally:
         conn.close()
     states = {k: settings.get(f"email_feature.{k}", "1") != "0" for k in mailer.FEATURES}
@@ -4020,6 +4023,8 @@ def admin_email(request: Request, msg: str = "", err: str = ""):
     labels.update({k: v[0] for k, v in mailer.ALWAYS_ON.items()})
     for row in recent_sends:
         row["label"] = labels.get(row["feature"], row["feature"])
+    params = [(k, label, lo, hi, param_values[k]) for k, (label, _default, lo, hi)
+             in send_reminders.PARAMS.items()]
     return templates.TemplateResponse(request, "admin_email.html", {
         "email_configured": mailer.email_configured(),
         "relay_configured": mailer.relay_configured(),
@@ -4027,6 +4032,7 @@ def admin_email(request: Request, msg: str = "", err: str = ""):
         "transactional": transactional, "scheduled": scheduled,
         "always_on": list(mailer.ALWAYS_ON.items()),
         "recent_sends": recent_sends,
+        "params": params, "retention_days": retention_days,
         "msg": msg, "err": err, "show_scope": False, "nav_active": "email",
     })
 
@@ -4046,6 +4052,34 @@ async def admin_email_toggle(request: Request):
         st.set_email_feature(conn, key, on)
         _audit(request, conn, "email_feature_toggle", target_type="setting", target_id=key,
                summary=f"{label} email turned {'ON' if on else 'OFF'}.")
+    finally:
+        conn.close()
+    return RedirectResponse("/admin/email?msg=" + quote("Saved."), status_code=303)
+
+
+@app.post("/admin/email/params")
+async def admin_email_params(request: Request):
+    if (r := _forbid(request, "manage_users")):
+        return r
+    posted = await _posted(request)
+
+    def _clamped_int(key, default, lo, hi):
+        try:
+            n = int(posted.get(key, ""))
+        except ValueError:
+            n = default
+        return max(lo, min(n, hi))
+
+    conn = get_conn()
+    try:
+        for key, (_label, default, lo, hi) in send_reminders.PARAMS.items():
+            n = _clamped_int(key, default, lo, hi)
+            st.set_setting(conn, f"email_param.{key}", str(n))
+        retention_days = _clamped_int(
+            "email_log_retention_days", ret.EMAIL_LOG_RETENTION_DAYS_DEFAULT, 7, 365)
+        st.set_setting(conn, "email_log_retention_days", str(retention_days))
+        _audit(request, conn, "email_params_changed", target_type="setting",
+               summary="Email schedule/retention parameters updated.")
     finally:
         conn.close()
     return RedirectResponse("/admin/email?msg=" + quote("Saved."), status_code=303)
