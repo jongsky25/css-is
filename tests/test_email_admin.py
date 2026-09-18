@@ -1,7 +1,7 @@
 """
-Admin email control center (docs/ADMIN_EMAIL_FEATURES_PLAN.md), Phase 1:
-the per-feature on/off setting and the mailer.py catalog it reads against.
-Nothing calls the gate yet (Phase 2) — this only covers the building block.
+Admin email control center (docs/ADMIN_EMAIL_FEATURES_PLAN.md).
+Phase 1: the per-feature on/off setting and the mailer.py catalog it reads
+against. Phase 4: the /admin/email console built on top of it.
 """
 import mailer
 import storage as st
@@ -79,3 +79,51 @@ def test_scheduled_features_match_reminder_jobs():
     import send_reminders as sr
     scheduled_keys = {k for k, v in mailer.FEATURES.items() if v[2] == "scheduled"}
     assert scheduled_keys == {f"job_{j}" for j in sr._ALL_JOBS}
+
+
+# ---- /admin/email console (Phase 4) -----------------------------------------
+
+def test_admin_email_lists_every_row(admin):
+    body = admin.get("/admin/email").text
+    for label, _hint, _group in mailer.FEATURES.values():
+        assert label in body
+    for label, _why in mailer.ALWAYS_ON.values():
+        assert label in body
+
+
+def test_admin_email_requires_manage_users(viewer):
+    assert viewer.get("/admin/email").status_code == 403
+    assert viewer.post("/admin/email/toggle", data={"key": "event_created", "on": "0"}).status_code == 403
+
+
+def test_admin_email_toggle_flips_setting_and_audits(admin, db_path):
+    conn = st.connect(db_path)
+    try:
+        _reset(conn)
+        before = len(st.list_audit(conn, action="email_feature_toggle"))
+        r = admin.post("/admin/email/toggle", data={"key": "event_created", "on": "0"},
+                       follow_redirects=False)
+        assert r.status_code == 303
+        assert st.email_feature_enabled(conn, "event_created") is False
+        after = st.list_audit(conn, action="email_feature_toggle")
+        assert len(after) == before + 1
+
+        admin.post("/admin/email/toggle", data={"key": "event_created", "on": "1"})
+        assert st.email_feature_enabled(conn, "event_created") is True
+    finally:
+        _reset(conn)
+        conn.close()
+
+
+def test_admin_email_toggle_rejects_unknown_key(admin, db_path):
+    conn = st.connect(db_path)
+    try:
+        _reset(conn)
+        r = admin.post("/admin/email/toggle", data={"key": "not_a_real_feature", "on": "0"},
+                       follow_redirects=False)
+        assert r.status_code == 303
+        assert "err=" in r.headers["location"]
+        assert conn.execute(
+            "SELECT 1 FROM app_setting WHERE key LIKE 'email_feature.%'").fetchone() is None
+    finally:
+        conn.close()

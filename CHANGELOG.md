@@ -1,5 +1,34 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-18 (v2.91 — admin email control center, Phase 4: the /admin/email console)
+
+Fourth of six phases (docs/ADMIN_EMAIL_FEATURES_PLAN.md). Adds the human
+interface over the toggles Phases 1-3 already wired in: `GET /admin/email`
+renders a transport banner (`mailer.email_configured()`, plus which of
+relay/SMTP is live) and three groups of rows — Transactional, Scheduled,
+Always-on — each with its label, hint and current on/off state, read in one
+`st.get_settings` call rather than 18 round trips. `POST
+/admin/email/toggle` takes `key` + `on`, rejects any key not in
+`mailer.FEATURES` (never lets a POST write an arbitrary `app_setting`),
+calls `st.set_email_feature`, audits the change (`email_feature_toggle`),
+and redirects with `?msg=Saved.`.
+
+Both handlers `_forbid(request, "manage_users")` on every request, copying
+`/admin/rules`' gating (D8) rather than `/admin/sharing`'s. New
+`templates/admin_email.html` extends `dash_layout.html` and reuses
+`admin_sharing.html`'s idiom verbatim: `.acard` sections, `.state.on` /
+`.state.off` pills, `.flash.ok`, plain `<form>` posts with no JavaScript
+dependency. Always-on rows (account invite, password reset, registration
+link re-send) render with no toggle, just the "why" string from
+`mailer.ALWAYS_ON`.
+
+New nav entry under Administrator, beside Sharing. Two new RBAC rows in
+`tests/test_auth_rbac.py`'s `GATED` table (`/admin/email` GET, `/admin/email
+/toggle` POST — both `manage_users`), plus Phase-4 tests in
+`tests/test_email_admin.py`: every row renders, a toggle flips the setting
+and writes an audit row, an unknown key is rejected and changes nothing,
+and a non-admin gets 403 on both routes.
+
 ## 2026-09-18 (v2.90 — admin email control center, Phase 3: gate the seven scheduled jobs)
 
 Third of six phases (docs/ADMIN_EMAIL_FEATURES_PLAN.md). `send_reminders.py`

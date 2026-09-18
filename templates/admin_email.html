@@ -1,0 +1,107 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}Email{% endblock %}
+
+{% block head %}
+<style>
+  .ewrap { max-width: 900px; }
+  .acard { background:var(--surface); border:1px solid var(--line); border-radius:14px;
+           padding:1.1rem 1.25rem; box-shadow:var(--shadow); margin-bottom:1rem; }
+  .acard h2 { font-size:1.02rem; margin:0 0 .2rem; }
+  .acard .hint { color:var(--soft); font-size:.86rem; margin:0 0 .9rem; }
+  .flash.ok { background:var(--green-bg); border:1px solid var(--green-ln); color:var(--green);
+              padding:.6rem .8rem; border-radius:8px; font-size:.86rem; margin-bottom:.8rem; }
+  .flash.err { background:var(--red-bg); border:1px solid var(--red-ln); color:var(--red);
+               padding:.6rem .8rem; border-radius:8px; font-size:.86rem; margin-bottom:.8rem; }
+  .status-row { display:flex; gap:1.4rem; flex-wrap:wrap; font-size:.9rem; }
+  .status-row .k { color:var(--soft); }
+  .pill { font-size:.72rem; font-weight:700; padding:.15rem .55rem; border-radius:999px;
+          border:1px solid var(--line); background:var(--bg); }
+  .pill.on { color:var(--green); border-color:var(--green-ln); background:var(--green-bg); }
+  .pill.off { color:var(--red); border-color:var(--red-ln); background:var(--red-bg); }
+  .frow { display:flex; align-items:center; justify-content:space-between; gap:1rem;
+          padding:.6rem 0; border-top:1px solid var(--line); }
+  .frow:first-of-type { border-top:none; }
+  .frow .lbl { font-weight:600; font-size:.92rem; }
+  .frow .fhint { color:var(--soft); font-size:.82rem; margin-top:.1rem; }
+  .frow form { display:flex; align-items:center; gap:.6rem; flex-shrink:0; }
+  .state { font-size:.78rem; font-weight:700; padding:.12rem .55rem; border-radius:999px; }
+  .state.on { background:var(--green-bg); color:var(--green); border:1px solid var(--green-ln); }
+  .state.off { background:var(--amber-bg); color:var(--amber); border:1px solid var(--amber-ln); }
+  .btn { padding:.32rem .7rem; border-radius:8px; border:1px solid var(--accent); background:var(--accent);
+         color:var(--on-accent); font-weight:600; cursor:pointer; font-size:.8rem; }
+  .btn.danger { border-color:var(--red-ln); color:var(--red); background:var(--red-bg); }
+  .always-on .frow .state { background:var(--soft); opacity:.5; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ewrap">
+  {{ page_header("Email", "Turn any of Office Connect's email notifications on or off, one at a time — nothing here changes what a message says, only whether it sends.") }}
+
+  {% if msg %}<div class="flash ok">{{ msg }}</div>{% endif %}
+  {% if err %}<div class="flash err">{{ err }}</div>{% endif %}
+
+  <div class="acard">
+    <h2>Transport</h2>
+    <div class="status-row">
+      <span class="k">Overall <span class="pill {{ 'on' if email_configured else 'off' }}">{{ 'configured' if email_configured else 'not configured' }}</span></span>
+      <span class="k">Relay <span class="pill {{ 'on' if relay_configured else 'off' }}">{{ 'configured' if relay_configured else 'not configured' }}</span></span>
+      <span class="k">SMTP <span class="pill {{ 'on' if smtp_configured else 'off' }}">{{ 'configured' if smtp_configured else 'not configured' }}</span></span>
+    </div>
+    {% if not email_configured %}
+    <p class="hint" style="margin-top:.6rem;">No transport is configured — even a feature turned ON below will not
+      actually send until a relay or SMTP is set up. The toggle and the transport are separate questions.</p>
+    {% endif %}
+  </div>
+
+  <div class="acard">
+    <h2>Transactional</h2>
+    <p class="hint">Sent right away, in response to something someone did.</p>
+    {% for key, label, hint, on in transactional %}
+    <div class="frow">
+      <div>
+        <div class="lbl">{{ label }} <span class="state {{ 'on' if on else 'off' }}">{{ 'ON' if on else 'OFF' }}</span></div>
+        <div class="fhint">{{ hint }}</div>
+      </div>
+      <form method="post" action="/admin/email/toggle">
+        <input type="hidden" name="key" value="{{ key }}">
+        <input type="hidden" name="on" value="{{ '0' if on else '1' }}">
+        <button class="btn {{ 'danger' if on else '' }}" type="submit">{{ 'Turn OFF' if on else 'Turn ON' }}</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="acard">
+    <h2>Scheduled</h2>
+    <p class="hint">The daily reminder sweep's jobs — each runs once, on its own schedule.</p>
+    {% for key, label, hint, on in scheduled %}
+    <div class="frow">
+      <div>
+        <div class="lbl">{{ label }} <span class="state {{ 'on' if on else 'off' }}">{{ 'ON' if on else 'OFF' }}</span></div>
+        <div class="fhint">{{ hint }}</div>
+      </div>
+      <form method="post" action="/admin/email/toggle">
+        <input type="hidden" name="key" value="{{ key }}">
+        <input type="hidden" name="on" value="{{ '0' if on else '1' }}">
+        <button class="btn {{ 'danger' if on else '' }}" type="submit">{{ 'Turn OFF' if on else 'Turn ON' }}</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="acard always-on">
+    <h2>Always on</h2>
+    <p class="hint">Account access mail. Never disableable here — turning any of these off could lock someone out of their own account.</p>
+    {% for key, (label, why) in always_on %}
+    <div class="frow">
+      <div>
+        <div class="lbl">{{ label }} <span class="state on">ALWAYS ON</span></div>
+        <div class="fhint">{{ why }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
