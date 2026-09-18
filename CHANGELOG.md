@@ -1,5 +1,32 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-18 (v2.90 — admin email control center, Phase 3: gate the seven scheduled jobs)
+
+Third of six phases (docs/ADMIN_EMAIL_FEATURES_PLAN.md). `send_reminders.py`
+gains `JOB_FEATURE`, a 1:1 map from each of `_ALL_JOBS` to its
+`job_*` admin toggle key, beside the existing `_ALL_JOBS` set.
+
+`run()` filters the resolved `jobs` set against `st.email_feature_enabled`
+right after the connection opens: **CLI flags/callers choose which jobs to
+consider, the admin toggle can only subtract from that set.** A disabled job
+is left out of the returned report entirely rather than reported as `0`, so
+a report (and `app._scheduler_loop`'s log of it) can tell "didn't run
+because it's off" apart from "ran and found nothing to send". `--dry-run`
+additionally prints `<job>: skipped (turned off in /admin/email)` for each
+one dropped, since a dry run's whole purpose is to say what would have
+happened.
+
+`app._scheduler_loop` needed no change — it already calls `send_reminders.run(DB)`
+with no job list, which now means "every job the admin still wants".
+
+Extended `tests/test_send_reminders.py`: a disabled job is absent from
+`run()`'s report and sends nothing, an enabled job is unaffected by the
+gate, and `--dry-run` names a disabled job instead of running it.
+
+Still no visible behavior change: every `email_feature.*` setting defaults
+to on, and nothing yet exposes a way to turn one off (Phase 4's
+`/admin/email` console).
+
 ## 2026-09-18 (v2.89 — admin email control center, Phase 2: wire the gate into the three funnels)
 
 Second of six phases (docs/ADMIN_EMAIL_FEATURES_PLAN.md). `app.py`'s three

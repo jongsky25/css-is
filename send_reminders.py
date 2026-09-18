@@ -135,6 +135,17 @@ def remind_tomorrows_events(conn, base, dry_run=False):
 _ALL_JOBS = {"events", "wellness_expiry", "digest", "csm_rp", "csm_activity",
             "wellness_file", "awa_file"}
 
+# job name -> the admin toggle that can switch it off (see /admin/email).
+JOB_FEATURE = {
+    "events": "job_events",
+    "wellness_expiry": "job_wellness_expiry",
+    "digest": "job_digest",
+    "csm_rp": "job_csm_rp",
+    "csm_activity": "job_csm_activity",
+    "wellness_file": "job_wellness_file",
+    "awa_file": "job_awa_file",
+}
+
 # How many days before a wellness decide link (auth._WELLNESS_DECIDE_MAX_AGE)
 # expires the approver gets re-notified, if the claim is still pending then.
 _WELLNESS_REMIND_DAYS_BEFORE_EXPIRY = 3
@@ -413,6 +424,15 @@ def run(db_path="css_is.db", dry_run=False, jobs=None):
     report = {}
     try:
         st.init_db(conn)
+        # CLI flags/callers choose which jobs to consider; the admin toggle
+        # can only subtract from that set, never add to it. A disabled job
+        # is reported as absent, not as 0, so a report can tell "didn't run"
+        # apart from "ran, sent nothing".
+        disabled = {j for j in jobs if not st.email_feature_enabled(conn, JOB_FEATURE[j])}
+        jobs -= disabled
+        if dry_run:
+            for j in sorted(disabled):
+                print(f"{j}: skipped (turned off in /admin/email)")
         _baseline_once(conn, dry_run=dry_run)
         if "events" in jobs:
             report["events"] = remind_tomorrows_events(conn, base, dry_run=dry_run)
