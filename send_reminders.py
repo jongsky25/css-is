@@ -375,6 +375,31 @@ def send_approvals_digest(conn, base, dry_run=False):
     return sent
 
 
+# Set once the back catalogue has been baselined (see
+# storage.baseline_csm_results_emailed). Keyed in app_setting rather than done
+# at column-add time, so it is still correct on a database that took the
+# columns in an earlier deploy.
+_BASELINE_SETTING = "csm_results_baselined"
+
+
+def _baseline_once(conn, dry_run=False):
+    """Before the CSM jobs ever send: stamp everything that concluded BEFORE
+    this feature existed, so the first sweep announces nothing retroactively.
+    A no-op on every later run."""
+    if st.get_setting(conn, _BASELINE_SETTING) == "1":
+        return
+    if dry_run:
+        events = st.list_concluded_events_pending_csm_email(conn, _CSM_RESULTS_DELAY_DAYS)
+        forms = st.list_concluded_rp_forms_pending_csm_email(conn, _CSM_RESULTS_DELAY_DAYS)
+        print(f"[dry-run] would baseline {len(events)} past activity/activities and "
+              f"{len(forms)} speaker session(s) as already-announced, sending nothing")
+        return
+    n_events, n_forms = st.baseline_csm_results_emailed(conn, _CSM_RESULTS_DELAY_DAYS)
+    st.set_setting(conn, _BASELINE_SETTING, "1")
+    print(f"Baselined {n_events} past activity/activities and {n_forms} speaker "
+          f"session(s) as already-announced (no email sent for the back catalogue).")
+
+
 def run(db_path="css_is.db", dry_run=False, jobs=None):
     """Run the selected jobs (all of them if `jobs` is None/empty). Returns a
     {job_name: emails_sent} report — empty when there is no CSS_BASE_URL to
@@ -388,6 +413,7 @@ def run(db_path="css_is.db", dry_run=False, jobs=None):
     report = {}
     try:
         st.init_db(conn)
+        _baseline_once(conn, dry_run=dry_run)
         if "events" in jobs:
             report["events"] = remind_tomorrows_events(conn, base, dry_run=dry_run)
         if "wellness_expiry" in jobs:

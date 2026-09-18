@@ -185,6 +185,57 @@ def test_run_uses_css_base_url(tmp_path, sent, monkeypatch):
     assert sent[0]["to"] == "envcheck@test.local"
 
 
+# ------------------------------------------------------ backlog baseline ---
+
+def test_first_run_baselines_the_back_catalogue_instead_of_announcing_it(
+        tmp_path, sent, monkeypatch):
+    """The whole back catalogue reads as "not emailed yet" on a database that
+    predates these jobs. Without a baseline the first sweep would mail every
+    organizer, chief and speaker about every activity the bureau has ever
+    run, in one burst, against a relay capped at ~1500 recipients a day."""
+    monkeypatch.setenv("CSS_BASE_URL", "https://css.example")
+    db = str(tmp_path / "backlog.db")
+    conn = st.connect(db)
+    st.init_db(conn)
+    st.create_admin_user(conn, "sr-a-creator@test.local", "x", "y", "section_manager")
+    conn.commit()
+    old = (tz.now_local() - timedelta(days=400)).date().isoformat()
+    _bureau_event_for_csm(conn, old)                       # last year's activity
+    _rp_form(conn, old)                                    # last year's session
+    conn.close()
+
+    report = sr.run(db_path=db, jobs={"csm_rp", "csm_activity"})
+    assert report == {"csm_rp": 0, "csm_activity": 0}
+    assert sent == []                                      # nothing announced
+
+    # And the history is settled, so a later run stays quiet too...
+    assert sr.run(db_path=db, jobs={"csm_rp", "csm_activity"}) == {"csm_rp": 0,
+                                                                   "csm_activity": 0}
+    # ...while an activity that concludes AFTER the baseline is announced normally.
+    conn = st.connect(db)
+    _bureau_event_for_csm(conn, (tz.now_local() - timedelta(days=4)).date().isoformat())
+    conn.close()
+    assert sr.run(db_path=db, jobs={"csm_activity"}) == {"csm_activity": 1}
+    assert sent[0]["to"] == "sr-a-creator@test.local"
+
+
+def test_baseline_dry_run_changes_nothing(tmp_path, sent, monkeypatch):
+    monkeypatch.setenv("CSS_BASE_URL", "https://css.example")
+    db = str(tmp_path / "backlog_dry.db")
+    conn = st.connect(db)
+    st.init_db(conn)
+    st.create_admin_user(conn, "sr-a-creator@test.local", "x", "y", "section_manager")
+    conn.commit()
+    _bureau_event_for_csm(conn, (tz.now_local() - timedelta(days=400)).date().isoformat())
+    conn.close()
+    sr.run(db_path=db, dry_run=True, jobs={"csm_activity"})
+    conn = st.connect(db)
+    assert st.get_setting(conn, sr._BASELINE_SETTING) is None
+    assert len(st.list_concluded_events_pending_csm_email(conn, 3)) == 1
+    conn.close()
+    assert sent == []
+
+
 # ------------------------------------------------- the app's daily sweep ---
 
 def test_scheduler_fires_the_sweep_once_a_day(app_mod, db_path, monkeypatch):

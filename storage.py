@@ -5018,6 +5018,31 @@ def list_concluded_events_pending_csm_email(conn, delay_days):
     return out
 
 
+def baseline_csm_results_emailed(conn, delay_days):
+    """Stamp every activity and speaker session that has ALREADY concluded as
+    though its results email had gone out — without sending anything. Returns
+    (events, forms) stamped.
+
+    The two CSM jobs ask "has this been emailed yet?", and on a database that
+    predates them the honest answer for the entire back catalogue is "no". So
+    the first sweep would mail every organizer, every section chief and every
+    speaker about every activity the bureau has ever run, all at once, against
+    a relay capped at ~1500 recipients a day (docs/MAIL_RELAY_SETUP.md) — which
+    would also be the day invites and password resets stopped going out. The
+    automation is for activities that conclude from here on; history gets
+    baselined, not announced.
+
+    Only what is already concluded: anything still running keeps its NULL and
+    is picked up normally when its time comes."""
+    events = list_concluded_events_pending_csm_email(conn, delay_days)
+    forms = list_concluded_rp_forms_pending_csm_email(conn, delay_days)
+    for event_id in events:
+        mark_event_csm_results_emailed(conn, event_id)
+    for row in forms:
+        mark_form_csm_results_emailed(conn, row["form_id"])
+    return len(events), len(forms)
+
+
 def mark_event_csm_results_emailed(conn, event_id):
     """Record that the organizer's overall-CSM-results email went out for this
     event, so a later run of the reminder job never sends it twice."""
