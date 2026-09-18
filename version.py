@@ -17,10 +17,23 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.95"
+APP_VERSION = "2.96"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.96",
+        "date": "September 18, 2026",
+        "summary": "The wellness break form's time slots can now be paired "
+                   "with an exact minute, for anyone who needs one that "
+                   "isn't on the half-hour.",
+        "changes": [
+            "The new time-slot grid only offered times on the hour or "
+            "half-hour. A \"Need a specific minute?\" box next to it now "
+            "lets you type any exact time (like 9:16 or 2:11 PM) instead — "
+            "it's checked against the same rules when you submit.",
+        ],
+    },
     {
         "version": "2.95",
         "date": "September 18, 2026",

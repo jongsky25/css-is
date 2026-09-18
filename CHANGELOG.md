@@ -1,5 +1,26 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-18 (v2.96 — wellness apply form: exact-time fallback next to the slot grid)
+
+Follow-up to v2.95: the new time-slot grid only offers 30-minute-aligned
+starts (07:00, 07:30, …), so a break that genuinely needs an odd minute
+(14:11, 09:16) had no way to be entered — a real regression against the old
+free-text `<input type="time">`, which took any minute.
+
+- **`templates/wellness_apply.html`**: a "Need a specific minute?" control
+  sits next to the slot grid — a `<input type="time">` paired with its own
+  `name="start_time"` radio (same field, same radio group as the grid's
+  pills, so the POST contract is untouched). Typing a value checks that
+  radio with the typed value; picking a grid pill afterward clears the box
+  back out (native radio-group exclusivity handles the reverse). This path
+  isn't pre-validated against `wellness_day_slots` the way grid pills are —
+  computing that for every possible minute isn't worth it for what's an
+  escape hatch — it's checked by `create_wellness_claim` on submit, exactly
+  as the old free-text field always was.
+- A resubmitted `start_time` that doesn't match any rendered pill (an odd
+  minute carried over from a validation error) now falls back into the
+  exact-time box on page load instead of silently not being reselected.
+
 ## 2026-09-18 (v2.95 — wellness apply form: pick a date and time slot, not type them)
 
 The apply form's date/time fields were two disconnected native `<input

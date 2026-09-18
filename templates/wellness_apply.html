@@ -53,6 +53,10 @@
   .slotpill.disabled { opacity:.4; cursor:not-allowed; text-decoration:line-through; }
   .slotgrid:empty::before { content:"Pick a date first to see available times.";
                              color:var(--soft); font-size:.85rem; font-weight:400; }
+  .customtime { display:flex; align-items:center; gap:.4rem; margin-top:.5rem; }
+  .customtime label { font-weight:400; font-size:.85rem; color:var(--soft); margin:0; }
+  .customtime input[type="radio"] { position:absolute; opacity:0; width:1px; height:1px; }
+  .customtime input[type="time"] { width:auto; }
 </style>
 
 {{ page_header("Request a wellness break",
@@ -103,7 +107,12 @@
       <label>Start time</label>
       <div class="slotgrid" id="slotGrid" role="radiogroup" aria-label="Start time"
            data-slots='{{ slots_by_date|tojson }}' data-initial="{{ form.get('start_time', '') }}"></div>
-      <div class="help">File it at least {{ min_lead }} minutes ahead so your approver has time to see it. Times marked 🍴 cross lunch — coordinate with your section so service isn't disrupted. Greyed-out times don't fit the rules; hover one for why.</div>
+      <div class="customtime">
+        <input type="radio" name="start_time" id="customTimeRadio" value="" required>
+        <label for="customTimeInput">Need a specific minute?</label>
+        <input type="time" id="customTimeInput" aria-label="Exact start time">
+      </div>
+      <div class="help">File it at least {{ min_lead }} minutes ahead so your approver has time to see it. Times marked 🍴 cross lunch — coordinate with your section so service isn't disrupted. Greyed-out times don't fit the rules; hover one for why. An exact time you type isn't pre-checked — it's validated the same way when you submit.</div>
     </div>
 
     <div class="field">
@@ -226,6 +235,24 @@
     r.addEventListener("change", function () { renderSlots(null); });
   });
 
+  // The slot grid only offers times on the 30-minute step. Typing an exact
+  // time (e.g. 14:11) checks this separate "start_time" radio with that exact
+  // value instead — it rides the same POST field, just skips the pre-check
+  // the grid gives its own slots (create_wellness_claim still validates it).
+  var customInput = document.getElementById("customTimeInput");
+  var customRadio = document.getElementById("customTimeRadio");
+  if (customInput && customRadio) {
+    customInput.addEventListener("input", function () {
+      customRadio.value = customInput.value;
+      customRadio.checked = !!customInput.value;
+    });
+    document.addEventListener("change", function (e) {
+      if (e.target.name === "start_time" && e.target !== customRadio) {
+        customInput.value = "";
+      }
+    });
+  }
+
   // "Others" needs a specification; reveal + require it only when chosen.
   var otherRow = document.getElementById("otherSpecifyRow");
   var otherField = document.getElementById("activity_other");
@@ -241,6 +268,14 @@
 
   refresh();
   renderSlots(initialStartTime);
+  // a resubmitted value the grid didn't have a matching pill for (an odd
+  // minute, or a date/length combo with no such slot) falls back to the
+  // exact-time box instead of silently vanishing
+  if (initialStartTime && !document.querySelector('input[name="start_time"]:checked')) {
+    customInput.value = initialStartTime;
+    customRadio.value = initialStartTime;
+    customRadio.checked = true;
+  }
   syncOther();
 })();
 </script>
