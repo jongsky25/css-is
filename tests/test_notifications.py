@@ -262,6 +262,77 @@ def test_registration_without_email_transport_does_not_crash(app_mod, manager, d
     assert r.status_code == 303
 
 
+# --------------------------------------------------------- certificate -----
+
+def _form_tokens(db_path, tok):
+    conn = st.connect(db_path)
+    rows = conn.execute(
+        """SELECT fi.qr_token FROM event_form ef
+           JOIN event e ON e.id=ef.event_id
+           JOIN form_instance fi ON fi.id=ef.form_instance_id
+           WHERE e.event_token=? ORDER BY ef.ordinal""", (tok,)).fetchall()
+    conn.close()
+    return [r[0] for r in rows]
+
+
+def test_certificate_ready_emails_once_on_completion(app_mod, client, manager, db_path, sent):
+    import re
+    rp = st.connect(db_path).execute(
+        "SELECT id FROM resource_person WHERE is_internal=1 LIMIT 1").fetchone()
+    r = manager.post("/create", data={
+        "event_type": "bureau", "activity_name": "NTF Certificate Forum",
+        "event_date": "2026-07-11", "venue": "Hall A", "qr_mode": "combined",
+        "rp_id": str(rp[0]), "topic": "Keynote",
+    }, follow_redirects=True)
+    tok = re.search(r"/e/([0-9a-f]{12})", r.text).group(1)
+    conn = st.connect(db_path)
+    ev = st.get_event(conn, tok)
+    st.set_event_certificate(conn, ev["id"], enabled=True, signatory_rp_id=None, verb="attended")
+    conn.close()
+    sent.clear()
+    r = client.post(f"/e/{tok}", data={
+        "name": "Ivy Santos", "email": "ntf-ivy@test.local", "sex": "F",
+        "affiliation": "DOH", "consent": "on"}, follow_redirects=False)
+    att = re.search(r"att=(\d+)", r.headers["location"]).group(1)
+    sent.clear()   # drop the registration confirmation — only care about the certificate
+    for ft in _form_tokens(db_path, tok):
+        client.post(f"/r/{ft}", data={"seq": "", "att": att, "A": "7", "B1": "7",
+                    "C": "4", "remarks": "ok"})
+    cert_mails = [c for c in sent if "certificate" in c["subject"].lower()]
+    assert len(cert_mails) == 1
+    assert cert_mails[0]["to"] == "ntf-ivy@test.local"
+    assert f"/e/{tok}/certificate?fmt=pdf&att={att}" in cert_mails[0]["body"]
+
+    # Resubmitting (e.g. the attendee revisits and the offline queue replays)
+    # must never send a second copy of the same email.
+    for ft in _form_tokens(db_path, tok):
+        client.post(f"/r/{ft}", data={"seq": "", "att": att, "A": "7", "B1": "7",
+                    "C": "4", "remarks": "ok"})
+    cert_mails = [c for c in sent if "certificate" in c["subject"].lower()]
+    assert len(cert_mails) == 1
+
+
+def test_no_certificate_email_when_certificate_not_enabled(app_mod, client, manager, db_path, sent):
+    import re
+    rp = st.connect(db_path).execute(
+        "SELECT id FROM resource_person WHERE is_internal=1 LIMIT 1").fetchone()
+    r = manager.post("/create", data={
+        "event_type": "bureau", "activity_name": "NTF No-Cert Forum",
+        "event_date": "2026-07-12", "venue": "Hall A", "qr_mode": "combined",
+        "rp_id": str(rp[0]), "topic": "Keynote",
+    }, follow_redirects=True)
+    tok = re.search(r"/e/([0-9a-f]{12})", r.text).group(1)
+    r = client.post(f"/e/{tok}", data={
+        "name": "Jun Lee", "email": "ntf-jun@test.local", "sex": "M",
+        "affiliation": "NON-DOH", "consent": "on"}, follow_redirects=False)
+    att = re.search(r"att=(\d+)", r.headers["location"]).group(1)
+    sent.clear()
+    for ft in _form_tokens(db_path, tok):
+        client.post(f"/r/{ft}", data={"seq": "", "att": att, "A": "7", "B1": "7",
+                    "C": "4", "remarks": "ok"})
+    assert not [c for c in sent if "certificate" in c["subject"].lower()]
+
+
 # --------------------------------------------------------- SMTP unconfigured ---
 
 def test_nothing_sent_when_smtp_unconfigured(app_mod, notif_org, monkeypatch):

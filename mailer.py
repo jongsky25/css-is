@@ -340,6 +340,27 @@ def registration_confirmed_message(name, link, event_title, event_date=None, ven
 # ---- action-needed notifications --------------------------------------------
 # Each returns (subject, plain_text_body, html_body), same shape as invite/reset.
 
+def certificate_ready_message(name, link, event_title):
+    """Returns (subject, plain_text_body, html_body). Sent once, the moment an
+    attendee finishes every feedback form on an activity that has certificates
+    enabled — mirrors the button that already appears on the thanks/link-tree
+    pages, for the participant who doesn't come back to click it."""
+    subject = f"Your Certificate of Appearance is ready — {event_title}"
+    body = (f"Hello {name or 'there'},\n\n"
+            f"Thanks for completing your feedback for “{event_title}”. Your "
+            f"Certificate of Appearance is ready to download:\n\n"
+            f"  {link}\n")
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="Your certificate is ready",
+        intro=(f"Thanks for completing your feedback for &ldquo;{_e(event_title)}&rdquo;. "
+               f"Your Certificate of Appearance is ready to download."),
+        cta_label="Download your certificate",
+        link=link,
+    )
+    return subject, body, html
+
+
 def event_created_message(creator_name, title, event_date, link):
     subject = f"Event created — {title}"
     body = (f"Hello {creator_name or 'there'},\n\n"

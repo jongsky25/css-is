@@ -635,6 +635,11 @@ def _add_missing_columns(conn):
         # NOT nulled by the retention purge.
         if "honorific" not in att_cols:
             conn.execute("ALTER TABLE attendee ADD COLUMN honorific TEXT")
+        # Set the first (and only) time the "your certificate is ready" email goes
+        # out, so a participant who revisits the link-tree or resubmits a form
+        # after finishing feedback doesn't get emailed the certificate link twice.
+        if "certificate_emailed_at" not in att_cols:
+            conn.execute("ALTER TABLE attendee ADD COLUMN certificate_emailed_at TEXT")
     # Manual demographic counts for older activities that predate capture. Keyed by
     # the activity's representative form_instance id (the event id the report uses).
     conn.execute(
@@ -1439,6 +1444,19 @@ def attendee_completed_feedback(conn, event_id, attendee_id):
            WHERE ef.event_id = ? AND r.attendee_id = ?""",
         (event_id, attendee_id)).fetchone()[0]
     return answered >= total
+
+
+def mark_certificate_emailed(conn, attendee_id):
+    """Record that the "your certificate is ready" email went out for this
+    attendee. Returns True the first time (the caller should send the email),
+    False if it was already sent (an UPDATE ... WHERE IS NULL touches no row) —
+    so a retry or a second feedback-completing submission never double-sends."""
+    cur = conn.execute(
+        "UPDATE attendee SET certificate_emailed_at = ? "
+        "WHERE id = ? AND certificate_emailed_at IS NULL",
+        (tz.now_iso(), attendee_id))
+    conn.commit()
+    return cur.rowcount > 0
 
 
 def attendee_answered_forms(conn, event_id, attendee_id):

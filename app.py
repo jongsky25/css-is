@@ -7059,6 +7059,14 @@ async def submit_rating(request: Request, qr_token: str):
                     if ev.get("ending_message"):
                         ending_message = amsg.personalize(ev["ending_message"], att_row["name"])
                     cert_ready = bool(ev.get("certificate_enabled"))
+                    if (cert_ready and att_row.get("email")
+                            and mailer.email_configured()
+                            and st.mark_certificate_emailed(conn, attendee_id)):
+                        cert_link = (f"{_base_url(request)}/e/{event_token}/certificate"
+                                    f"?fmt=pdf&att={attendee_id}")
+                        subj, body, html = mailer.certificate_ready_message(
+                            att_row["name"], cert_link, ev["title"])
+                        mailer.send(att_row["email"], subj, body, html=html)
     finally:
         conn.close()
 
