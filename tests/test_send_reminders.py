@@ -185,6 +185,58 @@ def test_run_uses_css_base_url(tmp_path, sent, monkeypatch):
     assert sent[0]["to"] == "envcheck@test.local"
 
 
+# ------------------------------------------------------- the admin gate ---
+
+def test_disabled_job_is_absent_from_the_report_and_sends_nothing(
+        tmp_path, sent, monkeypatch, on_digest_day):
+    monkeypatch.setenv("CSS_BASE_URL", "https://css.example")
+    db = str(tmp_path / "gated.db")
+    conn = st.connect(db)
+    st.init_db(conn)
+    chief, staff = _wellness_org(conn)
+    st.create_wellness_claim(conn, staff, _future_weekday().isoformat(), "10:00", "exercise")
+    st.set_email_feature(conn, "job_digest", False)
+    conn.commit()
+    conn.close()
+
+    report = sr.run(db_path=db, jobs={"digest"})
+    assert "digest" not in report
+    assert sent == []
+
+
+def test_enabled_job_is_unaffected_by_the_gate(tmp_path, sent, monkeypatch, on_digest_day):
+    monkeypatch.setenv("CSS_BASE_URL", "https://css.example")
+    db = str(tmp_path / "ungated.db")
+    conn = st.connect(db)
+    st.init_db(conn)
+    chief, staff = _wellness_org(conn)
+    st.create_wellness_claim(conn, staff, _future_weekday().isoformat(), "10:00", "exercise")
+    conn.commit()
+    conn.close()
+
+    report = sr.run(db_path=db, jobs={"digest"})
+    assert report == {"digest": 1}
+    assert sent[0]["to"] == "sr-w-chief@test.local"
+
+
+def test_dry_run_names_a_disabled_job_instead_of_running_it(
+        tmp_path, sent, monkeypatch, capsys, on_digest_day):
+    monkeypatch.setenv("CSS_BASE_URL", "https://css.example")
+    db = str(tmp_path / "gated_dry.db")
+    conn = st.connect(db)
+    st.init_db(conn)
+    chief, staff = _wellness_org(conn)
+    st.create_wellness_claim(conn, staff, _future_weekday().isoformat(), "10:00", "exercise")
+    st.set_email_feature(conn, "job_digest", False)
+    conn.commit()
+    conn.close()
+
+    report = sr.run(db_path=db, dry_run=True, jobs={"digest"})
+    assert "digest" not in report
+    assert sent == []
+    assert "digest: skipped (turned off in /admin/email)" in capsys.readouterr().out
+
+
 # ------------------------------------------------------ backlog baseline ---
 
 def test_first_run_baselines_the_back_catalogue_instead_of_announcing_it(
