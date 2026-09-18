@@ -1765,7 +1765,7 @@ def invalidate_atoms():
 #   directory, hide, wipe, user-management) additionally check a capability.
 # =====================================================================
 
-_PUBLIC_PREFIXES = ("/r/", "/photo/", "/e/", "/static/", "/lang/")
+_PUBLIC_PREFIXES = ("/r/", "/photo/", "/e/", "/static/", "/lang/", "/wellness/decide/")
 _PUBLIC_EXACT = {"/seq", "/login", "/logout", "/favicon.ico",
                  "/set-password", "/forgot", "/reset-password", "/health",
                  "/sw.js", "/manifest.webmanifest",
@@ -2264,6 +2264,15 @@ def _invite_link(request, uid, pw_hash):
 def _reset_link(request, uid, pw_hash):
     token = auth.make_action_token(uid, auth.PURPOSE_RESET, pw_hash)
     return f"{_base_url(request)}/reset-password?token={quote(token)}"
+
+
+def _wellness_decide_links(request, claim_id, approver_uid):
+    """(approve_link, deny_link) for the decide-by-email flow — same signed
+    token for both, differing only by the `action` query param that
+    pre-selects the confirm page's decision."""
+    token = auth.make_wellness_decide_token(claim_id, approver_uid)
+    base = f"{_base_url(request)}/wellness/decide/{claim_id}?token={quote(token)}"
+    return f"{base}&action=approve", f"{base}&action=deny"
 
 
 def _provision_account(conn, request, rp, role, inviter):
@@ -13600,9 +13609,10 @@ async def wellness_apply_submit(request: Request):
         claim = st.get_wellness_claim(conn, claim_id)
         for approver_id in st.get_approvers_for(conn, user["id"]):
             approver_name = _person_name(conn, approver_id)
+            approve_link, deny_link = _wellness_decide_links(request, claim_id, approver_id)
             subj, body, html = mailer.wellness_pending_message(
                 approver_name, claimant_name, claim["break_date"], claim["start_time"],
-                claim["hours"], approvals_link)
+                claim["hours"], approvals_link, approve_link=approve_link, deny_link=deny_link)
             _notify_account(conn, approver_id, subj, body, html=html)
     finally:
         conn.close()
@@ -13643,6 +13653,19 @@ def wellness_approvals(request: Request, err: str = "", ok: str = ""):
     })
 
 
+def _decide_wellness_and_notify(conn, request, claim_id, user, action, note):
+    """Decide a claim (raises PermissionError/ValueError exactly like
+    storage.decide_wellness_claim) and email the claimant. Returns (claim, verb).
+    Shared by the in-app approvals queue and the decide-by-email link below."""
+    claim = st.decide_wellness_claim(conn, claim_id, user, action, note)
+    verb = "approved" if action == "approve" else "denied"
+    subj, body, html = mailer.wellness_decided_message(
+        claim["person_name"], verb, claim["break_date"], claim["decide_note"],
+        f"{_base_url(request)}/wellness")
+    _notify_account(conn, claim["user_id"], subj, body, html=html)
+    return claim, verb
+
+
 @app.post("/wellness/claims/{claim_id}/decide")
 async def wellness_decide(request: Request, claim_id: int):
     user = request.state.user
@@ -13651,25 +13674,84 @@ async def wellness_decide(request: Request, claim_id: int):
     conn = get_conn()
     try:
         try:
-            claim = st.decide_wellness_claim(conn, claim_id, user, action, p.get("note"))
+            claim, verb = _decide_wellness_and_notify(conn, request, claim_id, user, action, p.get("note"))
         except PermissionError:
             return _wellness_forbid(request)
         except ValueError as e:
             return RedirectResponse(f"/wellness/approvals?err={quote(str(e))}",
                                     status_code=303)
-        verb = "approved" if action == "approve" else "denied"
         _audit(request, conn, f"wellness_{action}", target_type="wellness_claim",
                target_id=claim_id,
                summary=f"{verb} {claim['person_name']}'s wellness break "
                        f"on {claim['break_date']} {claim['start_time']}")
-        subj, body, html = mailer.wellness_decided_message(
-            claim["person_name"], verb, claim["break_date"], claim["decide_note"],
-            f"{_base_url(request)}/wellness")
-        _notify_account(conn, claim["user_id"], subj, body, html=html)
     finally:
         conn.close()
     return RedirectResponse(f"/wellness/approvals?ok={quote(verb.capitalize() + ' — done.')}",
                             status_code=303)
+
+
+def _wellness_link_approver(conn, claim_id, token):
+    """The admin account a decide-by-email token is valid for on this claim, or
+    None if the token itself is bad/expired/for a different claim, or the
+    account is inactive. Doesn't check claim status or org-chart eligibility —
+    decide_wellness_claim() is the single source of truth for those, and is
+    checked again (for real) on submit."""
+    cid, uid = auth.verify_wellness_decide_token(token)
+    if cid != claim_id or not uid:
+        return None
+    approver = st.get_admin_user_by_id(conn, uid)
+    return approver if approver and approver.get("active") else None
+
+
+@app.get("/wellness/decide/{claim_id}", response_class=HTMLResponse)
+def wellness_decide_link_form(request: Request, claim_id: int, token: str = "", action: str = "approve"):
+    """The confirm page a decide-by-email link opens — a preview + a button
+    the approver must actually click, so a mail client or link-scanner
+    prefetching the GET can't silently approve/deny anything on its own."""
+    if action not in ("approve", "deny"):
+        action = "approve"
+    conn = get_conn()
+    try:
+        approver = _wellness_link_approver(conn, claim_id, token)
+        claim = st.get_wellness_claim(conn, claim_id) if approver else None
+        decidable = bool(claim and claim["status"] == "pending"
+                         and st.is_approver_for(conn, approver, claim["user_id"]))
+    finally:
+        conn.close()
+    return templates.TemplateResponse(request, "wellness_decide_link.html", {
+        "valid": decidable, "claim": claim, "token": token, "action": action,
+        "show_scope": False,
+    }, status_code=200 if decidable else 400)
+
+
+@app.post("/wellness/decide/{claim_id}")
+async def wellness_decide_link_submit(request: Request, claim_id: int):
+    p = await _posted(request)
+    token = p.get("token", "")
+    action = p.get("action", "")
+    conn = get_conn()
+    try:
+        approver = _wellness_link_approver(conn, claim_id, token)
+        if not approver or action not in ("approve", "deny"):
+            return templates.TemplateResponse(request, "wellness_decide_link.html",
+                {"valid": False, "show_scope": False}, status_code=400)
+        try:
+            claim, verb = _decide_wellness_and_notify(conn, request, claim_id, approver, action, p.get("note"))
+        except (PermissionError, ValueError):
+            return templates.TemplateResponse(request, "wellness_decide_link.html", {
+                "valid": False, "show_scope": False,
+                "err": "That request has already been decided, or isn't yours to decide.",
+            }, status_code=400)
+        st.audit(conn, approver["username"], f"wellness_{action}",
+                 target_type="wellness_claim", target_id=claim_id,
+                 ip=request.client.host if request.client else None,
+                 summary=f"{verb} {claim['person_name']}'s wellness break "
+                         f"on {claim['break_date']} {claim['start_time']} (via email link)")
+    finally:
+        conn.close()
+    return templates.TemplateResponse(request, "wellness_decide_link.html", {
+        "valid": True, "done": True, "verb": verb, "claim": claim, "show_scope": False,
+    })
 
 
 @app.get("/wellness/claims/{claim_id}/complete", response_class=HTMLResponse)

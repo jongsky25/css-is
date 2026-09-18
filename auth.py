@@ -276,6 +276,47 @@ def verify_recovery_token(token, now=None):
 
 
 # ---------------------------------------------------------------------
+# Wellness decide-by-email tokens — lets a chief approve/deny a pending break
+# request straight from the notification email, without logging in. Signed
+# with the server secret directly (like the recovery tokens above, not tied
+# to a password hash). Reuse after the fact is naturally capped: once the
+# claim is no longer pending, decide_wellness_claim() refuses it regardless
+# of how a still-unexpired token is presented.
+# ---------------------------------------------------------------------
+
+PURPOSE_WELLNESS_DECIDE = "wellness_decide"
+_WELLNESS_DECIDE_MAX_AGE = 14 * 24 * 3600   # generous; the claim itself is long-decided by then
+
+
+def make_wellness_decide_token(claim_id, approver_uid, issued_at=None):
+    """Signed token letting `approver_uid` decide wellness claim `claim_id` by link."""
+    payload = {"cid": int(claim_id), "uid": int(approver_uid), "p": PURPOSE_WELLNESS_DECIDE,
+               "iat": int(issued_at if issued_at is not None else time.time())}
+    body = _b64e(json.dumps(payload, separators=(",", ":")).encode("utf-8"))
+    sig = hmac.new(_secret(), body.encode("ascii"), hashlib.sha256).hexdigest()
+    return f"{body}.{sig}"
+
+
+def verify_wellness_decide_token(token, now=None):
+    """Validate signature + purpose + age; return (claim_id, approver_uid) or (None, None)."""
+    if not token or "." not in token:
+        return None, None
+    body, sig = token.rsplit(".", 1)
+    expect = hmac.new(_secret(), body.encode("ascii"), hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(sig, expect):
+        return None, None
+    try:
+        payload = json.loads(_b64d(body))
+    except (ValueError, json.JSONDecodeError):
+        return None, None
+    if payload.get("p") != PURPOSE_WELLNESS_DECIDE:
+        return None, None
+    if (now if now is not None else time.time()) - payload.get("iat", 0) > _WELLNESS_DECIDE_MAX_AGE:
+        return None, None
+    return payload.get("cid"), payload.get("uid")
+
+
+# ---------------------------------------------------------------------
 # Email + password helpers
 # ---------------------------------------------------------------------
 

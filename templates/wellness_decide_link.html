@@ -1,0 +1,47 @@
+{% extends "public_layout.html" %}
+{% block title %}Wellness break decision — Office Connect{% endblock %}
+
+{% block content %}
+<div class="pub-card" style="max-width:440px; margin:8vh auto 0;">
+  <div style="font-weight:800; font-size:1.1rem;">CSS<span style="color:var(--accent);">·</span>IS</div>
+
+  {% if not valid %}
+    <h1 style="font-size:1.25rem; margin:.8rem 0 .2rem;">This link isn't valid</h1>
+    <p class="muted small" style="margin:0 0 1.2rem;">
+      {{ err or "It may have expired, already been used, or the request may have already been decided by someone else." }}
+    </p>
+    <div class="small" style="text-align:center;"><a href="/login">Sign in to Office Connect</a></div>
+
+  {% elif done %}
+    <h1 style="font-size:1.25rem; margin:.8rem 0 .2rem;">
+      {{ "Approved" if verb == "approved" else "Denied" }}
+    </h1>
+    <p class="muted small" style="margin:0 0 1.2rem;">
+      {{ claim.person_name }}'s wellness break on {{ claim.break_date }} at {{ claim.start_time }}
+      was {{ verb }}. They've been notified by email.
+    </p>
+    <div class="small" style="text-align:center;"><a href="/login">Sign in for the full dashboard</a></div>
+
+  {% else %}
+    <h1 style="font-size:1.25rem; margin:.8rem 0 .2rem;">Confirm your decision</h1>
+    <p class="muted small" style="margin:0 0 1.2rem;">
+      <strong>{{ claim.person_name }}</strong>{% if claim.section %} · {{ claim.section }}{% endif %}<br>
+      {{ claim.break_date }} at {{ claim.start_time }} · {{ claim.hours }}h · {{ claim.activity_label }}
+      {% if claim.note %}<br><em>“{{ claim.note }}”</em>{% endif %}
+    </p>
+    <form method="post" action="/wellness/decide/{{ claim.id }}" data-loading="Saving…">
+      <input type="hidden" name="token" value="{{ token }}">
+      <div class="field" style="display:flex; gap:1.2rem; margin-bottom:.8rem;">
+        <label><input type="radio" name="action" value="approve" {% if action == 'approve' %}checked{% endif %}> Approve</label>
+        <label><input type="radio" name="action" value="deny" {% if action == 'deny' %}checked{% endif %}> Deny</label>
+      </div>
+      <div class="field">
+        <label for="note">Note (optional)</label>
+        <input id="note" name="note" type="text" maxlength="300" placeholder="Shown to the requester">
+      </div>
+      <button type="submit" class="btn block" style="font-size:1rem; padding:.7rem;">Confirm</button>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}
+{% block foot %}{% endblock %}
