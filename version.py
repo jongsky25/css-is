@@ -17,10 +17,32 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.94"
+APP_VERSION = "2.95"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.95",
+        "date": "September 18, 2026",
+        "summary": "Requesting a wellness break now shows you which dates and "
+                   "times are actually open, instead of making you type them "
+                   "and find out after submitting.",
+        "changes": [
+            "The wellness break request form now shows the day as tappable "
+            "date buttons and the start time as a grid of time slots, "
+            "instead of the old calendar/clock text boxes. Times that "
+            "wouldn't be allowed (too soon, already booked, or no hours "
+            "left that week) are greyed out with the reason shown when you "
+            "point at them, so you find out before you submit, not after.",
+            "Times that would run into your lunch break are marked with a "
+            "fork-and-plate icon as a heads-up to coordinate with your "
+            "section — they're still allowed, just flagged.",
+            "Fixed a bug where two overlapping break requests on the same "
+            "day (for example 9:00-10:00 and 9:30-10:30) could both be "
+            "accepted as long as their start times weren't exactly the "
+            "same.",
+        ],
+    },
     {
         "version": "2.94",
         "date": "September 18, 2026",
