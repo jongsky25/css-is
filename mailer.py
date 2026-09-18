@@ -737,3 +737,107 @@ def feedback_update_message(submitter_name, status, reply, link):
         extra_html=_note_box_html("Their reply", reply) if (reply or "").strip() else "",
     )
     return subject, body, html
+
+
+# ---- Admin email control center (docs/ADMIN_EMAIL_FEATURES_PLAN.md) --------
+#
+# The catalog of every gateable email feature, keyed the same as the
+# `email_feature.<key>` app_setting rows storage.py reads/writes. This module
+# stays DB-free by design (tests/test_mailer.py imports it standalone), so it
+# only holds the catalog — never the setting itself. `group` is
+# "transactional" (fires from a user action) or "scheduled" (one of
+# send_reminders._ALL_JOBS, 1:1 with the "job_*" keys below).
+#
+# key -> (label, hint, group)
+FEATURES = {
+    "event_created": (
+        "Event created",
+        "The organizer gets a confirmation with the monitor link.",
+        "transactional"),
+    "event_section_notify": (
+        "New event under your section",
+        "The section chief is told when someone creates an event under them.",
+        "transactional"),
+    "registration_confirmed": (
+        "Registration confirmed",
+        "A registrant gets their personal link back to the activity.",
+        "transactional"),
+    "certificate_ready": (
+        "Certificate ready",
+        "Sent the moment a participant finishes an activity's feedback.",
+        "transactional"),
+    "raffle_winner": (
+        "Raffle winner",
+        "A winner who registered with an email is told they won.",
+        "transactional"),
+    "wellness_approval": (
+        "Wellness approval needed",
+        "The approver is told a wellness break is waiting on their decision.",
+        "transactional"),
+    "wellness_decided": (
+        "Wellness decision result",
+        "The claimant is told their wellness break was approved or denied.",
+        "transactional"),
+    "awa_approval": (
+        "Work arrangement approval needed",
+        "The approver is told a work arrangement is waiting on their decision.",
+        "transactional"),
+    "awa_decided": (
+        "Work arrangement decision result",
+        "The requester is told their work arrangement was approved or denied.",
+        "transactional"),
+    "awa_reopened": (
+        "Filing reopened",
+        "Staff who missed a deadline are told an admin reopened it.",
+        "transactional"),
+    "feedback_update": (
+        "Spot Feedback update",
+        "The submitter is told about a status change or reply.",
+        "transactional"),
+    "job_events": (
+        "Day-before activity reminder",
+        "Registrants, the organizer, and the section chief are reminded the "
+        "day before an activity.",
+        "scheduled"),
+    "job_wellness_expiry": (
+        "Wellness decide-link expiry reminder",
+        "Re-notifies an approver whose one-click decide link is about to expire.",
+        "scheduled"),
+    "job_digest": (
+        "Weekly pending-approvals digest",
+        "A Monday bundle of everything still awaiting each approver's decision.",
+        "scheduled"),
+    "job_csm_rp": (
+        "CSM results — resource person",
+        "A resource person is emailed their own CSM results once concluded.",
+        "scheduled"),
+    "job_csm_activity": (
+        "CSM results — activity",
+        "An activity's organizer and chief get its overall CSM results.",
+        "scheduled"),
+    "job_wellness_file": (
+        "Wellness filing nudge",
+        "Nudges staff who haven't used this week's wellness entitlement yet.",
+        "scheduled"),
+    "job_awa_file": (
+        "Work arrangement filing nudge",
+        "Nudges staff with no work arrangement filed before the deadline.",
+        "scheduled"),
+}
+
+# Account/recovery mail: never admin-disableable (see the admin email plan,
+# D3) — turning any of these off could lock someone out of their own account
+# recovery. Listed in the console anyway, greyed, so an admin who goes
+# looking for the toggle learns why it isn't there instead of wondering if
+# it's a bug. key -> (label, why)
+ALWAYS_ON = {
+    "invite": (
+        "Account invite",
+        "A new account cannot be set up without it."),
+    "reset": (
+        "Password reset",
+        "Disabling it would lock people out of their account for good."),
+    "recovery": (
+        "Registration link re-send",
+        "A participant's only way back into a lost registration."),
+}
