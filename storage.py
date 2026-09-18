@@ -497,6 +497,11 @@ def _add_missing_columns(conn):
         # feeds deliberately skip. NULL on every pre-existing row (creation was never
         # recorded before this column), so the strip is forward-looking only.
         conn.execute("ALTER TABLE form_instance ADD COLUMN created_by TEXT")
+    if "csm_results_emailed_at" not in fi_cols:
+        # Set once the scheduled reminder job (send_reminders.py) has emailed a
+        # Type-3 (resource-person) form's speaker their own CSM results for it —
+        # makes the send idempotent regardless of how often that job runs.
+        conn.execute("ALTER TABLE form_instance ADD COLUMN csm_results_emailed_at TEXT")
     ou_cols = {row[1] for row in conn.execute("PRAGMA table_info(org_unit)")}
     if "short_name" not in ou_cols:
         conn.execute("ALTER TABLE org_unit ADD COLUMN short_name TEXT")
@@ -635,6 +640,11 @@ def _add_missing_columns(conn):
         # NOT nulled by the retention purge.
         if "honorific" not in att_cols:
             conn.execute("ALTER TABLE attendee ADD COLUMN honorific TEXT")
+        # Set the first (and only) time the "your certificate is ready" email goes
+        # out, so a participant who revisits the link-tree or resubmits a form
+        # after finishing feedback doesn't get emailed the certificate link twice.
+        if "certificate_emailed_at" not in att_cols:
+            conn.execute("ALTER TABLE attendee ADD COLUMN certificate_emailed_at TEXT")
     # Manual demographic counts for older activities that predate capture. Keyed by
     # the activity's representative form_instance id (the event id the report uses).
     conn.execute(
@@ -697,6 +707,11 @@ def _add_missing_columns(conn):
     # allowing many NULLs.
     if ev_cols and "slug" not in ev_cols:
         conn.execute("ALTER TABLE event ADD COLUMN slug TEXT")
+    if ev_cols and "csm_results_emailed_at" not in ev_cols:
+        # Set once the scheduled reminder job (send_reminders.py) has emailed the
+        # activity's creator/section chief its overall CSM results — makes the
+        # send idempotent regardless of how often that job runs.
+        conn.execute("ALTER TABLE event ADD COLUMN csm_results_emailed_at TEXT")
     conn.execute(
         "CREATE UNIQUE INDEX IF NOT EXISTS ux_event_slug ON event(slug) WHERE slug IS NOT NULL")
     # Comment raffle (opt-in per activity; face-to-face or online): when on, a
@@ -953,6 +968,12 @@ def _add_missing_columns(conn):
     wc_cols = {row[1] for row in conn.execute("PRAGMA table_info(wellness_claim)")}
     if wc_cols and "activity_other" not in wc_cols:
         conn.execute("ALTER TABLE wellness_claim ADD COLUMN activity_other TEXT")
+    if wc_cols and "decide_reminded_at" not in wc_cols:
+        # Set once the scheduled job (send_reminders.py) has re-notified this
+        # claim's approver that their one-click decide link is about to expire.
+        # The reminder window is days wide so a cron that misses a day still
+        # catches the claim; this column is what keeps it to ONE reminder.
+        conn.execute("ALTER TABLE wellness_claim ADD COLUMN decide_reminded_at TEXT")
     wr_cols = {row[1] for row in conn.execute("PRAGMA table_info(wellness_reflection)")}
     if wr_cols:
         if "usefulness" not in wr_cols:
@@ -1252,6 +1273,25 @@ def get_event(conn, event_token):
     return _event_row(row) if row else None
 
 
+def list_events_on_date(conn, event_date):
+    """Every event (bureau or outside) whose event_date is exactly this day —
+    the "happening tomorrow" query for the scheduled reminder job. A multi-day
+    activity only matches on its start date, same as everywhere else event_date
+    is treated as the day-of."""
+    rows = conn.execute(_EVENT_COLS + " WHERE e.event_date = ? ORDER BY e.id",
+                        (event_date,)).fetchall()
+    return [_event_row(r) for r in rows]
+
+
+def event_lead_org_id(conn, event_id):
+    """The org unit an event was filed under (lead_org_id), or None. Not part
+    of the _event_row shape (which only carries the resolved org NAME), so a
+    caller that needs to look up that unit's chiefs (org_unit_chiefs) queries
+    it here instead."""
+    row = conn.execute("SELECT lead_org_id FROM event WHERE id=?", (event_id,)).fetchone()
+    return row[0] if row else None
+
+
 # A slug is lowercase letters/digits in hyphen-joined words (no leading/trailing
 # or doubled hyphens): "les-quezon-june", "lhsi-2026". Short reserved words that
 # are top-level route names are refused so a vanity link can never read like one.
@@ -1439,6 +1479,19 @@ def attendee_completed_feedback(conn, event_id, attendee_id):
            WHERE ef.event_id = ? AND r.attendee_id = ?""",
         (event_id, attendee_id)).fetchone()[0]
     return answered >= total
+
+
+def mark_certificate_emailed(conn, attendee_id):
+    """Record that the "your certificate is ready" email went out for this
+    attendee. Returns True the first time (the caller should send the email),
+    False if it was already sent (an UPDATE ... WHERE IS NULL touches no row) —
+    so a retry or a second feedback-completing submission never double-sends."""
+    cur = conn.execute(
+        "UPDATE attendee SET certificate_emailed_at = ? "
+        "WHERE id = ? AND certificate_emailed_at IS NULL",
+        (tz.now_iso(), attendee_id))
+    conn.commit()
+    return cur.rowcount > 0
 
 
 def attendee_answered_forms(conn, event_id, attendee_id):
@@ -4902,6 +4955,77 @@ def event_report_url(conn, event_id):
     return f"/reports?type=3&activity={repr_id}"
 
 
+def list_concluded_rp_forms_pending_csm_email(conn, delay_days):
+    """Type-3 (resource-person) forms whose CSM results are ready to announce
+    to the speaker: they have at least one response, haven't been emailed yet,
+    and have concluded — either their own response window closed, or (when no
+    window was set) it's been `delay_days` since the activity ended, giving
+    respondents time to answer first. Returns [{form_id, rp_id, topic,
+    event_id}, ...], oldest first."""
+    # Minute precision and a strict `<`, exactly as app._window_state decides
+    # "closed" — so a form is never treated as concluded here while the survey
+    # page still accepts answers for it.
+    now = tz.now_local().isoformat(timespec="minutes")
+    date_cutoff = (tz.now_local() - timedelta(days=delay_days)).date().isoformat()
+    rows = conn.execute(
+        """SELECT fi.id, fi.rp_id, fi.topic, ef.event_id
+           FROM form_instance fi
+           JOIN event_form ef ON ef.form_instance_id = fi.id
+           WHERE fi.survey_type = 3
+             AND COALESCE(fi.archived, 0) = 0
+             AND fi.rp_id IS NOT NULL
+             AND fi.csm_results_emailed_at IS NULL
+             AND EXISTS (SELECT 1 FROM response r WHERE r.form_instance_id = fi.id)
+             AND ((fi.close_at IS NOT NULL AND fi.close_at < ?)
+                  OR (fi.close_at IS NULL AND COALESCE(fi.end_date, fi.event_date) <= ?))
+           ORDER BY fi.id""",
+        (now, date_cutoff)).fetchall()
+    return [{"form_id": r[0], "rp_id": r[1], "topic": r[2], "event_id": r[3]} for r in rows]
+
+
+def mark_form_csm_results_emailed(conn, form_instance_id):
+    """Record that the speaker's own-results email went out for this Type-3
+    form, so a later run of the reminder job never sends it twice."""
+    conn.execute("UPDATE form_instance SET csm_results_emailed_at = ? WHERE id = ?",
+                (tz.now_iso(), form_instance_id))
+    conn.commit()
+
+
+def list_concluded_events_pending_csm_email(conn, delay_days):
+    """Event ids whose overall CSM picture is ready to summarize for the
+    organizer: at least one response in, not yet emailed, and concluded —
+    either the shared response window (get_event_window) closed, or (when no
+    window was set) it's been `delay_days` since the activity ended."""
+    now = tz.now_local().isoformat(timespec="minutes")   # app._window_state's convention
+    date_cutoff = (tz.now_local() - timedelta(days=delay_days)).date().isoformat()
+    rows = conn.execute(
+        """SELECT e.id FROM event e
+           WHERE e.csm_results_emailed_at IS NULL
+             AND EXISTS (SELECT 1 FROM response r
+                         JOIN event_form ef ON ef.form_instance_id = r.form_instance_id
+                         WHERE ef.event_id = e.id)
+           ORDER BY e.id""").fetchall()
+    out = []
+    for (eid,) in rows:
+        win = get_event_window(conn, eid)
+        if win["close_at"]:
+            concluded = win["close_at"] < now
+        else:
+            ev = get_event_by_id(conn, eid)
+            concluded = bool(ev) and (ev.get("end_date") or ev.get("event_date") or "9999") <= date_cutoff
+        if concluded:
+            out.append(eid)
+    return out
+
+
+def mark_event_csm_results_emailed(conn, event_id):
+    """Record that the organizer's overall-CSM-results email went out for this
+    event, so a later run of the reminder job never sends it twice."""
+    conn.execute("UPDATE event SET csm_results_emailed_at = ? WHERE id = ?",
+                (tz.now_iso(), event_id))
+    conn.commit()
+
+
 def event_rp_results_url(conn, event_id):
     """Deep link to the Resource Persons report (Type-3) narrowed to ONE event's
     activity, or None if the event has no live RP forms yet.
@@ -5035,7 +5159,7 @@ def raffle_pool(conn, event_id):
     registration, the attendee's name (None when anonymous or after a retention
     purge — the code is then the only identifier). Returns oldest-first."""
     rows = conn.execute("""
-        SELECT r.id, r.submitted_at, r.remarks, fi.topic, a.name
+        SELECT r.id, r.submitted_at, r.remarks, fi.topic, a.name, a.email
         FROM response r
         JOIN event_form ef    ON ef.form_instance_id = r.form_instance_id
         JOIN form_instance fi ON fi.id = ef.form_instance_id
@@ -5059,12 +5183,13 @@ def raffle_pool(conn, event_id):
         if (text or "").strip():
             notes.setdefault(rid, []).append(text.strip())
     pool = []
-    for rid, when, remarks, topic, name in rows:
+    for rid, when, remarks, topic, name, email in rows:
         comment = (remarks or "").strip() or " · ".join(notes.get(rid, []))
         if not comment:
             continue
         pool.append({"response_id": rid, "code": claim_code(rid),
                      "name": (name or "").strip() or None,
+                     "email": (email or "").strip() or None,
                      "comment": comment, "topic": topic,
                      "when": (when or "")[:16].replace("T", " ")})
     return pool
@@ -5888,6 +6013,24 @@ def wellness_window_weeks(d=None):
             for i in range(WELLNESS_WINDOW_WEEKS)]
 
 
+def staff_without_wellness_claim_this_week(conn, week_start):
+    """Active accounts with no counted (pending/approved/completed)
+    wellness_claim for this week — the "you have unused wellness hours" nudge's
+    audience. Someone who's used even part of the entitlement isn't nudged
+    again; only those who haven't touched it at all this week. An archived
+    directory person (resigned/transferred out) is off the roster, same rule
+    work_arrangement_roster applies."""
+    qs = ",".join("?" * len(_WELLNESS_COUNTED))
+    rows = conn.execute(
+        f"""SELECT a.id, a.username FROM admin_user a
+            LEFT JOIN resource_person rp ON rp.id = a.rp_id
+            WHERE a.active = 1 AND rp.archived_at IS NULL
+              AND a.id NOT IN (SELECT user_id FROM wellness_claim
+                                WHERE week_start = ? AND status IN ({qs}))
+            ORDER BY a.username""", (week_start, *_WELLNESS_COUNTED)).fetchall()
+    return [{"id": r[0], "username": r[1]} for r in rows]
+
+
 def wellness_hours_used(conn, user_id, week_start):
     """Hours of the week's entitlement already spoken for (pending + approved +
     completed; denied/cancelled don't count)."""
@@ -5967,6 +6110,33 @@ def create_wellness_claim(conn, user_id, break_date, start_time, activity,
          (note or "").strip() or None, tz.now_iso()))
     conn.commit()
     return cur.lastrowid
+
+
+def list_stale_pending_wellness_claims(conn, min_age_days, max_age_days):
+    """Pending wellness_claim ids, not yet reminded about, whose age (off
+    created_at — when the original approval email went out, not the break
+    date) falls in [min_age_days, max_age_days).
+
+    The window is deliberately several days wide so a cron run that misses a
+    day still catches the claim before its decide link lapses; what keeps the
+    approver from being re-reminded every day of that window is
+    decide_reminded_at (see mark_wellness_decide_reminded), not the window."""
+    newest = (tz.now_local() - timedelta(days=min_age_days)).isoformat()
+    oldest = (tz.now_local() - timedelta(days=max_age_days)).isoformat()
+    rows = conn.execute(
+        "SELECT id FROM wellness_claim WHERE status='pending' "
+        "AND decide_reminded_at IS NULL "
+        "AND created_at > ? AND created_at <= ? ORDER BY id",
+        (oldest, newest)).fetchall()
+    return [r[0] for r in rows]
+
+
+def mark_wellness_decide_reminded(conn, claim_id):
+    """Record that the approver(s) of this claim have been re-notified about
+    their soon-to-expire decide link, so it only ever goes out once."""
+    conn.execute("UPDATE wellness_claim SET decide_reminded_at = ? WHERE id = ?",
+                (tz.now_iso(), claim_id))
+    conn.commit()
 
 
 def get_wellness_claim(conn, claim_id):
@@ -6997,6 +7167,34 @@ def clear_work_arrangement_reopen(conn, period_start):
     conn.execute("DELETE FROM work_arrangement_reopen WHERE period_start=?",
                  (period_start,))
     conn.commit()
+
+
+def staff_without_work_arrangement(conn, period_start):
+    """Active accounts that still owe a work arrangement for this period — who
+    an admin's reopen actually reaches, and who the filing nudge is for.
+
+    "Still owes" follows work_arrangement_roster's own rules rather than the
+    looser "has no row at all":
+      * only a LIVE filing (_WA_LIVE) settles the period — a denied or
+        withdrawn one frees it again, so that person still has to file;
+      * someone tagged "No AWA" for the period is out of the schedule, and
+        create_work_arrangement refuses their filing outright — nudging them
+        would send them at a door the app holds shut;
+      * an archived directory person (resigned/transferred out) is off the
+        roster even if their account was never deactivated."""
+    qs = ",".join("?" * len(_WA_LIVE))
+    rows = conn.execute(
+        f"""SELECT a.id, a.username FROM admin_user a
+            LEFT JOIN resource_person rp ON rp.id = a.rp_id
+            WHERE a.active = 1 AND rp.archived_at IS NULL
+              AND a.id NOT IN (SELECT user_id FROM work_arrangement
+                                WHERE period_start = ? AND status IN ({qs}))
+              AND a.id NOT IN (SELECT user_id FROM work_arrangement_noawa
+                                WHERE effective_from <= ?
+                                  AND (effective_to IS NULL OR ? < effective_to))
+            ORDER BY a.username""",
+        (period_start, *_WA_LIVE, period_start, period_start)).fetchall()
+    return [{"id": r[0], "username": r[1]} for r in rows]
 
 
 def _wa_check_period_open(conn, period_start, d=None):

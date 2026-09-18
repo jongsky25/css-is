@@ -55,6 +55,7 @@ from fastapi.responses import (FileResponse, HTMLResponse, JSONResponse,
                                RedirectResponse, Response, StreamingResponse)
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from starlette.background import BackgroundTask
 
 import css_is_engine as eng
 import storage as st
@@ -67,6 +68,7 @@ import report_docs
 import csm_report
 import auth
 import mailer
+import send_reminders
 import backups as bk
 import monitoring as mon
 import name_cleanup as ncl
@@ -2029,6 +2031,21 @@ def _notify_email(email, subject, body, html=None):
         pass
 
 
+def _mail_after_response(email, subject, body, html=None):
+    """A BackgroundTask that sends this email once the response is already on
+    its way to the browser.
+
+    For the PARTICIPANT-facing sends (registration confirmation, the
+    certificate-ready notice, the live raffle draw). A send costs a round trip
+    to the mail relay and waits up to 30 s on its timeout (mailer._RELAY_TIMEOUT)
+    — charged, inline, to someone standing in a venue tapping Submit, or to the
+    draw screen waiting on its JSON. Deferring it keeps a slow or unreachable
+    relay from ever showing up as a slow page. The admin-side notifications
+    stay inline: they are low-frequency, and there the actor is better served
+    by the send finishing before the page says it saved."""
+    return BackgroundTask(mailer.send, email, subject, body, html=html)
+
+
 def _forbid(request, capability):
     """Return a response to short-circuit with if the user lacks `capability`,
     else None. (Login is already guaranteed by the middleware.)"""
@@ -3929,6 +3946,28 @@ async def admin_rules_edit(request: Request, rid: int):
 
 _SCHED_TICK = 60          # seconds between due-checks
 
+# The daily reminder sweep (send_reminders.py) rides this same loop. There is
+# no cron on the Space — it is a container, not a server anyone can add a
+# crontab to — so a "run it from cron" script would simply never run in
+# production. The individual jobs already gate themselves to the right day
+# (the weekly digest, the filing nudges), so this only has to fire the sweep
+# ONCE PER LOCAL DAY and let each job decide whether today is its day.
+_REMINDER_SETTING = "reminders_last_run_date"
+# Not at midnight: the first tick at or after this local hour, so a day-before
+# reminder lands in the morning rather than in the small hours.
+_REMINDER_HOUR = 7
+
+
+def _reminders_due(conn, now=None):
+    """True when today's reminder sweep hasn't run yet and it's late enough in
+    the day to send. The marker is a stored DATE, not an in-process flag: a
+    Space restarts often, and an in-memory one would re-send on every restart."""
+    now = now or _now_local()
+    if now.hour < _REMINDER_HOUR:
+        return False
+    return st.get_setting(conn, _REMINDER_SETTING) != now.date().isoformat()
+
+
 async def _scheduler_loop():
     while True:
         try:
@@ -3940,11 +3979,20 @@ async def _scheduler_loop():
                 bk.ensure_schedule_anchor(conn)
                 cfg = bk.read_config(conn)
                 due = bk.is_due(cfg, cfg["last_backup_at"])
+                reminders_due = _reminders_due(conn)
+                if reminders_due:
+                    # Claim the day BEFORE running: a crash mid-sweep must not
+                    # replay the whole sweep on the next tick, a minute later.
+                    # Each job's own marker column decides what it still owes.
+                    st.set_setting(conn, _REMINDER_SETTING,
+                                   _now_local().date().isoformat())
             finally:
                 conn.close()
             if due:
                 # blocking sqlite/file work off the event loop
                 await asyncio.to_thread(bk.run_scheduled_job, DB)
+            if reminders_due:
+                await asyncio.to_thread(send_reminders.run, DB)
         except Exception:         # noqa: BLE001 — never let the loop die
             pass
         await asyncio.sleep(_SCHED_TICK)
@@ -7048,6 +7096,7 @@ async def submit_rating(request: Request, qr_token: str):
         event_token = None
         ending_message = None
         cert_ready = False
+        cert_mail = None
         if next_token is None and attendee_id is not None:
             att_row = st.get_attendee(conn, attendee_id)
             if att_row:
@@ -7059,15 +7108,26 @@ async def submit_rating(request: Request, qr_token: str):
                     if ev.get("ending_message"):
                         ending_message = amsg.personalize(ev["ending_message"], att_row["name"])
                     cert_ready = bool(ev.get("certificate_enabled"))
+                    if (cert_ready and att_row.get("email")
+                            and mailer.email_configured()
+                            and st.mark_certificate_emailed(conn, attendee_id)):
+                        cert_link = (f"{_base_url(request)}/e/{event_token}/certificate"
+                                    f"?fmt=pdf&att={attendee_id}")
+                        subj, body, html = mailer.certificate_ready_message(
+                            att_row["name"], cert_link, ev["title"])
+                        cert_mail = _mail_after_response(
+                            att_row["email"], subj, body, html=html)
     finally:
         conn.close()
 
-    return templates.TemplateResponse(request, "thanks.html", {
+    resp = templates.TemplateResponse(request, "thanks.html", {
         "ctx": ctx, "seq": seq, "att": att, "next_token": next_token,
         "event_token": event_token, "ending_message": ending_message,
         "cert_ready": cert_ready, "lang": lang,
         "raffle_code": raffle_code, "raffle_prize": raffle_prize,
     })
+    resp.background = cert_mail
+    return resp
 
 
 @app.get("/seq", response_class=HTMLResponse)
@@ -7431,19 +7491,41 @@ async def event_consent(request: Request, event_token: str):
                 conn, ev["id"], name=name, email=email, contact=contact,
                 sex=sex, affiliation=affiliation, honorific=honorific,
                 consent_text=CONSENT_TEXT, ip=ip)
+            registered_now = True
         else:
             # Dedup-aware: same email (and same person, or confirmed "that's me")
             # resumes the existing registration instead of minting a duplicate —
             # this is what makes "lost my link, filled it again" safe.
-            attendee_id, _resumed = st.register_attendee(
+            attendee_id, resumed = st.register_attendee(
                 conn, ev["id"], name=name, email=email, contact=contact,
                 sex=sex, affiliation=affiliation, honorific=honorific,
                 consent_text=CONSENT_TEXT, ip=ip)
+            registered_now = not resumed
         event_id = ev["id"]
+        event_title, event_date, venue = ev.get("title"), ev.get("event_date"), ev.get("venue")
+        event_token_for_link = ev.get("event_token") or event_token
     finally:
         conn.close()
+    confirm_mail = None
+    # A NEW registration only. This endpoint is public and its rate limit is
+    # deliberately loose (120 POSTs/min per IP — a whole venue shares one NAT),
+    # so mailing on every submission would let a script aim ~120 messages a
+    # minute at any address it likes and burn the relay's ~1500/day quota
+    # (docs/MAIL_RELAY_SETUP.md) — taking invites and password resets down with
+    # it. Dedup already collapses a repeat submission into a resume, so keying
+    # the send to "a row was actually created" caps it at one message per
+    # address per activity. Someone who lost their link re-submits and lands
+    # back in their registration anyway, and the organizer can re-send it from
+    # the monitor roster.
+    if registered_now and email and mailer.email_configured():
+        token = auth.make_recovery_token(attendee_id)
+        reg_link = f"{_base_url(request)}/e/{event_token_for_link}/resume?rt={quote(token)}"
+        subj, body, html = mailer.registration_confirmed_message(
+            name, reg_link, event_title, event_date, venue)
+        confirm_mail = _mail_after_response(email, subj, body, html=html)
     # Re-enter the same page with a valid attendee session -> rating links show.
     resp = RedirectResponse(f"/e/{event_token}?att={attendee_id}", status_code=303)
+    resp.background = confirm_mail
     # Remember this device so a returning participant who loses the ?att= link is
     # recognized on the bare link (re-validated server-side, scoped to this event).
     resp.set_cookie(_attendee_cookie_name(event_id), str(attendee_id),
@@ -8096,11 +8178,21 @@ async def raffle_draw(request: Request, event_token: str):
                summary=(f"Drew raffle winner {winner['code']}"
                         + (f" ({winner['name']})" if winner["name"] else " (anonymous)")
                         + (f" — prize: {prize}" if prize else "")))
+        win_mail = None
+        if winner.get("email") and mailer.email_configured():
+            win_link = f"{_base_url(request)}/e/{ev['event_token']}"
+            subj, body, html = mailer.raffle_winner_message(
+                winner["name"], ev["title"], prize, win_link)
+            win_mail = _mail_after_response(winner["email"], subj, body, html=html)
+        # The winner's email is deliberately NOT in this payload: the draw
+        # screen is projected at the venue, and it only ever needs the claim
+        # code and (when there is one) the name.
         return JSONResponse({"ok": True, "remaining": len(candidates) - 1,
                              "winner": {
                                  "code": winner["code"], "name": winner["name"],
                                  "comment": winner["comment"], "topic": winner["topic"],
-                                 "when": winner["when"], "prize": prize or None}})
+                                 "when": winner["when"], "prize": prize or None}},
+                            background=win_mail)
     finally:
         conn.close()
 
@@ -14401,6 +14493,12 @@ async def admin_work_arrangement_reopen(request: Request):
             _audit(request, conn, "work_arrangement_reopen_set",
                    target_type="setting",
                    summary=f"Temporarily reopened {label} for filing.")
+            file_link = f"{_base_url(request)}/work-arrangement/file"
+            for staffer in st.staff_without_work_arrangement(conn, period_start):
+                staff_name = _person_name(conn, staffer["id"])
+                subj, body, html = mailer.work_arrangement_reopened_message(
+                    staff_name, label, file_link, note)
+                mailer.send(staffer["username"], subj, body, html=html)
             msg = f"{label} is reopened for filing."
     finally:
         conn.close()

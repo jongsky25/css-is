@@ -220,6 +220,177 @@ def test_feedback_reply_notifies_the_submitter(admin, db_path, sent):
         conn.commit(); conn.close()
 
 
+# --------------------------------------------------------- registration -----
+
+def test_registration_confirms_by_email(app_mod, manager, db_path, sent):
+    import re
+    rp = st.connect(db_path).execute(
+        "SELECT id FROM resource_person WHERE is_internal=1 LIMIT 1").fetchone()
+    r = manager.post("/create", data={
+        "event_type": "bureau", "activity_name": "NTF Registration Forum",
+        "event_date": "2026-07-09", "venue": "Hall A", "qr_mode": "combined",
+        "rp_id": str(rp[0]), "topic": "Keynote",
+    }, follow_redirects=True)
+    assert r.status_code == 200
+    tok = re.search(r"/e/([0-9a-f]{12})", r.text).group(1)
+    sent.clear()   # drop the event-created notification, only care about registration
+    r = manager.post(f"/e/{tok}", data={
+        "name": "Gia Cruz", "email": "ntf-gia@test.local", "sex": "F",
+        "affiliation": "DOH", "consent": "on"}, follow_redirects=False)
+    assert r.status_code == 303
+    assert len(sent) == 1
+    assert sent[0]["to"] == "ntf-gia@test.local"
+    assert "registered" in sent[0]["subject"].lower()
+    assert "NTF Registration Forum" in sent[0]["subject"]
+    assert f"/e/{tok}/resume?rt=" in sent[0]["body"]
+
+
+def test_resubmitting_a_registration_does_not_re_email(app_mod, manager, db_path, sent):
+    """The POST is public and loosely rate limited, so one confirmation per
+    address per activity is the cap: a repeat submission resumes the existing
+    registration and must not mint another email."""
+    import re
+    rp = st.connect(db_path).execute(
+        "SELECT id FROM resource_person WHERE is_internal=1 LIMIT 1").fetchone()
+    r = manager.post("/create", data={
+        "event_type": "bureau", "activity_name": "NTF Resubmit Forum",
+        "event_date": "2026-07-13", "venue": "Hall A", "qr_mode": "combined",
+        "rp_id": str(rp[0]), "topic": "Keynote",
+    }, follow_redirects=True)
+    tok = re.search(r"/e/([0-9a-f]{12})", r.text).group(1)
+    form = {"name": "Ines Roxas", "email": "ntf-ines@test.local", "sex": "F",
+            "affiliation": "DOH", "consent": "on"}
+    sent.clear()
+    manager.post(f"/e/{tok}", data=form, follow_redirects=False)
+    assert len(sent) == 1
+    manager.post(f"/e/{tok}", data=form, follow_redirects=False)   # "lost my link"
+    assert len(sent) == 1
+
+
+def test_registration_without_email_transport_does_not_crash(app_mod, manager, db_path, monkeypatch):
+    import re
+    monkeypatch.setattr(mailer, "email_configured", lambda: False)
+    rp = st.connect(db_path).execute(
+        "SELECT id FROM resource_person WHERE is_internal=1 LIMIT 1").fetchone()
+    r = manager.post("/create", data={
+        "event_type": "bureau", "activity_name": "NTF No-Mail Forum",
+        "event_date": "2026-07-10", "venue": "Hall A", "qr_mode": "combined",
+        "rp_id": str(rp[0]), "topic": "Keynote",
+    }, follow_redirects=True)
+    tok = re.search(r"/e/([0-9a-f]{12})", r.text).group(1)
+    r = manager.post(f"/e/{tok}", data={
+        "name": "Hu Nguyen", "email": "ntf-hu@test.local", "sex": "M",
+        "affiliation": "NON-DOH", "consent": "on"}, follow_redirects=False)
+    assert r.status_code == 303
+
+
+# --------------------------------------------------------- certificate -----
+
+def _form_tokens(db_path, tok):
+    conn = st.connect(db_path)
+    rows = conn.execute(
+        """SELECT fi.qr_token FROM event_form ef
+           JOIN event e ON e.id=ef.event_id
+           JOIN form_instance fi ON fi.id=ef.form_instance_id
+           WHERE e.event_token=? ORDER BY ef.ordinal""", (tok,)).fetchall()
+    conn.close()
+    return [r[0] for r in rows]
+
+
+def test_certificate_ready_emails_once_on_completion(app_mod, client, manager, db_path, sent):
+    import re
+    rp = st.connect(db_path).execute(
+        "SELECT id FROM resource_person WHERE is_internal=1 LIMIT 1").fetchone()
+    r = manager.post("/create", data={
+        "event_type": "bureau", "activity_name": "NTF Certificate Forum",
+        "event_date": "2026-07-11", "venue": "Hall A", "qr_mode": "combined",
+        "rp_id": str(rp[0]), "topic": "Keynote",
+    }, follow_redirects=True)
+    tok = re.search(r"/e/([0-9a-f]{12})", r.text).group(1)
+    conn = st.connect(db_path)
+    ev = st.get_event(conn, tok)
+    st.set_event_certificate(conn, ev["id"], enabled=True, signatory_rp_id=None, verb="attended")
+    conn.close()
+    sent.clear()
+    r = client.post(f"/e/{tok}", data={
+        "name": "Ivy Santos", "email": "ntf-ivy@test.local", "sex": "F",
+        "affiliation": "DOH", "consent": "on"}, follow_redirects=False)
+    att = re.search(r"att=(\d+)", r.headers["location"]).group(1)
+    sent.clear()   # drop the registration confirmation — only care about the certificate
+    for ft in _form_tokens(db_path, tok):
+        client.post(f"/r/{ft}", data={"seq": "", "att": att, "A": "7", "B1": "7",
+                    "C": "4", "remarks": "ok"})
+    cert_mails = [c for c in sent if "certificate" in c["subject"].lower()]
+    assert len(cert_mails) == 1
+    assert cert_mails[0]["to"] == "ntf-ivy@test.local"
+    assert f"/e/{tok}/certificate?fmt=pdf&att={att}" in cert_mails[0]["body"]
+
+    # Resubmitting (e.g. the attendee revisits and the offline queue replays)
+    # must never send a second copy of the same email.
+    for ft in _form_tokens(db_path, tok):
+        client.post(f"/r/{ft}", data={"seq": "", "att": att, "A": "7", "B1": "7",
+                    "C": "4", "remarks": "ok"})
+    cert_mails = [c for c in sent if "certificate" in c["subject"].lower()]
+    assert len(cert_mails) == 1
+
+
+def test_no_certificate_email_when_certificate_not_enabled(app_mod, client, manager, db_path, sent):
+    import re
+    rp = st.connect(db_path).execute(
+        "SELECT id FROM resource_person WHERE is_internal=1 LIMIT 1").fetchone()
+    r = manager.post("/create", data={
+        "event_type": "bureau", "activity_name": "NTF No-Cert Forum",
+        "event_date": "2026-07-12", "venue": "Hall A", "qr_mode": "combined",
+        "rp_id": str(rp[0]), "topic": "Keynote",
+    }, follow_redirects=True)
+    tok = re.search(r"/e/([0-9a-f]{12})", r.text).group(1)
+    r = client.post(f"/e/{tok}", data={
+        "name": "Jun Lee", "email": "ntf-jun@test.local", "sex": "M",
+        "affiliation": "NON-DOH", "consent": "on"}, follow_redirects=False)
+    att = re.search(r"att=(\d+)", r.headers["location"]).group(1)
+    sent.clear()
+    for ft in _form_tokens(db_path, tok):
+        client.post(f"/r/{ft}", data={"seq": "", "att": att, "A": "7", "B1": "7",
+                    "C": "4", "remarks": "ok"})
+    assert not [c for c in sent if "certificate" in c["subject"].lower()]
+
+
+# ------------------------------------------------------------------ raffle ---
+
+def test_raffle_draw_emails_the_winner(admin, db_path, sent):
+    conn = st.connect(db_path)
+    f = st.create_form_instance(conn, 2, "F2", "2026-06-12", topic="NTF Raffle Forum")
+    ev = st.create_event(conn, "NTF Raffle Forum", "2026-06-12", form_instance_ids=[f],
+                         created_by="admin@test.local")
+    aid, _ = st.register_attendee(conn, ev["id"], name="Kai Ramos",
+                                  email="ntf-kai@test.local", consent_text="ok")
+    st.record_response(conn, f, [("A", 6)], remarks="Loved it", attendee_id=aid)
+    conn.commit(); conn.close()
+    token = ev["event_token"]
+    admin.post(f"/activities/{token}/raffle/settings",
+              data={"raffle_enabled": "1", "raffle_prize": "a mug"})
+    r = admin.post(f"/activities/{token}/raffle/draw")
+    assert r.json()["ok"] is True
+    assert len(sent) == 1
+    assert sent[0]["to"] == "ntf-kai@test.local"
+    assert "won" in sent[0]["subject"].lower()
+    assert "mug" in sent[0]["body"]
+
+
+def test_raffle_draw_no_email_for_anonymous_winner(admin, db_path, sent):
+    conn = st.connect(db_path)
+    f = st.create_form_instance(conn, 2, "F2", "2026-06-12", topic="NTF Anon Raffle")
+    ev = st.create_event(conn, "NTF Anon Raffle", "2026-06-12", form_instance_ids=[f],
+                         created_by="admin@test.local")
+    st.record_response(conn, f, [("A", 6)], remarks="Nice")   # anonymous, no attendee
+    conn.commit(); conn.close()
+    token = ev["event_token"]
+    admin.post(f"/activities/{token}/raffle/settings", data={"raffle_enabled": "1"})
+    r = admin.post(f"/activities/{token}/raffle/draw")
+    assert r.json()["ok"] is True
+    assert sent == []
+
+
 # --------------------------------------------------------- SMTP unconfigured ---
 
 def test_nothing_sent_when_smtp_unconfigured(app_mod, notif_org, monkeypatch):

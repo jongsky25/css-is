@@ -209,6 +209,18 @@ def _button_html(label, link):
             f'</td></tr></table>')
 
 
+def _list_html(rows):
+    items = "".join(
+        f'<li style="margin:0 0 6px; font-family:Arial,Helvetica,sans-serif; '
+        f'font-size:14px; color:{_INK};">{htmlmod.escape(r)}</li>' for r in rows)
+    return f'<ul style="margin:0 0 18px; padding-left:20px;">{items}</ul>'
+
+
+def _section_label_html(text):
+    return (f'<p style="margin:0 0 6px; font-family:Arial,Helvetica,sans-serif; '
+            f'font-size:13px; font-weight:700; color:{_INK};">{htmlmod.escape(text)}</p>')
+
+
 def _note_box_html(label, text):
     """A shaded callout for an admin remark or a reply quote — e.g. the note
     on a decided wellness/AWA request, or a reply to Spot Feedback."""
@@ -313,8 +325,138 @@ def recovery_message(name, link, event_title=None):
     return subject, body
 
 
+def registration_confirmed_message(name, link, event_title, event_date=None, venue=None):
+    """Returns (subject, plain_text_body, html_body). Sent right after an
+    attendee registers (or resumes a lost registration) for an event."""
+    when = f" on {event_date}" if event_date else ""
+    where = f" at {venue}" if venue else ""
+    subject = f"You're registered — {event_title}"
+    body = (f"Hello {name or 'there'},\n\n"
+            f"You're registered for “{event_title}”{when}{where}. Keep this personal "
+            f"link — it's how you get back to your registration and leave feedback:\n\n"
+            f"  {link}\n\n"
+            f"If you didn't request this, you can ignore this message.\n")
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="You're registered",
+        intro=(f"You're registered for &ldquo;{_e(event_title)}&rdquo;{_e(when)}{_e(where)}. "
+               f"Keep the link below — it's how you get back to your registration and "
+               f"leave feedback."),
+        cta_label="View your registration",
+        link=link,
+        footnote="If you didn't request this, you can safely ignore this message.",
+    )
+    return subject, body, html
+
+
 # ---- action-needed notifications --------------------------------------------
 # Each returns (subject, plain_text_body, html_body), same shape as invite/reset.
+
+def certificate_ready_message(name, link, event_title):
+    """Returns (subject, plain_text_body, html_body). Sent once, the moment an
+    attendee finishes every feedback form on an activity that has certificates
+    enabled — mirrors the button that already appears on the thanks/link-tree
+    pages, for the participant who doesn't come back to click it."""
+    subject = f"Your Certificate of Appearance is ready — {event_title}"
+    body = (f"Hello {name or 'there'},\n\n"
+            f"Thanks for completing your feedback for “{event_title}”. Your "
+            f"Certificate of Appearance is ready to download:\n\n"
+            f"  {link}\n")
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="Your certificate is ready",
+        intro=(f"Thanks for completing your feedback for &ldquo;{_e(event_title)}&rdquo;. "
+               f"Your Certificate of Appearance is ready to download."),
+        cta_label="Download your certificate",
+        link=link,
+    )
+    return subject, body, html
+
+
+def raffle_winner_message(name, event_title, prize, link):
+    """Returns (subject, plain_text_body, html_body). Sent to a raffle winner who
+    left an email on file (registered attendees only — anonymous/walk-in
+    commenters are still announced on the draw screen, just not emailed)."""
+    prize_text = prize or "a prize"
+    subject = f"You won the raffle — {event_title}!"
+    body = (f"Hello {name or 'there'},\n\n"
+            f"Congratulations — you won {prize_text} in the raffle for "
+            f"“{event_title}”! Get in touch with the organizer to claim it.\n\n"
+            f"  {link}\n")
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="You won the raffle!",
+        intro=(f"Congratulations — you won {_e(prize_text)} in the raffle for "
+               f"&ldquo;{_e(event_title)}&rdquo;! Get in touch with the organizer "
+               f"to claim it."),
+        cta_label="View the activity",
+        link=link,
+    )
+    return subject, body, html
+
+
+def event_reminder_message(name, title, event_date, venue, link):
+    """Returns (subject, plain_text_body, html_body). Sent the day before an
+    activity to a registrant, its creator, or its section chief — `link` is
+    whichever page fits the recipient (their registration, or the monitor)."""
+    when = f" tomorrow, {event_date}" if event_date else " tomorrow"
+    where = f" at {venue}" if venue else ""
+    subject = f"Reminder — {title} is tomorrow"
+    body = (f"Hello {name or 'there'},\n\n"
+            f"“{title}” is happening{when}{where}.\n\n"
+            f"  {link}\n")
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="Your activity is tomorrow",
+        intro=f"&ldquo;{_e(title)}&rdquo; is happening{_e(when)}{_e(where)}.",
+        cta_label="View details",
+        link=link,
+    )
+    return subject, body, html
+
+
+def csm_rp_results_message(rp_name, topic, event_title, link):
+    """Returns (subject, plain_text_body, html_body). Sent once to a resource
+    person (speaker) with a login, after their own Type-3 CSM ratings for a
+    session have concluded — the results view requires signing in, so this
+    only goes to an RP with an admin_user account."""
+    subject = f"Your CSM results are ready — {topic}"
+    body = (f"Hello {rp_name or 'there'},\n\n"
+            f"The Client Satisfaction Measurement results for your session "
+            f"“{topic}” at “{event_title}” are ready to view.\n\n"
+            f"  {link}\n")
+    html = _email_html(
+        greeting=f"Hi {rp_name or 'there'},",
+        heading="Your CSM results are ready",
+        intro=(f"The Client Satisfaction Measurement results for your session "
+               f"&ldquo;{_e(topic)}&rdquo; at &ldquo;{_e(event_title)}&rdquo; are "
+               f"ready to view."),
+        cta_label="View your results",
+        link=link,
+    )
+    return subject, body, html
+
+
+def csm_activity_results_message(name, title, link):
+    """Returns (subject, plain_text_body, html_body). Sent once to an
+    activity's creator/section chief after its overall CSM/feedback picture
+    has concluded — enough responses are in and the response window (or a
+    grace period past the activity's end) has passed."""
+    subject = f"CSM results are ready — {title}"
+    body = (f"Hello {name or 'there'},\n\n"
+            f"The Client Satisfaction Measurement results for “{title}” are "
+            f"ready to view.\n\n"
+            f"  {link}\n")
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="CSM results are ready",
+        intro=(f"The Client Satisfaction Measurement results for "
+               f"&ldquo;{_e(title)}&rdquo; are ready to view."),
+        cta_label="View results",
+        link=link,
+    )
+    return subject, body, html
+
 
 def event_created_message(creator_name, title, event_date, link):
     subject = f"Event created — {title}"
@@ -385,6 +527,37 @@ def wellness_pending_message(approver_name, claimant_name, break_date, start_tim
     return subject, body, html
 
 
+def wellness_pending_reminder_message(approver_name, claimant_name, break_date, start_time,
+                                      hours, link, approve_link=None, deny_link=None):
+    """Returns (subject, plain_text_body, html_body). A follow-up to
+    wellness_pending_message for a claim that's still undecided as its
+    one-click decide link nears expiry — the links here are freshly minted
+    (a new 14-day window), not the original ones."""
+    subject = f"Reminder: wellness break still needs your approval — {claimant_name}"
+    action_block = ""
+    if approve_link and deny_link:
+        action_block = (f"Approve:\n  {approve_link}\n\n"
+                        f"Deny:\n  {deny_link}\n\n")
+    body = (f"Hello {approver_name or 'there'},\n\n"
+            f"{claimant_name}'s {hours}-hour wellness break on {break_date} at "
+            f"{start_time} is still waiting on your decision.\n\n"
+            f"{action_block}"
+            f"Or review it in the dashboard:\n  {link}\n")
+    extra_html = ""
+    if approve_link and deny_link:
+        extra_html = _button_html("Approve", approve_link) + _button_html("Deny", deny_link)
+    html = _email_html(
+        greeting=f"Hi {approver_name or 'there'},",
+        heading="Still waiting on your decision",
+        intro=(f"{_e(claimant_name)}'s {_e(hours)}-hour wellness break on "
+               f"{_e(break_date)} at {_e(start_time)} is still waiting on your decision."),
+        cta_label="Review in the dashboard" if extra_html else "Review request",
+        link=link,
+        extra_html=extra_html,
+    )
+    return subject, body, html
+
+
 def wellness_decided_message(claimant_name, action, break_date, note, link):
     subject = f"Your wellness break was {action} — {break_date}"
     note_line = f"\nNote: {note}\n" if note else ""
@@ -398,6 +571,71 @@ def wellness_decided_message(claimant_name, action, break_date, note, link):
         cta_label="View details",
         link=link,
         extra_html=_note_box_html("Note", note) if note else "",
+    )
+    return subject, body, html
+
+
+def work_arrangement_reopened_message(name, period_label, link, note=None):
+    """Returns (subject, plain_text_body, html_body). Sent to staff who missed
+    the period's own filing deadline, once an admin temporarily reopens it."""
+    subject = f"Work arrangement filing reopened — {period_label}"
+    note_line = f"\nNote from admin: {note}\n" if note else ""
+    body = (f"Hello {name or 'there'},\n\n"
+            f"You didn't file a work arrangement for {period_label} before its "
+            f"deadline. An admin has temporarily reopened it, so you can still "
+            f"file now.\n{note_line}\n"
+            f"  {link}\n")
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="Filing reopened",
+        intro=(f"You didn't file a work arrangement for {_e(period_label)} before "
+               f"its deadline. An admin has temporarily reopened it, so you can "
+               f"still file now."),
+        cta_label="File your work arrangement",
+        link=link,
+        extra_html=_note_box_html("Note from admin", note) if note else "",
+    )
+    return subject, body, html
+
+
+def wellness_file_reminder_message(name, deadline_label, link):
+    """Returns (subject, plain_text_body, html_body). A nudge, timed the day
+    before the Mon-Fri window closes, for someone who hasn't used any of this
+    week's wellness entitlement yet — unused hours don't carry over."""
+    subject = "Reminder: file your wellness break this week"
+    body = (f"Hello {name or 'there'},\n\n"
+            f"You haven't used this week's wellness break entitlement yet. "
+            f"Breaks can only be scheduled Monday through Friday, so any hours "
+            f"left unused by {deadline_label} won't carry over.\n\n"
+            f"  {link}\n")
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="Your wellness break is still unused",
+        intro=(f"You haven't used this week's wellness break entitlement yet. "
+               f"Breaks can only be scheduled Monday through Friday, so any "
+               f"hours left unused by {_e(deadline_label)} won't carry over."),
+        cta_label="File a wellness break",
+        link=link,
+    )
+    return subject, body, html
+
+
+def work_arrangement_file_reminder_message(name, period_label, deadline_label, link):
+    """Returns (subject, plain_text_body, html_body). A nudge, timed the day
+    before a filing period's own Friday deadline, for someone with no work
+    arrangement on file for it yet."""
+    subject = f"Reminder: file your work arrangement — {period_label}"
+    body = (f"Hello {name or 'there'},\n\n"
+            f"You haven't filed a work arrangement for {period_label} yet. "
+            f"The deadline is {deadline_label}.\n\n"
+            f"  {link}\n")
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="Work arrangement not yet filed",
+        intro=(f"You haven't filed a work arrangement for {_e(period_label)} yet. "
+               f"The deadline is {_e(deadline_label)}."),
+        cta_label="File your work arrangement",
+        link=link,
     )
     return subject, body, html
 
@@ -432,6 +670,53 @@ def awa_decided_message(requester_name, action, period_label, note, link):
         cta_label="View details",
         link=link,
         extra_html=_note_box_html("Note", note) if note else "",
+    )
+    return subject, body, html
+
+
+def approvals_digest_message(approver_name, wellness_lines, awa_lines, wellness_link, awa_link):
+    """Returns (subject, plain_text_body, html_body). A catch-all bundling
+    EVERY wellness break and work arrangement still awaiting this approver's
+    decision — in case an individual notification for one of them was missed
+    or lost. `wellness_lines`/`awa_lines` are already-formatted one-line
+    summaries, oldest-request-first; either may be empty (never both, or the
+    caller shouldn't have sent this)."""
+    subject = "Your pending approvals"
+    txt_parts = []
+    if wellness_lines:
+        txt_parts.append("Wellness breaks awaiting your decision:\n"
+                         + "\n".join(f"  - {l}" for l in wellness_lines))
+    if awa_lines:
+        txt_parts.append("Work arrangements awaiting your decision:\n"
+                         + "\n".join(f"  - {l}" for l in awa_lines))
+    body = (f"Hello {approver_name or 'there'},\n\n"
+            f"You have requests still waiting on your decision.\n\n"
+            + "\n\n".join(txt_parts) + "\n\n"
+            + (f"Wellness approvals: {wellness_link}\n" if wellness_lines else "")
+            + (f"Work arrangement approvals: {awa_link}\n" if awa_lines else ""))
+
+    extra_html = ""
+    if wellness_lines:
+        extra_html += _section_label_html(
+            f"Wellness breaks ({len(wellness_lines)})") + _list_html(wellness_lines)
+    if awa_lines:
+        extra_html += _section_label_html(
+            f"Work arrangements ({len(awa_lines)})") + _list_html(awa_lines)
+    if wellness_lines and awa_lines:
+        extra_html += _button_html("Review work arrangement approvals", awa_link)
+        cta_label, link = "Review wellness approvals", wellness_link
+    elif wellness_lines:
+        cta_label, link = "Review wellness approvals", wellness_link
+    else:
+        cta_label, link = "Review work arrangement approvals", awa_link
+
+    html = _email_html(
+        greeting=f"Hi {approver_name or 'there'},",
+        heading="Your pending approvals",
+        intro="You have requests still waiting on your decision.",
+        cta_label=cta_label,
+        link=link,
+        extra_html=extra_html,
     )
     return subject, body, html
 
