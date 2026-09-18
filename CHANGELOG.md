@@ -1,9 +1,10 @@
 # CHANGELOG — Cowork revisions (surgical)
 
-## 2026-09-18 (v2.84 — formal HTML invite/reset emails)
+## 2026-09-18 (v2.84 — formal HTML emails, invite/reset then everything else)
 
 User request, right after confirming v2.83's relay actually delivers: design
-the invite/reset emails to look formal instead of plain text.
+the invite/reset emails to look formal instead of plain text. Extended, still
+within the same unmerged PR, to every other notification email.
 
 **`mailer.py`** — new `_email_html()` builds a branded HTML shell: header
 ("Office Connect" + "Bureau of Local Health Systems Development"), greeting,
@@ -32,14 +33,38 @@ Branding correction mid-build: initial draft led the header with the old
 clarified the product is Office Connect now, not CSS-IS. Header now leads
 with "Office Connect" only.
 
-**Verified:** 21 tests in `tests/test_mailer.py` (subject/text/html shape;
-HTML escaping of `name`/`inviter`; SMTP multipart with a real `text/html`
-part; no-html calls stay non-multipart; relay payload carries `html` and
-falls back to `""` — matching the Apps Script's falsy check — when omitted).
-Rendered both templates with a headless-Chromium screenshot to check the
-actual visual result rather than trust the markup, then re-verified after
-the branding fix. Full relay round trip re-confirmed against a real local
-HTTP server. Full affected-test run green. Version bumped to **2.84**.
+**Extended to the other six composers** (`event_created_message`,
+`event_section_notify_message`, `wellness_pending_message`,
+`wellness_decided_message`, `awa_pending_message`, `awa_decided_message`,
+`feedback_update_message`) — all route through two shared helpers,
+`app._notify_account`/`app._notify_email`, which gained an `html=` kwarg
+passed straight through to `mailer.send()`; every one of the 8 call sites
+(`awa_pending_message` is called from two routes) updated to unpack the new
+3-tuple. `_email_html()` gained `extra_html` (a shaded callout box, new
+`_note_box_html()`) for the optional admin note on a decided wellness/AWA
+request or the reply on a Spot Feedback update — rendered only when present,
+matching the plain-text version's existing `if note` / `if reply` behavior.
+A generic `_e()` escapes the many dynamic fields (titles, names, dates,
+remarks) these composers interpolate into `intro`.
+
+**Caught by the test suite, not by inspection:** `tests/test_notifications.py`'s
+`sent` fixture's fake `mailer.send` didn't accept the new `html=` kwarg —
+every real call now raised `TypeError` inside `_notify_account`/`_notify_email`'s
+blanket `except Exception: pass`, silently dropping the notification with no
+visible error. All 7 notification tests failed with "0 emails sent" until the
+fixture signature was fixed to match. Worth flagging: that same swallow-all
+exception handling means a bug in production here would have failed exactly
+as silently — the test failure is the only thing that caught it.
+
+**Verified:** 26 tests in `tests/test_mailer.py` total (dynamic-field escaping
+across the new composers; note/reply box appears only when given); all 8
+`tests/test_notifications.py` tests green after the fixture fix. Rendered and
+headless-Chromium-screenshotted all 8 templates (both account emails plus
+all 6 notification types, including a no-note and a with-note variant) to
+check the actual visual result rather than trust the markup — this caught
+the CSS·IS→Office Connect branding mistake earlier in this same PR, so kept
+doing it for every subsequent template rather than assuming success. Full
+affected-test run green. Version bumped to **2.84**.
 
 ## 2026-09-17 (v2.83 — mail leaves over HTTPS; the Space blocks SMTP outright)
 

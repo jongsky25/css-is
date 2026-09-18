@@ -377,3 +377,74 @@ def test_relay_payload_html_is_empty_string_when_not_given(monkeypatch):
     monkeypatch.setattr(mailer.httpx, "post", _fake_post)
     mailer.send("to@example.com", "subj", "plain body only")
     assert captured["json"]["html"] == ""
+
+
+# ---- HTML template — the other action-needed notifications -------------------
+
+def test_all_action_composers_return_subject_text_html():
+    cases = [
+        mailer.event_created_message("Ana", "Q1 Meeting", "March 15, 2026", "https://x/1"),
+        mailer.event_section_notify_message("Chief", "Ana", "Q1 Meeting", "March 15, 2026", "https://x/1"),
+        mailer.wellness_pending_message("Chief", "Juan", "Mar 20", "2:00 PM", 1, "https://x/2"),
+        mailer.wellness_decided_message("Juan", "approved", "Mar 20", "", "https://x/3"),
+        mailer.awa_pending_message("Chief", "Juan", "April, 2nd half", "WFH", "https://x/4"),
+        mailer.awa_decided_message("Juan", "approved", "April, 2nd half", "", "https://x/5"),
+        mailer.feedback_update_message("Maria", "Resolved", "", "https://x/6"),
+    ]
+    for subj, text, html in cases:
+        assert isinstance(subj, str) and subj
+        assert isinstance(text, str) and text
+        assert "<!DOCTYPE html>" in html
+        assert "Office Connect" in html
+
+
+def test_note_box_appears_only_when_note_given():
+    _, _, with_note = mailer.wellness_decided_message("Juan", "approved", "Mar 20", "Enjoy!", "https://x")
+    _, _, without_note = mailer.wellness_decided_message("Juan", "denied", "Mar 20", "", "https://x")
+    assert "Enjoy!" in with_note
+    assert "NOTE" in with_note.upper()
+    assert "NOTE" not in without_note.upper()
+
+
+def test_feedback_reply_box_appears_only_when_reply_given():
+    _, _, with_reply = mailer.feedback_update_message("Maria", "Resolved", "Fixed the AC.", "https://x")
+    _, _, without_reply = mailer.feedback_update_message("Maria", "Open", "   ", "https://x")
+    assert "Fixed the AC." in with_reply
+    assert "THEIR REPLY" in with_reply.upper()
+    assert "THEIR REPLY" not in without_reply.upper()
+
+
+def test_action_composer_escapes_dynamic_fields():
+    """title/creator_name/etc. come from data an admin or staff member enters
+    (event titles, approval notes) — a stray '&'/'<' in real content must not
+    break the HTML or inject markup into the rendered email."""
+    _, text, html = mailer.event_created_message(
+        "Ana <ops>", "Health & Wellness Fair", "March 15, 2026", "https://x/1")
+    assert "Ana <ops>" in text and "Health & Wellness Fair" in text   # plain text: untouched
+    assert "<ops>" not in html                                        # html: never raw
+    assert "Ana &lt;ops&gt;" in html
+    assert "Health &amp; Wellness Fair" in html
+
+    _, text2, html2 = mailer.wellness_decided_message(
+        "Juan", "approved", "Mar 20", "Approved <b>early</b> & confirmed", "https://x")
+    assert "<b>early</b>" not in html2
+    assert "&lt;b&gt;early&lt;/b&gt;" in html2
+    assert "&amp; confirmed" in html2
+
+
+def test_notify_helpers_pass_html_through(monkeypatch):
+    """_notify_account/_notify_email are the single choke point every
+    action-needed composer sends through — if html doesn't reach mailer.send()
+    here, no notification email anywhere gets the formatted version."""
+    import app as app_mod
+    calls = []
+    monkeypatch.setattr(app_mod.mailer, "send",
+                        lambda *a, **kw: calls.append((a, kw)) or {"sent": True, "detail": "ok"})
+    app_mod._notify_email("to@example.com", "subj", "text body", html="<p>hi</p>")
+    assert calls[-1][1].get("html") == "<p>hi</p>"
+
+    class _FakeConn: pass
+    monkeypatch.setattr(app_mod.st, "get_admin_user_by_id",
+                        lambda conn, uid: {"username": "acct@example.com"})
+    app_mod._notify_account(_FakeConn(), 1, "subj", "text body", html="<p>hi2</p>")
+    assert calls[-1][1].get("html") == "<p>hi2</p>"

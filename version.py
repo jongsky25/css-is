@@ -24,13 +24,17 @@ CHANGELOG = [
     {
         "version": "2.84",
         "date": "September 18, 2026",
-        "summary": "Account invite and password-reset emails now look like "
-                   "a formal, official message instead of plain text.",
+        "summary": "Notification emails now look like a formal, official "
+                   "message instead of plain text.",
         "changes": [
             "The email you get to set up your account or reset your "
             "password is now a proper formatted message with the Office "
             "Connect name and a clear button, instead of a bare wall of "
             "text.",
+            "The same formal look now applies to every other email the "
+            "system sends: event notifications, wellness and work-"
+            "arrangement approvals and decisions, and Spot Feedback "
+            "replies.",
         ],
     },
     {

@@ -82,8 +82,8 @@ def sent(monkeypatch):
     calls = []
     monkeypatch.setattr(mailer, "email_configured", lambda: True)
 
-    def _fake_send(to, subject, body):
-        calls.append({"to": to, "subject": subject, "body": body})
+    def _fake_send(to, subject, body, html=None):
+        calls.append({"to": to, "subject": subject, "body": body, "html": html})
         return {"sent": True, "detail": "ok"}
     monkeypatch.setattr(mailer, "send", _fake_send)
     return calls
