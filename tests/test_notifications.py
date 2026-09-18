@@ -245,6 +245,28 @@ def test_registration_confirms_by_email(app_mod, manager, db_path, sent):
     assert f"/e/{tok}/resume?rt=" in sent[0]["body"]
 
 
+def test_resubmitting_a_registration_does_not_re_email(app_mod, manager, db_path, sent):
+    """The POST is public and loosely rate limited, so one confirmation per
+    address per activity is the cap: a repeat submission resumes the existing
+    registration and must not mint another email."""
+    import re
+    rp = st.connect(db_path).execute(
+        "SELECT id FROM resource_person WHERE is_internal=1 LIMIT 1").fetchone()
+    r = manager.post("/create", data={
+        "event_type": "bureau", "activity_name": "NTF Resubmit Forum",
+        "event_date": "2026-07-13", "venue": "Hall A", "qr_mode": "combined",
+        "rp_id": str(rp[0]), "topic": "Keynote",
+    }, follow_redirects=True)
+    tok = re.search(r"/e/([0-9a-f]{12})", r.text).group(1)
+    form = {"name": "Ines Roxas", "email": "ntf-ines@test.local", "sex": "F",
+            "affiliation": "DOH", "consent": "on"}
+    sent.clear()
+    manager.post(f"/e/{tok}", data=form, follow_redirects=False)
+    assert len(sent) == 1
+    manager.post(f"/e/{tok}", data=form, follow_redirects=False)   # "lost my link"
+    assert len(sent) == 1
+
+
 def test_registration_without_email_transport_does_not_crash(app_mod, manager, db_path, monkeypatch):
     import re
     monkeypatch.setattr(mailer, "email_configured", lambda: False)

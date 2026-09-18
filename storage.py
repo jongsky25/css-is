@@ -968,6 +968,12 @@ def _add_missing_columns(conn):
     wc_cols = {row[1] for row in conn.execute("PRAGMA table_info(wellness_claim)")}
     if wc_cols and "activity_other" not in wc_cols:
         conn.execute("ALTER TABLE wellness_claim ADD COLUMN activity_other TEXT")
+    if wc_cols and "decide_reminded_at" not in wc_cols:
+        # Set once the scheduled job (send_reminders.py) has re-notified this
+        # claim's approver that their one-click decide link is about to expire.
+        # The reminder window is days wide so a cron that misses a day still
+        # catches the claim; this column is what keeps it to ONE reminder.
+        conn.execute("ALTER TABLE wellness_claim ADD COLUMN decide_reminded_at TEXT")
     wr_cols = {row[1] for row in conn.execute("PRAGMA table_info(wellness_reflection)")}
     if wr_cols:
         if "usefulness" not in wr_cols:
@@ -4956,7 +4962,10 @@ def list_concluded_rp_forms_pending_csm_email(conn, delay_days):
     window was set) it's been `delay_days` since the activity ended, giving
     respondents time to answer first. Returns [{form_id, rp_id, topic,
     event_id}, ...], oldest first."""
-    now = tz.now_iso()
+    # Minute precision and a strict `<`, exactly as app._window_state decides
+    # "closed" — so a form is never treated as concluded here while the survey
+    # page still accepts answers for it.
+    now = tz.now_local().isoformat(timespec="minutes")
     date_cutoff = (tz.now_local() - timedelta(days=delay_days)).date().isoformat()
     rows = conn.execute(
         """SELECT fi.id, fi.rp_id, fi.topic, ef.event_id
@@ -4967,7 +4976,7 @@ def list_concluded_rp_forms_pending_csm_email(conn, delay_days):
              AND fi.rp_id IS NOT NULL
              AND fi.csm_results_emailed_at IS NULL
              AND EXISTS (SELECT 1 FROM response r WHERE r.form_instance_id = fi.id)
-             AND ((fi.close_at IS NOT NULL AND fi.close_at <= ?)
+             AND ((fi.close_at IS NOT NULL AND fi.close_at < ?)
                   OR (fi.close_at IS NULL AND COALESCE(fi.end_date, fi.event_date) <= ?))
            ORDER BY fi.id""",
         (now, date_cutoff)).fetchall()
@@ -4987,7 +4996,7 @@ def list_concluded_events_pending_csm_email(conn, delay_days):
     organizer: at least one response in, not yet emailed, and concluded —
     either the shared response window (get_event_window) closed, or (when no
     window was set) it's been `delay_days` since the activity ended."""
-    now = tz.now_iso()
+    now = tz.now_local().isoformat(timespec="minutes")   # app._window_state's convention
     date_cutoff = (tz.now_local() - timedelta(days=delay_days)).date().isoformat()
     rows = conn.execute(
         """SELECT e.id FROM event e
@@ -5000,7 +5009,7 @@ def list_concluded_events_pending_csm_email(conn, delay_days):
     for (eid,) in rows:
         win = get_event_window(conn, eid)
         if win["close_at"]:
-            concluded = win["close_at"] <= now
+            concluded = win["close_at"] < now
         else:
             ev = get_event_by_id(conn, eid)
             concluded = bool(ev) and (ev.get("end_date") or ev.get("event_date") or "9999") <= date_cutoff
@@ -6008,12 +6017,17 @@ def staff_without_wellness_claim_this_week(conn, week_start):
     """Active accounts with no counted (pending/approved/completed)
     wellness_claim for this week — the "you have unused wellness hours" nudge's
     audience. Someone who's used even part of the entitlement isn't nudged
-    again; only those who haven't touched it at all this week."""
+    again; only those who haven't touched it at all this week. An archived
+    directory person (resigned/transferred out) is off the roster, same rule
+    work_arrangement_roster applies."""
     qs = ",".join("?" * len(_WELLNESS_COUNTED))
     rows = conn.execute(
-        f"SELECT id, username FROM admin_user WHERE active = 1 AND id NOT IN "
-        f"  (SELECT user_id FROM wellness_claim WHERE week_start=? AND status IN ({qs})) "
-        f"ORDER BY username", (week_start, *_WELLNESS_COUNTED)).fetchall()
+        f"""SELECT a.id, a.username FROM admin_user a
+            LEFT JOIN resource_person rp ON rp.id = a.rp_id
+            WHERE a.active = 1 AND rp.archived_at IS NULL
+              AND a.id NOT IN (SELECT user_id FROM wellness_claim
+                                WHERE week_start = ? AND status IN ({qs}))
+            ORDER BY a.username""", (week_start, *_WELLNESS_COUNTED)).fetchall()
     return [{"id": r[0], "username": r[1]} for r in rows]
 
 
@@ -6099,18 +6113,30 @@ def create_wellness_claim(conn, user_id, break_date, start_time, activity,
 
 
 def list_stale_pending_wellness_claims(conn, min_age_days, max_age_days):
-    """Pending wellness_claim ids whose age (off created_at — when the original
-    approval email went out, not the break date) falls in [min_age_days,
-    max_age_days) — a one-day-wide window sized for a daily cron job, so a
-    claim that's still pending is caught in this window exactly once rather
-    than every day for the rest of its life."""
+    """Pending wellness_claim ids, not yet reminded about, whose age (off
+    created_at — when the original approval email went out, not the break
+    date) falls in [min_age_days, max_age_days).
+
+    The window is deliberately several days wide so a cron run that misses a
+    day still catches the claim before its decide link lapses; what keeps the
+    approver from being re-reminded every day of that window is
+    decide_reminded_at (see mark_wellness_decide_reminded), not the window."""
     newest = (tz.now_local() - timedelta(days=min_age_days)).isoformat()
     oldest = (tz.now_local() - timedelta(days=max_age_days)).isoformat()
     rows = conn.execute(
         "SELECT id FROM wellness_claim WHERE status='pending' "
+        "AND decide_reminded_at IS NULL "
         "AND created_at > ? AND created_at <= ? ORDER BY id",
         (oldest, newest)).fetchall()
     return [r[0] for r in rows]
+
+
+def mark_wellness_decide_reminded(conn, claim_id):
+    """Record that the approver(s) of this claim have been re-notified about
+    their soon-to-expire decide link, so it only ever goes out once."""
+    conn.execute("UPDATE wellness_claim SET decide_reminded_at = ? WHERE id = ?",
+                (tz.now_iso(), claim_id))
+    conn.commit()
 
 
 def get_wellness_claim(conn, claim_id):
@@ -7144,16 +7170,30 @@ def clear_work_arrangement_reopen(conn, period_start):
 
 
 def staff_without_work_arrangement(conn, period_start):
-    """Active accounts with no work_arrangement row (any status) for this
-    period — the people an admin's reopen actually reaches: they missed the
-    original deadline entirely, so they're the ones who need to know filing
-    is open again. Someone who already filed (and may just want to change it)
-    is not nudged again here."""
+    """Active accounts that still owe a work arrangement for this period — who
+    an admin's reopen actually reaches, and who the filing nudge is for.
+
+    "Still owes" follows work_arrangement_roster's own rules rather than the
+    looser "has no row at all":
+      * only a LIVE filing (_WA_LIVE) settles the period — a denied or
+        withdrawn one frees it again, so that person still has to file;
+      * someone tagged "No AWA" for the period is out of the schedule, and
+        create_work_arrangement refuses their filing outright — nudging them
+        would send them at a door the app holds shut;
+      * an archived directory person (resigned/transferred out) is off the
+        roster even if their account was never deactivated."""
+    qs = ",".join("?" * len(_WA_LIVE))
     rows = conn.execute(
-        "SELECT id, username FROM admin_user "
-        "WHERE active = 1 AND id NOT IN "
-        "  (SELECT user_id FROM work_arrangement WHERE period_start = ?) "
-        "ORDER BY username", (period_start,)).fetchall()
+        f"""SELECT a.id, a.username FROM admin_user a
+            LEFT JOIN resource_person rp ON rp.id = a.rp_id
+            WHERE a.active = 1 AND rp.archived_at IS NULL
+              AND a.id NOT IN (SELECT user_id FROM work_arrangement
+                                WHERE period_start = ? AND status IN ({qs}))
+              AND a.id NOT IN (SELECT user_id FROM work_arrangement_noawa
+                                WHERE effective_from <= ?
+                                  AND (effective_to IS NULL OR ? < effective_to))
+            ORDER BY a.username""",
+        (period_start, *_WA_LIVE, period_start, period_start)).fetchall()
     return [{"id": r[0], "username": r[1]} for r in rows]
 
 

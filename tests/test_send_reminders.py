@@ -196,6 +196,20 @@ def test_reminds_approver_of_expiring_wellness_claim(tmp_path, sent):
     assert "action=approve" in sent[0]["body"] and "action=deny" in sent[0]["body"]
 
 
+def test_reminds_an_expiring_claim_only_once(tmp_path, sent):
+    """The catch-up window is days wide so a cron that misses a day still
+    gets the reminder out — which means the claim matches it again tomorrow,
+    and only decide_reminded_at stops the approver being nagged daily."""
+    conn = _fresh(tmp_path)
+    chief, staff = _wellness_org(conn)
+    claim_id = st.create_wellness_claim(conn, staff, _future_weekday().isoformat(),
+                                        "10:00", "exercise")
+    _backdate_claim(conn, claim_id, days=12)
+    assert sr.remind_wellness_expiring(conn, "https://css.example") == 1
+    assert sr.remind_wellness_expiring(conn, "https://css.example") == 0
+    assert len(sent) == 1
+
+
 def test_does_not_remind_too_early_or_too_late(tmp_path, sent):
     conn = _fresh(tmp_path)
     chief, staff = _wellness_org(conn)
@@ -223,7 +237,19 @@ def test_does_not_remind_a_decided_claim(tmp_path, sent):
 
 # ------------------------------------------------------------------ digest ---
 
-def test_digest_bundles_wellness_and_awa_for_one_approver(tmp_path, sent):
+@pytest.fixture()
+def on_digest_day(monkeypatch):
+    """Pin "today" to the weekday the digest goes out on. The same pending
+    items sit in the queue until they're decided, so the digest is weekly —
+    every test of it has to be on its day."""
+    d = tz.today_local()
+    while d.weekday() != sr._DIGEST_WEEKDAY:
+        d += timedelta(days=1)
+    monkeypatch.setattr(tz, "today_local", lambda: d)
+    return d
+
+
+def test_digest_bundles_wellness_and_awa_for_one_approver(tmp_path, sent, on_digest_day):
     conn = _fresh(tmp_path)
     chief, staff = _wellness_org(conn)
     st.create_wellness_claim(conn, staff, _future_weekday().isoformat(), "10:00", "exercise")
@@ -237,7 +263,22 @@ def test_digest_bundles_wellness_and_awa_for_one_approver(tmp_path, sent):
     assert "/work-arrangement/approvals" in sent[0]["body"]
 
 
-def test_digest_skips_approver_with_nothing_pending(tmp_path, sent):
+def test_digest_does_not_go_out_on_other_days(tmp_path, sent, monkeypatch):
+    """Undecided items stay pending, so an ungated digest would re-list the
+    same rows every single morning."""
+    conn = _fresh(tmp_path)
+    chief, staff = _wellness_org(conn)
+    st.create_wellness_claim(conn, staff, _future_weekday().isoformat(), "10:00", "exercise")
+    d = tz.today_local()
+    while d.weekday() == sr._DIGEST_WEEKDAY:
+        d += timedelta(days=1)
+    monkeypatch.setattr(tz, "today_local", lambda: d)
+    n = sr.send_approvals_digest(conn, "https://css.example")
+    assert n == 0
+    assert sent == []
+
+
+def test_digest_skips_approver_with_nothing_pending(tmp_path, sent, on_digest_day):
     conn = _fresh(tmp_path)
     _wellness_org(conn)
     n = sr.send_approvals_digest(conn, "https://css.example")
@@ -245,7 +286,7 @@ def test_digest_skips_approver_with_nothing_pending(tmp_path, sent):
     assert sent == []
 
 
-def test_digest_omits_already_decided_items(tmp_path, sent):
+def test_digest_omits_already_decided_items(tmp_path, sent, on_digest_day):
     conn = _fresh(tmp_path)
     chief, staff = _wellness_org(conn)
     claim_id = st.create_wellness_claim(conn, staff, _future_weekday().isoformat(),

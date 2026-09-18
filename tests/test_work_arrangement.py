@@ -966,6 +966,39 @@ def test_staff_without_work_arrangement_excludes_filers(wa_org):
     assert wa_org["loner"] in non_filers
 
 
+def test_staff_without_work_arrangement_skips_the_noawa_tagged(wa_org):
+    """create_work_arrangement REFUSES a filing from someone tagged "No AWA",
+    so nudging them would point at a door the app holds shut."""
+    conn, ps = wa_org["conn"], _open()
+    tagged = wa_org["staff"][2]
+    st.set_work_arrangement_noawa(conn, tagged, "on secondment", _u(tagged))
+    non_filers = {r["id"] for r in st.staff_without_work_arrangement(conn, ps)}
+    assert tagged not in non_filers
+    assert wa_org["staff"][1] in non_filers          # untagged, still owes one
+
+
+def test_staff_without_work_arrangement_counts_a_denied_filing_as_unfiled(wa_org):
+    """A denied (or withdrawn) row frees the period again — _WA_LIVE is what
+    settles it — so that person still has to file and still needs the nudge."""
+    conn, ps = wa_org["conn"], _open()
+    emp = wa_org["staff"][3]
+    wa = st.create_work_arrangement(conn, emp, ps, "REG")
+    st.decide_work_arrangement(conn, wa, wa_org["admin"], "deny")
+    assert emp in {r["id"] for r in st.staff_without_work_arrangement(conn, ps)}
+
+
+def test_staff_without_work_arrangement_drops_an_archived_person(wa_org):
+    """Resigned/transferred out: off work_arrangement_roster, so off this list
+    too, even when the account itself was never deactivated."""
+    conn, ps = wa_org["conn"], _open()
+    gone = wa_org["staff"][4]
+    rp_id = st.get_admin_user_by_id(conn, gone)["rp_id"]
+    conn.execute("UPDATE resource_person SET archived_at=? WHERE id=?",
+                 (tz.now_iso(), rp_id))
+    conn.commit()
+    assert gone not in {r["id"] for r in st.staff_without_work_arrangement(conn, ps)}
+
+
 def test_reopen_emails_only_staff_who_did_not_file(wa_org, app_mod, monkeypatch):
     conn, ps = wa_org["conn"], _open()
     # staff[0] filed before the deadline; everyone else missed it.

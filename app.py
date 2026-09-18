@@ -55,6 +55,7 @@ from fastapi.responses import (FileResponse, HTMLResponse, JSONResponse,
                                RedirectResponse, Response, StreamingResponse)
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from starlette.background import BackgroundTask
 
 import css_is_engine as eng
 import storage as st
@@ -2027,6 +2028,21 @@ def _notify_email(email, subject, body, html=None):
             mailer.send(email, subject, body, html=html)
     except Exception:                                 # noqa: BLE001 - notify, don't crash
         pass
+
+
+def _mail_after_response(email, subject, body, html=None):
+    """A BackgroundTask that sends this email once the response is already on
+    its way to the browser.
+
+    For the PARTICIPANT-facing sends (registration confirmation, the
+    certificate-ready notice, the live raffle draw). A send costs a round trip
+    to the mail relay and waits up to 30 s on its timeout (mailer._RELAY_TIMEOUT)
+    — charged, inline, to someone standing in a venue tapping Submit, or to the
+    draw screen waiting on its JSON. Deferring it keeps a slow or unreachable
+    relay from ever showing up as a slow page. The admin-side notifications
+    stay inline: they are low-frequency, and there the actor is better served
+    by the send finishing before the page says it saved."""
+    return BackgroundTask(mailer.send, email, subject, body, html=html)
 
 
 def _forbid(request, capability):
@@ -7048,6 +7064,7 @@ async def submit_rating(request: Request, qr_token: str):
         event_token = None
         ending_message = None
         cert_ready = False
+        cert_mail = None
         if next_token is None and attendee_id is not None:
             att_row = st.get_attendee(conn, attendee_id)
             if att_row:
@@ -7066,16 +7083,19 @@ async def submit_rating(request: Request, qr_token: str):
                                     f"?fmt=pdf&att={attendee_id}")
                         subj, body, html = mailer.certificate_ready_message(
                             att_row["name"], cert_link, ev["title"])
-                        mailer.send(att_row["email"], subj, body, html=html)
+                        cert_mail = _mail_after_response(
+                            att_row["email"], subj, body, html=html)
     finally:
         conn.close()
 
-    return templates.TemplateResponse(request, "thanks.html", {
+    resp = templates.TemplateResponse(request, "thanks.html", {
         "ctx": ctx, "seq": seq, "att": att, "next_token": next_token,
         "event_token": event_token, "ending_message": ending_message,
         "cert_ready": cert_ready, "lang": lang,
         "raffle_code": raffle_code, "raffle_prize": raffle_prize,
     })
+    resp.background = cert_mail
+    return resp
 
 
 @app.get("/seq", response_class=HTMLResponse)
@@ -7439,27 +7459,41 @@ async def event_consent(request: Request, event_token: str):
                 conn, ev["id"], name=name, email=email, contact=contact,
                 sex=sex, affiliation=affiliation, honorific=honorific,
                 consent_text=CONSENT_TEXT, ip=ip)
+            registered_now = True
         else:
             # Dedup-aware: same email (and same person, or confirmed "that's me")
             # resumes the existing registration instead of minting a duplicate —
             # this is what makes "lost my link, filled it again" safe.
-            attendee_id, _resumed = st.register_attendee(
+            attendee_id, resumed = st.register_attendee(
                 conn, ev["id"], name=name, email=email, contact=contact,
                 sex=sex, affiliation=affiliation, honorific=honorific,
                 consent_text=CONSENT_TEXT, ip=ip)
+            registered_now = not resumed
         event_id = ev["id"]
         event_title, event_date, venue = ev.get("title"), ev.get("event_date"), ev.get("venue")
         event_token_for_link = ev.get("event_token") or event_token
     finally:
         conn.close()
-    if email and mailer.email_configured():
+    confirm_mail = None
+    # A NEW registration only. This endpoint is public and its rate limit is
+    # deliberately loose (120 POSTs/min per IP — a whole venue shares one NAT),
+    # so mailing on every submission would let a script aim ~120 messages a
+    # minute at any address it likes and burn the relay's ~1500/day quota
+    # (docs/MAIL_RELAY_SETUP.md) — taking invites and password resets down with
+    # it. Dedup already collapses a repeat submission into a resume, so keying
+    # the send to "a row was actually created" caps it at one message per
+    # address per activity. Someone who lost their link re-submits and lands
+    # back in their registration anyway, and the organizer can re-send it from
+    # the monitor roster.
+    if registered_now and email and mailer.email_configured():
         token = auth.make_recovery_token(attendee_id)
         reg_link = f"{_base_url(request)}/e/{event_token_for_link}/resume?rt={quote(token)}"
         subj, body, html = mailer.registration_confirmed_message(
             name, reg_link, event_title, event_date, venue)
-        mailer.send(email, subj, body, html=html)
+        confirm_mail = _mail_after_response(email, subj, body, html=html)
     # Re-enter the same page with a valid attendee session -> rating links show.
     resp = RedirectResponse(f"/e/{event_token}?att={attendee_id}", status_code=303)
+    resp.background = confirm_mail
     # Remember this device so a returning participant who loses the ?att= link is
     # recognized on the bare link (re-validated server-side, scoped to this event).
     resp.set_cookie(_attendee_cookie_name(event_id), str(attendee_id),
@@ -8112,16 +8146,21 @@ async def raffle_draw(request: Request, event_token: str):
                summary=(f"Drew raffle winner {winner['code']}"
                         + (f" ({winner['name']})" if winner["name"] else " (anonymous)")
                         + (f" — prize: {prize}" if prize else "")))
+        win_mail = None
         if winner.get("email") and mailer.email_configured():
             win_link = f"{_base_url(request)}/e/{ev['event_token']}"
             subj, body, html = mailer.raffle_winner_message(
                 winner["name"], ev["title"], prize, win_link)
-            mailer.send(winner["email"], subj, body, html=html)
+            win_mail = _mail_after_response(winner["email"], subj, body, html=html)
+        # The winner's email is deliberately NOT in this payload: the draw
+        # screen is projected at the venue, and it only ever needs the claim
+        # code and (when there is one) the name.
         return JSONResponse({"ok": True, "remaining": len(candidates) - 1,
                              "winner": {
                                  "code": winner["code"], "name": winner["name"],
                                  "comment": winner["comment"], "topic": winner["topic"],
-                                 "when": winner["when"], "prize": prize or None}})
+                                 "when": winner["when"], "prize": prize or None}},
+                            background=win_mail)
     finally:
         conn.close()
 

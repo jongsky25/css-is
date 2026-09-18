@@ -11,6 +11,10 @@ Windows Task Scheduler, the same way retention.py and daily_backup.py are:
     python send_reminders.py --events         # just tomorrow's event reminders
     python send_reminders.py --dry-run        # print what would be sent, send nothing
 
+Run it once a day and leave it: the jobs that shouldn't fire daily gate
+themselves on the right weekday (the digest) or the right date (the filing
+nudges, the day-before reminders), so there is nothing to stagger by hand.
+
 Jobs (each independently selectable so they can be scheduled at different
 times of day; with no flags at all, every job runs):
 
@@ -22,6 +26,7 @@ times of day; with no flags at all, every job runs):
   --digest            One email per approver bundling every wellness break AND
                       work arrangement still awaiting their decision — a
                       catch-all in case an individual notification was missed.
+                      Weekly (Mondays), not on every run.
   --csm-rp            Email a resource person their own CSM results once their
                       session's feedback has concluded (only if they have a
                       login — the results page is not public).
@@ -132,7 +137,8 @@ def remind_wellness_expiring(conn, base, dry_run=False):
     """Re-notify the approver of any still-pending wellness break whose
     one-click decide link is about to expire. The reminder mints a FRESH
     token (a new 14-day window), not a resend of the original — the old one
-    would be about to stop verifying anyway."""
+    would be about to stop verifying anyway. Marked per claim once sent, so
+    the days-wide catch-up window can't turn into a daily nag."""
     max_age_days = auth._WELLNESS_DECIDE_MAX_AGE // 86400
     min_age_days = max_age_days - _WELLNESS_REMIND_DAYS_BEFORE_EXPIRY
     dash_link = f"{base}/wellness/approvals"
@@ -141,6 +147,7 @@ def remind_wellness_expiring(conn, base, dry_run=False):
         claim = st.get_wellness_claim(conn, claim_id)
         if not claim or claim["status"] != "pending":
             continue
+        reminded = 0
         for approver_id in st.get_approvers_for(conn, claim["user_id"]):
             approver = st.get_admin_user_by_id(conn, approver_id)
             if not approver or not approver.get("username"):
@@ -159,6 +166,12 @@ def remind_wellness_expiring(conn, base, dry_run=False):
             else:
                 mailer.send(approver["username"], subj, body, html=html)
             sent += 1
+            reminded += 1
+        # Only once something actually went out: a claim whose chain has no
+        # reachable approver yet hasn't been reminded, so don't record it as
+        # though it had.
+        if reminded and not dry_run:
+            st.mark_wellness_decide_reminded(conn, claim_id)
     return sent
 
 
@@ -166,6 +179,10 @@ def remind_wellness_expiring(conn, base, dry_run=False):
 # close_at) to wait before announcing CSM results — gives respondents time
 # to actually answer first.
 _CSM_RESULTS_DELAY_DAYS = 3
+
+# Weekday (Mon=0) the pending-approvals digest goes out on. Monday: the
+# queue as it stands at the start of the work week.
+_DIGEST_WEEKDAY = 0
 
 
 def send_csm_results_to_rps(conn, base, dry_run=False):
@@ -182,10 +199,11 @@ def send_csm_results_to_rps(conn, base, dry_run=False):
         if not account or not account.get("username"):
             continue
         ev = st.get_event_by_id(conn, row["event_id"]) if row["event_id"] else None
-        if not ev:
+        results_path = st.event_rp_results_url(conn, row["event_id"]) if ev else None
+        if not ev or not results_path:
             continue
         rp = st.get_rp(conn, row["rp_id"])
-        link = f"{base}{st.event_rp_results_url(conn, row['event_id'])}"
+        link = f"{base}{results_path}"
         subj, body, html = mailer.csm_rp_results_message(
             rp["name"] if rp else None, row["topic"], ev["title"], link)
         if dry_run:
@@ -303,7 +321,13 @@ def send_approvals_digest(conn, base, dry_run=False):
     arrangement still awaiting their decision — a catch-all in case an
     individual pending-approval notification was missed or lost. Skips an
     approver who has nothing pending; never sent to someone with an empty
-    digest."""
+    digest.
+
+    Weekly, not daily: the same items stay pending until they're decided, so
+    a digest on every run would re-list them every morning and train people
+    to ignore it. Gated to one weekday, like the filing nudges below."""
+    if tz.today_local().weekday() != _DIGEST_WEEKDAY:
+        return 0
     wellness_by_approver = {}
     for (claim_id,) in conn.execute("SELECT id FROM wellness_claim WHERE status='pending' ORDER BY id"):
         claim = st.get_wellness_claim(conn, claim_id)
