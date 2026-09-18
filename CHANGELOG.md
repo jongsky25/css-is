@@ -1,5 +1,42 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-18 (v2.95 — wellness apply form: pick a date and time slot, not type them)
+
+The apply form's date/time fields were two disconnected native `<input
+type="date">`/`type="time">` widgets: no visibility into which times were
+actually bookable, an unconstrained time field the server would reject after
+a full round trip, and a field order (date, time, *then* break length) where
+length — which determines how long a slot needs to be — was asked last.
+
+- **`storage.py`**: new flexi-time policy constants `WELLNESS_DAY_START_HOUR`
+  (7), `WELLNESS_DAY_END_HOUR` (19), `WELLNESS_SLOT_STEP_MINUTES` (30),
+  `WELLNESS_LUNCH_START_HOUR`/`WELLNESS_LUNCH_END_HOUR` (12/14) — distinct
+  from the existing `WELLNESS_SLOTS` analytics buckets, which stay untouched.
+  New `wellness_day_slots(conn, user_id, d, hours)` returns every start time
+  the picker can offer for that date/length, each flagged `ok`/`reason` against
+  the *same* checks `create_wellness_claim` enforces (weekly cap, min lead
+  time, a same-day overlap) via a shared `_wellness_overlapping_claim` helper,
+  plus an advisory (non-blocking) `lunch` flag. New `wellness_window_dates()`
+  lists the weekdays the date strip offers.
+- **Bug fix**: `create_wellness_claim`'s double-booking check matched on an
+  *exact* `start_time`, so two claims that actually overlapped (e.g. 09:00-10:00
+  and 09:30-10:30) were both accepted as long as their start times differed.
+  It now checks real interval overlap via `_wellness_overlapping_claim`.
+- **Apply form** (`templates/wellness_apply.html`, `app.py`): the native date/time
+  inputs are replaced with a date-pill strip and a start-time slot grid, in the
+  existing `.acts`/`.lens` radio-pill idiom (real radio inputs, so the POST
+  contract — `break_date`/`start_time` fields — is unchanged). Field order is
+  now date → break length → start time, so the slot grid can depend on the
+  chosen length. The server precomputes `wellness_day_slots` for every window
+  date × both break lengths and ships it as a JSON data attribute (same pattern
+  as the existing `week_used` map); client JS renders the relevant slot set
+  into pills on date/length change, greys out and disables slots the server
+  wouldn't accept (with the reason as a tooltip), and marks lunch-crossing
+  slots with a 🍴 badge without disabling them. Today defaults pre-selected so
+  the form opens with a usable slot grid already showing.
+- Tests (`tests/test_wellness.py`): `test_overlapping_break_is_rejected_even_with_a_different_start_time`,
+  `test_wellness_day_slots_agrees_with_create_wellness_claim`.
+
 ## 2026-09-18 (v2.94 — admin email control center, Phase 7: timing parameters)
 
 `docs/ADMIN_EMAIL_FEATURES_PLAN.md` §12. The six schedule/delay values that

@@ -6026,6 +6026,18 @@ WELLNESS_WINDOW_WEEKS = 4
 # (Spot Feedback #73). Also stops same-day requests for a time that's already
 # passed.
 WELLNESS_MIN_LEAD_MINUTES = 30
+# The apply form's date/time-slot picker: flexi-time office hours bound which
+# start times it offers, and it steps in half-hour increments. Distinct from
+# WELLNESS_SLOTS below (that's coarse "morning/afternoon" analytics bucketing
+# for the pattern chart, not a scheduling rule).
+WELLNESS_DAY_START_HOUR = 7
+WELLNESS_DAY_END_HOUR = 19
+WELLNESS_SLOT_STEP_MINUTES = 30
+# Lunch is flagged on the slot picker but never disables a slot — the DM only
+# asks staff to coordinate with their section over lunch, it doesn't forbid a
+# break then (see the apply form's help text).
+WELLNESS_LUNCH_START_HOUR = 12
+WELLNESS_LUNCH_END_HOUR = 14
 WELLNESS_STATUSES = ("pending", "approved", "denied", "cancelled", "completed")
 # Statuses that consume the weekly entitlement (denied/cancelled free the hour).
 _WELLNESS_COUNTED = ("pending", "approved", "completed")
@@ -6188,12 +6200,10 @@ def create_wellness_claim(conn, user_id, break_date, start_time, activity,
         raise ValueError(
             f"Only {left} hour{'s' if left != 1 else ''} left in that week's "
             f"{WELLNESS_WEEKLY_HOURS}-hour entitlement.")
-    dup = conn.execute(
-        "SELECT 1 FROM wellness_claim WHERE user_id=? AND break_date=? AND "
-        "start_time=? AND status IN ('pending','approved','completed')",
-        (user_id, d.isoformat(), start_time)).fetchone()
-    if dup:
-        raise ValueError("You already have a break at that date and time.")
+    start_minutes = _wellness_time_to_minutes(start_time)
+    if _wellness_overlapping_claim(conn, user_id, d, start_minutes,
+                                   start_minutes + hours * 60):
+        raise ValueError("You already have a break that overlaps that time.")
     cur = conn.execute(
         """INSERT INTO wellness_claim(user_id, week_start, break_date, start_time,
                                       hours, activity, activity_other, note, status,
@@ -6203,6 +6213,97 @@ def create_wellness_claim(conn, user_id, break_date, start_time, activity,
          (note or "").strip() or None, tz.now_iso()))
     conn.commit()
     return cur.lastrowid
+
+
+def _wellness_time_to_minutes(hhmm):
+    h, m = hhmm.split(":")
+    return int(h) * 60 + int(m)
+
+
+def _wellness_minutes_to_time(minutes):
+    return f"{minutes // 60:02d}:{minutes % 60:02d}"
+
+
+def _wellness_overlapping_claim(conn, user_id, d, start_minutes, end_minutes):
+    """The start_time of the first counted claim `user_id` already holds on date
+    `d` whose [start,end) window overlaps [start_minutes, end_minutes), or None.
+    Shared by create_wellness_claim (to reject a double-booking) and
+    wellness_day_slots (to warn the picker off the same slot before submit) so
+    the two can't drift apart."""
+    qs = ",".join("?" * len(_WELLNESS_COUNTED))
+    rows = conn.execute(
+        f"SELECT start_time, hours FROM wellness_claim WHERE user_id=? AND "
+        f"break_date=? AND status IN ({qs})",
+        (user_id, d.isoformat(), *_WELLNESS_COUNTED)).fetchall()
+    for start_time, claim_hours in rows:
+        s = _wellness_time_to_minutes(start_time)
+        e = s + claim_hours * 60
+        if start_minutes < e and s < end_minutes:
+            return start_time
+    return None
+
+
+def wellness_day_slots(conn, user_id, d, hours):
+    """Every start time the apply form's slot picker can offer for a `hours`-long
+    break on date `d`, each tagged with whether create_wellness_claim would
+    accept it — and why not when it wouldn't — so the picker never offers a
+    choice the server will turn around and reject.
+
+    Returns a list of {"time": "HH:MM", "ok": bool, "reason": str|None,
+    "lunch": bool} ordered by time. `lunch` is advisory only (see
+    WELLNESS_LUNCH_START_HOUR) and never sets ok=False."""
+    hours = int(hours)
+    duration = hours * 60
+    day_start = WELLNESS_DAY_START_HOUR * 60
+    day_end = WELLNESS_DAY_END_HOUR * 60
+    lunch_start = WELLNESS_LUNCH_START_HOUR * 60
+    lunch_end = WELLNESS_LUNCH_END_HOUR * 60
+
+    week_left = WELLNESS_WEEKLY_HOURS - wellness_hours_used(
+        conn, user_id, wellness_week_start(d))
+
+    now = tz.now_local()
+    is_today = d == now.date()
+    earliest_minutes = now.hour * 60 + now.minute + WELLNESS_MIN_LEAD_MINUTES
+
+    slots = []
+    start = day_start
+    while start + duration <= day_end:
+        end = start + duration
+        reason = None
+        if week_left < hours:
+            reason = (f"Only {week_left} hour{'s' if week_left != 1 else ''} left "
+                       "that week" if week_left > 0 else
+                       "That week's entitlement is already fully claimed")
+        elif is_today and start < earliest_minutes:
+            reason = f"Less than {WELLNESS_MIN_LEAD_MINUTES} min lead time"
+        else:
+            conflict = _wellness_overlapping_claim(conn, user_id, d, start, end)
+            if conflict:
+                reason = f"Overlaps your {conflict} break"
+        slots.append({
+            "time": _wellness_minutes_to_time(start),
+            "ok": reason is None,
+            "reason": reason,
+            "lunch": start < lunch_end and lunch_start < end,
+        })
+        start += WELLNESS_SLOT_STEP_MINUTES
+    return slots
+
+
+def wellness_window_dates(d=None):
+    """Every weekday from `d` (today when None) through the end of the rolling
+    WELLNESS_WINDOW_WEEKS-week window — the dates the apply form's date strip
+    offers, in order."""
+    d = d or tz.today_local()
+    last = wellness_window_last_date(d)
+    dates = []
+    cur = d
+    while cur <= last:
+        if cur.weekday() < 5:
+            dates.append(cur)
+        cur += timedelta(days=1)
+    return dates
 
 
 def list_stale_pending_wellness_claims(conn, min_age_days, max_age_days):
