@@ -1,5 +1,48 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-18 (v3.01 — a section manager can add an external resource person)
+
+Spot Feedback #90: "How can I add Resource Persons who are not from BLHSD?"
+The `/create` speaker picker already lists external resource persons
+alongside internal staff, but adding a *new* one lived entirely under
+`/directory/*`, whose `_required_cap` gate is the coarse `"directory"`
+capability — admin-only, covering org units, internal staff, archiving and
+name-cleanup all at once. A `section_manager` (who already holds
+`create_activity`) had no way to add the outside speaker they needed for
+their own event, short of asking an admin.
+
+**`auth.py`** — new `"add_external_rp"` capability, granted to
+`section_manager` and `admin` (kept separate from `admin`'s blanket
+`"directory"`, so it has to be listed explicitly there too).
+**`app.py`**'s `_required_cap` now special-cases `/directory/external/new`
+and `/directory/external` (the *add* routes only) to require
+`"add_external_rp"` instead of falling through to `"directory"` — editing an
+existing external RP (`/directory/external/{id}/edit`) stays under the
+general, admin-only check, matching the narrower ask.
+
+Since a section manager can't open `/directory` itself, the add
+form's post-save redirect and its crumbs/cancel link now follow a `back`
+query/hidden-field param (validated same-site-relative,
+`_safe_back`) instead of a hardcoded `/directory` — so submitting the form
+doesn't hand them a 403. **`templates/form_create.html`** adds a
+"+ Add an external resource person" link next to the speaker picker
+(`target="_blank"`, `back=/create`, with a hint to reload afterward — a new
+tab so their in-progress survey form isn't lost). **`templates/
+external_rp_form.html`** threads `back` through the same way for the edit
+form too (unused there today, but keeps the two forms in sync); admin's
+existing Directory → Add flow is unaffected (default `back` is still
+`/directory`).
+
+**`tests/test_auth_rbac.py`** —
+`test_section_manager_can_add_external_rp_but_not_open_directory`: a
+section manager can open the add form and successfully create an external
+RP (verified in the DB, `is_internal=0`), redirected to the `back` target —
+while `/directory`, `/directory/staff/new` and editing an existing external
+RP all still 403 them. Full `tests/test_auth_rbac.py` (75 tests, all roles ×
+all gated paths) plus `tests/test_directory_archive.py`,
+`tests/test_directory_search.py`, `tests/test_create_duplicate_warning.py`,
+`tests/test_bureau_no_rp.py` and `tests/test_outside_activity.py` pass.
+
 ## 2026-09-18 (v3.00 — the approver is now told when a break is withdrawn)
 
 Spot Feedback #75: "how will I know if the approver was notified of my

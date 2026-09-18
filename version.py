@@ -17,10 +17,25 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.00"
+APP_VERSION = "3.01"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.01",
+        "date": "September 18, 2026",
+        "summary": "A Section Manager can now add an outside resource person "
+                   "directly from New survey, without needing an admin.",
+        "changes": [
+            "Creating a survey with a guest speaker who isn't already in "
+            "the directory used to be a dead end for a Section Manager — "
+            "adding a new external resource person required the "
+            "Directory, which is admin-only. There's now a “+ Add an "
+            "external resource person” link right on the New survey "
+            "screen that a Section Manager can use themselves, without "
+            "getting the rest of Directory's admin tools.",
+        ],
+    },
     {
         "version": "3.00",
         "date": "September 18, 2026",

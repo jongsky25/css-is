@@ -15,6 +15,8 @@ GATED = [
     ("/admin/audit",            "get",  "manage_users"),
     ("/directory",              "get",  "directory"),
     ("/directory/staff/new",    "get",  "directory"),
+    ("/directory/external/new", "get",  "add_external_rp"),
+    ("/directory/external/1/edit", "get", "directory"),
     ("/create",                 "post", "create_activity"),
     ("/arta",                   "get",  "create_activity"),
     ("/encode",                 "get",  "encode"),
@@ -204,6 +206,33 @@ def test_admin_reset_sends_a_reset_link_and_keeps_old_password_until_used(admin,
     conn = st.connect(app_mod.DB)
     u = st.get_admin_user_by_id(conn, uid); conn.close()
     assert auth.verify_password(new_pw, u["pw_hash"], u["salt"])
+
+def test_section_manager_can_add_external_rp_but_not_open_directory(manager, app_mod):
+    """Spot Feedback #90: a section manager can create activities but couldn't
+    add the outside speaker they needed for one. add_external_rp is scoped
+    to exactly that — it must not open the rest of Directory."""
+    import storage as st
+    r = manager.get("/directory/external/new", follow_redirects=False)
+    assert r.status_code == 200
+    r2 = manager.post("/directory/external",
+                      data={"name": "RBAC Test External Speaker", "back": "/create"},
+                      follow_redirects=False)
+    assert r2.status_code == 303
+    assert r2.headers["location"] == "/create"
+    conn = st.connect(app_mod.DB)
+    try:
+        row = conn.execute(
+            "SELECT is_internal FROM resource_person WHERE name=?",
+            ("RBAC Test External Speaker",)).fetchone()
+        assert row is not None and row[0] == 0
+    finally:
+        conn.execute("DELETE FROM resource_person WHERE name=?",
+                     ("RBAC Test External Speaker",))
+        conn.commit(); conn.close()
+    assert manager.get("/directory", follow_redirects=False).status_code == 403
+    assert manager.get("/directory/staff/new", follow_redirects=False).status_code == 403
+    assert manager.get("/directory/external/1/edit", follow_redirects=False).status_code == 403
+
 
 def test_reset_default_requires_manage_users(viewer, app_mod):
     uid = _make_temp_account(app_mod, "temp4@test.local")
