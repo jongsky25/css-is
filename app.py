@@ -4009,6 +4009,52 @@ async def admin_email_toggle(request: Request):
     return RedirectResponse("/admin/email?msg=" + quote("Saved."), status_code=303)
 
 
+# ---- preview + test-send (Phase 5) -----------------------------------------
+# Preview renders a real composer's HTML with sample data for display in an
+# <iframe srcdoc> on the console; test-send fires that same sample at the
+# REQUESTING ADMIN'S OWN address only — never one taken from the form, so
+# this can never be turned into an open relay (see the plan, D9/risk table).
+
+@app.get("/admin/email/preview/{key}", response_class=HTMLResponse)
+def admin_email_preview(request: Request, key: str):
+    if (r := _forbid(request, "manage_users")):
+        return r
+    result = mailer.preview(key)
+    if result is None:
+        return Response(status_code=404)
+    _subject, html = result
+    return HTMLResponse(html)
+
+
+@app.post("/admin/email/test")
+async def admin_email_test(request: Request):
+    if (r := _forbid(request, "manage_users")):
+        return r
+    posted = await _posted(request)
+    key = posted.get("key", "")
+    sample = mailer.sample_message(key)
+    if sample is None:
+        return RedirectResponse("/admin/email?err=" + quote("Unknown feature."), status_code=303)
+    if not mailer.email_configured():
+        return RedirectResponse("/admin/email?err=" + quote(
+            "No transport is configured — nothing was sent."), status_code=303)
+    subject, body, html = sample
+    catalog = mailer.FEATURES.get(key) or mailer.ALWAYS_ON.get(key)
+    user = request.state.user
+    result = mailer.send(user["username"], f"[Test] {subject}", body, html=html)
+    conn = get_conn()
+    try:
+        _audit(request, conn, "email_feature_test", target_type="setting", target_id=key,
+               summary=f"Test send of “{catalog[0]}” to {user['username']}: "
+                       f"{'sent' if result['sent'] else 'failed — ' + result['detail']}.")
+    finally:
+        conn.close()
+    if result["sent"]:
+        return RedirectResponse("/admin/email?msg=" + quote(
+            f"Test email sent to {user['username']}."), status_code=303)
+    return RedirectResponse("/admin/email?err=" + quote(result["detail"]), status_code=303)
+
+
 # ---- in-process backup scheduler -------------------------------------------
 # A single background task wakes every minute and fires run_scheduled_job when
 # the stored schedule says a backup is due. No external cron needed. It is

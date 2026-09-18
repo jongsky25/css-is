@@ -1,5 +1,37 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-18 (v2.92 — admin email control center, Phase 5: preview + test-send)
+
+Fifth of six phases (docs/ADMIN_EMAIL_FEATURES_PLAN.md). `mailer.py` gains
+`sample_message(key)` — `(subject, plain_text_body, html_or_None)` built by
+calling the REAL composer with representative sample data, one lambda per
+key in a new `_PREVIEWS` dict covering all 18 `FEATURES` keys plus the 3
+`ALWAYS_ON` keys (21 total, matching the composer count exactly). `preview
+(key)` wraps it down to `(subject, html)`, wrapping a plain-text-only
+composer's body (`recovery_message` has no HTML variant) in a minimal HTML
+shell so every key still previews as a renderable page. A preview can never
+drift from what actually sends, because it calls the same composer function.
+
+`app.py` adds `GET /admin/email/preview/{key}` (renders the sample HTML
+directly, for an `<iframe>` on the console; 404s on an unknown key) and
+`POST /admin/email/test` (composes the sample and sends it to the
+**requesting admin's own** `username` — never an address from the posted
+form, so this route can never be turned into an open relay; says so instead
+of pretending when `email_configured()` is False). Both `_forbid` on
+`manage_users` like every other handler in this module.
+
+`templates/admin_email.html` gains a `row()` macro shared by all three
+groups: each row now has a "Send test to me" button beside its toggle, and a
+`<details>` disclosure that lazy-loads the preview iframe on open — no
+JavaScript, consistent with the rest of the console.
+
+Two new RBAC rows in `tests/test_auth_rbac.py` (`/admin/email/preview/<key>`
+GET, `/admin/email/test` POST). New Phase-5 tests in
+`tests/test_email_admin.py`: every `FEATURES`/`ALWAYS_ON` key has a working
+sample (the one test that stops a future composer from being cataloged
+without a preview), an unknown key 404s/errors cleanly, and test-send proves
+it ignores any address posted alongside `key`.
+
 ## 2026-09-18 (v2.91 — admin email control center, Phase 4: the /admin/email console)
 
 Fourth of six phases (docs/ADMIN_EMAIL_FEATURES_PLAN.md). Adds the human
