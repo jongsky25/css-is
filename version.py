@@ -17,10 +17,27 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.84"
+APP_VERSION = "2.85"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.85",
+        "date": "September 18, 2026",
+        "summary": "A wellness break request can now be approved or denied "
+                   "straight from the notification email, no sign-in needed.",
+        "changes": [
+            "The email a chief gets when someone requests a wellness break "
+            "now has Approve and Deny links. Tapping one opens a page "
+            "confirming the details, and pressing Confirm decides it right "
+            "then — the same as using the Wellness approvals page.",
+            "The email's dashboard link is still there too, for anyone who'd "
+            "rather review the full queue first.",
+            "Each link only works for that one request, expires after 14 "
+            "days, and stops working the moment the request is decided by "
+            "anyone — so an old or already-used link can't do anything.",
+        ],
+    },
     {
         "version": "2.84",
         "date": "September 18, 2026",

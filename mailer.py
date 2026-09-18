@@ -349,19 +349,38 @@ def event_section_notify_message(chief_name, creator_name, title, event_date, li
     return subject, body, html
 
 
-def wellness_pending_message(approver_name, claimant_name, break_date, start_time, hours, link):
+def wellness_pending_message(approver_name, claimant_name, break_date, start_time, hours, link,
+                              approve_link=None, deny_link=None):
+    """`approve_link`/`deny_link` are optional one-click decide-by-email links
+    (see auth.make_wellness_decide_token) that open a confirm page and require
+    no login; `link` is always included as the dashboard fallback."""
     subject = f"Wellness break needs your approval — {claimant_name}"
+    action_block = ""
+    if approve_link and deny_link:
+        action_block = (f"Approve:\n  {approve_link}\n\n"
+                        f"Deny:\n  {deny_link}\n\n"
+                        f"(These links expire in 14 days and ask you to confirm before "
+                        f"deciding anything.)\n\n")
     body = (f"Hello {approver_name or 'there'},\n\n"
             f"{claimant_name} requested a {hours}-hour wellness break on "
-            f"{break_date} at {start_time}. It's waiting on your decision:\n\n"
-            f"  {link}\n")
+            f"{break_date} at {start_time}. It's waiting on your decision.\n\n"
+            f"{action_block}"
+            f"Or review it in the dashboard:\n  {link}\n")
+    extra_html = ""
+    if approve_link and deny_link:
+        extra_html = (
+            _button_html("Approve", approve_link) + _button_html("Deny", deny_link)
+            + f'<p style="margin:0 0 4px; font-family:Arial,Helvetica,sans-serif; font-size:12px; '
+              f'color:{_SOFT};">These links expire in 14 days and ask you to confirm before deciding anything.</p>'
+        )
     html = _email_html(
         greeting=f"Hi {approver_name or 'there'},",
         heading="Wellness break needs your approval",
         intro=(f"{_e(claimant_name)} requested a {_e(hours)}-hour wellness break on "
                f"{_e(break_date)} at {_e(start_time)}. It's waiting on your decision."),
-        cta_label="Review request",
+        cta_label="Review in the dashboard" if extra_html else "Review request",
         link=link,
+        extra_html=extra_html,
     )
     return subject, body, html
 
