@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "10.25"
+APP_VERSION = "10.27"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "10.27",
+        "date": "November 11, 2026",
+        "summary": "Make the wellness approval emails show only Approve and Deny.",
+        "changes": [
+            "When a wellness approval email has the one-click Approve and Deny links, drop the extra \"Review in the dashboard\" button and the \"paste this link\" line, so there are only two links to click. Approve is green and Deny is red.",
+            "The same applies to the reminder sent when the decide links near expiry. Emails without those links are unchanged.",
+            "This changes the message content only. Whether Gmail shows the formatted card depends on the mail relay script also sending the HTML part (see the mail relay setup guide)."
+        ]
+    },
     {
         "version": "10.25",
         "date": "November 11, 2026",

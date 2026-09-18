@@ -109,6 +109,14 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**November 11, 2026: wellness email links ported (10.27).** Older PR #130
+(`claude/kind-mendel-h8ze8q`) was re-applied onto current `main` as
+`port/wellness-email-links` and extended to the expiry reminder email, which did not
+exist when #130 was written. Content only: the live Apps Script mail relay must also
+send the HTML part (see [MAIL_RELAY_SETUP.md](MAIL_RELAY_SETUP.md)); whether it
+does has not been verified. Version 10.27 is numbered after 10.26 (#619, GovMail); the
+second of the two to merge must be re-checked against the new `main`.
+
 **November 9, 2026: #605 (10.14) merged; request-to-work navigation (10.15, #606) follows.**
 #605 merged at `a21044a` after exact-head CI passed; its guarded deployment is
 [run 42613919486](https://github.com/jongsky25/css-is/actions/runs/42613919486).

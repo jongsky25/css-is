@@ -100,7 +100,14 @@ def test_wellness_apply_notifies_the_approver(app_mod, notif_org, sent, future_w
     assert len(sent) == 1
     assert sent[0]["to"] == "ntf-chief@test.local"
     assert "approval" in sent[0]["subject"].lower()
-    assert "/approvals#wellness" in sent[0]["body"]
+    # One-click decide-by-email links (approve + deny), not the dashboard link —
+    # the email asks the approver to click exactly one of these two, nothing else.
+    assert "/wellness/decide/" in sent[0]["body"]
+    assert "action=approve" in sent[0]["body"]
+    assert "action=deny" in sent[0]["body"]
+    assert "/approvals#wellness" not in sent[0]["body"]
+    assert "/wellness/decide/" in sent[0]["html"]
+    assert "/approvals#wellness" not in sent[0]["html"]
 
 
 def test_wellness_apply_respects_the_feature_toggle(app_mod, notif_org, sent, future_weekday):
