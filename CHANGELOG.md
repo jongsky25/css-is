@@ -1,5 +1,71 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-18 (v2.84 — formal HTML emails, invite/reset then everything else)
+
+User request, right after confirming v2.83's relay actually delivers: design
+the invite/reset emails to look formal instead of plain text. Extended, still
+within the same unmerged PR, to every other notification email.
+
+**`mailer.py`** — new `_email_html()` builds a branded HTML shell: header
+("Office Connect" + "Bureau of Local Health Systems Development"), greeting,
+heading, intro, a bulletproof table-based CTA button (`_button_html()`),
+expiry note, plain-URL fallback, and a footer. Built to email-HTML rules, not
+web-HTML rules — no `<style>` block (many clients strip it), no flexbox/grid,
+every rule inline, layout via `<table>` so it degrades safely in Outlook's
+Word rendering engine. `invite_message()`/`reset_message()` now return
+`(subject, text, html)` instead of `(subject, text)`; the three call sites in
+`app.py` updated accordingly. `send()` gained an optional `html=` kwarg —
+omitted, behavior is unchanged (plain-text-only, exactly as every other
+composer — event/wellness/AWA/feedback notifications — still sends). SMTP
+path uses `msg.add_alternative(html, subtype="html")` for a proper
+multipart/alternative message; the relay path adds `"html"` to the JSON
+payload. `name`/`inviter` are HTML-escaped before interpolation.
+
+**`docs/MAIL_RELAY_SETUP.md`** — Apps Script snippet updated to read
+`body.html` and set `htmlBody` on `MailApp.sendEmail` when present (falls
+back to plain-text-only when absent, matching the JS `if (body.html)` check
+already documented). Added a callout for anyone who already deployed the
+v2.83 script: paste the updated code, then **Deploy → Manage deployments →
+New version → Deploy** — editing alone doesn't reach the live URL.
+
+Branding correction mid-build: initial draft led the header with the old
+"CSS·IS" mark (matching `forgot.html`/`set_password.html`); the user
+clarified the product is Office Connect now, not CSS-IS. Header now leads
+with "Office Connect" only.
+
+**Extended to the other six composers** (`event_created_message`,
+`event_section_notify_message`, `wellness_pending_message`,
+`wellness_decided_message`, `awa_pending_message`, `awa_decided_message`,
+`feedback_update_message`) — all route through two shared helpers,
+`app._notify_account`/`app._notify_email`, which gained an `html=` kwarg
+passed straight through to `mailer.send()`; every one of the 8 call sites
+(`awa_pending_message` is called from two routes) updated to unpack the new
+3-tuple. `_email_html()` gained `extra_html` (a shaded callout box, new
+`_note_box_html()`) for the optional admin note on a decided wellness/AWA
+request or the reply on a Spot Feedback update — rendered only when present,
+matching the plain-text version's existing `if note` / `if reply` behavior.
+A generic `_e()` escapes the many dynamic fields (titles, names, dates,
+remarks) these composers interpolate into `intro`.
+
+**Caught by the test suite, not by inspection:** `tests/test_notifications.py`'s
+`sent` fixture's fake `mailer.send` didn't accept the new `html=` kwarg —
+every real call now raised `TypeError` inside `_notify_account`/`_notify_email`'s
+blanket `except Exception: pass`, silently dropping the notification with no
+visible error. All 7 notification tests failed with "0 emails sent" until the
+fixture signature was fixed to match. Worth flagging: that same swallow-all
+exception handling means a bug in production here would have failed exactly
+as silently — the test failure is the only thing that caught it.
+
+**Verified:** 26 tests in `tests/test_mailer.py` total (dynamic-field escaping
+across the new composers; note/reply box appears only when given); all 8
+`tests/test_notifications.py` tests green after the fixture fix. Rendered and
+headless-Chromium-screenshotted all 8 templates (both account emails plus
+all 6 notification types, including a no-note and a with-note variant) to
+check the actual visual result rather than trust the markup — this caught
+the CSS·IS→Office Connect branding mistake earlier in this same PR, so kept
+doing it for every subsequent template rather than assuming success. Full
+affected-test run green. Version bumped to **2.84**.
+
 ## 2026-09-17 (v2.83 — mail leaves over HTTPS; the Space blocks SMTP outright)
 
 **Root cause, finally established.** Port 465 timed out exactly like 587 did.

@@ -30,6 +30,7 @@ TWO TRANSPORTS, tried in this order:
 """
 
 from __future__ import annotations
+import html as htmlmod
 import os
 import smtplib
 import socket
@@ -90,12 +91,12 @@ def _record(to, subject, body, note):
         pass
 
 
-def _send_via_relay(to, subject, body):
+def _send_via_relay(to, subject, body, html=None):
     """POST the message to the Apps Script web app, which sends it as the
     mailbox the script belongs to. Returns {'sent': bool, 'detail': str}."""
     url = os.environ["CSS_MAIL_RELAY_URL"]
     payload = {"secret": os.environ["CSS_MAIL_RELAY_SECRET"],
-               "to": to, "subject": subject, "text": body,
+               "to": to, "subject": subject, "text": body, "html": html or "",
                "fromName": os.environ.get("CSS_MAIL_RELAY_NAME", "Office Connect")}
     try:
         # follow_redirects is REQUIRED: an Apps Script /exec URL answers with a
@@ -129,14 +130,16 @@ def _send_via_relay(to, subject, body):
     return {"sent": True, "detail": "Email sent."}
 
 
-def send(to, subject, body):
-    """Send an email. Returns {'sent': bool, 'detail': str}.
+def send(to, subject, body, html=None):
+    """Send an email. `html` is optional — when given, the message is sent as
+    text+HTML alternatives (a client shows whichever it supports); when
+    omitted, plain text only. Returns {'sent': bool, 'detail': str}.
     With no transport configured, records to the outbox and reports sent=False."""
     if not email_configured():
         _record(to, subject, body, "NOT SENT - no mail transport configured")
         return {"sent": False, "detail": "Email is not configured on this server."}
     if relay_configured():
-        return _send_via_relay(to, subject, body)
+        return _send_via_relay(to, subject, body, html=html)
     host = os.environ["CSS_SMTP_HOST"]
     port = int(os.environ.get("CSS_SMTP_PORT", "587"))
     use_tls = os.environ.get("CSS_SMTP_TLS", "1") != "0"
@@ -148,6 +151,8 @@ def send(to, subject, body):
     msg["To"] = to
     msg["Subject"] = subject
     msg.set_content(body)
+    if html:
+        msg.add_alternative(html, subtype="html")
     try:
         socket.getaddrinfo = _ipv4_only_getaddrinfo
         # Port 465 is implicit TLS from the first byte (SMTP_SSL); STARTTLS
@@ -169,9 +174,91 @@ def send(to, subject, body):
         socket.getaddrinfo = _real_getaddrinfo
 
 
+# ---- HTML template (all composers below share this shell) -------------------
+#
+# Email HTML is a different discipline from web HTML: no <style> block (many
+# clients strip it), no flexbox/grid, every rule inline, and layout done with
+# <table> so it degrades safely in Outlook's Word rendering engine. Colors
+# match the app's light-mode palette (static/css/app.css --accent etc.); the
+# header leads with "Office Connect" — that's the product's name now.
+#
+# `intro` and `extra_html` are pre-built HTML fragments — callers interpolate
+# their own dynamic values (names, titles, dates, remarks) through _e() before
+# embedding them, since this shell does not escape those two params. Every
+# other param (`greeting`, `heading`, `footnote`, and `label`/`text` inside
+# _note_box_html) IS escaped internally — pass those as plain, unescaped text.
+
+_ACCENT = "#1040a0"
+_INK = "#1b2230"
+_SOFT = "#5a6473"
+_BORDER = "#e2e8f0"
+_BG = "#f4f6fa"
+
+
+def _e(value):
+    """Shorthand HTML-escape for interpolating dynamic data into intro/extra_html."""
+    return htmlmod.escape(str(value)) if value is not None else ""
+
+
+def _button_html(label, link):
+    return (f'<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:26px 0;">'
+            f'<tr><td style="border-radius:8px; background:{_ACCENT};">'
+            f'<a href="{link}" target="_blank" style="display:inline-block; padding:13px 28px; '
+            f'font-family:Arial,Helvetica,sans-serif; font-size:15px; font-weight:700; '
+            f'color:#ffffff; text-decoration:none; border-radius:8px;">{htmlmod.escape(label)}</a>'
+            f'</td></tr></table>')
+
+
+def _note_box_html(label, text):
+    """A shaded callout for an admin remark or a reply quote — e.g. the note
+    on a decided wellness/AWA request, or a reply to Spot Feedback."""
+    return (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:18px 0;">'
+            f'<tr><td style="padding:12px 16px; background:{_BG}; border-left:3px solid {_ACCENT}; border-radius:4px;">'
+            f'<p style="margin:0 0 2px; font-family:Arial,Helvetica,sans-serif; font-size:11px; font-weight:700; '
+            f'color:{_SOFT}; text-transform:uppercase; letter-spacing:.03em;">{htmlmod.escape(label)}</p>'
+            f'<p style="margin:0; font-family:Arial,Helvetica,sans-serif; font-size:14px; line-height:1.5; '
+            f'color:{_INK};">{htmlmod.escape(text)}</p></td></tr></table>')
+
+
+def _email_html(greeting, heading, intro, cta_label, link, footnote="", extra_html=""):
+    button = _button_html(cta_label, link)
+    footnote_html = (f'<p style="margin:0; font-family:Arial,Helvetica,sans-serif; font-size:13px; '
+                      f'line-height:1.6; color:{_SOFT};">{htmlmod.escape(footnote)}</p>') if footnote else ""
+    return f"""<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+<body style="margin:0; padding:0; background:{_BG};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:{_BG}; padding:32px 16px;">
+<tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px; background:#ffffff; border:1px solid {_BORDER}; border-radius:12px;">
+<tr><td style="padding:26px 32px 18px; border-bottom:1px solid {_BORDER};">
+  <div style="font-family:Arial,Helvetica,sans-serif; font-weight:800; font-size:18px; color:{_INK};">Office Connect</div>
+  <div style="font-family:Arial,Helvetica,sans-serif; font-size:11px; color:{_SOFT}; letter-spacing:.04em; text-transform:uppercase; margin-top:3px;">Bureau of Local Health Systems Development</div>
+</td></tr>
+<tr><td style="padding:30px 32px;">
+  <p style="margin:0 0 6px; font-family:Arial,Helvetica,sans-serif; font-size:14px; color:{_SOFT};">{htmlmod.escape(greeting)}</p>
+  <h1 style="margin:0 0 14px; font-family:Arial,Helvetica,sans-serif; font-size:20px; color:{_INK};">{htmlmod.escape(heading)}</h1>
+  <p style="margin:0; font-family:Arial,Helvetica,sans-serif; font-size:15px; line-height:1.6; color:{_INK};">{intro}</p>
+  {extra_html}
+  {button}
+  {footnote_html}
+  <p style="margin:22px 0 0; font-family:Arial,Helvetica,sans-serif; font-size:12px; line-height:1.5; color:{_SOFT}; word-break:break-all;">Or paste this link into your browser:<br><a href="{link}" style="color:{_ACCENT};">{link}</a></p>
+</td></tr>
+<tr><td style="padding:16px 32px; background:{_BG}; border-top:1px solid {_BORDER}; border-radius:0 0 12px 12px;">
+  <p style="margin:0; font-family:Arial,Helvetica,sans-serif; font-size:12px; color:{_SOFT};">This is an automated message from Office Connect. Please do not reply to this email.</p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>
+"""
+
+
 # ---- message composers ------------------------------------------------------
 
 def invite_message(name, link, inviter=None):
+    """Returns (subject, plain_text_body, html_body)."""
     subject = "Your Office Connect account — set your password"
     who = f" by {inviter}" if inviter else ""
     body = (f"Hello {name or 'there'},\n\n"
@@ -180,17 +267,38 @@ def invite_message(name, link, inviter=None):
             f"  {link}\n\n"
             f"This link expires in 7 days. If you weren't expecting this, you can "
             f"ignore this message.\n")
-    return subject, body
+    intro = (f"An account was created for you{htmlmod.escape(who)} on Office Connect, the "
+             f"bureau's staff system. To finish setting it up, choose your password below.")
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="Set up your account",
+        intro=intro,
+        cta_label="Set your password",
+        link=link,
+        footnote="This link expires in 7 days. If you weren't expecting this, you can safely "
+                 "ignore this message.",
+    )
+    return subject, body, html
 
 
 def reset_message(name, link):
+    """Returns (subject, plain_text_body, html_body)."""
     subject = "Office Connect — reset your password"
     body = (f"Hello {name or 'there'},\n\n"
             f"We received a request to reset your Office Connect password. Set a new one here:\n\n"
             f"  {link}\n\n"
             f"This link expires in 1 hour. If you didn't request this, you can safely "
             f"ignore this message — your password won't change.\n")
-    return subject, body
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="Reset your password",
+        intro="We received a request to reset your Office Connect password. Set a new one below.",
+        cta_label="Reset your password",
+        link=link,
+        footnote="This link expires in 1 hour. If you didn't request this, you can safely "
+                 "ignore this message — your password won't change.",
+    )
+    return subject, body, html
 
 
 def recovery_message(name, link, event_title=None):
@@ -206,6 +314,7 @@ def recovery_message(name, link, event_title=None):
 
 
 # ---- action-needed notifications --------------------------------------------
+# Each returns (subject, plain_text_body, html_body), same shape as invite/reset.
 
 def event_created_message(creator_name, title, event_date, link):
     subject = f"Event created — {title}"
@@ -213,7 +322,14 @@ def event_created_message(creator_name, title, event_date, link):
             f"Your event “{title}” on {event_date} was created. "
             f"Manage it here:\n\n"
             f"  {link}\n")
-    return subject, body
+    html = _email_html(
+        greeting=f"Hi {creator_name or 'there'},",
+        heading="Event created",
+        intro=f"Your event &ldquo;{_e(title)}&rdquo; on {_e(event_date)} was created.",
+        cta_label="Manage event",
+        link=link,
+    )
+    return subject, body, html
 
 
 def event_section_notify_message(chief_name, creator_name, title, event_date, link):
@@ -222,7 +338,15 @@ def event_section_notify_message(chief_name, creator_name, title, event_date, li
             f"{creator_name} created a new event under your section: "
             f"“{title}” on {event_date}.\n\n"
             f"  {link}\n")
-    return subject, body
+    html = _email_html(
+        greeting=f"Hi {chief_name or 'there'},",
+        heading="New event under your section",
+        intro=(f"{_e(creator_name)} created a new event under your section: "
+               f"&ldquo;{_e(title)}&rdquo; on {_e(event_date)}."),
+        cta_label="View event",
+        link=link,
+    )
+    return subject, body, html
 
 
 def wellness_pending_message(approver_name, claimant_name, break_date, start_time, hours, link):
@@ -231,7 +355,15 @@ def wellness_pending_message(approver_name, claimant_name, break_date, start_tim
             f"{claimant_name} requested a {hours}-hour wellness break on "
             f"{break_date} at {start_time}. It's waiting on your decision:\n\n"
             f"  {link}\n")
-    return subject, body
+    html = _email_html(
+        greeting=f"Hi {approver_name or 'there'},",
+        heading="Wellness break needs your approval",
+        intro=(f"{_e(claimant_name)} requested a {_e(hours)}-hour wellness break on "
+               f"{_e(break_date)} at {_e(start_time)}. It's waiting on your decision."),
+        cta_label="Review request",
+        link=link,
+    )
+    return subject, body, html
 
 
 def wellness_decided_message(claimant_name, action, break_date, note, link):
@@ -240,7 +372,15 @@ def wellness_decided_message(claimant_name, action, break_date, note, link):
     body = (f"Hello {claimant_name or 'there'},\n\n"
             f"Your wellness break on {break_date} was {action}.\n{note_line}\n"
             f"  {link}\n")
-    return subject, body
+    html = _email_html(
+        greeting=f"Hi {claimant_name or 'there'},",
+        heading=f"Your wellness break was {action}",
+        intro=f"Your wellness break on {_e(break_date)} was {_e(action)}.",
+        cta_label="View details",
+        link=link,
+        extra_html=_note_box_html("Note", note) if note else "",
+    )
+    return subject, body, html
 
 
 def awa_pending_message(approver_name, requester_name, period_label, arrangement, link):
@@ -249,7 +389,15 @@ def awa_pending_message(approver_name, requester_name, period_label, arrangement
             f"{requester_name} filed a {arrangement} work arrangement for "
             f"{period_label}. It's waiting on your decision:\n\n"
             f"  {link}\n")
-    return subject, body
+    html = _email_html(
+        greeting=f"Hi {approver_name or 'there'},",
+        heading="Work arrangement needs your approval",
+        intro=(f"{_e(requester_name)} filed a {_e(arrangement)} work arrangement for "
+               f"{_e(period_label)}. It's waiting on your decision."),
+        cta_label="Review request",
+        link=link,
+    )
+    return subject, body, html
 
 
 def awa_decided_message(requester_name, action, period_label, note, link):
@@ -258,7 +406,15 @@ def awa_decided_message(requester_name, action, period_label, note, link):
     body = (f"Hello {requester_name or 'there'},\n\n"
             f"Your work arrangement for {period_label} was {action}.\n{note_line}\n"
             f"  {link}\n")
-    return subject, body
+    html = _email_html(
+        greeting=f"Hi {requester_name or 'there'},",
+        heading=f"Your work arrangement was {action}",
+        intro=f"Your work arrangement for {_e(period_label)} was {_e(action)}.",
+        cta_label="View details",
+        link=link,
+        extra_html=_note_box_html("Note", note) if note else "",
+    )
+    return subject, body, html
 
 
 def feedback_update_message(submitter_name, status, reply, link):
@@ -268,4 +424,12 @@ def feedback_update_message(submitter_name, status, reply, link):
             f"There's an update on the feedback you sent. Status: {status}.\n"
             f"{reply_line}\n"
             f"  {link}\n")
-    return subject, body
+    html = _email_html(
+        greeting=f"Hi {submitter_name or 'there'},",
+        heading="Update on your Spot Feedback",
+        intro=f"There's an update on the feedback you sent. Status: {_e(status)}.",
+        cta_label="View feedback",
+        link=link,
+        extra_html=_note_box_html("Their reply", reply) if (reply or "").strip() else "",
+    )
+    return subject, body, html

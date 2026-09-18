@@ -2008,23 +2008,23 @@ def _person_name(conn, account_id):
     return (rp["name"] if rp else None) or u["username"]
 
 
-def _notify_account(conn, account_id, subject, body):
+def _notify_account(conn, account_id, subject, body, html=None):
     """Best-effort email to an admin account by id. Never raises — a missing
     account, missing email, or send failure must never break the request that
     triggered it (mailer.send() itself already never raises)."""
     try:
         u = st.get_admin_user_by_id(conn, account_id)
         if u and u.get("username"):
-            mailer.send(u["username"], subject, body)
+            mailer.send(u["username"], subject, body, html=html)
     except Exception:                                 # noqa: BLE001 - notify, don't crash
         pass
 
 
-def _notify_email(email, subject, body):
+def _notify_email(email, subject, body, html=None):
     """Best-effort email to a known address. Never raises."""
     try:
         if email:
-            mailer.send(email, subject, body)
+            mailer.send(email, subject, body, html=html)
     except Exception:                                 # noqa: BLE001 - notify, don't crash
         pass
 
@@ -2283,8 +2283,8 @@ def _provision_account(conn, request, rp, role, inviter):
     uid = st.create_admin_user(conn, email, "", "", role, created_by=inviter,
                                rp_id=rp["id"], active=False)
     link = _invite_link(request, uid, "")
-    subj, body = mailer.invite_message(rp.get("name"), link, inviter)
-    result = mailer.send(email, subj, body)
+    subj, body, html = mailer.invite_message(rp.get("name"), link, inviter)
+    result = mailer.send(email, subj, body, html=html)
     return {"ok": True, "email": email, "sent": result["sent"], "link": link,
             "detail": result.get("detail")}
 
@@ -2336,8 +2336,8 @@ async def forgot_submit(request: Request):
         u = st.get_admin_user(conn, email) if auth.valid_email(email) else None
         if u:
             link = _reset_link(request, u["id"], u["pw_hash"])
-            subj, body = mailer.reset_message(email, link)
-            mailer.send(email, subj, body)        # outbox-logged if SMTP not configured
+            subj, body, html = mailer.reset_message(email, link)
+            mailer.send(email, subj, body, html=html)   # outbox-logged if SMTP not configured
     finally:
         conn.close()
     # Always the same response — never reveal whether the email exists.
@@ -2456,8 +2456,8 @@ async def admin_users_reset_default(request: Request, user_id: int):
         if not u:
             return RedirectResponse("/admin/users?err=" + quote("No such account."), status_code=303)
         link = _reset_link(request, u["id"], u["pw_hash"])
-        subj, body = mailer.reset_message(u["username"], link)
-        result = mailer.send(u["username"], subj, body)
+        subj, body, html = mailer.reset_message(u["username"], link)
+        result = mailer.send(u["username"], subj, body, html=html)
         _audit(request, conn, "reset_password", target_type="user", target_id=u["username"],
                summary=f"Sent {u['username']} a password reset link")
         if result["sent"]:
@@ -2844,9 +2844,9 @@ async def admin_feedback_triage(request: Request, fid: int):
                 actor = request.state.user["username"]
                 st.add_feedback_update(conn, fid, status=status, reply=reply,
                                        kind="status", actor=actor)
-                subj, body = mailer.feedback_update_message(
+                subj, body, html = mailer.feedback_update_message(
                     entry["submitter"], status, reply, f"{_base_url(request)}/my/feedback")
-                _notify_email(entry["submitter"], subj, body)
+                _notify_email(entry["submitter"], subj, body, html=html)
             _audit(request, conn, "spot_feedback_triage", target_type="spot_feedback",
                    target_id=fid, summary=f"#{fid}: {entry['status']} → {status}",
                    before=entry["status"], after=status)
@@ -5429,16 +5429,16 @@ async def create_survey(request: Request):
             monitor_link = f"{_base_url(request)}/monitor/{event_token}"
             creator_uid = request.state.user["id"]
             creator_name = _person_name(conn, creator_uid) or request.state.user["username"]
-            subj, body = mailer.event_created_message(creator_name, activity_name,
-                                                       event_date, monitor_link)
-            _notify_email(request.state.user["username"], subj, body)
+            subj, body, html = mailer.event_created_message(creator_name, activity_name,
+                                                             event_date, monitor_link)
+            _notify_email(request.state.user["username"], subj, body, html=html)
             for chief_id in st.org_unit_chiefs(conn, lead_id):
                 if chief_id == creator_uid:
                     continue
                 chief_name = _person_name(conn, chief_id)
-                subj, body = mailer.event_section_notify_message(
+                subj, body, html = mailer.event_section_notify_message(
                     chief_name, creator_name, activity_name, event_date, monitor_link)
-                _notify_account(conn, chief_id, subj, body)
+                _notify_account(conn, chief_id, subj, body, html=html)
         else:
             st.create_event(conn, activity_name, event_date, end_date=end_date,
                             venue=venue, modality=modality, organizer=organizer_label,
@@ -13600,10 +13600,10 @@ async def wellness_apply_submit(request: Request):
         claim = st.get_wellness_claim(conn, claim_id)
         for approver_id in st.get_approvers_for(conn, user["id"]):
             approver_name = _person_name(conn, approver_id)
-            subj, body = mailer.wellness_pending_message(
+            subj, body, html = mailer.wellness_pending_message(
                 approver_name, claimant_name, claim["break_date"], claim["start_time"],
                 claim["hours"], approvals_link)
-            _notify_account(conn, approver_id, subj, body)
+            _notify_account(conn, approver_id, subj, body, html=html)
     finally:
         conn.close()
     cheer = quote(f"Break requested — {approver} will see it.")
@@ -13662,10 +13662,10 @@ async def wellness_decide(request: Request, claim_id: int):
                target_id=claim_id,
                summary=f"{verb} {claim['person_name']}'s wellness break "
                        f"on {claim['break_date']} {claim['start_time']}")
-        subj, body = mailer.wellness_decided_message(
+        subj, body, html = mailer.wellness_decided_message(
             claim["person_name"], verb, claim["break_date"], claim["decide_note"],
             f"{_base_url(request)}/wellness")
-        _notify_account(conn, claim["user_id"], subj, body)
+        _notify_account(conn, claim["user_id"], subj, body, html=html)
     finally:
         conn.close()
     return RedirectResponse(f"/wellness/approvals?ok={quote(verb.capitalize() + ' — done.')}",
@@ -14112,10 +14112,10 @@ async def work_arrangement_file_submit(request: Request):
         approvals_link = f"{_base_url(request)}/work-arrangement/approvals"
         for approver_id in st.get_approvers_for(conn, user["id"]):
             approver_name = _person_name(conn, approver_id)
-            subj, body = mailer.awa_pending_message(
+            subj, body, html = mailer.awa_pending_message(
                 approver_name, requester_name, row["period_label"],
                 row["arrangement_label"], approvals_link)
-            _notify_account(conn, approver_id, subj, body)
+            _notify_account(conn, approver_id, subj, body, html=html)
     finally:
         conn.close()
     return RedirectResponse(
@@ -14172,10 +14172,10 @@ async def work_arrangement_change_submit(request: Request, wa_id: int):
         approvals_link = f"{_base_url(request)}/work-arrangement/approvals"
         for approver_id in st.get_approvers_for(conn, user["id"]):
             approver_name = _person_name(conn, approver_id)
-            subj, body = mailer.awa_pending_message(
+            subj, body, html = mailer.awa_pending_message(
                 approver_name, requester_name, row["period_label"],
                 row["arrangement_label"], approvals_link)
-            _notify_account(conn, approver_id, subj, body)
+            _notify_account(conn, approver_id, subj, body, html=html)
     finally:
         conn.close()
     return RedirectResponse(
@@ -14244,10 +14244,10 @@ async def work_arrangement_decide(request: Request, wa_id: int):
                         f"{row['arrangement']} for {row['period_label']}"))
         msg = (f"{row['person_name']} — {row['arrangement']} for "
                f"{row['period_label']} {row['status']}.")
-        subj, body = mailer.awa_decided_message(
+        subj, body, html = mailer.awa_decided_message(
             row["person_name"], row["status"], row["period_label"],
             row["decide_note"], f"{_base_url(request)}/work-arrangement")
-        _notify_account(conn, row["user_id"], subj, body)
+        _notify_account(conn, row["user_id"], subj, body, html=html)
     finally:
         conn.close()
     return RedirectResponse(f"/work-arrangement/approvals?ok={quote(msg)}",
