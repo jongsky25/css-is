@@ -1,6 +1,6 @@
 # CHANGELOG — Cowork revisions (surgical)
 
-## 2026-09-18 (v3.01 — a section manager can add an external resource person)
+## 2026-09-18 (v3.03 — a section manager can add an external resource person)
 
 Spot Feedback #90: "How can I add Resource Persons who are not from BLHSD?"
 The `/create` speaker picker already lists external resource persons
@@ -43,7 +43,7 @@ all gated paths) plus `tests/test_directory_archive.py`,
 `tests/test_directory_search.py`, `tests/test_create_duplicate_warning.py`,
 `tests/test_bureau_no_rp.py` and `tests/test_outside_activity.py` pass.
 
-## 2026-09-18 (v3.00 — the approver is now told when a break is withdrawn)
+## 2026-09-18 (v3.02 — the approver is now told when a break is withdrawn)
 
 Spot Feedback #75: "how will I know if the approver was notified of my
 cancellation?" Filing a break already emails the approver
@@ -53,7 +53,7 @@ one.
 
 **`mailer.py`** — new `wellness_cancelled_message(approver_name,
 claimant_name, break_date, start_time, hours, reason, link)`, folding in
-v2.99's `cancel_reason` when given (`_note_box_html`, same as a denial's
+v3.01's `cancel_reason` when given (`_note_box_html`, same as a denial's
 `decide_note`). Registered as `"wellness_cancelled"` in `FEATURES`
 (admin-toggleable from `/admin/email` like every other transactional email,
 no template changes needed — that page already renders from the catalog)
@@ -75,7 +75,7 @@ cover the new key too — full `tests/test_notifications.py`,
 `tests/test_wellness.py` and `tests/test_wellness_escalation.py` suites
 (over 190 tests) pass.
 
-## 2026-09-18 (v2.99 — a documented reason when withdrawing a wellness break)
+## 2026-09-18 (v3.01 — a documented reason when withdrawing a wellness break)
 
 Spot Feedback #77: "Pop up window to record why withdrawing or cancelling
 the wellness break for documentation." `wellness_claim` already carries
@@ -108,27 +108,7 @@ on `/wellness` next to "cancelled" → the audit log carries it too) and the
 full `tests/test_wellness.py` + `tests/test_wellness_escalation.py` suites
 (55 tests) pass unchanged otherwise.
 
-## 2026-09-18 (v2.98 — the wellness break form defaulted its date to blank)
-
-Spot Feedback #81: "Might be easier if the default date is today?" on
-`/wellness/apply`. `templates/wellness_apply.html`'s `Date` field rendered
-`value=form.get("break_date", "")` — blank on a fresh visit, requiring a
-manual pick even though today is the overwhelmingly common case (`min` is
-already today; breaks can't be backdated).
-
-**`templates/wellness_apply.html`** — one-line change:
-`form.get("break_date", "")` → `form.get("break_date", today)`. `form` still
-wins after a validation-error re-render (the user's own prior pick is
-preserved, not overwritten), so this only changes the very first, blank
-visit. The page's own JS (`refresh()`, called unconditionally on load)
-already reads `dateInput.value` to show the right "N hours left that week"
-note and enable/disable the 2-hour option; it previously no-op'd on a blank
-value, so this also makes that computation run immediately on load instead
-of only after the user's first manual date change — recomputing the exact
-same numbers the server already rendered for the current week, so no
-visible change there.
-
-## 2026-09-18 (v2.97 — a light 3D lean for the wellness companion)
+## 2026-09-18 (v3.00 — a light 3D lean for the wellness companion)
 
 Spot Feedback #82: "make the pet 3d." Full 3D rendering is out of scope for a
 spot fix, so this is a scoped, cosmetic polish in the same spirit rather
@@ -154,7 +134,7 @@ positioning transform used by the wellness hub's drag-to-move (different
 element: outer `.avwrap` vs inner `.av-tiltstage`), and confirmed both work
 together with Playwright.
 
-## 2026-09-18 (v2.96 — a date field's calendar didn't always open on click)
+## 2026-09-18 (v2.99 — a date field's calendar didn't always open on click)
 
 Reported by the user (Spot Feedback #83): "there are times not clickable" on
 `#collected_on` (Date collected) on the paper-entry form. Every
@@ -178,7 +158,7 @@ entirely in "raw" mode (the "Add specific time" datetime-local toggle),
 where the real control is visible and already directly clickable, and on
 browsers without `showPicker()`, where behavior is unchanged from before.
 
-## 2026-09-18 (v2.95 — a right-edge nav dropdown ran off the screen)
+## 2026-09-18 (v2.98 — a right-edge nav dropdown ran off the screen)
 
 Reported by the user (Spot Feedback #93): "yung dropdown lumalagpas sa
 screen di na makita ang ibang choices" — a top-nav dropdown on
@@ -198,6 +178,115 @@ clearing it again on close.
 anchors the menu to its trigger's right edge instead, so a menu that would
 have overflowed opens leftward and stays fully on-screen; menus that
 already fit are untouched.
+
+*(Spot Feedback #81, "the wellness break date defaults to blank," was fixed
+as a one-line change on top of the old `<input type=date>` field in an
+earlier draft of this branch — superseded before merging by the date-pill
+picker below, whose own `loop.first` default covers the same case. No
+separate diff for it here.)*
+
+## 2026-09-18 (v2.97 — wellness breaks: current work week only, down from 4 weeks)
+
+Policy change: plans made weeks ahead were routinely getting cancelled or
+rescheduled by the time the week actually arrived, so the scheduling window
+shrinks to the current work week only.
+
+- **`storage.py`**: `WELLNESS_WINDOW_WEEKS` goes from `4` to `1`. Every
+  window-derived helper (`wellness_window_last_date`, `wellness_window_weeks`,
+  `wellness_window_dates`) was already built purely off this constant (see
+  v2.95), so no other window logic needed to change. Reworded the
+  beyond-window `ValueError` (was "up to N weeks ahead" — bad grammar and a
+  false "next few weeks" framing at N=1) to "within the current work week."
+- **`app.py` / `templates/wellness_apply.html`, `wellness_hub.html`**: copy
+  that interpolated `window_weeks` ("plan up to 1 weeks ahead", "the next 1
+  weeks") reworded for a single-week policy; dropped the now-dead
+  `window_weeks` template context key from both pages (neither template
+  reads it anymore). `wellness_hub`'s `can_request` check already scaled
+  correctly (it was written generically over `wellness_window_weeks()`) — with
+  the window at 1 week, exhausting the current week's entitlement now
+  disables the "Request a break" link immediately, since there's no future
+  week left to fall back on.
+- **Test infra** (`tests/conftest.py`, new `future_weekday` fixture): the
+  wellness/notifications/reminders suites each had their own copy of a
+  `_future_weekday()` helper (`today + 3 days, rolled to the next weekday`).
+  Under a 4-week window that was always safely in-window; under a 1-week
+  window it rolls into *next* week on 5 of 7 real calendar days (Wed through
+  Sun), which would make the suite flaky depending on what day it's run.
+  Replaced with one shared fixture that freezes the wall clock to the
+  current ISO week's Monday morning and returns that week's Wednesday —
+  deterministic regardless of the real day, and immune to the separate
+  minimum-lead-time rule since it's never "today." Updated every call site
+  across `tests/test_wellness.py`, `tests/test_notifications.py`,
+  `tests/test_send_reminders.py`, and one similarly-patterned inline date
+  computation in `tests/test_team_scope.py`; removed the three now-dead
+  local helper copies. Tests that freeze "today" for their own reasons
+  (`on_digest_day`) use that pinned date directly instead of layering a
+  second, conflicting clock freeze on top.
+- **Test coverage**: `test_request_allowed_across_the_month` and
+  `test_hub_link_stays_enabled_once_a_future_week_is_open` asserted the old
+  "a future week is still bookable" behavior directly, so their premise is
+  now false — removed / replaced with
+  `test_hub_link_disables_once_the_current_week_is_fully_claimed`, which
+  asserts the new behavior (link disables immediately; a next-week claim is
+  rejected through the real HTTP flow).
+
+## 2026-09-18 (v2.96 — wellness apply form: exact-time fallback next to the slot grid)
+
+Follow-up to v2.95: the new time-slot grid only offers 30-minute-aligned
+starts (07:00, 07:30, …), so a break that genuinely needs an odd minute
+(14:11, 09:16) had no way to be entered — a real regression against the old
+free-text `<input type="time">`, which took any minute.
+
+- **`templates/wellness_apply.html`**: a "Need a specific minute?" control
+  sits next to the slot grid — a `<input type="time">` paired with its own
+  `name="start_time"` radio (same field, same radio group as the grid's
+  pills, so the POST contract is untouched). Typing a value checks that
+  radio with the typed value; picking a grid pill afterward clears the box
+  back out (native radio-group exclusivity handles the reverse). This path
+  isn't pre-validated against `wellness_day_slots` the way grid pills are —
+  computing that for every possible minute isn't worth it for what's an
+  escape hatch — it's checked by `create_wellness_claim` on submit, exactly
+  as the old free-text field always was.
+- A resubmitted `start_time` that doesn't match any rendered pill (an odd
+  minute carried over from a validation error) now falls back into the
+  exact-time box on page load instead of silently not being reselected.
+
+## 2026-09-18 (v2.95 — wellness apply form: pick a date and time slot, not type them)
+
+The apply form's date/time fields were two disconnected native `<input
+type="date">`/`type="time">` widgets: no visibility into which times were
+actually bookable, an unconstrained time field the server would reject after
+a full round trip, and a field order (date, time, *then* break length) where
+length — which determines how long a slot needs to be — was asked last.
+
+- **`storage.py`**: new flexi-time policy constants `WELLNESS_DAY_START_HOUR`
+  (7), `WELLNESS_DAY_END_HOUR` (19), `WELLNESS_SLOT_STEP_MINUTES` (30),
+  `WELLNESS_LUNCH_START_HOUR`/`WELLNESS_LUNCH_END_HOUR` (12/14) — distinct
+  from the existing `WELLNESS_SLOTS` analytics buckets, which stay untouched.
+  New `wellness_day_slots(conn, user_id, d, hours)` returns every start time
+  the picker can offer for that date/length, each flagged `ok`/`reason` against
+  the *same* checks `create_wellness_claim` enforces (weekly cap, min lead
+  time, a same-day overlap) via a shared `_wellness_overlapping_claim` helper,
+  plus an advisory (non-blocking) `lunch` flag. New `wellness_window_dates()`
+  lists the weekdays the date strip offers.
+- **Bug fix**: `create_wellness_claim`'s double-booking check matched on an
+  *exact* `start_time`, so two claims that actually overlapped (e.g. 09:00-10:00
+  and 09:30-10:30) were both accepted as long as their start times differed.
+  It now checks real interval overlap via `_wellness_overlapping_claim`.
+- **Apply form** (`templates/wellness_apply.html`, `app.py`): the native date/time
+  inputs are replaced with a date-pill strip and a start-time slot grid, in the
+  existing `.acts`/`.lens` radio-pill idiom (real radio inputs, so the POST
+  contract — `break_date`/`start_time` fields — is unchanged). Field order is
+  now date → break length → start time, so the slot grid can depend on the
+  chosen length. The server precomputes `wellness_day_slots` for every window
+  date × both break lengths and ships it as a JSON data attribute (same pattern
+  as the existing `week_used` map); client JS renders the relevant slot set
+  into pills on date/length change, greys out and disables slots the server
+  wouldn't accept (with the reason as a tooltip), and marks lunch-crossing
+  slots with a 🍴 badge without disabling them. Today defaults pre-selected so
+  the form opens with a usable slot grid already showing.
+- Tests (`tests/test_wellness.py`): `test_overlapping_break_is_rejected_even_with_a_different_start_time`,
+  `test_wellness_day_slots_agrees_with_create_wellness_claim`.
 
 ## 2026-09-18 (v2.94 — admin email control center, Phase 7: timing parameters)
 

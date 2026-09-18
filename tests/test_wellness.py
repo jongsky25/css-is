@@ -23,14 +23,6 @@ def _next_weekday(d):
     return d
 
 
-def _future_weekday():
-    """A weekday comfortably in the future. Claim creation requires a minimum
-    lead time before the start (Spot Feedback #73), so tests that file at fixed
-    clock times must not use *today* — their time would read as 'in the past'
-    whenever the suite runs late in the day."""
-    return _next_weekday(tz.today_local() + timedelta(days=3))
-
-
 def _monday_this_week():
     t = tz.today_local()
     return t - timedelta(days=t.weekday())
@@ -84,19 +76,19 @@ def _client_for_id(app_mod, uid):
 
 # ---------------------------------------------------------------- entitlement
 
-def test_third_hour_in_a_week_is_rejected(wellness_org):
+def test_third_hour_in_a_week_is_rejected(wellness_org, future_weekday):
     conn, emp = wellness_org["conn"], wellness_org["emp"]
-    d = _future_weekday().isoformat()
+    d = future_weekday
     st.create_wellness_claim(conn, emp, d, "09:00", "exercise")
     st.create_wellness_claim(conn, emp, d, "15:00", "meditation")
     with pytest.raises(ValueError, match="entitlement"):
         st.create_wellness_claim(conn, emp, d, "16:00", "hobby")
 
 
-def test_two_hour_break_in_one_claim(wellness_org):
+def test_two_hour_break_in_one_claim(wellness_org, future_weekday):
     """The DM allows the whole 2-hour weekly entitlement in a single sitting."""
     conn, emp = wellness_org["conn"], wellness_org["emp"]
-    d = _future_weekday().isoformat()
+    d = future_weekday
     cid = st.create_wellness_claim(conn, emp, d, "09:00", "exercise", hours=2)
     ws = st.wellness_week_start(date.fromisoformat(d))
     assert st.wellness_hours_used(conn, emp, ws) == 2
@@ -106,27 +98,27 @@ def test_two_hour_break_in_one_claim(wellness_org):
         st.create_wellness_claim(conn, emp, d, "15:00", "meditation")
 
 
-def test_two_hour_claim_rejected_when_only_one_hour_left(wellness_org):
+def test_two_hour_claim_rejected_when_only_one_hour_left(wellness_org, future_weekday):
     conn, emp = wellness_org["conn"], wellness_org["emp"]
-    d = _future_weekday().isoformat()
+    d = future_weekday
     st.create_wellness_claim(conn, emp, d, "09:00", "exercise")     # 1 hour used
     with pytest.raises(ValueError, match="Only 1 hour left"):
         st.create_wellness_claim(conn, emp, d, "15:00", "meditation", hours=2)
 
 
-def test_break_length_bounds(wellness_org):
+def test_break_length_bounds(wellness_org, future_weekday):
     conn, emp = wellness_org["conn"], wellness_org["emp"]
-    d = _future_weekday().isoformat()
+    d = future_weekday
     with pytest.raises(ValueError, match="1 to 2 hours"):
         st.create_wellness_claim(conn, emp, d, "09:00", "exercise", hours=3)
     with pytest.raises(ValueError, match="1 to 2 hours"):
         st.create_wellness_claim(conn, emp, d, "09:00", "exercise", hours=0)
 
 
-def test_denied_and_cancelled_hours_return_to_the_week(wellness_org):
+def test_denied_and_cancelled_hours_return_to_the_week(wellness_org, future_weekday):
     conn, emp, chief = wellness_org["conn"], wellness_org["emp"], wellness_org["chief"]
     u_chief = {"id": chief, "username": "w-chief@test.local", "role": "section_manager"}
-    d = _future_weekday().isoformat()
+    d = future_weekday
     c1 = st.create_wellness_claim(conn, emp, d, "09:00", "exercise")
     c2 = st.create_wellness_claim(conn, emp, d, "15:00", "meditation")
     st.decide_wellness_claim(conn, c1, u_chief, "deny", "busy morning")
@@ -136,11 +128,11 @@ def test_denied_and_cancelled_hours_return_to_the_week(wellness_org):
     st.create_wellness_claim(conn, emp, d, "16:00", "hobby")       # fits again
 
 
-def test_cancel_reason_is_recorded_and_optional(wellness_org):
+def test_cancel_reason_is_recorded_and_optional(wellness_org, future_weekday):
     """Spot Feedback #77: a documented reason on withdrawal, same shape as
     decide_note (the approver's side) — present when given, blank when not."""
     conn, emp = wellness_org["conn"], wellness_org["emp"]
-    d = _future_weekday().isoformat()
+    d = future_weekday
     c1 = st.create_wellness_claim(conn, emp, d, "09:00", "exercise")
     c2 = st.create_wellness_claim(conn, emp, d, "15:00", "meditation")
     st.cancel_wellness_claim(conn, c1, emp, reason="  urgent office matter  ")
@@ -152,9 +144,9 @@ def test_cancel_reason_is_recorded_and_optional(wellness_org):
     assert claim2["cancel_reason"] is None
 
 
-def test_http_withdraw_records_reason(app_mod, wellness_org):
+def test_http_withdraw_records_reason(app_mod, wellness_org, future_weekday):
     conn, emp = wellness_org["conn"], wellness_org["emp"]
-    d = _future_weekday().isoformat()
+    d = future_weekday
     claim_id = st.create_wellness_claim(conn, emp, d, "09:00", "exercise")
     c = _client_for_id(app_mod, emp)
     r = c.post(f"/wellness/claims/{claim_id}/cancel",
@@ -165,9 +157,9 @@ def test_http_withdraw_records_reason(app_mod, wellness_org):
     assert claim["cancel_reason"] == "urgent work came up"
 
 
-def test_claim_validation_rules(wellness_org):
+def test_claim_validation_rules(wellness_org, future_weekday):
     conn, emp = wellness_org["conn"], wellness_org["emp"]
-    d = _future_weekday().isoformat()
+    d = future_weekday
     with pytest.raises(ValueError):                                 # bad date
         st.create_wellness_claim(conn, emp, "not-a-date", "09:00", "exercise")
     with pytest.raises(ValueError):                                 # bad time
@@ -206,6 +198,49 @@ def test_break_needs_minimum_lead_time(wellness_org, monkeypatch):
     assert st.create_wellness_claim(conn, emp, day, ok, "meditation")
 
 
+def test_overlapping_break_is_rejected_even_with_a_different_start_time(wellness_org, future_weekday):
+    """The duplicate check used to key on an exact start_time match, so two
+    claims that actually overlap in time (09:00-10:00 and 09:30-10:30) slipped
+    through as long as their start times weren't identical."""
+    conn, emp = wellness_org["conn"], wellness_org["emp"]
+    d = future_weekday
+    st.create_wellness_claim(conn, emp, d, "09:00", "exercise")
+    with pytest.raises(ValueError, match="already have a break"):
+        st.create_wellness_claim(conn, emp, d, "09:30", "hobby")
+    st.create_wellness_claim(conn, emp, d, "10:00", "meditation")  # back-to-back is fine
+
+
+def test_wellness_day_slots_agrees_with_create_wellness_claim(wellness_org, monkeypatch):
+    """The apply form's slot picker (wellness_day_slots) must never offer a
+    start time create_wellness_claim would then reject — lead time, lunch
+    flagging, and a same-day overlap all have to read the same way from both."""
+    conn, emp = wellness_org["conn"], wellness_org["emp"]
+    fixed = datetime.combine(_monday_this_week(), time(10, 0))   # a Monday, 10:00
+    monkeypatch.setattr(tz, "now_local", lambda: fixed)
+    monkeypatch.setattr(tz, "today_local", lambda: fixed.date())
+    today = fixed.date()
+
+    slots = {s["time"]: s for s in st.wellness_day_slots(conn, emp, today, 1)}
+    assert slots["09:00"]["ok"] is False                    # already in the past
+    assert slots["12:30"]["ok"] is True and slots["12:30"]["lunch"] is True
+    assert slots["15:00"]["lunch"] is False
+
+    # book one hour at 15:00; the entitlement still allows a second, but the
+    # slots that would overlap the booked hour must close
+    st.create_wellness_claim(conn, emp, today.isoformat(), "15:00", "exercise")
+    slots = {s["time"]: s for s in st.wellness_day_slots(conn, emp, today, 1)}
+    for overlapping in ("14:30", "15:00", "15:30"):
+        assert slots[overlapping]["ok"] is False
+        with pytest.raises(ValueError, match="already have a break"):
+            st.create_wellness_claim(conn, emp, today.isoformat(), overlapping, "hobby")
+    assert slots["16:00"]["ok"] is True
+    st.create_wellness_claim(conn, emp, today.isoformat(), "16:00", "hobby")
+
+    # entitlement now fully claimed: every remaining slot closes
+    slots = {s["time"]: s for s in st.wellness_day_slots(conn, emp, today, 1)}
+    assert all(not s["ok"] for s in slots.values())
+
+
 # ---------------------------------------------------------- approver routing
 
 def test_chief_resolved_through_directory(wellness_org):
@@ -217,10 +252,10 @@ def test_chief_resolved_through_directory(wellness_org):
     assert st.is_wellness_approver(conn, u_admin, wellness_org["loner"])
 
 
-def test_nobody_decides_their_own_claim(wellness_org):
+def test_nobody_decides_their_own_claim(wellness_org, future_weekday):
     conn, chief = wellness_org["conn"], wellness_org["chief"]
     u_chief = {"id": chief, "username": "w-chief@test.local", "role": "section_manager"}
-    d = _future_weekday().isoformat()
+    d = future_weekday
     own = st.create_wellness_claim(conn, chief, d, "09:00", "exercise")
     assert not st.is_wellness_approver(conn, u_chief, chief)
     with pytest.raises(PermissionError):
@@ -230,11 +265,11 @@ def test_nobody_decides_their_own_claim(wellness_org):
     assert own in [c["id"] for c in st.list_wellness_approvals(conn, u_admin)]
 
 
-def test_chief_queue_holds_only_their_unit(wellness_org):
+def test_chief_queue_holds_only_their_unit(wellness_org, future_weekday):
     conn, emp, chief, loner = (wellness_org["conn"], wellness_org["emp"],
                                wellness_org["chief"], wellness_org["loner"])
     u_chief = {"id": chief, "username": "w-chief@test.local", "role": "section_manager"}
-    d = _future_weekday().isoformat()
+    d = future_weekday
     inside = st.create_wellness_claim(conn, emp, d, "09:00", "exercise")
     outside = st.create_wellness_claim(conn, loner, d, "09:00", "exercise")
     ids = [c["id"] for c in st.list_wellness_approvals(conn, u_chief)]
@@ -382,9 +417,9 @@ def test_approve_complete_reflect_awards_points_and_badges(app_mod, wellness_org
     assert stats["points"] == 37 and stats["level"] == 2
 
 
-def test_completion_guards(wellness_org):
+def test_completion_guards(wellness_org, future_weekday):
     conn, emp = wellness_org["conn"], wellness_org["emp"]
-    d = _future_weekday().isoformat()
+    d = future_weekday
     cid = st.create_wellness_claim(conn, emp, d, "09:00", "exercise")
     with pytest.raises(ValueError, match="approved"):   # still pending
         st.complete_wellness_claim(conn, cid, emp, 3, 4, "walk", None)
@@ -394,7 +429,7 @@ def test_completion_guards(wellness_org):
 
 # ----------------------------------------------------------------- HTTP layer
 
-def test_http_apply_flow_and_hub(app_mod, wellness_org):
+def test_http_apply_flow_and_hub(app_mod, wellness_org, future_weekday):
     c = _client_for_id(app_mod, wellness_org["emp"])
     r = c.get("/wellness")
     # the companion now renders via the shared avatar macro (the mascot is the
@@ -408,7 +443,7 @@ def test_http_apply_flow_and_hub(app_mod, wellness_org):
     assert 'type="radio" name="activity" value="exercise"' in r.text
     # the break-length picker offers both 1- and 2-hour options
     assert 'name="hours" value="1"' in r.text and 'name="hours" value="2"' in r.text
-    d = _future_weekday().isoformat()
+    d = future_weekday
     # take the whole 2-hour entitlement in a single claim
     r = c.post("/wellness/apply", data={"break_date": d, "start_time": "10:00",
                                         "activity": "exercise", "note": "jog",
@@ -449,7 +484,7 @@ def test_http_approve_and_reflect(app_mod, wellness_org):
     conn2.close()
 
 
-def test_chief_pages_are_gated(app_mod, wellness_org, viewer, admin):
+def test_chief_pages_are_gated(app_mod, wellness_org, viewer, admin, future_weekday):
     # a viewer with no chief designation: hub yes, chief pages no
     assert viewer.get("/wellness").status_code == 200
     for path in ("/wellness/approvals", "/wellness/dashboard", "/wellness/export.xlsx"):
@@ -460,7 +495,7 @@ def test_chief_pages_are_gated(app_mod, wellness_org, viewer, admin):
         for path in ("/wellness/approvals", "/wellness/dashboard"):
             assert c.get(path).status_code == 200, path
     # deciding someone else's claim from a non-approver account bounces
-    d = _future_weekday().isoformat()
+    d = future_weekday
     conn = wellness_org["conn"]
     cid = st.create_wellness_claim(conn, wellness_org["emp"], d, "11:00", "exercise")
     loner_c = _client_for_id(app_mod, wellness_org["loner"])
@@ -555,9 +590,9 @@ def test_register_export_date_range(app_mod, wellness_org, admin):
 
 # ---------------------------------------- "Others" activity needs a specification
 
-def test_other_activity_requires_and_stores_specification(wellness_org):
+def test_other_activity_requires_and_stores_specification(wellness_org, future_weekday):
     conn, emp = wellness_org["conn"], wellness_org["emp"]
-    d = _future_weekday().isoformat()
+    d = future_weekday
     # "other" with no specification is rejected
     with pytest.raises(ValueError, match="Others"):
         st.create_wellness_claim(conn, emp, d, "09:00", "other")
@@ -575,26 +610,13 @@ def test_other_activity_requires_and_stores_specification(wellness_org):
     assert st.get_wellness_claim(conn, cid2)["activity_other"] is None
 
 
-# ---------------------------------------------- rolling 4-week request window
+# -------------------------------------------- current-work-week-only request window
 
-def test_request_allowed_across_the_month(wellness_org):
-    """A break can be filed for a future week within the window; each week keeps
-    its own 2-hour cap, independent of the current week."""
-    conn, emp = wellness_org["conn"], wellness_org["emp"]
-    next_week = _next_weekday(_monday_this_week() + timedelta(days=7))
-    d = next_week.isoformat()
-    cid = st.create_wellness_claim(conn, emp, d, "09:00", "exercise", hours=2)
-    ws = st.wellness_week_start(next_week)
-    assert st.wellness_hours_used(conn, emp, ws) == 2
-    # the current week is untouched by next week's claim
-    assert st.wellness_hours_used(conn, emp, st.wellness_week_start()) == 0
-
-
-def test_hub_link_stays_enabled_once_a_future_week_is_open(app_mod, wellness_org):
-    """Using up this week's 2 hours must not lock the 'Request a break' link —
-    the apply flow still accepts a claim for any open week in the rolling
-    window, so the hub link should only disable when EVERY week in the
-    window is full."""
+def test_hub_link_disables_once_the_current_week_is_fully_claimed(app_mod, wellness_org):
+    """WELLNESS_WINDOW_WEEKS == 1: there's no future week to fall back to once
+    this week's 2 hours are gone, so — unlike the old rolling multi-week
+    window — the 'Request a break' link must disable immediately, and a
+    next-week claim is rejected through the real HTTP flow, not accepted."""
     conn, emp = wellness_org["conn"], wellness_org["emp"]
     monday = _monday_this_week().isoformat()
     ws = st.wellness_week_start(date.fromisoformat(monday))
@@ -607,24 +629,22 @@ def test_hub_link_stays_enabled_once_a_future_week_is_open(app_mod, wellness_org
     c = _client_for_id(app_mod, emp)
     r = c.get("/wellness")
     assert r.status_code == 200
-    m = re.search(r'<a class="btn" href="/wellness/apply"[^>]*>', r.text)
-    assert m and "aria-disabled" not in m.group(0)
-    # a next-week claim is still accepted through the real HTTP flow
+    assert 'aria-disabled="true"' in r.text and "Request a break</span>" in r.text
+    # a next-week claim is rejected through the real HTTP flow too
     next_week = _next_weekday(_monday_this_week() + timedelta(days=7))
     r = c.post("/wellness/apply", data={"break_date": next_week.isoformat(),
                                         "start_time": "10:00", "activity": "exercise",
-                                        "note": "jog", "hours": "1"},
-               follow_redirects=False)
-    assert r.status_code == 303
+                                        "note": "jog", "hours": "1"})
+    assert r.status_code == 400 and "current work week" in r.text
 
 
 def test_request_beyond_window_is_rejected(wellness_org):
     conn, emp = wellness_org["conn"], wellness_org["emp"]
-    # a workday past the last week of the rolling window
+    # a workday past the last week of the (now single-week) window
     beyond = _next_weekday(_monday_this_week()
                            + timedelta(days=st.WELLNESS_WINDOW_WEEKS * 7))
     assert beyond > st.wellness_window_last_date()
-    with pytest.raises(ValueError, match="weeks ahead"):
+    with pytest.raises(ValueError, match="current work week"):
         st.create_wellness_claim(conn, emp, beyond.isoformat(), "09:00", "exercise")
 
 

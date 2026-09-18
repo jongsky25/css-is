@@ -13815,9 +13815,12 @@ def wellness_hub(request: Request, cheer: str = "", badges: str = "", err: str =
         profile = st.get_user_profile(conn, user["id"])
         week = st.wellness_week_start()
         used = st.wellness_hours_used(conn, user["id"], week)
-        # Whether ANY week in the rolling request window still has room — the
-        # current week alone (`used`/`left` below) isn't enough to gate the
-        # "Request a break" link, since a future week can still be wide open.
+        # Whether the current request window still has room. Written as "any
+        # week in the window" rather than a direct used<weekly check on the
+        # current week alone because it falls out of the same
+        # wellness_window_weeks() the apply form's date strip uses — today
+        # that window is just the current week, but the check doesn't need to
+        # assume that.
         can_request = any(
             st.wellness_hours_used(conn, user["id"], w) < st.WELLNESS_WEEKLY_HOURS
             for w in st.wellness_window_weeks())
@@ -13851,9 +13854,6 @@ def wellness_hub(request: Request, cheer: str = "", badges: str = "", err: str =
         "avatar_care_streak": avatar_care_streak, "avatar_last_care": avatar_last_care,
         "left": max(0, st.WELLNESS_WEEKLY_HOURS - used),
         "weekly_hours": st.WELLNESS_WEEKLY_HOURS, "can_request": can_request,
-        # Named so the "nothing left to request" copy states the same window
-        # can_request is actually computed over (st.wellness_window_weeks()).
-        "window_weeks": st.WELLNESS_WINDOW_WEEKS,
         "claims": claims, "is_chief": is_chief, "queue_n": queue_n,
         "register_months": register_months,
         "cheer": cheer, "cheer_badges": [b for b in badges.split("|") if b],
@@ -13874,6 +13874,19 @@ def _wellness_apply_page(request, err="", form=None):
         # the current week). Weeks with no claims default to 0 client-side.
         week_used = {w: st.wellness_hours_used(conn, user["id"], w)
                      for w in st.wellness_window_weeks()}
+        # The date strip + slot grid on the apply form: every weekday in the
+        # window, and for each one, every start time create_wellness_claim
+        # would actually accept for a 1-hour vs. a 2-hour break — computed
+        # server-side so the picker can never offer a choice the POST rejects.
+        window_dates = st.wellness_window_dates()
+        day_fmt = "%#d" if os.name == "nt" else "%-d"
+        date_pills = [{"iso": d.isoformat(), "dow": d.strftime("%a"),
+                       "day": d.strftime(day_fmt)} for d in window_dates]
+        slots_by_date = {
+            d.isoformat(): {str(h): st.wellness_day_slots(conn, user["id"], d, h)
+                            for h in (1, 2)}
+            for d in window_dates
+        }
     finally:
         conn.close()
     return templates.TemplateResponse(request, "wellness_apply.html", {
@@ -13885,8 +13898,9 @@ def _wellness_apply_page(request, err="", form=None):
         "min_lead": st.WELLNESS_MIN_LEAD_MINUTES,
         "today": _today_local().isoformat(),
         "max_date": st.wellness_window_last_date().isoformat(),
-        "window_weeks": st.WELLNESS_WINDOW_WEEKS,
         "week_used": week_used,
+        "date_pills": date_pills,
+        "slots_by_date": slots_by_date,
         "err": err, "form": form or {},
     }, status_code=400 if err else 200)
 

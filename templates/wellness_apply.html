@@ -36,10 +36,31 @@
          background:var(--accent); color:#fff; border-radius:10px; padding:.6rem 1.2rem; }
   .notallowed { color:var(--soft); font-size:.8rem; margin-top:.9rem; }
   .left-note { font-weight:700; color:var(--accent); margin-bottom:1rem; }
+  .datestrip, .slotgrid { display:flex; flex-wrap:wrap; gap:.5rem; }
+  .datepill, .slotpill { position:relative; border:2px solid var(--line); border-radius:12px;
+                cursor:pointer; background:var(--bg); text-align:center; font-weight:700;
+                transition:border-color .15s; }
+  .datepill { padding:.4rem .5rem; min-width:52px; display:flex; flex-direction:column;
+              align-items:center; }
+  .datepill .dow { font-size:.7rem; font-weight:600; color:var(--soft); }
+  .datepill .day { font-size:1.05rem; }
+  .slotpill { padding:.4rem .65rem; font-size:.85rem; }
+  .slotpill.lunch:not(.disabled)::after { content:"🍴"; margin-left:.35rem; font-size:.75rem; }
+  .datepill input, .slotpill input { position:absolute; opacity:0; width:1px; height:1px; }
+  .datepill:has(input:checked), .slotpill:has(input:checked) {
+    border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg); }
+  .datepill:focus-within, .slotpill:focus-within { outline:2px solid var(--accent); outline-offset:2px; }
+  .slotpill.disabled { opacity:.4; cursor:not-allowed; text-decoration:line-through; }
+  .slotgrid:empty::before { content:"Pick a date first to see available times.";
+                             color:var(--soft); font-size:.85rem; font-weight:400; }
+  .customtime { display:flex; align-items:center; gap:.4rem; margin-top:.5rem; }
+  .customtime label { font-weight:400; font-size:.85rem; color:var(--soft); margin:0; }
+  .customtime input[type="radio"] { position:absolute; opacity:0; width:1px; height:1px; }
+  .customtime input[type="time"] { width:auto; }
 </style>
 
 {{ page_header("Request a wellness break",
-               "Up to " ~ weekly_hours ~ " hours a week, in one or two sittings — plan up to " ~ window_weeks ~ " weeks ahead so your section keeps running.") }}
+               "Up to " ~ weekly_hours ~ " hours a week, in one or two sittings — filed within the current work week so plans don't go stale.") }}
 
 <div class="panel">
   {% if err %}{{ flash(err=err) }}{% endif %}
@@ -47,11 +68,21 @@
        data-week-used='{{ week_used|tojson }}' data-weekly="{{ weekly_hours }}">{{ left }} hour{{ 's' if left != 1 }} left that week.</div>
 
   <form method="post" action="/wellness/apply">
-    {{ field("break_date", "Date", value=form.get("break_date", today), type="date", required=True,
-             attrs='min="' ~ today ~ '" max="' ~ max_date ~ '"',
-             help="Any workday from today up to " ~ window_weeks ~ " weeks ahead — breaks can't be filed backdated.") }}
-    {{ field("start_time", "Start time", value=form.get("start_time", ""), type="time", required=True,
-             help="File it at least " ~ min_lead ~ " minutes ahead so your approver has time to see it. Coordinate with your section so service isn't disrupted; it can't overlap your lunch break.") }}
+    <div class="field">
+      <label>Date</label>
+      <div class="datestrip" role="radiogroup" aria-label="Date">
+        {% for p in date_pills %}
+        <label class="datepill" title="{{ p.iso }}">
+          <input type="radio" name="break_date" value="{{ p.iso }}" required
+                 {{ "checked" if (form.get("break_date") == p.iso) or
+                                 (not form.get("break_date") and loop.first) }}>
+          <span class="dow">{{ p.dow }}</span>
+          <span class="day">{{ p.day }}</span>
+        </label>
+        {% endfor %}
+      </div>
+      <div class="help">Any remaining workday this week, through Friday — breaks can't be filed backdated, and next week opens once it's the current week.</div>
+    </div>
 
     <div class="field">
       <label>Break length</label>
@@ -70,6 +101,18 @@
         </label>
       </div>
       <div class="help">Take your whole {{ weekly_hours }}-hour entitlement at once, or split it across the week.</div>
+    </div>
+
+    <div class="field">
+      <label>Start time</label>
+      <div class="slotgrid" id="slotGrid" role="radiogroup" aria-label="Start time"
+           data-slots='{{ slots_by_date|tojson }}' data-initial="{{ form.get('start_time', '') }}"></div>
+      <div class="customtime">
+        <input type="radio" name="start_time" id="customTimeRadio" value="" required>
+        <label for="customTimeInput">Need a specific minute?</label>
+        <input type="time" id="customTimeInput" aria-label="Exact start time">
+      </div>
+      <div class="help">File it at least {{ min_lead }} minutes ahead so your approver has time to see it. Times marked 🍴 cross lunch — coordinate with your section so service isn't disrupted. Greyed-out times don't fit the rules; hover one for why. An exact time you type isn't pre-checked — it's validated the same way when you submit.</div>
     </div>
 
     <div class="field">
@@ -107,12 +150,25 @@
 <script>
 (function () {
   var note = document.getElementById("leftNote");
-  var dateInput = document.querySelector('input[name="break_date"]');
   var hours2Label = document.getElementById("hours2Label");
   var hours2Input = document.getElementById("hours2Input");
   var weekly = parseInt(note && note.dataset.weekly, 10) || 2;
   var weekUsed = {};
   try { weekUsed = JSON.parse((note && note.dataset.weekUsed) || "{}"); } catch (e) {}
+
+  var slotGrid = document.getElementById("slotGrid");
+  var slotsByDate = {};
+  try { slotsByDate = JSON.parse((slotGrid && slotGrid.dataset.slots) || "{}"); } catch (e) {}
+  var initialStartTime = (slotGrid && slotGrid.dataset.initial) || "";
+
+  function selectedDate() {
+    var checked = document.querySelector('input[name="break_date"]:checked');
+    return checked && checked.value;
+  }
+  function selectedHours() {
+    var checked = document.querySelector('input[name="hours"]:checked');
+    return (checked && checked.value) || "1";
+  }
 
   // Monday (YYYY-MM-DD) of the week containing an ISO date string, in UTC so the
   // day-of-week math never shifts across the local timezone.
@@ -125,7 +181,7 @@
   }
 
   function refresh() {
-    var iso = dateInput && dateInput.value;
+    var iso = selectedDate();
     if (!iso) return;                        // keep the server-rendered current-week note
     var used = weekUsed[mondayOf(iso)] || 0;
     var left = Math.max(0, weekly - used);
@@ -143,7 +199,59 @@
       }
     }
   }
-  if (dateInput) dateInput.addEventListener("change", refresh);
+
+  // Rebuilds the time-slot pills for whichever date + break length are picked,
+  // from the server-computed availability in slotsByDate — the picker never
+  // has to guess a rule create_wellness_claim enforces independently.
+  function renderSlots(preserveTime) {
+    if (!slotGrid) return;
+    slotGrid.innerHTML = "";
+    var iso = selectedDate();
+    if (!iso) return;
+    var daySlots = (slotsByDate[iso] || {})[selectedHours()] || [];
+    daySlots.forEach(function (slot) {
+      var label = document.createElement("label");
+      label.className = "slotpill" + (slot.ok ? "" : " disabled") + (slot.lunch ? " lunch" : "");
+      if (!slot.ok) label.title = slot.reason;
+      else if (slot.lunch) label.title = "Crosses lunch — coordinate with your section";
+      var input = document.createElement("input");
+      input.type = "radio";
+      input.name = "start_time";
+      input.value = slot.time;
+      input.required = true;
+      if (!slot.ok) input.disabled = true;
+      else if (slot.time === preserveTime) input.checked = true;
+      input.addEventListener("change", refresh);
+      label.appendChild(input);
+      label.appendChild(document.createTextNode(slot.time));
+      slotGrid.appendChild(label);
+    });
+  }
+
+  document.querySelectorAll('input[name="break_date"]').forEach(function (r) {
+    r.addEventListener("change", function () { refresh(); renderSlots(null); });
+  });
+  document.querySelectorAll('input[name="hours"]').forEach(function (r) {
+    r.addEventListener("change", function () { renderSlots(null); });
+  });
+
+  // The slot grid only offers times on the 30-minute step. Typing an exact
+  // time (e.g. 14:11) checks this separate "start_time" radio with that exact
+  // value instead — it rides the same POST field, just skips the pre-check
+  // the grid gives its own slots (create_wellness_claim still validates it).
+  var customInput = document.getElementById("customTimeInput");
+  var customRadio = document.getElementById("customTimeRadio");
+  if (customInput && customRadio) {
+    customInput.addEventListener("input", function () {
+      customRadio.value = customInput.value;
+      customRadio.checked = !!customInput.value;
+    });
+    document.addEventListener("change", function (e) {
+      if (e.target.name === "start_time" && e.target !== customRadio) {
+        customInput.value = "";
+      }
+    });
+  }
 
   // "Others" needs a specification; reveal + require it only when chosen.
   var otherRow = document.getElementById("otherSpecifyRow");
@@ -159,6 +267,15 @@
   });
 
   refresh();
+  renderSlots(initialStartTime);
+  // a resubmitted value the grid didn't have a matching pill for (an odd
+  // minute, or a date/length combo with no such slot) falls back to the
+  // exact-time box instead of silently vanishing
+  if (initialStartTime && !document.querySelector('input[name="start_time"]:checked')) {
+    customInput.value = initialStartTime;
+    customRadio.value = initialStartTime;
+    customRadio.checked = true;
+  }
   syncOther();
 })();
 </script>

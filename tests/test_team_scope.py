@@ -163,23 +163,17 @@ def test_unlinked_account_gets_no_team_not_the_bureau(org):
     assert st._path_in_scope("TSCOPE/D2/S2", None) is True
 
 
-def test_the_approvals_queue_follows_the_chain_not_the_role(org):
+def test_the_approvals_queue_follows_the_chain_not_the_role(org, future_weekday):
     """Same rule, applied to the queue: an admin is the fallback ABOVE the chain,
     not a bypass around it. A section head who administers the app used to open a
     queue holding every section's routine claims; now they get their own chain's
     claims plus the ORPHANS — the ones no chief can reach — so nothing is
     stranded and nothing routine leaks sideways."""
-    from datetime import timedelta
-
-    import tzutil as tz
-
     conn = org["conn"]
-    day = tz.today_local() + timedelta(days=3)
-    while day.weekday() > 4:                       # a weekday, comfortably ahead
-        day += timedelta(days=1)
-    st.create_wellness_claim(conn, org["s1"], day.isoformat(), "09:00", "exercise")
-    st.create_wellness_claim(conn, org["s2"], day.isoformat(), "10:00", "exercise")
-    st.create_wellness_claim(conn, org["unlinked"], day.isoformat(), "11:00", "exercise")
+    day = future_weekday
+    st.create_wellness_claim(conn, org["s1"], day, "09:00", "exercise")
+    st.create_wellness_claim(conn, org["s2"], day, "10:00", "exercise")
+    st.create_wellness_claim(conn, org["unlinked"], day, "11:00", "exercise")
 
     def claimants(uid):
         return {c["user_id"] for c in st.list_wellness_approvals(conn, _u(conn, uid))}

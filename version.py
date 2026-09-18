@@ -17,12 +17,12 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.01"
+APP_VERSION = "3.03"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "3.01",
+        "version": "3.03",
         "date": "September 18, 2026",
         "summary": "A Section Manager can now add an outside resource person "
                    "directly from New survey, without needing an admin.",
@@ -30,14 +30,14 @@ CHANGELOG = [
             "Creating a survey with a guest speaker who isn't already in "
             "the directory used to be a dead end for a Section Manager — "
             "adding a new external resource person required the "
-            "Directory, which is admin-only. There's now a “+ Add an "
-            "external resource person” link right on the New survey "
+            "Directory, which is admin-only. There's now a \u201c+ Add an "
+            "external resource person\u201d link right on the New survey "
             "screen that a Section Manager can use themselves, without "
             "getting the rest of Directory's admin tools.",
         ],
     },
     {
-        "version": "3.00",
+        "version": "3.02",
         "date": "September 18, 2026",
         "summary": "Withdrawing a wellness break now tells the approver, so "
                    "you're not left wondering if they know.",
@@ -50,7 +50,7 @@ CHANGELOG = [
         ],
     },
     {
-        "version": "2.99",
+        "version": "3.01",
         "date": "September 18, 2026",
         "summary": "Withdrawing a wellness break now asks why, for a record "
                    "of it.",
@@ -63,19 +63,7 @@ CHANGELOG = [
         ],
     },
     {
-        "version": "2.98",
-        "date": "September 18, 2026",
-        "summary": "The wellness break request form now starts with today's "
-                   "date already filled in.",
-        "changes": [
-            "The Date field on \"Request a wellness break\" used to open "
-            "blank, so you had to pick a date even though today is almost "
-            "always what you want. It now starts on today's date — still "
-            "change it if you're planning a break for a later day.",
-        ],
-    },
-    {
-        "version": "2.97",
+        "version": "3.00",
         "date": "September 18, 2026",
         "summary": "Your wellness companion now leans toward your cursor "
                    "for a bit more depth, with a soft shadow underneath.",
@@ -89,7 +77,7 @@ CHANGELOG = [
         ],
     },
     {
-        "version": "2.96",
+        "version": "2.99",
         "date": "September 18, 2026",
         "summary": "Date fields (like Date collected on paper entry) now "
                    "always open their calendar when you tap or click them.",
@@ -102,7 +90,7 @@ CHANGELOG = [
         ],
     },
     {
-        "version": "2.95",
+        "version": "2.98",
         "date": "September 18, 2026",
         "summary": "A top-menu dropdown that opened near the right edge of "
                    "the screen no longer runs off the side, hiding its "
@@ -115,6 +103,56 @@ CHANGELOG = [
             "hidden choices. Such a menu now opens toward the left instead "
             "whenever opening toward the right would run off-screen, so "
             "every choice stays visible.",
+        ],
+    },
+    {
+        "version": "2.97",
+        "date": "September 18, 2026",
+        "summary": "Wellness breaks can now only be requested for a day in "
+                   "the current work week, not weeks ahead.",
+        "changes": [
+            "Filing a wellness break used to let you plan up to 4 weeks "
+            "ahead. It's now limited to the current Monday-to-Friday work "
+            "week, so plans stay close to when you'll actually take them "
+            "and don't need to be cancelled or moved as the week changes.",
+            "The \"Request a break\" button on the wellness page now turns "
+            "off as soon as this week's 2 hours are fully claimed, since "
+            "there's no longer a future week to fall back on.",
+        ],
+    },
+    {
+        "version": "2.96",
+        "date": "September 18, 2026",
+        "summary": "The wellness break form's time slots can now be paired "
+                   "with an exact minute, for anyone who needs one that "
+                   "isn't on the half-hour.",
+        "changes": [
+            "The new time-slot grid only offered times on the hour or "
+            "half-hour. A \"Need a specific minute?\" box next to it now "
+            "lets you type any exact time (like 9:16 or 2:11 PM) instead — "
+            "it's checked against the same rules when you submit.",
+        ],
+    },
+    {
+        "version": "2.95",
+        "date": "September 18, 2026",
+        "summary": "Requesting a wellness break now shows you which dates and "
+                   "times are actually open, instead of making you type them "
+                   "and find out after submitting.",
+        "changes": [
+            "The wellness break request form now shows the day as tappable "
+            "date buttons and the start time as a grid of time slots, "
+            "instead of the old calendar/clock text boxes. Times that "
+            "wouldn't be allowed (too soon, already booked, or no hours "
+            "left that week) are greyed out with the reason shown when you "
+            "point at them, so you find out before you submit, not after.",
+            "Times that would run into your lunch break are marked with a "
+            "fork-and-plate icon as a heads-up to coordinate with your "
+            "section — they're still allowed, just flagged.",
+            "Fixed a bug where two overlapping break requests on the same "
+            "day (for example 9:00-10:00 and 9:30-10:30) could both be "
+            "accepted as long as their start times weren't exactly the "
+            "same.",
         ],
     },
     {

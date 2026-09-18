@@ -164,3 +164,26 @@ def sample_ids(app_mod):
         "form_instance_id": inst[0] if inst else 0,
         "response_id": resp[0] if resp else 0,
     }
+
+
+@pytest.fixture
+def future_weekday(monkeypatch):
+    """A workday (Wednesday) inside the CURRENT ISO week, with the wall clock
+    pinned to that week's Monday morning.
+
+    Wellness breaks can only be filed within the current work week
+    (storage.WELLNESS_WINDOW_WEEKS == 1), so "a day safely in the future"
+    only exists on some real calendar days — on a Thu/Fri/Sat/Sun test run
+    there's no later weekday left in-window, and falling back to today would
+    couple every caller to the real wall-clock's time-of-day against
+    WELLNESS_MIN_LEAD_MINUTES. Freezing 'now' to a fixed Monday sidesteps
+    both: any weekday that week is fair game, deterministically, regardless
+    of which real day the suite happens to run on."""
+    import tzutil as tz
+    from datetime import datetime, time, timedelta
+    today = tz.today_local()
+    monday = today - timedelta(days=today.weekday())
+    fixed = datetime.combine(monday, time(6, 0))
+    monkeypatch.setattr(tz, "now_local", lambda: fixed)
+    monkeypatch.setattr(tz, "today_local", lambda: fixed.date())
+    return (monday + timedelta(days=2)).isoformat()   # Wednesday
