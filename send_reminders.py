@@ -22,6 +22,9 @@ times of day; with no flags at all, every job runs):
   --digest            One email per approver bundling every wellness break AND
                       work arrangement still awaiting their decision — a
                       catch-all in case an individual notification was missed.
+  --csm-rp            Email a resource person their own CSM results once their
+                      session's feedback has concluded (only if they have a
+                      login — the results page is not public).
 
 Requires CSS_BASE_URL (same as the live app — see app.py's _base_url) so the
 links in these emails point at the real site; a mail transport configured per
@@ -111,7 +114,7 @@ def remind_tomorrows_events(conn, base, dry_run=False):
     return sent
 
 
-_ALL_JOBS = {"events", "wellness_expiry", "digest"}
+_ALL_JOBS = {"events", "wellness_expiry", "digest", "csm_rp"}
 
 # How many days before a wellness decide link (auth._WELLNESS_DECIDE_MAX_AGE)
 # expires the approver gets re-notified, if the claim is still pending then.
@@ -149,6 +152,41 @@ def remind_wellness_expiring(conn, base, dry_run=False):
             else:
                 mailer.send(approver["username"], subj, body, html=html)
             sent += 1
+    return sent
+
+
+# How long after an activity ends (when it set no explicit response-window
+# close_at) to wait before announcing CSM results — gives respondents time
+# to actually answer first.
+_CSM_RESULTS_DELAY_DAYS = 3
+
+
+def send_csm_results_to_rps(conn, base, dry_run=False):
+    """Email a resource person their own CSM results once their session's
+    feedback has concluded. Only sent when the RP has a login (an
+    admin_user account) — the results page requires signing in, so there's
+    nowhere useful to send an external speaker with no account."""
+    sent = 0
+    for row in st.list_concluded_rp_forms_pending_csm_email(conn, _CSM_RESULTS_DELAY_DAYS):
+        # No account = no way to reach the (login-gated) results page yet — leave
+        # unmarked so this is retried once the RP does get one, rather than a
+        # skip that can no longer notify them if that ever changes.
+        account = st.get_admin_user_by_rp(conn, row["rp_id"])
+        if not account or not account.get("username"):
+            continue
+        ev = st.get_event_by_id(conn, row["event_id"]) if row["event_id"] else None
+        if not ev:
+            continue
+        rp = st.get_rp(conn, row["rp_id"])
+        link = f"{base}{st.event_rp_results_url(conn, row['event_id'])}"
+        subj, body, html = mailer.csm_rp_results_message(
+            rp["name"] if rp else None, row["topic"], ev["title"], link)
+        if dry_run:
+            print(f"[dry-run] CSM results (RP) -> {account['username']} ({row['topic']})")
+        else:
+            mailer.send(account["username"], subj, body, html=html)
+            st.mark_form_csm_results_emailed(conn, row["form_id"])
+        sent += 1
     return sent
 
 
@@ -213,6 +251,8 @@ def run(db_path="css_is.db", dry_run=False, jobs=None):
             report["wellness_expiry"] = remind_wellness_expiring(conn, base, dry_run=dry_run)
         if "digest" in jobs:
             report["digest"] = send_approvals_digest(conn, base, dry_run=dry_run)
+        if "csm_rp" in jobs:
+            report["csm_rp"] = send_csm_results_to_rps(conn, base, dry_run=dry_run)
     finally:
         conn.close()
     return report
@@ -228,11 +268,14 @@ def main():
                     help="Re-notify approvers of soon-to-expire pending wellness breaks.")
     ap.add_argument("--digest", action="store_true",
                     help="Send each approver a digest of everything still pending on them.")
+    ap.add_argument("--csm-rp", action="store_true",
+                    help="Email resource persons their own CSM results once concluded.")
     args = ap.parse_args()
 
     jobs = {j for j, flag in (("events", args.events),
                               ("wellness_expiry", args.wellness_expiry),
-                              ("digest", args.digest)) if flag}
+                              ("digest", args.digest),
+                              ("csm_rp", args.csm_rp)) if flag}
     report = run(db_path=args.db, dry_run=args.dry_run, jobs=jobs or None)
     for job, n in report.items():
         print(f"{job}: {n} email(s) {'would be ' if args.dry_run else ''}sent")

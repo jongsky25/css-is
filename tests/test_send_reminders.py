@@ -254,3 +254,82 @@ def test_digest_omits_already_decided_items(tmp_path, sent):
     n = sr.send_approvals_digest(conn, "https://css.example")
     assert n == 0
     assert sent == []
+
+
+# --------------------------------------------------------------- CSM (RP) ---
+
+def _rp_form(conn, event_date, *, close_at=None, rp_has_account=True, answered=True):
+    """An outside (Form-3-only) activity with one speaker session. Returns
+    (event, form_instance_id, rp_id)."""
+    rp_id = conn.execute(
+        "INSERT INTO resource_person(name, is_internal, email) "
+        "VALUES ('SR CSM Speaker', 1, 'sr-speaker@test.local')").lastrowid
+    if rp_has_account:
+        st.create_admin_user(conn, "sr-speaker@test.local", "x", "y", "viewer", rp_id=rp_id)
+    conn.commit()
+    f = st.create_form_instance(conn, 3, "F3", event_date, rp_id=rp_id, topic="SR Session")
+    if close_at is not None:
+        st.set_response_window(conn, f, None, close_at)
+    ev = st.create_event(conn, "SR CSM Activity", event_date, form_instance_ids=[f],
+                         created_by="sr-csm-creator@test.local", event_kind="outside")
+    if answered:
+        st.record_response(conn, f, [("RP1", 6)], served_by_rp_id=rp_id)
+    conn.commit()
+    return ev, f, rp_id
+
+
+def test_emails_rp_once_window_closes(tmp_path, sent):
+    conn = _fresh(tmp_path)
+    past_close = (tz.now_local() - timedelta(hours=1)).isoformat(timespec="minutes")
+    _ev, f, _rp = _rp_form(conn, "2026-01-05", close_at=past_close)
+    n = sr.send_csm_results_to_rps(conn, "https://css.example")
+    assert n == 1
+    assert sent[0]["to"] == "sr-speaker@test.local"
+    assert "csm results" in sent[0]["subject"].lower()
+    assert "SR Session" in sent[0]["subject"]
+    assert "/reports?type=3&activity=" in sent[0]["body"]
+    # Idempotent: a second run doesn't re-email the same form.
+    n2 = sr.send_csm_results_to_rps(conn, "https://css.example")
+    assert n2 == 0
+    assert len(sent) == 1
+
+
+def test_emails_rp_after_delay_with_no_close_at(tmp_path, sent):
+    conn = _fresh(tmp_path)
+    old_date = (tz.now_local() - timedelta(days=4)).date().isoformat()
+    _rp_form(conn, old_date)
+    n = sr.send_csm_results_to_rps(conn, "https://css.example")
+    assert n == 1
+
+
+def test_no_email_before_delay_elapses(tmp_path, sent):
+    conn = _fresh(tmp_path)
+    recent_date = (tz.now_local() - timedelta(days=1)).date().isoformat()
+    _rp_form(conn, recent_date)
+    n = sr.send_csm_results_to_rps(conn, "https://css.example")
+    assert n == 0
+    assert sent == []
+
+
+def test_no_email_without_a_response_yet(tmp_path, sent):
+    conn = _fresh(tmp_path)
+    old_date = (tz.now_local() - timedelta(days=4)).date().isoformat()
+    _rp_form(conn, old_date, answered=False)
+    n = sr.send_csm_results_to_rps(conn, "https://css.example")
+    assert n == 0
+    assert sent == []
+
+
+def test_no_email_when_rp_has_no_login_but_retries_once_they_do(tmp_path, sent):
+    conn = _fresh(tmp_path)
+    old_date = (tz.now_local() - timedelta(days=4)).date().isoformat()
+    ev, f, rp_id = _rp_form(conn, old_date, rp_has_account=False)
+    n = sr.send_csm_results_to_rps(conn, "https://css.example")
+    assert n == 0
+    assert sent == []
+    # The RP later gets an account -> the still-unmarked form is picked up.
+    st.create_admin_user(conn, "sr-speaker@test.local", "x", "y", "viewer", rp_id=rp_id)
+    conn.commit()
+    n2 = sr.send_csm_results_to_rps(conn, "https://css.example")
+    assert n2 == 1
+    assert sent[0]["to"] == "sr-speaker@test.local"

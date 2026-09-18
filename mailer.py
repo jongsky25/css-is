@@ -415,6 +415,28 @@ def event_reminder_message(name, title, event_date, venue, link):
     return subject, body, html
 
 
+def csm_rp_results_message(rp_name, topic, event_title, link):
+    """Returns (subject, plain_text_body, html_body). Sent once to a resource
+    person (speaker) with a login, after their own Type-3 CSM ratings for a
+    session have concluded — the results view requires signing in, so this
+    only goes to an RP with an admin_user account."""
+    subject = f"Your CSM results are ready — {topic}"
+    body = (f"Hello {rp_name or 'there'},\n\n"
+            f"The Client Satisfaction Measurement results for your session "
+            f"“{topic}” at “{event_title}” are ready to view.\n\n"
+            f"  {link}\n")
+    html = _email_html(
+        greeting=f"Hi {rp_name or 'there'},",
+        heading="Your CSM results are ready",
+        intro=(f"The Client Satisfaction Measurement results for your session "
+               f"&ldquo;{_e(topic)}&rdquo; at &ldquo;{_e(event_title)}&rdquo; are "
+               f"ready to view."),
+        cta_label="View your results",
+        link=link,
+    )
+    return subject, body, html
+
+
 def event_created_message(creator_name, title, event_date, link):
     subject = f"Event created — {title}"
     body = (f"Hello {creator_name or 'there'},\n\n"

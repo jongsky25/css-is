@@ -497,6 +497,11 @@ def _add_missing_columns(conn):
         # feeds deliberately skip. NULL on every pre-existing row (creation was never
         # recorded before this column), so the strip is forward-looking only.
         conn.execute("ALTER TABLE form_instance ADD COLUMN created_by TEXT")
+    if "csm_results_emailed_at" not in fi_cols:
+        # Set once the scheduled reminder job (send_reminders.py) has emailed a
+        # Type-3 (resource-person) form's speaker their own CSM results for it —
+        # makes the send idempotent regardless of how often that job runs.
+        conn.execute("ALTER TABLE form_instance ADD COLUMN csm_results_emailed_at TEXT")
     ou_cols = {row[1] for row in conn.execute("PRAGMA table_info(org_unit)")}
     if "short_name" not in ou_cols:
         conn.execute("ALTER TABLE org_unit ADD COLUMN short_name TEXT")
@@ -4937,6 +4942,39 @@ def event_report_url(conn, event_id):
     if f2_has_resp or (has_f2_form and not f3_has_resp):
         return f"/reports/activities/{repr_id}"
     return f"/reports?type=3&activity={repr_id}"
+
+
+def list_concluded_rp_forms_pending_csm_email(conn, delay_days):
+    """Type-3 (resource-person) forms whose CSM results are ready to announce
+    to the speaker: they have at least one response, haven't been emailed yet,
+    and have concluded — either their own response window closed, or (when no
+    window was set) it's been `delay_days` since the activity ended, giving
+    respondents time to answer first. Returns [{form_id, rp_id, topic,
+    event_id}, ...], oldest first."""
+    now = tz.now_iso()
+    date_cutoff = (tz.now_local() - timedelta(days=delay_days)).date().isoformat()
+    rows = conn.execute(
+        """SELECT fi.id, fi.rp_id, fi.topic, ef.event_id
+           FROM form_instance fi
+           JOIN event_form ef ON ef.form_instance_id = fi.id
+           WHERE fi.survey_type = 3
+             AND COALESCE(fi.archived, 0) = 0
+             AND fi.rp_id IS NOT NULL
+             AND fi.csm_results_emailed_at IS NULL
+             AND EXISTS (SELECT 1 FROM response r WHERE r.form_instance_id = fi.id)
+             AND ((fi.close_at IS NOT NULL AND fi.close_at <= ?)
+                  OR (fi.close_at IS NULL AND COALESCE(fi.end_date, fi.event_date) <= ?))
+           ORDER BY fi.id""",
+        (now, date_cutoff)).fetchall()
+    return [{"form_id": r[0], "rp_id": r[1], "topic": r[2], "event_id": r[3]} for r in rows]
+
+
+def mark_form_csm_results_emailed(conn, form_instance_id):
+    """Record that the speaker's own-results email went out for this Type-3
+    form, so a later run of the reminder job never sends it twice."""
+    conn.execute("UPDATE form_instance SET csm_results_emailed_at = ? WHERE id = ?",
+                (tz.now_iso(), form_instance_id))
+    conn.commit()
 
 
 def event_rp_results_url(conn, event_id):
