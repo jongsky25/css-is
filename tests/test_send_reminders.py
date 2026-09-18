@@ -444,3 +444,35 @@ def test_wellness_file_reminder_nudges_non_filers_only(tmp_path, sent, monkeypat
     assert "wellness break" in sent[0]["subject"].lower()
     assert "/wellness/apply" in sent[0]["body"]
     assert friday.isoformat() in sent[0]["body"]
+
+
+# ------------------------------------------------------------ awa (file) ---
+
+def test_awa_file_reminder_only_fires_the_day_before_deadline(tmp_path, sent, monkeypatch):
+    conn = _fresh(tmp_path)
+    st.create_admin_user(conn, "sr-awa-nofile@test.local", "x", "y", "viewer")
+    conn.commit()
+    period_start = "2030-06-01"          # far future, pure function, no collisions
+    deadline = st.work_arrangement_deadline(period_start)
+    two_days_before = deadline - timedelta(days=2)
+    monkeypatch.setattr(tz, "today_local", lambda: two_days_before)
+    n = sr.remind_awa_to_file(conn, "https://css.example")
+    assert n == 0
+    assert sent == []
+
+
+def test_awa_file_reminder_nudges_non_filers_only(tmp_path, sent, monkeypatch):
+    conn = _fresh(tmp_path)
+    non_filer = st.create_admin_user(conn, "sr-awa-nofile@test.local", "x", "y", "viewer")
+    filer = st.create_admin_user(conn, "sr-awa-filed@test.local", "x", "y", "viewer")
+    conn.commit()
+    period_start = "2030-06-01"
+    deadline = st.work_arrangement_deadline(period_start)
+    day_before = deadline - timedelta(days=1)
+    monkeypatch.setattr(tz, "today_local", lambda: day_before)
+    st.create_work_arrangement(conn, filer, period_start, "reg")
+    n = sr.remind_awa_to_file(conn, "https://css.example")
+    assert n == 1
+    assert sent[0]["to"] == "sr-awa-nofile@test.local"
+    assert "work arrangement" in sent[0]["subject"].lower()
+    assert "/work-arrangement/file" in sent[0]["body"]

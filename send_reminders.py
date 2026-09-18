@@ -29,6 +29,8 @@ times of day; with no flags at all, every job runs):
                       CSM results once concluded.
   --wellness-file     Nudge staff who haven't used any of this week's wellness
                       break entitlement yet, the day before it lapses.
+  --awa-file          Nudge staff with no work arrangement filed for the
+                      earliest still-open period, the day before its deadline.
 
 Requires CSS_BASE_URL (same as the live app — see app.py's _base_url) so the
 links in these emails point at the real site; a mail transport configured per
@@ -118,7 +120,8 @@ def remind_tomorrows_events(conn, base, dry_run=False):
     return sent
 
 
-_ALL_JOBS = {"events", "wellness_expiry", "digest", "csm_rp", "csm_activity", "wellness_file"}
+_ALL_JOBS = {"events", "wellness_expiry", "digest", "csm_rp", "csm_activity",
+            "wellness_file", "awa_file"}
 
 # How many days before a wellness decide link (auth._WELLNESS_DECIDE_MAX_AGE)
 # expires the approver gets re-notified, if the claim is still pending then.
@@ -268,6 +271,33 @@ def remind_wellness_to_file(conn, base, dry_run=False):
     return sent
 
 
+def remind_awa_to_file(conn, base, dry_run=False):
+    """Nudge staff with no work arrangement filed yet for the earliest
+    still-open period, timed for the day before its Friday filing deadline —
+    self-limiting to that one day, same trick as remind_wellness_to_file."""
+    today = tz.today_local()
+    open_periods = st.work_arrangement_open_periods()
+    if not open_periods:
+        return 0
+    period_start = open_periods[0]
+    if today != st.work_arrangement_deadline(period_start) - timedelta(days=1):
+        return 0
+    label = st.work_arrangement_period_label(period_start)
+    deadline_label = st.work_arrangement_deadline_label(period_start)
+    link = f"{base}/work-arrangement/file"
+    sent = 0
+    for staffer in st.staff_without_work_arrangement(conn, period_start):
+        name = _person_name(conn, staffer["id"])
+        subj, body, html = mailer.work_arrangement_file_reminder_message(
+            name, label, deadline_label, link)
+        if dry_run:
+            print(f"[dry-run] AWA file reminder -> {staffer['username']} ({label})")
+        else:
+            mailer.send(staffer["username"], subj, body, html=html)
+        sent += 1
+    return sent
+
+
 def send_approvals_digest(conn, base, dry_run=False):
     """One email per approver bundling EVERY wellness break and work
     arrangement still awaiting their decision — a catch-all in case an
@@ -335,6 +365,8 @@ def run(db_path="css_is.db", dry_run=False, jobs=None):
             report["csm_activity"] = send_csm_results_to_activity(conn, base, dry_run=dry_run)
         if "wellness_file" in jobs:
             report["wellness_file"] = remind_wellness_to_file(conn, base, dry_run=dry_run)
+        if "awa_file" in jobs:
+            report["awa_file"] = remind_awa_to_file(conn, base, dry_run=dry_run)
     finally:
         conn.close()
     return report
@@ -356,6 +388,8 @@ def main():
                     help="Email an activity's creator/chief its overall CSM results.")
     ap.add_argument("--wellness-file", action="store_true",
                     help="Nudge staff who haven't filed a wellness break this week.")
+    ap.add_argument("--awa-file", action="store_true",
+                    help="Nudge staff who haven't filed a work arrangement for the open period.")
     args = ap.parse_args()
 
     jobs = {j for j, flag in (("events", args.events),
@@ -363,7 +397,8 @@ def main():
                               ("digest", args.digest),
                               ("csm_rp", args.csm_rp),
                               ("csm_activity", args.csm_activity),
-                              ("wellness_file", args.wellness_file)) if flag}
+                              ("wellness_file", args.wellness_file),
+                              ("awa_file", args.awa_file)) if flag}
     report = run(db_path=args.db, dry_run=args.dry_run, jobs=jobs or None)
     for job, n in report.items():
         print(f"{job}: {n} email(s) {'would be ' if args.dry_run else ''}sent")

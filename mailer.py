@@ -620,6 +620,26 @@ def wellness_file_reminder_message(name, deadline_label, link):
     return subject, body, html
 
 
+def work_arrangement_file_reminder_message(name, period_label, deadline_label, link):
+    """Returns (subject, plain_text_body, html_body). A nudge, timed the day
+    before a filing period's own Friday deadline, for someone with no work
+    arrangement on file for it yet."""
+    subject = f"Reminder: file your work arrangement — {period_label}"
+    body = (f"Hello {name or 'there'},\n\n"
+            f"You haven't filed a work arrangement for {period_label} yet. "
+            f"The deadline is {deadline_label}.\n\n"
+            f"  {link}\n")
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="Work arrangement not yet filed",
+        intro=(f"You haven't filed a work arrangement for {_e(period_label)} yet. "
+               f"The deadline is {_e(deadline_label)}."),
+        cta_label="File your work arrangement",
+        link=link,
+    )
+    return subject, body, html
+
+
 def awa_pending_message(approver_name, requester_name, period_label, arrangement, link):
     subject = f"Work arrangement needs your approval — {requester_name}"
     body = (f"Hello {approver_name or 'there'},\n\n"
