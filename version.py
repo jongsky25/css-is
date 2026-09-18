@@ -17,10 +17,24 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "2.82"
+APP_VERSION = "2.83"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "2.83",
+        "date": "September 17, 2026",
+        "summary": "Invite and password-reset emails can now actually be "
+                   "sent from this server.",
+        "changes": [
+            "This server's network blocks the normal email channel "
+            "entirely, on every port, so no email provider could work "
+            "here \u2014 that's why sending kept timing out.",
+            "Email now goes out over a secure web connection instead, "
+            "sent from the bureau's own Google mailbox. An administrator "
+            "sets this up once; see docs/MAIL_RELAY_SETUP.md.",
+        ],
+    },
     {
         "version": "2.82",
         "date": "September 17, 2026",

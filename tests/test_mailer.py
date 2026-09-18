@@ -141,3 +141,127 @@ def test_send_uses_starttls_on_port_587(monkeypatch):
     result = mailer.send("to@example.com", "subj", "body")
     assert result["sent"] is True, result["detail"]
     assert not ssl_used, "port 587 must use plain SMTP + starttls, not SMTP_SSL"
+
+
+# ---- HTTPS relay transport (the Space blocks outbound SMTP on every port) ----
+
+class _FakeResponse:
+    def __init__(self, status_code=200, payload=None, text=None):
+        self.status_code = status_code
+        self._payload = payload
+        self.text = text if text is not None else ""
+
+    def json(self):
+        if self._payload is None:
+            raise ValueError("no JSON")
+        return self._payload
+
+
+def _relay_env(monkeypatch):
+    monkeypatch.setenv("CSS_MAIL_RELAY_URL", "https://script.google.com/macros/s/AKfyc/exec")
+    monkeypatch.setenv("CSS_MAIL_RELAY_SECRET", "s3cret")
+
+
+def test_relay_is_preferred_over_smtp_when_both_configured(monkeypatch):
+    """SMTP cannot work on the Space's network, so a configured relay must win
+    rather than the send falling into the SMTP path and timing out."""
+    _relay_env(monkeypatch)
+    monkeypatch.setenv("CSS_SMTP_HOST", "smtp.gmail.com")
+    smtp_used = []
+    monkeypatch.setattr(mailer.smtplib, "SMTP",
+                        lambda *a, **kw: smtp_used.append(True))
+    monkeypatch.setattr(mailer.httpx, "post",
+                        lambda *a, **kw: _FakeResponse(200, {"ok": True}))
+    result = mailer.send("to@example.com", "subj", "body")
+    assert result["sent"] is True, result["detail"]
+    assert not smtp_used, "relay must be used instead of SMTP"
+
+
+def test_relay_follows_redirects(monkeypatch):
+    """An Apps Script /exec URL answers 302 across to
+    script.googleusercontent.com and only that second response carries the
+    JSON. httpx does NOT follow redirects by default, so without
+    follow_redirects=True every single send would read as a failure."""
+    _relay_env(monkeypatch)
+    seen = {}
+
+    def _fake_post(url, **kw):
+        seen.update(kw)
+        if not kw.get("follow_redirects"):
+            return _FakeResponse(302, None, text="<HTML>Moved</HTML>")
+        return _FakeResponse(200, {"ok": True})
+
+    monkeypatch.setattr(mailer.httpx, "post", _fake_post)
+    result = mailer.send("to@example.com", "subj", "body")
+    assert seen.get("follow_redirects") is True, "relay must follow redirects"
+    assert result["sent"] is True, result["detail"]
+
+
+def test_relay_posts_secret_and_message(monkeypatch):
+    _relay_env(monkeypatch)
+    monkeypatch.setenv("CSS_MAIL_RELAY_NAME", "Office Connect")
+    captured = {}
+
+    def _fake_post(url, **kw):
+        captured["url"] = url
+        captured["json"] = kw.get("json")
+        return _FakeResponse(200, {"ok": True})
+
+    monkeypatch.setattr(mailer.httpx, "post", _fake_post)
+    mailer.send("someone@doh.gov.ph", "Reset your password", "the link")
+    assert captured["url"].endswith("/exec")
+    sent = captured["json"]
+    assert sent["secret"] == "s3cret"
+    assert sent["to"] == "someone@doh.gov.ph"
+    assert sent["subject"] == "Reset your password"
+    assert sent["text"] == "the link"
+    assert sent["fromName"] == "Office Connect"
+
+
+def test_relay_reports_unauthorized_from_script(monkeypatch):
+    _relay_env(monkeypatch)
+    monkeypatch.setattr(mailer.httpx, "post",
+                        lambda *a, **kw: _FakeResponse(200, {"ok": False, "error": "unauthorized"}))
+    result = mailer.send("to@example.com", "subj", "body")
+    assert result["sent"] is False
+    assert "unauthorized" in result["detail"]
+
+
+def test_relay_reports_non_json_reply_as_access_problem(monkeypatch):
+    """A web app deployed without 'Anyone' access serves Google's sign-in HTML
+    with a 200 — the admin needs to hear that, not a parse error."""
+    _relay_env(monkeypatch)
+    monkeypatch.setattr(mailer.httpx, "post",
+                        lambda *a, **kw: _FakeResponse(200, None, text="<html>Sign in</html>"))
+    result = mailer.send("to@example.com", "subj", "body")
+    assert result["sent"] is False
+    assert "Anyone" in result["detail"]
+
+
+def test_relay_reports_transport_failure(monkeypatch):
+    _relay_env(monkeypatch)
+
+    def _boom(*a, **kw):
+        raise RuntimeError("connection reset")
+
+    monkeypatch.setattr(mailer.httpx, "post", _boom)
+    result = mailer.send("to@example.com", "subj", "body")
+    assert result["sent"] is False
+    assert "unreachable" in result["detail"]
+    assert "connection reset" in result["detail"]
+
+
+def test_email_configured_true_with_relay_alone(monkeypatch):
+    monkeypatch.delenv("CSS_SMTP_HOST", raising=False)
+    _relay_env(monkeypatch)
+    assert mailer.email_configured() is True
+    assert mailer.relay_configured() is True
+    assert mailer.smtp_configured() is False
+
+
+def test_relay_needs_both_url_and_secret(monkeypatch):
+    monkeypatch.delenv("CSS_SMTP_HOST", raising=False)
+    monkeypatch.setenv("CSS_MAIL_RELAY_URL", "https://script.google.com/macros/s/AKfyc/exec")
+    monkeypatch.delenv("CSS_MAIL_RELAY_SECRET", raising=False)
+    assert mailer.relay_configured() is False
+    assert mailer.email_configured() is False

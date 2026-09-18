@@ -1,20 +1,32 @@
 """
 Office Connect mailer — sends account emails (invite + password reset).
 
-Honest by design: if SMTP isn't configured, it does NOT pretend to send. It
-records the message to an outbox log and reports sent=False, so the caller can
-fall back to showing the link to the admin. Real delivery starts the moment the
-SMTP environment variables are set — no code change needed.
+Honest by design: if no transport is configured, it does NOT pretend to send.
+It records the message to an outbox log and reports sent=False, so the caller
+can fall back to showing the link to the admin.
 
-Configure with environment variables:
-    CSS_SMTP_HOST   (required to enable sending)
-    CSS_SMTP_PORT   (default 587 = STARTTLS; 465 = implicit TLS/SSL from
-                     connect, auto-detected — no other config needed)
-    CSS_SMTP_USER   (login user; also the default From)
-    CSS_SMTP_PASS   (login password)
-    CSS_SMTP_FROM   (From address; defaults to CSS_SMTP_USER)
-    CSS_SMTP_TLS    ("1"/"0", default "1" = STARTTLS; ignored on port 465,
-                     which is always encrypted)
+TWO TRANSPORTS, tried in this order:
+
+1. HTTPS relay (preferred on the Hugging Face Space) — the Space's network
+   blocks outbound SMTP on every port (587 and 465 both time out; see
+   docs/MAIL_RELAY_SETUP.md), while outbound HTTPS works fine, which is how
+   ai_core.py reaches Gemini. So mail goes out as an HTTPS POST to a Google
+   Apps Script web app bound to the sending mailbox, which calls Gmail on our
+   behalf. Sending as that real mailbox also means Google signs the mail, so
+   there is no SPF/DKIM/DNS setup to arrange.
+       CSS_MAIL_RELAY_URL      (the Apps Script /exec web-app URL)
+       CSS_MAIL_RELAY_SECRET   (shared token; the script rejects anything else)
+       CSS_MAIL_RELAY_NAME     (optional display name, default "Office Connect")
+
+2. SMTP — kept for networks that actually allow it (e.g. the LAN pilot).
+       CSS_SMTP_HOST   (required to enable this transport)
+       CSS_SMTP_PORT   (default 587 = STARTTLS; 465 = implicit TLS/SSL from
+                        connect, auto-detected — no other config needed)
+       CSS_SMTP_USER   (login user; also the default From)
+       CSS_SMTP_PASS   (login password)
+       CSS_SMTP_FROM   (From address; defaults to CSS_SMTP_USER)
+       CSS_SMTP_TLS    ("1"/"0", default "1" = STARTTLS; ignored on port 465,
+                        which is always encrypted)
 """
 
 from __future__ import annotations
@@ -24,9 +36,14 @@ import socket
 from datetime import datetime
 from email.message import EmailMessage
 
+import httpx
+
 import tzutil as tz
 
 _OUTBOX = os.path.join(os.path.dirname(os.path.abspath(__file__)), "outbox.log")
+
+# The relay does one small POST; Apps Script cold-starts can take a few seconds.
+_RELAY_TIMEOUT = httpx.Timeout(30.0, connect=10.0)
 
 
 _real_getaddrinfo = socket.getaddrinfo   # captured before send() ever patches it
@@ -46,8 +63,17 @@ def _ipv4_only_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
     return _real_getaddrinfo(host, port, socket.AF_INET, type, proto, flags)
 
 
-def email_configured():
+def relay_configured():
+    return bool(os.environ.get("CSS_MAIL_RELAY_URL") and os.environ.get("CSS_MAIL_RELAY_SECRET"))
+
+
+def smtp_configured():
     return bool(os.environ.get("CSS_SMTP_HOST"))
+
+
+def email_configured():
+    """True when ANY transport can actually send."""
+    return relay_configured() or smtp_configured()
 
 
 def _from_addr():
@@ -64,12 +90,53 @@ def _record(to, subject, body, note):
         pass
 
 
+def _send_via_relay(to, subject, body):
+    """POST the message to the Apps Script web app, which sends it as the
+    mailbox the script belongs to. Returns {'sent': bool, 'detail': str}."""
+    url = os.environ["CSS_MAIL_RELAY_URL"]
+    payload = {"secret": os.environ["CSS_MAIL_RELAY_SECRET"],
+               "to": to, "subject": subject, "text": body,
+               "fromName": os.environ.get("CSS_MAIL_RELAY_NAME", "Office Connect")}
+    try:
+        # follow_redirects is REQUIRED: an Apps Script /exec URL answers with a
+        # 302 over to script.googleusercontent.com and only that second
+        # response carries the JSON. httpx does not follow redirects by
+        # default, so without this every send would read as a failure.
+        resp = httpx.post(url, json=payload, timeout=_RELAY_TIMEOUT, follow_redirects=True)
+    except Exception as e:                   # noqa: BLE001 - report, don't crash a request
+        _record(to, subject, body, f"SEND FAILED (relay): {e}")
+        return {"sent": False, "detail": f"Email send failed: mail relay unreachable ({e})"}
+
+    if resp.status_code != 200:
+        # Apps Script returns the login page (HTML) instead of JSON when the
+        # web app was deployed without "Anyone" access — a common setup slip
+        # worth naming rather than dumping raw markup at the admin.
+        _record(to, subject, body, f"SEND FAILED (relay HTTP {resp.status_code})")
+        return {"sent": False,
+                "detail": f"Email send failed: mail relay returned HTTP {resp.status_code}"}
+    try:
+        data = resp.json()
+    except ValueError:
+        _record(to, subject, body, "SEND FAILED (relay: non-JSON reply)")
+        return {"sent": False, "detail": ("Email send failed: mail relay did not return JSON "
+                                          "(check the web app is deployed with access set to "
+                                          "\"Anyone\")")}
+    if not data.get("ok"):
+        err = str(data.get("error") or "unknown error")
+        _record(to, subject, body, f"SEND FAILED (relay: {err})")
+        return {"sent": False, "detail": f"Email send failed: mail relay said {err}"}
+    _record(to, subject, body, "SENT (relay)")
+    return {"sent": True, "detail": "Email sent."}
+
+
 def send(to, subject, body):
     """Send an email. Returns {'sent': bool, 'detail': str}.
-    When SMTP is unconfigured, records to the outbox and reports sent=False."""
+    With no transport configured, records to the outbox and reports sent=False."""
     if not email_configured():
-        _record(to, subject, body, "NOT SENT - SMTP not configured")
+        _record(to, subject, body, "NOT SENT - no mail transport configured")
         return {"sent": False, "detail": "Email is not configured on this server."}
+    if relay_configured():
+        return _send_via_relay(to, subject, body)
     host = os.environ["CSS_SMTP_HOST"]
     port = int(os.environ.get("CSS_SMTP_PORT", "587"))
     use_tls = os.environ.get("CSS_SMTP_TLS", "1") != "0"
