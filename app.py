@@ -8112,6 +8112,11 @@ async def raffle_draw(request: Request, event_token: str):
                summary=(f"Drew raffle winner {winner['code']}"
                         + (f" ({winner['name']})" if winner["name"] else " (anonymous)")
                         + (f" — prize: {prize}" if prize else "")))
+        if winner.get("email") and mailer.email_configured():
+            win_link = f"{_base_url(request)}/e/{ev['event_token']}"
+            subj, body, html = mailer.raffle_winner_message(
+                winner["name"], ev["title"], prize, win_link)
+            mailer.send(winner["email"], subj, body, html=html)
         return JSONResponse({"ok": True, "remaining": len(candidates) - 1,
                              "winner": {
                                  "code": winner["code"], "name": winner["name"],

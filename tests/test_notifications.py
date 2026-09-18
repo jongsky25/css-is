@@ -333,6 +333,42 @@ def test_no_certificate_email_when_certificate_not_enabled(app_mod, client, mana
     assert not [c for c in sent if "certificate" in c["subject"].lower()]
 
 
+# ------------------------------------------------------------------ raffle ---
+
+def test_raffle_draw_emails_the_winner(admin, db_path, sent):
+    conn = st.connect(db_path)
+    f = st.create_form_instance(conn, 2, "F2", "2026-06-12", topic="NTF Raffle Forum")
+    ev = st.create_event(conn, "NTF Raffle Forum", "2026-06-12", form_instance_ids=[f],
+                         created_by="admin@test.local")
+    aid, _ = st.register_attendee(conn, ev["id"], name="Kai Ramos",
+                                  email="ntf-kai@test.local", consent_text="ok")
+    st.record_response(conn, f, [("A", 6)], remarks="Loved it", attendee_id=aid)
+    conn.commit(); conn.close()
+    token = ev["event_token"]
+    admin.post(f"/activities/{token}/raffle/settings",
+              data={"raffle_enabled": "1", "raffle_prize": "a mug"})
+    r = admin.post(f"/activities/{token}/raffle/draw")
+    assert r.json()["ok"] is True
+    assert len(sent) == 1
+    assert sent[0]["to"] == "ntf-kai@test.local"
+    assert "won" in sent[0]["subject"].lower()
+    assert "mug" in sent[0]["body"]
+
+
+def test_raffle_draw_no_email_for_anonymous_winner(admin, db_path, sent):
+    conn = st.connect(db_path)
+    f = st.create_form_instance(conn, 2, "F2", "2026-06-12", topic="NTF Anon Raffle")
+    ev = st.create_event(conn, "NTF Anon Raffle", "2026-06-12", form_instance_ids=[f],
+                         created_by="admin@test.local")
+    st.record_response(conn, f, [("A", 6)], remarks="Nice")   # anonymous, no attendee
+    conn.commit(); conn.close()
+    token = ev["event_token"]
+    admin.post(f"/activities/{token}/raffle/settings", data={"raffle_enabled": "1"})
+    r = admin.post(f"/activities/{token}/raffle/draw")
+    assert r.json()["ok"] is True
+    assert sent == []
+
+
 # --------------------------------------------------------- SMTP unconfigured ---
 
 def test_nothing_sent_when_smtp_unconfigured(app_mod, notif_org, monkeypatch):

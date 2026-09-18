@@ -5053,7 +5053,7 @@ def raffle_pool(conn, event_id):
     registration, the attendee's name (None when anonymous or after a retention
     purge — the code is then the only identifier). Returns oldest-first."""
     rows = conn.execute("""
-        SELECT r.id, r.submitted_at, r.remarks, fi.topic, a.name
+        SELECT r.id, r.submitted_at, r.remarks, fi.topic, a.name, a.email
         FROM response r
         JOIN event_form ef    ON ef.form_instance_id = r.form_instance_id
         JOIN form_instance fi ON fi.id = ef.form_instance_id
@@ -5077,12 +5077,13 @@ def raffle_pool(conn, event_id):
         if (text or "").strip():
             notes.setdefault(rid, []).append(text.strip())
     pool = []
-    for rid, when, remarks, topic, name in rows:
+    for rid, when, remarks, topic, name, email in rows:
         comment = (remarks or "").strip() or " · ".join(notes.get(rid, []))
         if not comment:
             continue
         pool.append({"response_id": rid, "code": claim_code(rid),
                      "name": (name or "").strip() or None,
+                     "email": (email or "").strip() or None,
                      "comment": comment, "topic": topic,
                      "when": (when or "")[:16].replace("T", " ")})
     return pool

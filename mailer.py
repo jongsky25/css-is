@@ -361,6 +361,28 @@ def certificate_ready_message(name, link, event_title):
     return subject, body, html
 
 
+def raffle_winner_message(name, event_title, prize, link):
+    """Returns (subject, plain_text_body, html_body). Sent to a raffle winner who
+    left an email on file (registered attendees only — anonymous/walk-in
+    commenters are still announced on the draw screen, just not emailed)."""
+    prize_text = prize or "a prize"
+    subject = f"You won the raffle — {event_title}!"
+    body = (f"Hello {name or 'there'},\n\n"
+            f"Congratulations — you won {prize_text} in the raffle for "
+            f"“{event_title}”! Get in touch with the organizer to claim it.\n\n"
+            f"  {link}\n")
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="You won the raffle!",
+        intro=(f"Congratulations — you won {_e(prize_text)} in the raffle for "
+               f"&ldquo;{_e(event_title)}&rdquo;! Get in touch with the organizer "
+               f"to claim it."),
+        cta_label="View the activity",
+        link=link,
+    )
+    return subject, body, html
+
+
 def event_created_message(creator_name, title, event_date, link):
     subject = f"Event created — {title}"
     body = (f"Hello {creator_name or 'there'},\n\n"
