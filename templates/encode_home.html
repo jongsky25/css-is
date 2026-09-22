@@ -98,7 +98,7 @@
       <td data-label="Form"><span class="kind">{{ 'Event' if r.survey_type == 2 else 'Speaker' }}</span><br><span class="fid">{{ r.form_id }}</span></td>
       <td data-label="Subject">
         <span class="subj">{{ r.rp_name if r.survey_type == 3 and r.rp_name else (r.topic or 'Event review') }}</span>
-        <div class="sub2">{% if r.topic and r.survey_type == 3 %}{{ r.topic }} · {% endif %}{{ r.organizer or 'BLHSD' }}{% if r.modality == 'online' %} · <span class="badge blue">Online</span>{% endif %}{% if r.venue %} · {{ r.venue }}{% endif %}</div>
+        <div class="sub2">{% if r.topic and r.survey_type == 3 %}{{ r.topic }} · {% endif %}{{ r.organizer or 'BLHSD' }}{% if r.modality == 'online' %} · <span class="badge blue">Online</span>{% elif r.modality == 'hybrid' %} · <span class="badge blue">Hybrid</span>{% endif %}{% if r.venue %} · {{ r.venue }}{% endif %}</div>
       </td>
       <td class="ncount" data-label="When">{{ r.event_date|humandate }}</td>
       <td data-label="Public link">

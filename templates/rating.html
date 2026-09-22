@@ -23,7 +23,7 @@
       <div class="muted small" style="margin-bottom:.4rem;">
         {% if ctx.rp_name and ctx.survey_type == 3 %}<strong style="color:var(--ink)">{{ ctx.rp_name }}</strong> · {% endif %}
         {% if ctx.topic %}{{ ctx.topic }} · {% endif %}{{ ctx.organizer }}<br>
-        {{ ctx.event_date|humandaterange(ctx.end_date) }}{% if ctx.modality == 'online' %} · <span class="badge blue">Online</span>{% endif %}{% if ctx.venue %} · {{ ctx.venue }}{% endif %} · {{ ctx.form_id }}
+        {{ ctx.event_date|humandaterange(ctx.end_date) }}{% if ctx.modality == 'online' %} · <span class="badge blue">Online</span>{% elif ctx.modality == 'hybrid' %} · <span class="badge blue">Hybrid</span>{% endif %}{% if ctx.venue %} · {{ ctx.venue }}{% endif %} · {{ ctx.form_id }}
       </div>
     </div>
     {% if ctx.survey_type == 3 %}

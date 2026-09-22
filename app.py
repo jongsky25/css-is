@@ -5532,7 +5532,8 @@ async def create_survey(request: Request):
     venue = first("venue").strip() or None
     # Held online or face-to-face. For online events `venue` carries the platform /
     # meeting link instead of a physical place (so it still shows as the location).
-    modality = "online" if first("modality", "f2f").strip() == "online" else "f2f"
+    modality = first("modality", "f2f").strip()
+    modality = modality if modality in ("f2f", "online", "hybrid") else "f2f"
     qr_mode = first("qr_mode", "combined")                 # 'combined' | 'separate'
     external_org = first("external_org").strip()
     # Optional response window ("allowed time to entry") — applies to every form
@@ -5715,10 +5716,11 @@ async def create_survey(request: Request):
         {"k": "Activity", "v": activity_name},
         {"k": "Event date" if not end_date else "Activity dates",
          "v": f"{_humandaterange(event_date, end_date)} (the start date sets the reporting period)"},
-        {"k": "Format", "v": "Online" if modality == "online" else "Face-to-face"},
+        {"k": "Format", "v": {"online": "Online", "hybrid": "Hybrid"}.get(modality, "Face-to-face")},
     ]
     if venue:
-        summary.append({"k": "Platform / link" if modality == "online" else "Venue", "v": venue})
+        summary.append({"k": {"online": "Platform / link", "hybrid": "Venue / link"}.get(modality, "Venue"),
+                        "v": venue})
     summary += [
         {"k": "Organizer", "v": organizer_label},
         {"k": "Speakers", "v": len(speakers)},
@@ -8100,7 +8102,7 @@ def _messages_ai_prompt(ev, slot, tone):
     date = (ev.get("event_date") or "").strip()
     venue = (ev.get("venue") or "").strip()
     organizer = (ev.get("organizer") or ev.get("lead_name") or "").strip()
-    modality = "online" if ev.get("modality") == "online" else "face-to-face"
+    modality = {"online": "online", "hybrid": "hybrid (in-person + online)"}.get(ev.get("modality"), "face-to-face")
     lines = [f"Activity: {title}", f"Modality: {modality}",
              f"Message to draft: {_AI_MESSAGE_SLOT_DESC[slot]}",
              f"Tone: {amsg.TONE_LABELS.get(tone, tone)}"]
@@ -9528,7 +9530,7 @@ def _fmt_activity_date_full(d):
         return str(d)
 
 
-_MRR_MODALITY_LABEL = {"online": "Virtual", "f2f": "Face-to-Face"}
+_MRR_MODALITY_LABEL = {"online": "Virtual", "f2f": "Face-to-Face", "hybrid": "Hybrid"}
 
 
 # ---------------------------------------------------------------------
@@ -9759,6 +9761,17 @@ _MRR_ACTION = {
             "strong": "Keep the present platform and pre-session technical check, and continue sending "
                       "the materials out as files.",
         },
+        "hybrid": {
+            "weak": "Fix the hybrid setup end to end: inspect the venue for sightlines, sound and "
+                    "seating and settle on a meeting platform the office can rely on, run a full AV "
+                    "and screen-share test that includes the remote feed on the morning of the "
+                    "activity, and hand out a reference pack to both the room and the online audience.",
+            "soft": "Test the AV and screen-share feed together before the activity starts — covering "
+                    "both the room and the remote audience — and give participants a reference pack "
+                    "they can take away or download.",
+            "strong": "Maintain the current venue and platform standard, and keep issuing the "
+                      "take-away reference pack to both audiences.",
+        },
     },
 }
 
@@ -9778,6 +9791,9 @@ _MRR_RESOURCE = {
                "reference packs.",
         "online": "A stable online-meeting platform licence, a pre-session technical check, and "
                   "materials prepared as downloadable files.",
+        "hybrid": "A venue with workable sightlines, sound and seating plus a stable online-meeting "
+                  "platform licence, a combined AV and connectivity check, and reference packs "
+                  "prepared for both in-room and remote participants.",
     },
 }
 
@@ -9863,8 +9879,8 @@ def _activity_mrr_profile(e):
         "runner": runner, "severity": severity, "avg": avg,
         "osq": osq, "osq_band": osq_band, "gap": gap, "n": n, "attendance": attendance,
         "rate": (f"{n / attendance * 100:.0f}%" if attendance else None),
-        "modality": "online" if e.get("modality") == "online" else "f2f",
-        "modality_word": "virtual" if e.get("modality") == "online" else "face-to-face",
+        "modality": (e.get("modality") if e.get("modality") in ("f2f", "online", "hybrid") else "f2f"),
+        "modality_word": {"online": "virtual", "hybrid": "hybrid"}.get(e.get("modality"), "face-to-face"),
         "theme": _mrr_chip_theme(e),
         "date": e.get("date") or "",
     }
@@ -13040,7 +13056,7 @@ def _f2_instance_ids(conn, instance_ids):
         instance_ids).fetchall()]
 
 
-MODALITY_LABELS = {"online": "Online", "f2f": "Face-to-face"}
+MODALITY_LABELS = {"online": "Online", "f2f": "Face-to-face", "hybrid": "Hybrid"}
 
 
 @app.get("/dashboard/trends", response_class=HTMLResponse)

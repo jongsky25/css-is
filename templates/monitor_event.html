@@ -72,7 +72,7 @@
   <div class="mhead">
     <p class="mmeta" style="margin-bottom:.1rem;"><a href="/monitor">Monitor</a> · Registration &amp; CSS status</p>
     <h1>{{ ev.title }}</h1>
-    <p class="mmeta"><strong>{{ ev.event_date|humandaterange(ev.end_date) or "—" }}</strong>{% if ev.modality == 'online' %} · Online{% endif %}{% if ev.venue %} · {{ ev.venue }}{% endif %}{% if ev.organizer %} · {{ ev.organizer }}{% endif %}</p>
+    <p class="mmeta"><strong>{{ ev.event_date|humandaterange(ev.end_date) or "—" }}</strong>{% if ev.modality == 'online' %} · Online{% elif ev.modality == 'hybrid' %} · Hybrid{% endif %}{% if ev.venue %} · {{ ev.venue }}{% endif %}{% if ev.organizer %} · {{ ev.organizer }}{% endif %}</p>
     <p class="mmeta">
       {% if is_closed %}
         <span style="color:var(--red);">● Closed</span> — no longer accepting responses.

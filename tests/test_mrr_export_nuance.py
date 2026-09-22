@@ -209,6 +209,19 @@ def test_resources_split_on_modality(manager, app_mod):
     assert "venue" in _row_for(ws, f2f)[4].lower()
 
 
+def test_resources_and_action_do_not_degrade_hybrid_to_face_to_face(manager, app_mod):
+    """A hybrid activity's Tangible copy must mention both the venue and the
+    online platform, not silently fall back to the f2f-only text."""
+    hybrid = "MRR Nuance Hybrid OOO"
+    _activity(app_mod, hybrid, days_ago=17, scores={"B8": 4.0, "B9": 4.0}, osq=3,
+              modality="hybrid")
+    ws = _sheet1(manager)
+    action = _row_for(ws, hybrid)[2]
+    resources = _row_for(ws, hybrid)[4]
+    assert "hybrid" in action.lower() and "platform" in action.lower()
+    assert "online-meeting platform" in resources and "venue" in resources.lower()
+
+
 def test_page_preview_matches_the_downloaded_draft(manager, app_mod):
     """The editable MRR form on the activity page and the Excel cell are the same
     text — the page must draft from the same five-dimension scorecard."""

@@ -63,3 +63,14 @@ def test_face_to_face_default(manager, db_path):
     assert modality == "f2f"
     assert venue == "Hall A"
     assert set(fi_modalities) == {"f2f"}
+
+
+def test_hybrid_stores_modality_and_venue_link(manager, db_path):
+    tok, r = _create(manager, db_path, modality="hybrid",
+                     venue="Hall A + Zoom — https://zoom.us/j/123")
+    (modality, venue), fi_modalities = _event_row(db_path, tok)
+    assert modality == "hybrid"                               # not collapsed to f2f
+    assert venue == "Hall A + Zoom — https://zoom.us/j/123"
+    assert fi_modalities == ["hybrid"]
+    assert "Hybrid" in r.text                                 # summary shows the format
+    assert "Venue" in r.text

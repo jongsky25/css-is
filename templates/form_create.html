@@ -80,6 +80,7 @@
       <div class="radio-row">
         <label><input type="radio" name="modality" value="f2f" {% if f.modality|default('f2f') == 'f2f' %}checked{% endif %} onchange="onModality()"> Face-to-face</label>
         <label><input type="radio" name="modality" value="online" {% if f.modality|default('') == 'online' %}checked{% endif %} onchange="onModality()"> Online</label>
+        <label><input type="radio" name="modality" value="hybrid" {% if f.modality|default('') == 'hybrid' %}checked{% endif %} onchange="onModality()"> Hybrid</label>
       </div>
       <label for="venue" id="venue-label">Venue</label>
       <input type="text" id="venue" name="venue" placeholder="e.g. Bayview Hall, Davao City" value="{{ f.venue|default('') }}">
@@ -195,12 +196,17 @@ function onStartDate() {
 }
 
 function onModality() {
-  const online = document.querySelector('input[name=modality]:checked').value === 'online';
+  const modality = document.querySelector('input[name=modality]:checked').value;
+  const online = modality === 'online';
+  const hybrid = modality === 'hybrid';
   const venue = document.getElementById('venue');
-  document.getElementById('venue-label').textContent = online ? 'Platform / meeting link' : 'Venue';
-  venue.placeholder = online ? 'e.g. Zoom — https://zoom.us/j/…' : 'e.g. Bayview Hall, Davao City';
+  document.getElementById('venue-label').textContent =
+    online ? 'Platform / meeting link' : (hybrid ? 'Venue / platform link' : 'Venue');
+  venue.placeholder = online ? 'e.g. Zoom — https://zoom.us/j/…' :
+    (hybrid ? 'e.g. Bayview Hall, Davao City + Zoom — https://zoom.us/j/…' : 'e.g. Bayview Hall, Davao City');
   // The link/platform is optional for online events; venue is just a label for F2F.
-  document.getElementById('venue-hint').classList.toggle('hidden', !online);
+  // A hybrid event needs both, so keep the same hint visible as a reminder to add the link too.
+  document.getElementById('venue-hint').classList.toggle('hidden', !(online || hybrid));
 }
 
 function onType(userToggled) {

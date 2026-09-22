@@ -238,7 +238,7 @@
                   <span class="fi-date">{{ a.event_date|humandate }}</span>
                   <span class="fi-body">
                     <div class="fi-name">{{ a.topic or 'Untitled activity' }}</div>
-                    <div class="fi-meta">{% if a.modality == 'online' %}<span class="badge blue">Online</span> {% endif %}{% if a.event_kind == 'outside' %}<span class="badge amber">Invited</span>{% else %}{{ a.kind }}{% endif %}{% if not a.open %} · <span class="badge">Closed</span>{% endif %}{% if a.venue and a.modality != 'online' %} · {{ a.venue }}{% endif %}</div>
+                    <div class="fi-meta">{% if a.modality == 'online' %}<span class="badge blue">Online</span> {% elif a.modality == 'hybrid' %}<span class="badge blue">Hybrid</span> {% endif %}{% if a.event_kind == 'outside' %}<span class="badge amber">Invited</span>{% else %}{{ a.kind }}{% endif %}{% if not a.open %} · <span class="badge">Closed</span>{% endif %}{% if a.venue and a.modality != 'online' %} · {{ a.venue }}{% endif %}</div>
                   </span>
                   <span class="fi-stat{% if a.responses %} go{% endif %}"><b>{{ a.responses }}</b>{{ 'response' if a.responses == 1 else 'responses' }}</span>
                   <span class="fi-go" aria-hidden="true">›</span>
@@ -284,7 +284,7 @@
                 <span class="fi-date">{{ a.event_date|humandate }}</span>
                 <span class="fi-body">
                   <div class="fi-name">{{ a.topic or 'Untitled activity' }}</div>
-                  {% if a.modality == 'online' %}<div class="fi-meta"><span class="badge blue">Online</span>{% if a.venue %} {{ a.venue }}{% endif %}</div>{% elif a.venue %}<div class="fi-meta">{{ a.venue }}</div>{% endif %}
+                  {% if a.modality == 'online' %}<div class="fi-meta"><span class="badge blue">Online</span>{% if a.venue %} {{ a.venue }}{% endif %}</div>{% elif a.modality == 'hybrid' %}<div class="fi-meta"><span class="badge blue">Hybrid</span>{% if a.venue %} {{ a.venue }}{% endif %}</div>{% elif a.venue %}<div class="fi-meta">{{ a.venue }}</div>{% endif %}
                   {% if a.speakers %}<div class="fi-meta fi-speakers" title="Resource person{{ 's' if a.speakers|length > 1 }}">{{ a.speakers|join(', ') }}</div>{% endif %}
                 </span>
                 {% if a.event_token %}<span class="fi-stat"><b class="fi-reg">{{ a.n_registered }}</b>registered</span>{% endif %}
@@ -320,7 +320,7 @@
                 <span class="fi-date">{{ a.event_date|humandate }}</span>
                 <span class="fi-body">
                   <div class="fi-name">{{ a.topic or 'Untitled activity' }}</div>
-                  <div class="fi-meta">{% if a.modality == 'online' %}<span class="badge blue">Online</span> {% endif %}{% if a.standalone %}{{ a.kind or 'Activity' }}{% else %}{{ a.registered }} registered{% endif %}{% if a.venue and a.modality != 'online' %} · {{ a.venue }}{% endif %}</div>
+                  <div class="fi-meta">{% if a.modality == 'online' %}<span class="badge blue">Online</span> {% elif a.modality == 'hybrid' %}<span class="badge blue">Hybrid</span> {% endif %}{% if a.standalone %}{{ a.kind or 'Activity' }}{% else %}{{ a.registered }} registered{% endif %}{% if a.venue and a.modality != 'online' %} · {{ a.venue }}{% endif %}</div>
                   {% if a.speakers %}<div class="fi-meta fi-speakers" title="Resource person{{ 's' if a.speakers|length > 1 }}">{{ a.speakers|join(', ') }}</div>{% endif %}
                 </span>
                 {% if a.standalone %}
@@ -482,7 +482,8 @@
         var since = cutoff(days);
         var rows = data.filter(function (a) { return a.event_date >= since; }).slice(0, SHOW);
         listEl.innerHTML = rows.map(function (a) {
-          var online = a.modality === 'online' ? '<span class="badge blue">Online</span> ' : '';
+          var online = a.modality === 'online' ? '<span class="badge blue">Online</span> ' :
+            (a.modality === 'hybrid' ? '<span class="badge blue">Hybrid</span> ' : '');
           var invited = a.invited ? '<span class="badge amber">Invited</span> ' : '';
           var meta = online + invited + (a.venue ? esc(a.venue) + ' · ' : '') + a.responses + ' response' + (a.responses === 1 ? '' : 's');
           var speakers = (a.speakers && a.speakers.length)

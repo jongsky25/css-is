@@ -66,7 +66,7 @@
     <div class="ctx">
       {% if ctx.rp_name and ctx.survey_type == 3 %}<strong>{{ ctx.rp_name }}</strong> · {% endif %}
       {% if ctx.topic %}{{ ctx.topic }} · {% endif %}{{ ctx.organizer }}<br>
-      {{ ctx.event_date|humandate }}{% if ctx.modality == 'online' %} · <span class="badge blue">Online</span>{% endif %}{% if ctx.venue %} · {{ ctx.venue }}{% endif %} · {{ ctx.form_id }}
+      {{ ctx.event_date|humandate }}{% if ctx.modality == 'online' %} · <span class="badge blue">Online</span>{% elif ctx.modality == 'hybrid' %} · <span class="badge blue">Hybrid</span>{% endif %}{% if ctx.venue %} · {{ ctx.venue }}{% endif %} · {{ ctx.form_id }}
     </div>
     {% if locked %}
     <div class="winnote" style="background:var(--red-bg);color:var(--red);border-color:var(--red-ln);">

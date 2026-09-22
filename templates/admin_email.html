@@ -99,6 +99,11 @@
     <p class="hint" style="margin-top:.6rem;">No transport is configured — even a feature turned ON below will not
       actually send until a relay or SMTP is set up, and "Send test to me" will say so instead of pretending.
       The toggle and the transport are separate questions.</p>
+    {% elif relay_configured %}
+    <p class="hint" style="margin-top:.6rem;">"Configured" only means the relay URL and secret are set — it doesn't
+      confirm the relay actually works. Use "Send test to me" on any row below (e.g. "Password reset" under Always on)
+      to check it for real; a failure there names the exact problem and, for a relay deployed with the wrong Google
+      Apps Script access setting, points to <code>docs/MAIL_RELAY_SETUP.md</code> for the fix.</p>
     {% endif %}
   </div>
 

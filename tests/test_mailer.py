@@ -238,6 +238,20 @@ def test_relay_reports_non_json_reply_as_access_problem(monkeypatch):
     assert "Anyone" in result["detail"]
 
 
+def test_relay_non_json_detail_points_to_setup_doc_and_self_test(monkeypatch):
+    """The 'Anyone' access failure is externally caused (a Google Apps Script
+    deployment setting Claude can't fix from here), so the message an admin
+    sees for it should point them at the fix and at how to re-check it
+    themselves, not just name the symptom."""
+    _relay_env(monkeypatch)
+    monkeypatch.setattr(mailer.httpx, "post",
+                        lambda *a, **kw: _FakeResponse(200, None, text="<html>Sign in</html>"))
+    result = mailer.send("to@example.com", "subj", "body")
+    assert result["sent"] is False
+    assert "docs/MAIL_RELAY_SETUP.md" in result["detail"]
+    assert "Send test to me" in result["detail"]
+
+
 def test_relay_reports_transport_failure(monkeypatch):
     _relay_env(monkeypatch)
 

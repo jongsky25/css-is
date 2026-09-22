@@ -121,7 +121,8 @@ def _send_via_relay(to, subject, body, html=None):
         _record(to, subject, body, "SEND FAILED (relay: non-JSON reply)")
         return {"sent": False, "detail": ("Email send failed: mail relay did not return JSON "
                                           "(check the web app is deployed with access set to "
-                                          "\"Anyone\")")}
+                                          "\"Anyone\") — see docs/MAIL_RELAY_SETUP.md, then use "
+                                          "\"Send test to me\" on Admin → Email to confirm the fix.")}
     if not data.get("ok"):
         err = str(data.get("error") or "unknown error")
         _record(to, subject, body, f"SEND FAILED (relay: {err})")

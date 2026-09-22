@@ -49,7 +49,7 @@
 <div class="twrap">
   <div class="thead">
     <h1>{{ ev.title }} <span class="badge inv">Invited activity</span></h1>
-    <p class="tmeta">{{ ev.event_date|humandaterange(ev.end_date) }} · organized by <strong>{{ ev.organizer or 'an outside body' }}</strong>{% if ev.modality == 'online' %} · <span class="badge blue">Online</span>{% endif %}{% if ev.venue %} · {{ ev.venue }}{% endif %}</p>
+    <p class="tmeta">{{ ev.event_date|humandaterange(ev.end_date) }} · organized by <strong>{{ ev.organizer or 'an outside body' }}</strong>{% if ev.modality == 'online' %} · <span class="badge blue">Online</span>{% elif ev.modality == 'hybrid' %} · <span class="badge blue">Hybrid</span>{% endif %}{% if ev.venue %} · {{ ev.venue }}{% endif %}</p>
     <p class="tmeta">This activity collects feedback <strong>anonymously</strong> — there are no participant names to show, only how many responses came in and the overall mix.
       {% if report_url %}<a href="{{ report_url }}#comments">💬 What people said →</a> · {% endif %}<a href="/activities/{{ ev.event_token }}/manage">Manage this activity →</a></p>
   </div>
