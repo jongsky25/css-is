@@ -44,7 +44,7 @@
       <div class="oe-top">
         <div>
           <div class="oe-name"><span class="life {{ e.lifecycle }}">{{ e.lifecycle }}</span>{{ e.title }}<span class="invited-badge">Invited</span></div>
-          <div class="oe-meta">{{ e.event_date|humandaterange(e.end_date) or "—" }}{% if e.modality == 'online' %} · Online{% endif %}{% if e.venue %} · {{ e.venue }}{% endif %}{% if e.organizer %} · {{ e.organizer }}{% endif %}</div>
+          <div class="oe-meta">{{ e.event_date|humandaterange(e.end_date) or "—" }}{% if e.modality == 'online' %} · Online{% elif e.modality == 'hybrid' %} · Hybrid{% endif %}{% if e.venue %} · {{ e.venue }}{% endif %}{% if e.organizer %} · {{ e.organizer }}{% endif %}</div>
         </div>
         <div class="oe-rate">
           <div class="v">{{ e.responses }}</div>

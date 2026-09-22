@@ -41,7 +41,7 @@
   <p class="muted">{{ t('lt_nf_body', lang) }}</p>
 {% else %}
   <h1 style="margin-top:0;">{{ ev.title }}</h1>
-  <p class="muted small" style="margin:0 0 .25rem;"><strong style="color:var(--ink);">{{ ev.event_date|humandaterange(ev.end_date) }}</strong>{% if ev.modality == 'online' %} · <span class="badge blue">Online</span>{% endif %}{% if ev.venue %} · {{ ev.venue }}{% endif %}</p>
+  <p class="muted small" style="margin:0 0 .25rem;"><strong style="color:var(--ink);">{{ ev.event_date|humandaterange(ev.end_date) }}</strong>{% if ev.modality == 'online' %} · <span class="badge blue">Online</span>{% elif ev.modality == 'hybrid' %} · <span class="badge blue">Hybrid</span>{% endif %}{% if ev.venue %} · {{ ev.venue }}{% endif %}</p>
   {% set org = ev.organizer or ev.lead_name %}
   {% if org %}<p class="muted small" style="margin:0;">{{ org }}</p>{% endif %}
   {% if can_manage %}<p class="small" style="margin:.4rem 0 0;"><a href="/activities/{{ ev.event_token }}/manage">⚙ Manage this activity →</a></p>{% endif %}

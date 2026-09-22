@@ -64,7 +64,7 @@
 <div class="mwrap">
   <div class="mhead">
     <h1>{{ ev.title }} <span class="badge inv">Invited activity</span></h1>
-    <p class="mmeta">{{ ev.event_date|humandaterange(ev.end_date) }} · organized by <strong>{{ ev.organizer or 'an outside body' }}</strong>{% if ev.modality == 'online' %} · <span class="badge blue">Online</span>{% endif %}{% if ev.venue %} · {{ ev.venue }}{% endif %}</p>
+    <p class="mmeta">{{ ev.event_date|humandaterange(ev.end_date) }} · organized by <strong>{{ ev.organizer or 'an outside body' }}</strong>{% if ev.modality == 'online' %} · <span class="badge blue">Online</span>{% elif ev.modality == 'hybrid' %} · <span class="badge blue">Hybrid</span>{% endif %}{% if ev.venue %} · {{ ev.venue }}{% endif %}</p>
     <p class="mmeta">{{ speakers|length }} speaker review{{ '' if speakers|length == 1 else 's' }} · {{ responses_total }} response{{ '' if responses_total == 1 else 's' }} so far · <a href="/monitor/{{ ev.event_token }}">See responses →</a></p>
   </div>
 

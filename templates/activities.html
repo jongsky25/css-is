@@ -147,7 +147,7 @@
       <span class="ev-main">
         <div class="ev-name">{{ e.name }} {% if e.is_external %}<span class="pill-ext">external</span>{% endif %}
           {% if e.open_at or e.close_at %}<span class="pill-win shut" title="Entry window: {{ e.open_at|humandt or 'now' }} → {{ e.close_at|humandt or 'no deadline' }}">entry window set</span>{% endif %}</div>
-        <div class="ev-meta">{{ e.date|humandate }}{% if e.modality == 'online' %} · <span class="badge blue">Online</span>{% endif %}{% if e.venue %} · {{ e.venue }}{% endif %} · {{ e.organizer }}{% if e.attendance %} · <strong>{{ e.attendance|comma }} attended</strong>{% if e.attendance_suspect %} <span title="Official figures are inconsistent (more responses than participants) — treat with caution">⚠</span>{% endif %}{% endif %} · {{ e.respondents|comma }} response(s)</div>
+        <div class="ev-meta">{{ e.date|humandate }}{% if e.modality == 'online' %} · <span class="badge blue">Online</span>{% elif e.modality == 'hybrid' %} · <span class="badge blue">Hybrid</span>{% endif %}{% if e.venue %} · {{ e.venue }}{% endif %} · {{ e.organizer }}{% if e.attendance %} · <strong>{{ e.attendance|comma }} attended</strong>{% if e.attendance_suspect %} <span title="Official figures are inconsistent (more responses than participants) — treat with caution">⚠</span>{% endif %}{% endif %} · {{ e.respondents|comma }} response(s)</div>
       </span>
       <span class="ev-score">
         {% if e.f2 %}

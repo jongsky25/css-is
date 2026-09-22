@@ -47,6 +47,26 @@ def test_segment_trend_splits_by_modality():
     assert seg["read"]["tone"] == "watch"
 
 
+def test_segment_trend_surfaces_a_third_hybrid_segment():
+    # Same grouping logic as the two-way split above, but with a third modality
+    # value present. segment_trend() is generic — it should surface a "Hybrid"
+    # line the moment the labels dict names it, with no code change needed.
+    rows = []
+    rid = 1
+    for q_date in ("2026-01-15", "2026-04-15"):
+        for _ in range(6):
+            rows += _resp(rid, q_date, "online", 5); rid += 1
+            rows += _resp(rid, q_date, "f2f", 7); rid += 1
+            rows += _resp(rid, q_date, "hybrid", 6); rid += 1
+    seg = di.segment_trend(_atoms(rows), 2, "quarterly", "modality",
+                           labels={"online": "Online", "f2f": "Face-to-face", "hybrid": "Hybrid"},
+                           metric="topbox", min_n=3)
+    assert seg["has_data"] is True
+    assert set(seg["segments"]) == {"Online", "Face-to-face", "Hybrid"}
+    names = {s["name"] for s in seg["series_raw"]}
+    assert names == {"Online", "Face-to-face", "Hybrid"}
+
+
 def test_segment_trend_drops_thin_slice_and_bails():
     # 6 face-to-face respondents but only 1 online -> online is dropped, and with
     # fewer than two readable segments the split isn't shown.

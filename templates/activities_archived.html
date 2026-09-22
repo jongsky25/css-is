@@ -61,7 +61,7 @@
       <span class="a-date">{{ a.event_date|humandate }}</span>
       <span class="a-body">
         <div class="a-name">{{ a.topic or 'Untitled activity' }}</div>
-        <div class="a-meta">{% if a.modality == 'online' %}<span class="badge blue">Online</span> {% endif %}{{ a.kind }}{% if a.venue and a.modality != 'online' %} · {{ a.venue }}{% endif %}</div>
+        <div class="a-meta">{% if a.modality == 'online' %}<span class="badge blue">Online</span> {% elif a.modality == 'hybrid' %}<span class="badge blue">Hybrid</span> {% endif %}{{ a.kind }}{% if a.venue and a.modality != 'online' %} · {{ a.venue }}{% endif %}</div>
       </span>
       <span class="a-stat"><b>{{ a.responses }}</b> {{ 'response' if a.responses == 1 else 'responses' }}</span>
       <form class="a-restore" method="post"

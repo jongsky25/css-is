@@ -33,7 +33,7 @@
     <a class="scard" href="/e/{{ e.event_token }}">
       <div class="body">
         <div class="title">{{ e.title }}</div>
-        <div class="meta">{{ e.event_date|humandate }}{% if e.modality == 'online' %} · <span class="badge blue">Online</span>{% endif %}{% if e.venue %} · {{ e.venue }}{% endif %}{% if e.organizer %} · {{ e.organizer }}{% endif %}</div>
+        <div class="meta">{{ e.event_date|humandate }}{% if e.modality == 'online' %} · <span class="badge blue">Online</span>{% elif e.modality == 'hybrid' %} · <span class="badge blue">Hybrid</span>{% endif %}{% if e.venue %} · {{ e.venue }}{% endif %}{% if e.organizer %} · {{ e.organizer }}{% endif %}</div>
       </div>
       <span class="count">{{ e.n_links }} resource{{ '' if e.n_links == 1 else 's' }}</span>
       <span class="go" aria-hidden="true">→</span>

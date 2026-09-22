@@ -17,7 +17,7 @@
   <h1 style="margin-top:0;">{{ t('title_rp', lang) }}</h1>
   <div class="muted small" style="margin-bottom:.5rem;">
     {% if event %}<strong style="color:var(--ink)">{{ event.title }}</strong> · {{ event.organizer }}<br>
-    {{ event.event_date|humandaterange(event.end_date) }}{% if event.modality == 'online' %} · <span class="badge blue">Online</span>{% endif %}{% if event.venue %} · {{ event.venue }}{% endif %}{% endif %}
+    {{ event.event_date|humandaterange(event.end_date) }}{% if event.modality == 'online' %} · <span class="badge blue">Online</span>{% elif event.modality == 'hybrid' %} · <span class="badge blue">Hybrid</span>{% endif %}{% if event.venue %} · {{ event.venue }}{% endif %}{% endif %}
   </div>
   <p class="muted small" style="margin:.2rem 0 1rem;">
     {{ t('cf_rp_heading_intro', lang) }} {{ t('cf_there_is', lang) if sections|length == 1 else t('cf_there_are', lang) }}
