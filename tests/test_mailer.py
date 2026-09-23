@@ -146,10 +146,11 @@ def test_send_uses_starttls_on_port_587(monkeypatch):
 # ---- HTTPS relay transport (the Space blocks outbound SMTP on every port) ----
 
 class _FakeResponse:
-    def __init__(self, status_code=200, payload=None, text=None):
+    def __init__(self, status_code=200, payload=None, text=None, url=None):
         self.status_code = status_code
         self._payload = payload
         self.text = text if text is not None else ""
+        self.url = url or "https://script.googleusercontent.com/macros/echo?id=fake"
 
     def json(self):
         if self._payload is None:
@@ -230,10 +231,12 @@ def test_relay_reports_unauthorized_from_script(monkeypatch):
 def test_relay_reports_non_json_reply_as_access_problem(monkeypatch):
     """A web app deployed without 'Anyone' access serves Google's sign-in HTML
     with a 200 on every attempt — the admin needs to hear that, not a parse
-    error, once the one retry (below) has ruled out a transient blip."""
+    error, once the reply retry (below) has ruled out a flaky echo step."""
     _relay_env(monkeypatch)
     monkeypatch.setattr(mailer, "_RELAY_RETRY_DELAY", 0)
     monkeypatch.setattr(mailer.httpx, "post",
+                        lambda *a, **kw: _FakeResponse(200, None, text="<html>Sign in</html>"))
+    monkeypatch.setattr(mailer.httpx, "get",
                         lambda *a, **kw: _FakeResponse(200, None, text="<html>Sign in</html>"))
     result = mailer.send("to@example.com", "subj", "body")
     assert result["sent"] is False
@@ -249,43 +252,71 @@ def test_relay_non_json_detail_points_to_setup_doc_and_self_test(monkeypatch):
     monkeypatch.setattr(mailer, "_RELAY_RETRY_DELAY", 0)
     monkeypatch.setattr(mailer.httpx, "post",
                         lambda *a, **kw: _FakeResponse(200, None, text="<html>Sign in</html>"))
+    monkeypatch.setattr(mailer.httpx, "get",
+                        lambda *a, **kw: _FakeResponse(200, None, text="<html>Sign in</html>"))
     result = mailer.send("to@example.com", "subj", "body")
     assert result["sent"] is False
     assert "docs/MAIL_RELAY_SETUP.md" in result["detail"]
     assert "Send test to me" in result["detail"]
 
 
-def test_relay_retries_once_on_non_json_reply_and_can_recover(monkeypatch):
-    """Apps Script is known to serve a one-off HTML interstitial on a
-    deployment that has sat idle even when access really is 'Anyone' — that
-    clears itself a moment later. A transient blip like this must not be
-    reported as a permanent access misconfiguration."""
+def test_relay_never_reposts_to_retry_a_non_json_reply(monkeypatch):
+    """CRITICAL regression: doPost() (and MailApp.sendEmail() inside it) has
+    already run by the time the relay answers, even when that answer is
+    non-JSON — so retrying by re-POSTing the payload would send the message
+    A SECOND TIME. The retry must be a plain GET on the already-redirected-to
+    reply URL, which the reference relay script can never route to doPost()
+    (it defines no doGet), and httpx.post must be called exactly once no
+    matter how the retry goes."""
     _relay_env(monkeypatch)
     monkeypatch.setattr(mailer, "_RELAY_RETRY_DELAY", 0)
-    calls = []
-
-    def _fake_post(*a, **kw):
-        calls.append(1)
-        if len(calls) == 1:
-            return _FakeResponse(200, None, text="<html>Sign in</html>")
-        return _FakeResponse(200, {"ok": True})
-
-    monkeypatch.setattr(mailer.httpx, "post", _fake_post)
+    post_calls = []
+    get_calls = []
+    monkeypatch.setattr(mailer.httpx, "post", lambda *a, **kw: (
+        post_calls.append(1), _FakeResponse(200, None, text="<html>Sign in</html>"))[1])
+    monkeypatch.setattr(mailer.httpx, "get", lambda *a, **kw: (
+        get_calls.append(1), _FakeResponse(200, {"ok": True}))[1])
     result = mailer.send("to@example.com", "subj", "body")
     assert result["sent"] is True, result["detail"]
-    assert len(calls) == 2, "must retry exactly once before giving up"
+    assert len(post_calls) == 1, "the send must never be retried by POSTing again"
+    assert len(get_calls) == 1, "the reply retry must be a GET"
+
+
+def test_relay_reply_retry_gets_the_redirected_to_url(monkeypatch):
+    """The GET retry must target the URL the relay actually answered from
+    (after following its redirect to script.googleusercontent.com), not the
+    original /exec URL — that's the URL Google's echo step is keyed to."""
+    _relay_env(monkeypatch)
+    monkeypatch.setattr(mailer, "_RELAY_RETRY_DELAY", 0)
+    echo_url = "https://script.googleusercontent.com/macros/echo?id=abc123"
+    monkeypatch.setattr(mailer.httpx, "post",
+                        lambda *a, **kw: _FakeResponse(200, None, text="<html>Sign in</html>",
+                                                       url=echo_url))
+    seen = {}
+
+    def _fake_get(url, **kw):
+        seen["url"] = url
+        return _FakeResponse(200, {"ok": True})
+
+    monkeypatch.setattr(mailer.httpx, "get", _fake_get)
+    result = mailer.send("to@example.com", "subj", "body")
+    assert result["sent"] is True, result["detail"]
+    assert seen["url"] == echo_url
 
 
 def test_relay_non_json_after_retry_says_it_retried(monkeypatch):
     """A failure that survives the retry is reported as such, not as if only
-    one attempt was made."""
+    one attempt was made, and warns the mail may already be sent."""
     _relay_env(monkeypatch)
     monkeypatch.setattr(mailer, "_RELAY_RETRY_DELAY", 0)
     monkeypatch.setattr(mailer.httpx, "post",
                         lambda *a, **kw: _FakeResponse(200, None, text="<html>Sign in</html>"))
+    monkeypatch.setattr(mailer.httpx, "get",
+                        lambda *a, **kw: _FakeResponse(200, None, text="<html>Sign in</html>"))
     result = mailer.send("to@example.com", "subj", "body")
     assert result["sent"] is False
     assert "retry" in result["detail"].lower()
+    assert "already have been sent" in result["detail"]
 
 
 def test_relay_reports_transport_failure(monkeypatch):
