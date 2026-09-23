@@ -229,8 +229,10 @@ def test_relay_reports_unauthorized_from_script(monkeypatch):
 
 def test_relay_reports_non_json_reply_as_access_problem(monkeypatch):
     """A web app deployed without 'Anyone' access serves Google's sign-in HTML
-    with a 200 — the admin needs to hear that, not a parse error."""
+    with a 200 on every attempt — the admin needs to hear that, not a parse
+    error, once the one retry (below) has ruled out a transient blip."""
     _relay_env(monkeypatch)
+    monkeypatch.setattr(mailer, "_RELAY_RETRY_DELAY", 0)
     monkeypatch.setattr(mailer.httpx, "post",
                         lambda *a, **kw: _FakeResponse(200, None, text="<html>Sign in</html>"))
     result = mailer.send("to@example.com", "subj", "body")
@@ -244,12 +246,46 @@ def test_relay_non_json_detail_points_to_setup_doc_and_self_test(monkeypatch):
     sees for it should point them at the fix and at how to re-check it
     themselves, not just name the symptom."""
     _relay_env(monkeypatch)
+    monkeypatch.setattr(mailer, "_RELAY_RETRY_DELAY", 0)
     monkeypatch.setattr(mailer.httpx, "post",
                         lambda *a, **kw: _FakeResponse(200, None, text="<html>Sign in</html>"))
     result = mailer.send("to@example.com", "subj", "body")
     assert result["sent"] is False
     assert "docs/MAIL_RELAY_SETUP.md" in result["detail"]
     assert "Send test to me" in result["detail"]
+
+
+def test_relay_retries_once_on_non_json_reply_and_can_recover(monkeypatch):
+    """Apps Script is known to serve a one-off HTML interstitial on a
+    deployment that has sat idle even when access really is 'Anyone' — that
+    clears itself a moment later. A transient blip like this must not be
+    reported as a permanent access misconfiguration."""
+    _relay_env(monkeypatch)
+    monkeypatch.setattr(mailer, "_RELAY_RETRY_DELAY", 0)
+    calls = []
+
+    def _fake_post(*a, **kw):
+        calls.append(1)
+        if len(calls) == 1:
+            return _FakeResponse(200, None, text="<html>Sign in</html>")
+        return _FakeResponse(200, {"ok": True})
+
+    monkeypatch.setattr(mailer.httpx, "post", _fake_post)
+    result = mailer.send("to@example.com", "subj", "body")
+    assert result["sent"] is True, result["detail"]
+    assert len(calls) == 2, "must retry exactly once before giving up"
+
+
+def test_relay_non_json_after_retry_says_it_retried(monkeypatch):
+    """A failure that survives the retry is reported as such, not as if only
+    one attempt was made."""
+    _relay_env(monkeypatch)
+    monkeypatch.setattr(mailer, "_RELAY_RETRY_DELAY", 0)
+    monkeypatch.setattr(mailer.httpx, "post",
+                        lambda *a, **kw: _FakeResponse(200, None, text="<html>Sign in</html>"))
+    result = mailer.send("to@example.com", "subj", "body")
+    assert result["sent"] is False
+    assert "retry" in result["detail"].lower()
 
 
 def test_relay_reports_transport_failure(monkeypatch):

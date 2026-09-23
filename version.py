@@ -17,10 +17,26 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.04"
+APP_VERSION = "3.05"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.05",
+        "date": "September 23, 2026",
+        "summary": "The mail relay now retries once before reporting a "
+                   "failed send, so a brief hiccup isn't mistaken for a "
+                   "broken setup.",
+        "changes": [
+            "If the mail relay answers with something other than the "
+            "expected reply, the system now waits a couple of seconds and "
+            "tries that one send again before giving up — Google's relay "
+            "occasionally needs a moment to wake up on a deployment that "
+            "hasn't sent mail in a while, even when it's set up correctly. "
+            "A send that only needed the retry now goes through instead of "
+            "being reported as failed.",
+        ],
+    },
     {
         "version": "3.04",
         "date": "September 23, 2026",

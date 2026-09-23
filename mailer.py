@@ -37,6 +37,8 @@ import socket
 from datetime import datetime
 from email.message import EmailMessage
 
+import time
+
 import httpx
 
 import tzutil as tz
@@ -45,6 +47,14 @@ _OUTBOX = os.path.join(os.path.dirname(os.path.abspath(__file__)), "outbox.log")
 
 # The relay does one small POST; Apps Script cold-starts can take a few seconds.
 _RELAY_TIMEOUT = httpx.Timeout(30.0, connect=10.0)
+
+# A non-JSON 200 usually means a real access misconfiguration (see
+# _send_via_relay), but Apps Script is also known to serve a one-off HTML
+# interstitial on an infrequently-used deployment (e.g. right after Google's
+# own cold-start or cache-warming) even when access is correctly "Anyone" —
+# that clears itself a moment later. One short retry tells the two apart
+# instead of reporting a permanent-looking failure for a blip.
+_RELAY_RETRY_DELAY = 2.0
 
 
 _real_getaddrinfo = socket.getaddrinfo   # captured before send() ever patches it
@@ -91,6 +101,18 @@ def _record(to, subject, body, note):
         pass
 
 
+def _post_to_relay(url, payload):
+    """One raw POST to the relay. Returns (resp, exc) — exactly one is None."""
+    try:
+        # follow_redirects is REQUIRED: an Apps Script /exec URL answers with a
+        # 302 over to script.googleusercontent.com and only that second
+        # response carries the JSON. httpx does not follow redirects by
+        # default, so without this every send would read as a failure.
+        return httpx.post(url, json=payload, timeout=_RELAY_TIMEOUT, follow_redirects=True), None
+    except Exception as e:                   # noqa: BLE001 - report, don't crash a request
+        return None, e
+
+
 def _send_via_relay(to, subject, body, html=None):
     """POST the message to the Apps Script web app, which sends it as the
     mailbox the script belongs to. Returns {'sent': bool, 'detail': str}."""
@@ -98,15 +120,36 @@ def _send_via_relay(to, subject, body, html=None):
     payload = {"secret": os.environ["CSS_MAIL_RELAY_SECRET"],
                "to": to, "subject": subject, "text": body, "html": html or "",
                "fromName": os.environ.get("CSS_MAIL_RELAY_NAME", "Office Connect")}
-    try:
-        # follow_redirects is REQUIRED: an Apps Script /exec URL answers with a
-        # 302 over to script.googleusercontent.com and only that second
-        # response carries the JSON. httpx does not follow redirects by
-        # default, so without this every send would read as a failure.
-        resp = httpx.post(url, json=payload, timeout=_RELAY_TIMEOUT, follow_redirects=True)
-    except Exception as e:                   # noqa: BLE001 - report, don't crash a request
-        _record(to, subject, body, f"SEND FAILED (relay): {e}")
-        return {"sent": False, "detail": f"Email send failed: mail relay unreachable ({e})"}
+
+    resp, exc = _post_to_relay(url, payload)
+    if exc is not None:
+        _record(to, subject, body, f"SEND FAILED (relay): {exc}")
+        return {"sent": False, "detail": f"Email send failed: mail relay unreachable ({exc})"}
+
+    if resp.status_code == 200:
+        try:
+            data = resp.json()
+        except ValueError:
+            data = None
+        if data is not None:
+            return _relay_result(to, subject, body, data)
+        # A non-JSON 200 is usually a real access misconfiguration, but Apps
+        # Script also occasionally serves a one-off HTML interstitial on a
+        # deployment that has sat idle — even with access correctly set to
+        # "Anyone" — that clears itself moments later. One retry tells the two
+        # apart instead of reporting a permanent-looking failure for a blip.
+        time.sleep(_RELAY_RETRY_DELAY)
+        resp, exc = _post_to_relay(url, payload)
+        if exc is not None:
+            _record(to, subject, body, f"SEND FAILED (relay, retry): {exc}")
+            return {"sent": False, "detail": f"Email send failed: mail relay unreachable ({exc})"}
+        if resp.status_code == 200:
+            try:
+                data = resp.json()
+            except ValueError:
+                data = None
+            if data is not None:
+                return _relay_result(to, subject, body, data)
 
     if resp.status_code != 200:
         # Apps Script returns the login page (HTML) instead of JSON when the
@@ -115,14 +158,14 @@ def _send_via_relay(to, subject, body, html=None):
         _record(to, subject, body, f"SEND FAILED (relay HTTP {resp.status_code})")
         return {"sent": False,
                 "detail": f"Email send failed: mail relay returned HTTP {resp.status_code}"}
-    try:
-        data = resp.json()
-    except ValueError:
-        _record(to, subject, body, "SEND FAILED (relay: non-JSON reply)")
-        return {"sent": False, "detail": ("Email send failed: mail relay did not return JSON "
-                                          "(check the web app is deployed with access set to "
-                                          "\"Anyone\") — see docs/MAIL_RELAY_SETUP.md, then use "
-                                          "\"Send test to me\" on Admin → Email to confirm the fix.")}
+    _record(to, subject, body, "SEND FAILED (relay: non-JSON reply, retried once)")
+    return {"sent": False, "detail": ("Email send failed: mail relay did not return JSON, even "
+                                      "after a retry (check the web app is deployed with access "
+                                      "set to \"Anyone\") — see docs/MAIL_RELAY_SETUP.md, then use "
+                                      "\"Send test to me\" on Admin → Email to confirm the fix.")}
+
+
+def _relay_result(to, subject, body, data):
     if not data.get("ok"):
         err = str(data.get("error") or "unknown error")
         _record(to, subject, body, f"SEND FAILED (relay: {err})")
