@@ -113,6 +113,24 @@ def _post_to_relay(url, payload):
         return None, e
 
 
+def _get_relay_reply(url):
+    """Re-fetch a URL with a plain GET — used ONLY to retry reading the
+    relay's reply, never to retry the send. Returns (resp, exc)."""
+    try:
+        return httpx.get(url, timeout=_RELAY_TIMEOUT, follow_redirects=True), None
+    except Exception as e:                   # noqa: BLE001 - report, don't crash a request
+        return None, e
+
+
+def _parse_relay_json(resp):
+    if resp is None or resp.status_code != 200:
+        return None
+    try:
+        return resp.json()
+    except ValueError:
+        return None
+
+
 def _send_via_relay(to, subject, body, html=None):
     """POST the message to the Apps Script web app, which sends it as the
     mailbox the script belongs to. Returns {'sent': bool, 'detail': str}."""
@@ -126,31 +144,6 @@ def _send_via_relay(to, subject, body, html=None):
         _record(to, subject, body, f"SEND FAILED (relay): {exc}")
         return {"sent": False, "detail": f"Email send failed: mail relay unreachable ({exc})"}
 
-    if resp.status_code == 200:
-        try:
-            data = resp.json()
-        except ValueError:
-            data = None
-        if data is not None:
-            return _relay_result(to, subject, body, data)
-        # A non-JSON 200 is usually a real access misconfiguration, but Apps
-        # Script also occasionally serves a one-off HTML interstitial on a
-        # deployment that has sat idle — even with access correctly set to
-        # "Anyone" — that clears itself moments later. One retry tells the two
-        # apart instead of reporting a permanent-looking failure for a blip.
-        time.sleep(_RELAY_RETRY_DELAY)
-        resp, exc = _post_to_relay(url, payload)
-        if exc is not None:
-            _record(to, subject, body, f"SEND FAILED (relay, retry): {exc}")
-            return {"sent": False, "detail": f"Email send failed: mail relay unreachable ({exc})"}
-        if resp.status_code == 200:
-            try:
-                data = resp.json()
-            except ValueError:
-                data = None
-            if data is not None:
-                return _relay_result(to, subject, body, data)
-
     if resp.status_code != 200:
         # Apps Script returns the login page (HTML) instead of JSON when the
         # web app was deployed without "Anyone" access — a common setup slip
@@ -158,11 +151,33 @@ def _send_via_relay(to, subject, body, html=None):
         _record(to, subject, body, f"SEND FAILED (relay HTTP {resp.status_code})")
         return {"sent": False,
                 "detail": f"Email send failed: mail relay returned HTTP {resp.status_code}"}
-    _record(to, subject, body, "SEND FAILED (relay: non-JSON reply, retried once)")
-    return {"sent": False, "detail": ("Email send failed: mail relay did not return JSON, even "
-                                      "after a retry (check the web app is deployed with access "
-                                      "set to \"Anyone\") — see docs/MAIL_RELAY_SETUP.md, then use "
-                                      "\"Send test to me\" on Admin → Email to confirm the fix.")}
+
+    data = _parse_relay_json(resp)
+    if data is None:
+        # doPost() has ALREADY run by the time this POST gets a response —
+        # its 302 just points at an "echo" URL Google uses to hand back the
+        # JSON doPost() returned, and MailApp.sendEmail() inside doPost() has
+        # already fired. A flaky echo step here means the mail still went
+        # out; only the confirmation failed to come back as JSON. So the
+        # retry MUST be a plain GET on that same (already-redirected-to) URL
+        # — the reference relay script defines no doGet, so a GET can never
+        # re-trigger doPost() — and must NEVER be another POST, which would
+        # re-run doPost() and send the message a second time.
+        time.sleep(_RELAY_RETRY_DELAY)
+        resp2, exc2 = _get_relay_reply(resp.url)
+        data = _parse_relay_json(resp2) if exc2 is None else None
+
+    if data is None:
+        _record(to, subject, body, "SEND FAILED (relay: non-JSON reply, retried the reply once)")
+        return {"sent": False, "detail": (
+            "Email send failed: mail relay did not return JSON, even after "
+            "retrying the reply (check the web app is deployed with access "
+            "set to \"Anyone\") — see docs/MAIL_RELAY_SETUP.md, then use "
+            "\"Send test to me\" on Admin → Email to confirm the fix. The "
+            "message may already have been sent even though this "
+            "confirmation failed — check the recipient's inbox before "
+            "resending by hand.")}
+    return _relay_result(to, subject, body, data)
 
 
 def _relay_result(to, subject, body, data):

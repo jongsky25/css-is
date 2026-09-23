@@ -17,10 +17,24 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.05"
+APP_VERSION = "3.06"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.06",
+        "date": "September 23, 2026",
+        "summary": "Fixed the mail relay's retry (added in 3.05) so it can "
+                   "no longer send the same email twice.",
+        "changes": [
+            "Yesterday's retry could, in a rare case, resend the exact "
+            "same email a second time: if the relay had actually sent the "
+            "message but only its confirmation failed to come back, the "
+            "retry re-sent the whole message instead of just re-checking "
+            "the confirmation. The retry now only re-checks whether the "
+            "message went out — it can no longer trigger a second send.",
+        ],
+    },
     {
         "version": "3.05",
         "date": "September 23, 2026",
