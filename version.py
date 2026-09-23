@@ -17,10 +17,29 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.03"
+APP_VERSION = "3.04"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.04",
+        "date": "September 23, 2026",
+        "summary": "Added a Hybrid option for an activity's format, and made "
+                   "the mail relay's error message easier to act on.",
+        "changes": [
+            "New survey's Format field now offers Hybrid alongside "
+            "Face-to-face and Online. A Hybrid activity's venue field asks "
+            "for both the venue and a platform link, and Hybrid now shows "
+            "up correctly everywhere Format is displayed or reported on — "
+            "the summary page, MRR exports, and dashboard trends — instead "
+            "of quietly being counted as Face-to-face.",
+            "If “Resend email” on Monitor fails with “mail "
+            "relay did not return JSON,” the message now points "
+            "straight at docs/MAIL_RELAY_SETUP.md and at “Send test "
+            "to me” on Admin → Email so it can be fixed and "
+            "re-checked without guessing.",
+        ],
+    },
     {
         "version": "3.03",
         "date": "September 18, 2026",
