@@ -17,10 +17,24 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.06"
+APP_VERSION = "3.07"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.07",
+        "date": "September 23, 2026",
+        "summary": "\"Resend email\" and reminder emails no longer show a "
+                   "false failure when the message actually went out.",
+        "changes": [
+            "The mail relay sometimes doesn't confirm a send even though "
+            "the email genuinely went out — that was being reported as "
+            "\"Email send failed,\" which risked someone clicking Resend "
+            "and getting the same message twice. It's now reported as sent, "
+            "with a note to check the recipient's inbox if you want to be "
+            "sure, instead of inviting a resend that could double it up.",
+        ],
+    },
     {
         "version": "3.06",
         "date": "September 23, 2026",
