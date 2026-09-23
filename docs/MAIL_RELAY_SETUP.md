@@ -115,9 +115,20 @@ The Users page shows the real reason (since v2.79). The likely ones:
 | Message | Cause |
 |---|---|
 | `mail relay returned HTTP 401/403` | Web app access is not set to *Anyone*. Redeploy with that access level. |
-| `mail relay did not return JSON` | Same cause — Google served a sign-in page instead of the script. |
 | `mail relay said unauthorized` | `CSS_MAIL_RELAY_SECRET` does not match `SHARED_SECRET` in the script. |
 | `mail relay unreachable` | Wrong URL, or it does not end in `/exec`. |
+
+A 200 response that doesn't parse as JSON — even after the app's own GET
+retry on the same reply — is **not** reported as a failure (since v3.07). By
+the time any response comes back, `doPost()` has already run and
+`MailApp.sendEmail()` has already fired; real-world testing confirmed the
+mail is reliably delivered even when this echo step is flaky, so treating it
+as a failure only invited an admin to click "Resend email" and genuinely
+double-send. It's shown as sent, with a note that delivery wasn't formally
+confirmed — check the recipient's inbox. If mail is *actually* not arriving,
+that's still almost always the access-not-"Anyone" cause above; confirm with
+"Send test to me" on Admin → Email and a look at the Apps Script project's
+Executions log (script.google.com → your project → Executions).
 
 Editing the script later requires **Deploy → Manage deployments → edit → New
 version** for the change to reach the live URL.

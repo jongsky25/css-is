@@ -228,10 +228,14 @@ def test_relay_reports_unauthorized_from_script(monkeypatch):
     assert "unauthorized" in result["detail"]
 
 
-def test_relay_reports_non_json_reply_as_access_problem(monkeypatch):
-    """A web app deployed without 'Anyone' access serves Google's sign-in HTML
-    with a 200 on every attempt — the admin needs to hear that, not a parse
-    error, once the reply retry (below) has ruled out a flaky echo step."""
+def test_relay_non_json_reply_is_reported_as_sent_not_failed(monkeypatch):
+    """CRITICAL: real-world testing on a deployment with access CONFIRMED
+    'Anyone' showed the mail is reliably delivered even when both the
+    original reply and the GET retry come back non-JSON — doPost() (and the
+    MailApp.sendEmail() inside it) has already run by the time any HTTP 200
+    comes back at all. Reporting this as a failure would invite an admin to
+    click 'Resend email' and genuinely double-send, so it must be reported as
+    sent (with the uncertainty named), never as a failure."""
     _relay_env(monkeypatch)
     monkeypatch.setattr(mailer, "_RELAY_RETRY_DELAY", 0)
     monkeypatch.setattr(mailer.httpx, "post",
@@ -239,15 +243,13 @@ def test_relay_reports_non_json_reply_as_access_problem(monkeypatch):
     monkeypatch.setattr(mailer.httpx, "get",
                         lambda *a, **kw: _FakeResponse(200, None, text="<html>Sign in</html>"))
     result = mailer.send("to@example.com", "subj", "body")
-    assert result["sent"] is False
-    assert "Anyone" in result["detail"]
+    assert result["sent"] is True, result["detail"]
 
 
-def test_relay_non_json_detail_points_to_setup_doc_and_self_test(monkeypatch):
-    """The 'Anyone' access failure is externally caused (a Google Apps Script
-    deployment setting Claude can't fix from here), so the message an admin
-    sees for it should point them at the fix and at how to re-check it
-    themselves, not just name the symptom."""
+def test_relay_non_json_detail_names_the_uncertainty_and_points_to_setup_doc(monkeypatch):
+    """The detail text must still let an admin diagnose a genuine access
+    problem if mail really isn't arriving, without phrasing this as a
+    failure that invites a manual resend."""
     _relay_env(monkeypatch)
     monkeypatch.setattr(mailer, "_RELAY_RETRY_DELAY", 0)
     monkeypatch.setattr(mailer.httpx, "post",
@@ -255,7 +257,8 @@ def test_relay_non_json_detail_points_to_setup_doc_and_self_test(monkeypatch):
     monkeypatch.setattr(mailer.httpx, "get",
                         lambda *a, **kw: _FakeResponse(200, None, text="<html>Sign in</html>"))
     result = mailer.send("to@example.com", "subj", "body")
-    assert result["sent"] is False
+    assert "failed" not in result["detail"].lower()
+    assert "recipient's inbox" in result["detail"]
     assert "docs/MAIL_RELAY_SETUP.md" in result["detail"]
     assert "Send test to me" in result["detail"]
 
@@ -304,19 +307,17 @@ def test_relay_reply_retry_gets_the_redirected_to_url(monkeypatch):
     assert seen["url"] == echo_url
 
 
-def test_relay_non_json_after_retry_says_it_retried(monkeypatch):
-    """A failure that survives the retry is reported as such, not as if only
-    one attempt was made, and warns the mail may already be sent."""
+def test_relay_reports_unauthorized_and_http_error_as_real_failures(monkeypatch):
+    """Only an explicit script-reported error, or a non-200 status, still
+    counts as a real failure — the ambiguous 200-but-non-JSON case (above)
+    does not. This guards against the fix for that case accidentally
+    swallowing genuine failures too."""
     _relay_env(monkeypatch)
-    monkeypatch.setattr(mailer, "_RELAY_RETRY_DELAY", 0)
     monkeypatch.setattr(mailer.httpx, "post",
-                        lambda *a, **kw: _FakeResponse(200, None, text="<html>Sign in</html>"))
-    monkeypatch.setattr(mailer.httpx, "get",
-                        lambda *a, **kw: _FakeResponse(200, None, text="<html>Sign in</html>"))
+                        lambda *a, **kw: _FakeResponse(403, None, text="Forbidden"))
     result = mailer.send("to@example.com", "subj", "body")
     assert result["sent"] is False
-    assert "retry" in result["detail"].lower()
-    assert "already have been sent" in result["detail"]
+    assert "403" in result["detail"]
 
 
 def test_relay_reports_transport_failure(monkeypatch):
