@@ -158,12 +158,98 @@
 {% endif %}
 {% endmacro %}
 
+{#-- the earned RANK regalia — unrelated to the calendar (_accessory/_pot_bow
+     above are the monthly ones). Tied to the wellness stage (the same `s`
+     every species macro already receives). Each stage REPLACES the last —
+     one rank badge worn at a time, not a wardrobe pile — climbing a fixed
+     ladder (bronze collar, silver bandana, gold medal, royal cape) that's
+     independent of the species' own palette, so the tier reads the same on
+     every companion. Stage 6 is the one exception: nothing replaces the
+     final stage, so it builds on the stage-5 cape as the finished look
+     rather than standing alone. Origin (0,0) = the neckline/collar point, y
+     growing DOWN the chest; place with translate/scale like _accessory.
+     Deliberately a DIFFERENT anchor than _accessory so a monthly hat and
+     earned rank never compete for one spot. Headless potted plants wear
+     _pot_regalia (rim sash) instead. --#}
+{% macro _regalia(s, x, y, k=1) %}
+{% if s >= 2 %}
+<g class="av-regalia" transform="translate({{ x }} {{ y }}) scale({{ k }})">
+  {% if s == 2 %}
+  {# bronze cord collar #}
+  <path d="M-9 -1 Q0 4 9 -1" stroke="#b5722f" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+  <circle cy="2.2" r="1.7" fill="#d68a42"/>
+  <circle cy="2.2" r=".8" fill="#f0b46a"/>
+  {% elif s == 3 %}
+  {# silver bandana, knotted at the neck #}
+  <path d="M-9 -1 Q0 6 9 -1 L9 -3.4 Q0 3 -9 -3.4 Z" fill="#9aa7b8"/>
+  <path d="M-2 6 l-2 6.4 M2 6 l2 6.4" stroke="#7c8898" stroke-width="1.6" stroke-linecap="round"/>
+  <circle cy="0" r="1.3" fill="#c9d3de"/>
+  {% elif s == 4 %}
+  {# gold ribbon + hanging medal #}
+  <path d="M-9 -1 Q0 4 9 -1" stroke="#d3a83a" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+  <path d="M-1.6 1.4 L1.6 1.4 L2.6 7 L0 5.2 L-2.6 7 Z" fill="#b5842a"/>
+  <circle cy="10" r="3.1" fill="url(#avg-sun)"/>
+  <circle cy="10" r="1.3" fill="#fff2c9"/>
+  {% else %}
+  {# stage 5+ — a royal cape flares from the shoulders #}
+  <path d="M-9 -1 Q-18 12 -12 22 Q-5 16 -8 4 Z" fill="#4a3a8a"/>
+  <path d="M9 -1 Q18 12 12 22 Q5 16 8 4 Z" fill="#4a3a8a"/>
+  <path d="M-9 -1 Q0 4 9 -1" stroke="#6a56b8" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  {% if s >= 6 %}
+  {# stage 6 — a jeweled star medal + flanking sparkles finish the look #}
+  <path d="M0 6.6 l1.4 3.3 3.5 .4 -2.6 2.4 .7 3.5 -3 -1.7 -3 1.7 .7 -3.5 -2.6 -2.4 3.5 -.4 Z" fill="url(#avg-sun)"/>
+  <circle cy="9.4" r="1.1" fill="#fff2c9"/>
+  <path d="M-13 6 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1 Z" fill="#f6c445" opacity=".85"/>
+  <path d="M13 6 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1 Z" fill="#f6c445" opacity=".85"/>
+  {% endif %}
+  {% endif %}
+</g>
+{% endif %}
+{% endmacro %}
+
+{#-- rank regalia for the headless potted plants — same stage gates and
+     replace-not-accrete rule as _regalia, wrapped around the pot rim's front
+     center instead of a neck. Companion to _pot_bow (the unrelated monthly
+     ribbon). --#}
+{% macro _pot_regalia(s, x=60, y=112) %}
+{% if s >= 2 %}
+<g class="av-regalia" transform="translate({{ x }} {{ y }})">
+  {% if s == 2 %}
+  {# bronze cord around the rim #}
+  <path d="M-16 0 Q0 4.4 16 0" stroke="#b5722f" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+  <circle cy="2.6" r="1.6" fill="#d68a42"/>
+  {% elif s == 3 %}
+  {# silver sash around the rim #}
+  <path d="M-16 0 Q0 5.4 16 0 L16 -2.6 Q0 2.4 -16 -2.6 Z" fill="#9aa7b8"/>
+  <circle cy="1" r="1.3" fill="#c9d3de"/>
+  {% elif s == 4 %}
+  {# gold sash + a medal pinned at center #}
+  <path d="M-16 0 Q0 4.4 16 0" stroke="#d3a83a" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <path d="M-1.6 1.6 L1.6 1.6 L2.6 6.6 L0 4.9 L-2.6 6.6 Z" fill="#b5842a"/>
+  <circle cy="9.4" r="2.8" fill="url(#avg-sun)"/>
+  <circle cy="9.4" r="1.2" fill="#fff2c9"/>
+  {% else %}
+  {# stage 5+ — royal cape panels drape off either side of the pot #}
+  <path d="M-16 0 q-6 5 -4 11" stroke="#4a3a8a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path d="M16 0 q6 5 4 11" stroke="#4a3a8a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path d="M-16 0 Q0 4.4 16 0" stroke="#6a56b8" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".85"/>
+  {% if s >= 6 %}
+  {# stage 6 — a jeweled star medal finishes the look #}
+  <path d="M0 6.8 l1.3 3.1 3.3 .4 -2.4 2.3 .6 3.3 -2.8 -1.6 -2.8 1.6 .6 -3.3 -2.4 -2.3 3.3 -.4 Z" fill="url(#avg-sun)"/>
+  <circle cy="9.4" r="1" fill="#fff2c9"/>
+  {% endif %}
+  {% endif %}
+</g>
+{% endif %}
+{% endmacro %}
+
 
 {# ============================ plant family ============================ #}
 
 {% macro _plant(s, m=0) %}
   {{ _pot() }}
   {{ _pot_bow(m) }}
+  {{ _pot_regalia(s) }}
   {% if s == 1 %}
     <ellipse cx="60" cy="103" rx="7" ry="4.6" fill="#e8d3a8"/>
     <ellipse cx="58" cy="102" rx="2.6" ry="1.6" fill="#f6ecd2"/>
