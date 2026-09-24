@@ -158,12 +158,98 @@
 {% endif %}
 {% endmacro %}
 
+{#-- the earned RANK regalia — unrelated to the calendar (_accessory/_pot_bow
+     above are the monthly ones). Tied to the wellness stage (the same `s`
+     every species macro already receives). Each stage REPLACES the last —
+     one rank badge worn at a time, not a wardrobe pile — climbing a fixed
+     ladder (bronze collar, silver bandana, gold medal, royal cape) that's
+     independent of the species' own palette, so the tier reads the same on
+     every companion. Stage 6 is the one exception: nothing replaces the
+     final stage, so it builds on the stage-5 cape as the finished look
+     rather than standing alone. Origin (0,0) = the neckline/collar point, y
+     growing DOWN the chest; place with translate/scale like _accessory.
+     Deliberately a DIFFERENT anchor than _accessory so a monthly hat and
+     earned rank never compete for one spot. Headless potted plants wear
+     _pot_regalia (rim sash) instead. --#}
+{% macro _regalia(s, x, y, k=1) %}
+{% if s >= 2 %}
+<g class="av-regalia" transform="translate({{ x }} {{ y }}) scale({{ k }})">
+  {% if s == 2 %}
+  {# bronze cord collar #}
+  <path d="M-9 -1 Q0 4 9 -1" stroke="#b5722f" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+  <circle cy="2.2" r="1.7" fill="#d68a42"/>
+  <circle cy="2.2" r=".8" fill="#f0b46a"/>
+  {% elif s == 3 %}
+  {# silver bandana, knotted at the neck #}
+  <path d="M-9 -1 Q0 6 9 -1 L9 -3.4 Q0 3 -9 -3.4 Z" fill="#9aa7b8"/>
+  <path d="M-2 6 l-2 6.4 M2 6 l2 6.4" stroke="#7c8898" stroke-width="1.6" stroke-linecap="round"/>
+  <circle cy="0" r="1.3" fill="#c9d3de"/>
+  {% elif s == 4 %}
+  {# gold ribbon + hanging medal #}
+  <path d="M-9 -1 Q0 4 9 -1" stroke="#d3a83a" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+  <path d="M-1.6 1.4 L1.6 1.4 L2.6 7 L0 5.2 L-2.6 7 Z" fill="#b5842a"/>
+  <circle cy="10" r="3.1" fill="url(#avg-sun)"/>
+  <circle cy="10" r="1.3" fill="#fff2c9"/>
+  {% else %}
+  {# stage 5+ — a royal cape flares from the shoulders #}
+  <path d="M-9 -1 Q-18 12 -12 22 Q-5 16 -8 4 Z" fill="#4a3a8a"/>
+  <path d="M9 -1 Q18 12 12 22 Q5 16 8 4 Z" fill="#4a3a8a"/>
+  <path d="M-9 -1 Q0 4 9 -1" stroke="#6a56b8" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  {% if s >= 6 %}
+  {# stage 6 — a jeweled star medal + flanking sparkles finish the look #}
+  <path d="M0 6.6 l1.4 3.3 3.5 .4 -2.6 2.4 .7 3.5 -3 -1.7 -3 1.7 .7 -3.5 -2.6 -2.4 3.5 -.4 Z" fill="url(#avg-sun)"/>
+  <circle cy="9.4" r="1.1" fill="#fff2c9"/>
+  <path d="M-13 6 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1 Z" fill="#f6c445" opacity=".85"/>
+  <path d="M13 6 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1 Z" fill="#f6c445" opacity=".85"/>
+  {% endif %}
+  {% endif %}
+</g>
+{% endif %}
+{% endmacro %}
+
+{#-- rank regalia for the headless potted plants — same stage gates and
+     replace-not-accrete rule as _regalia, wrapped around the pot rim's front
+     center instead of a neck. Companion to _pot_bow (the unrelated monthly
+     ribbon). --#}
+{% macro _pot_regalia(s, x=60, y=112) %}
+{% if s >= 2 %}
+<g class="av-regalia" transform="translate({{ x }} {{ y }})">
+  {% if s == 2 %}
+  {# bronze cord around the rim #}
+  <path d="M-16 0 Q0 4.4 16 0" stroke="#b5722f" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+  <circle cy="2.6" r="1.6" fill="#d68a42"/>
+  {% elif s == 3 %}
+  {# silver sash around the rim #}
+  <path d="M-16 0 Q0 5.4 16 0 L16 -2.6 Q0 2.4 -16 -2.6 Z" fill="#9aa7b8"/>
+  <circle cy="1" r="1.3" fill="#c9d3de"/>
+  {% elif s == 4 %}
+  {# gold sash + a medal pinned at center #}
+  <path d="M-16 0 Q0 4.4 16 0" stroke="#d3a83a" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <path d="M-1.6 1.6 L1.6 1.6 L2.6 6.6 L0 4.9 L-2.6 6.6 Z" fill="#b5842a"/>
+  <circle cy="9.4" r="2.8" fill="url(#avg-sun)"/>
+  <circle cy="9.4" r="1.2" fill="#fff2c9"/>
+  {% else %}
+  {# stage 5+ — royal cape panels drape off either side of the pot #}
+  <path d="M-16 0 q-6 5 -4 11" stroke="#4a3a8a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path d="M16 0 q6 5 4 11" stroke="#4a3a8a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path d="M-16 0 Q0 4.4 16 0" stroke="#6a56b8" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".85"/>
+  {% if s >= 6 %}
+  {# stage 6 — a jeweled star medal finishes the look #}
+  <path d="M0 6.8 l1.3 3.1 3.3 .4 -2.4 2.3 .6 3.3 -2.8 -1.6 -2.8 1.6 .6 -3.3 -2.4 -2.3 3.3 -.4 Z" fill="url(#avg-sun)"/>
+  <circle cy="9.4" r="1" fill="#fff2c9"/>
+  {% endif %}
+  {% endif %}
+</g>
+{% endif %}
+{% endmacro %}
+
 
 {# ============================ plant family ============================ #}
 
 {% macro _plant(s, m=0) %}
   {{ _pot() }}
   {{ _pot_bow(m) }}
+  {{ _pot_regalia(s) }}
   {% if s == 1 %}
     <ellipse cx="60" cy="103" rx="7" ry="4.6" fill="#e8d3a8"/>
     <ellipse cx="58" cy="102" rx="2.6" ry="1.6" fill="#f6ecd2"/>
@@ -218,6 +304,7 @@
   {% set h = 78 - (s - 1) * 8 %}
   {{ _pot("url(#avg-pot)", "#dda069") }}
   {{ _pot_bow(m) }}
+  {{ _pot_regalia(s) }}
   {# main trunk grows taller with stage #}
   <rect x="51" y="{{ h }}" width="18" height="{{ 106 - h }}" rx="9" fill="url(#avg-cactus)"/>
   <rect x="53" y="{{ h + 2 }}" width="5" height="{{ 102 - h }}" rx="2.5" fill="#ffffff2a"/>
@@ -262,6 +349,7 @@
   <ellipse class="av-soil" cx="60" cy="110" rx="26" ry="4.5" fill="#4a3a58"/>
   <ellipse class="av-soilwet" cx="60" cy="110" rx="26" ry="4.5" fill="#241830"/>
   {{ _pot_bow(m, 37, 114) }}
+  {{ _pot_regalia(s, 60, 114) }}
   {# gnarled trunk + branches grow with stage #}
   <path d="M60 108 C58 96 66 92 62 {{ 92 - (s * 6) }}" stroke="url(#avg-trunk)" stroke-width="6.5" fill="none" stroke-linecap="round"/>
   <path d="M59 104 C58 98 62 96 61 {{ 96 - (s * 5) }}" stroke="#ffffff1e" stroke-width="2" fill="none" stroke-linecap="round"/>
@@ -294,6 +382,7 @@
 {% macro _sunflower(s, m=0) %}
   {{ _pot() }}
   {% if s < 4 %}{{ _pot_bow(m) }}{% endif %}
+  {{ _pot_regalia(s) }}
   {% if s == 1 %}
     <ellipse cx="60" cy="103" rx="7" ry="4.6" fill="#e8d3a8"/>
     <circle cx="60" cy="101" r="3" fill="#8a6a3a"/>
@@ -354,6 +443,7 @@
 {% macro _fern(s, m=0) %}
   {{ _pot("url(#avg-pot)", "#d8916a") }}
   {{ _pot_bow(m) }}
+  {{ _pot_regalia(s) }}
   {# each frond = rib + paired herringbone leaflets tapering to the tip;
      grouped so the ripple can cascade 1..6. The newest frond also carries
      av-frond-top (unfurl flourish on watering). Leaflet rows: (x, y, rib
@@ -393,6 +483,7 @@
 
 {% macro _mushroom(s, m=0) %}
   {{ _pot("url(#avg-pot)", "#d8916a") }}
+  {{ _pot_regalia(s) }}
   {% set capw = 12 + s * 4 %}      {# cap half-width grows with stage #}
   {% set capt = 92 - s * 4 %}      {# cap top rises with stage #}
   {# stout stem with a friendly face — the mushroom is the one plant that blinks #}
@@ -444,6 +535,7 @@
 {% macro _succulent(s, m=0) %}
   {{ _pot("url(#avg-pot2)", "#93809f") }}
   {{ _pot_bow(m) }}
+  {{ _pot_regalia(s) }}
   {# plump rosette — outer ring first so inner leaves overlap it #}
   {% set petal = "M0 0 C-7 -7 -8 -18 0 -24 C8 -18 7 -7 0 0 Z" %}
   {% if s >= 2 %}
@@ -525,10 +617,7 @@
       <ellipse cx="70" cy="80" rx="2.6" ry="1.4" fill="#f2b8a0" opacity=".55"/>
       {{ _accessory(m, 60, 58, 1) }}
     </g>
-    {% if s >= 5 %}
-    <path d="M49 97 h22 l-2.6 5 h-16.8 Z" fill="#c05a72"/>
-    <circle cx="60" cy="102" r="2.4" fill="url(#avg-sun)"/>
-    {% endif %}
+    {{ _regalia(s, 60, 94) }}
     {% if s >= 6 %}
     <path d="M88 56 l2 4.4 4.8 .7 -3.5 3.4 .9 4.8 -4.2 -2.3 -4.2 2.3 .9 -4.8 -3.5 -3.4 4.8 -.7 Z" fill="url(#avg-sun)"/>
     {% endif %}
@@ -568,6 +657,7 @@
       <path d="M76 94 q8 -3 12 -8" stroke="#4d9a97" stroke-width="1" fill="none" opacity=".6"/>
     </g>
     {% endif %}
+    {{ _regalia(s, 60, 90, 0.7) }}
     <g class="av-head">
       <circle cx="60" cy="78" r="13" fill="url(#avg-bird)"/>
       <path d="M51 71 Q56 67 61 69" stroke="#ffffff40" stroke-width="2.2" fill="none" stroke-linecap="round"/>
@@ -623,7 +713,7 @@
     {% if s >= 4 %}
       {% for cx, cy in [(50, 98), (70, 98), (60, 96)] %}<path d="M{{ cx }} {{ cy }} l3 0 -1.5 -3 Z" fill="#2f6a44" opacity=".8"/>{% endfor %}
     {% endif %}
-    {% if s >= 5 %}<path d="M52 96 h16 l-2 -4 h-12 Z" fill="#edd7a1"/>{% endif %}
+    {{ _regalia(s, 60, 94, 0.7) }}
     {% if s >= 6 %}
       <path d="M60 {{ '%.0f'|format(88 - s * 2.6) }} l1.6 4 4 .6 -3 3 .8 4.2 -3.4 -2 -3.4 2 .8 -4.2 -3 -3 4 -.6 Z" fill="url(#avg-sun)"/>
     {% endif %}
@@ -649,10 +739,7 @@
     <ellipse cx="52" cy="117" rx="6.4" ry="4.2" fill="url(#avg-dogfur2)"/>
     <ellipse cx="68" cy="117" rx="6.4" ry="4.2" fill="url(#avg-dogfur2)"/>
     <path d="M50 116 l0 3 M54 116 l0 3 M66 116 l0 3 M70 116 l0 3" stroke="#a5763a" stroke-width=".9"/>
-    {% if s >= 4 %}
-    <path d="M44 86 Q60 94 76 86 L76 92 Q60 99 44 92 Z" fill="#c04a4a"/>
-    <circle cx="60" cy="95" r="2.8" fill="url(#avg-sun)"/>
-    {% endif %}
+    {{ _regalia(s, 60, 90) }}
     <g class="av-head">
       <g class="av-ear-l">
         <path d="M45 58 Q34 62 37 82 Q46 80 48 66 Z" fill="url(#avg-dogfur3)"/>
@@ -702,6 +789,7 @@
     <path d="M52 118 Q53 102 60 100 Q67 102 68 118 Z" fill="url(#avg-rabbit2)"/>
     <ellipse cx="51" cy="118" rx="7.5" ry="3.6" fill="url(#avg-rabbit2)"/>
     <ellipse cx="69" cy="118" rx="7.5" ry="3.6" fill="url(#avg-rabbit2)"/>
+    {{ _regalia(s, 60, 88, 0.8) }}
     <g class="av-head">
       <g class="av-ear-l">
         <ellipse cx="53" cy="44" rx="5.6" ry="{{ 13 + s }}" fill="url(#avg-rabbit)" transform="rotate(-9 53 58)"/>
@@ -771,6 +859,7 @@
     {% if s >= 3 %}
     <path d="M64 84 q4 4 0 8 M70 85 q4 4 0 7 M75 87 q3 3 0 5" stroke="#c65f14" stroke-width="1" fill="none" opacity=".6"/>
     {% endif %}
+    {{ _regalia(s, 56, 84, 0.45) }}
     <g class="av-head">
       {{ _eye(72, 89, 3.1, "#2c3a4a", "#f0a04c") }}
       <path d="M80 95 q2.6 1 3.6 -.6" stroke="#b25412" stroke-width="1.2" fill="none" stroke-linecap="round"/>
@@ -826,6 +915,7 @@
     <circle cx="58" cy="86" r="1" fill="#ffffff55"/><circle cx="66" cy="92" r=".9" fill="#ffffff55"/>
     <circle cx="52" cy="90" r=".8" fill="#ffffff55"/>
     {% endif %}
+    {{ _regalia(s, 58, 80, 0.4) }}
     <g class="av-head">
       {{ _eye(75, 84, 3, "#22303c", "#5f95b8") }}
       <ellipse cx="80" cy="90" rx="1.8" ry="1" fill="#bfe0ef" opacity=".6"/>
@@ -875,6 +965,7 @@
     {# feet on the branch #}
     <path d="M52 114 l-2 4 M52 114 l0 4.6 M52 114 l2 4 M68 114 l-2 4 M68 114 l0 4.6 M68 114 l2 4"
           stroke="#d98a2a" stroke-width="1.6" stroke-linecap="round"/>
+    {{ _regalia(s, 60, 81, 0.7) }}
     {# the swivelling facial disc (pointer-follow rotates this) #}
     <g class="av-head">
       {% if s >= 4 %}
@@ -928,6 +1019,7 @@
     <ellipse cx="60" cy="96" rx="7.5" ry="8" fill="url(#avg-bat2)"/>
     {# dangly feet #}
     <path d="M55 104 q-1 5 -3 6 M65 104 q1 5 3 6" stroke="#57517d" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    {{ _regalia(s, 60, 83, 0.65) }}
     <g class="av-head">
       <g class="av-ear-l">
         <path d="M50 64 L44 44 L59 59 Z" fill="url(#avg-bat)"/>
