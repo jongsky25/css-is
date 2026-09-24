@@ -2,6 +2,7 @@
 {% from "_components.html" import page_header, flash, field %}
 {% from "_work_arrangement_icons.html" import arrangement_icon %}
 {% block title %}{% if change_of %}Request a change{% else %}File your work arrangement{% endif %}{% endblock %}
+{% block page_width %}narrow{% endblock %}
 {% block content %}
 <style>
   .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px;

@@ -30,6 +30,9 @@
   /* density scale factor — multiplies hardcoded paddings/margins that aren't on the
      --s* scale, so cozy renders identically (×1) and compact tightens proportionally. */
   --dsf:1;
+  /* One page width shared by .wrap, the topnav and the scopebar so their edges
+     always line up. A page opts into another tier via {% block page_width %}. */
+  --page-max:1600px;
   --r1:6px; --r2:10px; --r3:14px; --rpill:999px;
   --ring:0 0 0 3px rgba(16,64,160,.35);
   --shadow:0 1px 3px rgba(20,30,50,.06);
@@ -143,8 +146,16 @@ img { max-width:100%; }
   box-shadow:var(--shadow); transform:translateY(-160%); transition:transform .15s ease; }
 .skip-link:focus { transform:translateY(0); outline:2px solid var(--ring); outline-offset:2px; }
 
-.wrap { max-width:980px; margin:0 auto;
+.wrap { max-width:var(--page-max); margin:0 auto;
         padding:calc(1.1rem * var(--dsf)) calc(1rem * var(--dsf)) calc(3rem * var(--dsf)); }
+/* Dense admin tables: nav + content both widen. */
+body[data-width="full"] { --page-max:1920px; }
+/* Forms and reading pages: only the content column narrows (the nav keeps the
+   default so it doesn't jump between pages), centred as one column. */
+body[data-width="narrow"] .wrap { max-width:calc(800px + 2rem); }
+@media (min-width:1200px) {
+  .wrap { padding-left:calc(1.5rem * var(--dsf)); padding-right:calc(1.5rem * var(--dsf)); }
+}
 /* Page descriptions span the full content width (no narrow orphaned column) so they
    align with everything below them. Was max-width:62ch — removed globally. */
 .lede { color:var(--soft); margin:.1rem 0 calc(1.1rem * var(--dsf)); font-size:.92rem; }
@@ -221,9 +232,10 @@ tr.no-hits.show, table.resp-table tr.no-hits.show { display:table-row; }
 /* Same idea as resp-table, but for rows carrying several inline forms per cell
    (a role picker + Apply, an actions column with two buttons) — those overflow
    the page well before 640px on an ordinary narrow browser window, not just a
-   phone, so this class stacks them starting at 960px instead. Add alongside
+   phone, so this class stacks them starting at 1180px (a 1024px laptop
+   still overflowed at 960) instead. Add alongside
    resp-table, not instead of it. */
-@media (max-width:960px) {
+@media (max-width:1180px) {
   table.resp-table-wide thead, table.resp-table-wide tr:has(th) { display:none; }
   table.resp-table-wide, table.resp-table-wide tbody { display:block; width:100%; }
   table.resp-table-wide tr { display:block; border:1px solid var(--line); border-radius:var(--r1);
@@ -268,7 +280,7 @@ details.disclosure[open] > summary::before { transform:rotate(90deg); }
 /* ---------- 4. Layout: topnav + scopebar ---------- */
 .topnav { position:sticky; top:0; z-index:20; background:var(--surface); border-bottom:1px solid var(--line);
           box-shadow:0 1px 4px rgba(20,30,50,.04); }
-.topnav .inner { max-width:980px; margin:0 auto; display:flex; align-items:center; gap:.4rem;
+.topnav .inner { max-width:var(--page-max); margin:0 auto; display:flex; align-items:center; gap:.4rem;
                  padding:.5rem 1rem; flex-wrap:wrap; }
 .brand { font-weight:800; font-size:1.02rem; letter-spacing:-.01em; margin-right:.4rem;
          white-space:nowrap; color:var(--ink); text-decoration:none; }
@@ -414,7 +426,7 @@ a.whoami:hover { border-color:var(--accent); }
 /* top tracks the real topnav height (--topnav-h, set by app.js) so it pins
    below the nav even when the nav wraps to two rows; 53px is the one-row fallback. */
 .scopebar { position:sticky; top:var(--topnav-h, 53px); z-index:15; background:var(--surface); border-bottom:1px solid var(--line); }
-.scopebar .inner { max-width:980px; margin:0 auto; display:flex; align-items:center; gap:.6rem;
+.scopebar .inner { max-width:var(--page-max); margin:0 auto; display:flex; align-items:center; gap:.6rem;
                    padding:.45rem 1rem; flex-wrap:wrap; font-size:var(--fs-sm); }
 .scopebar select { border:1px solid var(--line); border-radius:var(--r1); padding:.3rem .45rem;
                    font-size:max(16px, var(--fs-sm)); background:var(--surface); max-width:46vw; }
@@ -689,8 +701,12 @@ p.lede { color:var(--soft); margin:0 0 calc(1.4rem * var(--dsf)); font-size:.96r
 .ranked .val { font-variant-numeric:tabular-nums; font-weight:700; color:var(--ink); }
 
 /* old scopebar field styles kept for the scope form */
-.scopeform { max-width:980px; margin:0 auto; display:flex; align-items:center; gap:.7rem;
+.scopeform { max-width:var(--page-max); margin:0 auto; display:flex; align-items:center; gap:.7rem;
         padding:.5rem 1rem; flex-wrap:wrap; }
+/* Match .wrap's wider side padding so nav, scope bar and content share one edge. */
+@media (min-width:1200px) {
+  .topnav .inner, .scopebar .inner, .scopeform { padding-left:1.5rem; padding-right:1.5rem; }
+}
 .sb-icon { color:var(--accent); font-weight:700; }
 .sb-fld { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.03em;
         color:var(--soft); display:flex; align-items:center; gap:.4rem; }

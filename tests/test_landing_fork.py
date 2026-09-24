@@ -174,9 +174,9 @@ def test_landing_uses_tokens_not_hardcoded_colour(app_mod):
     has its own palette and is excluded — this checks the page we wrote.)"""
     import re
     html = _auth_client(app_mod, "admin").get("/").text
-    # Just this page's own <style> block — it opens with the .oc wrapper rule.
+    # Just this page's own <style> block — it opens with the .oc-hero rule.
     # The shared avatar art and the face partial ship their own blocks before it.
-    start = html.index(".oc { max-width")
+    start = html.index(".oc-hero {")
     own = html[start:html.index("</style>", start)]
     assert not re.search(r"#[0-9a-fA-F]{3,6}\b", own), \
         f"hardcoded colour in the landing page's own CSS: {own[:400]}"

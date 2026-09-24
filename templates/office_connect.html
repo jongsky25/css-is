@@ -10,7 +10,6 @@
 {{ growth_defs() }}
 {{ deck_defs() }}
 <style>
-  .oc { max-width:1040px; margin:0 auto; }
   .oc-hero { display:flex; gap:1rem; align-items:center; flex-wrap:wrap;
              margin:.4rem 0 1rem; }
   .oc-photo { width:72px; height:72px; border-radius:50%; object-fit:cover;
@@ -32,14 +31,19 @@
   .oc-seg a[aria-current="true"] { background:var(--accent); color:var(--on-accent); }
   .oc-scope { color:var(--soft); font-size:.85rem; margin:0 0 1rem; }
 
-  .oc-panels { display:grid; grid-template-columns:repeat(auto-fit, minmax(320px,1fr));
-               gap:1rem; }
-  /* Always exactly 3 cards (wellness, AWA, CSS). At the container's max width
-     (980px, .wrap) minmax(320px,1fr) never fits more than 2 columns, so the
-     3rd card is always the odd one out — left in column 1 alone, half the
-     row's width, with the rest of the row bare. Span it across instead of
-     leaving it stranded at half width. */
-  .oc-panels > .oc-card:last-child { grid-column:1 / -1; }
+  /* Always exactly 3 cards (wellness, AWA, CSS), so the column count is set by
+     breakpoint rather than auto-fit: 1 on phones, 2 with the 3rd spanning the
+     row in between (never stranded at half width), all 3 side by side once the
+     screen is wide enough to give each card a deck's worth of room. */
+  .oc-panels { display:grid; grid-template-columns:minmax(0,1fr); gap:1rem; }
+  @media (min-width:700px) {
+    .oc-panels { grid-template-columns:repeat(2, minmax(0,1fr)); }
+    .oc-panels > .oc-card:last-child { grid-column:1 / -1; }
+  }
+  @media (min-width:1280px) {
+    .oc-panels { grid-template-columns:repeat(3, minmax(0,1fr)); }
+    .oc-panels > .oc-card:last-child { grid-column:auto; }
+  }
   /* min-width:0 is load-bearing: a grid item sizes to its max-content by
      default, and a deck's max-content is every slide side by side — without it
      the card stretches to five slides wide and the whole PAGE scrolls

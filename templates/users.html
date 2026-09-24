@@ -1,6 +1,7 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header %}
 {% block title %}Users{% endblock %}
+{% block page_width %}full{% endblock %}
 {% block content %}
 <style>
   .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1.1rem 1.3rem;
@@ -30,6 +31,11 @@
             border-radius:8px; font-size:.92rem; background:var(--surface); }
   .dsearch .ico { position:absolute; left:.65rem; top:50%; transform:translateY(-50%); color:var(--soft);
             font-size:.9rem; pointer-events:none; }
+  /* Wide screens: keep each picker beside its Apply and the action buttons on
+     one line — the row needs ~1350px for that, so narrower screens wrap. */
+  @media (min-width:1440px) {
+    td form.inline, td.actions { white-space:nowrap; }
+  }
   /* tr.nomatch lives in app.css — a copy here loses to the responsive-table
      rules under 640px, which is how this search box died on a phone. */
 </style>
