@@ -788,6 +788,37 @@
     });
   }
 
+  /* ---- level-up reveal: notices the tracked wellness stage rising since the
+   * last visit and announces the newly earned regalia (templates/_avatars_art
+   * .html _regalia/_pot_regalia) through the same badge toast + sound used for
+   * a freshly-earned wellness badge. Scoped to [data-interactive] only — the
+   * viewer's OWN companion — so looking at someone else's avatar on a person
+   * page never fires someone else's level-up. Keyed per device by species so
+   * switching companions doesn't read as a level-up; the first time a given
+   * species is ever seen just records its stage silently. --------------- */
+  var STAGE_SEEN_PREFIX = "css-av-stage-seen-";
+  var REGALIA_NAMES = { 2: "Bronze Collar", 3: "Silver Bandana", 4: "Gold Medal",
+                         5: "Royal Cape", 6: "Champion's Crown" };
+  function checkLevelUp(w) {
+    if (!w.hasAttribute("data-interactive")) return;
+    var stage = parseInt(w.dataset.stage || "1", 10);
+    var key = STAGE_SEEN_PREFIX + w.dataset.kind;
+    var seen;
+    try { seen = parseInt(localStorage.getItem(key) || "0", 10); } catch (e) { seen = 0; }
+    if (seen && stage > seen) {
+      var name = REGALIA_NAMES[stage];
+      if (name) {
+        // let the page settle (idle loop, sleep check) before popping the toast
+        setTimeout(function () {
+          if (!w.isConnected) return;
+          badgeToast(w, "New gear: " + name + "!");
+          play("badge", null);
+        }, 900);
+      }
+    }
+    try { localStorage.setItem(key, String(stage)); } catch (e) {}
+  }
+
   /* ---- boot ------------------------------------------------------------- */
   function initAll() {
     var wraps = document.querySelectorAll(".avwrap[data-kind]");
@@ -800,6 +831,7 @@
       startRoam(w);
       initDrag(w);
       initExplore(w);
+      checkLevelUp(w);
     }
     syncSoundBtns();
   }
