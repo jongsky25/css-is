@@ -17,10 +17,44 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.08"
+APP_VERSION = "3.10"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.10",
+        "date": "September 24, 2026",
+        "summary": "An administrator could approve or deny another section's "
+                   "wellness break or work arrangement request — that's now "
+                   "limited to their own section.",
+        "changes": [
+            "Deciding a wellness break or work arrangement request now checks "
+            "that it's actually routed to that administrator — their own "
+            "section, or a request no section chief can reach — the same "
+            "rule the approvals queue already followed. Before, an "
+            "administrator could approve or deny a request from any "
+            "section, even though their own queue only ever showed the ones "
+            "that were really theirs to decide.",
+        ],
+    },
+    {
+        "version": "3.09",
+        "date": "September 24, 2026",
+        "summary": "The Alternative Work Arrangement approvals queue and the "
+                   "admin Users list are now readable on a phone or narrow "
+                   "laptop window.",
+        "changes": [
+            "The Alternative Work Arrangement approvals queue didn't adjust "
+            "for a phone screen at all, so its five columns squeezed into "
+            "an unreadable strip. It now stacks into readable cards on a "
+            "narrow screen, the same as other tables in the app.",
+            "The admin Users & roles page's tables already did this, but "
+            "only below 640 pixels wide — a normal laptop or tablet window "
+            "between roughly 640 and 960 pixels wide could still clip a "
+            "column off-screen (like Status disappearing). They now stack "
+            "properly all the way up to 960 pixels.",
+        ],
+    },
     {
         "version": "3.08",
         "date": "September 24, 2026",
