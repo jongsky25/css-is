@@ -5715,6 +5715,12 @@ BUREAU_NAME = "Bureau of Local Health Systems Development"
 # We deliberately do NOT match a bare "chief" in `position`: many section heads
 # hold the position "Chief Health Program Officer", which must not read as a
 # division chief.
+#
+# The Administrative Section's chief is another of the same class of miss:
+# their designation reads "Admin Head", not "Section Head" — so before this,
+# the person actually running that section (Administrative Officer IV
+# Alexander Medel) resolved to rank 0 like a line staffer, and the section's
+# wellness/AWA requests had nobody to escalate to.
 def _org_rank(designation, position=None):
     d = (designation or "").strip().lower()
     p = (position or "").strip().lower()
@@ -5722,7 +5728,8 @@ def _org_rank(designation, position=None):
         return 3
     if "division chief" in d:
         return 2
-    if "section head" in d or "section chief" in d:
+    if ("section head" in d or "section chief" in d
+            or "admin head" in d or "administrative head" in d):
         return 1
     return 0
 

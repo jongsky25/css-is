@@ -1,5 +1,35 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-24 (v3.12 — "Admin Head" now resolves to a section chief)
+
+Reported: Administrative Officer IV Alexander Medel is the chief of the
+Administrative Section, but the system wasn't treating him as its automatic
+approver.
+
+Root cause is the same class of miss `_org_rank`'s own comments already
+document for the Director (Spot Feedback #76): rank is read from the
+directory's `designation` field, matched case-insensitively as a substring
+against `"section head"` / `"section chief"`. The Administrative Section's
+chief carries the designation `"Admin Head"` instead — a real, in-use
+variant that never matched — so he resolved to rank 0 (same as a line
+staffer), and the section's wellness break and AWA requests had nobody in
+the directory to escalate to.
+
+**`storage.py`** — `_org_rank` now also matches `"admin head"` and
+`"administrative head"` as rank 1 (section chief), alongside the existing
+`"section head"` / `"section chief"` match. No table/route changes: every
+caller built on `_org_rank` (`get_approvers_for`, `user_is_approving_chief`,
+`approver_name_for`/`approver_title_for`, the wellness + AWA escalation
+chains, `team_scope_for_user`) picks this up automatically.
+
+**`tests/test_team_scope.py`** — `test_admin_head_is_recognized_as_a_section_chief`:
+`_org_rank` resolves `"Admin Head"`, lower-cased, and `"Administrative
+Head"` to rank 1, while a designation that merely contains the word "head"
+(`"Head Nurse"`) still doesn't. `tests/test_work_arrangement.py`,
+`tests/test_wellness.py`, `tests/test_wellness_escalation.py`,
+`tests/test_bureau_access.py` and `tests/test_section_oic.py` still pass
+unchanged.
+
 ## 2026-09-24 (v3.11 — a temporary OIC for wellness + AWA approvals, per section)
 
 Request: give admins a way to assign a temporary OIC/approver for wellness

@@ -149,6 +149,19 @@ def test_the_director_still_gets_the_whole_bureau(org):
     assert st.team_scope_for_user(conn, director) == (None, "bureau")
 
 
+def test_admin_head_is_recognized_as_a_section_chief():
+    """Another designation variant that isn't the clean 'Section Head'/'Section
+    Chief' string: the Administrative Section's chief carries 'Admin Head'.
+    Before this, that resolved to rank 0 — the same person as a line staffer —
+    so the section's wellness/AWA requests had nobody in the directory to
+    escalate to. Pure function, no DB needed."""
+    assert st._org_rank("Admin Head") == 1
+    assert st._org_rank("admin head") == 1              # case-insensitive
+    assert st._org_rank("Administrative Head") == 1
+    # still not a division chief or the Director, just because it contains "head"
+    assert st._org_rank("Head Nurse") == 0
+
+
 def test_unlinked_account_gets_no_team_not_the_bureau(org):
     """The whole point of the helper. _org_scope_for_user returns None here —
     indistinguishable from an unscoped bureau-wide call — which would have shown
