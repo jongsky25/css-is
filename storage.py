@@ -356,6 +356,22 @@ def init_db(conn):
         reopened_at  TEXT,
         note         TEXT                  -- admin's reason, shown to filers
     );
+
+    -- A temporary stand-in for the wellness/AWA approver seat a section (or
+    -- division) chief normally holds -- e.g. the chief is on leave. org_unit_id
+    -- is the PRIMARY KEY, not just unique, so "one delegate at a time per unit"
+    -- is enforced by the schema itself: setting a new delegate for a unit
+    -- overwrites whoever held it before, it never adds a second row. Cleared by
+    -- deleting the row rather than leaving an "off" one lying around, matching
+    -- work_arrangement_reopen above. get_approvers_for adds this delegate
+    -- alongside (never instead of) the substantive chief, so returning early
+    -- from leave never locks anyone out.
+    CREATE TABLE IF NOT EXISTS section_oic (
+        org_unit_id   INTEGER PRIMARY KEY REFERENCES org_unit(id),
+        admin_user_id INTEGER NOT NULL REFERENCES admin_user(id),
+        set_by        INTEGER REFERENCES admin_user(id),
+        set_at        TEXT NOT NULL
+    );
     """)
     _add_missing_columns(conn)
     _wa_install_week_guard(conn)
@@ -3110,6 +3126,9 @@ _AUDIT_ACTIONS = {
     "change_role":         ("Changed a role", "Accounts"),
     "activate_account":    ("Activated/deactivated an account", "Accounts"),
     "change_login_email":  ("Changed a login email", "Accounts"),
+    # Approvals
+    "set_section_oic":     ("Assigned a temporary OIC", "Approvals"),
+    "clear_section_oic":   ("Removed a temporary OIC", "Approvals"),
     # Directory
     "directory_add":       ("Added a directory person", "Directory"),
     "directory_edit":      ("Edited a directory person", "Directory"),
@@ -5713,6 +5732,84 @@ def _org_parent_path(path):
     return path.rsplit("/", 1)[0] if path and "/" in path else None
 
 
+# ---- temporary OIC / acting approver (section_oic) -----------------------
+#
+# A manual, admin-set stand-in for the chief who normally fills an approver
+# seat -- set when that person is on leave. Keyed by the ORG UNIT whose seat
+# is being covered (the section for a section-chief seat, the division for a
+# division-chief seat), not by the person being covered, so it survives the
+# substantive chief changing and needs no "who is currently on leave" tracking
+# of its own. get_approvers_for adds the delegate ALONGSIDE the substantive
+# chief rather than replacing them, so an early return from leave is never
+# locked out by a delegate nobody remembered to clear.
+
+def set_section_oic(conn, org_unit_id, admin_user_id, set_by=None):
+    """Make `admin_user_id` the acting OIC for `org_unit_id`, replacing
+    whoever held it (the PRIMARY KEY allows only one row per unit)."""
+    conn.execute(
+        "INSERT INTO section_oic(org_unit_id, admin_user_id, set_by, set_at) "
+        "VALUES (?,?,?,?) "
+        "ON CONFLICT(org_unit_id) DO UPDATE SET "
+        "admin_user_id=excluded.admin_user_id, set_by=excluded.set_by, set_at=excluded.set_at",
+        (org_unit_id, admin_user_id, set_by, tz.now_iso()))
+    conn.commit()
+
+
+def clear_section_oic(conn, org_unit_id):
+    """Remove the acting OIC for `org_unit_id`, if any."""
+    conn.execute("DELETE FROM section_oic WHERE org_unit_id=?", (org_unit_id,))
+    conn.commit()
+
+
+def get_section_oic(conn, org_unit_id):
+    """The current acting OIC for `org_unit_id`, or None. Carries the
+    delegate's display name for the admin page and the apply-page copy."""
+    row = conn.execute(
+        "SELECT so.admin_user_id, so.set_by, so.set_at FROM section_oic so "
+        "WHERE so.org_unit_id=?", (org_unit_id,)).fetchone()
+    if not row:
+        return None
+    return {"org_unit_id": org_unit_id, "admin_user_id": row[0],
+            "name": _account_display_name(conn, row[0]), "set_by": row[1], "set_at": row[2]}
+
+
+def list_section_oics(conn):
+    """{org_unit_id: get_section_oic(...)} for every unit that currently has
+    one -- the shape the admin page renders section by section."""
+    ids = [r[0] for r in conn.execute("SELECT org_unit_id FROM section_oic").fetchall()]
+    return {i: get_section_oic(conn, i) for i in ids}
+
+
+def is_section_oic(conn, admin_user_id):
+    """Does this account currently stand in as ANY unit's acting OIC? Used to
+    open the approvals queue for someone who holds no chief seat of their own."""
+    return conn.execute("SELECT 1 FROM section_oic WHERE admin_user_id=? LIMIT 1",
+                        (admin_user_id,)).fetchone() is not None
+
+
+def _account_display_name(conn, admin_user_id):
+    """The name a delegate should be shown under: their directory name, falling
+    back to their login email when they have no linked directory record."""
+    u = get_admin_user_by_id(conn, admin_user_id)
+    if not u:
+        return None
+    rp = get_rp(conn, u["rp_id"]) if u.get("rp_id") else None
+    return (rp["name"] if rp else None) or u["username"]
+
+
+def _section_oic_account_id(conn, path, exclude_uid=None):
+    """The acting OIC covering the chief seat located at org_unit.path, or None
+    -- the read get_approvers_for and approver_name_for fold into the chain."""
+    if path is None:
+        return None
+    row = conn.execute(
+        "SELECT so.admin_user_id FROM section_oic so "
+        "JOIN org_unit ou ON ou.id = so.org_unit_id WHERE ou.path=?", (path,)).fetchone()
+    if not row or row[0] == exclude_uid:
+        return None
+    return row[0]
+
+
 # ---- approver resolution ------------------------------------------------
 
 def _org_accounts_at_rank(conn, rank, org_path=None, exclude_uid=None):
@@ -5808,7 +5905,12 @@ def approver_name_for(conn, user_id):
     """The NAME of who decides THIS person's requests, for the apply/hub copy
     ('Send for approval of Ray Justin Ventura'). Mirrors approver_title_for's
     rank/org-path walk but resolves the seat-holder's name; returns None when the
-    seat is unfilled or unresolvable so callers fall back to the role title."""
+    seat is unfilled or unresolvable so callers fall back to the role title.
+
+    An acting OIC set on the covering unit (see set_section_oic) takes priority
+    over the substantive seat-holder's name here, so the copy names whoever will
+    actually decide the request today -- but get_approvers_for still routes to
+    both, so the substantive chief can decide it too if they come back early."""
     me = get_admin_user_by_id(conn, user_id)
     rp = get_rp(conn, me["rp_id"]) if me and me.get("rp_id") else None
     if not rp:
@@ -5816,13 +5918,29 @@ def approver_name_for(conn, user_id):
     rank = _org_rank(rp.get("designation"), rp.get("position"))
     path = rp.get("org_path")
     if rank == 0:                                   # staff -> section chief (same unit)
-        return _org_seat_name(conn, 1, org_path=path, exclude_uid=user_id)
+        oic = _account_display_name(conn, _section_oic_account_id(conn, path, exclude_uid=user_id))
+        return oic or _org_seat_name(conn, 1, org_path=path, exclude_uid=user_id)
     if rank == 1:                                   # section chief -> division chief (parent)
         parent = _org_parent_path(path)
-        return _org_seat_name(conn, 2, org_path=parent, exclude_uid=user_id) if parent else None
+        if not parent:
+            return None
+        oic = _account_display_name(conn, _section_oic_account_id(conn, parent, exclude_uid=user_id))
+        return oic or _org_seat_name(conn, 2, org_path=parent, exclude_uid=user_id)
     if rank == 2:                                   # division chief -> the Director
         return _org_seat_name(conn, 3, exclude_uid=user_id)
     return None
+
+
+def _with_section_oic(conn, approvers, path, exclude_uid=None):
+    """`approvers` (account ids) plus the acting OIC covering `path`'s chief
+    seat, if one is set and isn't the requester themselves. An acting OIC is
+    ADDED, never substituted, so a chief who returns from leave early keeps
+    deciding their own section's requests without anyone remembering to clear
+    the delegate first."""
+    oic = _section_oic_account_id(conn, path, exclude_uid=exclude_uid)
+    if oic is not None and oic not in approvers:
+        return approvers + [oic]
+    return approvers
 
 
 def get_approvers_for(conn, user_id):
@@ -5834,7 +5952,12 @@ def get_approvers_for(conn, user_id):
       * a division chief      -> the Director
       * the Director (or an unlinked account) -> nobody here; admins are the
         fallback (see is_approver_for).
-    Never the requester themselves."""
+    Never the requester themselves.
+
+    Whoever holds set_section_oic's acting-OIC delegate for the covering unit is
+    added to the result too (see _with_section_oic) -- a manual, admin-set
+    stand-in for a chief who is on leave, alongside the substantive seat rather
+    than instead of it."""
     me = get_admin_user_by_id(conn, user_id)
     if not me or not me.get("rp_id"):
         return []
@@ -5844,12 +5967,14 @@ def get_approvers_for(conn, user_id):
     rank = _org_rank(rp.get("designation"), rp.get("position"))
     path = rp.get("org_path")
     if rank == 0:                                   # staff -> section chief (same unit)
-        return _org_accounts_at_rank(conn, 1, org_path=path, exclude_uid=user_id)
+        approvers = _org_accounts_at_rank(conn, 1, org_path=path, exclude_uid=user_id)
+        return _with_section_oic(conn, approvers, path, exclude_uid=user_id)
     if rank == 1:                                   # section chief -> division chief (parent)
         parent = _org_parent_path(path)
         if not parent:
             return []
-        return _org_accounts_at_rank(conn, 2, org_path=parent, exclude_uid=user_id)
+        approvers = _org_accounts_at_rank(conn, 2, org_path=parent, exclude_uid=user_id)
+        return _with_section_oic(conn, approvers, parent, exclude_uid=user_id)
     if rank == 2:                                   # division chief -> the Director
         return _org_accounts_at_rank(conn, 3, exclude_uid=user_id)
     return []                                       # Director -> admin fallback
@@ -5874,8 +5999,10 @@ def is_approver_for(conn, user, subject_user_id):
 def user_is_approving_chief(conn, user):
     """Does this user see an approvals queue at all? Admins, plus anyone whose
     directory role can approve SOMEONE — section head/chief, division chief, or
-    the Director (who decides a division chief's own requests). Rank is read from
-    designation + position (see _org_rank) so the Director qualifies."""
+    the Director (who decides a division chief's own requests) — plus anyone
+    currently set as an acting OIC (set_section_oic), who may hold no chief
+    seat of their own. Rank is read from designation + position (see
+    _org_rank) so the Director qualifies."""
     if user.get("role") == "admin":
         return True
     row = conn.execute("""
@@ -5883,7 +6010,9 @@ def user_is_approving_chief(conn, user):
         JOIN resource_person rp ON rp.id = a.rp_id
         WHERE a.id=? AND rp.is_internal=1 LIMIT 1
     """, (user["id"],)).fetchone()
-    return bool(row) and _org_rank(row[0], row[1]) >= 1
+    if row and _org_rank(row[0], row[1]) >= 1:
+        return True
+    return is_section_oic(conn, user["id"])
 
 
 def pending_approval_counts(conn, user):
