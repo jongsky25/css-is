@@ -1,5 +1,38 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-24 (v3.16 — avatar companions wear rank regalia that grows with wellness stage)
+
+Companions already had six growth stages driven by wellness points, but
+leveling up only changed the creature's own species-specific body art —
+nothing signaled "you've earned something new" the way the existing monthly
+seasonal accessory does for the calendar.
+
+**`templates/_avatars_art.html`** — new `_regalia(s, x, y, k=1)` and
+`_pot_regalia(s, x=60, y=112)` macros: a five-tier rank outfit (bronze collar
+→ silver bandana → gold medal → royal cape, jeweled at stage 6) derived
+purely from the wellness stage already threaded through every species macro
+— no new schema, columns, or progression track. Each stage replaces the last
+rather than stacking. Anchored at a neck/chest point distinct from the
+existing monthly `_accessory`/`_pot_bow` slot so a seasonal hat and an earned
+rank item never compete for the same spot. Wired into all 16 catalog
+species: the 9 headless potted species get the `_pot_regalia` rim-sash
+variant; the 7 bodied species get a per-species tuned neck/chest anchor.
+`_cat` (stage ≥5), `_dog` (stage ≥4) and `_turtle` (stage ≥5) previously drew
+their own one-off neck flourish at their own stage — replaced with the
+unified system so every species now shares one consistent rank ladder
+starting at stage 2.
+
+**`static/js/avatars.js`** — new `checkLevelUp()`: compares each interactive
+companion's current `data-stage` against the last one seen (localStorage,
+keyed per species so a species change is never read as a level-up) and, on
+an increase, announces the new gear through the existing `badgeToast()` +
+`play("badge")` used for freshly-earned wellness badges. Scoped to
+`[data-interactive]` only, so viewing someone else's companion on a person
+page never fires their level-up.
+
+**`templates/_avatars.html`** — bumped the `avatars.js` cache-bust query
+string so the new behavior isn't served stale from a cached copy.
+
 ## 2026-09-24 (v3.14 — pages use the whole screen on laptops and monitors)
 
 Reported off two screenshots on a ~1900px monitor: Admin → Users and the

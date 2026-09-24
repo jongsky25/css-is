@@ -17,10 +17,25 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.15"
+APP_VERSION = "3.16"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.16",
+        "date": "September 24, 2026",
+        "summary": "Your wellness companion now wears earned gear that "
+                   "grows richer alongside it, and shows off when it does.",
+        "changes": [
+            "Every companion — plant or animal — now wears a small badge "
+            "of honor that upgrades as it grows: a plain collar early on, "
+            "then a scarf, a medal, a cape, and finally a jeweled crown "
+            "once it's fully grown.",
+            "When your companion earns its next piece of gear, you'll see "
+            "a \"New gear!\" pop-up and hear a soft chime, the same way "
+            "you're told about a new badge.",
+        ],
+    },
     {
         "version": "3.15",
         "date": "September 24, 2026",
