@@ -17,10 +17,25 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.12"
+APP_VERSION = "3.13"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.13",
+        "date": "September 24, 2026",
+        "summary": "The Temporary OIC picker no longer offers a section's own "
+                   "chief as their own stand-in.",
+        "changes": [
+            "Admin → Users' \"Temporary OIC\" picker listed every active "
+            "account in a section, including whoever already holds that "
+            "section's chief seat — so, for example, the Administrative "
+            "Section's picker offered its own chief as a choice for covering "
+            "their own leave. The picker now only offers someone else in the "
+            "section; assigning the chief to their own seat is refused the "
+            "same way picking someone from a different section is.",
+        ],
+    },
     {
         "version": "3.12",
         "date": "September 24, 2026",

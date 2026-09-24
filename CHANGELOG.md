@@ -1,5 +1,31 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-24 (v3.13 — the Temporary OIC picker excludes the section's own chief)
+
+Follow-on from v3.12: once Alexander Medel resolved correctly as the
+Administrative Section's chief, he then showed up as a selectable option in
+that same section's "Temporary OIC" picker on Admin → Users — i.e. the
+system offered him as a stand-in for his own leave.
+
+**`app.py`** — `admin_users`'s `section_accounts` (the eligible-delegate list
+per section) now excludes anyone who already resolves to `_org_rank(...) !=
+0` for that section — the chief (or, in principle, any chief-ranked seat)
+isn't offered as their own section's stand-in. `admin_users_section_oic_set`
+gets the matching server-side check, so a tampered POST naming the chief
+anyway is refused with the same error as naming someone from a different
+section.
+
+**`tests/test_section_oic.py`** — new
+`test_the_chief_is_not_offered_as_their_own_sections_delegate`: the picker's
+rendered `<option>` for the chief is absent while the eligible deputy's is
+present, and POSTing the chief's own id is refused. The rest of the section
+_oic suite (13 tests total now), `tests/test_team_scope.py`,
+`tests/test_work_arrangement.py`, `tests/test_wellness.py`,
+`tests/test_wellness_escalation.py`, `tests/test_bureau_access.py` and
+`tests/test_auth_rbac.py` all still pass.
+
+**`version.py` / `CHANGELOG.md`** — bumped to v3.13.
+
 ## 2026-09-24 (v3.12 — "Admin Head" now resolves to a section chief)
 
 Reported: Administrative Officer IV Alexander Medel is the chief of the
