@@ -17,10 +17,28 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.08"
+APP_VERSION = "3.09"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.09",
+        "date": "September 24, 2026",
+        "summary": "Wellness break and work arrangement requests can only be "
+                   "decided by the actual named approver, not any "
+                   "administrator account.",
+        "changes": [
+            "Approving or denying a wellness break or a work arrangement "
+            "request used to let ANY administrator account decide it, even "
+            "one that wasn't the requester's section or division chief — "
+            "including an administrator who merely happens to sit in the "
+            "same section. Only the person the org chart actually names as "
+            "the approver may decide now.",
+            "An administrator can still decide a request that has nobody "
+            "to route to — an unlinked account, the Director, or a seat "
+            "that isn't filled yet — exactly as before.",
+        ],
+    },
     {
         "version": "3.08",
         "date": "September 24, 2026",

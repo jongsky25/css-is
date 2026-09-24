@@ -5857,13 +5857,19 @@ def get_approvers_for(conn, user_id):
 
 def is_approver_for(conn, user, subject_user_id):
     """May `user` (the request's user dict) decide requests filed by
-    `subject_user_id`? Admins always may — they are the fallback above the
-    Director and for accounts off the chain. Nobody decides their own request."""
+    `subject_user_id`? The named approver from the org chain — and only that
+    person — decides. Admins are the fallback ABOVE the chain, for requests
+    it routes to nobody (an unlinked account, the Director, an unfilled
+    seat); holding the admin role is not itself a bypass, so an admin who
+    happens to sit in the same section as the requester — but isn't their
+    section/division chief — is no more entitled to decide than any other
+    colleague. Nobody decides their own request."""
     if user["id"] == subject_user_id:
         return False
-    if user.get("role") == "admin":
+    approvers = get_approvers_for(conn, subject_user_id)
+    if user["id"] in approvers:
         return True
-    return user["id"] in get_approvers_for(conn, subject_user_id)
+    return user.get("role") == "admin" and not approvers
 
 
 def user_is_approving_chief(conn, user):

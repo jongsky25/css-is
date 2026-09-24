@@ -266,7 +266,7 @@ def test_withdrawing_or_being_denied_frees_the_period(wa_org):
     assert st.my_pending_work_arrangement(conn, emp, ps) is None
 
     second = st.create_work_arrangement(conn, emp, ps, "CWW", 0)
-    st.decide_work_arrangement(conn, second, wa_org["admin"], "deny")
+    st.decide_work_arrangement(conn, second, _u(wa_org["chief"], "section_manager"), "deny")
     third = st.create_work_arrangement(conn, emp, ps, "REG")
     assert st.get_work_arrangement(conn, third)["status"] == "pending"
 
@@ -276,7 +276,7 @@ def test_only_a_pending_request_can_be_withdrawn(wa_org):
     wa = st.create_work_arrangement(conn, emp, ps, "REG")
     with pytest.raises(ValueError, match="isn't your work arrangement"):
         st.cancel_work_arrangement(conn, wa, wa_org["staff"][1])
-    st.decide_work_arrangement(conn, wa, wa_org["admin"], "approve")
+    st.decide_work_arrangement(conn, wa, _u(wa_org["chief"], "section_manager"), "approve")
     with pytest.raises(ValueError, match="waiting for approval"):
         st.cancel_work_arrangement(conn, wa, emp)
 
@@ -324,7 +324,7 @@ def test_a_monday_wfh_pushes_the_later_filing_past_the_shared_week(sept, weekday
     # Still goes on to approve normally — the resolution isn't a permanent
     # asterisk on the row, just its starting date.
     assert st.decide_work_arrangement(
-        conn, wa, sept["admin"], "approve")["status"] == "approved"
+        conn, wa, _u(sept["chief"], "section_manager"), "approve")["status"] == "approved"
 
 
 def test_the_pushed_effective_date_shows_up_in_the_day_view(sept):
@@ -333,7 +333,7 @@ def test_the_pushed_effective_date_shows_up_in_the_day_view(sept):
     conn, emp = sept["conn"], sept["staff"][0]
     st.create_work_arrangement(conn, emp, _SEPT_1_15, "WFH", 0)
     wa = st.create_work_arrangement(conn, emp, _SEPT_16_30, "WFH", 2)   # Wed
-    st.decide_work_arrangement(conn, wa, sept["admin"], "approve")
+    st.decide_work_arrangement(conn, wa, _u(sept["chief"], "section_manager"), "approve")
     day16 = st.work_arrangement_day(conn, date(2026, 9, 16))
     day23 = st.work_arrangement_day(conn, date(2026, 9, 23))
     name = "WA-Test Staff0"
@@ -404,7 +404,7 @@ def test_withdrawing_or_denying_gives_the_week_back(sept, release):
     if release == "withdraw":
         st.cancel_work_arrangement(conn, wa, emp)
     else:
-        st.decide_work_arrangement(conn, wa, sept["admin"], "deny")
+        st.decide_work_arrangement(conn, wa, _u(sept["chief"], "section_manager"), "deny")
     st.create_work_arrangement(conn, emp, _SEPT_16_30, "WFH", 2)
 
 
@@ -427,7 +427,7 @@ def test_the_blocked_direction_names_the_week_the_day_and_the_other_period(sept)
     push it to — so this still refuses, and still says what is in the way."""
     conn, emp = sept["conn"], sept["staff"][0]
     wa = st.create_work_arrangement(conn, emp, _SEPT_16_30, "WFH", 2)
-    st.decide_work_arrangement(conn, wa, sept["admin"], "approve")
+    st.decide_work_arrangement(conn, wa, _u(sept["chief"], "section_manager"), "approve")
     with pytest.raises(ValueError) as e:
         st.create_work_arrangement(conn, emp, _SEPT_1_15, "WFH", 0)
     msg = str(e.value)
@@ -443,7 +443,7 @@ def test_a_change_is_judged_on_the_day_it_asks_for(sept):
     """A change can walk into a boundary week the filed day stayed clear of."""
     conn, emp = sept["conn"], sept["staff"][0]
     wa = st.create_work_arrangement(conn, emp, _SEPT_1_15, "WFH", 2)   # Wednesday
-    st.decide_work_arrangement(conn, wa, sept["admin"], "approve")
+    st.decide_work_arrangement(conn, wa, _u(sept["chief"], "section_manager"), "approve")
     st.create_work_arrangement(conn, emp, _SEPT_16_30, "WFH", 2)       # fine
     # Mondays AND Tuesdays in September 1-15 both reach the week of the 14th —
     # and this filing IS the earlier period, so there's no later date within it
@@ -460,7 +460,7 @@ def test_a_change_may_still_reuse_the_week_its_own_filing_holds(sept):
     the clash — otherwise no arrangement could ever be changed."""
     conn, emp = sept["conn"], sept["staff"][0]
     wa = st.create_work_arrangement(conn, emp, _SEPT_1_15, "WFH", 0)
-    st.decide_work_arrangement(conn, wa, sept["admin"], "approve")
+    st.decide_work_arrangement(conn, wa, _u(sept["chief"], "section_manager"), "approve")
     assert st.request_work_arrangement_change(conn, wa, emp, "CWW", 0)
 
 
@@ -494,10 +494,10 @@ def test_an_approval_that_would_double_up_a_week_is_refused(sept):
     wa = st.create_work_arrangement(conn, emp, _SEPT_1_15, "WFH", 0)
     _grandfather(conn, emp, _SEPT_16_30, "WFH", 2, "approved")
     with pytest.raises(ValueError, match="can't take priority"):
-        st.decide_work_arrangement(conn, wa, sept["admin"], "approve")
+        st.decide_work_arrangement(conn, wa, _u(sept["chief"], "section_manager"), "approve")
     # denying it is still allowed — that is how the clash gets cleared
     assert st.decide_work_arrangement(
-        conn, wa, sept["admin"], "deny")["status"] == "denied"
+        conn, wa, _u(sept["chief"], "section_manager"), "deny")["status"] == "denied"
 
 
 def test_the_database_refuses_it_even_with_the_checks_bypassed(sept):
@@ -518,7 +518,7 @@ def test_the_database_refuses_a_status_flip_into_a_taken_week(sept):
     through UPDATE, so the trigger covers that too."""
     conn, emp = sept["conn"], sept["staff"][0]
     wa = st.create_work_arrangement(conn, emp, _SEPT_16_30, "WFH", 2)
-    st.decide_work_arrangement(conn, wa, sept["admin"], "deny")
+    st.decide_work_arrangement(conn, wa, _u(sept["chief"], "section_manager"), "deny")
     st.create_work_arrangement(conn, emp, _SEPT_1_15, "WFH", 0)
     with pytest.raises(sqlite3.IntegrityError, match="one alternative work"):
         conn.execute("UPDATE work_arrangement SET status='approved' WHERE id=?",
@@ -591,7 +591,7 @@ def test_the_filing_form_says_why_a_blocked_overlap_was_refused(sept, app_mod):
 def _approved(org, uid, arrangement="WFH", weekday=4, ps=None):
     conn, ps = org["conn"], ps or _open()
     wa = st.create_work_arrangement(conn, uid, ps, arrangement, weekday)
-    st.decide_work_arrangement(conn, wa, org["admin"], "approve")
+    st.decide_work_arrangement(conn, wa, _u(org["chief"], "section_manager"), "approve")
     return wa
 
 
@@ -611,7 +611,7 @@ def test_approving_a_change_supersedes_the_original(wa_org):
     conn, emp, ps = wa_org["conn"], wa_org["staff"][0], _open()
     orig = _approved(wa_org, emp)
     chg = st.request_work_arrangement_change(conn, orig, emp, "CWW", 0)
-    st.decide_work_arrangement(conn, chg, wa_org["admin"], "approve")
+    st.decide_work_arrangement(conn, chg, _u(wa_org["chief"], "section_manager"), "approve")
 
     assert st.get_work_arrangement(conn, orig)["status"] == "superseded"
     live = st.my_work_arrangement_for(conn, emp, ps)
@@ -628,7 +628,7 @@ def test_a_rejected_change_leaves_the_original_standing(wa_org, action):
     orig = _approved(wa_org, emp)
     chg = st.request_work_arrangement_change(conn, orig, emp, "CWW", 0)
     if action == "deny":
-        st.decide_work_arrangement(conn, chg, wa_org["admin"], "deny")
+        st.decide_work_arrangement(conn, chg, _u(wa_org["chief"], "section_manager"), "deny")
     else:
         st.cancel_work_arrangement(conn, chg, emp)
 
@@ -751,12 +751,12 @@ def test_decide_guards_state_and_authority(wa_org):
     with pytest.raises(ValueError, match="Unknown decision"):
         st.decide_work_arrangement(conn, wa, wa_org["admin"], "maybe")
 
-    row = st.decide_work_arrangement(conn, wa, wa_org["admin"], "approve",
+    row = st.decide_work_arrangement(conn, wa, _u(wa_org["chief"], "section_manager"), "approve",
                                      "keeps Tuesday covered")
     assert row["status"] == "approved"
     assert row["decided_at"] and row["decide_note"] == "keeps Tuesday covered"
     with pytest.raises(ValueError, match="already been decided"):
-        st.decide_work_arrangement(conn, wa, wa_org["admin"], "deny")
+        st.decide_work_arrangement(conn, wa, _u(wa_org["chief"], "section_manager"), "deny")
 
 
 # ---------------------------------------------------------------- coverage ---
@@ -779,7 +779,7 @@ def test_coverage_ignores_denied_and_withdrawn_rows(wa_org):
     conn, ps, path = wa_org["conn"], _open(), wa_org["path"]
     _approved(wa_org, wa_org["staff"][0], "CWW", 4)
     denied = st.create_work_arrangement(conn, wa_org["staff"][1], ps, "CWW", 4)
-    st.decide_work_arrangement(conn, denied, wa_org["admin"], "deny")
+    st.decide_work_arrangement(conn, denied, _u(wa_org["chief"], "section_manager"), "deny")
     withdrawn = st.create_work_arrangement(conn, wa_org["staff"][2], ps, "CWW", 4)
     st.cancel_work_arrangement(conn, withdrawn, wa_org["staff"][2])
 
@@ -813,7 +813,7 @@ def test_coverage_warns_but_never_blocks(wa_org):
     # ...and it still goes through, and can still be approved.
     wa = st.create_work_arrangement(conn, emp, ps, "CWW", 4)
     assert st.decide_work_arrangement(
-        conn, wa, wa_org["admin"], "approve")["status"] == "approved"
+        conn, wa, _u(wa_org["chief"], "section_manager"), "approve")["status"] == "approved"
     assert st.work_arrangement_coverage(conn, path, ps)["weekdays"][4]["onsite"] == 2
 
 
@@ -1070,7 +1070,7 @@ def test_staff_without_work_arrangement_counts_a_denied_filing_as_unfiled(wa_org
     conn, ps = wa_org["conn"], _open()
     emp = wa_org["staff"][3]
     wa = st.create_work_arrangement(conn, emp, ps, "REG")
-    st.decide_work_arrangement(conn, wa, wa_org["admin"], "deny")
+    st.decide_work_arrangement(conn, wa, _u(wa_org["chief"], "section_manager"), "deny")
     assert emp in {r["id"] for r in st.staff_without_work_arrangement(conn, ps)}
 
 
