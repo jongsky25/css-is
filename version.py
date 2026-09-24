@@ -17,10 +17,26 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.14"
+APP_VERSION = "3.15"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.15",
+        "date": "September 24, 2026",
+        "summary": "The system administrator's check-in account no longer "
+                   "shows up as a staff member on the work arrangement "
+                   "schedule.",
+        "changes": [
+            "ray@gmail.com is an admin account used to check on the system "
+            "once in a while, not an actual staff member, but it was "
+            "appearing as an unfiled row on the ANNEX C work arrangement "
+            "roster (on screen and in the printed export) and getting the "
+            "\"please file\" nudge like everyone else. It's now left off "
+            "the staff roster and the filing reminders, while keeping "
+            "every admin permission it had.",
+        ],
+    },
     {
         "version": "3.14",
         "date": "September 24, 2026",

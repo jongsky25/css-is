@@ -3784,6 +3784,21 @@ BUREAU_ACCESS_SEED = [
 ]
 
 
+# Accounts that sign in but are NOT bureau staff — the system administrator's
+# check-in account. They keep every permission they were granted; they just are
+# not a person the bureau schedules, so they never appear as a row on the staff
+# roster (ANNEX C, on screen and in print) and are never nudged to file.
+NON_STAFF_ACCOUNTS = ("ray@gmail.com",)
+
+
+def _staff_only_sql(alias="a"):
+    """SQL fragment + params that drop NON_STAFF_ACCOUNTS from an admin_user
+    query. Returns (sql, params) to AND into a WHERE clause."""
+    qs = ",".join("?" * len(NON_STAFF_ACCOUNTS))
+    return (f"lower({alias}.username) NOT IN ({qs})",
+            tuple(u.lower() for u in NON_STAFF_ACCOUNTS))
+
+
 def _seed_bureau_access(conn):
     """Apply BUREAU_ACCESS_SEED once per named account. Never overwrites a level
     an administrator has since chosen: the marker is written the first time the
@@ -6305,13 +6320,15 @@ def staff_without_wellness_claim_this_week(conn, week_start):
     directory person (resigned/transferred out) is off the roster, same rule
     work_arrangement_roster applies."""
     qs = ",".join("?" * len(_WELLNESS_COUNTED))
+    staff_sql, staff_params = _staff_only_sql()
     rows = conn.execute(
         f"""SELECT a.id, a.username FROM admin_user a
             LEFT JOIN resource_person rp ON rp.id = a.rp_id
-            WHERE a.active = 1 AND rp.archived_at IS NULL
+            WHERE a.active = 1 AND rp.archived_at IS NULL AND {staff_sql}
               AND a.id NOT IN (SELECT user_id FROM wellness_claim
                                 WHERE week_start = ? AND status IN ({qs}))
-            ORDER BY a.username""", (week_start, *_WELLNESS_COUNTED)).fetchall()
+            ORDER BY a.username""",
+        (*staff_params, week_start, *_WELLNESS_COUNTED)).fetchall()
     return [{"id": r[0], "username": r[1]} for r in rows]
 
 
@@ -7559,17 +7576,18 @@ def staff_without_work_arrangement(conn, period_start):
       * an archived directory person (resigned/transferred out) is off the
         roster even if their account was never deactivated."""
     qs = ",".join("?" * len(_WA_LIVE))
+    staff_sql, staff_params = _staff_only_sql()
     rows = conn.execute(
         f"""SELECT a.id, a.username FROM admin_user a
             LEFT JOIN resource_person rp ON rp.id = a.rp_id
-            WHERE a.active = 1 AND rp.archived_at IS NULL
+            WHERE a.active = 1 AND rp.archived_at IS NULL AND {staff_sql}
               AND a.id NOT IN (SELECT user_id FROM work_arrangement
                                 WHERE period_start = ? AND status IN ({qs}))
               AND a.id NOT IN (SELECT user_id FROM work_arrangement_noawa
                                 WHERE effective_from <= ?
                                   AND (effective_to IS NULL OR ? < effective_to))
             ORDER BY a.username""",
-        (period_start, *_WA_LIVE, period_start, period_start)).fetchall()
+        (*staff_params, period_start, *_WA_LIVE, period_start, period_start)).fetchall()
     return [{"id": r[0], "username": r[1]} for r in rows]
 
 
@@ -8287,15 +8305,16 @@ def work_arrangement_roster(conn, period_start, user=None, tagged=None):
     (user=None) — which is what the ANNEX C export makes — sees the whole
     bureau."""
     scope = _org_scope_for_user(conn, user, area="awa") if user else None
+    staff_sql, staff_params = _staff_only_sql()
     rows = conn.execute("""
         SELECT a.id, a.username, rp.name, rp.position, ou.short_name, ou.path,
                a.rp_id, (rp.photo IS NOT NULL), a.avatar_kind
         FROM admin_user a
         LEFT JOIN resource_person rp ON rp.id = a.rp_id
         LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id
-        WHERE a.active = 1 AND rp.archived_at IS NULL
+        WHERE a.active = 1 AND rp.archived_at IS NULL AND """ + staff_sql + """
         ORDER BY ou.path, rp.name, a.username
-    """).fetchall()
+    """, staff_params).fetchall()
     live = {}
     qs = ",".join("?" * len(_WA_LIVE))
     for r in conn.execute(
