@@ -745,18 +745,38 @@ def test_queue_is_scoped_to_what_the_chain_routes(wa_org):
 
 def test_decide_guards_state_and_authority(wa_org):
     conn, ps = wa_org["conn"], _open()
+    chief = _u(wa_org["chief"], "section_manager")
     wa = st.create_work_arrangement(conn, wa_org["staff"][0], ps, "REG")
     with pytest.raises(PermissionError):
         st.decide_work_arrangement(conn, wa, _u(wa_org["staff"][1]), "approve")
     with pytest.raises(ValueError, match="Unknown decision"):
-        st.decide_work_arrangement(conn, wa, wa_org["admin"], "maybe")
+        st.decide_work_arrangement(conn, wa, chief, "maybe")
 
-    row = st.decide_work_arrangement(conn, wa, _u(wa_org["chief"], "section_manager"), "approve",
+    row = st.decide_work_arrangement(conn, wa, chief, "approve",
                                      "keeps Tuesday covered")
     assert row["status"] == "approved"
     assert row["decided_at"] and row["decide_note"] == "keeps Tuesday covered"
     with pytest.raises(ValueError, match="already been decided"):
-        st.decide_work_arrangement(conn, wa, _u(wa_org["chief"], "section_manager"), "deny")
+        st.decide_work_arrangement(conn, wa, chief, "deny")
+
+
+def test_admin_cannot_decide_a_request_that_has_a_real_chief(wa_org):
+    """An admin is the fallback ABOVE the chain, for requests nobody in it can
+    reach — never a bypass around a section that already has an approver.
+    wa_org["staff"][0] has a real section chief, so an admin with no seat of
+    their own in that section may not decide it, even though the same admin
+    correctly decides the loner's request (an orphan, per
+    test_escalation_uses_the_shared_org_chain)."""
+    conn, ps = wa_org["conn"], _open()
+    wa = st.create_work_arrangement(conn, wa_org["staff"][0], ps, "REG")
+    assert not st.is_approver_for(conn, wa_org["admin"], wa_org["staff"][0])
+    with pytest.raises(PermissionError):
+        st.decide_work_arrangement(conn, wa, wa_org["admin"], "approve")
+    assert st.get_work_arrangement(conn, wa)["status"] == "pending"
+
+    orphan_wa = st.create_work_arrangement(conn, wa_org["loner"], ps, "REG")
+    row = st.decide_work_arrangement(conn, orphan_wa, wa_org["admin"], "approve")
+    assert row["status"] == "approved"
 
 
 # ---------------------------------------------------------------- coverage ---
