@@ -208,3 +208,28 @@ def test_the_picked_account_must_actually_belong_to_that_section(app_mod, org):
     assert r.status_code == 303
     assert "err=" in r.headers["location"]
     assert st.get_section_oic(conn, org["section_id"]) is None
+
+
+def test_the_chief_is_not_offered_as_their_own_sections_delegate(app_mod, org):
+    """The picker names a STAND-IN for the chief, so the chief themselves has
+    no business appearing in their own section's picker — and a tampered POST
+    naming them anyway is refused, the same as picking someone from another
+    section."""
+    conn = org["conn"]
+    admin = st.create_admin_user(conn, "oic-admin3@test.local", "x", "y", "admin")
+    conn.commit()
+    c = _client(app_mod, conn, admin)
+
+    # OIC-Chief still shows up elsewhere on the page (the staff accounts
+    # table), so check the specific <option> the section's picker would
+    # render for them, not a bare name search.
+    html = c.get("/admin/users").text
+    assert f'<option value="{org["chief"]}">OIC-Chief</option>' not in html
+    assert f'<option value="{org["deputy"]}">OIC-Deputy</option>' in html
+
+    r = c.post(f"/admin/users/section-oic/{org['section_id']}/set",
+               data={"admin_user_id": org["chief"]}, follow_redirects=False)
+    assert r.status_code == 303
+    assert "err=" in r.headers["location"]
+    assert st.get_section_oic(conn, org["section_id"]) is None
+

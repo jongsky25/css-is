@@ -2479,14 +2479,17 @@ def admin_users(request: Request, err: str = "", link: str = "", msg: str = ""):
         have = sum(1 for r in rows if r["account"])
         # Temporary OIC / acting approver, per section: who currently stands in
         # for a section chief on leave, and who's eligible to be picked (active
-        # accounts belonging to that same section).
+        # accounts belonging to that same section, MINUS whoever already holds
+        # the chief seat there — the picker is for naming a stand-in, and the
+        # substantive chief isn't a stand-in for themselves).
         sections = st.list_org_units(conn, level="section")
         section_oics = st.list_section_oics(conn)
         section_accounts = {
             s["id"]: sorted(
                 ({"id": r["account"]["id"], "name": r["name"]}
                  for r in rows
-                 if r["org_unit_id"] == s["id"] and r["account"] and r["account"]["active"]),
+                 if r["org_unit_id"] == s["id"] and r["account"] and r["account"]["active"]
+                 and st._org_rank(r.get("designation"), r.get("position")) == 0),
                 key=lambda a: a["name"])
             for s in sections
         }
@@ -2656,12 +2659,16 @@ async def admin_users_section_oic_set(request: Request, org_unit_id: int):
         unit = next((u for u in st.list_org_units(conn, level="section") if u["id"] == org_unit_id), None)
         delegate = st.get_admin_user_by_id(conn, admin_user_id)
         delegate_rp = st.get_rp(conn, delegate["rp_id"]) if delegate and delegate.get("rp_id") else None
-        # Defense in depth: the picker only offers active accounts that belong
-        # to this section, but a tampered POST could name anyone at all.
+        # Defense in depth: the picker only offers active, non-chief accounts
+        # that belong to this section, but a tampered POST could name anyone
+        # at all — including whoever already holds the chief seat, which
+        # would be a no-op standing in for themselves.
         in_section = bool(delegate_rp) and delegate_rp.get("org_unit_id") == org_unit_id
-        if not unit or not delegate or not delegate["active"] or not in_section:
+        already_chief = bool(delegate_rp) and st._org_rank(
+            delegate_rp.get("designation"), delegate_rp.get("position")) != 0
+        if not unit or not delegate or not delegate["active"] or not in_section or already_chief:
             return RedirectResponse(
-                "/admin/users?err=" + quote("Pick an active account from that section."),
+                "/admin/users?err=" + quote("Pick an active account from that section, other than its chief."),
                 status_code=303)
         st.set_section_oic(conn, org_unit_id, admin_user_id, set_by=request.state.user["id"])
         _audit(request, conn, "set_section_oic", target_type="org_unit", target_id=unit["name"],
