@@ -403,6 +403,21 @@ _WA_WEEK_TAIL_SQL = (
 # The refusal a person should never see: create_work_arrangement and
 # decide_work_arrangement both check first and raise something explanatory. This
 # is the backstop for any path that does not.
+#
+# A shared boundary week is not always a refusal, though: when the two filings'
+# periods are simply adjacent (the ordinary case), the EARLIER period's day
+# keeps that week and the later filing's effective_from is pushed to the Monday
+# after it (see _wa_resolve_week) instead of being blocked. So a row only
+# really claims the boundary week that matched it while that week is still ON
+# OR AFTER its own effective_from.
+#
+# The COALESCE fallback is the matched week itself (not period_start): a
+# period starting mid-week has a head/tail Monday that can fall BEFORE its
+# own period_start by construction (that gap is the whole reason this table
+# exists), so comparing against period_start would misjudge the ordinary,
+# unadjusted case. Falling back to the week being compared makes an unset
+# effective_from a no-op — trivially true — exactly as before this column
+# existed.
 _WA_WEEK_GUARD_BODY = """
       SELECT RAISE(ABORT,
                    'work_arrangement: one alternative work arrangement per week')
@@ -415,14 +430,19 @@ _WA_WEEK_GUARD_BODY = """
                 -- request legitimately sits alongside the row it replaces.
                 AND w.period_start <> NEW.period_start
                 AND w.id <> NEW.id
-                AND (w.week_head IN (NEW.week_head, NEW.week_tail)
-                  OR w.week_tail IN (NEW.week_head, NEW.week_tail)));
+                AND ((w.week_head IN (NEW.week_head, NEW.week_tail)
+                      AND w.week_head >= COALESCE(w.effective_from, w.week_head)
+                      AND w.week_head >= COALESCE(NEW.effective_from, w.week_head))
+                  OR (w.week_tail IN (NEW.week_head, NEW.week_tail)
+                      AND w.week_tail >= COALESCE(w.effective_from, w.week_tail)
+                      AND w.week_tail >= COALESCE(NEW.effective_from, w.week_tail))));
 """
 
 
 def _wa_install_week_guard(conn):
-    """Add the two derived week-boundary columns and the trigger that enforces
-    one alternative work arrangement per calendar week.
+    """Add the derived week-boundary columns, the effective_from override
+    column, and the trigger that enforces one alternative work arrangement per
+    calendar week.
 
     Separate from _add_missing_columns because a GENERATED column cannot be
     written in CREATE TABLE for a database that already exists — it has to be
@@ -431,6 +451,12 @@ def _wa_install_week_guard(conn):
     # table_xinfo, not table_info: the latter hides VIRTUAL generated columns,
     # so it would report them missing on every boot and re-ALTER them.
     cols = {row[1] for row in conn.execute("PRAGMA table_xinfo(work_arrangement)")}
+    if "effective_from" not in cols:
+        # The date this filing actually starts counting from — normally NULL,
+        # meaning "= period_start". _wa_resolve_week pushes it later only when
+        # this filing's own first week is one an earlier-period filing of the
+        # same person's already owns; every pre-existing row needs no backfill.
+        conn.execute("ALTER TABLE work_arrangement ADD COLUMN effective_from TEXT")
     if "week_head" not in cols:
         conn.execute("ALTER TABLE work_arrangement ADD COLUMN week_head TEXT "
                      f"GENERATED ALWAYS AS ({_WA_WEEK_HEAD_SQL}) VIRTUAL")
@@ -440,9 +466,15 @@ def _wa_install_week_guard(conn):
     # REG nominates no day and is exempt; a denied, withdrawn or superseded row
     # has already let its week go. Filings that predate this rule are left
     # exactly as they stand — the guard only judges what is written from now on.
+    #
+    # Dropped and recreated on every boot rather than guarded with IF NOT
+    # EXISTS: a body change here (the effective_from carve-out above, for
+    # instance) has to actually reach a database that already has the trigger
+    # from before, not just new ones.
     for name, event in (("ins", "INSERT"), ("upd", "UPDATE")):
+        conn.execute(f"DROP TRIGGER IF EXISTS trg_wa_one_per_week_{name}")
         conn.execute(
-            f"CREATE TRIGGER IF NOT EXISTS trg_wa_one_per_week_{name} "
+            f"CREATE TRIGGER trg_wa_one_per_week_{name} "
             f"BEFORE {event} ON work_arrangement "
             "WHEN NEW.weekday IS NOT NULL AND NEW.status IN ('pending', 'approved') "
             f"BEGIN {_WA_WEEK_GUARD_BODY} END")
@@ -7437,7 +7469,8 @@ _WA_SELECT = """
     SELECT w.id, w.user_id, w.period_start, w.arrangement, w.weekday, w.note,
            w.status, w.supersedes_id, w.decided_by, w.decided_at, w.decide_note,
            w.created_at, u.username, rp.name, rp.position,
-           ou.short_name, ou.path, COALESCE(rpd.name, ud.username, '')
+           ou.short_name, ou.path, COALESCE(rpd.name, ud.username, ''),
+           w.effective_from
     FROM work_arrangement w
     JOIN admin_user u ON u.id = w.user_id
     LEFT JOIN resource_person rp ON rp.id = u.rp_id
@@ -7453,7 +7486,8 @@ def _wa_hydrate(row):
     annex can never word the same record differently."""
     (wid, user_id, period_start, arrangement, weekday, note, status,
      supersedes_id, decided_by, decided_at, decide_note, created_at,
-     username, name, position, short_name, path, decided_by_name) = row
+     username, name, position, short_name, path, decided_by_name,
+     effective_from) = row
     return {
         "id": wid, "user_id": user_id, "period_start": period_start,
         "period_label": work_arrangement_period_label(period_start),
@@ -7470,6 +7504,8 @@ def _wa_hydrate(row):
         "created_at": created_at, "username": username,
         "person_name": name or username, "position": position or "",
         "section": short_name or "", "org_path": path or "",
+        # NULL means "no override" — the ordinary case. See _wa_resolve_week.
+        "effective_from": effective_from or period_start,
     }
 
 
@@ -7492,6 +7528,7 @@ def get_work_arrangement(conn, wa_id):
                 "weekday": prev[1],
                 "remarks": _wa_remarks(prev[0], prev[1], prev[2]),
             }
+    out["week_override_note"] = work_arrangement_week_override_note(conn, out)
     return out
 
 
@@ -7562,24 +7599,75 @@ def work_arrangement_week_conflict(conn, user_id, period_start, arrangement,
     return other
 
 
-def _wa_check_week_free(conn, user_id, period_start, arrangement, weekday,
-                        exclude_id=None):
-    """Raise the refusal a person can act on if this filing would be their
-    second alternative work arrangement day in one week."""
+def _wa_week_note(other, effective_from, weekday):
+    """The sentence explaining a resolved boundary-week overlap: which week
+    keeps the earlier arrangement, and which week the new one starts from.
+    Shared by the resolver (fresh) and work_arrangement_week_override_note
+    (re-derived at display time), so the two can never disagree."""
+    other_day = _WA_DAY_NAMES[other["weekday"]]
+    this_day = _WA_DAY_NAMES[weekday]
+    return (
+        f"The week of {work_arrangement_week_label(other['week_start'])} "
+        f"already carries your {other_day} arrangement for "
+        f"{other['period_label']}, so that week keeps {other_day}. This "
+        f"{this_day} arrangement takes effect the week of "
+        f"{work_arrangement_week_label(date.fromisoformat(effective_from))} "
+        f"onward.")
+
+
+def _wa_resolve_week(conn, user_id, period_start, arrangement, weekday,
+                     exclude_id=None):
+    """Decide how this filing's day interacts with the person's OTHER live
+    filing in the adjacent period, if the two share a boundary week.
+
+    Returns (effective_from, note). Most of the time there is no shared week:
+    effective_from comes back equal to period_start and note is "". When the
+    two DO share a week, the EARLIER period's day keeps it:
+      * if THIS filing is the later one, effective_from is pushed to the
+        Monday after the shared week and note explains it — no refusal;
+      * if THIS filing is the earlier one, there is no later date within its
+        own period to push it to (the shared week sits at that period's very
+        start), so this raises ValueError instead, naming the other filing
+        the person needs to change or withdraw first.
+
+    decide_work_arrangement calls this purely as a backstop (see its
+    docstring) and ignores the note — the row's effective_from was already
+    set when it was filed."""
     other = work_arrangement_week_conflict(conn, user_id, period_start,
                                            arrangement, weekday, exclude_id)
     if not other:
-        return
-    standing = ("already approved" if other["status"] == "approved"
-                else "already waiting for approval")
-    raise ValueError(
-        f"That would be your second work arrangement day in the week of "
-        f"{work_arrangement_week_label(other['week_start'])}. "
-        f"{_wa_remarks(other['arrangement'], other['weekday'])} on "
-        f"{work_arrangement_date_label(other['clash_date'])} is {standing} "
-        f"under {other['period_label']}, and that week runs across both "
-        f"periods. An alternative work arrangement is one day a week — pick a "
-        f"weekday outside that week, or change the other filing first.")
+        return period_start, ""
+    if period_start < other["period_start"]:
+        standing = ("already approved" if other["status"] == "approved"
+                    else "already waiting for approval")
+        raise ValueError(
+            f"The week of {work_arrangement_week_label(other['week_start'])} "
+            f"would then hold two of your work arrangement days. "
+            f"{_wa_remarks(other['arrangement'], other['weekday'])} on "
+            f"{work_arrangement_date_label(other['clash_date'])} is {standing} "
+            f"under {other['period_label']}, a LATER period than this one, so "
+            f"this filing can't take priority over it automatically — the "
+            f"earlier period always keeps a shared week. Change or withdraw "
+            f"that one first, or pick a different weekday here.")
+    effective_from = (other["week_start"] + timedelta(days=7)).isoformat()
+    return effective_from, _wa_week_note(other, effective_from, weekday)
+
+
+def work_arrangement_week_override_note(conn, row):
+    """The same explanation _wa_resolve_week gave at filing time, re-derived
+    from what's on record now — for the approvals queue and the filer's own
+    history, so it reads correctly even if the OTHER filing it refers to was
+    since changed. "" when this row's effective date was never adjusted."""
+    eff = row.get("effective_from")
+    ps = row.get("period_start")
+    if not eff or eff == ps or row.get("weekday") is None:
+        return ""
+    other = work_arrangement_week_conflict(conn, row["user_id"], ps,
+                                           row["arrangement"], row["weekday"],
+                                           exclude_id=row.get("id"))
+    if not other:
+        return ""          # the filing it deferred to was denied or withdrawn
+    return _wa_week_note(other, eff, row["weekday"])
 
 
 # ---- writes ---------------------------------------------------------------
@@ -7613,15 +7701,20 @@ def create_work_arrangement(conn, user_id, period_start, arrangement,
             f"{work_arrangement_period_label(ps)}. Withdraw it first if you "
             f"want to file something different.")
     # One AWA day a week, counting across the period boundary that splits a
-    # working week in two. A filing still waiting for approval holds its week:
-    # letting a second one through would only queue up a clash for the chief.
-    _wa_check_week_free(conn, user_id, ps, arrangement, weekday)
+    # working week in two. A filing still waiting for approval holds its week
+    # the same as an approved one — but when the two periods are simply
+    # adjacent, the earlier one keeps the shared week and this filing's
+    # effective_from is pushed past it instead of being refused outright; see
+    # _wa_resolve_week for when it still has to refuse.
+    effective_from, _week_note = _wa_resolve_week(conn, user_id, ps,
+                                                   arrangement, weekday)
     cur = conn.execute(
         """INSERT INTO work_arrangement(user_id, period_start, arrangement,
-                                        weekday, note, status, created_at)
-           VALUES (?,?,?,?,?,'pending',?)""",
+                                        weekday, note, status, created_at,
+                                        effective_from)
+           VALUES (?,?,?,?,?,'pending',?,?)""",
         (user_id, ps, arrangement, weekday, (note or "").strip() or None,
-         tz.now_iso()))
+         tz.now_iso(), effective_from if effective_from != ps else None))
     conn.commit()
     return cur.lastrowid
 
@@ -7656,14 +7749,15 @@ def request_work_arrangement_change(conn, wa_id, user_id, arrangement,
                          "different one.")
     # Changing a day can walk INTO a boundary week the old day stayed clear of,
     # so the weekly rule is checked against the new day, not the filed one.
-    _wa_check_week_free(conn, user_id, ps, arrangement, weekday)
+    effective_from, _week_note = _wa_resolve_week(conn, user_id, ps,
+                                                   arrangement, weekday)
     cur = conn.execute(
         """INSERT INTO work_arrangement(user_id, period_start, arrangement,
                                         weekday, note, status, supersedes_id,
-                                        created_at)
-           VALUES (?,?,?,?,?,'pending',?,?)""",
+                                        created_at, effective_from)
+           VALUES (?,?,?,?,?,'pending',?,?,?)""",
         (user_id, ps, arrangement, weekday, (note or "").strip() or None,
-         wa_id, tz.now_iso()))
+         wa_id, tz.now_iso(), effective_from if effective_from != ps else None))
     conn.commit()
     return cur.lastrowid
 
@@ -7838,14 +7932,15 @@ def decide_work_arrangement(conn, wa_id, user, action, note=None):
         raise ValueError("Unknown decision.")
     if not is_approver_for(conn, user, row["user_id"]):
         raise PermissionError("That request isn't yours to decide.")
-    # Filing already refuses a second day in one week, so this should never
-    # fire — unless the clashing row predates the rule or was written around it.
-    # Better the approver learns that here than signs off a schedule the annex
-    # would then have to print twice in one week.
+    # Filing already resolves or refuses a clashing day, so this should never
+    # fire — unless the clashing row predates the rule or was written around
+    # it. Better the approver learns that here than signs off a schedule the
+    # annex would then have to print twice in one week. The row's own
+    # effective_from was already set when it was filed, so only the raise
+    # matters here — a resolved result is simply left as filed.
     if action == "approve":
-        _wa_check_week_free(conn, row["user_id"], row["period_start"],
-                            row["arrangement"], row["weekday"],
-                            exclude_id=wa_id)
+        _wa_resolve_week(conn, row["user_id"], row["period_start"],
+                         row["arrangement"], row["weekday"], exclude_id=wa_id)
     status = "approved" if action == "approve" else "denied"
     note = (note or "").strip() or None
     try:
@@ -8106,6 +8201,10 @@ def work_arrangement_roster(conn, period_start, user=None, tagged=None):
             "filed": bool(w),
             "approved": bool(w and w["status"] == "approved"),
             "noawa": False,
+            # Almost always just period_start — see _wa_day_state for the one
+            # date-level case that reads it (a boundary week resolved in the
+            # OTHER filing's favor).
+            "effective_from": w["effective_from"] if w else None,
         })
     return out
 
@@ -8126,17 +8225,21 @@ WORK_ARRANGEMENT_DAY_GROUPS = [
 ]
 
 
-def _wa_day_state(row, weekday):
-    """Which group one roster row falls in on a given weekday.
+def _wa_day_state(row, day):
+    """Which group one roster row falls in on a given date.
 
     The nominated weekday RECURS: "Friday Day off" is EVERY Friday in the
-    fortnight, not one of them. That is the whole reason a day-by-day view can
-    be derived from a fortnightly filing and needs nothing stored per date."""
+    fortnight, not one of them — with one exception. When a boundary-week
+    overlap pushed this filing's effective_from past its period's own first
+    occurrence (see _wa_resolve_week), that one earliest occurrence still
+    belongs to the OTHER, earlier-period arrangement it deferred to, so it
+    reads as an ordinary on-site day here rather than a day off/WFH."""
     if row.get("noawa"):
         return "noawa"
     if not row.get("filed"):
         return "unfiled"
-    if row.get("arrangement") in _WA_DAY_TYPES and row.get("weekday") == weekday:
+    if (row.get("arrangement") in _WA_DAY_TYPES and row.get("weekday") == day.weekday()
+            and day.isoformat() >= (row.get("effective_from") or "")):
         # CWW's nominated day is a day OFF; WFH's is a day worked from home.
         # Conflating them would report someone on leave as reachable.
         return "dayoff" if row["arrangement"] == "CWW" else "wfh"
@@ -8187,7 +8290,7 @@ def work_arrangement_day(conn, day, user=None):
     # scheduled. Both are empty for different reasons the caller can tell apart.
     if out["kind"] != "none" and not out["is_weekend"]:
         for r in work_arrangement_roster(conn, ps, user):
-            state = _wa_day_state(r, day.weekday())
+            state = _wa_day_state(r, day)
             out["groups"][state].append({**r, "day_state": state})
     out["counts"] = {k: len(v) for k, v in out["groups"].items()}
     out["headcount"] = sum(out["counts"].values())

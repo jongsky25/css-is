@@ -25,6 +25,9 @@
           border:1px solid var(--line); white-space:nowrap; display:inline-block; }
   .pill.warn  { color:var(--amber); border-color:var(--amber-ln); background:var(--amber-bg); }
   .pill.empty { color:var(--red); border-color:var(--red-ln); background:var(--red-bg); }
+  .weeknote { color:var(--accent-ink); font-size:.8rem; margin-top:.35rem;
+              background:var(--blue-bg); border:1px solid var(--blue-ln);
+              border-radius:8px; padding:.35rem .5rem; }
   .muted { color:var(--soft); }
   .backbar { margin-bottom:1rem; display:flex; gap:.8rem; }
 </style>
@@ -61,6 +64,7 @@
             → now <b>{{ w.arrangement }}{% if w.remarks %} · {{ w.remarks }}{% endif %}</b></div>
           {% endif %}
           {% if w.note %}<div class="note">“{{ w.note }}”</div>{% endif %}
+          {% if w.week_override_note %}<div class="weeknote">{{ w.week_override_note }}</div>{% endif %}
         </td>
         <td>
           {% if w.coverage_flag %}

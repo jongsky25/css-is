@@ -64,6 +64,7 @@
 
 {% if ok %}{{ flash(msg=ok) }}{% endif %}
 {% if err %}{{ flash(err=err) }}{% endif %}
+{% if info %}{{ flash(info=info) }}{% endif %}
 
 {#-- Gated apart: seeing (and printing) the schedule is not the same power as
      deciding on it, so a bureau-wide viewer gets the second button only. --#}
