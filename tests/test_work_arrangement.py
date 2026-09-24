@@ -877,6 +877,29 @@ def test_the_roster_shows_people_who_never_filed(wa_org):
     assert d["thinnest"]["name"] == "Friday"
 
 
+def test_the_system_admin_account_is_not_on_the_staff_roster(wa_org):
+    """ray@gmail.com is the system administrator's check-in account, not staff:
+    never a roster row (screen or ANNEX C export), never nudged to file."""
+    conn, ps = wa_org["conn"], _open()
+    conn.execute("DELETE FROM admin_user WHERE lower(username)='ray@gmail.com'")
+    ray = st.create_admin_user(conn, "ray@gmail.com", "x", "y", "admin")
+    conn.commit()
+    try:
+        assert ray not in {r["user_id"] for r in st.work_arrangement_roster(conn, ps)}
+        assert "ray@gmail.com" not in {r["name"] for r in
+                                       st.work_arrangement_export_rows(conn, ps)}
+        assert ray not in {r["id"] for r in st.staff_without_work_arrangement(conn, ps)}
+        week = st.wellness_week_start()
+        assert ray not in {r["id"] for r in
+                           st.staff_without_wellness_claim_this_week(conn, week)}
+        # a real staff account is still there
+        assert wa_org["staff"][0] in {r["user_id"] for r in
+                                      st.work_arrangement_roster(conn, ps)}
+    finally:
+        conn.execute("DELETE FROM admin_user WHERE id=?", (ray,))
+        conn.commit()
+
+
 def test_export_prints_only_approved_rows(wa_org):
     conn, ps = wa_org["conn"], _open()
     _approved(wa_org, wa_org["staff"][0], "CWW", 4)
