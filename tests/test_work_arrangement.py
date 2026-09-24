@@ -308,13 +308,37 @@ def test_the_two_september_periods_share_one_working_week():
 
 
 @pytest.mark.parametrize("weekday,day", [(2, 16), (3, 17), (4, 18)])
-def test_a_monday_wfh_closes_the_rest_of_that_split_week(sept, weekday, day):
-    """Monday the 14th is work-from-home, so the 16th, 17th and 18th cannot be —
-    even though they are filed for under the next period."""
+def test_a_monday_wfh_pushes_the_later_filing_past_the_shared_week(sept, weekday, day):
+    """Monday the 14th is already work-from-home under the EARLIER period, so
+    the 16th, 17th and 18th filing doesn't get refused — it just doesn't start
+    until the week after, since September 1-15 keeps the week of the 14th."""
     conn, emp = sept["conn"], sept["staff"][0]
     st.create_work_arrangement(conn, emp, _SEPT_1_15, "WFH", 0)
-    with pytest.raises(ValueError, match="second work arrangement day"):
-        st.create_work_arrangement(conn, emp, _SEPT_16_30, "WFH", weekday)
+    wa = st.create_work_arrangement(conn, emp, _SEPT_16_30, "WFH", weekday)
+    row = st.get_work_arrangement(conn, wa)
+    assert row["effective_from"] == "2026-09-21"          # the Monday after
+    assert row["week_override_note"]
+    assert "September 14-18, 2026" in row["week_override_note"]
+    assert "Monday" in row["week_override_note"]
+    assert "September 21-25, 2026" in row["week_override_note"]
+    # Still goes on to approve normally — the resolution isn't a permanent
+    # asterisk on the row, just its starting date.
+    assert st.decide_work_arrangement(
+        conn, wa, sept["admin"], "approve")["status"] == "approved"
+
+
+def test_the_pushed_effective_date_shows_up_in_the_day_view(sept):
+    """The one place the boundary week actually matters day to day: the 16th
+    itself reads as an ordinary on-site day, and the 23rd reads as WFH."""
+    conn, emp = sept["conn"], sept["staff"][0]
+    st.create_work_arrangement(conn, emp, _SEPT_1_15, "WFH", 0)
+    wa = st.create_work_arrangement(conn, emp, _SEPT_16_30, "WFH", 2)   # Wed
+    st.decide_work_arrangement(conn, wa, sept["admin"], "approve")
+    day16 = st.work_arrangement_day(conn, date(2026, 9, 16))
+    day23 = st.work_arrangement_day(conn, date(2026, 9, 23))
+    name = "WA-Test Staff0"
+    assert name in [p["name"] for p in day16["groups"]["onsite"]]
+    assert name in [p["name"] for p in day23["groups"]["wfh"]]
 
 
 @pytest.mark.parametrize("weekday", [0, 1, 2, 3, 4])
@@ -338,12 +362,13 @@ def test_a_day_that_stops_short_of_the_boundary_week_does_not_reserve_it(sept):
 
 
 def test_a_compressed_day_off_counts_against_the_same_week(sept):
-    """Both alternative arrangements are capped, and against each other — a day
-    off and a day at home in one week is still two arrangements."""
+    """Both alternative arrangements share the cap, and against each other — a
+    day off and a day at home in one week is still two, so the later one still
+    gets pushed rather than treated as unrelated."""
     conn, emp = sept["conn"], sept["staff"][0]
     st.create_work_arrangement(conn, emp, _SEPT_1_15, "CWW", 0)
-    with pytest.raises(ValueError, match="second work arrangement day"):
-        st.create_work_arrangement(conn, emp, _SEPT_16_30, "WFH", 2)
+    wa = st.create_work_arrangement(conn, emp, _SEPT_16_30, "WFH", 2)
+    assert st.get_work_arrangement(conn, wa)["effective_from"] == "2026-09-21"
 
 
 def test_a_regular_week_is_exempt_at_both_ends(sept):
@@ -363,13 +388,13 @@ def test_the_cap_is_per_person(sept):
 
 
 def test_a_filing_still_waiting_for_approval_holds_the_week(sept):
-    """Pending occupies the week. Letting a second one through would only put a
-    clash in front of the chief for them to discover."""
+    """Pending occupies the week just like approved does — the later filing
+    still defers to it rather than being treated as free to claim it."""
     conn, emp = sept["conn"], sept["staff"][0]
     wa = st.create_work_arrangement(conn, emp, _SEPT_1_15, "WFH", 0)
     assert st.get_work_arrangement(conn, wa)["status"] == "pending"
-    with pytest.raises(ValueError, match="second work arrangement day"):
-        st.create_work_arrangement(conn, emp, _SEPT_16_30, "WFH", 2)
+    later = st.create_work_arrangement(conn, emp, _SEPT_16_30, "WFH", 2)
+    assert st.get_work_arrangement(conn, later)["effective_from"] == "2026-09-21"
 
 
 @pytest.mark.parametrize("release", ["withdraw", "deny"])
@@ -383,27 +408,35 @@ def test_withdrawing_or_denying_gives_the_week_back(sept, release):
     st.create_work_arrangement(conn, emp, _SEPT_16_30, "WFH", 2)
 
 
-def test_the_refusal_names_the_week_the_day_and_the_other_period(sept):
-    """A refusal that doesn't say what is in the way is a dead end — the same
-    standard the deadline refusal is held to."""
+def test_the_override_note_names_the_week_the_day_and_the_other_period(sept):
+    """A note that doesn't say what is in the way and what changed is a dead
+    end — the same standard the old refusal was held to."""
     conn, emp = sept["conn"], sept["staff"][0]
     st.create_work_arrangement(conn, emp, _SEPT_1_15, "WFH", 0)
+    wa = st.create_work_arrangement(conn, emp, _SEPT_16_30, "WFH", 2)
+    msg = st.get_work_arrangement(conn, wa)["week_override_note"]
+    assert "September 14-18, 2026" in msg          # the week they share
+    assert "Monday" in msg                         # what is already there
+    assert "September 1-15, 2026" in msg           # filed under which period
+    assert "September 21-25, 2026" in msg          # and when this one starts
+
+
+def test_the_blocked_direction_names_the_week_the_day_and_the_other_period(sept):
+    """Filing the EARLIER period after the later one is already approved can't
+    be resolved automatically — there's no later date within its own period to
+    push it to — so this still refuses, and still says what is in the way."""
+    conn, emp = sept["conn"], sept["staff"][0]
+    wa = st.create_work_arrangement(conn, emp, _SEPT_16_30, "WFH", 2)
+    st.decide_work_arrangement(conn, wa, sept["admin"], "approve")
     with pytest.raises(ValueError) as e:
-        st.create_work_arrangement(conn, emp, _SEPT_16_30, "WFH", 2)
+        st.create_work_arrangement(conn, emp, _SEPT_1_15, "WFH", 0)
     msg = str(e.value)
     assert "September 14-18, 2026" in msg          # the week they collide in
-    assert "Monday WFH" in msg                     # what is already there
-    assert "Monday, September 14, 2026" in msg     # and on which day
-    assert "September 1-15, 2026" in msg           # filed under which period
-    assert "waiting for approval" in msg           # and how far along it is
-
-
-def test_the_refusal_says_when_the_other_day_is_already_approved(sept):
-    conn, emp = sept["conn"], sept["staff"][0]
-    wa = st.create_work_arrangement(conn, emp, _SEPT_1_15, "WFH", 0)
-    st.decide_work_arrangement(conn, wa, sept["admin"], "approve")
-    with pytest.raises(ValueError, match="already approved"):
-        st.create_work_arrangement(conn, emp, _SEPT_16_30, "WFH", 2)
+    assert "Wednesday WFH" in msg                  # what is already there
+    assert "Wednesday, September 16, 2026" in msg  # and on which day
+    assert "September 16-30, 2026" in msg          # filed under which period
+    assert "already approved" in msg               # and how far along it is
+    assert "can't take priority" in msg            # why this one can't win it
 
 
 def test_a_change_is_judged_on_the_day_it_asks_for(sept):
@@ -412,9 +445,11 @@ def test_a_change_is_judged_on_the_day_it_asks_for(sept):
     wa = st.create_work_arrangement(conn, emp, _SEPT_1_15, "WFH", 2)   # Wednesday
     st.decide_work_arrangement(conn, wa, sept["admin"], "approve")
     st.create_work_arrangement(conn, emp, _SEPT_16_30, "WFH", 2)       # fine
-    # Mondays AND Tuesdays in September 1-15 both reach the week of the 14th
+    # Mondays AND Tuesdays in September 1-15 both reach the week of the 14th —
+    # and this filing IS the earlier period, so there's no later date within it
+    # to push the change to; it still has to refuse.
     for weekday in (0, 1):
-        with pytest.raises(ValueError, match="second work arrangement day"):
+        with pytest.raises(ValueError, match="can't take priority"):
             st.request_work_arrangement_change(conn, wa, emp, "WFH", weekday)
     # Thursdays run out on the 10th, so that change still goes through
     assert st.request_work_arrangement_change(conn, wa, emp, "WFH", 3)
@@ -458,7 +493,7 @@ def test_an_approval_that_would_double_up_a_week_is_refused(sept):
     conn, emp = sept["conn"], sept["staff"][0]
     wa = st.create_work_arrangement(conn, emp, _SEPT_1_15, "WFH", 0)
     _grandfather(conn, emp, _SEPT_16_30, "WFH", 2, "approved")
-    with pytest.raises(ValueError, match="second work arrangement day"):
+    with pytest.raises(ValueError, match="can't take priority"):
         st.decide_work_arrangement(conn, wa, sept["admin"], "approve")
     # denying it is still allowed — that is how the clash gets cleared
     assert st.decide_work_arrangement(
@@ -521,17 +556,34 @@ def test_the_week_label_reads_like_the_period_labels():
         "August 31 - September 4, 2026"
 
 
-def test_the_filing_form_says_why_it_was_refused(sept, app_mod):
-    """The refusal reaches the person at the form, not as a 500."""
+def test_a_resolved_boundary_week_files_and_carries_the_note_to_the_redirect(
+        sept, app_mod):
+    """The later-period filing over HTTP: no refusal, and the explanation rides
+    along on the redirect as a distinct info notice rather than being lost."""
     conn, emp = sept["conn"], sept["staff"][0]
     st.create_work_arrangement(conn, emp, _SEPT_1_15, "WFH", 0)
     c = _client_for_id(app_mod, emp)
     r = c.post("/work-arrangement/file",
                data={"period_start": _SEPT_16_30, "arrangement": "WFH",
-                     "weekday": "2"})
+                     "weekday": "2"}, follow_redirects=False)
+    assert r.status_code == 303
+    assert "info=" in r.headers["location"]
+    assert st.my_pending_work_arrangement(conn, emp, _SEPT_16_30) is not None
+
+
+def test_the_filing_form_says_why_a_blocked_overlap_was_refused(sept, app_mod):
+    """The direction that still can't be resolved automatically (the EARLIER
+    period filed after the later one) reaches the person at the form, not as a
+    500."""
+    conn, emp = sept["conn"], sept["staff"][0]
+    st.create_work_arrangement(conn, emp, _SEPT_16_30, "WFH", 2)
+    c = _client_for_id(app_mod, emp)
+    r = c.post("/work-arrangement/file",
+               data={"period_start": _SEPT_1_15, "arrangement": "WFH",
+                     "weekday": "0"})
     assert r.status_code == 400
     assert "September 14-18, 2026" in r.text
-    assert st.my_pending_work_arrangement(conn, emp, _SEPT_16_30) is None
+    assert st.my_pending_work_arrangement(conn, emp, _SEPT_1_15) is None
 
 
 # ------------------------------------------------ staff-initiated changes ----

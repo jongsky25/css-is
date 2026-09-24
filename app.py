@@ -14386,7 +14386,7 @@ def _wa_forbid(request):
 
 
 @app.get("/work-arrangement", response_class=HTMLResponse)
-def work_arrangement_hub(request: Request, ok: str = "", err: str = ""):
+def work_arrangement_hub(request: Request, ok: str = "", err: str = "", info: str = ""):
     """The employee's schedule home. What's IN FORCE right now leads the page —
     that's the schedule someone is actually working today — followed by
     whatever period(s) are still open for filing, and the deadline spelled out
@@ -14466,7 +14466,7 @@ def work_arrangement_hub(request: Request, ok: str = "", err: str = ""):
         "is_chief": is_chief, "can_schedule": can_schedule,
         "legend": st.WORK_ARRANGEMENT_LEGEND,
         "noawa": noawa, "noawa_label": st.WORK_ARRANGEMENT_NOAWA,
-        "ok": ok, "err": err,
+        "ok": ok, "err": err, "info": info,
     })
 
 
@@ -14564,9 +14564,13 @@ async def work_arrangement_file_submit(request: Request):
                            feature="awa_approval")
     finally:
         conn.close()
-    return RedirectResponse(
-        f"/work-arrangement?ok={quote(f'Work arrangement filed — {approver} will see it.')}",
-        status_code=303)
+    url = f"/work-arrangement?ok={quote(f'Work arrangement filed — {approver} will see it.')}"
+    # A boundary-week overlap was resolved rather than refused (see
+    # _wa_resolve_week) — say so up front rather than leaving the person to
+    # discover it later on the schedule.
+    if row.get("week_override_note"):
+        url += f"&info={quote(row['week_override_note'])}"
+    return RedirectResponse(url, status_code=303)
 
 
 @app.get("/work-arrangement/{wa_id}/change", response_class=HTMLResponse)
@@ -14625,11 +14629,12 @@ async def work_arrangement_change_submit(request: Request, wa_id: int):
                            feature="awa_approval")
     finally:
         conn.close()
-    return RedirectResponse(
-        "/work-arrangement?ok=" + quote(
-            f"Change requested — {approver} will see it. Your current "
-            f"arrangement stays in force until it's approved."),
-        status_code=303)
+    url = "/work-arrangement?ok=" + quote(
+        f"Change requested — {approver} will see it. Your current "
+        f"arrangement stays in force until it's approved.")
+    if row.get("week_override_note"):
+        url += f"&info={quote(row['week_override_note'])}"
+    return RedirectResponse(url, status_code=303)
 
 
 @app.post("/work-arrangement/{wa_id}/cancel")
