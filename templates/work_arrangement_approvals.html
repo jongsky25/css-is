@@ -45,18 +45,19 @@
 
 <div class="panel">
   {% if queue %}
-  <table class="q">
+  <div class="table-wrap">
+  <table class="q resp-table resp-table-wide">
     <thead><tr><th>Who</th><th>Period</th><th>Arrangement</th><th>Coverage</th><th>Decision</th></tr></thead>
     <tbody>
     {% for w in queue %}
       <tr>
-        <td>
+        <td data-label="Who">
           <div class="who">{{ w.person_name }}</div>
           <div class="sub">{{ w.position or "—" }}{% if w.section %} · {{ w.section }}{% endif %}</div>
           <div class="sub">filed {{ (w.created_at or "")|replace('T', ' ') }}</div>
         </td>
-        <td>{{ w.period_label }}</td>
-        <td>
+        <td data-label="Period">{{ w.period_label }}</td>
+        <td data-label="Arrangement">
           <div class="code">{{ w.arrangement }} — {{ w.arrangement_label }}</div>
           <div>{{ w.remarks or "Regular week, no nominated day" }}</div>
           {% if w.is_change and w.replaces %}
@@ -66,12 +67,12 @@
           {% if w.note %}<div class="note">“{{ w.note }}”</div>{% endif %}
           {% if w.week_override_note %}<div class="weeknote">{{ w.week_override_note }}</div>{% endif %}
         </td>
-        <td>
+        <td data-label="Coverage">
           {% if w.coverage_flag %}
             <span class="pill {{ 'empty' if 'nobody' in w.coverage_flag else 'warn' }}">{{ w.coverage_flag }}</span>
           {% else %}<span class="muted">—</span>{% endif %}
         </td>
-        <td>
+        <td data-label="Decision" class="actions">
           <form class="df" method="post" action="/work-arrangement/{{ w.id }}/decide">
             <input type="text" name="note" placeholder="optional remark">
             <button class="ok" type="submit" name="action" value="approve">Approve</button>
@@ -82,6 +83,7 @@
     {% endfor %}
     </tbody>
   </table>
+  </div>
   {% else %}
   {{ empty_state("Nothing waiting", "No work arrangement requests need you right now.", "🗓") }}
   {% endif %}

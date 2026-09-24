@@ -50,7 +50,7 @@
   <h2 style="margin:.1rem 0 .8rem; font-size:1rem;">Staff accounts</h2>
   <div class="dsearch"><span class="ico" aria-hidden="true">🔍</span><input type="text" placeholder="Search staff by name, email, section…" oninput="filterUsers(this)" aria-label="Search staff accounts"></div>
   <div class="table-wrap">
-  <table class="resp-table">
+  <table class="resp-table resp-table-wide">
     <tr><th>Staff</th><th>Email</th><th>Account</th><th>Role</th><th>Sees</th><th></th></tr>
     {% for r in rows %}
     {% set a = r.account %}
@@ -130,7 +130,7 @@
   <h2 style="margin:.1rem 0 .3rem; font-size:1rem;">Other accounts</h2>
   <p class="sec" style="margin:0 0 .8rem;">Accounts not linked to a directory staff record (e.g. the initial administrator).</p>
   <div class="table-wrap">
-  <table class="resp-table">
+  <table class="resp-table resp-table-wide">
     <tr><th>Email / username</th><th>Role</th><th>Sees</th><th>Status</th><th></th></tr>
     {% for u in standalone %}
     <tr>

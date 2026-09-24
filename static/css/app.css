@@ -218,6 +218,26 @@ tr.no-hits { display:none; }
 tr.no-hits.show, table.resp-table tr.no-hits.show { display:table-row; }
 @media (max-width:640px) { table.resp-table tr.no-hits.show { display:block; } }
 
+/* Same idea as resp-table, but for rows carrying several inline forms per cell
+   (a role picker + Apply, an actions column with two buttons) — those overflow
+   the page well before 640px on an ordinary narrow browser window, not just a
+   phone, so this class stacks them starting at 960px instead. Add alongside
+   resp-table, not instead of it. */
+@media (max-width:960px) {
+  table.resp-table-wide thead, table.resp-table-wide tr:has(th) { display:none; }
+  table.resp-table-wide, table.resp-table-wide tbody { display:block; width:100%; }
+  table.resp-table-wide tr { display:block; border:1px solid var(--line); border-radius:var(--r1);
+                        margin-bottom:.6rem; padding:.35rem .7rem; background:var(--surface); }
+  table.resp-table-wide tr:hover td { background:transparent; }
+  table.resp-table-wide td { display:block; border:none; padding:.3rem 0; text-align:left; }
+  table.resp-table-wide td.num, table.resp-table-wide td.ctr { text-align:left; }
+  table.resp-table-wide td::before { content:attr(data-label); display:block; font-size:.68rem;
+                        text-transform:uppercase; letter-spacing:.04em; color:var(--soft); font-weight:700; }
+  table.resp-table-wide td[data-label=""]::before, table.resp-table-wide td:not([data-label])::before { content:none; }
+  table.resp-table-wide td.actions { display:flex; flex-wrap:wrap; gap:.4rem; padding-top:.5rem; }
+  table.resp-table-wide tr.nomatch { display:none; }
+}
+
 .crumbs { font-size:var(--fs-sm); color:var(--soft); margin:.2rem 0 .8rem; }
 .crumbs a { color:var(--soft); text-decoration:none; }
 .crumbs a:hover { color:var(--accent); text-decoration:underline; }
