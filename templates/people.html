@@ -12,6 +12,7 @@
                     border:1px solid var(--line); color:var(--soft); }
   .admin-toggle a.on { background:var(--ink); color:var(--on-accent); border-color:var(--ink); }
   .grid { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:1rem; margin-top:1rem; }
+  @media (min-width:1280px){ .grid { grid-template-columns:repeat(4, minmax(0,1fr)); } }
   @media (max-width:860px){ .grid { grid-template-columns:repeat(2, minmax(0,1fr)); } }
   @media (max-width:560px){ .grid { grid-template-columns:1fr; } }
   .pcard { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1rem 1.1rem;

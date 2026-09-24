@@ -1,5 +1,66 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-24 (v3.14 — pages use the whole screen on laptops and monitors)
+
+Reported off two screenshots on a ~1900px monitor: Admin → Users and the
+Office Connect home both sat in a 980px strip with roughly half the screen
+bare, and the Users "Staff accounts" table didn't even fit that strip, so the
+Role/Sees pickers dropped their Apply under them and the actions column was
+clipped ("Send reset lin…").
+
+**Root cause:** one hard cap. `.wrap` (every signed-in page's `<main>`), the
+topnav and the scope bar were all `max-width:980px`; on top of that several
+pages added their own even narrower wrapper (Directory 780px with seven
+tables, home 1000px, Office Connect 1040px, …).
+
+**`static/css/app.css`** — new `--page-max` token (1600px) drives `.wrap`,
+`.topnav .inner`, `.scopebar .inner` and `.scopeform`, so nav, scope bar and
+content always share one edge. Two opt-in tiers keyed off
+`body[data-width]`: `full` raises `--page-max` to 1920px (nav follows);
+`narrow` caps only the content column at 800px, centred, so the nav doesn't
+jump between pages. Side padding goes to 1.5rem at ≥1200px (nav/scope bar
+match). The `resp-table-wide` stacking breakpoint moves 960 → 1180px — the
+Users row needs ~1060px, so a 1024px laptop was still scrolling it sideways.
+
+**`templates/dash_layout.html`** — `<body data-width="{% block page_width %}{% endblock %}">`.
+`full`: users, directory, audit, reports, work_arrangement_schedule,
+wellness_dashboard, feedback_board, backups, cleanup. `narrow`: form_create,
+staff_form, wellness_apply, wellness_reflect, work_arrangement_file, me,
+welcome, start, help, arta_link, external_rp_form, result, admin_sharing,
+admin_email, encode_form, arta_entry_edit, monitor_attendee_response.
+Everything else takes the default.
+
+**Per-page caps removed** (they'd now fight the container): directory
+`.dwrap`, cleanup `.cwrap`, admin_ai `.aiwrap`, ux_insights `.uxwrap`,
+office_connect `.oc`, home `.hwrap`, monitor_event / activity_manage /
+outside_manage `.mwrap`, monitor_outside `.twrap`, shared `.swrap`. Form
+pages keep their own tuned widths inside the narrow column.
+
+**Grids re-tuned for the wider box:** `office_connect.html` `.oc-panels` is
+now explicit — 1 column on phones, 2 with the 3rd card spanning at ≥700px,
+3 across at ≥1280px (auto-fit would have fit 3 and then the v2.72
+`:last-child` span stranded the 3rd card on its own row). `people.html`
+grid gets a 4th column at ≥1280px. `users.html` keeps each picker beside its
+Apply and the action buttons on one line at ≥1440px, where the row fits.
+
+**`tests/test_landing_fork.py`** — the colour-token test anchored its slice
+of the page's `<style>` on the removed `.oc { max-width` rule; it now
+anchors on `.oc-hero {`, the block's first rule.
+
+**`app.css?v=`** → `20260924a`; **`version.py`** → v3.14.
+
+**Verified:** Playwright pass on a seeded DB at 1920/1440/1280/1024/375px
+across home, Users, Directory, CSS home, Audit, Reports, Wellness
+dashboard/apply, AWA schedule/approvals, Me, Help, Ops, Email, Activities —
+topnav and content edges match at every width, and no page scrolls
+sideways that didn't already. The Users table fits its panel with no
+horizontal scroll at 1024 (stacked), 1181, 1200, 1280, 1366, 1440 and 1920.
+Two phone-width overflows (Wellness dashboard +229px, AWA schedule +649px at
+375px) are identical on `main` and untouched here. pytest: same result as
+`main` — the only failures are six that need a populated `css_is.db`
+(ai_report_draft ×3, home_feeds, integrity, search), which fail identically
+on `main` against an empty database.
+
 ## 2026-09-24 (v3.13 — the Temporary OIC picker excludes the section's own chief)
 
 Follow-on from v3.12: once Alexander Medel resolved correctly as the

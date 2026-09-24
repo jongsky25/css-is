@@ -17,10 +17,30 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.13"
+APP_VERSION = "3.14"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.14",
+        "date": "September 24, 2026",
+        "summary": "Pages now use the full width of a laptop or desktop "
+                   "screen instead of a narrow strip down the middle.",
+        "changes": [
+            "Every page used to stop at the same narrow width, leaving wide "
+            "empty margins on a big screen. Dashboards and lists now stretch "
+            "much wider, and busy admin tables like Users, Directory, Audit "
+            "and Reports use nearly the whole screen.",
+            "On Admin → Users each person's role, access and buttons now sit "
+            "on one line on a wide screen, and nothing is cut off at the right "
+            "edge any more.",
+            "Forms such as requesting a wellness break or filing a work "
+            "arrangement stay a comfortable reading width, centred on the "
+            "screen.",
+            "The home page shows its three cards side by side on a wide "
+            "screen.",
+        ],
+    },
     {
         "version": "3.13",
         "date": "September 24, 2026",

@@ -1,10 +1,10 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header %}
 {% block title %}Directory{% endblock %}
+{% block page_width %}full{% endblock %}
 
 {% block head %}
 <style>
-  .dwrap { max-width:780px; }
   .warn { background:var(--amber-bg); border:1px solid var(--amber-ln); color:var(--amber); border-radius:8px;
           padding:.8rem 1rem; margin-bottom:1rem; }
   .warn-actions { display:flex; gap:1rem; align-items:center; margin-top:.6rem; }
