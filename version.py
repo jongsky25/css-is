@@ -24,19 +24,16 @@ CHANGELOG = [
     {
         "version": "3.08",
         "date": "September 24, 2026",
-        "summary": "ANNEX C now prints Alexander Medel as \"Approved by,\" "
-                   "with his actual position from the directory instead of "
-                   "\"Director IV.\"",
+        "summary": "ANNEX C now prints Alexander Medel as \"Prepared by,\" "
+                   "with his actual position pulled from the directory.",
         "changes": [
-            "The internal work arrangement schedule's \"Approved by\" line "
-            "is now pinned to Alexander Medel rather than whoever the "
-            "directory lists as Director, and his title on the printout is "
-            "read live from the directory (Administrative Officer IV), the "
-            "same way it always was for whoever signed before.",
-            "This only changes who signs the printed form — it does "
-            "not change who approves wellness claims or work arrangement "
-            "requests, which keep following the directory's chain of "
-            "command as before.",
+            "The internal work arrangement schedule's \"Prepared by\" line "
+            "is now pinned to Alexander Medel, and his title on the "
+            "printout is read live from the directory (Administrative "
+            "Officer IV) instead of needing to be typed in and kept in "
+            "sync by hand.",
+            "\"Approved by\" is unchanged — it still follows the directory's "
+            "Director seat.",
         ],
     },
     {

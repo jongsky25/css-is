@@ -8288,22 +8288,16 @@ def work_arrangement_signatories(conn, user_id=None):
     resolved from live data rather than hardcoded — nothing else in this repo
     hardcodes a person's name and this shouldn't be the first thing that does.
 
-      * Approved by — the wa_approved_by_name app_setting override when an
-        admin has pinned one, otherwise the directory's Director (org rank 3).
-        Either way the printed title is read live from that person's directory
-        record (never stored alongside the override), so pinning a signatory
-        who isn't the Director — e.g. the Admin Officer who actually signs
-        this form — still prints their real position rather than "Director
-        IV". Deliberately separate from _org_rank: pinning who signs THIS
-        PRINTOUT must never change who approves wellness claims or work
-        arrangement requests, which is what _org_rank alone still routes.
-      * Prepared by — the app_setting override if an admin has pinned one,
-        otherwise whoever is generating the export.
+      * Approved by — the directory's Director (org rank 3).
+      * Prepared by — the wa_prepared_by_name app_setting override when an
+        admin has pinned one, otherwise whoever is generating the export.
+        Either way the printed title is read live from that person's
+        directory record when they have one there, falling back to the
+        separately-pinned wa_prepared_by_title only when they don't — so
+        pinning a signatory keeps their real position current even if it
+        changes later, the same way "Approved by" already does.
     """
-    s = get_settings(conn, ["wa_approved_by_name", "wa_prepared_by_name",
-                             "wa_prepared_by_title"])
-    approved_name = (s.get("wa_approved_by_name") or "").strip() \
-        or _org_seat_name(conn, 3) or ""
+    approved_name = _org_seat_name(conn, 3) or ""
     approved_title = ""
     if approved_name:
         row = conn.execute(
@@ -8312,9 +8306,17 @@ def work_arrangement_signatories(conn, user_id=None):
             (approved_name.split(" / ")[0],)).fetchone()
         if row:
             approved_title = row[0] or row[1] or ""
+    s = get_settings(conn, ["wa_prepared_by_name", "wa_prepared_by_title"])
     prepared_name = (s.get("wa_prepared_by_name") or "").strip()
     prepared_title = (s.get("wa_prepared_by_title") or "").strip()
-    if not prepared_name and user_id:
+    if prepared_name:
+        row = conn.execute(
+            "SELECT position, designation FROM resource_person "
+            "WHERE name = ? AND is_internal = 1 LIMIT 1",
+            (prepared_name,)).fetchone()
+        if row:
+            prepared_title = row[0] or row[1] or prepared_title
+    elif user_id:
         me = get_admin_user_by_id(conn, user_id)
         rp = get_rp(conn, me["rp_id"]) if me and me.get("rp_id") else None
         if rp:
@@ -8328,22 +8330,22 @@ def work_arrangement_signatories(conn, user_id=None):
     }
 
 
-_WA_APPROVED_BY_SEEDED = "wa_approved_by_seeded"
+_WA_PREPARED_BY_SEEDED = "wa_prepared_by_seeded"
 
 
-def seed_wa_approved_by_default(conn):
-    """One-shot: pin ANNEX C's 'Approved by' to Alexander Medel (the Admin
-    Officer who now signs it) instead of whoever the directory's Director
-    seat resolves to. Sets the wa_approved_by_name override rather than
-    editing his directory record, so this changes only who signs THIS
-    printed form — see work_arrangement_signatories for why that matters.
+def seed_wa_prepared_by_default(conn):
+    """One-shot: pin ANNEX C's 'Prepared by' to Alexander Medel, the Admin
+    Officer who prepares this specific document. Sets the wa_prepared_by_name
+    override — see work_arrangement_signatories for how the printed title
+    then comes live from his directory record rather than needing its own
+    setting kept in sync.
 
     Marker-guarded so it fires once per install: an admin who later clears or
     repoints the override is not silently overwritten back on the next boot."""
-    if get_setting(conn, _WA_APPROVED_BY_SEEDED):
+    if get_setting(conn, _WA_PREPARED_BY_SEEDED):
         return False
-    set_setting(conn, _WA_APPROVED_BY_SEEDED, "1")
-    set_setting(conn, "wa_approved_by_name", "Alexander R. Medel")
+    set_setting(conn, _WA_PREPARED_BY_SEEDED, "1")
+    set_setting(conn, "wa_prepared_by_name", "Alexander R. Medel")
     return True
 
 
