@@ -17,10 +17,28 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.10"
+APP_VERSION = "3.11"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.11",
+        "date": "September 24, 2026",
+        "summary": "Admins can now assign a temporary OIC to cover a section's "
+                   "wellness break and work arrangement approvals while the "
+                   "section chief is on leave.",
+        "changes": [
+            "Admin → Users has a new \"Temporary OIC\" panel, one row per "
+            "section: pick anyone from that section and they start receiving "
+            "the section's pending wellness break and AWA requests too, "
+            "alongside the section chief, until you remove them. Only one "
+            "person can hold it at a time per section — assigning someone "
+            "new replaces whoever had it.",
+            "The change is additive: the substantive chief keeps approving "
+            "their own section's requests the whole time, so nothing has to "
+            "be undone the day they're back from leave.",
+        ],
+    },
     {
         "version": "3.10",
         "date": "September 24, 2026",

@@ -1,5 +1,55 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-24 (v3.11 — a temporary OIC for wellness + AWA approvals, per section)
+
+Request: give admins a way to assign a temporary OIC/approver for wellness
+breaks and work arrangement (AWA) requests when a section's chief is on
+leave — a toggle per section, one delegate at a time.
+
+**`storage.py`** — new `section_oic` table, keyed by `org_unit_id`
+(`PRIMARY KEY`), so "one delegate at a time per section" is enforced by the
+schema itself: `set_section_oic` upserts (replacing whoever held it),
+`clear_section_oic` deletes the row. `get_section_oic` / `list_section_oics`
+resolve the delegate's display name for the admin page; `is_section_oic`
+answers whether an account currently stands in for ANY unit.
+`get_approvers_for` now ADDS the acting OIC for the covering unit (the
+requester's own section, or the parent division for a section chief's own
+request) alongside the substantive chief — never instead of them, via the
+new `_with_section_oic` helper — so an early return from leave is never
+locked out by a forgotten delegate. `user_is_approving_chief` now also opens
+the approvals queue for a delegate who holds no chief seat of their own, and
+`approver_name_for` names the acting delegate (falling back to the
+substantive chief) on the apply/hub copy so staff see who will actually
+decide their request today. Two new audit actions, `set_section_oic` /
+`clear_section_oic`, under a new "Approvals" category.
+
+**`app.py`** — `/admin/users` now also loads each section's current
+delegate and the active accounts eligible to become one (same-section,
+active accounts only). Two new routes, `POST
+/admin/users/section-oic/{org_unit_id}/set` and `.../clear`, both gated on
+`manage_users` like the rest of that page; `set` re-validates server-side
+that the picked account actually belongs to the section (defense in depth
+against a tampered POST) and audits the change.
+
+**`templates/users.html`** — a new "Temporary OIC — Wellness & AWA
+approvals" panel above the staff table: one row per section, showing the
+current delegate (if any) with a Remove button, or a picker + Assign button
+drawn from that section's active accounts — the toggle the request asked
+for.
+
+**`tests/test_section_oic.py`** (new, 12 tests) — no delegate by default;
+setting one adds them alongside the chief; only one at a time per section
+(assigning a second replaces the first, not both); clearing restores the
+plain chain; a delegate never approves their own request; a delegate with no
+chief seat of their own still gets an approvals queue and can decide a
+pending wellness claim end to end; the apply-page copy names the delegate
+while active; the same mechanism covers a division-chief seat, not just a
+section's; the admin routes are audited, gated to `manage_users`, and
+reject an account that doesn't actually belong to the section.
+`tests/test_bureau_access.py`, `tests/test_wellness.py`,
+`tests/test_wellness_escalation.py` and `tests/test_work_arrangement.py`
+still pass unchanged.
+
 ## 2026-09-18 (v3.03 — a section manager can add an external resource person)
 
 Spot Feedback #90: "How can I add Resource Persons who are not from BLHSD?"

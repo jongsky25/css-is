@@ -2477,6 +2477,19 @@ def admin_users(request: Request, err: str = "", link: str = "", msg: str = ""):
         rows = [dict(p, account=by_rp.get(p["id"])) for p in staff]
         standalone = [u for u in st.list_admin_users(conn) if u["rp_id"] is None]
         have = sum(1 for r in rows if r["account"])
+        # Temporary OIC / acting approver, per section: who currently stands in
+        # for a section chief on leave, and who's eligible to be picked (active
+        # accounts belonging to that same section).
+        sections = st.list_org_units(conn, level="section")
+        section_oics = st.list_section_oics(conn)
+        section_accounts = {
+            s["id"]: sorted(
+                ({"id": r["account"]["id"], "name": r["name"]}
+                 for r in rows
+                 if r["org_unit_id"] == s["id"] and r["account"] and r["account"]["active"]),
+                key=lambda a: a["name"])
+            for s in sections
+        }
     finally:
         conn.close()
     return templates.TemplateResponse(request, "users.html", {
@@ -2484,6 +2497,7 @@ def admin_users(request: Request, err: str = "", link: str = "", msg: str = ""):
         "roles": auth.ROLES, "role_labels": auth.ROLE_LABELS, "role_blurb": auth.ROLE_BLURB,
         "bureau_levels": st.BUREAU_ACCESS_LEVELS,
         "email_configured": mailer.email_configured(),
+        "sections": sections, "section_oics": section_oics, "section_accounts": section_accounts,
         "err": err, "link": link, "msg": msg, "show_scope": False, "nav_active": "",
     })
 
@@ -2618,6 +2632,64 @@ async def admin_users_bureau_access(request: Request, user_id: int):
     return RedirectResponse(
         "/admin/users?msg=" + quote(f"Now sees: {st.BUREAU_ACCESS_LABELS[level]}."),
         status_code=303)
+
+
+@app.post("/admin/users/section-oic/{org_unit_id}/set")
+async def admin_users_section_oic_set(request: Request, org_unit_id: int):
+    """Assign a temporary OIC/approver for one section's wellness + AWA
+    requests — the toggle for when the section's chief is on leave.
+
+    Only one delegate at a time per section: storage.set_section_oic's table
+    is keyed by the section, so picking someone new here simply replaces
+    whoever held it. The delegate is ADDED to the approval chain, not swapped
+    in for the substantive chief — see get_approvers_for — so nothing has to
+    be remembered or undone the day the chief is back."""
+    if (r := _forbid(request, "manage_users")):
+        return r
+    p = await _posted(request)
+    try:
+        admin_user_id = int(p.get("admin_user_id", ""))
+    except ValueError:
+        admin_user_id = 0
+    conn = get_conn()
+    try:
+        unit = next((u for u in st.list_org_units(conn, level="section") if u["id"] == org_unit_id), None)
+        delegate = st.get_admin_user_by_id(conn, admin_user_id)
+        delegate_rp = st.get_rp(conn, delegate["rp_id"]) if delegate and delegate.get("rp_id") else None
+        # Defense in depth: the picker only offers active accounts that belong
+        # to this section, but a tampered POST could name anyone at all.
+        in_section = bool(delegate_rp) and delegate_rp.get("org_unit_id") == org_unit_id
+        if not unit or not delegate or not delegate["active"] or not in_section:
+            return RedirectResponse(
+                "/admin/users?err=" + quote("Pick an active account from that section."),
+                status_code=303)
+        st.set_section_oic(conn, org_unit_id, admin_user_id, set_by=request.state.user["id"])
+        _audit(request, conn, "set_section_oic", target_type="org_unit", target_id=unit["name"],
+               summary=f"Temporary OIC for {unit['name']}: {delegate['username']}")
+    finally:
+        conn.close()
+    return RedirectResponse(
+        "/admin/users?msg=" + quote(f"{delegate['username']} is now the acting OIC for {unit['name']}."),
+        status_code=303)
+
+
+@app.post("/admin/users/section-oic/{org_unit_id}/clear")
+async def admin_users_section_oic_clear(request: Request, org_unit_id: int):
+    """Turn the toggle back off: remove a section's temporary OIC, e.g. once
+    the substantive chief is back from leave."""
+    if (r := _forbid(request, "manage_users")):
+        return r
+    conn = get_conn()
+    try:
+        unit = next((u for u in st.list_org_units(conn, level="section") if u["id"] == org_unit_id), None)
+        current = st.get_section_oic(conn, org_unit_id) if unit else None
+        if unit and current:
+            st.clear_section_oic(conn, org_unit_id)
+            _audit(request, conn, "clear_section_oic", target_type="org_unit", target_id=unit["name"],
+                   summary=f"Removed {current['name']} as the temporary OIC for {unit['name']}")
+    finally:
+        conn.close()
+    return RedirectResponse("/admin/users?msg=" + quote("Temporary OIC removed."), status_code=303)
 
 
 @app.post("/admin/users/{user_id}/active")
