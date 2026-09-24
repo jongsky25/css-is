@@ -8288,11 +8288,22 @@ def work_arrangement_signatories(conn, user_id=None):
     resolved from live data rather than hardcoded — nothing else in this repo
     hardcodes a person's name and this shouldn't be the first thing that does.
 
-      * Approved by — the directory's Director (org rank 3).
+      * Approved by — the wa_approved_by_name app_setting override when an
+        admin has pinned one, otherwise the directory's Director (org rank 3).
+        Either way the printed title is read live from that person's directory
+        record (never stored alongside the override), so pinning a signatory
+        who isn't the Director — e.g. the Admin Officer who actually signs
+        this form — still prints their real position rather than "Director
+        IV". Deliberately separate from _org_rank: pinning who signs THIS
+        PRINTOUT must never change who approves wellness claims or work
+        arrangement requests, which is what _org_rank alone still routes.
       * Prepared by — the app_setting override if an admin has pinned one,
         otherwise whoever is generating the export.
     """
-    approved_name = _org_seat_name(conn, 3) or ""
+    s = get_settings(conn, ["wa_approved_by_name", "wa_prepared_by_name",
+                             "wa_prepared_by_title"])
+    approved_name = (s.get("wa_approved_by_name") or "").strip() \
+        or _org_seat_name(conn, 3) or ""
     approved_title = ""
     if approved_name:
         row = conn.execute(
@@ -8301,7 +8312,6 @@ def work_arrangement_signatories(conn, user_id=None):
             (approved_name.split(" / ")[0],)).fetchone()
         if row:
             approved_title = row[0] or row[1] or ""
-    s = get_settings(conn, ["wa_prepared_by_name", "wa_prepared_by_title"])
     prepared_name = (s.get("wa_prepared_by_name") or "").strip()
     prepared_title = (s.get("wa_prepared_by_title") or "").strip()
     if not prepared_name and user_id:
@@ -8316,6 +8326,25 @@ def work_arrangement_signatories(conn, user_id=None):
         "prepared_by": {"name": prepared_name, "title": prepared_title},
         "approved_by": {"name": approved_name, "title": approved_title},
     }
+
+
+_WA_APPROVED_BY_SEEDED = "wa_approved_by_seeded"
+
+
+def seed_wa_approved_by_default(conn):
+    """One-shot: pin ANNEX C's 'Approved by' to Alexander Medel (the Admin
+    Officer who now signs it) instead of whoever the directory's Director
+    seat resolves to. Sets the wa_approved_by_name override rather than
+    editing his directory record, so this changes only who signs THIS
+    printed form — see work_arrangement_signatories for why that matters.
+
+    Marker-guarded so it fires once per install: an admin who later clears or
+    repoints the override is not silently overwritten back on the next boot."""
+    if get_setting(conn, _WA_APPROVED_BY_SEEDED):
+        return False
+    set_setting(conn, _WA_APPROVED_BY_SEEDED, "1")
+    set_setting(conn, "wa_approved_by_name", "Alexander R. Medel")
+    return True
 
 
 def work_arrangement_annex_data(conn, period_start, user_id=None):

@@ -831,6 +831,39 @@ def test_only_accounts_appear_on_the_annex(wa_org):
     assert "WA-Test NoAccount" not in names
 
 
+def test_approved_by_override_still_reads_the_directory_title(wa_org):
+    """Pinning who signs the annex must not require re-typing their title:
+    the printed title always comes from their live directory record, so it
+    stays accurate even for a signatory who isn't the Director."""
+    conn = wa_org["conn"]
+    st.set_setting(conn, "wa_approved_by_name", "WA-Test Chief")
+    try:
+        sig = st.work_arrangement_signatories(conn)
+        assert sig["approved_by"]["name"] == "WA-Test Chief"
+        assert sig["approved_by"]["title"] == "CHPO"     # from resource_person
+    finally:
+        st.set_setting(conn, "wa_approved_by_name", None)
+
+
+def test_seed_wa_approved_by_default_fires_once_and_never_overwrites(wa_org):
+    conn = wa_org["conn"]
+    conn.execute("DELETE FROM app_setting WHERE key IN (?, ?)",
+                 (st._WA_APPROVED_BY_SEEDED, "wa_approved_by_name"))
+    conn.commit()
+    try:
+        assert st.seed_wa_approved_by_default(conn) is True
+        assert st.get_setting(conn, "wa_approved_by_name") == "Alexander R. Medel"
+
+        # A later admin override survives the next boot's re-run.
+        st.set_setting(conn, "wa_approved_by_name", "Someone Else")
+        assert st.seed_wa_approved_by_default(conn) is False
+        assert st.get_setting(conn, "wa_approved_by_name") == "Someone Else"
+    finally:
+        conn.execute("DELETE FROM app_setting WHERE key IN (?, ?)",
+                     (st._WA_APPROVED_BY_SEEDED, "wa_approved_by_name"))
+        conn.commit()
+
+
 def test_annex_xlsx_reproduces_the_form(wa_org, app_mod):
     from openpyxl import load_workbook
     conn, ps = wa_org["conn"], _open()
