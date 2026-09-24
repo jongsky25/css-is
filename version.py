@@ -17,10 +17,27 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.11"
+APP_VERSION = "3.12"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.12",
+        "date": "September 24, 2026",
+        "summary": "The Administrative Section's chief is now recognized "
+                   "automatically as its approver for wellness break and "
+                   "work arrangement requests.",
+        "changes": [
+            "The system reads who is a section's chief from that person's "
+            "\"Designation\" in the directory, matching wording like "
+            "\"Section Head\" or \"Section Chief\". The Administrative "
+            "Section's chief carries the designation \"Admin Head\" "
+            "instead, so it wasn't being recognized — the section's "
+            "wellness and work arrangement requests had nobody to "
+            "automatically route to. \"Admin Head\" (and \"Administrative "
+            "Head\") are now recognized the same way.",
+        ],
+    },
     {
         "version": "3.11",
         "date": "September 24, 2026",
