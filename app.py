@@ -1445,6 +1445,7 @@ def get_conn():
         st.seed_directory_if_empty(conn)
         _seed_learned_rules(conn)    # FAQ rules for the AI search bar (fresh install only)
         wabf.run_once(conn)          # ANNEX C Aug 16-31, 2026 — one-shot, marker-guarded
+        st.seed_wa_prepared_by_default(conn)  # ANNEX C "Prepared by" -> Alexander Medel, one-shot
         _schema_ready_for.add(DB)
     return conn
 

@@ -8289,8 +8289,13 @@ def work_arrangement_signatories(conn, user_id=None):
     hardcodes a person's name and this shouldn't be the first thing that does.
 
       * Approved by — the directory's Director (org rank 3).
-      * Prepared by — the app_setting override if an admin has pinned one,
-        otherwise whoever is generating the export.
+      * Prepared by — the wa_prepared_by_name app_setting override when an
+        admin has pinned one, otherwise whoever is generating the export.
+        Either way the printed title is read live from that person's
+        directory record when they have one there, falling back to the
+        separately-pinned wa_prepared_by_title only when they don't — so
+        pinning a signatory keeps their real position current even if it
+        changes later, the same way "Approved by" already does.
     """
     approved_name = _org_seat_name(conn, 3) or ""
     approved_title = ""
@@ -8304,7 +8309,14 @@ def work_arrangement_signatories(conn, user_id=None):
     s = get_settings(conn, ["wa_prepared_by_name", "wa_prepared_by_title"])
     prepared_name = (s.get("wa_prepared_by_name") or "").strip()
     prepared_title = (s.get("wa_prepared_by_title") or "").strip()
-    if not prepared_name and user_id:
+    if prepared_name:
+        row = conn.execute(
+            "SELECT position, designation FROM resource_person "
+            "WHERE name = ? AND is_internal = 1 LIMIT 1",
+            (prepared_name,)).fetchone()
+        if row:
+            prepared_title = row[0] or row[1] or prepared_title
+    elif user_id:
         me = get_admin_user_by_id(conn, user_id)
         rp = get_rp(conn, me["rp_id"]) if me and me.get("rp_id") else None
         if rp:
@@ -8316,6 +8328,25 @@ def work_arrangement_signatories(conn, user_id=None):
         "prepared_by": {"name": prepared_name, "title": prepared_title},
         "approved_by": {"name": approved_name, "title": approved_title},
     }
+
+
+_WA_PREPARED_BY_SEEDED = "wa_prepared_by_seeded"
+
+
+def seed_wa_prepared_by_default(conn):
+    """One-shot: pin ANNEX C's 'Prepared by' to Alexander Medel, the Admin
+    Officer who prepares this specific document. Sets the wa_prepared_by_name
+    override — see work_arrangement_signatories for how the printed title
+    then comes live from his directory record rather than needing its own
+    setting kept in sync.
+
+    Marker-guarded so it fires once per install: an admin who later clears or
+    repoints the override is not silently overwritten back on the next boot."""
+    if get_setting(conn, _WA_PREPARED_BY_SEEDED):
+        return False
+    set_setting(conn, _WA_PREPARED_BY_SEEDED, "1")
+    set_setting(conn, "wa_prepared_by_name", "Alexander R. Medel")
+    return True
 
 
 def work_arrangement_annex_data(conn, period_start, user_id=None):

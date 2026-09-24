@@ -17,10 +17,25 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.07"
+APP_VERSION = "3.08"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.08",
+        "date": "September 24, 2026",
+        "summary": "ANNEX C now prints Alexander Medel as \"Prepared by,\" "
+                   "with his actual position pulled from the directory.",
+        "changes": [
+            "The internal work arrangement schedule's \"Prepared by\" line "
+            "is now pinned to Alexander Medel, and his title on the "
+            "printout is read live from the directory (Administrative "
+            "Officer IV) instead of needing to be typed in and kept in "
+            "sync by hand.",
+            "\"Approved by\" is unchanged — it still follows the directory's "
+            "Director seat.",
+        ],
+    },
     {
         "version": "3.07",
         "date": "September 23, 2026",
