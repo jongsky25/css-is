@@ -488,6 +488,28 @@ def test_note_box_appears_only_when_note_given():
     assert "NOTE" not in without_note.upper()
 
 
+def test_wellness_pending_decide_links_replace_the_dashboard_link():
+    """When approve_link/deny_link are given, the email's only calls to action
+    are those two — the dashboard link (and its usual "paste this link"
+    fallback) must not also appear, so there's nothing else to click."""
+    subj, text, html = mailer.wellness_pending_message(
+        "Chief", "Juan", "Mar 20", "2:00 PM", 1, "https://x/approvals",
+        approve_link="https://x/decide/1?token=a&action=approve",
+        deny_link="https://x/decide/1?token=a&action=deny")
+    assert "x/approvals" not in text
+    assert "x/approvals" not in html
+    assert "x/decide/1?token=a&action=approve" in text
+    assert "x/decide/1?token=a&action=deny" in text
+    assert ">Approve<" in html and ">Deny<" in html
+    assert "Or paste this link" not in html
+
+    # No action links given: behaves exactly as before (dashboard is the CTA).
+    subj2, text2, html2 = mailer.wellness_pending_message(
+        "Chief", "Juan", "Mar 20", "2:00 PM", 1, "https://x/approvals")
+    assert "x/approvals" in text2
+    assert "x/approvals" in html2
+
+
 def test_feedback_reply_box_appears_only_when_reply_given():
     _, _, with_reply = mailer.feedback_update_message("Maria", "Resolved", "Fixed the AC.", "https://x")
     _, _, without_reply = mailer.feedback_update_message("Maria", "Open", "   ", "https://x")
