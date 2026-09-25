@@ -40,7 +40,9 @@
   // — unlike tabindex="0"+, which does mean a custom interactive widget).
   var INTERACTIVE = 'a,button,input,select,textarea,label,summary,option,' +
     '[role="button"],[role="link"],[role="tab"],[role="menuitem"],[role="switch"],' +
-    '[role="checkbox"],[onclick],[tabindex]:not([tabindex="-1"]),[contenteditable="true"]';
+    '[role="checkbox"],[onclick],[tabindex]:not([tabindex="-1"]),[contenteditable="true"],' +
+    // a companion's surrounding area taps the companion (static/js/avatars.js)
+    '[data-pet-area]';
 
   // Clicks that are never evidence of a broken control, so they record neither
   // a dead nor a rage click: drawing on a <canvas> (the /me signature pad, the

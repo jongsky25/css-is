@@ -17,10 +17,25 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.30"
+APP_VERSION = "3.31"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.31",
+        "date": "September 25, 2026",
+        "summary": "Tapping anywhere around your companion now makes it "
+                   "react, not just tapping the companion itself.",
+        "changes": [
+            "On the home screen and on your wellness page, tapping your "
+            "companion's name, its stage line, or the space right beside it "
+            "now plays with it — the same bounce and hello as tapping it "
+            "directly. The \"Change companion\" link still opens your profile.",
+            "Browsers now pick up the latest versions of the companion, search "
+            "and usage-tracking scripts straight away after an update, rather "
+            "than on the second visit.",
+        ],
+    },
     {
         "version": "3.30",
         "date": "September 25, 2026",
