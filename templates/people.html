@@ -1,8 +1,9 @@
 {% extends "dash_layout.html" %}
+{% from "_insights.html" import insights_header with context %}
 {% from "_components.html" import page_header, empty_state %}
 {% from "_telemetry.html" import search_signal %}
 {% import "_export.html" as ex %}
-{% block title %}People{% endblock %}
+{% block title %}Insights · People{% endblock %}
 {% block content %}
 <style>
   .people-head { margin-bottom:.2rem; }
@@ -137,7 +138,7 @@
 {% set badgepart = ('&badge=' ~ sel_badge) if sel_badge else '' %}
 <div class="people-head">
   <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem;">
-    {{ page_header("People") }}
+    {{ insights_header("people") }}
     {{ ex.download('/dashboard/export?visual=people&org=' ~ (sel_org|urlencode) ~ '&period=' ~ (sel_period|urlencode) ~ '&aff=' ~ aff ~ '&sort=' ~ sel_sort ~ '&badge=' ~ sel_badge, 'Download') }}
   </div>
   <p class="lede">The people behind BLHSD — and the guest speakers who join them — seen through the eyes of

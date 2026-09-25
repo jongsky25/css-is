@@ -1,7 +1,8 @@
 {% extends "dash_layout.html" %}
+{% from "_insights.html" import insights_header with context %}
 {% from "_components.html" import page_header, chart_table %}
 {% import "_export.html" as ex %}
-{% block title %}Pulse{% endblock %}
+{% block title %}Insights · Pulse{% endblock %}
 {% block content %}
 <style>
   /* The intro reads as a full-width band aligned with the cards below, rather
@@ -95,7 +96,7 @@
   .sumcard.overall p { font-size:.95rem; line-height:1.55; color:var(--ink); margin:0; }
 </style>
 
-{{ page_header("Pulse") }}
+{{ insights_header("pulse") }}
 <p class="lede">
   A one-glance health check of how people feel about the bureau's service. The three cards below are
   the bureau's <strong>vital signs</strong> — one for each kind of feedback: clients at the

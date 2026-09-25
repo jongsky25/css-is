@@ -1,7 +1,8 @@
 {% extends "dash_layout.html" %}
+{% from "_insights.html" import insights_header with context %}
 {% from "_components.html" import page_header, empty_state, chart_table %}
 {% import "_export.html" as ex %}
-{% block title %}Participation{% endblock %}
+{% block title %}Insights · Participation{% endblock %}
 {% block content %}
 <style>
   .controls { display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:.9rem; }
@@ -160,7 +161,7 @@
 {% if cr %}<p class="miniread {{ cr.tone }}"><span class="mp">{{ cr.label }}</span><span class="mt"><b>{{ cr.headline }}</b> {{ cr.detail }}</span></p>{% endif %}
 {% endmacro %}
 
-{{ page_header("Participation") }}
+{{ insights_header("participation") }}
 <p class="lede">How <em>much</em> feedback we're getting — whether responses are genuinely rising or falling (not just normal month-to-month wobble), how deeply events are heard, who's active, and where the blind spots are.</p>
 
 {% set xtitle = {'monthly':'Month','quarterly':'Quarter','yearly':'Year'}.get(grain,'Period') %}

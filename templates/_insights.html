@@ -1,0 +1,51 @@
+{#-- Insights — the five CSS dashboards as tabs of one page.
+
+     They were five separate menu entries (Pulse 19 views / 30 days, People 30,
+     Participation 21, Teams 7, Trends 3), each re-asking for the same org and
+     period. Now one "Insights" menu entry opens Pulse, and this bar moves
+     between them carrying `org` along, and `period` among the four tabs that
+     share it (Pulse's `win` is a different vocabulary — all / ytd / quarter /
+     d30 — so it is neither carried in nor out). Each tab is still its own page at its own URL, so every existing
+     link, export and drill-down keeps working. Ordered by real use. --#}
+{% set INSIGHTS_TABS = [
+  ("pulse", "/dashboard", "Pulse", "How service quality is doing right now"),
+  ("people", "/dashboard/people", "People", "Everyone who has been rated"),
+  ("participation", "/dashboard/participation", "Participation", "Volume, coverage, blind spots"),
+  ("teams", "/dashboard/teams", "Teams", "How each unit's activities are landing"),
+  ("trends", "/dashboard/trends", "Trends", "Movement over time"),
+] %}
+
+{% macro insights_header(active, lede="") -%}
+{%- set q = request.query_params -%}
+{%- set org = q.get("org", "") -%}
+{%- set period = q.get("period", "") -%}
+<style>
+  .ins-head { flex:1 1 auto; min-width:0; }
+  .ins-tabs { display:flex; gap:.25rem; flex-wrap:nowrap; overflow-x:auto; border-bottom:1px solid var(--line);
+              margin:.2rem 0 1.1rem; scrollbar-width:thin; }
+  .ins-tabs a { flex:0 0 auto; }
+  .ins-tabs a { padding:.5rem .9rem; font-weight:700; font-size:.92rem; text-decoration:none;
+                color:var(--soft); border-bottom:3px solid transparent; margin-bottom:-1px;
+                border-radius:8px 8px 0 0; }
+  .ins-tabs a:hover { color:var(--ink); background:var(--surface-2); }
+  .ins-tabs a[aria-current="page"] { color:var(--accent); border-bottom-color:var(--accent); }
+  .ins-kicker { font-size:.8rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+                color:var(--soft); margin:0; }
+</style>
+<div class="ins-head">
+<p class="ins-kicker">Insights</p>
+{%- for key, url, label, hint in INSIGHTS_TABS if key == active %}
+<h1 class="page">{{ label }}</h1>
+{%- endfor %}
+<nav class="ins-tabs" aria-label="Insights">
+  {%- for key, url, label, hint in INSIGHTS_TABS %}
+  {%- set params = {} %}
+  {%- if org %}{% set _ = params.update({"org": org}) %}{% endif %}
+  {%- if period and key != "pulse" %}{% set _ = params.update({"period": period}) %}{% endif %}
+  <a href="{{ url }}{% if params %}?{{ params|urlencode }}{% endif %}" title="{{ hint }}"
+     {% if key == active %}aria-current="page"{% endif %}>{{ label }}</a>
+  {%- endfor %}
+</nav>
+</div>
+{% if lede %}<p class="lede">{{ lede|safe }}</p>{% endif %}
+{%- endmacro %}

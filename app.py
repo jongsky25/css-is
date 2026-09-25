@@ -504,22 +504,31 @@ NAV_GROUPS = [
     # Sixteen destinations, so they carry `section` labels and render as
     # headed blocks inside the one dropdown (see nav_groups_for).
     {"name": "CSS", "items": [
-        {"key": "pulse", "url": "/dashboard", "label": "Pulse",
+        # One "Insights" menu entry for the five dashboards, which are now tabs
+        # of one page (templates/_insights.html). The other four stay listed
+        # with in_nav False — still in the search palette and still valid
+        # AI-navigate destinations under their own keys.
+        {"key": "pulse", "url": "/dashboard", "label": "Insights",
          "section": "See how we're doing",
-         "hint": "How service quality is doing right now",
-         "kw": "pulse overview service quality servqual scores satisfaction current snapshot", "cap": None},
+         "hint": "How service quality is doing — all five dashboards, as tabs",
+         "kw": "insights pulse overview service quality servqual scores satisfaction "
+               "current snapshot dashboard", "cap": None},
         {"key": "people", "url": "/dashboard/people", "label": "People",
          "hint": "Everyone who has been rated",
-         "kw": "people staff speakers persons everyone rated individuals ratings grid", "cap": None},
+         "kw": "people staff speakers persons everyone rated individuals ratings grid", "cap": None,
+         "in_nav": False},
         {"key": "teams", "url": "/dashboard/teams", "label": "Teams",
          "hint": "How each unit's activities are landing",
-         "kw": "teams units org unit section division performance group", "cap": None},
+         "kw": "teams units org unit section division performance group", "cap": None,
+         "in_nav": False},
         {"key": "trends", "url": "/dashboard/trends", "label": "Trends",
          "hint": "Movement over time",
-         "kw": "trends over time movement history change spc control chart trajectory", "cap": None},
+         "kw": "trends over time movement history change spc control chart trajectory", "cap": None,
+         "in_nav": False},
         {"key": "participation", "url": "/dashboard/participation", "label": "Participation",
          "hint": "Volume, coverage, blind spots",
-         "kw": "participation volume coverage response rate blind spots reach counts", "cap": None},
+         "kw": "participation volume coverage response rate blind spots reach counts", "cap": None,
+         "in_nav": False},
         {"key": "reports", "url": "/reports?type=1", "label": "ARTA Walk-in",
          "section": "Official reports",
          "hint": "Official ARTA / CO-CSM citizen satisfaction",

@@ -1,7 +1,8 @@
 {% extends "dash_layout.html" %}
+{% from "_insights.html" import insights_header with context %}
 {% from "_components.html" import page_header, empty_state, chart_table %}
 {% import "_export.html" as ex %}
-{% block title %}Trends{% endblock %}
+{% block title %}Insights · Trends{% endblock %}
 {% block content %}
 <style>
   .tabs { display:flex; gap:.4rem; flex-wrap:wrap; margin-bottom:.8rem; }
@@ -99,7 +100,7 @@
   .chart-end-delta.flat { background:var(--surface-3); color:var(--soft); }
 </style>
 
-{{ page_header("Trends") }}
+{{ insights_header("trends") }}
 <p class="lede">Is feedback getting better, holding steady, or slipping? This page follows the story over time. The headline is the <strong>share of people who rated us at the very top</strong> — it moves where a simple average can't — then we show which specific areas are climbing or need a little attention.</p>
 
 <div class="tabs">

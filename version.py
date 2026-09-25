@@ -17,10 +17,26 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.27"
+APP_VERSION = "3.28"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.28",
+        "date": "September 25, 2026",
+        "summary": "The CSS dashboards are now one Insights page, with tabs "
+                   "for Pulse, People, Participation, Teams and Trends.",
+        "changes": [
+            "Under CSS in the menu, the five dashboard entries are now a single "
+            "\"Insights\" entry that opens Pulse.",
+            "Every dashboard has the same row of tabs at the top, so you can "
+            "move between them without going back to the menu. The unit you "
+            "picked comes along with you, and so does the period on the four "
+            "tabs that use the same periods.",
+            "Links, bookmarks and downloads to the individual dashboards all "
+            "still work, and searching for one by name still finds it.",
+        ],
+    },
     {
         "version": "3.27",
         "date": "September 25, 2026",
