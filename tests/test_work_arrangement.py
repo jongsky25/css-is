@@ -1684,3 +1684,30 @@ def test_admin_can_tag_someone_from_the_schedule_page(wa_org, app_mod):
         "SELECT summary FROM audit_log WHERE action='work_arrangement_noawa_set' "
         "ORDER BY id DESC LIMIT 1").fetchone()[0]
     assert "WA-Test Staff0" in summary and "on leave" in summary
+
+
+# ---- finding the right period's annex after an approval --------------------
+
+def test_the_schedule_points_at_the_upcoming_period_once_it_has_filings(wa_org, app_mod):
+    """Approvals are made for the NEXT period, but the schedule opens on the one
+    being worked — so the page must surface the upcoming period's own downloads,
+    or the approver prints a sheet where the person they just approved is blank."""
+    o = wa_org
+    now_ps = st.work_arrangement_schedule_period()
+    nxt = st.work_arrangement_next_period(now_ps)
+    if nxt not in st.work_arrangement_open_periods():
+        pytest.skip("next period not open for filing on this date")
+    c = _client_for_id(app_mod, o["chief"])
+    assert f"annex-c.pdf?period={nxt}" not in c.get("/work-arrangement/schedule").text
+    wid = st.create_work_arrangement(o["conn"], o["staff"][0], nxt, "WFH", 4)
+    r = c.post(f"/work-arrangement/{wid}/decide", data={"action": "approve"},
+               follow_redirects=False)
+    assert f"period={nxt}" in r.headers["location"]
+    assert f"annex-c.pdf?period={nxt}" in c.get(r.headers["location"]).text
+    page = c.get("/work-arrangement/schedule").text
+    assert f"annex-c.pdf?period={nxt}" in page
+    assert f"annex-c.pdf?period={now_ps}" in page
+    # ...and that period's annex really does carry the approval.
+    row = next(x for x in st.work_arrangement_export_rows(o["conn"], nxt)
+               if x["name"] == "WA-Test Staff0")
+    assert row["arrangement"] == "WFH"

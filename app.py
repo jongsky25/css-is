@@ -14736,7 +14736,8 @@ def work_arrangement_cancel(request: Request, wa_id: int):
 
 
 @app.get("/work-arrangement/approvals", response_class=HTMLResponse)
-def work_arrangement_approvals(request: Request, ok: str = "", err: str = ""):
+def work_arrangement_approvals(request: Request, ok: str = "", err: str = "",
+                               period: str = ""):
     """The chief's queue. Each row carries a coverage verdict, but both buttons
     stay live either way — a thin Friday is the chief's call to make."""
     user = request.state.user
@@ -14747,9 +14748,19 @@ def work_arrangement_approvals(request: Request, ok: str = "", err: str = ""):
         queue = st.list_work_arrangement_approvals(conn, user)
     finally:
         conn.close()
+    # The period just decided, so the page can point at THAT period's annex —
+    # the schedule otherwise opens on the one being worked.
+    decided, decided_label = "", ""
+    if ok and period:
+        try:
+            decided_label = st.work_arrangement_period_label(period)
+            decided = period
+        except ValueError:
+            pass
     return templates.TemplateResponse(request, "work_arrangement_approvals.html", {
         "nav_active": "work_arrangement", "show_scope": False,
         "queue": queue, "ok": ok, "err": err,
+        "decided_period": decided, "decided_period_label": decided_label,
     })
 
 
@@ -14782,8 +14793,9 @@ async def work_arrangement_decide(request: Request, wa_id: int):
                        feature="awa_decided")
     finally:
         conn.close()
-    return RedirectResponse(f"/work-arrangement/approvals?ok={quote(msg)}",
-                            status_code=303)
+    return RedirectResponse(
+        f"/work-arrangement/approvals?ok={quote(msg)}"
+        f"&period={quote(row['period_start'])}", status_code=303)
 
 
 @app.get("/admin/work-arrangement", response_class=HTMLResponse)
@@ -14888,11 +14900,22 @@ def work_arrangement_schedule(request: Request, period: str = ""):
             data = st.work_arrangement_period_summary(conn, ps, user)
         except ValueError:
             return RedirectResponse("/work-arrangement/schedule", status_code=303)
+        # Approvals are made for the NEXT period (the current one closed the
+        # Friday before it began), so someone approved minutes ago is blank on
+        # this period's annex. When the page is showing the period being worked
+        # and the next one already has filings, surface it with its own
+        # downloads rather than leave the approver printing the wrong sheet.
+        upcoming = None
+        if ps == st.work_arrangement_schedule_period():
+            nxt = st.work_arrangement_next_period(ps)
+            nd = st.work_arrangement_period_summary(conn, nxt, user)
+            if nd["filed"] or nd["noawa"]:
+                upcoming = nd
     finally:
         conn.close()
     return templates.TemplateResponse(request, "work_arrangement_schedule.html", {
         "nav_active": "work_arrangement", "show_scope": False,
-        "d": data, "legend": st.WORK_ARRANGEMENT_LEGEND,
+        "d": data, "legend": st.WORK_ARRANGEMENT_LEGEND, "upcoming": upcoming,
         "prev_period": st.work_arrangement_prev_period(ps),
         "next_period": st.work_arrangement_next_period(ps),
         "weekdays": st.WORK_ARRANGEMENT_WEEKDAYS,
