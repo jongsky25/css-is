@@ -6977,11 +6977,17 @@ def avatar_growth_actions(kind):
     left to look like a fifth way to level up."""
     return {
         "points": [
-            {"label": "Take a wellness break", "points": WELLNESS_PTS_BREAK},
-            {"label": "Write a reflection afterwards", "points": WELLNESS_PTS_REFLECTION},
+            # `href` — each line reads like a to-do, and people clicked it like
+            # one (the home growth card's single biggest dead-click spot), so
+            # each goes where you'd actually do it.
+            {"label": "Take a wellness break", "points": WELLNESS_PTS_BREAK,
+             "href": "/wellness/apply"},
+            {"label": "Write a reflection afterwards", "points": WELLNESS_PTS_REFLECTION,
+             "href": "/wellness"},
             {"label": f"Use your full {WELLNESS_WEEKLY_HOURS} hours in a week",
-             "points": WELLNESS_PTS_FULL_WEEK},
-            {"label": "Each week of an unbroken streak", "points": WELLNESS_PTS_STREAK_WEEK},
+             "points": WELLNESS_PTS_FULL_WEEK, "href": "/wellness/apply"},
+            {"label": "Each week of an unbroken streak", "points": WELLNESS_PTS_STREAK_WEEK,
+             "href": "/wellness"},
         ],
         "care": {"verb": avatar_care_verb(kind),
                  "badge": WELLNESS_BADGES["avatar_care_7"][0],
@@ -7832,7 +7838,20 @@ def get_work_arrangement(conn, wa_id):
                 "weekday": prev[1],
                 "remarks": _wa_remarks(prev[0], prev[1], prev[2]),
             }
-    out["week_override_note"] = work_arrangement_week_override_note(conn, out)
+    # The approvals queue reads the same note in the third person, with a link
+    # to the period that keeps the shared week — approvers kept clicking the
+    # plain-text note looking for the arrangement it talks about.
+    other = _wa_week_override_other(conn, out)
+    if other:
+        out["week_override_note"] = _wa_week_note(other, out["effective_from"], out["weekday"])
+        out["week_override_note_approver"] = _wa_week_note(
+            other, out["effective_from"], out["weekday"], owner=out.get("person_name"))
+        out["week_override_period"] = {"start": other["period_start"],
+                                       "label": other["period_label"]}
+    else:
+        out["week_override_note"] = ""
+        out["week_override_note_approver"] = ""
+        out["week_override_period"] = None
     return out
 
 
@@ -7903,16 +7922,19 @@ def work_arrangement_week_conflict(conn, user_id, period_start, arrangement,
     return other
 
 
-def _wa_week_note(other, effective_from, weekday):
+def _wa_week_note(other, effective_from, weekday, owner=None):
     """The sentence explaining a resolved boundary-week overlap: which week
     keeps the earlier arrangement, and which week the new one starts from.
     Shared by the resolver (fresh) and work_arrangement_week_override_note
-    (re-derived at display time), so the two can never disagree."""
+    (re-derived at display time), so the two can never disagree. `owner` names
+    whose arrangement it is when someone OTHER than the filer reads it (the
+    approvals queue) — "your" there pointed at the approver."""
     other_day = _WA_DAY_NAMES[other["weekday"]]
     this_day = _WA_DAY_NAMES[weekday]
+    whose = f"{owner}'s" if owner else "your"
     return (
         f"The week of {work_arrangement_week_label(other['week_start'])} "
-        f"already carries your {other_day} arrangement for "
+        f"already carries {whose} {other_day} arrangement for "
         f"{other['period_label']}, so that week keeps {other_day}. This "
         f"{this_day} arrangement takes effect the week of "
         f"{work_arrangement_week_label(date.fromisoformat(effective_from))} "
@@ -7957,21 +7979,28 @@ def _wa_resolve_week(conn, user_id, period_start, arrangement, weekday,
     return effective_from, _wa_week_note(other, effective_from, weekday)
 
 
-def work_arrangement_week_override_note(conn, row):
+def _wa_week_override_other(conn, row):
+    """The live filing this row's effective date was pushed back for, or None
+    when it was never adjusted (or the filing it deferred to was since denied
+    or withdrawn)."""
+    eff = row.get("effective_from")
+    ps = row.get("period_start")
+    if not eff or eff == ps or row.get("weekday") is None:
+        return None
+    return work_arrangement_week_conflict(conn, row["user_id"], ps,
+                                          row["arrangement"], row["weekday"],
+                                          exclude_id=row.get("id"))
+
+
+def work_arrangement_week_override_note(conn, row, owner=None):
     """The same explanation _wa_resolve_week gave at filing time, re-derived
     from what's on record now — for the approvals queue and the filer's own
     history, so it reads correctly even if the OTHER filing it refers to was
     since changed. "" when this row's effective date was never adjusted."""
-    eff = row.get("effective_from")
-    ps = row.get("period_start")
-    if not eff or eff == ps or row.get("weekday") is None:
-        return ""
-    other = work_arrangement_week_conflict(conn, row["user_id"], ps,
-                                           row["arrangement"], row["weekday"],
-                                           exclude_id=row.get("id"))
+    other = _wa_week_override_other(conn, row)
     if not other:
-        return ""          # the filing it deferred to was denied or withdrawn
-    return _wa_week_note(other, eff, row["weekday"])
+        return ""
+    return _wa_week_note(other, row["effective_from"], row["weekday"], owner)
 
 
 # ---- writes ---------------------------------------------------------------

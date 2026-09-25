@@ -18,6 +18,10 @@
   .oc-hi h1 { margin:0; font-size:1.45rem; }
   .oc-hi p { margin:.15rem 0 0; color:var(--soft); font-size:.9rem; }
   .oc-hero .grow { flex:1 1 auto; }
+  .oc-me { display:flex; align-items:center; gap:inherit; color:inherit; text-decoration:none;
+           border-radius:14px; }
+  .oc-me:hover h1, .oc-me:focus-visible h1 { text-decoration:underline; }
+  .oc-me-cta { color:var(--accent); font-weight:700; }
   .oc-pet { text-align:center; flex:0 0 auto; }
   .oc-pet-edit { display:inline-block; margin-top:.25rem; font-size:.76rem; font-weight:700;
                  color:var(--accent); text-decoration:none; }
@@ -67,6 +71,8 @@
   .oc-card > .foot { margin-top:auto; }
   .oc-card .foot a { color:var(--accent); }
   .oc-big { font-size:1.55rem; font-weight:800; line-height:1.1; }
+  .oc-big-link { display:block; color:inherit; text-decoration:none; }
+  .oc-big-link:hover small, .oc-big-link:focus-visible small { color:var(--accent); text-decoration:underline; }
   .oc-big small { font-size:.8rem; font-weight:600; color:var(--soft); }
 
   /* activity rows */
@@ -220,6 +226,10 @@
   {% if msg %}{{ flash(msg=msg) }}{% endif %}
 
   <div class="oc-hero">
+    {#-- The photo + greeting open your profile: people clicked them (and the
+         card around them) expecting to, and /me is where photo, name and
+         companion are changed. --#}
+    <a class="oc-me" href="/me" title="Your profile">
     <span class="oc-photo">
       {% if profile and profile.photo_url %}
         <img src="{{ profile.photo_url }}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
@@ -227,8 +237,9 @@
     </span>
     <div class="oc-hi">
       <h1>Hi{% if first_name %}, {{ first_name }}{% endif %} 👋</h1>
-      <p>{{ role_label }}</p>
+      <p>{{ role_label }} · <span class="oc-me-cta">Your profile →</span></p>
     </div>
+    </a>
     {% if profile and profile.avatar_name %}
     <div class="oc-pet">
       {#-- Bumped again from 108: the per-stage artwork carries real detail
@@ -436,8 +447,10 @@
              fortnight aggregate for the person opening this page at 9am. --#}
         {% if a.day and not a.day.is_weekend %}
         {% call deck_slide("Who is in the office", caption=false) %}
-        <div class="oc-big">{{ a.day.counts.onsite }}
-          <small>in the office {% if a.day.is_today %}today{% else %}on {{ a.day.weekday_name }}{% endif %}</small></div>
+        {#-- The headline is the link: people clicked the count itself looking
+             for the names behind it. --#}
+        <a class="oc-big oc-big-link" href="/work-arrangement/day">{{ a.day.counts.onsite }}
+          <small>in the office {% if a.day.is_today %}today{% else %}on {{ a.day.weekday_name }}{% endif %} →</small></a>
         <p class="sub" style="margin:.15rem 0 .5rem;">{{ a.day.date_label }}</p>
         <div class="oc-key">
           <span><i class="bg-green"></i>In the office {{ a.day.counts.onsite }}</span>

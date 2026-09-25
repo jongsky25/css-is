@@ -1,5 +1,29 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-25 (v3.21 — make the most-clicked dead spots actionable)
+
+From the 30-day UX handoff, once v3.20 filtered out telemetry noise: the
+places staff repeatedly clicked that did nothing.
+
+- **`storage.avatar_growth_actions`** — each point action carries an `href`
+  (`/wellness/apply` or `/wellness`); **`templates/_growth.html`** renders it
+  as a link. "Take a wellness break +10" on the home growth card was the top
+  real dead-click spot (30 clicks, 7 users).
+- **`templates/office_connect.html`** — the hero's photo + greeting are one
+  `.oc-me` link to `/me`; the "Who is in the office" headline count is a link
+  to `/work-arrangement/day` (the footer link stays).
+- **`templates/monitor_event.html`** — Copy button beside the registration
+  link (clipboard, `prompt()` fallback); the `<code>` is `user-select:all`.
+- **`storage.get_work_arrangement`** — adds `week_override_note_approver`
+  (the same sentence with the filer's name in place of "your", via
+  `_wa_week_note(owner=)`) and `week_override_period`; new
+  `_wa_week_override_other` so the conflict is looked up once.
+  **`templates/work_arrangement_approvals.html`** shows the third-person note
+  with a link to that period's schedule.
+
+Tests: `tests/test_avatar_care.py`, `tests/test_work_arrangement.py`,
+`tests/test_monitor.py`.
+
 ## 2026-09-25 (v3.20 — UX telemetry stops ranking its own noise)
 
 The 30-day UX handoff (v3.19 build) put the companion's Feed buttons, the

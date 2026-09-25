@@ -421,6 +421,24 @@ def test_the_override_note_names_the_week_the_day_and_the_other_period(sept):
     assert "September 21-25, 2026" in msg          # and when this one starts
 
 
+def test_the_approver_reads_the_override_note_about_the_filer_with_a_link(sept, app_mod):
+    """In the approvals queue the note is about SOMEONE ELSE's arrangement —
+    "your Monday arrangement" pointed at the approver — and it links to the
+    period that keeps the shared week."""
+    conn, emp = sept["conn"], sept["staff"][0]
+    st.create_work_arrangement(conn, emp, _SEPT_1_15, "WFH", 0)
+    wa = st.create_work_arrangement(conn, emp, _SEPT_16_30, "WFH", 2)
+    row = st.get_work_arrangement(conn, wa)
+    assert "your Monday" in row["week_override_note"]          # the filer's own view
+    assert "your" not in row["week_override_note_approver"]
+    assert f"{row['person_name']}'s Monday" in row["week_override_note_approver"]
+    assert row["week_override_period"]["start"] == _SEPT_1_15
+
+    html = _client_for_id(app_mod, sept["chief"]).get("/work-arrangement/approvals").text
+    assert row["week_override_note_approver"].replace("'", "&#39;") in html
+    assert f'href="/work-arrangement/schedule?period={_SEPT_1_15}"' in html
+
+
 def test_the_blocked_direction_names_the_week_the_day_and_the_other_period(sept):
     """Filing the EARLIER period after the later one is already approved can't
     be resolved automatically — there's no later date within its own period to
@@ -1422,6 +1440,8 @@ def test_landing_card_leads_with_who_is_in_today(wa_org, app_mod, monkeypatch):
     assert "in the office today" in html
     assert "Tuesday, August 18, 2026" in html
     assert 'href="/work-arrangement/day"' in html
+    # the headline count itself is the link — people clicked it for the names
+    assert 'class="oc-big oc-big-link" href="/work-arrangement/day"' in html
 
 
 # ------------------------------------------------------------- "No AWA" ------
