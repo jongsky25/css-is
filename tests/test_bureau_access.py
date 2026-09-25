@@ -204,7 +204,7 @@ def test_the_schedule_link_is_offered_to_a_grant_holder(app_mod, org):
     conn = org["conn"]
     html = _client(app_mod, conn, org["officer"]).get("/work-arrangement").text
     assert 'href="/work-arrangement/schedule"' in html
-    assert 'href="/work-arrangement/approvals"' not in html     # not an approver
+    assert 'href="/approvals' not in html                       # not an approver
 
 
 def test_admins_can_change_the_grant_and_it_is_audited(app_mod, org):

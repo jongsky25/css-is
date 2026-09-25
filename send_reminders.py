@@ -198,7 +198,7 @@ def remind_wellness_expiring(conn, base, dry_run=False):
     the days-wide catch-up window can't turn into a daily nag."""
     max_age_days = auth._WELLNESS_DECIDE_MAX_AGE // 86400
     min_age_days = max_age_days - _param(conn, "wellness_expiry_days_before")
-    dash_link = f"{base}/wellness/approvals"
+    dash_link = f"{base}/approvals#wellness"
     sent = 0
     for claim_id in st.list_stale_pending_wellness_claims(conn, min_age_days, max_age_days):
         claim = st.get_wellness_claim(conn, claim_id)
@@ -391,8 +391,8 @@ def send_approvals_digest(conn, base, dry_run=False):
         for approver_id in st.get_approvers_for(conn, wa["user_id"]):
             awa_by_approver.setdefault(approver_id, []).append(line)
 
-    wellness_link = f"{base}/wellness/approvals"
-    awa_link = f"{base}/work-arrangement/approvals"
+    wellness_link = f"{base}/approvals#wellness"
+    awa_link = f"{base}/approvals#awa"
     sent = 0
     for approver_id in set(wellness_by_approver) | set(awa_by_approver):
         approver = st.get_admin_user_by_id(conn, approver_id)

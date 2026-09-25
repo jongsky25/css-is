@@ -717,7 +717,7 @@
 
   {# ---------------- the three doors ---------------- #}
   <div class="doors">
-    <a class="door" href="{{ '/wellness/approvals' if d and d.approvals and d.approvals.wellness else '/wellness' }}">
+    <a class="door" href="{{ '/approvals#wellness' if d and d.approvals and d.approvals.wellness else '/wellness' }}">
       <span class="em" aria-hidden="true">🌱</span>
       <span class="t">Wellness — my 2-hour break</span>
       <div class="d">Request your weekly wellness break and grow your companion.</div>
@@ -725,7 +725,7 @@
       <span class="meta warn">{{ d.approvals.wellness }} waiting on your decision</span>
       {% elif wstats %}<span class="meta">{{ wstats.points }} pts · {{ wstats.streak }}-week streak</span>{% endif %}
     </a>
-    <a class="door" href="{{ '/work-arrangement/approvals' if d and d.approvals and d.approvals.awa else '/work-arrangement' }}">
+    <a class="door" href="{{ '/approvals#awa' if d and d.approvals and d.approvals.awa else '/work-arrangement' }}">
       <span class="em" aria-hidden="true">🗓️</span>
       <span class="t">Alternative Work Arrangement — CWW / WFH</span>
       <div class="d">File your on-site, compressed or work-from-home schedule for the half-month.</div>

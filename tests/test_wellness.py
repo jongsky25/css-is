@@ -935,3 +935,44 @@ def test_week_card_disabled_state_is_not_a_link(app_mod, wellness_org):
     assert 'href="/wellness/apply"' not in card         # nothing to activate
     assert 'aria-disabled="true"' in card               # still announced as off
     assert "tappable" not in card                       # and not advertised as clickable
+
+
+def test_approvals_inbox_shows_both_queues_and_old_urls_redirect(app_mod, wellness_org):
+    """One inbox for everything waiting on an approver. The two former queue
+    URLs (in emails already sent, and bookmarks) land in the right section."""
+    conn, emp = wellness_org["conn"], wellness_org["emp"]
+    monday = _monday_this_week().isoformat()
+    ws = st.wellness_week_start(date.fromisoformat(monday))
+    conn.execute(
+        "INSERT INTO wellness_claim(user_id, week_start, break_date, start_time,"
+        " hours, activity, status, created_at) VALUES (?,?,?,?,1,'exercise','pending',?)",
+        (emp, ws, monday, "10:00", tz.now_iso()))
+    conn.commit()
+    c = _client_for_id(app_mod, wellness_org["chief"])
+    html = c.get("/approvals").text
+    assert 'id="wellness"' in html and 'id="awa"' in html
+    assert "W-Test Employee" in html
+    assert "Wellness breaks" in html and "Work arrangements" in html
+    assert "No work arrangement requests need you right now." in html
+
+    for old, frag in (("/wellness/approvals", "#wellness"),
+                      ("/work-arrangement/approvals", "#awa")):
+        r = c.get(old + "?ok=Done", follow_redirects=False)
+        assert r.status_code == 303
+        assert r.headers["location"] == f"/approvals?ok=Done{frag}"
+
+
+def test_approvals_inbox_is_closed_to_non_approvers(viewer):
+    assert viewer.get("/approvals").status_code == 403
+    assert viewer.get("/wellness/approvals", follow_redirects=False).status_code == 403
+    assert viewer.get("/work-arrangement/approvals", follow_redirects=False).status_code == 403
+
+
+def test_deciding_returns_to_the_inbox(app_mod, wellness_org, future_weekday):
+    conn = wellness_org["conn"]
+    cid = st.create_wellness_claim(conn, wellness_org["emp"], future_weekday, "13:00", "exercise")
+    c = _client_for_id(app_mod, wellness_org["chief"])
+    r = c.post(f"/wellness/claims/{cid}/decide", data={"action": "approve"},
+               follow_redirects=False)
+    assert r.status_code == 303
+    assert r.headers["location"].startswith("/approvals?ok=") and r.headers["location"].endswith("#wellness")

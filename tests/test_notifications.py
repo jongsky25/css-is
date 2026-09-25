@@ -99,7 +99,7 @@ def test_wellness_apply_notifies_the_approver(app_mod, notif_org, sent, future_w
     assert len(sent) == 1
     assert sent[0]["to"] == "ntf-chief@test.local"
     assert "approval" in sent[0]["subject"].lower()
-    assert "/wellness/approvals" in sent[0]["body"]
+    assert "/approvals#wellness" in sent[0]["body"]
 
 
 def test_wellness_apply_respects_the_feature_toggle(app_mod, notif_org, sent, future_weekday):
@@ -179,7 +179,7 @@ def test_awa_file_notifies_the_approver(app_mod, notif_org, sent):
     assert len(sent) == 1
     assert sent[0]["to"] == "ntf-chief@test.local"
     assert "approval" in sent[0]["subject"].lower()
-    assert "/work-arrangement/approvals" in sent[0]["body"]
+    assert "/approvals#awa" in sent[0]["body"]
 
 
 def test_awa_decide_notifies_the_requester(app_mod, notif_org, sent):

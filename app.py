@@ -495,8 +495,8 @@ NAV_GROUPS = [
          "hint": "How your section is using its wellness hours",
          "kw": "wellness monitoring dashboard team section utilization register rollup "
                "who availed reflection rate", "cap": "chief"},
-        {"key": "wellness_approvals", "url": "/wellness/approvals", "label": "Approvals",
-         "hint": "Wellness breaks waiting on your decision",
+        {"key": "wellness_approvals", "url": "/approvals", "label": "Approvals",
+         "hint": "Everything waiting on your decision — wellness breaks and work arrangements",
          "kw": "wellness approvals approve decide queue pending requests waiting chief",
          "cap": "chief"},
     ]},
@@ -590,9 +590,9 @@ NAV_GROUPS = [
          "kw": "team schedule roster coverage on-site onsite weekday annex c chase list "
                "unfiled who is in office friday print export whole bureau",
          "cap": "wa_schedule"},
-        {"key": "work_arrangement_approvals", "url": "/work-arrangement/approvals",
+        {"key": "work_arrangement_approvals", "url": "/approvals",
          "label": "Approvals",
-         "hint": "Work arrangements waiting on your decision",
+         "hint": "Everything waiting on your decision — work arrangements and wellness breaks",
          "kw": "work arrangement approvals approve decide queue pending waiting chief awa",
          "cap": "chief"},
     ]},
@@ -1885,13 +1885,13 @@ def _notification_items(conn, user, feedback_unread):
         n = approvals["wellness"]
         items.append({
             "text": f"{n} wellness break{'' if n == 1 else 's'} waiting on your decision",
-            "url": "/wellness/approvals", "count": n,
+            "url": "/approvals#wellness", "count": n,
         })
     if approvals["awa"]:
         n = approvals["awa"]
         items.append({
             "text": f"{n} work arrangement request{'' if n == 1 else 's'} waiting on your decision",
-            "url": "/work-arrangement/approvals", "count": n,
+            "url": "/approvals#awa", "count": n,
         })
     wellness_decided = st.unseen_wellness_decisions(conn, user["id"])
     if wellness_decided:
@@ -14180,7 +14180,7 @@ async def wellness_apply_submit(request: Request):
         approver = (st.wellness_approver_name(conn, user["id"])
                     or st.wellness_approver_title(conn, user["id"]))
         claimant_name = _person_name(conn, user["id"]) or user["username"]
-        approvals_link = f"{_base_url(request)}/wellness/approvals"
+        approvals_link = f"{_base_url(request)}/approvals#wellness"
         claim = st.get_wellness_claim(conn, claim_id)
         for approver_id in st.get_approvers_for(conn, user["id"]):
             approver_name = _person_name(conn, approver_id)
@@ -14233,20 +14233,57 @@ async def wellness_cancel(request: Request, claim_id: int):
                             status_code=303)
 
 
-@app.get("/wellness/approvals", response_class=HTMLResponse)
-def wellness_approvals(request: Request, err: str = "", ok: str = ""):
+def _inbox_url(section, **params):
+    """/approvals, carrying a flash/period across, anchored at one queue."""
+    q = urlencode({k: v for k, v in params.items() if v})
+    return f"/approvals{'?' + q if q else ''}#{section}"
+
+
+@app.get("/approvals", response_class=HTMLResponse)
+def approvals_inbox(request: Request, ok: str = "", err: str = "", period: str = ""):
+    """Every request waiting on this approver — wellness breaks and work
+    arrangements — on one page. Replaces the two separate queues, which the
+    same chiefs opened one after the other from the same home screen. Both
+    queues gate on the same directory-rank check (user_is_wellness_chief is
+    user_is_approving_chief), so anyone allowed in sees both."""
     user = request.state.user
     conn = get_conn()
     try:
-        if not st.user_is_wellness_chief(conn, user):
-            return _wellness_forbid(request)
-        queue = st.list_wellness_approvals(conn, user)
+        if not st.user_is_approving_chief(conn, user):
+            return templates.TemplateResponse(
+                request, "forbidden.html",
+                {"capability": "approvals", "show_scope": False}, status_code=403)
+        wellness = st.list_wellness_approvals(conn, user)
+        awa = st.list_work_arrangement_approvals(conn, user)
     finally:
         conn.close()
-    return templates.TemplateResponse(request, "wellness_approvals.html", {
-        "nav_active": "wellness", "show_scope": False,
-        "queue": queue, "err": err, "ok": ok,
+    # The AWA period just decided, so the page can point at THAT period's annex
+    # — the schedule otherwise opens on the one being worked.
+    decided, decided_label = "", ""
+    if ok and period:
+        try:
+            decided_label = st.work_arrangement_period_label(period)
+            decided = period
+        except ValueError:
+            pass
+    return templates.TemplateResponse(request, "approvals.html", {
+        "nav_active": "approvals", "show_scope": False,
+        "wellness": wellness, "awa": awa, "ok": ok, "err": err,
+        "decided_period": decided, "decided_period_label": decided_label,
     })
+
+
+@app.get("/wellness/approvals")
+def wellness_approvals(request: Request, err: str = "", ok: str = ""):
+    """Kept for bookmarks and emails already sent: into the inbox's wellness
+    queue. Still gated here, so a non-approver gets the same 403 as before."""
+    conn = get_conn()
+    try:
+        if not st.user_is_wellness_chief(conn, request.state.user):
+            return _wellness_forbid(request)
+    finally:
+        conn.close()
+    return RedirectResponse(_inbox_url("wellness", ok=ok, err=err), status_code=303)
 
 
 def _decide_wellness_and_notify(conn, request, claim_id, user, action, note):
@@ -14275,15 +14312,14 @@ async def wellness_decide(request: Request, claim_id: int):
         except PermissionError:
             return _wellness_forbid(request)
         except ValueError as e:
-            return RedirectResponse(f"/wellness/approvals?err={quote(str(e))}",
-                                    status_code=303)
+            return RedirectResponse(_inbox_url("wellness", err=str(e)), status_code=303)
         _audit(request, conn, f"wellness_{action}", target_type="wellness_claim",
                target_id=claim_id,
                summary=f"{verb} {claim['person_name']}'s wellness break "
                        f"on {claim['break_date']} {claim['start_time']}")
     finally:
         conn.close()
-    return RedirectResponse(f"/wellness/approvals?ok={quote(verb.capitalize() + ' — done.')}",
+    return RedirectResponse(_inbox_url("wellness", ok=verb.capitalize() + " — done."),
                             status_code=303)
 
 
@@ -14788,7 +14824,7 @@ async def work_arrangement_file_submit(request: Request):
         approver = (st.approver_name_for(conn, user["id"])
                     or st.approver_title_for(conn, user["id"]))
         requester_name = _person_name(conn, user["id"]) or user["username"]
-        approvals_link = f"{_base_url(request)}/work-arrangement/approvals"
+        approvals_link = f"{_base_url(request)}/approvals#awa"
         for approver_id in st.get_approvers_for(conn, user["id"]):
             approver_name = _person_name(conn, approver_id)
             subj, body, html = mailer.awa_pending_message(
@@ -14853,7 +14889,7 @@ async def work_arrangement_change_submit(request: Request, wa_id: int):
         approver = (st.approver_name_for(conn, user["id"])
                     or st.approver_title_for(conn, user["id"]))
         requester_name = _person_name(conn, user["id"]) or user["username"]
-        approvals_link = f"{_base_url(request)}/work-arrangement/approvals"
+        approvals_link = f"{_base_url(request)}/approvals#awa"
         for approver_id in st.get_approvers_for(conn, user["id"]):
             approver_name = _person_name(conn, approver_id)
             subj, body, html = mailer.awa_pending_message(
@@ -14890,33 +14926,20 @@ def work_arrangement_cancel(request: Request, wa_id: int):
         "/work-arrangement?ok=" + quote("Request withdrawn."), status_code=303)
 
 
-@app.get("/work-arrangement/approvals", response_class=HTMLResponse)
+@app.get("/work-arrangement/approvals")
 def work_arrangement_approvals(request: Request, ok: str = "", err: str = "",
                                period: str = ""):
-    """The chief's queue. Each row carries a coverage verdict, but both buttons
-    stay live either way — a thin Friday is the chief's call to make."""
-    user = request.state.user
+    """Kept for bookmarks and emails already sent: into the inbox's work
+    arrangement queue. Still gated here, so a non-approver (e.g. a bureau-wide
+    schedule grant holder — sight is not authority) gets the same 403."""
     conn = get_conn()
     try:
-        if not st.user_is_approving_chief(conn, user):
+        if not st.user_is_approving_chief(conn, request.state.user):
             return _wa_forbid(request)
-        queue = st.list_work_arrangement_approvals(conn, user)
     finally:
         conn.close()
-    # The period just decided, so the page can point at THAT period's annex —
-    # the schedule otherwise opens on the one being worked.
-    decided, decided_label = "", ""
-    if ok and period:
-        try:
-            decided_label = st.work_arrangement_period_label(period)
-            decided = period
-        except ValueError:
-            pass
-    return templates.TemplateResponse(request, "work_arrangement_approvals.html", {
-        "nav_active": "work_arrangement", "show_scope": False,
-        "queue": queue, "ok": ok, "err": err,
-        "decided_period": decided, "decided_period_label": decided_label,
-    })
+    return RedirectResponse(_inbox_url("awa", ok=ok, err=err, period=period),
+                            status_code=303)
 
 
 @app.post("/work-arrangement/{wa_id}/decide")
@@ -14932,9 +14955,7 @@ async def work_arrangement_decide(request: Request, wa_id: int):
         except PermissionError:
             return _wa_forbid(request)
         except ValueError as e:
-            return RedirectResponse(
-                f"/work-arrangement/approvals?err={quote(str(e))}",
-                status_code=303)
+            return RedirectResponse(_inbox_url("awa", err=str(e)), status_code=303)
         _audit(request, conn, f"work_arrangement_{row['status']}",
                target_type="work_arrangement", target_id=wa_id,
                summary=(f"{row['status']} {row['person_name']}'s "
@@ -14948,9 +14969,8 @@ async def work_arrangement_decide(request: Request, wa_id: int):
                        feature="awa_decided")
     finally:
         conn.close()
-    return RedirectResponse(
-        f"/work-arrangement/approvals?ok={quote(msg)}"
-        f"&period={quote(row['period_start'])}", status_code=303)
+    return RedirectResponse(_inbox_url("awa", ok=msg, period=row["period_start"]),
+                            status_code=303)
 
 
 @app.get("/admin/work-arrangement", response_class=HTMLResponse)

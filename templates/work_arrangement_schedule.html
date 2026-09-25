@@ -55,7 +55,7 @@
   <a href="/work-arrangement/day">Who's in the office today</a>
   {#-- A bureau-wide viewer reaches this page without being anyone's approver,
        and a link that can only 403 is worse than no link. --#}
-  {% if is_chief %}<a href="/work-arrangement/approvals">Approvals queue</a>{% endif %}
+  {% if is_chief %}<a href="/approvals#awa">Approvals queue</a>{% endif %}
 </div>
 
 {% if upcoming %}
