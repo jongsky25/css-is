@@ -42,6 +42,30 @@
     '[role="button"],[role="link"],[role="tab"],[role="menuitem"],[role="switch"],' +
     '[role="checkbox"],[onclick],[tabindex]:not([tabindex="-1"]),[contenteditable="true"]';
 
+  // Clicks that are never evidence of a broken control, so they record neither
+  // a dead nor a rage click: drawing on a <canvas> (the /me signature pad, the
+  // photo cropper — every stroke is a "click" on a non-interactive element, and
+  // #sigCanvas topped the friction board for exactly that reason), plus anything
+  // a template opts out with data-ux-ignore.
+  var NON_ACTIONABLE = "canvas, [data-ux-ignore]";
+
+  // A click whose target IS the page background (not something inside it) —
+  // clicking empty space to deselect, dismiss or refocus. These arrived as
+  // "html > body" / "#maincontent" dead clicks carrying the whole page's text.
+  function isBackground(el) {
+    return el === document.documentElement || el === document.body ||
+      el.id === "maincontent" || el.tagName === "MAIN";
+  }
+
+  // The mouseup that ends a drag-to-select fires a click on whatever text was
+  // under the pointer — reading/copying, not expecting an action.
+  function endsTextSelection() {
+    try {
+      var sel = window.getSelection && window.getSelection();
+      return !!(sel && !sel.isCollapsed && String(sel).trim());
+    } catch (e) { return false; }
+  }
+
   // Our own Spot Feedback picker overlay (static/js/feedback.js) — never measure
   // clicks on/inside it as friction against itself.
   var OWN_UI = "#sfBtn, .sf-backdrop, .sf-hl, .sf-toast";
@@ -235,7 +259,10 @@
 
   document.addEventListener("click", function (e) {
     var target = e.target;
-    if (!target || isOwnUi(target)) return;
+    if (!target || target.nodeType !== 1 || isOwnUi(target)) return;
+    if (isBackground(target) || (target.closest && target.closest(NON_ACTIONABLE)) ||
+        endsTextSelection()) return;
+    var interactive = !!(target.closest && target.closest(INTERACTIVE));
 
     var now = Date.now();
     recentClicks = recentClicks.filter(function (c) { return now - c.t < RAGE_WINDOW_MS; });
@@ -246,11 +273,14 @@
     if (near.length >= RAGE_MIN && now - lastRageAt > RAGE_COOLDOWN_MS) {
       lastRageAt = now;
       recentClicks = [];
-      record("rage_click", { el: target });
+      // Rapid taps on a REAL control (feeding the companion, stepping a time
+      // chip) are usually play or impatience, not a dead affordance — flag
+      // them so the digest weighs them like a dead click instead of ×3.
+      record("rage_click", { el: target, meta: interactive ? { interactive: true } : null });
       return;
     }
 
-    if (!(target.closest && target.closest(INTERACTIVE))) record("dead_click", { el: target });
+    if (!interactive) record("dead_click", { el: target });
   }, true);
 
   // ── empty-search signal (dispatched on window as a "csi:search-empty"

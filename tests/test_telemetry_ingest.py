@@ -142,6 +142,25 @@ def test_telemetry_form_abandon_keeps_field_count_only(viewer, db_path):
         _reset(conn); conn.close()
 
 
+def test_telemetry_rage_click_keeps_interactive_flag_only_when_true(viewer, db_path):
+    """rage_click's meta.interactive (the burst landed on a real control) is
+    kept only as a literal True — a string or any other truthy value is not."""
+    conn = st.connect(db_path); st.init_db(conn); _reset(conn)
+    try:
+        r = viewer.post("/telemetry", json={"events": [
+            {"event_type": "rage_click", "route": "/wellness", "session_id": "s1",
+             "meta": {"interactive": True}},
+            {"event_type": "rage_click", "route": "/wellness", "session_id": "s1",
+             "meta": {"interactive": "yes"}},
+        ]})
+        assert r.status_code == 204
+        rows = st.list_ui_events(conn)
+        assert rows[1]["meta"] == {"interactive": True}
+        assert rows[0]["meta"] is None
+    finally:
+        _reset(conn); conn.close()
+
+
 def test_telemetry_ignores_malformed_body(viewer, db_path):
     conn = st.connect(db_path); st.init_db(conn); _reset(conn)
     try:

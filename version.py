@@ -17,10 +17,30 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.19"
+APP_VERSION = "3.20"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.20",
+        "date": "September 25, 2026",
+        "summary": "UX Insights (Administrator) now ranks real interface "
+                   "problems first, instead of signatures, clicks on empty "
+                   "space and people happily tapping the companion.",
+        "changes": [
+            "Drawing your signature, clicking an empty part of the page, "
+            "and selecting text to copy it are no longer counted as "
+            "\"dead clicks\".",
+            "Tapping a working button many times in a row (feeding the "
+            "companion, for example) is now shown as \"rapid taps\" and "
+            "weighs much less than frantic clicking on something that "
+            "doesn't respond.",
+            "Old Spot Feedback that is already Done or Won't fix no longer "
+            "pushes unrelated items up the list, and the downloadable "
+            "handoff now lists each matched comment once instead of "
+            "repeating it under every item on the same screen.",
+        ],
+    },
     {
         "version": "3.19",
         "date": "September 25, 2026",

@@ -3626,6 +3626,9 @@ def _clean_telemetry_meta(meta):
     if isinstance(meta.get("fields"), int) and not isinstance(meta.get("fields"), bool):
         # form_abandon: how many fields were touched — a count, never contents.
         out["fields"] = max(1, min(meta["fields"], 500))
+    if meta.get("interactive") is True:
+        # rage_click: the burst landed on a real control (telemetry.js).
+        out["interactive"] = True
     return {k: v for k, v in out.items() if v} or None
 
 

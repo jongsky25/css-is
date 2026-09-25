@@ -206,11 +206,51 @@ def exit_routes(rows, limit=10):
 
 # ── Friction (the ranked-opportunity core) ──────────────────────────────────
 
+# Selectors that are never a broken control — the page background (clicking
+# empty space to deselect/dismiss) and the app's drawing surfaces (every stroke
+# on the /me signature pad is a "click" on a non-interactive element). The
+# capture script stops sending these (static/js/telemetry.js NON_ACTIONABLE /
+# isBackground); filtering here too keeps rows recorded before that fix, still
+# inside the retention window, from topping the board.
+NON_ACTIONABLE_SELECTORS = {
+    "html", "body", "html > body", "main", "#maincontent",
+    "#sigCanvas", "#cropCanvas", "#confetti",
+}
+
+# Tags that are real controls. A rage-click whose selector ENDS in one of these
+# (e.g. "… > span > button:nth-of-type(1)", the companion's Feed button) landed
+# on something that does respond — the pre-meta.interactive fallback.
+_INTERACTIVE_TAGS = {"a", "button", "input", "select", "textarea", "label", "summary", "option"}
+
+
+def _last_selector_tag(selector):
+    last = re.split(r"\s*>\s*|\s+", selector.strip())[-1]
+    return re.match(r"[a-z0-9]*", last).group(0)
+
+
+def is_non_actionable(selector):
+    return bool(selector) and selector.strip() in NON_ACTIONABLE_SELECTORS
+
+
+def is_interactive_rage(row):
+    """A rage-click burst on a real control — play (feeding the companion) or
+    impatience with a slow/silent control, not an affordance that does nothing.
+    New rows carry meta.interactive from the capture script; older ones are
+    recognised by the selector's last tag."""
+    if (row.get("meta") or {}).get("interactive"):
+        return True
+    sel = row.get("element_selector")
+    return bool(sel) and _last_selector_tag(sel) in _INTERACTIVE_TAGS
+
+
 def friction_by_target(rows):
-    """Group dead + rage clicks by route + component (source anchor)."""
+    """Group dead + rage clicks by route + component (source anchor). Rage
+    bursts on a real control are counted apart, as rapid_taps."""
     by_key = {}
     for r in rows:
         if r["event_type"] not in ("dead_click", "rage_click"):
+            continue
+        if is_non_actionable(r.get("element_selector")):
             continue
         component = r.get("component")
         selector = r.get("element_selector")
@@ -219,11 +259,14 @@ def friction_by_target(rows):
         if not t:
             t = {"route": r["route"], "component": component,
                  "element_text": r.get("element_text"), "selector": selector,
-                 "dead_clicks": 0, "rage_clicks": 0,
+                 "dead_clicks": 0, "rage_clicks": 0, "rapid_taps": 0,
                  "_sessions": set(), "_users": set()}
             by_key[key] = t
         if r["event_type"] == "rage_click":
-            t["rage_clicks"] += 1
+            if is_interactive_rage(r):
+                t["rapid_taps"] += 1
+            else:
+                t["rage_clicks"] += 1
         else:
             t["dead_clicks"] += 1
         if r.get("session_id"):
@@ -243,8 +286,12 @@ def friction_by_target(rows):
 def friction_score(target):
     """Rank a friction target. Rage clicks weigh more than dead clicks (stronger
     frustration), and the whole thing is DAMPED by distinct users so one
-    frustrated person can't top the board alone. Deterministic, unit-tested."""
-    base = target["rage_clicks"] * 3 + target["dead_clicks"]
+    frustrated person can't top the board alone. Rapid taps on a real control
+    weigh like a dead click — worth a look (does it give visible feedback?) but
+    not the ×3 of a burst on something that does nothing. Deterministic,
+    unit-tested."""
+    base = (target["rage_clicks"] * 3 + target["dead_clicks"]
+            + target.get("rapid_taps", 0))
     users = target["users"]
     weight = 1 if users >= 3 else (0.8 if users == 2 else 0.6)
     return round(base * weight, 2)
@@ -252,15 +299,27 @@ def friction_score(target):
 
 FEEDBACK_BOOST = 1.5   # a hotspot with a matching complaint jumps the queue.
 
+# Mirrors storage.SPOT_RESOLVED_STATUSES (kept literal: this module stays DB-free).
+RESOLVED_FEEDBACK_STATUSES = {"Done", "Won't fix"}
+
+
+def _is_open(f):
+    return f.get("status") not in RESOLVED_FEEDBACK_STATUSES
+
 
 def correlate_feedback(targets, feedback):
     """Attach explicit spot-feedback to friction targets. A hotspot people ALSO
-    complained about is the strongest 'fix this' signal, so matched feedback
-    both enriches and boosts the score downstream (in build_digest). Match on
-    masked route (feedback page_url -> mask_route) + exact selector; fall back
-    to a route-only match so a complaint on the same screen still associates.
-    `feedback` rows come from storage.list_spot_feedback (page_url,
-    element_selector, message, status, created_at)."""
+    complained about is the strongest 'fix this' signal. Match on masked route
+    (feedback page_url -> mask_route) + exact selector; fall back to a
+    route-only match so a complaint on the same screen still associates — but
+    only an OPEN one: a months-old, already-Done comment about something else
+    on the same screen says nothing about this element (the /wellness Feed
+    button was carrying 12 unrelated, mostly resolved comments). An exact
+    element match is kept whatever its status (a Done complaint on an element
+    still drawing clicks means the fix didn't land). Only open feedback earns
+    the boost — see build_digest. `feedback` rows come from
+    storage.list_spot_feedback (page_url, element_selector, message, status,
+    created_at)."""
     prepared = [{"route": mask_route(f["page_url"]), "selector": f.get("element_selector"),
                  "message": f["message"], "status": f.get("status"),
                  "created_at": f["created_at"]} for f in feedback]
@@ -268,9 +327,11 @@ def correlate_feedback(targets, feedback):
     for t in targets:
         exact = [f for f in prepared
                  if f["route"] == t["route"] and t.get("selector") and f["selector"] == t["selector"]]
-        matched = exact if exact else [f for f in prepared if f["route"] == t["route"]]
+        matched = exact if exact else [f for f in prepared
+                                       if f["route"] == t["route"] and _is_open(f)]
         out.append({**t, "feedback": [{"message": f["message"], "status": f["status"],
-                                       "created_at": f["created_at"]} for f in matched]})
+                                       "created_at": f["created_at"],
+                                       "exact": bool(exact)} for f in matched]})
     return out
 
 
@@ -280,16 +341,25 @@ def _hint_for(o):
     """One deterministic, human-orienting cause line per opportunity (no LLM in
     the loop)."""
     parts = []
-    if o["signals"]["rage_clicks"] > 0:
+    sig = o["signals"]
+    if sig["rage_clicks"] > 0:
         parts.append("Users rage-click this element — it looks interactive but does "
                      "nothing. Make it actionable, or remove the affordance.")
-    elif o["signals"]["dead_clicks"] > 0:
+    elif sig["dead_clicks"] > 0:
         parts.append("Users click here expecting an action; the element is inert.")
-    if o["signals"]["client_errors"] > 0:
+    elif sig.get("rapid_taps", 0) > 0:
+        parts.append("Users tap this control repeatedly in quick succession — it "
+                     "works, so check it answers instantly and visibly (a slow or "
+                     "silent response reads as broken), or it may just be play.")
+    if sig["client_errors"] > 0:
         parts.append("This screen also throws client-side errors.")
-    if o["feedback"]:
-        parts.append(f"{len(o['feedback'])} matching spot-feedback comment(s) — "
+    open_fb = [f for f in o["feedback"] if _is_open(f)]
+    if open_fb:
+        parts.append(f"{len(open_fb)} open spot-feedback comment(s) — "
                      "someone already reported this.")
+    elif o["feedback"]:
+        parts.append(f"{len(o['feedback'])} resolved spot-feedback comment(s) on this "
+                     "exact element — the fix may not have landed.")
     return " ".join(parts) or "Recurring friction on this element."
 
 
@@ -315,12 +385,14 @@ def build_digest(rows, feedback, *, window_days=None, now=None, limit=15):
     scored = []
     for t in with_feedback:
         base = friction_score(t)
-        score = round(base * (FEEDBACK_BOOST if t["feedback"] else 1), 2)
+        boosted = any(_is_open(f) for f in t["feedback"])
+        score = round(base * (FEEDBACK_BOOST if boosted else 1), 2)
         partial = {
             "route": t["route"], "component": t["component"],
             "element_text": t["element_text"], "selector": t["selector"], "score": score,
             "signals": {
                 "rage_clicks": t["rage_clicks"], "dead_clicks": t["dead_clicks"],
+                "rapid_taps": t["rapid_taps"],
                 "empty_searches": empty_by_route.get(t["route"], 0),
                 "client_errors": error_by_route.get(t["route"], 0),
                 "sessions": t["sessions"], "users": t["users"],

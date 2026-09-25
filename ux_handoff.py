@@ -295,6 +295,25 @@ def _cell(v):
     return re.sub(r"\s+", " ", str(v)).replace("|", "\\|")
 
 
+def _matched_feedback_lines(opportunities):
+    """Each matched Spot Feedback comment ONCE, with the opportunity ranks it
+    matched. Several opportunities on one route share its route-level comments,
+    so listing them per opportunity repeated the same comment 3-4 times."""
+    seen = {}
+    for o in opportunities:
+        for f in o["feedback"]:
+            key = (o["route"], f["created_at"], f["message"])
+            seen.setdefault(key, {"f": f, "ranks": []})["ranks"].append(o["rank"])
+    lines = []
+    for (route, _, _), v in sorted(seen.items(), key=lambda kv: (kv[0][0], kv[0][1])):
+        f = v["f"]
+        ranks = ", ".join(f"#{r}" for r in v["ranks"])
+        lines.append(f"- {route} ({f['created_at']}, status {_cell(f['status'])}"
+                     f"{', this element' if f.get('exact') else ''}; matches {ranks}): "
+                     f"“{_cell(f['message'])}”")
+    return lines
+
+
 def _table(headers, rows_of_cells):
     lines = ["| " + " | ".join(headers) + " |",
              "| " + " | ".join("---" for _ in headers) + " |"]
@@ -331,7 +350,10 @@ def render_handoff_markdown(payload):
                       "route, enabling the nav-flow and exit analysis", p["event_type_counts"]["pageview"]],
          ["dead_click", "A click on something non-interactive — the user expected "
                         "an action and nothing happened", p["event_type_counts"]["dead_click"]],
-         ["rage_click", "≥3 clicks within 800 ms / 24 px — frustration on one spot",
+         ["rage_click", "≥3 clicks within 800 ms / 24 px — frustration on one spot. "
+                        "When the burst lands on a real control (a button, link, "
+                        "input) it is counted as a rapid tap instead — usually play "
+                        "or impatience with slow feedback, not a dead affordance",
           p["event_type_counts"]["rage_click"]],
          ["search_empty", "A search/filter that returned zero results; meta.term "
                           "is the (sanitized) term", p["event_type_counts"]["search_empty"]],
@@ -353,10 +375,13 @@ def render_handoff_markdown(payload):
         "- Nothing a respondent or staff member typed into a form is ever "
         "captured — only which screen and which element.")
     add("\n### Scoring\n")
-    add("Friction score = rage_clicks × 3 + dead_clicks, damped by distinct "
-        "users (≥3 users ×1, 2 users ×0.8, 1 user ×0.6), then ×1.5 if a Spot "
-        "Feedback comment (a typed, explicit complaint) matches the same "
-        "route/element.")
+    add("Friction score = rage_clicks × 3 + dead_clicks + rapid_taps, damped by "
+        "distinct users (≥3 users ×1, 2 users ×0.8, 1 user ×0.6), then ×1.5 if an "
+        "OPEN Spot Feedback comment (a typed, explicit complaint) matches the same "
+        "element, or the same route when no comment names the element. Resolved "
+        "comments only count on an exact element match, and never boost. Clicks on "
+        "the page background, on drawing canvases, and ones that end a text "
+        "selection are not recorded as friction at all.")
 
     add("\n## 3. Your task\n")
     add(TASK_MD)
@@ -365,16 +390,16 @@ def render_handoff_markdown(payload):
     if p["opportunities"]:
         add(_table(
             ["#", "route", "component", "selector", "element text", "score",
-             "rage", "dead", "errors", "sessions", "users", "hint"],
+             "rage", "dead", "rapid taps", "errors", "sessions", "users", "hint"],
             [[o["rank"], o["route"], o["component"], o["selector"], o["element_text"],
               o["score"], o["signals"]["rage_clicks"], o["signals"]["dead_clicks"],
+              o["signals"].get("rapid_taps", 0),
               o["signals"]["client_errors"], o["signals"]["sessions"],
               o["signals"]["users"], o["hint"]] for o in p["opportunities"]]))
-        for o in p["opportunities"]:
-            for f in o["feedback"]:
-                add(f"- Spot Feedback on {o['route']} "
-                    f"({f['created_at']}, status {_cell(f['status'])}): "
-                    f"“{_cell(f['message'])}”")
+        fb_lines = _matched_feedback_lines(p["opportunities"])
+        if fb_lines:
+            add("\n### Spot Feedback matched to these opportunities\n")
+            add("\n".join(fb_lines))
     else:
         add("No repeated friction hotspots in this window.")
 
