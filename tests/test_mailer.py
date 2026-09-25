@@ -320,6 +320,57 @@ def test_relay_reports_unauthorized_and_http_error_as_real_failures(monkeypatch)
     assert "403" in result["detail"]
 
 
+def test_relay_sign_in_page_is_a_definite_failure_without_retry(monkeypatch):
+    """Web-app access not set to "Anyone" (or limited to a Workspace domain):
+    Google redirects the anonymous POST to accounts.google.com, whose sign-in
+    page answers 200. The script never ran, so this is a real failure — named
+    as the access setting — and there is nothing to re-fetch."""
+    _relay_env(monkeypatch)
+    monkeypatch.setattr(mailer, "_RELAY_RETRY_DELAY", 0)
+    login = ("https://accounts.google.com/v3/signin/identifier"
+             "?continue=https://script.google.com/macros/s/AKfyc/exec")
+    get_calls = []
+    monkeypatch.setattr(mailer.httpx, "post",
+                        lambda *a, **kw: _FakeResponse(200, None, text="<html>Sign in</html>",
+                                                       url=login))
+    monkeypatch.setattr(mailer.httpx, "get",
+                        lambda *a, **kw: (get_calls.append(1), _FakeResponse(200, {"ok": True}))[1])
+    result = mailer.send("to@example.com", "subj", "body")
+    assert result["sent"] is False
+    assert "Anyone" in result["detail"] and "sign-in" in result["detail"]
+    assert "docs/MAIL_RELAY_SETUP.md" in result["detail"]
+    assert get_calls == [], "a sign-in page has no reply to re-fetch"
+    assert mailer.send_status(result) == "failed"
+
+
+@pytest.mark.parametrize("page", [
+    "<html><div>Script function not found: doPost</div></html>",
+    "<html>Authorization is required to perform that action.</html>",
+])
+def test_relay_apps_script_error_page_is_a_definite_failure(monkeypatch, page):
+    """No redirect to the echo URL, and Apps Script's own error page: the
+    script never ran to completion (the reference doPost() catches all its
+    own errors and answers JSON)."""
+    _relay_env(monkeypatch)
+    monkeypatch.setattr(mailer, "_RELAY_RETRY_DELAY", 0)
+    monkeypatch.setattr(mailer.httpx, "post", lambda *a, **kw: _FakeResponse(
+        200, None, text=page, url="https://script.google.com/macros/s/AKfyc/exec"))
+    result = mailer.send("to@example.com", "subj", "body")
+    assert result["sent"] is False
+    assert "Apps Script said" in result["detail"]
+
+
+def test_relay_error_text_on_the_echo_url_stays_ambiguous(monkeypatch):
+    """The echo URL means doPost() ran — whatever the body says, it is never
+    reported as a failure (that would invite a real double-send)."""
+    _relay_env(monkeypatch)
+    monkeypatch.setattr(mailer, "_RELAY_RETRY_DELAY", 0)
+    page = "<html>Authorization is required to perform that action.</html>"
+    monkeypatch.setattr(mailer.httpx, "post", lambda *a, **kw: _FakeResponse(200, None, text=page))
+    monkeypatch.setattr(mailer.httpx, "get", lambda *a, **kw: _FakeResponse(200, None, text=page))
+    assert mailer.send("to@example.com", "subj", "body")["sent"] is True
+
+
 def test_relay_reports_transport_failure(monkeypatch):
     _relay_env(monkeypatch)
 

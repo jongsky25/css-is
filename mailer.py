@@ -32,6 +32,7 @@ TWO TRANSPORTS, tried in this order:
 from __future__ import annotations
 import html as htmlmod
 import os
+import re
 import smtplib
 import socket
 from datetime import datetime
@@ -131,6 +132,40 @@ def _parse_relay_json(resp):
         return None
 
 
+# Apps Script's own HTML error pages for a request that never ran doPost() to
+# completion — the reference script catches everything inside doPost() and
+# answers JSON, so one of these means the script itself couldn't run.
+_APPS_SCRIPT_ERROR_RE = re.compile(
+    r"(Script function not found: \w+|Authorization is required to perform that action)")
+
+
+def _relay_not_run_reason(resp):
+    """For a 200 reply that isn't JSON: the reason doPost() definitely did NOT
+    run, or None when it may well have (the ambiguous echo case below).
+
+    The URL the redirects ended on tells the two apart. doPost() ran → Google
+    302s to script.googleusercontent.com/macros/echo to hand back its reply.
+    Web-app access not set to "Anyone" (or a Workspace domain that only allows
+    "Anyone within <domain>") → Google 302s the anonymous POST to
+    accounts.google.com, whose sign-in page answers 200 — the request never
+    reached the script, so nothing was sent and nothing can be double-sent."""
+    try:
+        url = httpx.URL(str(resp.url))
+    except Exception:                        # noqa: BLE001 - unparseable: stay ambiguous
+        return None
+    if url.host == "accounts.google.com" or "ServiceLogin" in url.path:
+        return ("the relay answered with a Google sign-in page, so the script "
+                "never ran. Its web app access isn't set to \"Anyone\" — "
+                "redeploy it with that access (see docs/MAIL_RELAY_SETUP.md)")
+    if url.host != "script.googleusercontent.com":
+        m = _APPS_SCRIPT_ERROR_RE.search(resp.text or "")
+        if m:
+            return (f"the relay script couldn't run (Apps Script said "
+                    f"\"{m.group(1)}\"). Check its code and redeploy a new "
+                    f"version (see docs/MAIL_RELAY_SETUP.md)")
+    return None
+
+
 def _send_via_relay(to, subject, body, html=None):
     """POST the message to the Apps Script web app, which sends it as the
     mailbox the script belongs to. Returns {'sent': bool, 'detail': str}."""
@@ -154,8 +189,13 @@ def _send_via_relay(to, subject, body, html=None):
 
     data = _parse_relay_json(resp)
     if data is None:
-        # doPost() has ALREADY run by the time this POST gets a response —
-        # its 302 just points at an "echo" URL Google uses to hand back the
+        reason = _relay_not_run_reason(resp)
+        if reason:
+            _record(to, subject, body, f"SEND FAILED (relay: {reason})")
+            return {"sent": False, "detail": f"Email not sent: {reason}."}
+    if data is None:
+        # Not a sign-in page or script error page: doPost() has almost
+        # certainly ALREADY run by the time this POST gets a response — its 302 just points at an "echo" URL Google uses to hand back the
         # JSON doPost() returned, and MailApp.sendEmail() inside doPost() has
         # already fired. A flaky echo step here means the mail still went
         # out; only the confirmation failed to come back as JSON. So the
