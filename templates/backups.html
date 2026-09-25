@@ -1,6 +1,7 @@
 {% extends "dash_layout.html" %}
+{% from "_page_tabs.html" import system_header %}
 {% from "_components.html" import page_header %}
-{% block title %}Backups{% endblock %}
+{% block title %}System · Backups{% endblock %}
 {% block page_width %}full{% endblock %}
 {% block content %}
 <style>
@@ -41,7 +42,8 @@
   .flash.bad { background:var(--red-bg); color:var(--red); border:1px solid var(--red-ln); }
 </style>
 
-{{ page_header("Backups", "Snapshot the whole database to a file you can keep or restore. Turn on a schedule and the app backs itself up automatically — pruning old snapshots and purging expired attendee details in the same run.") }}
+{{ system_header("backups") }}
+<p class="lede">Snapshot the whole database to a file you can keep or restore. Turn on a schedule and the app backs itself up automatically — pruning old snapshots and purging expired attendee details in the same run.</p>
 
 {% if msg %}<div class="flash ok">{{ msg }}</div>{% endif %}
 {% if err %}<div class="flash err">{{ err }}</div>{% endif %}

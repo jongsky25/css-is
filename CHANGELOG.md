@@ -1,5 +1,28 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-25 (v3.30 — one System page for the occasional admin screens)
+
+The 30-day UX handoff: six Administrator menu entries opened a handful of
+times a month — Backups 4, Audit 2, Sharing 2, Ops 1, UX Insights 1,
+Learned rules 1 — beside the admin screens used daily (Users 106,
+Feedback 30, Email 11, AI 7, AWA filing 7). All six are `manage_users`.
+
+**`templates/_page_tabs.html`** — `system_header(active)`: kicker "System",
+tabs Backups · Audit log · Sharing · System health · UX Insights · Learned
+rules (ordered by use), on the shared `page_tabs`.
+
+**`backups.html`, `audit.html`, `admin_sharing.html`, `ops.html`,
+`ux_insights.html`, `admin_rules.html`** — `page_header(title, lede)` →
+`system_header(key)` + the same lede; titles read "System · …".
+
+**`app.py`** (`NAV_GROUPS`) — the Backups entry is labelled "System"; the
+other five keep their keys (search + AI-navigate) with `in_nav: False`.
+`ux_insights` now passes `nav_active: "ux_insights"` (it passed `""`).
+**`dash_layout.html`** — `nav_cur` maps the five → the System entry.
+
+Tests: `tests/test_page_tabs.py` (tab bar on all six, one menu entry,
+search, still admin-only).
+
 ## 2026-09-25 (v3.29 — Invited events under Monitor, Name cleanup under Directory)
 
 The two screens the 30-day UX handoff found never used: Invited events

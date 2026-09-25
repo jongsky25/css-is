@@ -1,6 +1,7 @@
 {% extends "dash_layout.html" %}
+{% from "_page_tabs.html" import system_header %}
 {% from "_components.html" import page_header %}
-{% block title %}System health{% endblock %}
+{% block title %}System · System health{% endblock %}
 {% block content %}
 <style>
   .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1.1rem 1.3rem;
@@ -41,7 +42,7 @@
   .lastin { color:var(--soft); font-size:.88rem; margin:.2rem 0 0; }
 </style>
 
-{{ page_header("System health") }}
+{{ system_header("ops") }}
 <p class="lede">A plain-language look at how the app is doing right now — is it working, is it fast, and is your data safe. <a class="refresh" href="/ops">↻ Refresh</a></p>
 
 <div class="verdict {{ plain.verdict.tone }}">

@@ -53,3 +53,24 @@
    "hint": "Proper-case, strip honorifics, merge duplicates and split rosters"},
 ], active) }}
 {%- endmacro %}
+
+{#-- System: the admin screens used a handful of times a month (30-day
+     handoff: Backups 4, Audit 2, Sharing 2, Ops 1, UX Insights 1, Learned
+     rules 1). All six are admin-only (manage_users), so every admin sees
+     every tab. Ordered by use. --#}
+{% macro system_header(active) -%}
+{{ page_tabs("System", [
+  {"key": "backups", "href": "/admin/backups", "label": "Backups",
+   "hint": "Snapshot and restore the database; the backup schedule"},
+  {"key": "audit", "href": "/admin/audit", "label": "Audit log",
+   "hint": "Append-only, hash-chained record of governance actions"},
+  {"key": "sharing", "href": "/admin/sharing", "label": "Sharing",
+   "hint": "The site-wide switch for public resource sharing"},
+  {"key": "ops", "href": "/ops", "label": "System health",
+   "hint": "Requests, errors, latency and storage"},
+  {"key": "ux_insights", "href": "/admin/ux-insights", "label": "UX Insights",
+   "hint": "Interface friction, ranked into what to fix first"},
+  {"key": "rules", "href": "/admin/rules", "label": "Learned rules",
+   "hint": "Questions the AI search bar answers without calling the model"},
+], active) }}
+{%- endmacro %}
