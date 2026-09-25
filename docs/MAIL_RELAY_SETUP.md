@@ -117,9 +117,13 @@ The Users page shows the real reason (since v2.79). The likely ones:
 | `mail relay returned HTTP 401/403` | Web app access is not set to *Anyone*. Redeploy with that access level. |
 | `mail relay said unauthorized` | `CSS_MAIL_RELAY_SECRET` does not match `SHARED_SECRET` in the script. |
 | `mail relay unreachable` | Wrong URL, or it does not end in `/exec`. |
+| `Email not sent: the relay answered with a Google sign-in page…` | Web app access is not *Anyone* — Google sent the request to its sign-in page, so the script never ran. On a Google Workspace account the admin may only allow "Anyone within `<domain>`"; that is not enough, since the Space calls the relay without signing in. Redeploy with *Anyone*, or ask the Workspace admin to allow it (since v3.22). |
+| `Email not sent: the relay script couldn't run (Apps Script said "…")` | The script has no `doPost` (wrong code pasted), or the deployment was never authorized. Paste the script above, **Deploy → Manage deployments → New version**, and approve the permission prompt. |
 
-A 200 response that doesn't parse as JSON — even after the app's own GET
-retry on the same reply — is **not** reported as a failure (since v3.07). By
+Any other 200 response that doesn't parse as JSON — one that came back
+through Google's `script.googleusercontent.com/macros/echo` step, even after
+the app's own GET retry on the same reply — is **not** reported as a failure
+(since v3.07). By
 the time any response comes back, `doPost()` has already run and
 `MailApp.sendEmail()` has already fired; real-world testing confirmed the
 mail is reliably delivered even when this echo step is flaky, so treating it

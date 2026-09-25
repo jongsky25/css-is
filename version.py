@@ -17,10 +17,30 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.21"
+APP_VERSION = "3.22"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.22",
+        "date": "September 25, 2026",
+        "summary": "When an email can't be sent because the mail relay isn't "
+                   "set up right, Office Connect now says so plainly instead "
+                   "of reporting it as \"likely sent\".",
+        "changes": [
+            "If the mail relay's access setting keeps it from running, a "
+            "resend on Monitor, an invite or a password reset now shows "
+            "\"Email not sent\" with the setting to fix, instead of "
+            "\"Email likely sent — check the recipient's inbox\". Nothing "
+            "went out in that case, so it is safe to try again once it's "
+            "fixed.",
+            "The same goes when the relay script itself can't run (wrong code "
+            "pasted, or the deployment was never authorized).",
+            "Nothing changes for the case where the relay did run but its "
+            "confirmation came back garbled — that is still shown as likely "
+            "sent, so nobody is prompted to send the same email twice.",
+        ],
+    },
     {
         "version": "3.21",
         "date": "September 25, 2026",

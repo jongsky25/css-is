@@ -1,5 +1,27 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-25 (v3.22 — tell a relay that never ran apart from a garbled confirmation)
+
+The Sept 22–23 Monitor feedback ("Email send failed: mail relay did not
+return JSON") was answered by v3.07 (#147), which treats every 200 non-JSON
+reply as "likely sent" so an admin is never nudged into a double-send. That
+also swallowed the one case that is certainly NOT sent: web-app access not
+set to *Anyone* (common on Workspace accounts that only allow "Anyone within
+the domain"). Google then 302s the anonymous POST to accounts.google.com and
+its sign-in page answers 200 — the script never ran.
+
+**`mailer.py`**
+- `_relay_not_run_reason(resp)` — classifies a 200 non-JSON reply by the URL
+  the redirects ended on: `accounts.google.com` / `ServiceLogin` → access not
+  *Anyone*; any host other than `script.googleusercontent.com` with Apps
+  Script's own error text (`Script function not found: …`, `Authorization is
+  required…`) → the script couldn't run. Either is a definite failure (no GET
+  retry, `send_status` → `failed`). The echo URL keeps v3.07's behaviour.
+
+**`docs/MAIL_RELAY_SETUP.md`** — two new rows in "If something fails".
+
+Tests: `tests/test_mailer.py`.
+
 ## 2026-09-25 (v3.21 — make the most-clicked dead spots actionable)
 
 From the 30-day UX handoff, once v3.20 filtered out telemetry noise: the
