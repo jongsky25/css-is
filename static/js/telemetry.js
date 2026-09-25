@@ -252,7 +252,49 @@
         if (refUrl.origin === location.origin) from = maskRoute(refUrl.pathname);
       } catch (e) { /* malformed/opaque referrer — ignore */ }
     }
-    record("pageview", { meta: from ? { from: from } : null });
+    // Viewport class only (phone / tablet / desktop) — nothing finer, no
+    // user-agent, no screen size.
+    var w = window.innerWidth || document.documentElement.clientWidth || 0;
+    var vp = w < 640 ? "phone" : (w < 1024 ? "tablet" : "desktop");
+    var meta = { vp: vp };
+    if (from) meta.from = from;
+    record("pageview", { meta: meta });
+  })();
+
+  // ── page_timing — how long this page took, from the browser's own
+  // navigation timing, once it has finished loading ─────────────────────────
+
+  window.addEventListener("load", function () {
+    // loadEventEnd is only filled in AFTER the load handlers return.
+    setTimeout(function () {
+      try {
+        var nav = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
+        if (!nav || !nav.loadEventEnd) return;
+        record("page_timing", { meta: {
+          ttfb_ms: Math.round(nav.responseStart),
+          dom_ms: Math.round(nav.domContentLoadedEventEnd),
+          load_ms: Math.round(nav.loadEventEnd),
+        } });
+      } catch (e) { /* timing is best-effort */ }
+    }, 0);
+  });
+
+  // ── form_error — this page came back showing an error message (the app's
+  // flash(err=…) banner): a submitted task that didn't go through. Only the
+  // fact and the referring screen are recorded, never the message text. ──────
+
+  (function () {
+    function check() {
+      if (!document.querySelector(".flash.err")) return;
+      var from = null;
+      try {
+        var ref = document.referrer && new URL(document.referrer);
+        if (ref && ref.origin === location.origin) from = maskRoute(ref.pathname);
+      } catch (e) { /* ignore */ }
+      record("form_error", { meta: from ? { from: from } : null });
+    }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", check);
+    else check();
   })();
 
   // ── dead clicks + rage clicks ────────────────────────────────────────────
@@ -288,6 +330,13 @@
   // list filters and the help topic filter whenever a query returns nothing)
   // + client errors ────────────────────────────────────────────────────────
 
+  // Every completed search, with how many results it found — so the handoff
+  // can give an empty-search RATE, not just a count. No term: the empty ones
+  // already carry theirs (csi:search-empty below).
+  window.addEventListener("csi:search", function (e) {
+    var hits = e.detail && e.detail.hits;
+    record("search", { meta: { hits: typeof hits === "number" ? Math.max(0, Math.round(hits)) : 0 } });
+  });
   window.addEventListener("csi:search-empty", function (e) {
     var term = e.detail && e.detail.term;
     record("search_empty", { meta: { term: sanitizeText(term, 80) } });
@@ -395,6 +444,10 @@
     document.addEventListener("submit", function (e) {
       var form = e.target;
       if (form) dirtyForms.delete(form);
+      // form_submit — the other half of form_abandon, so a screen's abandon
+      // RATE can be read. Same opt-outs (search/filter forms, our own UI).
+      var f = formOf(form);
+      if (f) record("form_submit", { el: f });
     }, true);
     window.addEventListener("pagehide", function () {
       if (dirtyForms.size === 0) return;

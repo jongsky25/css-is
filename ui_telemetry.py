@@ -30,7 +30,18 @@ import re
 # change.
 UI_EVENT_TYPES = {
     "pageview", "dead_click", "rage_click", "search_empty", "client_error", "form_abandon",
+    # v3.26 — the questions the 30-day handoff couldn't answer: did the task
+    # succeed (form_submit / form_error, plus the server's own http_error), how
+    # often does search come up empty (search = every search, not just the
+    # empty ones), and how long do pages take (page_timing).
+    "form_submit", "form_error", "search", "page_timing",
 }
+
+# Written by the server itself (app.py's _metrics_gate), never accepted from a
+# browser: a 403 / 404 / 5xx a signed-in person actually hit.
+SERVER_EVENT_TYPES = {"http_error"}
+
+VIEWPORTS = ("phone", "tablet", "desktop")
 
 MAX_TEXT = 160
 MAX_SELECTOR = 1000
@@ -262,6 +273,155 @@ def errors_by_route(rows, limit=15):
             g["frames"] = meta["frames"]
     out = sorted(groups.values(), key=lambda x: -x["count"])
     return out[:limit]
+
+
+# ── Outcomes, search, speed, device, role, version (v3.26) ──────────────────
+
+def _median(vals):
+    vals = sorted(vals)
+    if not vals:
+        return None
+    mid = len(vals) // 2
+    return vals[mid] if len(vals) % 2 else (vals[mid - 1] + vals[mid]) // 2
+
+
+def _pct(vals, q):
+    vals = sorted(vals)
+    if not vals:
+        return None
+    return vals[min(len(vals) - 1, int(round(q * (len(vals) - 1))))]
+
+
+def task_outcomes(rows, limit=15):
+    """Per screen: forms submitted vs left with edits, pages that came back
+    showing an error message, and the HTTP errors people hit (by status).
+    Sorted by how much went wrong."""
+    by = {}
+    for r in rows:
+        et = r["event_type"]
+        if et not in ("form_submit", "form_abandon", "form_error", "http_error"):
+            continue
+        e = by.setdefault(r["route"], {"route": r["route"], "submits": 0, "abandons": 0,
+                                       "form_errors": 0, "http_errors": {}})
+        if et == "form_submit":
+            e["submits"] += 1
+        elif et == "form_abandon":
+            e["abandons"] += 1
+        elif et == "form_error":
+            e["form_errors"] += 1
+        else:
+            status = str((r.get("meta") or {}).get("status") or "?")
+            e["http_errors"][status] = e["http_errors"].get(status, 0) + 1
+    out = []
+    for e in by.values():
+        started = e["submits"] + e["abandons"]
+        e["abandon_rate"] = round(100 * e["abandons"] / started) if started else None
+        e["http_error_total"] = sum(e["http_errors"].values())
+        out.append(e)
+    out.sort(key=lambda e: (-(e["abandons"] + e["form_errors"] + e["http_error_total"]),
+                            e["route"]))
+    return out[:limit]
+
+
+def search_stats(rows, limit=10):
+    """Every search (search events) against the empty ones, overall and per
+    screen. Rows recorded before v3.26 only have search_empty, so a screen's
+    total is never shown below its empty count."""
+    by = {}
+    for r in rows:
+        if r["event_type"] not in ("search", "search_empty"):
+            continue
+        e = by.setdefault(r["route"], {"route": r["route"], "searches": 0, "empty": 0})
+        if r["event_type"] == "search":
+            e["searches"] += 1
+        else:
+            e["empty"] += 1
+    for e in by.values():
+        e["searches"] = max(e["searches"], e["empty"])
+        e["empty_rate"] = round(100 * e["empty"] / e["searches"]) if e["searches"] else None
+    per_route = sorted(by.values(), key=lambda e: (-e["searches"], e["route"]))[:limit]
+    total = sum(e["searches"] for e in by.values())
+    empty = sum(e["empty"] for e in by.values())
+    return {"total": total, "empty": empty,
+            "empty_rate": round(100 * empty / total) if total else None,
+            "by_route": per_route}
+
+
+def page_speed(rows, limit=12, min_samples=3):
+    """Median and 90th-percentile page load (and time to first byte) per
+    screen, slowest first. Screens with fewer than `min_samples` loads are
+    left out — one slow load is an anecdote."""
+    by = {}
+    for r in rows:
+        if r["event_type"] != "page_timing":
+            continue
+        m = r.get("meta") or {}
+        if not isinstance(m.get("load_ms"), int):
+            continue
+        e = by.setdefault(r["route"], {"load": [], "ttfb": []})
+        e["load"].append(m["load_ms"])
+        if isinstance(m.get("ttfb_ms"), int):
+            e["ttfb"].append(m["ttfb_ms"])
+    out = [{"route": route, "samples": len(e["load"]),
+            "load_median_ms": _median(e["load"]), "load_p90_ms": _pct(e["load"], 0.9),
+            "ttfb_median_ms": _median(e["ttfb"])}
+           for route, e in by.items() if len(e["load"]) >= min_samples]
+    out.sort(key=lambda x: (-x["load_p90_ms"], x["route"]))
+    return out[:limit]
+
+
+def device_mix(rows):
+    """Pageviews by viewport class (phone / tablet / desktop), overall."""
+    counts = {v: 0 for v in VIEWPORTS}
+    unknown = 0
+    for r in rows:
+        if r["event_type"] != "pageview":
+            continue
+        vp = (r.get("meta") or {}).get("vp")
+        if vp in counts:
+            counts[vp] += 1
+        else:
+            unknown += 1
+    return {"counts": counts, "unknown": unknown}
+
+
+def screens_by_role(rows, limit=15):
+    """Pageviews per screen split by the viewer's role — so low traffic on a
+    screen only some roles can open reads against the people who could."""
+    by, roles = {}, set()
+    for r in rows:
+        if r["event_type"] != "pageview":
+            continue
+        role = r.get("role") or "unknown"
+        roles.add(role)
+        e = by.setdefault(r["route"], {"route": r["route"], "total": 0, "by_role": {}})
+        e["total"] += 1
+        e["by_role"][role] = e["by_role"].get(role, 0) + 1
+    out = sorted(by.values(), key=lambda e: (-e["total"], e["route"]))[:limit]
+    return {"roles": sorted(roles), "rows": out}
+
+
+def events_by_version(rows):
+    """Events per app version (stamped by the server at ingest), oldest
+    version first — lines a spike up with the deploy that caused it. Rows
+    recorded before v3.26 carry no version."""
+    by = {}
+    for r in rows:
+        v = (r.get("meta") or {}).get("v") or "(before v3.26)"
+        e = by.setdefault(v, {"version": v, "events": 0, "client_errors": 0,
+                              "http_errors": 0, "first": r.get("created_at"),
+                              "last": r.get("created_at")})
+        e["events"] += 1
+        if r["event_type"] == "client_error":
+            e["client_errors"] += 1
+        elif r["event_type"] == "http_error":
+            e["http_errors"] += 1
+        at = r.get("created_at")
+        if at and (not e["first"] or at < e["first"]):
+            e["first"] = at
+        if at and (not e["last"] or at > e["last"]):
+            e["last"] = at
+    return sorted(by.values(), key=lambda e: (e["first"] or ""))
 
 
 def exit_routes(rows, limit=10):
@@ -497,4 +657,8 @@ def build_digest(rows, feedback, *, window_days=None, now=None, limit=15):
         "top_screens": top_routes(rows),
         "failed_searches": empty_search_terms(rows),
         "errors": errors_by_route(rows),
+        "outcomes": task_outcomes(rows),
+        "search": search_stats(rows),
+        "speed": page_speed(rows),
+        "devices": device_mix(rows),
     }

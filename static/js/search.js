@@ -98,6 +98,7 @@
     // ---- DB async state --------------------------------------------------
     var _dbTimer = null, _dbCtrl = null, _dbQuery = "";
     var _reportedEmpty = {};    // per-page dedup for the csi:search-empty signal
+    var _reportedSearch = {};   // ...and for csi:search (every settled search)
 
     // Tell telemetry.js a search came up completely empty (page index AND DB
     // records). Fired at most once per term per page load; the listener
@@ -180,6 +181,15 @@
             // The debounced DB fetch settling empty on top of zero page hits
             // is the "this search truly found nothing" moment.
             if (current.length === 0) _reportEmpty(raw);
+            // Every settled search (page hits + DB rows), once per term, so
+            // telemetry can give an empty RATE rather than just a count.
+            if (!_reportedSearch[raw]) {
+              _reportedSearch[raw] = true;
+              try {
+                window.dispatchEvent(new CustomEvent("csi:search", { detail: {
+                  hits: current.length + (Array.isArray(data) ? data.length : 0) } }));
+              } catch (e) { /* telemetry is best-effort */ }
+            }
           })
           .catch(function () { _removeLoadingRow(); });
       }, 200);

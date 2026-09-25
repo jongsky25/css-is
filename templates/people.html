@@ -1,6 +1,6 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header, empty_state %}
-{% from "_telemetry.html" import search_empty_signal %}
+{% from "_telemetry.html" import search_signal %}
 {% import "_export.html" as ex %}
 {% block title %}People{% endblock %}
 {% block content %}
@@ -209,8 +209,9 @@
 {% if not cards %}
   {% set msg %}{% if q %}No people match “{{ q }}” in this scope.{% elif sel_badge %}No one has the “{{ badge_defs[sel_badge].label }}” badge in this scope.{% else %}No one has any ratings yet.{% endif %}{% endset %}
   {{ empty_state(msg, icon="◔") }}
-  {{ search_empty_signal(q|trim, true) }}
+  {{ search_signal(q|trim, 0) }}
 {% else %}
+{{ search_signal(q|trim, cards|length) }}
 <div class="grid">
   {% for c in cards %}
   <div class="pcard {{ 'hidden' if c.hidden_public }}">

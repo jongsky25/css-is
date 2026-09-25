@@ -8,6 +8,28 @@
    are guaranteed to run first once DOMContentLoaded fires. The raw term is
    fine to pass here; telemetry.js sanitizes it (digit-masking, length cap)
    before it leaves the browser, and the server re-sanitizes on ingest. #}
+{#- search_signal(term, hits) — the same, for EVERY search: a "csi:search"
+   CustomEvent with the result count (so the handoff can give an empty RATE),
+   plus csi:search-empty when there were none. Nothing without a term. #}
+{% macro search_signal(term, hits) -%}
+{% if term %}
+<script>
+(function () {
+  function fire() {
+    try {
+      window.dispatchEvent(new CustomEvent("csi:search", { detail: { hits: {{ hits|int }} } }));
+      {% if not hits %}window.dispatchEvent(new CustomEvent("csi:search-empty",
+        { detail: { term: {{ term|tojson }} } }));{% endif %}
+    } catch (e) { /* telemetry is best-effort */ }
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", fire);
+  } else { fire(); }
+})();
+</script>
+{% endif %}
+{%- endmacro %}
+
 {% macro search_empty_signal(term, is_empty) -%}
 {% if term and is_empty %}
 <script>
