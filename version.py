@@ -17,10 +17,22 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.31"
+APP_VERSION = "3.32"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.32",
+        "date": "September 25, 2026",
+        "summary": "Fixed a work arrangement approval that was wrongly "
+                   "blocked over a week already settled by an earlier filing.",
+        "changes": [
+            "Approving a work arrangement request could be refused with a "
+            "false \"can't take priority automatically\" message, even when "
+            "the later request it pointed to had already stepped aside for "
+            "it. That request can now be approved normally.",
+        ],
+    },
     {
         "version": "3.31",
         "date": "September 25, 2026",
