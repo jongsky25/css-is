@@ -7894,7 +7894,14 @@ def work_arrangement_week_conflict(conn, user_id, period_start, arrangement,
     in the next, and two separate filings can land in it. This is the only place
     that can happen, and the only thing this looks for.
 
-    REG nominates no day and never conflicts, in either direction."""
+    REG nominates no day and never conflicts, in either direction.
+
+    A row that already deferred past the shared week (its effective_from is
+    later than the week it would otherwise have claimed — see
+    _wa_resolve_week) no longer counts as sitting in it: the same rule the DB
+    trigger enforces at write time (_WA_WEEK_GUARD_BODY), applied here so an
+    already-resolved later filing isn't mistaken for a live claim when the
+    earlier one it deferred to is later decided."""
     if arrangement not in _WA_DAY_TYPES or weekday is None:
         return None
     head, tail = work_arrangement_weeks(period_start, weekday)
@@ -7903,7 +7910,10 @@ def work_arrangement_week_conflict(conn, user_id, period_start, arrangement,
     qs = ",".join("?" * len(_WA_LIVE))
     sql = (_WA_SELECT + f" WHERE w.user_id = ? AND w.status IN ({qs}) "
            "AND w.weekday IS NOT NULL AND w.period_start <> ? "
-           "AND (w.week_head IN (?, ?) OR w.week_tail IN (?, ?))")
+           "AND ((w.week_head IN (?, ?) "
+           "      AND w.week_head >= COALESCE(w.effective_from, w.week_head)) "
+           "  OR (w.week_tail IN (?, ?) "
+           "      AND w.week_tail >= COALESCE(w.effective_from, w.week_tail)))")
     args = [user_id, *_WA_LIVE, period_start,
             head.isoformat(), tail.isoformat(),
             head.isoformat(), tail.isoformat()]

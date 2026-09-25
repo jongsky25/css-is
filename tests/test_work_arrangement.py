@@ -397,6 +397,21 @@ def test_a_filing_still_waiting_for_approval_holds_the_week(sept):
     assert st.get_work_arrangement(conn, later)["effective_from"] == "2026-09-21"
 
 
+def test_approving_the_earlier_filing_is_not_blocked_by_the_later_one_it_pushed(sept):
+    """The later filing already deferred past the shared week when IT was
+    filed (see test_a_filing_still_waiting_for_approval_holds_the_week) — the
+    earlier filing that it deferred to must still be approvable afterwards.
+    The backstop in _wa_apply_decision is for rows that never went through
+    that resolution (see test_an_approval_that_would_double_up_a_week_is_refused),
+    not for a later filing that already gave the week up."""
+    conn, emp = sept["conn"], sept["staff"][0]
+    earlier = st.create_work_arrangement(conn, emp, _SEPT_1_15, "WFH", 0)
+    later = st.create_work_arrangement(conn, emp, _SEPT_16_30, "WFH", 2)
+    assert st.get_work_arrangement(conn, later)["effective_from"] == "2026-09-21"
+    assert st.decide_work_arrangement(
+        conn, earlier, _u(sept["chief"], "section_manager"), "approve")["status"] == "approved"
+
+
 @pytest.mark.parametrize("release", ["withdraw", "deny"])
 def test_withdrawing_or_denying_gives_the_week_back(sept, release):
     conn, emp = sept["conn"], sept["staff"][0]
