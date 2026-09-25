@@ -1,7 +1,10 @@
-{% extends "dash_layout.html" %}
-{% from "_components.html" import page_header, flash, empty_state %}
-{% block title %}Work arrangement approvals{% endblock %}
-{% block content %}
+{#-- The approvals inbox's two queues (see approvals.html). Each macro is the
+     queue table, or its empty state, exactly as the former separate pages
+     (/wellness/approvals, /work-arrangement/approvals) rendered it — both
+     URLs now redirect into this inbox. --#}
+{% from "_components.html" import empty_state %}
+
+{% macro approvals_css() %}
 <style>
   .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px;
            padding:1.2rem 1.4rem; margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
@@ -31,26 +34,50 @@
   .muted { color:var(--soft); }
   .backbar { margin-bottom:1rem; display:flex; gap:.8rem; }
   .decided-link { margin:-.3rem 0 1rem; font-size:.9rem; }
+  .inbox-jump { display:flex; gap:.5rem; flex-wrap:wrap; margin:0 0 1rem; }
+  .inbox-jump a { font-size:.85rem; font-weight:700; padding:.3rem .8rem; border-radius:999px;
+                  border:1px solid var(--line); background:var(--surface); text-decoration:none; }
+  .inbox-jump a .n { color:var(--soft); font-weight:600; }
+  .inbox-jump a.has .n { color:var(--amber); }
+  .qhead { display:flex; align-items:baseline; gap:.8rem; flex-wrap:wrap; margin:0 0 .7rem; }
+  .qhead h2 { margin:0; font-size:1.1rem; }
+  .qhead .links { font-size:.85rem; display:flex; gap:.8rem; }
+  .panel { scroll-margin-top:5rem; }
 </style>
+{% endmacro %}
 
-{{ page_header("Work arrangement approvals",
-               "Requests from your section, waiting on you. Where a decision would leave a weekday thin, you'll see it flagged — the call is still yours.") }}
+{% macro wellness_queue(queue) %}
+  {% if queue %}
+  <div class="table-wrap">
+  <table class="q resp-table">
+    <thead><tr><th>Who</th><th>When</th><th>Activity</th><th>Decision</th></tr></thead>
+    <tbody>
+    {% for c in queue %}
+      <tr>
+        <td data-label="Who">
+          <div class="who">{{ c.person_name }}</div>
+          <div class="sub">{{ c.section or "—" }} · filed {{ c.created_at|replace('T', ' ') }}</div>
+        </td>
+        <td data-label="When">{{ c.break_date }} · {{ c.start_time }} ({{ c.hours }} h)</td>
+        <td data-label="Activity">{{ c.activity_label }}{% if c.note %}<div class="note">“{{ c.note }}”</div>{% endif %}</td>
+        <td data-label="Decision" class="actions">
+          <form class="df" method="post" action="/wellness/claims/{{ c.id }}/decide">
+            <input type="text" name="note" placeholder="optional remark">
+            <button class="ok" type="submit" name="action" value="approve">Approve</button>
+            <button class="no" type="submit" name="action" value="deny">Deny</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  {{ empty_state("Nothing waiting", "No pending break requests right now.", "☀") }}
+  {% endif %}
+{% endmacro %}
 
-<div class="backbar">
-  <a href="/work-arrangement">← My work arrangement</a>
-  <a href="/work-arrangement/schedule">Period schedule</a>
-</div>
-
-{% if ok %}{{ flash(msg=ok) }}{% endif %}
-{% if decided_period %}
-<p class="decided-link">Approved arrangements print on that period's ANNEX C —
-  <a href="/work-arrangement/schedule?period={{ decided_period }}">{{ decided_period_label }} schedule</a>
-  · <a href="/work-arrangement/annex-c.pdf?period={{ decided_period }}">PDF</a>
-  · <a href="/work-arrangement/annex-c.xlsx?period={{ decided_period }}">Excel</a></p>
-{% endif %}
-{% if err %}{{ flash(err=err) }}{% endif %}
-
-<div class="panel">
+{% macro awa_queue(queue) %}
   {% if queue %}
   <div class="table-wrap">
   <table class="q resp-table resp-table-wide">
@@ -95,5 +122,4 @@
   {% else %}
   {{ empty_state("Nothing waiting", "No work arrangement requests need you right now.", "🗓") }}
   {% endif %}
-</div>
-{% endblock %}
+{% endmacro %}

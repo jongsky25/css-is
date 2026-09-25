@@ -964,14 +964,14 @@ def team_view_data(conn, user, *, get_atoms, view_memo,
             notes.append({
                 "key": "wellness_approvals", "tone": "amber",
                 "text": f"{n} wellness break{'' if n == 1 else 's'} waiting on your decision.",
-                "url": "/wellness/approvals", "cta": "Review",
+                "url": "/approvals#wellness", "cta": "Review",
             })
         if approvals["awa"]:
             n = approvals["awa"]
             notes.append({
                 "key": "awa_approvals", "tone": "amber",
                 "text": f"{n} work arrangement request{'' if n == 1 else 's'} waiting on your decision.",
-                "url": "/work-arrangement/approvals", "cta": "Review",
+                "url": "/approvals#awa", "cta": "Review",
             })
 
     # The team roster, fresh (never memoised — its only sane key is the scope

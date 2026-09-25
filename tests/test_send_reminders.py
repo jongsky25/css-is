@@ -402,8 +402,8 @@ def test_digest_bundles_wellness_and_awa_for_one_approver(tmp_path, sent, on_dig
     assert n == 1
     assert sent[0]["to"] == "sr-w-chief@test.local"
     assert "pending approvals" in sent[0]["subject"].lower()
-    assert "/wellness/approvals" in sent[0]["body"]
-    assert "/work-arrangement/approvals" in sent[0]["body"]
+    assert "/approvals#wellness" in sent[0]["body"]
+    assert "/approvals#awa" in sent[0]["body"]
 
 
 def test_digest_does_not_go_out_on_other_days(tmp_path, sent, monkeypatch, future_weekday):

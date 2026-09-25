@@ -17,10 +17,29 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.24"
+APP_VERSION = "3.25"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.25",
+        "date": "September 25, 2026",
+        "summary": "Approvers now have one Approvals inbox for both wellness "
+                   "breaks and work arrangements.",
+        "changes": [
+            "Everything waiting on your decision is on one page, Approvals, "
+            "with a count for each kind at the top. Whichever kind has "
+            "requests waiting is shown first.",
+            "The Approvals links under Wellness and under AWA, the bell, the "
+            "home-screen notes and the approval emails all open this inbox. "
+            "Old links to the separate pages still work and land on the "
+            "right section.",
+            "After you approve or deny something you come back to the inbox, "
+            "so you can move straight on to the next request.",
+            "On a phone, wellness requests now show as cards instead of a table "
+            "that ran off the side of the screen.",
+        ],
+    },
     {
         "version": "3.24",
         "date": "September 25, 2026",

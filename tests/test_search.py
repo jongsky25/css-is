@@ -70,14 +70,14 @@ def test_chief_cap_gates_the_team_pages(app_mod):
     class U:
         def __init__(self, role): self.role = role
 
-    team_urls = {"/wellness/dashboard", "/wellness/approvals",
-                 "/work-arrangement/schedule", "/work-arrangement/approvals"}
+    # both queues' nav entries now open the one approvals inbox
+    team_urls = {"/wellness/dashboard", "/work-arrangement/schedule", "/approvals"}
 
     def urls(user, is_chief):
         return {it["url"] for g in app_mod.nav_groups_for(user, is_chief) for it in g["items"]}
 
     assert not (team_urls & urls(U("viewer"), False))    # ordinary staff: none
-    assert team_urls <= urls(U("viewer"), True)          # a section chief: all four
+    assert team_urls <= urls(U("viewer"), True)          # a section chief: all of them
     assert team_urls <= urls(U("admin"), False)          # admins always, chief flag or not
 
     # the search palette must make the same call, or the two drift apart
@@ -94,7 +94,7 @@ def test_chief_cap_gates_the_team_pages(app_mod):
 
     granted = urls(G("viewer", "awa"), False)
     assert "/work-arrangement/schedule" in granted
-    assert "/work-arrangement/approvals" not in granted
+    assert "/approvals" not in granted
     assert "/wellness/dashboard" not in granted
 
 

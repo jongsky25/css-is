@@ -1,5 +1,38 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-25 (v3.25 — one approvals inbox)
+
+The 30-day UX handoff showed the same 13-14 approvers opening
+`/wellness/approvals` and `/work-arrangement/approvals` one after the other
+from the home screen (35 + 35 trips). Both queues already gate on the same
+check (`storage.user_is_wellness_chief` *is* `user_is_approving_chief`).
+
+**`app.py`**
+- `GET /approvals` (`approvals_inbox`) — both queues, forbidden to
+  non-approvers; carries `ok` / `err` / `period` (the AWA "decided period"
+  ANNEX C link moved here).
+- `GET /wellness/approvals` and `/work-arrangement/approvals` keep their own
+  403 gate, then 303 to `/approvals#wellness` / `#awa` via `_inbox_url`, so
+  emails already sent and bookmarks still land in the right queue.
+- Both decide handlers redirect back to the inbox section.
+- Nav (both "Approvals" items), the bell, and the approval-request emails
+  point at the inbox.
+
+**Templates** — `approvals.html` (new page: per-queue counts as jump links, a
+non-empty queue first) and `_approvals.html` (the two queue tables as macros,
+lifted unchanged from the removed `wellness_approvals.html` /
+`work_arrangement_approvals.html`; the wellness table is now `resp-table`, so
+it stacks on a phone). `dash_layout.html`, `office_connect.html`,
+`wellness_hub.html`, `work_arrangement_hub.html`,
+`work_arrangement_schedule.html` link to the inbox.
+
+**`office_connect.py`**, **`send_reminders.py`** — home notes and the weekly
+digest link to the inbox sections.
+
+Tests: `tests/test_wellness.py` (inbox, redirects, gate, decide → inbox);
+URL assertions updated in `tests/test_search.py`, `tests/test_bureau_access.py`,
+`tests/test_notifications.py`, `tests/test_send_reminders.py`.
+
 ## 2026-09-25 (v3.24 — client errors say where they happened)
 
 All 9 client errors in the 30-day UX handoff read just "Error": the capture
