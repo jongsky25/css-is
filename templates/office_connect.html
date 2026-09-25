@@ -23,6 +23,26 @@
   .oc-me:hover h1, .oc-me:focus-visible h1 { text-decoration:underline; }
   .oc-me-cta { color:var(--accent); font-weight:700; }
   .oc-pet { text-align:center; flex:0 0 auto; }
+  .oc-todo { margin:0 0 1.3rem; }
+  .oc-todo h2 { font-size:1.05rem; margin:0 0 .6rem; }
+  .oc-tasks { list-style:none; margin:0; padding:0; display:grid; gap:.6rem;
+              grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); }
+  .oc-task a { display:grid; grid-template-columns:auto 1fr; align-items:start;
+               column-gap:.7rem; row-gap:.35rem; height:100%; box-sizing:border-box;
+               padding:.75rem .9rem; border-radius:14px; border:1px solid var(--line);
+               background:var(--surface); color:inherit; text-decoration:none; }
+  .oc-task .ic { grid-row:1 / span 2; }
+  .oc-task .cta { grid-column:2; align-self:end; }
+  .oc-task a:hover, .oc-task a:focus-visible { border-color:var(--accent); }
+  .oc-task .ic { font-size:1.3rem; line-height:1.2; }
+  .oc-task .tx { display:flex; flex-direction:column; gap:.1rem; min-width:0; }
+  .oc-task .tt { font-weight:700; font-size:.92rem; }
+  .oc-task .td { font-size:.8rem; color:var(--soft); }
+  .oc-task .cta { font-size:.8rem; font-weight:700; color:var(--accent); white-space:nowrap; }
+  .oc-task.t-todo a { border-left:4px solid var(--amber); }
+  .oc-task.t-wait a { border-left:4px solid var(--accent); }
+  .oc-task.t-done a { opacity:.75; }
+  .oc-task.t-done .cta { color:var(--green); }
   .oc-pet-edit { display:inline-block; margin-top:.25rem; font-size:.76rem; font-weight:700;
                  color:var(--accent); text-decoration:none; }
 
@@ -258,12 +278,35 @@
     {% endif %}
   </div>
 
+  {#-- ---------------- your to-do ----------------
+       What the person needs to do next, before any team analytics: the page
+       people land on most (523 views / 30 days) was leaving them to find
+       "apply", "file" and "approve" through the menus. --#}
+  {% if tasks %}
+  <section class="oc-todo" aria-labelledby="todo-h" data-tour="oc-todo">
+    <h2 id="todo-h">Your to-do</h2>
+    <ul class="oc-tasks">
+      {% for t in tasks %}
+      <li class="oc-task t-{{ t.tone }}">
+        <a href="{{ t.url }}">
+          <span class="ic" aria-hidden="true">{{ t.icon }}</span>
+          <span class="tx"><span class="tt">{{ t.title }}</span>
+            {% if t.detail %}<span class="td">{{ t.detail }}</span>{% endif %}</span>
+          <span class="cta">{% if t.tone == 'done' %}✓ {% endif %}{{ t.cta }} →</span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+  {% set task_keys = tasks|map(attribute='key')|list if tasks else [] %}
+
   {% if d %}
     {% if d.scope.kind != "none" and not me_view %}
     <p class="oc-scope">Showing <strong>{{ d.scope.label }}</strong>{% if d.scope.size %} — {{ d.scope.size }}
       {{ 'person' if d.scope.size == 1 else 'people' }}{% endif %}.</p>
     {% endif %}
-    {% for n in d.notes %}
+    {% for n in d.notes if not ('approvals' in task_keys and n.key in ('wellness_approvals', 'awa_approvals')) %}
       <div class="panel tint-{{ n.tone|default('blue') }}" style="margin-bottom:1rem;">
         {{ n.text }} <a href="{{ n.url }}">{{ n.cta }}</a>
       </div>

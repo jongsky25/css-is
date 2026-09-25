@@ -1731,3 +1731,17 @@ def test_the_schedule_points_at_the_upcoming_period_once_it_has_filings(wa_org, 
     row = next(x for x in st.work_arrangement_export_rows(o["conn"], nxt)
                if x["name"] == "WA-Test Staff0")
     assert row["arrangement"] == "WFH"
+
+
+def test_home_tasks_track_this_periods_filing(wa_org, app_mod):
+    """Not filed → a to-do with the deadline; filed → waiting on approval."""
+    import office_connect as oc
+    conn, emp = wa_org["conn"], wa_org["staff"][0]
+    u = st.get_admin_user_by_id(conn, emp)
+    user = {"id": u["id"], "username": u["username"], "role": u["role"]}
+    t = next(t for t in oc.home_tasks(conn, user) if t["key"] == "awa")
+    assert t["tone"] == "todo" and t["url"] == "/work-arrangement/file"
+    assert st.work_arrangement_period_label(_open()) in t["title"]
+    st.create_work_arrangement(conn, emp, _open(), "WFH", 4)
+    t = next(t for t in oc.home_tasks(conn, user) if t["key"] == "awa")
+    assert t["tone"] == "wait"

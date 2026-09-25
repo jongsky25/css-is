@@ -1032,3 +1032,21 @@ def test_remind_unfinished_refuses_once_the_window_has_lapsed(manager, db_path, 
     r = manager.post(f"/monitor/{tok}/remind-unfinished")
     assert r.status_code == 409 and "window" in r.json()["detail"] and sent_mail == []
     assert 'id="remindAll"' not in manager.get(f"/monitor/{tok}").text
+
+
+def test_home_tasks_link_an_organizers_open_activities_straight_to_monitor(app_mod, db_path):
+    """Skips the /css → /monitor hop: an organizer's own upcoming/ongoing
+    activities sit in their to-do with a direct Monitor link."""
+    import office_connect as oc
+    _eid, tok = _seed_remind_roster(db_path)
+    conn = st.connect(db_path)
+    try:
+        u = st.get_admin_user(conn, "manager@test.local")
+        tasks = oc.home_tasks(conn, {"id": u["id"], "username": u["username"],
+                                     "role": u["role"]})
+    finally:
+        conn.close()
+    urls = [t["url"] for t in tasks]
+    assert f"/monitor/{tok}" in urls
+    t = next(t for t in tasks if t["url"] == f"/monitor/{tok}")
+    assert "finished" in t["detail"]
