@@ -55,33 +55,37 @@
 <div class="panel">
   <h2 style="margin:.1rem 0 .3rem; font-size:1rem;">Temporary OIC — Wellness &amp; AWA approvals</h2>
   <p class="sec" style="margin:0 0 .8rem;">
-    When a section's chief is on leave, assign someone in that section as acting
-    OIC — they'll get wellness break and work arrangement requests for the
-    section routed to them alongside the chief, until you remove them. One
-    person at a time per section; picking someone new replaces whoever had it.
+    When a section's chief is on leave, assign someone to cover its wellness
+    break and work arrangement requests, alongside the chief, until you
+    remove them: either someone from that section as acting OIC, or the
+    section's own division chief — who decides as division chief, not as a
+    stand-in, since they already outrank the seat. One person at a time per
+    section; picking someone new replaces whoever had it.
   </p>
   <div class="table-wrap">
   <table class="resp-table">
-    <tr><th>Section</th><th>Acting OIC</th><th></th></tr>
+    <tr><th>Section</th><th>Covering</th><th></th></tr>
     {% for s in sections %}
     {% set current = section_oics.get(s.id) %}
     {% set eligible = section_accounts.get(s.id, []) %}
     <tr>
       <td data-label="Section"><strong>{{ s.name }}</strong></td>
-      <td data-label="Acting OIC">
-        {% if current %}<span class="pill active">{{ current.name }}</span>
+      <td data-label="Covering">
+        {% if current %}
+          <span class="pill active">{{ current.name }}</span>
+          <span class="sec">{{ "as division chief" if current.by_right else "acting OIC" }}</span>
         {% else %}<span class="sec">None assigned — the section chief decides as usual</span>{% endif %}
       </td>
       <td class="actions">
         {% if current %}
         <form method="post" action="/admin/users/section-oic/{{ s.id }}/clear" class="inline"
-              data-confirm="Remove {{ current.name }} as acting OIC for {{ s.name }}?">
+              data-confirm="Remove {{ current.name }} as {{ 'division chief' if current.by_right else 'acting OIC' }} for {{ s.name }}?">
           <button class="btn ghost" type="submit">Remove</button>
         </form>
         {% elif eligible %}
         <form method="post" action="/admin/users/section-oic/{{ s.id }}/set" class="inline"
-              data-confirm="Make this person the acting OIC for {{ s.name }}? Wellness and AWA requests from the section will start routing to them too.">
-          <select name="admin_user_id" aria-label="Pick an acting OIC for {{ s.name }}">
+              data-confirm="Make this person cover {{ s.name }}? Wellness and AWA requests from the section will start routing to them too.">
+          <select name="admin_user_id" aria-label="Pick who covers {{ s.name }}">
             {% for a in eligible %}<option value="{{ a.id }}">{{ a.name }}</option>{% endfor %}
           </select>
           <button class="btn ghost" type="submit">Assign</button>

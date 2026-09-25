@@ -19,46 +19,65 @@ import storage as st
 
 @pytest.fixture
 def org(app_mod):
-    """One section with a chief and two staff, plus a bare division chief
-    above it — enough to exercise both rungs of the escalation chain."""
+    """One section with a chief and two staff, a division chief above it and
+    a director above that — enough to exercise the whole escalation chain —
+    plus an outsider sitting in a wholly unrelated section, for testing that
+    a tampered POST naming someone genuinely unconnected is refused."""
     conn = st.connect(app_mod.DB)
     st.init_db(conn)
-    # section_oic rows reference admin_user (and org_unit) by foreign key, so
-    # they have to go before the accounts/units they point at.
-    conn.execute("DELETE FROM section_oic WHERE org_unit_id IN "
-                 "(SELECT id FROM org_unit WHERE path LIKE 'OICD%') "
-                 "OR admin_user_id IN "
-                 "(SELECT id FROM admin_user WHERE username LIKE 'oic-%@test.local')")
-    conn.execute("DELETE FROM wellness_claim WHERE user_id IN "
-                 "(SELECT id FROM admin_user WHERE username LIKE 'oic-%@test.local')")
-    conn.execute("DELETE FROM admin_user WHERE username LIKE 'oic-%@test.local'")
-    conn.execute("DELETE FROM resource_person WHERE name LIKE 'OIC-%'")
-    conn.execute("DELETE FROM org_unit WHERE path LIKE 'OICD%'")
-    conn.commit()
 
-    section_id = conn.execute(
+    def _wipe():
+        # section_oic rows reference admin_user (and org_unit) by foreign
+        # key, so they have to go before the accounts/units they point at.
+        # Run both before AND after: the fixture now mints a "Director"-rank
+        # account, and rank-3 lookups are GLOBAL (no org_path filter), so a
+        # leftover row here would leak into other test files' escalation
+        # assertions if it weren't cleaned up as soon as each test is done.
+        conn.execute("DELETE FROM section_oic WHERE org_unit_id IN "
+                     "(SELECT id FROM org_unit WHERE path LIKE 'OICD%') "
+                     "OR admin_user_id IN "
+                     "(SELECT id FROM admin_user WHERE username LIKE 'oic-%@test.local')")
+        conn.execute("DELETE FROM wellness_claim WHERE user_id IN "
+                     "(SELECT id FROM admin_user WHERE username LIKE 'oic-%@test.local')")
+        conn.execute("DELETE FROM admin_user WHERE username LIKE 'oic-%@test.local'")
+        conn.execute("DELETE FROM resource_person WHERE name LIKE 'OIC-%'")
+        conn.execute("DELETE FROM org_unit WHERE path LIKE 'OICD%'")
+        conn.commit()
+    _wipe()
+
+    office_id = conn.execute(
         "INSERT INTO org_unit(name, short_name, level, path) VALUES (?,?,?,?)",
-        ("Section One", "S1", "section", "OICD/Div/S1")).lastrowid
+        ("Office", "Off", "office", "OICD")).lastrowid
     division_id = conn.execute(
         "INSERT INTO org_unit(name, short_name, level, path) VALUES (?,?,?,?)",
         ("Division", "Div", "division", "OICD/Div")).lastrowid
+    section_id = conn.execute(
+        "INSERT INTO org_unit(name, short_name, level, path) VALUES (?,?,?,?)",
+        ("Section One", "S1", "section", "OICD/Div/S1")).lastrowid
+    outsider_unit_id = conn.execute(
+        "INSERT INTO org_unit(name, short_name, level, path) VALUES (?,?,?,?)",
+        ("Elsewhere", "Else", "section", "OICD-ELSEWHERE/Else")).lastrowid
 
-    def account(name, org_unit_id, designation=""):
+    def account(name, org_unit_id, designation=None, position=None):
         rp = conn.execute(
-            "INSERT INTO resource_person(name, is_internal, org_unit_id, designation)"
-            " VALUES (?,1,?,?)", (name, org_unit_id, designation)).lastrowid
+            "INSERT INTO resource_person(name, is_internal, org_unit_id, designation, "
+            "position) VALUES (?,1,?,?,?)", (name, org_unit_id, designation, position)).lastrowid
         return st.create_admin_user(conn, f"oic-{name.lower()}@test.local",
                                     "x", "y", "viewer", rp_id=rp)
 
     out = {
         "conn": conn, "section_id": section_id, "division_id": division_id,
+        "office_id": office_id,
+        "director": account("OIC-Director", office_id, None, "Director"),
         "chief": account("OIC-Chief", section_id, "Section Head"),
         "staff": account("OIC-Staff", section_id),
         "deputy": account("OIC-Deputy", section_id),         # eligible delegate, no seat
         "div_chief": account("OIC-DivChief", division_id, "Division Chief"),
+        "outsider": account("OIC-Outsider", outsider_unit_id),   # unrelated section
     }
     conn.commit()
     yield out
+    _wipe()
     conn.close()
 
 
@@ -161,6 +180,43 @@ def test_a_delegate_can_stand_in_for_a_division_chief_too(org):
     assert set(approvers) == {org["div_chief"], org["deputy"]}
 
 
+# --- the division chief as a section's OIC ------------------------------------
+
+def test_the_division_chief_may_cover_one_of_their_own_sections(org):
+    """A section's parent division chief is a legitimate pick too -- not just
+    someone from the section itself."""
+    conn = org["conn"]
+    st.set_section_oic(conn, org["section_id"], org["div_chief"], set_by=org["div_chief"])
+    approvers = st.get_approvers_for(conn, org["staff"])
+    assert set(approvers) == {org["chief"], org["div_chief"]}
+
+
+def test_the_division_chiefs_own_request_is_unaffected_by_covering_a_section(org):
+    """Covering a section doesn't change how the division chief's OWN request
+    is decided -- they already outrank the seat, so it keeps escalating
+    through their real rank (division chief -> Director), exactly as if they
+    held no OIC assignment at all.
+
+    Rank-3 lookups are bureau-wide (see _org_accounts_at_rank), so in a
+    full-suite run other files' fixtures may leave other Director-ranked
+    accounts lying around — assert membership/substring rather than an exact
+    match, the same way test_wellness.py's escalation tests do."""
+    conn = org["conn"]
+    assert org["director"] in st.get_approvers_for(conn, org["div_chief"])
+    st.set_section_oic(conn, org["section_id"], org["div_chief"], set_by=org["div_chief"])
+    assert org["director"] in st.get_approvers_for(conn, org["div_chief"])
+    assert "OIC-Director" in (st.approver_name_for(conn, org["div_chief"]) or "")
+    assert st.approver_title_for(conn, org["div_chief"]) == "the Director"
+
+
+def test_get_section_oic_flags_by_right_for_the_division_chief(org):
+    conn = org["conn"]
+    st.set_section_oic(conn, org["section_id"], org["deputy"], set_by=org["div_chief"])
+    assert st.get_section_oic(conn, org["section_id"])["by_right"] is False
+    st.set_section_oic(conn, org["section_id"], org["div_chief"], set_by=org["div_chief"])
+    assert st.get_section_oic(conn, org["section_id"])["by_right"] is True
+
+
 # --- the admin routes --------------------------------------------------------
 
 def test_an_admin_can_assign_and_it_is_audited(app_mod, org):
@@ -196,18 +252,43 @@ def test_only_user_managers_may_assign_a_delegate(app_mod, org):
     assert st.get_section_oic(conn, org["section_id"]) is None
 
 
-def test_the_picked_account_must_actually_belong_to_that_section(app_mod, org):
-    """Defense in depth against a tampered POST: an account from a different
-    section (or no account at all) is refused, not silently accepted."""
+def test_the_picked_account_must_belong_to_the_section_or_chief_its_division(app_mod, org):
+    """Defense in depth against a tampered POST: an account from an unrelated
+    section (or no account at all) is refused, not silently accepted -- the
+    section's OWN parent division chief is the one exception (see
+    test_an_admin_can_assign_the_division_chief_over_http)."""
     conn = org["conn"]
     admin = st.create_admin_user(conn, "oic-admin2@test.local", "x", "y", "admin")
     conn.commit()
     c = _client(app_mod, conn, admin)
     r = c.post(f"/admin/users/section-oic/{org['section_id']}/set",
-               data={"admin_user_id": org["div_chief"]}, follow_redirects=False)
+               data={"admin_user_id": org["outsider"]}, follow_redirects=False)
     assert r.status_code == 303
     assert "err=" in r.headers["location"]
     assert st.get_section_oic(conn, org["section_id"]) is None
+
+
+def test_an_admin_can_assign_the_division_chief_over_http(app_mod, org):
+    conn = org["conn"]
+    admin = st.create_admin_user(conn, "oic-admin4@test.local", "x", "y", "admin")
+    conn.commit()
+    c = _client(app_mod, conn, admin)
+
+    html = c.get("/admin/users").text
+    assert f'<option value="{org["div_chief"]}">OIC-DivChief (Division Chief)</option>' in html
+
+    r = c.post(f"/admin/users/section-oic/{org['section_id']}/set",
+               data={"admin_user_id": org["div_chief"]}, follow_redirects=False)
+    assert r.status_code == 303
+    assert "msg=" in r.headers["location"]
+    current = st.get_section_oic(conn, org["section_id"])
+    assert current["admin_user_id"] == org["div_chief"]
+    assert current["by_right"] is True
+
+    row = conn.execute(
+        "SELECT summary FROM audit_log WHERE action='set_section_oic' "
+        "ORDER BY id DESC LIMIT 1").fetchone()
+    assert row and row[0].startswith("Division chief for Section One:")
 
 
 def test_the_chief_is_not_offered_as_their_own_sections_delegate(app_mod, org):
