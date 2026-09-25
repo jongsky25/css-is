@@ -1,5 +1,32 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-25 (v3.24 — client errors say where they happened)
+
+All 9 client errors in the 30-day UX handoff read just "Error": the capture
+sent name + message, but no location, and neither the digest nor the handoff
+showed the message.
+
+**`static/js/telemetry.js`** — `errorMeta()` adds `source` (same-origin →
+masked path, query dropped; otherwise `external:<host>` only), `line`, `col`,
+and up to 3 `frames` ("fn /path:line:col", parsed from V8 and Firefox/Safari
+stacks). The `error` listener is now capture-phase so a failed `<script>` or
+stylesheet load is recorded as `ResourceError`. Unhandled rejections carry
+their stack frames.
+
+**`ui_telemetry.py`** — `clean_error_source`, `clean_error_frames` (each frame
+re-validated against that one shape, else dropped), `clean_line_number`,
+`error_location`. `errors_by_route` groups by route + name + message +
+location (falling back to the top frame) and carries `message`, `location`,
+`frames`.
+
+**`app.py`** (`_clean_telemetry_meta`) and **`ux_handoff.py`**
+(`_resanitize`) run those cleaners at ingest and at export. The handoff's
+"Client errors" table gains message + location columns and a top-frames list;
+**`templates/ux_insights.html`** shows message + location.
+
+Tests: `tests/test_ui_telemetry.py`, `tests/test_telemetry_ingest.py`,
+`tests/test_ux_handoff.py`.
+
 ## 2026-09-25 (v3.23 — "Remind N not finished" on Monitor)
 
 Spot Feedback (Sept 23): "I want to add a reminder feature for the

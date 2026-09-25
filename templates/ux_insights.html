@@ -27,6 +27,7 @@
   .opp-route { font-family:monospace; font-size:.84rem; }
   .opp-score { font-weight:800; font-variant-numeric:tabular-nums; }
   .opp-signals { display:flex; gap:.5rem; flex-wrap:wrap; font-size:.78rem; color:var(--soft); }
+  .err-loc { font-size:.74rem; color:var(--soft); word-break:break-all; }
   .opp-hint { color:var(--soft); font-size:.84rem; margin-top:.3rem; }
   .opp-fb { color:var(--amber); font-size:.82rem; margin-top:.25rem; }
   .side-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1rem; }
@@ -163,7 +164,8 @@
       {% if digest.errors %}
       <ul class="side-list">
         {% for e in digest.errors %}
-        <li><span class="k">{{ e.route }} — {{ e.name }}</span><span class="v">{{ e.count }}×</span></li>
+        <li><span class="k">{{ e.route }} — {{ e.name }}{% if e.message %}: {{ e.message }}{% endif %}
+          {% if e.location %}<br><code class="err-loc">{{ e.location }}</code>{% endif %}</span><span class="v">{{ e.count }}×</span></li>
         {% endfor %}
       </ul>
       {% else %}<p class="empty">None recorded in this window.</p>{% endif %}

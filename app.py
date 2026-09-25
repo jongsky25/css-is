@@ -3626,6 +3626,18 @@ def _clean_telemetry_meta(meta):
     if isinstance(meta.get("fields"), int) and not isinstance(meta.get("fields"), bool):
         # form_abandon: how many fields were touched — a count, never contents.
         out["fields"] = max(1, min(meta["fields"], 500))
+    # client_error: where it happened (ui_telemetry.clean_error_* re-validate
+    # the shape; a line number is code position, never user data).
+    src = ui_tel.clean_error_source(meta.get("source"))
+    if src:
+        out["source"] = src
+    for k in ("line", "col"):
+        n = ui_tel.clean_line_number(meta.get(k))
+        if n:
+            out[k] = n
+    frames = ui_tel.clean_error_frames(meta.get("frames"))
+    if frames:
+        out["frames"] = frames
     if meta.get("interactive") is True:
         # rage_click: the burst landed on a real control (telemetry.js).
         out["interactive"] = True

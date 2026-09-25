@@ -17,10 +17,25 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.23"
+APP_VERSION = "3.24"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.24",
+        "date": "September 25, 2026",
+        "summary": "UX Insights (Administrator) now shows where each "
+                   "on-screen error happened, not just that one did.",
+        "changes": [
+            "Client errors in UX Insights and its downloadable handoff now "
+            "carry the error message, the file and line it came from, and "
+            "the first few steps that led to it — enough to find and fix the "
+            "bug. Before, each one only said \"Error\".",
+            "A script or stylesheet that fails to load is now recorded too.",
+            "As before, nothing anyone typed is ever captured, and scripts from "
+            "outside Office Connect are recorded by their site name only.",
+        ],
+    },
     {
         "version": "3.23",
         "date": "September 25, 2026",

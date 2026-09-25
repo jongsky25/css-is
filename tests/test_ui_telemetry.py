@@ -280,3 +280,47 @@ def test_resolved_exact_element_feedback_attaches_without_boost():
     assert o["feedback"][0]["exact"] is True
     assert o["score"] == 3
     assert "may not have landed" in o["hint"]
+
+
+# ---- client_error location ----------------------------------------------------
+
+def test_clean_error_source_keeps_masked_paths_and_bare_external_hosts():
+    assert ui_tel.clean_error_source("/static/js/app.js") == "/static/js/app.js"
+    assert ui_tel.clean_error_source("/monitor/482/x.js") == "/monitor/{id}/x.js"
+    assert ui_tel.clean_error_source("external:cdn.jsdelivr.net") == "external:cdn.jsdelivr.net"
+    # a full third-party URL, or anything else, is never kept
+    assert ui_tel.clean_error_source("https://evil.example/a.js?u=me") is None
+    assert ui_tel.clean_error_source("external:a.b/path?q=1") is None
+    assert ui_tel.clean_error_source(42) is None
+
+
+def test_clean_error_frames_revalidates_each_frame():
+    frames = ["saveBreak /static/js/app.js:12:5",
+              "HTMLButtonElement.onclick /monitor/482:1:47",
+              "leak juan@example.com:1:1",                       # wrong shape -> dropped
+              "a /x.js:1:1"]                                     # 4th -> over the cap
+    assert ui_tel.clean_error_frames(frames) == [
+        "saveBreak /static/js/app.js:12:5",
+        "HTMLButtonElement.onclick /monitor/{id}:1:47"]
+    assert ui_tel.clean_error_frames("nope") is None
+
+
+def test_errors_group_by_message_and_location():
+    rows = [
+        _ev("client_error", route="/", meta={"name": "TypeError", "message": "x is undefined",
+                                             "source": "/static/js/a.js", "line": 3, "col": 9,
+                                             "frames": ["f /static/js/a.js:3:9"]}),
+        _ev("client_error", route="/", meta={"name": "TypeError", "message": "x is undefined",
+                                             "source": "/static/js/a.js", "line": 3, "col": 9}),
+        _ev("client_error", route="/", meta={"name": "TypeError", "message": "y is null",
+                                             "source": "/static/js/b.js", "line": 7}),
+        # an unhandled rejection: no filename, so its top frame is the location
+        _ev("client_error", route="/", meta={"name": "Error", "message": "boom",
+                                             "frames": ["g /static/js/c.js:2:4"]}),
+    ]
+    errs = {(e["message"]): e for e in ui_tel.errors_by_route(rows)}
+    assert errs["x is undefined"]["count"] == 2
+    assert errs["x is undefined"]["location"] == "/static/js/a.js:3:9"
+    assert errs["x is undefined"]["frames"] == ["f /static/js/a.js:3:9"]
+    assert errs["y is null"]["location"] == "/static/js/b.js:7"
+    assert errs["boom"]["location"] == "/static/js/c.js:2:4"

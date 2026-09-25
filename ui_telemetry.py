@@ -169,17 +169,98 @@ def empty_search_terms(rows, limit=15):
     return out[:limit]
 
 
+# ── client_error location (script + line + top stack frames) ─────────────────
+# Without these every error arrived as a bare "Error" nobody could act on. A
+# location is code, not personal data, but it is still re-validated here: a
+# same-origin script is kept as its masked path, anything else as
+# "external:<host>" only (no third-party URL, query or fragment ever kept), and
+# a frame must match the one shape the capture script builds or it is dropped.
+
+_EXTERNAL_RE = re.compile(r"^external:[A-Za-z0-9.-]{1,120}(:\d{1,5})?$")
+_FRAME_RE = re.compile(
+    r"^([A-Za-z0-9_$.<>\[\] -]{1,80}) "
+    r"((?:/[A-Za-z0-9_./{}~-]{0,200})|external:[A-Za-z0-9.-]{1,120}(?::\d{1,5})?):"
+    r"(\d{1,7}):(\d{1,7})$")
+MAX_FRAMES = 3
+
+
+def clean_error_source(src):
+    """A script location: a same-origin path (masked like a route, query
+    dropped) or "external:<host>". Anything else -> None."""
+    if not isinstance(src, str):
+        return None
+    src = src.strip()[:300]
+    if _EXTERNAL_RE.match(src):
+        return src
+    if src.startswith("/"):
+        return mask_route(src)
+    return None
+
+
+def clean_error_frames(frames):
+    """Up to MAX_FRAMES "fn /path:line:col" strings, each re-validated against
+    the exact shape telemetry.js emits; a frame that doesn't match is dropped."""
+    if not isinstance(frames, list):
+        return None
+    out = []
+    for f in frames[:MAX_FRAMES]:
+        if not isinstance(f, str):
+            continue
+        m = _FRAME_RE.match(f.strip())
+        if not m:
+            continue
+        fn, where, line, col = m.groups()
+        where = where if where.startswith("external:") else mask_route(where)
+        out.append(f"{fn} {where}:{line}:{col}")
+    return out or None
+
+
+def clean_line_number(v):
+    if isinstance(v, bool) or not isinstance(v, int):
+        return None
+    return v if 0 < v <= 10_000_000 else None
+
+
+def error_location(meta):
+    """"<source>:<line>:<col>" (or as much as is known), or None."""
+    meta = meta or {}
+    src = meta.get("source")
+    if not src:
+        return None
+    loc = src
+    if meta.get("line"):
+        loc += f":{meta['line']}"
+        if meta.get("col"):
+            loc += f":{meta['col']}"
+    return loc
+
+
 def errors_by_route(rows, limit=15):
-    """Client errors grouped by route + error name."""
-    counts = {}
+    """Client errors grouped by route + error name + message + location, so two
+    different bugs on one screen stay two rows. Carries the first stack frames
+    seen for each group."""
+    groups = {}
     for r in rows:
         if r["event_type"] != "client_error":
             continue
-        name = (r.get("meta") or {}).get("name") or "Error"
-        key = (r["route"], name)
-        counts[key] = counts.get(key, 0) + 1
-    out = [{"route": route, "name": name, "count": c} for (route, name), c in counts.items()]
-    out.sort(key=lambda x: -x["count"])
+        meta = r.get("meta") or {}
+        name = meta.get("name") or "Error"
+        message = meta.get("message")
+        location = error_location(meta)
+        if not location and meta.get("frames"):
+            # an unhandled rejection has no filename/lineno — its top frame is
+            # the best location there is
+            location = meta["frames"][0].split(" ", 1)[-1]
+        key = (r["route"], name, message, location)
+        g = groups.get(key)
+        if not g:
+            g = groups[key] = {"route": r["route"], "name": name, "message": message,
+                               "location": location, "frames": meta.get("frames"),
+                               "count": 0}
+        g["count"] += 1
+        if not g["frames"] and meta.get("frames"):
+            g["frames"] = meta["frames"]
+    out = sorted(groups.values(), key=lambda x: -x["count"])
     return out[:limit]
 
 
