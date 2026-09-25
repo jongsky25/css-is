@@ -40,6 +40,11 @@
               'sharing' if path.startswith('/admin/sharing') else
               'feedback' if path.startswith('/admin/feedback') else
               'ops' if path == '/ops' else '') %}
+{# The menu highlight only. The four Insights tabs besides Pulse have no menu
+   entry of their own (in_nav False), so the one "Insights" entry (key "pulse")
+   lights up for all five. `cur` itself stays the page's own key — saved views,
+   the page tour and PAGE_KEY are all keyed on it, per page. #}
+{% set nav_cur = 'pulse' if cur in ('people', 'teams', 'trends', 'participation') else cur %}
 {# Menus + search palette both render from nav_groups_for/search_index_for in
    app.py — one source of truth, so they can never drift apart. #}
 {% set nav_groups = nav_groups_for(u, request.state.is_chief) %}
@@ -50,7 +55,7 @@
 
     <div class="navgroups">
       {% for g in nav_groups %}
-      {% set group_cur = g['items'] | selectattr('key', 'equalto', cur) | list | length > 0 %}
+      {% set group_cur = g['items'] | selectattr('key', 'equalto', nav_cur) | list | length > 0 %}
       <details class="navgroup {{ 'current' if group_cur }}">
         <summary>{{ g.name }}</summary>
         <div class="menu">
@@ -60,7 +65,7 @@
           {% for sec in g['sections'] %}
           {% if sec.name %}<div class="msec">{{ sec.name }}</div>{% endif %}
           {% for it in sec['items'] %}
-          <a href="{{ it.url }}" {% if cur == it.key %}aria-current="page"{% endif %}>{{ it.label }}
+          <a href="{{ it.url }}" {% if nav_cur == it.key %}aria-current="page"{% endif %}>{{ it.label }}
             <span class="mhint">{{ it.hint }}</span></a>
           {% endfor %}
           {% endfor %}
@@ -78,7 +83,7 @@
         {% for sec in g['sections'] %}
         {% if sec.name %}<div class="msec">{{ sec.name }}</div>{% endif %}
         {% for it in sec['items'] %}
-        <a href="{{ it.url }}" {% if cur == it.key %}aria-current="page"{% endif %}>{{ it.label }}</a>
+        <a href="{{ it.url }}" {% if nav_cur == it.key %}aria-current="page"{% endif %}>{{ it.label }}</a>
         {% endfor %}
         {% endfor %}
         {% endfor %}

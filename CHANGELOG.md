@@ -1,5 +1,32 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-25 (v3.28 — the CSS dashboards as one tabbed Insights page)
+
+The 30-day UX handoff: five separate CSS menu entries for the dashboards —
+Pulse 19 views, People 30, Participation 21, Teams 7, Trends 3 — each a
+menu round trip away from the next.
+
+**`templates/_insights.html`** — `insights_header(active)`: an "Insights"
+kicker, the tab's title, and a tab bar (Pulse · People · Participation ·
+Teams · Trends, ordered by use; `aria-current` on the active one). Tabs carry
+`org` everywhere and `period` among the four tabs that share its vocabulary —
+Pulse's `win` (all / ytd / quarter / d30) is neither carried in nor out.
+Scrolls sideways on a phone rather than wrapping.
+
+**`pulse.html`, `people.html`, `participation.html`, `teams.html`,
+`trends.html`** — `page_header("X")` → `insights_header("x")`; titles read
+"Insights · X". Each tab is still its own page at its own URL, so links,
+exports and drill-downs are unchanged.
+
+**`app.py`** (`NAV_GROUPS`) — the Pulse entry is labelled "Insights"; People,
+Teams, Trends and Participation keep their keys (still AI-navigate
+destinations) but are `in_nav: False`, so the search palette still lists
+them. **`dash_layout.html`** — a separate `nav_cur` lights the Insights entry
+on all five; `cur` stays each page's own key, since saved views, the page tour
+and `PAGE_KEY` are keyed on it.
+
+Tests: `tests/test_insights_tabs.py`.
+
 ## 2026-09-25 (v3.27 — "Your to-do" leads the home screen)
 
 The 30-day UX handoff: `/` is the most-visited screen (523 views, 33 users)

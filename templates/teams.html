@@ -1,8 +1,9 @@
 {% extends "dash_layout.html" %}
+{% from "_insights.html" import insights_header with context %}
 {% from "_components.html" import page_header %}
 {% import "_unit_badges.html" as ub %}
 {% import "_export.html" as ex %}
-{% block title %}Teams{% endblock %}
+{% block title %}Insights · Teams{% endblock %}
 {% block content %}
 <style>
   .timefilter { display:flex; align-items:center; flex-wrap:wrap; gap:.4rem; margin:0 0 1.2rem; }
@@ -61,7 +62,7 @@
 {% endmacro %}
 
 <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem;">
-  {{ page_header("Teams") }}
+  {{ insights_header("teams") }}
   {{ ex.download('/dashboard/export?visual=teams_index&period=' ~ sel_period, 'Download') }}
 </div>
 <p class="lede">How each unit's activities are landing — a coaching read for the whole bureau, each division, and each section. Open one to see its strengths, where to focus next, how it's trending, how it stands among its peers, and the badges it has earned.</p>
