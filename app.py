@@ -1991,6 +1991,36 @@ async def _metrics_gate(request: Request, call_next):
         mon.record(request.method, request.url.path, status, dur_ms,
                    ip=request.client.host if request.client else None,
                    user=user["username"] if user else None)
+        if user and status >= 400 and status != 401:
+            _record_http_error(request, user, status)
+
+
+# Paths whose failures say nothing about a staff task: assets, the telemetry
+# beacon itself, and the live-count stream (a dropped SSE connection).
+_HTTP_ERROR_SKIP = ("/static/", "/telemetry", "/favicon", "/sw.js", "/manifest",
+                    "/api/monitor/")
+
+
+def _record_http_error(request, user, status):
+    """A 403 / 404 / 5xx a signed-in person actually hit, as a ui_event
+    (http_error) — the page-level failures the browser-side telemetry can't
+    see, because they ARE the page. Best-effort: never alters the response."""
+    path = request.url.path
+    if path.startswith(_HTTP_ERROR_SKIP):
+        return
+    try:
+        conn = get_conn()
+        try:
+            st.create_ui_events(conn, [{
+                "user_id": user.get("id"), "role": user.get("role"),
+                "session_id": "server", "event_type": "http_error",
+                "route": ui_tel.mask_route(path),
+                "meta": _stamp_version({"status": status, "method": request.method}),
+            }])
+        finally:
+            conn.close()
+    except Exception:                  # noqa: BLE001 — telemetry must never break a request
+        pass
 
 
 @app.exception_handler(Exception)
@@ -3641,7 +3671,28 @@ def _clean_telemetry_meta(meta):
     if meta.get("interactive") is True:
         # rage_click: the burst landed on a real control (telemetry.js).
         out["interactive"] = True
-    return {k: v for k, v in out.items() if v} or None
+    # search: how many results came back (0 is the point, so it must survive
+    # the empty-value filter below — hence `is not None`).
+    hits = meta.get("hits")
+    if isinstance(hits, int) and not isinstance(hits, bool):
+        out["hits"] = max(0, min(hits, 100_000))
+    # page_timing: navigation timings in whole milliseconds, capped at 10 min.
+    for k in ("ttfb_ms", "dom_ms", "load_ms"):
+        v = meta.get(k)
+        if isinstance(v, int) and not isinstance(v, bool) and 0 <= v <= 600_000:
+            out[k] = v
+    # pageview: viewport class — one of a fixed vocabulary, nothing finer.
+    if meta.get("vp") in ui_tel.VIEWPORTS:
+        out["vp"] = meta["vp"]
+    return {k: v for k, v in out.items() if v is not None and v != ""} or None
+
+
+def _stamp_version(meta):
+    """Every stored event carries the app version that received it, so a spike
+    in the handoff lines up with the deploy behind it."""
+    out = dict(meta or {})
+    out["v"] = ver.APP_VERSION
+    return out
 
 
 @app.post("/telemetry")
@@ -3674,7 +3725,7 @@ async def telemetry_ingest(request: Request):
             "component": component.strip()[:120] if isinstance(component, str) and component.strip() else None,
             "element_selector": ui_tel.sanitize_selector(e.get("element_selector")),
             "element_text": ui_tel.sanitize_text(e.get("element_text"), max_len=300),
-            "meta": _clean_telemetry_meta(e.get("meta")),
+            "meta": _stamp_version(_clean_telemetry_meta(e.get("meta"))),
         })
 
     if rows:

@@ -9,6 +9,15 @@ raw (unmasked) text — the defense-in-depth the doc calls out as the single mos
 important thing a naive port could get wrong.
 """
 import storage as st
+import version as ver
+
+
+def _meta(row):
+    """A stored event's meta minus the server's version stamp (every ingested
+    event carries meta.v since v3.26 — asserted here once per call)."""
+    m = dict(row["meta"] or {})
+    assert m.pop("v") == ver.APP_VERSION
+    return m or None
 
 
 def _reset(conn):
@@ -136,8 +145,8 @@ def test_telemetry_form_abandon_keeps_field_count_only(viewer, db_path):
         assert r.status_code == 204
         rows = st.list_ui_events(conn)
         assert len(rows) == 2
-        assert rows[1]["meta"] == {"fields": 4}       # newest first; oldest last
-        assert rows[0]["meta"] == {"fields": 500}     # clamped
+        assert _meta(rows[1]) == {"fields": 4}       # newest first; oldest last
+        assert _meta(rows[0]) == {"fields": 500}     # clamped
     finally:
         _reset(conn); conn.close()
 
@@ -155,8 +164,8 @@ def test_telemetry_rage_click_keeps_interactive_flag_only_when_true(viewer, db_p
         ]})
         assert r.status_code == 204
         rows = st.list_ui_events(conn)
-        assert rows[1]["meta"] == {"interactive": True}
-        assert rows[0]["meta"] is None
+        assert _meta(rows[1]) == {"interactive": True}
+        assert _meta(rows[0]) is None
     finally:
         _reset(conn); conn.close()
 
@@ -178,10 +187,51 @@ def test_telemetry_client_error_keeps_a_validated_location(viewer, db_path):
         ]})
         assert r.status_code == 204
         rows = st.list_ui_events(conn)
-        assert rows[1]["meta"] == {"name": "TypeError", "message": "pet is null",
+        assert _meta(rows[1]) == {"name": "TypeError", "message": "pet is null",
                                    "source": "/static/js/avatars.js", "line": 612, "col": 9,
                                    "frames": ["careClick /static/js/avatars.js:612:9"]}
-        assert rows[0]["meta"] == {"name": "Error"}
+        assert _meta(rows[0]) == {"name": "Error"}
+    finally:
+        _reset(conn); conn.close()
+
+
+def test_telemetry_new_measurement_fields_survive_ingest(viewer, db_path):
+    """v3.26: search hits (0 included), page timings, the viewport class —
+    each validated; anything outside the vocabulary or range is dropped."""
+    conn = st.connect(db_path); st.init_db(conn); _reset(conn)
+    try:
+        r = viewer.post("/telemetry", json={"events": [
+            {"event_type": "search", "route": "/people", "session_id": "s1",
+             "meta": {"hits": 0}},
+            {"event_type": "page_timing", "route": "/", "session_id": "s1",
+             "meta": {"ttfb_ms": 120, "dom_ms": 800, "load_ms": 1400, "junk": "x"}},
+            {"event_type": "pageview", "route": "/", "session_id": "s1",
+             "meta": {"vp": "phone"}},
+            {"event_type": "pageview", "route": "/", "session_id": "s1",
+             "meta": {"vp": "iPhone 15 Pro", "load_ms": -5}},
+            {"event_type": "http_error", "route": "/", "session_id": "s1",
+             "meta": {"status": 500}},                      # server-only: refused
+        ]})
+        assert r.status_code == 204
+        rows = st.list_ui_events(conn)[::-1]                # oldest first
+        assert [x["event_type"] for x in rows] == ["search", "page_timing", "pageview", "pageview"]
+        assert _meta(rows[0]) == {"hits": 0}
+        assert _meta(rows[1]) == {"ttfb_ms": 120, "dom_ms": 800, "load_ms": 1400}
+        assert _meta(rows[2]) == {"vp": "phone"}
+        assert _meta(rows[3]) is None
+    finally:
+        _reset(conn); conn.close()
+
+
+def test_server_records_http_errors_signed_in_people_hit(viewer, db_path):
+    conn = st.connect(db_path); st.init_db(conn); _reset(conn)
+    try:
+        assert viewer.get("/admin/users").status_code == 403
+        assert viewer.get("/static/js/does-not-exist.js").status_code == 404   # skipped
+        rows = st.list_ui_events(conn)
+        assert [(x["event_type"], x["route"]) for x in rows] == [("http_error", "/admin/users")]
+        assert _meta(rows[0]) == {"status": 403, "method": "GET"}
+        assert rows[0]["role"] == "viewer"
     finally:
         _reset(conn); conn.close()
 

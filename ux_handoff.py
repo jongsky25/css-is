@@ -89,7 +89,7 @@ def events_per_day(rows):
 def event_type_counts(rows):
     """Total events per type, every vocabulary type present (0 for silent ones —
     an analyst should see 'form_abandon: 0' and know the detector exists)."""
-    out = {t: 0 for t in sorted(ui_tel.UI_EVENT_TYPES)}
+    out = {t: 0 for t in sorted(ui_tel.UI_EVENT_TYPES | ui_tel.SERVER_EVENT_TYPES)}
     for r in rows:
         if r["event_type"] in out:
             out[r["event_type"]] += 1
@@ -289,6 +289,12 @@ def build_handoff(rows, feedback, *, window_days, now, app_version, generated_at
         "route_handlers": route_handlers,
         "failed_searches": digest["failed_searches"],
         "errors": digest["errors"],
+        "outcomes": digest["outcomes"],
+        "search": digest["search"],
+        "speed": digest["speed"],
+        "devices": digest["devices"],
+        "screens_by_role": ui_tel.screens_by_role(rows),
+        "versions": ui_tel.events_by_version(rows),
         "sample_events": pseudonymize_events(rows) if include_sample else [],
     }
 
@@ -369,7 +375,26 @@ def render_handoff_markdown(payload):
                           "meta has name + sanitized message", p["event_type_counts"]["client_error"]],
          ["form_abandon", "A form left with unsaved edits when the page was left; "
                           "meta.fields is how many fields were touched (never their "
-                          "contents)", p["event_type_counts"]["form_abandon"]]]))
+                          "contents)", p["event_type_counts"]["form_abandon"]],
+         ["form_submit", "A form submitted (the other half of form_abandon — "
+                         "together they give an abandon rate)",
+          p["event_type_counts"]["form_submit"]],
+         ["form_error", "A page that came back showing an error banner — a "
+                        "submitted task that didn't go through; meta.from is the "
+                        "screen it came from (the message is never recorded)",
+          p["event_type_counts"]["form_error"]],
+         ["http_error", "Recorded by the SERVER: a 403 / 404 / 5xx a signed-in "
+                        "person hit; meta.status", p["event_type_counts"]["http_error"]],
+         ["search", "Every completed search, with meta.hits = how many results "
+                    "(no term; the empty ones are also search_empty, with theirs)",
+          p["event_type_counts"]["search"]],
+         ["page_timing", "How long a page took: meta.ttfb_ms / dom_ms / load_ms "
+                         "from the browser's navigation timing",
+          p["event_type_counts"]["page_timing"]]]))
+    add("\nSince v3.26 every event also carries `meta.v`, the app version that "
+        "received it, and every pageview `meta.vp` (phone / tablet / desktop). "
+        "Events recorded earlier have neither, and the new event types start "
+        "from that release — early windows will read low on them.")
     add("\n### Sanitization semantics\n")
     add("- Routes are patterns, never concrete URLs: numeric ids → `{id}`, hex "
         "tokens → `{token}`, date segments → `{date}`; query strings and "
@@ -424,7 +449,7 @@ def render_handoff_markdown(payload):
     add(_table(["route", "exits"], [[e["route"], e["exits"]] for e in p["dead_ends"]])
         if p["dead_ends"] else "Not enough sessions yet.")
     add("\n### 5.4 Events per day\n")
-    day_types = sorted(ui_tel.UI_EVENT_TYPES)
+    day_types = sorted(ui_tel.UI_EVENT_TYPES | ui_tel.SERVER_EVENT_TYPES)
     add(_table(["day"] + day_types + ["total"],
                [[d["day"]] + [d.get(t, 0) for t in day_types] + [d["total"]]
                 for d in p["events_per_day"]])
@@ -483,7 +508,72 @@ def render_handoff_markdown(payload):
     else:
         add("None recorded in this window.")
 
-    add("\n## 10. Appendix — sampled raw events (pseudonymized)\n")
+    add("\n## 10. Task outcomes by screen\n")
+    if p["outcomes"]:
+        add("Forms submitted vs. left with unsaved edits (abandon rate = "
+            "abandons ÷ (submits + abandons)), pages that came back showing an "
+            "error banner, and HTTP errors the server returned to signed-in "
+            "people. Worst first.\n")
+        add(_table(["route", "submits", "abandons", "abandon %", "error banners",
+                    "HTTP errors"],
+                   [[o["route"], o["submits"], o["abandons"],
+                     "—" if o["abandon_rate"] is None else f"{o['abandon_rate']}%",
+                     o["form_errors"],
+                     ", ".join(f"{k}×{v}" for k, v in sorted(o["http_errors"].items())) or "—"]
+                    for o in p["outcomes"]]))
+    else:
+        add("None recorded in this window.")
+
+    add("\n## 11. Search\n")
+    sr = p["search"]
+    if sr["total"]:
+        add(f"{sr['total']} searches, {sr['empty']} with no results "
+            f"({sr['empty_rate']}% empty).\n")
+        add(_table(["route", "searches", "empty", "empty %"],
+                   [[e["route"], e["searches"], e["empty"],
+                     "—" if e["empty_rate"] is None else f"{e['empty_rate']}%"]
+                    for e in sr["by_route"]]))
+    else:
+        add("No searches recorded in this window.")
+
+    add("\n## 12. Page speed and devices\n")
+    if p["speed"]:
+        add("Browser-measured, per screen with at least 3 loads; slowest 90th "
+            "percentile first.\n")
+        add(_table(["route", "loads", "median load (ms)", "p90 load (ms)",
+                    "median first byte (ms)"],
+                   [[e["route"], e["samples"], e["load_median_ms"], e["load_p90_ms"],
+                     e["ttfb_median_ms"]] for e in p["speed"]]))
+    else:
+        add("No page timings recorded in this window.")
+    dv = p["devices"]
+    seen = sum(dv["counts"].values())
+    if seen:
+        add("\nPageviews by device: " + ", ".join(
+            f"{k} {v} ({round(100 * v / seen)}%)" for k, v in dv["counts"].items())
+            + (f"; {dv['unknown']} earlier pageviews carry no device." if dv["unknown"] else "."))
+
+    add("\n## 13. Screens by role\n")
+    sbr = p["screens_by_role"]
+    if sbr["rows"]:
+        add("Pageviews per screen by the viewer's role — read low traffic "
+            "against who can open the screen at all.\n")
+        add(_table(["route", "total"] + sbr["roles"],
+                   [[r["route"], r["total"]] + [r["by_role"].get(role, 0) for role in sbr["roles"]]
+                    for r in sbr["rows"]]))
+    else:
+        add("No pageviews recorded.")
+
+    add("\n## 14. Events by app version\n")
+    if p["versions"]:
+        add(_table(["version", "first seen", "last seen", "events", "client errors",
+                    "HTTP errors"],
+                   [[v["version"], v["first"], v["last"], v["events"],
+                     v["client_errors"], v["http_errors"]] for v in p["versions"]]))
+    else:
+        add("No events recorded.")
+
+    add("\n## 15. Appendix — sampled raw events (pseudonymized)\n")
     if p["sample_events"]:
         add(f"The {len(p['sample_events'])} most recent events (cap {SAMPLE_CAP}), "
             "newest first, pseudonymized as described in section 2.\n")

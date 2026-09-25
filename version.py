@@ -17,10 +17,36 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.25"
+APP_VERSION = "3.26"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.26",
+        "date": "September 25, 2026",
+        "summary": "UX Insights (Administrator) now also measures whether "
+                   "tasks go through, how often searches find nothing, and "
+                   "how fast pages load.",
+        "changes": [
+            "Forms that are submitted are now counted alongside forms left "
+            "half-filled, so each screen shows what share of started forms "
+            "gets abandoned. Pages that come back with an error message, and "
+            "\"not allowed\" / \"not found\" / server-error pages people "
+            "hit, are counted per screen too.",
+            "Every search is now counted, not just the ones that found "
+            "nothing, so UX Insights can show what share of searches come up "
+            "empty.",
+            "Page load times and whether a page was opened on a phone, tablet "
+            "or computer are recorded, so slow screens and phone-heavy screens "
+            "stand out.",
+            "Each recorded event now notes which version of Office Connect "
+            "received it, so a change in the numbers can be matched to an "
+            "update. The downloadable handoff also breaks screen visits down "
+            "by role.",
+            "As before, nothing anyone types is ever recorded — not search "
+            "terms that found results, not error messages, not form contents.",
+        ],
+    },
     {
         "version": "3.25",
         "date": "September 25, 2026",

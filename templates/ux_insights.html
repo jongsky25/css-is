@@ -172,6 +172,36 @@
     </div>
   </div>
 
+  <div class="side-grid">
+    <div class="acard">
+      <h2>Where tasks go wrong</h2>
+      {% if digest.outcomes %}
+      <ul class="side-list">
+        {% for o in digest.outcomes[:6] %}
+        <li><span class="k">{{ o.route }}
+          <br><span class="hint">{{ o.submits }} submitted · {{ o.abandons }} abandoned{% if o.abandon_rate is not none %} ({{ o.abandon_rate }}%){% endif %}{% if o.form_errors %} · {{ o.form_errors }} error banner(s){% endif %}{% if o.http_error_total %} · {% for k, v in o.http_errors|dictsort %}{{ v }}× {{ k }}{{ ", " if not loop.last }}{% endfor %}{% endif %}</span></span></li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="empty">Nothing recorded yet — this starts with v3.26.</p>{% endif %}
+    </div>
+    <div class="acard">
+      <h2>Search &amp; speed</h2>
+      {% if digest.search.total %}
+      <p class="hint" style="margin:0 0 .6rem;">{{ digest.search.total }} searches · <strong>{{ digest.search.empty_rate }}%</strong> found nothing.</p>
+      {% endif %}
+      {% if digest.speed %}
+      <ul class="side-list">
+        {% for e in digest.speed[:5] %}
+        <li><span class="k">{{ e.route }}</span><span class="v">p90 {{ (e.load_p90_ms / 1000)|round(1) }} s</span></li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      {% set dv = digest.devices.counts %}{% set seen = dv.phone + dv.tablet + dv.desktop %}
+      {% if seen %}<p class="hint" style="margin:.6rem 0 0;">Pageviews: {{ (100 * dv.phone / seen)|round|int }}% phone · {{ (100 * dv.tablet / seen)|round|int }}% tablet · {{ (100 * dv.desktop / seen)|round|int }}% desktop.</p>{% endif %}
+      {% if not digest.search.total and not digest.speed and not seen %}<p class="empty">Nothing recorded yet — this starts with v3.26.</p>{% endif %}
+    </div>
+  </div>
+
   <div class="acard">
     <h2>Retention</h2>
     <p class="hint">Passive UX events are behavioral data, not audit-of-record — they're purged past this window (currently enforced by running <code>python retention.py --ui-events</code>; not yet on an automatic schedule).</p>

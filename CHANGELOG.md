@@ -1,5 +1,44 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-25 (v3.26 — the measurement the 30-day handoff was missing)
+
+The handoff's "what instrumentation is missing" list: no task success or
+failure signal, no search volume (only empty searches), no page timing, no
+device split, no app version per event, no per-role view of screens.
+
+**`static/js/telemetry.js`** — `pageview` gains `meta.vp` (phone < 640 px,
+tablet < 1024, else desktop). New events: `page_timing` (navigation timing
+`ttfb_ms` / `dom_ms` / `load_ms`, after `load`), `form_submit` (the other half
+of `form_abandon`, same opt-outs), `form_error` (the page rendered a
+`.flash.err` banner; `meta.from` only, never the text), `search` (from a new
+`csi:search` event, `meta.hits`, no term).
+
+**Search dispatchers** — `_telemetry.search_signal(term, hits)` (fires
+`csi:search`, plus `csi:search-empty` at zero) replaces
+`search_empty_signal` in `search.html`, `encode_home.html`, `people.html`;
+`static/js/search.js` (once per settled term, page + DB hits) and
+`help.html` (in its existing 600 ms debounce) dispatch it too.
+
+**`app.py`** — `_clean_telemetry_meta` validates `hits`, the three timings
+(0–600 000 ms), `vp` (fixed vocabulary), and now keeps a legitimate `0`.
+`_stamp_version` adds `meta.v` (APP_VERSION) to every ingested event.
+`_metrics_gate` → `_record_http_error`: a 403/404/5xx returned to a signed-in
+person becomes an `http_error` row (`meta.status`, `meta.method`), skipping
+static assets, the beacon and the monitor stream. `http_error` is
+server-only (`ui_telemetry.SERVER_EVENT_TYPES`) — the beacon can't send it.
+
+**`ui_telemetry.py`** — `task_outcomes`, `search_stats`, `page_speed`
+(median + p90, ≥ 3 samples), `device_mix`, `screens_by_role`,
+`events_by_version`; the first four join `build_digest`.
+
+**`ux_handoff.py`** — vocabulary rows for the new types; sections 10 Task
+outcomes, 11 Search, 12 Page speed and devices, 13 Screens by role, 14 Events
+by app version (appendix is now 15). **`templates/ux_insights.html`** — "Where
+tasks go wrong" and "Search & speed" cards.
+
+Tests: `tests/test_telemetry_ingest.py` (new fields, server http_error,
+version stamp), `tests/test_ux_handoff.py` (every new section).
+
 ## 2026-09-25 (v3.25 — one approvals inbox)
 
 The 30-day UX handoff showed the same 13-14 approvers opening

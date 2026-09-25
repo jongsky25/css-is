@@ -45,7 +45,7 @@ def test_event_type_counts_lists_every_vocabulary_type():
     assert counts["pageview"] == 2
     assert counts["rage_click"] == 1
     # silent types still show as explicit zeros — the analyst should see them
-    assert set(counts) == ui_tel.UI_EVENT_TYPES
+    assert set(counts) == ui_tel.UI_EVENT_TYPES | ui_tel.SERVER_EVENT_TYPES
     assert counts["form_abandon"] == 0
 
 
@@ -184,7 +184,10 @@ def test_markdown_contains_every_section_header():
                    "## 3. Your task", "## 4. Ranked friction opportunities",
                    "## 5. Traffic & flows", "## 6. Feature usage & coverage",
                    "## 7. Route → handler map", "## 8. Failed searches",
-                   "## 9. Client errors", "## 10. Appendix"):
+                   "## 9. Client errors", "## 10. Task outcomes by screen",
+                   "## 11. Search", "## 12. Page speed and devices",
+                   "## 13. Screens by role", "## 14. Events by app version",
+                   "## 15. Appendix"):
         assert header in md, header
 
 
@@ -245,3 +248,27 @@ def test_markdown_client_errors_show_message_location_and_frames():
     assert "pet is null" in md
     assert "/static/js/avatars.js:612:9" in md
     assert "`careClick /static/js/avatars.js:612:9`" in md
+
+
+def test_handoff_answers_the_new_measurement_questions():
+    rows = [
+        _ev("pageview", route="/wellness/apply", role="viewer", meta={"vp": "phone", "v": "3.26"}),
+        _ev("pageview", route="/wellness/apply", role="section_manager", meta={"vp": "desktop", "v": "3.26"}),
+        _ev("form_submit", route="/wellness/apply"),
+        _ev("form_abandon", route="/wellness/apply", meta={"fields": 2}),
+        _ev("form_abandon", route="/wellness/apply", meta={"fields": 1}),
+        _ev("form_error", route="/wellness/apply"),
+        _ev("http_error", route="/admin/users", meta={"status": 403}),
+        _ev("search", route="/people", meta={"hits": 4}),
+        _ev("search", route="/people", meta={"hits": 0}),
+        _ev("search_empty", route="/people", meta={"term": "zz"}),
+    ] + [_ev("page_timing", route="/", meta={"load_ms": ms, "ttfb_ms": 100})
+         for ms in (900, 1000, 4000)]
+    md = uxh.render_handoff_markdown(_handoff(rows))
+    assert "| /wellness/apply | 1 | 2 | 67% | 1 | — |" in md        # abandon rate
+    assert "403×1" in md
+    assert "2 searches, 1 with no results (50% empty)" in md
+    assert "| / | 3 | 1000 | 4000 | 100 |" in md                   # median / p90 / ttfb
+    assert "phone 1 (50%)" in md and "desktop 1 (50%)" in md
+    assert "section_manager" in md and "## 14. Events by app version" in md
+    assert "| 3.26 |" in md
