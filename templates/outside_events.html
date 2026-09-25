@@ -1,6 +1,7 @@
 {% extends "dash_layout.html" %}
+{% from "_page_tabs.html" import monitor_header %}
 {% from "_components.html" import page_header, empty_state %}
-{% block title %}Invited events{% endblock %}
+{% block title %}Monitor · Invited events{% endblock %}
 
 {% block head %}
 <style>
@@ -30,7 +31,7 @@
 {% endblock %}
 
 {% block content %}
-{{ page_header("Invited events") }}
+{{ monitor_header("outside") }}
 <p class="lede">Every <b>non-bureau</b> activity — events organized by an outside body where your staff served as resource persons. Unlike the Monitor (which shows only activities still registering or collecting), this list keeps <b>upcoming</b>, <b>ongoing</b> and <b>concluded</b> invited events together, so one never disappears after its survey window closes. These collect feedback anonymously, so each shows its response total rather than a registration roster.{% if scope_kind == "bureau" %} You are seeing every invited event in the bureau.{% elif scope_kind == "none" %} Your account isn’t linked to a directory record yet, so you are seeing only the invited events you created.{% else %} You are seeing the invited events one of your team was a resource person at — an invited event has no organizing section of ours, so the speaker’s section is what places it.{% endif %}</p>
 
 {% if not events %}

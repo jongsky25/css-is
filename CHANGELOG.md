@@ -1,5 +1,30 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-25 (v3.29 — Invited events under Monitor, Name cleanup under Directory)
+
+The two screens the 30-day UX handoff found never used: Invited events
+(`/activities/outside`, its own CSS menu entry, 0 views) and Name cleanup
+(`/directory/cleanup`, already off the menu behind one button, 0 views).
+
+**`templates/_page_tabs.html`** (new) — `page_tabs(kicker, tabs, active)`,
+the heading + tab bar Insights introduced in v3.28, lifted out so the other
+screen families share it; plus `monitor_header` and `directory_header`.
+**`_insights.html`** now builds its tabs and calls `page_tabs` (same markup
+class, `page-tabs`).
+
+- **Monitor**: `monitor.html` / `outside_events.html` — tabs "Bureau
+  activities" · "Invited events".
+- **Directory**: `directory.html` / `cleanup.html` — tabs "Org units &
+  people" · "Name cleanup"; the old "⚙ Name cleanup tool" button is gone.
+
+**`app.py`** — the Invited events nav item is `in_nav: False` (still in
+search and an AI-navigate key); the Monitor hint names both.
+**`dash_layout.html`** — `nav_cur` maps `outside` → Monitor and `cleanup` →
+Directory for the menu highlight.
+
+Tests: `tests/test_page_tabs.py`; `tests/test_insights_tabs.py` follows the
+renamed tab-bar class.
+
 ## 2026-09-25 (v3.28 — the CSS dashboards as one tabbed Insights page)
 
 The 30-day UX handoff: five separate CSS menu entries for the dashboards —

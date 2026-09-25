@@ -17,10 +17,27 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.28"
+APP_VERSION = "3.29"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.29",
+        "date": "September 25, 2026",
+        "summary": "Invited events is now a tab of Monitor, and Name cleanup "
+                   "a tab of Directory.",
+        "changes": [
+            "Monitor has two tabs: Bureau activities (who registered and who "
+            "answered) and Invited events (every activity organized by an "
+            "outside body, including concluded ones). Invited events no "
+            "longer has its own menu entry.",
+            "Directory has two tabs: Org units & people, and Name cleanup — "
+            "the tool for tidying up and merging external speakers' names, "
+            "which used to be a small button at the top of the page.",
+            "Old links and bookmarks to both still work, and searching for "
+            "either by name still finds it.",
+        ],
+    },
     {
         "version": "3.28",
         "date": "September 25, 2026",

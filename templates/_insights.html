@@ -15,37 +15,20 @@
   ("trends", "/dashboard/trends", "Trends", "Movement over time"),
 ] %}
 
+{% from "_page_tabs.html" import page_tabs %}
+
 {% macro insights_header(active, lede="") -%}
 {%- set q = request.query_params -%}
 {%- set org = q.get("org", "") -%}
 {%- set period = q.get("period", "") -%}
-<style>
-  .ins-head { flex:1 1 auto; min-width:0; }
-  .ins-tabs { display:flex; gap:.25rem; flex-wrap:nowrap; overflow-x:auto; border-bottom:1px solid var(--line);
-              margin:.2rem 0 1.1rem; scrollbar-width:thin; }
-  .ins-tabs a { flex:0 0 auto; }
-  .ins-tabs a { padding:.5rem .9rem; font-weight:700; font-size:.92rem; text-decoration:none;
-                color:var(--soft); border-bottom:3px solid transparent; margin-bottom:-1px;
-                border-radius:8px 8px 0 0; }
-  .ins-tabs a:hover { color:var(--ink); background:var(--surface-2); }
-  .ins-tabs a[aria-current="page"] { color:var(--accent); border-bottom-color:var(--accent); }
-  .ins-kicker { font-size:.8rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
-                color:var(--soft); margin:0; }
-</style>
-<div class="ins-head">
-<p class="ins-kicker">Insights</p>
-{%- for key, url, label, hint in INSIGHTS_TABS if key == active %}
-<h1 class="page">{{ label }}</h1>
-{%- endfor %}
-<nav class="ins-tabs" aria-label="Insights">
-  {%- for key, url, label, hint in INSIGHTS_TABS %}
-  {%- set params = {} %}
-  {%- if org %}{% set _ = params.update({"org": org}) %}{% endif %}
-  {%- if period and key != "pulse" %}{% set _ = params.update({"period": period}) %}{% endif %}
-  <a href="{{ url }}{% if params %}?{{ params|urlencode }}{% endif %}" title="{{ hint }}"
-     {% if key == active %}aria-current="page"{% endif %}>{{ label }}</a>
-  {%- endfor %}
-</nav>
-</div>
+{%- set tabs = [] -%}
+{%- for key, url, label, hint in INSIGHTS_TABS -%}
+  {%- set params = {} -%}
+  {%- if org %}{% set _ = params.update({"org": org}) %}{% endif -%}
+  {%- if period and key != "pulse" %}{% set _ = params.update({"period": period}) %}{% endif -%}
+  {%- set _ = tabs.append({"key": key, "label": label, "hint": hint,
+                           "href": url ~ ("?" ~ (params|urlencode) if params else "")}) -%}
+{%- endfor -%}
+{{ page_tabs("Insights", tabs, active) }}
 {% if lede %}<p class="lede">{{ lede|safe }}</p>{% endif %}
 {%- endmacro %}

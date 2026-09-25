@@ -1,0 +1,55 @@
+{#-- page_tabs — one heading + tab bar for a family of related screens that
+     each keep their own URL (Insights' five dashboards, Monitor + Invited
+     events, Directory + Name cleanup). A kicker names the family, the h1 names
+     the active tab, and the bar links the siblings. Each tab is a real page, so
+     links, exports and bookmarks keep working; only the menu entries collapse.
+
+     tabs: a list of {key, href, label, hint}. Scrolls sideways on a phone. --#}
+{% macro page_tabs(kicker, tabs, active) -%}
+<style>
+  .ptabs-head { flex:1 1 auto; min-width:0; }
+  .ptabs-kicker { font-size:.8rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+                  color:var(--soft); margin:0; }
+  .page-tabs { display:flex; gap:.25rem; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:thin;
+               border-bottom:1px solid var(--line); margin:.2rem 0 1.1rem; }
+  .page-tabs a { flex:0 0 auto; padding:.5rem .9rem; font-weight:700; font-size:.92rem;
+                 text-decoration:none; color:var(--soft); border-bottom:3px solid transparent;
+                 margin-bottom:-1px; border-radius:8px 8px 0 0; }
+  .page-tabs a:hover { color:var(--ink); background:var(--surface-2); }
+  .page-tabs a[aria-current="page"] { color:var(--accent); border-bottom-color:var(--accent); }
+</style>
+<div class="ptabs-head">
+<p class="ptabs-kicker">{{ kicker }}</p>
+{%- for t in tabs if t.key == active %}
+<h1 class="page">{{ t.label }}</h1>
+{%- endfor %}
+<nav class="page-tabs" aria-label="{{ kicker }}">
+  {%- for t in tabs %}
+  <a href="{{ t.href }}" title="{{ t.hint }}"{% if t.key == active %} aria-current="page"{% endif %}>{{ t.label }}</a>
+  {%- endfor %}
+</nav>
+</div>
+{%- endmacro %}
+
+{#-- Monitor: the bureau activities still registering / collecting, and every
+     invited (outside-organized) event. "Invited events" had its own menu entry
+     and 0 views in 30 days; the Monitor index already listed the live ones. --#}
+{% macro monitor_header(active) -%}
+{{ page_tabs("Monitor", [
+  {"key": "monitor", "href": "/monitor", "label": "Bureau activities",
+   "hint": "Who registered and who answered, for activities still registering or collecting"},
+  {"key": "outside", "href": "/activities/outside", "label": "Invited events",
+   "hint": "Every activity organized by an outside body — upcoming, ongoing and concluded"},
+], active) }}
+{%- endmacro %}
+
+{#-- Directory: the org tree + people, and the name cleanup tool (0 views in
+     30 days behind a single button). --#}
+{% macro directory_header(active) -%}
+{{ page_tabs("Directory", [
+  {"key": "directory", "href": "/directory", "label": "Org units & people",
+   "hint": "Bureau, divisions, sections, staff and resource persons"},
+  {"key": "cleanup", "href": "/directory/cleanup", "label": "Name cleanup",
+   "hint": "Proper-case, strip honorifics, merge duplicates and split rosters"},
+], active) }}
+{%- endmacro %}
