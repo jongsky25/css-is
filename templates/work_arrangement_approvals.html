@@ -30,6 +30,7 @@
               border-radius:8px; padding:.35rem .5rem; }
   .muted { color:var(--soft); }
   .backbar { margin-bottom:1rem; display:flex; gap:.8rem; }
+  .decided-link { margin:-.3rem 0 1rem; font-size:.9rem; }
 </style>
 
 {{ page_header("Work arrangement approvals",
@@ -41,6 +42,12 @@
 </div>
 
 {% if ok %}{{ flash(msg=ok) }}{% endif %}
+{% if decided_period %}
+<p class="decided-link">Approved arrangements print on that period's ANNEX C —
+  <a href="/work-arrangement/schedule?period={{ decided_period }}">{{ decided_period_label }} schedule</a>
+  · <a href="/work-arrangement/annex-c.pdf?period={{ decided_period }}">PDF</a>
+  · <a href="/work-arrangement/annex-c.xlsx?period={{ decided_period }}">Excel</a></p>
+{% endif %}
 {% if err %}{{ flash(err=err) }}{% endif %}
 
 <div class="panel">

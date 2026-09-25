@@ -44,6 +44,7 @@
   .dl { display:flex; gap:.6rem; flex-wrap:wrap; margin-top:.9rem; }
   .legend { color:var(--soft); font-size:.78rem; line-height:1.4; margin-top:.9rem; }
   .backbar { margin-bottom:1rem; display:flex; gap:.8rem; }
+  .panel.upcoming { border-color:var(--amber-ln); background:var(--amber-bg); }
 </style>
 
 {{ page_header("Work arrangement schedule",
@@ -56,6 +57,20 @@
        and a link that can only 403 is worse than no link. --#}
   {% if is_chief %}<a href="/work-arrangement/approvals">Approvals queue</a>{% endif %}
 </div>
+
+{% if upcoming %}
+<div class="panel upcoming">
+  <b>{{ upcoming.period_label }} is being filed now</b> —
+  {{ upcoming.approved }} approved, {{ upcoming.pending }} waiting.
+  Approvals made this week are for that period, so they print on <em>its</em> ANNEX C,
+  not on {{ d.period_label }}'s below.
+  <div class="dl">
+    <a class="btn" href="/work-arrangement/schedule?period={{ upcoming.period_start }}">View {{ upcoming.period_label }}</a>
+    <a class="btn" href="/work-arrangement/annex-c.pdf?period={{ upcoming.period_start }}">ANNEX C (PDF) — {{ upcoming.period_label }}</a>
+    <a class="btn" href="/work-arrangement/annex-c.xlsx?period={{ upcoming.period_start }}">ANNEX C (Excel) — {{ upcoming.period_label }}</a>
+  </div>
+</div>
+{% endif %}
 
 <div class="panel">
   <div class="periodbar">
