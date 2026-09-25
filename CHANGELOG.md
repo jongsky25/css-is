@@ -1,5 +1,75 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-25 (v3.19 — a section's division chief can cover it AS division chief)
+
+Follow-up to v3.18's OIC redirect. `set_section_oic`'s picker only ever
+offered someone from the covered section itself. The ask: let a section's
+own division chief be assigned too — a natural pick, since they already
+decide a section chief's own requests — but once assigned, they should be
+recognized as covering it AS the division chief they really are, not as a
+generic "acting OIC" stand-in.
+
+That distinction isn't cosmetic: v3.18's OIC redirect (`_oic_override_seat`)
+unconditionally routed an OIC's own requests one rung above the seat they
+cover. Applied blindly to a division chief covering their own section, that
+would have redirected their own claim to "rank 2 in the parent division" —
+their OWN seat, excluding themselves — leaving them with no approver at all.
+
+**`storage.py`**
+- `_oic_override_seat(oic_unit, own_rank)` — now takes the OIC's own
+  substantive rank and returns `None` (no redirect) when `own_rank` already
+  meets or exceeds `_ORG_LEVEL_RANK` for the seat they're covering. A
+  section-level seat is rank 1, so a division chief (rank 2) covering one no
+  longer gets redirected — their own requests keep escalating through their
+  real rank (division chief → Director), same as if they held no OIC
+  assignment.
+- `get_approvers_for`, `approver_name_for`, `approver_title_for` — compute
+  the account's substantive rank *before* consulting the override now (they
+  needed it anyway for the fallback branches), and pass it through.
+- `get_section_oic` / `list_section_oics` — new `by_right` field: is this
+  delegate covering the seat because they already outrank it (a division
+  chief on one of their own sections) rather than as a stand-in below their
+  rank? Joins `org_unit` for the covered seat's level to compare against
+  `_ORG_LEVEL_RANK`.
+
+**`app.py`**
+- `admin_users` — `section_accounts` now also lists each section's parent
+  division chief(s), labeled `"<name> (Division Chief)"`, alongside
+  same-section staff.
+- `admin_users_section_oic_set` — validation now accepts either a
+  same-section staff account (rank 0) or the section's own parent division
+  chief (rank 2, confirmed against the parent `org_unit`), not just
+  same-section staff. Audit summary and flash message read "Division chief
+  for ..." / "...as division chief" for that case, "Temporary OIC" / "acting
+  OIC" otherwise.
+
+**`templates/users.html`** — the panel and column now say "Covering" rather
+than assuming "Acting OIC"; shows "as division chief" or "acting OIC" next
+to the current delegate's name, and the same distinction in the remove
+button's confirm text.
+
+**`tests/test_section_oic.py`** — extended the shared `org` fixture with a
+Director account (to exercise the escalation past the division chief) and
+an `outsider` in a wholly unrelated section (for the "must belong to the
+section, or chief it" refusal test, now that the division chief itself is a
+legitimate pick and can no longer stand in for "someone from elsewhere").
+Added: the division chief may cover one of their own sections; their own
+request is unaffected by doing so (still escalates to the Director, not
+swallowed by the override); `get_section_oic(...).by_right` is set
+correctly; the admin route accepts the division chief, labels the picker
+option, and audits/flashes it distinctly. Also added teardown cleanup to
+the `org` fixture itself — global rank-3 lookups (`_org_accounts_at_rank`
+for the Director) aren't scoped to one org_unit, so the fixture's own
+Director account has to be cleaned up after each test, not just before the
+next one, or it leaks into other test files' escalation assertions.
+
+**`tests/test_director_and_oic_routing.py`** — the division-level-OIC test
+added in v3.18 asserted an exact `get_approvers_for(...) == [director]` /
+`approver_name_for(...) == "RD-Director"`; loosened to membership/substring
+checks (the same idiom `test_wellness.py`'s escalation tests already use),
+since Director lookups are bureau-wide and other test files' fixtures can
+leave other Director-ranked accounts around in a full-suite run.
+
 ## 2026-09-25 (v3.18 — Director auto-approval + OIC self-routing)
 
 Two edge cases in the shared escalation chain (`storage._org_rank` /

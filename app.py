@@ -2478,21 +2478,32 @@ def admin_users(request: Request, err: str = "", link: str = "", msg: str = ""):
         standalone = [u for u in st.list_admin_users(conn) if u["rp_id"] is None]
         have = sum(1 for r in rows if r["account"])
         # Temporary OIC / acting approver, per section: who currently stands in
-        # for a section chief on leave, and who's eligible to be picked (active
-        # accounts belonging to that same section, MINUS whoever already holds
-        # the chief seat there — the picker is for naming a stand-in, and the
-        # substantive chief isn't a stand-in for themselves).
+        # for a section chief on leave, and who's eligible to be picked --
+        # active accounts belonging to that same section other than whoever
+        # already holds the chief seat there (a stand-in below their own
+        # rank), PLUS the section's parent division chief (a stand-in who
+        # already outranks the seat — see storage._oic_override_seat / the
+        # section_oic comment block — and so decides it, and is offered here,
+        # as the division chief they really are).
         sections = st.list_org_units(conn, level="section")
+        divisions_by_path = {u["path"]: u for u in st.list_org_units(conn, level="division")}
         section_oics = st.list_section_oics(conn)
-        section_accounts = {
-            s["id"]: sorted(
+        section_accounts = {}
+        for s in sections:
+            same_section = sorted(
                 ({"id": r["account"]["id"], "name": r["name"]}
                  for r in rows
                  if r["org_unit_id"] == s["id"] and r["account"] and r["account"]["active"]
                  and st._org_rank(r.get("designation"), r.get("position")) == 0),
                 key=lambda a: a["name"])
-            for s in sections
-        }
+            parent = divisions_by_path.get(st._org_parent_path(s["path"]))
+            div_chiefs = sorted(
+                ({"id": r["account"]["id"], "name": f"{r['name']} (Division Chief)"}
+                 for r in rows
+                 if parent and r["org_unit_id"] == parent["id"] and r["account"] and r["account"]["active"]
+                 and st._org_rank(r.get("designation"), r.get("position")) == 2),
+                key=lambda a: a["name"])
+            section_accounts[s["id"]] = same_section + div_chiefs
     finally:
         conn.close()
     return templates.TemplateResponse(request, "users.html", {
@@ -2640,7 +2651,12 @@ async def admin_users_bureau_access(request: Request, user_id: int):
 @app.post("/admin/users/section-oic/{org_unit_id}/set")
 async def admin_users_section_oic_set(request: Request, org_unit_id: int):
     """Assign a temporary OIC/approver for one section's wellness + AWA
-    requests — the toggle for when the section's chief is on leave.
+    requests — either someone from that section standing in for their chief
+    on leave, or that section's own division chief. The division chief is a
+    legitimate pick in their own right: they already outrank a section chief
+    seat, so storage._oic_override_seat has them decide it (and have their
+    own requests escalate) AS the division chief they really are, not as a
+    stand-in below their rank — see get_section_oic's `by_right`.
 
     Only one delegate at a time per section: storage.set_section_oic's table
     is keyed by the section, so picking someone new here simply replaces
@@ -2659,25 +2675,38 @@ async def admin_users_section_oic_set(request: Request, org_unit_id: int):
         unit = next((u for u in st.list_org_units(conn, level="section") if u["id"] == org_unit_id), None)
         delegate = st.get_admin_user_by_id(conn, admin_user_id)
         delegate_rp = st.get_rp(conn, delegate["rp_id"]) if delegate and delegate.get("rp_id") else None
-        # Defense in depth: the picker only offers active, non-chief accounts
-        # that belong to this section, but a tampered POST could name anyone
-        # at all — including whoever already holds the chief seat, which
-        # would be a no-op standing in for themselves.
-        in_section = bool(delegate_rp) and delegate_rp.get("org_unit_id") == org_unit_id
-        already_chief = bool(delegate_rp) and st._org_rank(
-            delegate_rp.get("designation"), delegate_rp.get("position")) != 0
-        if not unit or not delegate or not delegate["active"] or not in_section or already_chief:
+        delegate_rank = (st._org_rank(delegate_rp.get("designation"), delegate_rp.get("position"))
+                          if delegate_rp else None)
+        # Defense in depth: the picker only offers active accounts that
+        # either belong to this section (other than whoever already holds
+        # its chief seat) or chief the parent division, but a tampered POST
+        # could name anyone at all.
+        in_section_as_staff = (bool(delegate_rp) and delegate_rp.get("org_unit_id") == org_unit_id
+                                and delegate_rank == 0)
+        parent_unit = None
+        if unit:
+            parent_path = st._org_parent_path(unit["path"])
+            parent_unit = next((u for u in st.list_org_units(conn, level="division")
+                                if u["path"] == parent_path), None) if parent_path else None
+        is_division_chief = (bool(parent_unit) and delegate_rank == 2
+                              and delegate_rp.get("org_unit_id") == parent_unit["id"])
+        if (not unit or not delegate or not delegate["active"]
+                or not (in_section_as_staff or is_division_chief)):
             return RedirectResponse(
-                "/admin/users?err=" + quote("Pick an active account from that section, other than its chief."),
+                "/admin/users?err=" + quote(
+                    "Pick an active account from that section, or that section's division chief."),
                 status_code=303)
         st.set_section_oic(conn, org_unit_id, admin_user_id, set_by=request.state.user["id"])
+        role_label = "Division chief" if is_division_chief else "Temporary OIC"
         _audit(request, conn, "set_section_oic", target_type="org_unit", target_id=unit["name"],
-               summary=f"Temporary OIC for {unit['name']}: {delegate['username']}")
+               summary=f"{role_label} for {unit['name']}: {delegate['username']}")
+        msg = (f"{delegate['username']} will now decide {unit['name']}'s wellness and AWA "
+               f"requests as division chief."
+               if is_division_chief else
+               f"{delegate['username']} is now the acting OIC for {unit['name']}.")
     finally:
         conn.close()
-    return RedirectResponse(
-        "/admin/users?msg=" + quote(f"{delegate['username']} is now the acting OIC for {unit['name']}."),
-        status_code=303)
+    return RedirectResponse("/admin/users?msg=" + quote(msg), status_code=303)
 
 
 @app.post("/admin/users/section-oic/{org_unit_id}/clear")

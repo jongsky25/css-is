@@ -17,10 +17,34 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.18"
+APP_VERSION = "3.19"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.19",
+        "date": "September 25, 2026",
+        "summary": "Admin → Users can now assign a section's own division "
+                   "chief to cover its wellness and AWA approvals while the "
+                   "section chief is on leave, deciding as division chief "
+                   "rather than as a stand-in.",
+        "changes": [
+            "The Temporary OIC picker now also offers each section's "
+            "division chief, labeled \"(Division Chief)\" in the list, "
+            "alongside the section's own staff.",
+            "Assigning the division chief works the same way as any other "
+            "temporary OIC — the section's requests start routing to them "
+            "too, alongside the section chief — but it's tracked and shown "
+            "as \"as division chief,\" not \"acting OIC,\" since they "
+            "already outrank the seat.",
+            "That distinction matters for the division chief's OWN "
+            "requests: covering a section no longer changes who decides "
+            "them. Before this fix, a division chief assigned this way "
+            "could end up with nobody able to approve their own wellness "
+            "break or work arrangement. Their requests now keep going to "
+            "the Director exactly as they always did.",
+        ],
+    },
     {
         "version": "3.18",
         "date": "September 25, 2026",

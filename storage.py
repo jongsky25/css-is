@@ -5781,6 +5781,14 @@ _AUTO_APPROVE_NOTE = ("Auto-approved — the Director sits at the top of the "
 # of its own. get_approvers_for adds the delegate ALONGSIDE the substantive
 # chief rather than replacing them, so an early return from leave is never
 # locked out by a delegate nobody remembered to clear.
+#
+# The delegate is usually someone from the covered unit standing in BELOW
+# their own rank, but a section's parent division chief is an equally
+# legitimate pick (app.py's picker offers both) -- they already outrank a
+# section chief seat, so _oic_override_seat treats them differently: they
+# decide it, and their own requests escalate, as the division chief they
+# really are rather than as a stand-in below their rank. get_section_oic's
+# `by_right` tells the two apart for the admin page.
 
 def set_section_oic(conn, org_unit_id, admin_user_id, set_by=None):
     """Make `admin_user_id` the acting OIC for `org_unit_id`, replacing
@@ -5802,14 +5810,28 @@ def clear_section_oic(conn, org_unit_id):
 
 def get_section_oic(conn, org_unit_id):
     """The current acting OIC for `org_unit_id`, or None. Carries the
-    delegate's display name for the admin page and the apply-page copy."""
+    delegate's display name for the admin page and the apply-page copy, plus
+    `by_right`: are they covering it because they already outrank the seat
+    (a division chief named to cover one of their own sections — see
+    set_section_oic / _oic_override_seat), rather than as a temporary
+    stand-in below their own rank? The admin page shows the two differently,
+    and it's the same rule get_approvers_for uses to decide whether their OWN
+    requests get redirected."""
     row = conn.execute(
-        "SELECT so.admin_user_id, so.set_by, so.set_at FROM section_oic so "
-        "WHERE so.org_unit_id=?", (org_unit_id,)).fetchone()
+        "SELECT so.admin_user_id, so.set_by, so.set_at, ou.level FROM section_oic so "
+        "JOIN org_unit ou ON ou.id = so.org_unit_id WHERE so.org_unit_id=?",
+        (org_unit_id,)).fetchone()
     if not row:
         return None
-    return {"org_unit_id": org_unit_id, "admin_user_id": row[0],
-            "name": _account_display_name(conn, row[0]), "set_by": row[1], "set_at": row[2]}
+    admin_user_id, set_by, set_at, level = row
+    delegate = get_admin_user_by_id(conn, admin_user_id)
+    delegate_rp = get_rp(conn, delegate["rp_id"]) if delegate and delegate.get("rp_id") else None
+    own_rank = (_org_rank(delegate_rp.get("designation"), delegate_rp.get("position"))
+                if delegate_rp else 0)
+    by_right = own_rank >= _ORG_LEVEL_RANK.get(level, 0)
+    return {"org_unit_id": org_unit_id, "admin_user_id": admin_user_id,
+            "name": _account_display_name(conn, admin_user_id), "by_right": by_right,
+            "set_by": set_by, "set_at": set_at}
 
 
 def list_section_oics(conn):
@@ -5886,7 +5908,7 @@ def _org_accounts_at_rank(conn, rank, org_path=None, exclude_uid=None):
     return out
 
 
-def _oic_override_seat(oic_unit):
+def _oic_override_seat(oic_unit, own_rank):
     """(rank, org_path) of the seat that decides an ACTING OIC's own requests,
     or None to fall back to their substantive rank. An OIC's own claims don't
     follow their real designation — they're redirected one rung above the
@@ -5894,8 +5916,18 @@ def _oic_override_seat(oic_unit):
     escalate to: covering a section routes like that section's chief (up to
     the division chief); covering a division routes like a division chief (up
     to the Director). This also sidesteps the seat they're covering being
-    unavailable (on leave) being the very reason they're standing in for it."""
+    unavailable (on leave) being the very reason they're standing in for it.
+
+    Only applies while the OIC is standing in ABOVE their own real rank. A
+    division chief is a legitimate pick to cover one of their own sections
+    (see set_section_oic) — they already outrank a section chief, so there's
+    nothing to redirect: they decide it, and their own requests escalate,
+    as the division chief they really are, exactly as if they held no OIC
+    assignment at all."""
     if not oic_unit:
+        return None
+    level_rank = _ORG_LEVEL_RANK.get(oic_unit["level"])
+    if level_rank is None or own_rank >= level_rank:
         return None
     if oic_unit["level"] == "section":
         parent = _org_parent_path(oic_unit["path"])
@@ -5987,20 +6019,23 @@ def approver_name_for(conn, user_id):
     An OIC's OWN requests are redirected instead (see _oic_override_seat) to
     whoever sits one rung above the seat they're covering, before any of that
     -- the copy names that seat's holder (or its own acting OIC), not the OIC's
-    substantive chief."""
+    substantive chief. That redirect only applies while they're standing in
+    ABOVE their real rank -- a division chief named to cover one of their own
+    sections decides it (and is named here) as the division chief they really
+    are, not as that section's stand-in."""
     me = get_admin_user_by_id(conn, user_id)
     rp = get_rp(conn, me["rp_id"]) if me and me.get("rp_id") else None
     if not rp:
         return None
+    rank = _org_rank(rp.get("designation"), rp.get("position"))
 
-    override = _oic_override_seat(_oic_org_unit_for(conn, user_id))
+    override = _oic_override_seat(_oic_org_unit_for(conn, user_id), rank)
     if override:
-        rank, path = override
+        orank, path = override
         oic = (_account_display_name(conn, _section_oic_account_id(conn, path, exclude_uid=user_id))
                if path else None)
-        return oic or _org_seat_name(conn, rank, org_path=path, exclude_uid=user_id)
+        return oic or _org_seat_name(conn, orank, org_path=path, exclude_uid=user_id)
 
-    rank = _org_rank(rp.get("designation"), rp.get("position"))
     path = rp.get("org_path")
     if rank == 0:                                   # staff -> section chief (same unit)
         oic = _account_display_name(conn, _section_oic_account_id(conn, path, exclude_uid=user_id))
@@ -6049,21 +6084,28 @@ def get_approvers_for(conn, user_id):
     rung above the seat they're covering, not through their substantive rank --
     e.g. an OIC covering a section is decided by the division chief, exactly
     like a genuine section chief's own claim, and never by the (likely absent)
-    substantive holder of the seat they're standing in for."""
+    substantive holder of the seat they're standing in for.
+
+    That redirect only fires while the OIC is standing in ABOVE their real
+    rank. A division chief named to cover one of their own sections (a
+    legitimate pick -- see set_section_oic) already outranks the seat, so
+    there's nothing to redirect: their own requests keep escalating through
+    their real rank (division chief -> Director) exactly as if they held no
+    OIC assignment at all."""
     me = get_admin_user_by_id(conn, user_id)
     if not me or not me.get("rp_id"):
         return []
     rp = get_rp(conn, me["rp_id"])
     if not rp:
         return []
+    rank = _org_rank(rp.get("designation"), rp.get("position"))
 
-    override = _oic_override_seat(_oic_org_unit_for(conn, user_id))
+    override = _oic_override_seat(_oic_org_unit_for(conn, user_id), rank)
     if override:
-        rank, path = override
-        approvers = _org_accounts_at_rank(conn, rank, org_path=path, exclude_uid=user_id)
+        orank, path = override
+        approvers = _org_accounts_at_rank(conn, orank, org_path=path, exclude_uid=user_id)
         return _with_section_oic(conn, approvers, path, exclude_uid=user_id) if path else approvers
 
-    rank = _org_rank(rp.get("designation"), rp.get("position"))
     path = rp.get("org_path")
     if rank == 0:                                   # staff -> section chief (same unit)
         approvers = _org_accounts_at_rank(conn, 1, org_path=path, exclude_uid=user_id)
@@ -6161,22 +6203,25 @@ def approver_title_for(conn, user_id):
 
     An acting OIC's own requests are redirected a rung above the seat they're
     covering (see _oic_override_seat) before any of that: covering a section
-    reads "your division chief", covering a division reads "the Director"."""
+    reads "your division chief", covering a division reads "the Director" --
+    unless they're already ranked at or above that seat (a division chief
+    covering one of their own sections), in which case this reads exactly as
+    it would with no OIC assignment at all: their own real rank decides."""
     me = get_admin_user_by_id(conn, user_id)
     rp = get_rp(conn, me["rp_id"]) if me and me.get("rp_id") else None
     if not rp:
         return "an administrator"
+    rank = _org_rank(rp.get("designation"), rp.get("position"))
 
-    override = _oic_override_seat(_oic_org_unit_for(conn, user_id))
+    override = _oic_override_seat(_oic_org_unit_for(conn, user_id), rank)
     if override:
-        rank, path = override
-        if rank == 2 and _org_role_filled(conn, 2, org_path=path):
+        orank, path = override
+        if orank == 2 and _org_role_filled(conn, 2, org_path=path):
             return "your division chief"
-        if rank == 3 and _org_role_filled(conn, 3):
+        if orank == 3 and _org_role_filled(conn, 3):
             return "the Director"
         return "an administrator"
 
-    rank = _org_rank(rp.get("designation"), rp.get("position"))
     path = rp.get("org_path")
     if rank == 0 and _org_role_filled(conn, 1, org_path=path):
         return "your section chief"
