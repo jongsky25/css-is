@@ -621,7 +621,8 @@ NAV_GROUPS = [
          "hint": "Ranked interface-friction opportunities",
          "kw": "ux insights telemetry friction dead click rage click ranked opportunities "
                "behavior passive analytics what to fix handoff export download ai",
-         "cap": "manage_users"},
+         "cap": "manage_users",
+         "in_nav": False},
         {"key": "ai", "url": "/admin/ai", "label": "AI",
          "hint": "Gemini mode, budget & interaction log",
          "kw": "ai gemini assistant budget model llm nl router answers cap quota interaction "
@@ -631,7 +632,8 @@ NAV_GROUPS = [
          "hint": "FAQ rules that answer without AI",
          "kw": "learned rules faq frequently asked questions ai search bar non-ai deterministic "
                "answers save credits budget promote candidate question mining teach",
-         "cap": "manage_users"},
+         "cap": "manage_users",
+         "in_nav": False},
         {"key": "directory", "url": "/directory", "label": "Directory",
          "hint": "Org units, staff & speakers",
          "kw": "directory org units staff speakers people tree organization roster", "cap": "directory"},
@@ -643,18 +645,24 @@ NAV_GROUPS = [
          "section": "Setup & records",
          "hint": "Accounts & roles",
          "kw": "users accounts roles permissions manage logins members", "cap": "manage_users"},
-        {"key": "backups", "url": "/admin/backups", "label": "Backups",
-         "hint": "Snapshots & schedule",
+        {"key": "backups", "url": "/admin/backups", "label": "System",
+         # One entry for the six rarely-used admin screens, now tabs of one
+         # page (templates/_page_tabs.html system_header); the other five are
+         # in_nav False — still in search, still AI-navigate keys.
+         "hint": "Backups, records, health and site-wide settings",
          "kw": "backups snapshots restore schedule export data safety", "cap": "manage_users"},
         {"key": "ops", "url": "/ops", "label": "Ops",
          "hint": "Health & performance",
-         "kw": "ops operations health performance metrics monitoring status uptime", "cap": "manage_users"},
+         "kw": "ops operations health performance metrics monitoring status uptime", "cap": "manage_users",
+         "in_nav": False},
         {"key": "audit", "url": "/admin/audit", "label": "Audit",
          "hint": "Tamper-evident change log",
-         "kw": "audit log trail history changes tamper evident security", "cap": "manage_users"},
+         "kw": "audit log trail history changes tamper evident security", "cap": "manage_users",
+         "in_nav": False},
         {"key": "sharing", "url": "/admin/sharing", "label": "Sharing",
          "hint": "Public resource sharing switch",
-         "kw": "sharing public switch resource share toggle external", "cap": "manage_users"},
+         "kw": "sharing public switch resource share toggle external", "cap": "manage_users",
+         "in_nav": False},
         {"key": "email", "url": "/admin/email", "label": "Email",
          "hint": "Turn email notifications on or off",
          "kw": "email mail notifications toggle switch off preview test outbox "
@@ -3781,7 +3789,7 @@ def ux_insights(request: Request, days: int = UI_INSIGHTS_WINDOW_DAYS_DEFAULT, e
     return templates.TemplateResponse(request, "ux_insights.html", {
         "digest": digest, "days": days, "retention_days": retention_days,
         "truncated": truncated, "err": err,
-        "show_scope": False, "nav_active": "",
+        "show_scope": False, "nav_active": "ux_insights",
     })
 
 

@@ -43,11 +43,13 @@
 {# The menu highlight only. Tabs with no menu entry of their own (in_nav
    False) light up their family's entry: the four Insights tabs besides Pulse
    → "Insights" (key "pulse"), Invited events → Monitor, Name cleanup →
-   Directory. `cur` itself stays the page's own key — saved views,
+   Directory, and the five System tabs besides Backups → "System" (key
+   "backups"). `cur` itself stays the page's own key — saved views,
    the page tour and PAGE_KEY are all keyed on it, per page. #}
 {% set nav_cur = 'pulse' if cur in ('people', 'teams', 'trends', 'participation') else
                  'monitor' if cur == 'outside' else
-                 'directory' if cur == 'cleanup' else cur %}
+                 'directory' if cur == 'cleanup' else
+                 'backups' if cur in ('audit', 'sharing', 'ops', 'ux_insights', 'rules') else cur %}
 {# Menus + search palette both render from nav_groups_for/search_index_for in
    app.py — one source of truth, so they can never drift apart. #}
 {% set nav_groups = nav_groups_for(u, request.state.is_chief) %}

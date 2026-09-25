@@ -17,10 +17,25 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.29"
+APP_VERSION = "3.30"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.30",
+        "date": "September 25, 2026",
+        "summary": "For administrators: six occasional screens are now tabs "
+                   "of one System page.",
+        "changes": [
+            "Under Administrator in the menu, Backups, Audit, Sharing, Ops, "
+            "UX Insights and Learned rules are now a single \"System\" entry. "
+            "It opens Backups, with the other five as tabs along the top.",
+            "The Administrator menu now leads with what admins use every day: "
+            "Feedback, AI, Directory, Users, System, Email and AWA filing.",
+            "Links and bookmarks to each screen still work, and searching "
+            "for any of them by name still finds it.",
+        ],
+    },
     {
         "version": "3.29",
         "date": "September 25, 2026",

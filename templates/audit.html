@@ -1,6 +1,7 @@
 {% extends "dash_layout.html" %}
+{% from "_page_tabs.html" import system_header %}
 {% from "_components.html" import page_header, empty_state %}
-{% block title %}Audit log{% endblock %}
+{% block title %}System · Audit log{% endblock %}
 {% block page_width %}full{% endblock %}
 {% block content %}
 <style>
@@ -47,7 +48,8 @@
   .glead { font-size:.92rem; color:var(--ink); margin:0 0 .2rem; }
 </style>
 
-{{ page_header("Audit log", "Append-only record of every governance-relevant action. Each entry is hash-chained to the one before it, so tampering with history is detectable.") }}
+{{ system_header("audit") }}
+<p class="lede">Append-only record of every governance-relevant action. Each entry is hash-chained to the one before it, so tampering with history is detectable.</p>
 
 {% set cat_tint = {
   'Sign-in':'', 'Feedback':'',

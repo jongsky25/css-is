@@ -1,6 +1,7 @@
 {% extends "dash_layout.html" %}
+{% from "_page_tabs.html" import system_header %}
 {% from "_components.html" import page_header %}
-{% block title %}Sharing settings{% endblock %}
+{% block title %}System · Sharing settings{% endblock %}
 {% block page_width %}narrow{% endblock %}
 
 {% block head %}
@@ -29,7 +30,8 @@
 
 {% block content %}
 <div class="awrap">
-  {{ page_header("Sharing settings", "The site-wide switch for the activity link-tree's public resource sharing.") }}
+  {{ system_header("sharing") }}
+<p class="lede">The site-wide switch for the activity link-tree's public resource sharing.</p>
 
   {% if msg %}<div class="flash ok">{{ msg }}</div>{% endif %}
 

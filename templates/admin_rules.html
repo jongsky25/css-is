@@ -1,6 +1,7 @@
 {% extends "dash_layout.html" %}
+{% from "_page_tabs.html" import system_header %}
 {% from "_components.html" import page_header, flash, empty_state %}
-{% block title %}Learned rules{% endblock %}
+{% block title %}System · Learned rules{% endblock %}
 {% block content %}
 <style>
   .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1.1rem 1.3rem;
@@ -43,8 +44,8 @@
   @media (max-width:640px){ .addgrid { grid-template-columns:1fr; } }
 </style>
 
-{{ page_header("Learned rules",
-   "Frequently-asked questions answered by the AI search bar <strong>without calling the model</strong> — saving daily AI budget and still working when AI is off. A rule maps a question to a page, a stat answer, or a help section; the answer is rendered the same way the model path renders it.") }}
+{{ system_header("rules") }}
+<p class="lede">Frequently-asked questions answered by the AI search bar <strong>without calling the model</strong> — saving daily AI budget and still working when AI is off. A rule maps a question to a page, a stat answer, or a help section; the answer is rendered the same way the model path renders it.</p>
 {{ flash(msg=msg, err=err) }}
 
 <div class="panel">

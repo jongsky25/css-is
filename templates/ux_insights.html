@@ -1,6 +1,7 @@
 {% extends "dash_layout.html" %}
+{% from "_page_tabs.html" import system_header %}
 {% from "_components.html" import page_header %}
-{% block title %}UX Insights{% endblock %}
+{% block title %}System · UX Insights{% endblock %}
 
 {% block head %}
 <style>
@@ -56,7 +57,8 @@
 
 {% block content %}
 <div class="uxwrap">
-  {{ page_header("UX Insights", "Passive interface-friction telemetry, ranked into what to fix first — dead/rage clicks, failed searches, and client errors, correlated with Spot Feedback.") }}
+  {{ system_header("ux_insights") }}
+<p class="lede">Passive interface-friction telemetry, ranked into what to fix first — dead/rage clicks, failed searches, and client errors, correlated with Spot Feedback.</p>
 
   {% if err %}<div class="flash err">{{ err }}</div>{% endif %}
   {% if truncated %}<div class="flash note">This window has more events than fit in one read (showing the most recent {{ digest.totals.events }}) — the ranking below is based on that subset, not literally every event in the window.</div>{% endif %}
