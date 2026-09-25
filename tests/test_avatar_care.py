@@ -422,3 +422,19 @@ def test_landing_and_profile_both_show_the_ladder(app_mod):
         assert "grows" in html, path
         # every locked stage advertises the threshold that unlocks it
         assert "pts" in html, path
+
+
+def test_growth_actions_link_to_where_you_do_them(app_mod):
+    """Each "how it grows" line reads like a to-do and got clicked like one —
+    so each is a link to where that action happens."""
+    how = st.avatar_growth_actions("cat")
+    assert all(a.get("href") for a in how["points"])
+    from tests.conftest import _auth_client
+    html = _auth_client(app_mod, "admin").get("/").text
+    assert '<a href="/wellness/apply">Take a wellness break →</a>' in html
+
+
+def test_home_greeting_opens_your_profile(app_mod):
+    from tests.conftest import _auth_client
+    html = _auth_client(app_mod, "admin").get("/").text
+    assert 'class="oc-me" href="/me"' in html

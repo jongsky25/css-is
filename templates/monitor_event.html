@@ -18,7 +18,12 @@
           border-radius:8px; border:1px solid var(--accent); color:var(--accent); background:var(--surface); }
   .toolbar a.btn:hover { background:var(--accent-bg); }
   .reglink { font-size:.82rem; color:var(--soft); }
-  .reglink code { background:var(--surface-2); border:1px solid var(--line); border-radius:7px;
+  .reglink .reg-copy { font:inherit; font-size:.78rem; font-weight:600; cursor:pointer; padding:.22rem .7rem;
+          margin-left:.3rem; border-radius:8px; border:1px solid var(--accent); color:var(--accent);
+          background:var(--surface); }
+  .reglink .reg-copy:hover { background:var(--accent-bg); }
+  .reg-copy-msg { font-size:.78rem; color:var(--green); margin-left:.3rem; }
+  .reglink code { user-select:all; cursor:text; background:var(--surface-2); border:1px solid var(--line); border-radius:7px;
           padding:.25rem .5rem; color:var(--ink-soft); word-break:break-all; }
   .note { font-size:.82rem; color:var(--grey); margin:.2rem 0 1rem; }
   table.roster { width:100%; border-collapse:collapse; font-size:.88rem; }
@@ -100,7 +105,10 @@
     {% if report_url %}<a class="btn" href="{{ report_url }}#comments">💬 What people said →</a>{% endif %}
     <a class="btn" href="/monitor/{{ ev.event_token }}/export">⬇ Export roster (XLSX)</a>
     <a class="btn" href="/activities/{{ ev.event_token }}/manage">⚙ Manage activity</a>
-    <span class="reglink">Registration link: <code>{{ base_url }}/e/{{ ev.event_token }}</code></span>
+    {#-- People clicked (and rage-clicked) the bare <code> trying to copy it. --#}
+    <span class="reglink">Registration link: <code id="regLink">{{ base_url }}/e/{{ ev.event_token }}</code>
+      <button type="button" class="reg-copy" id="regCopy" aria-describedby="regLink">Copy</button>
+      <span class="reg-copy-msg" id="regCopyMsg" role="status" aria-live="polite"></span></span>
   </div>
 
   <p class="note">“Completed” means the participant answered all {{ summ.n_forms }} feedback form{{ '' if summ.n_forms == 1 else 's' }} for this activity.{% if summ.unattributed %} The “Not pre-registered” count is walk-in / QR / paper responses with no registrant — not tied to anyone above, but each one counts as a completed response, so the completion rate is figured out of everyone who took part (registered plus these).{% endif %} The completion rate reaches 100% only when every registered person has finished.</p>
@@ -177,6 +185,17 @@
   <script>
   (function () {
     var tok = "{{ ev.event_token }}";
+    var regCopy = document.getElementById('regCopy');
+    if (regCopy) regCopy.addEventListener('click', function () {
+      var link = document.getElementById('regLink').textContent.trim();
+      var out = document.getElementById('regCopyMsg');
+      function done() { out.textContent = 'Copied ✓'; setTimeout(function () { out.textContent = ''; }, 2500); }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(link).then(done, function () { window.prompt('Copy this registration link:', link); });
+      } else {
+        window.prompt('Copy this registration link:', link);
+      }
+    });
     function msg(aid, text, cls) {
       var el = document.querySelector('.act-msg[data-aid="' + aid + '"]');
       if (el) { el.textContent = text; el.className = 'act-msg ' + (cls || ''); }

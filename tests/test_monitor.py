@@ -355,6 +355,8 @@ def test_monitor_detail_shows_registrant_and_status(manager, db_path):
     assert r.status_code == 200
     assert "Reg One" in r.text
     assert "In progress" in r.text               # answered 1 of 2 forms
+    # the registration link has a real Copy control, not just a bare <code>
+    assert 'id="regCopy"' in r.text and 'id="regLink"' in r.text
 
 
 def test_non_creator_manager_is_redirected(manager, db_path):

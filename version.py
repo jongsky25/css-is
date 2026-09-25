@@ -17,10 +17,32 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.20"
+APP_VERSION = "3.21"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.21",
+        "date": "September 25, 2026",
+        "summary": "Things people kept clicking on now do something: the "
+                   "companion's \"how it grows\" list, your greeting on the "
+                   "home screen, the \"in the office\" count, and the "
+                   "registration link on Monitor.",
+        "changes": [
+            "On the home screen and your profile, each way to grow your "
+            "companion (\"Take a wellness break +10\" and the rest) is now a "
+            "link to where you do it.",
+            "Your photo and greeting at the top of the home screen now open "
+            "your profile.",
+            "The \"in the office today\" number on the work arrangement "
+            "card now opens the day-by-day list of who's in.",
+            "Monitor has a Copy button next to the registration link, and "
+            "clicking the link itself selects all of it.",
+            "On Work arrangement approvals, the note about a shared week now "
+            "names whose arrangement it is (it used to say \"your\") and "
+            "links to that period's schedule.",
+        ],
+    },
     {
         "version": "3.20",
         "date": "September 25, 2026",

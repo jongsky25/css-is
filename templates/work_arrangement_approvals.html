@@ -72,7 +72,8 @@
             → now <b>{{ w.arrangement }}{% if w.remarks %} · {{ w.remarks }}{% endif %}</b></div>
           {% endif %}
           {% if w.note %}<div class="note">“{{ w.note }}”</div>{% endif %}
-          {% if w.week_override_note %}<div class="weeknote">{{ w.week_override_note }}</div>{% endif %}
+          {% if w.week_override_note %}<div class="weeknote">{{ w.week_override_note_approver or w.week_override_note }}
+            {% if w.week_override_period %}<a href="/work-arrangement/schedule?period={{ w.week_override_period.start }}">See the {{ w.week_override_period.label }} schedule →</a>{% endif %}</div>{% endif %}
         </td>
         <td data-label="Coverage">
           {% if w.coverage_flag %}
