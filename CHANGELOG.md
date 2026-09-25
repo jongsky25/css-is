@@ -1,5 +1,33 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-25 (v3.17 — ANNEX C downloads point at the period that was approved)
+
+Reported as "Gilbert Canoy was approved but does not appear in the
+downloadable PDF". The export was correct; the approver was downloading the
+wrong period. Filings are only accepted for upcoming periods (the current one
+closes the Friday before it starts), but `/work-arrangement/schedule` — the
+only page with the ANNEX C buttons — defaults to
+`work_arrangement_schedule_period()`, the period being worked. Approving an
+October 1-15 filing and clicking "ANNEX C (PDF)" therefore produced the
+September 16-30 sheet, where that person's row is blank.
+
+**`app.py`** — `work_arrangement_schedule` builds an `upcoming` summary for
+the next period when the page is on the current schedule period and that
+next period already has filings or No AWA tags. `work_arrangement_decide`
+now redirects with `&period=<decided period>`, and
+`work_arrangement_approvals` validates it into `decided_period` /
+`decided_period_label`.
+
+**`templates/work_arrangement_schedule.html`** — amber callout above the
+period panel with the upcoming period's approved/waiting counts and its own
+View / PDF / Excel links.
+
+**`templates/work_arrangement_approvals.html`** — after a decision, a line
+under the flash links to that period's schedule and annex downloads.
+
+**`tests/test_work_arrangement.py`** — covers the redirect, both links, and
+that the upcoming period's export carries the approval.
+
 ## 2026-09-24 (v3.16 — avatar companions wear rank regalia that grows with wellness stage)
 
 Companions already had six growth stages driven by wellness points, but
