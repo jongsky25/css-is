@@ -8,6 +8,7 @@ Two layers:
     creator-only detail view, and the XLSX export.
 """
 from __future__ import annotations
+import pytest
 import storage as st
 
 
@@ -940,3 +941,94 @@ def test_a_bureau_grant_is_how_a_seat_gets_every_section_back(
             conn = st.connect(db_path)
             st.set_bureau_access(conn, me["user_id"], "")
             conn.close()
+
+
+# ---- "Remind N not finished" (Spot Feedback, Sept 23) -------------------------
+
+def _seed_remind_roster(db_path):
+    """Reg One in progress (email), Done Dan completed (email), No-mail Nia
+    not started with no email — only Reg One is reachable and unfinished."""
+    conn = st.connect(db_path)
+    try:
+        eid, tok, f2, f3 = _event_with_two_forms(conn, event_date="2099-01-01")
+        a = st.add_attendee(conn, eid, name="Reg One", email="r1@x.com", consent_text="x")
+        st.record_response(conn, f2, [("B6", 6)], attendee_id=a)
+        d = st.add_attendee(conn, eid, name="Done Dan", email="dan@x.com", consent_text="x")
+        st.record_response(conn, f2, [("B6", 6)], attendee_id=d)
+        st.record_response(conn, f3, [("SQD1", 6)], attendee_id=d)
+        st.add_attendee(conn, eid, name="No-mail Nia", email=None, consent_text="x")
+    finally:
+        conn.close()
+    return eid, tok
+
+
+@pytest.fixture()
+def sent_mail(app_mod, monkeypatch):
+    out = []
+    monkeypatch.setattr(app_mod.mailer, "email_configured", lambda: True)
+    monkeypatch.setattr(app_mod.mailer, "send", lambda to, subject, body, html=None: (
+        out.append({"to": to, "subject": subject, "body": body, "html": html}),
+        {"sent": True, "detail": "Email sent."})[1])
+    return out
+
+
+def test_remind_unfinished_emails_only_reachable_unfinished_registrants(
+        manager, db_path, sent_mail):
+    _eid, tok = _seed_remind_roster(db_path)
+    page = manager.get(f"/monitor/{tok}").text
+    assert 'id="remindAll"' in page and "Remind 1 not finished" in page
+
+    r = manager.post(f"/monitor/{tok}/remind-unfinished")
+    assert r.status_code == 200 and r.json()["queued"] == 1
+    assert [m["to"] for m in sent_mail] == ["r1@x.com"]          # not Dan, not Nia
+    assert f"/e/{tok}/resume?rt=" in sent_mail[0]["body"]        # their own resume link
+    assert "Forum" in sent_mail[0]["subject"]
+
+
+def test_remind_unfinished_holds_a_cooldown(manager, db_path, sent_mail):
+    """A double-click or a second organizer can't mail everyone twice."""
+    _eid, tok = _seed_remind_roster(db_path)
+    assert manager.post(f"/monitor/{tok}/remind-unfinished").json()["queued"] == 1
+    r = manager.post(f"/monitor/{tok}/remind-unfinished")
+    assert r.status_code == 429 and r.json()["queued"] == 0
+    assert len(sent_mail) == 1
+    page = manager.get(f"/monitor/{tok}").text
+    assert "Last reminder sent" in page
+    assert 'id="remindAll" data-count="1"\n            disabled' in page
+
+
+def test_remind_unfinished_refuses_a_closed_activity(manager, db_path, sent_mail):
+    eid, tok = _seed_remind_roster(db_path)
+    conn = st.connect(db_path)
+    try:
+        st.close_event_now(conn, eid)
+    finally:
+        conn.close()
+    r = manager.post(f"/monitor/{tok}/remind-unfinished")
+    assert r.status_code == 409 and sent_mail == []
+    assert 'id="remindAll"' not in manager.get(f"/monitor/{tok}").text
+
+
+def test_remind_unfinished_without_email_sends_nothing(manager, db_path, app_mod, monkeypatch):
+    _eid, tok = _seed_remind_roster(db_path)
+    monkeypatch.setattr(app_mod.mailer, "email_configured", lambda: False)
+    r = manager.post(f"/monitor/{tok}/remind-unfinished")
+    assert r.json()["queued"] == 0 and "isn't set up" in r.json()["detail"]
+
+
+def test_remind_unfinished_requires_manage_rights(viewer, db_path):
+    _eid, tok = _seed_remind_roster(db_path)
+    assert viewer.post(f"/monitor/{tok}/remind-unfinished").status_code in (403, 404)
+
+
+def test_remind_unfinished_refuses_once_the_window_has_lapsed(manager, db_path, sent_mail):
+    """Past the close time a resume link lands on a closed form — no reminder."""
+    eid, tok = _seed_remind_roster(db_path)
+    conn = st.connect(db_path)
+    try:
+        st.set_event_window(conn, eid, "2020-01-01T08:00", "2020-01-02T17:00")
+    finally:
+        conn.close()
+    r = manager.post(f"/monitor/{tok}/remind-unfinished")
+    assert r.status_code == 409 and "window" in r.json()["detail"] and sent_mail == []
+    assert 'id="remindAll"' not in manager.get(f"/monitor/{tok}").text

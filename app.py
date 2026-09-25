@@ -8968,6 +8968,7 @@ def monitor_event(request: Request, event_token: str, flash: str = ""):
             })
         people = st.event_attendees_status(conn, ev["id"])
         summ = st.event_registration_summary(conn, ev["id"])
+        remind_last, remind_wait = _remind_cooldown_left(conn, ev["id"])
         # So the roster header can say "open until <date>" / "closed" without the
         # organizer digging into the manage page. Read while the conn is still open.
         entry_window = st.get_event_window(conn, ev["id"])
@@ -8986,6 +8987,10 @@ def monitor_event(request: Request, event_token: str, flash: str = ""):
         "entry_window": entry_window, "is_closed": is_closed,
         "report_url": report_url,
         "flash": flash,
+        "remind_count": (0 if _window_over((entry_window or {}).get("close_at"))
+                         else len(_unfinished_with_email(people))),
+        "remind_last": remind_last, "remind_wait": remind_wait,
+        "email_on": mailer.email_configured(),
     })
 
 
@@ -9086,6 +9091,112 @@ def monitor_resend_link(request: Request, event_token: str, attendee_id: int):
     finally:
         conn.close()
     return JSONResponse(res)
+
+
+# Remind everyone who hasn't finished (Spot Feedback, Sept 23: "I want to add a
+# reminder feature for the participants"). One click from Monitor emails each
+# unfinished registrant their own resume link. Once per event per cooldown, so a
+# double-click — or a second organizer on the same roster — can't mail-bomb
+# participants; the page shows when the last round went out.
+REMIND_UNFINISHED_COOLDOWN_MIN = 60
+
+
+def _remind_setting_key(event_id):
+    return f"monitor_remind_unfinished.{event_id}"
+
+
+def _unfinished_with_email(people):
+    """Roster rows a reminder can reach: not finished, identity not purged, an
+    email on file."""
+    return [p for p in people
+            if p["status"] != "completed" and not p["purged"] and p.get("email")]
+
+
+def _remind_cooldown_left(conn, event_id):
+    """(last_sent_iso or None, minutes still to wait — 0 when a new round may go)."""
+    last = st.get_setting(conn, _remind_setting_key(event_id))
+    if not last:
+        return None, 0
+    try:
+        elapsed = _now_local() - datetime.fromisoformat(last)
+    except ValueError:
+        return None, 0
+    left = REMIND_UNFINISHED_COOLDOWN_MIN - int(elapsed.total_seconds() // 60)
+    return last, max(0, left)
+
+
+def _window_over(close_at):
+    """True once an activity's response window has lapsed — its resume links
+    would land on a closed form, so a reminder would only frustrate. close_at
+    is a naive local 'YYYY-MM-DDTHH:MM' (or date), which compares as a string."""
+    return bool(close_at) and str(close_at)[:16] < _now_local().isoformat(timespec="minutes")
+
+
+def _send_reminder_batch(messages):
+    """BackgroundTask: one relay round trip per recipient (up to 30 s each), so
+    a roster of dozens runs after the response instead of holding the page."""
+    for email, subject, body, html in messages:
+        _send_and_log("css_reminder", email, subject, body, html=html)
+
+
+@app.post("/monitor/{event_token}/remind-unfinished")
+def monitor_remind_unfinished(request: Request, event_token: str):
+    """Email every registrant who hasn't finished the activity's feedback their
+    own resume link. Creator/admin only (same gate as the monitor page)."""
+    conn = get_conn()
+    try:
+        ev = st.get_event(conn, event_token)
+        if not ev or not _can_manage_event(request.state.user, ev):
+            return JSONResponse({"queued": 0, "detail": "Not found."}, status_code=404)
+        if st.event_is_closed(conn, ev["id"]):
+            return JSONResponse({"queued": 0, "detail": "This activity is closed — "
+                                 "registrants can no longer answer, so no reminder "
+                                 "was sent."}, status_code=409)
+        close_at = (st.get_event_window(conn, ev["id"]) or {}).get("close_at")
+        if _window_over(close_at):
+            return JSONResponse({"queued": 0, "detail": "This activity's response window "
+                                 "has ended, so no reminder was sent. Extend it on the "
+                                 "manage page first."}, status_code=409)
+        if not mailer.email_configured():
+            return JSONResponse({"queued": 0, "detail": "Email isn't set up on this "
+                                 "server yet, so no reminder was sent."})
+        targets = _unfinished_with_email(st.event_attendees_status(conn, ev["id"]))
+        if not targets:
+            return JSONResponse({"queued": 0, "detail": "Everyone with an email on "
+                                 "file has already finished — nobody to remind."})
+        _, wait = _remind_cooldown_left(conn, ev["id"])
+        if wait:
+            return JSONResponse({"queued": 0, "detail": (
+                f"A reminder already went out less than {REMIND_UNFINISHED_COOLDOWN_MIN} "
+                f"minutes ago. You can send another in {wait} minute"
+                f"{'' if wait == 1 else 's'}.")}, status_code=429)
+        title = ev.get("title")
+        if not st.email_feature_enabled(conn, "css_reminder"):
+            return JSONResponse({"queued": 0, "detail": "Monitor reminders are turned "
+                                 "off in Admin → Email, so none were sent."})
+        close_label = _humandt(close_at) if close_at else None
+        base = _base_url(request)
+        messages = []
+        for p in targets:
+            link = (f"{base}/e/{event_token}/resume?rt="
+                    f"{quote(auth.make_recovery_token(p['id']))}")
+            subject, body, html = mailer.css_reminder_message(p.get("name"), link,
+                                                              title, close_label)
+            messages.append((p["email"], subject, body, html))
+        # Stamp BEFORE sending: the cooldown must hold even while this batch is
+        # still going out in the background.
+        st.set_setting(conn, _remind_setting_key(ev["id"]),
+                       _now_local().isoformat(timespec="seconds"))
+        _audit(request, conn, "remind_unfinished", target_type="event",
+               target_id=ev["id"],
+               summary=f"Reminded {len(messages)} unfinished registrant(s) of “{title}”.")
+    finally:
+        conn.close()
+    n = len(messages)
+    return JSONResponse(
+        {"queued": n, "detail": f"Sending reminders to {n} "
+                                f"{'person' if n == 1 else 'people'} who haven't finished."},
+        background=BackgroundTask(_send_reminder_batch, messages))
 
 
 @app.post("/monitor/{event_token}/attendee/{attendee_id}/delete")

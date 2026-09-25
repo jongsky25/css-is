@@ -17,10 +17,30 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.22"
+APP_VERSION = "3.23"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.23",
+        "date": "September 25, 2026",
+        "summary": "Monitor can now remind everyone who hasn't finished an "
+                   "activity's feedback, in one click.",
+        "changes": [
+            "A new \"Remind N not finished\" button on an activity's Monitor "
+            "page emails each registrant who hasn't completed the feedback "
+            "their own link back to the forms they still owe. People who have "
+            "finished, or have no email on file, aren't emailed.",
+            "It asks before sending, and can only be used once an hour per "
+            "activity, so nobody gets the same reminder twice by accident. "
+            "The page shows when the last reminder went out.",
+            "It isn't offered once an activity is closed or its response "
+            "window has ended, since the link would only land on a closed "
+            "form.",
+            "Admins can turn these reminders off under Admin → Email "
+            "(\"Monitor — remind unfinished registrants\").",
+        ],
+    },
     {
         "version": "3.22",
         "date": "September 25, 2026",
