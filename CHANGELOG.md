@@ -1,5 +1,45 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-25 (v3.20 — UX telemetry stops ranking its own noise)
+
+The 30-day UX handoff (v3.19 build) put the companion's Feed buttons, the
+`/me` signature pad and `html > body` clicks at the top of the friction
+board. None of those is a broken control: rage bursts on a real `<button>`
+were scored ×3 like a dead affordance, every signature stroke is a "click"
+on a non-interactive `<canvas>`, and clicks on empty space / at the end of a
+text selection were recorded as dead clicks carrying the whole page's text.
+Resolved route-level Spot Feedback from June–July was also boosting every
+hotspot on the same route, and the handoff repeated those comments once per
+opportunity.
+
+**`static/js/telemetry.js`**
+- New `NON_ACTIONABLE` (`canvas, [data-ux-ignore]`), `isBackground()` (target
+  is `html`/`body`/`main`/`#maincontent` itself) and `endsTextSelection()`
+  guards — such clicks record neither a dead nor a rage click.
+- A rage burst on an element matching `INTERACTIVE` is still sent, with
+  `meta.interactive: true`.
+
+**`app.py`** — `_clean_telemetry_meta` keeps `interactive` (literal `True` only).
+
+**`ui_telemetry.py`**
+- `NON_ACTIONABLE_SELECTORS` filters background/canvas selectors server-side
+  too, so rows recorded before this fix (still inside retention) re-rank now.
+- `is_interactive_rage()` — `meta.interactive`, or for older rows a selector
+  whose last segment is a control tag. Counted as `rapid_taps`, scored ×1.
+- `correlate_feedback` — route-only matches attach only OPEN feedback; exact
+  element matches attach whatever the status (flagged `exact`). Only open
+  feedback earns `FEEDBACK_BOOST`; a resolved exact match gets a "fix may not
+  have landed" hint instead.
+
+**`ux_handoff.py`** — "rapid taps" column; matched feedback listed once in a
+"Spot Feedback matched to these opportunities" section naming the ranks it
+matches; vocabulary and scoring text updated.
+
+**`templates/ux_insights.html`** — rapid-tap signal and scoring note.
+
+Tests: `tests/test_ui_telemetry.py`, `tests/test_ux_handoff.py`,
+`tests/test_telemetry_ingest.py`.
+
 ## 2026-09-25 (v3.19 — a section's division chief can cover it AS division chief)
 
 Follow-up to v3.18's OIC redirect. `set_section_oic`'s picker only ever

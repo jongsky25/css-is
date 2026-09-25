@@ -221,3 +221,16 @@ def test_markdown_is_deterministic():
     a = uxh.render_handoff_markdown(_handoff(_rows()))
     b = uxh.render_handoff_markdown(_handoff(_rows()))
     assert a == b
+
+
+def test_markdown_lists_each_matched_feedback_once():
+    """Two hotspots on one route share its open route-level comment — the
+    export lists that comment once, naming both ranks, not once per hotspot."""
+    rows = [_ev("dead_click", route="/wellness", element_selector=sel,
+                session_id=f"s{u}", user_id=u)
+            for sel in ("#a", "#b") for u in (1, 2, 3)]
+    fb = [{"page_url": "/wellness", "element_selector": None, "message": "confusing page",
+           "status": "New", "created_at": "2026-07-10T00:00:00"}]
+    md = uxh.render_handoff_markdown(_handoff(rows, fb))
+    assert md.count("confusing page") == 1
+    assert "matches #1, #2" in md

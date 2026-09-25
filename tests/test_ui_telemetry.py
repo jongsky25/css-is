@@ -220,3 +220,63 @@ def test_build_digest_empty_rows_no_error():
     assert digest["opportunities"] == []
     assert digest["totals"] == {"sessions": 0, "users": 0, "events": 0}
     assert digest["window"]["from"] is None
+
+
+# ---- noise filtering: rapid taps, background + canvas clicks ------------------
+
+def test_rage_on_a_real_control_counts_as_rapid_taps_not_rage():
+    """Feeding the companion fast is play, not a dead button: a rage burst on a
+    <button> (meta.interactive, or — for rows recorded before that flag — a
+    selector ending in a control tag) scores like a dead click, not x3."""
+    btn = "#maincontent > div:nth-of-type(2) > span > button:nth-of-type(1)"
+    targets = ui_tel.friction_by_target([
+        _ev("rage_click", route="/wellness", element_selector=btn, user_id=1),
+        _ev("rage_click", route="/wellness", element_selector=btn, user_id=2),
+        _ev("rage_click", route="/wellness", element_selector="#pet",
+            meta={"interactive": True}, user_id=3),
+        _ev("rage_click", route="/wellness", element_selector="#maincontent > div > span",
+            user_id=4),
+    ])
+    by_sel = {t["selector"]: t for t in targets}
+    assert by_sel[btn]["rapid_taps"] == 2 and by_sel[btn]["rage_clicks"] == 0
+    assert by_sel["#pet"]["rapid_taps"] == 1
+    assert by_sel["#maincontent > div > span"]["rage_clicks"] == 1
+    assert ui_tel.friction_score(by_sel[btn]) == 1.6          # 2 x 1, 2 users x0.8
+
+
+def test_background_and_canvas_clicks_are_not_friction():
+    targets = ui_tel.friction_by_target([
+        _ev("dead_click", route="/", element_selector="html > body"),
+        _ev("dead_click", route="/", element_selector="#maincontent"),
+        _ev("dead_click", route="/me", element_selector="#sigCanvas"),
+        _ev("rage_click", route="/me", element_selector="#sigCanvas"),
+        _ev("dead_click", route="/", element_selector="#maincontent > div > div:nth-of-type(1)"),
+    ])
+    assert [t["selector"] for t in targets] == ["#maincontent > div > div:nth-of-type(1)"]
+
+
+def test_resolved_route_level_feedback_neither_attaches_nor_boosts():
+    """A Done comment about something else on the same screen says nothing
+    about this element — it must not ride along (or boost) on every hotspot of
+    that route. Open route-level comments still attach and boost."""
+    rows = [_ev("dead_click", route="/a", element_selector="#x", user_id=u) for u in (1, 2, 3)]
+    done = {"page_url": "/a", "element_selector": "#other", "message": "old",
+            "status": "Done", "created_at": "2026-06-01T00:00:00"}
+    digest = ui_tel.build_digest(rows, [done], window_days=30)
+    assert digest["opportunities"][0]["feedback"] == []
+    assert digest["opportunities"][0]["score"] == 3
+
+    open_fb = dict(done, status="Reviewing", message="still odd")
+    digest = ui_tel.build_digest(rows, [done, open_fb], window_days=30)
+    assert [f["message"] for f in digest["opportunities"][0]["feedback"]] == ["still odd"]
+    assert digest["opportunities"][0]["score"] == 4.5
+
+
+def test_resolved_exact_element_feedback_attaches_without_boost():
+    rows = [_ev("dead_click", route="/a", element_selector="#x", user_id=u) for u in (1, 2, 3)]
+    done = {"page_url": "/a", "element_selector": "#x", "message": "fixed?",
+            "status": "Done", "created_at": "2026-06-01T00:00:00"}
+    o = ui_tel.build_digest(rows, [done], window_days=30)["opportunities"][0]
+    assert o["feedback"][0]["exact"] is True
+    assert o["score"] == 3
+    assert "may not have landed" in o["hint"]
