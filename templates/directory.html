@@ -1,4 +1,5 @@
 {% extends "dash_layout.html" %}
+{% from "_page_tabs.html" import directory_header %}
 {% from "_components.html" import page_header %}
 {% block title %}Directory{% endblock %}
 {% block page_width %}full{% endblock %}
@@ -65,10 +66,8 @@
 
 {% block content %}
 <div class="dwrap">
-  {{ page_header("Directory") }}
+  {{ directory_header("directory") }}
   <p class="lede">Build the organogram — bureau, divisions, then sections — and register staff &amp; resource persons.</p>
-  <p style="margin:-.4rem 0 1rem;"><a class="addbtn" href="/directory/cleanup">⚙ Name cleanup tool</a>
-     <span class="sub2">— proper-case, strip honorifics, merge duplicates &amp; split rosters fast.</span></p>
   {% if err %}<div class="flash err" role="alert">{{ err }}</div>{% endif %}
   {% if msg %}<div class="flash ok" role="status">{{ msg }}</div>{% endif %}
   {% if pending %}

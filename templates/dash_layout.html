@@ -40,11 +40,14 @@
               'sharing' if path.startswith('/admin/sharing') else
               'feedback' if path.startswith('/admin/feedback') else
               'ops' if path == '/ops' else '') %}
-{# The menu highlight only. The four Insights tabs besides Pulse have no menu
-   entry of their own (in_nav False), so the one "Insights" entry (key "pulse")
-   lights up for all five. `cur` itself stays the page's own key — saved views,
+{# The menu highlight only. Tabs with no menu entry of their own (in_nav
+   False) light up their family's entry: the four Insights tabs besides Pulse
+   → "Insights" (key "pulse"), Invited events → Monitor, Name cleanup →
+   Directory. `cur` itself stays the page's own key — saved views,
    the page tour and PAGE_KEY are all keyed on it, per page. #}
-{% set nav_cur = 'pulse' if cur in ('people', 'teams', 'trends', 'participation') else cur %}
+{% set nav_cur = 'pulse' if cur in ('people', 'teams', 'trends', 'participation') else
+                 'monitor' if cur == 'outside' else
+                 'directory' if cur == 'cleanup' else cur %}
 {# Menus + search palette both render from nav_groups_for/search_index_for in
    app.py — one source of truth, so they can never drift apart. #}
 {% set nav_groups = nav_groups_for(u, request.state.is_chief) %}

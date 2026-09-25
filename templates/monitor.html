@@ -1,4 +1,5 @@
 {% extends "dash_layout.html" %}
+{% from "_page_tabs.html" import monitor_header %}
 {% from "_components.html" import page_header %}
 {% block title %}Monitor{% endblock %}
 
@@ -34,7 +35,7 @@
 {% endblock %}
 
 {% block content %}
-{{ page_header("Monitor") }}
+{{ monitor_header("monitor") }}
 <p class="lede">Track who has registered for each activity through its public link, and how far they have got with the customer-satisfaction survey (CSS). Only activities that are <b>upcoming</b> (still registering) or <b>ongoing</b> (CSS collecting) appear here — once an activity concludes it moves to its report.{% if scope_kind == "bureau" %} You are seeing every activity in the bureau.{% elif scope_kind == "none" %} Your account isn’t linked to a directory record yet, so you are seeing only the activities you created.{% else %} You are seeing your team’s activities — the ones your section ran, and the ones one of you spoke at.{% endif %} Open one for the full participant roster, or export it.</p>
 
 {% if outside_events %}

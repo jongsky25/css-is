@@ -558,13 +558,16 @@ NAV_GROUPS = [
          "hint": "The standing walk-in feedback link",
          "kw": "arta walk-in qr standing link feedback walkin counter", "cap": "create_activity"},
         {"key": "monitor", "url": "/monitor", "label": "Monitor",
-         "hint": "Who registered & who answered the CSS",
+         "hint": "Who registered & who answered — bureau activities and invited events",
          "kw": "monitor registration registered participants attendees responses answered css "
                "status completion track tracking who responded roster", "cap": "manage_event"},
+        # A tab of Monitor now (templates/_page_tabs.html monitor_header) —
+        # search-only, like Name cleanup under Directory.
         {"key": "outside", "url": "/activities/outside", "label": "Invited events",
          "hint": "All non-bureau / invited activities",
          "kw": "invited outside non-bureau nonbureau external events activities resource person "
-               "concluded list all find missing speaker review f3 organized by another", "cap": "manage_event"},
+               "concluded list all find missing speaker review f3 organized by another", "cap": "manage_event",
+         "in_nav": False},
         {"key": "encode", "url": "/encode", "label": "Paper entry",
          "section": "Data entry",
          "hint": "Type in paper survey slips",

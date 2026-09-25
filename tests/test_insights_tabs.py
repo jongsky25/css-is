@@ -7,7 +7,7 @@ TABS = [("pulse", "/dashboard"), ("people", "/dashboard/people"),
 
 
 def _tab_hrefs(html):
-    nav = re.search(r'<nav class="ins-tabs".*?</nav>', html, re.S).group(0)
+    nav = re.search(r'<nav class="page-tabs".*?</nav>', html, re.S).group(0)
     import html as _h
     unesc = lambda xs: [_h.unescape(x) for x in xs]
     return unesc(re.findall(r'href="([^"]+)"', nav)), unesc(re.findall(

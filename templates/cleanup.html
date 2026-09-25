@@ -1,5 +1,6 @@
 {% extends "dash_layout.html" %}
-{% block title %}Name cleanup{% endblock %}
+{% from "_page_tabs.html" import directory_header %}
+{% block title %}Directory · Name cleanup{% endblock %}
 {% block page_width %}full{% endblock %}
 
 {% block head %}
@@ -85,7 +86,8 @@
 
 {% block content %}
 <div class="cwrap">
-  <h1 style="margin:.2rem 0 .1rem;">Name cleanup <span class="muted">· external resource persons</span></h1>
+  {{ directory_header("cleanup") }}
+  <p class="muted" style="margin:-.7rem 0 .4rem;">External resource persons</p>
   <p class="lede">Final tidy-up of the external speaker roster. BLHSD staff are hidden (the plantilla
      is already clean). The default <b>Needs action</b> view shows only what's left to fix —
      ALL-CAPS names, rosters (several people in one field), duplicate candidates, and low-signal
