@@ -17,10 +17,34 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.17"
+APP_VERSION = "3.18"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.18",
+        "date": "September 25, 2026",
+        "summary": "The Director's own wellness and work arrangement "
+                   "requests are now approved instantly, and a temporary "
+                   "OIC's own requests now go to the division chief (or the "
+                   "Director) instead of sitting with the chief they're "
+                   "standing in for.",
+        "changes": [
+            "The Director has nobody above them to send their own wellness "
+            "break or work arrangement to, so it used to sit pending, "
+            "waiting for an administrator to notice and approve it by hand. "
+            "It's now approved automatically the moment the Director files "
+            "it, with a note on the request saying so.",
+            "A temporary OIC's own wellness break and work arrangement "
+            "requests no longer route to the chief they're covering for — "
+            "who is very likely the person on leave, i.e. unavailable to "
+            "decide it. An OIC covering a section now has their own request "
+            "decided by the division chief, and an OIC covering a division "
+            "by the Director, the same as a genuine chief at that level. "
+            "The \"Send for approval of...\" copy on the apply pages now "
+            "names that person too.",
+        ],
+    },
     {
         "version": "3.17",
         "date": "September 25, 2026",

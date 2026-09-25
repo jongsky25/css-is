@@ -5754,6 +5754,23 @@ def _org_parent_path(path):
     return path.rsplit("/", 1)[0] if path and "/" in path else None
 
 
+def _is_director(conn, user_id):
+    """Does this account sit at the very top of the escalation chain (rank 3
+    -- see _org_rank)? The Director has nobody above them to route a wellness
+    break or work arrangement to, so their own filings skip the pending step
+    entirely and are auto-approved on the spot (see create_wellness_claim /
+    create_work_arrangement / request_work_arrangement_change)."""
+    me = get_admin_user_by_id(conn, user_id)
+    rp = get_rp(conn, me["rp_id"]) if me and me.get("rp_id") else None
+    if not rp:
+        return False
+    return _org_rank(rp.get("designation"), rp.get("position")) == 3
+
+
+_AUTO_APPROVE_NOTE = ("Auto-approved — the Director sits at the top of the "
+                       "approval chain, so this request needed no separate sign-off.")
+
+
 # ---- temporary OIC / acting approver (section_oic) -----------------------
 #
 # A manual, admin-set stand-in for the chief who normally fills an approver
@@ -5809,6 +5826,20 @@ def is_section_oic(conn, admin_user_id):
                         (admin_user_id,)).fetchone() is not None
 
 
+def _oic_org_unit_for(conn, admin_user_id):
+    """The org_unit this account currently stands in as acting OIC for, or
+    None. An account normally covers at most one seat; if it's ever assigned
+    more than one, the most recently set one wins (deterministic, not just
+    whatever SQLite happens to return first)."""
+    row = conn.execute(
+        "SELECT ou.id, ou.level, ou.path FROM section_oic so "
+        "JOIN org_unit ou ON ou.id = so.org_unit_id WHERE so.admin_user_id=? "
+        "ORDER BY so.set_at DESC LIMIT 1", (admin_user_id,)).fetchone()
+    if not row:
+        return None
+    return {"id": row[0], "level": row[1], "path": row[2]}
+
+
 def _account_display_name(conn, admin_user_id):
     """The name a delegate should be shown under: their directory name, falling
     back to their login email when they have no linked directory record."""
@@ -5853,6 +5884,25 @@ def _org_accounts_at_rank(conn, rank, org_path=None, exclude_uid=None):
         if aid != exclude_uid and _org_rank(desig, pos) == rank:
             out.append(aid)
     return out
+
+
+def _oic_override_seat(oic_unit):
+    """(rank, org_path) of the seat that decides an ACTING OIC's own requests,
+    or None to fall back to their substantive rank. An OIC's own claims don't
+    follow their real designation — they're redirected one rung above the
+    seat they're covering, the same rung a genuine holder of that seat would
+    escalate to: covering a section routes like that section's chief (up to
+    the division chief); covering a division routes like a division chief (up
+    to the Director). This also sidesteps the seat they're covering being
+    unavailable (on leave) being the very reason they're standing in for it."""
+    if not oic_unit:
+        return None
+    if oic_unit["level"] == "section":
+        parent = _org_parent_path(oic_unit["path"])
+        return (2, parent) if parent else None
+    if oic_unit["level"] == "division":
+        return (3, None)
+    return None                                     # bureau-level (the Director's own seat)
 
 
 _ORG_LEVEL_RANK = {"section": 1, "division": 2, "bureau": 3}
@@ -5932,11 +5982,24 @@ def approver_name_for(conn, user_id):
     An acting OIC set on the covering unit (see set_section_oic) takes priority
     over the substantive seat-holder's name here, so the copy names whoever will
     actually decide the request today -- but get_approvers_for still routes to
-    both, so the substantive chief can decide it too if they come back early."""
+    both, so the substantive chief can decide it too if they come back early.
+
+    An OIC's OWN requests are redirected instead (see _oic_override_seat) to
+    whoever sits one rung above the seat they're covering, before any of that
+    -- the copy names that seat's holder (or its own acting OIC), not the OIC's
+    substantive chief."""
     me = get_admin_user_by_id(conn, user_id)
     rp = get_rp(conn, me["rp_id"]) if me and me.get("rp_id") else None
     if not rp:
         return None
+
+    override = _oic_override_seat(_oic_org_unit_for(conn, user_id))
+    if override:
+        rank, path = override
+        oic = (_account_display_name(conn, _section_oic_account_id(conn, path, exclude_uid=user_id))
+               if path else None)
+        return oic or _org_seat_name(conn, rank, org_path=path, exclude_uid=user_id)
+
     rank = _org_rank(rp.get("designation"), rp.get("position"))
     path = rp.get("org_path")
     if rank == 0:                                   # staff -> section chief (same unit)
@@ -5979,13 +6042,27 @@ def get_approvers_for(conn, user_id):
     Whoever holds set_section_oic's acting-OIC delegate for the covering unit is
     added to the result too (see _with_section_oic) -- a manual, admin-set
     stand-in for a chief who is on leave, alongside the substantive seat rather
-    than instead of it."""
+    than instead of it.
+
+    An account currently standing in as an ACTING OIC (set_section_oic) has its
+    OWN requests redirected before any of that (see _oic_override_seat): one
+    rung above the seat they're covering, not through their substantive rank --
+    e.g. an OIC covering a section is decided by the division chief, exactly
+    like a genuine section chief's own claim, and never by the (likely absent)
+    substantive holder of the seat they're standing in for."""
     me = get_admin_user_by_id(conn, user_id)
     if not me or not me.get("rp_id"):
         return []
     rp = get_rp(conn, me["rp_id"])
     if not rp:
         return []
+
+    override = _oic_override_seat(_oic_org_unit_for(conn, user_id))
+    if override:
+        rank, path = override
+        approvers = _org_accounts_at_rank(conn, rank, org_path=path, exclude_uid=user_id)
+        return _with_section_oic(conn, approvers, path, exclude_uid=user_id) if path else approvers
+
     rank = _org_rank(rp.get("designation"), rp.get("position"))
     path = rp.get("org_path")
     if rank == 0:                                   # staff -> section chief (same unit)
@@ -6080,11 +6157,25 @@ def approver_title_for(conn, user_id):
     an app account yet. That's deliberate (Spot Feedback #76): a section head used
     to read "an administrator" because their division chief wasn't onboarded,
     which hid the real chain. Until the chief is onboarded the claim is still
-    handled by the admin fallback; the copy just tells staff who it's *for*."""
+    handled by the admin fallback; the copy just tells staff who it's *for*.
+
+    An acting OIC's own requests are redirected a rung above the seat they're
+    covering (see _oic_override_seat) before any of that: covering a section
+    reads "your division chief", covering a division reads "the Director"."""
     me = get_admin_user_by_id(conn, user_id)
     rp = get_rp(conn, me["rp_id"]) if me and me.get("rp_id") else None
     if not rp:
         return "an administrator"
+
+    override = _oic_override_seat(_oic_org_unit_for(conn, user_id))
+    if override:
+        rank, path = override
+        if rank == 2 and _org_role_filled(conn, 2, org_path=path):
+            return "your division chief"
+        if rank == 3 and _org_role_filled(conn, 3):
+            return "the Director"
+        return "an administrator"
+
     rank = _org_rank(rp.get("designation"), rp.get("position"))
     path = rp.get("org_path")
     if rank == 0 and _org_role_filled(conn, 1, org_path=path):
@@ -6400,13 +6491,22 @@ def create_wellness_claim(conn, user_id, break_date, start_time, activity,
     if _wellness_overlapping_claim(conn, user_id, d, start_minutes,
                                    start_minutes + hours * 60):
         raise ValueError("You already have a break that overlaps that time.")
+    # The Director has nobody above them to decide their own claim (see
+    # get_approvers_for) — rather than leave it pending on the admin fallback,
+    # it's approved the moment it's filed.
+    auto = _is_director(conn, user_id)
+    status = "approved" if auto else "pending"
+    decided_by = user_id if auto else None
+    decided_at = tz.now_iso() if auto else None
+    decide_note = _AUTO_APPROVE_NOTE if auto else None
     cur = conn.execute(
         """INSERT INTO wellness_claim(user_id, week_start, break_date, start_time,
                                       hours, activity, activity_other, note, status,
-                                      created_at)
-           VALUES (?,?,?,?,?,?,?,?,'pending',?)""",
+                                      created_at, decided_by, decided_at, decide_note)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (user_id, ws, d.isoformat(), start_time, hours, activity, activity_other,
-         (note or "").strip() or None, tz.now_iso()))
+         (note or "").strip() or None, status, tz.now_iso(), decided_by, decided_at,
+         decide_note))
     conn.commit()
     return cur.lastrowid
 
@@ -7875,7 +7975,14 @@ def create_work_arrangement(conn, user_id, period_start, arrangement,
         (user_id, ps, arrangement, weekday, (note or "").strip() or None,
          tz.now_iso(), effective_from if effective_from != ps else None))
     conn.commit()
-    return cur.lastrowid
+    wa_id = cur.lastrowid
+    # The Director has nobody above them to decide their own filing (see
+    # get_approvers_for) — rather than leave it pending on the admin fallback,
+    # it's approved the moment it's filed.
+    if _is_director(conn, user_id):
+        _wa_apply_decision(conn, wa_id, get_work_arrangement(conn, wa_id),
+                           "approved", user_id, _AUTO_APPROVE_NOTE)
+    return wa_id
 
 
 def request_work_arrangement_change(conn, wa_id, user_id, arrangement,
@@ -7918,7 +8025,14 @@ def request_work_arrangement_change(conn, wa_id, user_id, arrangement,
         (user_id, ps, arrangement, weekday, (note or "").strip() or None,
          wa_id, tz.now_iso(), effective_from if effective_from != ps else None))
     conn.commit()
-    return cur.lastrowid
+    new_id = cur.lastrowid
+    # Same auto-approval as a first-time filing (create_work_arrangement): the
+    # Director has nobody above them to decide a change to their own schedule
+    # either.
+    if _is_director(conn, user_id):
+        _wa_apply_decision(conn, new_id, get_work_arrangement(conn, new_id),
+                           "approved", user_id, _AUTO_APPROVE_NOTE)
+    return new_id
 
 
 def cancel_work_arrangement(conn, wa_id, user_id):
@@ -8074,33 +8188,26 @@ def end_work_arrangement_noawa(conn, user_id, actor):
 
 # ---- approval --------------------------------------------------------------
 
-def decide_work_arrangement(conn, wa_id, user, action, note=None):
-    """Approve or deny a pending arrangement. Raises ValueError (bad state or
-    input) or PermissionError (not this user's to decide). Returns the updated
-    row.
+def _wa_apply_decision(conn, wa_id, row, status, decided_by_id, note=None):
+    """Core of settling a pending arrangement as approved/denied -- shared by
+    a human decide_work_arrangement call and the Director's auto-approval at
+    filing time (create_work_arrangement / request_work_arrangement_change).
+    Assumes the caller already confirmed `row` is the pending row at `wa_id`
+    and that a decision is theirs to make; this only applies it.
 
     Approving a CHANGE retires the row it replaces in the same transaction, so
     the "one approved per period" index is never momentarily violated and the
     person is never momentarily without a schedule."""
-    row = get_work_arrangement(conn, wa_id)
-    if not row:
-        raise ValueError("That work arrangement request no longer exists.")
-    if row["status"] != "pending":
-        raise ValueError("That request has already been decided.")
-    if action not in ("approve", "deny"):
-        raise ValueError("Unknown decision.")
-    if not is_approver_for(conn, user, row["user_id"]):
-        raise PermissionError("That request isn't yours to decide.")
-    # Filing already resolves or refuses a clashing day, so this should never
-    # fire — unless the clashing row predates the rule or was written around
-    # it. Better the approver learns that here than signs off a schedule the
-    # annex would then have to print twice in one week. The row's own
-    # effective_from was already set when it was filed, so only the raise
-    # matters here — a resolved result is simply left as filed.
-    if action == "approve":
+    if status == "approved":
+        # Filing already resolves or refuses a clashing day, so this should
+        # never fire — unless the clashing row predates the rule or was
+        # written around it. Better the approver learns that here than signs
+        # off a schedule the annex would then have to print twice in one
+        # week. The row's own effective_from was already set when it was
+        # filed, so only the raise matters here — a resolved result is simply
+        # left as filed.
         _wa_resolve_week(conn, row["user_id"], row["period_start"],
                          row["arrangement"], row["weekday"], exclude_id=wa_id)
-    status = "approved" if action == "approve" else "denied"
     note = (note or "").strip() or None
     try:
         if status == "approved" and row["supersedes_id"]:
@@ -8110,12 +8217,29 @@ def decide_work_arrangement(conn, wa_id, user, action, note=None):
         conn.execute(
             "UPDATE work_arrangement SET status=?, decided_by=?, decided_at=?, "
             "decide_note=? WHERE id=?",
-            (status, user["id"], tz.now_iso(), note, wa_id))
+            (status, decided_by_id, tz.now_iso(), note, wa_id))
         conn.commit()
     except Exception:
         conn.rollback()
         raise
     return get_work_arrangement(conn, wa_id)
+
+
+def decide_work_arrangement(conn, wa_id, user, action, note=None):
+    """Approve or deny a pending arrangement. Raises ValueError (bad state or
+    input) or PermissionError (not this user's to decide). Returns the updated
+    row."""
+    row = get_work_arrangement(conn, wa_id)
+    if not row:
+        raise ValueError("That work arrangement request no longer exists.")
+    if row["status"] != "pending":
+        raise ValueError("That request has already been decided.")
+    if action not in ("approve", "deny"):
+        raise ValueError("Unknown decision.")
+    if not is_approver_for(conn, user, row["user_id"]):
+        raise PermissionError("That request isn't yours to decide.")
+    status = "approved" if action == "approve" else "denied"
+    return _wa_apply_decision(conn, wa_id, row, status, user["id"], note)
 
 
 def list_work_arrangement_approvals(conn, user):

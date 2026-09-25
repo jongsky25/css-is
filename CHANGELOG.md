@@ -1,5 +1,54 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-25 (v3.18 — Director auto-approval + OIC self-routing)
+
+Two edge cases in the shared escalation chain (`storage._org_rank` /
+`get_approvers_for`, STAFF_ONBOARDING_AVATAR_PLAN.md §7a.2):
+
+1. The Director has nobody above them in the chain, so their own wellness
+   break and work arrangement filings sat `pending` on the admin fallback
+   until an administrator happened to pick it up. They're now auto-approved
+   the moment they're filed.
+2. An acting OIC's (`set_section_oic`) own requests still routed through
+   their substantive rank — for an OIC standing in for a section chief on
+   leave, that meant their own claim went to that same (absent) chief. Their
+   own requests are now redirected a rung above the seat they're covering
+   instead: covering a section escalates like a section chief would (to the
+   division chief); covering a division escalates like a division chief
+   would (to the Director).
+
+**`storage.py`**
+- `_is_director` + `_AUTO_APPROVE_NOTE`: rank-3 check and shared note used by
+  the auto-approval path.
+- `create_wellness_claim` inserts the claim as `approved` (with
+  `decided_by`/`decided_at`/`decide_note` set) instead of `pending` when the
+  filer is the Director.
+- `_wa_apply_decision`: the approve/deny core of `decide_work_arrangement`
+  (resolve-week safety check, superseding the row a change replaces, the
+  status/decided_by/decided_at/decide_note update) pulled out into its own
+  function so it can be called both from a human decision and from
+  auto-approval. `decide_work_arrangement` itself is now a thin wrapper.
+- `create_work_arrangement` and `request_work_arrangement_change` call
+  `_wa_apply_decision` right after filing when the filer is the Director.
+- `_oic_org_unit_for`: which org unit (if any) an account currently stands
+  in as acting OIC for.
+- `_oic_override_seat`: maps that unit to the (rank, org_path) one rung
+  above it — a section's covering OIC maps to the division chief rank in the
+  parent division; a division's covering OIC maps to the Director.
+- `get_approvers_for`, `approver_name_for`, `approver_title_for` all check
+  `_oic_override_seat` first and, when set, route/name/label off it instead
+  of the account's substantive rank. Self-exclusion (an OIC can never be
+  their own approver) still applies via the existing `exclude_uid` plumbing.
+
+**`tests/test_director_and_oic_routing.py`** (new) — Director auto-approval
+for a wellness claim, a work arrangement filing, and a work arrangement
+change (including that the change still supersedes the row it replaces);
+a non-Director's filings are unaffected; a section-level and a
+division-level OIC's own requests redirect to the division chief / Director
+respectively, in both `get_approvers_for` and the apply-page copy; an OIC
+still never approves their own request; clearing the OIC restores the
+normal chain.
+
 ## 2026-09-25 (v3.17 — ANNEX C downloads point at the period that was approved)
 
 Reported as "Gilbert Canoy was approved but does not appear in the
