@@ -17,10 +17,25 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.16"
+APP_VERSION = "3.17"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.17",
+        "date": "September 25, 2026",
+        "summary": "After you approve a work arrangement, it's now easy to "
+                   "download the ANNEX C that actually shows it.",
+        "changes": [
+            "Approvals are always for the next half-month, but the schedule "
+            "page opens on the current one — so a freshly approved "
+            "arrangement looked missing from the downloaded form.",
+            "The schedule page now shows a highlighted box for the period "
+            "being filed, with its own PDF and Excel download buttons.",
+            "After approving or denying a request, the approvals page links "
+            "straight to that period's schedule and ANNEX C downloads.",
+        ],
+    },
     {
         "version": "3.16",
         "date": "September 24, 2026",
