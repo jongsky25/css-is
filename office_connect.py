@@ -36,6 +36,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
+import auth
 import css_is_engine as eng
 import dashboard_insights as di
 import storage as st
@@ -1004,3 +1005,154 @@ def team_view_data(conn, user, *, get_atoms, view_memo,
         "notes": notes,
         "approvals": approvals,
     }
+
+
+# ── Your to-do — the landing page as a personal task hub ─────────────────────
+#
+# The 30-day UX handoff: staff land here (523 views, 33 users) and leave for
+# the same handful of self-service tasks — apply for a break, file a work
+# arrangement, clear approvals, check an activity's roster — while the page
+# leads with team analytics. This strip answers "what do I need to do?" first,
+# one card per task, each with its single next step. Built straight from
+# storage (not from team_view_data), so it works for an account with no
+# directory link too, and one failing source never takes the others down.
+
+_TONE_ORDER = {"todo": 0, "wait": 1, "info": 2, "done": 3}
+
+
+def _plural(n, word):
+    return f"{n} {word}{'' if n == 1 else 's'}"
+
+
+def _task_approvals(conn, user):
+    counts = st.pending_approval_counts(conn, user)
+    n = counts["wellness"] + counts["awa"]
+    if not n:
+        return None
+    parts = [p for p in (
+        _plural(counts["wellness"], "wellness break") if counts["wellness"] else "",
+        _plural(counts["awa"], "work arrangement") if counts["awa"] else "") if p]
+    return {"key": "approvals", "icon": "✅", "tone": "todo",
+            "title": f"{_plural(n, 'request')} waiting on you",
+            "detail": " · ".join(parts), "cta": "Review", "url": "/approvals"}
+
+
+def _task_wellness(conn, user, today):
+    uid = user["id"]
+    claims = st.list_my_wellness_claims(conn, uid)
+    iso = today.isoformat()
+    to_check_in = [c for c in claims if c["status"] == "approved" and c["break_date"] <= iso]
+    if to_check_in:
+        c = to_check_in[-1]                      # the oldest one still open
+        more = len(to_check_in) - 1
+        return {"key": "wellness", "icon": "🌱", "tone": "todo",
+                "title": "Check in on your wellness break",
+                "detail": f"{c['break_date']} · {c['start_time']}"
+                          + (f" · and {more} more" if more else ""),
+                "cta": "Check in", "url": f"/wellness/claims/{c['id']}/complete"}
+    weekly = st.WELLNESS_WEEKLY_HOURS
+    used = st.wellness_hours_used(conn, uid, st.wellness_week_start())
+    left = max(0, weekly - used)
+    left = int(left) if float(left).is_integer() else left
+    pending = [c for c in claims if c["status"] == "pending" and c["break_date"] >= iso]
+    if left > 0:
+        detail = (f"{_plural(len(pending), 'request')} awaiting approval"
+                  if pending else "Book it for any remaining workday this week.")
+        return {"key": "wellness", "icon": "🌱", "tone": "todo",
+                "title": f"{_plural(left, 'hour')} of wellness break left this week",
+                "detail": detail, "cta": "Apply for a break", "url": "/wellness/apply"}
+    if pending:
+        c = pending[-1]
+        return {"key": "wellness", "icon": "🌱", "tone": "wait",
+                "title": "Wellness break awaiting approval",
+                "detail": f"{c['break_date']} · {c['start_time']}",
+                "cta": "View", "url": "/wellness"}
+    return {"key": "wellness", "icon": "🌱", "tone": "done",
+            "title": f"All {weekly} wellness hours booked this week",
+            "detail": "Nice. Next week's open on Monday.", "cta": "View", "url": "/wellness"}
+
+
+def _task_awa(conn, user, today):
+    open_ps = st.work_arrangement_open_periods()
+    if not open_ps:
+        return None
+    ps = open_ps[0]
+    uid = user["id"]
+    label = st.work_arrangement_period_label(ps)
+    deadline = st.work_arrangement_deadline(ps)
+    if st.get_work_arrangement_noawa(conn, uid, ps):
+        return None                              # not on AWA — nothing to file
+    approved = st.my_work_arrangement_for(conn, uid, ps)
+    pending = st.my_pending_work_arrangement(conn, uid, ps)
+    if pending:
+        return {"key": "awa", "icon": "🗓️", "tone": "wait",
+                "title": f"Work arrangement for {label} awaiting approval",
+                "detail": pending.get("arrangement_label") or "",
+                "cta": "View", "url": "/work-arrangement"}
+    if approved:
+        return {"key": "awa", "icon": "🗓️", "tone": "done",
+                "title": f"Work arrangement filed for {label}",
+                "detail": approved.get("arrangement_label") or "",
+                "cta": "View", "url": "/work-arrangement"}
+    days_left = (deadline - today).days
+    if days_left < 0:
+        return None                              # window already shut
+    due = ("due today" if days_left == 0 else
+           f"due {st.work_arrangement_deadline_label(ps)}"
+           f" · {_plural(days_left, 'day')} left")
+    return {"key": "awa", "icon": "🗓️", "tone": "todo",
+            "title": f"File your work arrangement for {label}",
+            "detail": due, "cta": "File now", "url": "/work-arrangement/file"}
+
+
+def _task_office_today(conn, user, today):
+    if today.weekday() >= 5:
+        return None
+    day = st.work_arrangement_day(conn, today, user)
+    n = day["counts"]["onsite"]
+    return {"key": "office", "icon": "🏢", "tone": "info",
+            "title": f"{n} in the office today",
+            "detail": f"{day['counts']['wfh']} from home · {day['counts']['dayoff']} off",
+            "cta": "See who", "url": "/work-arrangement/day"}
+
+
+def _task_activities(conn, user):
+    """The activities this person runs that are still collecting — straight to
+    their Monitor page, skipping the /css → /monitor hop (131 trips a month)."""
+    if not auth.can(user["role"], "manage_event"):
+        return []
+    events = [e for e in st.list_events(conn, created_by=user["username"],
+                                        lifecycles={"upcoming", "ongoing"})
+              if e.get("event_kind") != "outside"]
+    out = []
+    for e in events[:3]:
+        reg, done = e.get("registered") or 0, e.get("completed") or 0
+        out.append({"key": f"event-{e['id']}", "icon": "📋", "tone": "info",
+                    "title": e["title"],
+                    "detail": (f"{done} of {reg} finished" if reg else "No registrations yet")
+                              + (" · ongoing" if e["lifecycle"] == "ongoing" else " · upcoming"),
+                    "cta": "Monitor", "url": f"/monitor/{e['event_token']}"})
+    return out
+
+
+def home_tasks(conn, user, today=None):
+    """The landing page's to-do strip: what this person needs to do next,
+    most urgent first (to do → waiting → for information → done)."""
+    today = today or tz.today_local()
+    tasks = []
+    for build in (lambda: _task_approvals(conn, user),
+                  lambda: _task_wellness(conn, user, today),
+                  lambda: _task_awa(conn, user, today),
+                  lambda: _task_office_today(conn, user, today)):
+        try:
+            t = build()
+        except Exception:                        # noqa: BLE001 — one source never breaks the strip
+            t = None
+        if t:
+            tasks.append(t)
+    try:
+        tasks.extend(_task_activities(conn, user))
+    except Exception:                            # noqa: BLE001
+        pass
+    tasks.sort(key=lambda t: _TONE_ORDER[t["tone"]])   # stable: keeps build order within a tone
+    return tasks

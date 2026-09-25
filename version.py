@@ -17,10 +17,33 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.26"
+APP_VERSION = "3.27"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.27",
+        "date": "September 25, 2026",
+        "summary": "The home screen now opens with \"Your to-do\": what you "
+                   "need to do next, each with a button that takes you "
+                   "straight there.",
+        "changes": [
+            "Approvers see how many requests are waiting on them, with a "
+            "Review button that opens the Approvals inbox.",
+            "Your wellness break: how many hours you have left this week "
+            "(Apply for a break), or a reminder to check in after a break "
+            "you've taken.",
+            "Your work arrangement: whether you still need to file for the "
+            "next period and when it's due, or that it's filed and waiting "
+            "for approval.",
+            "How many people are in the office today.",
+            "Organizers see their own upcoming and ongoing activities, with how "
+            "many people have finished, and a Monitor button that opens each "
+            "one directly.",
+            "Things that need you come first, then things you're waiting on, "
+            "then things already done. The team charts are still below.",
+        ],
+    },
     {
         "version": "3.26",
         "date": "September 25, 2026",

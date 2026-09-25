@@ -976,3 +976,54 @@ def test_deciding_returns_to_the_inbox(app_mod, wellness_org, future_weekday):
                follow_redirects=False)
     assert r.status_code == 303
     assert r.headers["location"].startswith("/approvals?ok=") and r.headers["location"].endswith("#wellness")
+
+
+# ---- the landing page's "Your to-do" strip (office_connect.home_tasks) -------
+
+def _account(conn, uid):
+    u = st.get_admin_user_by_id(conn, uid)
+    return {"id": u["id"], "username": u["username"], "role": u["role"]}
+
+
+def test_home_tasks_offer_a_break_when_hours_are_left(app_mod, wellness_org):
+    import office_connect as oc
+    conn = wellness_org["conn"]
+    tasks = oc.home_tasks(conn, _account(conn, wellness_org["emp"]))
+    w = next(t for t in tasks if t["key"] == "wellness")
+    assert w["tone"] == "todo" and w["url"] == "/wellness/apply"
+    assert f"{st.WELLNESS_WEEKLY_HOURS} hours" in w["title"]
+
+
+def test_home_tasks_lead_with_a_check_in_and_approvals(app_mod, wellness_org):
+    import office_connect as oc
+    conn, emp = wellness_org["conn"], wellness_org["emp"]
+    monday = _monday_this_week().isoformat()
+    ws = st.wellness_week_start(date.fromisoformat(monday))
+    cid = conn.execute(
+        "INSERT INTO wellness_claim(user_id, week_start, break_date, start_time,"
+        " hours, activity, status, created_at) VALUES (?,?,?,?,1,'exercise','approved',?)",
+        (emp, ws, monday, "08:00", tz.now_iso())).lastrowid
+    conn.commit()
+    w = next(t for t in oc.home_tasks(conn, _account(conn, emp)) if t["key"] == "wellness")
+    assert w["url"] == f"/wellness/claims/{cid}/complete" and w["tone"] == "todo"
+
+    # a pending request routed to the chief puts "waiting on you" first
+    conn.execute(
+        "INSERT INTO wellness_claim(user_id, week_start, break_date, start_time,"
+        " hours, activity, status, created_at) VALUES (?,?,?,?,1,'exercise','pending',?)",
+        (emp, ws, monday, "14:00", tz.now_iso()))
+    conn.commit()
+    tasks = oc.home_tasks(conn, _account(conn, wellness_org["chief"]))
+    assert tasks[0]["key"] == "approvals" and tasks[0]["url"] == "/approvals"
+    assert "1 wellness break" in tasks[0]["detail"]
+
+
+def test_landing_page_leads_with_your_to_do(app_mod, wellness_org):
+    st.mark_onboarded(wellness_org["conn"], wellness_org["emp"])   # skip /welcome
+    c = _client_for_id(app_mod, wellness_org["emp"])
+    html = c.get("/").text
+    assert 'id="todo-h"' in html and "Your to-do" in html
+    assert 'href="/wellness/apply"' in html
+    # the to-do comes before the team panels
+    if 'data-tour="oc-wellness"' in html:
+        assert html.index("Your to-do") < html.index('data-tour="oc-wellness"')

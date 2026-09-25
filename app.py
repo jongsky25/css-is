@@ -4681,6 +4681,12 @@ def choose(request: Request, msg: str = "", view: str = "team"):
             # which is exactly the page this one replaced.
             traceback.print_exc()
             data = None
+        # The to-do strip that leads the page: each task with its one next step.
+        try:
+            tasks = oc.home_tasks(conn, request.state.user)
+        except Exception:
+            traceback.print_exc()
+            tasks = []
         # A light wellness teaser (points/streak) beside the Wellness door.
         try:
             wstats = st.wellness_stats(conn, request.state.user["id"])
@@ -4719,7 +4725,7 @@ def choose(request: Request, msg: str = "", view: str = "team"):
         "wa_file_label": wa_file_label, "wa_file_filed": wa_file_filed,
         "role_label": auth.ROLE_LABELS.get(role, role),
         "role_blurb": auth.ROLE_BLURB.get(role, ""),
-        "d": data, "view": view,
+        "d": data, "view": view, "tasks": tasks,
         # The companion's growth was invisible: you could see the creature you
         # had but not the one you were working toward, nor how it got there.
         "ladder": st.avatar_growth_ladder(avatar_kind, wstats),

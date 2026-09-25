@@ -1,5 +1,37 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-25 (v3.27 — "Your to-do" leads the home screen)
+
+The 30-day UX handoff: `/` is the most-visited screen (523 views, 33 users)
+and the biggest exit, and people leave it for the same self-service tasks —
+apply for a break (`/wellness/apply`, 25 users), file a work arrangement
+(29), clear approvals (home → approvals 70×), open an activity's Monitor
+(`/css` → `/monitor/{token}` 131×) — while the page leads with team charts.
+
+**`office_connect.home_tasks(conn, user, today=None)`** — one card per task,
+each `{key, icon, tone, title, detail, cta, url}`, sorted to do → waiting →
+info → done. Built straight from storage (not `team_view_data`), so it works
+for an account with no directory link, and each source is isolated in its own
+try so one failing never empties the strip:
+- `_task_approvals` — `pending_approval_counts` → `/approvals`.
+- `_task_wellness` — an approved break on/before today → its check-in page;
+  else hours left this week → `/wellness/apply`; else a pending request
+  (waiting) or all hours booked (done).
+- `_task_awa` — the earliest open filing period: not filed → `/work-arrangement/file`
+  with the deadline; pending → waiting; approved → done; "No AWA" or a shut
+  window → nothing.
+- `_task_office_today` — `work_arrangement_day` headcount → `/work-arrangement/day`
+  (weekdays only).
+- `_task_activities` — `manage_event` accounts: up to 3 of their own
+  upcoming/ongoing bureau activities, "X of Y finished" → `/monitor/{token}`.
+
+**`app.py`** (`choose`) passes `tasks`. **`templates/office_connect.html`** —
+the "Your to-do" strip under the greeting; the amber approval notes are
+skipped when the strip already carries approvals.
+
+Tests: `tests/test_wellness.py`, `tests/test_work_arrangement.py`,
+`tests/test_monitor.py`.
+
 ## 2026-09-25 (v3.26 — the measurement the 30-day handoff was missing)
 
 The handoff's "what instrumentation is missing" list: no task success or
