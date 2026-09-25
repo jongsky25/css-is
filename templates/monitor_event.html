@@ -17,6 +17,11 @@
   .toolbar a.btn { text-decoration:none; font-size:.85rem; font-weight:600; padding:.45rem .8rem;
           border-radius:8px; border:1px solid var(--accent); color:var(--accent); background:var(--surface); }
   .toolbar a.btn:hover { background:var(--accent-bg); }
+  .toolbar button.remind-btn { font:inherit; font-size:.85rem; font-weight:600; padding:.45rem .8rem;
+          border-radius:8px; border:1px solid var(--accent); color:#fff; background:var(--accent); cursor:pointer; }
+  .toolbar button.remind-btn:disabled { opacity:.55; cursor:not-allowed; }
+  .remind-msg { font-size:.84rem; color:var(--soft); margin:-.4rem 0 1rem; }
+  .remind-msg.ok { color:var(--green); } .remind-msg.err { color:var(--red); }
   .reglink { font-size:.82rem; color:var(--soft); }
   .reglink .reg-copy { font:inherit; font-size:.78rem; font-weight:600; cursor:pointer; padding:.22rem .7rem;
           margin-left:.3rem; border-radius:8px; border:1px solid var(--accent); color:var(--accent);
@@ -105,11 +110,21 @@
     {% if report_url %}<a class="btn" href="{{ report_url }}#comments">💬 What people said →</a>{% endif %}
     <a class="btn" href="/monitor/{{ ev.event_token }}/export">⬇ Export roster (XLSX)</a>
     <a class="btn" href="/activities/{{ ev.event_token }}/manage">⚙ Manage activity</a>
+    {% if not is_closed and remind_count %}
+    <button type="button" class="btn remind-btn" id="remindAll" data-count="{{ remind_count }}"
+            {% if remind_wait or not email_on %}disabled{% endif %}
+            title="{% if not email_on %}Email isn't set up on this server yet.{% elif remind_wait %}A reminder went out recently — you can send another in {{ remind_wait }} min.{% else %}Emails each of them their own link back to the forms they still owe.{% endif %}">
+      ✉ Remind {{ remind_count }} not finished</button>
+    {% endif %}
     {#-- People clicked (and rage-clicked) the bare <code> trying to copy it. --#}
     <span class="reglink">Registration link: <code id="regLink">{{ base_url }}/e/{{ ev.event_token }}</code>
       <button type="button" class="reg-copy" id="regCopy" aria-describedby="regLink">Copy</button>
       <span class="reg-copy-msg" id="regCopyMsg" role="status" aria-live="polite"></span></span>
   </div>
+
+  {% if not is_closed and remind_count %}
+  <p class="remind-msg" id="remindMsg" role="status" aria-live="polite">{% if remind_last %}Last reminder sent {{ remind_last|humandt }}.{% endif %}</p>
+  {% endif %}
 
   <p class="note">“Completed” means the participant answered all {{ summ.n_forms }} feedback form{{ '' if summ.n_forms == 1 else 's' }} for this activity.{% if summ.unattributed %} The “Not pre-registered” count is walk-in / QR / paper responses with no registrant — not tied to anyone above, but each one counts as a completed response, so the completion rate is figured out of everyone who took part (registered plus these).{% endif %} The completion rate reaches 100% only when every registered person has finished.</p>
 
@@ -185,6 +200,24 @@
   <script>
   (function () {
     var tok = "{{ ev.event_token }}";
+    var remindBtn = document.getElementById('remindAll');
+    if (remindBtn) remindBtn.addEventListener('click', function () {
+      var n = remindBtn.getAttribute('data-count');
+      if (!confirm('Email a reminder to ' + n + (n === '1' ? ' person' : ' people') +
+                   " who haven't finished their feedback? Each gets their own link back to the forms.")) return;
+      var out = document.getElementById('remindMsg');
+      remindBtn.disabled = true;
+      out.className = 'remind-msg'; out.textContent = 'Sending…';
+      fetch('/monitor/' + tok + '/remind-unfinished', {method: 'POST'})
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          out.textContent = d.detail || '';
+          out.className = 'remind-msg ' + (d.queued ? 'ok' : 'err');
+          if (!d.queued) remindBtn.disabled = false;
+        })
+        .catch(function () { out.textContent = 'Could not send reminders — try again.';
+                             out.className = 'remind-msg err'; remindBtn.disabled = false; });
+    });
     var regCopy = document.getElementById('regCopy');
     if (regCopy) regCopy.addEventListener('click', function () {
       var link = document.getElementById('regLink').textContent.trim();

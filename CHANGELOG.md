@@ -1,5 +1,32 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-25 (v3.23 — "Remind N not finished" on Monitor)
+
+Spot Feedback (Sept 23): "I want to add a reminder feature for the
+participants (PAX)". Monitor only had a per-registrant Resend.
+
+**`app.py`**
+- `POST /monitor/{token}/remind-unfinished` — creator/admin only. Refuses a
+  closed activity or a lapsed response window (409), no mail transport, the
+  `css_reminder` feature switched off, and a repeat within
+  `REMIND_UNFINISHED_COOLDOWN_MIN` (60, per event, stamped in app_setting
+  `monitor_remind_unfinished.<event_id>` BEFORE sending; 429). Recipients:
+  `_unfinished_with_email` — status ≠ completed, not purged, email on file —
+  each with their own recovery/resume link. Sends run after the response in
+  one `BackgroundTask` (`_send_reminder_batch` → `_send_and_log`, one
+  email_log row each); one audit row per round.
+- `monitor_event` passes `remind_count`, `remind_last`, `remind_wait`,
+  `email_on`.
+
+**`mailer.py`** — `css_reminder_message` (text + HTML), `FEATURES["css_reminder"]`
+(transactional, admin-toggleable), preview sample.
+
+**`templates/monitor_event.html`** — the toolbar button (confirm dialog;
+disabled during cooldown or with no email transport) and a live status line.
+
+Tests: `tests/test_monitor.py` (recipient filtering, cooldown, closed,
+lapsed window, no transport, access).
+
 ## 2026-09-25 (v3.22 — tell a relay that never ran apart from a garbled confirmation)
 
 The Sept 22–23 Monitor feedback ("Email send failed: mail relay did not

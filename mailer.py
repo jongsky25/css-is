@@ -446,6 +446,32 @@ def recovery_message(name, link, event_title=None):
     return subject, body
 
 
+def css_reminder_message(name, link, event_title, close_label=None):
+    """Returns (subject, plain_text_body, html_body). The organizer's one-click
+    nudge from Monitor to a registrant who hasn't finished the activity's
+    feedback. `link` is their own resume link (same as the recovery email), so
+    it lands them back on the forms they still owe."""
+    by = f" by {close_label}" if close_label else ""
+    subject = f"Reminder — please finish your feedback for {event_title}"
+    body = (f"Hello {name or 'there'},\n\n"
+            f"Thank you for joining “{event_title}”. Your feedback isn't "
+            f"finished yet — please complete it{by}. Your personal link picks "
+            f"up where you left off:\n\n"
+            f"  {link}\n\n"
+            f"Keep this link to yourself — it's tied to your registration.\n")
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="Your feedback isn't finished yet",
+        intro=(f"Thank you for joining &ldquo;{_e(event_title)}&rdquo;. Please "
+               f"complete your feedback{_e(by)} — your personal link picks up "
+               f"where you left off."),
+        cta_label="Finish my feedback",
+        link=link,
+        footnote="Keep this link to yourself — it's tied to your registration.",
+    )
+    return subject, body, html
+
+
 def registration_confirmed_message(name, link, event_title, event_date=None, venue=None):
     """Returns (subject, plain_text_body, html_body). Sent right after an
     attendee registers (or resumes a lost registration) for an event."""
@@ -944,6 +970,11 @@ FEATURES = {
         "Spot Feedback update",
         "The submitter is told about a status change or reply.",
         "transactional"),
+    "css_reminder": (
+        "Monitor — remind unfinished registrants",
+        "An organizer's one-click reminder, from Monitor, to every registrant "
+        "who hasn't finished an activity's feedback.",
+        "transactional"),
     "job_events": (
         "Day-before activity reminder",
         "Registrants, the organizer, and the section chief are reminded the "
@@ -1032,6 +1063,9 @@ _PREVIEWS = {
         "Juan Reyes", "October 1-15, 2026", _SAMPLE_LINK),
     "feedback_update": lambda: feedback_update_message(
         "Juan Reyes", "resolved", "Thanks for flagging this — fixed.", _SAMPLE_LINK),
+    "css_reminder": lambda: css_reminder_message(
+        "Juan Reyes", _SAMPLE_LINK, "Basic Life Support Training",
+        close_label="October 9, 2026, 5:00 PM"),
     "job_events": lambda: event_reminder_message(
         "Juan Reyes", "Basic Life Support Training", "October 2, 2026",
         "DOH Conference Room", _SAMPLE_LINK),
