@@ -438,3 +438,20 @@ def test_home_greeting_opens_your_profile(app_mod):
     from tests.conftest import _auth_client
     html = _auth_client(app_mod, "admin").get("/").text
     assert 'class="oc-me" href="/me"' in html
+
+
+def test_the_space_around_the_companion_taps_it(app_mod):
+    """The pet's name, stage line and the gaps beside it were dead clicks on
+    home and the wellness hub; they are now a [data-pet-area] that
+    avatars.js forwards to the companion, and telemetry counts as a control."""
+    from tests.conftest import _auth_client
+    import os
+    html = _auth_client(app_mod, "admin").get("/wellness").text
+    assert '<div class="avatar-box" data-pet-area' in html
+    root = os.path.dirname(app_mod.__file__)
+    home = open(os.path.join(root, "templates", "office_connect.html")).read()
+    assert '<div class="oc-pet" data-pet-area>' in home
+    js = open(os.path.join(root, "static", "js", "avatars.js")).read()
+    assert 'closest("[data-pet-area]")' in js
+    tel = open(os.path.join(root, "static", "js", "telemetry.js")).read()
+    assert "[data-pet-area]" in tel

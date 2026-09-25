@@ -1,5 +1,29 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-09-25 (v3.31 — the area around the companion taps it)
+
+The last dead clicks on the home greeting (v3.21 made the photo + name a
+link) landed around the companion — `.oc-pet` itself, "*wiggles nose* Change
+companion →" — and on the wellness hub the companion's name / "Stage 2 of 6"
+text (`.avatar-box`). Only the `.avwrap` drawing responded.
+
+- **`static/js/avatars.js`** — the tap handler also accepts a click inside a
+  `[data-pet-area]` that isn't on a control, and plays the tap on that
+  area's `.avwrap[data-interactive]` (same drag / pet / away guards).
+- **`static/js/telemetry.js`** — `[data-pet-area]` joins `INTERACTIVE`.
+- **`templates/office_connect.html`** (`.oc-pet`) and
+  **`templates/wellness_hub.html`** (`.avatar-box`) — `data-pet-area`,
+  pointer cursor.
+- **Cache tokens** — `avatars.js`, `search.js` and `telemetry.js` bumped to
+  `?v=20260925a`. The service worker serves static assets
+  stale-while-revalidate keyed on the full URL, so a changed script under an
+  unchanged token reached people one load late — including the telemetry
+  changes of v3.20 / v3.24 / v3.26 and search.js's `csi:search`.
+
+Tests: `tests/test_avatar_care.py`. Verified in headless Chromium on the
+rendered wellness hub: a tap on the stage line bounces the companion and
+records no dead click, while a click on a stat label still does.
+
 ## 2026-09-25 (v3.30 — one System page for the occasional admin screens)
 
 The 30-day UX handoff: six Administrator menu entries opened a handful of

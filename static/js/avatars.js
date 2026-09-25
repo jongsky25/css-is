@@ -590,6 +590,15 @@
     if (e.target.closest(".av-care-btn") || e.target.closest(".av-sound-btn") ||
         e.target.closest(".av-explore-btn")) return;
     var w = e.target.closest(".avwrap[data-interactive]");
+    // The space AROUND the companion — its name, stage line, the gaps beside
+    // it ([data-pet-area] on the home greeting and the wellness hero) — taps
+    // it too. People aimed at the pet and missed: those clicks were the home
+    // screen's and wellness hub's remaining dead clicks. Real links inside
+    // the area ("Change companion →") still go where they go.
+    if (!w && !e.target.closest("a, button, input, select, textarea, label")) {
+      var area = e.target.closest("[data-pet-area]");
+      if (area) w = area.querySelector(".avwrap[data-interactive]");
+    }
     if (!w || w._avDragMoved || w._avPetted || w._avAway) return;   // drags/pets aren't taps; nobody's home while exploring
     wake(w);                                           // a tap stirs a sleeper
     play("tap", w.classList.contains("fam-plant") ? "plant" : "animal");
