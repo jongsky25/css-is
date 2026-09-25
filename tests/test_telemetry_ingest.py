@@ -161,6 +161,31 @@ def test_telemetry_rage_click_keeps_interactive_flag_only_when_true(viewer, db_p
         _reset(conn); conn.close()
 
 
+def test_telemetry_client_error_keeps_a_validated_location(viewer, db_path):
+    """Script path (masked), line/col and well-formed frames survive ingest; a
+    third-party URL or a frame of the wrong shape does not."""
+    conn = st.connect(db_path); st.init_db(conn); _reset(conn)
+    try:
+        r = viewer.post("/telemetry", json={"events": [
+            {"event_type": "client_error", "route": "/wellness", "session_id": "s1",
+             "meta": {"name": "TypeError", "message": "pet is null",
+                      "source": "/static/js/avatars.js", "line": 612, "col": 9,
+                      "frames": ["careClick /static/js/avatars.js:612:9",
+                                 "x juan@example.com:1:1"]}},
+            {"event_type": "client_error", "route": "/wellness", "session_id": "s1",
+             "meta": {"name": "Error", "source": "https://evil.example/a.js?u=1",
+                      "line": "12", "col": True}},
+        ]})
+        assert r.status_code == 204
+        rows = st.list_ui_events(conn)
+        assert rows[1]["meta"] == {"name": "TypeError", "message": "pet is null",
+                                   "source": "/static/js/avatars.js", "line": 612, "col": 9,
+                                   "frames": ["careClick /static/js/avatars.js:612:9"]}
+        assert rows[0]["meta"] == {"name": "Error"}
+    finally:
+        _reset(conn); conn.close()
+
+
 def test_telemetry_ignores_malformed_body(viewer, db_path):
     conn = st.connect(db_path); st.init_db(conn); _reset(conn)
     try:

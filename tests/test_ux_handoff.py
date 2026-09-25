@@ -234,3 +234,14 @@ def test_markdown_lists_each_matched_feedback_once():
     md = uxh.render_handoff_markdown(_handoff(rows, fb))
     assert md.count("confusing page") == 1
     assert "matches #1, #2" in md
+
+
+def test_markdown_client_errors_show_message_location_and_frames():
+    rows = [_ev("client_error", route="/wellness", session_id="sessA", user_id=7,
+                meta={"name": "TypeError", "message": "pet is null",
+                      "source": "/static/js/avatars.js", "line": 612, "col": 9,
+                      "frames": ["careClick /static/js/avatars.js:612:9"]})]
+    md = uxh.render_handoff_markdown(_handoff(rows))
+    assert "pet is null" in md
+    assert "/static/js/avatars.js:612:9" in md
+    assert "`careClick /static/js/avatars.js:612:9`" in md

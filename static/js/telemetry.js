@@ -292,14 +292,73 @@
     var term = e.detail && e.detail.term;
     record("search_empty", { meta: { term: sanitizeText(term, 80) } });
   });
+  // Where an error happened: the script (same-origin → its masked path;
+  // anything else → "external:<host>", never a third-party URL), line, column
+  // and the top few stack frames as "fn /path:line:col". Without these every
+  // error arrived as a bare "Error" nobody could act on. The server re-validates
+  // each piece (ui_telemetry.clean_error_*).
+  function scriptSource(url) {
+    if (!url) return null;
+    try {
+      var u = new URL(url, location.href);
+      if (u.origin === location.origin) return maskRoute(u.pathname);
+      return u.host ? "external:" + u.host : null;
+    } catch (err) { return null; }
+  }
+
+  var FRAME_URL_RE = /(https?:\/\/[^\s()]+?):(\d+):(\d+)\)?\s*$/;
+  function topFrames(stack) {
+    if (!stack) return null;
+    var out = [];
+    var lines = String(stack).split("\n");
+    for (var i = 0; i < lines.length && out.length < 3; i++) {
+      var line = lines[i].trim();
+      var m = FRAME_URL_RE.exec(line);
+      if (!m) continue;
+      var src = scriptSource(m[1]);
+      if (!src) continue;
+      // V8: "at fn (url:l:c)" / "at url:l:c"; Firefox/Safari: "fn@url:l:c".
+      var fn = (/^at\s+([^\s(]+)\s+\(/.exec(line) || /^([^@\s]+)@/.exec(line) || [])[1] || "?";
+      fn = fn.replace(/[^A-Za-z0-9_$.<>\[\] -]/g, "").slice(0, 80) || "?";
+      out.push(fn + " " + src + ":" + m[2] + ":" + m[3]);
+    }
+    return out.length ? out : null;
+  }
+
+  function errorMeta(name, message, source, line, col, stack) {
+    var meta = { name: name, message: sanitizeText(message, 80) };
+    var src = scriptSource(source);
+    if (src) meta.source = src;
+    if (line) meta.line = line;
+    if (col) meta.col = col;
+    var frames = topFrames(stack);
+    if (frames) meta.frames = frames;
+    return meta;
+  }
+
   window.addEventListener("error", function (e) {
-    record("client_error", { meta: { name: (e.error && e.error.name) || "Error", message: sanitizeText(e.message, 80) } });
-  });
+    // A failed <script>/<link>/<img> load fires "error" on the element, not the
+    // window, and doesn't bubble — only a capture listener sees it. Only
+    // scripts and stylesheets matter here: a missing one breaks the page.
+    var t = e.target;
+    if (t && t !== window && t.tagName) {
+      var tag = t.tagName.toLowerCase();
+      if (tag === "script" || (tag === "link" && /stylesheet/i.test(t.rel || ""))) {
+        record("client_error", { meta: errorMeta("ResourceError", tag + " failed to load",
+                                                 t.src || t.href, 0, 0, null) });
+      }
+      return;
+    }
+    record("client_error", { meta: errorMeta((e.error && e.error.name) || "Error", e.message,
+                                             e.filename, e.lineno, e.colno,
+                                             e.error && e.error.stack) });
+  }, true);
   window.addEventListener("unhandledrejection", function (e) {
     var reason = e.reason;
     var name = (reason && reason.name) || "UnhandledRejection";
     var reasonMessage = reason && typeof reason.message === "string" ? reason.message : String(reason || "");
-    record("client_error", { meta: { name: name, message: sanitizeText(reasonMessage, 80) } });
+    record("client_error", { meta: errorMeta(name, reasonMessage, null, 0, 0,
+                                             reason && reason.stack) });
   });
 
   // ── form abandonment — a form edited but never submitted when the page is

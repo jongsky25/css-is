@@ -233,7 +233,15 @@ def _resanitize(rows):
                 m["term"] = ui_tel.sanitize_text(m["term"], max_len=80)
             if isinstance(m.get("message"), str):
                 m["message"] = ui_tel.sanitize_text(m["message"], max_len=80)
-            meta = m
+            if "source" in m:
+                m["source"] = ui_tel.clean_error_source(m["source"])
+            if "frames" in m:
+                m["frames"] = ui_tel.clean_error_frames(m["frames"])
+            for k in ("line", "col"):
+                if k in m:
+                    m[k] = ui_tel.clean_line_number(m[k])
+            meta = {k: v for k, v in m.items() if v is not None}
+            meta = meta or None
         out.append({**r,
                     "route": ui_tel.mask_route(r.get("route")),
                     "element_selector": ui_tel.sanitize_selector(r.get("element_selector")),
@@ -457,9 +465,23 @@ def render_handoff_markdown(payload):
         if p["failed_searches"] else "None recorded in this window.")
 
     add("\n## 9. Client errors\n")
-    add(_table(["route", "error", "count"],
-               [[e["route"], e["name"], e["count"]] for e in p["errors"]])
-        if p["errors"] else "None recorded in this window.")
+    if p["errors"]:
+        add("Grouped by route + error + message + location. `location` is the "
+            "script path (masked like a route) or `external:<host>` for a "
+            "third-party script, then line:column. A message of \"Script error.\" "
+            "with no location is the browser hiding a cross-origin script's "
+            "details.\n")
+        add(_table(["route", "error", "message", "location", "count"],
+                   [[e["route"], e["name"], e.get("message"), e.get("location"), e["count"]]
+                    for e in p["errors"]]))
+        traces = [e for e in p["errors"] if e.get("frames")]
+        if traces:
+            add("\nTop stack frames (first seen per row):\n")
+            for e in traces:
+                add(f"- {e['route']} — {_cell(e['name'])}: "
+                    + " ← ".join(f"`{_cell(f)}`" for f in e["frames"]))
+    else:
+        add("None recorded in this window.")
 
     add("\n## 10. Appendix — sampled raw events (pseudonymized)\n")
     if p["sample_events"]:
