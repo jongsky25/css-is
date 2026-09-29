@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.32"
+APP_VERSION = "3.33"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.33",
+        "date": "September 29, 2026",
+        "summary": "Administrators can now reopen the next work arrangement "
+                   "period after its filing deadline passes.",
+        "changes": [
+            "The AWA filing page under Administrator now shows October 1-15 "
+            "once its normal filing deadline has passed, so an administrator "
+            "can reopen it before the period begins.",
+        ],
+    },
     {
         "version": "3.32",
         "date": "September 25, 2026",
