@@ -15054,8 +15054,8 @@ async def work_arrangement_decide(request: Request, wa_id: int):
 def admin_work_arrangement(request: Request, ok: str = "", err: str = ""):
     """Lets an admin temporarily reopen a period whose Friday filing deadline
     has already passed — the escape hatch for "I need to update my AWA but
-    the window already closed." Lists the current period plus a few before
-    it; periods still open on their own never need this and aren't shown."""
+    the window already closed." Lists the next period as well as the current
+    one and a few before it; periods still open on their own aren't shown."""
     if (r := _forbid(request, "manage_users")):
         return r
     conn = get_conn()
@@ -15063,8 +15063,11 @@ def admin_work_arrangement(request: Request, ok: str = "", err: str = ""):
         open_ps = set(st.work_arrangement_open_periods())
         overrides = {row["period_start"]: row
                      for row in st.list_work_arrangement_reopens(conn)}
-        periods, ps = [], st.work_arrangement_period()
-        for _ in range(4):
+        periods = []
+        # The next half-month can close before it begins (e.g. October 1-15
+        # closes on September 25), so include it in the admin's choices.
+        ps = st.work_arrangement_next_period(st.work_arrangement_period())
+        for _ in range(5):
             if ps not in open_ps:
                 ov = overrides.get(ps)
                 periods.append({

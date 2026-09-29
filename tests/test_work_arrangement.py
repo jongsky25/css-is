@@ -1083,6 +1083,18 @@ def test_only_an_admin_reaches_the_reopen_console(wa_org, app_mod):
     assert admin.get("/admin/work-arrangement").status_code == 200
 
 
+def test_reopen_console_includes_next_period_after_its_deadline(
+        wa_org, app_mod, monkeypatch):
+    admin = _client_for_id(app_mod, wa_org["admin"]["id"])
+    monkeypatch.setattr(tz, "today_local", lambda: date(2026, 9, 29))
+
+    html = admin.get("/admin/work-arrangement").text
+
+    assert "October 1-15, 2026" in html
+    assert 'value="2026-10-01"' in html
+    assert "October 16-31, 2026" not in html
+
+
 def test_reopening_over_http_lets_the_employee_file_it_themselves(
         wa_org, app_mod, monkeypatch):
     conn, emp, ps = wa_org["conn"], wa_org["staff"][0], _open()
