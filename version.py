@@ -17,10 +17,29 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.35"
+APP_VERSION = "3.36"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.36",
+        "date": "October 1, 2026",
+        "summary": "A new weekly check-in: tell us where you'll be this week, "
+                   "and Who's in shows it.",
+        "changes": [
+            "Every Monday morning you get an email with your Monday-to-Friday "
+            "already filled in from your work arrangement. Tap the button, "
+            "change any day to Office, Field or Leave, and confirm. No login "
+            "needed.",
+            "The Who's in page now has \"In the field\" and \"On leave\" "
+            "groups, and what you reported for a day takes priority over your "
+            "fortnight schedule. Days nobody reported still follow the "
+            "schedule. Leave never shows a reason.",
+            "You can also report this week or next week anytime from \"Report "
+            "my week\" on the Who's in page. Administrators can switch the "
+            "Monday email off, or change its day, under Email.",
+        ],
+    },
     {
         "version": "3.35",
         "date": "October 1, 2026",

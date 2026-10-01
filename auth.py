@@ -319,6 +319,49 @@ def verify_wellness_decide_token(token, now=None):
 
 
 # ---------------------------------------------------------------------
+# Weekly whereabouts link
+#
+# The Monday "where will you be this week?" email opens the week form with no
+# login, so a phone tap is enough. The token names one person and one week
+# (the Monday); it can only ever read/write THAT person's whereabouts for THAT
+# week. It lapses after 10 days — long enough for the week plus a weekend, so
+# an old email can't be used to rewrite a later week.
+# ---------------------------------------------------------------------
+
+PURPOSE_WHEREABOUTS = "whereabouts"
+_WHEREABOUTS_MAX_AGE = 10 * 24 * 3600
+
+
+def make_whereabouts_token(uid, week_start, issued_at=None):
+    """Signed token letting `uid` report whereabouts for the week starting
+    `week_start` (an ISO Monday) by link."""
+    payload = {"uid": int(uid), "wk": str(week_start), "p": PURPOSE_WHEREABOUTS,
+               "iat": int(issued_at if issued_at is not None else time.time())}
+    body = _b64e(json.dumps(payload, separators=(",", ":")).encode("utf-8"))
+    sig = hmac.new(_secret(), body.encode("ascii"), hashlib.sha256).hexdigest()
+    return f"{body}.{sig}"
+
+
+def verify_whereabouts_token(token, now=None):
+    """Validate signature + purpose + age; return (uid, week_start) or (None, None)."""
+    if not token or "." not in token:
+        return None, None
+    body, sig = token.rsplit(".", 1)
+    expect = hmac.new(_secret(), body.encode("ascii"), hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(sig, expect):
+        return None, None
+    try:
+        payload = json.loads(_b64d(body))
+    except (ValueError, json.JSONDecodeError):
+        return None, None
+    if payload.get("p") != PURPOSE_WHEREABOUTS:
+        return None, None
+    if (now if now is not None else time.time()) - payload.get("iat", 0) > _WHEREABOUTS_MAX_AGE:
+        return None, None
+    return payload.get("uid"), payload.get("wk")
+
+
+# ---------------------------------------------------------------------
 # Email + password helpers
 # ---------------------------------------------------------------------
 

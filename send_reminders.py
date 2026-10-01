@@ -145,7 +145,7 @@ def remind_tomorrows_events(conn, base, dry_run=False):
 
 
 _ALL_JOBS = {"events", "wellness_expiry", "digest", "csm_rp", "csm_activity",
-            "wellness_file", "awa_file"}
+            "wellness_file", "awa_file", "whereabouts"}
 
 # job name -> the admin toggle that can switch it off (see /admin/email).
 JOB_FEATURE = {
@@ -156,6 +156,7 @@ JOB_FEATURE = {
     "csm_activity": "job_csm_activity",
     "wellness_file": "job_wellness_file",
     "awa_file": "job_awa_file",
+    "whereabouts": "job_whereabouts",
 }
 
 # Admin-tunable schedule/delay knobs for the jobs below (/admin/email "Timing"
@@ -175,6 +176,8 @@ PARAMS = {
         "Wellness filing nudge: weekday", 3, 0, 6),
     "awa_file_lead_days": (
         "Work arrangement filing nudge: days before deadline", 1, 1, 14),
+    "whereabouts_weekday": (
+        "Weekly whereabouts email: weekday", 0, 0, 4),
 }
 
 
@@ -360,6 +363,43 @@ def remind_awa_to_file(conn, base, dry_run=False):
     return sent
 
 
+def send_whereabouts_weekly(conn, base, dry_run=False):
+    """The Monday "where will you be this week?" email: each staff member gets
+    their Monday-Friday already plotted from their filed work arrangement, with a
+    signed one-click link to confirm or change it to Office / Field / Leave.
+
+    Sent on the configured weekday, with one day of catch-up so a Space that was
+    asleep at 7am Monday still sends on Tuesday. Never twice for the same week:
+    each send is recorded per person, so the daily sweep and any manual re-run
+    skip anyone already emailed."""
+    today = tz.today_local()
+    weekday = _param(conn, "whereabouts_weekday")
+    if today.weekday() not in (weekday, weekday + 1) or today.weekday() > 4:
+        return 0
+    monday = st.whereabouts_week_start(today)
+    label = st.whereabouts_week_label(monday)
+    defaults = st.whereabouts_defaults(conn, monday)
+    sent = 0
+    for staffer in st.whereabouts_recipients(conn, monday):
+        days = st.whereabouts_week(conn, staffer["id"], monday, defaults=defaults)
+        plotted = [(d["label"], st.whereabouts_choice_label(d)) for d in days]
+        token = auth.make_whereabouts_token(staffer["id"], monday.isoformat())
+        link = f"{base}/whereabouts/week?token={quote(token)}"
+        name = _person_name(conn, staffer["id"])
+        subj, body, html = mailer.whereabouts_week_message(name, label, plotted, link)
+        if dry_run:
+            print(f"[dry-run] whereabouts -> {staffer['username']} ({label})")
+        else:
+            res = _send(conn, JOB_FEATURE["whereabouts"], staffer["username"], subj, body,
+                        html=html)
+            # Only a send that actually went out is recorded as emailed, so a
+            # relay outage retries tomorrow instead of silently skipping the week.
+            if mailer.send_status(res) == "sent":
+                st.mark_whereabouts_emailed(conn, staffer["id"], monday)
+        sent += 1
+    return sent
+
+
 def send_approvals_digest(conn, base, dry_run=False):
     """One email per approver bundling EVERY wellness break and work
     arrangement still awaiting their decision — a catch-all in case an
@@ -475,6 +515,8 @@ def run(db_path="css_is.db", dry_run=False, jobs=None):
             report["wellness_file"] = remind_wellness_to_file(conn, base, dry_run=dry_run)
         if "awa_file" in jobs:
             report["awa_file"] = remind_awa_to_file(conn, base, dry_run=dry_run)
+        if "whereabouts" in jobs:
+            report["whereabouts"] = send_whereabouts_weekly(conn, base, dry_run=dry_run)
     finally:
         conn.close()
     return report
@@ -498,6 +540,8 @@ def main():
                     help="Nudge staff who haven't filed a wellness break this week.")
     ap.add_argument("--awa-file", action="store_true",
                     help="Nudge staff who haven't filed a work arrangement for the open period.")
+    ap.add_argument("--whereabouts", action="store_true",
+                    help="Email each staff member their week to confirm Office/Field/Leave.")
     args = ap.parse_args()
 
     jobs = {j for j, flag in (("events", args.events),
@@ -506,7 +550,8 @@ def main():
                               ("csm_rp", args.csm_rp),
                               ("csm_activity", args.csm_activity),
                               ("wellness_file", args.wellness_file),
-                              ("awa_file", args.awa_file)) if flag}
+                              ("awa_file", args.awa_file),
+                              ("whereabouts", args.whereabouts)) if flag}
     # run() treats a missing CSS_BASE_URL as a skip, because the in-process
     # caller must not be killed by it. On the command line it IS a failure:
     # exit non-zero so a cron/Task Scheduler run reports it instead of

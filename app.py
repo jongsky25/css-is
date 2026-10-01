@@ -595,7 +595,8 @@ NAV_GROUPS = [
          "hint": "Who is on-site, working from home, or off — one day at a time",
          "kw": "who is in the office today day daily on-site onsite present absent "
                "away out day off wfh work from home working remotely desk reachable "
-               "in out attendance roster whereabouts", "cap": None},
+               "in out attendance roster whereabouts report my week field leave "
+               "weekly office", "cap": None},
         {"key": "work_arrangement_schedule", "url": "/work-arrangement/schedule",
          "label": "Team schedule",
          "hint": "Who is on-site each weekday, and who hasn't filed",
@@ -1825,7 +1826,8 @@ def invalidate_atoms():
 #   directory, hide, wipe, user-management) additionally check a capability.
 # =====================================================================
 
-_PUBLIC_PREFIXES = ("/r/", "/photo/", "/e/", "/static/", "/lang/", "/wellness/decide/")
+_PUBLIC_PREFIXES = ("/r/", "/photo/", "/e/", "/static/", "/lang/", "/wellness/decide/",
+                    "/whereabouts/")
 _PUBLIC_EXACT = {"/seq", "/login", "/logout", "/favicon.ico",
                  "/set-password", "/forgot", "/reset-password", "/health",
                  "/sw.js", "/manifest.webmanifest",
@@ -15239,6 +15241,126 @@ def work_arrangement_schedule(request: Request, period: str = ""):
         "is_admin": user.get("role") == "admin",
         "is_chief": is_chief,
     })
+
+
+# ---- Weekly whereabouts ---------------------------------------------------
+# The Monday email's "where will you be this week?" form. Two doors onto the
+# same page: a signed one-click link (no login — /whereabouts/week, see
+# auth.make_whereabouts_token) and the signed-in /work-arrangement/week. Either
+# way it can only ever touch ONE account's whereabouts.
+
+def _whereabouts_page(request, user_id, monday, token="", msg="", err="", status_code=200):
+    conn = get_conn()
+    try:
+        days = st.whereabouts_week(conn, user_id, monday)
+        submitted = st.whereabouts_week_submitted(conn, user_id, monday)
+        editable = st.whereabouts_week_editable(monday)
+        acct = st.get_admin_user_by_id(conn, user_id)
+        name = _person_name(conn, user_id) if acct else None
+    finally:
+        conn.close()
+    this = st.whereabouts_week_start()
+    return templates.TemplateResponse(request, "whereabouts_week.html", {
+        "layout": "public_layout.html" if token else "dash_layout.html",
+        "nav_active": "work_arrangement", "show_scope": False,
+        "token": token, "days": days, "monday": monday.isoformat(),
+        "week_label": st.whereabouts_week_label(monday),
+        "submitted": submitted, "editable": editable, "name": name,
+        "options": st.WHEREABOUTS_LABELS, "msg": msg, "err": err,
+        "this_week": this.isoformat(),
+        "next_week": (this + timedelta(days=7)).isoformat(),
+        "is_next": monday > this,
+    }, status_code=status_code)
+
+
+def _whereabouts_entries(p, days):
+    return {d["iso"]: (p.get(f"s_{d['iso']}", ""), p.get(f"n_{d['iso']}", ""))
+            for d in days}
+
+
+def _whereabouts_save(request, p, user_id, monday):
+    conn = get_conn()
+    try:
+        days = st.whereabouts_week(conn, user_id, monday)
+        try:
+            st.save_whereabouts_week(conn, user_id, monday, _whereabouts_entries(p, days))
+        except ValueError as e:
+            return str(e)
+        acct = st.get_admin_user_by_id(conn, user_id)
+        st.audit(conn, acct["username"] if acct else str(user_id), "whereabouts_submit",
+                 target_type="whereabouts", target_id=user_id,
+                 ip=request.client.host if request.client else None,
+                 summary=f"Reported whereabouts for the week of {monday.isoformat()}")
+    finally:
+        conn.close()
+    return None
+
+
+def _whereabouts_token_owner(token):
+    uid, wk = auth.verify_whereabouts_token(token)
+    try:
+        monday = date.fromisoformat(wk) if wk else None
+    except ValueError:
+        monday = None
+    if not uid or not monday or monday.weekday() != 0:
+        return None, None
+    conn = get_conn()
+    try:
+        acct = st.get_admin_user_by_id(conn, uid)
+    finally:
+        conn.close()
+    return (uid, monday) if acct and acct.get("active") else (None, None)
+
+
+@app.get("/whereabouts/week", response_class=HTMLResponse)
+def whereabouts_link_form(request: Request, token: str = ""):
+    uid, monday = _whereabouts_token_owner(token)
+    if not uid:
+        return templates.TemplateResponse(request, "whereabouts_week.html", {
+            "layout": "public_layout.html", "invalid": True, "show_scope": False,
+        }, status_code=400)
+    return _whereabouts_page(request, uid, monday, token=token)
+
+
+@app.post("/whereabouts/week")
+async def whereabouts_link_submit(request: Request):
+    p = await _posted(request)
+    token = p.get("token", "")
+    uid, monday = _whereabouts_token_owner(token)
+    if not uid:
+        return templates.TemplateResponse(request, "whereabouts_week.html", {
+            "layout": "public_layout.html", "invalid": True, "show_scope": False,
+        }, status_code=400)
+    err = _whereabouts_save(request, p, uid, monday)
+    if err:
+        return _whereabouts_page(request, uid, monday, token=token, err=err, status_code=400)
+    return _whereabouts_page(request, uid, monday, token=token,
+                             msg="Saved — thanks. Your colleagues will see this on Who's in.")
+
+
+def _whereabouts_monday(week):
+    try:
+        d = date.fromisoformat(week) if week else _today_local()
+    except ValueError:
+        d = _today_local()
+    return st.whereabouts_week_start(d)
+
+
+@app.get("/work-arrangement/week", response_class=HTMLResponse)
+def whereabouts_form(request: Request, week: str = ""):
+    return _whereabouts_page(request, request.state.user["id"], _whereabouts_monday(week))
+
+
+@app.post("/work-arrangement/week")
+async def whereabouts_submit(request: Request):
+    p = await _posted(request)
+    monday = _whereabouts_monday(p.get("week", ""))
+    uid = request.state.user["id"]
+    err = _whereabouts_save(request, p, uid, monday)
+    if err:
+        return _whereabouts_page(request, uid, monday, err=err, status_code=400)
+    return _whereabouts_page(request, uid, monday,
+                             msg="Saved — your colleagues will see this on Who's in.")
 
 
 @app.get("/work-arrangement/day", response_class=HTMLResponse)

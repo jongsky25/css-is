@@ -357,6 +357,31 @@ def init_db(conn):
         note         TEXT                  -- admin's reason, shown to filers
     );
 
+    -- Weekly whereabouts: what a person says about each working day of one
+    -- week ("Office", "Field", "Leave", or "AWA" = follow my filed arrangement).
+    -- Layered ON TOP of the fortnightly ANNEX C filing and never written back
+    -- into it: the schedule of record is unchanged, this only refines the
+    -- Who's in view for the days a person has actually reported. One row per
+    -- person per day, so a re-submit simply overwrites.
+    CREATE TABLE IF NOT EXISTS whereabouts (
+        user_id    INTEGER NOT NULL REFERENCES admin_user(id),
+        day        TEXT NOT NULL,          -- YYYY-MM-DD, a Monday..Friday
+        status     TEXT NOT NULL CHECK (status IN ('office','field','leave','awa')),
+        note       TEXT,                   -- field only: where (kept off 'leave')
+        updated_at TEXT,
+        PRIMARY KEY (user_id, day)
+    );
+    CREATE INDEX IF NOT EXISTS idx_whereabouts_day ON whereabouts(day);
+    -- One row per person per week: when the Monday email went out (so a daily
+    -- sweep can never send it twice) and when they last submitted.
+    CREATE TABLE IF NOT EXISTS whereabouts_week (
+        user_id      INTEGER NOT NULL REFERENCES admin_user(id),
+        week_start   TEXT NOT NULL,        -- the Monday
+        emailed_at   TEXT,
+        submitted_at TEXT,
+        PRIMARY KEY (user_id, week_start)
+    );
+
     -- A temporary stand-in for the wellness/AWA approver seat a section (or
     -- division) chief normally holds -- e.g. the chief is on leave. org_unit_id
     -- is the PRIMARY KEY, not just unique, so "one delegate at a time per unit"
@@ -8601,6 +8626,8 @@ def work_arrangement_roster(conn, period_start, user=None, tagged=None):
 WORK_ARRANGEMENT_DAY_GROUPS = [
     ("onsite",  "In the office",     "On-site for the day"),
     ("wfh",     "Working from home", "Working, but not in the building"),
+    ("field",   "In the field",      "Out on field work — working, but not in the building"),
+    ("leave",   "On leave",          "Reported leave — not working today"),
     ("dayoff",  "Day off",           "Compressed workweek — not working today"),
     ("noawa",   WORK_ARRANGEMENT_NOAWA,
      "Out of the schedule entirely, with a stated reason"),
@@ -8673,12 +8700,207 @@ def work_arrangement_day(conn, day, user=None):
     # An unlinked account has no team to show, and a weekend has nobody
     # scheduled. Both are empty for different reasons the caller can tell apart.
     if out["kind"] != "none" and not out["is_weekend"]:
+        reported = whereabouts_for_day(conn, day)
         for r in work_arrangement_roster(conn, ps, user):
+            rep = reported.get(r["user_id"])
+            if rep and rep["status"] in WHEREABOUTS_DAY_STATE:
+                # The person's own word for the day outranks the fortnight's
+                # filing (and a "No AWA" tag): they reported it this week.
+                state = WHEREABOUTS_DAY_STATE[rep["status"]]
+                row = {**r, "day_state": state, "reported": True,
+                       "remarks": rep["note"] or ""}
+                if state in ("field", "leave"):
+                    row["arrangement_label"] = WHEREABOUTS_LABELS[rep["status"]]
+                    row["status"] = ""
+                elif state == "onsite":
+                    row["arrangement_label"] = WHEREABOUTS_LABELS["office"]
+                    row["status"] = ""
+                out["groups"][state].append(row)
+                continue
             state = _wa_day_state(r, day)
-            out["groups"][state].append({**r, "day_state": state})
+            out["groups"][state].append({**r, "day_state": state, "reported": False})
     out["counts"] = {k: len(v) for k, v in out["groups"].items()}
     out["headcount"] = sum(out["counts"].values())
     return out
+
+
+# ---- weekly whereabouts ----------------------------------------------------
+#
+# A once-a-week, one-click report layered over the fortnight's ANNEX C filing.
+# The email on Monday shows Monday-Friday already plotted from each person's
+# filed arrangement; they change only the exceptions. What they submit refines
+# the Who's in page; it never edits the arrangement itself.
+
+WHEREABOUTS_LABELS = {"office": "Office", "field": "Field", "leave": "Leave",
+                      "awa": "AWA"}
+WHEREABOUTS_STATUSES = tuple(WHEREABOUTS_LABELS)
+# Who's in group each reported status lands in. "awa" is deliberately absent:
+# it means "whatever my filed arrangement says today", so the day view keeps
+# deriving it (WFH / day off) rather than guessing here.
+WHEREABOUTS_DAY_STATE = {"office": "onsite", "field": "field", "leave": "leave"}
+_WHEREABOUTS_NOTE_MAX = 120
+
+
+def whereabouts_week_start(d=None):
+    """The Monday of the calendar week `d` falls in (a weekend belongs to the
+    week that just ended, like every other 'this week' in the app)."""
+    d = d or tz.today_local()
+    if isinstance(d, str):
+        d = date.fromisoformat(d)
+    return d - timedelta(days=d.weekday())
+
+
+def whereabouts_week_label(monday):
+    return work_arrangement_week_label(monday)
+
+
+def whereabouts_week_days(monday):
+    return [monday + timedelta(days=i) for i in range(5)]
+
+
+def whereabouts_week_editable(monday, today=None):
+    """Only this week and next can be reported on — a stale emailed link must
+    not rewrite history, and nobody plans a month out in a one-click form."""
+    today = today or tz.today_local()
+    this = whereabouts_week_start(today)
+    return this <= monday <= this + timedelta(days=7) and monday.weekday() == 0
+
+
+def _wa_default_status(state):
+    """The plotted default for a day, from its AWA-derived state: a WFH or
+    day-off day starts as 'AWA'; everything else starts as 'Office'."""
+    return "awa" if state in ("wfh", "dayoff") else "office"
+
+
+def whereabouts_defaults(conn, monday):
+    """{user_id: {day_iso: (default_status, awa_state)}} for every participating
+    account for the working week starting `monday` — the plotting the email and
+    the form start from. A week can straddle two half-month periods, so each
+    day reads the roster of its own period."""
+    out = {}
+    rosters = {}
+    for day in whereabouts_week_days(monday):
+        ps = work_arrangement_period(day)
+        if ps not in rosters:
+            rosters[ps] = work_arrangement_roster(conn, ps, None)
+        for r in rosters[ps]:
+            state = _wa_day_state(r, day)
+            out.setdefault(r["user_id"], {})[day.isoformat()] = (
+                _wa_default_status(state), state)
+    return out
+
+
+_WHEREABOUTS_AWA_LABEL = {"wfh": "Work from home (AWA)",
+                          "dayoff": "Day off (AWA)"}
+
+
+def whereabouts_week(conn, user_id, monday, defaults=None):
+    """One person's week as the form and the email need it: per working day the
+    plotted default, what they saved (if anything), the choice in force, and
+    which options apply. `awa_label` is None on a day their arrangement is an
+    ordinary on-site one — there is nothing for 'AWA' to mean then."""
+    defaults = defaults if defaults is not None else whereabouts_defaults(conn, monday)
+    mine = defaults.get(user_id, {})
+    saved = {r[0]: (r[1], r[2]) for r in conn.execute(
+        "SELECT day, status, note FROM whereabouts WHERE user_id=? AND day BETWEEN ? AND ?",
+        (user_id, monday.isoformat(), (monday + timedelta(days=4)).isoformat()))}
+    days = []
+    for day in whereabouts_week_days(monday):
+        iso = day.isoformat()
+        default, state = mine.get(iso, ("office", "onsite"))
+        sv, note = saved.get(iso, (None, None))
+        awa_label = _WHEREABOUTS_AWA_LABEL.get(state)
+        choice = sv or default
+        if choice == "awa" and not awa_label:
+            choice = "office"          # their AWA changed since they chose it
+        days.append({
+            "date": day, "iso": iso, "name": _WA_ALL_DAY_NAMES[day.weekday()],
+            "label": f"{_WA_ALL_DAY_NAMES[day.weekday()]}, {_MONTH_NAMES[day.month - 1]} {day.day}",
+            "default": default, "saved": sv, "choice": choice,
+            "note": note or "", "awa_label": awa_label, "awa_state": state,
+        })
+    return days
+
+
+def whereabouts_choice_label(day):
+    """'Work from home (AWA)' / 'Field' / 'Office' ... for one whereabouts_week
+    day — the words the email and the page both use."""
+    if day["choice"] == "awa":
+        return day["awa_label"] or "Office"
+    return WHEREABOUTS_LABELS[day["choice"]]
+
+
+def save_whereabouts_week(conn, user_id, monday, entries, today=None):
+    """Store one person's week. `entries` is {day_iso: (status, note)}; a day
+    that is missing, not a working day of this week, or carrying an unknown
+    status is ignored rather than failing the whole submit. 'AWA' is refused
+    on a day with nothing for it to follow. Returns the number of days saved.
+    Raises ValueError for a week that can't be reported on."""
+    if not whereabouts_week_editable(monday, today):
+        raise ValueError("That week can't be reported on any more.")
+    days = whereabouts_week(conn, user_id, monday)
+    now = tz.now_local().isoformat(timespec="seconds")
+    n = 0
+    for d in days:
+        if d["iso"] not in entries:
+            continue
+        status, note = entries[d["iso"]]
+        status = (status or "").strip().lower()
+        if status not in WHEREABOUTS_STATUSES:
+            continue
+        if status == "awa" and not d["awa_label"]:
+            status = "office"
+        note = (note or "").strip()[:_WHEREABOUTS_NOTE_MAX] if status == "field" else ""
+        conn.execute(
+            "INSERT INTO whereabouts(user_id, day, status, note, updated_at) "
+            "VALUES (?,?,?,?,?) ON CONFLICT(user_id, day) DO UPDATE SET "
+            "status=excluded.status, note=excluded.note, updated_at=excluded.updated_at",
+            (user_id, d["iso"], status, note or None, now))
+        n += 1
+    if n:
+        conn.execute(
+            "INSERT INTO whereabouts_week(user_id, week_start, submitted_at) VALUES (?,?,?) "
+            "ON CONFLICT(user_id, week_start) DO UPDATE SET submitted_at=excluded.submitted_at",
+            (user_id, monday.isoformat(), now))
+    conn.commit()
+    return n
+
+
+def whereabouts_for_day(conn, day):
+    """{user_id: {status, note}} reported for one date."""
+    iso = day.isoformat() if isinstance(day, date) else str(day)
+    return {r[0]: {"status": r[1], "note": r[2]} for r in conn.execute(
+        "SELECT user_id, status, note FROM whereabouts WHERE day=?", (iso,))}
+
+
+def whereabouts_week_submitted(conn, user_id, monday):
+    return bool(conn.execute(
+        "SELECT submitted_at FROM whereabouts_week WHERE user_id=? AND week_start=? "
+        "AND submitted_at IS NOT NULL", (user_id, monday.isoformat())).fetchone())
+
+
+def whereabouts_recipients(conn, monday):
+    """Who gets the Monday email: every active account linked to a (non-
+    archived) directory person who hasn't already been emailed for this week.
+    Includes "No AWA" staff — Field and Leave apply to everyone."""
+    staff_sql, staff_params = _staff_only_sql()
+    rows = conn.execute(
+        f"""SELECT a.id, a.username FROM admin_user a
+            JOIN resource_person rp ON rp.id = a.rp_id
+            WHERE a.active = 1 AND rp.archived_at IS NULL AND {staff_sql}
+              AND a.id NOT IN (SELECT user_id FROM whereabouts_week
+                                WHERE week_start = ? AND emailed_at IS NOT NULL)
+            ORDER BY a.username""",
+        (*staff_params, monday.isoformat())).fetchall()
+    return [{"id": r[0], "username": r[1]} for r in rows]
+
+
+def mark_whereabouts_emailed(conn, user_id, monday):
+    conn.execute(
+        "INSERT INTO whereabouts_week(user_id, week_start, emailed_at) VALUES (?,?,?) "
+        "ON CONFLICT(user_id, week_start) DO UPDATE SET emailed_at=excluded.emailed_at",
+        (user_id, monday.isoformat(), tz.now_local().isoformat(timespec="seconds")))
+    conn.commit()
 
 
 def work_arrangement_period_summary(conn, period_start, user=None):
