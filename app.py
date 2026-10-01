@@ -1502,16 +1502,22 @@ def get_conn():
 #   Pure appends (new answer/response/form rows, nothing else) need not — they are
 #   detected by _is_pure_append() and loaded incrementally.
 _ATOMS_TTL = 900          # seconds — safety net for in-place edits the key can't see
+_ATOMS_MAX_STALE = 90     # seconds a frame may lag NEW data before a request rebuilds it itself
+_REBUILD_STUCK = 180      # seconds after which a "running" background rebuild is presumed dead
+_VIEWS_WARM_MAX = 60      # seconds the post-swap serve-stale window may last
 _atoms_lock = threading.Lock()
 _atoms_state = {"key": None, "df": None, "built": 0.0,
                 "answer_maxid": 0,      # high-water mark of answer.id in the cached frame
                 "force_full": False,    # set by invalidate_atoms(): next build is full + blocking
                 "rebuilding": False,    # at most one background worker at a time
+                "rebuild_started": 0.0, # when that worker began (a hung one must not freeze the cache)
+                "stale_since": 0.0,     # first moment we saw new data the served frame lacks (0 = none)
                 "bg_full": False,       # the pending background build must be full (TTL/structural)
                 "epoch": 0}             # bumped by invalidate_atoms() to fence in-flight workers
 _view_memo = {}           # (name, atoms_key, *scope) -> value  (current, keyed by atoms key)
 _view_prev = {}           # (name, *scope) -> value  (last-good, survives atoms swaps → serve-stale)
 _views_warming = False     # True while a post-swap background re-warm repopulates the hot views
+_views_warming_since = 0.0  # when that window opened — serve-stale is bounded, never open-ended
 
 
 def _data_key(conn):
@@ -1558,6 +1564,15 @@ def get_atoms(conn):
         if have and key_match and now - s["built"] < _ATOMS_TTL:
             return s["df"]                       # fresh
         must_block = (not have) or s["force_full"]
+        if have and not key_match:
+            # New data the served frame lacks. Serving stale while the background
+            # worker catches up is fine for seconds — but if it never does (worker hung
+            # or died), a viewer must not read a frozen frame for hours (a live activity
+            # report once showed 12 of 44 responses). Past the bound, rebuild inline.
+            if not s["stale_since"]:
+                s["stale_since"] = now
+            elif now - s["stale_since"] > _ATOMS_MAX_STALE:
+                must_block = True
         if not must_block:
             # Stale but serviceable: serve the current frame, rebuild in background.
             # A TTL lapse with an unchanged key may hide an in-place edit the key
@@ -1588,8 +1603,14 @@ def _build_blocking(conn, key):
             return s["df"]
         # Snapshot the mark FIRST, then load up to it — frame and mark stay consistent.
         amax = _answer_maxid(conn)
-        df = st.load_atoms(conn, upto_answer_id=amax)
-        s.update(key=key, df=df, built=time.time(),
+        if (s["df"] is not None and not s["force_full"]
+                and _is_pure_append(s["key"], key)):
+            # Pure append (the stale-bound path): load only the delta, not ~8 s of full.
+            add = st.load_atoms(conn, after_answer_id=s["answer_maxid"], upto_answer_id=amax)
+            df = st.concat_atoms(s["df"], add)
+        else:
+            df = st.load_atoms(conn, upto_answer_id=amax)
+        s.update(key=key, df=df, built=time.time(), stale_since=0.0,
                  answer_maxid=amax, force_full=False, bg_full=False)
         _view_memo.clear()
         _persist_atoms_async(df, key, amax)  # F3: snapshot for a warm restart
@@ -1602,8 +1623,14 @@ def _spawn_refresh(full=False):
     if full:
         s["bg_full"] = True
     if s["rebuilding"]:
-        return
+        if time.time() - s["rebuild_started"] < _REBUILD_STUCK:
+            return
+        # The worker has run far past any real build: presume it hung/died and fence it
+        # off (epoch bump → its result is discarded) so a fresh one can take over.
+        s["epoch"] += 1
+        s["bg_full"] = True
     s["rebuilding"] = True
+    s["rebuild_started"] = time.time()
     threading.Thread(target=_refresh_worker, name="atoms-refresh", daemon=True).start()
 
 
@@ -1613,7 +1640,7 @@ def _refresh_worker():
     reader never sees a half-built frame. After the swap it re-warms the hot
     dashboard views off the request path (serving stale meanwhile), so the first
     viewer after a data append never pays the multi-second rebuild."""
-    global _views_warming
+    global _views_warming, _views_warming_since
     conn = st.connect(DB)
     try:
         new_key = _data_key(conn)
@@ -1645,10 +1672,11 @@ def _refresh_worker():
                 # let the next request take the blocking full path (force_full stays).
                 _atoms_state["rebuilding"] = False
                 return
-            _atoms_state.update(key=new_key, df=df, built=time.time(),
+            _atoms_state.update(key=new_key, df=df, built=time.time(), stale_since=0.0,
                                 answer_maxid=amax, force_full=False,
                                 rebuilding=False, bg_full=False)
             _view_memo.clear()           # derived views rebuild lazily against the new frame
+            _views_warming_since = time.time()
             _views_warming = True        # serve last-good for hot views while we repopulate them
         try:
             _prewarm_dashboard(df, conn)     # rebuild the hot views NOW, off the request path
@@ -1739,7 +1767,7 @@ def _hydrate_atoms_from_pickle(conn):
         traceback.print_exc()
 
 
-def view_memo(name, key_parts, builder):
+def view_memo(name, key_parts, builder, rebuild=False):
     """Memoize an expensive derived view, keyed on the current atoms key plus
     whatever scope identifies it. Cleared on data change or invalidate_views().
 
@@ -1753,7 +1781,11 @@ def view_memo(name, key_parts, builder):
     if key in _view_memo:
         return _view_memo[key]
     logical = (name, *key_parts)
-    if _views_warming and logical in _view_prev:
+    # Serve-stale is bounded: only inside the short post-swap window, and never for the
+    # re-warm itself (rebuild=True) — otherwise the pre-warm would just hand back the
+    # last-good value and the view would never actually be repopulated.
+    if (not rebuild and _views_warming and logical in _view_prev
+            and time.time() - _views_warming_since < _VIEWS_WARM_MAX):
         return _view_prev[logical]
     val = builder()
     _view_memo[key] = val
@@ -12253,15 +12285,18 @@ def _prewarm_dashboard(df, conn):
         except Exception:
             traceback.print_exc()
     _try(lambda: view_memo("events", ("", "all"),
-                           lambda: di.build_events(df, st.list_activity_instances(conn))))
+                           lambda: di.build_events(df, st.list_activity_instances(conn)),
+                           rebuild=True))
     for w in ("all", "ytd", "quarter", "d30"):
-        _try(lambda w=w: view_memo("pulse", ("", w), lambda: _pulse_build(df, "", w)))
+        _try(lambda w=w: view_memo("pulse", ("", w), lambda: _pulse_build(df, "", w),
+                                       rebuild=True))
     try:
         staff = st.list_resource_persons(conn, include_archived=True)
         for admin in (True, False):
             _try(lambda admin=admin: view_memo(
                 "people", ("", "all", admin),
-                lambda: di.people_grid(_scoped(df, "", "all"), staff, include_hidden=admin)))
+                lambda: di.people_grid(_scoped(df, "", "all"), staff, include_hidden=admin),
+                rebuild=True))
     except Exception:
         traceback.print_exc()
 

@@ -398,3 +398,61 @@ def test_hydrate_ignores_legacy_sidecar(atoms_db):
     A._hydrate_atoms_from_pickle(conn)
     conn.close()
     assert A._atoms_state["df"] is None             # legacy sidecar ignored
+
+
+# --------------------------------------------------------------------------- #
+# Bounded staleness — a hung/dead background worker must not freeze the report
+# (regression: a live activity report sat at 12 of 44 responses for hours)
+# --------------------------------------------------------------------------- #
+
+def test_frozen_frame_is_rebuilt_inline_past_the_stale_bound(atoms_db):
+    _append_submission(atoms_db, n_answers=5)
+    conn = st.connect(atoms_db)
+    assert len(A.get_atoms(conn)) == 5
+    # Simulate a worker that hung: it is "running" forever and never swaps.
+    with A._atoms_lock:
+        A._atoms_state["rebuilding"] = True
+        A._atoms_state["rebuild_started"] = time.time()
+    _append_submission(atoms_db, n_answers=3)
+    assert len(A.get_atoms(conn)) == 5            # inside the bound: stale is fine
+    with A._atoms_lock:                           # ...but the lag outlives the bound
+        A._atoms_state["stale_since"] = time.time() - A._ATOMS_MAX_STALE - 1
+    fresh = A.get_atoms(conn)                     # blocks and catches up (incrementally)
+    conn.close()
+    assert len(fresh) == 8
+    assert A._atoms_state["stale_since"] == 0.0
+    with A._atoms_lock:                           # release the simulated hung worker
+        A._atoms_state["rebuilding"] = False
+
+
+def test_hung_worker_is_replaced_after_the_stuck_window(atoms_db):
+    _append_submission(atoms_db, n_answers=5)
+    conn = st.connect(atoms_db)
+    A.get_atoms(conn)
+    with A._atoms_lock:
+        A._atoms_state["rebuilding"] = True
+        A._atoms_state["rebuild_started"] = time.time() - A._REBUILD_STUCK - 1
+    epoch0 = A._atoms_state["epoch"]
+    _append_submission(atoms_db, n_answers=3)
+    A.get_atoms(conn)                              # stale → spawns a replacement worker
+    assert A._atoms_state["epoch"] == epoch0 + 1   # the dead one is fenced off
+    _wait_rebuild()
+    assert len(A.get_atoms(conn)) == 8
+    conn.close()
+
+
+def test_view_serve_stale_is_bounded_and_prewarm_rebuilds(atoms_db):
+    A._view_memo.clear(); A._view_prev.clear()
+    A._atoms_state["key"] = "k1"
+    assert A.view_memo("t", (), lambda: "old") == "old"
+    A._atoms_state["key"] = "k2"                   # data changed; memo key now misses
+    A._views_warming, A._views_warming_since = True, time.time()
+    assert A.view_memo("t", (), lambda: "new") == "old"              # inside window: last-good
+    assert A.view_memo("t", (), lambda: "new", rebuild=True) == "new"  # re-warm really rebuilds
+    A._atoms_state["key"] = "k3"
+    A._views_warming_since = time.time() - A._VIEWS_WARM_MAX - 1     # window long expired
+    try:
+        assert A.view_memo("t", (), lambda: "newer") == "newer"      # no open-ended staleness
+    finally:
+        A._views_warming = False
+        A._view_memo.clear(); A._view_prev.clear()
