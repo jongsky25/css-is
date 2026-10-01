@@ -68,6 +68,8 @@
     {{ empty_state("We can't tell who your colleagues are",
                    "Your account isn't linked to a directory record yet, so we don't know which section to show you. Add it on My profile.", "🗓") }}
     <p><a href="/me">Complete your profile →</a></p>
+  {% elif d.holiday %}
+    {{ empty_state(d.holiday.name, d.holiday.kind_label ~ " — nobody is expected at work. Use ‹ previous day / next day › to step to a working day.", "🇵🇭") }}
   {% elif d.is_weekend %}
     {{ empty_state("It's the weekend",
                    "Nobody is scheduled on a Saturday or Sunday. Use ‹ previous day / next day › to step to a working day.", "🗓") }}
@@ -103,7 +105,7 @@
   {% endif %}
 </div>
 
-{% if d.kind != "none" and not d.is_weekend %}
+{% if d.kind != "none" and not d.is_weekend and not d.holiday %}
 {#-- One panel per group, skipping the empty ones: a heading over nothing reads
      as a broken box, and "Day off (0)" is not information anyone needs. --#}
 {% for key, heading, means in groups %}
@@ -152,7 +154,7 @@
   <p class="legend">{{ legend }}</p>
   <p class="legend">This is the schedule people filed, not an attendance record — the
   system never tracks who actually came in. A nominated day recurs: someone off on
-  Fridays is off <b>every</b> Friday in the fortnight. Public holidays and work
-  suspensions aren't known to the system, so they still show as ordinary working days.</p>
+  Fridays is off <b>every</b> Friday in the fortnight. Holidays and work
+  suspensions an administrator has added are shown as such; any others still read as ordinary working days.</p>
 </div>
 {% endblock %}

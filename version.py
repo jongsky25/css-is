@@ -17,10 +17,29 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.36"
+APP_VERSION = "3.37"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.37",
+        "date": "October 1, 2026",
+        "summary": "Holidays and work suspensions are now known to the "
+                   "weekly check-in and the Who's in page.",
+        "changes": [
+            "The 2026 Philippine holidays and special non-working days are "
+            "pre-loaded. Administrators can add, change or remove days, and "
+            "add a work suspension the moment one is declared, under "
+            "Administrator > Holidays.",
+            "On a holiday the weekly check-in shows the day as a holiday with "
+            "nothing to choose, nobody is counted as not reported for it, "
+            "and Who's in shows the holiday instead of listing everyone as in "
+            "the office.",
+            "Eid'l Fitr and Eid'l Adha are not pre-loaded because their dates "
+            "are announced late; add them once proclaimed. The fortnightly "
+            "work arrangement schedule is not changed.",
+        ],
+    },
     {
         "version": "3.36",
         "date": "October 1, 2026",

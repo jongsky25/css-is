@@ -357,6 +357,21 @@ def init_db(conn):
         note         TEXT                  -- admin's reason, shown to filers
     );
 
+    -- Days nobody is expected at work: national holidays, special non-working
+    -- days, and work suspensions an admin declares mid-week. Deliberately a
+    -- small admin-edited calendar (proclamations change every year and some
+    -- are announced days ahead), not a computed rule. Today it only affects the
+    -- weekly whereabouts report and the Who's in page; the fortnightly ANNEX C
+    -- schedule still treats these as ordinary days.
+    CREATE TABLE IF NOT EXISTS holiday (
+        day        TEXT PRIMARY KEY,       -- YYYY-MM-DD
+        name       TEXT NOT NULL,
+        kind       TEXT NOT NULL DEFAULT 'regular'
+                   CHECK (kind IN ('regular','special','suspension')),
+        created_by TEXT,
+        created_at TEXT
+    );
+
     -- Weekly whereabouts: what a person says about each working day of one
     -- week ("Office", "Field", "Leave", or "AWA" = follow my filed arrangement).
     -- Layered ON TOP of the fortnightly ANNEX C filing and never written back
@@ -1109,6 +1124,7 @@ def _add_missing_columns(conn):
         conn.commit()
 
     _seed_bureau_access(conn)
+    seed_holidays(conn)
 
 
 # ---------------------------------------------------------------------
@@ -8708,7 +8724,8 @@ def work_arrangement_day(conn, day, user=None):
         _scope, out["kind"] = team_scope_for_user(conn, user, area="awa")
     # An unlinked account has no team to show, and a weekend has nobody
     # scheduled. Both are empty for different reasons the caller can tell apart.
-    if out["kind"] != "none" and not out["is_weekend"]:
+    out["holiday"] = get_holiday(conn, day)
+    if out["kind"] != "none" and not out["is_weekend"] and not out["holiday"]:
         reported = whereabouts_for_day(conn, day)
         # Only weeks the Monday email actually went out for can have
         # "undeclared" people — before that nobody was asked.
@@ -8740,6 +8757,100 @@ def work_arrangement_day(conn, day, user=None):
                             for p in g if p.get("undeclared"))
     out["headcount"] = sum(out["counts"].values())
     return out
+
+
+# ---- holidays / work suspensions -------------------------------------------
+
+HOLIDAY_KINDS = {"regular": "Regular holiday",
+                 "special": "Special non-working day",
+                 "suspension": "Work suspension"}
+
+# Philippine non-working days for 2026 (regular holidays + special non-working
+# days). Seeded once; admins own the list from then on. Movable Islamic
+# holidays (Eid'l Fitr, Eid'l Adha) are NOT here: they are only proclaimed
+# shortly before, so an admin adds them when announced.
+_PH_HOLIDAYS_2026 = [
+    ("2026-01-01", "New Year's Day", "regular"),
+    ("2026-02-17", "Chinese New Year", "special"),
+    ("2026-04-02", "Maundy Thursday", "regular"),
+    ("2026-04-03", "Good Friday", "regular"),
+    ("2026-04-04", "Black Saturday", "special"),
+    ("2026-04-09", "Araw ng Kagitingan", "regular"),
+    ("2026-05-01", "Labor Day", "regular"),
+    ("2026-06-12", "Independence Day", "regular"),
+    ("2026-08-21", "Ninoy Aquino Day", "special"),
+    ("2026-08-31", "National Heroes Day", "regular"),
+    ("2026-11-01", "All Saints' Day", "special"),
+    ("2026-11-02", "All Souls' Day", "special"),
+    ("2026-11-30", "Bonifacio Day", "regular"),
+    ("2026-12-08", "Feast of the Immaculate Conception", "special"),
+    ("2026-12-24", "Christmas Eve", "special"),
+    ("2026-12-25", "Christmas Day", "regular"),
+    ("2026-12-30", "Rizal Day", "regular"),
+    ("2026-12-31", "Last Day of the Year", "special"),
+]
+_HOLIDAY_SEED_KEY = "holidays_seeded_2026"
+
+
+def seed_holidays(conn):
+    """Load the 2026 PH calendar once. Keyed in app_setting so an admin who
+    later deletes or edits an entry never has it silently put back."""
+    if get_setting(conn, _HOLIDAY_SEED_KEY) == "1":
+        return
+    for day, name, kind in _PH_HOLIDAYS_2026:
+        conn.execute("INSERT OR IGNORE INTO holiday(day, name, kind, created_by, created_at) "
+                     "VALUES (?,?,?,?,?)", (day, name, kind, "system", None))
+    set_setting(conn, _HOLIDAY_SEED_KEY, "1")
+    conn.commit()
+
+
+def get_holiday(conn, day):
+    """{day, name, kind, kind_label} for a date, or None on an ordinary day."""
+    iso = day.isoformat() if isinstance(day, date) else str(day)
+    r = conn.execute("SELECT day, name, kind FROM holiday WHERE day=?", (iso,)).fetchone()
+    return ({"day": r[0], "name": r[1], "kind": r[2], "kind_label": HOLIDAY_KINDS[r[2]]}
+            if r else None)
+
+
+def holidays_between(conn, start, end):
+    """{iso_day: holiday dict} for start..end inclusive."""
+    return {r[0]: {"day": r[0], "name": r[1], "kind": r[2], "kind_label": HOLIDAY_KINDS[r[2]]}
+            for r in conn.execute(
+                "SELECT day, name, kind FROM holiday WHERE day BETWEEN ? AND ?",
+                (start.isoformat(), end.isoformat()))}
+
+
+def list_holidays(conn, year):
+    return [{"day": r[0], "name": r[1], "kind": r[2], "kind_label": HOLIDAY_KINDS[r[2]],
+             "created_by": r[3]}
+            for r in conn.execute(
+                "SELECT day, name, kind, created_by FROM holiday "
+                "WHERE day BETWEEN ? AND ? ORDER BY day", (f"{year}-01-01", f"{year}-12-31"))]
+
+
+def set_holiday(conn, day, name, kind="regular", by=None):
+    """Add or replace one date. Raises ValueError for a bad date/name/kind."""
+    try:
+        d = date.fromisoformat(str(day))
+    except ValueError:
+        raise ValueError("Pick a valid date.")
+    name = (name or "").strip()[:80]
+    if not name:
+        raise ValueError("Give the day a name.")
+    if kind not in HOLIDAY_KINDS:
+        raise ValueError("Pick a type.")
+    conn.execute(
+        "INSERT INTO holiday(day, name, kind, created_by, created_at) VALUES (?,?,?,?,?) "
+        "ON CONFLICT(day) DO UPDATE SET name=excluded.name, kind=excluded.kind, "
+        "created_by=excluded.created_by, created_at=excluded.created_at",
+        (d.isoformat(), name, kind, by, tz.now_local().isoformat(timespec="seconds")))
+    conn.commit()
+    return d
+
+
+def delete_holiday(conn, day):
+    conn.execute("DELETE FROM holiday WHERE day=?", (str(day),))
+    conn.commit()
 
 
 # ---- weekly whereabouts ----------------------------------------------------
@@ -8823,6 +8934,7 @@ def whereabouts_week(conn, user_id, monday, defaults=None):
         "SELECT day, status, note FROM whereabouts WHERE user_id=? AND day BETWEEN ? AND ?",
         (user_id, monday.isoformat(), (monday + timedelta(days=4)).isoformat()))}
     days = []
+    holidays = holidays_between(conn, monday, monday + timedelta(days=4))
     for day in whereabouts_week_days(monday):
         iso = day.isoformat()
         default, state = mine.get(iso, ("office", "onsite"))
@@ -8836,6 +8948,7 @@ def whereabouts_week(conn, user_id, monday, defaults=None):
             "label": f"{_WA_ALL_DAY_NAMES[day.weekday()]}, {_MONTH_NAMES[day.month - 1]} {day.day}",
             "default": default, "saved": sv, "choice": choice,
             "note": note or "", "awa_label": awa_label, "awa_state": state,
+            "holiday": holidays.get(iso),
         })
     return days
 
@@ -8843,6 +8956,8 @@ def whereabouts_week(conn, user_id, monday, defaults=None):
 def whereabouts_choice_label(day):
     """'Work from home (AWA)' / 'Field' / 'Office' ... for one whereabouts_week
     day — the words the email and the page both use."""
+    if day.get("holiday"):
+        return f"Holiday — {day['holiday']['name']}"
     if day["choice"] == "awa":
         return day["awa_label"] or "Office"
     return WHEREABOUTS_LABELS[day["choice"]]
@@ -8860,8 +8975,8 @@ def save_whereabouts_week(conn, user_id, monday, entries, today=None):
     now = tz.now_local().isoformat(timespec="seconds")
     n = 0
     for d in days:
-        if d["iso"] not in entries:
-            continue
+        if d["iso"] not in entries or d["holiday"]:
+            continue                       # nothing to report on a day nobody works
         status, note = entries[d["iso"]]
         status = (status or "").strip().lower()
         if status not in WHEREABOUTS_STATUSES:

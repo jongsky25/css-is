@@ -381,6 +381,8 @@ def send_whereabouts_weekly(conn, base, dry_run=False):
     if not win:
         return 0
     _today, monday = win
+    if len(st.holidays_between(conn, monday, monday + timedelta(days=4))) >= 5:
+        return 0                    # a week with no working day has nothing to report
     label = st.whereabouts_week_label(monday)
     defaults = st.whereabouts_defaults(conn, monday)
     sent = 0
