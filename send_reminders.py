@@ -145,7 +145,8 @@ def remind_tomorrows_events(conn, base, dry_run=False):
 
 
 _ALL_JOBS = {"events", "wellness_expiry", "digest", "csm_rp", "csm_activity",
-            "wellness_file", "awa_file", "whereabouts"}
+            "wellness_file", "awa_file", "whereabouts",
+            "whereabouts_nudge", "whereabouts_rollup"}
 
 # job name -> the admin toggle that can switch it off (see /admin/email).
 JOB_FEATURE = {
@@ -157,6 +158,8 @@ JOB_FEATURE = {
     "wellness_file": "job_wellness_file",
     "awa_file": "job_awa_file",
     "whereabouts": "job_whereabouts",
+    "whereabouts_nudge": "job_whereabouts_nudge",
+    "whereabouts_rollup": "job_whereabouts_rollup",
 }
 
 # Admin-tunable schedule/delay knobs for the jobs below (/admin/email "Timing"
@@ -178,6 +181,8 @@ PARAMS = {
         "Work arrangement filing nudge: days before deadline", 1, 1, 14),
     "whereabouts_weekday": (
         "Weekly whereabouts email: weekday", 0, 0, 4),
+    "whereabouts_rollup_weekday": (
+        "Weekly whereabouts chief roll-up: weekday", 2, 0, 4),
 }
 
 
@@ -372,11 +377,10 @@ def send_whereabouts_weekly(conn, base, dry_run=False):
     asleep at 7am Monday still sends on Tuesday. Never twice for the same week:
     each send is recorded per person, so the daily sweep and any manual re-run
     skip anyone already emailed."""
-    today = tz.today_local()
-    weekday = _param(conn, "whereabouts_weekday")
-    if today.weekday() not in (weekday, weekday + 1) or today.weekday() > 4:
+    win = _whereabouts_window(conn, "whereabouts_weekday")
+    if not win:
         return 0
-    monday = st.whereabouts_week_start(today)
+    _today, monday = win
     label = st.whereabouts_week_label(monday)
     defaults = st.whereabouts_defaults(conn, monday)
     sent = 0
@@ -396,6 +400,78 @@ def send_whereabouts_weekly(conn, base, dry_run=False):
             # relay outage retries tomorrow instead of silently skipping the week.
             if mailer.send_status(res) == "sent":
                 st.mark_whereabouts_emailed(conn, staffer["id"], monday)
+        sent += 1
+    return sent
+
+
+def _whereabouts_window(conn, param_key, offset=0):
+    """(today, monday) when today is the job's weekday (+ `offset`) or the day
+    after it (one day of catch-up), else None. Always within Mon-Fri."""
+    today = tz.today_local()
+    day = _param(conn, param_key) + offset
+    if today.weekday() not in (day, day + 1) or today.weekday() > 4:
+        return None
+    return today, st.whereabouts_week_start(today)
+
+
+def nudge_whereabouts(conn, base, dry_run=False):
+    """The day after the Monday email, nudge anyone who hasn't answered it —
+    once per person per week. Never the same day the Monday email itself went
+    out (a catch-up send must not be followed by an instant nudge)."""
+    win = _whereabouts_window(conn, "whereabouts_weekday", offset=1)
+    if not win:
+        return 0
+    today, monday = win
+    label = st.whereabouts_week_label(monday)
+    sent = 0
+    for p in st.whereabouts_nonresponders(conn, monday):
+        if p["nudged_at"]:
+            continue
+        emailed = conn.execute(
+            "SELECT emailed_at FROM whereabouts_week WHERE user_id=? AND week_start=?",
+            (p["id"], monday.isoformat())).fetchone()[0] or ""
+        if emailed[:10] >= today.isoformat():
+            continue
+        token = auth.make_whereabouts_token(p["id"], monday.isoformat())
+        link = f"{base}/whereabouts/week?token={quote(token)}"
+        subj, body, html = mailer.whereabouts_nudge_message(
+            _person_name(conn, p["id"]), label, link)
+        if dry_run:
+            print(f"[dry-run] whereabouts nudge -> {p['username']} ({label})")
+        else:
+            res = _send(conn, JOB_FEATURE["whereabouts_nudge"], p["username"], subj, body,
+                        html=html)
+            if mailer.send_status(res) == "sent":
+                st.mark_whereabouts_nudged(conn, p["id"], monday)
+        sent += 1
+    return sent
+
+
+def send_whereabouts_rollup(conn, base, dry_run=False):
+    """Mid-week (Wednesday by default), tell each chief who among the staff
+    they approve for is still undeclared — after the Tuesday nudge has had a
+    day to work. Skips a chief with nobody missing; once per chief per week."""
+    win = _whereabouts_window(conn, "whereabouts_rollup_weekday")
+    if not win:
+        return 0
+    _today, monday = win
+    label = st.whereabouts_week_label(monday)
+    link = f"{base}/work-arrangement/day"
+    sent = 0
+    for chief_id, e in st.whereabouts_rollups(conn, monday).items():
+        chief = st.get_admin_user_by_id(conn, chief_id)
+        if not chief or not chief.get("username"):
+            continue
+        subj, body, html = mailer.whereabouts_rollup_message(
+            _person_name(conn, chief_id), label, e["missing"], e["total"], link)
+        if dry_run:
+            print(f"[dry-run] whereabouts roll-up -> {chief['username']} "
+                  f"({len(e['missing'])} undeclared)")
+        else:
+            res = _send(conn, JOB_FEATURE["whereabouts_rollup"], chief["username"], subj,
+                        body, html=html)
+            if mailer.send_status(res) == "sent":
+                st.mark_whereabouts_rollup_sent(conn, chief_id, monday)
         sent += 1
     return sent
 
@@ -517,6 +593,10 @@ def run(db_path="css_is.db", dry_run=False, jobs=None):
             report["awa_file"] = remind_awa_to_file(conn, base, dry_run=dry_run)
         if "whereabouts" in jobs:
             report["whereabouts"] = send_whereabouts_weekly(conn, base, dry_run=dry_run)
+        if "whereabouts_nudge" in jobs:
+            report["whereabouts_nudge"] = nudge_whereabouts(conn, base, dry_run=dry_run)
+        if "whereabouts_rollup" in jobs:
+            report["whereabouts_rollup"] = send_whereabouts_rollup(conn, base, dry_run=dry_run)
     finally:
         conn.close()
     return report
@@ -542,6 +622,10 @@ def main():
                     help="Nudge staff who haven't filed a work arrangement for the open period.")
     ap.add_argument("--whereabouts", action="store_true",
                     help="Email each staff member their week to confirm Office/Field/Leave.")
+    ap.add_argument("--whereabouts-nudge", action="store_true",
+                    help="Nudge staff who haven't answered the Monday whereabouts email.")
+    ap.add_argument("--whereabouts-rollup", action="store_true",
+                    help="Tell each chief who in their area hasn't reported their week.")
     args = ap.parse_args()
 
     jobs = {j for j, flag in (("events", args.events),
@@ -551,7 +635,9 @@ def main():
                               ("csm_activity", args.csm_activity),
                               ("wellness_file", args.wellness_file),
                               ("awa_file", args.awa_file),
-                              ("whereabouts", args.whereabouts)) if flag}
+                              ("whereabouts", args.whereabouts),
+                              ("whereabouts_nudge", args.whereabouts_nudge),
+                              ("whereabouts_rollup", args.whereabouts_rollup)) if flag}
     # run() treats a missing CSS_BASE_URL as a skip, because the in-process
     # caller must not be killed by it. On the command line it IS a failure:
     # exit non-zero so a cron/Task Scheduler run reports it instead of

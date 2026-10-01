@@ -239,3 +239,79 @@ def test_message_lists_every_day_and_the_link():
     assert "October 5-9, 2026" in subj
     assert "Work from home (AWA)" in body and "https://l" in body
     assert "Work from home (AWA)" in html and 'href="https://l"' in html
+
+
+# ------------------------------------------- nudge, roll-up, undeclared ---
+
+@pytest.fixture()
+def chiefed(org):
+    """The two staff plus a section chief who approves for them."""
+    c = org["conn"]
+    unit = c.execute("SELECT id FROM org_unit WHERE path='TEST/WB'").fetchone()[0]
+    rp = c.execute("INSERT INTO resource_person(name, is_internal, org_unit_id, designation) "
+                   "VALUES ('WB Chief',1,?,'Section Head')", (unit,)).lastrowid
+    org["chief"] = st.create_admin_user(c, "wb-chief@test.local", "x", "y",
+                                        "section_manager", rp_id=rp)
+    c.commit()
+    return org
+
+
+def test_nudge_goes_next_day_to_non_responders_once(org, sent, monkeypatch):
+    c = org["conn"]
+    sr.send_whereabouts_weekly(c, "https://x")                  # Monday
+    st.save_whereabouts_week(c, org["plain"], MONDAY, {})       # no entries: not a submit
+    st.save_whereabouts_week(c, org["wfh"], MONDAY, {WED: ("awa", "")})   # wfh responds
+    sent.clear()
+    assert sr.nudge_whereabouts(c, "https://x") == 0            # same day as the email
+    _today(monkeypatch, date(2026, 9, 22))
+    assert sr.nudge_whereabouts(c, "https://x") == 1
+    assert sent[0]["to"] == "wb-plain@test.local"
+    assert sr.nudge_whereabouts(c, "https://x") == 0            # once only
+
+
+def test_catch_up_monday_email_is_not_nudged_the_same_day(org, sent, monkeypatch):
+    _today(monkeypatch, date(2026, 9, 22))                      # email goes out Tuesday
+    sr.send_whereabouts_weekly(c := org["conn"], "https://x")
+    sent.clear()
+    assert sr.nudge_whereabouts(c, "https://x") == 0
+
+
+def test_rollup_tells_the_chief_who_is_undeclared(chiefed, sent, monkeypatch):
+    c = chiefed["conn"]
+    sr.send_whereabouts_weekly(c, "https://x")
+    st.save_whereabouts_week(c, chiefed["wfh"], MONDAY, {WED: ("awa", "")})
+    sent.clear()
+    _today(monkeypatch, date(2026, 9, 23))                      # Wednesday
+    assert sr.send_whereabouts_rollup(c, "https://x") == 1
+    mail = sent[0]
+    assert mail["to"] == "wb-chief@test.local"
+    assert "WB Plain" in mail["body"] and "WB Wfh" not in mail["body"]
+    assert sr.send_whereabouts_rollup(c, "https://x") == 0      # once per chief per week
+    _today(monkeypatch, date(2026, 9, 21))
+    assert sr.send_whereabouts_rollup(c, "https://x") == 0      # not its day
+
+
+def test_rollup_silent_when_everyone_reported(chiefed, sent, monkeypatch):
+    c = chiefed["conn"]
+    sr.send_whereabouts_weekly(c, "https://x")
+    for k in ("wfh", "plain"):
+        st.save_whereabouts_week(c, chiefed[k], MONDAY, {WED: ("office", "")})
+    _today(monkeypatch, date(2026, 9, 23))
+    assert sr.send_whereabouts_rollup(c, "https://x") == 0
+
+
+def test_undeclared_is_marked_only_once_people_were_asked(org, sent):
+    c = org["conn"]
+    d = st.work_arrangement_day(c, date(2026, 9, 22))
+    assert d["undeclared"] == 0 and not d["wb_tracked"]         # nobody asked yet
+    sr.send_whereabouts_weekly(c, "https://x")
+    st.save_whereabouts_week(c, org["plain"], MONDAY, {"2026-09-22": ("office", "")})
+    d = st.work_arrangement_day(c, date(2026, 9, 22))
+    undecl = {p["name"] for g in d["groups"].values() for p in g if p.get("undeclared")}
+    assert d["wb_tracked"] and undecl == {"WB Wfh"}
+    assert d["undeclared"] == 1
+
+
+def test_new_jobs_are_registered_and_previewable():
+    for j in ("whereabouts_nudge", "whereabouts_rollup"):
+        assert j in sr._ALL_JOBS and mailer.preview(sr.JOB_FEATURE[j])

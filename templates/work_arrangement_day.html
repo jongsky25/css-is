@@ -91,6 +91,9 @@
     {% if d.counts.noawa %}
     <div class="tile"><div class="n">{{ d.counts.noawa }}</div><div class="l">No AWA</div></div>
     {% endif %}
+    {% if can_schedule and d.wb_tracked and d.undeclared %}
+    <div class="tile"><div class="n warn">{{ d.undeclared }}</div><div class="l">Haven't reported</div></div>
+    {% endif %}
     {% if d.counts.unfiled %}
     <div class="tile">
       <div class="n warn">{{ d.counts.unfiled }}</div><div class="l">Nothing filed</div>
@@ -121,7 +124,8 @@
       <tbody>
       {% for p in people %}
         <tr>
-          <td class="who">{{ p.name }}</td>
+          <td class="who">{{ p.name }}
+            {% if p.undeclared and can_schedule %}<span class="pill s-pending" title="Didn't answer this week's whereabouts email">not reported</span>{% endif %}</td>
           <td>{{ p.position or "—" }}</td>
           <td>{{ p.section or "—" }}</td>
           <td>

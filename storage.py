@@ -379,7 +379,16 @@ def init_db(conn):
         week_start   TEXT NOT NULL,        -- the Monday
         emailed_at   TEXT,
         submitted_at TEXT,
+        nudged_at    TEXT,                 -- the Tuesday "you haven't reported" nudge
         PRIMARY KEY (user_id, week_start)
+    );
+    -- One row per chief per week: the roll-up of who in their area still hasn't
+    -- reported has gone out (so the daily sweep can't send it twice).
+    CREATE TABLE IF NOT EXISTS whereabouts_rollup (
+        approver_id INTEGER NOT NULL REFERENCES admin_user(id),
+        week_start  TEXT NOT NULL,
+        sent_at     TEXT,
+        PRIMARY KEY (approver_id, week_start)
     );
 
     -- A temporary stand-in for the wellness/AWA approver seat a section (or
@@ -8701,6 +8710,12 @@ def work_arrangement_day(conn, day, user=None):
     # scheduled. Both are empty for different reasons the caller can tell apart.
     if out["kind"] != "none" and not out["is_weekend"]:
         reported = whereabouts_for_day(conn, day)
+        # Only weeks the Monday email actually went out for can have
+        # "undeclared" people — before that nobody was asked.
+        asked = {r[0] for r in conn.execute(
+            "SELECT user_id FROM whereabouts_week WHERE week_start=? AND emailed_at IS NOT NULL",
+            (whereabouts_week_start(day).isoformat(),))}
+        out["wb_tracked"] = bool(asked)
         for r in work_arrangement_roster(conn, ps, user):
             rep = reported.get(r["user_id"])
             if rep and rep["status"] in WHEREABOUTS_DAY_STATE:
@@ -8718,8 +8733,11 @@ def work_arrangement_day(conn, day, user=None):
                 out["groups"][state].append(row)
                 continue
             state = _wa_day_state(r, day)
-            out["groups"][state].append({**r, "day_state": state, "reported": False})
+            out["groups"][state].append({**r, "day_state": state, "reported": False,
+                                         "undeclared": r["user_id"] in asked})
     out["counts"] = {k: len(v) for k, v in out["groups"].items()}
+    out["undeclared"] = sum(1 for g in out["groups"].values()
+                            for p in g if p.get("undeclared"))
     out["headcount"] = sum(out["counts"].values())
     return out
 
@@ -8899,7 +8917,75 @@ def mark_whereabouts_emailed(conn, user_id, monday):
     conn.execute(
         "INSERT INTO whereabouts_week(user_id, week_start, emailed_at) VALUES (?,?,?) "
         "ON CONFLICT(user_id, week_start) DO UPDATE SET emailed_at=excluded.emailed_at",
-        (user_id, monday.isoformat(), tz.now_local().isoformat(timespec="seconds")))
+        (user_id, monday.isoformat(),
+         f"{tz.today_local().isoformat()}T{tz.now_local().strftime('%H:%M:%S')}"))
+    conn.commit()
+
+
+def whereabouts_week_tracked(conn, monday):
+    """True once the Monday email has gone out to anyone for this week — i.e.
+    people were actually asked, so "didn't report" means something."""
+    return bool(conn.execute(
+        "SELECT 1 FROM whereabouts_week WHERE week_start=? AND emailed_at IS NOT NULL LIMIT 1",
+        (monday.isoformat(),)).fetchone())
+
+
+def whereabouts_nonresponders(conn, monday):
+    """Active staff emailed for this week who have not submitted: the Tuesday
+    nudge's audience and the chief roll-up's "undeclared" list."""
+    rows = conn.execute(
+        """SELECT a.id, a.username, COALESCE(rp.name, a.username), w.nudged_at
+           FROM whereabouts_week w
+           JOIN admin_user a ON a.id = w.user_id
+           LEFT JOIN resource_person rp ON rp.id = a.rp_id
+           WHERE w.week_start = ? AND w.emailed_at IS NOT NULL
+             AND w.submitted_at IS NULL AND a.active = 1
+             AND (rp.id IS NULL OR rp.archived_at IS NULL)
+           ORDER BY rp.name, a.username""", (monday.isoformat(),)).fetchall()
+    return [{"id": r[0], "username": r[1], "name": r[2], "nudged_at": r[3]}
+            for r in rows]
+
+
+def mark_whereabouts_nudged(conn, user_id, monday):
+    conn.execute("UPDATE whereabouts_week SET nudged_at=? WHERE user_id=? AND week_start=?",
+                 (tz.now_local().isoformat(timespec="seconds"), user_id, monday.isoformat()))
+    conn.commit()
+
+
+def whereabouts_rollups(conn, monday):
+    """{chief_account_id: {"missing": [names], "total": n}} — for each approver,
+    who among the staff they approve for were emailed this week and still
+    haven't reported. Chiefs already sent this week's roll-up are left out, as
+    are chiefs with nobody missing."""
+    sent = {r[0] for r in conn.execute(
+        "SELECT approver_id FROM whereabouts_rollup WHERE week_start=? AND sent_at IS NOT NULL",
+        (monday.isoformat(),))}
+    emailed = conn.execute(
+        """SELECT a.id, COALESCE(rp.name, a.username),
+                  (w.submitted_at IS NOT NULL)
+           FROM whereabouts_week w
+           JOIN admin_user a ON a.id = w.user_id
+           LEFT JOIN resource_person rp ON rp.id = a.rp_id
+           WHERE w.week_start = ? AND w.emailed_at IS NOT NULL AND a.active = 1
+             AND (rp.id IS NULL OR rp.archived_at IS NULL)
+           ORDER BY rp.name, a.username""", (monday.isoformat(),)).fetchall()
+    out = {}
+    for uid, name, done in emailed:
+        for chief in get_approvers_for(conn, uid):
+            if chief in sent:
+                continue
+            e = out.setdefault(chief, {"missing": [], "total": 0})
+            e["total"] += 1
+            if not done:
+                e["missing"].append(name)
+    return {c: e for c, e in out.items() if e["missing"]}
+
+
+def mark_whereabouts_rollup_sent(conn, approver_id, monday):
+    conn.execute(
+        "INSERT INTO whereabouts_rollup(approver_id, week_start, sent_at) VALUES (?,?,?) "
+        "ON CONFLICT(approver_id, week_start) DO UPDATE SET sent_at=excluded.sent_at",
+        (approver_id, monday.isoformat(), tz.now_local().isoformat(timespec="seconds")))
     conn.commit()
 
 

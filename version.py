@@ -38,6 +38,11 @@ CHANGELOG = [
             "You can also report this week or next week anytime from \"Report "
             "my week\" on the Who's in page. Administrators can switch the "
             "Monday email off, or change its day, under Email.",
+            "On Tuesday, anyone who hasn't answered gets a reminder. On "
+            "Wednesday, each chief gets a list of who in their area still "
+            "hasn't reported.",
+            "Chiefs also see a \"not reported\" mark beside those people, and "
+            "a \"Haven't reported\" count, on the Who's in page.",
         ],
     },
     {

@@ -844,6 +844,48 @@ def whereabouts_week_message(name, week_label, days, link):
     return subject, body, html
 
 
+def whereabouts_nudge_message(name, week_label, link):
+    """Returns (subject, plain_text_body, html_body). The Tuesday nudge to
+    someone who hasn't answered the Monday whereabouts email."""
+    subject = f"Reminder: confirm where you'll be — {week_label}"
+    body = (f"Hello {name or 'there'},\n\n"
+            f"We haven't heard where you'll be for {week_label}. It takes one tap "
+            f"(your work arrangement is already filled in):\n\n  {link}\n")
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="Where will you be this week?",
+        intro=(f"We haven't heard from you for {_e(week_label)} yet. Your week is already "
+               f"plotted from your work arrangement — confirm it, or change a day to "
+               f"Office, Field or Leave."),
+        cta_label="Confirm or change my week",
+        link=link,
+        footnote="No login needed.",
+    )
+    return subject, body, html
+
+
+def whereabouts_rollup_message(chief_name, week_label, missing, total, link):
+    """Returns (subject, plain_text_body, html_body). The chief's mid-week list
+    of who in their area still hasn't reported where they'll be."""
+    n = len(missing)
+    subject = f"{n} still to report their week — {week_label}"
+    body = (f"Hello {chief_name or 'there'},\n\n"
+            f"{total - n} of {total} in your area have reported where they'll be for "
+            f"{week_label}. Still undeclared ({n}):\n\n"
+            + "\n".join(f"  - {m}" for m in missing)
+            + f"\n\nSee who's in: {link}\n")
+    html = _email_html(
+        greeting=f"Hi {chief_name or 'there'},",
+        heading="Whereabouts not yet reported",
+        intro=(f"{total - n} of {total} in your area have reported where they'll be for "
+               f"{_e(week_label)}. Still undeclared ({n}):"),
+        extra_html=_list_html(missing),
+        cta_label="See who's in",
+        link=link,
+    )
+    return subject, body, html
+
+
 def awa_pending_message(approver_name, requester_name, period_label, arrangement, link):
     subject = f"Work arrangement needs your approval — {requester_name}"
     body = (f"Hello {approver_name or 'there'},\n\n"
@@ -1036,6 +1078,14 @@ FEATURES = {
         "Work arrangement filing nudge",
         "Nudges staff with no work arrangement filed before the deadline.",
         "scheduled"),
+    "job_whereabouts_nudge": (
+        "Weekly whereabouts — Tuesday nudge",
+        "Nudges staff who haven't answered the Monday whereabouts email.",
+        "scheduled"),
+    "job_whereabouts_rollup": (
+        "Weekly whereabouts — chief roll-up",
+        "Each chief is told who in their area still hasn't reported their week.",
+        "scheduled"),
     "job_whereabouts": (
         "Weekly whereabouts",
         "A Monday email to each staff member with their week plotted from their "
@@ -1120,6 +1170,10 @@ _PREVIEWS = {
         "Juan Reyes", "Friday", _SAMPLE_LINK),
     "job_awa_file": lambda: work_arrangement_file_reminder_message(
         "Juan Reyes", "October 1-15, 2026", "Friday", _SAMPLE_LINK),
+    "job_whereabouts_nudge": lambda: whereabouts_nudge_message(
+        "Juan Reyes", "October 5-9, 2026", _SAMPLE_LINK),
+    "job_whereabouts_rollup": lambda: whereabouts_rollup_message(
+        "Maria Santos", "October 5-9, 2026", ["Juan Reyes", "Ana Lopez"], 6, _SAMPLE_LINK),
     "job_whereabouts": lambda: whereabouts_week_message(
         "Juan Reyes", "October 5-9, 2026",
         [("Monday, October 5", "Office"), ("Tuesday, October 6", "Office"),

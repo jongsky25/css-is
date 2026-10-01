@@ -24,6 +24,14 @@ shows it.
   `/work-arrangement/week` (signed in). **Templates** — `whereabouts_week.html`;
   Who's in gains tiles, groups, a "reported" marker and a "Report my week" link.
 
+- **Undeclared**: `whereabouts_week_tracked/nonresponders`, `undeclared` on
+  `work_arrangement_day` (only people actually emailed, only once the week was
+  sent); chiefs/schedule viewers see a "not reported" pill + "Haven't reported"
+  tile. Jobs `whereabouts_nudge` (day after the email, once per person, never
+  the same day it went out) and `whereabouts_rollup` (Wednesday by default,
+  param `whereabouts_rollup_weekday`; once per chief per week; each chief's
+  approvees via `get_approvers_for`). Field/Leave stay separate from "No AWA".
+
 Tests: `tests/test_whereabouts.py`.
 
 ## 2026-09-25 (v3.31 — the area around the companion taps it)
