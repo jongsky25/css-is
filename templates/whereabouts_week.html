@@ -1,0 +1,85 @@
+{% extends layout %}
+{% block title %}Where will you be this week?{% endblock %}
+{% block content %}
+<style>
+  .wb { max-width:640px; margin:0 auto; }
+  .wb .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px;
+               padding:1.1rem 1.3rem; margin-bottom:1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .wb h1 { font-size:1.35rem; margin:.2rem 0 .3rem; }
+  .wb .sub { color:var(--soft); font-size:.88rem; margin:0 0 1rem; }
+  .wb .day { padding:.8rem 0; border-top:1px solid var(--line); }
+  .wb .day:first-of-type { border-top:0; }
+  .wb .dn { font-weight:800; margin-bottom:.45rem; }
+  .wb .opts { display:flex; gap:.45rem; flex-wrap:wrap; }
+  .wb .opts label { position:relative; flex:1 1 90px; text-align:center; cursor:pointer;
+        border:2px solid var(--line); background:var(--bg); border-radius:12px;
+        padding:.5rem .4rem; font-weight:700; font-size:.88rem; transition:border-color .15s; }
+  .wb .opts label small { display:block; font-weight:500; color:var(--soft); font-size:.72rem; }
+  .wb .opts input { position:absolute; opacity:0; width:1px; height:1px; }
+  .wb .opts label:has(input:checked) { border-color:var(--accent); background:var(--accent-bg);
+        box-shadow:0 0 0 3px var(--accent-bg); }
+  .wb .opts label:focus-within { outline:2px solid var(--accent); outline-offset:2px; }
+  .wb .note { display:none; margin-top:.5rem; }
+  .wb .day:has(input[value=field]:checked) .note { display:block; }
+  .wb .note input { width:100%; box-sizing:border-box; font:inherit; padding:.45rem .7rem;
+        border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--ink); }
+  .wb .btn { font:inherit; font-weight:700; cursor:pointer; border:1px solid var(--accent);
+        background:var(--accent); color:#fff; border-radius:10px; padding:.65rem 1.4rem; }
+  .wb .links { display:flex; gap:1rem; flex-wrap:wrap; font-size:.88rem; margin-bottom:.8rem; }
+  .wb .flash { border-radius:12px; padding:.6rem .9rem; margin-bottom:1rem; }
+  .wb .flash.ok { border:1px solid var(--green-ln, var(--line)); background:var(--green-bg, var(--bg)); }
+  .wb .flash.err { border:1px solid var(--red-ln); background:var(--red-bg); color:var(--red); }
+  .wb .foot { color:var(--soft); font-size:.78rem; line-height:1.4; }
+</style>
+<div class="wb">
+{% if invalid %}
+  <div class="panel">
+    <h1>This link isn't valid</h1>
+    <p class="sub">It may have expired, or it was copied incompletely. Sign in to report your week.</p>
+    <p><a href="/login?next=/work-arrangement/week">Sign in to Office Connect</a></p>
+  </div>
+{% else %}
+  <h1>Where will you be this week?</h1>
+  <p class="sub">{{ week_label }}{% if name %} · {{ name }}{% endif %}. Your work arrangement is already
+    plotted — change only the days that are different.</p>
+
+  {% if msg %}<div class="flash ok" role="status">✓ {{ msg }}</div>{% endif %}
+  {% if err %}<div class="flash err" role="alert">✕ {{ err }}</div>{% endif %}
+
+  {% if not token %}
+  <div class="links">
+    {% if monday != this_week %}<a href="/work-arrangement/week?week={{ this_week }}">‹ This week</a>{% endif %}
+    {% if not is_next %}<a href="/work-arrangement/week?week={{ next_week }}">Next week ›</a>{% endif %}
+    <a href="/work-arrangement/day">Who's in the office →</a>
+  </div>
+  {% endif %}
+
+  {% if not editable %}
+    <div class="panel"><p class="sub" style="margin:0">That week is closed for changes.
+      {% if token %}<a href="/login?next=/work-arrangement/week">Sign in</a> to report this or next week.{% endif %}</p></div>
+  {% else %}
+  <form method="post" action="{{ '/whereabouts/week' if token else '/work-arrangement/week' }}" class="panel">
+    {% if token %}<input type="hidden" name="token" value="{{ token }}">{% else %}<input type="hidden" name="week" value="{{ monday }}">{% endif %}
+    {% for d in days %}
+    <div class="day">
+      <div class="dn">{{ d.label }}</div>
+      <div class="opts" role="radiogroup" aria-label="{{ d.label }}">
+        <label><input type="radio" name="s_{{ d.iso }}" value="office" {{ 'checked' if d.choice == 'office' }}>Office</label>
+        <label><input type="radio" name="s_{{ d.iso }}" value="field" {{ 'checked' if d.choice == 'field' }}>Field</label>
+        <label><input type="radio" name="s_{{ d.iso }}" value="leave" {{ 'checked' if d.choice == 'leave' }}>Leave</label>
+        {% if d.awa_label %}
+        <label><input type="radio" name="s_{{ d.iso }}" value="awa" {{ 'checked' if d.choice == 'awa' }}>AWA<small>{{ d.awa_label }}</small></label>
+        {% endif %}
+      </div>
+      <div class="note"><input type="text" name="n_{{ d.iso }}" value="{{ d.note }}" maxlength="120"
+           placeholder="Where in the field? (optional)" aria-label="Field location for {{ d.label }}"></div>
+    </div>
+    {% endfor %}
+    <button class="btn" type="submit">{{ 'Update my week' if submitted else 'Confirm my week' }}</button>
+  </form>
+  {% endif %}
+  <p class="foot">This is what you tell us, not an attendance record. Colleagues see Office, Field or Leave
+    on the Who's in page — never a reason for leave.</p>
+{% endif %}
+</div>
+{% endblock %}

@@ -1,5 +1,39 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-01 (v3.36 — weekly whereabouts)
+
+Staff report where they will be each working day, once a week, and Who's in
+shows it.
+
+- **`storage.py`** — tables `whereabouts` (user, day, status office/field/leave/awa,
+  field-only note) and `whereabouts_week` (emailed_at / submitted_at, the
+  once-per-week guard). `whereabouts_defaults` plots a week from each person's
+  ANNEX C filing (per-day period, so a week straddling the 15th/16th is right);
+  `save_whereabouts_week` (this + next week only; `awa` refused where nothing to
+  follow; note kept for field only). `work_arrangement_day` lets a reported
+  office/field/leave override the filing and a "No AWA" tag; `awa` keeps the
+  derived WFH/day-off. New day groups `field` and `leave`.
+- **`auth.py`** — `make/verify_whereabouts_token` (uid + Monday, 10-day life).
+- **`mailer.py`** — `whereabouts_week_message`, feature `job_whereabouts`
+  (switchable in /admin/email, previewable).
+- **`send_reminders.py`** — job `whereabouts` (`--whereabouts`): Monday (param
+  `whereabouts_weekday`) with one day of catch-up; all active staff linked to a
+  directory record, including "No AWA"; recorded per person only when the send
+  succeeded, so a relay outage retries and nothing ever sends twice.
+- **`app.py`** — `/whereabouts/week` (signed link, public prefix) and
+  `/work-arrangement/week` (signed in). **Templates** — `whereabouts_week.html`;
+  Who's in gains tiles, groups, a "reported" marker and a "Report my week" link.
+
+- **Undeclared**: `whereabouts_week_tracked/nonresponders`, `undeclared` on
+  `work_arrangement_day` (only people actually emailed, only once the week was
+  sent); chiefs/schedule viewers see a "not reported" pill + "Haven't reported"
+  tile. Jobs `whereabouts_nudge` (day after the email, once per person, never
+  the same day it went out) and `whereabouts_rollup` (Tuesday by default,
+  param `whereabouts_rollup_weekday`; once per chief per week; each chief's
+  approvees via `get_approvers_for`). Field/Leave stay separate from "No AWA".
+
+Tests: `tests/test_whereabouts.py`.
+
 ## 2026-09-25 (v3.31 — the area around the companion taps it)
 
 The last dead clicks on the home greeting (v3.21 made the photo + name a

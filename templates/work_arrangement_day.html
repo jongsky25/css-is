@@ -35,6 +35,7 @@
   .pill { font-size:.72rem; font-weight:700; padding:.16rem .6rem; border-radius:999px;
           border:1px solid var(--line); white-space:nowrap; }
   .pill.s-pending { color:var(--amber); border-color:var(--amber-ln); background:var(--amber-bg); }
+  .pill.s-reported { color:var(--green); border-color:var(--green-ln, var(--line)); }
   .reason { color:var(--ink-soft); font-size:.85rem; font-style:italic; }
   .legend { color:var(--soft); font-size:.78rem; line-height:1.4; margin-top:.9rem; }
 </style>
@@ -44,6 +45,7 @@
 
 <div class="backbar">
   <a href="/work-arrangement">← My work arrangement</a>
+  <a href="/work-arrangement/week">Report my week</a>
   {#-- The chief's fortnight view. Linked only when they can actually open it,
        since a link that can only 403 is worse than no link. --#}
   {% if can_schedule %}<a href="/work-arrangement/schedule">Team schedule (fortnight)</a>{% endif %}
@@ -77,11 +79,20 @@
     <div class="tile">
       <div class="n">{{ d.counts.wfh }}</div><div class="l">Working from home</div>
     </div>
+    {% if d.counts.field %}
+    <div class="tile"><div class="n">{{ d.counts.field }}</div><div class="l">In the field</div></div>
+    {% endif %}
+    {% if d.counts.leave %}
+    <div class="tile"><div class="n">{{ d.counts.leave }}</div><div class="l">On leave</div></div>
+    {% endif %}
     <div class="tile">
       <div class="n">{{ d.counts.dayoff }}</div><div class="l">Day off</div>
     </div>
     {% if d.counts.noawa %}
     <div class="tile"><div class="n">{{ d.counts.noawa }}</div><div class="l">No AWA</div></div>
+    {% endif %}
+    {% if can_schedule and d.wb_tracked and d.undeclared %}
+    <div class="tile"><div class="n warn">{{ d.undeclared }}</div><div class="l">Haven't reported</div></div>
     {% endif %}
     {% if d.counts.unfiled %}
     <div class="tile">
@@ -102,7 +113,7 @@
     <div class="grp">
       {#-- REG stands in for "in the office"; the other three have their own art. --#}
       <span class="ic">{{ arrangement_icon("REG" if key in ("onsite", "unfiled")
-                                           else ("WFH" if key == "wfh" else "CWW")) }}</span>
+                                           else ("WFH" if key in ("wfh", "field") else "CWW")) }}</span>
       <h3>{{ heading }}</h3>
       <span class="n">{{ people|length }}</span>
     </div>
@@ -113,13 +124,15 @@
       <tbody>
       {% for p in people %}
         <tr>
-          <td class="who">{{ p.name }}</td>
+          <td class="who">{{ p.name }}
+            {% if p.undeclared and can_schedule %}<span class="pill s-pending" title="Didn't answer this week's whereabouts email">not reported</span>{% endif %}</td>
           <td>{{ p.position or "—" }}</td>
           <td>{{ p.section or "—" }}</td>
           <td>
             {% if key == "noawa" %}<span class="reason">{{ p.remarks or "—" }}</span>
             {% elif key == "unfiled" %}—
             {% else %}{{ p.arrangement_label or p.arrangement }}
+              {% if p.reported %}<span class="pill s-reported">reported this week</span>{% endif %}
               {% if p.remarks %}<div class="reason">{{ p.remarks }}</div>{% endif %}
               {#-- A filing still waiting on a chief is not yet the schedule of
                    record, so say so rather than presenting it as settled. --#}
