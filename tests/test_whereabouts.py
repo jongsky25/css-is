@@ -321,3 +321,68 @@ def test_undeclared_is_marked_only_once_people_were_asked(org, sent):
 def test_new_jobs_are_registered_and_previewable():
     for j in ("whereabouts_nudge", "whereabouts_rollup"):
         assert j in sr._ALL_JOBS and mailer.preview(sr.JOB_FEATURE[j])
+
+
+# ------------------------------------------------------------- holidays ---
+
+def test_ph_2026_calendar_is_seeded_once_and_stays_edited(org):
+    c = org["conn"]
+    days = {h["day"]: h for h in st.list_holidays(c, 2026)}
+    assert days["2026-12-25"]["kind"] == "regular" and days["2026-11-01"]["kind"] == "special"
+    assert "2026-08-31" in days                                  # National Heroes Day
+    st.delete_holiday(c, "2026-12-25")
+    st.seed_holidays(c)                                          # a later boot
+    assert st.get_holiday(c, "2026-12-25") is None
+
+
+def test_holiday_day_has_no_choice_and_is_labelled_in_the_email(org):
+    c = org["conn"]
+    st.set_holiday(c, "2026-09-23", "Typhoon suspension", "suspension")
+    days = st.whereabouts_week(c, org["wfh"], MONDAY)
+    wed = days[2]
+    assert wed["holiday"]["kind"] == "suspension"
+    assert st.whereabouts_choice_label(wed) == "Holiday — Typhoon suspension"
+    # nothing is stored for the holiday, the other days are
+    n = st.save_whereabouts_week(c, org["wfh"], MONDAY, {
+        WED: ("leave", ""), "2026-09-22": ("field", "x")})
+    assert n == 1
+
+
+def test_whos_in_shows_a_holiday_and_cancels_undeclared_tracking(org, sent):
+    c = org["conn"]
+    sr.send_whereabouts_weekly(c, "https://x")
+    st.set_holiday(c, "2026-09-22", "Work suspension", "suspension")
+    d = st.work_arrangement_day(c, date(2026, 9, 22))
+    assert d["holiday"]["name"] == "Work suspension"
+    assert d["headcount"] == 0 and d["undeclared"] == 0
+    assert all(not g for g in d["groups"].values())
+    assert st.work_arrangement_day(c, date(2026, 9, 24))["undeclared"] == 2   # others unaffected
+
+
+def test_a_week_with_no_working_day_sends_no_email(org, sent):
+    for i in range(5):
+        st.set_holiday(org["conn"], f"2026-09-{21 + i}", "Suspension", "suspension")
+    assert sr.send_whereabouts_weekly(org["conn"], "https://x") == 0 and sent == []
+
+
+def test_set_holiday_validates(org):
+    for args in (("nope", "x", "regular"), ("2026-09-22", "", "regular"),
+                 ("2026-09-22", "x", "bogus")):
+        with pytest.raises(ValueError):
+            st.set_holiday(org["conn"], *args)
+
+
+def test_admin_holidays_page_and_save(admin, viewer, app_mod):
+    assert viewer.get("/admin/holidays", follow_redirects=False).status_code in (302, 303, 403)
+    r = admin.get("/admin/holidays?year=2026")
+    assert r.status_code == 200 and "Christmas Day" in r.text
+    r = admin.post("/admin/holidays", content="action=add&day=2026-09-30&name=Test+day&kind=special",
+                   headers={"content-type": "application/x-www-form-urlencoded"},
+                   follow_redirects=False)
+    assert r.status_code == 303
+    assert "Test day" in admin.get("/admin/holidays?year=2026").text
+    admin.post("/admin/holidays", content="action=delete&day=2026-09-30",
+               headers={"content-type": "application/x-www-form-urlencoded"})
+    assert "Test day" not in admin.get("/admin/holidays?year=2026").text
+    # the Who's in page renders a holiday
+    assert admin.get("/work-arrangement/day?day=2026-12-25").status_code == 200

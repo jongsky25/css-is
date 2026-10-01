@@ -1,5 +1,23 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-01 (v3.37 — PH holidays and work suspensions)
+
+Builds on v3.36 (weekly whereabouts).
+
+- **`storage.py`** — `holiday` table (date, name, kind regular/special/suspension),
+  seeded once with the 2026 PH calendar (`seed_holidays`, keyed in app_setting so
+  admin deletions stick; Eid'l Fitr/Adha deliberately omitted — announced late).
+  `get_holiday`, `holidays_between`, `list_holidays`, `set_holiday`,
+  `delete_holiday`. A holiday day: carries no choice on the weekly form and is
+  never saved to; reads "Holiday — name" in the Monday email; makes
+  `work_arrangement_day` return no roster (so no one is undeclared that day).
+- **`send_reminders.py`** — a week of five holidays sends no Monday email.
+- **`app.py`** — `/admin/holidays` (admin, `manage_users`) + nav entry.
+- Not changed: the fortnightly ANNEX C schedule, coverage warnings and exports
+  still treat holidays as ordinary days.
+
+Tests: `tests/test_whereabouts.py`.
+
 ## 2026-10-01 (v3.36 — weekly whereabouts)
 
 Staff report where they will be each working day, once a week, and Who's in

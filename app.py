@@ -669,6 +669,11 @@ NAV_GROUPS = [
          "kw": "email mail notifications toggle switch off preview test outbox "
                "reminders digest csm wellness awa feedback invite reset",
          "cap": "manage_users"},
+        {"key": "holidays", "url": "/admin/holidays", "label": "Holidays",
+         "hint": "Holidays and work suspensions",
+         "kw": "holiday holidays suspension work suspension typhoon non-working special "
+               "regular calendar whereabouts day off proclamation",
+         "cap": "manage_users"},
         {"key": "wa_reopen", "url": "/admin/work-arrangement", "label": "AWA filing",
          "hint": "Temporarily reopen a closed filing period",
          "kw": "awa work arrangement reopen deadline override filing period cww wfh "
@@ -15111,6 +15116,53 @@ async def work_arrangement_decide(request: Request, wa_id: int):
         conn.close()
     return RedirectResponse(_inbox_url("awa", ok=msg, period=row["period_start"]),
                             status_code=303)
+
+
+@app.get("/admin/holidays", response_class=HTMLResponse)
+def admin_holidays(request: Request, year: int = 0, ok: str = "", err: str = ""):
+    """The small calendar of days nobody is expected at work. Edited here by an
+    admin: proclamations change yearly and a suspension can be declared the
+    night before."""
+    if (r := _forbid(request, "manage_users")):
+        return r
+    year = year if 2000 <= year <= 2100 else _today_local().year
+    conn = get_conn()
+    try:
+        rows = st.list_holidays(conn, year)
+    finally:
+        conn.close()
+    return templates.TemplateResponse(request, "admin_holidays.html", {
+        "rows": rows, "year": year, "kinds": st.HOLIDAY_KINDS, "ok": ok, "err": err,
+        "show_scope": False, "nav_active": "holidays",
+    })
+
+
+@app.post("/admin/holidays")
+async def admin_holidays_save(request: Request):
+    if (r := _forbid(request, "manage_users")):
+        return r
+    p = await _posted(request)
+    conn = get_conn()
+    try:
+        action = p.get("action", "add")
+        day = (p.get("day") or "").strip()
+        if action == "delete":
+            st.delete_holiday(conn, day)
+            _audit(request, conn, "holiday_deleted", target_type="setting",
+                   summary=f"Removed the holiday on {day}.")
+            msg, year = "Removed.", day[:4]
+        else:
+            try:
+                d = st.set_holiday(conn, day, p.get("name"), p.get("kind", "regular"),
+                                   by=request.state.user["username"])
+            except ValueError as e:
+                return RedirectResponse("/admin/holidays?err=" + quote(str(e)), status_code=303)
+            _audit(request, conn, "holiday_set", target_type="setting",
+                   summary=f"Set {d.isoformat()} as {p.get('name')} ({p.get('kind')}).")
+            msg, year = f"{d.isoformat()} saved.", d.year
+    finally:
+        conn.close()
+    return RedirectResponse(f"/admin/holidays?year={year}&ok=" + quote(msg), status_code=303)
 
 
 @app.get("/admin/work-arrangement", response_class=HTMLResponse)

@@ -33,6 +33,9 @@ def wa_org(app_mod):
     conn.execute("DELETE FROM resource_person WHERE name LIKE 'WA-Test %'")
     for path in ("TEST/WA/WASec", "TEST/WA"):
         conn.execute("DELETE FROM org_unit WHERE path = ?", (path,))
+    # These tests use Friday 2026-08-21 as an ordinary working day; it is a real
+    # PH special non-working day (Ninoy Aquino Day) in the seeded calendar.
+    conn.execute("DELETE FROM holiday WHERE day = '2026-08-21'")
     div = conn.execute(
         "INSERT INTO org_unit(name, short_name, level, path) "
         "VALUES ('WA Test Division','WADiv','division','TEST/WA')").lastrowid
@@ -67,6 +70,8 @@ def wa_org(app_mod):
     conn.execute("DELETE FROM resource_person WHERE name LIKE 'WA-Test %'")
     for path in ("TEST/WA/WASec", "TEST/WA"):
         conn.execute("DELETE FROM org_unit WHERE path = ?", (path,))
+    conn.execute("INSERT OR IGNORE INTO holiday(day, name, kind, created_by) VALUES "
+                 "('2026-08-21', 'Ninoy Aquino Day', 'special', 'system')")
     conn.commit()
     conn.close()
 

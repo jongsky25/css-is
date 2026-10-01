@@ -1,0 +1,72 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash, empty_state %}
+{% block title %}Holidays{% endblock %}
+{% block content %}
+<style>
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px; padding:1.1rem 1.3rem;
+           margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .panel h2 { margin:0 0 .2rem; font-size:1.05rem; }
+  .panel .sub { color:var(--soft); font-size:.85rem; margin:0 0 .9rem; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; padding:.5rem .5rem; border-bottom:1px solid var(--line); font-size:.88rem; }
+  th { font-size:.68rem; text-transform:uppercase; letter-spacing:.03em; color:var(--soft); }
+  .pill { font-size:.66rem; font-weight:700; padding:.12rem .5rem; border-radius:999px; border:1px solid var(--line); background:var(--bg); white-space:nowrap; }
+  .pill.suspension { color:var(--red); border-color:var(--red-ln); background:var(--red-bg); }
+  .btn { padding:.3rem .6rem; border-radius:8px; border:1px solid var(--accent); background:var(--accent);
+         color:var(--on-accent); font-weight:600; cursor:pointer; font-size:.8rem; }
+  .btn.danger { border-color:var(--red-ln); color:var(--red); background:var(--red-bg); }
+  .add { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
+  .add input, .add select { padding:.35rem .5rem; border:1px solid var(--line); border-radius:8px; font-size:.85rem;
+                            background:var(--bg); color:var(--ink); }
+  .years { display:flex; gap:1rem; margin-bottom:.8rem; font-size:.9rem; }
+</style>
+
+{{ page_header("Holidays",
+   "Days nobody is expected at work. They drop out of the weekly whereabouts report (no choices, nobody counted as not reported) and show as a holiday on Who's in. Add a work suspension here the moment one is declared. The fortnightly AWA schedule is not affected.") }}
+{{ flash(msg=ok, err=err) }}
+
+<div class="panel">
+  <h2>Add or change a day</h2>
+  <p class="sub">Adding a date that already exists replaces it. Eid'l Fitr and Eid'l Adha aren't pre-loaded — add them once proclaimed.</p>
+  <form method="post" action="/admin/holidays" class="add">
+    <input type="hidden" name="action" value="add">
+    <input type="date" name="day" required aria-label="Date" value="{{ year }}-01-01">
+    <input type="text" name="name" required maxlength="80" placeholder="Name, e.g. Typhoon suspension" aria-label="Name" style="min-width:16rem">
+    <select name="kind" aria-label="Type">
+      {% for k, label in kinds.items() %}<option value="{{ k }}">{{ label }}</option>{% endfor %}
+    </select>
+    <button class="btn" type="submit">Save</button>
+  </form>
+</div>
+
+<div class="panel">
+  <div class="years">
+    <a href="/admin/holidays?year={{ year - 1 }}">‹ {{ year - 1 }}</a>
+    <strong>{{ year }}</strong>
+    <a href="/admin/holidays?year={{ year + 1 }}">{{ year + 1 }} ›</a>
+  </div>
+  {% if rows %}
+  <table>
+    <thead><tr><th>Date</th><th>Name</th><th>Type</th><th></th></tr></thead>
+    <tbody>
+    {% for h in rows %}
+      <tr>
+        <td>{{ h.day }}</td>
+        <td>{{ h.name }}</td>
+        <td><span class="pill {{ h.kind }}">{{ h.kind_label }}</span></td>
+        <td>
+          <form method="post" action="/admin/holidays">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="day" value="{{ h.day }}">
+            <button class="btn danger" type="submit" aria-label="Remove {{ h.name }}">Remove</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  {{ empty_state("No days for " ~ year, "Add holidays above. 2026's Philippine calendar is pre-loaded.", "🗓") }}
+  {% endif %}
+</div>
+{% endblock %}
