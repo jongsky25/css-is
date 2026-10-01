@@ -2346,6 +2346,8 @@ def list_events(conn, created_by=None, lifecycles=None, team_scope=None):
         life = lifecycle_of(r[3], r[8], today, now, end_date=r[10])
         if lifecycles and life not in lifecycles:
             continue
+        if event_is_archived(conn, r[0]):
+            continue            # put away via Archive — off every management feed
         ev = {
             "id": r[0], "event_token": r[1], "title": r[2], "event_date": r[3],
             "end_date": r[10], "venue": r[4], "organizer": r[5], "modality": r[6] or "f2f",
@@ -3164,6 +3166,7 @@ _AUDIT_ACTIONS = {
     "outside_close":       ("Closed an invited activity", "Activities"),
     "outside_reopen":      ("Reopened an invited activity", "Activities"),
     "outside_archive":     ("Archived an invited activity", "Activities"),
+    "event_archive":       ("Archived or restored an activity", "Activities"),
     "resend_link":         ("Resent an activity link", "Activities"),
     "attendee_view_response": ("Viewed a registrant's response", "Activities"),
     "speaker_cleanup":     ("Cleaned up speakers", "Activities"),
@@ -5000,6 +5003,19 @@ def set_event_archived(conn, event_id, archived):
     """, (1 if archived else 0, event_id))
     conn.commit()
     return cur.rowcount
+
+
+def event_is_archived(conn, event_id):
+    """True when the event has forms and EVERY one is archived — the state
+    `set_event_archived` leaves it in, and what restoring from the Archived
+    activities page (which flips the forms back) undoes. Derived from the forms
+    rather than a second flag, so the two restore paths can never disagree. An
+    event with no forms at all is not 'archived' (nothing was put away)."""
+    row = conn.execute(
+        """SELECT COUNT(*), SUM(CASE WHEN COALESCE(fi.archived, 0) = 1 THEN 1 ELSE 0 END)
+           FROM event_form ef JOIN form_instance fi ON fi.id = ef.form_instance_id
+           WHERE ef.event_id = ?""", (event_id,)).fetchone()
+    return bool(row[0]) and row[0] == (row[1] or 0)
 
 
 def set_form_archived(conn, form_instance_id, archived):

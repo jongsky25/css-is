@@ -97,6 +97,11 @@
   {% elif flash == 'hasresponses' %}<div class="flashmsg warn">That entry has already answered, so it can't be deleted — its ratings are part of the reports. Reopen and correct the activity instead, or leave it.</div>
   {% elif flash == 'notfound' %}<div class="flashmsg warn">That entry was already gone.</div>{% endif %}
 
+  <form method="post" action="/monitor/{{ ev.event_token }}/archive" style="margin:0 0 1rem;"
+        onsubmit="return confirm('Archive this activity? It is hidden from Monitor and every report, and its public registration link stops working. Nothing is deleted — you can restore it later from Archived activities.');">
+    <button type="submit" class="act-btn danger" title="Retire a duplicate or mistaken activity. Reversible.">Archive this activity</button>
+  </form>
+
   <div class="cards">
     <div class="stat"><div class="v" id="stat-registered">{{ summ.registered }}</div><div class="k">Registered</div></div>
     <div class="stat done"><div class="v" id="live-count">{{ summ.completed }}</div><div class="k">Completed CSS <span class="live-dot" id="live-dot"></span></div></div>

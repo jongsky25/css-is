@@ -36,6 +36,7 @@
 
 {% block content %}
 {{ monitor_header("monitor") }}
+{% if flash == 'archived' %}<div class="mon-meta" style="background:var(--green-bg,#e8f5ee); border-radius:10px; padding:.6rem .85rem; margin:0 0 1rem;">Activity archived. It no longer appears on Monitor or in reports, and its registration link is closed. You can restore it from <a href="/activities/archived">Archived activities</a>.</div>{% endif %}
 <p class="lede">Track who has registered for each activity through its public link, and how far they have got with the customer-satisfaction survey (CSS). Only activities that are <b>upcoming</b> (still registering) or <b>ongoing</b> (CSS collecting) appear here — once an activity concludes it moves to its report.{% if scope_kind == "bureau" %} You are seeing every activity in the bureau.{% elif scope_kind == "none" %} Your account isn’t linked to a directory record yet, so you are seeing only the activities you created.{% else %} You are seeing your team’s activities — the ones your section ran, and the ones one of you spoke at.{% endif %} Open one for the full participant roster, or export it.</p>
 
 {% if outside_events %}

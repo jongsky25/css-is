@@ -7747,7 +7747,8 @@ def event_link_tree(request: Request, event_token: str, att: str = "", fresh: st
         # Outside ("we were invited") activities are grouped into an event record for
         # naming/management only — they have no public link tree and no registration,
         # so the link-tree URL must not resolve to one.
-        if not ev or ev.get("event_kind") == "outside":
+        if (not ev or ev.get("event_kind") == "outside"
+                or st.event_is_archived(conn, ev["id"])):
             return templates.TemplateResponse(request, "link_tree.html",
                                               {"ev": None, "lang": i18n.pick(request)},
                                               status_code=404)
@@ -7848,7 +7849,7 @@ async def event_consent(request: Request, event_token: str):
     conn = get_conn()
     try:
         ev = st.get_event(conn, event_token)
-        if not ev:
+        if not ev or st.event_is_archived(conn, ev["id"]):
             return templates.TemplateResponse(request, "link_tree.html",
                                               {"ev": None, "lang": i18n.pick(request)},
                                               status_code=404)
@@ -8970,7 +8971,7 @@ MONITOR_STATUS = {
 
 
 @app.get("/monitor", response_class=HTMLResponse)
-def monitor_index(request: Request):
+def monitor_index(request: Request, flash: str = ""):
     """Index of activities to monitor: registered / answered / completion at a
     glance. Scoped to the viewer's TEAM — see `_event_feed_scope`."""
     user = request.state.user
@@ -8993,7 +8994,7 @@ def monitor_index(request: Request):
         conn.close()
     return templates.TemplateResponse(request, "monitor.html", {
         "nav_active": "monitor", "show_scope": False, "events": events,
-        "outside_events": outside_events,
+        "outside_events": outside_events, "flash": flash,
         "scope_kind": scope_kind, "status_meta": MONITOR_STATUS,
     })
 
@@ -9226,6 +9227,31 @@ def _send_reminder_batch(messages):
     a roster of dozens runs after the response instead of holding the page."""
     for email, subject, body, html in messages:
         _send_and_log("css_reminder", email, subject, body, html=html)
+
+
+@app.post("/monitor/{event_token}/archive")
+async def monitor_archive_event(request: Request, event_token: str):
+    """Archive an activity from its Monitor page — the way to retire an accidental
+    duplicate. Hides it from Monitor and every report and closes its public
+    registration link; nothing is deleted, so it is reversible (restore=1 here, or
+    from Archived activities). Creator/admin only, same gate as the monitor page."""
+    posted = await _posted(request)
+    restore = (posted.get("restore") or "") in ("1", "true", "on", "yes")
+    conn = get_conn()
+    try:
+        ev = st.get_event(conn, event_token)
+        if not ev or not _can_manage_event(request.state.user, ev):
+            return RedirectResponse("/monitor", status_code=303)
+        st.set_event_archived(conn, ev["id"], archived=not restore)
+        _audit(request, conn, "event_archive", target_type="event", target_id=ev["id"],
+               summary=("Restored" if restore else "Archived")
+                       + f" the activity “{ev['title']}”.")
+    finally:
+        conn.close()
+    invalidate_atoms()               # archived forms leave / re-enter every report
+    return RedirectResponse(
+        f"/monitor/{event_token}" if restore else "/monitor?flash=archived",
+        status_code=303)
 
 
 @app.post("/monitor/{event_token}/remind-unfinished")
