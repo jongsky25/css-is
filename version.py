@@ -17,10 +17,26 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.37"
+APP_VERSION = "3.38"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.38",
+        "date": "October 1, 2026",
+        "summary": "Who's in now has a Week view: everyone at your level, "
+                   "Monday to Friday, on one page.",
+        "changes": [
+            "Open Who's in and tap Week to see each person's whole week: "
+            "Office, Work from home, Field, Leave or Day off for every day, "
+            "with the number in the office at the bottom. Each day lists first names under Office, Field, Leave and so on.",
+            "You only see people at your own level, the same as the Day view. "
+            "Leave never shows a reason; a Field location is shown.",
+            "A day shown faded has not been confirmed yet. It is filled in "
+            "from the person's work arrangement until they report their week.",
+            "Chiefs also see who hasn't reported this week.",
+        ],
+    },
     {
         "version": "3.37",
         "date": "October 1, 2026",

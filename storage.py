@@ -9107,6 +9107,141 @@ def mark_whereabouts_rollup_sent(conn, approver_id, monday):
     conn.commit()
 
 
+_WA_CELL_LABEL = {"onsite": "Office", "wfh": "WFH", "dayoff": "Day off",
+                  "field": "Field", "leave": "Leave", "noawa": "No AWA",
+                  "unfiled": "Not filed"}
+
+
+# Row order of the week grid: where people are, not who they are.
+_WB_MATRIX_ROWS = [("onsite", "In the office"), ("wfh", "Working from home"),
+                   ("field", "In the field"), ("leave", "On leave"),
+                   ("dayoff", "Day off"), ("noawa", "No AWA"),
+                   ("unfiled", "Nothing filed")]
+
+
+def _first_names(people):
+    """{user_id: short display name}: the first name only, or "First L." when two
+    people at this viewer's level share one (extended until they differ)."""
+    parts = {uid: (p["name"].split() or ["?"]) for uid, p in people.items()}
+    out = {uid: ps[0] for uid, ps in parts.items()}
+    counts = {}
+    for n in out.values():
+        counts[n.lower()] = counts.get(n.lower(), 0) + 1
+    for uid, ps in parts.items():
+        if counts[out[uid].lower()] > 1 and len(ps) > 1:
+            out[uid] = f"{ps[0]} {ps[-1][0]}."
+    return out
+
+
+def _whereabouts_matrix(people, ndays):
+    """Status rows x day columns, each cell the first names of who is there that
+    day — the same data as the per-person cells, pivoted. Rows with nobody in
+    them all week are dropped, except the office row which always stays."""
+    short = _first_names(people)
+    rows = {k: [[] for _ in range(ndays)] for k, _l in _WB_MATRIX_ROWS}
+    for uid, p in sorted(people.items(), key=lambda kv: short[kv[0]].lower()):
+        for i, c in enumerate(p["cells"]):
+            if c.get("holiday") or c["state"] not in rows:
+                continue
+            rows[c["state"]][i].append({
+                "name": short[uid], "full": p["name"], "note": c.get("note") or "",
+                "plotted": c.get("plotted", False), "undeclared": c.get("undeclared", False)})
+    return [{"key": k, "label": label, "cells": rows[k]}
+            for k, label in _WB_MATRIX_ROWS
+            if k == "onsite" or any(rows[k])]
+
+
+def whereabouts_roster_week(conn, monday, user):
+    """The whole week's roster for ONE viewer: people down the side grouped by
+    section, Monday-Friday across, one cell per person per day.
+
+    Same rules, same sources, as work_arrangement_day — it is built from them,
+    so the two pages cannot disagree about a person:
+      * scope is team_scope_for_user (own unit subtree, the whole bureau for the
+        Director or a bureau-wide AWA grant, "none" for an unlinked account,
+        which gets no roster rather than everyone's);
+      * what a person REPORTED for a day outranks the fortnight's filing and a
+        "No AWA" tag; an unreported day falls back to the filing and is marked
+        `plotted` so a viewer can tell confirmed from assumed;
+      * a holiday / suspension day has no cells;
+      * Leave carries no reason; a Field location is shown (within the viewer's
+        own level, like everything here).
+    `undeclared` (emailed, still hasn't reported) is set on every cell here and
+    left to the caller to show only to chiefs / schedule viewers."""
+    days = whereabouts_week_days(monday)
+    out = {"monday": monday, "label": whereabouts_week_label(monday),
+           "days": [{"date": d, "iso": d.isoformat(),
+                     "name": _WA_ALL_DAY_NAMES[d.weekday()],
+                     "short": f"{_MONTH_NAMES[d.month - 1][:3]} {d.day}",
+                     "holiday": None} for d in days],
+           "kind": "bureau", "sections": [], "totals": [], "people": 0,
+           "undeclared": 0}
+    _scope, out["kind"] = team_scope_for_user(conn, user, area="awa")
+    if out["kind"] == "none":
+        return out
+    holidays = holidays_between(conn, days[0], days[-1])
+    for d in out["days"]:
+        d["holiday"] = holidays.get(d["iso"])
+    reported = {}
+    for uid, iso, status, note in conn.execute(
+            "SELECT user_id, day, status, note FROM whereabouts WHERE day BETWEEN ? AND ?",
+            (days[0].isoformat(), days[-1].isoformat())):
+        reported[(uid, iso)] = (status, note)
+    asked = {r[0] for r in conn.execute(
+        "SELECT user_id FROM whereabouts_week WHERE week_start=? AND emailed_at IS NOT NULL",
+        (monday.isoformat(),))}
+    # A week can straddle two half-month periods: each day reads its own
+    # period's roster, and a person is one row however many periods they span.
+    rosters, people = {}, {}
+    for day in days:
+        ps = work_arrangement_period(day)
+        if ps not in rosters:
+            rosters[ps] = {r["user_id"]: r for r in work_arrangement_roster(conn, ps, user)}
+            for uid, r in rosters[ps].items():
+                people.setdefault(uid, {"user_id": uid, "name": r["name"],
+                                        "position": r["position"], "section": r["section"],
+                                        "org_path": r["org_path"], "cells": []})
+    totals = [{"onsite": 0, "wfh": 0, "dayoff": 0, "field": 0, "leave": 0} for _ in days]
+    # "Haven't reported this week" = was asked and reported no day at all; a
+    # per-day "not reported" mark still shows on the days left blank.
+    reported_any = {uid for uid, _iso in reported}
+    undeclared = {uid for uid in people if uid in asked and uid not in reported_any}
+    for uid, p in people.items():
+        for i, day in enumerate(days):
+            iso = day.isoformat()
+            if out["days"][i]["holiday"]:
+                p["cells"].append({"holiday": True, "state": "holiday", "label": ""})
+                continue
+            r = rosters[work_arrangement_period(day)].get(uid)
+            if r is None:                      # not on this period's roster
+                p["cells"].append({"state": "none", "label": "—", "plotted": False})
+                continue
+            rep = reported.get((uid, iso))
+            if rep and rep[0] in WHEREABOUTS_DAY_STATE:
+                state, plotted = WHEREABOUTS_DAY_STATE[rep[0]], False
+                note = rep[1] or "" if state == "field" else ""
+            else:
+                state = _wa_day_state(r, day)
+                plotted = not (rep and rep[0] == "awa")
+                note = ""
+            und = (uid in asked) and rep is None
+            if state in totals[i]:
+                totals[i][state] += 1
+            p["cells"].append({"state": state, "label": _WA_CELL_LABEL[state],
+                               "note": note, "plotted": plotted, "undeclared": und})
+    by_section = {}
+    for p in people.values():
+        by_section.setdefault((p["org_path"], p["section"]), []).append(p)
+    out["sections"] = [{"section": sec or "—", "people": sorted(ps, key=lambda x: x["name"].lower())}
+                       for (path, sec), ps in sorted(by_section.items(), key=lambda kv: kv[0][0] or "")]
+    out["totals"] = totals
+    out["matrix"] = _whereabouts_matrix(people, len(days))
+    out["people"] = len(people)
+    out["undeclared"] = len(undeclared)
+    out["tracked"] = bool(asked)
+    return out
+
+
 def work_arrangement_period_summary(conn, period_start, user=None):
     """Roster + per-section coverage + the tiles the schedule page leads with.
     `thinnest` is the weekday with the fewest people on-site across the sections

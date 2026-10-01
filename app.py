@@ -15415,6 +15415,31 @@ async def whereabouts_submit(request: Request):
                              msg="Saved — your colleagues will see this on Who's in.")
 
 
+@app.get("/work-arrangement/roster", response_class=HTMLResponse)
+def work_arrangement_week_roster(request: Request, week: str = ""):
+    """The whole week's whereabouts as a grid — people by day. Shown to every
+    signed-in user, scoped inside storage.whereabouts_roster_week exactly as the
+    Who's in day view is (own level; an unlinked account sees nothing). Only the
+    "not reported" marking is held back for chiefs and schedule viewers."""
+    user = request.state.user
+    monday = _whereabouts_monday(week)
+    conn = get_conn()
+    try:
+        data = st.whereabouts_roster_week(conn, monday, user)
+        can_schedule = st.user_can_view_work_arrangement_schedule(conn, user)
+    finally:
+        conn.close()
+    return templates.TemplateResponse(request, "whereabouts_roster.html", {
+        "nav_active": "work_arrangement", "show_scope": False,
+        "d": data, "can_schedule": can_schedule,
+        "prev_week": (monday - timedelta(days=7)).isoformat(),
+        "next_week": (monday + timedelta(days=7)).isoformat(),
+        "this_week": st.whereabouts_week_start().isoformat(),
+        "monday": monday.isoformat(),
+        "legend": st.WORK_ARRANGEMENT_LEGEND,
+    })
+
+
 @app.get("/work-arrangement/day", response_class=HTMLResponse)
 def work_arrangement_day(request: Request, day: str = ""):
     """Who is in the office on ONE day, by name — and for whoever is not,

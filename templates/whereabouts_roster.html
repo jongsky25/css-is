@@ -1,0 +1,117 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, empty_state %}
+{% block title %}Who's in — week{% endblock %}
+{% block page_width %}full{% endblock %}
+{% block content %}
+<style>
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px;
+           padding:1.2rem 1.4rem; margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .backbar { margin-bottom:1rem; display:flex; gap:.8rem; flex-wrap:wrap; }
+  .tabs { display:inline-flex; gap:0; border:1px solid var(--line); border-radius:999px; overflow:hidden; }
+  .tabs a { padding:.3rem .9rem; font-weight:700; font-size:.85rem; text-decoration:none; color:var(--ink-soft); }
+  .tabs a[aria-current=page] { background:var(--accent); color:var(--on-accent, #fff); }
+  .weekbar { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:.8rem; }
+  .weekbar a { font-weight:700; text-decoration:none; }
+  .weekbar .now { font-size:1.15rem; font-weight:800; }
+  .tiles { display:flex; gap:1.6rem; flex-wrap:wrap; margin-bottom:.6rem; }
+  .tile .n { font-size:1.5rem; font-weight:800; line-height:1.1; }
+  .tile .n.warn { color:var(--amber); }
+  .tile .l { color:var(--soft); font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; }
+  .scroll { overflow-x:auto; }
+  .g { width:100%; border-collapse:collapse; min-width:720px; table-layout:fixed; }
+  .g th, .g td { padding:.55rem .6rem; border-bottom:1px solid var(--line); font-size:.9rem; vertical-align:top; text-align:left; }
+  .g thead th { color:var(--soft); font-size:.74rem; text-transform:uppercase; letter-spacing:.04em; text-align:center; }
+  .g thead th small { display:block; text-transform:none; letter-spacing:0; font-weight:500; }
+  .g th.who, .g th.cat { width:9.5rem; }
+  .g th.cat { font-size:.8rem; font-weight:800; }
+  .g th.cat.onsite { color:var(--green); } .g th.cat.wfh { color:var(--accent); }
+  .g th.cat.field { color:var(--amber); }  .g th.cat.leave, .g th.cat.dayoff { color:var(--ink-soft); }
+  .g th.cat.noawa, .g th.cat.unfiled { color:var(--soft); }
+  .g td { border-left:1px solid var(--line); }
+  .nm { display:block; font-weight:600; line-height:1.5; }
+  .nm small { font-weight:500; color:var(--soft); }
+  /* Plotted from the filing, not yet confirmed by the person: shown, but quieter. */
+  .nm.plotted { opacity:.5; font-weight:500; }
+  .none { color:var(--soft); }
+  .hol { color:var(--soft); font-size:.8rem; font-style:italic; }
+  .nr { color:var(--amber); font-style:normal; font-weight:800; margin-left:.15rem; }
+  tfoot th, tfoot td { font-weight:800; border-top:2px solid var(--line); border-bottom:0; }
+  tfoot td { text-align:center; }
+  .key { display:flex; gap:1.1rem; flex-wrap:wrap; margin-top:.7rem; font-size:.78rem; color:var(--soft); align-items:center; }
+  .key .nm { display:inline; }
+  .legend { color:var(--soft); font-size:.78rem; line-height:1.4; margin-top:.9rem; }
+  .key { display:flex; gap:.9rem; flex-wrap:wrap; margin-top:.7rem; font-size:.78rem; color:var(--soft); align-items:center; }
+</style>
+
+{{ page_header("Who's in — week", "Where everyone at your level will be, Monday to Friday.") }}
+
+<div class="backbar">
+  <a href="/work-arrangement">← My work arrangement</a>
+  <span class="tabs" role="tablist" aria-label="Day or week">
+    <a href="/work-arrangement/day">Day</a><a href="/work-arrangement/roster" aria-current="page">Week</a>
+  </span>
+  <a href="/work-arrangement/week?week={{ monday }}">Report my week</a>
+  {% if can_schedule %}<a href="/work-arrangement/schedule">Team schedule (fortnight)</a>{% endif %}
+</div>
+
+<div class="panel">
+  <div class="weekbar">
+    <a href="/work-arrangement/roster?week={{ prev_week }}">‹ previous week</a>
+    <span class="now">{{ d.label }}</span>
+    <a href="/work-arrangement/roster?week={{ next_week }}">next week ›</a>
+    {% if monday != this_week %}<a href="/work-arrangement/roster">This week</a>{% endif %}
+  </div>
+
+  {% if d.kind == "none" %}
+    {{ empty_state("We can't tell who your colleagues are",
+                   "Your account isn't linked to a directory record yet, so we don't know which section to show you. Add it on My profile.", "🗓") }}
+    <p><a href="/me">Complete your profile →</a></p>
+  {% elif not d.people %}
+    {{ empty_state("Nobody to show", "There is nobody on the roster at your level this week.", "🗓") }}
+  {% else %}
+  {% if can_schedule and d.tracked and d.undeclared %}
+  <div class="tiles"><div class="tile"><div class="n warn">{{ d.undeclared }}</div>
+    <div class="l">Haven't reported this week</div></div></div>
+  {% endif %}
+  <div class="scroll">
+  <table class="g m">
+    <thead><tr><th class="who"></th>
+      {% for day in d.days %}<th>{{ day.name[:3] }}<small>{{ day.short }}</small></th>{% endfor %}</tr></thead>
+    <tbody>
+    {% for row in d.matrix %}
+      <tr class="r-{{ row.key }}">
+        <th scope="row" class="cat {{ row.key }}">{{ row.label }}</th>
+        {% for cell in row.cells %}
+        <td>
+          {% if d.days[loop.index0].holiday %}
+            {% if row.key == "onsite" %}<span class="hol">{{ d.days[loop.index0].holiday.name }}</span>{% endif %}
+          {% else %}
+            {% for p in cell %}<span class="nm{{ ' plotted' if p.plotted }}" title="{{ p.full }}{% if p.plotted %} — plotted from the work arrangement, not yet confirmed{% endif %}">{{ p.name }}{% if p.note %} <small>({{ p.note }})</small>{% endif %}{% if p.undeclared and can_schedule %}<i class="nr" title="Hasn't reported">?</i>{% endif %}</span>{% else %}<span class="none">—</span>{% endfor %}
+          {% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+    {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr><th scope="row" class="cat">In the office</th>
+        {% for t in d.totals %}<td>{% if d.days[loop.index0].holiday %}—{% else %}{{ t.onsite }}{% endif %}</td>{% endfor %}</tr>
+    </tfoot>
+  </table>
+  </div>
+  <div class="key">
+    <span><span class="nm">Name</span> confirmed</span>
+    <span><span class="nm plotted">Name</span> plotted from the work arrangement, not yet confirmed</span>
+    {% if can_schedule %}<span><i class="nr">?</i> hasn't reported this week</span>{% endif %}
+    <span>Hover a name for the full name.</span>
+  </div>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <p class="legend">{{ legend }}</p>
+  <p class="legend">This is what people filed and reported, not an attendance record — the system never
+  tracks who actually came in. Leave never shows a reason. Holidays and work suspensions
+  an administrator has added appear as such; any others still read as ordinary working days.</p>
+</div>
+{% endblock %}

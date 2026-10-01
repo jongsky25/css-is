@@ -1,5 +1,24 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-01 (v3.38 — weekly roster: Who's in, Week view)
+
+- **`storage.whereabouts_roster_week(conn, monday, user)`** — people × Mon-Fri.
+  Built on the same pieces as `work_arrangement_day` (scope via
+  `team_scope_for_user`, reported-over-filing precedence, holidays, "No AWA"), so
+  the two views cannot disagree (tested day-by-day). A week straddling two
+  half-month periods reads each day's own period. Unreported days are `plotted`
+  (shown faded); Leave carries no reason, a Field location does. An unlinked
+  account gets no roster.
+- **`app.py`** — `/work-arrangement/roster?week=` for every signed-in user.
+  "not reported" marks and the "Haven't reported this week" count (asked and
+  reported no day) are shown only to chiefs / schedule viewers.
+- **Templates** — `whereabouts_roster.html`; a Day | Week switch on Who's in; a
+  link from the Report-my-week form.
+- Not in this change (as agreed): weekly xlsx/pdf export, coverage flag, and
+  reflecting weekly reports in the chief fortnight schedule's counts.
+
+Tests: `tests/test_whereabouts.py`.
+
 ## 2026-10-01 (v3.37 — PH holidays and work suspensions)
 
 Builds on v3.36 (weekly whereabouts).

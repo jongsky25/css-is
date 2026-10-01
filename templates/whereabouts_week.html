@@ -51,7 +51,8 @@
   <div class="links">
     {% if monday != this_week %}<a href="/work-arrangement/week?week={{ this_week }}">‹ This week</a>{% endif %}
     {% if not is_next %}<a href="/work-arrangement/week?week={{ next_week }}">Next week ›</a>{% endif %}
-    <a href="/work-arrangement/day">Who's in the office →</a>
+    <a href="/work-arrangement/roster?week={{ monday }}">Who's in this week →</a>
+    <a href="/work-arrangement/day">Who's in today →</a>
   </div>
   {% endif %}
 
