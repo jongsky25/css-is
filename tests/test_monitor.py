@@ -1050,3 +1050,45 @@ def test_home_tasks_link_an_organizers_open_activities_straight_to_monitor(app_m
     assert f"/monitor/{tok}" in urls
     t = next(t for t in tasks if t["url"] == f"/monitor/{tok}")
     assert "finished" in t["detail"]
+
+
+# --------------------------------------------------------------------------
+# Archive an activity (retire an accidental duplicate)
+# --------------------------------------------------------------------------
+
+def test_archive_hides_event_and_restores(tmp_path):
+    conn = _fresh(tmp_path)
+    eid, _tok, f2, f3 = _event_with_two_forms(conn)
+    assert not st.event_is_archived(conn, eid)
+    assert [e["id"] for e in st.list_events(conn)] == [eid]
+    st.set_event_archived(conn, eid, archived=True)
+    assert st.event_is_archived(conn, eid)
+    assert st.list_events(conn) == []
+    # restoring the forms (what Archived activities does) un-archives the event
+    st.set_form_archived(conn, f2, archived=False)
+    st.set_form_archived(conn, f3, archived=False)
+    assert not st.event_is_archived(conn, eid)
+    assert len(st.list_events(conn)) == 1
+
+
+def test_archive_route_hides_from_monitor_and_closes_public_link(manager, db_path):
+    tok = _seed_event(db_path, "manager@test.local")
+    assert tok in manager.get("/monitor").text
+    assert "Archive this activity" in manager.get(f"/monitor/{tok}").text
+    r = manager.post(f"/monitor/{tok}/archive", follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"].startswith("/monitor")
+    assert tok not in manager.get("/monitor").text
+    assert manager.get(f"/e/{tok}").status_code == 404
+    manager.post(f"/monitor/{tok}/archive", data={"restore": "1"})
+    assert tok in manager.get("/monitor").text
+    assert manager.get(f"/e/{tok}").status_code == 200
+
+
+def test_archive_route_refused_for_non_owner(viewer, db_path):
+    tok = _seed_event(db_path, "manager@test.local")
+    r = viewer.post(f"/monitor/{tok}/archive", follow_redirects=False)
+    assert r.status_code in (303, 403)
+    from storage import connect
+    c = connect(db_path)
+    ev = st.get_event(c, tok)
+    assert not st.event_is_archived(c, ev["id"])

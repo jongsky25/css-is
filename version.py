@@ -17,10 +17,23 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.33"
+APP_VERSION = "3.34"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.34",
+        "date": "October 1, 2026",
+        "summary": "Managers can now archive an activity from Monitor, "
+                   "for example one that was created twice by mistake.",
+        "changes": [
+            "Each activity's Monitor page has a new \"Archive this activity\" "
+            "button. Archiving removes it from Monitor and from reports, and "
+            "its registration link stops working.",
+            "Nothing is deleted. An archived activity can be brought back "
+            "any time from Archived activities.",
+        ],
+    },
     {
         "version": "3.33",
         "date": "September 29, 2026",
