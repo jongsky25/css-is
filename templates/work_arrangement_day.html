@@ -6,6 +6,9 @@
 <style>
   .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px;
            padding:1.2rem 1.4rem; margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .tabs { display:inline-flex; border:1px solid var(--line); border-radius:999px; overflow:hidden; }
+  .tabs a { padding:.3rem .9rem; font-weight:700; font-size:.85rem; text-decoration:none; color:var(--ink-soft); }
+  .tabs a[aria-current=page] { background:var(--accent); color:var(--on-accent, #fff); }
   .backbar { margin-bottom:1rem; display:flex; gap:.8rem; flex-wrap:wrap; }
   .daybar { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:.4rem; }
   .daybar a { font-weight:700; text-decoration:none; }
@@ -45,6 +48,9 @@
 
 <div class="backbar">
   <a href="/work-arrangement">← My work arrangement</a>
+  <span class="tabs" role="tablist" aria-label="Day or week">
+    <a href="/work-arrangement/day" aria-current="page">Day</a><a href="/work-arrangement/roster?week={{ d.date_iso }}">Week</a>
+  </span>
   <a href="/work-arrangement/week">Report my week</a>
   {#-- The chief's fortnight view. Linked only when they can actually open it,
        since a link that can only 403 is worse than no link. --#}

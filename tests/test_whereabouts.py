@@ -386,3 +386,122 @@ def test_admin_holidays_page_and_save(admin, viewer, app_mod):
     assert "Test day" not in admin.get("/admin/holidays?year=2026").text
     # the Who's in page renders a holiday
     assert admin.get("/work-arrangement/day?day=2026-12-25").status_code == 200
+
+
+# ------------------------------------------------------- weekly roster ---
+
+def _u(uid):
+    return {"id": uid, "role": "viewer"}
+
+
+def _cells(data, name):
+    for sec in data["sections"]:
+        for p in sec["people"]:
+            if p["name"] == name:
+                return {c.get("label") or "HOL": c for c in p["cells"]}, p["cells"]
+    raise AssertionError(name)
+
+
+def test_roster_week_plots_everyone_and_marks_plotted_vs_confirmed(org):
+    c = org["conn"]
+    st.save_whereabouts_week(c, org["plain"], MONDAY, {
+        "2026-09-21": ("field", "Brgy. Poblacion"), "2026-09-22": ("leave", "dentist"),
+        "2026-09-23": ("office", "")})
+    data = st.whereabouts_roster_week(c, MONDAY, _u(org["wfh"]))
+    assert data["kind"] == "unit" and data["people"] == 2
+    _, plain = _cells(data, "WB Plain")
+    assert [x["label"] for x in plain] == ["Field", "Leave", "Office", "Not filed", "Not filed"]
+    assert plain[0]["note"] == "Brgy. Poblacion" and not plain[0]["plotted"]
+    assert plain[1]["note"] == ""                       # leave never carries a reason
+    assert plain[3]["plotted"]                          # unreported -> faded
+    _, wfh = _cells(data, "WB Wfh")
+    assert [x["label"] for x in wfh] == ["Office", "Office", "WFH", "Office", "Office"]
+    assert all(x["plotted"] for x in wfh)
+    # "AWA" explicitly confirmed is a confirmed (not faded) WFH
+    st.save_whereabouts_week(c, org["wfh"], MONDAY, {WED: ("awa", "")})
+    _, wfh = _cells(st.whereabouts_roster_week(c, MONDAY, _u(org["wfh"])), "WB Wfh")
+    assert wfh[2]["label"] == "WFH" and not wfh[2]["plotted"]
+
+
+def test_roster_week_agrees_with_the_day_view(org):
+    c = org["conn"]
+    st.save_whereabouts_week(c, org["plain"], MONDAY, {"2026-09-22": ("field", "x")})
+    wk = st.whereabouts_roster_week(c, MONDAY, _u(org["wfh"]))
+    for i, day in enumerate(st.whereabouts_week_days(MONDAY)):
+        d = st.work_arrangement_day(c, day, _u(org["wfh"]))
+        for sec in wk["sections"]:
+            for p in sec["people"]:
+                in_day = {g for g, people in d["groups"].items()
+                          for q in people if q["name"] == p["name"]}
+                assert in_day == {p["cells"][i]["state"]}
+
+
+def test_roster_week_is_limited_to_the_viewers_level(org):
+    c = org["conn"]
+    other = c.execute("INSERT INTO org_unit(name, short_name, level, path) "
+                      "VALUES ('Other','OTH','section','TEST/OTHER')").lastrowid
+    rp = c.execute("INSERT INTO resource_person(name, is_internal, org_unit_id) "
+                   "VALUES ('WB Outsider',1,?)", (other,)).lastrowid
+    outsider = st.create_admin_user(c, "wb-outsider@test.local", "x", "y", "viewer", rp_id=rp)
+    c.commit()
+    mine = st.whereabouts_roster_week(c, MONDAY, _u(org["plain"]))
+    names = {p["name"] for s in mine["sections"] for p in s["people"]}
+    assert names == {"WB Wfh", "WB Plain"}                       # not the outsider
+    theirs = st.whereabouts_roster_week(c, MONDAY, _u(outsider))
+    assert {p["name"] for s in theirs["sections"] for p in s["people"]} == {"WB Outsider"}
+    # an unlinked account gets NO roster, never the whole bureau
+    none = st.whereabouts_roster_week(c, MONDAY, _u(org["loner"]))
+    assert none["kind"] == "none" and none["people"] == 0 and none["sections"] == []
+
+
+def test_roster_week_holiday_and_undeclared(org, sent):
+    c = org["conn"]
+    sr.send_whereabouts_weekly(c, "https://x")
+    st.save_whereabouts_week(c, org["plain"], MONDAY, {"2026-09-21": ("office", "")})
+    st.set_holiday(c, "2026-09-24", "Work suspension", "suspension")
+    d = st.whereabouts_roster_week(c, MONDAY, _u(org["wfh"]))
+    assert d["days"][3]["holiday"]["name"] == "Work suspension"
+    _, plain = _cells(d, "WB Plain")
+    assert plain[3].get("holiday")
+    assert d["tracked"] and d["undeclared"] == 1                  # only the WFH person
+    assert d["totals"][0]["onsite"] == 2 and d["totals"][2]["wfh"] == 1
+
+
+def test_roster_week_spanning_two_periods(org):
+    # week of Sep 28-Oct 2 straddles the Sep 16-30 and Oct 1-15 periods
+    d = st.whereabouts_roster_week(org["conn"], date(2026, 9, 28), _u(org["wfh"]))
+    _, wfh = _cells(d, "WB Wfh")
+    assert len(wfh) == 5 and d["people"] == 2
+
+
+def test_roster_page_renders_for_a_signed_in_user(app_mod, client, viewer):
+    assert client.get("/work-arrangement/roster", follow_redirects=False).status_code in (302, 303, 401)
+    with in_the_directory(app_mod, "viewer@test.local"):
+        r = viewer.get("/work-arrangement/roster")
+        assert r.status_code == 200 and "Who's in" in r.text and "previous week" in r.text
+    r = viewer.get("/work-arrangement/roster?week=garbage")
+    assert r.status_code == 200
+    assert "Day</a>" in viewer.get("/work-arrangement/day").text
+
+
+def test_roster_week_matrix_pivots_to_first_names_by_status(org):
+    c = org["conn"]
+    st.save_whereabouts_week(c, org["plain"], MONDAY, {
+        "2026-09-21": ("field", "Brgy. Poblacion"), "2026-09-22": ("leave", "")})
+    m = {r["key"]: r["cells"] for r in
+         st.whereabouts_roster_week(c, MONDAY, _u(org["wfh"]))["matrix"]}
+    assert m["field"][0][0]["name"] == "WB P."     # both fixtures are "WB ..." -> disambiguated
+    assert m["field"][0][0]["note"] == "Brgy. Poblacion"
+    assert [n["full"] for n in m["leave"][1]] == ["WB Plain"]
+    assert [n["full"] for n in m["wfh"][2]] == ["WB Wfh"]
+    assert {n["full"] for n in m["onsite"][0]} == {"WB Wfh"}
+
+
+def test_matrix_uses_first_names_and_disambiguates_duplicates():
+    people = {1: {"name": "Maria Santos", "cells": [{"state": "onsite"}]},
+              2: {"name": "Maria Reyes", "cells": [{"state": "onsite"}]},
+              3: {"name": "Juan Dela Cruz", "cells": [{"state": "field", "note": "x"}]}}
+    m = {r["key"]: r["cells"] for r in st._whereabouts_matrix(people, 1)}
+    assert sorted(n["name"] for n in m["onsite"][0]) == ["Maria R.", "Maria S."]
+    assert m["field"][0][0]["name"] == "Juan"
+    assert "leave" not in m                      # empty rows are dropped
