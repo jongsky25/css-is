@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.34"
+APP_VERSION = "3.35"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.35",
+        "date": "October 1, 2026",
+        "summary": "Reports no longer get stuck showing fewer responses than "
+                   "Monitor does.",
+        "changes": [
+            "An activity's report could keep showing an old, smaller response "
+            "count (for example 12 while Monitor showed 44) for hours. Reports "
+            "now catch up to new responses within about a minute and a half.",
+        ],
+    },
     {
         "version": "3.34",
         "date": "October 1, 2026",
