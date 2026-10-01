@@ -182,7 +182,7 @@ PARAMS = {
     "whereabouts_weekday": (
         "Weekly whereabouts email: weekday", 0, 0, 4),
     "whereabouts_rollup_weekday": (
-        "Weekly whereabouts chief roll-up: weekday", 2, 0, 4),
+        "Weekly whereabouts chief roll-up: weekday", 1, 0, 4),
 }
 
 
@@ -448,17 +448,18 @@ def nudge_whereabouts(conn, base, dry_run=False):
 
 
 def send_whereabouts_rollup(conn, base, dry_run=False):
-    """Mid-week (Wednesday by default), tell each chief who among the staff
-    they approve for is still undeclared — after the Tuesday nudge has had a
-    day to work. Skips a chief with nobody missing; once per chief per week."""
+    """Tuesday by default (alongside the staff nudge), tell each chief who among
+    the staff they approve for is still undeclared. Skips a chief with nobody
+    missing; once per chief per week; and never counts someone whose Monday
+    email only went out today (a catch-up send)."""
     win = _whereabouts_window(conn, "whereabouts_rollup_weekday")
     if not win:
         return 0
-    _today, monday = win
+    today, monday = win
     label = st.whereabouts_week_label(monday)
     link = f"{base}/work-arrangement/day"
     sent = 0
-    for chief_id, e in st.whereabouts_rollups(conn, monday).items():
+    for chief_id, e in st.whereabouts_rollups(conn, monday, before=today).items():
         chief = st.get_admin_user_by_id(conn, chief_id)
         if not chief or not chief.get("username"):
             continue

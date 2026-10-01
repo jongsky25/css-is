@@ -28,7 +28,7 @@ shows it.
   `work_arrangement_day` (only people actually emailed, only once the week was
   sent); chiefs/schedule viewers see a "not reported" pill + "Haven't reported"
   tile. Jobs `whereabouts_nudge` (day after the email, once per person, never
-  the same day it went out) and `whereabouts_rollup` (Wednesday by default,
+  the same day it went out) and `whereabouts_rollup` (Tuesday by default,
   param `whereabouts_rollup_weekday`; once per chief per week; each chief's
   approvees via `get_approvers_for`). Field/Leave stay separate from "No AWA".
 

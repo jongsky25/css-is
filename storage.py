@@ -8952,17 +8952,18 @@ def mark_whereabouts_nudged(conn, user_id, monday):
     conn.commit()
 
 
-def whereabouts_rollups(conn, monday):
+def whereabouts_rollups(conn, monday, before=None):
     """{chief_account_id: {"missing": [names], "total": n}} — for each approver,
     who among the staff they approve for were emailed this week and still
     haven't reported. Chiefs already sent this week's roll-up are left out, as
-    are chiefs with nobody missing."""
+    are chiefs with nobody missing. `before` (a date) leaves out anyone emailed
+    on or after it — a same-day catch-up send hasn't given them time to answer."""
     sent = {r[0] for r in conn.execute(
         "SELECT approver_id FROM whereabouts_rollup WHERE week_start=? AND sent_at IS NOT NULL",
         (monday.isoformat(),))}
     emailed = conn.execute(
         """SELECT a.id, COALESCE(rp.name, a.username),
-                  (w.submitted_at IS NOT NULL)
+                  (w.submitted_at IS NOT NULL), w.emailed_at
            FROM whereabouts_week w
            JOIN admin_user a ON a.id = w.user_id
            LEFT JOIN resource_person rp ON rp.id = a.rp_id
@@ -8970,7 +8971,9 @@ def whereabouts_rollups(conn, monday):
              AND (rp.id IS NULL OR rp.archived_at IS NULL)
            ORDER BY rp.name, a.username""", (monday.isoformat(),)).fetchall()
     out = {}
-    for uid, name, done in emailed:
+    for uid, name, done, emailed_at in emailed:
+        if before and (emailed_at or "")[:10] >= before.isoformat():
+            continue
         for chief in get_approvers_for(conn, uid):
             if chief in sent:
                 continue

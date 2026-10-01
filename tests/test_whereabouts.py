@@ -281,7 +281,7 @@ def test_rollup_tells_the_chief_who_is_undeclared(chiefed, sent, monkeypatch):
     sr.send_whereabouts_weekly(c, "https://x")
     st.save_whereabouts_week(c, chiefed["wfh"], MONDAY, {WED: ("awa", "")})
     sent.clear()
-    _today(monkeypatch, date(2026, 9, 23))                      # Wednesday
+    _today(monkeypatch, date(2026, 9, 22))                      # Tuesday
     assert sr.send_whereabouts_rollup(c, "https://x") == 1
     mail = sent[0]
     assert mail["to"] == "wb-chief@test.local"
@@ -296,8 +296,14 @@ def test_rollup_silent_when_everyone_reported(chiefed, sent, monkeypatch):
     sr.send_whereabouts_weekly(c, "https://x")
     for k in ("wfh", "plain"):
         st.save_whereabouts_week(c, chiefed[k], MONDAY, {WED: ("office", "")})
-    _today(monkeypatch, date(2026, 9, 23))
+    _today(monkeypatch, date(2026, 9, 22))
     assert sr.send_whereabouts_rollup(c, "https://x") == 0
+
+
+def test_rollup_skips_a_same_day_catch_up_send(chiefed, sent, monkeypatch):
+    _today(monkeypatch, date(2026, 9, 22))                      # email goes out Tuesday
+    sr.send_whereabouts_weekly(chiefed["conn"], "https://x")
+    assert sr.send_whereabouts_rollup(chiefed["conn"], "https://x") == 0
 
 
 def test_undeclared_is_marked_only_once_people_were_asked(org, sent):
