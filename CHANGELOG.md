@@ -1,5 +1,14 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-05 (v3.39 — fix 500 on /css and dashboards)
+
+- **`storage.concat_atoms`** — a delta whose category dtype disagreed with the
+  cached frame raised `TypeError: dtype of categories must be the same`, which
+  500'd every atoms-backed page. It now falls back to a plain concat +
+  re-categorize (same result as a full rebuild).
+
+Tests: `tests/test_atoms_cache.py`.
+
 ## 2026-10-01 (v3.38 — weekly roster: Who's in, Week view)
 
 - **`storage.whereabouts_roster_week(conn, monday, user)`** — people × Mon-Fri.
