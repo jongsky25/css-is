@@ -8764,8 +8764,10 @@ def work_arrangement_day(conn, day, user=None):
                 out["groups"][state].append(row)
                 continue
             state = _wa_day_state(r, day)
-            out["groups"][state].append({**r, "day_state": state, "reported": False,
-                                         "undeclared": r["user_id"] in asked})
+            # An "awa" report is still a report — it just follows the filing.
+            out["groups"][state].append({**r, "day_state": state,
+                                         "reported": rep is not None,
+                                         "undeclared": r["user_id"] in asked and rep is None})
     out["counts"] = {k: len(v) for k, v in out["groups"].items()}
     out["undeclared"] = sum(1 for g in out["groups"].values()
                             for p in g if p.get("undeclared"))
