@@ -1,5 +1,13 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-05 (v3.40 — AWA report no longer "not reported")
+
+- **`storage.work_arrangement_day`** — a day reported as "awa" fell through to the
+  filing-derived path and was still tagged `undeclared`. `undeclared` is now
+  `asked and no report`, and `reported` is true for any report.
+
+Tests: `tests/test_whereabouts.py`.
+
 ## 2026-10-05 (v3.39 — fix 500 on /css and dashboards)
 
 - **`storage.concat_atoms`** — a delta whose category dtype disagreed with the

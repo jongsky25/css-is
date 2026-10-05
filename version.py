@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.39"
+APP_VERSION = "3.40"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.40",
+        "date": "October 5, 2026",
+        "summary": "Fixed Who's in still saying \"not reported\" after you chose AWA.",
+        "changes": [
+            "If you answered AWA (work from home or day off) for a day, Who's in "
+            "kept showing you as \"not reported\" for it. It now counts as reported.",
+        ],
+    },
     {
         "version": "3.39",
         "date": "October 5, 2026",
