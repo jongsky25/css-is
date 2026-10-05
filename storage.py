@@ -5607,13 +5607,27 @@ def concat_atoms(base, add):
         return base
     from pandas.api.types import union_categoricals
     cols = {}
-    for c in base.columns:
-        b, a = base[c], add[c]
-        if isinstance(b.dtype, pd.CategoricalDtype):
-            av = a.array if isinstance(a.dtype, pd.CategoricalDtype) else a.astype(b.dtype).array
-            cols[c] = union_categoricals([b.array, av])
-        else:
-            cols[c] = pd.concat([b, a], ignore_index=True).array
+    try:
+        for c in base.columns:
+            b, a = base[c], add[c]
+            if isinstance(b.dtype, pd.CategoricalDtype):
+                av = a.array if isinstance(a.dtype, pd.CategoricalDtype) else a.astype(b.dtype).array
+                cols[c] = union_categoricals([b.array, av])
+            else:
+                cols[c] = pd.concat([b, a], ignore_index=True).array
+    except (TypeError, ValueError):
+        # The delta's category dtype disagrees with the base (e.g. an int-coded
+        # column arriving as strings/floats, or an all-null delta column typed
+        # object). union_categoricals refuses that, and the error used to take
+        # down every page that reads the atoms cache. Fall back to a plain
+        # concat of the raw values and re-categorize — slower, but it yields
+        # what a from-scratch build would.
+        return _categorize_atoms(pd.concat(
+            [base.astype({c: object for c in base.columns
+                          if isinstance(base[c].dtype, pd.CategoricalDtype)}),
+             add.astype({c: object for c in add.columns
+                         if isinstance(add[c].dtype, pd.CategoricalDtype)})],
+            ignore_index=True))
     return pd.DataFrame(cols)
 
 
