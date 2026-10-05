@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.38"
+APP_VERSION = "3.39"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.39",
+        "date": "October 5, 2026",
+        "summary": "Fixed the error that stopped the home page and dashboards from opening.",
+        "changes": [
+            "The home page, dashboards and reports showed \"Internal Server Error\" "
+            "after new responses came in. They open normally again.",
+        ],
+    },
     {
         "version": "3.38",
         "date": "October 1, 2026",

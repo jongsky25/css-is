@@ -456,3 +456,17 @@ def test_view_serve_stale_is_bounded_and_prewarm_rebuilds(atoms_db):
     finally:
         A._views_warming = False
         A._view_memo.clear(); A._view_prev.clear()
+
+
+def test_concat_atoms_tolerates_mismatched_category_dtype():
+    """A delta whose category dtype disagrees with the base (int vs str) used to
+    raise 'dtype of categories must be the same' and 500 every atoms-backed page."""
+    import pandas as pd
+    import storage as st
+    base = st._categorize_atoms(pd.DataFrame(
+        {"served_by_rp_id": [1, 2], "topic": ["a", "b"], "v": [1.0, 2.0]}))
+    add = pd.DataFrame({"served_by_rp_id": pd.Categorical(["x"]),
+                        "topic": ["c"], "v": [3.0]})
+    out = st.concat_atoms(base, add)
+    assert len(out) == 3
+    assert isinstance(out["topic"].dtype, pd.CategoricalDtype)
