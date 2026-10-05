@@ -138,6 +138,17 @@ def test_awa_choice_keeps_the_derived_wfh_state(org):
     assert "WB Wfh" in names_of(wed, "wfh")
 
 
+def test_an_awa_report_is_not_marked_not_reported(org):
+    c = org["conn"]
+    c.execute("INSERT INTO whereabouts_week(user_id, week_start, emailed_at) VALUES (?,?,?)",
+              (org["wfh"], MONDAY.isoformat(), "2026-09-21T08:00:00"))
+    c.commit()
+    st.save_whereabouts_week(c, org["wfh"], MONDAY, {WED: ("awa", "")})
+    wed = next(p for p in st.work_arrangement_day(c, date(2026, 9, 23))["groups"]["wfh"]
+               if p["name"] == "WB Wfh")
+    assert wed["reported"] and not wed["undeclared"]
+
+
 # ---------------------------------------------------------------- token ---
 
 def test_token_round_trip_expiry_and_purpose():
