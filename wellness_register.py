@@ -83,9 +83,25 @@ def _range_label(start, end):
     return f"{start.month:02d}/{start.day:02d}-{end.month:02d}/{end.day:02d}"
 
 
+def time_range(start_time, hours):
+    """'16:00' + 1 -> '16:00 - 17:00'. Falls back to the bare start time when it
+    isn't a valid 'HH:MM', and wraps past midnight rather than printing '24:00+'."""
+    s = (start_time or "").strip()
+    m = re.fullmatch(r"([01]?\d|2[0-3]):([0-5]\d)", s)
+    if not m:
+        return s
+    try:
+        hrs = float(hours or 1)
+    except (TypeError, ValueError):
+        hrs = 1
+    start = int(m.group(1)) * 60 + int(m.group(2))
+    end = (start + int(round(hrs * 60))) % (24 * 60)
+    return f"{start // 60:02d}:{start % 60:02d} - {end // 60:02d}:{end % 60:02d}"
+
+
 def _break_html(e):
     """One availed break, as the form's day cell reads it."""
-    t = escape((e.get("start_time") or "").strip())
+    t = escape(time_range(e.get("start_time"), e.get("hours")))
     act = escape(e.get("activity_label") or "")
     hrs = e.get("hours") or 1
     done = e.get("status") == "completed"
@@ -256,7 +272,7 @@ def render_month_pdf(data) -> bytes:
         Spacer(1, 6),
         table,
         Spacer(1, 6),
-        Paragraph("Each weekday cell shows the break availed that day (start time · "
+        Paragraph("Each weekday cell shows the break availed that day (time range · "
                   "activity · hours; ✓ = completed) and, under it, the signature of "
                   "the chief who approved it. Approvals were recorded in the "
                   "CSS Information System; “Digitally approved and signed” stands in "

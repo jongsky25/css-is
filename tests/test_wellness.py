@@ -853,6 +853,19 @@ def test_day_cell_signs_on_the_day_of_the_break(wellness_org):
     assert "W-Test Chief" in text and "Digitally approved and signed" in text
 
 
+def test_register_prints_the_time_as_a_range(wellness_org):
+    """The register shows 16:00 - 17:00, not just the start time."""
+    import wellness_register as wreg
+    assert wreg.time_range("16:00", 1) == "16:00 - 17:00"
+    assert wreg.time_range("09:30", 2) == "09:30 - 11:30"
+    assert wreg.time_range("23:00", 2) == "23:00 - 01:00"
+    assert wreg.time_range("", 1) == ""
+    assert wreg.time_range("garbage", 1) == "garbage"
+    html = wreg._break_html({"start_time": "16:00", "hours": 1,
+                             "activity_label": "Physical exercise"})
+    assert "<b>16:00 - 17:00</b>" in html
+
+
 def test_register_pdf_embeds_the_signature_on_the_day(wellness_org):
     """End to end: a signed approval puts an image in the PDF; an unsigned one
     still prints the name over the stamp, and the download never fails."""
