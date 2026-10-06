@@ -1,5 +1,13 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-06 (v3.41 — wellness register prints the time range)
+
+- **`wellness_register.time_range`** — the monthly register PDF printed only a
+  break's start time. Each day cell now reads `16:00 - 17:00` (start + hours
+  availed, wrapping past midnight); an unparseable start falls back to as-is.
+
+Tests: `tests/test_wellness.py`.
+
 ## 2026-10-05 (v3.40 — AWA report no longer "not reported")
 
 - **`storage.work_arrangement_day`** — a day reported as "awa" fell through to the
