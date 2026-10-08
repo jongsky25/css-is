@@ -1,5 +1,13 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-08 (v3.48 — bust the app.css cache)
+
+- **`templates/dash_layout.html`, `templates/public_layout.html`** — `app.css?v=`
+  bumped `20260924a` → `20261008a`. v3.47's dropdown fix lived only in `app.css`,
+  and the unchanged query string let browsers keep serving the cached old file, so
+  the menu still ran off the bottom on a laptop. **Bump this string whenever
+  `app.css` changes.**
+
 ## 2026-10-08 (v3.47 — dropdown menu fits short screens)
 
 - **`static/css/app.css`** — `.navgroup .menu` (desktop dropdown) gets
