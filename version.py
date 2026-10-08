@@ -24,6 +24,15 @@ CHANGELOG = [
     {
         "version": "3.49",
         "date": "October 8, 2026",
+        "summary": "You can now add a nickname to your profile, and the home page greets you by it.",
+        "changes": [
+            "My profile has a new Nickname box. Whatever you put there is what the home page calls you: \"Hi, <nickname>\".",
+            "If you leave it blank, the home page keeps greeting you by your first name.",
+        ],
+    },
+    {
+        "version": "3.49",
+        "date": "October 8, 2026",
         "summary": "Resource persons now always need a topic, and you can add, edit or remove them on the Manage activity page.",
         "changes": [
             "When creating an activity, a resource person can no longer be saved without a topic, so none get left out by mistake.",
