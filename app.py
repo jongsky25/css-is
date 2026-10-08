@@ -5824,6 +5824,17 @@ async def create_survey(request: Request):
                 if rid and (top or "").strip()]
 
     errors = []
+    # A row with only a person or only a topic used to be dropped silently, so the
+    # activity was created with no resource persons. Make the user finish the row.
+    for rid, top in zip(rp_ids, topics):
+        has_topic = bool((top or "").strip())
+        if rid and not has_topic:
+            errors.append("Each resource person needs a topic — add one, or clear "
+                          "the resource person.")
+            break
+        if has_topic and not rid:
+            errors.append("Pick a resource person for each topic, or clear the topic.")
+            break
     if not activity_name:
         errors.append("Activity name is required.")
     if not event_date:
