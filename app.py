@@ -2205,14 +2205,30 @@ def _forbid(request, capability):
     return None
 
 
-def _can_manage_event(user, ev):
-    """Who may manage an activity's curated links: its creator, or any admin.
-    Events created before `created_by` existed (NULL) are admin-only — the safe
-    default."""
+def _can_manage_event(user, ev, conn=None):
+    """Who may manage an activity: an admin, its creator, or — when `conn` is
+    given — a section manager whose TEAM runs it.
+
+    The Monitor list already scopes by the organising unit (see
+    `_event_feed_scope`), so a section manager saw an activity an administrator
+    filed for their section yet was bounced off its Manage / roster pages, which
+    only knew the creator. The same rule now applies to both: a user with the
+    manage_event capability who has a directory team (not "none") manages the
+    activities inside it (st.event_in_team_scope). `created_by` stays a way in
+    for the creator; events with no creator stay admin-or-team only. Without a
+    `conn` only the creator/admin rule can be answered, the safe default."""
     if not user or not ev:
         return False
-    return user["role"] == "admin" or (
-        bool(ev.get("created_by")) and ev["created_by"] == user["username"])
+    if user["role"] == "admin" or (
+            bool(ev.get("created_by")) and ev["created_by"] == user["username"]):
+        return True
+    if conn is None or not ev.get("id") or not auth.can(user["role"], "manage_event"):
+        return False
+    scope_path, kind = st.team_scope_for_user(conn, user)
+    if kind == "none":
+        return False
+    paths = st.event_scope_paths(conn, ev["id"])
+    return st.event_in_team_scope(paths, scope_path)
 
 
 def _event_feed_scope(conn, user):
@@ -7773,7 +7789,7 @@ def _event_view(request, conn, ev, attendee=None, errors=None, posted=None,
         "resources_now": resources_now, "resources_after": resources_after,
         "completed": completed,
         "welcome_message": welcome_message, "ending_message": ending_message,
-        "can_manage": _can_manage_event(user, ev),
+        "can_manage": _can_manage_event(user, ev, conn),
         "confirm": confirm,
     })
 
@@ -8154,7 +8170,7 @@ def activity_manage(request: Request, event_token: str, err: str = "", edit: int
                                               status_code=404)
         # Only the creator or an admin manages it; everyone else is sent to the
         # public page (which they may view/register on like any participant).
-        if not _can_manage_event(request.state.user, ev):
+        if not _can_manage_event(request.state.user, ev, conn):
             return RedirectResponse(f"/e/{event_token}", status_code=303)
         # Outside activities get a focused, registration-free manage page.
         if ev.get("event_kind") == "outside":
@@ -8183,7 +8199,7 @@ async def activity_set_slug(request: Request, event_token: str):
         ev = st.get_event(conn, event_token)
         if not ev:
             return RedirectResponse("/", status_code=303)
-        if not _can_manage_event(request.state.user, ev):
+        if not _can_manage_event(request.state.user, ev, conn):
             return RedirectResponse(f"/e/{event_token}", status_code=303)
         ok, err = st.set_event_slug(conn, ev["id"], posted.get("slug", ""))
         base = f"/activities/{ev['event_token']}/manage"
@@ -8208,7 +8224,7 @@ async def activity_link_add(request: Request, event_token: str):
         ev = st.get_event(conn, event_token)
         if not ev:
             return RedirectResponse("/", status_code=303)
-        if not _can_manage_event(request.state.user, ev):
+        if not _can_manage_event(request.state.user, ev, conn):
             return RedirectResponse(f"/e/{event_token}", status_code=303)
         label = posted.get("label", "").strip()
         url = _safe_url(posted.get("url", ""))
@@ -8238,7 +8254,7 @@ async def activity_link_edit(request: Request, event_token: str, link_id: int):
         link = st.get_event_link(conn, link_id)
         if not ev or not link or link["event_id"] != ev["id"]:
             return RedirectResponse("/", status_code=303)
-        if not _can_manage_event(request.state.user, ev):
+        if not _can_manage_event(request.state.user, ev, conn):
             return RedirectResponse(f"/e/{event_token}", status_code=303)
         if action == "delete":
             st.delete_event_link(conn, link_id)
@@ -8284,7 +8300,7 @@ async def activity_messages_save(request: Request, event_token: str):
         ev = st.get_event(conn, event_token)
         if not ev:
             return RedirectResponse("/", status_code=303)
-        if not _can_manage_event(request.state.user, ev):
+        if not _can_manage_event(request.state.user, ev, conn):
             return RedirectResponse(f"/e/{event_token}", status_code=303)
         welcome = posted.get("welcome_message", "")[:_MSG_MAX]
         ending = posted.get("ending_message", "")[:_MSG_MAX]
@@ -8366,7 +8382,7 @@ async def activity_messages_ai_draft(request: Request, event_token: str):
         ev = st.get_event(conn, event_token)
         if not ev:
             return JSONResponse({"ok": False}, status_code=404)
-        if not _can_manage_event(user, ev):
+        if not _can_manage_event(user, ev, conn):
             return JSONResponse({"ok": False}, status_code=403)
         slot = posted.get("slot", "")
         tone = posted.get("tone", "")
@@ -8402,7 +8418,7 @@ async def activity_certificate_save(request: Request, event_token: str):
         ev = st.get_event(conn, event_token)
         if not ev:
             return RedirectResponse("/", status_code=303)
-        if not _can_manage_event(request.state.user, ev):
+        if not _can_manage_event(request.state.user, ev, conn):
             return RedirectResponse(f"/e/{event_token}", status_code=303)
         enabled = posted.get("certificate_enabled") in ("on", "1", "true", "yes")
         sig_raw = posted.get("signatory_rp_id", "").strip()
@@ -8438,7 +8454,7 @@ async def activity_window_save(request: Request, event_token: str):
         ev = st.get_event(conn, event_token)
         if not ev:
             return RedirectResponse("/", status_code=303)
-        if not _can_manage_event(request.state.user, ev):
+        if not _can_manage_event(request.state.user, ev, conn):
             return RedirectResponse(f"/e/{event_token}", status_code=303)
         # Date-only picker by default: a bare date opens at 00:00 / closes at
         # 23:59 so the chosen day is fully inside the window. An explicit
@@ -8473,7 +8489,7 @@ async def activity_respondents_save(request: Request, event_token: str):
         ev = st.get_event(conn, event_token)
         if not ev:
             return RedirectResponse("/", status_code=303)
-        if not _can_manage_event(request.state.user, ev):
+        if not _can_manage_event(request.state.user, ev, conn):
             return RedirectResponse(f"/e/{event_token}", status_code=303)
         raw = (posted.get("respondent_target", "") or "").strip()
         base = f"/activities/{event_token}/manage"
@@ -8518,7 +8534,7 @@ async def activity_dates_save(request: Request, event_token: str):
         ev = st.get_event(conn, event_token)
         if not ev:
             return RedirectResponse("/", status_code=303)
-        if not _can_manage_event(request.state.user, ev):
+        if not _can_manage_event(request.state.user, ev, conn):
             return RedirectResponse(f"/e/{event_token}", status_code=303)
         start = posted.get("event_date", "").strip()
         if not _valid_date(start) or start > _event_date_bounds()[1]:
@@ -8560,7 +8576,7 @@ async def raffle_settings(request: Request, event_token: str):
         ev = st.get_event(conn, event_token)
         if not ev:
             return RedirectResponse("/", status_code=303)
-        if not _can_manage_event(request.state.user, ev):
+        if not _can_manage_event(request.state.user, ev, conn):
             return RedirectResponse(f"/e/{event_token}", status_code=303)
         enabled = posted.get("raffle_enabled") in ("on", "1", "true", "yes")
         prize = posted.get("raffle_prize", "")[:200]
@@ -8583,7 +8599,7 @@ def raffle_screen(request: Request, event_token: str):
         ev = st.get_event(conn, event_token)
         if not ev:
             return RedirectResponse("/", status_code=303)
-        if not _can_manage_event(request.state.user, ev):
+        if not _can_manage_event(request.state.user, ev, conn):
             return RedirectResponse(f"/e/{event_token}", status_code=303)
         pool = st.raffle_pool(conn, ev["id"])
         drawn = st.raffle_drawn_ids(conn, ev["id"])
@@ -8616,7 +8632,7 @@ async def raffle_draw(request: Request, event_token: str):
         ev = st.get_event(conn, event_token)
         if not ev:
             return JSONResponse({"ok": False, "error": "notfound"}, status_code=404)
-        if not _can_manage_event(request.state.user, ev):
+        if not _can_manage_event(request.state.user, ev, conn):
             return JSONResponse({"ok": False, "error": "forbidden"}, status_code=403)
         pool = st.raffle_pool(conn, ev["id"])
         allow_repeat = posted.get("allow_repeat") in ("on", "1", "true", "yes")
@@ -8664,7 +8680,7 @@ async def raffle_reset(request: Request, event_token: str):
         ev = st.get_event(conn, event_token)
         if not ev:
             return RedirectResponse("/", status_code=303)
-        if not _can_manage_event(request.state.user, ev):
+        if not _can_manage_event(request.state.user, ev, conn):
             return RedirectResponse(f"/e/{event_token}", status_code=303)
         n = st.raffle_reset(conn, ev["id"])
         _audit(request, conn, "raffle_reset", target_type="event", target_id=ev["id"],
@@ -8684,7 +8700,7 @@ def _get_outside_event(conn, request, event_token):
     ev = st.get_event(conn, event_token)
     if not ev or ev.get("event_kind") != "outside":
         return None, RedirectResponse("/", status_code=303)
-    if not _can_manage_event(request.state.user, ev):
+    if not _can_manage_event(request.state.user, ev, conn):
         return None, RedirectResponse("/", status_code=303)
     return ev, None
 
@@ -8696,7 +8712,7 @@ def _get_manage_event(conn, request, event_token):
     ev = st.get_event(conn, event_token)
     if not ev:
         return None, RedirectResponse("/", status_code=303)
-    if not _can_manage_event(request.state.user, ev):
+    if not _can_manage_event(request.state.user, ev, conn):
         return None, RedirectResponse(f"/e/{event_token}", status_code=303)
     return ev, None
 
@@ -9089,7 +9105,7 @@ def monitor_event(request: Request, event_token: str, flash: str = ""):
             return templates.TemplateResponse(request, "monitor_event.html",
                                               {"ev": None, "show_scope": False},
                                               status_code=404)
-        if not _can_manage_event(request.state.user, ev):
+        if not _can_manage_event(request.state.user, ev, conn):
             return RedirectResponse("/monitor", status_code=303)
         # Outside activities have no registration roster — show the anonymous
         # response tracker (counts, timing, demographic mix; no identities) instead.
@@ -9143,7 +9159,7 @@ async def monitor_live_stream(request: Request, event_token: str):
     conn = get_conn()
     try:
         ev = st.get_event(conn, event_token)
-        if not ev or not _can_manage_event(request.state.user, ev):
+        if not ev or not _can_manage_event(request.state.user, ev, conn):
             return JSONResponse({"error": "forbidden"}, status_code=403)
         event_id = ev["id"]
         initial = st.event_registration_summary(conn, event_id)
@@ -9179,7 +9195,7 @@ def monitor_recovery_link(request: Request, event_token: str, attendee_id: int):
     conn = get_conn()
     try:
         ev = st.get_event(conn, event_token)
-        if not ev or not _can_manage_event(request.state.user, ev):
+        if not ev or not _can_manage_event(request.state.user, ev, conn):
             return JSONResponse({"error": "not_found"}, status_code=404)
         att = st.get_attendee(conn, attendee_id, event_id=ev["id"])
         if not att or att.get("purged_at"):
@@ -9199,7 +9215,7 @@ def monitor_resend_link(request: Request, event_token: str, attendee_id: int):
     conn = get_conn()
     try:
         ev = st.get_event(conn, event_token)
-        if not ev or not _can_manage_event(request.state.user, ev):
+        if not ev or not _can_manage_event(request.state.user, ev, conn):
             return JSONResponse({"sent": False, "detail": "Not found."}, status_code=404)
         att = st.get_attendee(conn, attendee_id, event_id=ev["id"])
         if not att or att.get("purged_at"):
@@ -9287,7 +9303,7 @@ async def monitor_archive_event(request: Request, event_token: str):
     conn = get_conn()
     try:
         ev = st.get_event(conn, event_token)
-        if not ev or not _can_manage_event(request.state.user, ev):
+        if not ev or not _can_manage_event(request.state.user, ev, conn):
             return RedirectResponse("/monitor", status_code=303)
         st.set_event_archived(conn, ev["id"], archived=not restore)
         _audit(request, conn, "event_archive", target_type="event", target_id=ev["id"],
@@ -9308,7 +9324,7 @@ def monitor_remind_unfinished(request: Request, event_token: str):
     conn = get_conn()
     try:
         ev = st.get_event(conn, event_token)
-        if not ev or not _can_manage_event(request.state.user, ev):
+        if not ev or not _can_manage_event(request.state.user, ev, conn):
             return JSONResponse({"queued": 0, "detail": "Not found."}, status_code=404)
         if st.event_is_closed(conn, ev["id"]):
             return JSONResponse({"queued": 0, "detail": "This activity is closed — "
@@ -9373,7 +9389,7 @@ async def monitor_delete_attendee(request: Request, event_token: str, attendee_i
         ev = st.get_event(conn, event_token)
         if not ev:
             return RedirectResponse("/monitor", status_code=303)
-        if not _can_manage_event(request.state.user, ev):
+        if not _can_manage_event(request.state.user, ev, conn):
             return RedirectResponse("/monitor", status_code=303)
         att = st.get_attendee(conn, attendee_id, event_id=ev["id"])
         who = (att.get("name") or att.get("email") or f"#{attendee_id}") if att else f"#{attendee_id}"
@@ -9445,7 +9461,7 @@ def monitor_attendee_response(request: Request, event_token: str, attendee_id: i
         ev = st.get_event(conn, event_token)
         if not ev:
             return RedirectResponse("/monitor", status_code=303)
-        if not _can_manage_event(request.state.user, ev):
+        if not _can_manage_event(request.state.user, ev, conn):
             return RedirectResponse("/monitor", status_code=303)
         att = st.get_attendee(conn, attendee_id, event_id=ev["id"])
         if not att:
@@ -9476,7 +9492,7 @@ def monitor_event_export(request: Request, event_token: str):
         ev = st.get_event(conn, event_token)
         if not ev:
             return RedirectResponse("/monitor", status_code=303)
-        if not _can_manage_event(request.state.user, ev):
+        if not _can_manage_event(request.state.user, ev, conn):
             return RedirectResponse("/monitor", status_code=303)
         people = st.event_attendees_status(conn, ev["id"])
         summ = st.event_registration_summary(conn, ev["id"])

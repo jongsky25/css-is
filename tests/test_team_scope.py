@@ -300,3 +300,26 @@ def test_activity_instances_expose_the_creator(app_mod):
         conn.execute("DELETE FROM form_instance WHERE qr_token = 'ts-creator-tok'")
         conn.commit()
         conn.close()
+
+
+def test_section_manager_manages_an_activity_an_admin_filed_for_their_section(org, app_mod):
+    """An administrator creates an activity FOR a section. The Monitor already
+    showed it to that section's manager (event_in_team_scope); the manage / roster
+    / export pages must open for them too, not just for the creator. Another
+    section's manager, and a viewer on the same team, stay locked out."""
+    conn = org["conn"]
+    s1_unit = conn.execute("SELECT id FROM org_unit WHERE path='TSCOPE/D1/S1'").fetchone()[0]
+    ev = st.create_event(conn, "TS scoped activity", "2026-11-24", venue="Manila",
+                         lead_org_id=s1_unit, created_by="ts-adm@test.local")
+    full = st.get_event(conn, ev["event_token"])
+    can = lambda key: app_mod._can_manage_event(_u(conn, org[key]), full, conn)
+
+    assert can("admin")
+    assert can("s1_chief")            # the section's own manager — the reported bug
+    assert not can("s2_chief")        # a different section's manager
+    assert not can("s1")              # same team, but a viewer lacks manage_event
+    assert not can("unlinked")
+    # Without a connection only creator/admin can be answered (safe default).
+    assert not app_mod._can_manage_event(_u(conn, org["s1_chief"]), full)
+    conn.execute("DELETE FROM event WHERE id=?", (ev["id"],))
+    conn.commit()

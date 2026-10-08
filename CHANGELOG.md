@@ -1,6 +1,6 @@
 # CHANGELOG — Cowork revisions (surgical)
 
-## 2026-10-08 (v3.43 — Monitor "Archive this activity" works again)
+## 2026-10-08 (v3.44 — Monitor "Archive this activity" works again)
 
 - **`templates/monitor_event.html`** — the copy/resend click handler was bound to
   every `.act-btn`, including the Archive and Remove submit buttons. It set
@@ -9,6 +9,20 @@
   to `.act-btn[data-act]` only.
 
 Tests: `tests/test_monitor.py`.
+
+## 2026-10-08 (v3.43 — section managers manage their section's activities)
+
+- **`app._can_manage_event(user, ev, conn)`** — only an admin or the activity's
+  `created_by` could manage it, while `/monitor` already listed it for the
+  organising section (team scope). A section manager therefore saw an
+  admin-filed activity but was bounced off Manage / roster / export / reminders.
+  With a `conn`, a user holding `manage_event` whose directory team is not
+  "none" now manages activities passing `st.event_in_team_scope` — the same rule
+  as the Monitor feed. Other sections and viewers/encoders stay locked out.
+- **`storage.event_scope_paths`** — single-event version of the lead/speaker
+  org paths that `list_events` already computes.
+
+Tests: `tests/test_team_scope.py`.
 
 ## 2026-10-08 (v3.42 — concluded activities stay reachable in Monitor)
 
