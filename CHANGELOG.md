@@ -1,5 +1,13 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-08 (v3.50 — nickname on My profile)
+
+- **`storage.py`** — new `admin_user.nickname` column (auto-migrated),
+  `set_user_nickname()`, and `nickname` on `get_user_profile()` / `_admin_row()`.
+- **`app.py`** — `/me` saves it; `_account_first_name()` returns the nickname
+  first, so the home greeting reads "Hi, <nickname>".
+- **`templates/me.html`** — Nickname field above Designation.
+
 ## 2026-10-08 (v3.49 — resource persons always need a topic; editable on the manage page)
 
 - **Create form** — a resource person can no longer be saved without a topic (nor a
@@ -13,14 +21,6 @@
   routes now work for any manageable activity, not just outside ones; outside activities
   can also swap the person (`storage.update_speaker_rp`).
 - **Tests** — `tests/test_event_speaker_manage.py`.
-
-## 2026-10-08 (v3.49 — nickname on My profile)
-
-- **`storage.py`** — new `admin_user.nickname` column (auto-migrated),
-  `set_user_nickname()`, and `nickname` on `get_user_profile()` / `_admin_row()`.
-- **`app.py`** — `/me` saves it; `_account_first_name()` returns the nickname
-  first, so the home greeting reads "Hi, <nickname>".
-- **`templates/me.html`** — Nickname field above Designation.
 
 ## 2026-10-08 (v3.48 — bust the app.css cache)
 
