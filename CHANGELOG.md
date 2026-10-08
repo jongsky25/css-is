@@ -1,5 +1,15 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-08 (v3.43 — Monitor "Archive this activity" works again)
+
+- **`templates/monitor_event.html`** — the copy/resend click handler was bound to
+  every `.act-btn`, including the Archive and Remove submit buttons. It set
+  `btn.disabled = true` inside the click, which cancels the form submission, so
+  the button greyed out and nothing was archived/removed. The handler is now bound
+  to `.act-btn[data-act]` only.
+
+Tests: `tests/test_monitor.py`.
+
 ## 2026-10-08 (v3.42 — concluded activities stay reachable in Monitor)
 
 - **`/monitor?view=concluded`** — `/monitor` listed only upcoming/ongoing

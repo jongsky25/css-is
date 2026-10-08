@@ -1115,3 +1115,14 @@ def test_archive_route_refused_for_non_owner(viewer, db_path):
     c = connect(db_path)
     ev = st.get_event(c, tok)
     assert not st.event_is_archived(c, ev["id"])
+
+
+def test_monitor_page_script_leaves_submit_buttons_alone(manager, db_path):
+    """The copy/resend script disables the button it handles; bound to the Archive
+    / Remove submit buttons it cancels their form submission, so it must only
+    target buttons carrying data-act."""
+    tok = _seed_event(db_path, "manager@test.local")
+    html = manager.get(f"/monitor/{tok}").text
+    assert "Archive this activity" in html
+    assert "querySelectorAll('.act-btn[data-act]')" in html
+    assert "querySelectorAll('.act-btn')" not in html
