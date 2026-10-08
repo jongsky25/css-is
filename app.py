@@ -2254,10 +2254,7 @@ def _event_feed_scope(conn, user):
     — exactly what it saw before. Blanking a management page is a lockout, not a
     safety measure.
     """
-    scope_path, kind = st.team_scope_for_user(conn, user)
-    if kind == "none":
-        return user["username"], None, kind
-    return None, (scope_path, kind), kind
+    return st.event_feed_scope(conn, user)
 
 
 def _safe_url(raw):
@@ -4842,14 +4839,18 @@ def home(request: Request):
         is_admin = request.state.user["role"] == "admin"
         # Admins manage the whole office, so the strip lists every recent activity
         # (any creator, incl. the historical unattributed rows) — each standalone one
-        # carries its Archive button. A section manager still sees only what they made.
+        # carries its Archive button. A section manager sees what they made PLUS what
+        # their team runs (an activity an admin filed for their section) — the same
+        # team rule as the Monitor (`_event_feed_scope`).
         if is_admin:
             my_activities = st.activities_by_creator(
                 conn, request.state.user["username"], limit=60, all_creators=True,
                 since_days=7)
         elif can_manage:
+            _, feed_scope, _ = _event_feed_scope(conn, request.state.user)
             my_activities = st.activities_by_creator(
-                conn, request.state.user["username"], since_days=7)
+                conn, request.state.user["username"], since_days=7,
+                team_scope=feed_scope)
         else:
             my_activities = []
         # 'Recently concluded' reuses the memoized events list (same source +
