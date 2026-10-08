@@ -446,6 +446,20 @@ UI = {
         "en": "I consent — continue to feedback",
         "fil": "Sumasang-ayon ako — magpatuloy sa feedback",
     },
+    "lt_more_details": {"en": "A few more details", "fil": "Ilang karagdagang detalye"},
+    "yes": {"en": "Yes", "fil": "Oo"},
+    "no": {"en": "No", "fil": "Hindi"},
+    # Appended to the consent notice only when the activity has its own registration
+    # questions.  DRAFT (Filipino)
+    "consent_extra_answers": {
+        "en": "We also collect your answers to this activity's additional registration "
+              "questions, used only to prepare for the activity; they are deleted "
+              "together with your personal details.",
+        "fil": "Kinokolekta rin namin ang inyong mga sagot sa karagdagang tanong sa "
+               "pagpaparehistro ng aktibidad na ito, na gagamitin lamang sa paghahanda "
+               "para sa aktibidad; buburahin ang mga ito kasama ng inyong personal na "
+               "impormasyon.",
+    },
     "lt_label_event": {"en": "Event review", "fil": "Pagtatasa ng kaganapan"},
     "lt_label_speaker": {"en": "Speaker review", "fil": "Pagtatasa ng tagapagsalita"},
     "lt_kind_program": {"en": "Programme / Agenda", "fil": "Programa / Agenda"},

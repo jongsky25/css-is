@@ -54,6 +54,27 @@
   .addform input, .addform select, .addform textarea { width:100%; padding:.45rem .55rem; border:1px solid var(--line-strong);
            border-radius:8px; background:var(--surface); }
   .addform textarea { min-height:2.4rem; resize:vertical; }
+  .qlist { list-style:none; margin:.2rem 0 .8rem; padding:0; }
+  .qlist > li { border-top:1px solid var(--line); padding:.6rem 0; }
+  .qlist > li:first-child { border-top:none; }
+  .qrow { display:flex; align-items:flex-start; gap:.6rem; flex-wrap:wrap; }
+  .qrow .qmain { flex:1 1 14rem; min-width:0; }
+  .qlabel { font-weight:600; font-size:.92rem; }
+  .qmeta { color:var(--grey); font-size:.78rem; margin-top:.1rem; overflow-wrap:anywhere; }
+  .qact { display:flex; align-items:center; gap:.3rem; flex-wrap:wrap; }
+  .qact form { margin:0; }
+  .qact button { font-size:.76rem; padding:.25rem .55rem; }
+  .qedit { margin-top:.4rem; }
+  .qedit summary { display:inline-block; cursor:pointer; font-size:.78rem; color:var(--accent); }
+  .qpresets { display:flex; flex-wrap:wrap; gap:.4rem; margin:0 0 .8rem; }
+  .qpresets form { margin:0; }
+  .qform { display:grid; gap:.6rem; margin-top:.5rem; }
+  .qform label { font-size:.78rem; font-weight:600; color:var(--soft); display:block; margin-bottom:.2rem; }
+  .qform input[type=text], .qform select, .qform textarea { width:100%; padding:.45rem .55rem;
+           border:1px solid var(--line-strong); border-radius:8px; background:var(--surface); }
+  .qform textarea { min-height:5rem; resize:vertical; }
+  .qadd { margin-top:.4rem; padding-top:.8rem; border-top:1px dashed var(--line); }
+  .qadd h3 { font-size:.92rem; margin:0; }
   .empty { color:var(--grey); font-size:.86rem; }
   .msgblock { margin:0 0 1.1rem; }
   .msglabel { display:block; font-size:.86rem; font-weight:700; color:var(--ink); margin:0 0 .4rem; }
@@ -137,6 +158,117 @@
       </form>
       {% endif %}
     </div>
+  </div>
+
+  <!-- registration questions -->
+  {% macro qfields(q, idp) %}
+    <div>
+      <label for="{{ idp }}_label">Question</label>
+      <input type="text" id="{{ idp }}_label" name="label" maxlength="200" required
+             value="{{ q.label if q else '' }}" placeholder="e.g. Food restrictions">
+    </div>
+    <div>
+      <label for="{{ idp }}_help">Help text <span class="opt">optional</span></label>
+      <input type="text" id="{{ idp }}_help" name="help_text" maxlength="300"
+             value="{{ q.help_text if q else '' }}">
+    </div>
+    <div>
+      <label for="{{ idp }}_kind">Type</label>
+      <select id="{{ idp }}_kind" name="kind"{% if q and q.n_answers %} disabled{% endif %}>
+        {% for k, lbl in q_kinds.items() %}
+        <option value="{{ k }}" {{ 'selected' if q and q.kind == k }}>{{ lbl }}</option>
+        {% endfor %}
+      </select>
+      {% if q and q.n_answers %}<p class="empty" style="margin:.25rem 0 0;">Type is locked because people have answered.</p>{% endif %}
+    </div>
+    <div class="q-options">
+      <label for="{{ idp }}_opts">Choices <span class="opt">one choice per line</span></label>
+      <textarea id="{{ idp }}_opts" name="options" maxlength="4000">{{ q.options|join('\n') if q else '' }}</textarea>
+    </div>
+    <label class="flag"><input type="checkbox" name="required" {{ 'checked' if q and q.required }}> Required</label>
+  {% endmacro %}
+  <div class="mcard" id="questions">
+    <h2>Registration questions</h2>
+    <p class="hint">Extra questions participants answer when they register, e.g. food restrictions or arrival. The standard questions (name, email, sex, affiliation) are always asked.</p>
+    {% if q_ok %}<div class="flash ok">Registration questions updated.</div>{% endif %}
+    {% if q_err == 'label' %}<div class="flash warn">Type the question itself.</div>
+    {% elif q_err == 'kind' %}<div class="flash warn">Pick a valid question type.</div>
+    {% elif q_err == 'options' %}<div class="flash warn">A choice question needs at least two choices, one per line.</div>
+    {% elif q_err == 'max' %}<div class="flash warn">An activity can have at most {{ q_max }} questions.</div>
+    {% elif q_err == 'notfound' %}<div class="flash warn">That question no longer exists.</div>{% endif %}
+
+    {% if q_presets %}
+    <div class="qpresets">
+      {% for key, lbl in q_presets.items() %}
+      <form method="post" action="/activities/{{ ev.event_token }}/questions/preset">
+        <input type="hidden" name="preset" value="{{ key }}">
+        <button type="submit" class="btn ghost small">+ {{ lbl }}</button>
+      </form>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if questions %}
+    <ul class="qlist">
+      {% for q in questions %}
+      <li>
+        <div class="qrow">
+          <div class="qmain">
+            <div class="qlabel">{{ q.label }}
+              <span class="badge {{ 'live' if q.required else 'pending' }}">{{ 'Required' if q.required else 'Optional' }}</span></div>
+            <div class="qmeta">{{ q_kinds.get(q.kind, q.kind) }}{% if q.options %} · {{ q.options|join(' · ') }}{% endif %}
+              · {{ q.n_answers }} answer{{ '' if q.n_answers == 1 else 's' }}</div>
+          </div>
+          <div class="qact">
+            <form method="post" action="/activities/{{ ev.event_token }}/questions/{{ q.id }}/move">
+              <input type="hidden" name="direction" value="up">
+              <button type="submit" class="btn ghost small" aria-label="Move up"{% if loop.first %} disabled{% endif %}>↑</button>
+            </form>
+            <form method="post" action="/activities/{{ ev.event_token }}/questions/{{ q.id }}/move">
+              <input type="hidden" name="direction" value="down">
+              <button type="submit" class="btn ghost small" aria-label="Move down"{% if loop.last %} disabled{% endif %}>↓</button>
+            </form>
+            {% set rm_msg = ('This question will be hidden from the form, but the ' ~ q.n_answers ~ ' existing answer(s) are kept. Remove it?') if q.n_answers else 'Remove this question?' %}
+            <form method="post" action="/activities/{{ ev.event_token }}/questions/{{ q.id }}/remove"
+                  onsubmit='return confirm({{ rm_msg|tojson }});'>
+              <button type="submit" class="btn ghost small">Remove</button>
+            </form>
+          </div>
+        </div>
+        <details class="qedit">
+          <summary>Edit</summary>
+          <form method="post" action="/activities/{{ ev.event_token }}/questions/{{ q.id }}" class="qform">
+            {{ qfields(q, 'q' ~ q.id) }}
+            <div><button class="btn" type="submit">Save question</button></div>
+          </form>
+        </details>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty">No extra questions yet. Add one below, or start from a preset above.</p>
+    {% endif %}
+
+    <div class="qadd">
+      <h3>Add a question</h3>
+      {% if questions|length >= q_max %}
+      <p class="empty">This activity already has the maximum of {{ q_max }} questions.</p>
+      {% else %}
+      <form method="post" action="/activities/{{ ev.event_token }}/questions" class="qform">
+        {{ qfields(none, 'qnew') }}
+        <div><button class="btn" type="submit">Add question</button></div>
+      </form>
+      {% endif %}
+    </div>
+    <script>
+    // Show the "Choices" box only for the two choice types.
+    document.querySelectorAll('.qform').forEach(function (f) {
+      var k = f.querySelector('select[name=kind]'), o = f.querySelector('.q-options');
+      function sync() { if (k && o) o.hidden = !(k.value === 'single' || k.value === 'multi'); }
+      if (k) k.addEventListener('change', sync);
+      sync();
+    });
+    </script>
   </div>
 
   <!-- organizer messages -->

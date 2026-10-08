@@ -17,7 +17,8 @@ email but DIFFERENT names are left ALONE — they are the legitimate shared-inbo
 case.
 
 Merge = keep the earliest attendee id, repoint every response.attendee_id to it,
-delete the duplicate rows. response is the only table that references attendee.
+delete the duplicate rows. response and attendee_answer (custom registration
+question answers) are the tables that reference attendee.
 
 Usage
 -----
@@ -62,6 +63,11 @@ def merge_group(conn, survivor, dups):
         cur = conn.execute(
             "UPDATE response SET attendee_id=? WHERE attendee_id=?", (survivor, d))
         moved += cur.rowcount
+        # Registration-question answers: the survivor's own answer wins; the
+        # duplicate's remaining ones are moved over, then any left are dropped.
+        conn.execute("UPDATE OR IGNORE attendee_answer SET attendee_id=? "
+                     "WHERE attendee_id=?", (survivor, d))
+        conn.execute("DELETE FROM attendee_answer WHERE attendee_id=?", (d,))
         conn.execute("DELETE FROM attendee WHERE id=?", (d,))
     return moved
 

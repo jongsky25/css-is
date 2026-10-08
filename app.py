@@ -75,6 +75,7 @@ import name_cleanup as ncl
 import harmonize as hz
 import activity_admin as aa
 import activity_messages as amsg
+import reg_questions as rq
 import certificate as cert
 import wellness_register as wreg
 import work_arrangement_annex as wanx
@@ -424,6 +425,17 @@ CONSENT_TEXT = (
     "and may request access to or deletion of your details by contacting BLHSD."
 ).format(months=RETENTION_MONTHS)
 CONSENT_TEXT_FIL = i18n.CONSENT_TMPL_FIL.format(months=RETENTION_MONTHS)
+
+
+def _consent_text_for(lang, has_questions):
+    """The consent notice to show (and, in English, to store). An activity with its
+    own registration questions gains one extra sentence saying those answers are
+    collected too; one without gets the notice unchanged."""
+    base = CONSENT_TEXT_FIL if lang == "fil" else CONSENT_TEXT
+    if not has_questions:
+        return base
+    # str(): t() returns Markup, and str + Markup would escape the notice.
+    return f"{base} {str(i18n.t('consent_extra_answers', lang))}"
 
 # Courtesy titles offered at registration (optional) — kept in sync with the
 # directory staff form. Used to address a participant on their certificate.
@@ -7725,8 +7737,19 @@ def _norm_name(name):
     return " ".join((name or "").strip().lower().split())
 
 
+def _multi_from_pairs(pairs):
+    """{field: [values]} for the custom-question fields (q_<id>) of a parsed form —
+    unlike the collapsed `posted` dict this keeps every checkbox of a group, so the
+    page can re-render them after an error or on the 'is this you?' step."""
+    out = {}
+    for k, v in pairs:
+        if k.startswith("q_"):
+            out.setdefault(k, []).append(v)
+    return out
+
+
 def _event_view(request, conn, ev, attendee=None, errors=None, posted=None,
-                confirm=None):
+                confirm=None, posted_multi=None):
     """Render the link-tree page in whichever state applies. The resource-person
     line-up + curated resources are loaded too, but the template only reveals them
     AFTER consent (they sit inside the attendee branch). `confirm` carries the
@@ -7764,11 +7787,14 @@ def _event_view(request, conn, ev, attendee=None, errors=None, posted=None,
     welcome_message = amsg.personalize(ev.get("welcome_message"), att_name)
     ending_message = (amsg.personalize(ev.get("ending_message"), att_name)
                       if completed else None)
-    consent_text = CONSENT_TEXT_FIL if lang == "fil" else CONSENT_TEXT
+    # The organizer's own registration questions (none for most activities).
+    questions = st.list_event_questions(conn, ev["id"])
+    consent_text = _consent_text_for(lang, bool(questions))
     return templates.TemplateResponse(request, "link_tree.html", {
         "ev": ev, "links": links, "tokens": tokens, "total": len(links),
         "attendee": attendee, "consent_text": consent_text, "lang": lang,
         "errors": errors or [], "posted": posted or {},
+        "questions": questions, "posted_multi": posted_multi or {},
         "speakers": st.list_event_resource_persons(conn, ev["id"]),
         "resources_now": resources_now, "resources_after": resources_after,
         "completed": completed,
@@ -7896,7 +7922,8 @@ async def event_consent(request: Request, event_token: str):
         # Throttle scripted registration floods. Generous per-IP window so a busy
         # venue (everyone behind one WiFi NAT) is never blocked — see ratelimit.py.
         if not rl.allow("register", ip):
-            resp = _event_view(request, conn, ev, posted=posted, errors=[
+            resp = _event_view(request, conn, ev, posted=posted,
+                               posted_multi=_multi_from_pairs(pairs), errors=[
                 "We're receiving a lot of submissions from your network right now. "
                 "Please wait a moment and try again."])
             resp.status_code = 429
@@ -7929,8 +7956,16 @@ async def event_consent(request: Request, event_token: str):
             errors.append("Please select your sex.")
         if affiliation not in ("DOH", "NON-DOH"):
             errors.append("Please select your affiliation.")
+        # The organizer's own questions: read from `pairs` (a checkbox group repeats
+        # its key) and whitelisted against each question's options server-side.
+        questions = st.list_event_questions(conn, ev["id"])
+        answers, q_errors = rq.collect_answers(questions, pairs)
+        errors.extend(q_errors)
         if errors:
-            return _event_view(request, conn, ev, errors=errors, posted=posted)
+            return _event_view(request, conn, ev, errors=errors, posted=posted,
+                               posted_multi=_multi_from_pairs(pairs))
+        # What the participant was shown — and so what we store as their consent.
+        consent_text = _consent_text_for("en", bool(questions))
 
         resolve = posted.get("resolve", "")
         existing = st.find_attendee_by_email(conn, ev["id"], email)
@@ -7940,14 +7975,14 @@ async def event_consent(request: Request, event_token: str):
         if existing and not resolve and _norm_name(existing["name"]) != _norm_name(name):
             return _event_view(request, conn, ev, confirm={
                 "existing_name": (existing["name"] or "").split()[0] if existing["name"] else "",
-                "posted": posted})
+                "posted": posted, "posted_multi": _multi_from_pairs(pairs)})
         if resolve == "new":
             # The participant said "I'm a different person" — a deliberate second
             # registration under the same (shared) email, so bypass dedup.
             attendee_id = st.add_attendee(
                 conn, ev["id"], name=name, email=email, contact=contact,
                 sex=sex, affiliation=affiliation, honorific=honorific,
-                consent_text=CONSENT_TEXT, ip=ip)
+                consent_text=consent_text, ip=ip)
             registered_now = True
         else:
             # Dedup-aware: same email (and same person, or confirmed "that's me")
@@ -7956,8 +7991,10 @@ async def event_consent(request: Request, event_token: str):
             attendee_id, resumed = st.register_attendee(
                 conn, ev["id"], name=name, email=email, contact=contact,
                 sex=sex, affiliation=affiliation, honorific=honorific,
-                consent_text=CONSENT_TEXT, ip=ip)
+                consent_text=consent_text, ip=ip)
             registered_now = not resumed
+        if answers:
+            st.save_attendee_answers(conn, attendee_id, answers)
         event_id = ev["id"]
         event_title, event_date, venue = ev.get("title"), ev.get("event_date"), ev.get("venue")
         event_token_for_link = ev.get("event_token") or event_token
@@ -8053,9 +8090,16 @@ def _manage_ctx(request, conn, ev):
     sharing buckets the manage page edits as separate cards."""
     links = st.list_event_links(conn, ev["id"])
     dmin, dmax = _event_date_bounds()
+    questions = st.list_event_questions(conn, ev["id"])
+    have = {q["label"].casefold() for q in questions}
     return {
         "nav_active": "home", "show_scope": False, "ev": ev,
         "date_min": dmin, "date_max": dmax,
+        # Registration questions card. A preset whose first question is already on
+        # the form isn't offered again.
+        "questions": questions, "q_kinds": rq.KINDS, "q_max": rq.MAX_QUESTIONS,
+        "q_presets": {k: lbl for k, lbl in rq.PRESET_LABELS.items()
+                      if rq.PRESETS[k][0]["label"].casefold() not in have},
         "forms": st.get_event_forms(conn, ev["id"]),
         "entry_window": st.get_event_window(conn, ev["id"]),
         # Registration funnel counts, so the respondent-target card can pre-fill the
@@ -8144,7 +8188,8 @@ def _outside_manage_ctx(request, conn, ev):
 
 @app.get("/activities/{event_token}/manage", response_class=HTMLResponse)
 def activity_manage(request: Request, event_token: str, err: str = "", edit: int = 0,
-                    slugok: int = 0, slugerr: str = "", dateok: int = 0):
+                    slugok: int = 0, slugerr: str = "", dateok: int = 0,
+                    qok: int = 0, qerr: str = ""):
     conn = get_conn()
     try:
         ev = st.get_event(conn, event_token)
@@ -8168,6 +8213,8 @@ def activity_manage(request: Request, event_token: str, err: str = "", edit: int
         ctx["edit_id"] = edit or None
         ctx["slug_ok"] = bool(slugok)
         ctx["slug_err"] = slugerr
+        ctx["q_ok"] = bool(qok)
+        ctx["q_err"] = qerr
     finally:
         conn.close()
     return templates.TemplateResponse(request, "activity_manage.html", ctx)
@@ -8269,6 +8316,161 @@ async def activity_link_edit(request: Request, event_token: str, link_id: int):
     finally:
         conn.close()
     return RedirectResponse(f"/activities/{event_token}/manage", status_code=303)
+
+
+# ---------------------------------------------------------------------
+# Registration questions — the organizer's own questions on the public form
+# (reg_questions.py holds the rules, storage.py the rows). Managed from the
+# manage page only. /questions/preset is declared BEFORE /questions/{qid} so the
+# literal path is never read as an id, and every route that takes a qid resolves
+# it through st.get_event_question (scoped to THIS event) — an id from another
+# activity is "notfound" and nothing changes.
+# ---------------------------------------------------------------------
+
+def _q_back(ev, **flag):
+    """303 back to the Registration questions card with a ?qok=1 / ?qerr=<code> flag."""
+    return RedirectResponse(
+        f"/activities/{ev['event_token']}/manage?{urlencode(flag)}#questions",
+        status_code=303)
+
+
+@app.post("/activities/{event_token}/questions")
+async def activity_question_add(request: Request, event_token: str):
+    """Add one registration question to the activity's public form."""
+    posted = await _posted(request)
+    conn = get_conn()
+    try:
+        ev = st.get_event(conn, event_token)
+        if not ev:
+            return RedirectResponse("/", status_code=303)
+        if not _can_manage_event(request.state.user, ev):
+            return RedirectResponse(f"/e/{event_token}", status_code=303)
+        if ev.get("event_kind") == "outside":
+            return RedirectResponse(f"/activities/{event_token}/manage", status_code=303)
+        q, code = rq.clean_question(posted)
+        if code:
+            return _q_back(ev, qerr=code)
+        qid = st.add_event_question(conn, ev["id"], q,
+                                    created_by=request.state.user["username"])
+        if qid is None:
+            return _q_back(ev, qerr="max")
+        _audit(request, conn, "event_question_add", target_type="event",
+               target_id=ev["id"], summary=f"Added registration question “{q['label']}” (#{qid}).")
+        return _q_back(ev, qok=1)
+    finally:
+        conn.close()
+
+
+@app.post("/activities/{event_token}/questions/preset")
+async def activity_question_preset(request: Request, event_token: str):
+    """Add a ready-made set of questions (food, arrival, …) in one click."""
+    posted = await _posted(request)
+    conn = get_conn()
+    try:
+        ev = st.get_event(conn, event_token)
+        if not ev:
+            return RedirectResponse("/", status_code=303)
+        if not _can_manage_event(request.state.user, ev):
+            return RedirectResponse(f"/e/{event_token}", status_code=303)
+        if ev.get("event_kind") == "outside":
+            return RedirectResponse(f"/activities/{event_token}/manage", status_code=303)
+        key = posted.get("preset", "")
+        wanted = rq.preset_questions(key)
+        if not wanted:
+            return _q_back(ev, qerr="kind")
+        added, full = [], False
+        for q in wanted:
+            qid = st.add_event_question(conn, ev["id"], q,
+                                        created_by=request.state.user["username"])
+            if qid is None:
+                full = True
+                break
+            added.append(qid)
+        if added:
+            _audit(request, conn, "event_question_add", target_type="event",
+                   target_id=ev["id"],
+                   summary=f"Added the “{key}” preset: {len(added)} registration question(s).")
+        return _q_back(ev, qerr="max") if full else _q_back(ev, qok=1)
+    finally:
+        conn.close()
+
+
+@app.post("/activities/{event_token}/questions/{qid}")
+async def activity_question_edit(request: Request, event_token: str, qid: int):
+    """Save an edited registration question. The type can't change once answered."""
+    posted = await _posted(request)
+    conn = get_conn()
+    try:
+        ev = st.get_event(conn, event_token)
+        if not ev:
+            return RedirectResponse("/", status_code=303)
+        if not _can_manage_event(request.state.user, ev):
+            return RedirectResponse(f"/e/{event_token}", status_code=303)
+        if ev.get("event_kind") == "outside":
+            return RedirectResponse(f"/activities/{event_token}/manage", status_code=303)
+        cur = st.get_event_question(conn, ev["id"], qid)
+        if not cur or cur["archived_at"]:
+            return _q_back(ev, qerr="notfound")
+        if cur["n_answers"]:
+            # The type select is disabled in the form (so it isn't posted); pin it.
+            posted["kind"] = cur["kind"]
+        q, code = rq.clean_question(posted)
+        if code:
+            return _q_back(ev, qerr=code)
+        st.update_event_question(conn, qid, q)
+        _audit(request, conn, "event_question_edit", target_type="event",
+               target_id=ev["id"], summary=f"Edited registration question “{q['label']}” (#{qid}).")
+        return _q_back(ev, qok=1)
+    finally:
+        conn.close()
+
+
+@app.post("/activities/{event_token}/questions/{qid}/remove")
+async def activity_question_remove(request: Request, event_token: str, qid: int):
+    """Remove a registration question: deleted if unanswered, else hidden (archived)
+    with its answers kept."""
+    await _posted(request)
+    conn = get_conn()
+    try:
+        ev = st.get_event(conn, event_token)
+        if not ev:
+            return RedirectResponse("/", status_code=303)
+        if not _can_manage_event(request.state.user, ev):
+            return RedirectResponse(f"/e/{event_token}", status_code=303)
+        if ev.get("event_kind") == "outside":
+            return RedirectResponse(f"/activities/{event_token}/manage", status_code=303)
+        cur = st.get_event_question(conn, ev["id"], qid)
+        if not cur or cur["archived_at"]:
+            return _q_back(ev, qerr="notfound")
+        outcome = st.remove_event_question(conn, qid)
+        _audit(request, conn, "event_question_remove", target_type="event",
+               target_id=ev["id"],
+               summary=f"Removed registration question “{cur['label']}” (#{qid}) — {outcome}.")
+        return _q_back(ev, qok=1)
+    finally:
+        conn.close()
+
+
+@app.post("/activities/{event_token}/questions/{qid}/move")
+async def activity_question_move(request: Request, event_token: str, qid: int):
+    """Move a registration question up or down one place (not audited — noise)."""
+    posted = await _posted(request)
+    conn = get_conn()
+    try:
+        ev = st.get_event(conn, event_token)
+        if not ev:
+            return RedirectResponse("/", status_code=303)
+        if not _can_manage_event(request.state.user, ev):
+            return RedirectResponse(f"/e/{event_token}", status_code=303)
+        if ev.get("event_kind") == "outside":
+            return RedirectResponse(f"/activities/{event_token}/manage", status_code=303)
+        cur = st.get_event_question(conn, ev["id"], qid)
+        if not cur or cur["archived_at"]:
+            return _q_back(ev, qerr="notfound")
+        st.move_event_question(conn, ev["id"], qid, posted.get("direction", ""))
+        return _q_back(ev, qok=1)
+    finally:
+        conn.close()
 
 
 # Cap on the free-text messages — generous, but bounds storage and the page.
