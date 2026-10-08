@@ -1,6 +1,6 @@
 # CHANGELOG — Cowork revisions (surgical)
 
-## 2026-10-08 (v3.47 — resource persons always need a topic; editable on the manage page)
+## 2026-10-08 (v3.49 — resource persons always need a topic; editable on the manage page)
 
 - **Create form** — a resource person can no longer be saved without a topic (nor a
   topic without a person). Enforced in the browser (`required`) and on the server
@@ -13,6 +13,27 @@
   routes now work for any manageable activity, not just outside ones; outside activities
   can also swap the person (`storage.update_speaker_rp`).
 - **Tests** — `tests/test_event_speaker_manage.py`.
+
+## 2026-10-08 (v3.48 — bust the app.css cache)
+
+- **`templates/dash_layout.html`, `templates/public_layout.html`** — `app.css?v=`
+  bumped `20260924a` → `20261008a`. v3.47's dropdown fix lived only in `app.css`,
+  and the unchanged query string let browsers keep serving the cached old file, so
+  the menu still ran off the bottom on a laptop. **Bump this string whenever
+  `app.css` changes.**
+
+## 2026-10-08 (v3.47 — dropdown menu fits short screens)
+
+- **`static/css/app.css`** — `.navgroup .menu` (desktop dropdown) gets
+  `max-height: calc(100dvh - var(--topnav-h) - 16px)` (with a `vh` fallback) and
+  `overflow-y:auto`, so the sixteen-entry CSS group scrolls instead of running off
+  the bottom. The ≤780px hamburger already did this.
+- Compact rules under `@media (min-width:781px) and (max-height:700px)`: hint lines
+  hidden, row/heading padding tightened. Placed after the base `a`/`.mhint`/`.msec`
+  rules so they win on equal specificity.
+
+Checked in headless Chromium at 1280×800/600/1000, 1024×500 and 800×400: the menu
+stays within the viewport and the last item ("Paper entry") scrolls into view.
 
 ## 2026-10-08 (v3.46 — custom registration questions)
 
