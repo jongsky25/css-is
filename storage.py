@@ -2309,11 +2309,19 @@ def delete_attendee_entry(conn, event_id, attendee_id):
 
 def purge_expired_attendees(conn, cutoff_iso, now_iso=None):
     """RETENTION enforcement: null the PII fields (name/email/contact) of every
-    attendee whose consent is older than cutoff_iso and not already purged. The
-    row is KEPT (consent_at/consent_text remain as the consent record) and
-    purged_at is stamped. Returns the number of rows purged. Ratings are
-    untouched — they live in response/answer and were never identifying."""
+    attendee whose consent is older than cutoff_iso and not already purged, and
+    delete their registration-question answers (diet/health details are as
+    sensitive as the contact fields). The row is KEPT (consent_at/consent_text
+    remain as the consent record) and purged_at is stamped. Returns the number
+    of rows purged. Ratings are untouched — they live in response/answer and
+    were never identifying."""
     now_iso = now_iso or tz.now_iso()
+    # Same cutoff and same purged_at IS NULL filter as the UPDATE below, and it
+    # must run first — afterwards purged_at is set and the subquery matches nothing.
+    conn.execute(
+        """DELETE FROM attendee_answer WHERE attendee_id IN
+             (SELECT id FROM attendee WHERE consent_at < ? AND purged_at IS NULL)""",
+        (cutoff_iso,))
     cur = conn.execute(
         """UPDATE attendee
               SET name=NULL, email=NULL, contact=NULL, purged_at=?

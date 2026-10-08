@@ -202,3 +202,58 @@ def display_value(q: dict, raw: str | None) -> str:
         except ValueError:
             pass
     return raw
+
+
+def answer_rows(questions: list[dict], person_answers: dict | None) -> list[tuple[str, str]]:
+    """One registrant's answers as [(label, display)] in question order, for the
+    roster. Unanswered questions are skipped; an archived question is kept (its
+    answers still exist) with " (removed)" after the label."""
+    out = []
+    for q in questions:
+        shown = display_value(q, (person_answers or {}).get(q["id"]))
+        if shown:
+            out.append((column_label(q), shown))
+    return out
+
+
+def column_label(q: dict) -> str:
+    """A question's label as a roster/export heading — archived ones are flagged."""
+    return q["label"] + (" (removed)" if q.get("archived_at") else "")
+
+
+def tally(questions: list[dict], answers_by_attendee: dict) -> list[dict]:
+    """At-a-glance counts for the monitor page: one entry per ACTIVE
+    single/multi/yesno question, {"label", "counts": [(option, n), ...], "text"}.
+    `answers_by_attendee` is storage.event_answers: {attendee_id: {qid: raw}}.
+    Options come in the question's own order and only those someone chose are
+    listed; a stored value that is no longer one of the options (the organizer
+    edited it away) is counted after them rather than lost. "text" is the same
+    counts as one display line, or "No answers yet" when nobody has answered."""
+    out = []
+    for q in questions:
+        if q.get("archived_at") or q["kind"] not in ("single", "multi", "yesno"):
+            continue
+        n: dict[str, int] = {}
+        for per in answers_by_attendee.values():
+            raw = per.get(q["id"])
+            if not raw:
+                continue
+            if q["kind"] == "multi":
+                try:
+                    chosen = json.loads(raw)
+                except ValueError:
+                    chosen = [raw]
+                if not isinstance(chosen, list):
+                    chosen = [raw]
+            else:
+                chosen = [raw]
+            for c in {str(c) for c in chosen}:
+                n[c] = n.get(c, 0) + 1
+        order = ["Yes", "No"] if q["kind"] == "yesno" else list(q["options"])
+        order += [c for c in n if c not in order]
+        counts = [(o, n[o]) for o in order if n.get(o)]
+        out.append({
+            "label": q["label"], "counts": counts,
+            "text": " · ".join(f"{o} {c}" for o, c in counts) or "No answers yet",
+        })
+    return out

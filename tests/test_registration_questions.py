@@ -528,3 +528,170 @@ def test_merge_group_keeps_survivor_answer_and_drops_duplicate(tmp_path):
     conn.commit()
     assert st.get_attendee_answers(conn, a1) == {qid: "none"}
     assert conn.execute("SELECT COUNT(*) FROM attendee_answer").fetchone()[0] == 1
+
+
+# ==========================================================================
+# PR-B — roster, summary, export, purge
+# ==========================================================================
+
+def test_display_helpers_and_tally_counts():
+    diet = _q(1, "multi", ["None", "Vegan", "Halal"], label="Diet")
+    stay = _q(2, "yesno", label="Stay?")
+    pick = _q(3, "single", ["S", "M"], label="Size")
+    note = _q(4, "text", label="Note")
+    gone = dict(_q(5, "single", ["A", "B"], label="Old"), archived_at="2026-01-01")
+    qs = [diet, stay, pick, note, gone]
+    ans = {
+        10: {1: json.dumps(["Vegan", "Halal"]), 2: "Yes", 3: "M", 4: "hi", 5: "A"},
+        11: {1: json.dumps(["Vegan"]), 2: "No", 3: "M"},
+        12: {1: json.dumps(["Old option"]), 2: "Yes"},
+    }
+    t = {x["label"]: x for x in rq.tally(qs, ans)}
+    assert set(t) == {"Diet", "Stay?", "Size"}                 # no text, no archived
+    assert t["Diet"]["counts"] == [("Vegan", 2), ("Halal", 1), ("Old option", 1)]
+    assert t["Stay?"]["counts"] == [("Yes", 2), ("No", 1)]
+    assert t["Stay?"]["text"] == "Yes 2 · No 1"
+    assert t["Size"]["counts"] == [("M", 2)]
+    assert rq.tally([_q(1, "single", ["A", "B"], label="Z")], {})[0]["text"] == "No answers yet"
+    assert rq.tally([_q(1, "text")], ans) == []
+    # answer_rows: question order, blanks skipped, archived flagged.
+    assert rq.answer_rows(qs, ans[10]) == [
+        ("Diet", "Vegan, Halal"), ("Stay?", "Yes"), ("Size", "M"), ("Note", "hi"),
+        ("Old (removed)", "A")]
+    assert rq.answer_rows(qs, None) == []
+
+
+def test_purge_expired_attendees_deletes_only_purged_answers(tmp_path):
+    conn = _fresh(tmp_path)
+    eid = _event(conn)
+    old, qid = _answered_attendee(conn, eid, "old@x.com")
+    new, _ = st.register_attendee(conn, eid, name="New", email="new@x.com", sex="F",
+                                  affiliation="DOH", consent_text="x")
+    st.save_attendee_answers(conn, new, {qid: "keep"})
+    conn.execute("UPDATE attendee SET consent_at='2000-01-01T00:00:00' WHERE id=?", (old,))
+    conn.commit()
+    assert st.purge_expired_attendees(conn, "2001-01-01") == 1
+    assert st.get_attendee_answers(conn, old) == {}
+    assert st.get_attendee_answers(conn, new) == {qid: "keep"}
+    # The attendee row survives as the consent record.
+    assert conn.execute("SELECT purged_at FROM attendee WHERE id=?", (old,)).fetchone()[0]
+
+
+def test_retention_run_reports_registration_answers(tmp_path, capsys):
+    import retention
+    path = str(tmp_path / "ret.db")
+    conn = st.connect(path); st.init_db(conn)
+    eid = _event(conn)
+    old, qid = _answered_attendee(conn, eid, "old@x.com")
+    conn.execute("UPDATE attendee SET consent_at='2000-01-01T00:00:00' WHERE id=?", (old,))
+    conn.commit(); conn.close()
+    assert retention.run(path, dry_run=True) == 1
+    assert "registration answers" in capsys.readouterr().out
+    assert retention.run(path) == 1
+    conn = st.connect(path)
+    assert conn.execute("SELECT COUNT(*) FROM attendee_answer").fetchone()[0] == 0
+    assert "registration answers" in conn.execute(
+        "SELECT summary FROM audit_log WHERE action='retention_purge'").fetchone()[0]
+
+
+def _roster_event(client, manager, db_path):
+    """An activity with a multi, an archived and a yes/no question, and three
+    registrants — one answered everything, one answered nothing, one purged."""
+    tok = _make_event(manager, db_path)
+    _add_q(manager, tok, label="Food", kind="multi", options="None\nVegan\nHalal")
+    _add_q(manager, tok, label="Old Q", kind="text")
+    _add_q(manager, tok, label="Stay", kind="yesno")
+    qs = {q["label"]: q["id"] for q in _questions(db_path, tok)}
+    r = _post_pairs(client, f"/e/{tok}", [
+        ("name", "Rey Dela Cruz"), ("email", "rey@example.com"), ("sex", "M"),
+        ("affiliation", "DOH"), ("consent", "on"),
+        (f"q_{qs['Food']}", "Vegan"), (f"q_{qs['Food']}", "Halal"),
+        (f"q_{qs['Old Q']}", "<b>bold</b>"), (f"q_{qs['Stay']}", "Yes")])
+    assert r.status_code == 303
+    client.post(f"/e/{tok}", data=_reg(name="Bea Silang", email="bea@example.com"))
+    client.post(f"/e/{tok}", data=_reg(name="Cy Tan", email="cy@example.com"))
+    conn = st.connect(db_path)
+    ev = st.get_event(conn, tok)
+    cy = conn.execute("SELECT id FROM attendee WHERE event_id=? AND email='cy@example.com'",
+                      (ev["id"],)).fetchone()[0]
+    st.save_attendee_answers(conn, cy, {qs["Food"]: json.dumps(["None"])})
+    conn.close()
+    # Archive "Old Q" (answered, so it is hidden rather than deleted).
+    manager.post(f"/activities/{tok}/questions/{qs['Old Q']}/remove")
+    # Purge Cy only.
+    conn = st.connect(db_path)
+    conn.execute("UPDATE attendee SET consent_at='2000-01-01T00:00:00' WHERE id=?", (cy,))
+    conn.commit()
+    st.purge_expired_attendees(conn, "2001-01-01")
+    conn.close()
+    return tok, qs
+
+
+def test_roster_shows_answers_and_summary(client, manager, db_path):
+    tok, _ = _roster_event(client, manager, db_path)
+    html = manager.get(f"/monitor/{tok}").text
+    assert "Registration answers" in html
+    assert "Vegan, Halal" in html
+    assert "Old Q (removed)" in html                       # archived: kept in details
+    assert "&lt;b&gt;bold&lt;/b&gt;" in html and "<b>bold</b>" not in html   # escaped
+    glance = html.split("Registration answers at a glance")[1].split("</div>")[0]
+    assert "Food:" in glance and "Vegan 1 · Halal 1" in glance
+    assert "Stay:" in glance and "Yes 1" in glance
+    assert "Old Q" not in glance                           # archived: not tallied
+    assert "None 1" not in glance                          # Cy's answer was purged
+
+
+def test_roster_without_questions_is_unchanged(client, manager, db_path):
+    tok = _make_event(manager, db_path)
+    client.post(f"/e/{tok}", data=_reg())
+    html = manager.get(f"/monitor/{tok}").text
+    assert "Rey Dela Cruz" in html
+    assert "Registration answers" not in html and '<details class="regans"' not in html
+
+
+def test_export_includes_question_columns(client, manager, db_path):
+    import io
+    from openpyxl import load_workbook
+    tok, qs = _roster_event(client, manager, db_path)
+    r = manager.get(f"/monitor/{tok}/export")
+    assert r.status_code == 200
+    wb = load_workbook(io.BytesIO(r.content))
+    ws = wb["Registration"]
+    header = [c.value for c in ws[6]]
+    assert header[:8] == ["No.", "Name", "Email", "Contact", "Sex", "Affiliation",
+                          "Registered at", "CSS status"]
+    assert header[8:] == ["Food", "Old Q (removed)", "Stay"]
+    rows = {ws.cell(r_, 2).value: [c.value for c in ws[r_]] for r_ in range(7, ws.max_row + 1)}
+    assert rows["Rey Dela Cruz"][8:] == ["Vegan, Halal", "<b>bold</b>", "Yes"]
+    assert rows["Bea Silang"][8:] in (["", "", ""], [None, None, None])
+    purged = rows["(identity removed)"]
+    assert all(v in ("", None) for v in purged[8:])         # purged: answer cells blank
+    # Letterhead merges span every column, not just the original eight.
+    assert any(str(m) == "A1:K1" for m in ws.merged_cells.ranges)
+    assert ws.column_dimensions["K"].width == 24
+    about = " ".join(str(c.value) for row in wb["About this report"].iter_rows() for c in row if c.value)
+    assert "registration questions" in about
+
+
+def test_export_without_questions_keeps_eight_columns(client, manager, db_path):
+    import io
+    from openpyxl import load_workbook
+    tok = _make_event(manager, db_path)
+    client.post(f"/e/{tok}", data=_reg())
+    wb = load_workbook(io.BytesIO(manager.get(f"/monitor/{tok}/export").content))
+    ws = wb["Registration"]
+    assert [c.value for c in ws[6] if c.value is not None][-1] == "CSS status"
+    assert ws.max_column == 8
+    assert any(str(m) == "A1:H1" for m in ws.merged_cells.ranges)
+    about = " ".join(str(c.value) for row in wb["About this report"].iter_rows() for c in row if c.value)
+    assert "registration questions" not in about
+
+
+def test_export_with_questions_and_no_registrants(manager, db_path):
+    import io
+    from openpyxl import load_workbook
+    tok = _make_event(manager, db_path)
+    _add_q(manager, tok, label="Diet")
+    ws = load_workbook(io.BytesIO(manager.get(f"/monitor/{tok}/export").content))["Registration"]
+    assert ws.cell(6, 9).value == "Diet"
+    assert any(str(m) == "A7:I7" for m in ws.merged_cells.ranges)   # "No one has registered"

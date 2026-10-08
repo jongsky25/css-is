@@ -13,7 +13,9 @@ its window" shape, otherwise unrelated:
    THE RULE (decided with the user): attendee identity is retained for
    RETENTION_MONTHS months from the date consent was given, then PERMANENTLY
    DELETED. The attendee row is kept as a consent record (consent_at +
-   consent_text + purged_at survive) but name/email/contact are nulled. The
+   consent_text + purged_at survive) but name/email/contact are nulled and the
+   attendee's custom registration-question answers (diet, arrival, … — see
+   reg_questions.py) are deleted outright. The
    ratings themselves are never identifying — they live in response/answer and
    are analysed anonymously — so purging identity never loses a single rating.
    Every purge is written to the hash-chained audit_log as 'retention_purge'.
@@ -91,15 +93,17 @@ def run(db_path="css_is.db", months=RETENTION_MONTHS_DEFAULT, dry_run=False,
                 "SELECT COUNT(*) FROM attendee WHERE consent_at < ? AND purged_at IS NULL",
                 (cutoff,)).fetchone()[0]
             print(f"[dry-run] {n} attendee record(s) older than {months} months "
-                  f"(consent before {cutoff}) would have their name/email/contact purged.")
+                  f"(consent before {cutoff}) would have their name/email/contact and "
+                  f"registration answers purged.")
             return n
         n = st.purge_expired_attendees(conn, cutoff)
         if n:
             st.audit(conn, actor, "retention_purge", target_type="attendee",
-                     summary=(f"Purged identity (name/email/contact) of {n} attendee "
-                              f"record(s) past the {months}-month retention window "
-                              f"(consent before {cutoff}); ratings kept."))
-        print(f"Purged {n} attendee record(s) past the {months}-month retention window.")
+                     summary=(f"Purged identity (name/email/contact) and registration "
+                              f"answers of {n} attendee record(s) past the {months}-month "
+                              f"retention window (consent before {cutoff}); ratings kept."))
+        print(f"Purged {n} attendee record(s) (identity + registration answers) past the "
+              f"{months}-month retention window.")
         return n
     finally:
         conn.close()

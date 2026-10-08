@@ -9299,6 +9299,13 @@ def monitor_event(request: Request, event_token: str, flash: str = ""):
             })
         people = st.event_attendees_status(conn, ev["id"])
         summ = st.event_registration_summary(conn, ev["id"])
+        # The activity's own registration questions: archived ones stay in each
+        # person's details (their answers still exist) but not in the tally.
+        questions = st.list_event_questions(conn, ev["id"], include_archived=True)
+        answers = st.event_answers(conn, ev["id"]) if questions else {}
+        for p in people:
+            p["extra"] = rq.answer_rows(questions, answers.get(p["id"]))
+        answer_tally = rq.tally(questions, answers)
         remind_last, remind_wait = _remind_cooldown_left(conn, ev["id"])
         # So the roster header can say "open until <date>" / "closed" without the
         # organizer digging into the manage page. Read while the conn is still open.
@@ -9314,6 +9321,7 @@ def monitor_event(request: Request, event_token: str, flash: str = ""):
     return templates.TemplateResponse(request, "monitor_event.html", {
         "nav_active": "monitor", "show_scope": False, "ev": ev,
         "people": people, "summ": summ, "status_meta": MONITOR_STATUS,
+        "answer_tally": answer_tally,
         "base_url": _base_url(request),
         "entry_window": entry_window, "is_closed": is_closed,
         "report_url": report_url,
@@ -9674,6 +9682,8 @@ def monitor_event_export(request: Request, event_token: str):
             return RedirectResponse("/monitor", status_code=303)
         people = st.event_attendees_status(conn, ev["id"])
         summ = st.event_registration_summary(conn, ev["id"])
+        questions = st.list_event_questions(conn, ev["id"], include_archived=True)
+        answers = st.event_answers(conn, ev["id"]) if questions else {}
         try:
             _, org_name, _ = st.get_or_create_blhsd(conn)
         except Exception:
@@ -9684,7 +9694,8 @@ def monitor_event_export(request: Request, event_token: str):
                         f"({summ['registered']} registered, {summ['completed']} completed)."))
     finally:
         conn.close()
-    data = _build_monitor_xlsx(ev, people, summ, org_name)
+    data = _build_monitor_xlsx(ev, people, summ, org_name,
+                               questions=questions, answers=answers)
     slug = re.sub(r"[^A-Za-z0-9]+", "_", ev["title"] or "activity").strip("_")[:40] or "activity"
     fname = f"Registration_{slug}_{_now_local().strftime('%Y%m%d_%H%M%S')}.xlsx"
     return Response(
@@ -9694,11 +9705,15 @@ def monitor_event_export(request: Request, event_token: str):
     )
 
 
-def _build_monitor_xlsx(ev, people, summ, org_name):
+def _build_monitor_xlsx(ev, people, summ, org_name, questions=(), answers=None):
     """One-sheet registration roster workbook: a letterhead caption (activity ·
     date · venue · N), the funnel counts, then one row per registrant with their
-    CSS status. Plus an About sheet, matching the house download standard."""
+    CSS status and, after it, one column per registration question of the
+    activity (archived ones too, headed "… (removed)"; `answers` is
+    storage.event_answers). Plus an About sheet, matching the house download
+    standard. An activity with no questions gets exactly the eight base columns."""
     from openpyxl import Workbook
+    from openpyxl.utils import get_column_letter
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
     wb = Workbook()
     thin = Side(style="thin", color="B0B7C0")
@@ -9707,6 +9722,10 @@ def _build_monitor_xlsx(ev, people, summ, org_name):
     ctr = Alignment(horizontal="center", vertical="center", wrap_text=True)
     left = Alignment(horizontal="left", vertical="center", wrap_text=True)
     status_lbl = {k: v[0] for k, v in MONITOR_STATUS.items()}
+    answers = answers or {}
+    headers = ["No.", "Name", "Email", "Contact", "Sex", "Affiliation",
+               "Registered at", "CSS status"] + [rq.column_label(q) for q in questions]
+    ncol = len(headers)
 
     ws = wb.active
     ws.title = "Registration"
@@ -9726,13 +9745,11 @@ def _build_monitor_xlsx(ev, people, summ, org_name):
             (caption, dict(size=10)),
             (funnel, dict(size=10, italic=True)),
             ("", dict())], start=1):
-        ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=8)
+        ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=ncol)
         c = ws.cell(row, 1, text)
         c.font = Font(**fk)
         c.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
 
-    headers = ["No.", "Name", "Email", "Contact", "Sex", "Affiliation",
-               "Registered at", "CSS status"]
     hrow = 6
     for i, h in enumerate(headers, start=1):
         c = ws.cell(hrow, i, h)
@@ -9752,6 +9769,10 @@ def _build_monitor_xlsx(ev, people, summ, org_name):
             "" if removed else (p["contact"] or ""),
             p["sex"] or "", p["affiliation"] or "",
             p["consent_at"] or "", prog,
+        ] + [
+            # A purged registrant's answers are already deleted; stay blank regardless.
+            "" if removed else rq.display_value(q, answers.get(p["id"], {}).get(q["id"]))
+            for q in questions
         ]
         for col, val in enumerate(cells, start=1):
             c = ws.cell(r, col, val)
@@ -9759,10 +9780,11 @@ def _build_monitor_xlsx(ev, people, summ, org_name):
             c.border = border
         r += 1
     if not people:
-        ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=8)
+        ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=ncol)
         ws.cell(r, 1, "No one has registered for this activity yet.").alignment = ctr
-    for col, w in zip("ABCDEFGH", [5, 26, 30, 16, 6, 12, 20, 22]):
-        ws.column_dimensions[col].width = w
+    widths = [5, 26, 30, 16, 6, 12, 20, 22] + [24] * (ncol - 8)
+    for col, w in enumerate(widths, start=1):
+        ws.column_dimensions[get_column_letter(col)].width = w
     ws.freeze_panes = "A7"
     ws.print_title_rows = "6:6"
 
@@ -9783,7 +9805,8 @@ def _build_monitor_xlsx(ev, people, summ, org_name):
             f"this activity has {summ['unattributed']} such unattributed response(s).",
             "Name / email / contact are personal data and are nulled after the retention "
             "period — purged registrants show as “(identity removed)” but keep their status.",
-        ])
+        ] + (["Columns after “CSS status” are this activity's own registration questions."]
+             if questions else []))
 
     buf = io.BytesIO()
     wb.save(buf)
