@@ -160,6 +160,9 @@
     <input type="hidden" name="affiliation" value="{{ confirm.posted.affiliation }}">
     <input type="hidden" name="honorific" value="{{ confirm.posted.honorific or '' }}">
     <input type="hidden" name="consent" value="on">
+    {% for k, vals in (confirm.posted_multi or {}).items() %}{% for v in vals %}
+    <input type="hidden" name="{{ k }}" value="{{ v }}">
+    {% endfor %}{% endfor %}
     <button type="submit" name="resolve" value="resume" class="btn block" style="font-size:1rem; padding:.8rem;">{{ t('lt_yes_me', lang) }}</button>
     <button type="submit" name="resolve" value="new" class="btn block ghost" style="font-size:1rem; padding:.8rem;">{{ t('lt_no_diff', lang) }}</button>
   </form>
@@ -214,6 +217,49 @@
         <option value="NON-DOH" {{ 'selected' if posted.affiliation == 'NON-DOH' }}>{{ t('non_doh', lang) }}</option>
       </select>
     </div>
+
+    {% if questions %}
+    <h3 style="margin:1.2rem 0 .4rem;">{{ t('lt_more_details', lang) }}</h3>
+    {% for q in questions %}{% set fid = 'q_' ~ q.id %}{% set pv = posted_multi.get(fid, []) %}
+    <div class="field">
+      <label{% if q.kind != 'multi' %} for="{{ fid }}"{% endif %}>{{ q.label }}{% if not q.required %} <span class="opt">{{ t('optional', lang) }}</span>{% endif %}</label>
+      {% if q.kind == 'text' %}
+      <input type="text" id="{{ fid }}" name="{{ fid }}" maxlength="200" value="{{ pv[0] if pv else '' }}"{% if q.required %} required{% endif %}>
+      {% elif q.kind == 'longtext' %}
+      <textarea id="{{ fid }}" name="{{ fid }}" maxlength="1000" rows="3"{% if q.required %} required{% endif %}>{{ pv[0] if pv else '' }}</textarea>
+      {% elif q.kind == 'single' %}
+      <select id="{{ fid }}" name="{{ fid }}"{% if q.required %} required{% endif %}>
+        <option value="" {{ 'selected' if not pv }}>{{ t('select', lang) }}</option>
+        {% for opt in q.options %}
+        <option value="{{ opt }}" {{ 'selected' if opt in pv }}>{{ opt }}</option>
+        {% endfor %}
+      </select>
+      {% elif q.kind == 'yesno' %}
+      <select id="{{ fid }}" name="{{ fid }}"{% if q.required %} required{% endif %}>
+        <option value="" {{ 'selected' if not pv }}>{{ t('select', lang) }}</option>
+        <option value="Yes" {{ 'selected' if 'Yes' in pv }}>{{ t('yes', lang) }}</option>
+        <option value="No" {{ 'selected' if 'No' in pv }}>{{ t('no', lang) }}</option>
+      </select>
+      {% elif q.kind == 'multi' %}
+      {# No `required` on the checkboxes: app.js would demand every one be ticked.
+         "Pick at least one" is enforced server-side. #}
+      <fieldset style="border:none; padding:0; margin:0;">
+        {% for opt in q.options %}
+        <label style="display:flex; gap:.5rem; align-items:center; font-weight:400; margin:.3rem 0;">
+          <input type="checkbox" name="{{ fid }}" value="{{ opt }}" {{ 'checked' if opt in pv }} style="width:1.05rem; height:1.05rem;">
+          <span>{{ opt }}</span>
+        </label>
+        {% endfor %}
+      </fieldset>
+      {% elif q.kind == 'date' %}
+      <input type="date" id="{{ fid }}" name="{{ fid }}" value="{{ pv[0] if pv else '' }}"{% if q.required %} required{% endif %}>
+      {% elif q.kind == 'time' %}
+      <input type="time" id="{{ fid }}" name="{{ fid }}" value="{{ pv[0] if pv else '' }}"{% if q.required %} required{% endif %}>
+      {% endif %}
+      {% if q.help_text %}<p class="muted small" style="margin:.3rem 0 0;">{{ q.help_text }}</p>{% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
 
     <div class="panel tint-blue" style="font-size:.85rem; line-height:1.45; color:var(--ink-soft); margin:1rem 0;">{{ consent_text }}</div>
     <label style="display:flex; gap:.55rem; align-items:flex-start; margin:1rem 0; font-size:.92rem; font-weight:400;">

@@ -1,5 +1,51 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-08 (v3.46 — custom registration questions)
+
+- **`reg_questions.py`** (new, pure logic) — the question kinds, presets and rules:
+  `parse_options`, `clean_question`, `collect_answers` (every answer is whitelisted
+  server-side against the question's options; a checkbox group is read from the
+  raw `parse_qsl` pairs) and `display_value`.
+- **`storage`** — new tables `event_question` and `attendee_answer` (created in
+  `_add_missing_columns` next to `event_link`), with `list_event_questions`,
+  `get_event_question` (scoped to the event — the IDOR guard), `add_event_question`
+  (max 20), `update_event_question` (kind locked once answered),
+  `remove_event_question` (deletes, or archives once answered),
+  `move_event_question`, `save_attendee_answers`, `get_attendee_answers` and
+  `event_answers`. Deleting an attendee or merging duplicates clears or moves
+  their answers; the roster, export and purge side are in the same release.
+- **`app.py`** — manage-page routes `POST /activities/{token}/questions`,
+  `/questions/preset`, `/questions/{qid}`, `/questions/{qid}/remove` and
+  `/questions/{qid}/move` (creator/admin only, audited). `event_consent` validates
+  and stores the answers (`_multi_from_pairs`, `_consent_text_for`); the consent
+  notice gains one sentence only for an activity that has questions.
+- **Templates / i18n** — a "Registration questions" card on `activity_manage.html`;
+  the questions render on the public form and are re-posted by the "Is this you?"
+  step in `link_tree.html`; new strings `lt_more_details`, `yes`, `no`,
+  `consent_extra_answers`.
+
+Tests: `tests/test_registration_questions.py`.
+
+- **`reg_questions.py`** — `answer_rows` (one registrant's non-empty answers as
+  display strings), `column_label` (adds " (removed)" for an archived question)
+  and `tally` (counts per option for the active single/multi/yesno questions,
+  with the display line precomputed).
+- **`app.py`** — `monitor_event` loads the questions (archived included) and
+  `event_answers`, sets `p["extra"]` per registrant and passes `answer_tally`.
+  `monitor_event_export` passes them to `_build_monitor_xlsx(..., questions=(),
+  answers=None)`, which now computes the column count (no more `end_column=8` /
+  `"ABCDEFGH"`; `get_column_letter`) and appends one column per question; purged
+  registrants' answer cells stay blank. An activity with no questions renders and
+  exports exactly as before.
+- **`templates/monitor_event.html`** — "Registration answers" `<details>` under the
+  email (no new column) and a "Registration answers at a glance" card above the roster.
+- **`storage.purge_expired_attendees`** — deletes the purged attendees' answers
+  (same cutoff, before the UPDATE); `retention.py` wording updated. Answers are
+  read only by `event_answers` / `get_attendee_answers`, from the creator/admin-gated
+  monitor routes — never by reports, AI prompts or public pages.
+
+Tests: `tests/test_registration_questions.py`.
+
 ## 2026-10-08 (v3.45 — team activities on the home strip and to-do)
 
 - **`storage.event_feed_scope`** — the Monitor's "directory decides" scope, now

@@ -31,6 +31,7 @@ from datetime import datetime, timedelta, date, time
 import pandas as pd
 import css_is_engine as eng
 import tzutil as tz  # local (PH) wall-clock — never stamp with the server clock
+import reg_questions as rq  # custom registration questions (pure rules)
 
 
 # ---------------------------------------------------------------------
@@ -866,6 +867,38 @@ def _add_missing_columns(conn):
     el_cols = {row[1] for row in conn.execute("PRAGMA table_info(event_link)")}
     if el_cols and "visible_after_done" not in el_cols:
         conn.execute("ALTER TABLE event_link ADD COLUMN visible_after_done INTEGER NOT NULL DEFAULT 0")
+    # Custom registration questions — extra questions an organizer adds to ONE
+    # activity's public form (food restrictions, arrival details, …), and each
+    # registrant's answers. A question that already has answers is archived
+    # (archived_at set) instead of deleted so those answers stay readable.
+    # attendee_answer.value is PII-adjacent (diet, health): the retention purge
+    # deletes it along with the attendee's name/email, and any code that deletes
+    # an attendee must delete their answers first (foreign keys are ON).
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS event_question (
+               id           INTEGER PRIMARY KEY,
+               event_id     INTEGER NOT NULL REFERENCES event(id),
+               label        TEXT NOT NULL,
+               help_text    TEXT,
+               kind         TEXT NOT NULL,
+               options_json TEXT,
+               required     INTEGER NOT NULL DEFAULT 0,
+               ordinal      INTEGER NOT NULL DEFAULT 0,
+               archived_at  TEXT,
+               created_by   TEXT,
+               created_at   TEXT
+           )""")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_event_question_event "
+                 "ON event_question(event_id)")
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS attendee_answer (
+               id          INTEGER PRIMARY KEY,
+               attendee_id INTEGER NOT NULL REFERENCES attendee(id),
+               question_id INTEGER NOT NULL REFERENCES event_question(id),
+               value       TEXT,
+               updated_at  TEXT,
+               UNIQUE(attendee_id, question_id)
+           )""")
     # Spot Feedback — a logged-in user flags a spot on a dashboard page and leaves a
     # comment; admins triage it on a board. element_selector + region_json locate the
     # spot (D4=A: no screenshot). status walks the SPOT_STATUSES workflow.
@@ -2007,6 +2040,157 @@ def register_attendee(conn, event_id, *, name=None, email=None, contact=None,
     return new_id, False
 
 
+# ---------------------------------------------------------------------
+# Custom registration questions (reg_questions.py holds the rules). Questions
+# belong to one event; answers hang off the attendee and are PII-adjacent, so
+# they are only read by the creator/admin-gated monitor routes.
+# ---------------------------------------------------------------------
+
+_QUESTION_SELECT = (
+    "SELECT q.id, q.event_id, q.label, q.help_text, q.kind, q.options_json, "
+    "q.required, q.ordinal, q.archived_at, "
+    "(SELECT COUNT(*) FROM attendee_answer a WHERE a.question_id = q.id) "
+    "FROM event_question q")
+
+
+def _question_row(r):
+    try:
+        options = json.loads(r[5]) if r[5] else []
+    except ValueError:
+        options = []
+    return {"id": r[0], "event_id": r[1], "label": r[2], "help_text": r[3] or "",
+            "kind": r[4], "options": options, "required": bool(r[6]),
+            "ordinal": r[7], "archived_at": r[8], "n_answers": r[9]}
+
+
+def list_event_questions(conn, event_id, include_archived=False):
+    """The event's registration questions in display order, each with `n_answers`
+    (how many answers it holds — the manage page locks the kind once > 0).
+    Archived questions are left out unless include_archived."""
+    where = "" if include_archived else " AND q.archived_at IS NULL"
+    rows = conn.execute(
+        _QUESTION_SELECT + " WHERE q.event_id = ?" + where +
+        " ORDER BY q.ordinal, q.id", (event_id,)).fetchall()
+    return [_question_row(r) for r in rows]
+
+
+def get_event_question(conn, event_id, qid):
+    """One question, or None when `qid` is not THIS event's. Every route that takes a
+    question id goes through this, so an id from another activity can't be touched."""
+    r = conn.execute(_QUESTION_SELECT + " WHERE q.id = ? AND q.event_id = ?",
+                     (qid, event_id)).fetchone()
+    return _question_row(r) if r else None
+
+
+def add_event_question(conn, event_id, q, created_by=None):
+    """Append a cleaned question (reg_questions.clean_question) to an event; ordinal
+    = next slot. Returns the new id, or None when the event already has
+    MAX_QUESTIONS active questions."""
+    active = conn.execute(
+        "SELECT COUNT(*) FROM event_question WHERE event_id = ? AND archived_at IS NULL",
+        (event_id,)).fetchone()[0]
+    if active >= rq.MAX_QUESTIONS:
+        return None
+    nxt = conn.execute(
+        "SELECT COALESCE(MAX(ordinal), 0) + 1 FROM event_question WHERE event_id = ?",
+        (event_id,)).fetchone()[0]
+    opts = json.dumps(q["options"]) if q["kind"] in rq.CHOICE_KINDS else None
+    cur = conn.execute(
+        """INSERT INTO event_question(event_id, label, help_text, kind, options_json,
+               required, ordinal, created_by, created_at)
+           VALUES (?,?,?,?,?,?,?,?,?)""",
+        (event_id, q["label"], q.get("help_text") or None, q["kind"], opts,
+         1 if q.get("required") else 0, nxt, created_by, tz.now_iso()))
+    conn.commit()
+    return cur.lastrowid
+
+
+def update_event_question(conn, qid, q):
+    """Save an edited question. The kind changes ONLY while nobody has answered —
+    afterwards the stored kind is kept, so existing answers keep their meaning."""
+    row = conn.execute(
+        "SELECT kind, (SELECT COUNT(*) FROM attendee_answer WHERE question_id = ?) "
+        "FROM event_question WHERE id = ?", (qid, qid)).fetchone()
+    if not row:
+        return
+    kind = row[0] if row[1] else q["kind"]
+    opts = json.dumps(q["options"]) if kind in rq.CHOICE_KINDS else None
+    conn.execute(
+        "UPDATE event_question SET label=?, help_text=?, kind=?, options_json=?, "
+        "required=? WHERE id=?",
+        (q["label"], q.get("help_text") or None, kind, opts,
+         1 if q.get("required") else 0, qid))
+    conn.commit()
+
+
+def remove_event_question(conn, qid):
+    """Delete a question nobody has answered; ARCHIVE one that has (hidden from the
+    form, answers kept). Returns "deleted" or "archived"."""
+    n = conn.execute("SELECT COUNT(*) FROM attendee_answer WHERE question_id = ?",
+                     (qid,)).fetchone()[0]
+    if n:
+        conn.execute("UPDATE event_question SET archived_at=? WHERE id=?",
+                     (tz.now_iso(), qid))
+        conn.commit()
+        return "archived"
+    conn.execute("DELETE FROM event_question WHERE id=?", (qid,))
+    conn.commit()
+    return "deleted"
+
+
+def move_event_question(conn, event_id, qid, direction):
+    """Swap a question with its active neighbour ("up" or "down"); a no-op at either
+    end. The active list is renumbered 1..n so the swap holds even if two ordinals
+    ever matched."""
+    rows = [r[0] for r in conn.execute(
+        "SELECT id FROM event_question WHERE event_id = ? AND archived_at IS NULL "
+        "ORDER BY ordinal, id", (event_id,)).fetchall()]
+    if qid not in rows or direction not in ("up", "down"):
+        return
+    i = rows.index(qid)
+    j = i - 1 if direction == "up" else i + 1
+    if j < 0 or j >= len(rows):
+        return
+    rows[i], rows[j] = rows[j], rows[i]
+    for n, rid in enumerate(rows, start=1):
+        conn.execute("UPDATE event_question SET ordinal=? WHERE id=?", (n, rid))
+    conn.commit()
+
+
+def save_attendee_answers(conn, attendee_id, values):
+    """Upsert {question_id: stored_value}. Only the keys present are written — a
+    blank answer is simply absent from `values`, so a resubmission never wipes an
+    earlier answer (the same rule update_attendee follows)."""
+    now = tz.now_iso()
+    for qid, val in values.items():
+        conn.execute(
+            """INSERT INTO attendee_answer(attendee_id, question_id, value, updated_at)
+               VALUES (?,?,?,?)
+               ON CONFLICT(attendee_id, question_id)
+               DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at""",
+            (attendee_id, qid, val, now))
+    conn.commit()
+
+
+def get_attendee_answers(conn, attendee_id):
+    """{question_id: value} for one attendee."""
+    return {r[0]: r[1] for r in conn.execute(
+        "SELECT question_id, value FROM attendee_answer WHERE attendee_id = ?",
+        (attendee_id,)).fetchall()}
+
+
+def event_answers(conn, event_id):
+    """{attendee_id: {question_id: value}} for every attendee of an event — one
+    query, for the roster and export."""
+    out = {}
+    for aid, qid, val in conn.execute(
+            """SELECT a.attendee_id, a.question_id, a.value
+                 FROM attendee_answer a JOIN attendee t ON t.id = a.attendee_id
+                WHERE t.event_id = ?""", (event_id,)).fetchall():
+        out.setdefault(aid, {})[qid] = val
+    return out
+
+
 def _tally_demo(out, sex, affil):
     """Fold one respondent's sex/affiliation strings into a running tally."""
     s = (sex or "").strip().upper()
@@ -2116,6 +2300,8 @@ def delete_attendee_entry(conn, event_id, attendee_id):
                      (attendee_id,)).fetchone()[0]
     if n:
         return "hasresponses", n
+    # Registration-question answers hang off the attendee (foreign keys are ON).
+    conn.execute("DELETE FROM attendee_answer WHERE attendee_id=?", (attendee_id,))
     conn.execute("DELETE FROM attendee WHERE id=?", (attendee_id,))
     conn.commit()
     return "ok", None
@@ -2123,11 +2309,19 @@ def delete_attendee_entry(conn, event_id, attendee_id):
 
 def purge_expired_attendees(conn, cutoff_iso, now_iso=None):
     """RETENTION enforcement: null the PII fields (name/email/contact) of every
-    attendee whose consent is older than cutoff_iso and not already purged. The
-    row is KEPT (consent_at/consent_text remain as the consent record) and
-    purged_at is stamped. Returns the number of rows purged. Ratings are
-    untouched — they live in response/answer and were never identifying."""
+    attendee whose consent is older than cutoff_iso and not already purged, and
+    delete their registration-question answers (diet/health details are as
+    sensitive as the contact fields). The row is KEPT (consent_at/consent_text
+    remain as the consent record) and purged_at is stamped. Returns the number
+    of rows purged. Ratings are untouched — they live in response/answer and
+    were never identifying."""
     now_iso = now_iso or tz.now_iso()
+    # Same cutoff and same purged_at IS NULL filter as the UPDATE below, and it
+    # must run first — afterwards purged_at is set and the subquery matches nothing.
+    conn.execute(
+        """DELETE FROM attendee_answer WHERE attendee_id IN
+             (SELECT id FROM attendee WHERE consent_at < ? AND purged_at IS NULL)""",
+        (cutoff_iso,))
     cur = conn.execute(
         """UPDATE attendee
               SET name=NULL, email=NULL, contact=NULL, purged_at=?

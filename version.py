@@ -17,10 +17,28 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.45"
+APP_VERSION = "3.46"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.46",
+        "date": "October 8, 2026",
+        "summary": "Organizers can now add their own questions to an activity's registration form and read the answers.",
+        "changes": [
+            "Organizers can now add their own questions to an activity's registration "
+            "form, like food restrictions or arrival time. Pick a ready-made set or "
+            "write your own, from the activity's manage page.",
+            "Questions can be short answers, paragraphs, pick-one or pick-many lists, "
+            "yes/no, a date or a time, and can be marked required.",
+            "On an activity's Monitor page, each registrant now has a \"Registration "
+            "answers\" link showing what they answered, and a small summary at the top "
+            "counts the answers to your pick-one, pick-many and yes/no questions.",
+            "The downloaded roster (XLSX) now has a column for each registration question.",
+            "Answers are deleted together with the registrant's name and email when "
+            "the retention period ends.",
+        ],
+    },
     {
         "version": "3.45",
         "date": "October 8, 2026",

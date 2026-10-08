@@ -38,6 +38,16 @@
   .who-name { font-weight:600; }
   .who-removed { color:var(--grey); font-style:italic; }
   .who-sub { color:var(--soft); font-size:.78rem; }
+  .qtally { border:1px solid var(--line); background:var(--surface); border-radius:12px;
+            padding:.7rem .95rem; margin:0 0 1rem; font-size:.88rem; }
+  .qtally h2 { margin:0 0 .4rem; font-size:.78rem; text-transform:uppercase; letter-spacing:.02em; color:var(--soft); }
+  .qtally p { margin:.15rem 0; }
+  .qtally .qt-none { color:var(--grey); }
+  details.regans { margin-top:.3rem; font-size:.78rem; }
+  details.regans summary { cursor:pointer; color:var(--accent); font-weight:600; }
+  details.regans dl { margin:.3rem 0 0; }
+  details.regans dt { color:var(--soft); margin-top:.25rem; }
+  details.regans dd { margin:0; color:var(--ink); overflow-wrap:anywhere; white-space:pre-line; }
   .badge { display:inline-block; font-size:.72rem; font-weight:700; padding:.12rem .55rem; border-radius:999px; white-space:nowrap; }
   .badge.done { background:var(--green-bg); color:var(--green); border:1px solid var(--green-ln); }
   .badge.part { background:var(--amber-bg); color:var(--amber); border:1px solid var(--amber-ln); }
@@ -133,6 +143,15 @@
 
   <p class="note">“Completed” means the participant answered all {{ summ.n_forms }} feedback form{{ '' if summ.n_forms == 1 else 's' }} for this activity.{% if summ.unattributed %} The “Not pre-registered” count is walk-in / QR / paper responses with no registrant — not tied to anyone above, but each one counts as a completed response, so the completion rate is figured out of everyone who took part (registered plus these).{% endif %} The completion rate reaches 100% only when every registered person has finished.</p>
 
+  {% if answer_tally %}
+  <div class="qtally">
+    <h2>Registration answers at a glance</h2>
+    {% for t in answer_tally %}
+    <p><strong>{{ t.label }}:</strong> <span{% if not t.counts %} class="qt-none"{% endif %}>{{ t.text }}</span></p>
+    {% endfor %}
+  </div>
+  {% endif %}
+
   {% if not people %}
     <div class="empty">No one has registered for this activity yet. Share the registration link above so participants can sign in and answer the CSS.</div>
   {% else %}
@@ -161,6 +180,11 @@
           {% else %}
             <div class="who-name">{{ p.name or "—" }}</div>
             {% if p.email %}<div class="who-sub">{{ p.email }}</div>{% endif %}
+            {% if p.extra %}
+            <details class="regans"><summary>Registration answers</summary>
+              <dl>{% for label, value in p.extra %}<dt>{{ label }}</dt><dd>{{ value }}</dd>{% endfor %}</dl>
+            </details>
+            {% endif %}
           {% endif %}
         </td>
         <td data-label="Contact">{% if p.purged %}<span class="who-sub">—</span>{% else %}{{ p.contact or "—" }}{% endif %}</td>
