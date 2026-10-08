@@ -1,6 +1,6 @@
 # CHANGELOG — Cowork revisions (surgical)
 
-## 2026-10-08 (resource persons always need a topic; editable on the manage page)
+## 2026-10-08 (v3.47 — resource persons always need a topic; editable on the manage page)
 
 - **Create form** — a resource person can no longer be saved without a topic (nor a
   topic without a person). Enforced in the browser (`required`) and on the server
