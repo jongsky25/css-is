@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.50"
+APP_VERSION = "3.51"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.51",
+        "date": "October 8, 2026",
+        "summary": "You can now crop and zoom your profile photo on My profile and the Welcome page.",
+        "changes": [
+            "When you pick a profile photo, you can drag it and zoom to choose exactly what shows in your round picture.",
+            "If you already have a photo, an \"Adjust size & position\" button lets you fix it without uploading again.",
+        ],
+    },
     {
         "version": "3.50",
         "date": "October 8, 2026",

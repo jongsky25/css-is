@@ -1,8 +1,10 @@
 {% extends "dash_layout.html" %}
+{% from "_photo_crop.html" import photo_crop_styles, photo_adjust_button, photo_editor %}
 {% block title %}{{ "Edit staff" if is_edit else "Add staff" }}{% endblock %}
 {% block page_width %}narrow{% endblock %}
 
 {% block head %}
+{{ photo_crop_styles() }}
 <style>
   .scard { max-width:620px; background:var(--surface); border:1px solid var(--line);
           border-radius:12px; padding:1.5rem 1.75rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
@@ -14,22 +16,6 @@
             color:var(--grey); font-weight:700; font-size:1.6rem; overflow:hidden; }
   .avatar3 img { width:100%; height:100%; object-fit:cover; }
   .pick .lbl { color:var(--accent); font-weight:600; cursor:pointer; font-size:.85rem; }
-  .linkbtn { background:none; border:none; color:var(--accent); font-weight:600; cursor:pointer;
-             padding:0; font-size:.85rem; margin-top:.35rem; display:block; }
-  .photoeditor { max-width:240px; margin:.4rem 0 .2rem; }
-  .stage { width:240px; height:240px; border-radius:50%; overflow:hidden; position:relative;
-           background:var(--surface-3); border:1px solid var(--line); touch-action:none;
-           cursor:grab; user-select:none; }
-  .stage:active { cursor:grabbing; }
-  .stage canvas { display:block; pointer-events:none; }
-  .zoomrow { display:flex; align-items:center; gap:.6rem; margin:.65rem 0 .15rem;
-             font-size:.85rem; color:var(--soft); }
-  .zoomrow input[type=range] { flex:1; accent-color:var(--accent); }
-  .ebtns { display:flex; gap:.75rem; align-items:center; margin-top:.5rem; }
-  .ebtns .done { background:var(--accent); color:var(--on-accent); border:none; border-radius:8px;
-                 padding:.4rem 1rem; font-weight:600; cursor:pointer; font-size:.85rem; }
-  .ebtns .ghost { background:none; border:none; color:var(--soft); font-weight:600;
-                  cursor:pointer; padding:0; font-size:.85rem; }
   .scard label { display:block; font-weight:600; margin:.7rem 0 .25rem; font-size:.9rem; }
   .scard input[type=text], .scard input[type=email], .scard select {
       width:100%; padding:.55rem .6rem; border:1px solid var(--line); border-radius:8px; font-size:.95rem; background:var(--surface); }
@@ -66,26 +52,12 @@
       </span>
       <div>
         <label>Profile photo</label>
-        <span class="pick"><label class="lbl">Choose / change photo<input type="file" accept="image/*" hidden onchange="onPick(this)"></label></span>
-        {% if f.photo_data or (f.has_photo and f.id) %}
-        <button type="button" class="linkbtn" id="adjustBtn">Adjust size &amp; position</button>
-        {% endif %}
+        <span class="pick"><label class="lbl">Choose / change photo<input type="file" accept="image/*" hidden onchange="photoCrop.pick(this)"></label></span>
+        {{ photo_adjust_button() }}
       </div>
     </div>
 
-    <div class="photoeditor" id="photoEditor" hidden>
-      <div class="stage" id="cropStage">
-        <canvas id="cropCanvas" width="240" height="240"></canvas>
-      </div>
-      <div class="zoomrow">
-        <span>Zoom</span>
-        <input type="range" id="cropZoom" min="1" max="3" step="0.01" value="1" aria-label="Zoom photo">
-      </div>
-      <p class="hint" style="margin:.2rem 0 0;color:var(--muted);font-size:.82rem;">Drag the photo to reposition and use the slider to zoom. This is exactly how it appears as a circular avatar.</p>
-      <div class="ebtns">
-        <button type="button" class="done" id="cropDone">Done</button>
-      </div>
-    </div>
+    {{ photo_editor() }}
 
     <div class="fgrid" style="grid-template-columns:140px 1fr;">
       <div>
@@ -179,95 +151,9 @@
   </form>
 </div>
 
+<script src="/static/js/photo-crop.js"></script>
 <script>
-// ---- Profile photo: crop / zoom / reposition into the circular avatar ----
-const V = 240, OUT = 512;                 // editor viewport px, baked output px
-const editor = document.getElementById('photoEditor');
-const stage  = document.getElementById('cropStage');
-const cvs    = document.getElementById('cropCanvas');
-const cctx   = cvs.getContext('2d');
-const zoom   = document.getElementById('cropZoom');
-let crop = null;                          // { img, min, scale, ox, oy }
-
-function clampCrop() {
-  const w = crop.img.width*crop.scale, h = crop.img.height*crop.scale;
-  crop.ox = Math.min(0, Math.max(V - w, crop.ox));
-  crop.oy = Math.min(0, Math.max(V - h, crop.oy));
-}
-function renderCrop() {
-  if (!crop) return;
-  clampCrop();
-  cctx.clearRect(0, 0, V, V);
-  cctx.drawImage(crop.img, crop.ox, crop.oy, crop.img.width*crop.scale, crop.img.height*crop.scale);
-  bakeCrop();
-}
-function bakeCrop() {
-  const k = OUT/V;
-  const c = document.createElement('canvas'); c.width = OUT; c.height = OUT;
-  const x = c.getContext('2d');
-  x.fillStyle = '#fff'; x.fillRect(0, 0, OUT, OUT);
-  x.drawImage(crop.img, crop.ox*k, crop.oy*k, crop.img.width*crop.scale*k, crop.img.height*crop.scale*k);
-  const d = c.toDataURL('image/jpeg', 0.85);
-  document.querySelector('input[name=photo_data]').value = d;
-  document.querySelector('.preview').innerHTML = '<img src="' + d + '">';
-}
-function openCropEditor(src) {
-  const img = new Image();
-  img.onload = () => {
-    const min = Math.max(V/img.width, V/img.height);   // "cover" the circle at zoom 1
-    crop = { img, min, scale: min, ox: 0, oy: 0 };
-    crop.ox = (V - img.width*crop.scale)/2;            // start centred
-    crop.oy = (V - img.height*crop.scale)/2;
-    zoom.value = 1;
-    editor.hidden = false;
-    renderCrop();
-  };
-  img.src = src;
-}
-
-function onPick(input) {
-  if (!input.files[0]) return;
-  const reader = new FileReader();
-  reader.onload = () => openCropEditor(reader.result);
-  reader.readAsDataURL(input.files[0]);
-}
-
-zoom.addEventListener('input', () => {
-  if (!crop) return;
-  const newScale = crop.min * parseFloat(zoom.value);
-  const cx = (V/2 - crop.ox)/crop.scale;               // keep viewport centre fixed
-  const cy = (V/2 - crop.oy)/crop.scale;
-  crop.scale = newScale;
-  crop.ox = V/2 - cx*newScale;
-  crop.oy = V/2 - cy*newScale;
-  renderCrop();
-});
-
-let drag = null;
-stage.addEventListener('pointerdown', (e) => {
-  if (!crop) return;
-  drag = { x: e.clientX, y: e.clientY, ox: crop.ox, oy: crop.oy };
-  stage.setPointerCapture(e.pointerId);
-});
-stage.addEventListener('pointermove', (e) => {
-  if (!drag) return;
-  crop.ox = drag.ox + (e.clientX - drag.x);
-  crop.oy = drag.oy + (e.clientY - drag.y);
-  renderCrop();
-});
-stage.addEventListener('pointerup',     () => { drag = null; });
-stage.addEventListener('pointercancel', () => { drag = null; });
-
-document.getElementById('cropDone').addEventListener('click', () => { editor.hidden = true; });
-
-const adjustBtn = document.getElementById('adjustBtn');
-if (adjustBtn) {
-  adjustBtn.addEventListener('click', () => {
-    const existing = document.querySelector('input[name=photo_data]').value
-                  || document.querySelector('.preview img')?.getAttribute('src');
-    if (existing) openCropEditor(existing);
-  });
-}
+const photoCrop = PhotoCrop.init({ hidden: 'input[name=photo_data]', preview: '.preview' });
 
 function onPickSig(input) {
   if (!input.files[0]) return;
