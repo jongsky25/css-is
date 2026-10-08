@@ -21,6 +21,11 @@
           text-transform:uppercase; letter-spacing:.02em; margin-right:.5rem; vertical-align:middle; }
   .life.upcoming { color:var(--accent); background:var(--accent-bg); border-color:var(--blue-ln); }
   .life.ongoing  { color:var(--green); background:var(--green-bg); border-color:var(--green-ln); }
+  .life.concluded { color:var(--soft); background:var(--surface-2); border-color:var(--line); }
+  .mon-views { display:flex; gap:.4rem; margin:1rem 0 0; }
+  .mon-views a { font-size:.82rem; font-weight:600; text-decoration:none; color:var(--soft);
+                 border:1px solid var(--line); border-radius:999px; padding:.25rem .8rem; }
+  .mon-views a.on { color:var(--accent); background:var(--accent-bg); border-color:var(--blue-ln); }
   .bar { height:8px; border-radius:999px; background:var(--surface-2); overflow:hidden;
          display:flex; margin:.7rem 0 .55rem; border:1px solid var(--line); }
   .bar .seg-done { background:var(--green); }
@@ -37,7 +42,11 @@
 {% block content %}
 {{ monitor_header("monitor") }}
 {% if flash == 'archived' %}<div class="mon-meta" style="background:var(--green-bg,#e8f5ee); border-radius:10px; padding:.6rem .85rem; margin:0 0 1rem;">Activity archived. It no longer appears on Monitor or in reports, and its registration link is closed. You can restore it from <a href="/activities/archived">Archived activities</a>.</div>{% endif %}
-<p class="lede">Track who has registered for each activity through its public link, and how far they have got with the customer-satisfaction survey (CSS). Only activities that are <b>upcoming</b> (still registering) or <b>ongoing</b> (CSS collecting) appear here — once an activity concludes it moves to its report.{% if scope_kind == "bureau" %} You are seeing every activity in the bureau.{% elif scope_kind == "none" %} Your account isn’t linked to a directory record yet, so you are seeing only the activities you created.{% else %} You are seeing your team’s activities — the ones your section ran, and the ones one of you spoke at.{% endif %} Open one for the full participant roster, or export it.</p>
+<p class="lede">Track who has registered for each activity through its public link, and how far they have got with the customer-satisfaction survey (CSS). The <b>Upcoming &amp; ongoing</b> view lists activities still registering or collecting; once an activity concludes it moves to the <b>Concluded</b> view, where its roster stays available.{% if scope_kind == "bureau" %} You are seeing every activity in the bureau.{% elif scope_kind == "none" %} Your account isn’t linked to a directory record yet, so you are seeing only the activities you created.{% else %} You are seeing your team’s activities — the ones your section ran, and the ones one of you spoke at.{% endif %} Open one for the full participant roster, or export it.</p>
+<nav class="mon-views" aria-label="Monitor view">
+  <a href="/monitor" class="{{ 'on' if view != 'concluded' }}">Upcoming &amp; ongoing</a>
+  <a href="/monitor?view=concluded" class="{{ 'on' if view == 'concluded' }}">Concluded</a>
+</nav>
 
 {% if outside_events %}
 <h2 style="font-size:1.05rem; margin:1.4rem 0 .2rem;">Invited activities <span style="font-weight:500; color:var(--soft); font-size:.82rem;">— response tracking</span></h2>
@@ -63,7 +72,9 @@
 {% endif %}
 
 {% if not events %}
-  {% if not outside_events %}
+  {% if view == 'concluded' %}
+  <div class="empty">No concluded activities with registrations yet. Concluded activities that had participants register will appear here. Invited events are listed under <a href="/activities/outside">Invited events</a>.</div>
+  {% elif not outside_events %}
   <div class="empty">No upcoming or ongoing activities to monitor. Once you <a href="/create">create an activity</a> with a future date and participants register through its link, it will appear here.</div>
   {% endif %}
 {% else %}

@@ -1,5 +1,14 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-08 (v3.42 — concluded activities stay reachable in Monitor)
+
+- **`/monitor?view=concluded`** — `/monitor` listed only upcoming/ongoing
+  activities, so a finished activity's roster page (`/monitor/<token>`, which
+  was never lifecycle-gated) had no link to it. A "Concluded" pill now lists
+  concluded bureau activities that had registrations; the default view is unchanged.
+
+Tests: `tests/test_monitor.py`.
+
 ## 2026-10-06 (v3.41 — wellness register prints the time range)
 
 - **`wellness_register.time_range`** — the monthly register PDF printed only a
