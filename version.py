@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.41"
+APP_VERSION = "3.42"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.42",
+        "date": "October 8, 2026",
+        "summary": "Finished activities can still be opened from Monitor.",
+        "changes": [
+            "Monitor now has a Concluded view, so you can still open the participant "
+            "roster, CSS status and export of an activity after it is over.",
+        ],
+    },
     {
         "version": "3.41",
         "date": "October 6, 2026",
