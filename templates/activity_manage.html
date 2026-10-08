@@ -577,25 +577,66 @@
        "Nothing in this card yet.",
        "e.g. Certificate of participation") }}
 
-  <!-- resource persons (read-only) -->
-  <div class="mcard">
-    <h2>Resource persons</h2>
+  <!-- resource persons: add / edit / remove (each is one ratable speaker review) -->
+  <div class="mcard" id="speakers">
+    <h2>Resource persons &amp; topics</h2>
+    <p class="hint">Each resource person needs a topic. You can change the topic any time; the resource person can be changed or removed only while that speaker review has no responses.</p>
+    {% if err == 'addspeaker' %}<div class="flash warn">Pick a resource person <strong>and</strong> type a topic to add them.</div>{% endif %}
+    {% if err == 'renametopic' %}<div class="flash warn">A topic can't be blank.</div>{% endif %}
+    {% if err == 'rpchange' %}<div class="flash warn">That resource person already has responses, so they can't be swapped for someone else.</div>{% endif %}
+    {% if err == 'hasresponses' %}<div class="flash warn">That speaker already has responses, so it can't be removed (its ratings would be lost).</div>{% endif %}
     {% if speakers %}
-    <ul class="chip-list">
+    <div class="table-wrap">
+    <table class="sp-tbl">
       {% for s in speakers %}
-      <li>
-        {% if s.has_photo %}<img class="sp-av" src="/photo/{{ s.id }}" alt="">
-        {% else %}<span class="sp-av">{{ (s.name or '?')[:1]|upper }}</span>{% endif %}
-        <span>
-          <div class="sp-name">{% if s.honorific %}{{ s.honorific }} {% endif %}{{ s.name }}</div>
-          {% if s.role %}<div class="sp-role">{{ s.role }}{% if s.agency and not s.is_internal %} · {{ s.agency }}{% endif %}</div>{% endif %}
-        </span>
-      </li>
+      <tr>
+        <td>
+          <form method="post" action="/activities/{{ ev.event_token }}/speakers/{{ s.id }}/rename" class="sp-topic">
+            <select name="rp_id" aria-label="Resource person" {% if s.responses %}disabled title="Has responses — can't be changed"{% endif %}>
+              {% for rp in resource_persons %}
+              <option value="{{ rp.id }}" {% if rp.id == s.rp_id %}selected{% endif %}>{{ rp.name }}{% if rp.is_internal and rp.org_path %} — {{ rp.org_path }}{% elif rp.is_internal %} — internal{% else %} — external{% endif %}</option>
+              {% endfor %}
+            </select>
+            <input type="text" name="topic" value="{{ s.topic or '' }}" aria-label="Topic" required>
+            <button class="btn ghost" type="submit" style="font-size:.78rem; padding:.3rem .6rem;">Save</button>
+          </form>
+        </td>
+        <td class="sp-resp">{{ s.responses }} response{{ '' if s.responses == 1 else 's' }}</td>
+        <td class="sp-act">
+          {% if s.responses %}
+          <span class="empty" role="img" aria-label="Locked — has responses, can't be removed" title="Has responses — remove is disabled">🔒</span>
+          {% else %}
+          <form method="post" action="/activities/{{ ev.event_token }}/speakers/{{ s.id }}/remove"
+                onsubmit="return confirm('Remove this resource person? This can\'t be undone.');">
+            <button class="btn-del" type="submit">Remove</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
       {% endfor %}
-    </ul>
+    </table>
+    </div>
     {% else %}
     <p class="empty">No resource persons are attached to this activity.</p>
     {% endif %}
+
+    <form method="post" action="/activities/{{ ev.event_token }}/speakers" class="addform">
+      <div>
+        <label for="add_rp_id">Resource person</label>
+        <select id="add_rp_id" name="rp_id" required>
+          <option value="">— select —</option>
+          {% for rp in resource_persons %}
+          <option value="{{ rp.id }}">{{ rp.name }}{% if rp.is_internal and rp.org_path %} — {{ rp.org_path }}{% elif rp.is_internal %} — internal{% else %} — external{% endif %}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="add_topic">Topic</label>
+        <input type="text" id="add_topic" name="topic" placeholder="e.g. Cold-chain management" required>
+      </div>
+      <div><button class="btn" type="submit">+ Add resource person</button></div>
+    </form>
+    <p class="hint">New speaker reviews get their own QR; re-print the QR sheet to include them.</p>
   </div>
 
   <!-- activity dates (editable any time) -->

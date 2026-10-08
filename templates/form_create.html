@@ -118,7 +118,7 @@
 
     <fieldset>
       <legend>4 · Resource persons &amp; topics</legend>
-      <div class="hint" id="rp-hint">Each resource-person + topic pair becomes one ratable speaker review (Form 3).
+      <div class="hint" id="rp-hint">Each resource person needs a topic — every pair becomes one ratable speaker review (Form 3).
         <strong>Optional for a bureau-organized activity</strong> — leave it empty if there were no resource persons (you still get the event review). Required for an outside event.</div>
       <div id="speakers"></div>
       <button type="button" class="btn-add" onclick="addRow()">+ Add resource person</button>
@@ -172,6 +172,13 @@ function addRow(rpId, topic) {
   // Restore a previously-typed row after a validation error.
   if (rpId) row.querySelector('select[name=rp_id]').value = rpId;
   if (topic != null) row.querySelector('input[name=topic]').value = topic;
+  // A resource person can't be saved without a topic (and vice versa).
+  const sel = row.querySelector('select[name=rp_id]'), top = row.querySelector('input[name=topic]');
+  const sync = () => {
+    const either = !!sel.value || !!top.value.trim();
+    top.required = either; sel.required = either;
+  };
+  sel.addEventListener('change', sync); top.addEventListener('input', sync); sync();
 }
 
 // The entry window is a plain date by default; "Add specific time" swaps the two
