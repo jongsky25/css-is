@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.46"
+APP_VERSION = "3.47"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.47",
+        "date": "October 8, 2026",
+        "summary": "The CSS menu no longer gets cut off on smaller screens.",
+        "changes": [
+            "The long CSS menu now scrolls when your screen is too short to show it all, so Monitor and Paper entry can always be reached.",
+            "On shorter screens the menu also drops the small description lines, so more of it fits at once.",
+        ],
+    },
     {
         "version": "3.46",
         "date": "October 8, 2026",

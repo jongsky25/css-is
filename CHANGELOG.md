@@ -1,5 +1,18 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-08 (v3.47 — dropdown menu fits short screens)
+
+- **`static/css/app.css`** — `.navgroup .menu` (desktop dropdown) gets
+  `max-height: calc(100dvh - var(--topnav-h) - 16px)` (with a `vh` fallback) and
+  `overflow-y:auto`, so the sixteen-entry CSS group scrolls instead of running off
+  the bottom. The ≤780px hamburger already did this.
+- Compact rules under `@media (min-width:781px) and (max-height:700px)`: hint lines
+  hidden, row/heading padding tightened. Placed after the base `a`/`.mhint`/`.msec`
+  rules so they win on equal specificity.
+
+Checked in headless Chromium at 1280×800/600/1000, 1024×500 and 800×400: the menu
+stays within the viewport and the last item ("Paper entry") scrolls into view.
+
 ## 2026-10-08 (v3.46 — custom registration questions)
 
 - **`reg_questions.py`** (new, pure logic) — the question kinds, presets and rules:
