@@ -94,6 +94,7 @@
   {% endif %}
 
   {% if err == 'addspeaker' %}<div class="flash warn">Pick a resource person and type a topic to add a speaker.</div>{% endif %}
+  {% if err == 'rpchange' %}<div class="flash warn">That resource person already has responses, so they can't be swapped for someone else.</div>{% endif %}
   {% if err == 'renametopic' %}<div class="flash warn">A topic can't be blank.</div>{% endif %}
   {% if err == 'hasresponses' %}<div class="flash warn">That speaker already has responses, so it can't be removed (its ratings would be lost). Close or archive the activity instead.</div>{% endif %}
 
@@ -140,10 +141,14 @@
       <tr>
         <td>
           <form method="post" action="/activities/{{ ev.event_token }}/speakers/{{ s.id }}/rename" class="sp-topic">
-            <input type="text" name="topic" value="{{ s.topic or '' }}" aria-label="Topic">
+            <select name="rp_id" aria-label="Resource person" {% if s.responses %}disabled title="Has responses — can't be changed"{% endif %}>
+              {% for rp in resource_persons %}
+              <option value="{{ rp.id }}" {% if rp.id == s.rp_id %}selected{% endif %}>{{ rp.name }}</option>
+              {% endfor %}
+            </select>
+            <input type="text" name="topic" value="{{ s.topic or '' }}" aria-label="Topic" required>
             <button class="btn ghost" type="submit" style="font-size:.78rem; padding:.3rem .6rem;">Save</button>
           </form>
-          <div class="sp-name">{{ s.rp_name or 'No resource person' }}</div>
         </td>
         <td class="sp-resp">{{ s.responses }} response{{ '' if s.responses == 1 else 's' }}</td>
         <td class="sp-act">

@@ -1,5 +1,19 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-08 (v3.49 — resource persons always need a topic; editable on the manage page)
+
+- **Create form** — a resource person can no longer be saved without a topic (nor a
+  topic without a person). Enforced in the browser (`required`) and on the server
+  (`POST /create` re-renders with an error); previously a half-filled row was dropped
+  silently and the activity was created with no resource persons.
+- **Manage page (bureau activities)** — the read-only "Resource persons" card is now
+  editable: add a person + topic, edit the topic any time, change the person or remove
+  them while that speaker review has no responses. New speaker reviews inherit the
+  activity's organizing section (`lead_org_id`). The `/activities/{token}/speakers`
+  routes now work for any manageable activity, not just outside ones; outside activities
+  can also swap the person (`storage.update_speaker_rp`).
+- **Tests** — `tests/test_event_speaker_manage.py`.
+
 ## 2026-10-08 (v3.48 — bust the app.css cache)
 
 - **`templates/dash_layout.html`, `templates/public_layout.html`** — `app.css?v=`

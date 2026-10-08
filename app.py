@@ -5824,6 +5824,17 @@ async def create_survey(request: Request):
                 if rid and (top or "").strip()]
 
     errors = []
+    # A row with only a person or only a topic used to be dropped silently, so the
+    # activity was created with no resource persons. Make the user finish the row.
+    for rid, top in zip(rp_ids, topics):
+        has_topic = bool((top or "").strip())
+        if rid and not has_topic:
+            errors.append("Each resource person needs a topic — add one, or clear "
+                          "the resource person.")
+            break
+        if has_topic and not rid:
+            errors.append("Pick a resource person for each topic, or clear the topic.")
+            break
     if not activity_name:
         errors.append("Activity name is required.")
     if not event_date:
@@ -7812,7 +7823,8 @@ def _event_view(request, conn, ev, attendee=None, errors=None, posted=None,
         "attendee": attendee, "consent_text": consent_text, "lang": lang,
         "errors": errors or [], "posted": posted or {},
         "questions": questions, "posted_multi": posted_multi or {},
-        "speakers": st.list_event_resource_persons(conn, ev["id"]),
+        "speakers": st.manage_event_speakers(conn, ev["id"]),
+        "resource_persons": st.list_resource_persons(conn),
         "resources_now": resources_now, "resources_after": resources_after,
         "completed": completed,
         "welcome_message": welcome_message, "ending_message": ending_message,
@@ -8130,7 +8142,8 @@ def _manage_ctx(request, conn, ev):
         # activity can surface a prominent "View the report" action (feedback #49).
         "report_url": st.event_report_url(conn, ev["id"]),
         "responses_total": st.event_response_total(conn, ev["id"]),
-        "speakers": st.list_event_resource_persons(conn, ev["id"]),
+        "speakers": st.manage_event_speakers(conn, ev["id"]),
+        "resource_persons": st.list_resource_persons(conn),
         "resources_now": [l for l in links if not l["visible_after_done"]],
         "resources_after": [l for l in links if l["visible_after_done"]],
         "kinds": st.EVENT_LINK_KINDS, "base_url": _base_url(request),
@@ -8928,7 +8941,7 @@ async def outside_speaker_add(request: Request, event_token: str):
     posted = await _posted(request)
     conn = get_conn()
     try:
-        ev, bail = _get_outside_event(conn, request, event_token)
+        ev, bail = _get_manage_event(conn, request, event_token)
         if bail:
             return bail
         rp_id = (posted.get("rp_id") or "").strip()
@@ -8947,17 +8960,23 @@ async def outside_speaker_add(request: Request, event_token: str):
 
 @app.post("/activities/{event_token}/speakers/{form_id}/rename")
 async def outside_speaker_rename(request: Request, event_token: str, form_id: int):
-    """Rename a speaker's topic — always allowed (it changes no rating)."""
+    """Edit a speaker: the topic is always editable (it changes no rating); the
+    resource person only while the review has no responses."""
     posted = await _posted(request)
     conn = get_conn()
     try:
-        ev, bail = _get_outside_event(conn, request, event_token)
+        ev, bail = _get_manage_event(conn, request, event_token)
         if bail:
             return bail
         topic = (posted.get("topic") or "").strip()
+        rp_id = (posted.get("rp_id") or "").strip()
         if not topic:
             return RedirectResponse(
                 f"/activities/{event_token}/manage?err=renametopic#speakers", status_code=303)
+        if rp_id:
+            if not rp_id.isdigit() or not st.update_speaker_rp(conn, ev["id"], form_id, int(rp_id)):
+                return RedirectResponse(
+                    f"/activities/{event_token}/manage?err=rpchange#speakers", status_code=303)
         if st.update_speaker_topic(conn, ev["id"], form_id, topic):
             _audit(request, conn, "outside_speaker_rename", target_type="form_instance",
                    target_id=form_id, summary=f"Renamed a speaker topic to '{topic}'.")
@@ -8972,7 +8991,7 @@ async def outside_speaker_remove(request: Request, event_token: str, form_id: in
     silently destroyed) — the manage page steers those to Close/Archive instead."""
     conn = get_conn()
     try:
-        ev, bail = _get_outside_event(conn, request, event_token)
+        ev, bail = _get_manage_event(conn, request, event_token)
         if bail:
             return bail
         if st.delete_event_speaker(conn, ev["id"], form_id):

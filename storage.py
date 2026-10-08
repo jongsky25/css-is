@@ -5148,7 +5148,7 @@ def _outside_event_context(conn, event_id):
     external organizer/creator. {} if the event has no forms left."""
     row = conn.execute("""
         SELECT fi.event_date, fi.venue, fi.modality, fi.organizer_external_id,
-               fi.created_by, fi.end_date
+               fi.created_by, fi.end_date, fi.lead_org_id
         FROM event_form ef JOIN form_instance fi ON fi.id = ef.form_instance_id
         WHERE ef.event_id = ?
         ORDER BY ef.ordinal, fi.id LIMIT 1
@@ -5156,7 +5156,8 @@ def _outside_event_context(conn, event_id):
     if not row:
         return {}
     return {"event_date": row[0], "venue": row[1], "modality": row[2],
-            "organizer_external_id": row[3], "created_by": row[4], "end_date": row[5]}
+            "organizer_external_id": row[3], "created_by": row[4], "end_date": row[5],
+            "lead_org_id": row[6]}
 
 
 def manage_event_speakers(conn, event_id):
@@ -5195,6 +5196,24 @@ def event_form_counts(conn, event_id):
     return (row[0] or 0, row[1] or 0)
 
 
+def update_speaker_rp(conn, event_id, form_instance_id, rp_id):
+    """Swap which resource person a speaker review is for. Refused once the review
+    has responses (their ratings would silently move to someone else). Returns True
+    if applied or already that person, False if blocked / not in this event."""
+    if not _form_in_event(conn, event_id, form_instance_id):
+        return False
+    cur = conn.execute("SELECT rp_id FROM form_instance WHERE id=?",
+                       (form_instance_id,)).fetchone()
+    if cur and cur[0] == int(rp_id):
+        return True
+    if speaker_response_count(conn, form_instance_id):
+        return False
+    conn.execute("UPDATE form_instance SET rp_id=? WHERE id=?",
+                 (int(rp_id), form_instance_id))
+    conn.commit()
+    return True
+
+
 def update_speaker_topic(conn, event_id, form_instance_id, topic):
     """Rename a speaker's topic — always allowed, even with responses (it doesn't
     change any rating). Guarded to the event's own forms. Returns True if applied."""
@@ -5218,7 +5237,8 @@ def add_event_speaker(conn, event_id, rp_id, topic):
         end_date=ctx.get("end_date"),
         venue=ctx["venue"], modality=ctx["modality"], rp_id=int(rp_id),
         topic=(topic or "").strip() or None,
-        organizer_external_id=ctx["organizer_external_id"], created_by=ctx["created_by"])
+        organizer_external_id=ctx["organizer_external_id"],
+        lead_org_id=ctx.get("lead_org_id"), created_by=ctx["created_by"])
     nxt = conn.execute(
         "SELECT COALESCE(MAX(ordinal), -1) + 1 FROM event_form WHERE event_id=?",
         (event_id,)).fetchone()[0]

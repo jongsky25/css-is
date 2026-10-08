@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.48"
+APP_VERSION = "3.49"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.49",
+        "date": "October 8, 2026",
+        "summary": "Resource persons now always need a topic, and you can add, edit or remove them on the Manage activity page.",
+        "changes": [
+            "When creating an activity, a resource person can no longer be saved without a topic, so none get left out by mistake.",
+            "On the Manage activity page you can now add resource persons, change their topic, or remove them.",
+            "You can switch a resource person for someone else, or remove them, only while nobody has rated them yet.",
+        ],
+    },
     {
         "version": "3.48",
         "date": "October 8, 2026",
