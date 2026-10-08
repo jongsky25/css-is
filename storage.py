@@ -693,6 +693,9 @@ def _add_missing_columns(conn):
             conn.execute("ALTER TABLE admin_user ADD COLUMN photo_mime TEXT")
         if "designation" not in au_cols:
             conn.execute("ALTER TABLE admin_user ADD COLUMN designation TEXT")
+        # What the home page calls the person ("Hi, <nickname>"); optional.
+        if "nickname" not in au_cols:
+            conn.execute("ALTER TABLE admin_user ADD COLUMN nickname TEXT")
         # The account holder's own handwritten signature — drawn with a finger or
         # stylus on /me, or uploaded onto their directory row by an admin. Same
         # linked/unlinked split as the photo above: linked accounts keep theirs on
@@ -3829,6 +3832,7 @@ def _admin_row(r):
             "avatar_last_care_at": r[13], "avatar_care_streak": r[14] or 0,
             "designation": r[15], "has_account_photo": bool(r[16]),
             "bureau_access": r[17] or "", "has_account_signature": bool(r[18]),
+            "nickname": r[19] or "",
             "pending": (r[2] == "")}      # no password set yet => still invited
 
 
@@ -3841,7 +3845,8 @@ _ADMIN_COLS = ("id, username, pw_hash, salt, role, active, must_change, rp_id, "
                "avatar_last_care_at, avatar_care_streak, designation, "
                "(photo IS NOT NULL) AS has_account_photo, "
                "COALESCE(bureau_access, ''), "
-               "(signature IS NOT NULL) AS has_account_signature")
+               "(signature IS NOT NULL) AS has_account_signature, "
+               "nickname")
 
 
 def get_admin_user(conn, username):
@@ -3980,6 +3985,7 @@ def get_user_profile(conn, user_id):
         # wins; an unlinked account uses the designation stored on the account.
         "designation": ((rp or {}).get("designation") if rp
                         else acct.get("designation")) or "",
+        "nickname": acct.get("nickname") or "",
         # position rides along too (unlinked accounts have none) so callers
         # can apply is_bureau_director() — the Director's title lives here,
         # not in designation (see is_bureau_director).
@@ -4229,6 +4235,13 @@ def get_user_photo(conn, user_id):
     if not row or row[0] is None:
         return None
     return bytes(row[0]), (row[1] or "image/jpeg")
+
+
+def set_user_nickname(conn, user_id, nickname):
+    """Set (or clear) the name the home page greets this account by."""
+    val = " ".join((nickname or "").split())[:40] or None
+    conn.execute("UPDATE admin_user SET nickname=? WHERE id=?", (val, user_id))
+    conn.commit()
 
 
 def set_user_designation(conn, user_id, designation):
