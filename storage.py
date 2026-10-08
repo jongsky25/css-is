@@ -2352,6 +2352,26 @@ def event_in_team_scope(ev, scope_path):
     return any(_path_in_scope(p, scope_path) for p in (ev.get("rp_paths") or ()))
 
 
+def event_scope_paths(conn, event_id):
+    """{"lead_path", "rp_paths"} for ONE event — the same two facts list_events
+    feeds event_in_team_scope (the organising unit's path, and the home units of
+    the internal people who spoke at it). Lets a single-event check apply exactly
+    the rule the Monitor list already uses."""
+    row = conn.execute(
+        """SELECT olead.path,
+                  (SELECT group_concat(DISTINCT ou.path) FROM event_form ef2
+                     JOIN form_instance fi2 ON fi2.id = ef2.form_instance_id
+                     JOIN resource_person rp ON rp.id = fi2.rp_id
+                     JOIN org_unit ou ON ou.id = rp.org_unit_id
+                    WHERE ef2.event_id = e.id AND COALESCE(rp.is_internal, 0) = 1)
+           FROM event e LEFT JOIN org_unit olead ON olead.id = e.lead_org_id
+           WHERE e.id = ?""", (event_id,)).fetchone()
+    if not row:
+        return {"lead_path": None, "rp_paths": []}
+    return {"lead_path": row[0],
+            "rp_paths": [p for p in (row[1] or "").split(",") if p]}
+
+
 def list_events(conn, created_by=None, lifecycles=None, team_scope=None):
     """Events newest-first for the monitor index, each enriched with its form count,
     registration funnel (registered / completed / in progress / not started) and its
