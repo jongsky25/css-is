@@ -1,5 +1,12 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-08 (photo crop editor is shared — now on My profile and Welcome)
+
+- **Photo crop** — the drag/zoom circular crop editor moved out of `staff_form.html` into
+  `static/js/photo-crop.js` + `templates/_photo_crop.html` (`PhotoCrop.init`). `/me` and the
+  Welcome page now use it too (they previously stored the raw upload with no crop), including
+  the "Adjust size & position" button for an existing photo. Staff form behaviour is unchanged.
+
 ## 2026-10-08 (v3.49 — resource persons always need a topic; editable on the manage page)
 
 - **Create form** — a resource person can no longer be saved without a topic (nor a

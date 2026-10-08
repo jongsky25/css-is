@@ -1,0 +1,43 @@
+{# Shared photo crop editor. Include inside the page <head> block (styles) and where the
+   editor should appear (markup), then call PhotoCrop.init({hidden, preview}) from
+   /static/js/photo-crop.js. #}
+{% macro photo_crop_styles() %}
+<style>
+  .linkbtn { background:none; border:none; color:var(--accent); font-weight:600; cursor:pointer;
+             padding:0; font-size:.85rem; margin-top:.35rem; display:block; }
+  .linkbtn[hidden] { display:none; }
+  .photoeditor { max-width:240px; margin:.4rem 0 .6rem; }
+  .photoeditor[hidden] { display:none; }
+  .stage { width:240px; height:240px; border-radius:50%; overflow:hidden; position:relative;
+           background:var(--surface-3); border:1px solid var(--line); touch-action:none;
+           cursor:grab; user-select:none; }
+  .stage:active { cursor:grabbing; }
+  .stage canvas { display:block; pointer-events:none; }
+  .zoomrow { display:flex; align-items:center; gap:.6rem; margin:.65rem 0 .15rem;
+             font-size:.85rem; color:var(--soft); }
+  .zoomrow input[type=range] { flex:1; accent-color:var(--accent); }
+  .ebtns { display:flex; gap:.75rem; align-items:center; margin-top:.5rem; }
+  .ebtns .done { background:var(--accent); color:var(--on-accent); border:none; border-radius:8px;
+                 padding:.4rem 1rem; font-weight:600; cursor:pointer; font-size:.85rem; }
+</style>
+{% endmacro %}
+
+{% macro photo_adjust_button() %}
+<button type="button" class="linkbtn" id="adjustBtn" hidden>Adjust size &amp; position</button>
+{% endmacro %}
+
+{% macro photo_editor() %}
+<div class="photoeditor" id="photoEditor" hidden>
+  <div class="stage" id="cropStage">
+    <canvas id="cropCanvas" width="240" height="240"></canvas>
+  </div>
+  <div class="zoomrow">
+    <span>Zoom</span>
+    <input type="range" id="cropZoom" min="1" max="3" step="0.01" value="1" aria-label="Zoom photo">
+  </div>
+  <p class="hint" style="margin:.2rem 0 0;color:var(--muted);font-size:.82rem;">Drag the photo to reposition and use the slider to zoom. This is exactly how it appears as a circular avatar.</p>
+  <div class="ebtns">
+    <button type="button" class="done" id="cropDone">Done</button>
+  </div>
+</div>
+{% endmacro %}
