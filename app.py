@@ -9026,23 +9026,30 @@ MONITOR_STATUS = {
 
 
 @app.get("/monitor", response_class=HTMLResponse)
-def monitor_index(request: Request, flash: str = ""):
+def monitor_index(request: Request, flash: str = "", view: str = ""):
     """Index of activities to monitor: registered / answered / completion at a
     glance. Scoped to the viewer's TEAM — see `_event_feed_scope`."""
     user = request.state.user
     conn = get_conn()
     try:
         owner, team_scope, scope_kind = _event_feed_scope(conn, user)
-        # Strict rule: monitoring is for activities still worth watching — upcoming
-        # (registering) and ongoing (CSS collecting). Concluded activities drop off
-        # to their report; the historical backlog never had registrations at all.
-        all_events = st.list_events(conn, created_by=owner, team_scope=team_scope,
-                                    lifecycles={"upcoming", "ongoing"})
+        # Default view: activities still worth watching — upcoming (registering) and
+        # ongoing (CSS collecting). The "Concluded" view keeps every finished
+        # activity's roster reachable (late CSS answers, exports, follow-ups) without
+        # cluttering the live list. The historical backlog never had registrations,
+        # so concluded rows with nobody registered are left out.
+        concluded_view = view == "concluded"
+        all_events = st.list_events(
+            conn, created_by=owner, team_scope=team_scope,
+            lifecycles={"concluded"} if concluded_view else {"upcoming", "ongoing"})
         # The registration funnel only exists for bureau activities (who registered +
         # answered). Outside ("invited") activities have no registration, so they get
         # a separate anonymous response-tracking section with their response totals.
         events = [e for e in all_events if e.get("event_kind") != "outside"]
-        outside_events = [e for e in all_events if e.get("event_kind") == "outside"]
+        if concluded_view:
+            events = [e for e in events if e.get("registered")]
+        outside_events = ([] if concluded_view else
+                          [e for e in all_events if e.get("event_kind") == "outside"])
         for e in outside_events:
             e["responses"] = st.event_response_total(conn, e["id"])
     finally:
@@ -9050,6 +9057,7 @@ def monitor_index(request: Request, flash: str = ""):
     return templates.TemplateResponse(request, "monitor.html", {
         "nav_active": "monitor", "show_scope": False, "events": events,
         "outside_events": outside_events, "flash": flash,
+        "view": "concluded" if concluded_view else "live",
         "scope_kind": scope_kind, "status_meta": MONITOR_STATUS,
     })
 

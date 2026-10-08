@@ -1,6 +1,6 @@
 # CHANGELOG — Cowork revisions (surgical)
 
-## 2026-10-08 (v3.42 — section managers manage their section's activities)
+## 2026-10-08 (v3.43 — section managers manage their section's activities)
 
 - **`app._can_manage_event(user, ev, conn)`** — only an admin or the activity's
   `created_by` could manage it, while `/monitor` already listed it for the
@@ -13,6 +13,15 @@
   org paths that `list_events` already computes.
 
 Tests: `tests/test_team_scope.py`.
+
+## 2026-10-08 (v3.42 — concluded activities stay reachable in Monitor)
+
+- **`/monitor?view=concluded`** — `/monitor` listed only upcoming/ongoing
+  activities, so a finished activity's roster page (`/monitor/<token>`, which
+  was never lifecycle-gated) had no link to it. A "Concluded" pill now lists
+  concluded bureau activities that had registrations; the default view is unchanged.
+
+Tests: `tests/test_monitor.py`.
 
 ## 2026-10-06 (v3.41 — wellness register prints the time range)
 
