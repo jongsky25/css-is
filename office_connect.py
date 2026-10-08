@@ -1117,11 +1117,14 @@ def _task_office_today(conn, user, today):
 
 
 def _task_activities(conn, user):
-    """The activities this person runs that are still collecting — straight to
-    their Monitor page, skipping the /css → /monitor hop (131 trips a month)."""
+    """The activities this person's team runs that are still collecting — straight
+    to their Monitor page, skipping the /css → /monitor hop (131 trips a month)."""
     if not auth.can(user["role"], "manage_event"):
         return []
-    events = [e for e in st.list_events(conn, created_by=user["username"],
+    # The same team rule as the Monitor feed: an activity an admin filed for this
+    # person's section is theirs to run, not only the ones they created.
+    owner, team_scope, _kind = st.event_feed_scope(conn, user)
+    events = [e for e in st.list_events(conn, created_by=owner, team_scope=team_scope,
                                         lifecycles={"upcoming", "ongoing"})
               if e.get("event_kind") != "outside"]
     out = []

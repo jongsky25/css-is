@@ -1,6 +1,30 @@
 # CHANGELOG — Cowork revisions (surgical)
 
-## 2026-10-08 (v3.43 — registration answers on the roster, export and summary)
+## 2026-10-08 (v3.46 — custom registration questions)
+
+- **`reg_questions.py`** (new, pure logic) — the question kinds, presets and rules:
+  `parse_options`, `clean_question`, `collect_answers` (every answer is whitelisted
+  server-side against the question's options; a checkbox group is read from the
+  raw `parse_qsl` pairs) and `display_value`.
+- **`storage`** — new tables `event_question` and `attendee_answer` (created in
+  `_add_missing_columns` next to `event_link`), with `list_event_questions`,
+  `get_event_question` (scoped to the event — the IDOR guard), `add_event_question`
+  (max 20), `update_event_question` (kind locked once answered),
+  `remove_event_question` (deletes, or archives once answered),
+  `move_event_question`, `save_attendee_answers`, `get_attendee_answers` and
+  `event_answers`. Deleting an attendee or merging duplicates clears or moves
+  their answers; the roster, export and purge side are in the same release.
+- **`app.py`** — manage-page routes `POST /activities/{token}/questions`,
+  `/questions/preset`, `/questions/{qid}`, `/questions/{qid}/remove` and
+  `/questions/{qid}/move` (creator/admin only, audited). `event_consent` validates
+  and stores the answers (`_multi_from_pairs`, `_consent_text_for`); the consent
+  notice gains one sentence only for an activity that has questions.
+- **Templates / i18n** — a "Registration questions" card on `activity_manage.html`;
+  the questions render on the public form and are re-posted by the "Is this you?"
+  step in `link_tree.html`; new strings `lt_more_details`, `yes`, `no`,
+  `consent_extra_answers`.
+
+Tests: `tests/test_registration_questions.py`.
 
 - **`reg_questions.py`** — `answer_rows` (one registrant's non-empty answers as
   display strings), `column_label` (adds " (removed)" for an archived question)
@@ -22,31 +46,51 @@
 
 Tests: `tests/test_registration_questions.py`.
 
-## 2026-10-08 (v3.42 — custom registration questions)
+## 2026-10-08 (v3.45 — team activities on the home strip and to-do)
 
-- **`reg_questions.py`** (new, pure logic) — the question kinds, presets and rules:
-  `parse_options`, `clean_question`, `collect_answers` (every answer is whitelisted
-  server-side against the question's options; a checkbox group is read from the
-  raw `parse_qsl` pairs) and `display_value`.
-- **`storage`** — new tables `event_question` and `attendee_answer` (created in
-  `_add_missing_columns` next to `event_link`), with `list_event_questions`,
-  `get_event_question` (scoped to the event — the IDOR guard), `add_event_question`
-  (max 20), `update_event_question` (kind locked once answered),
-  `remove_event_question` (deletes, or archives once answered),
-  `move_event_question`, `save_attendee_answers`, `get_attendee_answers` and
-  `event_answers`. Deleting an attendee or merging duplicates clears or moves
-  their answers; the roster, export and purge side landed in v3.43.
-- **`app.py`** — manage-page routes `POST /activities/{token}/questions`,
-  `/questions/preset`, `/questions/{qid}`, `/questions/{qid}/remove` and
-  `/questions/{qid}/move` (creator/admin only, audited). `event_consent` validates
-  and stores the answers (`_multi_from_pairs`, `_consent_text_for`); the consent
-  notice gains one sentence only for an activity that has questions.
-- **Templates / i18n** — a "Registration questions" card on `activity_manage.html`;
-  the questions render on the public form and are re-posted by the "Is this you?"
-  step in `link_tree.html`; new strings `lt_more_details`, `yes`, `no`,
-  `consent_extra_answers`.
+- **`storage.event_feed_scope`** — the Monitor's "directory decides" scope, now
+  shared (`app._event_feed_scope` delegates to it).
+- **`storage.activities_by_creator(team_scope=...)`** — the home "Your recent
+  activities" strip lists what the manager created OR what their team runs
+  (events by organising unit / speakers' units, standalone forms by organising
+  unit). Admins keep the all-creators view.
+- **`office_connect._task_activities`** — the to-do strip uses the same scope, so
+  an admin-filed activity for the section shows up for its manager.
 
-Tests: `tests/test_registration_questions.py`.
+Tests: `tests/test_team_scope.py`.
+
+## 2026-10-08 (v3.44 — Monitor "Archive this activity" works again)
+
+- **`templates/monitor_event.html`** — the copy/resend click handler was bound to
+  every `.act-btn`, including the Archive and Remove submit buttons. It set
+  `btn.disabled = true` inside the click, which cancels the form submission, so
+  the button greyed out and nothing was archived/removed. The handler is now bound
+  to `.act-btn[data-act]` only.
+
+Tests: `tests/test_monitor.py`.
+
+## 2026-10-08 (v3.43 — section managers manage their section's activities)
+
+- **`app._can_manage_event(user, ev, conn)`** — only an admin or the activity's
+  `created_by` could manage it, while `/monitor` already listed it for the
+  organising section (team scope). A section manager therefore saw an
+  admin-filed activity but was bounced off Manage / roster / export / reminders.
+  With a `conn`, a user holding `manage_event` whose directory team is not
+  "none" now manages activities passing `st.event_in_team_scope` — the same rule
+  as the Monitor feed. Other sections and viewers/encoders stay locked out.
+- **`storage.event_scope_paths`** — single-event version of the lead/speaker
+  org paths that `list_events` already computes.
+
+Tests: `tests/test_team_scope.py`.
+
+## 2026-10-08 (v3.42 — concluded activities stay reachable in Monitor)
+
+- **`/monitor?view=concluded`** — `/monitor` listed only upcoming/ongoing
+  activities, so a finished activity's roster page (`/monitor/<token>`, which
+  was never lifecycle-gated) had no link to it. A "Concluded" pill now lists
+  concluded bureau activities that had registrations; the default view is unchanged.
+
+Tests: `tests/test_monitor.py`.
 
 ## 2026-10-06 (v3.41 — wellness register prints the time range)
 

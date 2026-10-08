@@ -350,6 +350,29 @@ def test_monitor_index_lists_managers_event(manager, db_path):
     assert tok in r.text                         # links to the detail page
 
 
+def test_concluded_activity_stays_reachable_from_monitor(manager, db_path):
+    live = _seed_event(db_path, "manager@test.local")
+    done = _seed_event(db_path, "manager@test.local", event_date="2000-01-01")
+    # The default list is live-only; the concluded one is on the Concluded view.
+    assert live in manager.get("/monitor").text
+    assert done not in manager.get("/monitor").text
+    r = manager.get("/monitor?view=concluded")
+    assert r.status_code == 200
+    assert done in r.text and live not in r.text
+    # ...and its roster still opens.
+    assert "Reg One" in manager.get(f"/monitor/{done}").text
+
+
+def test_concluded_view_skips_activities_nobody_registered_for(manager, db_path):
+    conn = st.connect(db_path)
+    try:
+        _eid, tok, _f2, _f3 = _event_with_two_forms(
+            conn, created_by="manager@test.local", event_date="2000-01-01")
+    finally:
+        conn.close()
+    assert tok not in manager.get("/monitor?view=concluded").text
+
+
 def test_monitor_detail_shows_registrant_and_status(manager, db_path):
     tok = _seed_event(db_path, "manager@test.local")
     r = manager.get(f"/monitor/{tok}")
@@ -1092,3 +1115,14 @@ def test_archive_route_refused_for_non_owner(viewer, db_path):
     c = connect(db_path)
     ev = st.get_event(c, tok)
     assert not st.event_is_archived(c, ev["id"])
+
+
+def test_monitor_page_script_leaves_submit_buttons_alone(manager, db_path):
+    """The copy/resend script disables the button it handles; bound to the Archive
+    / Remove submit buttons it cancels their form submission, so it must only
+    target buttons carrying data-act."""
+    tok = _seed_event(db_path, "manager@test.local")
+    html = manager.get(f"/monitor/{tok}").text
+    assert "Archive this activity" in html
+    assert "querySelectorAll('.act-btn[data-act]')" in html
+    assert "querySelectorAll('.act-btn')" not in html

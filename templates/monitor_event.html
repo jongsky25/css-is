@@ -262,7 +262,10 @@
       var el = document.querySelector('.act-msg[data-aid="' + aid + '"]');
       if (el) { el.textContent = text; el.className = 'act-msg ' + (cls || ''); }
     }
-    document.querySelectorAll('.act-btn').forEach(function (btn) {
+    // Only the copy/resend buttons carry data-act. The Archive and Remove submit
+    // buttons share .act-btn for styling; disabling one inside its own click
+    // handler cancels the form submission, so they must not get this handler.
+    document.querySelectorAll('.act-btn[data-act]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var aid = btn.getAttribute('data-aid');
         var act = btn.getAttribute('data-act');

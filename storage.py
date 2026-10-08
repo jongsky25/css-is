@@ -2524,6 +2524,22 @@ def attendee_response_detail(conn, event_id, attendee_id):
     return out
 
 
+def event_feed_scope(conn, user):
+    """(created_by, team_scope, kind) for the activity MANAGEMENT feeds — the
+    Monitor, the Outside list, the home to-do strip and the home "recent
+    activities" strip. Feed to list_events / activities_by_creator.
+
+    The directory decides, not the role: a user with a team sees the activities
+    their team runs (event_in_team_scope), whoever filed them. The one fallback is
+    an account the directory does not place ("none"): `_path_in_scope(path, None)`
+    is True for everything, so scoping it would hand it the whole bureau — it
+    falls back to what it created instead."""
+    scope_path, kind = team_scope_for_user(conn, user)
+    if kind == "none":
+        return user["username"], None, kind
+    return None, (scope_path, kind), kind
+
+
 def event_in_team_scope(ev, scope_path):
     """Is this activity the viewer's team's, for the MANAGEMENT feeds?
 
@@ -2544,6 +2560,26 @@ def event_in_team_scope(ev, scope_path):
     if _path_in_scope(ev.get("lead_path"), scope_path):
         return True
     return any(_path_in_scope(p, scope_path) for p in (ev.get("rp_paths") or ()))
+
+
+def event_scope_paths(conn, event_id):
+    """{"lead_path", "rp_paths"} for ONE event — the same two facts list_events
+    feeds event_in_team_scope (the organising unit's path, and the home units of
+    the internal people who spoke at it). Lets a single-event check apply exactly
+    the rule the Monitor list already uses."""
+    row = conn.execute(
+        """SELECT olead.path,
+                  (SELECT group_concat(DISTINCT ou.path) FROM event_form ef2
+                     JOIN form_instance fi2 ON fi2.id = ef2.form_instance_id
+                     JOIN resource_person rp ON rp.id = fi2.rp_id
+                     JOIN org_unit ou ON ou.id = rp.org_unit_id
+                    WHERE ef2.event_id = e.id AND COALESCE(rp.is_internal, 0) = 1)
+           FROM event e LEFT JOIN org_unit olead ON olead.id = e.lead_org_id
+           WHERE e.id = ?""", (event_id,)).fetchone()
+    if not row:
+        return {"lead_path": None, "rp_paths": []}
+    return {"lead_path": row[0],
+            "rp_paths": [p for p in (row[1] or "").split(",") if p]}
 
 
 def list_events(conn, created_by=None, lifecycles=None, team_scope=None):
@@ -4778,7 +4814,7 @@ def ongoing_invited(conn, limit=20):
 
 
 def activities_by_creator(conn, created_by, limit=6, archived=0, all_creators=False,
-                          since_days=None):
+                          since_days=None, team_scope=None):
     """The most recent activities a manager created, newest first, with a response
     count and a usable link — so they can always find what they made, *especially*
     an "outside event" (Form 3 only, no event record) that the bureau-event
@@ -4808,6 +4844,11 @@ def activities_by_creator(conn, created_by, limit=6, archived=0, all_creators=Fa
     used by the Archived page)."""
     if not all_creators and not (created_by or "").strip():
         return []
+    # `team_scope` ((scope_path, kind) from event_feed_scope) widens a manager's
+    # strip from "what I created" to "what I created OR my team runs": an activity
+    # an administrator filed for the manager's section belongs on it too. The
+    # creator filter is dropped in SQL and re-applied below, per row.
+    team_mode = bool(team_scope) and not all_creators
     where = "COALESCE(fi.archived, 0) = ? AND COALESCE(fi.pooled, 0) = 0"
     params = [1 if archived else 0]
     if since_days is not None:
@@ -4817,24 +4858,41 @@ def activities_by_creator(conn, created_by, limit=6, archived=0, all_creators=Fa
         cutoff = (tz.now_local() - timedelta(days=since_days)).strftime("%Y-%m-%d")
         where += " AND (fi.event_date IS NULL OR fi.event_date >= ?)"
         params.append(cutoff)
-    if not all_creators:
+    if not all_creators and not team_mode:
         where = "fi.created_by = ? AND " + where
         params.insert(0, created_by)
     rows = conn.execute(f"""
         SELECT fi.id, fi.survey_type, fi.event_date, fi.venue, fi.modality, fi.topic,
                fi.qr_token, fi.close_at, fi.created_at, e.event_token,
                e.title, e.event_kind,
-               (SELECT COUNT(*) FROM response r WHERE r.form_instance_id = fi.id) AS responses
+               (SELECT COUNT(*) FROM response r WHERE r.form_instance_id = fi.id) AS responses,
+               fi.created_by, e.id, folead.path
         FROM form_instance fi
         LEFT JOIN event_form ef ON ef.form_instance_id = fi.id
         LEFT JOIN event e       ON e.id = ef.event_id
+        LEFT JOIN org_unit folead ON folead.id = fi.lead_org_id
         WHERE {where}
         ORDER BY fi.created_at DESC, fi.id ASC
         LIMIT ?
-    """, (*params, max(limit, 60))).fetchall()
+    """, (*params, 400 if team_mode else max(limit, 60))).fetchall()
     now = tz.now_iso()
     reps, orphans, resp_sum = {}, [], {}
+    ev_in_scope = {}
     for r in rows:
+        if team_mode:
+            # Mine, or run by my team. An event is judged once on its organising
+            # unit + speakers' units (the Monitor's rule); a standalone form on its
+            # own organising unit.
+            if r[13] != created_by:
+                if r[14] is not None:
+                    if r[14] not in ev_in_scope:
+                        ev_in_scope[r[14]] = event_in_team_scope(
+                            event_scope_paths(conn, r[14]), team_scope[0])
+                    mine = ev_in_scope[r[14]]
+                else:
+                    mine = bool(r[15]) and _path_in_scope(r[15], team_scope[0])
+                if not mine:
+                    continue
         tok = r[9]                                  # the grouping event's token (or None)
         kind_ev = (r[11] or "bureau") if tok else None
         outside = kind_ev == "outside"

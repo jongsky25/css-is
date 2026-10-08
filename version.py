@@ -17,15 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.43"
+APP_VERSION = "3.46"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "3.43",
+        "version": "3.46",
         "date": "October 8, 2026",
-        "summary": "You can now read and download the answers to your registration questions.",
+        "summary": "Organizers can now add their own questions to an activity's registration form and read the answers.",
         "changes": [
+            "Organizers can now add their own questions to an activity's registration "
+            "form, like food restrictions or arrival time. Pick a ready-made set or "
+            "write your own, from the activity's manage page.",
+            "Questions can be short answers, paragraphs, pick-one or pick-many lists, "
+            "yes/no, a date or a time, and can be marked required.",
             "On an activity's Monitor page, each registrant now has a \"Registration "
             "answers\" link showing what they answered, and a small summary at the top "
             "counts the answers to your pick-one, pick-many and yes/no questions.",
@@ -35,15 +40,42 @@ CHANGELOG = [
         ],
     },
     {
+        "version": "3.45",
+        "date": "October 8, 2026",
+        "summary": "Section managers now see their section's activities on the home page and in their to-do list.",
+        "changes": [
+            "An activity an administrator created for your section now shows under "
+            "\"Your recent activities\" and in your to-do list, not only the ones you made yourself.",
+        ],
+    },
+    {
+        "version": "3.44",
+        "date": "October 8, 2026",
+        "summary": "The Archive this activity button on Monitor works again.",
+        "changes": [
+            "Clicking Archive this activity (or Remove on a registrant) on an activity's "
+            "Monitor page now actually goes through instead of greying the button out "
+            "and doing nothing.",
+        ],
+    },
+    {
+        "version": "3.43",
+        "date": "October 8, 2026",
+        "summary": "Section managers can now manage activities that an administrator created for their section.",
+        "changes": [
+            "A section manager can now open Manage activity, the registration roster, "
+            "exports and reminders for any activity belonging to their own section, "
+            "even when an administrator was the one who created it.",
+            "Activities of other sections stay off-limits to them, as before.",
+        ],
+    },
+    {
         "version": "3.42",
         "date": "October 8, 2026",
-        "summary": "Organizers can now add their own questions to an activity's registration form.",
+        "summary": "Finished activities can still be opened from Monitor.",
         "changes": [
-            "Organizers can now add their own questions to an activity's registration "
-            "form, like food restrictions or arrival time. Pick a ready-made set or "
-            "write your own, from the activity's manage page.",
-            "Questions can be short answers, paragraphs, pick-one or pick-many lists, "
-            "yes/no, a date or a time, and can be marked required.",
+            "Monitor now has a Concluded view, so you can still open the participant "
+            "roster, CSS status and export of an activity after it is over.",
         ],
     },
     {
