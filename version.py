@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.44"
+APP_VERSION = "3.45"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.45",
+        "date": "October 8, 2026",
+        "summary": "Section managers now see their section's activities on the home page and in their to-do list.",
+        "changes": [
+            "An activity an administrator created for your section now shows under "
+            "\"Your recent activities\" and in your to-do list, not only the ones you made yourself.",
+        ],
+    },
     {
         "version": "3.44",
         "date": "October 8, 2026",

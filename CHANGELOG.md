@@ -1,5 +1,18 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-08 (v3.45 — team activities on the home strip and to-do)
+
+- **`storage.event_feed_scope`** — the Monitor's "directory decides" scope, now
+  shared (`app._event_feed_scope` delegates to it).
+- **`storage.activities_by_creator(team_scope=...)`** — the home "Your recent
+  activities" strip lists what the manager created OR what their team runs
+  (events by organising unit / speakers' units, standalone forms by organising
+  unit). Admins keep the all-creators view.
+- **`office_connect._task_activities`** — the to-do strip uses the same scope, so
+  an admin-filed activity for the section shows up for its manager.
+
+Tests: `tests/test_team_scope.py`.
+
 ## 2026-10-08 (v3.44 — Monitor "Archive this activity" works again)
 
 - **`templates/monitor_event.html`** — the copy/resend click handler was bound to
