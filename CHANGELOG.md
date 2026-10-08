@@ -1,11 +1,19 @@
 # CHANGELOG — Cowork revisions (surgical)
 
-## 2026-10-08 (photo crop editor is shared — now on My profile and Welcome)
+## 2026-10-08 (v3.51 — photo crop editor shared with My profile and Welcome)
 
 - **Photo crop** — the drag/zoom circular crop editor moved out of `staff_form.html` into
   `static/js/photo-crop.js` + `templates/_photo_crop.html` (`PhotoCrop.init`). `/me` and the
   Welcome page now use it too (they previously stored the raw upload with no crop), including
   the "Adjust size & position" button for an existing photo. Staff form behaviour is unchanged.
+
+## 2026-10-08 (v3.50 — nickname on My profile)
+
+- **`storage.py`** — new `admin_user.nickname` column (auto-migrated),
+  `set_user_nickname()`, and `nickname` on `get_user_profile()` / `_admin_row()`.
+- **`app.py`** — `/me` saves it; `_account_first_name()` returns the nickname
+  first, so the home greeting reads "Hi, <nickname>".
+- **`templates/me.html`** — Nickname field above Designation.
 
 ## 2026-10-08 (v3.49 — resource persons always need a topic; editable on the manage page)
 

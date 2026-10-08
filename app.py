@@ -4685,6 +4685,8 @@ def _account_first_name(conn, user):
         return ""
     name = ""
     acct = st.get_admin_user_by_id(conn, user["id"])
+    if acct and acct.get("nickname"):
+        return acct["nickname"]
     if acct and acct.get("rp_id"):
         rp = st.get_rp(conn, acct["rp_id"])
         name = (rp or {}).get("name") or ""
@@ -5139,6 +5141,7 @@ async def me_submit(request: Request):
     signature = _decode_signature(p.get("signature_data", ""))
     drop_signature = p.get("remove_signature") == "1"
     designation = (p.get("designation") or "").strip()
+    nickname = (p.get("nickname") or "").strip()
     uid = request.state.user["id"]
     conn = get_conn()
     try:
@@ -5179,6 +5182,7 @@ async def me_submit(request: Request):
                 _audit(request, conn, "profile_update", target_type="user",
                        target_id=uid, summary="removed their signature")
         st.set_user_designation(conn, uid, designation)
+        st.set_user_nickname(conn, uid, nickname)
         # Keep the staff directory in sync: a linked account's designation is
         # the same field the directory shows on certificates/signatory lines, so
         # write it through (a blank clears it on both sides).
