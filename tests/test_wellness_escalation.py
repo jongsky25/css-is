@@ -192,3 +192,19 @@ def test_dashboard_by_person_is_unscoped_for_admins(chain_org):
     names = _esc_names(st.wellness_dashboard_data(conn, wk, u_admin))
     assert {"ESC ChiefX", "ESC ChiefY", "ESC Staffx", "ESC DivChief",
             "ESC Director"} <= names
+
+
+# --- the Administrative Section's head escalates like a division chief -------
+
+def test_admin_head_escalates_to_director_but_still_chiefs_their_staff(chain_org):
+    conn = chain_org["conn"]
+    unit = conn.execute("SELECT id FROM org_unit WHERE path='ESC/DivA/SecX'").fetchone()[0]
+    conn.execute("UPDATE resource_person SET designation='Admin Head' "
+                 "WHERE name='ESC ChiefX'")
+    conn.commit()
+    # their own wellness/AWA requests go to the Director, not the division chief
+    assert st.get_wellness_approvers(conn, chain_org["chiefX"]) == [chain_org["director"]]
+    assert st.wellness_approver_title(conn, chain_org["chiefX"]) == "the Director"
+    # ...while their section's staff still route to them
+    assert st.get_wellness_approvers(conn, chain_org["staffx"]) == [chain_org["chiefX"]]
+    assert unit
