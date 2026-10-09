@@ -1,4 +1,4 @@
-# Autonomous QA Playbook — CSS Information System
+# Autonomous QA Playbook — Office Connect
 **Purpose:** a self-contained runbook for an *unattended* QA run that tests the build,
 fixes what it safely can, and leaves a clear trail — designed for a more capable model
 to execute end-to-end with no human in the loop. Carries forward the standing directive:
