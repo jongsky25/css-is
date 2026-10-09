@@ -270,3 +270,52 @@ def test_api_search_scope_css_returns_only_activity_and_people_sections(admin):
 def test_api_search_unknown_scope_is_treated_as_all(admin):
     assert (admin.get("/api/search?q=good&scope=nonsense").json()
             == admin.get("/api/search?q=good").json())
+
+
+# ── source registry + rate limit (Phase 3) ──────────────────────────────────
+
+def test_a_broken_source_does_not_break_search(admin, monkeypatch):
+    import search_sources as ss
+
+    def boom(conn, user, terms, ctx):
+        raise RuntimeError("source down")
+
+    monkeypatch.setattr(ss, "SOURCES", [
+        {"key": "bad", "section": "Bad", "scopes": {"all", "css"}, "run": boom},
+        {"key": "ok", "section": "Ok", "scopes": {"all", "css"},
+         "run": lambda conn, user, terms, ctx: [{"title": "fine", "hint": "", "url": "/x",
+                                                 "section": "Ok", "kw": ""}]},
+    ])
+    r = admin.get("/api/search?q=anything")
+    assert r.status_code == 200
+    assert [row["title"] for row in r.json()] == ["fine"]
+
+
+def test_sections_and_response_are_capped(app_mod):
+    import search_sources as ss
+    many = lambda conn, user, terms, ctx: [{"title": str(i), "section": "S"} for i in range(50)]
+    src = [{"key": str(i), "section": "S", "scopes": {"all"}, "run": many} for i in range(10)]
+    out = ss.run_sources(None, None, ["x"], {}, "all", sources=src)
+    assert len(out) == ss.TOTAL_CAP
+    assert len(ss.run_sources(None, None, ["x"], {}, "all", sources=src[:1])) == ss.SECTION_CAP
+
+
+def test_scope_filters_which_sources_run(app_mod):
+    import search_sources as ss
+    run = lambda tag: (lambda conn, user, terms, ctx: [{"title": tag}])
+    src = [{"key": "a", "section": "A", "scopes": {"all", "css"}, "run": run("a")},
+           {"key": "b", "section": "B", "scopes": {"all"}, "run": run("b")}]
+    assert [r["title"] for r in ss.run_sources(None, None, [], {}, "css", sources=src)] == ["a"]
+    assert [r["title"] for r in ss.run_sources(None, None, [], {}, "all", sources=src)] == ["a", "b"]
+    assert [r["title"] for r in ss.run_sources(None, None, [], {}, "bogus", sources=src)] == ["a", "b"]
+
+
+def test_the_121st_search_in_a_minute_returns_nothing(admin, monkeypatch):
+    import search_sources as ss
+    monkeypatch.setattr(ss, "SOURCES", [
+        {"key": "ok", "section": "Ok", "scopes": {"all"},
+         "run": lambda conn, user, terms, ctx: [{"title": "fine", "hint": "", "url": "/x",
+                                                 "section": "Ok", "kw": ""}]}])
+    for _ in range(120):
+        assert admin.get("/api/search?q=zz").json() != []
+    assert admin.get("/api/search?q=zz").json() == []

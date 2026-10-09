@@ -60,6 +60,7 @@ from starlette.background import BackgroundTask
 import css_is_engine as eng
 import storage as st
 import dashboard_insights as di
+import search_sources
 import dashboard_export as dx
 # The Office Connect landing payload. It takes get_atoms/view_memo as arguments
 # rather than importing them back out of here, so the dependency stays one-way.
@@ -5598,82 +5599,27 @@ def help_page(request: Request):
 
 @app.get("/api/search")
 def api_search(request: Request, q: str = "", scope: str = "all"):
-    """DB-record search: activities and people. Returns the same
-    {title, hint, url, section, kw} shape as window.SEARCH_INDEX so search.js
-    can append results without any schema changes on the client side.
-
-    `scope` is "all" or "css"; anything else counts as "all". Both sources today
-    are CSS records, so the answer is the same either way — the parameter is here
-    so later, non-CSS sources can skip a "css" box."""
-    if not request.state.user:
+    """Record search: runs every search_sources source for `scope` ("all" or "css";
+    anything else counts as "all"). Returns the same {title, hint, url, section, kw}
+    shape as window.SEARCH_INDEX so search.js can append results without any schema
+    changes on the client side."""
+    user = request.state.user
+    if not user:
         return JSONResponse([])
-    scope = scope if scope in ("all", "css") else "all"    # noqa: F841 — read by later sources
     q = q.strip()
     if len(q) < 2:
         return JSONResponse([])
+    if not rl.allow("search", f"u{user['id']}"):
+        return JSONResponse([])
 
-    terms = q.lower().split()
-    results = []
+    ctx = {"get_atoms": get_atoms, "view_memo": view_memo, "humandate": _humandate,
+           "is_chief": getattr(request.state, "is_chief", False), "today": _today_local()}
     conn = get_conn()
     conn.row_factory = sqlite3.Row
     try:
-        # ── Activities ────────────────────────────────────────────────────
-        # Search the SAME event list the Activities report is built from (atoms
-        # grouped into events), so a hit's id matches /reports/activities/<id>.
-        # The plain `event` table holds only link-tree events, not the historical
-        # backlog — those activities live as grouped form instances. build_events
-        # is memoized + prewarmed, so this is an in-memory filter, not a rebuild.
-        atoms = get_atoms(conn)
-        events = view_memo("events", ("", "all"),
-                           lambda: di.build_events(atoms, st.list_activity_instances(conn)))
-        act_hits = []
-        for e in events:
-            if not e["f2"]:                       # listing shows only F2-reviewed events
-                continue
-            hay = " ".join([e["name"] or "", e.get("organizer") or "",
-                            e.get("venue") or ""]).lower()
-            if all(t in hay for t in terms):
-                act_hits.append(e)
-                if len(act_hits) >= 5:            # events are newest-first already
-                    break
-        for e in act_hits:
-            results.append({
-                "title": e["name"],
-                "hint": (e["organizer"] or "Event") + " · " + _humandate(e["date"]),
-                "url": f"/reports/activities/{e['id']}",
-                "section": "Activities", "kw": "",
-            })
-
-        # ── People ────────────────────────────────────────────────────────
-        def _where(cols):
-            """(clause, params) — AND across terms, OR across columns, LIKE match."""
-            parts, params = [], []
-            for t in terms:
-                parts.append(
-                    "(" + " OR ".join(f"lower(COALESCE({c},'')) LIKE ?" for c in cols) + ")"
-                )
-                params.extend(f"%{t}%" for _ in cols)
-            return " AND ".join(parts), params
-
-        w, p = _where(["rp.name", "rp.position", "rp.designation", "rp.focus_area"])
-        for r in conn.execute(
-            f"SELECT rp.id, rp.name,"
-            f" COALESCE(rp.position, rp.designation, '') AS role_text,"
-            f" COALESCE(ou.name, rp.agency, '') AS unit"
-            f" FROM resource_person rp"
-            f" LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id"
-            f" WHERE {w} LIMIT 5", p
-        ).fetchall():
-            hint = " · ".join(x for x in [r["role_text"], r["unit"]] if x) or "Directory"
-            results.append({
-                "title": r["name"],
-                "hint": hint,
-                "url": f"/dashboard/people/{r['id']}",
-                "section": "People", "kw": "",
-            })
+        results = search_sources.run_sources(conn, user, q.lower().split(), ctx, scope)
     finally:
         conn.close()
-
     return JSONResponse(results)
 
 
