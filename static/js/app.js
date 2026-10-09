@@ -83,6 +83,25 @@ window.refreshChipCap = function (container) {
     });
   });
 
+  /* 5a. Mobile menu sheet: close from the backdrop, the ✕ / any [data-mm-close]
+        control, or Esc, and hand focus back to ☰. */
+  (function () {
+    var tg = document.querySelector("details.nav-toggle");
+    if (!tg) return;
+    function closeMenu() {
+      if (!tg.open) return;
+      tg.removeAttribute("open");
+      var sm = tg.querySelector("summary");
+      if (sm) sm.focus();
+    }
+    tg.addEventListener("click", function (e) {
+      if (e.target.closest("[data-mm-close]")) closeMenu();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") closeMenu();
+    });
+  })();
+
   /* 5b. Nav dropdowns anchor to their trigger's left edge (.menu { left:0 }),
         which is fine near the left of the bar but runs a wide menu off the
         right edge of the screen for a group sitting further along the row —
