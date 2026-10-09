@@ -84,7 +84,7 @@ def test_every_slot_renders_text_for_a_user_with_no_data(world):
 
 
 def test_the_slot_set_and_seed_rules_agree(world):
-    assert {k for _kind, k, _c, _a in oa.SEED_RULES} == set(oa.SLOTS)
+    assert {k for _kind, k, _c, _a in oa.SEED_RULES} == set(oa.SLOTS) - {"person_status"}   # that one needs a name
 
 
 def test_empty_todo_and_approvals_and_bookings(world, monkeypatch):

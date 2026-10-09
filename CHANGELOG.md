@@ -1,3 +1,9 @@
+## 10.29 — November 11, 2026
+
+- Ask the assistant "where is Mimi today?" and it answers whether that colleague is in the office, working from home, in the field, on leave or off, with a link to their card. The model only supplies the name as typed; the server checks every word appears in the question, finds the person in the directory and shows the directory's own name and basic status.
+- If a name could be more than one person, or none, the assistant says it cannot tell who you mean and links the possible matches instead of guessing. The administrator's bureau/team setting for colleague status still applies. Never a note, place or reason.
+- Needs AI in answers mode or higher; with AI off nothing changes. No database change.
+
 ## 10.27 — November 11, 2026
 
 - When a wellness approval email has the one-click Approve and Deny links, drop the extra "Review in the dashboard" button and the "paste this link" line, so there are only two links to click. Approve is green and Deny is red.
