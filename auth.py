@@ -319,6 +319,86 @@ def verify_wellness_decide_token(token, now=None):
 
 
 # ---------------------------------------------------------------------
+# Conference room decide-by-email link (docs/ROOM_RESERVATION_PLAN.md section 6)
+#
+# Same shape as the wellness one: the token names ONE reservation and ONE
+# approver, opens a confirm page (never a state change on GET), and lapses after
+# 14 days. rooms.approve / rooms.decline still refuse a reservation that is no
+# longer open, and the route re-checks the approver is still a room approver.
+# ---------------------------------------------------------------------
+
+PURPOSE_ROOM_DECIDE = "room_decide"
+_ROOM_DECIDE_MAX_AGE = 14 * 24 * 3600
+
+
+def make_room_decide_token(reservation_id, approver_uid, issued_at=None):
+    payload = {"rid": int(reservation_id), "uid": int(approver_uid), "p": PURPOSE_ROOM_DECIDE,
+               "iat": int(issued_at if issued_at is not None else time.time())}
+    body = _b64e(json.dumps(payload, separators=(",", ":")).encode("utf-8"))
+    sig = hmac.new(_secret(), body.encode("ascii"), hashlib.sha256).hexdigest()
+    return f"{body}.{sig}"
+
+
+def verify_room_decide_token(token, now=None):
+    """(reservation_id, approver_uid) or (None, None) when bad, forged, wrong purpose or expired."""
+    if not token or "." not in token:
+        return None, None
+    body, sig = token.rsplit(".", 1)
+    expect = hmac.new(_secret(), body.encode("ascii"), hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(sig, expect):
+        return None, None
+    try:
+        payload = json.loads(_b64d(body))
+    except (ValueError, json.JSONDecodeError):
+        return None, None
+    if payload.get("p") != PURPOSE_ROOM_DECIDE:
+        return None, None
+    if (now if now is not None else time.time()) - payload.get("iat", 0) > _ROOM_DECIDE_MAX_AGE:
+        return None, None
+    return payload.get("rid"), payload.get("uid")
+
+
+# ---------------------------------------------------------------------
+# Conference room tracking link for guests (R6)
+#
+# A guest has no account, so the signed link IS their access: it names one
+# reservation and lets whoever holds it see its status, withdraw it, or take a
+# suggested new time. It lapses after 150 days (a request is made at most 60 days
+# ahead), and the page still checks the reservation really is a guest's.
+# ---------------------------------------------------------------------
+
+PURPOSE_ROOM_TRACK = "room_track"
+_ROOM_TRACK_MAX_AGE = 150 * 24 * 3600
+
+
+def make_room_track_token(reservation_id, issued_at=None):
+    payload = {"rid": int(reservation_id), "p": PURPOSE_ROOM_TRACK,
+               "iat": int(issued_at if issued_at is not None else time.time())}
+    body = _b64e(json.dumps(payload, separators=(",", ":")).encode("utf-8"))
+    sig = hmac.new(_secret(), body.encode("ascii"), hashlib.sha256).hexdigest()
+    return f"{body}.{sig}"
+
+
+def verify_room_track_token(token, now=None):
+    """The reservation id, or None when the token is bad, forged, the wrong purpose or expired."""
+    if not token or "." not in token:
+        return None
+    body, sig = token.rsplit(".", 1)
+    expect = hmac.new(_secret(), body.encode("ascii"), hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(sig, expect):
+        return None
+    try:
+        payload = json.loads(_b64d(body))
+    except (ValueError, json.JSONDecodeError):
+        return None
+    if payload.get("p") != PURPOSE_ROOM_TRACK:
+        return None
+    if (now if now is not None else time.time()) - payload.get("iat", 0) > _ROOM_TRACK_MAX_AGE:
+        return None
+    return payload.get("rid")
+
+
+# ---------------------------------------------------------------------
 # Weekly whereabouts link
 #
 # The Monday "where will you be this week?" email opens the week form with no

@@ -67,6 +67,8 @@
     <p class="mmeta">{{ speakers|length }} speaker review{{ '' if speakers|length == 1 else 's' }} · {{ responses_total }} response{{ '' if responses_total == 1 else 's' }} so far · <a href="/monitor/{{ ev.event_token }}">See responses →</a></p>
   </div>
 
+  {% include "_room_banner.html" %}
+
   {% if is_archived %}
   <div class="mcard danger">
     <h2>This activity is archived</h2>

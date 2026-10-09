@@ -374,6 +374,130 @@ def init_db(conn):
         created_at TEXT
     );
 
+    -- Conference room (docs/ROOM_RESERVATION_PLAN.md). One room, fixed one-hour
+    -- slots. Only APPROVED slots are unique: many people may ask for the same
+    -- hour, the Administrative Section picks one. All writes go through rooms.py.
+    CREATE TABLE IF NOT EXISTS room_slot (
+        id         INTEGER PRIMARY KEY,
+        code       TEXT NOT NULL UNIQUE,   -- 'H07' = the 07:00 hour
+        label      TEXT NOT NULL,
+        start_time TEXT NOT NULL,          -- HH:MM
+        end_time   TEXT NOT NULL,
+        sort       INTEGER NOT NULL DEFAULT 0,
+        active     INTEGER NOT NULL DEFAULT 1
+    );
+
+    CREATE TABLE IF NOT EXISTS room_reservation (
+        id                INTEGER PRIMARY KEY,
+        ref_code          TEXT UNIQUE,     -- what people quote: CR-2610-0042
+        requester_user_id INTEGER REFERENCES admin_user(id),   -- internal requester
+        ext_name          TEXT,            -- external requester (no account)
+        ext_org           TEXT,
+        ext_email         TEXT,
+        ext_phone         TEXT,
+        ext_email_verified_at TEXT,        -- set when the guest first opens their tracking link
+        ext_consent_at    TEXT,            -- Data Privacy Act consent ticked on the public form
+        series_id         INTEGER,         -- the first reservation of a "repeat weekly" series; NULL = a single one
+        on_behalf_of      TEXT,
+        title             TEXT NOT NULL,
+        purpose           TEXT,
+        attendees         INTEGER,
+        modality          TEXT NOT NULL DEFAULT 'f2f'
+                          CHECK (modality IN ('f2f','online','hybrid')),
+        day               TEXT NOT NULL,   -- YYYY-MM-DD
+        status            TEXT NOT NULL DEFAULT 'requested'
+                          CHECK (status IN ('requested','approved','declined',
+                                            'withdrawn','cancelled','expired')),
+        source            TEXT NOT NULL DEFAULT 'internal'
+                          CHECK (source IN ('internal','external','encoded','move','bump_accept')),
+        decided_by        TEXT,
+        decided_at        TEXT,
+        decide_note       TEXT,
+        bumped_by_reservation_id INTEGER REFERENCES room_reservation(id),
+        moves_reservation_id     INTEGER REFERENCES room_reservation(id),
+        event_id          INTEGER,         -- linked CSS activity (later increment)
+        calendar_entry_id INTEGER,
+        meals_requested   INTEGER NOT NULL DEFAULT 0,
+        created_by        TEXT,
+        created_at        TEXT,
+        updated_at        TEXT
+    );
+    CREATE INDEX IF NOT EXISTS ix_room_res_day ON room_reservation(day, status);
+    CREATE INDEX IF NOT EXISTS ix_room_res_user ON room_reservation(requester_user_id);
+
+    -- The hours a request covers. is_approved mirrors the parent's status and is
+    -- written only by rooms.py in the same transaction as the status change.
+    CREATE TABLE IF NOT EXISTS room_reservation_slot (
+        reservation_id INTEGER NOT NULL REFERENCES room_reservation(id) ON DELETE CASCADE,
+        day            TEXT NOT NULL,
+        slot_id        INTEGER NOT NULL REFERENCES room_slot(id),
+        is_approved    INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (reservation_id, slot_id)
+    );
+    -- The "one room" rule, enforced by the database: two admins approving
+    -- different requests for the same hour cannot both succeed.
+    CREATE UNIQUE INDEX IF NOT EXISTS ux_room_slot_taken
+        ON room_reservation_slot(day, slot_id) WHERE is_approved = 1;
+
+    -- One row per person per event: the bell reads it, and the scheduler's flush turns it
+    -- into an email. UNIQUE makes every notice idempotent, so a retry or a second tick
+    -- can never send the same thing twice. recipient = 'u:<account id>' or 'e:<guest email>'.
+    CREATE TABLE IF NOT EXISTS room_notice (
+        id             INTEGER PRIMARY KEY,
+        recipient      TEXT NOT NULL,
+        user_id        INTEGER,
+        email          TEXT,
+        kind           TEXT NOT NULL,
+        reservation_id INTEGER NOT NULL DEFAULT 0,
+        version        INTEGER NOT NULL DEFAULT 1,
+        text           TEXT,
+        url            TEXT,
+        bell           INTEGER NOT NULL DEFAULT 0,
+        created_at     TEXT,
+        seen_at        TEXT,
+        email_status   TEXT,          -- NULL = still to send; sent / failed / skipped_off / skipped_none / not_configured
+        emailed_at     TEXT,
+        attempts       INTEGER NOT NULL DEFAULT 0,
+        UNIQUE (recipient, kind, reservation_id, version)
+    );
+    CREATE INDEX IF NOT EXISTS ix_room_notice_open ON room_notice(email_status, id);
+    CREATE INDEX IF NOT EXISTS ix_room_notice_user ON room_notice(user_id, seen_at);
+
+    -- The meal request form of a reservation (docs/ROOM_RESERVATION_PLAN.md section 8, R9): the activity's pax and any
+    -- special request, plus one line per meal with whether it is wanted, the delivery time asked for, and where the
+    -- Administrative Section has got to with it (pending -> requested -> delivered / not_delivered / cancelled).
+    CREATE TABLE IF NOT EXISTS room_meal (
+        reservation_id  INTEGER PRIMARY KEY REFERENCES room_reservation(id) ON DELETE CASCADE,
+        pax             INTEGER,
+        special_request TEXT,
+        form_version    INTEGER NOT NULL DEFAULT 1,
+        created_at      TEXT,
+        updated_at      TEXT,
+        updated_by      TEXT
+    );
+    CREATE TABLE IF NOT EXISTS room_meal_item (
+        reservation_id INTEGER NOT NULL REFERENCES room_reservation(id) ON DELETE CASCADE,
+        meal           TEXT NOT NULL CHECK (meal IN ('breakfast','am_snack','lunch','pm_snack')),
+        wanted         INTEGER NOT NULL DEFAULT 0,
+        deliver_at     TEXT,                -- HH:MM the meal is asked to arrive
+        status         TEXT NOT NULL DEFAULT 'pending'
+                       CHECK (status IN ('pending','requested','delivered','cancelled','not_delivered')),
+        status_by      TEXT,
+        status_at      TEXT,
+        status_note    TEXT,
+        PRIMARY KEY (reservation_id, meal)
+    );
+
+    -- Maintenance / admin holds. slot_id NULL = the whole day.
+    CREATE TABLE IF NOT EXISTS room_block (
+        id         INTEGER PRIMARY KEY,
+        day        TEXT NOT NULL,
+        slot_id    INTEGER REFERENCES room_slot(id),
+        reason     TEXT NOT NULL,
+        created_by TEXT,
+        created_at TEXT
+    );
+
     -- Weekly whereabouts: what a person says about each working day of one
     -- week ("Office", "Field", "Leave", or "AWA" = follow my filed arrangement).
     -- Layered ON TOP of the fortnightly ANNEX C filing and never written back
@@ -647,6 +771,12 @@ def _add_missing_columns(conn):
     CREATE TABLE IF NOT EXISTS leaves pre-existing tables untouched, so a column
     added after a database was first created has to be ALTERed in by hand.
     """
+    rr0 = {row[1] for row in conn.execute("PRAGMA table_info(room_reservation)")}
+    for col in ("ext_email_verified_at", "ext_consent_at"):       # added with the public QR page (R6)
+        if rr0 and col not in rr0:
+            conn.execute(f"ALTER TABLE room_reservation ADD COLUMN {col} TEXT")
+    if rr0 and "series_id" not in rr0:                              # added with repeat-weekly requests (R10)
+        conn.execute("ALTER TABLE room_reservation ADD COLUMN series_id INTEGER")
     au0 = {row[1] for row in conn.execute("PRAGMA table_info(admin_user)")}
     for col in ("bday_notify", "birthday_coordinator", "cal_email_week", "cal_email_daybefore",
                 "cal_feed_birthdays"):
@@ -3536,8 +3666,23 @@ _AUDIT_ACTIONS = {
     "change_role":         ("Changed a role", "Accounts"),
     "activate_account":    ("Activated/deactivated an account", "Accounts"),
     "change_login_email":  ("Changed a login email", "Accounts"),
+    # Conference room
+    "room_request":        ("Requested the conference room", "Conference room"),
+    "room_approve":        ("Approved a room reservation", "Conference room"),
+    "room_decline":        ("Declined a room reservation", "Conference room"),
+    "room_withdraw":       ("Withdrew a room reservation", "Conference room"),
+    "room_expire":         ("Expired a room request", "Conference room"),
+    "room_purge_guests":   ("Removed old guest details", "Conference room"),
+    "room_meal_edit":      ("Edited a room meal form", "Conference room"),
+    "room_series":         ("Requested a repeating room booking", "Conference room"),
+    "room_meal_tag":       ("Tagged a room meal order", "Conference room"),
+    "room_encode":         ("Encoded a room booking", "Conference room"),
+    "room_cancel":         ("Cancelled a room booking", "Conference room"),
+    "room_accept":         ("Took a suggested room slot", "Conference room"),
+    "room_block":          ("Blocked the conference room", "Conference room"),
+    "room_unblock":        ("Reopened the conference room", "Conference room"),
     # Approvals
-    "set_section_oic":     ("Assigned a temporary OIC", "Approvals"),
+    "set_section_oic":    ("Assigned a temporary OIC", "Approvals"),
     "clear_section_oic":   ("Removed a temporary OIC", "Approvals"),
     # Directory
     "directory_add":       ("Added a directory person", "Directory"),

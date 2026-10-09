@@ -1,12 +1,156 @@
 # CHANGELOG — Cowork revisions (surgical)
 
-## 2026-10-09 (v5.4 — birthday greeting email)
+## 2026-10-09 (v6.0 — birthday greeting email)
 
 `docs/BIRTHDAY_GREETINGS_PLAN.md` Phase 1.
 
 - **Rules (`birthdays.py`):** `next_occurrence`, `days_until`, `greeting_phase` (`today` / `before` / `none`, six days before and never after) and `email_send_date` (the birthday, or the last working day before it).
 - **Email (`mailer.birthday_greeting_message`, `GREETING_POOL`):** 12 bilingual (Tagalog and English) messages signed "From all of us at BLHSD", picked by `user_id + year`. No date, no age. Name is HTML-escaped.
 - **Job (`send_reminders.send_birthday_greetings`, job `birthday_greeting`, `--birthday-greeting`):** to every active account with a birthday on file, on the send date, once per year (email log, subject carries the year), never after the day. No per-person opt-out; the `/admin/email` switch (`job_birthday_greeting`, with preview) is the kill switch. Tests: `tests/test_birthday_greetings.py`.
+
+## 2026-10-09 (v5.9 — conference room reservation R10: the door display and repeat-weekly requests)
+
+- **Door / TV display.** `/rooms/display/<secret>` (no sign-in; a signed-in person can use `/rooms/display`): "In use now" or "Free until ...", "Next", today's schedule (a multi-hour booking is one line), the time,
+  and a QR to `/room`; "Closed" for weekends, holidays and whole-day closures. Dark, large type for 1920x1080, one column on a portrait tablet; reloads itself every 60 s and ticks its own clock; never cached or indexed.
+  Only approved bookings are shown. The secret is made on first visit to the **Door display** tab (section members) and **Make a new address** kills the old one at once; "Show meeting titles and who booked" can be
+  switched off, leaving only "Reserved" and the hours.
+- **Repeat weekly.** In the request panel: Repeat every week / every 2 weeks until a date (at most 12 dates). `rooms.plan_series` checks every date first (notice, weekends, holidays, closures, booked hours);
+  if any can't be had the page lists them with the reason and files nothing until "Request the N dates that work". The dates share a `series_id`. The section is told once for the whole series ("+4 more dates"),
+  the Approvals card offers **Approve all N / Decline all N** (a date something else holds is skipped and reported, never forced) as well as each date alone, the requester hears once, each date gets its own
+  meal form, and My reservations shows "Repeats: N dates" with **Withdraw the whole series** (today onward).
+- Tests: `tests/test_rooms_series.py`, `tests/test_rooms_series_pages.py`, `tests/test_rooms_display.py`.
+
+## 2026-10-09 (v5.8 — conference room reservation R9: meals, from the form to delivery)
+
+- **The form (`rooms_meals.py`, tables `room_meal` + `room_meal_item`):** 1. Title of the Activity (from the reservation), 2. Number of Pax, 3. Special Request for Meals, 4. Breakfast / AM snack /
+  lunch / PM snack, each Yes or No **with its requested delivery time**. It is prepared when "Will meals be requested?" is ticked (or later, from My reservations -> Request meals): each meal starts as Yes
+  when the booked hours include its hour (07, 10, 12, 15 — change with the `room_meal_times` setting) and with its usual time (07:30, 10:00, 12:00, 15:00). The requester corrects it at
+  `/rooms/meals/<id>` (guests at `/room/t/<token>/meals`); times must be 06:00–19:00 and pax is needed if any meal is Yes. A printable A4 PDF (`room_meal_form.py`) carries the same fields.
+- **The Administrative Section's page (`/rooms/meals`, tab "Meals" with a count of meals still to request):** every filled-up form to order from, by date, with pax, the special request and one line per
+  wanted meal. Each meal is tagged **Requested** (needs the room approved), then **Delivered**, **Not delivered** (both only on or after the day) or **Cancelled**, each with an optional note, who and
+  when; Undo / Reopen fix a slip; "Mark everything still pending as requested" does a whole form. Filters: dates, "needs ordering or tagging" vs everything, and rooms still awaiting approval.
+- **Changes after ordering:** the requester can edit only until ordering starts, then asks the section; the section can edit any time, and a meal whose time or yes/no they change goes back to "Not yet
+  requested". A change after approval raises a "meal form was changed" notice (bell + email) to the section; an approval with meals raises "a meal form is ready to order".
+- **When the booking goes away** (withdrawn, declined, bumped, closed, expired, or moved): its pending / requested meals become Cancelled, and if any were already Requested the section is told to cancel with
+  the supplier. Delivered meals are never rewritten. A moved booking's new form copies the old one.
+- Tests: `tests/test_rooms_meals.py`, `tests/test_rooms_meals_pages.py`.
+
+## 2026-10-09 (v5.7 — conference room reservation R8: CSS activities and the room, both ways)
+
+- **From the activity form:** a collapsible "Conference room" line (works without scripts). `room_chip.js` fetches `GET /rooms/api/day` (signed in, staff
+  rules: 2 working days, 90 days; hours only, never a title), shows free / others asked / booked / closed, and ticks "also reserve" for online and hybrid activities or a venue
+  that says "conference room" (unless the person has already decided). The room is checked **before** the activity is saved (`rooms.precheck`), so a bad choice comes back as a form error;
+  after saving, the request is filed tied to the activity (`room_reservation.event_id`, first day only) and never undoes the activity if it fails.
+- **From a reservation:** My reservations -> "Create a CSS activity for this" opens `/create?from_room=<id>` filled in (title, date, format, venue "Conference room"); saving links the reservation
+  to the new activity instead of filing a second request. Only its owner or a room approver; a reservation with an activity already, or no longer live, prefills nothing.
+- **Banner on the activity's manage page** (bureau and outside), from `rooms.activity_room_status`: reserved / requested / **booked for a different day** (offers the move) / move waiting /
+  **no room any more** (cancelled or declined: the owner can pick a suggested time, which keeps the activity's link) / **archived but still holds the room** (offers withdraw) / a prompt to reserve one.
+  Buttons only appear for the booking's owner or a room approver; the buttons return to the activity page (`next` is restricted to same-site activity and room paths; messages travel as `roomerr` / `roomok`).
+- **Moves:** an undecided request just changes day; an **approved** booking is kept and a `move` request is filed for the same hours on the new day. Approving the move releases the old hours in the
+  same transaction (the old one is marked withdrawn "Moved to CR-..."); declining it leaves the old one; withdrawing the old one withdraws its pending move. The Approvals card says "Move of CR-...".
+- Tests: `tests/test_rooms_activity.py`, `tests/test_rooms_activity_pages.py`.
+
+## 2026-10-09 (v5.6 — conference room reservation R7: the Rooms layer on the Office calendar)
+
+- **A `rooms` layer in `office_calendar.LAYERS`** (`kind: room`, 🏢, venue "Conference room", the booked hours as start/end time). An **approved** booking is
+  bureau-wide information: every signed-in viewer sees it in every scope except "mine" (your own requests). A **pending** request is shown, as `tentative` /
+  "awaiting approval", only to its requester and to the people who decide room requests. Withdrawn, declined, cancelled and expired never show. Colour = the
+  requester's unit (grey for guests, whose label is "Guest · organisation"); a guest's name and contact details are never in an item.
+- **Where it shows:** the Agenda and Month layouts (and the home page's Calendar tab), the Kind filter and the icon legend ("Conference room"), and
+  `GET /api/calendar?layers=rooms` (opt-in: the default layers are unchanged). It is deliberately **not** in the Week and Timeline layouts (who is where, not
+  what is booked), nor in the emails, the home "Coming up" card or the assistant's answers, which still ask for entries and activities only.
+- **More menu:** "Reserve the conference room" opens the board on that week.
+- **Personal feed and the approval email share one event:** your own bookings go into your subscribed calendar feed (`room-<id>@office-connect`; approved =
+  confirmed, pending = tentative; withdrawn / cancelled / declined / expired in the last 30 days = `STATUS:CANCELLED` so the app drops them). The `.ics` attached to
+  the approval email now uses the same event, so a calendar app never shows it twice, and its SEQUENCE rises when the booking changes.
+- Tests: `tests/test_calendar_rooms.py`, `tests/test_calendar_rooms_pages.py`.
+
+## 2026-10-09 (v5.5 — conference room reservation R6: the public QR page for guests)
+
+- **`/room` (no login), permanent.** Short enough to print and type; `/rooms/poster` (section members) prints an A4 page with the QR, the address and three steps.
+  The QR encodes `CSS_BASE_URL` + `/room`, so **set `CSS_BASE_URL` before printing** and never change that path. Pick a day from the next 60 days (each shows how many hours
+  are open), see each hour as free / others asked / booked / closed (never a title or a name), then fill in the meeting and who you are.
+- **Same rules as staff:** two working days' notice, back-to-back hours, approved by the Administrative Section from the same queue (guests are labelled, with an
+  "email not confirmed" flag until they open their link; the flag never blocks an approval). Horizon is 60 days for guests, 90 for staff.
+- **Tracking link (`/room/t/<signed token>`, 150 days).** The page they land on after sending is the same page the emails link to: status, history (no staff names),
+  withdraw, and, after a cancellation or decline, the nearest free times (a bumped guest's pick is booked already approved). The token only opens guest reservations.
+- **Abuse limits:** 5 requests an hour per IP (`CSS_RL_ROOM`), 120 availability look-ups a minute (`CSS_RL_ROOM_VIEW`), three open requests per email address, a hidden
+  honeypot field (a bot's post is dropped and looks like success), and a required Data Privacy Act consent (timestamped).
+- **Retention:** a guest's name, email and phone are removed 12 months after the meeting date and their email notices deleted; the booking stays. Runs once a day inside
+  the scheduler tick, and as `python retention.py --room-guests [--dry-run]`.
+- Guests also get a "request received" email (under the "Conference room decision result" switch). Tests: `tests/test_rooms_guest.py`, `tests/test_rooms_guest_pages.py`.
+
+## 2026-10-09 (v5.4 — conference room reservation, R1 to R5)
+
+The conference room, built in five increments (`docs/ROOM_RESERVATION_PLAN.md`). The notes below are the increments, newest first; their old version numbers (4.1 to 4.5) were folded into 5.4 when this was merged after the Calendar phases.
+
+### conference room reservation R5: notifications
+
+- **One table, one flush (`rooms_notify.py`, `room_notice`).** A state change only inserts notice rows (one per person per event, UNIQUE so nothing can double
+  up); the bell reads them; the scheduler's once-a-minute `tick` emails the ones that owe an email. A booking never waits on the mail relay, a failed send is
+  retried (three tries, five minutes apart), a feature an admin switched off is logged as skipped, and notices older than three days are not sent as news.
+  With no mail transport or no `CSS_BASE_URL` the emails wait while the bell still works.
+- **Requester:** approved / declined / cancelled (reason + the nearest free times) / booked for you / expired. Bell row until My reservations is opened.
+  Approved and booked-for-you carry a `.ics`. Guests with an email get the same emails (no bell). You are never notified about your own action.
+- **Section:** an email per new request with one-click Approve / Decline (signed, 14-day, confirm page, no state change on GET — `/rooms/decide/`);
+  escalation to the Admin Head when a request has waited 24 h or its date is within 48 h; a morning summary of open requests (08:00); tomorrow's schedule with
+  attendees and meals (16:00); a bell row and email for a withdrawal less than 24 h before the booking.
+- **Reminders:** the afternoon before, to each person with a booking. Dropped if it was withdrawn in the meantime.
+- **Expiry:** a request still undecided after its date becomes `expired`.
+- Five new switches in /admin/email: room_new_request, room_decided, room_reminder, room_admin_alerts, room_digest (all on by default).
+- Tests: `tests/test_rooms_notify.py`, `tests/test_rooms_notify_pages.py`.
+
+
+### conference room reservation R4: encode, "Book anyway", closures, suggestions
+
+- **Encode:** a section member books for an account or a named guest; approved at once (source `encoded`). Inside the 2-working-day notice a reason is required.
+- **Book anyway:** booked hours show as selectable to section members only. The first submit changes nothing and lists who would be cancelled, with the
+  alternatives each would be offered; the second (with a reason) books the new one and cancels the old ones in a single transaction, linked by
+  `bumped_by_reservation_id`.
+- **Suggestions (`rooms.suggest`):** same hours on the next free working days, then other hours the same day, then earlier days still ahead; holidays, weekends,
+  closures and booked hours are skipped. A bumped person picks one and it is booked **already approved**; a declined person's pick is an ordinary new request.
+  The server only accepts a time it would itself suggest right now, once per cancellation.
+- **Closures** (`/rooms/blocks`): whole day or some hours, with a reason; booked hours in the way need a confirm and are cancelled with the reason.
+- **Competing requests:** approving can decline the others for the same hours in the same transaction ("Also decline the N competing requests").
+- "Needs a new time" section on My reservations. Not yet: the notices themselves (email and bell for the requester) - R5.
+- Tests: `tests/test_rooms_bump.py`, `tests/test_rooms_bump_pages.py`.
+
+
+### conference room reservation R3: approvers and the Approvals queue
+
+- **Who decides:** `rooms.is_room_admin` — anyone in the Administrative Section (directory unit `…/ADMIN`, or beneath it), its temporary OIC, and the `admin`
+  role as the always-there fallback. Chiefs who are not in the section do not get room requests.
+- **Approvals inbox:** a third queue, "Conference room", on `/approvals` (also reachable to Administrative Section members who are not chiefs, who previously
+  got a 403). Cards show requester (guests are labelled), date and hours, meeting, meals, and the *other* requests for the same hours.
+- **Rules:** first to act wins and the second is told who; decline needs a reason; Approve is withheld when an approved booking already holds the hours;
+  hours blocked after the request was made cannot be approved. Bell row "N conference room requests waiting on your decision"; a Requests tab on `/rooms`.
+- Not yet: the email decide link (R5, with the emails that carry it), "Book anyway" and the competing-request dialog (R4).
+- Tests: `tests/test_rooms_approval.py`.
+
+
+### conference room reservation R2: availability board, request panel, My reservations
+
+- **Pages:** `/rooms` (week grid of the twelve hourly slots, one request panel), `/rooms/mine` (your requests, with Withdraw). A "Conference room" item in the
+  nav group beside the Office calendar.
+- **Layout:** desktop shows the grid beside a sticky request panel (two weeks side by side from 1600px); laptops get the panel as a right-hand drawer; phones
+  get one day at a time with a day strip and a full-screen request sheet. Cells always carry an icon and a word, never colour alone.
+- **Picking hours:** click an hour, then another in the same day (or drag, or shift-click); the date / From / Until fields stay the source of truth, so the form
+  also works typed by hand or with JavaScript off. Quick picks: Morning, Afternoon, Whole day.
+- **Privacy:** an approved booking shows its title to signed-in staff; someone else's pending request shows only as a count.
+- Not yet: the approval queue and notifications (R3, R5). Requests wait as "Requested".
+- Tests: `tests/test_rooms_pages.py`.
+
+
+### conference room reservation R1: the rules, no screens yet
+
+First increment of docs/ROOM_RESERVATION_PLAN.md. Nothing visible to users yet.
+
+- **Data:** `room_slot` (twelve one-hour slots, 07:00-19:00), `room_reservation`, `room_reservation_slot` and `room_block`. A partial unique index lets
+  many people *request* an hour but only one reservation be *approved* for it, so two admins can never both win.
+- **Rules (`rooms.py`):** request, approve, decline, withdraw; two working days' notice (holidays and weekends skipped); hours must be back-to-back;
+  first admin to decide wins and a later one is told who; a decline needs a reason; only the requester can withdraw. Every change is audited.
+- Tests: `tests/test_rooms_core.py`.
+=======
 
 ## 2026-10-09 (v5.3 — admin birthdays from the Directory)
 

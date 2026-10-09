@@ -1,0 +1,141 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash %}
+{% from "_rooms_grid.html" import week_grid %}
+{% block title %}Conference room{% endblock %}
+{% block page_width %}full{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/rooms.css?v=20261009f">{% endblock %}
+{% block content %}
+{{ page_header("Conference room", "See what is free, then pick your hours. The Administrative Section approves each request.") }}
+{% include "_rooms_tabs.html" %}
+
+{{ flash(msg=ok, err=error) }}
+
+<div class="rm-wrap" id="rm-wrap" data-earliest="{{ earliest.isoformat() }}">
+  <section class="rm-board" aria-label="Availability">
+    <div class="rm-bar">
+      <div class="rm-nav">
+        <a class="btn ghost small" href="/rooms?week={{ board.prev.isoformat() }}" aria-label="Previous week">◀</a>
+        <a class="btn ghost small" href="/rooms?week={{ board.this_week.isoformat() }}">Today</a>
+        <a class="btn ghost small" href="/rooms?week={{ board.next.isoformat() }}" aria-label="Next week">▶</a>
+      </div>
+      <button type="button" class="btn rm-open-panel" id="rm-open">+ Request</button>
+    </div>
+    <p class="rm-hint">Earliest date you can request: <strong>{{ earliest.strftime('%a') }} {{ earliest.day }} {{ earliest.strftime('%b') }}</strong> (2 working days' notice).
+      Click an hour, then another in the same day to pick a range. <span class="rm-legend"><span>✓ Free</span><span>○ Others requested (still ask)</span><span>● Booked</span><span>★ Yours</span><span>✕ Unavailable</span></span></p>
+
+    <div class="rm-daystrip" role="tablist" aria-label="Day">
+      {% for d in board.days %}
+      {% set free = d.cells | rejectattr('state', 'in', ['approved', 'blocked', 'closed']) | list | length %}
+      <a href="/rooms?week={{ board.start.isoformat() }}&day={{ d.iso }}" role="tab" data-day="{{ d.iso }}"
+         class="{{ 'is-active-day' if d.iso == active_day }}" aria-selected="{{ 'true' if d.iso == active_day else 'false' }}">
+        <span>{{ d.date.strftime('%a') }}</span><strong>{{ d.date.day }}</strong>
+        <small>{% if d.closed %}{{ d.closed_short|lower }}{% else %}{{ free }} open{% endif %}</small>
+      </a>
+      {% endfor %}
+    </div>
+
+    {{ week_grid(board, active_day, "", can_encode) }}
+    <div class="rm-week2">{{ week_grid(board2, '', 'second', can_encode) }}</div>
+  </section>
+
+  <aside class="rm-panel" id="rm-panel" aria-label="Request the conference room">
+    <form method="post" action="/rooms/request" id="rm-form">
+      <div class="rm-panel-head">
+        <h2>Request the room</h2>
+        <button type="button" class="btn ghost small rm-close" id="rm-close" aria-label="Close">✕</button>
+      </div>
+      <p class="rm-summary" id="rm-summary" aria-live="polite">Pick hours on the grid, or fill in the date and times below.</p>
+      <p class="rm-clash" id="rm-clash" role="status"></p>
+      {% if series %}
+      <div class="rm-bump rm-series" role="alert">
+        <strong>Check these dates first. Nothing has been requested yet:</strong>
+        <ul>{% for p in series %}<li class="{{ 'ok' if p.ok else 'bad' }}"><span aria-hidden="true">{{ '✓' if p.ok else '✕' }}</span> <b>{{ p.label }}</b>{% if not p.ok %} <small>{{ p.reason }}</small>{% endif %}</li>{% endfor %}</ul>
+        {% set n_ok = series|selectattr('ok')|list|length %}
+        {% if n_ok %}<button class="btn block" type="submit" name="skip_bad" value="1">Request the {{ n_ok }} date{{ '' if n_ok == 1 else 's' }} that work</button>
+        <p class="rm-hint">Or change the hours, the dates or the repeat above and send again.</p>{% else %}<p>None of them can be requested. Change the hours or the dates above.</p>{% endif %}
+      </div>
+      {% endif %}
+      {% if bump %}
+      <div class="rm-bump" role="alert">
+        <strong>These approved bookings are in the way and will be cancelled:</strong>
+        <ul>
+          {% for a in bump.affected %}
+          <li><b>{{ a.title }}</b> · {{ a.who }}{% if a.unit %} ({{ a.unit }}){% endif %} · {{ a.when }}, {{ a.hours }}
+            <small>{% if a.suggestions %}They will be offered: {% for s in a.suggestions %}{{ s.label }}{{ '; ' if not loop.last }}{% endfor %}{% else %}No free alternative found nearby.{% endif %}</small></li>
+          {% endfor %}
+        </ul>
+        <div class="field"><label for="rm-bump-reason">Reason they will be told</label>
+          <input id="rm-bump-reason" name="bump_reason" value="{{ bump.reason }}" maxlength="200"></div>
+        <button class="btn danger block" type="submit" name="bump" value="1" formaction="/rooms/encode">Cancel them and book this</button>
+      </div>
+      {% endif %}
+
+      <div class="field"><label for="rm-day">Date</label>
+        <input type="date" id="rm-day" name="day" value="{{ f.day }}" min="{{ earliest.isoformat() }}" required></div>
+      <div class="rm-times">
+        <div class="field"><label for="rm-from">From</label>
+          <select id="rm-from" name="from_slot" required>
+            {% for s in slots %}<option value="{{ s.id }}" data-time="{{ s.start_time }}" {{ 'selected' if f.from_slot|string == s.id|string }}>{{ room_hour(s.start_time) }}</option>{% endfor %}
+          </select></div>
+        <div class="field"><label for="rm-to">Until</label>
+          <select id="rm-to" name="to_slot" required>
+            {% for s in slots %}<option value="{{ s.id }}" data-time="{{ s.end_time }}" {{ 'selected' if f.to_slot|string == s.id|string }}>{{ room_hour(s.end_time) }}</option>{% endfor %}
+          </select></div>
+      </div>
+      <div class="rm-quick" aria-label="Quick picks">
+        <button type="button" class="btn ghost small" data-from="07:00" data-to="12:00">Morning</button>
+        <button type="button" class="btn ghost small" data-from="13:00" data-to="17:00">Afternoon</button>
+        <button type="button" class="btn ghost small" data-from="07:00" data-to="19:00">Whole day</button>
+      </div>
+
+      <fieldset class="rm-repeat">
+        <legend>Repeat</legend>
+        <select name="repeat" id="rm-repeat" aria-label="How often this repeats">
+          <option value="">Does not repeat</option>
+          <option value="1" {{ 'selected' if f.repeat == '1' }}>Every week</option>
+          <option value="2" {{ 'selected' if f.repeat == '2' }}>Every 2 weeks</option></select>
+        <label class="rm-until">until <input type="date" name="until" id="rm-until" value="{{ f.until }}"></label>
+        <div class="hint">Same hours on each date, up to 12 dates. Dates that can't be had are listed before anything is sent.</div>
+      </fieldset>
+
+      <div class="field"><label for="rm-title">Meeting title</label>
+        <input id="rm-title" name="title" value="{{ f.title }}" maxlength="200" required></div>
+      <div class="field"><label for="rm-purpose">Purpose <span class="opt">(optional)</span></label>
+        <textarea id="rm-purpose" name="purpose" rows="2" maxlength="600">{{ f.purpose }}</textarea></div>
+      <div class="field"><label for="rm-att">Attendees <span class="opt">(optional)</span></label>
+        <input id="rm-att" name="attendees" type="number" min="1" max="500" inputmode="numeric" value="{{ f.attendees }}"></div>
+      <fieldset class="field rm-modality"><legend>How will it be held?</legend>
+        {% for k, lab in room_modalities.items() %}
+        <label><input type="radio" name="modality" value="{{ k }}" {{ 'checked' if (f.modality or 'f2f') == k }}> {{ lab }}</label>
+        {% endfor %}
+      </fieldset>
+      <label class="rm-meals"><input type="checkbox" name="meals" value="1" {{ 'checked' if f.meals }}> Will meals be requested?
+        <small>The meal form is prepared for you from your hours once the request is approved.</small></label>
+
+      {% if can_encode %}
+      <details class="rm-encode" {{ 'open' if bump or f.for_user or f.for_name or f.note }}>
+        <summary>Administrative Section: book it for someone</summary>
+        <p class="rm-hint">Booked straight away, no approval step. Uses the date, hours and meeting details above.</p>
+        <div class="field"><label for="rm-for">Booking for</label>
+          <select id="rm-for" name="for_user">
+            <option value="">A guest (type a name below)</option>
+            {% for aid, aname in accounts %}<option value="{{ aid }}" {{ 'selected' if f.for_user|string == aid|string }}>{{ aname }}</option>{% endfor %}
+          </select></div>
+        <div class="field"><label for="rm-for-name">Guest name <span class="opt">(if not in the list)</span></label>
+          <input id="rm-for-name" name="for_name" value="{{ f.for_name }}" maxlength="120"></div>
+        <div class="field"><label for="rm-for-org">Organization <span class="opt">(optional)</span></label>
+          <input id="rm-for-org" name="for_org" value="{{ f.for_org }}" maxlength="120"></div>
+        <div class="field"><label for="rm-note">Reason <span class="opt">(needed inside the 2-working-day notice)</span></label>
+          <input id="rm-note" name="note" value="{{ f.note }}" maxlength="200"></div>
+        <button class="btn block" type="submit" formaction="/rooms/encode">Book it now (approved)</button>
+      </details>
+      {% endif %}
+
+      <div class="rm-actions">
+        <button class="btn block" type="submit">Request room</button>
+      </div>
+    </form>
+  </aside>
+</div>
+<script src="/static/js/rooms.js?v=20261009a" defer></script>
+{% endblock %}

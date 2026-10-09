@@ -125,6 +125,7 @@
     <p class="mmeta"><strong>{{ ev.event_date|humandaterange(ev.end_date) }}</strong>{% if ev.modality == 'online' %} · <span class="badge blue">Online</span>{% elif ev.modality == 'hybrid' %} · <span class="badge blue">Hybrid</span>{% endif %}{% if ev.venue %} · {{ ev.venue }}{% endif %}{% if ev.organizer %} · {{ ev.organizer }}{% endif %}</p>
     {% if ev.created_by %}<p class="mby">Created by {{ ev.created_by }}</p>{% endif %}
   </div>
+  {% include "_room_banner.html" %}
 
   {% if err == 'badlink' %}<div class="flash warn" style="margin-top:.8rem;">A link needs both a label and a valid web address (http/https).</div>{% endif %}
 
