@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.77"
+APP_VERSION = "3.78"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.78",
+        "date": "October 9, 2026",
+        "summary": "A new Timeline view shows your team over four weeks, and you can add items without leaving the page.",
+        "changes": [
+            "Calendar has a Timeline view: one row per person across four weeks, with trips, trainings, activities and days on leave as bars.",
+            "Weekends are shaded, holidays are tinted, and nobody's reason for leave is ever shown.",
+            "Quick add: press Quick add, tap a day, or tap an empty day on someone's row to add an item in a small sheet, then land back where you were.",
+        ],
+    },
     {
         "version": "3.77",
         "date": "October 9, 2026",

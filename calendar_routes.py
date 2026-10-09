@@ -14,6 +14,7 @@ from datetime import date, timedelta
 from urllib.parse import parse_qs, quote, urlencode
 
 import io
+import re
 import zipfile
 
 from fastapi import APIRouter, Request
@@ -71,7 +72,7 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
     link the body builds goes back to `base` carrying `fixed`, so a tab never turns into
     the other page. Visibility is office_calendar's job; nothing here widens it."""
     fixed = dict(fixed or {})
-    layout = q.get(layout_key) if q.get(layout_key) in ("month", "week") else "agenda"
+    layout = q.get(layout_key) if q.get(layout_key) in ("month", "week", "timeline") else "agenda"
     try:
         if layout == "month":
             m = date.fromisoformat((q.get("month") or today.strftime("%Y-%m")) + "-01")
@@ -79,6 +80,9 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
         elif layout == "week":
             start = oc.monday_of(date.fromisoformat(q["day"]) if q.get("day") else today)
             end = start + timedelta(days=4)                # Monday-Friday: the working week
+        elif layout == "timeline":
+            start = oc.monday_of(date.fromisoformat(q["day"]) if q.get("day") else today)
+            end = start + timedelta(days=7 * oc.TIMELINE_WEEKS - 1)
         else:
             start = date.fromisoformat(q["day"]) if q.get("day") else today
             end = start + timedelta(days=AGENDA_DAYS - 1)
@@ -94,8 +98,10 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
     # directory, so the items must not be narrowed to "mine" or the others' trips would vanish.
     # Visibility is unchanged — items_between still only returns what this viewer may see.
     # (The Week layout draws leave itself, from the same whereabouts, so it skips that layer.)
-    everything = oc.items_between(conn, user, start, end, scope="bureau" if layout == "week" else scope,
-                                  layers=[n for n in oc.LAYERS if not (layout == "week" and n in ("leave", "birthdays"))])
+    team_layout = layout in ("week", "timeline")                  # both are "everyone in my team"
+    skip_layers = {"week": ("leave", "birthdays"), "timeline": ("birthdays",)}.get(layout, ())
+    everything = oc.items_between(conn, user, start, end, scope="bureau" if team_layout else scope,
+                                  layers=[n for n in oc.LAYERS if n not in skip_layers])
     items = oc.apply_filters(everything, filters)
     entries = [i for i in everything if i["layer"] in ("entries", "activities")]
     # the filter menus list what is IN this window (before filtering), so choosing
@@ -127,6 +133,13 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
         "qs": qs, "form_action": base,
         "clear_filters": qs(kind="", status="", tag="", unit=""),
     }
+    owner = ""
+    if ctx["section_path"]:
+        r = conn.execute("SELECT id FROM org_unit WHERE path=?", (ctx["section_path"],)).fetchone()
+        owner = str(r[0]) if r else ""
+    # The quick-add sheet posts to the ordinary add route (so every rule there applies) and comes back here.
+    page["quick"] = {"owner": owner, "me": user["id"], "kinds": FORM_KIND_LABELS, "next": qs()}
+    page["flash"] = (q.get("ok") or "")[:120]
     hidden = [(k, v) for k, v in fixed.items()] + [("scope", scope)]
     noun = "item" if n == 1 else "items"
     if layout == "week":
@@ -135,6 +148,12 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
         page.update(week=pw, is_today_window=start == oc.monday_of(today), add_day=max(start, today).isoformat()
                     if start <= today <= end else start.isoformat(),
                     range_label=f"{pw['label']} · {n} {noun}")
+    elif layout == "timeline":
+        tl = oc.timeline(conn, user, start, items, today)
+        hidden += [(layout_key, "timeline"), ("day", start.isoformat())]
+        page.update(tl=tl, is_today_window=start == oc.monday_of(today), add_day=max(start, today).isoformat()
+                    if start <= today <= end else start.isoformat(),
+                    range_label=f"{tl['label']} · {n} {noun}")
     elif layout == "month":
         grid = oc.month_grid(items, m.year, m.month, today)
         hidden += [(layout_key, "month"), ("month", m.strftime("%Y-%m"))]
@@ -329,6 +348,15 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         tags = [t for t in f.get("tags", "").split(",")]
         return fields, people, tags, ""
 
+    def _safe_back(raw):
+        """Where the quick-add sheet may send you back to: a calendar page of this site, never
+        anywhere else (no scheme, no host, no protocol-relative or backslash tricks)."""
+        raw = (raw or "").strip()
+        if (raw.startswith(("/calendar?", "/?view=calendar")) or raw == "/calendar") and "//" not in raw \
+                and "\\" not in raw and "\n" not in raw and "\r" not in raw:
+            return re.sub(r"[&?]ok=[^&]*", "", raw)
+        return ""
+
     def _blank_form_defaults():
         return {"title": "", "kind": "meeting", "status": "confirmed", "start_date": "",
                 "end_date": "", "start_time": "", "end_time": "", "time_note": "",
@@ -510,6 +538,10 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 _add_skip(conn, series, ctx["occ"], request.state.user["username"])
         finally:
             conn.close()
+        back = _safe_back(f.get("next", ""))
+        if back:                                              # the quick-add sheet returns to the page it came from
+            return RedirectResponse(back + ("&" if "?" in back else "?") + "ok=" + quote("Added to the calendar."),
+                                    status_code=303)
         return RedirectResponse(f"/calendar/entries/{eid}?ok={quote('Added to the calendar.')}",
                                 status_code=303)
 

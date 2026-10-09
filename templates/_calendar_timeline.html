@@ -1,0 +1,59 @@
+{# Timeline layout (H2): several weeks, one row per person, every day across. Bars are trips,
+   trainings, activities and reported leave (never a reason). Clicking an empty day on a person's
+   row opens the quick-add sheet for that person and date. #}
+{% macro tbars(row_bars, row_more, n_rows) %}
+  {% for b in row_bars %}{% set i = b.item %}
+  <a class="cal-bar-item {{ 'cut-l' if b.left_cut }} {{ 'cut-r' if b.right_cut }}" href="{{ i.url or '#' }}"
+     data-tone="{{ i.tone }}" data-status="{{ i.status }}" data-kind="{{ i.kind }}"
+     style="grid-column:{{ b.col + 1 }} / span {{ b.span }}; grid-row:{{ b.lane }}"
+     title="{{ i.title }}{% if i.venue %} · {{ i.venue }}{% endif %}{% if i.status != 'confirmed' %} · {{ i.status|capitalize }}{% endif %}">{{ i.title }}</a>
+  {% endfor %}
+  {% for n in row_more if n %}
+  <span class="cal-more" style="grid-column:{{ loop.index0 + 2 }}; grid-row:{{ n_rows }}" title="{{ n }} more">+{{ n }}</span>
+  {% endfor %}
+{% endmacro %}
+
+{% if tl.kind == "none" %}
+  <div class="cal-flash warn">Your account isn't linked to a directory record yet, so there is no team to show. Use Agenda or Month, or <a href="/me">complete your profile</a>.</div>
+{% elif not tl.n_people %}
+  <p class="cal-wk-empty">There is nobody in your team to show.</p>
+{% else %}
+<p class="cal-range">Showing {{ tl.team_label }} · {{ tl.n_people }} {{ "person" if tl.n_people == 1 else "people" }}. Bars are trips, trainings, activities and days on leave (no reason is shown). Click an empty day to add something for that person.</p>
+<div class="cal-timeline" role="table" aria-label="Team timeline, {{ tl.label }}" style="--ncols:{{ tl.ncols }}">
+  <div class="cal-tl-head cal-tl-weeks" role="row">
+    <div class="cal-tl-name" role="columnheader"></div>
+    {% for w in tl.weeks %}<div role="columnheader" style="grid-column:{{ loop.index0 * 7 + 2 }} / span 7">{{ w.label }}</div>{% endfor %}
+  </div>
+  <div class="cal-tl-head" role="row">
+    <div class="cal-tl-name" role="columnheader"></div>
+    {% for d in tl.days %}
+    <button type="button" role="columnheader" class="cal-tl-day {{ 'weekend' if d.weekend }} {{ 'today' if d.is_today }} {{ 'hol' if d.holiday }}"
+            data-quick data-date="{{ d.iso }}" title="{{ d.date.strftime('%A, %B') }} {{ d.num }}{% if d.holiday %} · {{ d.holiday }}{% endif %} — add something"
+            ><small>{{ d.dow }}</small>{{ d.num }}</button>
+    {% endfor %}
+  </div>
+
+  {% if tl.has_band %}
+  <div class="cal-tl-row cal-tl-band" role="row" style="--rows:{{ tl.band.rows }}">
+    <div class="cal-tl-name" role="rowheader" style="grid-row:1 / span {{ tl.band.rows }}"><span>The whole team<small>or nobody in particular</small></span></div>
+    {% for d in tl.days %}<div class="cal-tl-cell {{ 'weekend' if d.weekend }} {{ 'today' if d.is_today }} {{ 'hol' if d.holiday }}" style="grid-column:{{ loop.index + 1 }}; grid-row:1 / span {{ tl.band.rows }}"></div>{% endfor %}
+    {{ tbars(tl.band.bars, tl.band.more, tl.band.rows) }}
+  </div>
+  {% endif %}
+
+  {% for sec in tl.sections %}
+  <div class="cal-tl-sec" role="rowgroup"><div class="cal-tl-sechead">{{ sec.section }}</div>
+    {% for p in sec.people %}
+    <div class="cal-tl-row" role="row" style="--rows:{{ p.rows }}" data-uid="{{ p.user_id }}" data-person="{{ p.name }}">
+      <div class="cal-tl-name" role="rowheader" style="grid-row:1 / span {{ p.rows }}"><span>{{ p.name }}</span>
+        <button type="button" class="cal-tl-plus" data-quick data-uid="{{ p.user_id }}" data-person="{{ p.name }}" data-date="{{ add_day }}" aria-label="Add something for {{ p.name }}" hidden>+</button></div>
+      {% for d in tl.days %}<div class="cal-tl-cell {{ 'weekend' if d.weekend }} {{ 'today' if d.is_today }} {{ 'hol' if d.holiday }}" data-date="{{ d.iso }}"
+           style="grid-column:{{ loop.index + 1 }}; grid-row:1 / span {{ p.rows }}"></div>{% endfor %}
+      {{ tbars(p.bars, p.more, p.rows) }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+<p class="cal-legend"><span>▨ Weekend</span><span>★ Holiday (tinted)</span><span>Today is outlined</span></p>
+{% endif %}

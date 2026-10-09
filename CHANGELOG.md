@@ -1,5 +1,21 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.78 — office calendar H2: Timeline view and quick-add)
+
+- **Timeline layout** (`/calendar?view=timeline`, and the home Calendar tab's layout switch): four weeks of calendar days across, one row per
+  person in the viewer's team (the same directory-based team and scope as the Week layout and Who's in — an unlinked account gets a clear
+  message, not everyone), grouped by section. Bars are trips, trainings, meetings, CSS activities and **reported leave (never a reason)**,
+  stacked in up to 3 lanes with "+N" for the rest (never silently dropped) and cut-edge markers when an item runs past either end. Items naming
+  nobody in the team sit in a band at the top. Weekends are shaded, holidays tinted and named, today outlined; "← Earlier / Later →" move
+  four weeks. Filters (type, status, tag, unit) apply as everywhere else. `office_calendar.timeline` is the model.
+- **Quick-add sheet** (a `<dialog>`, `static/js/calendar.js`): "⚡ Quick add", a day header, or an empty day on a person's row opens a small
+  form (title, type, who can see it, dates, optional times; a person's row pre-fills them as the person on it) that posts to the ORDINARY
+  `/calendar/new` route, so every rule there applies unchanged, and returns to the page it came from with a confirmation. The return address must
+  be a calendar page of this site (anything else — another host, `//`, backslashes, other paths — is ignored and you land on the new item), and
+  the confirmation text is escaped. A progressive enhancement: without JavaScript, the buttons stay hidden and "+ Add" does everything; the
+  script builds no HTML from strings.
+- Not in this increment: dragging bars to move or resize them (a possible later refinement).
+
 ## 2026-10-09 (v3.77 — office calendar H1: repeating items)
 
 - **One entry, many occurrences.** A series is a single `calendar_entry` carrying an RFC 5545 `RRULE` and an `EXDATE`-style list of skipped
