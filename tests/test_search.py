@@ -241,3 +241,32 @@ def test_rendered_nav_shows_groups_and_sections(admin):
     # the old seven-group shape is gone
     assert "<summary>Data entry</summary>" not in html
     assert "<summary>Manage</summary>" not in html
+
+
+# ── scoped search (Phase 2) ──────────────────────────────────────────────────
+
+def test_index_entries_carry_their_module(app_mod):
+    class U:
+        role = "admin"
+
+    idx = app_mod.search_index_for(U())
+    assert idx and all(e.get("mod") for e in idx)
+    assert {e["mod"] for e in idx} >= {"core", "css", "wellness", "awa", "administrator"}
+    by_url = {e["url"]: e["mod"] for e in idx}
+    assert by_url["/css"] == "core" and by_url["/me"] == "core"
+
+
+def test_css_scoped_page_has_the_exit_hooks(admin):
+    r = admin.get("/css")
+    assert 'data-scope="css"' in r.text and "/static/js/search.js?v=20261009b" in r.text
+
+
+def test_api_search_scope_css_returns_only_activity_and_people_sections(admin):
+    for q in ("learning", "good", "a b"):
+        for row in admin.get(f"/api/search?q={q}&scope=css").json():
+            assert row["section"] in ("Activities", "People")
+
+
+def test_api_search_unknown_scope_is_treated_as_all(admin):
+    assert (admin.get("/api/search?q=good&scope=nonsense").json()
+            == admin.get("/api/search?q=good").json())
