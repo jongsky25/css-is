@@ -1,5 +1,16 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (unreleased — office calendar A2: scope rules, no visible change)
+
+- **`office_calendar.py`** (new) — the layer registry: `items_between(conn, user, start, end,
+  scope=, layers=)` returns merged, sorted `CalItem` dicts from the `entries` and `holidays`
+  providers. Visibility comes from the directory (`team_scope_for_user`), never the role: an
+  unlinked account sees only bureau-audience items and its own; `audience='people'` is for the
+  named people and creator only; an owner-less unit entry is for its own people only. The
+  requested scope (blend/mine/section/division/bureau) can only narrow. Owner colour comes from the
+  `calendar_unit_tones` setting (importer, B2); bureau-level units default to green.
+- **Tests** — `tests/test_calendar_scope.py`. Nothing calls it yet, so `version.py` is not bumped.
+
 ## 2026-10-09 (unreleased — office calendar A1: storage only, no visible change)
 
 - **`storage.py`** — new tables `calendar_entry`, `calendar_entry_person`, `calendar_entry_tag`,
