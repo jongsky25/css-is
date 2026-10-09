@@ -632,7 +632,7 @@ NAV_GROUPS = [
          "kw": "work arrangement approvals approve decide queue pending waiting chief awa",
          "cap": "approver"},
     ]},
-    # ---- 4. Office (shared spaces and the calendar) -----------------------
+    # ---- 4. Office (shared spaces) -----------------------------------------
     # The conference room is not a work arrangement, and the Administrative
     # Section who run it are not necessarily app admins (cap manage_users), so it
     # has its own group: everyone requests; room approvers also get the manage items.
@@ -645,11 +645,6 @@ NAV_GROUPS = [
         {"key": "rooms_mine", "url": "/rooms/mine", "label": "My room reservations",
          "hint": "Your requests, their status, and withdrawing or moving them",
          "kw": "my room reservations requests withdraw move conference room status booked", "cap": None},
-        {"key": "calendar", "url": "/calendar", "label": "Office calendar",
-         "hint": "Meetings, trips, trainings, holidays and room bookings across the bureau",
-         "kw": "calendar office calendar schedule activities meetings events trips travel "
-               "technical assistance training workshop holidays what is on this week agenda "
-               "calendar of activities", "cap": None},
         {"key": "rooms_requests", "url": "/approvals", "label": "Room requests",
          "section": "Manage the room",
          "hint": "Approve or decline conference room requests",
@@ -670,7 +665,15 @@ NAV_GROUPS = [
          "kw": "qr poster print guest external request link conference room", "cap": "room_admin",
          "in_nav": False},
     ]},
-    # ---- 5. Administrator ------------------------------------------------
+    # ---- 5. Calendar (bureau-wide, not part of room booking) ---------------
+    {"name": "Calendar", "items": [
+        {"key": "calendar", "url": "/calendar", "label": "Office calendar",
+         "hint": "Meetings, trips, trainings, holidays and room bookings across the bureau",
+         "kw": "calendar office calendar schedule activities meetings events trips travel "
+               "technical assistance training workshop holidays what is on this week agenda "
+               "calendar of activities", "cap": None},
+    ]},
+    # ---- 6. Administrator ------------------------------------------------
     # Ordered by real usage inside the group: /admin/ai is the 4th busiest
     # screen in the app (53 views/30d) while Audit (2) and Sharing (1) are the
     # least-used of everything. Name cleanup stays search-only (0 views).

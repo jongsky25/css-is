@@ -17,17 +17,25 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.16"
+APP_VERSION = "6.17"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "6.16",
+        "version": "6.17",
         "date": "October 9, 2026",
         "summary": "Only the Administrative Section now manages the conference room.",
         "changes": [
             "Room requests, ordering meals, marking meals delivered, and room closures are for members of the Administrative Section only.",
             "A section's temporary OIC and admin accounts no longer see the room approval queue unless they belong to the Administrative Section.",
+        ],
+    },
+    {
+        "version": "6.16",
+        "date": "October 9, 2026",
+        "summary": "The Office calendar now has its own Calendar menu.",
+        "changes": [
+            "The Office calendar moved out of the Office menu into a new Calendar menu, so Office holds only the conference room.",
         ],
     },
     {
