@@ -1,5 +1,54 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v4.0 — the Office calendar, complete)
+
+A milestone marker for the whole Office calendar programme (increments A1 to H3, v3.5x to v3.79). No code beyond the version.
+
+- **Calendar:** one shared calendar for meetings, trips, trainings, deadlines, banners, CSS activities, reported leave and birthdays, with Agenda / Week /
+  Month / Timeline views, filters, scopes (mine, section, division, bureau), a Word-calendar import with the "Who is who?" step, repeating items, quick-add,
+  and a Team | Me | Calendar toggle and "Coming up" card on the home page.
+- **Two-way links:** weekly whereabouts (a confirmed trip pre-fills Field; your own report always wins; mismatches are soft heads-ups) and CSS activities
+  (every activity is on the calendar; "Collect feedback" from an item; editing a linked item goes through the activity; duplicate guard both ways).
+- **Staying informed:** one batched email per burst of changes, a Monday week-ahead, a day-before reminder, bell rows with seen-tracking, birthday reminders
+  with optional admin-set coordinators, an `.ics` per item, `.ics` attachments, and a private subscribe link.
+- **Privacy by construction:** visibility is decided once, in `office_calendar.items_between`, and everything (page, API, feed, emails, assistant answers)
+  reads it; birthdays store no year, are shared only by choice and consent is recorded; leave never carries a reason.
+- **Read API and assistant:** `GET /api/calendar` and eight calendar questions the search bar answers without the model seeing any calendar data.
+- To switch on after deploying: set `CSS_BASE_URL` (emails and links need it), and optionally update the mail relay script (docs/MAIL_RELAY_SETUP.md) so emails carry the `.ics` file.
+
+## 2026-10-09 (v3.79 — office calendar H3: read API and assistant answers)
+
+- **`GET /api/calendar`** (sign-in required; `no-store`): the calendar as JSON — `start`, `end` (default today + 13 days, at most 92 days), `scope`
+  (one of the viewer's own scope choices; an unlinked account is not offered `section`), `layers` (some of entries, activities, leave, holidays, birthdays;
+  default entries, activities, holidays) and `kind`. It IS `office_calendar.items_between`, the function behind the /calendar page, so a person gets
+  exactly what that page would show them in that scope and never more. Each item is a **whitelist** (id, layer, title, kind, status, dates and times, owner,
+  venue, format, whether a meeting link exists, tags, url, repeats, the people on it, an activity's lifecycle and registered count): never a note, never
+  the meeting link itself, never a leave reason (none is stored), never a birth year. Bad input is a plain 400 with a sentence.
+- **The assistant answers calendar questions** (`calendar_answers.py`, new, in the Space bundle): eight answer slots — today, tomorrow, the rest of this
+  week, next week, my next item, who is away this week / next week (trips and leave, by name and dates only), and birthdays this week. **The model never sees
+  calendar data**: like the survey-statistics answers it can only choose a key from a fixed list of labels and keywords, and the server renders the text from
+  the ASKER's own calendar (same visibility, so two people asking get two different, correct answers). Banners, cancelled and postponed items are left out,
+  tentative ones are marked, long lists stop at six with "…and N more".
+- **No model call needed**: eight FAQ rules ("what is on next week", "who is away this week", …) answer these through the existing deterministic layer, at zero
+  cost and while the assistant is off. They are added once to existing installs (marker `calendar_rules_seeded`) so an admin who removes them never has them
+  resurrected, and appear on fresh installs with the other seeds. The admin rules form lists the new answer slots automatically.
+
+## 2026-10-09 (v3.78 — office calendar H2: Timeline view and quick-add)
+
+- **Timeline layout** (`/calendar?view=timeline`, and the home Calendar tab's layout switch): four weeks of calendar days across, one row per
+  person in the viewer's team (the same directory-based team and scope as the Week layout and Who's in — an unlinked account gets a clear
+  message, not everyone), grouped by section. Bars are trips, trainings, meetings, CSS activities and **reported leave (never a reason)**,
+  stacked in up to 3 lanes with "+N" for the rest (never silently dropped) and cut-edge markers when an item runs past either end. Items naming
+  nobody in the team sit in a band at the top. Weekends are shaded, holidays tinted and named, today outlined; "← Earlier / Later →" move
+  four weeks. Filters (type, status, tag, unit) apply as everywhere else. `office_calendar.timeline` is the model.
+- **Quick-add sheet** (a `<dialog>`, `static/js/calendar.js`): "⚡ Quick add", a day header, or an empty day on a person's row opens a small
+  form (title, type, who can see it, dates, optional times; a person's row pre-fills them as the person on it) that posts to the ORDINARY
+  `/calendar/new` route, so every rule there applies unchanged, and returns to the page it came from with a confirmation. The return address must
+  be a calendar page of this site (anything else — another host, `//`, backslashes, other paths — is ignored and you land on the new item), and
+  the confirmation text is escaped. A progressive enhancement: without JavaScript, the buttons stay hidden and "+ Add" does everything; the
+  script builds no HTML from strings.
+- Not in this increment: dragging bars to move or resize them (a possible later refinement).
+
 ## 2026-10-09 (v3.77 — office calendar H1: repeating items)
 
 - **One entry, many occurrences.** A series is a single `calendar_entry` carrying an RFC 5545 `RRULE` and an `EXDATE`-style list of skipped

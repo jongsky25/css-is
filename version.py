@@ -17,10 +17,41 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.77"
+APP_VERSION = "4.0"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "4.0",
+        "date": "October 9, 2026",
+        "summary": "The Office calendar is complete: one place for meetings, trips, activities, leave and birthdays.",
+        "changes": [
+            "Calendar has Agenda, Week, Month and Timeline views, and you can add items in a tap, including ones that repeat.",
+            "It connects to everything else: your weekly whereabouts, survey activities, your home page, the bell, and your own Google, Outlook or Apple calendar.",
+            "Emails keep you informed without flooding you: one email for a burst of changes, a Monday week-ahead and a day-before reminder, all switchable on your profile.",
+            "Birthdays are optional and private unless you share them. You can ask the search bar what is on your calendar.",
+        ],
+    },
+    {
+        "version": "3.79",
+        "date": "October 9, 2026",
+        "summary": "Ask the search bar what is on your calendar.",
+        "changes": [
+            "Ask things like what do I have today, what is on next week, what is my next meeting, who is away this week or whose birthday is this week.",
+            "Answers come only from what you can already see on your calendar. Nobody's leave reason or private notes are ever included.",
+            "These questions work even when the AI assistant is switched off.",
+        ],
+    },
+    {
+        "version": "3.78",
+        "date": "October 9, 2026",
+        "summary": "A new Timeline view shows your team over four weeks, and you can add items without leaving the page.",
+        "changes": [
+            "Calendar has a Timeline view: one row per person across four weeks, with trips, trainings, activities and days on leave as bars.",
+            "Weekends are shaded, holidays are tinted, and nobody's reason for leave is ever shown.",
+            "Quick add: press Quick add, tap a day, or tap an empty day on someone's row to add an item in a small sheet, then land back where you were.",
+        ],
+    },
     {
         "version": "3.77",
         "date": "October 9, 2026",

@@ -66,6 +66,7 @@ import dashboard_export as dx
 import office_calendar as oc_cal
 import office_connect as oc
 import birthdays
+import calendar_answers
 import calendar_routes
 import report_docs
 import csm_report
@@ -930,6 +931,19 @@ AI_ANSWER_SLOTS = {
     },
 }
 
+# Calendar answers (office calendar H3). User-aware: rendered from the ASKER's own calendar by
+# calendar_answers (never from anything the model says), so they carry a `user_render` instead of `render`.
+AI_ANSWER_SLOTS.update(calendar_answers.SLOTS)
+
+
+def _render_answer(slot, conn, user):
+    """The text for an answer slot: survey statistics for the fixed slots, the asker's own calendar for
+    the calendar ones."""
+    if "user_render" in slot:
+        return slot["user_render"](conn, user, _today_local())
+    return slot["render"](home_stats(conn))
+
+
 
 # ---------------------------------------------------------------------
 # "Maximize AI" grounded-answer engine (nl_answer_grounded).
@@ -1483,6 +1497,19 @@ def _seed_learned_rules(conn):
             source="seed", created_by="system")
 
 
+def _seed_calendar_rules(conn):
+    """Add the calendar FAQ rules ONCE, on installs that already have rules (the fresh-install seeding
+    above is skipped there). A marker keeps an admin who deletes them from having them resurrected."""
+    if st.get_setting(conn, "calendar_rules_seeded", "") == "1":
+        return
+    for kind, target_key, canonical, alts in calendar_answers.SEED_RULES:
+        st.create_learned_rule(
+            conn, pattern=qa_rules.normalize(canonical), kind=kind, target_key=target_key,
+            keywords=" ".join([canonical] + list(alts)), sample_query=canonical,
+            source="seed", created_by="system")
+    st.set_setting(conn, "calendar_rules_seeded", "1")
+
+
 _schema_ready_for = set()    # DB paths whose schema has been ensured this process
 
 def get_conn():
@@ -1494,6 +1521,7 @@ def get_conn():
         st.init_db(conn)             # safe to re-run; also applies the venue migration
         st.seed_directory_if_empty(conn)
         _seed_learned_rules(conn)    # FAQ rules for the AI search bar (fresh install only)
+        _seed_calendar_rules(conn)   # calendar FAQ rules, once, on any install
         wabf.run_once(conn)          # ANNEX C Aug 16-31, 2026 — one-shot, marker-guarded
         st.seed_wa_prepared_by_default(conn)  # ANNEX C "Prepared by" -> Alexander Medel, one-shot
         _schema_ready_for.add(DB)
@@ -5690,7 +5718,7 @@ def _ai_try_rules(conn, user, query, ip=None, is_chief=False):
         slot = AI_ANSWER_SLOTS.get(key)
         if slot:
             payload = {"kind": "answer", "label": slot["label"],
-                       "text": slot["render"](home_stats(conn))}
+                       "text": _render_answer(slot, conn, user)}
     elif kind == "help":
         section = {s["key"]: s for s in help_catalog_for(user, is_chief)}.get(key)
         if section:
@@ -5877,7 +5905,7 @@ async def api_ai_route(request: Request):
             st.update_ai_interaction_outcome(conn, interaction_id, "ok",
                                              confidence=confidence, feature="nl_answer")
             return JSONResponse({
-                "kind": "answer", "label": slot["label"], "text": slot["render"](home_stats(conn)),
+                "kind": "answer", "label": slot["label"], "text": _render_answer(slot, conn, user),
                 "confidence": confidence, "interaction_id": interaction_id,
             })
 

@@ -1,0 +1,38 @@
+{# The quick-add sheet (H2): a small dialog that posts to the ordinary /calendar/new route, so every
+   rule there (who may see it, dates, repeat) applies unchanged, then returns to this page. It is an
+   enhancement: without JavaScript the "+ Add" button and the full form still do everything. #}
+<dialog id="cal-quick" class="cal-quick" aria-labelledby="cq-h">
+  <form method="post" action="/calendar/new" autocomplete="off">
+    <h2 id="cq-h">Quick add</h2>
+    <input type="hidden" name="status" value="confirmed">
+    <input type="hidden" name="repeat" value="none">
+    <input type="hidden" name="next" value="{{ quick.next }}">
+    <input type="hidden" name="owner_org_id" value="{{ quick.owner }}" data-owner>
+    <div data-people></div>
+    <label>What is it? <input name="title" required maxlength="200" data-first></label>
+    <div class="cf-row">
+      <label>Type <select name="kind">{% for k, label in quick.kinds.items() %}<option value="{{ k }}" {{ "selected" if k == "meeting" }}>{{ label }}</option>{% endfor %}</select></label>
+      <label>Who can see it
+        <select name="audience" data-audience>
+          {% if quick.owner %}<option value="unit">Everyone in my section</option>{% endif %}
+          <option value="people" {{ "selected" if not quick.owner }}>Only the people on it</option>
+          <option value="bureau">Everyone in the bureau</option>
+        </select></label>
+    </div>
+    <div class="cf-row">
+      <label>Starts <input type="date" name="start_date" required data-start></label>
+      <label>Ends <span class="opt">(if several days)</span> <input type="date" name="end_date" data-end></label>
+    </div>
+    <div class="cf-row">
+      <label>From <span class="opt">(optional)</span> <input type="time" name="start_time"></label>
+      <label>To <span class="opt">(optional)</span> <input type="time" name="end_time"></label>
+    </div>
+    <p class="cal-range" data-who hidden></p>
+    <div class="cf-actions">
+      <button class="cal-btn primary" type="submit">Add to the calendar</button>
+      <button class="cal-btn" type="button" data-quick-close>Cancel</button>
+      <a href="/calendar/new" data-more>More options…</a>
+    </div>
+  </form>
+</dialog>
+<script src="/static/js/calendar.js?v=20261009m" data-me="{{ quick.me }}" defer></script>

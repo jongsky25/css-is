@@ -14,6 +14,7 @@ from datetime import date, timedelta
 from urllib.parse import parse_qs, quote, urlencode
 
 import io
+import re
 import zipfile
 
 from fastapi import APIRouter, Request
@@ -71,7 +72,7 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
     link the body builds goes back to `base` carrying `fixed`, so a tab never turns into
     the other page. Visibility is office_calendar's job; nothing here widens it."""
     fixed = dict(fixed or {})
-    layout = q.get(layout_key) if q.get(layout_key) in ("month", "week") else "agenda"
+    layout = q.get(layout_key) if q.get(layout_key) in ("month", "week", "timeline") else "agenda"
     try:
         if layout == "month":
             m = date.fromisoformat((q.get("month") or today.strftime("%Y-%m")) + "-01")
@@ -79,6 +80,9 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
         elif layout == "week":
             start = oc.monday_of(date.fromisoformat(q["day"]) if q.get("day") else today)
             end = start + timedelta(days=4)                # Monday-Friday: the working week
+        elif layout == "timeline":
+            start = oc.monday_of(date.fromisoformat(q["day"]) if q.get("day") else today)
+            end = start + timedelta(days=7 * oc.TIMELINE_WEEKS - 1)
         else:
             start = date.fromisoformat(q["day"]) if q.get("day") else today
             end = start + timedelta(days=AGENDA_DAYS - 1)
@@ -94,8 +98,10 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
     # directory, so the items must not be narrowed to "mine" or the others' trips would vanish.
     # Visibility is unchanged — items_between still only returns what this viewer may see.
     # (The Week layout draws leave itself, from the same whereabouts, so it skips that layer.)
-    everything = oc.items_between(conn, user, start, end, scope="bureau" if layout == "week" else scope,
-                                  layers=[n for n in oc.LAYERS if not (layout == "week" and n in ("leave", "birthdays"))])
+    team_layout = layout in ("week", "timeline")                  # both are "everyone in my team"
+    skip_layers = {"week": ("leave", "birthdays"), "timeline": ("birthdays",)}.get(layout, ())
+    everything = oc.items_between(conn, user, start, end, scope="bureau" if team_layout else scope,
+                                  layers=[n for n in oc.LAYERS if n not in skip_layers])
     items = oc.apply_filters(everything, filters)
     entries = [i for i in everything if i["layer"] in ("entries", "activities")]
     # the filter menus list what is IN this window (before filtering), so choosing
@@ -127,6 +133,13 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
         "qs": qs, "form_action": base,
         "clear_filters": qs(kind="", status="", tag="", unit=""),
     }
+    owner = ""
+    if ctx["section_path"]:
+        r = conn.execute("SELECT id FROM org_unit WHERE path=?", (ctx["section_path"],)).fetchone()
+        owner = str(r[0]) if r else ""
+    # The quick-add sheet posts to the ordinary add route (so every rule there applies) and comes back here.
+    page["quick"] = {"owner": owner, "me": user["id"], "kinds": FORM_KIND_LABELS, "next": qs()}
+    page["flash"] = (q.get("ok") or "")[:120]
     hidden = [(k, v) for k, v in fixed.items()] + [("scope", scope)]
     noun = "item" if n == 1 else "items"
     if layout == "week":
@@ -135,6 +148,12 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
         page.update(week=pw, is_today_window=start == oc.monday_of(today), add_day=max(start, today).isoformat()
                     if start <= today <= end else start.isoformat(),
                     range_label=f"{pw['label']} · {n} {noun}")
+    elif layout == "timeline":
+        tl = oc.timeline(conn, user, start, items, today)
+        hidden += [(layout_key, "timeline"), ("day", start.isoformat())]
+        page.update(tl=tl, is_today_window=start == oc.monday_of(today), add_day=max(start, today).isoformat()
+                    if start <= today <= end else start.isoformat(),
+                    range_label=f"{tl['label']} · {n} {noun}")
     elif layout == "month":
         grid = oc.month_grid(items, m.year, m.month, today)
         hidden += [(layout_key, "month"), ("month", m.strftime("%Y-%m"))]
@@ -329,12 +348,83 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         tags = [t for t in f.get("tags", "").split(",")]
         return fields, people, tags, ""
 
+    def _safe_back(raw):
+        """Where the quick-add sheet may send you back to: a calendar page of this site, never
+        anywhere else (no scheme, no host, no protocol-relative or backslash tricks)."""
+        raw = (raw or "").strip()
+        if (raw.startswith(("/calendar?", "/?view=calendar")) or raw == "/calendar") and "//" not in raw \
+                and "\\" not in raw and "\n" not in raw and "\r" not in raw:
+            return re.sub(r"[&?]ok=[^&]*", "", raw)
+        return ""
+
     def _blank_form_defaults():
         return {"title": "", "kind": "meeting", "status": "confirmed", "start_date": "",
                 "end_date": "", "start_time": "", "end_time": "", "time_note": "",
                 "venue": "", "modality": "", "meeting_url": "", "note": "",
                 "owner_org_id": "", "audience": "unit", "tags": "", "updated_at": "",
                 "repeat": "none", "until": ""}
+
+    # ── the read API (H3) ───────────────────────────────────────────────────────
+
+    API_LAYERS = ("entries", "activities", "leave", "holidays", "birthdays")
+    API_MAX_DAYS = 92
+
+    def _api_item(i):
+        """What the API hands out for one calendar item: a WHITELIST, so a field added to the internal
+        item later is private until someone decides otherwise. Notes and meeting links are never in it
+        (only that a link exists), and a leave item carries no reason because none is ever stored."""
+        return {
+            "id": i["key"], "layer": i["layer"], "title": i["title"], "kind": i["kind"], "status": i["status"],
+            "start": i["start"], "end": i["end"], "start_time": i["start_time"], "end_time": i["end_time"],
+            "all_day": i["all_day"], "owner": i["owner_label"], "venue": i["venue"], "modality": i["modality"],
+            "has_meeting_link": bool(i["meeting_url"]), "tags": i["tags"], "url": i["url"],
+            "repeats": "repeats" in (i["flags"] or []),
+            "people": [{"user_id": p["user_id"], "name": p["name"], "role": p["role"]} for p in i["people"]],
+            "activity": ({"lifecycle": i["css"]["lifecycle"], "registered": i["css"]["registered"]} if i["css"] else None),
+        }
+
+    @router.get("/api/calendar")
+    def api_calendar(request: Request):
+        """The calendar as JSON, for the assistant and for tools. It is `office_calendar.items_between`
+        — the very function behind the /calendar page — so what it returns is exactly what that person
+        may see there, in the scope they ask for, and never more. Window: at most 92 days."""
+        user = request.state.user
+        if not user:
+            return JSONResponse({"error": "sign in required"}, status_code=401)
+        q = request.query_params
+
+        def bad(msg):
+            return JSONResponse({"error": msg}, status_code=400)
+        today = today_local()
+        try:
+            start = date.fromisoformat(q.get("start") or today.isoformat())
+            end = date.fromisoformat(q.get("end") or (start + timedelta(days=13)).isoformat())
+        except ValueError:
+            return bad("start and end must be dates like 2026-10-19")
+        if end < start:
+            return bad("end is before start")
+        if (end - start).days + 1 > API_MAX_DAYS:
+            return bad(f"ask for at most {API_MAX_DAYS} days at a time")
+        layers = [x for x in (q.get("layers") or "entries,activities,holidays").split(",") if x]
+        if not layers or any(x not in API_LAYERS for x in layers):
+            return bad("layers must be some of " + ", ".join(API_LAYERS))
+        conn = get_conn()
+        try:
+            ctx = oc.viewer_context(conn, user)
+            allowed = {c["key"] for c in oc.scope_choices(ctx)}
+            scope = q.get("scope") or oc.DEFAULT_SCOPE
+            if scope not in allowed:
+                return bad("scope must be one of " + ", ".join(sorted(allowed)))
+            kind = q.get("kind") or ""
+            if kind and kind not in KIND_LABELS:
+                return bad("unknown kind")
+            items = oc.items_between(conn, user, start, end, scope=scope, layers=layers,
+                                     filters={"kinds": {kind}} if kind else None)
+        finally:
+            conn.close()
+        return JSONResponse({"start": start.isoformat(), "end": end.isoformat(), "scope": scope,
+                             "count": len(items), "items": [_api_item(i) for i in items]},
+                            headers={"Cache-Control": "no-store"})
 
     # ── .ics: one item, and the personal feed (G4) ──────────────────────────────
 
@@ -510,6 +600,10 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 _add_skip(conn, series, ctx["occ"], request.state.user["username"])
         finally:
             conn.close()
+        back = _safe_back(f.get("next", ""))
+        if back:                                              # the quick-add sheet returns to the page it came from
+            return RedirectResponse(back + ("&" if "?" in back else "?") + "ok=" + quote("Added to the calendar."),
+                                    status_code=303)
         return RedirectResponse(f"/calendar/entries/{eid}?ok={quote('Added to the calendar.')}",
                                 status_code=303)
 

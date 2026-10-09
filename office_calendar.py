@@ -890,6 +890,63 @@ def people_week(conn, user, monday, items):
     }
 
 
+# ── the Timeline layout (H2) ─────────────────────────────────────────────────
+
+TIMELINE_WEEKS = 4
+TIMELINE_LANES = 3
+
+
+def timeline(conn, user, start, items, today, weeks=TIMELINE_WEEKS):
+    """Several weeks at once, one row per person in the viewer's team, every calendar day across
+    (weekends shaded, holidays tinted and named). Where "People × days" answers *where is everyone
+    this week*, this answers *who is away or busy over the next month*: trips, trainings, activities
+    and reported LEAVE are bars on each person's row (leave never carries a reason).
+
+    The team, and what may be shown of it, is exactly `storage.whereabouts_roster_week`'s — the
+    same directory-based scope as the Week layout and Who's in — and `items` are already the
+    ones the viewer may see. An item naming nobody in the team goes in the top band, so nothing
+    visible is left off the page."""
+    ncols = 7 * weeks
+    end = start + timedelta(days=ncols - 1)
+    roster = st.whereabouts_roster_week(conn, start, user)
+    team = {p["user_id"]: p["name"] for sec in roster["sections"] for p in sec["people"]}
+    hol = st.holidays_between(conn, start, end)
+    days = [{"iso": (start + timedelta(days=n)).isoformat(), "date": start + timedelta(days=n),
+             "num": (start + timedelta(days=n)).day, "dow": "MTWTFSS"[n % 7],
+             "weekend": n % 7 >= 5, "is_today": start + timedelta(days=n) == today,
+             "holiday": (hol.get((start + timedelta(days=n)).isoformat()) or {}).get("name")}
+            for n in range(ncols)]
+    heads = []
+    for w in range(weeks):
+        a, b = start + timedelta(days=7 * w), start + timedelta(days=7 * w + 6)
+        heads.append({"label": f"{a:%b} {a.day} – {b:%b} {b.day}" if a.month != b.month else f"{a:%b} {a.day}–{b.day}"})
+    work = [i for i in items if i["layer"] in ("entries", "activities", "leave")
+            and i["start"] <= end.isoformat() and i["end"] >= start.isoformat()]
+    per_person, band = {}, []
+    for i in work:
+        on = [p["user_id"] for p in i["people"] if p["user_id"] in team]
+        if on:
+            for uid in on:
+                per_person.setdefault(uid, []).append(i)
+        else:
+            band.append(i)
+    b_bars, b_lanes, b_more = _lay_out(band, start, ncols, TIMELINE_LANES)
+    sections = []
+    for sec in roster["sections"]:
+        rows = []
+        for p in sec["people"]:
+            bars, lanes, more = _lay_out(per_person.get(p["user_id"], []), start, ncols, TIMELINE_LANES)
+            rows.append({"user_id": p["user_id"], "name": p["name"], "bars": bars, "more": more,
+                         "rows": max(min(lanes, TIMELINE_LANES), 1) + (1 if any(more) else 0)})
+        sections.append({"section": sec["section"], "people": rows})
+    return {"kind": roster["kind"], "days": days, "weeks": heads, "ncols": ncols, "sections": sections,
+            "n_people": len(team), "has_band": bool(band),
+            "band": {"bars": b_bars, "more": b_more, "rows": max(min(b_lanes, TIMELINE_LANES), 1) + (1 if any(b_more) else 0)},
+            "label": f"{start:%b} {start.day} – {end:%b} {end.day}, {end.year}",
+            "prev": (start - timedelta(days=ncols)).isoformat(), "next": (start + timedelta(days=ncols)).isoformat(),
+            "start": start, "team_label": ", ".join(s["section"] for s in sections)}
+
+
 # ── linking calendar items and CSS activities (D2) ───────────────────────────
 
 LINKABLE_KINDS = ("meeting", "training")      # internal meetings, audits, banners... never get a CSS form
