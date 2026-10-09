@@ -1,5 +1,26 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (unreleased — office calendar B1: the Word-file parser, no visible change)
+
+- **`calendar_import.py`** (new, pure — no DB, no routes): `parse(path_or_file)` reads the yearly
+  Word calendar and returns `Draft` entries plus the holiday lines it set aside, file-level
+  warnings, stats and the colours it could not map.
+  - Owner = run highlight / shading per the legend (green Bureau, yellow S1, magenta S2, orange
+    S3, cyan S4, blue S5); pastel cell tints, white and unknown colours mean "no owner".
+  - Guesses (all editable in the review screen): kind, status (tentative/postponed/pending),
+    modality, start/end time (`130pm:`, `(1:30-3pm)`, `9-12`, `8-10AM`, `9-12 AM` = noon; AM/PM
+    alone stay a note), tags, and a raw `people_hint` for the resolver (B3). Numbers such as
+    "LIPH IS 3.0", "AO 2021-0040", "CHD6" are not mistaken for times.
+  - Wrapped fragments ("(S4: Carole)") join their activity; holiday lines are set aside.
+  - Identical activities on consecutive WORKING days merge into one range (across weekends, a
+    holiday, or a month table); typo variants within two characters merge with a warning, while a
+    different place ("Tawi Tawi" / "Basilan") never does. Stable `import_key` per draft.
+  - Run on the real CY 2026 file: 12 tables, 678 lines → 378 drafts, 18 holidays set aside, no
+    file-level warnings; 48 drafts had no owner colour and are flagged.
+- **`deploy_hf.py`** — ships `calendar_import.py` in the runtime bundle (B2 will import it).
+- **Tests** — `tests/test_calendar_import.py` (builds a small .docx in the test; the real file is
+  not in the repo).
+
 ## 2026-10-09 (v3.56 — office calendar: month grid and filters)
 
 - **`/calendar?view=month&month=YYYY-MM`** — a Sunday-first month grid like the Word calendar.
