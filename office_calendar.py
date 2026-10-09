@@ -171,8 +171,10 @@ def entry_visible(ctx, entry, owner_path):
 
 def _in_scope(ctx, scope, entry, owner_path):
     """Does a VISIBLE entry fall inside the scope the viewer asked for?"""
+    # whoever ran a bulk import is only its clerk: it is not "theirs" unless they are listed on it
     mine = (ctx["user_id"] in {p["user_id"] for p in entry["people"]}
-            or (bool(ctx["username"]) and entry["created_by"] == ctx["username"]))
+            or (bool(ctx["username"]) and entry["created_by"] == ctx["username"]
+                and entry.get("source") != "import"))
     bureau_wide = entry["audience"] == "bureau"
     if scope == "bureau":
         return True
