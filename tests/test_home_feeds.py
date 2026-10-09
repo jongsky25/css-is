@@ -22,11 +22,10 @@ def test_home_renders_both_feeds(admin):
     assert "Last week" in r.text and "Last 30 days" in r.text and "Last quarter" in r.text
 
 
-def test_home_greets_user_by_first_name(admin):
-    # The admin test account is admin@test.local (no directory link), so the
-    # greeting derives 'Admin' from the email local part.
+def test_css_hub_is_titled_css_hub(admin):
+    # /css is the CSS hub, not the home page: the personal greeting lives on `/`.
     r = admin.get("/css")
-    assert "What would you like to do, Admin?" in r.text
+    assert "<h1>CSS hub</h1>" in r.text
 
 
 def test_recently_concluded_links_resolve(admin):

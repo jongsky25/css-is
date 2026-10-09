@@ -6,7 +6,7 @@
 <title>{% block title %}Dashboard{% endblock %} — Office Connect</title>
 {# Set theme + text size before first paint so the choice never flashes. #}
 <script>(function(){try{var d=document.documentElement;var t=localStorage.getItem("theme");if(t!=="dark"&&t!=="light"&&t!=="contrast"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light";}d.setAttribute("data-theme",t);var s=localStorage.getItem("textscale");if(s!=="sm"&&s!=="lg"&&s!=="md"){s="md";}d.setAttribute("data-textscale",s);var dn=localStorage.getItem("density");if(dn!=="compact"&&dn!=="cozy"){dn="cozy";}d.setAttribute("data-density",dn);var ac=localStorage.getItem("accent");if(["blue","teal","violet","emerald","rose","amber"].indexOf(ac)<0){ac="blue";}d.setAttribute("data-accent",ac);}catch(e){}})();</script>
-<link rel="stylesheet" href="/static/css/app.css?v=20261008a">
+<link rel="stylesheet" href="/static/css/app.css?v=20261009a">
 {% block head %}{% endblock %}
 </head>
 {# page_width: "full" (dense tables), "narrow" (forms/reading), or empty for the default. #}
@@ -102,6 +102,7 @@
     </details>
 
     <div class="right">
+      {% if u %}<button id="navSearchBtn" type="button" class="nav-search" aria-label="Search (Ctrl K)" title="Search (Ctrl K)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>{% endif %}
       <details class="settings">
         <summary aria-label="Display settings" title="Display settings">⚙</summary>
         <div class="settings-menu">
@@ -220,7 +221,7 @@
   </div>
 </div>
 <script>window.SEARCH_INDEX = {{ search_index_for(u, request.state.is_chief)|tojson }};</script>
-<script src="/static/js/search.js?v=20260925a" defer></script>
+<script src="/static/js/search.js?v=20261009a" defer></script>
 {% endif %}
 {% if u and request.state.spot_feedback_enabled %}
 <button id="sfBtn" class="sf-float" type="button" aria-label="Send feedback about this page">💬 Send feedback</button>

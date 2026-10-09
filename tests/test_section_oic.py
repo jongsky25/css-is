@@ -305,6 +305,8 @@ def test_the_chief_is_not_offered_as_their_own_sections_delegate(app_mod, org):
     # table), so check the specific <option> the section's picker would
     # render for them, not a bare name search.
     html = c.get("/admin/users").text
+    # the birthday "Person" picker lists every account too: look only inside the OIC table
+    html = html.split("Temporary OIC")[1].split("</table>")[0]
     assert f'<option value="{org["chief"]}">OIC-Chief</option>' not in html
     assert f'<option value="{org["deputy"]}">OIC-Deputy</option>' in html
 

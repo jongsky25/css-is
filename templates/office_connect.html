@@ -6,6 +6,7 @@
 {% block title %}Home{% endblock %}
 {% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261010i">{% endblock %}
 {% block content %}
+{% from "_search_box.html" import search_box %}
 {{ avatar_defs() }}
 {{ face_defs() }}
 {{ growth_defs() }}
@@ -342,6 +343,13 @@
       <p class="oc-bday-sign">Mula sa lahat ng nasa BLHSD / From all of us at BLHSD</p>
     {% endif %}
   </section>
+  {% endif %}
+
+  {% if view != "calendar" %}
+  <div class="oc-search">
+    {{ search_box("Search people, pages, your calendar — or ask a question…", scope="all", tour="search") }}
+    <a class="try-assistant" href="/start">✨ Ask the assistant</a>
+  </div>
   {% endif %}
 
   {#-- ---------------- your to-do ----------------

@@ -27,8 +27,8 @@ TOURS = {
     "home": [
         {"target": "[data-tour='search']",
          "title": "Find anything fast",
-         "body": "Type a person, an activity, a report or a page here — or press "
-                 "Ctrl-K anywhere — to jump straight to it without digging through menus."},
+         "body": "Type an activity, a resource person, a report or a page here — or "
+                 "press Ctrl-K (or tap the magnifier at the top) anywhere — to jump straight to it."},
         {"target": "[data-tour='period']",
          "title": "Pick a time window",
          "body": "These buttons set the period for the four summary figures below — "
