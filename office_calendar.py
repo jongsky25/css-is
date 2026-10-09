@@ -35,6 +35,7 @@ from datetime import date, timedelta
 
 import auth
 import birthdays as bd
+import mailer
 import storage as st
 import tzutil as tz
 
@@ -940,3 +941,118 @@ def entry_candidates_for_activity(conn, user, title, start, end=None):
             out.append({"id": e["id"], "title": e["title"], "start": e["start_date"],
                         "end": e["end_date"] or e["start_date"], "url": f"/calendar/entries/{e['id']}"})
     return out
+
+
+# ── the email outbox (G1) ────────────────────────────────────────────────────
+#
+# storage._cal_enqueue writes one row per affected person in the SAME transaction as the
+# change, never for the editor. flush_outbox turns a burst of edits into ONE email per person:
+# it waits until the person's newest notice is QUIET_MINUTES old (or the oldest has waited
+# MAX_WAIT_MINUTES), except that a notice about something today or tomorrow goes at once.
+
+QUIET_MINUTES = 10
+MAX_WAIT_MINUTES = 60
+EXPIRE_DAYS = 2
+MAX_ATTEMPTS = 3
+
+_WHAT = {"title": "title", "start_date": "date", "end_date": "date", "start_time": "time",
+         "end_time": "time", "time_note": "time", "venue": "venue", "modality": "format",
+         "meeting_url": "meeting link", "status": "status"}
+
+
+def _coalesce(rows):
+    """One final kind per entry for a person's queued notices, or None when there is nothing to
+    say: added then cancelled/removed in the same burst means they never needed to know."""
+    kinds = [r["kind"] for r in rows]
+    first, last = kinds[0], kinds[-1]
+    if first == "added" and last in ("cancelled", "removed"):
+        return None
+    if last in ("cancelled", "removed"):
+        return last
+    if "added" in kinds:
+        return "added"
+    return "changed"
+
+
+def _when_text(e):
+    a = date.fromisoformat(e["start_date"])
+    b = date.fromisoformat(e["end_date"]) if e["end_date"] else a
+    day = f"{a:%a, %b} {a.day}" + (f" – {b:%a, %b} {b.day}" if b != a else "")
+    if e["start_time"]:
+        day += f" · {e['start_time']}" + (f"–{e['end_time']}" if e["end_time"] else "")
+    elif e["time_note"]:
+        day += f" · {e['time_note']}"
+    return day
+
+
+def flush_outbox(conn, base_url, *, now=None, send=None):
+    """Email the people whose notices are ready. Returns the number of emails sent. Safe to call
+    every minute: with nothing queued it is one cheap query. `send` defaults to mailer.send."""
+    from datetime import datetime
+    now = now or tz.now_local()
+    send = send or mailer.send
+    stamp = lambda dt: dt.isoformat(timespec="seconds")                               # noqa: E731
+    conn.execute("UPDATE calendar_outbox SET sent_at=?, result='expired' WHERE sent_at IS NULL AND queued_at < ?",
+                 (stamp(now), stamp(now - timedelta(days=EXPIRE_DAYS))))
+    conn.commit()
+    pending = {}
+    for r in conn.execute("SELECT id, user_id, entry_id, kind, detail, queued_at, urgent, attempts "
+                          "FROM calendar_outbox WHERE sent_at IS NULL ORDER BY id"):
+        pending.setdefault(r[1], []).append(dict(zip(
+            ("id", "user_id", "entry_id", "kind", "detail", "queued_at", "urgent", "attempts"), r)))
+    sent = 0
+    for uid, rows in pending.items():
+        times = [datetime.fromisoformat(r["queued_at"]) for r in rows]
+        ready = (any(r["urgent"] for r in rows)
+                 or now - max(times) >= timedelta(minutes=QUIET_MINUTES)
+                 or now - min(times) >= timedelta(minutes=MAX_WAIT_MINUTES))
+        if not ready:
+            continue
+        ids = [r["id"] for r in rows]
+
+        def close(result, ids=ids):
+            conn.execute("UPDATE calendar_outbox SET sent_at=?, result=? WHERE id IN (%s)"
+                         % ",".join("?" * len(ids)), (stamp(now), result, *ids))
+            conn.commit()
+        acct = st.get_admin_user_by_id(conn, uid)
+        if not acct or not acct["active"] or not acct["username"]:
+            close("dropped"); continue
+        if not st.calendar_email_pref(conn, uid):
+            close("skipped"); continue
+        by_entry = {}
+        for r in rows:
+            by_entry.setdefault(r["entry_id"], []).append(r)
+        lines = []
+        for eid, rs in by_entry.items():
+            kind = _coalesce(rs)
+            e = st.cal_get(conn, eid)
+            if kind is None or e is None:
+                continue
+            if e["status"] == "cancelled" and kind in ("added", "changed"):
+                kind = "cancelled"
+            if kind in ("added", "changed") and (e["end_date"] or e["start_date"]) < now.date().isoformat():
+                continue
+            moved = sorted({_WHAT[f] for r in rs for f in (r["detail"] or "").split(",") if f in _WHAT})
+            lines.append({"kind": kind, "title": e["title"], "when": _when_text(e),
+                          "where": e["venue"] or "", "url": f"{base_url}/calendar/entries/{eid}",
+                          "what": ("changed: " + ", ".join(moved)) if kind == "changed" and moved else ""})
+        if not lines:
+            close("dropped"); continue
+        if not st.email_feature_enabled(conn, "calendar_changes"):
+            st.log_email_send(conn, "calendar_changes", acct["username"], "(calendar changes)", "skipped_off")
+            close("skipped"); continue
+        name = (st.get_user_profile(conn, uid) or {}).get("person_name") or ""
+        subj, body, html = mailer.calendar_changes_message(
+            name.split()[0] if name else "", lines, f"{base_url}/calendar?scope=mine")
+        result = send(acct["username"], subj, body, html=html)
+        status = mailer.send_status(result)
+        st.log_email_send(conn, "calendar_changes", acct["username"], subj, status, result.get("detail"))
+        if status == "sent":
+            close("sent"); sent += 1
+        elif status == "failed" and max(r["attempts"] for r in rows) + 1 >= MAX_ATTEMPTS:
+            close("failed")
+        else:                                            # not configured yet / try again next tick
+            conn.execute("UPDATE calendar_outbox SET attempts=attempts+1 WHERE id IN (%s)"
+                         % ",".join("?" * len(ids)), ids)
+            conn.commit()
+    return sent

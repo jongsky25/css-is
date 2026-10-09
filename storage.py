@@ -468,6 +468,23 @@ def init_db(conn):
     );
     CREATE INDEX IF NOT EXISTS idx_cal_person_user ON calendar_entry_person(user_id);
 
+    -- Change notices waiting to be emailed (office calendar G1). Written in the same
+    -- transaction as the change, one row per affected person (never the editor), and
+    -- flushed by office_calendar.flush_outbox as ONE email per person per burst.
+    CREATE TABLE IF NOT EXISTS calendar_outbox (
+        id        INTEGER PRIMARY KEY,
+        user_id   INTEGER NOT NULL REFERENCES admin_user(id),
+        entry_id  INTEGER NOT NULL,
+        kind      TEXT NOT NULL,             -- added | changed | cancelled | removed
+        detail    TEXT,                      -- which fields moved ("start_date,venue")
+        queued_at TEXT NOT NULL,
+        urgent    INTEGER NOT NULL DEFAULT 0,  -- the entry is today/tomorrow: no waiting
+        attempts  INTEGER NOT NULL DEFAULT 0,
+        sent_at   TEXT,
+        result    TEXT                       -- sent | skipped | failed | expired | dropped
+    );
+    CREATE INDEX IF NOT EXISTS idx_cal_outbox_open ON calendar_outbox(sent_at, user_id);
+
     CREATE TABLE IF NOT EXISTS calendar_entry_tag (
         entry_id INTEGER NOT NULL REFERENCES calendar_entry(id) ON DELETE CASCADE,
         tag      TEXT NOT NULL,
@@ -629,6 +646,10 @@ def _add_missing_columns(conn):
     CREATE TABLE IF NOT EXISTS leaves pre-existing tables untouched, so a column
     added after a database was first created has to be ALTERed in by hand.
     """
+    au0 = {row[1] for row in conn.execute("PRAGMA table_info(admin_user)")}
+    if au0 and "cal_email_changes" not in au0:
+        # NULL = on (default). 0 = "don't email me about calendar changes".
+        conn.execute("ALTER TABLE admin_user ADD COLUMN cal_email_changes INTEGER")
     ce_cols = {row[1] for row in conn.execute("PRAGMA table_info(calendar_entry)")}
     if ce_cols and "css_nudged_at" not in ce_cols:
         conn.execute("ALTER TABLE calendar_entry ADD COLUMN css_nudged_at TEXT")
@@ -4074,6 +4095,7 @@ def get_user_profile(conn, user_id):
                         else acct.get("designation")) or "",
         "nickname": acct.get("nickname") or "",
         "birthday": get_birthday(conn, user_id),
+        "cal_email_changes": calendar_email_pref(conn, user_id),
         # position rides along too (unlinked accounts have none) so callers
         # can apply is_bureau_director() — the Director's title lives here,
         # not in designation (see is_bureau_director).
@@ -4392,6 +4414,18 @@ def clear_birthday(conn, user_id):
     conn.execute("UPDATE admin_user SET birthday_month=NULL, birthday_day=NULL, birthday_share=NULL, "
                  "birthday_consent_at=NULL, birthday_consent_notice=NULL WHERE id=?", (user_id,))
     conn.commit()
+
+
+def set_calendar_email_pref(conn, user_id, on):
+    """Whether this account is emailed when a calendar item they are on is added, changed or
+    cancelled. On by default (stored as NULL); an admin's global switch still applies."""
+    conn.execute("UPDATE admin_user SET cal_email_changes=? WHERE id=?", (None if on else 0, user_id))
+    conn.commit()
+
+
+def calendar_email_pref(conn, user_id):
+    r = conn.execute("SELECT cal_email_changes FROM admin_user WHERE id=?", (user_id,)).fetchone()
+    return not (r and r[0] == 0)
 
 
 def set_user_designation(conn, user_id, designation):
@@ -10113,6 +10147,29 @@ def cal_validate(title, start_date, **fields):
     return v
 
 
+_CAL_NOTIFY_FIELDS = ("title", "start_date", "end_date", "start_time", "end_time", "time_note",
+                      "venue", "modality", "meeting_url", "status")
+
+
+def _cal_enqueue(conn, entry, kind, user_ids, by, detail=""):
+    """Queue a change notice for each of `user_ids` — never the person who made the change,
+    and nothing for an entry that is already over. Runs inside the caller's transaction (the
+    caller commits). `entry` needs start_date / end_date as they stand AFTER the change."""
+    if not user_ids:
+        return
+    today = tz.today_local()
+    if (entry.get("end_date") or entry["start_date"]) < today.isoformat():
+        return
+    urgent = 1 if entry["start_date"] <= (today + timedelta(days=1)).isoformat() else 0
+    skip = set()
+    if by:
+        skip = {r[0] for r in conn.execute("SELECT id FROM admin_user WHERE username=?", (by,))}
+    now = tz.now_iso()
+    for uid in sorted(set(user_ids) - skip):
+        conn.execute("INSERT INTO calendar_outbox(user_id, entry_id, kind, detail, queued_at, urgent) "
+                     "VALUES (?,?,?,?,?,?)", (uid, entry["id"], kind, detail or None, now, urgent))
+
+
 def cal_create(conn, title, start_date, *, end_date=None, kind="meeting",
                status="confirmed", start_time=None, end_time=None, time_note=None,
                venue=None, modality=None, meeting_url=None, note=None,
@@ -10156,6 +10213,8 @@ def cal_create(conn, title, start_date, *, end_date=None, kind="meeting",
     _cal_write_people(conn, entry_id, people, by)
     _cal_write_tags(conn, entry_id, tags)
     _cal_revision(conn, entry_id, 0, "create", by, {"title": [None, v["title"]]})
+    if source != "import" and v["status"] != "cancelled":          # a bulk import never emails anyone
+        _cal_enqueue(conn, {"id": entry_id, **v}, "added", [u for u, _r in people], by)
     conn.commit()
     if by and audit_it:
         audit(conn, by, "calendar_create", target_type="calendar_entry",
@@ -10216,6 +10275,17 @@ def cal_update(conn, entry_id, *, by=None, expected_sequence=None,
     if "tags" in diff:
         _cal_write_tags(conn, entry_id, new_tags)
     _cal_revision(conn, entry_id, seq, "update", by, diff)
+    old_ids = {p["user_id"] for p in cur["people"]}
+    new_ids = {u for u, _r in new_people} if "people" in diff else old_ids
+    if merged["status"] == "cancelled":
+        if cur["status"] != "cancelled":
+            _cal_enqueue(conn, merged, "cancelled", old_ids, by)
+    else:
+        _cal_enqueue(conn, merged, "added", new_ids - old_ids, by)
+        _cal_enqueue(conn, merged, "removed", old_ids - new_ids, by)
+        moved = [f for f in _CAL_NOTIFY_FIELDS if f in diff]
+        if moved:
+            _cal_enqueue(conn, merged, "changed", old_ids & new_ids, by, ",".join(moved))
     conn.commit()
     if by:
         audit(conn, by, "calendar_update", target_type="calendar_entry",

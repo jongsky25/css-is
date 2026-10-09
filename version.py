@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.71"
+APP_VERSION = "3.72"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.72",
+        "date": "October 9, 2026",
+        "summary": "People on a calendar item now get one email when it is added, changed or cancelled.",
+        "changes": [
+            "If several edits are made in a row, you get a single email, not one per edit.",
+            "You never get an email about a change you made yourself.",
+            "Changes to something happening today or tomorrow are sent right away.",
+            "You can switch these emails off on your profile.",
+        ],
+    },
     {
         "version": "3.71",
         "date": "October 9, 2026",

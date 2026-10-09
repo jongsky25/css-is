@@ -63,6 +63,7 @@ import dashboard_insights as di
 import dashboard_export as dx
 # The Office Connect landing payload. It takes get_atoms/view_memo as arguments
 # rather than importing them back out of here, so the dependency stays one-way.
+import office_calendar as oc_cal
 import office_connect as oc
 import birthdays
 import calendar_routes
@@ -4439,6 +4440,19 @@ def _reminders_due(conn, now=None):
     return st.get_setting(conn, _REMINDER_SETTING) != now.date().isoformat()
 
 
+def _flush_calendar_outbox():
+    """Each tick: send the calendar change emails that are ready (one per person per burst).
+    Without a public base URL there is nothing to link to, so the notices simply wait."""
+    base = send_reminders._base_url()
+    if not base:
+        return
+    conn = st.connect(DB)
+    try:
+        oc_cal.flush_outbox(conn, base)
+    finally:
+        conn.close()
+
+
 async def _scheduler_loop():
     while True:
         try:
@@ -4465,6 +4479,10 @@ async def _scheduler_loop():
             if reminders_due:
                 await asyncio.to_thread(send_reminders.run, DB)
         except Exception:         # noqa: BLE001 — never let the loop die
+            pass
+        try:
+            await asyncio.to_thread(_flush_calendar_outbox)
+        except Exception:         # noqa: BLE001
             pass
         await asyncio.sleep(_SCHED_TICK)
 
@@ -5277,6 +5295,8 @@ async def me_submit(request: Request):
                 _audit(request, conn, "profile_update", target_type="user",
                        target_id=uid, summary="removed their signature")
         _save_birthday(request, conn, uid, bday)
+        if p.get("notify_present") == "1":
+            st.set_calendar_email_pref(conn, uid, p.get("cal_email_changes") == "1")
         st.set_user_designation(conn, uid, designation)
         st.set_user_nickname(conn, uid, nickname)
         # Keep the staff directory in sync: a linked account's designation is

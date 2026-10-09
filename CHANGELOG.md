@@ -1,5 +1,21 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.72 — office calendar G1: batched change emails)
+
+- **Outbox** (`calendar_outbox`): `cal_create` / `cal_update` / cancel / restore write one notice per affected person in the
+  SAME transaction as the change — **never the editor**. Kinds: *added* (new, or newly put on it), *changed* (title, date, time,
+  venue, format, link or status moved; a note, tag or audience edit says nothing), *cancelled*, *removed*. A bulk import,
+  a cancelled-on-arrival item and anything already over queue nothing.
+- **`office_calendar.flush_outbox`**, called every scheduler tick: ONE email per person per burst. It waits until the person's
+  newest notice is 10 minutes old (or the oldest has waited 60), except a notice about something **today or tomorrow**, which
+  goes on the next tick. Within a burst: added + edits → one "added" with the final details; added then cancelled → nothing;
+  several items → one "Calendar update: N items" email. Email text is built from the entry as it is *now*.
+- **Respects** the person's own switch (new on `/me`, on by default; a form without the field never flips it) and the
+  admin's global switch (new feature "Calendar — added / changed / cancelled" in /admin/email, with a preview). Inactive
+  accounts and deleted entries are dropped; a failed send retries up to 3 ticks; with mail not configured the notices wait and
+  expire after 2 days. Needs `CSS_BASE_URL` (for the links) like the other reminder emails.
+- Not yet: the `.ics` attachment (G4), bells (G2), the Monday/day-before emails (G3).
+
 ## 2026-10-09 (v3.71 — office calendar F2: birthdays on the calendar)
 
 - **`birthdays` layer**: 🎂 <nickname or first name> on the day, every year, as an all-day item of type "Birthday"

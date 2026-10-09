@@ -604,6 +604,47 @@ def calendar_css_nudge_message(name, title, when, link):
     return subject, body, html
 
 
+_CAL_KIND_WORD = {"added": "New", "changed": "Changed", "cancelled": "Cancelled", "removed": "Removed from"}
+
+
+def calendar_changes_message(name, rows, link):
+    """Returns (subject, plain_text_body, html_body). One email per person per burst of calendar
+    edits. `rows` is [{kind, title, when, where, what, url}] — kind is added / changed /
+    cancelled / removed; `what` says which parts moved for a change."""
+    if len(rows) == 1:
+        r = rows[0]
+        subject = {"added": f"Added to the calendar: {r['title']}",
+                   "changed": f"Changed on the calendar: {r['title']}",
+                   "cancelled": f"Cancelled: {r['title']}",
+                   "removed": f"Taken off your calendar: {r['title']}"}[r["kind"]]
+    else:
+        subject = f"Calendar update: {len(rows)} items"
+
+    def line(r):
+        bits = [r["when"]] + ([r["where"]] if r.get("where") else []) + ([r["what"]] if r.get("what") else [])
+        return f"  • {_CAL_KIND_WORD[r['kind']]}: {r['title']} — " + " · ".join(bits) + (f"\n    {r['url']}" if r.get("url") else "")
+    body = (f"Hello {name or 'there'},\n\nHere is what changed on the calendar for you:\n\n"
+            + "\n".join(line(r) for r in rows) + f"\n\nOpen your calendar:\n  {link}\n\n"
+            "You can turn these emails off on your profile.\n")
+    cells = "".join(
+        f'<tr><td style="padding:6px 12px 6px 0; font-family:Arial,Helvetica,sans-serif; font-size:13px; '
+        f'color:{_SOFT}; vertical-align:top;">{_e(_CAL_KIND_WORD[r["kind"]])}</td>'
+        f'<td style="padding:6px 0; font-family:Arial,Helvetica,sans-serif; font-size:14px; color:{_INK};">'
+        f'<strong>{_e(r["title"])}</strong><br><span style="color:{_SOFT}; font-size:13px;">'
+        f'{_e(" · ".join([r["when"]] + ([r["where"]] if r.get("where") else []) + ([r["what"]] if r.get("what") else [])))}'
+        f'</span></td></tr>' for r in rows)
+    table = (f'<table role="presentation" cellpadding="0" cellspacing="0" border="0" '
+             f'style="margin:16px 0 4px;">{cells}</table>')
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="Your calendar changed",
+        intro="Here is what was added, changed or cancelled for you.",
+        extra_html=table, cta_label="Open my calendar", link=link,
+        footnote="You can turn these emails off on your profile.",
+    )
+    return subject, body, html
+
+
 def csm_rp_results_message(rp_name, topic, event_title, link):
     """Returns (subject, plain_text_body, html_body). Sent once to a resource
     person (speaker) with a login, after their own Type-3 CSM ratings for a
@@ -1091,6 +1132,11 @@ FEATURES = {
         "A registrant is told when an organiser moves an activity they signed up for "
         "(the organiser chooses whether to notify).",
         "transactional"),
+    "calendar_changes": (
+        "Calendar — added / changed / cancelled",
+        "A person on a calendar item gets one email (not one per edit) when it is added, changed "
+        "or cancelled. Never the person who made the change.",
+        "transactional"),
     "css_reminder": (
         "Monitor — remind unfinished registrants",
         "An organizer's one-click reminder, from Monitor, to every registrant "
@@ -1222,6 +1268,12 @@ _PREVIEWS = {
         "Juan Reyes", "Friday", _SAMPLE_LINK),
     "job_awa_file": lambda: work_arrangement_file_reminder_message(
         "Juan Reyes", "October 1-15, 2026", "Friday", _SAMPLE_LINK),
+    "calendar_changes": lambda: calendar_changes_message(
+        "Juan Reyes",
+        [{"kind": "added", "title": "Orientation for new staff", "when": "Tue, Oct 14 · 9:00–10:00",
+          "where": "DOH Conference Room", "what": "", "url": _SAMPLE_LINK},
+         {"kind": "changed", "title": "Section 2 meeting", "when": "Wed, Oct 15", "where": "",
+          "what": "moved: start date, venue", "url": _SAMPLE_LINK}], _SAMPLE_LINK),
     "event_dates_changed": lambda: event_dates_changed_message(
         "Juan Reyes", "Basic Life Support Training", "October 2, 2026",
         "October 9, 2026", "DOH Conference Room", _SAMPLE_LINK),
