@@ -1,5 +1,19 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-10 (v5.0 — calendar Phase 5: accessibility and hardening)
+
+`docs/CALENDAR_UX_PLAN.md` Phase 5. Found with axe-core (WCAG 2.0 to 2.2 AA plus best practice) run over every calendar view and state (agenda, month, week, timeline, empty, search, the add form, filters and More open, the item sheet, quick add) in three themes at 390 and 1440px: 72 runs, 90 problems in 6 rules at the start, none left except an open dropdown covering the button beneath it.
+
+- **Grids (`_calendar_month.html`, `_calendar_week.html`, `_calendar_timeline.html`):** a `role="row"` may hold only cells, but the bars, day numbers and "+n more" were links placed directly in the row. They now share one cell-role wrapper (`.cal-layer`, `display:contents`, so layout is unchanged). The compact month's cell is the `gridcell` and holds the link (a link cannot carry that role). The timeline's day headers are header cells containing the add button (a button cannot carry the header role). The empty corner header of Week and Timeline is named "Person".
+- **Contrast and size:** out-of-month days fade by colour, not opacity (the number was under 4.5:1), the "+n" in a faded compact cell stays at full strength; bars and "+n more" are at least 24px tall (WCAG 2.2 target size).
+- **Structure:** today's section carries `aria-current="date"`; the empty state's heading is an `h2` (it skipped a level).
+- **Large text:** at 150% and 200% text the Whose menu, the open Filters panel and the Earlier / Today / Later links widened the page; they now wrap and shrink. Checked on every calendar page, including the menus open, at 390 and 768px.
+- **Keyboard (checked in a browser):** every calendar control shows a focus ring; menus open with Enter or Space and close with Escape back to their button; the item sheet and quick add are modal, keep focus inside and give it back to the item that opened them; the sheet is labelled by the item's title; reduced-motion switches off the card lift and the sheet slide.
+- **Tests:** `tests/test_calendar_a11y.py` validates every grid row's children from the HTML (no browser needed) and pins each fix; 7 of its tests fail on the old templates. One more guards a bug the restructure introduced and only a screenshot showed (day numbers on the desktop month hidden under the bars, because the number row collapsed).
+- **Smoke test (`qa_smoke.py`):** renders the calendar body for each kind of account across 11 layout / scope / filter / search combinations (22 on a two-account database), and honours `CSS_DB` like the app. With no accounts it warns instead of failing.
+- **Screens:** 48 (6 widths x 4 views x light and dark) were checked for sideways overflow, script errors and a missing title or toolbar, none found. Kept outside the repo.
+- Not a bug: while the More menu is open on a phone it covers the "Later" button beneath it, as any dropdown does.
+
 ## 2026-10-10 (v4.9 — calendar Phase 4: frictionless)
 
 `docs/CALENDAR_UX_PLAN.md` Phase 4.

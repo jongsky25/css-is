@@ -25,15 +25,15 @@
 <p class="cal-scrollhint" aria-hidden="true">← Swipe sideways to see more days →</p>
 <div class="cal-people-week" role="table" aria-label="Who is where, {{ week.label }}">
   <div class="cal-pw-head" role="row">
-    <div role="columnheader" class="cal-pw-name"></div>
+    <div role="columnheader" class="cal-pw-name"><span class="cal-sr">Person</span></div>
     {% for d in week.days %}<div role="columnheader" class="{{ 'today' if d.iso == today.isoformat() }}">{{ d.name[:3] }}<small>{{ d.short }}</small>{% if d.holiday %}<em>★ {{ d.holiday.name }}</em>{% endif %}</div>{% endfor %}
   </div>
 
   {% if week.has_band %}
   <div class="cal-pw-row cal-pw-band" role="row" style="--rows:{{ week.band.rows }}">
     <div class="cal-pw-name" role="rowheader" style="grid-row:1 / span {{ week.band.rows }}">The whole team<small>or nobody in particular</small></div>
-    {% for d in week.days %}<div class="cal-pw-cell" style="grid-column:{{ loop.index + 1 }}; grid-row:1 / span {{ week.band.rows }}"></div>{% endfor %}
-    {{ bars(week.band.bars, week.band.more, week.band.rows, week.band.rows) }}
+    {% for d in week.days %}<div class="cal-pw-cell" role="cell" style="grid-column:{{ loop.index + 1 }}; grid-row:1 / span {{ week.band.rows }}"></div>{% endfor %}
+    <div class="cal-layer" role="cell">{{ bars(week.band.bars, week.band.more, week.band.rows, week.band.rows) }}</div>
   </div>
   {% endif %}
 
@@ -51,7 +51,7 @@
         {% elif c.state == "noawa" %}<span class="cal-pw-state">{{ c.text }}</span>{% endif %}
       </div>
       {% endfor %}
-      {{ bars(p.bars, p.more, p.rows, p.rows) }}
+      <div class="cal-layer" role="cell">{{ bars(p.bars, p.more, p.rows, p.rows) }}</div>
     </div>
     {% endfor %}
   </div>

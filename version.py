@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "4.9"
+APP_VERSION = "5.0"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "5.0",
+        "date": "October 10, 2026",
+        "summary": "The calendar is easier to use with a keyboard, a screen reader and large text.",
+        "changes": [
+            "Screen readers now find the month, week and timeline grids correctly laid out, with named column headings and today marked.",
+            "Everything can be reached and used with the keyboard, with a clear focus ring, and the panels keep focus inside them and give it back when closed.",
+            "Large text (up to 200%) no longer pushes the page sideways, and out-of-month days in the month grid are easier to read.",
+            "Smaller tap targets in the month, week and timeline grids were enlarged to the recommended minimum.",
+        ],
+    },
     {
         "version": "4.9",
         "date": "October 10, 2026",
