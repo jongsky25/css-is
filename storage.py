@@ -654,6 +654,10 @@ def _add_missing_columns(conn):
         # birthday_coordinator: 1 = an admin ticked "organises birthday celebrations".
         if au0 and col not in au0:
             conn.execute(f"ALTER TABLE admin_user ADD COLUMN {col} INTEGER")
+    # bday_greeted: the last in-app birthday card shown, as year*10 + 1 (lead-in) or 2 (the day),
+    # so each person sees at most one celebration card per phase per year. NULL = never.
+    if au0 and "bday_greeted" not in au0:
+        conn.execute("ALTER TABLE admin_user ADD COLUMN bday_greeted INTEGER")
     for col in ("cal_feed_token", "cal_feed_scope"):
         if au0 and col not in au0:
             conn.execute(f"ALTER TABLE admin_user ADD COLUMN {col} TEXT")
@@ -4514,6 +4518,16 @@ def set_bday_notify_pref(conn, user_id, on):
 def bday_notify_pref(conn, user_id):
     r = conn.execute("SELECT bday_notify FROM admin_user WHERE id=?", (user_id,)).fetchone()
     return not (r and r[0] == 0)
+
+
+def bday_greeted(conn, user_id):
+    r = conn.execute("SELECT bday_greeted FROM admin_user WHERE id=?", (user_id,)).fetchone()
+    return (r[0] if r else None) or 0
+
+
+def set_bday_greeted(conn, user_id, stamp):
+    conn.execute("UPDATE admin_user SET bday_greeted=? WHERE id=?", (stamp, user_id))
+    conn.commit()
 
 
 def set_birthday_coordinators(conn, user_ids):

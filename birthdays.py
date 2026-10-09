@@ -128,3 +128,15 @@ def email_send_date(month, day, year, is_working):
             return d
         d -= timedelta(days=1)
     return d
+
+
+_TL_DAYS = ("Lunes", "Martes", "Miyerkules", "Huwebes", "Biyernes", "Sabado", "Linggo")
+
+
+def lead_in_phrases(month, day, today):
+    """(tagalog, english) for when a birthday that is 1-6 days away falls: 'bukas / tomorrow' or
+    'sa Sabado / on Saturday'."""
+    d = next_occurrence(month, day, today)
+    if (d - today).days == 1:
+        return "bukas", "tomorrow"
+    return f"sa {_TL_DAYS[d.weekday()]}", f"on {d:%A}"

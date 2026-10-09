@@ -172,16 +172,18 @@ def acct(app_mod):
     st.clear_birthday(c, uid); c.close()
 
 
-def test_the_celebrant_is_greeted_on_the_day_only(app_mod, viewer, acct):
+def test_the_celebrant_is_greeted_in_the_week_before_and_on_the_day_only(app_mod, viewer, acct):
     c, uid = acct
-    from datetime import date as d
     today = app_mod._today_local()
     st.set_birthday(c, uid, today.month, today.day, "none")
     assert "Happy birthday" in viewer.get("/").text
-    other = today + timedelta(days=3)
-    st.set_birthday(c, uid, other.month, other.day, "none")
+    soon = today + timedelta(days=3)                                  # inside the week before
+    st.set_birthday(c, uid, soon.month, soon.day, "none")
+    assert "Malapit na ang kaarawan mo" in viewer.get("/").text
+    later = today + timedelta(days=10)                                # too early: the ordinary greeting
+    st.set_birthday(c, uid, later.month, later.day, "none")
     html = viewer.get("/").text
-    assert "Happy birthday" not in html and "Hi, " in html
+    assert "Happy birthday" not in html and "Malapit na ang kaarawan" not in html and "Hi, " in html
 
 
 def test_the_monthly_page_lists_what_you_may_see_and_prints(app_mod, viewer, acct):

@@ -30,7 +30,7 @@ Space, so each phase must be safe to ship alone and is opened as a draft for the
 | Admin email console that lists, previews and toggles every feature | `/admin/email`, `mailer.FEATURES`, `PREVIEWS` | done. A new job appears by adding dict entries |
 | Nav bell with "🎂 Today: …" for teammates | `office_calendar.birthday_bell_row` | done. The celebrant is deliberately excluded from it |
 | Working-day helpers | `office_calendar.first_working_day`, `storage.holidays_between` | done. Reuse for weekend birthdays |
-| Companion avatar with moods | `_avatars.html`, `profile.avatar_mood` | done. Can wear a party hat |
+| Companion avatar with moods | `_avatars.html`, `profile.avatar_mood` | done. Can celebrate too (a line under it) |
 
 ## 2. Design decisions
 
@@ -70,8 +70,8 @@ person per year, enforced by `_already_sent` on a subject that includes the year
 asleep and the run is missed, nothing is sent afterwards: a late greeting is worse than none.
 
 **D6 — In-app: one celebratory moment, then quiet.** The first visit in the window shows a full
-card (confetti, the companion in a party hat, the bilingual message). The visit is recorded in
-`admin_user.bday_greeted_year`; after that only the slim greeting heading shows, so a daily user is
+card (confetti, a line from the companion, the bilingual message). The visit is recorded in
+`admin_user.bday_greeted`; after that only the slim greeting heading shows, so a daily user is
 not shown confetti every day. × dismisses it. All motion respects `prefers-reduced-motion`.
 
 **D7 — Nothing about it leaks.** The celebrant is still never in their own bell or coordinator
@@ -80,7 +80,7 @@ or age. The email goes only to the account's own address.
 
 **D8 — Sign-in is the trigger, not a separate login hook.** The greeting is computed at render time
 from today's date and the person's birthday, as `is_birthday` already is. The only state stored is
-`bday_greeted_year`.
+`bday_greeted`.
 
 **D9 — Birthday cards from teammates.** People who are allowed to see a birthday (inside the
 celebrant's sharing scope, via `birthdays.shared_with`) can send a card during the same window
@@ -110,10 +110,11 @@ is allowed to know their birthday. Details in Phase 3.
 - `_birthday_greeting(profile, today)` next to `is_birthday`, returning
   `{phase, message, first_visit}`. Replaces the boolean.
 - `office_connect.html`: celebration card on first visit in the window, slim heading afterwards,
-  per D4 wording. The companion wears a party hat (new avatar `mood="party"`).
-- `admin_user.bday_greeted_year` (guarded `ALTER TABLE`), set when the card first renders;
-  `POST /me/birthday-greeting/dismiss`.
-- The slim greeting also appears on the `/css` chooser and the Wellness hub header.
+  per D4 wording. A line under the companion says it is celebrating too ("🎉 Pip is celebrating with you!"). A hat drawn over the artwork would not sit right on every species, and the name tag only shows on tap, so neither was used.
+- `admin_user.bday_greeted` (guarded `ALTER TABLE`; `year*10 + 1` for the lead-in, `+ 2` for the
+  day), set when the card first renders, so each phase shows one card. × hides the card in the
+  browser; nothing is stored for it.
+- Only the landing page `/` greets: it is the page everyone passes through after signing in.
 - Tests: card shows in the window and not outside it, first visit only, "before" vs "today"
   wording, never "belated", no greeting without a birthday, reduced-motion CSS present.
 
