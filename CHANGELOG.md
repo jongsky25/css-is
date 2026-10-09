@@ -1,5 +1,15 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v4.1 — conference room reservation R1: the rules, no screens yet)
+
+First increment of docs/ROOM_RESERVATION_PLAN.md. Nothing visible to users yet.
+
+- **Data:** `room_slot` (twelve one-hour slots, 07:00-19:00), `room_reservation`, `room_reservation_slot` and `room_block`. A partial unique index lets
+  many people *request* an hour but only one reservation be *approved* for it, so two admins can never both win.
+- **Rules (`rooms.py`):** request, approve, decline, withdraw; two working days' notice (holidays and weekends skipped); hours must be back-to-back;
+  first admin to decide wins and a later one is told who; a decline needs a reason; only the requester can withdraw. Every change is audited.
+- Tests: `tests/test_rooms_core.py`.
+
 ## 2026-10-09 (v4.0 — the Office calendar, complete)
 
 A milestone marker for the whole Office calendar programme (increments A1 to H3, v3.5x to v3.79). No code beyond the version.

@@ -17,10 +17,18 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "4.0"
+APP_VERSION = "4.1"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "4.1",
+        "date": "October 9, 2026",
+        "summary": "Groundwork for booking the conference room. Nothing to use yet.",
+        "changes": [
+            "The system now knows the conference room's hourly slots (7 AM to 7 PM) and the booking rules, ready for the request page coming next.",
+        ],
+    },
     {
         "version": "4.0",
         "date": "October 9, 2026",

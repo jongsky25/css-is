@@ -374,6 +374,78 @@ def init_db(conn):
         created_at TEXT
     );
 
+    -- Conference room (docs/ROOM_RESERVATION_PLAN.md). One room, fixed one-hour
+    -- slots. Only APPROVED slots are unique: many people may ask for the same
+    -- hour, the Administrative Section picks one. All writes go through rooms.py.
+    CREATE TABLE IF NOT EXISTS room_slot (
+        id         INTEGER PRIMARY KEY,
+        code       TEXT NOT NULL UNIQUE,   -- 'H07' = the 07:00 hour
+        label      TEXT NOT NULL,
+        start_time TEXT NOT NULL,          -- HH:MM
+        end_time   TEXT NOT NULL,
+        sort       INTEGER NOT NULL DEFAULT 0,
+        active     INTEGER NOT NULL DEFAULT 1
+    );
+
+    CREATE TABLE IF NOT EXISTS room_reservation (
+        id                INTEGER PRIMARY KEY,
+        ref_code          TEXT UNIQUE,     -- what people quote: CR-2610-0042
+        requester_user_id INTEGER REFERENCES admin_user(id),   -- internal requester
+        ext_name          TEXT,            -- external requester (no account)
+        ext_org           TEXT,
+        ext_email         TEXT,
+        ext_phone         TEXT,
+        on_behalf_of      TEXT,
+        title             TEXT NOT NULL,
+        purpose           TEXT,
+        attendees         INTEGER,
+        modality          TEXT NOT NULL DEFAULT 'f2f'
+                          CHECK (modality IN ('f2f','online','hybrid')),
+        day               TEXT NOT NULL,   -- YYYY-MM-DD
+        status            TEXT NOT NULL DEFAULT 'requested'
+                          CHECK (status IN ('requested','approved','declined',
+                                            'withdrawn','cancelled','expired')),
+        source            TEXT NOT NULL DEFAULT 'internal'
+                          CHECK (source IN ('internal','external','encoded','move','bump_accept')),
+        decided_by        TEXT,
+        decided_at        TEXT,
+        decide_note       TEXT,
+        bumped_by_reservation_id INTEGER REFERENCES room_reservation(id),
+        moves_reservation_id     INTEGER REFERENCES room_reservation(id),
+        event_id          INTEGER,         -- linked CSS activity (later increment)
+        calendar_entry_id INTEGER,
+        meals_requested   INTEGER NOT NULL DEFAULT 0,
+        created_by        TEXT,
+        created_at        TEXT,
+        updated_at        TEXT
+    );
+    CREATE INDEX IF NOT EXISTS ix_room_res_day ON room_reservation(day, status);
+    CREATE INDEX IF NOT EXISTS ix_room_res_user ON room_reservation(requester_user_id);
+
+    -- The hours a request covers. is_approved mirrors the parent's status and is
+    -- written only by rooms.py in the same transaction as the status change.
+    CREATE TABLE IF NOT EXISTS room_reservation_slot (
+        reservation_id INTEGER NOT NULL REFERENCES room_reservation(id) ON DELETE CASCADE,
+        day            TEXT NOT NULL,
+        slot_id        INTEGER NOT NULL REFERENCES room_slot(id),
+        is_approved    INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (reservation_id, slot_id)
+    );
+    -- The "one room" rule, enforced by the database: two admins approving
+    -- different requests for the same hour cannot both succeed.
+    CREATE UNIQUE INDEX IF NOT EXISTS ux_room_slot_taken
+        ON room_reservation_slot(day, slot_id) WHERE is_approved = 1;
+
+    -- Maintenance / admin holds. slot_id NULL = the whole day.
+    CREATE TABLE IF NOT EXISTS room_block (
+        id         INTEGER PRIMARY KEY,
+        day        TEXT NOT NULL,
+        slot_id    INTEGER REFERENCES room_slot(id),
+        reason     TEXT NOT NULL,
+        created_by TEXT,
+        created_at TEXT
+    );
+
     -- Weekly whereabouts: what a person says about each working day of one
     -- week ("Office", "Field", "Leave", or "AWA" = follow my filed arrangement).
     -- Layered ON TOP of the fortnightly ANNEX C filing and never written back
@@ -3536,8 +3608,13 @@ _AUDIT_ACTIONS = {
     "change_role":         ("Changed a role", "Accounts"),
     "activate_account":    ("Activated/deactivated an account", "Accounts"),
     "change_login_email":  ("Changed a login email", "Accounts"),
+    # Conference room
+    "room_request":        ("Requested the conference room", "Conference room"),
+    "room_approve":        ("Approved a room reservation", "Conference room"),
+    "room_decline":        ("Declined a room reservation", "Conference room"),
+    "room_withdraw":       ("Withdrew a room reservation", "Conference room"),
     # Approvals
-    "set_section_oic":     ("Assigned a temporary OIC", "Approvals"),
+    "set_section_oic":    ("Assigned a temporary OIC", "Approvals"),
     "clear_section_oic":   ("Removed a temporary OIC", "Approvals"),
     # Directory
     "directory_add":       ("Added a directory person", "Directory"),
