@@ -372,6 +372,7 @@ def _entry(text, owner):
     start, end, note, title = _find_time(text)
     title = re.sub(r"[\[(]\s*(tentative|postponed|pending)\s*[\])]", "", title, flags=re.I)
     title = re.sub(r"^(tentative|postponed)\s*[:\-]\s*", "", title, flags=re.I)
+    title = re.sub(r"[\s\-–]*\(\s*(tentative|postponed|pending)\s*$", "", title, flags=re.I)
     title = re.sub(r"\s[-–]\s*(tentative|postponed|pending)\s*$", "", title, flags=re.I)
     title = re.sub(r"\s+", " ", title).strip(" -–:,")
     hint, tokens = _people_hint(title)

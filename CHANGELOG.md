@@ -15,7 +15,7 @@
   - Identical activities on consecutive WORKING days merge into one range (across weekends, a
     holiday, or a month table); typo variants within two characters merge with a warning, while a
     different place ("Tawi Tawi" / "Basilan") never does. Stable `import_key` per draft.
-  - Run on the real CY 2026 file: 12 tables, 678 lines → 378 drafts, 18 holidays set aside, no
+  - Run on the real CY 2026 file: 12 tables, 678 lines → 380 drafts, 18 holidays set aside, no
     file-level warnings; 48 drafts had no owner colour and are flagged.
 - **`deploy_hf.py`** — ships `calendar_import.py` in the runtime bundle (B2 will import it).
 - **Tests** — `tests/test_calendar_import.py` (builds a small .docx in the test; the real file is

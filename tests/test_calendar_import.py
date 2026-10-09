@@ -268,6 +268,8 @@ def test_status_modality_and_tags():
     assert one("ISO Surveillance Closing Meeting online (POSTPONED)").status == "postponed"
     assert one("Regional Consultation for IP Health - Pending").status == "tentative"
     assert one("Tentative: SCMS Audit by Auditors").title == "SCMS Audit by Auditors"
+    d = one("TUPAD-(Tentative 9-12 am)")
+    assert (d.title, d.status, d.start_time, d.end_time) == ("TUPAD", "tentative", "09:00", "12:00")
     assert one("Equity Workshop [TENTATIVE]").title == "Equity Workshop"
     assert one("Meeting with DOH Rep Coordinators (Online)").modality == "online"
     assert one("Orientation (face to face)").modality == "f2f"
