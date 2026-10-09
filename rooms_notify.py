@@ -37,8 +37,7 @@ STALE_AFTER = timedelta(days=3)           # an email nobody could send for 3 day
 # ------------------------------------------------------------ who ---
 
 def approver_accounts(conn):
-    """Active accounts who decide room requests: the Administrative Section, its temporary
-    OIC, and (only if the directory has nobody there) the admin-role accounts as a fallback.
+    """Active accounts who decide room requests: the Administrative Section only.
     Returns [{'id', 'username', 'name', 'head'}]; `head` marks the section's chief."""
     import rooms
     out = {}
@@ -47,15 +46,6 @@ def approver_accounts(conn):
             "JOIN resource_person rp ON rp.id=a.rp_id AND rp.is_internal=1 AND rp.archived_at IS NULL "
             f"JOIN org_unit ou ON ou.id=rp.org_unit_id WHERE a.active=1 AND {rooms._ADMIN_UNIT_SQL}"):
         out[aid] = {"id": aid, "username": uname, "head": st._org_rank(desig, pos) >= 1}
-    for (aid,) in conn.execute(
-            "SELECT so.admin_user_id FROM section_oic so JOIN org_unit ou ON ou.id=so.org_unit_id "
-            f"WHERE {rooms._ADMIN_UNIT_SQL}"):
-        u = st.get_admin_user_by_id(conn, aid)
-        if u and u.get("active", 1):
-            out.setdefault(aid, {"id": aid, "username": u["username"], "head": True})
-    if not out:
-        for aid, uname in conn.execute("SELECT id, username FROM admin_user WHERE active=1 AND role='admin'"):
-            out[aid] = {"id": aid, "username": uname, "head": True}
     for a in out.values():
         a["name"] = st._account_display_name(conn, a["id"]) or a["username"]
     return list(out.values())

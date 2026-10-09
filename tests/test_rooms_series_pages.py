@@ -3,10 +3,17 @@ from __future__ import annotations
 from datetime import timedelta
 
 import pytest
+from conftest import in_the_directory
 
 import rooms
 import storage as st
 import tzutil as tz
+
+@pytest.fixture(autouse=True)
+def _admin_account_is_in_the_section(app_mod):
+    """Only Administrative Section members approve, so the seeded admin account joins it."""
+    with in_the_directory(app_mod, "admin@test.local", path="ADMINFX/ADMIN"):
+        yield
 
 
 @pytest.fixture()

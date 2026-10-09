@@ -8,6 +8,7 @@ import calendar_ics as cics
 import office_calendar as oc
 import rooms
 import storage as st
+from conftest import join_admin_section
 from test_calendar_home import world                                  # noqa: F401  (throwaway org + accounts)
 
 MON = date(2030, 3, 4)
@@ -22,7 +23,7 @@ def S(conn, *hours):
 @pytest.fixture()
 def w(world):                                                          # noqa: F811
     rooms.ensure_slots(world["conn"])
-    world["boss"] = {"id": st.create_admin_user(world["conn"], "boss@test.local", "x", "y", "admin"),
+    world["boss"] = {"id": join_admin_section(world["conn"], st.create_admin_user(world["conn"], "boss@test.local", "x", "y", "admin")),
                      "username": "boss@test.local", "role": "admin"}
     return world
 
@@ -50,7 +51,7 @@ def test_an_approved_booking_is_visible_to_everyone_signed_in(w):
 def test_a_pending_request_is_visible_only_to_the_requester_and_the_deciders(w):
     book(w, title="Not yet", approve=False)
     assert [i["status"] for i in items(w, "s1")] == ["tentative"]       # the requester
-    assert [i["status"] for i in items(w, "boss")] == ["tentative"]      # a room approver (admin role fallback)
+    assert [i["status"] for i in items(w, "boss")] == ["tentative"]      # a room approver (Administrative Section)
     for who in ("s1b", "s3", "dir", "nobody"):
         assert items(w, who) == [], who
 

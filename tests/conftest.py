@@ -22,6 +22,19 @@ ROLE_USERS = {
     "admin":           "admin@test.local",
 }
 
+def join_admin_section(conn, user_id, path="BLHSD/ADMIN"):
+    """Make this account a member of the Administrative Section (the only room approvers)."""
+    row = conn.execute("SELECT id FROM org_unit WHERE path=?", (path,)).fetchone()
+    unit = row[0] if row else conn.execute(
+        "INSERT INTO org_unit(name, short_name, level, path) VALUES (?,?,?,?)",
+        ("Administrative Section", "ADMIN", "section", path)).lastrowid
+    rp = conn.execute("INSERT INTO resource_person(name, is_internal, org_unit_id) VALUES (?,1,?)",
+                      (f"ADMIN-{user_id}", unit)).lastrowid
+    conn.execute("UPDATE admin_user SET rp_id=? WHERE id=?", (rp, user_id))
+    conn.commit()
+    return user_id
+
+
 @pytest.fixture(scope="session")
 def app_mod(tmp_path_factory):
     import app as app_mod

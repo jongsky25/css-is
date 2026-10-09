@@ -584,23 +584,14 @@ _ADMIN_UNIT_SQL = "(ou.path = 'ADMIN' OR ou.path LIKE '%/ADMIN' OR ou.path LIKE 
 
 
 def is_room_admin(conn, user):
-    """May this account decide room requests? Members of the Administrative Section
-    (and whoever is its temporary OIC), plus the app's `admin` role as the always-there
-    fallback so a request can never be stranded by a gap in the directory."""
+    """May this account decide room requests, order and tag meals, and manage closures?
+    Only members of the Administrative Section: no acting OIC and no `admin`-role bypass."""
     if not user:
         return False
-    if user.get("role") == "admin":
-        return True
-    uid = user.get("id")
-    member = conn.execute(
+    return conn.execute(
         "SELECT 1 FROM admin_user a JOIN resource_person rp ON rp.id=a.rp_id AND rp.is_internal=1 "
         "AND rp.archived_at IS NULL JOIN org_unit ou ON ou.id=rp.org_unit_id "
-        f"WHERE a.id=? AND a.active=1 AND {_ADMIN_UNIT_SQL} LIMIT 1", (uid,)).fetchone()
-    if member:
-        return True
-    return conn.execute(
-        "SELECT 1 FROM section_oic so JOIN org_unit ou ON ou.id=so.org_unit_id "
-        f"WHERE so.admin_user_id=? AND {_ADMIN_UNIT_SQL} LIMIT 1", (uid,)).fetchone() is not None
+        f"WHERE a.id=? AND a.active=1 AND {_ADMIN_UNIT_SQL} LIMIT 1", (user.get("id"),)).fetchone() is not None
 
 
 def pending_count(conn):

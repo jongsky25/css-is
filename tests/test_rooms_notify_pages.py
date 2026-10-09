@@ -14,6 +14,12 @@ from conftest import in_the_directory
 
 ADMIN_UNIT = "BLHSD/ADMIN"
 
+@pytest.fixture(autouse=True)
+def _admin_account_is_in_the_section(app_mod):
+    """Only Administrative Section members approve, so the seeded admin account joins it."""
+    with in_the_directory(app_mod, "admin@test.local", path="ADMINFX/ADMIN"):
+        yield
+
 
 @pytest.fixture()
 def conn(app_mod):
@@ -125,7 +131,7 @@ def test_a_link_for_something_already_decided_says_who_decided(client, admin, co
     r = ask(conn)
     admin.post(f"/rooms/{r['id']}/decide", data={"action": "approve"})
     page = client.get(link(r["id"], uid(conn, "admin@test.local")))
-    assert page.status_code == 400 and "already approved" in page.text and "admin@test.local" in page.text
+    assert page.status_code == 400 and "already approved" in page.text and "LF-admin" in page.text
     resp = client.post(f"/rooms/decide/{r['id']}", data={"token": auth.make_room_decide_token(r["id"], uid(conn, "admin@test.local")),
                                                        "action": "decline", "note": "x"})
     assert resp.status_code == 400
