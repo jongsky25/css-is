@@ -685,6 +685,27 @@ def birthday_month_message(name, month_label, rows, link):
     return subject, body, html
 
 
+def calendar_day_before_message(name, day_label, items, link):
+    """Returns (subject, plain_text_body, html_body). The day before a calendar entry the person
+    is on: `items` is [{title, when, where, url}]."""
+    subject = (f"Tomorrow: {items[0]['title']}" if len(items) == 1 else f"Tomorrow: {len(items)} things on your calendar")
+
+    def one(i):
+        bits = [b for b in (i["when"], i.get("where")) if b]
+        return f"  • {i['title']}" + (" — " + " · ".join(bits) if bits else "") + (f"\n    {i['url']}" if i.get("url") else "")
+    body = (f"Hello {name or 'there'},\n\nTomorrow, {day_label}, you are on:\n\n" + "\n".join(one(i) for i in items)
+            + f"\n\nYour calendar: {link}\n\nYou can turn these reminders off on your profile.\n")
+    cells = "".join(f'<tr><td style="padding:5px 0; font-family:Arial,Helvetica,sans-serif; font-size:14px; color:{_INK};">'
+                    f'<strong>{_e(i["title"])}</strong><br><span style="font-size:13px; color:{_SOFT};">'
+                    f'{_e(" · ".join(b for b in (i["when"], i.get("where")) if b))}</span></td></tr>' for i in items)
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},", heading="Coming up tomorrow",
+        intro=f"Tomorrow, {_e(day_label)}, you are on:",
+        extra_html=f'<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0;">{cells}</table>',
+        cta_label="Open my calendar", link=link, footnote="You can turn these reminders off on your profile.")
+    return subject, body, html
+
+
 def csm_rp_results_message(rp_name, topic, event_title, link):
     """Returns (subject, plain_text_body, html_body). Sent once to a resource
     person (speaker) with a login, after their own Type-3 CSM ratings for a
@@ -935,17 +956,21 @@ def work_arrangement_file_reminder_message(name, period_label, deadline_label, l
     return subject, body, html
 
 
-def whereabouts_week_message(name, week_label, days, link, birthdays=None):
+def whereabouts_week_message(name, week_label, days, link, birthdays=None, events=None, events_more=0):
     """Returns (subject, plain_text_body, html_body). The Monday "where will you
     be this week?" email. `days` is a list of (day_label, plotted_label) for
     Monday-Friday — already plotted from the person's filed work arrangement, so
     the email reads as a confirmation: change only what is different."""
     subject = f"Where will you be this week? {week_label}"
     lines = "\n".join(f"  {d}: {w}" for d, w in days)
+    ev_text = ""
+    if events:
+        ev_text = ("On the calendar this week:\n" + "\n".join(f"  {d}  {t}" for d, t in events)
+                   + (f"\n  …and {events_more} more" if events_more else ""))
     bday_text = ("🎂 Birthdays this week: " + ", ".join(f"{n} ({when})" for n, when in birthdays)) if birthdays else ""
     body = (f"Hello {name or 'there'},\n\n"
             f"Here is where we have you for {week_label}, from your work arrangement:\n\n"
-            f"{lines}\n\n" + (f"{bday_text}\n\n" if bday_text else "") +
+            f"{lines}\n\n" + (f"{ev_text}\n\n" if ev_text else "") + (f"{bday_text}\n\n" if bday_text else "") +
             f"If anything is different (in the field, on leave, or in the office), "
             f"change it here — one tap, no login:\n\n  {link}\n")
     rows = "".join(
@@ -955,6 +980,14 @@ def whereabouts_week_message(name, week_label, days, link, birthdays=None):
         f'font-weight:700; color:{_INK};">{_e(w)}</td></tr>' for d, w in days)
     table = (f'<table role="presentation" cellpadding="0" cellspacing="0" border="0" '
              f'style="margin:16px 0 4px;">{rows}</table>')
+    if events:
+        ev_rows = "".join(f'<tr><td style="padding:3px 12px 3px 0; font-family:Arial,Helvetica,sans-serif; font-size:13px; '
+                          f'color:{_SOFT};">{_e(d)}</td><td style="padding:3px 0; font-family:Arial,Helvetica,sans-serif; '
+                          f'font-size:14px; color:{_INK};">{_e(t)}</td></tr>' for d, t in events)
+        more = (f'<tr><td></td><td style="font-size:13px; color:{_SOFT};">…and {events_more} more</td></tr>' if events_more else "")
+        table += (f'<p style="margin:16px 0 4px; font-family:Arial,Helvetica,sans-serif; font-size:14px; font-weight:700; '
+                  f'color:{_INK};">On the calendar this week</p><table role="presentation" cellpadding="0" cellspacing="0" '
+                  f'border="0">{ev_rows}{more}</table>')
     if bday_text:
         table += (f'<p style="margin:14px 0 0; font-family:Arial,Helvetica,sans-serif; font-size:14px; '
                   f'color:{_INK};">{_e(bday_text)}</p>')
@@ -991,7 +1024,7 @@ def whereabouts_nudge_message(name, week_label, link):
     return subject, body, html
 
 
-def whereabouts_rollup_message(chief_name, week_label, missing, total, link):
+def whereabouts_rollup_message(chief_name, week_label, missing, total, link, calendar_lines=None):
     """Returns (subject, plain_text_body, html_body). The chief's mid-week list
     of who in their area still hasn't reported where they'll be."""
     n = len(missing)
@@ -1000,13 +1033,17 @@ def whereabouts_rollup_message(chief_name, week_label, missing, total, link):
             f"{total - n} of {total} in your area have reported where they'll be for "
             f"{week_label}. Still undeclared ({n}):\n\n"
             + "\n".join(f"  - {m}" for m in missing)
+            + (f"\n\nCalendar and report disagree ({len(calendar_lines)}):\n"
+               + "\n".join(f"  - {m}" for m in calendar_lines) if calendar_lines else "")
             + f"\n\nSee who's in: {link}\n")
     html = _email_html(
         greeting=f"Hi {chief_name or 'there'},",
         heading="Whereabouts not yet reported",
         intro=(f"{total - n} of {total} in your area have reported where they'll be for "
                f"{_e(week_label)}. Still undeclared ({n}):"),
-        extra_html=_list_html(missing),
+        extra_html=_list_html(missing) + (
+            f'<p style="margin:16px 0 4px; font-family:Arial,Helvetica,sans-serif; font-size:14px; font-weight:700;">'
+            f'Calendar and report disagree ({len(calendar_lines)})</p>' + _list_html(calendar_lines) if calendar_lines else ""),
         cta_label="See who's in",
         link=link,
     )
@@ -1230,6 +1267,11 @@ FEATURES = {
         "On the first working day of the month, each coordinator gets the month's celebrants "
         "(only birthdays shared with them).",
         "scheduled"),
+    "job_calendar_day_before": (
+        "Calendar — day-before reminder",
+        "Each person on a calendar entry that starts tomorrow gets one reminder listing them. CSS "
+        "activities are left to the existing activity reminder, so nobody is told twice.",
+        "scheduled"),
     "job_whereabouts_nudge": (
         "Weekly whereabouts — Tuesday nudge",
         "Nudges staff who haven't answered the Monday whereabouts email.",
@@ -1335,6 +1377,10 @@ _PREVIEWS = {
         "Maria Santos", "Wednesday, October 14", [("Riza", "Section 1"), ("Tek", "Section 3")], _SAMPLE_LINK),
     "job_birthday_month": lambda: birthday_month_message(
         "Maria Santos", "October 2026", [("Wed 14", "Riza", "Section 1"), ("Sat 17", "Tek", "Section 3")], _SAMPLE_LINK),
+    "job_calendar_day_before": lambda: calendar_day_before_message(
+        "Juan Reyes", "Wednesday, October 14",
+        [{"title": "Orientation for new staff", "when": "9:00–10:00", "where": "DOH Conference Room", "url": _SAMPLE_LINK}],
+        _SAMPLE_LINK),
     "job_calendar_css_nudge": lambda: calendar_css_nudge_message(
         "Jane Dela Cruz", "Basic Life Support Training", "October 2, 2026", _SAMPLE_LINK),
     "job_whereabouts_nudge": lambda: whereabouts_nudge_message(

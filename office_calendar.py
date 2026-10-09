@@ -1167,3 +1167,43 @@ def first_working_day(conn, year, month):
     while d.weekday() >= 5 or d.isoformat() in hol:
         d += timedelta(days=1)
     return d
+
+
+# ── the week ahead and the day before (G3) ───────────────────────────────────
+
+WEEK_AHEAD_MAX = 8
+
+
+def week_ahead(conn, user, monday):
+    """The Monday email's "on the calendar this week": what THIS person may see — their own
+    items plus what is bureau-wide, the default scope — for Monday-Friday, as
+    [(label, title)] plus how many were left out. A banner is background, a cancelled or
+    postponed item is not an event, and a CSS activity is included (the Monday email is the one
+    place it is listed for the week; the day-before reminder is separate)."""
+    friday = monday + timedelta(days=4)
+    items = [i for i in items_between(conn, user, monday, friday, scope="blend", layers=["entries", "activities"])
+             if i["kind"] != "banner" and i["status"] not in ("cancelled", "postponed")]
+    out = []
+    for i in items:
+        a, b = date.fromisoformat(i["start"]), date.fromisoformat(i["end"])
+        first = max(a, monday)
+        label = f"{first:%a} {first.day}" + (f"–{min(b, friday):%a} {min(b, friday).day}" if min(b, friday) > first else "")
+        if i["start_time"] and a >= monday:
+            label += f" · {i['start_time']}"
+        out.append((label, i["title"] + (" (tentative)" if i["status"] == "tentative" else "")))
+    return out[:WEEK_AHEAD_MAX], max(len(out) - WEEK_AHEAD_MAX, 0)
+
+
+def entries_starting_on(conn, day):
+    """{user_id: [{id, title, start_time, end_time, venue}]} — people on a LIVE calendar entry
+    that starts on `day`. A CSS activity's overlay is left out (the existing event reminder already
+    covers the activity), and so is a banner (background, not something to attend)."""
+    iso = day.isoformat()
+    out = {}
+    for uid, eid, title, t1, t2, venue in conn.execute(
+            "SELECT p.user_id, e.id, e.title, e.start_time, e.end_time, e.venue FROM calendar_entry e "
+            "JOIN calendar_entry_person p ON p.entry_id = e.id "
+            "WHERE e.start_date = ? AND e.status IN ('confirmed', 'tentative') AND e.event_id IS NULL "
+            "AND e.kind <> 'banner' ORDER BY e.start_time, e.id", (iso,)):
+        out.setdefault(uid, []).append({"id": eid, "title": title, "start_time": t1, "end_time": t2, "venue": venue})
+    return out

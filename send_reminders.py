@@ -147,7 +147,7 @@ def remind_tomorrows_events(conn, base, dry_run=False):
 _ALL_JOBS = {"events", "wellness_expiry", "digest", "csm_rp", "csm_activity",
             "wellness_file", "awa_file", "whereabouts",
             "whereabouts_nudge", "whereabouts_rollup", "calendar_css_nudge",
-            "birthday_coordinators", "birthday_month"}
+            "birthday_coordinators", "birthday_month", "calendar_day_before"}
 
 # job name -> the admin toggle that can switch it off (see /admin/email).
 JOB_FEATURE = {
@@ -164,6 +164,7 @@ JOB_FEATURE = {
     "calendar_css_nudge": "job_calendar_css_nudge",
     "birthday_coordinators": "job_birthday_coordinators",
     "birthday_month": "job_birthday_month",
+    "calendar_day_before": "job_calendar_day_before",
 }
 
 # Admin-tunable schedule/delay knobs for the jobs below (/admin/email "Timing"
@@ -394,6 +395,11 @@ def send_whereabouts_weekly(conn, base, dry_run=False):
     sent = 0
     for staffer in st.whereabouts_recipients(conn, monday):
         days = st.whereabouts_week(conn, staffer["id"], monday, defaults=defaults)
+        week_events, week_more = [], 0
+        if st.calendar_email_extras(conn, staffer["id"])["week"]:
+            acct = st.get_admin_user_by_id(conn, staffer["id"])
+            if acct:
+                week_events, week_more = oc.week_ahead(conn, acct, monday)
         week_birthdays = []
         if people and st.bday_notify_pref(conn, staffer["id"]):
             week_birthdays = [(c["name"], f"{c['date']:%a}") for c in oc.celebrants_between(
@@ -404,7 +410,8 @@ def send_whereabouts_weekly(conn, base, dry_run=False):
         token = auth.make_whereabouts_token(staffer["id"], monday.isoformat())
         link = f"{base}/whereabouts/week?token={quote(token)}"
         name = _person_name(conn, staffer["id"])
-        subj, body, html = mailer.whereabouts_week_message(name, label, plotted, link, birthdays=week_birthdays)
+        subj, body, html = mailer.whereabouts_week_message(name, label, plotted, link, birthdays=week_birthdays,
+                                                          events=week_events, events_more=week_more)
         if dry_run:
             print(f"[dry-run] whereabouts -> {staffer['username']} ({label})")
         else:
@@ -507,6 +514,37 @@ def _already_sent(conn, feature, to, subject):
                              "AND status IN ('sent', 'not_configured') LIMIT 1", (feature, to, subject)).fetchone())
 
 
+def send_calendar_day_before(conn, base, dry_run=False):
+    """The day before a calendar entry starts, remind everyone on it — one email per person listing
+    all of tomorrow's. CSS activities (an entry linked to one) are left to the existing day-before
+    activity reminder (`events`), so nobody is told twice. Honours the person's own switch, and the
+    email log makes a re-run harmless."""
+    import office_calendar as oc
+    tomorrow = tz.today_local() + timedelta(days=1)
+    sent = 0
+    for uid, entries in oc.entries_starting_on(conn, tomorrow).items():
+        acct = st.get_admin_user_by_id(conn, uid)
+        if not acct or not acct["active"] or not st.calendar_email_extras(conn, uid)["daybefore"]:
+            continue
+        items = []
+        for e in entries:
+            when = (e["start_time"] + (f"–{e['end_time']}" if e["end_time"] else "")) if e["start_time"] else "All day"
+            items.append({"title": e["title"], "when": when, "where": e["venue"] or "",
+                          "url": f"{base}/calendar/entries/{e['id']}"})
+        subj, body, html = mailer.calendar_day_before_message(
+            _person_name(conn, uid) or acct["username"], f"{tomorrow:%A, %B} {tomorrow.day}", items,
+            f"{base}/calendar?scope=mine&day={tomorrow.isoformat()}")
+        subj = f"{subj} ({tomorrow:%b} {tomorrow.day})"
+        if _already_sent(conn, JOB_FEATURE["calendar_day_before"], acct["username"], subj):
+            continue
+        if dry_run:
+            print(f"[dry-run] calendar day-before -> {acct['username']} ({len(items)})")
+        else:
+            _send(conn, JOB_FEATURE["calendar_day_before"], acct["username"], subj, body, html=html)
+        sent += 1
+    return sent
+
+
 def send_birthday_coordinators(conn, base, dry_run=False):
     """The day before a birthday, tell each celebration coordinator an admin ticked (OPTIONAL: with
     nobody ticked this sends nothing). A coordinator only hears about people who chose to share
@@ -566,6 +604,21 @@ def send_birthday_month(conn, base, dry_run=False):
     return sent
 
 
+def _rollup_calendar_lines(conn, staff, monday):
+    """Extra lines for a chief's Tuesday roll-up: staff whose own report disagrees with the
+    calendar this week (a trip they reported as Office/Leave, or leave on a day an item lists them).
+    Names and days only — never the item's title, which may not be the chief's to read."""
+    import office_calendar as oc
+    names = {}
+    for m in oc.mismatches(conn, list(staff), monday, monday + timedelta(days=4),
+                           kinds=("trip_conflict", "leave_on_entry")):
+        d = date.fromisoformat(m["day"])
+        what = ("reported something other than Field on a day the calendar has them on a trip"
+                if m["kind"] == "trip_conflict" else "is on leave on a day a calendar item lists them")
+        names.setdefault(staff[m["user_id"]], []).append(f"{d:%a} {d.day}: {what}")
+    return [f"{n} — " + "; ".join(v) for n, v in sorted(names.items(), key=lambda kv: kv[0].lower())]
+
+
 def send_whereabouts_rollup(conn, base, dry_run=False):
     """Tuesday by default (alongside the staff nudge), tell each chief who among
     the staff they approve for is still undeclared. Skips a chief with nobody
@@ -582,8 +635,9 @@ def send_whereabouts_rollup(conn, base, dry_run=False):
         chief = st.get_admin_user_by_id(conn, chief_id)
         if not chief or not chief.get("username"):
             continue
+        lines = _rollup_calendar_lines(conn, e["staff"], monday)
         subj, body, html = mailer.whereabouts_rollup_message(
-            _person_name(conn, chief_id), label, e["missing"], e["total"], link)
+            _person_name(conn, chief_id), label, e["missing"], e["total"], link, calendar_lines=lines)
         if dry_run:
             print(f"[dry-run] whereabouts roll-up -> {chief['username']} "
                   f"({len(e['missing'])} undeclared)")
@@ -717,6 +771,8 @@ def run(db_path="css_is.db", dry_run=False, jobs=None):
             report["whereabouts_nudge"] = nudge_whereabouts(conn, base, dry_run=dry_run)
         if "whereabouts_rollup" in jobs:
             report["whereabouts_rollup"] = send_whereabouts_rollup(conn, base, dry_run=dry_run)
+        if "calendar_day_before" in jobs:
+            report["calendar_day_before"] = send_calendar_day_before(conn, base, dry_run=dry_run)
         if "birthday_coordinators" in jobs:
             report["birthday_coordinators"] = send_birthday_coordinators(conn, base, dry_run=dry_run)
         if "birthday_month" in jobs:
@@ -754,6 +810,8 @@ def main():
                     help="Tell each chief who in their area hasn't reported their week.")
     ap.add_argument("--calendar-css-nudge", action="store_true",
                     help="Ask the creator of a past calendar-only training if they want feedback.")
+    ap.add_argument("--calendar-day-before", action="store_true",
+                    help="Remind people on a calendar entry that starts tomorrow.")
     ap.add_argument("--birthday-coordinators", action="store_true",
                     help="Tell birthday coordinators who has a birthday tomorrow.")
     ap.add_argument("--birthday-month", action="store_true",
@@ -771,6 +829,7 @@ def main():
                               ("whereabouts_nudge", args.whereabouts_nudge),
                               ("whereabouts_rollup", args.whereabouts_rollup),
                               ("calendar_css_nudge", args.calendar_css_nudge),
+                              ("calendar_day_before", args.calendar_day_before),
                               ("birthday_coordinators", args.birthday_coordinators),
                               ("birthday_month", args.birthday_month)) if flag}
     # run() treats a missing CSS_BASE_URL as a skip, because the in-process

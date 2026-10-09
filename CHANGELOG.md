@@ -1,5 +1,20 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.75 — office calendar G3: week-ahead, day-before, roll-up lines)
+
+- **Monday week-ahead**: the existing whereabouts Monday email gains "On the calendar this week" — what that person may
+  see for Monday-Friday under the default scope (their own items plus what is bureau-wide), up to 8 with "…and N more";
+  banners, cancelled and postponed items are left out, tentative ones are marked, a trip under way shows its days this week.
+  No second email, and it keeps the Monday email's weekday gate. Switch: "Put the week's calendar in my Monday email" on `/me`.
+- **Day-before reminder** (`--calendar-day-before`, new scheduled email with an /admin/email toggle and preview): everyone on a
+  live entry that STARTS tomorrow gets ONE email listing all of tomorrow's. A CSS activity (an entry linked to one) is skipped
+  — the existing `--events` reminder covers it, so nobody is told twice; banners are background. Once per person per day (email
+  log), dry runs send nothing, inactive accounts are skipped. Switch: "Remind me the day before…" on `/me`.
+- **Chief roll-up lines**: the Tuesday roll-up (still only sent to chiefs with someone undeclared) adds "Calendar and report
+  disagree (N)": staff who reported something other than Field on a trip day, or leave on a day an item lists them. **Names and
+  days only, never an item's title**, which may not be the chief's to read.
+- Not yet: the `.ics` attachment on these emails and the personal feed (G4).
+
 ## 2026-10-09 (v3.74 — office calendar F3: birthday reminders)
 
 - **Bell**: one row, "🎂 Today: Mae, Tek", listing the day's celebrants the person may see (each owner's sharing choice;

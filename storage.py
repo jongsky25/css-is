@@ -647,7 +647,7 @@ def _add_missing_columns(conn):
     added after a database was first created has to be ALTERed in by hand.
     """
     au0 = {row[1] for row in conn.execute("PRAGMA table_info(admin_user)")}
-    for col in ("bday_notify", "birthday_coordinator"):
+    for col in ("bday_notify", "birthday_coordinator", "cal_email_week", "cal_email_daybefore"):
         # bday_notify: NULL = on, 0 = "don't tell me about teammates' birthdays".
         # birthday_coordinator: 1 = an admin ticked "organises birthday celebrations".
         if au0 and col not in au0:
@@ -4109,6 +4109,7 @@ def get_user_profile(conn, user_id):
         "birthday": get_birthday(conn, user_id),
         "cal_email_changes": calendar_email_pref(conn, user_id),
         "bday_notify": bday_notify_pref(conn, user_id),
+        "cal_email_extras": calendar_email_extras(conn, user_id),
         # position rides along too (unlinked accounts have none) so callers
         # can apply is_bureau_director() — the Director's title lives here,
         # not in designation (see is_bureau_director).
@@ -4427,6 +4428,20 @@ def clear_birthday(conn, user_id):
     conn.execute("UPDATE admin_user SET birthday_month=NULL, birthday_day=NULL, birthday_share=NULL, "
                  "birthday_consent_at=NULL, birthday_consent_notice=NULL WHERE id=?", (user_id,))
     conn.commit()
+
+
+def set_calendar_email_extras(conn, user_id, *, week=None, daybefore=None):
+    """The Monday week-ahead and the day-before reminder switches (each on by default, stored
+    as NULL; None leaves one alone)."""
+    for col, on in (("cal_email_week", week), ("cal_email_daybefore", daybefore)):
+        if on is not None:
+            conn.execute(f"UPDATE admin_user SET {col}=? WHERE id=?", (None if on else 0, user_id))
+    conn.commit()
+
+
+def calendar_email_extras(conn, user_id):
+    r = conn.execute("SELECT cal_email_week, cal_email_daybefore FROM admin_user WHERE id=?", (user_id,)).fetchone()
+    return {"week": not (r and r[0] == 0), "daybefore": not (r and r[1] == 0)}
 
 
 def set_bday_notify_pref(conn, user_id, on):
@@ -9671,8 +9686,9 @@ def whereabouts_rollups(conn, monday, before=None):
         for chief in get_approvers_for(conn, uid):
             if chief in sent:
                 continue
-            e = out.setdefault(chief, {"missing": [], "total": 0})
+            e = out.setdefault(chief, {"missing": [], "total": 0, "staff": {}})
             e["total"] += 1
+            e["staff"][uid] = name
             if not done:
                 e["missing"].append(name)
     return {c: e for c, e in out.items() if e["missing"]}

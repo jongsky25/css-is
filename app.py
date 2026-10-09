@@ -5330,6 +5330,8 @@ async def me_submit(request: Request):
         if p.get("notify_present") == "1":
             st.set_calendar_email_pref(conn, uid, p.get("cal_email_changes") == "1")
             st.set_bday_notify_pref(conn, uid, p.get("bday_notify") == "1")
+            st.set_calendar_email_extras(conn, uid, week=p.get("cal_email_week") == "1",
+                                         daybefore=p.get("cal_email_daybefore") == "1")
         st.set_user_designation(conn, uid, designation)
         st.set_user_nickname(conn, uid, nickname)
         # Keep the staff directory in sync: a linked account's designation is
