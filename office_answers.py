@@ -98,7 +98,9 @@ def _names(conn, ids):
 def _status_text(conn, user, today, wanted):
     status = st.colleague_status_for(conn, user, today)
     if not status:
-        return "Colleague status isn't shared with your account, so I can't say."
+        if st.colleague_status_scope(conn) == "team":
+            return "Colleague status isn't shared with your account, so I can't say."
+        return "I don't have anyone's status to show today."
     if set(status.values()) == {"off"}:
         return "Today is not a working day."
     parts = []

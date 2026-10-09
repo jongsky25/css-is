@@ -150,6 +150,7 @@
             <option value="hub" {{ 'selected' if settings.get('ai_landing_default', 'hub') != 'start' }}>Classic hub</option>
             <option value="start" {{ 'selected' if settings.get('ai_landing_default') == 'start' }}>NL landing (/start)</option>
           </select>
+          <p class="hint">The home page now has the search box and the assistant built in, so most people no longer need this. /start stays available as the full-page assistant, linked from the home box.</p>
         </div>
         <div class="field">
           <label for="ai_fallback_enabled">Groq fallback (when Gemini's quota runs out)</label>

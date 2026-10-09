@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.8"
+APP_VERSION = "6.9"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.9",
+        "date": "October 9, 2026",
+        "summary": "One box on the home page for both searching and asking.",
+        "changes": [
+            "Type a question into the search box, such as \u201cwho is in the office today?\u201d, and choose the Ask line at the top to see the answer right there.",
+            "Pages and records you were searching for still appear underneath, so nothing is lost.",
+            "The same Ask line works in the search that opens with Ctrl-K or the magnifier button.",
+            "The full-page assistant at /start works exactly as before.",
+        ],
+    },
     {
         "version": "6.8",
         "date": "October 9, 2026",
