@@ -422,6 +422,67 @@ def init_db(conn):
         set_by        INTEGER REFERENCES admin_user(id),
         set_at        TEXT NOT NULL
     );
+
+    -- OFFICE CALENDAR (docs/OFFICE_CALENDAR_PLAN.md §3). A meeting, trip, training,
+    -- deadline or banner. CSS activities stay in `event`; a row with event_id set is
+    -- only an OVERLAY on one (people / tags / kind), never a second copy of it.
+    -- Shaped after iCalendar (RFC 5545): an opaque random uid, a sequence that
+    -- rises on any date/time/status/recurrence change, and a status.
+    CREATE TABLE IF NOT EXISTS calendar_entry (
+        id           INTEGER PRIMARY KEY,
+        uid          TEXT NOT NULL UNIQUE,   -- random hex; no host/user data (RFC 7986)
+        sequence     INTEGER NOT NULL DEFAULT 0,
+        title        TEXT NOT NULL,
+        kind         TEXT NOT NULL DEFAULT 'meeting',
+        status       TEXT NOT NULL DEFAULT 'confirmed',
+        start_date   TEXT NOT NULL,          -- YYYY-MM-DD
+        end_date     TEXT,                   -- inclusive; NULL = single day
+        start_time   TEXT,                   -- HH:MM Asia/Manila; NULL = all day
+        end_time     TEXT,
+        time_note    TEXT,                   -- free text kept from import ("1:30-3pm")
+        venue        TEXT,
+        modality     TEXT,
+        meeting_url  TEXT,
+        note         TEXT,
+        owner_org_id INTEGER REFERENCES org_unit(id),
+        audience     TEXT NOT NULL DEFAULT 'unit',
+        event_id     INTEGER UNIQUE REFERENCES event(id),
+        rrule        TEXT,                   -- reserved (increment H1)
+        exdates      TEXT,                   -- reserved (increment H1)
+        source       TEXT NOT NULL DEFAULT 'app',
+        import_key   TEXT UNIQUE,            -- makes a re-import idempotent
+        created_by   TEXT, created_at TEXT,
+        updated_by   TEXT, updated_at TEXT,
+        cancelled_at TEXT, cancelled_by TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_cal_entry_dates ON calendar_entry(start_date, end_date);
+
+    CREATE TABLE IF NOT EXISTS calendar_entry_person (
+        entry_id  INTEGER NOT NULL REFERENCES calendar_entry(id) ON DELETE CASCADE,
+        user_id   INTEGER NOT NULL REFERENCES admin_user(id),
+        role      TEXT NOT NULL DEFAULT 'attending',
+        seen_seq  INTEGER,                   -- last sequence this person has seen (bell)
+        added_by  TEXT, added_at TEXT,
+        PRIMARY KEY (entry_id, user_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_cal_person_user ON calendar_entry_person(user_id);
+
+    CREATE TABLE IF NOT EXISTS calendar_entry_tag (
+        entry_id INTEGER NOT NULL REFERENCES calendar_entry(id) ON DELETE CASCADE,
+        tag      TEXT NOT NULL,
+        PRIMARY KEY (entry_id, tag)
+    );
+
+    -- Append-only change history: powers "History" and Restore.
+    CREATE TABLE IF NOT EXISTS calendar_entry_revision (
+        id         INTEGER PRIMARY KEY,
+        entry_id   INTEGER NOT NULL REFERENCES calendar_entry(id) ON DELETE CASCADE,
+        sequence   INTEGER NOT NULL,
+        action     TEXT NOT NULL,            -- create|update|cancel|restore
+        changed_by TEXT, changed_at TEXT,
+        diff_json  TEXT                      -- {"field": [old, new]}
+    );
+    CREATE INDEX IF NOT EXISTS idx_cal_rev_entry ON calendar_entry_revision(entry_id);
     """)
     _add_missing_columns(conn)
     _wa_install_week_guard(conn)
@@ -9725,3 +9786,364 @@ def work_arrangement_month_periods(ym):
     y, m = ym.split("-")
     first = f"{int(y):04d}-{int(m):02d}-01"
     return [first, work_arrangement_next_period(first)]
+
+
+
+# ---- office calendar (docs/OFFICE_CALENDAR_PLAN.md, increment A1) ------------
+# Storage only: no HTTP, no scope. Who may SEE an entry is office_calendar.py's
+# job (A2); here anyone with a connection can read and write, and every write
+# leaves a revision row (+ an audit line when the actor is known).
+
+CAL_KINDS = ("meeting", "training", "travel", "deadline", "audit_mr", "banner", "activity")
+CAL_STATUSES = ("tentative", "confirmed", "postponed", "cancelled")
+CAL_MODALITIES = ("f2f", "online", "hybrid")
+CAL_AUDIENCES = ("bureau", "unit", "people")
+CAL_ROLES = ("lead", "attending", "travel")
+CAL_SOURCES = ("app", "import", "whereabouts")
+CAL_RESTORE_DAYS = 30
+
+# Changing any of these makes an attendee's calendar app treat the entry as a
+# NEW version, so the sequence rises. Title/venue/people edits do not.
+_CAL_SEQ_FIELDS = ("start_date", "end_date", "start_time", "end_time",
+                   "status", "rrule", "exdates")
+_CAL_EDITABLE = ("title", "kind", "status", "start_date", "end_date", "start_time",
+                 "end_time", "time_note", "venue", "modality", "meeting_url", "note",
+                 "owner_org_id", "audience", "event_id", "rrule", "exdates")
+_CAL_COLS = ("id", "uid", "sequence", "title", "kind", "status", "start_date", "end_date",
+             "start_time", "end_time", "time_note", "venue", "modality", "meeting_url",
+             "note", "owner_org_id", "audience", "event_id", "rrule", "exdates", "source",
+             "import_key", "created_by", "created_at", "updated_by", "updated_at",
+             "cancelled_at", "cancelled_by")
+
+
+class CalendarConflict(Exception):
+    """The entry changed since the form was opened (its sequence moved on)."""
+
+    def __init__(self, entry):
+        super().__init__("calendar entry changed since it was loaded")
+        self.entry = entry
+
+
+def _cal_date(v, label):
+    try:
+        return date.fromisoformat(str(v)).isoformat()
+    except (TypeError, ValueError):
+        raise ValueError(f"{label} must be a YYYY-MM-DD date") from None
+
+
+def _cal_time(v, label):
+    if v in (None, ""):
+        return None
+    if not re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", str(v)):
+        raise ValueError(f"{label} must be HH:MM")
+    return str(v)
+
+
+def _cal_clean(vals):
+    """Validate + normalise the editable fields present in `vals` (a dict)."""
+    out = dict(vals)
+    if "title" in out:
+        out["title"] = (out["title"] or "").strip()
+        if not out["title"]:
+            raise ValueError("title is required")
+    for f, allowed in (("kind", CAL_KINDS), ("status", CAL_STATUSES),
+                       ("audience", CAL_AUDIENCES)):
+        if f in out and out[f] not in allowed:
+            raise ValueError(f"{f} must be one of {', '.join(allowed)}")
+    if out.get("modality") in ("",):
+        out["modality"] = None
+    if out.get("modality") is not None and out["modality"] not in CAL_MODALITIES:
+        raise ValueError(f"modality must be one of {', '.join(CAL_MODALITIES)}")
+    if "start_date" in out:
+        out["start_date"] = _cal_date(out["start_date"], "start_date")
+    if "end_date" in out:
+        out["end_date"] = (None if out["end_date"] in ("", None)
+                           else _cal_date(out["end_date"], "end_date"))
+    for f in ("start_time", "end_time"):
+        if f in out:
+            out[f] = _cal_time(out[f], f)
+    for f in ("time_note", "venue", "meeting_url", "note", "rrule", "exdates"):
+        if f in out and isinstance(out[f], str):
+            out[f] = out[f].strip() or None
+    return out
+
+
+def _cal_span_ok(start, end):
+    if end is not None and end < start:
+        raise ValueError("end_date cannot be before start_date")
+
+
+def _cal_revision(conn, entry_id, sequence, action, by, diff):
+    conn.execute(
+        "INSERT INTO calendar_entry_revision(entry_id, sequence, action, changed_by,"
+        " changed_at, diff_json) VALUES (?,?,?,?,?,?)",
+        (entry_id, sequence, action, by, tz.now_iso(),
+         json.dumps(diff, ensure_ascii=False) if diff else None))
+
+
+def _cal_people_rows(conn, entry_ids):
+    out = {i: [] for i in entry_ids}
+    for i in range(0, len(entry_ids), 500):
+        chunk = entry_ids[i:i + 500]
+        q = ",".join("?" * len(chunk))
+        for r in conn.execute(
+                "SELECT entry_id, user_id, role, seen_seq FROM calendar_entry_person"
+                f" WHERE entry_id IN ({q}) ORDER BY rowid", chunk):
+            out[r[0]].append({"user_id": r[1], "role": r[2], "seen_seq": r[3]})
+    return out
+
+
+def _cal_tag_rows(conn, entry_ids):
+    out = {i: [] for i in entry_ids}
+    for i in range(0, len(entry_ids), 500):
+        chunk = entry_ids[i:i + 500]
+        q = ",".join("?" * len(chunk))
+        for r in conn.execute(
+                "SELECT entry_id, tag FROM calendar_entry_tag"
+                f" WHERE entry_id IN ({q}) ORDER BY tag", chunk):
+            out[r[0]].append(r[1])
+    return out
+
+
+def _cal_hydrate(conn, rows):
+    entries = [dict(zip(_CAL_COLS, r)) for r in rows]
+    ids = [e["id"] for e in entries]
+    people, tags = _cal_people_rows(conn, ids), _cal_tag_rows(conn, ids)
+    for e in entries:
+        e["people"] = people[e["id"]]
+        e["tags"] = tags[e["id"]]
+    return entries
+
+
+def _cal_normalise_people(people):
+    seen, out = set(), []
+    for item in people or ():
+        uid, role = (item, "attending") if isinstance(item, int) else (item[0], item[1])
+        if role not in CAL_ROLES:
+            raise ValueError(f"role must be one of {', '.join(CAL_ROLES)}")
+        if uid not in seen:
+            seen.add(uid)
+            out.append((int(uid), role))
+    return out
+
+
+def _cal_normalise_tags(tags):
+    seen = {}
+    for t in tags or ():
+        t = (t or "").strip()
+        seen.setdefault(t.lower(), t) if t else None      # one spelling per tag, first wins
+    return sorted(seen.values(), key=str.lower)
+
+
+def _cal_write_people(conn, entry_id, people, by):
+    """Replace the attendee list, keeping seen_seq for people who stay."""
+    keep = {r[0]: r[1] for r in conn.execute(
+        "SELECT user_id, seen_seq FROM calendar_entry_person WHERE entry_id=?", (entry_id,))}
+    conn.execute("DELETE FROM calendar_entry_person WHERE entry_id=?", (entry_id,))
+    now = tz.now_iso()
+    for uid, role in people:
+        conn.execute(
+            "INSERT INTO calendar_entry_person(entry_id, user_id, role, seen_seq,"
+            " added_by, added_at) VALUES (?,?,?,?,?,?)",
+            (entry_id, uid, role, keep.get(uid), by, now))
+
+
+def _cal_write_tags(conn, entry_id, tags):
+    conn.execute("DELETE FROM calendar_entry_tag WHERE entry_id=?", (entry_id,))
+    for t in tags:
+        conn.execute("INSERT INTO calendar_entry_tag(entry_id, tag) VALUES (?,?)",
+                     (entry_id, t))
+
+
+def cal_get(conn, entry_id):
+    row = conn.execute(f"SELECT {', '.join(_CAL_COLS)} FROM calendar_entry WHERE id=?",
+                       (entry_id,)).fetchone()
+    return _cal_hydrate(conn, [row])[0] if row else None
+
+
+def cal_create(conn, title, start_date, *, end_date=None, kind="meeting",
+               status="confirmed", start_time=None, end_time=None, time_note=None,
+               venue=None, modality=None, meeting_url=None, note=None,
+               owner_org_id=None, audience="unit", event_id=None, rrule=None,
+               exdates=None, source="app", import_key=None, people=None, tags=None,
+               by=None):
+    """Create an entry; returns its id. With an `import_key` that already exists,
+    returns the existing entry's id and changes nothing (idempotent re-import)."""
+    if import_key:
+        r = conn.execute("SELECT id FROM calendar_entry WHERE import_key=?",
+                         (import_key,)).fetchone()
+        if r:
+            return r[0]
+    if source not in CAL_SOURCES:
+        raise ValueError(f"source must be one of {', '.join(CAL_SOURCES)}")
+    v = _cal_clean(dict(title=title, start_date=start_date, end_date=end_date, kind=kind,
+                        status=status, start_time=start_time, end_time=end_time,
+                        time_note=time_note, venue=venue, modality=modality,
+                        meeting_url=meeting_url, note=note, audience=audience,
+                        rrule=rrule, exdates=exdates))
+    if v["end_date"] == v["start_date"]:
+        v["end_date"] = None
+    _cal_span_ok(v["start_date"], v["end_date"])
+    people = _cal_normalise_people(people)
+    tags = _cal_normalise_tags(tags)
+    now = tz.now_iso()
+    cancelled = (now, by) if v["status"] == "cancelled" else (None, None)
+    cur = conn.execute(
+        """INSERT INTO calendar_entry(uid, sequence, title, kind, status, start_date,
+               end_date, start_time, end_time, time_note, venue, modality, meeting_url,
+               note, owner_org_id, audience, event_id, rrule, exdates, source, import_key,
+               created_by, created_at, updated_by, updated_at, cancelled_at, cancelled_by)
+           VALUES (?,0,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+        (uuid.uuid4().hex, v["title"], v["kind"], v["status"], v["start_date"],
+         v["end_date"], v["start_time"], v["end_time"], v["time_note"], v["venue"],
+         v["modality"], v["meeting_url"], v["note"], owner_org_id, v["audience"],
+         event_id, v["rrule"], v["exdates"], source, import_key,
+         by, now, by, now, cancelled[0], cancelled[1]))
+    entry_id = cur.lastrowid
+    _cal_write_people(conn, entry_id, people, by)
+    _cal_write_tags(conn, entry_id, tags)
+    _cal_revision(conn, entry_id, 0, "create", by, {"title": [None, v["title"]]})
+    conn.commit()
+    if by:
+        audit(conn, by, "calendar_create", target_type="calendar_entry",
+              target_id=entry_id, summary=f"Added '{v['title']}' on {v['start_date']}")
+    return entry_id
+
+
+def cal_update(conn, entry_id, *, by=None, expected_sequence=None, people=None,
+               tags=None, **fields):
+    """Change an entry. Raises CalendarConflict when `expected_sequence` is given
+    and the stored sequence has moved on. `people` / `tags` (when not None) replace
+    the whole list. The sequence rises only when a date/time/status/recurrence field
+    actually changes. Returns the updated entry; a no-op leaves no revision."""
+    cur = cal_get(conn, entry_id)
+    if cur is None:
+        raise KeyError(entry_id)
+    if expected_sequence is not None and cur["sequence"] != expected_sequence:
+        raise CalendarConflict(cur)
+    unknown = set(fields) - set(_CAL_EDITABLE)
+    if unknown:
+        raise ValueError(f"cannot edit: {', '.join(sorted(unknown))}")
+    v = _cal_clean(fields)
+    merged = {**cur, **v}
+    if merged["end_date"] == merged["start_date"]:
+        merged["end_date"] = None
+        if "end_date" in v or "start_date" in v:
+            v["end_date"] = None
+    _cal_span_ok(merged["start_date"], merged["end_date"])
+    diff = {f: [cur[f], merged[f]] for f in v if merged[f] != cur[f]}
+    if "end_date" in merged and merged["end_date"] != cur["end_date"]:
+        diff["end_date"] = [cur["end_date"], merged["end_date"]]
+    if people is not None:
+        new_people = _cal_normalise_people(people)
+        old_people = [(p["user_id"], p["role"]) for p in cur["people"]]
+        if sorted(new_people) != sorted(old_people):
+            diff["people"] = [old_people, new_people]
+    if tags is not None:
+        new_tags = _cal_normalise_tags(tags)
+        if new_tags != sorted(cur["tags"], key=str.lower):
+            diff["tags"] = [cur["tags"], new_tags]
+    if not diff:
+        return cur
+    seq = cur["sequence"] + (1 if any(f in diff for f in _CAL_SEQ_FIELDS) else 0)
+    now = tz.now_iso()
+    sets = {f: merged[f] for f in diff if f in _CAL_EDITABLE}
+    if sets.get("status") == "cancelled":
+        sets["cancelled_at"], sets["cancelled_by"] = now, by
+    elif "status" in sets and cur["status"] == "cancelled":
+        sets["cancelled_at"], sets["cancelled_by"] = None, None
+    sets.update(sequence=seq, updated_by=by, updated_at=now)
+    conn.execute("UPDATE calendar_entry SET " + ", ".join(f"{k}=?" for k in sets)
+                 + " WHERE id=?", (*sets.values(), entry_id))
+    if "people" in diff:
+        _cal_write_people(conn, entry_id, new_people, by)
+    if "tags" in diff:
+        _cal_write_tags(conn, entry_id, new_tags)
+    _cal_revision(conn, entry_id, seq, "update", by, diff)
+    conn.commit()
+    if by:
+        audit(conn, by, "calendar_update", target_type="calendar_entry",
+              target_id=entry_id,
+              summary=f"Edited '{merged['title']}' ({', '.join(sorted(diff))})")
+    return cal_get(conn, entry_id)
+
+
+def cal_cancel(conn, entry_id, *, by=None):
+    """Soft delete: status -> cancelled (restorable for CAL_RESTORE_DAYS)."""
+    cur = cal_get(conn, entry_id)
+    if cur is None:
+        raise KeyError(entry_id)
+    if cur["status"] == "cancelled":
+        return cur
+    out = cal_update(conn, entry_id, by=by, status="cancelled")
+    conn.execute("UPDATE calendar_entry_revision SET action='cancel' WHERE id="
+                 "(SELECT MAX(id) FROM calendar_entry_revision WHERE entry_id=?)",
+                 (entry_id,))
+    conn.commit()
+    return out
+
+
+def cal_restore(conn, entry_id, *, by=None, force=False):
+    """Undo a cancel, back to the status it had. Refused after CAL_RESTORE_DAYS
+    unless `force` (admin tooling)."""
+    cur = cal_get(conn, entry_id)
+    if cur is None:
+        raise KeyError(entry_id)
+    if cur["status"] != "cancelled":
+        return cur
+    if not force and cur["cancelled_at"]:
+        age = tz.now_local() - datetime.fromisoformat(cur["cancelled_at"])
+        if age > timedelta(days=CAL_RESTORE_DAYS):
+            raise ValueError(f"cancelled more than {CAL_RESTORE_DAYS} days ago")
+    prior = "confirmed"
+    for (d,) in conn.execute(
+            "SELECT diff_json FROM calendar_entry_revision WHERE entry_id=? AND "
+            "action='cancel' ORDER BY id DESC LIMIT 1", (entry_id,)):
+        old = (json.loads(d or "{}").get("status") or [None])[0]
+        if old in CAL_STATUSES and old != "cancelled":
+            prior = old
+    out = cal_update(conn, entry_id, by=by, status=prior)
+    conn.execute("UPDATE calendar_entry_revision SET action='restore' WHERE id="
+                 "(SELECT MAX(id) FROM calendar_entry_revision WHERE entry_id=?)",
+                 (entry_id,))
+    conn.commit()
+    return out
+
+
+def cal_delete(conn, entry_id, *, by=None):
+    """Hard delete (admin tooling only; the UI will gate it). Removes people, tags
+    and history with the entry."""
+    cur = cal_get(conn, entry_id)
+    if cur is None:
+        return False
+    conn.execute("DELETE FROM calendar_entry_person WHERE entry_id=?", (entry_id,))
+    conn.execute("DELETE FROM calendar_entry_tag WHERE entry_id=?", (entry_id,))
+    conn.execute("DELETE FROM calendar_entry_revision WHERE entry_id=?", (entry_id,))
+    conn.execute("DELETE FROM calendar_entry WHERE id=?", (entry_id,))
+    conn.commit()
+    if by:
+        audit(conn, by, "calendar_delete", target_type="calendar_entry",
+              target_id=entry_id, summary=f"Deleted '{cur['title']}'")
+    return True
+
+
+def cal_list_between(conn, start, end, *, include_cancelled=False):
+    """Entries overlapping [start, end] (inclusive dates). A multi-day entry that
+    starts before the window but runs into it is included."""
+    start, end = _cal_date(start, "start"), _cal_date(end, "end")
+    sql = (f"SELECT {', '.join(_CAL_COLS)} FROM calendar_entry "
+           "WHERE start_date <= ? AND COALESCE(end_date, start_date) >= ?")
+    if not include_cancelled:
+        sql += " AND status <> 'cancelled'"
+    sql += " ORDER BY start_date, COALESCE(start_time, ''), id"
+    return _cal_hydrate(conn, conn.execute(sql, (end, start)).fetchall())
+
+
+def cal_revisions(conn, entry_id):
+    """Newest-first change history for an entry."""
+    return [{"id": r[0], "sequence": r[1], "action": r[2], "changed_by": r[3],
+             "changed_at": r[4], "diff": json.loads(r[5]) if r[5] else {}}
+            for r in conn.execute(
+                "SELECT id, sequence, action, changed_by, changed_at, diff_json "
+                "FROM calendar_entry_revision WHERE entry_id=? ORDER BY id DESC",
+                (entry_id,))]

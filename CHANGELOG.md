@@ -1,5 +1,15 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (unreleased — office calendar A1: storage only, no visible change)
+
+- **`storage.py`** — new tables `calendar_entry`, `calendar_entry_person`, `calendar_entry_tag`,
+  `calendar_entry_revision` (auto-created by `init_db`), and `cal_create` / `cal_update` /
+  `cal_cancel` / `cal_restore` / `cal_delete` / `cal_get` / `cal_list_between` / `cal_revisions`.
+  Sequence rises only on date/time/status/recurrence changes; stale-sequence saves raise
+  `CalendarConflict`; cancel is a soft delete restorable for 30 days; `import_key` makes
+  re-import idempotent. Nothing reads these yet, so `version.py` is not bumped.
+- **Tests** — `tests/test_calendar_storage.py`. Plan: `docs/OFFICE_CALENDAR_PLAN.md` (increment A1).
+
 ## 2026-10-09 (v3.53 — wellness register PDF: office is BLHSD, footnote removed)
 
 - **`storage.py`** — `wellness_person_month` returns `office = BLHSD_NAME` for everyone
