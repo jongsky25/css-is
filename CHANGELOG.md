@@ -1,5 +1,16 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v6.11 — header and home hero on phones and tablets)
+
+Checked in Chromium at 320–1440px against the real `app.css` and `dash_layout.html`.
+
+- **Phone hero bug:** the phone rule that caps the companion (`.oc-pet .avwrap > span { height:151px !important }`) also matched the companion's hidden name label, turning it into an invisible 151px block. That is the large blank gap under the companion, which pushed Team / Me / Calendar down by about 150px, and it left "Change companion →" beside the art instead of under it. The rule now targets only `.av-tiltstage`, and the link is a block.
+- **Phone header (≤640px):** one 57px row — logo, search, bell, ☰ (was two rows, 97px). ⚙ display settings, the ? help menu and Log out are hidden in the bar and live in the ☰ menu (a "Take a tour of this page" button, "Open the full guide", a Display section, Log out). The ⚙ controls are one `display_settings()` macro used by both the popover and the menu; `app.js` already binds them by delegation, so both copies stay in step. ≤359px also drops the logo mark.
+- **Tablet header:** the hamburger now starts at ≤900px (was ≤780px) with ☰ last, and the "username · role" chip is hidden below 1180px (it repeats the greeting). One row at every width from 320px to 1440px; before, 781–1100px wrapped to 90–128px.
+- **Send feedback button (≤640px):** icon-only 44px round button (`.sf-lab` hidden; the aria-label is unchanged), on `dash_layout` and `public_layout`.
+- **Home search:** on a phone the placeholder becomes "Search or ask a question…" (the long one was cut off mid-word).
+- Cache-bust: `app.css?v=20261009d` on both layouts (`public_layout` was still on `20261008a`).
+
 ## 2026-10-09 (v6.10 — sweep: phones, accessibility, telemetry, help)
 
 `docs/HOME_SEARCH_ASSISTANT_PLAN.md` Phase 8, and the whole feature (v6.3 to v6.10):
