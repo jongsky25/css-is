@@ -17,7 +17,7 @@ import io
 import zipfile
 
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from starlette.concurrency import run_in_threadpool
 
 import auth
@@ -146,6 +146,49 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
                                 f"{end.strftime('%b')} {end.day}, {end.year} · {n} {noun}")
     page["hidden"] = hidden
     return page
+
+
+def prefill_from_entry(conn, user, entry_id):
+    """The /create form's starting values for "Collect feedback (CSS)" on a calendar item, or
+    None when the id is not one this person may turn into an activity (can't see it, already
+    linked, cancelled, or a kind that takes no CSS form). Speakers are the item's LEADS who have
+    a directory record, each with the item's title as their topic (every speaker needs one);
+    attendees are not speakers, so they are left off."""
+    if not str(entry_id or "").isdigit():
+        return None
+    e = oc.viewable_entry(conn, user, int(entry_id))
+    if e is None or not oc.entry_can_collect_feedback(e):
+        return None
+    sections = {s["id"] for s in st.list_org_units(conn, level="section")}
+    speakers = []
+    for p in e["people"]:
+        if p["role"] != "lead":
+            continue
+        row = conn.execute("SELECT rp_id FROM admin_user WHERE id=?", (p["user_id"],)).fetchone()
+        if row and row[0]:
+            speakers.append((str(row[0]), e["title"]))
+    return {"from_entry": str(e["id"]), "from_entry_title": e["title"], "event_type": "bureau",
+            "activity_name": e["title"], "event_date": e["start_date"], "end_date": e["end_date"] or "",
+            "venue": e["venue"] or e["meeting_url"] or "",
+            "modality": e["modality"] if e["modality"] in ("f2f", "online", "hybrid") else "f2f",
+            "section_id": str(e["owner_org_id"]) if e["owner_org_id"] in sections else "",
+            "speakers": speakers}
+
+
+def link_after_create(conn, user, entry_id, event_id):
+    """Called by /create once the activity exists: make the calendar item it was started from
+    the activity's overlay. Returns the item's title, or None — and never raises, because the
+    activity is already created and a failed link must not undo or hide that."""
+    if not str(entry_id or "").isdigit():
+        return None
+    try:
+        e = oc.viewable_entry(conn, user, int(entry_id))
+        if e is None or not oc.entry_can_collect_feedback(e):
+            return None
+        st.cal_link_event(conn, e["id"], event_id, by=user["username"])
+        return e["title"]
+    except ValueError:
+        return None
 
 
 def make_router(templates, get_conn, today_local):
@@ -292,11 +335,16 @@ def make_router(templates, get_conn, today_local):
             revs = st.cal_revisions(conn, entry_id)
             names = oc.display_names(conn, [e["created_by"], e["updated_by"]]
                                      + [r["changed_by"] for r in revs])
+            can_css = auth.can(user["role"], "create_activity")
+            linked = st.get_event_by_id(conn, e["event_id"]) if e["event_id"] else None
+            eligible = can_css and oc.entry_can_collect_feedback(e)
+            css = {"linked": linked, "eligible": eligible, "manage": auth.can(user["role"], "manage_event"),
+                   "candidates": oc.activity_candidates_for_entry(conn, e) if eligible else []}
         finally:
             conn.close()
         who = lambda u: names.get(u, u or "someone")           # noqa: E731
         return templates.TemplateResponse(request, "calendar_entry.html", {
-            "nav_active": "calendar", "e": e, "ok": ok, "err": err,
+            "nav_active": "calendar", "e": e, "ok": ok, "err": err, "css": css,
             "owner": unit["label"] if unit else None,
             "attendees": [{**cards.get(p["user_id"], {"name": "?", "initials": "?"}),
                            "role": p["role"]} for p in e["people"]],
@@ -364,6 +412,49 @@ def make_router(templates, get_conn, today_local):
             conn.close()
         return RedirectResponse(f"/calendar/entries/{entry_id}?ok={quote('Saved.')}",
                                 status_code=303)
+
+    @router.post("/calendar/entries/{entry_id}/link-activity")
+    async def calendar_link_activity(request: Request, entry_id: int):
+        user = request.state.user
+        if not auth.can(user["role"], "create_activity"):
+            return templates.TemplateResponse(request, "forbidden.html",
+                                              {"capability": "linking a calendar item to an activity",
+                                               "show_scope": False}, status_code=403)
+        raw = parse_qs((await request.body()).decode("utf-8"), keep_blank_values=True)
+        ev = (raw.get("event_id") or [""])[0].strip()
+        conn = get_conn()
+        try:
+            e = oc.viewable_entry(conn, user, entry_id)
+            if e is None:
+                return _not_found(request)
+            try:
+                if not ev.isdigit():
+                    raise ValueError("Choose the activity to link.")
+                st.cal_link_event(conn, entry_id, int(ev), by=user["username"])
+                note = f"ok={quote('Linked. The activity now owns the title, dates and venue.')}"
+            except ValueError as ex:
+                note = f"err={quote(str(ex))}"
+        finally:
+            conn.close()
+        return RedirectResponse(f"/calendar/entries/{entry_id}?{note}", status_code=303)
+
+    @router.get("/create/check-calendar")
+    def create_check_calendar(request: Request, activity_name: str = "", event_date: str = "",
+                              end_date: str = ""):
+        """Behind the /create screen's second heads-up: calendar items this person may see that
+        look like the activity being typed (same dates, similar title, not linked yet). Purely
+        a suggestion — the screen offers a button; nothing is linked until Create is pressed."""
+        try:
+            start = date.fromisoformat(event_date).isoformat()
+            end = date.fromisoformat(end_date).isoformat() if end_date else start
+        except ValueError:
+            return JSONResponse({"entries": []})
+        conn = get_conn()
+        try:
+            found = oc.entry_candidates_for_activity(conn, request.state.user, activity_name, start, end)
+        finally:
+            conn.close()
+        return JSONResponse({"entries": found[:5]})
 
     @router.post("/calendar/entries/{entry_id}/cancel")
     def calendar_cancel(request: Request, entry_id: int):

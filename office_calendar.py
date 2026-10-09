@@ -659,3 +659,69 @@ def people_week(conn, user, monday, items):
         "prev": (monday - timedelta(days=7)).isoformat(), "next": (monday + timedelta(days=7)).isoformat(),
         "monday": monday,
     }
+
+
+# ── linking calendar items and CSS activities (D2) ───────────────────────────
+
+LINKABLE_KINDS = ("meeting", "training")      # internal meetings, audits, banners... never get a CSS form
+
+
+def _norm_title(t):
+    return " ".join("".join(c if c.isalnum() else " " for c in (t or "").lower()).split())
+
+
+def similar_titles(a, b):
+    """Do two titles plausibly name the same activity? Equal after normalising, one inside
+    the other (6+ characters, so "Mtg" doesn't match everything), or very close. A
+    suggestion only: nothing is ever linked without a person pressing the button."""
+    from difflib import SequenceMatcher
+    na, nb = _norm_title(a), _norm_title(b)
+    if not na or not nb:
+        return False
+    if na == nb:
+        return True
+    if min(len(na), len(nb)) >= 6 and (na in nb or nb in na):
+        return True
+    return SequenceMatcher(None, na, nb, autojunk=False).ratio() >= 0.75
+
+
+def entry_can_collect_feedback(entry):
+    """May this calendar item be turned into a CSS activity? Only a live, unlinked meeting
+    or training: a trip, audit, banner or deadline has nobody to ask for feedback."""
+    return (entry["kind"] in LINKABLE_KINDS and not entry["event_id"]
+            and entry["status"] != "cancelled")
+
+
+def activity_candidates_for_entry(conn, entry):
+    """Activities that overlap this item's dates, have a similar title and no calendar item
+    linked yet — "this may already be an activity". Archived activities are not offered."""
+    start = entry["start_date"]
+    end = entry["end_date"] or start
+    out = []
+    for eid, token, title, ed, end_d in conn.execute("""
+            SELECT e.id, e.event_token, e.title, e.event_date, e.end_date FROM event e
+            WHERE COALESCE(e.event_date, '') <> '' AND substr(e.event_date, 1, 10) <= ?
+              AND substr(COALESCE(NULLIF(e.end_date, ''), e.event_date), 1, 10) >= ?
+              AND NOT EXISTS (SELECT 1 FROM calendar_entry c WHERE c.event_id = e.id)
+              AND NOT (EXISTS (SELECT 1 FROM event_form ef WHERE ef.event_id = e.id)
+                       AND NOT EXISTS (SELECT 1 FROM event_form ef JOIN form_instance fi
+                                        ON fi.id = ef.form_instance_id
+                                       WHERE ef.event_id = e.id AND COALESCE(fi.archived, 0) = 0))
+            ORDER BY e.event_date, e.id""", (end, start)):
+        if similar_titles(title, entry["title"]):
+            out.append({"id": eid, "token": token, "title": title, "date": ed[:10]})
+    return out
+
+
+def entry_candidates_for_activity(conn, user, title, start, end=None):
+    """Calendar items THIS viewer may see that could be the activity being created: same
+    dates, similar title, not already linked, a kind that can take a CSS form."""
+    end = end or start
+    out = []
+    for e in st.cal_list_between(conn, start, end):
+        if not entry_can_collect_feedback(e) or not similar_titles(e["title"], title):
+            continue
+        if viewable_entry(conn, user, e["id"]) is not None:
+            out.append({"id": e["id"], "title": e["title"], "start": e["start_date"],
+                        "end": e["end_date"] or e["start_date"], "url": f"/calendar/entries/{e['id']}"})
+    return out

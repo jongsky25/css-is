@@ -10287,3 +10287,30 @@ def cal_overlays_for_events(conn, event_ids):
         for e in _cal_hydrate(conn, rows):
             out[e["event_id"]] = e
     return out
+
+
+def cal_link_event(conn, entry_id, event_id, *, by=None):
+    """Make a calendar entry the OVERLAY of a CSS activity (docs/OFFICE_CALENDAR_PLAN.md §5):
+    from now on the activity owns the title, dates and venue and the entry only adds people,
+    tags and an audience. One activity has at most one overlay, and an entry that already is
+    one can't be re-pointed. Raises ValueError (with a sentence a person can read) otherwise.
+    Never changes the sequence — nothing an attendee's calendar shows has moved."""
+    cur = cal_get(conn, entry_id)
+    if cur is None:
+        raise ValueError("That calendar item no longer exists.")
+    if cur["event_id"]:
+        raise ValueError("That calendar item is already linked to an activity.")
+    if cur["status"] == "cancelled":
+        raise ValueError("Restore the cancelled item before linking it.")
+    if conn.execute("SELECT 1 FROM event WHERE id=?", (event_id,)).fetchone() is None:
+        raise ValueError("That activity no longer exists.")
+    if conn.execute("SELECT 1 FROM calendar_entry WHERE event_id=?", (event_id,)).fetchone():
+        raise ValueError("That activity is already linked to another calendar item.")
+    now = tz.now_iso()
+    conn.execute("UPDATE calendar_entry SET event_id=?, updated_by=?, updated_at=? WHERE id=?",
+                 (event_id, by, now, entry_id))
+    _cal_revision(conn, entry_id, cur["sequence"], "update", by, {"event_id": [None, event_id]})
+    conn.commit()
+    if by:
+        audit(conn, by, "calendar_link_activity", target_type="calendar_entry", target_id=entry_id,
+              summary=f"Linked '{cur['title']}' to CSS activity #{event_id}")

@@ -5804,20 +5804,23 @@ async def api_ai_feedback(request: Request):
 
 
 @app.get("/create", response_class=HTMLResponse)
-def create_screen(request: Request):
+def create_screen(request: Request, from_entry: str = ""):
     conn = get_conn()
     try:
         _, blhsd_name, _ = st.get_or_create_blhsd(conn)
         rps = st.list_resource_persons(conn)
         sections = st.list_org_units(conn, level="section")
+        # "Collect feedback (CSS)" on a calendar item: start from its details (office calendar D2)
+        prefill = calendar_routes.prefill_from_entry(conn, request.state.user, from_entry)
     finally:
         conn.close()
     dmin, dmax = _event_date_bounds()
-    return templates.TemplateResponse(request, "form_create.html", {
-        "blhsd_name": blhsd_name,
-        "resource_persons": rps, "sections": sections,
-        "date_min": dmin, "date_max": dmax,
-    })
+    ctx = {"blhsd_name": blhsd_name,
+           "resource_persons": rps, "sections": sections,
+           "date_min": dmin, "date_max": dmax}
+    if prefill:
+        ctx["form"] = prefill
+    return templates.TemplateResponse(request, "form_create.html", ctx)
 
 
 @app.post("/create", response_class=HTMLResponse)
@@ -5832,6 +5835,7 @@ async def create_survey(request: Request):
     def values(key):
         return [v for k, v in pairs if k == key]
 
+    from_entry = first("from_entry").strip()               # the calendar item this is made from, if any
     event_type = first("event_type", "bureau")             # 'bureau' | 'outside'
     section_id = first("section_id").strip()               # organizing section (bureau events)
     activity_name = first("activity_name").strip()
@@ -5926,6 +5930,7 @@ async def create_survey(request: Request):
             "open_at": first("open_at").strip(),
             "close_at": first("close_at").strip(),
             "speakers": list(zip(rp_ids, topics)),
+            "from_entry": from_entry, "from_entry_title": first("from_entry_title").strip(),
         }
         dmin, dmax = _event_date_bounds()
         ctx = {"blhsd_name": blhsd_name, "resource_persons": rps, "sections": sections,
@@ -5946,6 +5951,7 @@ async def create_survey(request: Request):
         lead_id = int(section_id) if section_id.isdigit() and int(section_id) in section_units else blhsd_id
         lead_name = section_units[lead_id]["name"] if lead_id in section_units else blhsd_name
 
+        linked_item = None  # title of the calendar item this activity was made from, once linked
         created = []        # display rows: {kind, form_id, qr_token, label}
         created_ids = []    # raw form_instance ids (for the entry window)
 
@@ -6004,6 +6010,7 @@ async def create_survey(request: Request):
                                   form_instance_ids=created_ids,
                                   created_by=request.state.user["username"])
             event_token = ev["event_token"]
+            linked_item = calendar_routes.link_after_create(conn, request.state.user, from_entry, ev["id"])
             monitor_link = f"{_base_url(request)}/monitor/{event_token}"
             creator_uid = request.state.user["id"]
             creator_name = _person_name(conn, creator_uid) or request.state.user["username"]
@@ -6020,10 +6027,11 @@ async def create_survey(request: Request):
                 _notify_account(conn, chief_id, subj, body, html=html,
                                feature="event_section_notify")
         else:
-            st.create_event(conn, activity_name, event_date, end_date=end_date,
-                            venue=venue, modality=modality, organizer=organizer_label,
-                            event_kind="outside", form_instance_ids=created_ids,
-                            created_by=request.state.user["username"])
+            ev = st.create_event(conn, activity_name, event_date, end_date=end_date,
+                                 venue=venue, modality=modality, organizer=organizer_label,
+                                 event_kind="outside", form_instance_ids=created_ids,
+                                 created_by=request.state.user["username"])
+            linked_item = calendar_routes.link_after_create(conn, request.state.user, from_entry, ev["id"])
     finally:
         conn.close()
 
@@ -6044,6 +6052,8 @@ async def create_survey(request: Request):
         {"k": "Organizer", "v": organizer_label},
         {"k": "Speakers", "v": len(speakers)},
     ]
+    if linked_item:
+        summary.append({"k": "Calendar", "v": f"Linked to the calendar item “{linked_item}”"})
     if open_at or close_at:
         summary.append({"k": "Entry window",
                         "v": f"{_humandt(open_at) or 'now'} → {_humandt(close_at) or 'no deadline'}"})

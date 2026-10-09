@@ -303,3 +303,8 @@
 .cal-css-chip[data-life="concluded"]{ color:var(--soft); }
 .cal-item[data-kind="activity"] .cal-title::before, .cal-bar-item[data-kind="activity"]::before,
 .cal-wk-item[data-kind="activity"] .cal-wk-main a::before { content:"★ "; color:var(--tone); }
+
+/* ---- Collect feedback / link to an activity (D2) ---- */
+.cal-css-box { margin:0 0 1rem; display:grid; gap:.5rem; }
+.cal-css-box .cal-btn { justify-self:start; }
+.cal-inline { display:flex; flex-wrap:wrap; gap:.5rem; align-items:center; margin:.4rem 0 0; }

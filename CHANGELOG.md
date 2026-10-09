@@ -1,5 +1,31 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.66 — office calendar: Collect feedback (CSS) and the duplicate guard)
+
+- **"Collect feedback (CSS)"** on a calendar item's page (live meetings and trainings only — a trip,
+  audit, banner, deadline or cancelled/already-linked item has nobody to ask; only people who can
+  create activities see it) → `/create?from_entry=<id>`, with the form pre-filled: name, dates, venue
+  (or the meeting link), format, the organising section when the item's owner is a section, and the
+  item's LEADS who have a directory record as speakers (topic = the item's title; attendees are not
+  speakers). A banner says it will be linked, with "Don't link". An item the person can't see, or
+  that can't be turned into an activity, simply gives the normal blank form.
+- **Linking** (`storage.cal_link_event`) — when Create succeeds the item becomes the activity's
+  OVERLAY (D1): the activity owns title/dates/venue and the item adds people/tags/audience, and the
+  calendar shows ONE card (the activity). The result page says "Linked to the calendar item". Bureau
+  and outside activities both link. A failed link never undoes or hides the activity just created;
+  a validation error keeps the link. One audit line; the sequence never changes.
+- **Duplicate guard, both directions** — (1) the create screen's new `/create/check-calendar` heads-up
+  offers calendar items the person may see with the same dates and a similar title, with a "Link this
+  activity to it" button (nothing links until Create); (2) an item's page lists activities on the same
+  dates with a similar title that have no calendar item yet, with "Link to this activity"
+  (`POST /calendar/entries/{id}/link-activity`, needs create-activity rights; refuses an item or
+  activity that is already linked). Similar = equal, one inside the other (6+ characters) or very
+  close; always only a suggestion.
+- **Item page** shows "linked to the CSS activity … the activity owns the title, dates and venue".
+- **Tests** — `tests/test_calendar_link.py`. `static/css/calendar.css` → `?v=20261009k`.
+- **Not here yet** — editing a linked item's dates from the calendar (writes through to the activity,
+  with the registrant notice) and the next-day "collect feedback?" nudge are D3.
+
 ## 2026-10-09 (v3.65 — office calendar: every CSS activity is on the calendar)
 
 - **`activities` layer** (`office_calendar._activities_layer`) — every non-archived CSS activity (the
