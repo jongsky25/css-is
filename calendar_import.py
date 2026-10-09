@@ -42,6 +42,8 @@ from difflib import SequenceMatcher
 import docx
 from docx.oxml.ns import qn
 
+import calendar_people as _people
+
 OWNERS = ("bureau", "s1", "s2", "s3", "s4", "s5")
 OWNER_LABELS = {"bureau": "Bureau", "s1": "Section 1", "s2": "Section 2",
                 "s3": "Section 3", "s4": "Section 4", "s5": "Section 5"}
@@ -73,6 +75,7 @@ class Draft:
     people_hint: str | None               # raw "(Malou, Fe)" / "- Sir Jong, Doc AC" text
     people_tokens: list[str]
     import_key: str
+    meeting_url: str | None = None        # a link written in the line ("Meeting Link: https://…")
     raw: list[str] = field(default_factory=list)       # "2026-10-06: <line as written>"
     warnings: list[str] = field(default_factory=list)
 
@@ -180,7 +183,7 @@ _LEGEND = re.compile(r"^(activity legend:?|bureau|section\s*[1-5])(\s+(bureau|se
 _HOLIDAY = re.compile(
     r"(holiday|new year|independence day|hero.?s day|labor day|christmas|rizal|bonifacio|"
     r"maundy|good friday|black saturday|araw ng|kagitingan|ninoy|manila day|all saints|"
-    r"all soul|eid|edsa)", re.I)
+    r"all soul|immaculate|eid|edsa)", re.I)
 _WORKY = re.compile(r"(meeting|mtg|workshop|training|orientation|consultation|monitoring|"
                     r"technical assistance|summit|conference|session|writeshop)", re.I)
 
@@ -206,6 +209,7 @@ def _kind(text, online):
     low = text.lower()
     if "moratorium" in low:
         return "banner"
+    low = re.sub(r"\b(non-?)?mr[ -]sia\b", " ", low)      # "MR SIA" = measles-rubella, not a management review
     if re.search(r"^\s*due\b|\bdue:|\bdeadline\b", low):
         return "deadline"
     if re.search(r"\b(iqa|eqa|iso\b|audit|surveillance|management review|mancom|strat(egic)?\.? ?plan|"
@@ -343,8 +347,33 @@ def _people_hint(text):
     return (hint if tokens else None), tokens
 
 
+def _trailing_known_names(text):
+    """Names the bureau's name guide knows, written at the very END of a line with no brackets
+    ("...Davao City- Riza and Mae", "...Bicol_Sir Jong/Riza/Vlanche", "...Baguio-Riza"). Walks
+    back from the last word over known names, honorifics and "and"; stops at the first other
+    word, so a place or a topic is never taken for a person. Returns (hint, tokens)."""
+    words = re.findall(r"[A-Za-z\u2019']+", text)
+    tail, names = [], []
+    for w in reversed(words):
+        c = _people.clean(w)
+        if c is None or c[0] in _people.HONORIFICS or c[0] == "and":
+            tail.append(w)
+        elif c[0] in _people.NAME_GUIDE:
+            tail.append(w)
+            names.append(w)
+        else:
+            break
+    if not names:
+        return None, []
+    names = list(dict.fromkeys(reversed(names)))
+    return " ".join(reversed(tail)).strip(), names
+
+
 # --- one line ------------------------------------------------------------------
 
+_URL = re.compile(r"https?://\S+", re.I)
+_TIME_IN_TITLE = re.compile(r"(?<![\w:./\-])\d{1,2}(?::\d{2})?\s*[-–]\s*\d{1,2}(?::\d{2})?(?![\w:./\-])|(?<![\w:./])\d{1,2}:\d{2}(?![\w:])")
+_MONTH_BEFORE = re.compile(r"\b(" + "|".join(sorted(_MONTHS, key=len, reverse=True)) + r")\.?\s*$", re.I)
 _CONT = re.compile(r"^\s*(\(|[-–]\s|,\s|pax:)", re.I)
 
 
@@ -369,14 +398,36 @@ def _entry(text, owner):
             break
     online = bool(_ONLINE.search(text))
     modality = "online" if online else "f2f" if _F2F.search(text) else None
+    notes = []
+    url = None
+    um = _URL.search(text)
+    if um:
+        url = um.group(0).rstrip(".,;)")
+        text = re.sub(r"\s*(meeting\s+link|link|zoom)\s*:?\s*" + re.escape(um.group(0)), "", text, flags=re.I)
+        text = text.replace(um.group(0), "").strip()
     start, end, note, title = _find_time(text)
+    if start and start < "06:00":
+        notes.append(f"'{note}' reads as {start}; no clock time kept. Check the time.")
+        start, end = None, None
+    elif not start and not note:
+        tm = next((m for m in _TIME_IN_TITLE.finditer(title)
+                   if not _MONTH_BEFORE.search(title[:m.start()])), None)         # "April 14-16" is a date
+        if tm:
+            notes.append("A time may be written in the title: " + tm.group(0) + ". Check it.")
     title = re.sub(r"[\[(]\s*(tentative|postponed|pending)\s*[\])]", "", title, flags=re.I)
     title = re.sub(r"^(tentative|postponed)\s*[:\-]\s*", "", title, flags=re.I)
     title = re.sub(r"[\s\-–]*\(\s*(tentative|postponed|pending)\s*$", "", title, flags=re.I)
     title = re.sub(r"\s[-–]\s*(tentative|postponed|pending)\s*$", "", title, flags=re.I)
     title = re.sub(r"\s+", " ", title).strip(" -–:,")
     hint, tokens = _people_hint(title)
-    return {"title": title or text, "owner": owner, "status": status, "modality": modality,
+    t_hint, t_names = _trailing_known_names(title)          # names the bracket/dash rule missed
+    have = {w for t in tokens for w in (_people.clean(t) or ("",))[0].split()}      # words already captured
+    extra = [n for n in t_names if (_people.clean(n) or ("",))[0] not in have]
+    if extra:
+        hint, tokens = hint or t_hint, tokens + extra
+    if re.match(r"^(and|or|with|at)\b", title, re.I):
+        notes.append("The title looks like a fragment of another line. Check it.")
+    return {"notes": notes, "meeting_url": url, "title": title or text, "owner": owner, "status": status, "modality": modality,
             "start_time": start, "end_time": end, "time_note": note,
             "kind": _kind(text, online),
             "tags": [t for t, rx in _TAGS if re.search(rx, text, re.I)],
@@ -518,6 +569,12 @@ def _merge(items, off_days):
     return chains
 
 
+def _alike(a, b):
+    """Two words that are probably one word spelled two ways ("plannin"/"planning"/"planningv",
+    "lhbassessment" holding "lhb"+"assessment"). "lds" and "sga" are not alike."""
+    return a in b or b in a or SequenceMatcher(None, a, b).ratio() >= 0.8
+
+
 def _draft(ch):
     es = ch["entries"]
     title = Counter(e["title"] for e in es).most_common()
@@ -528,6 +585,14 @@ def _draft(ch):
     if len({e["norm"] for e in es}) > 1:            # a real typo variant, not just spacing/punctuation
         warnings.append("Spelled differently on different days: " +
                         "; ".join(sorted({e["title"] for e in es})))
+    words = [set(re.findall(r"[a-z]{3,}", e["norm"])) for e in es]
+    diff = (set.union(*words) - set.intersection(*words)) - {"the", "and"}
+    real = sorted(w for w in diff if not any(v != w and _alike(w, v) for v in diff))      # a typo has a twin
+    if len({e["norm"] for e in es}) > 1 and real:
+        warnings.append("These days differ by a whole word, so they may be different activities: "
+                        + ", ".join(real) + ".")
+    for n in dict.fromkeys(n for e in es for n in e["notes"]):
+        warnings.append(n)
     if len(owners) > 1:
         warnings.append("Coloured for different owners on different days: " +
                         ", ".join(f"{OWNER_LABELS[o]}×{n}" for o, n in owners.most_common()))
@@ -541,7 +606,7 @@ def _draft(ch):
         start_time=first["start_time"], end_time=first["end_time"], time_note=first["time_note"],
         modality=first["modality"], owner=owners.most_common(1)[0][0] if owners else None,
         tags=first["tags"], people_hint=first["people_hint"], people_tokens=first["people_tokens"],
-        import_key="docx:" + key, raw=ch["raw"], warnings=warnings)
+        meeting_url=first["meeting_url"], import_key="docx:" + key, raw=ch["raw"], warnings=warnings)
 
 
 # ── public ─────────────────────────────────────────────────────────────────────

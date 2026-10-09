@@ -608,22 +608,37 @@ def items_between(conn, user, start, end, *, scope=DEFAULT_SCOPE, layers=None, f
     return apply_filters(items, filters)
 
 
+def _matches_text(i, needle):
+    """Does the free-text search hit this item? Title, place, owning unit, tags and the names of
+    the people on it, case-insensitively. Nothing the viewer could not already see is searched:
+    `items` were filtered by visibility before they got here."""
+    hay = " ".join(filter(None, [i.get("title"), i.get("venue"), i.get("owner_label"),
+                                 " ".join(i.get("tags") or []),
+                                 " ".join(p.get("name", "") for p in (i.get("people") or []))])).lower()
+    return needle in hay
+
+
 def apply_filters(items, filters):
     """Narrow items by what the viewer chose: filters is a dict with any of
     `kinds`, `statuses`, `tags`, `owner_org_ids` (sets; a missing/empty one means
-    "any"). Holidays are never filtered out: they are the calendar's own backdrop,
-    not something a person added. An item with no tags can't match a tag filter."""
-    f = {k: set(v) for k, v in (filters or {}).items() if v}
-    if not f:
+    "any") and `text` (a search string). Holidays are never filtered out by the menus: they
+    are the calendar's own backdrop, not something a person added; a text search keeps only
+    the ones whose name it matches. An item with no tags can't match a tag filter."""
+    filters = dict(filters or {})
+    text = (filters.pop("text", None) or "").strip().lower()
+    f = {k: set(v) for k, v in filters.items() if v}
+    if not f and not text:
         return items
     keep = []
     for i in items:
         if i["layer"] == "holidays":
-            keep.append(i)
+            if not text or text in (i.get("title") or "").lower():
+                keep.append(i)
         elif ((not f.get("kinds") or i["kind"] in f["kinds"])
               and (not f.get("statuses") or i["status"] in f["statuses"])
               and (not f.get("tags") or f["tags"] & set(i["tags"]))
-              and (not f.get("owner_org_ids") or i["owner_org_id"] in f["owner_org_ids"])):
+              and (not f.get("owner_org_ids") or i["owner_org_id"] in f["owner_org_ids"])
+              and (not text or _matches_text(i, text))):
             keep.append(i)
     return keep
 
@@ -808,11 +823,21 @@ def month_grid(items, year, month, today, max_lanes=3):
                 "date": d, "iso": iso, "num": d.day, "in_month": d.month == month,
                 "is_today": d == today, "is_weekend": d.weekday() >= 5,
                 "holidays": [i for i in items if i["layer"] == "holidays" and i["start"] == iso],
-                "more": 0,
+                "more": 0, "n": 0, "tones": [],
             })
         bars, lanes, more = _lay_out(items, w0, 7, max_lanes)
         for c, n in enumerate(more):
             days[c]["more"] = n
+        # What the compact (phone) month shows instead of bars: how many things touch each day, and
+        # up to four colour dots, one per distinct owning unit among the bars drawn there.
+        for b in bars:
+            for c in range(b["col"] - 1, b["col"] - 1 + b["span"]):
+                days[c]["n"] += 1
+                tone = b["item"].get("tone") or "grey"
+                if tone not in days[c]["tones"] and len(days[c]["tones"]) < 4:
+                    days[c]["tones"].append(tone)
+        for d in days:
+            d["n"] += d["more"]
         weeks.append({"days": days, "bars": bars,
                       "rows": min(lanes, max_lanes) + (1 if any(d["more"] for d in days) else 0)})
         w0 += timedelta(days=7)

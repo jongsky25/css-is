@@ -17,59 +17,128 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "4.5"
+APP_VERSION = "5.1"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
+        "version": "5.1",
+        "date": "October 9, 2026",
+        "summary": "Conference room: see what is free, request it, and get told what happens.",
+        "changes": [
+            "New Conference room page shows each hour from 7 AM to 7 PM, day by day. Click an hour (or a few in a row), fill in the meeting, and send your request. Requests need two working days' notice.",
+            "My reservations lists your requests with their status and lets you withdraw one if plans change.",
+            "The Administrative Section approves or declines from the Approvals page, or straight from the email. They can also book the room for someone, close it for repairs, and move a booking when something more important comes up.",
+            "If your booking is cancelled you are told why and offered the nearest free times, and picking one books it at once.",
+            "Approved bookings come with a calendar file, and you get a reminder the afternoon before.",
+        ],
+    },
+    {
+        "version": "5.0",
+        "date": "October 10, 2026",
+        "summary": "The calendar is easier to use with a keyboard, a screen reader and large text.",
+        "changes": [
+            "Screen readers now find the month, week and timeline grids correctly laid out, with named column headings and today marked.",
+            "Everything can be reached and used with the keyboard, with a clear focus ring, and the panels keep focus inside them and give it back when closed.",
+            "Large text (up to 200%) no longer pushes the page sideways, and out-of-month days in the month grid are easier to read.",
+            "Smaller tap targets in the month, week and timeline grids were enlarged to the recommended minimum.",
+        ],
+    },
+    {
+        "version": "4.9",
+        "date": "October 10, 2026",
+        "summary": "The calendar is faster to use: search, a details panel, add from any day, and keyboard and swipe.",
+        "changes": [
+            "Search the calendar by title, place, unit, tag or person. In the agenda it looks through the whole year.",
+            "Tap an item to read it in a panel without leaving the page (a sheet from the bottom on a phone). Back or Escape closes it, and the address can be shared.",
+            "Add something from any day: the + beside a day, or a date in the month grid. Quick add opens with that date filled in.",
+            "The calendar remembers the layout and whose calendar you last chose, and opens that way next time.",
+            "Arrow keys move through time, T goes to today, A adds, S searches. On a phone, swipe left or right to move.",
+        ],
+    },
+    {
+        "version": "4.8",
+        "date": "October 9, 2026",
+        "summary": "The calendar looks clearer and is easier to read.",
+        "changes": [
+            "Each day has a date badge with the weekday and number, a count of its items, and a Today highlight. Holidays show as a small red label.",
+            "Each item shows its time in one column (or All day, or AM / PM), a small icon for what kind of thing it is, and the unit that owns it. Tentative and postponed items are clearly marked.",
+            "Tap anywhere on an item to open it. Long titles are shortened to two lines, and the full title is on hover.",
+            "An empty calendar now offers Add something and Look further ahead. Today is tinted in Week and Timeline. Three unit colours were darkened slightly so their names are easier to read.",
+        ],
+    },
+    {
+        "version": "4.7",
+        "date": "October 9, 2026",
+        "summary": "The calendar now fits every screen, from a phone to a wide monitor.",
+        "changes": [
+            "Month works on a phone: each day shows its number and coloured dots for the units that have something on. Tap a day to read it.",
+            "On a laptop the agenda shows two days side by side, and on a wide monitor three, so the screen is no longer mostly empty.",
+            "Week and Timeline scroll sideways inside their own box on a small screen, with shadows at the edges and a hint, and the names stay in view.",
+            "The add form no longer runs off the edge of a phone: From and To sit side by side and the date boxes line up.",
+        ],
+    },
+    {
+        "version": "4.6",
+        "date": "October 9, 2026",
+        "summary": "The Calendar tab now shows only the calendar, with a much shorter toolbar.",
+        "changes": [
+            "Opening Calendar from the home page shows just the calendar. No greeting, companion or to-do list sits above it, and the Team / Me / Calendar switch stays at the top.",
+            "The controls are two short rows: pick a layout and add, then move through time, choose whose calendar, and open Filters. On a phone, today's events are now on the first screen.",
+            "Whose calendar is a single menu instead of five buttons. Birthdays and Import live under More. Filters apply as soon as you choose, and active ones show as chips you can remove.",
+            "An empty calendar says so once, with a way forward, instead of twice. The page loads faster because the team panels are not built for it.",
+        ],
+    },
+    {
         "version": "4.5",
         "date": "October 9, 2026",
-        "summary": "Conference room: everyone is now told what happens to their request.",
+        "summary": "The Word calendar import raises fewer false alarms and can no longer be applied twice by mistake.",
         "changes": [
-            "When your room request is approved, declined, cancelled or booked for you, you now get a note in the bell and an email. Approved bookings come with a calendar file you can add to your own calendar.",
-            "If your booking is cancelled for something more important, the email gives the reason and the nearest free times to pick from.",
-            "The Administrative Section gets an email for each new request, with Approve and Decline buttons that work from the email. A request left waiting for a day goes to the Admin Head, and a morning summary lists what is still open.",
-            "The afternoon before, the section gets tomorrow's room schedule (with attendees and meals) and each person with a booking gets a reminder.",
-            "A request nobody decided before its date now closes itself as expired, and the requester is told.",
+            "Things like version numbers (v2 - 2nd) and date ranges (April 14-16) are no longer flagged as times.",
+            "Two spellings of the same word are no longer flagged as two different activities; real differences still are.",
+            "An import that has already been applied is refused if it is applied again, so Undo always knows what it created.",
         ],
     },
     {
         "version": "4.4",
         "date": "October 9, 2026",
-        "summary": "The Administrative Section can book the room for someone, and move or close it when something more important comes up.",
+        "summary": "The Word calendar import now finds more of the names, and the names step works on a phone.",
         "changes": [
-            "Book it for someone: pick the hours, choose the person (or type a guest's name), and it is booked straight away with no approval step.",
-            "If a more important meeting needs hours that are already booked, the page shows exactly which bookings would be cancelled and asks for a reason. The people affected see the reason and are offered the nearest free times, and picking one books it at once.",
-            "Closures: the room can be closed for a day or some hours, for repairs for example. Anyone with a booking in the way is told and offered new times.",
-            "When you approve a request, you can decline the others asking for the same hours in one step. They are shown other free times to ask for.",
+            "Names written without brackets at the end of a line, such as Riza and Mae after a city, are now picked up when the name guide knows them.",
+            "The names step says how many are already filled in and how many need you, and shows how many will be saved.",
+            "On phones and tablets each name is a card, with a Save button that stays in view.",
         ],
     },
     {
         "version": "4.3",
         "date": "October 9, 2026",
-        "summary": "The Administrative Section can now approve or decline conference room requests.",
+        "summary": "A Word calendar import can now add missing holidays, and be undone.",
         "changes": [
-            "Conference room requests now appear in the Approvals page for everyone in the Administrative Section. Whoever decides first settles it, and the others can see who did.",
-            "Each request shows who is asking, the date and hours, and any other requests for the same hours, so you can compare them in one place.",
-            "A request needs a short reason when it is declined.",
+            "The review screen lists holidays from the Word file that are not in Holidays yet. Tick the ones the bureau is really off for; nothing is ticked for you.",
+            "Made a mistake? Undo this import removes the items it created that nobody has changed since, and the holidays it added.",
+            "Items someone edited after the import are kept and listed, and the upload opens for review again once everything is gone.",
         ],
     },
     {
         "version": "4.2",
         "date": "October 9, 2026",
-        "summary": "You can now see when the conference room is free and request it.",
+        "summary": "Reviewing a Word calendar import is quicker, and works on a phone.",
         "changes": [
-            "New Conference room page shows each hour from 7 AM to 7 PM, day by day. Click an hour (or a few in a row), fill in the meeting, and send your request.",
-            "My reservations lists your requests with their status, and lets you withdraw one if plans change.",
-            "Requests need two working days' notice. The Administrative Section will decide each one; their approval screen comes next.",
+            "The review screen lists the items that need you first. Items that look fine are folded away.",
+            "A suggested owner appears next to an item with no colour; nothing is chosen for you.",
+            "Do many rows at once: tick only the fine ones, give every unowned row an owner, or untick everything before a date.",
+            "A bar at the bottom always shows how many will be imported, and the table turns into cards on phones and tablets.",
         ],
     },
     {
         "version": "4.1",
         "date": "October 9, 2026",
-        "summary": "Groundwork for booking the conference room. Nothing to use yet.",
+        "summary": "The Word calendar import reads your file more carefully.",
         "changes": [
-            "The system now knows the conference room's hourly slots (7 AM to 7 PM) and the booking rules, ready for the request page coming next.",
+            "Measles-rubella activities (\"MR SIA\") are no longer mistaken for management reviews.",
+            "A link written in a line becomes the meeting link, and an odd time such as \"3 AM\" is flagged instead of saved.",
+            "Items that may be two different activities, or that have a time left in the title, are marked for you to check.",
+            "For items with no colour, the import now suggests an owner when the line or its topic points to one. You still choose.",
         ],
     },
     {

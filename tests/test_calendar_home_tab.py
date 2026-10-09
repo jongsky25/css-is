@@ -44,12 +44,31 @@ def test_every_role_gets_a_calendar_tab(request, who, conn):
     assert 'aria-current="true">Calendar</a>' in html and 'href="/?view=me"' in html
 
 
-def test_the_tab_replaces_the_team_panels_but_keeps_the_greeting_and_to_do(viewer, conn):
+def test_the_tab_shows_only_the_calendar_and_keeps_the_tab_switch(viewer, conn):
     mk(conn, "Today thing", 0)
     html = viewer.get("/?view=calendar").text
-    assert "Hi" in html and "Your to-do" in html
-    for gone in ("Coming up", "Your wellness break", "class=\"doors\"", "How your companion grows"):
+    assert '<h1 class="cal-h1">Calendar</h1>' in html and "CALTB Today thing" in html
+    assert 'href="/?view=me"' in html and 'aria-current="true">Calendar</a>' in html       # leaving is one tap
+    for gone in ("Your to-do", "Hi", "Coming up", "Your wellness break", "class=\"doors\"",
+                 "How your companion grows", "class=\"oc-pet\"", "class=\"oc-photo\"", "class=\"oc-me\""):
         assert gone not in html, gone
+
+
+def test_the_other_tabs_still_have_the_greeting_and_to_do(viewer, conn):
+    for url in ("/", "/?view=me"):
+        html = viewer.get(url).text
+        assert "Hi" in html and 'class="oc-hero"' in html and "cal-h1" not in html, url
+
+
+def test_the_calendar_tab_does_not_build_the_team_panels_or_the_to_do_list(viewer, conn, monkeypatch):
+    """None of it is drawn there, so none of it should be computed (it is the slow part of the home page)."""
+    def boom(*a, **k):
+        raise AssertionError("built something the Calendar tab never shows")
+    for name in ("team_view_data", "home_tasks", "calendar_week_block"):
+        monkeypatch.setattr(oc, name, boom)
+    monkeypatch.setattr(st, "wellness_stats", boom)
+    r = viewer.get("/?view=calendar")
+    assert r.status_code == 200 and 'class="cal-bar"' in r.text
 
 
 def test_links_on_the_tab_stay_on_the_home_page(viewer, conn):
@@ -80,8 +99,9 @@ def test_bad_input_falls_back_quietly(viewer):
 
 
 def test_scope_param_picks_the_pill(viewer):
-    assert 'aria-current="true">Mine only' in viewer.get("/?view=calendar&scope=mine").text
-    assert 'aria-current="true">Mine + bureau-wide' in viewer.get("/?view=calendar").text
+    assert re.search(r'<option value="mine" selected>Mine only</option>', viewer.get("/?view=calendar&scope=mine").text)
+    viewer.cookies.delete("cal_pref")                       # a plain visit would otherwise remember "mine"
+    assert re.search(r'<option value="blend" selected>Mine \+ bureau-wide</option>', viewer.get("/?view=calendar").text)
 
 
 def test_the_tab_never_shows_more_than_the_calendar_page(app_mod, viewer, conn):
@@ -109,7 +129,7 @@ def test_the_tab_opens_on_the_scope_of_the_tab_you_came_from(app_mod, viewer, co
         assert 'href="/?view=calendar&scope=blend"' in me              # Me -> mine + bureau-wide
         assert '>Team</a>' in team
         cal = viewer.get("/?view=calendar&scope=section").text
-        assert 'aria-current="true">My section' in cal and 'aria-current="true">Calendar</a>' in cal
+        assert re.search(r'<option value="section" selected>My section</option>', cal) and 'aria-current="true">Calendar</a>' in cal
 
 
 def test_an_unlinked_account_has_me_and_calendar_but_no_team_tab(viewer):
@@ -123,7 +143,7 @@ def test_the_tab_survives_the_calendar_failing(viewer, monkeypatch):
         raise RuntimeError("down")
     monkeypatch.setattr(calendar_routes, "build_calendar_page", boom)
     r = viewer.get("/?view=calendar")
-    assert r.status_code == 200 and "couldn't be loaded" in r.text and "Hi" in r.text
+    assert r.status_code == 200 and "couldn't be loaded" in r.text and 'aria-current="true">Calendar</a>' in r.text
 
 
 def test_titles_are_escaped_on_the_tab(viewer, conn):

@@ -1,69 +1,101 @@
 {# The calendar body — scope pills, layout switch, filters, agenda or month grid. Rendered by
    /calendar and by the home page's Calendar tab (calendar_routes.build_calendar_page). #}
+{#-- The toolbar is two rows. Row 1: which layout, add, and the rarer actions behind "More".
+     Row 2 (one GET form): move through time, whose calendar, and the filters, which sit behind one
+     button and show as removable chips once used. Everything works without JS; the script only
+     submits on change and closes the menus. --#}
+{% set n_f = [f.kind, f.status, f.tag, f.unit]|select|list|length %}
+{% set team_layout = layout in ("week", "timeline") %}
 <div class="cal-bar">
-  {% if layout not in ("week", "timeline") %}
-  <nav class="cal-pills" aria-label="Whose calendar">
-    {% for s in scopes %}
-    <a href="{{ qs(scope=s.key) }}" {% if s.key == scope %}aria-current="true"{% endif %}>{{ s.label }}</a>
-    {% endfor %}
-  </nav>
-{% endif %}
   <nav class="cal-pills cal-views" aria-label="Layout">
     <a href="{{ qs(layout='', month='', day='') }}" {% if layout == "agenda" %}aria-current="true"{% endif %}>Agenda</a>
     <a href="{{ qs(layout='week', month='', day='') }}" {% if layout == "week" %}aria-current="true"{% endif %}>Week</a>
     <a href="{{ qs(layout='timeline', month='', day='') }}" {% if layout == "timeline" %}aria-current="true"{% endif %}>Timeline</a>
     <a href="{{ qs(layout='month', month='', day='') }}" {% if layout == "month" %}aria-current="true"{% endif %}>Month</a>
   </nav>
-  <a class="cal-btn primary cal-add" href="/calendar/new?day={{ add_day }}">+ Add</a>
-  <button class="cal-btn cal-quick-open" type="button" data-quick data-date="{{ add_day }}" hidden>⚡ Quick add</button>
-  <a class="cal-btn" href="/calendar/birthdays">🎂 Birthdays</a>
-  {% if can_import %}<a class="cal-btn" href="/calendar/import">Import from Word</a>{% endif %}
+  <span class="cal-actions">
+    <a class="cal-btn primary cal-add" href="/calendar/new?day={{ add_day }}">+ Add</a>
+    <details class="cal-more">
+      <summary class="cal-btn" aria-label="More: quick add, birthdays{% if can_import %}, import{% endif %}">⋯<span class="cal-more-t"> More</span></summary>
+      <div class="cal-menu">
+        <button class="cal-menu-item cal-quick-open" type="button" data-quick data-date="{{ add_day }}" hidden>⚡ Quick add</button>
+        <a class="cal-menu-item" href="/calendar/birthdays">🎂 Birthdays</a>
+        {% if can_import %}<a class="cal-menu-item" href="/calendar/import">Import from Word</a>{% endif %}
+      </div>
+    </details>
+  </span>
+</div>
+
+<form id="cal-f" class="cal-ctl" method="get" action="{{ form_action }}" aria-label="Move through the calendar, choose whose, and filter">
+  {% for name, value in hidden %}{% if not (name == "scope" and not team_layout) %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endif %}{% endfor %}
+  {% if f.unit %}<input type="hidden" name="unit" value="{{ f.unit }}">{% endif %}
   <nav class="cal-nav" aria-label="Move through the calendar">
     {% if layout == "week" %}
     <a href="{{ qs(day=week.prev) }}">← Last week</a>
-    {% if not is_today_window %}<a href="{{ qs(day='') }}">This week</a>{% endif %}
+    <a href="{{ qs(day='') }}" {% if is_today_window %}aria-current="date"{% endif %}>This week</a>
     <a href="{{ qs(day=week.next) }}">Next week →</a>
     {% elif layout == "timeline" %}
     <a href="{{ qs(day=tl.prev) }}">← Earlier</a>
-    {% if not is_today_window %}<a href="{{ qs(day='') }}">This month</a>{% endif %}
+    <a href="{{ qs(day='') }}" {% if is_today_window %}aria-current="date"{% endif %}>This month</a>
     <a href="{{ qs(day=tl.next) }}">Later →</a>
     {% elif layout == "month" %}
     <a href="{{ qs(month=grid.prev) }}">← {{ grid.prev_label }}</a>
-    {% if not is_today_window %}<a href="{{ qs(month='') }}">This month</a>{% endif %}
+    <a href="{{ qs(month='') }}" {% if is_today_window %}aria-current="date"{% endif %}>This month</a>
     <a href="{{ qs(month=grid.next) }}">{{ grid.next_label }} →</a>
     {% else %}
-    <a href="{{ qs(day=prev_day) }}">← Earlier</a>
-    {% if not is_today_window %}<a href="{{ qs(day='') }}">Today</a>{% endif %}
-    <a href="{{ qs(day=next_day) }}">Later →</a>
+    <a href="{{ qs(day=prev_day) }}">{% if searching %}← {{ year - 1 }}{% else %}← Earlier{% endif %}</a>
+    <a href="{{ qs(day='') }}" {% if is_today_window %}aria-current="date"{% endif %}>Today</a>
+    <a href="{{ qs(day=next_day) }}">{% if searching %}{{ year + 1 }} →{% else %}Later →{% endif %}</a>
     {% endif %}
   </nav>
-</div>
+  <span class="cal-range">{{ range_label }}{% if filtered %} · filtered{% endif %}</span>
+  <input class="cal-q" type="search" name="q" value="{{ f.q }}" placeholder="Search titles, places, people…" aria-label="Search the calendar"
+         maxlength="80" enterkeyhint="search" autocomplete="off">
 
-<form class="cal-filters" method="get" action="{{ form_action }}" aria-label="Filter the calendar">
-  {% for name, value in hidden %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
-  <label>Type <select name="kind"><option value="">All</option>
-    {% for k, label in kinds.items() %}<option value="{{ k }}" {{ "selected" if f.kind == k }}>{{ label }}</option>{% endfor %}</select></label>
-  <label>Status <select name="status"><option value="">All</option>
-    {% for k, label in statuses.items() %}<option value="{{ k }}" {{ "selected" if f.status == k }}>{{ label }}</option>{% endfor %}</select></label>
-  <label>Tag <select name="tag"><option value="">All</option>
-    {% for t in tags %}<option value="{{ t }}" {{ "selected" if f.tag == t }}>{{ t }}</option>{% endfor %}
-    {% if f.tag and f.tag not in tags %}<option value="{{ f.tag }}" selected>{{ f.tag }}</option>{% endif %}</select></label>
-  {% if f.unit %}<input type="hidden" name="unit" value="{{ f.unit }}">{% endif %}
-  <button class="cal-btn" type="submit">Filter</button>
-  {% if filtered %}<a href="{{ clear_filters }}">Clear filters</a>{% endif %}
+  {% if not team_layout %}
+  <label class="cal-scope">Whose
+    <select name="scope" class="cal-auto" aria-label="Whose calendar">
+      {% for s in scopes %}<option value="{{ s.key }}" {{ "selected" if s.key == scope }}>{{ s.label }}</option>{% endfor %}
+    </select></label>
+  {% endif %}
+
+  <details class="cal-fdrop" {% if n_f %}data-active{% endif %}>
+    <summary class="cal-btn">Filters{% if n_f %} ({{ n_f }}){% endif %}</summary>
+    <div class="cal-fpanel">
+      <label>Type <select name="kind" class="cal-auto"><option value="">All</option>
+        {% for k, label in kinds.items() %}<option value="{{ k }}" {{ "selected" if f.kind == k }}>{{ label }}</option>{% endfor %}</select></label>
+      <label>Status <select name="status" class="cal-auto"><option value="">All</option>
+        {% for k, label in statuses.items() %}<option value="{{ k }}" {{ "selected" if f.status == k }}>{{ label }}</option>{% endfor %}</select></label>
+      <label>Tag <select name="tag" class="cal-auto"><option value="">All</option>
+        {% for t in tags %}<option value="{{ t }}" {{ "selected" if f.tag == t }}>{{ t }}</option>{% endfor %}
+        {% if f.tag and f.tag not in tags %}<option value="{{ f.tag }}" selected>{{ f.tag }}</option>{% endif %}</select></label>
+      {% if units %}
+      <p class="cal-units" aria-label="Units — click one to show only its items">
+        {% for u in units %}
+        <a class="cal-unit" data-tone="{{ u.tone }}" href="{{ qs(unit='' if f.unit == u.id|string else u.id) }}"
+           {% if f.unit == u.id|string %}aria-current="true"{% endif %}><i aria-hidden="true"></i>{{ u.label }}</a>
+        {% endfor %}
+      </p>
+      {% endif %}
+      <span class="cal-fact">
+        <button class="cal-btn cal-apply" type="submit">Apply</button>
+        {% if filtered %}<a href="{{ clear_filters }}">Clear filters</a>{% endif %}
+      </span>
+    </div>
+  </details>
+  {% if filtered %}
+  <span class="cal-chips-x" aria-label="Active filters">
+    {% if f.q %}<a class="cal-chipx" href="{{ qs(q='') }}" title="Clear the search">Search: {{ f.q }} <span aria-hidden="true">✕</span></a>{% endif %}
+    {% if f.kind %}<a class="cal-chipx" href="{{ qs(kind='') }}" title="Remove this filter">Type: {{ kinds.get(f.kind, f.kind) }} <span aria-hidden="true">✕</span></a>{% endif %}
+    {% if f.status %}<a class="cal-chipx" href="{{ qs(status='') }}" title="Remove this filter">Status: {{ statuses.get(f.status, f.status) }} <span aria-hidden="true">✕</span></a>{% endif %}
+    {% if f.tag %}<a class="cal-chipx" href="{{ qs(tag='') }}" title="Remove this filter">Tag: {{ f.tag }} <span aria-hidden="true">✕</span></a>{% endif %}
+    {% if f.unit %}{% for u in units if u.id|string == f.unit %}<a class="cal-chipx" href="{{ qs(unit='') }}" title="Remove this filter">{{ u.label }} <span aria-hidden="true">✕</span></a>{% endfor %}{% endif %}
+  </span>
+  {% endif %}
+  <noscript><button class="cal-btn" type="submit">Apply</button></noscript>
 </form>
 
-{% if units %}
-<p class="cal-units" aria-label="Units — click one to show only its items">
-  {% for u in units %}
-  <a class="cal-unit" data-tone="{{ u.tone }}" href="{{ qs(unit='' if f.unit == u.id|string else u.id) }}"
-     {% if f.unit == u.id|string %}aria-current="true"{% endif %}><i aria-hidden="true"></i>{{ u.label }}</a>
-  {% endfor %}
-</p>
-{% endif %}
-<p class="cal-range">{{ range_label }}{% if filtered %} · filtered{% endif %}</p>
-
-{% if flash %}<div class="cal-flash ok" role="status">✓ {{ flash }}</div>{% endif %}
+{% if cal_flash %}<div class="cal-flash ok" role="status">✓ {{ cal_flash }}</div>{% endif %}
 {% if layout == "timeline" %}
 {% include "_calendar_timeline.html" %}
 {% elif layout == "week" %}
@@ -72,24 +104,31 @@
 {% include "_calendar_month.html" %}
 {% else %}
 
-{% if not n_items and not days|selectattr("holidays")|list %}
-  {{ empty_state("Nothing on the calendar for these two weeks.", "Try another view above, or look further ahead.", "📅") }}
-{% endif %}
-
+{% set kind_icon = {"meeting": "👥", "training": "🎓", "travel": "🧳", "audit_mr": "📋", "banner": "📣", "deadline": "⏰", "activity": "★", "leave": "🌴", "birthday": "🎂"} %}
+<div class="cal-agenda">
 {% for d in days %}
-<section class="cal-day {{ 'today' if d.is_today }} {{ 'weekend' if d.is_weekend }}" aria-labelledby="d-{{ d.iso }}">
+<section class="cal-day {{ 'today' if d.is_today }} {{ 'weekend' if d.is_weekend }}" aria-labelledby="d-{{ d.iso }}"{% if d.is_today %} aria-current="date"{% endif %}>
   <header>
+    <span class="cal-date" aria-hidden="true"><small>{{ d.date.strftime('%a') }}</small><b>{{ d.date.day }}</b></span>
     <h2 id="d-{{ d.iso }}">{{ d.label }}</h2>
     {% if d.is_today %}<span class="cal-today-tag">Today</span>{% endif %}
     {% for h in d.holidays %}<span class="cal-holiday">{{ h.title }}{% if h.owner_label %} · {{ h.owner_label }}{% endif %}</span>{% endfor %}
+    <span class="cal-hdr-r">
+      {% if d.rows %}<span class="cal-count">{{ d.rows|length }} {{ "item" if d.rows|length == 1 else "items" }}</span>{% endif %}
+      <button type="button" class="cal-dayadd" data-quick data-date="{{ d.iso }}" hidden aria-label="Add something on {{ d.label }}" title="Add something on this day">+</button>
+    </span>
   </header>
   {% if d.rows %}
   <ul class="cal-list">
     {% for i in d.rows %}
     <li class="cal-item" data-tone="{{ i.tone }}" data-status="{{ i.status }}" data-kind="{{ i.kind }}">
-      <span class="cal-time">{% if i.start_time %}{{ i.start_time }}{% if i.end_time %}–{{ i.end_time }}{% endif %}{% elif i.time_note %}{{ i.time_note }}{% else %}All day{% endif %}</span>
-      <span class="cal-title">{% if i.url %}<a href="{{ i.url }}">{{ i.title }}</a>{% else %}{{ i.title }}{% endif %}{% if i.day_n %} <small>(day {{ i.day_n }} of {{ i.day_of }})</small>{% endif %}
-        {% for f in i.flags %}<span class="cal-flag">· {{ f|capitalize }}</span>{% endfor %}</span>
+      <span class="cal-time">{% if i.start_time %}<span class="cal-sr">{{ i.start_time }}{% if i.end_time %}–{{ i.end_time }}{% endif %}</span><span class="cal-tv" aria-hidden="true"><b>{{ i.start_time }}</b>{% if i.end_time %}<small>{{ i.end_time }}</small>{% endif %}</span>{% elif i.time_note %}<span class="cal-timechip">{{ i.time_note }}</span>{% else %}<span class="cal-allday">All day</span>{% endif %}</span>
+      <span class="cal-title">
+        <span class="cal-tl"><span class="cal-ki" aria-hidden="true" title="{{ kinds.get(i.kind, '') }}">{{ kind_icon.get(i.kind, "📅") }}</span>
+          {% if i.url %}<a class="cal-tt" href="{{ i.url }}"{% if i.title|length > 70 %} title="{{ i.title }}"{% endif %}>{{ i.title }}</a>{% else %}<span class="cal-tt"{% if i.title|length > 70 %} title="{{ i.title }}"{% endif %}>{{ i.title }}</span>{% endif %}</span>
+        {% if i.day_n or i.flags %}<span class="cal-sub">{% if i.day_n %}<small>(day {{ i.day_n }} of {{ i.day_of }})</small>{% endif %}
+          {% for f in i.flags %}<span class="cal-flag">{{ f|capitalize }}</span>{% endfor %}</span>{% endif %}
+      </span>
       <span class="cal-owner">{{ i.owner_label or "" }}</span>
       <span class="cal-meta">
         {% if i.css %}<span class="cal-css-chip" data-life="{{ i.css.lifecycle }}">{{ i.css.chip }}</span>{% endif %}
@@ -109,7 +148,22 @@
   {% endif %}
 </section>
 {% endfor %}
+</div>
 
+{% if not n_items and not days|selectattr("holidays")|list %}
+<div class="cal-empty">
+  <span class="cal-empty-ic" aria-hidden="true">📅</span>
+  <h2>{% if searching %}No matches for “{{ f.q }}” in {{ year }}{% else %}Nothing else planned for these two weeks{% endif %}</h2>
+  <p>{% if searching %}Try fewer or different words, or another year.{% else %}{% if filtered %}A filter may be hiding things. {% endif %}Add something, or look further ahead.{% endif %}</p>
+  <span class="cal-empty-act">
+    <a class="cal-btn primary" href="/calendar/new?day={{ add_day }}">+ Add something</a>
+    <a class="cal-btn" href="{{ qs(day=next_day) }}">{% if searching %}Search {{ year + 1 }}{% else %}Look further ahead{% endif %}</a>
+    {% if filtered %}<a class="cal-btn" href="{{ clear_filters }}">Clear filters</a>{% endif %}
+  </span>
+</div>
+{% endif %}
+
+<p class="cal-keys" aria-label="Keyboard shortcuts">Keys: <kbd>←</kbd> <kbd>→</kbd> move · <kbd>T</kbd> today · <kbd>A</kbd> add · <kbd>S</kbd> search</p>
 <p class="cal-legend" aria-label="Colour key">
   <span>The colour bar on each item is the unit that owns it; the unit's name is always written on the item.</span>
 </p>

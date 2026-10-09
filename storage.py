@@ -10756,6 +10756,26 @@ def cal_import_finish(conn, batch_id, result):
     conn.commit()
 
 
+def cal_import_reopen(conn, batch_id):
+    """Make an imported batch reviewable again (after its items were undone)."""
+    conn.execute("UPDATE calendar_import_batch SET result=NULL, imported_at=NULL WHERE id=?", (batch_id,))
+    conn.commit()
+
+
+def cal_entry_untouched_since_import(conn, entry_id, importer):
+    """True while an imported entry is exactly as the import made it: sequence 0 and its only
+    revisions are the create and 'people' additions by the person who ran the import."""
+    cur = cal_get(conn, entry_id)
+    if cur is None or cur["sequence"] != 0:
+        return False
+    for h in cal_revisions(conn, entry_id):
+        if h["action"] == "create":
+            continue
+        if h["changed_by"] != importer or set(h["diff"]) - {"people"}:
+            return False
+    return True
+
+
 def cal_import_discard(conn, batch_id):
     """Delete a batch that has not been imported. True if one was removed."""
     cur = conn.execute("DELETE FROM calendar_import_batch WHERE id=? AND imported_at IS NULL",

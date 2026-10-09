@@ -1,6 +1,10 @@
 # CHANGELOG — Cowork revisions (surgical)
 
-## 2026-10-09 (v4.5 — conference room reservation R5: notifications)
+## 2026-10-09 (v5.1 — conference room reservation, R1 to R5)
+
+The conference room, built in five increments (`docs/ROOM_RESERVATION_PLAN.md`). The notes below are the increments, newest first; their old version numbers (4.1 to 4.5) were folded into 5.1 when this was merged after the Calendar phases.
+
+### conference room reservation R5: notifications
 
 - **One table, one flush (`rooms_notify.py`, `room_notice`).** A state change only inserts notice rows (one per person per event, UNIQUE so nothing can double
   up); the bell reads them; the scheduler's once-a-minute `tick` emails the ones that owe an email. A booking never waits on the mail relay, a failed send is
@@ -16,7 +20,8 @@
 - Five new switches in /admin/email: room_new_request, room_decided, room_reminder, room_admin_alerts, room_digest (all on by default).
 - Tests: `tests/test_rooms_notify.py`, `tests/test_rooms_notify_pages.py`.
 
-## 2026-10-09 (v4.4 — conference room reservation R4: encode, "Book anyway", closures, suggestions)
+
+### conference room reservation R4: encode, "Book anyway", closures, suggestions
 
 - **Encode:** a section member books for an account or a named guest; approved at once (source `encoded`). Inside the 2-working-day notice a reason is required.
 - **Book anyway:** booked hours show as selectable to section members only. The first submit changes nothing and lists who would be cancelled, with the
@@ -30,7 +35,8 @@
 - "Needs a new time" section on My reservations. Not yet: the notices themselves (email and bell for the requester) - R5.
 - Tests: `tests/test_rooms_bump.py`, `tests/test_rooms_bump_pages.py`.
 
-## 2026-10-09 (v4.3 — conference room reservation R3: approvers and the Approvals queue)
+
+### conference room reservation R3: approvers and the Approvals queue
 
 - **Who decides:** `rooms.is_room_admin` — anyone in the Administrative Section (directory unit `…/ADMIN`, or beneath it), its temporary OIC, and the `admin`
   role as the always-there fallback. Chiefs who are not in the section do not get room requests.
@@ -41,7 +47,8 @@
 - Not yet: the email decide link (R5, with the emails that carry it), "Book anyway" and the competing-request dialog (R4).
 - Tests: `tests/test_rooms_approval.py`.
 
-## 2026-10-09 (v4.2 — conference room reservation R2: availability board, request panel, My reservations)
+
+### conference room reservation R2: availability board, request panel, My reservations
 
 - **Pages:** `/rooms` (week grid of the twelve hourly slots, one request panel), `/rooms/mine` (your requests, with Withdraw). A "Conference room" item in the
   nav group beside the Office calendar.
@@ -53,7 +60,8 @@
 - Not yet: the approval queue and notifications (R3, R5). Requests wait as "Requested".
 - Tests: `tests/test_rooms_pages.py`.
 
-## 2026-10-09 (v4.1 — conference room reservation R1: the rules, no screens yet)
+
+### conference room reservation R1: the rules, no screens yet
 
 First increment of docs/ROOM_RESERVATION_PLAN.md. Nothing visible to users yet.
 
@@ -62,6 +70,105 @@ First increment of docs/ROOM_RESERVATION_PLAN.md. Nothing visible to users yet.
 - **Rules (`rooms.py`):** request, approve, decline, withdraw; two working days' notice (holidays and weekends skipped); hours must be back-to-back;
   first admin to decide wins and a later one is told who; a decline needs a reason; only the requester can withdraw. Every change is audited.
 - Tests: `tests/test_rooms_core.py`.
+=======
+
+## 2026-10-10 (v5.0 — calendar Phase 5: accessibility and hardening)
+
+`docs/CALENDAR_UX_PLAN.md` Phase 5. Found with axe-core (WCAG 2.0 to 2.2 AA plus best practice) run over every calendar view and state (agenda, month, week, timeline, empty, search, the add form, filters and More open, the item sheet, quick add) in three themes at 390 and 1440px: 72 runs, 90 problems in 6 rules at the start, none left except an open dropdown covering the button beneath it.
+
+- **Grids (`_calendar_month.html`, `_calendar_week.html`, `_calendar_timeline.html`):** a `role="row"` may hold only cells, but the bars, day numbers and "+n more" were links placed directly in the row. They now share one cell-role wrapper (`.cal-layer`, `display:contents`, so layout is unchanged). The compact month's cell is the `gridcell` and holds the link (a link cannot carry that role). The timeline's day headers are header cells containing the add button (a button cannot carry the header role). The empty corner header of Week and Timeline is named "Person".
+- **Contrast and size:** out-of-month days fade by colour, not opacity (the number was under 4.5:1), the "+n" in a faded compact cell stays at full strength; bars and "+n more" are at least 24px tall (WCAG 2.2 target size).
+- **Structure:** today's section carries `aria-current="date"`; the empty state's heading is an `h2` (it skipped a level).
+- **Large text:** at 150% and 200% text the Whose menu, the open Filters panel and the Earlier / Today / Later links widened the page; they now wrap and shrink. Checked on every calendar page, including the menus open, at 390 and 768px.
+- **Keyboard (checked in a browser):** every calendar control shows a focus ring; menus open with Enter or Space and close with Escape back to their button; the item sheet and quick add are modal, keep focus inside and give it back to the item that opened them; the sheet is labelled by the item's title; reduced-motion switches off the card lift and the sheet slide.
+- **Tests:** `tests/test_calendar_a11y.py` validates every grid row's children from the HTML (no browser needed) and pins each fix; 7 of its tests fail on the old templates. One more guards a bug the restructure introduced and only a screenshot showed (day numbers on the desktop month hidden under the bars, because the number row collapsed).
+- **Smoke test (`qa_smoke.py`):** renders the calendar body for each kind of account across 11 layout / scope / filter / search combinations (22 on a two-account database), and honours `CSS_DB` like the app. With no accounts it warns instead of failing.
+- **Screens:** 48 (6 widths x 4 views x light and dark) were checked for sideways overflow, script errors and a missing title or toolbar, none found. Kept outside the repo.
+- Not a bug: while the More menu is open on a phone it covers the "Later" button beneath it, as any dropdown does.
+
+## 2026-10-10 (v4.9 — calendar Phase 4: frictionless)
+
+`docs/CALENDAR_UX_PLAN.md` Phase 4.
+
+- **Search (`office_calendar.apply_filters`, `calendar_routes._filters`, `_calendar_body.html`):** a `q` box in the toolbar (max 80 characters) matches title, place, owning unit, tags and the names of the people on an item, case-insensitively. Visibility is unchanged: only items the viewer can already see are searched. In the agenda a search reads through the whole year (only days with a match; "earlier / later" step a year; range label "Search in 2026 · 12 matches"); in Week, Timeline and Month it narrows the grid. A removable "Search: …" chip shows it; "Clear filters" clears it too. Holidays are never removed by the menus; a text search keeps only the ones whose name matches.
+- **Remembered view (`calendar_routes.with_pref / remember`, home handler):** a `cal_pref` cookie (`layout:scope`, httponly, SameSite=Lax, one year) fills in a **bare** visit (the Calendar tab, the menu link). Any URL that names a layout, scope, date, filter or search is used as written, so a shared link never changes under whoever opens it. A forged or stale value is ignored; a scope the person is not offered falls back to the default.
+- **Item sheet (`calendar.js`, `_calendar_quick.html`):** tapping an item fetches its page, takes the `.cal-detail` article out of the parsed document (after removing `script/iframe/object/embed/link/style`) and shows it in a `<dialog>`: a side panel on a wide screen, a sheet from the bottom on a phone. `?item=ID` is added to the address, so Back closes it and a shared link opens it; "Open full page" is always there; a modified click (new tab) and any failed fetch go to the ordinary page. The script never builds HTML from a string (a test enforces it).
+- **Add from where you are:** a `+` on every agenda day and the date numbers in the month grid open Quick add with that date filled in. Both are ordinary links or hidden until script runs, so nothing is lost without it.
+- **Keyboard and touch:** ← → move, **T** today, **A** add, **S** search (not `/`: the app already uses `/` and Ctrl+K for its command palette). Keys are ignored while typing or while a dialog is open. On a phone, a mostly-horizontal flick over the agenda or month moves to the next or previous window; Week and Timeline (which scroll sideways) and vertical drags are left alone.
+- Checked in Chromium on the real file's 379 items: the sheet opens, closes with Escape, Back and the backdrop, deep-links, and ignores junk or missing items; quick add from a day and from a month number creates an item; the keys, search, remembered view and swipe all behave; no script errors on desktop or phone. Found and fixed: `/` clashed with the app's palette (now **S**), and the phone `+` was 35px (now 44px).
+- Left out on purpose: loading the calendar without a page refresh when you change view or filter (it still reloads, quickly), and an add button inside Week cells.
+
+## 2026-10-09 (v4.8 — calendar Phase 3: a clearer look)
+
+`docs/CALENDAR_UX_PLAN.md` Phase 3. Colours come only from the app's tokens, so light, dark, high-contrast, text size, density and every accent choice keep working.
+
+- **Day header (`_calendar_body.html`, `calendar.css`):** a date badge (weekday over a large day number; today's is solid accent, weekends tinted), the day name, a Today tag, holidays as a red ribbon pill, and an item count.
+- **Cards:** a time column (start over end, an "All day" label, or an AM/PM chip), a kind icon (meeting 👥, training 🎓, trip 🧳, audit/review 📋, notice 📣, deadline ⏰, activity ★), the title clamped to two lines (full title as a tooltip only when it is long), a quiet details line (unit, venue, people, tags), and Tentative / Postponed as pills. The title link is stretched over the whole card, so a tap anywhere opens the item. The full time range stays in the page as hidden text for screen readers.
+- **Phones:** time and title share one line (a row less per item) and the unit name sits under the title.
+- **Empty state:** one card with "+ Add something", "Look further ahead" and, when a filter is on, "Clear filters" (replaces the one-line hint).
+- **Week and Timeline:** today's column is tinted and its header underlined. Month keeps its today ring and holiday labels.
+- **Contrast:** three unit text colours were under 4.5:1 in the light theme (green 4.40, orange 4.49, grey 4.06) and are now 4.6+. `tests/test_calendar_contrast.py` reads the real stylesheets and fails if any calendar text pair drops below AA in the light, dark or contrast theme.
+- Checked in Chromium on the real file's 379 items at 390 and 1440px in all three themes: no overflow, no clipped cards, no script errors; a tap on the right edge of a card opens it.
+- Left out on purpose: a "now" line. The grids are by day, not by hour, so there is no time of day to draw it at.
+
+## 2026-10-09 (v4.7 — calendar Phase 2: every screen size)
+
+`docs/CALENDAR_UX_PLAN.md` Phase 2 (P2.1–P2.2).
+
+- **Month on a phone (`_calendar_month.html`, `office_calendar.month_grid`):** below 761px a compact grid replaces the "needs a wider screen" note: the day number, up to four colour dots (one per distinct owning unit, from the bars drawn on that day), "+n" for the rest and a ★ on holidays. Every cell is a link to that day in the agenda and names itself for a screen reader ("Sunday, September 27: 0 items"). `month_grid` now returns `n` and `tones` per day; items hidden by the lane limit still count.
+- **Agenda columns (`_calendar_body.html`):** the days sit in one `.cal-agenda` grid: one column below 1100px, two from 1100px, three from 1500px, in date order left to right. Long titles and meta wrap (`min-width:0`, `overflow-wrap`).
+- **Week and Timeline:** the forced `min-width:52rem` is now `40rem` with a name column of `clamp(7rem, 14vw, 11rem)`; on a narrow screen the box scrolls sideways with edge shadows, the names stay sticky, and a "Swipe sideways" hint appears only when the box really scrolls (`calendar.js`).
+- **Add / edit form:** `align-content:start` and `min-width:0` stop boxes stretching and overflowing; rows use `minmax(min(190px,100%), 1fr)`; under 480px From and To stay side by side and the note takes its own line; the date overlay has a fixed height and no italic, so Starts, Ends and Last date match.
+- Checked in Chromium on the real file's 379 items at 360, 390, 768, 1024, 1440 and 1920px: no horizontal overflow on Month, Agenda, Week, Timeline or the form at any width; no script errors; 2 agenda columns at 1440, 3 at 1920; tapping a day on a phone opens its agenda; Week/Timeline names stay put while scrolling.
+- Left out on purpose: a day-by-day Week list under 480px, and a mini-month pane beside the agenda. Multi-column agenda gives most of the wide-screen benefit for far less code; both can follow if wanted.
+
+## 2026-10-09 (v4.6 — calendar Phase 1: calendar-only tab and a compact toolbar)
+
+`docs/CALENDAR_UX_PLAN.md` Phase 1 (P1.1–P1.3).
+
+- **Calendar-only tab (`templates/office_connect.html`, `app.py`):** `/?view=calendar` renders a slim header (title + the Team / Me / Calendar switch) and the calendar. No hero, companion, to-do list or "Coming up". The handler no longer builds `team_view_data`, `home_tasks`, `calendar_week_block`, wellness stats or the work-arrangement hint for that view (none is drawn); `team_linked` is a one-line scope lookup so the Team tab still shows for people who have a team.
+- **Two-row toolbar (`templates/_calendar_body.html`, `static/css/calendar.css`, `static/js/calendar.js`):** row 1 = layout switch, **+ Add**, and a **⋯ More** menu (Quick add, Birthdays, Import from Word for admins); row 2 = one GET form with `‹ Earlier | Today | Later ›`, the range, a **Whose** select (replaces the five scope pills; absent in Week and Timeline, which are always the team) and **Filters (n)** (type, status, tag, unit) with removable chips. Everything applies on change when script is on; without script an Apply button submits the same form. Menus close on outside click and Escape. The filter panel is placed against the whole row so it stays on screen wherever the button wraps.
+- **Bug fix:** the green "✓ <Macro 'flash'>" banner: the page's message variable `flash` was shadowed by the home page's `flash` macro. It is now `cal_flash`.
+- **Empty states:** when nothing is on for the range, today's card still says so, and one line below offers a way forward (clear filters, look further ahead, add something) instead of a second big empty state.
+- Checked in Chromium on the real file's 379 imported items at 360, 390, 768, 1024, 1440 and 1920px on both the home tab and `/calendar`: no horizontal overflow, no script errors, filters panel on screen at every width, and on a phone today's events start at y=400 of 844 (before: about 1,000px down). Found and fixed two layout bugs in the first version: the panel opening off the right edge on desktop, and off the left edge at 768px.
+- Tests: the scope pills became a select, and the old assertion that the Calendar tab kept the greeting and to-do list was reversed on purpose.
+
+## 2026-10-09 (v4.5 — calendar import dry run, P0.6)
+
+Found by running the CY 2026 file end to end on a local copy and reading the report.
+
+- **`apply()` refuses an already-imported batch** ("This upload has already been imported."). The web route already redirected, but a second call to the function itself overwrote the batch result and with it the list Undo works from (Undo then removed nothing).
+- **Fewer false flags:** a time-looking pair glued to letters ("v2 - 2nd") or after a month name ("April 14-16") is no longer flagged as a time in the title; "These days differ by a whole word" no longer fires for spellings of one word ("Plannin/Planning/Planningv", "LHBAssessment"), so the one real case (LDS vs SGA) stands out. Flags on the file: 24 → 21.
+- **Dry run result (local copy):** 379 of 379 imported, counts by month and by owner match the file, a second apply is refused, Undo removes all 379. An independent reader found every parsed line in its Word cell (0 missing), and no activity line in the Word tables was dropped (771 content lines: 26 are the "Activity Legend" boilerplate, the rest are in a draft or set aside as holidays). One item ("SEPTEMBER 1: Locking of LHS ML IS Access/Extract data for mid-year") sits in the August table's spill-over cell; the importer reads it as Sep 1.
+
+## 2026-10-09 (v4.4 — calendar import names, P0.5)
+
+- **More names found (`calendar_import._trailing_known_names`):** a name the bureau's name guide knows, written at the very end of a line with no brackets ("…Davao City- Riza and Mae", "…Bicol_Sir Jong/Riza/Vlanche", "…Baguio-Riza", "…HPB-riza"), is now captured and added to any names the bracket/dash rule found. It walks back from the last word over known names, honorifics and "and" and stops at the first other word, so places and topics are not taken for people. On the CY 2026 file the items with names went from 92 to 111.
+- **People step (`templates/calendar_import_people.html`):** says how many names are already filled in and how many need a person, shows a live "N of M will be saved" with a sticky Save, and stacks into cards below 1180px. It uses its own `cal-cards` layout, not `resp-table`: that class hides every row holding a `<th>`, and each row here starts with one, so the table was invisible on phones (found by looking at the screenshot; the overflow check alone passed).
+- Checked in Chromium at 390, 768 and 1440px on the real file with a stand-in directory built from the name guide: 61 names, all rows visible, no overflow or script errors, and saving added 160 people to 160 items.
+- Not changed: the resolver and the name guide (`calendar_people.py`); they already handled these names. Still not captured: names after an unmatched closing bracket ("…Updating Analyn, Jas, Wardah)") and misspellings ("doc vlance").
+
+## 2026-10-09 (v4.3 — calendar import holidays and undo, P0.4)
+
+- **Holidays (`calendar_import_apply.holiday_choices`, review page):** the holiday lines set aside by the parser that are not in Holidays are a checklist with a type each (regular / special / suspension, guessed from the name). Nothing is pre-ticked; some are local (Manila Day). Ticked ones are added with the import, validated with everything else (a bad choice stops the whole import), and a holiday someone already set is never overwritten. They are recorded in the batch result.
+- **Undo (`calendar_import_apply.undo`, `POST /calendar/import/{id}/undo`, admin only):** deletes the items the batch created that are untouched since import (sequence 0, and the only revisions are the create plus people matched by the person who ran the import, `storage.cal_entry_untouched_since_import`), and the holidays it added that still read as it left them. Edited items are kept and listed; when nothing is left the batch is reopened (`storage.cal_import_reopen`) so it can be reviewed and imported again. Audited.
+- Not done: approving a repeat series on the review screen. No repeat in the CY 2026 file fits a rule exactly, so there was nothing to approve; `suggest_series` stays stored in the batch for a future file.
+- Checked on the real file in Chromium at 390px: import 379 items + 1 ticked holiday, undo back to 0 items and 18 holidays, re-import 379.
+
+## 2026-10-09 (v4.2 — calendar import review screen, P0.3)
+
+- **Review screen (`templates/calendar_import_review.html`, `calendar_import_apply.review_rows`):** rows that need a person (no owner colour, a parser warning, a status other than confirmed) are listed first under "Needs you"; the rest are folded into "N rows look fine — show them". Each row shows why it needs you; a suggested owner is shown with a **Use** button and is never preselected.
+- **Bulk tools (progressive JS):** tick only the clean rows, tick/untick all, use all suggested owners, give every row with no owner one owner, untick everything before a date. The form fields and the server-side apply are unchanged, so a no-JS browser still works.
+- **Sticky summary bar** ("Will import N · skipping M · K ticked with no owner") with the Import and Discard buttons; the table uses `resp-table resp-table-wide`, so it becomes cards below 1180px.
+- Checked in Chromium at 390, 768 and 1440px on the real CY 2026 file: no horizontal overflow, no script errors, 307 rows look fine and 72 need you.
+
+## 2026-10-09 (v4.1 — calendar import, P0.1–P0.2)
+
+First two increments of `docs/CALENDAR_UX_PLAN.md` Phase 0 (import the CY 2026 Word calendar). Checked against the real file (379 drafts, 19 holiday lines).
+
+- **Parser (`calendar_import.py`):** "MR SIA" (measles-rubella) no longer counts as a management review (3 items were wrongly `audit_mr`); a URL in a line becomes `meeting_url` and leaves the title; a start time before 06:00 is not kept and is flagged; a bare time left in a title ("PK TWG 10-12") is flagged, not guessed; a title that begins "and/or/with/at" is flagged as a fragment; days merged into one range that differ by a whole word (LDS vs SGA) are flagged as possibly different activities; "Immaculate Concepcion" is recognised as a holiday line.
+- **Suggestions (`calendar_import_suggest.py`, new):** `suggest_owners` (a "Section N" in the line, or a tag one unit owns ≥80% of elsewhere in the file) and `suggest_series` (only when a repeat rule reproduces every date exactly). Stored in the batch payload as `suggestions`; nothing is applied without the review screen. On the CY 2026 file: 5 of 47 unowned items get a suggestion, and no repeat fits a rule exactly, so none is suggested.
+- Apply passes `meeting_url` through.
 
 ## 2026-10-09 (v4.0 — the Office calendar, complete)
 

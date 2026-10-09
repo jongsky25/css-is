@@ -4,7 +4,7 @@
 {% from "_faces.html" import face_defs, faces %}
 {% from "_growth.html" import growth_defs, growth %}
 {% block title %}Home{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009m">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261010h">{% endblock %}
 {% block content %}
 {{ avatar_defs() }}
 {{ face_defs() }}
@@ -246,6 +246,26 @@
 <div class="oc">
   {% if msg %}{{ flash(msg=msg) }}{% endif %}
 
+  {#-- The tab switch, built once: the full hero and the slim Calendar header both show it. --#}
+  {% set linked = team_linked if view == "calendar" else (d and d.scope.kind != "none") %}
+  {% set cur_tab = "calendar" if view == "calendar" else ("me" if (me_view or not linked) else "team") %}
+  {% set tabs %}
+    <div class="oc-seg" role="group" aria-label="Whose information to show">
+      {% if linked %}<a href="/" {% if cur_tab == "team" %}aria-current="true"{% endif %}>Team</a>{% endif %}
+      <a href="/?view=me" {% if cur_tab == "me" %}aria-current="true"{% endif %}>Me</a>
+      <a href="/?view=calendar{% if cal_week and view != 'calendar' %}&scope={{ cal_week.scope }}{% endif %}"
+         {% if cur_tab == "calendar" %}aria-current="true"{% endif %}>Calendar</a>
+    </div>
+  {% endset %}
+  {% if view == "calendar" %}
+  {#-- Calendar tab: nothing but the calendar. No greeting, companion, to-do or "Coming up" —
+       the tab switch stays, so Team and Me are one tap away. --#}
+  <div class="oc-hero cal-hero">
+    <h1 class="cal-h1">Calendar</h1>
+    <span class="grow"></span>
+    {{ tabs }}
+  </div>
+  {% else %}
   <div class="oc-hero">
     {#-- The photo + greeting open your profile: people clicked them (and the
          card around them) expecting to, and /me is where photo, name and
@@ -272,24 +292,15 @@
     </div>
     {% endif %}
     <span class="grow"></span>
-    {#-- Team / Me / Calendar. Team needs a directory link (it is "your team"); Me and Calendar
-         are for everyone. Calendar opens on the scope of the tab you came from: Team -> your
-         team (or the whole bureau), Me -> yours plus bureau-wide. --#}
-    {% set linked = d and d.scope.kind != "none" %}
-    {% set cur_tab = "calendar" if view == "calendar" else ("me" if (me_view or not linked) else "team") %}
-    <div class="oc-seg" role="group" aria-label="Whose information to show">
-      {% if linked %}<a href="/" {% if cur_tab == "team" %}aria-current="true"{% endif %}>Team</a>{% endif %}
-      <a href="/?view=me" {% if cur_tab == "me" %}aria-current="true"{% endif %}>Me</a>
-      <a href="/?view=calendar{% if cal_week and view != 'calendar' %}&scope={{ cal_week.scope }}{% endif %}"
-         {% if cur_tab == "calendar" %}aria-current="true"{% endif %}>Calendar</a>
-    </div>
+    {{ tabs }}
   </div>
+  {% endif %}
 
   {#-- ---------------- your to-do ----------------
        What the person needs to do next, before any team analytics: the page
        people land on most (523 views / 30 days) was leaving them to find
        "apply", "file" and "approve" through the menus. --#}
-  {% if tasks %}
+  {% if tasks and view != "calendar" %}
   <section class="oc-todo" aria-labelledby="todo-h" data-tour="oc-todo">
     <h2 id="todo-h">Your to-do</h2>
     <ul class="oc-tasks">

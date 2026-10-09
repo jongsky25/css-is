@@ -19,25 +19,26 @@
   <p class="cal-wk-empty">There is nobody in your team to show.</p>
 {% else %}
 <p class="cal-range">Showing {{ tl.team_label }} · {{ tl.n_people }} {{ "person" if tl.n_people == 1 else "people" }}. Bars are trips, trainings, activities and days on leave (no reason is shown). Click an empty day to add something for that person.</p>
+<p class="cal-scrollhint" aria-hidden="true">← Swipe sideways to see more days →</p>
 <div class="cal-timeline" role="table" aria-label="Team timeline, {{ tl.label }}" style="--ncols:{{ tl.ncols }}">
   <div class="cal-tl-head cal-tl-weeks" role="row">
-    <div class="cal-tl-name" role="columnheader"></div>
+    <div class="cal-tl-name" role="columnheader"><span class="cal-sr">Person</span></div>
     {% for w in tl.weeks %}<div role="columnheader" style="grid-column:{{ loop.index0 * 7 + 2 }} / span 7">{{ w.label }}</div>{% endfor %}
   </div>
   <div class="cal-tl-head" role="row">
-    <div class="cal-tl-name" role="columnheader"></div>
+    <div class="cal-tl-name" role="columnheader"><span class="cal-sr">Person</span></div>
     {% for d in tl.days %}
-    <button type="button" role="columnheader" class="cal-tl-day {{ 'weekend' if d.weekend }} {{ 'today' if d.is_today }} {{ 'hol' if d.holiday }}"
+    <div class="cal-tl-dayh" role="columnheader"><button type="button" class="cal-tl-day {{ 'weekend' if d.weekend }} {{ 'today' if d.is_today }} {{ 'hol' if d.holiday }}"
             data-quick data-date="{{ d.iso }}" title="{{ d.date.strftime('%A, %B') }} {{ d.num }}{% if d.holiday %} · {{ d.holiday }}{% endif %} — add something"
-            ><small>{{ d.dow }}</small>{{ d.num }}</button>
+            ><small>{{ d.dow }}</small>{{ d.num }}</button></div>
     {% endfor %}
   </div>
 
   {% if tl.has_band %}
   <div class="cal-tl-row cal-tl-band" role="row" style="--rows:{{ tl.band.rows }}">
     <div class="cal-tl-name" role="rowheader" style="grid-row:1 / span {{ tl.band.rows }}"><span>The whole team<small>or nobody in particular</small></span></div>
-    {% for d in tl.days %}<div class="cal-tl-cell {{ 'weekend' if d.weekend }} {{ 'today' if d.is_today }} {{ 'hol' if d.holiday }}" style="grid-column:{{ loop.index + 1 }}; grid-row:1 / span {{ tl.band.rows }}"></div>{% endfor %}
-    {{ tbars(tl.band.bars, tl.band.more, tl.band.rows) }}
+    {% for d in tl.days %}<div class="cal-tl-cell {{ 'weekend' if d.weekend }} {{ 'today' if d.is_today }} {{ 'hol' if d.holiday }}" role="cell" style="grid-column:{{ loop.index + 1 }}; grid-row:1 / span {{ tl.band.rows }}"></div>{% endfor %}
+    <div class="cal-layer" role="cell">{{ tbars(tl.band.bars, tl.band.more, tl.band.rows) }}</div>
   </div>
   {% endif %}
 
@@ -47,9 +48,9 @@
     <div class="cal-tl-row" role="row" style="--rows:{{ p.rows }}" data-uid="{{ p.user_id }}" data-person="{{ p.name }}">
       <div class="cal-tl-name" role="rowheader" style="grid-row:1 / span {{ p.rows }}"><span>{{ p.name }}</span>
         <button type="button" class="cal-tl-plus" data-quick data-uid="{{ p.user_id }}" data-person="{{ p.name }}" data-date="{{ add_day }}" aria-label="Add something for {{ p.name }}" hidden>+</button></div>
-      {% for d in tl.days %}<div class="cal-tl-cell {{ 'weekend' if d.weekend }} {{ 'today' if d.is_today }} {{ 'hol' if d.holiday }}" data-date="{{ d.iso }}"
+      {% for d in tl.days %}<div class="cal-tl-cell {{ 'weekend' if d.weekend }} {{ 'today' if d.is_today }} {{ 'hol' if d.holiday }}" role="cell" data-date="{{ d.iso }}"
            style="grid-column:{{ loop.index + 1 }}; grid-row:1 / span {{ p.rows }}"></div>{% endfor %}
-      {{ tbars(p.bars, p.more, p.rows) }}
+      <div class="cal-layer" role="cell">{{ tbars(p.bars, p.more, p.rows) }}</div>
     </div>
     {% endfor %}
   </div>

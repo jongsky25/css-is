@@ -100,7 +100,7 @@ def test_bad_day_bounces_and_bad_scope_falls_back(viewer):
     r = viewer.get("/calendar?day=not-a-date", follow_redirects=False)
     assert r.status_code == 303 and r.headers["location"] == "/calendar"
     r = viewer.get(f"/calendar?day={DAY}&scope=galaxy")
-    assert r.status_code == 200 and 'aria-current="true">Mine + bureau-wide' in r.text
+    assert r.status_code == 200 and '<option value="blend" selected>Mine + bureau-wide</option>' in r.text
 
 
 def test_it_is_read_only(viewer):
@@ -168,3 +168,36 @@ def test_scope_choices_hide_pills_that_could_only_be_empty():
     full = {"section_path": "a/b", "division_path": "a"}
     assert [c["key"] for c in oc.scope_choices(full)] == [
         "blend", "mine", "section", "division", "bureau"]
+
+
+def test_the_agenda_days_sit_in_one_grid_container_so_wide_screens_can_use_columns(viewer):
+    html = viewer.get("/calendar").text
+    assert html.count('<div class="cal-agenda">') == 1
+    assert html.index('<div class="cal-agenda">') < html.index('class="cal-day') < html.index('class="cal-empty"')
+
+
+# ------------------------------------- the card (CALENDAR_UX_PLAN Phase 3) ---
+
+def test_a_day_has_a_date_badge_a_count_and_each_card_a_kind_icon_and_time_column(viewer, conn):
+    _entry(conn, "Strat Planning", start_time="09:00", end_time="12:00", kind="training")
+    _entry(conn, "Open day", kind="meeting")
+    html = viewer.get(f"/calendar?day={DAY}").text
+    assert 'class="cal-date" aria-hidden="true"' in html and 'class="cal-count"' in html
+    assert "🎓" in html.split("CALPG Strat Planning")[0].rsplit('class="cal-item"', 1)[-1]          # training icon on its card
+    assert '<span class="cal-sr">09:00–12:00</span>' in html and '<b>09:00</b><small>12:00</small>' in html
+    assert 'class="cal-allday">All day' in html
+
+
+def test_the_whole_card_is_one_link_to_the_item_and_a_long_title_gets_a_tooltip(viewer, conn):
+    long = "A very long title " * 6
+    _entry(conn, long.strip())
+    _entry(conn, "Short one")
+    html = viewer.get(f"/calendar?day={DAY}").text
+    assert html.count('class="cal-tt"') >= 2 and html.count("a class=\"cal-tt\" href=\"/calendar/entries/") >= 2
+    assert f'title="CALPG {long.strip()}"' in html and 'title="CALPG Short one"' not in html
+
+
+def test_status_shows_as_a_pill_and_a_postponed_title_is_marked(viewer, conn):
+    _entry(conn, "Maybe", status="tentative")
+    html = viewer.get(f"/calendar?day={DAY}").text
+    assert '<span class="cal-flag">Tentative</span>' in html and 'data-status="tentative"' in html
