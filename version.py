@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.11"
+APP_VERSION = "6.13"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.13",
+        "date": "October 9, 2026",
+        "summary": "A roomier, easier menu on phones, with Log out always in reach.",
+        "changes": [
+            "On a phone the menu now slides in from the right, so Log out is always visible at the bottom instead of being cut off.",
+            "The menu sections fold open and closed, so the list is short and you can find things quickly.",
+            "Display settings (theme, colour, text size) are behind the small gear button at the bottom of the menu.",
+            "Close the menu with the X button, by tapping outside it, or with the Esc key.",
+        ],
+    },
     {
         "version": "6.11",
         "date": "October 9, 2026",
