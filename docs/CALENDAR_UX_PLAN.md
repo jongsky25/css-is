@@ -151,7 +151,7 @@ Each increment: **files · done when · tests**. Tests run with `./run_tests.sh`
 - Native `type=date|time`, so From/To stack under 480 px, and the italic "Pick a date" placeholder style is dropped.
 - Keep the long form; Quick add stays the fast path.
 
-### Phase 3: a more beautiful calendar
+### Phase 3: a more beautiful calendar *(done, v4.8; no "now" line, because the grids are by day, not by hour)*
 
 - **Day header:** a date badge (big number with the weekday above it), a "Today" accent, and a weekend tint.
 - **Event card:** a time column (or an AM/PM chip, or "All day"), a title clamped to 2 lines, a unit colour bar plus the unit name, a kind icon (meeting, training, travel, MR) and a quieter meta line (venue, faces, tags).

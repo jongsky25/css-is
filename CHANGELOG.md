@@ -1,5 +1,18 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v4.8 — calendar Phase 3: a clearer look)
+
+`docs/CALENDAR_UX_PLAN.md` Phase 3. Colours come only from the app's tokens, so light, dark, high-contrast, text size, density and every accent choice keep working.
+
+- **Day header (`_calendar_body.html`, `calendar.css`):** a date badge (weekday over a large day number; today's is solid accent, weekends tinted), the day name, a Today tag, holidays as a red ribbon pill, and an item count.
+- **Cards:** a time column (start over end, an "All day" label, or an AM/PM chip), a kind icon (meeting 👥, training 🎓, trip 🧳, audit/review 📋, notice 📣, deadline ⏰, activity ★), the title clamped to two lines (full title as a tooltip only when it is long), a quiet details line (unit, venue, people, tags), and Tentative / Postponed as pills. The title link is stretched over the whole card, so a tap anywhere opens the item. The full time range stays in the page as hidden text for screen readers.
+- **Phones:** time and title share one line (a row less per item) and the unit name sits under the title.
+- **Empty state:** one card with "+ Add something", "Look further ahead" and, when a filter is on, "Clear filters" (replaces the one-line hint).
+- **Week and Timeline:** today's column is tinted and its header underlined. Month keeps its today ring and holiday labels.
+- **Contrast:** three unit text colours were under 4.5:1 in the light theme (green 4.40, orange 4.49, grey 4.06) and are now 4.6+. `tests/test_calendar_contrast.py` reads the real stylesheets and fails if any calendar text pair drops below AA in the light, dark or contrast theme.
+- Checked in Chromium on the real file's 379 items at 390 and 1440px in all three themes: no overflow, no clipped cards, no script errors; a tap on the right edge of a card opens it.
+- Left out on purpose: a "now" line. The grids are by day, not by hour, so there is no time of day to draw it at.
+
 ## 2026-10-09 (v4.7 — calendar Phase 2: every screen size)
 
 `docs/CALENDAR_UX_PLAN.md` Phase 2 (P2.1–P2.2).

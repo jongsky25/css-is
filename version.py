@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "4.7"
+APP_VERSION = "4.8"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "4.8",
+        "date": "October 9, 2026",
+        "summary": "The calendar looks clearer and is easier to read.",
+        "changes": [
+            "Each day has a date badge with the weekday and number, a count of its items, and a Today highlight. Holidays show as a small red label.",
+            "Each item shows its time in one column (or All day, or AM / PM), a small icon for what kind of thing it is, and the unit that owns it. Tentative and postponed items are clearly marked.",
+            "Tap anywhere on an item to open it. Long titles are shortened to two lines, and the full title is on hover.",
+            "An empty calendar now offers Add something and Look further ahead. Today is tinted in Week and Timeline. Three unit colours were darkened slightly so their names are easier to read.",
+        ],
+    },
     {
         "version": "4.7",
         "date": "October 9, 2026",
