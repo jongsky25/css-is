@@ -38,9 +38,9 @@ def test_nav_groups_track_the_index(app_mod):
     # Four product groups, Wellness first (it is the busiest screen in the app).
     # A viewer meets no admin cap, so Administrator drops out entirely.
     assert [g["name"] for g in app_mod.nav_groups_for(U("viewer"))] == \
-        ["Wellness", "CSS", "AWA", "Office"]
+        ["Wellness", "CSS", "AWA", "Office", "Calendar"]
     assert [g["name"] for g in app_mod.nav_groups_for(U("admin"))] == \
-        ["Wellness", "CSS", "AWA", "Office", "Administrator"]
+        ["Wellness", "CSS", "AWA", "Office", "Calendar", "Administrator"]
     # in_nav=False items stay out of the menu even when the cap is met
     admin_nav_urls = {it["url"] for g in app_mod.nav_groups_for(U("admin")) for it in g["items"]}
     assert "/directory/cleanup" not in admin_nav_urls
@@ -77,8 +77,11 @@ def test_conference_room_lives_under_office_not_awa(app_mod):
     awa_urls = {it["url"] for it in group(U(), "AWA")["items"]}
     assert "/rooms" not in awa_urls and "/calendar" not in awa_urls
     staff = {it["url"] for it in group(U(), "Office")["items"]}
-    assert {"/rooms", "/rooms/mine", "/calendar"} <= staff
-    assert not staff & {"/rooms/meals", "/rooms/blocks"}
+    assert {"/rooms", "/rooms/mine"} <= staff
+    assert not staff & {"/rooms/meals", "/rooms/blocks", "/calendar"}
+    assert {it["url"] for it in group(U(), "Calendar")["items"]} == {"/calendar"}
+    assert next(e["section"] for e in app_mod.search_index_for(U())
+                if e["url"] == "/calendar" and e["title"] == "Office calendar") == "Calendar"
     mgr = {it["url"] for it in group(R(), "Office")["items"]}
     assert {"/rooms/meals", "/rooms/blocks", "/approvals"} <= mgr
     sec = [s["name"] for s in group(R(), "Office")["sections"]]
