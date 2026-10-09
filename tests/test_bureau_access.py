@@ -20,18 +20,22 @@ import auth
 import storage as st
 
 
-@pytest.fixture
-def org(app_mod):
-    """Two sections in different divisions, one person each, plus the three
-    accounts the levels are tested through."""
-    conn = st.connect(app_mod.DB)
-    st.init_db(conn)
+def _drop_fixture_rows(conn):
     conn.execute("DELETE FROM work_arrangement WHERE user_id IN "
                  "(SELECT id FROM admin_user WHERE username LIKE 'ba-%@test.local')")
     conn.execute("DELETE FROM admin_user WHERE username LIKE 'ba-%@test.local'")
     conn.execute("DELETE FROM resource_person WHERE name LIKE 'BA-%'")
     conn.execute("DELETE FROM org_unit WHERE path LIKE 'BACC%'")
     conn.commit()
+
+
+@pytest.fixture
+def org(app_mod):
+    """Two sections in different divisions, one person each, plus the three
+    accounts the levels are tested through."""
+    conn = st.connect(app_mod.DB)
+    st.init_db(conn)
+    _drop_fixture_rows(conn)
 
     units = {}
     for path, short in (("BACC/D1/S1", "S1"), ("BACC/D2/S2", "S2")):
@@ -58,6 +62,7 @@ def org(app_mod):
     st.set_bureau_access(conn, out["super"], "all")
     conn.commit()
     yield out
+    _drop_fixture_rows(conn)       # session DB is shared: don't leave "S1"/"S2" for other modules
     conn.close()
 
 

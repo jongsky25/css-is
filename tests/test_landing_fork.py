@@ -43,7 +43,7 @@ def test_team_toggle_appears_only_when_there_is_a_team(app_mod):
     showing it a Team tab that could only ever be empty would be a lie."""
     with _in_the_directory(app_mod, "admin@test.local"):
         admin = _auth_client(app_mod, "admin").get("/").text
-        assert 'href="/?view=me"' in admin             # in the directory, so a team
+        assert ">Team</a>" in admin                    # in the directory, so a team
 
     conn = st.connect(app_mod.DB)
     st.init_db(conn)
@@ -53,7 +53,7 @@ def test_team_toggle_appears_only_when_there_is_a_team(app_mod):
     conn.close()
     if unlinked:
         page = _auth_client(app_mod, "viewer").get("/").text
-        assert 'href="/?view=me"' not in page
+        assert ">Team</a>" not in page                 # no Team tab; Me and Calendar stay
         assert "directory record" in page              # the explainer instead
 
 
@@ -62,7 +62,7 @@ def test_an_admin_role_alone_is_not_a_team(app_mod):
     an admin with no directory record gets the personal view and the explainer,
     the same as any other unlinked account."""
     page = _auth_client(app_mod, "admin").get("/").text
-    assert 'href="/?view=me"' not in page
+    assert ">Team</a>" not in page
     assert "directory record" in page
 
 
