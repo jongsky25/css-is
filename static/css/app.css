@@ -917,6 +917,10 @@ body.sf-picking, body.sf-picking * { cursor:crosshair !important; }
 .palette-ask-answer:empty { display:none; }
 .palette-ask .pi-title { color:var(--accent); }
 
+/* While the home box's dropdown is open, tuck the floating "Send feedback" button away so it never
+   covers the last result (the list is z-index 50, the button 900). Browsers without :has() keep it. */
+body:has(.gsearch.js .gsearch-results:not(:empty)) .sf-float { visibility:hidden; }
+
 /* "Ask the assistant" pill next to the home search box */
 .oc-search { display:flex; align-items:flex-start; gap:.7rem; margin:0 0 1.3rem; }
 .oc-search .gsearch { flex:1 1 auto; margin:0; min-width:0; }

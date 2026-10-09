@@ -176,8 +176,17 @@
     wireFeedback(card, data.interaction_id);
   }
 
+  // Passive telemetry (telemetry.js listens): that someone asked, and how it ended. Never the
+  // question itself.
+  function signal(stage, kind) {
+    try {
+      window.dispatchEvent(new CustomEvent("csi:ask", { detail: { stage: stage, kind: kind || null } }));
+    } catch (e) { /* telemetry is best-effort */ }
+  }
+
   function ask(raw, mount, opts) {
     opts = opts || {};
+    signal("fired");
     if (opts.autoNavigate === undefined) opts.autoNavigate = true;
     var timeoutMs = opts.timeoutMs || 9000;
     var s = stateOf(mount);
@@ -212,14 +221,19 @@
         showActionCard(mount, data);
         pushHistory("assistant", data.description);
       } else {
+        signal("fallback");
         if (opts.onFallback) opts.onFallback(raw);
         return;
       }
+      signal("answered", kind);
       if (opts.onSettled) opts.onSettled(kind);
     }).catch(function () {
       if (to) clearTimeout(to);
       done();
-      if (s.last === raw && opts.onFallback) opts.onFallback(raw);
+      if (s.last === raw) {
+        signal("fallback");
+        if (opts.onFallback) opts.onFallback(raw);
+      }
     });
   }
 

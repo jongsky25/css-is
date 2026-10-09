@@ -5,8 +5,9 @@
     <svg class="gs-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
     <input type="text" name="q" class="gsearch-input" autocomplete="off" spellcheck="false"
            placeholder="{{ placeholder }}"
-           aria-label="{{ placeholder }}">
+           aria-label="{{ placeholder }}"
+           role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="gsearch-res-{{ scope }}">
     <kbd class="gs-kbd">Ctrl K</kbd>
-    <ul class="gsearch-results" role="listbox" aria-label="Search results"></ul>
+    <ul class="gsearch-results" id="gsearch-res-{{ scope }}" role="listbox" aria-label="Search results"></ul>
   </form>
 {% endmacro %}

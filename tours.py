@@ -28,7 +28,8 @@ TOURS = {
         {"target": "[data-tour='search']",
          "title": "Find anything fast",
          "body": "Type an activity, a resource person, a report or a page here — or "
-                 "press Ctrl-K (or tap the magnifier at the top) anywhere — to jump straight to it."},
+                 "press Ctrl-K (or tap the magnifier at the top) anywhere — to jump straight to it. "
+                 "This box searches the CSS side only; the home page searches everything."},
         {"target": "[data-tour='period']",
          "title": "Pick a time window",
          "body": "These buttons set the period for the four summary figures below — "
@@ -45,6 +46,23 @@ TOURS = {
          "title": "Need a refresher?",
          "body": "Open this “?” any time to replay a page's tour, or open the full "
                  "written guide that collects every tour in one place."},
+    ],
+    "home_page": [
+        {"target": "[data-tour='search']",
+         "title": "Search and ask in one box",
+         "body": "Type a colleague's name, a meeting, a page or a help topic. Type a question, such as "
+                 "“who is in the office today?”, and choose the Ask line at the top to get the answer "
+                 "right there. Ctrl-K, or the magnifier at the top of every page, opens the same box."},
+        {"target": ".try-assistant",
+         "title": "Prefer a full page?",
+         "body": "The assistant also has its own page. It answers questions about your to-dos, "
+                 "wellness hours, work arrangement, the conference room and who is in the office."},
+        {"target": ".cc",
+         "title": "A colleague's card",
+         "body": "Open a colleague from search to see their position, their unit, and whether they are "
+                 "in the office, working from home, in the field, on leave or off today. Only that "
+                 "basic status is shown to everyone; notes, places and reasons stay private. They "
+                 "may also show when they are away in the next seven days."},
     ],
     "pulse": [
         {"target": ".scopebar",

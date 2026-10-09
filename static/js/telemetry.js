@@ -337,7 +337,15 @@
   // already carry theirs (csi:search-empty below).
   window.addEventListener("csi:search", function (e) {
     var hits = e.detail && e.detail.hits;
-    record("search", { meta: { hits: typeof hits === "number" ? Math.max(0, Math.round(hits)) : 0 } });
+    var meta = { hits: typeof hits === "number" ? Math.max(0, Math.round(hits)) : 0 };
+    var sections = e.detail && e.detail.sections;
+    if (sections && typeof sections === "object") meta.sections = sections;   // counts only
+    record("search", { meta: meta });
+  });
+  // The assistant: asked / answered / fell back. Never the question.
+  window.addEventListener("csi:ask", function (e) {
+    var d = e.detail || {};
+    record("ask", { meta: { stage: d.stage, kind: d.kind } });
   });
   window.addEventListener("csi:search-empty", function (e) {
     var term = e.detail && e.detail.term;

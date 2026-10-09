@@ -847,7 +847,7 @@ def help_catalog_for(user, is_chief=False):
     the answers-mode NL router (docs/AI_INTEGRATION_PLAN.md Phase 2): a `help_key`
     the router picks can never point at a screen this user isn't already allowed
     to open, exactly like ai_route_catalog's `destination`."""
-    meta = {"home": ("Home", None, "/css")}
+    meta = {"home": ("CSS hub", None, "/css"), "home_page": ("Home page", None, "/")}
     for g in NAV_GROUPS:
         for it in g["items"]:
             meta[it["key"]] = (it["label"], it["cap"], it["url"])
@@ -3922,6 +3922,18 @@ def _clean_telemetry_meta(meta):
         v = meta.get(k)
         if isinstance(v, int) and not isinstance(v, bool) and 0 <= v <= 600_000:
             out[k] = v
+    # search: results by kind (section name -> count), from a fixed vocabulary; counts only.
+    secs = meta.get("sections")
+    if isinstance(secs, dict):
+        clean = {k: max(0, min(v, 100)) for k, v in secs.items()
+                 if k in ui_tel.SEARCH_SECTIONS and isinstance(v, int) and not isinstance(v, bool)}
+        if clean:
+            out["sections"] = clean
+    # ask: how the assistant call ended, from fixed vocabularies; never the question.
+    if meta.get("stage") in ui_tel.ASK_STAGES:
+        out["stage"] = meta["stage"]
+        if meta.get("kind") in ui_tel.ASK_KINDS:
+            out["kind"] = meta["kind"]
     # pageview: viewport class — one of a fixed vocabulary, nothing finer.
     if meta.get("vp") in ui_tel.VIEWPORTS:
         out["vp"] = meta["vp"]
@@ -3958,6 +3970,9 @@ async def telemetry_ingest(request: Request):
         if et not in ui_tel.UI_EVENT_TYPES:
             continue
         component = e.get("component")
+        meta = _clean_telemetry_meta(e.get("meta"))
+        if et == "ask":                       # the assistant: only how it ended, never any text
+            meta = {k: v for k, v in (meta or {}).items() if k in ("stage", "kind")} or None
         rows.append({
             "user_id": user["id"], "role": user["role"],
             "session_id": str(e.get("session_id") or "")[:80] or "unknown",
@@ -3966,7 +3981,7 @@ async def telemetry_ingest(request: Request):
             "component": component.strip()[:120] if isinstance(component, str) and component.strip() else None,
             "element_selector": ui_tel.sanitize_selector(e.get("element_selector")),
             "element_text": ui_tel.sanitize_text(e.get("element_text"), max_len=300),
-            "meta": _stamp_version(_clean_telemetry_meta(e.get("meta"))),
+            "meta": _stamp_version(meta),
         })
 
     if rows:
@@ -5067,7 +5082,7 @@ def choose(request: Request, msg: str = "", view: str = "team"):
     role = request.state.user["role"]
     avatar_kind = (profile or {}).get("avatar_kind") or st.AVATAR_DEFAULT
     resp = templates.TemplateResponse(request, "office_connect.html", {
-        "nav_active": "", "show_scope": False, "msg": msg,
+        "nav_active": "home_page", "show_scope": False, "msg": msg,
         "first_name": first_name, "profile": profile,
         "bday_greet": bday_greet,
         "initials": _initials(profile.get("person_name") if profile else ""),

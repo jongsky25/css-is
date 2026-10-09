@@ -35,7 +35,16 @@ UI_EVENT_TYPES = {
     # often does search come up empty (search = every search, not just the
     # empty ones), and how long do pages take (page_timing).
     "form_submit", "form_error", "search", "page_timing",
+    # v6.10 — the assistant in the search box and on /start: asked, answered, or fell back.
+    "ask",
 }
+
+# What a search found, by kind of result (counts only, never the term) — the section names the home
+# box can return. Anything else a browser sends is dropped.
+SEARCH_SECTIONS = ("Activities", "People", "Calendar", "My to-do", "My requests", "Conference room",
+                   "Help", "Colleagues", "Go to", "CSS", "Wellness", "AWA", "Administrator")
+ASK_STAGES = ("fired", "answered", "fallback")
+ASK_KINDS = ("navigate", "answer", "help", "action")
 
 # Written by the server itself (app.py's _metrics_gate), never accepted from a
 # browser: a 403 / 404 / 5xx a signed-in person actually hit.
@@ -345,6 +354,45 @@ def search_stats(rows, limit=10):
     return {"total": total, "empty": empty,
             "empty_rate": round(100 * empty / total) if total else None,
             "by_route": per_route}
+
+
+def search_sections(rows):
+    """{section: results shown} added up over every search that reported its sections."""
+    out = {}
+    for r in rows:
+        if r["event_type"] != "search":
+            continue
+        for name, n in ((r.get("meta") or {}).get("sections") or {}).items():
+            if name in SEARCH_SECTIONS and isinstance(n, int):
+                out[name] = out.get(name, 0) + n
+    return dict(sorted(out.items(), key=lambda kv: (-kv[1], kv[0])))
+
+
+def ask_stats(rows):
+    """How the assistant is used: asks fired, how many got an answer (and of what kind), how many
+    fell back to plain search results, and where. Rows before v6.10 have none."""
+    fired = answered = fallback = 0
+    kinds, by_route = {}, {}
+    for r in rows:
+        if r["event_type"] != "ask":
+            continue
+        m = r.get("meta") or {}
+        e = by_route.setdefault(r["route"], {"route": r["route"], "fired": 0, "answered": 0, "fallback": 0})
+        stage = m.get("stage")
+        if stage == "fired":
+            fired += 1
+            e["fired"] += 1
+        elif stage == "answered":
+            answered += 1
+            e["answered"] += 1
+            if m.get("kind") in ASK_KINDS:
+                kinds[m["kind"]] = kinds.get(m["kind"], 0) + 1
+        elif stage == "fallback":
+            fallback += 1
+            e["fallback"] += 1
+    return {"fired": fired, "answered": answered, "fallback": fallback, "kinds": kinds,
+            "answer_rate": round(100 * answered / fired) if fired else None,
+            "by_route": sorted(by_route.values(), key=lambda e: (-e["fired"], e["route"]))}
 
 
 def page_speed(rows, limit=12, min_samples=3):
@@ -659,6 +707,8 @@ def build_digest(rows, feedback, *, window_days=None, now=None, limit=15):
         "errors": errors_by_route(rows),
         "outcomes": task_outcomes(rows),
         "search": search_stats(rows),
+        "search_sections": search_sections(rows),
+        "ask": ask_stats(rows),
         "speed": page_speed(rows),
         "devices": device_mix(rows),
     }

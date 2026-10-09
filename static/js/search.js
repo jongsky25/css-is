@@ -239,8 +239,14 @@
             if (!_reportedSearch[raw]) {
               _reportedSearch[raw] = true;
               try {
+                // Counts per section, never the term: which kinds of result people get.
+                var sections = {};
+                current.forEach(function (c) {
+                  if (c.exit || c.ask || !c.section) return;
+                  sections[c.section] = (sections[c.section] || 0) + 1;
+                });
                 window.dispatchEvent(new CustomEvent("csi:search", { detail: {
-                  hits: real } }));
+                  hits: real, sections: sections } }));
               } catch (e) { /* telemetry is best-effort */ }
             }
           })
@@ -294,6 +300,14 @@
         },
         onSettled: retire
       });
+    }
+
+    // The combobox is "expanded" exactly while its list has rows.
+    function syncExpanded() {
+      input.setAttribute("aria-expanded", listEl.children.length ? "true" : "false");
+    }
+    if (typeof MutationObserver !== "undefined") {
+      new MutationObserver(syncExpanded).observe(listEl, { childList: true });
     }
 
     function paint(raw) {
