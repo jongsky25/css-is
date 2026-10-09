@@ -48,6 +48,7 @@ from datetime import date, timedelta
 from urllib.parse import quote
 
 import auth
+import birthdays as bd
 import calendar_ics as cics
 import mailer
 import storage as st
@@ -149,7 +150,8 @@ def remind_tomorrows_events(conn, base, dry_run=False):
 _ALL_JOBS = {"events", "wellness_expiry", "digest", "csm_rp", "csm_activity",
             "wellness_file", "awa_file", "whereabouts",
             "whereabouts_nudge", "whereabouts_rollup", "calendar_css_nudge",
-            "birthday_coordinators", "birthday_month", "calendar_day_before"}
+            "birthday_coordinators", "birthday_month", "birthday_greeting",
+            "calendar_day_before"}
 
 # job name -> the admin toggle that can switch it off (see /admin/email).
 JOB_FEATURE = {
@@ -166,6 +168,7 @@ JOB_FEATURE = {
     "calendar_css_nudge": "job_calendar_css_nudge",
     "birthday_coordinators": "job_birthday_coordinators",
     "birthday_month": "job_birthday_month",
+    "birthday_greeting": "job_birthday_greeting",
     "calendar_day_before": "job_calendar_day_before",
 }
 
@@ -552,6 +555,37 @@ def send_calendar_day_before(conn, base, dry_run=False):
     return sent
 
 
+def send_birthday_greetings(conn, base, dry_run=False):
+    """Greet each celebrant on their birthday -- or on the last working day before it when it falls
+    on a weekend or holiday. Mandatory for everyone with a birthday on file (no opt-out; removing the
+    birthday is the way out). A greeting is never sent late: if the day was missed, nothing goes.
+    Once per person per year (the email log, keyed on a subject that carries the year)."""
+    import office_calendar as oc
+    today = tz.today_local()
+    sent = 0
+    hols = {y: st.holidays_between(conn, date(y, 1, 1) - timedelta(days=14), date(y, 12, 31))
+            for y in (today.year, today.year + 1)}              # a Jan birthday is greeted in late Dec
+    for p in oc.birthday_people(conn):
+        acct = st.get_admin_user_by_id(conn, p["user_id"])
+        if not acct or not acct["active"] or not acct["username"]:
+            continue
+        for year, hol in hols.items():
+            when = bd.email_send_date(p["month"], p["day"], year,
+                                      lambda d: d.weekday() < 5 and d.isoformat() not in hol)
+            if when != today:
+                continue
+            subj, body, html = mailer.birthday_greeting_message(p["name"], p["user_id"] + year, base)
+            subj = f"{subj} ({year})"
+            if _already_sent(conn, JOB_FEATURE["birthday_greeting"], acct["username"], subj):
+                continue
+            if dry_run:
+                print(f"[dry-run] birthday greeting -> {acct['username']}")
+            else:
+                _send(conn, JOB_FEATURE["birthday_greeting"], acct["username"], subj, body, html=html)
+            sent += 1
+    return sent
+
+
 def send_birthday_coordinators(conn, base, dry_run=False):
     """The day before a birthday, tell each celebration coordinator an admin ticked (OPTIONAL: with
     nobody ticked this sends nothing). A coordinator only hears about people who chose to share
@@ -780,6 +814,8 @@ def run(db_path="css_is.db", dry_run=False, jobs=None):
             report["whereabouts_rollup"] = send_whereabouts_rollup(conn, base, dry_run=dry_run)
         if "calendar_day_before" in jobs:
             report["calendar_day_before"] = send_calendar_day_before(conn, base, dry_run=dry_run)
+        if "birthday_greeting" in jobs:
+            report["birthday_greeting"] = send_birthday_greetings(conn, base, dry_run=dry_run)
         if "birthday_coordinators" in jobs:
             report["birthday_coordinators"] = send_birthday_coordinators(conn, base, dry_run=dry_run)
         if "birthday_month" in jobs:
@@ -819,6 +855,8 @@ def main():
                     help="Ask the creator of a past calendar-only training if they want feedback.")
     ap.add_argument("--calendar-day-before", action="store_true",
                     help="Remind people on a calendar entry that starts tomorrow.")
+    ap.add_argument("--birthday-greeting", action="store_true",
+                    help="Greet people on their birthday (or the working day before a weekend one).")
     ap.add_argument("--birthday-coordinators", action="store_true",
                     help="Tell birthday coordinators who has a birthday tomorrow.")
     ap.add_argument("--birthday-month", action="store_true",
@@ -837,6 +875,7 @@ def main():
                               ("whereabouts_rollup", args.whereabouts_rollup),
                               ("calendar_css_nudge", args.calendar_css_nudge),
                               ("calendar_day_before", args.calendar_day_before),
+                              ("birthday_greeting", args.birthday_greeting),
                               ("birthday_coordinators", args.birthday_coordinators),
                               ("birthday_month", args.birthday_month)) if flag}
     # run() treats a missing CSS_BASE_URL as a skip, because the in-process

@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "5.3"
+APP_VERSION = "5.4"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "5.4",
+        "date": "October 9, 2026",
+        "summary": "Everyone with a birthday on file now gets a warm greeting email from BLHSD.",
+        "changes": [
+            "On your birthday you receive a short greeting in Tagalog and English, signed by all of us at BLHSD.",
+            "If your birthday falls on a weekend or holiday, the greeting arrives on the working day before, never late.",
+            "It goes to everyone who has added a birthday, whoever they chose to share it with, and tells nobody else. To stop it, remove your birthday on your profile.",
+        ],
+    },
     {
         "version": "5.3",
         "date": "October 9, 2026",

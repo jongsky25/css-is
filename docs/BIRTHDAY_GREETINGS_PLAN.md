@@ -48,7 +48,7 @@ The pool holds 12 to 15 messages, picked deterministically by `hash(user_id, yea
 gets a different one each year and a retry never sends a second variant. All are warm and
 work-appropriate, use the nickname (`birthdays.first_name`), thank the person for their work, and
 **never mention age**. The wording is drafted in code for the owner to read in the `/admin/email`
-preview before it ships (the preview renders every variant).
+preview before it ships (the preview shows a sample; the full list is in the PR description).
 
 **D3 — Sender is BLHSD.** Signed "Mula sa lahat ng nasa BLHSD / From all of us at BLHSD".
 Sent through the existing mailer, so the From address is whatever the relay is configured with.
@@ -101,7 +101,7 @@ is allowed to know their birthday. Details in Phase 3.
 - `send_reminders.send_birthday_greetings(conn, base, dry_run)`: active accounts with a birthday on
   file and a deliverable address whose send date is today; skipped if `_already_sent`. Registered
   as the `birthday_greeting` job in `_ALL_JOBS`, `JOB_FEATURE`, `run()`, `mailer.FEATURES`,
-  `PREVIEWS` (shows in `/admin/email` with a preview of every variant and an off switch).
+  `PREVIEWS` (shows in `/admin/email` with a sample preview and an off switch).
 - Tests: right person, right day, weekend and holiday roll back to the working day, once per year,
   no catch-up after the day, inactive/archived skipped, no age or date in the text, dry-run sends
   nothing, admin switch off sends nothing, Feb 29, New Year boundary.
@@ -149,7 +149,7 @@ is allowed to know their birthday. Details in Phase 3.
 
 ## 5. Needs the owner's eyes before it ships
 The greeting wording (Tagalog and English). The first draft ships in Phase 1 as a **draft PR** with
-every variant visible in the `/admin/email` preview; nothing reaches staff until the owner merges.
+the wording listed in the PR description; nothing reaches staff until the owner merges.
 
 ## 6. Decisions (settled)
 | # | Question | Decision |
