@@ -1,7 +1,7 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header %}
 {% block title %}Match the names{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009q">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009s">{% endblock %}
 {% block content %}
 {{ page_header("Who is who?", "The Word calendar names people the way the office says them. Say who each name is so those items show up in their calendar.") }}
 <p class="cal-back"><a href="/calendar/import/{{ batch.id }}">← The import</a> · <a href="/calendar/nicknames">Fill in nicknames first</a> · <a href="/calendar">Calendar</a></p>
@@ -24,14 +24,17 @@
   {% if pending %}
   <p class="cal-range">{{ pending|length }} {{ 'name' if pending|length == 1 else 'names' }} to check. A name is only pre-selected when exactly one person fits it; anything unclear is left for you.
     Nothing is saved until you press <strong>Save</strong>, and names left on "decide later" stay on this list.</p>
-  <table class="cal-table cal-people-table">
+  {% set n_pre = pending|selectattr("picked")|list|length %}
+  <p class="cal-range"><strong>{{ n_pre }}</strong> {{ "is" if n_pre == 1 else "are" }} already filled in from the name guide or an exact match, and
+    <strong>{{ pending|length - n_pre }}</strong> {{ "needs" if pending|length - n_pre == 1 else "need" }} you. Check the filled-in ones, then decide the rest or leave them for later.</p>
+  <table class="cal-table cal-people-table cal-cards">
     <thead><tr><th>Name in the file</th><th>Used in</th><th>Match</th><th>Who is it?</th></tr></thead>
     <tbody>
     {% for r in pending %}
     <tr>
-      <th scope="row">{{ r.label }}{% if r.raws and r.raws != [r.label] %}<small>as written: {{ r.raws|join(", ") }}</small>{% endif %}</th>
-      <td>{{ r.n }} {{ "item" if r.n == 1 else "items" }}<small>{{ r.titles|join(" · ") }}</small></td>
-      <td>{% set m = r.match %}
+      <th scope="row" data-label="Name in the file">{{ r.label }}{% if r.raws and r.raws != [r.label] %}<small>as written: {{ r.raws|join(", ") }}</small>{% endif %}</th>
+      <td data-label="Used in">{{ r.n }} {{ "item" if r.n == 1 else "items" }}<small>{{ r.titles|join(" · ") }}</small></td>
+      <td data-label="Match">{% set m = r.match %}
         {% if m.status == "alias" %}<span class="cal-chip">Remembered</span>
         {% elif m.status == "guided" %}<span class="cal-chip">Name guide · {{ m.guide }}{% if r.cands and r.cands[0].inactive %} (archived){% endif %}</span>
         {% elif m.guide and m.status == "unmatched" %}<span class="cal-chip warn">Guide says {{ m.guide }} · no active account</span>
@@ -43,13 +46,26 @@
         {% elif m.status == "possible" %}<span class="cal-chip warn">Maybe · starts like</span>
         {% elif m.status == "ambiguous" %}<span class="cal-chip warn">Could be {{ r.cands|length }} people</span>
         {% else %}<span class="cal-chip">No match</span>{% endif %}</td>
-      <td>{{ choose(r) }}</td>
+      <td data-label="Who is it?">{{ choose(r) }}</td>
     </tr>
     {% endfor %}
     </tbody>
   </table>
-  <div class="cf-actions"><button class="cal-btn primary" type="submit">Save</button>
+  <div class="cf-actions cal-sticky"><span id="cal-sum" class="cal-count" aria-live="polite"></span>
+    <button class="cal-btn primary" type="submit">Save</button>
     <a href="/calendar?view=month">Skip for now</a></div>
+  <script>
+  (function () {
+    var sel = Array.prototype.slice.call(document.querySelectorAll('.cal-people-table select[name^="who_"]'));
+    var out = document.getElementById('cal-sum');
+    function sum() {
+      var n = sel.filter(function (s) { return s.value; }).length;
+      out.textContent = n + ' of ' + sel.length + ' will be saved · ' + (sel.length - n) + ' left for later';
+    }
+    sel.forEach(function (s) { s.addEventListener('change', sum); });
+    sum();
+  })();
+  </script>
   {% else %}
   <div class="cal-flash ok">✓ Every name has been dealt with.</div>
   {% endif %}

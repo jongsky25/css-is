@@ -107,7 +107,7 @@ Each increment: **files · done when · tests**. Tests run with `./run_tests.sh`
 - **Undo import** on the batch page: deletes created entries untouched since import (`sequence` still 0 and `updated_at` = `created_at`). It lists edited entries instead of deleting them, and is audited.
 - *Tests:* re-import → 0 new; undo removes only untouched; series not duplicated on re-import.
 
-**P0.5 People** (existing B3 screen, `calendar_people.py`)
+**P0.5 People** *(done, v4.4: the resolver already handled the guide's names, so the work was capturing 19 more items' names and a usable phone layout; items with names went from 92 to 111)* (existing B3 screen, `calendar_people.py`)
 - Run the 92 hints through the resolver. Ambiguous names are never auto-assigned (existing rule), and nicknames learned here are remembered for next year.
 
 **P0.6 Dry run and hand-off** (no code)

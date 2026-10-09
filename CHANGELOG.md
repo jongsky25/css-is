@@ -1,5 +1,12 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v4.4 — calendar import names, P0.5)
+
+- **More names found (`calendar_import._trailing_known_names`):** a name the bureau's name guide knows, written at the very end of a line with no brackets ("…Davao City- Riza and Mae", "…Bicol_Sir Jong/Riza/Vlanche", "…Baguio-Riza", "…HPB-riza"), is now captured and added to any names the bracket/dash rule found. It walks back from the last word over known names, honorifics and "and" and stops at the first other word, so places and topics are not taken for people. On the CY 2026 file the items with names went from 92 to 111.
+- **People step (`templates/calendar_import_people.html`):** says how many names are already filled in and how many need a person, shows a live "N of M will be saved" with a sticky Save, and stacks into cards below 1180px. It uses its own `cal-cards` layout, not `resp-table`: that class hides every row holding a `<th>`, and each row here starts with one, so the table was invisible on phones (found by looking at the screenshot; the overflow check alone passed).
+- Checked in Chromium at 390, 768 and 1440px on the real file with a stand-in directory built from the name guide: 61 names, all rows visible, no overflow or script errors, and saving added 160 people to 160 items.
+- Not changed: the resolver and the name guide (`calendar_people.py`); they already handled these names. Still not captured: names after an unmatched closing bracket ("…Updating Analyn, Jas, Wardah)") and misspellings ("doc vlance").
+
 ## 2026-10-09 (v4.3 — calendar import holidays and undo, P0.4)
 
 - **Holidays (`calendar_import_apply.holiday_choices`, review page):** the holiday lines set aside by the parser that are not in Holidays are a checklist with a type each (regular / special / suspension, guessed from the name). Nothing is pre-ticked; some are local (Manila Day). Ticked ones are added with the import, validated with everything else (a bad choice stops the whole import), and a holiday someone already set is never overwritten. They are recorded in the batch result.

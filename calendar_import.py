@@ -42,6 +42,8 @@ from difflib import SequenceMatcher
 import docx
 from docx.oxml.ns import qn
 
+import calendar_people as _people
+
 OWNERS = ("bureau", "s1", "s2", "s3", "s4", "s5")
 OWNER_LABELS = {"bureau": "Bureau", "s1": "Section 1", "s2": "Section 2",
                 "s3": "Section 3", "s4": "Section 4", "s5": "Section 5"}
@@ -345,6 +347,28 @@ def _people_hint(text):
     return (hint if tokens else None), tokens
 
 
+def _trailing_known_names(text):
+    """Names the bureau's name guide knows, written at the very END of a line with no brackets
+    ("...Davao City- Riza and Mae", "...Bicol_Sir Jong/Riza/Vlanche", "...Baguio-Riza"). Walks
+    back from the last word over known names, honorifics and "and"; stops at the first other
+    word, so a place or a topic is never taken for a person. Returns (hint, tokens)."""
+    words = re.findall(r"[A-Za-z\u2019']+", text)
+    tail, names = [], []
+    for w in reversed(words):
+        c = _people.clean(w)
+        if c is None or c[0] in _people.HONORIFICS or c[0] == "and":
+            tail.append(w)
+        elif c[0] in _people.NAME_GUIDE:
+            tail.append(w)
+            names.append(w)
+        else:
+            break
+    if not names:
+        return None, []
+    names = list(dict.fromkeys(reversed(names)))
+    return " ".join(reversed(tail)).strip(), names
+
+
 # --- one line ------------------------------------------------------------------
 
 _URL = re.compile(r"https?://\S+", re.I)
@@ -393,6 +417,11 @@ def _entry(text, owner):
     title = re.sub(r"\s[-–]\s*(tentative|postponed|pending)\s*$", "", title, flags=re.I)
     title = re.sub(r"\s+", " ", title).strip(" -–:,")
     hint, tokens = _people_hint(title)
+    t_hint, t_names = _trailing_known_names(title)          # names the bracket/dash rule missed
+    have = {w for t in tokens for w in (_people.clean(t) or ("",))[0].split()}      # words already captured
+    extra = [n for n in t_names if (_people.clean(n) or ("",))[0] not in have]
+    if extra:
+        hint, tokens = hint or t_hint, tokens + extra
     if re.match(r"^(and|or|with|at)\b", title, re.I):
         notes.append("The title looks like a fragment of another line. Check it.")
     return {"notes": notes, "meeting_url": url, "title": title or text, "owner": owner, "status": status, "modality": modality,

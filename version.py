@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "4.3"
+APP_VERSION = "4.4"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "4.4",
+        "date": "October 9, 2026",
+        "summary": "The Word calendar import now finds more of the names, and the names step works on a phone.",
+        "changes": [
+            "Names written without brackets at the end of a line, such as Riza and Mae after a city, are now picked up when the name guide knows them.",
+            "The names step says how many are already filled in and how many need you, and shows how many will be saved.",
+            "On phones and tablets each name is a card, with a Save button that stays in view.",
+        ],
+    },
     {
         "version": "4.3",
         "date": "October 9, 2026",

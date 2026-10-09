@@ -375,3 +375,14 @@
 .cal-hol-row label { flex:1 1 18rem; font-weight:600; display:flex; gap:.5rem; align-items:center; min-height:2.2rem; }
 .cal-hol-row select { font:inherit; padding:.3rem .5rem; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); max-width:100%; }
 .cal-undo summary { cursor:pointer; font-weight:700; }
+
+/* people step (P0.5): rows stack into cards below 1180px. Not the shared resp-table: that hides
+   every row holding a <th>, and each row here starts with a <th scope="row"> (the name). */
+@media (max-width:1180px) {
+  .cal-cards thead { display:none; }
+  .cal-cards, .cal-cards tbody, .cal-cards tr, .cal-cards th, .cal-cards td { display:block; width:100%; box-sizing:border-box; }
+  .cal-cards tr { border:1px solid var(--line); border-radius:12px; background:var(--surface); padding:.5rem .8rem; margin:0 0 .6rem; }
+  .cal-cards th, .cal-cards td { border:0; padding:.3rem 0; text-align:left; }
+  .cal-cards td[data-label]::before { content:attr(data-label); display:block; font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--soft); }
+  .cal-cards select { width:100%; max-width:none; font-size:1rem; padding:.5rem; }
+}

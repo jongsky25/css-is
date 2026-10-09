@@ -433,3 +433,26 @@ def test_days_that_differ_by_a_whole_word_are_flagged_as_possibly_different_acti
 def test_a_holiday_that_is_a_bare_name_is_set_aside():
     res = build((12, {8: [("Immaculate Concepcion of Mary", "hl:green")]}))
     assert res.drafts == [] and res.holidays[0]["date"] == "2026-12-08"
+
+
+# ------------------------------- names written without brackets (CALENDAR_UX_PLAN P0.5) ---
+
+@pytest.mark.parametrize("line, names", [
+    ("BHW Mtg - Mindanao Cluster by UniGlobal in Davao City- Riza and Mae", ["Riza", "Mae"]),
+    ("BHW Connect v2 Pilot Test in Bicol_Sir Jong/Riza Desten/Vlanche", ["Jong", "Riza", "Desten", "Vlanche"]),
+    ("NEHP WS Baguio-Riza", ["Riza"]),
+    ("UNICEF mtg_IMCI_BHW WS 2 Riza Doc Malou", ["Riza", "Malou"]),
+    ("BHW Summit CHD sir Jong Riza and Mae", ["Mae", "Jong", "Riza"]),
+])
+def test_known_names_at_the_end_of_a_line_are_captured_without_brackets(line, names):
+    assert sorted(one(line).people_tokens) == sorted(names)
+
+
+def test_a_name_in_the_middle_of_a_line_or_a_place_is_not_taken_for_a_person():
+    assert one("Riza orientation for the BHW Coordinators").people_tokens == []
+    assert one("AOP Monitoring in Northern Mindanao").people_tokens == []
+    assert one("Meeting with MM CHD").people_tokens == []              # "MM CHD" is a region, not a person
+
+
+def test_a_name_already_found_in_brackets_is_not_added_twice():
+    assert one("BHW Pilot Test (Riza, Mae)").people_tokens == ["Riza", "Mae"]
