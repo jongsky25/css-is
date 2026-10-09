@@ -1,5 +1,13 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v6.0 — birthday greeting email)
+
+`docs/BIRTHDAY_GREETINGS_PLAN.md` Phase 1.
+
+- **Rules (`birthdays.py`):** `next_occurrence`, `days_until`, `greeting_phase` (`today` / `before` / `none`, six days before and never after) and `email_send_date` (the birthday, or the last working day before it).
+- **Email (`mailer.birthday_greeting_message`, `GREETING_POOL`):** 12 bilingual (Tagalog and English) messages signed "From all of us at BLHSD", picked by `user_id + year`. No date, no age. Name is HTML-escaped.
+- **Job (`send_reminders.send_birthday_greetings`, job `birthday_greeting`, `--birthday-greeting`):** to every active account with a birthday on file, on the send date, once per year (email log, subject carries the year), never after the day. No per-person opt-out; the `/admin/email` switch (`job_birthday_greeting`, with preview) is the kill switch. Tests: `tests/test_birthday_greetings.py`.
+
 ## 2026-10-09 (v5.9 — conference room reservation R10: the door display and repeat-weekly requests)
 
 - **Door / TV display.** `/rooms/display/<secret>` (no sign-in; a signed-in person can use `/rooms/display`): "In use now" or "Free until ...", "Next", today's schedule (a multi-hour booking is one line), the time,

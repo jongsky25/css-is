@@ -694,6 +694,57 @@ def birthday_month_message(name, month_label, rows, link):
     return subject, body, html
 
 
+# Birthday greeting to the celebrant (docs/BIRTHDAY_GREETINGS_PLAN.md). Every message is Tagalog
+# and English together, thanks the person, and never mentions age. The pool is read aloud in the
+# owner's review before it ships; add to the END so a person's yearly pick stays stable.
+GREETING_POOL = (
+    ("Maligayang kaarawan! Salamat sa iyong sipag at malasakit sa ating mga kasamahan at sa mga taong ating pinaglilingkuran.",
+     "Happy birthday! Thank you for your hard work and your care for our colleagues and the people we serve."),
+    ("Isang masaya at mapayapang kaarawan sa iyo! Nawa'y mapuno ng saya ang buong araw mo.",
+     "Wishing you a joyful and peaceful birthday. May your whole day be full of happiness."),
+    ("Hindi matatawaran ang iyong ambag sa ating opisina. Maraming salamat, at maligayang kaarawan!",
+     "Your contribution to our office means more than we can say. Thank you, and happy birthday!"),
+    ("Nawa'y pagpalain ka ng mabuting kalusugan, kapayapaan at ng mga taong nagmamahal sa iyo. Maligayang kaarawan!",
+     "May you be blessed with good health, peace and the people who love you. Happy birthday!"),
+    ("Ngayon ay araw mo. Magpahinga ka nang kaunti, magpakasaya, at damhin kung gaano ka kahalaga sa amin.",
+     "Today is your day. Take a moment to rest, enjoy it, and feel how much you matter to us."),
+    ("Salamat sa pagiging bahagi ng ating pamilya sa BLHSD. Maligayang kaarawan!",
+     "Thank you for being part of our BLHSD family. Happy birthday!"),
+    ("Isa kang biyaya sa ating opisina. Nawa'y bumalik sa iyo ang kabutihang ibinibigay mo sa iba.",
+     "You are a blessing to our office. May the kindness you give to others come back to you."),
+    ("Isa na namang taon ng pag-asa at bagong simula. Mabuhay ka, at maligayang kaarawan!",
+     "Another year of hope and fresh starts. Cheers to you, and happy birthday!"),
+    ("Pagbati mula sa puso! Sana'y makasama mo ngayon ang mga mahal mo sa buhay.",
+     "Warm wishes from the heart! May you spend today with the people you love."),
+    ("Ang iyong ngiti at pagtulong ay nagbibigay-sigla sa aming lahat. Maligayang kaarawan!",
+     "Your smile and your willingness to help lift all of us. Happy birthday!"),
+    ("Sa mga araw na nakapapagod, alalahanin mong mahalaga ka at pinahahalagahan ka namin. Magdiwang ka!",
+     "On tiring days, remember that you are valued and appreciated. Go and celebrate!"),
+    ("Mula sa aming lahat: maraming salamat, at isang napakasayang kaarawan sa iyo!",
+     "From all of us: thank you, and a very happy birthday to you!"),
+)
+
+
+def birthday_greeting_message(name, variant, link):
+    """Returns (subject, plain_text_body, html_body). Sent to the celebrant themselves, from BLHSD.
+    `variant` picks one of GREETING_POOL (any int; it wraps). No date and no age appear anywhere."""
+    tl, en = GREETING_POOL[variant % len(GREETING_POOL)]
+    who = name or ""
+    subject = f"Maligayang kaarawan, {who}! 🎂 Happy birthday!" if who else "Maligayang kaarawan! 🎂 Happy birthday!"
+    sign = "Mula sa lahat ng nasa BLHSD / From all of us at BLHSD"
+    body = (f"Mahal naming {who or 'kasama'} / Dear {who or 'colleague'},\n\n{tl}\n\n{en}\n\n{sign}\n\n"
+            f"Office Connect: {link}\n")
+    intro = (f'{_e(tl)}<br><br><span style="color:{_SOFT};">{_e(en)}</span>'
+             f'<br><br><strong>{_e(sign)}</strong>')
+    html = _email_html(
+        greeting=f"Mahal naming {who or 'kasama'} / Dear {who or 'colleague'},",
+        heading="Maligayang kaarawan! 🎂 Happy birthday!",
+        intro=intro, cta_label="Buksan ang Office Connect / Open Office Connect", link=link,
+        footnote="Natanggap mo ito dahil nasa iyong profile ang iyong kaarawan. / You get this because "
+                 "your birthday is on your profile; you can remove it there any time.")
+    return subject, body, html
+
+
 def calendar_day_before_message(name, day_label, items, link):
     """Returns (subject, plain_text_body, html_body). The day before a calendar entry the person
     is on: `items` is [{title, when, where, url}]."""
@@ -1393,6 +1444,12 @@ FEATURES = {
         "The day after a training that was only on the calendar, its creator is asked "
         "once whether to collect feedback for it.",
         "scheduled"),
+    "job_birthday_greeting": (
+        "Birthdays — greeting to the celebrant",
+        "The celebrant gets a warm Tagalog and English greeting from BLHSD on their birthday (or the "
+        "working day before, if it falls on a weekend or holiday). Never sent late. Goes to everyone "
+        "with a birthday on file.",
+        "scheduled"),
     "job_birthday_coordinators": (
         "Birthdays — day before, to coordinators",
         "Each celebration coordinator an admin ticked is told the day before who has a birthday "
@@ -1525,6 +1582,7 @@ _PREVIEWS = {
     "event_dates_changed": lambda: event_dates_changed_message(
         "Juan Reyes", "Basic Life Support Training", "October 2, 2026",
         "October 9, 2026", "DOH Conference Room", _SAMPLE_LINK),
+    "job_birthday_greeting": lambda: birthday_greeting_message("Mae", 0, _SAMPLE_LINK),
     "job_birthday_coordinators": lambda: birthday_tomorrow_message(
         "Maria Santos", "Wednesday, October 14", [("Riza", "Section 1"), ("Tek", "Section 3")], _SAMPLE_LINK),
     "job_birthday_month": lambda: birthday_month_message(

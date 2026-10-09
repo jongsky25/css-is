@@ -90,3 +90,41 @@ def week_label(d, today):
     if d == today + timedelta(days=1):
         return "Tomorrow"
     return d.strftime("%a") + (" (weekend)" if d.weekday() >= 5 else "")
+
+
+# ---- greetings (docs/BIRTHDAY_GREETINGS_PLAN.md) -----------------------------------------
+# A greeting comes BEFORE the birthday, never after: the six days leading up to it, plus the day.
+
+GREETING_DAYS_BEFORE = 6
+
+
+def next_occurrence(month, day, today):
+    """The first date on or after `today` this birthday falls on (Feb 29 stays on Feb 28 in a
+    non-leap year)."""
+    this_year = occurrence(month, day, today.year)
+    return this_year if this_year >= today else occurrence(month, day, today.year + 1)
+
+
+def days_until(month, day, today):
+    return (next_occurrence(month, day, today) - today).days
+
+
+def greeting_phase(month, day, today):
+    """'today' on the birthday, 'before' in the six days leading up to it, else 'none'. There is
+    deliberately no 'after': a late greeting is worse than none."""
+    n = days_until(month, day, today)
+    if n == 0:
+        return "today"
+    return "before" if n <= GREETING_DAYS_BEFORE else "none"
+
+
+def email_send_date(month, day, year, is_working):
+    """When the greeting EMAIL goes out for this year's birthday: the day itself, or the last
+    working day before it when it lands on a weekend or holiday (so it is read on a working day
+    and is never late). `is_working(date) -> bool`. The result can fall in the previous year."""
+    d = occurrence(month, day, year)
+    for _ in range(14):                      # a long holiday run still ends; never loop forever
+        if is_working(d):
+            return d
+        d -= timedelta(days=1)
+    return d
