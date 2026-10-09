@@ -105,6 +105,12 @@ a.cal-tt:focus-visible { outline:none; }
 .cal-nothing { padding:.7rem .9rem; color:var(--soft); font-size:.9rem; }
 
 .cal-legend { display:flex; flex-wrap:wrap; gap:.4rem 1rem; color:var(--soft); font-size:.8rem; margin:.4rem 0 0; }
+.cal-legend strong { color:var(--ink); font-weight:600; }
+.cal-unit-key { --tone:var(--cal-grey); }
+.cal-unit-key[data-tone="green"]   { --tone:var(--cal-green); }   .cal-unit-key[data-tone="yellow"] { --tone:var(--cal-yellow); }
+.cal-unit-key[data-tone="magenta"] { --tone:var(--cal-magenta); } .cal-unit-key[data-tone="orange"] { --tone:var(--cal-orange); }
+.cal-unit-key[data-tone="cyan"]    { --tone:var(--cal-cyan); }    .cal-unit-key[data-tone="blue"]   { --tone:var(--cal-blue); }
+.cal-legend .cal-unit-key i { background:var(--tone); }
 .cal-legend i { display:inline-block; width:.8rem; height:.8rem; border-radius:3px; margin-right:.3rem;
                 vertical-align:-.1rem; background:var(--cal-grey); }
 

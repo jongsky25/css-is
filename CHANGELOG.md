@@ -1,6 +1,6 @@
 # CHANGELOG — Cowork revisions (surgical)
 
-## 2026-10-09 (v5.2 — conference room reservation R6: the public QR page for guests)
+## 2026-10-09 (v5.3 — conference room reservation R6: the public QR page for guests)
 
 - **`/room` (no login), permanent.** Short enough to print and type; `/rooms/poster` (section members) prints an A4 page with the QR, the address and three steps.
   The QR encodes `CSS_BASE_URL` + `/room`, so **set `CSS_BASE_URL` before printing** and never change that path. Pick a day from the next 60 days (each shows how many hours
@@ -15,9 +15,9 @@
   the scheduler tick, and as `python retention.py --room-guests [--dry-run]`.
 - Guests also get a "request received" email (under the "Conference room decision result" switch). Tests: `tests/test_rooms_guest.py`, `tests/test_rooms_guest_pages.py`.
 
-## 2026-10-09 (v5.1 — conference room reservation, R1 to R5)
+## 2026-10-09 (v5.2 — conference room reservation, R1 to R5)
 
-The conference room, built in five increments (`docs/ROOM_RESERVATION_PLAN.md`). The notes below are the increments, newest first; their old version numbers (4.1 to 4.5) were folded into 5.1 when this was merged after the Calendar phases.
+The conference room, built in five increments (`docs/ROOM_RESERVATION_PLAN.md`). The notes below are the increments, newest first; their old version numbers (4.1 to 4.5) were folded into 5.2 when this was merged after the Calendar phases.
 
 ### conference room reservation R5: notifications
 
@@ -86,6 +86,11 @@ First increment of docs/ROOM_RESERVATION_PLAN.md. Nothing visible to users yet.
   first admin to decide wins and a later one is told who; a decline needs a reason; only the requester can withdraw. Every change is audited.
 - Tests: `tests/test_rooms_core.py`.
 =======
+
+## 2026-10-09 (v5.1 — calendar legend and admin-entered birthdays)
+
+- **Legend (`_calendar_body.html`, `calendar.css`):** Agenda and Month show "Colour = unit" (a swatch per unit in the window, same tones as the bars and dots) and "Icon = type". The kind-icon map moved to the top of the template so both layouts share it.
+- **Admin birthdays (`POST /admin/users/birthday`, `users.html`):** an admin with `manage_users` can set, change or clear an active account's birthday and its sharing scope. The consent note records that an administrator entered it; the person can still edit or remove it. The audit log never holds the date. `storage.set_birthday` gained a keyword-only `notice`.
 
 ## 2026-10-10 (v5.0 — calendar Phase 5: accessibility and hardening)
 
