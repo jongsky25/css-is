@@ -2450,7 +2450,7 @@ async def login_submit(request: Request):
         # landing page instead of the classic hub, but only when nothing else
         # already sent them somewhere specific (nxt != "/"), a temp-password
         # reset isn't about to intervene, and an admin has opted in on /admin/ai.
-        # Rollback = flip either setting; /start links "Classic home" right back.
+        # Rollback = flip either setting; /start links "Classic home" (/) right back.
         if not force_reset and nxt == "/":
             redirect_to_start = (
                 ai.ai_available(conn) and ai.mode_at_least(conn, "router")
