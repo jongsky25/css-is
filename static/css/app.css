@@ -904,6 +904,19 @@ body.sf-picking, body.sf-picking * { cursor:crosshair !important; }
   box-shadow:var(--shadow-md); padding:.3rem; max-height:60vh; overflow-y:auto; }
 .gsearch.js .gsearch-results:empty { display:none; }
 
+/* assistant cards — /start and the search box's Ask row (static/js/assistant.js) */
+.start-card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:1rem 1.2rem; }
+.start-card-msg { margin:0 0 .8rem; }
+.start-card-actions { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+.start-fb { margin-left:auto; display:flex; gap:.3rem; }
+.fb-btn { font-size:1.1rem; line-height:1; background:none; border:1px solid var(--line);
+  border-radius:8px; padding:.25rem .5rem; cursor:pointer; }
+.fb-btn:hover:not(:disabled) { background:var(--accent-bg); }
+.fb-btn.fb-sent { opacity:.55; }
+.palette-ask-answer { padding:.3rem .3rem .5rem; border-bottom:1px solid var(--line); margin-bottom:.3rem; }
+.palette-ask-answer:empty { display:none; }
+.palette-ask .pi-title { color:var(--accent); }
+
 /* "Ask the assistant" pill next to the home search box */
 .oc-search { display:flex; align-items:flex-start; gap:.7rem; margin:0 0 1.3rem; }
 .oc-search .gsearch { flex:1 1 auto; margin:0; min-width:0; }

@@ -258,7 +258,8 @@ def test_index_entries_carry_their_module(app_mod):
 
 def test_css_scoped_page_has_the_exit_hooks(admin):
     r = admin.get("/css")
-    assert 'data-scope="css"' in r.text and "/static/js/search.js?v=20261009b" in r.text
+    import re
+    assert 'data-scope="css"' in r.text and re.search(r"/static/js/search\.js\?v=\d+", r.text)
 
 
 def test_api_search_scope_css_returns_only_activity_and_people_sections(admin):

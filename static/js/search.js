@@ -9,6 +9,11 @@
  * role gate to get wrong. Every result is a real <a>, so middle-click / open-in-
  * new-tab work and there's a no-JS fallback (the form posts to /search?q=).
  *
+ * On an unscoped box (the home box and the palette) a question-like query also
+ * gets a first "Ask" row; choosing it hands the query to window.CSSAssistant
+ * (assistant.js) and shows the answer card inside the dropdown, above the
+ * normal results, which stay clickable underneath.
+ *
  * DB-record results (activities and people) are fetched from /api/search
  * after a 200 ms debounce and appended below the page results with no change to
  * the core engine or the result-row rendering contract.
@@ -65,6 +70,20 @@
     }
     hits.sort(function (a, b) { return b.sc - a.sc || a.ord - b.ord; });
     return hits.map(function (h) { return h.item; });
+  }
+
+  // ---- "does this read like a question?" -------------------------------------
+  // Ends in "?", starts with a question word (English or Tagalog), or is four
+  // words or more. Cheap and deliberately generous: the Ask row is only an offer.
+  var QUESTION_WORDS = ["who", "what", "when", "where", "how", "is", "am", "do", "does", "can",
+                        "sino", "ano", "kailan", "saan", "ilan", "may"];
+  function looksLikeQuestion(q) {
+    var t = (q || "").trim().toLowerCase();
+    if (!t) return false;
+    if (t.charAt(t.length - 1) === "?") return true;
+    var words = t.split(/\s+/);
+    if (QUESTION_WORDS.indexOf(words[0].replace(/[^a-z]/g, "")) !== -1) return true;
+    return words.length >= 4;
   }
 
   // ---- rendering -----------------------------------------------------------
@@ -213,7 +232,7 @@
             _appendDBRows(Array.isArray(data) ? data : [], raw);
             // The debounced DB fetch settling empty on top of zero page hits
             // is the "this search truly found nothing" moment.
-            var real = current.filter(function (c) { return !c.exit; }).length;
+            var real = current.filter(function (c) { return !c.exit && !c.ask; }).length;
             if (real === 0) _reportEmpty(raw);
             // Every settled search (page hits + DB rows), once per term, so
             // telemetry can give an empty RATE rather than just a count.
@@ -234,8 +253,47 @@
     function go(item) {
       if (!item) return;
       if (item.exit) { openPalette(input.value.trim()); return; }
+      if (item.ask) { askAssistant(item); return; }
       if (opts.onPick) opts.onPick(item);
       else window.location.href = item.url;
+    }
+
+    // Choosing the Ask row: the answer card goes in a box at the TOP of the list, the normal
+    // results stay underneath. On a fallback (AI off and no rule matched, or an error) the row
+    // and the box disappear and the page/record results are all that is left.
+    function askAssistant(item) {
+      var raw = input.value.trim();
+      if (!raw || !window.CSSAssistant) return;
+      var box = listEl.querySelector(".palette-ask-answer");
+      if (!box) {
+        box = document.createElement("li");
+        box.className = "palette-ask-answer";
+        box.setAttribute("role", "presentation");
+        box.setAttribute("aria-live", "polite");
+        listEl.insertBefore(box, listEl.firstChild);
+      }
+      var row = listEl.querySelector(".palette-ask");
+      if (row) row.classList.add("asking");
+      // The Ask row has done its job (answered, or nothing to say): retire it so Enter and the
+      // arrow keys go back to the normal results.
+      var retire = function () {
+        item.dead = true;
+        if (row) row.hidden = true;
+        if (current[active] && current[active].dead) {
+          active = -1;
+          for (var i = 0; i < current.length; i++) if (!current[i].dead) { active = i; break; }
+          syncActive();
+        }
+      };
+      window.CSSAssistant.ask(raw, box, {
+        autoNavigate: false, timeoutMs: 9000,
+        onFallback: function () {
+          window.CSSAssistant.clear(box);
+          if (box.parentNode) box.parentNode.removeChild(box);
+          retire();
+        },
+        onSettled: retire
+      });
     }
 
     function paint(raw) {
@@ -258,6 +316,13 @@
         if (!raw && it.section !== lastSection) {
           html += '<li class="palette-group" role="presentation">' + esc(it.section) + "</li>";
           lastSection = it.section;
+        }
+        if (it.ask) {
+          html += '<li id="' + idPrefix + i + '" role="option" class="palette-item palette-ask' +
+                  (i === active ? " active" : "") + '" aria-selected="' + (i === active) + '">' +
+                  '<a href="#" tabindex="-1" data-ask><span class="pi-title">' + esc(it.title) +
+                  "</span></a></li>";
+          continue;
         }
         html += '<li id="' + idPrefix + i + '" role="option" class="palette-item' +
                 (i === active ? " active" : "") + '" aria-selected="' +
@@ -290,6 +355,9 @@
       var raw = input.value.trim();
       _cancelDB();
       current = raw ? search(raw, scope) : (showAll ? INDEX.slice() : []);
+      if (raw && scope === "all" && window.CSSAssistant && looksLikeQuestion(raw)) {
+        current.unshift({ ask: true, title: "\u2728 Ask: \u201c" + raw + "\u201d", url: "#", section: "" });
+      }
       active = current.length ? 0 : -1;
       paint(raw);
       _addExitRow(raw);
@@ -298,7 +366,10 @@
 
     function move(delta) {
       if (!current.length) return;
-      active = (active + delta + current.length) % current.length;
+      for (var n = 0; n < current.length; n++) {         // skip rows that have been dropped
+        active = (active + delta + current.length) % current.length;
+        if (!current[active].dead) break;
+      }
       syncActive();
     }
 
@@ -313,6 +384,12 @@
       }
     });
     listEl.addEventListener("click", function (e) {
+      var ask = e.target.closest && e.target.closest("a[data-ask]");
+      if (ask) {
+        e.preventDefault();
+        for (var i = 0; i < current.length; i++) if (current[i].ask) { go(current[i]); break; }
+        return;
+      }
       var a = e.target.closest && e.target.closest("a[data-exit]");
       if (!a) return;
       e.preventDefault();
@@ -405,6 +482,6 @@
     document.addEventListener("DOMContentLoaded", init);
   } else { init(); }
 
-  window.CSSSearch = { search: search, attach: attach, index: INDEX,
+  window.CSSSearch = { search: search, attach: attach, index: INDEX, looksLikeQuestion: looksLikeQuestion,
                        openPalette: function (q) { openPalette(q); } };
 })();

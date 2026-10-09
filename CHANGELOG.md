@@ -1,5 +1,16 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v6.9 — one box: search and ask together)
+
+`docs/HOME_SEARCH_ASSISTANT_PLAN.md` Phase 7. `person_status` (item 3, optional) is not built: it is its own change (a model-supplied argument that has to be validated against the directory) and can be v6.10.
+
+- **`static/js/assistant.js` (new):** `window.CSSAssistant.ask(q, mountEl, opts)` — the `/api/ai/route` call, the answer / navigate / action / Confirm cards and the 👍/👎 posting, moved out of `start.js` unchanged. `opts`: `statusEl`, `timeoutMs`, `autoNavigate`, `onFallback(raw)`, `onSettled(kind)`. State is per mount, so `/start` and the search box don't share a pending query.
+- **`static/js/start.js`:** now a thin caller (supplies the keyword-palette fallback and the "maximize" timeout). `/start` behaves as before; its existing tests pass untouched. Loads `assistant.js` first.
+- **`static/js/search.js`:** on an unscoped box (the home box and Ctrl-K), a question-like query (ends in `?`, starts with who/what/when/where/how/is/am/do/does/can/sino/ano/kailan/saan/ilan/may, or is four words or more) gets a first row `✨ Ask: “q”`. Choosing it renders the answer card in a box at the top of the dropdown, `aria-live="polite"`, with the normal results underneath; navigate cards there don't auto-navigate. On a fallback reply the row and box are dropped. `window.CSSSearch.looksLikeQuestion` is exposed for tests.
+- **`/admin/ai`:** the post-login landing setting now says the home page carries the assistant too. `ai_landing_default` is unchanged.
+- **Styles:** the card and 👍/👎 styles moved from `start.html` into `app.css` so the dropdown has them. Cache-busts: `app.css`, `search.js`, `assistant.js`, `start.js`.
+- Tests: `tests/test_home_assistant_box.py` (the heuristic is run under node when it is installed).
+
 ## 2026-10-09 (v6.8 — the assistant answers about the whole office)
 
 `docs/HOME_SEARCH_ASSISTANT_PLAN.md` Phase 6. Same pattern as `calendar_answers`: the model only picks a slot key; the server writes the sentence from the asker's own data, so names and records never reach the model.
