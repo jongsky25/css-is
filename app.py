@@ -15923,4 +15923,15 @@ async def work_arrangement_noawa_remove(request: Request):
 
 
 # ---- Office calendar (routes live in calendar_routes.py) -------------------
-app.include_router(calendar_routes.make_router(templates, get_conn, _today_local))
+def _calendar_check_dates(start, end):
+    """The activity Dates card's rules, for the calendar's edit form: (end_or_None, error)."""
+    if not _valid_date(start) or start > _event_date_bounds()[1]:
+        return None, "That start date isn't a valid date."
+    end_date, err = _norm_end_date(start, end)
+    return end_date, ("That end date isn't a valid date." if err else None)
+
+
+app.include_router(calendar_routes.make_router(
+    templates, get_conn, _today_local, can_manage_event=_can_manage_event,
+    notify_email=_notify_email, base_url=_base_url, on_event_changed=invalidate_atoms,
+    check_dates=_calendar_check_dates))

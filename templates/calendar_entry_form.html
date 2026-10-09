@@ -18,37 +18,55 @@
 </div>
 {% endif %}
 
-<form method="post" class="cal-form"
+{% set locked = activity is not none and activity %}
+{% if locked %}
+<div class="cal-flash ok" role="status">★ Linked to the CSS activity <strong>{{ activity.title }}</strong>.
+  The activity owns the title, type, time and venue, so those are shown but can't be changed here.
+  {% if can_dates %}You can move its dates below.{% else %}Only the people who manage the activity can move its dates.{% endif %}
+  You can still change who is on it, the audience, tags and notes.</div>
+{% endif %}
+{% if confirm %}
+<div class="cal-flash warn" role="alert">
+  <strong>{{ confirm }} {{ "person" if confirm == 1 else "people" }} registered for this activity.</strong>
+  Moving its dates changes it for them too. Tell them by email?
+  <div class="cf-actions">
+    <button class="cal-btn primary" type="submit" name="notify" value="yes" form="cal-form">Save and email them</button>
+    <button class="cal-btn" type="submit" name="notify" value="no" form="cal-form">Save without emailing</button>
+  </div>
+</div>
+{% endif %}
+
+<form method="post" class="cal-form" id="cal-form"
       action="{{ '/calendar/entries/' ~ entry.id ~ '/edit' if entry else '/calendar/new' }}">
   <input type="hidden" name="updated_at" value="{{ f.updated_at }}">
 
   <label class="cf-wide">What is it?
-    <input name="title" value="{{ f.title }}" required maxlength="200" autofocus></label>
+    <input name="title" {{ "readonly" if locked }} value="{{ f.title }}" required maxlength="200" autofocus></label>
 
   <div class="cf-row">
     <label>Type
-      <select name="kind">{% for k, label in kinds.items() %}<option value="{{ k }}" {{ "selected" if f.kind == k }}>{{ label }}</option>{% endfor %}</select></label>
+      <select name="kind" {{ "disabled" if locked }}>{% for k, label in kinds.items() %}<option value="{{ k }}" {{ "selected" if f.kind == k }}>{{ label }}</option>{% endfor %}</select></label>
     <label>Status
-      <select name="status">{% for k, label in statuses.items() if k != "cancelled" %}<option value="{{ k }}" {{ "selected" if f.status == k }}>{{ label }}</option>{% endfor %}</select></label>
+      <select name="status" {{ "disabled" if locked }}>{% for k, label in statuses.items() if k != "cancelled" %}<option value="{{ k }}" {{ "selected" if f.status == k }}>{{ label }}</option>{% endfor %}</select></label>
   </div>
 
   <div class="cf-row">
-    <label>Starts <input type="date" name="start_date" value="{{ f.start_date }}" required></label>
-    <label>Ends <span class="opt">(if it runs several days)</span> <input type="date" name="end_date" value="{{ f.end_date }}"></label>
+    <label>Starts <input type="date" name="start_date" {{ "readonly" if locked and not can_dates }} value="{{ f.start_date }}" required></label>
+    <label>Ends <span class="opt">(if it runs several days)</span> <input type="date" name="end_date" {{ "readonly" if locked and not can_dates }} value="{{ f.end_date }}"></label>
   </div>
   <div class="cf-row">
-    <label>From <span class="opt">(optional)</span> <input type="time" name="start_time" value="{{ f.start_time }}"></label>
-    <label>To <span class="opt">(optional)</span> <input type="time" name="end_time" value="{{ f.end_time }}"></label>
-    <label>Time note <span class="opt">(e.g. "AM")</span> <input name="time_note" value="{{ f.time_note }}" maxlength="60"></label>
+    <label>From <span class="opt">(optional)</span> <input type="time" name="start_time" {{ "readonly" if locked }} value="{{ f.start_time }}"></label>
+    <label>To <span class="opt">(optional)</span> <input type="time" name="end_time" {{ "readonly" if locked }} value="{{ f.end_time }}"></label>
+    <label>Time note <span class="opt">(e.g. "AM")</span> <input name="time_note" {{ "readonly" if locked }} value="{{ f.time_note }}" maxlength="60"></label>
   </div>
 
   <div class="cf-row">
-    <label>Where <span class="opt">(optional)</span> <input name="venue" value="{{ f.venue }}" maxlength="200"></label>
+    <label>Where <span class="opt">(optional)</span> <input name="venue" {{ "readonly" if locked }} value="{{ f.venue }}" maxlength="200"></label>
     <label>Format
-      <select name="modality">{% for k, label in modalities.items() %}<option value="{{ k }}" {{ "selected" if f.modality == k }}>{{ label }}</option>{% endfor %}</select></label>
+      <select name="modality" {{ "disabled" if locked }}>{% for k, label in modalities.items() %}<option value="{{ k }}" {{ "selected" if f.modality == k }}>{{ label }}</option>{% endfor %}</select></label>
   </div>
   <label class="cf-wide">Meeting link <span class="opt">(optional)</span>
-    <input type="url" name="meeting_url" value="{{ f.meeting_url }}" placeholder="https://"></label>
+    <input type="url" name="meeting_url" {{ "readonly" if locked }} value="{{ f.meeting_url }}" placeholder="https://"></label>
 
   <div class="cf-row">
     <label>Owning unit

@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.66"
+APP_VERSION = "3.67"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.67",
+        "date": "October 9, 2026",
+        "summary": "You can move an activity's dates from the calendar, and trainings get a feedback reminder.",
+        "changes": [
+            "Open an activity's calendar item and change its dates there. The activity, its forms and the calendar all follow.",
+            "If people already registered, you choose whether to email them the new date.",
+            "The day after a training that is only on the calendar, its creator gets one email asking if they want to collect feedback.",
+        ],
+    },
     {
         "version": "3.66",
         "date": "October 9, 2026",

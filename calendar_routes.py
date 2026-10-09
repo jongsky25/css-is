@@ -21,6 +21,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from starlette.concurrency import run_in_threadpool
 
 import auth
+import mailer
 import calendar_import as ci
 import calendar_import_apply as cia
 import calendar_people as cp
@@ -191,8 +192,19 @@ def link_after_create(conn, user, entry_id, event_id):
         return None
 
 
-def make_router(templates, get_conn, today_local):
+LOCKED_WHEN_LINKED = ("title", "kind", "status", "start_time", "end_time", "time_note",
+                      "venue", "modality", "meeting_url")
+
+
+def make_router(templates, get_conn, today_local, *, can_manage_event=None, notify_email=None,
+                base_url=None, on_event_changed=None, check_dates=None):
+    """`can_manage_event(user, event, conn)`, `notify_email(conn, to, subject, body, html,
+    feature)`, `base_url(request)`, `on_event_changed()` (drops the reporting cache) and
+    `check_dates(start, end) -> (end_or_None, error_or_None)` are app.py's own rules, handed in
+    because this module cannot import app. All optional: without them a linked item's dates
+    simply stay locked."""
     router = APIRouter()
+
 
     @router.get("/calendar", response_class=HTMLResponse)
     def calendar_page(request: Request):
@@ -217,9 +229,15 @@ def make_router(templates, get_conn, today_local):
                                           {"nav_active": "calendar", "missing": True},
                                           status_code=404)
 
-    def _form_page(request, conn, f, *, entry=None, error="", conflict=None, status_code=200):
+    def _form_page(request, conn, f, *, entry=None, error="", conflict=None, status_code=200,
+                   confirm=0):
+        activity = st.get_event_by_id(conn, entry["event_id"]) if entry and entry["event_id"] else None
+        can_dates = bool(activity and can_manage_event
+                         and can_manage_event(request.state.user, activity, conn)
+                         and check_dates)
         return templates.TemplateResponse(request, "calendar_entry_form.html", {
             "nav_active": "calendar", "f": f, "entry": entry, "error": error,
+            "activity": activity, "can_dates": can_dates, "confirm": confirm,
             "conflict": conflict, "kinds": FORM_KIND_LABELS, "statuses": STATUS_LABELS,
             "modalities": MODALITY_LABELS, "audiences": AUDIENCE_LABELS,
             "units": oc.unit_choices(conn), "people": oc.people_choices(conn),
@@ -238,7 +256,14 @@ def make_router(templates, get_conn, today_local):
                 "owner_org_id": owner, "audience": "unit", "people": [], "tags": "",
                 "updated_at": ""}
 
-    def _entry_form(e):
+    def _activity_of(conn, e):
+        return st.get_event_by_id(conn, e["event_id"]) if e.get("event_id") else None
+
+    def _entry_form(e, activity=None):
+        if activity:                      # the activity owns the title, dates and venue
+            e = {**e, "title": activity["title"], "venue": activity.get("venue"),
+                 "start_date": (activity["event_date"] or e["start_date"])[:10],
+                 "end_date": (activity.get("end_date") or "")[:10] or None}
         return {"title": e["title"], "kind": e["kind"], "status": e["status"],
                 "start_date": e["start_date"], "end_date": e["end_date"] or "",
                 "start_time": e["start_time"] or "", "end_time": e["end_time"] or "",
@@ -370,7 +395,7 @@ def make_router(templates, get_conn, today_local):
                 return RedirectResponse(
                     f"/calendar/entries/{entry_id}?err={quote('Restore it before editing.')}",
                     status_code=303)
-            return _form_page(request, conn, _entry_form(e), entry=e)
+            return _form_page(request, conn, _entry_form(e, _activity_of(conn, e)), entry=e)
         finally:
             conn.close()
 
@@ -389,10 +414,41 @@ def make_router(templates, get_conn, today_local):
                 return RedirectResponse(
                     f"/calendar/entries/{entry_id}?err={quote('Restore it before editing.')}",
                     status_code=303)
+            activity = _activity_of(conn, e)
+            if activity:                  # locked to the activity: ignore whatever was posted
+                shown = _entry_form(e, activity)
+                for k in LOCKED_WHEN_LINKED:
+                    f[k] = shown[k]
+                f["title"] = activity["title"]
+                f["venue"] = shown["venue"]
             fields, people, tags, error = _parse(
                 f, e, {p["user_id"] for p in oc.people_choices(conn)})
             if error:
                 return _form_page(request, conn, f, entry=e, error=error, status_code=400)
+            redate = None
+            if activity:
+                shown = _entry_form(e, activity)
+                new_start, new_end = f["start_date"], f.get("end_date", "")
+                if (new_start, new_end) != (shown["start_date"], shown["end_date"]):
+                    if not (can_manage_event and check_dates
+                            and can_manage_event(user, activity, conn)):
+                        f["start_date"], f["end_date"] = shown["start_date"], shown["end_date"]
+                        return _form_page(request, conn, f, entry=e, status_code=403, error=(
+                            "Only the people who manage this activity can change its dates."))
+                    end_ok, bad = check_dates(new_start, new_end)
+                    if bad:
+                        return _form_page(request, conn, f, entry=e, error=bad, status_code=400)
+                    redate = (new_start, end_ok)
+                    fields["end_date"] = end_ok
+                    if "start_date" in fields:
+                        fields["start_date"] = new_start
+                    notify = f.get("notify", "")
+                    reachable = [a for a in st.event_attendees_status(conn, activity["id"])
+                                 if a.get("email")]
+                    if reachable and notify not in ("yes", "no"):
+                        return _form_page(request, conn, f, entry=e, confirm=len(reachable))
+                else:
+                    fields["start_date"], fields["end_date"] = e["start_date"], e["end_date"]
             try:
                 st.cal_update(conn, entry_id, by=user["username"], people=people, tags=tags,
                               expected_updated_at=f["updated_at"] or None, **fields)
@@ -408,10 +464,44 @@ def make_router(templates, get_conn, today_local):
                                   status_code=409)
             except ValueError as ex:
                 return _form_page(request, conn, f, entry=e, error=str(ex), status_code=400)
+            if redate:
+                _redate_activity(request, conn, activity, redate, notify == "yes", user)
         finally:
             conn.close()
         return RedirectResponse(f"/calendar/entries/{entry_id}?ok={quote('Saved.')}",
                                 status_code=303)
+
+    def _redate_activity(request, conn, activity, redate, notify, user):
+        """Write the new dates through the same path as the activity's own Dates card: the
+        event and every form of it, the reporting cache, an audit row, and (if chosen) one
+        email per registrant with an address."""
+        start, end = redate
+        old = _when(activity["event_date"][:10], (activity.get("end_date") or "")[:10])
+        n = st.set_event_dates(conn, activity["id"], start, end)
+        new = _when(start, end)
+        st.audit(conn, user["username"], "event_dates_set", target_type="event",
+                 target_id=activity["id"],
+                 summary=f"Set activity dates to {new} on {n} form(s) (from the calendar).")
+        if on_event_changed:
+            on_event_changed()
+        if not (notify and notify_email and base_url):
+            return
+        base = base_url(request)
+        for a in st.event_attendees_status(conn, activity["id"]):
+            if not a.get("email"):
+                continue
+            link = (f"{base}/e/{activity['event_token']}/resume?rt="
+                    f"{quote(auth.make_recovery_token(a['id']))}")
+            subj, body, html = mailer.event_dates_changed_message(
+                a.get("name"), activity["title"], old, new, activity.get("venue"), link)
+            notify_email(conn, a["email"], subj, body, html, "event_dates_changed")
+
+    def _when(start, end):
+        a = date.fromisoformat(start)
+        if not end or end == start:
+            return f"{a:%B} {a.day}, {a.year}"
+        b = date.fromisoformat(end)
+        return f"{a:%B} {a.day} – {b:%B} {b.day}, {b.year}"
 
     @router.post("/calendar/entries/{entry_id}/link-activity")
     async def calendar_link_activity(request: Request, entry_id: int):

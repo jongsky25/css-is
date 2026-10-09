@@ -114,6 +114,7 @@ def conn(app_mod):
         c.execute("UPDATE calendar_entry SET event_id=NULL WHERE event_id=?", (i,))
     for (i,) in c.execute("SELECT id FROM calendar_entry WHERE title LIKE 'CALLK %'").fetchall():
         st.cal_delete(c, i)
+    c.execute("DELETE FROM attendee WHERE event_id IN (SELECT id FROM event WHERE title LIKE 'CALLK %')")
     fids = [r[0] for r in c.execute("SELECT form_instance_id FROM event_form WHERE event_id IN (SELECT id FROM event WHERE title LIKE 'CALLK %')")]
     c.execute("DELETE FROM event_form WHERE event_id IN (SELECT id FROM event WHERE title LIKE 'CALLK %')")
     c.execute("DELETE FROM event WHERE title LIKE 'CALLK %'")

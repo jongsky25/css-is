@@ -146,7 +146,7 @@ def remind_tomorrows_events(conn, base, dry_run=False):
 
 _ALL_JOBS = {"events", "wellness_expiry", "digest", "csm_rp", "csm_activity",
             "wellness_file", "awa_file", "whereabouts",
-            "whereabouts_nudge", "whereabouts_rollup"}
+            "whereabouts_nudge", "whereabouts_rollup", "calendar_css_nudge"}
 
 # job name -> the admin toggle that can switch it off (see /admin/email).
 JOB_FEATURE = {
@@ -160,6 +160,7 @@ JOB_FEATURE = {
     "whereabouts": "job_whereabouts",
     "whereabouts_nudge": "job_whereabouts_nudge",
     "whereabouts_rollup": "job_whereabouts_rollup",
+    "calendar_css_nudge": "job_calendar_css_nudge",
 }
 
 # Admin-tunable schedule/delay knobs for the jobs below (/admin/email "Timing"
@@ -449,6 +450,45 @@ def nudge_whereabouts(conn, base, dry_run=False):
     return sent
 
 
+def nudge_calendar_css(conn, base, dry_run=False):
+    """The day after a TRAINING that lived only on the calendar, ask whoever added it
+    whether to collect feedback — once per item (css_nudged_at). Skips anything that
+    already looks like an activity. A dry run never marks, so it can be repeated."""
+    import office_calendar as oc
+    today = tz.today_local()
+    sent = 0
+    for c in st.cal_css_nudge_candidates(conn, today):
+        creator = st.get_admin_user(conn, c["created_by"])
+        if not creator or not creator.get("username"):
+            continue
+        entry = st.cal_get(conn, c["id"])
+        if oc.activity_candidates_for_entry(conn, entry):
+            if not dry_run:
+                st.cal_mark_css_nudged(conn, c["id"])       # already an activity: never ask
+            continue
+        when = _human_range(c["start_date"], c["end_date"])
+        link = f"{base}/calendar/entries/{c['id']}"
+        subj, body, html = mailer.calendar_css_nudge_message(
+            _person_name(conn, creator["id"]) or creator["username"], c["title"], when, link)
+        if dry_run:
+            print(f"[dry-run] calendar CSS nudge -> {creator['username']} ({c['title']})")
+        else:
+            res = _send(conn, JOB_FEATURE["calendar_css_nudge"], creator["username"], subj,
+                        body, html=html)
+            if mailer.send_status(res) == "sent":
+                st.cal_mark_css_nudged(conn, c["id"])
+        sent += 1
+    return sent
+
+
+def _human_range(start, end=None):
+    a = date.fromisoformat(start)
+    if not end or end == start:
+        return f"{a:%B} {a.day}, {a.year}"
+    b = date.fromisoformat(end)
+    return f"{a:%B} {a.day} – {b:%B} {b.day}, {b.year}"
+
+
 def send_whereabouts_rollup(conn, base, dry_run=False):
     """Tuesday by default (alongside the staff nudge), tell each chief who among
     the staff they approve for is still undeclared. Skips a chief with nobody
@@ -600,6 +640,8 @@ def run(db_path="css_is.db", dry_run=False, jobs=None):
             report["whereabouts_nudge"] = nudge_whereabouts(conn, base, dry_run=dry_run)
         if "whereabouts_rollup" in jobs:
             report["whereabouts_rollup"] = send_whereabouts_rollup(conn, base, dry_run=dry_run)
+        if "calendar_css_nudge" in jobs:
+            report["calendar_css_nudge"] = nudge_calendar_css(conn, base, dry_run=dry_run)
     finally:
         conn.close()
     return report
@@ -629,6 +671,8 @@ def main():
                     help="Nudge staff who haven't answered the Monday whereabouts email.")
     ap.add_argument("--whereabouts-rollup", action="store_true",
                     help="Tell each chief who in their area hasn't reported their week.")
+    ap.add_argument("--calendar-css-nudge", action="store_true",
+                    help="Ask the creator of a past calendar-only training if they want feedback.")
     args = ap.parse_args()
 
     jobs = {j for j, flag in (("events", args.events),
@@ -640,7 +684,8 @@ def main():
                               ("awa_file", args.awa_file),
                               ("whereabouts", args.whereabouts),
                               ("whereabouts_nudge", args.whereabouts_nudge),
-                              ("whereabouts_rollup", args.whereabouts_rollup)) if flag}
+                              ("whereabouts_rollup", args.whereabouts_rollup),
+                              ("calendar_css_nudge", args.calendar_css_nudge)) if flag}
     # run() treats a missing CSS_BASE_URL as a skip, because the in-process
     # caller must not be killed by it. On the command line it IS a failure:
     # exit non-zero so a cron/Task Scheduler run reports it instead of

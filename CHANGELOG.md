@@ -1,5 +1,23 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.67 — office calendar: editing linked items + the "collect feedback?" nudge)
+
+- **Editing a calendar item that is linked to a CSS activity.** The form shows the activity's title,
+  type, time and venue read-only (the activity owns them) and keeps who is on it, the audience, tags and
+  notes editable. Anything posted for the locked fields is ignored.
+- **Moving the dates from the calendar** goes through the activity's own Dates path (the event and
+  every form of it, the reporting cache, an `event_dates_set` audit row), and the item's own dates and
+  sequence follow so attendees' calendars update. Only people who can manage the activity may; others
+  see the dates locked (403 if they post them). A stale form is a conflict and changes nothing.
+- **Registrants are asked first.** If anyone registered with an email, saving shows "N people
+  registered — email them?" with *Save and email them* / *Save without emailing*. The email
+  ("Activity re-dated", new admin toggle) carries each person's own resume link.
+- **"Collect feedback?" nudge** (new scheduled email, `--calendar-css-nudge`, toggle in /admin/email):
+  the day after a TRAINING that lives only on the calendar, its creator is asked once. Never for
+  meetings, trips, audits, banners or deadlines; never for cancelled, imported or back-filled items;
+  never when a similar activity already exists; marked per item so it cannot repeat; a failed send is
+  retried within the 3-day window; a dry run marks nothing.
+
 ## 2026-10-09 (v3.66 — office calendar: Collect feedback (CSS) and the duplicate guard)
 
 - **"Collect feedback (CSS)"** on a calendar item's page (live meetings and trainings only — a trip,

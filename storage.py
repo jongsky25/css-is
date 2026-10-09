@@ -453,7 +453,8 @@ def init_db(conn):
         import_key   TEXT UNIQUE,            -- makes a re-import idempotent
         created_by   TEXT, created_at TEXT,
         updated_by   TEXT, updated_at TEXT,
-        cancelled_at TEXT, cancelled_by TEXT
+        cancelled_at TEXT, cancelled_by TEXT,
+        css_nudged_at TEXT                   -- once-only "collect feedback?" email (D3)
     );
     CREATE INDEX IF NOT EXISTS idx_cal_entry_dates ON calendar_entry(start_date, end_date);
 
@@ -628,6 +629,9 @@ def _add_missing_columns(conn):
     CREATE TABLE IF NOT EXISTS leaves pre-existing tables untouched, so a column
     added after a database was first created has to be ALTERed in by hand.
     """
+    ce_cols = {row[1] for row in conn.execute("PRAGMA table_info(calendar_entry)")}
+    if ce_cols and "css_nudged_at" not in ce_cols:
+        conn.execute("ALTER TABLE calendar_entry ADD COLUMN css_nudged_at TEXT")
     fi_cols = {row[1] for row in conn.execute("PRAGMA table_info(form_instance)")}
     if "end_date" not in fi_cols:
         # End of a multi-day activity. NULL on pre-existing rows = single-day
@@ -10287,6 +10291,32 @@ def cal_overlays_for_events(conn, event_ids):
         for e in _cal_hydrate(conn, rows):
             out[e["event_id"]] = e
     return out
+
+
+def cal_css_nudge_candidates(conn, today, window_days=3):
+    """Past TRAINING entries worth a one-time "collect feedback?" nudge to whoever made them:
+    live, not yet an activity, ended within the last `window_days` days (and before `today`),
+    never nudged, and created on or before the day it ended (a back-filled or imported item
+    is history, not a missed chance). Returns [{id, title, start_date, end_date, created_by}];
+    the caller still applies the similar-activity guard."""
+    today = str(today)[:10]
+    floor = (date.fromisoformat(today) - timedelta(days=window_days)).isoformat()
+    rows = conn.execute("""
+        SELECT id, title, start_date, end_date, created_by, kind FROM calendar_entry
+        WHERE kind = 'training' AND status <> 'cancelled' AND event_id IS NULL
+          AND css_nudged_at IS NULL AND COALESCE(created_by, '') <> ''
+          AND COALESCE(end_date, start_date) < ? AND COALESCE(end_date, start_date) >= ?
+          AND substr(COALESCE(created_at, ''), 1, 10) <= COALESCE(end_date, start_date)
+          AND COALESCE(created_at, '') <> ''
+        ORDER BY start_date, id""", (today, floor)).fetchall()
+    return [dict(zip(("id", "title", "start_date", "end_date", "created_by", "kind"), r))
+            for r in rows]
+
+
+def cal_mark_css_nudged(conn, entry_id):
+    """Record that the nudge went out (or was deliberately skipped), so it never repeats."""
+    conn.execute("UPDATE calendar_entry SET css_nudged_at=? WHERE id=?", (tz.now_iso(), entry_id))
+    conn.commit()
 
 
 def cal_link_event(conn, entry_id, event_id, *, by=None):
