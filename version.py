@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "4.5"
+APP_VERSION = "4.6"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "4.6",
+        "date": "October 9, 2026",
+        "summary": "The Calendar tab now shows only the calendar, with a much shorter toolbar.",
+        "changes": [
+            "Opening Calendar from the home page shows just the calendar. No greeting, companion or to-do list sits above it, and the Team / Me / Calendar switch stays at the top.",
+            "The controls are two short rows: pick a layout and add, then move through time, choose whose calendar, and open Filters. On a phone, today's events are now on the first screen.",
+            "Whose calendar is a single menu instead of five buttons. Birthdays and Import live under More. Filters apply as soon as you choose, and active ones show as chips you can remove.",
+            "An empty calendar says so once, with a way forward, instead of twice. The page loads faster because the team panels are not built for it.",
+        ],
+    },
     {
         "version": "4.5",
         "date": "October 9, 2026",

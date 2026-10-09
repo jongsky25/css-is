@@ -4847,29 +4847,35 @@ def choose(request: Request, msg: str = "", view: str = "team"):
         profile = st.get_user_profile(conn, request.state.user["id"])
         first_name = _account_first_name(conn, request.state.user)
         css_url = _css_entry_for(request.state.user, conn)
-        try:
-            data = oc.team_view_data(conn, request.state.user,
-                                     get_atoms=get_atoms, view_memo=view_memo)
-        except Exception:
-            # The landing page must never be the reason someone can't sign in.
-            # Losing the panels still leaves the greeting and the three doors,
-            # which is exactly the page this one replaced.
-            traceback.print_exc()
-            data = None
-        # The to-do strip that leads the page: each task with its one next step.
-        try:
-            tasks = oc.home_tasks(conn, request.state.user)
-        except Exception:
-            traceback.print_exc()
-            tasks = []
-        # The next seven days from the office calendar (same scope rules as /calendar).
-        # On the Calendar tab it only supplies the scope the tab opens with (below).
-        try:
-            cal_week = oc.calendar_week_block(conn, request.state.user,
-                                              view="me" if view == "calendar" else view)
-        except Exception:
-            traceback.print_exc()
-            cal_week = None
+        # The Calendar tab draws only the calendar, so the team panels, the to-do list, "Coming up",
+        # the wellness teaser and the work-arrangement hint are not built for it at all.
+        on_calendar = view == "calendar"
+        data, tasks, cal_week, wstats = None, [], None, None
+        wa_now, wa_label, wa_file_label, wa_file_filed = None, "", "", False
+        team_linked = st.team_scope_for_user(conn, request.state.user)[1] != "none"
+        if not on_calendar:
+            try:
+                data = oc.team_view_data(conn, request.state.user,
+                                         get_atoms=get_atoms, view_memo=view_memo)
+            except Exception:
+                # The landing page must never be the reason someone can't sign in.
+                # Losing the panels still leaves the greeting and the three doors,
+                # which is exactly the page this one replaced.
+                traceback.print_exc()
+                data = None
+            # The to-do strip that leads the page: each task with its one next step.
+            try:
+                tasks = oc.home_tasks(conn, request.state.user)
+            except Exception:
+                traceback.print_exc()
+                tasks = []
+            # The next seven days from the office calendar (same scope rules as /calendar).
+            try:
+                cal_week = oc.calendar_week_block(conn, request.state.user,
+                                                  view=view)
+            except Exception:
+                traceback.print_exc()
+                cal_week = None
         # The Calendar tab: the full calendar body (agenda / month, filters) inside the home
         # page. Same builder as /calendar; its links stay on this page (view=calendar).
         cal_page = None
@@ -4884,31 +4890,32 @@ def choose(request: Request, msg: str = "", view: str = "team"):
             except Exception:
                 traceback.print_exc()
                 cal_page = None
-        # A light wellness teaser (points/streak) beside the Wellness door.
-        try:
-            wstats = st.wellness_stats(conn, request.state.user["id"])
-        except Exception:
-            wstats = None
-        # ...and the same for the work arrangement door. What's IN FORCE right
-        # now leads — that is the schedule someone is actually working today —
-        # with whatever's open for filing next as a secondary hint, only when
-        # there's still something to do about it.
-        try:
-            uid = request.state.user["id"]
-            wa_period = st.work_arrangement_schedule_period()
-            wa_now = (st.my_work_arrangement_for(conn, uid, wa_period)
-                      or st.my_pending_work_arrangement(conn, uid, wa_period))
-            wa_label = st.work_arrangement_period_label(wa_period)
-            wa_open = st.work_arrangement_open_periods()
-            wa_file_period = wa_open[0] if wa_open else None
-            wa_file_label = (st.work_arrangement_period_label(wa_file_period)
-                             if wa_file_period else "")
-            wa_file_filed = bool(wa_file_period and (
-                st.my_work_arrangement_for(conn, uid, wa_file_period)
-                or st.my_pending_work_arrangement(conn, uid, wa_file_period)))
-        except Exception:
-            wa_now, wa_label = None, ""
-            wa_file_label, wa_file_filed = "", False
+        if not on_calendar:
+            # A light wellness teaser (points/streak) beside the Wellness door.
+            try:
+                wstats = st.wellness_stats(conn, request.state.user["id"])
+            except Exception:
+                wstats = None
+            # ...and the same for the work arrangement door. What's IN FORCE right
+            # now leads — that is the schedule someone is actually working today —
+            # with whatever's open for filing next as a secondary hint, only when
+            # there's still something to do about it.
+            try:
+                uid = request.state.user["id"]
+                wa_period = st.work_arrangement_schedule_period()
+                wa_now = (st.my_work_arrangement_for(conn, uid, wa_period)
+                          or st.my_pending_work_arrangement(conn, uid, wa_period))
+                wa_label = st.work_arrangement_period_label(wa_period)
+                wa_open = st.work_arrangement_open_periods()
+                wa_file_period = wa_open[0] if wa_open else None
+                wa_file_label = (st.work_arrangement_period_label(wa_file_period)
+                                 if wa_file_period else "")
+                wa_file_filed = bool(wa_file_period and (
+                    st.my_work_arrangement_for(conn, uid, wa_file_period)
+                    or st.my_pending_work_arrangement(conn, uid, wa_file_period)))
+            except Exception:
+                wa_now, wa_label = None, ""
+                wa_file_label, wa_file_filed = "", False
     finally:
         conn.close()
     role = request.state.user["role"]
@@ -4926,6 +4933,7 @@ def choose(request: Request, msg: str = "", view: str = "team"):
         "role_label": auth.ROLE_LABELS.get(role, role),
         "role_blurb": auth.ROLE_BLURB.get(role, ""),
         "d": data, "view": view, "tasks": tasks, "cal_week": cal_week, "cal_page": cal_page,
+        "team_linked": team_linked,
         # the Calendar tab's body reads these (layout, qs, scopes, days / grid ...) as plain
         # variables; none of its names clash with the home page's own
         **(cal_page or {}),

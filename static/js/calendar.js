@@ -1,3 +1,29 @@
+/* Calendar toolbar (Phase 1 of docs/CALENDAR_UX_PLAN.md). Progressive enhancement: the form works
+   without it (an Apply button submits it); with it, choosing a scope or a filter applies at once and
+   the two menus close when you click elsewhere, press Escape, or pick something. */
+(function () {
+  "use strict";
+  document.documentElement.classList.add("cal-js");
+  var form = document.getElementById("cal-f");
+  if (form) {
+    Array.prototype.forEach.call(form.querySelectorAll(".cal-auto"), function (el) {
+      el.addEventListener("change", function () {
+        if (typeof form.requestSubmit === "function") form.requestSubmit(); else form.submit();
+      });
+    });
+  }
+  var menus = function () { return Array.prototype.slice.call(document.querySelectorAll(".cal-more[open], .cal-fdrop[open]")); };
+  document.addEventListener("click", function (ev) {
+    menus().forEach(function (m) {
+      if (!m.contains(ev.target) || (ev.target.closest && ev.target.closest(".cal-menu-item"))) m.removeAttribute("open");
+    });
+  });
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key !== "Escape") return;
+    menus().forEach(function (m) { m.removeAttribute("open"); var s = m.querySelector("summary"); if (s) s.focus(); });
+  });
+})();
+
 /* Calendar quick-add (office calendar H2). A progressive enhancement: the page works without it
    (the "+ Add" button and the full form do everything); with it, "Quick add", the day headers and
    an empty day on a person's timeline row open a small sheet that posts to the ordinary add route.

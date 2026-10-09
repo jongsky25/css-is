@@ -100,7 +100,7 @@ def test_bad_day_bounces_and_bad_scope_falls_back(viewer):
     r = viewer.get("/calendar?day=not-a-date", follow_redirects=False)
     assert r.status_code == 303 and r.headers["location"] == "/calendar"
     r = viewer.get(f"/calendar?day={DAY}&scope=galaxy")
-    assert r.status_code == 200 and 'aria-current="true">Mine + bureau-wide' in r.text
+    assert r.status_code == 200 and '<option value="blend" selected>Mine + bureau-wide</option>' in r.text
 
 
 def test_it_is_read_only(viewer):

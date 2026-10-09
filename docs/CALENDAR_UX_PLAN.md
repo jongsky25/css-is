@@ -114,7 +114,7 @@ Each increment: **files · done when · tests**. Tests run with `./run_tests.sh`
 - Claude imports into a local copy of the DB and writes `scratchpad/import-report.md`: counts by month and owner vs §2, the 48 owner calls with suggestions, the series proposals, the holiday diff and 20 spot-checks against the Word file.
 - The owner reviews the report. An admin then runs the same upload in production. Past months (Jan–Sep) are imported as history.
 
-### Phase 1: calendar-only view and a compact toolbar
+### Phase 1: calendar-only view and a compact toolbar *(done, v4.6; empty days were already omitted from the agenda, so P1.3 only fixed the duplicate empty message)*
 
 **P1.1 Calendar-only Calendar tab** (`templates/office_connect.html`, `app.py` home route)
 - When `view == "calendar"`: no hero, companion, to-do or "Coming up". The top is a slim row: the Team / Me / **Calendar** segmented switch (so leaving is one tap) and the page title.
