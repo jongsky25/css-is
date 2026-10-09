@@ -233,4 +233,5 @@ def test_the_profile_switch_for_teammates_birthdays(app_mod, viewer):
         viewer.post("/me", content=urlencode({**base, "notify_present": "1", "bday_notify": "1", "cal_email_changes": "1"}), headers=F)
         assert st.bday_notify_pref(c, uid)
     finally:
-        st.set_bday_notify_pref(c, uid, True); st.set_calendar_email_pref(c, uid, True); c.close()
+        st.set_bday_notify_pref(c, uid, True); st.set_calendar_email_pref(c, uid, True)
+        st.set_calendar_email_extras(c, uid, week=True, daybefore=True); c.close()

@@ -234,7 +234,8 @@ def test_the_profile_switch(app_mod, viewer):
         viewer.post("/me", content=urlencode({**base, "notify_present": "1", "cal_email_changes": "1"}), headers=F)
         assert st.calendar_email_pref(c, uid)
     finally:
-        st.set_calendar_email_pref(c, uid, True); c.close()
+        st.set_calendar_email_pref(c, uid, True)
+        st.set_bday_notify_pref(c, uid, True); st.set_calendar_email_extras(c, uid, week=True, daybefore=True); c.close()
 
 
 def test_a_queued_notice_never_blocks_deleting_an_account(world):                              # noqa: F811

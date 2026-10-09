@@ -193,6 +193,7 @@ def test_the_profile_switches(app_mod, viewer):
     uid = st.get_admin_user(c, "viewer@test.local")["id"]
     base = {"avatar_kind": st.AVATAR_DEFAULT, "avatar_name": "Milo", "nickname": "", "designation": ""}
     F = {"Content-Type": "application/x-www-form-urlencoded"}
+    st.set_calendar_email_extras(c, uid, week=True, daybefore=True)
     try:
         html = viewer.get("/me").text
         assert "cal_email_week" in html and "cal_email_daybefore" in html
