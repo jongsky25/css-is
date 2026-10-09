@@ -1,0 +1,34 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}Fill in nicknames{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009g">{% endblock %}
+{% block content %}
+{{ page_header("Fill in nicknames", "The calendar calls people by the name the office uses. Giving each account that nickname lets the imported calendar match them on its own.") }}
+<p class="cal-back"><a href="/calendar/import">← Import</a> · <a href="/calendar">Calendar</a></p>
+{% if ok %}<div class="cal-flash ok" role="status">✓ {{ ok }}</div>{% endif %}
+
+<p class="cal-range">Only the people the bureau named are listed. A nickname also becomes the name the home page greets them by,
+  and they can change it any time on <strong>My profile</strong>. Nobody who already has a nickname is changed unless you tick them.</p>
+
+<form method="post" action="/calendar/nicknames">
+  <table class="cal-table">
+    <thead><tr><th>Apply</th><th>Person</th><th>Nickname to set</th><th>Now</th><th></th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+    <tr>
+      <td>{% if r.status in ("ready", "has_nickname") %}<input type="checkbox" name="apply" value="{{ r.person.user_id }}" {{ "checked" if r.status == "ready" }} aria-label="Set the nickname for {{ r.full }}">{% endif %}</td>
+      <th scope="row">{{ r.person.name if r.person else r.full }}{% if r.person and r.person.inactive %} <small>(archived)</small>{% endif %}</th>
+      <td><strong>{{ r.proposed }}</strong></td>
+      <td>{{ r.current or "—" }}</td>
+      <td>{% if r.status == "ready" %}<span class="cal-chip">Ready</span>
+          {% elif r.status == "same" %}<span class="cal-chip">Already set</span>
+          {% elif r.status == "has_nickname" %}<span class="cal-chip warn">Has another nickname — left alone unless ticked</span>
+          {% elif r.status == "ambiguous" %}<span class="cal-chip warn">{{ r.ids|length }} accounts have this name — set it by hand</span>
+          {% else %}<span class="cal-chip">No account found for {{ r.full }}</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <div class="cf-actions"><button class="cal-btn primary" type="submit">Set the ticked nicknames</button></div>
+</form>
+{% endblock %}

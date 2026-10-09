@@ -336,7 +336,7 @@ GUIDE_PEOPLE = [person(1, "Maria Teresa Santiago"), person(2, "Marifel Santiago"
                 person(12, "Mary Anne Milliscent Castro"), person(13, "Maria Lourdes Gajitos"),
                 person(14, "Fe Ramos"), person(15, "Apple Charm Agulto"),
                 person(16, "Ray Justin Ventura"), person(17, "Modesto Lazo"),
-                person(18, "Analyn Fortaleza"),
+                person(18, "Analyn Fortaleza"), person(21, "Cathrina Laurio"),
                 dict(person(19, "Maejorie Orpilla"), inactive=True)]       # archived
 
 
@@ -350,7 +350,7 @@ def guide(monkeypatch):
     ("feng", 2), ("ronnel", 3), ("rj", 4), ("june", 5), ("tek", 7),
     ("mimi", 8), ("mi", 8), ("carole", 9), ("kjf", 10), ("jap", 11), ("mm", 12),
     ("malou", 13), ("ac", 15), ("jong", 16), ("modesto", 17), ("desten", 17),   # Desten = Modesto Lazo
-    ("mmc", 12), ("asf", 18), ("analyn", 18),
+    ("mmc", 12), ("asf", 18), ("analyn", 18), ("cath", 21),
 ])
 def test_the_name_guide_picks_the_person_it_names(guide, key, uid):
     r = cp.match(key, GUIDE_PEOPLE)
@@ -373,7 +373,7 @@ def test_the_guide_works_when_the_directory_leaves_out_a_middle_name(guide):
 
 def test_a_guide_person_with_no_active_account_is_unmatched_not_guessed(guide):
     r = cp.match("mar", GUIDE_PEOPLE + [person(20, "Maria Cruz"), person(21, "Mar Santos")])
-    assert r["status"] == "unmatched" and r["candidates"] == [] and r["guide"] == "Mar Wynn Bello"
+    assert r["status"] == "no_account" and r["candidates"] == [] and r["guide"] == "Mar Wynn Bello"
     assert cp.match("mwb", GUIDE_PEOPLE)["guide"] == "Mar Wynn Bello"         # the previous Director, by initials
     assert cp.match("tek", [p for p in GUIDE_PEOPLE if p["user_id"] != 7])["status"] == "unmatched"
 
@@ -441,7 +441,8 @@ def test_the_places_and_teams_in_the_real_file_are_marked_not_people(guide):
     ("SGA - Arlene", []),                        # nobody called Arlene in this directory: whole token kept below
     ("MDN- Malou", ["malou"]),
     ("Sir Jong", ["jong"]),
-    ("℅ MM CHD-Cath", ["mm chd cath"]),          # neither side is a known person: kept to be marked
+    ("℅ MM CHD-Cath", ["cath"]),                 # Cath = Cathrina Laurio (guide); the place is dropped
+    ("℅ Some CHD-Nobody", ["some chd nobody"]),  # neither side is a known person: kept to be marked
     ("MOH-BARMM - Basilan", ["moh barmm basilan"]),
     ("Riza - Desten", ["riza", "desten"]),
 ])
@@ -473,3 +474,82 @@ def test_the_page_matches_an_archived_person_through_the_guide(admin, world, mon
     assert "Maejorie Calpe-Orpilla" in done
     # ...and she is not offered as an everyday choice for anyone else
     assert "Maejorie" not in html.split('name="who_riza"')[1].split("</select>")[0].split('label="Everyone"')[1]
+
+
+# ----------------------------------------------------------- nickname prefill ---
+
+def with_nick(p, nick=""):
+    return dict(p, nickname_raw=nick, nickname=" ".join(cp._words(nick)))
+
+
+def proposals(extra=()):
+    people = [with_nick(p) for p in GUIDE_PEOPLE] + list(extra)
+    return {r["full"]: r for r in cp.nickname_proposals(people)}
+
+
+def test_nicknames_are_proposed_only_for_the_people_the_bureau_named():
+    rows = proposals()
+    assert rows["Teresita Guzman"]["proposed"] == "Tek" and rows["Teresita Guzman"]["status"] == "ready"
+    assert rows["Maria Teresa Santiago"]["status"] == "ready" and rows["Maria Teresa Santiago"]["person"]["user_id"] == 1
+    assert rows["Ray Justin Ventura"]["proposed"] == "Jong" and rows["Cathrina Laurio"]["proposed"] == "Cath"
+    assert rows["Maejorie Orpilla"]["status"] == "ready" and rows["Maejorie Orpilla"]["person"]["inactive"]
+    assert rows["Catherine Dimaano"]["status"] == "no_account"            # not in this directory
+
+
+def test_initials_and_first_names_are_not_nicknames():
+    given = set(cp.NICKNAME_PREFILL.values())
+    assert not given & {"KJF", "JAP", "MM", "MMC", "ASF", "MWB"}                # initials stay on paper
+    for full, nick in cp.NICKNAME_PREFILL.items():
+        assert nick.lower() != full.split()[0].lower(), full                     # a first name needs no nickname
+
+
+def test_an_existing_nickname_is_never_overwritten_by_default():
+    nicks = {7: "Terry", 8: "mimi"}          # Teresita has a different one; Irene already has exactly this one
+    people = [with_nick(p, nicks.get(p["user_id"], "")) for p in GUIDE_PEOPLE]
+    r = {x["full"]: x for x in cp.nickname_proposals(people)}
+    assert r["Teresita Guzman"]["status"] == "has_nickname" and r["Teresita Guzman"]["current"] == "Terry"
+    assert r["Irene Hizon"]["status"] == "same"
+
+
+def test_two_accounts_with_one_name_are_never_ticked():
+    r = proposals([with_nick(person(99, "Teresita Guzman"))])
+    assert r["Teresita Guzman"]["status"] == "ambiguous" and sorted(r["Teresita Guzman"]["ids"]) == [7, 99]
+
+
+def test_the_nickname_page_and_apply(admin, viewer, world, monkeypatch):
+    monkeypatch.setattr(cp, "NICKNAME_PREFILL", {"Riza Calpe": "Riz", "Teodoro Calpe": "Teddy",
+                                                 "Mae Calpe-Cruz": "Maecee", "Nobody Atall": "Nope"})
+    conn = world["conn"]
+    st.set_user_nickname(conn, world["tek"], "Tek")                      # Teodoro already has a nickname
+    assert viewer.get("/calendar/nicknames").status_code == 403
+    assert viewer.post("/calendar/nicknames", content="apply=1", headers=FORM).status_code == 403
+    html = admin.get("/calendar/nicknames").text
+    assert "Riz" in html and "Teddy" in html and "Has another nickname" in html and "No account found for Nobody Atall" in html
+    ready = html.split(f'value="{world["riza"]}"')[1][:60]
+    assert "checked" in ready                                           # ready: ticked
+    assert "checked" not in html.split(f'value="{world["tek"]}"')[1][:60]   # has one already: not ticked
+    r = admin.post("/calendar/nicknames", content=urlencode(
+        [("apply", world["riza"]), ("apply", world["mae1"]), ("apply", "999999")]), headers=FORM,
+        follow_redirects=False)
+    assert r.status_code == 303
+    nick = lambda u: conn.execute("SELECT nickname FROM admin_user WHERE id=?", (u,)).fetchone()[0]    # noqa: E731
+    assert nick(world["riza"]) == "Riz" and nick(world["mae1"]) == "Maecee" and nick(world["tek"]) == "Tek"
+    assert "Set 2 nicknames" in admin.get("/calendar/nicknames?ok=Set+2+nicknames.").text
+    # a ticked box can override a different nickname on purpose
+    admin.post("/calendar/nicknames", content=urlencode([("apply", world["tek"])]), headers=FORM)
+    assert nick(world["tek"]) == "Teddy"
+    # the form can't choose what gets written: only the server's own list is used
+    admin.post("/calendar/nicknames", content=urlencode([("apply", world["mae2"]), ("nick", "Hacker")]), headers=FORM)
+    assert nick(world["mae2"]) is None
+
+
+def test_the_missing_account_names_can_be_skipped(admin, world, monkeypatch):
+    monkeypatch.setattr(cp, "NAME_GUIDE", {"mar": "Mar Wynn Bello"})
+    monkeypatch.setattr(cp, "NO_ACCOUNT", {"Mar Wynn Bello"})
+    doc = docx.Document(); month_table(doc, 10, {6: [("CALPE Old Director talk (Dir. Mar)", "hl:cyan")]})
+    buf = io.BytesIO(); doc.save(buf)
+    bid = batch_id(upload(admin, buf.getvalue()))
+    post_import(admin, bid, form_for(world["conn"], bid))
+    html = admin.get(f"/calendar/import/{bid}/people").text
+    sel = html.split('name="who_mar"')[1].split("</select>")[0]
+    assert "Mar Wynn Bello has no account" in html and 'value="ignore" selected' in sel

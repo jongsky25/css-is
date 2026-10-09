@@ -1,16 +1,16 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header %}
 {% block title %}Match the names{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009f">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009g">{% endblock %}
 {% block content %}
 {{ page_header("Who is who?", "The Word calendar names people the way the office says them. Say who each name is so those items show up in their calendar.") }}
-<p class="cal-back"><a href="/calendar/import/{{ batch.id }}">← The import</a> · <a href="/calendar">Calendar</a></p>
+<p class="cal-back"><a href="/calendar/import/{{ batch.id }}">← The import</a> · <a href="/calendar/nicknames">Fill in nicknames first</a> · <a href="/calendar">Calendar</a></p>
 {% if ok %}<div class="cal-flash ok" role="status">✓ {{ ok }}</div>{% endif %}
 
 {% macro choose(r) %}
 <select name="who_{{ r.key }}" aria-label="Who is {{ r.label }}?">
   <option value="">— decide later —</option>
-  <option value="ignore" {{ "selected" if r.ignored or r.picked == "ignore" }}>Not a person (a place, a team, initials)</option>
+  <option value="ignore" {{ "selected" if r.ignored or r.picked == "ignore" }}>Skip — not a person or has no account</option>
   {% if r.cands %}<optgroup label="{{ 'Likely' if r.match.status in ('suggested', 'alias', 'guided') else 'Could be' }}">
     {% for p in r.cands %}<option value="{{ p.user_id }}" {{ "selected" if r.picked == p.user_id }}>{{ p.name }}{% if p.nickname %} ({{ p.nickname }}){% endif %}{% if p.inactive %} · archived{% endif %}</option>{% endfor %}
   </optgroup>{% endif %}
@@ -36,6 +36,7 @@
         {% elif m.status == "guided" %}<span class="cal-chip">Name guide · {{ m.guide }}{% if r.cands and r.cands[0].inactive %} (archived){% endif %}</span>
         {% elif m.guide and m.status == "unmatched" %}<span class="cal-chip warn">Guide says {{ m.guide }} · no active account</span>
         {% elif m.guide and m.status == "ambiguous" %}<span class="cal-chip warn">Guide says {{ m.guide }} · {{ r.cands|length }} accounts</span>
+        {% elif m.status == "no_account" %}<span class="cal-chip">{{ m.guide }} has no account</span>
         {% elif m.status == "not_person" %}<span class="cal-chip">Not a person</span>
         {% elif m.status == "unlikely" %}<span class="cal-chip">Probably not a person</span>
         {% elif m.status == "suggested" %}<span class="cal-chip">Likely · {{ levels[m.level] }}</span>

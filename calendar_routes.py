@@ -493,7 +493,7 @@ def make_router(templates, get_conn, today_local):
                 st_ = r["match"]["status"]
                 r["picked"] = (r["decision"] if isinstance(r["decision"], int) else
                                r["match"]["candidates"][0] if st_ in ("alias", "guided", "suggested") else
-                               "ignore" if st_ == "not_person" else None)
+                               "ignore" if st_ in ("not_person", "no_account") else None)
             return templates.TemplateResponse(request, "calendar_import_people.html", {
                 "nav_active": "calendar", "batch": batch, "ok": ok,
                 "pending": [r for r in rows if r["decision"] is None and not r["ignored"]],
@@ -523,6 +523,44 @@ def make_router(templates, get_conn, today_local):
         msg = (f"Added {r['added']} {'person' if r['added'] == 1 else 'people'} to {r['items']} "
                f"{'item' if r['items'] == 1 else 'items'}; marked {r['ignored']} as not a person.")
         return RedirectResponse(f"/calendar/import/{batch_id}/people?ok={quote(msg)}", status_code=303)
+
+    @router.get("/calendar/nicknames", response_class=HTMLResponse)
+    def calendar_nicknames(request: Request, ok: str = ""):
+        denied = _admin_only(request)
+        if denied:
+            return denied
+        conn = get_conn()
+        try:
+            rows = cp.nickname_proposals(cp.load_directory(conn))
+        finally:
+            conn.close()
+        return templates.TemplateResponse(request, "calendar_nicknames.html", {
+            "nav_active": "calendar", "rows": rows, "ok": ok})
+
+    @router.post("/calendar/nicknames")
+    async def calendar_nicknames_apply(request: Request):
+        denied = _admin_only(request)
+        if denied:
+            return denied
+        raw = parse_qs((await request.body()).decode("utf-8"), keep_blank_values=True)
+        ticked = {x for x in raw.get("apply", []) if x.isdigit()}
+        by = request.state.user["username"]
+        conn = get_conn()
+        try:
+            n, names = 0, []
+            for r in cp.nickname_proposals(cp.load_directory(conn)):
+                p = r["person"]
+                # the nickname comes from the server's own list, never from the form
+                if p and str(p["user_id"]) in ticked and r["status"] in ("ready", "has_nickname"):
+                    st.set_user_nickname(conn, p["user_id"], r["proposed"])
+                    n += 1
+                    names.append(f"{p['name']} → {r['proposed']}")
+            if n:
+                st.audit(conn, by, "calendar_nicknames", target_type="admin_user",
+                         summary=f"Set {n} nicknames: " + "; ".join(names))
+        finally:
+            conn.close()
+        return RedirectResponse(f"/calendar/nicknames?ok={quote(f'Set {n} nicknames.')}", status_code=303)
 
     @router.post("/calendar/import/{batch_id}/discard")
     def calendar_import_discard(request: Request, batch_id: int):

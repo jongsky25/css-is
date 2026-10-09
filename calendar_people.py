@@ -48,11 +48,27 @@ NAME_GUIDE = {
     "ac": "Apple Charm Agulto", "jong": "Ray Justin Ventura",
     "mae": "Maejorie Orpilla",                                          # archived: still matched
     "mmc": "Mary Anne Milliscent Castro", "asf": "Analyn Fortaleza",    # initials
+    "cath": "Cathrina Laurio",
     "kjf": "Kathrine Joyce Flores", "jap": "Juan Alfonso Perez",       # initials
     "mm": "Mary Anne Milliscent",
 }
 # Known not-people, from the CY 2026 file: places, regions, teams and phrases the parser picked
 # up from the end of a line ("(Davao)", "- CAR", "(BLHSD IQA Team)"). Marked, never silently dropped.
+# People the guide names who have no account at all (so there is nobody to attach an item to).
+# Their names pre-select "skip" on the people step instead of lingering as unmatched.
+NO_ACCOUNT = {"Mar Wynn Bello"}                                    # the previous Director
+
+# The nickname each person goes by in the calendar, to prefill on their account (My profile).
+# Only names that are NOT already the person's first name, and not initials (KJF, JAP, MM,
+# MMC, ASF, MWB are initials the bureau uses on paper, not what anyone is called).
+NICKNAME_PREFILL = {
+    "Teresita Guzman": "Tek", "Maria Lourdes Gajitos": "Malou", "Maria Olga Bulasa": "Olga",
+    "Irene Hizon": "Mimi", "Marifel Santiago": "Feng", "Catherine Dimaano": "Dheng",
+    "Chariza Cruz": "Cha", "Maria Teresa Santiago": "Riza", "Ronnel John Dela Cruz": "RJ",
+    "Modesto Lazo": "Desten", "Apple Charm Agulto": "AC", "Ray Justin Ventura": "Jong",
+    "Cathrina Laurio": "Cath", "Maejorie Orpilla": "Mae",
+}
+
 NOT_PEOPLE = {
     "tolosa", "cebu", "iloilo", "pampanga", "mindanao", "northern mindanao", "bicol region",
     "car", "un avenue", "who regional office", "moh barmm basilan", "moh barmm maguindanao",
@@ -99,7 +115,7 @@ def load_directory(conn):
             name = f"{first.strip()} {last.strip()}"
         ws = [w for w in _words(name) if w not in HONORIFICS]
         out.append({"user_id": uid, "name": name or username, "nickname": " ".join(_words(nick)),
-                    "words": ws, "first": ws[0] if ws else "",
+                    "words": ws, "first": ws[0] if ws else "", "nickname_raw": (nick or "").strip(),
                     "inactive": (not active) or bool(archived)})
     return out
 
@@ -139,6 +155,9 @@ def _match(key, directory, aliases):
         found = guide_candidates(guide, directory)
         if len(found) == 1:
             return {"level": 0, "candidates": found, "status": "guided", "guide": guide}
+        if not found and guide in NO_ACCOUNT:
+            return {"level": None, "candidates": [], "status": "no_account", "guide": guide,
+                    "guide_found": 0}
         # The bureau said who this is, so a loose first-name guess would only be noise
         # ("Mar" must not become Maria when the previous Director has no account).
         return {"level": 0 if found else None, "candidates": found, "guide": guide,
@@ -232,8 +251,35 @@ def collect(drafts, created, directory, aliases, ignored, decided):
         rows.append({**rec, "raws": sorted(rec["raws"]), "n": len(rec["drafts"]),
                      "titles": [drafts[i]["title"] for i in rec["drafts"][:3]],
                      "match": m, "ignored": key in ignored, "decision": decided.get(key)})
-    order = {"alias": 0, "guided": 0, "suggested": 1, "not_person": 2, "ambiguous": 3,
+    order = {"alias": 0, "guided": 0, "suggested": 1, "not_person": 2, "no_account": 2, "ambiguous": 3,
              "possible": 4, "unlikely": 5, "unmatched": 6}
     rows.sort(key=lambda r: (r["decision"] is not None, r["ignored"], order[r["match"]["status"]],
                              -r["n"], r["key"]))
+    return rows
+
+
+def nickname_proposals(directory):
+    """One row per person in NICKNAME_PREFILL: who they are in the directory and whether
+    their account can be given the nickname.
+      ready         — one account, no nickname yet            (ticked)
+      same          — already has exactly this nickname        (nothing to do)
+      has_nickname  — already has a DIFFERENT one              (left alone unless ticked)
+      ambiguous     — two accounts carry that full name        (never ticked)
+      no_account    — nobody in the directory by that name
+    Never writes anything; the page applies what an admin ticks."""
+    rows = []
+    for full, nick in NICKNAME_PREFILL.items():
+        ids = guide_candidates(full, directory)
+        by_id = {p["user_id"]: p for p in directory}
+        row = {"full": full, "proposed": nick, "ids": ids, "person": None, "current": "", "status": "no_account"}
+        if len(ids) > 1:
+            row["status"] = "ambiguous"
+        elif ids:
+            p = by_id[ids[0]]
+            row.update(person=p, current=p["nickname_raw"])
+            same = " ".join(_words(p["nickname_raw"])) == " ".join(_words(nick))
+            row["status"] = ("same" if same else "has_nickname" if p["nickname_raw"] else "ready")
+        rows.append(row)
+    order = {"ready": 0, "has_nickname": 1, "ambiguous": 2, "no_account": 3, "same": 4}
+    rows.sort(key=lambda r: (order[r["status"]], r["full"].lower()))
     return rows

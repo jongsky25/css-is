@@ -1,5 +1,21 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.61 — fill in nicknames from the bureau's list; Cath; the previous Director)
+
+- **`/calendar/nicknames`** (admin only) — gives accounts the nickname the calendar uses, from the
+  bureau's own list (`calendar_people.NICKNAME_PREFILL`: Tek, Malou, Olga, Mimi, Feng, Dheng, Cha,
+  Riza, RJ, Desten, AC, Jong, Cath, Mae). Each person is found by FULL NAME. Rows: Ready (ticked),
+  Already set, Has another nickname (left alone unless an admin ticks it), two accounts with that name
+  (never ticked), no account found. Initials (KJF, JAP, MM, MMC, ASF, MWB) are not nicknames, and a
+  first name needs none. The nickname written comes from the server's list, never the form. A nickname
+  is also what the home page greets the person by, and they can change it on My profile. One audit
+  line per save. Linked from the import page and the "Who is who?" page.
+- **Guide** — Cath = Cathrina Laurio. **`NO_ACCOUNT`**: people the guide names who have no account at
+  all (the previous Director, Mar Wynn Bello) now show "has no account" with the skip option
+  pre-selected instead of lingering as unmatched.
+- **Tests** — `tests/test_calendar_people.py` (nickname proposals, apply, can't overwrite, can't be
+  forged; missing-account skip; Cath).
+
 ## 2026-10-09 (v3.60 — name guide: the rest of the names, archived people, "Place - Name")
 
 - **Guide additions** — Jong = Ray Justin Ventura; Mae = Maejorie Orpilla; Desten = Modesto Lazo

@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.60"
+APP_VERSION = "3.61"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.61",
+        "date": "October 9, 2026",
+        "summary": "Administrators can fill in the nicknames the office calendar uses.",
+        "changes": [
+            "A new page lets an administrator give each person the nickname the office calls them, in one go.",
+            "Nobody's own nickname is overwritten unless the administrator chooses to.",
+            "You can still change your nickname any time on My profile.",
+        ],
+    },
     {
         "version": "3.60",
         "date": "October 9, 2026",
