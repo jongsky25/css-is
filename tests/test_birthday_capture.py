@@ -36,6 +36,7 @@ def test_impossible_dates_are_refused(m, d):
 
 def test_there_is_no_year_anywhere(conn, uid):
     cols = {r[1] for r in conn.execute("PRAGMA table_info(admin_user)") if r[1].startswith("birthday")}
+    cols.discard("birthday_coordinator")                       # an admin's tick, not personal data
     assert cols == {"birthday_month", "birthday_day", "birthday_share", "birthday_consent_at",
                     "birthday_consent_notice"}
     assert not [r for r in conn.execute("PRAGMA table_info(resource_person)") if "birth" in r[1]]
