@@ -64,6 +64,7 @@ import dashboard_export as dx
 # The Office Connect landing payload. It takes get_atoms/view_memo as arguments
 # rather than importing them back out of here, so the dependency stays one-way.
 import office_connect as oc
+import birthdays
 import calendar_routes
 import report_docs
 import csm_report
@@ -4837,6 +4838,9 @@ def choose(request: Request, msg: str = "", view: str = "team"):
     return templates.TemplateResponse(request, "office_connect.html", {
         "nav_active": "", "show_scope": False, "msg": msg,
         "first_name": first_name, "profile": profile,
+        "is_birthday": bool((profile or {}).get("birthday")
+                            and birthdays.is_today(profile["birthday"]["month"],
+                                                   profile["birthday"]["day"], _today_local())),
         "initials": _initials(profile.get("person_name") if profile else ""),
         "css_url": css_url, "wstats": wstats,
         "wa_now": wa_now, "wa_label": wa_label,

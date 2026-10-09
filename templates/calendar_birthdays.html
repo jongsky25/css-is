@@ -1,0 +1,26 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}Birthdays in {{ month_name }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009l">{% endblock %}
+{% block content %}
+{{ page_header("🎂 " ~ month_name ~ " celebrants", "Only birthdays people chose to share with you are listed. Printable.") }}
+<p class="cal-back no-print"><a href="/calendar">← Back to the calendar</a></p>
+<div class="cal-bd-nav no-print">
+  <a href="/calendar/birthdays?month={{ prev }}">← Previous</a>
+  <strong>{{ month_name }} {{ year }}</strong>
+  <a href="/calendar/birthdays?month={{ next }}">Next →</a>
+  <button class="cal-btn" type="button" onclick="window.print()">Print</button>
+</div>
+{% if groups %}
+<div class="cal-bd-groups">
+  {% for unit, people in groups %}
+  <section class="cal-bd-group"><h2>{{ unit }}</h2>
+    <ul>{% for p in people %}<li class="{{ 'today' if p.today }}"><span class="d">{{ p.weekday }} {{ p.day }}</span><span>{{ p.name }}</span></li>{% endfor %}</ul>
+  </section>
+  {% endfor %}
+</div>
+<p class="cal-range">{{ n }} {{ "celebrant" if n == 1 else "celebrants" }}.</p>
+{% else %}
+<p class="cal-wk-empty">No shared birthdays in {{ month_name }}.</p>
+{% endif %}
+{% endblock %}

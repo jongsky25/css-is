@@ -34,6 +34,7 @@ from __future__ import annotations
 from datetime import date, timedelta
 
 import auth
+import birthdays as bd
 import storage as st
 import tzutil as tz
 
@@ -500,6 +501,59 @@ def entry_heads_up(conn, user, entry):
     return out
 
 
+def birthday_people(conn):
+    """Everyone with a birthday on file who is still here (active account, not archived), as the
+    plain dicts birthdays.py works on, plus what a card needs. Unlinked accounts have no unit, so
+    only bureau-wide sharing can reach anyone but themselves."""
+    rows = conn.execute("""
+        SELECT a.id, a.username, a.nickname, a.birthday_month, a.birthday_day, a.birthday_share,
+               rp.id, rp.name, (rp.photo IS NOT NULL), ou.path, ou.short_name
+        FROM admin_user a
+        LEFT JOIN resource_person rp ON rp.id = a.rp_id
+        LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id
+        WHERE a.active = 1 AND a.birthday_month IS NOT NULL AND a.birthday_day IS NOT NULL
+          AND (rp.id IS NULL OR rp.archived_at IS NULL)""").fetchall()
+    paths = {r[9] for r in rows if r[9]}
+    every = sorted({a for p in paths for a in _ancestors(p)})
+    levels = dict(conn.execute("SELECT path, level FROM org_unit WHERE path IN (%s)" % ",".join("?" * len(every)),
+                               every)) if every else {}
+    out = []
+    for uid, uname, nick, m, d, share, rp_id, rp_name, has_photo, path, short in rows:
+        division = next((p for p in _ancestors(path) if levels.get(p) == "division"), None) if path else None
+        name = bd.first_name(rp_name, nick, (uname or "").split("@")[0].title())
+        out.append({"user_id": uid, "month": m, "day": d, "share": share if share in bd.SHARES else "none",
+                    "section_path": path, "division_path": division, "name": name, "unit": short,
+                    "full_name": rp_name or uname,
+                    "card": {"name": name, "initials": _initials(rp_name or uname),
+                             "photo_url": f"/photo/{rp_id}" if rp_id and has_photo else None}})
+    return out
+
+
+def _birthdays_layer(conn, ctx, start, end, scope):
+    """🎂 on the day, yearly. Shown only inside the owner's sharing choice AND the viewer's scope;
+    a Feb 29 birthday sits on Feb 28 in a non-leap year. The date of birth's YEAR does not exist."""
+    viewer = {"user_id": ctx["user_id"], "section_path": ctx["section_path"],
+              "division_path": ctx["division_path"]}
+    a, b = date.fromisoformat(start), date.fromisoformat(end)
+    out = []
+    for p in birthday_people(conn):
+        if not (bd.shared_with(p, viewer) and bd.in_scope(scope, p, viewer)):
+            continue
+        for d in bd.occurrences_between(p["month"], p["day"], a, b):
+            out.append({
+                "key": f"birthday:{p['user_id']}:{d.isoformat()}", "layer": "birthdays",
+                "title": f"🎂 {p['name']}", "start": d.isoformat(), "end": d.isoformat(),
+                "start_time": None, "end_time": None, "all_day": True, "time_note": None,
+                "kind": "birthday", "status": "confirmed", "owner_org_id": None,
+                "owner_label": p["unit"], "tone": "grey",
+                "people": [{"user_id": p["user_id"], "role": "celebrant", **p["card"]}],
+                "tags": [], "venue": None, "modality": None, "meeting_url": None, "url": None,
+                "css": None, "flags": [], "editable": False, "private": False,
+                "section_path": p["section_path"],
+            })
+    return out
+
+
 # name -> provider(conn, ctx, start_iso, end_iso, scope) -> [CalItem]. Later
 # layers (activities, leave, birthdays, deadlines) are one line each.
 LAYERS = {
@@ -507,6 +561,7 @@ LAYERS = {
     "activities": _activities_layer,
     "holidays": _holidays_layer,
     "leave": _leave_layer,
+    "birthdays": _birthdays_layer,
 }
 
 # Within one day, what leads: the day's own banner (a holiday), then the rest.

@@ -37,6 +37,7 @@ from __future__ import annotations
 from datetime import date, timedelta
 
 import auth
+import birthdays as bd
 import css_is_engine as eng
 import dashboard_insights as di
 import office_calendar as ocal
@@ -1247,8 +1248,15 @@ def calendar_week_block(conn, user, *, view, today=None):
     else:
         scope = "bureau" if ctx["kind"] == "bureau" else "section"
     items = ocal.items_between(conn, user, today, end, scope=scope)
-    work = [i for i in items if i["layer"] != "holidays"]
+    work = [i for i in items if i["layer"] in ("entries", "activities")]
     holidays = [i for i in items if i["layer"] == "holidays"]
+    celebrating = []
+    for i in items:
+        if i["layer"] == "birthdays":
+            d = date.fromisoformat(i["start"])
+            celebrating.append({"name": i["title"].replace("🎂 ", ""), "when": bd.week_label(d, today),
+                                "date": i["start"], "today": d == today})
+    celebrating.sort(key=lambda c: (c["date"], c["name"].lower()))
     shown = []
     for i in work[:CAL_WEEK_ITEMS]:
         # a trip already under way is shown as today, with its real dates beside it
@@ -1279,6 +1287,7 @@ def calendar_week_block(conn, user, *, view, today=None):
         "range": _range_label(today.isoformat(), end.isoformat()),
         "items": shown, "n_more": max(len(work) - CAL_WEEK_ITEMS, 0), "n_total": len(work),
         "holidays": [{"title": h["title"], "when": _day_label(h["start"], today)} for h in holidays],
+        "celebrating": celebrating,
         "away": away_people[:CAL_WEEK_AWAY], "n_away_more": max(len(away_people) - CAL_WEEK_AWAY, 0),
         "calendar_url": f"/calendar?scope={scope}", "add_url": f"/calendar/new?day={today.isoformat()}",
     }

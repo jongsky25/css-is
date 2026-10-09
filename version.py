@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.70"
+APP_VERSION = "3.71"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.71",
+        "date": "October 9, 2026",
+        "summary": "Birthdays people chose to share now show on the calendar, with a happy birthday on your home page.",
+        "changes": [
+            "A 🎂 appears on the calendar for each birthday shared with you, every year.",
+            "The Coming up card says who is celebrating this week, including weekend birthdays.",
+            "On your own birthday the home page greets you with Happy birthday.",
+            "A new Birthdays page lists the month's celebrants by section, ready to print.",
+        ],
+    },
     {
         "version": "3.70",
         "date": "October 9, 2026",

@@ -1,5 +1,22 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.71 — office calendar F2: birthdays on the calendar)
+
+- **`birthdays` layer**: 🎂 <nickname or first name> on the day, every year, as an all-day item of type "Birthday"
+  (a filter option). Visible only to **the owner's sharing choice ∩ the viewer's scope**: yourself always; "My section" =
+  the same unit; "My division" = the same division; "Whole bureau" = everyone; "Don't share" = nobody else. The
+  default scope (Mine + bureau-wide) shows yours and bureau-shared ones; the section / division pills show that
+  unit's people. Archived and inactive people drop off. **Feb 29** sits on Feb 28 in non-leap years. Pure rules live
+  in the new `birthdays.py` (added to the Space bundle).
+- **Home "Coming up" card**: "🎂 Celebrating this week: Riza (Wed), Tek (Sat (weekend))" under the same scope as the
+  card; birthdays are a line, not agenda cards, and no longer fill the card's slots. (Leave bars, which E1 added to the
+  same list by accident, are also kept out of it now.)
+- **Celebrant's greeting**: on the day the home page says "Happy birthday, <name>! 🎉" — from their own data, whether or
+  not they share it.
+- **`/calendar/birthdays?month=10`**: the month's celebrants grouped by section, printable, only what the viewer may
+  already see; a Birthdays button on the calendar page.
+- The Week view skips the layer. Not yet: the avatar party-hat badge, bells and emails (F3, G2).
+
 ## 2026-10-09 (v3.70 — office calendar F1: birthdays, captured with consent)
 
 - **Capture on `/me` and the `/welcome` step**, optional: a month and a day. **No year is accepted or stored**

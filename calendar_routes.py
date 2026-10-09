@@ -39,7 +39,7 @@ FORM_KIND_LABELS = {"meeting": "Meeting", "training": "Training / workshop",
                     "travel": "Trip / field work", "deadline": "Deadline",
                     "audit_mr": "Audit / management review", "banner": "Bureau-wide notice"}
 # What the filter menu and the cards can name: the above plus the CSS activities.
-KIND_LABELS = {**FORM_KIND_LABELS, "activity": "CSS activity", "leave": "On leave"}
+KIND_LABELS = {**FORM_KIND_LABELS, "activity": "CSS activity", "leave": "On leave", "birthday": "Birthday"}
 STATUS_LABELS = {"confirmed": "Confirmed", "tentative": "Tentative",
                  "postponed": "Postponed", "cancelled": "Cancelled"}
 MODALITY_LABELS = {"": "Not set", "f2f": "Face to face", "online": "Online", "hybrid": "Hybrid"}
@@ -93,7 +93,7 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
     # Visibility is unchanged — items_between still only returns what this viewer may see.
     # (The Week layout draws leave itself, from the same whereabouts, so it skips that layer.)
     everything = oc.items_between(conn, user, start, end, scope="bureau" if layout == "week" else scope,
-                                  layers=[n for n in oc.LAYERS if not (layout == "week" and n == "leave")])
+                                  layers=[n for n in oc.LAYERS if not (layout == "week" and n in ("leave", "birthdays"))])
     items = oc.apply_filters(everything, filters)
     entries = [i for i in everything if i["layer"] in ("entries", "activities")]
     # the filter menus list what is IN this window (before filtering), so choosing
@@ -313,6 +313,41 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 "end_date": "", "start_time": "", "end_time": "", "time_note": "",
                 "venue": "", "modality": "", "meeting_url": "", "note": "",
                 "owner_org_id": "", "audience": "unit", "tags": "", "updated_at": ""}
+
+    @router.get("/calendar/birthdays", response_class=HTMLResponse)
+    def calendar_birthdays(request: Request, month: str = ""):
+        """The month's celebrants, grouped by section and printable — for the welfare or
+        celebrations committee. Lists only the birthdays this viewer may already see."""
+        today = today_local()
+        try:
+            m = int(month) if month else today.month
+            if not 1 <= m <= 12:
+                raise ValueError
+        except ValueError:
+            return RedirectResponse("/calendar/birthdays", status_code=303)
+        year = today.year
+        first = date(year, m, 1)
+        last = (date(year + (m == 12), m % 12 + 1, 1)) - timedelta(days=1)
+        conn = get_conn()
+        try:
+            items = oc.items_between(conn, request.state.user, first, last, scope="bureau",
+                                     layers=["birthdays"])
+        finally:
+            conn.close()
+        groups = {}
+        for i in items:
+            d = date.fromisoformat(i["start"])
+            groups.setdefault(i["owner_label"] or "Other", []).append(
+                {"name": i["title"].replace("🎂 ", ""), "day": d.day, "weekday": d.strftime("%a"),
+                 "date": d, "today": d == today})
+        for g in groups.values():
+            g.sort(key=lambda r: (r["day"], r["name"].lower()))
+        return templates.TemplateResponse(request, "calendar_birthdays.html", {
+            "nav_active": "calendar", "show_scope": False, "month": m, "year": year,
+            "month_name": first.strftime("%B"), "n": len(items),
+            "groups": sorted(groups.items(), key=lambda kv: (kv[0] == "Other", kv[0].lower())),
+            "prev": (m - 2) % 12 + 1, "next": m % 12 + 1,
+        })
 
     @router.get("/calendar/new", response_class=HTMLResponse)
     def calendar_new(request: Request, day: str = ""):
