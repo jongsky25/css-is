@@ -1,5 +1,13 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v4.5 — calendar import dry run, P0.6)
+
+Found by running the CY 2026 file end to end on a local copy and reading the report.
+
+- **`apply()` refuses an already-imported batch** ("This upload has already been imported."). The web route already redirected, but a second call to the function itself overwrote the batch result and with it the list Undo works from (Undo then removed nothing).
+- **Fewer false flags:** a time-looking pair glued to letters ("v2 - 2nd") or after a month name ("April 14-16") is no longer flagged as a time in the title; "These days differ by a whole word" no longer fires for spellings of one word ("Plannin/Planning/Planningv", "LHBAssessment"), so the one real case (LDS vs SGA) stands out. Flags on the file: 24 → 21.
+- **Dry run result (local copy):** 379 of 379 imported, counts by month and by owner match the file, a second apply is refused, Undo removes all 379. An independent reader found every parsed line in its Word cell (0 missing), and no activity line in the Word tables was dropped (771 content lines: 26 are the "Activity Legend" boilerplate, the rest are in a draft or set aside as holidays). One item ("SEPTEMBER 1: Locking of LHS ML IS Access/Extract data for mid-year") sits in the August table's spill-over cell; the importer reads it as Sep 1.
+
 ## 2026-10-09 (v4.4 — calendar import names, P0.5)
 
 - **More names found (`calendar_import._trailing_known_names`):** a name the bureau's name guide knows, written at the very end of a line with no brackets ("…Davao City- Riza and Mae", "…Bicol_Sir Jong/Riza/Vlanche", "…Baguio-Riza", "…HPB-riza"), is now captured and added to any names the bracket/dash rule found. It walks back from the last word over known names, honorifics and "and" and stops at the first other word, so places and topics are not taken for people. On the CY 2026 file the items with names went from 92 to 111.

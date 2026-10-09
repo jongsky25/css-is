@@ -435,3 +435,14 @@ def test_the_imported_page_offers_undo_with_a_count(admin, conn, units):
     bid = _imported(admin, conn)
     html = admin.get(f"/calendar/import/{bid}").text
     assert "Undo this import" in html and "<strong>4</strong> items" in html
+
+
+def test_applying_an_imported_batch_again_changes_nothing_and_keeps_undo_working(admin, conn, units):
+    import calendar_import_apply as cia
+    bid = _imported(admin, conn)
+    before = st.cal_import_get(conn, bid)
+    result, errors = cia.apply(conn, before, form_for(conn, bid), "admin@test.local")
+    assert result is None and errors == ["This upload has already been imported."]
+    after = st.cal_import_get(conn, bid)
+    assert after["result"] == before["result"] and len(titles(conn)) == 4
+    assert admin.post(f"/calendar/import/{bid}/undo", follow_redirects=False).headers["location"].count("removed=4") == 1

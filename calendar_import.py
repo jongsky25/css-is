@@ -372,7 +372,8 @@ def _trailing_known_names(text):
 # --- one line ------------------------------------------------------------------
 
 _URL = re.compile(r"https?://\S+", re.I)
-_TIME_IN_TITLE = re.compile(r"(?<![\d:./\-])\d{1,2}(?::\d{2})?\s*[-–]\s*\d{1,2}(?::\d{2})?(?![\d:./\-])|(?<![\d:./])\d{1,2}:\d{2}(?![\d:])")
+_TIME_IN_TITLE = re.compile(r"(?<![\w:./\-])\d{1,2}(?::\d{2})?\s*[-–]\s*\d{1,2}(?::\d{2})?(?![\w:./\-])|(?<![\w:./])\d{1,2}:\d{2}(?![\w:])")
+_MONTH_BEFORE = re.compile(r"\b(" + "|".join(sorted(_MONTHS, key=len, reverse=True)) + r")\.?\s*$", re.I)
 _CONT = re.compile(r"^\s*(\(|[-–]\s|,\s|pax:)", re.I)
 
 
@@ -408,9 +409,11 @@ def _entry(text, owner):
     if start and start < "06:00":
         notes.append(f"'{note}' reads as {start}; no clock time kept. Check the time.")
         start, end = None, None
-    elif not start and not note and _TIME_IN_TITLE.search(title):
-        notes.append("A time may be written in the title: " +
-                     _TIME_IN_TITLE.search(title).group(0) + ". Check it.")
+    elif not start and not note:
+        tm = next((m for m in _TIME_IN_TITLE.finditer(title)
+                   if not _MONTH_BEFORE.search(title[:m.start()])), None)         # "April 14-16" is a date
+        if tm:
+            notes.append("A time may be written in the title: " + tm.group(0) + ". Check it.")
     title = re.sub(r"[\[(]\s*(tentative|postponed|pending)\s*[\])]", "", title, flags=re.I)
     title = re.sub(r"^(tentative|postponed)\s*[:\-]\s*", "", title, flags=re.I)
     title = re.sub(r"[\s\-–]*\(\s*(tentative|postponed|pending)\s*$", "", title, flags=re.I)
@@ -566,6 +569,12 @@ def _merge(items, off_days):
     return chains
 
 
+def _alike(a, b):
+    """Two words that are probably one word spelled two ways ("plannin"/"planning"/"planningv",
+    "lhbassessment" holding "lhb"+"assessment"). "lds" and "sga" are not alike."""
+    return a in b or b in a or SequenceMatcher(None, a, b).ratio() >= 0.8
+
+
 def _draft(ch):
     es = ch["entries"]
     title = Counter(e["title"] for e in es).most_common()
@@ -577,9 +586,11 @@ def _draft(ch):
         warnings.append("Spelled differently on different days: " +
                         "; ".join(sorted({e["title"] for e in es})))
     words = [set(re.findall(r"[a-z]{3,}", e["norm"])) for e in es]
-    if len({e["norm"] for e in es}) > 1 and set.union(*words) - set.intersection(*words) - {"the", "and"}:
+    diff = (set.union(*words) - set.intersection(*words)) - {"the", "and"}
+    real = sorted(w for w in diff if not any(v != w and _alike(w, v) for v in diff))      # a typo has a twin
+    if len({e["norm"] for e in es}) > 1 and real:
         warnings.append("These days differ by a whole word, so they may be different activities: "
-                        + ", ".join(sorted(set.union(*words) - set.intersection(*words))) + ".")
+                        + ", ".join(real) + ".")
     for n in dict.fromkeys(n for e in es for n in e["notes"]):
         warnings.append(n)
     if len(owners) > 1:

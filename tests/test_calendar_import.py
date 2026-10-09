@@ -456,3 +456,21 @@ def test_a_name_in_the_middle_of_a_line_or_a_place_is_not_taken_for_a_person():
 
 def test_a_name_already_found_in_brackets_is_not_added_twice():
     assert one("BHW Pilot Test (Riza, Mae)").people_tokens == ["Riza", "Mae"]
+
+
+# ------------------------------------- fewer false alarms (CALENDAR_UX_PLAN P0.6) ---
+
+def test_a_version_or_ordinal_in_a_title_is_not_taken_for_a_time():
+    assert not [w for w in one("BHW Connect v2 - 2nd Pilot Test in CV CHD").warnings if "time" in w.lower()]
+
+
+def test_a_date_range_after_a_month_name_is_not_taken_for_a_time():
+    assert not [w for w in one("CBSR TOT April 14-16 @NCR").warnings if "time" in w.lower()]
+    assert [w for w in one("PK TWG 10-12").warnings if "10-12" in w]            # a real one still is
+
+
+def test_typo_variants_of_one_word_do_not_look_like_two_activities():
+    res = build((8, {3: [("Strat Plannin", "hl:green")], 4: [("Strat Planning", "hl:green")], 5: [("Strat Planningv", "hl:green")]}))
+    assert len(res.drafts) == 1
+    assert any("Spelled differently" in w for w in res.drafts[0].warnings)
+    assert not any("different activities" in w for w in res.drafts[0].warnings)

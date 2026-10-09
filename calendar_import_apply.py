@@ -130,6 +130,9 @@ def _holidays_to_add(batch, posted, errors):
 
 def apply(conn, batch, posted, by):
     """(result, errors). `posted` is the review form as a flat {name: value} dict."""
+    if batch["imported_at"]:
+        # A second apply would overwrite the recorded result, and with it the list Undo works from.
+        return None, ["This upload has already been imported."]
     drafts = batch["payload"]["drafts"]
     errors = []
 

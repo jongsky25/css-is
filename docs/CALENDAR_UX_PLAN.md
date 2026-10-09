@@ -110,7 +110,7 @@ Each increment: **files · done when · tests**. Tests run with `./run_tests.sh`
 **P0.5 People** *(done, v4.4: the resolver already handled the guide's names, so the work was capturing 19 more items' names and a usable phone layout; items with names went from 92 to 111)* (existing B3 screen, `calendar_people.py`)
 - Run the 92 hints through the resolver. Ambiguous names are never auto-assigned (existing rule), and nicknames learned here are remembered for next year.
 
-**P0.6 Dry run and hand-off** (no code)
+**P0.6 Dry run and hand-off** *(done, v4.5: report written, not committed because it names staff; it found the double-apply hazard and two noisy flags, now fixed)*
 - Claude imports into a local copy of the DB and writes `scratchpad/import-report.md`: counts by month and owner vs §2, the 48 owner calls with suggestions, the series proposals, the holiday diff and 20 spot-checks against the Word file.
 - The owner reviews the report. An admin then runs the same upload in production. Past months (Jan–Sep) are imported as history.
 
