@@ -1,5 +1,10 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v6.19 — remove growth panel from My profile)
+
+- `templates/me.html`: removed the "How <companion> grows" panel and its now-unused `growth` import/`growth_defs()` call. The home page panel is unchanged.
+- **Version bump:** `APP_VERSION` 6.18 → 6.19.
+
 ## 2026-10-09 (v6.18 — "Change companion" deep-links to the companion section)
 
 - `templates/office_connect.html`: "Change companion →" now links to `/me#companion`; "Your profile →" and the photo/greeting card still go to `/me`.
