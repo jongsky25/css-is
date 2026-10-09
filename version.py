@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.67"
+APP_VERSION = "3.68"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.68",
+        "date": "October 9, 2026",
+        "summary": "Trips on the calendar now fill in your weekly whereabouts, and leave shows on the calendar.",
+        "changes": [
+            "If you are listed on a confirmed trip, your weekly form and Monday email already show Field with the place. Just confirm it.",
+            "If the trip moves, the plan moves with it until you confirm. What you reported yourself is never overwritten.",
+            "Who's in and the team week show the trip as Field too, until you say otherwise.",
+            "Days you reported as Leave now appear on the calendar as \"on leave\", for you and the people who can already see your team. No reason is ever shown.",
+        ],
+    },
     {
         "version": "3.67",
         "date": "October 9, 2026",

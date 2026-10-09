@@ -66,10 +66,12 @@ def viewer_context(conn, user):
                 the viewer's own section (their unit) and the division above it;
                 None when they have no unit / no division."""
     scope_path, kind = st.team_scope_for_user(conn, user)
+    awa_path, awa_kind = st.team_scope_for_user(conn, user, area="awa")     # who's-in visibility
     rp = conn.execute("SELECT rp_id FROM admin_user WHERE id = ?", (user["id"],)).fetchone()
     ctx = {"user_id": user["id"], "username": user.get("username"), "role": user.get("role"),
            "rp_id": rp[0] if rp else None,
            "kind": kind, "scope_path": scope_path,
+           "awa_path": awa_path, "awa_kind": awa_kind,
            "section_path": None, "division_path": None}
     row = conn.execute("""
         SELECT ou.path FROM admin_user a
@@ -341,12 +343,74 @@ def _holidays_layer(conn, ctx, start, end, scope):
     return out
 
 
+def _leave_layer(conn, ctx, start, end, scope):
+    """Days people REPORTED themselves on leave (the weekly whereabouts), shown as "<name> — on
+    leave", one bar per unbroken run of working days. Never a reason: none is ever stored.
+    Who sees whom is the Who's-in page's rule (team_scope_for_user, area "awa"), so the two
+    pages cannot disagree; an unlinked account sees only itself. Scope then narrows: "mine" and
+    the default "blend" show only your own leave, so a section's calendar is not flooded."""
+    if scope in ("blend", "mine") or ctx["awa_kind"] == "none":
+        only_me = True
+    else:
+        only_me = False
+    args = [start, end]
+    sql = ("SELECT w.user_id, w.day, ou.path, ou.id FROM whereabouts w "
+           "JOIN admin_user a ON a.id = w.user_id AND a.active = 1 "
+           "LEFT JOIN resource_person rp ON rp.id = a.rp_id "
+           "LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id "
+           "WHERE w.status = 'leave' AND w.day BETWEEN ? AND ? "
+           "AND (rp.id IS NULL OR rp.archived_at IS NULL)")
+    if only_me:
+        sql += " AND w.user_id = ?"
+        args.append(ctx["user_id"])
+    days = {}
+    owner = {}
+    for uid, day, path, unit_id in conn.execute(sql + " ORDER BY w.user_id, w.day", args):
+        if uid != ctx["user_id"]:
+            if ctx["awa_kind"] == "unit" and not _under(path, ctx["awa_path"]):
+                continue
+            if scope == "section" and not _under(path, ctx["section_path"]):
+                continue
+            if scope == "division" and not _under(path, ctx["division_path"]):
+                continue
+        days.setdefault(uid, []).append(date.fromisoformat(day))
+        owner[uid] = (path, unit_id)
+    if not days:
+        return []
+    cards = _people_cards(conn, list(days))
+    units = _units(conn, [u for _p, u in owner.values()])
+    out = []
+    for uid, ds in days.items():
+        runs = [[ds[0], ds[0]]]
+        for d in ds[1:]:
+            gap = [runs[-1][1] + timedelta(days=n) for n in range(1, (d - runs[-1][1]).days)]
+            if all(g.weekday() >= 5 for g in gap):         # only a weekend between: same run
+                runs[-1][1] = d
+            else:
+                runs.append([d, d])
+        card = cards.get(uid, {"name": "", "initials": "?", "photo_url": None})
+        unit = units.get(owner[uid][1])
+        for a, b in runs:
+            out.append({
+                "key": f"leave:{uid}:{a.isoformat()}", "layer": "leave",
+                "title": f"{card['name'] or 'Someone'} — on leave",
+                "start": a.isoformat(), "end": b.isoformat(), "start_time": None, "end_time": None,
+                "all_day": True, "time_note": None, "kind": "leave", "status": "confirmed",
+                "owner_org_id": owner[uid][1], "owner_label": unit["label"] if unit else None,
+                "tone": "grey", "people": [{"user_id": uid, "role": "attending", **card}],
+                "tags": [], "venue": None, "modality": None, "meeting_url": None, "url": None,
+                "css": None, "flags": [], "editable": False, "private": False,
+            })
+    return out
+
+
 # name -> provider(conn, ctx, start_iso, end_iso, scope) -> [CalItem]. Later
 # layers (activities, leave, birthdays, deadlines) are one line each.
 LAYERS = {
     "entries": _entries_layer,
     "activities": _activities_layer,
     "holidays": _holidays_layer,
+    "leave": _leave_layer,
 }
 
 # Within one day, what leads: the day's own banner (a holiday), then the rest.

@@ -389,7 +389,9 @@ def send_whereabouts_weekly(conn, base, dry_run=False):
     sent = 0
     for staffer in st.whereabouts_recipients(conn, monday):
         days = st.whereabouts_week(conn, staffer["id"], monday, defaults=defaults)
-        plotted = [(d["label"], st.whereabouts_choice_label(d)) for d in days]
+        plotted = [(d["label"], st.whereabouts_choice_label(d)
+                    + (f" — {d['note']}" if d["choice"] == "field" and d["note"] else ""))
+                   for d in days]
         token = auth.make_whereabouts_token(staffer["id"], monday.isoformat())
         link = f"{base}/whereabouts/week?token={quote(token)}"
         name = _person_name(conn, staffer["id"])

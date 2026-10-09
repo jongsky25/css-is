@@ -9115,6 +9115,7 @@ def work_arrangement_day(conn, day, user=None):
     out["holiday"] = get_holiday(conn, day)
     if out["kind"] != "none" and not out["is_weekend"] and not out["holiday"]:
         reported = whereabouts_for_day(conn, day)
+        trips = cal_travel_defaults(conn, day, day)
         # Only weeks the Monday email actually went out for can have
         # "undeclared" people — before that nobody was asked.
         asked = {r[0] for r in conn.execute(
@@ -9136,6 +9137,14 @@ def work_arrangement_day(conn, day, user=None):
                     row["arrangement_label"] = WHEREABOUTS_LABELS["office"]
                     row["status"] = ""
                 out["groups"][state].append(row)
+                continue
+            trip = trips.get((r["user_id"], day.isoformat()))
+            if rep is None and trip:       # layer 3: a trip on the calendar, not yet confirmed
+                out["groups"]["field"].append({
+                    **r, "day_state": "field", "reported": False, "arrangement_label": "Field",
+                    "status": "", "remarks": trip["note"] if trip["public"] else "",
+                    "from_calendar": True,
+                    "undeclared": r["user_id"] in asked})
                 continue
             state = _wa_day_state(r, day)
             # An "awa" report is still a report — it just follows the filing.
@@ -9306,6 +9315,11 @@ def whereabouts_defaults(conn, monday):
             state = _wa_day_state(r, day)
             out.setdefault(r["user_id"], {})[day.isoformat()] = (
                 _wa_default_status(state), state)
+    # Layer 3: a confirmed trip on the calendar plots Field over the filed arrangement.
+    days = whereabouts_week_days(monday)
+    for (uid, iso), _t in cal_travel_defaults(conn, days[0], days[-1]).items():
+        state = out.get(uid, {}).get(iso, (None, "onsite"))[1]
+        out.setdefault(uid, {})[iso] = ("field", state)
     return out
 
 
@@ -9320,6 +9334,7 @@ def whereabouts_week(conn, user_id, monday, defaults=None):
     ordinary on-site one — there is nothing for 'AWA' to mean then."""
     defaults = defaults if defaults is not None else whereabouts_defaults(conn, monday)
     mine = defaults.get(user_id, {})
+    trips = cal_travel_defaults(conn, monday, monday + timedelta(days=4), user_id)
     saved = {r[0]: (r[1], r[2]) for r in conn.execute(
         "SELECT day, status, note FROM whereabouts WHERE user_id=? AND day BETWEEN ? AND ?",
         (user_id, monday.isoformat(), (monday + timedelta(days=4)).isoformat()))}
@@ -9330,6 +9345,7 @@ def whereabouts_week(conn, user_id, monday, defaults=None):
         default, state = mine.get(iso, ("office", "onsite"))
         sv, note = saved.get(iso, (None, None))
         awa_label = _WHEREABOUTS_AWA_LABEL.get(state)
+        trip = trips.get((user_id, iso))
         choice = sv or default
         if choice == "awa" and not awa_label:
             choice = "office"          # their AWA changed since they chose it
@@ -9337,7 +9353,8 @@ def whereabouts_week(conn, user_id, monday, defaults=None):
             "date": day, "iso": iso, "name": _WA_ALL_DAY_NAMES[day.weekday()],
             "label": f"{_WA_ALL_DAY_NAMES[day.weekday()]}, {_MONTH_NAMES[day.month - 1]} {day.day}",
             "default": default, "saved": sv, "choice": choice,
-            "note": note or "", "awa_label": awa_label, "awa_state": state,
+            "note": (note or "") if sv else (trip["note"] if trip and default == "field" else ""),
+            "trip": trip, "awa_label": awa_label, "awa_state": state,
             "holiday": holidays.get(iso),
         })
     return days
@@ -9573,6 +9590,7 @@ def whereabouts_roster_week(conn, monday, user):
     for d in out["days"]:
         d["holiday"] = holidays.get(d["iso"])
     reported = {}
+    trips = cal_travel_defaults(conn, days[0], days[-1])
     for uid, iso, status, note in conn.execute(
             "SELECT user_id, day, status, note FROM whereabouts WHERE day BETWEEN ? AND ?",
             (days[0].isoformat(), days[-1].isoformat())):
@@ -9610,6 +9628,10 @@ def whereabouts_roster_week(conn, monday, user):
             if rep and rep[0] in WHEREABOUTS_DAY_STATE:
                 state, plotted = WHEREABOUTS_DAY_STATE[rep[0]], False
                 note = rep[1] or "" if state == "field" else ""
+            elif rep is None and (uid, iso) in trips:      # layer 3: a trip on the calendar
+                t = trips[(uid, iso)]
+                state, plotted = "field", True
+                note = t["note"] if t["public"] else ""
             else:
                 state = _wa_day_state(r, day)
                 plotted = not (rep and rep[0] == "awa")
@@ -10317,6 +10339,38 @@ def cal_mark_css_nudged(conn, entry_id):
     """Record that the nudge went out (or was deliberately skipped), so it never repeats."""
     conn.execute("UPDATE calendar_entry SET css_nudged_at=? WHERE id=?", (tz.now_iso(), entry_id))
     conn.commit()
+
+
+def cal_travel_defaults(conn, start, end, user_id=None):
+    """Layer 3 of the whereabouts precedence (docs/OFFICE_CALENDAR_PLAN.md §4): the working
+    days between `start` and `end` on which a person is listed on a CONFIRMED travel entry.
+    Returns {(user_id, day_iso): {entry_id, title, venue, note, public}} — `note` is the venue
+    (else the title) and `public` says the entry's audience lets people outside it read that note.
+    Read at call time, so a trip that moves takes its default with it. A cancelled, tentative
+    or postponed trip, and a travel entry that is really an activity's overlay, give nothing."""
+    s_iso = start.isoformat() if isinstance(start, date) else str(start)
+    e_iso = end.isoformat() if isinstance(end, date) else str(end)
+    sql = ("SELECT cp.user_id, e.id, e.title, e.venue, e.audience, e.start_date, "
+           "COALESCE(NULLIF(e.end_date, ''), e.start_date) FROM calendar_entry e "
+           "JOIN calendar_entry_person cp ON cp.entry_id = e.id "
+           "WHERE e.kind = 'travel' AND e.status = 'confirmed' AND e.event_id IS NULL "
+           "AND e.start_date <= ? AND COALESCE(NULLIF(e.end_date, ''), e.start_date) >= ?")
+    args = [e_iso, s_iso]
+    if user_id is not None:
+        sql += " AND cp.user_id = ?"
+        args.append(user_id)
+    out = {}
+    for uid, eid, title, venue, audience, a, b in conn.execute(sql + " ORDER BY e.id", args):
+        day = max(date.fromisoformat(a), date.fromisoformat(s_iso))
+        last = min(date.fromisoformat(b), date.fromisoformat(e_iso))
+        while day <= last:
+            if day.weekday() < 5:
+                out.setdefault((uid, day.isoformat()), {
+                    "entry_id": eid, "title": title, "venue": venue,
+                    "note": ((venue or title or "").strip())[:_WHEREABOUTS_NOTE_MAX],
+                    "public": audience != "people"})
+            day += timedelta(days=1)
+    return out
 
 
 def cal_link_event(conn, entry_id, event_id, *, by=None):

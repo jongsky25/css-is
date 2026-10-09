@@ -39,7 +39,7 @@ FORM_KIND_LABELS = {"meeting": "Meeting", "training": "Training / workshop",
                     "travel": "Trip / field work", "deadline": "Deadline",
                     "audit_mr": "Audit / management review", "banner": "Bureau-wide notice"}
 # What the filter menu and the cards can name: the above plus the CSS activities.
-KIND_LABELS = {**FORM_KIND_LABELS, "activity": "CSS activity"}
+KIND_LABELS = {**FORM_KIND_LABELS, "activity": "CSS activity", "leave": "On leave"}
 STATUS_LABELS = {"confirmed": "Confirmed", "tentative": "Tentative",
                  "postponed": "Postponed", "cancelled": "Cancelled"}
 MODALITY_LABELS = {"": "Not set", "f2f": "Face to face", "online": "Online", "hybrid": "Hybrid"}
@@ -91,7 +91,9 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
     # The Week layout is "who is where" for the viewer's whole team: its rows come from the
     # directory, so the items must not be narrowed to "mine" or the others' trips would vanish.
     # Visibility is unchanged — items_between still only returns what this viewer may see.
-    everything = oc.items_between(conn, user, start, end, scope="bureau" if layout == "week" else scope)
+    # (The Week layout draws leave itself, from the same whereabouts, so it skips that layer.)
+    everything = oc.items_between(conn, user, start, end, scope="bureau" if layout == "week" else scope,
+                                  layers=[n for n in oc.LAYERS if not (layout == "week" and n == "leave")])
     items = oc.apply_filters(everything, filters)
     entries = [i for i in everything if i["layer"] in ("entries", "activities")]
     # the filter menus list what is IN this window (before filtering), so choosing

@@ -1,5 +1,23 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.68 — office calendar: trips fill in whereabouts, leave on the calendar)
+
+- **Calendar → whereabouts (layer 3).** A person listed on a CONFIRMED `travel` entry gets **Field** plotted
+  for each working day of it (note = the venue, else the title), above their filed arrangement and below
+  their own report. The weekly form and the Monday email open already showing "Field — Palawan"; the form
+  says "Filled in from the calendar: <trip>". Read at call time, so a moved trip moves the default; a
+  cancelled, tentative or postponed trip gives nothing; weekends are skipped.
+- **The person's own report always wins.** A saved row (including Office on a trip day) is never touched;
+  confirming a prefilled day writes their own row.
+- **Who's in (day) and the week roster** plot an unreported trip day as Field too (marked as plotted). The
+  place is shown only when the trip's audience isn't "only the people I add".
+- **Leave on the calendar (`leave` layer).** Reported leave days appear as "<name> — on leave", one bar per run
+  of working days (a weekend doesn't break it). Never a reason. Visibility is exactly the Who's-in rule
+  (own unit subtree, bureau for the Director or a grant, nobody else's for an unlinked account); the default
+  "Mine + bureau-wide" and "Mine only" scopes show only your own, so a section isn't flooded. "On leave" is a
+  filterable type. The Week view skips the layer (its rows already show leave).
+- Mismatch warnings and "Add this trip to the calendar" are E2.
+
 ## 2026-10-09 (v3.67 — office calendar: editing linked items + the "collect feedback?" nudge)
 
 - **Editing a calendar item that is linked to a CSS activity.** The form shows the activity's title,

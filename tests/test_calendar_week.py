@@ -193,7 +193,8 @@ def test_the_page_shows_a_team_with_bars_and_no_leave_reason(app_mod, viewer):
         assert "secret reason" not in html and "On leave" in html
         assert f'href="/calendar/entries/{eid}"' in html
         flt = viewer.get("/calendar?view=week&day=2026-10-12&kind=meeting").text
-        assert "CALWK Trip" not in flt
+        assert f'href="/calendar/entries/{eid}"' not in flt        # the bar is filtered away; the roster
+        assert "Field" in flt                                      # still plots the trip as Field (E1)
         st.cal_delete(conn, eid)
         conn.execute("DELETE FROM whereabouts WHERE note='secret reason'")
         conn.commit()
