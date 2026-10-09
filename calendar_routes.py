@@ -498,8 +498,9 @@ def make_router(templates, get_conn, today_local):
                 "nav_active": "calendar", "batch": batch, "ok": ok,
                 "pending": [r for r in rows if r["decision"] is None and not r["ignored"]],
                 "done": [r for r in rows if r["decision"] is not None or r["ignored"]],
-                "everyone": sorted(directory, key=lambda p: p["name"].lower()),
-                "levels": cp.LEVEL_LABELS,
+                "everyone": sorted((p for p in directory if not p["inactive"]),
+                                   key=lambda p: p["name"].lower()),
+                "levels": cp.LEVEL_LABELS, "all_people": directory,
             })
         finally:
             conn.close()

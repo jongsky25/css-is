@@ -133,17 +133,25 @@ def acct(conn, label, name=None, nick=None, active=True, archived=False):
     return uid
 
 
-def test_the_directory_is_active_accounts_with_names_and_nicknames(conn):
+def test_the_directory_lists_every_account_and_flags_the_inactive_ones(conn):
     a = acct(conn, "a", "Riza Santos", nick="Riz")
-    acct(conn, "gone", "Old Timer", archived=True)
-    acct(conn, "off", "Not Active", active=False)
+    gone = acct(conn, "gone", "Old Timer", archived=True)
+    off = acct(conn, "off", "Not Active", active=False)
     b = acct(conn, "b", "Cruz, Mae")                  # "Last, First" is reordered
     c = acct(conn, "c")                               # no directory name: the login stands in
     d = {p["user_id"]: p for p in cp.load_directory(conn)}
-    assert set(d) == {a, b, c}
+    assert set(d) == {a, gone, off, b, c}
+    assert [d[u]["inactive"] for u in (a, gone, off, b, c)] == [False, True, True, False, False]
     assert d[a]["nickname"] == "riz" and d[a]["first"] == "riza"
     assert d[b]["name"] == "Mae Cruz" and d[b]["first"] == "mae"
     assert d[c]["name"] == "c@test.local" and d[c]["words"] == []
+
+
+def test_ordinary_matching_never_reaches_someone_who_has_left():
+    d = [dict(person(1, "Mae Old", "Maeo"), inactive=True), person(2, "Mae New")]
+    assert m("mae", d)["candidates"] == [2]
+    assert m("maeo", d) == {"level": None, "candidates": [], "status": "unmatched"}
+    assert m("old", d)["status"] == "unmatched"
 
 
 def test_collect_counts_uses_orders_by_certainty_and_skips_unimported_drafts():
@@ -325,8 +333,11 @@ GUIDE_PEOPLE = [person(1, "Maria Teresa Santiago"), person(2, "Marifel Santiago"
                 person(5, "June Naig"), person(6, "June Perez"), person(7, "Teresita Guzman"),
                 person(8, "Irene Hizon", "Mimi"), person(9, "Carole Dela Fuente"),
                 person(10, "Kathrine Joyce Flores"), person(11, "Juan Alfonso Perez"),
-                person(12, "Mary Anne Milliscent"), person(13, "Maria Lourdes Gajitos"),
-                person(14, "Fe Ramos"), person(15, "Apple Charm Agulto")]
+                person(12, "Mary Anne Milliscent Castro"), person(13, "Maria Lourdes Gajitos"),
+                person(14, "Fe Ramos"), person(15, "Apple Charm Agulto"),
+                person(16, "Ray Justin Ventura"), person(17, "Modesto Lazo"),
+                person(18, "Analyn Fortaleza"),
+                dict(person(19, "Maejorie Orpilla"), inactive=True)]       # archived
 
 
 @pytest.fixture()
@@ -338,7 +349,8 @@ def guide(monkeypatch):
     ("riza", 1), ("riz", 1),            # Maria Teresa Santiago, not Marifel Santiago
     ("feng", 2), ("ronnel", 3), ("rj", 4), ("june", 5), ("tek", 7),
     ("mimi", 8), ("mi", 8), ("carole", 9), ("kjf", 10), ("jap", 11), ("mm", 12),
-    ("malou", 13), ("ac", 15),
+    ("malou", 13), ("ac", 15), ("jong", 16), ("modesto", 17), ("desten", 17),   # Desten = Modesto Lazo
+    ("mmc", 12), ("asf", 18), ("analyn", 18),
 ])
 def test_the_name_guide_picks_the_person_it_names(guide, key, uid):
     r = cp.match(key, GUIDE_PEOPLE)
@@ -376,17 +388,28 @@ def test_a_remembered_answer_still_beats_the_guide(guide):
     assert cp.match("riza", GUIDE_PEOPLE, {"riza": 2})["status"] == "alias"
 
 
+def test_an_archived_person_the_guide_names_is_still_matched(guide):
+    r = cp.match("mae", GUIDE_PEOPLE)
+    assert (r["status"], r["candidates"], r["guide"]) == ("guided", [19], "Maejorie Orpilla")
+    # ...but an active namesake wins over an archived one
+    d = GUIDE_PEOPLE + [person(40, "Maejorie Orpilla")]
+    assert cp.match("mae", d)["candidates"] == [40]
+
+
+def test_a_doubted_name_is_offered_never_chosen(monkeypatch):
+    monkeypatch.setattr(cp, "PROBABLY_NOT", {"xyz"})
+    assert cp.match("xyz", DIR)["status"] == "unlikely"
+
+
 def test_not_people_are_flagged(guide):
     assert cp.match("tolosa", GUIDE_PEOPLE)["status"] == "not_person"
-    for k in ("mmc", "asf"):
-        assert cp.match(k, GUIDE_PEOPLE)["status"] == "unlikely"
     # a place is never swallowed into a two-name split
     assert cp.expand("Riza Tolosa", GUIDE_PEOPLE) == ["riza tolosa"]
 
 
 def test_honorific_forms_reach_the_guide(guide):
     for raw, uid in (("Ma’am Riz", 1), ("Doc Malou", 13), ("Dr. Malou", 13), ("Dr June", 5),
-                     ("Ma’am Mi", 8), ("Doc AC", 15), ("Sir Jong", None)):
+                     ("Ma’am Mi", 8), ("Doc AC", 15), ("Sir Jong", 16), ("Dr. Mar Wynn", None)):
         key = cp.clean(raw)[0]
         r = cp.match(key, GUIDE_PEOPLE)
         assert (r["candidates"][0] if r["candidates"] else None) == uid, raw
@@ -411,3 +434,42 @@ def test_the_places_and_teams_in_the_real_file_are_marked_not_people(guide):
     for k in ("cebu", "car", "northern mindanao", "blhsd iqa team", "doh rep", "zbb", "tolosa"):
         assert cp.match(k, GUIDE_PEOPLE)["status"] == "not_person", k
     assert cp.match("car", GUIDE_PEOPLE)["candidates"] == []          # never "Carole"
+
+
+@pytest.mark.parametrize("raw, keys", [
+    ("MDN - Malou", ["malou"]),                  # a place glued to a person: the place is dropped
+    ("SGA - Arlene", []),                        # nobody called Arlene in this directory: whole token kept below
+    ("MDN- Malou", ["malou"]),
+    ("Sir Jong", ["jong"]),
+    ("℅ MM CHD-Cath", ["mm chd cath"]),          # neither side is a known person: kept to be marked
+    ("MOH-BARMM - Basilan", ["moh barmm basilan"]),
+    ("Riza - Desten", ["riza", "desten"]),
+])
+def test_a_person_glued_to_a_place_is_split_at_the_dash(guide, raw, keys):
+    got = cp.expand(raw, GUIDE_PEOPLE)
+    if raw.startswith("SGA"):
+        assert got == ["sga arlene"]
+    else:
+        assert got == keys
+
+
+def test_a_dash_split_finds_an_ordinary_first_name_too(guide):
+    d = GUIDE_PEOPLE + [person(50, "Arlene Reyes")]
+    assert cp.expand("SGA - Arlene", d) == ["arlene"]
+    assert cp.match("arlene", d)["candidates"] == [50]
+
+
+def test_the_page_matches_an_archived_person_through_the_guide(admin, world, monkeypatch):
+    archived = acct(world["conn"], "calpe-mae-old", "Maejorie Calpe-Orpilla", archived=True)
+    world["conn"].commit()
+    monkeypatch.setattr(cp, "NAME_GUIDE", {"mae": "Maejorie Calpe-Orpilla"})
+    bid = imported(admin, world)
+    html = admin.get(f"/calendar/import/{bid}/people").text
+    sel = html.split('name="who_mae"')[1].split("</select>")[0]
+    assert f'value="{archived}" selected' in sel and "archived" in sel and "(archived)" in html
+    admin.post(f"/calendar/import/{bid}/people", content=urlencode({"who_mae": archived}), headers=FORM)
+    assert archived in people_of(world, "CALPE Palawan trip (Riza, Mae)")[1]
+    done = admin.get(f"/calendar/import/{bid}/people").text.split("already dealt with")[1]
+    assert "Maejorie Calpe-Orpilla" in done
+    # ...and she is not offered as an everyday choice for anyone else
+    assert "Maejorie" not in html.split('name="who_riza"')[1].split("</select>")[0].split('label="Everyone"')[1]

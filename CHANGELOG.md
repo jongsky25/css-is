@@ -1,5 +1,23 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.60 — name guide: the rest of the names, archived people, "Place - Name")
+
+- **Guide additions** — Jong = Ray Justin Ventura; Mae = Maejorie Orpilla; Desten = Modesto Lazo
+  (same person as Modesto); MMC = Mary Anne Milliscent Castro (same person as MM); ASF = Analyn
+  Fortaleza (same person as Analyn); "Mar Wynn" = the previous Director. MMC/ASF are no longer
+  "probably not people" (`PROBABLY_NOT` is now empty; the mechanism stays).
+- **Archived / inactive people** — `load_directory` now returns every account with an `inactive`
+  flag. The guide may name someone who has left (Maejorie Orpilla is archived; the previous
+  Director may be) and the item still shows who it was for, marked "(archived)"; an active
+  namesake beats an archived one. Ordinary matching (nickname, first name, "starts like") only
+  ever looks at ACTIVE people, and archived people are not offered in the everyday picker.
+- **"Place - Name"** — `expand` splits a person glued to a place at the dash ("MDN - Malou",
+  "SGA - Arlene", "℅ MM CHD-Cath"): the sides that match somebody are the names and the place is
+  dropped; if neither side matches, the whole token is kept so it can be marked "not a person".
+- **Dry run on the real file** against the names supplied: 69 of the 92 items with names match;
+  only "Mar"/"MWB" (no active account for the previous Director) and "Cath" are left.
+- **Tests** — `tests/test_calendar_people.py`.
+
 ## 2026-10-09 (v3.59 — name guide for the imported calendar)
 
 - **`calendar_people.NAME_GUIDE`** — the bureau's own answer to "who is this?" for the names in the

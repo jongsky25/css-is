@@ -41,10 +41,13 @@ NAME_GUIDE = {
     "olga": "Maria Olga Bulasa", "mimi": "Irene Hizon", "mi": "Irene Hizon",
     "vlanche": "Vlanche Dulfo", "feng": "Marifel Santiago", "ronnel": "Ronnel Manaloto",
     "rj": "Ronnel John Dela Cruz", "dheng": "Catherine Dimaano",
-    "mar": "Mar Wynn Bello", "mwb": "Mar Wynn Bello",            # the previous Director
+    "mar": "Mar Wynn Bello", "mar wynn": "Mar Wynn Bello", "mwb": "Mar Wynn Bello",   # previous Director
     "carole": "Carole Dela Fuente", "analyn": "Analyn Fortaleza", "krisha": "Krisha Carayag",
     "cha": "Chariza Cruz", "riza": "Maria Teresa Santiago", "riz": "Maria Teresa Santiago",
-    "modesto": "Modesto Lazo", "ac": "Apple Charm Agulto",
+    "modesto": "Modesto Lazo", "desten": "Modesto Lazo",               # same person, two names
+    "ac": "Apple Charm Agulto", "jong": "Ray Justin Ventura",
+    "mae": "Maejorie Orpilla",                                          # archived: still matched
+    "mmc": "Mary Anne Milliscent Castro", "asf": "Analyn Fortaleza",    # initials
     "kjf": "Kathrine Joyce Flores", "jap": "Juan Alfonso Perez",       # initials
     "mm": "Mary Anne Milliscent",
 }
@@ -56,7 +59,7 @@ NOT_PEOPLE = {
     "mimaropa chd", "blhsd iqa team", "interagency twg", "doh rep", "zbb", "lha", "ta requests",
     "aop activity", "dovetail activity", "subprogram", "am for coordinators", "auditor hemb",
 }
-PROBABLY_NOT = {"mmc", "asf"}              # the bureau thinks these are not people: offered, not chosen
+PROBABLY_NOT = set()                       # names the bureau doubts are people: offered, never chosen
 
 LEVEL_LABELS = {0: "remembered", 1: "nickname", 2: "full name", 3: "first name",
                 4: "surname / other name", 5: "starts like"}
@@ -81,19 +84,23 @@ def clean(raw):
 
 
 def load_directory(conn):
-    """Active accounts as match candidates: [{user_id, name, nickname, words, first}]."""
+    """Every account as a match candidate: [{user_id, name, nickname, words, first, inactive}].
+    `inactive` = deactivated/pending, or linked to an archived directory person. Ordinary
+    matching (nickname, first name...) only looks at ACTIVE people; the name guide may name
+    someone who has since left (the previous Director, an archived colleague), and the
+    calendar should still be able to show who an old item was for."""
     out = []
-    for uid, username, rp_name, nick in conn.execute(
-            "SELECT a.id, a.username, rp.name, a.nickname FROM admin_user a "
-            "LEFT JOIN resource_person rp ON rp.id = a.rp_id "
-            "WHERE a.active = 1 AND (rp.id IS NULL OR rp.archived_at IS NULL)"):
+    for uid, username, rp_name, nick, active, archived in conn.execute(
+            "SELECT a.id, a.username, rp.name, a.nickname, a.active, rp.archived_at FROM admin_user a "
+            "LEFT JOIN resource_person rp ON rp.id = a.rp_id"):
         name = (rp_name or "").strip()
         if "," in name:                                   # "Santos, Maria" -> "Maria Santos"
             last, _, first = name.partition(",")
             name = f"{first.strip()} {last.strip()}"
         ws = [w for w in _words(name) if w not in HONORIFICS]
         out.append({"user_id": uid, "name": name or username, "nickname": " ".join(_words(nick)),
-                    "words": ws, "first": ws[0] if ws else ""})
+                    "words": ws, "first": ws[0] if ws else "",
+                    "inactive": (not active) or bool(archived)})
     return out
 
 
@@ -101,10 +108,12 @@ def guide_candidates(full, directory):
     """User ids the directory has for a guide's full name: everyone whose name holds ALL
     its words, else (a directory that omits middle names) first AND last word."""
     gw = [w for w in _words(full) if w not in HONORIFICS]
-    hit = [p["user_id"] for p in directory if p["words"] and set(gw) <= set(p["words"])]
+    people = [p for p in directory if p["words"]]
+    hit = [p for p in people if set(gw) <= set(p["words"])]
     if not hit and len(gw) > 2:
-        hit = [p["user_id"] for p in directory if p["words"] and {gw[0], gw[-1]} <= set(p["words"])]
-    return hit
+        hit = [p for p in people if {gw[0], gw[-1]} <= set(p["words"])]
+    live = [p for p in hit if not p.get("inactive")]
+    return [p["user_id"] for p in (live or hit)]               # an active account beats an archived namesake
 
 
 def match(key, directory, aliases=None):
@@ -140,6 +149,7 @@ def _match(key, directory, aliases):
 
 
 def _ordinary(key, directory):
+    directory = [p for p in directory if not p.get("inactive")]     # guesses never reach someone who has left
     words = key.split()
     tiers = {1: [], 2: [], 3: [], 4: [], 5: []}
     for p in directory:
@@ -164,9 +174,27 @@ def _ordinary(key, directory):
     return {"level": None, "candidates": [], "status": "unmatched"}
 
 
+_SEPARATORS = re.compile(r"\s*(?:[-–—]|℅)\s*")
+_MATCHED = ("alias", "guided", "suggested", "ambiguous", "possible")
+
+
 def expand(raw, directory, aliases=None):
-    """Keys for one raw token. Usually one; "Riza Desten" becomes ["riza", "desten"]
-    when it matches no single person as a whole but every word matches someone."""
+    """Keys for one raw token. Usually one. Two cases give more:
+      * "Riza Desten" becomes ["riza", "desten"] when it matches no single person as a whole
+        but every word matches someone;
+      * a person glued to a place, "MDN - Malou" / "SGA - Arlene" / "℅ MM CHD-Cath", is
+        split at the dash: the sides that match somebody are the names, the rest (the place)
+        is dropped. When no side matches anyone the whole token is kept so it still shows up
+        on the list to be marked "not a person"."""
+    parts = [p for p in _SEPARATORS.split(raw) if p.strip()]
+    if len(parts) > 1:
+        keys = []
+        for part in parts:
+            for k in expand(part, directory, aliases):
+                if match(k, directory, aliases)["status"] in _MATCHED and k not in keys:
+                    keys.append(k)
+        if keys:
+            return keys
     c = clean(raw)
     if not c:
         return []
@@ -174,7 +202,7 @@ def expand(raw, directory, aliases=None):
     words = key.split()
     if len(words) > 1 and match(key, directory, aliases)["status"] == "unmatched":
         parts = [match(w, directory, aliases)["status"] for w in words]
-        if all(s in ("alias", "guided", "suggested", "ambiguous", "possible") for s in parts):
+        if all(s in _MATCHED for s in parts):
             return words
     return [key]
 

@@ -12,7 +12,7 @@
   <option value="">— decide later —</option>
   <option value="ignore" {{ "selected" if r.ignored or r.picked == "ignore" }}>Not a person (a place, a team, initials)</option>
   {% if r.cands %}<optgroup label="{{ 'Likely' if r.match.status in ('suggested', 'alias', 'guided') else 'Could be' }}">
-    {% for p in r.cands %}<option value="{{ p.user_id }}" {{ "selected" if r.picked == p.user_id }}>{{ p.name }}{% if p.nickname %} ({{ p.nickname }}){% endif %}</option>{% endfor %}
+    {% for p in r.cands %}<option value="{{ p.user_id }}" {{ "selected" if r.picked == p.user_id }}>{{ p.name }}{% if p.nickname %} ({{ p.nickname }}){% endif %}{% if p.inactive %} · archived{% endif %}</option>{% endfor %}
   </optgroup>{% endif %}
   <optgroup label="Everyone">
     {% for p in everyone %}{% if p not in r.cands %}<option value="{{ p.user_id }}" {{ "selected" if r.picked == p.user_id }}>{{ p.name }}{% if p.nickname %} ({{ p.nickname }}){% endif %}</option>{% endif %}{% endfor %}
@@ -33,7 +33,7 @@
       <td>{{ r.n }} {{ "item" if r.n == 1 else "items" }}<small>{{ r.titles|join(" · ") }}</small></td>
       <td>{% set m = r.match %}
         {% if m.status == "alias" %}<span class="cal-chip">Remembered</span>
-        {% elif m.status == "guided" %}<span class="cal-chip">Name guide · {{ m.guide }}</span>
+        {% elif m.status == "guided" %}<span class="cal-chip">Name guide · {{ m.guide }}{% if r.cands and r.cands[0].inactive %} (archived){% endif %}</span>
         {% elif m.guide and m.status == "unmatched" %}<span class="cal-chip warn">Guide says {{ m.guide }} · no active account</span>
         {% elif m.guide and m.status == "ambiguous" %}<span class="cal-chip warn">Guide says {{ m.guide }} · {{ r.cands|length }} accounts</span>
         {% elif m.status == "not_person" %}<span class="cal-chip">Not a person</span>
@@ -58,7 +58,7 @@
     <table class="cal-table cal-people-table"><tbody>
     {% for r in done %}
     <tr><th scope="row">{{ r.label }}</th><td>{{ r.n }} {{ "item" if r.n == 1 else "items" }}</td>
-        <td colspan="2">{% if r.ignored %}Not a person{% else %}{% for p in everyone if p.user_id == r.decision %}{{ p.name }}{% endfor %}{% endif %}</td></tr>
+        <td colspan="2">{% if r.ignored %}Not a person{% else %}{% for p in all_people if p.user_id == r.decision %}{{ p.name }}{% endfor %}{% endif %}</td></tr>
     {% endfor %}
     </tbody></table>
   </details>
