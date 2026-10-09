@@ -1,5 +1,9 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v5.2 — "Mine only" ignores the person who ran an import)
+
+- **Scope (`office_calendar._in_scope`):** the creator clause of "mine" is skipped for entries with `source = 'import'`, because a bulk import stamps the importer as `created_by` on every row. Being listed as a person still counts. `created_by` is unchanged, so edit rights are unaffected, and "Mine + bureau-wide" still shows bureau-wide imports. The activities layer still counts the creator as mine. Test: `test_mine_ignores_the_person_who_only_ran_the_import`.
+
 ## 2026-10-09 (v5.1 — calendar legend and admin-entered birthdays)
 
 - **Legend (`_calendar_body.html`, `calendar.css`):** Agenda and Month show "Colour = unit" (a swatch per unit in the window, same tones as the bars and dots) and "Icon = type". The kind-icon map moved to the top of the template so both layouts share it.

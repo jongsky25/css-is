@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "5.1"
+APP_VERSION = "5.2"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "5.2",
+        "date": "October 9, 2026",
+        "summary": "\"Mine only\" on the calendar no longer shows things you only imported.",
+        "changes": [
+            "If you imported calendar items from a file, they no longer appear under \"Mine only\" unless you are actually listed on them.",
+            "Imported items still show under \"Mine + bureau-wide\" when they are bureau-wide.",
+        ],
+    },
     {
         "version": "5.1",
         "date": "October 9, 2026",
