@@ -31,9 +31,13 @@ Dates are ISO strings ('YYYY-MM-DD') so items are JSON-ready for the later API.
 """
 from __future__ import annotations
 
+import calendar
 from datetime import date, timedelta
 
 import auth
+import birthdays as bd
+import calendar_ics as cics
+import mailer
 import storage as st
 import tzutil as tz
 
@@ -184,21 +188,32 @@ def _in_scope(ctx, scope, entry, owner_path):
 # ── providers ────────────────────────────────────────────────────────────────
 
 def _entries_layer(conn, ctx, start, end, scope):
-    entries = st.cal_list_between(conn, start, end)
+    """Calendar entries as items. A repeating series is expanded here, ONE item per occurrence in the
+    window (skipped dates removed), keyed `entry:<id>:<date>` and linking to the series with `?date=`
+    so the page can offer "just this one"; an occurrence on a holiday says so."""
+    occs = st.cal_occurrences_between(conn, start, end)
+    entries = [e for e, _a, _b in occs]
     units = _units(conn, [e["owner_org_id"] for e in entries])
     tones = _tone_map(conn)
     cards = _people_cards(conn, [p["user_id"] for e in entries for p in e["people"]])
+    holidays = st.holidays_between(conn, date.fromisoformat(start), date.fromisoformat(end)) \
+        if any(e["rrule"] for e in entries) else {}
     out = []
-    for e in entries:
+    for e, o_start, o_end in occs:
         if e["event_id"]:
             continue            # an overlay on a CSS activity: the activities layer draws it, once
         unit = units.get(e["owner_org_id"])
         path = unit["path"] if unit else None
         if not entry_visible(ctx, e, path) or not _in_scope(ctx, scope, e, path):
             continue
+        flags = [e["status"]] if e["status"] in ("tentative", "postponed") else []
+        if e["rrule"]:
+            flags.append("repeats")
+            if holidays.get(o_start):
+                flags.append(f"falls on {holidays[o_start]['name']}")
         out.append({
-            "key": f"entry:{e['id']}", "layer": "entries", "title": e["title"],
-            "start": e["start_date"], "end": e["end_date"] or e["start_date"],
+            "key": f"entry:{e['id']}:{o_start}" if e["rrule"] else f"entry:{e['id']}", "layer": "entries",
+            "title": e["title"], "start": o_start, "end": o_end,
             "start_time": e["start_time"], "end_time": e["end_time"],
             "all_day": e["start_time"] is None, "time_note": e["time_note"],
             "kind": e["kind"], "status": e["status"],
@@ -210,10 +225,9 @@ def _entries_layer(conn, ctx, start, end, scope):
                                                    "photo_url": None})}
                        for p in e["people"]],
             "tags": e["tags"], "venue": e["venue"], "modality": e["modality"],
-            "meeting_url": e["meeting_url"], "url": f"/calendar/entries/{e['id']}",
-            "css": None,
-            "flags": [e["status"]] if e["status"] in ("tentative", "postponed") else [],
-            "editable": True, "private": False,
+            "meeting_url": e["meeting_url"],
+            "url": f"/calendar/entries/{e['id']}" + (f"?date={o_start}" if e["rrule"] else ""),
+            "css": None, "flags": flags, "editable": True, "private": False,
         })
     return out
 
@@ -447,16 +461,17 @@ def mismatches(conn, user_ids, start, end, *, kinds=MISMATCH_KINDS):
     if not ({"leave_on_entry", "double_booked"} & set(kinds)):
         return out
     by_day = {}
-    for uid, eid, title, a, b, t1, t2 in conn.execute(
-            f"SELECT cp.user_id, e.id, e.title, e.start_date, COALESCE(NULLIF(e.end_date, ''), e.start_date), "
-            f"e.start_time, e.end_time FROM calendar_entry e "
-            f"JOIN calendar_entry_person cp ON cp.entry_id = e.id "
-            f"WHERE cp.user_id IN ({marks}) AND e.status <> 'cancelled' AND e.start_date <= ? "
-            f"AND COALESCE(NULLIF(e.end_date, ''), e.start_date) >= ? ORDER BY e.id", (*ids, e_iso, s_iso)):
-        day, last = max(date.fromisoformat(a), date.fromisoformat(s_iso)), min(date.fromisoformat(b), date.fromisoformat(e_iso))
+    want = set(ids)
+    for e, o_start, o_end in st.cal_occurrences_between(conn, s_iso, e_iso):       # a series counts on each of its days
+        mine = [p["user_id"] for p in e["people"] if p["user_id"] in want]
+        if not mine:
+            continue
+        day, last = max(date.fromisoformat(o_start), date.fromisoformat(s_iso)), min(date.fromisoformat(o_end), date.fromisoformat(e_iso))
         while day <= last:
             if day.weekday() < 5:
-                by_day.setdefault((uid, day.isoformat()), []).append((eid, title, _hhmm(t1), _hhmm(t2)))
+                for uid in mine:
+                    by_day.setdefault((uid, day.isoformat()), []).append(
+                        (e["id"], e["title"], _hhmm(e["start_time"]), _hhmm(e["end_time"])))
             day += timedelta(days=1)
     for (uid, iso), rows in sorted(by_day.items(), key=lambda kv: (kv[0][1], kv[0][0])):
         if "leave_on_entry" in kinds and (reported.get((uid, iso)) or (None,))[0] == "leave":
@@ -500,6 +515,59 @@ def entry_heads_up(conn, user, entry):
     return out
 
 
+def birthday_people(conn):
+    """Everyone with a birthday on file who is still here (active account, not archived), as the
+    plain dicts birthdays.py works on, plus what a card needs. Unlinked accounts have no unit, so
+    only bureau-wide sharing can reach anyone but themselves."""
+    rows = conn.execute("""
+        SELECT a.id, a.username, a.nickname, a.birthday_month, a.birthday_day, a.birthday_share,
+               rp.id, rp.name, (rp.photo IS NOT NULL), ou.path, ou.short_name
+        FROM admin_user a
+        LEFT JOIN resource_person rp ON rp.id = a.rp_id
+        LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id
+        WHERE a.active = 1 AND a.birthday_month IS NOT NULL AND a.birthday_day IS NOT NULL
+          AND (rp.id IS NULL OR rp.archived_at IS NULL)""").fetchall()
+    paths = {r[9] for r in rows if r[9]}
+    every = sorted({a for p in paths for a in _ancestors(p)})
+    levels = dict(conn.execute("SELECT path, level FROM org_unit WHERE path IN (%s)" % ",".join("?" * len(every)),
+                               every)) if every else {}
+    out = []
+    for uid, uname, nick, m, d, share, rp_id, rp_name, has_photo, path, short in rows:
+        division = next((p for p in _ancestors(path) if levels.get(p) == "division"), None) if path else None
+        name = bd.first_name(rp_name, nick, (uname or "").split("@")[0].title())
+        out.append({"user_id": uid, "month": m, "day": d, "share": share if share in bd.SHARES else "none",
+                    "section_path": path, "division_path": division, "name": name, "unit": short,
+                    "full_name": rp_name or uname,
+                    "card": {"name": name, "initials": _initials(rp_name or uname),
+                             "photo_url": f"/photo/{rp_id}" if rp_id and has_photo else None}})
+    return out
+
+
+def _birthdays_layer(conn, ctx, start, end, scope):
+    """🎂 on the day, yearly. Shown only inside the owner's sharing choice AND the viewer's scope;
+    a Feb 29 birthday sits on Feb 28 in a non-leap year. The date of birth's YEAR does not exist."""
+    viewer = {"user_id": ctx["user_id"], "section_path": ctx["section_path"],
+              "division_path": ctx["division_path"]}
+    a, b = date.fromisoformat(start), date.fromisoformat(end)
+    out = []
+    for p in birthday_people(conn):
+        if not (bd.shared_with(p, viewer) and bd.in_scope(scope, p, viewer)):
+            continue
+        for d in bd.occurrences_between(p["month"], p["day"], a, b):
+            out.append({
+                "key": f"birthday:{p['user_id']}:{d.isoformat()}", "layer": "birthdays",
+                "title": f"🎂 {p['name']}", "start": d.isoformat(), "end": d.isoformat(),
+                "start_time": None, "end_time": None, "all_day": True, "time_note": None,
+                "kind": "birthday", "status": "confirmed", "owner_org_id": None,
+                "owner_label": p["unit"], "tone": "grey",
+                "people": [{"user_id": p["user_id"], "role": "celebrant", **p["card"]}],
+                "tags": [], "venue": None, "modality": None, "meeting_url": None, "url": None,
+                "css": None, "flags": [], "editable": False, "private": False,
+                "section_path": p["section_path"],
+            })
+    return out
+
+
 # name -> provider(conn, ctx, start_iso, end_iso, scope) -> [CalItem]. Later
 # layers (activities, leave, birthdays, deadlines) are one line each.
 LAYERS = {
@@ -507,6 +575,7 @@ LAYERS = {
     "activities": _activities_layer,
     "holidays": _holidays_layer,
     "leave": _leave_layer,
+    "birthdays": _birthdays_layer,
 }
 
 # Within one day, what leads: the day's own banner (a holiday), then the rest.
@@ -849,7 +918,7 @@ def entry_can_collect_feedback(entry):
     """May this calendar item be turned into a CSS activity? Only a live, unlinked meeting
     or training: a trip, audit, banner or deadline has nobody to ask for feedback."""
     return (entry["kind"] in LINKABLE_KINDS and not entry["event_id"]
-            and entry["status"] != "cancelled")
+            and entry["status"] != "cancelled" and not entry.get("rrule"))
 
 
 def activity_candidates_for_entry(conn, entry):
@@ -885,3 +954,323 @@ def entry_candidates_for_activity(conn, user, title, start, end=None):
             out.append({"id": e["id"], "title": e["title"], "start": e["start_date"],
                         "end": e["end_date"] or e["start_date"], "url": f"/calendar/entries/{e['id']}"})
     return out
+
+
+# ── the email outbox (G1) ────────────────────────────────────────────────────
+#
+# storage._cal_enqueue writes one row per affected person in the SAME transaction as the
+# change, never for the editor. flush_outbox turns a burst of edits into ONE email per person:
+# it waits until the person's newest notice is QUIET_MINUTES old (or the oldest has waited
+# MAX_WAIT_MINUTES), except that a notice about something today or tomorrow goes at once.
+
+QUIET_MINUTES = 10
+MAX_WAIT_MINUTES = 60
+EXPIRE_DAYS = 2
+MAX_ATTEMPTS = 3
+
+_WHAT = {"title": "title", "start_date": "date", "end_date": "date", "start_time": "time",
+         "end_time": "time", "time_note": "time", "venue": "venue", "modality": "format",
+         "rrule": "repeat", "exdates": "skipped dates",
+         "meeting_url": "meeting link", "status": "status"}
+
+
+def _coalesce(rows):
+    """One final kind per entry for a person's queued notices, or None when there is nothing to
+    say: added then cancelled/removed in the same burst means they never needed to know."""
+    kinds = [r["kind"] for r in rows]
+    first, last = kinds[0], kinds[-1]
+    if first == "added" and last in ("cancelled", "removed"):
+        return None
+    if last in ("cancelled", "removed"):
+        return last
+    if "added" in kinds:
+        return "added"
+    return "changed"
+
+
+def _when_text(e):
+    a = date.fromisoformat(e["start_date"])
+    b = date.fromisoformat(e["end_date"]) if e["end_date"] else a
+    day = f"{a:%a, %b} {a.day}" + (f" – {b:%a, %b} {b.day}" if b != a else "")
+    if e["start_time"]:
+        day += f" · {e['start_time']}" + (f"–{e['end_time']}" if e["end_time"] else "")
+    elif e["time_note"]:
+        day += f" · {e['time_note']}"
+    return day
+
+
+def flush_outbox(conn, base_url, *, now=None, send=None):
+    """Email the people whose notices are ready. Returns the number of emails sent. Safe to call
+    every minute: with nothing queued it is one cheap query. `send` defaults to mailer.send."""
+    from datetime import datetime
+    now = now or tz.now_local()
+    send = send or mailer.send
+    stamp = lambda dt: dt.isoformat(timespec="seconds")                               # noqa: E731
+    conn.execute("UPDATE calendar_outbox SET sent_at=?, result='expired' WHERE sent_at IS NULL AND queued_at < ?",
+                 (stamp(now), stamp(now - timedelta(days=EXPIRE_DAYS))))
+    conn.commit()
+    pending = {}
+    for r in conn.execute("SELECT id, user_id, entry_id, kind, detail, queued_at, urgent, attempts "
+                          "FROM calendar_outbox WHERE sent_at IS NULL ORDER BY id"):
+        pending.setdefault(r[1], []).append(dict(zip(
+            ("id", "user_id", "entry_id", "kind", "detail", "queued_at", "urgent", "attempts"), r)))
+    sent = 0
+    for uid, rows in pending.items():
+        times = [datetime.fromisoformat(r["queued_at"]) for r in rows]
+        ready = (any(r["urgent"] for r in rows)
+                 or now - max(times) >= timedelta(minutes=QUIET_MINUTES)
+                 or now - min(times) >= timedelta(minutes=MAX_WAIT_MINUTES))
+        if not ready:
+            continue
+        ids = [r["id"] for r in rows]
+
+        def close(result, ids=ids):
+            conn.execute("UPDATE calendar_outbox SET sent_at=?, result=? WHERE id IN (%s)"
+                         % ",".join("?" * len(ids)), (stamp(now), result, *ids))
+            conn.commit()
+        acct = st.get_admin_user_by_id(conn, uid)
+        if not acct or not acct["active"] or not acct["username"]:
+            close("dropped"); continue
+        if not st.calendar_email_pref(conn, uid):
+            close("skipped"); continue
+        by_entry = {}
+        for r in rows:
+            by_entry.setdefault(r["entry_id"], []).append(r)
+        lines, ics = [], []
+        for eid, rs in by_entry.items():
+            kind = _coalesce(rs)
+            e = st.cal_get(conn, eid)
+            if kind is None or e is None:
+                continue
+            if e["status"] == "cancelled" and kind in ("added", "changed"):
+                kind = "cancelled"
+            if kind in ("added", "changed") and st.cal_last_day(e) < now.date().isoformat():
+                continue
+            if kind != "removed":                # tell their calendar app too: same uid, current sequence
+                ics.append(cics.entry_event(e, base_url))
+            moved = sorted({_WHAT[f] for r in rs for f in (r["detail"] or "").split(",") if f in _WHAT})
+            lines.append({"kind": kind, "title": e["title"], "when": _when_text(e),
+                          "where": e["venue"] or "", "url": f"{base_url}/calendar/entries/{eid}",
+                          "what": ("changed: " + ", ".join(moved)) if kind == "changed" and moved else ""})
+        if not lines:
+            close("dropped"); continue
+        if not st.email_feature_enabled(conn, "calendar_changes"):
+            st.log_email_send(conn, "calendar_changes", acct["username"], "(calendar changes)", "skipped_off")
+            close("skipped"); continue
+        name = (st.get_user_profile(conn, uid) or {}).get("person_name") or ""
+        subj, body, html = mailer.calendar_changes_message(
+            name.split()[0] if name else "", lines, f"{base_url}/calendar?scope=mine")
+        result = (send(acct["username"], subj, body, html=html, attachments=[cics.attachment(ics, "calendar-update.ics")])
+                  if ics else send(acct["username"], subj, body, html=html))
+        status = mailer.send_status(result)
+        st.log_email_send(conn, "calendar_changes", acct["username"], subj, status, result.get("detail"))
+        if status == "sent":
+            close("sent"); sent += 1
+        elif status == "failed" and max(r["attempts"] for r in rows) + 1 >= MAX_ATTEMPTS:
+            close("failed")
+        else:                                            # not configured yet / try again next tick
+            conn.execute("UPDATE calendar_outbox SET attempts=attempts+1 WHERE id IN (%s)"
+                         % ",".join("?" * len(ids)), ids)
+            conn.commit()
+    return sent
+
+
+# ── bell rows (G2) ───────────────────────────────────────────────────────────
+
+def bell_rows(conn, user_id, today=None):
+    """The calendar's rows for the nav bell: [{text, url, count}], most useful first.
+
+      * "N new or changed calendar items for you"  — items this person is ON that they have not
+        seen at their current sequence; /calendar/updates lists them and clears the row.
+      * "Confirm where you'll be: <trip>" — the calendar has them on a trip but they reported
+        something else (the same mismatch the home to-do shows).
+      * "<trip> changed after you confirmed that week" — the trip moved since they last
+        submitted; links to that week's form.
+
+    Information such as "you have a meeting today" is deliberately NOT here — that is the home
+    card's job. Cheap by design: this runs on every signed-in request, so each part starts with
+    one indexed query and returns early when there is nothing to say."""
+    today = today or tz.today_local()
+    rows = []
+    bday = birthday_bell_row(conn, user_id, today)
+    if bday:
+        rows.append(bday)
+    unseen = st.cal_unseen_for_user(conn, user_id, today)
+    if unseen:
+        n = len(unseen)
+        rows.append({"text": f"{n} new or changed calendar item{'' if n == 1 else 's'} for you",
+                     "url": "/calendar/updates", "count": n})
+    if not conn.execute("SELECT 1 FROM calendar_entry e JOIN calendar_entry_person p ON p.entry_id = e.id "
+                        "WHERE p.user_id=? AND e.kind='travel' AND e.status='confirmed' "
+                        "AND COALESCE(NULLIF(e.end_date, ''), e.start_date) >= ? LIMIT 1",
+                        (user_id, today.isoformat())).fetchone():
+        return rows
+    monday = today - timedelta(days=today.weekday())
+    seen_titles = set()
+    for m in mismatches(conn, [user_id], today, monday + timedelta(days=11), kinds=("trip_conflict",)):
+        if m["entry_id"] in seen_titles:
+            continue
+        seen_titles.add(m["entry_id"])
+        d = date.fromisoformat(m["day"])
+        rows.append({"text": f"Confirm where you'll be: {m['title']}",
+                     "url": f"/work-arrangement/week?week={(d - timedelta(days=d.weekday())).isoformat()}",
+                     "count": 1})
+    for wk in (monday, monday + timedelta(days=7)):
+        for c in st.cal_trip_changes_after_confirm(conn, user_id, wk):
+            if c["entry_id"] in seen_titles:
+                continue
+            seen_titles.add(c["entry_id"])
+            rows.append({"text": f"{c['title']} changed after you confirmed your week",
+                         "url": f"/work-arrangement/week?week={wk.isoformat()}", "count": 1})
+    return rows
+
+
+# ── birthday reminders (F3) ──────────────────────────────────────────────────
+
+def viewer_paths(conn, user_id):
+    """{user_id, section_path, division_path} for one account — what birthdays.shared_with needs
+    (a lighter cousin of viewer_context for batch jobs)."""
+    out = {"user_id": user_id, "section_path": None, "division_path": None}
+    row = conn.execute("SELECT ou.path FROM admin_user a JOIN resource_person rp ON rp.id = a.rp_id "
+                       "JOIN org_unit ou ON ou.id = rp.org_unit_id WHERE a.id = ? AND rp.archived_at IS NULL",
+                       (user_id,)).fetchone()
+    if row and row[0]:
+        out["section_path"] = row[0]
+        anc = _ancestors(row[0])
+        levels = dict(conn.execute("SELECT path, level FROM org_unit WHERE path IN (%s)" % ",".join("?" * len(anc)), anc))
+        out["division_path"] = next((p for p in anc if levels.get(p) == "division"), None)
+    return out
+
+
+def celebrants_between(conn, viewer, start, end, *, people=None, exclude_self=True):
+    """Birthdays in [start, end] that `viewer` (a viewer_paths dict) may see — by each owner's
+    sharing choice — oldest date first. Nobody is ever reminded about themselves."""
+    out = []
+    for p in people if people is not None else birthday_people(conn):
+        if exclude_self and p["user_id"] == viewer["user_id"]:
+            continue
+        if not bd.shared_with(p, viewer):
+            continue
+        for d in bd.occurrences_between(p["month"], p["day"], start, end):
+            out.append({"user_id": p["user_id"], "name": p["name"], "full_name": p["full_name"],
+                        "unit": p["unit"], "date": d})
+    out.sort(key=lambda c: (c["date"], c["name"].lower()))
+    return out
+
+
+def birthday_bell_row(conn, user_id, today=None):
+    """One row listing today's celebrants this person may see, or None. Cheap when nobody has a
+    birthday today (one query), off when the person turned teammates' birthdays off, and gone at
+    midnight because it is simply computed from today's date."""
+    today = today or tz.today_local()
+    leap_fix = today.month == 2 and today.day == 28 and not calendar.isleap(today.year)    # Feb 29 people: Feb 28
+    if not conn.execute("SELECT 1 FROM admin_user WHERE active=1 AND birthday_month IS NOT NULL AND "
+                        "((birthday_month=? AND birthday_day=?) OR (?=1 AND birthday_month=2 AND birthday_day=29)) "
+                        "AND id<>? LIMIT 1", (today.month, today.day, 1 if leap_fix else 0, user_id)).fetchone():
+        return None
+    if not st.bday_notify_pref(conn, user_id):
+        return None
+    names = [c["name"] for c in celebrants_between(conn, viewer_paths(conn, user_id), today, today)]
+    if not names:
+        return None
+    return {"text": "🎂 Today: " + ", ".join(names), "url": "/calendar/birthdays", "count": 1}
+
+
+def first_working_day(conn, year, month):
+    """The first Monday-to-Friday of the month that is not a holiday or suspension."""
+    d = date(year, month, 1)
+    hol = st.holidays_between(conn, d, d + timedelta(days=10))
+    while d.weekday() >= 5 or d.isoformat() in hol:
+        d += timedelta(days=1)
+    return d
+
+
+# ── the week ahead and the day before (G3) ───────────────────────────────────
+
+WEEK_AHEAD_MAX = 8
+
+
+def week_ahead(conn, user, monday):
+    """The Monday email's "on the calendar this week": what THIS person may see — their own
+    items plus what is bureau-wide, the default scope — for Monday-Friday, as
+    [(label, title)] plus how many were left out. A banner is background, a cancelled or
+    postponed item is not an event, and a CSS activity is included (the Monday email is the one
+    place it is listed for the week; the day-before reminder is separate)."""
+    friday = monday + timedelta(days=4)
+    items = [i for i in items_between(conn, user, monday, friday, scope="blend", layers=["entries", "activities"])
+             if i["kind"] != "banner" and i["status"] not in ("cancelled", "postponed")]
+    out = []
+    for i in items:
+        a, b = date.fromisoformat(i["start"]), date.fromisoformat(i["end"])
+        first = max(a, monday)
+        label = f"{first:%a} {first.day}" + (f"–{min(b, friday):%a} {min(b, friday).day}" if min(b, friday) > first else "")
+        if i["start_time"] and a >= monday:
+            label += f" · {i['start_time']}"
+        out.append((label, i["title"] + (" (tentative)" if i["status"] == "tentative" else "")))
+    return out[:WEEK_AHEAD_MAX], max(len(out) - WEEK_AHEAD_MAX, 0)
+
+
+def entries_starting_on(conn, day):
+    """{user_id: [{id, title, start_time, end_time, venue}]} — people on a LIVE calendar entry
+    that starts on `day`. A CSS activity's overlay is left out (the existing event reminder already
+    covers the activity), and so is a banner (background, not something to attend)."""
+    iso = day.isoformat()
+    out = {}
+    for e, o_start, _o_end in st.cal_occurrences_between(conn, iso, iso):
+        if o_start != iso or e["event_id"] or e["status"] not in ("confirmed", "tentative") or e["kind"] == "banner":
+            continue
+        for p in e["people"]:
+            out.setdefault(p["user_id"], []).append({"id": e["id"], "title": e["title"], "start_time": e["start_time"],
+                                                      "end_time": e["end_time"], "venue": e["venue"]})
+    for rows in out.values():
+        rows.sort(key=lambda r: (r["start_time"] or "", r["id"]))
+    return out
+
+
+# ── the personal feed (G4) ───────────────────────────────────────────────────
+
+FEED_PAST_DAYS = 14
+FEED_AHEAD_DAYS = 365
+FEED_CANCELLED_DAYS = 30
+
+
+def build_feed(conn, user, base_url, *, scope="mine", birthdays=False, today=None):
+    """The text of one person's subscription feed: what THEY may see, exactly as the calendar page
+    decides it (the same items_between), from two weeks back to a year ahead. Items cancelled in
+    the last 30 days are included as STATUS:CANCELLED so a subscribed app removes them rather than
+    keeping a stale event. Birthdays (optional) are yearly events, only those shared with them."""
+    today = today or tz.today_local()
+    start, end = today - timedelta(days=FEED_PAST_DAYS), today + timedelta(days=FEED_AHEAD_DAYS)
+    items = items_between(conn, user, start, end, scope="blend" if scope == "mine" else "section",
+                          layers=["entries", "activities"])
+    entry_ids = [int(i["key"].split(":")[1]) for i in items if i["key"].startswith("entry:")]
+    events = []
+    full = {}
+    for eid in sorted(set(entry_ids)):
+        e = st.cal_get(conn, eid)
+        if e:
+            full[eid] = e
+    for i in items:
+        if i["key"].startswith("entry:"):
+            e = full.pop(int(i["key"].split(":")[1]), None)         # a series is ONE event with an RRULE
+            if e:
+                events.append(cics.entry_event(e, base_url))
+        elif i.get("css"):
+            events.append(cics.activity_event(i, base_url))
+    ctx = viewer_context(conn, user)
+    seen = set(entry_ids)
+    since = (tz.now_local() - timedelta(days=FEED_CANCELLED_DAYS)).isoformat(timespec="seconds")
+    cancelled = [e for e in st.cal_list_between(conn, start, end, include_cancelled=True)
+                 if e["status"] == "cancelled" and e["id"] not in seen and (e["cancelled_at"] or "") >= since
+                 and not e["event_id"]]
+    units = _units(conn, [e["owner_org_id"] for e in cancelled])
+    for e in cancelled:
+        path = (units.get(e["owner_org_id"]) or {}).get("path")
+        if entry_visible(ctx, e, path) and _in_scope(ctx, "blend" if scope == "mine" else "section", e, path):
+            events.append(cics.entry_event(e, base_url))
+    if birthdays:
+        viewer = {"user_id": ctx["user_id"], "section_path": ctx["section_path"], "division_path": ctx["division_path"]}
+        for p in birthday_people(conn):
+            if p["user_id"] != ctx["user_id"] and bd.shared_with(p, viewer):
+                events.append(cics.birthday_event(p["user_id"], p["name"], p["month"], p["day"], today.year))
+    return cics.vcalendar(events, name="BLHSD calendar")

@@ -4,7 +4,7 @@
 {% from "_faces.html" import face_defs, faces %}
 {% from "_growth.html" import growth_defs, growth %}
 {% block title %}Home{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009k">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009l">{% endblock %}
 {% block content %}
 {{ avatar_defs() }}
 {{ face_defs() }}
@@ -257,7 +257,8 @@
       {% else %}{{ initials }}{% endif %}
     </span>
     <div class="oc-hi">
-      <h1>Hi{% if first_name %}, {{ first_name }}{% endif %} 👋</h1>
+      {% if is_birthday %}<h1>Happy birthday{% if first_name %}, {{ first_name }}{% endif %}! 🎉</h1>
+      {% else %}<h1>Hi{% if first_name %}, {{ first_name }}{% endif %} 👋</h1>{% endif %}
       <p>{{ role_label }} · <span class="oc-me-cta">Your profile →</span></p>
     </div>
     </a>
@@ -334,6 +335,9 @@
     <p class="cal-wk-empty">Nothing on the calendar for the next seven days.
       <a href="{{ cal_week.add_url }}">Add something</a></p>
     {% endif %}
+    {% if cal_week.celebrating %}<p class="cal-wk-bday">🎂 Celebrating this week:
+      {% for c in cal_week.celebrating %}<b>{{ c.name }}</b> ({{ c.when }}){{ ", " if not loop.last }}{% endfor %}
+      · <a href="/calendar/birthdays">Monthly list</a></p>{% endif %}
     {% for h in cal_week.holidays %}<p class="cal-wk-hol">★ {{ h.when }} · {{ h.title }}</p>{% endfor %}
     {% if cal_week.away %}
     <div class="cal-wk-away" aria-label="Away on a trip">

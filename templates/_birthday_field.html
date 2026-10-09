@@ -1,0 +1,24 @@
+<fieldset class="field bd" style="border:0;padding:0;margin:0 0 1rem;">
+  <legend style="font-weight:600;margin-bottom:.35rem;">Birthday <span class="hint" style="font-weight:400">(optional)</span></legend>
+  <input type="hidden" name="birthday_present" value="1">
+  <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
+    <select name="birthday_month" aria-label="Birthday month">
+      <option value="">Month</option>
+      {% for name in bd_months %}<option value="{{ loop.index }}" {{ "selected" if bd.month|string == loop.index|string }}>{{ name }}</option>{% endfor %}
+    </select>
+    <select name="birthday_day" aria-label="Birthday day">
+      <option value="">Day</option>
+      {% for n in range(1, 32) %}<option value="{{ n }}" {{ "selected" if bd.day|string == n|string }}>{{ n }}</option>{% endfor %}
+    </select>
+  </div>
+  <div role="radiogroup" aria-label="Who can see your birthday" style="margin-top:.6rem;display:flex;gap:.9rem;flex-wrap:wrap;">
+    {% for k, label in bd_shares.items() %}
+    <label style="font-weight:400"><input type="radio" name="birthday_share" {{ "checked" if bd.share == k }} value="{{ k }}"> {{ label }}</label>
+    {% endfor %}
+  </div>
+  <p class="hint">{{ bd_notice }}</p>
+  {% if bd.saved %}
+  <p class="hint">{% if bd.consent_at %}Sharing agreed on {{ bd.consent_at[:10] }}. {% endif %}
+    <button type="button" onclick="var f=document.createElement('form');f.method='post';f.action='/me/birthday/remove';document.body.appendChild(f);f.submit();" class="btn-link" style="background:none;border:0;color:inherit;text-decoration:underline;cursor:pointer;padding:0">Remove my birthday</button></p>
+  {% endif %}
+</fieldset>

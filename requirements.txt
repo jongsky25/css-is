@@ -6,6 +6,7 @@ python-multipart
 jinja2
 qrcode[pil]
 pandas
+python-dateutil     # runtime: recurrence.py expands repeating calendar items (also a pandas dependency)
 matplotlib
 openpyxl
 python-pptx

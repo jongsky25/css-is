@@ -17,10 +17,97 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.69"
+APP_VERSION = "3.77"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.77",
+        "date": "October 9, 2026",
+        "summary": "Calendar items can now repeat.",
+        "changes": [
+            "When you add or edit an item, choose how often it repeats: every weekday, weekly, every two weeks, monthly on the same date, or monthly on the same weekday like the 2nd Tuesday.",
+            "A repeating item must have a last date, up to two years out.",
+            "Open any one date to change just that one, or skip it. The rest of the series stays as it was.",
+            "A repeat that lands on a holiday says so, and your calendar app gets the whole series with the skipped dates left out.",
+        ],
+    },
+    {
+        "version": "3.76",
+        "date": "October 9, 2026",
+        "summary": "You can put the office calendar in Google, Outlook or Apple Calendar.",
+        "changes": [
+            "Every calendar item has an Add to my calendar (.ics) link.",
+            "Calendar emails now carry the item as an attachment, so your calendar app adds it and later updates it instead of duplicating it.",
+            "My profile has a private Calendar link you can subscribe to. It shows only what you can already see, and you can make a new one or turn it off any time.",
+            "Google only refreshes subscribed calendars every 12 to 24 hours, so changes can take a day to appear there.",
+        ],
+    },
+    {
+        "version": "3.75",
+        "date": "October 9, 2026",
+        "summary": "Your Monday email lists the week's calendar, and you get a reminder the day before.",
+        "changes": [
+            "The Monday email now has an On the calendar this week list, with what you are on and what is bureau-wide.",
+            "The day before a calendar item you are on, you get one reminder listing everything tomorrow.",
+            "Chiefs' Tuesday roll-up notes anyone whose report disagrees with the calendar, by name and day only.",
+            "Both reminders can be switched off on your profile.",
+        ],
+    },
+    {
+        "version": "3.74",
+        "date": "October 9, 2026",
+        "summary": "You are reminded of teammates' birthdays, and an optional celebrations team gets a heads-up.",
+        "changes": [
+            "On someone's birthday the bell says whose it is, if they chose to share it with you.",
+            "Your Monday email has one line listing the week's birthdays.",
+            "Admins can tick the people who organise birthday celebrations. They get an email the day before and a list at the start of each month.",
+            "You can switch teammates' birthday reminders off on your profile. Nobody is ever reminded about their own birthday.",
+        ],
+    },
+    {
+        "version": "3.73",
+        "date": "October 9, 2026",
+        "summary": "The bell now tells you about calendar items that are new or changed for you.",
+        "changes": [
+            "The bell shows how many calendar items you are on that were added, moved or cancelled since you last looked.",
+            "Open the list, or open an item, and it counts as seen.",
+            "If a trip you are on does not match what you reported, or it moved after you confirmed your week, the bell points you to that week.",
+            "You never get a bell for something you changed yourself.",
+        ],
+    },
+    {
+        "version": "3.72",
+        "date": "October 9, 2026",
+        "summary": "People on a calendar item now get one email when it is added, changed or cancelled.",
+        "changes": [
+            "If several edits are made in a row, you get a single email, not one per edit.",
+            "You never get an email about a change you made yourself.",
+            "Changes to something happening today or tomorrow are sent right away.",
+            "You can switch these emails off on your profile.",
+        ],
+    },
+    {
+        "version": "3.71",
+        "date": "October 9, 2026",
+        "summary": "Birthdays people chose to share now show on the calendar, with a happy birthday on your home page.",
+        "changes": [
+            "A 🎂 appears on the calendar for each birthday shared with you, every year.",
+            "The Coming up card says who is celebrating this week, including weekend birthdays.",
+            "On your own birthday the home page greets you with Happy birthday.",
+            "A new Birthdays page lists the month's celebrants by section, ready to print.",
+        ],
+    },
+    {
+        "version": "3.70",
+        "date": "October 9, 2026",
+        "summary": "You can now add your birthday to your profile, and choose who sees it.",
+        "changes": [
+            "On My profile and in the welcome step, pick your birthday month and day. We keep no year.",
+            "It is private unless you choose to share it with your section, division or the whole bureau.",
+            "You can remove it in one click at any time. Nobody else, including admins, can set or edit it for you.",
+        ],
+    },
     {
         "version": "3.69",
         "date": "October 9, 2026",

@@ -67,6 +67,7 @@ def test_every_role_can_open_the_add_form(request, who):
 
 def test_create_stores_everything_and_audits(viewer, conn):
     other = uid(conn, "encoder@test.local")
+    mark = conn.execute("SELECT COALESCE(MAX(id), 0) FROM audit_log").fetchone()[0]   # rowids get reused
     eid = create(viewer, title="CALEP Trip", kind="travel", end_date="2026-10-14",
                  start_time="09:00", end_time="17:00", venue="Palawan", modality="f2f",
                  meeting_url="https://zoom.us/j/1", note="Bring ID", tags="PK, BHW, pk",
@@ -78,7 +79,7 @@ def test_create_stores_everything_and_audits(viewer, conn):
     assert e["tags"] == ["BHW", "PK"] and e["created_by"] == "viewer@test.local"
     assert [(p["user_id"], p["role"]) for p in e["people"]] == [(other, "travel")]
     assert conn.execute("SELECT COUNT(*) FROM audit_log WHERE action='calendar_create' "
-                        "AND target_id=?", (str(eid),)).fetchone()[0] == 1
+                        "AND target_id=? AND id>?", (str(eid), mark)).fetchone()[0] == 1
     page = viewer.get(f"/calendar/entries/{eid}").text
     assert "CALEP Trip" in page and "Palawan" in page and "BHW" in page and "viewer@test.local" in page
 

@@ -48,6 +48,7 @@ from datetime import date, timedelta
 from urllib.parse import quote
 
 import auth
+import calendar_ics as cics
 import mailer
 import storage as st
 import tzutil as tz
@@ -77,13 +78,14 @@ def _person_name(conn, account_id):
     return (rp["name"] if rp else None) or u["username"]
 
 
-def _send(conn, feature, to, subj, body, html=None):
+def _send(conn, feature, to, subj, body, html=None, attachments=None):
     """mailer.send() + an email_log row (docs/ADMIN_EMAIL_FEATURES_PLAN.md
     Phase 6). Every call site here is a real attempt worth logging — a
     disabled job never reaches its function at all (run() drops it from
     `jobs` before any job function runs), so there is no 'skipped_off' case
     to handle at this level."""
-    result = mailer.send(to, subj, body, html=html)
+    result = (mailer.send(to, subj, body, html=html, attachments=attachments) if attachments
+              else mailer.send(to, subj, body, html=html))
     st.log_email_send(conn, feature, to, subj, mailer.send_status(result), result.get("detail"))
     return result
 
@@ -146,7 +148,8 @@ def remind_tomorrows_events(conn, base, dry_run=False):
 
 _ALL_JOBS = {"events", "wellness_expiry", "digest", "csm_rp", "csm_activity",
             "wellness_file", "awa_file", "whereabouts",
-            "whereabouts_nudge", "whereabouts_rollup", "calendar_css_nudge"}
+            "whereabouts_nudge", "whereabouts_rollup", "calendar_css_nudge",
+            "birthday_coordinators", "birthday_month", "calendar_day_before"}
 
 # job name -> the admin toggle that can switch it off (see /admin/email).
 JOB_FEATURE = {
@@ -161,6 +164,9 @@ JOB_FEATURE = {
     "whereabouts_nudge": "job_whereabouts_nudge",
     "whereabouts_rollup": "job_whereabouts_rollup",
     "calendar_css_nudge": "job_calendar_css_nudge",
+    "birthday_coordinators": "job_birthday_coordinators",
+    "birthday_month": "job_birthday_month",
+    "calendar_day_before": "job_calendar_day_before",
 }
 
 # Admin-tunable schedule/delay knobs for the jobs below (/admin/email "Timing"
@@ -386,16 +392,28 @@ def send_whereabouts_weekly(conn, base, dry_run=False):
         return 0                    # a week with no working day has nothing to report
     label = st.whereabouts_week_label(monday)
     defaults = st.whereabouts_defaults(conn, monday)
+    import office_calendar as oc
+    people = oc.birthday_people(conn)
     sent = 0
     for staffer in st.whereabouts_recipients(conn, monday):
         days = st.whereabouts_week(conn, staffer["id"], monday, defaults=defaults)
+        week_events, week_more = [], 0
+        if st.calendar_email_extras(conn, staffer["id"])["week"]:
+            acct = st.get_admin_user_by_id(conn, staffer["id"])
+            if acct:
+                week_events, week_more = oc.week_ahead(conn, acct, monday)
+        week_birthdays = []
+        if people and st.bday_notify_pref(conn, staffer["id"]):
+            week_birthdays = [(c["name"], f"{c['date']:%a}") for c in oc.celebrants_between(
+                conn, oc.viewer_paths(conn, staffer["id"]), monday, monday + timedelta(days=6), people=people)]
         plotted = [(d["label"], st.whereabouts_choice_label(d)
                     + (f" — {d['note']}" if d["choice"] == "field" and d["note"] else ""))
                    for d in days]
         token = auth.make_whereabouts_token(staffer["id"], monday.isoformat())
         link = f"{base}/whereabouts/week?token={quote(token)}"
         name = _person_name(conn, staffer["id"])
-        subj, body, html = mailer.whereabouts_week_message(name, label, plotted, link)
+        subj, body, html = mailer.whereabouts_week_message(name, label, plotted, link, birthdays=week_birthdays,
+                                                          events=week_events, events_more=week_more)
         if dry_run:
             print(f"[dry-run] whereabouts -> {staffer['username']} ({label})")
         else:
@@ -491,6 +509,123 @@ def _human_range(start, end=None):
     return f"{a:%B} {a.day} – {b:%B} {b.day}, {b.year}"
 
 
+def _already_sent(conn, feature, to, subject):
+    """Has this exact email already gone to this person? The birthday jobs are idempotent by
+    asking the email log, so a catch-up run or a manual re-run never doubles up."""
+    return bool(conn.execute("SELECT 1 FROM email_log WHERE feature=? AND recipient=? AND subject=? "
+                             "AND status IN ('sent', 'not_configured') LIMIT 1", (feature, to, subject)).fetchone())
+
+
+def send_calendar_day_before(conn, base, dry_run=False):
+    """The day before a calendar entry starts, remind everyone on it — one email per person listing
+    all of tomorrow's. CSS activities (an entry linked to one) are left to the existing day-before
+    activity reminder (`events`), so nobody is told twice. Honours the person's own switch, and the
+    email log makes a re-run harmless."""
+    import office_calendar as oc
+    tomorrow = tz.today_local() + timedelta(days=1)
+    sent = 0
+    for uid, entries in oc.entries_starting_on(conn, tomorrow).items():
+        acct = st.get_admin_user_by_id(conn, uid)
+        if not acct or not acct["active"] or not st.calendar_email_extras(conn, uid)["daybefore"]:
+            continue
+        items = []
+        ics = []
+        for e in entries:
+            full = st.cal_get(conn, e["id"])
+            if full:
+                ics.append(cics.entry_event(full, base))
+            when = (e["start_time"] + (f"–{e['end_time']}" if e["end_time"] else "")) if e["start_time"] else "All day"
+            items.append({"title": e["title"], "when": when, "where": e["venue"] or "",
+                          "url": f"{base}/calendar/entries/{e['id']}"})
+        subj, body, html = mailer.calendar_day_before_message(
+            _person_name(conn, uid) or acct["username"], f"{tomorrow:%A, %B} {tomorrow.day}", items,
+            f"{base}/calendar?scope=mine&day={tomorrow.isoformat()}")
+        subj = f"{subj} ({tomorrow:%b} {tomorrow.day})"
+        if _already_sent(conn, JOB_FEATURE["calendar_day_before"], acct["username"], subj):
+            continue
+        if dry_run:
+            print(f"[dry-run] calendar day-before -> {acct['username']} ({len(items)})")
+        else:
+            _send(conn, JOB_FEATURE["calendar_day_before"], acct["username"], subj, body, html=html,
+                  attachments=[cics.attachment(ics, "tomorrow.ics")] if ics else None)
+        sent += 1
+    return sent
+
+
+def send_birthday_coordinators(conn, base, dry_run=False):
+    """The day before a birthday, tell each celebration coordinator an admin ticked (OPTIONAL: with
+    nobody ticked this sends nothing). A coordinator only hears about people who chose to share
+    their birthday with them, and never about themselves. Once per coordinator per day."""
+    import office_calendar as oc
+    coordinators = st.birthday_coordinators(conn)
+    if not coordinators:
+        return 0
+    tomorrow = tz.today_local() + timedelta(days=1)
+    people = oc.birthday_people(conn)
+    sent = 0
+    for co in coordinators:
+        cel = oc.celebrants_between(conn, oc.viewer_paths(conn, co["id"]), tomorrow, tomorrow, people=people)
+        if not cel:
+            continue
+        subj, body, html = mailer.birthday_tomorrow_message(
+            _person_name(conn, co["id"]) or co["username"], f"{tomorrow:%A, %B} {tomorrow.day}",
+            [(c["name"], c["unit"]) for c in cel], f"{base}/calendar/birthdays?month={tomorrow.month}")
+        if _already_sent(conn, JOB_FEATURE["birthday_coordinators"], co["username"], subj):
+            continue
+        if dry_run:
+            print(f"[dry-run] birthday tomorrow -> {co['username']} ({len(cel)})")
+        else:
+            _send(conn, JOB_FEATURE["birthday_coordinators"], co["username"], subj, body, html=html)
+        sent += 1
+    return sent
+
+
+def send_birthday_month(conn, base, dry_run=False):
+    """On the first working day of the month (or, if the app was asleep, any day through the 7th that
+    has not been sent yet), each coordinator gets the month's celebrants shared with them."""
+    import office_calendar as oc
+    coordinators = st.birthday_coordinators(conn)
+    today = tz.today_local()
+    if not coordinators or today < oc.first_working_day(conn, today.year, today.month) or today.day > 7:
+        return 0
+    first = today.replace(day=1)
+    last = (first.replace(year=first.year + (first.month == 12), month=first.month % 12 + 1)) - timedelta(days=1)
+    label = f"{first:%B %Y}"
+    people = oc.birthday_people(conn)
+    sent = 0
+    for co in coordinators:
+        cel = oc.celebrants_between(conn, oc.viewer_paths(conn, co["id"]), first, last, people=people)
+        if not cel:
+            continue
+        subj, body, html = mailer.birthday_month_message(
+            _person_name(conn, co["id"]) or co["username"], label,
+            [(f"{c['date']:%a} {c['date'].day}", c["name"], c["unit"]) for c in cel],
+            f"{base}/calendar/birthdays?month={first.month}")
+        if _already_sent(conn, JOB_FEATURE["birthday_month"], co["username"], subj):
+            continue
+        if dry_run:
+            print(f"[dry-run] birthday month -> {co['username']} ({len(cel)})")
+        else:
+            _send(conn, JOB_FEATURE["birthday_month"], co["username"], subj, body, html=html)
+        sent += 1
+    return sent
+
+
+def _rollup_calendar_lines(conn, staff, monday):
+    """Extra lines for a chief's Tuesday roll-up: staff whose own report disagrees with the
+    calendar this week (a trip they reported as Office/Leave, or leave on a day an item lists them).
+    Names and days only — never the item's title, which may not be the chief's to read."""
+    import office_calendar as oc
+    names = {}
+    for m in oc.mismatches(conn, list(staff), monday, monday + timedelta(days=4),
+                           kinds=("trip_conflict", "leave_on_entry")):
+        d = date.fromisoformat(m["day"])
+        what = ("reported something other than Field on a day the calendar has them on a trip"
+                if m["kind"] == "trip_conflict" else "is on leave on a day a calendar item lists them")
+        names.setdefault(staff[m["user_id"]], []).append(f"{d:%a} {d.day}: {what}")
+    return [f"{n} — " + "; ".join(v) for n, v in sorted(names.items(), key=lambda kv: kv[0].lower())]
+
+
 def send_whereabouts_rollup(conn, base, dry_run=False):
     """Tuesday by default (alongside the staff nudge), tell each chief who among
     the staff they approve for is still undeclared. Skips a chief with nobody
@@ -507,8 +642,9 @@ def send_whereabouts_rollup(conn, base, dry_run=False):
         chief = st.get_admin_user_by_id(conn, chief_id)
         if not chief or not chief.get("username"):
             continue
+        lines = _rollup_calendar_lines(conn, e["staff"], monday)
         subj, body, html = mailer.whereabouts_rollup_message(
-            _person_name(conn, chief_id), label, e["missing"], e["total"], link)
+            _person_name(conn, chief_id), label, e["missing"], e["total"], link, calendar_lines=lines)
         if dry_run:
             print(f"[dry-run] whereabouts roll-up -> {chief['username']} "
                   f"({len(e['missing'])} undeclared)")
@@ -642,6 +778,12 @@ def run(db_path="css_is.db", dry_run=False, jobs=None):
             report["whereabouts_nudge"] = nudge_whereabouts(conn, base, dry_run=dry_run)
         if "whereabouts_rollup" in jobs:
             report["whereabouts_rollup"] = send_whereabouts_rollup(conn, base, dry_run=dry_run)
+        if "calendar_day_before" in jobs:
+            report["calendar_day_before"] = send_calendar_day_before(conn, base, dry_run=dry_run)
+        if "birthday_coordinators" in jobs:
+            report["birthday_coordinators"] = send_birthday_coordinators(conn, base, dry_run=dry_run)
+        if "birthday_month" in jobs:
+            report["birthday_month"] = send_birthday_month(conn, base, dry_run=dry_run)
         if "calendar_css_nudge" in jobs:
             report["calendar_css_nudge"] = nudge_calendar_css(conn, base, dry_run=dry_run)
     finally:
@@ -675,6 +817,12 @@ def main():
                     help="Tell each chief who in their area hasn't reported their week.")
     ap.add_argument("--calendar-css-nudge", action="store_true",
                     help="Ask the creator of a past calendar-only training if they want feedback.")
+    ap.add_argument("--calendar-day-before", action="store_true",
+                    help="Remind people on a calendar entry that starts tomorrow.")
+    ap.add_argument("--birthday-coordinators", action="store_true",
+                    help="Tell birthday coordinators who has a birthday tomorrow.")
+    ap.add_argument("--birthday-month", action="store_true",
+                    help="Send birthday coordinators the month's celebrants.")
     args = ap.parse_args()
 
     jobs = {j for j, flag in (("events", args.events),
@@ -687,7 +835,10 @@ def main():
                               ("whereabouts", args.whereabouts),
                               ("whereabouts_nudge", args.whereabouts_nudge),
                               ("whereabouts_rollup", args.whereabouts_rollup),
-                              ("calendar_css_nudge", args.calendar_css_nudge)) if flag}
+                              ("calendar_css_nudge", args.calendar_css_nudge),
+                              ("calendar_day_before", args.calendar_day_before),
+                              ("birthday_coordinators", args.birthday_coordinators),
+                              ("birthday_month", args.birthday_month)) if flag}
     # run() treats a missing CSS_BASE_URL as a skip, because the in-process
     # caller must not be killed by it. On the command line it IS a failure:
     # exit non-zero so a cron/Task Scheduler run reports it instead of

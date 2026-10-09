@@ -1,5 +1,142 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.77 — office calendar H1: repeating items)
+
+- **One entry, many occurrences.** A series is a single `calendar_entry` carrying an RFC 5545 `RRULE` and an `EXDATE`-style list of skipped
+  dates (`recurrence.py`, new, pure, added to the Space bundle; `python-dateutil` is now an explicit requirement). Only the shapes people use
+  are accepted — every weekday, weekly, every 2 weeks, monthly on the same date, monthly on the same weekday (a 5th becomes "the last") — and
+  **every series must end** (UNTIL, at most 2 years), so nothing can fill the calendar, the feed or the reminders forever. A rule must begin on its
+  own start date; anything else is refused with a sentence. A trip or an item linked to a CSS activity can't repeat, and a series can't be turned
+  into an activity.
+- **Add / edit form**: "Repeats" and "Last date it repeats"; the edit form pre-selects the current series, and stopping it is choosing "Doesn't
+  repeat" (which also clears the skipped dates).
+- **The calendar expands it** (`storage.cal_occurrences_between`): one item per occurrence in the window (keyed `entry:<id>:<date>`, linking to the
+  series with `?date=`), skipped dates removed, a multi-day occurrence that began earlier counted, a "· Repeats" flag, and "· Falls on <holiday>" when
+  it lands on one. Everything downstream follows: double-booking and leave-on-an-item heads-ups, the day-before reminder, the Monday week-ahead, the
+  bell (a series still running counts as upcoming), and cancelling cancels the whole series (restore brings it back).
+- **Change just one date**: open an occurrence and choose *Change just this one* (a pre-filled one-off; saving it also skips that date in the series —
+  and is refused, creating nothing, if someone already changed that date) or *Skip this date*; skipped dates list with *put back*. Skipping is a
+  schedule change: it bumps the sequence and the people on the item get the usual change email.
+- **.ics / feed**: a series is ONE event with its `RRULE` and `EXDATE`s (dates for all-day, `TZID` times for timed), in the per-item download, the
+  email attachments and the personal feed, so calendar apps show the whole series; the feed no longer repeats it per occurrence.
+
+## 2026-10-09 (v3.76 — office calendar G4: .ics downloads, attachments and the personal feed)
+
+- **`calendar_ics.py`** (new, pure; added to the Space bundle): RFC 5545 output — CRLF lines folded at 75 OCTETS without ever
+  splitting a UTF-8 character, TEXT escaping, a VTIMEZONE for Asia/Manila (no DST, one STANDARD block), timed events with
+  `TZID`, all-day events as `VALUE=DATE` with the exclusive `DTEND`, UTC `DTSTAMP`, and the entry's random `UID` +
+  current `SEQUENCE` + `STATUS` (postponed shows as tentative with a "[Postponed]" title; cancelled says CANCELLED) so a
+  calendar app UPDATES an event rather than duplicating it. Birthdays are yearly all-day events (`RRULE:FREQ=YEARLY`; a Feb 29
+  person repeats on the last day of February, matching the app) and no birth year exists anywhere.
+- **Per item**: "Add to my calendar (.ics)" on every item page (`/calendar/entries/<id>/event.ics`), with the page's own visibility
+  (anything you cannot see is a 404) and sign-in required.
+- **Attachments**: the change email (G1) and the day-before reminder (G3) now carry an `.ics` with the same uid and current
+  sequence (a cancellation carries STATUS:CANCELLED). `mailer.send(attachments=…)` works over SMTP and the relay; **the relay
+  script in docs/MAIL_RELAY_SETUP.md gained a few lines to read them — paste it and redeploy a new version to enable
+  attachments; an older script just ignores them and the email still goes out.**
+- **Personal feed** (`/me` → Calendar link; `/calendar/feed/<token>.ics`): works without signing in because calendar apps cannot;
+  the long random token IS the credential, so it is replaceable ("Make a new link" kills the old one at once) and removable.
+  It shows what its owner may see, by the same rules as the calendar page — "My items (plus what is bureau-wide)" or "My
+  section" — from two weeks back to a year ahead, adds items cancelled in the last 30 days as STATUS:CANCELLED so subscribed apps
+  drop them, and (opt-in) the birthdays shared with them. A wrong, reset, switched-off or deactivated-owner token all answer the
+  same 404; responses are `private`, `noindex`. The page says plainly that Google refreshes only every 12–24 hours.
+- The Monday email carries no attachment (it lists many items); the activity ("CSS") events appear in the feed with a stable id.
+
+## 2026-10-09 (v3.75 — office calendar G3: week-ahead, day-before, roll-up lines)
+
+- **Monday week-ahead**: the existing whereabouts Monday email gains "On the calendar this week" — what that person may
+  see for Monday-Friday under the default scope (their own items plus what is bureau-wide), up to 8 with "…and N more";
+  banners, cancelled and postponed items are left out, tentative ones are marked, a trip under way shows its days this week.
+  No second email, and it keeps the Monday email's weekday gate. Switch: "Put the week's calendar in my Monday email" on `/me`.
+- **Day-before reminder** (`--calendar-day-before`, new scheduled email with an /admin/email toggle and preview): everyone on a
+  live entry that STARTS tomorrow gets ONE email listing all of tomorrow's. A CSS activity (an entry linked to one) is skipped
+  — the existing `--events` reminder covers it, so nobody is told twice; banners are background. Once per person per day (email
+  log), dry runs send nothing, inactive accounts are skipped. Switch: "Remind me the day before…" on `/me`.
+- **Chief roll-up lines**: the Tuesday roll-up (still only sent to chiefs with someone undeclared) adds "Calendar and report
+  disagree (N)": staff who reported something other than Field on a trip day, or leave on a day an item lists them. **Names and
+  days only, never an item's title**, which may not be the chief's to read.
+- Not yet: the `.ics` attachment on these emails and the personal feed (G4).
+
+## 2026-10-09 (v3.74 — office calendar F3: birthday reminders)
+
+- **Bell**: one row, "🎂 Today: Mae, Tek", listing the day's celebrants the person may see (each owner's sharing choice;
+  yourself never). Computed from today's date, so it is gone at midnight; Feb 29 people appear on Feb 28 in a non-leap year.
+  One cheap query when nobody has a birthday today.
+- **Monday email**: one line, "🎂 Birthdays this week: Riza (Wed), Tek (Sat)", added to the existing whereabouts email — no
+  extra email — personalised by each recipient's sharing scope, and absent when there is none.
+- **Optional coordinators** (admin → Users → "Birthday celebration coordinators"): tick accounts that organise celebrations.
+  Two new scheduled emails, each with its own /admin/email toggle and preview: `--birthday-coordinators` (the day before, one
+  email per coordinator per day) and `--birthday-month` (the first working day of the month — weekends and holidays skipped; a
+  sleeping app catches up through the 7th). **With nobody ticked neither is sent**; everything else works without them.
+  Coordinators only hear about birthdays people shared with them, and never about their own. Both are idempotent through
+  `email_log`, and a dry run sends and logs nothing.
+- **Profile**: "Tell me about teammates' birthdays (the bell and the Monday email)", on by default; a form without the field
+  never flips it.
+- Not in this increment: the avatar party-hat badge, and the Monday "week-ahead" for entries (G3).
+
+## 2026-10-09 (v3.73 — office calendar G2: bell rows and seen-tracking)
+
+- **"N new or changed calendar items for you"** in the nav bell: upcoming items the person is ON whose `seen_seq` is empty
+  (new) or behind the entry's `sequence` (the schedule moved; a note/tag edit does not count) or that were cancelled. The
+  row links to **`/calendar/updates`**, which lists exactly those and marks them seen, so the bell and the list cannot
+  disagree; opening an item's own page marks just that one. (The plan said opening `/calendar?scope=me` clears them; that page only
+  shows two weeks, so a dedicated list is what makes the count honest.)
+- **Never for your own edits**: the person who creates or changes an item is stamped as having seen it; a bulk import stamps
+  everyone; and everything that existed before this release is backfilled as already seen (one-time, flagged in
+  `app_setting`), so day one shows no flood.
+- **"Confirm where you'll be: <trip>"** (same mismatch as the home to-do) and **"<trip> changed after you confirmed your
+  week"** (the trip's schedule moved after the person last submitted that week; links to that week's form). Information like
+  "you have a meeting today" is not a bell row.
+- Cheap on every request: the unseen query is indexed by person, and the trip checks start with one query and return early when
+  the person is on no trip. A failure there can never break a page.
+- Not yet: the birthday row (F3).
+
+## 2026-10-09 (v3.72 — office calendar G1: batched change emails)
+
+- **Outbox** (`calendar_outbox`): `cal_create` / `cal_update` / cancel / restore write one notice per affected person in the
+  SAME transaction as the change — **never the editor**. Kinds: *added* (new, or newly put on it), *changed* (title, date, time,
+  venue, format, link or status moved; a note, tag or audience edit says nothing), *cancelled*, *removed*. A bulk import,
+  a cancelled-on-arrival item and anything already over queue nothing.
+- **`office_calendar.flush_outbox`**, called every scheduler tick: ONE email per person per burst. It waits until the person's
+  newest notice is 10 minutes old (or the oldest has waited 60), except a notice about something **today or tomorrow**, which
+  goes on the next tick. Within a burst: added + edits → one "added" with the final details; added then cancelled → nothing;
+  several items → one "Calendar update: N items" email. Email text is built from the entry as it is *now*.
+- **Respects** the person's own switch (new on `/me`, on by default; a form without the field never flips it) and the
+  admin's global switch (new feature "Calendar — added / changed / cancelled" in /admin/email, with a preview). Inactive
+  accounts and deleted entries are dropped; a failed send retries up to 3 ticks; with mail not configured the notices wait and
+  expire after 2 days. Needs `CSS_BASE_URL` (for the links) like the other reminder emails.
+- Not yet: the `.ics` attachment (G4), bells (G2), the Monday/day-before emails (G3).
+
+## 2026-10-09 (v3.71 — office calendar F2: birthdays on the calendar)
+
+- **`birthdays` layer**: 🎂 <nickname or first name> on the day, every year, as an all-day item of type "Birthday"
+  (a filter option). Visible only to **the owner's sharing choice ∩ the viewer's scope**: yourself always; "My section" =
+  the same unit; "My division" = the same division; "Whole bureau" = everyone; "Don't share" = nobody else. The
+  default scope (Mine + bureau-wide) shows yours and bureau-shared ones; the section / division pills show that
+  unit's people. Archived and inactive people drop off. **Feb 29** sits on Feb 28 in non-leap years. Pure rules live
+  in the new `birthdays.py` (added to the Space bundle).
+- **Home "Coming up" card**: "🎂 Celebrating this week: Riza (Wed), Tek (Sat (weekend))" under the same scope as the
+  card; birthdays are a line, not agenda cards, and no longer fill the card's slots. (Leave bars, which E1 added to the
+  same list by accident, are also kept out of it now.)
+- **Celebrant's greeting**: on the day the home page says "Happy birthday, <name>! 🎉" — from their own data, whether or
+  not they share it.
+- **`/calendar/birthdays?month=10`**: the month's celebrants grouped by section, printable, only what the viewer may
+  already see; a Birthdays button on the calendar page.
+- The Week view skips the layer. Not yet: the avatar party-hat badge, bells and emails (F3, G2).
+
+## 2026-10-09 (v3.70 — office calendar F1: birthdays, captured with consent)
+
+- **Capture on `/me` and the `/welcome` step**, optional: a month and a day. **No year is accepted or stored**
+  (no year parameter exists). Feb 29 is fine; Apr 31 or Feb 30 is refused, with the person's other choices kept.
+- **Sharing is opt-in**: Don't share (default) / My section / My division / Whole bureau. Choosing a scope records
+  `birthday_consent_at` and a snapshot of the exact notice shown; keeping the same scope keeps the original time, a
+  wider one is a new consent, and "Don't share" erases the record.
+- **One-click withdrawal** (`POST /me/birthday/remove`, "Remove my birthday") clears the date, the sharing choice and
+  the consent record. A form that doesn't carry the birthday fields never wipes a saved one.
+- **Personal data stays with the person.** Stored on the account, never on the staff directory row, never on the admin
+  staff form or user list; the audit log records that it was set/removed and the sharing level, never the date.
+- Nothing shows it to anyone yet — the calendar layer, home line and greeting are F2; reminders are F3.
+
 ## 2026-10-09 (v3.69 — office calendar: mismatches and "Add this trip")
 
 - **`office_calendar.mismatches(conn, user_ids, start, end)`** — one function for the soft heads-ups, derived at

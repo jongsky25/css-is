@@ -174,7 +174,7 @@ def test_bad_arguments_raise(world):
     with pytest.raises(ValueError):
         oc.items_between(world["conn"], world["s1"], *WIN, scope="galaxy")
     with pytest.raises(ValueError):
-        oc.items_between(world["conn"], world["s1"], *WIN, layers=["birthdays"])
+        oc.items_between(world["conn"], world["s1"], *WIN, layers=["nonsense"])
     with pytest.raises(ValueError):
         oc.items_between(world["conn"], world["s1"], "2026-10-31", "2026-10-01")
 

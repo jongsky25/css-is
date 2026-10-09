@@ -308,3 +308,15 @@
 .cal-css-box { margin:0 0 1rem; display:grid; gap:.5rem; }
 .cal-css-box .cal-btn { justify-self:start; }
 .cal-inline { display:flex; flex-wrap:wrap; gap:.5rem; align-items:center; margin:.4rem 0 0; }
+
+/* birthdays (F2) */
+.cal-wk-bday { margin:.5rem 0 0; font-size:.88rem; }
+.cal-bd-groups { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:1rem; margin-top:1rem; }
+.cal-bd-group { border:1px solid var(--line, #ddd); border-radius:10px; padding:.8rem 1rem; break-inside:avoid; }
+.cal-bd-group h2 { font-size:1rem; margin:0 0 .4rem; }
+.cal-bd-group ul { list-style:none; margin:0; padding:0; }
+.cal-bd-group li { display:flex; gap:.6rem; padding:.2rem 0; }
+.cal-bd-group li .d { min-width:3.4rem; font-variant-numeric:tabular-nums; color:#666; }
+.cal-bd-group li.today { font-weight:700; }
+.cal-bd-nav { display:flex; gap:1rem; align-items:center; margin-top:.5rem; }
+@media print { .no-print, nav, header.top, .sidebar { display:none !important; } .cal-bd-group { border-color:#999; } }

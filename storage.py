@@ -22,6 +22,7 @@ and calculator stay cleanly separated -- storage remembers, the engine computes.
 
 from __future__ import annotations
 import hashlib
+import recurrence
 import json
 import sqlite3
 import uuid
@@ -468,6 +469,23 @@ def init_db(conn):
     );
     CREATE INDEX IF NOT EXISTS idx_cal_person_user ON calendar_entry_person(user_id);
 
+    -- Change notices waiting to be emailed (office calendar G1). Written in the same
+    -- transaction as the change, one row per affected person (never the editor), and
+    -- flushed by office_calendar.flush_outbox as ONE email per person per burst.
+    CREATE TABLE IF NOT EXISTS calendar_outbox (
+        id        INTEGER PRIMARY KEY,
+        user_id   INTEGER NOT NULL,          -- no FK: deleting an account must never be blocked by a queued notice
+        entry_id  INTEGER NOT NULL,
+        kind      TEXT NOT NULL,             -- added | changed | cancelled | removed
+        detail    TEXT,                      -- which fields moved ("start_date,venue")
+        queued_at TEXT NOT NULL,
+        urgent    INTEGER NOT NULL DEFAULT 0,  -- the entry is today/tomorrow: no waiting
+        attempts  INTEGER NOT NULL DEFAULT 0,
+        sent_at   TEXT,
+        result    TEXT                       -- sent | skipped | failed | expired | dropped
+    );
+    CREATE INDEX IF NOT EXISTS idx_cal_outbox_open ON calendar_outbox(sent_at, user_id);
+
     CREATE TABLE IF NOT EXISTS calendar_entry_tag (
         entry_id INTEGER NOT NULL REFERENCES calendar_entry(id) ON DELETE CASCADE,
         tag      TEXT NOT NULL,
@@ -629,6 +647,26 @@ def _add_missing_columns(conn):
     CREATE TABLE IF NOT EXISTS leaves pre-existing tables untouched, so a column
     added after a database was first created has to be ALTERed in by hand.
     """
+    au0 = {row[1] for row in conn.execute("PRAGMA table_info(admin_user)")}
+    for col in ("bday_notify", "birthday_coordinator", "cal_email_week", "cal_email_daybefore",
+                "cal_feed_birthdays"):
+        # bday_notify: NULL = on, 0 = "don't tell me about teammates' birthdays".
+        # birthday_coordinator: 1 = an admin ticked "organises birthday celebrations".
+        if au0 and col not in au0:
+            conn.execute(f"ALTER TABLE admin_user ADD COLUMN {col} INTEGER")
+    for col in ("cal_feed_token", "cal_feed_scope"):
+        if au0 and col not in au0:
+            conn.execute(f"ALTER TABLE admin_user ADD COLUMN {col} TEXT")
+    if au0 and "cal_email_changes" not in au0:
+        # NULL = on (default). 0 = "don't email me about calendar changes".
+        conn.execute("ALTER TABLE admin_user ADD COLUMN cal_email_changes INTEGER")
+    if conn.execute("SELECT 1 FROM sqlite_master WHERE name='app_setting'").fetchone() and \
+            get_setting(conn, "cal_seen_backfilled", "") != "1":
+        # Office calendar G2: the bell counts items a person has not seen. Everything that
+        # existed before the bell did is "already seen", or day one would show a flood.
+        conn.execute("UPDATE calendar_entry_person SET seen_seq = (SELECT sequence FROM calendar_entry "
+                     "WHERE id = entry_id) WHERE seen_seq IS NULL")
+        set_setting(conn, "cal_seen_backfilled", "1")
     ce_cols = {row[1] for row in conn.execute("PRAGMA table_info(calendar_entry)")}
     if ce_cols and "css_nudged_at" not in ce_cols:
         conn.execute("ALTER TABLE calendar_entry ADD COLUMN css_nudged_at TEXT")
@@ -773,6 +811,13 @@ def _add_missing_columns(conn):
             conn.execute("ALTER TABLE admin_user ADD COLUMN photo_mime TEXT")
         if "designation" not in au_cols:
             conn.execute("ALTER TABLE admin_user ADD COLUMN designation TEXT")
+        # Optional birthday the PERSON enters (office calendar F1): month and day
+        # only, never a year; sharing is opt-in and consent is recorded.
+        for col, ddl in (("birthday_month", "INTEGER"), ("birthday_day", "INTEGER"),
+                         ("birthday_share", "TEXT"), ("birthday_consent_at", "TEXT"),
+                         ("birthday_consent_notice", "TEXT")):
+            if col not in au_cols:
+                conn.execute(f"ALTER TABLE admin_user ADD COLUMN {col} {ddl}")
         # What the home page calls the person ("Hi, <nickname>"); optional.
         if "nickname" not in au_cols:
             conn.execute("ALTER TABLE admin_user ADD COLUMN nickname TEXT")
@@ -4066,6 +4111,11 @@ def get_user_profile(conn, user_id):
         "designation": ((rp or {}).get("designation") if rp
                         else acct.get("designation")) or "",
         "nickname": acct.get("nickname") or "",
+        "birthday": get_birthday(conn, user_id),
+        "cal_email_changes": calendar_email_pref(conn, user_id),
+        "bday_notify": bday_notify_pref(conn, user_id),
+        "cal_email_extras": calendar_email_extras(conn, user_id),
+        "cal_feed": feed_get(conn, user_id),
         # position rides along too (unlinked accounts have none) so callers
         # can apply is_bureau_director() — the Director's title lives here,
         # not in designation (see is_bureau_director).
@@ -4322,6 +4372,171 @@ def set_user_nickname(conn, user_id, nickname):
     val = " ".join((nickname or "").split())[:40] or None
     conn.execute("UPDATE admin_user SET nickname=? WHERE id=?", (val, user_id))
     conn.commit()
+
+
+# ---- birthdays (office calendar F1; docs/OFFICE_CALENDAR_PLAN.md §6) ------------
+#
+# Month and day only — a year is never accepted, so it can never be stored. The person
+# enters it themselves (nobody else can set or see it from the staff form). Sharing is
+# opt-in; turning it on records WHEN and the exact notice they were shown.
+
+BIRTHDAY_SHARES = {"none": "Don't share", "section": "My section",
+                   "division": "My division", "bureau": "Whole bureau"}
+BIRTHDAY_NOTICE = ("Optional. Only the month and day are kept, never your year. We use it to greet "
+                   "you and remind your teammates. Choose who sees it; you can remove it any time.")
+
+
+def birthday_check(month, day):
+    """(month, day) as ints, or ValueError with a sentence a person can read. Feb 29 is fine
+    (checked against a leap year); Apr 31 is not."""
+    try:
+        m, d = int(str(month).strip()), int(str(day).strip())
+        date(2000, m, d)
+    except (TypeError, ValueError):
+        raise ValueError("That isn't a real date. Pick a month and a day that exist.") from None
+    return m, d
+
+
+def get_birthday(conn, user_id):
+    """{month, day, share, consent_at, label} for one account, or None when none is set."""
+    r = conn.execute("SELECT birthday_month, birthday_day, birthday_share, birthday_consent_at "
+                     "FROM admin_user WHERE id=?", (user_id,)).fetchone()
+    if not r or not r[0] or not r[1]:
+        return None
+    return {"month": r[0], "day": r[1], "share": r[2] if r[2] in BIRTHDAY_SHARES else "none",
+            "consent_at": r[3], "label": f"{_MONTH_NAMES[r[0] - 1]} {r[1]}"}
+
+
+def set_birthday(conn, user_id, month, day, share="none"):
+    """Save the account's own birthday. Choosing a sharing scope (from "none") records the
+    consent time and the notice shown; going back to "none" erases that record. Raises
+    ValueError for an impossible date or an unknown sharing choice."""
+    m, d = birthday_check(month, day)
+    if share not in BIRTHDAY_SHARES:
+        raise ValueError("Pick who can see your birthday from the list.")
+    prior = get_birthday(conn, user_id)
+    if share == "none":
+        consent = (None, None)
+    elif prior and prior["share"] == share and prior["consent_at"]:
+        consent = None                                    # unchanged choice: keep the record
+    else:
+        consent = (tz.now_iso(), BIRTHDAY_NOTICE)
+    conn.execute("UPDATE admin_user SET birthday_month=?, birthday_day=?, birthday_share=? WHERE id=?",
+                 (m, d, share, user_id))
+    if consent is not None:
+        conn.execute("UPDATE admin_user SET birthday_consent_at=?, birthday_consent_notice=? WHERE id=?",
+                     (*consent, user_id))
+    conn.commit()
+
+
+def clear_birthday(conn, user_id):
+    """Withdraw: the date, the sharing choice and the consent record all go."""
+    conn.execute("UPDATE admin_user SET birthday_month=NULL, birthday_day=NULL, birthday_share=NULL, "
+                 "birthday_consent_at=NULL, birthday_consent_notice=NULL WHERE id=?", (user_id,))
+    conn.commit()
+
+
+def set_calendar_email_extras(conn, user_id, *, week=None, daybefore=None):
+    """The Monday week-ahead and the day-before reminder switches (each on by default, stored
+    as NULL; None leaves one alone)."""
+    for col, on in (("cal_email_week", week), ("cal_email_daybefore", daybefore)):
+        if on is not None:
+            conn.execute(f"UPDATE admin_user SET {col}=? WHERE id=?", (None if on else 0, user_id))
+    conn.commit()
+
+
+def calendar_email_extras(conn, user_id):
+    r = conn.execute("SELECT cal_email_week, cal_email_daybefore FROM admin_user WHERE id=?", (user_id,)).fetchone()
+    return {"week": not (r and r[0] == 0), "daybefore": not (r and r[1] == 0)}
+
+
+# ---- the personal calendar feed (office calendar G4) ---------------------------------
+#
+# A subscribe link that works without logging in, because calendar apps cannot sign in. So the
+# secret IS the link: a long random token, one per person, replaceable at any time ("reset" makes
+# the old link stop working at once) and removable. What the feed shows is decided when it is
+# fetched, by the same visibility rules as the calendar page, for the token's owner.
+
+FEED_SCOPES = {"mine": "My items (plus what is bureau-wide)", "section": "My section"}
+
+
+def feed_get(conn, user_id):
+    """{token, scope, birthdays} for this account, or None when it has no feed link."""
+    r = conn.execute("SELECT cal_feed_token, cal_feed_scope, cal_feed_birthdays FROM admin_user WHERE id=?",
+                     (user_id,)).fetchone()
+    if not r or not r[0]:
+        return None
+    return {"token": r[0], "scope": r[1] if r[1] in FEED_SCOPES else "mine", "birthdays": r[2] == 1}
+
+
+def feed_reset(conn, user_id):
+    """Create the link, or replace it (the old one stops working immediately). Returns the token."""
+    import secrets
+    token = secrets.token_urlsafe(24)
+    conn.execute("UPDATE admin_user SET cal_feed_token=? WHERE id=?", (token, user_id))
+    conn.commit()
+    return token
+
+
+def feed_off(conn, user_id):
+    conn.execute("UPDATE admin_user SET cal_feed_token=NULL WHERE id=?", (user_id,))
+    conn.commit()
+
+
+def feed_set(conn, user_id, scope, birthdays):
+    if scope not in FEED_SCOPES:
+        raise ValueError("Pick what the feed should show from the list.")
+    conn.execute("UPDATE admin_user SET cal_feed_scope=?, cal_feed_birthdays=? WHERE id=?",
+                 (scope, 1 if birthdays else 0, user_id))
+    conn.commit()
+
+
+def feed_owner(conn, token):
+    """The ACTIVE account a feed token belongs to (the full account row), or None."""
+    if not token or len(token) < 20:
+        return None
+    r = conn.execute("SELECT id FROM admin_user WHERE cal_feed_token=? AND active=1", (token,)).fetchone()
+    return get_admin_user_by_id(conn, r[0]) if r else None
+
+
+def set_bday_notify_pref(conn, user_id, on):
+    """Whether this account hears about teammates' birthdays (the bell and the Monday email's
+    line). On by default (stored as NULL)."""
+    conn.execute("UPDATE admin_user SET bday_notify=? WHERE id=?", (None if on else 0, user_id))
+    conn.commit()
+
+
+def bday_notify_pref(conn, user_id):
+    r = conn.execute("SELECT bday_notify FROM admin_user WHERE id=?", (user_id,)).fetchone()
+    return not (r and r[0] == 0)
+
+
+def set_birthday_coordinators(conn, user_ids):
+    """Replace the set of accounts an admin has ticked as organising birthday celebrations
+    (OPTIONAL — with nobody ticked, the coordinator emails simply do not go out)."""
+    ids = sorted({int(u) for u in user_ids})
+    conn.execute("UPDATE admin_user SET birthday_coordinator=NULL")
+    if ids:
+        conn.execute("UPDATE admin_user SET birthday_coordinator=1 WHERE id IN (%s)" % ",".join("?" * len(ids)), ids)
+    conn.commit()
+
+
+def birthday_coordinators(conn):
+    """Active accounts ticked as coordinators: [{id, username}]."""
+    return [{"id": r[0], "username": r[1]} for r in conn.execute(
+        "SELECT id, username FROM admin_user WHERE active=1 AND birthday_coordinator=1 ORDER BY username")]
+
+
+def set_calendar_email_pref(conn, user_id, on):
+    """Whether this account is emailed when a calendar item they are on is added, changed or
+    cancelled. On by default (stored as NULL); an admin's global switch still applies."""
+    conn.execute("UPDATE admin_user SET cal_email_changes=? WHERE id=?", (None if on else 0, user_id))
+    conn.commit()
+
+
+def calendar_email_pref(conn, user_id):
+    r = conn.execute("SELECT cal_email_changes FROM admin_user WHERE id=?", (user_id,)).fetchone()
+    return not (r and r[0] == 0)
 
 
 def set_user_designation(conn, user_id, designation):
@@ -9526,8 +9741,9 @@ def whereabouts_rollups(conn, monday, before=None):
         for chief in get_approvers_for(conn, uid):
             if chief in sent:
                 continue
-            e = out.setdefault(chief, {"missing": [], "total": 0})
+            e = out.setdefault(chief, {"missing": [], "total": 0, "staff": {}})
             e["total"] += 1
+            e["staff"][uid] = name
             if not done:
                 e["missing"].append(name)
     return {c: e for c, e in out.items() if e["missing"]}
@@ -9940,6 +10156,23 @@ def _cal_clean(vals):
     return out
 
 
+def _cal_series_ok(v):
+    """A repeating item must carry a supported, ending rule that begins on its own start date, and
+    can't be a trip (trips feed the weekly whereabouts) or an overlay on a CSS activity. Also tidies
+    the skipped-dates list: valid ISO dates only, sorted, none without a rule."""
+    rule = v.get("rrule")
+    if not rule:
+        if v.get("exdates"):
+            v["exdates"] = None
+        return
+    if v.get("kind") == "travel":
+        raise ValueError("A trip can't repeat. Add each trip on its own.")
+    if v.get("event_id"):
+        raise ValueError("An item linked to a CSS activity can't repeat.")
+    v["rrule"] = recurrence.validate(rule, date.fromisoformat(v["start_date"]))
+    v["exdates"] = recurrence.join_exdates(recurrence.parse_exdates(v.get("exdates")))
+
+
 def _cal_span_ok(start, end):
     if end is not None and end < start:
         raise ValueError("end_date cannot be before start_date")
@@ -10027,6 +10260,75 @@ def _cal_write_tags(conn, entry_id, tags):
                      (entry_id, t))
 
 
+def _cal_stamp_seen(conn, entry_id, seq, by, everyone=False):
+    """Mark an entry as seen at `seq` for the person who made the change (or for everyone, for
+    a bulk import). Runs inside the caller's transaction."""
+    if everyone:
+        conn.execute("UPDATE calendar_entry_person SET seen_seq=? WHERE entry_id=?", (seq, entry_id))
+    elif by:
+        conn.execute("UPDATE calendar_entry_person SET seen_seq=? WHERE entry_id=? AND user_id IN "
+                     "(SELECT id FROM admin_user WHERE username=?)", (seq, entry_id, by))
+
+
+def cal_unseen_for_user(conn, user_id, today=None):
+    """Upcoming calendar items this person is ON and has not seen at their current sequence:
+    [{entry_id, title, start, end, kind}] with kind new (never opened), changed (the schedule
+    moved since) or cancelled. The bell counts these; /calendar/updates lists and clears them."""
+    today = (today or tz.today_local())
+    today = today.isoformat() if hasattr(today, "isoformat") else str(today)
+    out = []
+    for eid, title, a, b, status, seq, seen in conn.execute(
+            "SELECT e.id, e.title, e.start_date, COALESCE(NULLIF(e.end_date, ''), e.start_date), "
+            "e.status, e.sequence, p.seen_seq FROM calendar_entry_person p "
+            "JOIN calendar_entry e ON e.id = p.entry_id WHERE p.user_id = ? "
+            "AND (COALESCE(NULLIF(e.end_date, ''), e.start_date) >= ? OR (e.rrule IS NOT NULL "
+            "AND substr(e.rrule, instr(e.rrule, 'UNTIL=') + 6, 8) >= ?)) "
+            "AND (p.seen_seq IS NULL OR p.seen_seq < e.sequence) ORDER BY e.start_date, e.id",
+            (user_id, today, today.replace("-", ""))):
+        kind = "cancelled" if status == "cancelled" else ("new" if seen is None else "changed")
+        out.append({"entry_id": eid, "title": title, "start": a, "end": b, "kind": kind})
+    return out
+
+
+def cal_mark_seen(conn, user_id, entry_ids=None):
+    """The person has now seen these items (all their unseen ones when `entry_ids` is None)."""
+    sql = ("UPDATE calendar_entry_person SET seen_seq = (SELECT sequence FROM calendar_entry "
+           "WHERE id = entry_id) WHERE user_id = ? AND (seen_seq IS NULL OR seen_seq < "
+           "(SELECT sequence FROM calendar_entry WHERE id = entry_id))")
+    args = [user_id]
+    if entry_ids is not None:
+        ids = [int(i) for i in entry_ids]
+        if not ids:
+            return 0
+        sql += " AND entry_id IN (%s)" % ",".join("?" * len(ids))
+        args += ids
+    n = conn.execute(sql, args).rowcount
+    conn.commit()
+    return n
+
+
+def cal_trip_changes_after_confirm(conn, user_id, monday):
+    """Trips this person is on, covering a working day of the week starting `monday`, whose
+    schedule changed AFTER they last confirmed that week: [{entry_id, title}]. Nothing if they
+    never confirmed the week (then the form simply opens plotted from the calendar)."""
+    sub = conn.execute("SELECT submitted_at FROM whereabouts_week WHERE user_id=? AND week_start=? "
+                       "AND submitted_at IS NOT NULL", (user_id, monday.isoformat())).fetchone()
+    if not sub:
+        return []
+    end = (monday + timedelta(days=4)).isoformat()
+    out = []
+    for eid, title, seq in conn.execute(
+            "SELECT e.id, e.title, e.sequence FROM calendar_entry e JOIN calendar_entry_person p ON p.entry_id = e.id "
+            "WHERE p.user_id=? AND e.kind='travel' AND e.status='confirmed' AND e.sequence > 0 "
+            "AND e.start_date <= ? AND COALESCE(NULLIF(e.end_date, ''), e.start_date) >= ?",
+            (user_id, end, monday.isoformat())):
+        moved = conn.execute("SELECT MIN(changed_at) FROM calendar_entry_revision WHERE entry_id=? AND sequence=?",
+                             (eid, seq)).fetchone()[0]
+        if moved and moved > sub[0]:
+            out.append({"entry_id": eid, "title": title})
+    return out
+
+
 def cal_get(conn, entry_id):
     row = conn.execute(f"SELECT {', '.join(_CAL_COLS)} FROM calendar_entry WHERE id=?",
                        (entry_id,)).fetchone()
@@ -10041,6 +10343,29 @@ def cal_validate(title, start_date, **fields):
         v["end_date"] = None
     _cal_span_ok(v["start_date"], v.get("end_date"))
     return v
+
+
+_CAL_NOTIFY_FIELDS = ("title", "start_date", "end_date", "start_time", "end_time", "time_note",
+                      "venue", "modality", "meeting_url", "status", "rrule", "exdates")
+
+
+def _cal_enqueue(conn, entry, kind, user_ids, by, detail=""):
+    """Queue a change notice for each of `user_ids` — never the person who made the change,
+    and nothing for an entry that is already over. Runs inside the caller's transaction (the
+    caller commits). `entry` needs start_date / end_date as they stand AFTER the change."""
+    if not user_ids:
+        return
+    today = tz.today_local()
+    if cal_last_day(entry) < today.isoformat():
+        return
+    urgent = 1 if entry["start_date"] <= (today + timedelta(days=1)).isoformat() else 0
+    skip = set()
+    if by:
+        skip = {r[0] for r in conn.execute("SELECT id FROM admin_user WHERE username=?", (by,))}
+    now = tz.now_iso()
+    for uid in sorted(set(user_ids) - skip):
+        conn.execute("INSERT INTO calendar_outbox(user_id, entry_id, kind, detail, queued_at, urgent) "
+                     "VALUES (?,?,?,?,?,?)", (uid, entry["id"], kind, detail or None, now, urgent))
 
 
 def cal_create(conn, title, start_date, *, end_date=None, kind="meeting",
@@ -10067,6 +10392,9 @@ def cal_create(conn, title, start_date, *, end_date=None, kind="meeting",
     if v["end_date"] == v["start_date"]:
         v["end_date"] = None
     _cal_span_ok(v["start_date"], v["end_date"])
+    series = {**v, "event_id": event_id}
+    _cal_series_ok(series)
+    v["rrule"], v["exdates"] = series["rrule"], series["exdates"]
     people = _cal_normalise_people(people)
     tags = _cal_normalise_tags(tags)
     now = tz.now_iso()
@@ -10084,8 +10412,11 @@ def cal_create(conn, title, start_date, *, end_date=None, kind="meeting",
          by, now, by, now, cancelled[0], cancelled[1]))
     entry_id = cur.lastrowid
     _cal_write_people(conn, entry_id, people, by)
+    _cal_stamp_seen(conn, entry_id, 0, by, everyone=(source == "import"))
     _cal_write_tags(conn, entry_id, tags)
     _cal_revision(conn, entry_id, 0, "create", by, {"title": [None, v["title"]]})
+    if source != "import" and v["status"] != "cancelled":          # a bulk import never emails anyone
+        _cal_enqueue(conn, {"id": entry_id, **v}, "added", [u for u, _r in people], by)
     conn.commit()
     if by and audit_it:
         audit(conn, by, "calendar_create", target_type="calendar_entry",
@@ -10117,6 +10448,10 @@ def cal_update(conn, entry_id, *, by=None, expected_sequence=None,
         if "end_date" in v or "start_date" in v:
             v["end_date"] = None
     _cal_span_ok(merged["start_date"], merged["end_date"])
+    _cal_series_ok(merged)
+    for f in ("rrule", "exdates"):                     # a tidied value (or a cleared list) is part of the change
+        if f in v or merged[f] != cur[f]:
+            v[f] = merged[f]
     diff = {f: [cur[f], merged[f]] for f in v if merged[f] != cur[f]}
     if "end_date" in merged and merged["end_date"] != cur["end_date"]:
         diff["end_date"] = [cur["end_date"], merged["end_date"]]
@@ -10143,9 +10478,21 @@ def cal_update(conn, entry_id, *, by=None, expected_sequence=None,
                  + " WHERE id=?", (*sets.values(), entry_id))
     if "people" in diff:
         _cal_write_people(conn, entry_id, new_people, by)
+    _cal_stamp_seen(conn, entry_id, seq, by)           # you have seen what you just changed yourself
     if "tags" in diff:
         _cal_write_tags(conn, entry_id, new_tags)
     _cal_revision(conn, entry_id, seq, "update", by, diff)
+    old_ids = {p["user_id"] for p in cur["people"]}
+    new_ids = {u for u, _r in new_people} if "people" in diff else old_ids
+    if merged["status"] == "cancelled":
+        if cur["status"] != "cancelled":
+            _cal_enqueue(conn, merged, "cancelled", old_ids, by)
+    else:
+        _cal_enqueue(conn, merged, "added", new_ids - old_ids, by)
+        _cal_enqueue(conn, merged, "removed", old_ids - new_ids, by)
+        moved = [f for f in _CAL_NOTIFY_FIELDS if f in diff]
+        if moved:
+            _cal_enqueue(conn, merged, "changed", old_ids & new_ids, by, ",".join(moved))
     conn.commit()
     if by:
         audit(conn, by, "calendar_update", target_type="calendar_entry",
@@ -10218,11 +10565,39 @@ def cal_list_between(conn, start, end, *, include_cancelled=False):
     starts before the window but runs into it is included."""
     start, end = _cal_date(start, "start"), _cal_date(end, "end")
     sql = (f"SELECT {', '.join(_CAL_COLS)} FROM calendar_entry "
-           "WHERE start_date <= ? AND COALESCE(end_date, start_date) >= ?")
+           "WHERE start_date <= ? AND (COALESCE(end_date, start_date) >= ? "
+           "OR (rrule IS NOT NULL AND substr(rrule, instr(rrule, 'UNTIL=') + 6, 8) >= ?))")
     if not include_cancelled:
         sql += " AND status <> 'cancelled'"
     sql += " ORDER BY start_date, COALESCE(start_time, ''), id"
-    return _cal_hydrate(conn, conn.execute(sql, (end, start)).fetchall())
+    return _cal_hydrate(conn, conn.execute(sql, (end, start, start.replace("-", ""))).fetchall())
+
+
+def cal_last_day(entry):
+    """The last date an entry can touch: the end of a one-off, the UNTIL of a series."""
+    if entry.get("rrule"):
+        u = recurrence.until_of(entry["rrule"])
+        if u:
+            return max(u, date.fromisoformat(entry["end_date"] or entry["start_date"])).isoformat()
+    return entry.get("end_date") or entry["start_date"]
+
+
+def cal_occurrences_between(conn, start, end, *, include_cancelled=False):
+    """Every occurrence overlapping [start, end] as (entry, occ_start, occ_end) ISO dates — a
+    plain entry is its own single occurrence, a series is expanded (skipped dates removed, a
+    multi-day occurrence that began earlier and runs into the window counted)."""
+    out = []
+    a, b = date.fromisoformat(_cal_date(start, "start")), date.fromisoformat(_cal_date(end, "end"))
+    for e in cal_list_between(conn, a.isoformat(), b.isoformat(), include_cancelled=include_cancelled):
+        first = date.fromisoformat(e["start_date"])
+        span = (date.fromisoformat(e["end_date"] or e["start_date"]) - first).days
+        if not e.get("rrule"):
+            out.append((e, e["start_date"], e["end_date"] or e["start_date"]))
+            continue
+        for occ in recurrence.occurrences(first, e["rrule"], e["exdates"], a, b, span):
+            out.append((e, occ.isoformat(), (occ + timedelta(days=span)).isoformat()))
+    out.sort(key=lambda t: (t[1], t[0]["start_time"] or "", t[0]["id"]))
+    return out
 
 
 def cal_revisions(conn, entry_id):

@@ -63,7 +63,9 @@ import dashboard_insights as di
 import dashboard_export as dx
 # The Office Connect landing payload. It takes get_atoms/view_memo as arguments
 # rather than importing them back out of here, so the dependency stays one-way.
+import office_calendar as oc_cal
 import office_connect as oc
+import birthdays
 import calendar_routes
 import report_docs
 import csm_report
@@ -1854,7 +1856,7 @@ def invalidate_atoms():
 # =====================================================================
 
 _PUBLIC_PREFIXES = ("/r/", "/photo/", "/e/", "/static/", "/lang/", "/wellness/decide/",
-                    "/whereabouts/")
+                    "/whereabouts/", "/calendar/feed/")
 _PUBLIC_EXACT = {"/seq", "/login", "/logout", "/favicon.ico",
                  "/set-password", "/forgot", "/reset-password", "/health",
                  "/sw.js", "/manifest.webmanifest",
@@ -1986,6 +1988,10 @@ def _notification_items(conn, user, feedback_unread):
             "text": _decision_summary("work arrangement request", wa_decided),
             "url": "/work-arrangement", "count": len(wa_decided),
         })
+    try:
+        items.extend(oc_cal.bell_rows(conn, user["id"], _today_local()))
+    except Exception:                      # noqa: BLE001 — the bell must never break a page
+        pass
     return items
 
 
@@ -2601,6 +2607,9 @@ def admin_users(request: Request, err: str = "", link: str = "", msg: str = ""):
         rows = [dict(p, account=by_rp.get(p["id"])) for p in staff]
         standalone = [u for u in st.list_admin_users(conn) if u["rp_id"] is None]
         have = sum(1 for r in rows if r["account"])
+        accounts_all = st.list_admin_users(conn)
+        bday_on = {c["id"] for c in st.birthday_coordinators(conn)}
+        bday_names = {r["account"]["id"]: r["name"] for r in rows if r["account"]}
         # Temporary OIC / acting approver, per section: who currently stands in
         # for a section chief on leave, and who's eligible to be picked --
         # active accounts belonging to that same section other than whoever
@@ -2634,6 +2643,8 @@ def admin_users(request: Request, err: str = "", link: str = "", msg: str = ""):
         "rows": rows, "standalone": standalone, "have": have, "total": len(rows),
         "roles": auth.ROLES, "role_labels": auth.ROLE_LABELS, "role_blurb": auth.ROLE_BLURB,
         "bureau_levels": st.BUREAU_ACCESS_LEVELS,
+        "bday_accounts": [{"id": u["id"], "label": bday_names.get(u["id"]) or u["username"], "on": u["id"] in bday_on}
+                          for u in accounts_all if u["active"]],
         "email_configured": mailer.email_configured(),
         "sections": sections, "section_oics": section_oics, "section_accounts": section_accounts,
         "err": err, "link": link, "msg": msg, "show_scope": False, "nav_active": "",
@@ -2770,6 +2781,29 @@ async def admin_users_bureau_access(request: Request, user_id: int):
     return RedirectResponse(
         "/admin/users?msg=" + quote(f"Now sees: {st.BUREAU_ACCESS_LABELS[level]}."),
         status_code=303)
+
+
+@app.post("/admin/users/birthday-coordinators")
+async def admin_users_birthday_coordinators(request: Request):
+    """Tick the (optional) accounts that organise birthday celebrations. They get two extra emails
+    — the day before and a monthly list — about birthdays people shared with them. Nobody ticked
+    means those two emails do not go; everything else about birthdays works without it."""
+    if (r := _forbid(request, "manage_users")):
+        return r
+    body = parse_qsl((await request.body()).decode("utf-8"), keep_blank_values=True)
+    ids = [int(v) for k, v in body if k == "coordinator" and v.isdigit()]
+    conn = get_conn()
+    try:
+        valid = {u["id"] for u in st.list_admin_users(conn) if u["active"]}
+        ids = [i for i in ids if i in valid]
+        st.set_birthday_coordinators(conn, ids)
+        _audit(request, conn, "birthday_coordinators_set", target_type="user", target_id="*",
+               summary=f"Birthday celebration coordinators: {len(ids)} account(s)")
+    finally:
+        conn.close()
+    return RedirectResponse("/admin/users?msg=" + quote(
+        f"{len(ids)} birthday coordinator{'' if len(ids) == 1 else 's'} saved." if ids
+        else "No birthday coordinators — the day-before and monthly emails won't be sent."), status_code=303)
 
 
 @app.post("/admin/users/section-oic/{org_unit_id}/set")
@@ -4438,6 +4472,19 @@ def _reminders_due(conn, now=None):
     return st.get_setting(conn, _REMINDER_SETTING) != now.date().isoformat()
 
 
+def _flush_calendar_outbox():
+    """Each tick: send the calendar change emails that are ready (one per person per burst).
+    Without a public base URL there is nothing to link to, so the notices simply wait."""
+    base = send_reminders._base_url()
+    if not base:
+        return
+    conn = st.connect(DB)
+    try:
+        oc_cal.flush_outbox(conn, base)
+    finally:
+        conn.close()
+
+
 async def _scheduler_loop():
     while True:
         try:
@@ -4464,6 +4511,10 @@ async def _scheduler_loop():
             if reminders_due:
                 await asyncio.to_thread(send_reminders.run, DB)
         except Exception:         # noqa: BLE001 — never let the loop die
+            pass
+        try:
+            await asyncio.to_thread(_flush_calendar_outbox)
+        except Exception:         # noqa: BLE001
             pass
         await asyncio.sleep(_SCHED_TICK)
 
@@ -4837,6 +4888,9 @@ def choose(request: Request, msg: str = "", view: str = "team"):
     return templates.TemplateResponse(request, "office_connect.html", {
         "nav_active": "", "show_scope": False, "msg": msg,
         "first_name": first_name, "profile": profile,
+        "is_birthday": bool((profile or {}).get("birthday")
+                            and birthdays.is_today(profile["birthday"]["month"],
+                                                   profile["birthday"]["day"], _today_local())),
         "initials": _initials(profile.get("person_name") if profile else ""),
         "css_url": css_url, "wstats": wstats,
         "wa_now": wa_now, "wa_label": wa_label,
@@ -5040,6 +5094,39 @@ def _initials(name):
     return (parts[0][0] + (parts[-1][0] if len(parts) > 1 else "")).upper()
 
 
+def _birthday_from_form(p):
+    """What the profile/welcome form says about the birthday: None to leave it as is (the
+    form didn't carry the fields), "clear" for blank month+day, or (month, day, share).
+    ValueError carries a readable sentence."""
+    if p.get("birthday_present") != "1":
+        return None
+    m, d = (p.get("birthday_month") or "").strip(), (p.get("birthday_day") or "").strip()
+    if not m and not d:
+        return "clear"
+    if not (m and d):
+        raise ValueError("Pick both a month and a day for your birthday, or leave both blank.")
+    mm, dd = st.birthday_check(m, d)
+    share = (p.get("birthday_share") or "none").strip()
+    if share not in st.BIRTHDAY_SHARES:
+        raise ValueError("Pick who can see your birthday from the list.")
+    return mm, dd, share
+
+
+def _save_birthday(request, conn, uid, choice):
+    if choice is None:
+        return
+    if choice == "clear":
+        if st.get_birthday(conn, uid):
+            st.clear_birthday(conn, uid)
+            _audit(request, conn, "birthday_clear", target_type="user", target_id=uid,
+                   summary="removed their birthday")
+        return
+    mm, dd, share = choice
+    st.set_birthday(conn, uid, mm, dd, share)
+    _audit(request, conn, "birthday_set", target_type="user", target_id=uid,
+           summary=f"set their birthday (sharing: {st.BIRTHDAY_SHARES[share]})")   # never the date
+
+
 def _render_welcome(request, next="/", err="", form=None):
     """Render the onboarding page. Shared by the GET route and the POST's
     validation-error path (mirrors _wellness_apply_page)."""
@@ -5056,6 +5143,7 @@ def _render_welcome(request, next="/", err="", form=None):
         "initials": _initials(profile.get("person_name") if profile else ""),
         "catalog": st.AVATAR_CATALOG, "name_maxlen": st.AVATAR_NAME_MAXLEN,
         "next": _safe_next(next), "err": err, "form": form or {},
+        **_birthday_ctx(profile, form),
     })
 
 
@@ -5078,10 +5166,15 @@ async def welcome_submit(request: Request):
         return _render_welcome(request, next=nxt, err="Please pick a companion.", form=p)
     if not pet_name:
         return _render_welcome(request, next=nxt, err="Give your companion a name.", form=p)
+    try:
+        bday = _birthday_from_form(p)
+    except ValueError as e:
+        return _render_welcome(request, next=nxt, err=str(e), form=p)
     photo = _decode_photo(p.get("photo_data", ""))
     conn = get_conn()
     try:
         profile = st.get_user_profile(conn, request.state.user["id"])
+        _save_birthday(request, conn, request.state.user["id"], bday)
         if photo and profile and profile.get("rp_id"):
             st.set_rp_photo(conn, profile["rp_id"], photo[0], photo[1])
             _audit(request, conn, "profile_update", target_type="person",
@@ -5096,7 +5189,28 @@ async def welcome_submit(request: Request):
     return RedirectResponse(nxt, status_code=303)
 
 
-def _render_me(request, msg="", err=""):
+def _birthday_ctx(profile, form=None):
+    """Template context for the shared birthday fields: what is on file, or what was just
+    posted (so a validation error keeps the person's choices)."""
+    saved = (profile or {}).get("birthday") or {}
+    f = form or {}
+    return {"bd": {"month": f.get("birthday_month", saved.get("month", "")),
+                   "day": f.get("birthday_day", saved.get("day", "")),
+                   "share": f.get("birthday_share", saved.get("share", "none")),
+                   "saved": bool(saved), "consent_at": saved.get("consent_at")},
+            "bd_months": st._MONTH_NAMES, "bd_shares": st.BIRTHDAY_SHARES,
+            "bd_notice": st.BIRTHDAY_NOTICE}
+
+
+def _feed_ctx(request, profile):
+    f = (profile or {}).get("cal_feed")
+    if not f:
+        return None
+    url = f"{_base_url(request)}/calendar/feed/{f['token']}.ics"
+    return {**f, "url": url, "webcal": "webcal://" + url.split("://", 1)[1]}
+
+
+def _render_me(request, msg="", err="", form=None):
     conn = get_conn()
     try:
         profile = st.get_user_profile(conn, request.state.user["id"])
@@ -5117,7 +5231,8 @@ def _render_me(request, msg="", err=""):
         "wstats": wstats,
         "ladder": st.avatar_growth_ladder(kind, wstats),
         "growth_how": st.avatar_growth_actions(kind),
-        "msg": msg, "err": err,
+        "msg": msg, "err": err, **_birthday_ctx(profile, form),
+        "feed": _feed_ctx(request, profile), "feed_scopes": st.FEED_SCOPES,
     })
 
 
@@ -5170,6 +5285,10 @@ async def me_submit(request: Request):
         return _render_me(request, err="Please pick a companion.")
     if not pet_name:
         return _render_me(request, err="Give your companion a name.")
+    try:
+        bday = _birthday_from_form(p)
+    except ValueError as e:
+        return _render_me(request, err=str(e), form=p)
     photo = _decode_photo(p.get("photo_data", ""))
     # The signature pad only fills signature_data when someone actually drew
     # something, so saving the profile never wipes a signature by accident.
@@ -5216,6 +5335,12 @@ async def me_submit(request: Request):
                     st.clear_rp_signature(conn, profile["rp_id"])
                 _audit(request, conn, "profile_update", target_type="user",
                        target_id=uid, summary="removed their signature")
+        _save_birthday(request, conn, uid, bday)
+        if p.get("notify_present") == "1":
+            st.set_calendar_email_pref(conn, uid, p.get("cal_email_changes") == "1")
+            st.set_bday_notify_pref(conn, uid, p.get("bday_notify") == "1")
+            st.set_calendar_email_extras(conn, uid, week=p.get("cal_email_week") == "1",
+                                         daybefore=p.get("cal_email_daybefore") == "1")
         st.set_user_designation(conn, uid, designation)
         st.set_user_nickname(conn, uid, nickname)
         # Keep the staff directory in sync: a linked account's designation is
@@ -5236,6 +5361,18 @@ async def me_submit(request: Request):
     # Close the profile after saving: land back on the home chooser with a
     # confirmation, rather than re-opening the /me editor.
     return RedirectResponse("/?msg=" + quote("Profile saved."), status_code=303)
+
+
+@app.post("/me/birthday/remove")
+def me_birthday_remove(request: Request):
+    """Withdraw in one click: the date, the sharing choice and the consent record all go."""
+    uid = request.state.user["id"]
+    conn = get_conn()
+    try:
+        _save_birthday(request, conn, uid, "clear")
+    finally:
+        conn.close()
+    return RedirectResponse("/me?msg=" + quote("Your birthday was removed."), status_code=303)
 
 
 @app.post("/avatar/care")

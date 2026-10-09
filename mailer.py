@@ -166,13 +166,19 @@ def _relay_not_run_reason(resp):
     return None
 
 
-def _send_via_relay(to, subject, body, html=None):
+def _send_via_relay(to, subject, body, html=None, attachments=None):
     """POST the message to the Apps Script web app, which sends it as the
     mailbox the script belongs to. Returns {'sent': bool, 'detail': str}."""
     url = os.environ["CSS_MAIL_RELAY_URL"]
     payload = {"secret": os.environ["CSS_MAIL_RELAY_SECRET"],
                "to": to, "subject": subject, "text": body, "html": html or "",
                "fromName": os.environ.get("CSS_MAIL_RELAY_NAME", "Office Connect")}
+    if attachments:
+        # Needs the relay script updated to read `attachments` (docs/MAIL_RELAY_SETUP.md); an older
+        # script simply ignores the key and the mail goes out without the file.
+        import base64
+        payload["attachments"] = [{"name": n, "mimeType": m.split(";")[0], "base64": base64.b64encode(b).decode("ascii")}
+                                  for n, m, b in attachments]
 
     resp, exc = _post_to_relay(url, payload)
     if exc is not None:
@@ -240,7 +246,7 @@ def _relay_result(to, subject, body, data):
     return {"sent": True, "detail": "Email sent."}
 
 
-def send(to, subject, body, html=None):
+def send(to, subject, body, html=None, attachments=None):
     """Send an email. `html` is optional — when given, the message is sent as
     text+HTML alternatives (a client shows whichever it supports); when
     omitted, plain text only. Returns {'sent': bool, 'detail': str}.
@@ -249,7 +255,7 @@ def send(to, subject, body, html=None):
         _record(to, subject, body, "NOT SENT - no mail transport configured")
         return {"sent": False, "detail": "Email is not configured on this server."}
     if relay_configured():
-        return _send_via_relay(to, subject, body, html=html)
+        return _send_via_relay(to, subject, body, html=html, attachments=attachments)
     host = os.environ["CSS_SMTP_HOST"]
     port = int(os.environ.get("CSS_SMTP_PORT", "587"))
     use_tls = os.environ.get("CSS_SMTP_TLS", "1") != "0"
@@ -263,6 +269,9 @@ def send(to, subject, body, html=None):
     msg.set_content(body)
     if html:
         msg.add_alternative(html, subtype="html")
+    for fname, mime, data in (attachments or ()):
+        main, _, sub = mime.split(";")[0].partition("/")
+        msg.add_attachment(data, maintype=main or "application", subtype=sub or "octet-stream", filename=fname)
     try:
         socket.getaddrinfo = _ipv4_only_getaddrinfo
         # Port 465 is implicit TLS from the first byte (SMTP_SSL); STARTTLS
@@ -604,6 +613,108 @@ def calendar_css_nudge_message(name, title, when, link):
     return subject, body, html
 
 
+_CAL_KIND_WORD = {"added": "New", "changed": "Changed", "cancelled": "Cancelled", "removed": "Removed from"}
+
+
+def calendar_changes_message(name, rows, link):
+    """Returns (subject, plain_text_body, html_body). One email per person per burst of calendar
+    edits. `rows` is [{kind, title, when, where, what, url}] — kind is added / changed /
+    cancelled / removed; `what` says which parts moved for a change."""
+    if len(rows) == 1:
+        r = rows[0]
+        subject = {"added": f"Added to the calendar: {r['title']}",
+                   "changed": f"Changed on the calendar: {r['title']}",
+                   "cancelled": f"Cancelled: {r['title']}",
+                   "removed": f"Taken off your calendar: {r['title']}"}[r["kind"]]
+    else:
+        subject = f"Calendar update: {len(rows)} items"
+
+    def line(r):
+        bits = [r["when"]] + ([r["where"]] if r.get("where") else []) + ([r["what"]] if r.get("what") else [])
+        return f"  • {_CAL_KIND_WORD[r['kind']]}: {r['title']} — " + " · ".join(bits) + (f"\n    {r['url']}" if r.get("url") else "")
+    body = (f"Hello {name or 'there'},\n\nHere is what changed on the calendar for you:\n\n"
+            + "\n".join(line(r) for r in rows) + f"\n\nOpen your calendar:\n  {link}\n\n"
+            "You can turn these emails off on your profile.\n")
+    cells = "".join(
+        f'<tr><td style="padding:6px 12px 6px 0; font-family:Arial,Helvetica,sans-serif; font-size:13px; '
+        f'color:{_SOFT}; vertical-align:top;">{_e(_CAL_KIND_WORD[r["kind"]])}</td>'
+        f'<td style="padding:6px 0; font-family:Arial,Helvetica,sans-serif; font-size:14px; color:{_INK};">'
+        f'<strong>{_e(r["title"])}</strong><br><span style="color:{_SOFT}; font-size:13px;">'
+        f'{_e(" · ".join([r["when"]] + ([r["where"]] if r.get("where") else []) + ([r["what"]] if r.get("what") else [])))}'
+        f'</span></td></tr>' for r in rows)
+    table = (f'<table role="presentation" cellpadding="0" cellspacing="0" border="0" '
+             f'style="margin:16px 0 4px;">{cells}</table>')
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="Your calendar changed",
+        intro="Here is what was added, changed or cancelled for you.",
+        extra_html=table, cta_label="Open my calendar", link=link,
+        footnote="You can turn these emails off on your profile.",
+    )
+    return subject, body, html
+
+
+def birthday_tomorrow_message(name, day_label, celebrants, link):
+    """Returns (subject, plain_text_body, html_body). To a celebration coordinator the day before:
+    `celebrants` is [(name, unit)]. Only people who chose to share their birthday with this
+    coordinator are ever listed."""
+    one = len(celebrants) == 1
+    subject = (f"Tomorrow: {celebrants[0][0]}'s birthday" if one else f"Tomorrow: {len(celebrants)} birthdays")
+    lines = "\n".join(f"  • {n}" + (f" ({u})" if u else "") for n, u in celebrants)
+    body = (f"Hello {name or 'there'},\n\nYou are down as organising birthday celebrations. "
+            f"Tomorrow, {day_label}:\n\n{lines}\n\nThe month's list: {link}\n")
+    items = "".join(f'<li style="margin:3px 0;">{_e(n)}' + (f' <span style="color:{_SOFT};">({_e(u)})</span>' if u else "") + "</li>"
+                    for n, u in celebrants)
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},", heading="Birthday tomorrow 🎂",
+        intro=f"Tomorrow, {_e(day_label)}, you are down to organise a little something for:",
+        extra_html=f'<ul style="font-family:Arial,Helvetica,sans-serif; font-size:14px; color:{_INK};">{items}</ul>',
+        cta_label="See the month's list", link=link,
+        footnote="You get this because an admin ticked you as a celebration coordinator.")
+    return subject, body, html
+
+
+def birthday_month_message(name, month_label, rows, link):
+    """Returns (subject, plain_text_body, html_body). The first working day of the month, to a
+    coordinator: `rows` is [(day_label, name, unit)] for birthdays shared with them."""
+    subject = f"{month_label} celebrants"
+    lines = "\n".join(f"  {d}  {n}" + (f" ({u})" if u else "") for d, n, u in rows)
+    body = (f"Hello {name or 'there'},\n\nBirthdays this month ({len(rows)}):\n\n{lines}\n\n"
+            f"Printable list: {link}\n")
+    cells = "".join(f'<tr><td style="padding:4px 12px 4px 0; font-family:Arial,Helvetica,sans-serif; font-size:13px; '
+                    f'color:{_SOFT};">{_e(d)}</td><td style="padding:4px 0; font-family:Arial,Helvetica,sans-serif; '
+                    f'font-size:14px; color:{_INK};">{_e(n)}' + (f' <span style="color:{_SOFT};">({_e(u)})</span>' if u else "")
+                    + "</td></tr>" for d, n, u in rows)
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},", heading=f"{month_label} celebrants 🎂",
+        intro="Here are the birthdays shared with you this month.",
+        extra_html=f'<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:12px 0;">{cells}</table>',
+        cta_label="Open the printable list", link=link,
+        footnote="You get this because an admin ticked you as a celebration coordinator.")
+    return subject, body, html
+
+
+def calendar_day_before_message(name, day_label, items, link):
+    """Returns (subject, plain_text_body, html_body). The day before a calendar entry the person
+    is on: `items` is [{title, when, where, url}]."""
+    subject = (f"Tomorrow: {items[0]['title']}" if len(items) == 1 else f"Tomorrow: {len(items)} things on your calendar")
+
+    def one(i):
+        bits = [b for b in (i["when"], i.get("where")) if b]
+        return f"  • {i['title']}" + (" — " + " · ".join(bits) if bits else "") + (f"\n    {i['url']}" if i.get("url") else "")
+    body = (f"Hello {name or 'there'},\n\nTomorrow, {day_label}, you are on:\n\n" + "\n".join(one(i) for i in items)
+            + f"\n\nYour calendar: {link}\n\nYou can turn these reminders off on your profile.\n")
+    cells = "".join(f'<tr><td style="padding:5px 0; font-family:Arial,Helvetica,sans-serif; font-size:14px; color:{_INK};">'
+                    f'<strong>{_e(i["title"])}</strong><br><span style="font-size:13px; color:{_SOFT};">'
+                    f'{_e(" · ".join(b for b in (i["when"], i.get("where")) if b))}</span></td></tr>' for i in items)
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},", heading="Coming up tomorrow",
+        intro=f"Tomorrow, {_e(day_label)}, you are on:",
+        extra_html=f'<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0;">{cells}</table>',
+        cta_label="Open my calendar", link=link, footnote="You can turn these reminders off on your profile.")
+    return subject, body, html
+
+
 def csm_rp_results_message(rp_name, topic, event_title, link):
     """Returns (subject, plain_text_body, html_body). Sent once to a resource
     person (speaker) with a login, after their own Type-3 CSM ratings for a
@@ -854,16 +965,21 @@ def work_arrangement_file_reminder_message(name, period_label, deadline_label, l
     return subject, body, html
 
 
-def whereabouts_week_message(name, week_label, days, link):
+def whereabouts_week_message(name, week_label, days, link, birthdays=None, events=None, events_more=0):
     """Returns (subject, plain_text_body, html_body). The Monday "where will you
     be this week?" email. `days` is a list of (day_label, plotted_label) for
     Monday-Friday — already plotted from the person's filed work arrangement, so
     the email reads as a confirmation: change only what is different."""
     subject = f"Where will you be this week? {week_label}"
     lines = "\n".join(f"  {d}: {w}" for d, w in days)
+    ev_text = ""
+    if events:
+        ev_text = ("On the calendar this week:\n" + "\n".join(f"  {d}  {t}" for d, t in events)
+                   + (f"\n  …and {events_more} more" if events_more else ""))
+    bday_text = ("🎂 Birthdays this week: " + ", ".join(f"{n} ({when})" for n, when in birthdays)) if birthdays else ""
     body = (f"Hello {name or 'there'},\n\n"
             f"Here is where we have you for {week_label}, from your work arrangement:\n\n"
-            f"{lines}\n\n"
+            f"{lines}\n\n" + (f"{ev_text}\n\n" if ev_text else "") + (f"{bday_text}\n\n" if bday_text else "") +
             f"If anything is different (in the field, on leave, or in the office), "
             f"change it here — one tap, no login:\n\n  {link}\n")
     rows = "".join(
@@ -873,6 +989,17 @@ def whereabouts_week_message(name, week_label, days, link):
         f'font-weight:700; color:{_INK};">{_e(w)}</td></tr>' for d, w in days)
     table = (f'<table role="presentation" cellpadding="0" cellspacing="0" border="0" '
              f'style="margin:16px 0 4px;">{rows}</table>')
+    if events:
+        ev_rows = "".join(f'<tr><td style="padding:3px 12px 3px 0; font-family:Arial,Helvetica,sans-serif; font-size:13px; '
+                          f'color:{_SOFT};">{_e(d)}</td><td style="padding:3px 0; font-family:Arial,Helvetica,sans-serif; '
+                          f'font-size:14px; color:{_INK};">{_e(t)}</td></tr>' for d, t in events)
+        more = (f'<tr><td></td><td style="font-size:13px; color:{_SOFT};">…and {events_more} more</td></tr>' if events_more else "")
+        table += (f'<p style="margin:16px 0 4px; font-family:Arial,Helvetica,sans-serif; font-size:14px; font-weight:700; '
+                  f'color:{_INK};">On the calendar this week</p><table role="presentation" cellpadding="0" cellspacing="0" '
+                  f'border="0">{ev_rows}{more}</table>')
+    if bday_text:
+        table += (f'<p style="margin:14px 0 0; font-family:Arial,Helvetica,sans-serif; font-size:14px; '
+                  f'color:{_INK};">{_e(bday_text)}</p>')
     html = _email_html(
         greeting=f"Hi {name or 'there'},",
         heading=f"Where will you be this week?",
@@ -906,7 +1033,7 @@ def whereabouts_nudge_message(name, week_label, link):
     return subject, body, html
 
 
-def whereabouts_rollup_message(chief_name, week_label, missing, total, link):
+def whereabouts_rollup_message(chief_name, week_label, missing, total, link, calendar_lines=None):
     """Returns (subject, plain_text_body, html_body). The chief's mid-week list
     of who in their area still hasn't reported where they'll be."""
     n = len(missing)
@@ -915,13 +1042,17 @@ def whereabouts_rollup_message(chief_name, week_label, missing, total, link):
             f"{total - n} of {total} in your area have reported where they'll be for "
             f"{week_label}. Still undeclared ({n}):\n\n"
             + "\n".join(f"  - {m}" for m in missing)
+            + (f"\n\nCalendar and report disagree ({len(calendar_lines)}):\n"
+               + "\n".join(f"  - {m}" for m in calendar_lines) if calendar_lines else "")
             + f"\n\nSee who's in: {link}\n")
     html = _email_html(
         greeting=f"Hi {chief_name or 'there'},",
         heading="Whereabouts not yet reported",
         intro=(f"{total - n} of {total} in your area have reported where they'll be for "
                f"{_e(week_label)}. Still undeclared ({n}):"),
-        extra_html=_list_html(missing),
+        extra_html=_list_html(missing) + (
+            f'<p style="margin:16px 0 4px; font-family:Arial,Helvetica,sans-serif; font-size:14px; font-weight:700;">'
+            f'Calendar and report disagree ({len(calendar_lines)})</p>' + _list_html(calendar_lines) if calendar_lines else ""),
         cta_label="See who's in",
         link=link,
     )
@@ -1091,6 +1222,11 @@ FEATURES = {
         "A registrant is told when an organiser moves an activity they signed up for "
         "(the organiser chooses whether to notify).",
         "transactional"),
+    "calendar_changes": (
+        "Calendar — added / changed / cancelled",
+        "A person on a calendar item gets one email (not one per edit) when it is added, changed "
+        "or cancelled. Never the person who made the change.",
+        "transactional"),
     "css_reminder": (
         "Monitor — remind unfinished registrants",
         "An organizer's one-click reminder, from Monitor, to every registrant "
@@ -1129,6 +1265,21 @@ FEATURES = {
         "Calendar — collect feedback nudge",
         "The day after a training that was only on the calendar, its creator is asked "
         "once whether to collect feedback for it.",
+        "scheduled"),
+    "job_birthday_coordinators": (
+        "Birthdays — day before, to coordinators",
+        "Each celebration coordinator an admin ticked is told the day before who has a birthday "
+        "(only birthdays shared with them). Nobody ticked, nothing is sent.",
+        "scheduled"),
+    "job_birthday_month": (
+        "Birthdays — monthly list, to coordinators",
+        "On the first working day of the month, each coordinator gets the month's celebrants "
+        "(only birthdays shared with them).",
+        "scheduled"),
+    "job_calendar_day_before": (
+        "Calendar — day-before reminder",
+        "Each person on a calendar entry that starts tomorrow gets one reminder listing them. CSS "
+        "activities are left to the existing activity reminder, so nobody is told twice.",
         "scheduled"),
     "job_whereabouts_nudge": (
         "Weekly whereabouts — Tuesday nudge",
@@ -1222,9 +1373,23 @@ _PREVIEWS = {
         "Juan Reyes", "Friday", _SAMPLE_LINK),
     "job_awa_file": lambda: work_arrangement_file_reminder_message(
         "Juan Reyes", "October 1-15, 2026", "Friday", _SAMPLE_LINK),
+    "calendar_changes": lambda: calendar_changes_message(
+        "Juan Reyes",
+        [{"kind": "added", "title": "Orientation for new staff", "when": "Tue, Oct 14 · 9:00–10:00",
+          "where": "DOH Conference Room", "what": "", "url": _SAMPLE_LINK},
+         {"kind": "changed", "title": "Section 2 meeting", "when": "Wed, Oct 15", "where": "",
+          "what": "moved: start date, venue", "url": _SAMPLE_LINK}], _SAMPLE_LINK),
     "event_dates_changed": lambda: event_dates_changed_message(
         "Juan Reyes", "Basic Life Support Training", "October 2, 2026",
         "October 9, 2026", "DOH Conference Room", _SAMPLE_LINK),
+    "job_birthday_coordinators": lambda: birthday_tomorrow_message(
+        "Maria Santos", "Wednesday, October 14", [("Riza", "Section 1"), ("Tek", "Section 3")], _SAMPLE_LINK),
+    "job_birthday_month": lambda: birthday_month_message(
+        "Maria Santos", "October 2026", [("Wed 14", "Riza", "Section 1"), ("Sat 17", "Tek", "Section 3")], _SAMPLE_LINK),
+    "job_calendar_day_before": lambda: calendar_day_before_message(
+        "Juan Reyes", "Wednesday, October 14",
+        [{"title": "Orientation for new staff", "when": "9:00–10:00", "where": "DOH Conference Room", "url": _SAMPLE_LINK}],
+        _SAMPLE_LINK),
     "job_calendar_css_nudge": lambda: calendar_css_nudge_message(
         "Jane Dela Cruz", "Basic Life Support Training", "October 2, 2026", _SAMPLE_LINK),
     "job_whereabouts_nudge": lambda: whereabouts_nudge_message(
