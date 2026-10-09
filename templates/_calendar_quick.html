@@ -35,4 +35,14 @@
     </div>
   </form>
 </dialog>
-<script src="/static/js/calendar.js?v=20261009o" data-me="{{ quick.me }}" defer></script>
+{# The item sheet: tapping an item opens it here instead of leaving the page. The same page is still one
+   click away ("Open full page"), and without JavaScript the item link just goes there. #}
+<dialog id="cal-sheet" class="cal-sheet" aria-labelledby="cal-sheet-t">
+  <div class="cal-sheet-bar">
+    <span id="cal-sheet-t" class="cal-sheet-t">Calendar item</span>
+    <a class="cal-sheet-open" href="#" data-sheet-open>Open full page ↗</a>
+    <button type="button" class="cal-btn" data-sheet-close aria-label="Close">✕</button>
+  </div>
+  <div class="cal-sheet-body" data-sheet-body></div>
+</dialog>
+<script src="/static/js/calendar.js?v=20261010b" data-me="{{ quick.me }}" defer></script>

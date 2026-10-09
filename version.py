@@ -17,10 +17,22 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "4.8"
+APP_VERSION = "4.9"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "4.9",
+        "date": "October 10, 2026",
+        "summary": "The calendar is faster to use: search, a details panel, add from any day, and keyboard and swipe.",
+        "changes": [
+            "Search the calendar by title, place, unit, tag or person. In the agenda it looks through the whole year.",
+            "Tap an item to read it in a panel without leaving the page (a sheet from the bottom on a phone). Back or Escape closes it, and the address can be shared.",
+            "Add something from any day: the + beside a day, or a date in the month grid. Quick add opens with that date filled in.",
+            "The calendar remembers the layout and whose calendar you last chose, and opens that way next time.",
+            "Arrow keys move through time, T goes to today, A adds, S searches. On a phone, swipe left or right to move.",
+        ],
+    },
     {
         "version": "4.8",
         "date": "October 9, 2026",

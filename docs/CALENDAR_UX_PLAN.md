@@ -159,7 +159,7 @@ Each increment: **files · done when · tests**. Tests run with `./run_tests.sh`
 - **Month:** today ring, holiday label, a density dot on the phone.
 - Same tokens and themes as now (`--cal-*` pairs already have light, dark and contrast). No new colours without a contrast check.
 
-### Phase 4: frictionless
+### Phase 4: frictionless *(done, v4.9; **S** searches instead of `/` because the app already uses `/`; no refresh-free view changes, and no add button inside Week cells)*
 
 - **Details sheet:** tapping an item opens a bottom sheet (phone) or side panel (desktop) fetched from the entry page. Back/Escape closes it, and the URL updates so it can be shared. Without JS it's the ordinary link.
 - **Add from where you are:** tap an empty day or slot → Quick add with that date (already on Timeline; extend to Agenda, Week and Month).
