@@ -43,93 +43,111 @@ AUDIENCE_LABELS = {"unit": "Everyone in the owning unit",
                    "people": "Only the people I add"}
 
 
+def _filters(kind, status, tag, unit):
+    """Validated filter choices -> (filters dict for office_calendar, clean values)."""
+    clean = {"kind": kind if kind in KIND_LABELS else "",
+             "status": status if status in STATUS_LABELS and status != "cancelled" else "",
+             "tag": (tag or "").strip()[:50], "unit": unit if (unit or "").isdigit() else ""}
+    return ({"kinds": {clean["kind"]} if clean["kind"] else None,
+             "statuses": {clean["status"]} if clean["status"] else None,
+             "tags": {clean["tag"]} if clean["tag"] else None,
+             "owner_org_ids": {int(clean["unit"])} if clean["unit"] else None}, clean)
+
+
+def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="view", fixed=None):
+    """Everything the calendar body (agenda / month, filters, scope pills) needs, as a dict
+    for templates/_calendar_body.html — or None when `q` holds a date that isn't one.
+
+    Two places render that body: the /calendar page (base "/calendar", layout in `view=`)
+    and the home page's Calendar tab (base "/", layout in `layout=`, plus the fixed
+    `view=calendar` that selects the tab). `q` is the raw query (a dict of strings); every
+    link the body builds goes back to `base` carrying `fixed`, so a tab never turns into
+    the other page. Visibility is office_calendar's job; nothing here widens it."""
+    fixed = dict(fixed or {})
+    layout = "month" if q.get(layout_key) == "month" else "agenda"
+    try:
+        if layout == "month":
+            m = date.fromisoformat((q.get("month") or today.strftime("%Y-%m")) + "-01")
+            start, end = oc.month_span(m.year, m.month)
+        else:
+            start = date.fromisoformat(q["day"]) if q.get("day") else today
+            end = start + timedelta(days=AGENDA_DAYS - 1)
+    except ValueError:
+        return None                             # a hand-typed or stale date: caller falls back to today
+    filters, clean = _filters(q.get("kind", ""), q.get("status", ""), q.get("tag", ""), q.get("unit", ""))
+    ctx = oc.viewer_context(conn, user)
+    choices = oc.scope_choices(ctx)
+    scope = q.get("scope") or oc.DEFAULT_SCOPE
+    if scope not in {c["key"] for c in choices}:
+        scope = oc.DEFAULT_SCOPE                 # also catches a pill this viewer isn't offered
+    everything = oc.items_between(conn, user, start, end, scope=scope)
+    items = oc.apply_filters(everything, filters)
+    entries = [i for i in everything if i["layer"] == "entries"]
+    # the filter menus list what is IN this window (before filtering), so choosing
+    # one never makes the other options vanish
+    units = {}
+    for i in entries:
+        if i["owner_org_id"]:
+            units[i["owner_org_id"]] = {"id": i["owner_org_id"], "label": i["owner_label"],
+                                        "tone": i["tone"]}
+    month_param = m.strftime("%Y-%m") if layout == "month" and q.get("month") else ""
+    params = {**fixed, "scope": scope, layout_key: "month" if layout == "month" else "",
+              "month": month_param, **clean}
+
+    def qs(**over):
+        """A link to this body with the current choices and `over` applied; `layout=` names
+        the layout whatever key this page really uses, and empty values are dropped."""
+        merged = {**params, **{(layout_key if k == "layout" else k): v for k, v in over.items()}}
+        return base + "?" + urlencode([(k, v) for k, v in merged.items() if v not in ("", None)])
+
+    n = sum(1 for i in items if i["layer"] != "holidays")
+    page = {
+        "layout": layout, "can_import": auth.can(user["role"], "manage_users"),
+        "scope": scope, "scopes": choices, "today": today, "start": start, "end": end,
+        "n_items": n, "f": clean, "filtered": any(clean.values()),
+        "kinds": KIND_LABELS,
+        "statuses": {k: v for k, v in STATUS_LABELS.items() if k != "cancelled"},
+        "tags": sorted({t for i in entries for t in i["tags"]}, key=str.lower),
+        "units": sorted(units.values(), key=lambda u: u["label"].lower()),
+        "qs": qs, "form_action": base,
+        "clear_filters": qs(kind="", status="", tag="", unit=""),
+    }
+    hidden = [(k, v) for k, v in fixed.items()] + [("scope", scope)]
+    noun = "item" if n == 1 else "items"
+    if layout == "month":
+        grid = oc.month_grid(items, m.year, m.month, today)
+        hidden += [(layout_key, "month"), ("month", m.strftime("%Y-%m"))]
+        page.update(grid=grid, weekdays=oc.WEEKDAY_NAMES,
+                    is_today_window=(m.year, m.month) == (today.year, today.month),
+                    range_label=f"{grid['title']} · {n} {noun}",
+                    add_day=(today if (m.year, m.month) == (today.year, today.month) else m).isoformat())
+    else:
+        page.update(days=oc.agenda_days(items, start, end, today),
+                    prev_day=(start - timedelta(days=AGENDA_DAYS)).isoformat(),
+                    next_day=(start + timedelta(days=AGENDA_DAYS)).isoformat(),
+                    is_today_window=start == today, add_day=start.isoformat(),
+                    range_label=f"{start.strftime('%b')} {start.day} – "
+                                f"{end.strftime('%b')} {end.day}, {end.year} · {n} {noun}")
+    page["hidden"] = hidden
+    return page
+
+
 def make_router(templates, get_conn, today_local):
     router = APIRouter()
 
-    def _filters(kind, status, tag, unit):
-        """Validated filter choices -> (filters dict for office_calendar, clean values)."""
-        clean = {"kind": kind if kind in KIND_LABELS else "",
-                 "status": status if status in STATUS_LABELS and status != "cancelled" else "",
-                 "tag": tag.strip()[:50], "unit": unit if unit.isdigit() else ""}
-        return ({"kinds": {clean["kind"]} if clean["kind"] else None,
-                 "statuses": {clean["status"]} if clean["status"] else None,
-                 "tags": {clean["tag"]} if clean["tag"] else None,
-                 "owner_org_ids": {int(clean["unit"])} if clean["unit"] else None}, clean)
-
-    def _qs(params, **over):
-        """Query string for a link: the current choices with `over` applied, empty ones dropped."""
-        merged = {**params, **over}
-        return "?" + urlencode([(k, v) for k, v in merged.items() if v not in ("", None)])
-
     @router.get("/calendar", response_class=HTMLResponse)
-    def calendar_page(request: Request, scope: str = oc.DEFAULT_SCOPE, day: str = "",
-                      view: str = "agenda", month: str = "", kind: str = "",
-                      status: str = "", tag: str = "", unit: str = ""):
-        user = request.state.user
-        today = today_local()
-        view = "month" if view == "month" else "agenda"
-        try:
-            if view == "month":
-                m = date.fromisoformat((month or today.strftime("%Y-%m")) + "-01")
-                start, end = oc.month_span(m.year, m.month)
-            else:
-                start = date.fromisoformat(day) if day else today
-                end = start + timedelta(days=AGENDA_DAYS - 1)
-        except ValueError:
-            # a hand-typed or stale date bounces to today rather than 500-ing
-            return RedirectResponse("/calendar" + ("?view=month" if view == "month" else ""),
-                                    status_code=303)
-        filters, clean = _filters(kind, status, tag, unit)
+    def calendar_page(request: Request):
+        q = dict(request.query_params)
         conn = get_conn()
         try:
-            ctx = oc.viewer_context(conn, user)
-            choices = oc.scope_choices(ctx)
-            if scope not in {c["key"] for c in choices}:
-                scope = oc.DEFAULT_SCOPE         # also catches a pill this viewer isn't offered
-            everything = oc.items_between(conn, user, start, end, scope=scope)
+            page = build_calendar_page(conn, request.state.user, today_local(), q)
         finally:
             conn.close()
-        items = oc.apply_filters(everything, filters)
-        entries = [i for i in everything if i["layer"] == "entries"]
-        # the filter menus list what is IN this window (before filtering), so choosing
-        # one never makes the other options vanish
-        units = {}
-        for i in entries:
-            if i["owner_org_id"]:
-                units[i["owner_org_id"]] = {"id": i["owner_org_id"], "label": i["owner_label"],
-                                            "tone": i["tone"]}
-        params = {"scope": scope, "view": "month" if view == "month" else "",
-                  "month": m.strftime("%Y-%m") if view == "month" and month else "", **clean}
-        page = {
-            "nav_active": "calendar", "show_scope": False, "view": view,
-            "can_import": auth.can(user["role"], "manage_users"),
-            "scope": scope, "scopes": choices, "today": today, "start": start, "end": end,
-            "n_items": sum(1 for i in items if i["layer"] != "holidays"),
-            "f": clean, "filtered": any(clean.values()),
-            "kinds": KIND_LABELS,
-            "statuses": {k: v for k, v in STATUS_LABELS.items() if k != "cancelled"},
-            "tags": sorted({t for i in entries for t in i["tags"]}, key=str.lower),
-            "units": sorted(units.values(), key=lambda u: u["label"].lower()),
-            "qs": lambda **over: _qs(params, **over),
-            "clear_filters": _qs({**params, "kind": "", "status": "", "tag": "", "unit": ""}),
-        }
-        if view == "month":
-            grid = oc.month_grid(items, m.year, m.month, today)
-            page.update(grid=grid, weekdays=oc.WEEKDAY_NAMES, month_key=m.strftime("%Y-%m"),
-                        is_today_window=(m.year, m.month) == (today.year, today.month),
-                        range_label=f"{grid['title']} · {page['n_items']} "
-                                    f"{'item' if page['n_items'] == 1 else 'items'}",
-                        add_day=(today if (m.year, m.month) == (today.year, today.month)
-                                 else m).isoformat())
-        else:
-            page.update(days=oc.agenda_days(items, start, end, today),
-                        prev_day=(start - timedelta(days=AGENDA_DAYS)).isoformat(),
-                        next_day=(start + timedelta(days=AGENDA_DAYS)).isoformat(),
-                        is_today_window=start == today, add_day=start.isoformat(),
-                        range_label=f"{start.strftime('%b')} {start.day} – "
-                                    f"{end.strftime('%b')} {end.day}, {end.year} · "
-                                    f"{page['n_items']} {'item' if page['n_items'] == 1 else 'items'}")
-        return templates.TemplateResponse(request, "calendar.html", page)
+        if page is None:
+            return RedirectResponse("/calendar" + ("?view=month" if q.get("view") == "month" else ""),
+                                    status_code=303)
+        return templates.TemplateResponse(request, "calendar.html",
+                                          {"nav_active": "calendar", "show_scope": False, **page})
 
     # ── add / view / edit / cancel / restore ────────────────────────────────
     # Everyone signed in may add and edit (owner decision). What a person may

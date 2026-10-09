@@ -271,12 +271,17 @@
     </div>
     {% endif %}
     <span class="grow"></span>
-    {% if d and d.scope.kind != "none" %}
+    {#-- Team / Me / Calendar. Team needs a directory link (it is "your team"); Me and Calendar
+         are for everyone. Calendar opens on the scope of the tab you came from: Team -> your
+         team (or the whole bureau), Me -> yours plus bureau-wide. --#}
+    {% set linked = d and d.scope.kind != "none" %}
+    {% set cur_tab = "calendar" if view == "calendar" else ("me" if (me_view or not linked) else "team") %}
     <div class="oc-seg" role="group" aria-label="Whose information to show">
-      <a href="/" {% if not me_view %}aria-current="true"{% endif %}>Team</a>
-      <a href="/?view=me" {% if me_view %}aria-current="true"{% endif %}>Me</a>
+      {% if linked %}<a href="/" {% if cur_tab == "team" %}aria-current="true"{% endif %}>Team</a>{% endif %}
+      <a href="/?view=me" {% if cur_tab == "me" %}aria-current="true"{% endif %}>Me</a>
+      <a href="/?view=calendar{% if cal_week and view != 'calendar' %}&scope={{ cal_week.scope }}{% endif %}"
+         {% if cur_tab == "calendar" %}aria-current="true"{% endif %}>Calendar</a>
     </div>
-    {% endif %}
   </div>
 
   {#-- ---------------- your to-do ----------------
@@ -304,7 +309,7 @@
 
   {#-- ---------------- coming up (the office calendar) ----------------
        The next seven days, from the same calendar the /calendar page shows. --#}
-  {% if cal_week %}
+  {% if cal_week and view != "calendar" %}
   <section class="cal-wk" aria-labelledby="calwk-h" data-tour="oc-calendar">
     <header>
       <h2 id="calwk-h">Coming up</h2>
@@ -343,6 +348,14 @@
     {% endif %}
   </section>
   {% endif %}
+
+  {% if view == "calendar" %}
+  {#-- ---------------- the Calendar tab ---------------- #}
+  <section class="cal-tab" aria-label="Office calendar">
+    {% if cal_page %}{% include "_calendar_body.html" %}{% else %}
+    <p class="cal-wk-empty">The calendar couldn't be loaded just now. <a href="/calendar">Open the full calendar</a>.</p>{% endif %}
+  </section>
+  {% else %}
 
   {% if d %}
     {% if d.scope.kind != "none" and not me_view %}
@@ -831,6 +844,7 @@
       <span class="meta">{{ role_label }}</span>
     </a>
   </div>
+  {% endif %}{#-- /not the Calendar tab --#}
 </div>
 {#-- Arrows, dots and left/right keys for the card decks. The tracks already
      swipe without it — this is the mouse-and-keyboard half. --#}

@@ -1,5 +1,23 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.63 — office calendar: the Calendar tab on the home page, and today's count in the to-do)
+
+- **Home page tab: Team | Me | Calendar** — `/?view=calendar` shows the full calendar body (scope
+  pills, Agenda/Month, filters, unit chips, + Add) under the greeting and to-do, in place of the team
+  panels, the Coming-up card and the doors. Team needs a directory link; Me and Calendar are for
+  everyone (an unlinked account sees Me | Calendar). The tab opens on the scope of the tab you came
+  from: Team -> your team (or the whole bureau), Me -> yours plus bureau-wide. Every link, filter form
+  and month/agenda switch stays on the home page (`view=calendar`, layout in `layout=`).
+- **Shared body** — `calendar_routes.build_calendar_page(conn, user, today, q, base=, layout_key=,
+  fixed=)` builds the page for both `/calendar` and the tab; `templates/_calendar_body.html` is the
+  one body. `/calendar` behaves exactly as before; its template variable `view` is now `layout`.
+  If the tab's calendar fails the page still renders, with a link to `/calendar`.
+- **To-do** — `office_connect._task_calendar_today`: "N things on the calendar today" (your own items
+  plus what is bureau-wide; holidays and bureau-wide banners don't count), with the first two titles
+  and times, linking to the Calendar tab. Tone "for information": after to-dos, before done items.
+  Like every task source, a failure is swallowed and never hides the others.
+- **Tests** — `tests/test_calendar_home_tab.py`.
+
 ## 2026-10-09 (v3.62 — "Coming up" on the home page; initials as nicknames)
 
 - **Home page (`/`, Team and Me tabs)** — a "Coming up" card under the to-do strip: the next seven

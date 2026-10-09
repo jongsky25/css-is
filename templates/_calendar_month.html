@@ -2,7 +2,7 @@
    bar is placed by grid-column/grid-row so a multi-day trip is ONE bar across the
    week (cut with a flat end where it continues into the next). Hidden-by-lane
    items are counted as "+N more" and link to that day's agenda. #}
-<p class="cal-month-note">The month grid needs a wider screen. <a href="/calendar{{ qs(view='', month='', day='') }}">Open the agenda instead</a>.</p>
+<p class="cal-month-note">The month grid needs a wider screen. <a href="{{ qs(layout='', month='', day='') }}">Open the agenda instead</a>.</p>
 <div class="cal-month" role="grid" aria-label="{{ grid.title }}">
   <div class="cal-dow" role="row">{% for n in weekdays %}<div role="columnheader">{{ n }}</div>{% endfor %}</div>
   {% for w in grid.weeks %}
@@ -26,7 +26,7 @@
     {% endfor %}
     {% for d in w.days if d.more %}
     <a class="cal-more" style="grid-column:{{ w.days.index(d) + 1 }}; grid-row:{{ w.rows + 1 }}"
-       href="/calendar{{ qs(view='', month='', day=d.iso) }}">+{{ d.more }} more</a>
+       href="{{ qs(layout='', month='', day=d.iso) }}">+{{ d.more }} more</a>
     {% endfor %}
   </div>
   {% endfor %}

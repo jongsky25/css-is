@@ -1117,6 +1117,25 @@ def _task_office_today(conn, user, today):
             "cta": "See who", "url": "/work-arrangement/day"}
 
 
+def _task_calendar_today(conn, user, today):
+    """"2 things on the calendar today" — the person's own items plus what is bureau-wide,
+    straight to the Calendar tab. Holidays and bureau-wide banners ("MORATORIUM…") are
+    background, not things to do, so they do not count."""
+    items = [i for i in ocal.items_between(conn, user, today, today, scope="blend", layers=["entries"])
+             if i["kind"] != "banner"]
+    if not items:
+        return None
+    n = len(items)
+
+    def label(i):
+        return (f"{i['start_time']} " if i["start_time"] else "") + i["title"]
+    more = f" · +{n - 2} more" if n > 2 else ""
+    return {"key": "calendar_today", "icon": "📅", "tone": "info",
+            "title": f"{n} {'thing' if n == 1 else 'things'} on the calendar today",
+            "detail": " · ".join(label(i) for i in items[:2]) + more,
+            "cta": "Open the calendar", "url": "/?view=calendar"}
+
+
 def _task_activities(conn, user):
     """The activities this person's team runs that are still collecting — straight
     to their Monitor page, skipping the /css → /monitor hop (131 trips a month)."""
@@ -1147,7 +1166,8 @@ def home_tasks(conn, user, today=None):
     for build in (lambda: _task_approvals(conn, user),
                   lambda: _task_wellness(conn, user, today),
                   lambda: _task_awa(conn, user, today),
-                  lambda: _task_office_today(conn, user, today)):
+                  lambda: _task_office_today(conn, user, today),
+                  lambda: _task_calendar_today(conn, user, today)):
         try:
             t = build()
         except Exception:                        # noqa: BLE001 — one source never breaks the strip

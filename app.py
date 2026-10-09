@@ -4759,7 +4759,7 @@ def choose(request: Request, msg: str = "", view: str = "team"):
     The heavy lifting is office_connect.team_view_data; this handler is scope
     plumbing plus the three door teasers. The one-time onboarding guard stays
     exactly where it was — it must not become skippable by typing the URL."""
-    view = "me" if view == "me" else "team"
+    view = view if view in ("me", "calendar") else "team"
     conn = get_conn()
     try:
         onboard = _onboarding_redirect(request, conn)
@@ -4784,11 +4784,27 @@ def choose(request: Request, msg: str = "", view: str = "team"):
             traceback.print_exc()
             tasks = []
         # The next seven days from the office calendar (same scope rules as /calendar).
+        # On the Calendar tab it only supplies the scope the tab opens with (below).
         try:
-            cal_week = oc.calendar_week_block(conn, request.state.user, view=view)
+            cal_week = oc.calendar_week_block(conn, request.state.user,
+                                              view="me" if view == "calendar" else view)
         except Exception:
             traceback.print_exc()
             cal_week = None
+        # The Calendar tab: the full calendar body (agenda / month, filters) inside the home
+        # page. Same builder as /calendar; its links stay on this page (view=calendar).
+        cal_page = None
+        if view == "calendar":
+            try:
+                q = dict(request.query_params)
+                args = dict(base="/", layout_key="layout", fixed={"view": "calendar"})
+                cal_page = (calendar_routes.build_calendar_page(
+                    conn, request.state.user, _today_local(), q, **args)
+                    or calendar_routes.build_calendar_page(
+                        conn, request.state.user, _today_local(), {}, **args))
+            except Exception:
+                traceback.print_exc()
+                cal_page = None
         # A light wellness teaser (points/streak) beside the Wellness door.
         try:
             wstats = st.wellness_stats(conn, request.state.user["id"])
@@ -4827,7 +4843,10 @@ def choose(request: Request, msg: str = "", view: str = "team"):
         "wa_file_label": wa_file_label, "wa_file_filed": wa_file_filed,
         "role_label": auth.ROLE_LABELS.get(role, role),
         "role_blurb": auth.ROLE_BLURB.get(role, ""),
-        "d": data, "view": view, "tasks": tasks, "cal_week": cal_week,
+        "d": data, "view": view, "tasks": tasks, "cal_week": cal_week, "cal_page": cal_page,
+        # the Calendar tab's body reads these (layout, qs, scopes, days / grid ...) as plain
+        # variables; none of its names clash with the home page's own
+        **(cal_page or {}),
         # The companion's growth was invisible: you could see the creature you
         # had but not the one you were working toward, nor how it got there.
         "ladder": st.avatar_growth_ladder(avatar_kind, wstats),
