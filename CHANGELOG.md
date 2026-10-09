@@ -1,5 +1,14 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v6.4 — CSS-only search on /css)
+
+`docs/HOME_SEARCH_ASSISTANT_PLAN.md` Phase 2.
+
+- **Index (`app.search_index_for`):** every entry carries `mod` — the nav group's name lower-cased (`css`, `wellness`, `awa`, `administrator`); the three fixed entries are `core`.
+- **`search.js`:** `attach({scope})` (read from `form.dataset.scope`); a scoped box ranks only entries with a matching `mod` and sends `&scope=` to `/api/search`. The last row is always "Search everything for “q” →", which opens the global palette with the query via `window.CSSSearch.openPalette(q)`. Header comment no longer claims comments are searched. Cache-bust `?v=20261009b`.
+- **`/api/search`:** takes `scope` (`all` or `css`; anything else is `all`). Both sources are CSS today, so results are unchanged.
+- Tests: `tests/test_search.py`.
+
 ## 2026-10-09 (v6.3 — search and assistant on the home page)
 
 `docs/HOME_SEARCH_ASSISTANT_PLAN.md` Phase 1.

@@ -9,7 +9,7 @@
  * role gate to get wrong. Every result is a real <a>, so middle-click / open-in-
  * new-tab work and there's a no-JS fallback (the form posts to /search?q=).
  *
- * DB-record results (activities, people, comments) are fetched from /api/search
+ * DB-record results (activities and people) are fetched from /api/search
  * after a 200 ms debounce and appended below the page results with no change to
  * the core engine or the result-row rendering contract.
  */
@@ -17,6 +17,7 @@
   "use strict";
 
   var INDEX = window.SEARCH_INDEX || [];
+  var openPalette = function () {};      // set by initPalette once the overlay exists
 
   // ---- ranking -------------------------------------------------------------
   function wordStart(hay, term) {
@@ -50,12 +51,15 @@
     return s;
   }
 
-  function search(query) {
+  // scope "all" (or none) ranks the whole index; any other scope ranks only the
+  // entries whose `mod` matches (e.g. the /css box passes "css").
+  function search(query, scope) {
     var raw = query.trim().toLowerCase();
     if (!raw) return [];
     var terms = raw.split(/\s+/);
     var hits = [];
     for (var i = 0; i < INDEX.length; i++) {
+      if (scope && scope !== "all" && INDEX[i].mod !== scope) continue;
       var sc = score(INDEX[i], terms, raw);
       if (sc >= 0) hits.push({ item: INDEX[i], sc: sc, ord: i });
     }
@@ -88,8 +92,11 @@
   //   opts.input, opts.results  — elements
   //   opts.showAllOnEmpty       — list the whole index when the box is empty
   //   opts.onPick(item)         — optional; default navigates to item.url
+  //   opts.scope                — "all" (default) or a module such as "css"; a scoped
+  //                               box ends with a "Search everything" row
   function attach(opts) {
     var input = opts.input, listEl = opts.results;
+    var scope = opts.scope && opts.scope !== "all" ? opts.scope : "all";
     var showAll = !!opts.showAllOnEmpty;
     var idPrefix = (listEl.id || "res") + "-opt-";
     var loadingId = (listEl.id || "res") + "-db-loading";
@@ -126,9 +133,33 @@
       listEl.appendChild(li);
     }
 
+    // The scoped box's way out: always the last row, whatever has loaded so far.
+    function _removeExitRow() {
+      var el = listEl.querySelector(".palette-exit");
+      if (el) el.parentNode.removeChild(el);
+      if (current.length && current[current.length - 1].exit) current.pop();
+    }
+
+    function _addExitRow(raw) {
+      _removeExitRow();
+      if (scope === "all" || !raw) return;
+      var item = { exit: true, title: "Search everything for \u201c" + raw + "\u201d \u2192",
+                   url: "#", section: "" };
+      var idx = current.length;
+      var empty = listEl.querySelector(".palette-empty");
+      if (empty) empty.parentNode.removeChild(empty);
+      listEl.insertAdjacentHTML("beforeend",
+        '<li id="' + idPrefix + idx + '" role="option" class="palette-item palette-exit"' +
+        ' aria-selected="false"><a href="#" tabindex="-1" data-exit>' +
+        '<span class="pi-title">' + esc(item.title) + "</span></a></li>");
+      current.push(item);
+      if (active < 0) { active = idx; syncActive(); }
+    }
+
     function _appendDBRows(data, raw) {
       _removeLoadingRow();
-      if (!data.length) return;
+      if (!data.length) { _addExitRow(raw); return; }
+      _removeExitRow();
       var startIdx = current.length;
       var lastSection = null;
       var html = "";
@@ -150,6 +181,7 @@
       }
       listEl.insertAdjacentHTML("beforeend", html);
       for (var j = 0; j < data.length; j++) current.push(data[j]);
+      _addExitRow(raw);
     }
 
     function _cancelDB() {
@@ -167,7 +199,8 @@
         _showLoadingRow();
         var ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
         _dbCtrl = ctrl;
-        fetch("/api/search?q=" + encodeURIComponent(raw),
+        fetch("/api/search?q=" + encodeURIComponent(raw) +
+              (scope === "all" ? "" : "&scope=" + encodeURIComponent(scope)),
               ctrl ? { signal: ctrl.signal } : {})
           .then(function (res) {
             if (res.ok && (res.headers.get("content-type") || "").indexOf("json") >= 0)
@@ -180,14 +213,15 @@
             _appendDBRows(Array.isArray(data) ? data : [], raw);
             // The debounced DB fetch settling empty on top of zero page hits
             // is the "this search truly found nothing" moment.
-            if (current.length === 0) _reportEmpty(raw);
+            var real = current.filter(function (c) { return !c.exit; }).length;
+            if (real === 0) _reportEmpty(raw);
             // Every settled search (page hits + DB rows), once per term, so
             // telemetry can give an empty RATE rather than just a count.
             if (!_reportedSearch[raw]) {
               _reportedSearch[raw] = true;
               try {
                 window.dispatchEvent(new CustomEvent("csi:search", { detail: {
-                  hits: current.length + (Array.isArray(data) ? data.length : 0) } }));
+                  hits: real } }));
               } catch (e) { /* telemetry is best-effort */ }
             }
           })
@@ -199,6 +233,7 @@
 
     function go(item) {
       if (!item) return;
+      if (item.exit) { openPalette(input.value.trim()); return; }
       if (opts.onPick) opts.onPick(item);
       else window.location.href = item.url;
     }
@@ -254,9 +289,10 @@
     function render() {
       var raw = input.value.trim();
       _cancelDB();
-      current = raw ? search(raw) : (showAll ? INDEX.slice() : []);
+      current = raw ? search(raw, scope) : (showAll ? INDEX.slice() : []);
       active = current.length ? 0 : -1;
       paint(raw);
+      _addExitRow(raw);
       if (raw) _fetchDB(raw);
     }
 
@@ -275,6 +311,12 @@
       } else if (e.key === "Escape" && opts.onEscape) {
         opts.onEscape();
       }
+    });
+    listEl.addEventListener("click", function (e) {
+      var a = e.target.closest && e.target.closest("a[data-exit]");
+      if (!a) return;
+      e.preventDefault();
+      go({ exit: true });
     });
     // Mouse hover sets the active row so Enter stays predictable.
     listEl.addEventListener("mousemove", function (e) {
@@ -299,14 +341,16 @@
       onEscape: close
     });
 
-    function open() {
-      if (!backdrop.hidden) return;
+    function open(q) {
+      var text = typeof q === "string" ? q : "";
+      if (!backdrop.hidden) { if (!text) return; }
       backdrop.hidden = false;
       document.body.classList.add("cmdk-open");
-      input.value = "";
+      input.value = text;
       ctrl.render();
       input.focus();
     }
+    openPalette = open;
     function close() {
       backdrop.hidden = true;
       document.body.classList.remove("cmdk-open");
@@ -345,7 +389,8 @@
         var input = form.querySelector(".gsearch-input");
         var results = form.querySelector(".gsearch-results");
         if (!input || !results) return;
-        var ctrl = attach({ input: input, results: results, showAllOnEmpty: false });
+        var ctrl = attach({ input: input, results: results, showAllOnEmpty: false,
+                           scope: form.dataset.scope || "all" });
         form.classList.add("js");                   // lets CSS reveal the live list
         // Enter is handled by the engine (opens the active row); stop the GET
         // fallback from firing when JS is live.
@@ -360,5 +405,6 @@
     document.addEventListener("DOMContentLoaded", init);
   } else { init(); }
 
-  window.CSSSearch = { search: search, attach: attach, index: INDEX };
+  window.CSSSearch = { search: search, attach: attach, index: INDEX,
+                       openPalette: function (q) { openPalette(q); } };
 })();

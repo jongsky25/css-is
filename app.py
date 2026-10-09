@@ -805,16 +805,17 @@ def search_index_for(user, is_chief=False):
     index. Includes search-only items (in_nav False) the top nav omits. Built
     server-side so a user never even receives links they aren't allowed to use."""
     out = [{"title": "What to do", "hint": "Wellness or CSS", "url": "/", "section": "Go to",
-            "kw": "home start landing chooser what to do wellness css"},
+            "kw": "home start landing chooser what to do wellness css", "mod": "core"},
            {"title": "CSS hub", "hint": "Main hub", "url": "/css", "section": "Go to",
-            "kw": "css hub main launcher overview dashboards reports surveys"},
+            "kw": "css hub main launcher overview dashboards reports surveys", "mod": "core"},
            {"title": "My profile", "hint": "Photo, avatar & pet name", "url": "/me", "section": "Go to",
-            "kw": "my profile me avatar companion pet name photo picture rename change"}]
+            "kw": "my profile me avatar companion pet name photo picture rename change", "mod": "core"}]
     for g in NAV_GROUPS:
         for it in g["items"]:
             if _cap_ok(user, it["cap"], is_chief):
                 out.append({"title": it["label"], "hint": it["hint"], "url": it["url"],
-                            "section": g["name"], "kw": it["kw"]})
+                            "section": g["name"], "kw": it["kw"],
+                            "mod": g["name"].lower()})     # scoped boxes (/css) rank only their own module
     return out
 
 
@@ -5596,12 +5597,17 @@ def help_page(request: Request):
 
 
 @app.get("/api/search")
-def api_search(request: Request, q: str = ""):
+def api_search(request: Request, q: str = "", scope: str = "all"):
     """DB-record search: activities and people. Returns the same
     {title, hint, url, section, kw} shape as window.SEARCH_INDEX so search.js
-    can append results without any schema changes on the client side."""
+    can append results without any schema changes on the client side.
+
+    `scope` is "all" or "css"; anything else counts as "all". Both sources today
+    are CSS records, so the answer is the same either way — the parameter is here
+    so later, non-CSS sources can skip a "css" box."""
     if not request.state.user:
         return JSONResponse([])
+    scope = scope if scope in ("all", "css") else "all"    # noqa: F841 — read by later sources
     q = q.strip()
     if len(q) < 2:
         return JSONResponse([])
