@@ -374,8 +374,8 @@ a.whoami:hover { border-color:var(--accent); }
 .settings .settings-menu { position:absolute; right:0; top:calc(100% + 6px); z-index:40; min-width:210px;
         background:var(--surface); border:1px solid var(--line); border-radius:var(--r2); box-shadow:var(--shadow-md);
         padding:.7rem .8rem; display:flex; flex-direction:column; gap:.7rem; }
-.settings .set-group { display:flex; flex-direction:column; gap:.3rem; }
-.settings .set-lab { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--soft); }
+.settings .set-group, .mm-set .set-group { display:flex; flex-direction:column; gap:.3rem; }
+.settings .set-lab, .mm-set .set-lab { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--soft); }
 .seg-ctl { display:flex; border:1px solid var(--line); border-radius:var(--r1); overflow:hidden; }
 .seg-ctl button { flex:1 1 0; font-size:.8rem; font-weight:600; color:var(--soft); background:var(--surface);
         border:none; border-left:1px solid var(--line); padding:.4rem .3rem; cursor:pointer; line-height:1.1; }
@@ -407,11 +407,16 @@ a.whoami:hover { border-color:var(--accent); }
 .equity-credit { display:flex; align-items:center; justify-content:center; gap:.5rem;
   flex-wrap:wrap; margin-top:.4rem; color:var(--soft); font-size:.76rem; }
 
-/* mobile: collapse to hamburger */
+/* Collapse to the hamburger at 900px, not 780: the four menus plus the icons
+   don't fit one row on a tablet in portrait (820px wrapped to 128px of sticky
+   header). The ☰ sits last so it is the thumb-reachable corner; the
+   "username · role" chip repeats the greeting and profile link on Home, so it
+   goes below 1180px, where it is what pushed the header onto a second row. */
 .nav-toggle { display:none; }
-@media (max-width:780px) {
+@media (max-width:1179px) { .topnav .right .whoami { display:none; } }
+@media (max-width:900px) {
   .navgroups { display:none; }
-  .nav-toggle { display:block; margin-left:auto; }
+  .nav-toggle { display:block; order:3; margin-left:0; }
   .nav-toggle > summary { list-style:none; cursor:pointer; font-size:1.3rem; padding:.2rem .6rem;
         border:1px solid var(--line); border-radius:var(--r1); }
   .nav-toggle > summary::-webkit-details-marker { display:none; }
@@ -429,11 +434,24 @@ a.whoami:hover { border-color:var(--accent); }
      that have no sections at all. */
   .mobile-menu .msec { font-size:.68rem; letter-spacing:.03em; color:var(--grey);
         margin:.45rem 0 .1rem .6rem; font-weight:700; }
-  .mobile-menu a { display:block; padding:.5rem .6rem; border-radius:var(--r1); text-decoration:none;
+  .mobile-menu a, .mobile-menu .mm-btn { display:block; padding:.5rem .6rem; border-radius:var(--r1); text-decoration:none;
         color:var(--ink); font-weight:550; }
-  .mobile-menu a:hover { background:var(--bg); }
+  .mobile-menu a:hover, .mobile-menu .mm-btn:hover { background:var(--bg); }
   .mobile-menu a[aria-current="page"] { background:var(--blue-bg); color:var(--accent-ink); font-weight:700; }
-  .topnav .right .whoami { display:none; }
+  .mobile-menu .mm-btn { width:100%; text-align:left; border:0; background:none; font:inherit;
+        font-weight:550; cursor:pointer; }
+  .mobile-menu .mm-set { display:flex; flex-direction:column; gap:.7rem; padding:.2rem .6rem .4rem; }
+  .topnav .right { flex-wrap:nowrap; gap:.35rem; }
+}
+/* Phones: one row — logo · search · bell · ☰. Display settings, help/tour and
+   Log out live inside the ☰ menu (Log out was in both places before). */
+@media (max-width:640px) {
+  .topnav .right .settings, .topnav .right a.logout { display:none; }
+}
+@media (max-width:359px) {   /* the smallest phones: tighten the logo so the row still fits */
+  .topnav .inner { padding-left:.6rem; padding-right:.6rem; }
+  .brand { font-size:.92rem; margin-right:0; }
+  .brand .equity-mark { display:none; }
 }
 
 /* top tracks the real topnav height (--topnav-h, set by app.js) so it pins
@@ -444,7 +462,7 @@ a.whoami:hover { border-color:var(--accent); }
 .scopebar select { border:1px solid var(--line); border-radius:var(--r1); padding:.3rem .45rem;
                    font-size:max(16px, var(--fs-sm)); background:var(--surface); max-width:46vw; }
 .scopebar .showing { color:var(--soft); }
-@media (max-width:780px) { .scopebar { top:var(--topnav-h, 49px); } }
+@media (max-width:900px) { .scopebar { top:var(--topnav-h, 49px); } }
 
 /* ---------- 5. Forms & feedback ---------- */
 .field { margin-bottom:var(--s4); }
@@ -778,6 +796,12 @@ p.lede { color:var(--soft); margin:0 0 calc(1.4rem * var(--dsf)); font-size:.96r
   border:none; border-radius:999px; background:var(--accent); color:var(--on-accent);
   font:inherit; font-weight:700; font-size:.9rem; cursor:pointer; box-shadow:var(--shadow-md); }
 .sf-float:hover { background:var(--accent-ink); }
+/* On a phone the text pill sat on top of the to-do card; the 💬 alone is enough
+   (the aria-label still says "Send feedback about this page"). */
+@media (max-width:640px) {
+  .sf-float { width:44px; height:44px; padding:0; justify-content:center; font-size:1.2rem; bottom:1rem; right:1rem; }
+  .sf-float .sf-lab { display:none; }
+}
 .sf-float:focus-visible { outline:none; box-shadow:var(--ring), var(--shadow-md); }
 body.sf-picking, body.sf-picking * { cursor:crosshair !important; }
 .sf-hl { position:fixed; z-index:950; pointer-events:none; border:2px solid var(--accent);

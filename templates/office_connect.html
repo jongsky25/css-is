@@ -70,7 +70,7 @@
   .oc-task.t-wait a { border-left:4px solid var(--accent); }
   .oc-task.t-done a { opacity:.75; }
   .oc-task.t-done .cta { color:var(--green); }
-  .oc-pet-edit { display:inline-block; margin-top:.25rem; font-size:.76rem; font-weight:700;
+  .oc-pet-edit { display:block; margin-top:.25rem; font-size:.76rem; font-weight:700;
                  color:var(--accent); text-decoration:none; }
 
   /* Team | Me — the same segmented control the display-settings menu uses, so
@@ -208,9 +208,11 @@
   @media (max-width:640px) {
     .oc-hero { gap:.7rem; } .oc-hi h1 { font-size:1.25rem; }
     /* The companion's box is an inline width the macro writes, so a phone-sized
-       cap has to out-specify it. Keep the 1.16 art ratio the macro uses. */
-    .oc-pet .avwrap, .oc-pet .avwrap > span { width:130px !important; }
-    .oc-pet .avwrap > span { height:151px !important; }
+       cap has to out-specify it. Keep the 1.16 art ratio the macro uses. Target the art box (.av-tiltstage) only:
+       a bare `> span` also caught the hidden name label and made it a 151px-tall
+       blank block that pushed the tabs a screen down. */
+    .oc-pet .avwrap, .oc-pet .avwrap > .av-tiltstage { width:130px !important; }
+    .oc-pet .avwrap > .av-tiltstage { height:151px !important; }
   }
 </style>
 
@@ -350,6 +352,8 @@
     {{ search_box("Search people, pages, your calendar — or ask a question…", scope="all", tour="search") }}
     <a class="try-assistant" href="/start">✨ Ask the assistant</a>
   </div>
+  {#-- Phones: the long placeholder is cut off mid-word, so show a short one. --#}
+  <script>(function(){try{if(window.matchMedia("(max-width:640px)").matches){var i=document.querySelector(".oc-search .gsearch-input");if(i)i.placeholder="Search or ask a question…";}}catch(e){}})();</script>
   {% endif %}
 
   {#-- ---------------- your to-do ----------------
