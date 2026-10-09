@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.7"
+APP_VERSION = "6.8"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.8",
+        "date": "October 9, 2026",
+        "summary": "The assistant can now answer questions about your own tasks and the office.",
+        "changes": [
+            "Ask about your to-do list, your approvals, how many wellness hours you have left, or whether you filed your work arrangement.",
+            "Ask who is in the office or working from home today, whether the conference room is free today or tomorrow, and what room bookings you have.",
+            "These answers work even when the AI is switched off, and also in Tagalog, for example \u201csino ang nasa opisina\u201d.",
+        ],
+    },
     {
         "version": "6.7",
         "date": "October 9, 2026",

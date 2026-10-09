@@ -69,6 +69,7 @@ import office_connect as oc
 import birthday_cards
 import birthdays
 import calendar_answers
+import office_answers
 import calendar_routes
 import rooms
 import rooms_notify
@@ -949,6 +950,9 @@ AI_ANSWER_SLOTS = {
 # Calendar answers (office calendar H3). User-aware: rendered from the ASKER's own calendar by
 # calendar_answers (never from anything the model says), so they carry a `user_render` instead of `render`.
 AI_ANSWER_SLOTS.update(calendar_answers.SLOTS)
+# Office answers (to-do, approvals, wellness, AWA, who is in, the conference room): same pattern, from
+# the asker's own data and the colleague-status switch (office_answers).
+AI_ANSWER_SLOTS.update(office_answers.SLOTS)
 
 
 def _render_answer(slot, conn, user):
@@ -1525,6 +1529,22 @@ def _seed_calendar_rules(conn):
     st.set_setting(conn, "calendar_rules_seeded", "1")
 
 
+def _seed_office_rules(conn):
+    """Add the office FAQ rules ONCE, so these answers work with no model call and while AI is off.
+    A marker keeps an admin who deletes them from having them resurrected."""
+    if st.get_setting(conn, "office_rules_seeded", "") == "1":
+        return
+    # One rule PER phrasing (not one rule with alternates as keywords): the matcher scores a keyword
+    # match against the whole rule's size, so a short alternate such as "sino ang nasa opisina" would
+    # fall under the threshold. An exact normalized match always wins.
+    for kind, target_key, canonical, alts in office_answers.SEED_RULES:
+        for phrase in [canonical] + list(alts):
+            st.create_learned_rule(
+                conn, pattern=qa_rules.normalize(phrase), kind=kind, target_key=target_key,
+                keywords=phrase, sample_query=phrase, source="seed", created_by="system")
+    st.set_setting(conn, "office_rules_seeded", "1")
+
+
 _schema_ready_for = set()    # DB paths whose schema has been ensured this process
 
 def get_conn():
@@ -1537,6 +1557,7 @@ def get_conn():
         st.seed_directory_if_empty(conn)
         _seed_learned_rules(conn)    # FAQ rules for the AI search bar (fresh install only)
         _seed_calendar_rules(conn)   # calendar FAQ rules, once, on any install
+        _seed_office_rules(conn)     # office FAQ rules (to-do, wellness, room, who is in), once
         wabf.run_once(conn)          # ANNEX C Aug 16-31, 2026 — one-shot, marker-guarded
         st.seed_wa_prepared_by_default(conn)  # ANNEX C "Prepared by" -> Alexander Medel, one-shot
         _schema_ready_for.add(DB)
@@ -5710,7 +5731,10 @@ def _ai_router_system_prompt(include_answer, include_help, include_action, maxim
         parts.append(
             "kind=\"answer\": the request is a factual question this system can "
             "already answer with a number. Reply with the exact key from the "
-            "Answers catalog that best matches.")
+            "Answers catalog that best matches. Besides survey figures, the "
+            "catalog covers the asker's own to-dos, approvals, wellness hours, "
+            "work arrangement filing, room bookings, calendar, and who is in the "
+            "office today.")
         if maximize:
             parts.append(
                 "The Answers catalog includes a broad \"data_question\" key: use "
