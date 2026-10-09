@@ -1,20 +1,35 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header %}
 {% block title %}Review the import{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009p">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009q">{% endblock %}
 {% block content %}
 {{ page_header("Review the import", batch.filename or "calendar.docx") }}
 <p class="cal-back"><a href="/calendar/import">← All uploads</a> · <a href="/calendar">Calendar</a></p>
 
+{% if undone %}<div class="cal-flash ok" role="status">✓ Undone: removed {{ undone.removed }} item{{ "" if undone.removed == "1" else "s" }}{% if undone.holidays and undone.holidays != "0" %} and {{ undone.holidays }} holiday{{ "" if undone.holidays == "1" else "s" }}{% endif %}{% if undone.kept and undone.kept != "0" %}; {{ undone.kept }} edited item{{ "" if undone.kept == "1" else "s" }} kept{% endif %}.
+  {% if not batch.imported_at %}The upload is open for review again.{% endif %}</div>{% endif %}
 {% if batch.imported_at %}
 {% set r = batch.result %}
 <div class="cal-flash ok" role="status">✓ Imported {{ r.created|length }} items on {{ batch.imported_at[:10] }}.
   {% if r.already %}{{ r.already }} were already in the calendar and were left alone.{% endif %}
   {% if r.not_selected %}{{ r.not_selected }} were not selected.{% endif %}
   {% if r.unmapped_owner %}{{ r.unmapped_owner }} have an owner colour with no unit chosen, so they show with no owning unit.{% endif %}</div>
+{% if r.holidays %}<p class="cal-range">Added to Holidays: {% for h in r.holidays %}{{ h.date }} · {{ h.name }}{{ ", " if not loop.last }}{% endfor %}.</p>{% endif %}
 <p><a class="cal-btn primary" href="/calendar/import/{{ batch.id }}/people">Next: match the names{% if n_names %} ({{ n_names }} to check){% endif %}</a>
    <a class="cal-btn" href="/calendar?view=month&month={{ rows[0].month if rows else '' }}">See it on the calendar</a></p>
+<details class="cal-step cal-undo"><summary>Made a mistake? Undo this import</summary>
+  <p>Undoing deletes the <strong>{{ undo.removable }}</strong> item{{ "" if undo.removable == 1 else "s" }} this import created that nobody has changed since
+    {% if undo.holidays %}and the {{ undo.holidays }} holiday{{ "" if undo.holidays == 1 else "s" }} it added{% endif %}.
+    {% if undo.edited %}<strong>{{ undo.edited|length }}</strong> have been edited since, so they are <strong>kept</strong>:
+    {% for e in undo.edited[:8] %}<a href="/calendar/entries/{{ e.entry_id }}">{{ e.title }}</a>{{ ", " if not loop.last }}{% endfor %}{% if undo.edited|length > 8 %} and {{ undo.edited|length - 8 }} more{% endif %}.{% endif %}
+    {% if undo.gone %}{{ undo.gone }} were already deleted.{% endif %}
+    When every item is gone the upload opens for review again, so you can import it again.</p>
+  <form method="post" action="/calendar/import/{{ batch.id }}/undo">
+    <button class="cal-btn" type="submit" onclick="return confirm('Delete {{ undo.removable }} imported items? Items someone edited are kept.')">Undo this import</button>
+  </form>
+</details>
 {% else %}
+
 
 {% if errors %}<div class="cal-flash err" role="alert"><strong>Nothing was imported.</strong> Fix these and try again:
   <ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
@@ -52,10 +67,21 @@
       Only the owning unit <small>(items with no unit are still shown to everyone)</small></label>
   </fieldset>
 
-  <details class="cal-step cal-holidays"><summary>{{ holidays|length }} holiday lines were set aside —
-      {{ holidays|rejectattr("known")|list|length }} are not in Holidays yet</summary>
-    <ul>{% for h in holidays %}<li>{{ h.date }} · {{ h.name }} {% if h.known %}<small>(already in Holidays)</small>{% else %}<small>(not in Holidays — add it in Admin → Holidays if people are off)</small>{% endif %}</li>{% endfor %}</ul>
-  </details>
+  <fieldset class="cal-step cal-holidays">
+    <legend>Holidays in the file ({{ holidays|length }})</legend>
+    {% set missing = holidays|rejectattr("known")|list %}
+    <p class="cal-range">{{ holidays|length - missing|length }} are already in Holidays.
+      {% if missing %}<strong>{{ missing|length }}</strong> are not. Tick the ones the bureau is really off for; nothing is ticked for you,
+      because some are local (for example, Manila Day).{% else %}Nothing to add.{% endif %}</p>
+    {% for h in missing %}
+    <div class="cal-hol-row">
+      <label><input type="checkbox" name="hol_{{ h.date }}" value="1" {{ "checked" if h.date in hol_ticked }}> {{ h.date }} · {{ h.name }}</label>
+      <select name="holkind_{{ h.date }}" aria-label="Type for {{ h.name }}">{% for k, label in hol_kinds.items() %}<option value="{{ k }}" {{ "selected" if h.kind == k }}>{{ label }}</option>{% endfor %}</select>
+    </div>
+    {% endfor %}
+    {% if holidays|selectattr("known")|list %}<details><summary>Already in Holidays</summary>
+      <ul>{% for h in holidays if h.known %}<li>{{ h.date }} · {{ h.name }}</li>{% endfor %}</ul></details>{% endif %}
+  </fieldset>
 
   {#-- one table row; used by both lists so the form fields are identical --#}
   {% macro review_row(r) %}

@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "4.2"
+APP_VERSION = "4.3"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "4.3",
+        "date": "October 9, 2026",
+        "summary": "A Word calendar import can now add missing holidays, and be undone.",
+        "changes": [
+            "The review screen lists holidays from the Word file that are not in Holidays yet. Tick the ones the bureau is really off for; nothing is ticked for you.",
+            "Made a mistake? Undo this import removes the items it created that nobody has changed since, and the holidays it added.",
+            "Items someone edited after the import are kept and listed, and the upload opens for review again once everything is gone.",
+        ],
+    },
     {
         "version": "4.2",
         "date": "October 9, 2026",

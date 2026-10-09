@@ -100,7 +100,7 @@ Each increment: **files · done when · tests**. Tests run with `./run_tests.sh`
 - Phone layout uses the existing `.resp-table` card pattern (from `PAGE_SWEEP_PLAN.md`).
 - *Done when* an admin can clear the 48 + warnings without horizontal scrolling at 390 px.
 
-**P0.4 Apply, holidays, undo** (`calendar_import_apply.py`, `calendar_routes.py`, `storage.py`)
+**P0.4 Apply, holidays, undo** *(done, v4.3; series approval left out because no repeat in this file fits a rule)* (`calendar_import_apply.py`, `calendar_routes.py`, `storage.py`)
 - Apply (exists): mapping, audience = bureau, idempotent `import_key`, audit.
 - Approved series → one entry with `rrule`. Their source drafts are recorded in the batch result so re-import doesn't recreate them.
 - Holidays: "missing" ones are offered as a checklist and added with `storage.set_holiday`.

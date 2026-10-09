@@ -1,5 +1,12 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v4.3 — calendar import holidays and undo, P0.4)
+
+- **Holidays (`calendar_import_apply.holiday_choices`, review page):** the holiday lines set aside by the parser that are not in Holidays are a checklist with a type each (regular / special / suspension, guessed from the name). Nothing is pre-ticked; some are local (Manila Day). Ticked ones are added with the import, validated with everything else (a bad choice stops the whole import), and a holiday someone already set is never overwritten. They are recorded in the batch result.
+- **Undo (`calendar_import_apply.undo`, `POST /calendar/import/{id}/undo`, admin only):** deletes the items the batch created that are untouched since import (sequence 0, and the only revisions are the create plus people matched by the person who ran the import, `storage.cal_entry_untouched_since_import`), and the holidays it added that still read as it left them. Edited items are kept and listed; when nothing is left the batch is reopened (`storage.cal_import_reopen`) so it can be reviewed and imported again. Audited.
+- Not done: approving a repeat series on the review screen. No repeat in the CY 2026 file fits a rule exactly, so there was nothing to approve; `suggest_series` stays stored in the batch for a future file.
+- Checked on the real file in Chromium at 390px: import 379 items + 1 ticked holiday, undo back to 0 items and 18 holidays, re-import 379.
+
 ## 2026-10-09 (v4.2 — calendar import review screen, P0.3)
 
 - **Review screen (`templates/calendar_import_review.html`, `calendar_import_apply.review_rows`):** rows that need a person (no owner colour, a parser warning, a status other than confirmed) are listed first under "Needs you"; the rest are folded into "N rows look fine — show them". Each row shows why it needs you; a suggested owner is shown with a **Use** button and is never preselected.
