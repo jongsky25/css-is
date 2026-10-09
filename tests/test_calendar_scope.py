@@ -147,6 +147,17 @@ def test_scope_mine_vs_blend_vs_section(world):
         "Bureau thing", "My trip", "S1 thing"]
 
 
+def test_mine_ignores_the_person_who_only_ran_the_import(world):
+    s1 = world["s1"]
+    add(world, "Imported thing", owner="T", audience="bureau", by=s1["username"], source="import")
+    add(world, "Typed by me", owner="T", audience="bureau", by=s1["username"])
+    assert titles(world, s1, "mine") == ["Typed by me"]
+    assert sorted(titles(world, s1, "blend")) == ["Imported thing", "Typed by me"]
+    add(world, "Imported, I'm on it", owner="T", audience="bureau", by=s1["username"],
+        source="import", people=[s1])
+    assert "Imported, I'm on it" in titles(world, s1, "mine")
+
+
 def test_division_scope_includes_sibling_sections_for_a_chief(world):
     add(world, "S1 thing", owner="T/D1/S1")
     add(world, "S2 thing", owner="T/D1/S2")
