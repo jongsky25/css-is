@@ -647,6 +647,11 @@ def _add_missing_columns(conn):
     added after a database was first created has to be ALTERed in by hand.
     """
     au0 = {row[1] for row in conn.execute("PRAGMA table_info(admin_user)")}
+    for col in ("bday_notify", "birthday_coordinator"):
+        # bday_notify: NULL = on, 0 = "don't tell me about teammates' birthdays".
+        # birthday_coordinator: 1 = an admin ticked "organises birthday celebrations".
+        if au0 and col not in au0:
+            conn.execute(f"ALTER TABLE admin_user ADD COLUMN {col} INTEGER")
     if au0 and "cal_email_changes" not in au0:
         # NULL = on (default). 0 = "don't email me about calendar changes".
         conn.execute("ALTER TABLE admin_user ADD COLUMN cal_email_changes INTEGER")
@@ -4103,6 +4108,7 @@ def get_user_profile(conn, user_id):
         "nickname": acct.get("nickname") or "",
         "birthday": get_birthday(conn, user_id),
         "cal_email_changes": calendar_email_pref(conn, user_id),
+        "bday_notify": bday_notify_pref(conn, user_id),
         # position rides along too (unlinked accounts have none) so callers
         # can apply is_bureau_director() — the Director's title lives here,
         # not in designation (see is_bureau_director).
@@ -4421,6 +4427,34 @@ def clear_birthday(conn, user_id):
     conn.execute("UPDATE admin_user SET birthday_month=NULL, birthday_day=NULL, birthday_share=NULL, "
                  "birthday_consent_at=NULL, birthday_consent_notice=NULL WHERE id=?", (user_id,))
     conn.commit()
+
+
+def set_bday_notify_pref(conn, user_id, on):
+    """Whether this account hears about teammates' birthdays (the bell and the Monday email's
+    line). On by default (stored as NULL)."""
+    conn.execute("UPDATE admin_user SET bday_notify=? WHERE id=?", (None if on else 0, user_id))
+    conn.commit()
+
+
+def bday_notify_pref(conn, user_id):
+    r = conn.execute("SELECT bday_notify FROM admin_user WHERE id=?", (user_id,)).fetchone()
+    return not (r and r[0] == 0)
+
+
+def set_birthday_coordinators(conn, user_ids):
+    """Replace the set of accounts an admin has ticked as organising birthday celebrations
+    (OPTIONAL — with nobody ticked, the coordinator emails simply do not go out)."""
+    ids = sorted({int(u) for u in user_ids})
+    conn.execute("UPDATE admin_user SET birthday_coordinator=NULL")
+    if ids:
+        conn.execute("UPDATE admin_user SET birthday_coordinator=1 WHERE id IN (%s)" % ",".join("?" * len(ids)), ids)
+    conn.commit()
+
+
+def birthday_coordinators(conn):
+    """Active accounts ticked as coordinators: [{id, username}]."""
+    return [{"id": r[0], "username": r[1]} for r in conn.execute(
+        "SELECT id, username FROM admin_user WHERE active=1 AND birthday_coordinator=1 ORDER BY username")]
 
 
 def set_calendar_email_pref(conn, user_id, on):

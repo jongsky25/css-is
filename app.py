@@ -2607,6 +2607,9 @@ def admin_users(request: Request, err: str = "", link: str = "", msg: str = ""):
         rows = [dict(p, account=by_rp.get(p["id"])) for p in staff]
         standalone = [u for u in st.list_admin_users(conn) if u["rp_id"] is None]
         have = sum(1 for r in rows if r["account"])
+        accounts_all = st.list_admin_users(conn)
+        bday_on = {c["id"] for c in st.birthday_coordinators(conn)}
+        bday_names = {r["account"]["id"]: r["name"] for r in rows if r["account"]}
         # Temporary OIC / acting approver, per section: who currently stands in
         # for a section chief on leave, and who's eligible to be picked --
         # active accounts belonging to that same section other than whoever
@@ -2640,6 +2643,8 @@ def admin_users(request: Request, err: str = "", link: str = "", msg: str = ""):
         "rows": rows, "standalone": standalone, "have": have, "total": len(rows),
         "roles": auth.ROLES, "role_labels": auth.ROLE_LABELS, "role_blurb": auth.ROLE_BLURB,
         "bureau_levels": st.BUREAU_ACCESS_LEVELS,
+        "bday_accounts": [{"id": u["id"], "label": bday_names.get(u["id"]) or u["username"], "on": u["id"] in bday_on}
+                          for u in accounts_all if u["active"]],
         "email_configured": mailer.email_configured(),
         "sections": sections, "section_oics": section_oics, "section_accounts": section_accounts,
         "err": err, "link": link, "msg": msg, "show_scope": False, "nav_active": "",
@@ -2776,6 +2781,29 @@ async def admin_users_bureau_access(request: Request, user_id: int):
     return RedirectResponse(
         "/admin/users?msg=" + quote(f"Now sees: {st.BUREAU_ACCESS_LABELS[level]}."),
         status_code=303)
+
+
+@app.post("/admin/users/birthday-coordinators")
+async def admin_users_birthday_coordinators(request: Request):
+    """Tick the (optional) accounts that organise birthday celebrations. They get two extra emails
+    — the day before and a monthly list — about birthdays people shared with them. Nobody ticked
+    means those two emails do not go; everything else about birthdays works without it."""
+    if (r := _forbid(request, "manage_users")):
+        return r
+    body = parse_qsl((await request.body()).decode("utf-8"), keep_blank_values=True)
+    ids = [int(v) for k, v in body if k == "coordinator" and v.isdigit()]
+    conn = get_conn()
+    try:
+        valid = {u["id"] for u in st.list_admin_users(conn) if u["active"]}
+        ids = [i for i in ids if i in valid]
+        st.set_birthday_coordinators(conn, ids)
+        _audit(request, conn, "birthday_coordinators_set", target_type="user", target_id="*",
+               summary=f"Birthday celebration coordinators: {len(ids)} account(s)")
+    finally:
+        conn.close()
+    return RedirectResponse("/admin/users?msg=" + quote(
+        f"{len(ids)} birthday coordinator{'' if len(ids) == 1 else 's'} saved." if ids
+        else "No birthday coordinators — the day-before and monthly emails won't be sent."), status_code=303)
 
 
 @app.post("/admin/users/section-oic/{org_unit_id}/set")
@@ -5301,6 +5329,7 @@ async def me_submit(request: Request):
         _save_birthday(request, conn, uid, bday)
         if p.get("notify_present") == "1":
             st.set_calendar_email_pref(conn, uid, p.get("cal_email_changes") == "1")
+            st.set_bday_notify_pref(conn, uid, p.get("bday_notify") == "1")
         st.set_user_designation(conn, uid, designation)
         st.set_user_nickname(conn, uid, nickname)
         # Keep the staff directory in sync: a linked account's designation is

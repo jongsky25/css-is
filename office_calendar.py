@@ -31,6 +31,7 @@ Dates are ISO strings ('YYYY-MM-DD') so items are JSON-ready for the later API.
 """
 from __future__ import annotations
 
+import calendar
 from datetime import date, timedelta
 
 import auth
@@ -1075,6 +1076,9 @@ def bell_rows(conn, user_id, today=None):
     one indexed query and returns early when there is nothing to say."""
     today = today or tz.today_local()
     rows = []
+    bday = birthday_bell_row(conn, user_id, today)
+    if bday:
+        rows.append(bday)
     unseen = st.cal_unseen_for_user(conn, user_id, today)
     if unseen:
         n = len(unseen)
@@ -1103,3 +1107,63 @@ def bell_rows(conn, user_id, today=None):
             rows.append({"text": f"{c['title']} changed after you confirmed your week",
                          "url": f"/work-arrangement/week?week={wk.isoformat()}", "count": 1})
     return rows
+
+
+# ── birthday reminders (F3) ──────────────────────────────────────────────────
+
+def viewer_paths(conn, user_id):
+    """{user_id, section_path, division_path} for one account — what birthdays.shared_with needs
+    (a lighter cousin of viewer_context for batch jobs)."""
+    out = {"user_id": user_id, "section_path": None, "division_path": None}
+    row = conn.execute("SELECT ou.path FROM admin_user a JOIN resource_person rp ON rp.id = a.rp_id "
+                       "JOIN org_unit ou ON ou.id = rp.org_unit_id WHERE a.id = ? AND rp.archived_at IS NULL",
+                       (user_id,)).fetchone()
+    if row and row[0]:
+        out["section_path"] = row[0]
+        anc = _ancestors(row[0])
+        levels = dict(conn.execute("SELECT path, level FROM org_unit WHERE path IN (%s)" % ",".join("?" * len(anc)), anc))
+        out["division_path"] = next((p for p in anc if levels.get(p) == "division"), None)
+    return out
+
+
+def celebrants_between(conn, viewer, start, end, *, people=None, exclude_self=True):
+    """Birthdays in [start, end] that `viewer` (a viewer_paths dict) may see — by each owner's
+    sharing choice — oldest date first. Nobody is ever reminded about themselves."""
+    out = []
+    for p in people if people is not None else birthday_people(conn):
+        if exclude_self and p["user_id"] == viewer["user_id"]:
+            continue
+        if not bd.shared_with(p, viewer):
+            continue
+        for d in bd.occurrences_between(p["month"], p["day"], start, end):
+            out.append({"user_id": p["user_id"], "name": p["name"], "full_name": p["full_name"],
+                        "unit": p["unit"], "date": d})
+    out.sort(key=lambda c: (c["date"], c["name"].lower()))
+    return out
+
+
+def birthday_bell_row(conn, user_id, today=None):
+    """One row listing today's celebrants this person may see, or None. Cheap when nobody has a
+    birthday today (one query), off when the person turned teammates' birthdays off, and gone at
+    midnight because it is simply computed from today's date."""
+    today = today or tz.today_local()
+    leap_fix = today.month == 2 and today.day == 28 and not calendar.isleap(today.year)    # Feb 29 people: Feb 28
+    if not conn.execute("SELECT 1 FROM admin_user WHERE active=1 AND birthday_month IS NOT NULL AND "
+                        "((birthday_month=? AND birthday_day=?) OR (?=1 AND birthday_month=2 AND birthday_day=29)) "
+                        "AND id<>? LIMIT 1", (today.month, today.day, 1 if leap_fix else 0, user_id)).fetchone():
+        return None
+    if not st.bday_notify_pref(conn, user_id):
+        return None
+    names = [c["name"] for c in celebrants_between(conn, viewer_paths(conn, user_id), today, today)]
+    if not names:
+        return None
+    return {"text": "🎂 Today: " + ", ".join(names), "url": "/calendar/birthdays", "count": 1}
+
+
+def first_working_day(conn, year, month):
+    """The first Monday-to-Friday of the month that is not a holiday or suspension."""
+    d = date(year, month, 1)
+    hol = st.holidays_between(conn, d, d + timedelta(days=10))
+    while d.weekday() >= 5 or d.isoformat() in hol:
+        d += timedelta(days=1)
+    return d

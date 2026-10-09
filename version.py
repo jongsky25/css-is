@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.73"
+APP_VERSION = "3.74"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.74",
+        "date": "October 9, 2026",
+        "summary": "You are reminded of teammates' birthdays, and an optional celebrations team gets a heads-up.",
+        "changes": [
+            "On someone's birthday the bell says whose it is, if they chose to share it with you.",
+            "Your Monday email has one line listing the week's birthdays.",
+            "Admins can tick the people who organise birthday celebrations. They get an email the day before and a list at the start of each month.",
+            "You can switch teammates' birthday reminders off on your profile. Nobody is ever reminded about their own birthday.",
+        ],
+    },
     {
         "version": "3.73",
         "date": "October 9, 2026",

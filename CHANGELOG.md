@@ -1,5 +1,22 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.74 — office calendar F3: birthday reminders)
+
+- **Bell**: one row, "🎂 Today: Mae, Tek", listing the day's celebrants the person may see (each owner's sharing choice;
+  yourself never). Computed from today's date, so it is gone at midnight; Feb 29 people appear on Feb 28 in a non-leap year.
+  One cheap query when nobody has a birthday today.
+- **Monday email**: one line, "🎂 Birthdays this week: Riza (Wed), Tek (Sat)", added to the existing whereabouts email — no
+  extra email — personalised by each recipient's sharing scope, and absent when there is none.
+- **Optional coordinators** (admin → Users → "Birthday celebration coordinators"): tick accounts that organise celebrations.
+  Two new scheduled emails, each with its own /admin/email toggle and preview: `--birthday-coordinators` (the day before, one
+  email per coordinator per day) and `--birthday-month` (the first working day of the month — weekends and holidays skipped; a
+  sleeping app catches up through the 7th). **With nobody ticked neither is sent**; everything else works without them.
+  Coordinators only hear about birthdays people shared with them, and never about their own. Both are idempotent through
+  `email_log`, and a dry run sends and logs nothing.
+- **Profile**: "Tell me about teammates' birthdays (the bell and the Monday email)", on by default; a form without the field
+  never flips it.
+- Not in this increment: the avatar party-hat badge, and the Monday "week-ahead" for entries (G3).
+
 ## 2026-10-09 (v3.73 — office calendar G2: bell rows and seen-tracking)
 
 - **"N new or changed calendar items for you"** in the nav bell: upcoming items the person is ON whose `seen_seq` is empty

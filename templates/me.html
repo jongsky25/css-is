@@ -98,6 +98,9 @@
         <label style="font-weight:400"><input type="checkbox" name="cal_email_changes" {{ "checked" if profile.cal_email_changes }} value="1">
           Email me when a calendar item I'm on is added, changed or cancelled</label>
         <p class="hint">One email per burst of edits, never for changes you make yourself.</p>
+        <label style="font-weight:400;display:block;margin-top:.6rem"><input type="checkbox" name="bday_notify" {{ "checked" if profile.bday_notify }} value="1">
+          Tell me about teammates' birthdays (the bell and the Monday email)</label>
+        <p class="hint">Only birthdays people chose to share with you, and never your own.</p>
       </div>
       <div class="field">
         <label for="designation">Designation</label>

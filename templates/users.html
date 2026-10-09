@@ -246,6 +246,20 @@
   </p>
 </div>
 
+<div class="panel" id="birthday-coordinators">
+  <h2 style="margin-top:0;font-size:1.05rem;">🎂 Birthday celebration coordinators <span class="sec">(optional)</span></h2>
+  <p class="sec">Tick the people who organise birthday celebrations (for example the welfare or social committee). They get two extra emails:
+    one the day before a birthday and one list on the first working day of each month. They only hear about people who chose to share
+    their birthday with them, and never about their own. <strong>If nobody is ticked, those two emails simply aren't sent</strong>; the bell,
+    the Monday line, the home card and the printable list all still work.</p>
+  <form method="post" action="/admin/users/birthday-coordinators">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:.3rem .9rem;max-height:240px;overflow:auto;margin:.6rem 0;">
+      {% for a in bday_accounts %}<label style="font-size:.9rem"><input type="checkbox" name="coordinator" {{ "checked" if a.on }} value="{{ a.id }}"> {{ a.label }}</label>{% endfor %}
+    </div>
+    <button class="btn" type="submit">Save coordinators</button>
+  </form>
+</div>
+
 <script>
 function filterUsers(input) {
   const q = input.value.trim().toLowerCase();

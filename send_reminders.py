@@ -146,7 +146,8 @@ def remind_tomorrows_events(conn, base, dry_run=False):
 
 _ALL_JOBS = {"events", "wellness_expiry", "digest", "csm_rp", "csm_activity",
             "wellness_file", "awa_file", "whereabouts",
-            "whereabouts_nudge", "whereabouts_rollup", "calendar_css_nudge"}
+            "whereabouts_nudge", "whereabouts_rollup", "calendar_css_nudge",
+            "birthday_coordinators", "birthday_month"}
 
 # job name -> the admin toggle that can switch it off (see /admin/email).
 JOB_FEATURE = {
@@ -161,6 +162,8 @@ JOB_FEATURE = {
     "whereabouts_nudge": "job_whereabouts_nudge",
     "whereabouts_rollup": "job_whereabouts_rollup",
     "calendar_css_nudge": "job_calendar_css_nudge",
+    "birthday_coordinators": "job_birthday_coordinators",
+    "birthday_month": "job_birthday_month",
 }
 
 # Admin-tunable schedule/delay knobs for the jobs below (/admin/email "Timing"
@@ -386,16 +389,22 @@ def send_whereabouts_weekly(conn, base, dry_run=False):
         return 0                    # a week with no working day has nothing to report
     label = st.whereabouts_week_label(monday)
     defaults = st.whereabouts_defaults(conn, monday)
+    import office_calendar as oc
+    people = oc.birthday_people(conn)
     sent = 0
     for staffer in st.whereabouts_recipients(conn, monday):
         days = st.whereabouts_week(conn, staffer["id"], monday, defaults=defaults)
+        week_birthdays = []
+        if people and st.bday_notify_pref(conn, staffer["id"]):
+            week_birthdays = [(c["name"], f"{c['date']:%a}") for c in oc.celebrants_between(
+                conn, oc.viewer_paths(conn, staffer["id"]), monday, monday + timedelta(days=6), people=people)]
         plotted = [(d["label"], st.whereabouts_choice_label(d)
                     + (f" — {d['note']}" if d["choice"] == "field" and d["note"] else ""))
                    for d in days]
         token = auth.make_whereabouts_token(staffer["id"], monday.isoformat())
         link = f"{base}/whereabouts/week?token={quote(token)}"
         name = _person_name(conn, staffer["id"])
-        subj, body, html = mailer.whereabouts_week_message(name, label, plotted, link)
+        subj, body, html = mailer.whereabouts_week_message(name, label, plotted, link, birthdays=week_birthdays)
         if dry_run:
             print(f"[dry-run] whereabouts -> {staffer['username']} ({label})")
         else:
@@ -489,6 +498,72 @@ def _human_range(start, end=None):
         return f"{a:%B} {a.day}, {a.year}"
     b = date.fromisoformat(end)
     return f"{a:%B} {a.day} – {b:%B} {b.day}, {b.year}"
+
+
+def _already_sent(conn, feature, to, subject):
+    """Has this exact email already gone to this person? The birthday jobs are idempotent by
+    asking the email log, so a catch-up run or a manual re-run never doubles up."""
+    return bool(conn.execute("SELECT 1 FROM email_log WHERE feature=? AND recipient=? AND subject=? "
+                             "AND status IN ('sent', 'not_configured') LIMIT 1", (feature, to, subject)).fetchone())
+
+
+def send_birthday_coordinators(conn, base, dry_run=False):
+    """The day before a birthday, tell each celebration coordinator an admin ticked (OPTIONAL: with
+    nobody ticked this sends nothing). A coordinator only hears about people who chose to share
+    their birthday with them, and never about themselves. Once per coordinator per day."""
+    import office_calendar as oc
+    coordinators = st.birthday_coordinators(conn)
+    if not coordinators:
+        return 0
+    tomorrow = tz.today_local() + timedelta(days=1)
+    people = oc.birthday_people(conn)
+    sent = 0
+    for co in coordinators:
+        cel = oc.celebrants_between(conn, oc.viewer_paths(conn, co["id"]), tomorrow, tomorrow, people=people)
+        if not cel:
+            continue
+        subj, body, html = mailer.birthday_tomorrow_message(
+            _person_name(conn, co["id"]) or co["username"], f"{tomorrow:%A, %B} {tomorrow.day}",
+            [(c["name"], c["unit"]) for c in cel], f"{base}/calendar/birthdays?month={tomorrow.month}")
+        if _already_sent(conn, JOB_FEATURE["birthday_coordinators"], co["username"], subj):
+            continue
+        if dry_run:
+            print(f"[dry-run] birthday tomorrow -> {co['username']} ({len(cel)})")
+        else:
+            _send(conn, JOB_FEATURE["birthday_coordinators"], co["username"], subj, body, html=html)
+        sent += 1
+    return sent
+
+
+def send_birthday_month(conn, base, dry_run=False):
+    """On the first working day of the month (or, if the app was asleep, any day through the 7th that
+    has not been sent yet), each coordinator gets the month's celebrants shared with them."""
+    import office_calendar as oc
+    coordinators = st.birthday_coordinators(conn)
+    today = tz.today_local()
+    if not coordinators or today < oc.first_working_day(conn, today.year, today.month) or today.day > 7:
+        return 0
+    first = today.replace(day=1)
+    last = (first.replace(year=first.year + (first.month == 12), month=first.month % 12 + 1)) - timedelta(days=1)
+    label = f"{first:%B %Y}"
+    people = oc.birthday_people(conn)
+    sent = 0
+    for co in coordinators:
+        cel = oc.celebrants_between(conn, oc.viewer_paths(conn, co["id"]), first, last, people=people)
+        if not cel:
+            continue
+        subj, body, html = mailer.birthday_month_message(
+            _person_name(conn, co["id"]) or co["username"], label,
+            [(f"{c['date']:%a} {c['date'].day}", c["name"], c["unit"]) for c in cel],
+            f"{base}/calendar/birthdays?month={first.month}")
+        if _already_sent(conn, JOB_FEATURE["birthday_month"], co["username"], subj):
+            continue
+        if dry_run:
+            print(f"[dry-run] birthday month -> {co['username']} ({len(cel)})")
+        else:
+            _send(conn, JOB_FEATURE["birthday_month"], co["username"], subj, body, html=html)
+        sent += 1
+    return sent
 
 
 def send_whereabouts_rollup(conn, base, dry_run=False):
@@ -642,6 +717,10 @@ def run(db_path="css_is.db", dry_run=False, jobs=None):
             report["whereabouts_nudge"] = nudge_whereabouts(conn, base, dry_run=dry_run)
         if "whereabouts_rollup" in jobs:
             report["whereabouts_rollup"] = send_whereabouts_rollup(conn, base, dry_run=dry_run)
+        if "birthday_coordinators" in jobs:
+            report["birthday_coordinators"] = send_birthday_coordinators(conn, base, dry_run=dry_run)
+        if "birthday_month" in jobs:
+            report["birthday_month"] = send_birthday_month(conn, base, dry_run=dry_run)
         if "calendar_css_nudge" in jobs:
             report["calendar_css_nudge"] = nudge_calendar_css(conn, base, dry_run=dry_run)
     finally:
@@ -675,6 +754,10 @@ def main():
                     help="Tell each chief who in their area hasn't reported their week.")
     ap.add_argument("--calendar-css-nudge", action="store_true",
                     help="Ask the creator of a past calendar-only training if they want feedback.")
+    ap.add_argument("--birthday-coordinators", action="store_true",
+                    help="Tell birthday coordinators who has a birthday tomorrow.")
+    ap.add_argument("--birthday-month", action="store_true",
+                    help="Send birthday coordinators the month's celebrants.")
     args = ap.parse_args()
 
     jobs = {j for j, flag in (("events", args.events),
@@ -687,7 +770,9 @@ def main():
                               ("whereabouts", args.whereabouts),
                               ("whereabouts_nudge", args.whereabouts_nudge),
                               ("whereabouts_rollup", args.whereabouts_rollup),
-                              ("calendar_css_nudge", args.calendar_css_nudge)) if flag}
+                              ("calendar_css_nudge", args.calendar_css_nudge),
+                              ("birthday_coordinators", args.birthday_coordinators),
+                              ("birthday_month", args.birthday_month)) if flag}
     # run() treats a missing CSS_BASE_URL as a skip, because the in-process
     # caller must not be killed by it. On the command line it IS a failure:
     # exit non-zero so a cron/Task Scheduler run reports it instead of

@@ -645,6 +645,46 @@ def calendar_changes_message(name, rows, link):
     return subject, body, html
 
 
+def birthday_tomorrow_message(name, day_label, celebrants, link):
+    """Returns (subject, plain_text_body, html_body). To a celebration coordinator the day before:
+    `celebrants` is [(name, unit)]. Only people who chose to share their birthday with this
+    coordinator are ever listed."""
+    one = len(celebrants) == 1
+    subject = (f"Tomorrow: {celebrants[0][0]}'s birthday" if one else f"Tomorrow: {len(celebrants)} birthdays")
+    lines = "\n".join(f"  • {n}" + (f" ({u})" if u else "") for n, u in celebrants)
+    body = (f"Hello {name or 'there'},\n\nYou are down as organising birthday celebrations. "
+            f"Tomorrow, {day_label}:\n\n{lines}\n\nThe month's list: {link}\n")
+    items = "".join(f'<li style="margin:3px 0;">{_e(n)}' + (f' <span style="color:{_SOFT};">({_e(u)})</span>' if u else "") + "</li>"
+                    for n, u in celebrants)
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},", heading="Birthday tomorrow 🎂",
+        intro=f"Tomorrow, {_e(day_label)}, you are down to organise a little something for:",
+        extra_html=f'<ul style="font-family:Arial,Helvetica,sans-serif; font-size:14px; color:{_INK};">{items}</ul>',
+        cta_label="See the month's list", link=link,
+        footnote="You get this because an admin ticked you as a celebration coordinator.")
+    return subject, body, html
+
+
+def birthday_month_message(name, month_label, rows, link):
+    """Returns (subject, plain_text_body, html_body). The first working day of the month, to a
+    coordinator: `rows` is [(day_label, name, unit)] for birthdays shared with them."""
+    subject = f"{month_label} celebrants"
+    lines = "\n".join(f"  {d}  {n}" + (f" ({u})" if u else "") for d, n, u in rows)
+    body = (f"Hello {name or 'there'},\n\nBirthdays this month ({len(rows)}):\n\n{lines}\n\n"
+            f"Printable list: {link}\n")
+    cells = "".join(f'<tr><td style="padding:4px 12px 4px 0; font-family:Arial,Helvetica,sans-serif; font-size:13px; '
+                    f'color:{_SOFT};">{_e(d)}</td><td style="padding:4px 0; font-family:Arial,Helvetica,sans-serif; '
+                    f'font-size:14px; color:{_INK};">{_e(n)}' + (f' <span style="color:{_SOFT};">({_e(u)})</span>' if u else "")
+                    + "</td></tr>" for d, n, u in rows)
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},", heading=f"{month_label} celebrants 🎂",
+        intro="Here are the birthdays shared with you this month.",
+        extra_html=f'<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:12px 0;">{cells}</table>',
+        cta_label="Open the printable list", link=link,
+        footnote="You get this because an admin ticked you as a celebration coordinator.")
+    return subject, body, html
+
+
 def csm_rp_results_message(rp_name, topic, event_title, link):
     """Returns (subject, plain_text_body, html_body). Sent once to a resource
     person (speaker) with a login, after their own Type-3 CSM ratings for a
@@ -895,16 +935,17 @@ def work_arrangement_file_reminder_message(name, period_label, deadline_label, l
     return subject, body, html
 
 
-def whereabouts_week_message(name, week_label, days, link):
+def whereabouts_week_message(name, week_label, days, link, birthdays=None):
     """Returns (subject, plain_text_body, html_body). The Monday "where will you
     be this week?" email. `days` is a list of (day_label, plotted_label) for
     Monday-Friday — already plotted from the person's filed work arrangement, so
     the email reads as a confirmation: change only what is different."""
     subject = f"Where will you be this week? {week_label}"
     lines = "\n".join(f"  {d}: {w}" for d, w in days)
+    bday_text = ("🎂 Birthdays this week: " + ", ".join(f"{n} ({when})" for n, when in birthdays)) if birthdays else ""
     body = (f"Hello {name or 'there'},\n\n"
             f"Here is where we have you for {week_label}, from your work arrangement:\n\n"
-            f"{lines}\n\n"
+            f"{lines}\n\n" + (f"{bday_text}\n\n" if bday_text else "") +
             f"If anything is different (in the field, on leave, or in the office), "
             f"change it here — one tap, no login:\n\n  {link}\n")
     rows = "".join(
@@ -914,6 +955,9 @@ def whereabouts_week_message(name, week_label, days, link):
         f'font-weight:700; color:{_INK};">{_e(w)}</td></tr>' for d, w in days)
     table = (f'<table role="presentation" cellpadding="0" cellspacing="0" border="0" '
              f'style="margin:16px 0 4px;">{rows}</table>')
+    if bday_text:
+        table += (f'<p style="margin:14px 0 0; font-family:Arial,Helvetica,sans-serif; font-size:14px; '
+                  f'color:{_INK};">{_e(bday_text)}</p>')
     html = _email_html(
         greeting=f"Hi {name or 'there'},",
         heading=f"Where will you be this week?",
@@ -1176,6 +1220,16 @@ FEATURES = {
         "The day after a training that was only on the calendar, its creator is asked "
         "once whether to collect feedback for it.",
         "scheduled"),
+    "job_birthday_coordinators": (
+        "Birthdays — day before, to coordinators",
+        "Each celebration coordinator an admin ticked is told the day before who has a birthday "
+        "(only birthdays shared with them). Nobody ticked, nothing is sent.",
+        "scheduled"),
+    "job_birthday_month": (
+        "Birthdays — monthly list, to coordinators",
+        "On the first working day of the month, each coordinator gets the month's celebrants "
+        "(only birthdays shared with them).",
+        "scheduled"),
     "job_whereabouts_nudge": (
         "Weekly whereabouts — Tuesday nudge",
         "Nudges staff who haven't answered the Monday whereabouts email.",
@@ -1277,6 +1331,10 @@ _PREVIEWS = {
     "event_dates_changed": lambda: event_dates_changed_message(
         "Juan Reyes", "Basic Life Support Training", "October 2, 2026",
         "October 9, 2026", "DOH Conference Room", _SAMPLE_LINK),
+    "job_birthday_coordinators": lambda: birthday_tomorrow_message(
+        "Maria Santos", "Wednesday, October 14", [("Riza", "Section 1"), ("Tek", "Section 3")], _SAMPLE_LINK),
+    "job_birthday_month": lambda: birthday_month_message(
+        "Maria Santos", "October 2026", [("Wed 14", "Riza", "Section 1"), ("Sat 17", "Tek", "Section 3")], _SAMPLE_LINK),
     "job_calendar_css_nudge": lambda: calendar_css_nudge_message(
         "Jane Dela Cruz", "Basic Life Support Training", "October 2, 2026", _SAMPLE_LINK),
     "job_whereabouts_nudge": lambda: whereabouts_nudge_message(
