@@ -17,12 +17,12 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "5.7"
+APP_VERSION = "5.9"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "5.7",
+        "version": "5.9",
         "date": "October 9, 2026",
         "summary": "A door screen for the conference room, and meetings that repeat.",
         "changes": [
@@ -32,7 +32,7 @@ CHANGELOG = [
         ],
     },
     {
-        "version": "5.6",
+        "version": "5.8",
         "date": "October 9, 2026",
         "summary": "Meal requests for the conference room, from the form to delivery.",
         "changes": [
@@ -43,7 +43,7 @@ CHANGELOG = [
         ],
     },
     {
-        "version": "5.5",
+        "version": "5.7",
         "date": "October 9, 2026",
         "summary": "Activities and conference room bookings now know about each other.",
         "changes": [
@@ -53,7 +53,7 @@ CHANGELOG = [
         ],
     },
     {
-        "version": "5.4",
+        "version": "5.6",
         "date": "October 9, 2026",
         "summary": "Conference room bookings now show on the Office calendar.",
         "changes": [
@@ -63,7 +63,7 @@ CHANGELOG = [
         ],
     },
     {
-        "version": "5.3",
+        "version": "5.5",
         "date": "October 9, 2026",
         "summary": "Outside guests can now request the conference room from a QR code, without an account.",
         "changes": [
@@ -74,7 +74,7 @@ CHANGELOG = [
         ],
     },
     {
-        "version": "5.2",
+        "version": "5.4",
         "date": "October 9, 2026",
         "summary": "Conference room: see what is free, request it, and get told what happens.",
         "changes": [
@@ -83,6 +83,24 @@ CHANGELOG = [
             "The Administrative Section approves or declines from the Approvals page, or straight from the email. They can also book the room for someone, close it for repairs, and move a booking when something more important comes up.",
             "If your booking is cancelled you are told why and offered the nearest free times, and picking one books it at once.",
             "Approved bookings come with a calendar file, and you get a reminder the afternoon before.",
+        ],
+    },
+    {
+        "version": "5.3",
+        "date": "October 9, 2026",
+        "summary": "Admins can now add a person's birthday from the Directory.",
+        "changes": [
+            "On Directory, open Edit for a staff member and use the new Birthday card to add, change or remove their birthday, choosing who may see it.",
+            "Birthdays are kept on the person's account, so staff without an account are asked to get one first.",
+        ],
+    },
+    {
+        "version": "5.2",
+        "date": "October 9, 2026",
+        "summary": "\"Mine only\" on the calendar no longer shows things you only imported.",
+        "changes": [
+            "If you imported calendar items from a file, they no longer appear under \"Mine only\" unless you are actually listed on them.",
+            "Imported items still show under \"Mine + bureau-wide\" when they are bureau-wide.",
         ],
     },
     {

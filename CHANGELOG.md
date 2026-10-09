@@ -1,6 +1,6 @@
 # CHANGELOG — Cowork revisions (surgical)
 
-## 2026-10-09 (v5.7 — conference room reservation R10: the door display and repeat-weekly requests)
+## 2026-10-09 (v5.9 — conference room reservation R10: the door display and repeat-weekly requests)
 
 - **Door / TV display.** `/rooms/display/<secret>` (no sign-in; a signed-in person can use `/rooms/display`): "In use now" or "Free until ...", "Next", today's schedule (a multi-hour booking is one line), the time,
   and a QR to `/room`; "Closed" for weekends, holidays and whole-day closures. Dark, large type for 1920x1080, one column on a portrait tablet; reloads itself every 60 s and ticks its own clock; never cached or indexed.
@@ -12,7 +12,7 @@
   meal form, and My reservations shows "Repeats: N dates" with **Withdraw the whole series** (today onward).
 - Tests: `tests/test_rooms_series.py`, `tests/test_rooms_series_pages.py`, `tests/test_rooms_display.py`.
 
-## 2026-10-09 (v5.6 — conference room reservation R9: meals, from the form to delivery)
+## 2026-10-09 (v5.8 — conference room reservation R9: meals, from the form to delivery)
 
 - **The form (`rooms_meals.py`, tables `room_meal` + `room_meal_item`):** 1. Title of the Activity (from the reservation), 2. Number of Pax, 3. Special Request for Meals, 4. Breakfast / AM snack /
   lunch / PM snack, each Yes or No **with its requested delivery time**. It is prepared when "Will meals be requested?" is ticked (or later, from My reservations -> Request meals): each meal starts as Yes
@@ -27,7 +27,7 @@
   the supplier. Delivered meals are never rewritten. A moved booking's new form copies the old one.
 - Tests: `tests/test_rooms_meals.py`, `tests/test_rooms_meals_pages.py`.
 
-## 2026-10-09 (v5.5 — conference room reservation R8: CSS activities and the room, both ways)
+## 2026-10-09 (v5.7 — conference room reservation R8: CSS activities and the room, both ways)
 
 - **From the activity form:** a collapsible "Conference room" line (works without scripts). `room_chip.js` fetches `GET /rooms/api/day` (signed in, staff
   rules: 2 working days, 90 days; hours only, never a title), shows free / others asked / booked / closed, and ticks "also reserve" for online and hybrid activities or a venue
@@ -42,7 +42,7 @@
   same transaction (the old one is marked withdrawn "Moved to CR-..."); declining it leaves the old one; withdrawing the old one withdraws its pending move. The Approvals card says "Move of CR-...".
 - Tests: `tests/test_rooms_activity.py`, `tests/test_rooms_activity_pages.py`.
 
-## 2026-10-09 (v5.4 — conference room reservation R7: the Rooms layer on the Office calendar)
+## 2026-10-09 (v5.6 — conference room reservation R7: the Rooms layer on the Office calendar)
 
 - **A `rooms` layer in `office_calendar.LAYERS`** (`kind: room`, 🏢, venue "Conference room", the booked hours as start/end time). An **approved** booking is
   bureau-wide information: every signed-in viewer sees it in every scope except "mine" (your own requests). A **pending** request is shown, as `tentative` /
@@ -57,7 +57,7 @@
   the approval email now uses the same event, so a calendar app never shows it twice, and its SEQUENCE rises when the booking changes.
 - Tests: `tests/test_calendar_rooms.py`, `tests/test_calendar_rooms_pages.py`.
 
-## 2026-10-09 (v5.3 — conference room reservation R6: the public QR page for guests)
+## 2026-10-09 (v5.5 — conference room reservation R6: the public QR page for guests)
 
 - **`/room` (no login), permanent.** Short enough to print and type; `/rooms/poster` (section members) prints an A4 page with the QR, the address and three steps.
   The QR encodes `CSS_BASE_URL` + `/room`, so **set `CSS_BASE_URL` before printing** and never change that path. Pick a day from the next 60 days (each shows how many hours
@@ -72,9 +72,9 @@
   the scheduler tick, and as `python retention.py --room-guests [--dry-run]`.
 - Guests also get a "request received" email (under the "Conference room decision result" switch). Tests: `tests/test_rooms_guest.py`, `tests/test_rooms_guest_pages.py`.
 
-## 2026-10-09 (v5.2 — conference room reservation, R1 to R5)
+## 2026-10-09 (v5.4 — conference room reservation, R1 to R5)
 
-The conference room, built in five increments (`docs/ROOM_RESERVATION_PLAN.md`). The notes below are the increments, newest first; their old version numbers (4.1 to 4.5) were folded into 5.2 when this was merged after the Calendar phases.
+The conference room, built in five increments (`docs/ROOM_RESERVATION_PLAN.md`). The notes below are the increments, newest first; their old version numbers (4.1 to 4.5) were folded into 5.4 when this was merged after the Calendar phases.
 
 ### conference room reservation R5: notifications
 
@@ -143,6 +143,14 @@ First increment of docs/ROOM_RESERVATION_PLAN.md. Nothing visible to users yet.
   first admin to decide wins and a later one is told who; a decline needs a reason; only the requester can withdraw. Every change is audited.
 - Tests: `tests/test_rooms_core.py`.
 =======
+
+## 2026-10-09 (v5.3 — admin birthdays from the Directory)
+
+- **Directory (`POST /directory/person/{id}/birthday`, `staff_form.html`):** the Edit staff page has a Birthday card for admins with `manage_users`, with the same rules as `/admin/users/birthday` (admin consent notice, date never audited, blank month and day clears). Staff with no linked account see a note instead, since the birthday lives on `admin_user`. `_render_staff_form` now takes `msg` / `err`. The Users-page panel is unchanged. Test: `test_admin_sets_a_birthday_from_the_directory_edit_page`.
+
+## 2026-10-09 (v5.2 — "Mine only" ignores the person who ran an import)
+
+- **Scope (`office_calendar._in_scope`):** the creator clause of "mine" is skipped for entries with `source = 'import'`, because a bulk import stamps the importer as `created_by` on every row. Being listed as a person still counts. `created_by` is unchanged, so edit rights are unaffected, and "Mine + bureau-wide" still shows bureau-wide imports. The activities layer still counts the creator as mine. Test: `test_mine_ignores_the_person_who_only_ran_the_import`.
 
 ## 2026-10-09 (v5.1 — calendar legend and admin-entered birthdays)
 

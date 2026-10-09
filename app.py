@@ -6757,14 +6757,22 @@ def _staff_f(values, rp_id=None, has_photo=False, has_signature=False):
     return f
 
 
-def _render_staff_form(request, f, is_edit, dup=None):
+def _render_staff_form(request, f, is_edit, dup=None, msg="", err=""):
     conn = get_conn()
     try:
         org = st.org_structure(conn)
+        # Birthdays live on the person's ACCOUNT, so an admin can only set one here for
+        # staff who have one. Only those who may manage users see the section.
+        user = getattr(request.state, "user", None)
+        can_bday = bool(is_edit and f.get("id") and user and auth.can(user["role"], "manage_users"))
+        acct = st.get_admin_user_by_rp(conn, f["id"]) if can_bday else None
+        bday = (st.get_birthday(conn, acct["id"]) if acct else None) or {}
     finally:
         conn.close()
-    return templates.TemplateResponse(request, "staff_form.html",
-                                      {"f": f, "is_edit": is_edit, "org": org, "dup": dup or []})
+    return templates.TemplateResponse(request, "staff_form.html", {
+        "f": f, "is_edit": is_edit, "org": org, "dup": dup or [], "msg": msg, "err": err,
+        "can_bday": can_bday, "bday_acct": acct, "bd": bday,
+        "bd_months": st._MONTH_NAMES, "bd_shares": st.BIRTHDAY_SHARES})
 
 
 @app.get("/directory/staff/new", response_class=HTMLResponse)
@@ -6809,7 +6817,7 @@ async def directory_add_person(request: Request):
 
 
 @app.get("/directory/person/{rp_id}/edit", response_class=HTMLResponse)
-def directory_edit_person(request: Request, rp_id: int):
+def directory_edit_person(request: Request, rp_id: int, msg: str = ""):
     conn = get_conn()
     try:
         person = st.get_rp(conn, rp_id)
@@ -6819,7 +6827,7 @@ def directory_edit_person(request: Request, rp_id: int):
         return RedirectResponse("/directory", status_code=303)
     f = _staff_f(person, rp_id=rp_id, has_photo=person["has_photo"],
                  has_signature=person.get("has_signature", False))
-    return _render_staff_form(request, f, is_edit=True)
+    return _render_staff_form(request, f, is_edit=True, msg=msg)
 
 
 @app.post("/directory/person/{rp_id}/update")
@@ -6879,6 +6887,41 @@ async def directory_update_person(request: Request, rp_id: int):
         conn.close()
     dest = f"/directory?err={quote(warn)}#row-p{rp_id}" if warn else f"/directory#row-p{rp_id}"
     return RedirectResponse(dest, status_code=303)
+
+
+@app.post("/directory/person/{rp_id}/birthday")
+async def directory_person_birthday(request: Request, rp_id: int):
+    """Admin enters (or clears, with a blank month/day) a staff member's birthday from the
+    directory. Same rules as /admin/users/birthday; the date is never written to the audit log."""
+    if (r := _forbid(request, "manage_users")):
+        return r
+    p = await _posted(request)
+    conn = get_conn()
+    try:
+        acct = st.get_admin_user_by_rp(conn, rp_id)
+        person = st.get_rp(conn, rp_id)
+        if not person or not acct or not acct["active"]:
+            return RedirectResponse(f"/directory/person/{rp_id}/edit", status_code=303)
+        m, d = (p.get("birthday_month") or "").strip(), (p.get("birthday_day") or "").strip()
+        if not m and not d:
+            st.clear_birthday(conn, acct["id"])
+            _audit(request, conn, "birthday_clear", target_type="user", target_id=acct["id"],
+                   summary="admin removed their birthday")
+            msg = "Birthday removed."
+        else:
+            share = (p.get("birthday_share") or "none").strip()
+            try:
+                st.set_birthday(conn, acct["id"], m, d, share, notice=st.BIRTHDAY_ADMIN_NOTICE)
+            except ValueError as e:
+                f = _staff_f(person, rp_id=rp_id, has_photo=person["has_photo"],
+                             has_signature=person.get("has_signature", False))
+                return _render_staff_form(request, f, is_edit=True, err=str(e))
+            _audit(request, conn, "birthday_set", target_type="user", target_id=acct["id"],
+                   summary=f"admin set their birthday (sharing: {st.BIRTHDAY_SHARES[share]})")
+            msg = "Birthday saved."
+    finally:
+        conn.close()
+    return RedirectResponse(f"/directory/person/{rp_id}/edit?msg=" + quote(msg), status_code=303)
 
 
 @app.post("/directory/person/{rp_id}/archive")
