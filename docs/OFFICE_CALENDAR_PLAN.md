@@ -54,10 +54,12 @@ each**.
    - Signed links: the `auth.make_whereabouts_token` pattern.
    - Mail: `mailer.py` + `email_log`.
    - Audit: `audit_log`.
-6. **Keep `app.py` thin.** It is ~15.9k lines. Calendar logic lives in new modules:
-   `office_calendar.py`, `calendar_import.py`, `birthdays.py`. Routes go in a
-   `calendar_routes.py` FastAPI `APIRouter` that `app.py` includes (one line). The existing
-   auth middleware gates by path, so it covers router routes unchanged.
+6. **Keep `app.py` thin (decided).** It is ~15.9k lines. Calendar logic lives in new modules:
+   `office_calendar.py`, `calendar_import.py`, `birthdays.py`, `calendar_ics.py`. Routes go in a
+   `calendar_routes.py` FastAPI `APIRouter` that `app.py` includes with one line. The existing
+   auth middleware (`_auth_gate`) decides by URL path, so signed-in routes are covered unchanged.
+   The only public route (the personal ICS feed) must be added to `_PUBLIC_PREFIXES` in
+   `app.py` as `/calendar/feed/`, exactly like `/whereabouts/`; increment G4 does that.
 
 ---
 
@@ -248,11 +250,18 @@ explicitly.
 |---|---|---|---|
 | "Today is Mae's birthday" | the morning of | teammates inside Mae's sharing scope who haven't turned it off | bell (and home card) |
 | "Birthdays this week" | Monday | everyone, scoped | one line in the existing Monday email; no extra email |
-| "Tomorrow: Mae's birthday" | day before | *celebration coordinators* (accounts listed in an admin setting) | email |
+| "Tomorrow: Mae's birthday" | day before | *celebration coordinators* — **optional**, see below | email |
 | "October celebrants" | 1st working day of the month | coordinators | email with the list + printable link |
 | The celebrant | never | — | no one gets a reminder about themselves |
 
 All of these are toggles in `/me` and in Admin → Email, and they respect `birthday_share`.
+
+**Coordinators (optional).** A coordinator is just a staff account that an admin ticks as "organises
+birthday celebrations" (for example the welfare or social committee). They get two extra emails
+so they can prepare a card or cake: one the day before each birthday, and one list on the first
+working day of the month. **If nobody is ticked, those two emails simply don't go out** and
+everything else still works (bell, Monday line, home card, the printable monthly list). It is an
+admin checkbox on the user list, not a new role or permission.
 
 *Later, optional:* a "Send a greeting" button that leaves a short message on the celebrant's home
 card. It would reuse the comment storage patterns. It isn't scheduled; it's listed in §12.
@@ -358,7 +367,20 @@ All default on. Admins have global switches in Admin → Email.
 
 ## 10. Visual design
 
-- **Colour = owning unit; icon = kind; text is always present.**
+- **Colour = owning unit; icon = kind; text is always present.** The legend (confirmed by the owner):
+
+  | Owner | Colour |
+  |---|---|
+  | Bureau | green |
+  | Section 1 | yellow |
+  | Section 2 | magenta |
+  | Section 3 | orange |
+  | Section 4 | cyan |
+  | Section 5 | blue |
+
+  In the app these map to the existing `_unit_badges.html` tokens (not the raw Word colours),
+  so dark mode and contrast keep working. The importer (B2) still shows a mapping screen once,
+  because the Word cell shading codes differ slightly from the legend swatches.
   - Reuse the Word legend colours, mapped onto the existing `_unit_badges.html` tokens so dark
     mode and contrast keep working.
   - Never use colour as the only signal; the existing a11y tests apply.
@@ -516,18 +538,19 @@ E1 → G1 → G2 → F3 → C3 → E2 → G3 → D3 → G4 → H1 → H2 → H3.
 
 ## 15. Risks / open items
 
-- **Colour → unit mapping** of the Word legend needs one human confirmation during import (B2).
+- **Colour → unit mapping:** the legend is known (Bureau green, S1 yellow, S2 magenta, S3 orange,
+  S4 cyan, S5 blue), but the Word cells use slightly different shades, so B2 shows the mapping once for
+  confirmation.
 - **Nickname ambiguity** (two "Mae"s): the resolver never auto-assigns an ambiguous name (B3).
 - **Bell cost:** `_notification_items` runs on every request. Keep it to indexed single counts
   (`idx_cal_person_user`).
 - **Email volume** is the real cost of open editing. The outbox debounce plus the merged Monday
   email is the mitigation; watch `email_log` after G1.
-- **Celebration coordinators:** who they are is an office decision (an admin setting; empty
-  until set).
+- **Celebration coordinators:** optional. Admin ticks the accounts; with none ticked the two
+  coordinator emails are not sent.
 - **Birthday sharing default** is *Don't share* (opt-in). Changing it to opt-out would need a legal
   basis and a notice review.
-- **New convention:** `calendar_routes.py` introduces the first `APIRouter`. If that's unwelcome,
-  routes can live in `app.py` instead, with the logic still in the modules.
+- **New convention:** `calendar_routes.py` is the first `APIRouter` in the repo (decided: yes).
 
 ## 16. Sources consulted
 
