@@ -115,9 +115,14 @@ room_block           -- maintenance, a holiday override, or an admin hold
   lives in `rooms.py` only, so no trigger is needed.
 - `ref_code` is the thing people say on the phone ("CR-2610-0042"). Internal ids never appear in
   the UI.
-- Timeslot assumption until the owner confirms (**open item O1**): AM 08:00–12:00 and PM 13:00–17:00,
-  with "Whole day" selecting both. A request can cover several consecutive slots on one day.
-  Multi-day use is entered as one request per day, through a "repeat" helper (§9).
+- **Room hours are 07:00–19:00 (decided).** Timeslots are fixed one-hour blocks inside those hours
+  (12 blocks a day; **open item O1** asks whether the owner prefers larger blocks). A request
+  covers one or more *consecutive* blocks on one day, picked by clicking or dragging a range. Quick
+  picks "Morning", "Afternoon", and "Whole day" select common ranges. Multi-day use is entered as
+  one request per day, through a "repeat" helper (§9). Because slots are rows in `room_slot`,
+  changing the block size later needs no code change.
+- On the board (§3.1) the grid therefore becomes a **time grid** (hours down the side, days across)
+  on wide screens, and a day agenda of hour blocks on phones.
 
 ---
 
@@ -351,19 +356,27 @@ the bell, and the "My reservations" row.
 
 ## 8. Meals
 
-- **Captured on the request**, when "Will meals be requested?" is yes:
-  - headcount, defaulting to attendees;
-  - checkboxes for AM snack, lunch, and PM snack, filtered to the selected slots (an AM-only
-    booking hides PM snack);
-  - dietary notes.
+- **Meals are derived from the meeting schedule (decided).** When "Will meals be requested?" is yes,
+  the system works out which meals apply from the reserved hours, with no ticking needed:
+
+  | Meal | Included when the booking covers |
+  |---|---|
+  | AM snack | 10:00 (the 10:00–11:00 block) |
+  | Lunch | 12:00 (the 12:00–13:00 block) |
+  | PM snack | 15:00 (the 15:00–16:00 block) |
+
+  These trigger hours are settings, so they can be changed without code. The requester sees the
+  derived list ("AM snack · Lunch · PM snack") with a one-click way to untick any item.
+- **Also captured:** headcount, defaulting to attendees, and dietary notes.
 - **Generated:** on approval, `room_meal_form.render_pdf(data)` creates the form, following the
   `wellness_register` module pattern. It is stored as `form_version = 1` and emailed to the
   Administrative Section with the PDF attached. The requester can download it from "My
   reservations".
 - **Changes:** editing meal details on an approved booking regenerates the form as version N+1,
   marked "Revised". The section is notified.
-- **Cutoff:** a meal request made less than 3 working days before the date (configurable) is
-  allowed, with an amber warning to both sides.
+- **Cutoff:** the 2-working-day lead time (§9) already covers meals, so no separate meal cutoff is
+  needed. Meals added or changed on an approved booking less than 2 working days before the date
+  show an amber warning to both sides.
 - **Layout:** placeholder until the owner sends the official form (**open item O3**). The data
   fields above are designed so the official layout only changes the renderer.
 
@@ -374,7 +387,7 @@ the bell, and the "My reservations" row.
 | Case | Rule |
 |---|---|
 | Weekends and holidays | Shown as ⛔. Requesters can't select them. Admins can override with a reason (from the `holiday` table). |
-| Lead time | Internal requests can be made up to 90 days ahead. External requests up to 60 days ahead and at least 2 working days before. Same-day internal requests are allowed but flagged "Urgent" in the queue. |
+| Lead time | **A request must be made at least 2 working days before the date (decided), for internal and external requesters alike.** Earlier dates show as unavailable on the board. Admins can encode inside the window with a reason, for urgent cases. Booking horizon: up to 90 days ahead (internal) and 60 days ahead (external), unless the owner says otherwise. |
 | Pending past its date | Becomes `expired` (scheduler, nightly). The requester gets a short notice. |
 | Capacity | `room.capacity` is a setting. Going over it is a warning, not a block. |
 | Recurring meetings | "Repeat weekly until …" in the panel creates N linked requests. The admin can **Approve all** or approve one at a time. Clashing dates are listed before submitting. |
@@ -447,7 +460,7 @@ The plan follows the app's existing breakpoints (`static/css/app.css`):
 | R6 | Public `/room`, tracking link, poster, rate limit, retention | `rooms_routes.py`, `app.py` (`_PUBLIC_EXACT` + prefix), `ratelimit.py`, `retention.py` | The honeypot drops bots. The 6th submission in an hour gets a 429. Track and withdraw work without login. `test_rooms_public.py` |
 | R7 | Calendar layer "rooms" + ICS | `office_calendar.py`, `calendar_ics.py`, calendar templates | Approved bookings appear. Pending ones appear only to the requester and admins (**O2**). `test_calendar_rooms.py` |
 | R8 | Activity ↔ room (inline chip, from_room prefill, move requests, banners) | `form_create.html`, `app.py` create handler, `rooms.py` | Saving an activity never fails because of a room problem. A move keeps the old slot until it is approved. `test_rooms_activity.py` |
-| R9 | Meals: fields, PDF, versioning, cutoff | `room_meal_form.py`, routes | The PDF renders. Editing meals → v2 plus a notice. `test_rooms_meals.py` |
+| R9 | Meals: derived from hours, PDF, versioning (**notify the owner first; the official form layout is needed**) | `room_meal_form.py`, routes | The PDF renders. Editing meals → v2 plus a notice. `test_rooms_meals.py` |
 | R10 | Door/TV display + recurring requests + polish | templates, `rooms.py` | The display refreshes. Repeat-weekly creates N linked requests. `version.py` and `CHANGELOG.md` entries |
 
 R1 → R2 → R3 is the minimum useful release, internal-only. R6 (external) can ship as soon as R3
@@ -457,11 +470,18 @@ is done.
 
 ## 13. Open items for the owner
 
-- **O1.** What are the exact fixed timeslots (AM/PM, or hourly blocks)? What is the room capacity?
-- **O2.** Should pending requests show on the Office Calendar to everyone as "tentative", or only
-  to the requester and admins? Recommended: only to the requester and admins.
-- **O3.** The official meal request form layout. Confirm that it is generated on approval (as
-  recommended) rather than on submission.
-- **O4.** The lead-time numbers in §9, and the meal cutoff (3 working days).
-- **O5.** Is a door/TV display wanted (R10), or should it be dropped?
-- **O6.** Should extra approvers outside the Administrative Section be allowed through the setting?
+**Decided**
+- Room hours are 07:00–19:00.
+- Pending requests show on the Office Calendar only to the requester and admins.
+- The lead time is 2 working days.
+- Meals are derived automatically from the meeting hours (AM snack, lunch, PM snack).
+- Only Administrative Section members approve. No extra approvers from outside the section.
+
+**Still open**
+- **O1.** Are one-hour blocks (07:00–19:00) right, or would you prefer larger fixed blocks (for
+  example 07–12, 12–15, 15–19)? What is the room capacity?
+- **O3.** The official meal request form layout. The owner will send it when we reach increment R9,
+  and the session will notify them then.
+- **O5.** Door/TV display (R10): a read-only screen for a TV or tablet by the room door showing what
+  is on now, what is next, and today's schedule, with the request QR in the corner. It is optional
+  and built last. Keep or drop?
