@@ -197,11 +197,11 @@ A list on `/rooms/mine`, also a tab on the board.
 
 ### 4.1 Who counts as an approver
 
-- `rooms.is_room_admin(user)` is true for:
-  - accounts whose directory `org_path` ends in `/ADMIN` (the Administrative Section);
-  - the section's OIC (`section_oic`);
-  - `admin`-role accounts as a fallback.
-- An optional app setting lists extra approver accounts, for people outside the section.
+- `rooms.is_room_admin(user)` is true only for accounts whose directory `org_path` ends in `/ADMIN`
+  (the Administrative Section). The section's acting OIC and `admin`-role accounts are **not**
+  approvers unless they are in that unit.
+- The same rule covers the meal ordering page (ordering, then Delivered / Not delivered tagging)
+  and room closures: both are for the Administrative Section only.
 
 ### 4.2 Requests queue
 

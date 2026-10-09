@@ -6,6 +6,7 @@ import pytest
 
 import rooms
 import storage as st
+from conftest import join_admin_section
 
 MON = date(2030, 3, 4)
 THU = date(2030, 3, 7)
@@ -32,7 +33,7 @@ def other(conn):
 
 @pytest.fixture()
 def boss(conn):
-    uid = st.create_admin_user(conn, "boss@test.local", "x", "y", "admin")
+    uid = join_admin_section(conn, st.create_admin_user(conn, "boss@test.local", "x", "y", "admin"))
     return {"id": uid, "username": "boss@test.local", "role": "admin"}
 
 

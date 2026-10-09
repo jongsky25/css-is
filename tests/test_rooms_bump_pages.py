@@ -9,6 +9,12 @@ from conftest import in_the_directory
 
 ADMIN_UNIT = "BLHSD/ADMIN"
 
+@pytest.fixture(autouse=True)
+def _admin_account_is_in_the_section(app_mod):
+    """Only Administrative Section members approve, so the seeded admin account joins it."""
+    with in_the_directory(app_mod, "admin@test.local", path="ADMINFX/ADMIN"):
+        yield
+
 
 @pytest.fixture()
 def conn(app_mod):

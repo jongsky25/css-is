@@ -10,6 +10,12 @@ from conftest import in_the_directory
 ADMIN_UNIT = "BLHSD/ADMIN"
 OTHER_UNIT = "BLHSD/HSMED/Equity"
 
+@pytest.fixture(autouse=True)
+def _admin_account_is_in_the_section(app_mod):
+    """Only Administrative Section members approve, so the seeded admin account joins it."""
+    with in_the_directory(app_mod, "admin@test.local", path="ADMINFX/ADMIN"):
+        yield
+
 
 @pytest.fixture()
 def conn(app_mod):
@@ -51,18 +57,19 @@ def test_other_staff_may_not(app_mod, conn):
     assert not rooms.is_room_admin(conn, None)
 
 
-def test_admin_role_is_the_fallback_approver(conn):
-    assert rooms.is_room_admin(conn, {"id": uid(conn, "admin@test.local"), "role": "admin"})
+def test_admin_role_is_not_an_approver_outside_the_section(conn):
+    assert not rooms.is_room_admin(conn, {"id": uid(conn, "encoder@test.local"), "role": "admin"})
 
 
-def test_the_sections_acting_oic_may_decide(app_mod, conn):
+def test_the_sections_acting_oic_may_not_decide_unless_a_member(app_mod, conn):
     with in_the_directory(app_mod, "encoder@test.local", path=ADMIN_UNIT):
         unit = conn.execute("SELECT id FROM org_unit WHERE path=?", (ADMIN_UNIT,)).fetchone()[0]
         oic = {"id": uid(conn, "viewer@test.local"), "role": "viewer"}
-        assert not rooms.is_room_admin(conn, oic)
         st.set_section_oic(conn, unit, oic["id"])
-        assert rooms.is_room_admin(conn, oic)
-        st.clear_section_oic(conn, unit)
+        try:
+            assert not rooms.is_room_admin(conn, oic)
+        finally:
+            st.clear_section_oic(conn, unit)
 
 
 # ------------------------------------------------------------------- the inbox ---

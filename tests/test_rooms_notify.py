@@ -313,10 +313,10 @@ def test_a_notice_failure_never_breaks_the_booking(w, monkeypatch):
     assert rooms.get_reservation(w["conn"], r["id"])["status"] == "requested"
 
 
-def test_the_section_falls_back_to_admin_accounts_when_the_directory_has_nobody(tmp_path):
+def test_admin_accounts_outside_the_section_are_not_approvers(tmp_path):
     conn = st.connect(str(tmp_path / "f.db")); st.init_db(conn); rooms.ensure_slots(conn)
-    a = st.create_admin_user(conn, "boss@test.local", "x", "y", "admin")
-    assert [p["id"] for p in rn.approver_accounts(conn)] == [a]
+    st.create_admin_user(conn, "boss@test.local", "x", "y", "admin")
+    assert rn.approver_accounts(conn) == []
 
 
 # ------------------------------------------------------------------- tokens ---

@@ -7,6 +7,7 @@ import pytest
 import rooms
 import rooms_notify as rn
 import storage as st
+from conftest import join_admin_section
 
 MON = date(2030, 3, 4)
 THU = date(2030, 3, 7)
@@ -25,7 +26,7 @@ def me(conn):
 
 @pytest.fixture()
 def boss(conn):
-    return st.create_admin_user(conn, "boss@test.local", "x", "y", "admin")
+    return join_admin_section(conn, st.create_admin_user(conn, "boss@test.local", "x", "y", "admin"))
 
 
 def S(conn, *hours):

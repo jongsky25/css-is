@@ -39,7 +39,7 @@ def main(argv):
     print("Administrative Section unit(s):", ", ".join(u["path"] for u in units) or "NONE FOUND")
     if not units:
         problems += 1
-        print("  ! No directory unit with a path ending in /ADMIN. Only 'admin' role accounts can decide.")
+        print("  ! No directory unit with a path ending in /ADMIN. Nobody can decide room requests until it exists.")
 
     print("\nApprovers the app finds now:")
     approvers = rooms_notify.approver_accounts(conn)
@@ -48,8 +48,6 @@ def main(argv):
     if not approvers:
         problems += 1
         print("  ! none")
-    elif not units:
-        print("  (these are the 'admin' role fallback)")
 
     staff = _rows(conn, (
         "SELECT rp.id, rp.name, rp.email, rp.is_internal, rp.archived_at, ou.path "
