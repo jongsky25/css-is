@@ -1,5 +1,14 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.53 — wellness register PDF: office is BLHSD, footnote removed)
+
+- **`storage.py`** — `wellness_person_month` returns `office = BLHSD_NAME` for everyone
+  (was the person's org-unit short name).
+- **`wellness_register.py`** — dropped the closing footnote (which also still said
+  "CSS Information System").
+- **Rename** — remaining "CSS Information System" mentions (README, QA playbook,
+  requirements.txt, `ux_handoff.py` app context) now say Office Connect.
+
 ## 2026-10-09 (v3.52 — Admin Head's own requests escalate to the Director)
 
 - **`storage.py`** — new `_escalation_rank`: an "Admin Head"/"Administrative Head" keeps rank 1
