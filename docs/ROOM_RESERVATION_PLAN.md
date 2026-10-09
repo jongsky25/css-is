@@ -476,12 +476,10 @@ is done.
 - The lead time is 2 working days.
 - Meals are derived automatically from the meeting hours (AM snack, lunch, PM snack).
 - Only Administrative Section members approve. No extra approvers from outside the section.
+- One-hour blocks from 07:00 to 19:00.
+- The door/TV display is kept (R10, built last).
 
 **Still open**
-- **O1.** Are one-hour blocks (07:00–19:00) right, or would you prefer larger fixed blocks (for
-  example 07–12, 12–15, 15–19)? What is the room capacity?
+- **O1.** The room capacity (used for the over-capacity warning). Until given, no warning is shown.
 - **O3.** The official meal request form layout. The owner will send it when we reach increment R9,
   and the session will notify them then.
-- **O5.** Door/TV display (R10): a read-only screen for a TV or tablet by the room door showing what
-  is on now, what is next, and today's schedule, with the request QR in the corner. It is optional
-  and built last. Keep or drop?
