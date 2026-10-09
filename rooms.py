@@ -92,22 +92,29 @@ def earliest_bookable(conn, today=None):
     return add_working_days(conn, today or tz.today_local(), LEAD_WORKING_DAYS)
 
 
-def day_closed_reason(conn, day, today=None, *, override_lead=False):
-    """Why `day` can't be requested at all, or None. Plain words for the UI."""
+def day_closed(conn, day, today=None, *, override_lead=False):
+    """(short, long) reasons `day` can't be requested at all, or None. `short` is for a
+    narrow grid header, `long` is plain words for an error message."""
     day, today = _d(day), today or tz.today_local()
     if day.weekday() >= 5:
-        return "The conference room is closed on weekends."
+        return "Weekend", "The conference room is closed on weekends."
     h = st.get_holiday(conn, day)
     if h:
-        return f"Closed: {h['name']}."
+        return h["name"], f"Closed: {h['name']}."
     if day < today:
-        return "That date has already passed."
+        return "Past", "That date has already passed."
     if not override_lead and day < earliest_bookable(conn, today):
-        return (f"Requests need at least {LEAD_WORKING_DAYS} working days' notice "
-                f"(earliest: {earliest_bookable(conn, today).strftime('%b %d')}).")
+        return "Too soon", (f"Requests need at least {LEAD_WORKING_DAYS} working days' notice "
+                            f"(earliest: {earliest_bookable(conn, today).strftime('%b %d')}).")
     if day > today + timedelta(days=MAX_DAYS_AHEAD):
-        return f"Requests open up to {MAX_DAYS_AHEAD} days ahead."
+        return "Too far ahead", f"Requests open up to {MAX_DAYS_AHEAD} days ahead."
     return None
+
+
+def day_closed_reason(conn, day, today=None, *, override_lead=False):
+    """Why `day` can't be requested at all, or None. Plain words for the UI."""
+    c = day_closed(conn, day, today, override_lead=override_lead)
+    return c[1] if c else None
 
 
 def slot_states(conn, day):
@@ -343,3 +350,128 @@ def withdraw(conn, rid, user_id, reason=None, actor=None):
     out = get_reservation(conn, rid)
     out["late_withdrawal"] = late          # later increments alert the section on this
     return out
+
+
+# --------------------------------------------------- board & display ---
+
+def hour_label(hhmm):
+    """'07:00' -> '7 AM', '13:00' -> '1 PM' (the grid's row labels)."""
+    h = int(str(hhmm)[:2])
+    return f"{(h % 12) or 12} {'AM' if h < 12 else 'PM'}"
+
+
+def monday_of(day):
+    day = _d(day)
+    return day - timedelta(days=day.weekday())
+
+
+def slot_range(conn, first_slot_id, last_slot_id):
+    """Slot ids from the first to the last hour inclusive (either order), for the form's
+    From / To selects. Raises RoomError when either isn't a bookable hour."""
+    slots = list_slots(conn)
+    pos = {s["id"]: i for i, s in enumerate(slots)}
+    try:
+        a, b = pos[int(first_slot_id)], pos[int(last_slot_id)]
+    except (KeyError, TypeError, ValueError):
+        raise RoomError("Pick a start and end hour.")
+    a, b = min(a, b), max(a, b)
+    return [s["id"] for s in slots[a:b + 1]]
+
+
+def person_label(conn, username):
+    """A decider's directory name, falling back to their login."""
+    if not username:
+        return None
+    u = st.get_admin_user(conn, username)
+    if u:
+        return st._account_display_name(conn, u["id"]) or username
+    return username
+
+
+def board(conn, week_start, user_id=None, today=None, days=5):
+    """Everything the availability grid needs for one week (Mon-Fri by default).
+
+    Each cell is {slot, state, pending, mine, title, ref, cont, reason}; state is one of
+    free / requested / approved / blocked / closed. `mine` marks the viewer's own open
+    request or booking. Titles are shown for approved bookings only (staff-wide); a
+    pending request from someone else is just a count."""
+    today = today or tz.today_local()
+    start = monday_of(week_start)
+    slots = list_slots(conn)
+    dates = [start + timedelta(days=i) for i in range(days)]
+    iso = [d.isoformat() for d in dates]
+    earliest = earliest_bookable(conn, today)
+
+    held = {}                                   # (day, slot_id) -> list of reservation info
+    for day, sid, rid, appr, title, ref, uid in conn.execute(
+            "SELECT rs.day, rs.slot_id, r.id, rs.is_approved, r.title, r.ref_code, r.requester_user_id "
+            "FROM room_reservation_slot rs JOIN room_reservation r ON r.id=rs.reservation_id "
+            "WHERE rs.day BETWEEN ? AND ? AND r.status IN ('requested','approved')", (iso[0], iso[-1])):
+        held.setdefault((day, sid), []).append(
+            {"id": rid, "approved": bool(appr), "title": title, "ref": ref, "mine": uid == user_id and uid is not None})
+    blocks = {}
+    for day, sid, reason in conn.execute(
+            "SELECT day, slot_id, reason FROM room_block WHERE day BETWEEN ? AND ?", (iso[0], iso[-1])):
+        blocks[(day, sid)] = reason
+
+    out_days = []
+    for d, di in zip(dates, iso):
+        dc = day_closed(conn, d, today)
+        closed = dc[1] if dc else None
+        cells, prev_res = [], None
+        for s in slots:
+            cell = {"slot": s, "state": "free", "pending": 0, "mine": False, "title": None,
+                    "ref": None, "cont": False, "reason": None, "rid": None}
+            block = blocks.get((di, s["id"])) or blocks.get((di, None))
+            if closed:
+                cell.update(state="closed", reason=closed)
+            elif block:
+                cell.update(state="blocked", reason=block)
+            else:
+                for h in held.get((di, s["id"]), []):
+                    if h["mine"]:
+                        cell["mine"] = True
+                        cell["rid"] = h["id"]
+                    if h["approved"]:
+                        cell.update(state="approved", title=h["title"], ref=h["ref"], rid=h["id"])
+                        cell["mine"] = cell["mine"] or h["mine"]
+                    else:
+                        cell["pending"] += 1
+                        if cell["state"] == "free":
+                            cell["state"] = "requested"
+            res = cell["rid"] if cell["state"] == "approved" else None
+            cell["cont"] = bool(res and res == prev_res)
+            prev_res = res
+            cells.append(cell)
+        out_days.append({"date": d, "iso": di, "closed": closed, "closed_short": dc[0] if dc else None,
+                         "cells": cells,
+                         "is_today": d == today})
+    return {"start": start, "days": out_days, "slots": slots, "earliest": earliest,
+            "prev": start - timedelta(days=7), "next": start + timedelta(days=7),
+            "this_week": monday_of(today)}
+
+
+def timeline(conn, res):
+    """'Requested Oct 9 -> Approved Oct 9 by Ana': a short plain-words history."""
+    def md(ts):
+        try:
+            return datetime.fromisoformat(ts).strftime("%b %d").replace(" 0", " ")
+        except (TypeError, ValueError):
+            return ""
+    bits = [f"Requested {md(res['created_at'])}".strip()]
+    word = {"approved": "Approved", "declined": "Declined", "cancelled": "Cancelled",
+            "withdrawn": "Withdrawn", "expired": "Expired"}.get(res["status"])
+    if word:
+        when = md(res["decided_at"] or res["updated_at"])
+        who = person_label(conn, res["decided_by"]) if res["decided_by"] else None
+        bits.append(f"{word} {when}".strip() + (f" by {who}" if who else ""))
+    return " → ".join(bits)
+
+
+def hours_text(conn, res):
+    """'9 AM – 11 AM' for a reservation's booked hours."""
+    by = {s["id"]: s for s in list_slots(conn, active_only=False)}
+    ss = [by[i] for i in res["slot_ids"] if i in by]
+    if not ss:
+        return ""
+    return f"{hour_label(ss[0]['start_time'])} – {hour_label(ss[-1]['end_time'])}"

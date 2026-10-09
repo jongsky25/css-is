@@ -1,0 +1,113 @@
+/* Conference room (docs/ROOM_RESERVATION_PLAN.md §3, §10). State is always icon + word,
+   never colour alone. Breakpoints follow app.css: 1200 desktop, 780 phone, 1600 two weeks. */
+.rm-tabs { display:flex; gap:.35rem; margin:0 0 1rem; flex-wrap:wrap; }
+.rm-tabs a { padding:.35rem .9rem; border:1px solid var(--line); border-radius:var(--rpill);
+             font-weight:700; font-size:.88rem; text-decoration:none; color:var(--ink-soft); }
+.rm-tabs a[aria-current="page"] { background:var(--accent); color:var(--on-accent); border-color:var(--accent); }
+
+.rm-wrap { display:grid; grid-template-columns:minmax(0,1fr) 380px; gap:var(--s5); align-items:start; }
+.rm-board { min-width:0; }
+.rm-bar { display:flex; align-items:center; gap:.6rem; margin-bottom:.4rem; }
+.rm-nav { display:flex; gap:.35rem; }
+.rm-open-panel { margin-left:auto; display:none; }
+.rm-hint { color:var(--soft); font-size:.86rem; margin:.2rem 0 .8rem; }
+.rm-legend { display:inline-flex; flex-wrap:wrap; gap:.2rem .9rem; margin-left:.4rem; }
+.rm-daystrip { display:none; }
+
+/* ---- the grid ---- */
+.rm-grid { width:100%; border-collapse:separate; border-spacing:3px; table-layout:fixed; }
+.rm-cap { text-align:left; font-weight:700; padding:.2rem 0 .3rem; color:var(--ink-soft); }
+.rm-grid thead th { text-align:center; padding:.35rem .2rem; font-weight:700; border-radius:var(--r1);
+                    background:var(--surface-2); border:1px solid var(--line); }
+.rm-grid thead th.today { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); }
+.rm-grid thead th.closed { color:var(--soft); }
+.rm-dname { display:block; font-size:.74rem; text-transform:uppercase; letter-spacing:.04em; color:var(--soft); }
+.rm-ddate { display:block; }
+.rm-dnote { display:block; font-size:.7rem; font-weight:600; color:var(--red); }
+.rm-corner { width:4.2rem; }
+.rm-hour { width:4.2rem; text-align:right; padding-right:.5rem; font-size:.8rem; font-weight:600;
+           color:var(--soft); white-space:nowrap; }
+.rm-grid td { padding:0; }
+.rm-cell { display:flex; align-items:center; gap:.3rem; width:100%; min-height:calc(36px * var(--dsf));
+           padding:.15rem .5rem; border:1px solid var(--line); border-radius:var(--r1);
+           background:var(--surface); color:var(--ink); font:inherit; font-size:.82rem; text-align:left;
+           overflow:hidden; white-space:nowrap; }
+button.rm-cell { cursor:pointer; }
+button.rm-cell:hover { border-color:var(--accent); }
+button.rm-cell:focus-visible { outline:3px solid var(--accent); outline-offset:1px; }
+.rm-cell.st-free      { background:var(--green-bg); border-color:var(--green-ln); color:var(--green); font-weight:600; }
+.rm-cell.st-requested { background:var(--amber-bg); border-color:var(--amber-ln); color:var(--amber); font-weight:600; }
+.rm-cell.st-approved  { background:var(--blue-bg);  border-color:var(--blue-ln);  color:var(--accent-ink); }
+.rm-cell.st-approved.cont { border-top-color:transparent; justify-content:center; }
+.rm-cell.st-blocked   { background:var(--red-bg);   border-color:var(--red-ln);   color:var(--red); }
+.rm-cell.st-closed    { background:var(--surface-3); border-color:transparent; color:var(--grey); justify-content:center; }
+.rm-cell.mine { box-shadow:inset 4px 0 0 var(--accent); font-weight:700; }
+.rm-cell.is-sel { background:var(--accent); border-color:var(--accent); color:var(--on-accent); }
+.rm-title { overflow:hidden; text-overflow:ellipsis; }
+.rm-week2 { display:none; margin-top:1.2rem; }
+
+/* ---- the request panel ---- */
+.rm-panel { position:sticky; top:calc(var(--topnav-h, 53px) + 12px); background:var(--surface);
+            border:1px solid var(--line); border-radius:var(--r2); padding:var(--s4); box-shadow:var(--shadow); }
+.rm-panel-head { display:flex; align-items:center; justify-content:space-between; }
+.rm-panel-head h2 { margin:0; font-size:1.1rem; }
+.rm-close { display:none; }
+.rm-summary { font-weight:700; margin:.5rem 0 .2rem; }
+.rm-clash { min-height:1.2rem; margin:0 0 .6rem; font-size:.84rem; color:var(--amber); }
+.rm-clash.bad { color:var(--red); font-weight:600; }
+.rm-times { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; }
+.rm-quick { display:flex; gap:.4rem; flex-wrap:wrap; margin:-.2rem 0 var(--s4); }
+.rm-panel .field input:not([type=radio]):not([type=checkbox]), .rm-panel .field select, .rm-panel .field textarea { width:100%; box-sizing:border-box; font-size:max(16px, 1rem); }
+.rm-modality { border:0; padding:0; margin:0 0 var(--s4); }
+.rm-modality legend { font-weight:600; padding:0; margin-bottom:.25rem; }
+.rm-modality label { display:inline-flex; align-items:center; gap:.3rem; margin-right:.9rem; white-space:nowrap; }
+.rm-meals { display:block; margin-bottom:var(--s4); font-weight:600; }
+.rm-meals small { display:block; font-weight:400; color:var(--soft); margin-left:1.5rem; }
+.rm-actions { margin-top:var(--s3); }
+
+/* ---- my reservations ---- */
+.rm-mine-sec h2 { font-size:1.05rem; margin:1.2rem 0 .5rem; }
+.rm-withdraw summary { list-style:none; cursor:pointer; display:inline-flex; }
+.rm-withdraw summary::-webkit-details-marker { display:none; }
+.rm-withdraw form { margin-top:.5rem; display:grid; gap:.4rem; min-width:14rem; }
+.rm-withdraw input { width:100%; box-sizing:border-box; font-size:max(16px, 1rem); }
+
+/* ---- two weeks on very wide screens ---- */
+@media (min-width:1600px) { .rm-week2 { display:block; } }
+
+/* ---- laptops (781-1199): the panel becomes a right-hand drawer, once JS is running ---- */
+@media (max-width:1199px) {
+  .rm-wrap { grid-template-columns:minmax(0,1fr); }
+  .rm-wrap.js .rm-open-panel { display:inline-flex; }
+  .rm-wrap.js .rm-panel { position:fixed; top:var(--topnav-h, 53px); right:0; bottom:0; width:min(420px, 100vw);
+        z-index:30; border-radius:var(--r2) 0 0 var(--r2); overflow-y:auto; transform:translateX(105%);
+        transition:transform .18s ease; box-shadow:var(--shadow-md); }
+  .rm-wrap.js.panel-open .rm-panel { transform:none; }
+  .rm-wrap.js .rm-close { display:inline-flex; }
+}
+@media (max-height:700px) { .rm-cell { min-height:30px; } .rm-corner, .rm-hour { width:3.4rem; } }
+
+/* ---- phones / tablets (<=780): one day at a time, panel is a full-screen sheet ---- */
+@media (max-width:780px) {
+  .rm-daystrip { display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:.35rem; margin:0 0 .8rem; }
+  .rm-daystrip a { display:flex; flex-direction:column; align-items:center; padding:.4rem .1rem;
+        border:1px solid var(--line); border-radius:var(--r2); text-decoration:none; color:var(--ink);
+        background:var(--surface); font-size:.78rem; }
+  .rm-daystrip a strong { font-size:1.1rem; }
+  .rm-daystrip a small { color:var(--soft); }
+  .rm-daystrip a.is-active-day { background:var(--accent); border-color:var(--accent); color:var(--on-accent); }
+  .rm-daystrip a.is-active-day small { color:var(--on-accent); }
+  .rm-grid thead { display:none; }
+  .rm-grid th[data-day]:not(.is-active-day), .rm-grid td[data-day]:not(.is-active-day) { display:none; }
+  .rm-grid { border-spacing:0 4px; }
+  .rm-cell { min-height:48px; font-size:.95rem; padding:.3rem .8rem; }
+  .rm-hint .rm-legend { display:flex; margin:.3rem 0 0; }
+  .rm-wrap.js .rm-panel { inset:0; width:100%; border-radius:0; top:0; z-index:60; padding-bottom:5.5rem; }
+  .rm-wrap.js .rm-actions { position:fixed; left:0; right:0; bottom:0; padding:.7rem 1rem;
+        background:var(--surface); border-top:1px solid var(--line); z-index:61; margin:0; }
+  .rm-open-panel { min-height:44px; }
+  body.rm-sheet-open .sf-float { display:none; }       /* the feedback button would cover the Request button */
+}
+@media (max-width:480px) { .rm-times { grid-template-columns:1fr 1fr; } .rm-legend { display:none; } }
+@media print { .rm-panel, .rm-open-panel, .rm-nav, .rm-tabs, .rm-daystrip, .rm-hint { display:none !important; }
+               .rm-wrap { display:block; } .rm-week2 { display:block; } .rm-grid th[data-day], .rm-grid td[data-day] { display:table-cell !important; } }

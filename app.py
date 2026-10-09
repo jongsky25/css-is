@@ -68,6 +68,7 @@ import office_connect as oc
 import birthdays
 import calendar_answers
 import calendar_routes
+import rooms_routes
 import report_docs
 import csm_report
 import auth
@@ -618,6 +619,10 @@ NAV_GROUPS = [
          "kw": "calendar office calendar schedule activities meetings events trips travel "
                "technical assistance training workshop holidays what is on this week agenda "
                "calendar of activities", "cap": None},
+        {"key": "rooms", "url": "/rooms", "label": "Conference room",
+         "hint": "See what is free and request a slot",
+         "kw": "conference room reserve reservation book booking meeting room request venue "
+               "slot hours available", "cap": None},
         {"key": "work_arrangement_schedule", "url": "/work-arrangement/schedule",
          "label": "Team schedule",
          "hint": "Who is on-site each weekday, and who hasn't filed",
@@ -16131,3 +16136,7 @@ app.include_router(calendar_routes.make_router(
     templates, get_conn, _today_local, can_manage_event=_can_manage_event,
     notify_email=_notify_email, base_url=_base_url, on_event_changed=invalidate_atoms,
     check_dates=_calendar_check_dates))
+
+
+# ---- Conference room (rules in rooms.py, pages in rooms_routes.py) ----------
+app.include_router(rooms_routes.make_router(templates, get_conn, _today_local))

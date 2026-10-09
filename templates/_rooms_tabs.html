@@ -1,0 +1,4 @@
+<nav class="rm-tabs" aria-label="Conference room">
+  <a href="/rooms" {% if tab == 'board' %}aria-current="page"{% endif %}>Availability</a>
+  <a href="/rooms/mine" {% if tab == 'mine' %}aria-current="page"{% endif %}>My reservations{% if mine_open %} <span class="badge blue">{{ mine_open }}</span>{% endif %}</a>
+</nav>

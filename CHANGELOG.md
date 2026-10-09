@@ -1,5 +1,17 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v4.2 — conference room reservation R2: availability board, request panel, My reservations)
+
+- **Pages:** `/rooms` (week grid of the twelve hourly slots, one request panel), `/rooms/mine` (your requests, with Withdraw). A "Conference room" item in the
+  nav group beside the Office calendar.
+- **Layout:** desktop shows the grid beside a sticky request panel (two weeks side by side from 1600px); laptops get the panel as a right-hand drawer; phones
+  get one day at a time with a day strip and a full-screen request sheet. Cells always carry an icon and a word, never colour alone.
+- **Picking hours:** click an hour, then another in the same day (or drag, or shift-click); the date / From / Until fields stay the source of truth, so the form
+  also works typed by hand or with JavaScript off. Quick picks: Morning, Afternoon, Whole day.
+- **Privacy:** an approved booking shows its title to signed-in staff; someone else's pending request shows only as a count.
+- Not yet: the approval queue and notifications (R3, R5). Requests wait as "Requested".
+- Tests: `tests/test_rooms_pages.py`.
+
 ## 2026-10-09 (v4.1 — conference room reservation R1: the rules, no screens yet)
 
 First increment of docs/ROOM_RESERVATION_PLAN.md. Nothing visible to users yet.
