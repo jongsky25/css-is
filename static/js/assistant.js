@@ -120,6 +120,14 @@
     }
   }
 
+  // Buttons a reply may carry (a colleague card, the people a name could be). Server-built: label and url.
+  function linksHtml(links) {
+    if (!Array.isArray(links)) return "";
+    return links.slice(0, 5).map(function (l) {
+      return '<a class="btn ghost" href="' + esc(l.url) + '">' + esc(l.label) + "</a>";
+    }).join("");
+  }
+
   function showAnswerCard(mount, data) {
     clear(mount);
     var card = document.createElement("div");
@@ -128,6 +136,7 @@
       '<p class="start-card-msg">' + esc(data.text) + "</p>" +
       '<div class="start-card-actions">' +
       (data.url ? '<a class="btn ghost" href="' + esc(data.url) + '">Open guide →</a>' : "") +
+      linksHtml(data.links) +
       FB.replace("Good suggestion", "Good answer") + "</div>";
     mount.appendChild(card);
     wireFeedback(card, data.interaction_id);

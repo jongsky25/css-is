@@ -1,5 +1,14 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v6.11 — "where is Mimi today?")
+
+`docs/HOME_SEARCH_ASSISTANT_PLAN.md` Phase 7, item 3 (the optional `person_status` slot, built on its own).
+
+- **Slot `person_status` (`office_answers`):** the model returns the key and `person_name`, the name or nickname as the question wrote it (new field in the router schema, one sentence in the system prompt; no directory data in either). The server cleans it (`clean_person_name`: letters, spaces and `. ' -`, 2-40 characters, and every word must literally appear in the question, so the model cannot introduce a name), then resolves it with `calendar_people` against active, linked colleagues. One person at a trusted match level (an admin alias, the bureau's name guide, or a single nickname / full-name / first-name hit) is answered; anyone else gets "I couldn't tell who you mean" with links to the possible matches, never a guess.
+- **What is shown:** the directory's own name plus the basic status from `colleague_status_for` (so the bureau/team switch applies: out of team it says status isn't shared), with an "Open card →" link to `/people/{id}`. Never the model's text, a note, a place or a reason.
+- **Plumbing:** `_render_answer_payload` (text plus optional `links`); the "maximize" grounded call is skipped for this slot; `assistant.js` renders `links` as server-built, HTML-escaped buttons. It is model-only (no FAQ seed rule), so it needs AI on in answers mode or higher.
+- Tests: `tests/test_person_status.py`.
+
 ## 2026-10-09 (v6.10 — sweep: phones, accessibility, telemetry, help)
 
 `docs/HOME_SEARCH_ASSISTANT_PLAN.md` Phase 8, and the whole feature (v6.3 to v6.10):
