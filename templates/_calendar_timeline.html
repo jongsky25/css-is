@@ -19,6 +19,7 @@
   <p class="cal-wk-empty">There is nobody in your team to show.</p>
 {% else %}
 <p class="cal-range">Showing {{ tl.team_label }} · {{ tl.n_people }} {{ "person" if tl.n_people == 1 else "people" }}. Bars are trips, trainings, activities and days on leave (no reason is shown). Click an empty day to add something for that person.</p>
+<p class="cal-scrollhint" aria-hidden="true">← Swipe sideways to see more days →</p>
 <div class="cal-timeline" role="table" aria-label="Team timeline, {{ tl.label }}" style="--ncols:{{ tl.ncols }}">
   <div class="cal-tl-head cal-tl-weeks" role="row">
     <div class="cal-tl-name" role="columnheader"></div>

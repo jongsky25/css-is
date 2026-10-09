@@ -22,6 +22,7 @@
   <p class="cal-wk-empty">There is nobody in your team to show for this week.</p>
 {% else %}
 <p class="cal-range">Showing {{ week.team_label }} · {{ week.n_people }} {{ "person" if week.n_people == 1 else "people" }}. Where people are comes from their weekly report and filed arrangement (a pale dot is the filed plan, not yet confirmed by them).</p>
+<p class="cal-scrollhint" aria-hidden="true">← Swipe sideways to see more days →</p>
 <div class="cal-people-week" role="table" aria-label="Who is where, {{ week.label }}">
   <div class="cal-pw-head" role="row">
     <div role="columnheader" class="cal-pw-name"></div>

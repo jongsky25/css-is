@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "4.6"
+APP_VERSION = "4.7"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "4.7",
+        "date": "October 9, 2026",
+        "summary": "The calendar now fits every screen, from a phone to a wide monitor.",
+        "changes": [
+            "Month works on a phone: each day shows its number and coloured dots for the units that have something on. Tap a day to read it.",
+            "On a laptop the agenda shows two days side by side, and on a wide monitor three, so the screen is no longer mostly empty.",
+            "Week and Timeline scroll sideways inside their own box on a small screen, with shadows at the edges and a hint, and the names stay in view.",
+            "The add form no longer runs off the edge of a phone: From and To sit side by side and the date boxes line up.",
+        ],
+    },
     {
         "version": "4.6",
         "date": "October 9, 2026",

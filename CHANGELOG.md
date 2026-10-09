@@ -1,5 +1,16 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v4.7 — calendar Phase 2: every screen size)
+
+`docs/CALENDAR_UX_PLAN.md` Phase 2 (P2.1–P2.2).
+
+- **Month on a phone (`_calendar_month.html`, `office_calendar.month_grid`):** below 761px a compact grid replaces the "needs a wider screen" note: the day number, up to four colour dots (one per distinct owning unit, from the bars drawn on that day), "+n" for the rest and a ★ on holidays. Every cell is a link to that day in the agenda and names itself for a screen reader ("Sunday, September 27: 0 items"). `month_grid` now returns `n` and `tones` per day; items hidden by the lane limit still count.
+- **Agenda columns (`_calendar_body.html`):** the days sit in one `.cal-agenda` grid: one column below 1100px, two from 1100px, three from 1500px, in date order left to right. Long titles and meta wrap (`min-width:0`, `overflow-wrap`).
+- **Week and Timeline:** the forced `min-width:52rem` is now `40rem` with a name column of `clamp(7rem, 14vw, 11rem)`; on a narrow screen the box scrolls sideways with edge shadows, the names stay sticky, and a "Swipe sideways" hint appears only when the box really scrolls (`calendar.js`).
+- **Add / edit form:** `align-content:start` and `min-width:0` stop boxes stretching and overflowing; rows use `minmax(min(190px,100%), 1fr)`; under 480px From and To stay side by side and the note takes its own line; the date overlay has a fixed height and no italic, so Starts, Ends and Last date match.
+- Checked in Chromium on the real file's 379 items at 360, 390, 768, 1024, 1440 and 1920px: no horizontal overflow on Month, Agenda, Week, Timeline or the form at any width; no script errors; 2 agenda columns at 1440, 3 at 1920; tapping a day on a phone opens its agenda; Week/Timeline names stay put while scrolling.
+- Left out on purpose: a day-by-day Week list under 480px, and a mini-month pane beside the agenda. Multi-column agenda gives most of the wide-screen benefit for far less code; both can follow if wanted.
+
 ## 2026-10-09 (v4.6 — calendar Phase 1: calendar-only tab and a compact toolbar)
 
 `docs/CALENDAR_UX_PLAN.md` Phase 1 (P1.1–P1.3).

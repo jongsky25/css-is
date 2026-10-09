@@ -141,7 +141,6 @@
 .cal-unit[data-tone="cyan"]    { --tone:var(--cal-cyan); }    .cal-unit[data-tone="blue"]   { --tone:var(--cal-blue); }
 
 /* ---- month grid ---- */
-.cal-month-note { display:none; color:var(--soft); }
 .cal-month { border:1px solid var(--line); border-radius:14px; overflow:hidden; background:var(--surface); }
 .cal-dow, .cal-week { display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); }
 .cal-dow div { padding:.4rem .5rem; font-size:.74rem; font-weight:800; text-transform:uppercase;
@@ -178,10 +177,6 @@
 .cal-bar-owner { margin-left:auto; font-size:.64rem; font-weight:800; text-transform:uppercase; color:var(--tone); }
 .cal-more { z-index:1; margin:0 .3rem; font-size:.72rem; font-weight:700; color:var(--accent); text-decoration:none; }
 
-@media (max-width:760px) {
-  .cal-month { display:none; }
-  .cal-month-note { display:block; }
-}
 
 /* ---- Word import (admin) ---- */
 .cal-h2 { font-size:1.05rem; margin:1.4rem 0 .5rem; }
@@ -258,7 +253,7 @@
 
 /* ---- Week: people x days (C3) ---- */
 .cal-people-week { border:1px solid var(--line); border-radius:14px; background:var(--surface); overflow:auto; }
-.cal-pw-head, .cal-pw-row { display:grid; grid-template-columns:11rem repeat(5, minmax(7.5rem, 1fr)); min-width:52rem; }
+.cal-pw-head, .cal-pw-row { display:grid; grid-template-columns:clamp(7rem, 14vw, 11rem) repeat(5, minmax(6.4rem, 1fr)); min-width:40rem; }
 .cal-pw-head div { padding:.45rem .5rem; font-size:.74rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em;
                    color:var(--soft); border-bottom:1px solid var(--line); text-align:center; }
 .cal-pw-head small { display:block; text-transform:none; letter-spacing:0; font-weight:500; }
@@ -440,4 +435,73 @@
   .cal-fdrop { flex:0 0 auto; }
   .cal-fdrop[open] { flex:1 0 100%; order:4; }
   .cal-chips-x { order:5; flex:1 0 100%; }
+}
+
+/* ---- Phase 2: every screen size (docs/CALENDAR_UX_PLAN.md) ---- */
+
+/* Agenda: one column on a phone, two on a laptop, three on a wide monitor. Days stay in date order,
+   left to right then down; a long title wraps instead of widening the page. */
+.cal-agenda { display:grid; gap:.8rem; align-items:start; grid-template-columns:minmax(0, 1fr); }
+.cal-agenda > .cal-day { margin:0; min-width:0; }
+@media (min-width:1100px) { .cal-agenda { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+@media (min-width:1500px) { .cal-agenda { grid-template-columns:repeat(3, minmax(0, 1fr)); } }
+.cal-item { grid-template-columns:auto minmax(0, 1fr) auto; }
+.cal-title { overflow-wrap:anywhere; min-width:0; }
+.cal-meta { min-width:0; overflow-wrap:anywhere; }
+
+/* Month on a phone: the full grid cannot hold titles, so a compact one stands in for it. */
+.cal-mgrid { display:none; border:1px solid var(--line); border-radius:14px; background:var(--surface); overflow:hidden; }
+.cal-mdow, .cal-mweek { display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); }
+.cal-mdow div { text-align:center; font-size:.72rem; font-weight:800; color:var(--soft); padding:.45rem 0; border-bottom:1px solid var(--line); }
+.cal-mday { display:flex; flex-direction:column; align-items:center; gap:.25rem; min-height:3.4rem; padding:.4rem 0; box-sizing:border-box;
+            text-decoration:none; color:var(--ink); border-top:1px solid var(--line); border-left:1px solid var(--line); min-width:0; }
+.cal-mday:first-child { border-left:0; }
+.cal-mweek:first-of-type .cal-mday { border-top:0; }
+.cal-mday.weekend { background:var(--surface-2); }
+.cal-mday.holiday { background:var(--red-bg); }
+.cal-mday.out { opacity:.5; }
+.cal-mday:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+.cal-mnum { font-size:.88rem; font-weight:700; line-height:1.5; }
+.cal-mday.today .cal-mnum { background:var(--accent); color:var(--on-accent); border-radius:999px; padding:0 .5rem; }
+.cal-mdots { display:flex; flex-wrap:wrap; gap:.2rem; justify-content:center; align-items:center; min-height:.7rem; padding:0 .15rem; }
+.cal-mdots i { --tone:var(--cal-grey); width:.55rem; height:.55rem; border-radius:50%; background:var(--tone); }
+.cal-mdots i[data-tone="green"]   { --tone:var(--cal-green); }   .cal-mdots i[data-tone="yellow"] { --tone:var(--cal-yellow); }
+.cal-mdots i[data-tone="magenta"] { --tone:var(--cal-magenta); } .cal-mdots i[data-tone="orange"] { --tone:var(--cal-orange); }
+.cal-mdots i[data-tone="cyan"]    { --tone:var(--cal-cyan); }    .cal-mdots i[data-tone="blue"]   { --tone:var(--cal-blue); }
+.cal-mdots b { font-size:.62rem; color:var(--ink-soft); }
+.cal-mdots em { font-style:normal; font-size:.62rem; color:var(--red); }
+@media (max-width:760px) { .cal-mgrid { display:block; } .cal-month { display:none; } }
+
+/* Week and Timeline: on a narrow screen they scroll sideways inside their own box. Shadows at the
+   edges show there is more, and the hint says how. The names stay put (sticky). */
+.cal-scrollhint { display:none; margin:0 0 .4rem; font-size:.78rem; color:var(--soft); text-align:center; }
+.cal-people-week, .cal-timeline { -webkit-overflow-scrolling:touch; overscroll-behavior-x:contain;
+  background:linear-gradient(to right, var(--surface) 30%, transparent) left center / 2.4rem 100% no-repeat local,
+             linear-gradient(to left, var(--surface) 30%, transparent) right center / 2.4rem 100% no-repeat local,
+             radial-gradient(farthest-side at 0 50%, rgba(20,30,50,.22), transparent) left center / .8rem 100% no-repeat scroll,
+             radial-gradient(farthest-side at 100% 50%, rgba(20,30,50,.22), transparent) right center / .8rem 100% no-repeat scroll,
+             var(--surface); }
+.cal-scrollhint.show { display:block; }                 /* the script shows it only when the table really scrolls */
+@media (max-width:640px) {
+  .cal-pw-name { font-size:.8rem; padding:.35rem .45rem; }
+  .cal-pw-name small { display:none; }
+  .cal-timeline { --nw:7.5rem; }
+  .cal-tl-name { font-size:.78rem; padding:.3rem .45rem; }
+  .cal-tl-name small { display:none; }
+}
+
+/* The add / edit form: nothing may be wider than its column, and boxes in one row line up. */
+.cal-form label, .cal-form fieldset { align-content:start; min-width:0; }
+.cf-row { grid-template-columns:repeat(auto-fit, minmax(min(190px, 100%), 1fr)); }
+.cf-row > * { min-width:0; }
+.cal-form input[type=date], .cal-form input[type=time], .cal-form input[type=url], .cal-form select { min-width:0; max-width:100%; }
+.cal-form .datefix { min-width:0; }
+.cal-form .datefix-disp { font-weight:400; font-style:normal; height:2.7rem; padding-top:0; padding-bottom:0; border-radius:10px; background:var(--bg); display:flex; align-items:center; justify-content:space-between; }
+.cal-form .datefix-disp::after { float:none; margin-left:.5rem; }
+.cal-form .datefix-disp.empty { color:var(--soft); }
+@media (max-width:480px) {
+  .cal-form { gap:.8rem; }
+  .cf-row { grid-template-columns:minmax(0, 1fr); }
+  .cf-row:has(input[type=time]) { grid-template-columns:repeat(2, minmax(0, 1fr)); }       /* From / To stay side by side */
+  .cf-row:has(input[type=time]) > label:last-child { grid-column:1 / -1; }                 /* ... the note gets its own line */
 }

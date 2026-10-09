@@ -12,6 +12,15 @@
       });
     });
   }
+  // "Swipe sideways" only where the Week / Timeline box really is wider than the screen.
+  var scrollers = Array.prototype.slice.call(document.querySelectorAll(".cal-people-week, .cal-timeline"));
+  function hints() {
+    scrollers.forEach(function (box) {
+      var hint = box.previousElementSibling;
+      if (hint && hint.classList.contains("cal-scrollhint")) hint.classList.toggle("show", box.scrollWidth > box.clientWidth + 1);
+    });
+  }
+  if (scrollers.length) { hints(); window.addEventListener("resize", hints); }
   var menus = function () { return Array.prototype.slice.call(document.querySelectorAll(".cal-more[open], .cal-fdrop[open]")); };
   document.addEventListener("click", function (ev) {
     menus().forEach(function (m) {
