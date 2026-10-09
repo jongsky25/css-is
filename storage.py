@@ -473,7 +473,7 @@ def init_db(conn):
     -- flushed by office_calendar.flush_outbox as ONE email per person per burst.
     CREATE TABLE IF NOT EXISTS calendar_outbox (
         id        INTEGER PRIMARY KEY,
-        user_id   INTEGER NOT NULL REFERENCES admin_user(id),
+        user_id   INTEGER NOT NULL,          -- no FK: deleting an account must never be blocked by a queued notice
         entry_id  INTEGER NOT NULL,
         kind      TEXT NOT NULL,             -- added | changed | cancelled | removed
         detail    TEXT,                      -- which fields moved ("start_date,venue")
