@@ -91,3 +91,43 @@
   .cal-time { grid-column:1 / 3; }
   .cal-meta { grid-column:1 / 3; }
 }
+
+/* ---- add / edit / detail pages ---- */
+.cal-back { margin:.2rem 0 .8rem; font-size:.9rem; }
+.cal-flash { border-radius:12px; padding:.6rem .9rem; margin:0 0 1rem; }
+.cal-flash.ok   { border:1px solid var(--green-ln, var(--line)); background:var(--green-bg, var(--bg)); }
+.cal-flash.err  { border:1px solid var(--red-ln); background:var(--red-bg); color:var(--red); }
+.cal-flash.warn { border:1px solid var(--amber-ln); background:var(--amber-bg); }
+.cal-btn { font:inherit; font-weight:700; cursor:pointer; text-decoration:none; display:inline-block;
+           border:1px solid var(--line-strong, var(--line)); background:var(--surface); color:var(--ink);
+           border-radius:10px; padding:.5rem 1.1rem; }
+.cal-btn.primary { background:var(--accent); border-color:var(--accent); color:var(--on-accent); }
+.cal-add { margin-left:.2rem; }
+
+.cal-form { display:grid; gap:.9rem; max-width:760px; }
+.cal-form label, .cal-form fieldset { font-weight:700; font-size:.88rem; display:grid; gap:.3rem; }
+.cal-form .opt { font-weight:500; color:var(--soft); }
+.cal-form input:not([type=checkbox]), .cal-form select, .cal-form textarea {
+  font:inherit; font-weight:400; padding:.5rem .7rem; border:1px solid var(--line);
+  border-radius:10px; background:var(--bg); color:var(--ink); width:100%; box-sizing:border-box; }
+.cf-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:.9rem; }
+.cf-people { border:1px solid var(--line); border-radius:12px; padding:.6rem .9rem; margin:0; }
+.cf-checks { display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:.3rem .8rem;
+             max-height:15rem; overflow:auto; }
+.cf-checks label { font-weight:500; display:flex; gap:.45rem; align-items:center; }
+.cf-actions { display:flex; gap:.8rem; align-items:center; flex-wrap:wrap; margin:1rem 0 0; }
+.cf-actions form { margin:0; }
+
+.cal-detail { max-width:760px; }
+.cal-chips { display:flex; flex-wrap:wrap; gap:.4rem; margin:.2rem 0 .8rem; }
+.cal-chip { border:1px solid var(--line); border-radius:999px; padding:.1rem .65rem; font-size:.78rem;
+            font-weight:700; color:var(--ink-soft); }
+.cal-chip.warn { color:var(--amber); border-color:var(--amber-ln); background:var(--amber-bg); }
+.cal-facts { display:grid; grid-template-columns:6rem 1fr; gap:.5rem 1rem; margin:0 0 1rem; }
+.cal-facts dt { color:var(--soft); font-size:.82rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+.cal-facts dd { margin:0; }
+.cal-people { margin:0; padding-left:1.1rem; }
+.cal-note { white-space:pre-wrap; }
+.cal-edited { color:var(--soft); font-size:.82rem; margin:1rem 0 .4rem; }
+.cal-history ul { margin:.4rem 0 0; padding-left:1.1rem; font-size:.88rem; }
+.cal-history small { color:var(--soft); }

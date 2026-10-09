@@ -206,3 +206,23 @@ def test_init_db_is_safe_to_rerun_on_a_populated_db(conn):
     eid = _make(conn, tags=["PK"])
     st.init_db(conn)
     assert st.cal_get(conn, eid)["tags"] == ["PK"]
+
+
+def test_meeting_link_must_be_a_web_link(conn):
+    for bad in ("javascript:alert(1)", "data:text/html,x", "ftp://x", "zoom"):
+        with pytest.raises(ValueError):
+            _make(conn, meeting_url=bad)
+    eid = _make(conn, meeting_url=" https://zoom.us/j/123 ")
+    assert st.cal_get(conn, eid)["meeting_url"] == "https://zoom.us/j/123"
+    with pytest.raises(ValueError):
+        st.cal_update(conn, eid, meeting_url="javascript:alert(1)")
+
+
+def test_stale_updated_at_is_a_conflict_even_without_a_schedule_change(conn):
+    eid = _make(conn)
+    loaded = st.cal_get(conn, eid)["updated_at"]
+    conn.execute("UPDATE calendar_entry SET updated_at='2099-01-01T00:00:00' WHERE id=?", (eid,))
+    with pytest.raises(st.CalendarConflict):
+        st.cal_update(conn, eid, venue="Room 9", expected_updated_at=loaded)
+    st.cal_update(conn, eid, venue="Room 9", expected_updated_at="2099-01-01T00:00:00")
+    assert st.cal_get(conn, eid)["venue"] == "Room 9"

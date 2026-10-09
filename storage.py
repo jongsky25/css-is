@@ -9865,6 +9865,10 @@ def _cal_clean(vals):
     for f in ("time_note", "venue", "meeting_url", "note", "rrule", "exdates"):
         if f in out and isinstance(out[f], str):
             out[f] = out[f].strip() or None
+    # the link is rendered as an href, so only real web links are accepted
+    # (never javascript: / data: URLs)
+    if out.get("meeting_url") and not re.match(r"https?://\S+$", out["meeting_url"], re.I):
+        raise ValueError("meeting link must start with http:// or https://")
     return out
 
 
@@ -10010,16 +10014,19 @@ def cal_create(conn, title, start_date, *, end_date=None, kind="meeting",
     return entry_id
 
 
-def cal_update(conn, entry_id, *, by=None, expected_sequence=None, people=None,
-               tags=None, **fields):
-    """Change an entry. Raises CalendarConflict when `expected_sequence` is given
-    and the stored sequence has moved on. `people` / `tags` (when not None) replace
+def cal_update(conn, entry_id, *, by=None, expected_sequence=None,
+               expected_updated_at=None, people=None, tags=None, **fields):
+    """Change an entry. Raises CalendarConflict when `expected_sequence` or
+    `expected_updated_at` is given and no longer matches what is stored (the form
+    sends `updated_at`, which moves on every edit, not only schedule changes). `people` / `tags` (when not None) replace
     the whole list. The sequence rises only when a date/time/status/recurrence field
     actually changes. Returns the updated entry; a no-op leaves no revision."""
     cur = cal_get(conn, entry_id)
     if cur is None:
         raise KeyError(entry_id)
     if expected_sequence is not None and cur["sequence"] != expected_sequence:
+        raise CalendarConflict(cur)
+    if expected_updated_at is not None and cur["updated_at"] != expected_updated_at:
         raise CalendarConflict(cur)
     unknown = set(fields) - set(_CAL_EDITABLE)
     if unknown:

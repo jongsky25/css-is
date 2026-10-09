@@ -12,6 +12,7 @@
        {% if s.key == scope %}aria-current="true"{% endif %}>{{ s.label }}</a>
     {% endfor %}
   </nav>
+  <a class="cal-btn primary cal-add" href="/calendar/new?day={{ start.isoformat() }}">+ Add</a>
   <nav class="cal-nav" aria-label="Move through the calendar">
     <a href="/calendar?scope={{ scope }}&day={{ prev_day }}">← Earlier</a>
     {% if not is_today_window %}<a href="/calendar?scope={{ scope }}">Today</a>{% endif %}
@@ -36,7 +37,7 @@
     {% for i in d.rows %}
     <li class="cal-item" data-tone="{{ i.tone }}" data-status="{{ i.status }}" data-kind="{{ i.kind }}">
       <span class="cal-time">{% if i.start_time %}{{ i.start_time }}{% if i.end_time %}–{{ i.end_time }}{% endif %}{% elif i.time_note %}{{ i.time_note }}{% else %}All day{% endif %}</span>
-      <span class="cal-title">{{ i.title }}{% if i.day_n %} <small>(day {{ i.day_n }} of {{ i.day_of }})</small>{% endif %}
+      <span class="cal-title">{% if i.url %}<a href="{{ i.url }}">{{ i.title }}</a>{% else %}{{ i.title }}{% endif %}{% if i.day_n %} <small>(day {{ i.day_n }} of {{ i.day_of }})</small>{% endif %}
         {% for f in i.flags %}<span class="cal-flag">· {{ f|capitalize }}</span>{% endfor %}</span>
       <span class="cal-owner">{{ i.owner_label or "" }}</span>
       <span class="cal-meta">

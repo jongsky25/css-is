@@ -1,5 +1,27 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.55 — office calendar: add, edit, cancel and restore items)
+
+- **`calendar_routes.py`** — `GET/POST /calendar/new`, `GET /calendar/entries/{id}` (detail +
+  history), `GET/POST …/edit`, `POST …/cancel`, `POST …/restore`. Anyone signed in may add and
+  edit; an entry the viewer may not see answers 404 for every one of these (same as a missing
+  one). The form rejects: an empty title, end before start, a non-http(s) meeting link, a type or
+  status outside the offered list (so "activity" and "cancelled" can't be posted), people who
+  aren't active accounts, "only the people I add" with nobody added, and "owning unit" audience
+  with no unit (nobody outside the attendees would ever see it).
+- **Conflicts** — the form carries `updated_at`; a save against a newer version returns 409 with
+  who changed what, keeps what the person typed, and does not overwrite until they save again.
+- **`storage.py`** — `cal_update(expected_updated_at=)` (moves on every edit, unlike the
+  sequence); `meeting_url` must be http(s) (it is rendered as a link).
+- **`office_calendar.py`** — `viewable_entry`, `people_choices`, `unit_choices`, `display_names`,
+  `describe_change`.
+- **Templates/CSS** — `calendar_entry_form.html`, `calendar_entry.html`; the agenda gets "+ Add"
+  and links each title to its page.
+- **`deploy_hf.py`** — the HF runtime bundle now ships `office_calendar.py` and
+  `calendar_routes.py` (missing them would have crashed the Space on start; caught by
+  `test_runtime_py_is_import_closed`).
+- **Tests** — `tests/test_calendar_entry_pages.py`; storage tests extended.
+
 ## 2026-10-09 (v3.54 — office calendar: read-only agenda page)
 
 - **`calendar_routes.py`** (new, the repo's first `APIRouter`) — `GET /calendar`: a two-week agenda

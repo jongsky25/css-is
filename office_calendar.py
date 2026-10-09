@@ -313,3 +313,69 @@ def agenda_days(items, start, end, today):
             })
         d += timedelta(days=1)
     return out
+
+
+# ── helpers for the add / edit / detail pages (A4) ───────────────────────────
+
+FIELD_LABELS = {
+    "title": "title", "kind": "type", "status": "status", "start_date": "start date",
+    "end_date": "end date", "start_time": "start time", "end_time": "end time",
+    "time_note": "time note", "venue": "venue", "modality": "format",
+    "meeting_url": "meeting link", "note": "notes", "owner_org_id": "owning unit",
+    "audience": "who can see it", "people": "people", "tags": "tags",
+    "event_id": "linked activity", "rrule": "repeat", "exdates": "skipped dates",
+}
+
+
+def viewable_entry(conn, user, entry_id):
+    """The entry if THIS viewer may see it, else None. A caller turns None into a
+    404, so an entry the viewer isn't allowed to see is indistinguishable from one
+    that doesn't exist."""
+    e = st.cal_get(conn, entry_id)
+    if e is None:
+        return None
+    owner = _units(conn, [e["owner_org_id"]]).get(e["owner_org_id"])
+    return e if entry_visible(viewer_context(conn, user), e, owner["path"] if owner else None) else None
+
+
+def people_choices(conn):
+    """Active accounts a person can be put on an entry as: [{user_id, name}]."""
+    return sorted(
+        ({"user_id": r[0], "name": r[1] or r[2]} for r in conn.execute(
+            "SELECT a.id, rp.name, a.username FROM admin_user a "
+            "LEFT JOIN resource_person rp ON rp.id = a.rp_id "
+            "WHERE a.active = 1 AND (rp.id IS NULL OR rp.archived_at IS NULL)")),
+        key=lambda p: p["name"].lower())
+
+
+def unit_choices(conn):
+    """Org units to own an entry, indented by depth: [{id, label, path}]."""
+    out = []
+    for uid, name, path in conn.execute(
+            "SELECT id, COALESCE(NULLIF(short_name,''), name), path FROM org_unit "
+            "ORDER BY path"):
+        out.append({"id": uid, "path": path,
+                    "label": (" " * path.count("/")) + name})
+    return out
+
+
+def display_names(conn, usernames):
+    """{username: display name} — the directory name when linked, else the login."""
+    names = sorted({u for u in usernames if u})
+    if not names:
+        return {}
+    return {r[0]: r[1] or r[0] for r in conn.execute(
+        "SELECT a.username, rp.name FROM admin_user a "
+        "LEFT JOIN resource_person rp ON rp.id = a.rp_id WHERE a.username IN (%s)"
+        % ",".join("?" * len(names)), names)}
+
+
+def describe_change(diff):
+    """'changed venue and start date' for a revision's diff."""
+    order = list(FIELD_LABELS)
+    labels = [FIELD_LABELS.get(f, f) for f in
+              sorted(diff, key=lambda f: order.index(f) if f in order else len(order))]
+    if not labels:
+        return "saved"
+    return "changed " + (", ".join(labels[:-1]) + " and " + labels[-1]
+                         if len(labels) > 1 else labels[0])
