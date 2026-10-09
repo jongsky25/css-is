@@ -1,0 +1,29 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash %}
+{% block title %}Conference room door display{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/rooms.css?v=20261009f">{% endblock %}
+{% block content %}
+{{ page_header("Conference room", "A screen for the door or a TV: who has the room now, what is next, and today's schedule.") }}
+{% include "_rooms_tabs.html" %}
+{{ flash(msg=msg) }}
+<section class="card rm-setup">
+  <h2>The TV's address</h2>
+  <p>Open this address in the TV's browser (or a tablet by the door). It needs no sign-in, refreshes itself every minute and shows today only.</p>
+  <p class="rm-url"><a href="{{ url }}" target="_blank" rel="noopener">{{ url }}</a></p>
+  {% if qr %}<p><img src="{{ qr }}" alt="QR code for the TV's address" width="170" height="170" style="background:#fff;padding:6px;border-radius:8px">
+    <br><span class="rm-hint">Scan it with the TV or tablet's camera if typing is awkward.</span></p>{% endif %}
+  <p><a class="btn ghost" href="/rooms/display" target="_blank" rel="noopener">Preview it</a></p>
+  <p class="rm-hint">Anyone with this address can see the screen, so treat it like a key. If it gets out, make a new one: the old address stops working at once.</p>
+  <form method="post" action="/rooms/display-setup" onsubmit="return confirm('Make a new address? The TV will stop working until you change its address.')">
+    <input type="hidden" name="action" value="reset"><button class="btn danger small" type="submit">Make a new address</button></form>
+</section>
+<section class="card rm-setup">
+  <h2>What the screen shows</h2>
+  <form method="post" action="/rooms/display-setup">
+    <input type="hidden" name="action" value="titles">
+    <label class="rm-chk"><input type="checkbox" name="show_titles" value="1" {{ 'checked' if titles }}> Show meeting titles and who booked</label>
+    <p class="rm-hint">Untick it if the screen faces a corridor and some meetings shouldn't be read by passers-by: it then says only "Reserved" and the hours.</p>
+    <button class="btn small" type="submit">Save</button>
+  </form>
+</section>
+{% endblock %}

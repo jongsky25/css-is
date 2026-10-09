@@ -1158,6 +1158,113 @@ def feedback_update_message(submitter_name, status, reply, link):
     return subject, body, html
 
 
+# ---- Conference room (docs/ROOM_RESERVATION_PLAN.md section 6) --------------
+
+def _decide_buttons(approve_link, decline_link):
+    if not (approve_link and decline_link):
+        return "", ""
+    text = (f"Approve:\n  {approve_link}\n\nDecline:\n  {decline_link}\n\n"
+            "(These links expire in 14 days and ask you to confirm before deciding anything.)\n\n")
+    html = (_button_html("Approve", approve_link) + _button_html("Decline", decline_link)
+            + f'<p style="margin:0 0 4px; font-family:Arial,Helvetica,sans-serif; font-size:12px; '
+              f'color:{_SOFT};">These links expire in 14 days and ask you to confirm before deciding anything.</p>')
+    return text, html
+
+
+def room_request_message(approver_name, who, when_line, title, details, link,
+                         approve_link=None, decline_link=None):
+    """To an Administrative Section member: a room request is waiting. `details` is a short
+    extra line (attendees, meals, purpose) or ''."""
+    subject = f"Conference room request: {title}, {when_line}"
+    buttons, buttons_html = _decide_buttons(approve_link, decline_link)
+    body = (f"Hello {approver_name or 'there'},\n\n{who} asked for the conference room: {title}\n"
+            f"{when_line}\n{details + chr(10) if details else ''}\n{buttons}"
+            f"Or review it in the Approvals page:\n  {link}\n")
+    html = _email_html(
+        greeting=f"Hi {approver_name or 'there'},", heading="A conference room request is waiting",
+        intro=f"{_e(who)} asked for the conference room: <b>{_e(title)}</b>, {_e(when_line)}."
+              + (f" {_e(details)}" if details else ""),
+        cta_label="Review in Approvals", link=link, extra_html=buttons_html)
+    return subject, body, html
+
+
+_ROOM_DECIDED = {   # kind -> (subject verb, heading, lead sentence)
+    "approved": ("approved", "Your conference room request was approved", "Your request is approved."),
+    "declined": ("declined", "Your conference room request was declined", "Your request was declined."),
+    "cancelled": ("cancelled", "Your conference room booking was cancelled", "Your booking was cancelled."),
+    "encoded": ("booked for you", "The conference room was booked for you", "The Administrative Section booked the room for you."),
+    "expired": ("expired", "Your conference room request expired", "Nobody decided this request before its date, so it has expired."),
+    "received": ("received", "We received your conference room request", "Your request is in. The Administrative Section will decide, and we'll email you."),
+}
+
+
+def room_decided_message(name, kind, title, when_line, ref, note, link, suggestions=None):
+    """To the requester (or a guest's email). `suggestions` = list of 'Thu 15 Oct · 9 AM – 11 AM'
+    labels offered after a cancellation or decline."""
+    verb, heading, lead = _ROOM_DECIDED.get(kind, _ROOM_DECIDED["approved"])
+    subject = f"Conference room {verb}: {title}, {when_line}"
+    note_line = f"\n{'Reason' if kind in ('declined', 'cancelled') else 'Note'}: {note}\n" if note else ""
+    sug_text = ("\nNearest free times:\n" + "\n".join(f"  - {x}" for x in suggestions) + "\n") if suggestions else ""
+    body = (f"Hello {name or 'there'},\n\n{lead}\n\n{title}\n{when_line}\nReference: {ref}\n"
+            f"{note_line}{sug_text}\n{'Pick a new time or see the details' if suggestions else 'Details'}:\n  {link}\n")
+    extra = (_note_box_html("Reason" if kind in ("declined", "cancelled") else "Note", note) if note else "")
+    if suggestions:
+        extra += _section_label_html("Nearest free times") + _list_html(suggestions)
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},", heading=heading,
+        intro=f"<b>{_e(title)}</b><br>{_e(when_line)}<br>Reference: {_e(ref)}",
+        cta_label=("Pick a new time" if suggestions else
+                   "Track or withdraw your request" if kind == "received" else "See the details"), link=link,
+        footnote="Keep the reference handy if you need to call the Administrative Section.",
+        extra_html=extra)
+    return subject, body, html
+
+
+def room_reminder_message(name, title, when_line, ref, link):
+    subject = f"Reminder: conference room tomorrow, {when_line}"
+    body = (f"Hello {name or 'there'},\n\nA reminder that you have the conference room tomorrow.\n\n"
+            f"{title}\n{when_line}\nReference: {ref}\n\nChange of plan? Withdraw it so others can use the room:\n  {link}\n")
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},", heading="You have the conference room tomorrow",
+        intro=f"<b>{_e(title)}</b><br>{_e(when_line)}<br>Reference: {_e(ref)}",
+        cta_label="See or withdraw", link=link,
+        footnote="If your plans changed, please withdraw so others can use the room.")
+    return subject, body, html
+
+
+def room_alert_message(name, heading, line, link, approve_link=None, decline_link=None):
+    """To the Admin Head (a request has waited too long) or the section (a short-notice withdrawal)."""
+    subject = f"Conference room: {heading}"
+    buttons, buttons_html = _decide_buttons(approve_link, decline_link)
+    body = f"Hello {name or 'there'},\n\n{line}\n\n{buttons}Open the Approvals page:\n  {link}\n"
+    html = _email_html(greeting=f"Hi {name or 'there'},", heading=heading, intro=_e(line),
+                       cta_label="Open Approvals", link=link, extra_html=buttons_html)
+    return subject, body, html
+
+
+def room_digest_message(name, open_lines, tomorrow_lines, link):
+    """The Administrative Section's summary: open requests (morning) or tomorrow's schedule (afternoon)."""
+    if open_lines and not tomorrow_lines:
+        n = len(open_lines)
+        subject = f"Conference room: {n} request{'' if n == 1 else 's'} waiting"
+    elif tomorrow_lines and not open_lines:
+        subject = f"Conference room tomorrow: {len(tomorrow_lines)} booking{'' if len(tomorrow_lines) == 1 else 's'}"
+    else:
+        subject = "Conference room summary"
+    parts, extra = [f"Hello {name or 'there'},\n"], ""
+    if open_lines:
+        parts.append("Waiting on a decision:\n" + "\n".join(f"  - {x}" for x in open_lines) + "\n")
+        extra += _section_label_html("Waiting on a decision") + _list_html(open_lines)
+    if tomorrow_lines:
+        parts.append("Tomorrow's room schedule (setup and meals):\n" + "\n".join(f"  - {x}" for x in tomorrow_lines) + "\n")
+        extra += _section_label_html("Tomorrow's room schedule") + _list_html(tomorrow_lines)
+    body = "\n".join(parts) + f"\nOpen the Approvals page:\n  {link}\n"
+    html = _email_html(greeting=f"Hi {name or 'there'},",
+                       heading="Conference room: what needs you" if open_lines else "Conference room tomorrow",
+                       intro="Here is where the room stands.", cta_label="Open Approvals", link=link, extra_html=extra)
+    return subject, body, html
+
+
 # ---- Admin email control center (docs/ADMIN_EMAIL_FEATURES_PLAN.md) --------
 #
 # The catalog of every gateable email feature, keyed the same as the
@@ -1200,6 +1307,26 @@ FEATURES = {
     "wellness_cancelled": (
         "Wellness break withdrawn",
         "The approver is told when a claimant withdraws their own request.",
+        "transactional"),
+    "room_new_request": (
+        "Conference room request",
+        "The Administrative Section is told a room request is waiting, with approve and decline links.",
+        "transactional"),
+    "room_decided": (
+        "Conference room decision result",
+        "The requester is told their room request was approved, declined, cancelled or expired, or that it was booked for them.",
+        "transactional"),
+    "room_reminder": (
+        "Conference room day-before reminder",
+        "The person with a booking is reminded the afternoon before.",
+        "transactional"),
+    "room_admin_alerts": (
+        "Conference room alerts for the section",
+        "The Admin Head is told a request has waited too long, and the section is told of a short-notice withdrawal.",
+        "transactional"),
+    "room_digest": (
+        "Conference room daily summary",
+        "The Administrative Section gets the open requests each morning and tomorrow's room schedule each afternoon.",
         "transactional"),
     "awa_approval": (
         "Work arrangement approval needed",
@@ -1345,6 +1472,22 @@ _PREVIEWS = {
     "wellness_cancelled": lambda: wellness_cancelled_message(
         "Maria Santos", "Juan Reyes", "October 2, 2026", "10:00 AM", 1,
         "urgent office matter", _SAMPLE_LINK),
+    "room_new_request": lambda: room_request_message(
+        "Maria Santos", "Juan Reyes (Section 1)", "Thu 15 Oct 2026, 9 AM – 11 AM", "Section planning",
+        "12 attending · meals requested", _SAMPLE_LINK, approve_link=_SAMPLE_LINK, decline_link=_SAMPLE_LINK),
+    "room_decided": lambda: room_decided_message(
+        "Juan Reyes", "cancelled", "Section planning", "Thu 15 Oct 2026, 9 AM – 11 AM", "CR-2610-0042",
+        "The Director needs the room", _SAMPLE_LINK,
+        suggestions=["Fri 16 Oct · 9 AM – 11 AM", "Mon 19 Oct · 9 AM – 11 AM"]),
+    "room_reminder": lambda: room_reminder_message(
+        "Juan Reyes", "Section planning", "Thu 15 Oct 2026, 9 AM – 11 AM", "CR-2610-0042", _SAMPLE_LINK),
+    "room_admin_alerts": lambda: room_alert_message(
+        "Maria Santos", "a request has waited over a day",
+        "Section planning (Thu 15 Oct 2026, 9 AM – 11 AM) from Juan Reyes is still waiting for a decision.",
+        _SAMPLE_LINK, approve_link=_SAMPLE_LINK, decline_link=_SAMPLE_LINK),
+    "room_digest": lambda: room_digest_message(
+        "Maria Santos", ["Thu 15 Oct, 9 AM – 11 AM: Section planning (Juan Reyes)"],
+        [], _SAMPLE_LINK),
     "awa_approval": lambda: awa_pending_message(
         "Maria Santos", "Juan Reyes", "October 1-15, 2026", "work-from-home", _SAMPLE_LINK),
     "awa_decided": lambda: awa_decided_message(

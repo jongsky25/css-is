@@ -1,6 +1,6 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header, flash %}
-{% from "_approvals.html" import approvals_css, wellness_queue, awa_queue %}
+{% from "_approvals.html" import approvals_css, wellness_queue, awa_queue, rooms_queue %}
 {% block title %}Approvals{% endblock %}
 {% block content %}
 {{ approvals_css() }}
@@ -8,14 +8,17 @@
 {#-- One inbox for everything waiting on this approver. It replaced two
      separate pages that the same 13-14 chiefs reached from the same home
      screen, one queue at a time (UX handoff, Sept 2026). --#}
-{% set total = wellness|length + awa|length %}
+{% set total = wellness|length + awa|length + room_queue|length %}
 {{ page_header("Approvals",
                ("Nothing is waiting on you right now." if not total else
                 (total ~ " request" ~ ("" if total == 1 else "s") ~ " waiting on your decision."))) }}
 
 <nav class="inbox-jump" aria-label="Jump to a queue">
+  {% if show_chief %}
   <a href="#wellness" class="{{ 'has' if wellness }}">Wellness breaks <span class="n">{{ wellness|length }}</span></a>
   <a href="#awa" class="{{ 'has' if awa }}">Work arrangements <span class="n">{{ awa|length }}</span></a>
+  {% endif %}
+  {% if show_rooms %}<a href="#rooms" class="{{ 'has' if room_queue }}">Conference room <span class="n">{{ room_queue|length }}</span></a>{% endif %}
 </nav>
 
 {% if ok %}{{ flash(msg=ok) }}{% endif %}
@@ -28,8 +31,10 @@
 {% if err %}{{ flash(err=err) }}{% endif %}
 
 {#-- A non-empty queue leads, so the first thing on screen is always work. --#}
-{% set sections = [("wellness", wellness), ("awa", awa)] %}
-{% if not wellness and awa %}{% set sections = [("awa", awa), ("wellness", wellness)] %}{% endif %}
+{% set all = [] %}
+{% if show_chief %}{% set _ = all.append(("wellness", wellness)) %}{% set _ = all.append(("awa", awa)) %}{% endif %}
+{% if show_rooms %}{% set _ = all.append(("rooms", room_queue)) %}{% endif %}
+{% set sections = (all | selectattr(1) | list) + (all | rejectattr(1) | list) %}
 {% for key, queue in sections %}
 <section class="panel" id="{{ key }}" aria-labelledby="{{ key }}-h">
   {% if key == "wellness" %}
@@ -39,6 +44,13 @@
   </div>
   <p class="sub" style="margin:-.3rem 0 .7rem;">Approving keeps the week's 2-hour entitlement honest.</p>
   {{ wellness_queue(queue) }}
+  {% elif key == "rooms" %}
+  <div class="qhead">
+    <h2 id="rooms-h">Conference room</h2>
+    <div class="links"><a href="/rooms">Availability board</a></div>
+  </div>
+  <p class="sub" style="margin:-.3rem 0 .7rem;">The first of you to decide wins. Approving takes the hours; others asking for them are shown here so you can decline them.</p>
+  {{ rooms_queue(queue) }}
   {% else %}
   <div class="qhead">
     <h2 id="awa-h">Work arrangements</h2>

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="60">
+<meta name="robots" content="noindex, nofollow">
+<title>Conference room</title>
+<style>
+  /* The door screen: always dark, always large, readable across a corridor. Colour is never the only cue. */
+  :root { --bg:#0e1a2e; --card:#16263f; --line:#2a3f60; --ink:#f4f7fc; --soft:#a9b8d0; --free:#43c28a; --busy:#f0a35e; --next:#8fbbea; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--ink); font-family:system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  .scr { min-height:100vh; padding:clamp(14px, 2.4vw, 40px); display:grid; gap:clamp(12px, 1.8vw, 28px);
+         grid-template-columns:minmax(0, 1fr) clamp(190px, 20vw, 360px); grid-template-rows:auto 1fr; grid-template-areas:"head head" "main side"; }
+  header { grid-area:head; display:flex; align-items:baseline; justify-content:space-between; gap:1rem; flex-wrap:wrap; border-bottom:2px solid var(--line); padding-bottom:.6rem; }
+  h1 { margin:0; font-size:clamp(1.6rem, 3.4vw, 3.4rem); } .date { color:var(--soft); font-size:clamp(1rem, 1.8vw, 1.8rem); }
+  .clock { font-size:clamp(2rem, 4.4vw, 4.6rem); font-weight:800; font-variant-numeric:tabular-nums; }
+  main { grid-area:main; display:grid; gap:clamp(12px, 1.8vw, 28px); align-content:start; }
+  .card { background:var(--card); border:2px solid var(--line); border-radius:18px; padding:clamp(14px, 2vw, 32px); }
+  .lab { text-transform:uppercase; letter-spacing:.12em; color:var(--soft); font-size:clamp(.8rem, 1.2vw, 1.2rem); font-weight:700; }
+  .big { font-size:clamp(2rem, 5.2vw, 5.4rem); font-weight:800; line-height:1.08; margin:.25rem 0; overflow-wrap:anywhere; }
+  .mid { font-size:clamp(1.1rem, 2.2vw, 2.4rem); color:var(--soft); }
+  .now.free { border-color:var(--free); } .now.free .big { color:var(--free); }
+  .now.busy { border-color:var(--busy); } .now.busy .big { color:var(--busy); }
+  .nxt .big { font-size:clamp(1.6rem, 3.4vw, 3.4rem); color:var(--next); }
+  ol { list-style:none; margin:.4rem 0 0; padding:0; display:grid; gap:.5rem; }
+  li { display:grid; grid-template-columns:clamp(9rem, 15vw, 16rem) 1fr; gap:1rem; align-items:baseline; font-size:clamp(1.05rem, 2vw, 2.1rem); padding:.45rem .2rem; border-bottom:1px solid var(--line); }
+  li b { font-variant-numeric:tabular-nums; } li small { display:block; color:var(--soft); font-size:.7em; }
+  li.done { opacity:.45; } li.now b::before { content:"● "; color:var(--busy); } li.next b::before { content:"▸ "; color:var(--next); }
+  aside { grid-area:side; display:flex; flex-direction:column; align-items:center; text-align:center; gap:.8rem; align-self:end; }
+  aside img { width:100%; max-width:320px; background:#fff; padding:10px; border-radius:12px; image-rendering:pixelated; }
+  aside p { margin:0; color:var(--soft); font-size:clamp(.9rem, 1.4vw, 1.4rem); } aside strong { color:var(--ink); }
+  .none { color:var(--soft); font-size:clamp(1.1rem, 2vw, 2rem); }
+  @media (max-width:760px), (orientation:portrait) {                  /* a portrait tablet or a phone: one column, code at the bottom */
+    .scr { grid-template-columns:1fr; grid-template-areas:"head" "main" "side"; } aside { align-self:center; flex-direction:row; text-align:left; } aside img { width:42%; }
+  }
+</style>
+</head>
+<body>
+<div class="scr">
+  <header>
+    <div><h1>Conference room</h1><div class="date">{{ d.date_label }}</div></div>
+    <div class="clock" id="clock" aria-label="Time now">{{ d.time[:5] }}</div>
+  </header>
+  <main>
+    {% if d.closed %}
+    <section class="card now busy"><div class="lab">Today</div><div class="big">Closed</div><div class="mid">{{ d.closed }}</div></section>
+    {% elif d.current %}
+    <section class="card now busy" aria-live="polite"><div class="lab">In use now</div>
+      <div class="big">{{ d.current.title }}</div><div class="mid">{{ d.current.label }}{% if d.current.who %} · {{ d.current.who }}{% endif %}</div></section>
+    {% elif d.after_hours %}
+    <section class="card now"><div class="lab">Now</div><div class="big">Closed for the day</div><div class="mid">The room opens again at 7 AM on the next working day.</div></section>
+    {% else %}
+    <section class="card now free" aria-live="polite"><div class="lab">Now</div>
+      <div class="big">{{ 'Opens at 7 AM' if d.before_hours else 'Free' }}</div>
+      <div class="mid">{% if d.free_until and d.free_until != '19:00' %}Free until {{ d.free_until_label }}{% elif d.free_until %}Free until closing at 7 PM{% endif %}</div></section>
+    {% endif %}
+
+    {% if d.next and not d.closed %}
+    <section class="card nxt"><div class="lab">Next</div><div class="big">{{ d.next.title }}</div><div class="mid">{{ d.next.label }}{% if d.next.who %} · {{ d.next.who }}{% endif %}</div></section>
+    {% endif %}
+
+    <section class="card"><div class="lab">Today's schedule</div>
+      {% if d.schedule and not d.closed %}
+      <ol>{% for s in d.schedule %}<li class="{{ s.state }}"><b>{{ s.label }}</b><span>{{ s.title }}{% if s.who %}<small>{{ s.who }}</small>{% endif %}</span></li>{% endfor %}</ol>
+      {% else %}<p class="none">{{ 'Nothing is booked today.' if not d.closed else 'No bookings.' }}</p>{% endif %}
+    </section>
+  </main>
+  <aside>
+    {% if qr %}<img src="{{ qr }}" alt="QR code to request the conference room">{% endif %}
+    <p><strong>Scan to request the room</strong><br>{{ url }}</p>
+  </aside>
+</div>
+<script>
+/* Keep the clock ticking between the page's own refreshes. It shows the SERVER's local time (the office's), not the TV's. */
+(function () {
+  var parts = "{{ d.time }}".split(":").map(Number), s = parts[0] * 3600 + parts[1] * 60 + parts[2], el = document.getElementById("clock");
+  setInterval(function () {
+    s = (s + 1) % 86400;
+    var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+    el.textContent = (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m;
+  }, 1000);
+})();
+</script>
+</body>
+</html>

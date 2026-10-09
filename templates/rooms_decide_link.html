@@ -1,0 +1,47 @@
+{% extends "public_layout.html" %}
+{% block title %}Conference room decision — Office Connect{% endblock %}
+
+{% block content %}
+<div class="pub-card" style="max-width:440px; margin:8vh auto 0;">
+  <div style="font-weight:800; font-size:1.1rem;">CSS<span style="color:var(--accent);">·</span>IS</div>
+
+  {% if not valid %}
+    <h1 style="font-size:1.25rem; margin:.8rem 0 .2rem;">This link can't be used</h1>
+    <p class="muted small" style="margin:0 0 1.2rem;">
+      {{ err or "It may have expired, or the request may already have been decided by someone else." }}
+    </p>
+    <div class="small" style="text-align:center;"><a href="/login">Sign in to Office Connect</a></div>
+
+  {% elif done %}
+    <h1 style="font-size:1.25rem; margin:.8rem 0 .2rem;">{{ "Approved" if verb == "approved" else "Declined" }}</h1>
+    <p class="muted small" style="margin:0 0 1.2rem;">
+      {{ card.title }} on {{ card.when }}, {{ card.hours }}, was {{ verb }}. The requester has been told.
+    </p>
+    <div class="small" style="text-align:center;"><a href="/login">Sign in for the full Approvals page</a></div>
+
+  {% else %}
+    <h1 style="font-size:1.25rem; margin:.8rem 0 .2rem;">Confirm your decision</h1>
+    <p class="muted small" style="margin:0 0 1rem;">
+      <strong>{{ card.title }}</strong><br>
+      {{ card.when }} · {{ card.hours }}<br>
+      {{ card.requester_name }}{% if card.requester_unit %} · {{ card.requester_unit }}{% endif %}{% if card.is_external %} (guest){% endif %}
+      {% if card.attendees %}<br>{{ card.attendees }} attending{% endif %}{% if card.meals_requested %} · meals requested{% endif %}
+      {% if card.purpose %}<br><em>“{{ card.purpose }}”</em>{% endif %}
+    </p>
+    {% if err %}<p role="alert" style="color:var(--red); margin:0 0 .8rem;">✕ {{ err }}</p>{% endif %}
+    <form method="post" action="/rooms/decide/{{ card.id }}" data-loading="Saving…">
+      <input type="hidden" name="token" value="{{ token }}">
+      <div class="field" style="display:flex; gap:1.2rem; margin-bottom:.8rem;">
+        <label><input type="radio" name="action" value="approve" {% if action == 'approve' %}checked{% endif %}> Approve</label>
+        <label><input type="radio" name="action" value="decline" {% if action == 'decline' %}checked{% endif %}> Decline</label>
+      </div>
+      <div class="field">
+        <label for="note">Note <span class="opt">(required to decline)</span></label>
+        <input id="note" name="note" type="text" maxlength="300" placeholder="Shown to the requester">
+      </div>
+      <button type="submit" class="btn block" style="font-size:1rem; padding:.7rem;">Confirm</button>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}
+{% block foot %}{% endblock %}

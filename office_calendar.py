@@ -32,7 +32,7 @@ Dates are ISO strings ('YYYY-MM-DD') so items are JSON-ready for the later API.
 from __future__ import annotations
 
 import calendar
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 import auth
 import birthdays as bd
@@ -570,18 +570,77 @@ def _birthdays_layer(conn, ctx, start, end, scope):
     return out
 
 
+def _rooms_layer(conn, ctx, start, end, scope):
+    """Conference room reservations (docs/ROOM_RESERVATION_PLAN.md R7). The room is one shared resource,
+    so an APPROVED booking is bureau-wide information: everyone signed in sees that the hours are taken
+    and what for (the same thing the room board shows them). A PENDING request is shown only to the
+    person who asked and to the people who decide room requests, as "tentative". Withdrawn, declined,
+    cancelled and expired ones are not shown. Scope narrows only "mine" (your own requests) — the other
+    scopes show every approved booking, as a bureau-audience entry would. Guests' contact details are
+    never in the item; their organisation is the owner label."""
+    import rooms
+    try:
+        rows = conn.execute(
+            "SELECT r.id, r.title, r.day, r.status, r.modality, r.requester_user_id, r.ext_org, r.ref_code, "
+            "(SELECT MIN(s.start_time) FROM room_reservation_slot rs JOIN room_slot s ON s.id=rs.slot_id WHERE rs.reservation_id=r.id), "
+            "(SELECT MAX(s.end_time) FROM room_reservation_slot rs JOIN room_slot s ON s.id=rs.slot_id WHERE rs.reservation_id=r.id), "
+            "ou.id FROM room_reservation r LEFT JOIN admin_user a ON a.id=r.requester_user_id "
+            "LEFT JOIN resource_person rp ON rp.id=a.rp_id LEFT JOIN org_unit ou ON ou.id=rp.org_unit_id "
+            "WHERE r.day BETWEEN ? AND ? AND r.status IN ('requested','approved') ORDER BY r.day, r.id",
+            (start, end)).fetchall()
+    except Exception:                                  # noqa: BLE001 — a database that predates the room tables
+        return []
+    me = ctx["user_id"]
+    can_decide = None
+    keep = []
+    for row in rows:
+        rid, title, day, status, modality, req, ext_org, ref, t0, t1, unit_id = row
+        mine = req is not None and req == me
+        if scope == "mine" and not mine:
+            continue
+        if status == "requested" and not mine:
+            if can_decide is None:
+                can_decide = rooms.is_room_admin(conn, {"id": me, "role": ctx["role"]})
+            if not can_decide:
+                continue
+        keep.append(row)
+    if not keep:
+        return []
+    cards = _people_cards(conn, [r[5] for r in keep])
+    units = _units(conn, [r[10] for r in keep])
+    tones = _tone_map(conn)
+    out = []
+    for rid, title, day, status, modality, req, ext_org, ref, t0, t1, unit_id in keep:
+        unit = units.get(unit_id)
+        out.append({
+            "key": f"room:{rid}", "layer": "rooms", "title": title,
+            "start": day, "end": day, "start_time": t0, "end_time": t1, "all_day": False, "time_note": None,
+            "kind": "room", "status": "confirmed" if status == "approved" else "tentative",
+            "owner_org_id": unit_id, "owner_label": (unit["label"] if unit else ("" if req is not None else f"Guest · {ext_org}" if ext_org else "Guest")),
+            "tone": _tone(unit, unit_id, tones) if unit else "grey",
+            "people": ([{"user_id": req, "role": "attending", **cards[req]}] if req in cards else []),
+            "tags": [], "venue": "Conference room",
+            "modality": modality if modality in ("f2f", "online", "hybrid") else None, "meeting_url": None,
+            "url": f"/rooms?week={day}", "css": None,
+            "flags": [] if status == "approved" else ["awaiting approval"], "editable": False, "private": False,
+            "ref": ref,
+        })
+    return out
+
+
 # name -> provider(conn, ctx, start_iso, end_iso, scope) -> [CalItem]. Later
 # layers (activities, leave, birthdays, deadlines) are one line each.
 LAYERS = {
     "entries": _entries_layer,
     "activities": _activities_layer,
+    "rooms": _rooms_layer,
     "holidays": _holidays_layer,
     "leave": _leave_layer,
     "birthdays": _birthdays_layer,
 }
 
 # Within one day, what leads: the day's own banner (a holiday), then the rest.
-_DISPLAY_ORDER = ("holidays", "birthdays", "deadlines", "activities", "entries", "leave")
+_DISPLAY_ORDER = ("holidays", "birthdays", "deadlines", "activities", "entries", "rooms", "leave")
 _LAYER_ORDER = {name: i for i, name in enumerate(_DISPLAY_ORDER)}
 
 
@@ -1318,6 +1377,45 @@ FEED_AHEAD_DAYS = 365
 FEED_CANCELLED_DAYS = 30
 
 
+def room_event(res, hours, base_url="", status=None):
+    """The VEVENT dict for a conference room reservation (`rooms.get_reservation`'s dict). The UID is the
+    one the approval email's attachment uses, so a calendar app never shows the booking twice."""
+    t0, t1 = hours
+    try:
+        seq = int((datetime.fromisoformat(res["updated_at"]) - datetime(2026, 1, 1)).total_seconds())
+    except (TypeError, ValueError):
+        seq = 0
+    return {"uid": f"room-{res['id']}@office-connect", "sequence": max(seq, 0), "title": res["title"],
+            "status": status or ("confirmed" if res["status"] == "approved" else "tentative"),
+            "start": res["day"], "end": res["day"], "start_time": t0, "end_time": t1, "venue": "Conference room",
+            "url": f"{base_url}/rooms?week={res['day']}" if base_url else None,
+            "description": f"Reference {res['ref_code']}", "tags": [], "stamp": res["updated_at"]}
+
+
+def _room_feed_events(conn, user, base_url, start, end):
+    """A person's OWN room reservations for their calendar app: approved as confirmed, pending as tentative,
+    and ones withdrawn / cancelled / declined / expired in the last 30 days as STATUS:CANCELLED so the app
+    removes them instead of keeping a stale event."""
+    import rooms
+    since = (tz.now_local() - timedelta(days=FEED_CANCELLED_DAYS)).isoformat(timespec="seconds")
+    out = []
+    try:
+        rows = conn.execute(
+            "SELECT id FROM room_reservation WHERE requester_user_id=? AND day BETWEEN ? AND ? "
+            "AND (status IN ('requested','approved') OR (status IN ('withdrawn','cancelled','declined','expired') "
+            "AND COALESCE(updated_at, '') >= ?)) ORDER BY day, id", (user["id"], start.isoformat(), end.isoformat(), since)).fetchall()
+    except Exception:                                  # noqa: BLE001
+        return []
+    for (rid,) in rows:
+        res = rooms.get_reservation(conn, rid)
+        hrs = conn.execute("SELECT MIN(s.start_time), MAX(s.end_time) FROM room_reservation_slot rs "
+                           "JOIN room_slot s ON s.id=rs.slot_id WHERE rs.reservation_id=?", (rid,)).fetchone()
+        if res and hrs and hrs[0]:
+            gone = res["status"] not in ("requested", "approved")
+            out.append(room_event(res, hrs, base_url, "cancelled" if gone else None))
+    return out
+
+
 def build_feed(conn, user, base_url, *, scope="mine", birthdays=False, today=None):
     """The text of one person's subscription feed: what THEY may see, exactly as the calendar page
     decides it (the same items_between), from two weeks back to a year ahead. Items cancelled in
@@ -1352,6 +1450,7 @@ def build_feed(conn, user, base_url, *, scope="mine", birthdays=False, today=Non
         path = (units.get(e["owner_org_id"]) or {}).get("path")
         if entry_visible(ctx, e, path) and _in_scope(ctx, "blend" if scope == "mine" else "section", e, path):
             events.append(cics.entry_event(e, base_url))
+    events.extend(_room_feed_events(conn, user, base_url, start, end))
     if birthdays:
         viewer = {"user_id": ctx["user_id"], "section_path": ctx["section_path"], "division_path": ctx["division_path"]}
         for p in birthday_people(conn):

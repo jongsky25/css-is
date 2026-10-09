@@ -1,0 +1,25 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}Conference room QR poster{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/rooms.css?v=20261009f">{% endblock %}
+{% block content %}
+<div class="rm-poster-ctl">
+{{ page_header("Conference room", "Print this and post it by the room or at the front desk. The code never changes, so one printout lasts.") }}
+{% include "_rooms_tabs.html" %}
+<p><button type="button" class="btn" onclick="window.print()">Print the poster</button>
+  <span class="muted">Choose A4 and turn off headers and footers.</span></p>
+</div>
+<section class="rm-poster" aria-label="Poster preview">
+  <p class="rm-poster-kicker">Bureau of Local Health Systems Development</p>
+  <h1>Conference room</h1>
+  <p class="rm-poster-lede">Scan to request the room</p>
+  {% if qr %}<img class="rm-poster-qr" src="{{ qr }}" alt="QR code for {{ url }}">{% endif %}
+  <p class="rm-poster-url">{{ url }}</p>
+  <ol class="rm-poster-steps">
+    <li>Scan the code, or type the address above.</li>
+    <li>Pick a day and your hours, and tell us about your meeting.</li>
+    <li>The Administrative Section decides, and we email you.</li>
+  </ol>
+  <p class="rm-poster-note">Please ask at least 2 working days ahead.</p>
+</section>
+{% endblock %}

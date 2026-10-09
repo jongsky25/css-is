@@ -17,10 +17,74 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "5.3"
+APP_VERSION = "5.9"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "5.9",
+        "date": "October 9, 2026",
+        "summary": "A door screen for the conference room, and meetings that repeat.",
+        "changes": [
+            "New door display for a TV or tablet by the room: who has the room now, what is next, and today's schedule in large type, with a QR code to request it. It refreshes itself every minute. The Administrative Section sets it up from the Door display tab and can hide meeting titles if the screen faces a corridor.",
+            "A weekly meeting no longer needs a request for every date. Choose Repeat (every week or every 2 weeks) and an end date, and the dates that can't be had are listed first so you can request the ones that work.",
+            "The Administrative Section approves or declines a whole repeating request in one click, or one date at a time. You hear back once, and you can withdraw every remaining date together.",
+        ],
+    },
+    {
+        "version": "5.8",
+        "date": "October 9, 2026",
+        "summary": "Meal requests for the conference room, from the form to delivery.",
+        "changes": [
+            "When you ask for meals with a room booking, a meal form is prepared for you: the activity title, number of pax, any special request, and Yes or No for breakfast, AM snack, lunch and PM snack, each with the time you want it delivered. We fill the meals in from your hours and you correct them.",
+            "The form can be printed or downloaded as a PDF, and guests can fill in theirs from their tracking link.",
+            "The Administrative Section has a new Meals page that shows every filled-up form to order from. They tag each meal as requested, then delivered, not delivered or cancelled, with an optional note, and everything is recorded with who and when.",
+            "If a booking is cancelled, the meals are cancelled with it, and the section is told to cancel with the caterer if an order was already placed.",
+        ],
+    },
+    {
+        "version": "5.7",
+        "date": "October 9, 2026",
+        "summary": "Activities and conference room bookings now know about each other.",
+        "changes": [
+            "When you create an activity, a Conference room line lets you ask for the room in the same step. It shows which hours are free that day, and ticks itself for online and hybrid activities, where the room can host the session. A choice that cannot work (too soon, or already booked) is caught before the activity is saved.",
+            "On My reservations, \"Create a CSS activity for this\" starts the activity form filled in from the booking.",
+            "An activity's page now says what is happening with its room. If you move the activity to another day it offers to move the booking too, and the old booking is kept until the move is approved. If the room is cancelled, it offers the nearest free times.",
+        ],
+    },
+    {
+        "version": "5.6",
+        "date": "October 9, 2026",
+        "summary": "Conference room bookings now show on the Office calendar.",
+        "changes": [
+            "Approved room bookings appear on the calendar for everyone, with their hours, so you can see at a glance when the room is taken. A request still waiting for a decision shows only to the person who asked and to the Administrative Section, marked as awaiting approval.",
+            "You can show only the room with the \"Conference room\" type in the filter, and open the room board from the More menu.",
+            "Your own bookings also go to your phone or computer calendar if you subscribe to your calendar feed, and are taken off again if you withdraw or they are cancelled.",
+        ],
+    },
+    {
+        "version": "5.5",
+        "date": "October 9, 2026",
+        "summary": "Outside guests can now request the conference room from a QR code, without an account.",
+        "changes": [
+            "A permanent web address and QR code (/room) let anyone outside the office pick a day, choose hours and send a request. They see which hours are free but never who booked them.",
+            "Guests get an email with their reference and a private link to check the status, withdraw the request, or pick a new time if their booking is cancelled.",
+            "The Administrative Section approves guest requests the same way as staff ones, and can print a ready-made QR poster from the Conference room page.",
+            "To keep spam out, a guest can file only a few requests an hour and three open ones per email address. Guests' names and contact details are removed 12 months after their meeting date.",
+        ],
+    },
+    {
+        "version": "5.4",
+        "date": "October 9, 2026",
+        "summary": "Conference room: see what is free, request it, and get told what happens.",
+        "changes": [
+            "New Conference room page shows each hour from 7 AM to 7 PM, day by day. Click an hour (or a few in a row), fill in the meeting, and send your request. Requests need two working days' notice.",
+            "My reservations lists your requests with their status and lets you withdraw one if plans change.",
+            "The Administrative Section approves or declines from the Approvals page, or straight from the email. They can also book the room for someone, close it for repairs, and move a booking when something more important comes up.",
+            "If your booking is cancelled you are told why and offered the nearest free times, and picking one books it at once.",
+            "Approved bookings come with a calendar file, and you get a reminder the afternoon before.",
+        ],
+    },
     {
         "version": "5.3",
         "date": "October 9, 2026",

@@ -32,6 +32,7 @@
               background:var(--blue-bg); border:1px solid var(--blue-ln);
               border-radius:8px; padding:.35rem .5rem; }
   .muted { color:var(--soft); }
+  .rivals-opt { flex-basis:100%; font-size:.8rem; color:var(--ink-soft); }
   .backbar { margin-bottom:1rem; display:flex; gap:.8rem; }
   .decided-link { margin:-.3rem 0 1rem; font-size:.9rem; }
   .inbox-jump { display:flex; gap:.5rem; flex-wrap:wrap; margin:0 0 1rem; }
@@ -44,6 +45,63 @@
   .qhead .links { font-size:.85rem; display:flex; gap:.8rem; }
   .panel { scroll-margin-top:5rem; }
 </style>
+{% endmacro %}
+
+{% macro rooms_queue(queue) %}
+  {% if queue %}
+  <div class="table-wrap">
+  <table class="q resp-table resp-table-wide">
+    <thead><tr><th>Who</th><th>When</th><th>Meeting</th><th>Other requests</th><th>Decision</th></tr></thead>
+    <tbody>
+    {% for r in queue %}
+      <tr>
+        <td data-label="Who">
+          <div class="who">{{ r.requester_name }}{% if r.is_external %} <span class="pill warn">Guest</span>{% endif %}{% if r.email_unconfirmed %} <span class="pill" title="They haven't opened the tracking link we emailed yet">email not confirmed</span>{% endif %}</div>
+          <div class="sub">{{ r.requester_unit or "—" }}{% if r.is_external and r.ext_email %} · {{ r.ext_email }}{% endif %}{% if r.is_external and r.ext_phone %} · {{ r.ext_phone }}{% endif %}</div>
+          <div class="sub"><code>{{ r.ref_code }}</code> · filed {{ (r.created_at or "")|replace('T', ' ') }}</div>
+        </td>
+        <td data-label="When">
+          <div class="code">{{ r.when }}</div>
+          <div>{{ r.hours }}</div>
+        </td>
+        <td data-label="Meeting">
+          <div>{{ r.title }}</div>
+          <div class="sub">{{ room_modalities.get(r.modality, r.modality) }}{% if r.attendees %} · {{ r.attendees }} attending{% endif %}{% if r.meals_requested %} · meals requested{% endif %}</div>
+          {% if r.move_of %}<div class="delta"><span class="pill warn">Move</span> of <b>{{ r.move_of.ref }}</b> ({{ r.move_of.when }}). Approving releases the old hours.</div>{% endif %}
+          {% if r.purpose %}<div class="note">“{{ r.purpose }}”</div>{% endif %}
+        </td>
+        <td data-label="Other requests">
+          {% if r.held_by %}<span class="pill empty">Already booked</span>
+            <div class="delta">{{ r.held_by.title }} <b>{{ r.held_by.ref }}</b> holds these hours. Decline this one, or ask an admin to rebook.</div>
+          {% elif r.blocked %}<span class="pill empty">Unavailable</span><div class="delta">{{ r.blocked }}</div>
+          {% elif r.rivals %}<span class="pill warn">{{ r.rivals|length }} competing</span>
+            {% for o in r.rivals %}<div class="delta"><b>{{ o.title }}</b> · {{ o.who }} · {{ o.hours }}</div>{% endfor %}
+          {% else %}<span class="muted">—</span>{% endif %}
+        </td>
+        <td data-label="Decision" class="actions">
+          <form class="df" method="post" action="/rooms/{{ r.id }}/decide">
+            <input type="text" name="note" placeholder="remark or reason">
+            {% if r.can_approve %}<button class="ok" type="submit" name="action" value="approve">Approve</button>{% endif %}
+            <button class="no" type="submit" name="action" value="decline">Decline</button>
+            {% if r.series and r.series.open > 1 %}
+            <span class="rivals-opt"><b>Repeating request:</b> {{ r.series.open }} of {{ r.series.total }} dates are waiting.
+              <button class="ok" type="submit" name="action" value="approve_series">Approve all {{ r.series.open }}</button>
+              <button class="no" type="submit" name="action" value="decline_series">Decline all {{ r.series.open }}</button></span>
+            {% endif %}
+            {% if r.can_approve and r.rivals %}
+            <label class="rivals-opt"><input type="checkbox" name="decline_rivals" value="1" checked>
+              Also decline the {{ r.rivals|length }} competing request{{ '' if r.rivals|length == 1 else 's' }} and offer {{ 'it' if r.rivals|length == 1 else 'them' }} other times</label>
+            {% endif %}
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  {{ empty_state("Nothing waiting", "No conference room requests right now.", "🏢") }}
+  {% endif %}
 {% endmacro %}
 
 {% macro wellness_queue(queue) %}
