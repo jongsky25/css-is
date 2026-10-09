@@ -12,7 +12,10 @@ a place ("Palawan"), an initialism ("KJF") or a word that matches nobody is
 name left undecided stays undecided.
 
 Match levels, best first (a lower level always beats a higher one):
-  0 alias      — an admin already answered this exact name once; remembered
+  0 alias      — an admin already answered this exact name once; remembered.
+                 Next to it, the NAME GUIDE (below): who the bureau itself says a calendar
+                 name is ("Tek" = Teresita Guzman). It is looked up by full name, so it
+                 needs no user ids and survives a re-created account.
   1 nickname   — equals someone's nickname (My profile)
   2 full name  — all the words of a multi-word name are in one person's name
   3 first name — equals the first word of someone's name
@@ -27,6 +30,33 @@ import re
 
 HONORIFICS = {"sir", "doc", "dr", "dra", "maam", "mam", "madam", "engr", "atty", "dir",
               "director", "usec", "asec", "prof", "mr", "ms", "mrs", "hon"}
+
+# THE NAME GUIDE — supplied by the bureau (2026-10-09): what each name means in the
+# Word calendar. Keys are the cleaned form (`clean`): honorifics gone, lower case.
+# Values are the person's full name as it is in the directory. A name that is not in
+# here is matched the ordinary way (nickname / first name / ...), so people whose
+# calendar name is simply their first name or nickname need no entry. Edit freely.
+NAME_GUIDE = {
+    "june": "June Naig", "tek": "Teresita Guzman", "malou": "Maria Lourdes Gajitos",
+    "olga": "Maria Olga Bulasa", "mimi": "Irene Hizon", "mi": "Irene Hizon",
+    "vlanche": "Vlanche Dulfo", "feng": "Marifel Santiago", "ronnel": "Ronnel Manaloto",
+    "rj": "Ronnel John Dela Cruz", "dheng": "Catherine Dimaano",
+    "mar": "Mar Wynn Bello", "mwb": "Mar Wynn Bello",            # the previous Director
+    "carole": "Carole Dela Fuente", "analyn": "Analyn Fortaleza", "krisha": "Krisha Carayag",
+    "cha": "Chariza Cruz", "riza": "Maria Teresa Santiago", "riz": "Maria Teresa Santiago",
+    "modesto": "Modesto Lazo", "ac": "Apple Charm Agulto",
+    "kjf": "Kathrine Joyce Flores", "jap": "Juan Alfonso Perez",       # initials
+    "mm": "Mary Anne Milliscent",
+}
+# Known not-people, from the CY 2026 file: places, regions, teams and phrases the parser picked
+# up from the end of a line ("(Davao)", "- CAR", "(BLHSD IQA Team)"). Marked, never silently dropped.
+NOT_PEOPLE = {
+    "tolosa", "cebu", "iloilo", "pampanga", "mindanao", "northern mindanao", "bicol region",
+    "car", "un avenue", "who regional office", "moh barmm basilan", "moh barmm maguindanao",
+    "mimaropa chd", "blhsd iqa team", "interagency twg", "doh rep", "zbb", "lha", "ta requests",
+    "aop activity", "dovetail activity", "subprogram", "am for coordinators", "auditor hemb",
+}
+PROBABLY_NOT = {"mmc", "asf"}              # the bureau thinks these are not people: offered, not chosen
 
 LEVEL_LABELS = {0: "remembered", 1: "nickname", 2: "full name", 3: "first name",
                 4: "surname / other name", 5: "starts like"}
@@ -67,12 +97,49 @@ def load_directory(conn):
     return out
 
 
+def guide_candidates(full, directory):
+    """User ids the directory has for a guide's full name: everyone whose name holds ALL
+    its words, else (a directory that omits middle names) first AND last word."""
+    gw = [w for w in _words(full) if w not in HONORIFICS]
+    hit = [p["user_id"] for p in directory if p["words"] and set(gw) <= set(p["words"])]
+    if not hit and len(gw) > 2:
+        hit = [p["user_id"] for p in directory if p["words"] and {gw[0], gw[-1]} <= set(p["words"])]
+    return hit
+
+
 def match(key, directory, aliases=None):
-    """{'level', 'candidates': [user ids], 'status': alias|suggested|ambiguous|possible|unmatched}.
-    Only `alias` and `suggested` are ever pre-selected."""
+    """{'level', 'candidates': [user ids], 'guide': full name|None,
+        'status': alias|guided|suggested|ambiguous|possible|unlikely|not_person|unmatched}.
+    Only `alias`, `guided` and `suggested` are ever pre-selected (`not_person` pre-selects
+    "Not a person"). A guide entry whose person has no active account is `unmatched` (several
+    accounts: `ambiguous`) with `guide` set so the page can say so — it never falls back to a
+    first-name guess."""
+    out = _match(key, directory, aliases)
+    out.setdefault("guide", None)
+    return out
+
+
+def _match(key, directory, aliases):
     alias = (aliases or {}).get(key)
     if alias and any(p["user_id"] == alias for p in directory):
         return {"level": 0, "candidates": [alias], "status": "alias"}
+    if key in NOT_PEOPLE:
+        return {"level": None, "candidates": [], "status": "not_person"}
+    guide = NAME_GUIDE.get(key)
+    if guide:
+        found = guide_candidates(guide, directory)
+        if len(found) == 1:
+            return {"level": 0, "candidates": found, "status": "guided", "guide": guide}
+        # The bureau said who this is, so a loose first-name guess would only be noise
+        # ("Mar" must not become Maria when the previous Director has no account).
+        return {"level": 0 if found else None, "candidates": found, "guide": guide,
+                "guide_found": len(found), "status": "ambiguous" if found else "unmatched"}
+    if key in PROBABLY_NOT:
+        return {"level": None, "candidates": [], "status": "unlikely"}
+    return _ordinary(key, directory)
+
+
+def _ordinary(key, directory):
     words = key.split()
     tiers = {1: [], 2: [], 3: [], 4: [], 5: []}
     for p in directory:
@@ -107,7 +174,7 @@ def expand(raw, directory, aliases=None):
     words = key.split()
     if len(words) > 1 and match(key, directory, aliases)["status"] == "unmatched":
         parts = [match(w, directory, aliases)["status"] for w in words]
-        if all(s != "unmatched" for s in parts):
+        if all(s in ("alias", "guided", "suggested", "ambiguous", "possible") for s in parts):
             return words
     return [key]
 
@@ -137,7 +204,8 @@ def collect(drafts, created, directory, aliases, ignored, decided):
         rows.append({**rec, "raws": sorted(rec["raws"]), "n": len(rec["drafts"]),
                      "titles": [drafts[i]["title"] for i in rec["drafts"][:3]],
                      "match": m, "ignored": key in ignored, "decision": decided.get(key)})
-    order = {"alias": 0, "suggested": 1, "ambiguous": 2, "possible": 3, "unmatched": 4}
+    order = {"alias": 0, "guided": 0, "suggested": 1, "not_person": 2, "ambiguous": 3,
+             "possible": 4, "unlikely": 5, "unmatched": 6}
     rows.sort(key=lambda r: (r["decision"] is not None, r["ignored"], order[r["match"]["status"]],
                              -r["n"], r["key"]))
     return rows

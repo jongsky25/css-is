@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.58"
+APP_VERSION = "3.59"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.59",
+        "date": "October 9, 2026",
+        "summary": "Matching the names in the imported calendar is now much more accurate.",
+        "changes": [
+            "Calendar names such as Tek, Riza or Doc Malou are matched to the right person using the bureau's own list of who is who.",
+            "Places and teams that were picked up as names, such as Cebu or CAR, are now marked as not a person.",
+        ],
+    },
     {
         "version": "3.58",
         "date": "October 9, 2026",

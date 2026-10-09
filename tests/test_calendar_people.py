@@ -12,6 +12,14 @@ import storage as st
 from test_calendar_import import month_table
 
 FORM = {"Content-Type": "application/x-www-form-urlencoded"}
+REAL_GUIDE = dict(cp.NAME_GUIDE)
+
+
+@pytest.fixture(autouse=True)
+def _no_guide_unless_asked(monkeypatch):
+    """The ordinary-matching tests use made-up people, so the real name guide is off
+    for them; the guide tests below switch it back on."""
+    monkeypatch.setattr(cp, "NAME_GUIDE", {})
 
 
 # ------------------------------------------------------------------ matcher ---
@@ -42,7 +50,9 @@ def test_a_title_alone_is_not_a_name(raw):
 
 
 def m(key, directory=DIR, aliases=None):
-    return cp.match(key, directory, aliases)
+    r = cp.match(key, directory, aliases)
+    assert r.pop("guide") is None                    # these tests run with the name guide off
+    return r
 
 
 def test_a_nickname_is_the_best_match():
@@ -306,3 +316,98 @@ def test_a_possible_match_is_offered_but_never_pre_selected(admin, world):
     sel = html.split('name="who_riz"')[1].split("</select>")[0]
     assert "Maybe" in html and "Riza Calpe" in sel and "selected" not in sel
     assert 'label="Could be"' in sel
+
+
+# ----------------------------------------------------------- the name guide ---
+
+GUIDE_PEOPLE = [person(1, "Maria Teresa Santiago"), person(2, "Marifel Santiago"),
+                person(3, "Ronnel Manaloto"), person(4, "Ronnel John Dela Cruz"),
+                person(5, "June Naig"), person(6, "June Perez"), person(7, "Teresita Guzman"),
+                person(8, "Irene Hizon", "Mimi"), person(9, "Carole Dela Fuente"),
+                person(10, "Kathrine Joyce Flores"), person(11, "Juan Alfonso Perez"),
+                person(12, "Mary Anne Milliscent"), person(13, "Maria Lourdes Gajitos"),
+                person(14, "Fe Ramos"), person(15, "Apple Charm Agulto")]
+
+
+@pytest.fixture()
+def guide(monkeypatch):
+    monkeypatch.setattr(cp, "NAME_GUIDE", dict(REAL_GUIDE))
+
+
+@pytest.mark.parametrize("key, uid", [
+    ("riza", 1), ("riz", 1),            # Maria Teresa Santiago, not Marifel Santiago
+    ("feng", 2), ("ronnel", 3), ("rj", 4), ("june", 5), ("tek", 7),
+    ("mimi", 8), ("mi", 8), ("carole", 9), ("kjf", 10), ("jap", 11), ("mm", 12),
+    ("malou", 13), ("ac", 15),
+])
+def test_the_name_guide_picks_the_person_it_names(guide, key, uid):
+    r = cp.match(key, GUIDE_PEOPLE)
+    assert r["status"] == "guided" and r["candidates"] == [uid] and r["guide"]
+
+
+def test_the_guide_beats_a_first_name_two_people_share(guide):
+    assert cp.match("ronnel", GUIDE_PEOPLE)["candidates"] == [3]             # two Ronnels in the directory
+    assert cp.match("june", GUIDE_PEOPLE)["candidates"] == [5]               # two Junes
+
+
+def test_a_name_not_in_the_guide_is_matched_the_ordinary_way(guide):
+    assert cp.match("fe", GUIDE_PEOPLE) == {"level": 3, "candidates": [14], "status": "suggested", "guide": None}
+
+
+def test_the_guide_works_when_the_directory_leaves_out_a_middle_name(guide):
+    d = [person(1, "Ronnel Dela Cruz"), person(2, "Ronnel Manaloto")]
+    assert cp.match("rj", d)["candidates"] == [1]                           # first + last word
+
+
+def test_a_guide_person_with_no_active_account_is_unmatched_not_guessed(guide):
+    r = cp.match("mar", GUIDE_PEOPLE + [person(20, "Maria Cruz"), person(21, "Mar Santos")])
+    assert r["status"] == "unmatched" and r["candidates"] == [] and r["guide"] == "Mar Wynn Bello"
+    assert cp.match("mwb", GUIDE_PEOPLE)["guide"] == "Mar Wynn Bello"         # the previous Director, by initials
+    assert cp.match("tek", [p for p in GUIDE_PEOPLE if p["user_id"] != 7])["status"] == "unmatched"
+
+
+def test_two_accounts_for_a_guide_person_are_ambiguous(guide):
+    r = cp.match("tek", GUIDE_PEOPLE + [person(30, "Teresita Guzman")])
+    assert r["status"] == "ambiguous" and sorted(r["candidates"]) == [7, 30]
+
+
+def test_a_remembered_answer_still_beats_the_guide(guide):
+    assert cp.match("riza", GUIDE_PEOPLE, {"riza": 2})["candidates"] == [2]
+    assert cp.match("riza", GUIDE_PEOPLE, {"riza": 2})["status"] == "alias"
+
+
+def test_not_people_are_flagged(guide):
+    assert cp.match("tolosa", GUIDE_PEOPLE)["status"] == "not_person"
+    for k in ("mmc", "asf"):
+        assert cp.match(k, GUIDE_PEOPLE)["status"] == "unlikely"
+    # a place is never swallowed into a two-name split
+    assert cp.expand("Riza Tolosa", GUIDE_PEOPLE) == ["riza tolosa"]
+
+
+def test_honorific_forms_reach_the_guide(guide):
+    for raw, uid in (("Ma’am Riz", 1), ("Doc Malou", 13), ("Dr. Malou", 13), ("Dr June", 5),
+                     ("Ma’am Mi", 8), ("Doc AC", 15), ("Sir Jong", None)):
+        key = cp.clean(raw)[0]
+        r = cp.match(key, GUIDE_PEOPLE)
+        assert (r["candidates"][0] if r["candidates"] else None) == uid, raw
+
+
+def test_every_guide_entry_is_well_formed():
+    assert all(k == k.lower() and cp.clean(k) and cp.clean(k)[0] == k for k in REAL_GUIDE)
+    assert all(len(v.split()) >= 2 for v in REAL_GUIDE.values())
+
+
+def test_the_page_preselects_guided_names_and_not_a_person(admin, world, monkeypatch):
+    monkeypatch.setattr(cp, "NAME_GUIDE", {"riza": "Riza Calpe", "mar": "Mar Wynn Bello"})
+    monkeypatch.setattr(cp, "NOT_PEOPLE", {"palawan"})
+    html = admin.get(f"/calendar/import/{imported(admin, world)}/people").text
+    sel = lambda k: html.split(f'name="who_{k}"')[1].split("</select>")[0]               # noqa: E731
+    assert f'value="{world["riza"]}" selected' in sel("riza") and "Name guide · Riza Calpe" in html
+    assert 'value="ignore" selected' in sel("palawan")
+    assert "Guide says Mar Wynn Bello" not in html          # "mar" is not in this made-up file
+
+
+def test_the_places_and_teams_in_the_real_file_are_marked_not_people(guide):
+    for k in ("cebu", "car", "northern mindanao", "blhsd iqa team", "doh rep", "zbb", "tolosa"):
+        assert cp.match(k, GUIDE_PEOPLE)["status"] == "not_person", k
+    assert cp.match("car", GUIDE_PEOPLE)["candidates"] == []          # never "Carole"

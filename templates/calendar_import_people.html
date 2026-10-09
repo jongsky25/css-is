@@ -10,8 +10,8 @@
 {% macro choose(r) %}
 <select name="who_{{ r.key }}" aria-label="Who is {{ r.label }}?">
   <option value="">— decide later —</option>
-  <option value="ignore" {{ "selected" if r.ignored }}>Not a person (a place, a team, initials)</option>
-  {% if r.cands %}<optgroup label="{{ 'Likely' if r.match.status in ('suggested', 'alias') else 'Could be' }}">
+  <option value="ignore" {{ "selected" if r.ignored or r.picked == "ignore" }}>Not a person (a place, a team, initials)</option>
+  {% if r.cands %}<optgroup label="{{ 'Likely' if r.match.status in ('suggested', 'alias', 'guided') else 'Could be' }}">
     {% for p in r.cands %}<option value="{{ p.user_id }}" {{ "selected" if r.picked == p.user_id }}>{{ p.name }}{% if p.nickname %} ({{ p.nickname }}){% endif %}</option>{% endfor %}
   </optgroup>{% endif %}
   <optgroup label="Everyone">
@@ -33,6 +33,11 @@
       <td>{{ r.n }} {{ "item" if r.n == 1 else "items" }}<small>{{ r.titles|join(" · ") }}</small></td>
       <td>{% set m = r.match %}
         {% if m.status == "alias" %}<span class="cal-chip">Remembered</span>
+        {% elif m.status == "guided" %}<span class="cal-chip">Name guide · {{ m.guide }}</span>
+        {% elif m.guide and m.status == "unmatched" %}<span class="cal-chip warn">Guide says {{ m.guide }} · no active account</span>
+        {% elif m.guide and m.status == "ambiguous" %}<span class="cal-chip warn">Guide says {{ m.guide }} · {{ r.cands|length }} accounts</span>
+        {% elif m.status == "not_person" %}<span class="cal-chip">Not a person</span>
+        {% elif m.status == "unlikely" %}<span class="cal-chip">Probably not a person</span>
         {% elif m.status == "suggested" %}<span class="cal-chip">Likely · {{ levels[m.level] }}</span>
         {% elif m.status == "possible" %}<span class="cal-chip warn">Maybe · starts like</span>
         {% elif m.status == "ambiguous" %}<span class="cal-chip warn">Could be {{ r.cands|length }} people</span>

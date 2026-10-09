@@ -1,5 +1,21 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.59 — name guide for the imported calendar)
+
+- **`calendar_people.NAME_GUIDE`** — the bureau's own answer to "who is this?" for the names in the
+  CY 2026 calendar (Tek = Teresita Guzman, Riza = Maria Teresa Santiago, KJF = Kathrine Joyce Flores,
+  JAP = the Director, MM = Mary Anne Milliscent, Mar / MWB = the previous Director Mar Wynn Bello…).
+  It is looked up by FULL NAME in the directory (all words, else first + last word), so it needs no
+  user ids. It ranks just under a remembered answer and above nickname/first-name matching, so two
+  Ronnels or two Junes resolve correctly; a guide person with no active account is shown as
+  "Guide says … · no active account" and is never replaced by a first-name guess.
+- **Not people** — `NOT_PEOPLE` marks the plain places/teams/phrases from the file (Cebu, CAR,
+  Tolosa, BLHSD IQA Team, DOH Rep, ZBB…) so they pre-select "Not a person" ("CAR" no longer offers
+  Carole); `PROBABLY_NOT` (MMC, ASF) is shown as "Probably not a person" and never chosen.
+- **People step** — new chips (Name guide · …, Guide says … · no active account, Not a person) and
+  the "Not a person" option pre-selected for known non-people. Still nothing is written until Save.
+- **Tests** — `tests/test_calendar_people.py` (guide, ambiguity, missing account, honorific forms).
+
 ## 2026-10-09 (v3.58 — office calendar: match the names in the imported calendar)
 
 - **`/calendar/import/{id}/people`** (admin only; only after the batch is imported) — "Who is who?":

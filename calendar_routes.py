@@ -490,8 +490,10 @@ def make_router(templates, get_conn, today_local):
             by_id = {p["user_id"]: p for p in directory}
             for r in rows:
                 r["cands"] = [by_id[u] for u in r["match"]["candidates"] if u in by_id]
-                r["picked"] = r["decision"] if isinstance(r["decision"], int) else (
-                    r["match"]["candidates"][0] if r["match"]["status"] in ("alias", "suggested") else None)
+                st_ = r["match"]["status"]
+                r["picked"] = (r["decision"] if isinstance(r["decision"], int) else
+                               r["match"]["candidates"][0] if st_ in ("alias", "guided", "suggested") else
+                               "ignore" if st_ == "not_person" else None)
             return templates.TemplateResponse(request, "calendar_import_people.html", {
                 "nav_active": "calendar", "batch": batch, "ok": ok,
                 "pending": [r for r in rows if r["decision"] is None and not r["ignored"]],
