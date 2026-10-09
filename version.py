@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.79"
+APP_VERSION = "4.0"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "4.0",
+        "date": "October 9, 2026",
+        "summary": "The Office calendar is complete: one place for meetings, trips, activities, leave and birthdays.",
+        "changes": [
+            "Calendar has Agenda, Week, Month and Timeline views, and you can add items in a tap, including ones that repeat.",
+            "It connects to everything else: your weekly whereabouts, survey activities, your home page, the bell, and your own Google, Outlook or Apple calendar.",
+            "Emails keep you informed without flooding you: one email for a burst of changes, a Monday week-ahead and a day-before reminder, all switchable on your profile.",
+            "Birthdays are optional and private unless you share them. You can ask the search bar what is on your calendar.",
+        ],
+    },
     {
         "version": "3.79",
         "date": "October 9, 2026",

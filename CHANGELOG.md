@@ -1,5 +1,21 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v4.0 — the Office calendar, complete)
+
+A milestone marker for the whole Office calendar programme (increments A1 to H3, v3.5x to v3.79). No code beyond the version.
+
+- **Calendar:** one shared calendar for meetings, trips, trainings, deadlines, banners, CSS activities, reported leave and birthdays, with Agenda / Week /
+  Month / Timeline views, filters, scopes (mine, section, division, bureau), a Word-calendar import with the "Who is who?" step, repeating items, quick-add,
+  and a Team | Me | Calendar toggle and "Coming up" card on the home page.
+- **Two-way links:** weekly whereabouts (a confirmed trip pre-fills Field; your own report always wins; mismatches are soft heads-ups) and CSS activities
+  (every activity is on the calendar; "Collect feedback" from an item; editing a linked item goes through the activity; duplicate guard both ways).
+- **Staying informed:** one batched email per burst of changes, a Monday week-ahead, a day-before reminder, bell rows with seen-tracking, birthday reminders
+  with optional admin-set coordinators, an `.ics` per item, `.ics` attachments, and a private subscribe link.
+- **Privacy by construction:** visibility is decided once, in `office_calendar.items_between`, and everything (page, API, feed, emails, assistant answers)
+  reads it; birthdays store no year, are shared only by choice and consent is recorded; leave never carries a reason.
+- **Read API and assistant:** `GET /api/calendar` and eight calendar questions the search bar answers without the model seeing any calendar data.
+- To switch on after deploying: set `CSS_BASE_URL` (emails and links need it), and optionally update the mail relay script (docs/MAIL_RELAY_SETUP.md) so emails carry the `.ics` file.
+
 ## 2026-10-09 (v3.79 — office calendar H3: read API and assistant answers)
 
 - **`GET /api/calendar`** (sign-in required; `no-store`): the calendar as JSON — `start`, `end` (default today + 13 days, at most 92 days), `scope`
