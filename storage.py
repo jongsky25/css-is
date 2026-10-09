@@ -1314,6 +1314,23 @@ def _add_missing_columns(conn):
     conn.execute("CREATE INDEX IF NOT EXISTS email_log_created_idx ON email_log(created_at)")
     conn.execute("CREATE INDEX IF NOT EXISTS email_log_feature_idx ON email_log(feature)")
 
+    # birthday_card -- docs/BIRTHDAY_GREETINGS_PLAN.md Phase 3. A card a teammate sends someone whose
+    # birthday they may see. One per sender per celebrant per birthday year. Personal text, so the
+    # message is plain text, capped, and old years are dropped as new cards are sent.
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS birthday_card (
+               id           INTEGER PRIMARY KEY,
+               to_user_id   INTEGER NOT NULL,
+               from_user_id INTEGER NOT NULL,
+               year         INTEGER NOT NULL,       -- the year of the birthday it was sent for
+               design       TEXT NOT NULL,
+               message      TEXT NOT NULL,
+               created_at   TEXT NOT NULL,
+               hidden       INTEGER NOT NULL DEFAULT 0,
+               UNIQUE (to_user_id, from_user_id, year)
+           )""")
+    conn.execute("CREATE INDEX IF NOT EXISTS birthday_card_to_idx ON birthday_card(to_user_id, year)")
+
     # report_draft — docs/AI_INTEGRATION_PLAN.md Phase 5. AI-drafted (then
     # possibly analyst-edited) report-narrative text, keyed by which report
     # scope it belongs to (e.g. one activity's MRR columns, or one period's
@@ -4672,6 +4689,83 @@ def bday_greeted(conn, user_id):
 
 def set_bday_greeted(conn, user_id, stamp):
     conn.execute("UPDATE admin_user SET bday_greeted=? WHERE id=?", (stamp, user_id))
+    conn.commit()
+
+
+# ---- birthday cards (docs/BIRTHDAY_GREETINGS_PLAN.md Phase 3) -----------------------------
+
+CARD_DESIGNS = {"confetti": ("🎉", "Confetti"), "cake": ("🎂", "Cake"), "flowers": ("💐", "Bulaklak / Flowers"),
+                "balloons": ("🎈", "Lobo / Balloons"), "star": ("🌟", "Bituin / Star"), "heart": ("💝", "Puso / Heart")}
+CARD_MAX = 280
+
+
+def card_check(design, message):
+    """(design, message) cleaned, or ValueError with a sentence a person can read. Plain text only:
+    the template escapes it, and newlines are kept but runs of blank lines are squeezed."""
+    if design not in CARD_DESIGNS:
+        raise ValueError("Pick one of the card designs.")
+    text = "\n".join(line.rstrip() for line in (message or "").replace("\r", "").strip().split("\n"))
+    while "\n\n\n" in text:
+        text = text.replace("\n\n\n", "\n\n")
+    if not text:
+        raise ValueError("Write a short message for the card.")
+    if len(text) > CARD_MAX:
+        raise ValueError(f"Keep the message to {CARD_MAX} characters or fewer.")
+    return design, text
+
+
+def card_send(conn, to_user_id, from_user_id, year, design, message):
+    """Save one card. Raises ValueError for a bad card or a second card to the same person this
+    year. Cards for years before last year are dropped here, so they do not pile up."""
+    design, text = card_check(design, message)
+    try:
+        conn.execute("INSERT INTO birthday_card(to_user_id, from_user_id, year, design, message, created_at) "
+                     "VALUES (?,?,?,?,?,?)", (to_user_id, from_user_id, year, design, text, tz.now_iso()))
+    except sqlite3.IntegrityError:
+        raise ValueError("You already sent a card this year.") from None
+    conn.execute("DELETE FROM birthday_card WHERE year < ?", (year - 1,))
+    conn.commit()
+
+
+def cards_sent_by(conn, from_user_id, year):
+    """The ids of the people this account has already sent a card for `year`'s birthday."""
+    return {r[0] for r in conn.execute("SELECT to_user_id FROM birthday_card WHERE from_user_id=? AND year=?",
+                                       (from_user_id, year))}
+
+
+_CARD_SELECT = """SELECT c.id, c.to_user_id, c.from_user_id, c.year, c.design, c.message, c.created_at, c.hidden,
+                         COALESCE(rp.name, a.username), COALESCE(ta.nickname, trp.name, ta.username)
+                  FROM birthday_card c
+                  JOIN admin_user a ON a.id = c.from_user_id
+                  LEFT JOIN resource_person rp ON rp.id = a.rp_id
+                  JOIN admin_user ta ON ta.id = c.to_user_id
+                  LEFT JOIN resource_person trp ON trp.id = ta.rp_id"""
+
+
+def _card_row(r):
+    return {"id": r[0], "to_user_id": r[1], "from_user_id": r[2], "year": r[3], "design": r[4],
+            "emoji": CARD_DESIGNS.get(r[4], ("🎉",))[0], "message": r[5], "created_at": r[6],
+            "hidden": bool(r[7]), "from_name": r[8], "to_name": r[9]}
+
+
+def cards_for(conn, to_user_id, year):
+    """The cards for this person's `year` birthday that they may read (not hidden), oldest first."""
+    return [_card_row(r) for r in conn.execute(
+        _CARD_SELECT + " WHERE c.to_user_id=? AND c.year=? AND c.hidden=0 ORDER BY c.id", (to_user_id, year))]
+
+
+def cards_for_admin(conn, year):
+    """Every card for `year`, hidden or not, newest first, for the moderation page."""
+    return [_card_row(r) for r in conn.execute(_CARD_SELECT + " WHERE c.year=? ORDER BY c.id DESC", (year,))]
+
+
+def card_get(conn, card_id):
+    r = conn.execute(_CARD_SELECT + " WHERE c.id=?", (card_id,)).fetchone()
+    return _card_row(r) if r else None
+
+
+def card_set_hidden(conn, card_id, hidden):
+    conn.execute("UPDATE birthday_card SET hidden=? WHERE id=?", (1 if hidden else 0, card_id))
     conn.commit()
 
 

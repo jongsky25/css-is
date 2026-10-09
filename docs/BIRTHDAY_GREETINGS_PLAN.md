@@ -1,6 +1,6 @@
 # Birthday greetings — implementation plan
 
-**Status:** plan approved by the owner (decisions in §6). Build follows this plan phase by phase.
+**Status:** plan approved by the owner (decisions in §6). Phases 1 to 3 built, each as its own draft PR (v5.4, v5.5, v5.6).
 **Owner:** avincentpatrick
 **Why:** Office Connect already *knows* birthdays (month and day, with consent) and already tells
 teammates and coordinators about them. The one person it says nothing warm to is the celebrant.

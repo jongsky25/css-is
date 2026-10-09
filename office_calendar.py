@@ -1238,6 +1238,9 @@ def bell_rows(conn, user_id, today=None):
     bday = birthday_bell_row(conn, user_id, today)
     if bday:
         rows.append(bday)
+    card = card_bell_row(conn, user_id, today)
+    if card:
+        rows.append(card)
     unseen = st.cal_unseen_for_user(conn, user_id, today)
     if unseen:
         n = len(unseen)
@@ -1317,6 +1320,56 @@ def birthday_bell_row(conn, user_id, today=None):
     if not names:
         return None
     return {"text": "🎂 Today: " + ", ".join(names), "url": "/calendar/birthdays", "count": 1}
+
+
+def card_celebrants(conn, viewer_id, today):
+    """The people `viewer_id` may send a birthday card right now: those whose birthday is within the
+    greeting window (the six days before it and the day) AND who share it with them -- the celebrant's
+    own sharing choice decides, so "Don't share" gets no cards. [{user_id, name, unit, date, sent}],
+    soonest first. Never includes the viewer."""
+    end = today + timedelta(days=bd.GREETING_DAYS_BEFORE)
+    cel = celebrants_between(conn, viewer_paths(conn, viewer_id), today, end)
+    if not cel:
+        return []
+    sent = {(r[0], r[1]) for r in conn.execute(
+        "SELECT to_user_id, year FROM birthday_card WHERE from_user_id=? AND year IN (?, ?)",
+        (viewer_id, today.year, end.year))}
+    return [dict(c, sent=(c["user_id"], c["date"].year) in sent) for c in cel]
+
+
+def _window_pairs(today):
+    """The (month, day) pairs a birthday could have for the next week, with Feb 29 added on Feb 28
+    of a non-leap year (that is where such a birthday is kept)."""
+    pairs = set()
+    for i in range(bd.GREETING_DAYS_BEFORE + 1):
+        d = today + timedelta(days=i)
+        pairs.add((d.month, d.day))
+        if d.month == 2 and d.day == 28 and not calendar.isleap(d.year):
+            pairs.add((2, 29))
+    return pairs
+
+
+def card_bell_row(conn, user_id, today=None):
+    """One bell row while a teammate's birthday (one this person may see) is coming up or today and
+    they have not sent a card yet; None otherwise. Cheap when nobody has a birthday that week (one
+    query), and off with the same switch as the other teammate-birthday reminders."""
+    today = today or tz.today_local()
+    pairs = sorted(_window_pairs(today))
+    cond = " OR ".join("(birthday_month=? AND birthday_day=?)" for _ in pairs)
+    flat = [x for pair in pairs for x in pair]
+    if not conn.execute(f"SELECT 1 FROM admin_user WHERE active=1 AND id<>? AND birthday_share<>'none' "
+                        f"AND ({cond}) LIMIT 1", [user_id, *flat]).fetchone():
+        return None
+    if not st.bday_notify_pref(conn, user_id):
+        return None
+    todo = [c for c in card_celebrants(conn, user_id, today) if not c["sent"]]
+    if not todo:
+        return None
+    if len(todo) == 1:
+        c = todo[0]
+        when = "today" if c["date"] == today else c["date"].strftime("%a")
+        return {"text": f"💌 Send {c['name']} a birthday card ({when})", "url": f"/birthday/card/{c['user_id']}", "count": 1}
+    return {"text": f"💌 {len(todo)} birthday cards to send this week", "url": "/birthday/cards", "count": 1}
 
 
 def first_working_day(conn, year, month):

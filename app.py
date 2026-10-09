@@ -65,6 +65,7 @@ import dashboard_export as dx
 # rather than importing them back out of here, so the dependency stays one-way.
 import office_calendar as oc_cal
 import office_connect as oc
+import birthday_cards
 import birthdays
 import calendar_answers
 import calendar_routes
@@ -4901,6 +4902,19 @@ def _css_entry_for(user, conn):
     return "/css"
 
 
+def _my_card_count(profile, request):
+    """How many birthday cards the signed-in person may read now (none before the day)."""
+    b = (profile or {}).get("birthday")
+    if not b:
+        return 0
+    conn = get_conn()
+    try:
+        return len(st.cards_for(conn, request.state.user["id"],
+                                birthdays.revealed_card_year(b["month"], b["day"], _today_local())))
+    finally:
+        conn.close()
+
+
 def _birthday_greeting(conn, uid, profile, today):
     """What the landing page says about the signed-in person's birthday, or None
     (docs/BIRTHDAY_GREETINGS_PLAN.md). The six days leading up to it and the day itself, never after.
@@ -4917,6 +4931,7 @@ def _birthday_greeting(conn, uid, profile, today):
     out = {"phase": phase, "card": st.bday_greeted(conn, uid) < stamp}
     if phase == "today":
         out["tl"], out["en"] = mailer.GREETING_POOL[(uid + year) % len(mailer.GREETING_POOL)]
+        out["cards"] = len(st.cards_for(conn, uid, year))
     else:
         out["when_tl"], out["when_en"] = birthdays.lead_in_phrases(b["month"], b["day"], today)
     if out["card"]:
@@ -5377,7 +5392,7 @@ def _render_me(request, msg="", err="", form=None):
         "wstats": wstats,
         "ladder": st.avatar_growth_ladder(kind, wstats),
         "growth_how": st.avatar_growth_actions(kind),
-        "msg": msg, "err": err, **_birthday_ctx(profile, form),
+        "msg": msg, "err": err, **_birthday_ctx(profile, form), "my_cards": _my_card_count(profile, request),
         "feed": _feed_ctx(request, profile), "feed_scopes": st.FEED_SCOPES,
     })
 
@@ -16363,6 +16378,7 @@ def _calendar_check_dates(start, end):
     return end_date, ("That end date isn't a valid date." if err else None)
 
 
+app.include_router(birthday_cards.make_router(templates, get_conn, _today_local, _audit))
 app.include_router(calendar_routes.make_router(
     templates, get_conn, _today_local, can_manage_event=_can_manage_event,
     notify_email=_notify_email, base_url=_base_url, on_event_changed=invalidate_atoms,

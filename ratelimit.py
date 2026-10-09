@@ -31,6 +31,7 @@ def _limits(bucket):
                                  # budget (that's DB-backed in ai_budget so it survives restarts)
         "ai_groq": (10, 60),     # Groq fallback calls specifically — separate abuse throttle,
                                  # independent of Gemini's own budget/rate limiting
+        "card": (20, 60),        # sending birthday cards (keyed by the sender's account, not the IP)
         "room": (5, 3600),       # guest conference-room requests (POST /room): a human files a few an hour
         "room_view": (120, 60),  # guest availability look-ups (cheap GETs)
         "care": (60, 60),        # avatar water/feed taps — the per-user cooldown in

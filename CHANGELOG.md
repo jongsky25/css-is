@@ -1,5 +1,16 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v6.2 — birthday cards from teammates)
+
+`docs/BIRTHDAY_GREETINGS_PLAN.md` Phase 3.
+
+- **Module (`birthday_cards.py`, a second `APIRouter` like `calendar_routes.py`):** `/birthday/cards` (who you may send to), `/birthday/card/{id}` (form + send), `/me/cards` (cards you received) with `POST /me/cards/{id}/hide`, and `/admin/birthday-cards` with `POST .../hidden` (gated by the `/admin` prefix and checked again in the handler).
+- **Eligibility (`office_calendar.card_celebrants`):** a celebrant inside the greeting window (six days before, and the day) who shares their birthday with the sender (`birthdays.shared_with`); never yourself; "Don't share" gets none.
+- **Storage (`birthday_card`, `storage.card_*`):** unique per (celebrant, sender, birthday year); six designs; plain text, 280 characters, blank-line squeeze; cards for years before last are deleted as new ones are sent. Hidden flag for moderation.
+- **Held until the day (`birthdays.revealed_card_year`):** the celebrant reads this year's cards only from the morning of the birthday. The landing page links to them on the day ("May N card para sa iyo"); `/me` shows a link while there are any.
+- **Bell (`office_calendar.card_bell_row`):** "Send X a birthday card (Sat)" straight to the form, or "N birthday cards to send this week" to the list. Cheap guard query first; same switch as the other teammate-birthday reminders.
+- **Safety:** HTML-escaped on output, `ratelimit` bucket `card` (20/min, keyed by account), audit records "sent a birthday card" with no message, no date. `birthday_cards.py` added to `deploy_hf.RUNTIME_PY`. Tests: `tests/test_birthday_cards.py`.
+
 ## 2026-10-09 (v6.1 — birthday greeting on the landing page)
 
 `docs/BIRTHDAY_GREETINGS_PLAN.md` Phase 2.

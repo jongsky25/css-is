@@ -1,0 +1,24 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash %}
+{% block title %}Birthday cards (admin){% endblock %}
+{% block content %}
+{{ page_header("💌 Birthday cards", "Every card for this year's birthdays. Hide one that should not be shown; the person it was for stops seeing it. Cards are shown to the person only on their birthday.") }}
+{{ flash(msg) }}
+<p><a href="/admin/users#birthdays">← Users</a></p>
+{% if cards %}
+<table class="cal-table">
+  <thead><tr><th>For</th><th>From</th><th>Message</th><th></th></tr></thead>
+  <tbody>
+  {% for c in cards %}
+  <tr>
+    <td>{{ c.to_name }}</td><td>{{ c.from_name }}</td>
+    <td style="white-space:pre-wrap;overflow-wrap:anywhere">{{ c.emoji }} {{ c.message }}</td>
+    <td><form method="post" action="/admin/birthday-cards/{{ c.id }}/hidden">
+      <input type="hidden" name="hide" value="{{ 0 if c.hidden else 1 }}">
+      <button class="btn ghost" type="submit">{{ "Restore" if c.hidden else "Hide" }}</button></form></td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}<p class="lede">No cards yet.</p>{% endif %}
+{% endblock %}
