@@ -1,5 +1,6 @@
 """Office calendar month grid + filters (increment A5)."""
 from __future__ import annotations
+import re
 from datetime import date
 
 import pytest
@@ -217,3 +218,46 @@ def test_a_free_text_tag_is_escaped_where_it_is_echoed(viewer, conn):
 def test_filters_survive_month_navigation_links(viewer):
     html = viewer.get("/calendar?view=month&month=2026-10&kind=travel&tag=PK").text
     assert "month=2026-09" in html and "kind=travel" in html and "tag=PK" in html
+
+
+# ------------------------------------- the compact month for phones (CALENDAR_UX_PLAN Phase 2) ---
+
+def day_of(g, iso):
+    return next(d for w in g["weeks"] for d in w["days"] if d["iso"] == iso)
+
+
+def test_each_day_counts_what_touches_it_and_lists_up_to_four_distinct_unit_colours():
+    trip = item("Trip", "2026-10-08", "2026-10-10", tone="cyan")
+    a, b = item("A", "2026-10-09", tone="green"), item("B", "2026-10-09", tone="green")
+    g = oc.month_grid([trip, a, b], 2026, 10, TODAY)
+    assert (day_of(g, "2026-10-08")["n"], day_of(g, "2026-10-08")["tones"]) == (1, ["cyan"])
+    d9 = day_of(g, "2026-10-09")
+    assert d9["n"] == 3 and d9["tones"] == ["cyan", "green"]                  # one dot per unit, not per item
+    assert day_of(g, "2026-10-11")["n"] == 0 and day_of(g, "2026-10-11")["tones"] == []
+
+
+def test_a_day_with_more_than_four_units_shows_four_dots_and_the_full_count():
+    tones = ["green", "yellow", "magenta", "orange", "cyan", "blue"]
+    many = [item(f"E{n}", "2026-10-06", tone=t) for n, t in enumerate(tones)]
+    d = day_of(oc.month_grid(many, 2026, 10, TODAY, max_lanes=3), "2026-10-06")
+    assert len(d["tones"]) <= 4 and d["n"] == 6                                # 3 bars + 3 counted as "more"
+
+
+def test_items_hidden_by_the_lane_limit_still_count_on_their_day():
+    many = [item(f"E{n}", "2026-10-06") for n in range(5)]
+    assert day_of(oc.month_grid(many, 2026, 10, TODAY), "2026-10-06")["n"] == 5
+
+
+def test_the_page_has_both_the_full_month_and_the_compact_one_and_a_day_opens_its_agenda(viewer):
+    html = viewer.get("/calendar?view=month&month=2026-10").text
+    assert 'class="cal-month"' in html and 'class="cal-mgrid"' in html and "needs a wider screen" not in html
+    cell = html.split('class="cal-mday')[1].split("</a>")[0]
+    assert 'role="gridcell"' in cell and "view=agenda" not in cell
+    assert re.search(r'href="/calendar\?[^"]*day=2026-09-27', html.split('class="cal-mgrid"')[1])   # first cell, links to that day
+    assert 'aria-label="Sunday, September 27: 0 items"' in html
+
+
+def test_every_compact_day_names_itself_for_a_screen_reader(viewer):
+    html = viewer.get("/calendar?view=month&month=2026-10").text.split('class="cal-mgrid"')[1]
+    cells = html.count('class="cal-mday')
+    assert cells >= 28 and html.count('aria-label="') >= cells

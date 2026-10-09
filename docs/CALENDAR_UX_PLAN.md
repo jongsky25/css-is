@@ -133,7 +133,7 @@ Each increment: **files · done when · tests**. Tests run with `./run_tests.sh`
 - Collapsed empty days, one empty state, and an "Add something" action in it.
 - Bottom padding equal to the feedback button height on calendar pages, so nothing is covered.
 
-### Phase 2: fits every screen
+### Phase 2: fits every screen *(done, v4.7, with two deliberate cuts: a multi-column agenda instead of a mini-month pane, and no day-by-day Week list under 480px)*
 
 **P2.1 Layout by width** (`calendar.css`)
 

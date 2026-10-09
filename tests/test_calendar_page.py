@@ -168,3 +168,9 @@ def test_scope_choices_hide_pills_that_could_only_be_empty():
     full = {"section_path": "a/b", "division_path": "a"}
     assert [c["key"] for c in oc.scope_choices(full)] == [
         "blend", "mine", "section", "division", "bureau"]
+
+
+def test_the_agenda_days_sit_in_one_grid_container_so_wide_screens_can_use_columns(viewer):
+    html = viewer.get("/calendar").text
+    assert html.count('<div class="cal-agenda">') == 1
+    assert html.index('<div class="cal-agenda">') < html.index('class="cal-day') < html.index("cal-empty-hint")

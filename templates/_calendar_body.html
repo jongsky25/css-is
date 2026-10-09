@@ -101,6 +101,7 @@
 {% include "_calendar_month.html" %}
 {% else %}
 
+<div class="cal-agenda">
 {% for d in days %}
 <section class="cal-day {{ 'today' if d.is_today }} {{ 'weekend' if d.is_weekend }}" aria-labelledby="d-{{ d.iso }}">
   <header>
@@ -134,6 +135,7 @@
   {% endif %}
 </section>
 {% endfor %}
+</div>
 
 {% if not n_items and not days|selectattr("holidays")|list %}
 <p class="cal-empty-hint">📅 Nothing else on the calendar for these two weeks. Try another layout above, {% if filtered %}<a href="{{ clear_filters }}">clear the filters</a>, {% endif %}look <a href="{{ qs(day=next_day) }}">further ahead</a>, or <a href="/calendar/new?day={{ add_day }}">add something</a>.</p>

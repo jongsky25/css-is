@@ -808,11 +808,21 @@ def month_grid(items, year, month, today, max_lanes=3):
                 "date": d, "iso": iso, "num": d.day, "in_month": d.month == month,
                 "is_today": d == today, "is_weekend": d.weekday() >= 5,
                 "holidays": [i for i in items if i["layer"] == "holidays" and i["start"] == iso],
-                "more": 0,
+                "more": 0, "n": 0, "tones": [],
             })
         bars, lanes, more = _lay_out(items, w0, 7, max_lanes)
         for c, n in enumerate(more):
             days[c]["more"] = n
+        # What the compact (phone) month shows instead of bars: how many things touch each day, and
+        # up to four colour dots, one per distinct owning unit among the bars drawn there.
+        for b in bars:
+            for c in range(b["col"] - 1, b["col"] - 1 + b["span"]):
+                days[c]["n"] += 1
+                tone = b["item"].get("tone") or "grey"
+                if tone not in days[c]["tones"] and len(days[c]["tones"]) < 4:
+                    days[c]["tones"].append(tone)
+        for d in days:
+            d["n"] += d["more"]
         weeks.append({"days": days, "bars": bars,
                       "rows": min(lanes, max_lanes) + (1 if any(d["more"] for d in days) else 0)})
         w0 += timedelta(days=7)

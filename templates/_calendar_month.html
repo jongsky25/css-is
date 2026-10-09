@@ -2,7 +2,23 @@
    bar is placed by grid-column/grid-row so a multi-day trip is ONE bar across the
    week (cut with a flat end where it continues into the next). Hidden-by-lane
    items are counted as "+N more" and link to that day's agenda. #}
-<p class="cal-month-note">The month grid needs a wider screen. <a href="{{ qs(layout='', month='', day='') }}">Open the agenda instead</a>.</p>
+{# On a phone the full grid cannot hold titles, so a compact one takes its place: the day number,
+   up to four colour dots (one per owning unit) and a "+n". Tap a day to read it in the agenda. #}
+<div class="cal-mgrid" role="grid" aria-label="{{ grid.title }}, compact">
+  <div class="cal-mdow" role="row">{% for n in weekdays %}<div role="columnheader" title="{{ n }}">{{ n[:1] }}</div>{% endfor %}</div>
+  {% for w in grid.weeks %}
+  <div class="cal-mweek" role="row">
+    {% for d in w.days %}
+    <a class="cal-mday {{ 'out' if not d.in_month }} {{ 'today' if d.is_today }} {{ 'weekend' if d.is_weekend }} {{ 'holiday' if d.holidays }} {{ 'has' if d.n }}" role="gridcell"
+       href="{{ qs(layout='', month='', day=d.iso) }}" {% if d.is_today %}aria-current="date"{% endif %}
+       aria-label="{{ d.date.strftime('%A, %B') }} {{ d.num }}: {{ d.n }} {{ 'item' if d.n == 1 else 'items' }}{% if d.holidays %}, {{ d.holidays[0].title }}{% endif %}">
+      <span class="cal-mnum">{{ d.num }}</span>
+      <span class="cal-mdots" aria-hidden="true">{% for t in d.tones %}<i data-tone="{{ t }}"></i>{% endfor %}{% if d.n > d.tones|length %}<b>+{{ d.n - d.tones|length }}</b>{% endif %}{% if d.holidays %}<em>★</em>{% endif %}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
 <div class="cal-month" role="grid" aria-label="{{ grid.title }}">
   <div class="cal-dow" role="row">{% for n in weekdays %}<div role="columnheader">{{ n }}</div>{% endfor %}</div>
   {% for w in grid.weeks %}
