@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "5.2"
+APP_VERSION = "5.3"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "5.3",
+        "date": "October 9, 2026",
+        "summary": "Admins can now add a person's birthday from the Directory.",
+        "changes": [
+            "On Directory, open Edit for a staff member and use the new Birthday card to add, change or remove their birthday, choosing who may see it.",
+            "Birthdays are kept on the person's account, so staff without an account are asked to get one first.",
+        ],
+    },
     {
         "version": "5.2",
         "date": "October 9, 2026",

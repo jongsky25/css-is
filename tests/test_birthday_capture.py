@@ -181,3 +181,30 @@ def test_the_welcome_step_offers_it_too(app_mod, viewer, acct):
 def test_the_form_keeps_choices_after_an_error(app_mod, viewer, acct):
     r = me_post(viewer, birthday_present="1", birthday_month="4", birthday_day="31", birthday_share="division")
     assert 'checked value="division"' in r.text and 'value="4" selected' in r.text
+
+
+# ------------------------------------------------- directory (admin entry) ---
+
+def test_admin_sets_a_birthday_from_the_directory_edit_page(app_mod, admin, viewer):
+    c = st.connect(app_mod.DB); st.init_db(c)
+    rp = st.add_rp(c, "Dir Birthday Person", is_internal=True)
+    uid = st.create_admin_user(c, "dirbd@test.local", "x", "y", "viewer", rp_id=rp)
+    solo = st.add_rp(c, "No Account Person", is_internal=True)
+    try:
+        page = admin.get(f"/directory/person/{rp}/edit").text
+        assert "/birthday" in page and "Save birthday" in page
+        assert "doesn't have an Office Connect account" in admin.get(f"/directory/person/{solo}/edit").text
+        r = admin.post(f"/directory/person/{rp}/birthday", headers=FORM, follow_redirects=False,
+                       content=urlencode({"birthday_month": "3", "birthday_day": "14", "birthday_share": "bureau"}))
+        assert r.status_code == 303
+        assert st.get_birthday(c, uid)["label"] == "March 14" and st.get_birthday(c, uid)["share"] == "bureau"
+        bad = admin.post(f"/directory/person/{rp}/birthday", headers=FORM,
+                         content=urlencode({"birthday_month": "4", "birthday_day": "31", "birthday_share": "none"}))
+        assert "real date" in bad.text
+        assert viewer.post(f"/directory/person/{rp}/birthday", headers=FORM, follow_redirects=False,
+                           content=urlencode({"birthday_month": "1", "birthday_day": "1"})).status_code in (303, 403)
+        assert st.get_birthday(c, uid)["label"] == "March 14"
+        admin.post(f"/directory/person/{rp}/birthday", headers=FORM, content=urlencode({"birthday_month": "", "birthday_day": ""}))
+        assert st.get_birthday(c, uid) is None
+    finally:
+        c.close()
