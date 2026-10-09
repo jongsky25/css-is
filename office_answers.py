@@ -14,6 +14,8 @@ from __future__ import annotations
 from datetime import timedelta
 
 import birthdays as bd
+import calendar_people as cp
+import re
 import office_connect as oconn
 import rooms
 import storage as st
@@ -168,6 +170,78 @@ def _my_rooms(conn, user, today):
     return "Your conference room bookings: " + "; ".join(lines) + _more(None, len(mine), MAX_LINES) + "."
 
 
+# ── one colleague, by name ───────────────────────────────────────────────────
+#
+# "Where is Mimi today?" The model returns the slot key AND the name as the person typed it. The
+# name is an untrusted argument: it is cleaned, checked against the question itself, and resolved
+# against the directory by the server. What is rendered is the DIRECTORY's name and the basic
+# status from storage.colleague_status_for (so the admin's bureau/team switch applies) — never
+# anything the model wrote.
+
+_NAME_OK = re.compile(r"^[A-Za-zÀ-ÿñÑ][A-Za-zÀ-ÿñÑ .'\-]{1,39}$")
+
+
+def clean_person_name(raw, query):
+    """The name the model proposed, or None. Plain letters, spaces and . ' - only, 2-40 characters,
+    and every word of it must literally appear in what the person typed: the model cannot
+    introduce a name the question never contained."""
+    if not isinstance(raw, str):
+        return None
+    name = " ".join(raw.split())
+    if not _NAME_OK.match(name):
+        return None
+    q = " ".join((query or "").lower().split())
+    words = [w for w in cp._words(name)]
+    if not words or any(w not in cp._words(q) for w in words):
+        return None
+    return name
+
+
+def resolve_person(conn, name):
+    """([user_id, ...], exact) — the colleagues this name could be. `exact` is True only when
+    one person fits at a level calendar_people trusts enough to pre-select (an admin alias, the
+    bureau's name guide, or a single nickname / full name / first-name match)."""
+    key = cp.clean(name)
+    if not key:
+        return [], False
+    live = {p["user_id"] for p in st.colleague_directory(conn)}
+    m = cp.match(key[0], cp.load_directory(conn))
+    cands = [u for u in m["candidates"] if u in live]
+    exact = m["status"] in ("alias", "guided", "suggested") and len(cands) == 1
+    return cands, exact
+
+
+_STATE_PHRASE = {"onsite": "is in the office today", "wfh": "is working from home today",
+                 "field": "is in the field today", "leave": "is on leave today", "off": "is off today"}
+
+
+def person_status(conn, user, today, name):
+    """{"text", "links"} for one named colleague. A name that does not resolve to exactly one
+    colleague gets "I couldn't tell who you mean", with links to whoever it could be."""
+    cands, exact = resolve_person(conn, name) if name else ([], False)
+    if not exact:
+        people = {p["user_id"]: p for p in st.colleague_directory(conn)}
+        links = [{"label": people[u]["name"], "url": f"/people/{u}"} for u in cands[:5] if u in people]
+        return {"text": "I couldn't tell who you mean." + (" Did you mean one of these?" if links else
+                " Try their full name."), "links": links}
+    p = next(x for x in st.colleague_directory(conn) if x["user_id"] == cands[0])
+    state = st.colleague_status_for(conn, user, today).get(p["user_id"])
+    if state in _STATE_PHRASE:
+        text = f"{p['name']} {_STATE_PHRASE[state]}."
+    elif st.colleague_status_scope(conn) == "team":
+        text = f"Colleague status isn't shared with your account for {p['name']}."
+    else:
+        text = f"I don't have a status for {p['name']} today."
+    return {"text": text, "links": [{"label": "Open card →", "url": f"/people/{p['user_id']}"}]}
+
+
+def _person_status_text(conn, user, today, name=None):
+    """The slot's plain-text render (the FAQ-rule path, which has no name to give)."""
+    if not name:
+        return "Tell me whose status you want, for example “where is Mimi today?”."
+    return person_status(conn, user, today, name)["text"]
+
+
 SLOTS = {
     "todo_summary": {
         "label": "My to-do list", "kw": "to do todo to-do list tasks what do i need to do pending reminders",
@@ -196,6 +270,11 @@ SLOTS = {
     "my_room_bookings": {
         "label": "My conference room bookings", "kw": "my room bookings conference room reservations booked",
         "user_render": _my_rooms},
+    # Takes the colleague's name from the question (see clean_person_name); not offered as a seed rule.
+    "person_status": {
+        "label": "Where a colleague is today", "kw": "where is who is is in the office today in the field on leave wfh "
+                                                      "working from home nasaan si colleague name",
+        "user_render": _person_status_text, "takes_name": True},
 }
 
 # Questions people ask in their own words, mapped to a slot, so the FAQ layer answers them with no model
