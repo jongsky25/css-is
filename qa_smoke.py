@@ -44,7 +44,7 @@ def ok(label, fn):
 
 
 def main():
-    conn = st.connect("css_is.db")
+    conn = st.connect(os.environ.get("CSS_DB", "css_is.db"))
     st.init_db(conn)
     atoms = st.load_atoms(conn)
     staff = st.list_resource_persons(conn)
@@ -197,6 +197,37 @@ def main():
     for kind in ("bureau", "division", "section", "admin_section"):
         if not seen.get(kind):
             warns.append(f"no rated '{kind}' unit in the data — that path untested this run")
+
+    # ---- the office calendar: every layout, scope, filter and search, for every kind of account ----
+    def calendar_views():
+        import calendar_routes
+        import tzutil as tz
+        users = st.list_admin_users(conn)
+        by_role = {}
+        for u in users:
+            by_role.setdefault(u["role"], u)                     # one account per role is enough
+        today = tz.today_local()
+        queries = [{}, {"view": "month"}, {"view": "week"}, {"view": "timeline"},
+                   {"scope": "mine"}, {"scope": "bureau"}, {"view": "month", "scope": "bureau", "kind": "meeting"},
+                   {"q": "meeting"}, {"q": "zzz-no-such-thing"}, {"view": "week", "q": "a"},
+                   {"day": today.isoformat(), "status": "tentative"}]
+        env = app.templates.env
+        n = 0
+        for user in by_role.values():
+            u = {"id": user["id"], "username": user["username"], "role": user["role"]}
+            for q in queries:
+                page = calendar_routes.build_calendar_page(conn, u, today, q)
+                assert page is not None, f"{u['role']} {q}: no page"
+                assert isinstance(page["range_label"], str) and page["n_items"] >= 0, f"{u['role']} {q}"
+                # the template must render too: this is what a missing context key or a bad filter breaks
+                html = env.get_template("_calendar_body.html").render(**page)
+                assert 'id="cal-f"' in html and 'class="cal-bar"' in html, f"{u['role']} {q}: toolbar missing"
+                n += 1
+        if not n:
+            warns.append("no accounts in the data — the calendar views were not tried this run")
+        else:
+            print("Calendar views rendered:", n)
+    ok("office calendar views", calendar_views)
 
     conn.close()
     print(f"\nRan {checks} checks.")

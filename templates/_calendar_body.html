@@ -107,7 +107,7 @@
 {% set kind_icon = {"meeting": "👥", "training": "🎓", "travel": "🧳", "audit_mr": "📋", "banner": "📣", "deadline": "⏰", "activity": "★", "leave": "🌴", "birthday": "🎂"} %}
 <div class="cal-agenda">
 {% for d in days %}
-<section class="cal-day {{ 'today' if d.is_today }} {{ 'weekend' if d.is_weekend }}" aria-labelledby="d-{{ d.iso }}">
+<section class="cal-day {{ 'today' if d.is_today }} {{ 'weekend' if d.is_weekend }}" aria-labelledby="d-{{ d.iso }}"{% if d.is_today %} aria-current="date"{% endif %}>
   <header>
     <span class="cal-date" aria-hidden="true"><small>{{ d.date.strftime('%a') }}</small><b>{{ d.date.day }}</b></span>
     <h2 id="d-{{ d.iso }}">{{ d.label }}</h2>
@@ -153,7 +153,7 @@
 {% if not n_items and not days|selectattr("holidays")|list %}
 <div class="cal-empty">
   <span class="cal-empty-ic" aria-hidden="true">📅</span>
-  <h3>{% if searching %}No matches for “{{ f.q }}” in {{ year }}{% else %}Nothing else planned for these two weeks{% endif %}</h3>
+  <h2>{% if searching %}No matches for “{{ f.q }}” in {{ year }}{% else %}Nothing else planned for these two weeks{% endif %}</h2>
   <p>{% if searching %}Try fewer or different words, or another year.{% else %}{% if filtered %}A filter may be hiding things. {% endif %}Add something, or look further ahead.{% endif %}</p>
   <span class="cal-empty-act">
     <a class="cal-btn primary" href="/calendar/new?day={{ add_day }}">+ Add something</a>

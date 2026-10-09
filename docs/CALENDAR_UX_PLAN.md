@@ -167,7 +167,7 @@ Each increment: **files · done when · tests**. Tests run with `./run_tests.sh`
 - **Keyboard:** ← / → move, `T` today, `A` add, `/` search. **Swipe** left/right on touch.
 - **Search** by title across the year (380 items need it). It reuses the filter form.
 
-### Phase 5: hardening
+### Phase 5: hardening *(done, v5.0)*
 
 - Accessibility: focus order through the toolbar and sheet, `aria-current` on day/view, reduced motion, and screen-reader day headings.
 - Playwright screenshot set (six widths × four views × light/dark), kept in the scratchpad and not committed.

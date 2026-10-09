@@ -1,6 +1,7 @@
 # Office Calendar (with Birthdays) — integration plan v2
 
-**Status:** planned, not started.
+**Status:** built (increments A1 to H3, v3.5x to v4.0).
+**Later work:** the CY 2026 import, the calendar-only tab, the compact toolbar, every-screen-size layouts, the new look, search / item sheet / remembered view / shortcuts, and the accessibility pass are in `docs/CALENDAR_UX_PLAN.md` (v4.1 to v5.0).
 **Source material:** `CY-2026-BLHSD-CALENDAR-OF-ACTIVITIES.docx` — 12 monthly Word grids; the
 cell colour marks the owning unit (Bureau, Sections 1–5).
 **Owner decisions so far:**

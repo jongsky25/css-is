@@ -9,12 +9,13 @@
   {% for w in grid.weeks %}
   <div class="cal-mweek" role="row">
     {% for d in w.days %}
-    <a class="cal-mday {{ 'out' if not d.in_month }} {{ 'today' if d.is_today }} {{ 'weekend' if d.is_weekend }} {{ 'holiday' if d.holidays }} {{ 'has' if d.n }}" role="gridcell"
-       href="{{ qs(layout='', month='', day=d.iso) }}" {% if d.is_today %}aria-current="date"{% endif %}
-       aria-label="{{ d.date.strftime('%A, %B') }} {{ d.num }}: {{ d.n }} {{ 'item' if d.n == 1 else 'items' }}{% if d.holidays %}, {{ d.holidays[0].title }}{% endif %}">
-      <span class="cal-mnum">{{ d.num }}</span>
-      <span class="cal-mdots" aria-hidden="true">{% for t in d.tones %}<i data-tone="{{ t }}"></i>{% endfor %}{% if d.n > d.tones|length %}<b>+{{ d.n - d.tones|length }}</b>{% endif %}{% if d.holidays %}<em>★</em>{% endif %}</span>
-    </a>
+    <div class="cal-mday {{ 'out' if not d.in_month }} {{ 'today' if d.is_today }} {{ 'weekend' if d.is_weekend }} {{ 'holiday' if d.holidays }} {{ 'has' if d.n }}" role="gridcell">
+      <a class="cal-mlink" href="{{ qs(layout='', month='', day=d.iso) }}" {% if d.is_today %}aria-current="date"{% endif %}
+         aria-label="{{ d.date.strftime('%A, %B') }} {{ d.num }}: {{ d.n }} {{ 'item' if d.n == 1 else 'items' }}{% if d.holidays %}, {{ d.holidays[0].title }}{% endif %}">
+        <span class="cal-mnum">{{ d.num }}</span>
+        <span class="cal-mdots" aria-hidden="true">{% for t in d.tones %}<i data-tone="{{ t }}"></i>{% endfor %}{% if d.n > d.tones|length %}<b>+{{ d.n - d.tones|length }}</b>{% endif %}{% if d.holidays %}<em>★</em>{% endif %}</span>
+      </a>
+    </div>
     {% endfor %}
   </div>
   {% endfor %}
@@ -27,8 +28,13 @@
     <div class="cal-cell {{ 'out' if not d.in_month }} {{ 'today' if d.is_today }} {{ 'weekend' if d.is_weekend }} {{ 'holiday' if d.holidays }}"
          role="gridcell" style="grid-column:{{ loop.index }}; grid-row:1 / span {{ w.rows + 1 }}"
          {% if d.is_today %}aria-current="date"{% endif %}></div>
+    {% endfor %}
+    {# Numbers, bars and "+n more" are links laid over the cells by grid position. A grid row may hold only cells,
+       so they share ONE cell-role wrapper that has no box of its own (display:contents) and does not move them. #}
+    <div class="cal-layer" role="gridcell">
+    {% for d in w.days %}
     <a class="cal-num" href="/calendar/new?day={{ d.iso }}" style="grid-column:{{ loop.index }}; grid-row:1"
-       data-quick data-date="{{ d.iso }}" title="Add something on {{ d.iso }}"><span {% if d.is_today %}class="today"{% endif %}>{{ d.num }}</span>
+       data-quick data-date="{{ d.iso }}"{% if not d.in_month %} data-out{% endif %} title="Add something on {{ d.iso }}"><span {% if d.is_today %}class="today"{% endif %}>{{ d.num }}</span>
       {% for h in d.holidays %}<small class="cal-hol">★ {{ h.title }}</small>{% endfor %}</a>
     {% endfor %}
     {% for b in w.bars %}
@@ -44,6 +50,7 @@
     <a class="cal-more" style="grid-column:{{ w.days.index(d) + 1 }}; grid-row:{{ w.rows + 1 }}"
        href="{{ qs(layout='', month='', day=d.iso) }}">+{{ d.more }} more</a>
     {% endfor %}
+    </div>
   </div>
   {% endfor %}
 </div>
