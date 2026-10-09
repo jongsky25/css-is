@@ -6114,6 +6114,18 @@ def _org_rank(designation, position=None):
     return 0
 
 
+def _escalation_rank(designation, position=None):
+    """The rank whose escalation hop a person's OWN requests follow. Same as
+    _org_rank except the Administrative Section's head ("Admin Head"): they
+    keep the section-chief seat for their staff, but their own wellness/AWA
+    requests are decided by the Director, exactly like a division chief's."""
+    rank = _org_rank(designation, position)
+    d = (designation or "").strip().lower()
+    if rank == 1 and ("admin head" in d or "administrative head" in d):
+        return 2
+    return rank
+
+
 def _org_parent_path(path):
     """The org path one level up ('A/B/C' -> 'A/B'), or None at the top."""
     return path.rsplit("/", 1)[0] if path and "/" in path else None
@@ -6401,6 +6413,7 @@ def approver_name_for(conn, user_id):
                if path else None)
         return oic or _org_seat_name(conn, orank, org_path=path, exclude_uid=user_id)
 
+    rank = _escalation_rank(rp.get("designation"), rp.get("position"))
     path = rp.get("org_path")
     if rank == 0:                                   # staff -> section chief (same unit)
         oic = _account_display_name(conn, _section_oic_account_id(conn, path, exclude_uid=user_id))
@@ -6471,6 +6484,7 @@ def get_approvers_for(conn, user_id):
         approvers = _org_accounts_at_rank(conn, orank, org_path=path, exclude_uid=user_id)
         return _with_section_oic(conn, approvers, path, exclude_uid=user_id) if path else approvers
 
+    rank = _escalation_rank(rp.get("designation"), rp.get("position"))
     path = rp.get("org_path")
     if rank == 0:                                   # staff -> section chief (same unit)
         approvers = _org_accounts_at_rank(conn, 1, org_path=path, exclude_uid=user_id)
@@ -6587,6 +6601,7 @@ def approver_title_for(conn, user_id):
             return "the Director"
         return "an administrator"
 
+    rank = _escalation_rank(rp.get("designation"), rp.get("position"))
     path = rp.get("org_path")
     if rank == 0 and _org_role_filled(conn, 1, org_path=path):
         return "your section chief"

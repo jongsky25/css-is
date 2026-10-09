@@ -1,5 +1,12 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.52 — Admin Head's own requests escalate to the Director)
+
+- **`storage.py`** — new `_escalation_rank`: an "Admin Head"/"Administrative Head" keeps rank 1
+  (the section-chief seat for their own staff) but their OWN wellness/AWA requests follow the
+  division-chief hop to the Director. Used by `get_approvers_for`, `approver_name_for` and
+  `approver_title_for`. Test: `test_admin_head_escalates_to_director_but_still_chiefs_their_staff`.
+
 ## 2026-10-08 (v3.51 — photo crop editor shared with My profile and Welcome)
 
 - **Photo crop** — the drag/zoom circular crop editor moved out of `staff_form.html` into
