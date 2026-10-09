@@ -1,5 +1,18 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.70 — office calendar F1: birthdays, captured with consent)
+
+- **Capture on `/me` and the `/welcome` step**, optional: a month and a day. **No year is accepted or stored**
+  (no year parameter exists). Feb 29 is fine; Apr 31 or Feb 30 is refused, with the person's other choices kept.
+- **Sharing is opt-in**: Don't share (default) / My section / My division / Whole bureau. Choosing a scope records
+  `birthday_consent_at` and a snapshot of the exact notice shown; keeping the same scope keeps the original time, a
+  wider one is a new consent, and "Don't share" erases the record.
+- **One-click withdrawal** (`POST /me/birthday/remove`, "Remove my birthday") clears the date, the sharing choice and
+  the consent record. A form that doesn't carry the birthday fields never wipes a saved one.
+- **Personal data stays with the person.** Stored on the account, never on the staff directory row, never on the admin
+  staff form or user list; the audit log records that it was set/removed and the sharing level, never the date.
+- Nothing shows it to anyone yet — the calendar layer, home line and greeting are F2; reminders are F3.
+
 ## 2026-10-09 (v3.69 — office calendar: mismatches and "Add this trip")
 
 - **`office_calendar.mismatches(conn, user_ids, start, end)`** — one function for the soft heads-ups, derived at

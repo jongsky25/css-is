@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.69"
+APP_VERSION = "3.70"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.70",
+        "date": "October 9, 2026",
+        "summary": "You can now add your birthday to your profile, and choose who sees it.",
+        "changes": [
+            "On My profile and in the welcome step, pick your birthday month and day. We keep no year.",
+            "It is private unless you choose to share it with your section, division or the whole bureau.",
+            "You can remove it in one click at any time. Nobody else, including admins, can set or edit it for you.",
+        ],
+    },
     {
         "version": "3.69",
         "date": "October 9, 2026",

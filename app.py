@@ -5040,6 +5040,39 @@ def _initials(name):
     return (parts[0][0] + (parts[-1][0] if len(parts) > 1 else "")).upper()
 
 
+def _birthday_from_form(p):
+    """What the profile/welcome form says about the birthday: None to leave it as is (the
+    form didn't carry the fields), "clear" for blank month+day, or (month, day, share).
+    ValueError carries a readable sentence."""
+    if p.get("birthday_present") != "1":
+        return None
+    m, d = (p.get("birthday_month") or "").strip(), (p.get("birthday_day") or "").strip()
+    if not m and not d:
+        return "clear"
+    if not (m and d):
+        raise ValueError("Pick both a month and a day for your birthday, or leave both blank.")
+    mm, dd = st.birthday_check(m, d)
+    share = (p.get("birthday_share") or "none").strip()
+    if share not in st.BIRTHDAY_SHARES:
+        raise ValueError("Pick who can see your birthday from the list.")
+    return mm, dd, share
+
+
+def _save_birthday(request, conn, uid, choice):
+    if choice is None:
+        return
+    if choice == "clear":
+        if st.get_birthday(conn, uid):
+            st.clear_birthday(conn, uid)
+            _audit(request, conn, "birthday_clear", target_type="user", target_id=uid,
+                   summary="removed their birthday")
+        return
+    mm, dd, share = choice
+    st.set_birthday(conn, uid, mm, dd, share)
+    _audit(request, conn, "birthday_set", target_type="user", target_id=uid,
+           summary=f"set their birthday (sharing: {st.BIRTHDAY_SHARES[share]})")   # never the date
+
+
 def _render_welcome(request, next="/", err="", form=None):
     """Render the onboarding page. Shared by the GET route and the POST's
     validation-error path (mirrors _wellness_apply_page)."""
@@ -5056,6 +5089,7 @@ def _render_welcome(request, next="/", err="", form=None):
         "initials": _initials(profile.get("person_name") if profile else ""),
         "catalog": st.AVATAR_CATALOG, "name_maxlen": st.AVATAR_NAME_MAXLEN,
         "next": _safe_next(next), "err": err, "form": form or {},
+        **_birthday_ctx(profile, form),
     })
 
 
@@ -5078,10 +5112,15 @@ async def welcome_submit(request: Request):
         return _render_welcome(request, next=nxt, err="Please pick a companion.", form=p)
     if not pet_name:
         return _render_welcome(request, next=nxt, err="Give your companion a name.", form=p)
+    try:
+        bday = _birthday_from_form(p)
+    except ValueError as e:
+        return _render_welcome(request, next=nxt, err=str(e), form=p)
     photo = _decode_photo(p.get("photo_data", ""))
     conn = get_conn()
     try:
         profile = st.get_user_profile(conn, request.state.user["id"])
+        _save_birthday(request, conn, request.state.user["id"], bday)
         if photo and profile and profile.get("rp_id"):
             st.set_rp_photo(conn, profile["rp_id"], photo[0], photo[1])
             _audit(request, conn, "profile_update", target_type="person",
@@ -5096,7 +5135,20 @@ async def welcome_submit(request: Request):
     return RedirectResponse(nxt, status_code=303)
 
 
-def _render_me(request, msg="", err=""):
+def _birthday_ctx(profile, form=None):
+    """Template context for the shared birthday fields: what is on file, or what was just
+    posted (so a validation error keeps the person's choices)."""
+    saved = (profile or {}).get("birthday") or {}
+    f = form or {}
+    return {"bd": {"month": f.get("birthday_month", saved.get("month", "")),
+                   "day": f.get("birthday_day", saved.get("day", "")),
+                   "share": f.get("birthday_share", saved.get("share", "none")),
+                   "saved": bool(saved), "consent_at": saved.get("consent_at")},
+            "bd_months": st._MONTH_NAMES, "bd_shares": st.BIRTHDAY_SHARES,
+            "bd_notice": st.BIRTHDAY_NOTICE}
+
+
+def _render_me(request, msg="", err="", form=None):
     conn = get_conn()
     try:
         profile = st.get_user_profile(conn, request.state.user["id"])
@@ -5117,7 +5169,7 @@ def _render_me(request, msg="", err=""):
         "wstats": wstats,
         "ladder": st.avatar_growth_ladder(kind, wstats),
         "growth_how": st.avatar_growth_actions(kind),
-        "msg": msg, "err": err,
+        "msg": msg, "err": err, **_birthday_ctx(profile, form),
     })
 
 
@@ -5170,6 +5222,10 @@ async def me_submit(request: Request):
         return _render_me(request, err="Please pick a companion.")
     if not pet_name:
         return _render_me(request, err="Give your companion a name.")
+    try:
+        bday = _birthday_from_form(p)
+    except ValueError as e:
+        return _render_me(request, err=str(e), form=p)
     photo = _decode_photo(p.get("photo_data", ""))
     # The signature pad only fills signature_data when someone actually drew
     # something, so saving the profile never wipes a signature by accident.
@@ -5216,6 +5272,7 @@ async def me_submit(request: Request):
                     st.clear_rp_signature(conn, profile["rp_id"])
                 _audit(request, conn, "profile_update", target_type="user",
                        target_id=uid, summary="removed their signature")
+        _save_birthday(request, conn, uid, bday)
         st.set_user_designation(conn, uid, designation)
         st.set_user_nickname(conn, uid, nickname)
         # Keep the staff directory in sync: a linked account's designation is
@@ -5236,6 +5293,18 @@ async def me_submit(request: Request):
     # Close the profile after saving: land back on the home chooser with a
     # confirmation, rather than re-opening the /me editor.
     return RedirectResponse("/?msg=" + quote("Profile saved."), status_code=303)
+
+
+@app.post("/me/birthday/remove")
+def me_birthday_remove(request: Request):
+    """Withdraw in one click: the date, the sharing choice and the consent record all go."""
+    uid = request.state.user["id"]
+    conn = get_conn()
+    try:
+        _save_birthday(request, conn, uid, "clear")
+    finally:
+        conn.close()
+    return RedirectResponse("/me?msg=" + quote("Your birthday was removed."), status_code=303)
 
 
 @app.post("/avatar/care")

@@ -773,6 +773,13 @@ def _add_missing_columns(conn):
             conn.execute("ALTER TABLE admin_user ADD COLUMN photo_mime TEXT")
         if "designation" not in au_cols:
             conn.execute("ALTER TABLE admin_user ADD COLUMN designation TEXT")
+        # Optional birthday the PERSON enters (office calendar F1): month and day
+        # only, never a year; sharing is opt-in and consent is recorded.
+        for col, ddl in (("birthday_month", "INTEGER"), ("birthday_day", "INTEGER"),
+                         ("birthday_share", "TEXT"), ("birthday_consent_at", "TEXT"),
+                         ("birthday_consent_notice", "TEXT")):
+            if col not in au_cols:
+                conn.execute(f"ALTER TABLE admin_user ADD COLUMN {col} {ddl}")
         # What the home page calls the person ("Hi, <nickname>"); optional.
         if "nickname" not in au_cols:
             conn.execute("ALTER TABLE admin_user ADD COLUMN nickname TEXT")
@@ -4066,6 +4073,7 @@ def get_user_profile(conn, user_id):
         "designation": ((rp or {}).get("designation") if rp
                         else acct.get("designation")) or "",
         "nickname": acct.get("nickname") or "",
+        "birthday": get_birthday(conn, user_id),
         # position rides along too (unlinked accounts have none) so callers
         # can apply is_bureau_director() — the Director's title lives here,
         # not in designation (see is_bureau_director).
@@ -4321,6 +4329,68 @@ def set_user_nickname(conn, user_id, nickname):
     """Set (or clear) the name the home page greets this account by."""
     val = " ".join((nickname or "").split())[:40] or None
     conn.execute("UPDATE admin_user SET nickname=? WHERE id=?", (val, user_id))
+    conn.commit()
+
+
+# ---- birthdays (office calendar F1; docs/OFFICE_CALENDAR_PLAN.md §6) ------------
+#
+# Month and day only — a year is never accepted, so it can never be stored. The person
+# enters it themselves (nobody else can set or see it from the staff form). Sharing is
+# opt-in; turning it on records WHEN and the exact notice they were shown.
+
+BIRTHDAY_SHARES = {"none": "Don't share", "section": "My section",
+                   "division": "My division", "bureau": "Whole bureau"}
+BIRTHDAY_NOTICE = ("Optional. Only the month and day are kept, never your year. We use it to greet "
+                   "you and remind your teammates. Choose who sees it; you can remove it any time.")
+
+
+def birthday_check(month, day):
+    """(month, day) as ints, or ValueError with a sentence a person can read. Feb 29 is fine
+    (checked against a leap year); Apr 31 is not."""
+    try:
+        m, d = int(str(month).strip()), int(str(day).strip())
+        date(2000, m, d)
+    except (TypeError, ValueError):
+        raise ValueError("That isn't a real date. Pick a month and a day that exist.") from None
+    return m, d
+
+
+def get_birthday(conn, user_id):
+    """{month, day, share, consent_at, label} for one account, or None when none is set."""
+    r = conn.execute("SELECT birthday_month, birthday_day, birthday_share, birthday_consent_at "
+                     "FROM admin_user WHERE id=?", (user_id,)).fetchone()
+    if not r or not r[0] or not r[1]:
+        return None
+    return {"month": r[0], "day": r[1], "share": r[2] if r[2] in BIRTHDAY_SHARES else "none",
+            "consent_at": r[3], "label": f"{_MONTH_NAMES[r[0] - 1]} {r[1]}"}
+
+
+def set_birthday(conn, user_id, month, day, share="none"):
+    """Save the account's own birthday. Choosing a sharing scope (from "none") records the
+    consent time and the notice shown; going back to "none" erases that record. Raises
+    ValueError for an impossible date or an unknown sharing choice."""
+    m, d = birthday_check(month, day)
+    if share not in BIRTHDAY_SHARES:
+        raise ValueError("Pick who can see your birthday from the list.")
+    prior = get_birthday(conn, user_id)
+    if share == "none":
+        consent = (None, None)
+    elif prior and prior["share"] == share and prior["consent_at"]:
+        consent = None                                    # unchanged choice: keep the record
+    else:
+        consent = (tz.now_iso(), BIRTHDAY_NOTICE)
+    conn.execute("UPDATE admin_user SET birthday_month=?, birthday_day=?, birthday_share=? WHERE id=?",
+                 (m, d, share, user_id))
+    if consent is not None:
+        conn.execute("UPDATE admin_user SET birthday_consent_at=?, birthday_consent_notice=? WHERE id=?",
+                     (*consent, user_id))
+    conn.commit()
+
+
+def clear_birthday(conn, user_id):
+    """Withdraw: the date, the sharing choice and the consent record all go."""
+    conn.execute("UPDATE admin_user SET birthday_month=NULL, birthday_day=NULL, birthday_share=NULL, "
+                 "birthday_consent_at=NULL, birthday_consent_notice=NULL WHERE id=?", (user_id,))
     conn.commit()
 
 

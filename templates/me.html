@@ -92,6 +92,7 @@
                value="{{ profile.nickname }}" placeholder="e.g. Ray">
         <p class="hint">What the home page calls you: “Hi, <em>nickname</em>”. Leave blank to use your first name.</p>
       </div>
+      {% include "_birthday_field.html" %}
       <div class="field">
         <label for="designation">Designation</label>
         <input type="text" id="designation" name="designation" maxlength="120"
