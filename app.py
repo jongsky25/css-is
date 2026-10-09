@@ -6057,7 +6057,7 @@ async def api_ai_feedback(request: Request):
 
 
 @app.get("/create", response_class=HTMLResponse)
-def create_screen(request: Request, from_entry: str = ""):
+def create_screen(request: Request, from_entry: str = "", from_room: str = ""):
     conn = get_conn()
     try:
         _, blhsd_name, _ = st.get_or_create_blhsd(conn)
@@ -6065,15 +6065,41 @@ def create_screen(request: Request, from_entry: str = ""):
         sections = st.list_org_units(conn, level="section")
         # "Collect feedback (CSS)" on a calendar item: start from its details (office calendar D2)
         prefill = calendar_routes.prefill_from_entry(conn, request.state.user, from_entry)
+        # "Create a CSS activity" on a conference room reservation: start from its details (rooms R8)
+        room_prefill = rooms.prefill_activity(conn, from_room, request.state.user) if from_room else None
+        room_slots = rooms.list_slots(conn)
     finally:
         conn.close()
     dmin, dmax = _event_date_bounds()
     ctx = {"blhsd_name": blhsd_name,
-           "resource_persons": rps, "sections": sections,
+           "resource_persons": rps, "sections": sections, "room_slots": room_slots,
            "date_min": dmin, "date_max": dmax}
     if prefill:
         ctx["form"] = prefill
+    elif room_prefill:
+        ctx["form"] = room_prefill
     return templates.TemplateResponse(request, "form_create.html", ctx)
+
+
+def _rooms_after_create(conn, user, ev, *, from_room, reserve, slot_from, slot_to, meals, modality,
+                        activity_name, event_date):
+    """Summary rows for the result page after the activity exists: link it to the reservation it was made
+    from, or file the room request that was ticked on the form (first day only), tied to the activity."""
+    try:
+        if from_room.isdigit():
+            r = rooms.link_event(conn, int(from_room), ev["id"], user)
+            return [{"k": "Conference room", "v": f"Linked to your reservation {r['ref_code']}"}]
+        if reserve:
+            r = rooms.request(conn, title=activity_name, day=event_date, slot_ids=rooms.slot_range(conn, slot_from, slot_to),
+                              requester_user_id=user["id"], purpose="Reserved with the CSS activity.", modality=modality,
+                              meals_requested=meals, actor=user["username"], today=_today_local(), event_id=ev["id"])
+            return [{"k": "Conference room",
+                     "v": f"Requested ({r['ref_code']}). The Administrative Section will decide; follow it under Conference room → My reservations."}]
+    except rooms.RoomError as e:
+        return [{"k": "Conference room", "v": f"Not requested: {e} The activity itself was created. You can ask from the Conference room page."}]
+    except Exception:                                   # noqa: BLE001 — the activity is already saved
+        return [{"k": "Conference room", "v": "Not requested because of a problem. The activity itself was created; you can ask from the Conference room page."}]
+    return []
 
 
 @app.post("/create", response_class=HTMLResponse)
@@ -6089,6 +6115,10 @@ async def create_survey(request: Request):
         return [v for k, v in pairs if k == key]
 
     from_entry = first("from_entry").strip()               # the calendar item this is made from, if any
+    from_room = first("from_room").strip()                 # the room reservation this is made from, if any
+    reserve_room = bool(first("reserve_room"))             # "also reserve the conference room" ticked
+    room_from, room_to = first("room_from").strip(), first("room_to").strip()
+    room_meals = bool(first("room_meals"))
     event_type = first("event_type", "bureau")             # 'bureau' | 'outside'
     section_id = first("section_id").strip()               # organizing section (bureau events)
     activity_name = first("activity_name").strip()
@@ -6155,6 +6185,17 @@ async def create_survey(request: Request):
     if open_at and close_at and close_at <= open_at:
         errors.append("The entry window must close after it opens.")
 
+    # A room choice that can't work is caught NOW, so the activity isn't saved with a request that fails.
+    if reserve_room and not from_room and event_date and _valid_date(event_date):
+        rc = get_conn()
+        try:
+            try:
+                rooms.precheck(rc, event_date, rooms.slot_range(rc, room_from, room_to), _today_local())
+            except rooms.RoomError as e:
+                errors.append(f"Conference room: {e} Untick the room line to save the activity without it.")
+        finally:
+            rc.close()
+
     def _rerender_create_form(extra_ctx, status_code=400):
         # Echo everything the user typed back into the form so a validation error
         # never wipes their entries. Keep raw strings (not the None-coerced values)
@@ -6184,9 +6225,16 @@ async def create_survey(request: Request):
             "close_at": first("close_at").strip(),
             "speakers": list(zip(rp_ids, topics)),
             "from_entry": from_entry, "from_entry_title": first("from_entry_title").strip(),
+            "from_room": from_room, "from_room_ref": first("from_room_ref").strip(),
+            "reserve_room": reserve_room, "room_from": room_from, "room_to": room_to, "room_meals": room_meals,
         }
         dmin, dmax = _event_date_bounds()
-        ctx = {"blhsd_name": blhsd_name, "resource_persons": rps, "sections": sections,
+        rc2 = get_conn()
+        try:
+            room_slots = rooms.list_slots(rc2)
+        finally:
+            rc2.close()
+        ctx = {"blhsd_name": blhsd_name, "resource_persons": rps, "sections": sections, "room_slots": room_slots,
                "form": form, "date_min": dmin, "date_max": dmax}
         ctx.update(extra_ctx)
         return templates.TemplateResponse(request, "form_create.html", ctx,
@@ -6285,6 +6333,11 @@ async def create_survey(request: Request):
                                  event_kind="outside", form_instance_ids=created_ids,
                                  created_by=request.state.user["username"])
             linked_item = calendar_routes.link_after_create(conn, request.state.user, from_entry, ev["id"])
+        # The conference room, if the activity came from a reservation or ticked "also reserve" (rooms R8).
+        # Never lets a room problem undo the activity: it just reports what happened.
+        room_rows = _rooms_after_create(conn, request.state.user, ev, from_room=from_room, reserve=reserve_room,
+                                        slot_from=room_from, slot_to=room_to, meals=room_meals,
+                                        modality=modality, activity_name=activity_name, event_date=event_date)
     finally:
         conn.close()
 
@@ -6307,6 +6360,7 @@ async def create_survey(request: Request):
     ]
     if linked_item:
         summary.append({"k": "Calendar", "v": f"Linked to the calendar item “{linked_item}”"})
+    summary.extend(room_rows)
     if open_at or close_at:
         summary.append({"k": "Entry window",
                         "v": f"{_humandt(open_at) or 'now'} → {_humandt(close_at) or 'no deadline'}"})
@@ -8518,6 +8572,19 @@ def _outside_manage_ctx(request, conn, ev):
     }
 
 
+def _room_link_ctx(conn, request, ev):
+    """What the activity's page should say about its conference room (rooms R8), or None. A failure here
+    must never stop the page loading."""
+    try:
+        s = rooms.activity_room_status(conn, ev, request.state.user, _today_local())
+        s["next"] = f"/activities/{ev['event_token']}/manage"
+        s["flash_ok"] = (request.query_params.get("roomok") or "")[:80]
+        s["flash_err"] = (request.query_params.get("roomerr") or "")[:240]
+        return s
+    except Exception:                                    # noqa: BLE001
+        return None
+
+
 @app.get("/activities/{event_token}/manage", response_class=HTMLResponse)
 def activity_manage(request: Request, event_token: str, err: str = "", edit: int = 0,
                     slugok: int = 0, slugerr: str = "", dateok: int = 0,
@@ -8536,10 +8603,12 @@ def activity_manage(request: Request, event_token: str, err: str = "", edit: int
         # Outside activities get a focused, registration-free manage page.
         if ev.get("event_kind") == "outside":
             ctx = _outside_manage_ctx(request, conn, ev)
+            ctx["room_link"] = _room_link_ctx(conn, request, ev)
             ctx["err"] = err
             ctx["date_ok"] = bool(dateok)
             return templates.TemplateResponse(request, "outside_manage.html", ctx)
         ctx = _manage_ctx(request, conn, ev)
+        ctx["room_link"] = _room_link_ctx(conn, request, ev)
         ctx["err"] = err
         ctx["date_ok"] = bool(dateok)
         ctx["edit_id"] = edit or None

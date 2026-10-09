@@ -171,3 +171,17 @@ button.rm-cell:focus-visible { outline:3px solid var(--accent); outline-offset:1
   .rm-poster h1 { font-size:3.4rem; } .rm-poster-qr { width:11cm; } .rm-poster-url { font-size:1.8rem; } .rm-poster-steps { font-size:1.3rem; }
   @page { size:A4; margin:12mm; }
 }
+
+/* ---- the activity form's room line, and the banner on an activity's page ---- */
+.room-chip { border:1px solid var(--line); border-radius:var(--r2); background:var(--surface-2); padding:.55rem .8rem; margin:.8rem 0 0; }
+.room-chip > summary { cursor:pointer; font-weight:700; }
+.room-chip .rc-hours { grid-template-columns:repeat(auto-fill, minmax(7.5rem, 1fr)); margin:.6rem 0; }
+.room-chip .rc-hours li { padding:.15rem .4rem; font-size:.8rem; }
+.room-chip-tick { display:flex !important; align-items:center; gap:.4rem; font-weight:600; margin:.5rem 0; }
+.room-chip .rm-times label { display:block; font-weight:600; margin:.3rem 0 .15rem; }
+.room-linked { margin:.8rem 0 0; }
+.room-banner { border:1px solid var(--blue-ln); background:var(--blue-bg); border-radius:var(--r2); padding:.7rem .9rem; margin:.8rem 0; }
+.room-banner.warn { border-color:var(--amber-ln); background:var(--amber-bg); }
+.room-banner.bad { border-color:var(--red-ln); background:var(--red-bg); }
+.room-banner p { margin:.1rem 0 .4rem; }
+.room-banner form { display:inline-block; margin:.15rem .3rem .15rem 0; }

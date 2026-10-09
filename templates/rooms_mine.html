@@ -1,7 +1,7 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header, flash, empty_state %}
 {% block title %}My room reservations{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/rooms.css?v=20261009c">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/rooms.css?v=20261009d">{% endblock %}
 {% block content %}
 {{ page_header("Conference room", "Your requests and bookings.") }}
 {% include "_rooms_tabs.html" %}
@@ -16,7 +16,9 @@
   <tr>
     <td data-label="Ref"><code>{{ r.ref_code }}</code></td>
     <td data-label="When"><strong>{{ r.day_date.strftime('%a') }} {{ r.day_date.day }} {{ r.day_date.strftime('%b %Y') }}</strong><br>{{ r.hours }}</td>
-    <td data-label="Meeting">{{ r.title }}{% if r.meals_requested %} <span class="badge grey">Meals</span>{% endif %}</td>
+    <td data-label="Meeting">{{ r.title }}{% if r.meals_requested %} <span class="badge grey">Meals</span>{% endif %}
+      {% if r.activity %}<div class="rm-hint">CSS activity: <a href="/activities/{{ r.activity.token }}/manage">{{ r.activity.title }}</a></div>
+      {% elif r.status in ('requested', 'approved') and r.day_date >= today %}<div class="rm-hint"><a href="/create?from_room={{ r.id }}">Create a CSS activity for this</a></div>{% endif %}</td>
     <td data-label="Status"><span class="badge {{ r.badge[0] }}">{{ r.badge[1] }}</span></td>
     <td data-label="History">{{ r.timeline }}{% if r.status in ('declined', 'cancelled') and r.decide_note %}<br><em>Reason: {{ r.decide_note }}</em>{% endif %}
       {% if r.offers %}

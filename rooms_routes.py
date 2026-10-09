@@ -24,6 +24,19 @@ STATUS_BADGE = {   # status -> (badge colour, icon + word)
     "cancelled": ("red", "✕ Cancelled"), "expired": ("grey", "– Expired"),
 }
 _REF = re.compile(r"^CR-\d{4}-\d{4}$")
+_NEXT_OK = ("/activities/", "/rooms", "/monitor/")
+
+
+def _errkey(back):
+    """The query key for an error shown on the page we send them back to: an activity page already uses `err`
+    for its own codes, so room messages travel as `roomerr` there."""
+    return "roomerr" if (back or "").startswith("/activities/") else "err"
+
+
+def _safe_next(value, default):
+    """A same-site path we are willing to send someone back to (an activity page or the room pages)."""
+    v = (value or "").strip()
+    return v if v.startswith(_NEXT_OK) and "//" not in v and "\\" not in v and len(v) < 300 else default
 
 
 def _date_or_none(s):
@@ -130,6 +143,8 @@ def make_router(templates, get_conn, today_local, *, base_url=None, qr_data_uri=
                 r["timeline"] = rooms.timeline(conn, r)
                 r["badge"] = STATUS_BADGE.get(r["status"], ("grey", r["status"].title()))
                 r["day_date"] = date.fromisoformat(r["day"])
+                ev = conn.execute("SELECT event_token, title FROM event WHERE id=?", (r["event_id"],)).fetchone() if r["event_id"] else None
+                r["activity"] = {"token": ev[0], "title": ev[1]} if ev else None
                 r["offers"] = rooms.suggestions_for(conn, r, today=today)
                 r["was_bumped"] = r["status"] == "cancelled" and r["bumped_by_reservation_id"] is not None
             upcoming = sorted((r for r in rows if r["status"] in ("requested", "approved")
@@ -163,15 +178,51 @@ def make_router(templates, get_conn, today_local, *, base_url=None, qr_data_uri=
     async def rooms_withdraw(rid: int, request: Request):
         f = await _posted(request)
         user = request.state.user
+        back = _safe_next(f.get("next"), "")
         conn = get_conn()
         try:
             try:
                 rooms.withdraw(conn, rid, user["id"], reason=f.get("reason"), actor=user["username"])
             except rooms.RoomError as e:
-                return RedirectResponse("/rooms/mine?err=" + str(e).replace(" ", "+"), status_code=303)
+                return RedirectResponse((back or "/rooms/mine") + ("&" if "?" in back else "?") + urlencode({_errkey(back): str(e)}),
+                                        status_code=303)
         finally:
             conn.close()
-        return RedirectResponse("/rooms/mine?done=withdrawn", status_code=303)
+        return RedirectResponse(back or "/rooms/mine?done=withdrawn", status_code=303)
+
+    @router.get("/rooms/api/day")
+    def rooms_api_day(request: Request, date: str = ""):
+        """One day's hours for the activity form's room chip (signed in): free / requested / booked /
+        closed, never a title. Uses the staff rules: two working days' notice, 90 days ahead."""
+        d = _date_or_none(date)
+        if d is None:
+            return JSONResponse({"error": "Pick a date."}, status_code=400)
+        conn = get_conn()
+        try:
+            return JSONResponse(rooms.day_view(conn, d, today_local()))
+        finally:
+            conn.close()
+
+    @router.post("/rooms/{rid}/move")
+    async def rooms_move(rid: int, request: Request):
+        """Make a reservation follow its activity to a new day (see rooms.request_move)."""
+        f = await _posted(request)
+        user = request.state.user
+        back = _safe_next(f.get("next"), "/rooms/mine")
+        sep = "&" if "?" in back else "?"
+        conn = get_conn()
+        try:
+            try:
+                day = _date_or_none(f.get("day"))
+                if day is None:
+                    raise rooms.RoomError("Pick a date.")
+                new = rooms.request_move(conn, rid, day, user, today=today_local())
+            except rooms.RoomError as e:
+                return RedirectResponse(back + sep + urlencode({_errkey(back): str(e)}), status_code=303)
+        finally:
+            conn.close()
+        return RedirectResponse(back + sep + urlencode({"roomok": "Move requested" if new["source"] == "move" else "Request moved"}),
+                                status_code=303)
 
     def _forbidden(request):
         return templates.TemplateResponse(
@@ -223,6 +274,7 @@ def make_router(templates, get_conn, today_local, *, base_url=None, qr_data_uri=
         """The owner of a cancelled/declined reservation picks one of the offered new times."""
         f = await _posted(request)
         user = request.state.user
+        back = _safe_next(f.get("next"), "")
         conn = get_conn()
         try:
             try:
@@ -230,9 +282,14 @@ def make_router(templates, get_conn, today_local, *, base_url=None, qr_data_uri=
                 new = rooms.take_suggestion(conn, rid, user["id"], f.get("day", ""), ids,
                                             today=today_local(), actor=user["username"])
             except (rooms.RoomError, ValueError) as e:
-                return RedirectResponse("/rooms/mine?" + urlencode({"err": str(e)}), status_code=303)
+                return RedirectResponse((back or "/rooms/mine") + ("&" if "?" in back else "?") + urlencode({_errkey(back): str(e)}),
+                                        status_code=303)
         finally:
             conn.close()
+        if back:
+            return RedirectResponse(back + ("&" if "?" in back else "?") + urlencode({"roomok": "New time booked"
+                                                                                       if new["status"] == "approved" else "New request sent"}),
+                                    status_code=303)
         return RedirectResponse("/rooms/mine?" + urlencode({"ok": new["ref_code"], "took": new["status"]}), status_code=303)
 
     @router.get("/rooms/blocks", response_class=HTMLResponse)

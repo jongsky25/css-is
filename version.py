@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "5.4"
+APP_VERSION = "5.5"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "5.5",
+        "date": "October 9, 2026",
+        "summary": "Activities and conference room bookings now know about each other.",
+        "changes": [
+            "When you create an activity, a Conference room line lets you ask for the room in the same step. It shows which hours are free that day, and ticks itself for online and hybrid activities, where the room can host the session. A choice that cannot work (too soon, or already booked) is caught before the activity is saved.",
+            "On My reservations, \"Create a CSS activity for this\" starts the activity form filled in from the booking.",
+            "An activity's page now says what is happening with its room. If you move the activity to another day it offers to move the booking too, and the old booking is kept until the move is approved. If the room is cancelled, it offers the nearest free times.",
+        ],
+    },
     {
         "version": "5.4",
         "date": "October 9, 2026",

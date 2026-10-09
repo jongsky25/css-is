@@ -1,0 +1,49 @@
+{# What is happening with this activity's conference room (rooms R8). `room_link` is rooms.activity_room_status plus
+   `next` (where actions return to) and the flash messages. Nothing here changes anything by itself: every change is a
+   button the person presses. #}
+{% if room_link %}
+<link rel="stylesheet" href="/static/css/rooms.css?v=20261009d">
+{% set rl = room_link %}
+{% if rl.flash_ok %}<div class="room-banner" role="status">✓ {{ rl.flash_ok }}.</div>{% endif %}
+{% if rl.flash_err %}<div class="room-banner bad" role="alert">✕ {{ rl.flash_err }}</div>{% endif %}
+
+{% if rl.state == 'booked' %}
+<div class="room-banner"><p>🏢 <strong>Conference room reserved</strong>: {{ rl.res.when }}, {{ rl.res.hours }} <span class="badge green">✓ Approved</span> <code>{{ rl.res.ref_code }}</code></p>
+  <a href="/rooms/mine">Conference room → My reservations</a></div>
+
+{% elif rl.state == 'requested' %}
+<div class="room-banner"><p>🏢 <strong>Conference room requested</strong>: {{ rl.res.when }}, {{ rl.res.hours }} <span class="badge amber">○ Waiting</span> <code>{{ rl.res.ref_code }}</code></p>
+  <p class="hint">The Administrative Section will decide. You will be told.</p></div>
+
+{% elif rl.state == 'mismatch' %}
+<div class="room-banner warn"><p>🏢 <strong>The room is booked for a different day.</strong> The booking is for {{ rl.res.when }} ({{ rl.res.hours }}), but this activity is now on {{ rl.event_when }}.</p>
+  {% if rl.can_act %}
+  <form method="post" action="/rooms/{{ rl.res.id }}/move"><input type="hidden" name="day" value="{{ rl.event_day }}"><input type="hidden" name="next" value="{{ rl.next }}">
+    <button class="btn small" type="submit">{{ 'Move the request to ' if rl.res.status == 'requested' else 'Request a move to ' }}{{ rl.event_when }}</button></form>
+  <p class="hint">{% if rl.res.status == 'approved' %}Your current booking stays until the move is approved.{% else %}It is still waiting, so it simply changes day.{% endif %}</p>
+  {% else %}<p class="hint">Only the person who booked it, or the Administrative Section, can move it.</p>{% endif %}</div>
+
+{% elif rl.state == 'move_pending' %}
+<div class="room-banner"><p>🏢 <strong>A move is waiting for approval.</strong> The room is requested for {{ rl.res.when }}, {{ rl.res.hours }}; your booking for {{ rl.old.when }} stays until it is approved.</p></div>
+
+{% elif rl.state == 'lost' %}
+<div class="room-banner bad"><p>🏢 <strong>This activity has no room any more.</strong> The booking for {{ rl.res.when }}, {{ rl.res.hours }} was {{ rl.res.status }}{% if rl.res.decide_note %}: {{ rl.res.decide_note }}{% endif %}.</p>
+  {% if rl.offers and rl.mine %}
+  <p class="hint">{{ 'Pick a new time and it is booked at once:' if rl.res.status == 'cancelled' and rl.res.bumped_by_reservation_id else 'Other free times you could ask for:' }}</p>
+  {% for o in rl.offers %}
+  <form method="post" action="/rooms/{{ rl.res.id }}/take"><input type="hidden" name="day" value="{{ o.day }}"><input type="hidden" name="slots" value="{{ o.slot_ids|join(',') }}"><input type="hidden" name="next" value="{{ rl.next }}">
+    <button class="btn ghost small" type="submit">{{ o.label }}</button></form>
+  {% endfor %}
+  {% elif rl.can_act %}<a href="/rooms/mine">Pick a new time under My reservations</a>{% endif %}</div>
+
+{% elif rl.state == 'archived_holds' %}
+<div class="room-banner warn"><p>🏢 <strong>This activity is archived but still holds the room</strong> on {{ rl.res.when }}, {{ rl.res.hours }}.</p>
+  {% if rl.can_act and rl.mine %}
+  <form method="post" action="/rooms/{{ rl.res.id }}/withdraw"><input type="hidden" name="next" value="{{ rl.next }}"><input type="hidden" name="reason" value="The activity was archived.">
+    <button class="btn danger small" type="submit">Withdraw the booking</button></form>
+  {% elif rl.can_act %}<a href="/rooms/mine">Ask the person who booked it to withdraw, or see Conference room</a>{% endif %}</div>
+
+{% elif rl.state == 'none' and rl.upcoming %}
+<p class="hint room-cta">🏢 Need the conference room for this activity? <a href="/rooms?week={{ rl.event_day }}">Reserve it</a>.</p>
+{% endif %}
+{% endif %}

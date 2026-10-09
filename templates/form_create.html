@@ -23,6 +23,7 @@
   .btn-del { background:var(--red-bg); color:var(--red); border:1px solid var(--red-ln); border-radius:8px; padding:.55rem .9rem; cursor:pointer; }
   .hidden { display:none; }
 </style>
+<link rel="stylesheet" href="/static/css/rooms.css?v=20261009d">
 {% endblock %}
 
 {% block crumbs %}
@@ -98,6 +99,29 @@
       <label for="venue" id="venue-label">Venue</label>
       <input type="text" id="venue" name="venue" placeholder="e.g. Bayview Hall, Davao City" value="{{ f.venue|default('') }}">
       <div class="hint hidden" id="venue-hint">Optional — paste the meeting link or name the platform (e.g. Zoom, MS Teams). Leave blank if there isn't one.</div>
+      {# Conference room (docs/ROOM_RESERVATION_PLAN.md section 7). Works without scripts; room_chip.js adds the
+         day's availability and ticks the box for online / hybrid activities. #}
+      <input type="hidden" name="from_room" value="{{ f.from_room|default('') }}">
+      <input type="hidden" name="from_room_ref" value="{{ f.from_room_ref|default('') }}">
+      {% if f.from_room %}
+      <p class="hint room-linked">🏢 This activity will be linked to your conference room reservation <strong>{{ f.from_room_ref }}</strong>.</p>
+      {% else %}
+      <details class="room-chip" id="room-chip" {% if f.reserve_room %}open{% endif %}>
+        <summary>🏢 Conference room <span class="hint" id="room-chip-state" role="status"></span></summary>
+        <ul class="rp-hours rc-hours" id="room-chip-hours" aria-label="Conference room hours that day"></ul>
+        <label class="room-chip-tick"><input type="checkbox" name="reserve_room" value="1" id="room-chip-box" {% if f.reserve_room %}checked{% endif %}>
+          Also reserve the conference room for this activity</label>
+        <div class="rm-times">
+          <div><label for="room-from">From</label>
+            <select id="room-from" name="room_from">{% for s in room_slots %}<option value="{{ s.id }}" data-time="{{ s.start_time }}" {% if (f.room_from|default(room_slots[2].id if room_slots|length > 2 else ''))|string == s.id|string %}selected{% endif %}>{{ room_hour(s.start_time) }}</option>{% endfor %}</select></div>
+          <div><label for="room-to">Until</label>
+            <select id="room-to" name="room_to">{% for s in room_slots %}<option value="{{ s.id }}" data-time="{{ s.end_time }}" {% if (f.room_to|default(room_slots[3].id if room_slots|length > 3 else ''))|string == s.id|string %}selected{% endif %}>{{ room_hour(s.end_time) }}</option>{% endfor %}</select></div>
+        </div>
+        <label class="room-chip-tick"><input type="checkbox" name="room_meals" value="1" {% if f.room_meals %}checked{% endif %}> Will meals be requested?</label>
+        <div class="hint">The Administrative Section approves the request. It books the first day of the activity, at least 2 working days ahead, and you can follow it under Conference room → My reservations.</div>
+      </details>
+      <script src="/static/js/room_chip.js?v=20261009a" defer></script>
+      {% endif %}
       <label for="open_at">When can people answer? <span style="font-weight:400; color:var(--soft);">(optional)</span></label>
       <div class="win-row">
         <input type="date" id="open_at" name="open_at" class="win-field" style="flex:1; min-width:160px;" value="{{ (f.open_at|default(''))[:10] }}">

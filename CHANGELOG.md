@@ -1,5 +1,20 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v5.5 — conference room reservation R8: CSS activities and the room, both ways)
+
+- **From the activity form:** a collapsible "Conference room" line (works without scripts). `room_chip.js` fetches `GET /rooms/api/day` (signed in, staff
+  rules: 2 working days, 90 days; hours only, never a title), shows free / others asked / booked / closed, and ticks "also reserve" for online and hybrid activities or a venue
+  that says "conference room" (unless the person has already decided). The room is checked **before** the activity is saved (`rooms.precheck`), so a bad choice comes back as a form error;
+  after saving, the request is filed tied to the activity (`room_reservation.event_id`, first day only) and never undoes the activity if it fails.
+- **From a reservation:** My reservations -> "Create a CSS activity for this" opens `/create?from_room=<id>` filled in (title, date, format, venue "Conference room"); saving links the reservation
+  to the new activity instead of filing a second request. Only its owner or a room approver; a reservation with an activity already, or no longer live, prefills nothing.
+- **Banner on the activity's manage page** (bureau and outside), from `rooms.activity_room_status`: reserved / requested / **booked for a different day** (offers the move) / move waiting /
+  **no room any more** (cancelled or declined: the owner can pick a suggested time, which keeps the activity's link) / **archived but still holds the room** (offers withdraw) / a prompt to reserve one.
+  Buttons only appear for the booking's owner or a room approver; the buttons return to the activity page (`next` is restricted to same-site activity and room paths; messages travel as `roomerr` / `roomok`).
+- **Moves:** an undecided request just changes day; an **approved** booking is kept and a `move` request is filed for the same hours on the new day. Approving the move releases the old hours in the
+  same transaction (the old one is marked withdrawn "Moved to CR-..."); declining it leaves the old one; withdrawing the old one withdraws its pending move. The Approvals card says "Move of CR-...".
+- Tests: `tests/test_rooms_activity.py`, `tests/test_rooms_activity_pages.py`.
+
 ## 2026-10-09 (v5.4 — conference room reservation R7: the Rooms layer on the Office calendar)
 
 - **A `rooms` layer in `office_calendar.LAYERS`** (`kind: room`, 🏢, venue "Conference room", the booked hours as start/end time). An **approved** booking is

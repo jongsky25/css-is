@@ -236,9 +236,10 @@ def _validate_slots(conn, slot_ids):
 
 def request(conn, *, title, day, slot_ids, requester_user_id=None, ext=None, purpose=None,
             attendees=None, modality="f2f", meals_requested=False, actor=None, today=None,
-            max_ahead=MAX_DAYS_AHEAD, consent_at=None):
+            max_ahead=MAX_DAYS_AHEAD, consent_at=None, event_id=None, source=None, moves_reservation_id=None):
     """File a request. Internal (requester_user_id) or external (ext = dict of
-    name/org/email/phone). Status starts `requested`; nothing is held."""
+    name/org/email/phone). Status starts `requested`; nothing is held. `event_id` links it to a
+    CSS activity; `source`/`moves_reservation_id` mark a move request (see request_move)."""
     title = (title or "").strip()
     if not title:
         raise RoomError("Please give the meeting a title.")
@@ -266,11 +267,12 @@ def request(conn, *, title, day, slot_ids, requester_user_id=None, ext=None, pur
         cur = conn.execute(
             "INSERT INTO room_reservation(requester_user_id, ext_name, ext_org, ext_email, ext_phone, "
             "ext_consent_at, title, purpose, attendees, modality, day, status, source, meals_requested, "
-            "created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?, 'requested', ?,?,?,?,?)",
+            "event_id, moves_reservation_id, created_by, created_at, updated_at) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?, 'requested', ?,?,?,?,?,?,?)",
             (requester_user_id, ext.get("name"), ext.get("org"), ext.get("email"), ext.get("phone"),
              consent_at, title, (purpose or "").strip() or None, attendees, modality, day_iso,
-             "internal" if requester_user_id is not None else "external",
-             1 if meals_requested else 0, actor, now, now))
+             source or ("internal" if requester_user_id is not None else "external"),
+             1 if meals_requested else 0, event_id, moves_reservation_id, actor, now, now))
         rid = cur.lastrowid
         conn.execute("UPDATE room_reservation SET ref_code=? WHERE id=?",
                      (f"CR-{_d(day_iso):%y%m}-{rid:04d}", rid))
@@ -328,6 +330,12 @@ def approve(conn, rid, by, note=None, today=None, decline_rivals=False):
                 "updated_at=? WHERE id=? AND status='requested'",
                 (by, _stamp(), f"Another request for these hours was approved ({res['ref_code']}).",
                  _stamp(), o["id"]))
+        if res["source"] == "move" and res["moves_reservation_id"]:       # the move is approved: let the old hours go
+            old_id = res["moves_reservation_id"]
+            conn.execute("UPDATE room_reservation_slot SET is_approved=0 WHERE reservation_id=?", (old_id,))
+            conn.execute("UPDATE room_reservation SET status='withdrawn', decide_note=?, updated_at=? "
+                         "WHERE id=? AND status IN ('requested','approved')",
+                         (f"Moved to {res['ref_code']} ({res['day']}).", _stamp(), old_id))
         conn.commit()
     except sqlite3.IntegrityError:
         conn.rollback()
@@ -392,6 +400,8 @@ def withdraw(conn, rid, user_id, reason=None, actor=None, guest=False):
     conn.execute("UPDATE room_reservation_slot SET is_approved=0 WHERE reservation_id=?", (rid,))
     conn.execute("UPDATE room_reservation SET status='withdrawn', decide_note=COALESCE(?, decide_note), "
                  "updated_at=? WHERE id=?", ((reason or "").strip() or None, _stamp(), rid))
+    conn.execute("UPDATE room_reservation SET status='withdrawn', decide_note='The booking it would have moved was withdrawn.', "
+                 "updated_at=? WHERE moves_reservation_id=? AND source='move' AND status='requested'", (_stamp(), rid))
     conn.commit()
     st.audit(conn, actor or (f"guest:{res['ref_code']}" if guest else f"user:{user_id}"), "room_withdraw", target_type="room_reservation",
              target_id=rid, summary=f"{res['title']} on {res['day']}", before=before, after="withdrawn")
@@ -593,7 +603,9 @@ def queue(conn):
             on, ou_, oext = requester_label(conn, o)
             rivals.append({"id": o["id"], "ref": o["ref_code"], "title": o["title"], "who": on,
                            "hours": hours_text(conn, o)})
+        moved = get_reservation(conn, res["moves_reservation_id"]) if res["source"] == "move" and res["moves_reservation_id"] else None
         out.append({**res, "requester_name": name, "requester_unit": unit, "is_external": ext,
+                    "move_of": ({"ref": moved["ref_code"], "when": queue_when(moved), "status": moved["status"]} if moved else None),
                     "email_unconfirmed": bool(ext and res["ext_email"] and not res["ext_email_verified_at"]),
                     "hours": hours_text(conn, res), "rivals": rivals,
                     "when": f"{_d(res['day']):%a} {_d(res['day']).day} {_d(res['day']):%b %Y}",
@@ -805,12 +817,13 @@ def take_suggestion(conn, rid, user_id, day, slot_ids, today=None, actor=None, g
         raise RoomError("You already took a new time for this one.")
     kw = dict(title=res["title"], day=day, slot_ids=ids, requester_user_id=None if guest else user_id,
               purpose=res["purpose"], attendees=res["attendees"], modality=res["modality"],
-              meals_requested=bool(res["meals_requested"]), actor=actor or f"user:{user_id}", today=today)
+              meals_requested=bool(res["meals_requested"]), actor=actor or f"user:{user_id}", today=today,
+              event_id=res["event_id"])
     if guest:                                      # the same person: carry their contact details across
         kw["ext"] = {"name": res["ext_name"], "org": res["ext_org"], "email": res["ext_email"], "phone": res["ext_phone"]}
         kw["consent_at"] = res["ext_consent_at"]
         kw["max_ahead"] = GUEST_MAX_DAYS_AHEAD
-    new = _book_accepted(conn, res, kw) if bumped else request(conn, **kw)
+    new = _book_accepted(conn, res, kw) if bumped else request(conn, **{**kw, "moves_reservation_id": rid})
     conn.execute("UPDATE room_reservation SET moves_reservation_id=? WHERE id=?", (rid, new["id"]))
     conn.commit()
     st.audit(conn, kw["actor"], "room_accept", target_type="room_reservation", target_id=new["id"],
@@ -829,13 +842,13 @@ def _book_accepted(conn, old, kw):
         cur = conn.execute(
             "INSERT INTO room_reservation(requester_user_id, ext_name, ext_org, ext_email, ext_phone, ext_consent_at, "
             "title, purpose, attendees, modality, day, status, source, decided_by, decided_at, decide_note, "
-            "meals_requested, created_by, created_at, updated_at) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?, 'approved','bump_accept',?,?,?,?,?,?,?)",
+            "meals_requested, event_id, created_by, created_at, updated_at) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?, 'approved','bump_accept',?,?,?,?,?,?,?,?)",
             (kw["requester_user_id"], (kw.get("ext") or {}).get("name"), (kw.get("ext") or {}).get("org"),
              (kw.get("ext") or {}).get("email"), (kw.get("ext") or {}).get("phone"), kw.get("consent_at"),
              kw["title"], kw["purpose"], kw["attendees"], kw["modality"], day_iso,
              old["decided_by"], now, f"Moved after {old['ref_code']} was cancelled.",
-             1 if kw["meals_requested"] else 0, kw["actor"], now, now))
+             1 if kw["meals_requested"] else 0, kw.get("event_id"), kw["actor"], now, now))
         rid = cur.lastrowid
         conn.execute("UPDATE room_reservation SET ref_code=? WHERE id=?", (f"CR-{_d(day_iso):%y%m}-{rid:04d}", rid))
         conn.executemany("INSERT INTO room_reservation_slot(reservation_id, day, slot_id, is_approved) VALUES (?,?,?,1)",
@@ -986,11 +999,11 @@ def mark_email_verified(conn, rid):
     conn.commit()
 
 
-def public_day(conn, day, today=None):
+def public_day(conn, day, today=None, max_ahead=GUEST_MAX_DAYS_AHEAD):
     """What a guest may see of one day: each hour free / requested (others asked, you still can) /
     booked / closed. Never a title or a name."""
     today = today or tz.today_local()
-    closed = day_closed(conn, day, today, max_ahead=GUEST_MAX_DAYS_AHEAD)
+    closed = day_closed(conn, day, today, max_ahead=max_ahead)
     states = slot_states(conn, day)
     hours = []
     for sid, o in states.items():
@@ -1041,3 +1054,150 @@ def purge_guest_details(conn, today=None, months=GUEST_RETENTION_MONTHS):
         st.audit(conn, "system", "room_purge_guests", target_type="room_reservation", target_id=ids[0],
                  summary=f"Removed guest contact details from {len(ids)} reservation(s) dated before {cutoff}")
     return len(ids)
+
+
+# ------------------------------------------------ CSS activity link (R8) ---
+
+def precheck(conn, day, slot_ids, today=None, max_ahead=MAX_DAYS_AHEAD):
+    """Would a request for these hours be refused right now? Raises the same RoomError / SlotTaken
+    request() would, writing nothing: the activity form uses it to stop a bad room choice BEFORE
+    the activity is saved."""
+    reason = day_closed_reason(conn, day, today or tz.today_local(), max_ahead=max_ahead)
+    if reason:
+        raise RoomError(reason)
+    order = _validate_slots(conn, slot_ids)
+    states = slot_states(conn, day)
+    for sid in order:
+        if states[sid]["state"] in ("approved", "blocked"):
+            what = "already booked" if states[sid]["state"] == "approved" else "unavailable"
+            raise SlotTaken(f"The conference room is {what} at {states[sid]['slot']['label']} that day.")
+    return order
+
+
+def day_view(conn, day, today=None, max_ahead=MAX_DAYS_AHEAD):
+    """One day for a signed-in person's picker (the activity form's room chip): the hours with
+    free / requested / booked / closed, plus the slot list. Never titles or names."""
+    out = public_day(conn, day, today, max_ahead=max_ahead)
+    out["slots"] = [{"id": s["id"], "start": s["start_time"], "end": s["end_time"],
+                     "from": hour_label(s["start_time"]), "until": hour_label(s["end_time"])} for s in list_slots(conn)]
+    return out
+
+
+def link_event(conn, rid, event_id, user):
+    """Tie an existing, still-live reservation to a CSS activity. Only its owner or a room approver."""
+    res = get_reservation(conn, rid)
+    if res is None or res["status"] not in ("requested", "approved"):
+        raise RoomError("That reservation can't be linked any more.")
+    if not (_is_owner(res, user.get("id"), False) or is_room_admin(conn, user)):
+        raise RoomError("That reservation isn't yours to link.")
+    if res["event_id"] and res["event_id"] != event_id:
+        raise RoomError("That reservation is already linked to another activity.")
+    conn.execute("UPDATE room_reservation SET event_id=?, updated_at=? WHERE id=?", (event_id, _stamp(), rid))
+    conn.commit()
+    return get_reservation(conn, rid)
+
+
+def prefill_activity(conn, rid, user):
+    """Starting values for /create from a reservation ("Create CSS activity" on My reservations), or
+    None when it isn't theirs, isn't live, or already has an activity."""
+    try:
+        res = get_reservation(conn, int(rid))
+    except (TypeError, ValueError):
+        return None
+    if (res is None or res["status"] not in ("requested", "approved") or res["event_id"]
+            or not (_is_owner(res, user.get("id"), False) or is_room_admin(conn, user))):
+        return None
+    return {"activity_name": res["title"], "event_date": res["day"], "modality": res["modality"],
+            "venue": "Conference room", "from_room": res["id"], "from_room_ref": res["ref_code"]}
+
+
+def reservations_for_event(conn, event_id):
+    return [_row(conn, r) for r in conn.execute(
+        f"SELECT {_COLS} FROM room_reservation WHERE event_id=? ORDER BY id DESC", (event_id,))]
+
+
+def _event_archived(conn, event_id):
+    """Every form of the activity is archived (the same test the calendar uses to hide it)."""
+    r = conn.execute(
+        "SELECT EXISTS(SELECT 1 FROM event_form WHERE event_id=?) AND NOT EXISTS("
+        "SELECT 1 FROM event_form ef JOIN form_instance fi ON fi.id=ef.form_instance_id "
+        "WHERE ef.event_id=? AND COALESCE(fi.archived,0)=0)", (event_id, event_id)).fetchone()
+    return bool(r and r[0])
+
+
+def request_move(conn, rid, new_day, user, today=None):
+    """Re-date a reservation to follow its activity. A request nobody has decided yet simply changes
+    day. An APPROVED booking is kept until the new day is approved: a new `move` request is filed for
+    the same hours and the old one is released in the same step that approves it."""
+    res = get_reservation(conn, rid)
+    if res is None or res["status"] not in ("requested", "approved"):
+        raise RoomError("That reservation can't be moved.")
+    if not (_is_owner(res, user.get("id"), False) or is_room_admin(conn, user)):
+        raise RoomError("That reservation isn't yours to move.")
+    today = today or tz.today_local()
+    new_day_iso = _d(new_day).isoformat()
+    if new_day_iso == res["day"]:
+        raise RoomError("It is already on that day.")
+    if conn.execute("SELECT 1 FROM room_reservation WHERE moves_reservation_id=? AND source='move' AND status='requested'",
+                    (rid,)).fetchone():
+        raise RoomError("A move is already waiting for a decision.")
+    slot_ids = res["slot_ids"]
+    try:
+        precheck(conn, new_day, slot_ids, today)
+    except SlotTaken as e:
+        alts = suggest(conn, new_day, slot_ids, n=3, today=today)
+        raise SlotTaken(f"{e} " + ("Nearest free times: " + "; ".join(a["label"] for a in alts) + "." if alts else ""))
+    if res["status"] == "requested":
+        before = res["day"]
+        conn.execute("UPDATE room_reservation SET day=?, updated_at=? WHERE id=?", (new_day_iso, _stamp(), rid))
+        conn.execute("UPDATE room_reservation_slot SET day=? WHERE reservation_id=?", (new_day_iso, rid))
+        conn.commit()
+        st.audit(conn, user.get("username") or "system", "room_move", target_type="room_reservation", target_id=rid,
+                 summary=f"{res['title']}: request moved from {before} to {new_day_iso}")
+        return get_reservation(conn, rid)
+    new = request(conn, title=res["title"], day=new_day, slot_ids=slot_ids, requester_user_id=res["requester_user_id"],
+                  ext=({"name": res["ext_name"], "org": res["ext_org"], "email": res["ext_email"], "phone": res["ext_phone"]}
+                       if res["requester_user_id"] is None else None),
+                  purpose=res["purpose"], attendees=res["attendees"], modality=res["modality"],
+                  meals_requested=bool(res["meals_requested"]), actor=user.get("username") or "system", today=today,
+                  event_id=res["event_id"], source="move", moves_reservation_id=rid)
+    st.audit(conn, user.get("username") or "system", "room_move", target_type="room_reservation", target_id=new["id"],
+             summary=f"{res['title']}: move from {res['ref_code']} ({res['day']}) to {new_day_iso} requested")
+    return new
+
+
+def activity_room_status(conn, ev, user, today=None):
+    """What the activity's page should say about its conference room, as a dict for the banner:
+    state is none / booked / requested / mismatch / move_pending / lost / archived_holds. `can_act` is
+    true for the reservation's owner or a room approver (the people who may move or withdraw it)."""
+    today = today or tz.today_local()
+    ev_day = (ev.get("event_date") or "")[:10]
+    rows = reservations_for_event(conn, ev["id"])
+    live = [r for r in rows if r["status"] in ("requested", "approved")]
+    admin = is_room_admin(conn, user)
+
+    ev_when = queue_when({"day": ev_day}) if ev_day else ""
+
+    def dress(r, **extra):
+        r = dict(r)
+        r["hours"], r["when"] = hours_text(conn, r), queue_when(r)
+        mine = _is_owner(r, user.get("id"), False)
+        return {"res": r, "can_act": mine or admin, "mine": mine, "event_day": ev_day, "event_when": ev_when, **extra}
+
+    if live:
+        pending_move = next((r for r in live if r["source"] == "move" and r["status"] == "requested"), None)
+        current = next((r for r in live if r is not pending_move and r["status"] in ("approved", "requested")), live[0])
+        if _event_archived(conn, ev["id"]) and _d(current["day"]) >= today:
+            return dress(current, state="archived_holds")
+        if pending_move:
+            return dress(pending_move, state="move_pending", old=dress(current)["res"])
+        if ev_day and current["day"] != ev_day and _d(current["day"]) >= today - timedelta(days=0):
+            return dress(current, state="mismatch")
+        return dress(current, state="booked" if current["status"] == "approved" else "requested")
+    lost = next((r for r in rows if r["status"] in ("cancelled", "declined")
+                 and not conn.execute("SELECT 1 FROM room_reservation WHERE moves_reservation_id=? AND status IN ('requested','approved')",
+                                      (r["id"],)).fetchone()), None)
+    if lost and ev_day and _d(ev_day) >= today:
+        return dress(lost, state="lost", offers=suggestions_for(conn, lost, n=3, today=today))
+    return {"state": "none", "can_act": False, "event_day": ev_day, "event_when": ev_when, "res": None,
+            "upcoming": bool(ev_day and _d(ev_day) >= today)}
