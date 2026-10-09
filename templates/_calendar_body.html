@@ -43,12 +43,14 @@
     <a href="{{ qs(month='') }}" {% if is_today_window %}aria-current="date"{% endif %}>This month</a>
     <a href="{{ qs(month=grid.next) }}">{{ grid.next_label }} →</a>
     {% else %}
-    <a href="{{ qs(day=prev_day) }}">← Earlier</a>
+    <a href="{{ qs(day=prev_day) }}">{% if searching %}← {{ year - 1 }}{% else %}← Earlier{% endif %}</a>
     <a href="{{ qs(day='') }}" {% if is_today_window %}aria-current="date"{% endif %}>Today</a>
-    <a href="{{ qs(day=next_day) }}">Later →</a>
+    <a href="{{ qs(day=next_day) }}">{% if searching %}{{ year + 1 }} →{% else %}Later →{% endif %}</a>
     {% endif %}
   </nav>
   <span class="cal-range">{{ range_label }}{% if filtered %} · filtered{% endif %}</span>
+  <input class="cal-q" type="search" name="q" value="{{ f.q }}" placeholder="Search titles, places, people…" aria-label="Search the calendar"
+         maxlength="80" enterkeyhint="search" autocomplete="off">
 
   {% if not team_layout %}
   <label class="cal-scope">Whose
@@ -83,6 +85,7 @@
   </details>
   {% if filtered %}
   <span class="cal-chips-x" aria-label="Active filters">
+    {% if f.q %}<a class="cal-chipx" href="{{ qs(q='') }}" title="Clear the search">Search: {{ f.q }} <span aria-hidden="true">✕</span></a>{% endif %}
     {% if f.kind %}<a class="cal-chipx" href="{{ qs(kind='') }}" title="Remove this filter">Type: {{ kinds.get(f.kind, f.kind) }} <span aria-hidden="true">✕</span></a>{% endif %}
     {% if f.status %}<a class="cal-chipx" href="{{ qs(status='') }}" title="Remove this filter">Status: {{ statuses.get(f.status, f.status) }} <span aria-hidden="true">✕</span></a>{% endif %}
     {% if f.tag %}<a class="cal-chipx" href="{{ qs(tag='') }}" title="Remove this filter">Tag: {{ f.tag }} <span aria-hidden="true">✕</span></a>{% endif %}
@@ -110,7 +113,10 @@
     <h2 id="d-{{ d.iso }}">{{ d.label }}</h2>
     {% if d.is_today %}<span class="cal-today-tag">Today</span>{% endif %}
     {% for h in d.holidays %}<span class="cal-holiday">{{ h.title }}{% if h.owner_label %} · {{ h.owner_label }}{% endif %}</span>{% endfor %}
-    {% if d.rows %}<span class="cal-count">{{ d.rows|length }} {{ "item" if d.rows|length == 1 else "items" }}</span>{% endif %}
+    <span class="cal-hdr-r">
+      {% if d.rows %}<span class="cal-count">{{ d.rows|length }} {{ "item" if d.rows|length == 1 else "items" }}</span>{% endif %}
+      <button type="button" class="cal-dayadd" data-quick data-date="{{ d.iso }}" hidden aria-label="Add something on {{ d.label }}" title="Add something on this day">+</button>
+    </span>
   </header>
   {% if d.rows %}
   <ul class="cal-list">
@@ -147,16 +153,17 @@
 {% if not n_items and not days|selectattr("holidays")|list %}
 <div class="cal-empty">
   <span class="cal-empty-ic" aria-hidden="true">📅</span>
-  <h3>Nothing else planned for these two weeks</h3>
-  <p>{% if filtered %}A filter may be hiding things. {% endif %}Add something, or look further ahead.</p>
+  <h3>{% if searching %}No matches for “{{ f.q }}” in {{ year }}{% else %}Nothing else planned for these two weeks{% endif %}</h3>
+  <p>{% if searching %}Try fewer or different words, or another year.{% else %}{% if filtered %}A filter may be hiding things. {% endif %}Add something, or look further ahead.{% endif %}</p>
   <span class="cal-empty-act">
     <a class="cal-btn primary" href="/calendar/new?day={{ add_day }}">+ Add something</a>
-    <a class="cal-btn" href="{{ qs(day=next_day) }}">Look further ahead</a>
+    <a class="cal-btn" href="{{ qs(day=next_day) }}">{% if searching %}Search {{ year + 1 }}{% else %}Look further ahead{% endif %}</a>
     {% if filtered %}<a class="cal-btn" href="{{ clear_filters }}">Clear filters</a>{% endif %}
   </span>
 </div>
 {% endif %}
 
+<p class="cal-keys" aria-label="Keyboard shortcuts">Keys: <kbd>←</kbd> <kbd>→</kbd> move · <kbd>T</kbd> today · <kbd>A</kbd> add · <kbd>S</kbd> search</p>
 <p class="cal-legend" aria-label="Colour key">
   <span>The colour bar on each item is the unit that owns it; the unit's name is always written on the item.</span>
 </p>

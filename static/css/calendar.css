@@ -554,3 +554,42 @@ a.cal-tt:focus-visible { outline:none; }
 .cal-bar-item { border-radius:7px; }
 @media (prefers-reduced-motion:reduce) { .cal-item { transition:none; } .cal-item:hover, .cal-item:focus-within { transform:none; } }
 @media print { .cal-item { box-shadow:none !important; transform:none !important; break-inside:avoid; } }
+
+/* ---- Phase 4: search, add-from-a-day, the item sheet ---- */
+.cal-q { font:inherit; font-size:.9rem; min-height:2.4rem; padding:.35rem .75rem; box-sizing:border-box; border:1px solid var(--line); border-radius:999px;
+         background:var(--bg); color:var(--ink); flex:1 1 13rem; min-width:0; max-width:22rem; }
+.cal-q:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+@media (max-width:640px) { .cal-q { flex:1 0 100%; max-width:none; order:2; } .cal-range { order:3; } }
+
+.cal-hdr-r { margin-left:auto; display:inline-flex; gap:.5rem; align-items:center; }
+.cal-count { margin-left:0; }
+.cal-dayadd { font:inherit; font-weight:800; font-size:1.1rem; line-height:1; width:2.2rem; height:2.2rem; border-radius:50%; cursor:pointer;
+              color:var(--accent); background:var(--surface); border:1px solid var(--line); }
+.cal-dayadd[hidden] { display:none; }
+.cal-dayadd:hover, .cal-dayadd:focus-visible { background:var(--accent); color:var(--on-accent); border-color:var(--accent); }
+.cal-keys { color:var(--soft); font-size:.78rem; margin:.5rem 0 0; }
+.cal-keys kbd { font:inherit; font-size:.74rem; font-weight:700; padding:0 .35rem; border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; background:var(--surface); }
+@media (hover:none) { .cal-keys { display:none; } }
+
+/* the sheet: a panel on the right on a wide screen, a sheet from the bottom on a phone */
+.cal-sheet { border:0; padding:0; background:var(--surface); color:var(--ink); box-shadow:0 0 28px rgba(20,30,50,.3);
+             position:fixed; inset:0 0 0 auto; margin:0; width:min(34rem, 100%); height:100%; max-height:none; max-width:none; }
+.cal-sheet::backdrop { background:rgba(20,30,50,.45); }
+.cal-sheet[open] { display:flex; flex-direction:column; }
+.cal-sheet-bar { display:flex; align-items:center; gap:.7rem; padding:.6rem .9rem; border-bottom:1px solid var(--line); background:var(--surface-2); flex:0 0 auto; }
+.cal-sheet-t { font-weight:800; flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cal-sheet-open { font-size:.85rem; font-weight:700; white-space:nowrap; }
+.cal-sheet-body { padding:1rem 1.1rem 1.4rem; overflow:auto; flex:1 1 auto; overscroll-behavior:contain; }
+.cal-sheet-body .cal-detail { max-width:none; }
+.cal-sheet-body h1.page { font-size:1.25rem; margin:0 0 .4rem; }
+@media (max-width:640px) {
+  .cal-sheet { inset:auto 0 0 0; width:100%; height:auto; max-height:88vh; border-radius:18px 18px 0 0; }
+  .cal-sheet-bar::before { content:""; position:absolute; left:50%; top:.35rem; width:2.4rem; height:.25rem; margin-left:-1.2rem; border-radius:9px; background:var(--line-strong, var(--line)); }
+  .cal-sheet-bar { position:relative; padding-top:.9rem; }
+}
+@media (prefers-reduced-motion:no-preference) {
+  .cal-sheet[open] { animation:cal-sheet-in .18s ease-out; }
+  @keyframes cal-sheet-in { from { transform:translateX(24px); opacity:0; } to { transform:none; opacity:1; } }
+  @media (max-width:640px) { .cal-sheet[open] { animation-name:cal-sheet-up; } @keyframes cal-sheet-up { from { transform:translateY(24px); opacity:0; } to { transform:none; opacity:1; } } }
+}
+@media (max-width:640px) { .cal-dayadd { width:2.75rem; height:2.75rem; } }       /* a thumb-sized tap target */

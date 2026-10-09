@@ -52,15 +52,60 @@ AUDIENCE_LABELS = {"unit": "Everyone in the owning unit",
                    "people": "Only the people I add"}
 
 
-def _filters(kind, status, tag, unit):
+SEARCH_MAX = 80
+
+
+def _filters(kind, status, tag, unit, text=""):
     """Validated filter choices -> (filters dict for office_calendar, clean values)."""
     clean = {"kind": kind if kind in KIND_LABELS else "",
              "status": status if status in STATUS_LABELS and status != "cancelled" else "",
-             "tag": (tag or "").strip()[:50], "unit": unit if (unit or "").isdigit() else ""}
+             "tag": (tag or "").strip()[:50], "unit": unit if (unit or "").isdigit() else "",
+             "q": re.sub(r"\s+", " ", text or "").strip()[:SEARCH_MAX]}
     return ({"kinds": {clean["kind"]} if clean["kind"] else None,
              "statuses": {clean["status"]} if clean["status"] else None,
              "tags": {clean["tag"]} if clean["tag"] else None,
-             "owner_org_ids": {int(clean["unit"])} if clean["unit"] else None}, clean)
+             "owner_org_ids": {int(clean["unit"])} if clean["unit"] else None,
+             "text": clean["q"] or None}, clean)
+
+
+# ── remembering the layout and whose calendar a person last chose ────────────
+# A cookie, read on the server, so the page opens right the first time. It only fills in a BARE
+# visit (the Calendar tab, the menu link): any link that names a layout, a scope, a date or a filter
+# means exactly what it says, so a shared link never changes under the person who opens it.
+PREF_COOKIE = "cal_pref"
+_PREF_PARAMS = ("scope", "day", "month", "kind", "status", "tag", "unit", "q")
+PREF_LAYOUTS = ("agenda", "week", "timeline", "month")
+
+
+def read_pref(request):
+    """(layout, scope) from the cookie, or ("", "") when absent or not something we wrote."""
+    m = re.fullmatch(r"(agenda|week|timeline|month):([a-z_]{1,20})", request.cookies.get(PREF_COOKIE, ""))
+    return (m.group(1), m.group(2)) if m else ("", "")
+
+
+def is_bare(q, layout_key):
+    return not any(q.get(k) for k in (layout_key, *_PREF_PARAMS))
+
+
+def with_pref(q, request, layout_key):
+    """`q`, with the remembered layout and scope filled in when this is a bare visit."""
+    if not is_bare(q, layout_key):
+        return q
+    layout, scope = read_pref(request)
+    out = dict(q)
+    if layout and layout != "agenda":
+        out[layout_key] = layout
+    if scope:
+        out["scope"] = scope
+    return out
+
+
+def remember(response, q, page, layout_key):
+    """Save what was just shown, but only when the person chose it (a bare visit saves nothing)."""
+    if page is None or is_bare(q, layout_key):
+        return
+    response.set_cookie(PREF_COOKIE, f"{page['layout']}:{page['scope']}", max_age=365 * 24 * 3600,
+                        httponly=True, samesite="lax", path="/")
 
 
 def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="view", fixed=None):
@@ -89,7 +134,11 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
             end = start + timedelta(days=AGENDA_DAYS - 1)
     except ValueError:
         return None                             # a hand-typed or stale date: caller falls back to today
-    filters, clean = _filters(q.get("kind", ""), q.get("status", ""), q.get("tag", ""), q.get("unit", ""))
+    filters, clean = _filters(q.get("kind", ""), q.get("status", ""), q.get("tag", ""), q.get("unit", ""),
+                              q.get("q", ""))
+    searching = bool(clean["q"]) and layout == "agenda"
+    if searching:                              # a search in the agenda looks across the whole year
+        start, end = date(start.year, 1, 1), date(start.year, 12, 31)
     ctx = oc.viewer_context(conn, user)
     choices = oc.scope_choices(ctx)
     scope = q.get("scope") or oc.DEFAULT_SCOPE
@@ -132,7 +181,8 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
         "tags": sorted({t for i in entries for t in i["tags"]}, key=str.lower),
         "units": sorted(units.values(), key=lambda u: u["label"].lower()),
         "qs": qs, "form_action": base,
-        "clear_filters": qs(kind="", status="", tag="", unit=""),
+        "clear_filters": qs(kind="", status="", tag="", unit="", q=""),
+        "searching": False, "year": None,
     }
     owner = ""
     if ctx["section_path"]:
@@ -162,6 +212,15 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
                     is_today_window=(m.year, m.month) == (today.year, today.month),
                     range_label=f"{grid['title']} · {n} {noun}",
                     add_day=(today if (m.year, m.month) == (today.year, today.month) else m).isoformat())
+    elif searching:
+        # A search reads like a list of matches through the year, not a two-week window: only days that
+        # have a match, and "earlier / later" step a whole year.
+        page.update(days=[d for d in oc.agenda_days(items, start, end, today) if d["rows"] or d["holidays"]],
+                    searching=True, year=start.year,
+                    prev_day=date(start.year - 1, 1, 1).isoformat(), next_day=date(start.year + 1, 1, 1).isoformat(),
+                    is_today_window=start.year == today.year,
+                    add_day=(today if start.year == today.year else start).isoformat(),
+                    range_label=f"Search in {start.year} · {n} {'match' if n == 1 else 'matches'}")
     else:
         page.update(days=oc.agenda_days(items, start, end, today),
                     prev_day=(start - timedelta(days=AGENDA_DAYS)).isoformat(),
@@ -233,16 +292,19 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
     @router.get("/calendar", response_class=HTMLResponse)
     def calendar_page(request: Request):
         q = dict(request.query_params)
+        shown = with_pref(q, request, "view")
         conn = get_conn()
         try:
-            page = build_calendar_page(conn, request.state.user, today_local(), q)
+            page = build_calendar_page(conn, request.state.user, today_local(), shown)
         finally:
             conn.close()
         if page is None:
             return RedirectResponse("/calendar" + ("?view=month" if q.get("view") == "month" else ""),
                                     status_code=303)
-        return templates.TemplateResponse(request, "calendar.html",
+        resp = templates.TemplateResponse(request, "calendar.html",
                                           {"nav_active": "calendar", "show_scope": False, **page})
+        remember(resp, q, page, "view")
+        return resp
 
     # ── add / view / edit / cancel / restore ────────────────────────────────
     # Everyone signed in may add and edit (owner decision). What a person may

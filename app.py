@@ -4882,9 +4882,10 @@ def choose(request: Request, msg: str = "", view: str = "team"):
         if view == "calendar":
             try:
                 q = dict(request.query_params)
+                shown = calendar_routes.with_pref({k: v for k, v in q.items() if k != "view"}, request, "layout")
                 args = dict(base="/", layout_key="layout", fixed={"view": "calendar"})
                 cal_page = (calendar_routes.build_calendar_page(
-                    conn, request.state.user, _today_local(), q, **args)
+                    conn, request.state.user, _today_local(), shown, **args)
                     or calendar_routes.build_calendar_page(
                         conn, request.state.user, _today_local(), {}, **args))
             except Exception:
@@ -4920,7 +4921,7 @@ def choose(request: Request, msg: str = "", view: str = "team"):
         conn.close()
     role = request.state.user["role"]
     avatar_kind = (profile or {}).get("avatar_kind") or st.AVATAR_DEFAULT
-    return templates.TemplateResponse(request, "office_connect.html", {
+    resp = templates.TemplateResponse(request, "office_connect.html", {
         "nav_active": "", "show_scope": False, "msg": msg,
         "first_name": first_name, "profile": profile,
         "is_birthday": bool((profile or {}).get("birthday")
@@ -4942,6 +4943,10 @@ def choose(request: Request, msg: str = "", view: str = "team"):
         "ladder": st.avatar_growth_ladder(avatar_kind, wstats),
         "growth_how": st.avatar_growth_actions(avatar_kind),
     })
+    if view == "calendar":
+        calendar_routes.remember(resp, {k: v for k, v in request.query_params.items() if k != "view"},
+                                 cal_page, "layout")
+    return resp
 
 
 @app.get("/css", response_class=HTMLResponse)

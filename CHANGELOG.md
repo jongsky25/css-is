@@ -1,5 +1,17 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-10 (v4.9 — calendar Phase 4: frictionless)
+
+`docs/CALENDAR_UX_PLAN.md` Phase 4.
+
+- **Search (`office_calendar.apply_filters`, `calendar_routes._filters`, `_calendar_body.html`):** a `q` box in the toolbar (max 80 characters) matches title, place, owning unit, tags and the names of the people on an item, case-insensitively. Visibility is unchanged: only items the viewer can already see are searched. In the agenda a search reads through the whole year (only days with a match; "earlier / later" step a year; range label "Search in 2026 · 12 matches"); in Week, Timeline and Month it narrows the grid. A removable "Search: …" chip shows it; "Clear filters" clears it too. Holidays are never removed by the menus; a text search keeps only the ones whose name matches.
+- **Remembered view (`calendar_routes.with_pref / remember`, home handler):** a `cal_pref` cookie (`layout:scope`, httponly, SameSite=Lax, one year) fills in a **bare** visit (the Calendar tab, the menu link). Any URL that names a layout, scope, date, filter or search is used as written, so a shared link never changes under whoever opens it. A forged or stale value is ignored; a scope the person is not offered falls back to the default.
+- **Item sheet (`calendar.js`, `_calendar_quick.html`):** tapping an item fetches its page, takes the `.cal-detail` article out of the parsed document (after removing `script/iframe/object/embed/link/style`) and shows it in a `<dialog>`: a side panel on a wide screen, a sheet from the bottom on a phone. `?item=ID` is added to the address, so Back closes it and a shared link opens it; "Open full page" is always there; a modified click (new tab) and any failed fetch go to the ordinary page. The script never builds HTML from a string (a test enforces it).
+- **Add from where you are:** a `+` on every agenda day and the date numbers in the month grid open Quick add with that date filled in. Both are ordinary links or hidden until script runs, so nothing is lost without it.
+- **Keyboard and touch:** ← → move, **T** today, **A** add, **S** search (not `/`: the app already uses `/` and Ctrl+K for its command palette). Keys are ignored while typing or while a dialog is open. On a phone, a mostly-horizontal flick over the agenda or month moves to the next or previous window; Week and Timeline (which scroll sideways) and vertical drags are left alone.
+- Checked in Chromium on the real file's 379 items: the sheet opens, closes with Escape, Back and the backdrop, deep-links, and ignores junk or missing items; quick add from a day and from a month number creates an item; the keys, search, remembered view and swipe all behave; no script errors on desktop or phone. Found and fixed: `/` clashed with the app's palette (now **S**), and the phone `+` was 35px (now 44px).
+- Left out on purpose: loading the calendar without a page refresh when you change view or filter (it still reloads, quickly), and an add button inside Week cells.
+
 ## 2026-10-09 (v4.8 — calendar Phase 3: a clearer look)
 
 `docs/CALENDAR_UX_PLAN.md` Phase 3. Colours come only from the app's tokens, so light, dark, high-contrast, text size, density and every accent choice keep working.

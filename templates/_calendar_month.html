@@ -28,7 +28,7 @@
          role="gridcell" style="grid-column:{{ loop.index }}; grid-row:1 / span {{ w.rows + 1 }}"
          {% if d.is_today %}aria-current="date"{% endif %}></div>
     <a class="cal-num" href="/calendar/new?day={{ d.iso }}" style="grid-column:{{ loop.index }}; grid-row:1"
-       title="Add something on {{ d.iso }}"><span {% if d.is_today %}class="today"{% endif %}>{{ d.num }}</span>
+       data-quick data-date="{{ d.iso }}" title="Add something on {{ d.iso }}"><span {% if d.is_today %}class="today"{% endif %}>{{ d.num }}</span>
       {% for h in d.holidays %}<small class="cal-hol">★ {{ h.title }}</small>{% endfor %}</a>
     {% endfor %}
     {% for b in w.bars %}
