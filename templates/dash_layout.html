@@ -6,7 +6,7 @@
 <title>{% block title %}Dashboard{% endblock %} — Office Connect</title>
 {# Set theme + text size before first paint so the choice never flashes. #}
 <script>(function(){try{var d=document.documentElement;var t=localStorage.getItem("theme");if(t!=="dark"&&t!=="light"&&t!=="contrast"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light";}d.setAttribute("data-theme",t);var s=localStorage.getItem("textscale");if(s!=="sm"&&s!=="lg"&&s!=="md"){s="md";}d.setAttribute("data-textscale",s);var dn=localStorage.getItem("density");if(dn!=="compact"&&dn!=="cozy"){dn="cozy";}d.setAttribute("data-density",dn);var ac=localStorage.getItem("accent");if(["blue","teal","violet","emerald","rose","amber"].indexOf(ac)<0){ac="blue";}d.setAttribute("data-accent",ac);}catch(e){}})();</script>
-<link rel="stylesheet" href="/static/css/app.css?v=20261009d">
+<link rel="stylesheet" href="/static/css/app.css?v=20261009f">
 {% block head %}{% endblock %}
 </head>
 {# page_width: "full" (dense tables), "narrow" (forms/reading), or empty for the default. #}
@@ -116,27 +116,44 @@
       {% endfor %}
     </div>
 
-    {# ---- mobile hamburger (same links, flat) ---- #}
+    {# ---- mobile menu: right-side sheet. Header (close) + scrolling nav accordion
+         + pinned footer so Log out is always on screen. Same links as the bar. ---- #}
     <details class="nav-toggle">
       <summary aria-label="Menu">☰</summary>
-      <div class="mobile-menu">
-        {% for g in nav_groups %}
-        <div class="mgroup">{{ g.name }}</div>
-        {% for sec in g['sections'] %}
-        {% if sec.name %}<div class="msec">{{ sec.name }}</div>{% endif %}
-        {% for it in sec['items'] %}
-        <a href="{{ it.url }}" {% if nav_cur == it.key %}aria-current="page"{% endif %}>{{ it.label }}</a>
-        {% endfor %}
-        {% endfor %}
-        {% endfor %}
+      <div class="mm-backdrop" data-mm-close aria-hidden="true"></div>
+      <div class="mobile-menu" role="dialog" aria-label="Menu">
+        <div class="mm-head">
+          <span class="mm-title">Menu</span>
+          <button type="button" class="mm-close" data-mm-close aria-label="Close menu">✕</button>
+        </div>
+        <div class="mm-scroll">
+          {% for g in nav_groups %}
+          {% set group_cur = g['items'] | selectattr('key', 'equalto', nav_cur) | list | length > 0 %}
+          <details class="mm-grp" {{ 'open' if group_cur }}>
+            <summary>{{ g.name }}</summary>
+            {% for sec in g['sections'] %}
+            {% if sec.name %}<div class="msec">{{ sec.name }}</div>{% endif %}
+            {% for it in sec['items'] %}
+            <a href="{{ it.url }}" {% if nav_cur == it.key %}aria-current="page"{% endif %}>{{ it.label }}</a>
+            {% endfor %}
+            {% endfor %}
+          </details>
+          {% endfor %}
+        </div>
         {% if u %}
-        <div class="mgroup">{{ u.username }} · {{ ROLE_LABELS.get(u.role, u.role) }}</div>
-        <a href="/me">My profile — photo, avatar &amp; pet name</a>
-        {% if tour_for(cur) %}<button type="button" class="mm-btn" data-tour-replay onclick="this.closest('details').open=false">Take a tour of this page</button>{% endif %}
-        <a href="/help">Open the full guide</a>
-        <div class="mgroup">Display</div>
-        <div class="mm-set">{{ display_settings() }}</div>
-        <a href="/logout">Log out</a>
+        <div class="mm-foot">
+          <div class="mm-who">{{ u.username }} · {{ ROLE_LABELS.get(u.role, u.role) }}</div>
+          <div class="mm-chips">
+            <a href="/me">My profile</a>
+            {% if tour_for(cur) %}<button type="button" class="mm-btn" data-tour-replay data-mm-close>Page tour</button>{% endif %}
+            <a href="/help">Full guide</a>
+            <details class="mm-disp">
+              <summary aria-label="Display settings" title="Display settings">⚙</summary>
+              <div class="mm-set">{{ display_settings() }}</div>
+            </details>
+          </div>
+          <a href="/logout" class="mm-logout">Log out</a>
+        </div>
         {% endif %}
       </div>
     </details>
@@ -242,6 +259,6 @@
 {# Passive UX-behavior telemetry (docs/UX_TELEMETRY_HANDOFF_PLAN.md) — signed-in shell only. #}
 <script src="/static/js/telemetry.js?v=20260925a" defer></script>
 {% endif %}
-<script src="/static/js/app.js?v=20260815a" defer></script>
+<script src="/static/js/app.js?v=20261009f" defer></script>
 </body>
 </html>

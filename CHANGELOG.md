@@ -1,5 +1,24 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v6.14 — "Classic home" on /start goes to the landing page)
+
+- The "Classic home →" link on `/start` pointed at `/css` (the CSS hub); it now points at `/`.
+- **Version bump:** `APP_VERSION` 6.13 → 6.14 in `version.py` (#231 merged without one).
+
+## 2026-10-09 (v6.13 — phone menu: Display settings behind a ⚙ in the footer)
+
+- The Display accordion is gone from the scrolling nav list. A ⚙ button sits beside My profile / Page tour / Full guide in the pinned footer; it opens the same Theme / Accent / Text size / Density panel upward over the nav list, so the footer and Log out never move or grow. It closes with the sheet.
+- Checked in Chromium at 360, 390 and 430px (light, dark, contrast): panel fits above the footer, theme switching works, Log out stays on screen.
+- Cache-bust: `?v=20261009f`.
+- **Version bump:** `APP_VERSION` 6.11 → 6.13 in `version.py`. #232 (v6.12) merged without a bump, which makes the deploy workflow abort (`CSS_DEPLOY_STRICT_VERSION`), so the sheet menu was never deployed; this bump ships both.
+
+## 2026-10-09 (v6.12 — phone menu is a right-side sheet, Log out always visible)
+
+- **Bug:** the ☰ menu was a dropdown capped at `100vh`, which on iPhone Safari is taller than the visible area, so the bottom (Log out) sat behind the browser toolbar; it was also one long flat list with the Display controls (~400px) always open.
+- **Now (≤900px):** a full-height right-side sheet (`100dvh`, safe-area padding) over a dimmed backdrop. Header with ✕; the nav groups are accordions (only the current page's group opens); Display is a collapsed row; a pinned footer holds username · role, My profile / Page tour / Full guide, and **Log out**, so it never scrolls out of reach. Closes on ✕, backdrop tap or Esc (focus returns to ☰); page scroll is locked while open; touch targets are 44px; the floating feedback button is hidden while the sheet is open.
+- Checked in Chromium at 360, 390 and 430px (light, dark, contrast): Log out fully on screen at each. Desktop menus untouched.
+- Cache-bust: `app.css` and `app.js` `?v=20261009e`.
+
 ## 2026-10-09 (v6.11 — header and home hero on phones and tablets)
 
 Checked in Chromium at 320–1440px against the real `app.css` and `dash_layout.html`.
