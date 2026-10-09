@@ -17,10 +17,22 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "4.4"
+APP_VERSION = "4.5"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "4.5",
+        "date": "October 9, 2026",
+        "summary": "Conference room: everyone is now told what happens to their request.",
+        "changes": [
+            "When your room request is approved, declined, cancelled or booked for you, you now get a note in the bell and an email. Approved bookings come with a calendar file you can add to your own calendar.",
+            "If your booking is cancelled for something more important, the email gives the reason and the nearest free times to pick from.",
+            "The Administrative Section gets an email for each new request, with Approve and Decline buttons that work from the email. A request left waiting for a day goes to the Admin Head, and a morning summary lists what is still open.",
+            "The afternoon before, the section gets tomorrow's room schedule (with attendees and meals) and each person with a booking gets a reminder.",
+            "A request nobody decided before its date now closes itself as expired, and the requester is told.",
+        ],
+    },
     {
         "version": "4.4",
         "date": "October 9, 2026",

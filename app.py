@@ -69,6 +69,7 @@ import birthdays
 import calendar_answers
 import calendar_routes
 import rooms
+import rooms_notify
 import rooms_routes
 import report_docs
 import csm_report
@@ -1894,7 +1895,7 @@ def invalidate_atoms():
 # =====================================================================
 
 _PUBLIC_PREFIXES = ("/r/", "/photo/", "/e/", "/static/", "/lang/", "/wellness/decide/",
-                    "/whereabouts/", "/calendar/feed/")
+                    "/whereabouts/", "/calendar/feed/", "/rooms/decide/")
 _PUBLIC_EXACT = {"/seq", "/login", "/logout", "/favicon.ico",
                  "/set-password", "/forgot", "/reset-password", "/health",
                  "/sw.js", "/manifest.webmanifest",
@@ -2021,6 +2022,10 @@ def _notification_items(conn, user, feedback_unread):
                 "text": f"{n} conference room request{'' if n == 1 else 's'} waiting on your decision",
                 "url": "/approvals#rooms", "count": n,
             })
+    try:
+        items.extend(rooms_notify.bell_rows(conn, user["id"]))
+    except Exception:                      # noqa: BLE001 — the bell must never break a page
+        pass
     wellness_decided = st.unseen_wellness_decisions(conn, user["id"])
     if wellness_decided:
         items.append({
@@ -4533,6 +4538,17 @@ def _flush_calendar_outbox():
         conn.close()
 
 
+def _rooms_tick():
+    """Each tick: raise what is due for the conference room (escalations, the morning summary,
+    tomorrow's schedule and reminders, expiring old requests) and email what is owed. The bell
+    needs no base URL, so notices are raised regardless; only the emails wait for one."""
+    conn = st.connect(DB)
+    try:
+        rooms_notify.tick(conn, send_reminders._base_url())
+    finally:
+        conn.close()
+
+
 async def _scheduler_loop():
     while True:
         try:
@@ -4562,6 +4578,10 @@ async def _scheduler_loop():
             pass
         try:
             await asyncio.to_thread(_flush_calendar_outbox)
+        except Exception:         # noqa: BLE001
+            pass
+        try:
+            await asyncio.to_thread(_rooms_tick)
         except Exception:         # noqa: BLE001
             pass
         await asyncio.sleep(_SCHED_TICK)
@@ -14906,6 +14926,8 @@ def approvals_inbox(request: Request, ok: str = "", err: str = "", period: str =
         wellness = st.list_wellness_approvals(conn, user) if chief else []
         awa = st.list_work_arrangement_approvals(conn, user) if chief else []
         room_queue = rooms.queue(conn) if room_admin else []
+        if room_admin:                       # opening the inbox is reading the short-notice withdrawals
+            rooms_notify.mark_seen(conn, user["id"], ("withdrawn_late",))
     finally:
         conn.close()
     # The AWA period just decided, so the page can point at THAT period's annex

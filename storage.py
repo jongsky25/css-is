@@ -436,6 +436,30 @@ def init_db(conn):
     CREATE UNIQUE INDEX IF NOT EXISTS ux_room_slot_taken
         ON room_reservation_slot(day, slot_id) WHERE is_approved = 1;
 
+    -- One row per person per event: the bell reads it, and the scheduler's flush turns it
+    -- into an email. UNIQUE makes every notice idempotent, so a retry or a second tick
+    -- can never send the same thing twice. recipient = 'u:<account id>' or 'e:<guest email>'.
+    CREATE TABLE IF NOT EXISTS room_notice (
+        id             INTEGER PRIMARY KEY,
+        recipient      TEXT NOT NULL,
+        user_id        INTEGER,
+        email          TEXT,
+        kind           TEXT NOT NULL,
+        reservation_id INTEGER NOT NULL DEFAULT 0,
+        version        INTEGER NOT NULL DEFAULT 1,
+        text           TEXT,
+        url            TEXT,
+        bell           INTEGER NOT NULL DEFAULT 0,
+        created_at     TEXT,
+        seen_at        TEXT,
+        email_status   TEXT,          -- NULL = still to send; sent / failed / skipped_off / skipped_none / not_configured
+        emailed_at     TEXT,
+        attempts       INTEGER NOT NULL DEFAULT 0,
+        UNIQUE (recipient, kind, reservation_id, version)
+    );
+    CREATE INDEX IF NOT EXISTS ix_room_notice_open ON room_notice(email_status, id);
+    CREATE INDEX IF NOT EXISTS ix_room_notice_user ON room_notice(user_id, seen_at);
+
     -- Maintenance / admin holds. slot_id NULL = the whole day.
     CREATE TABLE IF NOT EXISTS room_block (
         id         INTEGER PRIMARY KEY,
@@ -3613,6 +3637,7 @@ _AUDIT_ACTIONS = {
     "room_approve":        ("Approved a room reservation", "Conference room"),
     "room_decline":        ("Declined a room reservation", "Conference room"),
     "room_withdraw":       ("Withdrew a room reservation", "Conference room"),
+    "room_expire":         ("Expired a room request", "Conference room"),
     "room_encode":         ("Encoded a room booking", "Conference room"),
     "room_cancel":         ("Cancelled a room booking", "Conference room"),
     "room_accept":         ("Took a suggested room slot", "Conference room"),

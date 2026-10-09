@@ -1,5 +1,21 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v4.5 — conference room reservation R5: notifications)
+
+- **One table, one flush (`rooms_notify.py`, `room_notice`).** A state change only inserts notice rows (one per person per event, UNIQUE so nothing can double
+  up); the bell reads them; the scheduler's once-a-minute `tick` emails the ones that owe an email. A booking never waits on the mail relay, a failed send is
+  retried (three tries, five minutes apart), a feature an admin switched off is logged as skipped, and notices older than three days are not sent as news.
+  With no mail transport or no `CSS_BASE_URL` the emails wait while the bell still works.
+- **Requester:** approved / declined / cancelled (reason + the nearest free times) / booked for you / expired. Bell row until My reservations is opened.
+  Approved and booked-for-you carry a `.ics`. Guests with an email get the same emails (no bell). You are never notified about your own action.
+- **Section:** an email per new request with one-click Approve / Decline (signed, 14-day, confirm page, no state change on GET — `/rooms/decide/`);
+  escalation to the Admin Head when a request has waited 24 h or its date is within 48 h; a morning summary of open requests (08:00); tomorrow's schedule with
+  attendees and meals (16:00); a bell row and email for a withdrawal less than 24 h before the booking.
+- **Reminders:** the afternoon before, to each person with a booking. Dropped if it was withdrawn in the meantime.
+- **Expiry:** a request still undecided after its date becomes `expired`.
+- Five new switches in /admin/email: room_new_request, room_decided, room_reminder, room_admin_alerts, room_digest (all on by default).
+- Tests: `tests/test_rooms_notify.py`, `tests/test_rooms_notify_pages.py`.
+
 ## 2026-10-09 (v4.4 — conference room reservation R4: encode, "Book anyway", closures, suggestions)
 
 - **Encode:** a section member books for an account or a named guest; approved at once (source `encoded`). Inside the 2-working-day notice a reason is required.

@@ -15,7 +15,7 @@ OTHER_UNIT = "BLHSD/HSMED/Equity"
 def conn(app_mod):
     c = st.connect(app_mod.DB); st.init_db(c); rooms.ensure_slots(c)
     yield c
-    for t in ("room_reservation_slot", "room_reservation", "room_block"):
+    for t in ("room_reservation_slot", "room_reservation", "room_block", "room_notice"):
         c.execute(f"DELETE FROM {t}")
     c.commit(); c.close()
 

@@ -26,6 +26,19 @@ class RoomError(Exception):
     """A request the rules refuse. The message is safe to show the user."""
 
 
+def _emit(event, conn, *args):
+    """Tell rooms_notify what happened. Notices are a courtesy: a failure here must never
+    undo or block a booking decision that already committed."""
+    try:
+        import rooms_notify
+        getattr(rooms_notify, "on_" + event)(conn, *args)
+    except Exception:                                       # noqa: BLE001
+        try:
+            conn.rollback()
+        except Exception:                                   # noqa: BLE001
+            pass
+
+
 class SlotTaken(RoomError):
     """The hour is already approved for another reservation."""
     def __init__(self, msg, other=None):
@@ -266,7 +279,9 @@ def request(conn, *, title, day, slot_ids, requester_user_id=None, ext=None, pur
         raise
     st.audit(conn, actor or "system", "room_request", target_type="room_reservation", target_id=rid,
              summary=f"{title} on {day_iso}")
-    return get_reservation(conn, rid)
+    out = get_reservation(conn, rid)
+    _emit("requested", conn, out)
+    return out
 
 
 def _must_be_open(res, want):
@@ -328,7 +343,10 @@ def approve(conn, rid, by, note=None, today=None, decline_rivals=False):
         st.audit(conn, by, "room_decline", target_type="room_reservation", target_id=o["id"],
                  summary=f"{o['title']} on {o['day']}: another request approved", before="requested",
                  after="declined")
-    return get_reservation(conn, rid)
+        _emit("decided", conn, get_reservation(conn, o["id"]), by)
+    out = get_reservation(conn, rid)
+    _emit("decided", conn, out, by)
+    return out
 
 
 def decline(conn, rid, by, note):
@@ -343,7 +361,9 @@ def decline(conn, rid, by, note):
     conn.commit()
     st.audit(conn, by, "room_decline", target_type="room_reservation", target_id=rid,
              summary=f"{res['title']} on {res['day']}: {note.strip()}", before="requested", after="declined")
-    return get_reservation(conn, rid)
+    out = get_reservation(conn, rid)
+    _emit("decided", conn, out, by)
+    return out
 
 
 def withdraw(conn, rid, user_id, reason=None, actor=None):
@@ -366,7 +386,8 @@ def withdraw(conn, rid, user_id, reason=None, actor=None):
     start = datetime.fromisoformat(f"{res['day']}T{first or '00:00'}:00")
     late = before == "approved" and start - tz.now_local() < timedelta(hours=24)
     out = get_reservation(conn, rid)
-    out["late_withdrawal"] = late          # later increments alert the section on this
+    out["late_withdrawal"] = late
+    _emit("withdrawn", conn, out, late)
     return out
 
 
@@ -741,6 +762,9 @@ def encode(conn, *, by, title, day, slot_ids, requester_user_id=None, ext=None, 
                  summary=f"Cancelled for {title.strip()}: {bump_reason.strip()}", before="approved", after="cancelled")
     out = get_reservation(conn, rid)
     out["bumped"] = held
+    _emit("encoded", conn, out, by)
+    for old in held:
+        _emit("cancelled", conn, get_reservation(conn, old), by)
     return out
 
 
@@ -846,6 +870,7 @@ def add_block(conn, by, day, slot_ids, reason, confirm=False, today=None):
     for old in held:
         st.audit(conn, by, "room_cancel", target_type="room_reservation", target_id=old,
                  summary=f"Room unavailable: {reason}", before="approved", after="cancelled")
+        _emit("cancelled", conn, get_reservation(conn, old), by)
     return {"ids": ids, "cancelled": held}
 
 
@@ -885,3 +910,9 @@ def account_options(conn):
     return [(r[0], r[1]) for r in conn.execute(
         "SELECT a.id, COALESCE(NULLIF(rp.name, ''), a.username) FROM admin_user a "
         "LEFT JOIN resource_person rp ON rp.id=a.rp_id WHERE a.active=1 ORDER BY 2 COLLATE NOCASE")]
+
+
+def queue_when(res):
+    """'Thu 15 Oct 2026' for a reservation card."""
+    d = _d(res["day"])
+    return f"{d:%a} {d.day} {d:%b %Y}"

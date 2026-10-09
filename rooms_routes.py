@@ -11,7 +11,9 @@ from urllib.parse import parse_qs, urlencode
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
+import auth
 import rooms
+import rooms_notify
 import storage as st
 
 MODALITY_LABELS = {"f2f": "Face-to-face", "online": "Online", "hybrid": "Hybrid"}
@@ -119,6 +121,7 @@ def make_router(templates, get_conn, today_local):
         today = today_local()
         conn = get_conn()
         try:
+            rooms_notify.mark_seen(conn, user["id"], rooms_notify.REQUESTER_KINDS)
             rows = rooms.list_for_user(conn, user["id"])
             for r in rows:
                 r["hours"] = rooms.hours_text(conn, r)
@@ -295,6 +298,75 @@ def make_router(templates, get_conn, today_local):
         finally:
             conn.close()
         return RedirectResponse("/rooms/blocks?" + urlencode({"msg": "Room reopened."}), status_code=303)
+
+    # ---- decide by email link (public: the signed token IS the credential) ----
+    def _link_approver(conn, rid, token):
+        """The approver this token is valid for on this reservation, or None. They must still be
+        an active account that may decide room requests today."""
+        t_rid, uid = auth.verify_room_decide_token(token)
+        if t_rid != rid or not uid:
+            return None
+        u = st.get_admin_user_by_id(conn, uid)
+        if not u or not u.get("active") or not rooms.is_room_admin(conn, {"id": uid, "role": u.get("role")}):
+            return None
+        return u
+
+    def _link_card(conn, rid):
+        res = rooms.get_reservation(conn, rid)
+        if not res:
+            return None
+        name, unit, ext = rooms.requester_label(conn, res)
+        return {**res, "requester_name": name, "requester_unit": unit, "is_external": ext,
+                "hours": rooms.hours_text(conn, res), "when": rooms.queue_when(res)}
+
+    @router.get("/rooms/decide/{rid}", response_class=HTMLResponse)
+    def rooms_decide_link_form(request: Request, rid: int, token: str = "", action: str = "approve"):
+        """The confirm page the emailed link opens: a preview and a button the approver must click,
+        so a mail client or link scanner prefetching the GET can't decide anything on its own."""
+        action = action if action in ("approve", "decline") else "approve"
+        conn = get_conn()
+        try:
+            approver = _link_approver(conn, rid, token)
+            card = _link_card(conn, rid) if approver else None
+            err = ""
+            if card and card["status"] != "requested":
+                who = rooms.person_label(conn, card["decided_by"])
+                err = f"This request was already {card['status']}" + (f" by {who}." if who else ".")
+                card = None
+        finally:
+            conn.close()
+        return templates.TemplateResponse(request, "rooms_decide_link.html", {
+            "valid": bool(card), "card": card, "token": token, "action": action, "err": err,
+            "show_scope": False}, status_code=200 if card else 400)
+
+    @router.post("/rooms/decide/{rid}")
+    async def rooms_decide_link_submit(request: Request, rid: int):
+        f = await _posted(request)
+        token, action = f.get("token", ""), f.get("action", "")
+        conn = get_conn()
+        try:
+            approver = _link_approver(conn, rid, token)
+            if not approver or action not in ("approve", "decline"):
+                return templates.TemplateResponse(request, "rooms_decide_link.html",
+                                                  {"valid": False, "show_scope": False}, status_code=400)
+            try:
+                if action == "approve":
+                    res = rooms.approve(conn, rid, approver["username"], f.get("note"), today=today_local())
+                else:
+                    res = rooms.decline(conn, rid, approver["username"], f.get("note"))
+            except rooms.AlreadyDecided as e:
+                return templates.TemplateResponse(request, "rooms_decide_link.html", {
+                    "valid": False, "show_scope": False, "err": f"{e}"}, status_code=400)
+            except rooms.RoomError as e:                  # e.g. a decline with no reason, or the hours were taken
+                return templates.TemplateResponse(request, "rooms_decide_link.html", {
+                    "valid": True, "card": _link_card(conn, rid), "token": token, "action": action,
+                    "err": str(e), "show_scope": False}, status_code=400)
+            card = _link_card(conn, rid)
+        finally:
+            conn.close()
+        return templates.TemplateResponse(request, "rooms_decide_link.html", {
+            "valid": True, "done": True, "verb": "approved" if action == "approve" else "declined",
+            "card": card, "show_scope": False})
 
     @router.post("/rooms/{rid}/decide")
     async def rooms_decide(rid: int, request: Request):
