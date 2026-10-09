@@ -1,5 +1,16 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v6.6 — search the rest of the office)
+
+`docs/HOME_SEARCH_ASSISTANT_PLAN.md` Phase 4. Five new `search_sources` sources, scope `all` only (the `/css` box never shows them); each calls the function behind the page it links to, as the signed-in person.
+
+- **Calendar:** `office_calendar.items_between(scope="blend", layers=["entries","activities"])` from 30 days back to 90 ahead, minus banners, cancelled and postponed; title match; five at most, nearest date first (upcoming before past). Hint is date, time and "tentative" only — never notes, a meeting link or a leave reason. Links to the entry (`/calendar/entries/{id}`) or the activity's own link, else `/calendar`.
+- **My to-do:** `office_connect.home_tasks`, title + detail, task `url`.
+- **My requests:** the person's own `list_my_wellness_claims`, and the current open period's pending or approved work arrangement. Never another person's, whatever the role.
+- **Conference room:** the person's own upcoming `rooms.list_for_user` reservations (link `/rooms/mine`), plus a fixed "Book the conference room" row (`/rooms`) when the query mentions room, conference or book.
+- **Help:** `help_catalog_for(user, is_chief)` (passed in through `ctx`), label + step text, linked with `?tour=1`.
+- Queries under 2 characters search nothing. Tests: `tests/test_search_sources.py`. `/api/search` p95 15 ms on the seeded DB.
+
 ## 2026-10-09 (v6.5 — /api/search is a list of sources)
 
 `docs/HOME_SEARCH_ASSISTANT_PLAN.md` Phase 3. A refactor: responses and order are unchanged.

@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.5"
+APP_VERSION = "6.6"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.6",
+        "date": "October 9, 2026",
+        "summary": "Search on the home page now finds your calendar, to-dos, requests, room bookings and help.",
+        "changes": [
+            "Type a meeting name and see it from your calendar, with its date and time.",
+            "Your to-do items, your wellness break and work arrangement, and your conference room bookings now show up in search.",
+            "Typing \u201croom\u201d gives you a quick link to book the conference room, and help topics appear with a link to the guided tour.",
+            "You only ever see your own requests and the calendar items you could already see.",
+        ],
+    },
     {
         "version": "6.5",
         "date": "October 9, 2026",

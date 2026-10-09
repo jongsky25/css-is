@@ -5612,8 +5612,10 @@ def api_search(request: Request, q: str = "", scope: str = "all"):
     if not rl.allow("search", f"u{user['id']}"):
         return JSONResponse([])
 
+    is_chief = getattr(request.state, "is_chief", False)
     ctx = {"get_atoms": get_atoms, "view_memo": view_memo, "humandate": _humandate,
-           "is_chief": getattr(request.state, "is_chief", False), "today": _today_local()}
+           "is_chief": is_chief, "today": _today_local(),
+           "help_catalog": lambda: help_catalog_for(user, is_chief)}
     conn = get_conn()
     conn.row_factory = sqlite3.Row
     try:
