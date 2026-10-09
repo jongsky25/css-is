@@ -6,7 +6,7 @@
      submits on change and closes the menus. --#}
 {% set n_f = [f.kind, f.status, f.tag, f.unit]|select|list|length %}
 {% set team_layout = layout in ("week", "timeline") %}
-{% set kind_icon = {"meeting": "👥", "training": "🎓", "travel": "🧳", "audit_mr": "📋", "banner": "📣", "deadline": "⏰", "activity": "★", "leave": "🌴", "birthday": "🎂"} %}
+{% set kind_icon = {"meeting": "👥", "training": "🎓", "travel": "🧳", "audit_mr": "📋", "banner": "📣", "deadline": "⏰", "activity": "★", "leave": "🌴", "birthday": "🎂", "room": "🏢"} %}
 <div class="cal-bar">
   <nav class="cal-pills cal-views" aria-label="Layout">
     <a href="{{ qs(layout='', month='', day='') }}" {% if layout == "agenda" %}aria-current="true"{% endif %}>Agenda</a>
@@ -20,6 +20,7 @@
       <summary class="cal-btn" aria-label="More: quick add, birthdays{% if can_import %}, import{% endif %}">⋯<span class="cal-more-t"> More</span></summary>
       <div class="cal-menu">
         <button class="cal-menu-item cal-quick-open" type="button" data-quick data-date="{{ add_day }}" hidden>⚡ Quick add</button>
+        <a class="cal-menu-item" href="/rooms?week={{ add_day }}">🏢 Reserve the conference room</a>
         <a class="cal-menu-item" href="/calendar/birthdays">🎂 Birthdays</a>
         {% if can_import %}<a class="cal-menu-item" href="/calendar/import">Import from Word</a>{% endif %}
       </div>
