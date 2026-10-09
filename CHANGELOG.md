@@ -1,5 +1,14 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v6.8 — the assistant answers about the whole office)
+
+`docs/HOME_SEARCH_ASSISTANT_PLAN.md` Phase 6. Same pattern as `calendar_answers`: the model only picks a slot key; the server writes the sentence from the asker's own data, so names and records never reach the model.
+
+- **`office_answers.py` (new):** nine slots — `todo_summary` (`home_tasks` titles only, in order), `approvals_waiting` (`pending_approval_counts`), `wellness_left` (`wellness_hours_used`, `WELLNESS_WEEKLY_HOURS`, next approved break), `awa_status` (the `_task_awa` calls plus the period's deadline), `office_today` / `wfh_today` (`colleague_status_for`, so the admin's bureau/team switch applies; first names per state, six at most, then "…and N more"; a weekend or holiday reads "not a working day"), `room_today` / `room_tomorrow` (`rooms.slot_states` → free windows; "closed" on a non-working day), `my_room_bookings` (`rooms.list_for_user`). Merged into `AI_ANSWER_SLOTS` right after the calendar slots; `MAX_LINES = 6`.
+- **Seed rules (`app._seed_office_rules`, marker `office_rules_seeded`):** one exact-match rule per phrasing, English and Tagalog/Taglish ("sino ang nasa opisina", "free ba ang conference room bukas", "ilan oras wellness ko"), so these answer with no model call and while AI is off.
+- **Router prompt:** one sentence naming the new topics; no data in it.
+- `office_answers.py` added to `deploy_hf.RUNTIME_PY`. Tests: `tests/test_office_answers.py`.
+
 ## 2026-10-09 (v6.7 — colleagues and their basic status)
 
 `docs/HOME_SEARCH_ASSISTANT_PLAN.md` Phase 5. A deliberate widening of who can see whom, built narrowly and switchable.
