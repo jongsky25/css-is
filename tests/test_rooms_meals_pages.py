@@ -198,6 +198,7 @@ def test_a_section_member_who_is_not_an_admin_can_use_it_and_sees_the_tab_badge(
     with in_the_directory(app_mod, "viewer@test.local", path=ADMIN_UNIT):
         assert viewer.get("/rooms/meals").status_code == 200
         tabs = viewer.get("/rooms").text
+        tabs = tabs[tabs.index('class="rm-tabs"'):]   # the room tab strip, past the Office menu
         assert 'href="/rooms/meals"' in tabs and ">1</span>" in tabs.split('href="/rooms/meals"')[1].split("</a>")[0]
 
 

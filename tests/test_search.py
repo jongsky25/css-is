@@ -38,9 +38,9 @@ def test_nav_groups_track_the_index(app_mod):
     # Four product groups, Wellness first (it is the busiest screen in the app).
     # A viewer meets no admin cap, so Administrator drops out entirely.
     assert [g["name"] for g in app_mod.nav_groups_for(U("viewer"))] == \
-        ["Wellness", "CSS", "AWA"]
+        ["Wellness", "CSS", "AWA", "Office"]
     assert [g["name"] for g in app_mod.nav_groups_for(U("admin"))] == \
-        ["Wellness", "CSS", "AWA", "Administrator"]
+        ["Wellness", "CSS", "AWA", "Office", "Administrator"]
     # in_nav=False items stay out of the menu even when the cap is met
     admin_nav_urls = {it["url"] for g in app_mod.nav_groups_for(U("admin")) for it in g["items"]}
     assert "/directory/cleanup" not in admin_nav_urls
@@ -61,6 +61,31 @@ def test_nav_groups_track_the_index(app_mod):
     assert [s["name"] for s in enc["sections"]] == \
         ["See how we're doing", "Official reports", "Data entry"]
     assert all(s["items"] for s in enc["sections"])
+
+
+def test_conference_room_lives_under_office_not_awa(app_mod):
+    class U:
+        role = "viewer"
+        room_approver = False
+
+    class R(U):
+        room_approver = True
+
+    def group(user, name):
+        return next(g for g in app_mod.nav_groups_for(user) if g["name"] == name)
+
+    awa_urls = {it["url"] for it in group(U(), "AWA")["items"]}
+    assert "/rooms" not in awa_urls and "/calendar" not in awa_urls
+    staff = {it["url"] for it in group(U(), "Office")["items"]}
+    assert {"/rooms", "/rooms/mine", "/calendar"} <= staff
+    assert not staff & {"/rooms/meals", "/rooms/blocks"}
+    mgr = {it["url"] for it in group(R(), "Office")["items"]}
+    assert {"/rooms/meals", "/rooms/blocks", "/approvals"} <= mgr
+    sec = [s["name"] for s in group(R(), "Office")["sections"]]
+    assert sec == ["Reserve", "Manage the room"]
+    sections = {e["url"]: e["section"] for e in app_mod.search_index_for(R())}
+    assert sections["/rooms"] == "Office" and sections["/rooms/poster"] == "Office"
+    assert "/rooms/poster" not in {e["url"] for e in app_mod.search_index_for(U())}
 
 
 def test_chief_cap_gates_the_team_pages(app_mod):
@@ -251,7 +276,7 @@ def test_index_entries_carry_their_module(app_mod):
 
     idx = app_mod.search_index_for(U())
     assert idx and all(e.get("mod") for e in idx)
-    assert {e["mod"] for e in idx} >= {"core", "css", "wellness", "awa", "administrator"}
+    assert {e["mod"] for e in idx} >= {"core", "css", "wellness", "awa", "office", "administrator"}
     by_url = {e["url"]: e["mod"] for e in idx}
     assert by_url["/css"] == "core" and by_url["/me"] == "core"
 

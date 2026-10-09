@@ -520,8 +520,7 @@ NAV_GROUPS = [
                "who availed reflection rate", "cap": "chief"},
         {"key": "wellness_approvals", "url": "/approvals", "label": "Approvals",
          "hint": "Everything waiting on your decision — wellness breaks and work arrangements",
-         "kw": "wellness approvals approve decide queue pending requests waiting chief "
-               "conference room reservation",
+         "kw": "wellness approvals approve decide queue pending requests waiting chief",
          "cap": "approver"},
     ]},
     # ---- 2. CSS ----------------------------------------------------------
@@ -621,15 +620,6 @@ NAV_GROUPS = [
                "away out day off wfh work from home working remotely desk reachable "
                "in out attendance roster whereabouts report my week field leave "
                "weekly office", "cap": None},
-        {"key": "calendar", "url": "/calendar", "label": "Office calendar",
-         "hint": "Meetings, trips, trainings and holidays across the bureau",
-         "kw": "calendar office calendar schedule activities meetings events trips travel "
-               "technical assistance training workshop holidays what is on this week agenda "
-               "calendar of activities", "cap": None},
-        {"key": "rooms", "url": "/rooms", "label": "Conference room",
-         "hint": "See what is free and request a slot",
-         "kw": "conference room reserve reservation book booking meeting room request venue "
-               "slot hours available", "cap": None},
         {"key": "work_arrangement_schedule", "url": "/work-arrangement/schedule",
          "label": "Team schedule",
          "hint": "Who is on-site each weekday, and who hasn't filed",
@@ -642,7 +632,45 @@ NAV_GROUPS = [
          "kw": "work arrangement approvals approve decide queue pending waiting chief awa",
          "cap": "approver"},
     ]},
-    # ---- 4. Administrator ------------------------------------------------
+    # ---- 4. Office (shared spaces and the calendar) -----------------------
+    # The conference room is not a work arrangement, and the Administrative
+    # Section who run it are not necessarily app admins (cap manage_users), so it
+    # has its own group: everyone requests; room approvers also get the manage items.
+    {"name": "Office", "items": [
+        {"key": "rooms", "url": "/rooms", "label": "Conference room",
+         "section": "Reserve",
+         "hint": "See what is free and request a slot",
+         "kw": "conference room reserve reservation book booking meeting room request venue "
+               "slot hours available", "cap": None},
+        {"key": "rooms_mine", "url": "/rooms/mine", "label": "My room reservations",
+         "hint": "Your requests, their status, and withdrawing or moving them",
+         "kw": "my room reservations requests withdraw move conference room status booked", "cap": None},
+        {"key": "calendar", "url": "/calendar", "label": "Office calendar",
+         "hint": "Meetings, trips, trainings, holidays and room bookings across the bureau",
+         "kw": "calendar office calendar schedule activities meetings events trips travel "
+               "technical assistance training workshop holidays what is on this week agenda "
+               "calendar of activities", "cap": None},
+        {"key": "rooms_requests", "url": "/approvals", "label": "Room requests",
+         "section": "Manage the room",
+         "hint": "Approve or decline conference room requests",
+         "kw": "room requests approve decline decide queue pending conference room reservation "
+               "administrative section book anyway", "cap": "room_admin"},
+        {"key": "rooms_meals", "url": "/rooms/meals", "label": "Room meals",
+         "hint": "Meal requests and forms for room bookings",
+         "kw": "meals food snacks lunch meal form catering conference room", "cap": "room_admin"},
+        {"key": "rooms_blocks", "url": "/rooms/blocks", "label": "Room closures",
+         "hint": "Close the room for maintenance or events",
+         "kw": "closures closed block maintenance unavailable reopen conference room", "cap": "room_admin"},
+        {"key": "rooms_display", "url": "/rooms/display-setup", "label": "Door display",
+         "hint": "Set up the screen outside the room",
+         "kw": "door display tv screen kiosk token conference room", "cap": "room_admin",
+         "in_nav": False},
+        {"key": "rooms_poster", "url": "/rooms/poster", "label": "Room QR poster",
+         "hint": "Printable QR poster for outside requesters",
+         "kw": "qr poster print guest external request link conference room", "cap": "room_admin",
+         "in_nav": False},
+    ]},
+    # ---- 5. Administrator ------------------------------------------------
     # Ordered by real usage inside the group: /admin/ai is the 4th busiest
     # screen in the app (53 views/30d) while Audit (2) and Sharing (1) are the
     # least-used of everything. Name cleanup stays search-only (0 views).
@@ -762,6 +790,9 @@ def _cap_ok(user, cap, is_chief=False):
     if cap == "approver":       # the Approvals inbox: a chief, or a room approver (Administrative Section)
         return (bool(is_chief) or _user_role(user) == "admin"
                 or (user.get("room_approver") if isinstance(user, dict) else False))
+    if cap == "room_admin":     # the Administrative Section (room approvers) and app admins
+        return (_user_role(user) == "admin"
+                or bool(user.get("room_approver") if isinstance(user, dict) else getattr(user, "room_approver", False)))
     if cap == "wa_schedule":
         return (bool(is_chief) or _user_role(user) == "admin"
                 or _user_bureau_access(user) in ("awa", "all"))
