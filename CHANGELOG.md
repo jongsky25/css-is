@@ -1,5 +1,20 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v5.4 — conference room reservation R7: the Rooms layer on the Office calendar)
+
+- **A `rooms` layer in `office_calendar.LAYERS`** (`kind: room`, 🏢, venue "Conference room", the booked hours as start/end time). An **approved** booking is
+  bureau-wide information: every signed-in viewer sees it in every scope except "mine" (your own requests). A **pending** request is shown, as `tentative` /
+  "awaiting approval", only to its requester and to the people who decide room requests. Withdrawn, declined, cancelled and expired never show. Colour = the
+  requester's unit (grey for guests, whose label is "Guest · organisation"); a guest's name and contact details are never in an item.
+- **Where it shows:** the Agenda and Month layouts (and the home page's Calendar tab), the Kind filter and the icon legend ("Conference room"), and
+  `GET /api/calendar?layers=rooms` (opt-in: the default layers are unchanged). It is deliberately **not** in the Week and Timeline layouts (who is where, not
+  what is booked), nor in the emails, the home "Coming up" card or the assistant's answers, which still ask for entries and activities only.
+- **More menu:** "Reserve the conference room" opens the board on that week.
+- **Personal feed and the approval email share one event:** your own bookings go into your subscribed calendar feed (`room-<id>@office-connect`; approved =
+  confirmed, pending = tentative; withdrawn / cancelled / declined / expired in the last 30 days = `STATUS:CANCELLED` so the app drops them). The `.ics` attached to
+  the approval email now uses the same event, so a calendar app never shows it twice, and its SEQUENCE rises when the booking changes.
+- Tests: `tests/test_calendar_rooms.py`, `tests/test_calendar_rooms_pages.py`.
+
 ## 2026-10-09 (v5.3 — conference room reservation R6: the public QR page for guests)
 
 - **`/room` (no login), permanent.** Short enough to print and type; `/rooms/poster` (section members) prints an A4 page with the QR, the address and three steps.

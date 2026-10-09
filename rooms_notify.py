@@ -305,11 +305,9 @@ def _build(conn, n, base, name, send_to_account):
     if kind in ("approved", "encoded") and res["slot_ids"]:
         by = {s["id"]: s for s in rooms.list_slots(conn, active_only=False)}
         first, last = by[res["slot_ids"][0]], by[res["slot_ids"][-1]]
-        att = [cics.attachment([{"uid": f"room-{res['id']}@office-connect", "sequence": 0, "title": res["title"],
-                                 "status": "confirmed", "start": res["day"], "end": res["day"],
-                                 "start_time": first["start_time"], "end_time": last["end_time"],
-                                 "venue": "Conference room", "description": f"Reference {res['ref_code']}",
-                                 "stamp": res["updated_at"]}], name="conference-room.ics")]
+        import office_calendar as oc
+        att = [cics.attachment([oc.room_event(res, (first["start_time"], last["end_time"]), base)],
+                               name="conference-room.ics")]
     return (feature, *mailer.room_decided_message(name, kind, res["title"], when, res["ref_code"], res["decide_note"],
                                                   mine, sugg or None), att)
 

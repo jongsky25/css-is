@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "5.3"
+APP_VERSION = "5.4"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "5.4",
+        "date": "October 9, 2026",
+        "summary": "Conference room bookings now show on the Office calendar.",
+        "changes": [
+            "Approved room bookings appear on the calendar for everyone, with their hours, so you can see at a glance when the room is taken. A request still waiting for a decision shows only to the person who asked and to the Administrative Section, marked as awaiting approval.",
+            "You can show only the room with the \"Conference room\" type in the filter, and open the room board from the More menu.",
+            "Your own bookings also go to your phone or computer calendar if you subscribe to your calendar feed, and are taken off again if you withdraw or they are cancelled.",
+        ],
+    },
     {
         "version": "5.3",
         "date": "October 9, 2026",
