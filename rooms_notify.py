@@ -89,6 +89,13 @@ def _when(conn, res):
     return f"{d:%a} {d.day} {d:%b %Y}, {rooms.hours_text(conn, res)}"
 
 
+def _series_note(conn, res):
+    """' (+5 more dates in this repeating request)' for the first date of a series, else ''. A series is announced once."""
+    import rooms
+    ss = rooms.series_summary(conn, res) if res.get("series_id") else None
+    return f" (+{ss['total'] - 1} more dates in this repeating request)" if ss else ""
+
+
 def _to_requester(conn, res, kind, text, by=None, bell=True):
     """Notice to whoever the reservation belongs to: an account (bell + email) or a guest (email)."""
     uid = res.get("requester_user_id")
@@ -106,11 +113,12 @@ def on_requested(conn, res):
     """A new request: tell the Administrative Section (email; the bell already counts it)."""
     import rooms
     who, unit, _ext = rooms.requester_label(conn, res)
+    more = _series_note(conn, res)
     for a in approver_accounts(conn):
         if res.get("requester_user_id") == a["id"]:
             continue
         _add(conn, kind="new_request", reservation_id=res["id"], user_id=a["id"], url="/approvals#rooms",
-             text=f"{who}{f' ({unit})' if unit else ''}: {res['title']}, {_when(conn, res)}")
+             text=f"{who}{f' ({unit})' if unit else ''}: {res['title']}, {_when(conn, res)}{more}")
 
 
 def on_received(conn, res):
@@ -142,7 +150,7 @@ def on_decided(conn, res, by=None):
             on_meal(conn, "meal_form", f)
     extra = f" Reason: {res['decide_note']}" if res["status"] == "declined" and res.get("decide_note") else ""
     _to_requester(conn, res, res["status"], f"Your conference room request was {verb}: {res['title']}, "
-                  f"{_when(conn, res)}.{extra}", by=by)
+                  f"{_when(conn, res)}{_series_note(conn, res)}.{extra}", by=by)
 
 
 def on_encoded(conn, res, by=None):
@@ -303,7 +311,7 @@ def _build(conn, n, base, name, send_to_account):
     res = rooms.get_reservation(conn, rid)
     if res is None:
         return None
-    when = _when(conn, res)
+    when = _when(conn, res) + (_series_note(conn, res) if kind in ("new_request", "approved", "declined", "received") else "")
     who, unit, _ext = rooms.requester_label(conn, res)
     if kind in ("new_request", "escalation"):
         if res["status"] != "requested":                 # decided in the meantime: nothing to ask

@@ -3,7 +3,7 @@
 {% from "_rooms_grid.html" import week_grid %}
 {% block title %}Conference room{% endblock %}
 {% block page_width %}full{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/rooms.css?v=20261009e">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/rooms.css?v=20261009f">{% endblock %}
 {% block content %}
 {{ page_header("Conference room", "See what is free, then pick your hours. The Administrative Section approves each request.") }}
 {% include "_rooms_tabs.html" %}
@@ -46,6 +46,15 @@
       </div>
       <p class="rm-summary" id="rm-summary" aria-live="polite">Pick hours on the grid, or fill in the date and times below.</p>
       <p class="rm-clash" id="rm-clash" role="status"></p>
+      {% if series %}
+      <div class="rm-bump rm-series" role="alert">
+        <strong>Check these dates first. Nothing has been requested yet:</strong>
+        <ul>{% for p in series %}<li class="{{ 'ok' if p.ok else 'bad' }}"><span aria-hidden="true">{{ '✓' if p.ok else '✕' }}</span> <b>{{ p.label }}</b>{% if not p.ok %} <small>{{ p.reason }}</small>{% endif %}</li>{% endfor %}</ul>
+        {% set n_ok = series|selectattr('ok')|list|length %}
+        {% if n_ok %}<button class="btn block" type="submit" name="skip_bad" value="1">Request the {{ n_ok }} date{{ '' if n_ok == 1 else 's' }} that work</button>
+        <p class="rm-hint">Or change the hours, the dates or the repeat above and send again.</p>{% else %}<p>None of them can be requested. Change the hours or the dates above.</p>{% endif %}
+      </div>
+      {% endif %}
       {% if bump %}
       <div class="rm-bump" role="alert">
         <strong>These approved bookings are in the way and will be cancelled:</strong>
@@ -78,6 +87,16 @@
         <button type="button" class="btn ghost small" data-from="13:00" data-to="17:00">Afternoon</button>
         <button type="button" class="btn ghost small" data-from="07:00" data-to="19:00">Whole day</button>
       </div>
+
+      <fieldset class="rm-repeat">
+        <legend>Repeat</legend>
+        <select name="repeat" id="rm-repeat" aria-label="How often this repeats">
+          <option value="">Does not repeat</option>
+          <option value="1" {{ 'selected' if f.repeat == '1' }}>Every week</option>
+          <option value="2" {{ 'selected' if f.repeat == '2' }}>Every 2 weeks</option></select>
+        <label class="rm-until">until <input type="date" name="until" id="rm-until" value="{{ f.until }}"></label>
+        <div class="hint">Same hours on each date, up to 12 dates. Dates that can't be had are listed before anything is sent.</div>
+      </fieldset>
 
       <div class="field"><label for="rm-title">Meeting title</label>
         <input id="rm-title" name="title" value="{{ f.title }}" maxlength="200" required></div>

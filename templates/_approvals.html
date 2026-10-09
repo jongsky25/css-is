@@ -83,6 +83,11 @@
             <input type="text" name="note" placeholder="remark or reason">
             {% if r.can_approve %}<button class="ok" type="submit" name="action" value="approve">Approve</button>{% endif %}
             <button class="no" type="submit" name="action" value="decline">Decline</button>
+            {% if r.series and r.series.open > 1 %}
+            <span class="rivals-opt"><b>Repeating request:</b> {{ r.series.open }} of {{ r.series.total }} dates are waiting.
+              <button class="ok" type="submit" name="action" value="approve_series">Approve all {{ r.series.open }}</button>
+              <button class="no" type="submit" name="action" value="decline_series">Decline all {{ r.series.open }}</button></span>
+            {% endif %}
             {% if r.can_approve and r.rivals %}
             <label class="rivals-opt"><input type="checkbox" name="decline_rivals" value="1" checked>
               Also decline the {{ r.rivals|length }} competing request{{ '' if r.rivals|length == 1 else 's' }} and offer {{ 'it' if r.rivals|length == 1 else 'them' }} other times</label>

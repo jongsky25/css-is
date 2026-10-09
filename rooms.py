@@ -191,7 +191,7 @@ _COLS = ("id, ref_code, requester_user_id, ext_name, ext_org, ext_email, ext_pho
          "title, purpose, attendees, modality, day, status, source, decided_by, decided_at, "
          "decide_note, bumped_by_reservation_id, moves_reservation_id, event_id, "
          "calendar_entry_id, meals_requested, created_by, created_at, updated_at, "
-         "ext_email_verified_at, ext_consent_at")
+         "ext_email_verified_at, ext_consent_at, series_id")
 
 
 def _row(conn, r):
@@ -261,7 +261,8 @@ def _validate_slots(conn, slot_ids):
 
 def request(conn, *, title, day, slot_ids, requester_user_id=None, ext=None, purpose=None,
             attendees=None, modality="f2f", meals_requested=False, actor=None, today=None,
-            max_ahead=MAX_DAYS_AHEAD, consent_at=None, event_id=None, source=None, moves_reservation_id=None):
+            max_ahead=MAX_DAYS_AHEAD, consent_at=None, event_id=None, source=None, moves_reservation_id=None,
+            series_id=None, quiet=False):
     """File a request. Internal (requester_user_id) or external (ext = dict of
     name/org/email/phone). Status starts `requested`; nothing is held. `event_id` links it to a
     CSS activity; `source`/`moves_reservation_id` mark a move request (see request_move)."""
@@ -292,12 +293,12 @@ def request(conn, *, title, day, slot_ids, requester_user_id=None, ext=None, pur
         cur = conn.execute(
             "INSERT INTO room_reservation(requester_user_id, ext_name, ext_org, ext_email, ext_phone, "
             "ext_consent_at, title, purpose, attendees, modality, day, status, source, meals_requested, "
-            "event_id, moves_reservation_id, created_by, created_at, updated_at) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?, 'requested', ?,?,?,?,?,?,?)",
+            "event_id, moves_reservation_id, series_id, created_by, created_at, updated_at) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?, 'requested', ?,?,?,?,?,?,?,?)",
             (requester_user_id, ext.get("name"), ext.get("org"), ext.get("email"), ext.get("phone"),
              consent_at, title, (purpose or "").strip() or None, attendees, modality, day_iso,
              source or ("internal" if requester_user_id is not None else "external"),
-             1 if meals_requested else 0, event_id, moves_reservation_id, actor, now, now))
+             1 if meals_requested else 0, event_id, moves_reservation_id, series_id, actor, now, now))
         rid = cur.lastrowid
         conn.execute("UPDATE room_reservation SET ref_code=? WHERE id=?",
                      (f"CR-{_d(day_iso):%y%m}-{rid:04d}", rid))
@@ -313,9 +314,10 @@ def request(conn, *, title, day, slot_ids, requester_user_id=None, ext=None, pur
     out = get_reservation(conn, rid)
     if meals_requested:
         _meal_form(conn, rid, actor)
-    _emit("requested", conn, out)
-    if requester_user_id is None:
-        _emit("received", conn, out)
+    if not quiet:                                          # a series tells the section once, not once per date
+        _emit("requested", conn, out)
+        if requester_user_id is None:
+            _emit("received", conn, out)
     return out
 
 
@@ -330,7 +332,7 @@ def _must_be_open(res, want):
             res["decided_by"], res["decided_at"], res["status"])
 
 
-def approve(conn, rid, by, note=None, today=None, decline_rivals=False):
+def approve(conn, rid, by, note=None, today=None, decline_rivals=False, notify=True):
     """First to act wins. Raises AlreadyDecided if someone already decided, or
     SlotTaken if another reservation holds one of the hours. With decline_rivals the
     other open requests for the same hours are declined in the same transaction (they
@@ -389,11 +391,12 @@ def approve(conn, rid, by, note=None, today=None, decline_rivals=False):
     if res["source"] == "move" and res["moves_reservation_id"]:
         _meals_over(conn, res["moves_reservation_id"], f"The booking moved to {res['ref_code']} ({res['day']}); the new form needs ordering.")
     out = get_reservation(conn, rid)
-    _emit("decided", conn, out, by)
+    if notify:
+        _emit("decided", conn, out, by)
     return out
 
 
-def decline(conn, rid, by, note):
+def decline(conn, rid, by, note, notify=True):
     """Decline an open request. A reason is required: the requester is told it."""
     if not (note or "").strip():
         raise RoomError("Please give a short reason so the requester knows why.")
@@ -407,7 +410,8 @@ def decline(conn, rid, by, note):
              summary=f"{res['title']} on {res['day']}: {note.strip()}", before="requested", after="declined")
     out = get_reservation(conn, rid)
     _meals_over(conn, rid, "The room request was declined.")
-    _emit("decided", conn, out, by)
+    if notify:
+        _emit("decided", conn, out, by)
     return out
 
 
@@ -636,7 +640,7 @@ def queue(conn):
             rivals.append({"id": o["id"], "ref": o["ref_code"], "title": o["title"], "who": on,
                            "hours": hours_text(conn, o)})
         moved = get_reservation(conn, res["moves_reservation_id"]) if res["source"] == "move" and res["moves_reservation_id"] else None
-        out.append({**res, "requester_name": name, "requester_unit": unit, "is_external": ext,
+        out.append({**res, "requester_name": name, "requester_unit": unit, "is_external": ext, "series": series_summary(conn, res),
                     "move_of": ({"ref": moved["ref_code"], "when": queue_when(moved), "status": moved["status"]} if moved else None),
                     "email_unconfirmed": bool(ext and res["ext_email"] and not res["ext_email_verified_at"]),
                     "hours": hours_text(conn, res), "rivals": rivals,
@@ -1237,3 +1241,212 @@ def activity_room_status(conn, ev, user, today=None):
         return dress(lost, state="lost", offers=suggestions_for(conn, lost, n=3, today=today))
     return {"state": "none", "can_act": False, "event_day": ev_day, "event_when": ev_when, "res": None,
             "upcoming": bool(ev_day and _d(ev_day) >= today)}
+
+
+# ----------------------------------------------- the door / TV display (R10) ---
+
+DISPLAY_TOKEN_KEY = "room_display_token"
+DISPLAY_TITLES_KEY = "room_display_titles"          # "0" = show "Reserved" instead of meeting titles
+
+
+def display_token(conn, create=True):
+    """The secret in the TV's address. Made the first time a section member opens the setup page; a new one
+    (`reset_display_token`) kills the old address."""
+    import secrets
+    tok = st.get_setting(conn, DISPLAY_TOKEN_KEY)
+    if not tok and create:
+        tok = secrets.token_urlsafe(24)
+        st.set_setting(conn, DISPLAY_TOKEN_KEY, tok)
+    return tok
+
+
+def reset_display_token(conn):
+    st.set_setting(conn, DISPLAY_TOKEN_KEY, "")
+    return display_token(conn)
+
+
+def display_token_ok(conn, token):
+    import hmac
+    real = st.get_setting(conn, DISPLAY_TOKEN_KEY) or ""
+    return bool(real) and bool(token) and hmac.compare_digest(real, str(token))
+
+
+def display_titles_on(conn):
+    return st.get_setting(conn, DISPLAY_TITLES_KEY, "1") != "0"
+
+
+def display_data(conn, now=None, show_titles=None):
+    """Everything the door screen shows for right now: whether the room is in use, what is next, and today's
+    schedule. A reservation spanning several hours is one line. Titles can be switched off for a screen
+    anyone walking past can read."""
+    now = now or tz.now_local()
+    day = now.date()
+    hhmm = now.strftime("%H:%M")
+    if show_titles is None:
+        show_titles = display_titles_on(conn)
+    closed = None
+    if day.weekday() >= 5:
+        closed = "The conference room is closed at weekends."
+    else:
+        h = st.get_holiday(conn, day)
+        if h:
+            closed = f"Closed today: {h['name']}."
+    blocks = [r for r in conn.execute("SELECT slot_id, reason FROM room_block WHERE day=?", (day.isoformat(),))]
+    if any(b[0] is None for b in blocks):
+        closed = closed or f"Closed today: {blocks[0][1]}."
+    rows = conn.execute(
+        "SELECT r.id, r.title, r.ext_org, r.requester_user_id, MIN(s.start_time), MAX(s.end_time), ou.id "
+        "FROM room_reservation r JOIN room_reservation_slot rs ON rs.reservation_id=r.id JOIN room_slot s ON s.id=rs.slot_id "
+        "LEFT JOIN admin_user a ON a.id=r.requester_user_id LEFT JOIN resource_person rp ON rp.id=a.rp_id "
+        "LEFT JOIN org_unit ou ON ou.id=rp.org_unit_id "
+        "WHERE r.day=? AND r.status='approved' GROUP BY r.id ORDER BY MIN(s.start_time), r.id", (day.isoformat(),)).fetchall()
+    unit_labels = {r[0]: r[1] for r in conn.execute("SELECT id, COALESCE(NULLIF(short_name,''), name) FROM org_unit")}
+    schedule = []
+    for rid, title, ext_org, req, t0, t1, unit_id in rows:
+        who = unit_labels.get(unit_id, "") if req is not None else (f"Guest · {ext_org}" if ext_org else "Guest")
+        schedule.append({"id": rid, "title": title if show_titles else "Reserved", "who": who if show_titles else "", "start": t0, "end": t1,
+                         "label": f"{hour_label(t0)} – {hour_label(t1)}", "state": "now" if t0 <= hhmm < t1 else ("done" if t1 <= hhmm else "next")})
+    current = next((s for s in schedule if s["state"] == "now"), None)
+    upcoming = [s for s in schedule if s["state"] == "next"]
+    nxt = upcoming[0] if upcoming else None
+    close = f"{CLOSE_HOUR:02d}:00"
+    free_until = None
+    if not closed and not current:
+        free_until = nxt["start"] if nxt else (close if hhmm < close else None)
+    return {"now": now, "date_label": f"{day:%A} {day.day} {day:%B %Y}", "time": now.strftime("%H:%M:%S"), "closed": closed,
+            "current": current, "next": nxt, "free_until": free_until, "free_until_label": hour_label(free_until) if free_until else None,
+            "after_hours": bool(not closed and hhmm >= close), "before_hours": bool(not closed and hhmm < f"{OPEN_HOUR:02d}:00"),
+            "schedule": schedule, "blocks": [b[1] for b in blocks], "titles": show_titles}
+
+
+# --------------------------------------------- repeat weekly (R10) ---
+
+MAX_SERIES = 12                       # the most dates one "repeat" may make (a quarter of weekly meetings)
+
+
+class SeriesIssues(RoomError):
+    """Some dates of a repeating request can't be had. `plan` lists every date with ok / reason, so the
+    person sees them BEFORE anything is filed and can request just the ones that work."""
+    def __init__(self, msg, plan):
+        super().__init__(msg)
+        self.plan = plan
+
+
+def series_dates(first_day, every_weeks, until):
+    """first_day, then every `every_weeks` weeks, up to `until` (inclusive) and MAX_SERIES dates."""
+    out, d = [], _d(first_day)
+    step = timedelta(weeks=every_weeks)
+    while d <= _d(until) and len(out) < MAX_SERIES:
+        out.append(d)
+        d += step
+    return out
+
+
+def plan_series(conn, day, slot_ids, every_weeks, until, today=None, max_ahead=MAX_DAYS_AHEAD):
+    """Every date of a repeating request with whether it can be requested and, if not, why."""
+    if every_weeks not in (1, 2):
+        raise RoomError("Choose to repeat every week or every 2 weeks.")
+    if _d(until) < _d(day):
+        raise RoomError("The repeat must end on or after the first date.")
+    today = today or tz.today_local()
+    plan = []
+    for d in series_dates(day, every_weeks, until):
+        try:
+            precheck(conn, d, slot_ids, today, max_ahead)
+            plan.append({"day": d.isoformat(), "label": f"{d:%a} {d.day} {d:%b}", "ok": True, "reason": None})
+        except RoomError as e:
+            plan.append({"day": d.isoformat(), "label": f"{d:%a} {d.day} {d:%b}", "ok": False, "reason": str(e)})
+    return plan
+
+
+def request_series(conn, *, every_weeks, until, skip_bad=False, day, slot_ids, **kw):
+    """File a request for each date of a repeat. Without `skip_bad`, any date that can't be had raises
+    SeriesIssues and nothing is filed. The dates share a `series_id` (the first one's id); the section is
+    told once, and can approve or decline the whole series or one date at a time."""
+    max_ahead = kw.get("max_ahead", MAX_DAYS_AHEAD)
+    plan = plan_series(conn, day, slot_ids, every_weeks, until, kw.get("today"), max_ahead)
+    bad, good = [p for p in plan if not p["ok"]], [p for p in plan if p["ok"]]
+    if bad and not skip_bad:
+        raise SeriesIssues(f"{len(bad)} of the {len(plan)} dates can't be requested.", plan)
+    if not good:
+        raise SeriesIssues("None of those dates can be requested.", plan)
+    made, head = [], None
+    for p in good:
+        r = request(conn, day=p["day"], slot_ids=slot_ids, series_id=head["id"] if head else None, quiet=True, **kw)
+        if head is None:
+            head = r
+            conn.execute("UPDATE room_reservation SET series_id=? WHERE id=?", (r["id"], r["id"]))
+            conn.commit()
+            head = r = get_reservation(conn, r["id"])
+        else:
+            r = get_reservation(conn, r["id"])
+        made.append(r)
+    if len(made) > 1:
+        st.audit(conn, kw.get("actor") or "system", "room_series", target_type="room_reservation", target_id=head["id"],
+                 summary=f"{head['title']}: {len(made)} dates, every {every_weeks} week(s) from {head['day']}")
+    _emit("requested", conn, head)
+    return {"reservations": made, "skipped": bad}
+
+
+def series_members(conn, rid):
+    """Every reservation of the same repeating request as `rid` (or just it), by date."""
+    res = get_reservation(conn, rid)
+    if res is None:
+        return []
+    if not res["series_id"]:
+        return [res]
+    return [_row(conn, r) for r in conn.execute(
+        f"SELECT {_COLS} FROM room_reservation WHERE series_id=? ORDER BY day, id", (res["series_id"],))]
+
+
+def series_summary(conn, res):
+    """For a card: how many dates are in the series and how many are still open, or None for a single request."""
+    if not res.get("series_id"):
+        return None
+    ms = series_members(conn, res["id"])
+    open_ = [m for m in ms if m["status"] == "requested"]
+    return {"total": len(ms), "open": len(open_), "approved": sum(1 for m in ms if m["status"] == "approved")} if len(ms) > 1 else None
+
+
+def approve_series(conn, rid, by, note=None, today=None, decline_rivals=False):
+    """Approve every still-open date of the series `rid` belongs to. A date something else already holds is
+    skipped and reported, never forced. The requester is told once. Returns {"approved": [...], "skipped": [(res, why)]}."""
+    today = today or tz.today_local()
+    approved, skipped = [], []
+    for m in series_members(conn, rid):
+        if m["status"] != "requested":
+            continue
+        try:
+            approved.append(approve(conn, m["id"], by, note, today=today, decline_rivals=decline_rivals, notify=False))
+        except RoomError as e:
+            skipped.append((m, str(e)))
+    if not approved and not skipped:
+        raise RoomError("Nothing in this series is waiting for a decision.")
+    if approved:
+        _emit("decided", conn, approved[0], by)
+    return {"approved": approved, "skipped": skipped}
+
+
+def decline_series(conn, rid, by, note):
+    """Decline every still-open date of the series, with one reason; the requester is told once."""
+    done = []
+    for m in series_members(conn, rid):
+        if m["status"] == "requested":
+            done.append(decline(conn, m["id"], by, note, notify=False))
+    if not done:
+        raise RoomError("Nothing in this series is waiting for a decision.")
+    _emit("decided", conn, done[0], by)
+    return {"declined": done}
+
+
+def withdraw_series(conn, rid, user_id, reason=None, actor=None, today=None):
+    """The requester takes back every live date of their repeating request from today on."""
+    today = today or tz.today_local()
+    n = 0
+    for m in series_members(conn, rid):
+        if m["status"] in ("requested", "approved") and _d(m["day"]) >= today:
+            withdraw(conn, m["id"], user_id, reason=reason, actor=actor)
+            n += 1
+    if not n:
+        raise RoomError("There is nothing left in this series to withdraw.")
+    return n

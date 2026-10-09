@@ -1,5 +1,17 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v5.7 — conference room reservation R10: the door display and repeat-weekly requests)
+
+- **Door / TV display.** `/rooms/display/<secret>` (no sign-in; a signed-in person can use `/rooms/display`): "In use now" or "Free until ...", "Next", today's schedule (a multi-hour booking is one line), the time,
+  and a QR to `/room`; "Closed" for weekends, holidays and whole-day closures. Dark, large type for 1920x1080, one column on a portrait tablet; reloads itself every 60 s and ticks its own clock; never cached or indexed.
+  Only approved bookings are shown. The secret is made on first visit to the **Door display** tab (section members) and **Make a new address** kills the old one at once; "Show meeting titles and who booked" can be
+  switched off, leaving only "Reserved" and the hours.
+- **Repeat weekly.** In the request panel: Repeat every week / every 2 weeks until a date (at most 12 dates). `rooms.plan_series` checks every date first (notice, weekends, holidays, closures, booked hours);
+  if any can't be had the page lists them with the reason and files nothing until "Request the N dates that work". The dates share a `series_id`. The section is told once for the whole series ("+4 more dates"),
+  the Approvals card offers **Approve all N / Decline all N** (a date something else holds is skipped and reported, never forced) as well as each date alone, the requester hears once, each date gets its own
+  meal form, and My reservations shows "Repeats: N dates" with **Withdraw the whole series** (today onward).
+- Tests: `tests/test_rooms_series.py`, `tests/test_rooms_series_pages.py`, `tests/test_rooms_display.py`.
+
 ## 2026-10-09 (v5.6 — conference room reservation R9: meals, from the form to delivery)
 
 - **The form (`rooms_meals.py`, tables `room_meal` + `room_meal_item`):** 1. Title of the Activity (from the reservation), 2. Number of Pax, 3. Special Request for Meals, 4. Breakfast / AM snack /

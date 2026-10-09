@@ -56,7 +56,7 @@ def make_router(templates, get_conn, today_local, *, base_url=None, qr_data_uri=
         raw = parse_qs((await request.body()).decode("utf-8"), keep_blank_values=True)
         return {k: (v[0] if v else "").strip() for k, v in raw.items()}
 
-    def _board_page(request, conn, q, *, f=None, error="", status_code=200, ok=None, bump=None):
+    def _board_page(request, conn, q, *, f=None, error="", status_code=200, ok=None, bump=None, series=None):
         today = today_local()
         f = f or {}
         wanted = _date_or_none(q.get("week")) or _date_or_none(f.get("day")) or today
@@ -83,7 +83,7 @@ def make_router(templates, get_conn, today_local, *, base_url=None, qr_data_uri=
             "active_day": active, "f": form, "error": error, "ok": ok, "slots": slots,
             "mine_open": mine_open, "earliest": board["earliest"], "today": today,
             "can_encode": can_encode, "accounts": rooms.account_options(conn) if can_encode else [],
-            "bump": bump,
+            "bump": bump, "series": series,
         }, status_code=status_code)
 
     @router.get("/rooms", response_class=HTMLResponse)
@@ -115,19 +115,28 @@ def make_router(templates, get_conn, today_local, *, base_url=None, qr_data_uri=
                 attendees = f.get("attendees", "")
                 if attendees and not attendees.isdigit():
                     raise rooms.RoomError("Attendees must be a number.")
-                res = rooms.request(
-                    conn, title=f.get("title"), day=day, slot_ids=ids,
-                    requester_user_id=user["id"], purpose=f.get("purpose"),
-                    attendees=int(attendees) if attendees else None,
-                    modality=f.get("modality") or "f2f",
-                    meals_requested=bool(f.get("meals")), actor=user["username"],
-                    today=today_local())
+                kw = dict(title=f.get("title"), requester_user_id=user["id"], purpose=f.get("purpose"),
+                          attendees=int(attendees) if attendees else None, modality=f.get("modality") or "f2f",
+                          meals_requested=bool(f.get("meals")), actor=user["username"], today=today_local())
+                if f.get("repeat") in ("1", "2"):
+                    until = _date_or_none(f.get("until"))
+                    if until is None:
+                        raise rooms.RoomError("Say the last date the meeting repeats on.")
+                    made = rooms.request_series(conn, every_weeks=int(f["repeat"]), until=until, skip_bad=bool(f.get("skip_bad")),
+                                                day=day, slot_ids=ids, **kw)
+                    res = made["reservations"][0]
+                    res["_n"] = len(made["reservations"])
+                else:
+                    res = rooms.request(conn, day=day, slot_ids=ids, **kw)
+            except rooms.SeriesIssues as e:
+                return _board_page(request, conn, {"week": f.get("day", "")}, f=f, status_code=409, series=e.plan,
+                                   error=f"{e} Nothing has been requested yet.")
             except rooms.RoomError as e:
                 return _board_page(request, conn, {"week": f.get("day", "")}, f=f, error=str(e),
                                    status_code=400)
         finally:
             conn.close()
-        return RedirectResponse(f"/rooms/mine?ok={res['ref_code']}", status_code=303)
+        return RedirectResponse(f"/rooms/mine?ok={res['ref_code']}" + (f"&series={res['_n']}" if res.get("_n", 1) > 1 else ""), status_code=303)
 
     @router.get("/rooms/mine", response_class=HTMLResponse)
     def rooms_mine(request: Request):
@@ -146,6 +155,7 @@ def make_router(templates, get_conn, today_local, *, base_url=None, qr_data_uri=
                 ev = conn.execute("SELECT event_token, title FROM event WHERE id=?", (r["event_id"],)).fetchone() if r["event_id"] else None
                 r["activity"] = {"token": ev[0], "title": ev[1]} if ev else None
                 r["offers"] = rooms.suggestions_for(conn, r, today=today)
+                r["series"] = rooms.series_summary(conn, r)
                 r["was_bumped"] = r["status"] == "cancelled" and r["bumped_by_reservation_id"] is not None
             upcoming = sorted((r for r in rows if r["status"] in ("requested", "approved")
                                and r["day_date"] >= today), key=lambda r: (r["day"], r["id"]))
@@ -160,8 +170,11 @@ def make_router(templates, get_conn, today_local, *, base_url=None, qr_data_uri=
             elif _REF.match(q.get("ok", "")):
                 r = rooms.get_by_ref(conn, q["ok"])
                 if r and r["requester_user_id"] == user["id"]:
-                    msg = (f"Request {r['ref_code']} sent. The Administrative Section will decide; "
-                           "you'll see the result here.")
+                    n = q.get("series", "")
+                    msg = (f"Request {r['ref_code']} sent" + (f" for {n} dates" if n.isdigit() else "") +
+                           ". The Administrative Section will decide; you'll see the result here.")
+            elif q.get("done") == "series":
+                msg = f"Withdrew {q.get('n', '')} date(s) of the repeating request. The hours are free again."[:200]
             elif q.get("done") == "withdrawn":
                 msg = "Reservation withdrawn. The hours are free again."
             elif q.get("err"):
@@ -173,6 +186,20 @@ def make_router(templates, get_conn, today_local, *, base_url=None, qr_data_uri=
                 "msg": msg, "err": err, "mine_open": len(upcoming), "today": today})
         finally:
             conn.close()
+
+    @router.post("/rooms/{rid}/withdraw-series")
+    async def rooms_withdraw_series(rid: int, request: Request):
+        f = await _posted(request)
+        user = request.state.user
+        conn = get_conn()
+        try:
+            try:
+                n = rooms.withdraw_series(conn, rid, user["id"], reason=f.get("reason"), actor=user["username"], today=today_local())
+            except rooms.RoomError as e:
+                return RedirectResponse("/rooms/mine?" + urlencode({"err": str(e)}), status_code=303)
+        finally:
+            conn.close()
+        return RedirectResponse("/rooms/mine?" + urlencode({"done": "series", "n": n}), status_code=303)
 
     @router.post("/rooms/{rid}/withdraw")
     async def rooms_withdraw(rid: int, request: Request):
@@ -570,6 +597,74 @@ def make_router(templates, get_conn, today_local, *, base_url=None, qr_data_uri=
             conn.close()
         return RedirectResponse(f"/room/t/{quote(auth.make_room_track_token(new['id']))}?new=1", status_code=303)
 
+    # ---- the door / TV display (R10) ----
+    def _display_response(request, conn):
+        base = base_url(request) if base_url else str(request.base_url).rstrip("/")
+        data = rooms.display_data(conn, rooms.tz.now_local())
+        resp = templates.TemplateResponse(request, "rooms_display.html", {
+            "d": data, "qr": qr_data_uri(base + "/room") if qr_data_uri else None, "url": base + "/room", "show_scope": False})
+        resp.headers["Cache-Control"] = "no-store"
+        resp.headers["X-Robots-Tag"] = "noindex, nofollow"
+        return resp
+
+    @router.get("/rooms/display", response_class=HTMLResponse)
+    def rooms_display(request: Request):
+        """The door screen for anyone signed in (a laptop on a lectern). A TV, which can't sign in, uses its own
+        private address from the setup page."""
+        conn = get_conn()
+        try:
+            return _display_response(request, conn)
+        finally:
+            conn.close()
+
+    @router.get("/rooms/display/{token}", response_class=HTMLResponse)
+    def rooms_display_token(request: Request, token: str):
+        conn = get_conn()
+        try:
+            if not rooms.display_token_ok(conn, token):
+                return HTMLResponse("This display address isn't valid. Ask the Administrative Section for the current one.", status_code=404,
+                                    headers={"X-Robots-Tag": "noindex, nofollow"})
+            return _display_response(request, conn)
+        finally:
+            conn.close()
+
+    @router.get("/rooms/display-setup", response_class=HTMLResponse)
+    def rooms_display_setup(request: Request):
+        return _display_setup(request)
+
+    def _display_setup(request, msg=""):
+        conn = get_conn()
+        try:
+            if not rooms.is_room_admin(conn, request.state.user):
+                return _forbidden(request)
+            base = base_url(request) if base_url else str(request.base_url).rstrip("/")
+            url = f"{base}/rooms/display/{rooms.display_token(conn)}"
+            return templates.TemplateResponse(request, "rooms_display_setup.html", {
+                "nav_active": "rooms", "tab": "display", "url": url, "qr": qr_data_uri(url) if qr_data_uri else None,
+                "titles": rooms.display_titles_on(conn), "msg": msg or (request.query_params.get("msg") or "")[:200],
+                "room_pending": rooms.pending_count(conn), "mine_open": 0})
+        finally:
+            conn.close()
+
+    @router.post("/rooms/display-setup")
+    async def rooms_display_setup_post(request: Request):
+        f = await _posted(request)
+        conn = get_conn()
+        try:
+            if not rooms.is_room_admin(conn, request.state.user):
+                return _forbidden(request)
+            if f.get("action") == "reset":
+                rooms.reset_display_token(conn)
+                msg = "New address made. The old one no longer works, so update the TV."
+            elif f.get("action") == "titles":
+                st.set_setting(conn, rooms.DISPLAY_TITLES_KEY, "1" if f.get("show_titles") else "0")
+                msg = "Saved."
+            else:
+                msg = ""
+        finally:
+            conn.close()
+        return RedirectResponse("/rooms/display-setup?" + urlencode({"msg": msg}), status_code=303)
+
     # ---- the printable QR poster (section members) ----
     @router.get("/rooms/poster", response_class=HTMLResponse)
     def rooms_poster(request: Request):
@@ -606,6 +701,16 @@ def make_router(templates, get_conn, today_local, *, base_url=None, qr_data_uri=
                 elif f.get("action") == "decline":
                     res = rooms.decline(conn, rid, user["username"], f.get("note"))
                     q = {"ok": f"Declined {res['ref_code']}."}
+                elif f.get("action") == "approve_series":
+                    out = rooms.approve_series(conn, rid, user["username"], f.get("note"), today=today_local(),
+                                               decline_rivals=bool(f.get("decline_rivals")))
+                    msg = f"Approved {len(out['approved'])} date(s)."
+                    if out["skipped"]:
+                        msg += " Not approved: " + "; ".join(f"{m['day']} ({why.rstrip('.')})" for m, why in out["skipped"]) + "."
+                    q = {"ok": msg}
+                elif f.get("action") == "decline_series":
+                    out = rooms.decline_series(conn, rid, user["username"], f.get("note"))
+                    q = {"ok": f"Declined {len(out['declined'])} date(s)."}
                 else:
                     raise rooms.RoomError("Choose Approve or Decline.")
             except rooms.RoomError as e:

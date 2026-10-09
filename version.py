@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "5.6"
+APP_VERSION = "5.7"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "5.7",
+        "date": "October 9, 2026",
+        "summary": "A door screen for the conference room, and meetings that repeat.",
+        "changes": [
+            "New door display for a TV or tablet by the room: who has the room now, what is next, and today's schedule in large type, with a QR code to request it. It refreshes itself every minute. The Administrative Section sets it up from the Door display tab and can hide meeting titles if the screen faces a corridor.",
+            "A weekly meeting no longer needs a request for every date. Choose Repeat (every week or every 2 weeks) and an end date, and the dates that can't be had are listed first so you can request the ones that work.",
+            "The Administrative Section approves or declines a whole repeating request in one click, or one date at a time. You hear back once, and you can withdraw every remaining date together.",
+        ],
+    },
     {
         "version": "5.6",
         "date": "October 9, 2026",

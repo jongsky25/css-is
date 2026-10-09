@@ -200,3 +200,13 @@ button.rm-cell:focus-visible { outline:3px solid var(--accent); outline-offset:1
 .rm-special { margin:.2rem 0 .6rem; padding:.4rem .6rem; background:var(--amber-bg); border:1px solid var(--amber-ln); border-radius:var(--r1); }
 .rm-tagform { display:flex; flex-wrap:wrap; gap:.3rem; align-items:center; } .rm-tagform input[name=note] { width:10rem; font-size:max(16px, .9rem); padding:.25rem .4rem; }
 .rm-tagall { margin-top:.6rem; }
+
+/* ---- door display setup ---- */
+.rm-setup { margin-bottom:1rem; } .rm-setup h2 { margin-top:0; font-size:1.1rem; } .rm-url { word-break:break-all; font-weight:700; }
+
+/* ---- repeat weekly ---- */
+.rm-repeat { border:1px solid var(--line); border-radius:var(--r2); padding:.5rem .7rem; margin:0 0 var(--s4); }
+.rm-repeat legend { font-weight:600; padding:0 .3rem; } .rm-repeat select, .rm-repeat input { font-size:max(16px, 1rem); }
+.rm-until { display:inline-flex; gap:.4rem; align-items:center; margin-left:.4rem; }
+.rm-series ul { list-style:none; padding:0; margin:.4rem 0 .6rem; } .rm-series li { padding:.15rem 0; } .rm-series li.bad { color:var(--red); } .rm-series li.ok { color:var(--green); }
+.rm-series small { display:block; color:var(--soft); margin-left:1.4rem; }

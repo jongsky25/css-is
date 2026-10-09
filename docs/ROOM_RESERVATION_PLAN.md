@@ -1,6 +1,6 @@
 # Conference Room Reservation — plan v2
 
-**Status:** in progress. Built so far: R1 (rules), R2 (board and request pages), R3 (approvers and queue), R4 (encode, "Book anyway", closures, suggestions), R5 (notifications), R6 (public QR page and guest tracking link), R7 (the Rooms layer on the Office calendar), R8 (CSS activity link, moves and banners), R9 (meals: the form and the ordering page).
+**Status:** built (R1 to R10), awaiting review and merge. Built so far: R1 (rules), R2 (board and request pages), R3 (approvers and queue), R4 (encode, "Book anyway", closures, suggestions), R5 (notifications), R6 (public QR page and guest tracking link), R7 (the Rooms layer on the Office calendar), R8 (CSS activity link, moves and banners), R9 (meals: the form and the ordering page), R10 (door display and repeat-weekly requests).
 **Scope:** the bureau's one conference room.
 
 **Owner decisions so far:**

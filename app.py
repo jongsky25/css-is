@@ -1896,7 +1896,7 @@ def invalidate_atoms():
 # =====================================================================
 
 _PUBLIC_PREFIXES = ("/r/", "/photo/", "/e/", "/static/", "/lang/", "/wellness/decide/",
-                    "/whereabouts/", "/calendar/feed/", "/rooms/decide/", "/room/t/")
+                    "/whereabouts/", "/calendar/feed/", "/rooms/decide/", "/room/t/", "/rooms/display/")
 _PUBLIC_EXACT = {"/room", "/room/", "/room/day", "/seq", "/login", "/logout", "/favicon.ico",
                  "/set-password", "/forgot", "/reset-password", "/health",
                  "/sw.js", "/manifest.webmanifest",

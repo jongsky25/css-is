@@ -397,6 +397,7 @@ def init_db(conn):
         ext_phone         TEXT,
         ext_email_verified_at TEXT,        -- set when the guest first opens their tracking link
         ext_consent_at    TEXT,            -- Data Privacy Act consent ticked on the public form
+        series_id         INTEGER,         -- the first reservation of a "repeat weekly" series; NULL = a single one
         on_behalf_of      TEXT,
         title             TEXT NOT NULL,
         purpose           TEXT,
@@ -774,6 +775,8 @@ def _add_missing_columns(conn):
     for col in ("ext_email_verified_at", "ext_consent_at"):       # added with the public QR page (R6)
         if rr0 and col not in rr0:
             conn.execute(f"ALTER TABLE room_reservation ADD COLUMN {col} TEXT")
+    if rr0 and "series_id" not in rr0:                              # added with repeat-weekly requests (R10)
+        conn.execute("ALTER TABLE room_reservation ADD COLUMN series_id INTEGER")
     au0 = {row[1] for row in conn.execute("PRAGMA table_info(admin_user)")}
     for col in ("bday_notify", "birthday_coordinator", "cal_email_week", "cal_email_daybefore",
                 "cal_feed_birthdays"):
@@ -3671,6 +3674,7 @@ _AUDIT_ACTIONS = {
     "room_expire":         ("Expired a room request", "Conference room"),
     "room_purge_guests":   ("Removed old guest details", "Conference room"),
     "room_meal_edit":      ("Edited a room meal form", "Conference room"),
+    "room_series":         ("Requested a repeating room booking", "Conference room"),
     "room_meal_tag":       ("Tagged a room meal order", "Conference room"),
     "room_encode":         ("Encoded a room booking", "Conference room"),
     "room_cancel":         ("Cancelled a room booking", "Conference room"),
