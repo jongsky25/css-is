@@ -1,5 +1,15 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v6.7 — colleagues and their basic status)
+
+`docs/HOME_SEARCH_ASSISTANT_PLAN.md` Phase 5. A deliberate widening of who can see whom, built narrowly and switchable.
+
+- **`storage.basic_status_for_day(conn, day) -> {user_id: state}`:** `state` is exactly one of `onsite`, `wfh`, `field`, `leave`, `off`, `unknown`. Reported status beats a calendar trip beats the fortnight's filing, through a new shared helper `_wa_person_day` that `work_arrangement_day` (the team page) now also calls, so the two cannot disagree. A weekend or a holiday is `off` for everyone. Read from an unscoped roster of linked staff; memoized 60 s per (database, day) (`basic_status_clear_cache`). No note, remarks, place, leave type or reason, arrangement label, `undeclared` or `plotted` ever leaves it.
+- **Admin switch:** setting `colleague_status_scope` (`bureau`, the default, or `team`), on `/admin/work-arrangement`; `colleague_status_for(conn, viewer, day)` applies it with `team_scope_for_user(area="awa")`, so in `team` an unlinked account sees no status.
+- **Search:** a `Colleagues` source (scope `all` only) matching name, nickname, position or unit, five at most, an exact first name or nickname first. Hint: `Position · Unit · In the office today` (or `no status`). Links to `/people/{user_id}`.
+- **`GET /people/{user_id}`:** signed-in only; 404 for an unknown or unlinked id. Photo or initials, name, position, unit, today's basic status, who is away in the next seven days (from the calendar as the viewer; a trip's title and a leave's reason are not shown), a shared birthday, and a birthday-card link when one can be sent. No email, phone, notes, filing history or wellness data.
+- **Unchanged:** `/work-arrangement/day`, the roster, and the home "in the office today" card stay team-scoped. Tests: `tests/test_colleague_status.py`.
+
 ## 2026-10-09 (v6.6 — search the rest of the office)
 
 `docs/HOME_SEARCH_ASSISTANT_PLAN.md` Phase 4. Five new `search_sources` sources, scope `all` only (the `/css` box never shows them); each calls the function behind the page it links to, as the signed-in person.

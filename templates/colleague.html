@@ -1,0 +1,36 @@
+{% extends "dash_layout.html" %}
+{% block title %}{{ p.name }}{% endblock %}
+{% block content %}
+<style>
+  .cc { max-width:520px; margin:1.2rem auto; background:var(--surface); border:1px solid var(--line);
+        border-radius:14px; padding:1.2rem 1.3rem; box-shadow:var(--shadow); }
+  .cc-head { display:flex; align-items:center; gap:1rem; }
+  .cc-photo { width:72px; height:72px; border-radius:50%; background:var(--accent-bg); color:var(--accent);
+              display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.4rem;
+              overflow:hidden; flex:0 0 auto; }
+  .cc-photo img { width:100%; height:100%; object-fit:cover; }
+  .cc h1 { margin:0; font-size:1.35rem; }
+  .cc-sub { color:var(--soft); margin:.15rem 0 0; font-size:.9rem; }
+  .cc-status { display:inline-block; margin:1rem 0 .2rem; padding:.25rem .8rem; border-radius:999px; font-weight:700;
+               font-size:.85rem; background:var(--surface-2); border:1px solid var(--line); }
+  .cc-status.onsite { background:var(--green-bg); color:var(--green); border-color:var(--green-ln); }
+  .cc h2 { font-size:.8rem; text-transform:uppercase; letter-spacing:.05em; color:var(--soft); margin:1.1rem 0 .3rem; }
+  .cc ul { margin:0; padding-left:1.1rem; }
+</style>
+<div class="cc">
+  <div class="cc-head">
+    <span class="cc-photo">{% if p.has_photo %}<img src="/photo/{{ p.rp_id }}" alt="">{% else %}{{ initials }}{% endif %}</span>
+    <div>
+      <h1>{{ p.name }}</h1>
+      <p class="cc-sub">{{ p.position }}{% if p.position and p.unit %} · {% endif %}{{ p.unit }}</p>
+    </div>
+  </div>
+  <span class="cc-status {{ state or 'unknown' }}">{{ status_label }}{% if state and state != "off" %} today{% endif %}</span>
+  {% if away %}
+  <h2>Away in the next 7 days</h2>
+  <ul>{% for a in away %}<li>{{ a.what }} · {{ a.when }}</li>{% endfor %}</ul>
+  {% endif %}
+  {% if birthday %}<h2>Birthday</h2><p style="margin:0">🎂 {{ birthday }}</p>{% endif %}
+  {% if can_card %}<p><a class="btn" href="/birthday/card/{{ p.user_id }}">💌 Send a birthday card</a></p>{% endif %}
+</div>
+{% endblock %}

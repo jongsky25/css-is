@@ -29,6 +29,7 @@ import uuid
 import re
 import difflib
 from datetime import datetime, timedelta, date, time
+import time as _clock
 import pandas as pd
 import css_is_engine as eng
 import tzutil as tz  # local (PH) wall-clock — never stamp with the server clock
@@ -9426,6 +9427,24 @@ def work_arrangement_coverage_flag(conn, row):
 
 # ---- the period roster (the ANNEX C body, on screen and in print) ----------
 
+def _linked_staff_rows(conn, linked_only=False):
+    """Every active staff account, unscoped, whose directory person (if any) is not archived: the
+    people the roster is drawn from. `linked_only` also drops accounts with no directory person,
+    which is what colleague search and basic status want (the roster keeps them: its blanks are
+    the point)."""
+    staff_sql, staff_params = _staff_only_sql()
+    return conn.execute("""
+        SELECT a.id, a.username, rp.name, rp.position, ou.short_name, ou.path,
+               a.rp_id, (rp.photo IS NOT NULL), a.avatar_kind
+        FROM admin_user a
+        LEFT JOIN resource_person rp ON rp.id = a.rp_id
+        LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id
+        WHERE a.active = 1 AND rp.archived_at IS NULL AND """ + staff_sql + (
+            " AND a.rp_id IS NOT NULL" if linked_only else "") + """
+        ORDER BY ou.path, rp.name, a.username
+    """, staff_params).fetchall()
+
+
 def work_arrangement_roster(conn, period_start, user=None, tagged=None):
     """Every participating account for a period, filed or not, ordered the way
     ANNEX C groups them (by division/section, then name).
@@ -9440,16 +9459,7 @@ def work_arrangement_roster(conn, period_start, user=None, tagged=None):
     (user=None) — which is what the ANNEX C export makes — sees the whole
     bureau."""
     scope = _org_scope_for_user(conn, user, area="awa") if user else None
-    staff_sql, staff_params = _staff_only_sql()
-    rows = conn.execute("""
-        SELECT a.id, a.username, rp.name, rp.position, ou.short_name, ou.path,
-               a.rp_id, (rp.photo IS NOT NULL), a.avatar_kind
-        FROM admin_user a
-        LEFT JOIN resource_person rp ON rp.id = a.rp_id
-        LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id
-        WHERE a.active = 1 AND rp.archived_at IS NULL AND """ + staff_sql + """
-        ORDER BY ou.path, rp.name, a.username
-    """, staff_params).fetchall()
+    rows = _linked_staff_rows(conn)
     live = {}
     qs = ",".join("?" * len(_WA_LIVE))
     for r in conn.execute(
@@ -9552,6 +9562,41 @@ def work_arrangement_day_step(day, delta):
     return d
 
 
+def _wa_person_day(r, day, reported, trips, asked):
+    """(state, row) for ONE roster row on one working day — the single place that decides
+    where a person is. The team page (work_arrangement_day) and the bureau-wide basic status
+    (basic_status_for_day) both call this, so they can never disagree.
+
+    Precedence: what the person reported for the day, then a trip on the calendar, then the
+    fortnight's filing."""
+    rep = reported.get(r["user_id"])
+    if rep and rep["status"] in WHEREABOUTS_DAY_STATE:
+        # The person's own word for the day outranks the fortnight's
+        # filing (and a "No AWA" tag): they reported it this week.
+        state = WHEREABOUTS_DAY_STATE[rep["status"]]
+        row = {**r, "day_state": state, "reported": True,
+               "remarks": rep["note"] or ""}
+        if state in ("field", "leave"):
+            row["arrangement_label"] = WHEREABOUTS_LABELS[rep["status"]]
+            row["status"] = ""
+        elif state == "onsite":
+            row["arrangement_label"] = WHEREABOUTS_LABELS["office"]
+            row["status"] = ""
+        return state, row
+    trip = trips.get((r["user_id"], day.isoformat()))
+    if rep is None and trip:       # layer 3: a trip on the calendar, not yet confirmed
+        return "field", {
+            **r, "day_state": "field", "reported": False, "arrangement_label": "Field",
+            "status": "", "remarks": trip["note"] if trip["public"] else "",
+            "from_calendar": True,
+            "undeclared": r["user_id"] in asked}
+    state = _wa_day_state(r, day)
+    # An "awa" report is still a report — it just follows the filing.
+    return state, {**r, "day_state": state,
+                   "reported": rep is not None,
+                   "undeclared": r["user_id"] in asked and rep is None}
+
+
 def work_arrangement_day(conn, day, user=None):
     """Who is physically in the office on ONE date, by name — and for whoever
     is not, whether that is a day off or a day working from home.
@@ -9596,39 +9641,110 @@ def work_arrangement_day(conn, day, user=None):
             (whereabouts_week_start(day).isoformat(),))}
         out["wb_tracked"] = bool(asked)
         for r in work_arrangement_roster(conn, ps, user):
-            rep = reported.get(r["user_id"])
-            if rep and rep["status"] in WHEREABOUTS_DAY_STATE:
-                # The person's own word for the day outranks the fortnight's
-                # filing (and a "No AWA" tag): they reported it this week.
-                state = WHEREABOUTS_DAY_STATE[rep["status"]]
-                row = {**r, "day_state": state, "reported": True,
-                       "remarks": rep["note"] or ""}
-                if state in ("field", "leave"):
-                    row["arrangement_label"] = WHEREABOUTS_LABELS[rep["status"]]
-                    row["status"] = ""
-                elif state == "onsite":
-                    row["arrangement_label"] = WHEREABOUTS_LABELS["office"]
-                    row["status"] = ""
-                out["groups"][state].append(row)
-                continue
-            trip = trips.get((r["user_id"], day.isoformat()))
-            if rep is None and trip:       # layer 3: a trip on the calendar, not yet confirmed
-                out["groups"]["field"].append({
-                    **r, "day_state": "field", "reported": False, "arrangement_label": "Field",
-                    "status": "", "remarks": trip["note"] if trip["public"] else "",
-                    "from_calendar": True,
-                    "undeclared": r["user_id"] in asked})
-                continue
-            state = _wa_day_state(r, day)
-            # An "awa" report is still a report — it just follows the filing.
-            out["groups"][state].append({**r, "day_state": state,
-                                         "reported": rep is not None,
-                                         "undeclared": r["user_id"] in asked and rep is None})
+            state, row = _wa_person_day(r, day, reported, trips, asked)
+            out["groups"][state].append(row)
     out["counts"] = {k: len(v) for k, v in out["groups"].items()}
     out["undeclared"] = sum(1 for g in out["groups"].values()
                             for p in g if p.get("undeclared"))
     out["headcount"] = sum(out["counts"].values())
     return out
+
+
+# ---- basic colleague status (visible to every signed-in user) --------------
+#
+# A deliberate widening of who can see whom: search and the colleague card show where a
+# colleague is TODAY in six coarse words, bureau-wide, to everyone signed in. The team page
+# (work_arrangement_day) stays scoped exactly as it was. What leaves this module is a bare
+# string per person — never a note, a place, a leave type or reason, an arrangement label, or
+# the "undeclared"/"plotted" bookkeeping. An admin can set it back to "team" (below).
+
+BASIC_STATES = ("onsite", "wfh", "field", "leave", "off", "unknown")
+BASIC_STATUS_LABELS = {"onsite": "In the office", "wfh": "Working from home", "field": "In the field",
+                       "leave": "On leave", "off": "Off today", "unknown": "no status"}
+_BASIC_FROM_GROUP = {"onsite": "onsite", "wfh": "wfh", "field": "field", "leave": "leave",
+                     "dayoff": "off",
+                     # No AWA (with a stated reason) and "nothing filed" say nothing basic about today
+                     "noawa": "unknown", "unfiled": "unknown"}
+COLLEAGUE_STATUS_SCOPES = ("bureau", "team")
+_BASIC_TTL = 60.0
+_BASIC_MEMO = {}
+
+
+def basic_status_clear_cache():
+    _BASIC_MEMO.clear()
+
+
+def _basic_status_rows(conn, day):
+    """{user_id: (org_path, state)} for every linked staff account on one date, memoized per
+    (database, day) for 60 s — search calls this on every keystroke.
+
+    The roster is read UNSCOPED (user=None): this is the one deliberate bureau-wide read, and the
+    team scope, where it applies, is applied by colleague_status_for. Never pass the viewer to
+    work_arrangement_roster here: that scoping is the team page's rule."""
+    day = day if isinstance(day, date) else date.fromisoformat(str(day))
+    db = conn.execute("PRAGMA database_list").fetchone()[2] or ":memory:"
+    key = (db, day.isoformat())
+    hit = _BASIC_MEMO.get(key)
+    now = _clock.monotonic()
+    if hit and now - hit[0] < _BASIC_TTL:
+        return hit[1]
+    if day.weekday() >= 5 or get_holiday(conn, day):
+        rows = {r[0]: (r[5] or "", "off") for r in _linked_staff_rows(conn, linked_only=True)}
+    else:
+        reported = whereabouts_for_day(conn, day)
+        trips = cal_travel_defaults(conn, day, day)
+        asked = {r[0] for r in conn.execute(
+            "SELECT user_id FROM whereabouts_week WHERE week_start=? AND emailed_at IS NOT NULL",
+            (whereabouts_week_start(day).isoformat(),))}
+        rows = {}
+        for r in work_arrangement_roster(conn, work_arrangement_period(day), None):
+            if not r["rp_id"]:
+                continue                      # no directory person: not a colleague
+            state, _row = _wa_person_day(r, day, reported, trips, asked)
+            rows[r["user_id"]] = (r["org_path"], _BASIC_FROM_GROUP.get(state, "unknown"))
+    _BASIC_MEMO[key] = (now, rows)
+    return rows
+
+
+def colleague_directory(conn):
+    """Every linked, active, non-archived staff member as plain dicts, for colleague search and
+    the colleague card: {user_id, name, nickname, position, unit, unit_path, rp_id, has_photo}."""
+    nick = dict(conn.execute("SELECT id, nickname FROM admin_user"))
+    return [{"user_id": uid, "name": name or username, "nickname": (nick.get(uid) or "").strip(),
+             "position": position or "", "unit": short or "", "unit_path": path or "",
+             "rp_id": rp_id, "has_photo": bool(has_photo)}
+            for (uid, username, name, position, short, path, rp_id, has_photo, _ak)
+            in _linked_staff_rows(conn, linked_only=True)]
+
+
+def basic_status_for_day(conn, day):
+    """{user_id: state} for everyone, bureau-wide; state is one of BASIC_STATES. A weekend or a
+    holiday is "off" for everyone."""
+    return {uid: state for uid, (_path, state) in _basic_status_rows(conn, day).items()}
+
+
+def colleague_status_scope(conn):
+    v = get_setting(conn, "colleague_status_scope", "bureau")
+    return v if v in COLLEAGUE_STATUS_SCOPES else "bureau"
+
+
+def set_colleague_status_scope(conn, value):
+    if value not in COLLEAGUE_STATUS_SCOPES:
+        raise ValueError("scope must be 'bureau' or 'team'")
+    set_setting(conn, "colleague_status_scope", value)
+
+
+def colleague_status_for(conn, viewer, day):
+    """{user_id: state} this viewer may see: everyone while the setting is "bureau"; in "team"
+    only the people inside the viewer's own team scope (and nobody for an account with no team)."""
+    rows = _basic_status_rows(conn, day)
+    if colleague_status_scope(conn) == "bureau":
+        return {uid: state for uid, (_p, state) in rows.items()}
+    scope, kind = team_scope_for_user(conn, viewer, area="awa")
+    if kind == "none":
+        return {}
+    return {uid: state for uid, (path, state) in rows.items()
+            if kind == "bureau" or _path_in_scope(path, scope)}
 
 
 # ---- holidays / work suspensions -------------------------------------------
