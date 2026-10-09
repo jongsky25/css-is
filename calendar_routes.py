@@ -17,10 +17,11 @@ import io
 import zipfile
 
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from starlette.concurrency import run_in_threadpool
 
 import auth
+import calendar_ics as cics
 import mailer
 import calendar_import as ci
 import calendar_import_apply as cia
@@ -313,6 +314,83 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 "end_date": "", "start_time": "", "end_time": "", "time_note": "",
                 "venue": "", "modality": "", "meeting_url": "", "note": "",
                 "owner_org_id": "", "audience": "unit", "tags": "", "updated_at": ""}
+
+    # ── .ics: one item, and the personal feed (G4) ──────────────────────────────
+
+    @router.get("/calendar/entries/{entry_id}/event.ics")
+    def calendar_entry_ics(request: Request, entry_id: int):
+        """Download one item as an .ics. Same visibility as its page: what you cannot see is a 404."""
+        conn = get_conn()
+        try:
+            e = oc.viewable_entry(conn, request.state.user, entry_id)
+            if e is None:
+                return Response(status_code=404)
+            body = cics.vcalendar([cics.entry_event(e, base_url(request) if base_url else "")], method="PUBLISH")
+        finally:
+            conn.close()
+        return Response(content=body.encode("utf-8"), media_type="text/calendar; charset=utf-8",
+                        headers={"Content-Disposition": f'attachment; filename="calendar-item-{entry_id}.ics"'})
+
+    @router.get("/calendar/feed/{token}.ics")
+    def calendar_feed(request: Request, token: str):
+        """The subscription feed. No login (calendar apps cannot sign in): the long random token in
+        the URL is the credential, and resetting it kills the old link. Wrong, reset or switched-off
+        tokens all answer the same 404, so nothing leaks about which exist."""
+        conn = get_conn()
+        try:
+            acct = st.feed_owner(conn, token)
+            if acct is None:
+                return Response(status_code=404)
+            cfg = st.feed_get(conn, acct["id"])
+            body = oc.build_feed(conn, acct, base_url(request) if base_url else "", scope=cfg["scope"],
+                                 birthdays=cfg["birthdays"], today=today_local())
+        finally:
+            conn.close()
+        return Response(content=body.encode("utf-8"), media_type="text/calendar; charset=utf-8",
+                        headers={"Cache-Control": "private, max-age=900", "X-Robots-Tag": "noindex"})
+
+    def _back_to_me(msg="", err=""):
+        q = (f"msg={quote(msg)}" if msg else f"err={quote(err)}")
+        return RedirectResponse(f"/me?{q}#calendar-feed", status_code=303)
+
+    @router.post("/me/calendar-feed/reset")
+    def me_feed_reset(request: Request):
+        conn = get_conn()
+        try:
+            had = st.feed_get(conn, request.state.user["id"])
+            st.feed_reset(conn, request.state.user["id"])
+            st.audit(conn, request.state.user["username"], "calendar_feed_reset", target_type="user",
+                     target_id=request.state.user["id"], summary="created a new calendar feed link" if had else "created a calendar feed link")
+        finally:
+            conn.close()
+        return _back_to_me("Your calendar link is ready. Any older link no longer works.")
+
+    @router.post("/me/calendar-feed/off")
+    def me_feed_off(request: Request):
+        conn = get_conn()
+        try:
+            st.feed_off(conn, request.state.user["id"])
+            st.audit(conn, request.state.user["username"], "calendar_feed_off", target_type="user",
+                     target_id=request.state.user["id"], summary="turned off their calendar feed link")
+        finally:
+            conn.close()
+        return _back_to_me("Your calendar link was turned off.")
+
+    @router.post("/me/calendar-feed/settings")
+    async def me_feed_settings(request: Request):
+        raw = parse_qs((await request.body()).decode("utf-8"), keep_blank_values=True)
+        scope = (raw.get("scope") or [""])[0]
+        conn = get_conn()
+        try:
+            if not st.feed_get(conn, request.state.user["id"]):
+                return _back_to_me(err="Create your calendar link first.")
+            try:
+                st.feed_set(conn, request.state.user["id"], scope, (raw.get("birthdays") or [""])[0] == "1")
+            except ValueError as ex:
+                return _back_to_me(err=str(ex))
+        finally:
+            conn.close()
+        return _back_to_me("Saved. Your calendar app picks the change up the next time it refreshes.")
 
     @router.get("/calendar/updates", response_class=HTMLResponse)
     def calendar_updates(request: Request):

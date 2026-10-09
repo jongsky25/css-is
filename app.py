@@ -1856,7 +1856,7 @@ def invalidate_atoms():
 # =====================================================================
 
 _PUBLIC_PREFIXES = ("/r/", "/photo/", "/e/", "/static/", "/lang/", "/wellness/decide/",
-                    "/whereabouts/")
+                    "/whereabouts/", "/calendar/feed/")
 _PUBLIC_EXACT = {"/seq", "/login", "/logout", "/favicon.ico",
                  "/set-password", "/forgot", "/reset-password", "/health",
                  "/sw.js", "/manifest.webmanifest",
@@ -5202,6 +5202,14 @@ def _birthday_ctx(profile, form=None):
             "bd_notice": st.BIRTHDAY_NOTICE}
 
 
+def _feed_ctx(request, profile):
+    f = (profile or {}).get("cal_feed")
+    if not f:
+        return None
+    url = f"{_base_url(request)}/calendar/feed/{f['token']}.ics"
+    return {**f, "url": url, "webcal": "webcal://" + url.split("://", 1)[1]}
+
+
 def _render_me(request, msg="", err="", form=None):
     conn = get_conn()
     try:
@@ -5224,6 +5232,7 @@ def _render_me(request, msg="", err="", form=None):
         "ladder": st.avatar_growth_ladder(kind, wstats),
         "growth_how": st.avatar_growth_actions(kind),
         "msg": msg, "err": err, **_birthday_ctx(profile, form),
+        "feed": _feed_ctx(request, profile), "feed_scopes": st.FEED_SCOPES,
     })
 
 

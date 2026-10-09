@@ -36,6 +36,7 @@ from datetime import date, timedelta
 
 import auth
 import birthdays as bd
+import calendar_ics as cics
 import mailer
 import storage as st
 import tzutil as tz
@@ -1023,7 +1024,7 @@ def flush_outbox(conn, base_url, *, now=None, send=None):
         by_entry = {}
         for r in rows:
             by_entry.setdefault(r["entry_id"], []).append(r)
-        lines = []
+        lines, ics = [], []
         for eid, rs in by_entry.items():
             kind = _coalesce(rs)
             e = st.cal_get(conn, eid)
@@ -1033,6 +1034,8 @@ def flush_outbox(conn, base_url, *, now=None, send=None):
                 kind = "cancelled"
             if kind in ("added", "changed") and (e["end_date"] or e["start_date"]) < now.date().isoformat():
                 continue
+            if kind != "removed":                # tell their calendar app too: same uid, current sequence
+                ics.append(cics.entry_event(e, base_url))
             moved = sorted({_WHAT[f] for r in rs for f in (r["detail"] or "").split(",") if f in _WHAT})
             lines.append({"kind": kind, "title": e["title"], "when": _when_text(e),
                           "where": e["venue"] or "", "url": f"{base_url}/calendar/entries/{eid}",
@@ -1045,7 +1048,8 @@ def flush_outbox(conn, base_url, *, now=None, send=None):
         name = (st.get_user_profile(conn, uid) or {}).get("person_name") or ""
         subj, body, html = mailer.calendar_changes_message(
             name.split()[0] if name else "", lines, f"{base_url}/calendar?scope=mine")
-        result = send(acct["username"], subj, body, html=html)
+        result = (send(acct["username"], subj, body, html=html, attachments=[cics.attachment(ics, "calendar-update.ics")])
+                  if ics else send(acct["username"], subj, body, html=html))
         status = mailer.send_status(result)
         st.log_email_send(conn, "calendar_changes", acct["username"], subj, status, result.get("detail"))
         if status == "sent":
@@ -1207,3 +1211,52 @@ def entries_starting_on(conn, day):
             "AND e.kind <> 'banner' ORDER BY e.start_time, e.id", (iso,)):
         out.setdefault(uid, []).append({"id": eid, "title": title, "start_time": t1, "end_time": t2, "venue": venue})
     return out
+
+
+# ── the personal feed (G4) ───────────────────────────────────────────────────
+
+FEED_PAST_DAYS = 14
+FEED_AHEAD_DAYS = 365
+FEED_CANCELLED_DAYS = 30
+
+
+def build_feed(conn, user, base_url, *, scope="mine", birthdays=False, today=None):
+    """The text of one person's subscription feed: what THEY may see, exactly as the calendar page
+    decides it (the same items_between), from two weeks back to a year ahead. Items cancelled in
+    the last 30 days are included as STATUS:CANCELLED so a subscribed app removes them rather than
+    keeping a stale event. Birthdays (optional) are yearly events, only those shared with them."""
+    today = today or tz.today_local()
+    start, end = today - timedelta(days=FEED_PAST_DAYS), today + timedelta(days=FEED_AHEAD_DAYS)
+    items = items_between(conn, user, start, end, scope="blend" if scope == "mine" else "section",
+                          layers=["entries", "activities"])
+    entry_ids = [int(i["key"].split(":")[1]) for i in items if i["key"].startswith("entry:")]
+    events = []
+    full = {}
+    for eid in entry_ids:
+        e = st.cal_get(conn, eid)
+        if e:
+            full[eid] = e
+    for i in items:
+        if i["key"].startswith("entry:"):
+            e = full.get(int(i["key"].split(":")[1]))
+            if e:
+                events.append(cics.entry_event(e, base_url))
+        elif i.get("css"):
+            events.append(cics.activity_event(i, base_url))
+    ctx = viewer_context(conn, user)
+    seen = set(full)
+    since = (tz.now_local() - timedelta(days=FEED_CANCELLED_DAYS)).isoformat(timespec="seconds")
+    cancelled = [e for e in st.cal_list_between(conn, start, end, include_cancelled=True)
+                 if e["status"] == "cancelled" and e["id"] not in seen and (e["cancelled_at"] or "") >= since
+                 and not e["event_id"]]
+    units = _units(conn, [e["owner_org_id"] for e in cancelled])
+    for e in cancelled:
+        path = (units.get(e["owner_org_id"]) or {}).get("path")
+        if entry_visible(ctx, e, path) and _in_scope(ctx, "blend" if scope == "mine" else "section", e, path):
+            events.append(cics.entry_event(e, base_url))
+    if birthdays:
+        viewer = {"user_id": ctx["user_id"], "section_path": ctx["section_path"], "division_path": ctx["division_path"]}
+        for p in birthday_people(conn):
+            if p["user_id"] != ctx["user_id"] and bd.shared_with(p, viewer):
+                events.append(cics.birthday_event(p["user_id"], p["name"], p["month"], p["day"], today.year))
+    return cics.vcalendar(events, name="BLHSD calendar")

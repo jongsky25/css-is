@@ -166,13 +166,19 @@ def _relay_not_run_reason(resp):
     return None
 
 
-def _send_via_relay(to, subject, body, html=None):
+def _send_via_relay(to, subject, body, html=None, attachments=None):
     """POST the message to the Apps Script web app, which sends it as the
     mailbox the script belongs to. Returns {'sent': bool, 'detail': str}."""
     url = os.environ["CSS_MAIL_RELAY_URL"]
     payload = {"secret": os.environ["CSS_MAIL_RELAY_SECRET"],
                "to": to, "subject": subject, "text": body, "html": html or "",
                "fromName": os.environ.get("CSS_MAIL_RELAY_NAME", "Office Connect")}
+    if attachments:
+        # Needs the relay script updated to read `attachments` (docs/MAIL_RELAY_SETUP.md); an older
+        # script simply ignores the key and the mail goes out without the file.
+        import base64
+        payload["attachments"] = [{"name": n, "mimeType": m.split(";")[0], "base64": base64.b64encode(b).decode("ascii")}
+                                  for n, m, b in attachments]
 
     resp, exc = _post_to_relay(url, payload)
     if exc is not None:
@@ -240,7 +246,7 @@ def _relay_result(to, subject, body, data):
     return {"sent": True, "detail": "Email sent."}
 
 
-def send(to, subject, body, html=None):
+def send(to, subject, body, html=None, attachments=None):
     """Send an email. `html` is optional — when given, the message is sent as
     text+HTML alternatives (a client shows whichever it supports); when
     omitted, plain text only. Returns {'sent': bool, 'detail': str}.
@@ -249,7 +255,7 @@ def send(to, subject, body, html=None):
         _record(to, subject, body, "NOT SENT - no mail transport configured")
         return {"sent": False, "detail": "Email is not configured on this server."}
     if relay_configured():
-        return _send_via_relay(to, subject, body, html=html)
+        return _send_via_relay(to, subject, body, html=html, attachments=attachments)
     host = os.environ["CSS_SMTP_HOST"]
     port = int(os.environ.get("CSS_SMTP_PORT", "587"))
     use_tls = os.environ.get("CSS_SMTP_TLS", "1") != "0"
@@ -263,6 +269,9 @@ def send(to, subject, body, html=None):
     msg.set_content(body)
     if html:
         msg.add_alternative(html, subtype="html")
+    for fname, mime, data in (attachments or ()):
+        main, _, sub = mime.split(";")[0].partition("/")
+        msg.add_attachment(data, maintype=main or "application", subtype=sub or "octet-stream", filename=fname)
     try:
         socket.getaddrinfo = _ipv4_only_getaddrinfo
         # Port 465 is implicit TLS from the first byte (SMTP_SSL); STARTTLS

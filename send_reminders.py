@@ -48,6 +48,7 @@ from datetime import date, timedelta
 from urllib.parse import quote
 
 import auth
+import calendar_ics as cics
 import mailer
 import storage as st
 import tzutil as tz
@@ -77,13 +78,14 @@ def _person_name(conn, account_id):
     return (rp["name"] if rp else None) or u["username"]
 
 
-def _send(conn, feature, to, subj, body, html=None):
+def _send(conn, feature, to, subj, body, html=None, attachments=None):
     """mailer.send() + an email_log row (docs/ADMIN_EMAIL_FEATURES_PLAN.md
     Phase 6). Every call site here is a real attempt worth logging — a
     disabled job never reaches its function at all (run() drops it from
     `jobs` before any job function runs), so there is no 'skipped_off' case
     to handle at this level."""
-    result = mailer.send(to, subj, body, html=html)
+    result = (mailer.send(to, subj, body, html=html, attachments=attachments) if attachments
+              else mailer.send(to, subj, body, html=html))
     st.log_email_send(conn, feature, to, subj, mailer.send_status(result), result.get("detail"))
     return result
 
@@ -527,7 +529,11 @@ def send_calendar_day_before(conn, base, dry_run=False):
         if not acct or not acct["active"] or not st.calendar_email_extras(conn, uid)["daybefore"]:
             continue
         items = []
+        ics = []
         for e in entries:
+            full = st.cal_get(conn, e["id"])
+            if full:
+                ics.append(cics.entry_event(full, base))
             when = (e["start_time"] + (f"–{e['end_time']}" if e["end_time"] else "")) if e["start_time"] else "All day"
             items.append({"title": e["title"], "when": when, "where": e["venue"] or "",
                           "url": f"{base}/calendar/entries/{e['id']}"})
@@ -540,7 +546,8 @@ def send_calendar_day_before(conn, base, dry_run=False):
         if dry_run:
             print(f"[dry-run] calendar day-before -> {acct['username']} ({len(items)})")
         else:
-            _send(conn, JOB_FEATURE["calendar_day_before"], acct["username"], subj, body, html=html)
+            _send(conn, JOB_FEATURE["calendar_day_before"], acct["username"], subj, body, html=html,
+                  attachments=[cics.attachment(ics, "tomorrow.ics")] if ics else None)
         sent += 1
     return sent
 

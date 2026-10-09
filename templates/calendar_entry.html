@@ -60,6 +60,8 @@
   </div>
   {% endif %}
 
+  <p class="cal-range"><a href="/calendar/entries/{{ e.id }}/event.ics">Add to my calendar (.ics)</a></p>
+
   <div class="cf-actions">
     {% if e.status == "cancelled" %}
       <form method="post" action="/calendar/entries/{{ e.id }}/restore"><button class="cal-btn primary" type="submit">Restore</button></form>

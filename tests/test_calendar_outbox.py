@@ -27,8 +27,9 @@ class Mail:
     def __init__(self):
         self.sent = []
 
-    def __call__(self, to, subj, body, html=None):
+    def __call__(self, to, subj, body, html=None, attachments=None):
         self.sent.append((to, subj, body))
+        self.attachments = attachments
         return {"sent": True, "detail": "ok"}
 
 

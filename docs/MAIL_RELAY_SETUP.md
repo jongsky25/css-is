@@ -53,6 +53,12 @@ function doPost(e) {
     if (body.html) {
       message.htmlBody = body.html;
     }
+    // Calendar emails attach an .ics so a calendar app can add/update the event.
+    if (body.attachments && body.attachments.length) {
+      message.attachments = body.attachments.map(function (a) {
+        return Utilities.newBlob(Utilities.base64Decode(a.base64), a.mimeType, a.name);
+      });
+    }
     MailApp.sendEmail(message);
     return reply({ ok: true });
   } catch (err) {
@@ -69,6 +75,10 @@ function reply(obj) {
 
 4. Name the project something recognisable, e.g. `Office Connect mail relay`.
 
+> **Calendar attachments (since v3.76):** the script above also reads an optional `attachments`
+> list so calendar emails can carry an `.ics` file. An older script just ignores it and the email
+> still goes out, without the file. To enable it, paste the updated script and redeploy a **New version**.
+>
 > **Already deployed an earlier version of this script?** Paste the updated
 > code in (it adds the `if (body.html) { message.htmlBody = body.html; }`
 > block — everything else is unchanged), save, then **Deploy → Manage

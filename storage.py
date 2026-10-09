@@ -647,11 +647,15 @@ def _add_missing_columns(conn):
     added after a database was first created has to be ALTERed in by hand.
     """
     au0 = {row[1] for row in conn.execute("PRAGMA table_info(admin_user)")}
-    for col in ("bday_notify", "birthday_coordinator", "cal_email_week", "cal_email_daybefore"):
+    for col in ("bday_notify", "birthday_coordinator", "cal_email_week", "cal_email_daybefore",
+                "cal_feed_birthdays"):
         # bday_notify: NULL = on, 0 = "don't tell me about teammates' birthdays".
         # birthday_coordinator: 1 = an admin ticked "organises birthday celebrations".
         if au0 and col not in au0:
             conn.execute(f"ALTER TABLE admin_user ADD COLUMN {col} INTEGER")
+    for col in ("cal_feed_token", "cal_feed_scope"):
+        if au0 and col not in au0:
+            conn.execute(f"ALTER TABLE admin_user ADD COLUMN {col} TEXT")
     if au0 and "cal_email_changes" not in au0:
         # NULL = on (default). 0 = "don't email me about calendar changes".
         conn.execute("ALTER TABLE admin_user ADD COLUMN cal_email_changes INTEGER")
@@ -4110,6 +4114,7 @@ def get_user_profile(conn, user_id):
         "cal_email_changes": calendar_email_pref(conn, user_id),
         "bday_notify": bday_notify_pref(conn, user_id),
         "cal_email_extras": calendar_email_extras(conn, user_id),
+        "cal_feed": feed_get(conn, user_id),
         # position rides along too (unlinked accounts have none) so callers
         # can apply is_bureau_director() — the Director's title lives here,
         # not in designation (see is_bureau_director).
@@ -4442,6 +4447,55 @@ def set_calendar_email_extras(conn, user_id, *, week=None, daybefore=None):
 def calendar_email_extras(conn, user_id):
     r = conn.execute("SELECT cal_email_week, cal_email_daybefore FROM admin_user WHERE id=?", (user_id,)).fetchone()
     return {"week": not (r and r[0] == 0), "daybefore": not (r and r[1] == 0)}
+
+
+# ---- the personal calendar feed (office calendar G4) ---------------------------------
+#
+# A subscribe link that works without logging in, because calendar apps cannot sign in. So the
+# secret IS the link: a long random token, one per person, replaceable at any time ("reset" makes
+# the old link stop working at once) and removable. What the feed shows is decided when it is
+# fetched, by the same visibility rules as the calendar page, for the token's owner.
+
+FEED_SCOPES = {"mine": "My items (plus what is bureau-wide)", "section": "My section"}
+
+
+def feed_get(conn, user_id):
+    """{token, scope, birthdays} for this account, or None when it has no feed link."""
+    r = conn.execute("SELECT cal_feed_token, cal_feed_scope, cal_feed_birthdays FROM admin_user WHERE id=?",
+                     (user_id,)).fetchone()
+    if not r or not r[0]:
+        return None
+    return {"token": r[0], "scope": r[1] if r[1] in FEED_SCOPES else "mine", "birthdays": r[2] == 1}
+
+
+def feed_reset(conn, user_id):
+    """Create the link, or replace it (the old one stops working immediately). Returns the token."""
+    import secrets
+    token = secrets.token_urlsafe(24)
+    conn.execute("UPDATE admin_user SET cal_feed_token=? WHERE id=?", (token, user_id))
+    conn.commit()
+    return token
+
+
+def feed_off(conn, user_id):
+    conn.execute("UPDATE admin_user SET cal_feed_token=NULL WHERE id=?", (user_id,))
+    conn.commit()
+
+
+def feed_set(conn, user_id, scope, birthdays):
+    if scope not in FEED_SCOPES:
+        raise ValueError("Pick what the feed should show from the list.")
+    conn.execute("UPDATE admin_user SET cal_feed_scope=?, cal_feed_birthdays=? WHERE id=?",
+                 (scope, 1 if birthdays else 0, user_id))
+    conn.commit()
+
+
+def feed_owner(conn, token):
+    """The ACTIVE account a feed token belongs to (the full account row), or None."""
+    if not token or len(token) < 20:
+        return None
+    r = conn.execute("SELECT id FROM admin_user WHERE cal_feed_token=? AND active=1", (token,)).fetchone()
+    return get_admin_user_by_id(conn, r[0]) if r else None
 
 
 def set_bday_notify_pref(conn, user_id, on):

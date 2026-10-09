@@ -29,7 +29,7 @@ def pretend_today(monkeypatch, d):
 def sent(monkeypatch):
     out = []
     monkeypatch.setattr(mailer, "email_configured", lambda: True)
-    monkeypatch.setattr(mailer, "send", lambda to, subj, body, html=None: out.append((to, subj, body)) or
+    monkeypatch.setattr(mailer, "send", lambda to, subj, body, html=None, attachments=None: out.append((to, subj, body)) or
                         {"sent": True, "detail": "ok"})
     return out
 

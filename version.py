@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.75"
+APP_VERSION = "3.76"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.76",
+        "date": "October 9, 2026",
+        "summary": "You can put the office calendar in Google, Outlook or Apple Calendar.",
+        "changes": [
+            "Every calendar item has an Add to my calendar (.ics) link.",
+            "Calendar emails now carry the item as an attachment, so your calendar app adds it and later updates it instead of duplicating it.",
+            "My profile has a private Calendar link you can subscribe to. It shows only what you can already see, and you can make a new one or turn it off any time.",
+            "Google only refreshes subscribed calendars every 12 to 24 hours, so changes can take a day to appear there.",
+        ],
+    },
     {
         "version": "3.75",
         "date": "October 9, 2026",

@@ -1,5 +1,27 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.76 — office calendar G4: .ics downloads, attachments and the personal feed)
+
+- **`calendar_ics.py`** (new, pure; added to the Space bundle): RFC 5545 output — CRLF lines folded at 75 OCTETS without ever
+  splitting a UTF-8 character, TEXT escaping, a VTIMEZONE for Asia/Manila (no DST, one STANDARD block), timed events with
+  `TZID`, all-day events as `VALUE=DATE` with the exclusive `DTEND`, UTC `DTSTAMP`, and the entry's random `UID` +
+  current `SEQUENCE` + `STATUS` (postponed shows as tentative with a "[Postponed]" title; cancelled says CANCELLED) so a
+  calendar app UPDATES an event rather than duplicating it. Birthdays are yearly all-day events (`RRULE:FREQ=YEARLY`; a Feb 29
+  person repeats on the last day of February, matching the app) and no birth year exists anywhere.
+- **Per item**: "Add to my calendar (.ics)" on every item page (`/calendar/entries/<id>/event.ics`), with the page's own visibility
+  (anything you cannot see is a 404) and sign-in required.
+- **Attachments**: the change email (G1) and the day-before reminder (G3) now carry an `.ics` with the same uid and current
+  sequence (a cancellation carries STATUS:CANCELLED). `mailer.send(attachments=…)` works over SMTP and the relay; **the relay
+  script in docs/MAIL_RELAY_SETUP.md gained a few lines to read them — paste it and redeploy a new version to enable
+  attachments; an older script just ignores them and the email still goes out.**
+- **Personal feed** (`/me` → Calendar link; `/calendar/feed/<token>.ics`): works without signing in because calendar apps cannot;
+  the long random token IS the credential, so it is replaceable ("Make a new link" kills the old one at once) and removable.
+  It shows what its owner may see, by the same rules as the calendar page — "My items (plus what is bureau-wide)" or "My
+  section" — from two weeks back to a year ahead, adds items cancelled in the last 30 days as STATUS:CANCELLED so subscribed apps
+  drop them, and (opt-in) the birthdays shared with them. A wrong, reset, switched-off or deactivated-owner token all answer the
+  same 404; responses are `private`, `noindex`. The page says plainly that Google refreshes only every 12–24 hours.
+- The Monday email carries no attachment (it lists many items); the activity ("CSS") events appear in the feed with a stable id.
+
 ## 2026-10-09 (v3.75 — office calendar G3: week-ahead, day-before, roll-up lines)
 
 - **Monday week-ahead**: the existing whereabouts Monday email gains "On the calendar this week" — what that person may
