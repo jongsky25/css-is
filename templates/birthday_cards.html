@@ -1,0 +1,28 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash %}
+{% block title %}Birthday cards{% endblock %}
+{% block content %}
+{{ page_header("💌 Birthday cards", "Send a card to a teammate in the week before their birthday. They read it on the day itself. Only people who chose to share their birthday with you are listed. / Magpadala ng card sa kasamahan bago ang kaarawan nila.") }}
+{{ flash(msg, err) }}
+{% if rows %}
+<ul class="bc-list">
+  {% for r in rows %}
+  <li>
+    <span class="bc-when">{{ "Today" if r.date == today else r.date.strftime("%a %b") ~ " " ~ r.date.day }}</span>
+    <span class="bc-name">{{ r.name }}{% if r.unit %} <small>({{ r.unit }})</small>{% endif %}</span>
+    {% if r.sent %}<span class="bc-done">✓ Card sent</span>
+    {% else %}<a class="btn" href="/birthday/card/{{ r.user_id }}">Send a card</a>{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="lede">No birthdays to send a card for right now. Come back in the week before a teammate's birthday.</p>
+{% endif %}
+<style>
+  .bc-list { list-style:none; margin:1rem 0; padding:0; max-width:640px; }
+  .bc-list li { display:flex; align-items:center; gap:.9rem; padding:.7rem 0; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  .bc-when { min-width:5.5rem; font-weight:700; color:var(--soft); }
+  .bc-name { flex:1 1 10rem; }
+  .bc-done { color:var(--green); font-weight:700; }
+</style>
+{% endblock %}

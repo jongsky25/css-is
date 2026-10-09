@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "5.5"
+APP_VERSION = "5.6"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "5.6",
+        "date": "October 9, 2026",
+        "summary": "You can now send a birthday card to a teammate.",
+        "changes": [
+            "In the week before a teammate's birthday, the bell reminds you to send them a card. Pick a design and write a short message in Tagalog or English.",
+            "Cards are kept hidden until their birthday, then they read them on the home page or on My profile, signed with your name.",
+            "Only people who chose to share their birthday with you can get a card from you. Someone who shares with no one gets none.",
+            "If a card is unkind or unsuitable, the person can hide it, and an admin can hide it too.",
+        ],
+    },
     {
         "version": "5.5",
         "date": "October 9, 2026",

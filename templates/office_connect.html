@@ -18,6 +18,7 @@
               justify-content:center; font-weight:800; color:var(--soft); flex:0 0 auto; }
   .oc-hi h1 { margin:0; font-size:1.45rem; }
   .oc-pet-party { display:block; margin-top:.2rem; font-size:.78rem; font-weight:700; color:var(--accent); }
+  .oc-bday-cards { margin:0 0 .8rem; font-weight:700; }
   .oc-bday-en { margin:.1rem 0 0; color:var(--soft); font-size:.95rem; }
   .oc-bday-card { position:relative; overflow:hidden; margin:0 0 1rem; padding:1rem 2.6rem 1rem 1.1rem;
                   border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:12px;
@@ -322,6 +323,9 @@
     <span class="grow"></span>
     {{ tabs }}
   </div>
+  {% endif %}
+  {% if bday_greet and bday_greet.phase == "today" and bday_greet.cards %}
+  <p class="oc-bday-cards"><a href="/me/cards">💌 May {{ bday_greet.cards }} card{{ "" if bday_greet.cards == 1 else "s" }} para sa iyo / {{ bday_greet.cards }} card{{ "" if bday_greet.cards == 1 else "s" }} for you →</a></p>
   {% endif %}
   {% if bday_greet and bday_greet.card %}
   <section class="oc-bday-card" id="oc-bday-card" aria-label="Birthday greeting">

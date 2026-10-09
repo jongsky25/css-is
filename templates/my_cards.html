@@ -1,0 +1,32 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash %}
+{% block title %}My birthday cards{% endblock %}
+{% block content %}
+{{ page_header("💌 My birthday cards", "Cards from your teammates. They appear on your birthday. / Mga card mula sa mga kasamahan mo, makikita sa araw ng kaarawan mo.") }}
+{{ flash(msg) }}
+{% if cards %}
+<ul class="mc-list">
+  {% for c in cards %}
+  <li class="mc-card">
+    <div class="mc-emoji" aria-hidden="true">{{ c.emoji }}</div>
+    <div class="mc-body">
+      <p class="mc-msg">{{ c.message }}</p>
+      <p class="mc-from">— {{ c.from_name }}</p>
+      <form method="post" action="/me/cards/{{ c.id }}/hide"><button class="btn ghost" type="submit">Hide this card</button></form>
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+{% elif has_birthday %}
+<p class="lede">No cards yet. They show up here on your birthday.</p>
+{% else %}
+<p class="lede">Add your birthday on <a href="/me">My profile</a> to receive cards from teammates you share it with.</p>
+{% endif %}
+<style>
+  .mc-list { list-style:none; margin:1rem 0; padding:0; max-width:640px; display:grid; gap:.8rem; }
+  .mc-card { display:flex; gap:.9rem; padding:.9rem 1rem; border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:12px; }
+  .mc-emoji { font-size:2rem; line-height:1; }
+  .mc-msg { margin:0 0 .3rem; white-space:pre-wrap; overflow-wrap:anywhere; }
+  .mc-from { margin:0 0 .5rem; color:var(--soft); font-weight:700; }
+</style>
+{% endblock %}

@@ -93,6 +93,7 @@
         <p class="hint">What the home page calls you: “Hi, <em>nickname</em>”. Leave blank to use your first name.</p>
       </div>
       {% include "_birthday_field.html" %}
+      {% if my_cards %}<p class="hint"><a href="/me/cards">💌 You have {{ my_cards }} birthday card{{ "" if my_cards == 1 else "s" }} →</a></p>{% endif %}
       <div class="field">
         <input type="hidden" name="notify_present" value="1">
         <label style="font-weight:400"><input type="checkbox" name="cal_email_changes" {{ "checked" if profile.cal_email_changes }} value="1">

@@ -140,3 +140,9 @@ def lead_in_phrases(month, day, today):
     if (d - today).days == 1:
         return "bukas", "tomorrow"
     return f"sa {_TL_DAYS[d.weekday()]}", f"on {d:%A}"
+
+
+def revealed_card_year(month, day, today):
+    """The birthday year whose cards the celebrant may read now: this year's from the morning of the
+    birthday on, and last year's until then. Cards are held back until the day (a surprise)."""
+    return today.year if today >= occurrence(month, day, today.year) else today.year - 1
