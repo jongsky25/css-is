@@ -1,5 +1,11 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v6.16 — the Office calendar gets its own Calendar menu)
+
+- **`app.py`** — `NAV_GROUPS`: the `calendar` item moved out of **Office** into a new one-item **Calendar** group between Office and Administrator. Office now holds only the conference room (Reserve / Manage the room). Search palette section and scope for `/calendar` become "Calendar".
+- **`tests/test_search.py`** — group order and Office/Calendar membership assertions updated.
+- **Version bump:** `APP_VERSION` 6.15 → 6.16.
+
 ## 2026-10-09 (v6.14 — "Classic home" on /start goes to the landing page)
 
 - The "Classic home →" link on `/start` pointed at `/css` (the CSS hub); it now points at `/`.
