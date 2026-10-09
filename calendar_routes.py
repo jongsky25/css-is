@@ -43,7 +43,8 @@ FORM_KIND_LABELS = {"meeting": "Meeting", "training": "Training / workshop",
                     "travel": "Trip / field work", "deadline": "Deadline",
                     "audit_mr": "Audit / management review", "banner": "Bureau-wide notice"}
 # What the filter menu and the cards can name: the above plus the CSS activities.
-KIND_LABELS = {**FORM_KIND_LABELS, "activity": "CSS activity", "leave": "On leave", "birthday": "Birthday"}
+KIND_LABELS = {**FORM_KIND_LABELS, "activity": "CSS activity", "leave": "On leave", "birthday": "Birthday",
+               "room": "Conference room"}
 STATUS_LABELS = {"confirmed": "Confirmed", "tentative": "Tentative",
                  "postponed": "Postponed", "cancelled": "Cancelled"}
 MODALITY_LABELS = {"": "Not set", "f2f": "Face to face", "online": "Online", "hybrid": "Hybrid"}
@@ -149,7 +150,7 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
     # Visibility is unchanged — items_between still only returns what this viewer may see.
     # (The Week layout draws leave itself, from the same whereabouts, so it skips that layer.)
     team_layout = layout in ("week", "timeline")                  # both are "everyone in my team"
-    skip_layers = {"week": ("leave", "birthdays"), "timeline": ("birthdays",)}.get(layout, ())
+    skip_layers = {"week": ("leave", "birthdays", "rooms"), "timeline": ("birthdays", "rooms")}.get(layout, ())
     everything = oc.items_between(conn, user, start, end, scope="bureau" if team_layout else scope,
                                   layers=[n for n in oc.LAYERS if n not in skip_layers])
     items = oc.apply_filters(everything, filters)
@@ -429,7 +430,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
 
     # ── the read API (H3) ───────────────────────────────────────────────────────
 
-    API_LAYERS = ("entries", "activities", "leave", "holidays", "birthdays")
+    API_LAYERS = ("entries", "activities", "leave", "holidays", "birthdays", "rooms")
     API_MAX_DAYS = 92
 
     def _api_item(i):

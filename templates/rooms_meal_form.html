@@ -1,0 +1,67 @@
+{% extends layout %}
+{% from "_components.html" import page_header, flash %}
+{% block title %}Meal request — conference room{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/rooms.css?v=20261009f">{% endblock %}
+{% block content %}
+{% if guest %}<div class="pub-card rp-card">{% endif %}
+{% if guest %}<div class="rp-brand">CSS<span>·</span>IS</div><h1>Meal request</h1>{% else %}
+{{ page_header("Meal request", "The form the Administrative Section orders from.") }}
+{% include "_rooms_tabs.html" %}{% endif %}
+
+{{ flash(msg=ok, err=err) }}
+<p class="rm-hint">Conference room · <code>{{ res.ref_code }}</code> · {{ when }}, {{ hours }} ·
+  <span class="badge {{ 'green' if res.status == 'approved' else 'amber' }}">{{ '✓ Room approved' if res.status == 'approved' else '○ Room ' ~ res.status }}</span></p>
+
+{% if not f %}
+<div class="card">
+  <p>No meals have been requested for this booking yet.</p>
+  {% if live %}
+  <form method="post" action="{{ base }}/start"><button class="btn" type="submit">Request meals</button></form>
+  <p class="rm-hint">We fill in the meals from your hours (breakfast, AM snack, lunch, PM snack) and you correct them.</p>
+  {% else %}<p class="rm-hint">This reservation is no longer active.</p>{% endif %}
+</div>
+{% else %}
+{% if f.locked %}<div class="flash info" role="status"><span>{{ 'The Administrative Section has started ordering from this form. You can still change it, but a meal you change goes back to "Not yet requested" and is ordered again.' if admin else 'The Administrative Section has started ordering from this form, so it can no longer be changed here. Please ask them if something needs to change.' }}</span></div>{% endif %}
+{% if res.status == 'requested' %}<div class="flash info" role="status"><span>The room isn't approved yet. The Administrative Section orders the meals once it is.</span></div>{% endif %}
+
+<form method="post" action="{{ base }}" class="rm-mealform card">
+  <div class="field"><label>1. Title of the Activity</label>
+    <input value="{{ f.title }}" readonly aria-readonly="true"><div class="help">Taken from the reservation.</div></div>
+  <div class="field"><label for="mf-pax">2. Number of Pax</label>
+    <input id="mf-pax" name="pax" type="number" min="1" max="1000" inputmode="numeric" value="{{ f.pax if f.pax is not none else '' }}" {{ 'disabled' if not can_edit }}></div>
+  <div class="field"><label for="mf-special">3. Special Request for Meals</label>
+    <textarea id="mf-special" name="special" rows="3" maxlength="800" placeholder="e.g. 3 vegetarian, no pork, halal" {{ 'disabled' if not can_edit }}>{{ f.special_request or '' }}</textarea></div>
+
+  <h2 class="rm-mealh">4. Meals</h2>
+  <div class="table-wrap"><table class="list resp-table rm-meals-tbl">
+    <thead><tr><th>Meal</th><th>Needed?</th><th>Requested delivery time</th>{% if f.locked or admin %}<th>Status</th>{% endif %}</tr></thead>
+    <tbody>
+    {% for i in f["items"] %}
+    <tr data-meal="{{ i.meal }}">
+      <td data-label="Meal"><strong>{{ i.label }}</strong></td>
+      <td data-label="Needed?"><span class="rm-yn">
+        <label><input type="radio" name="want_{{ i.meal }}" value="1" {{ 'checked' if i.wanted }} {{ 'disabled' if not can_edit }}> Yes</label>
+        <label><input type="radio" name="want_{{ i.meal }}" value="0" {{ 'checked' if not i.wanted }} {{ 'disabled' if not can_edit }}> No</label></span></td>
+      <td data-label="Delivery time"><input type="time" name="time_{{ i.meal }}" value="{{ i.deliver_at }}" min="06:00" max="19:00" step="300"
+          aria-label="Requested delivery time for {{ i.label }}" {{ 'disabled' if not can_edit }}></td>
+      {% if f.locked or admin %}<td data-label="Status">{% if i.wanted %}<span class="badge {{ meal_status_badge[i.status] }}">{{ meal_status_label[i.status] }}</span>{% else %}—{% endif %}</td>{% endif %}
+    </tr>
+    {% endfor %}
+    </tbody></table></div>
+  {% if can_edit %}<button class="btn" type="submit">Save the meal form</button>{% endif %}
+  <a class="btn ghost" href="{{ base }}/form.pdf" target="_blank" rel="noopener">Print / download the form (PDF)</a>
+  <p class="rm-hint">Form version {{ f.version }}, last saved {{ (f.updated_at or '')[:16].replace('T', ' ') }}.</p>
+</form>
+{% endif %}
+{% if guest %}<p class="rp-foot muted"><a href="{{ base[:-6] }}">← Back to your request</a></p></div>{% endif %}
+<script>
+/* A meal marked "No" greys its time out; nothing else needs a script. */
+(function () {
+  Array.prototype.forEach.call(document.querySelectorAll('.rm-meals-tbl tr[data-meal]'), function (row) {
+    var t = row.querySelector('input[type=time]'), radios = row.querySelectorAll('input[type=radio]');
+    function sync() { var yes = row.querySelector('input[type=radio][value="1"]').checked; t.style.opacity = yes ? '1' : '.45'; }
+    Array.prototype.forEach.call(radios, function (r) { r.addEventListener('change', sync); }); sync();
+  });
+})();
+</script>
+{% endblock %}

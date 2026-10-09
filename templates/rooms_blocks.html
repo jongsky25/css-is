@@ -1,0 +1,54 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash %}
+{% block title %}Close the conference room{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/rooms.css?v=20261009f">{% endblock %}
+{% block content %}
+{{ page_header("Conference room", "Close the room for repairs, a holiday event or anything else. Closed hours can't be requested.") }}
+{% include "_rooms_tabs.html" %}
+{{ flash(msg=msg, err=error) }}
+
+{% if confirm %}
+<div class="rm-bump" role="alert">
+  <strong>These approved bookings are in the way and will be cancelled:</strong>
+  <ul>
+    {% for a in confirm %}
+    <li><b>{{ a.title }}</b> · {{ a.who }}{% if a.unit %} ({{ a.unit }}){% endif %} · {{ a.when }}, {{ a.hours }}
+      <small>{% if a.suggestions %}They will be offered: {% for s in a.suggestions %}{{ s.label }}{{ '; ' if not loop.last }}{% endfor %}{% else %}No free alternative found nearby.{% endif %}</small></li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<form method="post" action="/rooms/blocks" class="card">
+  <h2 style="margin-top:0">Close the room</h2>
+  <div class="rm-blockform">
+    <div class="field"><label for="b-day">Date</label>
+      <input type="date" id="b-day" name="day" value="{{ f.day }}" min="{{ min_day.isoformat() }}" required></div>
+    <div class="field"><label for="b-from">From</label>
+      <select id="b-from" name="from_slot">{% for s in slots %}<option value="{{ s.id }}" {{ 'selected' if f.from_slot|string == s.id|string }}>{{ room_hour(s.start_time) }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="b-to">Until</label>
+      <select id="b-to" name="to_slot">{% for s in slots %}<option value="{{ s.id }}" {{ 'selected' if (f.to_slot|string == s.id|string) or (not f.to_slot and loop.last) }}>{{ room_hour(s.end_time) }}</option>{% endfor %}</select></div>
+    <label class="field"><input type="checkbox" name="whole_day" value="1" {{ 'checked' if f.whole_day or not f }}> Whole day</label>
+    <div class="field" style="grid-column:1 / -1"><label for="b-reason">Reason</label>
+      <input id="b-reason" name="reason" value="{{ f.reason }}" maxlength="200" required></div>
+  </div>
+  {% if confirm %}<input type="hidden" name="confirm" value="1">
+  <button class="btn danger" type="submit">Cancel those bookings and close the room</button>
+  {% else %}<button class="btn" type="submit">Close the room</button>{% endif %}
+</form>
+
+<section class="rm-mine-sec">
+  <h2>Upcoming closures</h2>
+  {% if blocks %}
+  <div class="table-wrap"><table class="list resp-table">
+    <thead><tr><th>When</th><th>Hours</th><th>Reason</th><th></th></tr></thead>
+    <tbody>
+    {% for b in blocks %}
+    <tr><td data-label="When">{{ b.when }}</td><td data-label="Hours">{{ b.hours }}</td><td data-label="Reason">{{ b.reason }}</td>
+      <td class="actions" data-label=""><form method="post" action="/rooms/blocks/reopen">
+        <input type="hidden" name="ids" value="{{ b.ids|join(',') }}"><button class="btn ghost small" type="submit">Reopen</button></form></td></tr>
+    {% endfor %}
+    </tbody></table></div>
+  {% else %}<div class="card"><p>No closures coming up.</p></div>{% endif %}
+</section>
+{% endblock %}
