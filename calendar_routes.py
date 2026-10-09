@@ -364,6 +364,68 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 "owner_org_id": "", "audience": "unit", "tags": "", "updated_at": "",
                 "repeat": "none", "until": ""}
 
+    # ── the read API (H3) ───────────────────────────────────────────────────────
+
+    API_LAYERS = ("entries", "activities", "leave", "holidays", "birthdays")
+    API_MAX_DAYS = 92
+
+    def _api_item(i):
+        """What the API hands out for one calendar item: a WHITELIST, so a field added to the internal
+        item later is private until someone decides otherwise. Notes and meeting links are never in it
+        (only that a link exists), and a leave item carries no reason because none is ever stored."""
+        return {
+            "id": i["key"], "layer": i["layer"], "title": i["title"], "kind": i["kind"], "status": i["status"],
+            "start": i["start"], "end": i["end"], "start_time": i["start_time"], "end_time": i["end_time"],
+            "all_day": i["all_day"], "owner": i["owner_label"], "venue": i["venue"], "modality": i["modality"],
+            "has_meeting_link": bool(i["meeting_url"]), "tags": i["tags"], "url": i["url"],
+            "repeats": "repeats" in (i["flags"] or []),
+            "people": [{"user_id": p["user_id"], "name": p["name"], "role": p["role"]} for p in i["people"]],
+            "activity": ({"lifecycle": i["css"]["lifecycle"], "registered": i["css"]["registered"]} if i["css"] else None),
+        }
+
+    @router.get("/api/calendar")
+    def api_calendar(request: Request):
+        """The calendar as JSON, for the assistant and for tools. It is `office_calendar.items_between`
+        — the very function behind the /calendar page — so what it returns is exactly what that person
+        may see there, in the scope they ask for, and never more. Window: at most 92 days."""
+        user = request.state.user
+        if not user:
+            return JSONResponse({"error": "sign in required"}, status_code=401)
+        q = request.query_params
+
+        def bad(msg):
+            return JSONResponse({"error": msg}, status_code=400)
+        today = today_local()
+        try:
+            start = date.fromisoformat(q.get("start") or today.isoformat())
+            end = date.fromisoformat(q.get("end") or (start + timedelta(days=13)).isoformat())
+        except ValueError:
+            return bad("start and end must be dates like 2026-10-19")
+        if end < start:
+            return bad("end is before start")
+        if (end - start).days + 1 > API_MAX_DAYS:
+            return bad(f"ask for at most {API_MAX_DAYS} days at a time")
+        layers = [x for x in (q.get("layers") or "entries,activities,holidays").split(",") if x]
+        if not layers or any(x not in API_LAYERS for x in layers):
+            return bad("layers must be some of " + ", ".join(API_LAYERS))
+        conn = get_conn()
+        try:
+            ctx = oc.viewer_context(conn, user)
+            allowed = {c["key"] for c in oc.scope_choices(ctx)}
+            scope = q.get("scope") or oc.DEFAULT_SCOPE
+            if scope not in allowed:
+                return bad("scope must be one of " + ", ".join(sorted(allowed)))
+            kind = q.get("kind") or ""
+            if kind and kind not in KIND_LABELS:
+                return bad("unknown kind")
+            items = oc.items_between(conn, user, start, end, scope=scope, layers=layers,
+                                     filters={"kinds": {kind}} if kind else None)
+        finally:
+            conn.close()
+        return JSONResponse({"start": start.isoformat(), "end": end.isoformat(), "scope": scope,
+                             "count": len(items), "items": [_api_item(i) for i in items]},
+                            headers={"Cache-Control": "no-store"})
+
     # ── .ics: one item, and the personal feed (G4) ──────────────────────────────
 
     @router.get("/calendar/entries/{entry_id}/event.ics")
