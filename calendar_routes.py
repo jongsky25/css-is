@@ -140,7 +140,7 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
         owner = str(r[0]) if r else ""
     # The quick-add sheet posts to the ordinary add route (so every rule there applies) and comes back here.
     page["quick"] = {"owner": owner, "me": user["id"], "kinds": FORM_KIND_LABELS, "next": qs()}
-    page["flash"] = (q.get("ok") or "")[:120]
+    page["cal_flash"] = (q.get("ok") or "")[:120]      # not "flash": the home page imports a macro of that name
     hidden = [(k, v) for k, v in fixed.items()] + [("scope", scope)]
     noun = "item" if n == 1 else "items"
     if layout == "week":

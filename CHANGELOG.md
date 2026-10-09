@@ -1,5 +1,16 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v4.6 — calendar Phase 1: calendar-only tab and a compact toolbar)
+
+`docs/CALENDAR_UX_PLAN.md` Phase 1 (P1.1–P1.3).
+
+- **Calendar-only tab (`templates/office_connect.html`, `app.py`):** `/?view=calendar` renders a slim header (title + the Team / Me / Calendar switch) and the calendar. No hero, companion, to-do list or "Coming up". The handler no longer builds `team_view_data`, `home_tasks`, `calendar_week_block`, wellness stats or the work-arrangement hint for that view (none is drawn); `team_linked` is a one-line scope lookup so the Team tab still shows for people who have a team.
+- **Two-row toolbar (`templates/_calendar_body.html`, `static/css/calendar.css`, `static/js/calendar.js`):** row 1 = layout switch, **+ Add**, and a **⋯ More** menu (Quick add, Birthdays, Import from Word for admins); row 2 = one GET form with `‹ Earlier | Today | Later ›`, the range, a **Whose** select (replaces the five scope pills; absent in Week and Timeline, which are always the team) and **Filters (n)** (type, status, tag, unit) with removable chips. Everything applies on change when script is on; without script an Apply button submits the same form. Menus close on outside click and Escape. The filter panel is placed against the whole row so it stays on screen wherever the button wraps.
+- **Bug fix:** the green "✓ <Macro 'flash'>" banner: the page's message variable `flash` was shadowed by the home page's `flash` macro. It is now `cal_flash`.
+- **Empty states:** when nothing is on for the range, today's card still says so, and one line below offers a way forward (clear filters, look further ahead, add something) instead of a second big empty state.
+- Checked in Chromium on the real file's 379 imported items at 360, 390, 768, 1024, 1440 and 1920px on both the home tab and `/calendar`: no horizontal overflow, no script errors, filters panel on screen at every width, and on a phone today's events start at y=400 of 844 (before: about 1,000px down). Found and fixed two layout bugs in the first version: the panel opening off the right edge on desktop, and off the left edge at 768px.
+- Tests: the scope pills became a select, and the old assertion that the Calendar tab kept the greeting and to-do list was reversed on purpose.
+
 ## 2026-10-09 (v4.5 — calendar import dry run, P0.6)
 
 Found by running the CY 2026 file end to end on a local copy and reading the report.
