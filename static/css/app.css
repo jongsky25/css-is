@@ -459,8 +459,20 @@ a.whoami:hover { border-color:var(--accent); }
   .mm-who { font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; color:var(--soft);
         font-weight:700; margin-bottom:.4rem; overflow-wrap:anywhere; }
   .mm-chips { display:flex; gap:.4rem; margin-bottom:.5rem; }
-  .mobile-menu .mm-chips > * { flex:1 1 0; justify-content:center; text-align:center; font-size:.82rem;
+  .mobile-menu .mm-chips > a, .mobile-menu .mm-chips > .mm-btn { flex:1 1 0; justify-content:center; text-align:center; font-size:.82rem;
         border:1px solid var(--line); padding:.3rem .4rem; }
+  /* Display settings: a ⚙ chip in the footer row; its panel opens upward over the
+     nav list so the footer (and Log out) never grows or moves. */
+  .mm-foot { position:relative; }
+  .mm-disp { flex:none !important; }
+  .mm-disp > summary { list-style:none; cursor:pointer; display:flex; align-items:center; justify-content:center;
+        min-width:44px; min-height:44px; border:1px solid var(--line); border-radius:var(--r1);
+        color:var(--ink); font-size:1.1rem; }
+  .mm-disp > summary::-webkit-details-marker { display:none; }
+  .mm-disp[open] > summary { background:var(--accent-bg); border-color:var(--accent); }
+  .mm-disp > .mm-set { position:absolute; left:.8rem; right:.8rem; bottom:100%; max-height:60dvh; overflow-y:auto;
+        background:var(--surface); border:1px solid var(--line); border-radius:var(--r2);
+        box-shadow:var(--shadow-md); padding:.8rem; }
   .mobile-menu a.mm-logout { justify-content:center; background:var(--accent); color:var(--on-accent);
         font-weight:700; }
   .mobile-menu a.mm-logout:hover { background:var(--accent-ink); }

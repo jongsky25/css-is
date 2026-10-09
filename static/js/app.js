@@ -91,6 +91,8 @@ window.refreshChipCap = function (container) {
     function closeMenu() {
       if (!tg.open) return;
       tg.removeAttribute("open");
+      var dp = tg.querySelector(".mm-disp");
+      if (dp) dp.removeAttribute("open");
       var sm = tg.querySelector("summary");
       if (sm) sm.focus();
     }

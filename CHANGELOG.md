@@ -1,5 +1,11 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v6.13 — phone menu: Display settings behind a ⚙ in the footer)
+
+- The Display accordion is gone from the scrolling nav list. A ⚙ button sits beside My profile / Page tour / Full guide in the pinned footer; it opens the same Theme / Accent / Text size / Density panel upward over the nav list, so the footer and Log out never move or grow. It closes with the sheet.
+- Checked in Chromium at 360, 390 and 430px (light, dark, contrast): panel fits above the footer, theme switching works, Log out stays on screen.
+- Cache-bust: `?v=20261009f`.
+
 ## 2026-10-09 (v6.12 — phone menu is a right-side sheet, Log out always visible)
 
 - **Bug:** the ☰ menu was a dropdown capped at `100vh`, which on iPhone Safari is taller than the visible area, so the bottom (Log out) sat behind the browser toolbar; it was also one long flat list with the Display controls (~400px) always open.
