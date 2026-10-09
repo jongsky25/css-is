@@ -64,11 +64,14 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
     link the body builds goes back to `base` carrying `fixed`, so a tab never turns into
     the other page. Visibility is office_calendar's job; nothing here widens it."""
     fixed = dict(fixed or {})
-    layout = "month" if q.get(layout_key) == "month" else "agenda"
+    layout = q.get(layout_key) if q.get(layout_key) in ("month", "week") else "agenda"
     try:
         if layout == "month":
             m = date.fromisoformat((q.get("month") or today.strftime("%Y-%m")) + "-01")
             start, end = oc.month_span(m.year, m.month)
+        elif layout == "week":
+            start = oc.monday_of(date.fromisoformat(q["day"]) if q.get("day") else today)
+            end = start + timedelta(days=4)                # Monday-Friday: the working week
         else:
             start = date.fromisoformat(q["day"]) if q.get("day") else today
             end = start + timedelta(days=AGENDA_DAYS - 1)
@@ -80,7 +83,10 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
     scope = q.get("scope") or oc.DEFAULT_SCOPE
     if scope not in {c["key"] for c in choices}:
         scope = oc.DEFAULT_SCOPE                 # also catches a pill this viewer isn't offered
-    everything = oc.items_between(conn, user, start, end, scope=scope)
+    # The Week layout is "who is where" for the viewer's whole team: its rows come from the
+    # directory, so the items must not be narrowed to "mine" or the others' trips would vanish.
+    # Visibility is unchanged — items_between still only returns what this viewer may see.
+    everything = oc.items_between(conn, user, start, end, scope="bureau" if layout == "week" else scope)
     items = oc.apply_filters(everything, filters)
     entries = [i for i in everything if i["layer"] == "entries"]
     # the filter menus list what is IN this window (before filtering), so choosing
@@ -91,7 +97,7 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
             units[i["owner_org_id"]] = {"id": i["owner_org_id"], "label": i["owner_label"],
                                         "tone": i["tone"]}
     month_param = m.strftime("%Y-%m") if layout == "month" and q.get("month") else ""
-    params = {**fixed, "scope": scope, layout_key: "month" if layout == "month" else "",
+    params = {**fixed, "scope": scope, layout_key: layout if layout != "agenda" else "",
               "month": month_param, **clean}
 
     def qs(**over):
@@ -114,7 +120,13 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
     }
     hidden = [(k, v) for k, v in fixed.items()] + [("scope", scope)]
     noun = "item" if n == 1 else "items"
-    if layout == "month":
+    if layout == "week":
+        pw = oc.people_week(conn, user, start, items)
+        hidden += [(layout_key, "week"), ("day", start.isoformat())]
+        page.update(week=pw, is_today_window=start == oc.monday_of(today), add_day=max(start, today).isoformat()
+                    if start <= today <= end else start.isoformat(),
+                    range_label=f"{pw['label']} · {n} {noun}")
+    elif layout == "month":
         grid = oc.month_grid(items, m.year, m.month, today)
         hidden += [(layout_key, "month"), ("month", m.strftime("%Y-%m"))]
         page.update(grid=grid, weekdays=oc.WEEKDAY_NAMES,

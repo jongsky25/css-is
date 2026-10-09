@@ -415,6 +415,37 @@ def month_span(year, month):
             last + timedelta(days=(5 - last.weekday()) % 7))
 
 
+def _lay_out(items, w0, ncols, max_lanes):
+    """Stack the items that overlap the `ncols` days starting at `w0` into lanes.
+    Returns (bars, lanes_used, more): each bar is {item, col (1-based), span, lane (1-based),
+    left_cut, right_cut, timed}; `more[c]` counts the items hidden below `max_lanes` on day c
+    (never silently dropped). Holidays are not bars."""
+    w_end = w0 + timedelta(days=ncols - 1)
+    iso0, iso_end = w0.isoformat(), w_end.isoformat()
+    mine = sorted((i for i in items if i["layer"] != "holidays"
+                   and i["start"] <= iso_end and i["end"] >= iso0),
+                  key=lambda i: (i["start"], -(date.fromisoformat(i["end"])
+                                                - date.fromisoformat(i["start"])).days,
+                                 i["start_time"] or "", i["title"].lower()))
+    lanes, bars, more = [], [], [0] * ncols
+    for i in mine:
+        c0 = max((date.fromisoformat(i["start"]) - w0).days, 0)
+        c1 = min((date.fromisoformat(i["end"]) - w0).days, ncols - 1)
+        lane = next((n for n, taken in enumerate(lanes)
+                     if not any(c0 <= b and a <= c1 for a, b in taken)), len(lanes))
+        if lane == len(lanes):
+            lanes.append([])
+        lanes[lane].append((c0, c1))
+        if lane < max_lanes:
+            bars.append({"item": i, "col": c0 + 1, "span": c1 - c0 + 1, "lane": lane + 1,
+                         "left_cut": i["start"] < iso0, "right_cut": i["end"] > iso_end,
+                         "timed": i["start_time"] is not None and i["start"] == i["end"]})
+        else:
+            for c in range(c0, c1 + 1):
+                more[c] += 1
+    return bars, len(lanes), more
+
+
 def month_grid(items, year, month, today, max_lanes=3):
     """Lay items out as weeks of seven days. Each entry that overlaps a week is a
     BAR: `col` (1-7) where it starts in that week, `span` days wide, `lane` (row
@@ -437,30 +468,11 @@ def month_grid(items, year, month, today, max_lanes=3):
                 "holidays": [i for i in items if i["layer"] == "holidays" and i["start"] == iso],
                 "more": 0,
             })
-        iso0, iso6 = w0.isoformat(), w6.isoformat()
-        mine = sorted((i for i in items if i["layer"] != "holidays"
-                       and i["start"] <= iso6 and i["end"] >= iso0),
-                      key=lambda i: (i["start"], -(date.fromisoformat(i["end"])
-                                                    - date.fromisoformat(i["start"])).days,
-                                     i["start_time"] or "", i["title"].lower()))
-        lanes, bars = [], []
-        for i in mine:
-            c0 = max((date.fromisoformat(i["start"]) - w0).days, 0)
-            c1 = min((date.fromisoformat(i["end"]) - w0).days, 6)
-            lane = next((n for n, taken in enumerate(lanes)
-                         if not any(c0 <= b and a <= c1 for a, b in taken)), len(lanes))
-            if lane == len(lanes):
-                lanes.append([])
-            lanes[lane].append((c0, c1))
-            if lane < max_lanes:
-                bars.append({"item": i, "col": c0 + 1, "span": c1 - c0 + 1, "lane": lane + 1,
-                             "left_cut": i["start"] < iso0, "right_cut": i["end"] > iso6,
-                             "timed": i["start_time"] is not None and i["start"] == i["end"]})
-            else:
-                for c in range(c0, c1 + 1):
-                    days[c]["more"] += 1
+        bars, lanes, more = _lay_out(items, w0, 7, max_lanes)
+        for c, n in enumerate(more):
+            days[c]["more"] = n
         weeks.append({"days": days, "bars": bars,
-                      "rows": min(len(lanes), max_lanes) + (1 if any(d["more"] for d in days) else 0)})
+                      "rows": min(lanes, max_lanes) + (1 if any(d["more"] for d in days) else 0)})
         w0 += timedelta(days=7)
     first = date(year, month, 1)
     prev = (first - timedelta(days=1)).strftime("%Y-%m")
@@ -469,3 +481,68 @@ def month_grid(items, year, month, today, max_lanes=3):
             "prev_label": date.fromisoformat(prev + "-01").strftime("%b %Y"),
             "next_label": date.fromisoformat(nxt + "-01").strftime("%b %Y"),
             "start": start, "end": end}
+
+
+# ── people x days (the Week layout, C3) ───────────────────────────────────────
+
+WEEK_LANES = 3          # bars drawn per person per week; the rest are counted, not dropped
+_STATE_TEXT = {"onsite": "In office", "wfh": "Home", "dayoff": "Day off", "field": "Field",
+               "leave": "On leave", "holiday": "Holiday", "noawa": "No AWA", "unfiled": "", "none": ""}
+
+
+def monday_of(d):
+    return d - timedelta(days=d.weekday())
+
+
+def people_week(conn, user, monday, items):
+    """The Week layout: one row per person in the viewer's team, Monday-Friday across.
+
+    Everything about WHERE a person is comes from `storage.whereabouts_roster_week` — the
+    very function behind the "Who's in" week page — so its rules carry over unchanged:
+    scope is the directory (an unlinked account gets no team, not everyone), a person's own
+    report outranks the filing, a holiday has no cells, and LEAVE NEVER CARRIES A REASON.
+    On top of that, each person's calendar items are laid out as bars across their days.
+
+    `items` are calendar items the viewer is already allowed to see (items_between did that
+    once, centrally). An item names the people on it: it goes on the row of each of them who
+    is in this team. One that names nobody in this team (the whole unit, the bureau, someone
+    outside) goes in the band at the top instead, so nothing visible is ever left off the page.
+    Weekend days are not shown: a trip that runs into one is simply cut at Friday."""
+    roster = st.whereabouts_roster_week(conn, monday, user)
+    ncols = len(roster["days"])
+    fri = monday + timedelta(days=ncols - 1)
+    work = [i for i in items if i["layer"] == "entries" and i["start"] <= fri.isoformat()
+            and i["end"] >= monday.isoformat()]
+    team = {p["user_id"] for sec in roster["sections"] for p in sec["people"]}
+    per_person, band = {}, []
+    for i in work:
+        on = [p["user_id"] for p in i["people"] if p["user_id"] in team]
+        if on:
+            for uid in on:
+                per_person.setdefault(uid, []).append(i)
+        else:
+            band.append(i)
+    band_bars, band_lanes, band_more = _lay_out(band, monday, ncols, WEEK_LANES)
+    sections = []
+    for sec in roster["sections"]:
+        rows = []
+        for p in sec["people"]:
+            bars, lanes, more = _lay_out(per_person.get(p["user_id"], []), monday, ncols, WEEK_LANES)
+            cells = []
+            for c in p["cells"]:
+                state = c["state"]
+                cells.append({"state": state, "text": _STATE_TEXT.get(state, ""),
+                              "note": c.get("note") or "", "plotted": c.get("plotted", False)})
+            rows.append({"user_id": p["user_id"], "name": p["name"], "cells": cells, "bars": bars,
+                         "more": more, "rows": max(min(lanes, WEEK_LANES), 1) + (1 if any(more) else 0)})
+        sections.append({"section": sec["section"], "people": rows})
+    return {
+        "kind": roster["kind"], "label": roster["label"], "days": roster["days"],
+        "sections": sections, "n_people": len(team),
+        "band": {"bars": band_bars, "more": band_more,
+                 "rows": max(min(band_lanes, WEEK_LANES), 1) + (1 if any(band_more) else 0)},
+        "has_band": bool(band),
+        "team_label": ", ".join(s["section"] for s in sections),
+        "prev": (monday - timedelta(days=7)).isoformat(), "next": (monday + timedelta(days=7)).isoformat(),
+        "monday": monday,
+    }

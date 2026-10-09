@@ -264,3 +264,33 @@
              display:inline-flex; align-items:center; justify-content:center; color:var(--ink-soft); overflow:hidden; }
 .cal-wk-av img { width:100%; height:100%; object-fit:cover; }
 @media (max-width:640px) { .cal-wk-item { grid-template-columns:1fr auto; } .cal-wk-when { grid-column:1 / 3; } }
+
+/* ---- Week: people x days (C3) ---- */
+.cal-people-week { border:1px solid var(--line); border-radius:14px; background:var(--surface); overflow:auto; }
+.cal-pw-head, .cal-pw-row { display:grid; grid-template-columns:11rem repeat(5, minmax(7.5rem, 1fr)); min-width:52rem; }
+.cal-pw-head div { padding:.45rem .5rem; font-size:.74rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em;
+                   color:var(--soft); border-bottom:1px solid var(--line); text-align:center; }
+.cal-pw-head small { display:block; text-transform:none; letter-spacing:0; font-weight:500; }
+.cal-pw-head em { display:block; color:var(--red); text-transform:none; letter-spacing:0; font-style:normal; font-weight:700; font-size:.68rem; }
+.cal-pw-head .today { color:var(--accent); }
+.cal-pw-name { padding:.4rem .6rem; font-size:.86rem; font-weight:700; position:sticky; left:0; background:var(--surface); z-index:2;
+               border-right:1px solid var(--line); display:flex; flex-direction:column; justify-content:center; }
+.cal-pw-name small { color:var(--soft); font-weight:500; font-size:.7rem; }
+.cal-pw-sechead { padding:.3rem .6rem; background:var(--surface-2); font-size:.76rem; font-weight:800; text-transform:uppercase;
+                  letter-spacing:.05em; color:var(--ink-soft); border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+.cal-pw-row { grid-template-rows:repeat(var(--rows), auto); row-gap:2px; border-bottom:1px solid var(--line); min-height:2.6rem; padding:.15rem 0; }
+.cal-pw-band { background:var(--surface-2); }
+.cal-pw-cell { border-left:1px solid var(--line); position:relative; z-index:0; min-height:2.2rem; }
+.cal-pw-dot { position:absolute; right:.4rem; top:.35rem; width:.6rem; height:.6rem; border-radius:50%; background:var(--green); }
+.cal-pw-state { position:absolute; left:.4rem; bottom:.15rem; font-size:.66rem; color:var(--soft); max-width:92%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cal-pw-cell.st-onsite .cal-pw-state { display:none; }
+.cal-pw-cell.st-wfh .cal-pw-dot { background:var(--accent); }
+.cal-pw-cell.st-field .cal-pw-dot { background:var(--amber); }
+.cal-pw-cell.st-field { background:var(--amber-bg); }
+.cal-pw-cell.st-dayoff .cal-pw-dot { background:transparent; border:2px solid var(--grey); }
+.cal-pw-cell.st-leave { background:repeating-linear-gradient(135deg, var(--surface-2) 0 6px, var(--surface-3) 6px 12px); }
+.cal-pw-cell.st-leave .cal-pw-dot { background:var(--grey); }
+.cal-pw-cell.st-holiday { background:var(--red-bg); }
+.cal-pw-cell.plotted .cal-pw-dot { opacity:.4; }          /* the filed plan, not yet confirmed by the person */
+.cal-pw-row .cal-bar-item { margin:.15rem .2rem; }
+@media (max-width:760px) { .cal-people-week { font-size:.9rem; } }

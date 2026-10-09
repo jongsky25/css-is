@@ -1,5 +1,24 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.64 — office calendar: Week view, people × days)
+
+- **Week layout** (Agenda | **Week** | Month; on `/calendar` and the home Calendar tab) — one row per
+  person in the viewer's team, grouped by section, Monday–Friday across; each person's calendar items
+  are bars over their row (a trip across Tue–Thu is one bar; cut flat where it runs past Friday or
+  began earlier; three lanes then "+N more" to that day's agenda). Items that name nobody in the team
+  (the whole unit, the bureau, someone outside) sit in a band at the top, so nothing visible is left off.
+- **Where people are** comes from `storage.whereabouts_roster_week` — the "Who's in" week page's own
+  function — so its rules carry over: scope is the directory (an unlinked account gets a message, not
+  everyone), a person's own report beats the filing, a holiday has no cells, **leave never carries a
+  reason** (asserted: the note never reaches the page), a field trip shows where; a pale dot is the
+  filed plan not yet confirmed by the person. Dots are never the only signal: each non-office state
+  also says it in words.
+- **Scope** — the scope pills don't apply to this layout (rows come from the directory); items are
+  loaded for the whole team but still only what the viewer may see (an item for "only the people I
+  add" is drawn for those people alone, not even for the Director).
+- **`office_calendar.people_week`**, `monday_of`, and `_lay_out` (the lane stacking `month_grid` now shares).
+- `static/css/calendar.css` → `?v=20261009i`. **Tests** — `tests/test_calendar_week.py`.
+
 ## 2026-10-09 (v3.63 — office calendar: the Calendar tab on the home page, and today's count in the to-do)
 
 - **Home page tab: Team | Me | Calendar** — `/?view=calendar` shows the full calendar body (scope

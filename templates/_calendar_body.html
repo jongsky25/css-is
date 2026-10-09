@@ -1,19 +1,26 @@
 {# The calendar body — scope pills, layout switch, filters, agenda or month grid. Rendered by
    /calendar and by the home page's Calendar tab (calendar_routes.build_calendar_page). #}
 <div class="cal-bar">
+  {% if layout != "week" %}
   <nav class="cal-pills" aria-label="Whose calendar">
     {% for s in scopes %}
     <a href="{{ qs(scope=s.key) }}" {% if s.key == scope %}aria-current="true"{% endif %}>{{ s.label }}</a>
     {% endfor %}
   </nav>
+{% endif %}
   <nav class="cal-pills cal-views" aria-label="Layout">
     <a href="{{ qs(layout='', month='', day='') }}" {% if layout == "agenda" %}aria-current="true"{% endif %}>Agenda</a>
+    <a href="{{ qs(layout='week', month='', day='') }}" {% if layout == "week" %}aria-current="true"{% endif %}>Week</a>
     <a href="{{ qs(layout='month', month='', day='') }}" {% if layout == "month" %}aria-current="true"{% endif %}>Month</a>
   </nav>
   <a class="cal-btn primary cal-add" href="/calendar/new?day={{ add_day }}">+ Add</a>
   {% if can_import %}<a class="cal-btn" href="/calendar/import">Import from Word</a>{% endif %}
   <nav class="cal-nav" aria-label="Move through the calendar">
-    {% if layout == "month" %}
+    {% if layout == "week" %}
+    <a href="{{ qs(day=week.prev) }}">← Last week</a>
+    {% if not is_today_window %}<a href="{{ qs(day='') }}">This week</a>{% endif %}
+    <a href="{{ qs(day=week.next) }}">Next week →</a>
+    {% elif layout == "month" %}
     <a href="{{ qs(month=grid.prev) }}">← {{ grid.prev_label }}</a>
     {% if not is_today_window %}<a href="{{ qs(month='') }}">This month</a>{% endif %}
     <a href="{{ qs(month=grid.next) }}">{{ grid.next_label }} →</a>
@@ -49,7 +56,9 @@
 {% endif %}
 <p class="cal-range">{{ range_label }}{% if filtered %} · filtered{% endif %}</p>
 
-{% if layout == "month" %}
+{% if layout == "week" %}
+{% include "_calendar_week.html" %}
+{% elif layout == "month" %}
 {% include "_calendar_month.html" %}
 {% else %}
 
