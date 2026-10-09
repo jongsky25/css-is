@@ -77,15 +77,20 @@ Each increment: **files · done when · tests**. Tests run with `./run_tests.sh`
 ### Phase 0: import the CY 2026 Word calendar
 
 **P0.1 Parser fixes** (`calendar_import.py`, `tests/test_calendar_import.py`)
-- Times: "130pm" → 13:30, "10an" → 10:00, "9-12" inside a title → 09:00–12:00 *only* when both ends parse. The original text stays in `time_note` and `raw`.
-- Typo groups: pick the most common spelling as the title. The variants stay in `raw` and in a warning.
-- *Done when* the five typo cases above parse, and no timed draft loses its `time_note`.
-- *Tests:* synthetic .docx fixture cases for each.
+- **Status: done (v4.1).** The dry run showed the parser already handled "130pm", "10an" and typo grouping, so those needed no work. Reading all 380 drafts found different problems, now fixed:
+  - "MR SIA" (measles-rubella) was being read as a management review (3 items).
+  - A link in a line ("Meeting Link: https://…") now becomes the meeting link.
+  - A start time before 06:00 ("3 AM") is not kept and is flagged.
+  - A bare time left in a title ("PK TWG 10-12", 16 items) is flagged, not guessed.
+  - A fragment title ("and OOP") and days that differ by a whole word (LDS vs SGA merged into one range) are flagged.
+  - "Immaculate Concepcion" is recognised as a holiday line (19 holiday lines, 379 drafts).
+- *Tests:* made-up lines with the same shapes, in `tests/test_calendar_import.py`.
 
 **P0.2 Suggestions, never decisions** (`calendar_import.py`, `calendar_import_apply.py`)
 - `owner_suggestion` for the 48 unowned drafts, from (in order) a people hint that resolves to one unit, a tag that one unit owns ≥80% of in this file, or a "Section N" in the title. It is shown preselected-but-flagged, never silently applied.
-- `series_suggestion`: group same-normalised-title drafts and try each `recurrence` rule kind. Suggest one only when the rule's expansion between first and last date equals the draft dates exactly.
-- `holiday_diff`: the 18 holiday lines vs `storage.holidays_between`, split into "already there", "missing" and "different name".
+- **Status: done (v4.1)** in `calendar_import_suggest.py`, stored in the batch payload. On this file 5 of 47 unowned items get a suggestion (42 need a person), and **no repeat fits a rule exactly** (LHSI Learning Exchange, HSDD Monthly, Q MR all fall on irregular dates), so no series is suggested. The check is kept for future files.
+- `series_suggestion`: same title, owner and kind, three or more single-day items, suggested only when a `recurrence` rule reproduces every date and adds none.
+- Holiday comparison already exists on the review page (`have_hol`), so P0.4 only needs the "add the missing ones" checklist.
 - *Tests:* a suggestion is never applied without the review form saying so; an irregular repeat gets no series.
 
 **P0.3 Review screen made workable for 380 rows** (`templates/calendar_import_review.html`, `calendar_routes.py`)

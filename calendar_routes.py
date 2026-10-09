@@ -26,6 +26,7 @@ import calendar_ics as cics
 import mailer
 import calendar_import as ci
 import calendar_import_apply as cia
+import calendar_import_suggest as cis
 import calendar_people as cp
 import office_calendar as oc
 import recurrence
@@ -988,7 +989,9 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                                     "No activities were found in that file. Is it the monthly calendar?", 400)
             batch_id = st.cal_import_create(conn, up.filename, request.state.user["username"], {
                 "drafts": [d.to_dict() for d in res.drafts], "holidays": res.holidays,
-                "warnings": res.warnings, "stats": res.stats, "unmapped_colors": res.unmapped_colors})
+                "warnings": res.warnings, "stats": res.stats, "unmapped_colors": res.unmapped_colors,
+                "suggestions": {"owners": cis.suggest_owners([d.to_dict() for d in res.drafts]),
+                                "series": cis.suggest_series([d.to_dict() for d in res.drafts])}})
         finally:
             conn.close()
         return RedirectResponse(f"/calendar/import/{batch_id}", status_code=303)

@@ -1,5 +1,13 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v4.1 — calendar import, P0.1–P0.2)
+
+First two increments of `docs/CALENDAR_UX_PLAN.md` Phase 0 (import the CY 2026 Word calendar). Checked against the real file (379 drafts, 19 holiday lines).
+
+- **Parser (`calendar_import.py`):** "MR SIA" (measles-rubella) no longer counts as a management review (3 items were wrongly `audit_mr`); a URL in a line becomes `meeting_url` and leaves the title; a start time before 06:00 is not kept and is flagged; a bare time left in a title ("PK TWG 10-12") is flagged, not guessed; a title that begins "and/or/with/at" is flagged as a fragment; days merged into one range that differ by a whole word (LDS vs SGA) are flagged as possibly different activities; "Immaculate Concepcion" is recognised as a holiday line.
+- **Suggestions (`calendar_import_suggest.py`, new):** `suggest_owners` (a "Section N" in the line, or a tag one unit owns ≥80% of elsewhere in the file) and `suggest_series` (only when a repeat rule reproduces every date exactly). Stored in the batch payload as `suggestions`; nothing is applied without the review screen. On the CY 2026 file: 5 of 47 unowned items get a suggestion, and no repeat fits a rule exactly, so none is suggested.
+- Apply passes `meeting_url` through.
+
 ## 2026-10-09 (v4.0 — the Office calendar, complete)
 
 A milestone marker for the whole Office calendar programme (increments A1 to H3, v3.5x to v3.79). No code beyond the version.

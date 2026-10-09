@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "4.0"
+APP_VERSION = "4.1"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "4.1",
+        "date": "October 9, 2026",
+        "summary": "The Word calendar import reads your file more carefully.",
+        "changes": [
+            "Measles-rubella activities (\"MR SIA\") are no longer mistaken for management reviews.",
+            "A link written in a line becomes the meeting link, and an odd time such as \"3 AM\" is flagged instead of saved.",
+            "Items that may be two different activities, or that have a time left in the title, are marked for you to check.",
+            "For items with no colour, the import now suggests an owner when the line or its topic points to one. You still choose.",
+        ],
+    },
     {
         "version": "4.0",
         "date": "October 9, 2026",

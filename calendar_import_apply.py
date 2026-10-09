@@ -129,7 +129,8 @@ def apply(conn, batch, posted, by):
                 posted.get(f"title_{i}", ""), posted.get(f"start_{i}", ""),
                 end_date=posted.get(f"end_{i}", "") or None, kind=kind, status=status,
                 start_time=d["start_time"], end_time=d["end_time"], time_note=d["time_note"],
-                modality=d["modality"], audience=aud)
+                modality=d["modality"], audience=aud,
+                meeting_url=d.get("meeting_url"))
         except ValueError as e:
             errors.append(f"{label}: {e}.")
             continue

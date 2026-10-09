@@ -73,6 +73,7 @@ class Draft:
     people_hint: str | None               # raw "(Malou, Fe)" / "- Sir Jong, Doc AC" text
     people_tokens: list[str]
     import_key: str
+    meeting_url: str | None = None        # a link written in the line ("Meeting Link: https://…")
     raw: list[str] = field(default_factory=list)       # "2026-10-06: <line as written>"
     warnings: list[str] = field(default_factory=list)
 
@@ -180,7 +181,7 @@ _LEGEND = re.compile(r"^(activity legend:?|bureau|section\s*[1-5])(\s+(bureau|se
 _HOLIDAY = re.compile(
     r"(holiday|new year|independence day|hero.?s day|labor day|christmas|rizal|bonifacio|"
     r"maundy|good friday|black saturday|araw ng|kagitingan|ninoy|manila day|all saints|"
-    r"all soul|eid|edsa)", re.I)
+    r"all soul|immaculate|eid|edsa)", re.I)
 _WORKY = re.compile(r"(meeting|mtg|workshop|training|orientation|consultation|monitoring|"
                     r"technical assistance|summit|conference|session|writeshop)", re.I)
 
@@ -206,6 +207,7 @@ def _kind(text, online):
     low = text.lower()
     if "moratorium" in low:
         return "banner"
+    low = re.sub(r"\b(non-?)?mr[ -]sia\b", " ", low)      # "MR SIA" = measles-rubella, not a management review
     if re.search(r"^\s*due\b|\bdue:|\bdeadline\b", low):
         return "deadline"
     if re.search(r"\b(iqa|eqa|iso\b|audit|surveillance|management review|mancom|strat(egic)?\.? ?plan|"
@@ -345,6 +347,8 @@ def _people_hint(text):
 
 # --- one line ------------------------------------------------------------------
 
+_URL = re.compile(r"https?://\S+", re.I)
+_TIME_IN_TITLE = re.compile(r"(?<![\d:./\-])\d{1,2}(?::\d{2})?\s*[-–]\s*\d{1,2}(?::\d{2})?(?![\d:./\-])|(?<![\d:./])\d{1,2}:\d{2}(?![\d:])")
 _CONT = re.compile(r"^\s*(\(|[-–]\s|,\s|pax:)", re.I)
 
 
@@ -369,14 +373,29 @@ def _entry(text, owner):
             break
     online = bool(_ONLINE.search(text))
     modality = "online" if online else "f2f" if _F2F.search(text) else None
+    notes = []
+    url = None
+    um = _URL.search(text)
+    if um:
+        url = um.group(0).rstrip(".,;)")
+        text = re.sub(r"\s*(meeting\s+link|link|zoom)\s*:?\s*" + re.escape(um.group(0)), "", text, flags=re.I)
+        text = text.replace(um.group(0), "").strip()
     start, end, note, title = _find_time(text)
+    if start and start < "06:00":
+        notes.append(f"'{note}' reads as {start}; no clock time kept. Check the time.")
+        start, end = None, None
+    elif not start and not note and _TIME_IN_TITLE.search(title):
+        notes.append("A time may be written in the title: " +
+                     _TIME_IN_TITLE.search(title).group(0) + ". Check it.")
     title = re.sub(r"[\[(]\s*(tentative|postponed|pending)\s*[\])]", "", title, flags=re.I)
     title = re.sub(r"^(tentative|postponed)\s*[:\-]\s*", "", title, flags=re.I)
     title = re.sub(r"[\s\-–]*\(\s*(tentative|postponed|pending)\s*$", "", title, flags=re.I)
     title = re.sub(r"\s[-–]\s*(tentative|postponed|pending)\s*$", "", title, flags=re.I)
     title = re.sub(r"\s+", " ", title).strip(" -–:,")
     hint, tokens = _people_hint(title)
-    return {"title": title or text, "owner": owner, "status": status, "modality": modality,
+    if re.match(r"^(and|or|with|at)\b", title, re.I):
+        notes.append("The title looks like a fragment of another line. Check it.")
+    return {"notes": notes, "meeting_url": url, "title": title or text, "owner": owner, "status": status, "modality": modality,
             "start_time": start, "end_time": end, "time_note": note,
             "kind": _kind(text, online),
             "tags": [t for t, rx in _TAGS if re.search(rx, text, re.I)],
@@ -528,6 +547,12 @@ def _draft(ch):
     if len({e["norm"] for e in es}) > 1:            # a real typo variant, not just spacing/punctuation
         warnings.append("Spelled differently on different days: " +
                         "; ".join(sorted({e["title"] for e in es})))
+    words = [set(re.findall(r"[a-z]{3,}", e["norm"])) for e in es]
+    if len({e["norm"] for e in es}) > 1 and set.union(*words) - set.intersection(*words) - {"the", "and"}:
+        warnings.append("These days differ by a whole word, so they may be different activities: "
+                        + ", ".join(sorted(set.union(*words) - set.intersection(*words))) + ".")
+    for n in dict.fromkeys(n for e in es for n in e["notes"]):
+        warnings.append(n)
     if len(owners) > 1:
         warnings.append("Coloured for different owners on different days: " +
                         ", ".join(f"{OWNER_LABELS[o]}×{n}" for o, n in owners.most_common()))
@@ -541,7 +566,7 @@ def _draft(ch):
         start_time=first["start_time"], end_time=first["end_time"], time_note=first["time_note"],
         modality=first["modality"], owner=owners.most_common(1)[0][0] if owners else None,
         tags=first["tags"], people_hint=first["people_hint"], people_tokens=first["people_tokens"],
-        import_key="docx:" + key, raw=ch["raw"], warnings=warnings)
+        meeting_url=first["meeting_url"], import_key="docx:" + key, raw=ch["raw"], warnings=warnings)
 
 
 # ── public ─────────────────────────────────────────────────────────────────────

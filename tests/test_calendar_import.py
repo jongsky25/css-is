@@ -389,3 +389,47 @@ def test_drafts_are_sorted_and_serialisable():
     assert [d.start_date for d in res.drafts] == ["2026-10-06", "2026-10-13"]
     assert res.drafts[0].to_dict()["title"] == "Alpha sync"
     assert res.stats["drafts"] == 2 and res.stats["by_owner"] == {"none": 2}
+
+
+# ------------------------------------- CY 2026 file shapes (docs/CALENDAR_UX_PLAN.md P0.1) ---
+
+def test_mr_sia_is_measles_rubella_not_a_management_review():
+    assert one("Orientation on LIPH IS for MR SIA CHDs & LGUs").kind == "training"
+    assert one("LIPH IS Orientation for non-MR SIA CHDs online").kind == "training"
+    assert one("Q2 MR").kind == "audit_mr"             # a real management review stays one
+
+
+def test_a_link_in_the_line_becomes_the_meeting_url_not_part_of_the_title():
+    d = one("Learning Exchange Session on LHSI Meeting Link: https://bit.ly/LHSI-LES")
+    assert d.meeting_url == "https://bit.ly/LHSI-LES"
+    assert d.title == "Learning Exchange Session on LHSI"
+
+
+def test_an_implausible_early_time_is_not_kept_and_is_flagged():
+    d = one("Technical Discussions on the BUHC - Subprogram 3 AM")
+    assert d.start_time is None
+    assert any("3 AM" in w for w in d.warnings)
+
+
+def test_a_bare_time_left_in_the_title_is_flagged_not_guessed():
+    d = one("PK TWG 10-12")
+    assert d.start_time is None and d.time_note is None
+    assert any("10-12" in w for w in d.warnings)
+    assert not [w for w in one("PK TWG", "hl:cyan").warnings if "time" in w.lower()]
+
+
+def test_a_leftover_fragment_title_is_flagged():
+    d = one("8:30-3pm and OOP")
+    assert any("fragment" in w for w in d.warnings)
+
+
+def test_days_that_differ_by_a_whole_word_are_flagged_as_possibly_different_activities():
+    res = build((8, {3: [("LGU HSC Monitoring in BARMM (LDS - Arlene)", "shd:6fa8dc")],
+                     4: [("LGU HSC Monitoring in BARMM (SGA - Arlene)", "shd:6fa8dc")]}))
+    assert len(res.drafts) == 1
+    assert any("different activities" in w for w in res.drafts[0].warnings)
+
+
+def test_a_holiday_that_is_a_bare_name_is_set_aside():
+    res = build((12, {8: [("Immaculate Concepcion of Mary", "hl:green")]}))
+    assert res.drafts == [] and res.holidays[0]["date"] == "2026-12-08"
