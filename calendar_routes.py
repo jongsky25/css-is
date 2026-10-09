@@ -362,6 +362,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             revs = st.cal_revisions(conn, entry_id)
             names = oc.display_names(conn, [e["created_by"], e["updated_by"]]
                                      + [r["changed_by"] for r in revs])
+            heads_up = oc.entry_heads_up(conn, user, e)
             can_css = auth.can(user["role"], "create_activity")
             linked = st.get_event_by_id(conn, e["event_id"]) if e["event_id"] else None
             eligible = can_css and oc.entry_can_collect_feedback(e)
@@ -371,7 +372,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             conn.close()
         who = lambda u: names.get(u, u or "someone")           # noqa: E731
         return templates.TemplateResponse(request, "calendar_entry.html", {
-            "nav_active": "calendar", "e": e, "ok": ok, "err": err, "css": css,
+            "nav_active": "calendar", "e": e, "ok": ok, "err": err, "css": css, "heads_up": heads_up,
             "owner": unit["label"] if unit else None,
             "attendees": [{**cards.get(p["user_id"], {"name": "?", "initials": "?"}),
                            "role": p["role"]} for p in e["people"]],

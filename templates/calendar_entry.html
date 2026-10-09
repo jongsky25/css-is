@@ -33,6 +33,11 @@
     {% if e.note %}<dt>Notes</dt><dd class="cal-note">{{ e.note }}</dd>{% endif %}
   </dl>
 
+  {% if heads_up %}
+  <div class="cal-flash warn" role="status"><strong>Heads-up</strong>
+    <ul>{% for h in heads_up %}<li>{{ h }}</li>{% endfor %}</ul></div>
+  {% endif %}
+
   {% if css.linked %}
   <div class="cal-flash ok" role="status">★ This is linked to the CSS activity <strong>{{ css.linked.title }}</strong>.
     The activity owns the title, dates and venue; this item adds the people and tags.

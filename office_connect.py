@@ -1136,6 +1136,22 @@ def _task_calendar_today(conn, user, today):
             "cta": "Open the calendar", "url": "/?view=calendar"}
 
 
+def _task_whereabouts_mismatch(conn, user, today):
+    """"Confirm where you'll be": the calendar has them on a trip but their own whereabouts say
+    something else, this week or next. A soft nudge to the form, never a block."""
+    mon = today - timedelta(days=today.weekday())
+    ms = ocal.mismatches(conn, [user["id"]], today, mon + timedelta(days=11), kinds=("trip_conflict",))
+    if not ms:
+        return None
+    m = ms[0]
+    d = date.fromisoformat(m["day"])
+    return {"key": "whereabouts_mismatch", "icon": "🧭", "tone": "todo",
+            "title": "Confirm where you'll be",
+            "detail": f"{m['detail']} on {d.strftime('%a, %b')} {d.day}" + (f" · +{len(ms) - 1} more" if len(ms) > 1 else ""),
+            "cta": "Check my week",
+            "url": f"/work-arrangement/week?week={(d - timedelta(days=d.weekday())).isoformat()}"}
+
+
 def _task_activities(conn, user):
     """The activities this person's team runs that are still collecting — straight
     to their Monitor page, skipping the /css → /monitor hop (131 trips a month)."""
@@ -1167,7 +1183,8 @@ def home_tasks(conn, user, today=None):
                   lambda: _task_wellness(conn, user, today),
                   lambda: _task_awa(conn, user, today),
                   lambda: _task_office_today(conn, user, today),
-                  lambda: _task_calendar_today(conn, user, today)):
+                  lambda: _task_calendar_today(conn, user, today),
+                  lambda: _task_whereabouts_mismatch(conn, user, today)):
         try:
             t = build()
         except Exception:                        # noqa: BLE001 — one source never breaks the strip

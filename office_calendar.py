@@ -404,6 +404,102 @@ def _leave_layer(conn, ctx, start, end, scope):
     return out
 
 
+# ── soft mismatches between what the calendar says and what people reported (E2) ──
+#
+# One function decides all of them (docs/OFFICE_CALENDAR_PLAN.md §4). They are heads-ups: nothing
+# here blocks, changes or deletes anything, and each is derived at read time from the entries
+# and the person's own whereabouts rows.
+
+MISMATCH_KINDS = ("trip_conflict", "leave_on_entry", "double_booked")
+
+
+def _hhmm(t):
+    return t if t and len(t) >= 5 else None
+
+
+def mismatches(conn, user_ids, start, end, *, kinds=MISMATCH_KINDS):
+    """Heads-ups for the given accounts over working days between `start` and `end`:
+
+      trip_conflict   on a confirmed trip, but reported Office / AWA / Leave that day
+      leave_on_entry  reported Leave on a day a live entry lists them (a trip is trip_conflict)
+      double_booked   listed on two timed entries that overlap in time the same day
+
+    Each is {kind, user_id, day, entry_id, title, other_title, detail}. Cancelled entries never
+    count, and a person who reported Field on a trip day, or has nothing reported, is no mismatch."""
+    ids = sorted({int(u) for u in user_ids})
+    if not ids:
+        return []
+    s_iso = start.isoformat() if isinstance(start, date) else str(start)
+    e_iso = end.isoformat() if isinstance(end, date) else str(end)
+    marks = ",".join("?" * len(ids))
+    reported = {(u, d): (stt, note) for u, d, stt, note in conn.execute(
+        f"SELECT user_id, day, status, note FROM whereabouts WHERE user_id IN ({marks}) "
+        f"AND day BETWEEN ? AND ?", (*ids, s_iso, e_iso))}
+    out = []
+    trips = st.cal_travel_defaults(conn, s_iso, e_iso)
+    if "trip_conflict" in kinds:
+        for (uid, iso), t in sorted(trips.items(), key=lambda kv: (kv[0][1], kv[0][0])):
+            rep = reported.get((uid, iso))
+            if uid in ids and rep and rep[0] != "field":
+                out.append({"kind": "trip_conflict", "user_id": uid, "day": iso,
+                            "entry_id": t["entry_id"], "title": t["title"], "other_title": None,
+                            "detail": f"On {t['title']}, but reported {st.WHEREABOUTS_LABELS.get(rep[0], rep[0])}"})
+    if not ({"leave_on_entry", "double_booked"} & set(kinds)):
+        return out
+    by_day = {}
+    for uid, eid, title, a, b, t1, t2 in conn.execute(
+            f"SELECT cp.user_id, e.id, e.title, e.start_date, COALESCE(NULLIF(e.end_date, ''), e.start_date), "
+            f"e.start_time, e.end_time FROM calendar_entry e "
+            f"JOIN calendar_entry_person cp ON cp.entry_id = e.id "
+            f"WHERE cp.user_id IN ({marks}) AND e.status <> 'cancelled' AND e.start_date <= ? "
+            f"AND COALESCE(NULLIF(e.end_date, ''), e.start_date) >= ? ORDER BY e.id", (*ids, e_iso, s_iso)):
+        day, last = max(date.fromisoformat(a), date.fromisoformat(s_iso)), min(date.fromisoformat(b), date.fromisoformat(e_iso))
+        while day <= last:
+            if day.weekday() < 5:
+                by_day.setdefault((uid, day.isoformat()), []).append((eid, title, _hhmm(t1), _hhmm(t2)))
+            day += timedelta(days=1)
+    for (uid, iso), rows in sorted(by_day.items(), key=lambda kv: (kv[0][1], kv[0][0])):
+        if "leave_on_entry" in kinds and (reported.get((uid, iso)) or (None,))[0] == "leave":
+            for eid, title, _t1, _t2 in rows:
+                if (uid, iso) in trips and trips[(uid, iso)]["entry_id"] == eid:
+                    continue                                    # reported as trip_conflict
+                out.append({"kind": "leave_on_entry", "user_id": uid, "day": iso, "entry_id": eid,
+                            "title": title, "other_title": None,
+                            "detail": f"On leave, but listed on {title}"})
+        if "double_booked" in kinds:
+            timed = [r for r in rows if r[2] and r[3]]
+            for i, (e1, t1, s1, f1) in enumerate(timed):
+                for e2, t2, s2, f2 in timed[i + 1:]:
+                    if s1 < f2 and s2 < f1:
+                        out.append({"kind": "double_booked", "user_id": uid, "day": iso, "entry_id": e1,
+                                    "title": t1, "other_title": t2, "other_entry_id": e2,
+                                    "detail": f"{t1} and {t2} overlap"})
+    return out
+
+
+def entry_heads_up(conn, user, entry):
+    """Sentences for an entry's page: mismatches among the people on it, shown only to the
+    person concerned, the entry's leads and whoever added it — never to the wider audience."""
+    ids = [p["user_id"] for p in entry["people"]]
+    if not ids or entry["status"] == "cancelled":
+        return []
+    leads = {p["user_id"] for p in entry["people"] if p["role"] == "lead"}
+    is_owner = bool(entry.get("created_by")) and entry["created_by"] == user.get("username")
+    start = entry["start_date"]
+    end = min(entry["end_date"] or start, (date.fromisoformat(start) + timedelta(days=60)).isoformat())
+    cards = _people_cards(conn, ids)
+    out = []
+    for m in mismatches(conn, ids, start, end):
+        if m["entry_id"] != entry["id"] and m.get("other_entry_id") != entry["id"]:
+            continue
+        if not (m["user_id"] == user["id"] or user["id"] in leads or is_owner):
+            continue
+        who = "You" if m["user_id"] == user["id"] else cards.get(m["user_id"], {}).get("name") or "Someone"
+        d = date.fromisoformat(m["day"])
+        out.append(f"{who}: {m['detail']} ({d.strftime('%a, %b')} {d.day}).")
+    return out
+
+
 # name -> provider(conn, ctx, start_iso, end_iso, scope) -> [CalItem]. Later
 # layers (activities, leave, birthdays, deadlines) are one line each.
 LAYERS = {

@@ -9360,6 +9360,33 @@ def whereabouts_week(conn, user_id, monday, defaults=None):
     return days
 
 
+def whereabouts_trip_offers(days):
+    """Runs of consecutive working days a person SAYS they are in the field, with the same place
+    written, that no calendar trip covers — the "Add this trip to the calendar" offers on the
+    whereabouts form. `days` is whereabouts_week()'s list. Only saved days count (their own word),
+    and a run never crosses a day with a different place, a holiday, or an existing trip.
+    Returns [{start, end, note, label}]."""
+    offers, run = [], None
+    for d in days:
+        note = (d["note"] or "").strip()
+        ok = (d["saved"] == "field" and note and not d["trip"] and not d["holiday"])
+        if ok and run and run["key"] == note.lower():
+            run["end"] = d["iso"]
+            continue
+        if run:
+            offers.append(run)
+            run = None
+        if ok:
+            run = {"start": d["iso"], "end": d["iso"], "note": note, "key": note.lower()}
+    if run:
+        offers.append(run)
+    for o in offers:
+        a, b = date.fromisoformat(o["start"]), date.fromisoformat(o["end"])
+        o["label"] = (f"{a:%a %b} {a.day}" if a == b else f"{a:%a %b} {a.day} – {b:%a %b} {b.day}")
+        del o["key"]
+    return offers
+
+
 def whereabouts_choice_label(day):
     """'Work from home (AWA)' / 'Field' / 'Office' ... for one whereabouts_week
     day — the words the email and the page both use."""

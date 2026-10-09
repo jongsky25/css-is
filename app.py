@@ -15627,13 +15627,14 @@ def _whereabouts_page(request, user_id, monday, token="", msg="", err="", status
         editable = st.whereabouts_week_editable(monday)
         acct = st.get_admin_user_by_id(conn, user_id)
         name = _person_name(conn, user_id) if acct else None
+        offers = [] if token else st.whereabouts_trip_offers(days)
     finally:
         conn.close()
     this = st.whereabouts_week_start()
     return templates.TemplateResponse(request, "whereabouts_week.html", {
         "layout": "public_layout.html" if token else "dash_layout.html",
         "nav_active": "work_arrangement", "show_scope": False,
-        "token": token, "days": days, "monday": monday.isoformat(),
+        "token": token, "days": days, "monday": monday.isoformat(), "offers": offers,
         "week_label": st.whereabouts_week_label(monday),
         "submitted": submitted, "editable": editable, "name": name,
         "options": st.WHEREABOUTS_LABELS, "msg": msg, "err": err,
@@ -15731,6 +15732,36 @@ async def whereabouts_submit(request: Request):
         return _whereabouts_page(request, uid, monday, err=err, status_code=400)
     return _whereabouts_page(request, uid, monday,
                              msg="Saved — your colleagues will see this on Who's in.")
+
+
+@app.post("/work-arrangement/week/add-trip")
+async def whereabouts_add_trip(request: Request):
+    """"Add this trip to the calendar" — one tap from the whereabouts form. Never automatic: the
+    person's note stays private until they press it. The run is re-derived from their saved week,
+    so only a trip they actually reported (and the calendar lacks) can be created."""
+    p = await _posted(request)
+    monday = _whereabouts_monday(p.get("week", ""))
+    user = request.state.user
+    conn = get_conn()
+    try:
+        days = st.whereabouts_week(conn, user["id"], monday)
+        offer = next((o for o in st.whereabouts_trip_offers(days)
+                      if o["start"] == p.get("start") and o["end"] == p.get("end")), None)
+        if not offer:
+            return _whereabouts_page(request, user["id"], monday, status_code=400,
+                                     err="That trip is already on the calendar, or your week changed.")
+        unit = conn.execute(
+            "SELECT rp.org_unit_id FROM admin_user a JOIN resource_person rp ON rp.id = a.rp_id "
+            "WHERE a.id = ?", (user["id"],)).fetchone()
+        st.cal_create(conn, offer["note"], offer["start"],
+                      end_date=offer["end"] if offer["end"] != offer["start"] else None,
+                      kind="travel", venue=offer["note"], audience="unit", source="whereabouts",
+                      owner_org_id=unit[0] if unit else None, people=[(user["id"], "travel")],
+                      by=user["username"])
+    finally:
+        conn.close()
+    return _whereabouts_page(request, user["id"], monday,
+                             msg=f"Added “{offer['note']}” to the calendar for your section.")
 
 
 @app.get("/work-arrangement/roster", response_class=HTMLResponse)

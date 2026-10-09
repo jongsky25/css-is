@@ -1,5 +1,22 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.69 — office calendar: mismatches and "Add this trip")
+
+- **`office_calendar.mismatches(conn, user_ids, start, end)`** — one function for the soft heads-ups, derived at
+  read time, never blocking: `trip_conflict` (on a confirmed trip but reported Office/AWA/Leave), `leave_on_entry`
+  (reported Leave on a day a live entry lists them; a trip is a trip_conflict, not both) and `double_booked`
+  (two timed entries that overlap; touching ends and untimed items don't count). Cancelled and tentative items never count.
+- **Whereabouts form:** a day whose report disagrees with a trip says "The calendar has you on <trip>, but you reported
+  Office. Is that right?".
+- **Home to-do "Confirm where you'll be"** (this week and next) opens the right week.
+- **Calendar item page:** a "Heads-up" box, shown only to the person concerned, the item's leads and whoever added it.
+- **"Add this trip to the calendar"** (signed-in whereabouts form only): runs of consecutive days the person reported
+  as Field with the same place, that no trip covers, get one button → a `travel` entry (source `whereabouts`, audience =
+  their section, they are on it). Never automatic; the run is re-derived server-side so a forged request is refused and a
+  second tap can't duplicate it.
+- Not in this increment: bells and the "trip changed after you confirmed" notice (G2), and the extra lines in the
+  Tuesday chief roll-up.
+
 ## 2026-10-09 (v3.68 — office calendar: trips fill in whereabouts, leave on the calendar)
 
 - **Calendar → whereabouts (layer 3).** A person listed on a CONFIRMED `travel` entry gets **Field** plotted

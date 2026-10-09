@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.68"
+APP_VERSION = "3.69"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.69",
+        "date": "October 9, 2026",
+        "summary": "The calendar and your weekly whereabouts now point out when they disagree, and you can add a trip you reported.",
+        "changes": [
+            "If the calendar has you on a trip but you reported Office or Leave, your weekly form and your home page ask you to check.",
+            "If you report a place in the field that is not on the calendar, one button adds it for your section.",
+            "A calendar item shows a heads-up when someone on it is on leave, is on a trip they reported differently, or is double-booked. Only that person, the leads and whoever added it see it.",
+        ],
+    },
     {
         "version": "3.68",
         "date": "October 9, 2026",
