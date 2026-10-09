@@ -1,5 +1,22 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.56 — office calendar: month grid and filters)
+
+- **`/calendar?view=month&month=YYYY-MM`** — a Sunday-first month grid like the Word calendar.
+  A multi-day trip is ONE bar per week (flat-ended where it continues into the next), stacked in
+  lanes; at most three lanes are drawn and the rest are counted per day as "+N more", linking to
+  that day's agenda — never silently dropped. Holidays label and tint their day; today is ringed;
+  tentative bars are dashed, postponed ones struck through. Phones get a note pointing at the
+  agenda instead of the grid.
+- **Filters (agenda and month)** — type, status and tag selects plus clickable unit chips (the
+  colour legend), all kept in the URL and across Earlier/Later/month navigation. Menu options are
+  taken from the unfiltered window so choosing one never hides the others; invalid values are
+  ignored; holidays are never filtered out.
+- **`office_calendar.py`** — `month_span`, `month_grid`, `apply_filters` (also `items_between(filters=)`).
+- **`calendar_routes.py`** — `/calendar` now handles both views (`calendar_page`).
+- **`static/css/calendar.css`** bumped to `?v=20261009b` (new rules).
+- **Tests** — `tests/test_calendar_month.py`.
+
 ## 2026-10-09 (v3.55 — office calendar: add, edit, cancel and restore items)
 
 - **`calendar_routes.py`** — `GET/POST /calendar/new`, `GET /calendar/entries/{id}` (detail +

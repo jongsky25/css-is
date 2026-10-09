@@ -1,25 +1,63 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header, empty_state %}
 {% block title %}Office calendar{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009a">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009b">{% endblock %}
 {% block content %}
 {{ page_header("Office calendar", "What is on across the bureau: meetings, trips, trainings and holidays.") }}
 
 <div class="cal-bar">
   <nav class="cal-pills" aria-label="Whose calendar">
     {% for s in scopes %}
-    <a href="/calendar?scope={{ s.key }}&day={{ start.isoformat() }}"
-       {% if s.key == scope %}aria-current="true"{% endif %}>{{ s.label }}</a>
+    <a href="/calendar{{ qs(scope=s.key) }}" {% if s.key == scope %}aria-current="true"{% endif %}>{{ s.label }}</a>
     {% endfor %}
   </nav>
-  <a class="cal-btn primary cal-add" href="/calendar/new?day={{ start.isoformat() }}">+ Add</a>
+  <nav class="cal-pills cal-views" aria-label="Layout">
+    <a href="/calendar{{ qs(view='', month='', day='') }}" {% if view == "agenda" %}aria-current="true"{% endif %}>Agenda</a>
+    <a href="/calendar{{ qs(view='month', month='', day='') }}" {% if view == "month" %}aria-current="true"{% endif %}>Month</a>
+  </nav>
+  <a class="cal-btn primary cal-add" href="/calendar/new?day={{ add_day }}">+ Add</a>
   <nav class="cal-nav" aria-label="Move through the calendar">
-    <a href="/calendar?scope={{ scope }}&day={{ prev_day }}">← Earlier</a>
-    {% if not is_today_window %}<a href="/calendar?scope={{ scope }}">Today</a>{% endif %}
-    <a href="/calendar?scope={{ scope }}&day={{ next_day }}">Later →</a>
+    {% if view == "month" %}
+    <a href="/calendar{{ qs(month=grid.prev) }}">← {{ grid.prev_label }}</a>
+    {% if not is_today_window %}<a href="/calendar{{ qs(month='') }}">This month</a>{% endif %}
+    <a href="/calendar{{ qs(month=grid.next) }}">{{ grid.next_label }} →</a>
+    {% else %}
+    <a href="/calendar{{ qs(day=prev_day) }}">← Earlier</a>
+    {% if not is_today_window %}<a href="/calendar{{ qs(day='') }}">Today</a>{% endif %}
+    <a href="/calendar{{ qs(day=next_day) }}">Later →</a>
+    {% endif %}
   </nav>
 </div>
-<p class="cal-range">{{ range_label }} · {{ n_items }} {{ "item" if n_items == 1 else "items" }}</p>
+
+<form class="cal-filters" method="get" action="/calendar" aria-label="Filter the calendar">
+  <input type="hidden" name="scope" value="{{ scope }}">
+  {% if view == "month" %}<input type="hidden" name="view" value="month">
+  <input type="hidden" name="month" value="{{ month_key }}">{% endif %}
+  <label>Type <select name="kind"><option value="">All</option>
+    {% for k, label in kinds.items() %}<option value="{{ k }}" {{ "selected" if f.kind == k }}>{{ label }}</option>{% endfor %}</select></label>
+  <label>Status <select name="status"><option value="">All</option>
+    {% for k, label in statuses.items() %}<option value="{{ k }}" {{ "selected" if f.status == k }}>{{ label }}</option>{% endfor %}</select></label>
+  <label>Tag <select name="tag"><option value="">All</option>
+    {% for t in tags %}<option value="{{ t }}" {{ "selected" if f.tag == t }}>{{ t }}</option>{% endfor %}
+    {% if f.tag and f.tag not in tags %}<option value="{{ f.tag }}" selected>{{ f.tag }}</option>{% endif %}</select></label>
+  {% if f.unit %}<input type="hidden" name="unit" value="{{ f.unit }}">{% endif %}
+  <button class="cal-btn" type="submit">Filter</button>
+  {% if filtered %}<a href="/calendar{{ clear_filters }}">Clear filters</a>{% endif %}
+</form>
+
+{% if units %}
+<p class="cal-units" aria-label="Units — click one to show only its items">
+  {% for u in units %}
+  <a class="cal-unit" data-tone="{{ u.tone }}" href="/calendar{{ qs(unit='' if f.unit == u.id|string else u.id) }}"
+     {% if f.unit == u.id|string %}aria-current="true"{% endif %}><i aria-hidden="true"></i>{{ u.label }}</a>
+  {% endfor %}
+</p>
+{% endif %}
+<p class="cal-range">{{ range_label }}{% if filtered %} · filtered{% endif %}</p>
+
+{% if view == "month" %}
+{% include "_calendar_month.html" %}
+{% else %}
 
 {% if not n_items and not days|selectattr("holidays")|list %}
   {{ empty_state("Nothing on the calendar for these two weeks.", "Try another view above, or look further ahead.", "📅") }}
@@ -61,4 +99,5 @@
 <p class="cal-legend" aria-label="Colour key">
   <span>The colour bar on each item is the unit that owns it; the unit's name is always written on the item.</span>
 </p>
+{% endif %}
 {% endblock %}

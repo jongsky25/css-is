@@ -241,13 +241,13 @@ _DISPLAY_ORDER = ("holidays", "birthdays", "deadlines", "activities", "entries",
 _LAYER_ORDER = {name: i for i, name in enumerate(_DISPLAY_ORDER)}
 
 
-def items_between(conn, user, start, end, *, scope=DEFAULT_SCOPE, layers=None):
+def items_between(conn, user, start, end, *, scope=DEFAULT_SCOPE, layers=None, filters=None):
     """Every calendar item `user` may see between `start` and `end` (inclusive;
     dates or ISO strings), merged across layers and sorted by day, then time.
 
     `scope` only narrows (see module docstring); an unknown scope raises
     ValueError rather than guessing. `layers` limits which providers run
-    (default: all registered)."""
+    (default: all registered). `filters` is `apply_filters`' dict."""
     if scope not in SCOPES:
         raise ValueError(f"scope must be one of {', '.join(SCOPES)}")
     start, end = _iso(start), _iso(end)
@@ -263,7 +263,27 @@ def items_between(conn, user, start, end, *, scope=DEFAULT_SCOPE, layers=None):
             items.extend(provider(conn, ctx, start, end, scope))
     items.sort(key=lambda i: (i["start"], i["start_time"] or "", _LAYER_ORDER.get(i["layer"], len(_LAYER_ORDER)),
                               i["title"].lower(), i["key"]))
-    return items
+    return apply_filters(items, filters)
+
+
+def apply_filters(items, filters):
+    """Narrow items by what the viewer chose: filters is a dict with any of
+    `kinds`, `statuses`, `tags`, `owner_org_ids` (sets; a missing/empty one means
+    "any"). Holidays are never filtered out: they are the calendar's own backdrop,
+    not something a person added. An item with no tags can't match a tag filter."""
+    f = {k: set(v) for k, v in (filters or {}).items() if v}
+    if not f:
+        return items
+    keep = []
+    for i in items:
+        if i["layer"] == "holidays":
+            keep.append(i)
+        elif ((not f.get("kinds") or i["kind"] in f["kinds"])
+              and (not f.get("statuses") or i["status"] in f["statuses"])
+              and (not f.get("tags") or f["tags"] & set(i["tags"]))
+              and (not f.get("owner_org_ids") or i["owner_org_id"] in f["owner_org_ids"])):
+            keep.append(i)
+    return keep
 
 
 def _iso(d):
@@ -379,3 +399,73 @@ def describe_change(diff):
         return "saved"
     return "changed " + (", ".join(labels[:-1]) + " and " + labels[-1]
                          if len(labels) > 1 else labels[0])
+
+
+# ── month grid ────────────────────────────────────────────────────────────────
+
+WEEKDAY_NAMES = ("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")     # Sunday first, like the Word calendar
+
+
+def month_span(year, month):
+    """(grid_start, grid_end): the Sunday on/before the 1st through the Saturday
+    on/after the last day — whole weeks, so the grid has no ragged rows."""
+    first = date(year, month, 1)
+    last = date(year + (month == 12), month % 12 + 1, 1) - timedelta(days=1)
+    return (first - timedelta(days=(first.weekday() + 1) % 7),
+            last + timedelta(days=(5 - last.weekday()) % 7))
+
+
+def month_grid(items, year, month, today, max_lanes=3):
+    """Lay items out as weeks of seven days. Each entry that overlaps a week is a
+    BAR: `col` (1-7) where it starts in that week, `span` days wide, `lane` (row
+    stacked under the day numbers), and `left_cut` / `right_cut` when it continues
+    from the previous / into the next week — so a four-day trip is one bar, not
+    four chips. Only `max_lanes` rows are drawn; anything below is counted per day
+    in `more` ("+N more"), never silently dropped. Holidays are not bars: they
+    label and tint their day."""
+    start, end = month_span(year, month)
+    weeks, w0 = [], start
+    while w0 <= end:
+        w6 = w0 + timedelta(days=6)
+        days = []
+        for n in range(7):
+            d = w0 + timedelta(days=n)
+            iso = d.isoformat()
+            days.append({
+                "date": d, "iso": iso, "num": d.day, "in_month": d.month == month,
+                "is_today": d == today, "is_weekend": d.weekday() >= 5,
+                "holidays": [i for i in items if i["layer"] == "holidays" and i["start"] == iso],
+                "more": 0,
+            })
+        iso0, iso6 = w0.isoformat(), w6.isoformat()
+        mine = sorted((i for i in items if i["layer"] != "holidays"
+                       and i["start"] <= iso6 and i["end"] >= iso0),
+                      key=lambda i: (i["start"], -(date.fromisoformat(i["end"])
+                                                    - date.fromisoformat(i["start"])).days,
+                                     i["start_time"] or "", i["title"].lower()))
+        lanes, bars = [], []
+        for i in mine:
+            c0 = max((date.fromisoformat(i["start"]) - w0).days, 0)
+            c1 = min((date.fromisoformat(i["end"]) - w0).days, 6)
+            lane = next((n for n, taken in enumerate(lanes)
+                         if not any(c0 <= b and a <= c1 for a, b in taken)), len(lanes))
+            if lane == len(lanes):
+                lanes.append([])
+            lanes[lane].append((c0, c1))
+            if lane < max_lanes:
+                bars.append({"item": i, "col": c0 + 1, "span": c1 - c0 + 1, "lane": lane + 1,
+                             "left_cut": i["start"] < iso0, "right_cut": i["end"] > iso6,
+                             "timed": i["start_time"] is not None and i["start"] == i["end"]})
+            else:
+                for c in range(c0, c1 + 1):
+                    days[c]["more"] += 1
+        weeks.append({"days": days, "bars": bars,
+                      "rows": min(len(lanes), max_lanes) + (1 if any(d["more"] for d in days) else 0)})
+        w0 += timedelta(days=7)
+    first = date(year, month, 1)
+    prev = (first - timedelta(days=1)).strftime("%Y-%m")
+    nxt = (date(year + (month == 12), month % 12 + 1, 1)).strftime("%Y-%m")
+    return {"weeks": weeks, "title": first.strftime("%B %Y"), "prev": prev, "next": nxt,
+            "prev_label": date.fromisoformat(prev + "-01").strftime("%b %Y"),
+            "next_label": date.fromisoformat(nxt + "-01").strftime("%b %Y"),
+            "start": start, "end": end}

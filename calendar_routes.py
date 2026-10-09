@@ -11,7 +11,7 @@ route is behind it. Who may SEE which item is decided in office_calendar.py.
 from __future__ import annotations
 
 from datetime import date, timedelta
-from urllib.parse import parse_qs, quote
+from urllib.parse import parse_qs, quote, urlencode
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -35,37 +35,89 @@ AUDIENCE_LABELS = {"unit": "Everyone in the owning unit",
 def make_router(templates, get_conn, today_local):
     router = APIRouter()
 
+    def _filters(kind, status, tag, unit):
+        """Validated filter choices -> (filters dict for office_calendar, clean values)."""
+        clean = {"kind": kind if kind in KIND_LABELS else "",
+                 "status": status if status in STATUS_LABELS and status != "cancelled" else "",
+                 "tag": tag.strip()[:50], "unit": unit if unit.isdigit() else ""}
+        return ({"kinds": {clean["kind"]} if clean["kind"] else None,
+                 "statuses": {clean["status"]} if clean["status"] else None,
+                 "tags": {clean["tag"]} if clean["tag"] else None,
+                 "owner_org_ids": {int(clean["unit"])} if clean["unit"] else None}, clean)
+
+    def _qs(params, **over):
+        """Query string for a link: the current choices with `over` applied, empty ones dropped."""
+        merged = {**params, **over}
+        return "?" + urlencode([(k, v) for k, v in merged.items() if v not in ("", None)])
+
     @router.get("/calendar", response_class=HTMLResponse)
-    def calendar_agenda(request: Request, scope: str = oc.DEFAULT_SCOPE, day: str = ""):
+    def calendar_page(request: Request, scope: str = oc.DEFAULT_SCOPE, day: str = "",
+                      view: str = "agenda", month: str = "", kind: str = "",
+                      status: str = "", tag: str = "", unit: str = ""):
         user = request.state.user
         today = today_local()
+        view = "month" if view == "month" else "agenda"
         try:
-            start = date.fromisoformat(day) if day else today
+            if view == "month":
+                m = date.fromisoformat((month or today.strftime("%Y-%m")) + "-01")
+                start, end = oc.month_span(m.year, m.month)
+            else:
+                start = date.fromisoformat(day) if day else today
+                end = start + timedelta(days=AGENDA_DAYS - 1)
         except ValueError:
             # a hand-typed or stale date bounces to today rather than 500-ing
-            return RedirectResponse("/calendar", status_code=303)
-        end = start + timedelta(days=AGENDA_DAYS - 1)
+            return RedirectResponse("/calendar" + ("?view=month" if view == "month" else ""),
+                                    status_code=303)
+        filters, clean = _filters(kind, status, tag, unit)
         conn = get_conn()
         try:
             ctx = oc.viewer_context(conn, user)
             choices = oc.scope_choices(ctx)
             if scope not in {c["key"] for c in choices}:
                 scope = oc.DEFAULT_SCOPE         # also catches a pill this viewer isn't offered
-            items = oc.items_between(conn, user, start, end, scope=scope)
+            everything = oc.items_between(conn, user, start, end, scope=scope)
         finally:
             conn.close()
-        return templates.TemplateResponse(request, "calendar.html", {
-            "nav_active": "calendar", "show_scope": False,
-            "scope": scope, "scopes": choices,
-            "days": oc.agenda_days(items, start, end, today),
-            "start": start, "end": end, "today": today,
+        items = oc.apply_filters(everything, filters)
+        entries = [i for i in everything if i["layer"] == "entries"]
+        # the filter menus list what is IN this window (before filtering), so choosing
+        # one never makes the other options vanish
+        units = {}
+        for i in entries:
+            if i["owner_org_id"]:
+                units[i["owner_org_id"]] = {"id": i["owner_org_id"], "label": i["owner_label"],
+                                            "tone": i["tone"]}
+        params = {"scope": scope, "view": "month" if view == "month" else "",
+                  "month": m.strftime("%Y-%m") if view == "month" and month else "", **clean}
+        page = {
+            "nav_active": "calendar", "show_scope": False, "view": view,
+            "scope": scope, "scopes": choices, "today": today, "start": start, "end": end,
             "n_items": sum(1 for i in items if i["layer"] != "holidays"),
-            "prev_day": (start - timedelta(days=AGENDA_DAYS)).isoformat(),
-            "next_day": (start + timedelta(days=AGENDA_DAYS)).isoformat(),
-            "is_today_window": start == today,
-            "range_label": f"{start.strftime('%b')} {start.day} – "
-                           f"{end.strftime('%b')} {end.day}, {end.year}",
-        })
+            "f": clean, "filtered": any(clean.values()),
+            "kinds": KIND_LABELS,
+            "statuses": {k: v for k, v in STATUS_LABELS.items() if k != "cancelled"},
+            "tags": sorted({t for i in entries for t in i["tags"]}, key=str.lower),
+            "units": sorted(units.values(), key=lambda u: u["label"].lower()),
+            "qs": lambda **over: _qs(params, **over),
+            "clear_filters": _qs({**params, "kind": "", "status": "", "tag": "", "unit": ""}),
+        }
+        if view == "month":
+            grid = oc.month_grid(items, m.year, m.month, today)
+            page.update(grid=grid, weekdays=oc.WEEKDAY_NAMES, month_key=m.strftime("%Y-%m"),
+                        is_today_window=(m.year, m.month) == (today.year, today.month),
+                        range_label=f"{grid['title']} · {page['n_items']} "
+                                    f"{'item' if page['n_items'] == 1 else 'items'}",
+                        add_day=(today if (m.year, m.month) == (today.year, today.month)
+                                 else m).isoformat())
+        else:
+            page.update(days=oc.agenda_days(items, start, end, today),
+                        prev_day=(start - timedelta(days=AGENDA_DAYS)).isoformat(),
+                        next_day=(start + timedelta(days=AGENDA_DAYS)).isoformat(),
+                        is_today_window=start == today, add_day=start.isoformat(),
+                        range_label=f"{start.strftime('%b')} {start.day} – "
+                                    f"{end.strftime('%b')} {end.day}, {end.year} · "
+                                    f"{page['n_items']} {'item' if page['n_items'] == 1 else 'items'}")
+        return templates.TemplateResponse(request, "calendar.html", page)
 
     # ── add / view / edit / cancel / restore ────────────────────────────────
     # Everyone signed in may add and edit (owner decision). What a person may
