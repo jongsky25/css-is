@@ -146,7 +146,7 @@ def test_upload_stores_a_batch_and_shows_the_review(admin, conn, units):
     assert [d["title"] for d in b["payload"]["drafts"]] == [
         "CALIM TA Palawan", "CALIM Section meeting (PK)", "CALIM Strat Planning", "CALIM Loose end"]
     html = admin.get(f"/calendar/import/{bid}").text
-    for needle in ("CALIM TA Palawan", "CALIM Loose end", "2026-10", "Section 4", "1 holiday lines",
+    for needle in ("CALIM TA Palawan", "CALIM Loose end", "2026-10", "Section 4", "Holidays in the file (1)",
                    "Which unit does each colour belong to", "Import the ticked items"):
         assert needle in html, needle
     assert "name=\"map_s1\"" in html and "name=\"inc_0\"" in html
@@ -287,3 +287,162 @@ def test_the_upload_list_shows_earlier_batches(admin, conn):
     bid = batch_id(upload(admin, name="CY-2026-draft.docx"))
     html = admin.get("/calendar/import").text
     assert "CY-2026-draft.docx" in html and f"/calendar/import/{bid}" in html and "Waiting for review" in html
+
+
+# ------------------------------------- review screen: "needs you" first (CALENDAR_UX_PLAN P0.3) ---
+
+def _review_html(admin, extra=None):
+    bid = batch_id(upload(admin, make_docx(extra)))
+    return bid, admin.get(f"/calendar/import/{bid}").text
+
+
+def test_review_puts_items_that_need_a_person_first_and_folds_the_clean_ones(admin, conn, units):
+    bid, html = _review_html(admin)
+    assert "Needs you (" in html
+    needs, rest = html.split('<details class="cal-clean">')
+    assert "CALIM Loose end" in needs                 # no owner colour: needs a person
+    assert "CALIM Section meeting (PK)" in rest       # coloured and unremarkable: folded away
+    assert "look fine — show them" in rest
+    assert 'data-bulk="clean"' in html and "data-bulk-owner" in html and "data-skip-before" in html
+
+
+def test_a_suggested_owner_is_shown_but_never_filled_in(admin, conn, units):
+    bid, html = _review_html(admin, {20: [("CALIM prep meeting (Sec1)", None)]})
+    assert "Suggested: <b>Section 1</b>" in html and 'data-use="s1"' in html
+    i = next(i for i, d in enumerate(st.cal_import_get(conn, bid)["payload"]["drafts"])
+             if d["title"] == "CALIM prep meeting (Sec1)")
+    sel = html.split(f'name="owner_{i}"')[1].split("</select>")[0]
+    assert "selected" not in sel                      # a suggestion, not a decision
+
+
+def test_a_tentative_item_is_listed_under_needs_you_with_its_reason(admin, conn, units):
+    bid, html = _review_html(admin, {21: [("CALIM Pending Review (Tentative)", "hl:green")]})
+    needs = html.split('<details class="cal-clean">')[0]
+    assert "CALIM Pending Review" in needs and "Tentative in the Word file." in needs
+
+
+def test_the_review_table_is_a_responsive_card_table_with_a_sticky_import_bar(admin, conn, units):
+    bid, html = _review_html(admin)
+    assert 'class="cal-table cal-review resp-table resp-table-wide"' in html and 'data-label="Owner"' in html
+    assert 'class="cf-actions cal-sticky"' in html and 'id="cal-sum"' in html
+
+
+def test_importing_the_review_form_as_posted_still_works(admin, conn, units):
+    bid, _ = _review_html(admin)
+    r = post_import(admin, bid, form_for(conn, bid))
+    assert r.status_code == 303 and "CALIM Loose end" in titles(conn)
+
+
+# ------------------------------------- holidays and undo (CALENDAR_UX_PLAN P0.4) ---
+
+HOL_DAY = "2026-10-14"                    # the "Non-working Holiday" make_docx() puts in the file
+
+
+@pytest.fixture()
+def no_holiday(conn):
+    conn.execute("DELETE FROM holiday WHERE day=?", (HOL_DAY,)); conn.commit()
+    yield
+    conn.execute("DELETE FROM holiday WHERE day=?", (HOL_DAY,)); conn.commit()
+
+
+def test_a_holiday_in_the_file_is_offered_unticked(admin, conn, units, no_holiday):
+    bid = batch_id(upload(admin))
+    html = admin.get(f"/calendar/import/{bid}").text
+    box = html.split(f'name="hol_{HOL_DAY}"')[1].split(">")[0]
+    assert "checked" not in box and f'name="holkind_{HOL_DAY}"' in html
+
+
+def test_only_the_ticked_holidays_are_added_with_the_import(admin, conn, units, no_holiday):
+    bid = batch_id(upload(admin))
+    assert post_import(admin, bid, form_for(conn, bid)).status_code == 303
+    assert st.get_holiday(conn, HOL_DAY) is None                       # not ticked: not added
+    bid2 = batch_id(upload(admin, make_docx({9: [("CALIM Another", "hl:cyan")]})))
+    r = post_import(admin, bid2, form_for(conn, bid2, **{f"hol_{HOL_DAY}": "1", f"holkind_{HOL_DAY}": "special"}))
+    assert r.status_code == 303
+    assert st.get_holiday(conn, HOL_DAY)["kind"] == "special"
+    assert st.cal_import_get(conn, bid2)["result"]["holidays"][0]["date"] == HOL_DAY
+
+
+def test_a_holiday_someone_already_set_is_never_overwritten(admin, conn, units, no_holiday):
+    st.set_holiday(conn, HOL_DAY, "Typhoon suspension", "suspension", by="x")
+    bid = batch_id(upload(admin))
+    post_import(admin, bid, form_for(conn, bid, **{f"hol_{HOL_DAY}": "1", f"holkind_{HOL_DAY}": "special"}))
+    assert st.get_holiday(conn, HOL_DAY)["name"] == "Typhoon suspension"
+
+
+def test_a_bad_holiday_choice_stops_the_whole_import(admin, conn, units, no_holiday):
+    bid = batch_id(upload(admin))
+    r = post_import(admin, bid, form_for(conn, bid, **{"hol_2026-01-01": "1"}))        # not in this file
+    assert r.status_code == 400 and "one of the holidays in this file" in r.text and titles(conn) == []
+    r = post_import(admin, bid, form_for(conn, bid, **{f"hol_{HOL_DAY}": "1", f"holkind_{HOL_DAY}": "nope"}))
+    assert r.status_code == 400 and titles(conn) == []
+
+
+def _imported(admin, conn, **over):
+    bid = batch_id(upload(admin))
+    assert post_import(admin, bid, form_for(conn, bid, **over)).status_code == 303
+    return bid
+
+
+def test_undo_removes_what_the_import_made_and_reopens_the_upload(admin, conn, units, no_holiday):
+    bid = _imported(admin, conn, **{f"hol_{HOL_DAY}": "1", f"holkind_{HOL_DAY}": "special"})
+    assert len(titles(conn)) == 4 and st.get_holiday(conn, HOL_DAY)
+    r = admin.post(f"/calendar/import/{bid}/undo", follow_redirects=False)
+    assert r.status_code == 303 and "removed=4" in r.headers["location"]
+    assert titles(conn) == [] and st.get_holiday(conn, HOL_DAY) is None
+    b = st.cal_import_get(conn, bid)
+    assert b["imported_at"] is None and b["result"] is None            # reviewable again
+    assert post_import(admin, bid, form_for(conn, bid)).status_code == 303 and len(titles(conn)) == 4
+
+
+def test_undo_keeps_an_item_someone_edited_and_says_so(admin, conn, units):
+    bid = _imported(admin, conn)
+    eid = conn.execute("SELECT id FROM calendar_entry WHERE title='CALIM Loose end'").fetchone()[0]
+    st.cal_update(conn, eid, by="someone@else", title="CALIM Loose end (moved)")
+    r = admin.post(f"/calendar/import/{bid}/undo", follow_redirects=False)
+    assert "removed=3" in r.headers["location"] and "kept=1" in r.headers["location"]
+    assert titles(conn) == ["CALIM Loose end (moved)"]
+    b = st.cal_import_get(conn, bid)
+    assert b["imported_at"] and [c["entry_id"] for c in b["result"]["created"]] == [eid]
+    assert "Undone: removed 3" in admin.get(r.headers["location"]).text
+
+
+def test_matching_names_does_not_count_as_an_edit(admin, conn, units):
+    bid = _imported(admin, conn)
+    eid = conn.execute("SELECT id FROM calendar_entry WHERE title='CALIM TA Palawan'").fetchone()[0]
+    uid = conn.execute("SELECT id FROM admin_user LIMIT 1").fetchone()[0]
+    st.cal_add_people(conn, eid, [(uid, "attending")], by="admin@test.local", mark_seen=True)
+    prev = cia_preview(conn, bid)
+    assert prev["removable"] == 4 and prev["edited"] == []
+
+
+def cia_preview(conn, bid):
+    import calendar_import_apply as cia
+    return cia.undo_preview(conn, st.cal_import_get(conn, bid))
+
+
+def test_undo_is_admin_only_and_ignores_a_batch_that_was_not_imported(request, admin, conn, units):
+    bid = batch_id(upload(admin))
+    assert admin.post(f"/calendar/import/{bid}/undo", follow_redirects=False).status_code == 303
+    assert st.cal_import_get(conn, bid) is not None                    # nothing imported: nothing happened
+    bid2 = _imported(admin, conn)
+    for who in ("viewer", "encoder", "manager"):
+        assert request.getfixturevalue(who).post(f"/calendar/import/{bid2}/undo").status_code == 403
+    assert len(titles(conn)) == 4
+
+
+def test_the_imported_page_offers_undo_with_a_count(admin, conn, units):
+    bid = _imported(admin, conn)
+    html = admin.get(f"/calendar/import/{bid}").text
+    assert "Undo this import" in html and "<strong>4</strong> items" in html
+
+
+def test_applying_an_imported_batch_again_changes_nothing_and_keeps_undo_working(admin, conn, units):
+    import calendar_import_apply as cia
+    bid = _imported(admin, conn)
+    before = st.cal_import_get(conn, bid)
+    result, errors = cia.apply(conn, before, form_for(conn, bid), "admin@test.local")
+    assert result is None and errors == ["This upload has already been imported."]
+    after = st.cal_import_get(conn, bid)
+    assert after["result"] == before["result"] and len(titles(conn)) == 4
+    assert admin.post(f"/calendar/import/{bid}/undo", follow_redirects=False).headers["location"].count("removed=4") == 1

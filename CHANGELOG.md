@@ -1,5 +1,42 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v4.5 — calendar import dry run, P0.6)
+
+Found by running the CY 2026 file end to end on a local copy and reading the report.
+
+- **`apply()` refuses an already-imported batch** ("This upload has already been imported."). The web route already redirected, but a second call to the function itself overwrote the batch result and with it the list Undo works from (Undo then removed nothing).
+- **Fewer false flags:** a time-looking pair glued to letters ("v2 - 2nd") or after a month name ("April 14-16") is no longer flagged as a time in the title; "These days differ by a whole word" no longer fires for spellings of one word ("Plannin/Planning/Planningv", "LHBAssessment"), so the one real case (LDS vs SGA) stands out. Flags on the file: 24 → 21.
+- **Dry run result (local copy):** 379 of 379 imported, counts by month and by owner match the file, a second apply is refused, Undo removes all 379. An independent reader found every parsed line in its Word cell (0 missing), and no activity line in the Word tables was dropped (771 content lines: 26 are the "Activity Legend" boilerplate, the rest are in a draft or set aside as holidays). One item ("SEPTEMBER 1: Locking of LHS ML IS Access/Extract data for mid-year") sits in the August table's spill-over cell; the importer reads it as Sep 1.
+
+## 2026-10-09 (v4.4 — calendar import names, P0.5)
+
+- **More names found (`calendar_import._trailing_known_names`):** a name the bureau's name guide knows, written at the very end of a line with no brackets ("…Davao City- Riza and Mae", "…Bicol_Sir Jong/Riza/Vlanche", "…Baguio-Riza", "…HPB-riza"), is now captured and added to any names the bracket/dash rule found. It walks back from the last word over known names, honorifics and "and" and stops at the first other word, so places and topics are not taken for people. On the CY 2026 file the items with names went from 92 to 111.
+- **People step (`templates/calendar_import_people.html`):** says how many names are already filled in and how many need a person, shows a live "N of M will be saved" with a sticky Save, and stacks into cards below 1180px. It uses its own `cal-cards` layout, not `resp-table`: that class hides every row holding a `<th>`, and each row here starts with one, so the table was invisible on phones (found by looking at the screenshot; the overflow check alone passed).
+- Checked in Chromium at 390, 768 and 1440px on the real file with a stand-in directory built from the name guide: 61 names, all rows visible, no overflow or script errors, and saving added 160 people to 160 items.
+- Not changed: the resolver and the name guide (`calendar_people.py`); they already handled these names. Still not captured: names after an unmatched closing bracket ("…Updating Analyn, Jas, Wardah)") and misspellings ("doc vlance").
+
+## 2026-10-09 (v4.3 — calendar import holidays and undo, P0.4)
+
+- **Holidays (`calendar_import_apply.holiday_choices`, review page):** the holiday lines set aside by the parser that are not in Holidays are a checklist with a type each (regular / special / suspension, guessed from the name). Nothing is pre-ticked; some are local (Manila Day). Ticked ones are added with the import, validated with everything else (a bad choice stops the whole import), and a holiday someone already set is never overwritten. They are recorded in the batch result.
+- **Undo (`calendar_import_apply.undo`, `POST /calendar/import/{id}/undo`, admin only):** deletes the items the batch created that are untouched since import (sequence 0, and the only revisions are the create plus people matched by the person who ran the import, `storage.cal_entry_untouched_since_import`), and the holidays it added that still read as it left them. Edited items are kept and listed; when nothing is left the batch is reopened (`storage.cal_import_reopen`) so it can be reviewed and imported again. Audited.
+- Not done: approving a repeat series on the review screen. No repeat in the CY 2026 file fits a rule exactly, so there was nothing to approve; `suggest_series` stays stored in the batch for a future file.
+- Checked on the real file in Chromium at 390px: import 379 items + 1 ticked holiday, undo back to 0 items and 18 holidays, re-import 379.
+
+## 2026-10-09 (v4.2 — calendar import review screen, P0.3)
+
+- **Review screen (`templates/calendar_import_review.html`, `calendar_import_apply.review_rows`):** rows that need a person (no owner colour, a parser warning, a status other than confirmed) are listed first under "Needs you"; the rest are folded into "N rows look fine — show them". Each row shows why it needs you; a suggested owner is shown with a **Use** button and is never preselected.
+- **Bulk tools (progressive JS):** tick only the clean rows, tick/untick all, use all suggested owners, give every row with no owner one owner, untick everything before a date. The form fields and the server-side apply are unchanged, so a no-JS browser still works.
+- **Sticky summary bar** ("Will import N · skipping M · K ticked with no owner") with the Import and Discard buttons; the table uses `resp-table resp-table-wide`, so it becomes cards below 1180px.
+- Checked in Chromium at 390, 768 and 1440px on the real CY 2026 file: no horizontal overflow, no script errors, 307 rows look fine and 72 need you.
+
+## 2026-10-09 (v4.1 — calendar import, P0.1–P0.2)
+
+First two increments of `docs/CALENDAR_UX_PLAN.md` Phase 0 (import the CY 2026 Word calendar). Checked against the real file (379 drafts, 19 holiday lines).
+
+- **Parser (`calendar_import.py`):** "MR SIA" (measles-rubella) no longer counts as a management review (3 items were wrongly `audit_mr`); a URL in a line becomes `meeting_url` and leaves the title; a start time before 06:00 is not kept and is flagged; a bare time left in a title ("PK TWG 10-12") is flagged, not guessed; a title that begins "and/or/with/at" is flagged as a fragment; days merged into one range that differ by a whole word (LDS vs SGA) are flagged as possibly different activities; "Immaculate Concepcion" is recognised as a holiday line.
+- **Suggestions (`calendar_import_suggest.py`, new):** `suggest_owners` (a "Section N" in the line, or a tag one unit owns ≥80% of elsewhere in the file) and `suggest_series` (only when a repeat rule reproduces every date exactly). Stored in the batch payload as `suggestions`; nothing is applied without the review screen. On the CY 2026 file: 5 of 47 unowned items get a suggestion, and no repeat fits a rule exactly, so none is suggested.
+- Apply passes `meeting_url` through.
+
 ## 2026-10-09 (v4.0 — the Office calendar, complete)
 
 A milestone marker for the whole Office calendar programme (increments A1 to H3, v3.5x to v3.79). No code beyond the version.

@@ -17,10 +17,62 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "4.0"
+APP_VERSION = "4.5"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "4.5",
+        "date": "October 9, 2026",
+        "summary": "The Word calendar import raises fewer false alarms and can no longer be applied twice by mistake.",
+        "changes": [
+            "Things like version numbers (v2 - 2nd) and date ranges (April 14-16) are no longer flagged as times.",
+            "Two spellings of the same word are no longer flagged as two different activities; real differences still are.",
+            "An import that has already been applied is refused if it is applied again, so Undo always knows what it created.",
+        ],
+    },
+    {
+        "version": "4.4",
+        "date": "October 9, 2026",
+        "summary": "The Word calendar import now finds more of the names, and the names step works on a phone.",
+        "changes": [
+            "Names written without brackets at the end of a line, such as Riza and Mae after a city, are now picked up when the name guide knows them.",
+            "The names step says how many are already filled in and how many need you, and shows how many will be saved.",
+            "On phones and tablets each name is a card, with a Save button that stays in view.",
+        ],
+    },
+    {
+        "version": "4.3",
+        "date": "October 9, 2026",
+        "summary": "A Word calendar import can now add missing holidays, and be undone.",
+        "changes": [
+            "The review screen lists holidays from the Word file that are not in Holidays yet. Tick the ones the bureau is really off for; nothing is ticked for you.",
+            "Made a mistake? Undo this import removes the items it created that nobody has changed since, and the holidays it added.",
+            "Items someone edited after the import are kept and listed, and the upload opens for review again once everything is gone.",
+        ],
+    },
+    {
+        "version": "4.2",
+        "date": "October 9, 2026",
+        "summary": "Reviewing a Word calendar import is quicker, and works on a phone.",
+        "changes": [
+            "The review screen lists the items that need you first. Items that look fine are folded away.",
+            "A suggested owner appears next to an item with no colour; nothing is chosen for you.",
+            "Do many rows at once: tick only the fine ones, give every unowned row an owner, or untick everything before a date.",
+            "A bar at the bottom always shows how many will be imported, and the table turns into cards on phones and tablets.",
+        ],
+    },
+    {
+        "version": "4.1",
+        "date": "October 9, 2026",
+        "summary": "The Word calendar import reads your file more carefully.",
+        "changes": [
+            "Measles-rubella activities (\"MR SIA\") are no longer mistaken for management reviews.",
+            "A link written in a line becomes the meeting link, and an odd time such as \"3 AM\" is flagged instead of saved.",
+            "Items that may be two different activities, or that have a time left in the title, are marked for you to check.",
+            "For items with no colour, the import now suggests an owner when the line or its topic points to one. You still choose.",
+        ],
+    },
     {
         "version": "4.0",
         "date": "October 9, 2026",

@@ -351,3 +351,38 @@
 .cal-quick input:not([type=hidden]), .cal-quick select { width:100%; box-sizing:border-box; font:inherit; padding:.4rem .55rem; border:1px solid var(--line); border-radius:8px; }
 .cal-quick .cf-row { display:flex; gap:.7rem; flex-wrap:wrap; } .cal-quick .cf-row > label { flex:1 1 9rem; }
 @media (max-width:760px) { .cal-timeline { font-size:.9rem; } }
+
+/* import review (P0.3): the "needs you" list, bulk tools, the sticky summary bar */
+.cal-need { display:inline-block; color:var(--amber); font-weight:700; margin-right:.35rem; }
+.cal-suggest { color:var(--ink-soft); }
+.cal-linkbtn { font:inherit; font-weight:700; color:var(--accent); background:none; border:0; padding:0 .3rem; cursor:pointer; text-decoration:underline; min-height:2rem; }
+.cal-tools label { font-size:.84rem; font-weight:600; display:inline-flex; gap:.4rem; align-items:center; flex-wrap:wrap; }
+.cal-clean { margin:1rem 0 0; }
+.cal-clean summary { cursor:pointer; font-weight:700; margin:0 0 .6rem; }
+.cal-sticky { position:sticky; bottom:0; z-index:5; background:var(--bg); border-top:1px solid var(--line); padding:.6rem 10.5rem .6rem 0; margin:1rem 0 0; }   /* the right gap keeps the Send-feedback button off the buttons */
+@media (max-width:640px) { .cal-sticky { padding-right:0; padding-bottom:4.2rem; } }
+.cal-sticky .cal-count { flex:1 1 14rem; font-weight:700; color:var(--ink); }
+@media (max-width:640px) { .cal-tools .cal-btn { padding:.55rem .9rem; } }
+@media (max-width:1180px) {            /* the table stacks into cards here (resp-table-wide) */
+  .cal-review.resp-table input:not([type=checkbox]), .cal-review.resp-table select { width:100%; font-size:1rem; padding:.5rem; }
+  .cal-review.resp-table .cal-title-cell { min-width:0; }
+  .cal-review.resp-table input[type=date] { width:100%; }
+  .cal-scroll { max-height:none; border:0; overflow:visible; }
+}
+
+/* holidays checklist and undo (P0.4) */
+.cal-hol-row { display:flex; flex-wrap:wrap; gap:.4rem .8rem; align-items:center; padding:.25rem 0; border-bottom:1px solid var(--line); }
+.cal-hol-row label { flex:1 1 18rem; font-weight:600; display:flex; gap:.5rem; align-items:center; min-height:2.2rem; }
+.cal-hol-row select { font:inherit; padding:.3rem .5rem; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); max-width:100%; }
+.cal-undo summary { cursor:pointer; font-weight:700; }
+
+/* people step (P0.5): rows stack into cards below 1180px. Not the shared resp-table: that hides
+   every row holding a <th>, and each row here starts with a <th scope="row"> (the name). */
+@media (max-width:1180px) {
+  .cal-cards thead { display:none; }
+  .cal-cards, .cal-cards tbody, .cal-cards tr, .cal-cards th, .cal-cards td { display:block; width:100%; box-sizing:border-box; }
+  .cal-cards tr { border:1px solid var(--line); border-radius:12px; background:var(--surface); padding:.5rem .8rem; margin:0 0 .6rem; }
+  .cal-cards th, .cal-cards td { border:0; padding:.3rem 0; text-align:left; }
+  .cal-cards td[data-label]::before { content:attr(data-label); display:block; font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--soft); }
+  .cal-cards select { width:100%; max-width:none; font-size:1rem; padding:.5rem; }
+}

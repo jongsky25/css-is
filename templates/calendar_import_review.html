@@ -1,20 +1,35 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header %}
 {% block title %}Review the import{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009m">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009s">{% endblock %}
 {% block content %}
 {{ page_header("Review the import", batch.filename or "calendar.docx") }}
 <p class="cal-back"><a href="/calendar/import">← All uploads</a> · <a href="/calendar">Calendar</a></p>
 
+{% if undone %}<div class="cal-flash ok" role="status">✓ Undone: removed {{ undone.removed }} item{{ "" if undone.removed == "1" else "s" }}{% if undone.holidays and undone.holidays != "0" %} and {{ undone.holidays }} holiday{{ "" if undone.holidays == "1" else "s" }}{% endif %}{% if undone.kept and undone.kept != "0" %}; {{ undone.kept }} edited item{{ "" if undone.kept == "1" else "s" }} kept{% endif %}.
+  {% if not batch.imported_at %}The upload is open for review again.{% endif %}</div>{% endif %}
 {% if batch.imported_at %}
 {% set r = batch.result %}
 <div class="cal-flash ok" role="status">✓ Imported {{ r.created|length }} items on {{ batch.imported_at[:10] }}.
   {% if r.already %}{{ r.already }} were already in the calendar and were left alone.{% endif %}
   {% if r.not_selected %}{{ r.not_selected }} were not selected.{% endif %}
   {% if r.unmapped_owner %}{{ r.unmapped_owner }} have an owner colour with no unit chosen, so they show with no owning unit.{% endif %}</div>
+{% if r.holidays %}<p class="cal-range">Added to Holidays: {% for h in r.holidays %}{{ h.date }} · {{ h.name }}{{ ", " if not loop.last }}{% endfor %}.</p>{% endif %}
 <p><a class="cal-btn primary" href="/calendar/import/{{ batch.id }}/people">Next: match the names{% if n_names %} ({{ n_names }} to check){% endif %}</a>
    <a class="cal-btn" href="/calendar?view=month&month={{ rows[0].month if rows else '' }}">See it on the calendar</a></p>
+<details class="cal-step cal-undo"><summary>Made a mistake? Undo this import</summary>
+  <p>Undoing deletes the <strong>{{ undo.removable }}</strong> item{{ "" if undo.removable == 1 else "s" }} this import created that nobody has changed since
+    {% if undo.holidays %}and the {{ undo.holidays }} holiday{{ "" if undo.holidays == 1 else "s" }} it added{% endif %}.
+    {% if undo.edited %}<strong>{{ undo.edited|length }}</strong> have been edited since, so they are <strong>kept</strong>:
+    {% for e in undo.edited[:8] %}<a href="/calendar/entries/{{ e.entry_id }}">{{ e.title }}</a>{{ ", " if not loop.last }}{% endfor %}{% if undo.edited|length > 8 %} and {{ undo.edited|length - 8 }} more{% endif %}.{% endif %}
+    {% if undo.gone %}{{ undo.gone }} were already deleted.{% endif %}
+    When every item is gone the upload opens for review again, so you can import it again.</p>
+  <form method="post" action="/calendar/import/{{ batch.id }}/undo">
+    <button class="cal-btn" type="submit" onclick="return confirm('Delete {{ undo.removable }} imported items? Items someone edited are kept.')">Undo this import</button>
+  </form>
+</details>
 {% else %}
+
 
 {% if errors %}<div class="cal-flash err" role="alert"><strong>Nothing was imported.</strong> Fix these and try again:
   <ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
@@ -52,49 +67,96 @@
       Only the owning unit <small>(items with no unit are still shown to everyone)</small></label>
   </fieldset>
 
-  <details class="cal-step cal-holidays"><summary>{{ holidays|length }} holiday lines were set aside —
-      {{ holidays|rejectattr("known")|list|length }} are not in Holidays yet</summary>
-    <ul>{% for h in holidays %}<li>{{ h.date }} · {{ h.name }} {% if h.known %}<small>(already in Holidays)</small>{% else %}<small>(not in Holidays — add it in Admin → Holidays if people are off)</small>{% endif %}</li>{% endfor %}</ul>
-  </details>
+  <fieldset class="cal-step cal-holidays">
+    <legend>Holidays in the file ({{ holidays|length }})</legend>
+    {% set missing = holidays|rejectattr("known")|list %}
+    <p class="cal-range">{{ holidays|length - missing|length }} are already in Holidays.
+      {% if missing %}<strong>{{ missing|length }}</strong> are not. Tick the ones the bureau is really off for; nothing is ticked for you,
+      because some are local (for example, Manila Day).{% else %}Nothing to add.{% endif %}</p>
+    {% for h in missing %}
+    <div class="cal-hol-row">
+      <label><input type="checkbox" name="hol_{{ h.date }}" value="1" {{ "checked" if h.date in hol_ticked }}> {{ h.date }} · {{ h.name }}</label>
+      <select name="holkind_{{ h.date }}" aria-label="Type for {{ h.name }}">{% for k, label in hol_kinds.items() %}<option value="{{ k }}" {{ "selected" if h.kind == k }}>{{ label }}</option>{% endfor %}</select>
+    </div>
+    {% endfor %}
+    {% if holidays|selectattr("known")|list %}<details><summary>Already in Holidays</summary>
+      <ul>{% for h in holidays if h.known %}<li>{{ h.date }} · {{ h.name }}</li>{% endfor %}</ul></details>{% endif %}
+  </fieldset>
 
-  <fieldset class="cal-step">
-    <legend>3 · Check the items</legend>
-    <p class="cal-tools">
-      <button type="button" class="cal-btn" data-check="all">Tick all</button>
-      <button type="button" class="cal-btn" data-check="none">Untick all</button>
-      <button type="button" class="cal-btn" data-check="owned">Tick only those with an owner</button>
-      <span id="cal-count" class="cal-count" aria-live="polite"></span>
-    </p>
-    <div class="cal-scroll">
-    <table class="cal-table cal-review">
-      <thead><tr><th>Add</th><th>Starts</th><th>Ends</th><th>Title</th><th>Type</th><th>Status</th><th>Owner</th></tr></thead>
-      <tbody>
-      {% set ns = namespace(month="") %}
-      {% for r in rows %}
-      {% if r.month != ns.month %}{% set ns.month = r.month %}<tr class="cal-month-row"><th colspan="7">{{ r.month }}</th></tr>{% endif %}
+  {#-- one table row; used by both lists so the form fields are identical --#}
+  {% macro review_row(r) %}
       <tr {% if r.existing %}class="cal-existing"{% endif %}>
-        <td><input type="checkbox" name="inc_{{ r.i }}" value="1" {{ "checked" if r.include }} data-owner="{{ r.owner }}" aria-label="Add row {{ r.i + 1 }}"></td>
-        <td><input type="date" name="start_{{ r.i }}" value="{{ r.start }}" required aria-label="Starts"></td>
-        <td><input type="date" name="end_{{ r.i }}" value="{{ r.end }}" aria-label="Ends"></td>
-        <td class="cal-title-cell"><input name="title_{{ r.i }}" value="{{ r.title }}" maxlength="200" aria-label="Title">
+        <td data-label="Add"><input type="checkbox" name="inc_{{ r.i }}" value="1" {{ "checked" if r.include }} aria-label="Add row {{ r.i + 1 }}"></td>
+        <td data-label="Starts"><input type="date" name="start_{{ r.i }}" value="{{ r.start }}" required aria-label="Starts"></td>
+        <td data-label="Ends"><input type="date" name="end_{{ r.i }}" value="{{ r.end }}" aria-label="Ends"></td>
+        <td class="cal-title-cell" data-label="Title"><input name="title_{{ r.i }}" value="{{ r.title }}" maxlength="200" aria-label="Title">
           <small>
             {% if r.existing %}<b>Already in the calendar.</b> {% endif %}
             {% if r.d.start_time %}{{ r.d.start_time }}{% if r.d.end_time %}–{{ r.d.end_time }}{% endif %} · {% elif r.d.time_note %}{{ r.d.time_note }} · {% endif %}
             {% if r.d.people_hint %}names: {{ r.d.people_hint }} · {% endif %}
-            {% for w in r.d.warnings if not w.startswith("No owner") %}{{ w }} · {% endfor %}
+            {% for w in r.needs %}<span class="cal-need">{{ w }}</span> {% endfor %}
           </small></td>
-        <td><select name="kind_{{ r.i }}" aria-label="Type">{% for k, label in kinds.items() %}<option value="{{ k }}" {{ "selected" if r.kind == k }}>{{ label }}</option>{% endfor %}</select></td>
-        <td><select name="status_{{ r.i }}" aria-label="Status">{% for k, label in statuses.items() %}<option value="{{ k }}" {{ "selected" if r.status == k }}>{{ label }}</option>{% endfor %}</select></td>
-        <td><select name="owner_{{ r.i }}" aria-label="Owner"><option value="">— none —</option>
-          {% for key, label, tone in owners %}<option value="{{ key }}" {{ "selected" if r.owner == key }}>{{ label }}</option>{% endfor %}</select></td>
+        <td data-label="Type"><select name="kind_{{ r.i }}" aria-label="Type">{% for k, label in kinds.items() %}<option value="{{ k }}" {{ "selected" if r.kind == k }}>{{ label }}</option>{% endfor %}</select></td>
+        <td data-label="Status"><select name="status_{{ r.i }}" aria-label="Status">{% for k, label in statuses.items() %}<option value="{{ k }}" {{ "selected" if r.status == k }}>{{ label }}</option>{% endfor %}</select></td>
+        <td data-label="Owner"><select name="owner_{{ r.i }}" aria-label="Owner"><option value="">— none —</option>
+          {% for key, label, tone in owners %}<option value="{{ key }}" {{ "selected" if r.owner == key }}>{{ label }}</option>{% endfor %}</select>
+          {% if r.suggest %}<small class="cal-suggest">Suggested: <b>{{ unit_labels[r.suggest.owner] }}</b> — {{ r.suggest.why }}
+            <button type="button" class="cal-linkbtn" data-use="{{ r.suggest.owner }}" data-row="{{ r.i }}">Use</button></small>{% endif %}</td>
       </tr>
+  {% endmacro %}
+  {% macro review_table(group) %}
+    <div class="cal-scroll">
+    <table class="cal-table cal-review resp-table resp-table-wide">
+      <thead><tr><th>Add</th><th>Starts</th><th>Ends</th><th>Title</th><th>Type</th><th>Status</th><th>Owner</th></tr></thead>
+      <tbody>
+      {% set ns = namespace(month="") %}
+      {% for r in group %}
+      {% if r.month != ns.month %}{% set ns.month = r.month %}<tr class="cal-month-row"><th colspan="7">{{ r.month }}</th></tr>{% endif %}
+      {{ review_row(r) }}
       {% endfor %}
       </tbody>
     </table>
     </div>
+  {% endmacro %}
+  {% set need_rows = rows|rejectattr("clean")|list %}
+  {% set clean_rows = rows|selectattr("clean")|list %}
+  {% set n_no_owner = rows|selectattr("no_owner")|list|length %}
+  {% set n_suggest = rows|selectattr("suggest")|list|length %}
+
+  <fieldset class="cal-step">
+    <legend>3 · Check the items</legend>
+    <p class="cal-range"><strong>{{ clean_rows|length }}</strong> look fine and <strong>{{ need_rows|length }}</strong> need you
+      ({{ n_no_owner }} with no owner colour{% if n_suggest %}, {{ n_suggest }} with a suggestion{% endif %}). Check those first; the rest are below.</p>
+    <div class="cal-tools" aria-label="Do many rows at once">
+      <button type="button" class="cal-btn" data-bulk="clean" {{ "disabled" if not clean_rows }}>Tick only the {{ clean_rows|length }} that look fine</button>
+      <button type="button" class="cal-btn" data-bulk="all">Tick all</button>
+      <button type="button" class="cal-btn" data-bulk="none">Untick all</button>
+    </div>
+    <div class="cal-tools">
+      {% if n_suggest %}<button type="button" class="cal-btn" data-bulk="suggestions">Use all {{ n_suggest }} suggested owners</button>{% endif %}
+      <label>Give every row with no owner:
+        <select data-bulk-owner aria-label="Owner for every row with no owner"><option value="">— choose —</option>
+          {% for key, label, tone in owners %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select></label>
+      <button type="button" class="cal-btn" data-bulk="owner">Apply</button>
+    </div>
+    <div class="cal-tools">
+      <label>Untick everything before <input type="date" data-skip-before aria-label="Untick items that start before this date"></label>
+      <button type="button" class="cal-btn" data-bulk="before">Untick</button>
+    </div>
+
+    {% if need_rows %}
+    <h3 class="cal-h2">Needs you ({{ need_rows|length }})</h3>
+    {{ review_table(need_rows) }}
+    {% endif %}
+    {% if clean_rows %}
+    <details class="cal-clean"><summary>{{ clean_rows|length }} rows look fine — show them</summary>
+    {{ review_table(clean_rows) }}
+    </details>
+    {% endif %}
   </fieldset>
 
-  <div class="cf-actions">
+  <div class="cf-actions cal-sticky">
+    <span id="cal-sum" class="cal-count" aria-live="polite"></span>
     <button class="cal-btn primary" type="submit">Import the ticked items</button>
     <button class="cal-btn" type="submit" formaction="/calendar/import/{{ batch.id }}/discard" formnovalidate
             onclick="return confirm('Throw this upload away without importing anything?')">Discard this upload</button>
@@ -102,18 +164,52 @@
 </form>
 <script>
 (function () {
-  var boxes = Array.prototype.slice.call(document.querySelectorAll('.cal-review input[type=checkbox]'));
-  var out = document.getElementById('cal-count');
-  function count() { out.textContent = boxes.filter(function (b) { return b.checked; }).length + ' of ' + boxes.length + ' ticked'; }
-  document.querySelectorAll('[data-check]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var mode = btn.getAttribute('data-check');
-      boxes.forEach(function (b) { b.checked = mode === 'all' ? true : mode === 'none' ? false : b.getAttribute('data-owner') !== ''; });
-      count();
+  var rows = Array.prototype.slice.call(document.querySelectorAll('.cal-review tbody tr:not(.cal-month-row)'));
+  function f(tr, pre) { return tr.querySelector('[name^="' + pre + '_"]'); }
+  function idx(tr) { return f(tr, 'inc').name.slice(4); }
+  var clean = {{ clean_rows|map(attribute='i')|list|tojson }};
+  var out = document.getElementById('cal-sum');
+  function sum() {
+    var on = 0, noOwner = 0;
+    rows.forEach(function (tr) {
+      if (f(tr, 'inc').checked) { on++; if (!f(tr, 'owner').value) noOwner++; }
     });
+    out.textContent = 'Will import ' + on + ' · skipping ' + (rows.length - on) +
+      (noOwner ? ' · ' + noOwner + ' ticked with no owner' : '');
+  }
+  function each(fn) { rows.forEach(fn); sum(); }
+  var bulk = {
+    all: function () { each(function (tr) { f(tr, 'inc').checked = true; }); },
+    none: function () { each(function (tr) { f(tr, 'inc').checked = false; }); },
+    clean: function () { each(function (tr) { f(tr, 'inc').checked = clean.indexOf(+idx(tr)) >= 0; }); },
+    suggestions: function () {
+      document.querySelectorAll('[data-use]').forEach(function (b) { use(b); });
+    },
+    owner: function () {
+      var v = document.querySelector('[data-bulk-owner]').value;
+      if (!v) return;
+      each(function (tr) { var s = f(tr, 'owner'); if (!s.value) s.value = v; });
+    },
+    before: function () {
+      var d = document.querySelector('[data-skip-before]').value;
+      if (!d) return;
+      each(function (tr) { if (f(tr, 'start').value && f(tr, 'start').value < d) f(tr, 'inc').checked = false; });
+    }
+  };
+  function use(b) {
+    var tr = document.querySelector('[name="owner_' + b.getAttribute('data-row') + '"]');
+    if (tr) { tr.value = b.getAttribute('data-use'); }
+    b.closest('.cal-suggest').hidden = true;
+    sum();
+  }
+  document.addEventListener('click', function (ev) {
+    var b = ev.target.closest && ev.target.closest('[data-bulk]');
+    if (b && bulk[b.getAttribute('data-bulk')]) { bulk[b.getAttribute('data-bulk')](); return; }
+    var u = ev.target.closest && ev.target.closest('[data-use]');
+    if (u) use(u);
   });
-  boxes.forEach(function (b) { b.addEventListener('change', count); });
-  count();
+  document.addEventListener('change', function (ev) { if (ev.target.closest && ev.target.closest('.cal-review')) sum(); });
+  sum();
 })();
 </script>
 {% endif %}

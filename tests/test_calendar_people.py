@@ -561,3 +561,12 @@ def test_the_missing_account_names_can_be_skipped(admin, world, monkeypatch):
     html = admin.get(f"/calendar/import/{bid}/people").text
     sel = html.split('name="who_mar"')[1].split("</select>")[0]
     assert "Mar Wynn Bello has no account" in html and 'value="ignore" selected' in sel
+
+
+def test_the_names_table_uses_its_own_card_layout_and_a_live_save_summary(admin, world):
+    """Each row starts with a <th scope="row">; the shared resp-table CSS hides every row holding a
+    <th> on a phone, which made the whole table invisible. This table must use cal-cards instead."""
+    html = admin.get(f"/calendar/import/{imported(admin, world)}/people").text
+    assert 'class="cal-table cal-people-table cal-cards"' in html and "resp-table" not in html
+    assert 'data-label="Who is it?"' in html and 'id="cal-sum"' in html
+    assert "already filled in from the name guide or an exact match" in html

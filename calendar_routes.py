@@ -26,6 +26,7 @@ import calendar_ics as cics
 import mailer
 import calendar_import as ci
 import calendar_import_apply as cia
+import calendar_import_suggest as cis
 import calendar_people as cp
 import office_calendar as oc
 import recurrence
@@ -988,12 +989,14 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                                     "No activities were found in that file. Is it the monthly calendar?", 400)
             batch_id = st.cal_import_create(conn, up.filename, request.state.user["username"], {
                 "drafts": [d.to_dict() for d in res.drafts], "holidays": res.holidays,
-                "warnings": res.warnings, "stats": res.stats, "unmapped_colors": res.unmapped_colors})
+                "warnings": res.warnings, "stats": res.stats, "unmapped_colors": res.unmapped_colors,
+                "suggestions": {"owners": cis.suggest_owners([d.to_dict() for d in res.drafts]),
+                                "series": cis.suggest_series([d.to_dict() for d in res.drafts])}})
         finally:
             conn.close()
         return RedirectResponse(f"/calendar/import/{batch_id}", status_code=303)
 
-    def _review_page(request, conn, batch, posted=None, errors=(), status_code=200):
+    def _review_page(request, conn, batch, posted=None, errors=(), status_code=200, undone=None):
         drafts = batch["payload"]["drafts"]
         existing = st.cal_existing_import_keys(conn, [d["import_key"] for d in drafts])
         years = {h["date"][:4] for h in batch["payload"]["holidays"]}
@@ -1005,9 +1008,14 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         return templates.TemplateResponse(request, "calendar_import_review.html", {
             "n_names": n_names,
             "nav_active": "calendar", "batch": batch, "errors": list(errors),
-            "rows": cia.review_rows(drafts, existing, posted),
+            "rows": cia.review_rows(drafts, existing, posted, batch["payload"].get("suggestions")),
+            "unit_labels": dict(ci.OWNER_LABELS),
             "stats": batch["payload"]["stats"], "file_warnings": batch["payload"]["warnings"],
-            "holidays": [{**h, "known": h["date"] in have_hol} for h in batch["payload"]["holidays"]],
+            "holidays": cia.holiday_choices(batch, have_hol),
+            "hol_ticked": {k[4:] for k in (posted or {}) if k.startswith("hol_")},
+            "hol_kinds": dict(st.HOLIDAY_KINDS),
+            "undo": cia.undo_preview(conn, batch) if batch["imported_at"] else None,
+            "undone": undone,
             "owners": [(k, ci.OWNER_LABELS[k], cia.OWNER_TONES[k]) for k in ci.OWNERS],
             "mapping": mapping, "units": oc.unit_choices(conn),
             "audience": (posted or {}).get("audience", "bureau"),
@@ -1026,7 +1034,10 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             batch = st.cal_import_get(conn, batch_id)
             if batch is None:
                 return RedirectResponse("/calendar/import", status_code=303)
-            return _review_page(request, conn, batch)
+            q = request.query_params
+            undone = ({"removed": q.get("removed"), "kept": q.get("kept"), "holidays": q.get("holidays")}
+                      if q.get("undone") else None)
+            return _review_page(request, conn, batch, undone=undone)
         finally:
             conn.close()
 
@@ -1136,6 +1147,23 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         finally:
             conn.close()
         return RedirectResponse(f"/calendar/nicknames?ok={quote(f'Set {n} nicknames.')}", status_code=303)
+
+    @router.post("/calendar/import/{batch_id}/undo")
+    def calendar_import_undo(request: Request, batch_id: int):
+        denied = _admin_only(request)
+        if denied:
+            return denied
+        conn = get_conn()
+        try:
+            batch = st.cal_import_get(conn, batch_id)
+            if batch is None or not batch["imported_at"]:
+                return RedirectResponse(f"/calendar/import/{batch_id}" if batch else "/calendar/import",
+                                        status_code=303)
+            r = cia.undo(conn, batch, request.state.user["username"])
+        finally:
+            conn.close()
+        return RedirectResponse(f"/calendar/import/{batch_id}?undone=1&removed={r['removed']}"
+                                f"&kept={len(r['kept'])}&holidays={r['holidays']}", status_code=303)
 
     @router.post("/calendar/import/{batch_id}/discard")
     def calendar_import_discard(request: Request, batch_id: int):
