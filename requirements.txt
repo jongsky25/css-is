@@ -1,4 +1,4 @@
-# CSS Information System — runtime + QA dependencies
+# Office Connect — runtime + QA dependencies
 # Install:  pip install -r requirements.txt
 fastapi
 uvicorn[standard]

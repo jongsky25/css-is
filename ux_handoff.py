@@ -36,7 +36,7 @@ SAMPLE_CAP = 200
 
 APP_CONTEXT_MD = """\
 Office Connect is the BLHSD (Bureau of Local Health Systems Development, Philippine
-Department of Health) Customer Satisfaction Survey Information System: staff
+Department of Health) office platform. Its Customer Satisfaction Survey module lets staff
 create survey activities, respondents scan QR codes to rate services
 (CSM/SERVQUAL), and staff monitor responses, manage rosters and directories,
 and generate official reports. The app is server-rendered (FastAPI + Jinja2,

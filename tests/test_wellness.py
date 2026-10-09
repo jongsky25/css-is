@@ -757,7 +757,7 @@ def test_availed_months_and_person_month(wellness_org):
     assert mar["count"] == 2 and mar["label"] == "March 2026"
 
     data = st.wellness_person_month(conn, emp, 2026, 3)
-    assert data["name"] == "W-Test Employee" and data["office"] == "WSec"
+    assert data["name"] == "W-Test Employee" and data["office"] == "BLHSD"
     assert len(data["entries"]) == 2              # the denied one is excluded
     assert {e["date"] for e in data["entries"]} == {"2026-03-03", "2026-03-17"}
     assert all(e["approver"] == "W-Test Chief" for e in data["entries"])

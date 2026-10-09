@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.52"
+APP_VERSION = "3.53"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.53",
+        "date": "October 9, 2026",
+        "summary": "The monthly wellness register PDF is tidier, and the app is now called Office Connect everywhere.",
+        "changes": [
+            "The register's Office field now always reads BLHSD, instead of the section you belong to.",
+            "The long note at the bottom of the register has been removed.",
+            "A few places that still used the old name now say Office Connect.",
+        ],
+    },
     {
         "version": "3.52",
         "date": "October 9, 2026",

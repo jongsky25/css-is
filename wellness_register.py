@@ -271,12 +271,6 @@ def render_month_pdf(data) -> bytes:
                   f"Office: <b>{escape(office)}</b>", hdr),
         Spacer(1, 6),
         table,
-        Spacer(1, 6),
-        Paragraph("Each weekday cell shows the break availed that day (time range · "
-                  "activity · hours; ✓ = completed) and, under it, the signature of "
-                  "the chief who approved it. Approvals were recorded in the "
-                  "CSS Information System; “Digitally approved and signed” stands in "
-                  "for the approver’s wet signature.", sub),
     ]
     doc.build(story)
     return buf.getvalue()

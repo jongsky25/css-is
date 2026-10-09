@@ -7745,19 +7745,13 @@ _MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July",
 
 def wellness_person_month(conn, user_id, year, month):
     """Everything the monthly register PDF needs for one person and month: their
-    name and office, and the availed (approved/completed) breaks in that month,
+    name and office (always BLHSD), and the availed (approved/completed) breaks in that month,
     each carrying the deciding approver's name. Days are chronological."""
     ym = f"{int(year):04d}-{int(month):02d}"
     prof = get_user_profile(conn, user_id)
     name = (prof or {}).get("person_name") or (prof or {}).get("username") or ""
-    office = ""
-    if prof and prof.get("org_unit_id"):
-        row = conn.execute(
-            "SELECT short_name, path, name FROM org_unit WHERE id=?",
-            (prof["org_unit_id"],)).fetchone()
-        if row:
-            office = (row[0] or (row[1].rsplit("/", 1)[-1] if row[1] else "")
-                      or row[2] or "")
+    # The office is BLHSD for everyone; the section they sit in is not the office.
+    office = BLHSD_NAME
     qs = ",".join("?" * len(_WELLNESS_AVAILED))
     rows = conn.execute(
         f"""SELECT c.break_date, c.start_time, c.hours, c.activity, c.activity_other,
