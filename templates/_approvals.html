@@ -46,6 +46,53 @@
 </style>
 {% endmacro %}
 
+{% macro rooms_queue(queue) %}
+  {% if queue %}
+  <div class="table-wrap">
+  <table class="q resp-table resp-table-wide">
+    <thead><tr><th>Who</th><th>When</th><th>Meeting</th><th>Other requests</th><th>Decision</th></tr></thead>
+    <tbody>
+    {% for r in queue %}
+      <tr>
+        <td data-label="Who">
+          <div class="who">{{ r.requester_name }}{% if r.is_external %} <span class="pill warn">Guest</span>{% endif %}</div>
+          <div class="sub">{{ r.requester_unit or "—" }}{% if r.is_external and r.ext_email %} · {{ r.ext_email }}{% endif %}{% if r.is_external and r.ext_phone %} · {{ r.ext_phone }}{% endif %}</div>
+          <div class="sub"><code>{{ r.ref_code }}</code> · filed {{ (r.created_at or "")|replace('T', ' ') }}</div>
+        </td>
+        <td data-label="When">
+          <div class="code">{{ r.when }}</div>
+          <div>{{ r.hours }}</div>
+        </td>
+        <td data-label="Meeting">
+          <div>{{ r.title }}</div>
+          <div class="sub">{{ room_modalities.get(r.modality, r.modality) }}{% if r.attendees %} · {{ r.attendees }} attending{% endif %}{% if r.meals_requested %} · meals requested{% endif %}</div>
+          {% if r.purpose %}<div class="note">“{{ r.purpose }}”</div>{% endif %}
+        </td>
+        <td data-label="Other requests">
+          {% if r.held_by %}<span class="pill empty">Already booked</span>
+            <div class="delta">{{ r.held_by.title }} <b>{{ r.held_by.ref }}</b> holds these hours. Decline this one, or ask an admin to rebook.</div>
+          {% elif r.blocked %}<span class="pill empty">Unavailable</span><div class="delta">{{ r.blocked }}</div>
+          {% elif r.rivals %}<span class="pill warn">{{ r.rivals|length }} competing</span>
+            {% for o in r.rivals %}<div class="delta"><b>{{ o.title }}</b> · {{ o.who }} · {{ o.hours }}</div>{% endfor %}
+          {% else %}<span class="muted">—</span>{% endif %}
+        </td>
+        <td data-label="Decision" class="actions">
+          <form class="df" method="post" action="/rooms/{{ r.id }}/decide">
+            <input type="text" name="note" placeholder="remark or reason">
+            {% if r.can_approve %}<button class="ok" type="submit" name="action" value="approve">Approve</button>{% endif %}
+            <button class="no" type="submit" name="action" value="decline">Decline</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  {{ empty_state("Nothing waiting", "No conference room requests right now.", "🏢") }}
+  {% endif %}
+{% endmacro %}
+
 {% macro wellness_queue(queue) %}
   {% if queue %}
   <div class="table-wrap">

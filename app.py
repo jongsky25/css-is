@@ -68,6 +68,7 @@ import office_connect as oc
 import birthdays
 import calendar_answers
 import calendar_routes
+import rooms
 import rooms_routes
 import report_docs
 import csm_report
@@ -514,8 +515,9 @@ NAV_GROUPS = [
                "who availed reflection rate", "cap": "chief"},
         {"key": "wellness_approvals", "url": "/approvals", "label": "Approvals",
          "hint": "Everything waiting on your decision — wellness breaks and work arrangements",
-         "kw": "wellness approvals approve decide queue pending requests waiting chief",
-         "cap": "chief"},
+         "kw": "wellness approvals approve decide queue pending requests waiting chief "
+               "conference room reservation",
+         "cap": "approver"},
     ]},
     # ---- 2. CSS ----------------------------------------------------------
     # Sixteen destinations, so they carry `section` labels and render as
@@ -633,7 +635,7 @@ NAV_GROUPS = [
          "label": "Approvals",
          "hint": "Everything waiting on your decision — work arrangements and wellness breaks",
          "kw": "work arrangement approvals approve decide queue pending waiting chief awa",
-         "cap": "chief"},
+         "cap": "approver"},
     ]},
     # ---- 4. Administrator ------------------------------------------------
     # Ordered by real usage inside the group: /admin/ai is the 4th busiest
@@ -752,6 +754,9 @@ def _cap_ok(user, cap, is_chief=False):
     this test — this one only decides whether the LINK is shown)."""
     if cap == "chief":
         return bool(is_chief) or _user_role(user) == "admin"
+    if cap == "approver":       # the Approvals inbox: a chief, or a room approver (Administrative Section)
+        return (bool(is_chief) or _user_role(user) == "admin"
+                or (user.get("room_approver") if isinstance(user, dict) else False))
     if cap == "wa_schedule":
         return (bool(is_chief) or _user_role(user) == "admin"
                 or _user_bureau_access(user) in ("awa", "all"))
@@ -2009,6 +2014,13 @@ def _notification_items(conn, user, feedback_unread):
             "text": f"{n} work arrangement request{'' if n == 1 else 's'} waiting on your decision",
             "url": "/approvals#awa", "count": n,
         })
+    if rooms.is_room_admin(conn, user):
+        n = rooms.pending_count(conn)
+        if n:
+            items.append({
+                "text": f"{n} conference room request{'' if n == 1 else 's'} waiting on your decision",
+                "url": "/approvals#rooms", "count": n,
+            })
     wellness_decided = st.unseen_wellness_decisions(conn, user["id"])
     if wellness_decided:
         items.append({
@@ -2073,6 +2085,9 @@ async def _auth_gate(request: Request, call_next):
             # through every caller.
             request.state.user["bureau_access"] = st.bureau_access_of(
                 conn, request.state.user)
+            # Administrative Section members decide conference-room requests; the
+            # nav's "approver" cap reads this flag.
+            request.state.user["room_approver"] = rooms.is_room_admin(conn, request.state.user)
         finally:
             conn.close()
     if _is_public(path):
@@ -14882,12 +14897,15 @@ def approvals_inbox(request: Request, ok: str = "", err: str = "", period: str =
     user = request.state.user
     conn = get_conn()
     try:
-        if not st.user_is_approving_chief(conn, user):
+        chief = st.user_is_approving_chief(conn, user)
+        room_admin = rooms.is_room_admin(conn, user)
+        if not (chief or room_admin):
             return templates.TemplateResponse(
                 request, "forbidden.html",
                 {"capability": "approvals", "show_scope": False}, status_code=403)
-        wellness = st.list_wellness_approvals(conn, user)
-        awa = st.list_work_arrangement_approvals(conn, user)
+        wellness = st.list_wellness_approvals(conn, user) if chief else []
+        awa = st.list_work_arrangement_approvals(conn, user) if chief else []
+        room_queue = rooms.queue(conn) if room_admin else []
     finally:
         conn.close()
     # The AWA period just decided, so the page can point at THAT period's annex
@@ -14902,6 +14920,7 @@ def approvals_inbox(request: Request, ok: str = "", err: str = "", period: str =
     return templates.TemplateResponse(request, "approvals.html", {
         "nav_active": "approvals", "show_scope": False,
         "wellness": wellness, "awa": awa, "ok": ok, "err": err,
+        "room_queue": room_queue, "show_rooms": room_admin, "show_chief": chief,
         "decided_period": decided, "decided_period_label": decided_label,
     })
 

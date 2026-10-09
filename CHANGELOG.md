@@ -1,5 +1,16 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v4.3 — conference room reservation R3: approvers and the Approvals queue)
+
+- **Who decides:** `rooms.is_room_admin` — anyone in the Administrative Section (directory unit `…/ADMIN`, or beneath it), its temporary OIC, and the `admin`
+  role as the always-there fallback. Chiefs who are not in the section do not get room requests.
+- **Approvals inbox:** a third queue, "Conference room", on `/approvals` (also reachable to Administrative Section members who are not chiefs, who previously
+  got a 403). Cards show requester (guests are labelled), date and hours, meeting, meals, and the *other* requests for the same hours.
+- **Rules:** first to act wins and the second is told who; decline needs a reason; Approve is withheld when an approved booking already holds the hours;
+  hours blocked after the request was made cannot be approved. Bell row "N conference room requests waiting on your decision"; a Requests tab on `/rooms`.
+- Not yet: the email decide link (R5, with the emails that carry it), "Book anyway" and the competing-request dialog (R4).
+- Tests: `tests/test_rooms_approval.py`.
+
 ## 2026-10-09 (v4.2 — conference room reservation R2: availability board, request panel, My reservations)
 
 - **Pages:** `/rooms` (week grid of the twelve hourly slots, one request panel), `/rooms/mine` (your requests, with Withdraw). A "Conference room" item in the

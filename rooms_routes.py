@@ -6,7 +6,7 @@ approving is a later increment."""
 from __future__ import annotations
 import re
 from datetime import date, timedelta
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, urlencode
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -60,6 +60,7 @@ def make_router(templates, get_conn, today_local):
             form["to_slot"] = form["to_slot"] or form["from_slot"]
         mine_open = len(rooms.list_for_user(conn, request.state.user["id"], upcoming_only=True, today=today))
         return templates.TemplateResponse(request, "rooms.html", {
+            "room_pending": rooms.pending_count(conn) if rooms.is_room_admin(conn, request.state.user) else None,
             "nav_active": "rooms", "tab": "board", "board": board, "board2": board2,
             "active_day": active, "f": form, "error": error, "ok": ok, "slots": slots,
             "mine_open": mine_open, "earliest": board["earliest"], "today": today,
@@ -135,6 +136,7 @@ def make_router(templates, get_conn, today_local):
             elif q.get("err"):
                 err = q["err"][:200]
             return templates.TemplateResponse(request, "rooms_mine.html", {
+                "room_pending": rooms.pending_count(conn) if rooms.is_room_admin(conn, user) else None,
                 "nav_active": "rooms", "tab": "mine", "upcoming": upcoming, "earlier": earlier,
                 "msg": msg, "err": err, "mine_open": len(upcoming), "today": today})
         finally:
@@ -153,5 +155,32 @@ def make_router(templates, get_conn, today_local):
         finally:
             conn.close()
         return RedirectResponse("/rooms/mine?done=withdrawn", status_code=303)
+
+    @router.post("/rooms/{rid}/decide")
+    async def rooms_decide(rid: int, request: Request):
+        """Approve or decline a request from the Approvals inbox. First to act wins: a
+        second approver is told who got there first."""
+        f = await _posted(request)
+        user = request.state.user
+        conn = get_conn()
+        try:
+            if not rooms.is_room_admin(conn, user):
+                return templates.TemplateResponse(
+                    request, "forbidden.html", {"capability": "room approvals", "show_scope": False},
+                    status_code=403)
+            try:
+                if f.get("action") == "approve":
+                    res = rooms.approve(conn, rid, user["username"], f.get("note"), today=today_local())
+                    q = {"ok": f"Approved {res['ref_code']}: {res['title']}."}
+                elif f.get("action") == "decline":
+                    res = rooms.decline(conn, rid, user["username"], f.get("note"))
+                    q = {"ok": f"Declined {res['ref_code']}."}
+                else:
+                    raise rooms.RoomError("Choose Approve or Decline.")
+            except rooms.RoomError as e:
+                q = {"err": str(e)}
+        finally:
+            conn.close()
+        return RedirectResponse("/approvals?" + urlencode(q) + "#rooms", status_code=303)
 
     return router

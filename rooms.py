@@ -287,6 +287,11 @@ def approve(conn, rid, by, note=None, today=None):
     _must_be_open(res, ("requested",))
     if _d(res["day"]) < (today or tz.today_local()):
         raise RoomError("That date has already passed.")
+    blocked = conn.execute(
+        "SELECT b.reason FROM room_block b JOIN room_reservation_slot rs ON rs.day=b.day "
+        "AND (b.slot_id IS NULL OR b.slot_id=rs.slot_id) WHERE rs.reservation_id=? LIMIT 1", (rid,)).fetchone()
+    if blocked:
+        raise SlotTaken(f"The room is unavailable for those hours ({blocked[0]}).")
     try:
         conn.execute("UPDATE room_reservation_slot SET is_approved=1 WHERE reservation_id=?", (rid,))
         conn.execute(
@@ -475,3 +480,75 @@ def hours_text(conn, res):
     if not ss:
         return ""
     return f"{hour_label(ss[0]['start_time'])} – {hour_label(ss[-1]['end_time'])}"
+
+
+# ------------------------------------------------------- who approves ---
+
+# The Administrative Section is the directory unit whose path ends in /ADMIN
+# (apply_directory.py creates it as "<bureau>/ADMIN"); anything beneath it counts too.
+_ADMIN_UNIT_SQL = "(ou.path = 'ADMIN' OR ou.path LIKE '%/ADMIN' OR ou.path LIKE '%/ADMIN/%' OR ou.path LIKE 'ADMIN/%')"
+
+
+def is_room_admin(conn, user):
+    """May this account decide room requests? Members of the Administrative Section
+    (and whoever is its temporary OIC), plus the app's `admin` role as the always-there
+    fallback so a request can never be stranded by a gap in the directory."""
+    if not user:
+        return False
+    if user.get("role") == "admin":
+        return True
+    uid = user.get("id")
+    member = conn.execute(
+        "SELECT 1 FROM admin_user a JOIN resource_person rp ON rp.id=a.rp_id AND rp.is_internal=1 "
+        "AND rp.archived_at IS NULL JOIN org_unit ou ON ou.id=rp.org_unit_id "
+        f"WHERE a.id=? AND a.active=1 AND {_ADMIN_UNIT_SQL} LIMIT 1", (uid,)).fetchone()
+    if member:
+        return True
+    return conn.execute(
+        "SELECT 1 FROM section_oic so JOIN org_unit ou ON ou.id=so.org_unit_id "
+        f"WHERE so.admin_user_id=? AND {_ADMIN_UNIT_SQL} LIMIT 1", (uid,)).fetchone() is not None
+
+
+def pending_count(conn):
+    return conn.execute("SELECT COUNT(*) FROM room_reservation WHERE status='requested'").fetchone()[0]
+
+
+def requester_label(conn, res):
+    """(name, unit or organization, is_external) for a reservation's requester."""
+    if res["requester_user_id"] is None:
+        return (res["ext_name"] or "Guest", res["ext_org"] or "", True)
+    name = st._account_display_name(conn, res["requester_user_id"]) or "Staff"
+    row = conn.execute(
+        "SELECT ou.short_name FROM admin_user a LEFT JOIN resource_person rp ON rp.id=a.rp_id "
+        "LEFT JOIN org_unit ou ON ou.id=rp.org_unit_id WHERE a.id=?", (res["requester_user_id"],)).fetchone()
+    return (name, (row[0] if row and row[0] else ""), False)
+
+
+def queue(conn):
+    """Open requests for the Administrative Section's inbox, soonest first. Each carries
+    what a decider needs on one card: who, when, what, the other requests wanting the same
+    hours, and whether something already holds them (then Approve is withheld)."""
+    out = []
+    for res in list_pending(conn):
+        name, unit, ext = requester_label(conn, res)
+        held = conn.execute(
+            "SELECT DISTINCT r.id, r.ref_code, r.title FROM room_reservation_slot mine "
+            "JOIN room_reservation_slot o ON o.day=mine.day AND o.slot_id=mine.slot_id AND o.is_approved=1 "
+            "JOIN room_reservation r ON r.id=o.reservation_id WHERE mine.reservation_id=? LIMIT 1",
+            (res["id"],)).fetchone()
+        block = conn.execute(
+            "SELECT b.reason FROM room_block b JOIN room_reservation_slot rs ON rs.day=b.day "
+            "AND (b.slot_id IS NULL OR b.slot_id=rs.slot_id) WHERE rs.reservation_id=? LIMIT 1",
+            (res["id"],)).fetchone()
+        rivals = []
+        for o in competing(conn, res["id"]):
+            on, ou_, oext = requester_label(conn, o)
+            rivals.append({"id": o["id"], "ref": o["ref_code"], "title": o["title"], "who": on,
+                           "hours": hours_text(conn, o)})
+        out.append({**res, "requester_name": name, "requester_unit": unit, "is_external": ext,
+                    "hours": hours_text(conn, res), "rivals": rivals,
+                    "when": f"{_d(res['day']):%a} {_d(res['day']).day} {_d(res['day']):%b %Y}",
+                    "held_by": ({"id": held[0], "ref": held[1], "title": held[2]} if held else None),
+                    "blocked": block[0] if block else None,
+                    "can_approve": not held and not block})
+    return out
