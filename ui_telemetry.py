@@ -42,7 +42,7 @@ UI_EVENT_TYPES = {
 # What a search found, by kind of result (counts only, never the term) — the section names the home
 # box can return. Anything else a browser sends is dropped.
 SEARCH_SECTIONS = ("Activities", "People", "Calendar", "My to-do", "My requests", "Conference room",
-                   "Help", "Colleagues", "Go to", "CSS", "Wellness", "AWA", "Administrator")
+                   "Help", "Colleagues", "Go to", "CSS", "Wellness", "AWA", "Office", "Administrator")
 ASK_STAGES = ("fired", "answered", "fallback")
 ASK_KINDS = ("navigate", "answer", "help", "action")
 
