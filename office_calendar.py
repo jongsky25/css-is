@@ -31,7 +31,7 @@ Dates are ISO strings ('YYYY-MM-DD') so items are JSON-ready for the later API.
 """
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 
 import storage as st
 
@@ -268,3 +268,48 @@ def items_between(conn, user, start, end, *, scope=DEFAULT_SCOPE, layers=None):
 
 def _iso(d):
     return d.isoformat() if isinstance(d, date) else date.fromisoformat(str(d)).isoformat()
+
+
+# ── presentation helpers (pure; used by the /calendar page) ──────────────────
+
+SCOPE_LABELS = {
+    "blend": "Mine + bureau-wide", "mine": "Mine only", "section": "My section",
+    "division": "My division", "bureau": "Everything I can see",
+}
+
+
+def scope_choices(ctx):
+    """The scope pills this viewer is offered, in display order. A viewer with no
+    section/division is not offered a pill that could only ever be empty."""
+    out = ["blend", "mine"]
+    if ctx["section_path"]:
+        out.append("section")
+    if ctx["division_path"]:
+        out.append("division")
+    out.append("bureau")
+    return [{"key": k, "label": SCOPE_LABELS[k]} for k in out]
+
+
+def agenda_days(items, start, end, today):
+    """Group items by day for the agenda. A multi-day item appears on every day it
+    covers inside the window, tagged "day 2 of 4". Days with nothing on are left
+    out, except today, which is always pinned so the page says so plainly.
+    `start`/`end`/`today` are dates; items carry ISO strings."""
+    out, d = [], start
+    while d <= end:
+        iso = d.isoformat()
+        todays = []
+        for it in items:
+            if it["start"] <= iso <= it["end"]:
+                span = (date.fromisoformat(it["end"]) - date.fromisoformat(it["start"])).days + 1
+                nth = (d - date.fromisoformat(it["start"])).days + 1
+                todays.append({**it, "day_n": nth if span > 1 else None, "day_of": span})
+        if todays or d == today:
+            out.append({
+                "iso": iso, "date": d, "label": d.strftime("%a, %b ") + str(d.day),
+                "is_today": d == today, "is_weekend": d.weekday() >= 5,
+                "holidays": [i for i in todays if i["layer"] == "holidays"],
+                "rows": [i for i in todays if i["layer"] != "holidays"],
+            })
+        d += timedelta(days=1)
+    return out

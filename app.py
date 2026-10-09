@@ -64,6 +64,7 @@ import dashboard_export as dx
 # The Office Connect landing payload. It takes get_atoms/view_memo as arguments
 # rather than importing them back out of here, so the dependency stays one-way.
 import office_connect as oc
+import calendar_routes
 import report_docs
 import csm_report
 import auth
@@ -609,6 +610,11 @@ NAV_GROUPS = [
                "away out day off wfh work from home working remotely desk reachable "
                "in out attendance roster whereabouts report my week field leave "
                "weekly office", "cap": None},
+        {"key": "calendar", "url": "/calendar", "label": "Office calendar",
+         "hint": "Meetings, trips, trainings and holidays across the bureau",
+         "kw": "calendar office calendar schedule activities meetings events trips travel "
+               "technical assistance training workshop holidays what is on this week agenda "
+               "calendar of activities", "cap": None},
         {"key": "work_arrangement_schedule", "url": "/work-arrangement/schedule",
          "label": "Team schedule",
          "hint": "Who is on-site each weekday, and who hasn't filed",
@@ -15875,3 +15881,7 @@ async def work_arrangement_noawa_remove(request: Request):
     return RedirectResponse(
         f"{back}?ok={quote('Removed — you can file a work arrangement again.')}",
         status_code=303)
+
+
+# ---- Office calendar (routes live in calendar_routes.py) -------------------
+app.include_router(calendar_routes.make_router(templates, get_conn, _today_local))

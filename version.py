@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.53"
+APP_VERSION = "3.54"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.54",
+        "date": "October 9, 2026",
+        "summary": "There is now an Office calendar page where you can see what is happening across the bureau.",
+        "changes": [
+            "Open Office calendar from the AWA menu to see the next two weeks: meetings, trips, trainings and holidays.",
+            "Switch between your own items, your section, your division, or everything you are allowed to see.",
+            "For now the calendar is for viewing; adding and editing items comes next.",
+        ],
+    },
     {
         "version": "3.53",
         "date": "October 9, 2026",

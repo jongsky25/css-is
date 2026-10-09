@@ -1,0 +1,63 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, empty_state %}
+{% block title %}Office calendar{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009a">{% endblock %}
+{% block content %}
+{{ page_header("Office calendar", "What is on across the bureau: meetings, trips, trainings and holidays.") }}
+
+<div class="cal-bar">
+  <nav class="cal-pills" aria-label="Whose calendar">
+    {% for s in scopes %}
+    <a href="/calendar?scope={{ s.key }}&day={{ start.isoformat() }}"
+       {% if s.key == scope %}aria-current="true"{% endif %}>{{ s.label }}</a>
+    {% endfor %}
+  </nav>
+  <nav class="cal-nav" aria-label="Move through the calendar">
+    <a href="/calendar?scope={{ scope }}&day={{ prev_day }}">← Earlier</a>
+    {% if not is_today_window %}<a href="/calendar?scope={{ scope }}">Today</a>{% endif %}
+    <a href="/calendar?scope={{ scope }}&day={{ next_day }}">Later →</a>
+  </nav>
+</div>
+<p class="cal-range">{{ range_label }} · {{ n_items }} {{ "item" if n_items == 1 else "items" }}</p>
+
+{% if not n_items and not days|selectattr("holidays")|list %}
+  {{ empty_state("Nothing on the calendar for these two weeks.", "Try another view above, or look further ahead.", "📅") }}
+{% endif %}
+
+{% for d in days %}
+<section class="cal-day {{ 'today' if d.is_today }} {{ 'weekend' if d.is_weekend }}" aria-labelledby="d-{{ d.iso }}">
+  <header>
+    <h2 id="d-{{ d.iso }}">{{ d.label }}</h2>
+    {% if d.is_today %}<span class="cal-today-tag">Today</span>{% endif %}
+    {% for h in d.holidays %}<span class="cal-holiday">{{ h.title }}{% if h.owner_label %} · {{ h.owner_label }}{% endif %}</span>{% endfor %}
+  </header>
+  {% if d.rows %}
+  <ul class="cal-list">
+    {% for i in d.rows %}
+    <li class="cal-item" data-tone="{{ i.tone }}" data-status="{{ i.status }}" data-kind="{{ i.kind }}">
+      <span class="cal-time">{% if i.start_time %}{{ i.start_time }}{% if i.end_time %}–{{ i.end_time }}{% endif %}{% elif i.time_note %}{{ i.time_note }}{% else %}All day{% endif %}</span>
+      <span class="cal-title">{{ i.title }}{% if i.day_n %} <small>(day {{ i.day_n }} of {{ i.day_of }})</small>{% endif %}
+        {% for f in i.flags %}<span class="cal-flag">· {{ f|capitalize }}</span>{% endfor %}</span>
+      <span class="cal-owner">{{ i.owner_label or "" }}</span>
+      <span class="cal-meta">
+        {% if i.venue %}<span>📍 {{ i.venue }}</span>{% endif %}
+        {% if i.modality == "online" %}<span>Online</span>{% elif i.modality == "hybrid" %}<span>Hybrid</span>{% endif %}
+        {% if i.people %}<span class="cal-faces" aria-label="With {{ i.people|map(attribute='name')|join(', ') }}">
+          {% for p in i.people[:4] %}<span title="{{ p.name }}">{% if p.photo_url %}<img src="{{ p.photo_url }}" alt="">{% else %}{{ p.initials }}{% endif %}</span>{% endfor %}
+          {% if i.people|length > 4 %}<span>+{{ i.people|length - 4 }}</span>{% endif %}
+        </span>{% endif %}
+        {% for t in i.tags %}<span class="cal-tag">{{ t }}</span>{% endfor %}
+      </span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% elif not d.holidays %}
+  <p class="cal-nothing">Nothing scheduled today.</p>
+  {% endif %}
+</section>
+{% endfor %}
+
+<p class="cal-legend" aria-label="Colour key">
+  <span>The colour bar on each item is the unit that owns it; the unit's name is always written on the item.</span>
+</p>
+{% endblock %}

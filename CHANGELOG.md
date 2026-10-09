@@ -1,5 +1,20 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.54 — office calendar: read-only agenda page)
+
+- **`calendar_routes.py`** (new, the repo's first `APIRouter`) — `GET /calendar`: a two-week agenda
+  with scope pills (Mine + bureau-wide / Mine only / My section / My division / Everything I can
+  see), Earlier / Today / Later links and a pinned "today". `app.py` includes it with one line
+  (`make_router(templates, get_conn, _today_local)`); `_auth_gate` already covers it by path.
+- **`office_calendar.py`** — `agenda_days()` (groups items by day, "day 2 of 3" for trips) and
+  `scope_choices()` (never offers a pill that could only be empty).
+- **`templates/calendar.html`, `static/css/calendar.css`** — colour = owning unit (green/yellow/
+  magenta/orange/cyan/blue/grey tokens, light/dark/contrast), tentative dashed, postponed struck
+  through; the unit name is always written, never colour alone.
+- **`app.py` / `dash_layout.html`** — "Office calendar" entry in the AWA menu and search index;
+  `/calendar*` highlights it.
+- **Tests** — `tests/test_calendar_page.py`.
+
 ## 2026-10-09 (unreleased — office calendar A2: scope rules, no visible change)
 
 - **`office_calendar.py`** (new) — the layer registry: `items_between(conn, user, start, end,
