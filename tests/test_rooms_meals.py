@@ -10,6 +10,7 @@ import rooms_meals as rm
 import rooms_notify as rn
 import room_meal_form
 import storage as st
+from conftest import join_admin_section
 
 MON = date(2030, 3, 4)
 THU = date(2030, 3, 7)
@@ -190,7 +191,7 @@ def test_mark_everything_pending_as_requested(conn, me):
 # --------------------------------------------------- when the booking goes away ---
 
 def test_withdrawing_cancels_the_meals_and_tells_the_section_if_any_were_ordered(conn, me):
-    boss = st.create_admin_user(conn, "boss@test.local", "x", "y", "admin")
+    boss = join_admin_section(conn, st.create_admin_user(conn, "boss@test.local", "x", "y", "admin"))
     r = book(conn, me, (10, 11, 12))
     rm.tag(conn, r["id"], "lunch", "requested", "ana")
     rooms.withdraw(conn, r["id"], me)
@@ -243,7 +244,7 @@ def test_moving_the_booking_carries_the_form_over_and_cancels_the_old_one(conn, 
 # ------------------------------------------------------------------- notices ---
 
 def test_the_section_is_told_when_a_form_is_ready_and_when_it_changes(conn, me):
-    boss = st.create_admin_user(conn, "boss@test.local", "x", "y", "admin")
+    boss = join_admin_section(conn, st.create_admin_user(conn, "boss@test.local", "x", "y", "admin"))
     r = book(conn, me)
     ready = conn.execute("SELECT user_id, bell, text FROM room_notice WHERE kind='meal_form'").fetchall()
     assert ready == [(boss, 1, ready[0][2])] and "A meal form is ready to order" in ready[0][2]
@@ -255,7 +256,7 @@ def test_the_section_is_told_when_a_form_is_ready_and_when_it_changes(conn, me):
 
 
 def test_a_form_that_asks_for_no_meal_sends_no_notice(conn, me):
-    st.create_admin_user(conn, "boss@test.local", "x", "y", "admin")
+    join_admin_section(conn, st.create_admin_user(conn, "boss@test.local", "x", "y", "admin"))
     book(conn, me, (13,))
     assert conn.execute("SELECT COUNT(*) FROM room_notice WHERE kind='meal_form'").fetchone()[0] == 0
 
@@ -269,7 +270,7 @@ class Mail:
 
 
 def test_the_section_gets_an_email_about_a_meal_form(conn, me):
-    st.create_admin_user(conn, "boss@test.local", "x", "y", "admin")
+    join_admin_section(conn, st.create_admin_user(conn, "boss@test.local", "x", "y", "admin"))
     book(conn, me)
     mail = Mail()
     rn.flush(conn, "https://x.test", now=datetime.now(), send=mail)

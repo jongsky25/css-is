@@ -1,5 +1,11 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v6.16 — conference room: Administrative Section members only)
+
+- `rooms.is_room_admin` no longer admits a section's temporary OIC or `admin`-role accounts; only members of the Administrative Section (`…/ADMIN`) can decide requests, order and tag meals (Requested, Delivered, Not delivered, Cancelled), and manage closures. `rooms_notify.approver_accounts` drops the same two groups, including the admin-role fallback when the section is empty.
+- Tests: new `join_admin_section` helper; the OIC and admin-role cases now assert they are refused.
+- **Version bump:** `APP_VERSION` 6.15 → 6.16.
+
 ## 2026-10-09 (v6.14 — "Classic home" on /start goes to the landing page)
 
 - The "Classic home →" link on `/start` pointed at `/css` (the CSS hub); it now points at `/`.
