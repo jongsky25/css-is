@@ -1,5 +1,10 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v6.14 — "Classic home" on /start goes to the landing page)
+
+- The "Classic home →" link on `/start` pointed at `/css` (the CSS hub); it now points at `/`.
+- **Version bump:** `APP_VERSION` 6.13 → 6.14 in `version.py` (#231 merged without one).
+
 ## 2026-10-09 (v6.13 — phone menu: Display settings behind a ⚙ in the footer)
 
 - The Display accordion is gone from the scrolling nav list. A ⚙ button sits beside My profile / Page tour / Full guide in the pinned footer; it opens the same Theme / Accent / Text size / Density panel upward over the nav list, so the footer and Log out never move or grow. It closes with the sheet.

@@ -17,10 +17,18 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.13"
+APP_VERSION = "6.14"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.14",
+        "date": "October 9, 2026",
+        "summary": "The assistant page's \"Classic home\" link now takes you to the home page.",
+        "changes": [
+            "On the assistant page, \"Classic home\" now opens the Office Connect home page instead of the CSS hub.",
+        ],
+    },
     {
         "version": "6.13",
         "date": "October 9, 2026",
