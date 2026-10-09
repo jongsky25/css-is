@@ -3613,6 +3613,11 @@ _AUDIT_ACTIONS = {
     "room_approve":        ("Approved a room reservation", "Conference room"),
     "room_decline":        ("Declined a room reservation", "Conference room"),
     "room_withdraw":       ("Withdrew a room reservation", "Conference room"),
+    "room_encode":         ("Encoded a room booking", "Conference room"),
+    "room_cancel":         ("Cancelled a room booking", "Conference room"),
+    "room_accept":         ("Took a suggested room slot", "Conference room"),
+    "room_block":          ("Blocked the conference room", "Conference room"),
+    "room_unblock":        ("Reopened the conference room", "Conference room"),
     # Approvals
     "set_section_oic":    ("Assigned a temporary OIC", "Approvals"),
     "clear_section_oic":   ("Removed a temporary OIC", "Approvals"),

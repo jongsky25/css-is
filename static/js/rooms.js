@@ -44,11 +44,20 @@
     if (!dayEl.value || !f || !t) return;
     if (fromEl.selectedIndex > toEl.selectedIndex) { summary.textContent = 'Check the times: "Until" is before "From".'; return; }
     summary.textContent = label(dayEl.value) + ' · ' + f.textContent + ' – ' + t.textContent;
-    var pending = 0, bad = false;
+    var pending = 0, booked = null;
     if (sel) for (var r = Math.min(sel.a, sel.b); r <= Math.max(sel.a, sel.b); r++) {
-      var c = byRow(sel.day, r); if (c) pending = Math.max(pending, +c.dataset.pending || 0);
+      var c = byRow(sel.day, r); if (!c) continue;
+      pending = Math.max(pending, +c.dataset.pending || 0);
+      if (c.dataset.booked && !booked) booked = c.dataset.title || 'a booking';
     }
     clash.className = 'rm-clash';
+    var enc = document.querySelector('.rm-encode');
+    if (booked && enc) {                              // section members: booking over an approved one
+      enc.open = true;
+      clash.className = 'rm-clash bad';
+      clash.textContent = 'Already booked: ' + booked + '. To book anyway, use "book it for someone" below.';
+      return;
+    }
     clash.textContent = pending ? pending + ' other request' + (pending > 1 ? 's are' : ' is') +
       ' pending for these hours. The Administrative Section will decide.' : '';
   }
@@ -124,5 +133,10 @@
 
   // Land on the form's own values (a prefilled link, or a server-side error re-render).
   if (dayEl.value) fromForm(); else describe();
-  if (wrap.querySelector('.rm-panel .field-error, .flash.err') || document.querySelector('.flash.err')) open(true);
+  if (wrap.querySelector('.rm-panel .field-error, .rm-bump') || document.querySelector('.flash.err')) open(true);
+})();
+
+(function () {                                    // a Book-anyway prompt must not be missed
+  var b = document.querySelector('.rm-bump');
+  if (b) b.scrollIntoView({ block: 'center' });
 })();

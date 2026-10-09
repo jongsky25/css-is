@@ -111,3 +111,17 @@ button.rm-cell:focus-visible { outline:3px solid var(--accent); outline-offset:1
 @media (max-width:480px) { .rm-times { grid-template-columns:1fr 1fr; } .rm-legend { display:none; } }
 @media print { .rm-panel, .rm-open-panel, .rm-nav, .rm-tabs, .rm-daystrip, .rm-hint { display:none !important; }
                .rm-wrap { display:block; } .rm-week2 { display:block; } .rm-grid th[data-day], .rm-grid td[data-day] { display:table-cell !important; } }
+
+/* ---- admin: encode / book anyway, offers, closures ---- */
+.rm-encode { border-top:1px solid var(--line); margin-top:var(--s3); padding-top:var(--s3); }
+.rm-encode > summary { cursor:pointer; font-weight:700; color:var(--accent); margin-bottom:.5rem; }
+.rm-encode .btn { margin-bottom:.5rem; }
+.rm-bump { border:1px solid var(--red-ln); background:var(--red-bg); color:var(--ink); border-radius:var(--r2); padding:.7rem .8rem; margin-bottom:.8rem; }
+.rm-bump ul { margin:.4rem 0 .6rem 1rem; padding:0; }
+.rm-bump small { display:block; color:var(--soft); }
+.rm-offers { margin-top:.6rem; display:flex; flex-direction:column; gap:.3rem; align-items:flex-start; }
+.rm-offers form { margin:0; }
+.rm-attention h2 { color:var(--amber); }
+.rm-blockform { display:grid; grid-template-columns:repeat(auto-fit, minmax(11rem, 1fr)); gap:.8rem; align-items:end; margin-bottom:1rem; }
+.rm-blockform .field { margin:0; }
+.rm-blockform input, .rm-blockform select { width:100%; box-sizing:border-box; font-size:max(16px, 1rem); }

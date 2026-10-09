@@ -280,9 +280,11 @@ def _must_be_open(res, want):
             res["decided_by"], res["decided_at"], res["status"])
 
 
-def approve(conn, rid, by, note=None, today=None):
+def approve(conn, rid, by, note=None, today=None, decline_rivals=False):
     """First to act wins. Raises AlreadyDecided if someone already decided, or
-    SlotTaken if another reservation holds one of the hours."""
+    SlotTaken if another reservation holds one of the hours. With decline_rivals the
+    other open requests for the same hours are declined in the same transaction (they
+    are shown alternatives on My reservations)."""
     res = get_reservation(conn, rid)
     _must_be_open(res, ("requested",))
     if _d(res["day"]) < (today or tz.today_local()):
@@ -292,12 +294,19 @@ def approve(conn, rid, by, note=None, today=None):
         "AND (b.slot_id IS NULL OR b.slot_id=rs.slot_id) WHERE rs.reservation_id=? LIMIT 1", (rid,)).fetchone()
     if blocked:
         raise SlotTaken(f"The room is unavailable for those hours ({blocked[0]}).")
+    rivals = competing(conn, rid) if decline_rivals else []
     try:
         conn.execute("UPDATE room_reservation_slot SET is_approved=1 WHERE reservation_id=?", (rid,))
         conn.execute(
             "UPDATE room_reservation SET status='approved', decided_by=?, decided_at=?, "
             "decide_note=?, updated_at=? WHERE id=? AND status='requested'",
             (by, _stamp(), (note or "").strip() or None, _stamp(), rid))
+        for o in rivals:
+            conn.execute(
+                "UPDATE room_reservation SET status='declined', decided_by=?, decided_at=?, decide_note=?, "
+                "updated_at=? WHERE id=? AND status='requested'",
+                (by, _stamp(), f"Another request for these hours was approved ({res['ref_code']}).",
+                 _stamp(), o["id"]))
         conn.commit()
     except sqlite3.IntegrityError:
         conn.rollback()
@@ -315,6 +324,10 @@ def approve(conn, rid, by, note=None, today=None):
         raise
     st.audit(conn, by, "room_approve", target_type="room_reservation", target_id=rid,
              summary=f"{res['title']} on {res['day']}", before="requested", after="approved")
+    for o in rivals:
+        st.audit(conn, by, "room_decline", target_type="room_reservation", target_id=o["id"],
+                 summary=f"{o['title']} on {o['day']}: another request approved", before="requested",
+                 after="declined")
     return get_reservation(conn, rid)
 
 
@@ -552,3 +565,323 @@ def queue(conn):
                     "blocked": block[0] if block else None,
                     "can_approve": not held and not block})
     return out
+
+
+# ---------------------------------------------- suggestions, encode, bump, blocks ---
+
+class NeedsBump(RoomError):
+    """The hours are held by approved bookings. `affected` lists what would be cancelled;
+    the caller asks for a reason and tries again."""
+    def __init__(self, msg, affected):
+        super().__init__(msg)
+        self.affected = affected
+
+
+def _approved_overlapping(conn, day_iso, slot_ids):
+    if not slot_ids:
+        return []
+    qs = ",".join("?" * len(slot_ids))
+    return [r[0] for r in conn.execute(
+        f"SELECT DISTINCT reservation_id FROM room_reservation_slot "
+        f"WHERE day=? AND is_approved=1 AND slot_id IN ({qs}) ORDER BY reservation_id", (day_iso, *slot_ids))]
+
+
+def _blocked_reason(conn, day_iso, slot_ids):
+    qs = ",".join("?" * len(slot_ids))
+    r = conn.execute(f"SELECT reason FROM room_block WHERE day=? AND (slot_id IS NULL OR slot_id IN ({qs})) LIMIT 1",
+                     (day_iso, *slot_ids)).fetchone()
+    return r[0] if r else None
+
+
+def _window_label(conn, day, slot_ids):
+    by = {s["id"]: s for s in list_slots(conn, active_only=False)}
+    ss = [by[i] for i in slot_ids]
+    d = _d(day)
+    return f"{d:%a} {d.day} {d:%b} · {hour_label(ss[0]['start_time'])} – {hour_label(ss[-1]['end_time'])}"
+
+
+def suggest(conn, day, slot_ids, n=3, today=None, respect_lead=True, extra_taken=()):
+    """Nearest free alternatives to (day, slot_ids): the same hours on the next working
+    days, then other hours the same day, then the same hours on earlier days that are still
+    ahead. Holidays, weekends and blocks are skipped. `extra_taken` = {(day_iso, slot_id)}
+    to treat as already gone (a booking about to be made)."""
+    today = today or tz.today_local()
+    slots = list_slots(conn)
+    idx = {s["id"]: i for i, s in enumerate(slots)}
+    ids = sorted(slot_ids, key=lambda i: idx[i])
+    k, first = len(ids), idx[ids[0]]
+    taken = set(extra_taken)
+
+    def ok_day(d):
+        return (is_working_day(conn, d) and d >= today
+                and day_closed(conn, d, today, override_lead=not respect_lead) is None)
+
+    def free(d, window):
+        di = d.isoformat()
+        return (not _approved_overlapping(conn, di, window) and not _blocked_reason(conn, di, window)
+                and not any((di, w) in taken for w in window))
+
+    out, seen = [], set()
+
+    def add(d, window, why):
+        key = (d.isoformat(), tuple(window))
+        if key in seen or len(out) >= n:
+            return
+        seen.add(key)
+        out.append({"day": d.isoformat(), "slot_ids": list(window), "why": why,
+                    "label": _window_label(conn, d, window)})
+
+    base = _d(day)
+    d, steps = base, 0                                   # 1. same hours, following working days
+    while len(out) < n and steps < 10:
+        d += timedelta(days=1)
+        if d > today + timedelta(days=MAX_DAYS_AHEAD):
+            break
+        if ok_day(d) and free(d, ids):
+            add(d, ids, "Same hours, next free day")
+        steps += 1
+    if ok_day(base):                                     # 2. same day, other hours (nearest first)
+        wins = [[s["id"] for s in slots[i:i + k]] for i in range(0, len(slots) - k + 1) if i != first]
+        for w in sorted(wins, key=lambda w: abs(idx[w[0]] - first)):
+            if free(base, w):
+                add(base, w, "Same day, other hours")
+    d, steps = base, 0                                   # 3. same hours, earlier days still ahead
+    while len(out) < n and steps < 10:
+        d -= timedelta(days=1)
+        if d < today:
+            break
+        if ok_day(d) and free(d, ids):
+            add(d, ids, "Same hours, earlier day")
+        steps += 1
+    return out
+
+
+def _check_fields(title, modality, attendees):
+    if not (title or "").strip():
+        raise RoomError("Please give the meeting a title.")
+    if modality not in MODALITIES:
+        raise RoomError("Choose face-to-face, online or hybrid.")
+    if attendees is not None and int(attendees) < 1:
+        raise RoomError("Attendees must be at least 1.")
+
+
+def _cancel_in_txn(conn, rid, by, reason, bumped_by=None):
+    conn.execute("UPDATE room_reservation_slot SET is_approved=0 WHERE reservation_id=?", (rid,))
+    conn.execute(
+        "UPDATE room_reservation SET status='cancelled', decided_by=?, decided_at=?, decide_note=?, "
+        "bumped_by_reservation_id=?, updated_at=? WHERE id=?", (by, _stamp(), reason, bumped_by, _stamp(), rid))
+
+
+def _affected_info(conn, rids, extra_taken=(), today=None):
+    out = []
+    for rid in rids:
+        r = get_reservation(conn, rid)
+        name, unit, ext = requester_label(conn, r)
+        out.append({"id": rid, "ref": r["ref_code"], "title": r["title"], "who": name, "unit": unit,
+                    "hours": hours_text(conn, r), "day": r["day"],
+                    "when": f"{_d(r['day']):%a} {_d(r['day']).day} {_d(r['day']):%b}",
+                    "suggestions": suggest(conn, r["day"], r["slot_ids"], today=today, respect_lead=False,
+                                           extra_taken=extra_taken)})
+    return out
+
+
+def encode(conn, *, by, title, day, slot_ids, requester_user_id=None, ext=None, purpose=None,
+           attendees=None, modality="f2f", meals_requested=False, note=None, bump_reason=None,
+           today=None):
+    """An admin books the room for someone: approved at once (source 'encoded').
+
+    Inside the 2-working-day notice a reason (`note`) is needed. If an approved booking
+    holds the hours, raises NeedsBump listing what would be cancelled; call again with
+    `bump_reason` and the new booking and the cancellations happen in ONE transaction, so
+    nobody can slip into the gap."""
+    _check_fields(title, modality, attendees)
+    ext = ext or {}
+    if requester_user_id is None and not (ext.get("name") or "").strip():
+        raise RoomError("Who is this booking for? Pick a person or type a name.")
+    today = today or tz.today_local()
+    closed = day_closed(conn, day, today, override_lead=True)
+    if closed:
+        raise RoomError(closed[1])
+    if _d(day) < earliest_bookable(conn, today) and not (note or "").strip():
+        raise RoomError(f"This is inside the {LEAD_WORKING_DAYS}-working-day notice. Please add a reason.")
+    order = _validate_slots(conn, slot_ids)
+    day_iso = _d(day).isoformat()
+    block = _blocked_reason(conn, day_iso, order)
+    if block:
+        raise SlotTaken(f"The room is unavailable for those hours ({block}).")
+    held = _approved_overlapping(conn, day_iso, order)
+    if held and not (bump_reason or "").strip():
+        raise NeedsBump("Those hours are already booked.",
+                        _affected_info(conn, held, extra_taken={(day_iso, s) for s in order}, today=today))
+    now = _stamp()
+    try:
+        cur = conn.execute(
+            "INSERT INTO room_reservation(requester_user_id, ext_name, ext_org, ext_email, ext_phone, "
+            "title, purpose, attendees, modality, day, status, source, decided_by, decided_at, decide_note, "
+            "meals_requested, created_by, created_at, updated_at) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?, 'approved','encoded',?,?,?,?,?,?,?)",
+            (requester_user_id, ext.get("name"), ext.get("org"), ext.get("email"), ext.get("phone"),
+             title.strip(), (purpose or "").strip() or None, attendees, modality, day_iso, by, now,
+             (note or "").strip() or None, 1 if meals_requested else 0, by, now, now))
+        rid = cur.lastrowid
+        conn.execute("UPDATE room_reservation SET ref_code=? WHERE id=?", (f"CR-{_d(day_iso):%y%m}-{rid:04d}", rid))
+        conn.executemany("INSERT INTO room_reservation_slot(reservation_id, day, slot_id, is_approved) VALUES (?,?,?,0)",
+                         [(rid, day_iso, s) for s in order])
+        for old in held:                                  # free the hours first, then take them
+            _cancel_in_txn(conn, old, by, bump_reason.strip(), bumped_by=rid)
+        conn.execute("UPDATE room_reservation_slot SET is_approved=1 WHERE reservation_id=?", (rid,))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    st.audit(conn, by, "room_encode", target_type="room_reservation", target_id=rid,
+             summary=f"{title.strip()} on {day_iso}", after="approved")
+    for old in held:
+        st.audit(conn, by, "room_cancel", target_type="room_reservation", target_id=old,
+                 summary=f"Cancelled for {title.strip()}: {bump_reason.strip()}", before="approved", after="cancelled")
+    out = get_reservation(conn, rid)
+    out["bumped"] = held
+    return out
+
+
+def take_suggestion(conn, rid, user_id, day, slot_ids, today=None, actor=None):
+    """The owner of a cancelled or declined reservation takes one of the offered
+    alternatives. After a bump it is booked already approved (the admin caused the move);
+    after a decline it is an ordinary new request. Only times the server itself would
+    suggest right now are accepted, so a posted form can't pick an arbitrary slot."""
+    res = get_reservation(conn, rid)
+    if res is None or res["requester_user_id"] is None or res["requester_user_id"] != user_id:
+        raise RoomError("You can only change your own reservation.")
+    if res["status"] not in ("cancelled", "declined"):
+        raise RoomError("This reservation doesn't need a new time.")
+    today = today or tz.today_local()
+    bumped = res["status"] == "cancelled" and res["bumped_by_reservation_id"] is not None
+    ids = [int(s) for s in slot_ids]
+    offered = suggest(conn, res["day"], res["slot_ids"], n=8, today=today, respect_lead=not bumped)
+    if not any(o["day"] == str(day) and o["slot_ids"] == ids for o in offered):
+        raise RoomError("That time is no longer free. Pick one of the fresh suggestions.")
+    if conn.execute("SELECT 1 FROM room_reservation WHERE moves_reservation_id=? AND status IN ('requested','approved')",
+                    (rid,)).fetchone():
+        raise RoomError("You already took a new time for this one.")
+    kw = dict(title=res["title"], day=day, slot_ids=ids, requester_user_id=user_id, purpose=res["purpose"],
+              attendees=res["attendees"], modality=res["modality"], meals_requested=bool(res["meals_requested"]),
+              actor=actor or f"user:{user_id}", today=today)
+    new = _book_accepted(conn, res, kw) if bumped else request(conn, **kw)
+    conn.execute("UPDATE room_reservation SET moves_reservation_id=? WHERE id=?", (rid, new["id"]))
+    conn.commit()
+    st.audit(conn, kw["actor"], "room_accept", target_type="room_reservation", target_id=new["id"],
+             summary=f"{new['title']} moved from {res['ref_code']} to {day}", after=new["status"])
+    return get_reservation(conn, new["id"])
+
+
+def _book_accepted(conn, old, kw):
+    """A bumped person's chosen alternative: approved immediately, source 'bump_accept',
+    notice rule waived (the cancellation, not the requester, caused the short notice)."""
+    ids, day_iso = kw["slot_ids"], _d(kw["day"]).isoformat()
+    if _approved_overlapping(conn, day_iso, ids) or _blocked_reason(conn, day_iso, ids):
+        raise RoomError("That time was just taken. Pick one of the fresh suggestions.")
+    now = _stamp()
+    try:
+        cur = conn.execute(
+            "INSERT INTO room_reservation(requester_user_id, title, purpose, attendees, modality, day, status, "
+            "source, decided_by, decided_at, decide_note, meals_requested, created_by, created_at, updated_at) "
+            "VALUES (?,?,?,?,?,?, 'approved','bump_accept',?,?,?,?,?,?,?)",
+            (kw["requester_user_id"], kw["title"], kw["purpose"], kw["attendees"], kw["modality"], day_iso,
+             old["decided_by"], now, f"Moved after {old['ref_code']} was cancelled.",
+             1 if kw["meals_requested"] else 0, kw["actor"], now, now))
+        rid = cur.lastrowid
+        conn.execute("UPDATE room_reservation SET ref_code=? WHERE id=?", (f"CR-{_d(day_iso):%y%m}-{rid:04d}", rid))
+        conn.executemany("INSERT INTO room_reservation_slot(reservation_id, day, slot_id, is_approved) VALUES (?,?,?,1)",
+                         [(rid, day_iso, s) for s in ids])
+        conn.commit()
+    except sqlite3.IntegrityError:
+        conn.rollback()
+        raise RoomError("That time was just taken. Pick one of the fresh suggestions.")
+    return get_reservation(conn, rid)
+
+
+def suggestions_for(conn, res, n=4, today=None):
+    """What to offer the owner of a cancelled/declined reservation whose date is still ahead."""
+    today = today or tz.today_local()
+    if res["status"] not in ("cancelled", "declined") or _d(res["day"]) < today:
+        return []
+    bumped = res["status"] == "cancelled" and res["bumped_by_reservation_id"] is not None
+    if conn.execute("SELECT 1 FROM room_reservation WHERE moves_reservation_id=? AND status IN ('requested','approved')",
+                    (res["id"],)).fetchone():
+        return []
+    return suggest(conn, res["day"], res["slot_ids"], n=n, today=today, respect_lead=not bumped)
+
+
+# ---- blocks ---------------------------------------------------------------
+
+def add_block(conn, by, day, slot_ids, reason, confirm=False, today=None):
+    """Close the room for a whole day (slot_ids None/empty) or some hours. Approved bookings
+    in the way are cancelled, but only once `confirm` is true; until then NeedsBump lists them."""
+    reason = (reason or "").strip()
+    if not reason:
+        raise RoomError("Say why the room is unavailable.")
+    today = today or tz.today_local()
+    if _d(day) < today:
+        raise RoomError("That date has already passed.")
+    day_iso = _d(day).isoformat()
+    order = _validate_slots(conn, slot_ids) if slot_ids else [s["id"] for s in list_slots(conn)]
+    held = _approved_overlapping(conn, day_iso, order)
+    if held and not confirm:
+        raise NeedsBump("Approved bookings are in the way.", _affected_info(
+            conn, held, extra_taken={(day_iso, s) for s in order}, today=today))
+    try:
+        ids = []
+        rows = [None] if not slot_ids else order
+        for s in rows:
+            ids.append(conn.execute("INSERT INTO room_block(day, slot_id, reason, created_by, created_at) VALUES (?,?,?,?,?)",
+                                    (day_iso, s, reason, by, _stamp())).lastrowid)
+        for old in held:
+            _cancel_in_txn(conn, old, by, f"The room is unavailable: {reason}")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    st.audit(conn, by, "room_block", target_type="room_block", target_id=ids[0],
+             summary=f"{day_iso}: {reason}" + (f" ({len(held)} booking(s) cancelled)" if held else ""))
+    for old in held:
+        st.audit(conn, by, "room_cancel", target_type="room_reservation", target_id=old,
+                 summary=f"Room unavailable: {reason}", before="approved", after="cancelled")
+    return {"ids": ids, "cancelled": held}
+
+
+def list_blocks(conn, today=None):
+    """Upcoming blocks, grouped (same day and reason) with a readable hour range."""
+    today = (today or tz.today_local()).isoformat()
+    slots = {s["id"]: s for s in list_slots(conn, active_only=False)}
+    groups = {}
+    for bid, day, sid, reason in conn.execute(
+            "SELECT id, day, slot_id, reason FROM room_block WHERE day>=? ORDER BY day, slot_id", (today,)):
+        g = groups.setdefault((day, reason), {"day": day, "reason": reason, "ids": [], "slots": []})
+        g["ids"].append(bid)
+        g["slots"].append(sid)
+    out = []
+    for g in groups.values():
+        whole = None in g["slots"]
+        ss = [slots[i] for i in g["slots"] if i in slots]
+        g["whole_day"] = whole
+        g["hours"] = "Whole day" if whole or not ss else f"{hour_label(ss[0]['start_time'])} – {hour_label(ss[-1]['end_time'])}"
+        g["when"] = f"{_d(g['day']):%a} {_d(g['day']).day} {_d(g['day']):%b %Y}"
+        out.append(g)
+    return out
+
+
+def remove_block(conn, by, ids):
+    ids = [int(i) for i in ids]
+    if not ids:
+        raise RoomError("Nothing to reopen.")
+    qs = ",".join("?" * len(ids))
+    conn.execute(f"DELETE FROM room_block WHERE id IN ({qs})", ids)
+    conn.commit()
+    st.audit(conn, by, "room_unblock", target_type="room_block", target_id=ids[0], summary=f"{len(ids)} block row(s) removed")
+
+
+def account_options(conn):
+    """(id, name) of active accounts for the encode form's 'booking for' picker."""
+    return [(r[0], r[1]) for r in conn.execute(
+        "SELECT a.id, COALESCE(NULLIF(rp.name, ''), a.username) FROM admin_user a "
+        "LEFT JOIN resource_person rp ON rp.id=a.rp_id WHERE a.active=1 ORDER BY 2 COLLATE NOCASE")]

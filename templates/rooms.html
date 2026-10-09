@@ -3,7 +3,7 @@
 {% from "_rooms_grid.html" import week_grid %}
 {% block title %}Conference room{% endblock %}
 {% block page_width %}full{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/rooms.css?v=20261009a">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/rooms.css?v=20261009b">{% endblock %}
 {% block content %}
 {{ page_header("Conference room", "See what is free, then pick your hours. The Administrative Section approves each request.") }}
 {% include "_rooms_tabs.html" %}
@@ -34,8 +34,8 @@
       {% endfor %}
     </div>
 
-    {{ week_grid(board, active_day) }}
-    <div class="rm-week2">{{ week_grid(board2, '', 'second') }}</div>
+    {{ week_grid(board, active_day, "", can_encode) }}
+    <div class="rm-week2">{{ week_grid(board2, '', 'second', can_encode) }}</div>
   </section>
 
   <aside class="rm-panel" id="rm-panel" aria-label="Request the conference room">
@@ -46,6 +46,20 @@
       </div>
       <p class="rm-summary" id="rm-summary" aria-live="polite">Pick hours on the grid, or fill in the date and times below.</p>
       <p class="rm-clash" id="rm-clash" role="status"></p>
+      {% if bump %}
+      <div class="rm-bump" role="alert">
+        <strong>These approved bookings are in the way and will be cancelled:</strong>
+        <ul>
+          {% for a in bump.affected %}
+          <li><b>{{ a.title }}</b> · {{ a.who }}{% if a.unit %} ({{ a.unit }}){% endif %} · {{ a.when }}, {{ a.hours }}
+            <small>{% if a.suggestions %}They will be offered: {% for s in a.suggestions %}{{ s.label }}{{ '; ' if not loop.last }}{% endfor %}{% else %}No free alternative found nearby.{% endif %}</small></li>
+          {% endfor %}
+        </ul>
+        <div class="field"><label for="rm-bump-reason">Reason they will be told</label>
+          <input id="rm-bump-reason" name="bump_reason" value="{{ bump.reason }}" maxlength="200"></div>
+        <button class="btn danger block" type="submit" name="bump" value="1" formaction="/rooms/encode">Cancel them and book this</button>
+      </div>
+      {% endif %}
 
       <div class="field"><label for="rm-day">Date</label>
         <input type="date" id="rm-day" name="day" value="{{ f.day }}" min="{{ earliest.isoformat() }}" required></div>
@@ -78,6 +92,25 @@
       </fieldset>
       <label class="rm-meals"><input type="checkbox" name="meals" value="1" {{ 'checked' if f.meals }}> Will meals be requested?
         <small>The meal form is prepared for you from your hours once the request is approved.</small></label>
+
+      {% if can_encode %}
+      <details class="rm-encode" {{ 'open' if bump or f.for_user or f.for_name or f.note }}>
+        <summary>Administrative Section: book it for someone</summary>
+        <p class="rm-hint">Booked straight away, no approval step. Uses the date, hours and meeting details above.</p>
+        <div class="field"><label for="rm-for">Booking for</label>
+          <select id="rm-for" name="for_user">
+            <option value="">A guest (type a name below)</option>
+            {% for aid, aname in accounts %}<option value="{{ aid }}" {{ 'selected' if f.for_user|string == aid|string }}>{{ aname }}</option>{% endfor %}
+          </select></div>
+        <div class="field"><label for="rm-for-name">Guest name <span class="opt">(if not in the list)</span></label>
+          <input id="rm-for-name" name="for_name" value="{{ f.for_name }}" maxlength="120"></div>
+        <div class="field"><label for="rm-for-org">Organization <span class="opt">(optional)</span></label>
+          <input id="rm-for-org" name="for_org" value="{{ f.for_org }}" maxlength="120"></div>
+        <div class="field"><label for="rm-note">Reason <span class="opt">(needed inside the 2-working-day notice)</span></label>
+          <input id="rm-note" name="note" value="{{ f.note }}" maxlength="200"></div>
+        <button class="btn block" type="submit" formaction="/rooms/encode">Book it now (approved)</button>
+      </details>
+      {% endif %}
 
       <div class="rm-actions">
         <button class="btn block" type="submit">Request room</button>

@@ -1,5 +1,6 @@
 <nav class="rm-tabs" aria-label="Conference room">
   <a href="/rooms" {% if tab == 'board' %}aria-current="page"{% endif %}>Availability</a>
   <a href="/rooms/mine" {% if tab == 'mine' %}aria-current="page"{% endif %}>My reservations{% if mine_open %} <span class="badge blue">{{ mine_open }}</span>{% endif %}</a>
-  {% if room_pending is not none %}<a href="/approvals#rooms">Requests{% if room_pending %} <span class="badge amber">{{ room_pending }}</span>{% endif %}</a>{% endif %}
+  {% if room_pending is not none %}<a href="/rooms/blocks" {% if tab == 'blocks' %}aria-current="page"{% endif %}>Closures</a>
+  <a href="/approvals#rooms">Requests{% if room_pending %} <span class="badge amber">{{ room_pending }}</span>{% endif %}</a>{% endif %}
 </nav>

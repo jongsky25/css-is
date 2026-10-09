@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "4.3"
+APP_VERSION = "4.4"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "4.4",
+        "date": "October 9, 2026",
+        "summary": "The Administrative Section can book the room for someone, and move or close it when something more important comes up.",
+        "changes": [
+            "Book it for someone: pick the hours, choose the person (or type a guest's name), and it is booked straight away with no approval step.",
+            "If a more important meeting needs hours that are already booked, the page shows exactly which bookings would be cancelled and asks for a reason. The people affected see the reason and are offered the nearest free times, and picking one books it at once.",
+            "Closures: the room can be closed for a day or some hours, for repairs for example. Anyone with a booking in the way is told and offered new times.",
+            "When you approve a request, you can decline the others asking for the same hours in one step. They are shown other free times to ask for.",
+        ],
+    },
     {
         "version": "4.3",
         "date": "October 9, 2026",

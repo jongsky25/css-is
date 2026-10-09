@@ -39,7 +39,7 @@ def make_router(templates, get_conn, today_local):
         raw = parse_qs((await request.body()).decode("utf-8"), keep_blank_values=True)
         return {k: (v[0] if v else "").strip() for k, v in raw.items()}
 
-    def _board_page(request, conn, q, *, f=None, error="", status_code=200, ok=None):
+    def _board_page(request, conn, q, *, f=None, error="", status_code=200, ok=None, bump=None):
         today = today_local()
         f = f or {}
         wanted = _date_or_none(q.get("week")) or _date_or_none(f.get("day")) or today
@@ -59,11 +59,14 @@ def make_router(templates, get_conn, today_local):
             form["from_slot"] = str(slots[2]["id"] if len(slots) > 2 else slots[0]["id"])   # 9 AM
             form["to_slot"] = form["to_slot"] or form["from_slot"]
         mine_open = len(rooms.list_for_user(conn, request.state.user["id"], upcoming_only=True, today=today))
+        can_encode = rooms.is_room_admin(conn, request.state.user)
         return templates.TemplateResponse(request, "rooms.html", {
-            "room_pending": rooms.pending_count(conn) if rooms.is_room_admin(conn, request.state.user) else None,
+            "room_pending": rooms.pending_count(conn) if can_encode else None,
             "nav_active": "rooms", "tab": "board", "board": board, "board2": board2,
             "active_day": active, "f": form, "error": error, "ok": ok, "slots": slots,
             "mine_open": mine_open, "earliest": board["earliest"], "today": today,
+            "can_encode": can_encode, "accounts": rooms.account_options(conn) if can_encode else [],
+            "bump": bump,
         }, status_code=status_code)
 
     @router.get("/rooms", response_class=HTMLResponse)
@@ -71,7 +74,7 @@ def make_router(templates, get_conn, today_local):
         q = dict(request.query_params)
         conn = get_conn()
         try:
-            ok = None
+            ok = (q.get("flash") or "")[:300] or None
             if _REF.match(q.get("ok", "")):
                 r = rooms.get_by_ref(conn, q["ok"])
                 if r and r["requester_user_id"] == request.state.user["id"]:
@@ -122,11 +125,19 @@ def make_router(templates, get_conn, today_local):
                 r["timeline"] = rooms.timeline(conn, r)
                 r["badge"] = STATUS_BADGE.get(r["status"], ("grey", r["status"].title()))
                 r["day_date"] = date.fromisoformat(r["day"])
+                r["offers"] = rooms.suggestions_for(conn, r, today=today)
+                r["was_bumped"] = r["status"] == "cancelled" and r["bumped_by_reservation_id"] is not None
             upcoming = sorted((r for r in rows if r["status"] in ("requested", "approved")
                                and r["day_date"] >= today), key=lambda r: (r["day"], r["id"]))
-            earlier = [r for r in rows if r not in upcoming]
+            attention = [r for r in rows if r["offers"]]            # cancelled/declined, date still ahead, needs a new time
+            earlier = [r for r in rows if r not in upcoming and r not in attention]
             msg = err = None
-            if _REF.match(q.get("ok", "")):
+            if q.get("took"):
+                r = rooms.get_by_ref(conn, q.get("ok", ""))
+                if r and r["requester_user_id"] == user["id"]:
+                    msg = (f"New time booked: {r['ref_code']}." if r["status"] == "approved"
+                           else f"New request {r['ref_code']} sent. The Administrative Section will decide.")
+            elif _REF.match(q.get("ok", "")):
                 r = rooms.get_by_ref(conn, q["ok"])
                 if r and r["requester_user_id"] == user["id"]:
                     msg = (f"Request {r['ref_code']} sent. The Administrative Section will decide; "
@@ -138,6 +149,7 @@ def make_router(templates, get_conn, today_local):
             return templates.TemplateResponse(request, "rooms_mine.html", {
                 "room_pending": rooms.pending_count(conn) if rooms.is_room_admin(conn, user) else None,
                 "nav_active": "rooms", "tab": "mine", "upcoming": upcoming, "earlier": earlier,
+                "attention": attention,
                 "msg": msg, "err": err, "mine_open": len(upcoming), "today": today})
         finally:
             conn.close()
@@ -156,6 +168,134 @@ def make_router(templates, get_conn, today_local):
             conn.close()
         return RedirectResponse("/rooms/mine?done=withdrawn", status_code=303)
 
+    def _forbidden(request):
+        return templates.TemplateResponse(
+            request, "forbidden.html", {"capability": "room approvals", "show_scope": False}, status_code=403)
+
+    @router.post("/rooms/encode")
+    async def rooms_encode(request: Request):
+        """An Administrative Section member books the room for someone: approved at once.
+        When approved bookings are in the way the page comes back asking for a reason (Book
+        anyway) and nothing changes until it is given."""
+        f = await _posted(request)
+        user = request.state.user
+        conn = get_conn()
+        try:
+            if not rooms.is_room_admin(conn, user):
+                return _forbidden(request)
+            try:
+                day = _date_or_none(f.get("day"))
+                if day is None:
+                    raise rooms.RoomError("Pick a date.")
+                ids = rooms.slot_range(conn, f.get("from_slot"), f.get("to_slot"))
+                attendees = f.get("attendees", "")
+                if attendees and not attendees.isdigit():
+                    raise rooms.RoomError("Attendees must be a number.")
+                for_user = int(f["for_user"]) if (f.get("for_user") or "").isdigit() else None
+                res = rooms.encode(
+                    conn, by=user["username"], title=f.get("title"), day=day, slot_ids=ids,
+                    requester_user_id=for_user,
+                    ext={"name": f.get("for_name"), "org": f.get("for_org")} if not for_user else None,
+                    purpose=f.get("purpose"), attendees=int(attendees) if attendees else None,
+                    modality=f.get("modality") or "f2f", meals_requested=bool(f.get("meals")),
+                    note=f.get("note"), bump_reason=f.get("bump_reason") if f.get("bump") else None,
+                    today=today_local())
+            except rooms.NeedsBump as e:
+                return _board_page(request, conn, {"week": f.get("day", "")}, f=f, status_code=409,
+                                   error="Those hours are already booked. Nothing has changed yet.",
+                                   bump={"affected": e.affected, "reason": f.get("bump_reason", "")})
+            except rooms.RoomError as e:
+                return _board_page(request, conn, {"week": f.get("day", "")}, f=f, error=str(e), status_code=400)
+        finally:
+            conn.close()
+        msg = f"Booked {res['ref_code']}: {res['title']}."
+        if res.get("bumped"):
+            msg += f" {len(res['bumped'])} earlier booking(s) cancelled; their owners can pick a new time."
+        return RedirectResponse(f"/rooms?week={res['day']}&" + urlencode({"flash": msg}), status_code=303)
+
+    @router.post("/rooms/{rid}/take")
+    async def rooms_take(rid: int, request: Request):
+        """The owner of a cancelled/declined reservation picks one of the offered new times."""
+        f = await _posted(request)
+        user = request.state.user
+        conn = get_conn()
+        try:
+            try:
+                ids = [int(x) for x in (f.get("slots") or "").split(",") if x.strip().isdigit()]
+                new = rooms.take_suggestion(conn, rid, user["id"], f.get("day", ""), ids,
+                                            today=today_local(), actor=user["username"])
+            except (rooms.RoomError, ValueError) as e:
+                return RedirectResponse("/rooms/mine?" + urlencode({"err": str(e)}), status_code=303)
+        finally:
+            conn.close()
+        return RedirectResponse("/rooms/mine?" + urlencode({"ok": new["ref_code"], "took": new["status"]}), status_code=303)
+
+    @router.get("/rooms/blocks", response_class=HTMLResponse)
+    def rooms_blocks(request: Request):
+        return _blocks_page(request)
+
+    def _blocks_page(request, *, error="", msg="", f=None, confirm=None, status_code=200):
+        conn = get_conn()
+        try:
+            if not rooms.is_room_admin(conn, request.state.user):
+                return _forbidden(request)
+            slots = rooms.list_slots(conn)
+            return templates.TemplateResponse(request, "rooms_blocks.html", {
+                "nav_active": "rooms", "tab": "blocks", "blocks": rooms.list_blocks(conn, today_local()),
+                "slots": slots, "error": error, "msg": msg, "f": f or {}, "confirm": confirm,
+                "room_pending": rooms.pending_count(conn),
+                "mine_open": len(rooms.list_for_user(conn, request.state.user["id"], upcoming_only=True,
+                                                     today=today_local())),
+                "min_day": today_local()}, status_code=status_code)
+        finally:
+            conn.close()
+
+    @router.post("/rooms/blocks")
+    async def rooms_block_add(request: Request):
+        f = await _posted(request)
+        user = request.state.user
+        conn = get_conn()
+        try:
+            if not rooms.is_room_admin(conn, user):
+                return _forbidden(request)
+            try:
+                day = _date_or_none(f.get("day"))
+                if day is None:
+                    raise rooms.RoomError("Pick a date.")
+                ids = None if f.get("whole_day") else rooms.slot_range(conn, f.get("from_slot"), f.get("to_slot"))
+                out = rooms.add_block(conn, user["username"], day, ids, f.get("reason"),
+                                      confirm=bool(f.get("confirm")), today=today_local())
+            except rooms.NeedsBump as e:
+                conn.close()
+                return _blocks_page(request, f=f, confirm=e.affected, status_code=409,
+                                    error="Approved bookings are in the way. Nothing has changed yet.")
+            except rooms.RoomError as e:
+                conn.close()
+                return _blocks_page(request, f=f, error=str(e), status_code=400)
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+        msg = "Room closed." + (f" {len(out['cancelled'])} booking(s) cancelled." if out["cancelled"] else "")
+        return RedirectResponse("/rooms/blocks?" + urlencode({"msg": msg}), status_code=303)
+
+    @router.post("/rooms/blocks/reopen")
+    async def rooms_block_reopen(request: Request):
+        raw = parse_qs((await request.body()).decode("utf-8"), keep_blank_values=True)
+        user = request.state.user
+        conn = get_conn()
+        try:
+            if not rooms.is_room_admin(conn, user):
+                return _forbidden(request)
+            try:
+                rooms.remove_block(conn, user["username"], [i for i in (raw.get("ids", [""])[0]).split(",") if i.isdigit()])
+            except rooms.RoomError as e:
+                return RedirectResponse("/rooms/blocks?" + urlencode({"msg": str(e)}), status_code=303)
+        finally:
+            conn.close()
+        return RedirectResponse("/rooms/blocks?" + urlencode({"msg": "Room reopened."}), status_code=303)
+
     @router.post("/rooms/{rid}/decide")
     async def rooms_decide(rid: int, request: Request):
         """Approve or decline a request from the Approvals inbox. First to act wins: a
@@ -170,7 +310,8 @@ def make_router(templates, get_conn, today_local):
                     status_code=403)
             try:
                 if f.get("action") == "approve":
-                    res = rooms.approve(conn, rid, user["username"], f.get("note"), today=today_local())
+                    res = rooms.approve(conn, rid, user["username"], f.get("note"), today=today_local(),
+                                        decline_rivals=bool(f.get("decline_rivals")))
                     q = {"ok": f"Approved {res['ref_code']}: {res['title']}."}
                 elif f.get("action") == "decline":
                     res = rooms.decline(conn, rid, user["username"], f.get("note"))

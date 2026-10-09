@@ -32,6 +32,7 @@
               background:var(--blue-bg); border:1px solid var(--blue-ln);
               border-radius:8px; padding:.35rem .5rem; }
   .muted { color:var(--soft); }
+  .rivals-opt { flex-basis:100%; font-size:.8rem; color:var(--ink-soft); }
   .backbar { margin-bottom:1rem; display:flex; gap:.8rem; }
   .decided-link { margin:-.3rem 0 1rem; font-size:.9rem; }
   .inbox-jump { display:flex; gap:.5rem; flex-wrap:wrap; margin:0 0 1rem; }
@@ -81,6 +82,10 @@
             <input type="text" name="note" placeholder="remark or reason">
             {% if r.can_approve %}<button class="ok" type="submit" name="action" value="approve">Approve</button>{% endif %}
             <button class="no" type="submit" name="action" value="decline">Decline</button>
+            {% if r.can_approve and r.rivals %}
+            <label class="rivals-opt"><input type="checkbox" name="decline_rivals" value="1" checked>
+              Also decline the {{ r.rivals|length }} competing request{{ '' if r.rivals|length == 1 else 's' }} and offer {{ 'it' if r.rivals|length == 1 else 'them' }} other times</label>
+            {% endif %}
           </form>
         </td>
       </tr>

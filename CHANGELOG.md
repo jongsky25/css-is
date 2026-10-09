@@ -1,5 +1,19 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v4.4 — conference room reservation R4: encode, "Book anyway", closures, suggestions)
+
+- **Encode:** a section member books for an account or a named guest; approved at once (source `encoded`). Inside the 2-working-day notice a reason is required.
+- **Book anyway:** booked hours show as selectable to section members only. The first submit changes nothing and lists who would be cancelled, with the
+  alternatives each would be offered; the second (with a reason) books the new one and cancels the old ones in a single transaction, linked by
+  `bumped_by_reservation_id`.
+- **Suggestions (`rooms.suggest`):** same hours on the next free working days, then other hours the same day, then earlier days still ahead; holidays, weekends,
+  closures and booked hours are skipped. A bumped person picks one and it is booked **already approved**; a declined person's pick is an ordinary new request.
+  The server only accepts a time it would itself suggest right now, once per cancellation.
+- **Closures** (`/rooms/blocks`): whole day or some hours, with a reason; booked hours in the way need a confirm and are cancelled with the reason.
+- **Competing requests:** approving can decline the others for the same hours in the same transaction ("Also decline the N competing requests").
+- "Needs a new time" section on My reservations. Not yet: the notices themselves (email and bell for the requester) - R5.
+- Tests: `tests/test_rooms_bump.py`, `tests/test_rooms_bump_pages.py`.
+
 ## 2026-10-09 (v4.3 — conference room reservation R3: approvers and the Approvals queue)
 
 - **Who decides:** `rooms.is_room_admin` — anyone in the Administrative Section (directory unit `…/ADMIN`, or beneath it), its temporary OIC, and the `admin`

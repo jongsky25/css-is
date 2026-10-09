@@ -1,6 +1,6 @@
 {# One week of the availability grid. Hours down the side, days across. `active` is the
    single day the phone layout keeps (CSS hides the other columns under 780px). #}
-{% macro week_grid(b, active, extra_class="") %}
+{% macro week_grid(b, active, extra_class="", admin=False) %}
 <div class="table-wrap">
 <table class="rm-grid {{ extra_class }}" data-week="{{ b.start.isoformat() }}">
   <caption class="rm-cap">{{ b.start.day }} {{ b.start.strftime('%b') }} – {{ b.days[-1].date.day }} {{ b.days[-1].date.strftime('%b %Y') }}</caption>
@@ -32,6 +32,14 @@
           {% if c.mine %}<span aria-hidden="true">★</span> Yours
           {% elif c.state == 'free' %}<span aria-hidden="true">✓</span> Free
           {% else %}<span aria-hidden="true">○</span> {{ c.pending }} requested{% endif %}
+        </button>
+        {% elif c.state == 'approved' and admin %}
+        {# Section members can pick a booked hour: that is how "book it anyway" starts. #}
+        <button type="button" class="rm-cell st-approved{{ ' mine' if c.mine }}{{ ' cont' if c.cont }}" data-day="{{ d.iso }}" data-slot="{{ s.id }}"
+                data-row="{{ row }}" data-pending="{{ c.pending }}" data-booked="1" data-title="{{ c.title }}"
+                aria-label="{{ label }}, booked: {{ c.title }}. Select to book over it.">
+          {% if c.cont %}<span aria-hidden="true">┆</span>
+          {% else %}<span aria-hidden="true">{{ '★' if c.mine else '●' }}</span> <span class="rm-title">{{ c.title }}</span>{% endif %}
         </button>
         {% elif c.state == 'approved' %}
         <div class="rm-cell st-approved{{ ' mine' if c.mine }}{{ ' cont' if c.cont }}" aria-label="{{ label }}, booked{{ ': ' ~ c.title if not c.cont }}">
