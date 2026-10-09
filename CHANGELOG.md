@@ -1,5 +1,11 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v6.18 — "Change companion" deep-links to the companion section)
+
+- `templates/office_connect.html`: "Change companion →" now links to `/me#companion`; "Your profile →" and the photo/greeting card still go to `/me`.
+- `templates/me.html`: the "Your companion" panel gets `id="companion"` and `scroll-margin-top:5rem` so the sticky header doesn't cover its heading.
+- **Version bump:** `APP_VERSION` 6.17 → 6.18.
+
 ## 2026-10-09 (v6.17 — conference room: Administrative Section members only)
 
 - `rooms.is_room_admin` no longer admits a section's temporary OIC or `admin`-role accounts; only members of the Administrative Section (`…/ADMIN`) can decide requests, order and tag meals (Requested, Delivered, Not delivered, Cancelled), and manage closures. `rooms_notify.approver_accounts` drops the same two groups, including the admin-role fallback when the section is empty.
