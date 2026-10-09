@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "5.0"
+APP_VERSION = "5.1"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "5.1",
+        "date": "October 9, 2026",
+        "summary": "The calendar now has a colour key, and admins can add birthdays for people.",
+        "changes": [
+            "Under the agenda and month calendar there is now a key showing which colour belongs to which unit, and what each icon means.",
+            "Admins can add, change or remove a person's birthday from the Users page, choosing who may see it.",
+            "People can still change or remove their own birthday on their profile.",
+        ],
+    },
     {
         "version": "5.0",
         "date": "October 10, 2026",

@@ -6,6 +6,7 @@
      submits on change and closes the menus. --#}
 {% set n_f = [f.kind, f.status, f.tag, f.unit]|select|list|length %}
 {% set team_layout = layout in ("week", "timeline") %}
+{% set kind_icon = {"meeting": "👥", "training": "🎓", "travel": "🧳", "audit_mr": "📋", "banner": "📣", "deadline": "⏰", "activity": "★", "leave": "🌴", "birthday": "🎂"} %}
 <div class="cal-bar">
   <nav class="cal-pills cal-views" aria-label="Layout">
     <a href="{{ qs(layout='', month='', day='') }}" {% if layout == "agenda" %}aria-current="true"{% endif %}>Agenda</a>
@@ -104,7 +105,6 @@
 {% include "_calendar_month.html" %}
 {% else %}
 
-{% set kind_icon = {"meeting": "👥", "training": "🎓", "travel": "🧳", "audit_mr": "📋", "banner": "📣", "deadline": "⏰", "activity": "★", "leave": "🌴", "birthday": "🎂"} %}
 <div class="cal-agenda">
 {% for d in days %}
 <section class="cal-day {{ 'today' if d.is_today }} {{ 'weekend' if d.is_weekend }}" aria-labelledby="d-{{ d.iso }}"{% if d.is_today %} aria-current="date"{% endif %}>
@@ -164,9 +164,22 @@
 {% endif %}
 
 <p class="cal-keys" aria-label="Keyboard shortcuts">Keys: <kbd>←</kbd> <kbd>→</kbd> move · <kbd>T</kbd> today · <kbd>A</kbd> add · <kbd>S</kbd> search</p>
-<p class="cal-legend" aria-label="Colour key">
-  <span>The colour bar on each item is the unit that owns it; the unit's name is always written on the item.</span>
-</p>
+{% endif %}
+
+{% if layout in ("agenda", "month") %}
+<div class="cal-key" aria-label="Legend">
+  {% if units %}
+  <p class="cal-legend" aria-label="Colour key — the unit that owns each item">
+    <strong>Colour = unit</strong>
+    {% for u in units %}<span class="cal-unit-key" data-tone="{{ u.tone }}"><i aria-hidden="true"></i>{{ u.label }}</span>{% endfor %}
+  </p>
+  {% endif %}
+  <p class="cal-legend" aria-label="Icon key — the type of item">
+    <strong>Icon = type</strong>
+    {% for k, label in kinds.items() %}<span><span aria-hidden="true">{{ kind_icon.get(k, "📅") }}</span> {{ label }}</span>{% endfor %}
+  </p>
+  <p class="cal-legend"><span>The unit's name is always written on the item too, so colour is never the only cue.</span></p>
+</div>
 {% endif %}
 
 {% include "_calendar_quick.html" %}

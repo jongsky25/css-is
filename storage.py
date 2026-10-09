@@ -4407,8 +4407,13 @@ def get_birthday(conn, user_id):
             "consent_at": r[3], "label": f"{_MONTH_NAMES[r[0] - 1]} {r[1]}"}
 
 
-def set_birthday(conn, user_id, month, day, share="none"):
-    """Save the account's own birthday. Choosing a sharing scope (from "none") records the
+BIRTHDAY_ADMIN_NOTICE = ("Entered by an administrator on the person's behalf. Only the month and day "
+                         "are kept, never the year. The person can change or remove it on their profile.")
+
+
+def set_birthday(conn, user_id, month, day, share="none", *, notice=BIRTHDAY_NOTICE):
+    """Save the account's birthday (the person's own, or an admin's entry for them -- pass
+    `notice=BIRTHDAY_ADMIN_NOTICE`). Choosing a sharing scope (from "none") records the
     consent time and the notice shown; going back to "none" erases that record. Raises
     ValueError for an impossible date or an unknown sharing choice."""
     m, d = birthday_check(month, day)
@@ -4420,7 +4425,7 @@ def set_birthday(conn, user_id, month, day, share="none"):
     elif prior and prior["share"] == share and prior["consent_at"]:
         consent = None                                    # unchanged choice: keep the record
     else:
-        consent = (tz.now_iso(), BIRTHDAY_NOTICE)
+        consent = (tz.now_iso(), notice)
     conn.execute("UPDATE admin_user SET birthday_month=?, birthday_day=?, birthday_share=? WHERE id=?",
                  (m, d, share, user_id))
     if consent is not None:

@@ -2638,6 +2638,7 @@ def admin_users(request: Request, err: str = "", link: str = "", msg: str = ""):
         accounts_all = st.list_admin_users(conn)
         bday_on = {c["id"] for c in st.birthday_coordinators(conn)}
         bday_names = {r["account"]["id"]: r["name"] for r in rows if r["account"]}
+        bday_set = {u["id"]: st.get_birthday(conn, u["id"]) for u in accounts_all if u["active"]}
         # Temporary OIC / acting approver, per section: who currently stands in
         # for a section chief on leave, and who's eligible to be picked --
         # active accounts belonging to that same section other than whoever
@@ -2671,8 +2672,10 @@ def admin_users(request: Request, err: str = "", link: str = "", msg: str = ""):
         "rows": rows, "standalone": standalone, "have": have, "total": len(rows),
         "roles": auth.ROLES, "role_labels": auth.ROLE_LABELS, "role_blurb": auth.ROLE_BLURB,
         "bureau_levels": st.BUREAU_ACCESS_LEVELS,
-        "bday_accounts": [{"id": u["id"], "label": bday_names.get(u["id"]) or u["username"], "on": u["id"] in bday_on}
+        "bday_accounts": [{"id": u["id"], "label": bday_names.get(u["id"]) or u["username"], "on": u["id"] in bday_on,
+                           "bd": bday_set.get(u["id"])}
                           for u in accounts_all if u["active"]],
+        "bd_months": st._MONTH_NAMES, "bd_shares": st.BIRTHDAY_SHARES,
         "email_configured": mailer.email_configured(),
         "sections": sections, "section_oics": section_oics, "section_accounts": section_accounts,
         "err": err, "link": link, "msg": msg, "show_scope": False, "nav_active": "",
@@ -2832,6 +2835,38 @@ async def admin_users_birthday_coordinators(request: Request):
     return RedirectResponse("/admin/users?msg=" + quote(
         f"{len(ids)} birthday coordinator{'' if len(ids) == 1 else 's'} saved." if ids
         else "No birthday coordinators — the day-before and monthly emails won't be sent."), status_code=303)
+
+
+@app.post("/admin/users/birthday")
+async def admin_users_birthday(request: Request):
+    """An admin enters (or clears, with a blank month/day) a birthday for an account. Sharing
+    still decides who sees it; the date itself is never written to the audit log."""
+    if (r := _forbid(request, "manage_users")):
+        return r
+    p = {k: v for k, v in parse_qsl((await request.body()).decode("utf-8"), keep_blank_values=True)}
+    uid = int(p["user_id"]) if (p.get("user_id") or "").isdigit() else 0
+    conn = get_conn()
+    try:
+        if uid not in {u["id"] for u in st.list_admin_users(conn) if u["active"]}:
+            return RedirectResponse("/admin/users?err=" + quote("Pick an account."), status_code=303)
+        m, d = (p.get("birthday_month") or "").strip(), (p.get("birthday_day") or "").strip()
+        if not m and not d:
+            st.clear_birthday(conn, uid)
+            _audit(request, conn, "birthday_clear", target_type="user", target_id=uid,
+                   summary="admin removed their birthday")
+            msg = "Birthday removed."
+        else:
+            share = (p.get("birthday_share") or "none").strip()
+            try:
+                st.set_birthday(conn, uid, m, d, share, notice=st.BIRTHDAY_ADMIN_NOTICE)
+            except ValueError as e:
+                return RedirectResponse("/admin/users?err=" + quote(str(e)) + "#birthdays", status_code=303)
+            _audit(request, conn, "birthday_set", target_type="user", target_id=uid,
+                   summary=f"admin set their birthday (sharing: {st.BIRTHDAY_SHARES[share]})")
+            msg = "Birthday saved."
+    finally:
+        conn.close()
+    return RedirectResponse("/admin/users?msg=" + quote(msg) + "#birthdays", status_code=303)
 
 
 @app.post("/admin/users/section-oic/{org_unit_id}/set")
