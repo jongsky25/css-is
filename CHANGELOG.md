@@ -1,5 +1,12 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v4.2 — calendar import review screen, P0.3)
+
+- **Review screen (`templates/calendar_import_review.html`, `calendar_import_apply.review_rows`):** rows that need a person (no owner colour, a parser warning, a status other than confirmed) are listed first under "Needs you"; the rest are folded into "N rows look fine — show them". Each row shows why it needs you; a suggested owner is shown with a **Use** button and is never preselected.
+- **Bulk tools (progressive JS):** tick only the clean rows, tick/untick all, use all suggested owners, give every row with no owner one owner, untick everything before a date. The form fields and the server-side apply are unchanged, so a no-JS browser still works.
+- **Sticky summary bar** ("Will import N · skipping M · K ticked with no owner") with the Import and Discard buttons; the table uses `resp-table resp-table-wide`, so it becomes cards below 1180px.
+- Checked in Chromium at 390, 768 and 1440px on the real CY 2026 file: no horizontal overflow, no script errors, 307 rows look fine and 72 need you.
+
 ## 2026-10-09 (v4.1 — calendar import, P0.1–P0.2)
 
 First two increments of `docs/CALENDAR_UX_PLAN.md` Phase 0 (import the CY 2026 Word calendar). Checked against the real file (379 drafts, 19 holiday lines).

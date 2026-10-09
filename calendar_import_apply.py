@@ -59,20 +59,37 @@ def guess_mapping(conn):
     return out
 
 
-def review_rows(drafts, existing, posted=None):
+def _needs(d):
+    """Why a draft wants a person's eyes: the parser's own warnings plus a status that is not
+    plain "confirmed". No owner colour is the commonest reason and is shown by its own marker."""
+    out = [w for w in d["warnings"] if not w.startswith("No owner")]
+    if d["status"] != "confirmed":
+        out.append(d["status"].capitalize() + " in the Word file.")
+    return out
+
+
+def review_rows(drafts, existing, posted=None, suggestions=None):
     """One row per draft for the review table. `posted` (the submitted form, after a
-    validation error) wins over the parser's guesses so nothing the person typed is lost."""
+    validation error) wins over the parser's guesses so nothing the person typed is lost.
+    `suggestions` is the batch's {"owners": {"<index>": {owner, why}}}: shown next to the row,
+    never filled in. A row is `clean` when nothing about it needs a person's attention."""
+    owners = (suggestions or {}).get("owners", {})
     rows = []
     for i, d in enumerate(drafts):
         p = posted or {}
         have = d["import_key"] in existing
+        owner = p.get(f"owner_{i}", d["owner"] or "")
+        needs = _needs(d)
         rows.append({
             "i": i, "d": d, "existing": have,
             "include": (f"inc_{i}" in p) if posted is not None else not have,
             "title": p.get(f"title_{i}", d["title"]), "kind": p.get(f"kind_{i}", d["kind"]),
-            "status": p.get(f"status_{i}", d["status"]), "owner": p.get(f"owner_{i}", d["owner"] or ""),
+            "status": p.get(f"status_{i}", d["status"]), "owner": owner,
             "start": p.get(f"start_{i}", d["start_date"]), "end": p.get(f"end_{i}", d["end_date"] or ""),
             "month": d["start_date"][:7],
+            "needs": needs, "no_owner": not d["owner"],
+            "suggest": owners.get(str(i)) if not d["owner"] else None,
+            "clean": not needs and bool(d["owner"]) and not have,
         })
     return rows
 

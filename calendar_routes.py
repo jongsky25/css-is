@@ -1008,7 +1008,8 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         return templates.TemplateResponse(request, "calendar_import_review.html", {
             "n_names": n_names,
             "nav_active": "calendar", "batch": batch, "errors": list(errors),
-            "rows": cia.review_rows(drafts, existing, posted),
+            "rows": cia.review_rows(drafts, existing, posted, batch["payload"].get("suggestions")),
+            "unit_labels": dict(ci.OWNER_LABELS),
             "stats": batch["payload"]["stats"], "file_warnings": batch["payload"]["warnings"],
             "holidays": [{**h, "known": h["date"] in have_hol} for h in batch["payload"]["holidays"]],
             "owners": [(k, ci.OWNER_LABELS[k], cia.OWNER_TONES[k]) for k in ci.OWNERS],

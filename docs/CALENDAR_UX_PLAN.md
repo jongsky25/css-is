@@ -93,7 +93,7 @@ Each increment: **files · done when · tests**. Tests run with `./run_tests.sh`
 - Holiday comparison already exists on the review page (`have_hol`), so P0.4 only needs the "add the missing ones" checklist.
 - *Tests:* a suggestion is never applied without the review form saying so; an irregular repeat gets no series.
 
-**P0.3 Review screen made workable for 380 rows** (`templates/calendar_import_review.html`, `calendar_routes.py`)
+**P0.3 Review screen made workable for 380 rows** *(done, v4.2: 307 of 379 look fine, 72 need you on the CY 2026 file; checked at 390, 768 and 1440 px)* (`templates/calendar_import_review.html`, `calendar_routes.py`)
 - Top: a **"Needs you" list**: unowned, warnings, tentative/postponed, suggested series. The clean rows sit below, collapsed, as "327 rows look fine".
 - Bulk actions: *set owner for selected*, *approve all clean rows*, *skip before a date*.
 - A sticky summary bar: "Will import N · skip M · needs you K".

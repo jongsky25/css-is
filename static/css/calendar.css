@@ -351,3 +351,21 @@
 .cal-quick input:not([type=hidden]), .cal-quick select { width:100%; box-sizing:border-box; font:inherit; padding:.4rem .55rem; border:1px solid var(--line); border-radius:8px; }
 .cal-quick .cf-row { display:flex; gap:.7rem; flex-wrap:wrap; } .cal-quick .cf-row > label { flex:1 1 9rem; }
 @media (max-width:760px) { .cal-timeline { font-size:.9rem; } }
+
+/* import review (P0.3): the "needs you" list, bulk tools, the sticky summary bar */
+.cal-need { display:inline-block; color:var(--amber); font-weight:700; margin-right:.35rem; }
+.cal-suggest { color:var(--ink-soft); }
+.cal-linkbtn { font:inherit; font-weight:700; color:var(--accent); background:none; border:0; padding:0 .3rem; cursor:pointer; text-decoration:underline; min-height:2rem; }
+.cal-tools label { font-size:.84rem; font-weight:600; display:inline-flex; gap:.4rem; align-items:center; flex-wrap:wrap; }
+.cal-clean { margin:1rem 0 0; }
+.cal-clean summary { cursor:pointer; font-weight:700; margin:0 0 .6rem; }
+.cal-sticky { position:sticky; bottom:0; z-index:5; background:var(--bg); border-top:1px solid var(--line); padding:.6rem 10.5rem .6rem 0; margin:1rem 0 0; }   /* the right gap keeps the Send-feedback button off the buttons */
+@media (max-width:640px) { .cal-sticky { padding-right:0; padding-bottom:4.2rem; } }
+.cal-sticky .cal-count { flex:1 1 14rem; font-weight:700; color:var(--ink); }
+@media (max-width:640px) { .cal-tools .cal-btn { padding:.55rem .9rem; } }
+@media (max-width:1180px) {            /* the table stacks into cards here (resp-table-wide) */
+  .cal-review.resp-table input:not([type=checkbox]), .cal-review.resp-table select { width:100%; font-size:1rem; padding:.5rem; }
+  .cal-review.resp-table .cal-title-cell { min-width:0; }
+  .cal-review.resp-table input[type=date] { width:100%; }
+  .cal-scroll { max-height:none; border:0; overflow:visible; }
+}

@@ -287,3 +287,47 @@ def test_the_upload_list_shows_earlier_batches(admin, conn):
     bid = batch_id(upload(admin, name="CY-2026-draft.docx"))
     html = admin.get("/calendar/import").text
     assert "CY-2026-draft.docx" in html and f"/calendar/import/{bid}" in html and "Waiting for review" in html
+
+
+# ------------------------------------- review screen: "needs you" first (CALENDAR_UX_PLAN P0.3) ---
+
+def _review_html(admin, extra=None):
+    bid = batch_id(upload(admin, make_docx(extra)))
+    return bid, admin.get(f"/calendar/import/{bid}").text
+
+
+def test_review_puts_items_that_need_a_person_first_and_folds_the_clean_ones(admin, conn, units):
+    bid, html = _review_html(admin)
+    assert "Needs you (" in html
+    needs, rest = html.split('<details class="cal-clean">')
+    assert "CALIM Loose end" in needs                 # no owner colour: needs a person
+    assert "CALIM Section meeting (PK)" in rest       # coloured and unremarkable: folded away
+    assert "look fine — show them" in rest
+    assert 'data-bulk="clean"' in html and "data-bulk-owner" in html and "data-skip-before" in html
+
+
+def test_a_suggested_owner_is_shown_but_never_filled_in(admin, conn, units):
+    bid, html = _review_html(admin, {20: [("CALIM prep meeting (Sec1)", None)]})
+    assert "Suggested: <b>Section 1</b>" in html and 'data-use="s1"' in html
+    i = next(i for i, d in enumerate(st.cal_import_get(conn, bid)["payload"]["drafts"])
+             if d["title"] == "CALIM prep meeting (Sec1)")
+    sel = html.split(f'name="owner_{i}"')[1].split("</select>")[0]
+    assert "selected" not in sel                      # a suggestion, not a decision
+
+
+def test_a_tentative_item_is_listed_under_needs_you_with_its_reason(admin, conn, units):
+    bid, html = _review_html(admin, {21: [("CALIM Pending Review (Tentative)", "hl:green")]})
+    needs = html.split('<details class="cal-clean">')[0]
+    assert "CALIM Pending Review" in needs and "Tentative in the Word file." in needs
+
+
+def test_the_review_table_is_a_responsive_card_table_with_a_sticky_import_bar(admin, conn, units):
+    bid, html = _review_html(admin)
+    assert 'class="cal-table cal-review resp-table resp-table-wide"' in html and 'data-label="Owner"' in html
+    assert 'class="cf-actions cal-sticky"' in html and 'id="cal-sum"' in html
+
+
+def test_importing_the_review_form_as_posted_still_works(admin, conn, units):
+    bid, _ = _review_html(admin)
+    r = post_import(admin, bid, form_for(conn, bid))
+    assert r.status_code == 303 and "CALIM Loose end" in titles(conn)
