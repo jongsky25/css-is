@@ -35,6 +35,8 @@
 {% block content %}
 <div class="scard">
   <h1 style="margin:0 0 1rem; font-size:1.4rem;">{{ "Edit staff" if is_edit else "Add staff" }}</h1>
+  {% if msg %}<div class="warn" role="status" style="background:var(--surface-3);border-color:var(--line);color:inherit">{{ msg }}</div>{% endif %}
+  {% if err %}<div class="warn" role="alert">{{ err }}</div>{% endif %}
   {% if dup %}
   <div class="warn" role="alert"><strong>Possible duplicate.</strong> This looks similar to existing:
     <strong>{{ dup|join(', ') }}</strong>. {{ "Save" if is_edit else "Add" }} anyway with the button below, or change the name.</div>
@@ -150,6 +152,35 @@
     </div>
   </form>
 </div>
+
+{% if can_bday %}
+<div class="scard" id="birthday" style="margin-top:1rem;">
+  <h2 style="margin:0 0 .5rem; font-size:1.1rem;">🎂 Birthday</h2>
+  {% if bday_acct %}
+  <p class="hint">Enter this only if {{ f.name }} has agreed to share it. Only the month and day are kept. <strong>"Don't share" keeps it hidden from everyone but them.</strong> Leave month and day blank to remove it. They can still change it on their profile.</p>
+  <form method="post" action="/directory/person/{{ f.id }}/birthday" data-loading="Saving…">
+    <div class="fgrid">
+      <div>
+        <label for="birthday_month">Month</label>
+        <select id="birthday_month" name="birthday_month"><option value="">—</option>
+          {% for name in bd_months %}<option value="{{ loop.index }}" {{ "selected" if bd.month|string == loop.index|string }}>{{ name }}</option>{% endfor %}</select>
+      </div>
+      <div>
+        <label for="birthday_day">Day</label>
+        <select id="birthday_day" name="birthday_day"><option value="">—</option>
+          {% for n in range(1, 32) %}<option value="{{ n }}" {{ "selected" if bd.day|string == n|string }}>{{ n }}</option>{% endfor %}</select>
+      </div>
+    </div>
+    <label for="birthday_share">Who can see it</label>
+    <select id="birthday_share" name="birthday_share">
+      {% for k, label in bd_shares.items() %}<option value="{{ k }}" {{ "selected" if k == (bd.share or "section") }}>{{ label }}</option>{% endfor %}</select>
+    <div class="actions"><button type="submit">Save birthday</button></div>
+  </form>
+  {% else %}
+  <p class="hint">{{ f.name }} doesn't have an Office Connect account yet, and birthdays are kept on the account. Create their account on the Users page first, then add the birthday here.</p>
+  {% endif %}
+</div>
+{% endif %}
 
 <script src="/static/js/photo-crop.js"></script>
 <script>
