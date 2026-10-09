@@ -23,6 +23,7 @@ from starlette.concurrency import run_in_threadpool
 import auth
 import calendar_import as ci
 import calendar_import_apply as cia
+import calendar_people as cp
 import office_calendar as oc
 import storage as st
 
@@ -424,7 +425,10 @@ def make_router(templates, get_conn, today_local):
         have_hol = {row["day"] for y in years for row in st.list_holidays(conn, int(y))}
         mapping = ({k[4:]: int(v) for k, v in posted.items() if k.startswith("map_") and v.isdigit()}
                    if posted is not None else cia.guess_mapping(conn))
+        n_names = (sum(1 for r in cia.people_state(conn, batch)[0] if r["decision"] is None and not r["ignored"])
+                   if batch["imported_at"] else 0)
         return templates.TemplateResponse(request, "calendar_import_review.html", {
+            "n_names": n_names,
             "nav_active": "calendar", "batch": batch, "errors": list(errors),
             "rows": cia.review_rows(drafts, existing, posted),
             "stats": batch["payload"]["stats"], "file_warnings": batch["payload"]["warnings"],
@@ -470,6 +474,52 @@ def make_router(templates, get_conn, today_local):
         finally:
             conn.close()
         return RedirectResponse(f"/calendar/import/{batch_id}", status_code=303)
+
+    @router.get("/calendar/import/{batch_id}/people", response_class=HTMLResponse)
+    def calendar_import_people(request: Request, batch_id: int, ok: str = ""):
+        denied = _admin_only(request)
+        if denied:
+            return denied
+        conn = get_conn()
+        try:
+            batch = st.cal_import_get(conn, batch_id)
+            if batch is None or not batch["imported_at"]:
+                return RedirectResponse(f"/calendar/import/{batch_id}" if batch else "/calendar/import",
+                                        status_code=303)
+            rows, directory = cia.people_state(conn, batch)
+            by_id = {p["user_id"]: p for p in directory}
+            for r in rows:
+                r["cands"] = [by_id[u] for u in r["match"]["candidates"] if u in by_id]
+                r["picked"] = r["decision"] if isinstance(r["decision"], int) else (
+                    r["match"]["candidates"][0] if r["match"]["status"] in ("alias", "suggested") else None)
+            return templates.TemplateResponse(request, "calendar_import_people.html", {
+                "nav_active": "calendar", "batch": batch, "ok": ok,
+                "pending": [r for r in rows if r["decision"] is None and not r["ignored"]],
+                "done": [r for r in rows if r["decision"] is not None or r["ignored"]],
+                "everyone": sorted(directory, key=lambda p: p["name"].lower()),
+                "levels": cp.LEVEL_LABELS,
+            })
+        finally:
+            conn.close()
+
+    @router.post("/calendar/import/{batch_id}/people")
+    async def calendar_import_people_apply(request: Request, batch_id: int):
+        denied = _admin_only(request)
+        if denied:
+            return denied
+        raw = parse_qs((await request.body()).decode("utf-8"), keep_blank_values=True)
+        posted = {k: (v[0] if v else "").strip() for k, v in raw.items()}
+        conn = get_conn()
+        try:
+            batch = st.cal_import_get(conn, batch_id)
+            if batch is None or not batch["imported_at"]:
+                return RedirectResponse("/calendar/import", status_code=303)
+            r = cia.apply_people(conn, batch, posted, request.state.user["username"])
+        finally:
+            conn.close()
+        msg = (f"Added {r['added']} {'person' if r['added'] == 1 else 'people'} to {r['items']} "
+               f"{'item' if r['items'] == 1 else 'items'}; marked {r['ignored']} as not a person.")
+        return RedirectResponse(f"/calendar/import/{batch_id}/people?ok={quote(msg)}", status_code=303)
 
     @router.post("/calendar/import/{batch_id}/discard")
     def calendar_import_discard(request: Request, batch_id: int):

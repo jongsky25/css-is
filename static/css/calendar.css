@@ -219,3 +219,9 @@
 @media (max-width:760px) { .cal-holidays ul { columns:1; } .cal-review .cal-title-cell { min-width:14rem; } }
 .cal-review input[type=date] { width:9.2rem; font-size:.8rem; }
 .cal-review td { white-space:normal; }
+
+/* ---- who is who (B3) ---- */
+.cal-people-table th small, .cal-people-table td small { display:block; color:var(--soft); font-weight:400; font-size:.74rem; margin-top:.1rem; }
+.cal-people-table select { max-width:22rem; font:inherit; font-size:.86rem; padding:.3rem .5rem; border:1px solid var(--line); border-radius:9px; background:var(--bg); color:var(--ink); }
+
+.cal-people-table .cal-chip { white-space:nowrap; }

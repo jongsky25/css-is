@@ -1,5 +1,28 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.58 — office calendar: match the names in the imported calendar)
+
+- **`/calendar/import/{id}/people`** (admin only; only after the batch is imported) — "Who is who?":
+  every name the importer found in the imported items, with the items it appears in, how well it
+  matched, and a choice per name: a person, "not a person" (places, teams, initials) or "decide later".
+- **`calendar_people.py`** (new) — the matcher. Levels, best first: remembered answer, nickname,
+  full name (any order), first name, surname/other name, "starts like" (3+ letters). A name is only
+  PRE-SELECTED when exactly one person fits at one of the first five levels; "starts like" is only
+  ever offered as "maybe" ("Dir. Mar" must not become Maria); two people called Mae are "ambiguous"
+  and nothing is chosen; places and initials are "unmatched". Honorifics (Sir, Doc, Ma'am, Dr., Dir.,
+  Usec…) are dropped first; "Riza Desten" is split into two people only when each word is someone.
+  Active accounts only; "Last, First" directory names are reordered.
+- **Writing** — nothing is saved until Save. People are ADDED to the items (never replacing who is on
+  them), as `travel` on trips and `attending` otherwise, stamped as already seen so a bulk import
+  cannot flood anyone's bell later; people never bump an item's sequence. Applying twice adds nobody
+  twice; names left on "decide later" stay on the list. One audit line per save.
+  `storage.cal_add_people`, `cal_import_set_result`.
+- **Remembered** — each answer is kept (`calendar_people_aliases`, `calendar_people_ignored`) so next
+  year's upload pre-selects it as "Remembered".
+- **`calendar_import_apply.py`** — `people_state`, `apply_people`. **`deploy_hf.py`** ships
+  `calendar_people.py`.
+- **Tests** — `tests/test_calendar_people.py`.
+
 ## 2026-10-09 (v3.57 — office calendar: import the Word calendar)
 
 - **`/calendar/import`** (admin only — `manage_users`; everyone else gets 403) — upload the yearly

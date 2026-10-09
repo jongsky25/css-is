@@ -10238,3 +10238,37 @@ def cal_existing_import_keys(conn, keys):
             "SELECT import_key FROM calendar_entry WHERE import_key IN (%s)"
             % ",".join("?" * len(chunk)), chunk))
     return found
+
+
+def cal_add_people(conn, entry_id, people, *, by=None, mark_seen=False):
+    """ADD people to an entry without touching who is already on it (unlike
+    `cal_update(people=)`, which replaces the list). People already on it are left as
+    they are. `mark_seen` stamps the new rows as already seen at the current sequence —
+    a bulk import must not flood everyone's bell with items they never missed.
+    Returns how many were added; a no-op leaves no revision."""
+    cur = cal_get(conn, entry_id)
+    if cur is None:
+        raise KeyError(entry_id)
+    have = {p["user_id"] for p in cur["people"]}
+    new = [(u, r) for u, r in _cal_normalise_people(people) if u not in have]
+    if not new:
+        return 0
+    now = tz.now_iso()
+    for uid, role in new:
+        conn.execute(
+            "INSERT INTO calendar_entry_person(entry_id, user_id, role, seen_seq, added_by, added_at)"
+            " VALUES (?,?,?,?,?,?)",
+            (entry_id, uid, role, cur["sequence"] if mark_seen else None, by, now))
+    conn.execute("UPDATE calendar_entry SET updated_by=?, updated_at=? WHERE id=?", (by, now, entry_id))
+    _cal_revision(conn, entry_id, cur["sequence"], "update", by,
+                  {"people": [[(p["user_id"], p["role"]) for p in cur["people"]],
+                              [(p["user_id"], p["role"]) for p in cur["people"]] + new]})
+    conn.commit()
+    return len(new)
+
+
+def cal_import_set_result(conn, batch_id, result):
+    """Replace a batch's recorded result (the people step adds to it)."""
+    conn.execute("UPDATE calendar_import_batch SET result=? WHERE id=?",
+                 (json.dumps(result), batch_id))
+    conn.commit()

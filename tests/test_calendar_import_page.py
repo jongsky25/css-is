@@ -166,6 +166,7 @@ def test_import_creates_the_ticked_items_with_owner_tone_and_one_audit_line(admi
     bid = batch_id(upload(admin))
     form = form_for(conn, bid, map_bureau=units["Bureau"], map_s1=units["Section 1"],
                     map_s4=units["Section 4"])
+    last_audit = conn.execute("SELECT COALESCE(MAX(id), 0) FROM audit_log").fetchone()[0]
     r = post_import(admin, bid, form)
     assert r.status_code == 303 and titles(conn) == [
         "CALIM Loose end", "CALIM Section meeting (PK)", "CALIM Strat Planning", "CALIM TA Palawan"]
@@ -181,7 +182,8 @@ def test_import_creates_the_ticked_items_with_owner_tone_and_one_audit_line(admi
     tones = json.loads(st.get_setting(conn, "calendar_unit_tones"))
     assert tones[str(units["Section 4"])] == "cyan" and tones[str(units["Section 1"])] == "yellow"
     assert tones[str(units["Bureau"])] == "green"
-    acts = [r[0] for r in conn.execute("SELECT action FROM audit_log WHERE action LIKE 'calendar_%'")]
+    acts = [r[0] for r in conn.execute("SELECT action FROM audit_log WHERE id > ? AND action LIKE 'calendar_%'",
+                                       (last_audit,))]       # the audit log is append-only: look only at ours
     assert acts.count("calendar_import") == 1 and "calendar_create" not in acts
     page = admin.get(f"/calendar/import/{bid}").text
     assert "Imported 4 items" in page and "Import the ticked items" not in page

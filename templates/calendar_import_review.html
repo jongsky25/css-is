@@ -1,7 +1,7 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header %}
 {% block title %}Review the import{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009d">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009f">{% endblock %}
 {% block content %}
 {{ page_header("Review the import", batch.filename or "calendar.docx") }}
 <p class="cal-back"><a href="/calendar/import">← All uploads</a> · <a href="/calendar">Calendar</a></p>
@@ -12,7 +12,8 @@
   {% if r.already %}{{ r.already }} were already in the calendar and were left alone.{% endif %}
   {% if r.not_selected %}{{ r.not_selected }} were not selected.{% endif %}
   {% if r.unmapped_owner %}{{ r.unmapped_owner }} have an owner colour with no unit chosen, so they show with no owning unit.{% endif %}</div>
-<p><a class="cal-btn primary" href="/calendar?view=month&month={{ rows[0].month if rows else '' }}">See it on the calendar</a></p>
+<p><a class="cal-btn primary" href="/calendar/import/{{ batch.id }}/people">Next: match the names{% if n_names %} ({{ n_names }} to check){% endif %}</a>
+   <a class="cal-btn" href="/calendar?view=month&month={{ rows[0].month if rows else '' }}">See it on the calendar</a></p>
 {% else %}
 
 {% if errors %}<div class="cal-flash err" role="alert"><strong>Nothing was imported.</strong> Fix these and try again:

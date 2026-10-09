@@ -21,6 +21,7 @@ import json
 import re
 
 import calendar_import as ci
+import calendar_people as cp
 import storage as st
 
 OWNER_TONES = {"bureau": "green", "s1": "yellow", "s2": "magenta",
@@ -167,3 +168,73 @@ def _remember(conn, mapping):
         tones = {}
     tones.update({str(uid): OWNER_TONES[key] for key, uid in mapping.items()})
     st.set_setting(conn, _TONES_SETTING, json.dumps(tones))
+
+
+# ── the people step (B3) ───────────────────────────────────────────────────────
+
+_ALIASES = "calendar_people_aliases"        # JSON {name key: user id}  (remembered answers)
+_IGNORED = "calendar_people_ignored"        # JSON [name key]           (places, initialisms, ...)
+
+
+def _json_setting(conn, key, default):
+    try:
+        v = json.loads(st.get_setting(conn, key) or "")
+    except ValueError:
+        return default
+    return v if isinstance(v, type(default)) else default
+
+
+def people_state(conn, batch):
+    """(rows for the page, directory) — every name used by the items this batch created."""
+    directory = cp.load_directory(conn)
+    aliases = {k: int(v) for k, v in _json_setting(conn, _ALIASES, {}).items()}
+    ignored = set(_json_setting(conn, _IGNORED, []))
+    result = batch["result"] or {"created": []}
+    created = {c["i"]: c["entry_id"] for c in result["created"]}
+    rows = cp.collect(batch["payload"]["drafts"], created, directory, aliases, ignored,
+                      result.get("people", {}))
+    return rows, directory
+
+
+def apply_people(conn, batch, posted, by):
+    """Write the confirmed decisions. `posted` maps `who_<key>` to "" (decide later),
+    "ignore" (not a person) or a user id. Returns {added, items, remembered, ignored}.
+    Safe to run again: people already on an item are skipped, and a name left undecided
+    stays on the list."""
+    rows, directory = people_state(conn, batch)
+    by_key = {r["key"]: r for r in rows}
+    valid = {p["user_id"] for p in directory}
+    result = batch["result"]
+    created = {c["i"]: c["entry_id"] for c in result["created"]}
+    drafts = batch["payload"]["drafts"]
+    aliases = {k: int(v) for k, v in _json_setting(conn, _ALIASES, {}).items()}
+    ignored = set(_json_setting(conn, _IGNORED, []))
+    decided = dict(result.get("people", {}))
+    added = touched = remembered = n_ignored = 0
+    for key, row in by_key.items():
+        dec = posted.get(f"who_{key}", "")
+        if dec == "ignore":
+            ignored.add(key); decided[key] = "ignore"; n_ignored += 1
+            continue
+        if not dec.isdigit() or int(dec) not in valid:
+            continue
+        uid = int(dec)
+        for i in row["drafts"]:
+            eid = created.get(i)
+            if eid is None:
+                continue
+            role = "travel" if drafts[i]["kind"] == "travel" else "attending"
+            n = st.cal_add_people(conn, eid, [(uid, role)], by=by, mark_seen=True)
+            added += n
+            touched += 1 if n else 0
+        aliases[key] = uid; decided[key] = uid; remembered += 1
+    st.set_setting(conn, _ALIASES, json.dumps(aliases))
+    st.set_setting(conn, _IGNORED, json.dumps(sorted(ignored)))
+    result["people"] = decided
+    st.cal_import_set_result(conn, batch["id"], result)
+    if added or remembered or n_ignored:
+        st.audit(conn, by, "calendar_import_people", target_type="calendar_import_batch",
+                 target_id=batch["id"],
+                 summary=f"Matched names to people: {added} people added to {touched} items, "
+                         f"{remembered} names remembered, {n_ignored} marked not a person")
+    return {"added": added, "items": touched, "remembered": remembered, "ignored": n_ignored}
