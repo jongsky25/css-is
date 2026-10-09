@@ -43,7 +43,7 @@
     <div class="cal-pw-row" role="row" style="--rows:{{ p.rows }}">
       <div class="cal-pw-name" role="rowheader" style="grid-row:1 / span {{ p.rows }}">{{ p.name }}</div>
       {% for c in p.cells %}
-      <div class="cal-pw-cell st-{{ c.state }} {{ 'plotted' if c.plotted }}" role="cell"
+      <div class="cal-pw-cell st-{{ c.state }} {{ 'plotted' if c.plotted }} {{ 'is-today' if week.days[loop.index0].iso == today.isoformat() }}" role="cell"
            style="grid-column:{{ loop.index + 1 }}; grid-row:1 / span {{ p.rows }}"
            {% if c.text %}title="{{ p.name }}: {{ c.text }}{% if c.note %} — {{ c.note }}{% endif %}"{% endif %}>
         {% if c.state in ("onsite", "wfh", "dayoff", "field", "leave") %}<span class="cal-pw-dot" aria-hidden="true"></span>

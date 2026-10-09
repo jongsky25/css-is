@@ -101,21 +101,28 @@
 {% include "_calendar_month.html" %}
 {% else %}
 
+{% set kind_icon = {"meeting": "👥", "training": "🎓", "travel": "🧳", "audit_mr": "📋", "banner": "📣", "deadline": "⏰", "activity": "★", "leave": "🌴", "birthday": "🎂"} %}
 <div class="cal-agenda">
 {% for d in days %}
 <section class="cal-day {{ 'today' if d.is_today }} {{ 'weekend' if d.is_weekend }}" aria-labelledby="d-{{ d.iso }}">
   <header>
+    <span class="cal-date" aria-hidden="true"><small>{{ d.date.strftime('%a') }}</small><b>{{ d.date.day }}</b></span>
     <h2 id="d-{{ d.iso }}">{{ d.label }}</h2>
     {% if d.is_today %}<span class="cal-today-tag">Today</span>{% endif %}
     {% for h in d.holidays %}<span class="cal-holiday">{{ h.title }}{% if h.owner_label %} · {{ h.owner_label }}{% endif %}</span>{% endfor %}
+    {% if d.rows %}<span class="cal-count">{{ d.rows|length }} {{ "item" if d.rows|length == 1 else "items" }}</span>{% endif %}
   </header>
   {% if d.rows %}
   <ul class="cal-list">
     {% for i in d.rows %}
     <li class="cal-item" data-tone="{{ i.tone }}" data-status="{{ i.status }}" data-kind="{{ i.kind }}">
-      <span class="cal-time">{% if i.start_time %}{{ i.start_time }}{% if i.end_time %}–{{ i.end_time }}{% endif %}{% elif i.time_note %}{{ i.time_note }}{% else %}All day{% endif %}</span>
-      <span class="cal-title">{% if i.url %}<a href="{{ i.url }}">{{ i.title }}</a>{% else %}{{ i.title }}{% endif %}{% if i.day_n %} <small>(day {{ i.day_n }} of {{ i.day_of }})</small>{% endif %}
-        {% for f in i.flags %}<span class="cal-flag">· {{ f|capitalize }}</span>{% endfor %}</span>
+      <span class="cal-time">{% if i.start_time %}<span class="cal-sr">{{ i.start_time }}{% if i.end_time %}–{{ i.end_time }}{% endif %}</span><span class="cal-tv" aria-hidden="true"><b>{{ i.start_time }}</b>{% if i.end_time %}<small>{{ i.end_time }}</small>{% endif %}</span>{% elif i.time_note %}<span class="cal-timechip">{{ i.time_note }}</span>{% else %}<span class="cal-allday">All day</span>{% endif %}</span>
+      <span class="cal-title">
+        <span class="cal-tl"><span class="cal-ki" aria-hidden="true" title="{{ kinds.get(i.kind, '') }}">{{ kind_icon.get(i.kind, "📅") }}</span>
+          {% if i.url %}<a class="cal-tt" href="{{ i.url }}"{% if i.title|length > 70 %} title="{{ i.title }}"{% endif %}>{{ i.title }}</a>{% else %}<span class="cal-tt"{% if i.title|length > 70 %} title="{{ i.title }}"{% endif %}>{{ i.title }}</span>{% endif %}</span>
+        {% if i.day_n or i.flags %}<span class="cal-sub">{% if i.day_n %}<small>(day {{ i.day_n }} of {{ i.day_of }})</small>{% endif %}
+          {% for f in i.flags %}<span class="cal-flag">{{ f|capitalize }}</span>{% endfor %}</span>{% endif %}
+      </span>
       <span class="cal-owner">{{ i.owner_label or "" }}</span>
       <span class="cal-meta">
         {% if i.css %}<span class="cal-css-chip" data-life="{{ i.css.lifecycle }}">{{ i.css.chip }}</span>{% endif %}
@@ -138,7 +145,16 @@
 </div>
 
 {% if not n_items and not days|selectattr("holidays")|list %}
-<p class="cal-empty-hint">📅 Nothing else on the calendar for these two weeks. Try another layout above, {% if filtered %}<a href="{{ clear_filters }}">clear the filters</a>, {% endif %}look <a href="{{ qs(day=next_day) }}">further ahead</a>, or <a href="/calendar/new?day={{ add_day }}">add something</a>.</p>
+<div class="cal-empty">
+  <span class="cal-empty-ic" aria-hidden="true">📅</span>
+  <h3>Nothing else planned for these two weeks</h3>
+  <p>{% if filtered %}A filter may be hiding things. {% endif %}Add something, or look further ahead.</p>
+  <span class="cal-empty-act">
+    <a class="cal-btn primary" href="/calendar/new?day={{ add_day }}">+ Add something</a>
+    <a class="cal-btn" href="{{ qs(day=next_day) }}">Look further ahead</a>
+    {% if filtered %}<a class="cal-btn" href="{{ clear_filters }}">Clear filters</a>{% endif %}
+  </span>
+</div>
 {% endif %}
 
 <p class="cal-legend" aria-label="Colour key">

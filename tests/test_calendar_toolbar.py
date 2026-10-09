@@ -95,8 +95,9 @@ def test_a_saved_message_shows_as_text_and_never_as_a_macro(viewer):
         assert "✓ Added to the calendar." in html and "&lt;Macro" not in html and "<Macro" not in html, url
 
 
-def test_an_empty_calendar_says_so_once_with_one_way_forward(viewer, conn):
+def test_an_empty_calendar_says_so_once_with_clear_next_steps(viewer, conn):
     html = viewer.get("/calendar?day=2031-01-06").text
-    assert "Nothing scheduled today" not in html or html.count("Nothing") <= 2
-    assert 'class="empty-state"' not in html and html.count('class="cal-empty-hint"') == 1
-    assert "add something</a>" in html and "further ahead</a>" in html
+    assert 'class="empty-state"' not in html and html.count('class="cal-empty"') == 1
+    assert html.count("Nothing else planned") == 1
+    assert "+ Add something</a>" in html and "Look further ahead</a>" in html and "Clear filters" not in html
+    assert "Clear filters</a>" in viewer.get("/calendar?day=2031-01-06&kind=meeting").text       # a filter may be the reason
