@@ -1,5 +1,14 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v6.1 — birthday greeting on the landing page)
+
+`docs/BIRTHDAY_GREETINGS_PLAN.md` Phase 2.
+
+- **Landing page (`app._birthday_greeting`, `office_connect.html`):** replaces the old `is_birthday` flag. The six days before a birthday show "Malapit na ang kaarawan mo" with when it falls; the day shows "Maligayang kaarawan" / "Happy birthday!". Never after. The first view of each phase also shows a bilingual card (same message as the email for the day; confetti off under `prefers-reduced-motion`; × hides it in the browser), then only the heading. A line under the companion says it is celebrating too.
+- **State (`admin_user.bday_greeted`, guarded ALTER):** `year*10 + 1` (lead-in) or `+ 2` (the day), set when the card first renders. A failure to record it is logged and never breaks the page.
+- **Rules (`birthdays.lead_in_phrases`):** "bukas / tomorrow", "sa Sabado / on Saturday".
+- Tests: `tests/test_birthday_greeting_signin.py`.
+
 ## 2026-10-09 (v6.0 — birthday greeting email)
 
 `docs/BIRTHDAY_GREETINGS_PLAN.md` Phase 1.

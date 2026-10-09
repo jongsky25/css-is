@@ -4901,6 +4901,32 @@ def _css_entry_for(user, conn):
     return "/css"
 
 
+def _birthday_greeting(conn, uid, profile, today):
+    """What the landing page says about the signed-in person's birthday, or None
+    (docs/BIRTHDAY_GREETINGS_PLAN.md). The six days leading up to it and the day itself, never after.
+    `card` is True only the first time each phase is seen -- one celebratory moment, then a quiet
+    heading -- and viewing it is recorded here, so a reload shows the heading only."""
+    b = (profile or {}).get("birthday")
+    if not b:
+        return None
+    phase = birthdays.greeting_phase(b["month"], b["day"], today)
+    if phase == "none":
+        return None
+    year = birthdays.next_occurrence(b["month"], b["day"], today).year
+    stamp = year * 10 + (2 if phase == "today" else 1)
+    out = {"phase": phase, "card": st.bday_greeted(conn, uid) < stamp}
+    if phase == "today":
+        out["tl"], out["en"] = mailer.GREETING_POOL[(uid + year) % len(mailer.GREETING_POOL)]
+    else:
+        out["when_tl"], out["when_en"] = birthdays.lead_in_phrases(b["month"], b["day"], today)
+    if out["card"]:
+        try:
+            st.set_bday_greeted(conn, uid, stamp)
+        except Exception:                      # noqa: BLE001 -- a greeting must never break the landing page
+            traceback.print_exc()
+    return out
+
+
 @app.get("/", response_class=HTMLResponse)
 def choose(request: Request, msg: str = "", view: str = "team"):
     """The Office Connect landing page — how your team is doing across all three
@@ -4923,6 +4949,11 @@ def choose(request: Request, msg: str = "", view: str = "team"):
         profile = st.get_user_profile(conn, request.state.user["id"])
         first_name = _account_first_name(conn, request.state.user)
         css_url = _css_entry_for(request.state.user, conn)
+        try:
+            bday_greet = _birthday_greeting(conn, request.state.user["id"], profile, _today_local())
+        except Exception:                      # noqa: BLE001
+            traceback.print_exc()
+            bday_greet = None
         # The Calendar tab draws only the calendar, so the team panels, the to-do list, "Coming up",
         # the wellness teaser and the work-arrangement hint are not built for it at all.
         on_calendar = view == "calendar"
@@ -5000,9 +5031,7 @@ def choose(request: Request, msg: str = "", view: str = "team"):
     resp = templates.TemplateResponse(request, "office_connect.html", {
         "nav_active": "", "show_scope": False, "msg": msg,
         "first_name": first_name, "profile": profile,
-        "is_birthday": bool((profile or {}).get("birthday")
-                            and birthdays.is_today(profile["birthday"]["month"],
-                                                   profile["birthday"]["day"], _today_local())),
+        "bday_greet": bday_greet,
         "initials": _initials(profile.get("person_name") if profile else ""),
         "css_url": css_url, "wstats": wstats,
         "wa_now": wa_now, "wa_label": wa_label,

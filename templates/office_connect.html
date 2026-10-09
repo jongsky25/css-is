@@ -17,6 +17,30 @@
               background:var(--surface-3); display:inline-flex; align-items:center;
               justify-content:center; font-weight:800; color:var(--soft); flex:0 0 auto; }
   .oc-hi h1 { margin:0; font-size:1.45rem; }
+  .oc-pet-party { display:block; margin-top:.2rem; font-size:.78rem; font-weight:700; color:var(--accent); }
+  .oc-bday-en { margin:.1rem 0 0; color:var(--soft); font-size:.95rem; }
+  .oc-bday-card { position:relative; overflow:hidden; margin:0 0 1rem; padding:1rem 2.6rem 1rem 1.1rem;
+                  border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:12px;
+                  background:var(--surface-2, var(--bg)); }
+  .oc-bday-card p { margin:0 0 .35rem; line-height:1.5; }
+  .oc-bday-tl { font-size:1.05rem; font-weight:700; }
+  .oc-bday-sign { margin-top:.5rem !important; font-size:.82rem; color:var(--soft); }
+  .oc-bday-x { position:absolute; top:.35rem; right:.5rem; min-width:32px; min-height:32px; border:0; background:none;
+               font-size:1.4rem; line-height:1; color:var(--soft); cursor:pointer; border-radius:8px; }
+  .oc-bday-x:hover, .oc-bday-x:focus-visible { background:var(--surface-3); color:var(--ink, inherit); }
+  .oc-bday-confetti i { position:absolute; top:-10px; width:7px; height:11px; border-radius:2px; opacity:.9;
+                        animation:oc-confetti 2.6s ease-in 1 both; }
+  .oc-bday-confetti i:nth-child(1) { left:8%;  background:var(--red); animation-delay:.0s; }
+  .oc-bday-confetti i:nth-child(2) { left:20%; background:var(--amber); animation-delay:.3s; }
+  .oc-bday-confetti i:nth-child(3) { left:33%; background:var(--accent); animation-delay:.1s; }
+  .oc-bday-confetti i:nth-child(4) { left:46%; background:var(--green); animation-delay:.5s; }
+  .oc-bday-confetti i:nth-child(5) { left:59%; background:var(--red); animation-delay:.2s; }
+  .oc-bday-confetti i:nth-child(6) { left:72%; background:var(--amber); animation-delay:.6s; }
+  .oc-bday-confetti i:nth-child(7) { left:84%; background:var(--accent); animation-delay:.4s; }
+  .oc-bday-confetti i:nth-child(8) { left:93%; background:var(--green); animation-delay:.15s; }
+  @keyframes oc-confetti { from { transform:translateY(0) rotate(0); opacity:.95; }
+                           to   { transform:translateY(150px) rotate(300deg); opacity:0; } }
+  @media (prefers-reduced-motion: reduce) { .oc-bday-confetti { display:none; } }
   .oc-hi p { margin:.15rem 0 0; color:var(--soft); font-size:.9rem; }
   .oc-hero .grow { flex:1 1 auto; }
   .oc-me { display:flex; align-items:center; gap:inherit; color:inherit; text-decoration:none;
@@ -277,7 +301,10 @@
       {% else %}{{ initials }}{% endif %}
     </span>
     <div class="oc-hi">
-      {% if is_birthday %}<h1>Happy birthday{% if first_name %}, {{ first_name }}{% endif %}! 🎉</h1>
+      {% if bday_greet and bday_greet.phase == "today" %}<h1>Maligayang kaarawan{% if first_name %}, {{ first_name }}{% endif %}! 🎉</h1>
+      <p class="oc-bday-en">Happy birthday!</p>
+      {% elif bday_greet %}<h1>Malapit na ang kaarawan mo{% if first_name %}, {{ first_name }}{% endif %}! 🎂</h1>
+      <p class="oc-bday-en">Your birthday is {{ bday_greet.when_en }}.</p>
       {% else %}<h1>Hi{% if first_name %}, {{ first_name }}{% endif %} 👋</h1>{% endif %}
       <p>{{ role_label }} · <span class="oc-me-cta">Your profile →</span></p>
     </div>
@@ -288,12 +315,29 @@
            (a leaf count, a shell pattern) that was still hard to make out. --#}
       {{ avatar(profile.avatar_kind, (wstats.stage if wstats else 1), name=profile.avatar_name,
                 size=150, interactive=true, mood=profile.avatar_mood) }}
+      {% if bday_greet %}<span class="oc-pet-party">🎉 {{ profile.avatar_name }} is celebrating with you!</span>{% endif %}
       <a class="oc-pet-edit" href="/me">Change companion →</a>
     </div>
     {% endif %}
     <span class="grow"></span>
     {{ tabs }}
   </div>
+  {% endif %}
+  {% if bday_greet and bday_greet.card %}
+  <section class="oc-bday-card" id="oc-bday-card" aria-label="Birthday greeting">
+    <button type="button" class="oc-bday-x" aria-label="Close this greeting"
+            onclick="document.getElementById('oc-bday-card').hidden=true">×</button>
+    <div class="oc-bday-confetti" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    {% if bday_greet.phase == "today" %}
+      <p class="oc-bday-tl">{{ bday_greet.tl }}</p>
+      <p class="oc-bday-en">{{ bday_greet.en }}</p>
+      <p class="oc-bday-sign">Mula sa lahat ng nasa BLHSD / From all of us at BLHSD</p>
+    {% else %}
+      <p class="oc-bday-tl">Malapit na ang kaarawan mo {{ bday_greet.when_tl }}! Sana'y maging masaya ang buong linggo mo.</p>
+      <p class="oc-bday-en">Your birthday is {{ bday_greet.when_en }}. We hope your whole week is a happy one.</p>
+      <p class="oc-bday-sign">Mula sa lahat ng nasa BLHSD / From all of us at BLHSD</p>
+    {% endif %}
+  </section>
   {% endif %}
 
   {#-- ---------------- your to-do ----------------
