@@ -1,5 +1,12 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v6.12 — phone menu is a right-side sheet, Log out always visible)
+
+- **Bug:** the ☰ menu was a dropdown capped at `100vh`, which on iPhone Safari is taller than the visible area, so the bottom (Log out) sat behind the browser toolbar; it was also one long flat list with the Display controls (~400px) always open.
+- **Now (≤900px):** a full-height right-side sheet (`100dvh`, safe-area padding) over a dimmed backdrop. Header with ✕; the nav groups are accordions (only the current page's group opens); Display is a collapsed row; a pinned footer holds username · role, My profile / Page tour / Full guide, and **Log out**, so it never scrolls out of reach. Closes on ✕, backdrop tap or Esc (focus returns to ☰); page scroll is locked while open; touch targets are 44px; the floating feedback button is hidden while the sheet is open.
+- Checked in Chromium at 360, 390 and 430px (light, dark, contrast): Log out fully on screen at each. Desktop menus untouched.
+- Cache-bust: `app.css` and `app.js` `?v=20261009e`.
+
 ## 2026-10-09 (v6.11 — header and home hero on phones and tablets)
 
 Checked in Chromium at 320–1440px against the real `app.css` and `dash_layout.html`.

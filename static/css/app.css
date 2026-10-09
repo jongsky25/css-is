@@ -420,27 +420,50 @@ a.whoami:hover { border-color:var(--accent); }
   .nav-toggle > summary { list-style:none; cursor:pointer; font-size:1.3rem; padding:.2rem .6rem;
         border:1px solid var(--line); border-radius:var(--r1); }
   .nav-toggle > summary::-webkit-details-marker { display:none; }
-  .nav-toggle[open] .mobile-menu { display:block; }
-  .mobile-menu { position:absolute; right:.5rem; left:.5rem; top:calc(100% + 4px); background:var(--surface);
-        border:1px solid var(--line); border-radius:var(--r2); box-shadow:var(--shadow-md);
-        padding:.6rem; z-index:40;
-        max-height:calc(100vh - var(--topnav-h, 53px) - 16px); overflow-y:auto;
-        overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
-  .mobile-menu .mgroup { font-size:.72rem; text-transform:uppercase; letter-spacing:.04em;
-        color:var(--soft); margin:.6rem 0 .2rem; font-weight:700; }
-  /* Indented one step under .mgroup so the two levels stay distinguishable in
-     the flat hamburger list. Only the heading is indented — a `~ a` rule here
-     would leak the indent onto every later link in the menu, including groups
-     that have no sections at all. */
+  /* Right-side sheet over a dimmed backdrop. dvh tracks the *visible* viewport
+     (iOS Safari's toolbars shrink it; 100vh did not, which hid Log out). */
+  .mobile-menu, .mm-backdrop { display:none; }
+  .nav-toggle[open] .mm-backdrop { display:block; position:fixed; inset:0; z-index:39;
+        background:rgba(15,20,30,.45); }
+  .nav-toggle[open] .mobile-menu { display:flex; flex-direction:column; position:fixed; top:0; right:0; bottom:0;
+        z-index:40; width:min(22rem,88vw); height:100vh; height:100dvh; background:var(--surface);
+        border-left:1px solid var(--line); box-shadow:var(--shadow-md); }
+  body:has(.nav-toggle[open]) { overflow:hidden; }
+  body:has(.nav-toggle[open]) .sf-float { display:none; }
+  .mm-head { display:flex; align-items:center; justify-content:space-between; flex:none;
+        padding:.5rem .6rem .5rem .9rem; border-bottom:1px solid var(--line); }
+  .mm-title { font-weight:700; color:var(--ink); }
+  .mm-close { min-width:44px; min-height:44px; border:1px solid var(--line); border-radius:var(--r1);
+        background:none; color:var(--ink); font-size:1.1rem; cursor:pointer; }
+  .mm-scroll { flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain;
+        -webkit-overflow-scrolling:touch; padding:.4rem .6rem; }
+  .mm-grp { border-bottom:1px solid var(--line); }
+  .mm-grp > summary { list-style:none; cursor:pointer; min-height:44px; display:flex; align-items:center;
+        justify-content:space-between; font-size:.78rem; text-transform:uppercase; letter-spacing:.04em;
+        color:var(--soft); font-weight:700; padding:0 .6rem; }
+  .mm-grp > summary::-webkit-details-marker { display:none; }
+  .mm-grp > summary::after { content:"▸"; transition:transform .15s; }
+  .mm-grp[open] > summary::after { transform:rotate(90deg); }
+  .mm-grp[open] > summary { color:var(--ink); }
+  .mm-grp[open] { padding-bottom:.4rem; }
   .mobile-menu .msec { font-size:.68rem; letter-spacing:.03em; color:var(--grey);
         margin:.45rem 0 .1rem .6rem; font-weight:700; }
-  .mobile-menu a, .mobile-menu .mm-btn { display:block; padding:.5rem .6rem; border-radius:var(--r1); text-decoration:none;
-        color:var(--ink); font-weight:550; }
+  .mobile-menu a, .mobile-menu .mm-btn { display:flex; align-items:center; min-height:44px; padding:.4rem .6rem;
+        border-radius:var(--r1); text-decoration:none; color:var(--ink); font-weight:550; }
   .mobile-menu a:hover, .mobile-menu .mm-btn:hover { background:var(--bg); }
   .mobile-menu a[aria-current="page"] { background:var(--blue-bg); color:var(--accent-ink); font-weight:700; }
-  .mobile-menu .mm-btn { width:100%; text-align:left; border:0; background:none; font:inherit;
-        font-weight:550; cursor:pointer; }
+  .mobile-menu .mm-btn { border:0; background:none; font:inherit; font-weight:550; cursor:pointer; }
   .mobile-menu .mm-set { display:flex; flex-direction:column; gap:.7rem; padding:.2rem .6rem .4rem; }
+  .mm-foot { flex:none; border-top:1px solid var(--line); background:var(--surface);
+        padding:.6rem .8rem calc(.6rem + env(safe-area-inset-bottom)); }
+  .mm-who { font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; color:var(--soft);
+        font-weight:700; margin-bottom:.4rem; overflow-wrap:anywhere; }
+  .mm-chips { display:flex; gap:.4rem; margin-bottom:.5rem; }
+  .mobile-menu .mm-chips > * { flex:1 1 0; justify-content:center; text-align:center; font-size:.82rem;
+        border:1px solid var(--line); padding:.3rem .4rem; }
+  .mobile-menu a.mm-logout { justify-content:center; background:var(--accent); color:var(--on-accent);
+        font-weight:700; }
+  .mobile-menu a.mm-logout:hover { background:var(--accent-ink); }
   .topnav .right { flex-wrap:nowrap; gap:.35rem; }
 }
 /* Phones: one row — logo · search · bell · ☰. Display settings, help/tour and
