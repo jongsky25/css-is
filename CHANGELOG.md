@@ -1,5 +1,17 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v6.10 — sweep: phones, accessibility, telemetry, help)
+
+`docs/HOME_SEARCH_ASSISTANT_PLAN.md` Phase 8, and the whole feature (v6.3 to v6.10):
+
+- **What it is:** the home page has one box that searches people, colleagues, pages, your calendar, to-dos, requests, room bookings and help, and that answers questions in place; the header magnifier opens the same search on every page and on phones; `/css` keeps a CSS-only search with a way out to search everything; `/people/{id}` is a small colleague card with basic status (an admin can limit it to each person's own team on `/admin/work-arrangement`); the assistant answers about to-dos, approvals, wellness hours, AWA, who is in the office and the conference room, with the model switched off too.
+- **Phone check** (Chromium, 390x844): no horizontal scroll on `/`, `/css`, `/start` or a colleague card; the header magnifier opens the palette; the results stay inside the viewport when the screen is short (the keyboard up). The floating "Send feedback" button used to cover the bottom of the results, so it is hidden while the home box's list is open (`:has()`; the same trick `rooms.css` uses).
+- **Accessibility:** the inline box is a combobox (`role`, `aria-autocomplete`, `aria-expanded` kept in step with the list, `aria-controls`); the palette already was; the assistant's answer box and card are `aria-live="polite"`.
+- **Telemetry:** `csi:search` now also carries result counts per section (a fixed vocabulary, counts only, never the term); a new `ask` event (`fired`, `answered`/`kind`, `fallback`; never the question) is sent by `assistant.js` for the box and `/start`. `/admin/ux-insights` shows both. The server drops anything outside the vocabularies and any text on an `ask`.
+- **Help:** `tours.py` gets a `home_page` tour (the box, the assistant, the colleague card) and a clearer CSS-hub search step; `/` now has a page key so the tour replays with `?tour=1` — it auto-shows once per device, like every page tour. The guide lists it as "Home page" and the CSS hub as "CSS hub".
+- **Speed:** `docs/PERFORMANCE.md` section 8: p95 15 ms on the demo DB and 70 ms on a 150-staff / 1,500-entry synthetic load (target 150 ms).
+- Tests: `tests/test_search_telemetry.py`.
+
 ## 2026-10-09 (v6.9 — one box: search and ask together)
 
 `docs/HOME_SEARCH_ASSISTANT_PLAN.md` Phase 7. `person_status` (item 3, optional) is not built: it is its own change (a model-supplied argument that has to be validated against the directory) and can be v6.10.

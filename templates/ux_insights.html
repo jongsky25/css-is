@@ -190,6 +190,12 @@
       <h2>Search &amp; speed</h2>
       {% if digest.search.total %}
       <p class="hint" style="margin:0 0 .6rem;">{{ digest.search.total }} searches · <strong>{{ digest.search.empty_rate }}%</strong> found nothing.</p>
+      {% if digest.search_sections %}
+      <p class="hint" style="margin:0 0 .6rem;">Results shown, by kind: {% for name, n in digest.search_sections.items() %}{{ name }} {{ n }}{{ " · " if not loop.last }}{% endfor %}.</p>
+      {% endif %}
+      {% endif %}
+      {% if digest.ask.fired %}
+      <p class="hint" style="margin:0 0 .6rem;">Assistant: {{ digest.ask.fired }} asked · <strong>{{ digest.ask.answer_rate }}%</strong> answered{% if digest.ask.fallback %} · {{ digest.ask.fallback }} fell back to search{% endif %}.</p>
       {% endif %}
       {% if digest.speed %}
       <ul class="side-list">
@@ -200,7 +206,7 @@
       {% endif %}
       {% set dv = digest.devices.counts %}{% set seen = dv.phone + dv.tablet + dv.desktop %}
       {% if seen %}<p class="hint" style="margin:.6rem 0 0;">Pageviews: {{ (100 * dv.phone / seen)|round|int }}% phone · {{ (100 * dv.tablet / seen)|round|int }}% tablet · {{ (100 * dv.desktop / seen)|round|int }}% desktop.</p>{% endif %}
-      {% if not digest.search.total and not digest.speed and not seen %}<p class="empty">Nothing recorded yet — this starts with v3.26.</p>{% endif %}
+      {% if not digest.search.total and not digest.ask.fired and not digest.speed and not seen %}<p class="empty">Nothing recorded yet — this starts with v3.26.</p>{% endif %}
     </div>
   </div>
 

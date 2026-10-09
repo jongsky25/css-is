@@ -46,7 +46,7 @@ def test_help_manual_renders(admin):
     assert "Guide" in r.text
     # the Home tour section + its replay-in-context link (the hub moved to /css
     # in the onboarding fork — the tour markup lives there now)
-    assert ">Home<" in r.text
+    assert ">CSS hub<" in r.text and ">Home page<" in r.text
     assert "/css?tour=1" in r.text
     # the searchable section markers the filter JS keys on
     assert "data-help-sec" in r.text

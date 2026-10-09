@@ -132,3 +132,23 @@ Every join uses integer-primary-key (rowid) lookups — the fastest possible. Th
 - `assign_periods`: 1,371 ms → 1,166 ms with explicit format.
 - Indexes present: only `sqlite_autoindex_*` (PK/UNIQUE) + `ux_admin_user_rp`. No index on `answer.response_id`, `answer.item_id`, `response.form_instance_id` — and none needed for the hot path (rowid joins).
 - `journal_mode`: `delete` (WAL not enabled).
+
+
+---
+
+## 8. Home search (`/api/search`, v6.10)
+
+The home box calls `/api/search` after a 200 ms pause on each keystroke, and it now runs several sources (`search_sources.py`): activities, people, calendar, to-do, own requests, conference room, help and colleagues. Each page-index match (pages, help topics) is still done in the browser.
+
+**Method:** 50 signed-in calls through FastAPI's `TestClient` (rate limit cleared between calls), cycling through 20 common terms, after one warm-up call, on a copy of the seeded database. Environment: Python 3.13, SQLite, Linux container.
+
+| Data | p50 | p95 | max |
+|---|---|---|---|
+| Seeded demo DB (171 responses, 5 people, no calendar entries) | 12 ms | 15 ms | 17 ms |
+| Office-sized synthetic load: 150 linked staff, 1,500 calendar entries spread over -30/+90 days, bureau audience | 47 ms | 70 ms | ~180 ms (the first call after a cold start) |
+
+**Target:** p95 under 150 ms. **Met** on both. The synthetic run is the more telling one: nearly all of the time is the calendar source (`items_between` over 120 days) plus the colleague directory read; the activity source is an in-memory filter over the memoized event list and costs about the same at any data size.
+
+**Not measured:** the real `css_is.db` (about 390,000 survey atoms), which isn't available in this environment. Only the activities source touches that data, and only through the memoized `build_events` list; the first search after a restart or a data change pays that rebuild (see section 3), as it already did before v6.5.
+
+**Guards:** per-account rate limit of 120 calls a minute (`ratelimit` bucket `search`); each section is capped at 5 rows and the response at 30; one source failing is logged and skipped; colleague status is memoized for 60 seconds per (database, day).
