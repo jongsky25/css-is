@@ -1988,6 +1988,10 @@ def _notification_items(conn, user, feedback_unread):
             "text": _decision_summary("work arrangement request", wa_decided),
             "url": "/work-arrangement", "count": len(wa_decided),
         })
+    try:
+        items.extend(oc_cal.bell_rows(conn, user["id"], _today_local()))
+    except Exception:                      # noqa: BLE001 — the bell must never break a page
+        pass
     return items
 
 

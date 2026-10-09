@@ -1056,3 +1056,50 @@ def flush_outbox(conn, base_url, *, now=None, send=None):
                          % ",".join("?" * len(ids)), ids)
             conn.commit()
     return sent
+
+
+# ── bell rows (G2) ───────────────────────────────────────────────────────────
+
+def bell_rows(conn, user_id, today=None):
+    """The calendar's rows for the nav bell: [{text, url, count}], most useful first.
+
+      * "N new or changed calendar items for you"  — items this person is ON that they have not
+        seen at their current sequence; /calendar/updates lists them and clears the row.
+      * "Confirm where you'll be: <trip>" — the calendar has them on a trip but they reported
+        something else (the same mismatch the home to-do shows).
+      * "<trip> changed after you confirmed that week" — the trip moved since they last
+        submitted; links to that week's form.
+
+    Information such as "you have a meeting today" is deliberately NOT here — that is the home
+    card's job. Cheap by design: this runs on every signed-in request, so each part starts with
+    one indexed query and returns early when there is nothing to say."""
+    today = today or tz.today_local()
+    rows = []
+    unseen = st.cal_unseen_for_user(conn, user_id, today)
+    if unseen:
+        n = len(unseen)
+        rows.append({"text": f"{n} new or changed calendar item{'' if n == 1 else 's'} for you",
+                     "url": "/calendar/updates", "count": n})
+    if not conn.execute("SELECT 1 FROM calendar_entry e JOIN calendar_entry_person p ON p.entry_id = e.id "
+                        "WHERE p.user_id=? AND e.kind='travel' AND e.status='confirmed' "
+                        "AND COALESCE(NULLIF(e.end_date, ''), e.start_date) >= ? LIMIT 1",
+                        (user_id, today.isoformat())).fetchone():
+        return rows
+    monday = today - timedelta(days=today.weekday())
+    seen_titles = set()
+    for m in mismatches(conn, [user_id], today, monday + timedelta(days=11), kinds=("trip_conflict",)):
+        if m["entry_id"] in seen_titles:
+            continue
+        seen_titles.add(m["entry_id"])
+        d = date.fromisoformat(m["day"])
+        rows.append({"text": f"Confirm where you'll be: {m['title']}",
+                     "url": f"/work-arrangement/week?week={(d - timedelta(days=d.weekday())).isoformat()}",
+                     "count": 1})
+    for wk in (monday, monday + timedelta(days=7)):
+        for c in st.cal_trip_changes_after_confirm(conn, user_id, wk):
+            if c["entry_id"] in seen_titles:
+                continue
+            seen_titles.add(c["entry_id"])
+            rows.append({"text": f"{c['title']} changed after you confirmed your week",
+                         "url": f"/work-arrangement/week?week={wk.isoformat()}", "count": 1})
+    return rows

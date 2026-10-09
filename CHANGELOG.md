@@ -1,5 +1,22 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.73 — office calendar G2: bell rows and seen-tracking)
+
+- **"N new or changed calendar items for you"** in the nav bell: upcoming items the person is ON whose `seen_seq` is empty
+  (new) or behind the entry's `sequence` (the schedule moved; a note/tag edit does not count) or that were cancelled. The
+  row links to **`/calendar/updates`**, which lists exactly those and marks them seen, so the bell and the list cannot
+  disagree; opening an item's own page marks just that one. (The plan said opening `/calendar?scope=me` clears them; that page only
+  shows two weeks, so a dedicated list is what makes the count honest.)
+- **Never for your own edits**: the person who creates or changes an item is stamped as having seen it; a bulk import stamps
+  everyone; and everything that existed before this release is backfilled as already seen (one-time, flagged in
+  `app_setting`), so day one shows no flood.
+- **"Confirm where you'll be: <trip>"** (same mismatch as the home to-do) and **"<trip> changed after you confirmed your
+  week"** (the trip's schedule moved after the person last submitted that week; links to that week's form). Information like
+  "you have a meeting today" is not a bell row.
+- Cheap on every request: the unseen query is indexed by person, and the trip checks start with one query and return early when
+  the person is on no trip. A failure there can never break a page.
+- Not yet: the birthday row (F3).
+
 ## 2026-10-09 (v3.72 — office calendar G1: batched change emails)
 
 - **Outbox** (`calendar_outbox`): `cal_create` / `cal_update` / cancel / restore write one notice per affected person in the

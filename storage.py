@@ -650,6 +650,13 @@ def _add_missing_columns(conn):
     if au0 and "cal_email_changes" not in au0:
         # NULL = on (default). 0 = "don't email me about calendar changes".
         conn.execute("ALTER TABLE admin_user ADD COLUMN cal_email_changes INTEGER")
+    if conn.execute("SELECT 1 FROM sqlite_master WHERE name='app_setting'").fetchone() and \
+            get_setting(conn, "cal_seen_backfilled", "") != "1":
+        # Office calendar G2: the bell counts items a person has not seen. Everything that
+        # existed before the bell did is "already seen", or day one would show a flood.
+        conn.execute("UPDATE calendar_entry_person SET seen_seq = (SELECT sequence FROM calendar_entry "
+                     "WHERE id = entry_id) WHERE seen_seq IS NULL")
+        set_setting(conn, "cal_seen_backfilled", "1")
     ce_cols = {row[1] for row in conn.execute("PRAGMA table_info(calendar_entry)")}
     if ce_cols and "css_nudged_at" not in ce_cols:
         conn.execute("ALTER TABLE calendar_entry ADD COLUMN css_nudged_at TEXT")
@@ -10131,6 +10138,74 @@ def _cal_write_tags(conn, entry_id, tags):
                      (entry_id, t))
 
 
+def _cal_stamp_seen(conn, entry_id, seq, by, everyone=False):
+    """Mark an entry as seen at `seq` for the person who made the change (or for everyone, for
+    a bulk import). Runs inside the caller's transaction."""
+    if everyone:
+        conn.execute("UPDATE calendar_entry_person SET seen_seq=? WHERE entry_id=?", (seq, entry_id))
+    elif by:
+        conn.execute("UPDATE calendar_entry_person SET seen_seq=? WHERE entry_id=? AND user_id IN "
+                     "(SELECT id FROM admin_user WHERE username=?)", (seq, entry_id, by))
+
+
+def cal_unseen_for_user(conn, user_id, today=None):
+    """Upcoming calendar items this person is ON and has not seen at their current sequence:
+    [{entry_id, title, start, end, kind}] with kind new (never opened), changed (the schedule
+    moved since) or cancelled. The bell counts these; /calendar/updates lists and clears them."""
+    today = (today or tz.today_local())
+    today = today.isoformat() if hasattr(today, "isoformat") else str(today)
+    out = []
+    for eid, title, a, b, status, seq, seen in conn.execute(
+            "SELECT e.id, e.title, e.start_date, COALESCE(NULLIF(e.end_date, ''), e.start_date), "
+            "e.status, e.sequence, p.seen_seq FROM calendar_entry_person p "
+            "JOIN calendar_entry e ON e.id = p.entry_id WHERE p.user_id = ? "
+            "AND COALESCE(NULLIF(e.end_date, ''), e.start_date) >= ? "
+            "AND (p.seen_seq IS NULL OR p.seen_seq < e.sequence) ORDER BY e.start_date, e.id",
+            (user_id, today)):
+        kind = "cancelled" if status == "cancelled" else ("new" if seen is None else "changed")
+        out.append({"entry_id": eid, "title": title, "start": a, "end": b, "kind": kind})
+    return out
+
+
+def cal_mark_seen(conn, user_id, entry_ids=None):
+    """The person has now seen these items (all their unseen ones when `entry_ids` is None)."""
+    sql = ("UPDATE calendar_entry_person SET seen_seq = (SELECT sequence FROM calendar_entry "
+           "WHERE id = entry_id) WHERE user_id = ? AND (seen_seq IS NULL OR seen_seq < "
+           "(SELECT sequence FROM calendar_entry WHERE id = entry_id))")
+    args = [user_id]
+    if entry_ids is not None:
+        ids = [int(i) for i in entry_ids]
+        if not ids:
+            return 0
+        sql += " AND entry_id IN (%s)" % ",".join("?" * len(ids))
+        args += ids
+    n = conn.execute(sql, args).rowcount
+    conn.commit()
+    return n
+
+
+def cal_trip_changes_after_confirm(conn, user_id, monday):
+    """Trips this person is on, covering a working day of the week starting `monday`, whose
+    schedule changed AFTER they last confirmed that week: [{entry_id, title}]. Nothing if they
+    never confirmed the week (then the form simply opens plotted from the calendar)."""
+    sub = conn.execute("SELECT submitted_at FROM whereabouts_week WHERE user_id=? AND week_start=? "
+                       "AND submitted_at IS NOT NULL", (user_id, monday.isoformat())).fetchone()
+    if not sub:
+        return []
+    end = (monday + timedelta(days=4)).isoformat()
+    out = []
+    for eid, title, seq in conn.execute(
+            "SELECT e.id, e.title, e.sequence FROM calendar_entry e JOIN calendar_entry_person p ON p.entry_id = e.id "
+            "WHERE p.user_id=? AND e.kind='travel' AND e.status='confirmed' AND e.sequence > 0 "
+            "AND e.start_date <= ? AND COALESCE(NULLIF(e.end_date, ''), e.start_date) >= ?",
+            (user_id, end, monday.isoformat())):
+        moved = conn.execute("SELECT MIN(changed_at) FROM calendar_entry_revision WHERE entry_id=? AND sequence=?",
+                             (eid, seq)).fetchone()[0]
+        if moved and moved > sub[0]:
+            out.append({"entry_id": eid, "title": title})
+    return out
+
+
 def cal_get(conn, entry_id):
     row = conn.execute(f"SELECT {', '.join(_CAL_COLS)} FROM calendar_entry WHERE id=?",
                        (entry_id,)).fetchone()
@@ -10211,6 +10286,7 @@ def cal_create(conn, title, start_date, *, end_date=None, kind="meeting",
          by, now, by, now, cancelled[0], cancelled[1]))
     entry_id = cur.lastrowid
     _cal_write_people(conn, entry_id, people, by)
+    _cal_stamp_seen(conn, entry_id, 0, by, everyone=(source == "import"))
     _cal_write_tags(conn, entry_id, tags)
     _cal_revision(conn, entry_id, 0, "create", by, {"title": [None, v["title"]]})
     if source != "import" and v["status"] != "cancelled":          # a bulk import never emails anyone
@@ -10272,6 +10348,7 @@ def cal_update(conn, entry_id, *, by=None, expected_sequence=None,
                  + " WHERE id=?", (*sets.values(), entry_id))
     if "people" in diff:
         _cal_write_people(conn, entry_id, new_people, by)
+    _cal_stamp_seen(conn, entry_id, seq, by)           # you have seen what you just changed yourself
     if "tags" in diff:
         _cal_write_tags(conn, entry_id, new_tags)
     _cal_revision(conn, entry_id, seq, "update", by, diff)

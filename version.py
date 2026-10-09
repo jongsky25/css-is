@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.72"
+APP_VERSION = "3.73"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.73",
+        "date": "October 9, 2026",
+        "summary": "The bell now tells you about calendar items that are new or changed for you.",
+        "changes": [
+            "The bell shows how many calendar items you are on that were added, moved or cancelled since you last looked.",
+            "Open the list, or open an item, and it counts as seen.",
+            "If a trip you are on does not match what you reported, or it moved after you confirmed your week, the bell points you to that week.",
+            "You never get a bell for something you changed yourself.",
+        ],
+    },
     {
         "version": "3.72",
         "date": "October 9, 2026",

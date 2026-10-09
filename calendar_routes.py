@@ -314,6 +314,25 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 "venue": "", "modality": "", "meeting_url": "", "note": "",
                 "owner_org_id": "", "audience": "unit", "tags": "", "updated_at": ""}
 
+    @router.get("/calendar/updates", response_class=HTMLResponse)
+    def calendar_updates(request: Request):
+        """What is new or changed for you, newest schedule first. Opening it is what clears the
+        bell row, so the count in the bell and the list here can never disagree."""
+        user = request.state.user
+        conn = get_conn()
+        try:
+            unseen = st.cal_unseen_for_user(conn, user["id"], today_local())
+            st.cal_mark_seen(conn, user["id"], [u["entry_id"] for u in unseen])
+        finally:
+            conn.close()
+        for u in unseen:
+            a = date.fromisoformat(u["start"])
+            b = date.fromisoformat(u["end"])
+            u["when"] = f"{a:%a, %b} {a.day}" + (f" – {b:%a, %b} {b.day}" if b != a else "")
+        return templates.TemplateResponse(request, "calendar_updates.html", {
+            "nav_active": "calendar", "show_scope": False, "items": unseen,
+            "labels": {"new": "New", "changed": "Changed", "cancelled": "Cancelled"}})
+
     @router.get("/calendar/birthdays", response_class=HTMLResponse)
     def calendar_birthdays(request: Request, month: str = ""):
         """The month's celebrants, grouped by section and printable — for the welfare or
@@ -397,6 +416,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             revs = st.cal_revisions(conn, entry_id)
             names = oc.display_names(conn, [e["created_by"], e["updated_by"]]
                                      + [r["changed_by"] for r in revs])
+            st.cal_mark_seen(conn, user["id"], [entry_id])      # opening it IS seeing it
             heads_up = oc.entry_heads_up(conn, user, e)
             can_css = auth.can(user["role"], "create_activity")
             linked = st.get_event_by_id(conn, e["event_id"]) if e["event_id"] else None
