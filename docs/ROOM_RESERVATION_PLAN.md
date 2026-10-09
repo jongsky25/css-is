@@ -1,6 +1,6 @@
 # Conference Room Reservation — plan v2
 
-**Status:** in progress. Built so far: R1 (rules), R2 (board and request pages), R3 (approvers and queue), R4 (encode, "Book anyway", closures, suggestions), R5 (notifications), R6 (public QR page and guest tracking link), R7 (the Rooms layer on the Office calendar), R8 (CSS activity link, moves and banners).
+**Status:** in progress. Built so far: R1 (rules), R2 (board and request pages), R3 (approvers and queue), R4 (encode, "Book anyway", closures, suggestions), R5 (notifications), R6 (public QR page and guest tracking link), R7 (the Rooms layer on the Office calendar), R8 (CSS activity link, moves and banners), R9 (meals: the form and the ordering page).
 **Scope:** the bureau's one conference room.
 
 **Owner decisions so far:**
@@ -354,31 +354,17 @@ the bell, and the "My reservations" row.
 
 ---
 
-## 8. Meals
+## 8. Meals (as built in R9)
 
-- **Meals are derived from the meeting schedule (decided).** When "Will meals be requested?" is yes,
-  the system works out which meals apply from the reserved hours, with no ticking needed:
+The owner supplied the form's fields: **Title of the Activity, Number of Pax, Special Request for Meals, and Yes/No for Breakfast, AM snack, Lunch and PM snack, each with its requested delivery time.**
 
-  | Meal | Included when the booking covers |
-  |---|---|
-  | AM snack | 10:00 (the 10:00–11:00 block) |
-  | Lunch | 12:00 (the 12:00–13:00 block) |
-  | PM snack | 15:00 (the 15:00–16:00 block) |
-
-  These trigger hours are settings, so they can be changed without code. The requester sees the
-  derived list ("AM snack · Lunch · PM snack") with a one-click way to untick any item.
-- **Also captured:** headcount, defaulting to attendees, and dietary notes.
-- **Generated:** on approval, `room_meal_form.render_pdf(data)` creates the form, following the
-  `wellness_register` module pattern. It is stored as `form_version = 1` and emailed to the
-  Administrative Section with the PDF attached. The requester can download it from "My
-  reservations".
-- **Changes:** editing meal details on an approved booking regenerates the form as version N+1,
-  marked "Revised". The section is notified.
-- **Cutoff:** the 2-working-day lead time (§9) already covers meals, so no separate meal cutoff is
-  needed. Meals added or changed on an approved booking less than 2 working days before the date
-  show an amber warning to both sides.
-- **Layout:** placeholder until the owner sends the official form (**open item O3**). The data
-  fields above are designed so the official layout only changes the renderer.
+- **Prepared** when "Will meals be requested?" is ticked (or later, from My reservations). Each meal starts as Yes when the booked hours cover its hour (07:00, 10:00, 12:00, 15:00) and with its
+  usual delivery time (07:30, 10:00, 12:00, 15:00). Both are settings (`room_meal_times`). The requester corrects it; times are 06:00-19:00; pax is needed if any meal is Yes.
+- **Printable:** a one-page A4 PDF with the same fields, and a status column for the Administrative Section.
+- **The Administrative Section's page** (`/rooms/meals`) lists every filled-up form to order from. They tag each wanted meal **Requested** (the room must be approved) and afterwards **Delivered**,
+  **Not delivered** or **Cancelled** (delivered / not delivered only on or after the day), with a note; every tag records who and when and is audited.
+- **Changes:** the requester edits until ordering starts; the section edits any time (a changed meal returns to "Not yet requested"). Changes after approval notify the section.
+- **When the booking goes away,** its meals are cancelled; if any were already requested the section is told to cancel with the supplier.
 
 ---
 
@@ -481,5 +467,5 @@ is done.
 
 **Still open**
 - **O1.** The room capacity (used for the over-capacity warning). Until given, no warning is shown.
-- **O3.** The official meal request form layout. The owner will send it when we reach increment R9,
-  and the session will notify them then.
+- **O3.** Closed: the owner gave the meal form's fields (see section 8). A printed layout of their own can replace
+  `room_meal_form.py` without touching anything else.

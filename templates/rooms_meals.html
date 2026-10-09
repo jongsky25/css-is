@@ -1,0 +1,78 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash, empty_state %}
+{% block title %}Conference room meals{% endblock %}
+{% block page_width %}full{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/rooms.css?v=20261009e">{% endblock %}
+{% block content %}
+{{ page_header("Conference room meals", "Order from the filled-up forms, then tag each meal as requested, delivered, not delivered or cancelled.") }}
+{% include "_rooms_tabs.html" %}
+{{ flash(msg=msg, err=err) }}
+
+<form method="get" action="/rooms/meals" class="rm-mfilter card">
+  <label>From <input type="date" name="from" value="{{ start.isoformat() }}"></label>
+  <label>To <input type="date" name="to" value="{{ end.isoformat() }}"></label>
+  <label>Show <select name="show"><option value="action" {{ 'selected' if show == 'action' }}>Needs ordering or tagging</option>
+    <option value="all" {{ 'selected' if show == 'all' }}>Everything in these dates</option></select></label>
+  <label class="rm-chk"><input type="checkbox" name="waiting" value="1" {{ 'checked' if include_waiting }}> Include rooms still awaiting approval</label>
+  <button class="btn small" type="submit">Show</button>
+</form>
+{% if waiting and not include_waiting %}<p class="rm-hint">{{ waiting }} meal form{{ '' if waiting == 1 else 's' }} in these dates {{ 'is' if waiting == 1 else 'are' }} waiting for the room to be approved first.</p>{% endif %}
+
+{% for f in forms %}
+{% set r = f.reservation %}
+<section class="rm-mcard card" id="r{{ r.id }}" aria-labelledby="t{{ r.id }}">
+  <header class="rm-mhead">
+    <div>
+      <h2 id="t{{ r.id }}">{{ f.title }}</h2>
+      <p class="rm-hint"><strong>{{ f.when }}</strong> · {{ f.hours }} · <code>{{ r.ref_code }}</code> ·
+        {{ f.requester_name }}{% if f.requester_unit %} ({{ f.requester_unit }}){% endif %}{% if f.is_external %} <span class="badge amber">Guest</span>{% endif %}
+        {% if f.awaiting_room %}· <span class="badge amber">○ room awaiting approval</span>{% endif %}</p>
+    </div>
+    <div class="rm-mfacts"><span><b>{{ f.pax if f.pax is not none else '?' }}</b> pax</span>
+      <a href="/rooms/meals/{{ r.id }}/form.pdf" target="_blank" rel="noopener">PDF</a> · <a href="/rooms/meals/{{ r.id }}">Form</a></div>
+  </header>
+  {% if f.special_request %}<p class="rm-special"><strong>Special request:</strong> {{ f.special_request }}</p>{% endif %}
+  <div class="table-wrap"><table class="list resp-table resp-table-wide">
+    <thead><tr><th>Meal</th><th>Deliver at</th><th>Status</th><th>Tag it</th></tr></thead>
+    <tbody>
+    {% for i in f["items"] if i.wanted %}
+    <tr>
+      <td data-label="Meal"><strong>{{ i.label }}</strong></td>
+      <td data-label="Deliver at">{{ meal_clock(i.deliver_at) }}</td>
+      <td data-label="Status"><span class="badge {{ meal_status_badge[i.status] }}">{{ meal_status_label[i.status] }}</span>
+        {% if i.status_at and i.status != 'pending' %}<div class="rm-hint">{{ (i.status_by or '') }} · {{ i.status_at[:16].replace('T', ' ') }}{% if i.status_note %}<br>{{ i.status_note }}{% endif %}</div>
+        {% elif i.status_note %}<div class="rm-hint">{{ i.status_note }}</div>{% endif %}</td>
+      <td data-label="Tag it" class="actions">
+        <form method="post" action="/rooms/meals/{{ r.id }}/tag" class="rm-tagform">
+          <input type="hidden" name="meal" value="{{ i.meal }}">
+          <input type="hidden" name="from" value="{{ start.isoformat() }}"><input type="hidden" name="to" value="{{ end.isoformat() }}"><input type="hidden" name="show" value="{{ show }}">{% if include_waiting %}<input type="hidden" name="waiting" value="1">{% endif %}
+          <input name="note" maxlength="200" placeholder="note (optional)" aria-label="Note for {{ i.label }}">
+          {% if i.status == 'pending' %}
+            <button class="btn small" name="status" value="requested" {{ 'disabled title="Approve the room first"' if r.status != 'approved' }}>Mark requested</button>
+            <button class="btn ghost small" name="status" value="cancelled">Cancel</button>
+          {% elif i.status == 'requested' %}
+            {% set future = f.reservation.day > today.isoformat() %}
+            <button class="btn small" name="status" value="delivered" {{ 'disabled title="Not before the day"' if future }}>Delivered</button>
+            <button class="btn ghost small" name="status" value="not_delivered" {{ 'disabled title="Not before the day"' if future }}>Not delivered</button>
+            <button class="btn ghost small" name="status" value="cancelled">Cancel</button>
+            <button class="btn ghost small" name="status" value="pending" title="Undo: it was not actually requested">Undo</button>
+          {% elif i.status == 'cancelled' %}
+            <button class="btn ghost small" name="status" value="pending">Reopen</button>
+          {% else %}
+            <button class="btn ghost small" name="status" value="requested">Reopen</button>
+          {% endif %}
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody></table></div>
+  {% if f["items"]|selectattr('wanted')|selectattr('status', 'equalto', 'pending')|list|length > 1 and r.status == 'approved' %}
+  <form method="post" action="/rooms/meals/{{ r.id }}/tag-all" class="rm-tagall">
+    <input type="hidden" name="from" value="{{ start.isoformat() }}"><input type="hidden" name="to" value="{{ end.isoformat() }}"><input type="hidden" name="show" value="{{ show }}">{% if include_waiting %}<input type="hidden" name="waiting" value="1">{% endif %}
+    <button class="btn small" type="submit">Mark everything still pending as requested</button>
+  </form>{% endif %}
+</section>
+{% else %}
+{{ empty_state("Nothing to order", "No meal forms need ordering or tagging in these dates." if show == 'action' else "No meal forms in these dates.", "🍽") }}
+{% endfor %}
+{% endblock %}

@@ -41,6 +41,31 @@ def _emit(event, conn, *args):
             pass
 
 
+def _meal_form(conn, rid, by=None):
+    """Prepare the meal form for a reservation that asked for meals. A meal-form problem must never undo
+    the booking that already committed."""
+    try:
+        import rooms_meals
+        rooms_meals.ensure_form(conn, rid, by)
+    except Exception:                                       # noqa: BLE001
+        try:
+            conn.rollback()
+        except Exception:                                   # noqa: BLE001
+            pass
+
+
+def _meals_over(conn, rid, why):
+    """The reservation is no longer going ahead: cancel its meal lines (and tell the section if any were ordered)."""
+    try:
+        import rooms_meals
+        rooms_meals.release(conn, rid, why)
+    except Exception:                                       # noqa: BLE001
+        try:
+            conn.rollback()
+        except Exception:                                   # noqa: BLE001
+            pass
+
+
 class SlotTaken(RoomError):
     """The hour is already approved for another reservation."""
     def __init__(self, msg, other=None):
@@ -286,6 +311,8 @@ def request(conn, *, title, day, slot_ids, requester_user_id=None, ext=None, pur
     st.audit(conn, actor or "system", "room_request", target_type="room_reservation", target_id=rid,
              summary=f"{title} on {day_iso}")
     out = get_reservation(conn, rid)
+    if meals_requested:
+        _meal_form(conn, rid, actor)
     _emit("requested", conn, out)
     if requester_user_id is None:
         _emit("received", conn, out)
@@ -357,7 +384,10 @@ def approve(conn, rid, by, note=None, today=None, decline_rivals=False):
         st.audit(conn, by, "room_decline", target_type="room_reservation", target_id=o["id"],
                  summary=f"{o['title']} on {o['day']}: another request approved", before="requested",
                  after="declined")
+        _meals_over(conn, o["id"], "The room request was declined.")
         _emit("decided", conn, get_reservation(conn, o["id"]), by)
+    if res["source"] == "move" and res["moves_reservation_id"]:
+        _meals_over(conn, res["moves_reservation_id"], f"The booking moved to {res['ref_code']} ({res['day']}); the new form needs ordering.")
     out = get_reservation(conn, rid)
     _emit("decided", conn, out, by)
     return out
@@ -376,6 +406,7 @@ def decline(conn, rid, by, note):
     st.audit(conn, by, "room_decline", target_type="room_reservation", target_id=rid,
              summary=f"{res['title']} on {res['day']}: {note.strip()}", before="requested", after="declined")
     out = get_reservation(conn, rid)
+    _meals_over(conn, rid, "The room request was declined.")
     _emit("decided", conn, out, by)
     return out
 
@@ -411,6 +442,7 @@ def withdraw(conn, rid, user_id, reason=None, actor=None, guest=False):
     late = before == "approved" and start - tz.now_local() < timedelta(hours=24)
     out = get_reservation(conn, rid)
     out["late_withdrawal"] = late
+    _meals_over(conn, rid, "The room booking was withdrawn.")
     _emit("withdrawn", conn, out, late)
     return out
 
@@ -789,8 +821,11 @@ def encode(conn, *, by, title, day, slot_ids, requester_user_id=None, ext=None, 
                  summary=f"Cancelled for {title.strip()}: {bump_reason.strip()}", before="approved", after="cancelled")
     out = get_reservation(conn, rid)
     out["bumped"] = held
+    if meals_requested:
+        _meal_form(conn, rid, by)
     _emit("encoded", conn, out, by)
     for old in held:
+        _meals_over(conn, old, f"The booking was cancelled: {bump_reason.strip()}")
         _emit("cancelled", conn, get_reservation(conn, old), by)
     return out
 
@@ -907,6 +942,7 @@ def add_block(conn, by, day, slot_ids, reason, confirm=False, today=None):
     for old in held:
         st.audit(conn, by, "room_cancel", target_type="room_reservation", target_id=old,
                  summary=f"Room unavailable: {reason}", before="approved", after="cancelled")
+        _meals_over(conn, old, f"The room is unavailable: {reason}")
         _emit("cancelled", conn, get_reservation(conn, old), by)
     return {"ids": ids, "cancelled": held}
 

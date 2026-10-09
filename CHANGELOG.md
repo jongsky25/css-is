@@ -1,5 +1,20 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v5.6 — conference room reservation R9: meals, from the form to delivery)
+
+- **The form (`rooms_meals.py`, tables `room_meal` + `room_meal_item`):** 1. Title of the Activity (from the reservation), 2. Number of Pax, 3. Special Request for Meals, 4. Breakfast / AM snack /
+  lunch / PM snack, each Yes or No **with its requested delivery time**. It is prepared when "Will meals be requested?" is ticked (or later, from My reservations -> Request meals): each meal starts as Yes
+  when the booked hours include its hour (07, 10, 12, 15 — change with the `room_meal_times` setting) and with its usual time (07:30, 10:00, 12:00, 15:00). The requester corrects it at
+  `/rooms/meals/<id>` (guests at `/room/t/<token>/meals`); times must be 06:00–19:00 and pax is needed if any meal is Yes. A printable A4 PDF (`room_meal_form.py`) carries the same fields.
+- **The Administrative Section's page (`/rooms/meals`, tab "Meals" with a count of meals still to request):** every filled-up form to order from, by date, with pax, the special request and one line per
+  wanted meal. Each meal is tagged **Requested** (needs the room approved), then **Delivered**, **Not delivered** (both only on or after the day) or **Cancelled**, each with an optional note, who and
+  when; Undo / Reopen fix a slip; "Mark everything still pending as requested" does a whole form. Filters: dates, "needs ordering or tagging" vs everything, and rooms still awaiting approval.
+- **Changes after ordering:** the requester can edit only until ordering starts, then asks the section; the section can edit any time, and a meal whose time or yes/no they change goes back to "Not yet
+  requested". A change after approval raises a "meal form was changed" notice (bell + email) to the section; an approval with meals raises "a meal form is ready to order".
+- **When the booking goes away** (withdrawn, declined, bumped, closed, expired, or moved): its pending / requested meals become Cancelled, and if any were already Requested the section is told to cancel with
+  the supplier. Delivered meals are never rewritten. A moved booking's new form copies the old one.
+- Tests: `tests/test_rooms_meals.py`, `tests/test_rooms_meals_pages.py`.
+
 ## 2026-10-09 (v5.5 — conference room reservation R8: CSS activities and the room, both ways)
 
 - **From the activity form:** a collapsible "Conference room" line (works without scripts). `room_chip.js` fetches `GET /rooms/api/day` (signed in, staff

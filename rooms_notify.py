@@ -20,9 +20,11 @@ import storage as st
 import tzutil as tz
 
 REQUESTER_KINDS = ("approved", "declined", "cancelled", "encoded", "expired")
+MEAL_KINDS = ("meal_form", "meal_revised", "meal_cancel")
 FEATURE = {"new_request": "room_new_request", "received": "room_decided", "approved": "room_decided", "declined": "room_decided",
            "cancelled": "room_decided", "encoded": "room_decided", "expired": "room_decided",
            "reminder": "room_reminder", "escalation": "room_admin_alerts",
+           "meal_form": "room_admin_alerts", "meal_revised": "room_admin_alerts", "meal_cancel": "room_admin_alerts",
            "withdrawn_late": "room_admin_alerts", "digest": "room_digest", "tomorrow": "room_digest"}
 ESCALATE_AFTER = timedelta(hours=24)       # a request pending this long goes to the Admin Head ...
 ESCALATE_WITHIN = timedelta(hours=48)      # ... as does one whose date is this close
@@ -117,10 +119,27 @@ def on_received(conn, res):
                   bell=False)
 
 
+def on_meal(conn, kind, form, text=None):
+    """Tell the Administrative Section about a meal form: ready to order, revised, or its booking is gone.
+    Bell + email, once per form version."""
+    res = form["reservation"]
+    heading = {"meal_form": "A meal form is ready to order", "meal_revised": "A meal form was changed",
+               "meal_cancel": "A meal order needs cancelling"}[kind]
+    line = text or f"{res['title']}, {_when(conn, res)}: {len(form['wanted'])} meal(s) for {form['pax'] or '?'} pax."
+    for a in approver_accounts(conn):
+        _add(conn, kind=kind, reservation_id=res["id"], version=form["version"], user_id=a["id"], bell=True,
+             url="/rooms/meals", text=f"{heading}: {line}")
+
+
 def on_decided(conn, res, by=None):
     verb = {"approved": "approved", "declined": "declined"}.get(res["status"])
     if not verb:
         return
+    if res["status"] == "approved":                                   # the form is now something to order from
+        import rooms_meals
+        f = rooms_meals.get_form(conn, res["id"])
+        if f and f["wanted"]:
+            on_meal(conn, "meal_form", f)
     extra = f" Reason: {res['decide_note']}" if res["status"] == "declined" and res.get("decide_note") else ""
     _to_requester(conn, res, res["status"], f"Your conference room request was {verb}: {res['title']}, "
                   f"{_when(conn, res)}.{extra}", by=by)
@@ -160,7 +179,11 @@ def bell_rows(conn, user_id):
                         (user_id,)).fetchall()
     mine = [r for r in rows if r[0] in REQUESTER_KINDS]
     late = [r for r in rows if r[0] == "withdrawn_late"]
+    meals = [r for r in rows if r[0] in MEAL_KINDS]
     out = []
+    if meals:
+        out.append({"text": meals[0][1] if len(meals) == 1 else f"{len(meals)} meal order updates", "url": "/rooms/meals",
+                    "count": len(meals)})
     if len(mine) == 1:
         out.append({"text": mine[0][1], "url": "/rooms/mine", "count": 1})
     elif mine:
@@ -193,6 +216,7 @@ def expire_past_requests(conn, today):
         res = rooms.get_reservation(conn, rid)
         st.audit(conn, "system", "room_expire", target_type="room_reservation", target_id=rid,
                  summary=f"{res['title']} on {res['day']} expired undecided", before="requested", after="expired")
+        rooms._meals_over(conn, rid, "The room request expired undecided.")
         on_expired(conn, res)
         n += 1
     return n
@@ -293,6 +317,10 @@ def _build(conn, n, base, name, send_to_account):
         return (feature, *mailer.room_alert_message(name, "a request is still waiting", n["text"], inbox, ap, de), None)
     if kind == "withdrawn_late":
         return (feature, *mailer.room_alert_message(name, "a booking was withdrawn at short notice", n["text"], inbox), None)
+    if kind in MEAL_KINDS:
+        return (feature, *mailer.room_alert_message(name, {"meal_form": "a meal form is ready to order", "meal_revised": "a meal form was changed",
+                                                           "meal_cancel": "a meal order needs cancelling"}[kind], n["text"],
+                                                    f"{base}/rooms/meals"), None)
     if kind == "reminder":
         if res["status"] != "approved":
             return None

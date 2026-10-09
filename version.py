@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "5.5"
+APP_VERSION = "5.6"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "5.6",
+        "date": "October 9, 2026",
+        "summary": "Meal requests for the conference room, from the form to delivery.",
+        "changes": [
+            "When you ask for meals with a room booking, a meal form is prepared for you: the activity title, number of pax, any special request, and Yes or No for breakfast, AM snack, lunch and PM snack, each with the time you want it delivered. We fill the meals in from your hours and you correct them.",
+            "The form can be printed or downloaded as a PDF, and guests can fill in theirs from their tracking link.",
+            "The Administrative Section has a new Meals page that shows every filled-up form to order from. They tag each meal as requested, then delivered, not delivered or cancelled, with an optional note, and everything is recorded with who and when.",
+            "If a booking is cancelled, the meals are cancelled with it, and the section is told to cancel with the caterer if an order was already placed.",
+        ],
+    },
     {
         "version": "5.5",
         "date": "October 9, 2026",

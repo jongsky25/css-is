@@ -1,6 +1,6 @@
 {% extends "public_layout.html" %}
 {% block title %}Your conference room request — Office Connect{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/rooms.css?v=20261009d">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/rooms.css?v=20261009e">{% endblock %}
 
 {% block content %}
 <div class="pub-card rp-card">
@@ -29,6 +29,8 @@
 
   {% if r.status == 'requested' %}<p class="muted">The Administrative Section hasn't decided yet. We'll email you as soon as they do.</p>{% endif %}
   {% if r.status == 'approved' %}<p class="muted">The room is yours at these hours. If your plans change, please withdraw so others can use it.</p>{% endif %}
+
+  {% if can_withdraw %}<p><a href="/room/t/{{ token }}/meals">{{ 'Meal form' if r.meals_requested else 'Request meals' }}</a></p>{% endif %}
 
   {% if offers %}
   <div class="rm-offers"><strong>{{ 'Your booking was cancelled. Pick a new time and it is booked at once:' if was_bumped else 'Other times that are free. Ask again:' }}</strong>

@@ -70,6 +70,7 @@ import calendar_answers
 import calendar_routes
 import rooms
 import rooms_notify
+import rooms_meals_routes
 import rooms_routes
 import report_docs
 import csm_report
@@ -16299,3 +16300,4 @@ app.include_router(calendar_routes.make_router(
 # ---- Conference room (rules in rooms.py, pages in rooms_routes.py) ----------
 app.include_router(rooms_routes.make_router(templates, get_conn, _today_local,
                                            base_url=_base_url, qr_data_uri=_qr_data_uri))
+app.include_router(rooms_meals_routes.make_router(templates, get_conn, _today_local))

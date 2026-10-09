@@ -462,6 +462,31 @@ def init_db(conn):
     CREATE INDEX IF NOT EXISTS ix_room_notice_open ON room_notice(email_status, id);
     CREATE INDEX IF NOT EXISTS ix_room_notice_user ON room_notice(user_id, seen_at);
 
+    -- The meal request form of a reservation (docs/ROOM_RESERVATION_PLAN.md section 8, R9): the activity's pax and any
+    -- special request, plus one line per meal with whether it is wanted, the delivery time asked for, and where the
+    -- Administrative Section has got to with it (pending -> requested -> delivered / not_delivered / cancelled).
+    CREATE TABLE IF NOT EXISTS room_meal (
+        reservation_id  INTEGER PRIMARY KEY REFERENCES room_reservation(id) ON DELETE CASCADE,
+        pax             INTEGER,
+        special_request TEXT,
+        form_version    INTEGER NOT NULL DEFAULT 1,
+        created_at      TEXT,
+        updated_at      TEXT,
+        updated_by      TEXT
+    );
+    CREATE TABLE IF NOT EXISTS room_meal_item (
+        reservation_id INTEGER NOT NULL REFERENCES room_reservation(id) ON DELETE CASCADE,
+        meal           TEXT NOT NULL CHECK (meal IN ('breakfast','am_snack','lunch','pm_snack')),
+        wanted         INTEGER NOT NULL DEFAULT 0,
+        deliver_at     TEXT,                -- HH:MM the meal is asked to arrive
+        status         TEXT NOT NULL DEFAULT 'pending'
+                       CHECK (status IN ('pending','requested','delivered','cancelled','not_delivered')),
+        status_by      TEXT,
+        status_at      TEXT,
+        status_note    TEXT,
+        PRIMARY KEY (reservation_id, meal)
+    );
+
     -- Maintenance / admin holds. slot_id NULL = the whole day.
     CREATE TABLE IF NOT EXISTS room_block (
         id         INTEGER PRIMARY KEY,
@@ -3645,6 +3670,8 @@ _AUDIT_ACTIONS = {
     "room_withdraw":       ("Withdrew a room reservation", "Conference room"),
     "room_expire":         ("Expired a room request", "Conference room"),
     "room_purge_guests":   ("Removed old guest details", "Conference room"),
+    "room_meal_edit":      ("Edited a room meal form", "Conference room"),
+    "room_meal_tag":       ("Tagged a room meal order", "Conference room"),
     "room_encode":         ("Encoded a room booking", "Conference room"),
     "room_cancel":         ("Cancelled a room booking", "Conference room"),
     "room_accept":         ("Took a suggested room slot", "Conference room"),

@@ -2,7 +2,7 @@
    `next` (where actions return to) and the flash messages. Nothing here changes anything by itself: every change is a
    button the person presses. #}
 {% if room_link %}
-<link rel="stylesheet" href="/static/css/rooms.css?v=20261009d">
+<link rel="stylesheet" href="/static/css/rooms.css?v=20261009e">
 {% set rl = room_link %}
 {% if rl.flash_ok %}<div class="room-banner" role="status">✓ {{ rl.flash_ok }}.</div>{% endif %}
 {% if rl.flash_err %}<div class="room-banner bad" role="alert">✕ {{ rl.flash_err }}</div>{% endif %}

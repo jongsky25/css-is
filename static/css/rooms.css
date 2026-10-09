@@ -185,3 +185,18 @@ button.rm-cell:focus-visible { outline:3px solid var(--accent); outline-offset:1
 .room-banner.bad { border-color:var(--red-ln); background:var(--red-bg); }
 .room-banner p { margin:.1rem 0 .4rem; }
 .room-banner form { display:inline-block; margin:.15rem .3rem .15rem 0; }
+
+/* ---- meals: the form and the Administrative Section's ordering page ---- */
+.rm-mealform .field input:not([type=radio]):not([type=checkbox]), .rm-mealform textarea { width:100%; box-sizing:border-box; font-size:max(16px, 1rem); }
+.rm-mealh { font-size:1.05rem; margin:1.2rem 0 .4rem; }
+.rm-yn { display:inline-flex; gap:1rem; } .rm-yn label { display:inline-flex; align-items:center; gap:.3rem; font-weight:600; white-space:nowrap; }
+.rm-meals-tbl input[type=time] { font-size:max(16px, 1rem); padding:.3rem .4rem; }
+.rm-mfilter { display:flex; flex-wrap:wrap; gap:.7rem 1rem; align-items:end; margin-bottom:.8rem; }
+.rm-mfilter label { display:flex; flex-direction:column; font-weight:600; font-size:.85rem; } .rm-mfilter .rm-chk { flex-direction:row; align-items:center; gap:.4rem; }
+.rm-mfilter input, .rm-mfilter select { font-size:max(16px, 1rem); }
+.rm-mcard { margin-bottom:1rem; scroll-margin-top:5rem; }
+.rm-mhead { display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
+.rm-mhead h2 { margin:0; font-size:1.1rem; } .rm-mfacts { text-align:right; } .rm-mfacts b { font-size:1.3rem; }
+.rm-special { margin:.2rem 0 .6rem; padding:.4rem .6rem; background:var(--amber-bg); border:1px solid var(--amber-ln); border-radius:var(--r1); }
+.rm-tagform { display:flex; flex-wrap:wrap; gap:.3rem; align-items:center; } .rm-tagform input[name=note] { width:10rem; font-size:max(16px, .9rem); padding:.25rem .4rem; }
+.rm-tagall { margin-top:.6rem; }

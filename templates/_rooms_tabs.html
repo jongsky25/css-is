@@ -1,7 +1,8 @@
 <nav class="rm-tabs" aria-label="Conference room">
   <a href="/rooms" {% if tab == 'board' %}aria-current="page"{% endif %}>Availability</a>
   <a href="/rooms/mine" {% if tab == 'mine' %}aria-current="page"{% endif %}>My reservations{% if mine_open %} <span class="badge blue">{{ mine_open }}</span>{% endif %}</a>
-  {% if room_pending is not none %}<a href="/rooms/poster" {% if tab == 'poster' %}aria-current="page"{% endif %}>QR poster</a>
+  {% if room_pending is not none %}<a href="/rooms/meals" {% if tab in ('meals', 'meals_form') %}aria-current="page"{% endif %}>Meals{% set mb = room_meals_badge() %}{% if mb %} <span class="badge amber">{{ mb }}</span>{% endif %}</a>
+  <a href="/rooms/poster" {% if tab == 'poster' %}aria-current="page"{% endif %}>QR poster</a>
   <a href="/rooms/blocks" {% if tab == 'blocks' %}aria-current="page"{% endif %}>Closures</a>
   <a href="/approvals#rooms">Requests{% if room_pending %} <span class="badge amber">{{ room_pending }}</span>{% endif %}</a>{% endif %}
 </nav>
