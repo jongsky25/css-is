@@ -4,7 +4,7 @@
 {% from "_faces.html" import face_defs, faces %}
 {% from "_growth.html" import growth_defs, growth %}
 {% block title %}Home{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009i">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009j">{% endblock %}
 {% block content %}
 {{ avatar_defs() }}
 {{ face_defs() }}
@@ -322,7 +322,7 @@
       <li class="cal-wk-item" data-tone="{{ i.tone }}" data-status="{{ i.status }}">
         <span class="cal-wk-when {{ 'now' if i.is_today }}">{{ i.when }}{% if i.time %}<small>{{ i.time }}</small>{% endif %}</span>
         <span class="cal-wk-main"><a href="{{ i.url }}">{{ i.title }}</a>
-          <small>{% if i.status != "confirmed" %}<b>{{ i.status|capitalize }}</b> · {% endif %}{% if i.dates %}{{ i.dates }} · {% endif %}{% if i.venue %}📍 {{ i.venue }} · {% endif %}{{ i.owner or "" }}</small></span>
+          <small>{% if i.chip %}<span class="cal-css-chip" data-life="{{ i.life }}">{{ i.chip }}</span> · {% endif %}{% if i.status != "confirmed" %}<b>{{ i.status|capitalize }}</b> · {% endif %}{% if i.dates %}{{ i.dates }} · {% endif %}{% if i.venue %}📍 {{ i.venue }} · {% endif %}{{ i.owner or "" }}</small></span>
         {% if i.people %}<span class="cal-faces" aria-label="With {{ i.people|map(attribute='name')|join(', ') }}">
           {% for p in i.people %}<span title="{{ p.name }}">{% if p.photo_url %}<img src="{{ p.photo_url }}" alt="">{% else %}{{ p.initials }}{% endif %}</span>{% endfor %}
           {% if i.more_people %}<span>+{{ i.more_people }}</span>{% endif %}</span>{% endif %}

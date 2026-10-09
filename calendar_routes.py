@@ -32,9 +32,13 @@ MAX_UNZIPPED = 80 * 1024 * 1024         # refuse a zip bomb before python-docx i
 
 AGENDA_DAYS = 14        # the agenda shows two weeks from the chosen day
 
-KIND_LABELS = {"meeting": "Meeting", "training": "Training / workshop",
-               "travel": "Trip / field work", "deadline": "Deadline",
-               "audit_mr": "Audit / management review", "banner": "Bureau-wide notice"}
+# What a person can choose when adding or editing an item. "activity" is not here: a CSS
+# activity is made through Create and shows on the calendar by itself.
+FORM_KIND_LABELS = {"meeting": "Meeting", "training": "Training / workshop",
+                    "travel": "Trip / field work", "deadline": "Deadline",
+                    "audit_mr": "Audit / management review", "banner": "Bureau-wide notice"}
+# What the filter menu and the cards can name: the above plus the CSS activities.
+KIND_LABELS = {**FORM_KIND_LABELS, "activity": "CSS activity"}
 STATUS_LABELS = {"confirmed": "Confirmed", "tentative": "Tentative",
                  "postponed": "Postponed", "cancelled": "Cancelled"}
 MODALITY_LABELS = {"": "Not set", "f2f": "Face to face", "online": "Online", "hybrid": "Hybrid"}
@@ -88,7 +92,7 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
     # Visibility is unchanged — items_between still only returns what this viewer may see.
     everything = oc.items_between(conn, user, start, end, scope="bureau" if layout == "week" else scope)
     items = oc.apply_filters(everything, filters)
-    entries = [i for i in everything if i["layer"] == "entries"]
+    entries = [i for i in everything if i["layer"] in ("entries", "activities")]
     # the filter menus list what is IN this window (before filtering), so choosing
     # one never makes the other options vanish
     units = {}
@@ -173,7 +177,7 @@ def make_router(templates, get_conn, today_local):
     def _form_page(request, conn, f, *, entry=None, error="", conflict=None, status_code=200):
         return templates.TemplateResponse(request, "calendar_entry_form.html", {
             "nav_active": "calendar", "f": f, "entry": entry, "error": error,
-            "conflict": conflict, "kinds": KIND_LABELS, "statuses": STATUS_LABELS,
+            "conflict": conflict, "kinds": FORM_KIND_LABELS, "statuses": STATUS_LABELS,
             "modalities": MODALITY_LABELS, "audiences": AUDIENCE_LABELS,
             "units": oc.unit_choices(conn), "people": oc.people_choices(conn),
         }, status_code=status_code)
@@ -210,7 +214,7 @@ def make_router(templates, get_conn, today_local):
 
     def _parse(f, existing=None, allowed_people=()):
         """(storage fields, people [(uid, role)], tags, error) from a posted form."""
-        if f["kind"] not in KIND_LABELS:
+        if f["kind"] not in FORM_KIND_LABELS:
             return None, None, None, "Pick a type from the list."
         if f["status"] not in STATUS_LABELS or f["status"] == "cancelled":
             return None, None, None, "Pick a status from the list."
@@ -466,7 +470,7 @@ def make_router(templates, get_conn, today_local):
             "owners": [(k, ci.OWNER_LABELS[k], cia.OWNER_TONES[k]) for k in ci.OWNERS],
             "mapping": mapping, "units": oc.unit_choices(conn),
             "audience": (posted or {}).get("audience", "bureau"),
-            "kinds": {k: v for k, v in KIND_LABELS.items()},
+            "kinds": dict(FORM_KIND_LABELS),
             "statuses": {k: v for k, v in STATUS_LABELS.items() if k != "cancelled"},
             "n_existing": sum(1 for r in drafts if r["import_key"] in existing),
         }, status_code=status_code)

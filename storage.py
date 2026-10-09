@@ -10272,3 +10272,18 @@ def cal_import_set_result(conn, batch_id, result):
     conn.execute("UPDATE calendar_import_batch SET result=? WHERE id=?",
                  (json.dumps(result), batch_id))
     conn.commit()
+
+
+def cal_overlays_for_events(conn, event_ids):
+    """{event_id: entry} for the calendar entries that are OVERLAYS on a CSS activity (their
+    `event_id` is set). An overlay carries what the activity itself cannot — the people on it,
+    tags, a kind, an audience — and never the title/dates/venue, which the event owns."""
+    ids = list(event_ids)
+    out = {}
+    for i in range(0, len(ids), 500):
+        chunk = ids[i:i + 500]
+        rows = conn.execute(f"SELECT {', '.join(_CAL_COLS)} FROM calendar_entry WHERE event_id IN (%s)"
+                            % ",".join("?" * len(chunk)), chunk).fetchall()
+        for e in _cal_hydrate(conn, rows):
+            out[e["event_id"]] = e
+    return out

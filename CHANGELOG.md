@@ -1,5 +1,31 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.65 — office calendar: every CSS activity is on the calendar)
+
+- **`activities` layer** (`office_calendar._activities_layer`) — every non-archived CSS activity (the
+  `event` table) that overlaps the window is on the calendar with NO copying and NO backfill: if it
+  exists it shows, in the agenda, month and week views, the home "Coming up" card and today's to-do
+  count. The activity owns its title, dates, venue and format. Invited ("outside") activities are
+  included; an activity with no date is never drawn; one whose every form is archived is hidden and
+  returns when restored.
+- **Chips by lifecycle** — upcoming: "N registered"; ongoing: "feedback open · N answered"; concluded:
+  "concluded · N responses" (from `lifecycle_of` + `event_registration_summary`). Staff who manage
+  activities land on `/monitor/<token>`, everyone else on the public `/e/<token>`. (The 1-5 score on
+  the card is not here yet — it needs the survey atoms and is left for a later increment.)
+- **Overlay** — a calendar entry whose `event_id` is set adds people, tags, kind, owner unit and an
+  audience on top of the activity and is NEVER drawn as a second card (the entries layer skips it);
+  an overlay narrowed to "only the people I add" hides the activity from everyone else.
+  `storage.cal_overlays_for_events`.
+- **People** — internal speakers who have an account are the people on the activity (role lead), so
+  the Week view puts an activity on its speakers' rows.
+- **Scope** — visibility is separate from scope. Everyone sees activities (staff register and rate
+  through them) unless an overlay narrows it; a section/division view shows the activities that unit
+  ORGANISES, "mine" those you created, speak at or are put on; "bureau" everything visible.
+- **Filters/labels** — "CSS activity" is in the type filter; a person still cannot POST the
+  "activity" kind from the add form (`FORM_KIND_LABELS` vs `KIND_LABELS`). Unit chips and tag menus
+  include activities. `viewer_context` now carries `role` and `rp_id`.
+- **Tests** — `tests/test_calendar_activities.py`. `static/css/calendar.css` → `?v=20261009j`.
+
 ## 2026-10-09 (v3.64 — office calendar: Week view, people × days)
 
 - **Week layout** (Agenda | **Week** | Month; on `/calendar` and the home Calendar tab) — one row per

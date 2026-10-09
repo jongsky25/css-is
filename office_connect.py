@@ -1121,7 +1121,7 @@ def _task_calendar_today(conn, user, today):
     """"2 things on the calendar today" — the person's own items plus what is bureau-wide,
     straight to the Calendar tab. Holidays and bureau-wide banners ("MORATORIUM…") are
     background, not things to do, so they do not count."""
-    items = [i for i in ocal.items_between(conn, user, today, today, scope="blend", layers=["entries"])
+    items = [i for i in ocal.items_between(conn, user, today, today, scope="blend", layers=["entries", "activities"])
              if i["kind"] != "banner"]
     if not items:
         return None
@@ -1244,6 +1244,7 @@ def calendar_week_block(conn, user, *, view, today=None):
             "dates": _range_label(i["start"], i["end"]) if i["end"] != i["start"] else "",
             "tone": i["tone"], "owner": i["owner_label"], "status": i["status"], "kind": i["kind"],
             "venue": i["venue"], "people": i["people"][:3], "more_people": max(len(i["people"]) - 3, 0),
+            "chip": (i["css"] or {}).get("chip"), "life": (i["css"] or {}).get("lifecycle"),
         })
     away = {}
     for i in work:

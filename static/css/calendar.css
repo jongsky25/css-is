@@ -294,3 +294,12 @@
 .cal-pw-cell.plotted .cal-pw-dot { opacity:.4; }          /* the filed plan, not yet confirmed by the person */
 .cal-pw-row .cal-bar-item { margin:.15rem .2rem; }
 @media (max-width:760px) { .cal-people-week { font-size:.9rem; } }
+
+/* ---- CSS activity chips (D1): where an activity is in its life ---- */
+.cal-css-chip { display:inline-block; border:1px solid var(--line); border-radius:999px; padding:0 .55rem; font-size:.72rem;
+                font-weight:700; color:var(--ink-soft); background:var(--surface); }
+.cal-css-chip[data-life="upcoming"] { color:var(--accent); border-color:var(--accent); }
+.cal-css-chip[data-life="ongoing"]  { color:var(--green); border-color:var(--green-ln, var(--green)); background:var(--green-bg); }
+.cal-css-chip[data-life="concluded"]{ color:var(--soft); }
+.cal-item[data-kind="activity"] .cal-title::before, .cal-bar-item[data-kind="activity"]::before,
+.cal-wk-item[data-kind="activity"] .cal-wk-main a::before { content:"★ "; color:var(--tone); }

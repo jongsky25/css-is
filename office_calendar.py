@@ -33,7 +33,9 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
+import auth
 import storage as st
+import tzutil as tz
 
 SCOPES = ("blend", "mine", "section", "division", "bureau")
 DEFAULT_SCOPE = "blend"            # mine + bureau-wide
@@ -64,7 +66,9 @@ def viewer_context(conn, user):
                 the viewer's own section (their unit) and the division above it;
                 None when they have no unit / no division."""
     scope_path, kind = st.team_scope_for_user(conn, user)
-    ctx = {"user_id": user["id"], "username": user.get("username"),
+    rp = conn.execute("SELECT rp_id FROM admin_user WHERE id = ?", (user["id"],)).fetchone()
+    ctx = {"user_id": user["id"], "username": user.get("username"), "role": user.get("role"),
+           "rp_id": rp[0] if rp else None,
            "kind": kind, "scope_path": scope_path,
            "section_path": None, "division_path": None}
     row = conn.execute("""
@@ -184,6 +188,8 @@ def _entries_layer(conn, ctx, start, end, scope):
     cards = _people_cards(conn, [p["user_id"] for e in entries for p in e["people"]])
     out = []
     for e in entries:
+        if e["event_id"]:
+            continue            # an overlay on a CSS activity: the activities layer draws it, once
         unit = units.get(e["owner_org_id"])
         path = unit["path"] if unit else None
         if not entry_visible(ctx, e, path) or not _in_scope(ctx, scope, e, path):
@@ -210,6 +216,112 @@ def _entries_layer(conn, ctx, start, end, scope):
     return out
 
 
+_LIFE_TEXT = {"upcoming": "registration open", "ongoing": "feedback open", "concluded": "concluded"}
+
+
+def _activities_layer(conn, ctx, start, end, scope):
+    """Every CSS activity (the `event` table) that overlaps the window, with no copying and
+    no backfill: if it exists, it is on the calendar. The activity owns its title, dates,
+    venue and format; an OVERLAY entry (calendar_entry.event_id) adds people, tags, kind and
+    an audience on top and is never drawn as a second item.
+
+    Visibility: an activity is bureau-wide information (staff register and give feedback
+    through it) unless its overlay narrows the audience, in which case the overlay's rules
+    (office_calendar.entry_visible) decide. Scope is separate from visibility: a section's
+    view shows the activities that unit ORGANISES (or that its people spoke at), "mine" the
+    ones you created, speak at or are put on, so one section's schedule is not flooded by the
+    whole bureau's. Archived activities (every form put away) are not shown."""
+    rows = conn.execute("""
+        SELECT e.id, e.event_token, e.title, e.event_date, e.end_date, e.venue, e.modality,
+               e.event_kind, e.created_by, e.lead_org_id,
+               (SELECT fi.close_at FROM event_form ef JOIN form_instance fi ON fi.id = ef.form_instance_id
+                  WHERE ef.event_id = e.id AND fi.survey_type = 2 LIMIT 1)
+        FROM event e
+        WHERE COALESCE(e.event_date, '') <> ''
+          AND substr(e.event_date, 1, 10) <= ?
+          AND substr(COALESCE(NULLIF(e.end_date, ''), e.event_date), 1, 10) >= ?
+          AND NOT (EXISTS (SELECT 1 FROM event_form ef WHERE ef.event_id = e.id)
+                   AND NOT EXISTS (SELECT 1 FROM event_form ef JOIN form_instance fi ON fi.id = ef.form_instance_id
+                                    WHERE ef.event_id = e.id AND COALESCE(fi.archived, 0) = 0))
+        ORDER BY e.event_date, e.id""", (end, start)).fetchall()
+    if not rows:
+        return []
+    ids = [r[0] for r in rows]
+    overlays = st.cal_overlays_for_events(conn, ids)
+    units = _units(conn, [r[9] for r in rows] + [o["owner_org_id"] for o in overlays.values()])
+    tones = _tone_map(conn)
+    speakers = {}                                           # event id -> {rp_id: (account id or None)}
+    for eid, rp_id, uid in conn.execute(
+            "SELECT DISTINCT ef.event_id, fi.rp_id, a.id FROM event_form ef "
+            "JOIN form_instance fi ON fi.id = ef.form_instance_id AND fi.survey_type = 3 "
+            "LEFT JOIN admin_user a ON a.rp_id = fi.rp_id AND a.active = 1 "
+            "WHERE ef.event_id IN (%s) AND fi.rp_id IS NOT NULL" % ",".join("?" * len(ids)), ids):
+        speakers.setdefault(eid, {})[rp_id] = uid
+    today, now = tz.today_local().isoformat(), tz.now_iso()
+    cards = _people_cards(conn, [p["user_id"] for o in overlays.values() for p in o["people"]]
+                          + [u for m in speakers.values() for u in m.values() if u])
+    out = []
+    for (eid, token, title, ed, end_d, venue, modality, ekind, created_by, lead_id, close_at) in rows:
+        ov = overlays.get(eid)
+        lead = units.get(ov["owner_org_id"] if ov and ov["owner_org_id"] else lead_id)
+        path = lead["path"] if lead else None
+        acct = {u for u in speakers.get(eid, {}).values() if u}
+        on = {p["user_id"] for p in (ov["people"] if ov else [])} | acct
+        pseudo = {"audience": (ov["audience"] if ov and ov["audience"] in ("bureau", "people") else "unit"),
+                  "people": [{"user_id": u} for u in on], "created_by": created_by}
+        if ov and not entry_visible(ctx, ov, path):
+            continue
+        mine = (ctx["user_id"] in on or (ctx["username"] and created_by == ctx["username"])
+                or ctx["rp_id"] in speakers.get(eid, {}))
+        if not _in_scope_activity(ctx, scope, pseudo, path, mine):
+            continue
+        s_iso = ed[:10]
+        e_iso = (end_d or ed)[:10]
+        life = st.lifecycle_of(ed, close_at, today, now, end_date=end_d or None)
+        summ = st.event_registration_summary(conn, eid)
+        answered = summ["completed"] + summ["unattributed"]
+        chip = (f"{summ['registered']} registered" if life == "upcoming" else
+                f"feedback open · {answered} answered" if life == "ongoing" else
+                f"concluded · {answered} {'response' if answered == 1 else 'responses'}")
+        who = {}
+        for p in (ov["people"] if ov else []):
+            who[p["user_id"]] = p["role"]
+        for u in acct:
+            who.setdefault(u, "lead")
+        manage = bool(ctx["role"]) and auth.can(ctx["role"], "manage_event")
+        out.append({
+            "key": f"event:{eid}", "layer": "activities", "title": title or "Untitled activity",
+            "start": s_iso, "end": max(e_iso, s_iso), "start_time": None, "end_time": None,
+            "all_day": True, "time_note": None,
+            "kind": "activity", "status": "confirmed",
+            "owner_org_id": ov["owner_org_id"] if ov and ov["owner_org_id"] else lead_id,
+            "owner_label": lead["label"] if lead else None,
+            "tone": _tone(lead, ov["owner_org_id"] if ov and ov["owner_org_id"] else lead_id, tones),
+            "people": [{"user_id": u, "role": r, **cards.get(u, {"name": "", "initials": "?", "photo_url": None})}
+                       for u, r in who.items()],
+            "tags": ov["tags"] if ov else [], "venue": venue, "modality": modality if modality in ("f2f", "online", "hybrid") else None,
+            "meeting_url": None,
+            "url": (f"/monitor/{token}" if manage else f"/e/{token}") if token else None,
+            "css": {"event_id": eid, "lifecycle": life, "life_text": _LIFE_TEXT[life], "registered": summ["registered"],
+                    "answered": answered, "chip": chip, "event_kind": ekind or "bureau"},
+            "flags": [], "editable": False, "private": False,
+        })
+    return out
+
+
+def _in_scope_activity(ctx, scope, pseudo, owner_path, mine):
+    """Scope narrowing for an activity: like an entry's, but "mine" also counts being the
+    creator or a speaker, and "section"/"division" mean the unit that organises it."""
+    if scope == "bureau":
+        return True
+    if scope == "mine":
+        return mine
+    if scope == "blend":
+        return mine or pseudo["audience"] == "bureau"
+    root = ctx["section_path"] if scope == "section" else ctx["division_path"]
+    return _under(owner_path, root) or pseudo["audience"] == "bureau"
+
+
 def _holidays_layer(conn, ctx, start, end, scope):
     """Holidays and work suspensions: shown to everyone, in every scope."""
     out = []
@@ -233,6 +345,7 @@ def _holidays_layer(conn, ctx, start, end, scope):
 # layers (activities, leave, birthdays, deadlines) are one line each.
 LAYERS = {
     "entries": _entries_layer,
+    "activities": _activities_layer,
     "holidays": _holidays_layer,
 }
 
@@ -511,7 +624,7 @@ def people_week(conn, user, monday, items):
     roster = st.whereabouts_roster_week(conn, monday, user)
     ncols = len(roster["days"])
     fri = monday + timedelta(days=ncols - 1)
-    work = [i for i in items if i["layer"] == "entries" and i["start"] <= fri.isoformat()
+    work = [i for i in items if i["layer"] in ("entries", "activities") and i["start"] <= fri.isoformat()
             and i["end"] >= monday.isoformat()]
     team = {p["user_id"] for sec in roster["sections"] for p in sec["people"]}
     per_person, band = {}, []

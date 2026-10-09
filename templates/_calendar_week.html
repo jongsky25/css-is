@@ -7,7 +7,7 @@
   <a class="cal-bar-item {{ 'cut-l' if b.left_cut }} {{ 'cut-r' if b.right_cut }}" href="{{ i.url }}"
      data-tone="{{ i.tone }}" data-status="{{ i.status }}" data-kind="{{ i.kind }}"
      style="grid-column:{{ b.col + 1 }} / span {{ b.span }}; grid-row:{{ b.lane }}"
-     title="{{ i.title }}{% if i.owner_label %} · {{ i.owner_label }}{% endif %}{% if i.venue %} · {{ i.venue }}{% endif %}{% if i.status != 'confirmed' %} · {{ i.status|capitalize }}{% endif %}">
+     title="{{ i.title }}{% if i.owner_label %} · {{ i.owner_label }}{% endif %}{% if i.venue %} · {{ i.venue }}{% endif %}{% if i.status != 'confirmed' %} · {{ i.status|capitalize }}{% endif %}{% if i.css %} · {{ i.css.chip }}{% endif %}">
     {% if b.timed %}<b>{{ i.start_time }}</b> {% endif %}{{ i.title }}{% if i.status == "tentative" %} <em>(tentative)</em>{% elif i.status == "postponed" %} <em>(postponed)</em>{% endif %}</a>
   {% endfor %}
   {% for n in row_more if n %}
