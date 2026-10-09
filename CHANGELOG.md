@@ -1,5 +1,9 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v5.3 — admin birthdays from the Directory)
+
+- **Directory (`POST /directory/person/{id}/birthday`, `staff_form.html`):** the Edit staff page has a Birthday card for admins with `manage_users`, with the same rules as `/admin/users/birthday` (admin consent notice, date never audited, blank month and day clears). Staff with no linked account see a note instead, since the birthday lives on `admin_user`. `_render_staff_form` now takes `msg` / `err`. The Users-page panel is unchanged. Test: `test_admin_sets_a_birthday_from_the_directory_edit_page`.
+
 ## 2026-10-09 (v5.2 — "Mine only" ignores the person who ran an import)
 
 - **Scope (`office_calendar._in_scope`):** the creator clause of "mine" is skipped for entries with `source = 'import'`, because a bulk import stamps the importer as `created_by` on every row. Being listed as a person still counts. `created_by` is unchanged, so edit rights are unaffected, and "Mine + bureau-wide" still shows bureau-wide imports. The activities layer still counts the creator as mine. Test: `test_mine_ignores_the_person_who_only_ran_the_import`.
