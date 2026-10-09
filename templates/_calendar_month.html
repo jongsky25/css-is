@@ -1,0 +1,33 @@
+{# Month grid: one block per week, seven columns. Day numbers sit in row 1; each
+   bar is placed by grid-column/grid-row so a multi-day trip is ONE bar across the
+   week (cut with a flat end where it continues into the next). Hidden-by-lane
+   items are counted as "+N more" and link to that day's agenda. #}
+<p class="cal-month-note">The month grid needs a wider screen. <a href="{{ qs(layout='', month='', day='') }}">Open the agenda instead</a>.</p>
+<div class="cal-month" role="grid" aria-label="{{ grid.title }}">
+  <div class="cal-dow" role="row">{% for n in weekdays %}<div role="columnheader">{{ n }}</div>{% endfor %}</div>
+  {% for w in grid.weeks %}
+  <div class="cal-week" role="row" style="--rows:{{ w.rows }}">
+    {% for d in w.days %}
+    <div class="cal-cell {{ 'out' if not d.in_month }} {{ 'today' if d.is_today }} {{ 'weekend' if d.is_weekend }} {{ 'holiday' if d.holidays }}"
+         role="gridcell" style="grid-column:{{ loop.index }}; grid-row:1 / span {{ w.rows + 1 }}"
+         {% if d.is_today %}aria-current="date"{% endif %}></div>
+    <a class="cal-num" href="/calendar/new?day={{ d.iso }}" style="grid-column:{{ loop.index }}; grid-row:1"
+       title="Add something on {{ d.iso }}"><span {% if d.is_today %}class="today"{% endif %}>{{ d.num }}</span>
+      {% for h in d.holidays %}<small class="cal-hol">★ {{ h.title }}</small>{% endfor %}</a>
+    {% endfor %}
+    {% for b in w.bars %}
+    {% set i = b.item %}
+    <a class="cal-bar-item {{ 'cut-l' if b.left_cut }} {{ 'cut-r' if b.right_cut }}" href="{{ i.url }}"
+       data-tone="{{ i.tone }}" data-status="{{ i.status }}" data-kind="{{ i.kind }}"
+       style="grid-column:{{ b.col }} / span {{ b.span }}; grid-row:{{ b.lane + 1 }}"
+       title="{{ i.title }}{% if i.owner_label %} · {{ i.owner_label }}{% endif %}{% if i.venue %} · {{ i.venue }}{% endif %}{% if i.status != 'confirmed' %} · {{ i.status|capitalize }}{% endif %}{% if i.css %} · {{ i.css.chip }}{% endif %}">
+      {% if b.timed %}<b>{{ i.start_time }}</b> {% endif %}{{ i.title }}{% if i.status == "tentative" %} <em>(tentative)</em>{% elif i.status == "postponed" %} <em>(postponed)</em>{% endif %}
+      {% if i.owner_label %}<span class="cal-bar-owner">{{ i.owner_label }}</span>{% endif %}</a>
+    {% endfor %}
+    {% for d in w.days if d.more %}
+    <a class="cal-more" style="grid-column:{{ w.days.index(d) + 1 }}; grid-row:{{ w.rows + 1 }}"
+       href="{{ qs(layout='', month='', day=d.iso) }}">+{{ d.more }} more</a>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>

@@ -1,5 +1,354 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.69 — office calendar: mismatches and "Add this trip")
+
+- **`office_calendar.mismatches(conn, user_ids, start, end)`** — one function for the soft heads-ups, derived at
+  read time, never blocking: `trip_conflict` (on a confirmed trip but reported Office/AWA/Leave), `leave_on_entry`
+  (reported Leave on a day a live entry lists them; a trip is a trip_conflict, not both) and `double_booked`
+  (two timed entries that overlap; touching ends and untimed items don't count). Cancelled and tentative items never count.
+- **Whereabouts form:** a day whose report disagrees with a trip says "The calendar has you on <trip>, but you reported
+  Office. Is that right?".
+- **Home to-do "Confirm where you'll be"** (this week and next) opens the right week.
+- **Calendar item page:** a "Heads-up" box, shown only to the person concerned, the item's leads and whoever added it.
+- **"Add this trip to the calendar"** (signed-in whereabouts form only): runs of consecutive days the person reported
+  as Field with the same place, that no trip covers, get one button → a `travel` entry (source `whereabouts`, audience =
+  their section, they are on it). Never automatic; the run is re-derived server-side so a forged request is refused and a
+  second tap can't duplicate it.
+- Not in this increment: bells and the "trip changed after you confirmed" notice (G2), and the extra lines in the
+  Tuesday chief roll-up.
+
+## 2026-10-09 (v3.68 — office calendar: trips fill in whereabouts, leave on the calendar)
+
+- **Calendar → whereabouts (layer 3).** A person listed on a CONFIRMED `travel` entry gets **Field** plotted
+  for each working day of it (note = the venue, else the title), above their filed arrangement and below
+  their own report. The weekly form and the Monday email open already showing "Field — Palawan"; the form
+  says "Filled in from the calendar: <trip>". Read at call time, so a moved trip moves the default; a
+  cancelled, tentative or postponed trip gives nothing; weekends are skipped.
+- **The person's own report always wins.** A saved row (including Office on a trip day) is never touched;
+  confirming a prefilled day writes their own row.
+- **Who's in (day) and the week roster** plot an unreported trip day as Field too (marked as plotted). The
+  place is shown only when the trip's audience isn't "only the people I add".
+- **Leave on the calendar (`leave` layer).** Reported leave days appear as "<name> — on leave", one bar per run
+  of working days (a weekend doesn't break it). Never a reason. Visibility is exactly the Who's-in rule
+  (own unit subtree, bureau for the Director or a grant, nobody else's for an unlinked account); the default
+  "Mine + bureau-wide" and "Mine only" scopes show only your own, so a section isn't flooded. "On leave" is a
+  filterable type. The Week view skips the layer (its rows already show leave).
+- Mismatch warnings and "Add this trip to the calendar" are E2.
+
+## 2026-10-09 (v3.67 — office calendar: editing linked items + the "collect feedback?" nudge)
+
+- **Editing a calendar item that is linked to a CSS activity.** The form shows the activity's title,
+  type, time and venue read-only (the activity owns them) and keeps who is on it, the audience, tags and
+  notes editable. Anything posted for the locked fields is ignored.
+- **Moving the dates from the calendar** goes through the activity's own Dates path (the event and
+  every form of it, the reporting cache, an `event_dates_set` audit row), and the item's own dates and
+  sequence follow so attendees' calendars update. Only people who can manage the activity may; others
+  see the dates locked (403 if they post them). A stale form is a conflict and changes nothing.
+- **Registrants are asked first.** If anyone registered with an email, saving shows "N people
+  registered — email them?" with *Save and email them* / *Save without emailing*. The email
+  ("Activity re-dated", new admin toggle) carries each person's own resume link.
+- **"Collect feedback?" nudge** (new scheduled email, `--calendar-css-nudge`, toggle in /admin/email):
+  the day after a TRAINING that lives only on the calendar, its creator is asked once. Never for
+  meetings, trips, audits, banners or deadlines; never for cancelled, imported or back-filled items;
+  never when a similar activity already exists; marked per item so it cannot repeat; a failed send is
+  retried within the 3-day window; a dry run marks nothing.
+
+## 2026-10-09 (v3.66 — office calendar: Collect feedback (CSS) and the duplicate guard)
+
+- **"Collect feedback (CSS)"** on a calendar item's page (live meetings and trainings only — a trip,
+  audit, banner, deadline or cancelled/already-linked item has nobody to ask; only people who can
+  create activities see it) → `/create?from_entry=<id>`, with the form pre-filled: name, dates, venue
+  (or the meeting link), format, the organising section when the item's owner is a section, and the
+  item's LEADS who have a directory record as speakers (topic = the item's title; attendees are not
+  speakers). A banner says it will be linked, with "Don't link". An item the person can't see, or
+  that can't be turned into an activity, simply gives the normal blank form.
+- **Linking** (`storage.cal_link_event`) — when Create succeeds the item becomes the activity's
+  OVERLAY (D1): the activity owns title/dates/venue and the item adds people/tags/audience, and the
+  calendar shows ONE card (the activity). The result page says "Linked to the calendar item". Bureau
+  and outside activities both link. A failed link never undoes or hides the activity just created;
+  a validation error keeps the link. One audit line; the sequence never changes.
+- **Duplicate guard, both directions** — (1) the create screen's new `/create/check-calendar` heads-up
+  offers calendar items the person may see with the same dates and a similar title, with a "Link this
+  activity to it" button (nothing links until Create); (2) an item's page lists activities on the same
+  dates with a similar title that have no calendar item yet, with "Link to this activity"
+  (`POST /calendar/entries/{id}/link-activity`, needs create-activity rights; refuses an item or
+  activity that is already linked). Similar = equal, one inside the other (6+ characters) or very
+  close; always only a suggestion.
+- **Item page** shows "linked to the CSS activity … the activity owns the title, dates and venue".
+- **Tests** — `tests/test_calendar_link.py`. `static/css/calendar.css` → `?v=20261009k`.
+- **Not here yet** — editing a linked item's dates from the calendar (writes through to the activity,
+  with the registrant notice) and the next-day "collect feedback?" nudge are D3.
+
+## 2026-10-09 (v3.65 — office calendar: every CSS activity is on the calendar)
+
+- **`activities` layer** (`office_calendar._activities_layer`) — every non-archived CSS activity (the
+  `event` table) that overlaps the window is on the calendar with NO copying and NO backfill: if it
+  exists it shows, in the agenda, month and week views, the home "Coming up" card and today's to-do
+  count. The activity owns its title, dates, venue and format. Invited ("outside") activities are
+  included; an activity with no date is never drawn; one whose every form is archived is hidden and
+  returns when restored.
+- **Chips by lifecycle** — upcoming: "N registered"; ongoing: "feedback open · N answered"; concluded:
+  "concluded · N responses" (from `lifecycle_of` + `event_registration_summary`). Staff who manage
+  activities land on `/monitor/<token>`, everyone else on the public `/e/<token>`. (The 1-5 score on
+  the card is not here yet — it needs the survey atoms and is left for a later increment.)
+- **Overlay** — a calendar entry whose `event_id` is set adds people, tags, kind, owner unit and an
+  audience on top of the activity and is NEVER drawn as a second card (the entries layer skips it);
+  an overlay narrowed to "only the people I add" hides the activity from everyone else.
+  `storage.cal_overlays_for_events`.
+- **People** — internal speakers who have an account are the people on the activity (role lead), so
+  the Week view puts an activity on its speakers' rows.
+- **Scope** — visibility is separate from scope. Everyone sees activities (staff register and rate
+  through them) unless an overlay narrows it; a section/division view shows the activities that unit
+  ORGANISES, "mine" those you created, speak at or are put on; "bureau" everything visible.
+- **Filters/labels** — "CSS activity" is in the type filter; a person still cannot POST the
+  "activity" kind from the add form (`FORM_KIND_LABELS` vs `KIND_LABELS`). Unit chips and tag menus
+  include activities. `viewer_context` now carries `role` and `rp_id`.
+- **Tests** — `tests/test_calendar_activities.py`. `static/css/calendar.css` → `?v=20261009j`.
+
+## 2026-10-09 (v3.64 — office calendar: Week view, people × days)
+
+- **Week layout** (Agenda | **Week** | Month; on `/calendar` and the home Calendar tab) — one row per
+  person in the viewer's team, grouped by section, Monday–Friday across; each person's calendar items
+  are bars over their row (a trip across Tue–Thu is one bar; cut flat where it runs past Friday or
+  began earlier; three lanes then "+N more" to that day's agenda). Items that name nobody in the team
+  (the whole unit, the bureau, someone outside) sit in a band at the top, so nothing visible is left off.
+- **Where people are** comes from `storage.whereabouts_roster_week` — the "Who's in" week page's own
+  function — so its rules carry over: scope is the directory (an unlinked account gets a message, not
+  everyone), a person's own report beats the filing, a holiday has no cells, **leave never carries a
+  reason** (asserted: the note never reaches the page), a field trip shows where; a pale dot is the
+  filed plan not yet confirmed by the person. Dots are never the only signal: each non-office state
+  also says it in words.
+- **Scope** — the scope pills don't apply to this layout (rows come from the directory); items are
+  loaded for the whole team but still only what the viewer may see (an item for "only the people I
+  add" is drawn for those people alone, not even for the Director).
+- **`office_calendar.people_week`**, `monday_of`, and `_lay_out` (the lane stacking `month_grid` now shares).
+- `static/css/calendar.css` → `?v=20261009i`. **Tests** — `tests/test_calendar_week.py`.
+
+## 2026-10-09 (v3.63 — office calendar: the Calendar tab on the home page, and today's count in the to-do)
+
+- **Home page tab: Team | Me | Calendar** — `/?view=calendar` shows the full calendar body (scope
+  pills, Agenda/Month, filters, unit chips, + Add) under the greeting and to-do, in place of the team
+  panels, the Coming-up card and the doors. Team needs a directory link; Me and Calendar are for
+  everyone (an unlinked account sees Me | Calendar). The tab opens on the scope of the tab you came
+  from: Team -> your team (or the whole bureau), Me -> yours plus bureau-wide. Every link, filter form
+  and month/agenda switch stays on the home page (`view=calendar`, layout in `layout=`).
+- **Shared body** — `calendar_routes.build_calendar_page(conn, user, today, q, base=, layout_key=,
+  fixed=)` builds the page for both `/calendar` and the tab; `templates/_calendar_body.html` is the
+  one body. `/calendar` behaves exactly as before; its template variable `view` is now `layout`.
+  If the tab's calendar fails the page still renders, with a link to `/calendar`.
+- **To-do** — `office_connect._task_calendar_today`: "N things on the calendar today" (your own items
+  plus what is bureau-wide; holidays and bureau-wide banners don't count), with the first two titles
+  and times, linking to the Calendar tab. Tone "for information": after to-dos, before done items.
+  Like every task source, a failure is swallowed and never hides the others.
+- **Tests** — `tests/test_calendar_home_tab.py`.
+
+## 2026-10-09 (v3.62 — "Coming up" on the home page; initials as nicknames)
+
+- **Home page (`/`, Team and Me tabs)** — a "Coming up" card under the to-do strip: the next seven
+  days from the office calendar, up to five items (Today / Tomorrow / weekday, time, title linked to
+  the item, owning unit's colour and name, dates when it is a trip already under way, venue, status,
+  up to three faces) with "+N more", a holiday line, an empty state with an Add link, and an "Away"
+  strip of the people on a confirmed trip (one chip per person, capped at six). Built by
+  `office_connect.calendar_week_block` on top of `office_calendar.items_between`, so what is shown can
+  never exceed what `/calendar` shows. Scope: Team = the viewer's unit (their section, a chief's
+  division) or the whole bureau for a bureau-wide viewer; Me, or an account with no directory link =
+  their own items plus what is bureau-wide. (An item you are on that another unit owns is on the Me
+  tab.) The card is optional: if it fails the page still renders.
+- **Nicknames** — the bureau's initials are now prefilled as nicknames (KJF, JAP, MM, ASF); one per
+  person (Mary Anne Milliscent Castro: "MM", not "MMC"). People can change theirs on My profile.
+- **Tests** — `tests/test_calendar_home.py`; nickname tests updated.
+- `static/css/calendar.css` bumped to `?v=20261009h`.
+
+## 2026-10-09 (v3.61 — fill in nicknames from the bureau's list; Cath; the previous Director)
+
+- **`/calendar/nicknames`** (admin only) — gives accounts the nickname the calendar uses, from the
+  bureau's own list (`calendar_people.NICKNAME_PREFILL`: Tek, Malou, Olga, Mimi, Feng, Dheng, Cha,
+  Riza, RJ, Desten, AC, Jong, Cath, Mae). Each person is found by FULL NAME. Rows: Ready (ticked),
+  Already set, Has another nickname (left alone unless an admin ticks it), two accounts with that name
+  (never ticked), no account found. Initials (KJF, JAP, MM, MMC, ASF, MWB) are not nicknames, and a
+  first name needs none. The nickname written comes from the server's list, never the form. A nickname
+  is also what the home page greets the person by, and they can change it on My profile. One audit
+  line per save. Linked from the import page and the "Who is who?" page.
+- **Guide** — Cath = Cathrina Laurio. **`NO_ACCOUNT`**: people the guide names who have no account at
+  all (the previous Director, Mar Wynn Bello) now show "has no account" with the skip option
+  pre-selected instead of lingering as unmatched.
+- **Tests** — `tests/test_calendar_people.py` (nickname proposals, apply, can't overwrite, can't be
+  forged; missing-account skip; Cath).
+
+## 2026-10-09 (v3.60 — name guide: the rest of the names, archived people, "Place - Name")
+
+- **Guide additions** — Jong = Ray Justin Ventura; Mae = Maejorie Orpilla; Desten = Modesto Lazo
+  (same person as Modesto); MMC = Mary Anne Milliscent Castro (same person as MM); ASF = Analyn
+  Fortaleza (same person as Analyn); "Mar Wynn" = the previous Director. MMC/ASF are no longer
+  "probably not people" (`PROBABLY_NOT` is now empty; the mechanism stays).
+- **Archived / inactive people** — `load_directory` now returns every account with an `inactive`
+  flag. The guide may name someone who has left (Maejorie Orpilla is archived; the previous
+  Director may be) and the item still shows who it was for, marked "(archived)"; an active
+  namesake beats an archived one. Ordinary matching (nickname, first name, "starts like") only
+  ever looks at ACTIVE people, and archived people are not offered in the everyday picker.
+- **"Place - Name"** — `expand` splits a person glued to a place at the dash ("MDN - Malou",
+  "SGA - Arlene", "℅ MM CHD-Cath"): the sides that match somebody are the names and the place is
+  dropped; if neither side matches, the whole token is kept so it can be marked "not a person".
+- **Dry run on the real file** against the names supplied: 69 of the 92 items with names match;
+  only "Mar"/"MWB" (no active account for the previous Director) and "Cath" are left.
+- **Tests** — `tests/test_calendar_people.py`.
+
+## 2026-10-09 (v3.59 — name guide for the imported calendar)
+
+- **`calendar_people.NAME_GUIDE`** — the bureau's own answer to "who is this?" for the names in the
+  CY 2026 calendar (Tek = Teresita Guzman, Riza = Maria Teresa Santiago, KJF = Kathrine Joyce Flores,
+  JAP = the Director, MM = Mary Anne Milliscent, Mar / MWB = the previous Director Mar Wynn Bello…).
+  It is looked up by FULL NAME in the directory (all words, else first + last word), so it needs no
+  user ids. It ranks just under a remembered answer and above nickname/first-name matching, so two
+  Ronnels or two Junes resolve correctly; a guide person with no active account is shown as
+  "Guide says … · no active account" and is never replaced by a first-name guess.
+- **Not people** — `NOT_PEOPLE` marks the plain places/teams/phrases from the file (Cebu, CAR,
+  Tolosa, BLHSD IQA Team, DOH Rep, ZBB…) so they pre-select "Not a person" ("CAR" no longer offers
+  Carole); `PROBABLY_NOT` (MMC, ASF) is shown as "Probably not a person" and never chosen.
+- **People step** — new chips (Name guide · …, Guide says … · no active account, Not a person) and
+  the "Not a person" option pre-selected for known non-people. Still nothing is written until Save.
+- **Tests** — `tests/test_calendar_people.py` (guide, ambiguity, missing account, honorific forms).
+
+## 2026-10-09 (v3.58 — office calendar: match the names in the imported calendar)
+
+- **`/calendar/import/{id}/people`** (admin only; only after the batch is imported) — "Who is who?":
+  every name the importer found in the imported items, with the items it appears in, how well it
+  matched, and a choice per name: a person, "not a person" (places, teams, initials) or "decide later".
+- **`calendar_people.py`** (new) — the matcher. Levels, best first: remembered answer, nickname,
+  full name (any order), first name, surname/other name, "starts like" (3+ letters). A name is only
+  PRE-SELECTED when exactly one person fits at one of the first five levels; "starts like" is only
+  ever offered as "maybe" ("Dir. Mar" must not become Maria); two people called Mae are "ambiguous"
+  and nothing is chosen; places and initials are "unmatched". Honorifics (Sir, Doc, Ma'am, Dr., Dir.,
+  Usec…) are dropped first; "Riza Desten" is split into two people only when each word is someone.
+  Active accounts only; "Last, First" directory names are reordered.
+- **Writing** — nothing is saved until Save. People are ADDED to the items (never replacing who is on
+  them), as `travel` on trips and `attending` otherwise, stamped as already seen so a bulk import
+  cannot flood anyone's bell later; people never bump an item's sequence. Applying twice adds nobody
+  twice; names left on "decide later" stay on the list. One audit line per save.
+  `storage.cal_add_people`, `cal_import_set_result`.
+- **Remembered** — each answer is kept (`calendar_people_aliases`, `calendar_people_ignored`) so next
+  year's upload pre-selects it as "Remembered".
+- **`calendar_import_apply.py`** — `people_state`, `apply_people`. **`deploy_hf.py`** ships
+  `calendar_people.py`.
+- **Tests** — `tests/test_calendar_people.py`.
+
+## 2026-10-09 (v3.57 — office calendar: import the Word calendar)
+
+- **`/calendar/import`** (admin only — `manage_users`; everyone else gets 403) — upload the yearly
+  .docx → review → import. Upload is capped (8 MB, 80 MB unpacked) and any unreadable file gets one
+  friendly message; the parsed drafts are kept in the new `calendar_import_batch` table so a review
+  survives a restart and B3 can still see the people hints.
+- **Review page** — (1) map each legend colour (Bureau, Sections 1-5) to a unit, guessed from unit
+  names and remembered next time; this also sets the unit colours the calendar draws
+  (`calendar_unit_tones`); (2) who can see the items (everyone, or only the owning unit — an item
+  with no unit is always shown to everyone so it can't become invisible); (3) a table of every item
+  with tick / dates / title / type / status / owner editable, plus warnings, times and name hints.
+- **`calendar_import_apply.py`** — all-or-nothing: every ticked row is validated before the first is
+  written (`storage.cal_validate`), one audit line for the whole batch (`cal_create(audit_it=False)`).
+  Idempotent: a draft whose `import_key` is already in the calendar is left alone — re-uploading the
+  same file, or importing twice, adds nothing and never overwrites a later edit. An imported batch
+  cannot be imported or discarded again.
+- **Real file** — the CY 2026 calendar imports as 380 items in 0.1 s; review page 618 KB.
+- **`deploy_hf.py`** ships `calendar_import_apply.py`; `app.py` adds a search-only "Import calendar"
+  entry (admin).
+- **Tests** — `tests/test_calendar_import_page.py`.
+
+## 2026-10-09 (unreleased — office calendar B1: the Word-file parser, no visible change)
+
+- **`calendar_import.py`** (new, pure — no DB, no routes): `parse(path_or_file)` reads the yearly
+  Word calendar and returns `Draft` entries plus the holiday lines it set aside, file-level
+  warnings, stats and the colours it could not map.
+  - Owner = run highlight / shading per the legend (green Bureau, yellow S1, magenta S2, orange
+    S3, cyan S4, blue S5); pastel cell tints, white and unknown colours mean "no owner".
+  - Guesses (all editable in the review screen): kind, status (tentative/postponed/pending),
+    modality, start/end time (`130pm:`, `(1:30-3pm)`, `9-12`, `8-10AM`, `9-12 AM` = noon; AM/PM
+    alone stay a note), tags, and a raw `people_hint` for the resolver (B3). Numbers such as
+    "LIPH IS 3.0", "AO 2021-0040", "CHD6" are not mistaken for times.
+  - Wrapped fragments ("(S4: Carole)") join their activity; holiday lines are set aside.
+  - Identical activities on consecutive WORKING days merge into one range (across weekends, a
+    holiday, or a month table); typo variants within two characters merge with a warning, while a
+    different place ("Tawi Tawi" / "Basilan") never does. Stable `import_key` per draft.
+  - Run on the real CY 2026 file: 12 tables, 678 lines → 380 drafts, 18 holidays set aside, no
+    file-level warnings; 48 drafts had no owner colour and are flagged.
+- **`deploy_hf.py`** — ships `calendar_import.py` in the runtime bundle (B2 will import it).
+- **Tests** — `tests/test_calendar_import.py` (builds a small .docx in the test; the real file is
+  not in the repo).
+
+## 2026-10-09 (v3.56 — office calendar: month grid and filters)
+
+- **`/calendar?view=month&month=YYYY-MM`** — a Sunday-first month grid like the Word calendar.
+  A multi-day trip is ONE bar per week (flat-ended where it continues into the next), stacked in
+  lanes; at most three lanes are drawn and the rest are counted per day as "+N more", linking to
+  that day's agenda — never silently dropped. Holidays label and tint their day; today is ringed;
+  tentative bars are dashed, postponed ones struck through. Phones get a note pointing at the
+  agenda instead of the grid.
+- **Filters (agenda and month)** — type, status and tag selects plus clickable unit chips (the
+  colour legend), all kept in the URL and across Earlier/Later/month navigation. Menu options are
+  taken from the unfiltered window so choosing one never hides the others; invalid values are
+  ignored; holidays are never filtered out.
+- **`office_calendar.py`** — `month_span`, `month_grid`, `apply_filters` (also `items_between(filters=)`).
+- **`calendar_routes.py`** — `/calendar` now handles both views (`calendar_page`).
+- **`static/css/calendar.css`** bumped to `?v=20261009b` (new rules).
+- **Tests** — `tests/test_calendar_month.py`.
+
+## 2026-10-09 (v3.55 — office calendar: add, edit, cancel and restore items)
+
+- **`calendar_routes.py`** — `GET/POST /calendar/new`, `GET /calendar/entries/{id}` (detail +
+  history), `GET/POST …/edit`, `POST …/cancel`, `POST …/restore`. Anyone signed in may add and
+  edit; an entry the viewer may not see answers 404 for every one of these (same as a missing
+  one). The form rejects: an empty title, end before start, a non-http(s) meeting link, a type or
+  status outside the offered list (so "activity" and "cancelled" can't be posted), people who
+  aren't active accounts, "only the people I add" with nobody added, and "owning unit" audience
+  with no unit (nobody outside the attendees would ever see it).
+- **Conflicts** — the form carries `updated_at`; a save against a newer version returns 409 with
+  who changed what, keeps what the person typed, and does not overwrite until they save again.
+- **`storage.py`** — `cal_update(expected_updated_at=)` (moves on every edit, unlike the
+  sequence); `meeting_url` must be http(s) (it is rendered as a link).
+- **`office_calendar.py`** — `viewable_entry`, `people_choices`, `unit_choices`, `display_names`,
+  `describe_change`.
+- **Templates/CSS** — `calendar_entry_form.html`, `calendar_entry.html`; the agenda gets "+ Add"
+  and links each title to its page.
+- **`deploy_hf.py`** — the HF runtime bundle now ships `office_calendar.py` and
+  `calendar_routes.py` (missing them would have crashed the Space on start; caught by
+  `test_runtime_py_is_import_closed`).
+- **Tests** — `tests/test_calendar_entry_pages.py`; storage tests extended.
+
+## 2026-10-09 (v3.54 — office calendar: read-only agenda page)
+
+- **`calendar_routes.py`** (new, the repo's first `APIRouter`) — `GET /calendar`: a two-week agenda
+  with scope pills (Mine + bureau-wide / Mine only / My section / My division / Everything I can
+  see), Earlier / Today / Later links and a pinned "today". `app.py` includes it with one line
+  (`make_router(templates, get_conn, _today_local)`); `_auth_gate` already covers it by path.
+- **`office_calendar.py`** — `agenda_days()` (groups items by day, "day 2 of 3" for trips) and
+  `scope_choices()` (never offers a pill that could only be empty).
+- **`templates/calendar.html`, `static/css/calendar.css`** — colour = owning unit (green/yellow/
+  magenta/orange/cyan/blue/grey tokens, light/dark/contrast), tentative dashed, postponed struck
+  through; the unit name is always written, never colour alone.
+- **`app.py` / `dash_layout.html`** — "Office calendar" entry in the AWA menu and search index;
+  `/calendar*` highlights it.
+- **Tests** — `tests/test_calendar_page.py`.
+
+## 2026-10-09 (unreleased — office calendar A2: scope rules, no visible change)
+
+- **`office_calendar.py`** (new) — the layer registry: `items_between(conn, user, start, end,
+  scope=, layers=)` returns merged, sorted `CalItem` dicts from the `entries` and `holidays`
+  providers. Visibility comes from the directory (`team_scope_for_user`), never the role: an
+  unlinked account sees only bureau-audience items and its own; `audience='people'` is for the
+  named people and creator only; an owner-less unit entry is for its own people only. The
+  requested scope (blend/mine/section/division/bureau) can only narrow. Owner colour comes from the
+  `calendar_unit_tones` setting (importer, B2); bureau-level units default to green.
+- **Tests** — `tests/test_calendar_scope.py`. Nothing calls it yet, so `version.py` is not bumped.
+
+## 2026-10-09 (unreleased — office calendar A1: storage only, no visible change)
+
+- **`storage.py`** — new tables `calendar_entry`, `calendar_entry_person`, `calendar_entry_tag`,
+  `calendar_entry_revision` (auto-created by `init_db`), and `cal_create` / `cal_update` /
+  `cal_cancel` / `cal_restore` / `cal_delete` / `cal_get` / `cal_list_between` / `cal_revisions`.
+  Sequence rises only on date/time/status/recurrence changes; stale-sequence saves raise
+  `CalendarConflict`; cancel is a soft delete restorable for 30 days; `import_key` makes
+  re-import idempotent. Nothing reads these yet, so `version.py` is not bumped.
+- **Tests** — `tests/test_calendar_storage.py`. Plan: `docs/OFFICE_CALENDAR_PLAN.md` (increment A1).
+
 ## 2026-10-09 (v3.53 — wellness register PDF: office is BLHSD, footnote removed)
 
 - **`storage.py`** — `wellness_person_month` returns `office = BLHSD_NAME` for everyone

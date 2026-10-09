@@ -1,0 +1,82 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, empty_state %}
+{% block title %}{{ "Not found" if missing else e.title }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009k">{% endblock %}
+{% block content %}
+{% if missing %}
+  {{ empty_state("That calendar item isn't here.", "It may have been removed, or it isn't shared with you.", "📅") }}
+  <p><a href="/calendar">← Back to the calendar</a></p>
+{% else %}
+<p class="cal-back"><a href="/calendar?day={{ e.start_date }}">← Back to the calendar</a></p>
+{% if ok %}<div class="cal-flash ok" role="status">✓ {{ ok }}</div>{% endif %}
+{% if err %}<div class="cal-flash err" role="alert">✕ {{ err }}</div>{% endif %}
+
+<article class="cal-detail" data-status="{{ e.status }}">
+  <h1 class="page"><span {% if e.status in ("cancelled", "postponed") %}style="text-decoration:line-through;opacity:.75"{% endif %}>{{ e.title }}</span></h1>
+  <p class="cal-chips">
+    <span class="cal-chip">{{ kind_label }}</span>
+    {% if e.status != "confirmed" %}<span class="cal-chip warn">{{ status_label }}</span>{% endif %}
+    {% if owner %}<span class="cal-chip">{{ owner }}</span>{% endif %}
+    <span class="cal-chip" title="Who can see this item">{{ audience_label }}</span>
+  </p>
+
+  <dl class="cal-facts">
+    <dt>When</dt>
+    <dd>{{ e.start_date }}{% if e.end_date %} → {{ e.end_date }}{% endif %}
+      {% if e.start_time %} · {{ e.start_time }}{% if e.end_time %}–{{ e.end_time }}{% endif %}{% elif e.time_note %} · {{ e.time_note }}{% else %} · All day{% endif %}</dd>
+    {% if e.venue or e.modality %}<dt>Where</dt>
+    <dd>{{ e.venue or "" }}{% if e.modality %} <span class="cal-chip">{{ {"f2f": "Face to face", "online": "Online", "hybrid": "Hybrid"}[e.modality] }}</span>{% endif %}</dd>{% endif %}
+    {% if e.meeting_url %}<dt>Link</dt><dd><a href="{{ e.meeting_url }}" rel="noopener noreferrer" target="_blank">{{ e.meeting_url }}</a></dd>{% endif %}
+    {% if attendees %}<dt>On it</dt>
+    <dd><ul class="cal-people">{% for p in attendees %}<li>{{ p.name }}{% if p.role == "lead" %} <small>(lead)</small>{% elif p.role == "travel" %} <small>(travelling)</small>{% endif %}</li>{% endfor %}</ul></dd>{% endif %}
+    {% if e.tags %}<dt>Tags</dt><dd>{% for t in e.tags %}<span class="cal-tag">{{ t }}</span> {% endfor %}</dd>{% endif %}
+    {% if e.note %}<dt>Notes</dt><dd class="cal-note">{{ e.note }}</dd>{% endif %}
+  </dl>
+
+  {% if heads_up %}
+  <div class="cal-flash warn" role="status"><strong>Heads-up</strong>
+    <ul>{% for h in heads_up %}<li>{{ h }}</li>{% endfor %}</ul></div>
+  {% endif %}
+
+  {% if css.linked %}
+  <div class="cal-flash ok" role="status">★ This is linked to the CSS activity <strong>{{ css.linked.title }}</strong>.
+    The activity owns the title, dates and venue; this item adds the people and tags.
+    <a href="{{ '/monitor/' if css.manage else '/e/' }}{{ css.linked.event_token }}">Open the activity</a></div>
+  {% elif css.eligible %}
+  <div class="cal-css-box">
+    <a class="cal-btn" href="/create?from_entry={{ e.id }}">Collect feedback (CSS)</a>
+    <span class="cal-range">Opens the create-activity form with this item's details filled in; the item is linked to the new activity.</span>
+    {% if css.candidates %}
+    <div class="cal-flash warn"><strong>This may already be an activity</strong>
+      {% for c in css.candidates %}
+      <form method="post" action="/calendar/entries/{{ e.id }}/link-activity" class="cal-inline">
+        <input type="hidden" name="event_id" value="{{ c.id }}">
+        <a href="{{ '/monitor/' if css.manage else '/e/' }}{{ c.token }}">{{ c.title }}</a> ({{ c.date }})
+        <button class="cal-btn" type="submit">Link to this activity</button>
+      </form>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <div class="cf-actions">
+    {% if e.status == "cancelled" %}
+      <form method="post" action="/calendar/entries/{{ e.id }}/restore"><button class="cal-btn primary" type="submit">Restore</button></form>
+    {% else %}
+      <a class="cal-btn primary" href="/calendar/entries/{{ e.id }}/edit">Edit</a>
+      <form method="post" action="/calendar/entries/{{ e.id }}/cancel"
+            onsubmit="return confirm('Cancel this item? You can restore it for 30 days.')"><button class="cal-btn" type="submit">Cancel item</button></form>
+    {% endif %}
+  </div>
+
+  <p class="cal-edited">Added by {{ created_by }}{% if e.created_at %} on {{ e.created_at[:10] }}{% endif %}.
+    {% if e.updated_at and e.updated_at != e.created_at %}Last edited by {{ updated_by }}, {{ e.updated_at.replace("T", " ") }}.{% endif %}</p>
+
+  <details class="cal-history">
+    <summary>History ({{ history|length }})</summary>
+    <ul>{% for h in history %}<li><strong>{{ h.who }}</strong> {{ h.what }} <small>{{ h.at.replace("T", " ") if h.at }}</small></li>{% endfor %}</ul>
+  </details>
+</article>
+{% endif %}
+{% endblock %}

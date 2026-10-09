@@ -75,6 +75,7 @@ RUNTIME_PY = [
     "tours.py", "ui_telemetry.py", "ux_handoff.py", "ai_core.py", "qa_rules.py",
     "wellness_register.py", "work_arrangement_annex.py",
     "work_arrangement_backfill.py", "office_connect.py",
+    "office_calendar.py", "calendar_routes.py", "calendar_import.py", "calendar_import_apply.py", "calendar_people.py",
     # Imported by app.py for the daily reminder sweep the scheduler loop fires.
     "send_reminders.py",
 ]

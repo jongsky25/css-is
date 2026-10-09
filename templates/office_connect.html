@@ -4,6 +4,7 @@
 {% from "_faces.html" import face_defs, faces %}
 {% from "_growth.html" import growth_defs, growth %}
 {% block title %}Home{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009k">{% endblock %}
 {% block content %}
 {{ avatar_defs() }}
 {{ face_defs() }}
@@ -270,12 +271,17 @@
     </div>
     {% endif %}
     <span class="grow"></span>
-    {% if d and d.scope.kind != "none" %}
+    {#-- Team / Me / Calendar. Team needs a directory link (it is "your team"); Me and Calendar
+         are for everyone. Calendar opens on the scope of the tab you came from: Team -> your
+         team (or the whole bureau), Me -> yours plus bureau-wide. --#}
+    {% set linked = d and d.scope.kind != "none" %}
+    {% set cur_tab = "calendar" if view == "calendar" else ("me" if (me_view or not linked) else "team") %}
     <div class="oc-seg" role="group" aria-label="Whose information to show">
-      <a href="/" {% if not me_view %}aria-current="true"{% endif %}>Team</a>
-      <a href="/?view=me" {% if me_view %}aria-current="true"{% endif %}>Me</a>
+      {% if linked %}<a href="/" {% if cur_tab == "team" %}aria-current="true"{% endif %}>Team</a>{% endif %}
+      <a href="/?view=me" {% if cur_tab == "me" %}aria-current="true"{% endif %}>Me</a>
+      <a href="/?view=calendar{% if cal_week and view != 'calendar' %}&scope={{ cal_week.scope }}{% endif %}"
+         {% if cur_tab == "calendar" %}aria-current="true"{% endif %}>Calendar</a>
     </div>
-    {% endif %}
   </div>
 
   {#-- ---------------- your to-do ----------------
@@ -300,6 +306,56 @@
   </section>
   {% endif %}
   {% set task_keys = tasks|map(attribute='key')|list if tasks else [] %}
+
+  {#-- ---------------- coming up (the office calendar) ----------------
+       The next seven days, from the same calendar the /calendar page shows. --#}
+  {% if cal_week and view != "calendar" %}
+  <section class="cal-wk" aria-labelledby="calwk-h" data-tour="oc-calendar">
+    <header>
+      <h2 id="calwk-h">Coming up</h2>
+      <span class="cal-wk-sub">{{ cal_week.range }} · {{ cal_week.scope_label }}</span>
+      <a class="cal-wk-all" href="{{ cal_week.calendar_url }}">Open the calendar →</a>
+    </header>
+    {% if cal_week['items'] %}
+    <ul class="cal-wk-list">
+      {% for i in cal_week['items'] %}
+      <li class="cal-wk-item" data-tone="{{ i.tone }}" data-status="{{ i.status }}">
+        <span class="cal-wk-when {{ 'now' if i.is_today }}">{{ i.when }}{% if i.time %}<small>{{ i.time }}</small>{% endif %}</span>
+        <span class="cal-wk-main"><a href="{{ i.url }}">{{ i.title }}</a>
+          <small>{% if i.chip %}<span class="cal-css-chip" data-life="{{ i.life }}">{{ i.chip }}</span> · {% endif %}{% if i.status != "confirmed" %}<b>{{ i.status|capitalize }}</b> · {% endif %}{% if i.dates %}{{ i.dates }} · {% endif %}{% if i.venue %}📍 {{ i.venue }} · {% endif %}{{ i.owner or "" }}</small></span>
+        {% if i.people %}<span class="cal-faces" aria-label="With {{ i.people|map(attribute='name')|join(', ') }}">
+          {% for p in i.people %}<span title="{{ p.name }}">{% if p.photo_url %}<img src="{{ p.photo_url }}" alt="">{% else %}{{ p.initials }}{% endif %}</span>{% endfor %}
+          {% if i.more_people %}<span>+{{ i.more_people }}</span>{% endif %}</span>{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% if cal_week.n_more %}<p class="cal-wk-more"><a href="{{ cal_week.calendar_url }}">+{{ cal_week.n_more }} more this week →</a></p>{% endif %}
+    {% else %}
+    <p class="cal-wk-empty">Nothing on the calendar for the next seven days.
+      <a href="{{ cal_week.add_url }}">Add something</a></p>
+    {% endif %}
+    {% for h in cal_week.holidays %}<p class="cal-wk-hol">★ {{ h.when }} · {{ h.title }}</p>{% endfor %}
+    {% if cal_week.away %}
+    <div class="cal-wk-away" aria-label="Away on a trip">
+      <span class="cal-wk-away-h">Away</span>
+      {% for a in cal_week.away %}
+      <a class="cal-wk-chip" href="{{ a.trips[0].url }}" title="{{ a.trips|map(attribute='title')|join('; ') }}">
+        <span class="cal-wk-av">{% if a.photo_url %}<img src="{{ a.photo_url }}" alt="">{% else %}{{ a.initials }}{% endif %}</span>
+        {{ a.name }} <small>{{ a.trips[0].dates }}</small></a>
+      {% endfor %}
+      {% if cal_week.n_away_more %}<span class="cal-wk-chip">+{{ cal_week.n_away_more }}</span>{% endif %}
+    </div>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  {% if view == "calendar" %}
+  {#-- ---------------- the Calendar tab ---------------- #}
+  <section class="cal-tab" aria-label="Office calendar">
+    {% if cal_page %}{% include "_calendar_body.html" %}{% else %}
+    <p class="cal-wk-empty">The calendar couldn't be loaded just now. <a href="/calendar">Open the full calendar</a>.</p>{% endif %}
+  </section>
+  {% else %}
 
   {% if d %}
     {% if d.scope.kind != "none" and not me_view %}
@@ -788,6 +844,7 @@
       <span class="meta">{{ role_label }}</span>
     </a>
   </div>
+  {% endif %}{#-- /not the Calendar tab --#}
 </div>
 {#-- Arrows, dots and left/right keys for the card decks. The tracks already
      swipe without it — this is the mouse-and-keyboard half. --#}

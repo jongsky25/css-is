@@ -1,0 +1,106 @@
+{# The calendar body — scope pills, layout switch, filters, agenda or month grid. Rendered by
+   /calendar and by the home page's Calendar tab (calendar_routes.build_calendar_page). #}
+<div class="cal-bar">
+  {% if layout != "week" %}
+  <nav class="cal-pills" aria-label="Whose calendar">
+    {% for s in scopes %}
+    <a href="{{ qs(scope=s.key) }}" {% if s.key == scope %}aria-current="true"{% endif %}>{{ s.label }}</a>
+    {% endfor %}
+  </nav>
+{% endif %}
+  <nav class="cal-pills cal-views" aria-label="Layout">
+    <a href="{{ qs(layout='', month='', day='') }}" {% if layout == "agenda" %}aria-current="true"{% endif %}>Agenda</a>
+    <a href="{{ qs(layout='week', month='', day='') }}" {% if layout == "week" %}aria-current="true"{% endif %}>Week</a>
+    <a href="{{ qs(layout='month', month='', day='') }}" {% if layout == "month" %}aria-current="true"{% endif %}>Month</a>
+  </nav>
+  <a class="cal-btn primary cal-add" href="/calendar/new?day={{ add_day }}">+ Add</a>
+  {% if can_import %}<a class="cal-btn" href="/calendar/import">Import from Word</a>{% endif %}
+  <nav class="cal-nav" aria-label="Move through the calendar">
+    {% if layout == "week" %}
+    <a href="{{ qs(day=week.prev) }}">← Last week</a>
+    {% if not is_today_window %}<a href="{{ qs(day='') }}">This week</a>{% endif %}
+    <a href="{{ qs(day=week.next) }}">Next week →</a>
+    {% elif layout == "month" %}
+    <a href="{{ qs(month=grid.prev) }}">← {{ grid.prev_label }}</a>
+    {% if not is_today_window %}<a href="{{ qs(month='') }}">This month</a>{% endif %}
+    <a href="{{ qs(month=grid.next) }}">{{ grid.next_label }} →</a>
+    {% else %}
+    <a href="{{ qs(day=prev_day) }}">← Earlier</a>
+    {% if not is_today_window %}<a href="{{ qs(day='') }}">Today</a>{% endif %}
+    <a href="{{ qs(day=next_day) }}">Later →</a>
+    {% endif %}
+  </nav>
+</div>
+
+<form class="cal-filters" method="get" action="{{ form_action }}" aria-label="Filter the calendar">
+  {% for name, value in hidden %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
+  <label>Type <select name="kind"><option value="">All</option>
+    {% for k, label in kinds.items() %}<option value="{{ k }}" {{ "selected" if f.kind == k }}>{{ label }}</option>{% endfor %}</select></label>
+  <label>Status <select name="status"><option value="">All</option>
+    {% for k, label in statuses.items() %}<option value="{{ k }}" {{ "selected" if f.status == k }}>{{ label }}</option>{% endfor %}</select></label>
+  <label>Tag <select name="tag"><option value="">All</option>
+    {% for t in tags %}<option value="{{ t }}" {{ "selected" if f.tag == t }}>{{ t }}</option>{% endfor %}
+    {% if f.tag and f.tag not in tags %}<option value="{{ f.tag }}" selected>{{ f.tag }}</option>{% endif %}</select></label>
+  {% if f.unit %}<input type="hidden" name="unit" value="{{ f.unit }}">{% endif %}
+  <button class="cal-btn" type="submit">Filter</button>
+  {% if filtered %}<a href="{{ clear_filters }}">Clear filters</a>{% endif %}
+</form>
+
+{% if units %}
+<p class="cal-units" aria-label="Units — click one to show only its items">
+  {% for u in units %}
+  <a class="cal-unit" data-tone="{{ u.tone }}" href="{{ qs(unit='' if f.unit == u.id|string else u.id) }}"
+     {% if f.unit == u.id|string %}aria-current="true"{% endif %}><i aria-hidden="true"></i>{{ u.label }}</a>
+  {% endfor %}
+</p>
+{% endif %}
+<p class="cal-range">{{ range_label }}{% if filtered %} · filtered{% endif %}</p>
+
+{% if layout == "week" %}
+{% include "_calendar_week.html" %}
+{% elif layout == "month" %}
+{% include "_calendar_month.html" %}
+{% else %}
+
+{% if not n_items and not days|selectattr("holidays")|list %}
+  {{ empty_state("Nothing on the calendar for these two weeks.", "Try another view above, or look further ahead.", "📅") }}
+{% endif %}
+
+{% for d in days %}
+<section class="cal-day {{ 'today' if d.is_today }} {{ 'weekend' if d.is_weekend }}" aria-labelledby="d-{{ d.iso }}">
+  <header>
+    <h2 id="d-{{ d.iso }}">{{ d.label }}</h2>
+    {% if d.is_today %}<span class="cal-today-tag">Today</span>{% endif %}
+    {% for h in d.holidays %}<span class="cal-holiday">{{ h.title }}{% if h.owner_label %} · {{ h.owner_label }}{% endif %}</span>{% endfor %}
+  </header>
+  {% if d.rows %}
+  <ul class="cal-list">
+    {% for i in d.rows %}
+    <li class="cal-item" data-tone="{{ i.tone }}" data-status="{{ i.status }}" data-kind="{{ i.kind }}">
+      <span class="cal-time">{% if i.start_time %}{{ i.start_time }}{% if i.end_time %}–{{ i.end_time }}{% endif %}{% elif i.time_note %}{{ i.time_note }}{% else %}All day{% endif %}</span>
+      <span class="cal-title">{% if i.url %}<a href="{{ i.url }}">{{ i.title }}</a>{% else %}{{ i.title }}{% endif %}{% if i.day_n %} <small>(day {{ i.day_n }} of {{ i.day_of }})</small>{% endif %}
+        {% for f in i.flags %}<span class="cal-flag">· {{ f|capitalize }}</span>{% endfor %}</span>
+      <span class="cal-owner">{{ i.owner_label or "" }}</span>
+      <span class="cal-meta">
+        {% if i.css %}<span class="cal-css-chip" data-life="{{ i.css.lifecycle }}">{{ i.css.chip }}</span>{% endif %}
+        {% if i.venue %}<span>📍 {{ i.venue }}</span>{% endif %}
+        {% if i.modality == "online" and (i.venue or "")|lower != "online" %}<span>Online</span>{% elif i.modality == "hybrid" %}<span>Hybrid</span>{% endif %}
+        {% if i.people %}<span class="cal-faces" aria-label="With {{ i.people|map(attribute='name')|join(', ') }}">
+          {% for p in i.people[:4] %}<span title="{{ p.name }}">{% if p.photo_url %}<img src="{{ p.photo_url }}" alt="">{% else %}{{ p.initials }}{% endif %}</span>{% endfor %}
+          {% if i.people|length > 4 %}<span>+{{ i.people|length - 4 }}</span>{% endif %}
+        </span>{% endif %}
+        {% for t in i.tags %}<span class="cal-tag">{{ t }}</span>{% endfor %}
+      </span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% elif not d.holidays %}
+  <p class="cal-nothing">Nothing scheduled today.</p>
+  {% endif %}
+</section>
+{% endfor %}
+
+<p class="cal-legend" aria-label="Colour key">
+  <span>The colour bar on each item is the unit that owns it; the unit's name is always written on the item.</span>
+</p>
+{% endif %}

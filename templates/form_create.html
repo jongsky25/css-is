@@ -48,7 +48,19 @@
        activity instead. -->
   <div class="dup-warn hidden" id="dupWarn" role="alert"></div>
 
+  <!-- Office calendar: a calendar item this activity is made from (or has just been matched to).
+       Set by "Collect feedback (CSS)" on the item, or by the button the heads-up below offers;
+       it only takes effect when Create is pressed, and "Don't link" undoes it. -->
+  <div class="dup-warn {% if not f.from_entry %}hidden{% endif %}" id="calLinked" role="status">
+    📅 This activity will be linked to the calendar item <strong id="calLinkedTitle">{{ f.from_entry_title|default('') }}</strong>:
+    the calendar will show it as the activity, with the people already on that item.
+    <button type="button" class="btn small" id="calUnlink">Don't link</button>
+  </div>
+  <div class="dup-warn hidden" id="calWarn" role="status"></div>
+
   <form method="post" action="/create" data-loading="Creating survey…">
+    <input type="hidden" name="from_entry" id="from_entry" value="{{ f.from_entry|default('') }}">
+    <input type="hidden" name="from_entry_title" id="from_entry_title" value="{{ f.from_entry_title|default('') }}">
 
     <fieldset>
       <legend>1 · Event type</legend>
@@ -285,5 +297,54 @@ function checkDuplicate() {
 }
 document.getElementById('activity_name').addEventListener('input', checkDuplicate);
 document.getElementById('event_date').addEventListener('change', checkDuplicate);
+
+// Office calendar heads-up: a calendar item the person can see that looks like this activity
+// (same dates, similar name, not linked yet). A suggestion with a button — nothing is linked
+// until Create is pressed. Built with textContent, never innerHTML: item titles are free text.
+function setCalLink(id, title) {
+  document.getElementById('from_entry').value = id || '';
+  document.getElementById('from_entry_title').value = title || '';
+  document.getElementById('calLinkedTitle').textContent = title || '';
+  document.getElementById('calLinked').classList.toggle('hidden', !id);
+  if (id) document.getElementById('calWarn').classList.add('hidden');
+}
+document.getElementById('calUnlink').addEventListener('click', () => setCalLink('', ''));
+let calCheckTimer = null;
+function checkCalendar() {
+  clearTimeout(calCheckTimer);
+  calCheckTimer = setTimeout(async () => {
+    const box = document.getElementById('calWarn');
+    const name = document.getElementById('activity_name').value.trim();
+    const date = document.getElementById('event_date').value;
+    const end = document.getElementById('end_date').value;
+    if (document.getElementById('from_entry').value || !name || !date) { box.classList.add('hidden'); return; }
+    let data;
+    try {
+      const resp = await fetch('/create/check-calendar?activity_name=' + encodeURIComponent(name)
+        + '&event_date=' + encodeURIComponent(date) + '&end_date=' + encodeURIComponent(end));
+      data = resp.ok ? await resp.json() : null;
+    } catch (e) { return; }
+    const found = (data && data.entries) || [];
+    if (!found.length) { box.classList.add('hidden'); return; }
+    box.replaceChildren();
+    const head = document.createElement('strong');
+    head.textContent = found.length === 1 ? 'This may already be on the calendar' : 'These may already be on the calendar';
+    box.appendChild(head);
+    for (const it of found) {
+      const row = document.createElement('p');
+      const a = document.createElement('a'); a.href = it.url; a.textContent = it.title; a.target = '_blank';
+      row.append(a, document.createTextNode(' (' + it.start + (it.end !== it.start ? ' – ' + it.end : '') + ') '));
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'btn small'; b.textContent = 'Link this activity to it';
+      b.addEventListener('click', () => setCalLink(String(it.id), it.title));
+      row.appendChild(b);
+      box.appendChild(row);
+    }
+    box.classList.remove('hidden');
+  }, 500);
+}
+document.getElementById('activity_name').addEventListener('input', checkCalendar);
+document.getElementById('event_date').addEventListener('change', checkCalendar);
+document.getElementById('end_date').addEventListener('change', checkCalendar);
 </script>
 {% endblock %}

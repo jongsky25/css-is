@@ -17,10 +17,169 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.53"
+APP_VERSION = "3.69"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.69",
+        "date": "October 9, 2026",
+        "summary": "The calendar and your weekly whereabouts now point out when they disagree, and you can add a trip you reported.",
+        "changes": [
+            "If the calendar has you on a trip but you reported Office or Leave, your weekly form and your home page ask you to check.",
+            "If you report a place in the field that is not on the calendar, one button adds it for your section.",
+            "A calendar item shows a heads-up when someone on it is on leave, is on a trip they reported differently, or is double-booked. Only that person, the leads and whoever added it see it.",
+        ],
+    },
+    {
+        "version": "3.68",
+        "date": "October 9, 2026",
+        "summary": "Trips on the calendar now fill in your weekly whereabouts, and leave shows on the calendar.",
+        "changes": [
+            "If you are listed on a confirmed trip, your weekly form and Monday email already show Field with the place. Just confirm it.",
+            "If the trip moves, the plan moves with it until you confirm. What you reported yourself is never overwritten.",
+            "Who's in and the team week show the trip as Field too, until you say otherwise.",
+            "Days you reported as Leave now appear on the calendar as \"on leave\", for you and the people who can already see your team. No reason is ever shown.",
+        ],
+    },
+    {
+        "version": "3.67",
+        "date": "October 9, 2026",
+        "summary": "You can move an activity's dates from the calendar, and trainings get a feedback reminder.",
+        "changes": [
+            "Open an activity's calendar item and change its dates there. The activity, its forms and the calendar all follow.",
+            "If people already registered, you choose whether to email them the new date.",
+            "The day after a training that is only on the calendar, its creator gets one email asking if they want to collect feedback.",
+        ],
+    },
+    {
+        "version": "3.66",
+        "date": "October 9, 2026",
+        "summary": "You can now turn a calendar item into a survey activity in one click.",
+        "changes": [
+            "Open a meeting or training on the calendar and press Collect feedback (CSS) to start the survey form with its details already filled in.",
+            "The calendar item and the new activity are linked, so it shows once.",
+            "The app now warns you when the activity you are creating may already be on the calendar, and the other way round.",
+        ],
+    },
+    {
+        "version": "3.65",
+        "date": "October 9, 2026",
+        "summary": "Every survey activity now appears on the Office calendar by itself.",
+        "changes": [
+            "Activities you create for client feedback show up on the calendar automatically, marked with a star.",
+            "Each one shows where it is: how many have registered, whether feedback is open, or that it has concluded.",
+            "Click an activity to go to its page.",
+        ],
+    },
+    {
+        "version": "3.64",
+        "date": "October 9, 2026",
+        "summary": "The Office calendar has a new Week view that shows who is where.",
+        "changes": [
+            "Choose Week on the Office calendar to see your team down the side and Monday to Friday across.",
+            "Trips and meetings appear as bars on each person's row, with who is in the office, at home, in the field or on leave.",
+            "Leave only ever shows as On leave, never the reason.",
+        ],
+    },
+    {
+        "version": "3.63",
+        "date": "October 9, 2026",
+        "summary": "The home page now has a Calendar tab, and your to-do list shows what is on today.",
+        "changes": [
+            "Click Calendar next to Team and Me on the home page to see the whole office calendar without leaving it.",
+            "Your to-do list now tells you how many things are on the calendar today.",
+        ],
+    },
+    {
+        "version": "3.62",
+        "date": "October 9, 2026",
+        "summary": "The home page now shows what is coming up on the office calendar.",
+        "changes": [
+            "A new Coming up card on the home page lists the next seven days: meetings, trips, trainings and holidays.",
+            "Use the Team and Me buttons to switch between your team's calendar and your own.",
+            "It also shows who is away on a trip.",
+        ],
+    },
+    {
+        "version": "3.61",
+        "date": "October 9, 2026",
+        "summary": "Administrators can fill in the nicknames the office calendar uses.",
+        "changes": [
+            "A new page lets an administrator give each person the nickname the office calls them, in one go.",
+            "Nobody's own nickname is overwritten unless the administrator chooses to.",
+            "You can still change your nickname any time on My profile.",
+        ],
+    },
+    {
+        "version": "3.60",
+        "date": "October 9, 2026",
+        "summary": "The imported calendar now recognises almost every name, including colleagues who have left.",
+        "changes": [
+            "Names written next to a place, like MDN - Malou, are now understood.",
+            "People who have since left are still shown on the old items they were part of, marked as archived.",
+        ],
+    },
+    {
+        "version": "3.59",
+        "date": "October 9, 2026",
+        "summary": "Matching the names in the imported calendar is now much more accurate.",
+        "changes": [
+            "Calendar names such as Tek, Riza or Doc Malou are matched to the right person using the bureau's own list of who is who.",
+            "Places and teams that were picked up as names, such as Cebu or CAR, are now marked as not a person.",
+        ],
+    },
+    {
+        "version": "3.58",
+        "date": "October 9, 2026",
+        "summary": "After importing the Word calendar, administrators can say who the names in it are.",
+        "changes": [
+            "Names like Riza, Tek or Doc Malou are matched to people's accounts, so those items appear in their calendars.",
+            "Only clear matches are suggested; when two people could fit, the administrator chooses.",
+            "Answers are remembered for next year's import.",
+        ],
+    },
+    {
+        "version": "3.57",
+        "date": "October 9, 2026",
+        "summary": "Administrators can now bring the yearly Word calendar into the Office calendar.",
+        "changes": [
+            "On the Office calendar, administrators have an Import from Word button to upload the Calendar of Activities.",
+            "You check every item first, choose which unit each colour belongs to, and nothing is added until you press Import.",
+            "Importing the same file again will not create duplicates.",
+        ],
+    },
+    {
+        "version": "3.56",
+        "date": "October 9, 2026",
+        "summary": "The Office calendar now has a month view and filters.",
+        "changes": [
+            "Switch to Month on the Office calendar to see the whole month at a glance, like the old Word calendar.",
+            "A trip that lasts several days shows as one bar across the days it covers.",
+            "Filter by type, status, tag or unit to see just what you need.",
+        ],
+    },
+    {
+        "version": "3.55",
+        "date": "October 9, 2026",
+        "summary": "You can now add and change items on the Office calendar.",
+        "changes": [
+            "Use + Add on the Office calendar to put a meeting, trip, training or deadline on it, and choose who it is for.",
+            "Open any item to see the details, who changed it and when, and to edit or cancel it.",
+            "A cancelled item can be brought back for 30 days.",
+            "If two people edit the same item at once, the second person is shown what changed instead of overwriting it.",
+        ],
+    },
+    {
+        "version": "3.54",
+        "date": "October 9, 2026",
+        "summary": "There is now an Office calendar page where you can see what is happening across the bureau.",
+        "changes": [
+            "Open Office calendar from the AWA menu to see the next two weeks: meetings, trips, trainings and holidays.",
+            "Switch between your own items, your section, your division, or everything you are allowed to see.",
+            "For now the calendar is for viewing; adding and editing items comes next.",
+        ],
+    },
     {
         "version": "3.53",
         "date": "October 9, 2026",

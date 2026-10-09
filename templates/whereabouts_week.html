@@ -20,6 +20,9 @@
         box-shadow:0 0 0 3px var(--accent-bg); }
   .wb .opts label:focus-within { outline:2px solid var(--accent); outline-offset:2px; }
   .wb .hol { color:var(--soft); font-size:.9rem; }
+  .wb .fromcal { margin:.5rem 0 0; font-size:.85rem; color:#555; }
+  .wb .fromcal.warn { color:#8a5a00; }
+  .wb .offers { margin:1rem 0; }
   .wb .note { display:none; margin-top:.5rem; }
   .wb .day:has(input[value=field]:checked) .note { display:block; }
   .wb .note input { width:100%; box-sizing:border-box; font:inherit; padding:.45rem .7rem;
@@ -56,6 +59,19 @@
   </div>
   {% endif %}
 
+  {% if offers and editable %}
+  <div class="panel offers">
+    {% for o in offers %}
+    <form method="post" action="/work-arrangement/week/add-trip" style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:.3rem 0">
+      <input type="hidden" name="week" value="{{ monday }}"><input type="hidden" name="start" value="{{ o.start }}"><input type="hidden" name="end" value="{{ o.end }}">
+      <span>📅 {{ o.label }} · {{ o.note }} isn't on the calendar.</span>
+      <button class="btn" type="submit">Add this trip to the calendar</button>
+    </form>
+    {% endfor %}
+    <p class="sub" style="margin:.3rem 0 0">Your section will see the trip and where it is. Nothing is added unless you press the button.</p>
+  </div>
+  {% endif %}
+
   {% if not editable %}
     <div class="panel"><p class="sub" style="margin:0">That week is closed for changes.
       {% if token %}<a href="/login?next=/work-arrangement/week">Sign in</a> to report this or next week.{% endif %}</p></div>
@@ -76,6 +92,8 @@
         <label><input type="radio" name="s_{{ d.iso }}" value="awa" {{ 'checked' if d.choice == 'awa' }}>AWA<small>{{ d.awa_label }}</small></label>
         {% endif %}
       </div>
+      {% if d.trip and d.saved and d.saved != 'field' %}<p class="fromcal warn">⚠ The calendar has you on “{{ d.trip.title }}”, but you reported {{ options[d.saved] }}. Is that right?</p>{% endif %}
+      {% if d.trip and not d.saved %}<p class="fromcal">📅 Filled in from the calendar: {{ d.trip.title }}. Change it if the plan changed.</p>{% endif %}
       <div class="note"><input type="text" name="n_{{ d.iso }}" value="{{ d.note }}" maxlength="120"
            placeholder="Where in the field? (optional)" aria-label="Field location for {{ d.label }}"></div>
       {% endif %}

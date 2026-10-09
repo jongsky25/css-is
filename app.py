@@ -64,6 +64,7 @@ import dashboard_export as dx
 # The Office Connect landing payload. It takes get_atoms/view_memo as arguments
 # rather than importing them back out of here, so the dependency stays one-way.
 import office_connect as oc
+import calendar_routes
 import report_docs
 import csm_report
 import auth
@@ -609,6 +610,11 @@ NAV_GROUPS = [
                "away out day off wfh work from home working remotely desk reachable "
                "in out attendance roster whereabouts report my week field leave "
                "weekly office", "cap": None},
+        {"key": "calendar", "url": "/calendar", "label": "Office calendar",
+         "hint": "Meetings, trips, trainings and holidays across the bureau",
+         "kw": "calendar office calendar schedule activities meetings events trips travel "
+               "technical assistance training workshop holidays what is on this week agenda "
+               "calendar of activities", "cap": None},
         {"key": "work_arrangement_schedule", "url": "/work-arrangement/schedule",
          "label": "Team schedule",
          "hint": "Who is on-site each weekday, and who hasn't filed",
@@ -686,6 +692,10 @@ NAV_GROUPS = [
          "kw": "holiday holidays suspension work suspension typhoon non-working special "
                "regular calendar whereabouts day off proclamation",
          "cap": "manage_users"},
+        {"key": "calendar_import", "url": "/calendar/import", "label": "Import calendar",
+         "hint": "Bring the yearly Word Calendar of Activities into the Office calendar",
+         "kw": "import calendar word docx upload calendar of activities yearly office calendar "
+               "bring in migrate", "cap": "manage_users", "in_nav": False},
         {"key": "wa_reopen", "url": "/admin/work-arrangement", "label": "AWA filing",
          "hint": "Temporarily reopen a closed filing period",
          "kw": "awa work arrangement reopen deadline override filing period cww wfh "
@@ -4749,7 +4759,7 @@ def choose(request: Request, msg: str = "", view: str = "team"):
     The heavy lifting is office_connect.team_view_data; this handler is scope
     plumbing plus the three door teasers. The one-time onboarding guard stays
     exactly where it was — it must not become skippable by typing the URL."""
-    view = "me" if view == "me" else "team"
+    view = view if view in ("me", "calendar") else "team"
     conn = get_conn()
     try:
         onboard = _onboarding_redirect(request, conn)
@@ -4773,6 +4783,28 @@ def choose(request: Request, msg: str = "", view: str = "team"):
         except Exception:
             traceback.print_exc()
             tasks = []
+        # The next seven days from the office calendar (same scope rules as /calendar).
+        # On the Calendar tab it only supplies the scope the tab opens with (below).
+        try:
+            cal_week = oc.calendar_week_block(conn, request.state.user,
+                                              view="me" if view == "calendar" else view)
+        except Exception:
+            traceback.print_exc()
+            cal_week = None
+        # The Calendar tab: the full calendar body (agenda / month, filters) inside the home
+        # page. Same builder as /calendar; its links stay on this page (view=calendar).
+        cal_page = None
+        if view == "calendar":
+            try:
+                q = dict(request.query_params)
+                args = dict(base="/", layout_key="layout", fixed={"view": "calendar"})
+                cal_page = (calendar_routes.build_calendar_page(
+                    conn, request.state.user, _today_local(), q, **args)
+                    or calendar_routes.build_calendar_page(
+                        conn, request.state.user, _today_local(), {}, **args))
+            except Exception:
+                traceback.print_exc()
+                cal_page = None
         # A light wellness teaser (points/streak) beside the Wellness door.
         try:
             wstats = st.wellness_stats(conn, request.state.user["id"])
@@ -4811,7 +4843,10 @@ def choose(request: Request, msg: str = "", view: str = "team"):
         "wa_file_label": wa_file_label, "wa_file_filed": wa_file_filed,
         "role_label": auth.ROLE_LABELS.get(role, role),
         "role_blurb": auth.ROLE_BLURB.get(role, ""),
-        "d": data, "view": view, "tasks": tasks,
+        "d": data, "view": view, "tasks": tasks, "cal_week": cal_week, "cal_page": cal_page,
+        # the Calendar tab's body reads these (layout, qs, scopes, days / grid ...) as plain
+        # variables; none of its names clash with the home page's own
+        **(cal_page or {}),
         # The companion's growth was invisible: you could see the creature you
         # had but not the one you were working toward, nor how it got there.
         "ladder": st.avatar_growth_ladder(avatar_kind, wstats),
@@ -5769,20 +5804,23 @@ async def api_ai_feedback(request: Request):
 
 
 @app.get("/create", response_class=HTMLResponse)
-def create_screen(request: Request):
+def create_screen(request: Request, from_entry: str = ""):
     conn = get_conn()
     try:
         _, blhsd_name, _ = st.get_or_create_blhsd(conn)
         rps = st.list_resource_persons(conn)
         sections = st.list_org_units(conn, level="section")
+        # "Collect feedback (CSS)" on a calendar item: start from its details (office calendar D2)
+        prefill = calendar_routes.prefill_from_entry(conn, request.state.user, from_entry)
     finally:
         conn.close()
     dmin, dmax = _event_date_bounds()
-    return templates.TemplateResponse(request, "form_create.html", {
-        "blhsd_name": blhsd_name,
-        "resource_persons": rps, "sections": sections,
-        "date_min": dmin, "date_max": dmax,
-    })
+    ctx = {"blhsd_name": blhsd_name,
+           "resource_persons": rps, "sections": sections,
+           "date_min": dmin, "date_max": dmax}
+    if prefill:
+        ctx["form"] = prefill
+    return templates.TemplateResponse(request, "form_create.html", ctx)
 
 
 @app.post("/create", response_class=HTMLResponse)
@@ -5797,6 +5835,7 @@ async def create_survey(request: Request):
     def values(key):
         return [v for k, v in pairs if k == key]
 
+    from_entry = first("from_entry").strip()               # the calendar item this is made from, if any
     event_type = first("event_type", "bureau")             # 'bureau' | 'outside'
     section_id = first("section_id").strip()               # organizing section (bureau events)
     activity_name = first("activity_name").strip()
@@ -5891,6 +5930,7 @@ async def create_survey(request: Request):
             "open_at": first("open_at").strip(),
             "close_at": first("close_at").strip(),
             "speakers": list(zip(rp_ids, topics)),
+            "from_entry": from_entry, "from_entry_title": first("from_entry_title").strip(),
         }
         dmin, dmax = _event_date_bounds()
         ctx = {"blhsd_name": blhsd_name, "resource_persons": rps, "sections": sections,
@@ -5911,6 +5951,7 @@ async def create_survey(request: Request):
         lead_id = int(section_id) if section_id.isdigit() and int(section_id) in section_units else blhsd_id
         lead_name = section_units[lead_id]["name"] if lead_id in section_units else blhsd_name
 
+        linked_item = None  # title of the calendar item this activity was made from, once linked
         created = []        # display rows: {kind, form_id, qr_token, label}
         created_ids = []    # raw form_instance ids (for the entry window)
 
@@ -5969,6 +6010,7 @@ async def create_survey(request: Request):
                                   form_instance_ids=created_ids,
                                   created_by=request.state.user["username"])
             event_token = ev["event_token"]
+            linked_item = calendar_routes.link_after_create(conn, request.state.user, from_entry, ev["id"])
             monitor_link = f"{_base_url(request)}/monitor/{event_token}"
             creator_uid = request.state.user["id"]
             creator_name = _person_name(conn, creator_uid) or request.state.user["username"]
@@ -5985,10 +6027,11 @@ async def create_survey(request: Request):
                 _notify_account(conn, chief_id, subj, body, html=html,
                                feature="event_section_notify")
         else:
-            st.create_event(conn, activity_name, event_date, end_date=end_date,
-                            venue=venue, modality=modality, organizer=organizer_label,
-                            event_kind="outside", form_instance_ids=created_ids,
-                            created_by=request.state.user["username"])
+            ev = st.create_event(conn, activity_name, event_date, end_date=end_date,
+                                 venue=venue, modality=modality, organizer=organizer_label,
+                                 event_kind="outside", form_instance_ids=created_ids,
+                                 created_by=request.state.user["username"])
+            linked_item = calendar_routes.link_after_create(conn, request.state.user, from_entry, ev["id"])
     finally:
         conn.close()
 
@@ -6009,6 +6052,8 @@ async def create_survey(request: Request):
         {"k": "Organizer", "v": organizer_label},
         {"k": "Speakers", "v": len(speakers)},
     ]
+    if linked_item:
+        summary.append({"k": "Calendar", "v": f"Linked to the calendar item “{linked_item}”"})
     if open_at or close_at:
         summary.append({"k": "Entry window",
                         "v": f"{_humandt(open_at) or 'now'} → {_humandt(close_at) or 'no deadline'}"})
@@ -15582,13 +15627,14 @@ def _whereabouts_page(request, user_id, monday, token="", msg="", err="", status
         editable = st.whereabouts_week_editable(monday)
         acct = st.get_admin_user_by_id(conn, user_id)
         name = _person_name(conn, user_id) if acct else None
+        offers = [] if token else st.whereabouts_trip_offers(days)
     finally:
         conn.close()
     this = st.whereabouts_week_start()
     return templates.TemplateResponse(request, "whereabouts_week.html", {
         "layout": "public_layout.html" if token else "dash_layout.html",
         "nav_active": "work_arrangement", "show_scope": False,
-        "token": token, "days": days, "monday": monday.isoformat(),
+        "token": token, "days": days, "monday": monday.isoformat(), "offers": offers,
         "week_label": st.whereabouts_week_label(monday),
         "submitted": submitted, "editable": editable, "name": name,
         "options": st.WHEREABOUTS_LABELS, "msg": msg, "err": err,
@@ -15686,6 +15732,36 @@ async def whereabouts_submit(request: Request):
         return _whereabouts_page(request, uid, monday, err=err, status_code=400)
     return _whereabouts_page(request, uid, monday,
                              msg="Saved — your colleagues will see this on Who's in.")
+
+
+@app.post("/work-arrangement/week/add-trip")
+async def whereabouts_add_trip(request: Request):
+    """"Add this trip to the calendar" — one tap from the whereabouts form. Never automatic: the
+    person's note stays private until they press it. The run is re-derived from their saved week,
+    so only a trip they actually reported (and the calendar lacks) can be created."""
+    p = await _posted(request)
+    monday = _whereabouts_monday(p.get("week", ""))
+    user = request.state.user
+    conn = get_conn()
+    try:
+        days = st.whereabouts_week(conn, user["id"], monday)
+        offer = next((o for o in st.whereabouts_trip_offers(days)
+                      if o["start"] == p.get("start") and o["end"] == p.get("end")), None)
+        if not offer:
+            return _whereabouts_page(request, user["id"], monday, status_code=400,
+                                     err="That trip is already on the calendar, or your week changed.")
+        unit = conn.execute(
+            "SELECT rp.org_unit_id FROM admin_user a JOIN resource_person rp ON rp.id = a.rp_id "
+            "WHERE a.id = ?", (user["id"],)).fetchone()
+        st.cal_create(conn, offer["note"], offer["start"],
+                      end_date=offer["end"] if offer["end"] != offer["start"] else None,
+                      kind="travel", venue=offer["note"], audience="unit", source="whereabouts",
+                      owner_org_id=unit[0] if unit else None, people=[(user["id"], "travel")],
+                      by=user["username"])
+    finally:
+        conn.close()
+    return _whereabouts_page(request, user["id"], monday,
+                             msg=f"Added “{offer['note']}” to the calendar for your section.")
 
 
 @app.get("/work-arrangement/roster", response_class=HTMLResponse)
@@ -15875,3 +15951,18 @@ async def work_arrangement_noawa_remove(request: Request):
     return RedirectResponse(
         f"{back}?ok={quote('Removed — you can file a work arrangement again.')}",
         status_code=303)
+
+
+# ---- Office calendar (routes live in calendar_routes.py) -------------------
+def _calendar_check_dates(start, end):
+    """The activity Dates card's rules, for the calendar's edit form: (end_or_None, error)."""
+    if not _valid_date(start) or start > _event_date_bounds()[1]:
+        return None, "That start date isn't a valid date."
+    end_date, err = _norm_end_date(start, end)
+    return end_date, ("That end date isn't a valid date." if err else None)
+
+
+app.include_router(calendar_routes.make_router(
+    templates, get_conn, _today_local, can_manage_event=_can_manage_event,
+    notify_email=_notify_email, base_url=_base_url, on_event_changed=invalidate_atoms,
+    check_dates=_calendar_check_dates))

@@ -1,0 +1,60 @@
+{# Week layout: people down the side (grouped by section), Monday-Friday across. Each person's
+   row is where they are (a dot + a word for anything but "in office"; leave never carries a
+   reason) with their calendar items laid over it as bars. Items that name nobody in this
+   team sit in a band at the top. #}
+{% macro bars(row_bars, row_more, n_rows, more_row) %}
+  {% for b in row_bars %}{% set i = b.item %}
+  <a class="cal-bar-item {{ 'cut-l' if b.left_cut }} {{ 'cut-r' if b.right_cut }}" href="{{ i.url }}"
+     data-tone="{{ i.tone }}" data-status="{{ i.status }}" data-kind="{{ i.kind }}"
+     style="grid-column:{{ b.col + 1 }} / span {{ b.span }}; grid-row:{{ b.lane }}"
+     title="{{ i.title }}{% if i.owner_label %} · {{ i.owner_label }}{% endif %}{% if i.venue %} · {{ i.venue }}{% endif %}{% if i.status != 'confirmed' %} · {{ i.status|capitalize }}{% endif %}{% if i.css %} · {{ i.css.chip }}{% endif %}">
+    {% if b.timed %}<b>{{ i.start_time }}</b> {% endif %}{{ i.title }}{% if i.status == "tentative" %} <em>(tentative)</em>{% elif i.status == "postponed" %} <em>(postponed)</em>{% endif %}</a>
+  {% endfor %}
+  {% for n in row_more if n %}
+  <a class="cal-more" style="grid-column:{{ loop.index0 + 2 }}; grid-row:{{ more_row }}"
+     href="{{ qs(layout='', month='', day=week.days[loop.index0].iso) }}">+{{ n }} more</a>
+  {% endfor %}
+{% endmacro %}
+
+{% if week.kind == "none" %}
+  <div class="cal-flash warn">Your account isn't linked to a directory record yet, so there is no team to show. Use Agenda or Month, or <a href="/me">complete your profile</a>.</div>
+{% elif not week.n_people %}
+  <p class="cal-wk-empty">There is nobody in your team to show for this week.</p>
+{% else %}
+<p class="cal-range">Showing {{ week.team_label }} · {{ week.n_people }} {{ "person" if week.n_people == 1 else "people" }}. Where people are comes from their weekly report and filed arrangement (a pale dot is the filed plan, not yet confirmed by them).</p>
+<div class="cal-people-week" role="table" aria-label="Who is where, {{ week.label }}">
+  <div class="cal-pw-head" role="row">
+    <div role="columnheader" class="cal-pw-name"></div>
+    {% for d in week.days %}<div role="columnheader" class="{{ 'today' if d.iso == today.isoformat() }}">{{ d.name[:3] }}<small>{{ d.short }}</small>{% if d.holiday %}<em>★ {{ d.holiday.name }}</em>{% endif %}</div>{% endfor %}
+  </div>
+
+  {% if week.has_band %}
+  <div class="cal-pw-row cal-pw-band" role="row" style="--rows:{{ week.band.rows }}">
+    <div class="cal-pw-name" role="rowheader" style="grid-row:1 / span {{ week.band.rows }}">The whole team<small>or nobody in particular</small></div>
+    {% for d in week.days %}<div class="cal-pw-cell" style="grid-column:{{ loop.index + 1 }}; grid-row:1 / span {{ week.band.rows }}"></div>{% endfor %}
+    {{ bars(week.band.bars, week.band.more, week.band.rows, week.band.rows) }}
+  </div>
+  {% endif %}
+
+  {% for sec in week.sections %}
+  <div class="cal-pw-sec" role="rowgroup"><div class="cal-pw-sechead">{{ sec.section }}</div>
+    {% for p in sec.people %}
+    <div class="cal-pw-row" role="row" style="--rows:{{ p.rows }}">
+      <div class="cal-pw-name" role="rowheader" style="grid-row:1 / span {{ p.rows }}">{{ p.name }}</div>
+      {% for c in p.cells %}
+      <div class="cal-pw-cell st-{{ c.state }} {{ 'plotted' if c.plotted }}" role="cell"
+           style="grid-column:{{ loop.index + 1 }}; grid-row:1 / span {{ p.rows }}"
+           {% if c.text %}title="{{ p.name }}: {{ c.text }}{% if c.note %} — {{ c.note }}{% endif %}"{% endif %}>
+        {% if c.state in ("onsite", "wfh", "dayoff", "field", "leave") %}<span class="cal-pw-dot" aria-hidden="true"></span>
+        <span class="cal-pw-state">{{ c.text }}{% if c.note %}: {{ c.note }}{% endif %}</span>
+        {% elif c.state == "noawa" %}<span class="cal-pw-state">{{ c.text }}</span>{% endif %}
+      </div>
+      {% endfor %}
+      {{ bars(p.bars, p.more, p.rows, p.rows) }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+<p class="cal-legend"><span>● In office</span><span>● Home</span><span>● Field</span><span>▨ On leave (no reason is shown)</span><span>○ Day off</span><span>★ Holiday</span></p>
+{% endif %}

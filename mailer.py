@@ -562,6 +562,48 @@ def event_reminder_message(name, title, event_date, venue, link):
     return subject, body, html
 
 
+def event_dates_changed_message(name, title, old_when, new_when, venue, link):
+    """Returns (subject, plain_text_body, html_body). Sent to a registrant when an
+    organiser re-dates an activity they signed up for."""
+    where = f" at {venue}" if venue else ""
+    subject = f"New date — {title}"
+    body = (f"Hello {name or 'there'},\n\n"
+            f"“{title}” has moved{where}.\n\n"
+            f"  Was: {old_when}\n  Now: {new_when}\n\n"
+            f"  {link}\n")
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="The date changed",
+        intro=(f"&ldquo;{_e(title)}&rdquo; has moved{_e(where)}. "
+               f"It was {_e(old_when)}; it is now <strong>{_e(new_when)}</strong>."),
+        cta_label="View your registration",
+        link=link,
+    )
+    return subject, body, html
+
+
+def calendar_css_nudge_message(name, title, when, link):
+    """Returns (subject, plain_text_body, html_body). Sent once, the day after a
+    training that was only on the calendar, to ask the organiser if they want to
+    collect feedback for it."""
+    subject = f"Collect feedback for “{title}”?"
+    body = (f"Hello {name or 'there'},\n\n"
+            f"“{title}” ({when}) is on the calendar but has no feedback form yet. "
+            f"If you'd like to collect feedback, you can set one up from it.\n\n"
+            f"  {link}\n\n"
+            f"If you don't need one, ignore this — we won't ask again.\n")
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="Collect feedback?",
+        intro=(f"&ldquo;{_e(title)}&rdquo; ({_e(when)}) is on the calendar but has no "
+               f"feedback form yet. Set one up from it if you'd like responses. "
+               f"We won't ask again."),
+        cta_label="Open the calendar item",
+        link=link,
+    )
+    return subject, body, html
+
+
 def csm_rp_results_message(rp_name, topic, event_title, link):
     """Returns (subject, plain_text_body, html_body). Sent once to a resource
     person (speaker) with a login, after their own Type-3 CSM ratings for a
@@ -1044,6 +1086,11 @@ FEATURES = {
         "Spot Feedback update",
         "The submitter is told about a status change or reply.",
         "transactional"),
+    "event_dates_changed": (
+        "Activity re-dated",
+        "A registrant is told when an organiser moves an activity they signed up for "
+        "(the organiser chooses whether to notify).",
+        "transactional"),
     "css_reminder": (
         "Monitor — remind unfinished registrants",
         "An organizer's one-click reminder, from Monitor, to every registrant "
@@ -1077,6 +1124,11 @@ FEATURES = {
     "job_awa_file": (
         "Work arrangement filing nudge",
         "Nudges staff with no work arrangement filed before the deadline.",
+        "scheduled"),
+    "job_calendar_css_nudge": (
+        "Calendar — collect feedback nudge",
+        "The day after a training that was only on the calendar, its creator is asked "
+        "once whether to collect feedback for it.",
         "scheduled"),
     "job_whereabouts_nudge": (
         "Weekly whereabouts — Tuesday nudge",
@@ -1170,6 +1222,11 @@ _PREVIEWS = {
         "Juan Reyes", "Friday", _SAMPLE_LINK),
     "job_awa_file": lambda: work_arrangement_file_reminder_message(
         "Juan Reyes", "October 1-15, 2026", "Friday", _SAMPLE_LINK),
+    "event_dates_changed": lambda: event_dates_changed_message(
+        "Juan Reyes", "Basic Life Support Training", "October 2, 2026",
+        "October 9, 2026", "DOH Conference Room", _SAMPLE_LINK),
+    "job_calendar_css_nudge": lambda: calendar_css_nudge_message(
+        "Jane Dela Cruz", "Basic Life Support Training", "October 2, 2026", _SAMPLE_LINK),
     "job_whereabouts_nudge": lambda: whereabouts_nudge_message(
         "Juan Reyes", "October 5-9, 2026", _SAMPLE_LINK),
     "job_whereabouts_rollup": lambda: whereabouts_rollup_message(
