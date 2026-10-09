@@ -1,5 +1,14 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v6.5 — /api/search is a list of sources)
+
+`docs/HOME_SEARCH_ASSISTANT_PLAN.md` Phase 3. A refactor: responses and order are unchanged.
+
+- **`search_sources.py` (new):** each source is `{key, section, scopes, run(conn, user, terms, ctx)}`; Activities and People moved in with identical queries and limits. `ctx` passes `get_atoms`, `view_memo`, `humandate`, `is_chief`, `today` in from `app.py`, so the module never imports `app`.
+- **`api_search`:** loops `run_sources` for the scope; each source runs inside try/except with a log line, each section is capped at 5 rows and the response at 30.
+- **Rate limit:** `search` bucket, 120 per 60 s, keyed by account id; over the limit the answer is `[]`.
+- `search_sources.py` added to `deploy_hf.RUNTIME_PY`. Tests: `tests/test_search.py`.
+
 ## 2026-10-09 (v6.4 — CSS-only search on /css)
 
 `docs/HOME_SEARCH_ASSISTANT_PLAN.md` Phase 2.
