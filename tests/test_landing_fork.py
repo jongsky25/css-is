@@ -78,7 +78,7 @@ def test_hub_lives_at_css(app_mod):
     c = _auth_client(app_mod, "admin")
     r = c.get("/css")
     assert r.status_code == 200
-    # the role-filtered module cards + the inline search box are hub features
+    # the role-filtered module cards + the CSS-scoped search box are hub features
     assert 'id="css-modules"' in r.text
     assert "data-search" in r.text
 

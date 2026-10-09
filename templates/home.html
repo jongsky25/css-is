@@ -9,10 +9,6 @@
   .rolechip { font-size:.72rem; font-weight:700; padding:.2rem .7rem; border-radius:999px;
               background:var(--accent-bg); color:var(--accent); border:1px solid var(--blue-ln); white-space:nowrap; }
   .hhead-actions { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
-  .try-assistant { font-size:.82rem; font-weight:600; color:var(--accent); text-decoration:none;
-                    padding:.3rem .8rem; border-radius:999px; border:1px solid var(--blue-ln);
-                    background:var(--surface-2); white-space:nowrap; }
-  .try-assistant:hover { background:var(--accent-bg); }
 
   .stats { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:.7rem; margin-bottom:1.4rem; }
   .stat { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:.8rem 1rem; }
@@ -142,28 +138,21 @@
 {% block crumbs %}{% endblock %}
 
 {% block content %}
+{% from "_search_box.html" import search_box %}
 {% set u = request.state.user %}
 <div class="hwrap">
   <div class="hhead">
     <div>
-      <h1>What would you like to do{% if first_name %}, {{ first_name }}{% endif %}?</h1>
+      <h1>CSS hub</h1>
       <p class="hsub">{{ blhsd_name or 'Bureau of Local Health Systems Development' }} · client satisfaction information system</p>
     </div>
     <div class="hhead-actions">
-      <a class="try-assistant" href="/start">✨ Try the assistant</a>
       {% if u %}<span class="rolechip">{{ ROLE_LABELS.get(u.role, u.role) }}</span>{% endif %}
     </div>
   </div>
 
   <!-- search-to-jump: type intent, click the link (no menu drilling) -->
-  <form class="gsearch" action="/search" method="get" role="search" data-search data-tour="search">
-    <svg class="gs-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-    <input type="text" name="q" class="gsearch-input" autocomplete="off" spellcheck="false"
-           placeholder="Search or jump to a page — people, trends, walk-in report, new survey…"
-           aria-label="Search or jump to a page">
-    <kbd class="gs-kbd">Ctrl K</kbd>
-    <ul class="gsearch-results" role="listbox" aria-label="Search results"></ul>
-  </form>
+  {{ search_box("Search CSS — activities, resource persons, reports…", scope="css", tour="search") }}
 
   <!-- glanceable stats — one toggle flips all cards to the same window -->
   {% set default_period = 'all' %}

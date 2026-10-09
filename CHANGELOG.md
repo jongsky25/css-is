@@ -1,5 +1,15 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v6.3 — search and assistant on the home page)
+
+`docs/HOME_SEARCH_ASSISTANT_PLAN.md` Phase 1.
+
+- **Shared macro (`templates/_search_box.html`):** `search_box(placeholder, scope, tour)` renders the `form.gsearch` markup with `data-scope`. Used by `/` (scope `all`) and `/css` (scope `css`).
+- **Home (`office_connect.html`):** the box sits after the hero and birthday blocks, before "Your to-do", with a "✨ Ask the assistant" link to `/start`. Not rendered in the Calendar tab.
+- **Header:** `#navSearchBtn` (magnifier) in `dash_layout.html` for signed-in users; `search.js` already wired it, so phones can now open the palette. The "Ctrl K" hint is hidden on touch and narrow screens.
+- **CSS hub (`home.html`):** heading is "CSS hub"; the assistant link moved to the home page. Both boxes carry `data-tour="search"` (the `home` tour only runs on `/css`).
+- `.try-assistant` styles moved to `app.css`. Tests: `tests/test_search.py`, `tests/test_landing_fork.py`.
+
 ## 2026-10-09 (v6.2 — birthday cards from teammates)
 
 `docs/BIRTHDAY_GREETINGS_PLAN.md` Phase 3.

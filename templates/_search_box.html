@@ -1,0 +1,12 @@
+{#-- One search box, used on the home page (scope "all") and the CSS hub (scope "css").
+     search.js wires any form[data-search]; data-scope tells it what to search. --#}
+{% macro search_box(placeholder, scope="all", tour=None) %}
+  <form class="gsearch" action="/search" method="get" role="search" data-search data-scope="{{ scope }}"{% if tour %} data-tour="{{ tour }}"{% endif %}>
+    <svg class="gs-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+    <input type="text" name="q" class="gsearch-input" autocomplete="off" spellcheck="false"
+           placeholder="{{ placeholder }}"
+           aria-label="{{ placeholder }}">
+    <kbd class="gs-kbd">Ctrl K</kbd>
+    <ul class="gsearch-results" role="listbox" aria-label="Search results"></ul>
+  </form>
+{% endmacro %}

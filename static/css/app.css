@@ -904,6 +904,25 @@ body.sf-picking, body.sf-picking * { cursor:crosshair !important; }
   box-shadow:var(--shadow-md); padding:.3rem; max-height:60vh; overflow-y:auto; }
 .gsearch.js .gsearch-results:empty { display:none; }
 
+/* "Ask the assistant" pill next to the home search box */
+.oc-search { display:flex; align-items:flex-start; gap:.7rem; margin:0 0 1.3rem; }
+.oc-search .gsearch { flex:1 1 auto; margin:0; min-width:0; }
+.try-assistant { font-size:.82rem; font-weight:600; color:var(--accent); text-decoration:none;
+  padding:.5rem .9rem; border-radius:999px; border:1px solid var(--blue-ln);
+  background:var(--surface-2); white-space:nowrap; align-self:center; }
+.try-assistant:hover { background:var(--accent-bg); }
+@media (max-width:640px) { .oc-search { flex-direction:column; align-items:stretch; gap:.5rem; }
+  .try-assistant { align-self:flex-start; } }
+
+/* header search button: opens the palette (the only way in on a phone) */
+.nav-search { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px;
+  border:1px solid var(--line); border-radius:var(--r1); background:var(--surface); color:var(--ink); cursor:pointer; }
+.nav-search:hover { background:var(--surface-2); color:var(--accent); }
+.nav-search:focus-visible { outline:none; box-shadow:var(--ring); }
+
+/* no keyboard hint where there is no keyboard shortcut */
+@media (hover:none), (max-width:640px) { .gs-kbd { display:none; } }
+
 /* /search no-JS fallback page */
 .gsearch-page { max-width:560px; }
 .gs-go { flex:0 0 auto; border:1px solid var(--accent); background:var(--accent); color:var(--on-accent);

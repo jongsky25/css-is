@@ -123,11 +123,34 @@ def test_search_page_respects_role(viewer):
 
 
 def test_landing_wires_the_search_box(admin):
-    r = admin.get("/css")
+    r = admin.get("/")
     assert r.status_code == 200
     assert 'data-search' in r.text                       # inline box present
+    assert 'data-scope="all"' in r.text
     assert "window.SEARCH_INDEX" in r.text               # palette index injected
     assert "/static/js/search.js" in r.text
+
+
+def test_calendar_tab_has_no_inline_box(admin):
+    r = admin.get("/?view=calendar")
+    assert r.status_code == 200
+    assert "data-search" not in r.text
+
+
+def test_css_hub_search_is_scoped_to_css(admin):
+    r = admin.get("/css")
+    assert r.status_code == 200
+    assert 'data-scope="css"' in r.text
+    assert "CSS hub" in r.text
+    assert "What would you like to do" not in r.text
+    assert "Try the assistant" not in r.text
+
+
+def test_nav_search_button_only_when_signed_in(admin, app_mod):
+    assert 'id="navSearchBtn"' in admin.get("/").text
+    from fastapi.testclient import TestClient
+    anon = TestClient(app_mod.app)
+    assert 'id="navSearchBtn"' not in anon.get("/login").text
 
 
 # ── /api/search ──────────────────────────────────────────────────────────────
