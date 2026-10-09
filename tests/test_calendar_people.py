@@ -496,11 +496,19 @@ def test_nicknames_are_proposed_only_for_the_people_the_bureau_named():
     assert rows["Catherine Dimaano"]["status"] == "no_account"            # not in this directory
 
 
-def test_initials_and_first_names_are_not_nicknames():
-    given = set(cp.NICKNAME_PREFILL.values())
-    assert not given & {"KJF", "JAP", "MM", "MMC", "ASF", "MWB"}                # initials stay on paper
-    for full, nick in cp.NICKNAME_PREFILL.items():
-        assert nick.lower() != full.split()[0].lower(), full                     # a first name needs no nickname
+def test_the_bureaus_initials_are_nicknames_and_first_names_need_none():
+    n = cp.NICKNAME_PREFILL
+    assert (n["Kathrine Joyce Flores"], n["Juan Alfonso Perez"]) == ("KJF", "JAP")
+    assert (n["Mary Anne Milliscent Castro"], n["Analyn Fortaleza"]) == ("MM", "ASF")
+    assert "MMC" not in n.values() and "MWB" not in n.values()           # one nickname per person; MWB has no account
+    assert len(set(n.values())) == len(n)                                # nobody shares a nickname
+    for full, nick in n.items():
+        assert nick.lower() != full.split()[0].lower(), full             # a first name needs no nickname
+
+
+def test_a_prefilled_initial_nickname_matches_on_its_own():
+    d = [with_nick(person(7, "Kathrine Joyce Flores"), "KJF"), with_nick(person(8, "Kim Jae Fox"))]
+    assert cp.match("kjf", d, ) == {"level": 1, "candidates": [7], "status": "suggested", "guide": None}
 
 
 def test_an_existing_nickname_is_never_overwritten_by_default():

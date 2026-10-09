@@ -59,14 +59,18 @@ NAME_GUIDE = {
 NO_ACCOUNT = {"Mar Wynn Bello"}                                    # the previous Director
 
 # The nickname each person goes by in the calendar, to prefill on their account (My profile).
-# Only names that are NOT already the person's first name, and not initials (KJF, JAP, MM,
-# MMC, ASF, MWB are initials the bureau uses on paper, not what anyone is called).
+# Only names that are NOT already the person's first name. The bureau's initials (KJF, JAP,
+# MM, ASF) count as nicknames by default; each person can change theirs on My profile.
+# One nickname per person: Mary Anne Milliscent Castro is both "MM" and "MMC" in the file,
+# and "MM" is the one used most. (MWB has no account.)
 NICKNAME_PREFILL = {
     "Teresita Guzman": "Tek", "Maria Lourdes Gajitos": "Malou", "Maria Olga Bulasa": "Olga",
     "Irene Hizon": "Mimi", "Marifel Santiago": "Feng", "Catherine Dimaano": "Dheng",
     "Chariza Cruz": "Cha", "Maria Teresa Santiago": "Riza", "Ronnel John Dela Cruz": "RJ",
     "Modesto Lazo": "Desten", "Apple Charm Agulto": "AC", "Ray Justin Ventura": "Jong",
     "Cathrina Laurio": "Cath", "Maejorie Orpilla": "Mae",
+    "Kathrine Joyce Flores": "KJF", "Juan Alfonso Perez": "JAP",
+    "Mary Anne Milliscent Castro": "MM", "Analyn Fortaleza": "ASF",
 }
 
 NOT_PEOPLE = {

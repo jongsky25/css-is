@@ -4783,6 +4783,12 @@ def choose(request: Request, msg: str = "", view: str = "team"):
         except Exception:
             traceback.print_exc()
             tasks = []
+        # The next seven days from the office calendar (same scope rules as /calendar).
+        try:
+            cal_week = oc.calendar_week_block(conn, request.state.user, view=view)
+        except Exception:
+            traceback.print_exc()
+            cal_week = None
         # A light wellness teaser (points/streak) beside the Wellness door.
         try:
             wstats = st.wellness_stats(conn, request.state.user["id"])
@@ -4821,7 +4827,7 @@ def choose(request: Request, msg: str = "", view: str = "team"):
         "wa_file_label": wa_file_label, "wa_file_filed": wa_file_filed,
         "role_label": auth.ROLE_LABELS.get(role, role),
         "role_blurb": auth.ROLE_BLURB.get(role, ""),
-        "d": data, "view": view, "tasks": tasks,
+        "d": data, "view": view, "tasks": tasks, "cal_week": cal_week,
         # The companion's growth was invisible: you could see the creature you
         # had but not the one you were working toward, nor how it got there.
         "ladder": st.avatar_growth_ladder(avatar_kind, wstats),

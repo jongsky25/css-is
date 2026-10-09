@@ -1,5 +1,22 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.62 — "Coming up" on the home page; initials as nicknames)
+
+- **Home page (`/`, Team and Me tabs)** — a "Coming up" card under the to-do strip: the next seven
+  days from the office calendar, up to five items (Today / Tomorrow / weekday, time, title linked to
+  the item, owning unit's colour and name, dates when it is a trip already under way, venue, status,
+  up to three faces) with "+N more", a holiday line, an empty state with an Add link, and an "Away"
+  strip of the people on a confirmed trip (one chip per person, capped at six). Built by
+  `office_connect.calendar_week_block` on top of `office_calendar.items_between`, so what is shown can
+  never exceed what `/calendar` shows. Scope: Team = the viewer's unit (their section, a chief's
+  division) or the whole bureau for a bureau-wide viewer; Me, or an account with no directory link =
+  their own items plus what is bureau-wide. (An item you are on that another unit owns is on the Me
+  tab.) The card is optional: if it fails the page still renders.
+- **Nicknames** — the bureau's initials are now prefilled as nicknames (KJF, JAP, MM, ASF); one per
+  person (Mary Anne Milliscent Castro: "MM", not "MMC"). People can change theirs on My profile.
+- **Tests** — `tests/test_calendar_home.py`; nickname tests updated.
+- `static/css/calendar.css` bumped to `?v=20261009h`.
+
 ## 2026-10-09 (v3.61 — fill in nicknames from the bureau's list; Cath; the previous Director)
 
 - **`/calendar/nicknames`** (admin only) — gives accounts the nickname the calendar uses, from the

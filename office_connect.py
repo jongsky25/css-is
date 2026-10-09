@@ -39,6 +39,7 @@ from datetime import date, timedelta
 import auth
 import css_is_engine as eng
 import dashboard_insights as di
+import office_calendar as ocal
 import storage as st
 import tzutil as tz
 
@@ -1159,3 +1160,87 @@ def home_tasks(conn, user, today=None):
         pass
     tasks.sort(key=lambda t: _TONE_ORDER[t["tone"]])   # stable: keeps build order within a tone
     return tasks
+
+
+# ── "Coming up" — the calendar on the landing page (office calendar C1) ──────────
+#
+# A slim card for the Team and Me views: the next seven days from the office
+# calendar, plus who is away on a trip. It reads the SAME function the /calendar
+# page does (office_calendar.items_between), so what a person may see here can never
+# differ from what they may see there: visibility is decided once, in that module.
+#
+# Which calendar scope each tab shows follows team_view_data's own rule, so the two
+# agree about "your team": Team -> the viewer's unit (a section member sees their
+# section, a division chief their division) or the whole bureau for a bureau-wide
+# viewer; Me — and anyone with no directory link — -> their own items plus what is
+# bureau-wide.
+
+CAL_WEEK_DAYS = 7
+CAL_WEEK_ITEMS = 5
+CAL_WEEK_AWAY = 6
+_CAL_SCOPE_LABEL = {"blend": "Yours and bureau-wide", "section": "Your team", "bureau": "The whole bureau"}
+
+
+def _day_label(iso, today):
+    d = date.fromisoformat(iso)
+    if d == today:
+        return "Today"
+    if d == today + timedelta(days=1):
+        return "Tomorrow"
+    return f"{d.strftime('%a, %b')} {d.day}"
+
+
+def _range_label(start, end):
+    a, b = date.fromisoformat(start), date.fromisoformat(end)
+    if a == b:
+        return f"{a.strftime('%b')} {a.day}"
+    if (a.year, a.month) == (b.year, b.month):
+        return f"{a.strftime('%b')} {a.day}–{b.day}"
+    return f"{a.strftime('%b')} {a.day} – {b.strftime('%b')} {b.day}"
+
+
+def calendar_week_block(conn, user, *, view, today=None):
+    """The "Coming up" card's data, or None when the calendar has nothing to say about
+    this account. `view` is "team" or "me"."""
+    today = today or tz.today_local()
+    end = today + timedelta(days=CAL_WEEK_DAYS - 1)
+    ctx = ocal.viewer_context(conn, user)
+    if view == "me" or ctx["kind"] == "none":
+        scope = "blend"
+    else:
+        scope = "bureau" if ctx["kind"] == "bureau" else "section"
+    items = ocal.items_between(conn, user, today, end, scope=scope)
+    work = [i for i in items if i["layer"] != "holidays"]
+    holidays = [i for i in items if i["layer"] == "holidays"]
+    shown = []
+    for i in work[:CAL_WEEK_ITEMS]:
+        # a trip already under way is shown as today, with its real dates beside it
+        first = max(i["start"], today.isoformat())
+        shown.append({
+            "title": i["title"], "url": i["url"], "when": _day_label(first, today),
+            "is_today": first == today.isoformat(),
+            "time": (i["start_time"] + (f"–{i['end_time']}" if i["end_time"] else "")
+                     if i["start_time"] else i["time_note"] or ""),
+            "dates": _range_label(i["start"], i["end"]) if i["end"] != i["start"] else "",
+            "tone": i["tone"], "owner": i["owner_label"], "status": i["status"], "kind": i["kind"],
+            "venue": i["venue"], "people": i["people"][:3], "more_people": max(len(i["people"]) - 3, 0),
+        })
+    away = {}
+    for i in work:
+        if i["kind"] != "travel" or i["status"] in ("postponed", "tentative"):
+            continue
+        for p in i["people"]:
+            if p["role"] == "travel":
+                rec = away.setdefault(p["user_id"], {**{k: p[k] for k in ("user_id", "name", "initials", "photo_url")},
+                                                     "trips": []})
+                rec["trips"].append({"title": i["title"], "dates": _range_label(i["start"], i["end"]),
+                                     "url": i["url"], "start": i["start"]})
+    away_people = sorted(away.values(), key=lambda a: (min(t["start"] for t in a["trips"]), a["name"].lower()))
+    return {
+        "scope": scope, "scope_label": _CAL_SCOPE_LABEL[scope],
+        "range": _range_label(today.isoformat(), end.isoformat()),
+        "items": shown, "n_more": max(len(work) - CAL_WEEK_ITEMS, 0), "n_total": len(work),
+        "holidays": [{"title": h["title"], "when": _day_label(h["start"], today)} for h in holidays],
+        "away": away_people[:CAL_WEEK_AWAY], "n_away_more": max(len(away_people) - CAL_WEEK_AWAY, 0),
+        "calendar_url": f"/calendar?scope={scope}", "add_url": f"/calendar/new?day={today.isoformat()}",
+    }
