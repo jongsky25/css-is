@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.6"
+APP_VERSION = "6.7"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.7",
+        "date": "October 9, 2026",
+        "summary": "Search for a colleague and see whether they are in the office today.",
+        "changes": [
+            "Typing a colleague's name in search now shows their position, their unit and whether they are in the office, working from home, in the field, on leave or off today.",
+            "Opening a colleague shows a small card with their photo, who they are, and when they are away in the next seven days.",
+            "Only that basic status is shown to everyone signed in. Notes, places and reasons stay private.",
+            "An administrator can limit who sees this status to each person's own team, under AWA filing.",
+        ],
+    },
     {
         "version": "6.6",
         "date": "October 9, 2026",

@@ -7393,6 +7393,50 @@ async def cleanup_split(request: Request):
     return _cleanup_commit(request, summary, action="name_cleanup_split")
 
 
+@app.get("/people/{user_id}", response_class=HTMLResponse)
+def colleague_card(request: Request, user_id: int):
+    """A small read-only card for one colleague: who they are, today's BASIC status, who is away
+    in the next seven days, and a shared birthday. Signed-in users only (the auth middleware sends
+    anyone else to the login page). Shown: photo or initials, name, position, unit. Never shown:
+    email, phone, notes, filing history, wellness data, or any reason.
+
+    Status honours the admin's bureau/team switch (storage.colleague_status_for). "Away" comes from
+    the office calendar as the VIEWER, so the calendar's own visibility rules are the gate; a trip's
+    title (which can name a place) and a leave's reason are deliberately not shown."""
+    viewer = request.state.user
+    conn = get_conn()
+    try:
+        person = next((p for p in st.colleague_directory(conn) if p["user_id"] == user_id), None)
+        if not person:
+            return Response(status_code=404)
+        today = _today_local()
+        state = st.colleague_status_for(conn, viewer, today).get(user_id)
+        away = []
+        for i in oc_cal.items_between(conn, viewer, today, today + timedelta(days=7),
+                                      scope="bureau", layers=["entries", "leave"]):
+            if (i["status"] in ("cancelled", "postponed", "tentative")
+                    or i["kind"] not in ("travel", "leave")
+                    or not any(p["user_id"] == user_id for p in i["people"])):
+                continue
+            a, b = date.fromisoformat(i["start"]), date.fromisoformat(i["end"])
+            away.append({"what": "On leave" if i["kind"] == "leave" else "Away",
+                         "when": f"{a:%b} {a.day}" if a == b else f"{a:%b} {a.day} – {b:%b} {b.day}"})
+        birthday = None
+        vp = oc_cal.viewer_paths(conn, viewer["id"])
+        for bp in oc_cal.birthday_people(conn):
+            if bp["user_id"] == user_id and birthdays.shared_with(bp, vp):
+                birthday = f"{st._MONTH_NAMES[bp['month'] - 1]} {bp['day']}"
+        can_card = any(c["user_id"] == user_id and not c["sent"]
+                       for c in oc_cal.card_celebrants(conn, viewer["id"], today))
+    finally:
+        conn.close()
+    return templates.TemplateResponse(request, "colleague.html", {
+        "p": person, "initials": _initials(person["name"]), "state": state,
+        "status_label": st.BASIC_STATUS_LABELS.get(state, st.BASIC_STATUS_LABELS["unknown"]),
+        "away": away, "birthday": birthday, "can_card": can_card,
+        "nav_active": "", "show_scope": False})
+
+
 @app.get("/photo/{rp_id}")
 def serve_photo(rp_id: int):
     conn = get_conn()
@@ -15884,12 +15928,35 @@ def admin_work_arrangement(request: Request, ok: str = "", err: str = ""):
                 })
             ps = st.work_arrangement_prev_period(ps)
         periods.reverse()
+        colleague_scope = st.colleague_status_scope(conn)
     finally:
         conn.close()
     return templates.TemplateResponse(request, "admin_work_arrangement.html", {
         "periods": periods, "ok": ok, "err": err, "show_scope": False,
+        "colleague_scope": colleague_scope,
         "nav_active": "wa_reopen",
     })
+
+
+@app.post("/admin/work-arrangement/colleague-status")
+async def admin_work_arrangement_colleague_status(request: Request):
+    if (r := _forbid(request, "manage_users")):
+        return r
+    posted = await _posted(request)
+    value = (posted.get("scope") or "").strip()
+    if value not in st.COLLEAGUE_STATUS_SCOPES:
+        return RedirectResponse("/admin/work-arrangement?err=" + quote("Pick bureau-wide or team only."),
+                                status_code=303)
+    conn = get_conn()
+    try:
+        st.set_colleague_status_scope(conn, value)
+        st.basic_status_clear_cache()
+        _audit(request, conn, "colleague_status_scope", target_type="setting",
+               summary="Colleague status is now shown " +
+                       ("to everyone signed in" if value == "bureau" else "within each person's own team"))
+    finally:
+        conn.close()
+    return RedirectResponse("/admin/work-arrangement?ok=" + quote("Saved."), status_code=303)
 
 
 @app.post("/admin/work-arrangement/reopen")

@@ -212,6 +212,38 @@ def _help(conn, user, terms, ctx):
     return rows
 
 
+def _today_label(state):
+    return {"onsite": "In the office today", "wfh": "Working from home today",
+            "field": "In the field today", "leave": "On leave today",
+            "off": "Off today"}.get(state, st.BASIC_STATUS_LABELS["unknown"])
+
+
+def _colleagues(conn, user, terms, ctx):
+    """People in the directory — name, nickname, position or unit — with today's BASIC status
+    only (see storage.colleague_status_for; it honours the admin's bureau/team switch)."""
+    if not _long_enough(terms):
+        return []
+    hits = []
+    for p in st.colleague_directory(conn):
+        hay = " ".join([p["name"], p["nickname"], p["position"], p["unit"]]).lower()
+        if not all(t in hay for t in terms):
+            continue
+        words = p["name"].lower().split()
+        exact = (words and terms[0] == words[0]) or terms[0] == p["nickname"].lower()
+        hits.append((0 if exact else 1, p["name"].lower(), p))
+    if not hits:
+        return []
+    hits.sort(key=lambda h: h[:2])
+    status = st.colleague_status_for(conn, user, ctx["today"])
+    rows = []
+    for _rank, _n, p in hits[:SECTION_CAP]:
+        bits = [b for b in (p["position"], p["unit"]) if b]
+        bits.append(_today_label(status.get(p["user_id"])))
+        rows.append({"title": p["name"], "hint": " · ".join(bits), "url": f"/people/{p['user_id']}",
+                     "section": "Colleagues", "kw": ""})
+    return rows
+
+
 SOURCES = [
     {"key": "activities", "section": "Activities", "scopes": {"all", "css"}, "run": _activities},
     {"key": "people", "section": "People", "scopes": {"all", "css"}, "run": _people},
@@ -220,6 +252,7 @@ SOURCES = [
     {"key": "requests", "section": "My requests", "scopes": {"all"}, "run": _requests},
     {"key": "room", "section": "Conference room", "scopes": {"all"}, "run": _room},
     {"key": "help", "section": "Help", "scopes": {"all"}, "run": _help},
+    {"key": "colleagues", "section": "Colleagues", "scopes": {"all"}, "run": _colleagues},
 ]
 
 

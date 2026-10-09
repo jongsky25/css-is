@@ -32,6 +32,16 @@
 {{ flash(msg=ok, err=err) }}
 
 <div class="panel">
+  <h2>Colleague status</h2>
+  <p class="sub">Who can see whether a colleague is in the office today. Only the basic status is ever shown: in the office, working from home, in the field, on leave, or off. Never a note, a place or a reason.</p>
+  <form method="post" action="/admin/work-arrangement/colleague-status" class="rowacts">
+    <label><input type="radio" name="scope" value="bureau" {{ "checked" if colleague_scope == "bureau" }}> Everyone signed in</label>
+    <label><input type="radio" name="scope" value="team" {{ "checked" if colleague_scope == "team" }}> Only people in their own team</label>
+    <button class="btn" type="submit">Save</button>
+  </form>
+</div>
+
+<div class="panel">
   <h2>Recent periods</h2>
   <p class="sub">Only periods whose own deadline has already passed are listed — anything still open needs no override.</p>
   {% if periods %}
