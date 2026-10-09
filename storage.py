@@ -483,6 +483,21 @@ def init_db(conn):
         diff_json  TEXT                      -- {"field": [old, new]}
     );
     CREATE INDEX IF NOT EXISTS idx_cal_rev_entry ON calendar_entry_revision(entry_id);
+
+    -- One uploaded Word calendar awaiting review (docs/OFFICE_CALENDAR_PLAN.md §9).
+    -- `payload` is calendar_import.parse()'s drafts/holidays/warnings as JSON so the
+    -- review survives a restart and B3 can still see the people hints afterwards;
+    -- `result` records what the import created (draft index -> entry id).
+    CREATE TABLE IF NOT EXISTS calendar_import_batch (
+        id          INTEGER PRIMARY KEY,
+        filename    TEXT,
+        created_by  TEXT,
+        created_at  TEXT,
+        n_drafts    INTEGER,
+        payload     TEXT NOT NULL,
+        result      TEXT,
+        imported_at TEXT
+    );
     """)
     _add_missing_columns(conn)
     _wa_install_week_guard(conn)
@@ -9965,14 +9980,25 @@ def cal_get(conn, entry_id):
     return _cal_hydrate(conn, [row])[0] if row else None
 
 
+def cal_validate(title, start_date, **fields):
+    """The normalised field dict `cal_create` would store, or ValueError — so a bulk
+    import can check every row BEFORE writing any (cal_create commits per row)."""
+    v = _cal_clean(dict(title=title, start_date=start_date, **fields))
+    if v.get("end_date") == v["start_date"]:
+        v["end_date"] = None
+    _cal_span_ok(v["start_date"], v.get("end_date"))
+    return v
+
+
 def cal_create(conn, title, start_date, *, end_date=None, kind="meeting",
                status="confirmed", start_time=None, end_time=None, time_note=None,
                venue=None, modality=None, meeting_url=None, note=None,
                owner_org_id=None, audience="unit", event_id=None, rrule=None,
                exdates=None, source="app", import_key=None, people=None, tags=None,
-               by=None):
+               by=None, audit_it=True):
     """Create an entry; returns its id. With an `import_key` that already exists,
-    returns the existing entry's id and changes nothing (idempotent re-import)."""
+    returns the existing entry's id and changes nothing (idempotent re-import).
+    `audit_it=False` skips the per-entry audit line (a bulk import writes one summary)."""
     if import_key:
         r = conn.execute("SELECT id FROM calendar_entry WHERE import_key=?",
                          (import_key,)).fetchone()
@@ -10008,7 +10034,7 @@ def cal_create(conn, title, start_date, *, end_date=None, kind="meeting",
     _cal_write_tags(conn, entry_id, tags)
     _cal_revision(conn, entry_id, 0, "create", by, {"title": [None, v["title"]]})
     conn.commit()
-    if by:
+    if by and audit_it:
         audit(conn, by, "calendar_create", target_type="calendar_entry",
               target_id=entry_id, summary=f"Added '{v['title']}' on {v['start_date']}")
     return entry_id
@@ -10154,3 +10180,61 @@ def cal_revisions(conn, entry_id):
                 "SELECT id, sequence, action, changed_by, changed_at, diff_json "
                 "FROM calendar_entry_revision WHERE entry_id=? ORDER BY id DESC",
                 (entry_id,))]
+
+
+# ---- office calendar: Word import batches (increment B2) ---------------------
+
+def cal_import_create(conn, filename, by, payload):
+    cur = conn.execute(
+        "INSERT INTO calendar_import_batch(filename, created_by, created_at, n_drafts, payload) "
+        "VALUES (?,?,?,?,?)", (filename, by, tz.now_iso(), len(payload.get("drafts", [])),
+                               json.dumps(payload, ensure_ascii=False)))
+    conn.commit()
+    return cur.lastrowid
+
+
+def cal_import_get(conn, batch_id):
+    r = conn.execute("SELECT id, filename, created_by, created_at, payload, result, imported_at "
+                     "FROM calendar_import_batch WHERE id=?", (batch_id,)).fetchone()
+    if not r:
+        return None
+    return {"id": r[0], "filename": r[1], "created_by": r[2], "created_at": r[3],
+            "payload": json.loads(r[4]), "result": json.loads(r[5]) if r[5] else None,
+            "imported_at": r[6]}
+
+
+def cal_import_list(conn, limit=20):
+    out = []
+    for r in conn.execute("SELECT id, filename, created_by, created_at, imported_at, "
+                          "n_drafts, result "
+                          "FROM calendar_import_batch ORDER BY id DESC LIMIT ?", (limit,)):
+        res = json.loads(r[6]) if r[6] else None
+        out.append({"id": r[0], "filename": r[1], "created_by": r[2], "created_at": r[3],
+                    "imported_at": r[4], "n_drafts": r[5],
+                    "n_created": len(res["created"]) if res else None})
+    return out
+
+
+def cal_import_finish(conn, batch_id, result):
+    conn.execute("UPDATE calendar_import_batch SET result=?, imported_at=? WHERE id=?",
+                 (json.dumps(result), tz.now_iso(), batch_id))
+    conn.commit()
+
+
+def cal_import_discard(conn, batch_id):
+    """Delete a batch that has not been imported. True if one was removed."""
+    cur = conn.execute("DELETE FROM calendar_import_batch WHERE id=? AND imported_at IS NULL",
+                       (batch_id,))
+    conn.commit()
+    return cur.rowcount > 0
+
+
+def cal_existing_import_keys(conn, keys):
+    keys = list(keys)
+    found = set()
+    for i in range(0, len(keys), 500):
+        chunk = keys[i:i + 500]
+        found.update(r[0] for r in conn.execute(
+            "SELECT import_key FROM calendar_entry WHERE import_key IN (%s)"
+            % ",".join("?" * len(chunk)), chunk))
+    return found

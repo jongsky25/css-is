@@ -1,5 +1,26 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.57 — office calendar: import the Word calendar)
+
+- **`/calendar/import`** (admin only — `manage_users`; everyone else gets 403) — upload the yearly
+  .docx → review → import. Upload is capped (8 MB, 80 MB unpacked) and any unreadable file gets one
+  friendly message; the parsed drafts are kept in the new `calendar_import_batch` table so a review
+  survives a restart and B3 can still see the people hints.
+- **Review page** — (1) map each legend colour (Bureau, Sections 1-5) to a unit, guessed from unit
+  names and remembered next time; this also sets the unit colours the calendar draws
+  (`calendar_unit_tones`); (2) who can see the items (everyone, or only the owning unit — an item
+  with no unit is always shown to everyone so it can't become invisible); (3) a table of every item
+  with tick / dates / title / type / status / owner editable, plus warnings, times and name hints.
+- **`calendar_import_apply.py`** — all-or-nothing: every ticked row is validated before the first is
+  written (`storage.cal_validate`), one audit line for the whole batch (`cal_create(audit_it=False)`).
+  Idempotent: a draft whose `import_key` is already in the calendar is left alone — re-uploading the
+  same file, or importing twice, adds nothing and never overwrites a later edit. An imported batch
+  cannot be imported or discarded again.
+- **Real file** — the CY 2026 calendar imports as 380 items in 0.1 s; review page 618 KB.
+- **`deploy_hf.py`** ships `calendar_import_apply.py`; `app.py` adds a search-only "Import calendar"
+  entry (admin).
+- **Tests** — `tests/test_calendar_import_page.py`.
+
 ## 2026-10-09 (unreleased — office calendar B1: the Word-file parser, no visible change)
 
 - **`calendar_import.py`** (new, pure — no DB, no routes): `parse(path_or_file)` reads the yearly

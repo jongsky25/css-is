@@ -1,7 +1,7 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header, empty_state %}
 {% block title %}Office calendar{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009b">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009d">{% endblock %}
 {% block content %}
 {{ page_header("Office calendar", "What is on across the bureau: meetings, trips, trainings and holidays.") }}
 
@@ -16,6 +16,7 @@
     <a href="/calendar{{ qs(view='month', month='', day='') }}" {% if view == "month" %}aria-current="true"{% endif %}>Month</a>
   </nav>
   <a class="cal-btn primary cal-add" href="/calendar/new?day={{ add_day }}">+ Add</a>
+  {% if can_import %}<a class="cal-btn" href="/calendar/import">Import from Word</a>{% endif %}
   <nav class="cal-nav" aria-label="Move through the calendar">
     {% if view == "month" %}
     <a href="/calendar{{ qs(month=grid.prev) }}">← {{ grid.prev_label }}</a>

@@ -191,3 +191,31 @@
   .cal-month { display:none; }
   .cal-month-note { display:block; }
 }
+
+/* ---- Word import (admin) ---- */
+.cal-h2 { font-size:1.05rem; margin:1.4rem 0 .5rem; }
+.cal-table { width:100%; border-collapse:collapse; font-size:.88rem; }
+.cal-table th, .cal-table td { padding:.35rem .5rem; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
+.cal-table thead th { color:var(--soft); font-size:.74rem; text-transform:uppercase; letter-spacing:.04em; position:sticky; top:0; background:var(--surface); z-index:2; }
+.cal-step { border:1px solid var(--line); border-radius:14px; padding:.8rem 1rem; margin:0 0 1rem; background:var(--surface); }
+.cal-step legend { font-weight:800; padding:0 .4rem; }
+.cal-map th { width:16rem; font-weight:700; }
+.cal-map small { color:var(--soft); font-weight:400; }
+.cal-map select { max-width:20rem; font:inherit; padding:.3rem .5rem; border:1px solid var(--line); border-radius:9px; background:var(--bg); color:var(--ink); }
+.cal-count { color:var(--soft); font-size:.84rem; }
+.cal-radio { display:block; margin:.25rem 0; }
+.cal-radio small { color:var(--soft); }
+.cal-tools { display:flex; flex-wrap:wrap; gap:.5rem; align-items:center; margin:0 0 .6rem; }
+.cal-tools .cal-btn { padding:.3rem .8rem; font-size:.82rem; }
+.cal-scroll { max-height:70vh; overflow:auto; border:1px solid var(--line); border-radius:10px; }
+.cal-review input:not([type=checkbox]), .cal-review select { font:inherit; font-size:.84rem; padding:.25rem .4rem; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); max-width:100%; box-sizing:border-box; }
+.cal-review .cal-title-cell { min-width:22rem; }
+.cal-review .cal-title-cell input { width:100%; }
+.cal-review small { display:block; color:var(--soft); font-size:.74rem; margin-top:.15rem; }
+.cal-month-row th { background:var(--surface-2); font-size:.8rem; position:static !important; }
+.cal-existing { opacity:.65; }
+.cal-holidays summary { cursor:pointer; font-weight:700; }
+.cal-holidays ul { columns:2; margin:.5rem 0 0; font-size:.86rem; }
+@media (max-width:760px) { .cal-holidays ul { columns:1; } .cal-review .cal-title-cell { min-width:14rem; } }
+.cal-review input[type=date] { width:9.2rem; font-size:.8rem; }
+.cal-review td { white-space:normal; }

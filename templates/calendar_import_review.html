@@ -1,0 +1,119 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}Review the import{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009d">{% endblock %}
+{% block content %}
+{{ page_header("Review the import", batch.filename or "calendar.docx") }}
+<p class="cal-back"><a href="/calendar/import">← All uploads</a> · <a href="/calendar">Calendar</a></p>
+
+{% if batch.imported_at %}
+{% set r = batch.result %}
+<div class="cal-flash ok" role="status">✓ Imported {{ r.created|length }} items on {{ batch.imported_at[:10] }}.
+  {% if r.already %}{{ r.already }} were already in the calendar and were left alone.{% endif %}
+  {% if r.not_selected %}{{ r.not_selected }} were not selected.{% endif %}
+  {% if r.unmapped_owner %}{{ r.unmapped_owner }} have an owner colour with no unit chosen, so they show with no owning unit.{% endif %}</div>
+<p><a class="cal-btn primary" href="/calendar?view=month&month={{ rows[0].month if rows else '' }}">See it on the calendar</a></p>
+{% else %}
+
+{% if errors %}<div class="cal-flash err" role="alert"><strong>Nothing was imported.</strong> Fix these and try again:
+  <ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+
+<p class="cal-range">{{ stats.drafts }} items found in {{ stats.tables }} months
+  ({{ stats.merged }} repeated daily lines were combined into ranges).
+  {% if n_existing %}<strong>{{ n_existing }}</strong> are already in the calendar and are unticked.{% endif %}</p>
+{% for w in file_warnings %}<div class="cal-flash warn">{{ w }}</div>{% endfor %}
+
+<form method="post" action="/calendar/import/{{ batch.id }}" class="cal-import">
+
+  <fieldset class="cal-step">
+    <legend>1 · Which unit does each colour belong to?</legend>
+    <p class="cal-range">The Word file shows who owns an item only by its colour. Choose the unit for each; this is remembered for next year.</p>
+    <table class="cal-table cal-map">
+      <tbody>
+      {% for key, label, tone in owners %}
+      <tr><th scope="row"><span class="cal-unit" data-tone="{{ tone }}"><i aria-hidden="true"></i>{{ label }}</span>
+            <small>({{ tone }} in the Word file)</small></th>
+          <td><select name="map_{{ key }}" aria-label="Unit for {{ label }}"><option value="">— not set —</option>
+            {% for u in units %}<option value="{{ u.id }}" {{ "selected" if mapping.get(key) == u.id }}>{{ u.label }}</option>{% endfor %}</select></td>
+          <td class="cal-count">{{ rows|selectattr("owner", "equalto", key)|list|length }} items</td></tr>
+      {% endfor %}
+      <tr><th scope="row">No colour<br><small>(owner not shown in the file)</small></th><td colspan="2" class="cal-count">
+        {{ rows|selectattr("owner", "equalto", "")|list|length }} items — choose an owner per row below, or leave blank.</td></tr>
+      </tbody>
+    </table>
+  </fieldset>
+
+  <fieldset class="cal-step">
+    <legend>2 · Who can see the imported items?</legend>
+    <label class="cal-radio"><input type="radio" name="audience" value="bureau" {{ "checked" if audience != "unit" }}>
+      Everyone in the bureau <small>(like the Word calendar everyone gets)</small></label>
+    <label class="cal-radio"><input type="radio" name="audience" value="unit" {{ "checked" if audience == "unit" }}>
+      Only the owning unit <small>(items with no unit are still shown to everyone)</small></label>
+  </fieldset>
+
+  <details class="cal-step cal-holidays"><summary>{{ holidays|length }} holiday lines were set aside —
+      {{ holidays|rejectattr("known")|list|length }} are not in Holidays yet</summary>
+    <ul>{% for h in holidays %}<li>{{ h.date }} · {{ h.name }} {% if h.known %}<small>(already in Holidays)</small>{% else %}<small>(not in Holidays — add it in Admin → Holidays if people are off)</small>{% endif %}</li>{% endfor %}</ul>
+  </details>
+
+  <fieldset class="cal-step">
+    <legend>3 · Check the items</legend>
+    <p class="cal-tools">
+      <button type="button" class="cal-btn" data-check="all">Tick all</button>
+      <button type="button" class="cal-btn" data-check="none">Untick all</button>
+      <button type="button" class="cal-btn" data-check="owned">Tick only those with an owner</button>
+      <span id="cal-count" class="cal-count" aria-live="polite"></span>
+    </p>
+    <div class="cal-scroll">
+    <table class="cal-table cal-review">
+      <thead><tr><th>Add</th><th>Starts</th><th>Ends</th><th>Title</th><th>Type</th><th>Status</th><th>Owner</th></tr></thead>
+      <tbody>
+      {% set ns = namespace(month="") %}
+      {% for r in rows %}
+      {% if r.month != ns.month %}{% set ns.month = r.month %}<tr class="cal-month-row"><th colspan="7">{{ r.month }}</th></tr>{% endif %}
+      <tr {% if r.existing %}class="cal-existing"{% endif %}>
+        <td><input type="checkbox" name="inc_{{ r.i }}" value="1" {{ "checked" if r.include }} data-owner="{{ r.owner }}" aria-label="Add row {{ r.i + 1 }}"></td>
+        <td><input type="date" name="start_{{ r.i }}" value="{{ r.start }}" required aria-label="Starts"></td>
+        <td><input type="date" name="end_{{ r.i }}" value="{{ r.end }}" aria-label="Ends"></td>
+        <td class="cal-title-cell"><input name="title_{{ r.i }}" value="{{ r.title }}" maxlength="200" aria-label="Title">
+          <small>
+            {% if r.existing %}<b>Already in the calendar.</b> {% endif %}
+            {% if r.d.start_time %}{{ r.d.start_time }}{% if r.d.end_time %}–{{ r.d.end_time }}{% endif %} · {% elif r.d.time_note %}{{ r.d.time_note }} · {% endif %}
+            {% if r.d.people_hint %}names: {{ r.d.people_hint }} · {% endif %}
+            {% for w in r.d.warnings if not w.startswith("No owner") %}{{ w }} · {% endfor %}
+          </small></td>
+        <td><select name="kind_{{ r.i }}" aria-label="Type">{% for k, label in kinds.items() %}<option value="{{ k }}" {{ "selected" if r.kind == k }}>{{ label }}</option>{% endfor %}</select></td>
+        <td><select name="status_{{ r.i }}" aria-label="Status">{% for k, label in statuses.items() %}<option value="{{ k }}" {{ "selected" if r.status == k }}>{{ label }}</option>{% endfor %}</select></td>
+        <td><select name="owner_{{ r.i }}" aria-label="Owner"><option value="">— none —</option>
+          {% for key, label, tone in owners %}<option value="{{ key }}" {{ "selected" if r.owner == key }}>{{ label }}</option>{% endfor %}</select></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </fieldset>
+
+  <div class="cf-actions">
+    <button class="cal-btn primary" type="submit">Import the ticked items</button>
+    <button class="cal-btn" type="submit" formaction="/calendar/import/{{ batch.id }}/discard" formnovalidate
+            onclick="return confirm('Throw this upload away without importing anything?')">Discard this upload</button>
+  </div>
+</form>
+<script>
+(function () {
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.cal-review input[type=checkbox]'));
+  var out = document.getElementById('cal-count');
+  function count() { out.textContent = boxes.filter(function (b) { return b.checked; }).length + ' of ' + boxes.length + ' ticked'; }
+  document.querySelectorAll('[data-check]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var mode = btn.getAttribute('data-check');
+      boxes.forEach(function (b) { b.checked = mode === 'all' ? true : mode === 'none' ? false : b.getAttribute('data-owner') !== ''; });
+      count();
+    });
+  });
+  boxes.forEach(function (b) { b.addEventListener('change', count); });
+  count();
+})();
+</script>
+{% endif %}
+{% endblock %}

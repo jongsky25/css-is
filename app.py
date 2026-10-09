@@ -692,6 +692,10 @@ NAV_GROUPS = [
          "kw": "holiday holidays suspension work suspension typhoon non-working special "
                "regular calendar whereabouts day off proclamation",
          "cap": "manage_users"},
+        {"key": "calendar_import", "url": "/calendar/import", "label": "Import calendar",
+         "hint": "Bring the yearly Word Calendar of Activities into the Office calendar",
+         "kw": "import calendar word docx upload calendar of activities yearly office calendar "
+               "bring in migrate", "cap": "manage_users", "in_nav": False},
         {"key": "wa_reopen", "url": "/admin/work-arrangement", "label": "AWA filing",
          "hint": "Temporarily reopen a closed filing period",
          "kw": "awa work arrangement reopen deadline override filing period cww wfh "

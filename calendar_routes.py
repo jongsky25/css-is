@@ -13,11 +13,21 @@ from __future__ import annotations
 from datetime import date, timedelta
 from urllib.parse import parse_qs, quote, urlencode
 
+import io
+import zipfile
+
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
+from starlette.concurrency import run_in_threadpool
 
+import auth
+import calendar_import as ci
+import calendar_import_apply as cia
 import office_calendar as oc
 import storage as st
+
+MAX_UPLOAD = 8 * 1024 * 1024            # a calendar .docx is well under 1 MB
+MAX_UNZIPPED = 80 * 1024 * 1024         # refuse a zip bomb before python-docx inflates it
 
 AGENDA_DAYS = 14        # the agenda shows two weeks from the chosen day
 
@@ -91,6 +101,7 @@ def make_router(templates, get_conn, today_local):
                   "month": m.strftime("%Y-%m") if view == "month" and month else "", **clean}
         page = {
             "nav_active": "calendar", "show_scope": False, "view": view,
+            "can_import": auth.can(user["role"], "manage_users"),
             "scope": scope, "scopes": choices, "today": today, "start": start, "end": end,
             "n_items": sum(1 for i in items if i["layer"] != "holidays"),
             "f": clean, "filtered": any(clean.values()),
@@ -348,5 +359,128 @@ def make_router(templates, get_conn, today_local):
         finally:
             conn.close()
         return RedirectResponse(f"/calendar/entries/{entry_id}?{note}", status_code=303)
+
+    # ── Word import (admin only) ────────────────────────────────────────────
+
+    def _admin_only(request):
+        if not auth.can(request.state.user["role"], "manage_users"):
+            return templates.TemplateResponse(
+                request, "forbidden.html",
+                {"capability": "importing the calendar", "show_scope": False}, status_code=403)
+        return None
+
+    def _upload_page(request, conn, error="", status_code=200):
+        return templates.TemplateResponse(request, "calendar_import.html", {
+            "nav_active": "calendar", "error": error, "batches": st.cal_import_list(conn),
+        }, status_code=status_code)
+
+    @router.get("/calendar/import", response_class=HTMLResponse)
+    def calendar_import_form(request: Request):
+        denied = _admin_only(request)
+        if denied:
+            return denied
+        conn = get_conn()
+        try:
+            return _upload_page(request, conn)
+        finally:
+            conn.close()
+
+    @router.post("/calendar/import")
+    async def calendar_import_upload(request: Request):
+        denied = _admin_only(request)
+        if denied:
+            return denied
+        form = await request.form()
+        up = form.get("file")
+        conn = get_conn()
+        try:
+            data = await up.read() if hasattr(up, "read") else b""
+            if not data or not (up.filename or "").lower().endswith(".docx"):
+                return _upload_page(request, conn, "Choose the calendar as a Word (.docx) file.", 400)
+            if len(data) > MAX_UPLOAD:
+                return _upload_page(request, conn, "That file is too large to be the calendar.", 400)
+            try:
+                with zipfile.ZipFile(io.BytesIO(data)) as z:
+                    if sum(i.file_size for i in z.infolist()) > MAX_UNZIPPED:
+                        raise ValueError("too large when unpacked")
+                res = await run_in_threadpool(ci.parse, io.BytesIO(data))
+            except Exception:                    # noqa: BLE001 — any unreadable file gets one friendly message
+                return _upload_page(request, conn,
+                                    "That doesn't look like the calendar Word file, so nothing was read.", 400)
+            if not res.drafts:
+                return _upload_page(request, conn,
+                                    "No activities were found in that file. Is it the monthly calendar?", 400)
+            batch_id = st.cal_import_create(conn, up.filename, request.state.user["username"], {
+                "drafts": [d.to_dict() for d in res.drafts], "holidays": res.holidays,
+                "warnings": res.warnings, "stats": res.stats, "unmapped_colors": res.unmapped_colors})
+        finally:
+            conn.close()
+        return RedirectResponse(f"/calendar/import/{batch_id}", status_code=303)
+
+    def _review_page(request, conn, batch, posted=None, errors=(), status_code=200):
+        drafts = batch["payload"]["drafts"]
+        existing = st.cal_existing_import_keys(conn, [d["import_key"] for d in drafts])
+        years = {h["date"][:4] for h in batch["payload"]["holidays"]}
+        have_hol = {row["day"] for y in years for row in st.list_holidays(conn, int(y))}
+        mapping = ({k[4:]: int(v) for k, v in posted.items() if k.startswith("map_") and v.isdigit()}
+                   if posted is not None else cia.guess_mapping(conn))
+        return templates.TemplateResponse(request, "calendar_import_review.html", {
+            "nav_active": "calendar", "batch": batch, "errors": list(errors),
+            "rows": cia.review_rows(drafts, existing, posted),
+            "stats": batch["payload"]["stats"], "file_warnings": batch["payload"]["warnings"],
+            "holidays": [{**h, "known": h["date"] in have_hol} for h in batch["payload"]["holidays"]],
+            "owners": [(k, ci.OWNER_LABELS[k], cia.OWNER_TONES[k]) for k in ci.OWNERS],
+            "mapping": mapping, "units": oc.unit_choices(conn),
+            "audience": (posted or {}).get("audience", "bureau"),
+            "kinds": {k: v for k, v in KIND_LABELS.items()},
+            "statuses": {k: v for k, v in STATUS_LABELS.items() if k != "cancelled"},
+            "n_existing": sum(1 for r in drafts if r["import_key"] in existing),
+        }, status_code=status_code)
+
+    @router.get("/calendar/import/{batch_id}", response_class=HTMLResponse)
+    def calendar_import_review(request: Request, batch_id: int):
+        denied = _admin_only(request)
+        if denied:
+            return denied
+        conn = get_conn()
+        try:
+            batch = st.cal_import_get(conn, batch_id)
+            if batch is None:
+                return RedirectResponse("/calendar/import", status_code=303)
+            return _review_page(request, conn, batch)
+        finally:
+            conn.close()
+
+    @router.post("/calendar/import/{batch_id}")
+    async def calendar_import_apply(request: Request, batch_id: int):
+        denied = _admin_only(request)
+        if denied:
+            return denied
+        raw = parse_qs((await request.body()).decode("utf-8"), keep_blank_values=True)
+        posted = {k: (v[0] if v else "").strip() for k, v in raw.items()}
+        conn = get_conn()
+        try:
+            batch = st.cal_import_get(conn, batch_id)
+            if batch is None or batch["imported_at"]:
+                return RedirectResponse(f"/calendar/import/{batch_id}" if batch else "/calendar/import",
+                                        status_code=303)
+            result, errors = cia.apply(conn, batch, posted, request.state.user["username"])
+            if errors:
+                return _review_page(request, conn, batch, posted, errors, status_code=400)
+        finally:
+            conn.close()
+        return RedirectResponse(f"/calendar/import/{batch_id}", status_code=303)
+
+    @router.post("/calendar/import/{batch_id}/discard")
+    def calendar_import_discard(request: Request, batch_id: int):
+        denied = _admin_only(request)
+        if denied:
+            return denied
+        conn = get_conn()
+        try:
+            st.cal_import_discard(conn, batch_id)
+        finally:
+            conn.close()
+        return RedirectResponse("/calendar/import", status_code=303)
 
     return router

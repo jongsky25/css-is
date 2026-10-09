@@ -1,0 +1,30 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}Import the Word calendar{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261009d">{% endblock %}
+{% block content %}
+{{ page_header("Import the Word calendar", "Upload the yearly Calendar of Activities (.docx). You will review everything before anything is added.") }}
+<p class="cal-back"><a href="/calendar">← Back to the calendar</a></p>
+{% if error %}<div class="cal-flash err" role="alert">✕ {{ error }}</div>{% endif %}
+
+<form method="post" action="/calendar/import" enctype="multipart/form-data" class="cal-form">
+  <label class="cf-wide">The calendar file (.docx)
+    <input type="file" name="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required></label>
+  <div class="cf-actions"><button class="cal-btn primary" type="submit">Read the file</button></div>
+</form>
+<p class="cal-range">Nothing is saved to the calendar until you press <strong>Import</strong> on the next page. You can import the same file again later; items already imported are recognised and not duplicated.</p>
+
+{% if batches %}
+<h2 class="cal-h2">Earlier uploads</h2>
+<table class="cal-table">
+  <thead><tr><th>File</th><th>Uploaded</th><th>By</th><th>Items found</th><th>Status</th></tr></thead>
+  <tbody>
+  {% for b in batches %}
+  <tr><td><a href="/calendar/import/{{ b.id }}">{{ b.filename or "calendar.docx" }}</a></td>
+      <td>{{ b.created_at.replace("T", " ") if b.created_at }}</td><td>{{ b.created_by }}</td><td>{{ b.n_drafts }}</td>
+      <td>{% if b.imported_at %}Imported {{ b.n_created }} · {{ b.imported_at[:10] }}{% else %}Waiting for review{% endif %}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}
