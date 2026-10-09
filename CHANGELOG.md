@@ -1,5 +1,10 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v5.1 — calendar legend and admin-entered birthdays)
+
+- **Legend (`_calendar_body.html`, `calendar.css`):** Agenda and Month show "Colour = unit" (a swatch per unit in the window, same tones as the bars and dots) and "Icon = type". The kind-icon map moved to the top of the template so both layouts share it.
+- **Admin birthdays (`POST /admin/users/birthday`, `users.html`):** an admin with `manage_users` can set, change or clear an active account's birthday and its sharing scope. The consent note records that an administrator entered it; the person can still edit or remove it. The audit log never holds the date. `storage.set_birthday` gained a keyword-only `notice`.
+
 ## 2026-10-10 (v5.0 — calendar Phase 5: accessibility and hardening)
 
 `docs/CALENDAR_UX_PLAN.md` Phase 5. Found with axe-core (WCAG 2.0 to 2.2 AA plus best practice) run over every calendar view and state (agenda, month, week, timeline, empty, search, the add form, filters and More open, the item sheet, quick add) in three themes at 390 and 1440px: 72 runs, 90 problems in 6 rules at the start, none left except an open dropdown covering the button beneath it.
