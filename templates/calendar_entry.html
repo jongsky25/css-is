@@ -29,9 +29,34 @@
     {% if e.meeting_url %}<dt>Link</dt><dd><a href="{{ e.meeting_url }}" rel="noopener noreferrer" target="_blank">{{ e.meeting_url }}</a></dd>{% endif %}
     {% if attendees %}<dt>On it</dt>
     <dd><ul class="cal-people">{% for p in attendees %}<li>{{ p.name }}{% if p.role == "lead" %} <small>(lead)</small>{% elif p.role == "travel" %} <small>(travelling)</small>{% endif %}</li>{% endfor %}</ul></dd>{% endif %}
+    {% if series %}<dt>Repeats</dt>
+    <dd>{{ series.text }}{% if series.next %} · next: {{ series.next.strftime("%a, %b") }} {{ series.next.day }}{% endif %}</dd>{% endif %}
     {% if e.tags %}<dt>Tags</dt><dd>{% for t in e.tags %}<span class="cal-tag">{{ t }}</span> {% endfor %}</dd>{% endif %}
     {% if e.note %}<dt>Notes</dt><dd class="cal-note">{{ e.note }}</dd>{% endif %}
   </dl>
+
+  {% if series %}
+  <div class="cal-flash ok" role="status" id="series">
+    {% if series.occ %}
+    <strong>{{ series.occ.strftime("%A, %B") }} {{ series.occ.day }}</strong> is one of this item's repeats.
+    <div class="cf-actions">
+      <a class="cal-btn" href="/calendar/entries/{{ e.id }}/detach?date={{ series.occ.isoformat() }}">Change just this one</a>
+      <form method="post" action="/calendar/entries/{{ e.id }}/skip" class="cal-inline"
+            data-confirm="Skip {{ series.occ.strftime('%B') }} {{ series.occ.day }}? The rest of the series stays.">
+        <input type="hidden" name="date" value="{{ series.occ.isoformat() }}"><button class="cal-btn" type="submit">Skip this date</button></form>
+      <a class="cal-btn" href="/calendar/entries/{{ e.id }}/edit">Edit the whole series</a>
+    </div>
+    {% else %}
+    This item repeats. <a href="/calendar/entries/{{ e.id }}/edit">Edit the whole series</a>; to change or skip one date, open it from the calendar.
+    {% endif %}
+    {% if series.skipped %}<div>Skipped:
+      {% for d in series.skipped %}
+      <form method="post" action="/calendar/entries/{{ e.id }}/unskip" class="cal-inline"><input type="hidden" name="date" value="{{ d.isoformat() }}">
+        {{ d.strftime("%b") }} {{ d.day }} <button class="cal-btn" type="submit" title="Put this date back">put back</button></form>{% endfor %}
+    </div>{% endif %}
+    <small>Cancelling this item cancels the whole series.</small>
+  </div>
+  {% endif %}
 
   {% if heads_up %}
   <div class="cal-flash warn" role="status"><strong>Heads-up</strong>

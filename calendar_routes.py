@@ -27,6 +27,7 @@ import calendar_import as ci
 import calendar_import_apply as cia
 import calendar_people as cp
 import office_calendar as oc
+import recurrence
 import storage as st
 
 MAX_UPLOAD = 8 * 1024 * 1024            # a calendar .docx is well under 1 MB
@@ -233,7 +234,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                                           status_code=404)
 
     def _form_page(request, conn, f, *, entry=None, error="", conflict=None, status_code=200,
-                   confirm=0):
+                   confirm=0, detach=None):
         activity = st.get_event_by_id(conn, entry["event_id"]) if entry and entry["event_id"] else None
         can_dates = bool(activity and can_manage_event
                          and can_manage_event(request.state.user, activity, conn)
@@ -241,6 +242,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         return templates.TemplateResponse(request, "calendar_entry_form.html", {
             "nav_active": "calendar", "f": f, "entry": entry, "error": error,
             "activity": activity, "can_dates": can_dates, "confirm": confirm,
+            "repeats": recurrence.REPEATS, "detach": detach,
             "conflict": conflict, "kinds": FORM_KIND_LABELS, "statuses": STATUS_LABELS,
             "modalities": MODALITY_LABELS, "audiences": AUDIENCE_LABELS,
             "units": oc.unit_choices(conn), "people": oc.people_choices(conn),
@@ -257,10 +259,16 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 "end_date": "", "start_time": "", "end_time": "", "time_note": "",
                 "venue": "", "modality": "", "meeting_url": "", "note": "",
                 "owner_org_id": owner, "audience": "unit", "people": [], "tags": "",
-                "updated_at": ""}
+                "updated_at": "", "repeat": "none", "until": ""}
 
     def _activity_of(conn, e):
         return st.get_event_by_id(conn, e["event_id"]) if e.get("event_id") else None
+
+    def _repeat_of(e):
+        if not e.get("rrule"):
+            return "none", ""
+        key, until = recurrence.kind_of(e["rrule"], date.fromisoformat(e["start_date"]))
+        return key, until.isoformat() if until else ""
 
     def _entry_form(e, activity=None):
         if activity:                      # the activity owns the title, dates and venue
@@ -275,7 +283,8 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 "note": e["note"] or "",
                 "owner_org_id": str(e["owner_org_id"] or ""), "audience": e["audience"],
                 "people": [str(p["user_id"]) for p in e["people"]],
-                "tags": ", ".join(e["tags"]), "updated_at": e["updated_at"] or ""}
+                "tags": ", ".join(e["tags"]), "updated_at": e["updated_at"] or "",
+                **dict(zip(("repeat", "until"), _repeat_of(e)))}
 
     async def _posted_form(request):
         raw = parse_qs((await request.body()).decode("utf-8"), keep_blank_values=True)
@@ -302,6 +311,17 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         fields.update(title=f["title"], start_date=f["start_date"], kind=f["kind"],
                       status=f["status"], audience=f["audience"],
                       owner_org_id=int(f["owner_org_id"]) if f["owner_org_id"].isdigit() else None)
+        repeat = f.get("repeat") or "none"
+        if (existing or {}).get("event_id"):
+            repeat = "none"                                      # an activity's item never repeats
+        try:
+            start = date.fromisoformat(f["start_date"])
+            until = date.fromisoformat(f["until"]) if f.get("until") else None
+            fields["rrule"] = recurrence.build(repeat, start, until)
+        except ValueError as ex:
+            return None, None, None, (str(ex) if repeat != "none" else "Pick a real start date.")
+        if repeat != "none" and f["kind"] == "travel":
+            return None, None, None, "A trip can't repeat. Add each trip on its own."
         had = {p["user_id"]: p["role"] for p in (existing or {}).get("people", [])}
         default = "travel" if f["kind"] == "travel" else "attending"
         people = [(int(u), "lead" if had.get(int(u)) == "lead" else default)
@@ -313,7 +333,8 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         return {"title": "", "kind": "meeting", "status": "confirmed", "start_date": "",
                 "end_date": "", "start_time": "", "end_time": "", "time_note": "",
                 "venue": "", "modality": "", "meeting_url": "", "note": "",
-                "owner_org_id": "", "audience": "unit", "tags": "", "updated_at": ""}
+                "owner_org_id": "", "audience": "unit", "tags": "", "updated_at": "",
+                "repeat": "none", "until": ""}
 
     # ── .ics: one item, and the personal feed (G4) ──────────────────────────────
 
@@ -467,6 +488,13 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         try:
             fields, people, tags, error = _parse(
                 f, allowed_people={p["user_id"] for p in oc.people_choices(conn)})
+            series = None
+            if not error and f.get("detach_from"):              # "just this one": the series must still repeat then
+                series = (oc.viewable_entry(conn, request.state.user, int(f["detach_from"]))
+                          if f["detach_from"].isdigit() else None)
+                ctx = _series_ctx(series, f.get("detach_date", "")) if series else None
+                if not ctx or not ctx["occ"]:
+                    error = "That repeat is gone or was already changed. Open the series again."
             if not error:
                 try:
                     eid = st.cal_create(conn, fields.pop("title"), fields.pop("start_date"),
@@ -475,11 +503,112 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 except ValueError as e:
                     error = str(e)
             if error:
-                return _form_page(request, conn, f, error=error, status_code=400)
+                detach = ({"id": series["id"], "date": f["detach_date"], "date_label": f["detach_date"]}
+                          if series else None)
+                return _form_page(request, conn, f, error=error, status_code=400, detach=detach)
+            if series:
+                _add_skip(conn, series, ctx["occ"], request.state.user["username"])
         finally:
             conn.close()
         return RedirectResponse(f"/calendar/entries/{eid}?ok={quote('Added to the calendar.')}",
                                 status_code=303)
+
+    def _series_ctx(e, on):
+        """What the item page needs for a repeating series: how it repeats, the dates skipped so
+        far, and — when it was opened from one occurrence (`?date=`) — that occurrence."""
+        if not e.get("rrule"):
+            return None
+        first = date.fromisoformat(e["start_date"])
+        span = (date.fromisoformat(e["end_date"] or e["start_date"]) - first).days
+        skipped = recurrence.parse_exdates(e["exdates"])
+        occ = None
+        try:
+            d = date.fromisoformat(on)
+            if d in recurrence.occurrences(first, e["rrule"], e["exdates"], d, d, span):
+                occ = d
+        except ValueError:
+            pass
+        until = recurrence.until_of(e["rrule"])
+        nxt = recurrence.occurrences(first, e["rrule"], e["exdates"], max(today_local(), first),
+                                     until or today_local(), span) if until else []
+        return {"text": recurrence.describe(e["rrule"], first), "skipped": skipped, "occ": occ,
+                "next": nxt[0] if nxt else None}
+
+    def _add_skip(conn, e, d, by):
+        """Skip one occurrence: add it to the series' skipped dates (a schedule change, so it bumps
+        the sequence and the people on it are told). Returns an error sentence or ''."""
+        first = date.fromisoformat(e["start_date"])
+        span = (date.fromisoformat(e["end_date"] or e["start_date"]) - first).days
+        if d not in recurrence.occurrences(first, e["rrule"], e["exdates"], d, d, span):
+            return "That date isn't one of this item's repeats."
+        st.cal_update(conn, e["id"], by=by, exdates=recurrence.join_exdates(recurrence.parse_exdates(e["exdates"]) + [d]))
+        return ""
+
+    @router.post("/calendar/entries/{entry_id}/skip")
+    async def calendar_skip(request: Request, entry_id: int):
+        raw = parse_qs((await request.body()).decode("utf-8"), keep_blank_values=True)
+        conn = get_conn()
+        try:
+            e = oc.viewable_entry(conn, request.state.user, entry_id)
+            if e is None:
+                return _not_found(request)
+            try:
+                d = date.fromisoformat((raw.get("date") or [""])[0])
+                err = "" if e["rrule"] else "That item doesn't repeat."
+            except ValueError:
+                d, err = None, "Pick one of the dates."
+            err = err or _add_skip(conn, e, d, request.state.user["username"])
+        finally:
+            conn.close()
+        note = f"err={quote(err)}" if err else f"ok={quote('Skipped ' + d.strftime('%b ') + str(d.day) + '. The rest of the series is unchanged.')}"
+        return RedirectResponse(f"/calendar/entries/{entry_id}?{note}", status_code=303)
+
+    @router.post("/calendar/entries/{entry_id}/unskip")
+    async def calendar_unskip(request: Request, entry_id: int):
+        raw = parse_qs((await request.body()).decode("utf-8"), keep_blank_values=True)
+        conn = get_conn()
+        try:
+            e = oc.viewable_entry(conn, request.state.user, entry_id)
+            if e is None:
+                return _not_found(request)
+            try:
+                d = date.fromisoformat((raw.get("date") or [""])[0])
+            except ValueError:
+                d = None
+            skipped = recurrence.parse_exdates(e["exdates"])
+            if d is None or d not in skipped:
+                err = "That date isn't skipped."
+            else:
+                st.cal_update(conn, entry_id, by=request.state.user["username"],
+                              exdates=recurrence.join_exdates([x for x in skipped if x != d]))
+                err = ""
+        finally:
+            conn.close()
+        note = f"err={quote(err)}" if err else f"ok={quote('Put back ' + d.strftime('%b ') + str(d.day) + '.')}"
+        return RedirectResponse(f"/calendar/entries/{entry_id}?{note}", status_code=303)
+
+    @router.get("/calendar/entries/{entry_id}/detach", response_class=HTMLResponse)
+    def calendar_detach(request: Request, entry_id: int):
+        """"Change just this one": a new one-off item pre-filled from the series for that date.
+        Saving it also skips the date in the series (see calendar_create)."""
+        d_raw = request.query_params.get("date", "")
+        conn = get_conn()
+        try:
+            e = oc.viewable_entry(conn, request.state.user, entry_id)
+            if e is None:
+                return _not_found(request)
+            ctx = _series_ctx(e, d_raw)
+            if not ctx or not ctx["occ"]:
+                return RedirectResponse(f"/calendar/entries/{entry_id}?err={quote('Pick one of the repeats to change.')}",
+                                        status_code=303)
+            f = _entry_form(e)
+            span = (date.fromisoformat(e["end_date"] or e["start_date"]) - date.fromisoformat(e["start_date"])).days
+            f.update(start_date=ctx["occ"].isoformat(), updated_at="", repeat="none", until="",
+                     end_date=(ctx["occ"] + timedelta(days=span)).isoformat() if span else "")
+            return _form_page(request, conn, f, detach={"id": entry_id, "date": ctx["occ"].isoformat(),
+                                                        "date_label": f"{ctx['occ']:%A, %B} {ctx['occ'].day}"})
+        finally:
+            conn.close()
 
     @router.get("/calendar/entries/{entry_id}", response_class=HTMLResponse)
     def calendar_entry(request: Request, entry_id: int, ok: str = "", err: str = ""):
@@ -495,6 +624,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             names = oc.display_names(conn, [e["created_by"], e["updated_by"]]
                                      + [r["changed_by"] for r in revs])
             st.cal_mark_seen(conn, user["id"], [entry_id])      # opening it IS seeing it
+            series = _series_ctx(e, request.query_params.get("date", ""))
             heads_up = oc.entry_heads_up(conn, user, e)
             can_css = auth.can(user["role"], "create_activity")
             linked = st.get_event_by_id(conn, e["event_id"]) if e["event_id"] else None
@@ -505,7 +635,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             conn.close()
         who = lambda u: names.get(u, u or "someone")           # noqa: E731
         return templates.TemplateResponse(request, "calendar_entry.html", {
-            "nav_active": "calendar", "e": e, "ok": ok, "err": err, "css": css, "heads_up": heads_up,
+            "nav_active": "calendar", "e": e, "ok": ok, "err": err, "css": css, "heads_up": heads_up, "series": series,
             "owner": unit["label"] if unit else None,
             "attendees": [{**cards.get(p["user_id"], {"name": "?", "initials": "?"}),
                            "role": p["role"]} for p in e["people"]],

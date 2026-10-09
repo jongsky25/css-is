@@ -188,21 +188,32 @@ def _in_scope(ctx, scope, entry, owner_path):
 # ── providers ────────────────────────────────────────────────────────────────
 
 def _entries_layer(conn, ctx, start, end, scope):
-    entries = st.cal_list_between(conn, start, end)
+    """Calendar entries as items. A repeating series is expanded here, ONE item per occurrence in the
+    window (skipped dates removed), keyed `entry:<id>:<date>` and linking to the series with `?date=`
+    so the page can offer "just this one"; an occurrence on a holiday says so."""
+    occs = st.cal_occurrences_between(conn, start, end)
+    entries = [e for e, _a, _b in occs]
     units = _units(conn, [e["owner_org_id"] for e in entries])
     tones = _tone_map(conn)
     cards = _people_cards(conn, [p["user_id"] for e in entries for p in e["people"]])
+    holidays = st.holidays_between(conn, date.fromisoformat(start), date.fromisoformat(end)) \
+        if any(e["rrule"] for e in entries) else {}
     out = []
-    for e in entries:
+    for e, o_start, o_end in occs:
         if e["event_id"]:
             continue            # an overlay on a CSS activity: the activities layer draws it, once
         unit = units.get(e["owner_org_id"])
         path = unit["path"] if unit else None
         if not entry_visible(ctx, e, path) or not _in_scope(ctx, scope, e, path):
             continue
+        flags = [e["status"]] if e["status"] in ("tentative", "postponed") else []
+        if e["rrule"]:
+            flags.append("repeats")
+            if holidays.get(o_start):
+                flags.append(f"falls on {holidays[o_start]['name']}")
         out.append({
-            "key": f"entry:{e['id']}", "layer": "entries", "title": e["title"],
-            "start": e["start_date"], "end": e["end_date"] or e["start_date"],
+            "key": f"entry:{e['id']}:{o_start}" if e["rrule"] else f"entry:{e['id']}", "layer": "entries",
+            "title": e["title"], "start": o_start, "end": o_end,
             "start_time": e["start_time"], "end_time": e["end_time"],
             "all_day": e["start_time"] is None, "time_note": e["time_note"],
             "kind": e["kind"], "status": e["status"],
@@ -214,10 +225,9 @@ def _entries_layer(conn, ctx, start, end, scope):
                                                    "photo_url": None})}
                        for p in e["people"]],
             "tags": e["tags"], "venue": e["venue"], "modality": e["modality"],
-            "meeting_url": e["meeting_url"], "url": f"/calendar/entries/{e['id']}",
-            "css": None,
-            "flags": [e["status"]] if e["status"] in ("tentative", "postponed") else [],
-            "editable": True, "private": False,
+            "meeting_url": e["meeting_url"],
+            "url": f"/calendar/entries/{e['id']}" + (f"?date={o_start}" if e["rrule"] else ""),
+            "css": None, "flags": flags, "editable": True, "private": False,
         })
     return out
 
@@ -451,16 +461,17 @@ def mismatches(conn, user_ids, start, end, *, kinds=MISMATCH_KINDS):
     if not ({"leave_on_entry", "double_booked"} & set(kinds)):
         return out
     by_day = {}
-    for uid, eid, title, a, b, t1, t2 in conn.execute(
-            f"SELECT cp.user_id, e.id, e.title, e.start_date, COALESCE(NULLIF(e.end_date, ''), e.start_date), "
-            f"e.start_time, e.end_time FROM calendar_entry e "
-            f"JOIN calendar_entry_person cp ON cp.entry_id = e.id "
-            f"WHERE cp.user_id IN ({marks}) AND e.status <> 'cancelled' AND e.start_date <= ? "
-            f"AND COALESCE(NULLIF(e.end_date, ''), e.start_date) >= ? ORDER BY e.id", (*ids, e_iso, s_iso)):
-        day, last = max(date.fromisoformat(a), date.fromisoformat(s_iso)), min(date.fromisoformat(b), date.fromisoformat(e_iso))
+    want = set(ids)
+    for e, o_start, o_end in st.cal_occurrences_between(conn, s_iso, e_iso):       # a series counts on each of its days
+        mine = [p["user_id"] for p in e["people"] if p["user_id"] in want]
+        if not mine:
+            continue
+        day, last = max(date.fromisoformat(o_start), date.fromisoformat(s_iso)), min(date.fromisoformat(o_end), date.fromisoformat(e_iso))
         while day <= last:
             if day.weekday() < 5:
-                by_day.setdefault((uid, day.isoformat()), []).append((eid, title, _hhmm(t1), _hhmm(t2)))
+                for uid in mine:
+                    by_day.setdefault((uid, day.isoformat()), []).append(
+                        (e["id"], e["title"], _hhmm(e["start_time"]), _hhmm(e["end_time"])))
             day += timedelta(days=1)
     for (uid, iso), rows in sorted(by_day.items(), key=lambda kv: (kv[0][1], kv[0][0])):
         if "leave_on_entry" in kinds and (reported.get((uid, iso)) or (None,))[0] == "leave":
@@ -907,7 +918,7 @@ def entry_can_collect_feedback(entry):
     """May this calendar item be turned into a CSS activity? Only a live, unlinked meeting
     or training: a trip, audit, banner or deadline has nobody to ask for feedback."""
     return (entry["kind"] in LINKABLE_KINDS and not entry["event_id"]
-            and entry["status"] != "cancelled")
+            and entry["status"] != "cancelled" and not entry.get("rrule"))
 
 
 def activity_candidates_for_entry(conn, entry):
@@ -959,6 +970,7 @@ MAX_ATTEMPTS = 3
 
 _WHAT = {"title": "title", "start_date": "date", "end_date": "date", "start_time": "time",
          "end_time": "time", "time_note": "time", "venue": "venue", "modality": "format",
+         "rrule": "repeat", "exdates": "skipped dates",
          "meeting_url": "meeting link", "status": "status"}
 
 
@@ -1032,7 +1044,7 @@ def flush_outbox(conn, base_url, *, now=None, send=None):
                 continue
             if e["status"] == "cancelled" and kind in ("added", "changed"):
                 kind = "cancelled"
-            if kind in ("added", "changed") and (e["end_date"] or e["start_date"]) < now.date().isoformat():
+            if kind in ("added", "changed") and st.cal_last_day(e) < now.date().isoformat():
                 continue
             if kind != "removed":                # tell their calendar app too: same uid, current sequence
                 ics.append(cics.entry_event(e, base_url))
@@ -1204,12 +1216,14 @@ def entries_starting_on(conn, day):
     covers the activity), and so is a banner (background, not something to attend)."""
     iso = day.isoformat()
     out = {}
-    for uid, eid, title, t1, t2, venue in conn.execute(
-            "SELECT p.user_id, e.id, e.title, e.start_time, e.end_time, e.venue FROM calendar_entry e "
-            "JOIN calendar_entry_person p ON p.entry_id = e.id "
-            "WHERE e.start_date = ? AND e.status IN ('confirmed', 'tentative') AND e.event_id IS NULL "
-            "AND e.kind <> 'banner' ORDER BY e.start_time, e.id", (iso,)):
-        out.setdefault(uid, []).append({"id": eid, "title": title, "start_time": t1, "end_time": t2, "venue": venue})
+    for e, o_start, _o_end in st.cal_occurrences_between(conn, iso, iso):
+        if o_start != iso or e["event_id"] or e["status"] not in ("confirmed", "tentative") or e["kind"] == "banner":
+            continue
+        for p in e["people"]:
+            out.setdefault(p["user_id"], []).append({"id": e["id"], "title": e["title"], "start_time": e["start_time"],
+                                                      "end_time": e["end_time"], "venue": e["venue"]})
+    for rows in out.values():
+        rows.sort(key=lambda r: (r["start_time"] or "", r["id"]))
     return out
 
 
@@ -1232,19 +1246,19 @@ def build_feed(conn, user, base_url, *, scope="mine", birthdays=False, today=Non
     entry_ids = [int(i["key"].split(":")[1]) for i in items if i["key"].startswith("entry:")]
     events = []
     full = {}
-    for eid in entry_ids:
+    for eid in sorted(set(entry_ids)):
         e = st.cal_get(conn, eid)
         if e:
             full[eid] = e
     for i in items:
         if i["key"].startswith("entry:"):
-            e = full.get(int(i["key"].split(":")[1]))
+            e = full.pop(int(i["key"].split(":")[1]), None)         # a series is ONE event with an RRULE
             if e:
                 events.append(cics.entry_event(e, base_url))
         elif i.get("css"):
             events.append(cics.activity_event(i, base_url))
     ctx = viewer_context(conn, user)
-    seen = set(full)
+    seen = set(entry_ids)
     since = (tz.now_local() - timedelta(days=FEED_CANCELLED_DAYS)).isoformat(timespec="seconds")
     cancelled = [e for e in st.cal_list_between(conn, start, end, include_cancelled=True)
                  if e["status"] == "cancelled" and e["id"] not in seen and (e["cancelled_at"] or "") >= since

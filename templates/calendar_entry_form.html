@@ -36,9 +36,15 @@
 </div>
 {% endif %}
 
+{% if detach %}
+<div class="cal-flash ok" role="status">Changing just <strong>{{ detach.date_label }}</strong>. Save it and the repeating series skips that day,
+  so you get this one-off instead. The rest of the series is untouched.</div>
+{% endif %}
+
 <form method="post" class="cal-form" id="cal-form"
       action="{{ '/calendar/entries/' ~ entry.id ~ '/edit' if entry else '/calendar/new' }}">
   <input type="hidden" name="updated_at" value="{{ f.updated_at }}">
+  {% if detach %}<input type="hidden" name="detach_from" value="{{ detach.id }}"><input type="hidden" name="detach_date" value="{{ detach.date }}">{% endif %}
 
   <label class="cf-wide">What is it?
     <input name="title" {{ "readonly" if locked }} value="{{ f.title }}" required maxlength="200" autofocus></label>
@@ -54,6 +60,14 @@
     <label>Starts <input type="date" name="start_date" {{ "readonly" if locked and not can_dates }} value="{{ f.start_date }}" required></label>
     <label>Ends <span class="opt">(if it runs several days)</span> <input type="date" name="end_date" {{ "readonly" if locked and not can_dates }} value="{{ f.end_date }}"></label>
   </div>
+  {% if not locked %}
+  <div class="cf-row">
+    <label>Repeats
+      <select name="repeat" id="repeat">{% for k, label in repeats.items() %}<option value="{{ k }}" {{ "selected" if f.repeat == k }}>{{ label }}</option>{% endfor %}</select></label>
+    <label>Last date it repeats <span class="opt">(needed when it repeats; at most 2 years)</span>
+      <input type="date" name="until" value="{{ f.until }}"></label>
+  </div>
+  {% endif %}
   <div class="cf-row">
     <label>From <span class="opt">(optional)</span> <input type="time" name="start_time" {{ "readonly" if locked }} value="{{ f.start_time }}"></label>
     <label>To <span class="opt">(optional)</span> <input type="time" name="end_time" {{ "readonly" if locked }} value="{{ f.end_time }}"></label>

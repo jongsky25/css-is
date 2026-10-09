@@ -22,6 +22,7 @@ and calculator stay cleanly separated -- storage remembers, the engine computes.
 
 from __future__ import annotations
 import hashlib
+import recurrence
 import json
 import sqlite3
 import uuid
@@ -10155,6 +10156,23 @@ def _cal_clean(vals):
     return out
 
 
+def _cal_series_ok(v):
+    """A repeating item must carry a supported, ending rule that begins on its own start date, and
+    can't be a trip (trips feed the weekly whereabouts) or an overlay on a CSS activity. Also tidies
+    the skipped-dates list: valid ISO dates only, sorted, none without a rule."""
+    rule = v.get("rrule")
+    if not rule:
+        if v.get("exdates"):
+            v["exdates"] = None
+        return
+    if v.get("kind") == "travel":
+        raise ValueError("A trip can't repeat. Add each trip on its own.")
+    if v.get("event_id"):
+        raise ValueError("An item linked to a CSS activity can't repeat.")
+    v["rrule"] = recurrence.validate(rule, date.fromisoformat(v["start_date"]))
+    v["exdates"] = recurrence.join_exdates(recurrence.parse_exdates(v.get("exdates")))
+
+
 def _cal_span_ok(start, end):
     if end is not None and end < start:
         raise ValueError("end_date cannot be before start_date")
@@ -10263,9 +10281,10 @@ def cal_unseen_for_user(conn, user_id, today=None):
             "SELECT e.id, e.title, e.start_date, COALESCE(NULLIF(e.end_date, ''), e.start_date), "
             "e.status, e.sequence, p.seen_seq FROM calendar_entry_person p "
             "JOIN calendar_entry e ON e.id = p.entry_id WHERE p.user_id = ? "
-            "AND COALESCE(NULLIF(e.end_date, ''), e.start_date) >= ? "
+            "AND (COALESCE(NULLIF(e.end_date, ''), e.start_date) >= ? OR (e.rrule IS NOT NULL "
+            "AND substr(e.rrule, instr(e.rrule, 'UNTIL=') + 6, 8) >= ?)) "
             "AND (p.seen_seq IS NULL OR p.seen_seq < e.sequence) ORDER BY e.start_date, e.id",
-            (user_id, today)):
+            (user_id, today, today.replace("-", ""))):
         kind = "cancelled" if status == "cancelled" else ("new" if seen is None else "changed")
         out.append({"entry_id": eid, "title": title, "start": a, "end": b, "kind": kind})
     return out
@@ -10327,7 +10346,7 @@ def cal_validate(title, start_date, **fields):
 
 
 _CAL_NOTIFY_FIELDS = ("title", "start_date", "end_date", "start_time", "end_time", "time_note",
-                      "venue", "modality", "meeting_url", "status")
+                      "venue", "modality", "meeting_url", "status", "rrule", "exdates")
 
 
 def _cal_enqueue(conn, entry, kind, user_ids, by, detail=""):
@@ -10337,7 +10356,7 @@ def _cal_enqueue(conn, entry, kind, user_ids, by, detail=""):
     if not user_ids:
         return
     today = tz.today_local()
-    if (entry.get("end_date") or entry["start_date"]) < today.isoformat():
+    if cal_last_day(entry) < today.isoformat():
         return
     urgent = 1 if entry["start_date"] <= (today + timedelta(days=1)).isoformat() else 0
     skip = set()
@@ -10373,6 +10392,9 @@ def cal_create(conn, title, start_date, *, end_date=None, kind="meeting",
     if v["end_date"] == v["start_date"]:
         v["end_date"] = None
     _cal_span_ok(v["start_date"], v["end_date"])
+    series = {**v, "event_id": event_id}
+    _cal_series_ok(series)
+    v["rrule"], v["exdates"] = series["rrule"], series["exdates"]
     people = _cal_normalise_people(people)
     tags = _cal_normalise_tags(tags)
     now = tz.now_iso()
@@ -10426,6 +10448,10 @@ def cal_update(conn, entry_id, *, by=None, expected_sequence=None,
         if "end_date" in v or "start_date" in v:
             v["end_date"] = None
     _cal_span_ok(merged["start_date"], merged["end_date"])
+    _cal_series_ok(merged)
+    for f in ("rrule", "exdates"):                     # a tidied value (or a cleared list) is part of the change
+        if f in v or merged[f] != cur[f]:
+            v[f] = merged[f]
     diff = {f: [cur[f], merged[f]] for f in v if merged[f] != cur[f]}
     if "end_date" in merged and merged["end_date"] != cur["end_date"]:
         diff["end_date"] = [cur["end_date"], merged["end_date"]]
@@ -10539,11 +10565,39 @@ def cal_list_between(conn, start, end, *, include_cancelled=False):
     starts before the window but runs into it is included."""
     start, end = _cal_date(start, "start"), _cal_date(end, "end")
     sql = (f"SELECT {', '.join(_CAL_COLS)} FROM calendar_entry "
-           "WHERE start_date <= ? AND COALESCE(end_date, start_date) >= ?")
+           "WHERE start_date <= ? AND (COALESCE(end_date, start_date) >= ? "
+           "OR (rrule IS NOT NULL AND substr(rrule, instr(rrule, 'UNTIL=') + 6, 8) >= ?))")
     if not include_cancelled:
         sql += " AND status <> 'cancelled'"
     sql += " ORDER BY start_date, COALESCE(start_time, ''), id"
-    return _cal_hydrate(conn, conn.execute(sql, (end, start)).fetchall())
+    return _cal_hydrate(conn, conn.execute(sql, (end, start, start.replace("-", ""))).fetchall())
+
+
+def cal_last_day(entry):
+    """The last date an entry can touch: the end of a one-off, the UNTIL of a series."""
+    if entry.get("rrule"):
+        u = recurrence.until_of(entry["rrule"])
+        if u:
+            return max(u, date.fromisoformat(entry["end_date"] or entry["start_date"])).isoformat()
+    return entry.get("end_date") or entry["start_date"]
+
+
+def cal_occurrences_between(conn, start, end, *, include_cancelled=False):
+    """Every occurrence overlapping [start, end] as (entry, occ_start, occ_end) ISO dates — a
+    plain entry is its own single occurrence, a series is expanded (skipped dates removed, a
+    multi-day occurrence that began earlier and runs into the window counted)."""
+    out = []
+    a, b = date.fromisoformat(_cal_date(start, "start")), date.fromisoformat(_cal_date(end, "end"))
+    for e in cal_list_between(conn, a.isoformat(), b.isoformat(), include_cancelled=include_cancelled):
+        first = date.fromisoformat(e["start_date"])
+        span = (date.fromisoformat(e["end_date"] or e["start_date"]) - first).days
+        if not e.get("rrule"):
+            out.append((e, e["start_date"], e["end_date"] or e["start_date"]))
+            continue
+        for occ in recurrence.occurrences(first, e["rrule"], e["exdates"], a, b, span):
+            out.append((e, occ.isoformat(), (occ + timedelta(days=span)).isoformat()))
+    out.sort(key=lambda t: (t[1], t[0]["start_time"] or "", t[0]["id"]))
+    return out
 
 
 def cal_revisions(conn, entry_id):

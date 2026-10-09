@@ -1,5 +1,25 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v3.77 — office calendar H1: repeating items)
+
+- **One entry, many occurrences.** A series is a single `calendar_entry` carrying an RFC 5545 `RRULE` and an `EXDATE`-style list of skipped
+  dates (`recurrence.py`, new, pure, added to the Space bundle; `python-dateutil` is now an explicit requirement). Only the shapes people use
+  are accepted — every weekday, weekly, every 2 weeks, monthly on the same date, monthly on the same weekday (a 5th becomes "the last") — and
+  **every series must end** (UNTIL, at most 2 years), so nothing can fill the calendar, the feed or the reminders forever. A rule must begin on its
+  own start date; anything else is refused with a sentence. A trip or an item linked to a CSS activity can't repeat, and a series can't be turned
+  into an activity.
+- **Add / edit form**: "Repeats" and "Last date it repeats"; the edit form pre-selects the current series, and stopping it is choosing "Doesn't
+  repeat" (which also clears the skipped dates).
+- **The calendar expands it** (`storage.cal_occurrences_between`): one item per occurrence in the window (keyed `entry:<id>:<date>`, linking to the
+  series with `?date=`), skipped dates removed, a multi-day occurrence that began earlier counted, a "· Repeats" flag, and "· Falls on <holiday>" when
+  it lands on one. Everything downstream follows: double-booking and leave-on-an-item heads-ups, the day-before reminder, the Monday week-ahead, the
+  bell (a series still running counts as upcoming), and cancelling cancels the whole series (restore brings it back).
+- **Change just one date**: open an occurrence and choose *Change just this one* (a pre-filled one-off; saving it also skips that date in the series —
+  and is refused, creating nothing, if someone already changed that date) or *Skip this date*; skipped dates list with *put back*. Skipping is a
+  schedule change: it bumps the sequence and the people on the item get the usual change email.
+- **.ics / feed**: a series is ONE event with its `RRULE` and `EXDATE`s (dates for all-day, `TZID` times for timed), in the per-item download, the
+  email attachments and the personal feed, so calendar apps show the whole series; the feed no longer repeats it per occurrence.
+
 ## 2026-10-09 (v3.76 — office calendar G4: .ics downloads, attachments and the personal feed)
 
 - **`calendar_ics.py`** (new, pure; added to the Space bundle): RFC 5545 output — CRLF lines folded at 75 OCTETS without ever

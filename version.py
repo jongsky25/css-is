@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "3.76"
+APP_VERSION = "3.77"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "3.77",
+        "date": "October 9, 2026",
+        "summary": "Calendar items can now repeat.",
+        "changes": [
+            "When you add or edit an item, choose how often it repeats: every weekday, weekly, every two weeks, monthly on the same date, or monthly on the same weekday like the 2nd Tuesday.",
+            "A repeating item must have a last date, up to two years out.",
+            "Open any one date to change just that one, or skip it. The rest of the series stays as it was.",
+            "A repeat that lands on a holiday says so, and your calendar app gets the whole series with the skipped dates left out.",
+        ],
+    },
     {
         "version": "3.76",
         "date": "October 9, 2026",

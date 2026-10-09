@@ -10,6 +10,8 @@ Rules it keeps:
   are VALUE=DATE with an exclusive DTEND, and DTSTAMP is UTC;
 * every event keeps its random UID and its SEQUENCE, so a calendar app UPDATES the event it
   already has instead of duplicating it, and a cancelled one says STATUS:CANCELLED;
+* a repeating item is ONE event with its RRULE and an EXDATE for each skipped date (a "just this
+  one" change is a separate ordinary event), so a calendar app shows the whole series;
 * a birthday is a yearly recurring all-day event (a Feb 29 person's rule is "last day of
   February", which is exactly where the app shows them in a non-leap year).
 
@@ -99,6 +101,12 @@ def vevent(ev):
         lines.append(_prop("DTEND", last.strftime("%Y%m%d"), ";VALUE=DATE"))
     if ev.get("rrule"):
         lines.append(_prop("RRULE", ev["rrule"]))
+        skipped = [d for d in (ev.get("exdates") or []) if d]
+        if skipped:                                         # skipped dates: one EXDATE, same form as DTSTART
+            if timed:
+                lines.append(_prop("EXDATE", ",".join(_dt(d, st_time) for d in skipped), f";TZID={TZID}"))
+            else:
+                lines.append(_prop("EXDATE", ",".join(_d(d) for d in skipped), ";VALUE=DATE"))
     title = ev["title"]
     if ev.get("status") == "postponed":
         title = f"[Postponed] {title}"
@@ -138,7 +146,8 @@ def entry_event(entry, base_url=""):
             "status": entry["status"], "start": entry["start_date"], "end": entry.get("end_date"),
             "start_time": entry.get("start_time"), "end_time": entry.get("end_time"),
             "venue": entry.get("venue"), "url": entry.get("meeting_url") or link or None,
-            "description": desc, "tags": entry.get("tags") or [], "stamp": entry.get("updated_at")}
+            "description": desc, "tags": entry.get("tags") or [], "stamp": entry.get("updated_at"),
+            "rrule": entry.get("rrule"), "exdates": [x for x in (entry.get("exdates") or "").split(",") if x]}
 
 
 def activity_event(item, base_url=""):
