@@ -6,12 +6,13 @@ approving is a later increment."""
 from __future__ import annotations
 import re
 from datetime import date, timedelta
-from urllib.parse import parse_qs, urlencode
+from urllib.parse import parse_qs, quote, urlencode
 
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 import auth
+import ratelimit as rl
 import rooms
 import rooms_notify
 import storage as st
@@ -32,7 +33,8 @@ def _date_or_none(s):
         return None
 
 
-def make_router(templates, get_conn, today_local):
+def make_router(templates, get_conn, today_local, *, base_url=None, qr_data_uri=None):
+    """`base_url(request)` and `qr_data_uri(url)` are app.py's own (this module cannot import app)."""
     router = APIRouter()
     templates.env.globals["room_hour"] = rooms.hour_label
     templates.env.globals["room_modalities"] = MODALITY_LABELS
@@ -367,6 +369,165 @@ def make_router(templates, get_conn, today_local):
         return templates.TemplateResponse(request, "rooms_decide_link.html", {
             "valid": True, "done": True, "verb": "approved" if action == "approve" else "declined",
             "card": card, "show_scope": False})
+
+    # ====================================================================
+    # Guests: the permanent QR page (/room) and their tracking link. No login.
+    # ====================================================================
+    def _public_page(request, conn, *, f=None, error="", status_code=200, sent=False):
+        f = f or {}
+        today = today_local()
+        days = rooms.public_days(conn, today)
+        wanted = (request.query_params.get("date") or f.get("day") or "").strip()
+        picked = next((d for d in days if d["day"] == wanted), None)
+        slots = rooms.list_slots(conn)
+        form = {"from_slot": str(slots[2]["id"]) if len(slots) > 2 else "", "modality": "f2f", **f}
+        form.setdefault("to_slot", form["from_slot"])
+        return templates.TemplateResponse(request, "room_public.html", {
+            "days": days, "soon": days[:14], "later": days[14:], "picked": picked,
+            "avail": rooms.public_day(conn, wanted, today) if picked else None,
+            "f": form, "error": error, "sent": sent, "slots": slots,
+            "earliest": rooms.earliest_bookable(conn, today), "show_scope": False}, status_code=status_code)
+
+    @router.get("/room", response_class=HTMLResponse)
+    @router.get("/room/", response_class=HTMLResponse)
+    def room_public(request: Request):
+        conn = get_conn()
+        try:
+            return _public_page(request, conn, sent=request.query_params.get("sent") == "1")
+        finally:
+            conn.close()
+
+    @router.get("/room/day")
+    def room_public_day(request: Request, date: str = ""):
+        """One day's hours for the page's date picker: free / requested / booked / closed, no titles."""
+        if not rl.allow("room_view", request.client.host if request.client else None):
+            return JSONResponse({"error": "Too many look-ups. Please wait a moment."}, status_code=429)
+        d = _date_or_none(date)
+        if d is None:
+            return JSONResponse({"error": "Pick a date."}, status_code=400)
+        conn = get_conn()
+        try:
+            return JSONResponse(rooms.public_day(conn, d, today_local()))
+        finally:
+            conn.close()
+
+    @router.post("/room")
+    async def room_public_submit(request: Request):
+        f = await _posted(request)
+        ip = request.client.host if request.client else None
+        conn = get_conn()
+        try:
+            if f.get("website"):                       # the hidden field only a bot fills in: look like it worked
+                return RedirectResponse("/room?sent=1", status_code=303)
+            if not rl.allow("room", ip):
+                return _public_page(request, conn, f=f, status_code=429, error=(
+                    "You've sent several requests in a short time. Please wait a while, or call the "
+                    "Administrative Section."))
+            try:
+                day = _date_or_none(f.get("day"))
+                if day is None:
+                    raise rooms.RoomError("Pick a day first.")
+                ids = rooms.slot_range(conn, f.get("from_slot"), f.get("to_slot"))
+                attendees = f.get("attendees", "")
+                if attendees and not attendees.isdigit():
+                    raise rooms.RoomError("Attendees must be a number.")
+                res = rooms.request_external(
+                    conn, name=f.get("name"), org=f.get("org"), email=f.get("email"), phone=f.get("phone"),
+                    title=f.get("title"), day=day, slot_ids=ids, consent=bool(f.get("consent")),
+                    purpose=f.get("purpose"), attendees=int(attendees) if attendees else None,
+                    modality=f.get("modality") or "f2f", meals_requested=bool(f.get("meals")),
+                    today=today_local())
+            except rooms.RoomError as e:
+                return _public_page(request, conn, f=f, error=str(e), status_code=400)
+        finally:
+            conn.close()
+        return RedirectResponse(f"/room/t/{quote(auth.make_room_track_token(res['id']))}?new=1", status_code=303)
+
+    def _track(conn, token):
+        rid = auth.verify_room_track_token(token)
+        res = rooms.get_reservation(conn, rid) if rid else None
+        return res if res and res["requester_user_id"] is None else None
+
+    def _track_page(request, conn, token, res, *, msg="", err="", new=False, status_code=200):
+        today = today_local()
+        res = rooms.get_reservation(conn, res["id"])
+        res["hours"] = rooms.hours_text(conn, res)
+        res["when"] = rooms.queue_when(res)
+        offers = rooms.suggestions_for(conn, res, today=today)
+        return templates.TemplateResponse(request, "room_track.html", {
+            "r": res, "token": token, "badge": STATUS_BADGE.get(res["status"], ("grey", res["status"].title())),
+            "timeline": rooms.timeline(conn, res, names=False), "offers": offers,
+            "was_bumped": res["status"] == "cancelled" and res["bumped_by_reservation_id"] is not None,
+            "can_withdraw": res["status"] in ("requested", "approved") and rooms._d(res["day"]) >= today,
+            "msg": msg, "err": err, "new": new, "show_scope": False}, status_code=status_code)
+
+    @router.get("/room/t/{token}", response_class=HTMLResponse)
+    def room_track(request: Request, token: str):
+        conn = get_conn()
+        try:
+            res = _track(conn, token)
+            if not res:
+                return templates.TemplateResponse(request, "room_track.html", {"invalid": True, "show_scope": False},
+                                                  status_code=404)
+            new = request.query_params.get("new") == "1"
+            if not new and not res["ext_email_verified_at"]:
+                rooms.mark_email_verified(conn, res["id"])
+            q = request.query_params
+            msg = {"withdrawn": "Your request was withdrawn. The hours are free again."}.get(q.get("done"), "")
+            return _track_page(request, conn, token, res, msg=msg, err=(q.get("err") or "")[:200], new=new)
+        finally:
+            conn.close()
+
+    @router.post("/room/t/{token}/withdraw")
+    async def room_track_withdraw(request: Request, token: str):
+        f = await _posted(request)
+        conn = get_conn()
+        try:
+            res = _track(conn, token)
+            if not res:
+                return templates.TemplateResponse(request, "room_track.html", {"invalid": True, "show_scope": False},
+                                                  status_code=404)
+            try:
+                rooms.withdraw(conn, res["id"], None, reason=f.get("reason"), guest=True)
+            except rooms.RoomError as e:
+                return RedirectResponse(f"/room/t/{quote(token)}?" + urlencode({"err": str(e)}), status_code=303)
+        finally:
+            conn.close()
+        return RedirectResponse(f"/room/t/{quote(token)}?done=withdrawn", status_code=303)
+
+    @router.post("/room/t/{token}/take")
+    async def room_track_take(request: Request, token: str):
+        f = await _posted(request)
+        conn = get_conn()
+        try:
+            res = _track(conn, token)
+            if not res:
+                return templates.TemplateResponse(request, "room_track.html", {"invalid": True, "show_scope": False},
+                                                  status_code=404)
+            try:
+                ids = [int(x) for x in (f.get("slots") or "").split(",") if x.strip().isdigit()]
+                new = rooms.take_suggestion(conn, res["id"], None, f.get("day", ""), ids, today=today_local(), guest=True)
+            except rooms.RoomError as e:
+                return RedirectResponse(f"/room/t/{quote(token)}?" + urlencode({"err": str(e)}), status_code=303)
+        finally:
+            conn.close()
+        return RedirectResponse(f"/room/t/{quote(auth.make_room_track_token(new['id']))}?new=1", status_code=303)
+
+    # ---- the printable QR poster (section members) ----
+    @router.get("/rooms/poster", response_class=HTMLResponse)
+    def rooms_poster(request: Request):
+        conn = get_conn()
+        try:
+            if not rooms.is_room_admin(conn, request.state.user):
+                return _forbidden(request)
+            url = (base_url(request) if base_url else str(request.base_url).rstrip("/")) + "/room"
+            return templates.TemplateResponse(request, "rooms_poster.html", {
+                "nav_active": "rooms", "tab": "poster", "url": url,
+                "qr": qr_data_uri(url) if qr_data_uri else None,
+                "room_pending": rooms.pending_count(conn),
+                "mine_open": len(rooms.list_for_user(conn, request.state.user["id"], upcoming_only=True, today=today_local()))})
+        finally:
+            conn.close()
 
     @router.post("/rooms/{rid}/decide")
     async def rooms_decide(rid: int, request: Request):

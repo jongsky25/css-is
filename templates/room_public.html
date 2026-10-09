@@ -1,0 +1,103 @@
+{% extends "public_layout.html" %}
+{% block title %}Request the conference room — Office Connect{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/rooms.css?v=20261009c">{% endblock %}
+
+{% block content %}
+<div class="pub-card rp-card">
+  <div class="rp-brand">CSS<span>·</span>IS</div>
+  <h1>Request the conference room</h1>
+  <p class="muted">Pick a day, choose your hours and tell us about your meeting. The Administrative Section will decide and
+    email you. Requests need at least 2 working days' notice (earliest: <strong>{{ earliest.strftime('%a') }} {{ earliest.day }} {{ earliest.strftime('%b') }}</strong>).</p>
+
+  {% if sent %}<div class="flash ok" role="status">✓ Request received. We'll be in touch.</div>{% endif %}
+  {% if error %}<div class="flash err" role="alert">✕ {{ error }}</div>{% endif %}
+
+  <h2 class="rp-step"><span>1</span> Pick a day</h2>
+  {% if days %}
+  <nav class="rp-days" aria-label="Days you can request">
+    {% for d in soon %}
+    <a href="/room?date={{ d.day }}" class="{{ 'on' if picked and picked.day == d.day }} {{ 'full' if not d.open }}"
+       {% if picked and picked.day == d.day %}aria-current="date"{% endif %}>
+      <strong>{{ d.label }}</strong><small>{{ d.open ~ ' of ' ~ d.of ~ ' hours open' if d.open else 'fully booked' }}</small></a>
+    {% endfor %}
+  </nav>
+  {% if later %}
+  <details class="rp-more"><summary>Later days</summary>
+    <nav class="rp-days" aria-label="Later days">
+      {% for d in later %}
+      <a href="/room?date={{ d.day }}" class="{{ 'on' if picked and picked.day == d.day }} {{ 'full' if not d.open }}"><strong>{{ d.label }}</strong><small>{{ d.open ~ ' open' if d.open else 'full' }}</small></a>
+      {% endfor %}
+    </nav>
+  </details>
+  {% endif %}
+  {% else %}<p class="muted">No days are open for requests right now. Please call the Administrative Section.</p>{% endif %}
+
+  {% if picked %}
+  <h2 class="rp-step"><span>2</span> {{ avail.label }}</h2>
+  <ul class="rp-hours" aria-label="Hours that day">
+    {% for h in avail.hours %}
+    <li class="st-{{ h.state }}"><b>{{ h.start }}</b>
+      <span>{% if h.state == 'free' %}✓ Free{% elif h.state == 'requested' %}○ Others asked (you can still ask){% elif h.state == 'booked' %}● Booked{% else %}✕ Closed{% endif %}</span></li>
+    {% endfor %}
+  </ul>
+
+  <form method="post" action="/room" id="rp-form" class="rp-form">
+    <input type="hidden" name="day" value="{{ picked.day }}">
+    <div class="rm-times">
+      <div class="field"><label for="rp-from">From</label>
+        <select id="rp-from" name="from_slot" required>
+          {% for s in slots %}<option value="{{ s.id }}" data-time="{{ s.start_time }}" {{ 'selected' if f.from_slot|string == s.id|string }}>{{ room_hour(s.start_time) }}</option>{% endfor %}
+        </select></div>
+      <div class="field"><label for="rp-to">Until</label>
+        <select id="rp-to" name="to_slot" required>
+          {% for s in slots %}<option value="{{ s.id }}" data-time="{{ s.end_time }}" {{ 'selected' if f.to_slot|string == s.id|string }}>{{ room_hour(s.end_time) }}</option>{% endfor %}
+        </select></div>
+    </div>
+    <div class="rm-quick" aria-label="Quick picks">
+      <button type="button" class="btn ghost small" data-from="07:00" data-to="12:00">Morning</button>
+      <button type="button" class="btn ghost small" data-from="13:00" data-to="17:00">Afternoon</button>
+      <button type="button" class="btn ghost small" data-from="07:00" data-to="19:00">Whole day</button>
+    </div>
+
+    <h2 class="rp-step"><span>3</span> About your meeting</h2>
+    <div class="field"><label for="rp-title">Meeting title</label>
+      <input id="rp-title" name="title" value="{{ f.title }}" maxlength="200" required></div>
+    <div class="field"><label for="rp-purpose">Purpose <span class="opt">(optional)</span></label>
+      <textarea id="rp-purpose" name="purpose" rows="2" maxlength="600">{{ f.purpose }}</textarea></div>
+    <div class="field"><label for="rp-att">How many people? <span class="opt">(optional)</span></label>
+      <input id="rp-att" name="attendees" type="number" min="1" max="500" inputmode="numeric" value="{{ f.attendees }}"></div>
+    <fieldset class="field rm-modality"><legend>How will it be held?</legend>
+      {% for k, lab in room_modalities.items() %}<label><input type="radio" name="modality" value="{{ k }}" {{ 'checked' if (f.modality or 'f2f') == k }}> {{ lab }}</label>{% endfor %}
+    </fieldset>
+    <label class="rm-meals"><input type="checkbox" name="meals" value="1" {{ 'checked' if f.meals }}> Will meals be requested?
+      <small>We prepare the meal form for you once the request is approved.</small></label>
+
+    <h2 class="rp-step"><span>4</span> Who are you?</h2>
+    <div class="field"><label for="rp-name">Your name</label>
+      <input id="rp-name" name="name" value="{{ f.name }}" maxlength="120" autocomplete="name" required></div>
+    <div class="field"><label for="rp-org">Organization <span class="opt">(optional)</span></label>
+      <input id="rp-org" name="org" value="{{ f.org }}" maxlength="120" autocomplete="organization"></div>
+    <div class="field"><label for="rp-email">Email</label>
+      <input id="rp-email" name="email" type="email" value="{{ f.email }}" maxlength="160" autocomplete="email" inputmode="email">
+      <div class="help">We email your reference and a link to track or withdraw your request.</div></div>
+    <div class="field"><label for="rp-phone">Phone <span class="opt">(optional if you gave an email)</span></label>
+      <input id="rp-phone" name="phone" type="tel" value="{{ f.phone }}" maxlength="40" autocomplete="tel" inputmode="tel"></div>
+
+    {# A field only a script fills in. Hidden from people and screen readers; if it has text, the request is dropped. #}
+    <div class="rp-hp" aria-hidden="true"><label>Leave this empty <input name="website" tabindex="-1" autocomplete="off"></label></div>
+
+    <label class="rm-meals"><input type="checkbox" name="consent" value="1" required {{ 'checked' if f.consent }}>
+      I agree that the Administrative Section may keep these details to handle this request.
+      <small>Under the Data Privacy Act (RA 10173). Your name, email and phone are removed 12 months after the meeting date.</small></label>
+
+    <button class="btn block" type="submit">Send my request</button>
+  </form>
+  {% elif days %}
+  <p class="muted rp-prompt">Choose a day above to see its hours and send your request.</p>
+  {% endif %}
+
+  <p class="rp-foot muted">Already sent a request? Open the link in the email we sent you to see its status or withdraw it.</p>
+</div>
+<script src="/static/js/room_public.js?v=20261009a" defer></script>
+{% endblock %}
+{% block foot %}{% endblock %}

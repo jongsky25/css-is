@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "5.1"
+APP_VERSION = "5.2"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "5.2",
+        "date": "October 9, 2026",
+        "summary": "Outside guests can now request the conference room from a QR code, without an account.",
+        "changes": [
+            "A permanent web address and QR code (/room) let anyone outside the office pick a day, choose hours and send a request. They see which hours are free but never who booked them.",
+            "Guests get an email with their reference and a private link to check the status, withdraw the request, or pick a new time if their booking is cancelled.",
+            "The Administrative Section approves guest requests the same way as staff ones, and can print a ready-made QR poster from the Conference room page.",
+            "To keep spam out, a guest can file only a few requests an hour and three open ones per email address. Guests' names and contact details are removed 12 months after their meeting date.",
+        ],
+    },
     {
         "version": "5.1",
         "date": "October 9, 2026",

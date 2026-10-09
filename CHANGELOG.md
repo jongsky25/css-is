@@ -1,5 +1,20 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-09 (v5.2 — conference room reservation R6: the public QR page for guests)
+
+- **`/room` (no login), permanent.** Short enough to print and type; `/rooms/poster` (section members) prints an A4 page with the QR, the address and three steps.
+  The QR encodes `CSS_BASE_URL` + `/room`, so **set `CSS_BASE_URL` before printing** and never change that path. Pick a day from the next 60 days (each shows how many hours
+  are open), see each hour as free / others asked / booked / closed (never a title or a name), then fill in the meeting and who you are.
+- **Same rules as staff:** two working days' notice, back-to-back hours, approved by the Administrative Section from the same queue (guests are labelled, with an
+  "email not confirmed" flag until they open their link; the flag never blocks an approval). Horizon is 60 days for guests, 90 for staff.
+- **Tracking link (`/room/t/<signed token>`, 150 days).** The page they land on after sending is the same page the emails link to: status, history (no staff names),
+  withdraw, and, after a cancellation or decline, the nearest free times (a bumped guest's pick is booked already approved). The token only opens guest reservations.
+- **Abuse limits:** 5 requests an hour per IP (`CSS_RL_ROOM`), 120 availability look-ups a minute (`CSS_RL_ROOM_VIEW`), three open requests per email address, a hidden
+  honeypot field (a bot's post is dropped and looks like success), and a required Data Privacy Act consent (timestamped).
+- **Retention:** a guest's name, email and phone are removed 12 months after the meeting date and their email notices deleted; the booking stays. Runs once a day inside
+  the scheduler tick, and as `python retention.py --room-guests [--dry-run]`.
+- Guests also get a "request received" email (under the "Conference room decision result" switch). Tests: `tests/test_rooms_guest.py`, `tests/test_rooms_guest_pages.py`.
+
 ## 2026-10-09 (v5.1 — conference room reservation, R1 to R5)
 
 The conference room, built in five increments (`docs/ROOM_RESERVATION_PLAN.md`). The notes below are the increments, newest first; their old version numbers (4.1 to 4.5) were folded into 5.1 when this was merged after the Calendar phases.

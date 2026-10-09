@@ -18,6 +18,8 @@ import tzutil as tz
 OPEN_HOUR, CLOSE_HOUR = 7, 19      # room hours: 07:00-19:00
 LEAD_WORKING_DAYS = 2              # a request must be made 2 working days ahead
 MAX_DAYS_AHEAD = 90                # booking horizon for signed-in users
+GUEST_MAX_DAYS_AHEAD = 60          # ... and for guests using the public QR page
+GUEST_OPEN_LIMIT = 3               # open requests allowed per guest email address
 MODALITIES = ("f2f", "online", "hybrid")
 _SEED_KEY = "room_slots_seeded"
 
@@ -105,7 +107,7 @@ def earliest_bookable(conn, today=None):
     return add_working_days(conn, today or tz.today_local(), LEAD_WORKING_DAYS)
 
 
-def day_closed(conn, day, today=None, *, override_lead=False):
+def day_closed(conn, day, today=None, *, override_lead=False, max_ahead=MAX_DAYS_AHEAD):
     """(short, long) reasons `day` can't be requested at all, or None. `short` is for a
     narrow grid header, `long` is plain words for an error message."""
     day, today = _d(day), today or tz.today_local()
@@ -119,14 +121,14 @@ def day_closed(conn, day, today=None, *, override_lead=False):
     if not override_lead and day < earliest_bookable(conn, today):
         return "Too soon", (f"Requests need at least {LEAD_WORKING_DAYS} working days' notice "
                             f"(earliest: {earliest_bookable(conn, today).strftime('%b %d')}).")
-    if day > today + timedelta(days=MAX_DAYS_AHEAD):
-        return "Too far ahead", f"Requests open up to {MAX_DAYS_AHEAD} days ahead."
+    if day > today + timedelta(days=max_ahead):
+        return "Too far ahead", f"Requests open up to {max_ahead} days ahead."
     return None
 
 
-def day_closed_reason(conn, day, today=None, *, override_lead=False):
+def day_closed_reason(conn, day, today=None, *, override_lead=False, max_ahead=MAX_DAYS_AHEAD):
     """Why `day` can't be requested at all, or None. Plain words for the UI."""
-    c = day_closed(conn, day, today, override_lead=override_lead)
+    c = day_closed(conn, day, today, override_lead=override_lead, max_ahead=max_ahead)
     return c[1] if c else None
 
 
@@ -163,7 +165,8 @@ def slot_states(conn, day):
 _COLS = ("id, ref_code, requester_user_id, ext_name, ext_org, ext_email, ext_phone, on_behalf_of, "
          "title, purpose, attendees, modality, day, status, source, decided_by, decided_at, "
          "decide_note, bumped_by_reservation_id, moves_reservation_id, event_id, "
-         "calendar_entry_id, meals_requested, created_by, created_at, updated_at")
+         "calendar_entry_id, meals_requested, created_by, created_at, updated_at, "
+         "ext_email_verified_at, ext_consent_at")
 
 
 def _row(conn, r):
@@ -232,7 +235,8 @@ def _validate_slots(conn, slot_ids):
 
 
 def request(conn, *, title, day, slot_ids, requester_user_id=None, ext=None, purpose=None,
-            attendees=None, modality="f2f", meals_requested=False, actor=None, today=None):
+            attendees=None, modality="f2f", meals_requested=False, actor=None, today=None,
+            max_ahead=MAX_DAYS_AHEAD, consent_at=None):
     """File a request. Internal (requester_user_id) or external (ext = dict of
     name/org/email/phone). Status starts `requested`; nothing is held."""
     title = (title or "").strip()
@@ -247,7 +251,7 @@ def request(conn, *, title, day, slot_ids, requester_user_id=None, ext=None, pur
         raise RoomError("Who is asking? Add a name and an email or phone number.")
     ext = ext or {}
     today = today or tz.today_local()
-    reason = day_closed_reason(conn, day, today)
+    reason = day_closed_reason(conn, day, today, max_ahead=max_ahead)
     if reason:
         raise RoomError(reason)
     order = _validate_slots(conn, slot_ids)
@@ -261,10 +265,10 @@ def request(conn, *, title, day, slot_ids, requester_user_id=None, ext=None, pur
     try:
         cur = conn.execute(
             "INSERT INTO room_reservation(requester_user_id, ext_name, ext_org, ext_email, ext_phone, "
-            "title, purpose, attendees, modality, day, status, source, meals_requested, "
-            "created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?, 'requested', ?,?,?,?,?)",
+            "ext_consent_at, title, purpose, attendees, modality, day, status, source, meals_requested, "
+            "created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?, 'requested', ?,?,?,?,?)",
             (requester_user_id, ext.get("name"), ext.get("org"), ext.get("email"), ext.get("phone"),
-             title, (purpose or "").strip() or None, attendees, modality, day_iso,
+             consent_at, title, (purpose or "").strip() or None, attendees, modality, day_iso,
              "internal" if requester_user_id is not None else "external",
              1 if meals_requested else 0, actor, now, now))
         rid = cur.lastrowid
@@ -281,6 +285,8 @@ def request(conn, *, title, day, slot_ids, requester_user_id=None, ext=None, pur
              summary=f"{title} on {day_iso}")
     out = get_reservation(conn, rid)
     _emit("requested", conn, out)
+    if requester_user_id is None:
+        _emit("received", conn, out)
     return out
 
 
@@ -366,12 +372,20 @@ def decline(conn, rid, by, note):
     return out
 
 
-def withdraw(conn, rid, user_id, reason=None, actor=None):
+def _is_owner(res, user_id, guest):
+    """A signed-in requester owns their own reservation; a guest (reached by their signed
+    tracking link, so `guest=True`) owns only reservations filed without an account."""
+    if guest:
+        return res["requester_user_id"] is None
+    return res["requester_user_id"] is not None and res["requester_user_id"] == user_id
+
+
+def withdraw(conn, rid, user_id, reason=None, actor=None, guest=False):
     """The requester takes their own request back (requested or approved). Frees the hours."""
     res = get_reservation(conn, rid)
     if res is None:
         raise RoomError("That reservation no longer exists.")
-    if res["requester_user_id"] is None or res["requester_user_id"] != user_id:
+    if not _is_owner(res, user_id, guest):
         raise RoomError("You can only withdraw your own reservation.")
     _must_be_open(res, ("requested", "approved"))
     before = res["status"]
@@ -379,7 +393,7 @@ def withdraw(conn, rid, user_id, reason=None, actor=None):
     conn.execute("UPDATE room_reservation SET status='withdrawn', decide_note=COALESCE(?, decide_note), "
                  "updated_at=? WHERE id=?", ((reason or "").strip() or None, _stamp(), rid))
     conn.commit()
-    st.audit(conn, actor or f"user:{user_id}", "room_withdraw", target_type="room_reservation",
+    st.audit(conn, actor or (f"guest:{res['ref_code']}" if guest else f"user:{user_id}"), "room_withdraw", target_type="room_reservation",
              target_id=rid, summary=f"{res['title']} on {res['day']}", before=before, after="withdrawn")
     first = conn.execute("SELECT MIN(s.start_time) FROM room_reservation_slot rs "
                          "JOIN room_slot s ON s.id=rs.slot_id WHERE rs.reservation_id=?", (rid,)).fetchone()[0]
@@ -490,7 +504,7 @@ def board(conn, week_start, user_id=None, today=None, days=5):
             "this_week": monday_of(today)}
 
 
-def timeline(conn, res):
+def timeline(conn, res, names=True):
     """'Requested Oct 9 -> Approved Oct 9 by Ana': a short plain-words history."""
     def md(ts):
         try:
@@ -502,7 +516,7 @@ def timeline(conn, res):
             "withdrawn": "Withdrawn", "expired": "Expired"}.get(res["status"])
     if word:
         when = md(res["decided_at"] or res["updated_at"])
-        who = person_label(conn, res["decided_by"]) if res["decided_by"] else None
+        who = (person_label(conn, res["decided_by"]) if names else "the Administrative Section") if res["decided_by"] else None
         bits.append(f"{word} {when}".strip() + (f" by {who}" if who else ""))
     return " → ".join(bits)
 
@@ -580,6 +594,7 @@ def queue(conn):
             rivals.append({"id": o["id"], "ref": o["ref_code"], "title": o["title"], "who": on,
                            "hours": hours_text(conn, o)})
         out.append({**res, "requester_name": name, "requester_unit": unit, "is_external": ext,
+                    "email_unconfirmed": bool(ext and res["ext_email"] and not res["ext_email_verified_at"]),
                     "hours": hours_text(conn, res), "rivals": rivals,
                     "when": f"{_d(res['day']):%a} {_d(res['day']).day} {_d(res['day']):%b %Y}",
                     "held_by": ({"id": held[0], "ref": held[1], "title": held[2]} if held else None),
@@ -621,7 +636,7 @@ def _window_label(conn, day, slot_ids):
     return f"{d:%a} {d.day} {d:%b} · {hour_label(ss[0]['start_time'])} – {hour_label(ss[-1]['end_time'])}"
 
 
-def suggest(conn, day, slot_ids, n=3, today=None, respect_lead=True, extra_taken=()):
+def suggest(conn, day, slot_ids, n=3, today=None, respect_lead=True, extra_taken=(), max_ahead=MAX_DAYS_AHEAD):
     """Nearest free alternatives to (day, slot_ids): the same hours on the next working
     days, then other hours the same day, then the same hours on earlier days that are still
     ahead. Holidays, weekends and blocks are skipped. `extra_taken` = {(day_iso, slot_id)}
@@ -635,7 +650,7 @@ def suggest(conn, day, slot_ids, n=3, today=None, respect_lead=True, extra_taken
 
     def ok_day(d):
         return (is_working_day(conn, d) and d >= today
-                and day_closed(conn, d, today, override_lead=not respect_lead) is None)
+                and day_closed(conn, d, today, override_lead=not respect_lead, max_ahead=max_ahead) is None)
 
     def free(d, window):
         di = d.isoformat()
@@ -656,7 +671,7 @@ def suggest(conn, day, slot_ids, n=3, today=None, respect_lead=True, extra_taken
     d, steps = base, 0                                   # 1. same hours, following working days
     while len(out) < n and steps < 10:
         d += timedelta(days=1)
-        if d > today + timedelta(days=MAX_DAYS_AHEAD):
+        if d > today + timedelta(days=max_ahead):
             break
         if ok_day(d) and free(d, ids):
             add(d, ids, "Same hours, next free day")
@@ -768,28 +783,33 @@ def encode(conn, *, by, title, day, slot_ids, requester_user_id=None, ext=None, 
     return out
 
 
-def take_suggestion(conn, rid, user_id, day, slot_ids, today=None, actor=None):
+def take_suggestion(conn, rid, user_id, day, slot_ids, today=None, actor=None, guest=False):
     """The owner of a cancelled or declined reservation takes one of the offered
     alternatives. After a bump it is booked already approved (the admin caused the move);
     after a decline it is an ordinary new request. Only times the server itself would
     suggest right now are accepted, so a posted form can't pick an arbitrary slot."""
     res = get_reservation(conn, rid)
-    if res is None or res["requester_user_id"] is None or res["requester_user_id"] != user_id:
+    if res is None or not _is_owner(res, user_id, guest):
         raise RoomError("You can only change your own reservation.")
     if res["status"] not in ("cancelled", "declined"):
         raise RoomError("This reservation doesn't need a new time.")
     today = today or tz.today_local()
     bumped = res["status"] == "cancelled" and res["bumped_by_reservation_id"] is not None
     ids = [int(s) for s in slot_ids]
-    offered = suggest(conn, res["day"], res["slot_ids"], n=8, today=today, respect_lead=not bumped)
+    offered = suggest(conn, res["day"], res["slot_ids"], n=8, today=today, respect_lead=not bumped,
+                      max_ahead=GUEST_MAX_DAYS_AHEAD if guest else MAX_DAYS_AHEAD)
     if not any(o["day"] == str(day) and o["slot_ids"] == ids for o in offered):
         raise RoomError("That time is no longer free. Pick one of the fresh suggestions.")
     if conn.execute("SELECT 1 FROM room_reservation WHERE moves_reservation_id=? AND status IN ('requested','approved')",
                     (rid,)).fetchone():
         raise RoomError("You already took a new time for this one.")
-    kw = dict(title=res["title"], day=day, slot_ids=ids, requester_user_id=user_id, purpose=res["purpose"],
-              attendees=res["attendees"], modality=res["modality"], meals_requested=bool(res["meals_requested"]),
-              actor=actor or f"user:{user_id}", today=today)
+    kw = dict(title=res["title"], day=day, slot_ids=ids, requester_user_id=None if guest else user_id,
+              purpose=res["purpose"], attendees=res["attendees"], modality=res["modality"],
+              meals_requested=bool(res["meals_requested"]), actor=actor or f"user:{user_id}", today=today)
+    if guest:                                      # the same person: carry their contact details across
+        kw["ext"] = {"name": res["ext_name"], "org": res["ext_org"], "email": res["ext_email"], "phone": res["ext_phone"]}
+        kw["consent_at"] = res["ext_consent_at"]
+        kw["max_ahead"] = GUEST_MAX_DAYS_AHEAD
     new = _book_accepted(conn, res, kw) if bumped else request(conn, **kw)
     conn.execute("UPDATE room_reservation SET moves_reservation_id=? WHERE id=?", (rid, new["id"]))
     conn.commit()
@@ -807,10 +827,13 @@ def _book_accepted(conn, old, kw):
     now = _stamp()
     try:
         cur = conn.execute(
-            "INSERT INTO room_reservation(requester_user_id, title, purpose, attendees, modality, day, status, "
-            "source, decided_by, decided_at, decide_note, meals_requested, created_by, created_at, updated_at) "
-            "VALUES (?,?,?,?,?,?, 'approved','bump_accept',?,?,?,?,?,?,?)",
-            (kw["requester_user_id"], kw["title"], kw["purpose"], kw["attendees"], kw["modality"], day_iso,
+            "INSERT INTO room_reservation(requester_user_id, ext_name, ext_org, ext_email, ext_phone, ext_consent_at, "
+            "title, purpose, attendees, modality, day, status, source, decided_by, decided_at, decide_note, "
+            "meals_requested, created_by, created_at, updated_at) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?, 'approved','bump_accept',?,?,?,?,?,?,?)",
+            (kw["requester_user_id"], (kw.get("ext") or {}).get("name"), (kw.get("ext") or {}).get("org"),
+             (kw.get("ext") or {}).get("email"), (kw.get("ext") or {}).get("phone"), kw.get("consent_at"),
+             kw["title"], kw["purpose"], kw["attendees"], kw["modality"], day_iso,
              old["decided_by"], now, f"Moved after {old['ref_code']} was cancelled.",
              1 if kw["meals_requested"] else 0, kw["actor"], now, now))
         rid = cur.lastrowid
@@ -833,7 +856,8 @@ def suggestions_for(conn, res, n=4, today=None):
     if conn.execute("SELECT 1 FROM room_reservation WHERE moves_reservation_id=? AND status IN ('requested','approved')",
                     (res["id"],)).fetchone():
         return []
-    return suggest(conn, res["day"], res["slot_ids"], n=n, today=today, respect_lead=not bumped)
+    return suggest(conn, res["day"], res["slot_ids"], n=n, today=today, respect_lead=not bumped,
+                   max_ahead=MAX_DAYS_AHEAD if res["requester_user_id"] is not None else GUEST_MAX_DAYS_AHEAD)
 
 
 # ---- blocks ---------------------------------------------------------------
@@ -916,3 +940,104 @@ def queue_when(res):
     """'Thu 15 Oct 2026' for a reservation card."""
     d = _d(res["day"])
     return f"{d:%a} {d.day} {d:%b %Y}"
+
+
+# ----------------------------------------------------- guests (public QR page) ---
+
+_EMAIL_OK = __import__("re").compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+def request_external(conn, *, name, org, email, phone, title, day, slot_ids, consent, purpose=None,
+                     attendees=None, modality="f2f", meals_requested=False, today=None):
+    """A request from the public QR page. Same rules as a signed-in one (two working days'
+    notice, back-to-back hours), a shorter horizon (60 days), a consent tick, a sane email
+    and at most three open requests per email address."""
+    name, org, email, phone = (name or "").strip(), (org or "").strip(), (email or "").strip(), (phone or "").strip()
+    if not consent:
+        raise RoomError("Please tick the box to agree to how your details are kept.")
+    if not name:
+        raise RoomError("Please tell us your name.")
+    if not email and not phone:
+        raise RoomError("Please give an email address or a phone number so we can reach you.")
+    if email and not _EMAIL_OK.match(email):
+        raise RoomError("That email address doesn't look right.")
+    if phone and sum(c.isdigit() for c in phone) < 7:
+        raise RoomError("That phone number doesn't look right.")
+    if max(len(name), len(org), len(email), len(phone)) > 160 or len((title or "")) > 200 or len(purpose or "") > 600:
+        raise RoomError("Something you typed is too long.")
+    today = today or tz.today_local()
+    if email:
+        n_open = conn.execute(
+            "SELECT COUNT(*) FROM room_reservation WHERE lower(ext_email)=lower(?) AND status IN ('requested','approved') "
+            "AND day>=?", (email, today.isoformat())).fetchone()[0]
+        if n_open >= GUEST_OPEN_LIMIT:
+            raise RoomError(f"This email address already has {GUEST_OPEN_LIMIT} open requests. "
+                            "Please wait for a decision or withdraw one first.")
+    return request(conn, title=title, day=day, slot_ids=slot_ids, ext={"name": name, "org": org, "email": email, "phone": phone},
+                   purpose=purpose, attendees=attendees, modality=modality, meals_requested=meals_requested,
+                   actor=f"guest:{email or phone}", today=today, max_ahead=GUEST_MAX_DAYS_AHEAD,
+                   consent_at=_stamp())
+
+
+def mark_email_verified(conn, rid):
+    """The guest opened the emailed tracking link: their address works (a soft check, never a block)."""
+    conn.execute("UPDATE room_reservation SET ext_email_verified_at=? WHERE id=? AND ext_email_verified_at IS NULL "
+                 "AND ext_email IS NOT NULL", (_stamp(), rid))
+    conn.commit()
+
+
+def public_day(conn, day, today=None):
+    """What a guest may see of one day: each hour free / requested (others asked, you still can) /
+    booked / closed. Never a title or a name."""
+    today = today or tz.today_local()
+    closed = day_closed(conn, day, today, max_ahead=GUEST_MAX_DAYS_AHEAD)
+    states = slot_states(conn, day)
+    hours = []
+    for sid, o in states.items():
+        s = o["slot"]
+        state = "closed" if closed else {"approved": "booked", "blocked": "closed"}.get(o["state"], o["state"])
+        hours.append({"id": sid, "label": f"{hour_label(s['start_time'])} – {hour_label(s['end_time'])}",
+                      "start": hour_label(s["start_time"]), "state": state})
+    return {"day": _d(day).isoformat(), "closed": closed[1] if closed else None, "hours": hours,
+            "label": f"{_d(day):%A} {_d(day).day} {_d(day):%B %Y}"}
+
+
+def public_days(conn, today=None):
+    """The days a guest can ask for, soonest first, each with how many hours are still open
+    (free, or only asked for by others)."""
+    today = today or tz.today_local()
+    out, d = [], earliest_bookable(conn, today)
+    last = today + timedelta(days=GUEST_MAX_DAYS_AHEAD)
+    while d <= last:
+        if day_closed(conn, d, today, max_ahead=GUEST_MAX_DAYS_AHEAD) is None:
+            hrs = public_day(conn, d, today)["hours"]
+            out.append({"day": d.isoformat(), "label": f"{d:%a} {d.day} {d:%b}",
+                        "open": sum(1 for h in hrs if h["state"] in ("free", "requested")), "of": len(hrs)})
+        d += timedelta(days=1)
+    return out
+
+
+GUEST_RETENTION_MONTHS = 12
+
+
+def purge_guest_details(conn, today=None, months=GUEST_RETENTION_MONTHS):
+    """Blank a guest's name, email and phone `months` after their reservation date (the booking
+    itself stays on record), and drop their email notices. Returns how many reservations changed."""
+    today = today or tz.today_local()
+    y, m = today.year, today.month - months
+    while m <= 0:
+        m += 12; y -= 1
+    cutoff = date(y, m, min(today.day, 28)).isoformat()
+    ids = [r[0] for r in conn.execute(
+        "SELECT id FROM room_reservation WHERE requester_user_id IS NULL AND day < ? "
+        "AND (ext_name IS NOT NULL OR ext_email IS NOT NULL OR ext_phone IS NOT NULL)", (cutoff,))]
+    if ids:
+        qs = ",".join("?" * len(ids))
+        conn.execute(f"UPDATE room_reservation SET ext_name=NULL, ext_email=NULL, ext_phone=NULL, updated_at=? "
+                     f"WHERE id IN ({qs})", (_stamp(), *ids))
+    conn.execute("DELETE FROM room_notice WHERE recipient LIKE 'e:%' AND created_at < ?", (cutoff + "T00:00:00",))
+    conn.commit()
+    if ids:
+        st.audit(conn, "system", "room_purge_guests", target_type="room_reservation", target_id=ids[0],
+                 summary=f"Removed guest contact details from {len(ids)} reservation(s) dated before {cutoff}")
+    return len(ids)

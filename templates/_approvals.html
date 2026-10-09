@@ -56,7 +56,7 @@
     {% for r in queue %}
       <tr>
         <td data-label="Who">
-          <div class="who">{{ r.requester_name }}{% if r.is_external %} <span class="pill warn">Guest</span>{% endif %}</div>
+          <div class="who">{{ r.requester_name }}{% if r.is_external %} <span class="pill warn">Guest</span>{% endif %}{% if r.email_unconfirmed %} <span class="pill" title="They haven't opened the tracking link we emailed yet">email not confirmed</span>{% endif %}</div>
           <div class="sub">{{ r.requester_unit or "—" }}{% if r.is_external and r.ext_email %} · {{ r.ext_email }}{% endif %}{% if r.is_external and r.ext_phone %} · {{ r.ext_phone }}{% endif %}</div>
           <div class="sub"><code>{{ r.ref_code }}</code> · filed {{ (r.created_at or "")|replace('T', ' ') }}</div>
         </td>

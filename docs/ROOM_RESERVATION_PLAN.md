@@ -1,6 +1,6 @@
 # Conference Room Reservation — plan v2
 
-**Status:** in progress. Built so far: R1 (rules), R2 (board and request pages), R3 (approvers and queue), R4 (encode, "Book anyway", closures, suggestions), R5 (notifications).
+**Status:** in progress. Built so far: R1 (rules), R2 (board and request pages), R3 (approvers and queue), R4 (encode, "Book anyway", closures, suggestions), R5 (notifications), R6 (public QR page and guest tracking link).
 **Scope:** the bureau's one conference room.
 
 **Owner decisions so far:**

@@ -395,6 +395,8 @@ def init_db(conn):
         ext_org           TEXT,
         ext_email         TEXT,
         ext_phone         TEXT,
+        ext_email_verified_at TEXT,        -- set when the guest first opens their tracking link
+        ext_consent_at    TEXT,            -- Data Privacy Act consent ticked on the public form
         on_behalf_of      TEXT,
         title             TEXT NOT NULL,
         purpose           TEXT,
@@ -743,6 +745,10 @@ def _add_missing_columns(conn):
     CREATE TABLE IF NOT EXISTS leaves pre-existing tables untouched, so a column
     added after a database was first created has to be ALTERed in by hand.
     """
+    rr0 = {row[1] for row in conn.execute("PRAGMA table_info(room_reservation)")}
+    for col in ("ext_email_verified_at", "ext_consent_at"):       # added with the public QR page (R6)
+        if rr0 and col not in rr0:
+            conn.execute(f"ALTER TABLE room_reservation ADD COLUMN {col} TEXT")
     au0 = {row[1] for row in conn.execute("PRAGMA table_info(admin_user)")}
     for col in ("bday_notify", "birthday_coordinator", "cal_email_week", "cal_email_daybefore",
                 "cal_feed_birthdays"):
@@ -3638,6 +3644,7 @@ _AUDIT_ACTIONS = {
     "room_decline":        ("Declined a room reservation", "Conference room"),
     "room_withdraw":       ("Withdrew a room reservation", "Conference room"),
     "room_expire":         ("Expired a room request", "Conference room"),
+    "room_purge_guests":   ("Removed old guest details", "Conference room"),
     "room_encode":         ("Encoded a room booking", "Conference room"),
     "room_cancel":         ("Cancelled a room booking", "Conference room"),
     "room_accept":         ("Took a suggested room slot", "Conference room"),

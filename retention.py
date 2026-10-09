@@ -193,6 +193,27 @@ def purge_stale_email_log(db_path="css_is.db", days=None, dry_run=False):
         conn.close()
 
 
+def purge_room_guests(db_path="css_is.db", months=None, dry_run=False):
+    """Blank conference-room guests' name/email/phone `months` (default 12) after their reservation
+    date. The app also does this itself once a day; this is the manual/cron form."""
+    import rooms
+    conn = st.connect(db_path)
+    try:
+        st.init_db(conn)
+        months = months or rooms.GUEST_RETENTION_MONTHS
+        if dry_run:
+            n = conn.execute("SELECT COUNT(*) FROM room_reservation WHERE requester_user_id IS NULL AND day < ? "
+                             "AND (ext_name IS NOT NULL OR ext_email IS NOT NULL OR ext_phone IS NOT NULL)",
+                             (months_ago(months).date().isoformat(),)).fetchone()[0]
+            print(f"[dry-run] {n} guest reservation(s) older than {months} months would lose their contact details.")
+            return n
+        n = rooms.purge_guest_details(conn, months=months)
+        print(f"Removed guest contact details from {n} reservation(s) older than {months} months.")
+        return n
+    finally:
+        conn.close()
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Purge expired attendee PII (retention rule).")
     ap.add_argument("--db", default="css_is.db", help="database file (default css_is.db)")
@@ -207,6 +228,8 @@ if __name__ == "__main__":
                          "instead of attendee PII")
     ap.add_argument("--email-log", action="store_true",
                     help="purge stale email_log rows instead of attendee PII")
+    ap.add_argument("--room-guests", action="store_true",
+                    help="blank conference-room guests' contact details past --months (default 12)")
     ap.add_argument("--days", type=int, default=None,
                     help="retention window in days for --ui-events, --ai-log or --email-log "
                          "(default: the matching app_setting, or the module default if unset)")
@@ -215,6 +238,9 @@ if __name__ == "__main__":
         purge_stale_ui_events(db_path=args.db, days=args.days, dry_run=args.dry_run)
     elif args.ai_log:
         purge_stale_ai_log(db_path=args.db, days=args.days, dry_run=args.dry_run)
+    elif args.room_guests:
+        purge_room_guests(db_path=args.db, months=args.months if args.months != RETENTION_MONTHS_DEFAULT else None,
+                          dry_run=args.dry_run)
     elif args.email_log:
         purge_stale_email_log(db_path=args.db, days=args.days, dry_run=args.dry_run)
     else:

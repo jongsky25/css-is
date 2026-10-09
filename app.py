@@ -1895,8 +1895,8 @@ def invalidate_atoms():
 # =====================================================================
 
 _PUBLIC_PREFIXES = ("/r/", "/photo/", "/e/", "/static/", "/lang/", "/wellness/decide/",
-                    "/whereabouts/", "/calendar/feed/", "/rooms/decide/")
-_PUBLIC_EXACT = {"/seq", "/login", "/logout", "/favicon.ico",
+                    "/whereabouts/", "/calendar/feed/", "/rooms/decide/", "/room/t/")
+_PUBLIC_EXACT = {"/room", "/room/", "/room/day", "/seq", "/login", "/logout", "/favicon.ico",
                  "/set-password", "/forgot", "/reset-password", "/health",
                  "/sw.js", "/manifest.webmanifest",
                  "/offsite-backup/ping"}   # machine callback, token-gated below
@@ -16193,4 +16193,5 @@ app.include_router(calendar_routes.make_router(
 
 
 # ---- Conference room (rules in rooms.py, pages in rooms_routes.py) ----------
-app.include_router(rooms_routes.make_router(templates, get_conn, _today_local))
+app.include_router(rooms_routes.make_router(templates, get_conn, _today_local,
+                                           base_url=_base_url, qr_data_uri=_qr_data_uri))

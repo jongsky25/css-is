@@ -1194,6 +1194,7 @@ _ROOM_DECIDED = {   # kind -> (subject verb, heading, lead sentence)
     "cancelled": ("cancelled", "Your conference room booking was cancelled", "Your booking was cancelled."),
     "encoded": ("booked for you", "The conference room was booked for you", "The Administrative Section booked the room for you."),
     "expired": ("expired", "Your conference room request expired", "Nobody decided this request before its date, so it has expired."),
+    "received": ("received", "We received your conference room request", "Your request is in. The Administrative Section will decide, and we'll email you."),
 }
 
 
@@ -1212,7 +1213,8 @@ def room_decided_message(name, kind, title, when_line, ref, note, link, suggesti
     html = _email_html(
         greeting=f"Hi {name or 'there'},", heading=heading,
         intro=f"<b>{_e(title)}</b><br>{_e(when_line)}<br>Reference: {_e(ref)}",
-        cta_label="Pick a new time" if suggestions else "See the details", link=link,
+        cta_label=("Pick a new time" if suggestions else
+                   "Track or withdraw your request" if kind == "received" else "See the details"), link=link,
         footnote="Keep the reference handy if you need to call the Administrative Section.",
         extra_html=extra)
     return subject, body, html

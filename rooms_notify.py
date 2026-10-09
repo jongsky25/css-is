@@ -20,7 +20,7 @@ import storage as st
 import tzutil as tz
 
 REQUESTER_KINDS = ("approved", "declined", "cancelled", "encoded", "expired")
-FEATURE = {"new_request": "room_new_request", "approved": "room_decided", "declined": "room_decided",
+FEATURE = {"new_request": "room_new_request", "received": "room_decided", "approved": "room_decided", "declined": "room_decided",
            "cancelled": "room_decided", "encoded": "room_decided", "expired": "room_decided",
            "reminder": "room_reminder", "escalation": "room_admin_alerts",
            "withdrawn_late": "room_admin_alerts", "digest": "room_digest", "tomorrow": "room_digest"}
@@ -109,6 +109,12 @@ def on_requested(conn, res):
             continue
         _add(conn, kind="new_request", reservation_id=res["id"], user_id=a["id"], url="/approvals#rooms",
              text=f"{who}{f' ({unit})' if unit else ''}: {res['title']}, {_when(conn, res)}")
+
+
+def on_received(conn, res):
+    """A guest's request is in: send their reference and tracking link."""
+    _to_requester(conn, res, "received", f"We received your request {res['ref_code']}: {res['title']}, {_when(conn, res)}.",
+                  bell=False)
 
 
 def on_decided(conn, res, by=None):
@@ -252,6 +258,8 @@ def _build(conn, n, base, name, send_to_account):
     feature = FEATURE[kind]
     inbox = f"{base}/approvals#rooms"
     mine = f"{base}/rooms/mine"
+    if not n["user_id"] and rid:                      # a guest has no account: their signed link is the way back
+        mine = f"{base}/room/t/{quote(auth.make_room_track_token(rid))}"
     if kind in ("digest", "tomorrow"):
         open_lines = [f"{q['when']}, {q['hours']}: {q['title']} ({q['requester_name']})" for q in rooms.queue(conn)] \
             if kind == "digest" else []
@@ -303,7 +311,7 @@ def _build(conn, n, base, name, send_to_account):
                                  "venue": "Conference room", "description": f"Reference {res['ref_code']}",
                                  "stamp": res["updated_at"]}], name="conference-room.ics")]
     return (feature, *mailer.room_decided_message(name, kind, res["title"], when, res["ref_code"], res["decide_note"],
-                                                  mine if n["user_id"] else "", sugg or None), att)
+                                                  mine, sugg or None), att)
 
 
 def flush(conn, base_url, now=None, send=None):
@@ -360,6 +368,10 @@ def flush(conn, base_url, now=None, send=None):
 def tick(conn, base_url, now=None, send=None):
     """The scheduler's once-a-minute call: raise what is due, then send what is owed."""
     now = now or tz.now_local()
+    if st.get_setting(conn, "room_guest_purge_on") != now.date().isoformat():     # the privacy rule can't depend on a cron
+        import rooms
+        st.set_setting(conn, "room_guest_purge_on", now.date().isoformat())
+        rooms.purge_guest_details(conn, now.date())
     expire_past_requests(conn, now.date())
     queue_escalations(conn, now)
     if now.hour >= MORNING_HOUR:
