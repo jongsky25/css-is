@@ -28,6 +28,7 @@ CHANGELOG = [
         "changes": [
             "Small profile pictures on the home screen, calendar and directory are now much lighter, so faces appear sooner.",
             "Pictures you have already seen are no longer downloaded again each time you open a page.",
+            "Pictures you have seen before now appear instantly, even with a weak connection, and refresh quietly in the background.",
         ],
     },
     {

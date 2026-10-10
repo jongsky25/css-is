@@ -4,6 +4,7 @@
 
 - `app.py` `/photo/{rp_id}`: adds an `ETag` (304 on `If-None-Match`) and `Cache-Control: private, max-age=300` (was `no-cache` with no validator, so every page view re-downloaded every ~100 KB photo). New `?s=64|128|256` returns a memoised JPEG thumbnail; other values return the original.
 - Small avatar `<img>`s (`_faces.html`, `_calendar_body.html`, `office_connect.html`, `directory.html`, `link_tree.html`) now request `?s=128`/`?s=64`; calendar/Office Connect/directory avatars also get `loading="lazy" decoding="async"`.
+- `static/js/sw.js`: `/photo/<id>` (any `?s=`) is now stale-while-revalidate (instant from cache, refreshed behind; capped at 300 entries; a 404 evicts the cached copy). `CACHE_VERSION` v2.19-b → v2.20-a. `tests/test_pwa.py` covers it.
 - `tests/test_routes.py`: ETag/304, thumbnail size, fallback and 404 coverage.
 - **Version bump:** `APP_VERSION` 6.20 → 6.21.
 
