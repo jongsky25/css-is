@@ -109,10 +109,10 @@ def test_duplicate_post_reuses_attendee(client, manager, db_path):
     data = {"name": "Bea", "email": "bea@example.com", "sex": "F",
             "affiliation": "DOH", "consent": "on"}
     r1 = client.post(f"/e/{tok}", data=data, follow_redirects=False)
-    att1 = re.search(r"att=(\d+)", r1.headers["location"]).group(1)
+    att1 = re.search(r"att=([^&]+)", r1.headers["location"]).group(1)
     # "Lost my link" -> re-submit the SAME email -> resume, no duplicate row.
     r2 = client.post(f"/e/{tok}", data=data, follow_redirects=False)
-    att2 = re.search(r"att=(\d+)", r2.headers["location"]).group(1)
+    att2 = re.search(r"att=([^&]+)", r2.headers["location"]).group(1)
     assert att2 == att1
     assert st.count_attendees(st.connect(db_path)) == before + 1
 
@@ -158,13 +158,13 @@ def _reg(name, email, **kw):
 def test_same_name_resumes_silently(client, manager, db_path):
     tok = _make_event(manager, db_path)
     data = _reg("Ela Reyes", "ela@example.com")
-    a1 = re.search(r"att=(\d+)",
+    a1 = re.search(r"att=([^&]+)",
                    client.post(f"/e/{tok}", data=data, follow_redirects=False)
                    .headers["location"]).group(1)
     # Same person, same email -> straight 303 resume, no interstitial.
     r = client.post(f"/e/{tok}", data=data, follow_redirects=False)
     assert r.status_code == 303
-    assert re.search(r"att=(\d+)", r.headers["location"]).group(1) == a1
+    assert re.search(r"att=([^&]+)", r.headers["location"]).group(1) == a1
 
 
 def test_different_name_shows_confirm_and_does_not_collapse(client, manager, db_path):
@@ -204,7 +204,7 @@ def test_resolve_new_creates_separate_attendee(client, manager, db_path):
 
 def test_resolve_resume_reuses_existing(client, manager, db_path):
     tok = _make_event(manager, db_path)
-    a1 = re.search(r"att=(\d+)",
+    a1 = re.search(r"att=([^&]+)",
                    client.post(f"/e/{tok}", data=_reg("Jo Yu", "jo@example.com"),
                                follow_redirects=False).headers["location"]).group(1)
     before = st.count_attendees(st.connect(db_path))
@@ -212,7 +212,7 @@ def test_resolve_resume_reuses_existing(client, manager, db_path):
     r = client.post(f"/e/{tok}", data=_reg("Jo Yu Jr", "jo@example.com",
                     resolve="resume"), follow_redirects=False)
     assert r.status_code == 303
-    assert re.search(r"att=(\d+)", r.headers["location"]).group(1) == a1
+    assert re.search(r"att=([^&]+)", r.headers["location"]).group(1) == a1
     assert st.count_attendees(st.connect(db_path)) == before
 
 
@@ -261,13 +261,13 @@ def test_recovery_token_roundtrip_tamper_expiry():
 def test_resume_link_recognizes_on_fresh_device(app_mod, manager, db_path):
     tok = _make_event(manager, db_path)
     reg = TestClient(app_mod.app, raise_server_exceptions=True)
-    att = re.search(r"att=(\d+)", reg.post(f"/e/{tok}", data=_reg("Mara Go", "mara@example.com"),
+    att = re.search(r"att=([^&]+)", reg.post(f"/e/{tok}", data=_reg("Mara Go", "mara@example.com"),
                     follow_redirects=False).headers["location"]).group(1)
-    rtok = auth.make_recovery_token(int(att))
+    rtok = auth.make_recovery_token(auth.verify_attendee_token(att))
     # A brand-new device (no cookie) opens the recovery link -> recognized + cookie set.
     c = TestClient(app_mod.app, raise_server_exceptions=True)
     r = c.get(f"/e/{tok}/resume", params={"rt": rtok}, follow_redirects=False)
-    assert r.status_code == 303 and f"att={att}" in r.headers["location"]
+    assert r.status_code == 303 and "att=" in r.headers["location"]
     assert any("css_att_e" in v for v in r.headers.get_list("set-cookie"))
     assert f"/e/{tok}/forget" in c.get(f"/e/{tok}").text   # now recognized by the cookie
 
@@ -281,10 +281,10 @@ def test_resume_bad_token_falls_back_to_page(client, manager, db_path):
 def test_organizer_recovery_link_and_it_resumes(manager, db_path, app_mod):
     tok = _make_event(manager, db_path)
     c = TestClient(app_mod.app, raise_server_exceptions=True)
-    att = re.search(r"att=(\d+)", c.post(f"/e/{tok}", data=_reg("Noli Sy", "noli@example.com"),
+    att = re.search(r"att=([^&]+)", c.post(f"/e/{tok}", data=_reg("Noli Sy", "noli@example.com"),
                     follow_redirects=False).headers["location"]).group(1)
     # Organizer mints the link...
-    r = manager.get(f"/monitor/{tok}/recovery-link/{att}")
+    r = manager.get(f"/monitor/{tok}/recovery-link/{auth.verify_attendee_token(att)}")
     assert r.status_code == 200
     link = r.json()["link"]
     assert f"/e/{tok}/resume?rt=" in link
@@ -297,9 +297,9 @@ def test_organizer_recovery_link_and_it_resumes(manager, db_path, app_mod):
 def test_resend_without_smtp_tells_organizer_to_copy(manager, db_path, app_mod):
     tok = _make_event(manager, db_path)
     c = TestClient(app_mod.app, raise_server_exceptions=True)
-    att = re.search(r"att=(\d+)", c.post(f"/e/{tok}", data=_reg("Ofe Tan", "ofe@example.com"),
+    att = re.search(r"att=([^&]+)", c.post(f"/e/{tok}", data=_reg("Ofe Tan", "ofe@example.com"),
                     follow_redirects=False).headers["location"]).group(1)
-    r = manager.post(f"/monitor/{tok}/resend/{att}")
+    r = manager.post(f"/monitor/{tok}/resend/{auth.verify_attendee_token(att)}")
     body = r.json()
     assert body["sent"] is False and "Copy link" in body["detail"]
 

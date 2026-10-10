@@ -6,6 +6,7 @@ Exercises the public flow end to end on the throwaway test DB:
   stays anonymous -> retention purge nulls PII but keeps ratings + consent.
 """
 import re
+import auth
 import storage as st
 
 
@@ -53,18 +54,18 @@ def test_consent_capture_and_rating_link(client, manager, db_path):
                     "contact": "0917", "sex": "F", "affiliation": "DOH", "consent": "on"},
                     follow_redirects=False)
     assert r.status_code == 303
-    att = re.search(r"att=(\d+)", r.headers["location"]).group(1)
+    att = re.search(r"att=([^&]+)", r.headers["location"]).group(1)
 
     conn = st.connect(db_path)
     row = conn.execute("SELECT name, email, contact, consent_at, consent_text, purged_at "
-                       "FROM attendee WHERE id=?", (att,)).fetchone()
+                       "FROM attendee WHERE id=?", (auth.verify_attendee_token(att),)).fetchone()
     conn.close()
     assert row[0] == "Ana Cruz" and row[1] == "ana@example.com" and row[2] == "0917"
     assert row[3] and "Data Privacy Act" in row[4] and row[5] is None
 
-    # post-consent page exposes the rating links carrying the att session
+    # post-consent page exposes the rating links carrying the (signed) att session
     r = client.get(f"/e/{tok}?att={att}")
-    assert f"att={att}" in r.text and "/r/" in r.text
+    assert "&att=" in r.text and "/r/" in r.text
     ftok = re.search(r"/r/([0-9a-f]{12})\?seq=", r.text).group(1)
 
     # a rating submitted in this session is tagged to the attendee
@@ -72,7 +73,7 @@ def test_consent_capture_and_rating_link(client, manager, db_path):
                     "C": "4", "remarks": "Good"}, follow_redirects=False)
     assert r.status_code == 200 and "Thank" in r.text
     conn = st.connect(db_path)
-    linked = conn.execute("SELECT COUNT(*) FROM response WHERE attendee_id=?", (att,)).fetchone()[0]
+    linked = conn.execute("SELECT COUNT(*) FROM response WHERE attendee_id=?", (auth.verify_attendee_token(att),)).fetchone()[0]
     # analytics must not surface identity
     df = st.load_atoms(conn)
     conn.close()
@@ -105,8 +106,9 @@ def test_retention_purge(client, manager, db_path):
     tok = _make_event(manager, db_path)
     r = client.post(f"/e/{tok}", data={"name": "Old Attendee", "email": "old@e.com",
                     "sex": "M", "affiliation": "DOH", "consent": "on"}, follow_redirects=False)
-    att = re.search(r"att=(\d+)", r.headers["location"]).group(1)
+    att = re.search(r"att=([^&]+)", r.headers["location"]).group(1)
     conn = st.connect(db_path)
+    att = auth.verify_attendee_token(att)
     conn.execute("UPDATE attendee SET consent_at='2020-01-01T00:00:00' WHERE id=?", (att,))
     conn.commit(); conn.close()
 

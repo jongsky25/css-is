@@ -8066,10 +8066,16 @@ def rating_form(request: Request, qr_token: str, seq: str = "", att: str = ""):
         # form, don't re-offer the blank form — send them back to the activity's
         # link-tree, where the form now reads as done. (Anonymous raters carry no
         # att, so a shared device still gets a fresh form.)
-        if ctx and att.isdigit() and st.attendee_answered_form(conn, ctx["id"], int(att)):
+        if ctx and att:
             ev = st.event_for_form_instance(conn, ctx["id"])
-            if ev:
-                return RedirectResponse(f"/e/{ev['event_token']}?att={att}", status_code=303)
+            who = _attendee_from_token(conn, ev, att)
+            if not who:
+                att = ""           # a forged or legacy id never reaches the form
+            elif st.attendee_answered_form(conn, ctx["id"], who["id"]):
+                return RedirectResponse(f"/e/{ev['event_token']}?att={quote(att)}",
+                                        status_code=303)
+        else:
+            att = ""
     finally:
         conn.close()
     if not ctx:
@@ -8164,9 +8170,10 @@ async def submit_rating(request: Request, qr_token: str):
         # attendee. We can't bind it to a specific event here (the rating token
         # doesn't carry one), so a bad/forged value is simply dropped to NULL —
         # the rating is still recorded, just unattributed.
-        attendee_id = int(att) if att.isdigit() else None
-        if attendee_id is not None and not st.get_attendee(conn, attendee_id):
-            attendee_id = None
+        who = _attendee_from_token(conn, st.event_for_form_instance(conn, ctx["id"]), att)
+        attendee_id = who["id"] if who else None
+        if not who:
+            att = ""
 
         # One response per form, per registered attendee. If this attendee has
         # already rated this form, don't record a second response — treat the
@@ -8247,7 +8254,7 @@ async def submit_rating(request: Request, qr_token: str):
                             and mailer.email_configured()
                             and st.mark_certificate_emailed(conn, attendee_id)):
                         cert_link = (f"{_base_url(request)}/e/{event_token}/certificate"
-                                    f"?fmt=pdf&att={attendee_id}")
+                                    f"?fmt=pdf&att={quote(_att_token(attendee_id))}")
                         subj, body, html = mailer.certificate_ready_message(
                             att_row["name"], cert_link, ev["title"])
                         cert_mail = _mail_after_response(
@@ -8400,6 +8407,30 @@ def _attendee_cookie_name(event_id):
     return f"css_att_e{event_id}"
 
 
+def _att_token(attendee_id):
+    """The signed credential that identifies an attendee in `?att=`, the hidden
+    field on rating forms, certificate links and the per-event cookie. A bare
+    attendee id is guessable, so it is never accepted as an identity."""
+    return auth.make_attendee_token(attendee_id)
+
+
+def _attendee_from_token(conn, ev, token):
+    """The attendee a signed token names, scoped to this activity, or None. Anything
+    else — including the old raw-integer ids — is simply not an identity."""
+    if not token or not ev:
+        return None
+    aid = auth.verify_attendee_token(token)
+    if not aid:
+        return None
+    return st.get_attendee(conn, int(aid), event_id=ev["id"])
+
+
+def _cookie_attendee(request, conn, ev):
+    """The attendee this device was recognized as at registration, or None."""
+    return _attendee_from_token(
+        conn, ev, request.cookies.get(_attendee_cookie_name(ev["id"]), ""))
+
+
 def _norm_name(name):
     """Normalize a name for same-person comparison: case-fold + collapse spaces."""
     return " ".join((name or "").strip().lower().split())
@@ -8473,8 +8504,7 @@ def _event_view(request, conn, ev, attendee=None, errors=None, posted=None,
     # The personal link + QR are shown ONLY to a device we already recognize by its
     # cookie — never because of a bare ?att=<id> (unsigned, guessable).
     qp = request.query_params
-    recognized = bool(attendee) and request.cookies.get(
-        _attendee_cookie_name(ev["id"]), "") == str(attendee["id"])
+    recognized = bool(attendee)
     personal_link = personal_qr = link_valid_until = None
     exp = _personal_link_expiry(ev)
     if recognized and (exp is None or exp > time.time()):
@@ -8502,7 +8532,8 @@ def _event_view(request, conn, ev, attendee=None, errors=None, posted=None,
         "any_open": any(l["state"] == "open" and not l["done"] for l in links),
         "announcement": ev.get("announcement"),
         "announcement_at": _humandt(ev.get("announcement_at")),
-        "recognized": recognized, "personal_link": personal_link,
+        "recognized": recognized, "att_tok": _att_token(attendee["id"]) if attendee else "",
+        "personal_link": personal_link,
         "personal_qr": personal_qr, "link_valid_until": link_valid_until,
         "just_registered": qp.get("new") == "1",
         "emailed_to": masked, "email_wait": qp.get("emailed") == "wait",
@@ -8529,15 +8560,12 @@ def event_link_tree(request: Request, event_token: str, att: str = "", fresh: st
         # `fresh` is set by the "Not you?" link — show the blank form and ignore any
         # remembered attendee, so a shared/kiosk device can register someone else.
         if not fresh:
-            if att.isdigit():
-                attendee = st.get_attendee(conn, int(att), event_id=ev["id"])
+            attendee = _attendee_from_token(conn, ev, att)
             # Fallback: a returning participant who lost the ?att= link is recognized
-            # by a per-event cookie set at registration time, so the bare link shows
-            # their "already registered" state instead of an empty form to re-fill.
+            # by a per-event signed cookie set at registration time, so the bare link
+            # shows their "already registered" state instead of an empty form.
             if attendee is None:
-                cookie_att = request.cookies.get(_attendee_cookie_name(ev["id"]), "")
-                if cookie_att.isdigit():
-                    attendee = st.get_attendee(conn, int(cookie_att), event_id=ev["id"])
+                attendee = _cookie_attendee(request, conn, ev)
         return _event_view(request, conn, ev, attendee=attendee)
     finally:
         conn.close()
@@ -8561,16 +8589,9 @@ def event_forget(request: Request, event_token: str):
 
 
 def _resolve_attendee(request, conn, ev, att):
-    """Resolve the attendee for a link-tree request: an explicit ?att= id, else
-    the per-event recognition cookie. Returns a validated attendee dict or None."""
-    if att and att.isdigit():
-        a = st.get_attendee(conn, int(att), event_id=ev["id"])
-        if a:
-            return a
-    cookie_att = request.cookies.get(_attendee_cookie_name(ev["id"]), "")
-    if cookie_att.isdigit():
-        return st.get_attendee(conn, int(cookie_att), event_id=ev["id"])
-    return None
+    """Resolve the attendee for a link-tree request: an explicit signed ?att= token,
+    else the per-event recognition cookie. Returns a validated attendee or None."""
+    return _attendee_from_token(conn, ev, att) or _cookie_attendee(request, conn, ev)
 
 
 @app.get("/e/{event_token}/certificate")
@@ -8707,6 +8728,7 @@ async def event_consent(request: Request, event_token: str):
         event_title, event_date, venue = ev.get("title"), ev.get("event_date"), ev.get("venue")
         event_token_for_link = ev.get("event_token") or event_token
         cookie_age = _attendee_cookie_max_age(ev)
+        att_tok = _att_token(attendee_id)
         confirm_mail = None
         # A NEW registration only. This endpoint is public and its rate limit is
         # deliberately loose (120 POSTs/min per IP — a whole venue shares one NAT),
@@ -8730,12 +8752,12 @@ async def event_consent(request: Request, event_token: str):
     # Re-enter the same page with a valid attendee session -> rating links show.
     # `new=1` opens the "save your personal link" panel for a first registration.
     resp = RedirectResponse(
-        f"/e/{event_token}?att={attendee_id}" + ("&new=1" if registered_now else ""),
+        f"/e/{event_token}?att={quote(att_tok)}" + ("&new=1" if registered_now else ""),
         status_code=303)
     resp.background = confirm_mail
     # Remember this device so a returning participant who loses the ?att= link is
     # recognized on the bare link (re-validated server-side, scoped to this event).
-    resp.set_cookie(_attendee_cookie_name(event_id), str(attendee_id),
+    resp.set_cookie(_attendee_cookie_name(event_id), att_tok,
                     httponly=True, secure=SECURE_COOKIES, samesite="lax",
                     path="/", max_age=cookie_age)
     return resp
@@ -8777,11 +8799,10 @@ def event_email_link(request: Request, event_token: str):
         ev = st.get_event(conn, event_token)
         if not ev or st.event_is_archived(conn, ev["id"]):
             return RedirectResponse(f"/e/{event_token}", status_code=303)
-        cookie = request.cookies.get(_attendee_cookie_name(ev["id"]), "")
-        att = st.get_attendee(conn, int(cookie), event_id=ev["id"]) if cookie.isdigit() else None
+        att = _cookie_attendee(request, conn, ev)
         if not att or att.get("purged_at") or not att.get("email"):
             return RedirectResponse(f"/e/{event_token}", status_code=303)
-        base = f"/e/{event_token}?att={att['id']}"
+        base = f"/e/{event_token}?att={quote(_att_token(att['id']))}"
         if not rl.allow("email_link", ip):
             return RedirectResponse(base + "&emailed=wait", status_code=303)
         last = st.last_email_send_at(conn, "registration_confirmed", att["email"])
@@ -8831,8 +8852,9 @@ def event_resume(request: Request, event_token: str, rt: str = ""):
     if not attendee:
         # Bad/expired link — send them to the normal page rather than erroring.
         return RedirectResponse(f"/e/{event_token}?expired=1", status_code=303)
-    resp = RedirectResponse(f"/e/{event_token}?att={attendee['id']}", status_code=303)
-    resp.set_cookie(_attendee_cookie_name(ev["id"]), str(attendee["id"]),
+    tok = _att_token(attendee["id"])
+    resp = RedirectResponse(f"/e/{event_token}?att={quote(tok)}", status_code=303)
+    resp.set_cookie(_attendee_cookie_name(ev["id"]), tok,
                     httponly=True, secure=SECURE_COOKIES, samesite="lax",
                     path="/", max_age=cookie_age)
     return resp

@@ -399,7 +399,7 @@ def test_certificate_ready_emails_once_on_completion(app_mod, client, manager, d
     r = client.post(f"/e/{tok}", data={
         "name": "Ivy Santos", "email": "ntf-ivy@test.local", "sex": "F",
         "affiliation": "DOH", "consent": "on"}, follow_redirects=False)
-    att = re.search(r"att=(\d+)", r.headers["location"]).group(1)
+    att = re.search(r"att=([^&]+)", r.headers["location"]).group(1)
     sent.clear()   # drop the registration confirmation — only care about the certificate
     for ft in _form_tokens(db_path, tok):
         client.post(f"/r/{ft}", data={"seq": "", "att": att, "A": "7", "B1": "7",
@@ -407,7 +407,8 @@ def test_certificate_ready_emails_once_on_completion(app_mod, client, manager, d
     cert_mails = [c for c in sent if "certificate" in c["subject"].lower()]
     assert len(cert_mails) == 1
     assert cert_mails[0]["to"] == "ntf-ivy@test.local"
-    assert f"/e/{tok}/certificate?fmt=pdf&att={att}" in cert_mails[0]["body"]
+    m = re.search(rf"/e/{tok}/certificate\?fmt=pdf&att=([^\s&]+)", cert_mails[0]["body"])
+    assert m and auth.verify_attendee_token(m.group(1)) == auth.verify_attendee_token(att)
 
     # Resubmitting (e.g. the attendee revisits and the offline queue replays)
     # must never send a second copy of the same email.
@@ -431,7 +432,7 @@ def test_no_certificate_email_when_certificate_not_enabled(app_mod, client, mana
     r = client.post(f"/e/{tok}", data={
         "name": "Jun Lee", "email": "ntf-jun@test.local", "sex": "M",
         "affiliation": "NON-DOH", "consent": "on"}, follow_redirects=False)
-    att = re.search(r"att=(\d+)", r.headers["location"]).group(1)
+    att = re.search(r"att=([^&]+)", r.headers["location"]).group(1)
     sent.clear()
     for ft in _form_tokens(db_path, tok):
         client.post(f"/r/{ft}", data={"seq": "", "att": att, "A": "7", "B1": "7",

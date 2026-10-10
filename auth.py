@@ -258,6 +258,43 @@ def make_recovery_token(attendee_id, issued_at=None):
     return f"{body}.{sig}"
 
 
+# Attendee SESSION token — what `?att=`, the per-event cookie, the rating form's
+# hidden field and certificate links carry. A bare attendee id is guessable, so it
+# is never accepted as an identity; this signed token is. A different purpose from
+# the emailed "resume" link above, so one can't stand in for the other, and its
+# lifetime is independent of the activity's dates (re-registering with the same
+# email always mints a fresh one, so nobody is locked out of their own certificate).
+PURPOSE_ATTENDEE = "att"
+_ATTENDEE_MAX_AGE = 400 * 24 * 3600
+
+
+def make_attendee_token(attendee_id, issued_at=None):
+    payload = {"aid": int(attendee_id), "p": PURPOSE_ATTENDEE,
+               "iat": int(issued_at if issued_at is not None else time.time())}
+    body = _b64e(json.dumps(payload, separators=(",", ":")).encode("utf-8"))
+    sig = hmac.new(_secret(), body.encode("ascii"), hashlib.sha256).hexdigest()
+    return f"{body}.{sig}"
+
+
+def verify_attendee_token(token, now=None):
+    """Validate signature + purpose + age; return the attendee id or None."""
+    if not token or "." not in token:
+        return None
+    body, sig = token.rsplit(".", 1)
+    expect = hmac.new(_secret(), body.encode("ascii"), hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(sig, expect):
+        return None
+    try:
+        payload = json.loads(_b64d(body))
+    except (ValueError, json.JSONDecodeError):
+        return None
+    if payload.get("p") != PURPOSE_ATTENDEE:
+        return None
+    if (now if now is not None else time.time()) - payload.get("iat", 0) > _ATTENDEE_MAX_AGE:
+        return None
+    return payload.get("aid")
+
+
 def verify_recovery_token(token, now=None, expires_at=None):
     """Validate signature + purpose + age; return the attendee id or None.
 

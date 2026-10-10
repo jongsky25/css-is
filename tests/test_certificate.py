@@ -11,6 +11,7 @@ Covers the renderer (certificate.py) and the gated download route:
 """
 import base64
 import re
+import auth
 import storage as st
 import certificate as cert
 
@@ -37,7 +38,7 @@ def _register(client, tok, name="Ana Cruz", email="ana@example.com", honorific="
     if honorific:
         data["honorific"] = honorific
     r = client.post(f"/e/{tok}", data=data, follow_redirects=False)
-    return re.search(r"att=(\d+)", r.headers["location"]).group(1)
+    return re.search(r"att=([^&]+)", r.headers["location"]).group(1)
 
 
 def _form_tokens(db_path, tok):
@@ -164,7 +165,7 @@ def test_purged_attendee_refused(client, manager, db_path):
     _complete_feedback(client, db_path, tok, att)
     # simulate a retention purge: PII nulled, row kept
     conn = st.connect(db_path)
-    conn.execute("UPDATE attendee SET name=NULL WHERE id=?", (att,))
+    conn.execute("UPDATE attendee SET name=NULL WHERE id=?", (auth.verify_attendee_token(att),))
     conn.commit(); conn.close()
     r = client.get(f"/e/{tok}/certificate?att={att}")
     assert r.status_code == 410
@@ -220,7 +221,7 @@ def test_honorific_captured_and_on_certificate(client, manager, db_path):
     att = _register(client, tok, name="Ana Cruz", email="hon@example.com", honorific="Dr.")
     # stored on the attendee
     conn = st.connect(db_path)
-    a = st.get_attendee(conn, int(att))
+    a = st.get_attendee(conn, auth.verify_attendee_token(att))
     conn.close()
     assert a["honorific"] == "Dr."
     # and rendered onto the certificate text layer (PDF)
@@ -240,7 +241,7 @@ def test_forged_honorific_rejected(client, manager, db_path):
     tok = _make_event(manager, db_path)
     att = _register(client, tok, email="forge@example.com", honorific="Supreme Overlord")
     conn = st.connect(db_path)
-    a = st.get_attendee(conn, int(att))
+    a = st.get_attendee(conn, auth.verify_attendee_token(att))
     conn.close()
     assert not a["honorific"]          # off-list value dropped
 
