@@ -1044,6 +1044,11 @@ def _add_missing_columns(conn):
         conn.execute("ALTER TABLE event ADD COLUMN welcome_message TEXT")
     if ev_cols and "ending_message" not in ev_cols:
         conn.execute("ALTER TABLE event ADD COLUMN ending_message TEXT")
+    # Organizer's pinned update, shown at the top of a registered participant's page.
+    if ev_cols and "announcement" not in ev_cols:
+        conn.execute("ALTER TABLE event ADD COLUMN announcement TEXT")
+    if ev_cols and "announcement_at" not in ev_cols:
+        conn.execute("ALTER TABLE event ADD COLUMN announcement_at TEXT")
     # Certificate of Appearance (opt-in per activity). certificate_enabled (0/1)
     # is the on/off; signatory_rp_id points at the directory person who signs
     # (their name, position and signature image are pulled from that record);
@@ -1694,7 +1699,7 @@ _EVENT_COLS = """
                COALESCE(e.certificate_enabled, 0), e.signatory_rp_id, e.certificate_verb,
                e.event_kind, e.slug,
                COALESCE(e.raffle_enabled, 0), e.raffle_prize, e.end_date,
-               e.respondent_target
+               e.respondent_target, e.announcement, e.announcement_at
         FROM event e
         LEFT JOIN org_unit ou ON ou.id = e.lead_org_id
 """
@@ -1715,7 +1720,8 @@ def _event_row(row):
             "raffle_enabled": bool(row[17]),
             "raffle_prize": row[18],
             "end_date": row[19],
-            "respondent_target": row[20]}
+            "respondent_target": row[20],
+            "announcement": row[21], "announcement_at": row[22]}
 
 
 def set_event_messages(conn, event_id, welcome, ending):
@@ -1725,6 +1731,32 @@ def set_event_messages(conn, event_id, welcome, ending):
         "UPDATE event SET welcome_message = ?, ending_message = ? WHERE id = ?",
         ((welcome or "").strip() or None, (ending or "").strip() or None, event_id))
     conn.commit()
+
+
+ANNOUNCEMENT_MAX = 1000
+
+
+def set_event_announcement(conn, event_id, text, now_iso):
+    """Post (or clear) the organizer's pinned update. Blank clears both columns.
+    The posted-at stamp only moves when the text actually changes."""
+    text = (text or "").strip()[:ANNOUNCEMENT_MAX]
+    if not text:
+        conn.execute("UPDATE event SET announcement=NULL, announcement_at=NULL WHERE id=?",
+                     (event_id,))
+    else:
+        conn.execute(
+            "UPDATE event SET announcement_at = CASE WHEN COALESCE(announcement,'') = ? "
+            "THEN announcement_at ELSE ? END, announcement = ? WHERE id = ?",
+            (text, now_iso, text, event_id))
+    conn.commit()
+
+
+def last_email_send_at(conn, feature, recipient):
+    """ISO time of the most recent *sent* email of this feature to this address."""
+    row = conn.execute(
+        "SELECT MAX(created_at) FROM email_log WHERE feature=? AND lower(recipient)=lower(?) "
+        "AND status='sent'", (feature, recipient)).fetchone()
+    return row[0] if row else None
 
 
 _CERT_VERBS = ("attended", "appeared at", "conducted", "participated in")
@@ -1866,7 +1898,7 @@ def get_event_forms(conn, event_id):
     everywhere else too)."""
     rows = conn.execute("""
         SELECT fi.qr_token, fi.survey_type, fi.topic, rp.name AS rp_name, ef.ordinal,
-               fi.id AS form_instance_id
+               fi.id AS form_instance_id, fi.open_at, fi.close_at
         FROM event_form ef
         JOIN form_instance fi ON fi.id = ef.form_instance_id
         LEFT JOIN resource_person rp ON rp.id = fi.rp_id
@@ -1874,9 +1906,10 @@ def get_event_forms(conn, event_id):
         ORDER BY ef.ordinal
     """, (event_id,)).fetchall()
     out = []
-    for tok, stype, topic, rp_name, _, fi_id in rows:
+    for tok, stype, topic, rp_name, _, fi_id, open_at, close_at in rows:
         out.append({"qr_token": tok, "survey_type": stype, "topic": topic,
-                    "rp_name": rp_name, "form_instance_id": fi_id})
+                    "rp_name": rp_name, "form_instance_id": fi_id,
+                    "open_at": open_at, "close_at": close_at})
     return out
 
 

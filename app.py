@@ -7918,6 +7918,85 @@ def _window_state(ctx, now=None):
     return "open"
 
 
+def _activity_last_day(ev):
+    """The activity's last day (end_date, else event_date) as a date, or None when
+    the dates are missing or malformed — callers treat None as "no date gate"."""
+    for key in ("end_date", "event_date"):
+        raw = str((ev or {}).get(key) or "").strip()[:10]
+        if raw:
+            try:
+                return datetime.strptime(raw, "%Y-%m-%d").date()
+            except ValueError:
+                return None
+    return None
+
+
+def _activity_start(ev):
+    """'YYYY-MM-DDT00:00' for the activity's first day (local), or None."""
+    raw = str((ev or {}).get("event_date") or "").strip()[:10]
+    try:
+        return datetime.strptime(raw, "%Y-%m-%d").strftime("%Y-%m-%dT00:00")
+    except ValueError:
+        return None
+
+
+def _feedback_state(ev, form, now=None):
+    """'open' | 'not_yet' | 'closed' for one feedback form on an activity's page.
+    A form's own open_at/close_at window always applies; a form with NO open_at is
+    also held back until the activity's first day, so people can't rate a session
+    that hasn't happened. Undated activities are never gated."""
+    now = now or _now_local().isoformat(timespec="minutes")
+    state = _window_state(form, now)
+    if state != "open":
+        return state
+    start = _activity_start(ev)
+    if not form.get("open_at") and start and now < start:
+        return "not_yet"
+    return "open"
+
+
+def _rating_gate(ctx, conn=None):
+    """(state, opens_at) for a public rating form: its own window, plus the
+    "not before the activity starts" hold for forms attached to a dated activity.
+    `opens_at` is what the not-yet page should show as the opening time."""
+    now = _now_local().isoformat(timespec="minutes")
+    state = _window_state(ctx, now)
+    if state != "open" or ctx.get("open_at"):
+        return state, ctx.get("open_at")
+    own = conn is None
+    conn = conn or get_conn()
+    try:
+        ev = st.event_for_form_instance(conn, ctx["id"])
+    finally:
+        if own:
+            conn.close()
+    if ev and ev.get("event_kind") != "outside":
+        state = _feedback_state(ev, ctx, now)
+        if state != "open":
+            return state, _activity_start(ev)
+    return "open", None
+
+
+def _personal_link_expiry(ev):
+    """Epoch seconds until which an attendee's personal link works: the activity's
+    last day + 30 days, to the end of that day (local). None when undated."""
+    last = _activity_last_day(ev)
+    if not last:
+        return None
+    end = datetime.combine(last + timedelta(days=30), datetime.max.time().replace(microsecond=0))
+    return end.replace(tzinfo=LOCAL_TZ).timestamp()
+
+
+def _attendee_cookie_max_age(ev):
+    """Keep the device recognized for at least 30 days, and through the personal
+    link's life for someone who registers well ahead of the activity."""
+    base = 30 * 24 * 3600
+    exp = _personal_link_expiry(ev)
+    if exp is None:
+        return base
+    return int(min(max(base, exp - time.time()), 400 * 24 * 3600))
+
+
 def _fmt_window(iso):
     """'2026-06-15T08:00' -> '2026-06-15 08:00' for the closed page."""
     return (iso or "").replace("T", " ")
@@ -7988,11 +8067,11 @@ def rating_form(request: Request, qr_token: str, seq: str = "", att: str = ""):
     if not ctx:
         return templates.TemplateResponse(request, "rating.html",
                                           {"ctx": None, "lang": lang}, status_code=404)
-    state = _window_state(ctx)
+    state, opens_at = _rating_gate(ctx)
     if state != "open":
         return templates.TemplateResponse(request, "closed.html", {
             "ctx": ctx, "state": state, "lang": lang,
-            "opens": _humandt(ctx.get("open_at")),
+            "opens": _humandt(opens_at),
             "closed": _humandt(ctx.get("close_at")),
         }, status_code=403)
     spec = survey_spec(ctx, lang)
@@ -8031,11 +8110,11 @@ async def submit_rating(request: Request, qr_token: str):
             return JSONResponse({"ok": True, "deduped": True})
         # Enforce the response window on SUBMIT too — a form opened before the
         # deadline can't be posted after it.
-        state = _window_state(ctx)
+        state, opens_at = _rating_gate(ctx, conn)
         if state != "open":
             return templates.TemplateResponse(request, "closed.html", {
                 "ctx": ctx, "state": state, "lang": lang,
-                "opens": _humandt(ctx.get("open_at")),
+                "opens": _humandt(opens_at),
                 "closed": _humandt(ctx.get("close_at")),
             }, status_code=403)
         spec = survey_spec(ctx)
@@ -8329,6 +8408,12 @@ def _multi_from_pairs(pairs):
     return out
 
 
+def _mask_email(email):
+    """'ana.cruz@example.com' -> 'a•••@example.com' for on-page confirmations."""
+    local, _, domain = (email or "").partition("@")
+    return f"{local[:1]}•••@{domain}" if domain else ""
+
+
 def _event_view(request, conn, ev, attendee=None, errors=None, posted=None,
                 confirm=None, posted_multi=None):
     """Render the link-tree page in whichever state applies. The resource-person
@@ -8344,13 +8429,19 @@ def _event_view(request, conn, ev, attendee=None, errors=None, posted=None,
     done_forms = (st.attendee_answered_forms(conn, ev["id"], attendee["id"])
                   if attendee else set())
     links = []
+    now_iso = _now_local().isoformat(timespec="minutes")
     for i, f in enumerate(forms):
         label = (i18n.t("lt_label_event", lang) if f["survey_type"] == 2
                  else i18n.t("lt_label_speaker", lang))
         title = f["topic"] or f["rp_name"] or label
         links.append({"token": f["qr_token"], "n": i + 1, "label": label,
                       "title": title, "rp_name": f["rp_name"] if f["survey_type"] == 3 else None,
-                      "done": f["form_instance_id"] in done_forms})
+                      "done": f["form_instance_id"] in done_forms,
+                      "state": _feedback_state(ev, f, now_iso),
+                      "opens": _humandt(f.get("open_at") or _activity_start(ev))})
+    # Held-back feedback: one line above the list says when it opens.
+    locked = [l for l in links if l["state"] == "not_yet"]
+    feedback_opens = locked[0]["opens"] if locked else ""
     user = getattr(request.state, "user", None)
     # Curated resources are split into two buckets. "Immediate" resources show as
     # soon as the participant has registered/consented. "After feedback" resources
@@ -8371,6 +8462,23 @@ def _event_view(request, conn, ev, attendee=None, errors=None, posted=None,
     # The organizer's own registration questions (none for most activities).
     questions = st.list_event_questions(conn, ev["id"])
     consent_text = _consent_text_for(lang, bool(questions))
+    # The personal link + QR are shown ONLY to a device we already recognize by its
+    # cookie — never because of a bare ?att=<id> (unsigned, guessable).
+    qp = request.query_params
+    recognized = bool(attendee) and request.cookies.get(
+        _attendee_cookie_name(ev["id"]), "") == str(attendee["id"])
+    personal_link = personal_qr = link_valid_until = None
+    exp = _personal_link_expiry(ev)
+    if recognized and (exp is None or exp > time.time()):
+        slug = ev.get("slug") or ev["event_token"]
+        personal_link = (f"{_base_url(request)}/e/{slug}/resume?rt="
+                         f"{quote(auth.make_recovery_token(attendee['id']))}")
+        personal_qr = _qr_data_uri(personal_link)
+        if exp is not None:
+            link_valid_until = _humandt(datetime.fromtimestamp(exp, LOCAL_TZ).strftime("%Y-%m-%d"))
+    masked = ""
+    if qp.get("emailed") == "1" and attendee and attendee.get("email"):
+        masked = _mask_email(attendee["email"])
     return templates.TemplateResponse(request, "link_tree.html", {
         "ev": ev, "links": links, "tokens": tokens, "total": len(links),
         "attendee": attendee, "consent_text": consent_text, "lang": lang,
@@ -8383,6 +8491,17 @@ def _event_view(request, conn, ev, attendee=None, errors=None, posted=None,
         "welcome_message": welcome_message, "ending_message": ending_message,
         "can_manage": _can_manage_event(user, ev, conn),
         "confirm": confirm,
+        "feedback_opens": feedback_opens,
+        "any_open": any(l["state"] == "open" and not l["done"] for l in links),
+        "announcement": ev.get("announcement"),
+        "announcement_at": _humandt(ev.get("announcement_at")),
+        "recognized": recognized, "personal_link": personal_link,
+        "personal_qr": personal_qr, "link_valid_until": link_valid_until,
+        "just_registered": qp.get("new") == "1",
+        "emailed_to": masked, "email_wait": qp.get("emailed") == "wait",
+        "link_expired": qp.get("expired") == "1",
+        "can_email_link": bool(recognized and attendee.get("email")
+                               and mailer.email_configured()),
     })
 
 
@@ -8580,6 +8699,7 @@ async def event_consent(request: Request, event_token: str):
         event_id = ev["id"]
         event_title, event_date, venue = ev.get("title"), ev.get("event_date"), ev.get("venue")
         event_token_for_link = ev.get("event_token") or event_token
+        cookie_age = _attendee_cookie_max_age(ev)
         confirm_mail = None
         # A NEW registration only. This endpoint is public and its rate limit is
         # deliberately loose (120 POSTs/min per IP — a whole venue shares one NAT),
@@ -8601,13 +8721,16 @@ async def event_consent(request: Request, event_token: str):
     finally:
         conn.close()
     # Re-enter the same page with a valid attendee session -> rating links show.
-    resp = RedirectResponse(f"/e/{event_token}?att={attendee_id}", status_code=303)
+    # `new=1` opens the "save your personal link" panel for a first registration.
+    resp = RedirectResponse(
+        f"/e/{event_token}?att={attendee_id}" + ("&new=1" if registered_now else ""),
+        status_code=303)
     resp.background = confirm_mail
     # Remember this device so a returning participant who loses the ?att= link is
     # recognized on the bare link (re-validated server-side, scoped to this event).
     resp.set_cookie(_attendee_cookie_name(event_id), str(attendee_id),
                     httponly=True, secure=SECURE_COOKIES, samesite="lax",
-                    path="/", max_age=30 * 24 * 3600)
+                    path="/", max_age=cookie_age)
     return resp
 
 
@@ -8632,13 +8755,58 @@ def event_register_check(request: Request, event_token: str, email: str = ""):
         conn.close()
 
 
+_EMAIL_LINK_COOLDOWN_MIN = 15
+
+
+@app.post("/e/{event_token}/email-link")
+def event_email_link(request: Request, event_token: str):
+    """"Email me this link" — sends the registered participant's own personal link
+    to the address already on their registration. The attendee comes from the
+    recognition COOKIE only (never ?att=, never the form body), so this can't be
+    aimed at someone else's inbox."""
+    ip = request.client.host if request.client else None
+    conn = get_conn()
+    try:
+        ev = st.get_event(conn, event_token)
+        if not ev or st.event_is_archived(conn, ev["id"]):
+            return RedirectResponse(f"/e/{event_token}", status_code=303)
+        cookie = request.cookies.get(_attendee_cookie_name(ev["id"]), "")
+        att = st.get_attendee(conn, int(cookie), event_id=ev["id"]) if cookie.isdigit() else None
+        if not att or att.get("purged_at") or not att.get("email"):
+            return RedirectResponse(f"/e/{event_token}", status_code=303)
+        base = f"/e/{event_token}?att={att['id']}"
+        if not rl.allow("email_link", ip):
+            return RedirectResponse(base + "&emailed=wait", status_code=303)
+        last = st.last_email_send_at(conn, "registration_confirmed", att["email"])
+        if last:
+            try:
+                age = _now_local() - datetime.fromisoformat(last)
+                if age < timedelta(minutes=_EMAIL_LINK_COOLDOWN_MIN):
+                    return RedirectResponse(base + "&emailed=wait", status_code=303)
+            except ValueError:
+                pass
+        if not mailer.email_configured():
+            return RedirectResponse(base, status_code=303)
+        slug = ev.get("slug") or ev["event_token"]
+        link = (f"{_base_url(request)}/e/{slug}/resume?rt="
+                f"{quote(auth.make_recovery_token(att['id']))}")
+        subj, body, html = mailer.registration_confirmed_message(
+            att["name"], link, ev.get("title"), ev.get("event_date"), ev.get("venue"))
+        task = _mail_after_response(conn, att["email"], subj, body, html=html,
+                                    feature="registration_confirmed")
+    finally:
+        conn.close()
+    resp = RedirectResponse(base + "&emailed=1", status_code=303)
+    resp.background = task
+    return resp
+
+
 @app.get("/e/{event_token}/resume")
 def event_resume(request: Request, event_token: str, rt: str = ""):
     """Recovery "magic link" — resolves a signed token to its attendee and drops
     them back into their registration on ANY device (sets the recognition cookie).
     This is the durable recovery path the monitor's "copy link / resend" produces.
     An invalid/expired token falls back to the normal page (blank form)."""
-    aid = auth.verify_recovery_token(rt)
     conn = get_conn()
     try:
         ev = st.get_event(conn, event_token)
@@ -8646,17 +8814,20 @@ def event_resume(request: Request, event_token: str, rt: str = ""):
             return templates.TemplateResponse(request, "link_tree.html",
                                               {"ev": None, "lang": i18n.pick(request)},
                                               status_code=404)
+        # A dated activity keeps the link alive until its last day + 30 days.
+        aid = auth.verify_recovery_token(rt, expires_at=_personal_link_expiry(ev))
         attendee = (st.get_attendee(conn, int(aid), event_id=ev["id"])
                     if aid else None)
+        cookie_age = _attendee_cookie_max_age(ev)
     finally:
         conn.close()
     if not attendee:
         # Bad/expired link — send them to the normal page rather than erroring.
-        return RedirectResponse(f"/e/{event_token}", status_code=303)
+        return RedirectResponse(f"/e/{event_token}?expired=1", status_code=303)
     resp = RedirectResponse(f"/e/{event_token}?att={attendee['id']}", status_code=303)
     resp.set_cookie(_attendee_cookie_name(ev["id"]), str(attendee["id"]),
                     httponly=True, secure=SECURE_COOKIES, samesite="lax",
-                    path="/", max_age=30 * 24 * 3600)
+                    path="/", max_age=cookie_age)
     return resp
 
 
@@ -8703,6 +8874,8 @@ def _manage_ctx(request, conn, ev):
         "sharing_on": st.get_setting(conn, "public_sharing_enabled", "1") != "0",
         "welcome_message": ev.get("welcome_message") or "",
         "ending_message": ev.get("ending_message") or "",
+        "announcement": ev.get("announcement") or "",
+        "announcement_at": _humandt(ev.get("announcement_at")),
         "msg_drafts": amsg.all_drafts(ev),
         "tone_labels": amsg.TONE_LABELS, "tones": amsg.TONES,
         # Certificate of Appearance settings + the internal-staff list to pick a
@@ -9101,6 +9274,31 @@ async def activity_messages_save(request: Request, event_token: str):
     if request.headers.get("x-requested-with"):
         return Response(status_code=204)
     return RedirectResponse(f"/activities/{event_token}/manage", status_code=303)
+
+
+@app.post("/activities/{event_token}/announcement")
+async def activity_announcement_save(request: Request, event_token: str):
+    """Post, change or clear the pinned update shown at the top of every
+    registered participant's page. An empty value removes it."""
+    posted = await _posted(request)
+    conn = get_conn()
+    try:
+        ev = st.get_event(conn, event_token)
+        if not ev:
+            return RedirectResponse("/", status_code=303)
+        if not _can_manage_event(request.state.user, ev, conn):
+            return RedirectResponse(f"/e/{event_token}", status_code=303)
+        text = posted.get("announcement", "").strip()[:st.ANNOUNCEMENT_MAX]
+        st.set_event_announcement(conn, ev["id"], text, _tz.now_iso()[:16])
+        _audit(request, conn, "event_announcement_set", target_type="event",
+               target_id=ev["id"],
+               summary=(f"Posted a pinned update ({len(text)} chars)." if text
+                        else "Removed the pinned update."))
+    finally:
+        conn.close()
+    if request.headers.get("x-requested-with"):
+        return Response(status_code=204)
+    return RedirectResponse(f"/activities/{event_token}/manage#announcement", status_code=303)
 
 
 # ---------------------------------------------------------------------

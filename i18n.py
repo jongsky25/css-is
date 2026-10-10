@@ -370,8 +370,8 @@ UI = {
     },
     "lt_thanks_pre": {"en": "Thanks", "fil": "Salamat"},
     "lt_thanks_post": {
-        "en": "! Your attendance is recorded. Everything for this activity is below.",
-        "fil": "! Naitala ang inyong pagdalo. Nasa ibaba ang lahat para sa aktibidad na ito.",
+        "en": "! You're registered. Everything for this activity is below.",
+        "fil": "! Nakarehistro na kayo. Nasa ibaba ang lahat para sa aktibidad na ito.",
     },
     "lt_not_you": {"en": "Not", "fil": "Hindi ikaw si"},
     "lt_start_fresh": {"en": "Start fresh on this device →", "fil": "Magsimulang muli sa device na ito →"},
@@ -421,15 +421,15 @@ UI = {
         "en": '"A different person" is for a shared email (e.g. an office inbox) used by more than one attendee.',
         "fil": '"Ibang tao" ay para sa isang pinagsamang email (hal. opisinang inbox) na ginagamit ng higit sa isang kalahok.',
     },
-    "lt_sign_in": {"en": "Sign in to give your feedback", "fil": "Mag-sign in para ibigay ang inyong puna"},
+    "lt_sign_in": {"en": "Register for this activity", "fil": "Magparehistro sa aktibidad na ito"},
     "lt_title_lbl": {"en": "Title", "fil": "Titulo"},
     "lt_name_lbl": {"en": "Full name", "fil": "Buong pangalan"},
     "lt_email_lbl": {"en": "Email", "fil": "Email"},
     "lt_dupe_notice": {
-        "en": "This email is already registered. Submitting again just takes you back to "
-              "your existing registration — you won't create a duplicate.",
-        "fil": "Nakarehistrong na ang email na ito. Ang muling pagsusumite ay magbabalik sa inyong "
-               "umiiral na rehistrasyon — hindi ito lilikha ng duplicate.",
+        "en": "You're already registered with this email. Submitting again takes you "
+              "back to your registration — it won't create a duplicate.",
+        "fil": "Nakarehistro na kayo gamit ang email na ito. Ang muling pagsusumite ay magbabalik "
+               "sa inyong rehistrasyon — hindi ito lilikha ng duplicate.",
     },
     "lt_contact_lbl": {"en": "Contact number", "fil": "Numero ng kontak"},
     "lt_cert_help": {
@@ -442,11 +442,59 @@ UI = {
         "fil": "Nabasa ko na ang paunawa sa itaas at sumasang-ayon ako na mangolekta at "
                "magproseso ang BLHSD ng aking personal na mga detalye para sa layuning ito.",
     },
-    "lt_consent_submit": {
-        "en": "I consent — continue to feedback",
-        "fil": "Sumasang-ayon ako — magpatuloy sa feedback",
-    },
+    "lt_consent_submit": {"en": "Register", "fil": "Magparehistro"},
     "lt_more_details": {"en": "A few more details", "fil": "Ilang karagdagang detalye"},
+    "lt_reg_intro": {
+        "en": "Register once. You'll get a personal link to come back for the programme, "
+              "updates, feedback and your certificate.",
+        "fil": "Magparehistro nang isang beses. Makakatanggap kayo ng personal na link para bumalik "
+               "sa programa, mga update, feedback at inyong sertipiko.",
+    },
+    "lt_reg_benefit_updates": {"en": "📌 Updates from the organizers", "fil": "📌 Mga update mula sa organisador"},
+    "lt_reg_benefit_feedback": {
+        "en": "📝 Feedback forms, open once the activity starts",
+        "fil": "📝 Mga feedback form, bukas kapag nagsimula na ang aktibidad",
+    },
+    "lt_reg_benefit_cert": {
+        "en": "🏅 Your certificate, once you've given feedback",
+        "fil": "🏅 Inyong sertipiko, kapag nakapagbigay na kayo ng feedback",
+    },
+    "lt_email_help": {
+        "en": "We'll use this to find your registration again.",
+        "fil": "Gagamitin namin ito para mahanap muli ang inyong rehistrasyon.",
+    },
+    "lt_registered_h": {"en": "You're registered 🎉", "fil": "Nakarehistro na kayo 🎉"},
+    "lt_personal_link_h": {"en": "📎 Your personal link & QR", "fil": "📎 Inyong personal na link at QR"},
+    "lt_save_body": {
+        "en": "Save this link or screenshot the QR. It's how you get back here for updates, "
+              "feedback and your certificate — on any device.",
+        "fil": "I-save ang link na ito o i-screenshot ang QR. Ito ang paraan para makabalik dito para sa "
+               "mga update, feedback at inyong sertipiko — sa kahit anong device.",
+    },
+    "lt_qr_alt": {"en": "QR code of your personal link", "fil": "QR code ng inyong personal na link"},
+    "lt_copy_link": {"en": "Copy link", "fil": "Kopyahin ang link"},
+    "lt_copied": {"en": "Copied ✓", "fil": "Nakopya ✓"},
+    "lt_share": {"en": "Share…", "fil": "I-share…"},
+    "lt_download_qr": {"en": "Download QR", "fil": "I-download ang QR"},
+    "lt_email_me_link": {"en": "Email me this link", "fil": "I-email sa akin ang link"},
+    "lt_valid_until": {"en": "Valid until", "fil": "Wasto hanggang"},
+    "lt_emailed": {"en": "Sent to", "fil": "Ipinadala sa"},
+    "lt_email_wait": {
+        "en": "We emailed this link a few minutes ago. Please check your inbox (and spam) before asking again.",
+        "fil": "Ipinadala namin ang link na ito ilang minuto na ang nakalipas. Pakitingnan ang inyong inbox (at spam).",
+    },
+    "lt_update_h": {"en": "Update", "fil": "Update"},
+    "lt_feedback_locked": {
+        "en": "Feedback opens when the activity starts —",
+        "fil": "Bubukas ang feedback kapag nagsimula ang aktibidad —",
+    },
+    "lt_feedback_come_back": {"en": "Come back to this page then.", "fil": "Bumalik sa pahinang ito sa oras na iyon."},
+    "lt_opens": {"en": "Opens", "fil": "Bubukas"},
+    "lt_closed_tile": {"en": "Closed", "fil": "Sarado na"},
+    "lt_link_expired": {
+        "en": "That personal link has expired. Register again with the same email to get back in.",
+        "fil": "Nag-expire na ang personal na link na iyon. Magparehistro muli gamit ang parehong email para makabalik.",
+    },
     "yes": {"en": "Yes", "fil": "Oo"},
     "no": {"en": "No", "fil": "Hindi"},
     # Appended to the consent notice only when the activity has its own registration

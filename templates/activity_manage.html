@@ -272,6 +272,24 @@
     </script>
   </div>
 
+  <!-- pinned update -->
+  <div class="mcard" id="announcement">
+    <h2>📌 Pinned update</h2>
+    <p class="hint">Shown at the top of every registered participant's page. Use it for room changes,
+      schedule shifts or reminders. It goes live only when you press <strong>Post update</strong>.</p>
+    <form method="post" action="/activities/{{ ev.event_token }}/announcement">
+      <textarea name="announcement" rows="3" maxlength="1000"
+                placeholder="e.g. The session has moved to Room 3B. Doors open at 8:30 AM.">{{ announcement }}</textarea>
+      <div style="display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; margin-top:.5rem;">
+        <button class="btn" type="submit">Post update</button>
+        {% if announcement %}
+        <button class="btn ghost" type="submit" name="announcement" value="">Remove</button>
+        <span class="muted small">Posted {{ announcement_at }}</span>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
   <!-- organizer messages -->
   <div class="mcard">
     <h2>Messages to participants</h2>
