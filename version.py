@@ -17,10 +17,18 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.19"
+APP_VERSION = "6.20"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.20",
+        "date": "October 10, 2026",
+        "summary": "Administrators no longer see the room management menu unless they are in the Administrative Section.",
+        "changes": [
+            "The \"Manage the room\" part of the Office menu (Room requests, Room meals, Room closures) now shows only for members of the Administrative Section, not for every administrator account.",
+        ],
+    },
     {
         "version": "6.19",
         "date": "October 9, 2026",
