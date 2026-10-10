@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.21"
+APP_VERSION = "6.22"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.22",
+        "date": "October 10, 2026",
+        "summary": "Profile pictures now load much faster.",
+        "changes": [
+            "Small profile pictures on the home screen, calendar and directory are now much lighter, so faces appear sooner.",
+            "Pictures you have already seen are no longer downloaded again each time you open a page.",
+            "Pictures you have seen before now appear instantly, even with a weak connection, and refresh quietly in the background.",
+        ],
+    },
     {
         "version": "6.21",
         "date": "October 10, 2026",

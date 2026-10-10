@@ -402,7 +402,7 @@
         <span class="cal-wk-main"><a href="{{ i.url }}">{{ i.title }}</a>
           <small>{% if i.chip %}<span class="cal-css-chip" data-life="{{ i.life }}">{{ i.chip }}</span> · {% endif %}{% if i.status != "confirmed" %}<b>{{ i.status|capitalize }}</b> · {% endif %}{% if i.dates %}{{ i.dates }} · {% endif %}{% if i.venue %}📍 {{ i.venue }} · {% endif %}{{ i.owner or "" }}</small></span>
         {% if i.people %}<span class="cal-faces" aria-label="With {{ i.people|map(attribute='name')|join(', ') }}">
-          {% for p in i.people %}<span title="{{ p.name }}">{% if p.photo_url %}<img src="{{ p.photo_url }}" alt="">{% else %}{{ p.initials }}{% endif %}</span>{% endfor %}
+          {% for p in i.people %}<span title="{{ p.name }}">{% if p.photo_url %}<img src="{{ p.photo_url }}?s=128" alt="" loading="lazy" decoding="async">{% else %}{{ p.initials }}{% endif %}</span>{% endfor %}
           {% if i.more_people %}<span>+{{ i.more_people }}</span>{% endif %}</span>{% endif %}
       </li>
       {% endfor %}
@@ -421,7 +421,7 @@
       <span class="cal-wk-away-h">Away</span>
       {% for a in cal_week.away %}
       <a class="cal-wk-chip" href="{{ a.trips[0].url }}" title="{{ a.trips|map(attribute='title')|join('; ') }}">
-        <span class="cal-wk-av">{% if a.photo_url %}<img src="{{ a.photo_url }}" alt="">{% else %}{{ a.initials }}{% endif %}</span>
+        <span class="cal-wk-av">{% if a.photo_url %}<img src="{{ a.photo_url }}?s=128" alt="" loading="lazy" decoding="async">{% else %}{{ a.initials }}{% endif %}</span>
         {{ a.name }} <small>{{ a.trips[0].dates }}</small></a>
       {% endfor %}
       {% if cal_week.n_away_more %}<span class="cal-wk-chip">+{{ cal_week.n_away_more }}</span>{% endif %}

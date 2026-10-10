@@ -8,7 +8,7 @@
  * whose name differs, so an old app-shell is purged the moment the new SW takes
  * over. Keep this in lockstep with version.py / the ?v= asset tokens.
  */
-const CACHE_VERSION = "v2.19-b";
+const CACHE_VERSION = "v2.20-a";
 const CACHE_NAME = "css-is-" + CACHE_VERSION;
 
 /* ── Edge-retry shield ─────────────────────────────────────────────────────────
@@ -89,6 +89,23 @@ function isStaticAsset(url) {
   return url.origin === self.location.origin && url.pathname.startsWith("/static/");
 }
 
+/* Profile photos (/photo/<id>[?s=N]): stale-while-revalidate, so a face that was
+ * seen once paints instantly (and offline) on every later page while a fresh
+ * copy is fetched behind it. They live in the same cache as the app shell, so
+ * the version bump above purges them too. Bounded so the cache can't grow
+ * without limit (each entry is a few KB thumbnail, or ~100 KB for the original). */
+const PHOTO_MAX = 300;
+
+function isPhoto(url) {
+  return url.origin === self.location.origin && /^\/photo\/\d+$/.test(url.pathname);
+}
+
+async function trimPhotos(cache) {
+  const keys = (await cache.keys()).filter((r) => isPhoto(new URL(r.url)));
+  // keys() is insertion-ordered: drop the oldest beyond the cap
+  await Promise.all(keys.slice(0, Math.max(0, keys.length - PHOTO_MAX)).map((r) => cache.delete(r)));
+}
+
 function isPublicNav(url) {
   return PUBLIC_NAV.some((p) => url.pathname === p || url.pathname.startsWith(p));
 }
@@ -103,6 +120,26 @@ self.addEventListener("fetch", (event) => {
   // the app), while an app response — or a network error — is never retried.
   if (req.method !== "GET") {
     event.respondWith(fetchRetrying(req, false));
+    return;
+  }
+
+  // Profile photos: stale-while-revalidate (only successful responses are kept,
+  // so a 404 for a removed photo is never pinned in the cache).
+  if (isPhoto(url)) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then((cache) =>
+        cache.match(req).then((hit) => {
+          const network = fetchRetrying(req, true).then((res) => {
+            if (res && res.ok) {
+              cache.put(req, res.clone()).then(() => trimPhotos(cache)).catch(() => null);
+            } else if (res && res.status === 404) {
+              cache.delete(req);             // photo was removed: stop showing the stale copy
+            }
+            return res;
+          }).catch(() => hit);
+          return hit || network;
+        }))
+    );
     return;
   }
 
@@ -140,7 +177,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Every other same-origin GET (JSON APIs, exports, images): no caching,
+  // Every other same-origin GET (JSON APIs, exports, other images): no caching,
   // just the edge-retry shield.
   event.respondWith(fetchRetrying(req, true));
 });

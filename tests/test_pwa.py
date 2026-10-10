@@ -46,6 +46,12 @@ def test_service_worker_served_at_root_scope(client):
     assert "CACHE_VERSION" in r.text
 
 
+def test_service_worker_caches_photos(client):
+    # profile photos get stale-while-revalidate (they're outside /static/)
+    r = client.get("/sw.js")
+    assert "isPhoto(url)" in r.text and "PHOTO_MAX" in r.text
+
+
 def test_public_form_wires_pwa(client, sample_ids):
     # A rendered public survey page advertises the manifest and registers the SW.
     r = client.get(f"/r/{sample_ids['qr_token']}")

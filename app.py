@@ -34,6 +34,7 @@ import calendar
 import csv
 import io
 import asyncio
+import hashlib
 import hmac
 import json
 import os
@@ -7509,8 +7510,39 @@ def colleague_card(request: Request, user_id: int):
         "nav_active": "", "show_scope": False})
 
 
+_PHOTO_SIZES = (64, 128, 256)     # thumbnail edge lengths a caller may ask for (?s=)
+_PHOTO_CACHE_CONTROL = "private, max-age=300"   # re-check after 5 min; ETag makes that a 304
+_thumb_cache: dict = {}           # (etag, size) -> (bytes, mime); tiny, bounded below
+
+
+def _photo_thumb(raw, mime, size, etag):
+    """Square-ish JPEG thumbnail of a stored photo, memoised on (etag, size).
+    Falls back to the original bytes if Pillow can't read the image."""
+    hit = _thumb_cache.get((etag, size))
+    if hit:
+        return hit
+    try:
+        from PIL import Image, ImageOps
+        with Image.open(io.BytesIO(raw)) as im:
+            im = ImageOps.exif_transpose(im).convert("RGB")
+            im.thumbnail((size, size), Image.LANCZOS)
+            out = io.BytesIO()
+            im.save(out, "JPEG", quality=82, optimize=True)
+        res = (out.getvalue(), "image/jpeg")
+    except Exception:
+        res = (raw, mime)
+    if len(_thumb_cache) > 2000:
+        _thumb_cache.clear()
+    _thumb_cache[(etag, size)] = res
+    return res
+
+
 @app.get("/photo/{rp_id}")
-def serve_photo(rp_id: int):
+def serve_photo(request: Request, rp_id: int, s: int = 0):
+    """A directory person's photo. `?s=64|128|256` returns a small thumbnail
+    (the avatar circles are ~60px; the stored original is 512px). Both forms
+    carry an ETag, so a repeat view is a 304 with no body instead of a full
+    re-download."""
     conn = get_conn()
     try:
         photo = st.get_rp_photo(conn, rp_id)
@@ -7518,8 +7550,15 @@ def serve_photo(rp_id: int):
         conn.close()
     if not photo:
         return Response(status_code=404)
-    return Response(content=photo[0], media_type=photo[1],
-                    headers={"Cache-Control": "no-cache"})
+    raw, mime = photo
+    size = s if s in _PHOTO_SIZES else 0
+    etag = '"%s%s"' % (hashlib.md5(raw).hexdigest()[:20], "-%d" % size if size else "")
+    headers = {"Cache-Control": _PHOTO_CACHE_CONTROL, "ETag": etag}
+    if etag in [t.strip() for t in request.headers.get("if-none-match", "").split(",")]:
+        return Response(status_code=304, headers=headers)
+    if size:
+        raw, mime = _photo_thumb(raw, mime, size, etag)
+    return Response(content=raw, media_type=mime, headers=headers)
 
 
 # ---------------------------------------------------------------------

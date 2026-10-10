@@ -252,7 +252,7 @@
       <tr><th></th><th>Name</th><th>Position / designation</th><th>Assigned to</th><th>Type</th><th></th></tr>
       {% for p in staff %}
       <tr id="row-p{{ p.id }}">
-        <td><span class="avatar2">{% if p.has_photo %}<img src="/photo/{{ p.id }}?v={{ loop.index }}" alt="">{% else %}{{ p.name[0]|upper }}{% endif %}</span></td>
+        <td><span class="avatar2">{% if p.has_photo %}<img src="/photo/{{ p.id }}?s=64" alt="" loading="lazy" decoding="async">{% else %}{{ p.name[0]|upper }}{% endif %}</span></td>
         <td>{{ p.name }}{% if p.email %}<br><span class="sub2">{{ p.email }}</span>{% endif %}</td>
         <td>{{ p.position or "—" }}{% if p.designation %}<br><span class="sub2">{{ p.designation }}</span>{% endif %}</td>
         <!-- The unit's FULL name rides along under the short path: it is what
@@ -291,7 +291,7 @@
       <tr><th></th><th>Name</th><th>Agency</th><th>Email</th><th></th><th></th></tr>
       {% for p in external_rps %}
       <tr id="row-p{{ p.id }}">
-        <td><span class="avatar2">{% if p.has_photo %}<img src="/photo/{{ p.id }}?v={{ loop.index }}" alt="">{% else %}{{ p.name[0]|upper }}{% endif %}</span></td>
+        <td><span class="avatar2">{% if p.has_photo %}<img src="/photo/{{ p.id }}?s=64" alt="" loading="lazy" decoding="async">{% else %}{{ p.name[0]|upper }}{% endif %}</span></td>
         <td>{{ (p.honorific ~ ' ') if p.honorific else '' }}{{ p.name }}</td>
         <td class="sub2">{{ p.agency or '—' }}</td>
         <td class="sub2">{{ p.email or '—' }}</td>
@@ -343,7 +343,7 @@
       <tr><th></th><th>Name</th><th>Was</th><th>Archived</th><th></th></tr>
       {% for p in archived %}
       <tr class="arch" id="row-p{{ p.id }}">
-        <td><span class="avatar2">{% if p.has_photo %}<img src="/photo/{{ p.id }}?v={{ loop.index }}" alt="">{% else %}{{ p.name[0]|upper }}{% endif %}</span></td>
+        <td><span class="avatar2">{% if p.has_photo %}<img src="/photo/{{ p.id }}?s=64" alt="" loading="lazy" decoding="async">{% else %}{{ p.name[0]|upper }}{% endif %}</span></td>
         <td>{{ p.name }}{% if p.email %}<br><span class="sub2">{{ p.email }}</span>{% endif %}</td>
         <td>
           {% if p.is_internal %}{{ p.position or p.designation or "Staff" }}
