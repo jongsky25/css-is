@@ -714,6 +714,7 @@
     if (!w.hasAttribute("data-drag") || w._avDrag) return;
     w._avDrag = true;
     var pos = { x: 0, y: 0 };
+    var posKey = w.getAttribute("data-drag-key") || POS_KEY;
     function apply() { w.style.transform = "translate(" + pos.x + "px," + pos.y + "px)"; }
     function clampToPlay() {
       var play = w.closest(".av-play");
@@ -722,10 +723,10 @@
       pos.y = Math.max(-w.offsetTop, Math.min(play.clientHeight - w.offsetTop - w.offsetHeight, pos.y));
     }
     function save() {
-      try { localStorage.setItem(POS_KEY, JSON.stringify(pos)); } catch (e) {}
+      try { localStorage.setItem(posKey, JSON.stringify(pos)); } catch (e) {}
     }
     try {
-      var saved = JSON.parse(localStorage.getItem(POS_KEY) || "null");
+      var saved = JSON.parse(localStorage.getItem(posKey) || "null");
       if (saved && typeof saved.x === "number" && typeof saved.y === "number") {
         pos = saved; clampToPlay(); apply();
       }
