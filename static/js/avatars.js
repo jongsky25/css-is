@@ -804,13 +804,14 @@
         if (!w._avChasing) return;
         w._avChasing = false;
         w.classList.remove.apply(w.classList, GAITS);
+        w.classList.remove("av-chasing");
         w.style.transition = "";
       };
       chaseT = setInterval(function () {
         if (!w.isConnected) { clearInterval(chaseT); return; }
         var play = w.closest(".av-play");
         if (!ptr || !play || still() || document.hidden || asleep(w) || w._avAway || w._avPetting ||
-            w._avDragMoved || start || Date.now() - lastMove > 4000) { stopChase(); return; }
+            w._avDragMoved || start || Date.now() - lastMove > 5000) { stopChase(); return; }
         var pr = play.getBoundingClientRect();
         if (ptr.x < pr.left - 140 || ptr.x > pr.right + 140 ||
             ptr.y < pr.top - 100 || ptr.y > pr.bottom + 100) { stopChase(); return; }
@@ -821,25 +822,24 @@
           stopChase();
           if (Date.now() - caught > 2500) {
             caught = Date.now();
-            w.classList.remove("happy"); void w.offsetWidth; w.classList.add("happy");
-            setTimeout(function () { w.classList.remove("happy"); }, 700);
+            w.classList.remove("av-pounce"); void w.offsetWidth; w.classList.add("av-pounce");
+            setTimeout(function () { w.classList.remove("av-pounce"); }, 850);
           }
           return;
         }
-        var k = Math.min(1, 14 / dist);              // up to 14px per 80ms tick
+        var k = Math.min(1, 32 / dist);              // up to 32px per 80ms tick (~400px/s)
         if (!w._avChasing) {
           w._avChasing = true;
           if (w._avGX) { w._avGX = 0; }
-          if (!WALKERS[w.dataset.kind] && w.dataset.kind !== "bat") w.classList.add("av-do-bound");
         }
-        if (WALKERS[w.dataset.kind]) w.classList.add(WALKERS[w.dataset.kind].gait);
+        w.classList.add("av-chasing");
         var mv = w.querySelector(".avmove");
         if (mv) {
           mv.style.transition = "transform .15s";
           mv.style.transform = "scale(" + (dx < 0 ? -1 : 1) + ",1)";
         }
         w._avBusy = Date.now() + 300;
-        w.style.transition = "transform .09s linear";
+        w.style.transition = "transform .08s linear";
         pos.x += dx * k; pos.y += dy * k;
         clampToPlay(); apply();
       }, 80);

@@ -126,6 +126,11 @@
   @keyframes av-trot   { 0%,100%{ transform:translateY(0) rotate(0);} 50%{ transform:translateY(-3px) rotate(1.4deg);} }
   .av-do-bound .avstage      { animation:av-bound .45s ease-in-out infinite; }
   @keyframes av-bound  { 0%,100%{ transform:translateY(0) scale(1,1);} 40%{ transform:translateY(-10px) scale(.96,1.05);} 80%{ transform:translateY(0) scale(1.04,.94);} }
+  /* chase: a faster, much springier run, and a big pounce when it catches up */
+  .av-chasing .avstage       { animation:av-chase-leap .34s ease-in-out infinite !important; }
+  @keyframes av-chase-leap { 0%,100%{ transform:translateY(0) scale(1.05,.93);} 45%{ transform:translateY(-26px) scale(.95,1.08);} }
+  .av-pounce .avstage        { animation:av-pounce .8s cubic-bezier(.3,.7,.4,1) !important; }
+  @keyframes av-pounce { 0%{ transform:translateY(0) scale(1.08,.9);} 35%{ transform:translateY(-48px) scale(.94,1.1) rotate(-6deg);} 65%{ transform:translateY(0) scale(1.1,.88);} 82%{ transform:translateY(-12px);} 100%{ transform:translateY(0);} }
   .av-do-plod .avstage       { animation:av-plod 1.6s ease-in-out infinite; }
   @keyframes av-plod   { 0%,100%{ transform:rotate(-1.3deg);} 50%{ transform:rotate(1.3deg);} }
 
