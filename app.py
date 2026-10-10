@@ -8905,6 +8905,10 @@ def _manage_ctx(request, conn, ev):
         "ending_message": ev.get("ending_message") or "",
         "announcement": ev.get("announcement") or "",
         "announcement_at": _humandt(ev.get("announcement_at")),
+        "update_reach": sum(1 for p in st.event_attendees_status(conn, ev["id"])
+                            if not p["purged"] and p.get("email")),
+        "update_email_ready": (mailer.email_configured()
+                               and st.email_feature_enabled(conn, "event_update")),
         # The public link as a QR for posters/slides (the CUSTOM link when one is
         # set; the original token link keeps working either way).
         "event_qr": _qr_data_uri(f"{_base_url(request)}/e/{ev.get('slug') or ev['event_token']}"),
@@ -8990,7 +8994,8 @@ def _room_link_ctx(conn, request, ev):
 @app.get("/activities/{event_token}/manage", response_class=HTMLResponse)
 def activity_manage(request: Request, event_token: str, err: str = "", edit: int = 0,
                     slugok: int = 0, slugerr: str = "", dateok: int = 0,
-                    qok: int = 0, qerr: str = ""):
+                    qok: int = 0, qerr: str = "", ann: str = "", annn: int = 0,
+                    annm: int = 0):
     conn = get_conn()
     try:
         ev = st.get_event(conn, event_token)
@@ -9018,6 +9023,7 @@ def activity_manage(request: Request, event_token: str, err: str = "", edit: int
         ctx["slug_err"] = slugerr
         ctx["q_ok"] = bool(qok)
         ctx["q_err"] = qerr
+        ctx["ann_code"], ctx["ann_n"], ctx["ann_m"] = ann, annn, annm
     finally:
         conn.close()
     return templates.TemplateResponse(request, "activity_manage.html", ctx)
@@ -9308,6 +9314,73 @@ async def activity_messages_save(request: Request, event_token: str):
     return RedirectResponse(f"/activities/{event_token}/manage", status_code=303)
 
 
+UPDATE_EMAIL_COOLDOWN_MIN = 15      # one blast per activity per this many minutes
+UPDATE_EMAIL_DAILY_CAP = 300        # all activities together, per local day: the relay's
+                                    # ~1500/day (docs/MAIL_RELAY_SETUP.md) also carries
+                                    # invites and password resets, so updates get a slice
+
+
+def _update_cooldown_key(event_id):
+    return f"event_update_email.{event_id}"
+
+
+def _update_quota_key():
+    return f"event_update_email_quota.{_today_local().isoformat()}"
+
+
+def _update_quota_used(conn):
+    try:
+        return int(st.get_setting(conn, _update_quota_key(), "0") or 0)
+    except ValueError:
+        return 0
+
+
+def _send_update_batch(messages):
+    """BackgroundTask: one relay round trip per recipient, after the response."""
+    for email, subject, body, html in messages:
+        _send_and_log("event_update", email, subject, body, html=html)
+
+
+def _queue_update_emails(request, conn, ev, text):
+    """Plan the "also email registrants" send for a freshly posted update.
+
+    Returns (code, sent, left_out, messages). Registrants with no email (or whose
+    identity was purged) are skipped silently. The daily cap and the per-activity
+    cooldown are stamped BEFORE the background send, so they hold while it runs."""
+    if not mailer.email_configured():
+        return "nomail", 0, 0, []
+    if not st.email_feature_enabled(conn, "event_update"):
+        return "off", 0, 0, []
+    last = st.get_setting(conn, _update_cooldown_key(ev["id"]))
+    if last:
+        try:
+            left = UPDATE_EMAIL_COOLDOWN_MIN - int(
+                (_now_local() - datetime.fromisoformat(last)).total_seconds() // 60)
+            if left > 0:
+                return f"wait:{left}", 0, 0, []
+        except ValueError:
+            pass
+    targets = [p for p in st.event_attendees_status(conn, ev["id"])
+               if not p["purged"] and p.get("email")]
+    if not targets:
+        return "none", 0, 0, []
+    remaining = max(0, UPDATE_EMAIL_DAILY_CAP - _update_quota_used(conn))
+    chosen = targets[:remaining]
+    if not chosen:
+        return "cap", 0, len(targets), []
+    base, slug = _base_url(request), ev.get("slug") or ev["event_token"]
+    messages = []
+    for p in chosen:
+        link = f"{base}/e/{slug}/resume?rt={quote(auth.make_recovery_token(p['id']))}"
+        subject, body, html = mailer.event_update_message(
+            p.get("name"), link, ev.get("title"), text)
+        messages.append((p["email"], subject, body, html))
+    st.set_setting(conn, _update_cooldown_key(ev["id"]),
+                   _now_local().isoformat(timespec="seconds"))
+    st.set_setting(conn, _update_quota_key(), str(_update_quota_used(conn) + len(chosen)))
+    return "sent", len(chosen), len(targets) - len(chosen), messages
+
+
 @app.post("/activities/{event_token}/announcement")
 async def activity_announcement_save(request: Request, event_token: str):
     """Post, change or clear the pinned update shown at the top of every
@@ -9326,11 +9399,25 @@ async def activity_announcement_save(request: Request, event_token: str):
                target_id=ev["id"],
                summary=(f"Posted a pinned update ({len(text)} chars)." if text
                         else "Removed the pinned update."))
+        code, sent, left_out, messages = None, 0, 0, []
+        if text and posted.get("email_registrants") in ("on", "1", "true", "yes"):
+            code, sent, left_out, messages = _queue_update_emails(request, conn, ev, text)
+            if code == "sent":
+                _audit(request, conn, "event_update_emailed", target_type="event",
+                       target_id=ev["id"],
+                       summary=f"Emailed the pinned update to {sent} registrant(s) of "
+                               f"“{ev['title']}”" + (f" ({left_out} left out by the daily "
+                               f"cap)." if left_out else "."))
     finally:
         conn.close()
     if request.headers.get("x-requested-with"):
         return Response(status_code=204)
-    return RedirectResponse(f"/activities/{event_token}/manage#announcement", status_code=303)
+    qs = f"?ann={quote(code)}&annn={sent}&annm={left_out}" if code else ""
+    resp = RedirectResponse(f"/activities/{event_token}/manage{qs}#announcement",
+                            status_code=303)
+    if messages:
+        resp.background = BackgroundTask(_send_update_batch, messages)
+    return resp
 
 
 # ---------------------------------------------------------------------

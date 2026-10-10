@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.25"
+APP_VERSION = "6.26"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.26",
+        "date": "October 10, 2026",
+        "summary": "Organizers can now email a pinned update to everyone registered.",
+        "changes": [
+            "When you post a pinned update, tick \"Also email registrants\" to send it to everyone who registered with an email. People without an email simply see it on their page.",
+            "Each email includes the person's own link back to the activity page.",
+            "To protect the mail service, an activity can send one update email every 15 minutes, and there's a daily limit across all activities. The page tells you if anyone was left out.",
+            "Admins can turn update emails on or off in Admin → Email.",
+        ],
+    },
     {
         "version": "6.25",
         "date": "October 10, 2026",

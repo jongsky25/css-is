@@ -290,9 +290,28 @@
     <h2>📌 Pinned update</h2>
     <p class="hint">Shown at the top of every registered participant's page. Use it for room changes,
       schedule shifts or reminders. It goes live only when you press <strong>Post update</strong>.</p>
+    {% if ann_code %}
+    <div class="flash {{ 'ok' if ann_code == 'sent' else 'warn' }}" role="status" style="margin:.4rem 0 .6rem;">
+      {% if ann_code == 'sent' %}Update posted and emailing {{ ann_n }} registrant{{ '' if ann_n == 1 else 's' }}{% if ann_m %}. {{ ann_m }} more {{ 'was' if ann_m == 1 else 'were' }} left out because today's email limit was reached; they'll still see it on their page{% endif %}.
+      {% elif ann_code == 'nomail' %}Update posted. Email isn't set up on this server, so nobody was emailed.
+      {% elif ann_code == 'off' %}Update posted. Update emails are turned off in Admin → Email, so nobody was emailed.
+      {% elif ann_code == 'none' %}Update posted. No registrant has an email on file, so nobody was emailed.
+      {% elif ann_code == 'cap' %}Update posted, but today's email limit was reached, so nobody was emailed. Registrants will still see it on their page.
+      {% elif ann_code[:5] == 'wait:' %}Update posted. Registrants were already emailed an update recently. You can email again in {{ ann_code[5:] }} minute{{ '' if ann_code[5:] == '1' else 's' }}; they'll still see this one on their page.
+      {% endif %}
+    </div>
+    {% endif %}
     <form method="post" action="/activities/{{ ev.event_token }}/announcement">
       <textarea name="announcement" rows="3" maxlength="1000"
                 placeholder="e.g. The session has moved to Room 3B. Doors open at 8:30 AM.">{{ announcement }}</textarea>
+      <label style="display:flex; gap:.5rem; align-items:flex-start; margin:.6rem 0 0; font-weight:400;{% if not update_email_ready %} opacity:.65;{% endif %}">
+        <input type="checkbox" name="email_registrants" value="on"{% if not update_email_ready or not update_reach %} disabled{% endif %} style="margin-top:.2rem; width:1.05rem; height:1.05rem;">
+        <span>Also email registrants
+          {% if not update_email_ready %}<span class="muted small">— email isn't available right now.</span>
+          {% elif update_reach %}<span class="muted small">— {{ update_reach }} {{ 'person has' if update_reach == 1 else 'people have' }} an email on file; anyone without one just sees it on their page. Sends once, so re-check the wording first.</span>
+          {% else %}<span class="muted small">— nobody has registered with an email yet.</span>{% endif %}
+        </span>
+      </label>
       <div style="display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; margin-top:.5rem;">
         <button class="btn" type="submit">Post update</button>
         {% if announcement %}

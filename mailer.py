@@ -455,6 +455,29 @@ def recovery_message(name, link, event_title=None):
     return subject, body
 
 
+def event_update_message(name, link, event_title, update_text):
+    """Returns (subject, plain_text_body, html_body). An organizer's pinned update,
+    emailed to a registrant with their own link back to the activity page."""
+    update_text = (update_text or "").replace("\r\n", "\n").replace("\r", "\n")
+    subject = f"Update — {event_title}"
+    body = (f"Hello {name or 'there'},\n\n"
+            f"There's an update for “{event_title}”:\n\n"
+            f"{update_text}\n\n"
+            f"Your personal link to the activity page:\n\n"
+            f"  {link}\n\n"
+            f"Keep this link to yourself — it's tied to your registration.\n")
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="An update for your activity",
+        intro=(f"There's an update for &ldquo;{_e(event_title)}&rdquo;:<br><br>"
+               f"{_e(update_text).replace(chr(10), '<br>')}"),
+        cta_label="Open the activity page",
+        link=link,
+        footnote="Keep this link to yourself — it's tied to your registration.",
+    )
+    return subject, body, html
+
+
 def css_reminder_message(name, link, event_title, close_label=None):
     """Returns (subject, plain_text_body, html_body). The organizer's one-click
     nudge from Monitor to a registrant who hasn't finished the activity's
@@ -1412,6 +1435,12 @@ FEATURES = {
         "An organizer's one-click reminder, from Monitor, to every registrant "
         "who hasn't finished an activity's feedback.",
         "transactional"),
+    "event_update": (
+        "Activity — pinned update",
+        "When an organizer posts a pinned update and ticks \"Also email registrants\", "
+        "each registrant with an email on file gets the update and their own link back "
+        "to the activity page.",
+        "transactional"),
     "job_events": (
         "Day-before activity reminder",
         "Registrants, the organizer, and the section chief are reminded the "
@@ -1555,6 +1584,9 @@ _PREVIEWS = {
         "Juan Reyes", "October 1-15, 2026", _SAMPLE_LINK),
     "feedback_update": lambda: feedback_update_message(
         "Juan Reyes", "resolved", "Thanks for flagging this — fixed.", _SAMPLE_LINK),
+    "event_update": lambda: event_update_message(
+        "Juan Reyes", _SAMPLE_LINK, "Basic Life Support Training",
+        "The session has moved to Room 3B. Doors open at 8:30 AM."),
     "css_reminder": lambda: css_reminder_message(
         "Juan Reyes", _SAMPLE_LINK, "Basic Life Support Training",
         close_label="October 9, 2026, 5:00 PM"),
