@@ -1,5 +1,15 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-10 (v6.26 — email the pinned update to registrants)
+
+- Manage page, "Pinned update" card: an opt-in **Also email registrants** checkbox (off by default, disabled when email is unavailable or nobody has an email). Result messages explain what happened (sent / left out by the cap / cooldown / email off / nobody to email).
+- `app.py` `_queue_update_emails` + `POST /activities/{token}/announcement`: emails each non-purged registrant **with an email on file** (everyone else is skipped silently), each with their own `/resume?rt=` link, sent after the response via `_send_update_batch` / `_send_and_log("event_update", …)`.
+- Guards, all stamped **before** the background send: per-activity cooldown `UPDATE_EMAIL_COOLDOWN_MIN` = 15 (app_setting `event_update_email.<event_id>`), and a daily cap `UPDATE_EMAIL_DAILY_CAP` = 300 across all activities (app_setting `event_update_email_quota.<date>`), a slice of the relay's ~1500/day (docs/MAIL_RELAY_SETUP.md). Registrants over the cap are left out and the organizer is told how many. Removing an update or posting without the box ticked never emails.
+- `mailer.py`: `event_update_message` (update text HTML-escaped, newlines kept), new `event_update` entry in `FEATURES` (Admin → Email on/off) and `_PREVIEWS`.
+- Audit: `event_update_emailed` with the recipient count.
+- `tests/test_update_email.py` (13 tests).
+- **Version bump:** `APP_VERSION` 6.25 → 6.26.
+
 ## 2026-10-10 (v6.25 — stop accepting guessable attendee ids)
 
 - **Security:** `?att=<id>`, the per-event recognition cookie, the rating form's hidden `att`, and the certificate link used to carry the raw attendee id. Anyone could open a registrant's page, download their named certificate, or file feedback as them by changing the number (or forging the cookie). All four now carry a signed token instead; raw integers are ignored everywhere.
