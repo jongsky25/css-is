@@ -21,6 +21,10 @@
            padding:1.1rem 1.25rem; box-shadow:var(--shadow); margin-bottom:1rem; }
   .mcard h2 { font-size:1.02rem; margin:0 0 .2rem; }
   .mcard .hint { color:var(--soft); font-size:.82rem; margin:0 0 .8rem; }
+  .posterqr { display:flex; gap:1rem; align-items:center; flex-wrap:wrap; margin-top:1rem; }
+  .posterqr img { background:#fff; padding:.35rem; border:1px solid var(--line); border-radius:8px;
+                  max-width:100%; height:auto; }
+  .posterqr > div { flex:1 1 14rem; min-width:0; }
   .pubrow { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
   .pubrow code { background:var(--surface-2); border:1px solid var(--line); border-radius:7px;
                  padding:.3rem .55rem; font-size:.82rem; color:var(--ink-soft); word-break:break-all; }
@@ -137,6 +141,15 @@
       <a class="btn" href="/e/{{ ev.slug or ev.event_token }}" target="_blank" rel="noopener">Open public page ↗</a>
       <code id="pubUrl">{{ base_url }}/e/{{ ev.slug or ev.event_token }}</code>
       <button type="button" class="btn ghost small" onclick="navigator.clipboard&amp;&amp;navigator.clipboard.writeText(document.getElementById('pubUrl').textContent)">Copy link</button>
+    </div>
+
+    <!-- poster QR -->
+    <div class="posterqr">
+      <img src="{{ event_qr }}" alt="QR code for the participant page" width="140" height="140">
+      <div>
+        <p class="hint" style="margin:0 0 .5rem;">Print this on posters or show it on a slide. It's the <strong>activity</strong> link, the same for everyone. Each person who registers gets their own personal link and QR to save.</p>
+        <a class="btn ghost small" href="{{ event_qr }}" download="{{ ev.slug or ev.event_token }}-qr.png">Download QR</a>
+      </div>
     </div>
 
     <!-- custom (vanity) link -->
