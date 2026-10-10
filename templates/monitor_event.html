@@ -135,6 +135,7 @@
     <span class="reglink">Registration link: <code id="regLink">{{ base_url }}/e/{{ ev.event_token }}</code>
       <button type="button" class="reg-copy" id="regCopy" aria-describedby="regLink">Copy</button>
       <span class="reg-copy-msg" id="regCopyMsg" role="status" aria-live="polite"></span></span>
+    {% if link_valid_until %}<span class="reglink" style="display:block; margin-top:.25rem;">Personal links stay valid until <strong>{{ link_valid_until }}</strong> (30 days after the activity ends).</span>{% endif %}
   </div>
 
   {% if not is_closed and remind_count %}

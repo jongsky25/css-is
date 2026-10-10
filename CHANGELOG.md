@@ -1,5 +1,12 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-10 (v6.24 — organizer QR card and link validity on the roster)
+
+- `activity_manage.html` / `_manage_ctx`: the "participant page" card shows a QR of the public link (custom slug when set, via `_qr_data_uri`) with a Download QR button, and explains how it differs from each participant's personal link.
+- `monitor_event.html` / `monitor_event`: the roster header states the date until which personal links work (`_link_valid_until`, shared with the participant page; hidden for undated activities).
+- `tests/test_event_hub.py`: three more tests (poster QR, custom-slug filename, roster validity date).
+- **Version bump:** `APP_VERSION` 6.23 → 6.24.
+
 ## 2026-10-10 (v6.23 — event page as a registration hub)
 
 - `link_tree.html` / `i18n.py`: the public page now reads as registration ("Register for this activity"). A benefits list and email help line were added, and the old sign-in/thanks/dupe/consent strings were reworded (EN + FIL).

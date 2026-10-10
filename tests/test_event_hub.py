@@ -317,3 +317,28 @@ def test_pinned_update_refused_for_non_managers(app_mod, client, viewer, manager
     row = conn.execute("SELECT announcement FROM event WHERE event_token=?", (tok,)).fetchone()
     conn.close()
     assert not row[0]
+
+
+# ---- PR-2: organizer side ----------------------------------------------------
+
+def test_manage_page_has_poster_qr(app_mod, manager, db_path):
+    tok = _manager_event(manager, db_path)
+    page = manager.get(f"/activities/{tok}/manage").text
+    assert "data:image/png;base64" in page
+    assert f"{tok}-qr.png" in page and "Download QR" in page
+
+
+def test_manage_qr_uses_the_custom_link_when_set(app_mod, manager, db_path):
+    tok = _manager_event(manager, db_path)
+    manager.post(f"/activities/{tok}/slug", data={"slug": "hub-poster-test"})
+    page = manager.get(f"/activities/{tok}/manage").text
+    assert "hub-poster-test-qr.png" in page
+
+
+def test_monitor_shows_when_personal_links_expire(app_mod, manager, db_path):
+    tok = _manager_event(manager, db_path, event_date=_FUTURE)
+    page = manager.get(f"/monitor/{tok}").text
+    assert "Personal links stay valid until" in page
+    want = app_mod._link_valid_until({"event_date": _FUTURE, "end_date": None})
+    assert want in page
+    assert app_mod._link_valid_until({"event_date": None}) is None

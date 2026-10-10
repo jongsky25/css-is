@@ -7987,6 +7987,14 @@ def _personal_link_expiry(ev):
     return end.replace(tzinfo=LOCAL_TZ).timestamp()
 
 
+def _link_valid_until(ev):
+    """Display date until which personal links work, or None for an undated activity."""
+    exp = _personal_link_expiry(ev)
+    if exp is None:
+        return None
+    return _humandt(datetime.fromtimestamp(exp, LOCAL_TZ).strftime("%Y-%m-%d"))
+
+
 def _attendee_cookie_max_age(ev):
     """Keep the device recognized for at least 30 days, and through the personal
     link's life for someone who registers well ahead of the activity."""
@@ -8474,8 +8482,7 @@ def _event_view(request, conn, ev, attendee=None, errors=None, posted=None,
         personal_link = (f"{_base_url(request)}/e/{slug}/resume?rt="
                          f"{quote(auth.make_recovery_token(attendee['id']))}")
         personal_qr = _qr_data_uri(personal_link)
-        if exp is not None:
-            link_valid_until = _humandt(datetime.fromtimestamp(exp, LOCAL_TZ).strftime("%Y-%m-%d"))
+        link_valid_until = _link_valid_until(ev)
     masked = ""
     if qp.get("emailed") == "1" and attendee and attendee.get("email"):
         masked = _mask_email(attendee["email"])
@@ -8876,6 +8883,9 @@ def _manage_ctx(request, conn, ev):
         "ending_message": ev.get("ending_message") or "",
         "announcement": ev.get("announcement") or "",
         "announcement_at": _humandt(ev.get("announcement_at")),
+        # The public link as a QR for posters/slides (the CUSTOM link when one is
+        # set; the original token link keeps working either way).
+        "event_qr": _qr_data_uri(f"{_base_url(request)}/e/{ev.get('slug') or ev['event_token']}"),
         "msg_drafts": amsg.all_drafts(ev),
         "tone_labels": amsg.TONE_LABELS, "tones": amsg.TONES,
         # Certificate of Appearance settings + the internal-staff list to pick a
@@ -10140,6 +10150,7 @@ def monitor_event(request: Request, event_token: str, flash: str = ""):
                          else len(_unfinished_with_email(people))),
         "remind_last": remind_last, "remind_wait": remind_wait,
         "email_on": mailer.email_configured(),
+        "link_valid_until": _link_valid_until(ev),
     })
 
 
