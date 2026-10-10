@@ -350,11 +350,11 @@
      care=true adds the water/feed button; drag=true lets it be moved around
      its .av-play container (wellness hub). --#}
 {% macro avatar(kind, stage, name="", size=170, interactive=false, mood="", care=false, drag=false,
-                person="", care_streak=0, last_care="", drag_key="") %}
+                person="", care_streak=0, last_care="", drag_key="", chase=false) %}
 {% set fam = "fam-animal" if avatar_family(kind) == "animal" else "fam-plant" %}
 {% set verb = avatar_care_verb(kind) %}
 <span class="avwrap {{ fam }}" data-kind="{{ kind }}" data-stage="{{ [[stage|int, 6]|min, 1]|max }}"
-      {% if mood %}data-mood="{{ mood }}"{% endif %}{% if drag and interactive %} data-drag{% if drag_key %} data-drag-key="{{ drag_key }}"{% endif %}{% endif %}
+      {% if mood %}data-mood="{{ mood }}"{% endif %}{% if drag and interactive %} data-drag{% if drag_key %} data-drag-key="{{ drag_key }}"{% endif %}{% if chase %} data-chase{% endif %}{% endif %}
       {% if person %}data-person="{{ person }}"{% endif %}
       {% if care_streak %}data-care-streak="{{ care_streak }}"{% endif %}
       {% if last_care %}data-last-care="{{ last_care }}"{% endif %}
