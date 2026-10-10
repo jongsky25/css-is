@@ -51,7 +51,7 @@
   {% endif %}
 
   {% if next_token %}
-    <a class="btn" style="margin-top:.6rem;" href="/r/{{ next_token }}?seq={{ seq }}{% if att %}&att={{ att }}{% endif %}">{{ t('thanks_continue', lang) }}</a>
+    <a class="btn" style="margin-top:.6rem;" href="/r/{{ next_token }}?seq={{ seq }}{% if att %}&att={{ att|urlencode }}{% endif %}">{{ t('thanks_continue', lang) }}</a>
   {% elif event_token %}
     <p style="font-weight:650; color:var(--green);">{{ t('thanks_all_done_event', lang) }}</p>
     {% if ending_message %}
@@ -60,10 +60,10 @@
     {% if cert_ready %}
     <div class="panel" style="margin:.8rem 0; padding:.85rem 1rem;">
       <p style="margin:0 0 .5rem; font-weight:650;">{{ t('thanks_cert_heading', lang) }}</p>
-      <a class="btn" href="/e/{{ event_token }}/certificate?fmt=pdf{% if att %}&att={{ att }}{% endif %}">{{ t('thanks_cert_pdf', lang) }}</a>
+      <a class="btn" href="/e/{{ event_token }}/certificate?fmt=pdf{% if att %}&att={{ att|urlencode }}{% endif %}">{{ t('thanks_cert_pdf', lang) }}</a>
     </div>
     {% endif %}
-    <a class="btn" style="margin-top:.2rem;" href="/e/{{ event_token }}{% if att %}?att={{ att }}{% endif %}">{{ t('thanks_back_activity', lang) }}</a>
+    <a class="btn" style="margin-top:.2rem;" href="/e/{{ event_token }}{% if att %}?att={{ att|urlencode }}{% endif %}">{{ t('thanks_back_activity', lang) }}</a>
   {% elif seq %}
     <p style="font-weight:650; color:var(--green);">{{ t('thanks_seq_done', lang) }}</p>
     <a class="btn ghost" href="/seq?tokens={{ seq }}">{{ t('thanks_back_list', lang) }}</a>

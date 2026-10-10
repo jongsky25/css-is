@@ -152,7 +152,7 @@
       <span class="go">✓ {{ t('lt_done', lang) }}</span>
     </div></li>
     {% elif l.state == 'open' %}
-    <li><a class="tile lg" href="/r/{{ l.token }}?seq={{ tokens }}&att={{ attendee.id }}">
+    <li><a class="tile lg" href="/r/{{ l.token }}?seq={{ tokens }}&att={{ att_tok|urlencode }}">
       <span class="muted small">{{ l.n }} {{ t('lt_n_of', lang) }} {{ total }} · {{ l.label }}</span><br>
       <strong>{{ l.title }}</strong>{% if l.rp_name %} — {{ l.rp_name }}{% endif %}
       <span class="go" aria-hidden="true">→</span>
@@ -182,7 +182,7 @@
   {% if completed and ev.certificate_enabled and attendee %}
   <div class="panel" style="margin:0 0 1rem; padding:.85rem 1rem;">
     <p style="margin:0 0 .5rem; font-weight:650;">{{ t('lt_cert_heading', lang) }}</p>
-    <a class="btn" href="/e/{{ ev.event_token }}/certificate?fmt=pdf&att={{ attendee.id }}">{{ t('thanks_cert_pdf', lang) }}</a>
+    <a class="btn" href="/e/{{ ev.event_token }}/certificate?fmt=pdf&att={{ att_tok|urlencode }}">{{ t('thanks_cert_pdf', lang) }}</a>
   </div>
   {% endif %}
 

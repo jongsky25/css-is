@@ -8,6 +8,7 @@ messages-route RBAC, welcome shown after consent, and ending shown ONLY after th
 attendee has completed every feedback form (on both the link tree and thanks page).
 """
 import app as app_mod
+import auth
 import storage as st
 import activity_messages as amsg
 
@@ -117,7 +118,7 @@ def test_welcome_shows_after_consent_only(manager, db_path):
         aid = st.add_attendee(conn, ev["id"], name="Jordan Cruz", email="j@x.com",
                               sex="M", affiliation="DOH", consent_text="x")
         conn.commit()
-        shown = manager.get(f"/e/{tok}?att={aid}").text
+        shown = manager.get(f"/e/{tok}?att={auth.make_attendee_token(aid)}").text
         assert "Welcome, Jordan! Glad you came." in shown
     finally:
         _cleanup(conn, ev, fids); conn.close()
@@ -133,12 +134,12 @@ def test_ending_shows_only_after_completion(manager, db_path):
                               sex="F", affiliation="DOH", consent_text="x")
         conn.commit()
         # not yet completed — ending hidden on the link tree
-        assert "See you next time" not in manager.get(f"/e/{tok}?att={aid}").text
+        assert "See you next time" not in manager.get(f"/e/{tok}?att={auth.make_attendee_token(aid)}").text
         # complete the single feedback form as this attendee
         st.record_response(conn, fids[0], [], attendee_id=aid)
         conn.commit()
         assert st.attendee_completed_feedback(conn, ev["id"], aid) is True
-        shown = manager.get(f"/e/{tok}?att={aid}").text
+        shown = manager.get(f"/e/{tok}?att={auth.make_attendee_token(aid)}").text
         assert "See you next time, Sam!" in shown
     finally:
         _cleanup(conn, ev, fids); conn.close()

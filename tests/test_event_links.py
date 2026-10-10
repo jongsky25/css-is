@@ -8,6 +8,7 @@ RBAC (creator / admin / other / logged-out), and the add → public-page round-t
 """
 import re
 import app as app_mod
+import auth
 import storage as st
 
 
@@ -149,7 +150,7 @@ def test_add_link_shows_on_manage_and_public_after_consent(manager, db_path):
         aid = st.add_attendee(conn, ev["id"], name="P", email="p@x.com",
                               sex="F", affiliation="DOH", consent_text="x")
         conn.commit()
-        shown = manager.get(f"/e/{tok}?att={aid}").text
+        shown = manager.get(f"/e/{tok}?att={auth.make_attendee_token(aid)}").text
         assert "Day 1 deck" in shown and "Programme" in shown
     finally:
         _cleanup(conn, ev, fids); conn.close()

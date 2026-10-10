@@ -147,12 +147,12 @@ def test_panel_collapsed_on_later_visits(app_mod, db_path):
     assert "open" not in head
 
 
-def test_panel_absent_without_cookie(app_mod, db_path):
+def test_panel_absent_for_a_guessed_id(app_mod, db_path):
     tok, _ = _db_event(db_path, _FUTURE)
     c, r = _register(app_mod, tok)
-    att = parse_qs(urlparse(r.headers["location"]).query)["att"][0]
+    att = auth.verify_attendee_token(parse_qs(urlparse(r.headers["location"]).query)["att"][0])
     stranger = TestClient(app_mod.app, raise_server_exceptions=True)
-    page = stranger.get(f"/e/{tok}?att={att}").text
+    page = stranger.get(f"/e/{tok}?att={att}").text           # the old guessable form
     assert "/resume?rt=" not in page and "data:image/png;base64" not in page
 
 
@@ -188,18 +188,18 @@ def test_early_registrant_link_outlives_90_days(app_mod, db_path):
     far = (date.today() + timedelta(days=150)).isoformat()
     tok, _ = _db_event(db_path, far)
     c, r = _register(app_mod, tok)
-    att = int(parse_qs(urlparse(r.headers["location"]).query)["att"][0])
+    att = auth.verify_attendee_token(parse_qs(urlparse(r.headers["location"]).query)["att"][0])
     stale = auth.make_recovery_token(att, issued_at=time.time() - 100 * 24 * 3600)
     new = TestClient(app_mod.app, raise_server_exceptions=True)
     r = new.get(f"/e/{tok}/resume", params={"rt": stale}, follow_redirects=False)
-    assert r.status_code == 303 and f"att={att}" in r.headers["location"]
+    assert r.status_code == 303 and "att=" in r.headers["location"]
     assert any("css_att_e" in v for v in r.headers.get_list("set-cookie"))
 
 
 def test_link_past_the_buffer_is_expired(app_mod, db_path):
     tok, _ = _db_event(db_path, _LONG_AGO)
     c, r = _register(app_mod, tok)
-    att = int(parse_qs(urlparse(r.headers["location"]).query)["att"][0])
+    att = auth.verify_attendee_token(parse_qs(urlparse(r.headers["location"]).query)["att"][0])
     t = auth.make_recovery_token(att)
     new = TestClient(app_mod.app, raise_server_exceptions=True)
     r = new.get(f"/e/{tok}/resume", params={"rt": t}, follow_redirects=False)
@@ -233,7 +233,7 @@ def test_email_link_needs_the_cookie(app_mod, db_path, monkeypatch):
     att = parse_qs(urlparse(r.headers["location"]).query)["att"][0]
     calls.clear()
     stranger = TestClient(app_mod.app, raise_server_exceptions=True)
-    r = stranger.post(f"/e/{tok}/email-link?att={att}", follow_redirects=False)
+    r = stranger.post(f"/e/{tok}/email-link?att={att}", follow_redirects=False)  # even a valid token in the URL is not enough
     assert r.status_code == 303 and r.headers["location"] == f"/e/{tok}"
     assert calls == []
 

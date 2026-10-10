@@ -10,6 +10,7 @@ only global control is the public_sharing_enabled master switch.
 Covers: per-attendee completion detection, bucket filtering, the move action, the
 master switch, list_shared_events, and the /shared + /admin/sharing pages.
 """
+import auth
 import storage as st
 
 
@@ -128,13 +129,13 @@ def test_public_page_two_buckets(manager, db_path):
     conn.commit()
     try:
         # before finishing feedback: immediate shows, cert locked (teaser, no link)
-        body = manager.get(f"/e/{tok}?att={aid}").text
+        body = manager.get(f"/e/{tok}?att={auth.make_attendee_token(aid)}").text
         assert "Immediate Deck" in body
         assert "Reward Cert" not in body
         assert "unlock" in body.lower()
         # finish the feedback -> cert unlocks
         st.record_response(conn, fids[0], [], attendee_id=aid); conn.commit()
-        body2 = manager.get(f"/e/{tok}?att={aid}").text
+        body2 = manager.get(f"/e/{tok}?att={auth.make_attendee_token(aid)}").text
         assert "Reward Cert" in body2 and "Immediate Deck" in body2
     finally:
         _cleanup(conn, ev, fids); conn.close()
@@ -150,9 +151,9 @@ def test_public_page_honors_master_switch(manager, db_path):
     conn.commit()
     try:
         st.set_setting(conn, "public_sharing_enabled", "1")
-        assert "Master Deck" in manager.get(f"/e/{tok}?att={aid}").text
+        assert "Master Deck" in manager.get(f"/e/{tok}?att={auth.make_attendee_token(aid)}").text
         st.set_setting(conn, "public_sharing_enabled", "0")
-        assert "Master Deck" not in manager.get(f"/e/{tok}?att={aid}").text
+        assert "Master Deck" not in manager.get(f"/e/{tok}?att={auth.make_attendee_token(aid)}").text
     finally:
         st.set_setting(conn, "public_sharing_enabled", "1")
         _cleanup(conn, ev, fids); conn.close()
