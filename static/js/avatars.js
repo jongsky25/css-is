@@ -274,7 +274,7 @@
       w._avRoamT = setTimeout(function () {
         if (!w.isConnected) return;
         if (still() || document.hidden || asleep(w) || w._avAway ||
-            w._avDragMoved || w.classList.contains("av-dragging")) { amble(); return; }
+            w._avDragMoved || w._avChasing || w.classList.contains("av-dragging")) { amble(); return; }
         var legs = 1, fast = false;
         if (spec.zoom && Math.random() < spec.zoom) { legs = 3; fast = true; }  // zoomies!
         else if (spec.hops) legs = spec.hops[0] + Math.floor(Math.random() * (spec.hops[1] - spec.hops[0] + 1));
@@ -714,6 +714,7 @@
     if (!w.hasAttribute("data-drag") || w._avDrag) return;
     w._avDrag = true;
     var pos = { x: 0, y: 0 };
+    var posKey = w.getAttribute("data-drag-key") || POS_KEY;
     function apply() { w.style.transform = "translate(" + pos.x + "px," + pos.y + "px)"; }
     function clampToPlay() {
       var play = w.closest(".av-play");
@@ -722,10 +723,10 @@
       pos.y = Math.max(-w.offsetTop, Math.min(play.clientHeight - w.offsetTop - w.offsetHeight, pos.y));
     }
     function save() {
-      try { localStorage.setItem(POS_KEY, JSON.stringify(pos)); } catch (e) {}
+      try { localStorage.setItem(posKey, JSON.stringify(pos)); } catch (e) {}
     }
     try {
-      var saved = JSON.parse(localStorage.getItem(POS_KEY) || "null");
+      var saved = JSON.parse(localStorage.getItem(posKey) || "null");
       if (saved && typeof saved.x === "number" && typeof saved.y === "number") {
         pos = saved; clampToPlay(); apply();
       }
@@ -742,6 +743,7 @@
         if (mv) { mv.style.transition = "transform .3s ease"; mv.style.transform = ""; }
         w._avGX = 0;
       }
+      w.style.transition = "";
       start = { px: e.clientX, py: e.clientY, x: pos.x, y: pos.y };
       w.setPointerCapture(e.pointerId);
       // held still long enough = petting, not a tap and not a drag
@@ -788,6 +790,60 @@
     }
     w.addEventListener("pointerup", done);
     w.addEventListener("pointercancel", done);
+
+    /* ---- chase: with data-chase the pet trots after a mouse pointer that is
+     * moving over (or near) its .av-play stage, pounces when it catches up,
+     * then loses interest a few seconds after the pointer goes still. ------- */
+    if (w.hasAttribute("data-chase")) {
+      var ptr = null, lastMove = 0, caught = 0, chaseT = null;
+      document.addEventListener("pointermove", function (e) {
+        if (e.pointerType === "touch") return;
+        ptr = { x: e.clientX, y: e.clientY }; lastMove = Date.now();
+      }, { passive: true });
+      var stopChase = function () {
+        if (!w._avChasing) return;
+        w._avChasing = false;
+        w.classList.remove.apply(w.classList, GAITS);
+        w.classList.remove("av-chasing");
+        w.style.transition = "";
+      };
+      chaseT = setInterval(function () {
+        if (!w.isConnected) { clearInterval(chaseT); return; }
+        var play = w.closest(".av-play");
+        if (!ptr || !play || still() || document.hidden || asleep(w) || w._avAway || w._avPetting ||
+            w._avDragMoved || start || Date.now() - lastMove > 5000) { stopChase(); return; }
+        var pr = play.getBoundingClientRect();
+        if (ptr.x < pr.left - 140 || ptr.x > pr.right + 140 ||
+            ptr.y < pr.top - 100 || ptr.y > pr.bottom + 100) { stopChase(); return; }
+        var wr = w.getBoundingClientRect();
+        var dx = ptr.x - (wr.left + wr.width / 2), dy = ptr.y - (wr.top + wr.height * 0.6);
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 55) {                              // got it! pounce, then wait
+          stopChase();
+          if (Date.now() - caught > 2500) {
+            caught = Date.now();
+            w.classList.remove("av-pounce"); void w.offsetWidth; w.classList.add("av-pounce");
+            setTimeout(function () { w.classList.remove("av-pounce"); }, 850);
+          }
+          return;
+        }
+        var k = Math.min(1, 32 / dist);              // up to 32px per 80ms tick (~400px/s)
+        if (!w._avChasing) {
+          w._avChasing = true;
+          if (w._avGX) { w._avGX = 0; }
+        }
+        w.classList.add("av-chasing");
+        var mv = w.querySelector(".avmove");
+        if (mv) {
+          mv.style.transition = "transform .15s";
+          mv.style.transform = "scale(" + (dx < 0 ? -1 : 1) + ",1)";
+        }
+        w._avBusy = Date.now() + 300;
+        w.style.transition = "transform .08s linear";
+        pos.x += dx * k; pos.y += dy * k;
+        clampToPlay(); apply();
+      }, 80);
+    }
     w.addEventListener("keydown", function (e) {
       var d = { ArrowLeft: [-8, 0], ArrowRight: [8, 0], ArrowUp: [0, -8], ArrowDown: [0, 8] }[e.key];
       if (!d) return;

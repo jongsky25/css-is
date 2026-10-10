@@ -1,5 +1,12 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-10 (v6.21 — home companion roams, chases the cursor and can be dragged)
+
+- `templates/office_connect.html`: the companion sits in a new `.oc-pet-stage.av-play` area in the hero and is rendered with `drag=true, chase=true`, so the existing roaming engine runs there.
+- `templates/_avatars.html`: `avatar()` macro gains `drag_key` and `chase` params (`data-drag-key`, `data-chase`); new `av-chasing` / `av-pounce` animations.
+- `static/js/avatars.js`: per-avatar drag position key; new cursor-chase loop (mouse only, honours reduced motion, sleep, petting and dragging); roaming pauses while chasing.
+- **Version bump:** `APP_VERSION` 6.20 → 6.21.
+
 ## 2026-10-10 (v6.20 — hide "Manage the room" nav from non-Administrative-Section admins)
 
 - `app.py` `_cap_ok`: the `room_admin` cap no longer admits `admin`-role accounts; it follows `room_approver` (Administrative Section) only, matching `rooms.is_room_admin`. Hides Room requests / meals / closures from the Office menu and the door display / QR poster from search.
