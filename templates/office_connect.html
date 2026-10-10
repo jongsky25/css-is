@@ -49,7 +49,9 @@
            border-radius:14px; }
   .oc-me:hover h1, .oc-me:focus-visible h1 { text-decoration:underline; }
   .oc-me-cta { color:var(--accent); font-weight:700; }
-  .oc-pet { text-align:center; flex:0 0 auto; cursor:pointer; }
+  .oc-pet { text-align:center; display:inline-block; cursor:pointer; }
+  .oc-pet-stage { flex:1 1 220px; min-width:0; min-height:230px; display:flex; justify-content:center; }
+  .oc-pet .avwrap { touch-action:none; }
   .oc-todo { margin:0 0 1.3rem; }
   .oc-todo h2 { font-size:1.05rem; margin:0 0 .6rem; }
   .oc-tasks { list-style:none; margin:0; padding:0; display:grid; gap:.6rem;
@@ -314,13 +316,17 @@
     </div>
     </a>
     {% if profile and profile.avatar_name %}
+    {#-- The stage is the empty stretch between the greeting and the tabs: the
+         companion roams it on its own and can be dragged anywhere inside. --#}
+    <div class="oc-pet-stage av-play">
     <div class="oc-pet" data-pet-area>
       {#-- Bumped again from 108: the per-stage artwork carries real detail
            (a leaf count, a shell pattern) that was still hard to make out. --#}
       {{ avatar(profile.avatar_kind, (wstats.stage if wstats else 1), name=profile.avatar_name,
-                size=150, interactive=true, mood=profile.avatar_mood) }}
+                size=150, interactive=true, mood=profile.avatar_mood, drag=true, drag_key="css-av-pos-home", chase=true) }}
       {% if bday_greet %}<span class="oc-pet-party">🎉 {{ profile.avatar_name }} is celebrating with you!</span>{% endif %}
       <a class="oc-pet-edit" href="/me#companion">Change companion →</a>
+    </div>
     </div>
     {% endif %}
     <span class="grow"></span>

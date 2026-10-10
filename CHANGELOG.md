@@ -1,11 +1,18 @@
 # CHANGELOG — Cowork revisions (surgical)
 
-## 2026-10-10 (v6.21 — faster profile photos)
+## 2026-10-10 (v6.22 — faster profile photos)
 
 - `app.py` `/photo/{rp_id}`: adds an `ETag` (304 on `If-None-Match`) and `Cache-Control: private, max-age=300` (was `no-cache` with no validator, so every page view re-downloaded every ~100 KB photo). New `?s=64|128|256` returns a memoised JPEG thumbnail; other values return the original.
 - Small avatar `<img>`s (`_faces.html`, `_calendar_body.html`, `office_connect.html`, `directory.html`, `link_tree.html`) now request `?s=128`/`?s=64`; calendar/Office Connect/directory avatars also get `loading="lazy" decoding="async"`.
 - `static/js/sw.js`: `/photo/<id>` (any `?s=`) is now stale-while-revalidate (instant from cache, refreshed behind; capped at 300 entries; a 404 evicts the cached copy). `CACHE_VERSION` v2.19-b → v2.20-a. `tests/test_pwa.py` covers it.
 - `tests/test_routes.py`: ETag/304, thumbnail size, fallback and 404 coverage.
+- **Version bump:** `APP_VERSION` 6.21 → 6.22.
+
+## 2026-10-10 (v6.21 — home companion roams, chases the cursor and can be dragged)
+
+- `templates/office_connect.html`: the companion sits in a new `.oc-pet-stage.av-play` area in the hero and is rendered with `drag=true, chase=true`, so the existing roaming engine runs there.
+- `templates/_avatars.html`: `avatar()` macro gains `drag_key` and `chase` params (`data-drag-key`, `data-chase`); new `av-chasing` / `av-pounce` animations.
+- `static/js/avatars.js`: per-avatar drag position key; new cursor-chase loop (mouse only, honours reduced motion, sleep, petting and dragging); roaming pauses while chasing.
 - **Version bump:** `APP_VERSION` 6.20 → 6.21.
 
 ## 2026-10-10 (v6.20 — hide "Manage the room" nav from non-Administrative-Section admins)
