@@ -793,9 +793,8 @@ def _cap_ok(user, cap, is_chief=False):
     if cap == "approver":       # the Approvals inbox: a chief, or a room approver (Administrative Section)
         return (bool(is_chief) or _user_role(user) == "admin"
                 or (user.get("room_approver") if isinstance(user, dict) else False))
-    if cap == "room_admin":     # the Administrative Section (room approvers) and app admins
-        return (_user_role(user) == "admin"
-                or bool(user.get("room_approver") if isinstance(user, dict) else getattr(user, "room_approver", False)))
+    if cap == "room_admin":     # the Administrative Section only (rooms.is_room_admin) — no admin-role bypass
+        return bool(user.get("room_approver") if isinstance(user, dict) else getattr(user, "room_approver", False))
     if cap == "wa_schedule":
         return (bool(is_chief) or _user_role(user) == "admin"
                 or _user_bureau_access(user) in ("awa", "all"))
