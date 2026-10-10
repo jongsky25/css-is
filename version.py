@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.20"
+APP_VERSION = "6.21"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.21",
+        "date": "October 10, 2026",
+        "summary": "Your companion on the home page now plays: it roams, follows your cursor and can be dragged.",
+        "changes": [
+            "Your companion now wanders around the space beside your greeting instead of standing still.",
+            "Move your mouse near it and it will chase your cursor, then pounce when it catches up.",
+            "You can pick it up and drop it anywhere in that space, and it remembers where you left it.",
+        ],
+    },
     {
         "version": "6.20",
         "date": "October 10, 2026",
