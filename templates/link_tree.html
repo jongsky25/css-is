@@ -62,7 +62,7 @@
   <ul class="sp-list">
     {% for s in speakers %}
     <li class="sp-row">
-      {% if s.has_photo %}<img class="sp-av" src="/photo/{{ s.id }}" alt="" loading="lazy" decoding="async">
+      {% if s.has_photo %}<img class="sp-av" src="/photo/{{ s.id }}?s=64" alt="" loading="lazy" decoding="async">
       {% else %}<span class="sp-av">{{ (s.name or '?')[:1]|upper }}</span>{% endif %}
       <span>
         <div class="sp-name">{% if s.honorific %}{{ s.honorific }} {% endif %}{{ s.name }}</div>

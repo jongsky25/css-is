@@ -1,5 +1,12 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-10 (v6.21 — faster profile photos)
+
+- `app.py` `/photo/{rp_id}`: adds an `ETag` (304 on `If-None-Match`) and `Cache-Control: private, max-age=300` (was `no-cache` with no validator, so every page view re-downloaded every ~100 KB photo). New `?s=64|128|256` returns a memoised JPEG thumbnail; other values return the original.
+- Small avatar `<img>`s (`_faces.html`, `_calendar_body.html`, `office_connect.html`, `directory.html`, `link_tree.html`) now request `?s=128`/`?s=64`; calendar/Office Connect/directory avatars also get `loading="lazy" decoding="async"`.
+- `tests/test_routes.py`: ETag/304, thumbnail size, fallback and 404 coverage.
+- **Version bump:** `APP_VERSION` 6.20 → 6.21.
+
 ## 2026-10-10 (v6.20 — hide "Manage the room" nav from non-Administrative-Section admins)
 
 - `app.py` `_cap_ok`: the `room_admin` cap no longer admits `admin`-role accounts; it follows `room_approver` (Administrative Section) only, matching `rooms.is_room_admin`. Hides Room requests / meals / closures from the Office menu and the door display / QR poster from search.

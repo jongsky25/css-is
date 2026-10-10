@@ -243,6 +243,33 @@ def test_photo_route(client, sample_ids):
     r = client.get(f"/photo/{sample_ids['rp_id']}")
     assert r.status_code in (200, 302, 404)
 
+def test_photo_etag_and_thumbnail(client, app_mod, sample_ids):
+    import io
+    from PIL import Image
+    import storage as st
+    buf = io.BytesIO(); Image.new("RGB", (512, 512), (200, 80, 40)).save(buf, "JPEG")
+    conn = st.connect(app_mod.DB)
+    try:
+        rp = conn.execute("INSERT INTO resource_person(name,is_internal) VALUES('Photo T',1)").lastrowid
+        st.set_rp_photo(conn, rp, buf.getvalue(), "image/jpeg")
+    finally:
+        conn.close()
+    full = client.get(f"/photo/{rp}")
+    assert full.status_code == 200 and "max-age" in full.headers["cache-control"]
+    etag = full.headers["etag"]
+    # a repeat view with the validator is a bodyless 304
+    again = client.get(f"/photo/{rp}", headers={"If-None-Match": etag})
+    assert again.status_code == 304 and not again.content
+    # thumbnail: much smaller, correct dimensions, its own ETag
+    small = client.get(f"/photo/{rp}?s=128")
+    assert small.status_code == 200 and small.headers["etag"] != etag
+    assert Image.open(io.BytesIO(small.content)).size == (128, 128)
+    assert len(small.content) < len(full.content)
+    # unsupported sizes fall back to the original
+    assert client.get(f"/photo/{rp}?s=999").content == full.content
+    assert client.get("/photo/99999999").status_code == 404
+
+
 def test_respondent_landing_public(client, sample_ids):
     r = client.get(f"/r/{sample_ids['qr_token']}")
     assert r.status_code in (200, 404)  # valid token -> form; stale -> closed/404
