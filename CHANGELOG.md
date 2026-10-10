@@ -1,5 +1,11 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-10 (v6.20 — hide "Manage the room" nav from non-Administrative-Section admins)
+
+- `app.py` `_cap_ok`: the `room_admin` cap no longer admits `admin`-role accounts; it follows `room_approver` (Administrative Section) only, matching `rooms.is_room_admin`. Hides Room requests / meals / closures from the Office menu and the door display / QR poster from search.
+- `tests/test_search.py`: asserts an admin-role account outside the section sees only "Reserve".
+- **Version bump:** `APP_VERSION` 6.19 → 6.20.
+
 ## 2026-10-09 (v6.19 — remove growth panel from My profile)
 
 - `templates/me.html`: removed the "How <companion> grows" panel and its now-unused `growth` import/`growth_defs()` call. The home page panel is unchanged.
