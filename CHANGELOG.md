@@ -1,5 +1,14 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-10 (v6.25 — stop accepting guessable attendee ids)
+
+- **Security:** `?att=<id>`, the per-event recognition cookie, the rating form's hidden `att`, and the certificate link used to carry the raw attendee id. Anyone could open a registrant's page, download their named certificate, or file feedback as them by changing the number (or forging the cookie). All four now carry a signed token instead; raw integers are ignored everywhere.
+- `auth.make_attendee_token` / `verify_attendee_token`: a new "att" purpose, separate from the emailed resume token, so neither can stand in for the other. Valid 400 days from issue, independent of the activity's dates, so re-registering with the same email always restores access even after the resume link's last-day + 30 days has passed.
+- `app.py`: `_att_token`, `_attendee_from_token` (scoped to the activity), `_cookie_attendee`; used by `event_link_tree`, `_resolve_attendee` (certificate), `rating_form` / `submit_rating` (a forged or legacy value is dropped, so the rating is recorded unattributed), `event_consent`, `event_resume`, `event_email_link`. The certificate-ready email link is signed. `link_tree.html` / `thanks.html` pass the token.
+- **Compatibility:** old certificate links with an integer `att` and old cookies holding an integer stop working; the person registers again with the same email and is resumed (no duplicate).
+- `tests/test_att_hardening.py` (12 tests); existing tests now read the token instead of an integer id.
+- **Version bump:** `APP_VERSION` 6.24 → 6.25.
+
 ## 2026-10-10 (v6.24 — organizer QR card and link validity on the roster)
 
 - `activity_manage.html` / `_manage_ctx`: the "participant page" card shows a QR of the public link (custom slug when set, via `_qr_data_uri`) with a Download QR button, and explains how it differs from each participant's personal link.

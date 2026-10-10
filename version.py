@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.24"
+APP_VERSION = "6.25"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.25",
+        "date": "October 10, 2026",
+        "summary": "Participant pages and certificates are now protected from guessing.",
+        "changes": [
+            "A participant's page, feedback and certificate can no longer be opened by guessing or editing a number in the web address.",
+            "Each participant now gets a private, unguessable link when they register.",
+            "If an old certificate link or a remembered device stops working, register again with the same email to get straight back in. Nothing is duplicated.",
+        ],
+    },
     {
         "version": "6.24",
         "date": "October 10, 2026",
