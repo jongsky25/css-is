@@ -258,8 +258,11 @@ def make_recovery_token(attendee_id, issued_at=None):
     return f"{body}.{sig}"
 
 
-def verify_recovery_token(token, now=None):
-    """Validate signature + purpose + age; return the attendee id or None."""
+def verify_recovery_token(token, now=None, expires_at=None):
+    """Validate signature + purpose + age; return the attendee id or None.
+
+    `expires_at` (epoch seconds) lets a caller that knows the activity's dates
+    keep the link alive until then INSTEAD of the flat _RECOVER_MAX_AGE rule."""
     if not token or "." not in token:
         return None
     body, sig = token.rsplit(".", 1)
@@ -272,7 +275,11 @@ def verify_recovery_token(token, now=None):
         return None
     if payload.get("p") != PURPOSE_RECOVER:
         return None
-    if (now if now is not None else time.time()) - payload.get("iat", 0) > _RECOVER_MAX_AGE:
+    cur = now if now is not None else time.time()
+    if expires_at is not None:
+        if cur > expires_at:
+            return None
+    elif cur - payload.get("iat", 0) > _RECOVER_MAX_AGE:
         return None
     return payload.get("aid")
 

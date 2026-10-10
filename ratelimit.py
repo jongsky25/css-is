@@ -33,6 +33,7 @@ def _limits(bucket):
                                  # independent of Gemini's own budget/rate limiting
         "card": (20, 60),        # sending birthday cards (keyed by the sender's account, not the IP)
         "search": (120, 60),     # /api/search, on keystroke (keyed by the signed-in account)
+        "email_link": (5, 3600), # "email me my personal link" (POST /e/<t>/email-link)
         "room": (5, 3600),       # guest conference-room requests (POST /room): a human files a few an hour
         "room_view": (120, 60),  # guest availability look-ups (cheap GETs)
         "care": (60, 60),        # avatar water/feed taps — the per-user cooldown in

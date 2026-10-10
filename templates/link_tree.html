@@ -21,6 +21,18 @@
                color:var(--ink); cursor:default; }
   .tile.done .go { color:var(--green, #2f855a); }
   .tile.done strong { color:var(--soft); font-weight:600; }
+  .tile.locked { cursor:default; background:var(--bg-soft, #f6f7f9); color:var(--soft); }
+  .tile.locked strong { color:var(--soft); font-weight:600; }
+  .tile.locked .go { float:none; display:block; margin-top:.25rem; font-weight:600; }
+  .save-link { margin:1rem 0; padding:.85rem 1rem; }
+  .save-link summary { cursor:pointer; font-weight:700; font-size:1.05rem; }
+  .save-link .save-body { text-align:center; margin-top:.6rem; }
+  .save-link .save-body p { text-align:left; margin:.4rem 0 .8rem; line-height:1.45; }
+  .save-link img.qr { display:block; margin:0 auto .8rem; width:180px; max-width:100%; height:auto;
+                      background:#fff; padding:.4rem; border:1px solid var(--line); border-radius:8px; }
+  .save-actions { display:flex; gap:.5rem; flex-wrap:wrap; justify-content:center; }
+  .save-actions form { margin:0; }
+  .reg-benefits { margin:.2rem 0 1rem; padding-left:0; list-style:none; line-height:1.7; }
 </style>
 {% endblock %}
 
@@ -47,8 +59,39 @@
   {% if can_manage %}<p class="small" style="margin:.4rem 0 0;"><a href="/activities/{{ ev.event_token }}/manage">⚙ Manage this activity →</a></p>{% endif %}
 
   {% if attendee %}
+  {% if personal_link %}
+  <details class="panel tint-green save-link"{% if just_registered %} open{% endif %}>
+    <summary>{{ t('lt_registered_h', lang) if just_registered else t('lt_personal_link_h', lang) }}</summary>
+    <div class="save-body">
+      <p>{% if attendee.name %}<strong>{{ attendee.name }}</strong> — {% endif %}{{ t('lt_save_body', lang) }}</p>
+      <img class="qr" src="{{ personal_qr }}" alt="{{ t('lt_qr_alt', lang) }}" width="180" height="180">
+      <div class="save-actions">
+        <button type="button" class="btn" data-copy="{{ personal_link }}" data-done="{{ t('lt_copied', lang) }}">{{ t('lt_copy_link', lang) }}</button>
+        <button type="button" class="btn ghost" data-share="{{ personal_link }}" hidden>{{ t('lt_share', lang) }}</button>
+        <a class="btn ghost" href="{{ personal_qr }}" download="{{ ev.slug or ev.event_token }}-my-link.png">{{ t('lt_download_qr', lang) }}</a>
+        {% if can_email_link %}
+        <form method="post" action="/e/{{ ev.event_token }}/email-link">
+          <button type="submit" class="btn ghost">{{ t('lt_email_me_link', lang) }}</button>
+        </form>
+        {% endif %}
+      </div>
+      {% if link_valid_until %}<p class="muted small" style="text-align:center;">{{ t('lt_valid_until', lang) }} {{ link_valid_until }}</p>{% endif %}
+    </div>
+  </details>
+  {% else %}
   <div class="flash ok" style="margin-top:1rem;">{{ t('lt_thanks_pre', lang) }}{% if attendee.name %}, {{ attendee.name }}{% endif %}{{ t('lt_thanks_post', lang) }}</div>
-  <p class="muted small" style="margin:-.5rem 0 1rem;">
+  {% endif %}
+  {% if emailed_to %}<div class="flash ok" role="status">{{ t('lt_emailed', lang) }} {{ emailed_to }}</div>{% endif %}
+  {% if email_wait %}<div class="flash" role="status">{{ t('lt_email_wait', lang) }}</div>{% endif %}
+
+  {% if announcement %}
+  <div class="panel tint-amber" role="status" style="margin:0 0 1rem; padding:.85rem 1rem;">
+    <p style="margin:0 0 .3rem; font-weight:650;">📌 {{ t('lt_update_h', lang) }}{% if announcement_at %} <span class="muted small" style="font-weight:400;">· {{ announcement_at }}</span>{% endif %}</p>
+    <div style="white-space:pre-wrap; line-height:1.5;">{{ announcement }}</div>
+  </div>
+  {% endif %}
+
+  <p class="muted small" style="margin:0 0 1rem;">
     {{ t('lt_not_you', lang) }} {{ (attendee.name or 'you').split(' ')[0] }}?
     <a href="/e/{{ ev.event_token }}/forget">{{ t('lt_start_fresh', lang) }}</a>
   </p>
@@ -93,8 +136,47 @@
   {{ reslist(resources_now) }}
   {% endif %}
 
+  <h2>{{ t('lt_rate_this', lang) }}</h2>
+  {% if links %}
+  {% if feedback_opens %}
+  <div class="panel tint-blue" style="margin:0 0 .8rem; padding:.75rem .9rem; font-size:.92rem;">
+    🔒 {{ t('lt_feedback_locked', lang) }} <strong>{{ feedback_opens }}</strong>. {{ t('lt_feedback_come_back', lang) }}
+  </div>
+  {% endif %}
+  <ul class="link-list">
+    {% for l in links %}
+    {% if l.done %}
+    <li><div class="tile lg done">
+      <span class="muted small">{{ l.n }} {{ t('lt_n_of', lang) }} {{ total }} · {{ l.label }}</span><br>
+      <strong>{{ l.title }}</strong>{% if l.rp_name %} — {{ l.rp_name }}{% endif %}
+      <span class="go">✓ {{ t('lt_done', lang) }}</span>
+    </div></li>
+    {% elif l.state == 'open' %}
+    <li><a class="tile lg" href="/r/{{ l.token }}?seq={{ tokens }}&att={{ attendee.id }}">
+      <span class="muted small">{{ l.n }} {{ t('lt_n_of', lang) }} {{ total }} · {{ l.label }}</span><br>
+      <strong>{{ l.title }}</strong>{% if l.rp_name %} — {{ l.rp_name }}{% endif %}
+      <span class="go" aria-hidden="true">→</span>
+    </a></li>
+    {% else %}
+    <li><div class="tile lg locked">
+      <span class="muted small">{{ l.n }} {{ t('lt_n_of', lang) }} {{ total }} · {{ l.label }}</span><br>
+      <strong>{{ l.title }}</strong>{% if l.rp_name %} — {{ l.rp_name }}{% endif %}
+      <span class="go" style="color:var(--soft);">{% if l.state == 'not_yet' %}🔒 {{ t('lt_opens', lang) }} {{ l.opens }}{% else %}{{ t('lt_closed_tile', lang) }}{% endif %}</span>
+    </div></li>
+    {% endif %}
+    {% endfor %}
+  </ul>
+  {% if completed %}
+  <p class="muted small">{{ t('lt_all_done', lang) }}</p>
+  {% elif any_open %}
+  <p class="muted small">{{ t('lt_each_hint', lang) }}</p>
+  {% endif %}
+  {% else %}
+  <p class="muted">{{ t('lt_no_forms', lang) }}</p>
+  {% endif %}
+
   {% if completed and ending_message %}
-  <div class="panel tint-green" style="margin:0 0 1rem; padding:.85rem 1rem; white-space:pre-wrap; line-height:1.5;">{{ ending_message }}</div>
+  <div class="panel tint-green" style="margin:1rem 0; padding:.85rem 1rem; white-space:pre-wrap; line-height:1.5;">{{ ending_message }}</div>
   {% endif %}
 
   {% if completed and ev.certificate_enabled and attendee %}
@@ -116,32 +198,34 @@
     {% endif %}
   {% endif %}
 
-  <h2>{{ t('lt_rate_this', lang) }}</h2>
-  {% if links %}
-  <ul class="link-list">
-    {% for l in links %}
-    {% if l.done %}
-    <li><div class="tile lg done">
-      <span class="muted small">{{ l.n }} {{ t('lt_n_of', lang) }} {{ total }} · {{ l.label }}</span><br>
-      <strong>{{ l.title }}</strong>{% if l.rp_name %} — {{ l.rp_name }}{% endif %}
-      <span class="go">✓ {{ t('lt_done', lang) }}</span>
-    </div></li>
-    {% else %}
-    <li><a class="tile lg" href="/r/{{ l.token }}?seq={{ tokens }}&att={{ attendee.id }}">
-      <span class="muted small">{{ l.n }} {{ t('lt_n_of', lang) }} {{ total }} · {{ l.label }}</span><br>
-      <strong>{{ l.title }}</strong>{% if l.rp_name %} — {{ l.rp_name }}{% endif %}
-      <span class="go" aria-hidden="true">→</span>
-    </a></li>
-    {% endif %}
-    {% endfor %}
-  </ul>
-  {% if completed %}
-  <p class="muted small">{{ t('lt_all_done', lang) }}</p>
-  {% else %}
-  <p class="muted small">{{ t('lt_each_hint', lang) }}</p>
-  {% endif %}
-  {% else %}
-  <p class="muted">{{ t('lt_no_forms', lang) }}</p>
+  {% if personal_link %}
+  <script>
+  (function () {
+    document.querySelectorAll('[data-copy]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var url = btn.getAttribute('data-copy'), label = btn.textContent;
+        function done() { btn.textContent = btn.getAttribute('data-done') || 'Copied'; setTimeout(function () { btn.textContent = label; }, 2000); }
+        function fallback() {
+          try {
+            var ta = document.createElement('textarea');
+            ta.value = url; ta.style.position = 'fixed'; ta.style.opacity = '0';
+            document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done();
+          } catch (_) { window.prompt('Copy this link', url); }
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(url).then(done, fallback); }
+        else { fallback(); }
+      });
+    });
+    if (navigator.share) {
+      document.querySelectorAll('[data-share]').forEach(function (btn) {
+        btn.hidden = false;
+        btn.addEventListener('click', function () {
+          navigator.share({title: document.title, url: btn.getAttribute('data-share')}).catch(function () {});
+        });
+      });
+    }
+  })();
+  </script>
   {% endif %}
 
   {% elif confirm %}
@@ -171,6 +255,13 @@
   {% else %}
   <hr style="border:none; border-top:1px solid var(--line); margin:1.2rem 0;">
   <h2 style="margin-top:0;">{{ t('lt_sign_in', lang) }}</h2>
+  {% if link_expired %}<div class="flash" role="status">{{ t('lt_link_expired', lang) }}</div>{% endif %}
+  <p class="muted" style="margin:.2rem 0 .4rem;">{{ t('lt_reg_intro', lang) }}</p>
+  <ul class="reg-benefits small">
+    <li>{{ t('lt_reg_benefit_updates', lang) }}</li>
+    <li>{{ t('lt_reg_benefit_feedback', lang) }}</li>
+    {% if ev.certificate_enabled %}<li>{{ t('lt_reg_benefit_cert', lang) }}</li>{% endif %}
+  </ul>
   {% if errors %}
   <div class="errors" role="alert"><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>
   {% endif %}
@@ -192,6 +283,7 @@
     <div class="field">
       <label for="email">{{ t('lt_email_lbl', lang) }}</label>
       <input type="email" id="email" name="email" value="{{ posted.email or '' }}" autocomplete="email" required>
+      <p class="muted small" style="margin:.3rem 0 0;">{{ t('lt_email_help', lang) }}</p>
       <p id="dupe-notice" class="panel tint-blue" role="status" hidden
          style="font-size:.85rem; line-height:1.4; margin:.5rem 0 0; color:var(--ink-soft);">
         {{ t('lt_dupe_notice', lang) }}

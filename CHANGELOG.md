@@ -1,5 +1,15 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-10 (v6.23 — event page as a registration hub)
+
+- `link_tree.html` / `i18n.py`: the public page now reads as registration ("Register for this activity"). A benefits list and email help line were added, and the old sign-in/thanks/dupe/consent strings were reworded (EN + FIL).
+- Save-your-link panel in the registered view: signed `/resume?rt=` link + inline QR (`_qr_data_uri`), copy/share/download buttons, collapsed on later visits (`?new=1` after a first registration opens it). It renders **only for a device recognized by its cookie**, never for a bare `?att=`. New `POST /e/{token}/email-link` (cookie-only, `email_link` rate bucket 5/h, 15-min per-address cooldown from `email_log`; reuses the `registration_confirmed` email feature). `mailer.registration_confirmed_message` reworded.
+- Feedback is held until the activity's first day: `_feedback_state` / `_rating_gate` gate the page tiles **and** `GET`/`POST /r/{token}` (forms with their own `open_at` keep their window; undated and outside activities are ungated). `st.get_event_forms` now also returns `open_at`/`close_at`.
+- Personal-link lifetime = activity last day + 30 days: `auth.verify_recovery_token(..., expires_at=)` (default 90-day path unchanged for other callers); `event_resume` uses it, the recognition cookie lasts at least as long, and an expired link redirects with `?expired=1`.
+- Pinned update: `event.announcement` / `announcement_at` columns, `POST /activities/{token}/announcement` (+ manage card), shown above the page content for registered participants (plain text, 1000-char cap).
+- `tests/test_event_hub.py` (21 tests); `tests/test_registration_dedup.py` now keys "recognized" on the start-fresh link and the `?expired=1` redirect (its events are a year out, so feedback is intentionally hidden).
+- **Version bump:** `APP_VERSION` 6.22 → 6.23.
+
 ## 2026-10-10 (v6.22 — faster profile photos)
 
 - `app.py` `/photo/{rp_id}`: adds an `ETag` (304 on `If-None-Match`) and `Cache-Control: private, max-age=300` (was `no-cache` with no validator, so every page view re-downloaded every ~100 KB photo). New `?s=64|128|256` returns a memoised JPEG thumbnail; other values return the original.

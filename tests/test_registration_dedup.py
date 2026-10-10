@@ -137,9 +137,11 @@ def test_cookie_recognizes_returning_participant(app_mod, manager, db_path):
                follow_redirects=False)
     assert r.status_code == 303
     assert any("css_att_e" in v for v in r.headers.get_list("set-cookie"))
-    # The bare link (NO ?att=) is now recognized via the cookie -> rating links show.
+    # The bare link (NO ?att=) is now recognized via the cookie -> the registered view
+    # (its "start fresh" link) shows. Rating links are NOT the signal here: this
+    # event is a year out, so its feedback is held back until it starts.
     r = c.get(f"/e/{tok}")
-    assert r.status_code == 200 and "/r/" in r.text
+    assert r.status_code == 200 and f"/e/{tok}/forget" in r.text
 
 
 # --------------------------------------------------------------------------
@@ -222,7 +224,7 @@ def test_forget_clears_cookie_and_shows_form(app_mod, manager, db_path):
     tok = _make_event(manager, db_path)
     c = TestClient(app_mod.app, raise_server_exceptions=True)
     c.post(f"/e/{tok}", data=_reg("Kay Diaz", "kay@example.com"))
-    assert "/r/" in c.get(f"/e/{tok}").text          # recognized via cookie
+    assert f"/e/{tok}/forget" in c.get(f"/e/{tok}").text   # recognized via cookie
     # "Not you?" -> clears the cookie and routes to a blank form.
     r = c.get(f"/e/{tok}/forget", follow_redirects=False)
     assert r.status_code == 303 and r.headers["location"].endswith("?fresh=1")
@@ -267,13 +269,13 @@ def test_resume_link_recognizes_on_fresh_device(app_mod, manager, db_path):
     r = c.get(f"/e/{tok}/resume", params={"rt": rtok}, follow_redirects=False)
     assert r.status_code == 303 and f"att={att}" in r.headers["location"]
     assert any("css_att_e" in v for v in r.headers.get_list("set-cookie"))
-    assert "/r/" in c.get(f"/e/{tok}").text          # now recognized by the cookie
+    assert f"/e/{tok}/forget" in c.get(f"/e/{tok}").text   # now recognized by the cookie
 
 
 def test_resume_bad_token_falls_back_to_page(client, manager, db_path):
     tok = _make_event(manager, db_path)
     r = client.get(f"/e/{tok}/resume", params={"rt": "nope"}, follow_redirects=False)
-    assert r.status_code == 303 and r.headers["location"] == f"/e/{tok}"
+    assert r.status_code == 303 and r.headers["location"] == f"/e/{tok}?expired=1"
 
 
 def test_organizer_recovery_link_and_it_resumes(manager, db_path, app_mod):
