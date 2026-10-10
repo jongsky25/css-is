@@ -113,7 +113,7 @@ def test_duplicate_post_reuses_attendee(client, manager, db_path):
     # "Lost my link" -> re-submit the SAME email -> resume, no duplicate row.
     r2 = client.post(f"/e/{tok}", data=data, follow_redirects=False)
     att2 = re.search(r"att=([^&]+)", r2.headers["location"]).group(1)
-    assert att2 == att1
+    assert auth.verify_attendee_token(att2) == auth.verify_attendee_token(att1)   # same person
     assert st.count_attendees(st.connect(db_path)) == before + 1
 
 
@@ -164,7 +164,7 @@ def test_same_name_resumes_silently(client, manager, db_path):
     # Same person, same email -> straight 303 resume, no interstitial.
     r = client.post(f"/e/{tok}", data=data, follow_redirects=False)
     assert r.status_code == 303
-    assert re.search(r"att=([^&]+)", r.headers["location"]).group(1) == a1
+    assert auth.verify_attendee_token(re.search(r"att=([^&]+)", r.headers["location"]).group(1)) == auth.verify_attendee_token(a1)
 
 
 def test_different_name_shows_confirm_and_does_not_collapse(client, manager, db_path):
@@ -212,7 +212,7 @@ def test_resolve_resume_reuses_existing(client, manager, db_path):
     r = client.post(f"/e/{tok}", data=_reg("Jo Yu Jr", "jo@example.com",
                     resolve="resume"), follow_redirects=False)
     assert r.status_code == 303
-    assert re.search(r"att=([^&]+)", r.headers["location"]).group(1) == a1
+    assert auth.verify_attendee_token(re.search(r"att=([^&]+)", r.headers["location"]).group(1)) == auth.verify_attendee_token(a1)
     assert st.count_attendees(st.connect(db_path)) == before
 
 
@@ -291,7 +291,9 @@ def test_organizer_recovery_link_and_it_resumes(manager, db_path, app_mod):
     # ...and the minted link actually works end to end.
     path = link.split("//", 1)[-1].split("/", 1)[-1]      # strip scheme+host
     r = c.get("/" + path, follow_redirects=False)
-    assert r.status_code == 303 and f"att={att}" in r.headers["location"]
+    assert r.status_code == 303
+    got = re.search(r"att=([^&]+)", r.headers["location"]).group(1)
+    assert auth.verify_attendee_token(got) == auth.verify_attendee_token(att)   # same person
 
 
 def test_resend_without_smtp_tells_organizer_to_copy(manager, db_path, app_mod):
