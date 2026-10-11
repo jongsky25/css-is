@@ -15549,14 +15549,16 @@ def approvals_inbox(request: Request, ok: str = "", err: str = "", period: str =
     user = request.state.user
     conn = get_conn()
     try:
-        chief = st.user_is_approving_chief(conn, user)
+        # Chain approvers only: an admin with no chief seat has nothing routed
+        # to them here, and shouldn't see other people's orphaned requests.
+        chief = st.user_is_chain_approver(conn, user)
         room_admin = rooms.is_room_admin(conn, user)
         if not (chief or room_admin):
             return templates.TemplateResponse(
                 request, "forbidden.html",
                 {"capability": "approvals", "show_scope": False}, status_code=403)
-        wellness = st.list_wellness_approvals(conn, user) if chief else []
-        awa = st.list_work_arrangement_approvals(conn, user) if chief else []
+        wellness = st.list_wellness_approvals(conn, user, orphans=False) if chief else []
+        awa = st.list_work_arrangement_approvals(conn, user, orphans=False) if chief else []
         room_queue = rooms.queue(conn) if room_admin else []
         if room_admin:                       # opening the inbox is reading the short-notice withdrawals
             rooms_notify.mark_seen(conn, user["id"], ("withdrawn_late",))

@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.26"
+APP_VERSION = "6.27"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.27",
+        "date": "October 11, 2026",
+        "summary": "The Approvals page now shows you only the requests that are really yours to decide.",
+        "changes": [
+            "If you only manage conference rooms, Approvals no longer lists other people's wellness break and work arrangement requests.",
+            "Wellness breaks and work arrangements appear only for people who hold a chief seat or are acting as OIC, and only for requests routed to them.",
+            "The waiting-on-you counts on the home page and bell now match what the Approvals page shows.",
+        ],
+    },
     {
         "version": "6.26",
         "date": "October 10, 2026",

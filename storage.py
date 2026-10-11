@@ -7103,6 +7103,15 @@ def is_approver_for(conn, user, subject_user_id):
     return user.get("role") == "admin" and not approvers
 
 
+def user_is_chain_approver(conn, user):
+    """Like user_is_approving_chief, but the `admin` role alone doesn't count:
+    does this user hold a directory chief seat (or an acting-OIC delegation), so
+    requests can actually be routed to them? The approvals inbox gates its
+    wellness / work-arrangement sections on this, so an admin who is only there
+    for the room queue isn't shown other people's orphaned requests."""
+    return user_is_approving_chief(conn, {**user, "role": None})
+
+
 def user_is_approving_chief(conn, user):
     """Does this user see an approvals queue at all? Admins, plus anyone whose
     directory role can approve SOMEONE — section head/chief, division chief, or
@@ -7133,10 +7142,10 @@ def pending_approval_counts(conn, user):
     ever show a number the real queue (list_wellness_approvals /
     list_work_arrangement_approvals — the exact functions the queue pages
     themselves call) disagrees with."""
-    if not user_is_approving_chief(conn, user):
+    if not user_is_chain_approver(conn, user):
         return {"wellness": 0, "awa": 0}
-    return {"wellness": len(list_wellness_approvals(conn, user)),
-            "awa": len(list_work_arrangement_approvals(conn, user))}
+    return {"wellness": len(list_wellness_approvals(conn, user, orphans=False)),
+            "awa": len(list_work_arrangement_approvals(conn, user, orphans=False))}
 
 
 def user_can_view_work_arrangement_schedule(conn, user):
@@ -7686,7 +7695,7 @@ def list_my_wellness_claims(conn, user_id, limit=25):
     return [get_wellness_claim(conn, i) for i in ids]
 
 
-def list_wellness_approvals(conn, user):
+def list_wellness_approvals(conn, user, orphans=True):
     """Pending claims this user may decide, oldest break first. A chief sees
     exactly the claims the escalation chain routes to them (their section's
     staff, or — for a division chief — their division's section chiefs, etc.).
@@ -7704,14 +7713,15 @@ def list_wellness_approvals(conn, user):
         "SELECT id FROM wellness_claim WHERE status='pending' AND user_id != ? "
         "ORDER BY break_date, start_time", (user["id"],)).fetchall()]
     claims = [get_wellness_claim(conn, i) for i in ids]
-    return _mine_or_orphaned(conn, user, claims, lambda c: c["user_id"])
+    return _mine_or_orphaned(conn, user, claims, lambda c: c["user_id"], orphans=orphans)
 
 
-def _mine_or_orphaned(conn, user, rows, subject_of):
+def _mine_or_orphaned(conn, user, rows, subject_of, orphans=True):
     """The approval-queue filter shared by the wellness break and the work
     arrangement: rows the chain routes to `user`, plus — for an admin — the rows
-    it routes to nobody. See list_wellness_approvals for why."""
-    is_admin = user.get("role") == "admin"
+    it routes to nobody (unless `orphans` is False — the approvals inbox keeps
+    those out of the page). See list_wellness_approvals for why."""
+    is_admin = user.get("role") == "admin" and orphans
     if not is_admin and not user_is_approving_chief(conn, user):
         return []
     out = []
@@ -9287,7 +9297,7 @@ def decide_work_arrangement(conn, wa_id, user, action, note=None):
     return _wa_apply_decision(conn, wa_id, row, status, user["id"], note)
 
 
-def list_work_arrangement_approvals(conn, user):
+def list_work_arrangement_approvals(conn, user, orphans=True):
     """Pending arrangements this user may decide, earliest period first. A chief
     sees exactly what the escalation chain routes to them; an admin additionally
     sees the requests it routes to nobody (see list_wellness_approvals — the same
@@ -9299,7 +9309,7 @@ def list_work_arrangement_approvals(conn, user):
         "ORDER BY w.period_start, w.id", (user["id"],)).fetchall()
     out = _mine_or_orphaned(conn, user,
                             [get_work_arrangement(conn, r[0]) for r in rows],
-                            lambda w: w["user_id"])
+                            lambda w: w["user_id"], orphans=orphans)
     for w in out:
         w["coverage_flag"] = work_arrangement_coverage_flag(conn, w)
     return out
