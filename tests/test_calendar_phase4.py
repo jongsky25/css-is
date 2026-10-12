@@ -183,3 +183,10 @@ def test_the_calendar_script_never_builds_html_from_a_string():
 def pathlib_root():
     import pathlib
     return pathlib.Path(__file__).resolve().parent.parent
+
+
+def test_more_options_keeps_what_was_typed_in_quick_add(viewer):
+    html = viewer.get("/calendar/new?day=2026-10-14&title=Budget+talk&end_date=2026-10-15"
+                      "&start_time=09:30&kind=training").text
+    assert 'value="Budget talk"' in html and 'value="2026-10-15"' in html and 'value="09:30"' in html
+    assert re.search(r'<option value="training"\s+selected', html)
