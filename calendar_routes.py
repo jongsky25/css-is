@@ -629,7 +629,15 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             day = today_local().isoformat()
         conn = get_conn()
         try:
-            return _form_page(request, conn, _blank_form(conn, request.state.user, day))
+            f = _blank_form(conn, request.state.user, day)
+            # "More options…" on the quick-add sheet hands over what was already typed there.
+            q = request.query_params
+            for k in ("title", "kind", "audience", "owner_org_id", "end_date", "start_time", "end_time"):
+                if q.get(k):
+                    f[k] = q[k][:200]
+            if q.getlist("people"):
+                f["people"] = q.getlist("people")
+            return _form_page(request, conn, f)
         finally:
             conn.close()
 

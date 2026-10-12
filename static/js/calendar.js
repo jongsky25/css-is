@@ -202,6 +202,19 @@
     if (first) first.focus();
   }
 
+  // "More options…" carries what is already typed into the full form (on a phone the sheet is
+  // typed into first, so a bare link would throw that away).
+  form.querySelector("[data-more]").addEventListener("click", function () {
+    var p = [];
+    function add(k, v) { if (v) p.push(encodeURIComponent(k) + "=" + encodeURIComponent(v)); }
+    ["title", "kind", "audience", "owner_org_id", "start_date", "end_date", "start_time", "end_time"].forEach(function (n) {
+      var el = form.elements[n];
+      add(n === "start_date" ? "day" : n, el && el.value);
+    });
+    Array.prototype.forEach.call(form.querySelectorAll("input[name=people]"), function (el) { add("people", el.value); });
+    this.href = "/calendar/new" + (p.length ? "?" + p.join("&") : "");
+  });
+
   document.addEventListener("click", function (ev) {
     var t = ev.target;
     var btn = t.closest && t.closest("[data-quick]");
