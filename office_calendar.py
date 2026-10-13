@@ -584,7 +584,7 @@ def _rooms_layer(conn, ctx, start, end, scope):
             "SELECT r.id, r.title, r.day, r.status, r.modality, r.requester_user_id, r.ext_org, r.ref_code, "
             "(SELECT MIN(s.start_time) FROM room_reservation_slot rs JOIN room_slot s ON s.id=rs.slot_id WHERE rs.reservation_id=r.id), "
             "(SELECT MAX(s.end_time) FROM room_reservation_slot rs JOIN room_slot s ON s.id=rs.slot_id WHERE rs.reservation_id=r.id), "
-            "ou.id, r.event_id FROM room_reservation r LEFT JOIN admin_user a ON a.id=r.requester_user_id "
+            "ou.id, r.event_id, r.standby FROM room_reservation r LEFT JOIN admin_user a ON a.id=r.requester_user_id "
             "LEFT JOIN resource_person rp ON rp.id=a.rp_id LEFT JOIN org_unit ou ON ou.id=rp.org_unit_id "
             "WHERE r.day BETWEEN ? AND ? AND r.status IN ('requested','approved') ORDER BY r.day, r.id",
             (start, end)).fetchall()
@@ -594,7 +594,7 @@ def _rooms_layer(conn, ctx, start, end, scope):
     can_decide = None
     keep = []
     for row in rows:
-        rid, title, day, status, modality, req, ext_org, ref, t0, t1, unit_id, _event_id = row
+        rid, title, day, status, modality, req, ext_org, ref, t0, t1, unit_id, _event_id, _standby = row
         mine = req is not None and req == me
         if scope == "mine" and not mine:
             continue
@@ -610,7 +610,7 @@ def _rooms_layer(conn, ctx, start, end, scope):
     units = _units(conn, [r[10] for r in keep])
     tones = _tone_map(conn)
     out = []
-    for rid, title, day, status, modality, req, ext_org, ref, t0, t1, unit_id, event_id in keep:
+    for rid, title, day, status, modality, req, ext_org, ref, t0, t1, unit_id, event_id, standby in keep:
         unit = units.get(unit_id)
         out.append({
             "key": f"room:{rid}", "layer": "rooms", "title": title,
@@ -622,8 +622,8 @@ def _rooms_layer(conn, ctx, start, end, scope):
             "tags": [], "venue": "Conference room",
             "modality": modality if modality in ("f2f", "online", "hybrid") else None, "meeting_url": None,
             "url": f"/rooms?week={day}", "css": None,
-            "flags": [] if status == "approved" else ["awaiting approval"], "editable": False, "private": False,
-            "ref": ref, "event_id": event_id,
+            "flags": [] if status == "approved" else (["provisional (standby)"] if standby else ["awaiting approval"]),
+            "editable": False, "private": False, "ref": ref, "event_id": event_id,
         })
     return out
 
@@ -649,7 +649,7 @@ def _fold_linked_rooms(items):
         if not act["venue"]:
             act["venue"] = "Conference room"
         if i["status"] == "tentative" and "room awaiting approval" not in act["flags"]:
-            act["flags"] = [*act["flags"], "room awaiting approval"]
+            act["flags"] = [*act["flags"], "room provisional (standby)" if "provisional (standby)" in i["flags"] else "room awaiting approval"]
     return out
 
 

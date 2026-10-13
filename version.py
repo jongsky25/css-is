@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.27"
+APP_VERSION = "6.28"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.28",
+        "date": "October 13, 2026",
+        "summary": "Standby (provisional) conference room requests, and no more double plotting on the calendar.",
+        "changes": [
+            "An activity and the conference room booked for it now show as one item on the calendar, with the room hours on it.",
+            "If the hours you want are already booked or closed, you can ask for a provisional (standby) use on the Add activity form and the Conference room page. Nothing is held for you.",
+            "The Administrative Section sees standby requests marked in Approvals and can confirm one in an emergency (the booking in the way is released and its owner is told why), or decline it.",
+        ],
+    },
     {
         "version": "6.27",
         "date": "October 11, 2026",

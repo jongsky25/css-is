@@ -191,7 +191,7 @@ _COLS = ("id, ref_code, requester_user_id, ext_name, ext_org, ext_email, ext_pho
          "title, purpose, attendees, modality, day, status, source, decided_by, decided_at, "
          "decide_note, bumped_by_reservation_id, moves_reservation_id, event_id, "
          "calendar_entry_id, meals_requested, created_by, created_at, updated_at, "
-         "ext_email_verified_at, ext_consent_at, series_id")
+         "ext_email_verified_at, ext_consent_at, series_id, standby")
 
 
 def _row(conn, r):
@@ -262,10 +262,15 @@ def _validate_slots(conn, slot_ids):
 def request(conn, *, title, day, slot_ids, requester_user_id=None, ext=None, purpose=None,
             attendees=None, modality="f2f", meals_requested=False, actor=None, today=None,
             max_ahead=MAX_DAYS_AHEAD, consent_at=None, event_id=None, source=None, moves_reservation_id=None,
-            series_id=None, quiet=False):
+            series_id=None, quiet=False, standby=False):
     """File a request. Internal (requester_user_id) or external (ext = dict of
     name/org/email/phone). Status starts `requested`; nothing is held. `event_id` links it to a
-    CSS activity; `source`/`moves_reservation_id` mark a move request (see request_move)."""
+    CSS activity; `source`/`moves_reservation_id` mark a move request (see request_move).
+
+    `standby=True` lets the request be filed for hours that are already booked or closed: it is a
+    PROVISIONAL use that holds nothing, and the Administrative Section can confirm it if the booking
+    is released or in an emergency (`confirm_standby`). It is stored as standby only when something
+    really is in the way; for free hours it is an ordinary request."""
     title = (title or "").strip()
     if not title:
         raise RoomError("Please give the meeting a title.")
@@ -283,22 +288,24 @@ def request(conn, *, title, day, slot_ids, requester_user_id=None, ext=None, pur
         raise RoomError(reason)
     order = _validate_slots(conn, slot_ids)
     states = slot_states(conn, day)
-    for sid in order:
-        if states[sid]["state"] in ("approved", "blocked"):
-            who = "booked" if states[sid]["state"] == "approved" else "unavailable"
-            raise SlotTaken(f"{states[sid]['slot']['label']} is already {who} that day.")
+    taken = [sid for sid in order if states[sid]["state"] in ("approved", "blocked")]
+    if taken and not standby:
+        sid = taken[0]
+        who = "booked" if states[sid]["state"] == "approved" else "unavailable"
+        raise SlotTaken(f"{states[sid]['slot']['label']} is already {who} that day.")
+    is_standby = 1 if taken else 0
     now = _stamp()
     day_iso = _d(day).isoformat()
     try:
         cur = conn.execute(
             "INSERT INTO room_reservation(requester_user_id, ext_name, ext_org, ext_email, ext_phone, "
             "ext_consent_at, title, purpose, attendees, modality, day, status, source, meals_requested, "
-            "event_id, moves_reservation_id, series_id, created_by, created_at, updated_at) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?, 'requested', ?,?,?,?,?,?,?,?)",
+            "event_id, moves_reservation_id, series_id, standby, created_by, created_at, updated_at) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?, 'requested', ?,?,?,?,?,?,?,?,?)",
             (requester_user_id, ext.get("name"), ext.get("org"), ext.get("email"), ext.get("phone"),
              consent_at, title, (purpose or "").strip() or None, attendees, modality, day_iso,
              source or ("internal" if requester_user_id is not None else "external"),
-             1 if meals_requested else 0, event_id, moves_reservation_id, series_id, actor, now, now))
+             1 if meals_requested else 0, event_id, moves_reservation_id, series_id, is_standby, actor, now, now))
         rid = cur.lastrowid
         conn.execute("UPDATE room_reservation SET ref_code=? WHERE id=?",
                      (f"CR-{_d(day_iso):%y%m}-{rid:04d}", rid))
@@ -310,7 +317,7 @@ def request(conn, *, title, day, slot_ids, requester_user_id=None, ext=None, pur
         conn.rollback()
         raise
     st.audit(conn, actor or "system", "room_request", target_type="room_reservation", target_id=rid,
-             summary=f"{title} on {day_iso}")
+             summary=f"{title} on {day_iso}" + (" (standby: hours already taken)" if is_standby else ""))
     out = get_reservation(conn, rid)
     if meals_requested:
         _meal_form(conn, rid, actor)
@@ -410,6 +417,50 @@ def decline(conn, rid, by, note, notify=True):
              summary=f"{res['title']} on {res['day']}: {note.strip()}", before="requested", after="declined")
     out = get_reservation(conn, rid)
     _meals_over(conn, rid, "The room request was declined.")
+    if notify:
+        _emit("decided", conn, out, by)
+    return out
+
+
+def confirm_standby(conn, rid, by, reason, today=None, notify=True):
+    """The Administrative Section confirms a provisional (standby) request for hours that an approved
+    booking still holds, e.g. an emergency. The held booking(s) are cancelled and this one is approved in
+    ONE transaction, like "Book anyway"; a reason is required and goes to the people bumped. Hours that are
+    closed by a block can't be taken this way: reopen the room first. If nothing holds the hours any more
+    it is simply approved."""
+    if not (reason or "").strip():
+        raise RoomError("Please give a short reason: the people whose booking is released are told it.")
+    res = get_reservation(conn, rid)
+    _must_be_open(res, ("requested",))
+    if _d(res["day"]) < (today or tz.today_local()):
+        raise RoomError("That date has already passed.")
+    day_iso = res["day"]
+    block = _blocked_reason(conn, day_iso, res["slot_ids"])
+    if block:
+        raise SlotTaken(f"The room is closed for those hours ({block}). Reopen it first under Room closures.")
+    held = [h for h in _approved_overlapping(conn, day_iso, res["slot_ids"]) if h != rid]
+    try:
+        for old in held:
+            _cancel_in_txn(conn, old, by, reason.strip(), bumped_by=rid)
+        conn.execute("UPDATE room_reservation_slot SET is_approved=1 WHERE reservation_id=?", (rid,))
+        conn.execute(
+            "UPDATE room_reservation SET status='approved', decided_by=?, decided_at=?, decide_note=?, "
+            "updated_at=? WHERE id=? AND status='requested'", (by, _stamp(), reason.strip(), _stamp(), rid))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    st.audit(conn, by, "room_approve", target_type="room_reservation", target_id=rid,
+             summary=f"{res['title']} on {day_iso}: standby confirmed. {reason.strip()}", before="requested", after="approved")
+    for old in held:
+        st.audit(conn, by, "room_cancel", target_type="room_reservation", target_id=old,
+                 summary=f"Cancelled for {res['title']}: {reason.strip()}", before="approved", after="cancelled")
+    out = get_reservation(conn, rid)
+    out["bumped"] = held
+    for old in held:
+        _meals_over(conn, old, f"The booking was cancelled: {reason.strip()}")
+        if notify:
+            _emit("cancelled", conn, get_reservation(conn, old), by)
     if notify:
         _emit("decided", conn, out, by)
     return out
@@ -638,7 +689,8 @@ def queue(conn):
                     "when": f"{_d(res['day']):%a} {_d(res['day']).day} {_d(res['day']):%b %Y}",
                     "held_by": ({"id": held[0], "ref": held[1], "title": held[2]} if held else None),
                     "blocked": block[0] if block else None,
-                    "can_approve": not held and not block})
+                    "can_approve": not held and not block,
+                    "can_confirm_standby": bool(res["standby"] and held and not block)})
     return out
 
 
@@ -1089,16 +1141,16 @@ def purge_guest_details(conn, today=None, months=GUEST_RETENTION_MONTHS):
 
 # ------------------------------------------------ CSS activity link (R8) ---
 
-def precheck(conn, day, slot_ids, today=None, max_ahead=MAX_DAYS_AHEAD):
+def precheck(conn, day, slot_ids, today=None, max_ahead=MAX_DAYS_AHEAD, standby=False):
     """Would a request for these hours be refused right now? Raises the same RoomError / SlotTaken
     request() would, writing nothing: the activity form uses it to stop a bad room choice BEFORE
-    the activity is saved."""
+    the activity is saved. With `standby` taken hours are fine (a provisional request is allowed)."""
     reason = day_closed_reason(conn, day, today or tz.today_local(), max_ahead=max_ahead)
     if reason:
         raise RoomError(reason)
     order = _validate_slots(conn, slot_ids)
     states = slot_states(conn, day)
-    for sid in order:
+    for sid in ([] if standby else order):
         if states[sid]["state"] in ("approved", "blocked"):
             what = "already booked" if states[sid]["state"] == "approved" else "unavailable"
             raise SlotTaken(f"The conference room is {what} at {states[sid]['slot']['label']} that day.")

@@ -65,14 +65,14 @@
           <div>{{ r.hours }}</div>
         </td>
         <td data-label="Meeting">
-          <div>{{ r.title }}</div>
+          <div>{{ r.title }}{% if r.standby %} <span class="pill warn" title="Filed for hours that were already booked or closed">Standby · provisional</span>{% endif %}</div>
           <div class="sub">{{ room_modalities.get(r.modality, r.modality) }}{% if r.attendees %} · {{ r.attendees }} attending{% endif %}{% if r.meals_requested %} · meals requested{% endif %}</div>
           {% if r.move_of %}<div class="delta"><span class="pill warn">Move</span> of <b>{{ r.move_of.ref }}</b> ({{ r.move_of.when }}). Approving releases the old hours.</div>{% endif %}
           {% if r.purpose %}<div class="note">“{{ r.purpose }}”</div>{% endif %}
         </td>
         <td data-label="Other requests">
           {% if r.held_by %}<span class="pill empty">Already booked</span>
-            <div class="delta">{{ r.held_by.title }} <b>{{ r.held_by.ref }}</b> holds these hours. Decline this one, or ask an admin to rebook.</div>
+            <div class="delta">{{ r.held_by.title }} <b>{{ r.held_by.ref }}</b> holds these hours. {% if r.can_confirm_standby %}Confirm it as an emergency use (releases that booking), or decline.{% else %}Decline this one, or ask an admin to rebook.{% endif %}</div>
           {% elif r.blocked %}<span class="pill empty">Unavailable</span><div class="delta">{{ r.blocked }}</div>
           {% elif r.rivals %}<span class="pill warn">{{ r.rivals|length }} competing</span>
             {% for o in r.rivals %}<div class="delta"><b>{{ o.title }}</b> · {{ o.who }} · {{ o.hours }}</div>{% endfor %}
@@ -82,6 +82,7 @@
           <form class="df" method="post" action="/rooms/{{ r.id }}/decide">
             <input type="text" name="note" placeholder="remark or reason">
             {% if r.can_approve %}<button class="ok" type="submit" name="action" value="approve">Approve</button>{% endif %}
+            {% if r.can_confirm_standby %}<button class="ok" type="submit" name="action" value="confirm_standby" title="Cancels the booking that holds these hours. A reason is required and is sent to them.">Confirm standby (needs reason)</button>{% endif %}
             <button class="no" type="submit" name="action" value="decline">Decline</button>
             {% if r.series and r.series.open > 1 %}
             <span class="rivals-opt"><b>Repeating request:</b> {{ r.series.open }} of {{ r.series.total }} dates are waiting.

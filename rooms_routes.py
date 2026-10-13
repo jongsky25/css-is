@@ -117,7 +117,8 @@ def make_router(templates, get_conn, today_local, *, base_url=None, qr_data_uri=
                     raise rooms.RoomError("Attendees must be a number.")
                 kw = dict(title=f.get("title"), requester_user_id=user["id"], purpose=f.get("purpose"),
                           attendees=int(attendees) if attendees else None, modality=f.get("modality") or "f2f",
-                          meals_requested=bool(f.get("meals")), actor=user["username"], today=today_local())
+                          meals_requested=bool(f.get("meals")), actor=user["username"], today=today_local(),
+                          standby=bool(f.get("standby")))
                 if f.get("repeat") in ("1", "2"):
                     until = _date_or_none(f.get("until"))
                     if until is None:
@@ -698,6 +699,10 @@ def make_router(templates, get_conn, today_local, *, base_url=None, qr_data_uri=
                     res = rooms.approve(conn, rid, user["username"], f.get("note"), today=today_local(),
                                         decline_rivals=bool(f.get("decline_rivals")))
                     q = {"ok": f"Approved {res['ref_code']}: {res['title']}."}
+                elif f.get("action") == "confirm_standby":
+                    res = rooms.confirm_standby(conn, rid, user["username"], f.get("note"), today=today_local())
+                    q = {"ok": f"Confirmed {res['ref_code']}: {res['title']}."
+                         + (f" {len(res['bumped'])} booking(s) released." if res["bumped"] else "")}
                 elif f.get("action") == "decline":
                     res = rooms.decline(conn, rid, user["username"], f.get("note"))
                     q = {"ok": f"Declined {res['ref_code']}."}

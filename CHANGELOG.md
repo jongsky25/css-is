@@ -1,5 +1,13 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-13 (v6.28 — standby room requests, one calendar item per activity+room)
+
+- `office_calendar.py`: a room reservation linked to a CSS activity (`event_id`) is folded into the activity item (room hours as the time note) instead of drawing twice; the personal `.ics` feed skips the duplicate too.
+- `room_reservation.standby` (new column, migrated): a **provisional** request for hours already booked or closed. `rooms.request(..., standby=True)` / `precheck(..., standby=True)`; stored as standby only when something is really in the way.
+- `rooms.confirm_standby`: Administrative Section confirms it atomically, releasing the held booking(s) with a required reason (blocked hours still need reopening first). `POST /rooms/{id}/decide` action `confirm_standby`.
+- UI: standby tick on the Add activity room chip (shown only when some hours are taken) and on `/rooms`; badge and "Confirm standby" button in Approvals; calendar flag "provisional (standby)".
+- **Version bump:** `APP_VERSION` 6.27 → 6.28.
+
 ## 2026-10-10 (v6.26 — email the pinned update to registrants)
 
 - Manage page, "Pinned update" card: an opt-in **Also email registrants** checkbox (off by default, disabled when email is unavailable or nobody has an email). Result messages explain what happened (sent / left out by the cap / cooldown / email off / nobody to email).

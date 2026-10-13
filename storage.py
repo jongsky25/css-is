@@ -398,6 +398,7 @@ def init_db(conn):
         ext_phone         TEXT,
         ext_email_verified_at TEXT,        -- set when the guest first opens their tracking link
         ext_consent_at    TEXT,            -- Data Privacy Act consent ticked on the public form
+        standby           INTEGER NOT NULL DEFAULT 0,   -- 1 = provisional request for hours already booked or closed
         series_id         INTEGER,         -- the first reservation of a "repeat weekly" series; NULL = a single one
         on_behalf_of      TEXT,
         title             TEXT NOT NULL,
@@ -778,6 +779,8 @@ def _add_missing_columns(conn):
             conn.execute(f"ALTER TABLE room_reservation ADD COLUMN {col} TEXT")
     if rr0 and "series_id" not in rr0:                              # added with repeat-weekly requests (R10)
         conn.execute("ALTER TABLE room_reservation ADD COLUMN series_id INTEGER")
+    if rr0 and "standby" not in rr0:                                # provisional (standby) requests
+        conn.execute("ALTER TABLE room_reservation ADD COLUMN standby INTEGER NOT NULL DEFAULT 0")
     au0 = {row[1] for row in conn.execute("PRAGMA table_info(admin_user)")}
     for col in ("bday_notify", "birthday_coordinator", "cal_email_week", "cal_email_daybefore",
                 "cal_feed_birthdays"):

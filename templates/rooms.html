@@ -109,6 +109,8 @@
         <label><input type="radio" name="modality" value="{{ k }}" {{ 'checked' if (f.modality or 'f2f') == k }}> {{ lab }}</label>
         {% endfor %}
       </fieldset>
+      <label class="rm-meals"><input type="checkbox" name="standby" value="1" {{ 'checked' if f.standby }}> These hours may be taken: file it as a provisional (standby) request
+        <small>Use this when the hours above are already booked or closed. Nothing is held; the Administrative Section can confirm it if the hours free up or in an emergency.</small></label>
       <label class="rm-meals"><input type="checkbox" name="meals" value="1" {{ 'checked' if f.meals }}> Will meals be requested?
         <small>The meal form is prepared for you from your hours once the request is approved.</small></label>
 

@@ -6154,7 +6154,7 @@ def create_screen(request: Request, from_entry: str = "", from_room: str = ""):
 
 
 def _rooms_after_create(conn, user, ev, *, from_room, reserve, slot_from, slot_to, meals, modality,
-                        activity_name, event_date):
+                        activity_name, event_date, standby=False):
     """Summary rows for the result page after the activity exists: link it to the reservation it was made
     from, or file the room request that was ticked on the form (first day only), tied to the activity."""
     try:
@@ -6164,7 +6164,10 @@ def _rooms_after_create(conn, user, ev, *, from_room, reserve, slot_from, slot_t
         if reserve:
             r = rooms.request(conn, title=activity_name, day=event_date, slot_ids=rooms.slot_range(conn, slot_from, slot_to),
                               requester_user_id=user["id"], purpose="Reserved with the CSS activity.", modality=modality,
-                              meals_requested=meals, actor=user["username"], today=_today_local(), event_id=ev["id"])
+                              meals_requested=meals, actor=user["username"], today=_today_local(), event_id=ev["id"], standby=standby)
+            if r.get("standby"):
+                return [{"k": "Conference room",
+                         "v": f"Provisional standby request ({r['ref_code']}): those hours are taken, so nothing is held. The Administrative Section can confirm it if the room frees up or in an emergency; follow it under Conference room → My reservations."}]
             return [{"k": "Conference room",
                      "v": f"Requested ({r['ref_code']}). The Administrative Section will decide; follow it under Conference room → My reservations."}]
     except rooms.RoomError as e:
@@ -6191,6 +6194,7 @@ async def create_survey(request: Request):
     reserve_room = bool(first("reserve_room"))             # "also reserve the conference room" ticked
     room_from, room_to = first("room_from").strip(), first("room_to").strip()
     room_meals = bool(first("room_meals"))
+    room_standby = bool(first("room_standby"))        # "hours taken: ask for a provisional use"
     event_type = first("event_type", "bureau")             # 'bureau' | 'outside'
     section_id = first("section_id").strip()               # organizing section (bureau events)
     activity_name = first("activity_name").strip()
@@ -6262,7 +6266,7 @@ async def create_survey(request: Request):
         rc = get_conn()
         try:
             try:
-                rooms.precheck(rc, event_date, rooms.slot_range(rc, room_from, room_to), _today_local())
+                rooms.precheck(rc, event_date, rooms.slot_range(rc, room_from, room_to), _today_local(), standby=room_standby)
             except rooms.RoomError as e:
                 errors.append(f"Conference room: {e} Untick the room line to save the activity without it.")
         finally:
@@ -6298,7 +6302,7 @@ async def create_survey(request: Request):
             "speakers": list(zip(rp_ids, topics)),
             "from_entry": from_entry, "from_entry_title": first("from_entry_title").strip(),
             "from_room": from_room, "from_room_ref": first("from_room_ref").strip(),
-            "reserve_room": reserve_room, "room_from": room_from, "room_to": room_to, "room_meals": room_meals,
+            "reserve_room": reserve_room, "room_from": room_from, "room_to": room_to, "room_meals": room_meals, "room_standby": room_standby,
         }
         dmin, dmax = _event_date_bounds()
         rc2 = get_conn()
@@ -6408,7 +6412,7 @@ async def create_survey(request: Request):
         # The conference room, if the activity came from a reservation or ticked "also reserve" (rooms R8).
         # Never lets a room problem undo the activity: it just reports what happened.
         room_rows = _rooms_after_create(conn, request.state.user, ev, from_room=from_room, reserve=reserve_room,
-                                        slot_from=room_from, slot_to=room_to, meals=room_meals,
+                                        slot_from=room_from, slot_to=room_to, meals=room_meals, standby=room_standby,
                                         modality=modality, activity_name=activity_name, event_date=event_date)
     finally:
         conn.close()

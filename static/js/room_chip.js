@@ -6,6 +6,7 @@
   var chip = document.getElementById('room-chip'), stateEl = document.getElementById('room-chip-state'),
       list = document.getElementById('room-chip-hours'), dateEl = document.getElementById('event_date'),
       venue = document.getElementById('venue'), from = document.getElementById('room-from'), to = document.getElementById('room-to');
+  var standbyRow = document.getElementById('room-standby-row'), standbyBox = document.getElementById('room-standby-box');
   var touched = !!box.checked, autoTicked = false, closed = false, seq = 0;
 
   function wants() {
@@ -18,29 +19,36 @@
     if (on !== box.checked) { box.checked = on; autoTicked = on; }
     if (on) chip.open = true;
   }
+  function showStandby(on) {                            // a provisional (standby) use only makes sense when some hours are taken
+    if (!standbyRow) return;
+    standbyRow.hidden = !on;
+    if (!on && standbyBox) standbyBox.checked = false;
+  }
   function render(j) {
     list.textContent = '';
     closed = !!j.closed;
     if (closed) {
+      showStandby(false);
       stateEl.textContent = '· not available: ' + j.closed.replace(/\.$/, '');
       box.disabled = true; if (box.checked) box.checked = false;
       return;
     }
     box.disabled = false;
-    var free = 0;
+    var free = 0, taken = 0;
     j.hours.forEach(function (h) {
-      if (h.state === 'free' || h.state === 'requested') free++;
+      if (h.state === 'free' || h.state === 'requested') free++; else taken++;
       var li = document.createElement('li'); li.className = 'st-' + h.state;
       var b = document.createElement('b'); b.textContent = h.start;
       var s = document.createElement('span');
       s.textContent = h.state === 'free' ? '✓ Free' : h.state === 'requested' ? '○ Others asked' : h.state === 'booked' ? '● Booked' : '✕ Closed';
       li.appendChild(b); li.appendChild(s); list.appendChild(li);
     });
+    showStandby(taken > 0);
     stateEl.textContent = '· ' + free + ' of ' + j.hours.length + ' hours open that day';
   }
   function refresh() {
     var v = dateEl ? dateEl.value : '';
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) { stateEl.textContent = ''; list.textContent = ''; closed = false; box.disabled = false; return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) { stateEl.textContent = ''; list.textContent = ''; closed = false; box.disabled = false; showStandby(false); return; }
     var mine = ++seq;
     fetch('/rooms/api/day?date=' + encodeURIComponent(v), { credentials: 'same-origin' })
       .then(function (r) { return r.ok ? r.json() : null; })
