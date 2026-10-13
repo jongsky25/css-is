@@ -67,6 +67,7 @@
         <td data-label="Meeting">
           <div>{{ r.title }}{% if r.standby %} <span class="pill warn" title="Filed for hours that were already booked or closed">Standby · provisional</span>{% endif %}</div>
           <div class="sub">{{ room_modalities.get(r.modality, r.modality) }}{% if r.attendees %} · {{ r.attendees }} attending{% endif %}{% if r.meals_requested %} · meals requested{% endif %}</div>
+          {% if r.linked %}<div class="sub">{{ r.linked.kind }}: <a href="{{ r.linked.url }}">{{ r.linked.title }}</a></div>{% endif %}
           {% if r.move_of %}<div class="delta"><span class="pill warn">Move</span> of <b>{{ r.move_of.ref }}</b> ({{ r.move_of.when }}). Approving releases the old hours.</div>{% endif %}
           {% if r.purpose %}<div class="note">“{{ r.purpose }}”</div>{% endif %}
         </td>

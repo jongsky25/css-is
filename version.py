@@ -17,10 +17,22 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.28"
+APP_VERSION = "6.29"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.29",
+        "date": "October 13, 2026",
+        "summary": "Add a calendar item and reserve the conference room in one go, and the room now follows your activity or item everywhere.",
+        "changes": [
+            "The Add to the calendar form now has a Conference room line, just like Add activity. It shows which hours are free, follows the times you enter, and offers a standby request if the hours are taken.",
+            "A calendar item or activity and its room show as one item on the calendar, and a calendar item's page shows the room's status with buttons to move or withdraw it.",
+            "If you turn a calendar item into a CSS activity, its room goes with it.",
+            "Cancelling a calendar item that still holds the room offers to release it.",
+            "Standby requests are marked on My reservations, in Approvals and in the email to the Administrative Section, and Approvals shows which activity or calendar item each request is for.",
+        ],
+    },
     {
         "version": "6.28",
         "date": "October 13, 2026",

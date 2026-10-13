@@ -30,6 +30,7 @@ import calendar_import_suggest as cis
 import calendar_people as cp
 import office_calendar as oc
 import recurrence
+import rooms
 import storage as st
 
 MAX_UPLOAD = 8 * 1024 * 1024            # a calendar .docx is well under 1 MB
@@ -252,7 +253,9 @@ def prefill_from_entry(conn, user, entry_id):
         row = conn.execute("SELECT rp_id FROM admin_user WHERE id=?", (p["user_id"],)).fetchone()
         if row and row[0]:
             speakers.append((str(row[0]), e["title"]))
-    return {"from_entry": str(e["id"]), "from_entry_title": e["title"], "event_type": "bureau",
+    held = next((r for r in rooms.reservations_for_entry(conn, e["id"]) if r["status"] in ("requested", "approved")), None)
+    room = {"from_room": str(held["id"]), "from_room_ref": held["ref_code"]} if held and not held["event_id"] else {}
+    return {**room, "from_entry": str(e["id"]), "from_entry_title": e["title"], "event_type": "bureau",
             "activity_name": e["title"], "event_date": e["start_date"], "end_date": e["end_date"] or "",
             "venue": e["venue"] or e["meeting_url"] or "",
             "modality": e["modality"] if e["modality"] in ("f2f", "online", "hybrid") else "f2f",
@@ -271,6 +274,9 @@ def link_after_create(conn, user, entry_id, event_id):
         if e is None or not oc.entry_can_collect_feedback(e):
             return None
         st.cal_link_event(conn, e["id"], event_id, by=user["username"])
+        conn.execute("UPDATE room_reservation SET event_id=? WHERE calendar_entry_id=? AND event_id IS NULL "
+                     "AND status IN ('requested','approved')", (event_id, e["id"]))   # its room now follows the activity
+        conn.commit()
         return e["title"]
     except ValueError:
         return None
@@ -329,7 +335,28 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             "conflict": conflict, "kinds": FORM_KIND_LABELS, "statuses": STATUS_LABELS,
             "modalities": MODALITY_LABELS, "audiences": AUDIENCE_LABELS,
             "units": oc.unit_choices(conn), "people": oc.people_choices(conn),
+            "room_slots": rooms.list_slots(conn), "noun": "calendar item",
+            "show_room_chip": not (entry and entry.get("event_id")) and not (
+                entry and any(r["status"] in ("requested", "approved") for r in rooms.reservations_for_entry(conn, entry["id"]))),
+            "room_link": _room_link(request, conn, entry) if entry else None,
+            "chip_date": "start_date", "chip_venue": "venue", "chip_format": "modality",
+            "chip_start": "start_time", "chip_end": "end_time",
         }, status_code=status_code)
+
+    def _room_link(request, conn, e):
+        """What a calendar item's page should say about its conference room, or None. A failure here must never stop the
+        page loading. An item that is an overlay on a CSS activity shows the activity's room on the activity instead."""
+        if e.get("event_id"):
+            return None
+        try:
+            s = rooms.entry_room_status(conn, e, request.state.user, today_local())
+            s["next"] = f"/calendar/entries/{e['id']}"
+            s["edit_url"] = f"/calendar/entries/{e['id']}/edit"
+            s["flash_ok"] = (request.query_params.get("roomok") or "")[:80]
+            s["flash_err"] = (request.query_params.get("roomerr") or "")[:240]
+            return s
+        except Exception:                                    # noqa: BLE001
+            return None
 
     def _blank_form(conn, user, day):
         ctx = oc.viewer_context(conn, user)
@@ -426,7 +453,42 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 "end_date": "", "start_time": "", "end_time": "", "time_note": "",
                 "venue": "", "modality": "", "meeting_url": "", "note": "",
                 "owner_org_id": "", "audience": "unit", "tags": "", "updated_at": "",
-                "repeat": "none", "until": ""}
+                "repeat": "none", "until": "", "reserve_room": "", "room_from": "", "room_to": "",
+                "room_meals": "", "room_standby": ""}
+
+    # ── the conference room line on the form (rooms R8, for calendar items) ─────
+
+    def _room_precheck(conn, f):
+        """An error for a room choice that can't work, or "" — caught BEFORE the item is saved."""
+        if not f.get("reserve_room") or not f.get("start_date"):
+            return ""
+        try:
+            rooms.precheck(conn, date.fromisoformat(f["start_date"]), rooms.slot_range(conn, f["room_from"], f["room_to"]),
+                           today_local(), standby=bool(f.get("room_standby")))
+        except rooms.RoomError as e:
+            return f"Conference room: {e} Untick the room line to save the item without it."
+        except ValueError:
+            return ""                                       # the date check reports a bad date
+        return ""
+
+    def _room_after_save(conn, user, entry_id, title, f):
+        """File the ticked room request, tied to the item, and say what happened in one sentence. Never raises: the
+        item is already saved and a room problem must not undo it."""
+        if not f.get("reserve_room"):
+            return ""
+        try:
+            r = rooms.request(conn, title=title, day=f["start_date"], slot_ids=rooms.slot_range(conn, f["room_from"], f["room_to"]),
+                              requester_user_id=user["id"], purpose="Reserved with the calendar item.",
+                              modality=f.get("modality") if f.get("modality") in rooms.MODALITIES else "f2f",
+                              meals_requested=bool(f.get("room_meals")), actor=user["username"], today=today_local(),
+                              calendar_entry_id=entry_id, standby=bool(f.get("room_standby")))
+            if r.get("standby"):
+                return f" Conference room: provisional standby request {r['ref_code']} (those hours are taken, so nothing is held)."
+            return f" Conference room requested ({r['ref_code']}); the Administrative Section will decide."
+        except rooms.RoomError as e:
+            return f" Conference room not requested: {e} You can ask again by editing the item."
+        except Exception:                                    # noqa: BLE001
+            return " Conference room not requested because of a problem. You can ask again by editing the item."
 
     # ── the read API (H3) ───────────────────────────────────────────────────────
 
@@ -658,7 +720,10 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 if not ctx or not ctx["occ"]:
                     error = "That repeat is gone or was already changed. Open the series again."
             if not error:
+                error = _room_precheck(conn, f)
+            if not error:
                 try:
+                    title = fields["title"]
                     eid = st.cal_create(conn, fields.pop("title"), fields.pop("start_date"),
                                         people=people, tags=tags,
                                         by=request.state.user["username"], **fields)
@@ -670,13 +735,14 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 return _form_page(request, conn, f, error=error, status_code=400, detach=detach)
             if series:
                 _add_skip(conn, series, ctx["occ"], request.state.user["username"])
+            said = "Added to the calendar." + _room_after_save(conn, request.state.user, eid, title, f)
         finally:
             conn.close()
         back = _safe_back(f.get("next", ""))
         if back:                                              # the quick-add sheet returns to the page it came from
-            return RedirectResponse(back + ("&" if "?" in back else "?") + "ok=" + quote("Added to the calendar."),
+            return RedirectResponse(back + ("&" if "?" in back else "?") + "ok=" + quote(said),
                                     status_code=303)
-        return RedirectResponse(f"/calendar/entries/{eid}?ok={quote('Added to the calendar.')}",
+        return RedirectResponse(f"/calendar/entries/{eid}?ok={quote(said)}",
                                 status_code=303)
 
     def _series_ctx(e, on):
@@ -778,6 +844,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
 
     @router.get("/calendar/entries/{entry_id}", response_class=HTMLResponse)
     def calendar_entry(request: Request, entry_id: int, ok: str = "", err: str = ""):
+        # room messages (roomok / roomerr) are read by _room_link from the query string
         user = request.state.user
         conn = get_conn()
         try:
@@ -797,11 +864,13 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             eligible = can_css and oc.entry_can_collect_feedback(e)
             css = {"linked": linked, "eligible": eligible, "manage": auth.can(user["role"], "manage_event"),
                    "candidates": oc.activity_candidates_for_entry(conn, e) if eligible else []}
+            room_link = _room_link(request, conn, e)
         finally:
             conn.close()
         who = lambda u: names.get(u, u or "someone")           # noqa: E731
         return templates.TemplateResponse(request, "calendar_entry.html", {
             "nav_active": "calendar", "e": e, "ok": ok, "err": err, "css": css, "heads_up": heads_up, "series": series,
+            "room_link": room_link,
             "owner": unit["label"] if unit else None,
             "attendees": [{**cards.get(p["user_id"], {"name": "?", "initials": "?"}),
                            "role": p["role"]} for p in e["people"]],
@@ -855,6 +924,10 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 f["venue"] = shown["venue"]
             fields, people, tags, error = _parse(
                 f, e, {p["user_id"] for p in oc.people_choices(conn)})
+            if activity or any(r["status"] in ("requested", "approved") for r in rooms.reservations_for_entry(conn, entry_id)):
+                f["reserve_room"] = ""                       # it already has a room (or its activity does): never a second one
+            elif not error:
+                error = _room_precheck(conn, f)
             if error:
                 return _form_page(request, conn, f, entry=e, error=error, status_code=400)
             redate = None
@@ -898,9 +971,10 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 return _form_page(request, conn, f, entry=e, error=str(ex), status_code=400)
             if redate:
                 _redate_activity(request, conn, activity, redate, notify == "yes", user)
+            said = "Saved." + (_room_after_save(conn, user, entry_id, f["title"], f) if f.get("reserve_room") else "")
         finally:
             conn.close()
-        return RedirectResponse(f"/calendar/entries/{entry_id}?ok={quote('Saved.')}",
+        return RedirectResponse(f"/calendar/entries/{entry_id}?ok={quote(said)}",
                                 status_code=303)
 
     def _redate_activity(request, conn, activity, redate, notify, user):

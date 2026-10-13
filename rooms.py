@@ -262,10 +262,10 @@ def _validate_slots(conn, slot_ids):
 def request(conn, *, title, day, slot_ids, requester_user_id=None, ext=None, purpose=None,
             attendees=None, modality="f2f", meals_requested=False, actor=None, today=None,
             max_ahead=MAX_DAYS_AHEAD, consent_at=None, event_id=None, source=None, moves_reservation_id=None,
-            series_id=None, quiet=False, standby=False):
+            series_id=None, quiet=False, standby=False, calendar_entry_id=None):
     """File a request. Internal (requester_user_id) or external (ext = dict of
     name/org/email/phone). Status starts `requested`; nothing is held. `event_id` links it to a
-    CSS activity; `source`/`moves_reservation_id` mark a move request (see request_move).
+    CSS activity (or `calendar_entry_id` to a calendar item); `source`/`moves_reservation_id` mark a move request.
 
     `standby=True` lets the request be filed for hours that are already booked or closed: it is a
     PROVISIONAL use that holds nothing, and the Administrative Section can confirm it if the booking
@@ -300,12 +300,12 @@ def request(conn, *, title, day, slot_ids, requester_user_id=None, ext=None, pur
         cur = conn.execute(
             "INSERT INTO room_reservation(requester_user_id, ext_name, ext_org, ext_email, ext_phone, "
             "ext_consent_at, title, purpose, attendees, modality, day, status, source, meals_requested, "
-            "event_id, moves_reservation_id, series_id, standby, created_by, created_at, updated_at) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?, 'requested', ?,?,?,?,?,?,?,?,?)",
+            "event_id, calendar_entry_id, moves_reservation_id, series_id, standby, created_by, created_at, updated_at) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?, 'requested', ?,?,?,?,?,?,?,?,?,?)",
             (requester_user_id, ext.get("name"), ext.get("org"), ext.get("email"), ext.get("phone"),
              consent_at, title, (purpose or "").strip() or None, attendees, modality, day_iso,
              source or ("internal" if requester_user_id is not None else "external"),
-             1 if meals_requested else 0, event_id, moves_reservation_id, series_id, is_standby, actor, now, now))
+             1 if meals_requested else 0, event_id, calendar_entry_id, moves_reservation_id, series_id, is_standby, actor, now, now))
         rid = cur.lastrowid
         conn.execute("UPDATE room_reservation SET ref_code=? WHERE id=?",
                      (f"CR-{_d(day_iso):%y%m}-{rid:04d}", rid))
@@ -649,6 +649,20 @@ def pending_count(conn):
     return conn.execute("SELECT COUNT(*) FROM room_reservation WHERE status='requested'").fetchone()[0]
 
 
+def linked_to(conn, res):
+    """What a reservation is for, as {kind, title, url} (a CSS activity or a calendar item), or None. Read-only
+    links any signed-in person may follow: the public activity page and the calendar item page."""
+    if res.get("event_id"):
+        ev = conn.execute("SELECT event_token, title FROM event WHERE id=?", (res["event_id"],)).fetchone()
+        if ev:
+            return {"kind": "CSS activity", "title": ev[1], "url": f"/e/{ev[0]}", "manage_token": ev[0]}
+    if res.get("calendar_entry_id"):
+        ce = conn.execute("SELECT title FROM calendar_entry WHERE id=?", (res["calendar_entry_id"],)).fetchone()
+        if ce:
+            return {"kind": "Calendar item", "title": ce[0], "url": f"/calendar/entries/{res['calendar_entry_id']}", "manage_token": None}
+    return None
+
+
 def requester_label(conn, res):
     """(name, unit or organization, is_external) for a reservation's requester."""
     if res["requester_user_id"] is None:
@@ -682,7 +696,7 @@ def queue(conn):
             rivals.append({"id": o["id"], "ref": o["ref_code"], "title": o["title"], "who": on,
                            "hours": hours_text(conn, o)})
         moved = get_reservation(conn, res["moves_reservation_id"]) if res["source"] == "move" and res["moves_reservation_id"] else None
-        out.append({**res, "requester_name": name, "requester_unit": unit, "is_external": ext, "series": series_summary(conn, res),
+        out.append({**res, "linked": linked_to(conn, res), "requester_name": name, "requester_unit": unit, "is_external": ext, "series": series_summary(conn, res),
                     "move_of": ({"ref": moved["ref_code"], "when": queue_when(moved), "status": moved["status"]} if moved else None),
                     "email_unconfirmed": bool(ext and res["ext_email"] and not res["ext_email_verified_at"]),
                     "hours": hours_text(conn, res), "rivals": rivals,
@@ -1199,6 +1213,25 @@ def reservations_for_event(conn, event_id):
         f"SELECT {_COLS} FROM room_reservation WHERE event_id=? ORDER BY id DESC", (event_id,))]
 
 
+def reservations_for_entry(conn, entry_id):
+    return [_row(conn, r) for r in conn.execute(
+        f"SELECT {_COLS} FROM room_reservation WHERE calendar_entry_id=? ORDER BY id DESC", (entry_id,))]
+
+
+def link_entry(conn, rid, entry_id, user):
+    """Tie an existing, still-live reservation to a calendar item. Only its owner or a room approver."""
+    res = get_reservation(conn, rid)
+    if res is None or res["status"] not in ("requested", "approved"):
+        raise RoomError("That reservation can't be linked any more.")
+    if not (_is_owner(res, user.get("id"), False) or is_room_admin(conn, user)):
+        raise RoomError("That reservation isn't yours to link.")
+    if (res["event_id"] or res["calendar_entry_id"]) and res["calendar_entry_id"] != entry_id:
+        raise RoomError("That reservation is already linked to another activity or calendar item.")
+    conn.execute("UPDATE room_reservation SET calendar_entry_id=?, updated_at=? WHERE id=?", (entry_id, _stamp(), rid))
+    conn.commit()
+    return get_reservation(conn, rid)
+
+
 def _event_archived(conn, event_id):
     """Every form of the activity is archived (the same test the calendar uses to hide it)."""
     r = conn.execute(
@@ -1243,7 +1276,7 @@ def request_move(conn, rid, new_day, user, today=None):
                        if res["requester_user_id"] is None else None),
                   purpose=res["purpose"], attendees=res["attendees"], modality=res["modality"],
                   meals_requested=bool(res["meals_requested"]), actor=user.get("username") or "system", today=today,
-                  event_id=res["event_id"], source="move", moves_reservation_id=rid)
+                  event_id=res["event_id"], calendar_entry_id=res["calendar_entry_id"], source="move", moves_reservation_id=rid)
     st.audit(conn, user.get("username") or "system", "room_move", target_type="room_reservation", target_id=new["id"],
              summary=f"{res['title']}: move from {res['ref_code']} ({res['day']}) to {new_day_iso} requested")
     return new
@@ -1253,9 +1286,21 @@ def activity_room_status(conn, ev, user, today=None):
     """What the activity's page should say about its conference room, as a dict for the banner:
     state is none / booked / requested / mismatch / move_pending / lost / archived_holds. `can_act` is
     true for the reservation's owner or a room approver (the people who may move or withdraw it)."""
+    return _room_status(conn, reservations_for_event(conn, ev["id"]), (ev.get("event_date") or "")[:10],
+                        _event_archived(conn, ev["id"]), user, today, noun="activity",
+                        why="The activity was archived.")
+
+
+def entry_room_status(conn, e, user, today=None):
+    """The same banner data for a calendar item. A cancelled item that still holds the room is
+    `archived_holds`; a repeating item has no single day to compare, so it never reads as a mismatch."""
+    return _room_status(conn, reservations_for_entry(conn, e["id"]), "" if e.get("rrule") else (e["start_date"] or "")[:10],
+                        e.get("status") == "cancelled", user, today, noun="calendar item",
+                        why="The calendar item was cancelled.", plan_day=(e["start_date"] or "")[:10])
+
+
+def _room_status(conn, rows, ev_day, archived, user, today, *, noun, why, plan_day=None):
     today = today or tz.today_local()
-    ev_day = (ev.get("event_date") or "")[:10]
-    rows = reservations_for_event(conn, ev["id"])
     live = [r for r in rows if r["status"] in ("requested", "approved")]
     admin = is_room_admin(conn, user)
 
@@ -1265,12 +1310,13 @@ def activity_room_status(conn, ev, user, today=None):
         r = dict(r)
         r["hours"], r["when"] = hours_text(conn, r), queue_when(r)
         mine = _is_owner(r, user.get("id"), False)
-        return {"res": r, "can_act": mine or admin, "mine": mine, "event_day": ev_day, "event_when": ev_when, **extra}
+        return {"res": r, "can_act": mine or admin, "mine": mine, "event_day": ev_day, "event_when": ev_when,
+                "noun": noun, "why": why, "standby": bool(r.get("standby")), **extra}
 
     if live:
         pending_move = next((r for r in live if r["source"] == "move" and r["status"] == "requested"), None)
         current = next((r for r in live if r is not pending_move and r["status"] in ("approved", "requested")), live[0])
-        if _event_archived(conn, ev["id"]) and _d(current["day"]) >= today:
+        if archived and _d(current["day"]) >= today:
             return dress(current, state="archived_holds")
         if pending_move:
             return dress(pending_move, state="move_pending", old=dress(current)["res"])
@@ -1282,8 +1328,9 @@ def activity_room_status(conn, ev, user, today=None):
                                       (r["id"],)).fetchone()), None)
     if lost and ev_day and _d(ev_day) >= today:
         return dress(lost, state="lost", offers=suggestions_for(conn, lost, n=3, today=today))
-    return {"state": "none", "can_act": False, "event_day": ev_day, "event_when": ev_when, "res": None,
-            "upcoming": bool(ev_day and _d(ev_day) >= today)}
+    cta_day = ev_day or plan_day or ""
+    return {"state": "none", "can_act": False, "event_day": ev_day, "event_when": ev_when, "res": None, "noun": noun,
+            "why": why, "standby": False, "upcoming": bool(cta_day and _d(cta_day) >= today)}
 
 
 # ----------------------------------------------- the door / TV display (R10) ---

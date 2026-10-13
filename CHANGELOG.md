@@ -1,5 +1,15 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-13 (v6.29 — room line on the calendar item form, one flow end to end)
+
+- `templates/_room_chip.html` (shared by `/create` and `/calendar/new|edit`); `room_chip.js` finds the date / venue / format / start / end fields through `data-*` attributes and makes the hours follow the item's start and end times.
+- `calendar_routes.py`: `_room_precheck` before saving, `_room_after_save` after (never fails the item), edit never files a second request, `_room_link` banner on the item page and edit form, `link_after_create` carries the room to the new activity, `/create?from_entry` shows an existing room as linked.
+- `rooms.py`: `request(calendar_entry_id=...)`, `reservations_for_entry`, `link_entry`, `entry_room_status`; `activity_room_status` and the new one share `_room_status` (nouns, release reason, standby wording); `linked_to` for Approvals and My reservations.
+- `office_calendar._fold_linked_rooms` folds a room into its activity **or calendar item** (repeating items match on the occurrence holding the day); the `.ics` feed follows the same rule.
+- Alignment: standby shown on My reservations, in Approvals and in the new-request notice; `/rooms/{id}/move|withdraw|take` may return to `/calendar/entries/…`.
+- Tests: `tests/test_calendar_entry_room.py`.
+- **Version bump:** `APP_VERSION` 6.28 → 6.29.
+
 ## 2026-10-13 (v6.28 — standby room requests, one calendar item per activity+room)
 
 - `office_calendar.py`: a room reservation linked to a CSS activity (`event_id`) is folded into the activity item (room hours as the time note) instead of drawing twice; the personal `.ics` feed skips the duplicate too.

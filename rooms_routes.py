@@ -24,13 +24,13 @@ STATUS_BADGE = {   # status -> (badge colour, icon + word)
     "cancelled": ("red", "✕ Cancelled"), "expired": ("grey", "– Expired"),
 }
 _REF = re.compile(r"^CR-\d{4}-\d{4}$")
-_NEXT_OK = ("/activities/", "/rooms", "/monitor/")
+_NEXT_OK = ("/activities/", "/rooms", "/monitor/", "/calendar/entries/")
 
 
 def _errkey(back):
     """The query key for an error shown on the page we send them back to: an activity page already uses `err`
     for its own codes, so room messages travel as `roomerr` there."""
-    return "roomerr" if (back or "").startswith("/activities/") else "err"
+    return "roomerr" if (back or "").startswith(("/activities/", "/calendar/entries/")) else "err"
 
 
 def _safe_next(value, default):
@@ -155,6 +155,9 @@ def make_router(templates, get_conn, today_local, *, base_url=None, qr_data_uri=
                 r["day_date"] = date.fromisoformat(r["day"])
                 ev = conn.execute("SELECT event_token, title FROM event WHERE id=?", (r["event_id"],)).fetchone() if r["event_id"] else None
                 r["activity"] = {"token": ev[0], "title": ev[1]} if ev else None
+                r["linked"] = rooms.linked_to(conn, r)
+                if r["status"] == "requested" and r["standby"]:
+                    r["badge"] = ("amber", "○ Provisional (standby)")
                 r["offers"] = rooms.suggestions_for(conn, r, today=today)
                 r["series"] = rooms.series_summary(conn, r)
                 r["was_bumped"] = r["status"] == "cancelled" and r["bumped_by_reservation_id"] is not None
