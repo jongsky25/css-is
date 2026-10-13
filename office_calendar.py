@@ -644,8 +644,11 @@ def _fold_linked_rooms(items):
             out.append(i)
             continue
         hours = f"{i['start_time']}–{i['end_time']}" if i["start_time"] and i["end_time"] else None
-        if hours and not act["time_note"]:
+        if hours and act["start"] == act["end"] and not act["time_note"]:
             act["time_note"] = f"🏢 {hours}"
+        elif hours:                                   # a multi-day activity: the room is for ONE of its days
+            d = date.fromisoformat(i["start"])
+            act["flags"] = [*act["flags"], f"room {d:%a} {d.day} {d:%b} {hours}"]
         if not act["venue"]:
             act["venue"] = "Conference room"
         if i["status"] == "tentative" and "room awaiting approval" not in act["flags"]:
@@ -1529,9 +1532,10 @@ def build_feed(conn, user, base_url, *, scope="mine", birthdays=False, today=Non
         path = (units.get(e["owner_org_id"]) or {}).get("path")
         if entry_visible(ctx, e, path) and _in_scope(ctx, "blend" if scope == "mine" else "section", e, path):
             events.append(cics.entry_event(e, base_url))
-    in_feed = {i["css"]["event_id"] for i in items if i.get("css")}
+    span = {i["css"]["event_id"]: (i["start"], i["end"]) for i in items if i.get("css")}
     events.extend(e for e in _room_feed_events(conn, user, base_url, start, end)
-                  if e.get("event_id") not in in_feed or e.get("status") == "cancelled")
+                  if e.get("status") == "cancelled" or e.get("event_id") not in span
+                  or not (span[e["event_id"]][0] <= e["start"] <= span[e["event_id"]][1]))
     if birthdays:
         viewer = {"user_id": ctx["user_id"], "section_path": ctx["section_path"], "division_path": ctx["division_path"]}
         for p in birthday_people(conn):

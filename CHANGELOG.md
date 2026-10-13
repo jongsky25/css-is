@@ -6,6 +6,8 @@
 - `room_reservation.standby` (new column, migrated): a **provisional** request for hours already booked or closed. `rooms.request(..., standby=True)` / `precheck(..., standby=True)`; stored as standby only when something is really in the way.
 - `rooms.confirm_standby`: Administrative Section confirms it atomically, releasing the held booking(s) with a required reason (blocked hours still need reopening first). `POST /rooms/{id}/decide` action `confirm_standby`.
 - UI: standby tick on the Add activity room chip (shown only when some hours are taken) and on `/rooms`; badge and "Confirm standby" button in Approvals; calendar flag "provisional (standby)".
+- A multi-day activity gets a "room Thu 7 Mar 09:00–11:00" flag instead of a time note on every day; the `.ics` feed drops a linked room only when it falls inside its activity's dates.
+- Tests: Approvals standby card + `confirm_standby` route, `/rooms` standby tick, Add activity standby save, closed hours refuse confirmation, feed day-mismatch.
 - **Version bump:** `APP_VERSION` 6.27 → 6.28.
 
 ## 2026-10-10 (v6.26 — email the pinned update to registrants)

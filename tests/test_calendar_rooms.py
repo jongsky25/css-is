@@ -180,3 +180,27 @@ def test_a_room_on_another_day_than_its_activity_is_not_hidden(w):
     rooms.link_event(w["conn"], r["id"], eid, w["s1"])
     got = oc.items_between(w["conn"], w["s1"], THU, THU + timedelta(days=7), scope="blend", layers=["activities", "rooms"])
     assert sorted(i["layer"] for i in got) == ["activities", "rooms"]
+
+
+def test_a_multi_day_activity_names_the_one_day_the_room_is_for(w):
+    r = book(w, title="Training", hours=(9, 10))
+    ev = st.create_event(w["conn"], "Training", (THU - timedelta(days=1)).isoformat(),
+                         end_date=(THU + timedelta(days=1)).isoformat(), created_by=w["s1"]["username"])
+    rooms.link_event(w["conn"], r["id"], ev["id"], w["s1"])
+    got = items(w, "s1", layers=("activities", "rooms"))
+    assert [i["layer"] for i in got] == ["activities"]
+    assert got[0]["time_note"] is None and any("Thu 7 Mar 09:00–11:00" in f for f in got[0]["flags"])
+
+
+def test_the_feed_keeps_a_linked_room_that_sits_on_another_day(w):
+    day = date(2030, 3, 11)
+    r = book(w, "s1", (9,), title="Planning", day=day)
+    ev = st.create_event(w["conn"], "Planning", (day + timedelta(days=7)).isoformat(), created_by=w["s1"]["username"])
+    rooms.link_event(w["conn"], r["id"], ev["id"], w["s1"])
+    feed = oc.build_feed(w["conn"], w["s1"], "https://x.test", today=MON)
+    assert f"UID:room-{r['id']}@office-connect" in feed                      # mismatched day: not hidden
+    ev2 = st.create_event(w["conn"], "Planning 2", day.isoformat(), created_by=w["s1"]["username"])
+    r2 = book(w, "s1", (13,), title="Planning 2", day=day)
+    rooms.link_event(w["conn"], r2["id"], ev2["id"], w["s1"])
+    feed = oc.build_feed(w["conn"], w["s1"], "https://x.test", today=MON)
+    assert f"UID:room-{r2['id']}@office-connect" not in feed                 # same day: the activity carries it

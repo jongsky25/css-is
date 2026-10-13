@@ -167,3 +167,44 @@ def test_hours_blocked_after_the_request_cannot_be_approved(conn):
     assert rooms.queue(conn)[0]["can_approve"] is False
     with pytest.raises(rooms.SlotTaken, match="Fumigation"):
         rooms.approve(conn, r["id"], "admin")
+
+
+# ------------------------------------------------- standby (provisional) requests ---
+
+def test_a_standby_card_offers_confirm_and_the_route_releases_the_held_booking(admin, conn):
+    held = ask(conn, "encoder@test.local", 9, title="Holder")
+    admin.post(f"/rooms/{held['id']}/decide", data={"action": "approve"})
+    sb = rooms.request(conn, title="Urgent briefing", day=held["day"], slot_ids=[sid(conn, 9)],
+                       requester_user_id=uid(conn, "viewer@test.local"), standby=True)
+    page = admin.get("/approvals").text
+    assert "Standby · provisional" in page and "Confirm standby" in page
+    # a reason is required, and nothing changes without one
+    resp = admin.post(f"/rooms/{sb['id']}/decide", data={"action": "confirm_standby", "note": ""}, follow_redirects=True)
+    assert "reason" in resp.text and rooms.get_reservation(conn, sb["id"])["status"] == "requested"
+    resp = admin.post(f"/rooms/{sb['id']}/decide", data={"action": "confirm_standby", "note": "Emergency briefing"},
+                      follow_redirects=True)
+    assert "Confirmed" in resp.text
+    assert rooms.get_reservation(conn, sb["id"])["status"] == "approved"
+    assert rooms.get_reservation(conn, held["id"])["status"] == "cancelled"
+
+
+def test_standby_is_refused_when_the_hours_are_closed_and_a_plain_request_still_is(conn):
+    r = rooms.request(conn, title="x", day=day(conn), slot_ids=[sid(conn, 14)], requester_user_id=uid(conn, "encoder@test.local"))
+    conn.execute("INSERT INTO room_block(day, slot_id, reason) VALUES (?,NULL,?)", (r["day"], "Fumigation")); conn.commit()
+    with pytest.raises(rooms.SlotTaken):
+        rooms.request(conn, title="y", day=r["day"], slot_ids=[sid(conn, 14)], requester_user_id=uid(conn, "viewer@test.local"))
+    sb = rooms.request(conn, title="y", day=r["day"], slot_ids=[sid(conn, 14)], requester_user_id=uid(conn, "viewer@test.local"), standby=True)
+    with pytest.raises(rooms.SlotTaken, match="Fumigation"):
+        rooms.confirm_standby(conn, sb["id"], "admin", "Emergency")
+
+
+def test_the_request_form_and_route_accept_a_standby_tick(admin, encoder, conn):
+    held = ask(conn, "viewer@test.local", 10, title="Holder")
+    admin.post(f"/rooms/{held['id']}/decide", data={"action": "approve"})
+    assert "provisional (standby)" in encoder.get("/rooms").text
+    form = {"day": held["day"], "from_slot": sid(conn, 10), "to_slot": sid(conn, 11), "title": "Urgent", "modality": "f2f"}
+    assert encoder.post("/rooms/request", data=form).status_code in (200, 400, 409) and \
+        not any(r["title"] == "Urgent" for r in rooms.list_pending(conn))      # without the tick it's refused
+    encoder.post("/rooms/request", data={**form, "standby": "1"})
+    got = [r for r in rooms.list_pending(conn) if r["title"] == "Urgent"]
+    assert got and got[0]["standby"] == 1
