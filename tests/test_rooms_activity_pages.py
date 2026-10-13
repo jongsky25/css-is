@@ -88,6 +88,17 @@ def test_taken_hours_are_caught_too(manager, conn):
     assert r.status_code == 400 and "already booked" in r.text and event_of(conn, "R8 clash") is None
 
 
+def test_taken_hours_with_standby_save_the_activity_and_file_a_provisional_request(manager, conn):
+    held = rooms.request(conn, title="Held", day=day(conn), slot_ids=S(conn, 9), requester_user_id=uid(conn, "encoder@test.local"))
+    rooms.approve(conn, held["id"], "admin@test.local")
+    r = create(manager, conn, "R8 standby", reserve_room="1", room_standby="1", room_from=S(conn, 9)[0], room_to=S(conn, 10)[0])
+    assert r.status_code == 200 and "Provisional standby request (CR-" in r.text
+    ev = event_of(conn, "R8 standby")
+    row = conn.execute("SELECT status, standby, event_id FROM room_reservation WHERE title='R8 standby'").fetchone()
+    assert row == ("requested", 1, ev[0])
+    assert 'id="room-standby-row" hidden' in manager.get("/create").text          # shown by the script only when hours are taken
+
+
 def test_without_the_tick_no_room_is_asked_for(manager, conn):
     create(manager, conn, "R8 no room needed")
     assert conn.execute("SELECT COUNT(*) FROM room_reservation").fetchone()[0] == 0

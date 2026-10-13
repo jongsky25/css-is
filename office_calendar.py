@@ -584,7 +584,7 @@ def _rooms_layer(conn, ctx, start, end, scope):
             "SELECT r.id, r.title, r.day, r.status, r.modality, r.requester_user_id, r.ext_org, r.ref_code, "
             "(SELECT MIN(s.start_time) FROM room_reservation_slot rs JOIN room_slot s ON s.id=rs.slot_id WHERE rs.reservation_id=r.id), "
             "(SELECT MAX(s.end_time) FROM room_reservation_slot rs JOIN room_slot s ON s.id=rs.slot_id WHERE rs.reservation_id=r.id), "
-            "ou.id FROM room_reservation r LEFT JOIN admin_user a ON a.id=r.requester_user_id "
+            "ou.id, r.event_id, r.standby FROM room_reservation r LEFT JOIN admin_user a ON a.id=r.requester_user_id "
             "LEFT JOIN resource_person rp ON rp.id=a.rp_id LEFT JOIN org_unit ou ON ou.id=rp.org_unit_id "
             "WHERE r.day BETWEEN ? AND ? AND r.status IN ('requested','approved') ORDER BY r.day, r.id",
             (start, end)).fetchall()
@@ -594,7 +594,7 @@ def _rooms_layer(conn, ctx, start, end, scope):
     can_decide = None
     keep = []
     for row in rows:
-        rid, title, day, status, modality, req, ext_org, ref, t0, t1, unit_id = row
+        rid, title, day, status, modality, req, ext_org, ref, t0, t1, unit_id, _event_id, _standby = row
         mine = req is not None and req == me
         if scope == "mine" and not mine:
             continue
@@ -610,7 +610,7 @@ def _rooms_layer(conn, ctx, start, end, scope):
     units = _units(conn, [r[10] for r in keep])
     tones = _tone_map(conn)
     out = []
-    for rid, title, day, status, modality, req, ext_org, ref, t0, t1, unit_id in keep:
+    for rid, title, day, status, modality, req, ext_org, ref, t0, t1, unit_id, event_id, standby in keep:
         unit = units.get(unit_id)
         out.append({
             "key": f"room:{rid}", "layer": "rooms", "title": title,
@@ -622,9 +622,37 @@ def _rooms_layer(conn, ctx, start, end, scope):
             "tags": [], "venue": "Conference room",
             "modality": modality if modality in ("f2f", "online", "hybrid") else None, "meeting_url": None,
             "url": f"/rooms?week={day}", "css": None,
-            "flags": [] if status == "approved" else ["awaiting approval"], "editable": False, "private": False,
-            "ref": ref,
+            "flags": [] if status == "approved" else (["provisional (standby)"] if standby else ["awaiting approval"]),
+            "editable": False, "private": False, "ref": ref, "event_id": event_id,
         })
+    return out
+
+
+def _fold_linked_rooms(items):
+    """A conference room reservation tied to a CSS activity is the SAME occasion, so it is drawn once: on the
+    activity, which gains the room's hours (and "Conference room" as a venue if it had none). The separate
+    room item is dropped only when its activity is on the calendar for this viewer and the booked day falls
+    inside the activity's dates; a room on another day (an unresolved mismatch) or one whose activity the
+    viewer can't see stays as its own item."""
+    acts = {i["css"]["event_id"]: i for i in items if i["layer"] == "activities" and i.get("css")}
+    if not acts:
+        return items
+    out = []
+    for i in items:
+        act = acts.get(i.get("event_id")) if i["layer"] == "rooms" else None
+        if act is None or not (act["start"] <= i["start"] <= act["end"]):
+            out.append(i)
+            continue
+        hours = f"{i['start_time']}–{i['end_time']}" if i["start_time"] and i["end_time"] else None
+        if hours and act["start"] == act["end"] and not act["time_note"]:
+            act["time_note"] = f"🏢 {hours}"
+        elif hours:                                   # a multi-day activity: the room is for ONE of its days
+            d = date.fromisoformat(i["start"])
+            act["flags"] = [*act["flags"], f"room {d:%a} {d.day} {d:%b} {hours}"]
+        if not act["venue"]:
+            act["venue"] = "Conference room"
+        if i["status"] == "tentative" and "room awaiting approval" not in act["flags"]:
+            act["flags"] = [*act["flags"], "room provisional (standby)" if "provisional (standby)" in i["flags"] else "room awaiting approval"]
     return out
 
 
@@ -664,6 +692,7 @@ def items_between(conn, user, start, end, *, scope=DEFAULT_SCOPE, layers=None, f
     for name, provider in LAYERS.items():
         if layers is None or name in layers:
             items.extend(provider(conn, ctx, start, end, scope))
+    items = _fold_linked_rooms(items)
     items.sort(key=lambda i: (i["start"], i["start_time"] or "", _LAYER_ORDER.get(i["layer"], len(_LAYER_ORDER)),
                               i["title"].lower(), i["key"]))
     return apply_filters(items, filters)
@@ -1442,7 +1471,7 @@ def room_event(res, hours, base_url="", status=None):
             "status": status or ("confirmed" if res["status"] == "approved" else "tentative"),
             "start": res["day"], "end": res["day"], "start_time": t0, "end_time": t1, "venue": "Conference room",
             "url": f"{base_url}/rooms?week={res['day']}" if base_url else None,
-            "description": f"Reference {res['ref_code']}", "tags": [], "stamp": res["updated_at"]}
+            "event_id": res.get("event_id"), "description": f"Reference {res['ref_code']}", "tags": [], "stamp": res["updated_at"]}
 
 
 def _room_feed_events(conn, user, base_url, start, end):
@@ -1503,7 +1532,10 @@ def build_feed(conn, user, base_url, *, scope="mine", birthdays=False, today=Non
         path = (units.get(e["owner_org_id"]) or {}).get("path")
         if entry_visible(ctx, e, path) and _in_scope(ctx, "blend" if scope == "mine" else "section", e, path):
             events.append(cics.entry_event(e, base_url))
-    events.extend(_room_feed_events(conn, user, base_url, start, end))
+    span = {i["css"]["event_id"]: (i["start"], i["end"]) for i in items if i.get("css")}
+    events.extend(e for e in _room_feed_events(conn, user, base_url, start, end)
+                  if e.get("status") == "cancelled" or e.get("event_id") not in span
+                  or not (span[e["event_id"]][0] <= e["start"] <= span[e["event_id"]][1]))
     if birthdays:
         viewer = {"user_id": ctx["user_id"], "section_path": ctx["section_path"], "division_path": ctx["division_path"]}
         for p in birthday_people(conn):

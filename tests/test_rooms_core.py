@@ -213,3 +213,31 @@ def test_listing_for_user_and_audit_trail(conn, users):
     acts = [x["action"] for x in st.list_audit(conn) if x["target_type"] == "room_reservation"]
     assert {"room_request", "room_approve"} <= set(acts)
     assert st.audit_label("room_approve") == "Approved a room reservation"
+
+
+# ------------------------------------------------------- standby (provisional) requests ---
+
+def test_standby_request_for_booked_hours_and_emergency_confirm(tmp_path):
+    from datetime import date
+    import rooms, storage as st
+    from conftest import join_admin_section
+    c = st.connect(str(tmp_path / "s.db")); st.init_db(c); rooms.ensure_slots(c)
+    me = st.create_admin_user(c, "me@test.local", "x", "y", "section_manager")
+    boss = join_admin_section(c, st.create_admin_user(c, "boss@test.local", "x", "y", "admin"))
+    mon, thu = date(2030, 3, 4), date(2030, 3, 7)
+    by = {s["start_time"]: s["id"] for s in rooms.list_slots(c)}
+    first = rooms.request(c, title="Held", day=thu, slot_ids=[by["09:00"]], requester_user_id=boss, today=mon)
+    rooms.approve(c, first["id"], "boss@test.local", today=mon)
+    with pytest.raises(rooms.SlotTaken):
+        rooms.request(c, title="Urgent", day=thu, slot_ids=[by["09:00"]], requester_user_id=me, today=mon)
+    sb = rooms.request(c, title="Urgent", day=thu, slot_ids=[by["09:00"]], requester_user_id=me, today=mon, standby=True)
+    assert sb["standby"] == 1 and sb["status"] == "requested"
+    free = rooms.request(c, title="Free", day=thu, slot_ids=[by["13:00"]], requester_user_id=me, today=mon, standby=True)
+    assert free["standby"] == 0                                    # nothing in the way: an ordinary request
+    q = {r["id"]: r for r in rooms.queue(c)}
+    assert q[sb["id"]]["can_confirm_standby"] and not q[sb["id"]]["can_approve"]
+    with pytest.raises(rooms.RoomError):
+        rooms.confirm_standby(c, sb["id"], "boss@test.local", "", today=mon)
+    out = rooms.confirm_standby(c, sb["id"], "boss@test.local", "Emergency briefing", today=mon)
+    assert out["status"] == "approved" and out["bumped"] == [first["id"]]
+    assert rooms.get_reservation(c, first["id"])["status"] == "cancelled"

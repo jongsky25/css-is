@@ -150,3 +150,57 @@ def test_a_booking_changed_later_gets_a_higher_sequence(w):
     first = oc.room_event(res, ("09:00", "11:00"))["sequence"]
     w["conn"].execute("UPDATE room_reservation SET updated_at='2030-03-05T10:00:00' WHERE id=?", (b["id"],)); w["conn"].commit()
     assert oc.room_event(rooms.get_reservation(w["conn"], b["id"]), ("09:00", "11:00"))["sequence"] > first
+
+
+# ------------------------------------------ one occasion is drawn once (activity + its room) ---
+
+def _activity(w, day=THU, title="Planning"):
+    ev = st.create_event(w["conn"], title, day.isoformat(), created_by=w["s1"]["username"])
+    return ev["id"] if isinstance(ev, dict) else ev
+
+
+def test_a_room_linked_to_an_activity_is_drawn_once_on_the_activity(w):
+    r = book(w, title="Planning", hours=(9, 10))
+    eid = _activity(w)
+    rooms.link_event(w["conn"], r["id"], eid, w["s1"])
+    got = items(w, "s1", layers=("activities", "rooms"))
+    assert [i["layer"] for i in got] == ["activities"]
+    assert got[0]["time_note"] == "🏢 09:00–11:00" and got[0]["venue"] == "Conference room"
+
+
+def test_an_unlinked_booking_and_an_activity_stay_separate(w):
+    book(w, title="Planning")
+    _activity(w)
+    assert sorted(i["layer"] for i in items(w, "s1", layers=("activities", "rooms"))) == ["activities", "rooms"]
+
+
+def test_a_room_on_another_day_than_its_activity_is_not_hidden(w):
+    r = book(w, title="Planning")
+    eid = _activity(w, day=THU + timedelta(days=7))
+    rooms.link_event(w["conn"], r["id"], eid, w["s1"])
+    got = oc.items_between(w["conn"], w["s1"], THU, THU + timedelta(days=7), scope="blend", layers=["activities", "rooms"])
+    assert sorted(i["layer"] for i in got) == ["activities", "rooms"]
+
+
+def test_a_multi_day_activity_names_the_one_day_the_room_is_for(w):
+    r = book(w, title="Training", hours=(9, 10))
+    ev = st.create_event(w["conn"], "Training", (THU - timedelta(days=1)).isoformat(),
+                         end_date=(THU + timedelta(days=1)).isoformat(), created_by=w["s1"]["username"])
+    rooms.link_event(w["conn"], r["id"], ev["id"], w["s1"])
+    got = items(w, "s1", layers=("activities", "rooms"))
+    assert [i["layer"] for i in got] == ["activities"]
+    assert got[0]["time_note"] is None and any("Thu 7 Mar 09:00–11:00" in f for f in got[0]["flags"])
+
+
+def test_the_feed_keeps_a_linked_room_that_sits_on_another_day(w):
+    day = date(2030, 3, 11)
+    r = book(w, "s1", (9,), title="Planning", day=day)
+    ev = st.create_event(w["conn"], "Planning", (day + timedelta(days=7)).isoformat(), created_by=w["s1"]["username"])
+    rooms.link_event(w["conn"], r["id"], ev["id"], w["s1"])
+    feed = oc.build_feed(w["conn"], w["s1"], "https://x.test", today=MON)
+    assert f"UID:room-{r['id']}@office-connect" in feed                      # mismatched day: not hidden
+    ev2 = st.create_event(w["conn"], "Planning 2", day.isoformat(), created_by=w["s1"]["username"])
+    r2 = book(w, "s1", (13,), title="Planning 2", day=day)
+    rooms.link_event(w["conn"], r2["id"], ev2["id"], w["s1"])
+    feed = oc.build_feed(w["conn"], w["s1"], "https://x.test", today=MON)
+    assert f"UID:room-{r2['id']}@office-connect" not in feed                 # same day: the activity carries it
