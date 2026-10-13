@@ -63,6 +63,8 @@
     <ul>{% for h in heads_up %}<li>{{ h }}</li>{% endfor %}</ul></div>
   {% endif %}
 
+  {% include "_room_banner.html" %}
+
   {% if css.linked %}
   <div class="cal-flash ok" role="status">★ This is linked to the CSS activity <strong>{{ css.linked.title }}</strong>.
     The activity owns the title, dates and venue; this item adds the people and tags.

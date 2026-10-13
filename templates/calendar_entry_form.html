@@ -41,6 +41,8 @@
   so you get this one-off instead. The rest of the series is untouched.</div>
 {% endif %}
 
+{% include "_room_banner.html" %}
+
 <form method="post" class="cal-form" id="cal-form"
       action="{{ '/calendar/entries/' ~ entry.id ~ '/edit' if entry else '/calendar/new' }}">
   <input type="hidden" name="updated_at" value="{{ f.updated_at }}">
@@ -57,7 +59,7 @@
   </div>
 
   <div class="cf-row">
-    <label>Starts <input type="date" name="start_date" {{ "readonly" if locked and not can_dates }} value="{{ f.start_date }}" required></label>
+    <label>Starts <input type="date" name="start_date" id="start_date" {{ "readonly" if locked and not can_dates }} value="{{ f.start_date }}" required></label>
     <label>Ends <span class="opt">(if it runs several days)</span> <input type="date" name="end_date" {{ "readonly" if locked and not can_dates }} value="{{ f.end_date }}"></label>
   </div>
   {% if not locked %}
@@ -69,15 +71,15 @@
   </div>
   {% endif %}
   <div class="cf-row">
-    <label>From <span class="opt">(optional)</span> <input type="time" name="start_time" {{ "readonly" if locked }} value="{{ f.start_time }}"></label>
-    <label>To <span class="opt">(optional)</span> <input type="time" name="end_time" {{ "readonly" if locked }} value="{{ f.end_time }}"></label>
+    <label>From <span class="opt">(optional)</span> <input type="time" name="start_time" id="start_time" {{ "readonly" if locked }} value="{{ f.start_time }}"></label>
+    <label>To <span class="opt">(optional)</span> <input type="time" name="end_time" id="end_time" {{ "readonly" if locked }} value="{{ f.end_time }}"></label>
     <label>Time note <span class="opt">(e.g. "AM")</span> <input name="time_note" {{ "readonly" if locked }} value="{{ f.time_note }}" maxlength="60"></label>
   </div>
 
   <div class="cf-row">
-    <label>Where <span class="opt">(optional)</span> <input name="venue" {{ "readonly" if locked }} value="{{ f.venue }}" maxlength="200"></label>
+    <label>Where <span class="opt">(optional)</span> <input name="venue" id="venue" {{ "readonly" if locked }} value="{{ f.venue }}" maxlength="200"></label>
     <label>Format
-      <select name="modality" {{ "disabled" if locked }}>{% for k, label in modalities.items() %}<option value="{{ k }}" {{ "selected" if f.modality == k }}>{{ label }}</option>{% endfor %}</select></label>
+      <select name="modality" id="modality" {{ "disabled" if locked }}>{% for k, label in modalities.items() %}<option value="{{ k }}" {{ "selected" if f.modality == k }}>{{ label }}</option>{% endfor %}</select></label>
   </div>
   <label class="cf-wide">Meeting link <span class="opt">(optional)</span>
     <input type="url" name="meeting_url" {{ "readonly" if locked }} value="{{ f.meeting_url }}" placeholder="https://"></label>
@@ -89,6 +91,8 @@
     <label>Who can see it
       <select name="audience">{% for k, label in audiences.items() %}<option value="{{ k }}" {{ "selected" if f.audience == k }}>{{ label }}</option>{% endfor %}</select></label>
   </div>
+
+  {% if show_room_chip %}<div class="cf-wide">{% include "_room_chip.html" %}</div>{% endif %}
 
   <fieldset class="cf-wide cf-people">
     <legend>Who is on it <span class="opt">(they will see it in their calendar)</span></legend>

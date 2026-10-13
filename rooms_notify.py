@@ -108,7 +108,8 @@ def on_requested(conn, res):
         if res.get("requester_user_id") == a["id"]:
             continue
         _add(conn, kind="new_request", reservation_id=res["id"], user_id=a["id"], url="/approvals#rooms",
-             text=f"{who}{f' ({unit})' if unit else ''}: {res['title']}, {_when(conn, res)}{more}")
+             text=f"{who}{f' ({unit})' if unit else ''}: {res['title']}, {_when(conn, res)}{more}"
+                  + (" · STANDBY: those hours are already taken" if res.get("standby") else ""))
 
 
 def on_received(conn, res):

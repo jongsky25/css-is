@@ -1,5 +1,6 @@
 """Conference room R8 over HTTP: the activity form's room line, /create?from_room, the banner and its buttons."""
 from __future__ import annotations
+import re
 import pytest
 from conftest import in_the_directory
 
@@ -61,7 +62,7 @@ def test_the_form_has_a_collapsed_room_line_with_hours(manager, conn):
     page = manager.get("/create").text
     assert 'id="room-chip"' in page and "Also reserve the conference room" in page
     assert page.count('name="room_from"') == 1 and "room_chip.js" in page
-    assert "<details class=\"room-chip\" id=\"room-chip\" >" in page or "<details class=\"room-chip\" id=\"room-chip\">" in page
+    assert re.search(r'<details class="room-chip" id="room-chip"[^>]*>', page) and "open>" not in re.search(r'<details class="room-chip"[^>]*>', page).group(0)
 
 
 def test_ticking_the_room_files_a_request_tied_to_the_new_activity(manager, conn):
