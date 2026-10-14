@@ -1,5 +1,13 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-14 (v6.31 — travel filing foundations, employee number)
+
+- `storage.py`: DDL for `travel_filing`, `travel_item`, `travel_flag`, `travel_route_type`, `travel_ceiling`, `travel_justification` (additive, `IF NOT EXISTS`); `admin_user.employee_no` (guarded ALTER, `_ADMIN_COLS`/`_admin_row`, `get_user_profile`, `set_user_employee_no`); ten `travel_*` audit labels; `init_db` tail calls `travel.ensure_defaults`.
+- New modules: `travel.py` (seeds, settings defaults, `ceilings`), `travel_rules.py` (deadlines, `ride_check`, flags, `build_checklist`, `completeness`), `travel_checklist.py` (`CHECKLIST_REV = "FMS-BD-01 r6 2025-06"`), `travel_docs.py` (`date_range`, `peso_words`, `money`). All added to `deploy_hf.RUNTIME_PY`.
+- `app.py` `/me`: saves the employee number only when the field is on the posted form; `templates/me.html`: new input.
+- Tests: `tests/test_travel_rules.py`, `tests/test_travel_core.py`. Plan: `docs/TRAVEL_FILING_PLAN.md`.
+- **Version bump:** `APP_VERSION` 6.30 → 6.31.
+
 ## 2026-10-14 (v6.30 — calendar form people list scrolls on mobile, with search)
 
 - `templates/calendar_entry_form.html`: the "Who is on it" list gets a `#people-search` box that filters the checkboxes by name (client-side; ticked people stay ticked when hidden) and a "No one matches." line.
