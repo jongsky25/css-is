@@ -1,5 +1,11 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-14 (v6.30 — calendar form people list scrolls on mobile, with search)
+
+- `templates/calendar_entry_form.html`: the "Who is on it" list gets a `#people-search` box that filters the checkboxes by name (client-side; ticked people stay ticked when hidden) and a "No one matches." line.
+- `static/css/calendar.css`: scrolling moved from the `.cf-checks` grid to a new `.cf-checks-scroll` wrapper (`overscroll-behavior`, `touch-action: pan-y`) so it works inside the fieldset on mobile; calendar.css cache-buster `20261014a`.
+- **Version bump:** `APP_VERSION` 6.29 → 6.30.
+
 ## 2026-10-13 (v6.29 — room line on the calendar item form, one flow end to end)
 
 - `templates/_room_chip.html` (shared by `/create` and `/calendar/new|edit`); `room_chip.js` finds the date / venue / format / start / end fields through `data-*` attributes and makes the hours follow the item's start and end times.
