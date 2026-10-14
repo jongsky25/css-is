@@ -1,0 +1,96 @@
+// Office Connect travel documents relay.
+// Deploy: Web app, Execute as: Me, Who has access: Anyone. Every request is HMAC-signed, so the
+// "Anyone" endpoint only does work for the Space. Setup: docs/TRAVEL_DOCS_RELAY_SETUP.md.
+// Script Properties: SHARED_SECRET, ROOT_FOLDER_ID, ALLOWED_DOMAIN (doh.gov.ph),
+// TPL_appendix_a, TPL_appendix_b, TPL_mc114_justification, TPL_jo_cert, TPL_travel_report,
+// TPL_cenrr, TPL_rer.
+const P = PropertiesService.getScriptProperties();
+
+function doPost(e) {
+  try {
+    const env = JSON.parse(e.postData.contents);               // {ts, payload, sig}
+    if (!verify_(env)) return reply_({ ok: false, error: 'unauthorized' });
+    const req = JSON.parse(env.payload);
+    switch (req.action) {
+      case 'ping': return reply_({ ok: true, version: 1 });
+      case 'check_link': return reply_(checkLink_(req));
+      case 'generate_doc': return reply_(generateDoc_(req));
+      default: return reply_({ ok: false, error: 'unknown_action' });
+    }
+  } catch (err) { return reply_({ ok: false, error: String(err) }); }
+}
+
+function verify_(env) {
+  if (!env || !env.ts || !env.payload || !env.sig) return false;
+  if (Math.abs(Date.now() - Number(env.ts)) > 5 * 60 * 1000) return false;
+  const raw = Utilities.computeHmacSha256Signature(env.ts + '.' + env.payload, P.getProperty('SHARED_SECRET'));
+  const hex = raw.map(function (b) { return ('0' + (b & 0xff).toString(16)).slice(-2); }).join('');
+  return hex.length === String(env.sig).length && hex === String(env.sig);
+}
+
+function reply_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+function esc_(s) { return String(s).replace(/\\/g, '\\\\').replace(/\$/g, '\\$'); }
+
+function checkLink_(req) {
+  const m = /[-\w]{25,}/.exec(String(req.url || '')); if (!m) return { ok: false, error: 'bad_link' };
+  try { const f = DriveApp.getFileById(m[0]); return { ok: true, id: m[0], name: f.getName(), mime: f.getMimeType() }; }
+  catch (err) { return { ok: false, error: 'not_accessible' }; }
+}
+
+function generateDoc_(req) {
+  // Allow-list: the template must be one of the TPL_ properties, the folder name a plain slug.
+  if (!/^[a-z0-9_]{1,40}$/.test(String(req.template_key))) return { ok: false, error: 'template_not_set' };
+  if (!/^[A-Za-z0-9_-]{1,40}$/.test(String(req.folder_key))) return { ok: false, error: 'bad_folder' };
+  if (!/^[A-Za-z0-9:_-]{1,80}$/.test(String(req.request_id))) return { ok: false, error: 'bad_request_id' };
+  const tpl = P.getProperty('TPL_' + req.template_key); if (!tpl) return { ok: false, error: 'template_not_set' };
+  const root = DriveApp.getFolderById(P.getProperty('ROOT_FOLDER_ID'));
+  const it = root.getFoldersByName(req.folder_key);
+  const folder = it.hasNext() ? it.next() : root.createFolder(req.folder_key);
+  const files = folder.getFiles();
+  while (files.hasNext()) { const f = files.next(); if (f.getDescription() === 'request_id=' + req.request_id) return doc_(f); }
+  const copy = DriveApp.getFileById(tpl).makeCopy(String(req.title).slice(0, 120), folder);
+  copy.setDescription('request_id=' + req.request_id);
+  const doc = DocumentApp.openById(copy.getId()), body = doc.getBody();
+  applyRows_(body, req.rows || {}); applyBlocks_(body, req.blocks || {}); applyFields_(body, req.fields || {});
+  doc.saveAndClose();
+  (req.share_with || []).forEach(function (a) {
+    if (String(a).toLowerCase().endsWith('@' + P.getProperty('ALLOWED_DOMAIN'))) copy.addEditor(a);
+  });
+  return doc_(copy);
+}
+
+function doc_(f) { return { ok: true, id: f.getId(), url: f.getUrl(), name: f.getName() }; }
+
+function applyFields_(body, fields) {
+  Object.keys(fields).forEach(function (k) {
+    if (/^[a-z0-9_]+$/.test(k)) body.replaceText('\\{\\{' + k + '\\}\\}', esc_(fields[k]));
+  });
+  body.replaceText('\\{\\{[a-z0-9_]+\\}\\}', '');   // never leave raw braces
+}
+
+function applyBlocks_(body, blocks) {
+  Object.keys(blocks).forEach(function (k) {
+    const hit = body.findText('\\{\\{' + k + '\\}\\}'); if (!hit) return;
+    const para = hit.getElement().getParent().asParagraph(), parent = para.getParent();
+    const lines = blocks[k].length ? blocks[k] : [''];
+    para.setText(lines[0]);
+    const idx = parent.getChildIndex(para);
+    for (let i = 1; i < lines.length; i++) parent.insertParagraph(idx + i, lines[i]).setAttributes(para.getAttributes());
+  });
+}
+
+function applyRows_(body, rows) {
+  Object.keys(rows).forEach(function (k) {
+    const spec = rows[k], hit = body.findText('\\{\\{' + spec.marker + '\\}\\}'); if (!hit) return;
+    let el = hit.getElement();
+    while (el && el.getType() !== DocumentApp.ElementType.TABLE_ROW) el = el.getParent();
+    if (!el) return;
+    const row = el.asTableRow(), table = row.getParent().asTable(), idx = table.getChildIndex(row);
+    const data = spec.data.length ? spec.data : [{}];
+    for (let i = 1; i < data.length; i++) table.insertTableRow(idx + i, row.copy());
+    data.forEach(function (d, i) {
+      const r = table.getRow(idx + i);
+      Object.keys(d).forEach(function (c) { r.replaceText('\\{\\{' + c + '\\}\\}', esc_(d[c])); });
+    });
+  });
+}

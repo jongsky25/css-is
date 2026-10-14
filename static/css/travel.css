@@ -39,3 +39,5 @@
 .tv-fmis { border-style:dashed; }
 @media print { .tv-tabs, .tv-actions, .tv-noprint { display:none !important; } }
 @media (max-width:480px) { .tv-item form { flex-direction:column; align-items:stretch; } }
+
+.tv-h { font-size: 1.05rem; margin: 0 0 .4rem; }

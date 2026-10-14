@@ -492,6 +492,13 @@ def save_item(conn, filing, code, *, drive_url=None, na=None, fmis_ref=None, not
     conn.commit()
 
 
+def set_drive_file_id(conn, filing, code, file_id):
+    """Remember the Drive file id the relay confirmed for an item's link."""
+    conn.execute("UPDATE travel_item SET drive_file_id=?, updated_at=? WHERE filing_id=? AND item_code=?",
+                 (file_id, tz.now_iso(), filing["id"], code))
+    conn.commit()
+
+
 def _saved(conn, filing, code, col):
     r = conn.execute(f"SELECT {col} FROM travel_item WHERE filing_id=? AND item_code=?", (filing["id"], code)).fetchone()
     return r[0] if r else None

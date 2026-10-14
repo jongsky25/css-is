@@ -36,6 +36,7 @@ def _limits(bucket):
         "email_link": (5, 3600), # "email me my personal link" (POST /e/<t>/email-link)
         "room": (5, 3600),       # guest conference-room requests (POST /room): a human files a few an hour
         "room_view": (120, 60),  # guest availability look-ups (cheap GETs)
+        "travel_relay": (30, 60),  # travel link checks and relay tests (keyed by the signed-in account)
         "care": (60, 60),        # avatar water/feed taps — the per-user cooldown in
                                  # storage.record_avatar_care is the real gate; this
                                  # only blunts scripted hammering of the endpoint
