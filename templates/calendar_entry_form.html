@@ -1,7 +1,7 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header %}
 {% block title %}{{ "Edit calendar item" if entry else "Add to the calendar" }}{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261010i">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261014a">{% endblock %}
 {% block content %}
 {{ page_header("Edit calendar item" if entry else "Add to the calendar",
                "Anyone can add or change items. Every change is recorded, and the people on an item see it in their calendar.") }}
@@ -96,12 +96,34 @@
 
   <fieldset class="cf-wide cf-people">
     <legend>Who is on it <span class="opt">(they will see it in their calendar)</span></legend>
-    <div class="cf-checks">
-      {% for p in people %}
-      <label><input type="checkbox" name="people" value="{{ p.user_id }}" {{ "checked" if p.user_id|string in f.people }}> {{ p.name }}</label>
-      {% endfor %}
+    <input type="search" id="people-search" class="cf-people-search" placeholder="Search names…"
+           aria-label="Search people" autocomplete="off">
+    <div class="cf-checks-scroll">
+      <div class="cf-checks">
+        {% for p in people %}
+        <label data-name="{{ p.name|lower }}"><input type="checkbox" name="people" value="{{ p.user_id }}" {{ "checked" if p.user_id|string in f.people }}> {{ p.name }}</label>
+        {% endfor %}
+      </div>
+      <p class="cf-nomatch opt" id="people-nomatch" hidden>No one matches.</p>
     </div>
   </fieldset>
+  <script>
+  (function () {
+    var box = document.getElementById("people-search");
+    var none = document.getElementById("people-nomatch");
+    var labels = document.querySelectorAll(".cf-checks label");
+    box.addEventListener("input", function () {
+      var q = box.value.trim().toLowerCase(), shown = 0;
+      labels.forEach(function (l) {
+        var ok = !q || l.dataset.name.indexOf(q) !== -1;
+        l.hidden = !ok;
+        if (ok) shown++;
+      });
+      none.hidden = shown > 0;
+    });
+    box.addEventListener("keydown", function (e) { if (e.key === "Enter") e.preventDefault(); });
+  })();
+  </script>
 
   <label class="cf-wide">Tags <span class="opt">(comma-separated, e.g. PK, BHW)</span>
     <input name="tags" value="{{ f.tags }}" maxlength="200"></label>
