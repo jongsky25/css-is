@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.34"
+APP_VERSION = "6.35"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.35",
+        "date": "October 14, 2026",
+        "summary": "Make travel forms from your travel claim.",
+        "changes": [
+            "A new Prepare the forms page on each travel claim lets you fill in your itinerary, report and certificate once, and makes the Google Docs for you: Appendix A and B, the Post Travel Report, the Job Order certification, the MC 114 sheet, and the CENRR and RER forms your rides need.",
+            "The page adds up your fares and tells you straight away if a ride will need the Admin Unit to check it, such as a fare above the limit or a route that is not on the approved list.",
+            "What you type is used to make the forms and is not kept on this site. You can change it and make new copies at any time; the older copies stay in Drive.",
+            "If a form fails to come out, you can try just that one again.",
+        ],
+    },
     {
         "version": "6.34",
         "date": "October 14, 2026",

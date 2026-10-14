@@ -5,15 +5,18 @@ No middleware gate covers /travel, so every handler checks the switch, then owne
 (travel.can_view / travel.is_owner), and every POST checks that Origin / Referer, when
 present, is this site."""
 from __future__ import annotations
+import json
 import os
 import re
 from datetime import timedelta
 from urllib.parse import parse_qs, quote, urlparse
 
 from fastapi import APIRouter, Request
+from starlette.background import BackgroundTask
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 import gdocs_relay
+import travel_docs
 import ratelimit
 import rooms
 import storage as st
@@ -304,6 +307,145 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
                 return fail(str(e))
             travel.set_drive_file_id(conn, filing, code, res.data.get("id"))
             return JSONResponse({"ok": True, "name": res.data.get("name", ""), "mime": res.data.get("mime", "")})
+        finally:
+            conn.close()
+
+    # ----------------------------------------------- prepare and generate (T5) ---
+
+    SIG_SETTINGS = ("head_name", "head_title", "certifier_name", "certifier_title", "station")
+
+    def _sig_settings(conn):
+        return {k: st.get_setting(conn, f"travel.sig.{k}", "") for k in SIG_SETTINGS}
+
+    def _generate_items(conn, filing):
+        return [it for it in travel.view_items(conn, filing) if it["handling"] == "generate" and it["state"] != "na"]
+
+    def _jerr(msg, status=400):
+        return JSONResponse({"ok": False, "error": msg}, status_code=status)
+
+    @router.get("/travel/f/{ref}/prepare", response_class=HTMLResponse)
+    def travel_prepare(request: Request, ref: str):
+        conn = get_conn()
+        try:
+            filing, bad = _load(request, conn, ref, owner=True)
+            if bad:
+                return bad
+            if filing["status"] not in ("open", "ready"):
+                return _go(f"/travel/f/{ref}", err="This filing can no longer be changed.")
+            profile = st.get_user_profile(conn, request.state.user["id"]) or {}
+            data = travel_docs.defaults(conn, filing, profile, _sig_settings(conn))
+            data["ceilings"] = [[m, rt, a] for (m, rt), a in sorted(travel.ceilings(conn).items())]
+            data["routes"] = [[r[0], r[1]] for r in conn.execute("SELECT code, label FROM travel_route_type WHERE active=1 ORDER BY sort, code")]
+            data["ref"] = ref
+            data["post_url"] = f"/travel/f/{ref}/generate"
+            data["status_url"] = f"/travel/f/{ref}/status"
+            items = _generate_items(conn, filing)
+            return templates.TemplateResponse(request, "travel_prepare.html", {
+                "nav_active": "travel_mine", "tab": "mine", "f": filing, "items": items, "relay_ready": gdocs_relay.configured(),
+                "prep_json": json.dumps(data, default=str).replace("</", "<\\/"),
+                "ans": travel.answers_of(filing)})
+        finally:
+            conn.close()
+
+    def _run_generation(ref, filing_id, payloads, revs, share_with):
+        """BackgroundTask: one relay call per document, one at a time. Own connection; never raises."""
+        conn = get_conn()
+        try:
+            relay = gdocs_relay.get_relay()
+            by_code = {}
+            for pl in payloads:
+                by_code.setdefault(pl.item_code, []).append(pl)
+            for code, docs in by_code.items():
+                rev, urls, err = revs[code], [], ""
+                for pl in docs:
+                    res = relay.generate_doc(request_id=f"{ref}:{code}:{rev}:{pl.index}", template_key=pl.template_key,
+                                             folder_key=ref, title=pl.title if pl.index == 1 else f"{pl.title} {pl.index}",
+                                             fields=pl.fields, blocks=pl.blocks, rows=pl.rows, share_with=share_with)
+                    if res.ok and res.data.get("url"):
+                        urls.append(res.data["url"])
+                    else:
+                        err = gdocs_relay.describe(res.error)
+                        break
+                if err or not urls:
+                    travel.finish_item(conn, filing_id, code, rev, error=err or "No document came back.")
+                else:
+                    travel.finish_item(conn, filing_id, code, rev, url=urls[0],
+                                       extra=("More: " + " ".join(urls[1:])) if len(urls) > 1 else None)
+            travel.finish_generation(conn, filing_id)
+        except Exception:                                   # noqa: BLE001 - never leave a run 'running'
+            try:
+                conn.execute("UPDATE travel_item SET doc_state=REPLACE(doc_state,'pending:','failed:'), "
+                             "note='Something went wrong. Try again.' WHERE filing_id=? AND doc_state LIKE 'pending:%'", (filing_id,))
+                travel.finish_generation(conn, filing_id)
+            except Exception:                               # noqa: BLE001
+                pass
+        finally:
+            conn.close()
+
+    @router.post("/travel/f/{ref}/generate")
+    async def travel_generate(request: Request, ref: str):
+        """JSON: {rows, texts, signatories, mc114_text, codes?}. Rechecks the rides, opens flags,
+        then makes the documents after the response. The posted values are used and dropped."""
+        if not _same_origin(request):
+            return _jerr("This request came from another site.", 403)
+        try:
+            body = await request.json()
+        except ValueError:
+            return _jerr("Send JSON.")
+        conn = get_conn()
+        try:
+            if not travel.enabled(conn):
+                return _jerr("Travel filing is not switched on.", 403)
+            filing = travel.get_by_ref(conn, ref) if _REF.match(ref) else None
+            user = request.state.user
+            if not travel.can_view(conn, user, filing):
+                return _jerr("Not found.", 404)
+            if not travel.is_owner(user, filing):
+                return _jerr("Only the person who filed can make these documents.", 403)
+            if filing["status"] not in ("open", "ready"):
+                return _jerr("This filing can no longer be changed.", 409)
+            if filing["gen_state"] == "running" and travel.generation_status(conn, filing)["gen_state"] == "running":
+                return _jerr("The documents are already being made.", 409)
+            if not gdocs_relay.configured():
+                return _jerr("Making forms automatically is not set up yet. Make the form yourself and paste its link on the filing page.", 503)
+            if not ratelimit.allow("travel_relay", f"u{user['id']}"):
+                return _jerr("Too many requests. Wait a minute and try again.", 429)
+            norm = travel_docs.normalize(body)
+            ceilings = travel.ceilings(conn)
+            filing = travel.set_derived_answers(conn, filing, travel_docs.ride_answers(norm["rows"], ceilings))
+            travel.sync_flags(conn, filing, tr.flags_for(filing, norm["rows"], travel.answers_of(filing), ceilings))
+            items = _generate_items(conn, filing)
+            wanted = body.get("codes") if isinstance(body.get("codes"), list) else None
+            codes = [it["code"] for it in items if (not wanted or it["code"] in wanted)]
+            if not codes:
+                return _jerr("There is nothing to make for this filing.")
+            profile = st.get_user_profile(conn, user["id"]) or {}
+            payloads = travel_docs.build_payloads(
+                filing["kind"], filing, profile, _sig_settings(conn), body, codes, ceilings=ceilings,
+                items=travel.view_items(conn, filing), today=today_local())
+            made = {pl.item_code for pl in payloads}
+            if not made:
+                return _jerr("Nothing to make: no rides need a form.")
+            revs = travel.start_generation(conn, filing, sorted(made))
+            share = [user.get("username")] if user.get("username") else []
+            audit(request, conn, "travel_generate", target_type="travel_filing", target_id=filing["ref_code"],
+                  summary="started making " + ", ".join(sorted(made)))
+            task = BackgroundTask(_run_generation, ref, filing["id"], payloads, revs, share)
+            return JSONResponse({"ok": True, "started": sorted(made), "flags": len(travel.flags_of(conn, filing["id"]))},
+                                background=task)
+        finally:
+            conn.close()
+
+    @router.get("/travel/f/{ref}/status")
+    def travel_status(request: Request, ref: str):
+        conn = get_conn()
+        try:
+            if not travel.enabled(conn):
+                return _jerr("Travel filing is not switched on.", 403)
+            filing = travel.get_by_ref(conn, ref) if _REF.match(ref) else None
+            if not travel.can_view(conn, request.state.user, filing):
+                return _jerr("Not found.", 404)
+            return JSONResponse({"ok": True, **travel.generation_status(conn, filing)})
         finally:
             conn.close()
 
