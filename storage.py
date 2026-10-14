@@ -643,9 +643,70 @@ def init_db(conn):
         result      TEXT,
         imported_at TEXT
     );
+
+    -- Travel filing (docs/TRAVEL_FILING_PLAN.md). Only the checklist drivers, links and
+    -- status are stored; the contents of generated forms are never saved. All writes go
+    -- through travel.py.
+    CREATE TABLE IF NOT EXISTS travel_filing (
+        id INTEGER PRIMARY KEY, ref_code TEXT UNIQUE,
+        user_id INTEGER NOT NULL REFERENCES admin_user(id),
+        kind TEXT NOT NULL CHECK (kind IN ('ca','liquidation','reimbursement')),
+        source_kind TEXT NOT NULL CHECK (source_kind IN ('entry','css_event','blank')),
+        entry_id INTEGER, event_id INTEGER,
+        act_title TEXT NOT NULL, act_start TEXT NOT NULL, act_end TEXT NOT NULL, act_venue TEXT,
+        dpo_no TEXT, dpo_date TEXT,
+        answers_json TEXT NOT NULL DEFAULT '{}',
+        advance_amount REAL, ca_filing_id INTEGER REFERENCES travel_filing(id),
+        mc114_format TEXT CHECK (mc114_format IN ('separate','appendix_b','none')),
+        deadline_date TEXT, deadline_rule TEXT CHECK (deadline_rule IN ('after_fact','plotted','none')),
+        status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open','ready','submitted','withdrawn')),
+        gen_state TEXT NOT NULL DEFAULT 'idle' CHECK (gen_state IN ('idle','running','done','failed')),
+        opened_at TEXT, ready_at TEXT, submitted_at TEXT, withdrawn_at TEXT,
+        created_by TEXT, updated_at TEXT, purged_at TEXT
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS ux_travel_ca_live
+        ON travel_filing(user_id, COALESCE(entry_id,-1), COALESCE(event_id,-1))
+        WHERE kind='ca' AND status<>'withdrawn' AND source_kind<>'blank';
+    CREATE INDEX IF NOT EXISTS ix_travel_filing_user ON travel_filing(user_id, status);
+    CREATE INDEX IF NOT EXISTS ix_travel_filing_act ON travel_filing(entry_id, event_id);
+    CREATE TABLE IF NOT EXISTS travel_item (
+        filing_id INTEGER NOT NULL REFERENCES travel_filing(id) ON DELETE CASCADE,
+        item_code TEXT NOT NULL,
+        handling TEXT NOT NULL CHECK (handling IN ('generate','upload','fmis','carry')),
+        state TEXT NOT NULL DEFAULT 'missing' CHECK (state IN ('missing','present','na')),
+        drive_url TEXT, drive_file_id TEXT, doc_url TEXT, doc_state TEXT, fmis_ref TEXT, note TEXT,
+        updated_at TEXT,
+        PRIMARY KEY (filing_id, item_code)
+    );
+    CREATE TABLE IF NOT EXISTS travel_flag (
+        id INTEGER PRIMARY KEY,
+        filing_id INTEGER NOT NULL REFERENCES travel_filing(id) ON DELETE CASCADE,
+        kind TEXT NOT NULL CHECK (kind IN ('over_ceiling','unlisted_route','no_receipt_over_1000','participant_only')),
+        sig TEXT NOT NULL, detail TEXT,
+        state TEXT NOT NULL DEFAULT 'open' CHECK (state IN ('open','verified','rejected')),
+        supervisor_confirmed INTEGER NOT NULL DEFAULT 0, note TEXT, decided_by TEXT, decided_at TEXT,
+        created_at TEXT,
+        UNIQUE (filing_id, sig)
+    );
+    CREATE TABLE IF NOT EXISTS travel_route_type (
+        code TEXT PRIMARY KEY, label TEXT NOT NULL,
+        active INTEGER NOT NULL DEFAULT 1, sort INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE TABLE IF NOT EXISTS travel_ceiling (
+        mode TEXT NOT NULL CHECK (mode IN ('rer','tnvs','taxi','cenrr')),
+        route_type TEXT NOT NULL, amount REAL NOT NULL, note TEXT, updated_by TEXT, updated_at TEXT,
+        PRIMARY KEY (mode, route_type)
+    );
+    CREATE TABLE IF NOT EXISTS travel_justification (
+        id INTEGER PRIMARY KEY, title TEXT NOT NULL,
+        format TEXT NOT NULL CHECK (format IN ('separate','appendix_b')), body TEXT NOT NULL,
+        active INTEGER NOT NULL DEFAULT 1, updated_by TEXT, updated_at TEXT
+    );
     """)
     _add_missing_columns(conn)
     _wa_install_week_guard(conn)
+    import travel                            # seeds ceilings, route types and starter justifications
+    travel.ensure_defaults(conn)
     conn.commit()
 
 
@@ -988,6 +1049,9 @@ def _add_missing_columns(conn):
             conn.execute("ALTER TABLE admin_user ADD COLUMN wellness_seen_at TEXT")
         if "wa_seen_at" not in au_cols:
             conn.execute("ALTER TABLE admin_user ADD COLUMN wa_seen_at TEXT")
+        # Government employee number, asked on /me and printed on travel forms (CENRR).
+        if "employee_no" not in au_cols:
+            conn.execute("ALTER TABLE admin_user ADD COLUMN employee_no TEXT")
         conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_admin_user_rp "
                      "ON admin_user(rp_id) WHERE rp_id IS NOT NULL")
     # Respondent demographics captured at Type-2 pre-registration. These are NON-PII
@@ -3733,6 +3797,17 @@ _AUDIT_ACTIONS = {
     "room_purge_guests":   ("Removed old guest details", "Conference room"),
     "room_meal_edit":      ("Edited a room meal form", "Conference room"),
     "room_series":         ("Requested a repeating room booking", "Conference room"),
+    # Travel filing
+    "travel_open":         ("Opened a travel filing", "Travel filing"),
+    "travel_generate":     ("Generated travel documents", "Travel filing"),
+    "travel_ready":        ("Marked a travel filing ready", "Travel filing"),
+    "travel_submit":       ("Marked a travel filing submitted", "Travel filing"),
+    "travel_withdraw":     ("Withdrew a travel filing", "Travel filing"),
+    "travel_flag_decide":  ("Decided a travel flag", "Travel filing"),
+    "travel_ceiling_save": ("Saved travel ceilings or routes", "Travel filing"),
+    "travel_library_save": ("Saved the MC 114 justification library", "Travel filing"),
+    "travel_settings_save": ("Saved travel filing settings", "Travel filing"),
+    "travel_purge":        ("Removed old travel filing details", "Travel filing"),
     "room_meal_tag":       ("Tagged a room meal order", "Conference room"),
     "room_encode":         ("Encoded a room booking", "Conference room"),
     "room_cancel":         ("Cancelled a room booking", "Conference room"),
@@ -4160,7 +4235,7 @@ def _admin_row(r):
             "avatar_last_care_at": r[13], "avatar_care_streak": r[14] or 0,
             "designation": r[15], "has_account_photo": bool(r[16]),
             "bureau_access": r[17] or "", "has_account_signature": bool(r[18]),
-            "nickname": r[19] or "",
+            "nickname": r[19] or "", "employee_no": r[20] or "",
             "pending": (r[2] == "")}      # no password set yet => still invited
 
 
@@ -4174,7 +4249,7 @@ _ADMIN_COLS = ("id, username, pw_hash, salt, role, active, must_change, rp_id, "
                "(photo IS NOT NULL) AS has_account_photo, "
                "COALESCE(bureau_access, ''), "
                "(signature IS NOT NULL) AS has_account_signature, "
-               "nickname")
+               "nickname, employee_no")
 
 
 def get_admin_user(conn, username):
@@ -4314,6 +4389,7 @@ def get_user_profile(conn, user_id):
         "designation": ((rp or {}).get("designation") if rp
                         else acct.get("designation")) or "",
         "nickname": acct.get("nickname") or "",
+        "employee_no": acct.get("employee_no") or "",
         "birthday": get_birthday(conn, user_id),
         "cal_email_changes": calendar_email_pref(conn, user_id),
         "bday_notify": bday_notify_pref(conn, user_id),
@@ -4840,6 +4916,14 @@ def set_user_designation(conn, user_id, designation):
     one in without touching the admin-managed directory."""
     val = (designation or "").strip() or None
     conn.execute("UPDATE admin_user SET designation=? WHERE id=?", (val, user_id))
+    conn.commit()
+
+
+def set_user_employee_no(conn, user_id, employee_no):
+    """Set (or clear) the account's government employee number (printed on travel forms).
+    Trimmed to one line of at most 30 characters; blank clears it."""
+    val = " ".join((employee_no or "").split())[:30] or None
+    conn.execute("UPDATE admin_user SET employee_no=? WHERE id=?", (val, user_id))
     conn.commit()
 
 

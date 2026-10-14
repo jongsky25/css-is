@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.30"
+APP_VERSION = "6.31"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.31",
+        "date": "October 14, 2026",
+        "summary": "Groundwork for travel filing, plus an employee number on your profile.",
+        "changes": [
+            "Your profile now has an Employee number box. It will be printed on travel forms.",
+            "Behind the scenes, the rules for travel claim deadlines, taxi and ride-hailing fare limits and the document checklist are in place. You will see the travel pages in a later update.",
+        ],
+    },
     {
         "version": "6.30",
         "date": "October 14, 2026",

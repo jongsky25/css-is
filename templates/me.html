@@ -111,6 +111,12 @@
                value="{{ profile.designation }}" placeholder="e.g. Section Head">
         <p class="hint">Your functional role — fill it in and update it any time.</p>
       </div>
+      <div class="field">
+        <label for="employee_no">Employee number</label>
+        <input type="text" id="employee_no" name="employee_no" maxlength="30"
+               value="{{ profile.employee_no }}" placeholder="e.g. 12345">
+        <p class="hint">Printed on travel forms such as the Certification of Expenses Not Requiring Receipts. Optional.</p>
+      </div>
     </div>
 
     {#-- Sign with a finger or stylus: the register a chief approves shows this

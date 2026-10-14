@@ -5576,6 +5576,8 @@ async def me_submit(request: Request):
                                          daybefore=p.get("cal_email_daybefore") == "1")
         st.set_user_designation(conn, uid, designation)
         st.set_user_nickname(conn, uid, nickname)
+        if "employee_no" in p:                  # only when the field was on the form it never wipes
+            st.set_user_employee_no(conn, uid, p.get("employee_no"))
         # Keep the staff directory in sync: a linked account's designation is
         # the same field the directory shows on certificates/signatory lines, so
         # write it through (a blank clears it on both sides).
