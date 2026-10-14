@@ -141,9 +141,12 @@ a.cal-tt:focus-visible { outline:none; }
   border-radius:10px; background:var(--bg); color:var(--ink); width:100%; box-sizing:border-box; }
 .cf-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:.9rem; }
 .cf-people { border:1px solid var(--line); border-radius:12px; padding:.6rem .9rem; margin:0; }
-.cf-checks { display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:.3rem .8rem;
-             max-height:15rem; overflow:auto; }
+.cf-people-search { width:100%; box-sizing:border-box; margin:0 0 .5rem; }
+.cf-checks-scroll { max-height:15rem; overflow-y:auto; -webkit-overflow-scrolling:touch;
+                    overscroll-behavior:contain; touch-action:pan-y; }
+.cf-checks { display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:.3rem .8rem; }
 .cf-checks label { font-weight:500; display:flex; gap:.45rem; align-items:center; }
+.cf-checks label[hidden] { display:none; }
 .cf-actions { display:flex; gap:.8rem; align-items:center; flex-wrap:wrap; margin:1rem 0 0; }
 .cf-actions form { margin:0; }
 
