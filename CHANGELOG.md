@@ -1,5 +1,14 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-14 (v6.36 — travel flags: verify queue)
+
+- `travel.py`: `flag_queue` (open or recently decided, with the filing and person; withdrawn and submitted filings are left out), `get_flag`, `decide_flag` (rejection needs a note; a participant-only flag is verified only with the supervisor's confirmation; a rejection sends a ready filing back to open; filings no longer open cannot be decided).
+- `travel_rules.completeness`: a rejected flag blocks "ready" like an open one, with the note in the message.
+- `travel_routes.py`: `GET /travel/verify` and `POST /travel/verify/{flag_id}` for Administrative Section members only (`rooms.is_room_admin`, no admin-role bypass), same-origin checked, audited as `travel_flag_decide`, off when the travel switch is off. `templates/travel_verify.html`; nav item "Verify travel flags" (cap `room_admin`, section Admin Unit) in the Travel group.
+- `travel_notify.py`: the Admin Unit line now counts only open flags on open or ready filings and links to `/travel/verify`; a person is told when something on an open claim was rejected.
+- Tests: `tests/test_travel_flags.py` (all ride vectors through the generate route, queue access, decisions, ready blocking, regeneration, bell).
+- **Version bump:** `APP_VERSION` 6.35 → 6.36.
+
 ## 2026-10-14 (v6.35 — prepare and generate travel forms)
 
 - `travel_docs.py`: `defaults`, `normalize`, `build_payloads` and one builder per document (`appendix_a`, `appendix_b`, `mc114_justification`, `jo_cert`, `travel_report`, `cenrr`, one `rer` per ride). Payloads are built in memory from what the prepare page posts and are never stored.

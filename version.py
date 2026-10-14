@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.35"
+APP_VERSION = "6.36"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.36",
+        "date": "October 14, 2026",
+        "summary": "The Administrative Section can now verify flagged travel claims.",
+        "changes": [
+            "A new Verify travel flags page, in the Travel menu for the Administrative Section, lists every travel claim item that needs a decision: a fare above the limit, a route that is not on the approved list, a fare over 1,000 with no receipt, or someone travelling only as a participant.",
+            "The Admin Unit records Verified or Reject with a note. Rejecting needs a reason, and a participant-only trip needs the supervisor's confirmation that the travel was necessary.",
+            "A claim cannot be marked ready while any flag is waiting or has been rejected. If a claim was already ready and something is rejected, it goes back to in progress.",
+            "You see the outcome and note on your claim, and the bell tells you when something was not accepted. Changing a fare or route makes a fresh flag, so an old decision never covers a new amount.",
+        ],
+    },
     {
         "version": "6.35",
         "date": "October 14, 2026",

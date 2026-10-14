@@ -15,7 +15,7 @@ Six additive tables (`travel_filing`, `travel_item`, `travel_flag`, `travel_rout
 Built in T2: `/travel` (my filings, activities that may need a claim, unliquidated warnings), `/travel/new` (activity, kind, role, trip questions, papers), `/travel/f/{ref}` (checklist with Drive links, N/A, FMIS references, changing answers), `/travel/f/{ref}/ready` (print list, Mark ready, Mark submitted). Withdrawn and submitted filings are read-only.
 
 ## 4. Admin Unit experience
-Built in T6/T7: verify queue, ceilings and routes, justification library.
+Built in T6: the verify queue at `/travel/verify` (Administrative Section members only; the app admin role is no bypass). It lists open flags with the person and filing, and records Verified or Reject with a note; a participant-only flag also needs the supervisor's confirmation. Built in T7: ceilings and routes, justification library.
 
 ## 5. External requests
 None. Travel filing is staff only.
@@ -68,4 +68,5 @@ T1 Foundations, T2 Filing shell, T3 Reminders and bell, T4 Relay, T5 Prepare and
 - **Flags are created by generate (T5)**: `sync_flags` keeps a flag's decision while its fingerprint is unchanged and replaces it when the fare, route or role changes. The Admin Unit verify queue is T6.
 - **Job Order certification text**: the starter activities text is only the activity and dates; obligations are left blank for the person. The wording still needs the owner's approval.
 - **Not yet checked against real Google**: the templates, placeholder names and repeated rows (see `docs/TRAVEL_DOCS_RELAY_SETUP.md`).
+- **Flags (T6)**: a rejected flag blocks "ready" as an open one does, and sends a ready filing back to in progress; the person fixes the ride (a changed fare or route makes a new flag) or talks to the Admin Unit. Decided flags can be decided again by posting to the same URL, but the page lists only open ones; the "Recently decided" list is the last 30. The queue leaves out withdrawn and submitted filings. A rejection has no email, only the bell and the note on the filing.
 - **Local test setup**: the HTTP tests need a `css_is.db` (gitignored). `python setup_db.py` creates one; nine tests (`test_ai_report_draft` x3, `test_avatar_care`, `test_home_feeds`, `test_integrity`, `test_routes[/work-arrangement/approvals]`, `test_search::test_api_search_activities`, `test_wellness::test_chief_pages_are_gated`) fail on that sample database and also fail on `main`.

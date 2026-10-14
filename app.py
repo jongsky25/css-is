@@ -673,6 +673,11 @@ NAV_GROUPS = [
          "hint": "Cash advances, liquidations and reimbursements for official travel",
          "kw": "travel claim filing cash advance liquidation reimbursement itinerary dpo personnel order "
                "per diem taxi receipt appendix a appendix b cenrr rer mc 114 deadline", "cap": None},
+        {"key": "travel_verify", "url": "/travel/verify", "label": "Verify travel flags",
+         "section": "Admin Unit",
+         "hint": "Record the outcome on travel claims that were flagged",
+         "kw": "verify travel flags admin unit ceiling route receipt participant supervisor necessity "
+               "reject verified", "cap": "room_admin"},
         {"key": "admin_travel", "url": "/admin/travel", "label": "Travel filing settings",
          "hint": "Switch travel filing on or off",
          "kw": "travel filing settings enable switch signatories relay", "cap": "manage_users",

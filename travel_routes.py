@@ -449,6 +449,55 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
         finally:
             conn.close()
 
+    # ----------------------------------------------- Admin Unit: verify queue (T6) ---
+
+    def _admin_unit(request, conn):
+        """(None, None) when the signed-in user may decide flags, else (None, response)."""
+        if not travel.enabled(conn):
+            return _off(request)
+        if not rooms.is_room_admin(conn, request.state.user):
+            return _forbidden(request, "the travel verify queue (Administrative Section only)")
+        return None
+
+    @router.get("/travel/verify", response_class=HTMLResponse)
+    def travel_verify(request: Request):
+        q = dict(request.query_params)
+        conn = get_conn()
+        try:
+            bad = _admin_unit(request, conn)
+            if bad:
+                return bad
+            return templates.TemplateResponse(request, "travel_verify.html", {
+                "nav_active": "travel_verify", "queue": travel.flag_queue(conn, "open"),
+                "decided": travel.flag_queue(conn, "decided", limit=30), "flag_labels": tr.FLAG_LABELS,
+                "msg": (q.get("ok") or "")[:200] or None, "err": (q.get("err") or "")[:200] or None})
+        finally:
+            conn.close()
+
+    @router.post("/travel/verify/{flag_id}")
+    async def travel_verify_decide(request: Request, flag_id: int):
+        if not _same_origin(request):
+            return _forbidden(request, "this request (it came from another site)")
+        f = await _posted(request)
+        conn = get_conn()
+        try:
+            bad = _admin_unit(request, conn)
+            if bad:
+                return bad
+            flag = travel.get_flag(conn, flag_id)
+            if not flag:
+                return _go("/travel/verify", err="That flag does not exist.")
+            try:
+                done = travel.decide_flag(conn, flag, request.state.user.get("username") or "",
+                                          f.get("outcome", ""), f.get("note", ""), f.get("supervisor_confirmed") == "1")
+            except travel.TravelError as e:
+                return _go("/travel/verify", err=str(e))
+            audit(request, conn, "travel_flag_decide", target_type="travel_flag", target_id=str(flag_id),
+                  summary=f"{done['state']} {flag['kind']} on filing {flag['filing_id']}")
+            return _go("/travel/verify", msg=f"Marked {done['state']}.")
+        finally:
+            conn.close()
+
     # ------------------------------------------------------- ready / submitted ---
 
     @router.get("/travel/f/{ref}/ready", response_class=HTMLResponse)

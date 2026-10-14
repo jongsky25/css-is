@@ -2,7 +2,8 @@
 
 One cheap, per-user query: how many of the person's open filings are due soon or overdue, and how
 many submitted cash advances still need a liquidation. Admin Unit members also see the flags
-waiting to be verified (the queue itself arrives in T6, so the line only shows once a flag exists).
+waiting to be verified (the same list as /travel/verify). A person is also told when the Admin Unit
+did not accept something on one of their open claims.
 Never raises into the caller's page: app.py wraps this in try/except as it does rooms_notify."""
 from __future__ import annotations
 from datetime import timedelta
@@ -53,10 +54,16 @@ def bell_rows(conn, user_id, today):
         rows.append({"text": "A cash advance still needs a liquidation" if owed == 1
                      else f"{owed} cash advances still need a liquidation",
                      "url": "/travel", "count": owed})
-    flags = conn.execute("SELECT COUNT(*) FROM travel_flag WHERE state='open'").fetchone()[0]
+    rejected = conn.execute("SELECT COUNT(*) FROM travel_flag g JOIN travel_filing f ON f.id=g.filing_id "
+                            "WHERE f.user_id=? AND f.status IN ('open','ready') AND g.state='rejected'", (user_id,)).fetchone()[0]
+    if rejected:
+        rows.append({"text": f"The Admin Unit did not accept {_plural(rejected, 'item', 'items')} on your travel claims",
+                     "url": "/travel", "count": rejected})
+    flags = conn.execute("SELECT COUNT(*) FROM travel_flag g JOIN travel_filing f ON f.id=g.filing_id "
+                         "WHERE g.state='open' AND f.status IN ('open','ready')").fetchone()[0]
     if flags:
         user = st.get_admin_user_by_id(conn, user_id)
         if user and rooms.is_room_admin(conn, user):
             rows.append({"text": f"{_plural(flags, 'travel flag', 'travel flags')} to verify",
-                         "url": "/admin/travel", "count": flags})
+                         "url": "/travel/verify", "count": flags})
     return rows

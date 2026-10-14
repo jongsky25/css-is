@@ -299,6 +299,51 @@ def generation_status(conn, filing):
     return {"gen_state": filing["gen_state"], "items": out}
 
 
+FLAG_OUTCOMES = ("verified", "rejected")
+
+
+def flag_queue(conn, state="open", limit=200):
+    """Flags for the Admin Unit, with the filing and person they belong to. Flags on filings that are
+    withdrawn or already submitted are not listed. state: 'open' or 'decided'."""
+    where = "g.state='open'" if state == "open" else "g.state IN ('verified','rejected')"
+    order = "g.created_at, g.id" if state == "open" else "g.decided_at DESC, g.id DESC"
+    return _rows(conn, f"""SELECT g.*, f.ref_code, f.kind AS filing_kind, f.act_title, f.act_start, f.act_end,
+                                  f.status AS filing_status, f.user_id,
+                                  COALESCE(NULLIF(rp.name,''), a.username) AS who
+                           FROM travel_flag g JOIN travel_filing f ON f.id=g.filing_id
+                           JOIN admin_user a ON a.id=f.user_id LEFT JOIN resource_person rp ON rp.id=a.rp_id
+                           WHERE {where} AND f.status IN ('open','ready') ORDER BY {order} LIMIT ?""", (limit,))
+
+
+def get_flag(conn, flag_id):
+    r = _rows(conn, "SELECT * FROM travel_flag WHERE id=?", (flag_id,))
+    return r[0] if r else None
+
+
+def decide_flag(conn, flag, decided_by, outcome, note="", supervisor_confirmed=False):
+    """Record the Admin Unit's outcome on a flag. The decision is theirs, made outside this site;
+    this only records it. A rejection needs a note, and a participant-only trip is verified only with
+    the supervisor's confirmation that the travel was necessary."""
+    filing = get_filing(conn, flag["filing_id"])
+    if not filing or filing["status"] not in ("open", "ready"):
+        raise TravelError("This filing is no longer open, so its flags cannot be decided.")
+    if outcome not in FLAG_OUTCOMES:
+        raise TravelError("Choose verified or rejected.")
+    note = " ".join((note or "").split())[:500]
+    if outcome == "rejected" and not note:
+        raise TravelError("Say why in the note when you reject a flag.")
+    if outcome == "verified" and flag["kind"] == "participant_only" and not supervisor_confirmed:
+        raise TravelError("Confirm that the supervisor said this travel was necessary.")
+    now = tz.now_iso()
+    conn.execute("UPDATE travel_flag SET state=?, note=?, supervisor_confirmed=?, decided_by=?, decided_at=? WHERE id=?",
+                 (outcome, note or None, 1 if supervisor_confirmed else 0, decided_by, now, flag["id"]))
+    if outcome == "rejected":
+        _touch_open(conn, filing, now)                       # a ready filing goes back to be fixed
+    conn.execute("UPDATE travel_filing SET updated_at=? WHERE id=?", (now, filing["id"]))
+    conn.commit()
+    return get_flag(conn, flag["id"])
+
+
 def missing_for(conn, filing):
     return tr.completeness(filing, view_items(conn, filing), flags_of(conn, filing["id"]))
 
