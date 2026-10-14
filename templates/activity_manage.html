@@ -137,6 +137,7 @@
   <div class="mcard" style="margin-top:1rem;">
     <h2>The participant page</h2>
     <p class="hint">This is the single page participants land on. After they register &amp; consent, they see the details, resource persons, your shared resources, and the feedback links.</p>
+    {% if travel_url %}<p><a class="btn ghost" href="{{ travel_url }}">✈ File a travel claim</a></p>{% endif %}
     <div class="pubrow">
       <a class="btn" href="/e/{{ ev.slug or ev.event_token }}" target="_blank" rel="noopener">Open public page ↗</a>
       <code id="pubUrl">{{ base_url }}/e/{{ ev.slug or ev.event_token }}</code>

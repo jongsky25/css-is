@@ -1,0 +1,75 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash %}
+{% block title %}File a travel claim{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261014a">{% endblock %}
+{% block content %}
+{{ page_header("File a travel claim", "A few short questions decide which documents you need.") }}
+{% include "_travel_tabs.html" %}
+{% if error %}<div class="flash err" role="alert">✕ {{ error }}</div>{% endif %}
+
+{% if warn %}
+<div class="tv-warn" role="alert">
+  <strong>Before you start a new cash advance:</strong> you still have {{ warn|length }} cash advance{{ 's' if warn|length != 1 }} that {{ 'have' if warn|length != 1 else 'has' }} not been liquidated.
+  <ul class="tv-missing">{% for w in warn %}<li><a href="/travel/f/{{ w.ref_code }}">{{ w.ref_code }}</a> {{ w.act_title }} (ended {{ w.act_end }})</li>{% endfor %}</ul>
+  <p>Accounting will not release a new advance while an old one is open. You can still continue.</p>
+</div>
+{% endif %}
+
+<form method="post" action="/travel/new" class="tv-card tv-form">
+  {% if source.entry_id %}<input type="hidden" name="entry" value="{{ source.entry_id }}"><input type="hidden" name="date" value="{{ source.start }}">{% endif %}
+  {% if source.event_id %}<input type="hidden" name="event" value="{{ source.event_id }}">{% endif %}
+  {% if warn %}<input type="hidden" name="ack" value="1">{% endif %}
+
+  <h2>The activity</h2>
+  {% if source.source_kind == 'blank' %}
+  <div class="field"><label for="title">Activity name</label><input id="title" name="title" maxlength="200" required value="{{ f.title }}"></div>
+  <div class="field"><label for="start">First day</label><input id="start" name="start" type="date" required value="{{ f.start }}"></div>
+  <div class="field"><label for="end">Last day</label><input id="end" name="end" type="date" required value="{{ f.end }}"></div>
+  <div class="field"><label for="venue">Venue <span class="opt">(optional)</span></label><input id="venue" name="venue" maxlength="200" value="{{ f.venue }}"></div>
+  {% else %}
+  <p><strong>{{ source.title }}</strong><br>{{ source.start }}{% if source.end != source.start %} to {{ source.end }}{% endif %}{% if source.venue %} · 📍 {{ source.venue }}{% endif %}</p>
+  {% endif %}
+
+  <h2>What are you filing?</h2>
+  <div class="tv-radios" role="radiogroup">
+    {% for code, label in kinds %}
+    {% set blocked = (code == 'ca' and (ca_msg or live_ca)) %}
+    <label class="{{ 'off' if blocked }}"><input type="radio" name="kind" value="{{ code }}" {{ 'checked' if f.kind == code }} {{ 'disabled' if blocked }}>
+      <span><strong>{{ label }}</strong>
+        {% if code == 'ca' %}<br><small>Money before the trip. Only more than a week before the activity starts.{% if ca_msg %} <em>Too late for this activity.</em>{% elif live_ca %} <em>You already have one.</em>{% endif %}</small>
+        {% elif code == 'liquidation' %}<br><small>Accounting for a cash advance you received.</small>
+        {% else %}<br><small>Claiming money you spent, with no cash advance.</small>{% endif %}</span></label>
+    {% endfor %}
+  </div>
+  {% if live_ca %}<p class="tv-hint">You have a cash advance for this activity ({{ live_ca.ref_code }}), so a reimbursement is not offered.</p>{% endif %}
+
+  <div class="field" id="liq-fields">
+    <label for="ca">If this is a liquidation: which cash advance?</label>
+    <select id="ca" name="ca"><option value="">A cash advance filed outside this platform</option>
+      {% for c in cas %}<option value="{{ c.id }}" {{ 'selected' if live_ca and live_ca.id == c.id }}>{{ c.ref_code }} · {{ c.act_title }}</option>{% endfor %}</select>
+    <label for="advance_amount">Amount received, for one filed outside this platform (₱)</label>
+    <input id="advance_amount" name="advance_amount" inputmode="decimal" value="{{ f.advance_amount or '' }}">
+  </div>
+
+  <h2>Your role</h2>
+  <div class="tv-radios" role="radiogroup">
+    {% for code, label in roles %}<label><input type="radio" name="role" value="{{ code }}" {{ 'checked' if f.role == code }} required> {{ label }}</label>{% endfor %}
+  </div>
+  <p class="tv-hint">Travelling only as a participant needs the supervisor's confirmation, checked by the Admin Unit.</p>
+
+  <h2>Your trip</h2>
+  <div class="tv-checks">
+    {% for key, label, kinds_ in questions %}
+    <label><input type="checkbox" name="{{ key }}" value="1" {{ 'checked' if f.get(key) == '1' }}> <span>{{ label }} <small class="tv-hint">({% for k in kinds_ %}{{ kind_labels[k]|lower }}{{ ', ' if not loop.last }}{% endfor %})</small></span></label>
+    {% endfor %}
+  </div>
+
+  <h2>Papers</h2>
+  <div class="field"><label for="dpo_no">Department Personnel Order number <span class="opt">(optional)</span></label><input id="dpo_no" name="dpo_no" maxlength="60" value="{{ f.dpo_no or '' }}"></div>
+  <div class="field"><label for="dpo_date">DPO date <span class="opt">(optional)</span></label><input id="dpo_date" name="dpo_date" type="date" value="{{ f.dpo_date or '' }}"></div>
+  <div class="field"><label for="mc114_format">MC 114 justification</label>
+    <select id="mc114_format" name="mc114_format">{% for code, label in mc114 %}<option value="{{ code }}" {{ 'selected' if f.mc114_format == code }}>{{ label }}</option>{% endfor %}</select></div>
+
+  <div class="tv-actions"><button class="btn" type="submit">{{ 'Continue anyway' if warn else 'Open the checklist' }}</button> <a class="btn ghost" href="/travel">Cancel</a></div>
+</form>
+{% endblock %}

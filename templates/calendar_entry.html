@@ -87,6 +87,11 @@
   </div>
   {% endif %}
 
+  {% if filing %}
+  <p class="cal-range">✈ <strong>Travel claim:</strong>
+    {% if filing.chip %}<a href="{{ filing.chip.url }}">{{ filing.chip.label }}</a>{% else %}none filed yet. <a href="{{ filing.new_url }}">File a travel claim</a>{% endif %}</p>
+  {% endif %}
+
   <p class="cal-range"><a href="/calendar/entries/{{ e.id }}/event.ics">Add to my calendar (.ics)</a></p>
 
   <div class="cf-actions">
@@ -94,6 +99,7 @@
       <form method="post" action="/calendar/entries/{{ e.id }}/restore"><button class="cal-btn primary" type="submit">Restore</button></form>
     {% else %}
       <a class="cal-btn primary" href="/calendar/entries/{{ e.id }}/edit">Edit</a>
+      {% if filing and not filing.chip %}<a class="cal-btn" href="{{ filing.new_url }}">File travel claim</a>{% endif %}
       <form method="post" action="/calendar/entries/{{ e.id }}/cancel"
             onsubmit="return confirm('Cancel this item? You can restore it for 30 days.')"><button class="cal-btn" type="submit">Cancel item</button></form>
     {% endif %}

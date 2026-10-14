@@ -200,6 +200,10 @@ def _entries_layer(conn, ctx, start, end, scope):
     cards = _people_cards(conn, [p["user_id"] for e in entries for p in e["people"]])
     holidays = st.holidays_between(conn, date.fromisoformat(start), date.fromisoformat(end)) \
         if any(e["rrule"] for e in entries) else {}
+    import travel                                           # filing chips; lazy, travel imports this module
+    filed = travel.calendar_chips(conn, ctx["user_id"], [e["id"] for e in entries if not e["event_id"]], [])
+    chips_on, filed = filed is not None, filed or {}
+    today_d = tz.today_local()
     out = []
     for e, o_start, o_end in occs:
         if e["event_id"]:
@@ -230,6 +234,10 @@ def _entries_layer(conn, ctx, start, end, scope):
             "meeting_url": e["meeting_url"],
             "url": f"/calendar/entries/{e['id']}" + (f"?date={o_start}" if e["rrule"] else ""),
             "css": None, "flags": flags, "editable": True, "private": False,
+            "filing": filed.get(("entry", e["id"])) or (
+                travel.not_filed_chip(e["id"], None, o_start, o_end, today_d)
+                if chips_on and e["kind"] in ("travel", "training")
+                and any(p["user_id"] == ctx["user_id"] for p in e["people"]) else None),
         })
     return out
 
@@ -276,6 +284,9 @@ def _activities_layer(conn, ctx, start, end, scope):
             "WHERE ef.event_id IN (%s) AND fi.rp_id IS NOT NULL" % ",".join("?" * len(ids)), ids):
         speakers.setdefault(eid, {})[rp_id] = uid
     today, now = tz.today_local().isoformat(), tz.now_iso()
+    import travel                                           # filing chips; lazy, travel imports this module
+    filed = travel.calendar_chips(conn, ctx["user_id"], [], ids)
+    chips_on, filed = filed is not None, filed or {}
     cards = _people_cards(conn, [p["user_id"] for o in overlays.values() for p in o["people"]]
                           + [u for m in speakers.values() for u in m.values() if u])
     out = []
@@ -323,6 +334,9 @@ def _activities_layer(conn, ctx, start, end, scope):
             "css": {"event_id": eid, "lifecycle": life, "life_text": _LIFE_TEXT[life], "registered": summ["registered"],
                     "answered": answered, "chip": chip, "event_kind": ekind or "bureau"},
             "flags": [], "editable": False, "private": False,
+            "filing": filed.get(("event", eid)) or (
+                travel.not_filed_chip(None, eid, s_iso, max(e_iso, s_iso), today)
+                if chips_on and mine and modality != "online" else None),
         })
     return out
 

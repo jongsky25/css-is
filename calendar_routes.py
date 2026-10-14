@@ -317,6 +317,21 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
     # Everyone signed in may add and edit (owner decision). What a person may
     # SEE still rules: an entry they cannot see answers 404, same as a missing one.
 
+    def _travel_block(conn, user, e, on=""):
+        """The "Travel claim" block on an item's page: the viewer's filing, or a way to start one.
+        Never raises: the page must open even if travel filing is off or broken."""
+        try:
+            import travel
+            if not travel.enabled(conn):
+                return None
+            key = ("event", e["event_id"]) if e["event_id"] else ("entry", e["id"])
+            chips = travel.filing_summaries(conn, user["id"], [] if e["event_id"] else [e["id"]],
+                                            [e["event_id"]] if e["event_id"] else [])
+            new_url = f"/travel/new?entry={e['id']}" + (f"&date={on}" if on and not e["event_id"] else "")
+            return {"chip": chips.get(key), "new_url": new_url}
+        except Exception:                                   # noqa: BLE001
+            return None
+
     def _not_found(request):
         return templates.TemplateResponse(request, "calendar_entry.html",
                                           {"nav_active": "calendar", "missing": True},
@@ -865,12 +880,13 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             css = {"linked": linked, "eligible": eligible, "manage": auth.can(user["role"], "manage_event"),
                    "candidates": oc.activity_candidates_for_entry(conn, e) if eligible else []}
             room_link = _room_link(request, conn, e)
+            filing = _travel_block(conn, user, e, request.query_params.get("date", ""))
         finally:
             conn.close()
         who = lambda u: names.get(u, u or "someone")           # noqa: E731
         return templates.TemplateResponse(request, "calendar_entry.html", {
             "nav_active": "calendar", "e": e, "ok": ok, "err": err, "css": css, "heads_up": heads_up, "series": series,
-            "room_link": room_link,
+            "room_link": room_link, "filing": filing,
             "owner": unit["label"] if unit else None,
             "attendees": [{**cards.get(p["user_id"], {"name": "?", "initials": "?"}),
                            "role": p["role"]} for p in e["people"]],

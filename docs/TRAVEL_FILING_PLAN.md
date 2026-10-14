@@ -12,7 +12,7 @@ Contents of generated forms are never saved. Only checklist drivers, links, flag
 Six additive tables (`travel_filing`, `travel_item`, `travel_flag`, `travel_route_type`, `travel_ceiling`, `travel_justification`) and `admin_user.employee_no`. Seeds are written once, keyed `travel.seeded` in `app_setting`, so administrator edits are never put back. Settings keys are under `travel.*`.
 
 ## 3. Requester experience (internal)
-Built in T2: `/travel`, `/travel/new`, `/travel/f/{ref}`, ready page.
+Built in T2: `/travel` (my filings, activities that may need a claim, unliquidated warnings), `/travel/new` (activity, kind, role, trip questions, papers), `/travel/f/{ref}` (checklist with Drive links, N/A, FMIS references, changing answers), `/travel/f/{ref}/ready` (print list, Mark ready, Mark submitted). Withdrawn and submitted filings are read-only.
 
 ## 4. Admin Unit experience
 Built in T6/T7: verify queue, ceilings and routes, justification library.
@@ -42,6 +42,13 @@ Open: every unlisted route flags until the Admin Unit adds approved routes.
 T1 Foundations, T2 Filing shell, T3 Reminders and bell, T4 Relay, T5 Prepare and generate, T6 Flags, T7 Library and admin screens.
 
 ## 13. Open items
+- **T2 nav**: only "My travel claims" and the hidden "Travel filing settings" are in the Travel menu. Verify, ceilings and library entries arrive with T6/T7 so the menu never links to a missing page.
+- **Drive links**: only `https://drive.google.com/` and `https://docs.google.com/` links are accepted. A generated form can be replaced by the person's own Drive link (shown as "your own copy") until the relay exists.
+- **"Not filed" chip**: shown only for calendar entries of kind travel or training that the viewer is on, and for in-person CSS activities the viewer is part of, from 60 days back onward. This keeps ordinary meetings quiet.
+- **Overlay entries** (calendar entries linked to a CSS activity) are filed against the activity, never against the overlay entry.
+- **Repeating items**: a filing is for one occurrence (the `date` in the link), but the one-live-cash-advance rule is per entry, so a series allows one live cash advance at a time.
+- **Unliquidated warning** counts only submitted cash advances whose activity has ended.
+- **Editing a ready filing** sends it back to "in progress".
 - **Cash advance lead time (owner, 2026-10-14):** a cash advance can only be filed when the activity starts more than 7 days away (8 or more days ahead; `travel_rules.ca_lead_error`). Closer or past activities use a reimbursement. So a cash advance never has a deadline (assumption 5 confirmed); liquidation and reimbursement are due 5 calendar days after the last day, rolled to a working day, or 5 working days from opening when the activity had already ended.
 - **Approved routes**: a route type counts as approved only when it has an active `travel_route_type` row and an `rer` ceiling (`travel.ceilings` drops inactive ones). Adding a route in T7 must create its RER ceiling.
 - **Ride documents** (`cenrr`, `rer`) are not known when the filing opens. The checklist adds them from the derived answers `rides_cenrr` / `rides_rer`, set when the itinerary is prepared (T5/T6).

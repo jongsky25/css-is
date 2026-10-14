@@ -1,5 +1,15 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-14 (v6.32 — travel filing shell: checklists, links, ready and submit)
+
+- `travel.py`: filing lifecycle (`create_filing`, `update_answers`, `save_item`, `mark_ready`, `mark_submitted`, `withdraw`, `refresh_deadline`), `activity_choices`, `resolve_source`, `filing_summaries` (one query per 500 ids), `calendar_chips`, `event_url_for`.
+- `travel_routes.py`: `/travel`, `/travel/new`, `/travel/f/{ref}` (+ `/answers`, `/item/{code}`, `/ready`, `/submit`, `/withdraw`), `/admin/travel` (on/off switch). Every handler checks the switch, then ownership; every POST checks Origin/Referer. Admin Unit members can view, not edit.
+- Guards: cash advance only when the activity starts more than 7 days away; one live cash advance per user and activity; reimbursement hidden when a live cash advance exists; warning page (with acknowledge) before a new cash advance while an older submitted one has no liquidation; liquidation needs a submitted cash advance or a manual amount.
+- Templates: `travel_index`, `travel_new`, `travel_filing`, `travel_ready`, `admin_travel`, `_travel_tabs`; `static/css/travel.css`.
+- Small inserts: `app.py` (import, router, "Travel" nav group, `_travel_url` on activity pages), `office_calendar.py` (`filing` key on entry and activity items), `_calendar_body.html` (chip), `calendar_entry.html` + `calendar_routes.py` (Travel claim block and button), `link_tree.html`, `monitor_event.html`, `activity_manage.html` (button), `deploy_hf.RUNTIME_PY`.
+- Tests: `tests/test_travel_pages.py`; `tests/test_search.py` nav expectations now include the Travel group.
+- **Version bump:** `APP_VERSION` 6.31 → 6.32.
+
 ## 2026-10-14 (v6.31 — travel filing foundations, employee number)
 
 - `storage.py`: DDL for `travel_filing`, `travel_item`, `travel_flag`, `travel_route_type`, `travel_ceiling`, `travel_justification` (additive, `IF NOT EXISTS`); `admin_user.employee_no` (guarded ALTER, `_ADMIN_COLS`/`_admin_row`, `get_user_profile`, `set_user_employee_no`); ten `travel_*` audit labels; `init_db` tail calls `travel.ensure_defaults`.

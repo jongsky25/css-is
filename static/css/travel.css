@@ -1,0 +1,41 @@
+/* Travel filing (docs/TRAVEL_FILING_PLAN.md). State is always icon + word, never colour alone.
+   Readable at 400px: tables collapse through .resp-table, forms stack. */
+.tv-tabs { display:flex; gap:.35rem; margin:0 0 1rem; flex-wrap:wrap; }
+.tv-tabs a { padding:.35rem .9rem; border:1px solid var(--line); border-radius:var(--rpill); font-weight:700;
+             font-size:.88rem; text-decoration:none; color:var(--ink-soft); }
+.tv-tabs a[aria-current="page"] { background:var(--accent); color:var(--on-accent); border-color:var(--accent); }
+.tv-card { background:var(--surface); border:1px solid var(--line); border-radius:var(--r2); padding:var(--s4); margin:0 0 1rem; }
+.tv-card h2 { margin:0 0 .4rem; font-size:1.1rem; }
+.tv-hint { color:var(--soft); font-size:.88rem; margin:.2rem 0 .6rem; }
+.tv-meta { display:flex; flex-wrap:wrap; gap:.3rem 1.2rem; margin:.3rem 0 .8rem; }
+.tv-meta dt { font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; color:var(--soft); }
+.tv-meta dd { margin:0 0 .3rem; font-weight:600; }
+.tv-due.late { color:var(--red); font-weight:700; }
+.tv-due.warn { color:var(--amber); font-weight:700; }
+.tv-warn { background:var(--amber-bg); border:1px solid var(--amber-ln); color:var(--ink); border-radius:var(--r2);
+           padding:.7rem .9rem; margin:0 0 1rem; }
+.tv-missing { margin:.2rem 0 0; padding-left:1.1rem; }
+.tv-form .field { margin:0 0 .8rem; }
+.tv-form input:not([type=radio]):not([type=checkbox]), .tv-form select, .tv-form textarea { width:100%; box-sizing:border-box; font-size:max(16px,1rem); }
+.tv-checks { display:grid; gap:.35rem; margin:.2rem 0 .8rem; }
+.tv-checks label, .tv-radios label { display:flex; gap:.5rem; align-items:flex-start; font-weight:500; }
+.tv-radios { display:grid; gap:.4rem; }
+.tv-radios .off { color:var(--soft); }
+.tv-items { list-style:none; margin:0; padding:0; display:grid; gap:.6rem; }
+.tv-item { border:1px solid var(--line); border-radius:var(--r2); padding:.7rem .9rem; background:var(--surface); }
+.tv-item.is-optional { background:var(--surface-2); }
+.tv-item-head { display:flex; flex-wrap:wrap; gap:.4rem .8rem; align-items:baseline; justify-content:space-between; }
+.tv-item-head strong { flex:1 1 14rem; }
+.tv-item form { display:flex; flex-wrap:wrap; gap:.4rem; margin:.45rem 0 0; align-items:center; }
+.tv-item form input[type=url], .tv-item form input[type=text] { flex:1 1 16rem; min-width:0; font-size:max(16px,1rem); }
+.tv-note { color:var(--soft); font-size:.84rem; margin:.25rem 0 0; }
+.tv-wet { font-weight:700; }
+.tv-actions { display:flex; flex-wrap:wrap; gap:.5rem; margin:1rem 0; }
+.tv-chip { display:inline-block; padding:.05rem .5rem; border-radius:var(--rpill); font-size:.78rem; font-weight:700;
+           border:1px solid var(--line); text-decoration:none; color:var(--ink-soft); background:var(--surface-2); }
+.tv-chip.ok { background:var(--green-bg); border-color:var(--green-ln); color:var(--green); }
+.tv-chip.warn { background:var(--amber-bg); border-color:var(--amber-ln); color:var(--amber); }
+.tv-chip.late { background:var(--red-bg); border-color:var(--red-ln); color:var(--red); }
+.tv-fmis { border-style:dashed; }
+@media print { .tv-tabs, .tv-actions, .tv-noprint { display:none !important; } }
+@media (max-width:480px) { .tv-item form { flex-direction:column; align-items:stretch; } }
