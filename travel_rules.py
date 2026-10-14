@@ -11,6 +11,7 @@ import rooms
 import travel_checklist as tc
 
 AFTER_FACT_DAYS = 5          # working days to file when the activity had already ended
+CA_MIN_LEAD_DAYS = 7         # a cash advance needs MORE than this many days before the activity starts
 PLOTTED_DAYS = 5             # calendar days after the last day, then the next working day
 NO_RECEIPT_LIMIT = 1000      # an unreceipted fare above this always goes to the Admin Unit
 RECEIPT_MODES = ("tnvs", "taxi")
@@ -55,6 +56,16 @@ def deadline_for(conn, kind, act_end_iso, opened_iso):
             d += timedelta(days=1)
         return d.isoformat(), "plotted"
     return None, "none"
+
+
+def ca_lead_error(act_start_iso, today_iso):
+    """Why a cash advance cannot be filed for this activity today, or None when it can.
+    Owner's rule: only more than a week before the activity starts (8 or more days ahead)."""
+    days = (_d(act_start_iso) - _d(today_iso)).days
+    if days > CA_MIN_LEAD_DAYS:
+        return None
+    return ("A cash advance can only be filed more than a week before the activity starts. "
+            "Once it is closer or over, file a reimbursement instead.")
 
 
 # ----------------------------------------------------------------- rides ---

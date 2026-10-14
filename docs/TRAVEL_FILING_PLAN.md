@@ -42,15 +42,15 @@ Open: every unlisted route flags until the Admin Unit adds approved routes.
 T1 Foundations, T2 Filing shell, T3 Reminders and bell, T4 Relay, T5 Prepare and generate, T6 Flags, T7 Library and admin screens.
 
 ## 13. Open items
-- **Assumption 5** (owner to confirm at T2 review): a cash advance on a current or future activity has no deadline; liquidation and reimbursement are due 5 calendar days after the last day, rolled to a working day; an activity already over when the filing is opened gives every kind 5 working days from the day opened.
+- **Cash advance lead time (owner, 2026-10-14):** a cash advance can only be filed when the activity starts more than 7 days away (8 or more days ahead; `travel_rules.ca_lead_error`). Closer or past activities use a reimbursement. So a cash advance never has a deadline (assumption 5 confirmed); liquidation and reimbursement are due 5 calendar days after the last day, rolled to a working day, or 5 working days from opening when the activity had already ended.
 - **Approved routes**: a route type counts as approved only when it has an active `travel_route_type` row and an `rer` ceiling (`travel.ceilings` drops inactive ones). Adding a route in T7 must create its RER ceiling.
 - **Ride documents** (`cenrr`, `rer`) are not known when the filing opens. The checklist adds them from the derived answers `rides_cenrr` / `rides_rer`, set when the itinerary is prepared (T5/T6).
 - **Open flags are part of `completeness()`** so the missing list shows them; "ready" is refused while any remains.
 - **A fare of exactly 1,000.01 unreceipted** raises both `over_ceiling` (when above the route cap) and `no_receipt_over_1000`.
 - **`peso_words(1)`** returns "One Peso" (singular); the spec gave no vector.
-- **Starter MC 114 wording** is generic text with the tokens `{{traveler_name}}`, `{{activity_title}}`, `{{dates}}`, `{{venue}}`. The owner's sample justification is a real person's document and was not copied; template administrators replace the starter rows in the library (T7).
+- **Starter MC 114 wording** (owner agreed generic placeholder text is fine) is generic text with the tokens `{{traveler_name}}`, `{{activity_title}}`, `{{dates}}`, `{{venue}}`. The owner's sample justification is a real person's document and was not copied; template administrators replace the starter rows in the library (T7).
 - **Back-to-office report**: when `cert_of_appearance_available` is false the checklist asks for `bto_report` instead of `cert_appearance`.
 - **Per diem and transport allowance rules**: manual entry until supplied.
 - **Wording** of the Job Order certification and the meals/lodging and extra-expense certifications needs the owner's approval against the official issuance.
 - **2027 holidays** must be loaded before 2027 deadlines are trustworthy.
-- **Local test setup**: the HTTP tests need a `css_is.db` (gitignored). `python setup_db.py` creates one; four tests (`test_ai_report_draft`, `test_routes[/work-arrangement/approvals]`, `test_search::test_api_search_activities`, `test_wellness::test_chief_pages_are_gated`) fail on that sample database and also fail on `main`.
+- **Local test setup**: the HTTP tests need a `css_is.db` (gitignored). `python setup_db.py` creates one; nine tests (`test_ai_report_draft` x3, `test_avatar_care`, `test_home_feeds`, `test_integrity`, `test_routes[/work-arrangement/approvals]`, `test_search::test_api_search_activities`, `test_wellness::test_chief_pages_are_gated`) fail on that sample database and also fail on `main`.

@@ -64,6 +64,13 @@ def test_count_working_days_excludes_start_includes_end(conn):
     assert tr.count_working_days(conn, "2026-10-16", "2026-10-23") == 4
 
 
+def test_cash_advance_needs_more_than_a_week_of_lead():
+    assert tr.ca_lead_error("2026-10-22", "2026-10-14") is None          # 8 days ahead
+    assert tr.ca_lead_error("2026-10-21", "2026-10-14")                  # exactly 7 days: too late
+    assert tr.ca_lead_error("2026-10-14", "2026-10-14")
+    assert tr.ca_lead_error("2026-10-01", "2026-10-14")                  # already over
+
+
 # -------------------------------------------------------------------- rides ---
 
 def test_receipted_tnvs_and_taxi_use_the_flat_ceiling():
