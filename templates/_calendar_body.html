@@ -133,6 +133,7 @@
       <span class="cal-owner">{{ i.owner_label or "" }}</span>
       <span class="cal-meta">
         {% if i.css %}<span class="cal-css-chip" data-life="{{ i.css.lifecycle }}">{{ i.css.chip }}</span>{% endif %}
+        {% set tf = i.get("filing") %}{% if tf %}<a class="cal-css-chip" href="{{ tf.url }}" data-tone="{{ tf.tone }}" title="Travel claim">✈ {{ tf.label }}</a>{% endif %}
         {% if i.venue %}<span>📍 {{ i.venue }}</span>{% endif %}
         {% if i.modality == "online" and (i.venue or "")|lower != "online" %}<span>Online</span>{% elif i.modality == "hybrid" %}<span>Hybrid</span>{% endif %}
         {% if i.people %}<span class="cal-faces" aria-label="With {{ i.people|map(attribute='name')|join(', ') }}">

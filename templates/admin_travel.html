@@ -1,0 +1,13 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash %}
+{% block title %}Travel filing settings{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261014a">{% endblock %}
+{% block content %}
+{{ page_header("Travel filing settings", "Switch the travel claim pages on or off for everyone.") }}
+{{ flash(msg=msg, err=err) }}
+<form method="post" action="/admin/travel" class="tv-card tv-form">
+  <div class="tv-checks"><label><input type="checkbox" name="enabled" value="1" {{ 'checked' if enabled }}> <span>Travel filing is on</span></label></div>
+  <p class="tv-hint">When it is off, the travel pages say it is not switched on and nothing can be filed. Existing filings are kept.</p>
+  <button class="btn" type="submit">Save</button>
+</form>
+{% endblock %}

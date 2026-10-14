@@ -38,9 +38,9 @@ def test_nav_groups_track_the_index(app_mod):
     # Four product groups, Wellness first (it is the busiest screen in the app).
     # A viewer meets no admin cap, so Administrator drops out entirely.
     assert [g["name"] for g in app_mod.nav_groups_for(U("viewer"))] == \
-        ["Wellness", "CSS", "AWA", "Office", "Calendar"]
+        ["Wellness", "CSS", "AWA", "Office", "Travel", "Calendar"]
     assert [g["name"] for g in app_mod.nav_groups_for(U("admin"))] == \
-        ["Wellness", "CSS", "AWA", "Office", "Calendar", "Administrator"]
+        ["Wellness", "CSS", "AWA", "Office", "Travel", "Calendar", "Administrator"]
     # in_nav=False items stay out of the menu even when the cap is met
     admin_nav_urls = {it["url"] for g in app_mod.nav_groups_for(U("admin")) for it in g["items"]}
     assert "/directory/cleanup" not in admin_nav_urls

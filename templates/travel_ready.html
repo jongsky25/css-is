@@ -1,0 +1,39 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash %}
+{% block title %}Print list {{ f.ref_code }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261014a">{% endblock %}
+{% block content %}
+{{ page_header("Print list · " ~ f.ref_code, f.act_title) }}
+{% include "_travel_tabs.html" %}
+{{ flash(msg=msg, err=err) }}
+
+{% if f.status == 'open' and missing_list %}
+<div class="tv-warn"><strong>Not ready yet:</strong>
+  <ul class="tv-missing">{% for m in missing_list %}<li>{{ m }}</li>{% endfor %}</ul></div>
+{% endif %}
+
+<div class="tv-card">
+  <h2>Documents to submit</h2>
+  <p class="tv-hint">Print each one with the copies shown. Sign the marked ones in ink. FMIS documents are printed from FMIS.</p>
+  <div class="table-wrap"><table class="list resp-table">
+    <thead><tr><th>Document</th><th>Copies</th><th>Sign in ink</th></tr></thead>
+    <tbody>
+    {% for it in printed %}
+    <tr><td data-label="Document">{{ it.label }}{% if it.handling == 'fmis' %} <span class="badge grey">From FMIS</span>{% endif %}</td>
+        <td data-label="Copies">{{ it.copies }}</td>
+        <td data-label="Sign in ink">{% if it.wet_sign %}<span class="tv-wet">✎ Yes</span>{% else %}–{% endif %}</td></tr>
+    {% endfor %}
+    </tbody></table></div>
+  <div class="tv-actions tv-noprint">
+    {% if owner and f.status == 'open' and not missing_list %}
+    <form method="post" action="/travel/f/{{ f.ref_code }}/ready"><button class="btn" type="submit">Mark ready</button></form>
+    {% endif %}
+    {% if owner and f.status == 'ready' %}
+    <form method="post" action="/travel/f/{{ f.ref_code }}/submit"><button class="btn" type="submit">Mark submitted</button></form>
+    <p class="tv-hint">Tap this once you have handed the papers in. The calendar shows "Filed" only after this.</p>
+    {% endif %}
+    <button class="btn ghost" type="button" onclick="window.print()">Print this page</button>
+    <a class="btn ghost" href="/travel/f/{{ f.ref_code }}">Back to the checklist</a>
+  </div>
+</div>
+{% endblock %}

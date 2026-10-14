@@ -17,10 +17,22 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.31"
+APP_VERSION = "6.32"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.32",
+        "date": "October 14, 2026",
+        "summary": "File travel claims: cash advance, liquidation and reimbursement checklists.",
+        "changes": [
+            "There is a new Travel menu with My travel claims. Pick an activity (or start one that is not on the calendar), answer a few short questions, and get the list of documents you need.",
+            "Paste a Google Drive link for each document, mark what does not apply, and note the FMIS reference for finance papers. The page tells you exactly what is still missing.",
+            "A cash advance can only be filed more than a week before the activity starts. Liquidations and reimbursements show their deadline and turn red when overdue.",
+            "When everything is in, you get a print list showing how many copies each document needs and which ones to sign in ink. Tap Mark submitted once you have handed them in.",
+            "The calendar now shows a small travel chip on your activities (Not filed, Due in 3 days, Ready to sign, Filed), and activity pages have a File a travel claim button.",
+        ],
+    },
     {
         "version": "6.31",
         "date": "October 14, 2026",

@@ -1,0 +1,126 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash %}
+{% block title %}{{ 'Travel claim' if missing else f.ref_code }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261014a">{% endblock %}
+{% block content %}
+{% if missing %}
+{{ page_header("Travel claim not found", "") }}
+<div class="tv-card"><p>That claim does not exist, or it belongs to someone else.</p><p><a class="btn" href="/travel">My travel claims</a></p></div>
+{% else %}
+{{ page_header(travel_kind_labels[f.kind] ~ " · " ~ f.ref_code, f.act_title) }}
+{% include "_travel_tabs.html" %}
+{{ flash(msg=msg, err=err) }}
+
+<div class="tv-card">
+  <dl class="tv-meta">
+    <div><dt>Status</dt><dd><span class="badge {{ travel_status_badge[f.status] }}">{{ travel_status_labels[f.status] }}</span></dd></div>
+    <div><dt>Activity dates</dt><dd>{{ f.act_start }}{% if f.act_end != f.act_start %} to {{ f.act_end }}{% endif %}</dd></div>
+    {% if f.act_venue %}<div><dt>Venue</dt><dd>{{ f.act_venue }}</dd></div>{% endif %}
+    <div><dt>Deadline</dt><dd>{% if f.deadline_date %}{{ f.deadline_date }}{% if f.deadline_text %} · <span class="tv-due {{ f.deadline_tone }}">{{ f.deadline_text }}</span>{% endif %}
+      <small class="tv-hint">{{ 'Counted from the day you opened it.' if f.deadline_rule == 'after_fact' else '5 days after the last day, next working day.' }}</small>{% else %}None for a cash advance{% endif %}</dd></div>
+    {% if f.advance_amount %}<div><dt>Cash advance received</dt><dd>₱{{ '{:,.2f}'.format(f.advance_amount) }}</dd></div>{% endif %}
+    {% if ca %}<div><dt>Liquidates</dt><dd><a href="/travel/f/{{ ca.ref_code }}">{{ ca.ref_code }}</a></dd></div>{% endif %}
+    {% if f.dpo_no %}<div><dt>DPO</dt><dd>{{ f.dpo_no }}{% if f.dpo_date %} dated {{ f.dpo_date }}{% endif %}</dd></div>{% endif %}
+  </dl>
+  {% if liquidations %}<p class="tv-hint">Liquidation: {% for l in liquidations %}<a href="/travel/f/{{ l.ref_code }}">{{ l.ref_code }}</a>{% endfor %}</p>{% endif %}
+
+  {% if f.status in ('open', 'ready') %}
+    {% if missing_list %}
+    <div class="tv-warn"><strong>Still to do ({{ missing_list|length }}):</strong>
+      <ul class="tv-missing">{% for m in missing_list %}<li>{{ m }}</li>{% endfor %}</ul></div>
+    {% else %}
+    <div class="flash ok" role="status">✓ Everything required is in. {% if f.status == 'open' %}Mark it ready to get your print list.{% endif %}</div>
+    {% endif %}
+  {% endif %}
+
+  <div class="tv-actions">
+    {% if owner and f.status in ('open', 'ready') %}
+      <a class="btn" href="/travel/f/{{ f.ref_code }}/ready">{{ 'Print list and submit' if f.status == 'ready' else 'Review and mark ready' }}</a>
+    {% elif f.status == 'submitted' %}
+      <a class="btn ghost" href="/travel/f/{{ f.ref_code }}/ready">Print list</a>
+    {% endif %}
+    {% if owner and f.status in ('open', 'ready') %}
+      <form method="post" action="/travel/f/{{ f.ref_code }}/withdraw" onsubmit="return confirm('Withdraw this filing?')"><button class="btn danger" type="submit">Withdraw</button></form>
+    {% endif %}
+    {% if f.kind == 'ca' and f.status == 'submitted' %}<a class="btn ghost" href="/travel/new?kind=liquidation">Start the liquidation</a>{% endif %}
+  </div>
+  {% if not owner %}<p class="tv-hint">You are looking at someone else's filing as the Admin Unit. You can view it but not change it.</p>{% endif %}
+</div>
+
+{% if flags %}
+<div class="tv-card"><h2>Flags for the Admin Unit</h2>
+  <ul class="tv-missing">{% for fl in flags %}<li><span class="badge {{ 'amber' if fl.state == 'open' else ('green' if fl.state == 'verified' else 'red') }}">{{ fl.state|capitalize }}</span> {{ fl.detail }}{% if fl.note %} <em>({{ fl.note }})</em>{% endif %}</li>{% endfor %}</ul></div>
+{% endif %}
+
+<div class="tv-card">
+  <h2>Checklist</h2>
+  <p class="tv-hint">Based on form {{ rev }}. Documents in FMIS are listed so you do not forget them; they never block "ready".</p>
+  <ul class="tv-items">
+  {% for it in items %}
+    <li class="tv-item {{ 'tv-fmis' if it.handling == 'fmis' }} {{ 'is-optional' if it.requirement == 'optional' }}" id="item-{{ it.code }}">
+      <div class="tv-item-head">
+        <strong>{{ it.label }}</strong>
+        <span>
+          {% if it.requirement == 'optional' %}<span class="badge grey">Optional</span>{% endif %}
+          {% if it.handling == 'fmis' %}<span class="badge grey">In FMIS</span>
+          {% elif it.state == 'na' %}<span class="badge grey">– Not applicable</span>
+          {% elif it.handling == 'generate' %}{% if it.doc_url %}<span class="badge green">✓ Ready</span>{% else %}<span class="badge amber">○ To make</span>{% endif %}
+          {% elif it.drive_url or (it.handling == 'carry' and it.note) %}<span class="badge green">✓ Added</span>
+          {% else %}<span class="badge amber">○ Missing</span>{% endif %}
+        </span>
+      </div>
+      <div class="tv-note">{{ it.copies }} cop{{ 'y' if it.copies == 1 else 'ies' }}{% if it.wet_sign %} · <span class="tv-wet">sign in ink</span>{% endif %}{% if it.note_hint %} · {{ it.note_hint }}{% endif %}</div>
+      {% if it.handling == 'upload' and it.wet_sign %}<div class="tv-note">Scan it after signing, and sign in ink again when you submit.</div>{% endif %}
+      {% if owner and editable %}
+        {% if it.handling == 'fmis' %}
+        <form method="post" action="/travel/f/{{ f.ref_code }}/item/{{ it.code }}">
+          <input type="text" name="fmis_ref" maxlength="120" value="{{ it.fmis_ref }}" placeholder="FMIS reference or status" aria-label="FMIS reference for {{ it.label }}">
+          <button class="btn ghost small" type="submit">Save</button></form>
+        {% else %}
+        <form method="post" action="/travel/f/{{ f.ref_code }}/item/{{ it.code }}">
+          <input type="url" name="drive_url" maxlength="500" value="{{ (it.doc_url if it.handling == 'generate' else it.drive_url) or '' }}" placeholder="{{ 'Link to the form you made in Google Drive' if it.handling == 'generate' else 'Paste the Google Drive link' }}" aria-label="Drive link for {{ it.label }}">
+          <button class="btn ghost small" type="submit">Save link</button></form>
+        {% if it.handling == 'carry' %}
+        <form method="post" action="/travel/f/{{ f.ref_code }}/item/{{ it.code }}">
+          <input type="text" name="note" maxlength="300" value="{{ it.note }}" placeholder="Or a note, if you have it on paper" aria-label="Note for {{ it.label }}">
+          <button class="btn ghost small" type="submit">Save note</button></form>
+        {% endif %}
+        {% if it.handling in ('upload', 'carry') %}
+        <form method="post" action="/travel/f/{{ f.ref_code }}/item/{{ it.code }}">
+          <input type="hidden" name="na" value="{{ '0' if it.state == 'na' else '1' }}">
+          <button class="btn ghost small" type="submit">{{ 'Needed after all' if it.state == 'na' else 'Does not apply to me' }}</button></form>
+        {% endif %}
+        {% endif %}
+      {% elif it.handling == 'fmis' and it.fmis_ref %}<div class="tv-note">FMIS: {{ it.fmis_ref }}</div>
+      {% endif %}
+      {% if it.drive_url %}<div class="tv-note"><a href="{{ it.drive_url }}" rel="noopener" target="_blank">Open the file</a></div>{% endif %}
+      {% if it.doc_url %}<div class="tv-note"><a href="{{ it.doc_url }}" rel="noopener" target="_blank">Open the form</a>{% if it.doc_state == 'manual' %} (your own copy){% endif %}</div>{% endif %}
+      {% if it.note and it.handling == 'carry' %}<div class="tv-note">Note: {{ it.note }}</div>{% endif %}
+    </li>
+  {% endfor %}
+  </ul>
+</div>
+
+{% if owner and editable %}
+<details class="tv-card">
+  <summary><strong>Change my answers</strong></summary>
+  <form method="post" action="/travel/f/{{ f.ref_code }}/answers" class="tv-form">
+    <div class="field"><label for="role">Your role</label>
+      <select id="role" name="role">{% for code, label in roles %}<option value="{{ code }}" {{ 'selected' if ans.role == code }}>{{ label }}</option>{% endfor %}</select></div>
+    <div class="tv-checks">
+      {% for key, label, kinds_ in questions %}
+      <label><input type="checkbox" name="{{ key }}" value="1" {{ 'checked' if ans.get(key) }}> <span>{{ label }}</span></label>
+      {% endfor %}
+    </div>
+    <div class="field"><label for="dpo_no">DPO number</label><input id="dpo_no" name="dpo_no" maxlength="60" value="{{ f.dpo_no or '' }}"></div>
+    <div class="field"><label for="dpo_date">DPO date</label><input id="dpo_date" name="dpo_date" type="date" value="{{ f.dpo_date or '' }}"></div>
+    <div class="field"><label for="mc114_format">MC 114 justification</label>
+      <select id="mc114_format" name="mc114_format">{% for code, label in mc114 %}<option value="{{ code }}" {{ 'selected' if f.mc114_format == code }}>{{ label }}</option>{% endfor %}</select></div>
+    {% if can_manual_amount %}<div class="field"><label for="advance_amount">Cash advance amount (₱)</label><input id="advance_amount" name="advance_amount" inputmode="decimal" value="{{ f.advance_amount or '' }}"></div>{% endif %}
+    <button class="btn" type="submit">Save answers</button>
+    <p class="tv-hint">Your links are kept. Rows that no longer apply are hidden, not deleted.</p>
+  </form>
+</details>
+{% endif %}
+{% endif %}
+{% endblock %}

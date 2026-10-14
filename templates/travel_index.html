@@ -1,0 +1,58 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash, empty_state %}
+{% block title %}My travel claims{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261014a">{% endblock %}
+{% block content %}
+{{ page_header("Travel claims", "Cash advances, liquidations and reimbursements for official travel.") }}
+{% if off %}
+<div class="tv-card"><h2>Travel filing is not switched on</h2>
+  <p>An administrator has not turned this on yet. Ask them to enable it under Admin, Travel filing.</p></div>
+{% else %}
+{% include "_travel_tabs.html" %}
+{{ flash(msg=msg, err=err) }}
+{% for w in warnings %}
+<div class="tv-warn" role="alert">⚠ {{ w.text }} <a href="/travel/new?kind=liquidation">File the liquidation</a>.</div>
+{% endfor %}
+
+<div class="tv-card">
+  <h2>Activities that may need a claim</h2>
+  {% if todo %}
+  <div class="table-wrap"><table class="list resp-table">
+    <thead><tr><th>Activity</th><th>When</th><th></th></tr></thead>
+    <tbody>
+    {% for c in todo %}
+    <tr>
+      <td data-label="Activity">{{ c.title }}{% if c.venue %}<div class="tv-hint">📍 {{ c.venue }}</div>{% endif %}</td>
+      <td data-label="When">{{ c.start }}{% if c.end != c.start %} to {{ c.end }}{% endif %}</td>
+      <td class="actions" data-label=""><a class="btn small" href="/travel/new?{% if c.event_id %}event={{ c.event_id }}{% else %}entry={{ c.entry_id }}&amp;date={{ c.start }}{% endif %}">File a claim</a></td>
+    </tr>
+    {% endfor %}
+    </tbody></table></div>
+  {% else %}
+  <p class="tv-hint">Nothing waiting. Activities you are part of, from 60 days ago to 60 days ahead, show here until you file.</p>
+  {% endif %}
+  <p><a class="btn ghost small" href="/travel/new?blank=1">File for something not on the calendar</a></p>
+</div>
+
+<div class="tv-card">
+  <h2>My filings</h2>
+  {% if filings %}
+  <div class="table-wrap"><table class="list resp-table">
+    <thead><tr><th>Ref</th><th>What</th><th>Activity</th><th>Status</th><th>Due</th></tr></thead>
+    <tbody>
+    {% for f in filings %}
+    <tr>
+      <td data-label="Ref"><a href="/travel/f/{{ f.ref_code }}"><code>{{ f.ref_code }}</code></a></td>
+      <td data-label="What">{{ travel_kind_labels[f.kind] }}</td>
+      <td data-label="Activity">{{ f.act_title }}<div class="tv-hint">{{ f.act_start }}{% if f.act_end != f.act_start %} to {{ f.act_end }}{% endif %}</div></td>
+      <td data-label="Status"><span class="badge {{ travel_status_badge[f.status] }}">{{ travel_status_labels[f.status] }}</span></td>
+      <td data-label="Due">{% if f.deadline_text %}<span class="tv-due {{ f.deadline_tone }}">{{ f.deadline_text }}</span><div class="tv-hint">{{ f.deadline_date }}</div>{% else %}–{% endif %}</td>
+    </tr>
+    {% endfor %}
+    </tbody></table></div>
+  {% else %}
+  {{ empty_state("No claims yet", "Pick an activity above to start one.") }}
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

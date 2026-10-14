@@ -76,6 +76,7 @@ import rooms
 import rooms_notify
 import rooms_meals_routes
 import rooms_routes
+import travel_routes
 import report_docs
 import csm_report
 import auth
@@ -664,6 +665,17 @@ NAV_GROUPS = [
         {"key": "rooms_poster", "url": "/rooms/poster", "label": "Room QR poster",
          "hint": "Printable QR poster for outside requesters",
          "kw": "qr poster print guest external request link conference room", "cap": "room_admin",
+         "in_nav": False},
+    ]},
+    # ---- 4b. Travel filing (cash advance, liquidation, reimbursement) -------
+    {"name": "Travel", "items": [
+        {"key": "travel_mine", "url": "/travel", "label": "My travel claims",
+         "hint": "Cash advances, liquidations and reimbursements for official travel",
+         "kw": "travel claim filing cash advance liquidation reimbursement itinerary dpo personnel order "
+               "per diem taxi receipt appendix a appendix b cenrr rer mc 114 deadline", "cap": None},
+        {"key": "admin_travel", "url": "/admin/travel", "label": "Travel filing settings",
+         "hint": "Switch travel filing on or off",
+         "kw": "travel filing settings enable switch signatories relay", "cap": "manage_users",
          "in_nav": False},
     ]},
     # ---- 5. Calendar (bureau-wide, not part of room booking) ---------------
@@ -8459,6 +8471,19 @@ def _mask_email(email):
     return f"{local[:1]}•••@{domain}" if domain else ""
 
 
+def _travel_url(request, conn, ev):
+    """Where "File a travel claim" goes from a CSS activity page, or None when the viewer is
+    not part of the activity (or travel filing is off). Never raises: the page must open."""
+    user = getattr(request.state, "user", None)
+    if not user:
+        return None
+    try:
+        import travel
+        return travel.event_url_for(conn, user, ev["id"])
+    except Exception:                                       # noqa: BLE001
+        return None
+
+
 def _event_view(request, conn, ev, attendee=None, errors=None, posted=None,
                 confirm=None, posted_multi=None):
     """Render the link-tree page in whichever state applies. The resource-person
@@ -8532,7 +8557,7 @@ def _event_view(request, conn, ev, attendee=None, errors=None, posted=None,
         "resources_now": resources_now, "resources_after": resources_after,
         "completed": completed,
         "welcome_message": welcome_message, "ending_message": ending_message,
-        "can_manage": _can_manage_event(user, ev, conn),
+        "can_manage": _can_manage_event(user, ev, conn), "travel_url": _travel_url(request, conn, ev),
         "confirm": confirm,
         "feedback_opens": feedback_opens,
         "any_open": any(l["state"] == "open" and not l["done"] for l in links),
@@ -9030,6 +9055,7 @@ def activity_manage(request: Request, event_token: str, err: str = "", edit: int
         ctx["q_ok"] = bool(qok)
         ctx["q_err"] = qerr
         ctx["ann_code"], ctx["ann_n"], ctx["ann_m"] = ann, annn, annm
+        ctx["travel_url"] = _travel_url(request, conn, ev)
     finally:
         conn.close()
     return templates.TemplateResponse(request, "activity_manage.html", ctx)
@@ -10251,10 +10277,11 @@ def monitor_event(request: Request, event_token: str, flash: str = ""):
         # per-activity SERVQUAL report, an invited/RP one its Type-3 results; both
         # anchor to #comments. Only surfaced once there are responses to read.
         report_url = st.event_report_url(conn, ev["id"]) if st.event_response_total(conn, ev["id"]) else None
+        travel_url = _travel_url(request, conn, ev)
     finally:
         conn.close()
     return templates.TemplateResponse(request, "monitor_event.html", {
-        "nav_active": "monitor", "show_scope": False, "ev": ev,
+        "nav_active": "monitor", "show_scope": False, "ev": ev, "travel_url": travel_url,
         "people": people, "summ": summ, "status_meta": MONITOR_STATUS,
         "answer_tally": answer_tally,
         "base_url": _base_url(request),
@@ -16847,3 +16874,6 @@ app.include_router(calendar_routes.make_router(
 app.include_router(rooms_routes.make_router(templates, get_conn, _today_local,
                                            base_url=_base_url, qr_data_uri=_qr_data_uri))
 app.include_router(rooms_meals_routes.make_router(templates, get_conn, _today_local))
+
+# ---- Travel filing (rules in travel.py / travel_rules.py, pages in travel_routes.py) ----
+app.include_router(travel_routes.make_router(templates, get_conn, _today_local, audit=_audit, base_url=_base_url))
