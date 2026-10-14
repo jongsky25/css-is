@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.32"
+APP_VERSION = "6.33"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.33",
+        "date": "October 14, 2026",
+        "summary": "Travel claim reminders by email and in the bell.",
+        "changes": [
+            "You now get one email a day while a travel claim of yours is due within 2 days or overdue. It lists each claim with a link straight to it.",
+            "A cash advance whose activity is over and has no liquidation yet is included in the same email, and shows in the bell as 'A cash advance still needs a liquidation'.",
+            "The bell also shows how many of your travel claims are due soon or overdue. Admin Unit members will see travel flags waiting to be verified once that queue opens.",
+            "An administrator can turn the email off, or change the 2 days, on the email settings page.",
+        ],
+    },
     {
         "version": "6.32",
         "date": "October 14, 2026",
