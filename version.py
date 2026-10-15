@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.39"
+APP_VERSION = "6.40"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.40",
+        "date": "October 15, 2026",
+        "summary": "Travel claim amounts now fill in by themselves.",
+        "changes": [
+            "Once you choose the destination and rates, the fare and daily allowance boxes fill in from the policy without pressing anything. Type a different amount if you spent less.",
+            "One new choice sets the per diem rule for every day of the trip at once.",
+        ],
+    },
     {
         "version": "6.39",
         "date": "October 15, 2026",
