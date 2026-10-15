@@ -1,0 +1,18 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}Prepare forms · {{ f.ref_code }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261014b">{% endblock %}
+{% block content %}
+{{ page_header("Prepare the forms · " ~ f.ref_code, f.act_title) }}
+{% include "_travel_tabs.html" %}
+<div class="tv-card">
+  <p>Fill in what the forms need. Nothing you type here is saved on this site: it goes straight into the Google Docs that get made, and you can change it again and make new copies any time.</p>
+  <p class="tv-hint">Forms to make: {% for it in items %}<strong>{{ it.label }}</strong>{% if not loop.last %}, {% endif %}{% else %}none{% endfor %}. The rides decide whether a CENRR or an RER is needed.</p>
+  {% if not relay_ready %}
+  <div class="tv-warn">Making forms automatically is not set up yet. Make each form yourself and paste its link on the <a href="/travel/f/{{ f.ref_code }}">filing page</a>.</div>
+  {% endif %}
+</div>
+<div id="prep-app" class="tv-prep" data-has-relay="{{ '1' if relay_ready else '0' }}"><noscript><div class="tv-card">This page needs JavaScript. You can still make the forms yourself and paste their links on the filing page.</div></noscript></div>
+<script type="application/json" id="prep-data">{{ prep_json|safe }}</script>
+<script src="/static/js/travel_prepare.js?v=20261014b" defer></script>
+{% endblock %}

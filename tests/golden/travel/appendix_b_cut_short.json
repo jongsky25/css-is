@@ -1,0 +1,37 @@
+{
+  "item_code": "appendix_b",
+  "template_key": "appendix_b",
+  "title": "Appendix B - Certificate of Travel Completed - TF-2609-0001",
+  "fields": {
+    "date": "September 10, 2026",
+    "head_name": "Dr. Ana Reyes",
+    "head_title": "OIC-Director",
+    "station": "Manila",
+    "itinerary_ref": "Appendix A, September 01-04, 2026",
+    "chk_strict": "☐",
+    "chk_cut": "☒",
+    "chk_extended": "☐",
+    "chk_other": "☐",
+    "refund_amount": "",
+    "refund_or_no": "",
+    "refund_or_date": "",
+    "traveler_name": "Juan Dela Cruz",
+    "traveler_designation": "Nurse II",
+    "approver_name": "Dr. Ana Reyes",
+    "approver_title": "OIC-Director"
+  },
+  "blocks": {
+    "explanation": [
+      "Left a day early.",
+      "Sick.",
+      "Justification (MC 114):",
+      "Because of the schedule.",
+      "It was necessary."
+    ],
+    "evidence_list": [
+      "1. Plane ticket",
+      "2. Post Travel Report"
+    ]
+  },
+  "rows": {}
+}

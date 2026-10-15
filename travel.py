@@ -203,6 +203,102 @@ def flags_of(conn, filing_id):
     return _rows(conn, "SELECT * FROM travel_flag WHERE filing_id=? ORDER BY id", (filing_id,))
 
 
+def sync_flags(conn, filing, specs):
+    """Make the filing's flag rows match `specs` (travel_rules.FlagSpec list), keyed by `sig`.
+    A flag whose fingerprint is unchanged keeps its decision; a new one opens; one whose fare or
+    route changed (so its sig no longer matches) is dropped and its replacement opens."""
+    now = tz.now_iso()
+    want = {sp.sig: sp for sp in specs}
+    have = {r["sig"]: r for r in flags_of(conn, filing["id"])}
+    for sig, row in have.items():
+        if sig not in want:
+            conn.execute("DELETE FROM travel_flag WHERE id=?", (row["id"],))
+    for sig, sp in want.items():
+        if sig not in have:
+            conn.execute("INSERT INTO travel_flag(filing_id, kind, sig, detail, state, created_at) VALUES (?,?,?,?,'open',?)",
+                         (filing["id"], sp.kind, sig, sp.detail, now))
+    conn.commit()
+
+
+def set_derived_answers(conn, filing, derived):
+    """Store the platform-set drivers (rides_cenrr / rides_rer) and add any checklist rows they bring."""
+    ans = answers_of(filing)
+    ans.update({k: 1 if v else 0 for k, v in derived.items() if k in ("rides_cenrr", "rides_rer")})
+    conn.execute("UPDATE travel_filing SET answers_json=?, updated_at=? WHERE id=?",
+                 (json.dumps(ans), tz.now_iso(), filing["id"]))
+    sync_items(conn, get_filing(conn, filing["id"]))
+    conn.commit()
+    return get_filing(conn, filing["id"])
+
+
+def revision_of(doc_state) -> int:
+    """'done:3' / 'pending:3' / 'failed:3' -> 3; anything else (None, 'manual') -> 0."""
+    m = re.match(r"^(?:pending|done|failed):(\d+)$", doc_state or "")
+    return int(m.group(1)) if m else 0
+
+
+def start_generation(conn, filing, codes):
+    """Mark the chosen generate-items as being made and return {code: revision}. A new revision per
+    click keeps the old document in Drive; the relay reuses a revision's document on a transport retry."""
+    now, revs = tz.now_iso(), {}
+    for code in codes:
+        n = revision_of(_saved(conn, filing, code, "doc_state")) + 1
+        revs[code] = n
+        conn.execute("UPDATE travel_item SET doc_state=?, note=NULL, updated_at=? WHERE filing_id=? AND item_code=?",
+                     (f"pending:{n}", now, filing["id"], code))
+    conn.execute("UPDATE travel_filing SET gen_state='running', updated_at=? WHERE id=?", (now, filing["id"]))
+    conn.commit()
+    return revs
+
+
+def finish_item(conn, filing_id, code, rev, *, url=None, extra=None, error=None):
+    now = tz.now_iso()
+    if url:
+        conn.execute("UPDATE travel_item SET doc_url=?, doc_state=?, state='present', note=?, updated_at=? "
+                     "WHERE filing_id=? AND item_code=?", (url, f"done:{rev}", extra or None, now, filing_id, code))
+    else:
+        conn.execute("UPDATE travel_item SET doc_state=?, note=?, updated_at=? WHERE filing_id=? AND item_code=?",
+                     (f"failed:{rev}", (error or "Failed")[:300], now, filing_id, code))
+    conn.commit()
+
+
+def finish_generation(conn, filing_id):
+    bad = conn.execute("SELECT 1 FROM travel_item WHERE filing_id=? AND (doc_state LIKE 'failed:%' OR doc_state LIKE 'pending:%') "
+                       "LIMIT 1", (filing_id,)).fetchone()
+    conn.execute("UPDATE travel_filing SET gen_state=?, updated_at=? WHERE id=?",
+                 ("failed" if bad else "done", tz.now_iso(), filing_id))
+    conn.commit()
+
+
+STALE_RUN = timedelta(minutes=10)
+
+
+def generation_status(conn, filing):
+    """gen_state plus one entry per generate-item. A run that has not moved for STALE_RUN (the server
+    restarted mid-way) is closed as failed so the person can retry."""
+    from datetime import datetime
+    if filing["gen_state"] == "running":
+        try:
+            idle = datetime.fromisoformat(tz.now_iso()) - datetime.fromisoformat(filing["updated_at"])
+        except (TypeError, ValueError):
+            idle = timedelta(0)
+        if idle > STALE_RUN:
+            conn.execute("UPDATE travel_item SET doc_state=REPLACE(doc_state,'pending:','failed:'), "
+                         "note='The run was interrupted. Try again.' WHERE filing_id=? AND doc_state LIKE 'pending:%'",
+                         (filing["id"],))
+            finish_generation(conn, filing["id"])
+            filing = get_filing(conn, filing["id"])
+    out = []
+    for it in view_items(conn, filing):
+        if it["handling"] != "generate":
+            continue
+        ds = it["doc_state"] or ""
+        state = ds.split(":")[0] if ":" in ds else (ds or "idle")
+        out.append({"code": it["code"], "label": it["label"], "state": state, "url": it["doc_url"] or "",
+                    "error": it["note"] if state == "failed" else ""})
+    return {"gen_state": filing["gen_state"], "items": out}
+
+
 def missing_for(conn, filing):
     return tr.completeness(filing, view_items(conn, filing), flags_of(conn, filing["id"]))
 
@@ -509,6 +605,8 @@ def mark_ready(conn, filing):
         return filing
     if filing["status"] != "open":
         raise TravelError("Only a filing in progress can be marked ready.")
+    if filing["gen_state"] == "running":
+        raise TravelError("The documents are still being made. Try again in a minute.")
     missing = missing_for(conn, filing)
     if missing:
         raise TravelError("Not ready yet: " + missing[0] + (f" (and {len(missing) - 1} more)" if len(missing) > 1 else ""))

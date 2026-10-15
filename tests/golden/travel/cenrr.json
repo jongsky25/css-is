@@ -1,0 +1,35 @@
+{
+  "item_code": "cenrr",
+  "template_key": "cenrr",
+  "title": "CENRR - TF-2609-0001",
+  "fields": {
+    "employee_name": "Juan Dela Cruz",
+    "employee_no": "12345",
+    "office": "Manila",
+    "division": "PLANNING",
+    "total": "550",
+    "purpose": "attend Regional Planning Workshop",
+    "printed_name": "Juan Dela Cruz",
+    "designation": "Nurse II",
+    "noted_by_name": "Dr. Ana Reyes",
+    "noted_by_title": "OIC-Director"
+  },
+  "blocks": {},
+  "rows": {
+    "items": {
+      "marker": "p_date",
+      "data": [
+        {
+          "p_date": "September 1, 2026",
+          "p_text": "Fare from Home to Airport by public transport",
+          "p_amount": "250"
+        },
+        {
+          "p_date": "September 2, 2026",
+          "p_text": "Fare from Home to Airport by public transport",
+          "p_amount": "300"
+        }
+      ]
+    }
+  }
+}

@@ -41,3 +41,17 @@
 @media (max-width:480px) { .tv-item form { flex-direction:column; align-items:stretch; } }
 
 .tv-h { font-size: 1.05rem; margin: 0 0 .4rem; }
+
+/* Prepare forms (T5) */
+.tv-prep section { margin: 0 0 1rem; }
+.tv-prep label { display: block; margin: .5rem 0 .15rem; font-weight: 600; }
+.tv-prep input, .tv-prep select, .tv-prep textarea { width: 100%; max-width: 100%; box-sizing: border-box; }
+.tv-rows { display: grid; gap: .75rem; }
+.tv-row { border: 1px solid var(--line, #d8dde3); border-radius: 8px; padding: .6rem; display: grid; gap: .4rem; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); }
+.tv-row .tv-row-wide { grid-column: 1 / -1; }
+.tv-flagline { color: #8a5a00; font-size: .9rem; }
+.tv-flagline.bad { color: #a12; }
+.tv-totals { font-weight: 700; margin-top: .5rem; }
+.tv-docs li.done::before { content: "\2713 "; color: #1a7f37; }
+.tv-docs li.failed::before { content: "\2717 "; color: #a12; }
+.tv-docs li.pending::before { content: "\2026 "; }

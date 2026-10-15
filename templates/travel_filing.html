@@ -39,6 +39,9 @@
     {% elif f.status == 'submitted' %}
       <a class="btn ghost" href="/travel/f/{{ f.ref_code }}/ready">Print list</a>
     {% endif %}
+    {% if owner and f.status in ('open', 'ready') and items|selectattr('handling', 'equalto', 'generate')|list %}
+      <a class="btn ghost" href="/travel/f/{{ f.ref_code }}/prepare">Prepare the forms</a>
+    {% endif %}
     {% if owner and f.status in ('open', 'ready') %}
       <form method="post" action="/travel/f/{{ f.ref_code }}/withdraw" onsubmit="return confirm('Withdraw this filing?')"><button class="btn danger" type="submit">Withdraw</button></form>
     {% endif %}

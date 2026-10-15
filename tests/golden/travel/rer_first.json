@@ -1,0 +1,17 @@
+{
+  "item_code": "rer",
+  "template_key": "rer",
+  "title": "RER - TF-2609-0001",
+  "fields": {
+    "payee_name": "Juan Dela Cruz",
+    "payee_designation": "Nurse II",
+    "amount_words": "Five Hundred Pesos",
+    "amount_figures": "500",
+    "ride_from": "Home",
+    "ride_to": "Airport",
+    "ride_date": "September 1, 2026",
+    "purpose": "attend Regional Planning Workshop"
+  },
+  "blocks": {},
+  "rows": {}
+}

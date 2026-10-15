@@ -1,0 +1,64 @@
+{
+  "item_code": "appendix_a",
+  "template_key": "appendix_a",
+  "title": "Appendix A - Itinerary of Travel - TF-2609-0001",
+  "fields": {
+    "traveler_name": "Juan Dela Cruz",
+    "purpose": "To attend the Regional Planning Workshop on September 01-04, 2026 at Cebu City as per DPO No. 2026-123 dated August 20, 2026",
+    "itinerary_no": "",
+    "grand_total": "3,000",
+    "certifier_name": "Dr. Lito Cruz",
+    "certifier_title": "Medical Officer V",
+    "prepared_by": "Juan Dela Cruz",
+    "approver_name": "Dr. Ana Reyes",
+    "approver_title": "OIC-Director"
+  },
+  "blocks": {},
+  "rows": {
+    "itinerary": {
+      "marker": "r_date",
+      "data": [
+        {
+          "r_date": "September 1, 2026",
+          "r_place": "Home to Airport",
+          "r_dep": "06:00",
+          "r_arr": "07:00",
+          "r_mode": "Taxi",
+          "r_allowance": "250",
+          "r_perdiem": "500",
+          "r_total": "750"
+        },
+        {
+          "r_date": "September 2, 2026",
+          "r_place": "Home to Airport",
+          "r_dep": "06:00",
+          "r_arr": "07:00",
+          "r_mode": "Taxi",
+          "r_allowance": "250",
+          "r_perdiem": "500",
+          "r_total": "750"
+        },
+        {
+          "r_date": "September 3, 2026",
+          "r_place": "Home to Airport",
+          "r_dep": "06:00",
+          "r_arr": "07:00",
+          "r_mode": "Taxi",
+          "r_allowance": "250",
+          "r_perdiem": "500",
+          "r_total": "750"
+        },
+        {
+          "r_date": "September 4, 2026",
+          "r_place": "Home to Airport",
+          "r_dep": "06:00",
+          "r_arr": "07:00",
+          "r_mode": "Taxi",
+          "r_allowance": "250",
+          "r_perdiem": "500",
+          "r_total": "750"
+        }
+      ]
+    }
+  }
+}

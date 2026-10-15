@@ -1,5 +1,14 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-14 (v6.35 — prepare and generate travel forms)
+
+- `travel_docs.py`: `defaults`, `normalize`, `build_payloads` and one builder per document (`appendix_a`, `appendix_b`, `mc114_justification`, `jo_cert`, `travel_report`, `cenrr`, one `rer` per ride). Payloads are built in memory from what the prepare page posts and are never stored.
+- `travel.py`: `sync_flags` (flag rows follow the rides by `sig`; an unchanged flag keeps its decision), `set_derived_answers` (`rides_cenrr` / `rides_rer` bring the CENRR and RER rows onto the checklist), generation state (`start_generation`, `finish_item`, `finish_generation`, `generation_status`; `doc_state` is `pending|done|failed:<revision>`), and `mark_ready` refuses while documents are being made.
+- `travel_routes.py`: `GET /travel/f/{ref}/prepare`, `POST /travel/f/{ref}/generate` (JSON, owner only, same-origin, rate limited; documents are made in a `BackgroundTask`, one relay call at a time, `request_id = ref:item:revision:n`), `GET /travel/f/{ref}/status`.
+- `templates/travel_prepare.html`, `static/js/travel_prepare.js` (itinerary rows, live totals and ride flags, optional browser draft), `static/css/travel.css`, a "Prepare the forms" button on the filing page.
+- Tests: `tests/test_travel_docs_payloads.py` (with golden files in `tests/golden/travel/`), `tests/test_travel_generate.py`.
+- **Version bump:** `APP_VERSION` 6.34 → 6.35.
+
 ## 2026-10-14 (v6.34 — travel documents relay)
 
 - `gdocs_relay.py`: signed client for the travel documents Apps Script. Envelope `{ts, payload, sig}` with `sig = HMAC-SHA256(secret, "ts.payload")`, `ts` in ms; env `CSS_DOCS_RELAY_URL` / `CSS_DOCS_RELAY_SECRET`; 90 s timeout (10 s connect), follows redirects, one retry on transport error with the same `request_id`; reuses `mailer._parse_relay_json` and `_relay_not_run_reason`. An unconfirmed 200 is a failure (unlike mail). Never raises: returns `RelayResult`. `get_relay()` is the seam tests fake.
