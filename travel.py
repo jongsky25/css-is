@@ -299,6 +299,160 @@ def generation_status(conn, filing):
     return {"gen_state": filing["gen_state"], "items": out}
 
 
+# ================================================================ T7: admin data ===
+# Ceilings and routes (Administrative Section), the justification library (template administrators),
+# the retention purge and the holiday notice.
+
+MAX_CEILING = 100000
+LIB_TOKENS = ("traveler_name", "activity_title", "dates", "venue")
+FLAT_CEILINGS = (("tnvs", "TNVS (with receipt)"), ("taxi", "Metered taxi (with receipt)"),
+                 ("cenrr", "CENRR, up to (no receipt)"))
+
+
+def _ceiling_amount(v, label):
+    try:
+        n = float(str(v).replace(",", "").strip())
+    except ValueError:
+        raise TravelError(f"{label}: enter an amount as a number.")
+    if not (0 < n <= MAX_CEILING):
+        raise TravelError(f"{label}: the amount must be more than 0 and at most {MAX_CEILING:,}.")
+    return round(n, 2)
+
+
+def route_types(conn):
+    """Every route type with its RER ceiling (None if the ceiling row is missing)."""
+    rer = {rt: a for m, rt, a in conn.execute("SELECT mode, route_type, amount FROM travel_ceiling WHERE mode='rer'")}
+    return [{"code": c, "label": l, "active": bool(a), "rer": rer.get(c)}
+            for c, l, a in conn.execute("SELECT code, label, active FROM travel_route_type ORDER BY sort, code")]
+
+
+def flat_ceilings(conn):
+    got = {m: a for m, rt, a in conn.execute("SELECT mode, route_type, amount FROM travel_ceiling WHERE route_type='*'")}
+    return [{"mode": m, "label": l, "amount": got.get(m)} for m, l in FLAT_CEILINGS]
+
+
+def save_ceilings(conn, by, form):
+    """Save every ceiling and route switch posted by the Admin Unit screen. All values are checked
+    before anything is written. Returns the number of values that changed."""
+    now, writes, active = tz.now_iso(), [], {}
+    for r in route_types(conn):
+        key = f"rer__{r['code']}"
+        if key in form:
+            writes.append(("rer", r["code"], _ceiling_amount(form[key], f"RER ceiling for {r['label']}")))
+        active[r["code"]] = 1 if form.get(f"active__{r['code']}") == "1" else 0
+    for mode, label in FLAT_CEILINGS:
+        if mode in form:
+            writes.append((mode, "*", _ceiling_amount(form[mode], label)))
+    changed = 0
+    for mode, rt, amount in writes:
+        old = conn.execute("SELECT amount FROM travel_ceiling WHERE mode=? AND route_type=?", (mode, rt)).fetchone()
+        if old is None or float(old[0]) != amount:
+            conn.execute("INSERT INTO travel_ceiling(mode, route_type, amount, updated_by, updated_at) VALUES (?,?,?,?,?) "
+                         "ON CONFLICT(mode, route_type) DO UPDATE SET amount=excluded.amount, "
+                         "updated_by=excluded.updated_by, updated_at=excluded.updated_at", (mode, rt, amount, by, now))
+            changed += 1
+    for code, on in active.items():
+        was = conn.execute("SELECT active FROM travel_route_type WHERE code=?", (code,)).fetchone()
+        if was is not None and bool(was[0]) != bool(on):
+            conn.execute("UPDATE travel_route_type SET active=? WHERE code=?", (on, code))
+            changed += 1
+    conn.commit()
+    return changed
+
+
+def add_route(conn, by, label, rer_amount):
+    """A new approved route. It always gets its RER ceiling, because a route counts as approved only
+    when it has one (see `ceilings`)."""
+    label = " ".join((label or "").split())[:80]
+    if not label:
+        raise TravelError("Give the route a name, for example \"Residence \u21c4 Terminal 3\".")
+    slug = re.sub(r"[^a-z0-9]+", "_", label.lower()).strip("_")[:40]
+    if not slug:
+        raise TravelError("Use letters or numbers in the route name.")
+    amount = _ceiling_amount(rer_amount, "RER ceiling")
+    if conn.execute("SELECT 1 FROM travel_route_type WHERE code=? OR lower(label)=lower(?)", (slug, label)).fetchone():
+        raise TravelError("There is already a route with that name.")
+    order = conn.execute("SELECT COALESCE(MAX(sort), -1) + 1 FROM travel_route_type").fetchone()[0]
+    now = tz.now_iso()
+    conn.execute("INSERT INTO travel_route_type(code, label, active, sort) VALUES (?,?,1,?)", (slug, label, order))
+    conn.execute("INSERT INTO travel_ceiling(mode, route_type, amount, updated_by, updated_at) VALUES ('rer',?,?,?,?)",
+                 (slug, amount, by, now))
+    conn.commit()
+    return slug
+
+
+def is_template_admin(conn, user) -> bool:
+    names = {n.strip().lower() for n in st.get_setting(conn, "travel.template_admins", "").split(",") if n.strip()}
+    return bool(user and (user.get("username") or "").lower() in names)
+
+
+def justifications(conn):
+    return _rows(conn, "SELECT * FROM travel_justification ORDER BY format, id")
+
+
+def save_justification(conn, by, jid, title, fmt, body, active=True):
+    """Add (jid empty) or change a library row. Only the four tokens are allowed, so a generated
+    document never carries a raw {{placeholder}}."""
+    title, body = " ".join((title or "").split())[:120], (body or "").replace("\r", "").strip()
+    if not title:
+        raise TravelError("Give the text a title.")
+    if fmt not in ("separate", "appendix_b"):
+        raise TravelError("Choose where the text is used.")
+    if not body or len(body) > 6000:
+        raise TravelError("The text must be between 1 and 6,000 characters.")
+    bad = sorted(set(re.findall(r"\{\{([^}]*)\}\}", body)) - set(LIB_TOKENS))
+    if bad:
+        raise TravelError("Unknown placeholder {{%s}}. Use only %s." % (bad[0], ", ".join("{{%s}}" % t for t in LIB_TOKENS)))
+    now = tz.now_iso()
+    if jid:
+        if not conn.execute("SELECT 1 FROM travel_justification WHERE id=?", (jid,)).fetchone():
+            raise TravelError("That text no longer exists.")
+        conn.execute("UPDATE travel_justification SET title=?, format=?, body=?, active=?, updated_by=?, updated_at=? WHERE id=?",
+                     (title, fmt, body, 1 if active else 0, by, now, jid))
+    else:
+        jid = conn.execute("INSERT INTO travel_justification(title, format, body, active, updated_by, updated_at) "
+                           "VALUES (?,?,?,?,?,?)", (title, fmt, body, 1 if active else 0, by, now)).lastrowid
+    conn.commit()
+    return jid
+
+
+def holiday_notice(conn, today=None):
+    """A sentence for the admin pages when next year's holidays are not loaded, else ''."""
+    today = _d(today or tz.today_local())
+    year = today.year + 1
+    if st.holidays_between(conn, date(year, 1, 1), date(year, 12, 31)):
+        return ""
+    return (f"No holidays are loaded for {year}. A deadline that lands in {year} can fall on a holiday "
+            f"until they are added (Administration, Holidays).")
+
+
+def purge_filings(conn, months=None, today=None, dry_run=False):
+    """Retention: months after a filing was submitted (or withdrawn), blank the personal links and
+    notes on it and its flags, and clear its saved answers. The row, its status and its dates stay.
+    Returns the number of filings (that would be) purged."""
+    months = int(months or st.get_setting(conn, "travel.retention_months", "12") or 12)
+    today = _d(today or tz.today_local())
+    y, m = today.year, today.month - months
+    while m <= 0:
+        m += 12
+        y -= 1
+    cutoff = date(y, m, min(today.day, 28)).isoformat() + "T00:00:00"
+    ids = [r[0] for r in conn.execute(
+        "SELECT id FROM travel_filing WHERE purged_at IS NULL AND ((status='submitted' AND submitted_at < ?) "
+        "OR (status='withdrawn' AND withdrawn_at < ?))", (cutoff, cutoff))]
+    if dry_run or not ids:
+        return len(ids)
+    qs, now = ",".join("?" * len(ids)), tz.now_iso()
+    conn.execute(f"UPDATE travel_item SET drive_url=NULL, drive_file_id=NULL, doc_url=NULL, fmis_ref=NULL, note=NULL, "
+                 f"updated_at=? WHERE filing_id IN ({qs})", (now, *ids))
+    conn.execute(f"UPDATE travel_flag SET detail=NULL, note=NULL WHERE filing_id IN ({qs})", ids)
+    conn.execute(f"UPDATE travel_filing SET answers_json='{{}}', purged_at=?, updated_at=? WHERE id IN ({qs})", (now, now, *ids))
+    conn.commit()
+    st.audit(conn, "system", "travel_purge", target_type="travel_filing", target_id=ids[0],
+             summary=f"Removed links and notes from {len(ids)} travel filing(s) older than {months} months")
+    return len(ids)
+
+
 FLAG_OUTCOMES = ("verified", "rejected")
 
 

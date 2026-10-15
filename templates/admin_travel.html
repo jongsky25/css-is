@@ -5,6 +5,7 @@
 {% block content %}
 {{ page_header("Travel filing settings", "Switch the travel claim pages on or off, set the signatories, and check the documents relay.") }}
 {{ flash(msg=msg, err=err) }}
+{% if holiday_notice %}<div class="tv-warn" role="status">{{ holiday_notice }}</div>{% endif %}
 <form method="post" action="/admin/travel" class="tv-card tv-form">
   <div class="tv-checks"><label><input type="checkbox" name="enabled" value="1" {{ 'checked' if enabled }}> <span>Travel filing is on</span></label></div>
   <p class="tv-hint">When it is off, the travel pages say it is not switched on and nothing can be filed. Existing filings are kept.</p>

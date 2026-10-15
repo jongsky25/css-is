@@ -498,6 +498,104 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
         finally:
             conn.close()
 
+    # ------------------------------------- ceilings, routes and the library (T7) ---
+
+    def _page(request, conn, name, ctx, status_code=200):
+        q = dict(request.query_params)
+        return templates.TemplateResponse(request, name, {
+            "msg": (q.get("ok") or "")[:200] or None, "err": ctx.pop("err", None) or (q.get("err") or "")[:200] or None,
+            **ctx}, status_code=status_code)
+
+    @router.get("/travel/admin", response_class=HTMLResponse)
+    def travel_admin(request: Request):
+        conn = get_conn()
+        try:
+            bad = _admin_unit(request, conn)
+            if bad:
+                return bad
+            return _page(request, conn, "travel_admin.html", {
+                "nav_active": "travel_admin", "routes": travel.route_types(conn), "flat": travel.flat_ceilings(conn),
+                "holiday_notice": travel.holiday_notice(conn, today_local())})
+        finally:
+            conn.close()
+
+    @router.post("/travel/admin/ceilings")
+    async def travel_admin_ceilings(request: Request):
+        if not _same_origin(request):
+            return _forbidden(request, "this request (it came from another site)")
+        f = await _posted(request)
+        conn = get_conn()
+        try:
+            bad = _admin_unit(request, conn)
+            if bad:
+                return bad
+            try:
+                n = travel.save_ceilings(conn, request.state.user.get("username") or "", f)
+            except travel.TravelError as e:
+                return _go("/travel/admin", err=str(e))
+            audit(request, conn, "travel_ceiling_save", target_type="travel_ceiling", target_id="ceilings",
+                  summary=f"saved travel ceilings and routes ({n} change{'s' if n != 1 else ''})")
+            return _go("/travel/admin", msg="Saved." if n else "Nothing changed.")
+        finally:
+            conn.close()
+
+    @router.post("/travel/admin/route")
+    async def travel_admin_route(request: Request):
+        if not _same_origin(request):
+            return _forbidden(request, "this request (it came from another site)")
+        f = await _posted(request)
+        conn = get_conn()
+        try:
+            bad = _admin_unit(request, conn)
+            if bad:
+                return bad
+            try:
+                code = travel.add_route(conn, request.state.user.get("username") or "", f.get("label", ""), f.get("rer", ""))
+            except travel.TravelError as e:
+                return _go("/travel/admin", err=str(e))
+            audit(request, conn, "travel_ceiling_save", target_type="travel_route_type", target_id=code,
+                  summary=f"added approved route {code} with an RER ceiling")
+            return _go("/travel/admin", msg="Route added. It now counts as approved.")
+        finally:
+            conn.close()
+
+    @router.get("/travel/library", response_class=HTMLResponse)
+    def travel_library(request: Request):
+        conn = get_conn()
+        try:
+            bad = _admin_unit(request, conn)
+            if bad:
+                return bad
+            return _page(request, conn, "travel_library.html", {
+                "nav_active": "travel_library", "rows": travel.justifications(conn), "tokens": travel.LIB_TOKENS,
+                "can_edit": travel.is_template_admin(conn, request.state.user), "formats": travel.MC114_FORMATS[1:]})
+        finally:
+            conn.close()
+
+    @router.post("/travel/library")
+    async def travel_library_save(request: Request):
+        if not _same_origin(request):
+            return _forbidden(request, "this request (it came from another site)")
+        f = await _posted(request)
+        conn = get_conn()
+        try:
+            bad = _admin_unit(request, conn)
+            if bad:
+                return bad
+            if not travel.is_template_admin(conn, request.state.user):
+                return _forbidden(request, "editing the justification library (template administrators only)")
+            jid = int(f["id"]) if (f.get("id") or "").isdigit() else None
+            try:
+                jid = travel.save_justification(conn, request.state.user.get("username") or "", jid, f.get("title", ""),
+                                                f.get("format", ""), f.get("body", ""), active=f.get("active") == "1")
+            except travel.TravelError as e:
+                return _go("/travel/library", err=str(e))
+            audit(request, conn, "travel_library_save", target_type="travel_justification", target_id=str(jid),
+                  summary="saved a justification text")
+            return _go("/travel/library", msg="Saved.")
+        finally:
+            conn.close()
+
     # ------------------------------------------------------- ready / submitted ---
 
     @router.get("/travel/f/{ref}/ready", response_class=HTMLResponse)
@@ -553,6 +651,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
         return {"nav_active": "admin_travel", "enabled": travel.enabled(conn),
                 "relay_ready": gdocs_relay.configured(),
                 "relay_host": urlparse(os.environ.get(gdocs_relay.ENV_URL, "")).netloc,
+                "holiday_notice": travel.holiday_notice(conn, today_local()),
                 "sig": {k: st.get_setting(conn, f"travel.sig.{k}", "") for k in keys},
                 "template_admins": st.get_setting(conn, "travel.template_admins", ""),
                 "msg": (q.get("ok") or "")[:200] or None, "err": (q.get("err") or "")[:200] or None, **extra}

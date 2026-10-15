@@ -15,7 +15,7 @@ Six additive tables (`travel_filing`, `travel_item`, `travel_flag`, `travel_rout
 Built in T2: `/travel` (my filings, activities that may need a claim, unliquidated warnings), `/travel/new` (activity, kind, role, trip questions, papers), `/travel/f/{ref}` (checklist with Drive links, N/A, FMIS references, changing answers), `/travel/f/{ref}/ready` (print list, Mark ready, Mark submitted). Withdrawn and submitted filings are read-only.
 
 ## 4. Admin Unit experience
-Built in T6: the verify queue at `/travel/verify` (Administrative Section members only; the app admin role is no bypass). It lists open flags with the person and filing, and records Verified or Reject with a note; a participant-only flag also needs the supervisor's confirmation. Built in T7: ceilings and routes, justification library.
+Built in T6: the verify queue at `/travel/verify` (Administrative Section members only; the app admin role is no bypass). It lists open flags with the person and filing, and records Verified or Reject with a note; a participant-only flag also needs the supervisor's confirmation. Built in T7: `/travel/admin` (ceilings and approved routes; a new route is created together with its RER ceiling) for Administrative Section members, and `/travel/library` (the MC 114 texts) which template administrators edit and other members read. Both show a notice when next year's holidays are not loaded.
 
 ## 5. External requests
 None. Travel filing is staff only.
@@ -39,7 +39,7 @@ Readable at 400px; English text hard-coded.
 Open: every unlisted route flags until the Admin Unit adds approved routes.
 
 ## 12. Increments (each one PR)
-T1 Foundations, T2 Filing shell, T3 Reminders and bell, T4 Relay, T5 Prepare and generate, T6 Flags, T7 Library and admin screens.
+T1 Foundations, T2 Filing shell, T3 Reminders and bell, T4 Relay, T5 Prepare and generate, T6 Flags, T7 Library and admin screens. All seven are built; what is left is the owner's list under Open items.
 
 ## 13. Open items
 - **T2 nav**: only "My travel claims" and the hidden "Travel filing settings" are in the Travel menu. Verify, ceilings and library entries arrive with T6/T7 so the menu never links to a missing page.
@@ -69,4 +69,8 @@ T1 Foundations, T2 Filing shell, T3 Reminders and bell, T4 Relay, T5 Prepare and
 - **Job Order certification text**: the starter activities text is only the activity and dates; obligations are left blank for the person. The wording still needs the owner's approval.
 - **Not yet checked against real Google**: the templates, placeholder names and repeated rows (see `docs/TRAVEL_DOCS_RELAY_SETUP.md`).
 - **Flags (T6)**: a rejected flag blocks "ready" as an open one does, and sends a ready filing back to in progress; the person fixes the ride (a changed fare or route makes a new flag) or talks to the Admin Unit. Decided flags can be decided again by posting to the same URL, but the page lists only open ones; the "Recently decided" list is the last 30. The queue leaves out withdrawn and submitted filings. A rejection has no email, only the bell and the note on the filing.
+- **Retention (T7)**: filings are purged 12 months after `submitted_at`, and also after `withdrawn_at` (the spec named only submitted ones; withdrawn filings hold the same links, so the safer reading was taken). The window is the `travel.retention_months` setting. The purge runs once a day with the room-guest purge, and by hand with `python retention.py --travel-filings [--dry-run] [--months N]`. Open filings are never purged.
+- **Library (T7)**: for each place a text is used, the first switched-on text (lowest id) is the one pre-filled. There is no delete, only switching a text off. Only the four tokens `{{traveler_name}}`, `{{activity_title}}`, `{{dates}}`, `{{venue}}` are accepted.
+- **Ceilings (T7)**: amounts must be more than 0 and at most 100,000. Switching a route off keeps its ceiling; the route simply stops counting as approved.
+- **To do by people (not code)**: deploy the relay and fill the templates (`docs/TRAVEL_DOCS_RELAY_SETUP.md`); name template administrators; load 2027 holidays; supply per diem rules; approve the wording of the Job Order certification and the meals/lodging and extra-expense certifications; confirm the Job Order starter text; run the live relay checks.
 - **Local test setup**: the HTTP tests need a `css_is.db` (gitignored). `python setup_db.py` creates one; nine tests (`test_ai_report_draft` x3, `test_avatar_care`, `test_home_feeds`, `test_integrity`, `test_routes[/work-arrangement/approvals]`, `test_search::test_api_search_activities`, `test_wellness::test_chief_pages_are_gated`) fail on that sample database and also fail on `main`.

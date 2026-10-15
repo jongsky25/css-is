@@ -1,5 +1,14 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-15 (v6.37 — travel library, ceilings, retention)
+
+- `travel.py`: `route_types`, `flat_ceilings`, `save_ceilings` (all values checked before any write; amounts 0 < n <= 100,000), `add_route` (always creates the route's RER ceiling), `is_template_admin`, `justifications`, `save_justification` (only the four library tokens allowed), `holiday_notice`, `purge_filings`.
+- `travel_routes.py`: `GET /travel/admin`, `POST /travel/admin/ceilings`, `POST /travel/admin/route` (Administrative Section only; audited as `travel_ceiling_save`); `GET /travel/library`, `POST /travel/library` (template administrators edit, other Admin Unit members read; audited as `travel_library_save`). Holiday notice on `/travel/admin` and `/admin/travel`. Nav items "Ceilings and routes" and "Justification library" (cap `room_admin`).
+- `retention.py`: `purge_travel_filings(conn, months, dry_run)` and `--travel-filings` (with `--dry-run`, `--months`). `rooms_notify.tick` runs the purge once a day beside the room-guest purge and never lets it stop the room notices. Submitted filings are purged by `submitted_at`, withdrawn ones by `withdrawn_at`; links, file ids, FMIS references and notes on items, flag text and notes, and saved answers are blanked, `purged_at` is set, the row and its dates stay.
+- Templates: `travel_admin.html`, `travel_library.html`.
+- Tests: `tests/test_travel_admin.py`, including a final sweep (no table gains a content column unnoticed, every travel POST is audited unless it is a draft edit, every travel route needs a login, no public prefix includes `/travel`).
+- **Version bump:** `APP_VERSION` 6.36 → 6.37.
+
 ## 2026-10-14 (v6.36 — travel flags: verify queue)
 
 - `travel.py`: `flag_queue` (open or recently decided, with the filing and person; withdrawn and submitted filings are left out), `get_flag`, `decide_flag` (rejection needs a note; a participant-only flag is verified only with the supervisor's confirmation; a rejection sends a ready filing back to open; filings no longer open cannot be decided).

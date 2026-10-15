@@ -397,6 +397,13 @@ def tick(conn, base_url, now=None, send=None):
         import rooms
         st.set_setting(conn, "room_guest_purge_on", now.date().isoformat())
         rooms.purge_guest_details(conn, now.date())
+    if st.get_setting(conn, "travel_purge_on") != now.date().isoformat():          # same rule for travel filings
+        st.set_setting(conn, "travel_purge_on", now.date().isoformat())
+        try:
+            import travel
+            travel.purge_filings(conn, today=now.date())
+        except Exception:                                  # noqa: BLE001 - never stop the room notices
+            pass
     expire_past_requests(conn, now.date())
     queue_escalations(conn, now)
     if now.hour >= MORNING_HOUR:
