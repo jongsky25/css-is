@@ -88,6 +88,8 @@
     border-radius:999px; background:var(--surface-3); }
   .meter > .tick { position:absolute; top:-3px; bottom:-3px; width:2px; border-radius:2px;
     background:var(--ink); box-shadow:0 0 0 1.5px var(--surface); }
+  .score-v { white-space:nowrap; }
+  @media (max-width:640px) { .meter { min-width:40px; } }
   .score-v small { font-size:.7rem; color:var(--soft); font-weight:600; margin-left:.05rem; }
   .vs-cell { position:relative; cursor:help; }
   .vs-chip { display:inline-flex; align-items:center; gap:.18rem; font-size:.74rem; font-weight:800;
