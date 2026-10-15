@@ -433,9 +433,9 @@ def test_a_ticket_upload_is_read_and_the_reading_comes_back(viewer, conn, fake, 
 
 
 def test_other_rows_are_not_read(viewer, conn, fake, on, ai_clean, monkeypatch):
-    ref = mk(viewer)
+    ref = mk(viewer, representative_signs="1")
     seen = ai_on(conn, monkeypatch, GOOD)
-    j = up(viewer, ref, code="dpo").json()
+    j = up(viewer, ref, code="dpo_representative").json()
     assert j["ok"] and j["reading"] is None and "images" not in seen
 
 
@@ -471,3 +471,83 @@ def test_the_checklist_marks_each_upload_with_its_name_for_the_reading_list(view
     ref = mk(viewer, flew="1")
     page = viewer.get(f"/travel/f/{ref}").text
     assert f'data-ref="{ref}"' in page and 'data-label="Plane ticket / e-ticket"' in page
+
+
+# ------------------------------------------- the DPO and the Certificate of Appearance ---
+
+import travel_scan as _ts
+
+F = {"act_start": "2026-10-05", "act_end": "2026-10-07", "dpo_no": "2026-123", "dpo_date": "2026-09-20"}
+DPO_OK = {"readable": True, "dpo_no": "2026-123", "dpo_date": "2026-09-20", "travel_start": "2026-10-04",
+          "travel_end": "2026-10-08", "funding_stated": True, "funding": "GAA MOOE", "note": ""}
+
+
+def test_clean_dpo_and_appearance_never_trust_bad_answers():
+    assert _ts.clean_dpo(None)["readable"] is False and _ts.clean_dpo({"readable": True})["readable"] is False
+    d = _ts.clean_dpo({**DPO_OK, "dpo_date": "20/09/2026", "funding": ""})
+    assert d["dpo_date"] == "" and d["funding_stated"] is False        # no funding words: not "stated"
+    a = _ts.clean_appearance({"readable": True, "date_from": "2026-10-07", "date_to": "2026-10-05"})
+    assert (a["date_from"], a["date_to"]) == ("2026-10-05", "2026-10-07")
+    assert _ts.clean_appearance({"readable": True, "date_from": "2026-10-05", "date_to": ""})["date_to"] == "2026-10-05"
+    assert _ts.clean_appearance({"readable": True, "date_from": "", "date_to": ""})["readable"] is False
+
+
+def test_a_matching_dpo_raises_nothing():
+    assert _ts.check("dpo", _ts.clean_dpo(DPO_OK), F) == ([], None)
+
+
+def test_the_dpo_is_checked_against_the_filing():
+    msgs, fill = _ts.check("dpo", _ts.clean_dpo({**DPO_OK, "dpo_no": "2026-999", "funding_stated": False,
+                                                 "funding": "", "travel_start": "2026-10-06"}), F)
+    text = " ".join(msgs)
+    assert "funding source" in text and "2026-999" in text and "2026-123" in text and "covers" in text
+    assert fill == {"dpo_no": "2026-999", "dpo_date": "2026-09-20"}
+
+
+def test_a_dpo_number_that_differs_only_in_dashes_and_case_matches():
+    msgs, fill = _ts.check("dpo", _ts.clean_dpo({**DPO_OK, "dpo_no": "2026 123"}), F)
+    assert msgs == [] and fill is None
+
+
+def test_an_empty_filing_gets_the_number_and_date_offered():
+    msgs, fill = _ts.check("dpo", _ts.clean_dpo(DPO_OK), {**F, "dpo_no": None, "dpo_date": None})
+    assert msgs == [] and fill == {"dpo_no": "2026-123", "dpo_date": "2026-09-20"}
+    assert _ts.check("dpo", _ts.clean_dpo(DPO_OK), {**F, "dpo_date": None})[1] == {"dpo_no": "", "dpo_date": "2026-09-20"}   # the number matches: only the date
+
+
+def test_an_unreadable_dpo_says_so():
+    msgs, fill = _ts.check("dpo", _ts.clean_dpo({"readable": False}), F)
+    assert "Could not read" in msgs[0] and fill is None
+
+
+def test_the_certificate_must_cover_the_activity_dates():
+    ok = _ts.clean_appearance({"readable": True, "date_from": "2026-10-05", "date_to": "2026-10-07"})
+    assert _ts.check("appearance", ok, F) == ([], None)
+    short = _ts.clean_appearance({"readable": True, "date_from": "2026-10-05", "date_to": "2026-10-06"})
+    assert "covers Oct 5, 2026 to Oct 6, 2026" in _ts.check("appearance", short, F)[0][0]
+
+
+def test_a_dpo_upload_returns_the_checks_and_stores_nothing(viewer, conn, fake, on, ai_clean, monkeypatch):
+    ref = mk(viewer, dpo_no="2026-123", dpo_date="2026-09-20")
+    seen = ai_on(conn, monkeypatch, {**DPO_OK, "funding_stated": False, "funding": "", "dpo_no": "2026-777"})
+    j = up(viewer, ref, code="dpo", body=JPEG).json()
+    assert j["ok"] and j["doc"] == "dpo" and j["reading"]["dpo_no"] == "2026-777"
+    assert any("funding source" in m for m in j["checks"]) and any("2026-777" in m for m in j["checks"])
+    assert j["fill"]["dpo_no"] == "2026-777" and seen["response_schema"] is _ts.DPO_SCHEMA
+    f = conn.execute("SELECT dpo_no FROM travel_filing WHERE ref_code=?", (ref,)).fetchone()[0]
+    assert f == "2026-123"                                                    # the filing is never changed by a reading
+    assert "2026-777" not in " ".join(str(c) for c in conn.execute("SELECT * FROM travel_item").fetchall())
+
+
+def test_an_appearance_upload_is_checked_against_the_activity(viewer, conn, fake, on, ai_clean, monkeypatch):
+    ref = mk(viewer, cert_of_appearance_available="1")
+    ai_on(conn, monkeypatch, {"readable": True, "date_from": "2000-01-01", "date_to": "2000-01-02", "note": ""})
+    j = up(viewer, ref, code="cert_appearance", body=JPEG).json()
+    assert j["ok"] and j["doc"] == "appearance" and "covers" in j["checks"][0] and j["fill"] is None
+
+
+def test_receipts_still_come_back_marked_as_receipts(viewer, conn, fake, on, ai_clean, monkeypatch):
+    ref = mk(viewer, flew="1")
+    ai_on(conn, monkeypatch, GOOD)
+    j = up(viewer, ref, code="plane_ticket", body=JPEG).json()
+    assert j["doc"] == "receipt" and j["checks"] == [] and j["fill"] is None

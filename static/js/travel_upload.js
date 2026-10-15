@@ -41,8 +41,35 @@
 
   function peso(n) { return '\u20b1' + Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
+  // The DPO and the Certificate of Appearance come back already checked against the filing: show what does not
+  // match, and offer to copy a DPO number / date the filing lacks into "Change my answers" (the person saves it).
+  function checked(box, j) {
+    if (j.fill) store('set', 'tv-upload-fill:' + box.dataset.ref, JSON.stringify(j.fill));
+    return (j.checks || []).join(' ') || (j.reading && j.reading.readable ? 'Checked against this filing: nothing to flag.' : '');
+  }
+
+  function offerFill(box, out) {
+    var raw = store('get', 'tv-upload-fill:' + box.dataset.ref), fill = null;
+    try { fill = raw ? JSON.parse(raw) : null; } catch (e) { fill = null; }
+    var no = document.getElementById('dpo_no'), dt = document.getElementById('dpo_date');
+    if (!fill || !no || !dt) return;
+    store('del', 'tv-upload-fill:' + box.dataset.ref);
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn ghost small';
+    b.textContent = 'Put the DPO ' + [fill.dpo_no, fill.dpo_date].filter(Boolean).join(' dated ') + ' in my answers';
+    b.addEventListener('click', function () {
+      if (fill.dpo_no) no.value = fill.dpo_no;
+      if (fill.dpo_date) dt.value = fill.dpo_date;
+      var d = no.closest('details'); if (d) d.open = true;
+      no.scrollIntoView({ block: 'center' }); no.focus();
+      b.remove();
+    });
+    out.appendChild(document.createTextNode(' ')); out.appendChild(b);
+  }
+
   function remember(box, j) {                     // keep a peso reading for the prepare page; returns a sentence or ''
-    var r = j && j.reading;
+    if (j && (j.doc === 'dpo' || j.doc === 'appearance')) return checked(box, j);
+    var r = j && j.doc === 'receipt' ? j.reading : null;
     if (!r || !r.readable) return '';
     var what = [r.vendor, r.date].filter(Boolean).join(' \u00b7 ');
     if (r.currency !== 'PHP') return 'It shows ' + r.amount + ' ' + r.currency + ', not pesos, so it was not kept.';
@@ -59,7 +86,7 @@
   document.querySelectorAll('.tv-upload').forEach(function (box) {
     var pick = box.querySelector('input[type=file]'), out = box.querySelector('.tv-upload-out');
     var msgKey = 'tv-upload-msg:' + box.dataset.ref + ':' + box.dataset.code, kept = store('get', msgKey);
-    if (kept) { out.textContent = kept; store('del', msgKey); }
+    if (kept) { out.textContent = kept; store('del', msgKey); offerFill(box, out); }
     pick.addEventListener('change', function () {
       var files = Array.prototype.slice.call(pick.files || []);
       if (!files.length) return;

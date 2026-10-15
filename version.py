@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.44"
+APP_VERSION = "6.45"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.45",
+        "date": "October 15, 2026",
+        "summary": "Travel claims: the DPO and the Certificate of Appearance are checked as you upload them.",
+        "changes": [
+            "Uploading the DPO now checks its number, date and travel dates against your filing, and warns if it does not state a funding source.",
+            "Uploading the Certificate of Appearance warns if its dates do not cover the activity.",
+            "If your filing has no DPO number or date, a button puts the one read from the file into your answers. You still press Save, and nothing read is kept on the server.",
+        ],
+    },
     {
         "version": "6.44",
         "date": "October 15, 2026",
