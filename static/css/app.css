@@ -191,6 +191,17 @@ body[data-width="narrow"] .wrap { max-width:calc(800px + 2rem); }
 .badge.blue  { background:var(--blue-bg);  border-color:var(--blue-ln);  color:var(--accent); }
 .badge.grey  { background:var(--bg); color:var(--soft); }
 
+/* Shared pill guard — many templates define their own pill/chip/tag. Whatever their
+   colours, a pill must never break across lines (it splits the border) nor push past
+   its card: stay on one line, shrink with an ellipsis if the card is narrower. */
+.pill, .pill-win, .pill-ext, .chip, .tag, .sl-tag {
+  white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis;
+  vertical-align:middle; }
+
+/* Long unbroken text (URLs, meeting links, long venues) wraps inside the card instead of
+   spilling out. `break-word` (not `anywhere`) so table/flex min-content sizing is unchanged. */
+.card, .panel, .event, .vcard, .pcard, .coach, .ev-main { overflow-wrap:break-word; }
+
 .table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
 table.list { width:100%; border-collapse:collapse; }
 table.list th { text-align:left; font-size:.72rem; text-transform:uppercase; letter-spacing:.04em;
