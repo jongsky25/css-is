@@ -151,3 +151,12 @@ version** for the change to reach the live URL.
 
 Google Workspace accounts can send ~1,500 recipients/day this way (consumer
 Gmail: 100). Invites and password resets are nowhere near that.
+
+## Reuse for official document dispatch
+
+Documents uses the same `CSS_MAIL_RELAY_URL` / `CSS_MAIL_RELAY_SECRET` connection. Its durable
+per-recipient Gmail receipts require updating the existing project with `apps_script/mail_relay.gs`
+and `apps_script/documents_relay.gs`, and enabling the Gmail/Drive advanced services. Legacy mail
+requests remain supported. Follow [the upgrade steps](DOCUMENT_MANAGEMENT_SETUP.md#existing-mail-apps-script-project);
+keep the existing secret value, deployment URL and sending account. Merely pointing Documents at an
+older mail deployment is insufficient: an unqualified `{ok:true}` is not official dispatch evidence.

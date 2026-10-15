@@ -8,11 +8,12 @@
 {#-- One inbox for everything waiting on this approver. It replaced two
      separate pages that the same 13-14 chiefs reached from the same home
      screen, one queue at a time (UX handoff, Sept 2026). --#}
-{% set total = wellness|length + awa|length + room_queue|length %}
+{% set total = wellness|length + awa|length + room_queue|length + document_queue|default([])|length %}
 {{ page_header("Approvals",
                ("Nothing is waiting on you right now." if not total else
                 (total ~ " request" ~ ("" if total == 1 else "s") ~ " waiting on your decision."))) }}
 
+{% if document_queue %}<section class="panel"><h2>Documents for review</h2><ul>{% for doc in document_queue %}<li><a href="/documents/{{ doc.id }}">{{ doc.number }} · {{ doc.subject }}</a></li>{% endfor %}</ul></section>{% endif %}
 <nav class="inbox-jump" aria-label="Jump to a queue">
   {% if show_chief %}
   <a href="#wellness" class="{{ 'has' if wellness }}">Wellness breaks <span class="n">{{ wellness|length }}</span></a>

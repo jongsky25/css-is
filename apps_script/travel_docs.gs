@@ -12,6 +12,9 @@ function doPost(e) {
     const env = JSON.parse(e.postData.contents);               // {ts, payload, sig}
     if (!verify_(env)) return reply_({ ok: false, error: 'unauthorized' });
     const req = JSON.parse(env.payload);
+    if (String(req.action || '').indexOf('document_') === 0 && typeof documentOperation_ === 'function') {
+      return reply_(documentOperation_(req, ['inspect','preview','extract','sign','status']));
+    }
     switch (req.action) {
       case 'ping': return reply_({ ok: true, version: 2 });
       case 'check_link': return reply_(checkLink_(req));

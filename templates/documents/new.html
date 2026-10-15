@@ -1,0 +1,12 @@
+{% extends "documents/base.html" %}{% from 'documents/forms.html' import field,text,select %}
+{% block documents_content %}<h2>Register a document</h2>
+<p>Incoming and outgoing numbers are permanent, including cancelled drafts. DTRAK numbers are external references. You may register without a scan and add it later.</p>
+{% if enabled %}<form method="post" class="doc-card"><input type="hidden" name="csrf" value="{{ csrf }}">
+{{ select('direction','Direction',[('IN','Incoming'),('OUT','Outgoing draft')]) }}
+{{ field('subject','Subject',value=values.subject) }}{{ field('type','Document type',value=values.type) }}{{ field('sender','Sender / originating office',value=values.sender,required=false) }}
+<label>Concerned unit <select name="unit_id"><option value="">Not yet determined</option>{% for u in units %}<option value="{{ u.id }}">{{ u.name }}</option>{% endfor %}</select></label>
+{{ field('document_date','Document date','date',values.document_date,false) }}{{ field('received_at','Received at (Manila)','datetime-local',values.received_at,false) }}
+{{ field('due_date','Explicit deadline, if stated','date',values.due_date,false) }}{{ select('priority','Priority',[('normal','Normal'),('urgent','Urgent')]) }}
+{{ text('references','DTRAK and other references (one per line)',values.references,false) }}{{ field('channel','Receipt channel',value=values.channel,required=false) }}
+{{ field('drive_url','Drive scan / source link',type='url',value=values.drive_url,required=false) }}{{ text('evidence','Receipt evidence / note',values.evidence,false) }}
+<p>Confirm these fields before registration. After saving, you can request assisted extraction from a Drive source and review its suggestions.</p><button>Register document</button></form>{% endif %}{% endblock %}

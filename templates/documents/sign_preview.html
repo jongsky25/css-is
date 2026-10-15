@@ -1,0 +1,12 @@
+{% extends 'documents/base.html' %}{% from 'documents/forms.html' import start,end %}
+{% block documents_content %}
+<h2>Review your signature placement</h2>
+<p><a href="{{ preview.url }}" target="_blank" rel="noopener noreferrer">Open the exact approved Google Doc</a> and check its final content. The relay found one <code>{{ preview.marker }}</code> on a paragraph of its own.</p>
+<p>Your saved profile signature will replace that marker, keeping its proportions within 160 × 80 pixels. The signed result will be a new PDF in the office Drive; the source stays unchanged.</p>
+<img src="/me/signature.png" alt="Your saved signature" style="max-width:160px;max-height:80px">
+<p>Reviewed source: {{ preview.fingerprint }}.</p>
+{{ start(doc,csrf,'sign','Confirm and apply my own signature') }}
+<input type="hidden" name="confirmed_fingerprint" value="{{ preview.fingerprint }}">
+<label><input type="checkbox" required> I reviewed the final source and marker location, and authorize applying my own signature.</label>
+{{ end('Sign this version as myself') }}
+{% endblock %}
