@@ -328,6 +328,7 @@ function tm_mc114_(id) {
 
 // Replace text in a sheet. first=true changes only the first match (reading order).
 function tm_sheetRep_(sh, pattern, repl, first) {
+  pattern = String(pattern).replace(/ /g, '[\\s\\x{00A0}]+');      // a space also matches line breaks and non-breaking spaces
   const finder = sh.createTextFinder(pattern).useRegularExpression(true);
   if (!first) { finder.replaceAllWith(repl); return; }
   const hit = finder.findNext();
@@ -381,7 +382,7 @@ function tm_rer_(id) {
   tm_sheetRep_(sh, '\\(P_{3,}\\)', '(P{{amount_figures}})', false);
   tm_sheetRep_(sh, 'Taxi fare from _+', 'fare from {{ride_from}} to {{ride_to}}', false);
   tm_sheetRep_(sh, '\\bon _{3,}', 'on {{ride_date}}', false);
-  tm_sheetRep_(sh, 'in Attendance to .*DPO No\\. 2026-5451', 'in attendance to {{activity_title}} as per {{dpo_ref}}', false);
+  tm_sheetRep_(sh, 'in Attendance[\\s\\S]*?2026-5451', 'in attendance to {{activity_title}} as per {{dpo_ref}}', false);
 }
 
 // ------------------------------------------------------------- when a template needs a look ---
@@ -405,6 +406,12 @@ function debugTravelTemplates() {
       if (/Strictly|Cut short|Extended|Other deviations|Excess/.test(line)) {
         out.push('B line: ' + JSON.stringify(line.slice(0, 40)) + ' codes ' + line.slice(0, 3).split('').map(function (ch) { return ch.charCodeAt(0); }).join(','));
       }
+    });
+  }
+  const r = P.getProperty('TPL_rer');
+  if (r) {
+    SpreadsheetApp.openById(r).getSheets()[0].getDataRange().getValues().forEach(function (row, i) {
+      row.forEach(function (v, j) { if (/Attendance|5451|\{\{/.test(String(v))) out.push('RER r' + (i + 1) + 'c' + (j + 1) + ': ' + JSON.stringify(String(v).slice(0, 120))); });
     });
   }
   Logger.log('\n' + out.join('\n'));

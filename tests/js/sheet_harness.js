@@ -15,7 +15,7 @@ class FakeRange {
 class FakeFinder {
   constructor(sh, p, range) { this.sh = sh; this.p = p; this.range = range; this.rx = false; }
   useRegularExpression(b) { this.rx = b; return this; }
-  re(flags) { return new RegExp(this.rx ? this.p : this.p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags); }
+  re(flags) { return new RegExp(this.rx ? this.p.replace(/\\x\{00A0\}/g, '\\u00a0') : this.p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags); }
   cells() {
     const rg = this.range || new FakeRange(this.sh, 1, 1, this.sh.grid.length, this.sh.getLastColumn()), out = [];
     for (let i = 0; i < rg.nr; i++) for (let j = 0; j < rg.nc; j++) out.push([rg.r + i, rg.c + j]);
@@ -55,7 +55,7 @@ const RER = [
   ['RECEIVED from MR. RALIE JAY N. RAMOS'], ['ADMINISTRATIVE ASSISTANT III'],
   ['of ____________________________ (P__________)'], ['in payment for Taxi fare from ______________________________'],
   ['(Payments for subsistence, services,'], ['on ______________________'],
-  ['in Attendance to the CY 2026 Measles-Rubella SIA scheduled on August 17-28, 2026 as per DPO No. 2026-5451'],
+  ['in Attendance to the CY 2026 Measles-Rubella SIA\nscheduled on August 17-28, 2026 as per DPO\u00a0No. 2026-5451'],
   ['Name/Signature: ____________'], ['Address : ____________'],
 ];
 
