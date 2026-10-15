@@ -707,6 +707,8 @@ def init_db(conn):
     _wa_install_week_guard(conn)
     import travel                            # seeds ceilings, route types and starter justifications
     travel.ensure_defaults(conn)
+    import documents_storage
+    documents_storage.install(conn)
     conn.commit()
 
 
@@ -3697,7 +3699,7 @@ def _audit_hash(prev_hash, ts, actor, action, target_type, target_id,
 
 
 def audit(conn, actor, action, *, target_type=None, target_id=None,
-          summary=None, before=None, after=None, ip=None):
+          summary=None, before=None, after=None, ip=None, commit=True):
     """Append one audit entry. Never raises into the caller's request — a
     failed audit write should surface loudly in logs, not break the action…
     except that silent-loss is worse for an audit trail, so we DO raise: the
@@ -3713,7 +3715,8 @@ def audit(conn, actor, action, *, target_type=None, target_id=None,
            VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
         (ts, actor, action, target_type, str(target_id) if target_id is not None else None,
          summary, before, after, ip, prev_hash, row_hash))
-    conn.commit()
+    if commit:
+        conn.commit()
 
 
 def list_audit(conn, action=None, actor=None, limit=200):
@@ -10877,7 +10880,7 @@ def cal_create(conn, title, start_date, *, end_date=None, kind="meeting",
                venue=None, modality=None, meeting_url=None, note=None,
                owner_org_id=None, audience="unit", event_id=None, rrule=None,
                exdates=None, source="app", import_key=None, people=None, tags=None,
-               by=None, audit_it=True):
+               by=None, audit_it=True, commit=True):
     """Create an entry; returns its id. With an `import_key` that already exists,
     returns the existing entry's id and changes nothing (idempotent re-import).
     `audit_it=False` skips the per-entry audit line (a bulk import writes one summary)."""
@@ -10921,10 +10924,11 @@ def cal_create(conn, title, start_date, *, end_date=None, kind="meeting",
     _cal_revision(conn, entry_id, 0, "create", by, {"title": [None, v["title"]]})
     if source != "import" and v["status"] != "cancelled":          # a bulk import never emails anyone
         _cal_enqueue(conn, {"id": entry_id, **v}, "added", [u for u, _r in people], by)
-    conn.commit()
+    if commit:
+        conn.commit()
     if by and audit_it:
         audit(conn, by, "calendar_create", target_type="calendar_entry",
-              target_id=entry_id, summary=f"Added '{v['title']}' on {v['start_date']}")
+              target_id=entry_id, commit=commit, summary=f"Added '{v['title']}' on {v['start_date']}")
     return entry_id
 
 

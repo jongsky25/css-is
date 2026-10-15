@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.38"
+APP_VERSION = "6.39"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.39",
+        "date": "October 15, 2026",
+        "summary": "Document-management workflows are available for configuration and acceptance testing.",
+        "changes": [
+            "Incoming and outgoing documents can be tracked through assignments, review, signing, release and closure when the module is enabled.",
+            "The document module stays disabled until office policies, service connections and launch checks are confirmed.",
+        ],
+    },
     {
         "version": "6.38",
         "date": "October 15, 2026",

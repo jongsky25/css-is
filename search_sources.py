@@ -244,7 +244,17 @@ def _colleagues(conn, user, terms, ctx):
     return rows
 
 
+def _documents(conn, user, terms, ctx):
+    import documents
+    if not documents.enabled(conn):
+        return []
+    return [{"title": doc["subject"], "hint": doc["number"], "url": "/documents/"+str(doc["id"]),
+             "section": "Documents", "kw": ""} for doc in documents.list_visible(conn,user)
+            if all(t.lower() in (doc["subject"]+" "+doc["number"]).lower() for t in terms)][:SECTION_CAP]
+
+
 SOURCES = [
+    {"key": "documents", "section": "Documents", "scopes": {"all"}, "run": _documents},
     {"key": "activities", "section": "Activities", "scopes": {"all", "css"}, "run": _activities},
     {"key": "people", "section": "People", "scopes": {"all", "css"}, "run": _people},
     {"key": "calendar", "section": "Calendar", "scopes": {"all"}, "run": _calendar},

@@ -1,3 +1,8 @@
+## 6.39 — October 15, 2026
+
+- Added document registration, routing, assignments, review, versioned signing/release workflows, closure, scoped search and reporting for acceptance testing.
+- Documents and document sending are disabled by default. Live Drive/OCR/signature/mail adapters and office policy/launch decisions remain required before operational use.
+
 # CHANGELOG — Cowork revisions (surgical)
 
 ## 2026-10-15 (v6.38 — Sheets templates and the template maker)

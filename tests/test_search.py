@@ -85,13 +85,13 @@ def test_conference_room_lives_under_office_not_awa(app_mod):
     mgr = {it["url"] for it in group(R(), "Office")["items"]}
     assert {"/rooms/meals", "/rooms/blocks", "/approvals"} <= mgr
     sec = [s["name"] for s in group(R(), "Office")["sections"]]
-    assert sec == ["Reserve", "Manage the room"]
+    assert sec == ["Documents", "Reserve", "Manage the room"]
 
     class A(U):
         role = "admin"          # app admin who is NOT in the Administrative Section
     adm = {it["url"] for it in group(A(), "Office")["items"]}
     assert not adm & {"/rooms/meals", "/rooms/blocks"}
-    assert [s["name"] for s in group(A(), "Office")["sections"]] == ["Reserve"]
+    assert [s["name"] for s in group(A(), "Office")["sections"]] == ["Documents", "Reserve"]
     sections = {e["url"]: e["section"] for e in app_mod.search_index_for(R())}
     assert sections["/rooms"] == "Office" and sections["/rooms/poster"] == "Office"
     assert "/rooms/poster" not in {e["url"] for e in app_mod.search_index_for(U())}

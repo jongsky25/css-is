@@ -77,6 +77,9 @@ import rooms_notify
 import rooms_meals_routes
 import rooms_routes
 import travel_routes
+import documents_routes
+import documents_notify
+import documents
 import report_docs
 import csm_report
 import auth
@@ -639,6 +642,7 @@ NAV_GROUPS = [
     # Section who run it are not necessarily app admins (cap manage_users), so it
     # has its own group: everyone requests; room approvers also get the manage items.
     {"name": "Office", "items": [
+        {"key": "documents", "url": "/documents", "label": "Documents", "section": "Documents", "hint": "Incoming and outgoing document register", "kw": "documents correspondence registry incoming outgoing", "cap": None},
         {"key": "rooms", "url": "/rooms", "label": "Conference room",
          "section": "Reserve",
          "hint": "See what is free and request a slot",
@@ -2114,6 +2118,7 @@ def _notification_items(conn, user, feedback_unread):
     try:
         import travel_notify
         items.extend(travel_notify.bell_rows(conn, user["id"], _tz.today_local()))
+        items.extend(documents_notify.bell_rows(conn, user["id"], _tz.today_local()))
     except Exception:                      # noqa: BLE001 — the bell must never break a page
         pass
     wellness_decided = st.unseen_wellness_decisions(conn, user["id"])
@@ -15605,7 +15610,8 @@ def approvals_inbox(request: Request, ok: str = "", err: str = "", period: str =
         # to them here, and shouldn't see other people's orphaned requests.
         chief = st.user_is_chain_approver(conn, user)
         room_admin = rooms.is_room_admin(conn, user)
-        if not (chief or room_admin):
+        document_queue = documents.list_visible(conn, user, queue="review") if documents.enabled(conn) else []
+        if not (chief or room_admin or document_queue):
             return templates.TemplateResponse(
                 request, "forbidden.html",
                 {"capability": "approvals", "show_scope": False}, status_code=403)
@@ -15627,7 +15633,7 @@ def approvals_inbox(request: Request, ok: str = "", err: str = "", period: str =
             pass
     return templates.TemplateResponse(request, "approvals.html", {
         "nav_active": "approvals", "show_scope": False,
-        "wellness": wellness, "awa": awa, "ok": ok, "err": err,
+        "document_queue": document_queue, "wellness": wellness, "awa": awa, "ok": ok, "err": err,
         "room_queue": room_queue, "show_rooms": room_admin, "show_chief": chief,
         "decided_period": decided, "decided_period_label": decided_label,
     })
@@ -16896,3 +16902,6 @@ app.include_router(rooms_meals_routes.make_router(templates, get_conn, _today_lo
 
 # ---- Travel filing (rules in travel.py / travel_rules.py, pages in travel_routes.py) ----
 app.include_router(travel_routes.make_router(templates, get_conn, _today_local, audit=_audit, base_url=_base_url))
+
+# Document module: each route enforces account, object access and CSRF.
+app.include_router(documents_routes.make_router(templates, get_conn))
