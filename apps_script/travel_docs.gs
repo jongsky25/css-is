@@ -77,7 +77,7 @@ function applyFieldsSheet_(sh, fields) {
   Object.keys(fields).forEach(function (k) {
     if (/^[a-z0-9_]+$/.test(k)) sh.createTextFinder('{{' + k + '}}').replaceAllWith(String(fields[k]));
   });
-  sh.createTextFinder('\\{\\{[a-z0-9_]+\\}\\}').useRegularExpressions(true).replaceAllWith('');   // never leave raw braces
+  sh.createTextFinder('\\{\\{[a-z0-9_]+\\}\\}').useRegularExpression(true).replaceAllWith('');   // never leave raw braces
 }
 
 function applyRowsSheet_(sh, rows) {

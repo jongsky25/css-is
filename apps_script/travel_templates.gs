@@ -328,15 +328,15 @@ function tm_mc114_(id) {
 
 // Replace text in a sheet. first=true changes only the first match (reading order).
 function tm_sheetRep_(sh, pattern, repl, first) {
-  const finder = sh.createTextFinder(pattern).useRegularExpressions(true);
+  const finder = sh.createTextFinder(pattern).useRegularExpression(true);
   if (!first) { finder.replaceAllWith(repl); return; }
   const hit = finder.findNext();
-  if (hit) hit.createTextFinder(pattern).useRegularExpressions(true).replaceAllWith(repl);
+  if (hit) hit.createTextFinder(pattern).useRegularExpression(true).replaceAllWith(repl);
 }
 
 // The row (1-based) of the first cell whose text matches, or 0.
 function tm_sheetRow_(sh, pattern) {
-  const hit = sh.createTextFinder(pattern).useRegularExpressions(true).findNext();
+  const hit = sh.createTextFinder(pattern).useRegularExpression(true).findNext();
   return hit ? hit.getRow() : 0;
 }
 
@@ -361,7 +361,7 @@ function tm_cenrr_(id) {
   const line = tm_sheetRow_(sh, 'Taxi fare from');
   if (line) {
     const dateRow = tm_sheetRow_(sh, 'March 10, 2026');
-    const cell = sh.createTextFinder('Taxi fare from').useRegularExpressions(true).findNext();
+    const cell = sh.createTextFinder('Taxi fare from').useRegularExpression(true).findNext();
     cell.setValue('{{p_date}}: {{p_text}}');
     tm_numericCell_(sh, line, '{{p_amount}}');
     if (dateRow && dateRow === line - 1) sh.deleteRow(dateRow);

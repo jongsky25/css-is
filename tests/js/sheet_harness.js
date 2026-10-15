@@ -14,7 +14,7 @@ class FakeRange {
 }
 class FakeFinder {
   constructor(sh, p, range) { this.sh = sh; this.p = p; this.range = range; this.rx = false; }
-  useRegularExpressions(b) { this.rx = b; return this; }
+  useRegularExpression(b) { this.rx = b; return this; }
   re(flags) { return new RegExp(this.rx ? this.p : this.p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags); }
   cells() {
     const rg = this.range || new FakeRange(this.sh, 1, 1, this.sh.grid.length, this.sh.getLastColumn()), out = [];

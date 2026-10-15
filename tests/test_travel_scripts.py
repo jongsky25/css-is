@@ -85,3 +85,10 @@ def test_the_template_maker_covers_every_template_key_the_app_asks_for():
     src = (ROOT / "apps_script" / "travel_templates.gs").read_text()
     for key in td.DOC_TEMPLATES:
         assert f"key: '{key}'" in src, key
+
+
+@pytest.mark.parametrize("name", ["travel_docs.gs", "travel_templates.gs"])
+def test_the_scripts_use_the_real_sheets_method_names(name):
+    """Google's Sheets TextFinder spells it useRegularExpression (no s); the plural is a runtime error."""
+    src = (ROOT / "apps_script" / name).read_text()
+    assert "useRegularExpressions" not in src
