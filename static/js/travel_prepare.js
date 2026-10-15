@@ -114,6 +114,39 @@
     return wrap;
   }
 
+  // Read the fare off a ticket, boarding pass or receipt. The file goes to the server, the AI reads it, and the answer comes
+  // back as a suggestion with a button; nothing is filled in, and nothing is kept, until the person presses it.
+  function scanPicker(r) {
+    var out = el('div', { 'class': 'tv-hint', role: 'status', 'aria-live': 'polite' });
+    var pick = el('input', { type: 'file', accept: 'image/*,application/pdf', 'aria-label': 'Read the fare from a ticket or receipt' });
+    pick.addEventListener('change', function () {
+      var f = pick.files && pick.files[0];
+      if (!f) return;
+      out.textContent = 'Reading\u2026';
+      fetch(data.scan_url, { method: 'POST', credentials: 'same-origin', body: f })
+        .then(function (res) { return res.json(); }).then(function (j) {
+          pick.value = '';
+          out.textContent = '';
+          if (!j.ok) { out.textContent = j.error || 'Could not read that file. Type the amount in.'; return; }
+          if (!j.readable) { out.textContent = 'Could not find an amount on that file. Type it in.' + (j.note ? ' ' + j.note : ''); return; }
+          if (j.currency !== 'PHP') { out.textContent = 'That shows ' + j.amount + ' ' + j.currency + ', not pesos. Type the peso amount you paid.'; return; }
+          var what = [j.vendor, [j.origin, j.destination].filter(Boolean).join(' to '), j.date].filter(Boolean).join(' \u00b7 ');
+          out.appendChild(document.createTextNode('Found ' + peso(j.amount) + (what ? ' (' + what + ')' : '') + '. Check it against the file. ' + (j.note ? j.note + ' ' : '')));
+          var use = el('button', { type: 'button', 'class': 'btn ghost small', text: 'Use ' + peso(j.amount) });
+          use.addEventListener('click', function () {
+            r.allowance = j.amount; r._aa = null;
+            if (!r.date && j.date) r.date = j.date;
+            if (!r.from && j.origin) r.from = j.origin;
+            if (!r.to && j.destination) r.to = j.destination;
+            if (r.mode === 'taxi' || r.mode === 'tnvs') r.receipt = 'receipt';
+            save(); drawRows(); refresh();
+          });
+          out.appendChild(use);
+        }).catch(function () { pick.value = ''; out.textContent = 'Could not reach the server. Type the amount in.'; });
+    });
+    return el('div', { 'class': 'tv-row-wide' }, [el('label', { text: 'Or read it from a ticket or receipt (photo or PDF)' }), pick, out]);
+  }
+
   function drawRows() {
     rowsBox.textContent = '';
     uis = [];
@@ -138,6 +171,7 @@
       var capLine = el('div', { 'class': 'tv-row-wide tv-hint' });
       kids.push(capLine);
       kids.push(field('Fare / allowance (\u20b1)', r.allowance, function (v) { r.allowance = v; }, { type: 'number', refresh: true }));
+      kids.push(scanPicker(r));
       kids.push(select('Per diem rule', r.day_kind, kinds, function (v) { r.day_kind = v; }));
       if (r.day_kind === 'full' || r.day_kind === 'departure' || ['monitor', 'monitor_late', 'liaison', 'hpdpb'].indexOf(r.day_kind) >= 0) {
         kids.push(check('Meals were provided', r.meals_provided, function (v) { r.meals_provided = v; }));

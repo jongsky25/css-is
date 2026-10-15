@@ -274,7 +274,7 @@ def test_no_table_can_quietly_start_storing_form_contents(conn):
 
 
 NOT_AUDITED = {"travel_answers", "travel_item", "travel_link_check", "admin_travel_ping",
-               "travel_rates_calc"}      # drafts and read-only checks (the rate calculator stores nothing)
+               "travel_rates_calc", "travel_scan_document"}      # drafts and read-only checks (the calculator and the ticket reader store nothing)
 
 
 def test_every_travel_post_is_audited_unless_it_is_a_draft_edit():

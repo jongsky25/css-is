@@ -43,6 +43,7 @@ design). Configure with:
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
 import os
 import re
@@ -91,6 +92,8 @@ FEATURE_DEFAULTS = {
     "harmonize": 20,
     "assistant_action": 15,
     "i18n_review": 20,   # tools/i18n_review.py — one-off DRAFT-translation review
+    "travel_scan": 30,   # travel prepare page: read the fare off an uploaded ticket / receipt
+                         # (the only feature that sends an image; Gemini only, no Groq fallback)
     "test": 5,   # the /admin/ai "Test connection" egress smoke test
 }
 FEATURES = tuple(FEATURE_DEFAULTS.keys())
@@ -340,10 +343,13 @@ def _thinking_config(model):
 
 
 def _http_generate(prompt, *, system=None, response_schema=None, temperature=0.2,
-                    max_output_tokens=1024, timeout=8.0):
+                    max_output_tokens=1024, timeout=8.0, images=None):
     """One Gemini `generateContent` call. Connect timeout is fixed at 3s; total
     timeout is `timeout` (default 8s). Retries once on a 5xx or a timeout,
     never on 429 (a 429 instead sets a 60s cooldown and raises immediately).
+
+    `images` is an optional list of (mime_type, bytes) sent inline before the prompt text
+    (a photo or a PDF); only Gemini takes them.
 
     Returns {"text", "parsed", "tokens_in", "tokens_out", "latency_ms", "model"}.
     `parsed` is the JSON-decoded text when `response_schema` was supplied,
@@ -366,7 +372,10 @@ def _http_generate(prompt, *, system=None, response_schema=None, temperature=0.2
     if response_schema is not None:
         generation_config["responseMimeType"] = "application/json"
         generation_config["responseSchema"] = response_schema
-    body = {"contents": [{"role": "user", "parts": [{"text": prompt}]}],
+    parts = [{"inline_data": {"mime_type": mime, "data": base64.b64encode(raw).decode("ascii")}}
+             for mime, raw in (images or [])]
+    parts.append({"text": prompt})
+    body = {"contents": [{"role": "user", "parts": parts}],
             "generationConfig": generation_config}
     if system:
         body["systemInstruction"] = {"parts": [{"text": system}]}
@@ -516,13 +525,15 @@ def _http_generate_groq(prompt, *, system=None, response_schema=None, temperatur
 
 
 def _try_groq_fallback(conn, *, feature, ip, prompt, system, response_schema,
-                        temperature, max_output_tokens, timeout):
+                        temperature, max_output_tokens, timeout, images=None):
     """Attempt the Groq fallback for one Gemini quota/rate-limit failure.
     Returns a result dict on success. Returns None *silently* if Groq isn't
     applicable (excluded feature, disabled, not configured, rate-limited).
     If Groq *was* applicable but itself raised AIError, that error
     propagates — ask() decides how to fold it into the log line."""
     if feature == "harmonize" or not fallback_enabled(conn) or not groq_configured():
+        return None
+    if images:
         return None
     if not rl.allow("ai_groq", ip or "unknown"):
         return None
@@ -561,7 +572,7 @@ def _log_interaction(conn, *, user, feature, mode, outcome, result=None, error=N
 
 
 def ask(conn, user, feature, prompt, *, ip=None, system=None, response_schema=None,
-        temperature=0.2, max_output_tokens=1024, timeout=8.0, question=None):
+        temperature=0.2, max_output_tokens=1024, timeout=8.0, question=None, images=None):
     """The single entry point every AI feature calls.
 
     Gates in order: configured + mode != off + feature flag -> burst rate
@@ -578,12 +589,16 @@ def ask(conn, user, feature, prompt, *, ip=None, system=None, response_schema=No
     Returns (result, interaction_id) on success. Raises AIError on any
     failure — callers catch AIError and fall back to their existing
     behavior; this function itself never raises anything else.
+
+    `images` ([(mime, bytes)]) makes it a Gemini-only call: Groq's text model cannot read
+    them, so neither the Groq-alone nor the quota fallback is used (the caller falls back
+    to typing the amount by hand). The bytes are never logged.
     """
     mode = ai_mode(conn)
     log_prompts = st.get_setting(conn, "ai_log_prompts", "masked") != "off"
 
     gemini_ready = ai_configured()
-    groq_only = not gemini_ready and ai_available(conn, feature)
+    groq_only = not gemini_ready and not images and ai_available(conn, feature)
 
     if not (gemini_ready or groq_only) or mode == "off" or not feature_enabled(conn, feature):
         _log_interaction(conn, user=user, feature=feature, mode=mode, outcome="no_config",
@@ -632,7 +647,8 @@ def ask(conn, user, feature, prompt, *, ip=None, system=None, response_schema=No
         try:
             fb = _try_groq_fallback(conn, feature=feature, ip=ip, prompt=prompt, system=system,
                                      response_schema=response_schema, temperature=temperature,
-                                     max_output_tokens=max_output_tokens, timeout=timeout)
+                                     max_output_tokens=max_output_tokens, timeout=timeout,
+                                     images=images)
         except AIError as ge:
             groq_exc = ge
         if fb is not None:
@@ -647,9 +663,11 @@ def ask(conn, user, feature, prompt, *, ip=None, system=None, response_schema=No
         raise
 
     try:
+        # `images` is passed only when there are some, so a text-only call keeps the exact
+        # signature every existing caller and test double of _http_generate expects.
         result = _http_generate(prompt, system=system, response_schema=response_schema,
                                  temperature=temperature, max_output_tokens=max_output_tokens,
-                                 timeout=timeout)
+                                 timeout=timeout, **({"images": images} if images else {}))
     except AITimeout as e:
         _log_interaction(conn, user=user, feature=feature, mode=mode, outcome="fallback_timeout",
                           error=str(e), prompt=prompt, log_prompts=log_prompts)
@@ -659,7 +677,8 @@ def ask(conn, user, feature, prompt, *, ip=None, system=None, response_schema=No
         try:
             fb = _try_groq_fallback(conn, feature=feature, ip=ip, prompt=prompt, system=system,
                                      response_schema=response_schema, temperature=temperature,
-                                     max_output_tokens=max_output_tokens, timeout=timeout)
+                                     max_output_tokens=max_output_tokens, timeout=timeout,
+                                     images=images)
         except AIError as ge:
             groq_exc = ge
         if fb is not None:
