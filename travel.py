@@ -101,7 +101,7 @@ ROLE_CODES = tuple(c for c, _ in tc.ROLES)
 CHOICE_BACK_DAYS, CHOICE_AHEAD_DAYS = 120, 365
 _GOOGLE_HOSTS = ("drive.google.com", "docs.google.com")
 _ITEM_FIELDS = ("filing_id", "item_code", "handling", "state", "drive_url", "drive_file_id", "doc_url",
-                "doc_state", "fmis_ref", "note", "updated_at")
+                "doc_state", "fmis_ref", "note", "updated_at", "drive_source")
 
 
 class TravelError(Exception):
@@ -193,7 +193,8 @@ def view_items(conn, filing):
         out.append({"code": spec.code, "label": spec.label, "handling": spec.handling,
                     "requirement": spec.requirement, "copies": spec.copies, "wet_sign": spec.wet_sign,
                     "note_hint": spec.note, "state": row.get("state") or "missing",
-                    "drive_url": row.get("drive_url"), "doc_url": row.get("doc_url"),
+                    "drive_url": row.get("drive_url"), "drive_source": row.get("drive_source"),
+                    "doc_url": row.get("doc_url"),
                     "doc_state": row.get("doc_state"), "fmis_ref": row.get("fmis_ref") or "",
                     "note": row.get("note") or ""})
     return out
@@ -426,10 +427,11 @@ def holiday_notice(conn, today=None):
             f"until they are added (Administration, Holidays).")
 
 
-def purge_filings(conn, months=None, today=None, dry_run=False):
-    """Retention: months after a filing was submitted (or withdrawn), blank the personal links and
-    notes on it and its flags, and clear its saved answers. The row, its status and its dates stay.
-    Returns the number of filings (that would be) purged."""
+def purge_filings(conn, months=None, today=None, dry_run=False, relay=None):
+    """Retention: months after a filing was submitted (or withdrawn), trash the files the office stored for
+    it in Drive, blank the personal links and notes on it and its flags, and clear its saved answers. The
+    row, its status and its dates stay. A filing whose Drive files cannot be trashed is left for the next
+    run, so no file outlives its record. Returns the number of filings (that would be) purged."""
     months = int(months or st.get_setting(conn, "travel.retention_months", "12") or 12)
     today = _d(today or tz.today_local())
     y, m = today.year, today.month - months
@@ -442,15 +444,33 @@ def purge_filings(conn, months=None, today=None, dry_run=False):
         "OR (status='withdrawn' AND withdrawn_at < ?))", (cutoff, cutoff))]
     if dry_run or not ids:
         return len(ids)
+    ids = [i for i in ids if _trash_uploads(conn, i, relay)]
+    if not ids:
+        return 0
     qs, now = ",".join("?" * len(ids)), tz.now_iso()
-    conn.execute(f"UPDATE travel_item SET drive_url=NULL, drive_file_id=NULL, doc_url=NULL, fmis_ref=NULL, note=NULL, "
+    conn.execute(f"UPDATE travel_item SET drive_url=NULL, drive_file_id=NULL, drive_source=NULL, doc_url=NULL, fmis_ref=NULL, note=NULL, "
                  f"updated_at=? WHERE filing_id IN ({qs})", (now, *ids))
     conn.execute(f"UPDATE travel_flag SET detail=NULL, note=NULL WHERE filing_id IN ({qs})", ids)
     conn.execute(f"UPDATE travel_filing SET answers_json='{{}}', purged_at=?, updated_at=? WHERE id IN ({qs})", (now, now, *ids))
     conn.commit()
     st.audit(conn, "system", "travel_purge", target_type="travel_filing", target_id=ids[0],
-             summary=f"Removed links and notes from {len(ids)} travel filing(s) older than {months} months")
+             summary=f"Removed links, notes and stored files from {len(ids)} travel filing(s) older than {months} months")
     return len(ids)
+
+
+def _trash_uploads(conn, filing_id, relay=None):
+    """Trash the Drive folders the office stored for one filing. True when there is nothing left to trash."""
+    folders = [r[0] for r in conn.execute(
+        "SELECT DISTINCT drive_file_id FROM travel_item WHERE filing_id=? AND drive_source='upload' "
+        "AND drive_file_id IS NOT NULL", (filing_id,))]
+    if not folders:
+        return True
+    import gdocs_relay
+    if relay is None:
+        if not gdocs_relay.configured():
+            return False
+        relay = gdocs_relay.get_relay()
+    return all(relay.trash_file(fid).ok for fid in folders)
 
 
 FLAG_OUTCOMES = ("verified", "rejected")
@@ -757,10 +777,10 @@ def save_item(conn, filing, code, *, drive_url=None, na=None, fmis_ref=None, not
             if not link:
                 raise TravelError("Paste a Google Drive link (it starts with https://drive.google.com/).")
             sets.update(doc_url=link, doc_state="manual", state="present") if manual else \
-                sets.update(drive_url=link, state="present")
+                sets.update(drive_url=link, drive_file_id=None, drive_source="link", state="present")
         else:
             sets.update(doc_url=None, doc_state=None, state="missing") if manual else \
-                sets.update(drive_url=None, drive_file_id=None, state="missing")
+                sets.update(drive_url=None, drive_file_id=None, drive_source=None, state="missing")
     if na is not None:
         if spec.handling not in ("upload", "carry"):
             raise TravelError("Only uploaded documents can be marked as not applicable.")
@@ -784,6 +804,43 @@ def save_item(conn, filing, code, *, drive_url=None, na=None, fmis_ref=None, not
                  (*sets.values(), filing["id"], code))
     _touch_open(conn, filing, sets["updated_at"])
     _stamp(conn, filing["id"], sets["updated_at"])
+    conn.commit()
+
+
+def uploaded_folder(conn, filing, code):
+    """The Drive folder id the office made for this row's uploaded files, or None (nothing, or a pasted link)."""
+    r = conn.execute("SELECT drive_file_id FROM travel_item WHERE filing_id=? AND item_code=? AND drive_source='upload'",
+                     (filing["id"], code)).fetchone()
+    return (r[0] or None) if r else None
+
+
+def save_upload(conn, filing, code, folder_id, folder_url):
+    """The relay confirmed a file in the row's folder: the row now links to that folder. Only the link and
+    the folder id are kept, never the file."""
+    _editable(filing)
+    spec = _item_spec(filing, code)
+    if spec.handling not in ("upload", "carry"):
+        raise TravelError("This document does not take an uploaded file.")
+    link = valid_drive_link(folder_url)
+    if not link or not folder_id:
+        raise TravelError("The upload was not confirmed. Try again.")
+    sync_items(conn, filing)
+    now = tz.now_iso()
+    conn.execute("UPDATE travel_item SET drive_url=?, drive_file_id=?, drive_source='upload', state='present', "
+                 "updated_at=? WHERE filing_id=? AND item_code=?", (link, folder_id, now, filing["id"], code))
+    _touch_open(conn, filing, now)
+    _stamp(conn, filing["id"], now)
+    conn.commit()
+
+
+def clear_upload(conn, filing, code):
+    """Forget a row's uploaded folder (after it was trashed in Drive): the row goes back to missing."""
+    _editable(filing)
+    now = tz.now_iso()
+    conn.execute("UPDATE travel_item SET drive_url=NULL, drive_file_id=NULL, drive_source=NULL, state='missing', "
+                 "updated_at=? WHERE filing_id=? AND item_code=? AND drive_source='upload'", (now, filing["id"], code))
+    _touch_open(conn, filing, now)
+    _stamp(conn, filing["id"], now)
     conn.commit()
 
 

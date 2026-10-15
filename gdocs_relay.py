@@ -10,6 +10,7 @@ confirmed is not a document the person can put on a checklist. Retrying is safe 
 
 Routes get the relay through `get_relay()`, which tests replace with a fake."""
 from __future__ import annotations
+import base64
 import hashlib
 import hmac
 import json
@@ -88,6 +89,9 @@ def describe(error: str) -> str:
         "bad_link": "That does not look like a Google Drive link.",
         "not_accessible": "The relay mailbox cannot open that file. Share it with the office mailbox and try again.",
         "template_not_set": "That document's template is not set in the relay.",
+        "bad_type": "Use a photo (JPG, PNG, WebP) or a PDF.",
+        "bad_size": "That file is empty or too large. Use one under 6 MB.",
+        "not_allowed": "The relay would not touch that file.",
     }.get(error, f"The relay said: {error}." if error and not error.startswith("http_")
           else f"The relay answered with an error ({error})." if error else "The relay failed.")
 
@@ -106,6 +110,18 @@ class Relay:
         return call("generate_doc", request_id=request_id, template_key=template_key, folder_key=folder_key,
                     title=title, fields=fields or {}, blocks=blocks or {}, rows=rows or {},
                     share_with=share_with or [])
+
+    def upload_file(self, *, request_id, folder_key, item_key, name, mime, data, share_with=None) -> RelayResult:
+        """Put one file in the filing's Drive folder for a checklist row. `data` is the raw bytes."""
+        return call("upload_file", request_id=request_id, folder_key=folder_key, item_key=item_key, name=name,
+                    mime=mime, data_b64=base64.b64encode(data).decode("ascii"), share_with=share_with or [])
+
+    def trash_file(self, file_id: str) -> RelayResult:
+        """Trash an uploaded file or folder (the relay refuses anything outside its root folder)."""
+        return call("trash_file", id=file_id)
+
+
+UPLOAD_VERSION = 2      # the relay script version that has upload_file and trash_file
 
 
 def get_relay() -> Relay:

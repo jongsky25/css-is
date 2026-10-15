@@ -13,9 +13,11 @@ function doPost(e) {
     if (!verify_(env)) return reply_({ ok: false, error: 'unauthorized' });
     const req = JSON.parse(env.payload);
     switch (req.action) {
-      case 'ping': return reply_({ ok: true, version: 1 });
+      case 'ping': return reply_({ ok: true, version: 2 });
       case 'check_link': return reply_(checkLink_(req));
       case 'generate_doc': return reply_(generateDoc_(req));
+      case 'upload_file': return reply_(uploadFile_(req));
+      case 'trash_file': return reply_(trashFile_(req));
       default: return reply_({ ok: false, error: 'unknown_action' });
     }
   } catch (err) { return reply_({ ok: false, error: String(err) }); }
@@ -67,6 +69,67 @@ function generateDoc_(req) {
     if (String(a).toLowerCase().endsWith('@' + P.getProperty('ALLOWED_DOMAIN'))) copy.addEditor(a);
   });
   return doc_(copy);
+}
+
+// Uploaded documents (version 2). A file lands in ROOT/<folder_key>/<item_key>/, one sub-folder per checklist
+// row, so a row with several files links to one folder. A retry with the same request_id finds the file it
+// already made. trash_file only touches something that sits under the root folder.
+const UPLOAD_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+const UPLOAD_MAX_BYTES = 7 * 1024 * 1024;
+
+function childFolder_(parent, name) {
+  const it = parent.getFoldersByName(name);
+  return it.hasNext() ? it.next() : parent.createFolder(name);
+}
+
+function uploadFile_(req) {
+  const slug = /^[A-Za-z0-9_-]{1,40}$/;
+  if (!slug.test(String(req.folder_key)) || !slug.test(String(req.item_key))) return { ok: false, error: 'bad_folder' };
+  if (!/^[A-Za-z0-9:_-]{1,80}$/.test(String(req.request_id))) return { ok: false, error: 'bad_request_id' };
+  if (UPLOAD_MIMES.indexOf(String(req.mime)) < 0) return { ok: false, error: 'bad_type' };
+  const name = String(req.name || 'file').replace(/[^A-Za-z0-9._ -]/g, '_').slice(0, 100) || 'file';
+  const bytes = Utilities.base64Decode(String(req.data_b64 || ''));
+  if (!bytes.length || bytes.length > UPLOAD_MAX_BYTES) return { ok: false, error: 'bad_size' };
+  const root = DriveApp.getFolderById(P.getProperty('ROOT_FOLDER_ID'));
+  const folder = childFolder_(childFolder_(root, req.folder_key), req.item_key);
+  let file = null;
+  const files = folder.getFiles();
+  while (files.hasNext()) { const f = files.next(); if (f.getDescription() === 'request_id=' + req.request_id) file = f; }
+  if (!file) {
+    file = folder.createFile(Utilities.newBlob(bytes, String(req.mime), name));
+    file.setDescription('request_id=' + req.request_id);
+  }
+  (req.share_with || []).forEach(function (a) {
+    if (String(a).toLowerCase().endsWith('@' + P.getProperty('ALLOWED_DOMAIN'))) folder.addViewer(a);
+  });
+  let count = 0; const all = folder.getFiles(); while (all.hasNext()) { all.next(); count++; }
+  return { ok: true, id: file.getId(), url: file.getUrl(), name: file.getName(),
+           folder_id: folder.getId(), folder_url: folder.getUrl(), count: count };
+}
+
+function underRoot_(item, rootId) {
+  let cur = item;
+  for (let i = 0; i < 6; i++) {
+    const ps = cur.getParents();
+    if (!ps.hasNext()) return false;
+    cur = ps.next();
+    if (cur.getId() === rootId) return true;
+  }
+  return false;
+}
+
+function trashFile_(req) {
+  const id = String(req.id || '');
+  if (!/^[-\w]{20,}$/.test(id)) return { ok: false, error: 'bad_link' };
+  const rootId = P.getProperty('ROOT_FOLDER_ID');
+  if (id === rootId) return { ok: false, error: 'not_allowed' };
+  let item = null;
+  try { item = DriveApp.getFolderById(id); } catch (e1) {
+    try { item = DriveApp.getFileById(id); } catch (e2) { return { ok: true, gone: true }; }   // already gone
+  }
+  if (!underRoot_(item, rootId)) return { ok: false, error: 'not_allowed' };
+  item.setTrashed(true);
+  return { ok: true };
 }
 
 function doc_(f) { return { ok: true, id: f.getId(), url: f.getUrl(), name: f.getName() }; }

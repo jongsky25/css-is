@@ -38,6 +38,7 @@ def _limits(bucket):
         "room_view": (120, 60),  # guest availability look-ups (cheap GETs)
         "travel_relay": (30, 60),  # travel link checks and relay tests (keyed by the signed-in account)
         "travel_rates": (240, 60), # travel policy-rate calculator, on each edit of the prepare page (per account)
+        "travel_upload": (30, 60), # travel checklist file uploads to Drive (per account)
         "travel_scan": (12, 60),   # travel prepare page: ticket / receipt reads by the AI (per account)
         "care": (60, 60),        # avatar water/feed taps — the per-user cooldown in
                                  # storage.record_avatar_care is the real gate; this
