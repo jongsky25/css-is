@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.33"
+APP_VERSION = "6.34"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.34",
+        "date": "October 14, 2026",
+        "summary": "Groundwork for making travel forms automatically.",
+        "changes": [
+            "The travel settings page now has a Test the relay button that checks whether the office's Google connection for travel forms is working, and says in plain words what is wrong if it is not.",
+            "You can set who signs the travel forms (head of office and certifying officer) and who looks after the form templates.",
+            "When you paste a Google Drive link on a travel claim, it can now be checked to see that the office can open the file. Nothing changes for you yet until forms are made automatically in a later update.",
+        ],
+    },
     {
         "version": "6.33",
         "date": "October 14, 2026",

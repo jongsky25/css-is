@@ -27,7 +27,7 @@ Built in T3. Reminder job `travel_filing_due` (`send_reminders.send_travel_filin
 Built in T2: calendar chips, buttons on activity pages. A filing stores `entry_id` or `event_id` plus a snapshot.
 
 ## 8. Documents
-Built in T4/T5: relay and payload builders.
+Built in T4: the relay. `gdocs_relay.py` signs every request (HMAC-SHA256 over `ts.payload`) and returns a `RelayResult`; routes get it through `gdocs_relay.get_relay()`, which tests replace. `apps_script/travel_docs.gs` is the source of the Apps Script; `docs/TRAVEL_DOCS_RELAY_SETUP.md` lists what a person must do. `POST /travel/f/{ref}/link-check` checks a pasted Drive link and stores the file id; `/admin/travel` shows relay status, a test button, signatories and template administrators. T5 adds the payload builders and generation.
 
 ## 9. Guardrails and edge cases
 One live cash advance per user and activity (partial unique index). Withdrawn filings free the slot. Reimbursement is hidden when a live cash advance exists.
@@ -61,4 +61,6 @@ T1 Foundations, T2 Filing shell, T3 Reminders and bell, T4 Relay, T5 Prepare and
 - **Wording** of the Job Order certification and the meals/lodging and extra-expense certifications needs the owner's approval against the official issuance.
 - **2027 holidays** must be loaded before 2027 deadlines are trustworthy.
 - **Reminders (T3)**: filings in "ready" are reminded too, since they are not yet handed in. There is no per-person opt-out; an administrator can switch the job off or change the lead days at `/admin/email`. The bell's flag line links to `/admin/travel` until T6 adds the verify queue; point it there then.
+- **Relay (T4)**: the relay has never run against real Google; the checks listed in `docs/TRAVEL_DOCS_RELAY_SETUP.md` (escaping, merged-cell rows, `addEditor` emails, run time) are still to be done by a person. The script rejects template keys, folder names and request ids that are not plain slugs, a hardening beyond the draft in the spec.
+- **Link check stores the file id only**: `travel_item` has no column for the file name, so the name is returned to the page but not saved (nothing in the spec needs it later). The link-check route has no button yet; T5's script calls it.
 - **Local test setup**: the HTTP tests need a `css_is.db` (gitignored). `python setup_db.py` creates one; nine tests (`test_ai_report_draft` x3, `test_avatar_care`, `test_home_feeds`, `test_integrity`, `test_routes[/work-arrangement/approvals]`, `test_search::test_api_search_activities`, `test_wellness::test_chief_pages_are_gated`) fail on that sample database and also fail on `main`.

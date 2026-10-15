@@ -1,5 +1,14 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-14 (v6.34 — travel documents relay)
+
+- `gdocs_relay.py`: signed client for the travel documents Apps Script. Envelope `{ts, payload, sig}` with `sig = HMAC-SHA256(secret, "ts.payload")`, `ts` in ms; env `CSS_DOCS_RELAY_URL` / `CSS_DOCS_RELAY_SECRET`; 90 s timeout (10 s connect), follows redirects, one retry on transport error with the same `request_id`; reuses `mailer._parse_relay_json` and `_relay_not_run_reason`. An unconfirmed 200 is a failure (unlike mail). Never raises: returns `RelayResult`. `get_relay()` is the seam tests fake.
+- `apps_script/travel_docs.gs`: relay source (actions `ping`, `check_link`, `generate_doc`), with the signature check, a 5 minute clock window, slug-only template/folder/request names, `@doh.gov.ph`-only sharing, and idempotency on `request_id`.
+- `travel_routes.py`: `POST /travel/f/{ref}/link-check` (JSON, owner only, same-origin, rate limited by `ratelimit` bucket `travel_relay`; saves the link and `travel_item.drive_file_id`); `/admin/travel` gains relay status and `POST /admin/travel/ping`, plus `POST /admin/travel/signatories` for signatories and template administrators.
+- `docs/TRAVEL_DOCS_RELAY_SETUP.md`; `deploy_hf.RUNTIME_PY` lists `gdocs_relay.py`.
+- Tests: `tests/test_travel_relay.py`.
+- **Version bump:** `APP_VERSION` 6.33 → 6.34.
+
 ## 2026-10-14 (v6.33 — travel filing reminders and bell)
 
 - `send_reminders.py`: new job `travel_filing_due` (`send_travel_filing_due`, CLI `--travel-filing-due`, `run()` branch) and timing knob `travel_filing_lead_days` (default 2, range 1-14). One email a day per person: open or ready filings due within the lead days or overdue, plus submitted cash advances whose activity is over with no live liquidation (`travel.unliquidated_cas`). Skips when `travel.enabled` is off; repeats skipped through `_already_sent` (subject carries the date); goes to the directory email, else the login.

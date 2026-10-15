@@ -5,13 +5,16 @@ No middleware gate covers /travel, so every handler checks the switch, then owne
 (travel.can_view / travel.is_owner), and every POST checks that Origin / Referer, when
 present, is this site."""
 from __future__ import annotations
+import os
 import re
 from datetime import timedelta
 from urllib.parse import parse_qs, quote, urlparse
 
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
+import gdocs_relay
+import ratelimit
 import rooms
 import storage as st
 import travel
@@ -260,6 +263,50 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
         finally:
             conn.close()
 
+    @router.post("/travel/f/{ref}/link-check")
+    async def travel_link_check(request: Request, ref: str):
+        """JSON: {code, url}. Asks the relay whether the office mailbox can open the pasted file,
+        then saves the link and the file id. Owner only; rate limited per account."""
+        def fail(msg, status=400):
+            return JSONResponse({"ok": False, "error": msg}, status_code=status)
+        if not _same_origin(request):
+            return fail("This request came from another site.", 403)
+        try:
+            body = await request.json()
+        except ValueError:
+            return fail("Send JSON with a code and a url.")
+        code, url = str((body or {}).get("code") or ""), str((body or {}).get("url") or "")
+        conn = get_conn()
+        try:
+            if not travel.enabled(conn):
+                return fail("Travel filing is not switched on.", 403)
+            filing = travel.get_by_ref(conn, ref) if _REF.match(ref) else None
+            user = request.state.user
+            if not travel.can_view(conn, user, filing):
+                return fail("Not found.", 404)
+            if not travel.is_owner(user, filing):
+                return fail("Only the person who filed can change this.", 403)
+            if not ratelimit.allow("travel_relay", f"u{user['id']}"):
+                return fail("Too many checks. Wait a minute and try again.", 429)
+            link = travel.valid_drive_link(url)
+            if not link:
+                return fail("Paste a Google Drive link (it starts with https://drive.google.com/).")
+            try:
+                travel._item_spec(filing, code)
+            except travel.TravelError as e:
+                return fail(str(e))
+            res = gdocs_relay.get_relay().check_link(link)
+            if not res.ok:
+                return fail(gdocs_relay.describe(res.error), 502 if res.error in ("not_configured", "unreachable") else 400)
+            try:
+                travel.save_item(conn, filing, code, drive_url=link)
+            except travel.TravelError as e:
+                return fail(str(e))
+            travel.set_drive_file_id(conn, filing, code, res.data.get("id"))
+            return JSONResponse({"ok": True, "name": res.data.get("name", ""), "mime": res.data.get("mime", "")})
+        finally:
+            conn.close()
+
     # ------------------------------------------------------- ready / submitted ---
 
     @router.get("/travel/f/{ref}/ready", response_class=HTMLResponse)
@@ -310,14 +357,51 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
     # ------------------------------------------------- app admin: the switch ---
     # /admin/* is already gated to the app admin role by the auth middleware.
 
+    def _admin_context(conn, q, **extra):
+        keys = ("head_name", "head_title", "certifier_name", "certifier_title", "station")
+        return {"nav_active": "admin_travel", "enabled": travel.enabled(conn),
+                "relay_ready": gdocs_relay.configured(),
+                "relay_host": urlparse(os.environ.get(gdocs_relay.ENV_URL, "")).netloc,
+                "sig": {k: st.get_setting(conn, f"travel.sig.{k}", "") for k in keys},
+                "template_admins": st.get_setting(conn, "travel.template_admins", ""),
+                "msg": (q.get("ok") or "")[:200] or None, "err": (q.get("err") or "")[:200] or None, **extra}
+
     @router.get("/admin/travel", response_class=HTMLResponse)
     def admin_travel(request: Request):
-        q = dict(request.query_params)
         conn = get_conn()
         try:
-            return templates.TemplateResponse(request, "admin_travel.html", {
-                "nav_active": "admin_travel", "enabled": travel.enabled(conn),
-                "msg": (q.get("ok") or "")[:200] or None, "err": (q.get("err") or "")[:200] or None})
+            return templates.TemplateResponse(request, "admin_travel.html", _admin_context(conn, dict(request.query_params)))
+        finally:
+            conn.close()
+
+    @router.post("/admin/travel/ping")
+    async def admin_travel_ping(request: Request):
+        if not _same_origin(request):
+            return _forbidden(request, "this request (it came from another site)")
+        conn = get_conn()
+        try:
+            if not ratelimit.allow("travel_relay", f"u{request.state.user['id']}"):
+                return _go("/admin/travel", err="Too many tests. Wait a minute and try again.")
+            res = gdocs_relay.get_relay().ping()
+            return _go("/admin/travel", msg="The documents relay answered." if res.ok else None,
+                       err=None if res.ok else gdocs_relay.describe(res.error))
+        finally:
+            conn.close()
+
+    @router.post("/admin/travel/signatories")
+    async def admin_travel_signatories(request: Request):
+        if not _same_origin(request):
+            return _forbidden(request, "this request (it came from another site)")
+        f = await _posted(request)
+        conn = get_conn()
+        try:
+            for k in ("head_name", "head_title", "certifier_name", "certifier_title", "station"):
+                st.set_setting(conn, f"travel.sig.{k}", " ".join(f.get(k, "").split())[:120])
+            names = [n.strip().lower() for n in f.get("template_admins", "").replace("\n", ",").split(",") if n.strip()]
+            st.set_setting(conn, "travel.template_admins", ",".join(dict.fromkeys(names))[:1000])
+            audit(request, conn, "travel_settings_save", target_type="setting", target_id="travel.sig",
+                  summary="saved travel signatories and template administrators")
+            return _go("/admin/travel", msg="Saved.")
         finally:
             conn.close()
 

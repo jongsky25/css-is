@@ -3,11 +3,31 @@
 {% block title %}Travel filing settings{% endblock %}
 {% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261014a">{% endblock %}
 {% block content %}
-{{ page_header("Travel filing settings", "Switch the travel claim pages on or off for everyone.") }}
+{{ page_header("Travel filing settings", "Switch the travel claim pages on or off, set the signatories, and check the documents relay.") }}
 {{ flash(msg=msg, err=err) }}
 <form method="post" action="/admin/travel" class="tv-card tv-form">
   <div class="tv-checks"><label><input type="checkbox" name="enabled" value="1" {{ 'checked' if enabled }}> <span>Travel filing is on</span></label></div>
   <p class="tv-hint">When it is off, the travel pages say it is not switched on and nothing can be filed. Existing filings are kept.</p>
   <button class="btn" type="submit">Save</button>
+</form>
+<form method="post" action="/admin/travel/signatories" class="tv-card tv-form">
+  <h2 class="tv-h">Signatories and template administrators</h2>
+  <p class="tv-hint">These pre-fill the generated forms. People can still change them while preparing a form.</p>
+  <label>Head of office <input name="head_name" value="{{ sig.head_name }}" maxlength="120"></label>
+  <label>Head of office, title <input name="head_title" value="{{ sig.head_title }}" maxlength="120"></label>
+  <label>Certifying officer <input name="certifier_name" value="{{ sig.certifier_name }}" maxlength="120"></label>
+  <label>Certifying officer, title <input name="certifier_title" value="{{ sig.certifier_title }}" maxlength="120"></label>
+  <label>Station <input name="station" value="{{ sig.station }}" maxlength="120"></label>
+  <label>Template administrators (email addresses, comma separated) <textarea name="template_admins" rows="2" maxlength="1000">{{ template_admins }}</textarea></label>
+  <button class="btn" type="submit">Save</button>
+</form>
+<form method="post" action="/admin/travel/ping" class="tv-card tv-form">
+  <h2 class="tv-h">Documents relay</h2>
+  {% if relay_ready %}
+  <p class="tv-hint">Set up. Requests go to <strong>{{ relay_host or 'the configured address' }}</strong>.</p>
+  <button class="btn" type="submit">Test the relay</button>
+  {% else %}
+  <p class="tv-hint">Not set up yet. Until it is, people paste a link to a form they made themselves. Steps are in <code>docs/TRAVEL_DOCS_RELAY_SETUP.md</code>; the two Space secrets are <code>CSS_DOCS_RELAY_URL</code> and <code>CSS_DOCS_RELAY_SECRET</code>.</p>
+  {% endif %}
 </form>
 {% endblock %}
