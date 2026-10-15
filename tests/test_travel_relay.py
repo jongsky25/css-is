@@ -131,10 +131,22 @@ def test_the_script_source_matches_the_signing_scheme():
 class FakeRelay(gr.Relay):
     def __init__(self):
         self.pings, self.checks, self.result = 0, [], gr.RelayResult(True, {"id": "FILEID123", "name": "scan.pdf", "mime": "application/pdf"})
+        self.uploads, self.trashed, self.ping_version = [], [], 1
+        self.upload_result = gr.RelayResult(True, {"id": "F1", "name": "n.pdf", "count": 1, "folder_id": "FOLDER1234567890123456",
+                                                   "folder_url": "https://drive.google.com/drive/folders/FOLDER1234567890123456"})
+        self.trash_ok = True
+
+    def upload_file(self, **kw):
+        self.uploads.append(kw)
+        return self.upload_result
+
+    def trash_file(self, file_id):
+        self.trashed.append(file_id)
+        return gr.RelayResult(self.trash_ok, error="" if self.trash_ok else "unreachable")
 
     def ping(self):
         self.pings += 1
-        return self.result if not self.result.data else gr.RelayResult(True, {"version": 1})
+        return self.result if not self.result.data else gr.RelayResult(True, {"version": self.ping_version})
 
     def check_link(self, url):
         self.checks.append(url)
@@ -255,3 +267,142 @@ def test_link_check_respects_the_switch(viewer, admin, conn, fake):
     post(admin, "/admin/travel")                                                       # off
     r = jpost(viewer, f"/travel/f/{ref}/link-check", {"code": "dpo", "url": "https://drive.google.com/file/d/ABC/view"})
     assert r.status_code == 403 and fake.checks == []
+
+
+# ------------------------------------------------------------------ uploads ---
+
+PDF = b"%PDF-1.4 test file"
+UP = {"Content-Type": "application/octet-stream", "X-Filename": "My%20Ticket%20(1).pdf"}
+
+
+def up(client, ref, code="dpo", body=PDF, headers=None):
+    return client.post(f"/travel/f/{ref}/upload?code={code}", content=body, headers={**UP, **(headers or {})})
+
+
+@pytest.fixture()
+def on(conn, env):
+    st.set_setting(conn, "travel.relay_version", "2")
+    conn.commit()
+    yield
+    st.set_setting(conn, "travel.relay_version", "0")
+    conn.commit()
+
+
+def row(conn, code="dpo"):
+    r = conn.execute("SELECT drive_url, drive_file_id, drive_source, state FROM travel_item WHERE item_code=?", (code,)).fetchone()
+    return None if r is None else dict(zip(("drive_url", "drive_file_id", "drive_source", "state"), r))
+
+
+def test_the_script_has_the_upload_actions_and_only_trashes_under_the_root():
+    src = open("apps_script/travel_docs.gs").read()
+    assert "case 'upload_file'" in src and "case 'trash_file'" in src and "version: 2" in src
+    assert "underRoot_(item, rootId)" in src and "request_id=" in src
+
+
+def test_upload_stores_only_the_folder_link_and_sends_the_bytes_once(viewer, conn, fake, on):
+    ref = mk(viewer)
+    r = up(viewer, ref)
+    assert r.status_code == 200 and r.json()["ok"] and r.json()["url"].startswith("https://drive.google.com/")
+    assert len(fake.uploads) == 1
+    u = fake.uploads[0]
+    assert u["data"] == PDF and u["mime"] == "application/pdf" and u["folder_key"] == ref and u["item_key"] == "dpo"
+    assert u["name"] == f"{ref}_dpo_My Ticket _1_.pdf" and u["request_id"].startswith(f"{ref}:dpo:")
+    assert tuple(row(conn).values()) == ("https://drive.google.com/drive/folders/FOLDER1234567890123456", "FOLDER1234567890123456", "upload", "present")
+    assert all(PDF.decode() not in str(v) for v in conn.execute("SELECT * FROM travel_item").fetchall()[0])
+    page = viewer.get(f"/travel/f/{ref}").text
+    assert "Add another file" in page and "Open the folder" in page and "Remove uploaded files" in page
+
+
+def test_a_failed_upload_leaves_the_row_missing(viewer, conn, fake, on):
+    ref = mk(viewer)
+    fake.upload_result = gr.RelayResult(False, error="unreachable")
+    r = up(viewer, ref)
+    assert r.status_code == 502 and "could not be reached" in r.json()["error"]
+    assert row(conn) is None or row(conn)["state"] == "missing"
+
+
+def test_upload_refuses_bad_files_rows_and_callers_before_the_relay(viewer, encoder, conn, fake, on):
+    ref = mk(viewer)
+    assert up(viewer, ref, body=b"MZ not a document").status_code == 415
+    assert up(viewer, ref, body=b"").status_code in (400, 413)
+    assert up(viewer, ref, body=PDF + b"0" * (6 * 1024 * 1024)).status_code == 413
+    assert up(viewer, ref, code="nope").status_code == 400
+    assert up(viewer, ref, code="fms_routing_slip").status_code == 400          # an FMIS row takes no file
+    assert up(viewer, ref, code="appendix_b").status_code == 400                # a generated form takes no file
+    assert up(encoder, ref).status_code == 404                                  # a stranger
+    assert up(viewer, ref, headers={"Origin": "https://evil.example"}).status_code == 403
+    assert fake.uploads == []
+
+
+def test_upload_is_off_until_the_relay_reports_version_two(viewer, conn, fake, env):
+    st.set_setting(conn, "travel.relay_version", "0"); conn.commit()
+    ref = mk(viewer)
+    assert up(viewer, ref).status_code == 503 and fake.uploads == []
+    assert "Choose file" not in viewer.get(f"/travel/f/{ref}").text
+
+
+def test_ping_records_the_script_version(admin, conn, fake, env):
+    fake.ping_version = 2
+    post(admin, "/admin/travel/ping")
+    assert st.get_setting(conn, "travel.relay_version") == "2"
+    st.set_setting(conn, "travel.relay_version", "0"); conn.commit()
+
+
+def test_upload_is_rate_limited(viewer, conn, fake, on, monkeypatch):
+    ref = mk(viewer)
+    monkeypatch.setenv("CSS_RL_TRAVEL_UPLOAD", "2/60")
+    ratelimit._HITS.clear()
+    assert [up(viewer, ref).status_code for _ in range(3)] == [200, 200, 429]
+
+
+def test_a_submitted_filing_takes_no_more_files(viewer, conn, fake, on):
+    ref = mk(viewer)
+    conn.execute("UPDATE travel_filing SET status='submitted' WHERE ref_code=?", (ref,)); conn.commit()
+    assert up(viewer, ref).status_code == 400 and fake.uploads == []
+
+
+def test_remove_trashes_the_folder_first_and_only_then_clears_the_row(viewer, conn, fake, on):
+    ref = mk(viewer)
+    up(viewer, ref)
+    fake.trash_ok = False
+    r = post(viewer, f"/travel/f/{ref}/item/dpo/remove-upload")
+    assert "err=" in r.headers["location"] and row(conn)["drive_source"] == "upload"       # kept: Drive still has it
+    fake.trash_ok = True
+    r = post(viewer, f"/travel/f/{ref}/item/dpo/remove-upload")
+    assert "ok=" in r.headers["location"] and fake.trashed[-1] == "FOLDER1234567890123456"
+    assert tuple(row(conn).values()) == (None, None, None, "missing")
+
+
+def test_a_pasted_link_replaces_uploads_by_trashing_them_but_a_link_is_never_trashed(viewer, conn, fake, on):
+    ref = mk(viewer)
+    up(viewer, ref)
+    post(viewer, f"/travel/f/{ref}/item/dpo", drive_url="https://drive.google.com/file/d/ABC/view")
+    assert fake.trashed == ["FOLDER1234567890123456"]
+    assert tuple(row(conn).values()) == ("https://drive.google.com/file/d/ABC/view", None, "link", "present")
+    post(viewer, f"/travel/f/{ref}/item/dpo", drive_url="")                         # clearing a pasted link
+    post(viewer, f"/travel/f/{ref}/item/dpo/remove-upload")
+    assert fake.trashed == ["FOLDER1234567890123456"] and row(conn)["state"] == "missing"
+
+
+def test_a_link_is_not_replaced_when_the_uploaded_files_cannot_be_trashed(viewer, conn, fake, on):
+    ref = mk(viewer)
+    up(viewer, ref)
+    fake.trash_ok = False
+    r = post(viewer, f"/travel/f/{ref}/item/dpo", drive_url="https://drive.google.com/file/d/ABC/view")
+    assert "err=" in r.headers["location"] and row(conn)["drive_source"] == "upload"
+
+
+def test_purge_trashes_uploaded_folders_and_waits_when_drive_will_not(viewer, conn, fake, on):
+    uid = conn.execute("SELECT id FROM admin_user WHERE username='viewer@test.local'").fetchone()[0]
+    old = (tz.now() - timedelta(days=500)).isoformat() if hasattr(tz, "now") else "2024-01-01T00:00:00"
+    fid = conn.execute("INSERT INTO travel_filing(ref_code, user_id, kind, source_kind, act_title, act_start, act_end, status, submitted_at) "
+                       "VALUES ('TF-U-0001', ?, 'liquidation', 'blank', 'T', '2024-01-01', '2024-01-02', 'submitted', ?)", (uid, old)).lastrowid
+    conn.execute("INSERT INTO travel_item(filing_id, item_code, handling, state, drive_url, drive_file_id, drive_source) "
+                 "VALUES (?, 'dpo', 'upload', 'present', 'https://drive.google.com/drive/folders/X', 'FOLDER1234567890123456', 'upload')", (fid,))
+    conn.commit()
+    fake.trash_ok = False
+    assert travel.purge_filings(conn, relay=fake) == 0                              # Drive failed: nothing blanked, retry next run
+    assert row(conn)["drive_source"] == "upload"
+    fake.trash_ok = True
+    assert travel.purge_filings(conn, relay=fake) == 1
+    assert fake.trashed[-1] == "FOLDER1234567890123456" and tuple(row(conn).values()) == (None, None, None, "present")

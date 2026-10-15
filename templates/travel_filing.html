@@ -1,7 +1,7 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header, flash %}
 {% block title %}{{ 'Travel claim' if missing else f.ref_code }}{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261014a">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261015b">{% if uploads_ready %}<script src="/static/js/travel_upload.js?v=20261015a" defer></script>{% endif %}{% endblock %}
 {% block content %}
 {% if missing %}
 {{ page_header("Travel claim not found", "") }}
@@ -80,8 +80,19 @@
           <input type="text" name="fmis_ref" maxlength="120" value="{{ it.fmis_ref }}" placeholder="FMIS reference or status" aria-label="FMIS reference for {{ it.label }}">
           <button class="btn ghost small" type="submit">Save</button></form>
         {% else %}
+        {% if uploads_ready and it.handling in ('upload', 'carry') %}
+        <div class="tv-upload" data-url="/travel/f/{{ f.ref_code }}/upload" data-code="{{ it.code }}">
+          <label class="btn ghost small">{{ 'Add another file' if it.drive_source == 'upload' else 'Choose file or take photo' }}
+            <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" multiple hidden aria-label="Upload files for {{ it.label }}"></label>
+          <span class="tv-upload-out tv-note" role="status" aria-live="polite"></span>
+        </div>
+        {% if it.drive_source == 'upload' %}
+        <form method="post" action="/travel/f/{{ f.ref_code }}/item/{{ it.code }}/remove-upload">
+          <button class="btn ghost small" type="submit">Remove uploaded files</button></form>
+        {% endif %}
+        {% endif %}
         <form method="post" action="/travel/f/{{ f.ref_code }}/item/{{ it.code }}">
-          <input type="url" name="drive_url" maxlength="500" value="{{ (it.doc_url if it.handling == 'generate' else it.drive_url) or '' }}" placeholder="{{ 'Link to the form you made in Google Drive' if it.handling == 'generate' else 'Paste the Google Drive link' }}" aria-label="Drive link for {{ it.label }}">
+          <input type="url" name="drive_url" maxlength="500" value="{{ (it.doc_url if it.handling == 'generate' else it.drive_url) or '' }}" placeholder="{{ 'Link to the form you made in Google Drive' if it.handling == 'generate' else ('Or paste a Google Drive link' if uploads_ready else 'Paste the Google Drive link') }}" aria-label="Drive link for {{ it.label }}">
           <button class="btn ghost small" type="submit">Save link</button></form>
         {% if it.handling == 'carry' %}
         <form method="post" action="/travel/f/{{ f.ref_code }}/item/{{ it.code }}">
@@ -96,7 +107,7 @@
         {% endif %}
       {% elif it.handling == 'fmis' and it.fmis_ref %}<div class="tv-note">FMIS: {{ it.fmis_ref }}</div>
       {% endif %}
-      {% if it.drive_url %}<div class="tv-note"><a href="{{ it.drive_url }}" rel="noopener" target="_blank">Open the file</a></div>{% endif %}
+      {% if it.drive_url %}<div class="tv-note"><a href="{{ it.drive_url }}" rel="noopener" target="_blank">{{ 'Open the folder' if it.drive_source == 'upload' else 'Open the file' }}</a></div>{% endif %}
       {% if it.doc_url %}<div class="tv-note"><a href="{{ it.doc_url }}" rel="noopener" target="_blank">Open the form</a>{% if it.doc_state == 'manual' %} (your own copy){% endif %}</div>{% endif %}
       {% if it.note and it.handling == 'carry' %}<div class="tv-note">Note: {{ it.note }}</div>{% endif %}
     </li>

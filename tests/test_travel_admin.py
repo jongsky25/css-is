@@ -260,7 +260,7 @@ EXPECTED_COLUMNS = {
                       "act_end", "act_venue", "dpo_no", "dpo_date", "answers_json", "advance_amount", "ca_filing_id",
                       "mc114_format", "deadline_date", "deadline_rule", "status", "gen_state", "opened_at", "ready_at",
                       "submitted_at", "withdrawn_at", "created_by", "updated_at", "purged_at"},
-    "travel_item": {"filing_id", "item_code", "handling", "state", "drive_url", "drive_file_id", "doc_url", "doc_state",
+    "travel_item": {"filing_id", "item_code", "handling", "state", "drive_url", "drive_file_id", "doc_url", "doc_state", "drive_source",
                     "fmis_ref", "note", "updated_at"},
     "travel_flag": {"id", "filing_id", "kind", "sig", "detail", "state", "supervisor_confirmed", "note", "decided_by",
                     "decided_at", "created_at"},

@@ -675,7 +675,7 @@ def init_db(conn):
         handling TEXT NOT NULL CHECK (handling IN ('generate','upload','fmis','carry')),
         state TEXT NOT NULL DEFAULT 'missing' CHECK (state IN ('missing','present','na')),
         drive_url TEXT, drive_file_id TEXT, doc_url TEXT, doc_state TEXT, fmis_ref TEXT, note TEXT,
-        updated_at TEXT,
+        updated_at TEXT, drive_source TEXT,
         PRIMARY KEY (filing_id, item_code)
     );
     CREATE TABLE IF NOT EXISTS travel_flag (
@@ -868,6 +868,9 @@ def _add_missing_columns(conn):
         conn.execute("UPDATE calendar_entry_person SET seen_seq = (SELECT sequence FROM calendar_entry "
                      "WHERE id = entry_id) WHERE seen_seq IS NULL")
         set_setting(conn, "cal_seen_backfilled", "1")
+    ti_cols = {row[1] for row in conn.execute("PRAGMA table_info(travel_item)")}
+    if ti_cols and "drive_source" not in ti_cols:     # 'upload' = a folder the office made; 'link' = pasted by the person
+        conn.execute("ALTER TABLE travel_item ADD COLUMN drive_source TEXT")
     ce_cols = {row[1] for row in conn.execute("PRAGMA table_info(calendar_entry)")}
     if ce_cols and "css_nudged_at" not in ce_cols:
         conn.execute("ALTER TABLE calendar_entry ADD COLUMN css_nudged_at TEXT")

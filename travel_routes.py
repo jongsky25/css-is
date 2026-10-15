@@ -5,6 +5,7 @@ No middleware gate covers /travel, so every handler checks the switch, then owne
 (travel.can_view / travel.is_owner), and every POST checks that Origin / Referer, when
 present, is this site."""
 from __future__ import annotations
+import hashlib
 import json
 import os
 import re
@@ -13,6 +14,7 @@ from urllib.parse import parse_qs, quote, urlparse
 
 from fastapi import APIRouter, Request
 from starlette.background import BackgroundTask
+from starlette.concurrency import run_in_threadpool
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 import gdocs_relay
@@ -240,7 +242,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             "questions": [q_ for q_ in tc.ANSWER_KEYS if filing["kind"] in q_[2]], "roles": tc.ROLES,
             "mc114": travel.MC114_FORMATS, "liquidations": liqs, "ca": ca, "editable": filing["status"] in ("open", "ready"),
             "msg": (q.get("ok") or "")[:200] or None, "err": error or (q.get("err") or "")[:200] or None,
-            "rev": tc.CHECKLIST_REV, "can_manual_amount": filing["kind"] in ("ca", "liquidation") and not filing["ca_filing_id"],
+            "uploads_ready": _uploads_ready(conn), "rev": tc.CHECKLIST_REV, "can_manual_amount": filing["kind"] in ("ca", "liquidation") and not filing["ca_filing_id"],
         }, status_code=status_code)
 
     @router.get("/travel/f/{ref}", response_class=HTMLResponse)
@@ -282,6 +284,11 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             filing, bad = _load(request, conn, ref, owner=True)
             if bad:
                 return bad
+            if "drive_url" in f:
+                folder = travel.uploaded_folder(conn, filing, code)
+                if folder and not _trash(folder):
+                    return _go(f"/travel/f/{ref}#item-{code}", err="The files you uploaded could not be removed from "
+                                                                  "Drive just now. Try again in a minute.")
             try:
                 travel.save_item(conn, filing, code,
                                  drive_url=f["drive_url"] if "drive_url" in f else None,
@@ -291,6 +298,108 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             except travel.TravelError as e:
                 return _go(f"/travel/f/{ref}#item-{code}", err=str(e))
             return _go(f"/travel/f/{ref}#item-{code}", msg="Saved.")
+        finally:
+            conn.close()
+
+    def _uploads_ready(conn):
+        """Upload to Drive is offered only once the relay has answered a test with the version that has it."""
+        try:
+            v = int(st.get_setting(conn, "travel.relay_version", "0") or 0)
+        except ValueError:
+            v = 0
+        return gdocs_relay.configured() and v >= gdocs_relay.UPLOAD_VERSION
+
+    def _trash(file_id):
+        try:
+            return gdocs_relay.get_relay().trash_file(file_id).ok
+        except Exception:                                   # noqa: BLE001 - a failed trash is reported, not raised
+            return False
+
+    @router.post("/travel/f/{ref}/upload")
+    async def travel_upload(request: Request, ref: str, code: str = ""):
+        """The raw bytes of one file for a checklist row (X-Filename carries its name). The file goes to the
+        office's Drive through the relay and is dropped here; only the folder link is kept. The file is saved
+        only after the relay confirms it, so a failure leaves the row as it was."""
+        if not _same_origin(request):
+            return _jerr("This request came from another site.", 403)
+        try:
+            if int(request.headers.get("content-length") or 0) > travel_scan.MAX_BYTES:
+                return _jerr("That file is too large. Use one under 6 MB.", 413)
+        except ValueError:
+            return _jerr("Send the file.")
+        raw = await request.body()
+        if not raw or len(raw) > travel_scan.MAX_BYTES:
+            return _jerr("That file is empty or too large. Use one under 6 MB.", 413)
+        mime = travel_scan.sniff(raw)
+        if not mime:
+            return _jerr("Use a photo (JPG, PNG, WebP) or a PDF.", 415)
+        conn = get_conn()
+        try:
+            if not travel.enabled(conn):
+                return _jerr("Travel filing is not switched on.", 403)
+            filing = travel.get_by_ref(conn, ref) if _REF.match(ref) else None
+            user = request.state.user
+            if not travel.can_view(conn, user, filing):
+                return _jerr("Not found.", 404)
+            if not travel.is_owner(user, filing):
+                return _jerr("Only the person who filed can change this.", 403)
+            if not _uploads_ready(conn):
+                return _jerr("Uploading is not switched on yet. Paste a Google Drive link instead.", 503)
+            try:
+                travel._editable(filing)
+                spec = travel._item_spec(filing, code)
+                if spec.handling not in ("upload", "carry"):
+                    raise travel.TravelError("This document does not take an uploaded file.")
+            except travel.TravelError as e:
+                return _jerr(str(e))
+            if not ratelimit.allow("travel_upload", f"u{user['id']}"):
+                return _jerr("Too many uploads. Wait a minute and try again.", 429)
+            from urllib.parse import unquote
+            stem = re.sub(r"[^A-Za-z0-9._ -]", "_", unquote(request.headers.get("x-filename") or "")).strip(" .")[:60]
+            ext = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "application/pdf": "pdf"}[mime]
+            stem = re.sub(r"\.(jpe?g|png|webp|pdf)$", "", stem, flags=re.I) or "file"
+            digest = hashlib.sha256(raw).hexdigest()[:12]
+            share = [user.get("username")] if user.get("username") else []
+            res = await run_in_threadpool(
+                gdocs_relay.get_relay().upload_file, request_id=f"{ref}:{code}:{digest}", folder_key=ref, item_key=code,
+                name=f"{ref}_{code}_{stem}.{ext}", mime=mime, data=raw, share_with=share)
+            del raw
+            if not res.ok:
+                return _jerr(gdocs_relay.describe(res.error), 502 if res.error in ("not_configured", "unreachable") else 400)
+            try:
+                travel.save_upload(conn, filing, code, res.data.get("folder_id"), res.data.get("folder_url"))
+            except travel.TravelError as e:
+                return _jerr(str(e))
+            audit(request, conn, "travel_upload", target_type="travel_filing", target_id=ref,
+                  summary=f"stored a file for {code}")
+            return JSONResponse({"ok": True, "name": res.data.get("name", ""), "count": res.data.get("count"),
+                                 "url": res.data.get("folder_url")})
+        finally:
+            conn.close()
+
+    @router.post("/travel/f/{ref}/item/{code}/remove-upload")
+    async def travel_remove_upload(request: Request, ref: str, code: str):
+        """Trash the files uploaded for a row (in Drive), then clear the row. Pasted links are never touched."""
+        if not _same_origin(request):
+            return _forbidden(request, "this request (it came from another site)")
+        conn = get_conn()
+        try:
+            filing, bad = _load(request, conn, ref, owner=True)
+            if bad:
+                return bad
+            folder = travel.uploaded_folder(conn, filing, code)
+            if not folder:
+                return _go(f"/travel/f/{ref}#item-{code}", err="There are no uploaded files on this row.")
+            if not _trash(folder):
+                return _go(f"/travel/f/{ref}#item-{code}", err="The files could not be removed from Drive just now. "
+                                                              "Try again in a minute.")
+            try:
+                travel.clear_upload(conn, filing, code)
+            except travel.TravelError as e:
+                return _go(f"/travel/f/{ref}#item-{code}", err=str(e))
+            audit(request, conn, "travel_remove_upload", target_type="travel_filing", target_id=ref,
+                  summary=f"removed the files stored for {code}")
+            return _go(f"/travel/f/{ref}#item-{code}", msg="Uploaded files removed.")
         finally:
             conn.close()
 
@@ -780,6 +889,11 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             if not ratelimit.allow("travel_relay", f"u{request.state.user['id']}"):
                 return _go("/admin/travel", err="Too many tests. Wait a minute and try again.")
             res = gdocs_relay.get_relay().ping()
+            if res.ok:                                      # remember which script version answered (gates uploads)
+                try:
+                    st.set_setting(conn, "travel.relay_version", str(int(res.data.get("version") or 1)))
+                except (TypeError, ValueError):
+                    pass
             return _go("/admin/travel", msg="The documents relay answered." if res.ok else None,
                        err=None if res.ok else gdocs_relay.describe(res.error))
         finally:

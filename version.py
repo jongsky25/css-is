@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.42"
+APP_VERSION = "6.43"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.43",
+        "date": "October 15, 2026",
+        "summary": "Travel claims: upload a file to a checklist row instead of pasting a Drive link.",
+        "changes": [
+            "Each upload row on a travel filing now has a \u201cChoose file or take photo\u201d button. Pick a photo or PDF and it is stored in the office travel folder; pasting a Drive link still works.",
+            "Large photos are shrunk on your device before they are sent. You can remove or replace the files you uploaded.",
+            "The button appears once the office has updated the documents relay (Administration, Travel filing settings, Test the relay).",
+        ],
+    },
     {
         "version": "6.42",
         "date": "October 15, 2026",

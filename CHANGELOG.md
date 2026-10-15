@@ -7,6 +7,16 @@
 
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-15 (v6.43 — upload a file instead of pasting a link)
+
+- `apps_script/travel_docs.gs` (script version 2): `upload_file` puts a JPG / PNG / WebP / PDF in `ROOT/<filing>/<row>/` (one sub-folder per checklist row, idempotent on `request_id`, folder shared view-only with the claimant); `trash_file` trashes a folder or file only when it sits under the root folder. `ping` answers `version: 2`.
+- `gdocs_relay.py`: `Relay.upload_file` / `Relay.trash_file`, `UPLOAD_VERSION = 2`, plain-word errors for the new codes.
+- `travel_routes.py`: `POST /travel/f/<ref>/upload?code=` (raw file, owner-only, same-origin, open filings, upload / carry rows only, 30 a minute per account) sends the file to the relay, saves only the folder link and id once the relay confirms, and drops the bytes. `POST .../item/<code>/remove-upload` trashes the folder, then clears the row. Pasting a link over uploaded files trashes them first. The admin "Test the relay" press records `travel.relay_version`; the button shows only at version 2, so an old script deployment changes nothing.
+- `travel.py` / `storage.py`: `travel_item.drive_source` (`upload` or `link`) so only office-made folders are ever trashed; `save_upload`, `clear_upload`, `uploaded_folder`. `purge_filings` trashes uploaded folders first and skips a filing whose files cannot be trashed (retried next run).
+- `static/js/travel_upload.js`, `templates/travel_filing.html`: "Choose file or take photo" (several files at once, big photos shrunk to about 2000 px in the browser) next to the Drive-link box, which stays as the fallback.
+- Tests: `tests/test_travel_relay.py` (upload, failure, refusals, switch, rate limit, remove, replace, purge); `test_travel_admin.py` lists the new column and the audited removal.
+- **Version bump:** `APP_VERSION` 6.42 → 6.43. Redeploy the relay script (docs/TRAVEL_DOCS_RELAY_SETUP.md, step 7).
+
 ## 2026-10-15 (v6.41 — read the fare off a ticket or receipt)
 
 - `ai_core.py`: `ask()` / `_http_generate()` take `images=[(mime, bytes)]`, sent to Gemini as inline data ahead of the prompt. An image call never uses Groq (the Groq-alone and the quota-fallback paths both skip it) and the bytes are never logged. New feature `travel_scan`, 30 a day.

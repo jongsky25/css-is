@@ -28,6 +28,8 @@
 .tv-item-head strong { flex:1 1 14rem; }
 .tv-item form { display:flex; flex-wrap:wrap; gap:.4rem; margin:.45rem 0 0; align-items:center; }
 .tv-item form input[type=url], .tv-item form input[type=text] { flex:1 1 16rem; min-width:0; font-size:max(16px,1rem); }
+.tv-upload { display:flex; flex-wrap:wrap; gap:.4rem; margin:.45rem 0 0; align-items:center; }
+.tv-upload label { cursor:pointer; }
 .tv-note { color:var(--soft); font-size:.84rem; margin:.25rem 0 0; }
 .tv-wet { font-weight:700; }
 .tv-actions { display:flex; flex-wrap:wrap; gap:.5rem; margin:1rem 0; }
