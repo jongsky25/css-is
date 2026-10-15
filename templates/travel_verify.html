@@ -1,0 +1,43 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash, empty_state %}
+{% block title %}Verify travel flags{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261014c">{% endblock %}
+{% block content %}
+{{ page_header("Verify travel flags", "Claims where a fare, route or role needs the Administrative Section's say-so. Record what was decided; nothing here pays or approves a claim.") }}
+{{ flash(msg=msg, err=err) }}
+
+<div class="tv-card">
+  <h2>Waiting ({{ queue|length }})</h2>
+  {% if not queue %}<p class="tv-hint">Nothing is waiting.</p>{% endif %}
+  <ul class="tv-items">
+  {% for g in queue %}
+    <li class="tv-item" id="flag-{{ g.id }}">
+      <div class="tv-item-head"><strong>{{ flag_labels.get(g.kind, g.kind) }}</strong>
+        <span class="badge amber">Open</span></div>
+      <div class="tv-note">{{ g.detail }}</div>
+      <div class="tv-note">{{ g.who }} · <a href="/travel/f/{{ g.ref_code }}">{{ g.ref_code }}</a> · {{ g.act_title }} · {{ g.act_start }}{% if g.act_end != g.act_start %} to {{ g.act_end }}{% endif %}</div>
+      <form method="post" action="/travel/verify/{{ g.id }}" class="tv-form">
+        <label>Note (needed to reject) <input type="text" name="note" maxlength="500"></label>
+        {% if g.kind == 'participant_only' %}<div class="tv-checks"><label><input type="checkbox" name="supervisor_confirmed" value="1"> <span>The supervisor confirmed this travel was necessary</span></label></div>{% endif %}
+        <button class="btn small" type="submit" name="outcome" value="verified">Verified</button>
+        <button class="btn danger small" type="submit" name="outcome" value="rejected">Reject</button>
+      </form>
+    </li>
+  {% endfor %}
+  </ul>
+</div>
+
+{% if decided %}
+<div class="tv-card">
+  <h2>Recently decided</h2>
+  <ul class="tv-missing">
+  {% for g in decided %}
+    <li><span class="badge {{ 'green' if g.state == 'verified' else 'red' }}">{{ g.state|capitalize }}</span>
+      {{ flag_labels.get(g.kind, g.kind) }} · <a href="/travel/f/{{ g.ref_code }}">{{ g.ref_code }}</a> · {{ g.who }}
+      {% if g.note %}<em>({{ g.note }})</em>{% endif %}{% if g.supervisor_confirmed %} · supervisor confirmed{% endif %}
+      <small class="tv-hint">by {{ g.decided_by }}</small></li>
+  {% endfor %}
+  </ul>
+</div>
+{% endif %}
+{% endblock %}

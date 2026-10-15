@@ -206,4 +206,8 @@ def completeness(filing, items, flags) -> list:
     for fl in flags:
         if fl.get("state") == "open":
             missing.append(f"Waiting for the Admin Unit to verify: {fl.get('detail') or 'a flagged item'}")
+        elif fl.get("state") == "rejected":
+            why = f" ({fl['note']})" if fl.get("note") else ""
+            missing.append(f"The Admin Unit did not accept: {fl.get('detail') or 'a flagged item'}{why} "
+                           "Change it on the prepare page, or talk to them.")
     return missing
