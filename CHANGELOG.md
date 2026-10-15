@@ -1,5 +1,14 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-15 (v6.43 — tickets and receipts are read as they are uploaded)
+
+- `travel_scan.py`: `READ_CODES`, the checklist rows whose uploads are tickets or receipts (plane ticket, boarding pass, boat / bus ticket, terminal fee, taxi, ride-hailing, lodging bill, extra-expense invoice).
+- `travel_routes.py`: an upload to one of those rows is read by the AI at the same time as it goes to Drive (`asyncio.gather`), under the existing `travel_scan` rate limit. The answer comes back as `reading` (and `ai: false` when AI is off). A failed or skipped read never stops the file being saved; a failed Drive upload returns no reading. Nothing from the reading is stored on the server.
+- `static/js/travel_upload.js`: shows what was found under the row and keeps peso readings in this browser's session only (`tv-reads:<ref>`).
+- `static/js/travel_prepare.js`: each day's fare box lists those readings with a "Use" button, the same one the scan picker uses (`offer`). Nothing is filled in until it is pressed.
+- Tests: `tests/test_travel_relay.py` (read on upload, other rows not read, AI off, failed upload, read limit, nothing stored).
+- **Version bump:** `APP_VERSION` 6.42 → 6.43.
+
 ## 2026-10-15 (v6.42 — upload a file instead of pasting a link)
 
 - `apps_script/travel_docs.gs` (script version 2): `upload_file` puts a JPG / PNG / WebP / PDF in `ROOT/<filing>/<row>/` (one sub-folder per checklist row, idempotent on `request_id`, folder shared view-only with the claimant); `trash_file` trashes a folder or file only when it sits under the root folder. `ping` answers `version: 2`.

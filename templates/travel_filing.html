@@ -81,7 +81,7 @@
           <button class="btn ghost small" type="submit">Save</button></form>
         {% else %}
         {% if uploads_ready and it.handling in ('upload', 'carry') %}
-        <div class="tv-upload" data-url="/travel/f/{{ f.ref_code }}/upload" data-code="{{ it.code }}">
+        <div class="tv-upload" data-url="/travel/f/{{ f.ref_code }}/upload" data-ref="{{ f.ref_code }}" data-code="{{ it.code }}" data-label="{{ it.label }}">
           <label class="btn ghost small">{{ 'Add another file' if it.drive_source == 'upload' else 'Choose file or take photo' }}
             <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" multiple hidden aria-label="Upload files for {{ it.label }}"></label>
           <span class="tv-upload-out tv-note" role="status" aria-live="polite"></span>

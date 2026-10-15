@@ -17,6 +17,9 @@ MIME_OK = ("image/jpeg", "image/png", "image/webp", "application/pdf")
 KINDS = ("plane_ticket", "boarding_pass", "bus_boat_ticket", "taxi_receipt", "ridehail_receipt",
          "terminal_fee", "lodging_bill", "other")
 MAX_AMOUNT = Decimal("1000000")
+# Checklist rows whose uploads are tickets or receipts: an upload to one of these is also read for its amount.
+READ_CODES = frozenset({"plane_ticket", "boarding_pass", "boat_bus_ticket", "terminal_fee", "taxi_receipt",
+                        "ridehail_receipt", "lodging_bill", "extra_expense_invoice"})
 
 SYSTEM = (
     "You read Philippine travel documents for a government travel claim: airline e-tickets, "
