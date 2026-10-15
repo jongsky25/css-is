@@ -1,5 +1,17 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-15 (v6.39 — travel policy rates)
+
+- `travel_rates.py` (new, pure): DO 2019-0225 and 2019-0225-A as tables and functions. `day_amount` (DTE by cluster, 100% / 50% days, live-in, subsistence allowance, provided lodging or meals, the within-50 km meal allowances), `row_cap` (taxi 550 / TNVS 700, Annex C by area, seaport and shuttle zones, live-out distance bands with the 300 no-receipt hold, Annex B LTFRB fare), `rates_for_rows`, `find_areas`, `ltfrb_fare`, `live_out_max`.
+- `travel_rules.py`: `ride_check(..., cap=None)` holds a ride to its policy limit on any document and counts the route as approved; `flags_for(..., opts, is_working)` also flags a day whose per diem is above its rule. A per-diem flag is stored under `over_ceiling` (the table only allows four kinds); `flag_label` headings it on the verify page.
+- `travel_docs.py`: `blank_row`, `normalize_rates`; rows carry `basis`, `place`, `km`, `day_kind`, `lodging_provided`, `meals_provided`; `rides_of` / `ride_answers` take the options.
+- `travel_routes.py`: `POST /travel/f/{ref}/rates` (read-only calculator, owner only, same-origin, rate limited by the new `travel_rates` bucket, not audited), `GET /travel/rates` (the rate card), policy tables on the prepare page, options passed through `generate`.
+- `static/js/travel_prepare.js`: rates panel (destination, subsistence allowance, senior / PWD), per-row fare rate with an Annex C place search or distance, per-row per diem rule, "Use" buttons, "Fill every day with the policy per diem". `rideCheck` takes the policy limit as an optional sixth argument.
+- Templates: `travel_rates.html`; "Policy rates" tab; verify page uses `travel_flag_label`.
+- Tests: `tests/test_travel_rates.py` (tables, the LTFRB table against its printed method, day rules, caps, flags, normalize, routes, JS/Python parity); `tests/test_travel_admin.py` lists the calculator as read-only.
+- Docs: `docs/TRAVEL_RATES_PLAN.md` (what is automated, how, the readings to confirm, what is not automated); `docs/TRAVEL_FILING_PLAN.md` open item closed.
+- **Version bump:** `APP_VERSION` 6.38 → 6.39.
+
 ## 2026-10-15 (v6.38 — Sheets templates and the template maker)
 
 - `apps_script/travel_docs.gs`: the relay now fills a Google Sheet template as well as a Google Doc (it checks the template's type): `applyFieldsSheet_` and `applyRowsSheet_` (one marker row copied per item; raw `{{...}}` never left behind). The CENRR and RER forms are Excel forms, so their templates are Sheets.

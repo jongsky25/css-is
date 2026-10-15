@@ -12,7 +12,7 @@
   <ul class="tv-items">
   {% for g in queue %}
     <li class="tv-item" id="flag-{{ g.id }}">
-      <div class="tv-item-head"><strong>{{ flag_labels.get(g.kind, g.kind) }}</strong>
+      <div class="tv-item-head"><strong>{{ travel_flag_label(g.kind, g.detail) }}</strong>
         <span class="badge amber">Open</span></div>
       <div class="tv-note">{{ g.detail }}</div>
       <div class="tv-note">{{ g.who }} · <a href="/travel/f/{{ g.ref_code }}">{{ g.ref_code }}</a> · {{ g.act_title }} · {{ g.act_start }}{% if g.act_end != g.act_start %} to {{ g.act_end }}{% endif %}</div>
@@ -33,7 +33,7 @@
   <ul class="tv-missing">
   {% for g in decided %}
     <li><span class="badge {{ 'green' if g.state == 'verified' else 'red' }}">{{ g.state|capitalize }}</span>
-      {{ flag_labels.get(g.kind, g.kind) }} · <a href="/travel/f/{{ g.ref_code }}">{{ g.ref_code }}</a> · {{ g.who }}
+      {{ travel_flag_label(g.kind, g.detail) }} · <a href="/travel/f/{{ g.ref_code }}">{{ g.ref_code }}</a> · {{ g.who }}
       {% if g.note %}<em>({{ g.note }})</em>{% endif %}{% if g.supervisor_confirmed %} · supervisor confirmed{% endif %}
       <small class="tv-hint">by {{ g.decided_by }}</small></li>
   {% endfor %}

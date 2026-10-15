@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.38"
+APP_VERSION = "6.39"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.39",
+        "date": "October 15, 2026",
+        "summary": "Travel claims now work out the policy rates for you.",
+        "changes": [
+            "On the prepare page, pick where you are going and how each day was spent, and the page shows the daily allowance the policy gives for it, with a button to use it.",
+            "For each ride, pick the rate that applies (airport trip by area, live-out trip by distance, taxi to an activity, public fare beyond 50 km) and the page shows the most the policy allows.",
+            "A fare or daily amount above the policy is still allowed, but it is sent to the Admin Unit to check, as before.",
+            "A new Policy rates tab lists every rate with the section it comes from.",
+        ],
+    },
     {
         "version": "6.38",
         "date": "October 15, 2026",

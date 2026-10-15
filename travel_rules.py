@@ -9,6 +9,7 @@ from typing import Optional
 
 import rooms
 import travel_checklist as tc
+import travel_rates as rates
 
 AFTER_FACT_DAYS = 5          # working days to file when the activity had already ended
 CA_MIN_LEAD_DAYS = 7         # a cash advance needs MORE than this many days before the activity starts
@@ -22,6 +23,16 @@ FLAG_LABELS = {
     "no_receipt_over_1000": "No receipt for a fare above 1,000",
     "participant_only": "Participant-only travel",
 }
+
+PER_DIEM_LABEL = "Per diem above the policy rate"
+
+
+def flag_label(kind, detail="") -> str:
+    """The heading a flag shows. A per diem above its policy rate is stored under 'over_ceiling' (the
+    table only allows the four kinds), so the text of the flag tells it from a fare."""
+    if kind == "over_ceiling" and (detail or "").startswith("Per diem"):
+        return PER_DIEM_LABEL
+    return FLAG_LABELS.get(kind, kind)
 
 
 def _d(v) -> date:
@@ -106,13 +117,17 @@ def known_routes(ceilings) -> set:
     return {rt for (mode, rt) in ceilings if mode == "rer"}
 
 
-def ride_check(mode, route_type, fare, receipt, ceilings, row_key="") -> RideResult:
+def ride_check(mode, route_type, fare, receipt, ceilings, row_key="", cap=None) -> RideResult:
     """Which document a taxi / ride-hailing / public-transport fare needs, and what to flag.
 
     `ceilings` maps (mode, route_type) to an amount: ('rer', route) per approved route,
     ('tnvs', '*'), ('taxi', '*'), ('cenrr', '*'). A receipted TNVS or taxi fare is checked
     against its flat ceiling; an unreceipted fare is a CENRR up to the CENRR ceiling and an
-    RER beyond it, capped per route."""
+    RER beyond it, capped per route.
+
+    `cap` is the policy limit for the rate the person chose (travel_rates.row_cap). When there is
+    one it is the limit for this ride, on any document, and the route counts as approved: the
+    policy itself names it."""
     fare = _dec(fare)
     if fare <= 0 or mode not in RIDE_MODES:
         return RideResult(None)
@@ -122,21 +137,28 @@ def ride_check(mode, route_type, fare, receipt, ceilings, row_key="") -> RideRes
     def add(kind, detail):
         flags.append(FlagSpec(kind, flag_sig(kind, row_key, fare, route_type), detail, row_key))
 
-    known = route_type in known_routes(ceilings)
+    def over(limit):
+        add("over_ceiling", f"Fare {_num(fare)} is {_num(fare - limit)} above the {_num(limit)} ceiling.")
+
+    policy = cap is not None
+    known = policy or route_type in known_routes(ceilings)
     if not known:
         add("unlisted_route", "The route is not on the approved list.")
+    if policy and fare > _dec(cap):
+        over(_dec(cap))
     receipted = mode in RECEIPT_MODES and receipt == "receipt"
     if receipted:
-        cap = _dec(ceilings.get((mode, "*"), 0))
-        if cap and fare > cap:
-            add("over_ceiling", f"Fare {_num(fare)} is {_num(fare - cap)} above the {_num(cap)} ceiling.")
+        flat = _dec(ceilings.get((mode, "*"), 0))
+        if not policy and flat and fare > flat:
+            over(flat)
         return RideResult("receipt", flags)
     cenrr_cap = _dec(ceilings.get(("cenrr", "*"), 300))
     if fare <= cenrr_cap:
         return RideResult("cenrr", flags)
-    cap = _dec(ceilings.get(("rer", route_type), 0)) if known else Decimal(0)
-    if known and cap and fare > cap:
-        add("over_ceiling", f"Fare {_num(fare)} is {_num(fare - cap)} above the {_num(cap)} ceiling.")
+    if not policy:
+        route_cap = _dec(ceilings.get(("rer", route_type), 0)) if known else Decimal(0)
+        if known and route_cap and fare > route_cap:
+            over(route_cap)
     if fare > NO_RECEIPT_LIMIT:
         add("no_receipt_over_1000", f"No receipt for a fare of {_num(fare)}.")
     return RideResult("rer", flags)
@@ -153,13 +175,21 @@ def row_keys(rows) -> list:
     return out
 
 
-def flags_for(filing, itinerary_rows, answers, ceilings) -> list:
-    """Every flag the filing currently deserves: one per offending ride, plus participant-only."""
+def flags_for(filing, itinerary_rows, answers, ceilings, opts=None, is_working=None) -> list:
+    """Every flag the filing currently deserves: one per offending ride, one per day whose per diem
+    is above what its day kind allows, plus participant-only. `opts` are the policy-rate options
+    the prepare page posted (region, receives_sa, discounted); `is_working` tells working days."""
     flags = []
-    for key, row in zip(row_keys(itinerary_rows), itinerary_rows):
+    keys = row_keys(itinerary_rows)
+    calc = rates.rates_for_rows(itinerary_rows, opts, is_working)
+    for key, row, rr in zip(keys, itinerary_rows, calc):
         res = ride_check(row.get("mode"), row.get("route_type"), row.get("allowance"),
-                         row.get("receipt"), ceilings, key)
+                         row.get("receipt"), ceilings, key, cap=rr.cap.amount if rr.cap else None)
         flags.extend(res.flags)
+        if rr.per_diem is not None and _dec(row.get("per_diem")) > rr.per_diem:
+            flags.append(FlagSpec("over_ceiling", flag_sig("over_ceiling", key + "|per_diem", row.get("per_diem"), row.get("day_kind")),
+                                  f"Per diem {_num(_dec(row.get('per_diem')))} is {_num(_dec(row.get('per_diem')) - rr.per_diem)} "
+                                  f"above the {_num(rr.per_diem)} the policy allows for this day.", key))
     if (answers or {}).get("role") == "participant":
         flags.append(FlagSpec("participant_only",
                               flag_sig("participant_only", "role", 0, ""),

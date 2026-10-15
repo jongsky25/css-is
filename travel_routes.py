@@ -17,6 +17,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 import gdocs_relay
 import travel_docs
+import travel_rates
 import ratelimit
 import rooms
 import storage as st
@@ -33,6 +34,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
     templates.env.globals["travel_kind_labels"] = travel.KIND_LABELS
     templates.env.globals["travel_status_labels"] = travel.STATUS_LABELS
     templates.env.globals["travel_status_badge"] = STATUS_BADGE
+    templates.env.globals["travel_flag_label"] = tr.flag_label
 
     async def _posted(request):
         raw = parse_qs((await request.body()).decode("utf-8"), keep_blank_values=True)
@@ -72,6 +74,30 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
     def _decorate(f, today):
         words, tone = travel.deadline_words(f, today) if f["status"] in ("open", "ready") else (None, None)
         return {**f, "deadline_text": words, "deadline_tone": tone}
+
+    # ------------------------------------------------------- policy rates (T9) ---
+
+    def _rate_opts(filing, raw):
+        """The posted claim-level options, cleaned, plus the length of the trip."""
+        opts = travel_docs.normalize_rates(raw)
+        opts["trip_days"] = len(travel_docs.trip_days(filing["act_start"], filing["act_end"]))
+        return opts
+
+    def _working(conn):
+        return lambda day: rooms.is_working_day(conn, day)
+
+    @router.get("/travel/rates", response_class=HTMLResponse)
+    def travel_rate_card(request: Request):
+        """The policy rates the prepare page applies, printed in full so anyone can check one."""
+        conn = get_conn()
+        try:
+            if not travel.enabled(conn):
+                return _off(request)
+            return templates.TemplateResponse(request, "travel_rates.html", {
+                "nav_active": "travel_mine", "tab": "rates", "r": travel_rates,
+                "clusters": [(n, travel_rates.CLUSTER_DTE[n], [x for x in travel_rates.REGIONS if x[2] == n]) for n in (3, 2, 1)]})
+        finally:
+            conn.close()
 
     # ----------------------------------------------------------------- index ---
 
@@ -336,6 +362,13 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             data = travel_docs.defaults(conn, filing, profile, _sig_settings(conn))
             data["ceilings"] = [[m, rt, a] for (m, rt), a in sorted(travel.ceilings(conn).items())]
             data["routes"] = [[r[0], r[1]] for r in conn.execute("SELECT code, label FROM travel_route_type WHERE active=1 ORDER BY sort, code")]
+            data["policy"] = {
+                "regions": [[c, label, travel_rates.region_dte(c)] for c, label, _cl in travel_rates.REGIONS],
+                "day_kinds": [[c, g, label, rule] for c, g, label, rule in travel_rates.DAY_KINDS],
+                "bases": [[c, label, inp, note] for c, label, inp, note in travel_rates.BASES],
+                "places": {b: [[c, label, float(a), q] for c, label, a, q in travel_rates.place_choices(b)]
+                           for b in ("airport", "terminal", "shuttle")},
+                "rates_url": f"/travel/f/{ref}/rates"}
             data["ref"] = ref
             data["post_url"] = f"/travel/f/{ref}/generate"
             data["status_url"] = f"/travel/f/{ref}/status"
@@ -412,8 +445,10 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
                 return _jerr("Too many requests. Wait a minute and try again.", 429)
             norm = travel_docs.normalize(body)
             ceilings = travel.ceilings(conn)
-            filing = travel.set_derived_answers(conn, filing, travel_docs.ride_answers(norm["rows"], ceilings))
-            travel.sync_flags(conn, filing, tr.flags_for(filing, norm["rows"], travel.answers_of(filing), ceilings))
+            opts = _rate_opts(filing, norm["rates"])
+            filing = travel.set_derived_answers(conn, filing, travel_docs.ride_answers(norm["rows"], ceilings, opts))
+            travel.sync_flags(conn, filing, tr.flags_for(filing, norm["rows"], travel.answers_of(filing), ceilings,
+                                                         opts, _working(conn)))
             items = _generate_items(conn, filing)
             wanted = body.get("codes") if isinstance(body.get("codes"), list) else None
             codes = [it["code"] for it in items if (not wanted or it["code"] in wanted)]
@@ -433,6 +468,36 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             task = BackgroundTask(_run_generation, ref, filing["id"], payloads, revs, share)
             return JSONResponse({"ok": True, "started": sorted(made), "flags": len(travel.flags_of(conn, filing["id"]))},
                                 background=task)
+        finally:
+            conn.close()
+
+    @router.post("/travel/f/{ref}/rates")
+    async def travel_rates_calc(request: Request, ref: str):
+        """JSON: {rows, rates}. What the policy allows for each day and ride, worked out here so the
+        rules live in one place. Read-only: nothing is stored, so it is not audited."""
+        if not _same_origin(request):
+            return _jerr("This request came from another site.", 403)
+        try:
+            body = await request.json()
+        except ValueError:
+            return _jerr("Send JSON.")
+        conn = get_conn()
+        try:
+            if not travel.enabled(conn):
+                return _jerr("Travel filing is not switched on.", 403)
+            filing = travel.get_by_ref(conn, ref) if _REF.match(ref) else None
+            user = request.state.user
+            if not travel.can_view(conn, user, filing):
+                return _jerr("Not found.", 404)
+            if not travel.is_owner(user, filing):
+                return _jerr("Only the person who filed can use this.", 403)
+            if not ratelimit.allow("travel_rates", f"u{user['id']}"):
+                return _jerr("Too many requests. Wait a moment and try again.", 429)
+            norm = travel_docs.normalize(body)
+            opts = _rate_opts(filing, norm["rates"])
+            calc = travel_rates.rates_for_rows(norm["rows"], opts, _working(conn))
+            dte = travel_rates.region_dte(opts["region"])
+            return JSONResponse({"ok": True, "dte": float(dte) if dte else None, "rows": [c.as_dict() for c in calc]})
         finally:
             conn.close()
 
