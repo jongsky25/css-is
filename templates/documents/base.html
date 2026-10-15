@@ -1,0 +1,16 @@
+{% extends "dash_layout.html" %}
+{% block title %}Documents{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/documents.css">{% endblock %}
+{% block content %}
+<div class="documents">
+<h1>Documents</h1>
+<nav aria-label="Document queues" class="doc-tabs">
+{% for value,label in [('mine','My actions'),('IN','Incoming'),('OUT','Outgoing'),('verification','For verification'),('review','For review'),('release','For release'),('unassigned','Unassigned'),('all','Register and overview')] %}<a href="/documents?queue={{ value }}">{{ label }}</a>{% endfor %}
+{% if workflow_admin %}<a href="/documents/rules">Rules and policies</a>{% endif %}
+</nav>
+{% if not enabled %}<p class="doc-alert" role="status">Documents is not enabled. You can read records you have access to; new work and sending are disabled.</p>{% endif %}
+{% if error %}<p class="doc-alert" role="alert">{{ error }}</p>{% endif %}
+{% if submitted %}<details open><summary>Your submitted values</summary><dl>{% for k,v in submitted.items() if k not in ['csrf','revision'] %}<dt>{{ k|replace('_',' ') }}</dt><dd>{{ v }}</dd>{% endfor %}</dl><p>Reload the current record before resubmitting a stale action.</p></details>{% endif %}
+{% block documents_content %}{% endblock %}
+</div>
+{% endblock %}

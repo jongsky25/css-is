@@ -23,9 +23,13 @@ Other things the office has to supply, not part of this setup: name the template
 - Asking for the same `request_id` twice returns the document already made, so a retry never makes a duplicate.
 - `check_link` tells the Space a pasted link's file name and type if the office mailbox can open it. Only signed requests from the Space can ask.
 
-## Things to verify live before relying on it
+## Live evidence and remaining checks
 
-These could not be tested without Google (the tests fake the relay):
+[PR #261](https://github.com/jongsky25/css-is/pull/261) records a successful live relay response
+and creation of all seven templates from the office's real forms. This supersedes older notes
+saying the relay/template maker had never run. Visual layout and the following behavior still
+need representative live acceptance:
+
 - replacement text containing `$` or a backslash comes out unchanged;
 - `TableRow.replaceText` fills a copied row of Appendix A (merged cells);
 - `makeTravelTemplates` left each converted form looking like the original (the Word and Excel conversions can shift tables, logos and merged cells), and the CENRR's single repeating line and the sample date row were removed correctly;
@@ -36,3 +40,11 @@ These could not be tested without Google (the tests fake the relay):
 ## If something goes wrong
 
 The test button gives a plain reason. "Rejected the signature" means the two secrets differ or the Space clock is off. "The script did not run" means the web app access is not Anyone. "Not reached" means the URL is wrong or Google is down.
+
+## Reuse for Documents
+
+The document-management module reuses this connection and its existing credentials. Add the
+`documents_relay.gs` companion and update the current deployment as described in
+[Document management setup](DOCUMENT_MANAGEMENT_SETUP.md#update-the-existing-workspace-deployments).
+Existing travel actions are preserved. Document operations require their own private correspondence
+folder; they do not assume the travel output folder has appropriate access.

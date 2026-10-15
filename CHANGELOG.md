@@ -1,3 +1,10 @@
+## 6.42 — October 15, 2026
+
+- Added document registration, routing, review, signing/release, closure, scoped search and reporting for acceptance testing.
+- Documents reuses the existing travel Docs and mail relays for extraction, saved signatures and durable Gmail dispatch/status.
+- Includes profile-signature preview, compatibility tests and existing-deployment upgrade instructions.
+- Module and sending switches remain disabled; live acceptance and office policy decisions are required before operational use.
+
 # CHANGELOG — Cowork revisions (surgical)
 
 ## 2026-10-15 (v6.41 — read the fare off a ticket or receipt)
