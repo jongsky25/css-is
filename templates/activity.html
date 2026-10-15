@@ -190,7 +190,7 @@
   <div style="min-width:0;">
     <h1>{{ ev.name }}
       {% if ev.is_external %}<span class="pill-ext">external</span>{% endif %}
-      {% if ev.open_at or ev.close_at %}<span class="pill-win" title="Entry window: {{ ev.open_at|humandt or 'now' }} → {{ ev.close_at|humandt or 'no deadline' }}">entry window set</span>{% endif %}
+      {% if ev.open_at or ev.close_at %}<span class="pill-win" title="Entry window: {{ ev.open_at|humandt or 'now' }} → {{ ev.close_at|humandt or 'no deadline' }}">entry window</span>{% endif %}
     </h1>
     <div class="meta">{{ ev.date|humandate }}{% if ev.venue %} · {{ ev.venue }}{% endif %} · {{ ev.organizer }}{% if ev.attendance %} · <strong>{{ ev.attendance|comma }} attended</strong>{% endif %} · {{ ev.respondents|comma }} response(s)</div>
   </div>
