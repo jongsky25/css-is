@@ -5,6 +5,7 @@ No middleware gate covers /travel, so every handler checks the switch, then owne
 (travel.can_view / travel.is_owner), and every POST checks that Origin / Referer, when
 present, is this site."""
 from __future__ import annotations
+import asyncio
 import hashlib
 import json
 import os
@@ -360,10 +361,25 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             stem = re.sub(r"\.(jpe?g|png|webp|pdf)$", "", stem, flags=re.I) or "file"
             digest = hashlib.sha256(raw).hexdigest()[:12]
             share = [user.get("username")] if user.get("username") else []
-            res = await run_in_threadpool(
+            ip = request.client.host if request.client else None
+            upload = run_in_threadpool(
                 gdocs_relay.get_relay().upload_file, request_id=f"{ref}:{code}:{digest}", folder_key=ref, item_key=code,
                 name=f"{ref}_{code}_{stem}.{ext}", mime=mime, data=raw, share_with=share)
+            # A ticket or receipt is also read for its amount, at the same time. The reading is only offered back to
+            # the browser; a failed or refused read never stops the file from being saved.
+            reading, ai_off = None, False
+            if code in travel_scan.READ_CODES and ratelimit.allow("travel_scan", f"u{user['id']}"):
+                res, found = await asyncio.gather(upload, travel_scan.read(conn, user, ip, raw, mime),
+                                                  return_exceptions=True)
+                if isinstance(found, dict):
+                    reading = found
+                else:
+                    ai_off = isinstance(found, ai_core.AIError)
+            else:
+                res = await upload
             del raw
+            if isinstance(res, BaseException):
+                return _jerr("The documents relay failed. Try again.", 502)
             if not res.ok:
                 return _jerr(gdocs_relay.describe(res.error), 502 if res.error in ("not_configured", "unreachable") else 400)
             try:
@@ -373,7 +389,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             audit(request, conn, "travel_upload", target_type="travel_filing", target_id=ref,
                   summary=f"stored a file for {code}")
             return JSONResponse({"ok": True, "name": res.data.get("name", ""), "count": res.data.get("count"),
-                                 "url": res.data.get("folder_url")})
+                                 "url": res.data.get("folder_url"), "reading": reading, "ai": not ai_off})
         finally:
             conn.close()
 

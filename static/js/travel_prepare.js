@@ -114,6 +114,35 @@
     return wrap;
   }
 
+  // One reading (from the scan above or from a ticket uploaded on the checklist) shown as a suggestion with a button.
+  // Nothing is filled in until the person presses it.
+  function offer(out, j, r, after) {
+    var what = [j.vendor, [j.origin, j.destination].filter(Boolean).join(' to '), j.date].filter(Boolean).join(' \u00b7 ');
+    out.appendChild(document.createTextNode('Found ' + peso(j.amount) + (what ? ' (' + what + ')' : '') + '. Check it against the file. ' + (j.note ? j.note + ' ' : '')));
+    var use = el('button', { type: 'button', 'class': 'btn ghost small', text: 'Use ' + peso(j.amount) });
+    use.addEventListener('click', function () {
+      r.allowance = j.amount; r._aa = null;
+      if (!r.date && j.date) r.date = j.date;
+      if (!r.from && j.origin) r.from = j.origin;
+      if (!r.to && j.destination) r.to = j.destination;
+      if (r.mode === 'taxi' || r.mode === 'tnvs') r.receipt = 'receipt';
+      if (after) after();
+      save(); drawRows(); refresh();
+    });
+    out.appendChild(use);
+  }
+
+  // Readings kept by the checklist page when a ticket or receipt was uploaded (this browser's session only).
+  function keptReads() {
+    try { return JSON.parse(window.sessionStorage.getItem('tv-reads:' + data.ref) || '[]'); } catch (e) { return []; }
+  }
+  function dropRead(x) {
+    try {
+      var rest = keptReads().filter(function (y) { return !(y.code === x.code && y.amount === x.amount && y.date === x.date && y.vendor === x.vendor); });
+      window.sessionStorage.setItem('tv-reads:' + data.ref, JSON.stringify(rest));
+    } catch (e) { /* ignore */ }
+  }
+
   // Read the fare off a ticket, boarding pass or receipt. The file goes to the server, the AI reads it, and the answer comes
   // back as a suggestion with a button; nothing is filled in, and nothing is kept, until the person presses it.
   function scanPicker(r) {
@@ -130,21 +159,17 @@
           if (!j.ok) { out.textContent = j.error || 'Could not read that file. Type the amount in.'; return; }
           if (!j.readable) { out.textContent = 'Could not find an amount on that file. Type it in.' + (j.note ? ' ' + j.note : ''); return; }
           if (j.currency !== 'PHP') { out.textContent = 'That shows ' + j.amount + ' ' + j.currency + ', not pesos. Type the peso amount you paid.'; return; }
-          var what = [j.vendor, [j.origin, j.destination].filter(Boolean).join(' to '), j.date].filter(Boolean).join(' \u00b7 ');
-          out.appendChild(document.createTextNode('Found ' + peso(j.amount) + (what ? ' (' + what + ')' : '') + '. Check it against the file. ' + (j.note ? j.note + ' ' : '')));
-          var use = el('button', { type: 'button', 'class': 'btn ghost small', text: 'Use ' + peso(j.amount) });
-          use.addEventListener('click', function () {
-            r.allowance = j.amount; r._aa = null;
-            if (!r.date && j.date) r.date = j.date;
-            if (!r.from && j.origin) r.from = j.origin;
-            if (!r.to && j.destination) r.to = j.destination;
-            if (r.mode === 'taxi' || r.mode === 'tnvs') r.receipt = 'receipt';
-            save(); drawRows(); refresh();
-          });
-          out.appendChild(use);
+          offer(out, j, r, null);
         }).catch(function () { pick.value = ''; out.textContent = 'Could not reach the server. Type the amount in.'; });
     });
-    return el('div', { 'class': 'tv-row-wide' }, [el('label', { text: 'Or read it from a ticket or receipt (photo or PDF)' }), pick, out]);
+    var kept = el('div', { 'class': 'tv-hint' });
+    keptReads().forEach(function (x) {
+      var line = el('div', { 'class': 'tv-hint' });
+      line.appendChild(document.createTextNode((x.label || 'Uploaded file') + ': '));
+      offer(line, x, r, function () { dropRead(x); line.remove(); });
+      kept.appendChild(line);
+    });
+    return el('div', { 'class': 'tv-row-wide' }, [el('label', { text: 'Or read it from a ticket or receipt (photo or PDF)' }), pick, out, kept]);
   }
 
   function drawRows() {

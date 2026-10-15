@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.43"
+APP_VERSION = "6.44"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.44",
+        "date": "October 15, 2026",
+        "summary": "Travel claims: tickets and receipts are read as you upload them.",
+        "changes": [
+            "When you upload a plane, bus or boat ticket, a taxi or Grab receipt, a terminal fee or a hotel bill to the checklist, the amount is read off it.",
+            "On the prepare page, each day lists those readings with a \u201cUse\u201d button. Nothing fills in until you press it, and nothing read is kept on the server.",
+        ],
+    },
     {
         "version": "6.43",
         "date": "October 15, 2026",

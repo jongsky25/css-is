@@ -406,3 +406,68 @@ def test_purge_trashes_uploaded_folders_and_waits_when_drive_will_not(viewer, co
     fake.trash_ok = True
     assert travel.purge_filings(conn, relay=fake) == 1
     assert fake.trashed[-1] == "FOLDER1234567890123456" and tuple(row(conn).values()) == (None, None, None, "present")
+
+
+# ------------------------------------------------- reading tickets on upload ---
+
+import ai_core as _ai
+from test_travel_scan import GOOD, JPEG, ai_on
+
+
+@pytest.fixture()
+def ai_clean():
+    _ai.reset_cooldown()
+    yield
+    _ai.reset_cooldown()
+
+
+def test_a_ticket_upload_is_read_and_the_reading_comes_back(viewer, conn, fake, on, ai_clean, monkeypatch):
+    ref = mk(viewer, flew="1")
+    seen = ai_on(conn, monkeypatch, GOOD)
+    j = up(viewer, ref, code="plane_ticket", body=JPEG).json()
+    assert j["ok"] and j["ai"] is True and j["reading"]["amount"] == 4521.5 and j["reading"]["vendor"] == "Cebu Pacific"
+    assert seen["images"] == [("image/jpeg", JPEG)] and fake.uploads[0]["data"] == JPEG
+    assert row(conn, "plane_ticket")["drive_source"] == "upload"
+    cols = " ".join(str(c) for c in conn.execute("SELECT * FROM travel_item").fetchall())
+    assert "4521" not in cols and "Cebu" not in cols                         # the reading is never stored
+
+
+def test_other_rows_are_not_read(viewer, conn, fake, on, ai_clean, monkeypatch):
+    ref = mk(viewer)
+    seen = ai_on(conn, monkeypatch, GOOD)
+    j = up(viewer, ref, code="dpo").json()
+    assert j["ok"] and j["reading"] is None and "images" not in seen
+
+
+def test_the_file_is_saved_even_when_the_ai_is_off(viewer, conn, fake, on, ai_clean, monkeypatch):
+    ref = mk(viewer, flew="1")
+    monkeypatch.delenv("CSS_GEMINI_API_KEY", raising=False)
+    st.set_setting(conn, "ai_mode", "off"); conn.commit()
+    j = up(viewer, ref, code="plane_ticket", body=JPEG).json()
+    assert j["ok"] and j["reading"] is None and j["ai"] is False
+    assert row(conn, "plane_ticket")["state"] == "present"
+
+
+def test_a_failed_upload_returns_no_reading(viewer, conn, fake, on, ai_clean, monkeypatch):
+    ref = mk(viewer, flew="1")
+    ai_on(conn, monkeypatch, GOOD)
+    fake.upload_result = gr.RelayResult(False, error="unreachable")
+    r = up(viewer, ref, code="plane_ticket", body=JPEG)
+    assert r.status_code == 502 and "reading" not in r.json()
+    assert row(conn, "plane_ticket") is None or row(conn, "plane_ticket")["state"] == "missing"
+
+
+def test_the_read_limit_skips_the_reading_but_not_the_upload(viewer, conn, fake, on, ai_clean, monkeypatch):
+    ref = mk(viewer, flew="1")
+    ai_on(conn, monkeypatch, GOOD)
+    monkeypatch.setenv("CSS_RL_TRAVEL_SCAN", "1/60")
+    ratelimit._HITS.clear()
+    first = up(viewer, ref, code="plane_ticket", body=JPEG).json()
+    second = up(viewer, ref, code="plane_ticket", body=JPEG + b"1").json()
+    assert first["reading"] and second["ok"] and second["reading"] is None
+
+
+def test_the_checklist_marks_each_upload_with_its_name_for_the_reading_list(viewer, conn, fake, on):
+    ref = mk(viewer, flew="1")
+    page = viewer.get(f"/travel/f/{ref}").text
+    assert f'data-ref="{ref}"' in page and 'data-label="Plane ticket / e-ticket"' in page
