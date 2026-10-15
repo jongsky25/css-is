@@ -81,6 +81,7 @@ import re
 from dataclasses import dataclass, field
 from decimal import InvalidOperation
 
+import travel_rates as rates
 import travel_rules as tr
 
 MODES = ("taxi", "tnvs", "public_noreceipt", "van_doh", "plane", "bus", "boat", "own", "govt", "none")
@@ -88,6 +89,7 @@ MODE_LABELS = {"taxi": "Taxi", "tnvs": "TNVS", "public_noreceipt": "Public trans
                "plane": "Plane", "bus": "Bus", "boat": "Boat", "own": "Private vehicle",
                "govt": "Government vehicle", "none": ""}
 MAX_ROWS, MAX_DAYS = 40, 62
+MAX_KM = 2000
 DOC_TEMPLATES = {"appendix_a": "appendix_a", "appendix_b": "appendix_b", "mc114_justification": "mc114_justification",
                  "jo_cert": "jo_cert", "travel_report": "travel_report", "cenrr": "cenrr", "rer": "rer"}
 DOC_TITLES = {"appendix_a": "Appendix A - Itinerary of Travel", "appendix_b": "Appendix B - Certificate of Travel Completed",
@@ -185,6 +187,14 @@ def _division(profile) -> str:
     return path.split("/")[-1] if path else ""
 
 
+def blank_row(day="") -> dict:
+    """One itinerary day as the prepare page starts it. basis / place / km choose the fare rate,
+    day_kind the per diem rule (travel_rates); empty means 'typed in by hand'."""
+    return {"date": day, "from": "", "to": "", "dep": "", "arr": "", "mode": "none", "route_type": "",
+            "receipt": "none", "allowance": 0, "per_diem": 0, "basis": "", "place": "", "km": 0, "day_kind": "",
+            "lodging_provided": False, "meals_provided": False}
+
+
 def defaults(conn, filing, profile, settings) -> dict:
     """What the prepare page starts with. `settings` is {'head_name': ..., 'certifier_name': ...}."""
     name = profile.get("person_name") or profile.get("username") or ""
@@ -198,17 +208,29 @@ def defaults(conn, filing, profile, settings) -> dict:
                approved_by_name=settings.get("head_name", ""), approved_by_title=settings.get("head_title", ""),
                signatory_name=settings.get("head_name", ""), signatory_title=settings.get("head_title", ""))
     days = trip_days(filing["act_start"], filing["act_end"])
-    rows = [{"date": d.isoformat(), "from": "", "to": "", "dep": "", "arr": "", "mode": "none", "route_type": "",
-             "receipt": "none", "allowance": 0, "per_diem": 0} for d in days]
+    rows = [blank_row(d.isoformat()) for d in days]
     dates = date_range(filing["act_start"], filing["act_end"])
     texts = {k: "" for k in TEXT_KEYS}
     texts.update(purpose=f"attend {filing['act_title']}", strictness="strict",
                  activities=f"{filing['act_title']} on {dates}" + (f" at {filing['act_venue']}" if filing.get("act_venue") else ""),
                  day_by_day=[f"{long_date(d)}: " for d in days])
-    return {"rows": rows, "texts": texts, "signatories": sig,
+    return {"rows": rows, "texts": texts, "signatories": sig, "rates": {"region": "", "receives_sa": False, "discounted": False},
             "mc114_text": fill_tokens(_library_text(conn, filing), filing, profile),
             "traveler": {"name": name, "designation": desig, "employee_no": profile.get("employee_no") or ""},
             "modes": [[m, MODE_LABELS[m] or "No travel"] for m in MODES]}
+
+
+def _km(v) -> Decimal:
+    d = _amt(v)
+    return d if d <= MAX_KM else Decimal(0)
+
+
+def normalize_rates(raw) -> dict:
+    """The claim-level policy options: where the person is going, and two facts about them."""
+    raw = raw if isinstance(raw, dict) else {}
+    region = raw.get("region") if isinstance(raw.get("region"), str) else ""
+    return {"region": region if rates.region_dte(region) else "",
+            "receives_sa": bool(raw.get("receives_sa")), "discounted": bool(raw.get("discounted"))}
 
 
 def normalize(posted) -> dict:
@@ -223,7 +245,11 @@ def normalize(posted) -> dict:
                      "dep": _txt(r.get("dep"), 12), "arr": _txt(r.get("arr"), 12), "mode": mode,
                      "route_type": _txt(r.get("route_type"), 40),
                      "receipt": "receipt" if r.get("receipt") == "receipt" else "none",
-                     "allowance": _amt(r.get("allowance")), "per_diem": _amt(r.get("per_diem"))})
+                     "allowance": _amt(r.get("allowance")), "per_diem": _amt(r.get("per_diem")),
+                     "basis": r.get("basis") if r.get("basis") in rates.BASIS_CODES else "",
+                     "place": _txt(r.get("place"), 40), "km": _km(r.get("km")),
+                     "day_kind": r.get("day_kind") if r.get("day_kind") in rates.DAY_KIND_CODES else "",
+                     "lodging_provided": bool(r.get("lodging_provided")), "meals_provided": bool(r.get("meals_provided"))})
     t = posted.get("texts") if isinstance(posted.get("texts"), dict) else {}
     texts = {k: (_txt(t.get(k), 3000) if k in ("itinerary_no", "refund_amount", "refund_or_no", "refund_or_date")
                  else str(t.get(k) or "")[:6000]) for k in TEXT_KEYS}
@@ -232,21 +258,23 @@ def normalize(posted) -> dict:
     texts["day_by_day"] = [_txt(x, 1500) for x in dbd][:MAX_DAYS] if isinstance(dbd, list) else []
     s = posted.get("signatories") if isinstance(posted.get("signatories"), dict) else {}
     return {"rows": rows, "texts": texts, "mc114_text": str(posted.get("mc114_text") or "")[:6000],
-            "sig": {k: _txt(s.get(k), 120) for k in SIGNATORY_KEYS}}
+            "sig": {k: _txt(s.get(k), 120) for k in SIGNATORY_KEYS}, "rates": normalize_rates(posted.get("rates"))}
 
 
-def rides_of(rows, ceilings) -> list:
+def rides_of(rows, ceilings, opts=None) -> list:
     """[(row, key, RideResult)] for every row that is a taxi / TNVS / public-transport ride with a fare."""
     out = []
-    for key, row in zip(tr.row_keys(rows), rows):
-        res = tr.ride_check(row["mode"], row["route_type"], row["allowance"], row["receipt"], ceilings, key)
+    calc = rates.rates_for_rows(rows, opts)
+    for key, row, rr in zip(tr.row_keys(rows), rows, calc):
+        res = tr.ride_check(row["mode"], row["route_type"], row["allowance"], row["receipt"], ceilings, key,
+                            cap=rr.cap.amount if rr.cap else None)
         if res.kind:
             out.append((row, key, res))
     return out
 
 
-def ride_answers(rows, ceilings) -> dict:
-    kinds = {res.kind for _r, _k, res in rides_of(rows, ceilings)}
+def ride_answers(rows, ceilings, opts=None) -> dict:
+    kinds = {res.kind for _r, _k, res in rides_of(rows, ceilings, opts)}
     return {"rides_cenrr": 1 if "cenrr" in kinds else 0, "rides_rer": 1 if "rer" in kinds else 0}
 
 
@@ -332,7 +360,7 @@ def _travel_report(ctx) -> DocPayload:
 
 
 def _cenrr(ctx) -> list:
-    rides = [(r, k) for r, k, res in rides_of(ctx["rows"], ctx["ceilings"]) if res.kind == "cenrr"]
+    rides = [(r, k) for r, k, res in rides_of(ctx["rows"], ctx["ceilings"], ctx["rates"]) if res.kind == "cenrr"]
     if not rides:
         return []
     sig, total = ctx["sig"], Decimal(0)
@@ -352,7 +380,7 @@ def _cenrr(ctx) -> list:
 
 def _rers(ctx) -> list:
     out = []
-    for r, _k, res in rides_of(ctx["rows"], ctx["ceilings"]):
+    for r, _k, res in rides_of(ctx["rows"], ctx["ceilings"], ctx["rates"]):
         if res.kind != "rer":
             continue
         out.append(DocPayload("rer", "rer", ctx["title"]("rer"), {
@@ -381,7 +409,7 @@ def build_payloads(kind, filing, profile, settings, posted, codes, *, ceilings, 
         sig[k + "_title"] = sig[k + "_title"] or sig["head_title"]
     name = profile.get("person_name") or profile.get("username") or ""
     ctx = {"filing": filing, "profile": profile, "name": name, "designation": profile.get("designation") or "",
-           "rows": p["rows"], "texts": p["texts"], "sig": sig, "mc114_text": p["mc114_text"], "ceilings": ceilings,
+           "rows": p["rows"], "texts": p["texts"], "sig": sig, "rates": p["rates"], "mc114_text": p["mc114_text"], "ceilings": ceilings,
            "items": list(items), "today": today or date.today(),
            "title": lambda code: f"{DOC_TITLES[code]} - {filing['ref_code']}"}
     out = []

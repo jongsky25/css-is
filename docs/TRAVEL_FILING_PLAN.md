@@ -39,7 +39,7 @@ Readable at 400px; English text hard-coded.
 Open: every unlisted route flags until the Admin Unit adds approved routes.
 
 ## 12. Increments (each one PR)
-T1 Foundations, T2 Filing shell, T3 Reminders and bell, T4 Relay, T5 Prepare and generate, T6 Flags, T7 Library and admin screens. All seven are built; what is left is the owner's list under Open items.
+T1 Foundations, T2 Filing shell, T3 Reminders and bell, T4 Relay, T5 Prepare and generate, T6 Flags, T7 Library and admin screens, T8 Templates, T9 Policy rates. All are built; what is left is the owner's list under Open items.
 
 ## 13. Open items
 - **T2 nav**: only "My travel claims" and the hidden "Travel filing settings" are in the Travel menu. Verify, ceilings and library entries arrive with T6/T7 so the menu never links to a missing page.
@@ -57,7 +57,7 @@ T1 Foundations, T2 Filing shell, T3 Reminders and bell, T4 Relay, T5 Prepare and
 - **`peso_words(1)`** returns "One Peso" (singular); the spec gave no vector.
 - **Starter MC 114 wording** (owner agreed generic placeholder text is fine) is generic text with the tokens `{{traveler_name}}`, `{{activity_title}}`, `{{dates}}`, `{{venue}}`. The owner's sample justification is a real person's document and was not copied; template administrators replace the starter rows in the library (T7).
 - **Back-to-office report**: when `cert_of_appearance_available` is false the checklist asks for `bto_report` instead of `cert_appearance`.
-- **Per diem and transport allowance rules**: manual entry until supplied.
+- **Per diem and transport allowance rules**: supplied (DO 2019-0225 and 2019-0225-A) and built in T9; see `docs/TRAVEL_RATES_PLAN.md`. The page works the limit out, and a claim above it is flagged.
 - **Wording** of the Job Order certification and the meals/lodging and extra-expense certifications needs the owner's approval against the official issuance.
 - **2027 holidays** must be loaded before 2027 deadlines are trustworthy.
 - **Reminders (T3)**: filings in "ready" are reminded too, since they are not yet handed in. There is no per-person opt-out; an administrator can switch the job off or change the lead days at `/admin/email`. The bell's flag line links to `/admin/travel` until T6 adds the verify queue; point it there then.
@@ -72,6 +72,6 @@ T1 Foundations, T2 Filing shell, T3 Reminders and bell, T4 Relay, T5 Prepare and
 - **Retention (T7)**: filings are purged 12 months after `submitted_at`, and also after `withdrawn_at` (the spec named only submitted ones; withdrawn filings hold the same links, so the safer reading was taken). The window is the `travel.retention_months` setting. The purge runs once a day with the room-guest purge, and by hand with `python retention.py --travel-filings [--dry-run] [--months N]`. Open filings are never purged.
 - **Library (T7)**: for each place a text is used, the first switched-on text (lowest id) is the one pre-filled. There is no delete, only switching a text off. Only the four tokens `{{traveler_name}}`, `{{activity_title}}`, `{{dates}}`, `{{venue}}` are accepted.
 - **Ceilings (T7)**: amounts must be more than 0 and at most 100,000. Switching a route off keeps its ceiling; the route simply stops counting as approved.
-- **To do by people (not code)**: deploy the relay and fill the templates (`docs/TRAVEL_DOCS_RELAY_SETUP.md`); name template administrators; load 2027 holidays; supply per diem rules; approve the wording of the Job Order certification and the meals/lodging and extra-expense certifications; confirm the Job Order starter text; run the live relay checks.
+- **To do by people (not code)**: deploy the relay and fill the templates (`docs/TRAVEL_DOCS_RELAY_SETUP.md`); name template administrators; load 2027 holidays; confirm the readings in `docs/TRAVEL_RATES_PLAN.md` section 3 and check the Policy rates tab against the issuance; approve the wording of the Job Order certification and the meals/lodging and extra-expense certifications; confirm the Job Order starter text; run the live relay checks.
 - **Templates (T8)**: the office's CENRR and RER are Excel forms, so their templates are Google Sheets and the relay fills Sheets as well as Docs (it checks the template's type). The five Word forms are converted by `apps_script/travel_templates.gs`, which was run against the office files in PR #261: its report lists missing placeholders, and the output still needs a person's eye (tables, logos, merged cells). Known simplifications: the CENRR's date row is removed and its details line becomes `{{p_date}}: {{p_text}}`; Appendix A's `itinerary_no` and the Post Travel Report's unit lines are not placeholders; the MC 114 closing sentence ("reimbursement requested") is fixed text.
 - **Local test setup**: the HTTP tests need a `css_is.db` (gitignored). `python setup_db.py` creates one; nine tests (`test_ai_report_draft` x3, `test_avatar_care`, `test_home_feeds`, `test_integrity`, `test_routes[/work-arrangement/approvals]`, `test_search::test_api_search_activities`, `test_wellness::test_chief_pages_are_gated`) fail on that sample database and also fail on `main`.

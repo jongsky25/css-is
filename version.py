@@ -17,26 +17,48 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.40"
+APP_VERSION = "6.42"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
+        "version": "6.42",
+        "date": "October 15, 2026",
+        "summary": "Document-management workflows are ready for configuration and acceptance testing.",
+        "changes": [
+            "Incoming and outgoing documents can be tracked through assignments, review, signing, release and closure when enabled.",
+            "Document reading, saved signatures and official email reuse the existing office Google connections.",
+            "Documents stays disabled until office policies and launch checks are confirmed.",
+        ],
+    },
+    {
+        "version": "6.41",
+        "date": "October 15, 2026",
+        "summary": "Travel claims can read the fare off a ticket or receipt.",
+        "changes": [
+            "On the prepare page, each day has a new \u201cread it from a ticket or receipt\u201d button. Pick a photo or PDF of your plane, bus or boat ticket, taxi or Grab receipt, and it shows the amount it found.",
+            "Nothing fills in until you press \u201cUse\u201d, so you can check it against the file first. The file is read once and is not kept.",
+            "If the reading is not available or the file is unclear, you simply type the amount as before.",
+        ],
+    },
+    {
         "version": "6.40",
         "date": "October 15, 2026",
-        "summary": "Documents can reuse the office's existing Google Workspace connections.",
+        "summary": "Travel claim amounts now fill in by themselves.",
         "changes": [
-            "Document reading, signature placement and official email use extensions to the existing office connections.",
-            "The existing Google scripts must be updated and checked before these document features are enabled.",
+            "Once you choose the destination and rates, the fare and daily allowance boxes fill in from the policy without pressing anything. Type a different amount if you spent less.",
+            "One new choice sets the per diem rule for every day of the trip at once.",
         ],
     },
     {
         "version": "6.39",
         "date": "October 15, 2026",
-        "summary": "Document-management workflows are available for configuration and acceptance testing.",
+        "summary": "Travel claims now work out the policy rates for you.",
         "changes": [
-            "Incoming and outgoing documents can be tracked through assignments, review, signing, release and closure when the module is enabled.",
-            "The document module stays disabled until office policies, service connections and launch checks are confirmed.",
+            "On the prepare page, pick where you are going and how each day was spent, and the page shows the daily allowance the policy gives for it, with a button to use it.",
+            "For each ride, pick the rate that applies (airport trip by area, live-out trip by distance, taxi to an activity, public fare beyond 50 km) and the page shows the most the policy allows.",
+            "A fare or daily amount above the policy is still allowed, but it is sent to the Admin Unit to check, as before.",
+            "A new Policy rates tab lists every rate with the section it comes from.",
         ],
     },
     {

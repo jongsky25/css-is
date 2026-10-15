@@ -676,7 +676,8 @@ NAV_GROUPS = [
         {"key": "travel_mine", "url": "/travel", "label": "My travel claims",
          "hint": "Cash advances, liquidations and reimbursements for official travel",
          "kw": "travel claim filing cash advance liquidation reimbursement itinerary dpo personnel order "
-               "per diem taxi receipt appendix a appendix b cenrr rer mc 114 deadline", "cap": None},
+               "per diem taxi receipt appendix a appendix b cenrr rer mc 114 deadline policy rates dte "
+               "daily travel expense annex airport subsistence allowance", "cap": None},
         {"key": "travel_verify", "url": "/travel/verify", "label": "Verify travel flags",
          "section": "Admin Unit",
          "hint": "Record the outcome on travel claims that were flagged",

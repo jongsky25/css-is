@@ -1,0 +1,112 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}Travel policy rates{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261015a">{% endblock %}
+{% block content %}
+{{ page_header("Policy rates", r.POLICY ~ ". These are the rates the prepare page applies to a claim.") }}
+{% include "_travel_tabs.html" %}
+
+<div class="tv-card">
+  <p>On the prepare page you pick where you went and how each day and ride was spent, and the page fills in the most the policy allows. It is a limit, not a payment: enter what you actually spent, and anything above the limit goes to the Admin Unit to check.</p>
+  <p class="tv-hint">The Annex C areas were typed in from a scanned copy. If a place or amount here does not match the issuance, tell the Administrative Section.</p>
+</div>
+
+<div class="tv-card">
+  <h2>Daily travel expense (DTE)</h2>
+  <p class="tv-hint">The most for one day, whatever the rank, by where you are going (VI.A.2.h).</p>
+  <div class="table-wrap"><table class="list resp-table">
+    <thead><tr><th>Cluster</th><th>Most per day</th><th>Where</th></tr></thead>
+    <tbody>
+    {% for n, amt, regs in clusters %}
+      <tr><td data-label="Cluster">{{ 'I' * n if n < 4 else n }}</td><td data-label="Most per day"><strong>Php {{ '{:,.0f}'.format(amt) }}</strong></td>
+          <td data-label="Where">{% for c, label, _cl in regs %}{{ label }}{% if not loop.last %}; {% endif %}{% endfor %}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+
+<div class="tv-card">
+  <h2>How a day's DTE is shared (VI.A.2.i)</h2>
+  <ul class="tv-missing">
+    <li><strong>Arrival day and each day of official business: 100%.</strong> Lodging 50%, meals 30%, incidentals 20%.</li>
+    <li><strong>Departure day, when you left the station the day before you arrived: 50%.</strong> Meals 30%, incidentals 20%.</li>
+    <li><strong>The Php 50 subsistence allowance</strong> paid through payroll comes off the meals of a working day, not a weekend or holiday.</li>
+    <li><strong>Hotel and meals provided (live-in):</strong> incidentals of 20% for the day before and the day after.</li>
+    <li><strong>No double payment (VI.A.2.k):</strong> a part that the government or someone else paid for is not allowed.</li>
+    <li><strong>Lodging above its share (VI.A.2.j)</strong> can be claimed by up to 100% more, with the agency head's certification and the hotel bill and official receipts. The prepare page does not work this out; the extra goes to the Admin Unit.</li>
+  </ul>
+</div>
+
+<div class="tv-card">
+  <h2>Within 50 km, going home each day (VI.A.3.b)</h2>
+  <div class="table-wrap"><table class="list resp-table">
+    <thead><tr><th>Who and what</th><th>Allowed</th></tr></thead>
+    <tbody>
+    {% for code, group, label, rule in r.DAY_KINDS if code in ('commute', 'monitor', 'monitor_late', 'liaison', 'hpdpb', 'late_activity') %}
+      <tr><td data-label="Who and what">{{ label }}</td><td data-label="Allowed">{{ rule }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  <p class="tv-hint">Within Metro Manila the DTE is the NCR figure (Cluster III). Under amendment 2019-0225-A the liaison officer's meal allowance is 10% for leaving by 8:00 AM; the earlier extra 10% for returning after 3 PM is not in the amended text.</p>
+</div>
+
+<div class="tv-card">
+  <h2>Taxi and TNVS limits</h2>
+  <ul class="tv-missing">
+    <li><strong>To an official activity outside DOH (VI.A.2.b(1)):</strong> taxi up to Php {{ '{:,.0f}'.format(r.TAXI_ACTIVITY_MAX) }}, with a receipt and a justification approved by the Head of Office. TNVS (e.g. Grab) only when justified, up to Php {{ '{:,.0f}'.format(r.TNVS_MAX) }}, with an e-receipt in your name; you pay the excess.</li>
+    <li><strong>Without an official receipt:</strong> up to Php {{ '{:,.0f}'.format(r.NO_RECEIPT_MAX) }} with a Certification of Expenses Not Requiring Receipts (COA Circular 2017-001).</li>
+  </ul>
+  <h3>Live-out activity within 50 km (VI.A.3.c)</h3>
+  <div class="table-wrap"><table class="list resp-table">
+    <thead><tr><th>Distance by Google Maps</th><th>Most per trip</th></tr></thead>
+    <tbody>
+    {% set ns = namespace(prev=0) %}
+    {% for upto, amt in r.LIVE_OUT_BANDS %}
+      <tr><td data-label="Distance">{% if upto is none %}over {{ ns.prev }} km{% elif ns.prev == 0 %}up to {{ upto }} km{% else %}over {{ ns.prev }} km up to {{ upto }} km{% endif %}</td>
+          <td data-label="Most per trip">Php {{ amt }}</td></tr>
+      {% if upto is not none %}{% set ns.prev = upto %}{% endif %}
+    {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+
+<div class="tv-card">
+  <h2>Airport trips (Annex C)</h2>
+  <p class="tv-hint">Taxi from your residence or official station to the airport terminal and back, by city area. Outside Metro Manila (Rizal, Cavite, Bulacan and the rest): Php {{ '{:,.0f}'.format(r.OUTSIDE_METRO.amount) }}.</p>
+  <div class="table-wrap"><table class="list resp-table">
+    <thead><tr><th>Area</th><th>Most per trip</th><th>Places</th></tr></thead>
+    <tbody>
+    {% for a in r.ANNEX_C %}
+      <tr><td data-label="Area">{{ a.name }}</td><td data-label="Most per trip">Php {{ '{:,.0f}'.format(a.amount) }}</td>
+          <td data-label="Places">{{ a.places|join('; ') }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+
+<div class="tv-card">
+  <h2>Seaport, bus station and DOH shuttle (VI.A.2.f and g)</h2>
+  <h3>Residence to a seaport or bus station</h3>
+  <div class="table-wrap"><table class="list resp-table">
+    <thead><tr><th>Most per trip</th><th>Area</th></tr></thead>
+    <tbody>{% for z in r.TERMINAL_ZONES %}<tr><td data-label="Most per trip">Php {{ '{:,.0f}'.format(z.amount) }}</td><td data-label="Area">{{ z.places }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <h3>Residence to the DOH Central Office to catch the DOH shuttle or a rented bus (trips of {{ r.SHUTTLE_MIN_DAYS }} days or more)</h3>
+  <div class="table-wrap"><table class="list resp-table">
+    <thead><tr><th>Most per trip</th><th>Area</th></tr></thead>
+    <tbody>{% for z in r.SHUTTLE_ZONES %}<tr><td data-label="Most per trip">Php {{ '{:,.0f}'.format(z.amount) }}</td><td data-label="Area">{{ z.places }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <p class="tv-hint">Claims on these are subject to COA Circular 2017-001. Other offices than the Central Office use the fare matrix their Center for Health Development issues; enter those by hand.</p>
+</div>
+
+<div class="tv-card">
+  <h2>Public fare beyond 50 km (Annex B)</h2>
+  <p class="tv-hint">When no local rate per passenger exists, the fare from the point of disembarkation to the place of assignment follows the LTFRB ordinary bus fare guide for Metro Manila. First 5 km Php 10.00, then Php 1.85 for each km, to the nearest 25 centavos. Seniors, PWDs and students pay 20% less (Php 8.00, then Php 1.48 for each km). A part of a kilometre counts as a whole one; past 60 km the same method continues.</p>
+  <details><summary>Show the fare table, 1 to 60 km</summary>
+    <div class="table-wrap"><table class="list resp-table">
+      <thead><tr><th>Km</th><th>Regular</th><th>Senior / PWD / student</th></tr></thead>
+      <tbody>{% for i in range(60) %}<tr><td data-label="Km">{{ i + 1 }}</td><td data-label="Regular">{{ '{:,.2f}'.format(r.LTFRB_REGULAR[i]) }}</td><td data-label="Senior / PWD / student">{{ '{:,.2f}'.format(r.LTFRB_DISCOUNT[i]) }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </details>
+</div>
+{% endblock %}

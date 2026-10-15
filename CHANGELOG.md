@@ -1,15 +1,37 @@
-## 6.40 — October 15, 2026
+## 6.42 — October 15, 2026
 
-- Documents reuses the existing travel Docs and mail relays; no additional Workspace account or endpoint is needed.
-- Added Drive/OCR/signing and durable official Gmail dispatch/status scripts, profile-signature preview, compatibility tests and existing-deployment upgrade instructions.
-- Module/send switches remain disabled; live Apps Script upgrades and acceptance checks are still required.
-
-## 6.39 — October 15, 2026
-
-- Added document registration, routing, assignments, review, versioned signing/release workflows, closure, scoped search and reporting for acceptance testing.
-- Documents and document sending are disabled by default. Live Drive/OCR/signature/mail adapters and office policy/launch decisions remain required before operational use.
+- Added document registration, routing, review, signing/release, closure, scoped search and reporting for acceptance testing.
+- Documents reuses the existing travel Docs and mail relays for extraction, saved signatures and durable Gmail dispatch/status.
+- Includes profile-signature preview, compatibility tests and existing-deployment upgrade instructions.
+- Module and sending switches remain disabled; live acceptance and office policy decisions are required before operational use.
 
 # CHANGELOG — Cowork revisions (surgical)
+
+## 2026-10-15 (v6.41 — read the fare off a ticket or receipt)
+
+- `ai_core.py`: `ask()` / `_http_generate()` take `images=[(mime, bytes)]`, sent to Gemini as inline data ahead of the prompt. An image call never uses Groq (the Groq-alone and the quota-fallback paths both skip it) and the bytes are never logged. New feature `travel_scan`, 30 a day.
+- `travel_scan.py` (new): `sniff` (type from the first bytes), `clean` (a bad amount, date or kind becomes empty, never raises), `read` (one structured Gemini call).
+- `travel_routes.py`: `POST /travel/f/<ref>/scan`, raw file as the body (JPG / PNG / WebP / PDF, under 6 MB), owner-only, same-origin, 12 a minute per account (`ratelimit.py`). Stores and audits nothing.
+- `static/js/travel_prepare.js`: a file picker under each day's fare box. It shows what was found with a "Use" button; only that button sets the fare (and the date / from / to when empty, and the taxi / TNVS receipt choice). A non-peso total is not offered.
+- Tests: `tests/test_travel_scan.py`; `test_travel_admin.py` lists the new read-only POST.
+- **Version bump:** `APP_VERSION` 6.40 → 6.41.
+
+## 2026-10-15 (v6.40 — travel rates fill in by themselves)
+
+- `static/js/travel_prepare.js`: the policy limit and the daily allowance now fill the fare and per diem boxes without a click (`autofill`): a box is filled while empty or still holding the last automatic value, so changing a rate updates it and a typed amount is kept. "Set every day to…" sets the per diem rule for the whole trip at once; the per-day "Use" buttons remain. The "Fill every day" button is gone.
+- **Version bump:** `APP_VERSION` 6.39 → 6.40.
+
+## 2026-10-15 (v6.39 — travel policy rates)
+
+- `travel_rates.py` (new, pure): DO 2019-0225 and 2019-0225-A as tables and functions. `day_amount` (DTE by cluster, 100% / 50% days, live-in, subsistence allowance, provided lodging or meals, the within-50 km meal allowances), `row_cap` (taxi 550 / TNVS 700, Annex C by area, seaport and shuttle zones, live-out distance bands with the 300 no-receipt hold, Annex B LTFRB fare), `rates_for_rows`, `find_areas`, `ltfrb_fare`, `live_out_max`.
+- `travel_rules.py`: `ride_check(..., cap=None)` holds a ride to its policy limit on any document and counts the route as approved; `flags_for(..., opts, is_working)` also flags a day whose per diem is above its rule. A per-diem flag is stored under `over_ceiling` (the table only allows four kinds); `flag_label` headings it on the verify page.
+- `travel_docs.py`: `blank_row`, `normalize_rates`; rows carry `basis`, `place`, `km`, `day_kind`, `lodging_provided`, `meals_provided`; `rides_of` / `ride_answers` take the options.
+- `travel_routes.py`: `POST /travel/f/{ref}/rates` (read-only calculator, owner only, same-origin, rate limited by the new `travel_rates` bucket, not audited), `GET /travel/rates` (the rate card), policy tables on the prepare page, options passed through `generate`.
+- `static/js/travel_prepare.js`: rates panel (destination, subsistence allowance, senior / PWD), per-row fare rate with an Annex C place search or distance, per-row per diem rule, "Use" buttons, "Fill every day with the policy per diem". `rideCheck` takes the policy limit as an optional sixth argument.
+- Templates: `travel_rates.html`; "Policy rates" tab; verify page uses `travel_flag_label`.
+- Tests: `tests/test_travel_rates.py` (tables, the LTFRB table against its printed method, day rules, caps, flags, normalize, routes, JS/Python parity); `tests/test_travel_admin.py` lists the calculator as read-only.
+- Docs: `docs/TRAVEL_RATES_PLAN.md` (what is automated, how, the readings to confirm, what is not automated); `docs/TRAVEL_FILING_PLAN.md` open item closed.
+- **Version bump:** `APP_VERSION` 6.38 → 6.39.
 
 ## 2026-10-15 (v6.38 — Sheets templates and the template maker)
 

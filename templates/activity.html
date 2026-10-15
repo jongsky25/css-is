@@ -88,6 +88,8 @@
     border-radius:999px; background:var(--surface-3); }
   .meter > .tick { position:absolute; top:-3px; bottom:-3px; width:2px; border-radius:2px;
     background:var(--ink); box-shadow:0 0 0 1.5px var(--surface); }
+  .score-v { white-space:nowrap; }
+  @media (max-width:640px) { .meter { min-width:40px; } }
   .score-v small { font-size:.7rem; color:var(--soft); font-weight:600; margin-left:.05rem; }
   .vs-cell { position:relative; cursor:help; }
   .vs-chip { display:inline-flex; align-items:center; gap:.18rem; font-size:.74rem; font-weight:800;
@@ -190,7 +192,7 @@
   <div style="min-width:0;">
     <h1>{{ ev.name }}
       {% if ev.is_external %}<span class="pill-ext">external</span>{% endif %}
-      {% if ev.open_at or ev.close_at %}<span class="pill-win" title="Entry window: {{ ev.open_at|humandt or 'now' }} → {{ ev.close_at|humandt or 'no deadline' }}">entry window set</span>{% endif %}
+      {% if ev.open_at or ev.close_at %}<span class="pill-win" title="Entry window: {{ ev.open_at|humandt or 'now' }} → {{ ev.close_at|humandt or 'no deadline' }}">entry window</span>{% endif %}
     </h1>
     <div class="meta">{{ ev.date|humandate }}{% if ev.venue %} · {{ ev.venue }}{% endif %} · {{ ev.organizer }}{% if ev.attendance %} · <strong>{{ ev.attendance|comma }} attended</strong>{% endif %} · {{ ev.respondents|comma }} response(s)</div>
   </div>
