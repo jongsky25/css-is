@@ -11,7 +11,8 @@
 // Run it as the office mailbox. The first run asks for permission to use Drive, Docs and Sheets.
 // Converted templates are put in a "_templates" folder inside the ROOT_FOLDER_ID folder.
 //
-// A template whose TPL_ property is already set is skipped. To redo one, delete its property first.
+// A template that is already set and has every placeholder is kept; one with gaps is made again (the older copy stays
+// in _templates). Run it as often as you like.
 // checkTravelTemplates() re-checks the placeholders in the templates that are already set.
 
 const TM_SOURCE_FOLDER_ID = 'PUT-THE-TRAVEL-REIMBURSEMENT-TEMPLATE-FOLDER-ID-HERE';
@@ -51,13 +52,20 @@ function makeTravelTemplates() {
   if (TM_SOURCE_FOLDER_ID.indexOf('PUT-') === 0) throw new Error('Set TM_SOURCE_FOLDER_ID at the top of this file first.');
   const source = DriveApp.getFolderById(TM_SOURCE_FOLDER_ID);
   const out = tm_outFolder_(P);
+  const stamp = Utilities.formatDate(new Date(), 'Asia/Manila', 'MMM d HH:mm');
   const report = [];
   TM_TEMPLATES.forEach(function (t) {
-    if (P.getProperty('TPL_' + t.key)) { report.push(t.key + ': already set, skipped'); return; }
     try {
+      // A template that is already set and has every placeholder is kept; anything else is (re)made.
+      const existing = P.getProperty('TPL_' + t.key);
+      if (existing) {
+        let gaps = null;
+        try { gaps = tm_missing_(existing, t); } catch (e) { gaps = ['(could not open it)']; }
+        if (!gaps.length) { report.push(t.key + ': already good, kept'); return; }
+      }
       const file = tm_find_(source, t.source);
       if (!file) throw new Error('could not find "' + t.source + '" under the source folder');
-      const id = tm_convert_(file, t.mime, out.getId(), tm_title_(t));
+      const id = tm_convert_(file, t.mime, out.getId(), tm_title_(t) + ' (' + stamp + ')');
       t.build(id);
       P.setProperty('TPL_' + t.key, id);
       const missing = tm_missing_(id, t);
@@ -135,8 +143,38 @@ function tm_sheetText_(id) {
   return out;
 }
 
+// In a pattern, every space matches any run of spaces, tabs and non-breaking spaces (Word text often has them).
+function tm_pat_(p) { return String(p).replace(/ /g, '[ \\x{00A0}\\t]+'); }
+function tm_norm_(s) { return String(s).replace(/[\s\u00a0]+/g, ' ').trim(); }
+
 // Replace text anywhere in a document body (regex, RE2). Replacements here only ever hold {{placeholders}}.
-function tm_rep_(body, pattern, repl) { body.replaceText(pattern, repl); }
+function tm_rep_(body, pattern, repl) { body.replaceText(tm_pat_(pattern), repl); }
+
+// Make a whole table cell hold `text`, keeping the look of its first character.
+function tm_setCell_(cell, text) {
+  const t = cell.editAsText(), len = t.getText().length;
+  t.insertText(0, text);
+  if (len > 0) t.deleteText(text.length, text.length + len - 1);
+}
+
+// The paragraph that holds `text` (anywhere, tables included), or null.
+function tm_paraWith_(body, text) {
+  const hit = body.findText(tm_pat_(text));
+  if (!hit) return null;
+  let el = hit.getElement();
+  while (el && el.getType() !== DocumentApp.ElementType.PARAGRAPH && el.getType() !== DocumentApp.ElementType.LIST_ITEM) el = el.getParent();
+  return el;
+}
+
+// A checkbox line: drop whatever symbol starts the paragraph and put the placeholder there instead.
+function tm_check_(body, lineStartsWith, placeholder) {
+  const para = tm_paraWith_(body, lineStartsWith);
+  if (!para) return false;
+  const t = para.editAsText(), idx = t.getText().indexOf(lineStartsWith.split(' ')[0]);
+  if (idx > 0) t.deleteText(0, idx - 1);
+  t.insertText(0, placeholder + ' ');
+  return true;
+}
 
 // Replace a run of paragraphs with ONE plain paragraph holding `placeholder`.
 //   start: text the first paragraph starts with (exact: whole text equals it)
@@ -164,24 +202,31 @@ function tm_section_(body, start, end, placeholder, opt) {
   return true;
 }
 
-// Within a table row (found by text), replace text.
-function tm_rowRep_(body, rowContains, pattern, repl) {
-  const tables = body.getTables();
+// The first table row whose text contains `contains` (spaces and line breaks ignored), or null.
+function tm_findRow_(body, contains) {
+  const want = tm_norm_(contains), tables = body.getTables();
   for (let t = 0; t < tables.length; t++) {
-    const table = tables[t];
-    for (let r = 0; r < table.getNumRows(); r++) {
-      const row = table.getRow(r);
-      if (row.getText().indexOf(rowContains) >= 0) { row.replaceText(pattern, repl); return true; }
+    for (let r = 0; r < tables[t].getNumRows(); r++) {
+      if (tm_norm_(tables[t].getRow(r).getText()).indexOf(want) >= 0) return tables[t].getRow(r);
     }
   }
-  return false;
+  return null;
+}
+
+// Within a table row (found by text), replace text.
+function tm_rowRep_(body, rowContains, pattern, repl) {
+  const row = tm_findRow_(body, rowContains);
+  if (!row) return false;
+  row.replaceText(tm_pat_(pattern), repl);
+  return true;
 }
 
 function tm_removeRowsContaining_(body, texts) {
+  const wants = texts.map(tm_norm_);
   body.getTables().forEach(function (table) {
     for (let r = table.getNumRows() - 1; r >= 0; r--) {
-      const txt = table.getRow(r).getText();
-      if (texts.some(function (x) { return txt.indexOf(x) >= 0; })) table.removeRow(r);
+      const txt = tm_norm_(table.getRow(r).getText());
+      if (wants.some(function (x) { return txt.indexOf(x) >= 0; })) table.removeRow(r);
     }
   });
 }
@@ -190,17 +235,14 @@ function tm_removeRowsContaining_(body, texts) {
 
 function tm_appendixA_(id) {
   const body = DocumentApp.openById(id).getBody();
-  tm_rep_(body, 'Name: ELVIE JO ROBIS', 'Name: {{traveler_name}}');
+  tm_rep_(body, 'ELVIE JO ROBIS', '{{traveler_name}}');
   tm_rep_(body, 'Purpose of Travel: .*', 'Purpose of Travel: {{purpose}}');
-  // the one sample row that stays becomes the repeating row
-  tm_rowRep_(body, 'September 01, 2026', 'September 01, 2026', '{{r_date}}');
-  tm_rowRep_(body, '{{r_date}}', 'Residence in \\(Fairview Quezon City\\) to DOH Central Office', '{{r_place}}');
-  tm_rowRep_(body, '{{r_date}}', '07:00 AM', '{{r_dep}}');
-  tm_rowRep_(body, '{{r_date}}', '08:00 AM', '{{r_arr}}');
-  tm_rowRep_(body, '{{r_date}}', 'Grab', '{{r_mode}}');
-  tm_rowRep_(body, '{{r_date}}', '700', '{{r_allowance}}');
-  tm_rowRep_(body, '{{r_date}}', '360', '{{r_perdiem}}');
-  tm_rowRep_(body, '{{r_date}}', '1,060', '{{r_total}}');
+  // the first sample row stays and becomes the repeating row: one placeholder per column
+  const row = tm_findRow_(body, 'September 01, 2026');
+  if (row) {
+    const cols = ['r_date', 'r_place', 'r_dep', 'r_arr', 'r_mode', 'r_allowance', 'r_perdiem', 'r_total'];
+    for (let c = 0; c < Math.min(row.getNumCells(), cols.length); c++) tm_setCell_(row.getCell(c), '{{' + cols[c] + '}}');
+  }
   tm_removeRowsContaining_(body, ['DOH-Central Office to Sunday', 'ACTIVITY PROPER', 'Sunday Hevea Hotel and Resort to DOH',
                                   'DOH-Central Office to Residence']);
   tm_rep_(body, 'PhP2,120', 'PhP{{grand_total}}');
@@ -218,10 +260,10 @@ function tm_appendixB_(id) {
   tm_rep_(body, 'Bureau of Local Health System Development', '{{station}}');
   tm_rep_(body, 'September 07, 2026', '{{date}}');
   tm_rep_(body, 'DPO No\\.\\s?2026-5556 dated August 04, 2026', '{{dpo_ref}}');
-  tm_rep_(body, '☒ Strictly', '{{chk_strict}} Strictly');
-  tm_rep_(body, '☐ Cut short', '{{chk_cut}} Cut short');
-  tm_rep_(body, '☐ Extended', '{{chk_extended}} Extended');
-  tm_rep_(body, '☐ Other deviations', '{{chk_other}} Other deviations');
+  tm_check_(body, 'Strictly in accordance', '{{chk_strict}}');
+  tm_check_(body, 'Cut short', '{{chk_cut}}');
+  tm_check_(body, 'Extended as explained', '{{chk_extended}}');
+  tm_check_(body, 'Other deviations', '{{chk_other}}');
   tm_rep_(body, 'Excess payment in the amount of', 'Excess payment in the amount of {{refund_amount}}');
   tm_rep_(body, 'O\\.R\\. No\\. _+ dated _+', 'O.R. No. {{refund_or_no}} dated {{refund_or_date}}');
   tm_section_(body, 'Explanation or Justification', 'Evidence of Travel attached hereto', '{{explanation}}', { exact: false });
@@ -236,7 +278,7 @@ function tm_report_(id) {
   const body = DocumentApp.openById(id).getBody();
   tm_rep_(body, 'Maria Lourdes Gajitos, Medical Officer V', '{{name_designation}}');
   tm_rep_(body, 'November 10-14, 2025', '{{travel_dates}}');
-  tm_rep_(body, 'DPO No\\. 2025-7852 dated October 29, 2025', '{{dpo_ref}}');
+  tm_rep_(body, 'DPO No\\.? ?2025-7852.*', '{{dpo_ref}}');
   const x = { exact: true };
   tm_section_(body, 'Overview', 'Day-by-Day Highlights', '{{overview}}', x);
   tm_section_(body, 'Day-by-Day Highlights', 'Key Points Raised:', '{{day_by_day}}', x);
@@ -340,4 +382,31 @@ function tm_rer_(id) {
   tm_sheetRep_(sh, 'Taxi fare from _+', 'fare from {{ride_from}} to {{ride_to}}', false);
   tm_sheetRep_(sh, '\\bon _{3,}', 'on {{ride_date}}', false);
   tm_sheetRep_(sh, 'in Attendance to .*DPO No\\. 2026-5451', 'in attendance to {{activity_title}} as per {{dpo_ref}}', false);
+}
+
+// ------------------------------------------------------------- when a template needs a look ---
+
+// Logs how the converted Appendix A table and the Appendix B checkbox lines really look, so a gap can be fixed.
+function debugTravelTemplates() {
+  const P = PropertiesService.getScriptProperties(), out = [];
+  const a = P.getProperty('TPL_appendix_a');
+  if (a) {
+    DocumentApp.openById(a).getBody().getTables().forEach(function (tb, ti) {
+      for (let r = 0; r < tb.getNumRows(); r++) {
+        const row = tb.getRow(r), cells = [];
+        for (let c = 0; c < row.getNumCells(); c++) cells.push(tm_norm_(row.getCell(c).getText()).slice(0, 28));
+        out.push('A table ' + ti + ' row ' + r + ' [' + row.getNumCells() + ']: ' + cells.join(' | '));
+      }
+    });
+  }
+  const b = P.getProperty('TPL_appendix_b');
+  if (b) {
+    DocumentApp.openById(b).getBody().getText().split('\n').forEach(function (line) {
+      if (/Strictly|Cut short|Extended|Other deviations|Excess/.test(line)) {
+        out.push('B line: ' + JSON.stringify(line.slice(0, 40)) + ' codes ' + line.slice(0, 3).split('').map(function (ch) { return ch.charCodeAt(0); }).join(','));
+      }
+    });
+  }
+  Logger.log('\n' + out.join('\n'));
+  return out.join('\n');
 }
