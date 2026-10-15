@@ -151,10 +151,11 @@ _ALL_JOBS = {"events", "wellness_expiry", "digest", "csm_rp", "csm_activity",
             "wellness_file", "awa_file", "whereabouts",
             "whereabouts_nudge", "whereabouts_rollup", "calendar_css_nudge",
             "birthday_coordinators", "birthday_month", "birthday_greeting",
-            "calendar_day_before", "travel_filing_due"}
+            "calendar_day_before", "travel_filing_due", "documents"}
 
 # job name -> the admin toggle that can switch it off (see /admin/email).
 JOB_FEATURE = {
+    "documents": "job_documents",
     "events": "job_events",
     "wellness_expiry": "job_wellness_expiry",
     "digest": "job_digest",
@@ -865,6 +866,9 @@ def run(db_path="css_is.db", dry_run=False, jobs=None):
             report["whereabouts_rollup"] = send_whereabouts_rollup(conn, base, dry_run=dry_run)
         if "calendar_day_before" in jobs:
             report["calendar_day_before"] = send_calendar_day_before(conn, base, dry_run=dry_run)
+        if "documents" in jobs:
+            import documents_notify
+            report["documents"] = documents_notify.deliver(conn, base, dry_run=dry_run)
         if "travel_filing_due" in jobs:
             report["travel_filing_due"] = send_travel_filing_due(conn, base, dry_run=dry_run)
         if "birthday_greeting" in jobs:
@@ -916,9 +920,10 @@ def main():
                     help="Tell birthday coordinators who has a birthday tomorrow.")
     ap.add_argument("--birthday-month", action="store_true",
                     help="Send birthday coordinators the month's celebrants.")
+    ap.add_argument("--documents", action="store_true", help="Deliver document notices and schedule deadlines.")
     args = ap.parse_args()
 
-    jobs = {j for j, flag in (("events", args.events),
+    jobs = {j for j, flag in (("documents", args.documents), ("events", args.events),
                               ("wellness_expiry", args.wellness_expiry),
                               ("digest", args.digest),
                               ("csm_rp", args.csm_rp),

@@ -17,12 +17,51 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.44"
+APP_VERSION = "6.45"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
+        "version": "6.45",
+        "date": "October 15, 2026",
+        "summary": "Travel claims: the DPO and the Certificate of Appearance are checked as you upload them.",
+        "changes": [
+            "Uploading the DPO now checks its number, date and travel dates against your filing, and warns if it does not state a funding source.",
+            "Uploading the Certificate of Appearance warns if its dates do not cover the activity.",
+            "If your filing has no DPO number or date, a button puts the one read from the file into your answers. You still press Save, and nothing read is kept on the server.",
+        ],
+    },
+    {
         "version": "6.44",
+        "date": "October 15, 2026",
+        "summary": "Travel claims: tickets and receipts are read as you upload them.",
+        "changes": [
+            "When you upload a plane, bus or boat ticket, a taxi or Grab receipt, a terminal fee or a hotel bill to the checklist, the amount is read off it.",
+            "On the prepare page, each day lists those readings with a \u201cUse\u201d button. Nothing fills in until you press it, and nothing read is kept on the server.",
+        ],
+    },
+    {
+        "version": "6.43",
+        "date": "October 15, 2026",
+        "summary": "Travel claims: upload a file to a checklist row instead of pasting a Drive link.",
+        "changes": [
+            "Each upload row on a travel filing now has a \u201cChoose file or take photo\u201d button. Pick a photo or PDF and it is stored in the office travel folder; pasting a Drive link still works.",
+            "Large photos are shrunk on your device before they are sent. You can remove or replace the files you uploaded.",
+            "The button appears once the office has updated the documents relay (Administration, Travel filing settings, Test the relay).",
+        ],
+    },
+    {
+        "version": "6.42",
+        "date": "October 15, 2026",
+        "summary": "Document-management workflows are ready for configuration and acceptance testing.",
+        "changes": [
+            "Incoming and outgoing documents can be tracked through assignments, review, signing, release and closure when enabled.",
+            "Document reading, saved signatures and official email reuse the existing office Google connections.",
+            "Documents stays disabled until office policies and launch checks are confirmed.",
+        ],
+    },
+    {
+        "version": "6.41",
         "date": "October 15, 2026",
         "summary": "Travel claims can read the fare off a ticket or receipt.",
         "changes": [

@@ -1,6 +1,13 @@
+## 6.42 — October 15, 2026
+
+- Added document registration, routing, review, signing/release, closure, scoped search and reporting for acceptance testing.
+- Documents reuses the existing travel Docs and mail relays for extraction, saved signatures and durable Gmail dispatch/status.
+- Includes profile-signature preview, compatibility tests and existing-deployment upgrade instructions.
+- Module and sending switches remain disabled; live acceptance and office policy decisions are required before operational use.
+
 # CHANGELOG — Cowork revisions (surgical)
 
-## 2026-10-15 (v6.44 — the DPO and the Certificate of Appearance are checked as they are uploaded)
+## 2026-10-15 (v6.45 — the DPO and the Certificate of Appearance are checked as they are uploaded)
 
 - `travel_scan.py`: `DOC_FOR` maps a checklist row to what is read (receipt rows as before, `dpo`, `cert_appearance`). `read_doc` asks only for the fields below, never a name; `clean_dpo` / `clean_appearance` never raise; `check()` sets the reading against the filing.
 - DPO: number, issue date, the travel dates it covers, and whether it names a funding source. Warns when no funding source is stated, when the number or date differs from the filing, or when its travel dates do not cover the activity. Offers the number / date for an empty or different field.
@@ -8,18 +15,18 @@
 - `travel_routes.py`: the upload response gains `doc`, `checks` and `fill` next to `reading`. A reading never changes the filing; the person copies a DPO number / date into "Change my answers" and saves it. Same `travel_scan` rate limit; a failed or skipped read never stops the file being saved. Nothing from a reading is stored on the server.
 - `static/js/travel_upload.js`: shows the warnings under the row (kept across the reload in this browser's session) and a button that puts the DPO number / date into the answers form.
 - Tests: `tests/test_travel_relay.py` (cleaning, each check, a DPO and a certificate upload, nothing stored, filing unchanged).
-- **Version bump:** `APP_VERSION` 6.43 → 6.44.
+- **Version bump:** `APP_VERSION` 6.44 → 6.45.
 
-## 2026-10-15 (v6.43 — tickets and receipts are read as they are uploaded)
+## 2026-10-15 (v6.44 — tickets and receipts are read as they are uploaded)
 
 - `travel_scan.py`: `READ_CODES`, the checklist rows whose uploads are tickets or receipts (plane ticket, boarding pass, boat / bus ticket, terminal fee, taxi, ride-hailing, lodging bill, extra-expense invoice).
 - `travel_routes.py`: an upload to one of those rows is read by the AI at the same time as it goes to Drive (`asyncio.gather`), under the existing `travel_scan` rate limit. The answer comes back as `reading` (and `ai: false` when AI is off). A failed or skipped read never stops the file being saved; a failed Drive upload returns no reading. Nothing from the reading is stored on the server.
 - `static/js/travel_upload.js`: shows what was found under the row and keeps peso readings in this browser's session only (`tv-reads:<ref>`).
 - `static/js/travel_prepare.js`: each day's fare box lists those readings with a "Use" button, the same one the scan picker uses (`offer`). Nothing is filled in until it is pressed.
 - Tests: `tests/test_travel_relay.py` (read on upload, other rows not read, AI off, failed upload, read limit, nothing stored).
-- **Version bump:** `APP_VERSION` 6.42 → 6.43.
+- **Version bump:** `APP_VERSION` 6.43 → 6.44.
 
-## 2026-10-15 (v6.42 — upload a file instead of pasting a link)
+## 2026-10-15 (v6.43 — upload a file instead of pasting a link)
 
 - `apps_script/travel_docs.gs` (script version 2): `upload_file` puts a JPG / PNG / WebP / PDF in `ROOT/<filing>/<row>/` (one sub-folder per checklist row, idempotent on `request_id`, folder shared view-only with the claimant); `trash_file` trashes a folder or file only when it sits under the root folder. `ping` answers `version: 2`.
 - `gdocs_relay.py`: `Relay.upload_file` / `Relay.trash_file`, `UPLOAD_VERSION = 2`, plain-word errors for the new codes.
@@ -27,7 +34,7 @@
 - `travel.py` / `storage.py`: `travel_item.drive_source` (`upload` or `link`) so only office-made folders are ever trashed; `save_upload`, `clear_upload`, `uploaded_folder`. `purge_filings` trashes uploaded folders first and skips a filing whose files cannot be trashed (retried next run).
 - `static/js/travel_upload.js`, `templates/travel_filing.html`: "Choose file or take photo" (several files at once, big photos shrunk to about 2000 px in the browser) next to the Drive-link box, which stays as the fallback.
 - Tests: `tests/test_travel_relay.py` (upload, failure, refusals, switch, rate limit, remove, replace, purge); `test_travel_admin.py` lists the new column and the audited removal.
-- **Version bump:** `APP_VERSION` 6.41 → 6.42. Redeploy the relay script (docs/TRAVEL_DOCS_RELAY_SETUP.md, step 7).
+- **Version bump:** `APP_VERSION` 6.42 → 6.43. Redeploy the relay script (docs/TRAVEL_DOCS_RELAY_SETUP.md, step 7).
 
 ## 2026-10-15 (v6.41 — read the fare off a ticket or receipt)
 
