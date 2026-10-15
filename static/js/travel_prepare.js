@@ -181,6 +181,21 @@
     });
   }
 
+  // Fill an amount box from the policy without a click. A box is filled while it is empty or still holds what
+  // we put there last time, so a change of rate updates it, and a number the person typed is left alone.
+  function autofill(r, field, tag, val) {
+    var cur = Number(r[field]) || 0, last = r[tag];
+    if (val == null) {
+      if (last != null && cur === last) { r[field] = 0; r[tag] = null; return true; }
+      return false;
+    }
+    if (cur === 0 || (last != null && cur === last)) {
+      r[tag] = val;
+      if (cur !== val) { r[field] = val; return true; }
+    }
+    return false;
+  }
+
   var timer2 = null, calcSeq = 0;
   function recalc() {
     clearTimeout(timer2);
@@ -190,26 +205,41 @@
         body: JSON.stringify({ rows: state.rows, rates: state.rates }) })
         .then(function (r) { return r.json(); }).then(function (j) {
           if (seq !== calcSeq || !j.ok) return;
-          calc = j.rows; paint(); refresh(true);
+          calc = j.rows;
+          var changed = false;
+          state.rows.forEach(function (r, i) {
+            var c = calc[i] || {};
+            if (autofill(r, 'allowance', '_aa', c.cap == null ? null : c.cap)) changed = true;
+            if (autofill(r, 'per_diem', '_ap', c.per_diem == null ? null : c.per_diem)) changed = true;
+          });
+          if (changed) { save(); drawRows(); }
+          paint(); refresh(true);
         }).catch(function () { /* the limits just do not show; the form still works */ });
     }, 250);
   }
 
-  var applyAll = el('button', { type: 'button', 'class': 'btn ghost', text: 'Fill every day with the policy per diem' });
-  applyAll.addEventListener('click', function () {
-    state.rows.forEach(function (r, i) { if (calc[i] && calc[i].per_diem != null) r.per_diem = calc[i].per_diem; });
-    save(); drawRows(); refresh();
-  });
+  // One choice for the whole trip instead of one per day; each day can still be changed.
+  function allDays() {
+    var sel = el('select', { 'aria-label': 'Set every day to' });
+    sel.appendChild(el('option', { value: '', text: 'Set every day to\u2026' }));
+    policy.day_kinds.forEach(function (k) { sel.appendChild(el('option', { value: k[0], text: k[2] })); });
+    sel.addEventListener('change', function () {
+      if (!sel.value) return;
+      state.rows.forEach(function (r) { r.day_kind = sel.value; });
+      save(); drawRows(); refresh();
+    });
+    return el('div', {}, [el('label', { text: 'Per diem rule for the whole trip' }), sel]);
+  }
 
   function ratesPanel() {
     var regionOpts = [['', 'Choose where you are going']].concat(policy.regions.map(function (x) { return [x[0], x[1] + ' \u00b7 up to ' + peso(x[2]) + ' a day']; }));
     return el('div', { 'class': 'tv-card' }, [
       el('h3', { text: 'Policy rates' }),
-      el('p', { 'class': 'tv-hint', text: 'Choose the destination and, on each day, how it was spent. The page then shows the most the policy allows (DO 2019-0225 and 2019-0225-A). See the Policy rates tab for every rate.' }),
+      el('p', { 'class': 'tv-hint', text: 'Choose the destination and how the days were spent, and the amounts fill in by themselves from the policy (DO 2019-0225 and 2019-0225-A). Change any amount to what you actually spent. See the Policy rates tab for every rate.' }),
       select('Where you are going', state.rates.region, regionOpts, function (v) { state.rates.region = v; }),
       check('I receive the \u20b150 daily subsistence allowance through payroll', state.rates.receives_sa, function (v) { state.rates.receives_sa = v; }),
       check('I am a senior citizen, PWD or student (20% lower public fare)', state.rates.discounted, function (v) { state.rates.discounted = v; }),
-      applyAll]);
+      allDays()]);
   }
 
   function refresh(fromServer) {

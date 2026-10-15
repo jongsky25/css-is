@@ -1,5 +1,10 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-15 (v6.40 — travel rates fill in by themselves)
+
+- `static/js/travel_prepare.js`: the policy limit and the daily allowance now fill the fare and per diem boxes without a click (`autofill`): a box is filled while empty or still holding the last automatic value, so changing a rate updates it and a typed amount is kept. "Set every day to…" sets the per diem rule for the whole trip at once; the per-day "Use" buttons remain. The "Fill every day" button is gone.
+- **Version bump:** `APP_VERSION` 6.39 → 6.40.
+
 ## 2026-10-15 (v6.39 — travel policy rates)
 
 - `travel_rates.py` (new, pure): DO 2019-0225 and 2019-0225-A as tables and functions. `day_amount` (DTE by cluster, 100% / 50% days, live-in, subsistence allowance, provided lodging or meals, the within-50 km meal allowances), `row_cap` (taxi 550 / TNVS 700, Annex C by area, seaport and shuttle zones, live-out distance bands with the 300 no-receipt hold, Annex B LTFRB fare), `rates_for_rows`, `find_areas`, `ltfrb_fare`, `live_out_max`.
