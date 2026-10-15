@@ -365,11 +365,13 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             upload = run_in_threadpool(
                 gdocs_relay.get_relay().upload_file, request_id=f"{ref}:{code}:{digest}", folder_key=ref, item_key=code,
                 name=f"{ref}_{code}_{stem}.{ext}", mime=mime, data=raw, share_with=share)
-            # A ticket or receipt is also read for its amount, at the same time. The reading is only offered back to
-            # the browser; a failed or refused read never stops the file from being saved.
+            # A ticket, receipt, DPO or Certificate of Appearance is also read, at the same time. The reading is only
+            # offered back to the browser (checked against the filing for the DPO and the certificate); a failed or
+            # refused read never stops the file from being saved.
+            doc = travel_scan.DOC_FOR.get(code)
             reading, ai_off = None, False
-            if code in travel_scan.READ_CODES and ratelimit.allow("travel_scan", f"u{user['id']}"):
-                res, found = await asyncio.gather(upload, travel_scan.read(conn, user, ip, raw, mime),
+            if doc and ratelimit.allow("travel_scan", f"u{user['id']}"):
+                res, found = await asyncio.gather(upload, travel_scan.read_doc(doc, conn, user, ip, raw, mime),
                                                   return_exceptions=True)
                 if isinstance(found, dict):
                     reading = found
@@ -386,10 +388,12 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
                 travel.save_upload(conn, filing, code, res.data.get("folder_id"), res.data.get("folder_url"))
             except travel.TravelError as e:
                 return _jerr(str(e))
+            checks, fill = travel_scan.check(doc, reading, filing) if reading else ([], None)
             audit(request, conn, "travel_upload", target_type="travel_filing", target_id=ref,
                   summary=f"stored a file for {code}")
             return JSONResponse({"ok": True, "name": res.data.get("name", ""), "count": res.data.get("count"),
-                                 "url": res.data.get("folder_url"), "reading": reading, "ai": not ai_off})
+                                 "url": res.data.get("folder_url"), "reading": reading, "doc": doc if reading else None,
+                                 "checks": checks, "fill": fill, "ai": not ai_off})
         finally:
             conn.close()
 

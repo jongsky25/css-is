@@ -1,5 +1,15 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-15 (v6.44 — the DPO and the Certificate of Appearance are checked as they are uploaded)
+
+- `travel_scan.py`: `DOC_FOR` maps a checklist row to what is read (receipt rows as before, `dpo`, `cert_appearance`). `read_doc` asks only for the fields below, never a name; `clean_dpo` / `clean_appearance` never raise; `check()` sets the reading against the filing.
+- DPO: number, issue date, the travel dates it covers, and whether it names a funding source. Warns when no funding source is stated, when the number or date differs from the filing, or when its travel dates do not cover the activity. Offers the number / date for an empty or different field.
+- Certificate of Appearance: warns when its dates do not cover the activity dates.
+- `travel_routes.py`: the upload response gains `doc`, `checks` and `fill` next to `reading`. A reading never changes the filing; the person copies a DPO number / date into "Change my answers" and saves it. Same `travel_scan` rate limit; a failed or skipped read never stops the file being saved. Nothing from a reading is stored on the server.
+- `static/js/travel_upload.js`: shows the warnings under the row (kept across the reload in this browser's session) and a button that puts the DPO number / date into the answers form.
+- Tests: `tests/test_travel_relay.py` (cleaning, each check, a DPO and a certificate upload, nothing stored, filing unchanged).
+- **Version bump:** `APP_VERSION` 6.43 → 6.44.
+
 ## 2026-10-15 (v6.43 — tickets and receipts are read as they are uploaded)
 
 - `travel_scan.py`: `READ_CODES`, the checklist rows whose uploads are tickets or receipts (plane ticket, boarding pass, boat / bus ticket, terminal fee, taxi, ride-hailing, lodging bill, extra-expense invoice).
