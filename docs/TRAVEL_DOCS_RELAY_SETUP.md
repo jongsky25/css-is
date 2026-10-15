@@ -7,10 +7,10 @@ Until this is done the travel pages still work: people paste a link to a form th
 ## What a person has to do
 
 1. **Create the script.** Sign in as the office mailbox, open <https://script.google.com>, New project, paste in `apps_script/travel_docs.gs` (the file in this repo is the source of truth).
-2. **Make the templates.** For each form, convert the Word file to a Google Doc (File, Save as Google Docs) and replace the values with the `{{placeholders}}` listed in `docs/TRAVEL_FILING_PLAN.md` section 9. Check the tables, since the conversion can shift Appendix A.
+2. **Make the templates (one script does it).** The office's forms are Word files (Appendix A and B, the Post Travel Report, the Job Order certification, the MC 114 sheet) and Excel files (CENRR and RER). Add `apps_script/travel_templates.gs` to the same Apps Script project (File, New, Script, paste it in). At the top, set `TM_SOURCE_FOLDER_ID` to the id of the "Travel Reimbursement Template" folder (the part of its address after `/folders/`); the office mailbox must be able to open that folder. Run `makeTravelTemplates` once, allow the permissions it asks for, and read the Execution log. It converts each file into a Google Doc or Sheet in a `_templates` folder inside the root folder, swaps the sample names, dates and amounts for the `{{placeholders}}` listed in `docs/TRAVEL_FILING_PLAN.md` section 9, saves each template's id as its `TPL_<key>` property, and lists any placeholder that did not land. Open each template once and check it looks like the original. `checkTravelTemplates` re-checks them later. To redo one template, delete its `TPL_` property and run again.
 3. **Make the Drive folder.** Create a root folder under the office mailbox. Generated documents go in sub-folders named after the filing.
-4. **Set Script Properties** (Project settings): `SHARED_SECRET` (a long random string), `ROOT_FOLDER_ID`, `ALLOWED_DOMAIN` = `doh.gov.ph`, and one `TPL_<key>` per template: `TPL_appendix_a`, `TPL_appendix_b`, `TPL_mc114_justification`, `TPL_jo_cert`, `TPL_travel_report`, `TPL_cenrr`, `TPL_rer` (the value is the Google Doc id).
-5. **Deploy.** Deploy, New deployment, Web app. Execute as: Me. Who has access: **Anyone**. Authorise the Drive and Documents scopes when asked. Copy the `/exec` URL. Every later change to the script needs Deploy, Manage deployments, New version.
+4. **Set Script Properties** (Project settings): `SHARED_SECRET` (a long random string), `ROOT_FOLDER_ID` and `ALLOWED_DOMAIN` = `doh.gov.ph`. The seven `TPL_<key>` properties (`TPL_appendix_a`, `TPL_appendix_b`, `TPL_mc114_justification`, `TPL_jo_cert`, `TPL_travel_report`, `TPL_cenrr`, `TPL_rer`) are set for you by `makeTravelTemplates`; a value is the id of a Google Doc, or of a Google Sheet for `TPL_cenrr` and `TPL_rer`.
+5. **Deploy.** Deploy, New deployment, Web app. (After adding the template script or changing any script file, use Deploy, Manage deployments, edit, New version, so the web app picks up the change and its permissions.) Execute as: Me. Who has access: **Anyone**. Authorise the Drive and Documents scopes when asked. Copy the `/exec` URL. Every later change to the script needs Deploy, Manage deployments, New version.
 6. **Set the Space secrets:** `CSS_DOCS_RELAY_URL` (the `/exec` URL) and `CSS_DOCS_RELAY_SECRET` (the same string as `SHARED_SECRET`). Restart the Space.
 7. **Test.** Open Administration, Travel filing settings, press **Test the relay**. It should say the relay answered.
 
@@ -28,6 +28,8 @@ Other things the office has to supply, not part of this setup: name the template
 These could not be tested without Google (the tests fake the relay):
 - replacement text containing `$` or a backslash comes out unchanged;
 - `TableRow.replaceText` fills a copied row of Appendix A (merged cells);
+- `makeTravelTemplates` left each converted form looking like the original (the Word and Excel conversions can shift tables, logos and merged cells), and the CENRR's single repeating line and the sample date row were removed correctly;
+- a CENRR with several rides grows its rows and keeps the total underneath;
 - whether `addEditor` emails the person;
 - five documents in one go finish inside one script run (Apps Script allows several minutes).
 

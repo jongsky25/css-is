@@ -10,7 +10,9 @@
     "ride_from": "Home",
     "ride_to": "Airport",
     "ride_date": "September 1, 2026",
-    "purpose": "attend Regional Planning Workshop"
+    "purpose": "attend Regional Planning Workshop",
+    "activity_title": "Regional Planning Workshop",
+    "dpo_ref": "DPO No. 2026-123 dated August 20, 2026"
   },
   "blocks": {},
   "rows": {}
