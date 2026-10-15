@@ -1,0 +1,94 @@
+"""The Apps Script sources (relay and template maker): syntax, and the sheet logic run against a fake."""
+from __future__ import annotations
+import json
+import pathlib
+import shutil
+import subprocess
+
+import pytest
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+node = pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+
+
+@node
+@pytest.mark.parametrize("name", ["travel_docs.gs", "travel_templates.gs"])
+def test_the_scripts_parse(name, tmp_path):
+    copy = tmp_path / (name + ".js")
+    copy.write_text((ROOT / "apps_script" / name).read_text())
+    out = subprocess.run(["node", "--check", str(copy)], capture_output=True, text=True, timeout=30)
+    assert out.returncode == 0, out.stderr
+
+
+@pytest.fixture(scope="module")
+def harness():
+    if shutil.which("node") is None:
+        pytest.skip("node is not installed")
+    out = subprocess.run(["node", "tests/js/sheet_harness.js"], capture_output=True, text=True, cwd=ROOT, timeout=60)
+    assert out.returncode == 0, out.stderr
+    return json.loads(out.stdout)
+
+
+def flat(rows):
+    return "\n".join(rows)
+
+
+def test_cenrr_template_has_one_repeating_line_and_every_placeholder(harness):
+    t = flat(harness["cenrrTemplate"])
+    for k in ("employee_name", "employee_no", "office", "division", "p_date", "p_text", "p_amount", "total", "purpose", "dates",
+              "dpo_ref", "printed_name", "designation", "noted_by_name", "noted_by_title"):
+        assert "{{%s}}" % k in t, k
+    assert "March 10, 2026" not in t and "Taxi fare" not in t and "DR. JUNE" not in t and "20240016" not in t
+    assert t.count("{{p_date}}") == 1 and t.count("{{employee_name}}") == 1 and t.count("{{printed_name}}") == 1
+
+
+def test_cenrr_rows_grow_and_the_form_is_filled(harness):
+    rows = harness["cenrrFilled"]
+    lines = [r for r in rows if r.startswith("September")]
+    assert [l.split("|")[0].split(":")[0] for l in lines] == ["September 1, 2026", "September 2, 2026", "September 4, 2026"]
+    assert [l.split("|")[-1] for l in lines] == ["250", "300", "120"]
+    t = flat(rows)
+    assert "Name of Employee: Juan Dela Cruz" in t and "Employee No. 12345" in t and "Office: Manila" in t
+    assert "To attend Workshop on September 01-04, 2026 per DPO No. 2026-123" in t
+    assert any(r.startswith("TOTAL") and r.endswith("670") for r in rows)
+    assert "{{" not in t and "}}" not in t                                    # nothing raw is left behind
+    assert "Dr. Ana Reyes" in t and "OIC-Director" in t and "Nurse II" in t
+
+
+def test_cenrr_with_no_rows_leaves_no_placeholders(harness):
+    t = flat(harness["emptyRows"])
+    assert "{{" not in t
+
+
+def test_rer_template_and_fill(harness):
+    tpl = flat(harness["rerTemplate"])
+    for k in ("payee_name", "payee_designation", "amount_words", "amount_figures", "ride_from", "ride_to", "ride_date",
+              "activity_title", "dpo_ref"):
+        assert "{{%s}}" % k in tpl, k
+    assert "RALIE" not in tpl and "5451" not in tpl
+    assert "Fund Cluster : ______" in tpl and "RER No. : ______" in tpl            # the blanks left for handwriting stay
+    filled = flat(harness["rerFilled"])
+    assert "RECEIVED from MR. RALIE" not in filled and "Juan" in filled
+    assert "of Five Hundred Pesos (P500)" in filled
+    assert "fare from Home to Airport" in filled and "on September 1, 2026" in filled
+    assert "in attendance to Workshop as per DPO No. 2026-123" in filled and "{{" not in filled
+
+
+def test_the_relay_picks_sheet_or_doc_from_the_template_type():
+    src = (ROOT / "apps_script" / "travel_docs.gs").read_text()
+    assert "application/vnd.google-apps.spreadsheet" in src and "applyRowsSheet_" in src and "applyFieldsSheet_" in src
+    assert "doc.saveAndClose()" in src                                       # the Doc path is still there
+
+
+def test_the_template_maker_covers_every_template_key_the_app_asks_for():
+    import travel_docs as td
+    src = (ROOT / "apps_script" / "travel_templates.gs").read_text()
+    for key in td.DOC_TEMPLATES:
+        assert f"key: '{key}'" in src, key
+
+
+@pytest.mark.parametrize("name", ["travel_docs.gs", "travel_templates.gs"])
+def test_the_scripts_use_the_real_sheets_method_names(name):
+    """Google's Sheets TextFinder spells it useRegularExpression (no s); the plural is a runtime error."""
+    src = (ROOT / "apps_script" / name).read_text()
+    assert "useRegularExpressions" not in src

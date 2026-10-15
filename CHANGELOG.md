@@ -1,5 +1,14 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-15 (v6.38 — Sheets templates and the template maker)
+
+- `apps_script/travel_docs.gs`: the relay now fills a Google Sheet template as well as a Google Doc (it checks the template's type): `applyFieldsSheet_` and `applyRowsSheet_` (one marker row copied per item; raw `{{...}}` never left behind). The CENRR and RER forms are Excel forms, so their templates are Sheets.
+- `apps_script/travel_templates.gs` (new): one-time `makeTravelTemplates()` converts the office's Word and Excel files (found by name under a source folder) into Google Docs / Sheets in `<root>/_templates`, replaces the sample values with the `{{placeholders}}`, saves the `TPL_*` Script Properties and logs every placeholder that did not land; `checkTravelTemplates()` re-checks. Skips a template whose property is already set.
+- `travel_docs.py`: Appendix B gets `dpo_ref`; CENRR gets `dates` and `dpo_ref`; RER gets `activity_title` and `dpo_ref` (golden files updated).
+- `docs/TRAVEL_DOCS_RELAY_SETUP.md`: step 2 now uses the template maker; a new deployment version is needed after changing the scripts.
+- Tests: `tests/test_travel_scripts.py` and `tests/js/sheet_harness.js` (both scripts parse; the real sheet code runs against a fake Sheets API on grids that copy the CENRR and RER layouts).
+- **Version bump:** `APP_VERSION` 6.37 → 6.38.
+
 ## 2026-10-15 (v6.37 — travel library, ceilings, retention)
 
 - `travel.py`: `route_types`, `flat_ceilings`, `save_ceilings` (all values checked before any write; amounts 0 < n <= 100,000), `add_route` (always creates the route's RER ceiling), `is_template_admin`, `justifications`, `save_justification` (only the four library tokens allowed), `holiday_notice`, `purge_filings`.

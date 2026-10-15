@@ -1,6 +1,7 @@
 // Office Connect travel documents relay.
 // Deploy: Web app, Execute as: Me, Who has access: Anyone. Every request is HMAC-signed, so the
 // "Anyone" endpoint only does work for the Space. Setup: docs/TRAVEL_DOCS_RELAY_SETUP.md.
+// A template may be a Google Doc or a Google Sheet; the script checks which.
 // Script Properties: SHARED_SECRET, ROOT_FOLDER_ID, ALLOWED_DOMAIN (doh.gov.ph),
 // TPL_appendix_a, TPL_appendix_b, TPL_mc114_justification, TPL_jo_cert, TPL_travel_report,
 // TPL_cenrr, TPL_rer.
@@ -48,11 +49,20 @@ function generateDoc_(req) {
   const folder = it.hasNext() ? it.next() : root.createFolder(req.folder_key);
   const files = folder.getFiles();
   while (files.hasNext()) { const f = files.next(); if (f.getDescription() === 'request_id=' + req.request_id) return doc_(f); }
-  const copy = DriveApp.getFileById(tpl).makeCopy(String(req.title).slice(0, 120), folder);
+  const tplFile = DriveApp.getFileById(tpl);
+  const isSheet = tplFile.getMimeType() === 'application/vnd.google-apps.spreadsheet';
+  const copy = tplFile.makeCopy(String(req.title).slice(0, 120), folder);
   copy.setDescription('request_id=' + req.request_id);
-  const doc = DocumentApp.openById(copy.getId()), body = doc.getBody();
-  applyRows_(body, req.rows || {}); applyBlocks_(body, req.blocks || {}); applyFields_(body, req.fields || {});
-  doc.saveAndClose();
+  if (isSheet) {
+    SpreadsheetApp.openById(copy.getId()).getSheets().forEach(function (sh) {
+      applyRowsSheet_(sh, req.rows || {}); applyFieldsSheet_(sh, req.fields || {});
+    });
+    SpreadsheetApp.flush();
+  } else {
+    const doc = DocumentApp.openById(copy.getId()), body = doc.getBody();
+    applyRows_(body, req.rows || {}); applyBlocks_(body, req.blocks || {}); applyFields_(body, req.fields || {});
+    doc.saveAndClose();
+  }
   (req.share_with || []).forEach(function (a) {
     if (String(a).toLowerCase().endsWith('@' + P.getProperty('ALLOWED_DOMAIN'))) copy.addEditor(a);
   });
@@ -60,6 +70,30 @@ function generateDoc_(req) {
 }
 
 function doc_(f) { return { ok: true, id: f.getId(), url: f.getUrl(), name: f.getName() }; }
+
+// Google Sheets templates (the CENRR and RER forms are spreadsheets). Same {{placeholders}}; a repeated
+// row is the one row that holds the marker, copied once per item.
+function applyFieldsSheet_(sh, fields) {
+  Object.keys(fields).forEach(function (k) {
+    if (/^[a-z0-9_]+$/.test(k)) sh.createTextFinder('{{' + k + '}}').replaceAllWith(String(fields[k]));
+  });
+  sh.createTextFinder('\\{\\{[a-z0-9_]+\\}\\}').useRegularExpression(true).replaceAllWith('');   // never leave raw braces
+}
+
+function applyRowsSheet_(sh, rows) {
+  Object.keys(rows).forEach(function (k) {
+    const spec = rows[k], hit = sh.createTextFinder('{{' + spec.marker + '}}').findNext(); if (!hit) return;
+    const r = hit.getRow(), lastCol = sh.getLastColumn(), data = spec.data.length ? spec.data : [{}];
+    if (data.length > 1) {
+      sh.insertRowsAfter(r, data.length - 1);
+      for (let i = 1; i < data.length; i++) sh.getRange(r, 1, 1, lastCol).copyTo(sh.getRange(r + i, 1, 1, lastCol));
+    }
+    data.forEach(function (d, i) {
+      const range = sh.getRange(r + i, 1, 1, lastCol);
+      Object.keys(d).forEach(function (c) { range.createTextFinder('{{' + c + '}}').replaceAllWith(String(d[c])); });
+    });
+  });
+}
 
 function applyFields_(body, fields) {
   Object.keys(fields).forEach(function (k) {

@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.37"
+APP_VERSION = "6.38"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.38",
+        "date": "October 15, 2026",
+        "summary": "Travel forms can now be made from the office's own Word and Excel forms.",
+        "changes": [
+            "The CENRR and RER forms are now made from the office's Excel forms, so they keep their official layout.",
+            "A one-time setup script turns the office's travel forms into ready-to-fill Google templates, so nobody has to edit them by hand.",
+            "The generated Appendix B, CENRR and RER now say the DPO number and the activity, the way the originals do.",
+        ],
+    },
     {
         "version": "6.37",
         "date": "October 15, 2026",

@@ -291,6 +291,7 @@ def _appendix_b(ctx) -> DocPayload:
     return DocPayload("appendix_b", "appendix_b", ctx["title"]("appendix_b"), {
         "date": long_date(ctx["today"]), "head_name": sig["head_name"], "head_title": sig["head_title"], "station": sig["station"],
         "itinerary_ref": f"Appendix A, {date_range(f['act_start'], f['act_end'])}",
+        "dpo_ref": dpo_ref(f),
         "chk_strict": chk("strict"), "chk_cut": chk("cut"), "chk_extended": chk("extended"), "chk_other": chk("other"),
         "refund_amount": t["refund_amount"], "refund_or_no": t["refund_or_no"], "refund_or_date": t["refund_or_date"],
         "traveler_name": n, "traveler_designation": ctx["designation"],
@@ -343,6 +344,7 @@ def _cenrr(ctx) -> list:
     return [DocPayload("cenrr", "cenrr", ctx["title"]("cenrr"), {
         "employee_name": ctx["name"], "employee_no": ctx["profile"].get("employee_no") or "", "office": sig["station"],
         "division": _division(ctx["profile"]), "total": _m(total), "purpose": f"attend {ctx['filing']['act_title']}",
+        "dates": date_range(ctx["filing"]["act_start"], ctx["filing"]["act_end"]), "dpo_ref": dpo_ref(ctx["filing"]),
         "printed_name": ctx["name"], "designation": ctx["designation"],
         "noted_by_name": sig["noted_by_name"], "noted_by_title": sig["noted_by_title"]},
         rows={"items": {"marker": "p_date", "data": data}})]
@@ -356,7 +358,8 @@ def _rers(ctx) -> list:
         out.append(DocPayload("rer", "rer", ctx["title"]("rer"), {
             "payee_name": ctx["name"], "payee_designation": ctx["designation"], "amount_words": peso_words(r["allowance"]),
             "amount_figures": _m(r["allowance"]), "ride_from": r["from"], "ride_to": r["to"],
-            "ride_date": long_date(r["date"]) if r["date"] else "", "purpose": f"attend {ctx['filing']['act_title']}"},
+            "ride_date": long_date(r["date"]) if r["date"] else "", "purpose": f"attend {ctx['filing']['act_title']}",
+            "activity_title": ctx["filing"]["act_title"], "dpo_ref": dpo_ref(ctx["filing"])},
             index=len(out) + 1))
     return out
 
