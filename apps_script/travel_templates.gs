@@ -7,7 +7,8 @@
 //
 // Setup: set TM_SOURCE_FOLDER_ID below to the id of the "Travel Reimbursement Template" folder (the part
 // of its Drive address after /folders/). The office mailbox must be able to open that folder.
-// Run it as the office mailbox. The first run asks for permission to use Drive, Docs, Sheets and the web.
+// Also add the Drive API service: Services (+ beside Services) > Drive API > Add (version v3).
+// Run it as the office mailbox. The first run asks for permission to use Drive, Docs and Sheets.
 // Converted templates are put in a "_templates" folder inside the ROOT_FOLDER_ID folder.
 //
 // A template whose TPL_ property is already set is skipped. To redo one, delete its property first.
@@ -103,14 +104,14 @@ function tm_find_(folder, name) {
 }
 
 // Convert a Word / Excel file into a Google Doc / Sheet (a copy with a Google type), in a folder.
+// Uses the Drive API "advanced service" (Services > Drive API > v3), which needs no web-request permission.
 function tm_convert_(file, mime, folderId, title) {
-  const res = UrlFetchApp.fetch('https://www.googleapis.com/drive/v3/files/' + file.getId() + '/copy?supportsAllDrives=true', {
-    method: 'post', contentType: 'application/json', muteHttpExceptions: true,
-    headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
-    payload: JSON.stringify({ name: title, mimeType: mime, parents: [folderId] })
-  });
-  if (res.getResponseCode() !== 200) throw new Error('conversion failed (' + res.getResponseCode() + '): ' + res.getContentText().slice(0, 200));
-  return JSON.parse(res.getContentText()).id;
+  if (typeof Drive === 'undefined') {
+    throw new Error('add the Drive API service first: Services (the + beside Services) > Drive API > Add');
+  }
+  const copy = Drive.Files.copy({ name: title, mimeType: mime, parents: [folderId] }, file.getId(), { supportsAllDrives: true });
+  if (!copy || !copy.id) throw new Error('conversion returned nothing for ' + file.getName());
+  return copy.id;
 }
 
 function tm_lit_(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
