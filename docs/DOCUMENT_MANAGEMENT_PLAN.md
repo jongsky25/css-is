@@ -543,6 +543,8 @@ policy, integration and operational evidence exists; local fake-adapter tests do
 
 ### Implementation evidence — October 15, 2026
 
+Implementation review: [draft PR #264](https://github.com/jongsky25/css-is/pull/264).
+
 - [Setup, increment coverage, adapter contracts and recovery](DOCUMENT_MANAGEMENT_SETUP.md).
 - [Synthetic lifecycle contracts](../tests/test_documents.py) and [HTTP/CSRF contracts](../tests/test_documents_routes.py).
 - Browser acceptance on a synthetic database: incoming registration, verification, register and rules
