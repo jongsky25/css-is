@@ -1,0 +1,34 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash %}
+{% block title %}Travel ceilings and routes{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261014d">{% endblock %}
+{% block content %}
+{{ page_header("Ceilings and routes", "The most a ride can cost before the Admin Unit has to check it, and the routes that count as approved.") }}
+{{ flash(msg=msg, err=err) }}
+{% if holiday_notice %}<div class="tv-warn" role="status">{{ holiday_notice }}</div>{% endif %}
+
+<form method="post" action="/travel/admin/ceilings" class="tv-card tv-form">
+  <h2 class="tv-h">Ceilings</h2>
+  <p class="tv-hint">Amounts are in pesos per ride. An unreceipted fare up to the CENRR amount goes on a CENRR; above it, on an RER capped by its route. A fare above 1,000 with no receipt is always checked.</p>
+  {% for c in flat %}
+  <label>{{ c.label }} <input type="number" step="0.01" min="0.01" name="{{ c.mode }}" value="{{ c.amount if c.amount is not none else '' }}" required></label>
+  {% endfor %}
+  <h2 class="tv-h">Approved routes</h2>
+  <p class="tv-hint">A route counts as approved only while it is switched on and has an RER ceiling. Any other route is flagged.</p>
+  {% for r in routes %}
+  <div class="tv-row">
+    <div class="tv-row-wide"><strong>{{ r.label }}</strong></div>
+    <label>RER ceiling <input type="number" step="0.01" min="0.01" name="rer__{{ r.code }}" value="{{ r.rer if r.rer is not none else '' }}" required></label>
+    <div class="tv-checks"><label><input type="checkbox" name="active__{{ r.code }}" value="1" {{ 'checked' if r.active }}> <span>Approved</span></label></div>
+  </div>
+  {% endfor %}
+  <button class="btn" type="submit">Save ceilings</button>
+</form>
+
+<form method="post" action="/travel/admin/route" class="tv-card tv-form">
+  <h2 class="tv-h">Add an approved route</h2>
+  <label>Route name <input type="text" name="label" maxlength="80" required placeholder="Residence ⇄ Terminal 3"></label>
+  <label>RER ceiling <input type="number" step="0.01" min="0.01" name="rer" required></label>
+  <button class="btn" type="submit">Add route</button>
+</form>
+{% endblock %}

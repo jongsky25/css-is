@@ -1,0 +1,33 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash %}
+{% block title %}Justification library{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261014d">{% endblock %}
+{% block content %}
+{{ page_header("Justification library", "The MC 114 texts that travel forms start from. People can still edit the text for their own form.") }}
+{{ flash(msg=msg, err=err) }}
+<div class="tv-card">
+  <p class="tv-hint">Placeholders you can use: {% for t in tokens %}<code>{{ '{{' ~ t ~ '}}' }}</code>{% if not loop.last %}, {% endif %}{% endfor %}. For each place, the first text that is switched on is the one used.
+  {% if not can_edit %}Only template administrators can change these. Ask an administrator to add you under Travel filing settings.{% endif %}</p>
+</div>
+{% for r in rows %}
+<form method="post" action="/travel/library" class="tv-card tv-form">
+  <input type="hidden" name="id" value="{{ r.id }}">
+  <label>Title <input type="text" name="title" maxlength="120" value="{{ r.title }}" {{ 'readonly' if not can_edit }}></label>
+  <label>Used in <select name="format" {{ 'disabled' if not can_edit }}>{% for code, label in formats %}<option value="{{ code }}" {{ 'selected' if code == r.format }}>{{ label }}</option>{% endfor %}</select></label>
+  <label>Text <textarea name="body" rows="7" maxlength="6000" {{ 'readonly' if not can_edit }}>{{ r.body }}</textarea></label>
+  <div class="tv-checks"><label><input type="checkbox" name="active" value="1" {{ 'checked' if r.active }} {{ 'disabled' if not can_edit }}> <span>Switched on</span></label></div>
+  <small class="tv-hint">Last saved by {{ r.updated_by or 'the system' }}</small>
+  {% if can_edit %}<button class="btn" type="submit">Save</button>{% endif %}
+</form>
+{% endfor %}
+{% if can_edit %}
+<form method="post" action="/travel/library" class="tv-card tv-form">
+  <h2 class="tv-h">Add a text</h2>
+  <label>Title <input type="text" name="title" maxlength="120" required></label>
+  <label>Used in <select name="format">{% for code, label in formats %}<option value="{{ code }}">{{ label }}</option>{% endfor %}</select></label>
+  <label>Text <textarea name="body" rows="7" maxlength="6000" required></textarea></label>
+  <input type="hidden" name="active" value="1">
+  <button class="btn" type="submit">Add</button>
+</form>
+{% endif %}
+{% endblock %}

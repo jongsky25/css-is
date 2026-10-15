@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.36"
+APP_VERSION = "6.37"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.37",
+        "date": "October 15, 2026",
+        "summary": "Travel claims: set fare limits and routes, keep the justification texts, and clear old records.",
+        "changes": [
+            "The Administrative Section can now change the fare limits (TNVS, taxi, CENRR and each route's RER limit) and switch routes on or off from Ceilings and routes in the Travel menu. A new route always comes with its RER limit.",
+            "Template administrators can edit the MC 114 justification texts that travel forms start from, from the Justification library. Other Administrative Section members can read them.",
+            "A year after a travel claim is submitted (or withdrawn), the links and notes on it are cleared automatically. The claim itself, its dates and its status stay on record.",
+            "The travel settings pages now warn when next year's holidays have not been loaded, since deadlines can land on a holiday until they are.",
+        ],
+    },
     {
         "version": "6.36",
         "date": "October 14, 2026",

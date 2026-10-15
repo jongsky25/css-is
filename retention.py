@@ -214,6 +214,14 @@ def purge_room_guests(db_path="css_is.db", months=None, dry_run=False):
         conn.close()
 
 
+def purge_travel_filings(conn, months=None, dry_run=False, today=None):
+    """Blank links, FMIS references, notes, flag text and saved answers on travel filings submitted (or
+    withdrawn) more than `months` ago (default: the travel.retention_months setting, 12). The app
+    also does this once a day; this is the manual/cron form. Returns the number of filings."""
+    import travel
+    return travel.purge_filings(conn, months=months, today=today, dry_run=dry_run)
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Purge expired attendee PII (retention rule).")
     ap.add_argument("--db", default="css_is.db", help="database file (default css_is.db)")
@@ -230,6 +238,8 @@ if __name__ == "__main__":
                     help="purge stale email_log rows instead of attendee PII")
     ap.add_argument("--room-guests", action="store_true",
                     help="blank conference-room guests' contact details past --months (default 12)")
+    ap.add_argument("--travel-filings", action="store_true",
+                    help="blank links and notes on travel filings past --months (default: the travel.retention_months setting)")
     ap.add_argument("--days", type=int, default=None,
                     help="retention window in days for --ui-events, --ai-log or --email-log "
                          "(default: the matching app_setting, or the module default if unset)")
@@ -241,6 +251,16 @@ if __name__ == "__main__":
     elif args.room_guests:
         purge_room_guests(db_path=args.db, months=args.months if args.months != RETENTION_MONTHS_DEFAULT else None,
                           dry_run=args.dry_run)
+    elif args.travel_filings:
+        _conn = st.connect(args.db)
+        try:
+            st.init_db(_conn)
+            _n = purge_travel_filings(_conn, months=args.months if args.months != RETENTION_MONTHS_DEFAULT else None,
+                                      dry_run=args.dry_run)
+            print(f"{'[dry-run] ' if args.dry_run else ''}{_n} travel filing(s) "
+                  f"{'would be ' if args.dry_run else 'were '}purged.")
+        finally:
+            _conn.close()
     elif args.email_log:
         purge_stale_email_log(db_path=args.db, days=args.days, dry_run=args.dry_run)
     else:
