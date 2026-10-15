@@ -24,6 +24,8 @@ import storage as st
 import travel
 import travel_checklist as tc
 import travel_rules as tr
+import travel_scan
+import ai_core
 
 _REF = re.compile(r"^TF-\d{4}-\d{4,}$")
 STATUS_BADGE = {"open": "amber", "ready": "blue", "submitted": "green", "withdrawn": "grey"}
@@ -372,6 +374,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             data["ref"] = ref
             data["post_url"] = f"/travel/f/{ref}/generate"
             data["status_url"] = f"/travel/f/{ref}/status"
+            data["scan_url"] = f"/travel/f/{ref}/scan"
             items = _generate_items(conn, filing)
             return templates.TemplateResponse(request, "travel_prepare.html", {
                 "nav_active": "travel_mine", "tab": "mine", "f": filing, "items": items, "relay_ready": gdocs_relay.configured(),
@@ -498,6 +501,45 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             calc = travel_rates.rates_for_rows(norm["rows"], opts, _working(conn))
             dte = travel_rates.region_dte(opts["region"])
             return JSONResponse({"ok": True, "dte": float(dte) if dte else None, "rows": [c.as_dict() for c in calc]})
+        finally:
+            conn.close()
+
+    @router.post("/travel/f/{ref}/scan")
+    async def travel_scan_document(request: Request, ref: str):
+        """The raw bytes of one ticket, boarding pass or receipt (image or PDF) as the body. The AI reads the
+        amount; the file is dropped as soon as the answer is back, so nothing is stored or audited."""
+        if not _same_origin(request):
+            return _jerr("This request came from another site.", 403)
+        try:
+            if int(request.headers.get("content-length") or 0) > travel_scan.MAX_BYTES:
+                return _jerr("That file is too large. Use one under 6 MB.", 413)
+        except ValueError:
+            return _jerr("Send the file.")
+        raw = await request.body()
+        if not raw or len(raw) > travel_scan.MAX_BYTES:
+            return _jerr("That file is empty or too large. Use one under 6 MB.", 413)
+        mime = travel_scan.sniff(raw)
+        if not mime:
+            return _jerr("Use a photo (JPG, PNG, WebP) or a PDF.", 415)
+        conn = get_conn()
+        try:
+            if not travel.enabled(conn):
+                return _jerr("Travel filing is not switched on.", 403)
+            filing = travel.get_by_ref(conn, ref) if _REF.match(ref) else None
+            user = request.state.user
+            if not travel.can_view(conn, user, filing):
+                return _jerr("Not found.", 404)
+            if not travel.is_owner(user, filing):
+                return _jerr("Only the person who filed can use this.", 403)
+            if not ratelimit.allow("travel_scan", f"u{user['id']}"):
+                return _jerr("Too many scans. Wait a minute and try again.", 429)
+            ip = request.client.host if request.client else None
+            try:
+                found = await travel_scan.read(conn, user, ip, raw, mime)
+            except ai_core.AIError:
+                return JSONResponse({"ok": False, "ai": False,
+                                     "error": "Reading documents is not available right now. Type the amount in."})
+            return JSONResponse({"ok": True, **found})
         finally:
             conn.close()
 

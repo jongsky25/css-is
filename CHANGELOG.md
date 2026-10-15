@@ -1,5 +1,14 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-15 (v6.41 — read the fare off a ticket or receipt)
+
+- `ai_core.py`: `ask()` / `_http_generate()` take `images=[(mime, bytes)]`, sent to Gemini as inline data ahead of the prompt. An image call never uses Groq (the Groq-alone and the quota-fallback paths both skip it) and the bytes are never logged. New feature `travel_scan`, 30 a day.
+- `travel_scan.py` (new): `sniff` (type from the first bytes), `clean` (a bad amount, date or kind becomes empty, never raises), `read` (one structured Gemini call).
+- `travel_routes.py`: `POST /travel/f/<ref>/scan`, raw file as the body (JPG / PNG / WebP / PDF, under 6 MB), owner-only, same-origin, 12 a minute per account (`ratelimit.py`). Stores and audits nothing.
+- `static/js/travel_prepare.js`: a file picker under each day's fare box. It shows what was found with a "Use" button; only that button sets the fare (and the date / from / to when empty, and the taxi / TNVS receipt choice). A non-peso total is not offered.
+- Tests: `tests/test_travel_scan.py`; `test_travel_admin.py` lists the new read-only POST.
+- **Version bump:** `APP_VERSION` 6.40 → 6.41.
+
 ## 2026-10-15 (v6.40 — travel rates fill in by themselves)
 
 - `static/js/travel_prepare.js`: the policy limit and the daily allowance now fill the fare and per diem boxes without a click (`autofill`): a box is filled while empty or still holding the last automatic value, so changing a rate updates it and a typed amount is kept. "Set every day to…" sets the per diem rule for the whole trip at once; the per-day "Use" buttons remain. The "Fill every day" button is gone.
