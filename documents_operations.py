@@ -5,14 +5,11 @@ It receives metadata only; binary documents and transient OCR remain in Drive/re
 A successful transport is never itself evidence of a signed or dispatched document.
 """
 import hashlib
-import hmac
+import base64
 import json
-import os
 import re
-import time
 import uuid
 from urllib.parse import urlparse
-import httpx
 import storage as st
 import tzutil as tz
 import documents as d
@@ -20,8 +17,7 @@ import documents_permissions as p
 from documents_storage import rows, transaction, event
 
 
-class Unconfigured(ValueError):
-    pass
+from documents_workspace import WorkspaceRelay, Unconfigured
 
 
 def validate_drive_url(value):
@@ -39,32 +35,12 @@ def validate_drive_url(value):
     return f'https://drive.google.com/file/d/{fid}/view',fid
 
 
-class Relay:
-    """Signed HTTPS adapter; deliberately no automatic transport retries."""
-    def call(self, action, payload, operation_id):
-        endpoint=os.environ.get('DOCUMENTS_RELAY_URL','')
-        secret=os.environ.get('DOCUMENTS_RELAY_SECRET','')
-        if not endpoint or not secret or urlparse(endpoint).scheme!='https':
-            raise Unconfigured('The document relay has not been configured and live-validated.')
-        data=json.dumps({'action':action,'operation_id':operation_id,**payload},sort_keys=True,separators=(',',':'))
-        ts=str(int(time.time()))
-        signature=hmac.new(secret.encode(),(ts+'.'+data).encode(),hashlib.sha256).hexdigest()
-        with httpx.Client(timeout=45,follow_redirects=False) as client:
-            with client.stream('POST',endpoint,json={'ts':ts,'payload':data,'signature':signature}) as response:
-                response.raise_for_status()
-                content=bytearray()
-                for chunk in response.iter_bytes():
-                    content.extend(chunk)
-                    if len(content)>1024*1024:
-                        raise ValueError('Relay response exceeded the 1 MiB metadata limit.')
-        result=json.loads(content)
-        if not isinstance(result,dict) or result.get('operation_id')!=operation_id:
-            raise ValueError('Relay did not confirm the operation identifier.')
-        return result
+# Alias retained for callers; transport uses the already-configured Workspace relays.
+Relay = WorkspaceRelay
 
 
 def get_adapter():
-    return Relay()
+    return WorkspaceRelay()
 
 
 def version(conn,doc):
@@ -162,10 +138,16 @@ def queue(conn,user,doc_id,revision,kind,data):
             v=version(conn,doc)
             if data.get('confirmed_fingerprint')!=v['fingerprint']:
                 raise ValueError('Preview and explicitly confirm the final fingerprint.')
-            payload={'file_id':v['file_id'],'fingerprint':v['fingerprint'],'signatory_id':user['id']}
+            signature=st.user_signature(conn,user['id'])
+            if not signature or signature[1] not in ('image/png','image/jpeg') or len(signature[0])>512*1024:
+                raise ValueError('Save your PNG or JPEG signature (up to 512 KiB) in My profile before signing.')
+            payload={'file_id':v['file_id'],'fingerprint':v['fingerprint'],'signatory_id':user['id'],
+                     'signature_hash':hashlib.sha256(signature[0]).hexdigest()}
         else:
             v=release_gate(conn,user,doc,data)
-            payload={**data,'file_id':v['file_id'],'fingerprint':v['fingerprint'],'channel':'direct_email'}
+            payload={**data,'file_id':v['file_id'],'fingerprint':v['fingerprint'],'channel':'direct_email',
+                     'subject':doc['number']+' — '+doc['subject'],
+                     'message':str(data.get('message') or 'Please see the attached official correspondence.')[:4000]}
             sender=st.get_setting(conn,'documents.official_sender','')
             if not sender:
                 raise Unconfigured('The official sender mailbox has not been configured.')
@@ -231,6 +213,7 @@ def record_dispatch(conn,user,doc_id,revision,data,adapter=None):
 
 def execute(conn,operation,adapter=None,*,reconcile=False):
     adapter=adapter or get_adapter()
+    transient={}
     with transaction(conn):
         d.writable(conn)
         job=rows(conn,'SELECT * FROM document_job WHERE id=?',(operation,))
@@ -248,6 +231,11 @@ def execute(conn,operation,adapter=None,*,reconcile=False):
             v=version(conn,doc)
             if doc['status']!='approved' or doc['approved_version']!=v['id'] or doc['reconcile']:
                 raise ValueError('Signing approval is no longer current.')
+            if not reconcile:
+                signature=st.user_signature(conn,user['id'])
+                if not signature or hashlib.sha256(signature[0]).hexdigest()!=payload.get('signature_hash'):
+                    raise ValueError('Your stored signature changed. Cancel the unexecuted request and confirm again.')
+                transient={'signature_base64':base64.b64encode(signature[0]).decode('ascii'),'signature_mime':signature[1]}
         else:
             d.require(p.can_work(conn,user,doc))
         if v and job['version_id']!=v['id']:
@@ -256,7 +244,7 @@ def execute(conn,operation,adapter=None,*,reconcile=False):
     # Relay must atomically compare fingerprint before sign/send. An inspect call
     # alone has a TOCTOU gap and cannot authorize an external effect.
     try:
-        result=adapter.call('status' if reconcile else job['kind'],{**payload,'kind':job['kind'],'actor_id':user['id']},operation)
+        result=adapter.call('status' if reconcile else job['kind'],{**payload,**transient,'kind':job['kind'],'actor_id':user['id']},operation)
         if result.get('state')!='confirmed':
             raise ValueError('The relay did not confirm the effect.')
         if job['kind']=='sign':
@@ -327,3 +315,22 @@ def acknowledge(conn,user,doc_id,revision,dispatch_id,recipient,evidence):
         if not cur.rowcount:
             raise ValueError('Dispatched recipient not found.')
         return d.finish(conn,user,doc,'acknowledgment',{'dispatch_id':dispatch_id,'recipient':recipient,'evidence':evidence})
+
+
+def signature_preview(conn,user,doc_id,adapter=None):
+    """Read-only placement check against the exact approved source."""
+    d.writable(conn)
+    user=p.actor(conn,user); doc=d.get(conn,user,doc_id)
+    d.require(p.has_role(conn,user,'signatory',doc['unit_id']))
+    v=version(conn,doc)
+    if doc['status']!='approved' or doc['approved_version']!=v['id'] or doc['reconcile']:
+        raise ValueError('Approve the current source before previewing a signature.')
+    signature=st.user_signature(conn,user['id'])
+    if not signature:
+        raise ValueError('Save your own signature in My profile first.')
+    result=(adapter or get_adapter()).call('preview',{'file_id':v['file_id'],'fingerprint':v['fingerprint'],
+                                                    'actor_id':user['id']},str(uuid.uuid4()))
+    if result.get('state')!='confirmed' or result.get('fingerprint')!=v['fingerprint']:
+        raise ValueError('The source or signature position could not be confirmed.')
+    # Use our already-validated source link, not an arbitrary provider URL.
+    return {'fingerprint':v['fingerprint'],'url':v['url'],'marker':'{{OFFICE_CONNECT_SIGNATURE}}'}

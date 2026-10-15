@@ -536,8 +536,8 @@ For every incremental PR:
 - Preserve prior module behavior and keep optional future work separate from first-release gates.
 
 The D1–D11 development implementation adds application tables, service workflows, screens and shared
-integration hooks. `documents.enabled` and `documents.sending_enabled` default to `0`. It has not
-connected production Google/OCR/signing/mail providers, sent live mail, imported spreadsheet data,
+integration hooks. `documents.enabled` and `documents.sending_enabled` default to `0`. It now includes compatible extensions for the existing Google Workspace relays, but has not
+updated their live deployments, sent live mail, imported spreadsheet data,
 or deployed code. The unchecked acceptance items above intentionally remain open until their full
 policy, integration and operational evidence exists; local fake-adapter tests do not close those gates.
 
@@ -552,3 +552,12 @@ Implementation review: [draft PR #264](https://github.com/jongsky25/css-is/pull/
 - Repeated migrations and repository preflight passed. Full regression results and the clean-main
   comparison are recorded in the implementation PR.
 - O01–O11 remain owner/configuration/live-acceptance gates. D12 launch and D13 import are not performed.
+
+### Workspace integration follow-up
+
+The client now reuses the existing travel Docs and mail connection settings and millisecond HMAC
+protocol. `apps_script/documents_relay.gs` supplies Drive version checks, Google Drive OCR,
+signatory-only profile-image application to a marked Google Doc, and durable Gmail dispatch/status
+operations. `apps_script/mail_relay.gs` retains legacy mail requests. Source and fake-service tests
+are evidence of implementation, not live deployment; the updated setup document lists the exact
+existing-project upgrade steps and remaining acceptance gates. No new Google account is required.

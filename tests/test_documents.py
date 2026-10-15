@@ -26,7 +26,8 @@ def registry(tmp_path):
     c.execute('UPDATE admin_user SET rp_id=? WHERE id=?',(rp,users[2]['id']))
     for uid,role in [(users[1]['id'],'records'),(users[1]['id'],'workflow_admin'),(users[2]['id'],'signatory'),(users[1]['id'],'grant_admin')]:
         c.execute('INSERT INTO document_role_grant(user_id,role,created_at) VALUES (?,?,?)',(uid,role,'2026-01-01'))
-    c.commit(); st.set_setting(c,'documents.enabled','1'); c.commit()
+    c.commit(); st.set_user_signature(c,users[2]['id'],b'test-signature','image/png')
+    st.set_setting(c,'documents.enabled','1'); c.commit()
     yield c,users,unit,path
     c.close()
 
@@ -315,3 +316,37 @@ def test_malformed_rule_lists_are_rejected(registry):
     c,u,unit,_=registry
     for body in ({'assignees':'not a list'}, {'unit_ids':7}, {'policy':{'cutoff':'25:00'}}, {'keywords':['']}):
         with pytest.raises(ValueError):d.rule_save(c,u[1],'Invalid',body)
+
+
+def test_signature_is_transient_and_changed_profile_blocks_execution(registry):
+    c,u,unit,_=registry;doc=approved(registry)
+    operation=ops.queue(c,u[2],doc['id'],doc['revision'],'sign',{'confirmed_fingerprint':'v1'})
+    payload=c.execute('SELECT payload_json FROM document_job WHERE id=?',(operation,)).fetchone()[0]
+    assert 'signature_base64' not in payload and 'test-signature' not in payload
+    st.set_user_signature(c,u[2]['id'],b'replacement','image/png')
+    with pytest.raises(ValueError,match='signature changed'):ops.execute(c,operation,Adapter())
+    assert c.execute('SELECT state FROM document_job WHERE id=?',(operation,)).fetchone()[0]=='pending'
+
+
+def test_only_current_signatory_can_preview_approved_source(registry):
+    c,u,unit,_=registry;doc=approved(registry)
+    class Preview(Adapter):
+        def call(self,action,payload,operation):
+            assert action=='preview' and 'signature_base64' not in payload
+            return {'state':'confirmed','fingerprint':payload['fingerprint'],'url':'https://untrusted.test'}
+    with pytest.raises(p.Denied):ops.signature_preview(c,u[0],doc['id'],Preview())
+    result=ops.signature_preview(c,u[2],doc['id'],Preview())
+    assert result['url'].startswith('https://drive.google.com/')
+
+
+def test_sign_execution_uses_actors_own_existing_signature(registry):
+    import base64
+    c,u,unit,_=registry;doc=approved(registry)
+    class Sign(Adapter):
+        def call(self,action,payload,operation):
+            assert payload['signatory_id']==payload['actor_id']==u[2]['id']
+            assert base64.b64decode(payload['signature_base64'])==b'test-signature'
+            return super().call(action,payload,operation)
+    operation=ops.queue(c,u[2],doc['id'],doc['revision'],'sign',{'confirmed_fingerprint':'v1','signature_base64':'attacker supplied'})
+    ops.execute(c,operation,Sign())
+    assert 'signature_base64' not in c.execute('SELECT payload_json FROM document_job WHERE id=?',(operation,)).fetchone()[0]

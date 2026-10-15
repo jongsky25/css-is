@@ -1,3 +1,9 @@
+## 6.40 — October 15, 2026
+
+- Documents reuses the existing travel Docs and mail relays; no additional Workspace account or endpoint is needed.
+- Added Drive/OCR/signing and durable official Gmail dispatch/status scripts, profile-signature preview, compatibility tests and existing-deployment upgrade instructions.
+- Module/send switches remain disabled; live Apps Script upgrades and acceptance checks are still required.
+
 ## 6.39 — October 15, 2026
 
 - Added document registration, routing, assignments, review, versioned signing/release workflows, closure, scoped search and reporting for acceptance testing.

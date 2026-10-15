@@ -210,6 +210,9 @@ def make_router(templates,get_conn):
             revision=int(data['revision'])
             if action=='attach':
                 ops.attach(conn,user,doc_id,revision,data['url'],data['classification'],data['reason'])
+            elif action=='sign_preview':
+                preview=ops.signature_preview(conn,user,doc_id)
+                return render(request,conn,'sign_preview',doc=d.get(conn,user,doc_id),preview=preview)
             elif action=='external_signature':
                 ops.external_signature(conn,user,doc_id,revision,data['url'],data['source_fingerprint'],data['evidence'])
             elif action in ('extract','sign','dispatch'):

@@ -42,12 +42,12 @@
 {% if doc.reviewer_id==request.state.user.id %}{{ start(doc,csrf,'review','Review the exact current version') }}{{ select('decision','Decision',[('approved','Approve'),('changes_requested','Return for revision')]) }}{{ text('reason','Review note') }}{{ end('Record review') }}{% endif %}
 {% if signatory %}
 {{ start(doc,csrf,'external_signature','Record your externally signed final copy') }}{{ field('url','Signed Drive copy','url') }}{{ field('source_fingerprint','Reviewed source fingerprint') }}{{ text('evidence','Signing evidence and confirmation that content matches the approved source') }}{{ end() }}
-{{ start(doc,csrf,'sign','Apply your own stored signature') }}<p>Open the current file above and check the final content and signature placement before confirming.</p>{{ field('confirmed_fingerprint','I reviewed this exact fingerprint') }}{{ end('Confirm final version and sign as myself') }}
+{{ start(doc,csrf,'sign_preview','Preview your stored signature placement') }}<p>Place {{ '{{OFFICE_CONNECT_SIGNATURE}}' }} on a paragraph of its own in the Google Doc before review. Existing PDFs can use the external-signature workflow.</p>{{ end('Check final source and placement') }}
 {% endif %}
 {% if can_release %}
 {% for action,label in [('record_dispatch','Record existing email / physical dispatch'),('dispatch','Send through the official mailbox')] %}
 {{ start(doc,csrf,action,label) }}<input type="hidden" name="operation_id" value="{{ operation_id }}">
-{% if action=='record_dispatch' %}{{ select('channel','Channel',[('email','Existing email'),('physical','Physical delivery'),('other','Other')]) }}{{ field('sender','Actual sender') }}{{ text('evidence','Message ID / delivery receipt / release evidence') }}{% else %}<input type="hidden" name="channel" value="direct_email"><p>This sends the authorized final version to the recipients below.</p>{% endif %}
+{% if action=='record_dispatch' %}{{ select('channel','Channel',[('email','Existing email'),('physical','Physical delivery'),('other','Other')]) }}{{ field('sender','Actual sender') }}{{ text('evidence','Message ID / delivery receipt / release evidence') }}{% else %}<input type="hidden" name="channel" value="direct_email">{{ text('message','Cover message',required=false) }}<p>This sends the authorized final version to the recipients below.</p>{% endif %}
 {{ text('recipients','Recipients (one per line)') }}{% for label in policy.get('release',[]) %}{{ text('checklist:'~label,label) }}{% endfor %}{{ end('Confirm release') }}{% endfor %}
 {{ start(doc,csrf,'acknowledge','Record recipient acknowledgment') }}{{ field('dispatch_id','Dispatch number','number') }}{{ field('recipient','Recipient') }}{{ text('evidence','Acknowledgment evidence') }}{{ end() }}
 {% endif %}
