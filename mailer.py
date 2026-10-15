@@ -1534,6 +1534,7 @@ FEATURES = {
         "Each person on a calendar entry that starts tomorrow gets one reminder listing them. CSS "
         "activities are left to the existing activity reminder, so nobody is told twice.",
         "scheduled"),
+    "job_documents": ("Documents — workflow notices", "Access-checked document workflow notices and deadline reminders.", "scheduled"),
     "job_travel_filing_due": (
         "Travel claims — due soon or overdue",
         "Each person gets one email a day while a travel claim of theirs is due within the lead time "
@@ -1668,6 +1669,7 @@ _PREVIEWS = {
         "Juan Reyes", "Wednesday, October 14",
         [{"title": "Orientation for new staff", "when": "9:00–10:00", "where": "DOH Conference Room", "url": _SAMPLE_LINK}],
         _SAMPLE_LINK),
+    "job_documents": lambda: document_notice_message(_SAMPLE_LINK),
     "job_travel_filing_due": lambda: travel_filing_due_message(
         "Juan Reyes",
         [{"title": "Basic Life Support Training", "kind": "reimbursement", "when": "Due in 2 days", "url": _SAMPLE_LINK}],
@@ -1723,3 +1725,9 @@ def preview(key):
                 f'<body style="font-family:Arial,Helvetica,sans-serif; white-space:pre-wrap;">'
                 f'{htmlmod.escape(body)}</body></html>')
     return subject, html
+
+
+def document_notice_message(link):
+    from html import escape
+    return ("A document needs your attention", "Sign in to review your document queue: " + link,
+            '<p>A document needs your attention.</p><a href="'+escape(link,quote=True)+'">Sign in to review</a>')

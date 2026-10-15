@@ -1,6 +1,6 @@
 # Documents Management — phased incremental development plan v1
 
-**Status:** proposed implementation baseline; planning only. No Documents increment is implemented by this PR.
+**Status:** D1–D11 application implementation added behind disabled switches; acceptance and live-integration gates remain open. See [implementation/setup evidence](DOCUMENT_MANAGEMENT_SETUP.md).
 **Owner decisions recorded through:** 2026-10-15.
 **Repository baseline:** main at a6bcb64a451611535d9e3a9b6a61b93f2690aeed; recheck integration points before each implementation PR.
 **Launch:** bureau-wide introduction with a trial period, covering incoming and outgoing documents.
@@ -445,7 +445,7 @@ uncertain values remain visible; historical timestamps are distinguished from im
 - templates/documents/ and focused static assets; reuse shared layouts, forms, statuses, and approvals.
 - tests/test_documents_*.py: focused behavioral and integration contracts.
 
-These names are proposals, not files created by this PR. Keep app.py integration small.
+Implementation uses the proposed service boundaries; external Drive, extraction, signing and dispatch orchestration is consolidated in `documents_operations.py`. Keep app.py integration small.
 Do not couple document workflow logic to CSS response/answer tables or travel-specific form policies.
 
 Primary screens: My actions; Incoming; Outgoing; For verification; For review; For release;
@@ -535,5 +535,29 @@ For every incremental PR:
 - Update this plan with actual status, PR links, evidence, and any explicitly approved scope change.
 - Preserve prior module behavior and keep optional future work separate from first-release gates.
 
-This PR adds a planning document only. It does not create application tables, change permissions,
-activate automation, connect Google accounts, send mail, import spreadsheet data, or deploy code.
+The D1–D11 development implementation adds application tables, service workflows, screens and shared
+integration hooks. `documents.enabled` and `documents.sending_enabled` default to `0`. It now includes compatible extensions for the existing Google Workspace relays, but has not
+updated their live deployments, sent live mail, imported spreadsheet data,
+or deployed code. The unchecked acceptance items above intentionally remain open until their full
+policy, integration and operational evidence exists; local fake-adapter tests do not close those gates.
+
+### Implementation evidence — October 15, 2026
+
+Implementation review: [draft PR #264](https://github.com/jongsky25/css-is/pull/264).
+
+- [Setup, increment coverage, adapter contracts and recovery](DOCUMENT_MANAGEMENT_SETUP.md).
+- [Synthetic lifecycle contracts](../tests/test_documents.py) and [HTTP/CSRF contracts](../tests/test_documents_routes.py).
+- Browser acceptance on a synthetic database: incoming registration, verification, register and rules
+  at 390px/1280px; no horizontal overflow on checked phone screens.
+- Repeated migrations and repository preflight passed. Full regression results and the clean-main
+  comparison are recorded in the implementation PR.
+- O01–O11 remain owner/configuration/live-acceptance gates. D12 launch and D13 import are not performed.
+
+### Workspace integration follow-up
+
+The client now reuses the existing travel Docs and mail connection settings and millisecond HMAC
+protocol. `apps_script/documents_relay.gs` supplies Drive version checks, Google Drive OCR,
+signatory-only profile-image application to a marked Google Doc, and durable Gmail dispatch/status
+operations. `apps_script/mail_relay.gs` retains legacy mail requests. Source and fake-service tests
+are evidence of implementation, not live deployment; the updated setup document lists the exact
+existing-project upgrade steps and remaining acceptance gates. No new Google account is required.

@@ -1180,7 +1180,9 @@ def home_tasks(conn, user, today=None):
     most urgent first (to do → waiting → for information → done)."""
     today = today or tz.today_local()
     tasks = []
-    for build in (lambda: _task_approvals(conn, user),
+    import documents_notify
+    for build in (lambda: documents_notify.home_task(conn, user),
+                  lambda: _task_approvals(conn, user),
                   lambda: _task_wellness(conn, user, today),
                   lambda: _task_awa(conn, user, today),
                   lambda: _task_office_today(conn, user, today),

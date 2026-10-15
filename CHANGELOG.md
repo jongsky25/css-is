@@ -1,6 +1,13 @@
+## 6.42 — October 15, 2026
+
+- Added document registration, routing, review, signing/release, closure, scoped search and reporting for acceptance testing.
+- Documents reuses the existing travel Docs and mail relays for extraction, saved signatures and durable Gmail dispatch/status.
+- Includes profile-signature preview, compatibility tests and existing-deployment upgrade instructions.
+- Module and sending switches remain disabled; live acceptance and office policy decisions are required before operational use.
+
 # CHANGELOG — Cowork revisions (surgical)
 
-## 2026-10-15 (v6.42 — upload a file instead of pasting a link)
+## 2026-10-15 (v6.43 — upload a file instead of pasting a link)
 
 - `apps_script/travel_docs.gs` (script version 2): `upload_file` puts a JPG / PNG / WebP / PDF in `ROOT/<filing>/<row>/` (one sub-folder per checklist row, idempotent on `request_id`, folder shared view-only with the claimant); `trash_file` trashes a folder or file only when it sits under the root folder. `ping` answers `version: 2`.
 - `gdocs_relay.py`: `Relay.upload_file` / `Relay.trash_file`, `UPLOAD_VERSION = 2`, plain-word errors for the new codes.
@@ -8,7 +15,7 @@
 - `travel.py` / `storage.py`: `travel_item.drive_source` (`upload` or `link`) so only office-made folders are ever trashed; `save_upload`, `clear_upload`, `uploaded_folder`. `purge_filings` trashes uploaded folders first and skips a filing whose files cannot be trashed (retried next run).
 - `static/js/travel_upload.js`, `templates/travel_filing.html`: "Choose file or take photo" (several files at once, big photos shrunk to about 2000 px in the browser) next to the Drive-link box, which stays as the fallback.
 - Tests: `tests/test_travel_relay.py` (upload, failure, refusals, switch, rate limit, remove, replace, purge); `test_travel_admin.py` lists the new column and the audited removal.
-- **Version bump:** `APP_VERSION` 6.41 → 6.42. Redeploy the relay script (docs/TRAVEL_DOCS_RELAY_SETUP.md, step 7).
+- **Version bump:** `APP_VERSION` 6.42 → 6.43. Redeploy the relay script (docs/TRAVEL_DOCS_RELAY_SETUP.md, step 7).
 
 ## 2026-10-15 (v6.41 — read the fare off a ticket or receipt)
 
