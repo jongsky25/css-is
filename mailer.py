@@ -791,6 +791,44 @@ def calendar_day_before_message(name, day_label, items, link):
     return subject, body, html
 
 
+_TRAVEL_KIND = {"ca": "cash advance", "liquidation": "liquidation", "reimbursement": "reimbursement"}
+
+
+def travel_filing_due_message(name, items, owed, link):
+    """Returns (subject, plain_text_body, html_body). `items` is [{title, kind, when, url}] for open
+    travel claims that are due soon or overdue; `owed` is [{title, url}] for submitted cash advances
+    whose activity is over and still have no liquidation."""
+    n = len(items) + len(owed)
+    subject = ("Travel claim due: " + (items or owed)[0]["title"]) if n == 1 else f"{n} travel claims need your attention"
+    lines = []
+    if items:
+        lines.append("Due soon or overdue:")
+        for i in items:
+            lines.append(f"  • {i['title']} — {_TRAVEL_KIND.get(i['kind'], i['kind'])}, {(i['when'] or '').lower() or 'open'}\n    {i['url']}")
+    if owed:
+        if lines:
+            lines.append("")
+        lines.append("Cash advances that still need a liquidation (the activity is over):")
+        for o in owed:
+            lines.append(f"  • {o['title']}\n    {o['url']}")
+    body = (f"Hello {name or 'there'},\n\nThese travel claims are waiting on you:\n\n" + "\n".join(lines)
+            + f"\n\nAll your travel claims: {link}\n\nYou get this because you have a travel claim open in Office Connect.\n")
+    def row(title, sub, url):
+        return (f'<tr><td style="padding:5px 0; font-family:Arial,Helvetica,sans-serif; font-size:14px; color:{_INK};">'
+                f'<a href="{_e(url)}" style="color:{_INK};"><strong>{_e(title)}</strong></a><br>'
+                f'<span style="font-size:13px; color:{_SOFT};">{_e(sub)}</span></td></tr>')
+    cells = "".join(row(i["title"], f"{_TRAVEL_KIND.get(i['kind'], i['kind']).capitalize()} · {i['when']}", i["url"])
+                    for i in items)
+    cells += "".join(row(o["title"], "Cash advance · liquidation still to file", o["url"]) for o in owed)
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},", heading="Travel claims waiting on you",
+        intro="These travel claims are waiting on you:",
+        extra_html=f'<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0;">{cells}</table>',
+        cta_label="Open my travel claims", link=link,
+        footnote="You get this because you have a travel claim open in Office Connect.")
+    return subject, body, html
+
+
 def csm_rp_results_message(rp_name, topic, event_title, link):
     """Returns (subject, plain_text_body, html_body). Sent once to a resource
     person (speaker) with a login, after their own Type-3 CSM ratings for a
@@ -1496,6 +1534,11 @@ FEATURES = {
         "Each person on a calendar entry that starts tomorrow gets one reminder listing them. CSS "
         "activities are left to the existing activity reminder, so nobody is told twice.",
         "scheduled"),
+    "job_travel_filing_due": (
+        "Travel claims — due soon or overdue",
+        "Each person gets one email a day while a travel claim of theirs is due within the lead time "
+        "(or overdue), or a cash advance still needs its liquidation. Nothing is sent when there is nothing due.",
+        "scheduled"),
     "job_whereabouts_nudge": (
         "Weekly whereabouts — Tuesday nudge",
         "Nudges staff who haven't answered the Monday whereabouts email.",
@@ -1625,6 +1668,10 @@ _PREVIEWS = {
         "Juan Reyes", "Wednesday, October 14",
         [{"title": "Orientation for new staff", "when": "9:00–10:00", "where": "DOH Conference Room", "url": _SAMPLE_LINK}],
         _SAMPLE_LINK),
+    "job_travel_filing_due": lambda: travel_filing_due_message(
+        "Juan Reyes",
+        [{"title": "Basic Life Support Training", "kind": "reimbursement", "when": "Due in 2 days", "url": _SAMPLE_LINK}],
+        [{"title": "Regional Planning Workshop", "url": _SAMPLE_LINK}], _SAMPLE_LINK),
     "job_calendar_css_nudge": lambda: calendar_css_nudge_message(
         "Jane Dela Cruz", "Basic Life Support Training", "October 2, 2026", _SAMPLE_LINK),
     "job_whereabouts_nudge": lambda: whereabouts_nudge_message(

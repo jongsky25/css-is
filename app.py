@@ -2097,6 +2097,11 @@ def _notification_items(conn, user, feedback_unread):
         items.extend(rooms_notify.bell_rows(conn, user["id"]))
     except Exception:                      # noqa: BLE001 — the bell must never break a page
         pass
+    try:
+        import travel_notify
+        items.extend(travel_notify.bell_rows(conn, user["id"], _tz.today_local()))
+    except Exception:                      # noqa: BLE001 — the bell must never break a page
+        pass
     wellness_decided = st.unseen_wellness_decisions(conn, user["id"])
     if wellness_decided:
         items.append({

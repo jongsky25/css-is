@@ -151,7 +151,7 @@ _ALL_JOBS = {"events", "wellness_expiry", "digest", "csm_rp", "csm_activity",
             "wellness_file", "awa_file", "whereabouts",
             "whereabouts_nudge", "whereabouts_rollup", "calendar_css_nudge",
             "birthday_coordinators", "birthday_month", "birthday_greeting",
-            "calendar_day_before"}
+            "calendar_day_before", "travel_filing_due"}
 
 # job name -> the admin toggle that can switch it off (see /admin/email).
 JOB_FEATURE = {
@@ -170,6 +170,7 @@ JOB_FEATURE = {
     "birthday_month": "job_birthday_month",
     "birthday_greeting": "job_birthday_greeting",
     "calendar_day_before": "job_calendar_day_before",
+    "travel_filing_due": "job_travel_filing_due",
 }
 
 # Admin-tunable schedule/delay knobs for the jobs below (/admin/email "Timing"
@@ -193,6 +194,8 @@ PARAMS = {
         "Weekly whereabouts email: weekday", 0, 0, 4),
     "whereabouts_rollup_weekday": (
         "Weekly whereabouts chief roll-up: weekday", 1, 0, 4),
+    "travel_filing_lead_days": (
+        "Travel filing reminder: days before", 2, 1, 14),
 }
 
 
@@ -555,6 +558,54 @@ def send_calendar_day_before(conn, base, dry_run=False):
     return sent
 
 
+def _travel_recipient(conn, acct):
+    """Where a travel reminder goes: the person's directory email, else their login."""
+    rp = st.get_rp(conn, acct["rp_id"]) if acct.get("rp_id") else None
+    return ((rp or {}).get("email") or "").strip() or acct["username"]
+
+
+def send_travel_filing_due(conn, base, dry_run=False):
+    """One email a day per person listing their travel claims that are due within the lead days
+    (or overdue) and any submitted cash advance whose activity is over with no liquidation filed.
+    Withdrawn and submitted filings are never mentioned. The subject carries the date, so the
+    email log makes a re-run the same day harmless."""
+    import travel
+    if not travel.enabled(conn):
+        return 0
+    today = tz.today_local()
+    horizon = (today + timedelta(days=_param(conn, "travel_filing_lead_days"))).isoformat()
+    per_user = {}
+    for f in travel._rows(conn, "SELECT * FROM travel_filing WHERE status IN ('open','ready') "
+                                "AND deadline_date IS NOT NULL AND deadline_date<=? "
+                                "ORDER BY deadline_date, id", (horizon,)):
+        per_user.setdefault(f["user_id"], {"due": [], "cas": []})["due"].append(f)
+    for (uid,) in conn.execute("SELECT DISTINCT user_id FROM travel_filing WHERE kind='ca' "
+                               "AND status='submitted' AND act_end<?", (today.isoformat(),)).fetchall():
+        cas = travel.unliquidated_cas(conn, uid, today)
+        if cas:
+            per_user.setdefault(uid, {"due": [], "cas": []})["cas"] = cas
+    sent = 0
+    for uid, got in sorted(per_user.items()):
+        acct = st.get_admin_user_by_id(conn, uid)
+        if not acct or not acct["active"]:
+            continue
+        to = _travel_recipient(conn, acct)
+        items = [{"title": f["act_title"], "kind": f["kind"], "url": f"{base}/travel/f/{f['ref_code']}",
+                  "when": travel.deadline_words(f, today)[0] or ""} for f in got["due"]]
+        owed = [{"title": f["act_title"], "url": f"{base}/travel/f/{f['ref_code']}"} for f in got["cas"]]
+        subj, body, html = mailer.travel_filing_due_message(
+            _person_name(conn, uid) or acct["username"], items, owed, f"{base}/travel")
+        subj = f"{subj} ({today:%b} {today.day})"
+        if _already_sent(conn, JOB_FEATURE["travel_filing_due"], to, subj):
+            continue
+        if dry_run:
+            print(f"[dry-run] travel filing due -> {to} ({len(items)} due, {len(owed)} to liquidate)")
+        else:
+            _send(conn, JOB_FEATURE["travel_filing_due"], to, subj, body, html=html)
+        sent += 1
+    return sent
+
+
 def send_birthday_greetings(conn, base, dry_run=False):
     """Greet each celebrant on their birthday -- or on the last working day before it when it falls
     on a weekend or holiday. Mandatory for everyone with a birthday on file (no opt-out; removing the
@@ -814,6 +865,8 @@ def run(db_path="css_is.db", dry_run=False, jobs=None):
             report["whereabouts_rollup"] = send_whereabouts_rollup(conn, base, dry_run=dry_run)
         if "calendar_day_before" in jobs:
             report["calendar_day_before"] = send_calendar_day_before(conn, base, dry_run=dry_run)
+        if "travel_filing_due" in jobs:
+            report["travel_filing_due"] = send_travel_filing_due(conn, base, dry_run=dry_run)
         if "birthday_greeting" in jobs:
             report["birthday_greeting"] = send_birthday_greetings(conn, base, dry_run=dry_run)
         if "birthday_coordinators" in jobs:
@@ -855,6 +908,8 @@ def main():
                     help="Ask the creator of a past calendar-only training if they want feedback.")
     ap.add_argument("--calendar-day-before", action="store_true",
                     help="Remind people on a calendar entry that starts tomorrow.")
+    ap.add_argument("--travel-filing-due", action="store_true",
+                    help="Remind people of travel claims that are due soon or overdue.")
     ap.add_argument("--birthday-greeting", action="store_true",
                     help="Greet people on their birthday (or the working day before a weekend one).")
     ap.add_argument("--birthday-coordinators", action="store_true",
@@ -875,6 +930,7 @@ def main():
                               ("whereabouts_rollup", args.whereabouts_rollup),
                               ("calendar_css_nudge", args.calendar_css_nudge),
                               ("calendar_day_before", args.calendar_day_before),
+                              ("travel_filing_due", args.travel_filing_due),
                               ("birthday_greeting", args.birthday_greeting),
                               ("birthday_coordinators", args.birthday_coordinators),
                               ("birthday_month", args.birthday_month)) if flag}

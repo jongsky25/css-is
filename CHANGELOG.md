@@ -1,5 +1,13 @@
 # CHANGELOG — Cowork revisions (surgical)
 
+## 2026-10-14 (v6.33 — travel filing reminders and bell)
+
+- `send_reminders.py`: new job `travel_filing_due` (`send_travel_filing_due`, CLI `--travel-filing-due`, `run()` branch) and timing knob `travel_filing_lead_days` (default 2, range 1-14). One email a day per person: open or ready filings due within the lead days or overdue, plus submitted cash advances whose activity is over with no live liquidation (`travel.unliquidated_cas`). Skips when `travel.enabled` is off; repeats skipped through `_already_sent` (subject carries the date); goes to the directory email, else the login.
+- `mailer.py`: `FEATURES["job_travel_filing_due"]`, `travel_filing_due_message`, `_PREVIEWS["job_travel_filing_due"]`.
+- `travel_notify.py`: `bell_rows(conn, user_id, today)` from one aggregate query ("N travel claims are overdue" / "due soon", "A cash advance still needs a liquidation"); Admin Unit members also get "N travel flags to verify" only while open `travel_flag` rows exist. Empty when the switch is off. `app.py`: one wrapped call beside `rooms_notify.bell_rows`; `deploy_hf.RUNTIME_PY` lists the new module.
+- Tests: `tests/test_travel_reminders.py`.
+- **Version bump:** `APP_VERSION` 6.32 → 6.33.
+
 ## 2026-10-14 (v6.32 — travel filing shell: checklists, links, ready and submit)
 
 - `travel.py`: filing lifecycle (`create_filing`, `update_answers`, `save_item`, `mark_ready`, `mark_submitted`, `withdraw`, `refresh_deadline`), `activity_choices`, `resolve_source`, `filing_summaries` (one query per 500 ids), `calendar_chips`, `event_url_for`.

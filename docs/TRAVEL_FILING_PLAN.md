@@ -21,7 +21,7 @@ Built in T6/T7: verify queue, ceilings and routes, justification library.
 None. Travel filing is staff only.
 
 ## 6. Notifications
-Built in T3: reminder job `travel_filing_due`, bell rows.
+Built in T3. Reminder job `travel_filing_due` (`send_reminders.send_travel_filing_due`, registered in `_ALL_JOBS`, `JOB_FEATURE`, `mailer.FEATURES` and `mailer._PREVIEWS`; timing knob `travel_filing_lead_days`, default 2): one email a day per person listing open or ready filings due within the lead days or overdue, plus submitted cash advances whose activity is over with no liquidation. Withdrawn and submitted filings are never mentioned. It goes to the directory email, else the login, and does nothing while `travel.enabled` is off. Bell rows come from `travel_notify.bell_rows`: overdue, due soon, cash advance needing a liquidation, and for Admin Unit members "N travel flags to verify" once open flags exist.
 
 ## 7. CSS activity ↔ filing
 Built in T2: calendar chips, buttons on activity pages. A filing stores `entry_id` or `event_id` plus a snapshot.
@@ -60,4 +60,5 @@ T1 Foundations, T2 Filing shell, T3 Reminders and bell, T4 Relay, T5 Prepare and
 - **Per diem and transport allowance rules**: manual entry until supplied.
 - **Wording** of the Job Order certification and the meals/lodging and extra-expense certifications needs the owner's approval against the official issuance.
 - **2027 holidays** must be loaded before 2027 deadlines are trustworthy.
+- **Reminders (T3)**: filings in "ready" are reminded too, since they are not yet handed in. There is no per-person opt-out; an administrator can switch the job off or change the lead days at `/admin/email`. The bell's flag line links to `/admin/travel` until T6 adds the verify queue; point it there then.
 - **Local test setup**: the HTTP tests need a `css_is.db` (gitignored). `python setup_db.py` creates one; nine tests (`test_ai_report_draft` x3, `test_avatar_care`, `test_home_feeds`, `test_integrity`, `test_routes[/work-arrangement/approvals]`, `test_search::test_api_search_activities`, `test_wellness::test_chief_pages_are_gated`) fail on that sample database and also fail on `main`.
