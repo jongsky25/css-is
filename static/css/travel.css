@@ -49,6 +49,9 @@
 .tv-rows { display: grid; gap: .75rem; }
 .tv-row { border: 1px solid var(--line, #d8dde3); border-radius: 8px; padding: .6rem; display: grid; gap: .4rem; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); }
 .tv-row .tv-row-wide { grid-column: 1 / -1; }
+.tv-prep .tv-check { display: flex; gap: .5rem; align-items: center; font-weight: 500; }
+.tv-prep .tv-check input { width: auto; }
+.tv-row .tv-hint { margin: .1rem 0; }
 .tv-flagline { color: #8a5a00; font-size: .9rem; }
 .tv-flagline.bad { color: #a12; }
 .tv-totals { font-weight: 700; margin-top: .5rem; }
