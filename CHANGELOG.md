@@ -1,3 +1,7 @@
+## October 16, 2026 (v6.68 — participant registration page)
+
+- Remove activity management and travel claim links from the public registration page; staff can use the internal activity and calendar pages.
+
 ## October 16, 2026 (v6.67 — calendar travel claim links)
 
 - Open the matching travel filing and checklist when a claim reminder is selected on the calendar.

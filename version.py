@@ -17,18 +17,26 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.68"
+APP_VERSION = "6.69"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "6.68",
+        "version": "6.69",
         "date": "October 16, 2026",
         "summary": "Find the working draft and hand off contributions with clear context.",
         "changes": [
             "Open the named working Google draft and find supporting files from the work item.",
             "Record contribution handoff notes with the draft and task state you reviewed.",
             "Keep earlier draft selections and file references visible when the working draft changes.",
+        ],
+    },
+    {
+        "version": "6.68",
+        "date": "October 16, 2026",
+        "summary": "Registration pages now focus on participants.",
+        "changes": [
+            "Keep activity management and travel claim actions on staff pages instead of the public registration page.",
         ],
     },
     {

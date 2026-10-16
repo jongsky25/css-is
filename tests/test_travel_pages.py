@@ -391,7 +391,7 @@ def test_filing_summaries_is_one_batched_query_per_chunk(conn):
     assert len([q for q in seen if "FROM travel_filing" in q]) == 3
 
 
-def test_activity_pages_offer_the_button_only_to_people_on_the_activity(viewer, encoder, conn):
+def test_activity_staff_actions_stay_off_the_public_page(viewer, encoder, conn):
     me = uid(conn, "viewer@test.local")
     eid = conn.execute("INSERT INTO event(event_token, title, event_date, end_date, created_by) VALUES (?,?,?,?,?)",
                        ("tvtesttok", "TRAVELTEST Activity", days(15), days(16), "viewer@test.local")).lastrowid
@@ -405,7 +405,11 @@ def test_activity_pages_offer_the_button_only_to_people_on_the_activity(viewer, 
         st.cal_create(conn, "TRAVELTEST overlay", days(15), end_date=days(16), event_id=eid, audience="bureau",
                       people=[(other["id"], "attending")], by="x@x")
         assert travel.event_url_for(conn, other, eid) == f"/travel/new?event={eid}"
-        assert "File a travel claim" in viewer.get("/e/tvtesttok").text
+        public = viewer.get("/e/tvtesttok").text
+        assert "File a travel claim" not in public
+        assert "Manage this activity" not in public
+        manage = viewer.get("/activities/tvtesttok/manage").text
+        assert "File a travel claim" in manage
         assert "File a travel claim" not in viewer.get("/monitor/tvtesttok").text
         st.set_setting(conn, "travel.enabled", "0")
         assert travel.event_url_for(conn, user, eid) is None
