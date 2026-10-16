@@ -63,3 +63,26 @@ The public endpoint is not configurable. A provider change should be a deliberat
 change with its own validation, rather than sending destinations to arbitrary hosts.
 
 References: https://is.gd/apishorteningreference.php and https://is.gd/usagelimits.php.
+
+## Investigation: October 16, 2026
+
+Direct is.gd POST tests returned HTTP 200 with the non-JSON body
+`Error, database insert failed` for both the application's public root and the
+reported activity URL. A common Wikipedia URL returned a valid short URL, while
+that same URL with a new diagnostic query parameter produced the insert failure.
+This is consistent with existing mappings being retrievable while creation of new
+mappings fails; it does not prove the provider's internal cause or recovery time.
+GET requests for the activity URL also failed, so changing the API method is not a fix.
+
+The worker already catches the JSON parse failure and schedules retries. The UI
+previously showed no error. The follow-up now preserves a safe provider-failure
+category and displays state/retry timing without exposing raw responses. Tests
+cover the observed HTTP 200/plain-text failure and subsequent successful recovery.
+
+Live queue contents and runtime variables were not inspected: this execution
+environment has no live-app admin or Hugging Face credentials. A previously supplied
+activity URL also returned an application-generated 404 during the investigation;
+that separate destination issue needs checking against the currently active activity.
+
+This change improves diagnosis; it cannot repair is.gd's database. No replacement
+provider is configured automatically and no existing destination mappings are changed.

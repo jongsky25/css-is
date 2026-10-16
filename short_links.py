@@ -99,6 +99,35 @@ def lookup(conn, url):
     return row[0] if row else url
 
 
+def status(conn, url, *, now=None):
+    """Safe display status: never expose raw upstream responses or destination tokens."""
+    if not enabled():
+        return {"done": True, "state": "disabled", "message": "Short links are not enabled. Use the original link."}
+    if not eligible(url):
+        return {"done": True, "state": "ineligible", "message": "A short link is not available for this address. Use the original link."}
+    row = conn.execute("SELECT status,short_url,last_error,next_attempt FROM short_links WHERE original_url=?",
+                       (url,)).fetchone()
+    if not row:
+        return {"done": True, "state": "missing", "message": "A short link has not been queued. Reopen the sharing page to try again."}
+    state, short, error, retry_at = row
+    result = {"done": state in ("ready", "failed"), "state": state}
+    if state == "ready":
+        result.update(url=short, message="Short link ready.")
+    elif state == "failed":
+        result["message"] = "This link could not be shortened. Use the original link."
+    elif error:
+        result["state"] = "retrying"
+        result["message"] = ("The short-link service is unavailable. Use the original link while we retry automatically."
+                             if error != "is.gd error 3" else
+                             "The short-link service has reached its request limit. Use the original link while we wait to retry.")
+        rate = conn.execute("SELECT next_call FROM short_link_rate WHERE id=1").fetchone()
+        result["retry_after_seconds"] = max(0, int(max(retry_at, rate[0] if rate else 0) -
+                                                  (time.time() if now is None else now)))
+    else:
+        result["message"] = "Preparing a short link. You can use the original link now."
+    return result
+
+
 def _connect(db):
     conn = sqlite3.connect(db, timeout=5)
     conn.execute("PRAGMA busy_timeout=5000")
@@ -149,6 +178,7 @@ def process_one(db, *, now=None, post=None):
                      "updated_at=? WHERE original_url=?", (now + 60, now, url))
         conn.commit()
         short, error, status, delay = None, None, "pending", min(86400, 60 * 2 ** min(attempts, 10))
+        response = None
         try:
             response = (post or httpx.post)("https://is.gd/create.php", data={"format": "json", "url": url},
                                            timeout=8, follow_redirects=False)
@@ -167,7 +197,9 @@ def process_one(db, *, now=None, post=None):
                     raise ValueError("Invalid short URL")
                 short, status = candidate, "ready"
         except (httpx.HTTPError, ValueError, TypeError, AttributeError):
-            error = "Shortening request failed"
+            error = ("Provider database unavailable"
+                     if response is not None and response.text.strip() == "Error, database insert failed"
+                     else "Shortening request failed")
         conn.execute("UPDATE short_links SET short_url=?,status=?,next_attempt=?,updated_at=?,last_error=? "
                      "WHERE original_url=?", (short, status, now + delay, now, error, url))
         if error == "is.gd error 3":

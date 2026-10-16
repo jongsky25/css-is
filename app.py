@@ -1628,17 +1628,15 @@ templates.env.globals["share_url"] = _share_url
 @app.get("/short-links/status")
 def short_link_status(request: Request, url: str):
     # Authenticated by middleware. Read existing mappings only; no user URL submission.
-    if not short_links.enabled() or not short_links.eligible(url):
-        return JSONResponse({"done": True}, headers={"Cache-Control": "no-store"})
     conn = get_conn()
     try:
-        row = conn.execute("SELECT status,short_url FROM short_links WHERE original_url=?", (url,)).fetchone()
+        data = short_links.status(conn, url)
     finally:
         conn.close()
-    data = {"done": not row or row[0] in ("ready", "failed")}
-    if row and row[0] == "ready":
-        data.update(url=row[1], qr=_qr_data_uri(row[1]))
+    if data.get("url"):
+        data["qr"] = _qr_data_uri(data["url"])
     return JSONResponse(data, headers={"Cache-Control": "no-store"})
+
 
 
 _short_link_task = None

@@ -1,3 +1,10 @@
+## October 16, 2026 (v6.71 — visible short-link failures)
+
+- Recognize is.gd's HTTP 200 plain-text database-insert failure and retain a safe diagnostic category while retrying.
+- Expose authenticated queue state and retry timing; sharing controls explain pending, disabled, failed, and retrying states.
+- Stop silently displaying only the original URL when the provider or status check fails.
+- Regression tests reproduce the observed provider response and verify recovery, status reporting and URL exclusions.
+
 ## October 16, 2026 (v6.68 — participant registration page)
 
 - Remove activity management and travel claim links from the public registration page; staff can use the internal activity and calendar pages.

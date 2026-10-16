@@ -173,7 +173,48 @@ def test_status_and_qr_ui(queue, monkeypatch):
     assert f'id="pubUrl" data-short-text>{SHORT}</code>' in page.text
     # Polling is read-only, including syntactically valid but unknown public URLs.
     unknown = BASE + '/e/not-created'
-    assert client.get('/short-links/status', params={'url': unknown}).json() == {'done': True}
+    assert client.get('/short-links/status', params={'url': unknown}).json() ['state'] == 'missing'
     conn = sqlite3.connect(queue)
     assert not conn.execute('SELECT 1 FROM short_links WHERE original_url=?', (unknown,)).fetchone()
     conn.close()
+
+
+def test_actual_plain_text_provider_failure_is_visible_and_retried(queue):
+    sl.share(queue, URL)
+    def provider_failure(*a, **k):
+        return httpx.Response(200, text='Error, database insert failed',
+                              request=httpx.Request('POST', 'https://is.gd/create.php'))
+    assert sl.process_one(queue, now=100, post=provider_failure)
+    with sqlite3.connect(queue) as conn:
+        row = conn.execute('SELECT status,last_error,next_attempt FROM short_links').fetchone()
+        assert row == ('pending', 'Provider database unavailable', 160)
+        result = sl.status(conn, URL, now=110)
+        assert result['state'] == 'retrying' and result['done'] is False
+        assert result['retry_after_seconds'] == 50
+        assert 'unavailable' in result['message']
+        assert 'database insert' not in result['message']
+    assert sl.share(queue, URL) == URL
+    assert sl.process_one(queue, now=160, post=lambda *a, **k: reply({'shorturl': SHORT}))
+    with sqlite3.connect(queue) as conn:
+        assert sl.status(conn, URL)['url'] == SHORT
+        assert sl.status(conn, URL)['state'] == 'ready'
+
+
+def test_status_distinguishes_off_pending_invalid_and_rate_limited(queue, monkeypatch):
+    with sqlite3.connect(queue) as conn:
+        monkeypatch.setenv('CSS_SHORT_LINKS', '0')
+        assert sl.status(conn, URL)['state'] == 'disabled'
+        monkeypatch.setenv('CSS_SHORT_LINKS', '1')
+        assert sl.status(conn, BASE + '/e/a/resume?rt=secret')['state'] == 'ineligible'
+        assert sl.status(conn, URL)['state'] == 'missing'
+        sl.enqueue(conn, URL)
+        assert sl.status(conn, URL)['state'] == 'pending'
+    sl.process_one(queue, now=100, post=lambda *a, **k: reply({'errorcode': 3}, 502))
+    with sqlite3.connect(queue) as conn:
+        result = sl.status(conn, URL, now=200)
+        assert result['state'] == 'retrying'
+        assert result['retry_after_seconds'] == 3500
+        assert 'request limit' in result['message']
+        conn.execute("UPDATE short_links SET status='failed'")
+        assert sl.status(conn, URL)['done'] is True
+        assert sl.status(conn, URL)['state'] == 'failed'
