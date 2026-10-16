@@ -1,4 +1,4 @@
-## 6.47 — October 16, 2026
+## 6.48 — October 16, 2026
 
 - Filter opening questions by claim type and show external advance details only for an external liquidation.
 - Show only applicable preparation sections; retain required official report fields and prefilled signatories.
@@ -7,6 +7,12 @@
 - Show browser draft restore/save failures and a direct checklist link; omit inapplicable refund/deviation text from generated forms.
 - Preserve the existing browser-only draft design, database schema, official form templates, and manual submission workflow.
 - Add browser regression coverage for claim switching, mobile layout, fare calculations, local drafts, conditional sections, and document generation with a fake relay.
+
+## 6.47 — October 16, 2026
+
+- Added an audited Documents enable/disable control to Administrator → Documents setup.
+- Enabling requires an explicit bureau-wide permissions-administrator grant and keeps sending disabled; disabling stops both switches.
+- Confirmation rechecks current authority and settings revision to reject stale or replayed changes.
 
 ## 6.46 — October 16, 2026
 

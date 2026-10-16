@@ -155,6 +155,29 @@ def bootstrap_admins(conn, user, preview):
         return current
 
 
+def set_module_enabled(conn, user, turn_on, expected_revision, authorization):
+    """Explicit module control; enabling never enables delivery."""
+    with transaction(conn):
+        user = setup_operator(conn, user)
+        if turn_on:
+            require(p.has_role(conn, user, 'grant_admin'),
+                    'Enabling Documents requires an explicit permissions-administrator grant across all units.')
+        authorization = reason(authorization)
+        revision = st.get_setting(conn, 'documents.settings_revision', '0')
+        if str(expected_revision) != revision:
+            raise Conflict('Documents settings changed. Reload this page before confirming again.')
+        before = {'enabled': st.get_setting(conn, 'documents.enabled', '0'),
+                  'sending_enabled': st.get_setting(conn, 'documents.sending_enabled', '0')}
+        if turn_on and before['sending_enabled'] != '0':
+            raise ValueError('Disable Documents and sending before enabling for testing.')
+        after = {'enabled': '1' if turn_on else '0', 'sending_enabled': '0'}
+        for key, value in {**{'documents.' + k: v for k, v in after.items()},
+                           'documents.settings_revision': str(int(revision) + 1)}.items():
+            conn.execute('INSERT INTO app_setting(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value', (key, value))
+        event(conn, None, user, 'module_enabled' if turn_on else 'module_disabled',
+              {'before': before, 'after': after, 'authorization': authorization})
+
+
 def notify(conn, doc, eid, kind, extra=()):
     recipients = {doc['creator_id'], doc['lead_id']} | set(extra)
     recipients |= {r[0] for r in conn.execute("SELECT user_id FROM document_assignment WHERE document_id=? AND status<>'superseded'",(doc['id'],))}

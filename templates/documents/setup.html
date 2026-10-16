@@ -12,7 +12,7 @@
     {% if grants %}
       <h2>Appointed administrators</h2>
       <ul>{% for grant in grants %}<li>{{ grant.username }} — {{ 'Permissions administrator' if grant.role == 'grant_admin' else 'Workflow administrator' }}{% if grant.revoked_at %} (revoked){% elif not grant.active %} (account inactive){% endif %}</li>{% endfor %}</ul>
-      <p>Designated administrators can view <a href="/documents/rules">Rules and policies</a>. Editing becomes available when Documents is enabled after acceptance setup.</p>
+      <p>Designated administrators can view <a href="/documents/rules">Rules and policies</a>. Editing becomes available when Documents is enabled.</p>
     {% endif %}
   {% elif preview %}
     <section class="doc-card">
@@ -42,6 +42,36 @@
       <p>The next screen lets you review the accounts and roles before saving. This page does not enable Documents or sending.</p>
       <button type="submit">Review appointments</button>
     </form>
+  {% endif %}
+  {% if not preview %}
+    <section class="doc-card">
+      <h2>Documents feature</h2>
+      {% if module_enabled or sending_enabled %}
+        <p><a href="/documents">Open Documents</a> to register and review documents. <a href="/documents/rules">Rules and policies</a> controls workflow configuration.</p>
+        <p>Disabling stops new document writes and sending. Existing permitted records remain readable.</p>
+        <form method="post">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <input type="hidden" name="action" value="disable_module">
+          <input type="hidden" name="settings_revision" value="{{ settings_revision }}">
+          <label>Reason for disabling<textarea name="authorization" required maxlength="4000"></textarea></label>
+          <label><input type="checkbox" name="confirmed" value="yes" required style="display:inline;width:auto"> Disable Documents and document sending.</label>
+          <button type="submit">Disable Documents and sending</button>
+        </form>
+      {% elif can_enable %}
+        <p>Enable Documents to configure routing rules and test intake, review and signing with designated staff. Document sending remains disabled.</p>
+        <p>This enables document writes for staff according to their permissions. Use test records while completing workflow and live-service acceptance.</p>
+        <form method="post">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <input type="hidden" name="action" value="enable_module">
+          <input type="hidden" name="settings_revision" value="{{ settings_revision }}">
+          <label>Reason for enabling<textarea name="authorization" required maxlength="4000"></textarea></label>
+          <label><input type="checkbox" name="confirmed" value="yes" required style="display:inline;width:auto"> Enable Documents with sending disabled.</label>
+          <button type="submit">Enable Documents</button>
+        </form>
+      {% else %}
+        <p>To enable Documents, sign in as a system administrator who has also been explicitly appointed as a Documents permissions administrator across all units.</p>
+      {% endif %}
+    </section>
   {% endif %}
 </div>
 {% endblock %}

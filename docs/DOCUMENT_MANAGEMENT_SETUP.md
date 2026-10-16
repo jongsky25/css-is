@@ -42,7 +42,14 @@ Documents operations have been deployed or live-tested.
    This also records authorization in the business event and platform audit logs. It changes neither
    switch and does not infer grants from the technical-admin role. Other records/signatory grants
    are managed on `/documents/rules` by the designated grant administrator.
-4. Set `documents.enabled=1` on the acceptance copy through `storage.set_setting`. Keep
+4. On the acceptance instance, open **Administrator → Documents setup** as an active system
+   administrator who also has a bureau-wide Documents `grant_admin` appointment. Under
+   **Documents feature**, enter the reason, confirm **Enable Documents with sending disabled**,
+   then select **Enable Documents**. This sets `documents.enabled=1` and keeps sending off.
+   The page also allows an active system administrator to disable Documents and sending together;
+   each setting change records the actor/reason and rejects stale submissions. Enablement applies
+   to the whole instance, with normal record permissions enforced; it is not a private sandbox.
+   An offline database operator can alternatively use `storage.set_setting`. Keep
    `documents.sending_enabled=0` until deliberately testing delivery with authorized recipients.
    Both settings default to `0`, including on repeat migration. Never enable the production
    module solely because the local tests passed.
