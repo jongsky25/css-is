@@ -623,3 +623,58 @@ a.cal-tt:focus-visible { outline:none; }
 .cal-nav { flex-wrap:wrap; max-width:100%; }
 .cal-nav a { white-space:normal; text-align:center; justify-content:center; min-width:0; }       /* long labels wrap instead of widening the page */
 @media (max-width:640px) { .cal-nav a { flex:1 1 5.5rem; } }
+
+/* ---- Add / edit form, sectioned layout: cards in two columns on desktop, one column on tablet and phone ---- */
+.cal-form [hidden] { display:none !important; }
+.cal-form.cf-sectioned { max-width:1120px; gap:1rem; }
+.cf-cols { display:grid; grid-template-columns:minmax(0, 1fr); gap:1rem; align-items:start; }
+.cf-col { display:grid; gap:1rem; min-width:0; }
+.cf-card { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:.8rem 1rem 1rem;
+           display:grid; gap:.8rem; margin:0; min-width:0; }
+.cf-h { margin:0; font-size:.8rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--soft); }
+.cf-more > summary { cursor:pointer; list-style:none; min-height:1.8rem; display:flex; align-items:center; gap:.4rem; }
+.cf-more > summary::-webkit-details-marker { display:none; }
+.cf-more > summary::before { content:"▸"; }
+.cf-more[open] > summary::before { content:"▾"; }
+.cf-more[open] { gap:.8rem; }
+.cf-sectioned .cf-card .cf-people { border:0; padding:0; border-radius:0; }
+.cf-sectioned .cf-card .cf-people > legend { padding:0 0 .4rem; }
+.cf-sectioned .cf-row { gap:.8rem; }
+.cf-sectioned .cf-row-4 { grid-template-columns:repeat(auto-fit, minmax(min(9.5rem, 100%), 1fr)); }
+.cf-sectioned .cf-row-3 { grid-template-columns:repeat(auto-fit, minmax(min(12rem, 100%), 1fr)); }
+.cf-sectioned .cf-checks { grid-template-columns:repeat(auto-fill, minmax(min(13rem, 100%), 1fr)); }
+.cf-sectioned .cf-checks-scroll { max-height:18rem; }
+.cf-sectioned .cf-checks label { min-height:2.2rem; }
+.cf-sectioned .cf-checks input[type=checkbox] { width:1.15rem; height:1.15rem; }
+.cf-sectioned .cf-actions { margin:.2rem 0 0; gap:.7rem; }
+.cf-sectioned .cf-actions .cal-btn { min-height:3rem; padding:.6rem 1.6rem; font-size:1rem; }
+
+@media (min-width:1100px) {
+  .cf-cols { grid-template-columns:minmax(0, 1.25fr) minmax(0, 1fr); gap:1.2rem; }
+  .cf-sectioned .cf-checks-scroll { max-height:22rem; }
+  .cf-sectioned .cf-row-4 { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+}
+/* Tablet and phone: the Save / Cancel bar stays on screen (the right gap keeps the Send-feedback button clear). */
+@media (max-width:1099px) {
+  .cf-sectioned .cf-actions { position:sticky; bottom:0; z-index:5; background:var(--bg); border-top:1px solid var(--line);
+    margin:.4rem 0 0; padding:.7rem 10.5rem calc(.7rem + env(safe-area-inset-bottom)) 0; }
+}
+@media (max-width:640px) {
+  .cal-form.cf-sectioned, .cf-cols, .cf-col { gap:.7rem; }
+  .cf-card { padding:.7rem .8rem .85rem; gap:.7rem; }
+  .cf-sectioned .cf-row { gap:.7rem; }
+  .cal-form.cf-sectioned input:not([type=checkbox]), .cal-form.cf-sectioned select { min-height:2.9rem; }
+  .cf-sectioned .cf-row-4, .cf-sectioned .cf-row-3 { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  .cf-sectioned .cf-row-3 > label:last-child:nth-child(odd) { grid-column:1 / -1; }
+  .cf-sectioned .cf-checks { grid-template-columns:minmax(0, 1fr); }
+  .cf-sectioned .cf-checks label { min-height:2.7rem; }
+  .cf-sectioned .cf-actions { padding:.6rem 0 4.2rem; flex-wrap:nowrap; }
+  .cf-sectioned .cf-actions .cf-save { flex:1 1 auto; }
+}
+@media (max-width:480px) {
+  /* the older one-column rules would undo the pairing: keep pairs, but Type/Status, Unit/Audience and Where/Format stack only on the narrowest phones */
+  .cf-sectioned .cf-row { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  .cf-sectioned .cf-row:has(input[type=time]) { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  .cf-sectioned .cf-row:has(input[name=venue]) { grid-template-columns:minmax(0, 1fr); }
+}
+.cf-more:not([open]) { padding-bottom:.8rem; }
