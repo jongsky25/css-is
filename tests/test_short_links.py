@@ -24,11 +24,18 @@ def queue(tmp_path, monkeypatch):
     return db
 
 
+def request_link(db, url):
+    with sqlite3.connect(db) as conn:
+        sl.enqueue(conn, url)
+    return sl.share(db, url)
+
+
 def reply(body, status=200):
     return httpx.Response(status, json=body, request=httpx.Request('POST', 'https://api.short.io/links'))
 
 
 def test_saved_mapping_reused(queue):
+    request_link(queue, URL)
     assert sl.share(queue, URL) == URL
     calls = []
     def post(url, **kwargs):
@@ -64,7 +71,7 @@ def test_requires_canonical_public_https(queue, monkeypatch, base):
 def test_other_origin_and_disabled(queue, monkeypatch):
     assert not sl.eligible('https://other.example.org/e/a')
     assert not sl.eligible('https://[invalid/e/a')
-    sl.share(queue, URL)
+    request_link(queue, URL)
     monkeypatch.setenv('CSS_SHORT_LINKS', '0')
     assert not sl.process_one(queue, post=lambda *a, **k: pytest.fail('Network when disabled'))
     assert sl.share(queue, URL) == URL
@@ -72,7 +79,7 @@ def test_other_origin_and_disabled(queue, monkeypatch):
 
 def test_combined_query_preserved(queue):
     url = BASE + '/seq?tokens=abc,def'
-    sl.share(queue, url)
+    request_link(queue, url)
     def post(endpoint, **kwargs):
         assert kwargs['json']['originalURL'] == url
         return reply({'secureShortURL': SHORT})
@@ -81,8 +88,8 @@ def test_combined_query_preserved(queue):
 
 
 def test_rate_limit_shared_and_restart_retry(queue):
-    sl.share(queue, URL)
-    sl.share(queue, BASE + '/r/form')
+    request_link(queue, URL)
+    request_link(queue, BASE + '/r/form')
     assert sl.process_one(queue, now=100, post=lambda *a, **k: httpx.Response(429, headers={'Retry-After': '3600'}))
     # New connection/process observes provider-wide cooldown, not just this job.
     assert not sl.process_one(queue, now=200, post=lambda *a, **k: pytest.fail('Rate limited'))
@@ -93,7 +100,7 @@ def test_rate_limit_shared_and_restart_retry(queue):
 
 
 def test_timeout_then_retry_and_stale_lease(queue):
-    sl.share(queue, URL)
+    request_link(queue, URL)
     def timeout(*a, **k):
         raise httpx.ReadTimeout('timeout')
     assert sl.process_one(queue, now=100, post=timeout)
@@ -107,7 +114,7 @@ def test_timeout_then_retry_and_stale_lease(queue):
 
 def test_concurrent_workers_and_enqueue(queue):
     with concurrent.futures.ThreadPoolExecutor(4) as pool:
-        assert list(pool.map(lambda _: sl.share(queue, URL), range(8))) == [URL] * 8
+        assert list(pool.map(lambda _: request_link(queue, URL), range(8))) == [URL] * 8
         results = list(pool.map(lambda _: sl.process_one(queue, now=100,
             post=lambda *a, **k: reply({'secureShortURL': SHORT})), range(4)))
     assert results.count(True) == 1
@@ -117,30 +124,26 @@ def test_concurrent_workers_and_enqueue(queue):
 
 @pytest.mark.parametrize('body', [{'secureShortURL': 'https://evil.example/abcde'}, {}, {'errorcode': 1}])
 def test_bad_provider_response_keeps_original(queue, body):
-    sl.share(queue, URL)
+    request_link(queue, URL)
     assert sl.process_one(queue, now=100, post=lambda *a, **k: reply(body, 400 if body.get('errorcode') == 1 else 200))
     assert sl.share(queue, URL) == URL
     if body.get('errorcode') == 1:
         assert not sl.process_one(queue, now=10000, post=lambda *a, **k: pytest.fail('Permanent error'))
 
 
-def test_storage_creation_and_backfill(queue, monkeypatch):
+def test_storage_creation_does_not_queue(queue, monkeypatch):
     import storage as st
     conn = st.connect(queue)
     st.init_db(conn)
     fid = st.create_form_instance(conn, 2, 'F2', '2026-10-16')
     ev = st.create_event(conn, 'Activity', '2026-10-16', form_instance_ids=[fid])
     stable = BASE + '/e/' + ev['event_token']
-    assert conn.execute('SELECT 1 FROM short_links WHERE original_url=?', (stable,)).fetchone()
-    assert st.set_event_slug(conn, ev['id'], 'changed-name')[0]
-    assert sl.backfill(conn) == 0
-    conn.execute('DELETE FROM short_links'); conn.commit()
-    st.set_event_archived(conn, ev['id'], True)
-    assert sl.backfill(conn) == 0
-    st.set_event_archived(conn, ev['id'], False)
-    assert sl.backfill(conn) == 2
-    assert sl.backfill(conn) == 0
+    assert not conn.execute('SELECT 1 FROM short_links').fetchone()
+    assert sl.share(queue, stable) == stable
+    assert not conn.execute('SELECT 1 FROM short_links').fetchone()
+    assert not sl.process_one(queue, post=lambda *a, **k: pytest.fail('Automatic creation'))
     conn.close()
+
 
 
 def test_status_and_qr_ui(queue, monkeypatch):
@@ -155,10 +158,15 @@ def test_status_and_qr_ui(queue, monkeypatch):
     ev = st.create_event(conn, 'Sharing', '2026-10-16', created_by='short@test.local')
     conn.close()
     original = BASE + '/e/' + ev['event_token']
-    sl.process_one(queue, post=lambda *a, **k: reply({'secureShortURL': SHORT}))
     client = TestClient(app.app)
+    assert client.post('/short-links/create', data={'url': original}, headers={'X-Short-Link-Request': '1'}).status_code == 401
     assert client.get('/short-links/status', params={'url': original}, follow_redirects=False).status_code in (302, 303)
     client.cookies.set(auth.COOKIE_NAME, auth.make_token({'id': uid, 'username': 'short@test.local', 'role': 'admin'}))
+    assert client.get('/short-links/status', params={'url': original}).json()['state'] == 'missing'
+    assert client.post('/short-links/create', data={'url': original}).status_code == 403
+    assert client.post('/short-links/create', data={'url': BASE + '/e/unknown'}, headers={'X-Short-Link-Request': '1'}).status_code == 404
+    assert client.post('/short-links/create', data={'url': original}, headers={'X-Short-Link-Request': '1'}).status_code == 200
+    assert sl.process_one(queue, post=lambda *a, **k: reply({'secureShortURL': SHORT}))
     data = client.get('/short-links/status', params={'url': original}).json()
     assert data['url'] == SHORT and data['qr'].startswith('data:image/png;base64,')
     page = client.get(f"/activities/{ev['event_token']}/manage")
@@ -183,7 +191,7 @@ def test_status_and_qr_ui(queue, monkeypatch):
 
 
 def test_actual_plain_text_provider_failure_is_visible_and_retried(queue):
-    sl.share(queue, URL)
+    request_link(queue, URL)
     def provider_failure(*a, **k):
         return httpx.Response(200, text='Error, database insert failed',
                               request=httpx.Request('POST', 'https://api.short.io/links'))
@@ -243,7 +251,7 @@ def test_legacy_migration_preserves_ready_links_and_retries_failed(queue):
 
 
 def test_missing_secret_does_not_consume_attempts(queue, monkeypatch):
-    sl.share(queue, URL)
+    request_link(queue, URL)
     monkeypatch.delenv('SHORT_IO_API_KEY')
     assert not sl.process_one(queue, post=lambda *a, **k: pytest.fail('Missing API key'))
     with sqlite3.connect(queue) as conn:
@@ -255,8 +263,8 @@ def test_missing_secret_does_not_consume_attempts(queue, monkeypatch):
 
 @pytest.mark.parametrize('http_status,category', [(401,'Provider credentials rejected'),(403,'Provider credentials rejected'),(402,'Provider quota reached')])
 def test_account_errors_pause_globally_without_exposing_secret(queue, http_status, category):
-    sl.share(queue, URL)
-    sl.share(queue, BASE + '/r/other')
+    request_link(queue, URL)
+    request_link(queue, BASE + '/r/other')
     sl.process_one(queue, now=100, post=lambda *a, **k: reply({'secret':'test-key-not-real'}, http_status))
     with sqlite3.connect(queue) as conn:
         assert conn.execute('SELECT last_error FROM short_links WHERE original_url=?',(URL,)).fetchone()[0] == category
@@ -267,6 +275,21 @@ def test_account_errors_pause_globally_without_exposing_secret(queue, http_statu
 
 @pytest.mark.parametrize('candidate', ['https://evil.example/abc', 'https://blhsd.s.gy.evil.example/abc', 'http://blhsd.s.gy/abc', 'https://blhsd.s.gy@evil.example/abc', 'https://blhsd.s.gy/abc?rt=secret'])
 def test_provider_response_must_use_selected_https_domain(queue, candidate):
-    sl.share(queue, URL)
+    request_link(queue, URL)
     sl.process_one(queue, post=lambda *a, **k: reply({'secureShortURL': candidate}))
     assert sl.share(queue, URL) == URL
+
+
+def test_legacy_queue_waits_for_click_and_ready_mapping_survives(queue):
+    with sqlite3.connect(queue) as conn:
+        conn.execute("INSERT INTO short_links(original_url,created_at,updated_at) VALUES(?,0,0)", (URL,))
+        conn.commit()
+        sl.init_db(conn)
+        assert sl.status(conn, URL)['state'] == 'missing'
+    assert sl.share(queue, URL) == URL
+    assert not sl.process_one(queue, post=lambda *a, **k: pytest.fail('Unrequested legacy job'))
+    request_link(queue, URL)
+    assert sl.process_one(queue, post=lambda *a, **k: reply({'secureShortURL': SHORT}))
+    with sqlite3.connect(queue) as conn:
+        sl.init_db(conn)
+    assert sl.share(queue, URL) == SHORT

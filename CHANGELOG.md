@@ -1,3 +1,8 @@
+## 6.73 — October 16, 2026
+
+- Create short links with an explicit button click to conserve the Short.io allowance.
+- Stop automatic creation and old unrequested jobs; preserve completed links.
+
 ## October 16, 2026 (v6.72 — Short.io public links)
 
 - Replace is.gd creation requests with authenticated Short.io requests for blhsd.s.gy.

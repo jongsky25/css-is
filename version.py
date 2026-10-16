@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.72"
+APP_VERSION = "6.73"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.73",
+        "date": "October 16, 2026",
+        "summary": "Create short links only when you choose to.",
+        "changes": [
+            "Click Create short link beside a sharing link to use your Short.io allowance.",
+            "Opening pages and creating activities no longer create short links automatically.",
+            "Existing short links remain available, while old waiting jobs require a click.",
+        ],
+    },
     {
         "version": "6.72",
         "date": "October 16, 2026",

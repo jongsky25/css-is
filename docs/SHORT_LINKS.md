@@ -21,20 +21,16 @@ The runtime has no way to verify this until an authenticated API call succeeds.
 
 ## Migration and verification
 
-Deploying this version migrates unsuccessful is.gd jobs to pending Short.io jobs,
-clearing their previous failure/cooldown. Completed mappings stay intact, including
-any successful is.gd links. No old short URL is deleted, repointed or recycled.
+Shortening is manual. Open the activity or feedback sharing page and click
+**Create short link** beside the URL/QR you want to shorten. Creating activities,
+opening pages, and polling status never queue a new link. Each new destination
+can use one of the account's link creations; reusing a saved mapping does not.
 
-Open one existing activity's sharing page. When its job is processed, its URL should
-be `https://blhsd.s.gy/...`. Confirm that it opens the intended registration page,
-then download/scan the matching QR. Also verify an individual feedback form.
-Short.io calls require the Space secret; mocked tests do not establish live account access.
-
-For older active activities not already queued, run `python short_links.py --backfill`
-in the deployed environment with the same settings/database as the app. This is
-resumable and excludes archived activities/forms. It includes standalone public forms.
-Do not run bulk backfill before validating the account and considering the free plan's
-1,000 lifetime link-creation allowance.
+Existing completed links remain available. Older queued jobs are not processed
+until explicitly requested. The bulk backfill command has been removed.
+After a click, the worker processes that request and retries transient failures.
+Confirm the resulting link opens the intended page, then download its updated QR.
+Live account access requires the Space secret and is not verified by mocked tests.
 
 ## Behavior
 
