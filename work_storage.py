@@ -230,5 +230,25 @@ def install(conn):
         for action in ('UPDATE','DELETE'):
             conn.execute(f"CREATE TRIGGER IF NOT EXISTS {table}_no_{action.lower()} BEFORE {action} ON {table} "
                          "BEGIN SELECT RAISE(ABORT,'Consolidation review history is append-only'); END;")
+    case_columns = {r[1] for r in conn.execute('PRAGMA table_info(work_case)')}
+    for name, definition in (('status', "TEXT NOT NULL DEFAULT 'open' CHECK(status IN ('open','completed'))"),
+                             ('completion_mode', "TEXT NOT NULL DEFAULT 'undecided' CHECK(completion_mode IN ('undecided','internal','formal'))")):
+        if name not in case_columns:
+            conn.execute('ALTER TABLE work_case ADD COLUMN '+name+' '+definition)
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS work_completion_requirement (
+      case_id INTEGER NOT NULL REFERENCES work_case(id), document_id INTEGER NOT NULL REFERENCES document(id),
+      actor_id INTEGER NOT NULL REFERENCES admin_user(id), reason TEXT NOT NULL, created_at TEXT NOT NULL,
+      PRIMARY KEY(case_id,document_id));
+    CREATE INDEX IF NOT EXISTS work_completion_document ON work_completion_requirement(document_id,case_id);
+    CREATE TABLE IF NOT EXISTS work_completion (
+      id INTEGER PRIMARY KEY, case_id INTEGER NOT NULL REFERENCES work_case(id), actor_id INTEGER NOT NULL REFERENCES admin_user(id),
+      evidence TEXT NOT NULL, snapshot_json TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE INDEX IF NOT EXISTS work_completion_case ON work_completion(case_id,id);
+    """)
+    for table in ('work_completion_requirement','work_completion'):
+        for action in ('UPDATE','DELETE'):
+            conn.execute(f"CREATE TRIGGER IF NOT EXISTS {table}_no_{action.lower()} BEFORE {action} ON {table} "
+                         "BEGIN SELECT RAISE(ABORT,'Completion evidence is append-only'); END;")
     conn.execute("INSERT OR IGNORE INTO app_setting(key,value) VALUES ('work.enabled','0')")
     conn.commit()

@@ -1,6 +1,6 @@
 # P3.2 — Consolidation and review inbox
 
-October 16, 2026 (Asia/Manila). **In review**, version **6.71**, branch `codex/consolidation-review`. P3.1 was merged at `eded7ce` before development. P3.2 is not merged or deployed.
+October 16, 2026 (Asia/Manila). **In review**, version **6.71**, branch `codex/consolidation-review`. P3.1 was merged at `eded7ce` before development. P3.2 was subsequently merged to main at `b788d34` on the user’s instruction. Live deployment success has not been independently verified.
 
 ## Delivered
 

@@ -17,6 +17,8 @@ def mapping(conn, document_id):
 
 
 def require_open(conn, case_id):
+    if work.raw(conn,case_id)['status']=='completed':
+        raise ValueError('Reopen the completed work item before changing contributions or shared context.')
     for (did,) in conn.execute('SELECT document_id FROM work_legacy_document WHERE case_id=?', (case_id,)):
         doc = docs.raw(conn, did)
         if doc['status'] in ('closed', 'cancelled') or doc['canonical_id']:

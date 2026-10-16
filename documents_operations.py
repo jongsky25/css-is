@@ -86,6 +86,8 @@ def attach(conn,user,doc_id,revision,url,classification,note,adapter=None):
 
 
 def release_gate(conn,user,doc,data):
+    import work_completion
+    work_completion.release_gate(conn,doc)
     work_review.require_current(conn,doc)
     d.require(p.can_release(conn,user,doc))
     if doc['direction']!='OUT' or doc['status'] not in ('approved','ready_to_release') or doc['verification']!='verified' or doc['reconcile']:

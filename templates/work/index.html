@@ -1,7 +1,7 @@
 {% extends 'work/base.html' %}
 {% block work_content %}
 <h1>Shared work</h1><p class="work-intro">Keep the expected outcome, accountable lead, and related correspondence together.</p>
-{% for case in cases %}<article class="work-card"><h2><a href="/work/{{ case.id }}">{{ case.title }}</a></h2><p class="work-outcome">{{ case.outcome }}</p>
+{% for case in cases %}<article class="work-card"><h2><a href="/work/{{ case.id }}">{{ case.title }}</a></h2><p><span class="work-badge">{{ case.status|capitalize }}</span> <a href="/work/{{ case.id }}/completion">Completion checklist</a></p><p class="work-outcome">{{ case.outcome }}</p>
 <div class="work-meta"><span>Accountable lead<strong>{{ names.get(case.lead_id, 'Inactive account') if case.lead_id else 'Awaiting confirmation' }}</strong></span><span>Planning target<strong>{{ case.due_date|humandate if case.due_date else 'Not set' }}</strong></span></div></article>
 {% else %}<div class="work-card"><h2>No work items on this page</h2><p>Only items you are permitted to read appear here.</p>{% if enabled %}<a class="work-btn primary" href="/work/new">Start a work item</a>{% endif %}</div>{% endfor %}
 <div class="work-actions">{% if before %}<a class="work-btn" href="/work">Back to newest</a>{% endif %}{% if next_cursor %}<a class="work-btn" href="/work?before={{ next_cursor }}">Older work items</a>{% endif %}</div>

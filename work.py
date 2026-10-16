@@ -183,6 +183,8 @@ def link_document_in_transaction(conn, user, case_id, revision, document_id, kin
     user = permissions.actor(conn, user)
     case = get(conn, user, case_id)
     writable(conn)
+    import work_compat
+    work_compat.require_open(conn,case_id)
     if not can_link(conn, user, case):
         raise permissions.Denied('The creator, lead, or concerned officer links correspondence.')
     _check_revision(case, revision)

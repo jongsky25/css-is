@@ -202,6 +202,8 @@ def finish(conn, user, doc, action, detail, changes=None, extra=()):
     notify(conn,doc,eid,action,extra)
     import work_review
     work_review.invalidate(conn,user,document_id=doc['id'])
+    import work_completion
+    work_completion.invalidate(conn,user,doc['id'])
     return raw(conn,doc['id'])
 
 

@@ -2190,3 +2190,203 @@ def test_consolidation_cancelled_source_invalidates_review(workspace):
     docs.mutate(c,u[1],source['id'],source['revision'],'cancel',{'reason':'Request withdrawn'})
     assert docs.raw(c,output['id'])['approved_version'] is None
     assert docs.raw(c,output['id'])['status']=='changes_requested'
+
+
+# P3.3: shared completion uses actual formal release/closure evidence.
+import work_completion as completion
+import uuid
+
+
+def finish_document_lead(c,u,doc):
+    assignment=c.execute("SELECT id FROM document_assignment WHERE document_id=? AND role='lead' ORDER BY id DESC LIMIT 1",(doc['id'],)).fetchone()[0]
+    for status in ('acknowledged','submitted','completed'):
+        doc=docs.mutate(c,u[2],doc['id'],doc['revision'],'contribution',{'assignment_id':assignment,'status':status,'outcome':'Formal coordination and required lead work completed'})
+    return doc
+
+
+def completion_fixture(workspace,signature=True,ack=True):
+    c,u,unit,_=workspace
+    source,output,item,task=consolidation_fixture(workspace)
+    # Set the synthetic document policy before review; no live adapters are used.
+    c.execute('UPDATE document SET policy_json=? WHERE id=?',(json.dumps({'signature_required':signature,'ack_required':ack,'release':['authority'],'closure':['filed']}),output['id']));c.commit()
+    output=docs.raw(c,output['id'])
+    output=docs.mutate(c,u[1],output['id'],output['revision'],'lead',{'user_id':u[2]['id'],'task':'Lead the formal response','reason':'Confirm lead'})
+    output=finish_document_lead(c,u,output)
+    completion.configure(c,u[1],item['id'],item['revision'],'formal',[output['id']],'Official response is required for this outcome')
+    item=work.get(c,u[0],item['id'])
+    output=formal_review(c,u,request_consolidation(c,u,output,item))
+    return source,output,item,task
+
+
+def release_and_close(c,u,output,signature=True,ack=True):
+    output=docs.raw(c,output['id'])
+    if signature:
+        output=doc_ops.external_signature(c,u[2],output['id'],output['revision'],SUPPORT_URL,'checked-v1','Signed reviewed response',ConsolidationAdapter())
+    output=doc_ops.record_dispatch(c,u[1],output['id'],output['revision'],{'operation_id':str(uuid.uuid4()),'channel':'email',
+        'sender':'office@example.test','recipients':['recipient@example.test'],'evidence':'Confirmed delivery message-id',
+        'checklist':{'authority':'Authorized response'}},ConsolidationAdapter())
+    dispatch=c.execute('SELECT MAX(id) FROM document_dispatch WHERE document_id=?',(output['id'],)).fetchone()[0]
+    if ack:output=doc_ops.acknowledge(c,u[1],output['id'],output['revision'],dispatch,'recipient@example.test','Received and acknowledged')
+    return docs.mutate(c,u[2],output['id'],output['revision'],'close',{'evidence':{'filed':'Filed with the incoming request'}})
+
+
+def finish_case(c,u,item,evidence='Delivered response and filed closure evidence'):
+    page=completion.page(c,u[2],item['id'])
+    completion.complete(c,u[2],item['id'],page['case']['revision'],page['digest'],evidence)
+
+
+def test_completion_signed_release_ack_closure_and_reopen(workspace):
+    c,u,unit,_=workspace;source,output,item,task=completion_fixture(workspace)
+    with pytest.raises(ValueError,match='official records'):finish_case(c,u,item)
+    output=release_and_close(c,u,output)
+    page=completion.page(c,u[2],item['id']);assert page['issues']==[],page
+    finish_case(c,u,item)
+    closed=work.get(c,u[0],item['id']);assert closed['status']=='completed'
+    stored=c.execute('SELECT snapshot_json FROM work_completion').fetchone()[0]
+    assert 'Confirmed delivery message-id' in stored and 'Received and acknowledged' in stored
+    assert 'Signed reviewed response' in stored and 'Reviewed exact response and inputs' in stored
+    with pytest.raises(ValueError,match='Reopen'):advance(c,u[2],task,'reopen')
+    with pytest.raises(ValueError,match='Reopen'):handoff.set_draft(c,u[0],item['id'],0,{'title':'Late change','url':DRAFT_URL,'reason':'Change'})
+    with pytest.raises(ValueError,match='Reopen'):work.link_document(c,u[0],item['id'],closed['revision'],source['id'])
+    discussion.post(c,u[0],item['id'],'Post-completion clarification retained')
+    assert work.get(c,u[0],item['id'])['status']=='completed'
+    completion.reopen(c,u[2],item['id'],closed['revision'],'Follow-up needed')
+    assert work.get(c,u[0],item['id'])['status']=='open'
+    assert c.execute('SELECT snapshot_json FROM work_completion').fetchone()[0]==stored
+    assert docs.raw(c,output['id'])['status']=='closed'  # case reopening cannot reopen official records
+
+
+def test_completion_internal_scope_authority_and_required_tasks(workspace):
+    c,u,unit,_=workspace;item=case(c,u[0],unit)
+    item=work.confirm_lead(c,u[1],item['id'],item['revision'],u[2]['id'],'Lead')
+    task=propose(c,u[0],item,unit)
+    with pytest.raises(permissions.Denied):completion.configure(c,u[0],item['id'],item['revision'],'internal',[],'Creator cannot declare scope')
+    completion.configure(c,u[1],item['id'],item['revision'],'internal',[],'Internal coordination; no formal release required')
+    with pytest.raises(ValueError,match='outstanding'):finish_case(c,u,item)
+    task=advance(c,u[1],task,'cancel',reason='Requirement withdrawn by authorized officer')
+    finish_case(c,u,item,'Agreed internal outcome documented')
+    assert work.get(c,u[0],item['id'])['status']=='completed'
+    with pytest.raises(permissions.Denied):completion.page(c,u[4],item['id'])
+
+
+def test_completion_release_blocks_late_required_contribution(workspace):
+    c,u,unit,_=workspace;source,output,item,task=completion_fixture(workspace,signature=False,ack=False)
+    proposed=propose(c,u[0],item,unit,title='Missing required input')
+    # Renewed review can explicitly acknowledge outstanding input; release cannot bypass it.
+    output=formal_review(c,u,request_consolidation(c,u,output,item))
+    with pytest.raises(ValueError,match='outstanding contributions'):
+        doc_ops.record_dispatch(c,u[1],output['id'],output['revision'],{'operation_id':str(uuid.uuid4()),'channel':'email','sender':'office@example.test','recipients':['r@example.test'],'evidence':'Try bypass','checklist':{'authority':'checked'}},ConsolidationAdapter())
+    assert not c.execute('SELECT 1 FROM document_dispatch').fetchone()
+
+
+def test_completion_unknown_delivery_and_missing_ack_cannot_pass(workspace):
+    c,u,unit,_=workspace;source,output,item,task=completion_fixture(workspace)
+    output=release_and_close(c,u,output)
+    c.execute("INSERT INTO document_job(id,document_id,actor_id,kind,version_id,payload_json,created_at,updated_at,state) VALUES ('uncertain-send',?,?,'dispatch',?,'{}','2026-10-16','2026-10-16','unknown')",(output['id'],u[1]['id'],output['current_version']));c.commit()
+    assert completion.page(c,u[2],item['id'])['issues']
+    with pytest.raises(ValueError):finish_case(c,u,item)
+    c.execute("UPDATE document_job SET state='confirmed' WHERE id='uncertain-send'")
+    c.execute('UPDATE document_dispatch_recipient SET acknowledged_at=NULL');c.commit()
+    assert 'Required recipient acknowledgment is missing.' in completion.page(c,u[2],item['id'])['requirements'][0]['issues']
+    with pytest.raises(ValueError):finish_case(c,u,item)
+    assert not c.execute('SELECT 1 FROM work_completion').fetchone()
+
+
+def test_completion_snapshot_stale_disabled_and_atomic_audit(workspace,monkeypatch):
+    c,u,unit,_=workspace;source,output,item,task=completion_fixture(workspace)
+    output=release_and_close(c,u,output)
+    page=completion.page(c,u[2],item['id'])
+    docs.mutate(c,u[1],output['id'],output['revision'],'receipt',{'channel':'email','sender':'recipient','received_at':'2026-10-16T12:00:00','evidence':'Additional receipt'})
+    with pytest.raises(docs.Conflict):completion.complete(c,u[2],item['id'],page['case']['revision'],page['digest'],'Stale evidence')
+    st.set_setting(c,'work.enabled','0')
+    assert completion.page(c,u[2],item['id'])
+    with pytest.raises(ValueError,match='not enabled'):finish_case(c,u,item)
+    st.set_setting(c,'work.enabled','1')
+    def fail(*a,**k):raise RuntimeError('audit unavailable')
+    monkeypatch.setattr(st,'audit',fail)
+    with pytest.raises(RuntimeError):finish_case(c,u,item)
+    assert work.get(c,u[0],item['id'])['status']=='open'
+    assert not c.execute('SELECT 1 FROM work_completion').fetchone()
+
+
+def test_completion_official_reopening_reactivates_case_and_keeps_history(workspace):
+    c,u,unit,_=workspace;source,output,item,task=completion_fixture(workspace)
+    output=release_and_close(c,u,output);finish_case(c,u,item)
+    before=c.execute('SELECT snapshot_json FROM work_completion').fetchone()[0]
+    docs.mutate(c,u[2],output['id'],output['revision'],'reopen',{'due_date':'2026-12-01','reason':'Official correction required'})
+    assert work.get(c,u[0],item['id'])['status']=='open'
+    assert c.execute('SELECT snapshot_json FROM work_completion').fetchone()[0]==before
+    assert c.execute("SELECT 1 FROM work_event WHERE action='completion_invalidated'").fetchone()
+    st.init_db(c)
+    with pytest.raises(sqlite3.IntegrityError):c.execute('DELETE FROM work_completion')
+    c.rollback()
+
+
+def test_completion_scope_cannot_drop_automatic_formal_requirements(workspace):
+    c,u,unit,_=workspace;source,output,item,task=completion_fixture(workspace)
+    assert output['id'] in completion.required_ids(c,item['id'])
+    with pytest.raises(ValueError,match='cannot be removed'):
+        completion.configure(c,u[1],item['id'],item['revision'],'internal',[],'Try to avoid delivery')
+    outsider=case(c,u[0],unit);other=document(c,u[0],unit)
+    with pytest.raises(permissions.Denied):completion.configure(c,u[1],outsider['id'],outsider['revision'],'formal',[other['id']],'Unlinked document')
+
+
+def test_completion_changed_released_input_requires_closed_followup(workspace):
+    c,u,unit,_=workspace;source,output,item,task=completion_fixture(workspace)
+    output=release_and_close(c,u,output)
+    task=advance(c,u[2],task,'reopen');task=advance(c,u[0],task,'submit',submission='Corrected regional evidence');task=advance(c,u[2],task,'accept')
+    with pytest.raises(ValueError):finish_case(c,u,item)
+    followup=document(c,u[0],unit,direction='OUT',subject='Corrected formal follow-up')
+    c.execute('UPDATE document SET policy_json=? WHERE id=?',(output['policy_json'],followup['id']));c.commit()
+    followup=docs.raw(c,followup['id'])
+    followup=docs.mutate(c,u[1],followup['id'],followup['revision'],'verify',{'verification':'verified','reason':'Checked correction'})
+    followup=docs.mutate(c,u[1],followup['id'],followup['revision'],'lead',{'user_id':u[2]['id'],'task':'Lead corrected response','reason':'Confirmed'})
+    followup=finish_document_lead(c,u,followup)
+    followup=doc_ops.attach(c,u[0],followup['id'],followup['revision'],SHEET_URL,'material','Corrected response',ConsolidationAdapter())
+    item=work.get(c,u[0],item['id']);item=work.link_document(c,u[0],item['id'],item['revision'],followup['id'])
+    followup=formal_review(c,u,request_consolidation(c,u,followup,item))
+    followup=release_and_close(c,u,followup)
+    with pytest.raises(ValueError):finish_case(c,u,item)  # an unrelated new release cannot stand in for a follow-up
+    docs.mutate(c,u[2],followup['id'],followup['revision'],'relate',{'target_id':output['id'],'kind':'follow_up'})
+    finish_case(c,u,item)
+    assert work.get(c,u[0],item['id'])['status']=='completed'
+
+
+@pytest.mark.parametrize('missing',['approval','signature','delivery','closure'])
+def test_completion_legacy_status_alone_cannot_replace_evidence(workspace,missing):
+    c,u,unit,_=workspace;source,output,item,task=completion_fixture(workspace)
+    output=release_and_close(c,u,output)
+    if missing=='approval':c.execute('DELETE FROM document_review WHERE document_id=?',(output['id'],))
+    elif missing=='signature':c.execute('DELETE FROM document_signature WHERE document_id=?',(output['id'],))
+    elif missing=='delivery':c.execute('DELETE FROM document_dispatch_recipient')
+    else:c.execute('UPDATE document SET policy_json=? WHERE id=?',(json.dumps({**json.loads(output['policy_json']),'closure':['new_required_evidence']}),output['id']))
+    c.commit()
+    assert docs.raw(c,output['id'])['status']=='closed'
+    with pytest.raises(ValueError):finish_case(c,u,item)
+
+
+def test_completion_http_permissions_csrf_retained_note_and_state(workspace,app_mod,monkeypatch):
+    from starlette.testclient import TestClient
+    c,u,unit,path=workspace;monkeypatch.setattr(app_mod,'DB',path)
+    source,output,item,task=completion_fixture(workspace);output=release_and_close(c,u,output)
+    url=f"/work/{item['id']}/completion"
+    with TestClient(app_mod.app) as client:
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[0]))
+        page=client.get(url);assert page.status_code==200,page.text
+        # No completion form for an ordinary contributor.
+        assert 'Record completion</button>' not in page.text
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[2]))
+        page=client.get(url);token=re.search(r'name="csrf" value="([a-f0-9]+)"',page.text)[1]
+        data=completion.page(c,u[2],item['id'])
+        fields={'action':'complete','csrf':token,'revision':data['case']['revision'],'digest':data['digest'],'evidence':'<script>Outcome confirmed</script>'}
+        assert client.post(url,data={**fields,'csrf':''}).status_code==403
+        stale=client.post(url,data={**fields,'digest':'stale'})
+        assert stale.status_code==409 and '&lt;script&gt;Outcome confirmed&lt;/script&gt;' in stale.text
+        response=client.post(url,data=fields)
+        assert response.status_code==200 and 'Reopen work item' in response.text
+        assert '&lt;script&gt;Outcome confirmed&lt;/script&gt;' in response.text
+        assert 'Completed' in client.get(f"/work/{item['id']}").text
+        assert client.post(url,data=fields).status_code==409
+        docs.mutate(c,u[1],source['id'],source['revision'],'access',{'visibility':'restricted','viewers':[u[1]['id']],'reason':'Withdraw case access'})
+        assert client.get(url).status_code==404
+        assert client.post(url,data=fields).status_code==403

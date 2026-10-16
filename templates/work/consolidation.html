@@ -1,7 +1,7 @@
 {% extends 'work/base.html' %}
 {% block title %}Consolidate and review · Office Connect{% endblock %}
 {% block work_content %}
-<h1>Consolidate and review</h1><p class="work-intro"><a href="/work/{{ case.id }}">{{ case.title }}</a> · {{ case.outcome }}</p>
+<h1>Consolidate and review</h1><p><a href="/work/{{ case.id }}/completion">Release and completion checklist →</a></p><p class="work-intro"><a href="/work/{{ case.id }}">{{ case.title }}</a> · {{ case.outcome }}</p>
 {% if blocked %}<p class="work-note">{{ blocked }}</p>{% endif %}
 <section class="work-card"><h2>Contribution readiness</h2><p>{{ accepted|length }} accepted · {{ missing|length }} required contributions outstanding.</p><p class="work-small">Readiness describes contributions. The reviewer decides the identified outgoing version under the existing document authority. Review does not complete outstanding work or release the document.</p>
 {% for task in tasks %}<div class="work-row"><div><a href="/work/{{ case.id }}#task-{{ task.id }}">{{ task.title }}</a><p>{{ names.get(task.owner_id,'Unassigned') }} · {{ task_labels[task.status] }} · {{ 'Required' if task.mandatory else 'Optional' }}{% if task.waiting %} · Blocker or reconciliation needs attention{% endif %}</p>{% if task.submission %}<details><summary>Submitted evidence</summary><p class="work-outcome">{{ task.submission }}</p></details>{% endif %}</div></div>{% else %}<p>No contributions recorded. Confirm which inputs are needed before requesting review.</p>{% endfor %}

@@ -21,6 +21,7 @@ import work_decisions
 import work_handoff
 import work_team
 import work_review
+import work_completion
 
 
 def csrf(request):
@@ -48,6 +49,7 @@ def make_router(templates, get_conn):
         fields = dict(form)
         fields['mentions'] = form.getlist('mentions')
         fields['affected_tasks'] = form.getlist('affected_tasks')
+        fields['required_documents'] = form.getlist('required_documents')
         if not hmac.compare_digest(str(fields.get('csrf', '')), csrf(request)):
             raise permissions.Denied('The form expired. Reload this page and try again.')
         return fields
@@ -401,6 +403,37 @@ def make_router(templates, get_conn):
         except (ValueError,TypeError) as e:
             try:return consolidation_page(request,conn,case_id,409 if isinstance(e,docs.Conflict) else 400,str(e),{**fields,'document_id':document_id})
             except permissions.Denied:return HTMLResponse('Consolidation unavailable.',status_code=404)
+        finally:conn.close()
+
+    def completion_page(request,conn,case_id,status_code=200,error='',submitted=None):
+        return render(request,conn,'completion',status_code=status_code,error=error,
+            submitted=submitted or {},**work_completion.page(conn,request.state.user,case_id))
+
+    @router.get('/work/{case_id}/completion',response_class=HTMLResponse)
+    def completion(request: Request,case_id: int):
+        conn=get_conn()
+        try:return completion_page(request,conn,case_id)
+        except permissions.Denied:return HTMLResponse('Completion checklist unavailable.',status_code=404)
+        finally:conn.close()
+
+    @router.post('/work/{case_id}/completion')
+    async def completion_change(request: Request,case_id: int):
+        conn=get_conn();fields={}
+        try:
+            fields=await posted(request)
+            revision=int(fields.get('revision',''))
+            if fields.get('action')=='scope':
+                work_completion.configure(conn,request.state.user,case_id,revision,fields.get('mode'),fields['required_documents'],fields.get('reason'))
+            elif fields.get('action')=='complete':
+                work_completion.complete(conn,request.state.user,case_id,revision,fields.get('digest'),fields.get('evidence'))
+            elif fields.get('action')=='reopen':
+                work_completion.reopen(conn,request.state.user,case_id,revision,fields.get('reason'))
+            else:raise ValueError('Choose a completion action.')
+            return RedirectResponse(f'/work/{case_id}/completion',status_code=303)
+        except permissions.Denied:return HTMLResponse('Completion action unavailable to you.',status_code=403)
+        except (ValueError,TypeError) as e:
+            try:return completion_page(request,conn,case_id,409 if isinstance(e,docs.Conflict) else 400,str(e),fields)
+            except permissions.Denied:return HTMLResponse('Completion checklist unavailable.',status_code=404)
         finally:conn.close()
 
     @router.get('/work', response_class=HTMLResponse)
