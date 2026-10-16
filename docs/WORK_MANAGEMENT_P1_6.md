@@ -1,6 +1,6 @@
 # P1.6 — Contextual work item interface
 
-October 16, 2026. **In review**; implementation owner Codex. Branch `codex/contextual-work`; prepared version **6.58**. P1.5 was already merged at `7249534`. P1.6 is not merged or deployed. Staff acceptance remains open.
+October 16, 2026. **In review**; implementation owner Codex. Branch `codex/contextual-work`; prepared version **6.58**. P1.5 was already merged at `7249534`. P1.6 was subsequently merged at `77d9611` on the user’s instruction. Live deployment success has not been independently verified. Staff acceptance remains open.
 
 ## Work item context
 
@@ -43,6 +43,6 @@ Evidence: `/tmp/work-p16-tests.xml` and `/workspace/scratch/work-p16/` (syntheti
 
 No new schema, write authority, or feature switch is introduced. Existing module flags and all task/document mutation checks remain authoritative. Templates are included by the existing deployment allowlist; no runtime module is added. Presentation rollback to P1.5 preserves all work, assignments, and history.
 
-Automated checks do not establish staff usability acceptance or live deployment success. A push to main triggers the configured deployment workflow; this increment remains on its development branch pending merge.
+Automated checks do not establish staff usability acceptance or live deployment success. A push to main triggers the configured deployment workflow; the subsequent merge does not establish deployment success.
 
 Next: **P1.7 — Guided administrator readiness**: role, policy, holiday, and integration checks with precise next setup actions, without inventing signing authority or enabling dispatch inadvertently.

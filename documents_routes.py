@@ -18,6 +18,7 @@ import documents_rules as rules
 import documents_calendar as cal
 import work
 import work_intake
+import work_readiness
 from documents_storage import rows
 
 
@@ -238,6 +239,19 @@ def make_router(templates,get_conn):
             'settings_revision': st.get_setting(conn, 'documents.settings_revision', '0'),
             'usernames': '', 'authorization': '', 'preview': None, **values,
         }, status_code=status_code)
+
+    @router.get('/admin/documents/readiness', response_class=HTMLResponse)
+    def admin_readiness(request: Request):
+        conn = get_conn()
+        try:
+            readiness = work_readiness.report(conn, getattr(request.state, 'user', None))
+            return templates.TemplateResponse(request, 'documents/readiness.html', {
+                'nav_active': 'documents_setup', 'readiness': readiness,
+            })
+        except p.Denied as e:
+            return HTMLResponse(str(e), status_code=403)
+        finally:
+            conn.close()
 
     @router.get('/admin/documents/setup', response_class=HTMLResponse)
     def admin_setup(request: Request):
