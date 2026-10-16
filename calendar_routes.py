@@ -24,6 +24,7 @@ from starlette.concurrency import run_in_threadpool
 import auth
 import calendar_ics as cics
 import mailer
+import meet_relay
 import calendar_import as ci
 import calendar_import_apply as cia
 import calendar_import_suggest as cis
@@ -750,7 +751,8 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 return _form_page(request, conn, f, error=error, status_code=400, detach=detach)
             if series:
                 _add_skip(conn, series, ctx["occ"], request.state.user["username"])
-            said = "Added to the calendar." + _room_after_save(conn, request.state.user, eid, title, f)
+            said = ("Added to the calendar." + _room_after_save(conn, request.state.user, eid, title, f)
+                    + meet_relay.sync(conn, eid, by=request.state.user["username"]))
         finally:
             conn.close()
         back = _safe_back(f.get("next", ""))
@@ -987,7 +989,8 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 return _form_page(request, conn, f, entry=e, error=str(ex), status_code=400)
             if redate:
                 _redate_activity(request, conn, activity, redate, notify == "yes", user)
-            said = "Saved." + (_room_after_save(conn, user, entry_id, f["title"], f) if f.get("reserve_room") else "")
+            said = ("Saved." + (_room_after_save(conn, user, entry_id, f["title"], f) if f.get("reserve_room") else "")
+                    + meet_relay.sync(conn, entry_id, by=user["username"]))
         finally:
             conn.close()
         return RedirectResponse(f"/calendar/entries/{entry_id}?ok={quote(said)}",
@@ -1076,6 +1079,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             if oc.viewable_entry(conn, user, entry_id) is None:
                 return _not_found(request)
             st.cal_cancel(conn, entry_id, by=user["username"])
+            meet_relay.sync(conn, entry_id, by=user["username"])
         finally:
             conn.close()
         return RedirectResponse(
