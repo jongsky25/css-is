@@ -1,6 +1,7 @@
 """P1.1 shared outcomes, scoped lead confirmation, and document links.
 
-No tasks, assignment migration, document state changes, or external effects.
+Contribution membership is resolved from work_task; no legacy assignment migration,
+document state changes, or external effects.
 Every public write owns one transaction and reloads current authority.
 """
 from datetime import date
@@ -44,7 +45,11 @@ def resolved_document(conn, document_id):
 
 
 def _can_view(conn, user, case):
-    if not case or not (user['id'] in (case['creator_id'], case['lead_id']) or officer(conn, user, case)):
+    if not case:
+        return False
+    tasks = rows(conn, 'SELECT owner_id,unit_id,status FROM work_task WHERE case_id=?', (case['id'],))
+    participant = any((t['owner_id'] == user['id'] and t['status'] != 'cancelled') or officer(conn, user, t) for t in tasks)
+    if not (user['id'] in (case['creator_id'], case['lead_id']) or officer(conn, user, case) or participant):
         return False
     for (doc_id,) in conn.execute('SELECT document_id FROM work_document WHERE case_id=?', (case['id'],)):
         if not permissions.can_view(conn, user, resolved_document(conn, doc_id)):
@@ -102,6 +107,11 @@ def _document_for_link(conn, user, case, document_id, kind):
             continue
         if not permissions.can_view(conn, {'id': uid}, doc):
             raise ValueError('The creator and confirmed lead must have document access before it can be linked.')
+    for task in rows(conn, "SELECT owner_id,due_date FROM work_task WHERE case_id=? AND status<>'cancelled'", (case['id'],)):
+        if task['owner_id'] and not permissions.can_view(conn, {'id': task['owner_id']}, doc):
+            raise ValueError('Every assigned contributor needs document access before it can be linked.')
+        if task['due_date'] and doc['due_date'] and task['due_date'] > doc['due_date']:
+            raise ValueError('A contribution target cannot follow the linked official deadline.')
     return doc
 
 
@@ -154,6 +164,8 @@ def link_document(conn, user, case_id, revision, document_id, kind='reference'):
         user = permissions.actor(conn, user)
         case = get(conn, user, case_id)
         writable(conn)
+        if not can_link(conn, user, case):
+            raise permissions.Denied('The creator, lead, or concerned officer links correspondence.')
         _check_revision(case, revision)
         doc = _document_for_link(conn, user, case, document_id, kind)
         previous = None
@@ -170,6 +182,10 @@ def link_document(conn, user, case_id, revision, document_id, kind='reference'):
         conn.execute('UPDATE work_case SET revision=revision+1,updated_at=? WHERE id=?', (tz.now_iso(), case_id))
         _event(conn, user, case_id, 'document_linked', {'document_id': doc['id'], 'kind': kind})
         return raw(conn, case_id)
+
+
+def can_link(conn, user, case):
+    return user['id'] in (case['creator_id'], case['lead_id']) or officer(conn, user, case)
 
 
 def list_page(conn, user, before=None, limit=25):

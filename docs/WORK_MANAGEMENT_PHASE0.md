@@ -12,7 +12,7 @@ This is the evidence packet for P0.1–P0.3 of [the phased plan](COLLABORATIVE_W
 | P0.2 | In review | Proposed authority/state/migration contract below | Office owner and concerned chiefs confirm terminology and the stated authority choices |
 | P0.3 | In review | [Interactive sample screens](prototypes/work-management.html), with fictional people and records | Contributors, lead, and reviewer complete the walkthrough and record corrections |
 
-The P0 gate is **open**, not accepted. P1 implementation remains pending. Preparing the contract and prototype alongside the baseline is allowed here because they are proposals for the same P0 review; they do not claim that an unaccepted dependency is operationally ready.
+The P0 gate is **open**, not accepted. P1.1 was subsequently merged and P1.2 implemented under the user-authorized development exception recorded below. Preparing the contract and prototype alongside the baseline is allowed here because they are proposals for the same P0 review; they do not claim that an unaccepted dependency is operationally ready.
 
 ## P0.1 — Current workflow and baseline
 

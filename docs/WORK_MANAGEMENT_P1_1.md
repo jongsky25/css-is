@@ -1,6 +1,6 @@
 # P1.1 — Shared work item and document links
 
-Date: October 16, 2026. Status: **In review**. Implementation owner: Codex; staff acceptance owner remains to be designated. Branch: `codex/collaborative-work-foundation`. Prepared version: **6.50**. No deployment or merge is recorded for this increment.
+Date: October 16, 2026. Status: **In review**. Implementation owner: Codex; staff acceptance owner remains to be designated. Branch: `codex/collaborative-work-foundation`. Prepared version: **6.50**. Merged into `main` on the user’s instruction, October 16, 2026: `e4c5da2db7f37b504e4fdbeb530e2e1e6b892b86` (fast-forward push, remote SHA verified). Operational activation and staff acceptance are not recorded.
 
 ## Delivered workflow
 

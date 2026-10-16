@@ -11,6 +11,7 @@ import documents as docs
 import documents_permissions as permissions
 from documents_storage import rows
 import work
+import work_tasks
 
 
 def csrf(request):
@@ -47,8 +48,15 @@ def make_router(templates, get_conn):
                                LEFT JOIN resource_person r ON r.id=u.rp_id
                                WHERE e.case_id=? ORDER BY e.id DESC''', (case_id,))
         for event in events:
-            event['note'] = json.loads(event['detail_json']).get('reason', '')
+            payload = json.loads(event['detail_json'])
+            event['note'] = payload.get('reason', '')
+            event['task_title'] = payload.get('title', '')
+            event['submission'] = payload.get('submission', '')
+        tasks = work_tasks.list_for_case(conn, user, case_id)
+        for task in tasks:
+            task['actions'] = work_tasks.actions(conn, user, case, task)
         return render(request, conn, 'detail', status_code=status_code, error=error, case=case,
+                      tasks=tasks, task_labels=work_tasks.LABELS, can_link=work.can_link(conn, user, case),
                       documents=work.linked_documents(conn, user, case_id), history=events,
                       choices=work.document_choices(conn, user, request.query_params.get('q', '')),
                       officer=work.officer(conn, user, case), submitted=submitted or {})
@@ -118,6 +126,8 @@ def make_router(templates, get_conn):
                 work.confirm_lead(conn, user, case_id, revision, fields.get('lead_id'), fields.get('reason'))
             elif action == 'link':
                 work.link_document(conn, user, case_id, revision, fields.get('document_id'))
+            elif action == 'tasks':
+                work_tasks.create(conn, user, case_id, fields)
             else:
                 return HTMLResponse('Action not found.', status_code=404)
             return RedirectResponse('/work/' + str(case_id), status_code=303)
@@ -127,6 +137,25 @@ def make_router(templates, get_conn):
             try:
                 return detail(request, conn, case_id, status_code=409 if isinstance(e, docs.Conflict) else 400,
                               error=str(e), submitted=fields)
+            except permissions.Denied:
+                return HTMLResponse('Work item not found or unavailable to you.', status_code=404)
+        finally:
+            conn.close()
+
+    @router.post('/work/{case_id}/tasks/{task_id}/{action}')
+    async def task_change(request: Request, case_id: int, task_id: int, action: str):
+        conn = get_conn()
+        try:
+            fields = await posted(request)
+            work_tasks.mutate(conn, request.state.user, case_id, task_id,
+                              int(fields.get('revision', '')), action, fields)
+            return RedirectResponse('/work/' + str(case_id) + '#task-' + str(task_id), status_code=303)
+        except permissions.Denied:
+            return HTMLResponse('Contribution or action not available to you. Reload the page.', status_code=403)
+        except (ValueError, TypeError) as e:
+            try:
+                return detail(request, conn, case_id, status_code=409 if isinstance(e, docs.Conflict) else 400,
+                              error=str(e), submitted={**fields, '_task_id': task_id, '_action': action})
             except permissions.Denied:
                 return HTMLResponse('Work item not found or unavailable to you.', status_code=404)
         finally:

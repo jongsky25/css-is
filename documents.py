@@ -379,7 +379,8 @@ def mutate(conn,user,doc_id,revision,action,data):
                          (doc_id,uid,'lead' if action=='lead' else 'contributor',reason(data.get('task')),due,int(data.get('mandatory',True)),tz.now_iso()))
         elif action=='contribution':
             item=rows(conn,'SELECT * FROM document_assignment WHERE id=? AND document_id=?',(int(data['assignment_id']),doc_id))
-            require(item and (item[0]['user_id']==user['id'] or officer))
+            require(item and (coordinator if data.get('status')=='completed' else
+                              (item[0]['user_id']==user['id'] or officer)))
             if item[0]['status']=='superseded' or data.get('status') not in ('acknowledged','in_progress','submitted','completed'):
                 raise ValueError('Invalid contribution transition.')
             if data['status']=='completed':

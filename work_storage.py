@@ -23,6 +23,17 @@ def install(conn):
       created_at TEXT NOT NULL,
       PRIMARY KEY(case_id,document_id));
     CREATE INDEX IF NOT EXISTS work_document_document ON work_document(document_id,case_id);
+    CREATE TABLE IF NOT EXISTS work_task (
+      id INTEGER PRIMARY KEY, case_id INTEGER NOT NULL REFERENCES work_case(id),
+      title TEXT NOT NULL, expected_output TEXT NOT NULL,
+      unit_id INTEGER NOT NULL REFERENCES org_unit(id),
+      proposed_owner_id INTEGER REFERENCES admin_user(id), owner_id INTEGER REFERENCES admin_user(id),
+      creator_id INTEGER NOT NULL REFERENCES admin_user(id),
+      status TEXT NOT NULL CHECK(status IN ('proposed','todo','in_progress','for_review','done','cancelled')),
+      due_date TEXT, submission TEXT NOT NULL DEFAULT '',
+      revision INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+    CREATE INDEX IF NOT EXISTS work_task_case ON work_task(case_id,id);
+    CREATE INDEX IF NOT EXISTS work_task_owner ON work_task(owner_id,case_id);
     CREATE TABLE IF NOT EXISTS work_event (
       id INTEGER PRIMARY KEY, case_id INTEGER NOT NULL REFERENCES work_case(id),
       actor_id INTEGER NOT NULL REFERENCES admin_user(id), action TEXT NOT NULL,

@@ -227,3 +227,189 @@ def test_http_creation_lead_link_and_access(workspace, app_mod, monkeypatch):
         assert creator.get(url).status_code == 200
         assert 'Confirm lead' not in officer.get(url).text
         assert creator.post('/work/new', data=payload).status_code == 400
+
+# P1.2 contribution workflows intentionally do not mutate legacy assignments.
+import json
+import work_tasks as tasks
+
+
+def propose(c, user, item, unit, owner=None, **extra):
+    return tasks.create(c, user, item['id'], {'title': 'Technical contribution', 'expected_output': 'Supported findings',
+                        'unit_id': unit, 'proposed_owner_id': owner, **extra})
+
+
+def advance(c, user, task, action, **extra):
+    return tasks.mutate(c, user, task['case_id'], task['id'], task['revision'], action,
+                        {'reason': 'Recorded decision', **extra})
+
+
+def test_independent_contributions_return_resubmit_and_lead_acceptance(workspace):
+    c, u, unit, _ = workspace
+    item = case(c, u[0], unit)
+    item = work.confirm_lead(c, u[1], item['id'], 1, u[2]['id'], 'Lead confirmed')
+    a = propose(c, u[2], item, unit, u[0]['id'])
+    b = propose(c, u[2], item, unit, u[3]['id'])
+    for task, owner in ((a, u[0]), (b, u[3])):
+        with pytest.raises(permissions.Denied):
+            advance(c, u[2], task, 'confirm', owner_id=owner['id'])
+    a = advance(c, u[1], a, 'confirm', owner_id=u[0]['id'])
+    b = advance(c, u[1], b, 'confirm', owner_id=u[3]['id'])
+    assert work.get(c, u[3], item['id'])
+    assert b in tasks.list_for_case(c, u[3], item['id'])
+    with pytest.raises(permissions.Denied):
+        advance(c, u[0], a, 'submit', submission='Skipped acknowledgement')
+    a = advance(c, u[0], a, 'acknowledge')
+    b = advance(c, u[3], b, 'acknowledge')
+    a = advance(c, u[0], a, 'submit', submission='First draft evidence')
+    with pytest.raises(permissions.Denied):
+        advance(c, u[0], a, 'accept')
+    a = advance(c, u[2], a, 'return', reason='Add the missing basis')
+    a = advance(c, u[0], a, 'submit', submission='Revised supported output')
+    a = advance(c, u[2], a, 'accept')
+    assert a['status'] == 'done'
+    assert tasks.list_for_case(c, u[2], item['id'])[1] == b
+    assert work.raw(c, item['id'])['revision'] == item['revision']
+    history = [json.loads(r[0]) for r in c.execute("SELECT detail_json FROM work_event WHERE action='task_submit'")]
+    assert [h['submission'] for h in history] == ['First draft evidence', 'Revised supported output']
+    a = advance(c, u[2], a, 'reopen', reason='New technical clarification')
+    assert a['status'] == 'in_progress'
+    assert not c.execute('SELECT 1 FROM document_assignment').fetchone()
+
+
+def test_proposed_owners_scoped_confirmation_and_reassignment(workspace):
+    c, u, unit, _ = workspace
+    item = case(c, u[0], unit)
+    other = st.add_org_unit(c, 'Partner division', 'division', 'WORK/D2')
+    task = propose(c, u[0], item, other, u[3]['id'])
+    with pytest.raises(permissions.Denied):
+        work.get(c, u[3], item['id'])
+    with pytest.raises(permissions.Denied):
+        advance(c, u[1], task, 'confirm', owner_id=u[3]['id'])
+    c.execute("INSERT INTO document_role_grant(user_id,role,unit_id,created_at) VALUES (?,'records',?,'2026-10-16')", (u[2]['id'], other)); c.commit()
+    assert work.get(c, u[2], item['id'])
+    task = advance(c, u[2], task, 'confirm', owner_id=u[3]['id'])
+    assert work.get(c, u[3], item['id'])
+    task = advance(c, u[3], task, 'acknowledge')
+    task = advance(c, u[3], task, 'submit', submission='Prior owner output')
+    task = advance(c, u[2], task, 'reassign', owner_id=u[4]['id'])
+    assert task['status'] == 'todo' and task['submission'] == 'Prior owner output'
+    with pytest.raises(permissions.Denied):
+        work.get(c, u[3], item['id'])
+    assert work.get(c, u[4], item['id'])
+    task = advance(c, u[2], task, 'cancel')
+    with pytest.raises(permissions.Denied):
+        work.get(c, u[4], item['id'])
+    assert work.get(c, u[2], item['id'])  # scoped officer retains the history
+
+
+def test_task_source_access_deadlines_and_later_linking(workspace):
+    c, u, unit, _ = workspace
+    doc = document(c, u[0], unit)
+    c.execute('UPDATE document SET due_date=? WHERE id=?', ('2026-10-25', doc['id'])); c.commit()
+    item = case(c, u[0], unit, source_document_id=doc['id'])
+    with pytest.raises(ValueError, match='official deadline'):
+        propose(c, u[0], item, unit, due_date='2026-10-26')
+    task = propose(c, u[0], item, unit, u[3]['id'], due_date='2026-10-24')
+    with pytest.raises(ValueError, match='every linked document'):
+        advance(c, u[1], task, 'confirm', owner_id=u[3]['id'])
+    doc = docs.mutate(c, u[1], doc['id'], doc['revision'], 'verify', {'verification': 'verified', 'reason': 'Checked'})
+    task = advance(c, u[1], task, 'confirm', owner_id=u[3]['id'])
+    hidden = document(c, u[0], unit)
+    with pytest.raises(ValueError, match='contributor needs document access'):
+        work.link_document(c, u[0], item['id'], item['revision'], hidden['id'])
+    with pytest.raises(permissions.Denied):
+        work.link_document(c, u[3], item['id'], item['revision'], doc['id'])
+    docs.mutate(c, u[1], doc['id'], doc['revision'], 'access',
+                {'visibility': 'restricted', 'viewers': [u[0]['id'], u[1]['id']], 'reason': 'Restricted'})
+    with pytest.raises(permissions.Denied):
+        advance(c, u[3], task, 'acknowledge')
+    assert work.list_page(c, u[3])[0] == []
+    assert work.cases_for_document(c, u[3], doc['id']) == []
+
+
+def test_task_stale_revision_inactive_owner_and_audit_rollback(workspace, monkeypatch):
+    c, u, unit, _ = workspace
+    item = case(c, u[0], unit)
+    task = propose(c, u[0], item, unit, u[3]['id'])
+    c.execute('UPDATE admin_user SET active=0 WHERE id=?', (u[3]['id'],)); c.commit()
+    with pytest.raises(ValueError, match='active staff'):
+        advance(c, u[1], task, 'confirm', owner_id=u[3]['id'])
+    task = advance(c, u[1], task, 'confirm', owner_id=u[0]['id'])
+    old = task.copy()
+    task = advance(c, u[0], task, 'acknowledge')
+    with pytest.raises(docs.Conflict):
+        advance(c, u[0], old, 'acknowledge')
+    with pytest.raises(ValueError, match='Output or evidence'):
+        advance(c, u[0], task, 'submit', submission='')
+    def fail(*args, **kwargs):
+        raise RuntimeError('audit unavailable')
+    monkeypatch.setattr(st, 'audit', fail)
+    with pytest.raises(RuntimeError):
+        advance(c, u[0], task, 'submit', submission='Should roll back')
+    assert tasks.list_for_case(c, u[0], item['id'])[0] == task
+    with pytest.raises(RuntimeError):
+        propose(c, u[0], item, unit)
+    assert len(tasks.list_for_case(c, u[0], item['id'])) == 1
+
+
+def test_task_http_authorization_csrf_stale_and_disabled(workspace, app_mod, monkeypatch):
+    from starlette.testclient import TestClient
+    c, u, unit, path = workspace
+    monkeypatch.setattr(app_mod, 'DB', path)
+    item = case(c, u[0], unit)
+    url = f"/work/{item['id']}"
+    with TestClient(app_mod.app) as client:
+        def login(user):
+            client.cookies.set(auth.COOKIE_NAME, auth.make_token(user))
+            page = client.get(url)
+            assert page.status_code == 200
+            return re.search(r'name="csrf" value="([a-f0-9]+)"', page.text)[1]
+        csrf = login(u[0])
+        payload = {'csrf': csrf, 'revision': item['revision'], 'title': 'HTTP contribution',
+                   'expected_output': 'A supported answer', 'unit_id': unit, 'proposed_owner_id': u[3]['id']}
+        assert client.post(url + '/tasks', data={**payload, 'csrf': ''}).status_code == 403
+        assert client.post(url + '/tasks', data=payload).status_code == 200
+        task = tasks.list_for_case(c, u[0], item['id'])[0]
+        target = url + f"/tasks/{task['id']}"
+        assert client.post(target + '/confirm', data={'csrf': csrf, 'revision': 1, 'owner_id': u[3]['id'], 'reason': 'Unscoped'}).status_code == 403
+        csrf = login(u[1])
+        assignment = {'csrf': csrf, 'revision': 1, 'owner_id': u[3]['id'], 'reason': 'Confirmed'}
+        assert client.post(target + '/confirm', data=assignment).status_code == 200
+        assert client.post(target + '/confirm', data=assignment).status_code == 409
+        csrf = login(u[3])
+        assert 'Acknowledge and start' in client.get(url).text
+        assert 'Confirm accountable lead' not in client.get(url).text
+        assert 'Link an existing document' not in client.get(url).text
+        assert client.post(target + '/acknowledge', data={'csrf': csrf, 'revision': 2, 'reason': 'Started'}).status_code == 200
+        invalid = client.post(target + '/submit', data={'csrf': csrf, 'revision': 3, 'reason': '',
+                                                       'submission': 'Preserve this typed evidence'})
+        assert invalid.status_code == 400
+        assert 'Preserve this typed evidence</textarea>' in invalid.text
+        assert client.post(target + '/submit', data={'csrf': csrf, 'revision': 3, 'reason': 'Ready', 'submission': '<script>bad()</script>'}).status_code == 200
+        page = client.get(url)
+        assert '&lt;script&gt;bad()&lt;/script&gt;' in page.text
+        assert '<script>bad()</script>' not in page.text
+        st.set_setting(c, 'work.enabled', '0')
+        assert client.get(url).status_code == 200
+        assert 'Propose a contribution' not in client.get(url).text
+        assert client.post(target + '/submit', data={'csrf': csrf, 'revision': 4, 'reason': 'Ready', 'submission': 'Again'}).status_code == 400
+        st.init_db(c)
+        assert not work.enabled(c) and len(tasks.list_for_case(c, u[3], item['id'])) == 1
+
+
+def test_legacy_document_lead_can_accept_but_cannot_submit_for_another(workspace):
+    c, u, unit, _ = workspace
+    doc = document(c, u[0], unit)
+    doc = docs.mutate(c, u[1], doc['id'], doc['revision'], 'lead',
+                      {'user_id': u[2]['id'], 'reason': 'Lead', 'task': 'Coordinate'})
+    doc = docs.mutate(c, u[1], doc['id'], doc['revision'], 'assign',
+                      {'user_id': u[3]['id'], 'reason': 'Contributor', 'task': 'Provide input'})
+    assignment = c.execute("SELECT id FROM document_assignment WHERE document_id=? AND user_id=?", (doc['id'], u[3]['id'])).fetchone()[0]
+    payload = {'assignment_id': assignment, 'status': 'submitted', 'outcome': 'Input'}
+    with pytest.raises(permissions.Denied):
+        docs.mutate(c, u[2], doc['id'], doc['revision'], 'contribution', payload)
+    doc = docs.mutate(c, u[3], doc['id'], doc['revision'], 'contribution', payload)
+    with pytest.raises(permissions.Denied):
+        docs.mutate(c, u[3], doc['id'], doc['revision'], 'contribution', {**payload, 'status': 'completed'})
+    doc = docs.mutate(c, u[2], doc['id'], doc['revision'], 'contribution', {**payload, 'status': 'completed'})
+    assert c.execute('SELECT status FROM document_assignment WHERE id=?', (assignment,)).fetchone()[0] == 'completed'
