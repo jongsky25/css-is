@@ -20,6 +20,7 @@ import work_blockers
 import work_decisions
 import work_handoff
 import work_team
+import work_review
 
 
 def csrf(request):
@@ -369,6 +370,37 @@ def make_router(templates, get_conn):
             try:return handoff_page(request,conn,case_id,409 if isinstance(e,docs.Conflict) else 400,str(e),fields)
             except permissions.Denied:return HTMLResponse('Work draft unavailable.',status_code=404)
             except (ValueError,TypeError):return HTMLResponse('Invalid draft or handoff link.',status_code=400)
+        finally:conn.close()
+
+    def consolidation_page(request,conn,case_id,status_code=200,error='',submitted=None):
+        return render(request,conn,'consolidation',status_code=status_code,error=error,
+            submitted=submitted or {},task_labels=work_tasks.LABELS,**work_review.page(conn,request.state.user,case_id))
+
+    @router.get('/work/{case_id}/consolidation',response_class=HTMLResponse)
+    def consolidation(request: Request,case_id: int):
+        conn=get_conn()
+        try:return consolidation_page(request,conn,case_id)
+        except permissions.Denied:return HTMLResponse('Consolidation unavailable.',status_code=404)
+        finally:conn.close()
+
+    @router.post('/work/{case_id}/consolidation/{document_id}')
+    async def consolidation_change(request: Request,case_id: int,document_id: int):
+        conn=get_conn();fields={}
+        try:
+            fields=await posted(request)
+            work.get(conn,request.state.user,case_id)
+            work.writable(conn)
+            if document_id not in {d['id'] for d in work.linked_documents(conn,request.state.user,case_id)}:
+                raise permissions.Denied('Correspondence unavailable.')
+            if fields.get('action') not in ('review_route','review'):
+                raise ValueError('Choose a review action.')
+            docs.mutate(conn,request.state.user,document_id,int(fields.get('revision','')),
+                        fields['action'],{**fields,'work_case_id':case_id})
+            return RedirectResponse(f'/work/{case_id}/consolidation',status_code=303)
+        except permissions.Denied:return HTMLResponse('Review or correspondence unavailable to you.',status_code=403)
+        except (ValueError,TypeError) as e:
+            try:return consolidation_page(request,conn,case_id,409 if isinstance(e,docs.Conflict) else 400,str(e),{**fields,'document_id':document_id})
+            except permissions.Denied:return HTMLResponse('Consolidation unavailable.',status_code=404)
         finally:conn.close()
 
     @router.get('/work', response_class=HTMLResponse)

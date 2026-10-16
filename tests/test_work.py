@@ -1986,3 +1986,207 @@ def test_team_http_revocation_disabled_and_cross_case_reject(workspace,app_mod,m
         assert client.post(target,data=fields).status_code==403
         assert task['title'] not in client.get('/work/team?view=board').text
         assert tasks.list_for_case(c,u[1],item['id'])[0]['status']=='todo'
+
+
+# P3.2: formal review retains the precise consolidation context.
+import work_review as review
+import documents_operations as doc_ops
+
+
+class ConsolidationAdapter:
+    def call(self,action,payload,operation):
+        assert action=='inspect'
+        return {'accessible':True,'file_id':payload['file_id'],'fingerprint':'checked-v1','size':100}
+
+
+def consolidation_fixture(workspace):
+    c,u,unit,_=workspace
+    bureau=st.add_org_unit(c,'Work Bureau','bureau','WORK')
+    rp=st.add_rp(c,'Director Reviewer',is_internal=True,org_unit_id=bureau)
+    c.execute("UPDATE resource_person SET position='Director' WHERE id=?",(rp,))
+    c.execute('UPDATE admin_user SET rp_id=? WHERE id=?',(rp,u[2]['id']))
+    c.execute("INSERT INTO document_role_grant(user_id,role,unit_id,created_at) VALUES (?,'signatory',?,'2026-10-16')",(u[2]['id'],unit));c.commit()
+    u[2]=st.get_admin_user_by_id(c,u[2]['id'])
+    source=document(c,u[0],unit)
+    source=docs.mutate(c,u[1],source['id'],source['revision'],'verify',{'verification':'verified','reason':'Checked incoming source'})
+    output=document(c,u[0],unit,direction='OUT',subject='Consolidated response')
+    output=docs.mutate(c,u[1],output['id'],output['revision'],'verify',{'verification':'verified','reason':'Checked response'})
+    output=doc_ops.attach(c,u[0],output['id'],output['revision'],DRAFT_URL,'material','Exact response',ConsolidationAdapter())
+    item=case(c,u[0],unit,source_document_id=source['id'])
+    item=work.link_document(c,u[0],item['id'],item['revision'],output['id'])
+    item=work.confirm_lead(c,u[1],item['id'],item['revision'],u[2]['id'],'Accountable review lead')
+    task=propose(c,u[0],item,unit,u[0]['id']);task=advance(c,u[1],task,'confirm',owner_id=u[0]['id'])
+    task=advance(c,u[0],task,'acknowledge');task=advance(c,u[0],task,'submit',submission='Validated regional evidence')
+    task=advance(c,u[2],task,'accept')
+    return source,output,item,task
+
+
+def request_consolidation(c,u,output,item,**extra):
+    output=docs.raw(c,output['id'])
+    return docs.mutate(c,u[1],output['id'],output['revision'],'review_route',{
+        'review_class':'director','reviewer_id':u[2]['id'],'reason':'Authority and scope checked',
+        'work_case_id':item['id'],'work_snapshot':review.snapshot(c,item['id'],output['id'])[1],
+        'version_id':output['current_version'],**extra})
+
+
+def formal_review(c,u,output,decision='approved'):
+    return docs.mutate(c,u[2],output['id'],output['revision'],'review',{
+        'version_id':output['current_version'],'decision':decision,'reason':'Revise the summary' if decision=='changes_requested' else 'Reviewed exact response and inputs'})
+
+
+def test_consolidation_return_rerequest_feedback_and_exact_version(workspace):
+    c,u,unit,_=workspace;source,output,item,task=consolidation_fixture(workspace)
+    pending=propose(c,u[0],item,unit,title='Release preparation')
+    output=request_consolidation(c,u,output,item)
+    first=review.latest(c,output['id'])
+    context=review.summaries(c,u[2],[output])[output['id']]
+    assert context['accepted']==1 and context['missing']==1
+    with pytest.raises(docs.Conflict):
+        docs.mutate(c,u[2],output['id'],output['revision'],'review',{'decision':'approved','reason':'Wrong version','version_id':999})
+    output=formal_review(c,u,output,'changes_requested')
+    assert output['approved_version'] is None
+    output=request_consolidation(c,u,output,item)
+    second=review.latest(c,output['id']);assert second['id']!=first['id']
+    output=formal_review(c,u,output)
+    assert output['approved_version']==output['current_version']
+    history=review.page(c,u[2],item['id'])['review_history']
+    assert history[0]['reviews'][0]['decision']=='approved'
+    assert history[1]['reviews'][0]['reason']=='Revise the summary'
+    assert tasks.list_for_case(c,u[0],item['id'])[1]['status']=='proposed'
+    assert docs.raw(c,source['id'])==source
+    with pytest.raises(ValueError,match='consolidation'):
+        docs.mutate(c,u[1],output['id'],output['revision'],'review_route',{'review_class':'director','reviewer_id':u[2]['id'],'reason':'Omit bound context'})
+
+
+def test_consolidation_source_change_invalidates_approval_and_stale_request(workspace):
+    c,u,unit,_=workspace;source,output,item,task=consolidation_fixture(workspace)
+    digest=review.snapshot(c,item['id'],output['id'])[1]
+    source=docs.mutate(c,u[1],source['id'],source['revision'],'deadline',{'due_date':'2026-12-01','reason':'Authorized extension'})
+    with pytest.raises(docs.Conflict):request_consolidation(c,u,output,item,work_snapshot=digest)
+    output=formal_review(c,u,request_consolidation(c,u,output,item))
+    source=docs.mutate(c,u[2],source['id'],source['revision'],'directive',{'reason':'Use revised regional grouping'})
+    changed=docs.raw(c,output['id'])
+    assert changed['status']=='changes_requested' and changed['approved_version'] is None and changed['signed_version'] is None
+    assert changed['revision']>output['revision']
+    assert c.execute('SELECT COUNT(*) FROM document_review WHERE document_id=?',(output['id'],)).fetchone()[0]==1
+    assert c.execute('SELECT COUNT(*) FROM work_review_invalidation').fetchone()[0]==1
+    with pytest.raises(docs.Conflict):review.require_current(c,changed)
+    with pytest.raises(docs.Conflict):formal_review(c,u,output)
+
+
+def test_consolidation_conversation_preserves_approval_but_reopened_input_invalidates(workspace):
+    c,u,unit,_=workspace;source,output,item,task=consolidation_fixture(workspace)
+    output=formal_review(c,u,request_consolidation(c,u,output,item))
+    discussion.post(c,u[0],item['id'],'Clarifying wording without changing input')
+    handoff.post(c,u[0],item['id'],task['id'],task['revision'],0,'Totals are ready for consolidation.')
+    assert docs.raw(c,output['id'])==output
+    advance(c,u[2],task,'reopen',reason='Correct the supporting totals')
+    assert docs.raw(c,output['id'])['approved_version'] is None
+    assert review.page(c,u[2],item['id'])['review_history'][0]['inputs'][0]['status']=='done'
+
+
+def test_consolidation_new_draft_and_signed_lineage(workspace):
+    c,u,unit,_=workspace;source,output,item,task=consolidation_fixture(workspace)
+    output=formal_review(c,u,request_consolidation(c,u,output,item))
+    output=doc_ops.external_signature(c,u[2],output['id'],output['revision'],SUPPORT_URL,'checked-v1','Signed approved contents',ConsolidationAdapter())
+    assert output['status']=='ready_to_release' and review.current(c,review.latest(c,output['id']))
+    output=doc_ops.attach(c,u[1],output['id'],output['revision'],SHEET_URL,'minor','Typography correction',ConsolidationAdapter())
+    assert output['approved_version'] is None and output['status']=='changes_requested'
+    output=request_consolidation(c,u,output,item)
+    assert review.current(c,review.latest(c,output['id']))
+
+
+def test_consolidation_lock_and_audit_rollback(workspace,monkeypatch):
+    c,u,unit,_=workspace;source,output,item,task=consolidation_fixture(workspace)
+    output=formal_review(c,u,request_consolidation(c,u,output,item))
+    c.execute("INSERT INTO document_job(id,document_id,actor_id,kind,version_id,payload_json,created_at,updated_at,state) VALUES ('test-lock',?,?,'sign',?,'{}','2026-10-16','2026-10-16','unknown')",(output['id'],u[2]['id'],output['current_version']));c.commit()
+    with pytest.raises(docs.Conflict,match='external operation'):
+        advance(c,u[2],task,'reopen')
+    assert tasks.list_for_case(c,u[0],item['id'])[0]['revision']==task['revision']
+    assert docs.raw(c,output['id'])==output
+    c.execute("UPDATE document_job SET state='failed' WHERE id='test-lock'");c.commit()
+    original=st.audit
+    def fail(conn,*args,**kwargs):
+        if len(args)>1 and args[1]=='document_consolidation_changed':raise RuntimeError('audit unavailable')
+        return original(conn,*args,**kwargs)
+    monkeypatch.setattr(st,'audit',fail)
+    with pytest.raises(RuntimeError,match='audit unavailable'):advance(c,u[2],task,'reopen')
+    assert docs.raw(c,output['id'])==output
+    assert not c.execute('SELECT 1 FROM work_review_invalidation').fetchone()
+
+
+def test_consolidation_permissions_revocation_and_immutable_history(workspace):
+    c,u,unit,_=workspace;source,output,item,task=consolidation_fixture(workspace)
+    with pytest.raises(permissions.Denied):review.page(c,u[4],item['id'])
+    with pytest.raises(permissions.Denied):request_consolidation(c,u,output,item,reviewer_id=u[4]['id'])
+    output=request_consolidation(c,u,output,item)
+    st.init_db(c)
+    assert len(review.page(c,u[2],item['id'])['review_history'])==1
+    with pytest.raises(sqlite3.IntegrityError):c.execute('DELETE FROM work_review_packet')
+    c.rollback()
+    docs.mutate(c,u[1],source['id'],source['revision'],'access',{'visibility':'restricted','viewers':[u[0]['id']],'reason':'Restrict source'})
+    assert review.summaries(c,u[2],[output])=={}
+    with pytest.raises(permissions.Denied):formal_review(c,u,output)
+
+
+def test_consolidation_http_request_return_inbox_and_stale_note(workspace,app_mod,monkeypatch):
+    from starlette.testclient import TestClient
+    c,u,unit,path=workspace;monkeypatch.setattr(app_mod,'DB',path)
+    source,output,item,task=consolidation_fixture(workspace)
+    url=f"/work/{item['id']}/consolidation";target=url+f"/{output['id']}"
+    with TestClient(app_mod.app) as client:
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[1]))
+        page=client.get(url);assert page.status_code==200,page.text
+        token=re.search(r'name="csrf" value="([a-f0-9]+)"',page.text)[1]
+        fields={'csrf':token,'action':'review_route','revision':output['revision'],'version_id':output['current_version'],
+            'work_snapshot':review.snapshot(c,item['id'],output['id'])[1],'review_class':'director','reviewer_id':u[2]['id'],'reason':'Review consolidated evidence'}
+        assert client.post(target,data={**fields,'csrf':''}).status_code==403
+        assert client.post(target,data=fields,follow_redirects=False).status_code==303
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[2]))
+        inbox=client.get('/approvals');assert inbox.status_code==200,inbox.text
+        assert 'checked-v1' in inbox.text and '1 accepted inputs' in inbox.text
+        page=client.get(url);token=re.search(r'name="csrf" value="([a-f0-9]+)"',page.text)[1]
+        output=docs.raw(c,output['id'])
+        fields={'csrf':token,'action':'review','revision':output['revision'],'version_id':output['current_version'],'decision':'changes_requested','reason':'<script>Clarify totals</script>'}
+        assert client.post(target,data=fields).status_code==200
+        assert '&lt;script&gt;Clarify totals&lt;/script&gt;' in client.get(url).text
+        assert '&lt;script&gt;Clarify totals&lt;/script&gt;' in client.get(f"/documents/{output['id']}").text
+        response=client.post(target,data={**fields,'reason':'Retain my stale feedback'})
+        assert response.status_code==409 and 'Retain my stale feedback' in response.text
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[4]))
+        assert client.get(url).status_code==404
+
+
+def test_consolidation_downstream_invalidation_propagates(workspace):
+    c,u,unit,_=workspace;source,output,item,task=consolidation_fixture(workspace)
+    output=formal_review(c,u,request_consolidation(c,u,output,item))
+    downstream=document(c,u[0],unit,direction='OUT',subject='Downstream response')
+    downstream=docs.mutate(c,u[1],downstream['id'],downstream['revision'],'verify',{'verification':'verified','reason':'Verified'})
+    downstream=doc_ops.attach(c,u[0],downstream['id'],downstream['revision'],SHEET_URL,'material','Downstream draft',ConsolidationAdapter())
+    second=case(c,u[0],unit,source_document_id=output['id'])
+    second=work.link_document(c,u[0],second['id'],second['revision'],downstream['id'])
+    second=work.confirm_lead(c,u[1],second['id'],second['revision'],u[2]['id'],'Review lead')
+    downstream=formal_review(c,u,request_consolidation(c,u,downstream,second))
+    advance(c,u[2],task,'reopen',reason='Correct evidence')
+    assert docs.raw(c,output['id'])['approved_version'] is None
+    assert docs.raw(c,downstream['id'])['approved_version'] is None
+    assert c.execute('SELECT COUNT(*) FROM work_review_invalidation').fetchone()[0]==2
+
+
+def test_consolidation_changed_decisions_and_draft_selection_require_review(workspace):
+    c,u,unit,_=workspace;source,output,item,task=consolidation_fixture(workspace)
+    output=formal_review(c,u,request_consolidation(c,u,output,item))
+    handoff.set_draft(c,u[0],item['id'],0,{'title':'New working draft','url':SHEET_URL,'reason':'Rework consolidation'})
+    assert docs.raw(c,output['id'])['approved_version'] is None
+    message=discussion.post(c,u[0],item['id'],'Director requests a new grouping')
+    decisions.record(c,u[2],item['id'],message,1,decision_fields(c,[task]))
+    with pytest.raises(ValueError,match='Reconcile changed work decisions'):request_consolidation(c,u,output,item)
+
+
+
+def test_consolidation_cancelled_source_invalidates_review(workspace):
+    c,u,unit,_=workspace;source,output,item,task=consolidation_fixture(workspace)
+    output=formal_review(c,u,request_consolidation(c,u,output,item))
+    docs.mutate(c,u[1],source['id'],source['revision'],'cancel',{'reason':'Request withdrawn'})
+    assert docs.raw(c,output['id'])['approved_version'] is None
+    assert docs.raw(c,output['id'])['status']=='changes_requested'

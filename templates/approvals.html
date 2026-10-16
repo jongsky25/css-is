@@ -13,7 +13,7 @@
                ("Nothing is waiting on you right now." if not total else
                 (total ~ " request" ~ ("" if total == 1 else "s") ~ " waiting on your decision."))) }}
 
-{% if document_queue %}<section class="panel"><h2>Documents for review</h2><ul>{% for doc in document_queue %}<li><a href="/documents/{{ doc.id }}">{{ doc.number }} · {{ doc.subject }}</a></li>{% endfor %}</ul></section>{% endif %}
+{% if document_queue %}<section class="panel"><h2>Documents for review</h2><ul>{% for doc in document_queue %}<li><a href="/documents/{{ doc.id }}">{{ doc.number }} · {{ doc.subject }}</a>{% set context=consolidation_reviews.get(doc.id) if consolidation_reviews is defined else none %}{% if context %}<p><a href="/work/{{ context.case.id }}/consolidation">{{ context.case.title }} — consolidate and review</a><br>Exact version #{{ context.version.id }} · {{ context.version.fingerprint }}<br>{{ context.accepted }} accepted inputs · {{ context.missing }} required inputs outstanding at request.</p>{% endif %}</li>{% endfor %}</ul></section>{% endif %}
 <nav class="inbox-jump" aria-label="Jump to a queue">
   {% if show_chief %}
   <a href="#wellness" class="{{ 'has' if wellness }}">Wellness breaks <span class="n">{{ wellness|length }}</span></a>

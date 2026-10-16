@@ -17,17 +17,28 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.71"
+APP_VERSION = "6.72"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
+        "version": "6.72",
+        "date": "October 16, 2026",
+        "summary": "Public activity links now use Short.io with clearer status messages.",
+        "changes": [
+            "Share registration and feedback links using blhsd.s.gy when shortening is enabled.",
+            "See when shortening is waiting, needs configuration, or will retry.",
+            "Previously failed shortening requests are retried through the new service.",
+        ],
+    },
+    {
         "version": "6.71",
         "date": "October 16, 2026",
-        "summary": "Sharing pages explain when a short link is unavailable or waiting to retry.",
+        "summary": "Review consolidated responses with clear inputs and retained feedback.",
         "changes": [
-            "See whether a short link is being prepared, is disabled, or could not be created.",
-            "See when shortening will be retried while keeping the original link available.",
+            "See accepted and outstanding contributions beside the exact outgoing draft version.",
+            "Find consolidation context in Approvals and retain feedback when a draft is returned.",
+            "Require renewed review when recorded inputs or the reviewed draft change.",
         ],
     },
     {
