@@ -765,6 +765,9 @@ NAV_GROUPS = [
          "kw": "email mail notifications toggle switch off preview test outbox "
                "reminders digest csm wellness awa feedback invite reset",
          "cap": "manage_users"},
+        {"key": "documents_setup", "url": "/admin/documents/setup", "label": "Documents setup",
+         "hint": "Appoint the initial Documents permissions and workflow administrators",
+         "kw": "documents setup initial permissions workflow administrators", "cap": "manage_users"},
         {"key": "holidays", "url": "/admin/holidays", "label": "Holidays",
          "hint": "Holidays and work suspensions",
          "kw": "holiday holidays suspension work suspension typhoon non-working special "

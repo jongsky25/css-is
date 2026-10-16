@@ -18,14 +18,28 @@ Documents operations have been deployed or live-tested.
 1. Back up the database with the repository's SQLite backup tooling. Use a copy for acceptance.
 2. Run `storage.init_db` on that copy. The additive schema is repeatable. All existing APIs retain
    their commit behavior unless explicitly passed `commit=False` by Documents.
-3. Agree the named workflow/grant administrator with the owner. Bootstrap that **existing active
-   account** explicitly:
+3. Agree the named workflow/grant administrators with the owner. While both switches are disabled,
+   sign in as an active system administrator and open **Administrator → Documents setup**
+   (`/admin/documents/setup`). Enter the existing active account emails, one per line, and record
+   who authorized the appointments. Select **Review appointments**, verify every account, check the
+   confirmation box and select **Appoint these administrators**. Include everyone in this initial
+   batch: setup closes after saving. Each selected account receives the bureau-wide `grant_admin`
+   and `workflow_admin` roles, with the operator and reason in the business event/platform audit.
+   No accounts, records-officer roles, signing permissions or restricted-document access are created.
+   Neither switch changes. The system administrator receives no implicit Documents role.
+
+   Existing grant-administrator history (including revoked grants), or the completion marker, closes
+   this initial setup route. Later changes belong to designated grant administrators; losing every
+   grant administrator requires an explicitly authorized server-side recovery. A stale preview is
+   rejected if an account changes or either switch is enabled before confirmation.
+
+   For an offline acceptance database, the existing operator tool remains available:
 
    ```sh
    python tools/configure_documents.py --db /path/to/acceptance.db --grant-admin 123 --reason 'Named by records owner for acceptance'
    ```
 
-   This records authorization in the business event and platform audit logs. It changes neither
+   This also records authorization in the business event and platform audit logs. It changes neither
    switch and does not infer grants from the technical-admin role. Other records/signatory grants
    are managed on `/documents/rules` by the designated grant administrator.
 4. Set `documents.enabled=1` on the acceptance copy through `storage.set_setting`. Keep

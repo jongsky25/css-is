@@ -1,3 +1,10 @@
+## 6.46 — October 16, 2026
+
+- Added Administrator → Documents setup for an explicit, reviewed initial batch of existing active account appointments.
+- Setup grants only permissions/workflow administration, records the operator and authorization, and leaves both Documents switches disabled.
+- Confirmation rechecks account identity and administrator authority atomically; existing grant-administrator history closes the setup route.
+
+
 ## 6.42 — October 15, 2026
 
 - Added document registration, routing, review, signing/release, closure, scoped search and reporting for acceptance testing.

@@ -1,0 +1,47 @@
+{% extends 'dash_layout.html' %}
+{% block title %}Documents administrator setup{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/documents.css">{% endblock %}
+{% block content %}
+<div class="documents">
+  <h1>Documents administrator setup</h1>
+  <p>Appoint the existing staff accounts authorized to manage Documents permissions and workflow rules.</p>
+  <p>Documents: <strong>{{ 'Enabled' if module_enabled else 'Disabled' }}</strong> · Document sending: <strong>{{ 'Enabled' if sending_enabled else 'Disabled' }}</strong></p>
+  {% if error %}<p class="doc-alert" role="alert">{{ error }}</p>{% endif %}
+  {% if blocker %}
+    <p class="doc-alert" role="status">{{ blocker }}</p>
+    {% if grants %}
+      <h2>Appointed administrators</h2>
+      <ul>{% for grant in grants %}<li>{{ grant.username }} — {{ 'Permissions administrator' if grant.role == 'grant_admin' else 'Workflow administrator' }}{% if grant.revoked_at %} (revoked){% elif not grant.active %} (account inactive){% endif %}</li>{% endfor %}</ul>
+      <p>Designated administrators can view <a href="/documents/rules">Rules and policies</a>. Editing becomes available when Documents is enabled after acceptance setup.</p>
+    {% endif %}
+  {% elif preview %}
+    <section class="doc-card">
+      <h2>Review the appointments</h2>
+      <ul>{% for account in preview.accounts %}<li>{{ account.username }}</li>{% endfor %}</ul>
+      <p>Each account will receive both roles across all units:</p>
+      <ul><li><strong>Permissions administrator:</strong> manages Documents role grants.</li><li><strong>Workflow administrator:</strong> manages routing rules and document policies.</li></ul>
+      <p><strong>Authorization:</strong> {{ preview.authorization }}</p>
+      <p>These roles do not grant signing authority or access to restricted documents. Documents and sending remain disabled. Initial setup closes after these appointments are saved.</p>
+      <form method="post">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <input type="hidden" name="action" value="confirm">
+        <input type="hidden" name="preview" value="{{ preview|tojson|forceescape }}">
+        <input type="hidden" name="preview_signature" value="{{ preview_signature }}">
+        <label><input type="checkbox" name="confirmed" value="yes" required style="display:inline;width:auto"> I confirm these accounts are authorized for both roles.</label>
+        <button type="submit">Appoint these administrators</button>
+        <a href="/admin/documents/setup">Change the selection</a>
+      </form>
+    </section>
+  {% else %}
+    <form method="post" class="doc-card">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <input type="hidden" name="action" value="preview">
+      <label>Account emails, one per line<textarea name="usernames" required maxlength="6000" placeholder="Enter the emails of existing active CSS-IS accounts">{{ usernames }}</textarea></label>
+      <p>Include everyone being appointed now. Initial setup can be completed once.</p>
+      <label>Who authorized these appointments?<textarea name="authorization" required maxlength="4000" placeholder="Record the approving person and the reason for these appointments">{{ authorization }}</textarea></label>
+      <p>The next screen lets you review the accounts and roles before saving. This page does not enable Documents or sending.</p>
+      <button type="submit">Review appointments</button>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

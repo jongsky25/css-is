@@ -10,6 +10,7 @@ from urllib.parse import quote
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 import auth
+import storage as st
 import documents as d
 import documents_permissions as p
 import documents_operations as ops
@@ -150,6 +151,60 @@ def make_router(templates,get_conn):
             if fields:
                 data['checklist' if prefix=='checklist' else 'evidence']=fields
         return data
+
+    def setup_signature(request, preview):
+        payload = json.dumps(preview, sort_keys=True, separators=(',', ':'))
+        return hmac.new(auth._secret(), (csrf(request) + ':' + payload).encode(), hashlib.sha256).hexdigest()
+
+    def setup_page(request, conn, status_code=200, **values):
+        d.setup_operator(conn, request.state.user)
+        grants = rows(conn, '''SELECT u.username,u.active,g.role,g.revoked_at FROM document_role_grant g
+                              JOIN admin_user u ON u.id=g.user_id
+                              WHERE g.role IN ('grant_admin','workflow_admin') AND g.unit_id IS NULL
+                              ORDER BY u.username,g.role''')
+        return templates.TemplateResponse(request, 'documents/setup.html', {
+            'nav_active': 'documents_setup', 'csrf': csrf(request), 'error': '',
+            'blocker': d.setup_blocker(conn), 'grants': grants,
+            'module_enabled': d.enabled(conn),
+            'sending_enabled': st.get_setting(conn, 'documents.sending_enabled', '0') == '1',
+            'usernames': '', 'authorization': '', 'preview': None, **values,
+        }, status_code=status_code)
+
+    @router.get('/admin/documents/setup', response_class=HTMLResponse)
+    def admin_setup(request: Request):
+        conn = get_conn()
+        try:
+            return setup_page(request, conn)
+        except p.Denied as e:
+            return HTMLResponse(str(e), status_code=403)
+        finally:
+            conn.close()
+
+    @router.post('/admin/documents/setup', response_class=HTMLResponse)
+    async def save_admin_setup(request: Request):
+        conn = get_conn()
+        data = {}
+        try:
+            d.setup_operator(conn, request.state.user)
+            data = await posted(request)
+            if data.get('action') == 'preview':
+                preview = d.preview_admin_setup(conn, request.state.user, data.get('usernames', ''), data.get('authorization', ''))
+                return setup_page(request, conn, preview=preview, preview_signature=setup_signature(request, preview))
+            if data.get('action') != 'confirm' or data.get('confirmed') != 'yes':
+                raise ValueError('Review the accounts and confirm their appointment before saving.')
+            preview = data.get('preview')
+            supplied = str(data.get('preview_signature', ''))
+            if not isinstance(preview, dict) or not hmac.compare_digest(supplied, setup_signature(request, preview)):
+                raise p.Denied('The preview changed or expired. Review the accounts again.')
+            d.bootstrap_admins(conn, request.state.user, preview)
+            return RedirectResponse('/admin/documents/setup', status_code=303)
+        except p.Denied as e:
+            return HTMLResponse(str(e), status_code=403)
+        except ValueError as e:
+            return setup_page(request, conn, status_code=409 if isinstance(e, d.Conflict) else 400,
+                              error=str(e), usernames=data.get('usernames', ''), authorization=data.get('authorization', ''))
+        finally:
+            conn.close()
 
     @router.post('/documents/new')
     async def create(request:Request):
