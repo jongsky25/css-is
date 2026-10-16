@@ -5,6 +5,7 @@ import documents_permissions as p
 import documents_rules as rules
 import storage as st
 import tzutil as tz
+import work_compat
 from documents_storage import rows, transaction
 
 
@@ -20,7 +21,7 @@ def schedule(conn, now=None):
             if not all(k in policy for k in ('cutoff','reminder_time','escalate_chief_days','escalate_director_days')):
                 continue  # No invented timing defaults while O03 is open.
             due=date.fromisoformat(doc['due_date'])
-            recipients={r[0] for r in conn.execute("SELECT user_id FROM document_assignment WHERE document_id=? AND status NOT IN ('completed','superseded')",(doc['id'],))}
+            recipients={r[0] for r in conn.execute("SELECT user_id FROM document_assignment_effective WHERE document_id=? AND status NOT IN ('completed','superseded')",(doc['id'],))}
             recipients.add(doc['lead_id'] or doc['creator_id'])
             milestones=[(rules.shift(conn,due,-3),'three_days'),(rules.shift(conn,due,-1),'one_day'),(due,'due')]
             elapsed=[(day,kind) for day,kind in milestones if datetime.fromisoformat(day.isoformat()+'T'+policy['reminder_time'])<=now]
@@ -48,7 +49,7 @@ def schedule(conn, now=None):
                     cur=conn.execute("INSERT INTO document_notice(document_id,user_id,kind,dedup_key,due_at) VALUES (?,?,?,?,?) ON CONFLICT(dedup_key) DO UPDATE SET state='pending',due_at=excluded.due_at WHERE document_notice.state='cancelled'",
                                      (doc['id'],uid,'deadline:'+kind,key,tz.now_iso()))
                     count+=cur.rowcount
-        for assignment in rows(conn,"SELECT a.*,d.status AS document_status FROM document_assignment a JOIN document d ON d.id=a.document_id WHERE a.due_date IS NOT NULL AND a.status NOT IN ('completed','superseded') AND d.status NOT IN ('closed','cancelled') AND d.canonical_id IS NULL"):
+        for assignment in rows(conn,"SELECT a.*,d.status AS document_status FROM document_assignment_effective a JOIN document d ON d.id=a.document_id WHERE a.due_date IS NOT NULL AND a.status NOT IN ('completed','superseded') AND d.status NOT IN ('closed','cancelled') AND d.canonical_id IS NULL"):
             doc=d.raw(conn,assignment['document_id'])
             import json
             policy=json.loads(doc['policy_json'])
@@ -61,7 +62,7 @@ def schedule(conn, now=None):
                 continue
             kind='overdue' if now.date()>due else elapsed[-1]
             for uid in {assignment['user_id'],doc['lead_id']} - {None}:
-                if p.can_view(conn,{'id':uid},doc):
+                if p.can_view(conn,{'id':uid},doc) and work_compat.can_view_assignments(conn,{'id':uid},doc['id']):
                     cycle=conn.execute("SELECT COALESCE(MAX(id),0) FROM document_event WHERE document_id=? AND action='reopen'",(doc['id'],)).fetchone()[0]
                     key=f"milestone:{assignment['id']}:{assignment['due_date']}:{uid}:{kind}:{cycle}"
                     cur=conn.execute("INSERT INTO document_notice(document_id,user_id,kind,dedup_key,due_at) VALUES (?,?,?,?,?) ON CONFLICT(dedup_key) DO UPDATE SET state='pending',due_at=excluded.due_at WHERE document_notice.state='cancelled'",
@@ -80,7 +81,8 @@ def deliver(conn,base,dry_run=False):
     for notice in rows(conn,"SELECT * FROM document_notice WHERE state='pending' AND due_at<=? ORDER BY id",(tz.now_iso(),)):
         user=st.get_admin_user_by_id(conn,notice['user_id'])
         doc=d.raw(conn,notice['document_id'])
-        if not user or not p.can_view(conn,user,doc):
+        if (not user or not p.can_view(conn,user,doc) or
+                (notice['kind'].startswith('milestone:') and not work_compat.can_view_assignments(conn,user,doc['id']))):
             if not dry_run:
                 conn.execute("UPDATE document_notice SET state='revoked' WHERE id=?",(notice['id'],)); conn.commit()
             continue
@@ -110,18 +112,25 @@ def deliver(conn,base,dry_run=False):
 def bell_rows(conn,user_id,today=None):
     if not d.enabled(conn):
         return []
-    docs=d.list_visible(conn,{'id':user_id},queue='mine')
-    if not docs:
-        return []
-    return [{'text':f'{len(docs)} documents need your attention','url':'/documents?queue=mine','count':len(docs)}]
+    import work_inbox
+    user = p.actor(conn, {'id': user_id})
+    items, cursor = work_inbox.page(conn, user, limit=3, today=today)
+    result = [{'text':item['action'] + ': ' + item['title'], 'url':item['url'], 'count':1}
+              for item in items if item['can_act']]
+    if cursor:
+        result.append({'text':'Browse My work', 'url':'/work/mine', 'count':0})
+    reviews = d.list_visible(conn, user, queue='review')
+    if reviews:
+        result.append({'text':f'{len(reviews)} document reviews awaiting your decision', 'url':'/approvals', 'count':len(reviews)})
+    return result
 
 
 def home_task(conn,user):
-    notices=bell_rows(conn,user['id'])
-    if not notices:
-        return None
-    return {'tone':'todo','title':notices[0]['text'],'key':'documents','detail':'Review your document action queue.',
-            'url':'/documents?queue=mine','cta':'Open documents','icon':'file'}
+    # Compatibility for callers expecting one card. The home page uses the full
+    # personal provider and its existing approvals provider instead.
+    import work_inbox
+    items = work_inbox.home_rows(conn,user)
+    return items[0] if items else None
 
 
 def retry(conn,user,doc_id,notice_id,note):

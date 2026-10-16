@@ -1,0 +1,22 @@
+{% extends 'dash_layout.html' %}
+{% block title %}Work management readiness{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/documents.css">{% endblock %}
+{% block content %}<div class="documents">
+<h1>Work management readiness</h1>
+<p>This checklist reads current configuration. It does not certify live readiness, grant authority, change settings or send documents. No external connections are tested here.</p>
+<section class="doc-card"><h2>Rollout controls</h2>
+<ul>{% for key, enabled in readiness.flags.items() %}<li>{{ {'documents.enabled':'Documents', 'work.enabled':'Collaborative work', 'documents.sending_enabled':'Document sending'}[key] }}: <strong>{{ 'Enabled' if enabled else 'Disabled' }}</strong></li>{% endfor %}</ul>
+<p>Collaborative work requires both Documents and Collaborative work to be enabled. A disabled sending switch blocks direct dispatch even when email is configured.</p>
+<p>System administrators with explicit all-unit permissions authority can change Documents in <a href="/admin/documents/setup">Documents setup</a>. Ask the deployment maintainer to review the Collaborative work switch under the approved rollout plan. Sending requires separate operational authorization; this checklist never enables it.</p>
+</section>
+<h2>Setup and verification checklist</h2>
+<p>Start with authorized staff and unit coverage, then policies and holiday years. Complete controlled integration checks before operational rollout. Links retain the destination’s existing permissions; ask the named owner if you cannot open a setup screen.</p>
+{% for item in readiness['items'] %}<section class="doc-card" aria-labelledby="check-{{ item.key }}">
+<h3 id="check-{{ item.key }}">{{ item.title }}</h3><p><strong>{{ item.status }}</strong></p>
+<p>{{ item.detail }}</p><p><strong>Needed for:</strong> {{ item.blocks }}</p>
+<p><strong>Next step:</strong> {{ item.action }}</p>
+{% if item.href %}<a href="{{ item.href }}">Open setup for {{ item.title|lower }}</a>{% endif %}
+</section>{% endfor %}
+<section class="doc-card"><h2>Before Phase 1 acceptance</h2><p>Record the responsible owner, test date and evidence for each live check in the rollout review. Use synthetic documents and explicitly approved recipients. Review staff journeys and restricted access with the participating units. Existing receipts on individual documents do not certify the whole integration.</p>
+<p>Deployment instructions: <code>docs/DOCUMENT_MANAGEMENT_SETUP.md</code> in the repository. No verified-live status is stored by this checklist.</p></section>
+</div>{% endblock %}

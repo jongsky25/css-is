@@ -262,3 +262,75 @@ def test_http_enable_requires_confirmation_and_allows_intake(setup_db, app_mod, 
         assert st.get_setting(conn, 'documents.sending_enabled') == '0'
         assert client.post(url, data={**form, 'action': 'disable_module', 'settings_revision': '1'}).status_code == 200
         assert not d.enabled(conn)
+
+
+def test_readiness_inventory_no_side_effects_or_secrets(setup_db, monkeypatch):
+    import work_readiness as readiness
+    conn, users, _ = setup_db
+    monkeypatch.setenv('CSS_DOCS_RELAY_URL', 'https://script.google.com/macros/s/private-deployment/exec')
+    monkeypatch.setenv('CSS_DOCS_RELAY_SECRET', 'never-display-this')
+    monkeypatch.delenv('CSS_MAIL_RELAY_URL', raising=False)
+    before = conn.total_changes
+    result = readiness.report(conn, users[0], year=2026)
+    assert conn.total_changes == before
+    items = {i['key']: i for i in result['items']}
+    assert items['drive']['status'] == 'Configured — not verified'
+    assert items['email']['status'] == 'Missing or invalid configuration'
+    assert items['holidays_2027']['status'] == 'Missing confirmation'
+    assert items['signatory']['status'] == 'Missing'
+    assert all(i['action'] and i['blocks'] for i in items.values())
+    assert 'never-display-this' not in str(result)
+    assert 'private-deployment' not in str(result)
+    assert not any(result['flags'].values())
+    st.set_setting(conn, 'documents.holidays_confirmed.2026', '1')
+    updated = {i['key']: i for i in readiness.report(conn, users[0], 2026)['items']}
+    assert updated['holidays_2026']['status'] == 'Recorded — review dates'
+
+
+def test_readiness_scope_inactive_revoked_and_authority(setup_db):
+    import work_readiness as readiness
+    conn, users, _ = setup_db
+    unit = st.add_org_unit(conn, 'Scoped division', 'division', 'BLHSD/SCOPED')
+    conn.execute("INSERT INTO document_role_grant(user_id,role,unit_id,created_at) VALUES (?,'records',?,'2026-10-16')", (users[1]['id'], unit))
+    conn.commit()
+    def item():
+        return next(i for i in readiness.report(conn, users[0])['items'] if i['key'] == 'records')
+    assert item()['status'] == 'Review required'
+    conn.execute('UPDATE admin_user SET active=0 WHERE id=?', (users[1]['id'],));conn.commit()
+    assert item()['status'] == 'Missing'
+    conn.execute('UPDATE admin_user SET active=1 WHERE id=?', (users[1]['id'],))
+    conn.execute("UPDATE document_role_grant SET revoked_at='2026-10-16'");conn.commit()
+    assert item()['status'] == 'Missing'
+    with pytest.raises(permissions.Denied):
+        readiness.report(conn, {**users[1], 'role': 'admin'})
+    d.bootstrap_admins(conn, users[0], appointment(conn, users))
+    assert readiness.report(conn, users[1])
+    conn.execute('UPDATE admin_user SET active=0 WHERE id=?', (users[1]['id'],));conn.commit()
+    with pytest.raises(permissions.Denied):
+        readiness.report(conn, users[1])
+
+
+@pytest.mark.parametrize('endpoint', ['http://script.google.com/x/exec', 'https://example.test/exec', 'https://script.google.com:invalid/exec', ''])
+def test_readiness_rejects_invalid_relay_configuration(monkeypatch, endpoint):
+    import work_readiness
+    monkeypatch.setenv('CSS_DOCS_RELAY_URL', endpoint)
+    monkeypatch.setenv('CSS_DOCS_RELAY_SECRET', 'secret')
+    assert not work_readiness.relay_configured('CSS_DOCS_RELAY')
+
+
+def test_readiness_http_access_and_read_only_page(setup_db, app_mod, monkeypatch):
+    from starlette.testclient import TestClient
+    conn, users, path = setup_db
+    monkeypatch.setattr(app_mod, 'DB', path)
+    url = '/admin/documents/readiness'
+    with TestClient(app_mod.app) as client:
+        assert client.get(url, follow_redirects=False).status_code in (302, 303)
+        client.cookies.set(auth.COOKIE_NAME, auth.make_token(users[1]))
+        assert client.get(url).status_code == 403
+        client.cookies.set(auth.COOKIE_NAME, auth.make_token(users[0]))
+        page = client.get(url)
+        assert page.status_code == 200
+        assert 'Work management readiness' in page.text
+        assert 'No external connections are tested' in page.text
+        assert 'type="submit"' not in page.text
+        assert st.get_setting(conn, 'documents.sending_enabled') == '0'

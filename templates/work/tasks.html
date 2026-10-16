@@ -1,0 +1,35 @@
+{% from 'work/task_action.html' import task_action %}
+<div class="work-card"><h2>Contributions</h2>
+<p class="work-small">Each person submits their own output. Accepting a contribution does not approve, sign, or release correspondence.</p>
+{% for task in tasks %}
+<article class="work-task" id="task-{{ task.id }}">
+<h3>{{ task.title }} <span class="work-badge">{{ task_labels[task.status] }}</span></h3>
+<p class="work-outcome">{{ task.expected_output }}</p>{% if task.attention %}<p class="work-note">{{ task.attention }}</p>{% endif %}<p class="work-next"><strong>Next step:</strong> {{ task.next_label }}</p>{% if task.return_note %}<p class="work-note"><strong>Changes requested:</strong> {{ task.return_note }}</p>{% endif %}
+<p class="work-small">{% if task.owner_id %}Owner: {{ names.get(task.owner_id, 'Inactive account') }}{% else %}Owner awaiting confirmation{% if task.proposed_owner_id %} · Suggested: {{ names.get(task.proposed_owner_id, 'Inactive account') }}{% endif %}{% endif %}<br>Contributing unit: {% for unit in units if unit.id==task.unit_id %}{{ unit.name }}{% endfor %}<br>Internal target: {{ task.due_date|humandate if task.due_date else 'Not set' }}</p>
+{% if task.source_message %}<details><summary>Proposed from a discussion message</summary><p class="work-outcome">{{ task.source_message.body }}</p><a href="{{ task.source_message.url }}">Source message and history</a> · Recorded revision {{ task.source_message.source_revision }}</details>{% endif %}
+{% for decision in task.pending_decisions %}<p class="work-note"><strong>Changed direction needs review:</strong> <a href="/work/{{ case.id }}/decisions/{{ decision.id }}">{{ decision.body|truncate(160) }}</a></p>{% endfor %}
+{% include "work/blockers.html" %}
+{% if task.submission %}<details open><summary>Latest submitted output</summary><p class="work-outcome">{{ task.submission }}</p></details>{% endif %}
+{% if enabled %}
+{% if task.primary %}{{ task_action(task,task.primary,case,csrf,people,submitted) }}{% endif %}
+{% if task.primary=='accept' and 'return' in task.actions %}{{ task_action(task,'return',case,csrf,people,submitted) }}{% endif %}
+{% set others=task.actions|reject('equalto',task.primary)|reject('equalto', 'return' if task.primary=='accept' else '')|list %}
+{% if others %}<details class="work-secondary" {% if submitted.get('_task_id')==task.id and submitted.get('_action') in others %}open{% endif %}><summary>Other authorized actions</summary>
+{% for action in others %}
+{{ task_action(task,action,case,csrf,people,submitted) }}
+{% endfor %}</details>{% endif %}{% endif %}
+<p><a href="/work/{{ case.id }}/discussion?task_id={{ task.id }}">Discuss this contribution</a></p>
+<details class="work-task-history"><summary>Contribution history</summary>{% with history=task.task_history %}{% include "work/history.html" %}{% endwith %}</details>
+</article>
+{% else %}<p>No contributions proposed yet.</p>{% endfor %}
+{% if enabled and not blocked %}<details class="work-task-action" {% if submitted.get("title") %}open{% endif %}><summary>Propose a contribution</summary>
+<form method="post" class="work-form" action="/work/{{ case.id }}/tasks">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ case.revision }}">
+<label for="task-title">Contribution title</label><input id="task-title" name="title" maxlength="250" required value="{{ submitted.get('title','') }}">
+<label for="task-output">Expected output</label><textarea id="task-output" name="expected_output" maxlength="4000" required>{{ submitted.get("expected_output", "") }}</textarea>
+<label for="task-unit">Contributing unit</label><select id="task-unit" name="unit_id" required>{% for unit in units %}<option value="{{ unit.id }}" {% if unit.id==(submitted.get("unit_id", case.unit_id)|int) %}selected{% endif %}>{{ unit.name }}</option>{% endfor %}</select>
+<label for="task-owner">Suggested responsible person</label><select id="task-owner" name="proposed_owner_id"><option value="">Officer to decide</option>{% for person in people %}<option value="{{ person.id }}" {% if person.id==(submitted.get("proposed_owner_id",0)|int) %}selected{% endif %}>{{ person.name }} · {{ person.username }}</option>{% endfor %}</select>
+<label for="task-due">Internal target</label><input id="task-due" type="date" name="due_date" value="{{ submitted.get('due_date','') }}">
+<p class="work-small">The contributing unit's officer confirms the assignment. A suggestion grants no access. Internal targets do not extend official deadlines.</p><button class="work-btn primary">Propose contribution</button>
+</form></details>{% endif %}
+</div>

@@ -2,5 +2,5 @@
 {% macro end(label='Save') %}<button type="submit">{{ label }}</button></form></details>{% endmacro %}
 {% macro field(name,label,type='text',value='',required=true) %}<label>{{ label }}<input name="{{ name }}" type="{{ type }}" value="{{ value or '' }}" {% if required %}required{% endif %}></label>{% endmacro %}
 {% macro text(name,label,value='',required=true) %}<label>{{ label }}<textarea name="{{ name }}" {% if required %}required{% endif %}>{{ value or '' }}</textarea></label>{% endmacro %}
-{% macro person(name,label,people) %}<label>{{ label }}<select name="{{ name }}" required><option value="">Choose a person</option>{% for u in people %}<option value="{{ u.id }}">{{ u.username }}</option>{% endfor %}</select></label>{% endmacro %}
+{% macro person(name,label,people) %}<label>{{ label }}<select name="{{ name }}" required><option value="">Choose a person</option>{% for u in people %}<option value="{{ u.id }}">{{ u.name or u.username }} · {{ u.username }}</option>{% endfor %}</select></label>{% endmacro %}
 {% macro select(name,label,choices) %}<label>{{ label }}<select name="{{ name }}">{% for value,title in choices %}<option value="{{ value }}">{{ title }}</option>{% endfor %}</select></label>{% endmacro %}

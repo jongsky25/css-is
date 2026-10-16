@@ -59,6 +59,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.background import BackgroundTask
 
 import css_is_engine as eng
+import short_links
 import storage as st
 import dashboard_insights as di
 import search_sources
@@ -78,6 +79,7 @@ import rooms_meals_routes
 import rooms_routes
 import travel_routes
 import documents_routes
+import work_routes
 import documents_notify
 import documents
 import report_docs
@@ -642,7 +644,8 @@ NAV_GROUPS = [
     # Section who run it are not necessarily app admins (cap manage_users), so it
     # has its own group: everyone requests; room approvers also get the manage items.
     {"name": "Office", "items": [
-        {"key": "documents", "url": "/documents", "label": "Documents", "section": "Documents", "hint": "Incoming and outgoing document register", "kw": "documents correspondence registry incoming outgoing", "cap": None},
+        {"key": "work", "url": "/work/mine", "label": "My work", "section": "Documents", "hint": "Shared outcomes, ownership, and related correspondence", "kw": "work item shared outcome accountable lead", "cap": None},
+        {"key": "documents", "url": "/documents", "label": "Documents", "hint": "Incoming and outgoing document register", "kw": "documents correspondence registry incoming outgoing", "cap": None},
         {"key": "rooms", "url": "/rooms", "label": "Conference room",
          "section": "Reserve",
          "hint": "See what is free and request a slot",
@@ -1615,6 +1618,42 @@ def _seed_office_rules(conn):
 
 _schema_ready_for = set()    # DB paths whose schema has been ensured this process
 
+def _share_url(url):
+    return short_links.share(DB, url)
+
+
+templates.env.globals["share_url"] = _share_url
+
+
+@app.get("/short-links/status")
+def short_link_status(request: Request, url: str):
+    # Authenticated by middleware. Read existing mappings only; no user URL submission.
+    if not short_links.enabled() or not short_links.eligible(url):
+        return JSONResponse({"done": True}, headers={"Cache-Control": "no-store"})
+    conn = get_conn()
+    try:
+        row = conn.execute("SELECT status,short_url FROM short_links WHERE original_url=?", (url,)).fetchone()
+    finally:
+        conn.close()
+    data = {"done": not row or row[0] in ("ready", "failed")}
+    if row and row[0] == "ready":
+        data.update(url=row[1], qr=_qr_data_uri(row[1]))
+    return JSONResponse(data, headers={"Cache-Control": "no-store"})
+
+
+_short_link_task = None
+
+
+@app.on_event("shutdown")
+async def _stop_short_links():
+    if _short_link_task:
+        _short_link_task.cancel()
+        try:
+            await _short_link_task
+        except asyncio.CancelledError:
+            pass
+
+
 def get_conn():
     """Fresh connection per request (SQLite + threads). Schema is ensured/seeded
     once per DB path (init_db is idempotent but costs ~2-3 ms; no need to pay it
@@ -2125,6 +2164,8 @@ def _notification_items(conn, user, feedback_unread):
         items.extend(documents_notify.bell_rows(conn, user["id"], _tz.today_local()))
     except Exception:                      # noqa: BLE001 — the bell must never break a page
         pass
+    import work_updates
+    items.extend(work_updates.bell_rows(conn, user))
     wellness_decided = st.unseen_wellness_decisions(conn, user["id"])
     if wellness_decided:
         items.append({
@@ -4853,6 +4894,7 @@ async def _persist_on_shutdown():
 
 @app.on_event("startup")
 async def _start_scheduler():
+    global _short_link_task
     mon.set_start_db_bytes(DB)        # baseline for the DB-growth saturation signal
     # F3: warm the atoms cache from the last snapshot so the first request is fast.
     try:
@@ -4879,6 +4921,10 @@ async def _start_scheduler():
         except Exception:
             traceback.print_exc()
     threading.Thread(target=_startup_prewarm, name="dash-prewarm", daemon=True).start()
+    if short_links.enabled() and short_links.origin():
+        c = get_conn()
+        c.close()
+        _short_link_task = asyncio.create_task(short_links.worker(DB))
     asyncio.create_task(_scheduler_loop())
     if PERSIST_DIR:                   # durability engine (bucket-backed persistence)
         print(f"[persist] active — snapshotting {DB} to {bk.SCHED_DIR} "
@@ -6530,10 +6576,12 @@ def arta_screen(request: Request):
     finally:
         conn.close()
     url = f"{_base_url(request)}/r/{walkin['qr_token']}"
+    original_url = url
+    url = _share_url(url)
     qr = {"title": "Walk-in / online client feedback (always open)",
           "url": url, "img": _qr_data_uri(url)}
     return templates.TemplateResponse(request, "arta_link.html", {
-        "qr": qr, "form_id": walkin["form_id"], "url": url,
+        "qr": qr, "form_id": walkin["form_id"], "url": url, "original_url": original_url,
         "can_manage_entries": auth.can(request.state.user["role"], "manage_walkin_entries"),
     })
 
@@ -8968,9 +9016,8 @@ def _manage_ctx(request, conn, ev):
                             if not p["purged"] and p.get("email")),
         "update_email_ready": (mailer.email_configured()
                                and st.email_feature_enabled(conn, "event_update")),
-        # The public link as a QR for posters/slides (the CUSTOM link when one is
-        # set; the original token link keeps working either way).
-        "event_qr": _qr_data_uri(f"{_base_url(request)}/e/{ev.get('slug') or ev['event_token']}"),
+        # Short URLs target the stable token even when the readable slug changes.
+        "event_qr": _qr_data_uri(_share_url(f"{_base_url(request)}/e/{ev['event_token']}")),
         "msg_drafts": amsg.all_drafts(ev),
         "tone_labels": amsg.TONE_LABELS, "tones": amsg.TONES,
         # Certificate of Appearance settings + the internal-staff list to pick a
@@ -9009,14 +9056,19 @@ def _outside_manage_ctx(request, conn, ev):
     speakers = st.manage_event_speakers(conn, ev["id"])
     for s in speakers:
         s["url"] = f"{base}/r/{s['qr_token']}"
+        s["original_url"] = s["url"]
+        s["url"] = _share_url(s["url"])
         s["qr"] = _qr_data_uri(s["url"])
     combined_url = f"{base}/seq?tokens=" + ",".join(s["qr_token"] for s in speakers)
+    combined_original = combined_url
+    combined_url = _share_url(combined_url) if speakers else combined_url
     active, archived = st.event_form_counts(conn, ev["id"])
     dmin, dmax = _event_date_bounds()
     return {
         "nav_active": "home", "show_scope": False, "ev": ev,
         "date_min": dmin, "date_max": dmax,
         "speakers": speakers,
+        "combined_original": combined_original,
         "combined_url": combined_url if speakers else None,
         "combined_qr": _qr_data_uri(combined_url) if speakers else None,
         "entry_window": st.get_event_window(conn, ev["id"]),
@@ -15392,11 +15444,15 @@ def _build_qrs(created, qr_mode, base, event_token=None):
             tokens = ",".join(c["qr_token"] for c in created)
             url = f"{base}/seq?tokens={tokens}"
             title = "Combined QR (one page — rate every speaker, submit once)"
-        return [{"title": title, "url": url, "img": _qr_data_uri(url)}]
+        original = url
+        url = _share_url(url)
+        return [{"title": title, "url": url, "original_url": original, "img": _qr_data_uri(url)}]
     out = []
     for c in created:
         url = f"{base}/r/{c['qr_token']}"
-        out.append({"title": f"{c['kind']} — {c['label']} ({c['form_id']})",
+        original = url
+        url = _share_url(url)
+        out.append({"original_url": original, "title": f"{c['kind']} — {c['label']} ({c['form_id']})",
                     "url": url, "img": _qr_data_uri(url)})
     return out
 
@@ -16908,3 +16964,4 @@ app.include_router(travel_routes.make_router(templates, get_conn, _today_local, 
 
 # Document module: each route enforces account, object access and CSRF.
 app.include_router(documents_routes.make_router(templates, get_conn))
+app.include_router(work_routes.make_router(templates, get_conn))

@@ -72,7 +72,17 @@ def require_view(conn, user, doc):
 
 
 def assigned(conn, user, doc):
-    return bool(conn.execute("SELECT 1 FROM document_assignment WHERE document_id=? AND user_id=? AND status<>'superseded'",
+    migration = conn.execute('SELECT case_id FROM work_legacy_document WHERE document_id=?',(doc['id'],)).fetchone()
+    if migration:
+        import work
+        try:
+            work.get(conn, user, migration[0])
+        except Denied:
+            return False
+        return doc['lead_id']==user['id'] or bool(conn.execute(
+            "SELECT 1 FROM work_task WHERE case_id=? AND owner_id=? AND status<>'cancelled'",
+            (migration[0],user['id'])).fetchone())
+    return bool(conn.execute("SELECT 1 FROM document_assignment_effective WHERE document_id=? AND user_id=? AND status<>'superseded'",
                              (doc['id'], user['id'])).fetchone())
 
 

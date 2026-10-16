@@ -180,7 +180,7 @@ def set_module_enabled(conn, user, turn_on, expected_revision, authorization):
 
 def notify(conn, doc, eid, kind, extra=()):
     recipients = {doc['creator_id'], doc['lead_id']} | set(extra)
-    recipients |= {r[0] for r in conn.execute("SELECT user_id FROM document_assignment WHERE document_id=? AND status<>'superseded'",(doc['id'],))}
+    recipients |= {r[0] for r in conn.execute("SELECT user_id FROM document_assignment_effective WHERE document_id=? AND status<>'superseded'",(doc['id'],))}
     recipients |= {r[0] for r in conn.execute('SELECT user_id FROM document_access WHERE document_id=?',(doc['id'],))}
     for acct in rows(conn,'SELECT id FROM admin_user WHERE active=1'):
         a = p.actor(conn,acct)
@@ -216,63 +216,70 @@ def apply_route(conn, doc, evaluation):
 
 def register(conn, user, fields, now=None):
     with transaction(conn):
-        writable(conn)
-        user = p.actor(conn,user)
-        direction = fields.get('direction','IN')
-        if direction not in ('IN','OUT'):
-            raise ValueError('Choose Incoming or Outgoing.')
-        subject, typ = str(fields.get('subject','')).strip(), str(fields.get('type','')).strip()
-        if not subject or len(subject)>500 or not typ or len(typ)>100:
-            raise ValueError('Subject (up to 500 characters) and type (up to 100) are required.')
-        unit = int(fields['unit_id']) if fields.get('unit_id') else None
-        if unit and not conn.execute('SELECT 1 FROM org_unit WHERE id=?',(unit,)).fetchone():
-            raise ValueError('Unknown unit.')
-        # Registration instant, not issue date, governs permanent annual numbering.
-        now = now or datetime.now(ZoneInfo('Asia/Manila'))
-        if now.tzinfo is None:
-            raise ValueError('Registration clock must include a timezone.')
-        local = now.astimezone(ZoneInfo('Asia/Manila'))
-        seq = conn.execute('INSERT INTO document_sequence(year,direction,value) VALUES (?,?,1) ON CONFLICT(year,direction) DO UPDATE SET value=value+1 RETURNING value',
-                           (local.year,direction)).fetchone()[0]
-        number = f'BLHSD-{direction}-{local.year}-{seq:06d}'
-        timestamp = local.replace(tzinfo=None).isoformat(timespec='seconds')
-        due = date.fromisoformat(fields['due_date']).isoformat() if fields.get('due_date') else None
-        issued = date.fromisoformat(fields['document_date']).isoformat() if fields.get('document_date') else None
-        received = str(fields.get('received_at') or timestamp)
-        receipt_time=datetime.fromisoformat(received)
-        if receipt_time.tzinfo is not None:
-            receipt_time=receipt_time.astimezone(ZoneInfo('Asia/Manila')).replace(tzinfo=None)
-        received=receipt_time.isoformat(timespec='seconds')
-        sender = str(fields.get('sender','')).strip()[:500]
-        evaluation = rules.evaluate(conn,{'subject':subject,'type':typ,'sender':sender})
-        policy = evaluation['policy']
-        source = 'explicit' if due else None
-        if not due and 'default_days' in policy and 'anchor' in policy:
-            anchor = received[:10] if policy['anchor']=='receipt' else timestamp[:10]
-            due = rules.shift(conn,anchor,policy['default_days']).isoformat()
-            source = 'default'
-        lead = evaluation['leads'][0] if len(evaluation['leads'])==1 and len(evaluation.get('lead_units',[]))<=1 else None
-        doc_id = conn.execute('''INSERT INTO document(number,direction,subject,type,sender,document_date,received_at,
-            creator_id,unit_id,lead_id,status,priority,due_date,original_due_date,due_source,policy_json,matches_json,created_at,updated_at)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
-            (number,direction,subject,typ,sender,issued,received,user['id'],unit,lead,'registered' if direction=='IN' else 'draft',
-             'urgent' if fields.get('priority')=='urgent' else 'normal',due,due,source,json.dumps(policy),json.dumps(evaluation),timestamp,timestamp)).lastrowid
-        doc = raw(conn,doc_id)
-        for ref in str(fields.get('references','')).splitlines():
-            if ref.strip():
-                conn.execute('INSERT INTO document_reference(document_id,kind,value) VALUES (?,?,?)',(doc_id,'external',ref.strip()[:500]))
-        if direction=='IN':
-            conn.execute('INSERT INTO document_receipt(document_id,channel,sender,received_at,evidence) VALUES (?,?,?,?,?)',
-                         (doc_id,str(fields.get('channel') or 'unspecified')[:100],sender,received,str(fields.get('evidence',''))[:4000]))
+        return register_in_transaction(conn, user, fields, now)
+
+
+def register_in_transaction(conn, user, fields, now=None, suppress_assignments=False):
+    if not conn.in_transaction:
+        raise RuntimeError('An active transaction is required')
+    writable(conn)
+    user = p.actor(conn,user)
+    direction = fields.get('direction','IN')
+    if direction not in ('IN','OUT'):
+        raise ValueError('Choose Incoming or Outgoing.')
+    subject, typ = str(fields.get('subject','')).strip(), str(fields.get('type','')).strip()
+    if not subject or len(subject)>500 or not typ or len(typ)>100:
+        raise ValueError('Subject (up to 500 characters) and type (up to 100) are required.')
+    unit = int(fields['unit_id']) if fields.get('unit_id') else None
+    if unit and not conn.execute('SELECT 1 FROM org_unit WHERE id=?',(unit,)).fetchone():
+        raise ValueError('Unknown unit.')
+    # Registration instant, not issue date, governs permanent annual numbering.
+    now = now or datetime.now(ZoneInfo('Asia/Manila'))
+    if now.tzinfo is None:
+        raise ValueError('Registration clock must include a timezone.')
+    local = now.astimezone(ZoneInfo('Asia/Manila'))
+    seq = conn.execute('INSERT INTO document_sequence(year,direction,value) VALUES (?,?,1) ON CONFLICT(year,direction) DO UPDATE SET value=value+1 RETURNING value',
+                       (local.year,direction)).fetchone()[0]
+    number = f'BLHSD-{direction}-{local.year}-{seq:06d}'
+    timestamp = local.replace(tzinfo=None).isoformat(timespec='seconds')
+    due = date.fromisoformat(fields['due_date']).isoformat() if fields.get('due_date') else None
+    issued = date.fromisoformat(fields['document_date']).isoformat() if fields.get('document_date') else None
+    received = str(fields.get('received_at') or timestamp)
+    receipt_time=datetime.fromisoformat(received)
+    if receipt_time.tzinfo is not None:
+        receipt_time=receipt_time.astimezone(ZoneInfo('Asia/Manila')).replace(tzinfo=None)
+    received=receipt_time.isoformat(timespec='seconds')
+    sender = str(fields.get('sender','')).strip()[:500]
+    evaluation = rules.evaluate(conn,{'subject':subject,'type':typ,'sender':sender})
+    policy = evaluation['policy']
+    source = 'explicit' if due else None
+    if not due and 'default_days' in policy and 'anchor' in policy:
+        anchor = received[:10] if policy['anchor']=='receipt' else timestamp[:10]
+        due = rules.shift(conn,anchor,policy['default_days']).isoformat()
+        source = 'default'
+    lead = evaluation['leads'][0] if not suppress_assignments and len(evaluation['leads'])==1 and len(evaluation.get('lead_units',[]))<=1 else None
+    doc_id = conn.execute('''INSERT INTO document(number,direction,subject,type,sender,document_date,received_at,
+        creator_id,unit_id,lead_id,status,priority,due_date,original_due_date,due_source,policy_json,matches_json,created_at,updated_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+        (number,direction,subject,typ,sender,issued,received,user['id'],unit,lead,'registered' if direction=='IN' else 'draft',
+         'urgent' if fields.get('priority')=='urgent' else 'normal',due,due,source,json.dumps(policy),json.dumps(evaluation),timestamp,timestamp)).lastrowid
+    doc = raw(conn,doc_id)
+    for ref in str(fields.get('references','')).splitlines():
+        if ref.strip():
+            conn.execute('INSERT INTO document_reference(document_id,kind,value) VALUES (?,?,?)',(doc_id,'external',ref.strip()[:500]))
+    if direction=='IN':
+        conn.execute('INSERT INTO document_receipt(document_id,channel,sender,received_at,evidence) VALUES (?,?,?,?,?)',
+                     (doc_id,str(fields.get('channel') or 'unspecified')[:100],sender,received,str(fields.get('evidence',''))[:4000]))
+    if not suppress_assignments:
         apply_route(conn,doc,evaluation)
-        eid = event(conn,doc_id,user,'registered',{'number':number,'routing':evaluation,'scan_missing':not fields.get('drive_url')})
-        if fields.get('drive_url'):
-            from documents_operations import validate_drive_url
-            url, file_id = validate_drive_url(fields['drive_url'])
-            conn.execute('INSERT INTO document_file_version(document_id,url,file_id,fingerprint,role,actor_id,created_at) VALUES (?,?,?,?,?,?,?)',
-                         (doc_id,url,file_id,'','reference',user['id'],timestamp))
-        notify(conn,doc,eid,'registered')
-        return doc
+    eid = event(conn,doc_id,user,'registered',{'number':number,'routing':evaluation,'scan_missing':not fields.get('drive_url'),'automatic_assignments_suppressed':suppress_assignments})
+    if fields.get('drive_url'):
+        from documents_operations import validate_drive_url
+        url, file_id = validate_drive_url(fields['drive_url'])
+        conn.execute('INSERT INTO document_file_version(document_id,url,file_id,fingerprint,role,actor_id,created_at) VALUES (?,?,?,?,?,?,?)',
+                     (doc_id,url,file_id,'','reference',user['id'],timestamp))
+    notify(conn,doc,eid,'registered')
+    return doc
 
 
 def rule_save(conn,user,name,body, rule_id=None, revision=None, state='draft'):
@@ -327,6 +334,10 @@ def mutate(conn,user,doc_id,revision,action,data):
         work=p.can_work(conn,user,doc)
         coordinator=officer or doc['lead_id']==user['id']
         changes={}
+        import work_compat
+        if work_compat.mapping(conn, doc_id) and action in ('assign','lead','contribution','milestone','reevaluate'):
+            detail = work_compat.change(conn, user, doc, action, data)
+            return finish(conn, user, doc, action, detail, {})
         if doc['status'] in ('closed','cancelled') and action not in ('reopen','receipt','relate'):
             raise ValueError('Reopen this record before further work.')
         if action=='confirmed_fields':
@@ -379,7 +390,8 @@ def mutate(conn,user,doc_id,revision,action,data):
                          (doc_id,uid,'lead' if action=='lead' else 'contributor',reason(data.get('task')),due,int(data.get('mandatory',True)),tz.now_iso()))
         elif action=='contribution':
             item=rows(conn,'SELECT * FROM document_assignment WHERE id=? AND document_id=?',(int(data['assignment_id']),doc_id))
-            require(item and (item[0]['user_id']==user['id'] or officer))
+            require(item and (coordinator if data.get('status')=='completed' else
+                              (item[0]['user_id']==user['id'] or officer)))
             if item[0]['status']=='superseded' or data.get('status') not in ('acknowledged','in_progress','submitted','completed'):
                 raise ValueError('Invalid contribution transition.')
             if data['status']=='completed':
@@ -466,7 +478,7 @@ def mutate(conn,user,doc_id,revision,action,data):
                     raise ValueError('A linked outgoing reply must be released before closure.')
             if doc['reconcile'] or not doc['lead_id'] or doc['verification']!='verified':
                 raise ValueError('Resolve ownership, verification and directives before closure.')
-            if conn.execute("SELECT 1 FROM document_assignment WHERE document_id=? AND mandatory=1 AND status NOT IN ('completed','superseded')",(doc_id,)).fetchone():
+            if conn.execute("SELECT 1 FROM document_assignment_effective WHERE document_id=? AND mandatory=1 AND status NOT IN ('completed','superseded')",(doc_id,)).fetchone():
                 raise ValueError('Mandatory contributions are incomplete.')
             if doc['direction']=='OUT' and doc['status'] not in ('released','awaiting_acknowledgment'):
                 raise ValueError('Release the outgoing document before closure.')
@@ -535,6 +547,9 @@ def merge(conn,user,preview,note):
         if current!=preview:
             raise Conflict('Merge preview is stale.')
         source,target=raw(conn,preview['source_id']),raw(conn,preview['target_id'])
+        import work_compat
+        if work_compat.mapping(conn, source['id']) or work_compat.mapping(conn, target['id']):
+            raise ValueError('Reconcile migrated work ownership before merging these records.')
         if source['lead_id']!=target['lead_id'] or source['due_date']!=target['due_date']:
             raise ValueError('Resolve different leads and deadlines before merging.')
         # Retain originals as immutable receipt history. Canonical visibility is the
@@ -581,7 +596,7 @@ def metrics(conn,documents,today=None):
             due=date.fromisoformat(doc['due_date'])
             counts['overdue']+=due<today
             counts['due_soon']+=today<=due<=rules.shift(conn,today,3)
-        counts['unacknowledged']+=bool(conn.execute("SELECT 1 FROM document_assignment WHERE document_id=? AND status IN ('proposed','assigned')",(doc['id'],)).fetchone())
+        counts['unacknowledged']+=bool(conn.execute("SELECT 1 FROM document_assignment_effective WHERE document_id=? AND status IN ('proposed','assigned')",(doc['id'],)).fetchone())
         if doc['status']=='closed':
             closed=conn.execute("SELECT occurred_at FROM document_event WHERE document_id=? AND action='close' ORDER BY id DESC LIMIT 1",(doc['id'],)).fetchone()
             if closed:

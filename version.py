@@ -17,10 +17,170 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.49"
+APP_VERSION = "6.66"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.66",
+        "date": "October 16, 2026",
+        "summary": "Public registration and feedback links can now be shortened automatically.",
+        "changes": [
+            "Share compact activity and feedback links with matching QR codes when shortening is enabled.",
+            "Keep using the original link while a short link is being prepared or the service is unavailable.",
+            "Personal participant recovery links stay private from the shortening service.",
+        ],
+    },
+    {
+        "version": "6.65",
+        "date": "October 16, 2026",
+        "summary": "Turn discussions into proposed tasks and traceable work decisions.",
+        "changes": [
+            "Create a proposed contribution from a message while retaining its original text.",
+            "Record work decisions with their source, affected contributions and supporting correspondence.",
+            "Review changed work direction while preserving earlier outputs and acceptance history.",
+        ],
+    },
+    {
+        "version": "6.64",
+        "date": "October 16, 2026",
+        "summary": "Make blocked contributions and prerequisite work visible to the team.",
+        "changes": [
+            "Record a blocker with a follow-up owner and date, then keep its resolution in history.",
+            "Link prerequisite contributions and see what must be accepted before work can be submitted.",
+            "Find blocker follow-ups in My work without changing official deadlines.",
+        ],
+    },
+    {
+        "version": "6.63",
+        "date": "October 16, 2026",
+        "summary": "Online meetings are easier to join.",
+        "changes": [
+            "A Join Google Meet button now sits on the calendar item.",
+            "People on an online item get the meeting on their own Google Calendar, so they can join without asking.",
+        ],
+    },
+    {
+        "version": "6.62",
+        "date": "October 16, 2026",
+        "summary": "Online meetings on the calendar can get a Google Meet link automatically.",
+        "changes": [
+            "Save a calendar item as Online or Hybrid with no link and a Google Meet link is added for you.",
+            "Changing the time of the item moves the Meet event, and cancelling it removes the event.",
+            "A link you type yourself, such as Zoom or Teams, is never replaced.",
+        ],
+    },
+    {
+        "version": "6.61",
+        "date": "October 16, 2026",
+        "summary": "Follow discussions and see when colleagues need your attention.",
+        "changes": [
+            "Mention people who already have access and find their updates in the notification bell.",
+            "Follow a work item or contribution and stop following whenever you choose.",
+            "See unread messages and mark the displayed versions as read.",
+        ],
+    },
+    {
+        "version": "6.60",
+        "date": "October 16, 2026",
+        "summary": "Discuss shared work and contributions with your colleagues.",
+        "changes": [
+            "Post messages and replies within a work item or contribution.",
+            "Edit your own messages while keeping earlier text visible in history.",
+            "Keep discussions separate from task updates and formal document approvals.",
+        ],
+    },
+    {
+        "version": "6.59",
+        "date": "October 16, 2026",
+        "summary": "Administrators can review what still needs setup before collaborative work goes live.",
+        "changes": [
+            "Review roles, policies, holiday coverage and integrations with specific next steps.",
+            "See which connections are configured and which still need live verification.",
+            "Review setup without changing permissions or enabling document sending.",
+        ],
+    },
+    {
+        "version": "6.58",
+        "date": "October 16, 2026",
+        "summary": "Work items make the next action and contribution history easier to follow.",
+        "changes": [
+            "See outstanding contributions, your next actions, and return notes alongside each task.",
+            "Review individual contribution histories with named people and submitted outputs.",
+            "Update document contributions through named cards without typing assignment numbers.",
+        ],
+    },
+    {
+        "version": "6.57",
+        "date": "October 16, 2026",
+        "summary": "Correspondence intake connects reviewed records with the right shared work.",
+        "changes": [
+            "Choose reference-only intake, start shared work, or link an existing work item during registration.",
+            "Office scenarios offer optional contribution proposals without assigning people or approval authority.",
+            "Review source suggestions before registration, or continue manually if the source cannot be read.",
+        ],
+    },
+    {
+        "version": "6.56",
+        "date": "October 16, 2026",
+        "summary": "My work is included in the deployment package.",
+        "changes": ["The deployment package now includes the personal work inbox used by home and notifications."],
+    },
+    {'version': '6.55',
+ 'date': 'October 16, 2026',
+ 'summary': 'My work shows your own contributions and decisions with their '
+            'next steps.',
+ 'changes': ['Find assigned work, internal targets, and items waiting for '
+             'review in one personal list.',
+             'Home now links directly to individual contributions, while '
+             'formal document reviews stay in Approvals.',
+             'Completed tasks leave your action list, and migrated assignments '
+             'appear only once.']},
+    {
+        "version": "6.54",
+        "date": "October 16, 2026",
+        "summary": "Behind-the-scenes fix so the latest updates can go live again.",
+        "changes": [
+            "Updates 6.50 to 6.53 (shared work, contribution review and the registration link layout) are now included in the live site.",
+        ],
+    },
+    {
+        "version": "6.53",
+        "date": "October 16, 2026",
+        "summary": "The registration link on an activity's page is easier to read and copy on a phone.",
+        "changes": [
+            "The registration link now sits on one tidy line with its Copy button instead of spilling over several lines.",
+        ],
+    },
+    {
+        "version": "6.52",
+        "date": "October 16, 2026",
+        "summary": "Existing assignments can be rehearsed as shared contributions while preserving their history.",
+        "changes": [
+            "For migrated records, document pages reflect current shared contribution progress.",
+            "Required contributions still control closure, and officers can adjust internal targets with a recorded reason.",
+            "Migration can be checked on a separate database copy before operational use.",
+        ],
+    },
+    {
+        "version": "6.51",
+        "date": "October 16, 2026",
+        "summary": "Shared work now supports individual contributions and review.",
+        "changes": [
+            "Officers can confirm contribution owners, while staff can start and submit their own outputs.",
+            "Work leads can return contributions for changes or accept them, with each decision kept in history.",
+            "Document leads can now confirm another contributor's completed work.",
+        ],
+    },
+    {
+        "version": "6.50",
+        "date": "October 16, 2026",
+        "summary": "Shared work items connect an expected outcome with its lead and correspondence.",
+        "changes": [
+            "When Shared work is enabled, staff can describe an outcome and link its incoming and outgoing records.",
+            "Concerned officers can confirm the accountable lead without changing document access or approval authority.",
+        ],
+    },
     {
         "version": "6.49",
         "date": "October 16, 2026",

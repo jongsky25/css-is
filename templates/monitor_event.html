@@ -29,7 +29,13 @@
   .reglink .reg-copy:hover { background:var(--accent-bg); }
   .reg-copy-msg { font-size:.78rem; color:var(--green); margin-left:.3rem; }
   .reglink code { user-select:all; cursor:text; background:var(--surface-2); border:1px solid var(--line); border-radius:7px;
-          padding:.25rem .5rem; color:var(--ink-soft); word-break:break-all; }
+          padding:.25rem .5rem; color:var(--ink-soft); }
+  /* Label on its own line; link box + Copy share the next one. The box
+     truncates with an ellipsis instead of wrapping (select-all still copies the full URL). */
+  .reglink-row { display:flex; flex-wrap:wrap; align-items:center; gap:.35rem .4rem; }
+  .reglink-row .reglink-label { flex:0 0 100%; }
+  .reglink-row code { flex:1 1 0; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .reglink-row .reg-copy, .reglink-row .reg-copy-msg { margin-left:0; flex:0 0 auto; }
   .note { font-size:.82rem; color:var(--grey); margin:.2rem 0 1rem; }
   table.roster { width:100%; border-collapse:collapse; font-size:.88rem; }
   table.roster th, table.roster td { padding:.55rem .5rem; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
@@ -132,9 +138,11 @@
       ✉ Remind {{ remind_count }} not finished</button>
     {% endif %}
     {#-- People clicked (and rage-clicked) the bare <code> trying to copy it. --#}
-    <span class="reglink">Registration link: <code id="regLink">{{ base_url }}/e/{{ ev.event_token }}</code>
+    <div class="reglink reglink-row" data-short-link="{{ base_url }}/e/{{ ev.event_token }}"><span class="reglink-label">Registration link:</span>
+      <code id="regLink" data-short-text>{{ share_url(base_url ~ "/e/" ~ ev.event_token) }}</code>
+      <a href="{{ base_url }}/e/{{ ev.event_token }}" target="_blank" rel="noopener">Original link</a>
       <button type="button" class="reg-copy" id="regCopy" aria-describedby="regLink">Copy</button>
-      <span class="reg-copy-msg" id="regCopyMsg" role="status" aria-live="polite"></span></span>
+      <span class="reg-copy-msg" id="regCopyMsg" role="status" aria-live="polite"></span></div>
     {% if link_valid_until %}<span class="reglink" style="display:block; margin-top:.25rem;">Personal links stay valid until <strong>{{ link_valid_until }}</strong> (30 days after the activity ends).</span>{% endif %}
   </div>
 

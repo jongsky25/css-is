@@ -16,6 +16,9 @@ import documents_permissions as p
 import documents_operations as ops
 import documents_rules as rules
 import documents_calendar as cal
+import work
+import work_intake
+import work_readiness
 from documents_storage import rows
 
 
@@ -30,26 +33,53 @@ def make_router(templates,get_conn):
         user=p.actor(conn,getattr(request.state,'user',None))
         return {'nav_active':'documents','enabled':d.enabled(conn),'csrf':csrf(request),'error':'',
                 'workflow_admin':p.has_role(conn,user,'workflow_admin'),
-                'people':rows(conn,'SELECT id,username FROM admin_user WHERE active=1 ORDER BY username'),
+                'people':rows(conn,"SELECT u.id,u.username,COALESCE(NULLIF(r.name,''),u.username) AS name FROM admin_user u LEFT JOIN resource_person r ON r.id=u.rp_id WHERE u.active=1 ORDER BY name"),
+                'names':{r['id']:r['name'] for r in rows(conn,"SELECT u.id,COALESCE(NULLIF(r.name,''),u.username) AS name FROM admin_user u LEFT JOIN resource_person r ON r.id=u.rp_id")},
                 'units':rows(conn,'SELECT id,name FROM org_unit ORDER BY path'),**values}
 
     def render(request,conn,page,**values):
         return templates.TemplateResponse(request,'documents/'+page+'.html',context(request,conn,**values))
 
     def detail_context(conn,user,doc_id):
+        user=p.actor(conn,user)
         doc=d.get(conn,user,doc_id)
         if doc['canonical_id']:
             return {'redirect':doc['canonical_id']}
         details={name:rows(conn,'SELECT * FROM '+table+' WHERE document_id=? ORDER BY id', (doc_id,)) for name,table in
-                 [('assignments','document_assignment'),('versions','document_file_version'),('history','document_event'),
+                 [('assignments','document_assignment_effective'),('versions','document_file_version'),('history','document_event'),
                   ('dispatches','document_dispatch'),('jobs','document_job'),('references','document_reference'),('receipts','document_receipt'),('directives','document_directive')]}
+        migration = conn.execute('SELECT case_id FROM work_legacy_document WHERE document_id=?',(doc_id,)).fetchone()
+        if migration:
+            try:
+                work.get(conn, user, migration[0])
+            except p.Denied:
+                details['assignments'] = []
+                migration = None
+        is_officer=p.officer(conn,user,doc)
+        coordinator=is_officer or doc['lead_id']==user['id']
+        for assignment in details['assignments']:
+            assignment['progress_choices']=[]
+            assignment['milestone_allowed']=False
+            if not migration and doc['status'] not in ('closed','cancelled') and assignment['status'] not in ('completed','superseded'):
+                if assignment['user_id']==user['id'] or is_officer:
+                    assignment['progress_choices']={'assigned':[('acknowledged','Acknowledge')],
+                        'acknowledged':[('in_progress','Start contribution'),('submitted','Submit for consolidation')],
+                        'in_progress':[('submitted','Submit for consolidation')]}.get(assignment['status'],[])
+                if coordinator:
+                    if assignment['status']=='submitted':
+                        assignment['progress_choices'].append(('completed','Confirm contribution complete'))
+                    assignment['milestone_allowed']=True
         for e in details['history']:
             e['detail']=json.loads(e['detail_json'])
+            e['note']=e['detail'].get('reason') or e['detail'].get('outcome') or ''
         policy=json.loads(doc['policy_json'])
         warnings=rules.coverage(conn,doc['created_at'],doc['due_date'])
         if any(a['due_date'] and a['due_date']<doc['created_at'][:10] for a in details['assignments']):
             warnings.append('The proposed contributor buffer cannot fit before the deadline. The lead must adjust milestones explicitly.')
         return {'doc':doc,**details,'policy':policy,'duplicates':d.duplicate_candidates(conn,user,doc_id),
+                'work_migration':migration,
+                'assignments_migrated':bool(conn.execute('SELECT 1 FROM work_legacy_document WHERE document_id=?',(doc_id,)).fetchone()),
+                'work_enabled':work.enabled(conn),'work_cases':work.cases_for_document(conn,user,doc_id),
                 'warnings':warnings,
                 'evaluation':rules.evaluate(conn,doc),'operation_id':str(uuid.uuid4()),
                 'officer':p.officer(conn,p.actor(conn,user),doc),'can_work':p.can_work(conn,p.actor(conn,user),doc),
@@ -90,11 +120,49 @@ def make_router(templates,get_conn):
         finally:
             conn.close()
 
+    def intake_page(request,conn,data=None,status_code=200,error='',preview=None):
+        data=data or {}
+        cases=work_intake.choices(conn,request.state.user) if work.enabled(conn) else []
+        if data.get('case_selection'):
+            try:
+                chosen=work.get(conn,request.state.user,int(str(data['case_selection']).split(':')[0]))
+                if work.can_link(conn,request.state.user,chosen) and chosen['id'] not in [c['id'] for c in cases]:
+                    cases.append(chosen)
+            except (ValueError,TypeError):
+                pass
+        return templates.TemplateResponse(request,'documents/new.html',context(request,conn,
+            values=data,work_enabled=work.enabled(conn),cases=cases,scenarios=work_intake.SCENARIOS,
+            preview=preview,error=error),status_code=status_code)
+
+    @router.post('/documents/intake/preview')
+    async def intake_preview(request:Request):
+        conn=get_conn();data={}
+        try:
+            data=await posted(request)
+            result=work_intake.preview(conn,request.state.user,data.get('drive_url',''))
+            data.pop('confirmed',None)
+            return intake_page(request,conn,data,preview=result)
+        except p.Denied:
+            return HTMLResponse('The form expired or the account is unavailable.',status_code=403)
+        except Exception:
+            data.pop('confirmed',None)
+            return intake_page(request,conn,data,error='The source could not be read. Your entered fields are retained; continue manually or retry extraction.')
+        finally:
+            conn.close()
+
     @router.get('/documents/new',response_class=HTMLResponse)
-    def new(request:Request):
+    def new(request:Request,case_id:int|None=None):
         conn=get_conn()
         try:
-            return render(request,conn,'new',values={})
+            data={}
+            if case_id:
+                chosen=work.get(conn,request.state.user,case_id)
+                if not work.can_link(conn,request.state.user,chosen):
+                    raise p.Denied('Work item unavailable for linking.')
+                data={'case_selection':str(chosen['id'])+':'+str(chosen['revision']),'work_mode':'existing','scenario':'response'}
+            return intake_page(request,conn,data)
+        except p.Denied:
+            return HTMLResponse('Work item unavailable for linking.',status_code=404)
         finally:
             conn.close()
 
@@ -172,6 +240,19 @@ def make_router(templates,get_conn):
             'usernames': '', 'authorization': '', 'preview': None, **values,
         }, status_code=status_code)
 
+    @router.get('/admin/documents/readiness', response_class=HTMLResponse)
+    def admin_readiness(request: Request):
+        conn = get_conn()
+        try:
+            readiness = work_readiness.report(conn, getattr(request.state, 'user', None))
+            return templates.TemplateResponse(request, 'documents/readiness.html', {
+                'nav_active': 'documents_setup', 'readiness': readiness,
+            })
+        except p.Denied as e:
+            return HTMLResponse(str(e), status_code=403)
+        finally:
+            conn.close()
+
     @router.get('/admin/documents/setup', response_class=HTMLResponse)
     def admin_setup(request: Request):
         conn = get_conn()
@@ -219,10 +300,13 @@ def make_router(templates,get_conn):
         conn=get_conn(); data={}
         try:
             data=await posted(request)
+            if data.get('intake')=='guided':
+                doc,case=work_intake.register(conn,request.state.user,data)
+                return RedirectResponse('/work/'+str(case['id']) if case else '/documents/'+str(doc['id']),status_code=303)
             doc=d.register(conn,request.state.user,data)
             return RedirectResponse('/documents/'+str(doc['id']),status_code=303)
         except (ValueError,sqlite3.IntegrityError) as e:
-            return templates.TemplateResponse(request,'documents/new.html',context(request,conn,error=str(e),values=data),status_code=403 if isinstance(e,p.Denied) else 400)
+            return intake_page(request,conn,data,error=str(e),status_code=403 if isinstance(e,p.Denied) else (409 if isinstance(e,d.Conflict) else 400))
         finally:
             conn.close()
 

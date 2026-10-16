@@ -1,0 +1,228 @@
+"""Persistent is.gd outbox for public survey URLs; never shorten participant tokens."""
+from __future__ import annotations
+
+import asyncio
+import ipaddress
+import logging
+import os
+import re
+import sqlite3
+import time
+from urllib.parse import parse_qs, urlsplit
+
+import httpx
+
+log = logging.getLogger(__name__)
+INTERVAL = 25  # <= 144 requests/hour, shared across workers using this database
+TOKEN = r"[A-Za-z0-9_-]+"
+
+
+def enabled():
+    return os.environ.get("CSS_SHORT_LINKS", "0") == "1"
+
+
+def origin():
+    base = os.environ.get("CSS_BASE_URL", "").rstrip("/")
+    try:
+        p = urlsplit(base)
+        host = p.hostname or ""
+        if (p.scheme != "https" or not host or p.username or p.password or
+                p.port not in (None, 443) or p.path or p.query or p.fragment or
+                "." not in host or host.endswith((".localhost", ".local", ".test", ".invalid"))):
+            return ""
+        try:
+            if not ipaddress.ip_address(host).is_global:
+                return ""
+        except ValueError:
+            pass
+        return base
+    except ValueError:
+        return ""
+
+
+def eligible(url):
+    base = origin()
+    if not base or not isinstance(url, str) or len(url) > 5000:
+        return False
+    try:
+        p = urlsplit(url)
+    except ValueError:
+        return False
+    if f"{p.scheme}://{p.netloc}" != base or p.fragment:
+        return False
+    if re.fullmatch(r"/(e|r)/" + TOKEN, p.path):
+        return not p.query
+    if p.path == "/seq":
+        q = parse_qs(p.query, keep_blank_values=True)
+        return (set(q) == {"tokens"} and len(q["tokens"]) == 1 and
+                bool(re.fullmatch(TOKEN + r"(?:," + TOKEN + r")*", q["tokens"][0])))
+    return False
+
+
+def init_db(conn):
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS short_links (
+            original_url TEXT PRIMARY KEY,
+            short_url TEXT,
+            provider TEXT NOT NULL DEFAULT 'is.gd',
+            status TEXT NOT NULL DEFAULT 'pending',
+            attempts INTEGER NOT NULL DEFAULT 0,
+            next_attempt REAL NOT NULL DEFAULT 0,
+            created_at REAL NOT NULL,
+            updated_at REAL NOT NULL,
+            last_error TEXT
+        );
+        CREATE TABLE IF NOT EXISTS short_link_rate (
+            id INTEGER PRIMARY KEY CHECK(id=1), next_call REAL NOT NULL
+        );
+        INSERT OR IGNORE INTO short_link_rate VALUES(1,0);
+    """)
+
+
+def enqueue(conn, url):
+    """Caller owns transaction; insert once, never reset a retry or completed link."""
+    if enabled() and eligible(url):
+        now = time.time()
+        conn.execute("INSERT OR IGNORE INTO short_links(original_url,created_at,updated_at) VALUES(?,?,?)",
+                     (url, now, now))
+
+
+def enqueue_path(conn, path):
+    enqueue(conn, origin() + path)
+
+
+def lookup(conn, url):
+    if not enabled() or not eligible(url):
+        return url
+    row = conn.execute("SELECT short_url FROM short_links WHERE original_url=? AND status='ready'",
+                       (url,)).fetchone()
+    return row[0] if row else url
+
+
+def _connect(db):
+    conn = sqlite3.connect(db, timeout=5)
+    conn.execute("PRAGMA busy_timeout=5000")
+    return conn
+
+
+def share(db, url):
+    """No network in page rendering. Fail open even if the database is busy."""
+    if not enabled() or not eligible(url):
+        return url
+    try:
+        conn = _connect(db)
+        try:
+            enqueue(conn, url)
+            result = lookup(conn, url)
+            conn.commit()
+            return result
+        finally:
+            conn.close()
+    except sqlite3.Error:
+        log.warning("Short-link cache unavailable; using original link")
+        return url
+
+
+def process_one(db, *, now=None, post=None):
+    """Claim with a lease and global rate slot, release DB lock before HTTP."""
+    if not enabled() or not origin():
+        return False
+    now = time.time() if now is None else now
+    conn = _connect(db)
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        next_call = conn.execute("SELECT next_call FROM short_link_rate WHERE id=1").fetchone()[0]
+        row = conn.execute("SELECT original_url,attempts FROM short_links WHERE "
+                           "status IN ('pending','processing') AND next_attempt<=? "
+                           "ORDER BY created_at LIMIT 1", (now,)).fetchone()
+        if now < next_call or not row:
+            conn.rollback()
+            return False
+        url, attempts = row
+        if not eligible(url):
+            conn.execute("UPDATE short_links SET status='failed',last_error='Destination no longer eligible' "
+                         "WHERE original_url=?", (url,))
+            conn.commit()
+            return False
+        conn.execute("UPDATE short_link_rate SET next_call=? WHERE id=1", (now + INTERVAL,))
+        conn.execute("UPDATE short_links SET status='processing',attempts=attempts+1,next_attempt=?,"
+                     "updated_at=? WHERE original_url=?", (now + 60, now, url))
+        conn.commit()
+        short, error, status, delay = None, None, "pending", min(86400, 60 * 2 ** min(attempts, 10))
+        try:
+            response = (post or httpx.post)("https://is.gd/create.php", data={"format": "json", "url": url},
+                                           timeout=8, follow_redirects=False)
+            data = response.json()
+            code = data.get("errorcode") if isinstance(data, dict) else None
+            if code is not None:
+                error = f"is.gd error {code}"
+                if str(code) in ("1", "2"):
+                    status = "failed"
+                if str(code) == "3":
+                    delay = max(delay, 3600)
+            else:
+                response.raise_for_status()
+                candidate = data.get("shorturl", "")
+                if not re.fullmatch(r"https://is\.gd/[A-Za-z0-9_]{5,30}", candidate):
+                    raise ValueError("Invalid short URL")
+                short, status = candidate, "ready"
+        except (httpx.HTTPError, ValueError, TypeError, AttributeError):
+            error = "Shortening request failed"
+        conn.execute("UPDATE short_links SET short_url=?,status=?,next_attempt=?,updated_at=?,last_error=? "
+                     "WHERE original_url=?", (short, status, now + delay, now, error, url))
+        if error == "is.gd error 3":
+            conn.execute("UPDATE short_link_rate SET next_call=MAX(next_call,?) WHERE id=1", (now + delay,))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+async def worker(db):
+    while True:
+        pending = asyncio.create_task(asyncio.to_thread(process_one, db))
+        try:
+            await asyncio.shield(pending)
+        except asyncio.CancelledError:
+            # Finish the bounded HTTP request before shutdown takes its DB snapshot.
+            await pending
+            raise
+        except Exception:
+            log.exception("Short-link worker will retry")
+        await asyncio.sleep(5)
+
+
+def backfill(conn):
+    """Queue active public forms/events and outside combined links; safe to rerun."""
+    import storage as st
+    before = conn.total_changes
+    for (token,) in conn.execute("SELECT qr_token FROM form_instance WHERE COALESCE(archived,0)=0"):
+        if token:
+            enqueue_path(conn, f"/r/{token}")
+    for eid, token, kind in conn.execute("SELECT id,event_token,event_kind FROM event"):
+        if st.event_is_archived(conn, eid):
+            continue
+        if kind != "outside":
+            enqueue_path(conn, f"/e/{token}")
+        else:
+            tokens = ",".join(f["qr_token"] for f in st.get_event_forms(conn, eid))
+            if tokens:
+                enqueue_path(conn, f"/seq?tokens={tokens}")
+    conn.commit()
+    return conn.total_changes - before
+
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="Queue existing active public links for is.gd")
+    parser.add_argument("--backfill", action="store_true", required=True)
+    args = parser.parse_args()
+    if not enabled() or not origin():
+        parser.error("Set CSS_SHORT_LINKS=1 and a public HTTPS CSS_BASE_URL first")
+    import storage as st
+    conn = st.connect(os.environ.get("CSS_DB", "css_is.db"))
+    try:
+        st.init_db(conn)
+        print(f"Queued {backfill(conn)} links. The running app processes the queue.")
+    finally:
+        conn.close()

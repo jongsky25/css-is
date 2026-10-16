@@ -4,6 +4,7 @@
 {% block content %}
 <div class="documents">
   <h1>Documents administrator setup</h1>
+  <p><a href="/admin/documents/readiness">Review work management readiness and next setup steps</a></p>
   <p>Appoint the existing staff accounts authorized to manage Documents permissions and workflow rules.</p>
   <p>Documents: <strong>{{ 'Enabled' if module_enabled else 'Disabled' }}</strong> · Document sending: <strong>{{ 'Enabled' if sending_enabled else 'Disabled' }}</strong></p>
   {% if error %}<p class="doc-alert" role="alert">{{ error }}</p>{% endif %}
