@@ -14,12 +14,12 @@
     there's nothing to create per client. Running an event instead? <a href="/">Create an activity survey</a>.
     {% if can_manage_entries %} Need to fix or archive a submitted slip? <a href="/arta/entries">Manage entries</a>.{% endif %}</p>
 
-  <div class="card" style="text-align:center; margin-bottom:1.25rem;">
+  <div class="card" style="text-align:center; margin-bottom:1.25rem;" data-short-link="{{ original_url }}">
     <span class="equity-mark lg" role="img" aria-label="Equity in Health" style="display:inline-block; margin-bottom:.7rem;"></span>
     <div style="font-weight:600; margin-bottom:.6rem;">{{ qr.title }}</div>
-    <img src="{{ qr.img }}" alt="Walk-in feedback QR code" style="width:240px; height:240px; image-rendering:pixelated;">
-    <div class="mono small" style="margin-top:.75rem; word-break:break-all;"><a href="{{ url }}">{{ url }}</a></div>
-    <div class="noprint" style="margin-top:.6rem;"><a class="btn ghost" href="{{ qr.img }}" download="qr-walkin.png">⤓ Download QR</a></div>
+    <img data-short-qr src="{{ qr.img }}" alt="Walk-in feedback QR code" style="width:240px; height:240px; image-rendering:pixelated;">
+    <div class="mono small" style="margin-top:.75rem; word-break:break-all;"><a data-short-text data-short-href href="{{ url }}">{{ url }}</a></div>
+    <div class="noprint" style="margin-top:.6rem;"><a class="btn ghost" data-short-download href="{{ qr.img }}" download="qr-walkin.png">⤓ Download QR</a> <a href="{{ original_url }}">Original link</a></div>
   </div>
 
   <div class="panel tint-blue" style="color:var(--accent-ink); font-size:.9rem;">

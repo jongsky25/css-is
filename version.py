@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.60"
+APP_VERSION = "6.61"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.61",
+        "date": "October 16, 2026",
+        "summary": "Public registration and feedback links can now be shortened automatically.",
+        "changes": [
+            "Share compact activity and feedback links with matching QR codes when shortening is enabled.",
+            "Keep using the original link while a short link is being prepared or the service is unavailable.",
+            "Personal participant recovery links stay private from the shortening service.",
+        ],
+    },
     {
         "version": "6.60",
         "date": "October 16, 2026",

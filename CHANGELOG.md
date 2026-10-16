@@ -1,3 +1,11 @@
+## October 16, 2026 (v6.61 — automatic public short links)
+
+- Add an opt-in is.gd outbox in SQLite, with persisted retries, shared pacing, expired-lease recovery and shutdown draining.
+- Queue public activity/form links on creation; reuse mappings for sharing and printable/downloadable QR codes, with original-link fallback.
+- Update sharing controls when shortening completes; keep signed participant URLs out of the provider.
+- Add resumable active-link backfill, configuration/rollout documentation and runtime deployment packaging.
+- Tests: `tests/test_short_links.py` and activity/sharing regression tests.
+
 ## 6.48 — October 16, 2026
 
 - Filter opening questions by claim type and show external advance details only for an external liquidation.
