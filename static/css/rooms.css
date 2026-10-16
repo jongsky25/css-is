@@ -178,7 +178,8 @@ button.rm-cell:focus-visible { outline:3px solid var(--accent); outline-offset:1
 .room-chip[data-state="closed"] { border-left-color:var(--amber-ln); }
 .room-chip > summary { list-style:none; cursor:pointer; display:flex; flex-wrap:wrap; align-items:center; gap:.4rem .7rem; min-height:3rem; padding:.55rem .9rem; box-sizing:border-box; }
 .room-chip > summary::-webkit-details-marker { display:none; }
-.room-chip > summary::after { content:"\25BE"; margin-left:auto; color:var(--soft); }
+.room-chip > summary::after { content:"\25BE"; position:absolute; right:.9rem; top:.8rem; color:var(--soft); }
+.room-chip > summary { position:relative; padding-right:2.4rem; }
 .room-chip:not([open]) > summary::after { content:"\25B8"; }
 .rc-title { font-weight:800; font-size:1.02rem; }
 .rc-pill { font-weight:700; font-size:.8rem; padding:.15rem .6rem; border-radius:999px; border:1px solid var(--line); background:var(--surface); color:var(--soft); }
