@@ -238,7 +238,7 @@ Delivery is explicitly phased and incremental. A **phase** delivers a usable cap
 
 ### 9.5 P3 — Connect team execution and formal release
 
-**Progress, October 17, 2026:** Following user acceptance of the Phase 2 gate by authorizing P3.1, [shared team list and board views](WORK_MANAGEMENT_P3_1.md) were merged at `eded7ce` as version 6.70. [P3.2 consolidation and review inbox](WORK_MANAGEMENT_P3_2.md) was merged at `b788d34` as version 6.71. [P3.3 formal release and case completion](WORK_MANAGEMENT_P3_3.md) was merged at `516ad91` as version 6.74. [P3.4 notification preferences and digests](WORK_MANAGEMENT_P3_4.md) is implemented for review as version 6.75. Phase 3 acceptance remains open.
+**Progress, October 17, 2026:** Following user acceptance of the Phase 2 gate by authorizing P3.1, [shared team list and board views](WORK_MANAGEMENT_P3_1.md) were merged at `eded7ce` as version 6.70. [P3.2 consolidation and review inbox](WORK_MANAGEMENT_P3_2.md) was merged at `b788d34` as version 6.71. [P3.3 formal release and case completion](WORK_MANAGEMENT_P3_3.md) was merged at `516ad91` as version 6.74. [P3.4 notification preferences and digests](WORK_MANAGEMENT_P3_4.md) was merged at `ccdc142` as version 6.75. [P3.5 manager support overview](WORK_MANAGEMENT_P3_5.md) is implemented for review as version 6.77, preserving the intervening calendar form release. Phase 3 acceptance remains open.
 
 | Increment | Status | Depends on | Small deliverable | Acceptance evidence |
 |---|---|---|---|---|
@@ -246,7 +246,7 @@ Delivery is explicitly phased and incremental. A **phase** delivers a usable cap
 | **P3.2 — Consolidation and review inbox** | In review | P2.5, P3.1 | Surface accepted/missing inputs, the exact outgoing draft, and requested reviews in the existing approvals experience. | The reviewer can approve or return the identified version with retained feedback; a changed source cannot retain an invalid approval. |
 | **P3.3 — Formal release and case completion** | In review | P3.2 | Connect existing signing/dispatch evidence and mandatory-contribution checks to the shared outcome. | Case completion cannot bypass required contributions, release, acknowledgment, or closure evidence; an uncertain send cannot trigger an unconditional resend. |
 | **P3.4 — Notification preferences and digests** | In review | P2.2, P3.3 | Separate actionable alerts from routine follower updates and provide digest preferences. | Urgent required notices remain actionable; digests avoid duplicates and omit items the recipient can no longer access. |
-| **P3.5 — Manager support overview** | Pending | P3.3, P3.4 | Show unassigned work, blocked tasks, review waits, and outcomes at risk using defined metrics. | Each metric links to matching authorized records; missing dates are distinct from overdue work; case/task/document counts are not conflated. |
+| **P3.5 — Manager support overview** | In review | P3.3, P3.4 | Show unassigned work, blocked tasks, review waits, and outcomes at risk using defined metrics. | Each metric links to matching authorized records; missing dates are distinct from overdue work; case/task/document counts are not conflated. |
 
 ### 9.6 P4 — Validate and introduce bureau-wide
 
