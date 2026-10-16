@@ -1,3 +1,9 @@
+## 6.47 — October 16, 2026
+
+- Added an audited Documents enable/disable control to Administrator → Documents setup.
+- Enabling requires an explicit bureau-wide permissions-administrator grant and keeps sending disabled; disabling stops both switches.
+- Confirmation rechecks current authority and settings revision to reject stale or replayed changes.
+
 ## 6.46 — October 16, 2026
 
 - Added Administrator → Documents setup for an explicit, reviewed initial batch of existing active account appointments.

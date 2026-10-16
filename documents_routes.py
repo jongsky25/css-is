@@ -157,7 +157,7 @@ def make_router(templates,get_conn):
         return hmac.new(auth._secret(), (csrf(request) + ':' + payload).encode(), hashlib.sha256).hexdigest()
 
     def setup_page(request, conn, status_code=200, **values):
-        d.setup_operator(conn, request.state.user)
+        operator = d.setup_operator(conn, request.state.user)
         grants = rows(conn, '''SELECT u.username,u.active,g.role,g.revoked_at FROM document_role_grant g
                               JOIN admin_user u ON u.id=g.user_id
                               WHERE g.role IN ('grant_admin','workflow_admin') AND g.unit_id IS NULL
@@ -167,6 +167,8 @@ def make_router(templates,get_conn):
             'blocker': d.setup_blocker(conn), 'grants': grants,
             'module_enabled': d.enabled(conn),
             'sending_enabled': st.get_setting(conn, 'documents.sending_enabled', '0') == '1',
+            'can_enable': p.has_role(conn, operator, 'grant_admin'),
+            'settings_revision': st.get_setting(conn, 'documents.settings_revision', '0'),
             'usernames': '', 'authorization': '', 'preview': None, **values,
         }, status_code=status_code)
 
@@ -187,6 +189,12 @@ def make_router(templates,get_conn):
         try:
             d.setup_operator(conn, request.state.user)
             data = await posted(request)
+            if data.get('action') in ('enable_module', 'disable_module'):
+                if data.get('confirmed') != 'yes':
+                    raise ValueError('Confirm the Documents setting change before saving.')
+                d.set_module_enabled(conn, request.state.user, data['action'] == 'enable_module',
+                                     data.get('settings_revision', ''), data.get('authorization', ''))
+                return RedirectResponse('/admin/documents/setup', status_code=303)
             if data.get('action') == 'preview':
                 preview = d.preview_admin_setup(conn, request.state.user, data.get('usernames', ''), data.get('authorization', ''))
                 return setup_page(request, conn, preview=preview, preview_signature=setup_signature(request, preview))

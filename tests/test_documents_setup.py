@@ -186,3 +186,79 @@ def test_http_preview_confirmation_csrf_and_one_time_access(setup_db, app_mod, m
         client.cookies.set(auth.COOKIE_NAME, auth.make_token(users[1]))
         assert client.get('/documents/rules').status_code == 200
         assert client.get(url).status_code == 403
+
+
+def test_enable_requires_explicit_global_grant_and_keeps_sending_off(setup_db):
+    conn, users, _ = setup_db
+    with pytest.raises(permissions.Denied):
+        d.set_module_enabled(conn, users[0], True, '0', 'Controlled acceptance')
+    preview = d.preview_admin_setup(conn, users[0], users[0]['username'], 'Owner approved')
+    d.bootstrap_admins(conn, users[0], preview)
+    d.set_module_enabled(conn, users[0], True, '0', 'Controlled acceptance')
+    assert d.enabled(conn)
+    assert st.get_setting(conn, 'documents.sending_enabled') == '0'
+    assert st.get_setting(conn, 'documents.settings_revision') == '1'
+    row = conn.execute("SELECT actor_id,detail_json FROM document_event WHERE action='module_enabled'").fetchone()
+    assert row[0] == users[0]['id']
+    assert json.loads(row[1])['after'] == {'enabled': '1', 'sending_enabled': '0'}
+    with pytest.raises(d.Conflict):
+        d.set_module_enabled(conn, users[0], False, '0', 'Stale form')
+    # Revoking document authority blocks enablement, but does not prevent emergency disabling.
+    conn.execute("UPDATE document_role_grant SET revoked_at='2026-10-16'");conn.commit()
+    st.set_setting(conn, 'documents.sending_enabled', '1')
+    d.set_module_enabled(conn, users[0], False, '1', 'Stop acceptance')
+    assert not d.enabled(conn)
+    assert st.get_setting(conn, 'documents.sending_enabled') == '0'
+    with pytest.raises(permissions.Denied):
+        d.set_module_enabled(conn, users[0], True, '2', 'Attempt after revocation')
+
+
+def test_module_control_audit_failure_rolls_back_switches(setup_db, monkeypatch):
+    conn, users, _ = setup_db
+    st.set_setting(conn, 'documents.enabled', '1')
+    st.set_setting(conn, 'documents.sending_enabled', '1')
+    def fail(*args, **kwargs):
+        raise RuntimeError('audit unavailable')
+    monkeypatch.setattr(d, 'event', fail)
+    with pytest.raises(RuntimeError):
+        d.set_module_enabled(conn, users[0], False, '0', 'Stop')
+    assert d.enabled(conn)
+    assert st.get_setting(conn, 'documents.sending_enabled') == '1'
+    assert st.get_setting(conn, 'documents.settings_revision', '0') == '0'
+
+
+def test_scoped_grant_cannot_enable_bureau_wide_module(setup_db):
+    conn, users, _ = setup_db
+    unit = st.add_org_unit(conn, 'Scoped division', 'division', 'BLHSD/SCOPED')
+    conn.execute("INSERT INTO document_role_grant(user_id,role,unit_id,created_at) VALUES (?,'grant_admin',?,'2026-10-16')", (users[0]['id'], unit));conn.commit()
+    with pytest.raises(permissions.Denied):
+        d.set_module_enabled(conn, users[0], True, '0', 'Scoped authority only')
+    assert not d.enabled(conn)
+
+
+def test_http_enable_requires_confirmation_and_allows_intake(setup_db, app_mod, monkeypatch):
+    from starlette.testclient import TestClient
+    conn, users, path = setup_db
+    monkeypatch.setattr(app_mod, 'DB', path)
+    preview = d.preview_admin_setup(conn, users[0], users[0]['username'], 'Owner approved')
+    d.bootstrap_admins(conn, users[0], preview)
+    url = '/admin/documents/setup'
+    with TestClient(app_mod.app) as client:
+        client.cookies.set(auth.COOKIE_NAME, auth.make_token(users[0]))
+        page = client.get(url)
+        assert 'Enable Documents</button>' in page.text
+        form = {'action': 'enable_module', 'settings_revision': '0', 'authorization': 'Controlled acceptance'}
+        assert client.post(url, data=form).status_code == 403
+        form['csrf'] = hidden(page, 'csrf')
+        assert client.post(url, data=form).status_code == 400
+        form['confirmed'] = 'yes'
+        result = client.post(url, data=form, follow_redirects=False)
+        assert result.status_code == 303
+        assert 'Disable Documents and sending</button>' in client.get(url).text
+        assert client.post(url, data=form).status_code == 409
+        page = client.get('/documents/new')
+        created = client.post('/documents/new', data={'csrf': hidden(page, 'csrf'), 'subject': 'Synthetic enabled intake', 'type': 'memo'}, follow_redirects=False)
+        assert created.status_code == 303, created.text
+        assert st.get_setting(conn, 'documents.sending_enabled') == '0'
+        assert client.post(url, data={**form, 'action': 'disable_module', 'settings_revision': '1'}).status_code == 200
+        assert not d.enabled(conn)
