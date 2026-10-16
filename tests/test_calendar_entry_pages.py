@@ -220,3 +220,8 @@ def test_add_form_is_sectioned_and_keeps_every_field(admin):
                  "tags", "note"):
         assert f'name="{name}"' in html, name
     assert "cf-sectioned" in html and "cf-save" in html and "cf-cancel" in html
+
+
+def test_add_form_loads_the_room_card_styles(admin):
+    html = admin.get(f"/calendar/new?day={DAY}").text
+    assert 'id="room-chip"' in html and "/static/css/rooms.css" in html     # the card is styled even with no room banner
