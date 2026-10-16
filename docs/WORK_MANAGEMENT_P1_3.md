@@ -1,6 +1,6 @@
 # P1.3 — Assignment compatibility and migration rehearsal
 
-October 16, 2026. **In review**, implementation owner Codex. Branch `codex/assignment-compatibility`; prepared version **6.52**. P1.2 was merged first at `aeba93e` as requested. P1.3 is not merged, deployed, or applied to operational records.
+October 16, 2026. **In review**, implementation owner Codex. Branch `codex/assignment-compatibility`; prepared version **6.52**. P1.2 was merged first at `aeba93e` as requested. P1.3 was subsequently merged into main on the user’s instruction at `027d76bc5fa183cf051f7b50eb892957d88d42c9`. Operational deployment and migration are not recorded.
 
 ## Explicit mapping and retained history
 

@@ -112,18 +112,25 @@ def deliver(conn,base,dry_run=False):
 def bell_rows(conn,user_id,today=None):
     if not d.enabled(conn):
         return []
-    docs=d.list_visible(conn,{'id':user_id},queue='mine')
-    if not docs:
-        return []
-    return [{'text':f'{len(docs)} documents need your attention','url':'/documents?queue=mine','count':len(docs)}]
+    import work_inbox
+    user = p.actor(conn, {'id': user_id})
+    items, cursor = work_inbox.page(conn, user, limit=3, today=today)
+    result = [{'text':item['action'] + ': ' + item['title'], 'url':item['url'], 'count':1}
+              for item in items if item['can_act']]
+    if cursor:
+        result.append({'text':'Browse My work', 'url':'/work/mine', 'count':0})
+    reviews = d.list_visible(conn, user, queue='review')
+    if reviews:
+        result.append({'text':f'{len(reviews)} document reviews awaiting your decision', 'url':'/approvals', 'count':len(reviews)})
+    return result
 
 
 def home_task(conn,user):
-    notices=bell_rows(conn,user['id'])
-    if not notices:
-        return None
-    return {'tone':'todo','title':notices[0]['text'],'key':'documents','detail':'Review your document action queue.',
-            'url':'/documents?queue=mine','cta':'Open documents','icon':'file'}
+    # Compatibility for callers expecting one card. The home page uses the full
+    # personal provider and its existing approvals provider instead.
+    import work_inbox
+    items = work_inbox.home_rows(conn,user)
+    return items[0] if items else None
 
 
 def retry(conn,user,doc_id,notice_id,note):

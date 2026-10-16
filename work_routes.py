@@ -12,6 +12,7 @@ import documents_permissions as permissions
 from documents_storage import rows
 import work
 import work_tasks
+import work_inbox
 
 
 def csrf(request):
@@ -99,6 +100,21 @@ def make_router(templates, get_conn):
             return HTMLResponse(str(e), status_code=403)
         except (ValueError, TypeError) as e:
             return render(request, conn, 'new', status_code=400, error=str(e), values=fields, source=None)
+        finally:
+            conn.close()
+
+    @router.get('/work/mine', response_class=HTMLResponse)
+    def mine(request: Request, before: int | None = None, view: str = 'action'):
+        conn = get_conn()
+        try:
+            if view not in ('action', 'waiting'):
+                return HTMLResponse('Unknown work view.', status_code=400)
+            items, cursor = work_inbox.page(conn, request.state.user, before=before, waiting=view=='waiting')
+            return render(request, conn, 'mine', items=items, next_cursor=cursor, before=before, view=view)
+        except permissions.Denied:
+            return HTMLResponse('An active staff account is required.', status_code=403)
+        except ValueError as e:
+            return HTMLResponse(str(e), status_code=400)
         finally:
             conn.close()
 

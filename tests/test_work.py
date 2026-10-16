@@ -604,3 +604,157 @@ def test_migrated_milestones_and_reminders_use_current_task_state(workspace):
     notices.schedule(c,datetime(2026,10,22,10))
     assert not c.execute("SELECT 1 FROM document_notice WHERE kind LIKE 'milestone:%' AND state='pending'").fetchone()
     assert c.execute("SELECT 1 FROM document_notice WHERE kind='assignments_migrated' AND state='pending'").fetchone()
+
+# P1.4 personal responsibilities, independent of broad visibility.
+import work_inbox as inbox
+
+
+def inbox_case(c,u,unit):
+    item=case(c,u[0],unit)
+    return work.confirm_lead(c,u[1],item['id'],item['revision'],u[2]['id'],'Confirmed coordination lead')
+
+
+def test_personal_inbox_tracks_owner_waiting_and_lead_review(workspace):
+    c,u,unit,_=workspace
+    item=inbox_case(c,u,unit)
+    task=propose(c,u[0],item,unit,u[3]['id'],due_date='2026-10-15')
+    assert inbox.page(c,u[3])[0]==[] # suggestion grants no personal task
+    assert inbox.page(c,u[2])[0]==[] # lead cannot confirm assignments
+    assert inbox.page(c,u[1])[0][0]['action']=='Confirm contribution owner'
+    task=advance(c,u[1],task,'confirm',owner_id=u[3]['id'])
+    assert inbox.page(c,u[1])[0]==[] # broad officer authority is not a personal assignment
+    entry=inbox.page(c,u[3],today=__import__('datetime').date(2026,10,16))[0][0]
+    assert entry['action']=='Acknowledge and start' and entry['due_label']=='Overdue'
+    task=advance(c,u[3],task,'acknowledge')
+    assert inbox.page(c,u[3])[0][0]['action']=='Prepare and submit output'
+    task=advance(c,u[3],task,'submit',submission='Input ready')
+    assert inbox.page(c,u[3])[0]==[]
+    assert inbox.page(c,u[3],waiting=True)[0][0]['action']=='Waiting for contribution review'
+    assert inbox.page(c,u[2])[0][0]['action']=='Review submitted contribution'
+    assert inbox.page(c,u[1])[0]==[]
+    task=advance(c,u[2],task,'return')
+    assert inbox.page(c,u[3],waiting=True)[0]==[]
+    task=advance(c,u[3],task,'submit',submission='Revised input')
+    advance(c,u[2],task,'accept')
+    for user in u:
+        assert inbox.page(c,user)[0]==[] and inbox.page(c,user,waiting=True)[0]==[]
+
+
+def test_inbox_reassignment_revocation_and_disabled_home(workspace):
+    c,u,unit,_=workspace
+    item=inbox_case(c,u,unit); task=propose(c,u[0],item,unit,u[3]['id'])
+    task=advance(c,u[1],task,'confirm',owner_id=u[3]['id'])
+    assert inbox.home_rows(c,u[3])
+    task=advance(c,u[1],task,'reassign',owner_id=u[0]['id'])
+    assert inbox.home_rows(c,u[3])==[]
+    doc=document(c,u[0],unit)
+    doc=docs.mutate(c,u[1],doc['id'],doc['revision'],'verify',{'verification':'verified','reason':'Checked'})
+    work.link_document(c,u[0],item['id'],item['revision'],doc['id'])
+    docs.mutate(c,u[1],doc['id'],doc['revision'],'access',{'visibility':'restricted','viewers':[u[1]['id']],'reason':'Limit source access'})
+    assert inbox.page(c,u[0])[0]==[] and inbox.home_rows(c,u[0])==[]
+    # Feature switches remove action cards; permitted read-only lists remain available.
+    second=inbox_case(c,u,unit);another=propose(c,u[0],second,unit,u[3]['id'])
+    advance(c,u[1],another,'confirm',owner_id=u[3]['id'])
+    st.set_setting(c,'work.enabled','0')
+    assert inbox.page(c,u[3])[0][0]['can_act'] is False
+    assert inbox.home_rows(c,u[3])==[]
+    st.set_setting(c,'documents.enabled','0')
+    assert inbox.home_rows(c,u[1])==[]
+
+
+def test_inbox_migration_deduplication_and_legacy_completion(workspace):
+    c,u,unit,_=workspace
+    doc=legacy_setup(c,u,unit)
+    entries=inbox.page(c,u[3])[0]
+    assert len(entries)==1 and entries[0]['url']==f"/documents/{doc['id']}"
+    assert inbox.page(c,u[1])[0]==[]
+    report=migrate(c,u,doc)
+    entries=inbox.page(c,u[3])[0]
+    assert len(entries)==1 and entries[0]['url'].startswith(f"/work/{report['case_id']}#task-")
+    assert entries[0]['key'].startswith('work:task:')
+    item=tasks.list_for_case(c,u[3],report['case_id'])[0]
+    item=advance(c,u[3],item,'acknowledge');item=advance(c,u[3],item,'submit',submission='Ready')
+    assert len(inbox.page(c,u[3],waiting=True)[0])==1
+    assert len(inbox.page(c,u[2])[0])==1
+    advance(c,u[2],item,'accept')
+    assert inbox.home_rows(c,u[3])==[] and inbox.home_rows(c,u[2])==[]
+
+
+def test_inbox_pagination_skips_hidden_candidates_without_losing_tasks(workspace):
+    c,u,unit,_=workspace
+    item=inbox_case(c,u,unit)
+    expected=[]
+    for i in range(7):
+        task=propose(c,u[0],item,unit,u[3]['id'])
+        task=advance(c,u[1],task,'confirm',owner_id=u[3]['id'])
+        expected.insert(0, 'work:task:'+str(task['id']))
+    first,cursor=inbox.page(c,u[3],limit=3)
+    # The cursor's task can complete or be reassigned between pages without losing the boundary.
+    boundary_id=int(first[-1]['key'].split(':')[-1])
+    task=next(t for t in tasks.list_for_case(c,u[3],item['id']) if t['id']==boundary_id)
+    advance(c,u[1],task,'reassign',owner_id=u[0]['id'])
+    second,cursor=inbox.page(c,u[3],before=cursor,limit=3)
+    third,end=inbox.page(c,u[3],before=cursor,limit=3)
+    assert [e['key'] for e in first+second+third]==expected and end is None
+    # More than one scan of unrelated decision candidates exposes no titles or counts.
+    for i in range(251):
+        c.execute("INSERT INTO work_case(title,outcome,unit_id,creator_id,created_at,updated_at) VALUES ('Hidden subject','Hidden output',?,?,?,?)",(unit,u[0]['id'],'2099-01-01','2099-01-01'))
+    c.commit()
+    hidden,cursor=inbox.page(c,u[3])
+    assert hidden==[] and cursor
+    later,end=inbox.page(c,u[3],before=cursor)
+    assert len(later)==6 and all('Hidden' not in str(x) for x in later)
+
+
+def test_home_approvals_not_duplicated_in_personal_tasks(workspace):
+    import office_connect as oc
+    c,u,unit,_=workspace
+    doc=document(c,u[0],unit,direction='OUT')
+    c.execute("UPDATE document SET status='in_review',reviewer_id=?,visibility='bureau',verification='verified' WHERE id=?",(u[2]['id'],doc['id']));c.commit()
+    assert inbox.home_rows(c,u[2])==[]
+    cards=oc.home_tasks(c,u[2])
+    approvals=[x for x in cards if x['key']=='approvals']
+    assert len(approvals)==1 and '1 document review' in approvals[0]['detail']
+    assert not any(x['key']=='documents' for x in cards)
+    item=inbox_case(c,u,unit);task=propose(c,u[0],item,unit,u[2]['id'])
+    advance(c,u[1],task,'confirm',owner_id=u[2]['id'])
+    cards=oc.home_tasks(c,u[2])
+    assert len([x for x in cards if x['key'].startswith('work:task:')])==1
+    assert len([x for x in cards if x['key']=='approvals'])==1
+
+
+def test_personal_inbox_http_filters_home_and_dates(workspace,app_mod,monkeypatch):
+    from starlette.testclient import TestClient
+    c,u,unit,path=workspace
+    monkeypatch.setattr(app_mod,'DB',path)
+    item=inbox_case(c,u,unit);task=propose(c,u[0],item,unit,u[3]['id'],title='Prepare the regional input',due_date='2026-10-23')
+    task=advance(c,u[1],task,'confirm',owner_id=u[3]['id'])
+    with TestClient(app_mod.app) as client:
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[3]))
+        page=client.get('/work/mine')
+        assert page.status_code==200 and 'Prepare the regional input' in page.text
+        assert 'October 23, 2026' in page.text and 'Acknowledge and start' in page.text
+        assert 'Prepare the regional input' in client.get('/').text
+        assert 'Prepare the regional input' not in client.get('/work/mine?view=waiting').text.split('<div class="work-wrap">',1)[1]
+        assert client.get('/work/mine?view=bogus').status_code==400
+        assert client.get('/work/mine?before=-3').status_code==400
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[4]))
+        assert 'Prepare the regional input' not in client.get('/work/mine').text
+        assert 'Prepare the regional input' not in client.get('/').text
+
+
+def test_bell_and_fallback_review_follow_real_responsibilities(workspace):
+    import documents_notify as notices
+    c,u,unit,_=workspace
+    item=inbox_case(c,u,unit);task=propose(c,u[0],item,unit,u[3]['id'])
+    task=advance(c,u[1],task,'confirm',owner_id=u[3]['id'])
+    assert notices.bell_rows(c,u[1]['id'])==[]
+    assert len(notices.bell_rows(c,u[3]['id']))==1
+    task=advance(c,u[3],task,'acknowledge');task=advance(c,u[3],task,'submit',submission='Ready')
+    assert notices.bell_rows(c,u[3]['id'])==[]
+    assert len(notices.bell_rows(c,u[2]['id']))==1
+    c.execute('UPDATE admin_user SET active=0 WHERE id=?',(u[2]['id'],));c.commit()
+    assert inbox.page(c,u[1])[0][0]['action']=='Review submitted contribution'
+    other=st.add_org_unit(c,'Other unit','division','WORK/OTHER')
+    c.execute('UPDATE document_role_grant SET unit_id=? WHERE user_id=?',(other,u[1]['id']));c.commit()
+    assert inbox.page(c,u[1])[0]==[] # fresh scope, no cached officer role

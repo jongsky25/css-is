@@ -643,7 +643,7 @@ NAV_GROUPS = [
     # Section who run it are not necessarily app admins (cap manage_users), so it
     # has its own group: everyone requests; room approvers also get the manage items.
     {"name": "Office", "items": [
-        {"key": "work", "url": "/work", "label": "Shared work", "section": "Documents", "hint": "Shared outcomes, ownership, and related correspondence", "kw": "work item shared outcome accountable lead", "cap": None},
+        {"key": "work", "url": "/work/mine", "label": "My work", "section": "Documents", "hint": "Shared outcomes, ownership, and related correspondence", "kw": "work item shared outcome accountable lead", "cap": None},
         {"key": "documents", "url": "/documents", "label": "Documents", "hint": "Incoming and outgoing document register", "kw": "documents correspondence registry incoming outgoing", "cap": None},
         {"key": "rooms", "url": "/rooms", "label": "Conference room",
          "section": "Reserve",

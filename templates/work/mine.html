@@ -1,0 +1,13 @@
+{% extends 'work/base.html' %}
+{% block title %}My work · Office Connect{% endblock %}
+{% block work_content %}
+<h1>My work</h1><p class="work-intro">Your assigned contributions and decisions, with the next step for each. Formal document approvals remain in the approvals inbox.</p>
+<nav class="work-actions" aria-label="Personal work views"><a class="work-btn" href="/work/mine" {% if view=='action' %}aria-current="page"{% endif %}>Needs my action</a><a class="work-btn" href="/work/mine?view=waiting" {% if view=='waiting' %}aria-current="page"{% endif %}>Waiting for review</a></nav>
+<p class="work-small">Newest assignments first. Targets are internal planning dates; official document deadlines still apply.</p>
+{% for item in items %}<article class="work-card"><h2><a href="{{ item.url }}">{{ item.title }}</a></h2><p>{{ item.context }}</p>
+<div class="work-meta"><span>Next step<strong>{{ item.action }}</strong></span><span>Internal target<strong>{{ item.due_date|humandate if item.due_date else 'Not set' }}</strong><span>{{ item.due_label }}</span></span></div>
+{% if not item.can_act %}<p class="work-note">Changes are currently disabled. You can still read this item.</p>{% endif %}
+<a class="work-btn" href="{{ item.url }}">{{ 'View contribution' if item.waiting or not item.can_act else item.action }} →</a></article>
+{% else %}<div class="work-card"><h2>{{ 'No waiting items on this page' if view=='waiting' else 'No actions on this page' }}</h2><p>Only current responsibilities you are permitted to read appear here. Completed contributions leave this list.</p></div>{% endfor %}
+<div class="work-actions">{% if before %}<a class="work-btn" href="/work/mine?view={{ view }}">Back to newest</a>{% endif %}{% if next_cursor %}<a class="work-btn" href="/work/mine?view={{ view }}&amp;before={{ next_cursor }}">Continue through work</a>{% endif %}</div>
+{% endblock %}

@@ -1028,12 +1028,15 @@ def _plural(n, word):
 
 def _task_approvals(conn, user):
     counts = st.pending_approval_counts(conn, user)
-    n = counts["wellness"] + counts["awa"]
+    import documents
+    document_reviews = len(documents.list_visible(conn, user, queue='review')) if documents.enabled(conn) else 0
+    n = counts["wellness"] + counts["awa"] + document_reviews
     if not n:
         return None
     parts = [p for p in (
         _plural(counts["wellness"], "wellness break") if counts["wellness"] else "",
-        _plural(counts["awa"], "work arrangement") if counts["awa"] else "") if p]
+        _plural(counts["awa"], "work arrangement") if counts["awa"] else "",
+        _plural(document_reviews, "document review") if document_reviews else "") if p]
     return {"key": "approvals", "icon": "✅", "tone": "todo",
             "title": f"{_plural(n, 'request')} waiting on you",
             "detail": " · ".join(parts), "cta": "Review", "url": "/approvals"}
@@ -1180,9 +1183,12 @@ def home_tasks(conn, user, today=None):
     most urgent first (to do → waiting → for information → done)."""
     today = today or tz.today_local()
     tasks = []
-    import documents_notify
-    for build in (lambda: documents_notify.home_task(conn, user),
-                  lambda: _task_approvals(conn, user),
+    import work_inbox
+    try:
+        tasks.extend(work_inbox.home_rows(conn, user, today))
+    except Exception:
+        pass
+    for build in (lambda: _task_approvals(conn, user),
                   lambda: _task_wellness(conn, user, today),
                   lambda: _task_awa(conn, user, today),
                   lambda: _task_office_today(conn, user, today),
