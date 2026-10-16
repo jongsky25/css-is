@@ -83,6 +83,6 @@ which corrupts on read); restore it and re-run.
 
 ## Optional public short links
 
-Automatic is.gd shortening is off by default. See [SHORT_LINKS.md](docs/SHORT_LINKS.md)
+Automatic Short.io shortening is off by default. See [SHORT_LINKS.md](docs/SHORT_LINKS.md)
 for `CSS_SHORT_LINKS=1`, canonical HTTPS origin requirements, queue behavior and the
-resumable active-activity backfill. No is.gd account or key is required.
+resumable active-activity backfill. Set the private SHORT_IO_API_KEY secret and select SHORT_IO_DOMAIN (defaults to blhsd.s.gy).

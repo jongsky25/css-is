@@ -9,13 +9,15 @@ import short_links as sl
 
 BASE = 'https://office.example.org'
 URL = BASE + '/e/abc123'
-SHORT = 'https://is.gd/Ab3xYz'
+SHORT = 'https://blhsd.s.gy/Ab3xYz'
 
 
 @pytest.fixture
 def queue(tmp_path, monkeypatch):
     monkeypatch.setenv('CSS_SHORT_LINKS', '1')
     monkeypatch.setenv('CSS_BASE_URL', BASE)
+    monkeypatch.setenv('SHORT_IO_API_KEY', 'test-key-not-real')
+    monkeypatch.setenv('SHORT_IO_DOMAIN', 'blhsd.s.gy')
     db = str(tmp_path / 'links.db')
     with sqlite3.connect(db) as conn:
         sl.init_db(conn)
@@ -23,7 +25,7 @@ def queue(tmp_path, monkeypatch):
 
 
 def reply(body, status=200):
-    return httpx.Response(status, json=body, request=httpx.Request('POST', 'https://is.gd/create.php'))
+    return httpx.Response(status, json=body, request=httpx.Request('POST', 'https://api.short.io/links'))
 
 
 def test_saved_mapping_reused(queue):
@@ -31,13 +33,14 @@ def test_saved_mapping_reused(queue):
     calls = []
     def post(url, **kwargs):
         calls.append(kwargs)
-        return reply({'shorturl': SHORT})
+        return reply({'secureShortURL': SHORT})
     assert sl.process_one(queue, now=100, post=post)
     assert sl.share(queue, URL) == SHORT
     assert sl.share(queue, URL) == SHORT
     assert not sl.process_one(queue, now=200, post=post)
     assert len(calls) == 1
-    assert calls[0]['data'] == {'format': 'json', 'url': URL}
+    assert calls[0]['json'] == {'domain': 'blhsd.s.gy', 'originalURL': URL, 'allowDuplicates': False}
+    assert calls[0]['headers'] == {'Authorization': 'test-key-not-real'}
 
 
 @pytest.mark.parametrize('tail', ['/e/a?att=secret', '/e/a/resume?rt=secret',
@@ -71,8 +74,8 @@ def test_combined_query_preserved(queue):
     url = BASE + '/seq?tokens=abc,def'
     sl.share(queue, url)
     def post(endpoint, **kwargs):
-        assert kwargs['data']['url'] == url
-        return reply({'shorturl': SHORT})
+        assert kwargs['json']['originalURL'] == url
+        return reply({'secureShortURL': SHORT})
     assert sl.process_one(queue, post=post)
     assert sl.share(queue, url) == SHORT
 
@@ -80,13 +83,13 @@ def test_combined_query_preserved(queue):
 def test_rate_limit_shared_and_restart_retry(queue):
     sl.share(queue, URL)
     sl.share(queue, BASE + '/r/form')
-    assert sl.process_one(queue, now=100, post=lambda *a, **k: reply({'errorcode': 3}, 502))
+    assert sl.process_one(queue, now=100, post=lambda *a, **k: httpx.Response(429, headers={'Retry-After': '3600'}))
     # New connection/process observes provider-wide cooldown, not just this job.
     assert not sl.process_one(queue, now=200, post=lambda *a, **k: pytest.fail('Rate limited'))
-    assert sl.process_one(queue, now=3700, post=lambda *a, **k: reply({'shorturl': SHORT}))
+    assert sl.process_one(queue, now=3700, post=lambda *a, **k: reply({'secureShortURL': SHORT}))
     assert sl.share(queue, URL) == SHORT
     assert not sl.process_one(queue, now=3710, post=lambda *a, **k: pytest.fail('Too soon'))
-    assert sl.process_one(queue, now=3725, post=lambda *a, **k: reply({'shorturl': SHORT}))
+    assert sl.process_one(queue, now=3725, post=lambda *a, **k: reply({'secureShortURL': SHORT}))
 
 
 def test_timeout_then_retry_and_stale_lease(queue):
@@ -98,7 +101,7 @@ def test_timeout_then_retry_and_stale_lease(queue):
     assert not sl.process_one(queue, now=130, post=timeout)
     with sqlite3.connect(queue) as c:
         c.execute("UPDATE short_links SET status='processing',next_attempt=160")
-    assert sl.process_one(queue, now=160, post=lambda *a, **k: reply({'shorturl': SHORT}))
+    assert sl.process_one(queue, now=160, post=lambda *a, **k: reply({'secureShortURL': SHORT}))
     assert sl.share(queue, URL) == SHORT
 
 
@@ -106,16 +109,16 @@ def test_concurrent_workers_and_enqueue(queue):
     with concurrent.futures.ThreadPoolExecutor(4) as pool:
         assert list(pool.map(lambda _: sl.share(queue, URL), range(8))) == [URL] * 8
         results = list(pool.map(lambda _: sl.process_one(queue, now=100,
-            post=lambda *a, **k: reply({'shorturl': SHORT})), range(4)))
+            post=lambda *a, **k: reply({'secureShortURL': SHORT})), range(4)))
     assert results.count(True) == 1
     with sqlite3.connect(queue) as c:
         assert c.execute('SELECT attempts FROM short_links').fetchone()[0] == 1
 
 
-@pytest.mark.parametrize('body', [{'shorturl': 'https://evil.example/abcde'}, {}, {'errorcode': 1}])
+@pytest.mark.parametrize('body', [{'secureShortURL': 'https://evil.example/abcde'}, {}, {'errorcode': 1}])
 def test_bad_provider_response_keeps_original(queue, body):
     sl.share(queue, URL)
-    assert sl.process_one(queue, now=100, post=lambda *a, **k: reply(body))
+    assert sl.process_one(queue, now=100, post=lambda *a, **k: reply(body, 400 if body.get('errorcode') == 1 else 200))
     assert sl.share(queue, URL) == URL
     if body.get('errorcode') == 1:
         assert not sl.process_one(queue, now=10000, post=lambda *a, **k: pytest.fail('Permanent error'))
@@ -152,7 +155,7 @@ def test_status_and_qr_ui(queue, monkeypatch):
     ev = st.create_event(conn, 'Sharing', '2026-10-16', created_by='short@test.local')
     conn.close()
     original = BASE + '/e/' + ev['event_token']
-    sl.process_one(queue, post=lambda *a, **k: reply({'shorturl': SHORT}))
+    sl.process_one(queue, post=lambda *a, **k: reply({'secureShortURL': SHORT}))
     client = TestClient(app.app)
     assert client.get('/short-links/status', params={'url': original}, follow_redirects=False).status_code in (302, 303)
     client.cookies.set(auth.COOKIE_NAME, auth.make_token({'id': uid, 'username': 'short@test.local', 'role': 'admin'}))
@@ -183,18 +186,18 @@ def test_actual_plain_text_provider_failure_is_visible_and_retried(queue):
     sl.share(queue, URL)
     def provider_failure(*a, **k):
         return httpx.Response(200, text='Error, database insert failed',
-                              request=httpx.Request('POST', 'https://is.gd/create.php'))
+                              request=httpx.Request('POST', 'https://api.short.io/links'))
     assert sl.process_one(queue, now=100, post=provider_failure)
     with sqlite3.connect(queue) as conn:
         row = conn.execute('SELECT status,last_error,next_attempt FROM short_links').fetchone()
-        assert row == ('pending', 'Provider database unavailable', 160)
+        assert row == ('pending', 'Shortening request failed', 160)
         result = sl.status(conn, URL, now=110)
         assert result['state'] == 'retrying' and result['done'] is False
         assert result['retry_after_seconds'] == 50
         assert 'unavailable' in result['message']
         assert 'database insert' not in result['message']
     assert sl.share(queue, URL) == URL
-    assert sl.process_one(queue, now=160, post=lambda *a, **k: reply({'shorturl': SHORT}))
+    assert sl.process_one(queue, now=160, post=lambda *a, **k: reply({'secureShortURL': SHORT}))
     with sqlite3.connect(queue) as conn:
         assert sl.status(conn, URL)['url'] == SHORT
         assert sl.status(conn, URL)['state'] == 'ready'
@@ -209,7 +212,7 @@ def test_status_distinguishes_off_pending_invalid_and_rate_limited(queue, monkey
         assert sl.status(conn, URL)['state'] == 'missing'
         sl.enqueue(conn, URL)
         assert sl.status(conn, URL)['state'] == 'pending'
-    sl.process_one(queue, now=100, post=lambda *a, **k: reply({'errorcode': 3}, 502))
+    sl.process_one(queue, now=100, post=lambda *a, **k: httpx.Response(429, headers={'Retry-After': '3600'}))
     with sqlite3.connect(queue) as conn:
         result = sl.status(conn, URL, now=200)
         assert result['state'] == 'retrying'
@@ -218,3 +221,52 @@ def test_status_distinguishes_off_pending_invalid_and_rate_limited(queue, monkey
         conn.execute("UPDATE short_links SET status='failed'")
         assert sl.status(conn, URL)['done'] is True
         assert sl.status(conn, URL)['state'] == 'failed'
+
+
+def test_legacy_migration_preserves_ready_links_and_retries_failed(queue):
+    with sqlite3.connect(queue) as conn:
+        sl.enqueue(conn, URL)
+        sl.enqueue(conn, BASE + '/r/old')
+        conn.execute("UPDATE short_links SET provider='is.gd',status='failed',attempts=10,next_attempt=9999999999")
+        conn.execute("UPDATE short_links SET status='ready',short_url='https://is.gd/Old123' WHERE original_url=?", (BASE + '/r/old',))
+        conn.execute('UPDATE short_link_rate SET next_call=9999999999')
+        conn.commit()
+        sl.init_db(conn)
+        assert conn.execute('SELECT provider,status,attempts,next_attempt FROM short_links WHERE original_url=?', (URL,)).fetchone() == ('short.io','pending',0,0)
+        assert sl.lookup(conn, BASE + '/r/old') == 'https://is.gd/Old123'
+        assert conn.execute('SELECT next_call FROM short_link_rate').fetchone()[0] == 0
+    assert sl.process_one(queue, now=100, post=lambda *a, **k: reply({'secureShortURL': SHORT}))
+    with sqlite3.connect(queue) as conn:
+        sl.init_db(conn)
+        assert sl.lookup(conn, URL) == SHORT
+        assert conn.execute('SELECT attempts FROM short_links WHERE original_url=?', (URL,)).fetchone()[0] == 1
+
+
+def test_missing_secret_does_not_consume_attempts(queue, monkeypatch):
+    sl.share(queue, URL)
+    monkeypatch.delenv('SHORT_IO_API_KEY')
+    assert not sl.process_one(queue, post=lambda *a, **k: pytest.fail('Missing API key'))
+    with sqlite3.connect(queue) as conn:
+        assert sl.status(conn, URL)['state'] == 'configuration'
+        assert conn.execute('SELECT attempts FROM short_links').fetchone()[0] == 0
+    monkeypatch.setenv('SHORT_IO_API_KEY', 'restored-test-key')
+    assert sl.process_one(queue, post=lambda *a, **k: reply({'secureShortURL': SHORT}))
+
+
+@pytest.mark.parametrize('http_status,category', [(401,'Provider credentials rejected'),(403,'Provider credentials rejected'),(402,'Provider quota reached')])
+def test_account_errors_pause_globally_without_exposing_secret(queue, http_status, category):
+    sl.share(queue, URL)
+    sl.share(queue, BASE + '/r/other')
+    sl.process_one(queue, now=100, post=lambda *a, **k: reply({'secret':'test-key-not-real'}, http_status))
+    with sqlite3.connect(queue) as conn:
+        assert conn.execute('SELECT last_error FROM short_links WHERE original_url=?',(URL,)).fetchone()[0] == category
+        assert 'test-key-not-real' not in str(sl.status(conn, URL))
+    assert not sl.process_one(queue, now=200, post=lambda *a, **k: pytest.fail('Provider cooldown'))
+    assert sl.process_one(queue, now=3700, post=lambda *a, **k: reply({'secureShortURL': SHORT}))
+
+
+@pytest.mark.parametrize('candidate', ['https://evil.example/abc', 'https://blhsd.s.gy.evil.example/abc', 'http://blhsd.s.gy/abc', 'https://blhsd.s.gy@evil.example/abc', 'https://blhsd.s.gy/abc?rt=secret'])
+def test_provider_response_must_use_selected_https_domain(queue, candidate):
+    sl.share(queue, URL)
+    sl.process_one(queue, post=lambda *a, **k: reply({'secureShortURL': candidate}))
+    assert sl.share(queue, URL) == URL

@@ -1,9 +1,9 @@
-## October 16, 2026 (v6.71 — visible short-link failures)
+## October 16, 2026 (v6.72 — Short.io public links)
 
-- Recognize is.gd's HTTP 200 plain-text database-insert failure and retain a safe diagnostic category while retrying.
-- Expose authenticated queue state and retry timing; sharing controls explain pending, disabled, failed, and retrying states.
-- Stop silently displaying only the original URL when the provider or status check fails.
-- Regression tests reproduce the observed provider response and verify recovery, status reporting and URL exclusions.
+- Replace is.gd creation requests with authenticated Short.io requests for blhsd.s.gy.
+- Migrate unsuccessful legacy jobs while preserving completed mappings and original destinations.
+- Show missing configuration, provider failure, quota/auth restrictions and retry timing on sharing pages.
+- Cover migration, deduplication payloads, secret handling, retries and HTTPS domain validation with regression tests.
 
 ## October 16, 2026 (v6.68 — participant registration page)
 
