@@ -26,6 +26,9 @@
 .tv-item.is-optional { background:var(--surface-2); }
 .tv-item-head { display:flex; flex-wrap:wrap; gap:.4rem .8rem; align-items:baseline; justify-content:space-between; }
 .tv-item-head strong { flex:1 1 14rem; }
+.tv-item summary { cursor: pointer; }
+.tv-item summary::before { content: '+'; font-weight: 700; }
+.tv-item details[open] > summary::before { content: '−'; }
 .tv-item form { display:flex; flex-wrap:wrap; gap:.4rem; margin:.45rem 0 0; align-items:center; }
 .tv-item form input[type=url], .tv-item form input[type=text] { flex:1 1 16rem; min-width:0; font-size:max(16px,1rem); }
 .tv-upload { display:flex; flex-wrap:wrap; gap:.4rem; margin:.45rem 0 0; align-items:center; }
@@ -46,6 +49,9 @@
 
 /* Prepare forms (T5) */
 .tv-prep section { margin: 0 0 1rem; }
+.tv-form [hidden], .tv-prep [hidden] { display: none !important; }
+.tv-prep summary { cursor: pointer; font-weight: 700; }
+.tv-prep input, .tv-prep select, .tv-prep textarea { font-size: max(16px, 1rem); }
 .tv-prep label { display: block; margin: .5rem 0 .15rem; font-weight: 600; }
 .tv-prep input, .tv-prep select, .tv-prep textarea { width: 100%; max-width: 100%; box-sizing: border-box; }
 .tv-rows { display: grid; gap: .75rem; }

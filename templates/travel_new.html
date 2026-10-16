@@ -1,7 +1,7 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header, flash %}
 {% block title %}File a travel claim{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261014a">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261016a"><script src="/static/js/travel_new.js?v=20261016a" defer></script>{% endblock %}
 {% block content %}
 {{ page_header("File a travel claim", "A few short questions decide which documents you need.") }}
 {% include "_travel_tabs.html" %}
@@ -34,7 +34,7 @@
   <div class="tv-radios" role="radiogroup">
     {% for code, label in kinds %}
     {% set blocked = (code == 'ca' and (ca_msg or live_ca)) %}
-    <label class="{{ 'off' if blocked }}"><input type="radio" name="kind" value="{{ code }}" {{ 'checked' if f.kind == code }} {{ 'disabled' if blocked }}>
+    <label class="{{ 'off' if blocked }}"><input type="radio" name="kind" value="{{ code }}" {{ 'checked' if f.kind == code and not blocked }} {{ 'disabled' if blocked }} required>
       <span><strong>{{ label }}</strong>
         {% if code == 'ca' %}<br><small>Money before the trip. Only more than a week before the activity starts.{% if ca_msg %} <em>Too late for this activity.</em>{% elif live_ca %} <em>You already have one.</em>{% endif %}</small>
         {% elif code == 'liquidation' %}<br><small>Accounting for a cash advance you received.</small>
@@ -46,9 +46,11 @@
   <div class="field" id="liq-fields">
     <label for="ca">If this is a liquidation: which cash advance?</label>
     <select id="ca" name="ca"><option value="">A cash advance filed outside this platform</option>
-      {% for c in cas %}<option value="{{ c.id }}" {{ 'selected' if live_ca and live_ca.id == c.id }}>{{ c.ref_code }} · {{ c.act_title }}</option>{% endfor %}</select>
+      {% for c in cas %}<option value="{{ c.id }}" {{ 'selected' if f.get('ca', '')|string == c.id|string or ('ca' not in f and live_ca and live_ca.id == c.id) }}>{{ c.ref_code }} · {{ c.act_title }}</option>{% endfor %}</select>
+    <div id="external-advance">
     <label for="advance_amount">Amount received, for one filed outside this platform (₱)</label>
     <input id="advance_amount" name="advance_amount" inputmode="decimal" value="{{ f.advance_amount or '' }}">
+    </div>
   </div>
 
   <h2>Your role</h2>
@@ -60,7 +62,7 @@
   <h2>Your trip</h2>
   <div class="tv-checks">
     {% for key, label, kinds_ in questions %}
-    <label><input type="checkbox" name="{{ key }}" value="1" {{ 'checked' if f.get(key) == '1' }}> <span>{{ label }} <small class="tv-hint">({% for k in kinds_ %}{{ kind_labels[k]|lower }}{{ ', ' if not loop.last }}{% endfor %})</small></span></label>
+    <label data-claim-kinds="{{ kinds_|join(' ') }}"><input type="checkbox" name="{{ key }}" value="1" {{ 'checked' if f.get(key) == '1' }}> <span>{{ label }} <small class="tv-hint tv-nojs-kinds">({% for k in kinds_ %}{{ kind_labels[k]|lower }}{{ ', ' if not loop.last }}{% endfor %})</small></span></label>
     {% endfor %}
   </div>
 
