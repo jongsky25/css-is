@@ -6,6 +6,8 @@
 <p class="work-small">Newest assignments first. Targets are internal planning dates; official document deadlines still apply.</p>
 {% for item in items %}<article class="work-card"><h2><a href="{{ item.url }}">{{ item.title }}</a></h2><p>{{ item.context }}</p>
 <div class="work-meta"><span>Next step<strong>{{ item.action }}</strong></span><span>Internal target<strong>{{ item.due_date|humandate if item.due_date else 'Not set' }}</strong><span>{{ item.due_label }}</span></span></div>
+{% if item.blocker_reason %}<p class="work-note"><strong>Blocker:</strong> {{ item.blocker_reason }}{% if item.followup_date %}<br>Follow-up: {{ item.followup_date|humandate }}{% endif %}</p>{% endif %}
+{% if item.prerequisites %}<p>Waiting for: {{ item.prerequisites|join(', ') }}</p>{% endif %}
 {% if not item.can_act %}<p class="work-note">Changes are currently disabled. You can still read this item.</p>{% endif %}
 <a class="work-btn" href="{{ item.url }}">{{ 'View contribution' if item.waiting or not item.can_act else item.action }} →</a></article>
 {% else %}<div class="work-card"><h2>{{ 'No waiting items on this page' if view=='waiting' else 'No actions on this page' }}</h2><p>Only current responsibilities you are permitted to read appear here. Completed contributions leave this list.</p></div>{% endfor %}

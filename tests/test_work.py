@@ -1153,3 +1153,498 @@ def test_discussion_history_paging_and_atomic_post(workspace):
     c.execute('UPDATE admin_user SET active=0 WHERE id=?',(u[0]['id'],));c.commit()
     with pytest.raises(permissions.Denied):
         discussion.history(c,u[0],item['id'],None,cid)
+
+
+# P2.2: targeted updates never create access and are delivered through current ACLs.
+import work_updates as updates
+
+
+def test_updates_mentions_followers_replies_deduplicate(workspace):
+    c,u,unit,_=workspace
+    item=case(c,u[0],unit)
+    item=work.confirm_lead(c,u[1],item['id'],1,u[2]['id'],'Confirmed')
+    updates.follow(c,u[1],item['id'])
+    updates.follow(c,u[1],item['id'])
+    parent=discussion.post(c,u[1],item['id'],'Please check')
+    cid=discussion.post(c,u[0],item['id'],'Checked',parent_id=parent,mentions=[u[1]['id'],u[1]['id'],u[0]['id']])
+    assert c.execute('SELECT COUNT(*) FROM work_notice WHERE comment_id=?',(cid,)).fetchone()[0]==1
+    assert updates.inbox(c,u[1])[0][0]['reason']=='mention'
+    assert not updates.inbox(c,u[0])[0]  # no self notification
+    discussion.edit(c,u[0],item['id'],None,cid,1,'Checked again',mentions=[u[1]['id'],u[2]['id']])
+    assert len(updates.inbox(c,u[1])[0])==1
+    assert len(updates.inbox(c,u[2])[0])==1
+    assert [m['user_id'] for m in updates.mentions(c,cid,1)]==[u[0]['id'],u[1]['id']]
+    assert [m['user_id'] for m in updates.mentions(c,cid,2)]==[u[1]['id'],u[2]['id']]
+    st.init_db(c)
+    assert len(updates.inbox(c,u[1])[0])==1
+
+
+def test_updates_follow_scope_unfollow_and_read_revision(workspace):
+    c,u,unit,_=workspace
+    item=case(c,u[0],unit)
+    a=propose(c,u[0],item,unit)
+    b=propose(c,u[0],item,unit)
+    updates.follow(c,u[1],item['id'],a['id'])
+    discussion.post(c,u[0],item['id'],'Case-wide')
+    discussion.post(c,u[0],item['id'],'Other task',b['id'])
+    cid=discussion.post(c,u[0],item['id'],'Followed task',a['id'])
+    assert [n['comment_id'] for n in updates.inbox(c,u[1])[0]]==[cid]
+    discussion.edit(c,u[0],item['id'],a['id'],cid,1,'Edited while viewing')
+    updates.mark_read(c,u[1],item['id'],a['id'],[[cid,1]])
+    assert updates.read_revision(c,u[1]['id'],cid)==1  # concurrent edit stays unread in thread
+    assert not updates.inbox(c,u[1])[0]  # original targeted alert acknowledged
+    updates.mark_read(c,u[1],item['id'],a['id'],[[cid,2]])
+    updates.mark_read(c,u[1],item['id'],a['id'],[[cid,1]])
+    assert updates.read_revision(c,u[1]['id'],cid)==2
+    updates.follow(c,u[1],item['id'],a['id'],False)
+    discussion.post(c,u[0],item['id'],'After unfollow',a['id'])
+    assert not updates.inbox(c,u[1])[0]
+    updates.follow(c,u[1],item['id'])
+    discussion.post(c,u[0],item['id'],'Case follow includes other tasks',b['id'])
+    assert len(updates.inbox(c,u[1])[0])==1
+
+
+def test_updates_revoked_access_never_delivers_or_mentions(workspace):
+    c,u,unit,_=workspace
+    doc=document(c,u[0],unit)
+    item=case(c,u[0],unit,source_document_id=doc['id'])
+    updates.follow(c,u[0],item['id'])
+    cid=discussion.post(c,u[1],item['id'],'Restricted later',mentions=[u[0]['id']])
+    assert updates.bell_rows(c,u[0])
+    before=c.execute('SELECT COUNT(*) FROM work_comment').fetchone()[0]
+    with pytest.raises(ValueError,match='no longer has access'):
+        discussion.post(c,u[0],item['id'],'Mention cannot grant access',mentions=[u[4]['id']])
+    assert c.execute('SELECT COUNT(*) FROM work_comment').fetchone()[0]==before
+    docs.mutate(c,u[1],doc['id'],doc['revision'],'access',{'visibility':'restricted','viewers':[u[1]['id']],'reason':'Restricted'})
+    assert not updates.inbox(c,u[0])[0]
+    assert not updates.bell_rows(c,u[0])
+    assert u[0]['id'] not in [p['id'] for p in updates.candidates(c,u[1],item['id'])]
+    discussion.post(c,u[1],item['id'],'No delivery to revoked follower')
+    assert c.execute('SELECT COUNT(*) FROM work_notice WHERE user_id=?',(u[0]['id'],)).fetchone()[0]==1
+    with pytest.raises(permissions.Denied):
+        updates.mark_read(c,u[0],item['id'],None,[[cid,1]])
+    with pytest.raises(permissions.Denied):
+        updates.follow(c,u[0],item['id'])
+
+
+def test_updates_read_scope_atomicity_and_disabled_preferences(workspace):
+    c,u,unit,_=workspace
+    item=case(c,u[0],unit)
+    task=propose(c,u[0],item,unit)
+    cid=discussion.post(c,u[1],item['id'],'Case message',mentions=[u[0]['id']])
+    other=discussion.post(c,u[1],item['id'],'Task message',task['id'])
+    with pytest.raises(permissions.Denied):
+        updates.mark_read(c,u[0],item['id'],None,[[cid,1],[other,1]])
+    assert updates.read_revision(c,u[0]['id'],cid)==0
+    with pytest.raises(ValueError):
+        updates.mark_read(c,u[0],item['id'],None,[[cid,2]])
+    st.set_setting(c,'work.enabled','0')
+    with pytest.raises(ValueError):
+        updates.follow(c,u[0],item['id'])
+    updates.mark_read(c,u[0],item['id'],None,[[cid,1]])
+    assert not updates.inbox(c,u[0])[0]
+    c.execute('UPDATE admin_user SET active=0 WHERE id=?',(u[0]['id'],));c.commit()
+    with pytest.raises(permissions.Denied):
+        updates.inbox(c,u[0])
+
+
+def test_updates_atomic_notice_failure_and_scan_pagination(workspace):
+    c,u,unit,_=workspace
+    item=case(c,u[0],unit)
+    updates.follow(c,u[1],item['id'])
+    c.execute("CREATE TRIGGER fail_notice BEFORE INSERT ON work_notice BEGIN SELECT RAISE(ABORT,'notice failed'); END;");c.commit()
+    with pytest.raises(sqlite3.IntegrityError):
+        discussion.post(c,u[0],item['id'],'Must roll back')
+    assert not c.execute('SELECT 1 FROM work_comment').fetchone()
+    c.execute('DROP TRIGGER fail_notice');c.commit()
+    ids=[discussion.post(c,u[0],item['id'],f'Update {n}') for n in range(28)]
+    first,cursor=updates.inbox(c,u[1]);second,_=updates.inbox(c,u[1],cursor)
+    assert [n['comment_id'] for n in first+second]==list(reversed(ids))
+
+
+def test_updates_http_mentions_unread_csrf_and_no_get_mutation(workspace,app_mod,monkeypatch):
+    from starlette.testclient import TestClient
+    c,u,unit,path=workspace
+    item=case(c,u[0],unit)
+    monkeypatch.setattr(app_mod,'DB',path)
+    url=f"/work/{item['id']}/discussion"
+    with TestClient(app_mod.app) as client:
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[0]))
+        page=client.get(url)
+        csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',page.text)[1]
+        assert client.post(url+'/preferences',data={'action':'follow'}).status_code==403
+        assert client.post(url+'/preferences',data={'action':'follow','csrf':csrf}).status_code==200
+        posted=client.post(url+'/messages',data={'action':'post','csrf':csrf,'body':'Please review','mentions':str(u[1]['id'])})
+        assert posted.status_code==200 and 'Mentioned:' in posted.text
+        cid=c.execute('SELECT id FROM work_comment').fetchone()[0]
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[1]))
+        inbox=client.get('/work/updates')
+        assert inbox.status_code==200 and 'Mentioned you' in inbox.text
+        page=client.get(url)
+        assert 'Unread</span>' in page.text
+        assert updates.read_revision(c,u[1]['id'],cid)==0
+        csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',page.text)[1]
+        result=client.post(url+'/preferences',data={'action':'read','csrf':csrf,'observed':json.dumps([[cid,1]])})
+        assert result.status_code==200
+        assert 'No unread updates in this page.' in client.get('/work/updates').text
+
+
+def test_updates_revoked_page_does_not_hide_older_permitted_alert(workspace):
+    c,u,unit,_=workspace
+    visible=case(c,u[0],unit)
+    wanted=discussion.post(c,u[1],visible['id'],'Still permitted',mentions=[u[0]['id']])
+    doc=document(c,u[0],unit)
+    hidden=case(c,u[0],unit,source_document_id=doc['id'])
+    updates.follow(c,u[0],hidden['id'])
+    for n in range(251):
+        discussion.post(c,u[1],hidden['id'],f'Now restricted {n}')
+    docs.mutate(c,u[1],doc['id'],doc['revision'],'access',{'visibility':'restricted','viewers':[u[1]['id']],'reason':'Restrict'})
+    first,cursor=updates.inbox(c,u[0])
+    assert not first and cursor
+    second,_=updates.inbox(c,u[0],cursor)
+    assert [n['comment_id'] for n in second]==[wanted]
+    assert updates.bell_rows(c,u[0])
+
+
+# P2.3: blockers and same-case dependencies preserve deadlines and authority.
+import work_blockers as blockers
+import work_inbox
+
+
+def change_block(c,user,task,action,**fields):
+    return blockers.mutate(c,user,task['case_id'],task['id'],task['revision'],action,
+                           {'reason':'Recorded blocker decision',**fields})
+
+
+def test_blocker_owner_date_gate_and_unchanged_deadlines(workspace):
+    c,u,unit,_=workspace
+    doc=document(c,u[0],unit)
+    item=case(c,u[0],unit,source_document_id=doc['id'])
+    task=propose(c,u[0],item,unit,u[0]['id'])
+    task=advance(c,u[1],task,'confirm',owner_id=u[0]['id'])
+    task=advance(c,u[0],task,'acknowledge')
+    before_doc=tuple(c.execute('SELECT * FROM document WHERE id=?',(doc['id'],)).fetchone())
+    task=change_block(c,u[0],task,'block',reason='Waiting for regional totals',followup_owner_id=u[0]['id'],followup_date='2026-10-20')
+    assert task['status']=='in_progress' and task['due_date'] is None
+    with pytest.raises(ValueError,match='Resolve'):
+        advance(c,u[0],task,'submit',submission='Premature')
+    entries,_=work_inbox.page(c,u[0])
+    assert entries[0]['action']=='Follow up on blocker'
+    assert entries[0]['followup_date']=='2026-10-20'
+    assert tuple(c.execute('SELECT * FROM document WHERE id=?',(doc['id'],)).fetchone())==before_doc
+    assert work.get(c,u[0],item['id'])['revision']==item['revision']
+    blocked_revision=task['revision']
+    task=change_block(c,u[0],task,'unblock',reason='Regional totals received')
+    with pytest.raises(docs.Conflict):
+        blockers.mutate(c,u[0],item['id'],task['id'],blocked_revision,'block',{'reason':'Stale','followup_owner_id':u[0]['id'],'followup_date':'2026-10-21'})
+    task=advance(c,u[0],task,'submit',submission='Validated totals')
+    assert task['status']=='for_review'
+    history=json.loads(c.execute("SELECT detail_json FROM work_event WHERE action='task_unblock'").fetchone()[0])
+    assert history['previous_blocker']=='Waiting for regional totals'
+
+
+def test_dependency_cycles_cross_case_and_completion_gate(workspace):
+    c,u,unit,_=workspace
+    item=case(c,u[0],unit)
+    task=[]
+    for _ in range(3):
+        t=propose(c,u[0],item,unit,u[0]['id']);t=advance(c,u[1],t,'confirm',owner_id=u[0]['id'])
+        task.append(advance(c,u[0],t,'acknowledge'))
+    a,b,d=task
+    a=change_block(c,u[1],a,'dependency_add',prerequisite_id=b['id'])
+    b=change_block(c,u[1],b,'dependency_add',prerequisite_id=d['id'])
+    with pytest.raises(ValueError,match='cycle'):
+        change_block(c,u[1],d,'dependency_add',prerequisite_id=a['id'])
+    with pytest.raises(ValueError):
+        change_block(c,u[1],a,'dependency_add',prerequisite_id=a['id'])
+    other=case(c,u[0],unit);outside=propose(c,u[0],other,unit)
+    with pytest.raises(ValueError):
+        change_block(c,u[1],a,'dependency_add',prerequisite_id=outside['id'])
+    with pytest.raises(ValueError,match='Resolve'):
+        advance(c,u[0],a,'submit',submission='Too soon')
+    d=advance(c,u[0],d,'submit',submission='Upstream input')
+    d=advance(c,u[1],d,'accept')
+    b=advance(c,u[0],b,'submit',submission='Middle input')
+    b=advance(c,u[1],b,'accept')
+    a=advance(c,u[0],a,'submit',submission='Combined input')
+    # Upstream reopened while A awaits review: current prerequisites checked at acceptance.
+    b=advance(c,u[1],b,'reopen')
+    with pytest.raises(ValueError,match='Resolve'):
+        advance(c,u[1],a,'accept')
+    b=advance(c,u[1],b,'cancel')
+    assert blockers.waiting(c,a)  # cancelled prerequisite is not implicitly satisfied
+    a=change_block(c,u[1],a,'dependency_remove',prerequisite_id=b['id'],reason='Requirement explicitly withdrawn')
+    assert advance(c,u[1],a,'accept')['status']=='done'
+
+
+def test_blocker_authority_followup_membership_and_revocation(workspace):
+    c,u,unit,_=workspace
+    item=case(c,u[0],unit)
+    item=work.confirm_lead(c,u[1],item['id'],1,u[2]['id'],'Lead confirmed')
+    task=propose(c,u[0],item,unit,u[0]['id']);task=advance(c,u[1],task,'confirm',owner_id=u[0]['id'])
+    with pytest.raises(permissions.Denied):
+        change_block(c,u[4],task,'block',followup_owner_id=u[4]['id'],followup_date='2026-10-20')
+    with pytest.raises(permissions.Denied):
+        change_block(c,u[0],task,'block',followup_owner_id=u[2]['id'],followup_date='2026-10-20')
+    with pytest.raises(permissions.Denied):
+        change_block(c,u[2],task,'block',followup_owner_id=u[3]['id'],followup_date='2026-10-20')
+    task=change_block(c,u[2],task,'block',followup_owner_id=u[1]['id'],followup_date='2026-10-20')
+    entries,_=work_inbox.page(c,u[1]);assert any(e['action']=='Follow up on blocker' for e in entries)
+    st.set_setting(c,'work.enabled','0')
+    with pytest.raises(ValueError,match='not enabled'):
+        change_block(c,u[1],task,'unblock')
+    st.set_setting(c,'work.enabled','1')
+    c.execute("UPDATE document_role_grant SET revoked_at='2026-10-16' WHERE user_id=?",(u[1]['id'],));c.commit()
+    with pytest.raises(permissions.Denied):
+        change_block(c,u[1],task,'unblock')
+    assert not work_inbox.page(c,u[1])[0]
+    task=change_block(c,u[2],task,'block',followup_owner_id=u[2]['id'],followup_date='2026-10-21')
+    assert change_block(c,u[2],task,'unblock')['blocker_reason']==''
+
+
+def test_dependency_concurrent_opposite_links_and_audit_rollback(workspace,monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    c,u,unit,path=workspace
+    item=case(c,u[0],unit);a=propose(c,u[0],item,unit);b=propose(c,u[0],item,unit)
+    def link(pair):
+        conn=st.connect(path)
+        try:
+            change_block(conn,u[1],pair[0],'dependency_add',prerequisite_id=pair[1]['id'])
+            return 'saved'
+        except ValueError:
+            return 'cycle'
+        finally:
+            conn.close()
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        assert sorted(pool.map(link,[(a,b),(b,a)]))==['cycle','saved']
+    assert c.execute('SELECT COUNT(*) FROM work_dependency').fetchone()[0]==1
+    task=propose(c,u[0],item,unit)
+    def fail(*args,**kwargs): raise RuntimeError('audit unavailable')
+    monkeypatch.setattr(work,'_event',fail)
+    with pytest.raises(RuntimeError):
+        change_block(c,u[1],task,'block',followup_owner_id=u[1]['id'],followup_date='2026-10-20')
+    stored=c.execute('SELECT blocker_reason,revision FROM work_task WHERE id=?',(task['id'],)).fetchone()
+    assert stored==('',1)
+    st.init_db(c)
+    assert c.execute('SELECT COUNT(*) FROM work_dependency').fetchone()[0]==1
+
+
+def test_blocker_http_forms_csrf_history_and_source_visibility(workspace,app_mod,monkeypatch):
+    from starlette.testclient import TestClient
+    c,u,unit,path=workspace
+    doc=document(c,u[0],unit);item=case(c,u[0],unit,source_document_id=doc['id'])
+    task=propose(c,u[0],item,unit,u[0]['id']);task=advance(c,u[1],task,'confirm',owner_id=u[0]['id'])
+    monkeypatch.setattr(app_mod,'DB',path)
+    url=f"/work/{item['id']}";target=url+f"/tasks/{task['id']}/block"
+    with TestClient(app_mod.app) as client:
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[0]))
+        page=client.get(url);assert 'Report a blocker' in page.text
+        csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',page.text)[1]
+        form={'revision':task['revision'],'reason':'<script>Need totals</script>','followup_owner_id':u[0]['id'],'followup_date':'2026-10-20'}
+        assert client.post(target,data=form).status_code==403
+        result=client.post(target,data={**form,'csrf':csrf})
+        assert result.status_code==200 and 'Blocker recorded or updated' in result.text
+        assert '&lt;script&gt;Need totals&lt;/script&gt;' in result.text
+        assert '<script>Need totals</script>' not in result.text
+        assert client.post(target,data={**form,'csrf':csrf}).status_code==409
+        docs.mutate(c,u[1],doc['id'],doc['revision'],'access',{'visibility':'restricted','viewers':[u[1]['id']],'reason':'Restrict'})
+        assert client.get(url).status_code==404
+        assert client.post(target,data={**form,'csrf':csrf}).status_code==403
+
+
+# P2.4: discussion-derived proposals and decisions retain exact source/affected-work evidence.
+import work_decisions as decisions
+
+
+def decision_fields(c,task_list,**extra):
+    return {'kind':'change','body':'Use the revised regional breakdown.','affected_tasks':[str(t['id']) for t in task_list],
+            'task_revisions':{str(t['id']):c.execute('SELECT revision FROM work_task WHERE id=?',(t['id'],)).fetchone()[0] for t in task_list},**extra}
+
+
+def test_message_proposal_exact_source_duplicate_and_no_authority_grant(workspace):
+    c,u,unit,_=workspace
+    item=case(c,u[0],unit)
+    cid=discussion.post(c,u[0],item['id'],'Please prepare a regional breakdown.')
+    fields={'title':'Regional breakdown','expected_output':'Validated table','unit_id':unit,'proposed_owner_id':u[3]['id']}
+    task=decisions.propose(c,u[0],item['id'],cid,1,fields)
+    assert task['status']=='proposed' and task['owner_id'] is None
+    with pytest.raises(permissions.Denied):work.get(c,u[3],item['id'])
+    with pytest.raises(docs.Conflict):decisions.propose(c,u[0],item['id'],cid,1,fields)
+    discussion.edit(c,u[0],item['id'],None,cid,1,'Changed request later.')
+    source=decisions.task_source(c,u[0],item['id'],task['id'])
+    assert source['source_revision']==1 and source['body']=='Please prepare a regional breakdown.'
+    stale=discussion.post(c,u[0],item['id'],'First draft')
+    discussion.edit(c,u[0],item['id'],None,stale,1,'Latest draft')
+    with pytest.raises(docs.Conflict):decisions.propose(c,u[0],item['id'],stale,1,fields)
+    assert c.execute('SELECT COUNT(*) FROM work_task').fetchone()[0]==1
+
+
+def test_changed_direction_preserves_acceptance_and_requires_explicit_review(workspace):
+    c,u,unit,_=workspace
+    doc=document(c,u[0],unit)
+    item=case(c,u[0],unit,source_document_id=doc['id'])
+    task=propose(c,u[0],item,unit,u[0]['id']);task=advance(c,u[1],task,'confirm',owner_id=u[0]['id'])
+    task=advance(c,u[0],task,'acknowledge');task=advance(c,u[0],task,'submit',submission='Original accepted regional totals')
+    task=advance(c,u[1],task,'accept')
+    before=tuple(c.execute('SELECT * FROM document WHERE id=?',(doc['id'],)).fetchone())
+    cid=discussion.post(c,u[0],item['id'],'Director requests a new regional grouping.')
+    did=decisions.record(c,u[1],item['id'],cid,1,decision_fields(c,[task],document_id=doc['id'],document_revisions={str(doc['id']):doc['revision']}))
+    _,decision,affected=decisions.detail(c,u[0],item['id'],did)
+    assert affected[0]['status']=='done' and affected[0]['snapshot']['submission']=='Original accepted regional totals'
+    assert affected[0]['revision']==task['revision']+1
+    assert decision['document_revision']==doc['revision']
+    assert tuple(c.execute('SELECT * FROM document WHERE id=?',(doc['id'],)).fetchone())==before
+    for user in (u[0],u[1]):
+        assert any(e['action']=='Review changed work direction' for e in work_inbox.page(c,user)[0])
+    with pytest.raises(permissions.Denied):
+        decisions.resolve(c,u[0],item['id'],did,task['id'],affected[0]['revision'],'retain','Self acceptance')
+    decisions.resolve(c,u[1],item['id'],did,task['id'],affected[0]['revision'],'revise','Rework the grouping; preserve the original totals.')
+    _,_,updated=decisions.detail(c,u[0],item['id'],did)
+    assert updated[0]['status']=='in_progress'
+    assert updated[0]['submission']=='Original accepted regional totals'
+    assert updated[0]['snapshot']['status']=='done'
+    assert not decisions.pending(c,task['id'])
+    assert tuple(c.execute('SELECT * FROM document WHERE id=?',(doc['id'],)).fetchone())==before
+    with pytest.raises(docs.Conflict):
+        decisions.resolve(c,u[1],item['id'],did,task['id'],updated[0]['revision'],'retain','Duplicate')
+
+
+def test_decision_gates_submission_retains_output_and_old_forms_are_stale(workspace):
+    c,u,unit,_=workspace
+    item=case(c,u[0],unit)
+    task=propose(c,u[0],item,unit,u[0]['id']);task=advance(c,u[1],task,'confirm',owner_id=u[0]['id']);task=advance(c,u[0],task,'acknowledge')
+    cid=discussion.post(c,u[0],item['id'],'Revise the scope')
+    did=decisions.record(c,u[1],item['id'],cid,1,decision_fields(c,[task]))
+    with pytest.raises(docs.Conflict):advance(c,u[0],task,'submit',submission='Stale submission')
+    current=tasks.list_for_case(c,u[0],item['id'])[0]
+    with pytest.raises(ValueError,match='changed-decision'):
+        advance(c,u[0],current,'submit',submission='Not reviewed')
+    decisions.resolve(c,u[1],item['id'],did,task['id'],current['revision'],'retain','The current scope already meets the changed instruction.')
+    current=tasks.list_for_case(c,u[0],item['id'])[0]
+    assert advance(c,u[0],current,'submit',submission='Reviewed scope')['status']=='for_review'
+
+
+def test_decision_supersession_keeps_all_affected_work_and_stale_sources(workspace):
+    c,u,unit,_=workspace
+    item=case(c,u[0],unit);a=propose(c,u[0],item,unit);b=propose(c,u[0],item,unit)
+    first=discussion.post(c,u[0],item['id'],'First direction')
+    old=decisions.record(c,u[1],item['id'],first,1,decision_fields(c,[a,b]))
+    second=discussion.post(c,u[0],item['id'],'Replacement direction')
+    with pytest.raises(ValueError,match='every contribution'):
+        decisions.record(c,u[1],item['id'],second,1,decision_fields(c,[a],supersedes_id=old))
+    with pytest.raises(ValueError,match='Replacing'):
+        decisions.record(c,u[1],item['id'],second,1,decision_fields(c,[a,b],kind='coordination',supersedes_id=old))
+    new=decisions.record(c,u[1],item['id'],second,1,decision_fields(c,[a,b],supersedes_id=old))
+    assert [d['id'] for d in decisions.pending(c,a['id'])]==[new]
+    assert decisions.detail(c,u[0],item['id'],old)[1]['successor_id']==new
+    with pytest.raises(docs.Conflict):decisions.resolve(c,u[1],item['id'],old,a['id'],3,'retain','Old review')
+    third=discussion.post(c,u[0],item['id'],'Another direction')
+    with pytest.raises(docs.Conflict):decisions.record(c,u[1],item['id'],third,1,decision_fields(c,[a,b],supersedes_id=old))
+    discussion.edit(c,u[0],item['id'],None,second,1,'Edited replacement text')
+    assert decisions.detail(c,u[0],item['id'],new)[1]['source_body']=='Replacement direction'
+
+
+def test_decision_authority_scope_read_revocation_and_immutable_history(workspace):
+    c,u,unit,_=workspace
+    doc=document(c,u[0],unit);item=case(c,u[0],unit,source_document_id=doc['id']);task=propose(c,u[0],item,unit)
+    cid=discussion.post(c,u[0],item['id'],'Discuss this')
+    for user in (u[0],u[4]):
+        with pytest.raises(permissions.Denied):decisions.record(c,user,item['id'],cid,1,decision_fields(c,[task]))
+    other=case(c,u[0],unit);outside=propose(c,u[0],other,unit)
+    with pytest.raises(ValueError):decisions.record(c,u[1],item['id'],cid,1,decision_fields(c,[outside]))
+    did=decisions.record(c,u[1],item['id'],cid,1,decision_fields(c,[task],kind='coordination'))
+    assert not decisions.pending(c,task['id']) and tasks.list_for_case(c,u[0],item['id'])[0]['revision']==1
+    with pytest.raises(docs.Conflict):decisions.record(c,u[1],item['id'],cid,1,decision_fields(c,[task]))
+    st.init_db(c)
+    for table in ('work_decision','work_decision_task'):
+        with pytest.raises(sqlite3.IntegrityError,match='append-only'):c.execute('DELETE FROM '+table)
+        c.rollback()
+    docs.mutate(c,u[1],doc['id'],doc['revision'],'access',{'visibility':'restricted','viewers':[u[1]['id']],'reason':'Restrict'})
+    with pytest.raises(permissions.Denied):decisions.detail(c,u[0],item['id'],did)
+    with pytest.raises(permissions.Denied):decisions.propose(c,u[0],item['id'],cid,1,{'title':'Bypass','expected_output':'Bypass'})
+
+
+def test_decision_atomic_audit_failure_and_revision_checks(workspace,monkeypatch):
+    c,u,unit,_=workspace
+    item=case(c,u[0],unit);task=propose(c,u[0],item,unit);cid=discussion.post(c,u[0],item['id'],'Source')
+    fields=decision_fields(c,[task]);fields['task_revisions'][str(task['id'])]=0
+    with pytest.raises(docs.Conflict):decisions.record(c,u[1],item['id'],cid,1,fields)
+    def fail(*args,**kwargs):raise RuntimeError('audit unavailable')
+    monkeypatch.setattr(work,'_event',fail)
+    with pytest.raises(RuntimeError):decisions.record(c,u[1],item['id'],cid,1,decision_fields(c,[task]))
+    assert not c.execute('SELECT 1 FROM work_decision').fetchone()
+    assert c.execute('SELECT revision FROM work_task WHERE id=?',(task['id'],)).fetchone()[0]==1
+    with pytest.raises(RuntimeError):decisions.propose(c,u[0],item['id'],cid,1,{'title':'Proposal','expected_output':'Output','unit_id':unit})
+    assert c.execute('SELECT COUNT(*) FROM work_task').fetchone()[0]==1
+    assert not c.execute('SELECT 1 FROM work_task_source').fetchone()
+
+
+def test_decision_http_source_forms_csrf_and_review(workspace,app_mod,monkeypatch):
+    from starlette.testclient import TestClient
+    import html
+    c,u,unit,path=workspace;item=case(c,u[0],unit)
+    cid=discussion.post(c,u[0],item['id'],'A <script>source</script> request')
+    monkeypatch.setattr(app_mod,'DB',path)
+    url=f"/work/{item['id']}/messages/{cid}/actions"
+    def hidden(page,name):return html.unescape(re.search('name="'+name+'" value="([^"]*)"',page.text)[1])
+    with TestClient(app_mod.app) as client:
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[0]));page=client.get(url)
+        assert page.status_code==200 and '&lt;script&gt;source&lt;/script&gt;' in page.text
+        assert 'Record work decision</button>' not in page.text
+        data={'action':'task','source_revision':1,'title':'Derived task','expected_output':'Supported output','unit_id':unit}
+        assert client.post(url,data=data).status_code==403
+        result=client.post(url,data={**data,'csrf':hidden(page,'csrf')})
+        assert result.status_code==200 and 'Proposed from a discussion message' in result.text
+        task=tasks.list_for_case(c,u[0],item['id'])[0]
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[1]));page=client.get(url)
+        data={k:hidden(page,k) for k in ('csrf','source_revision','task_revisions','document_revisions')}
+        result=client.post(url,data={**data,'action':'decision','kind':'change','body':'Use the revised grouping','affected_tasks':str(task['id'])})
+        assert result.status_code==200 and 'Needs review against the changed direction' in result.text
+        did=c.execute('SELECT id FROM work_decision').fetchone()[0]
+        target=f"/work/{item['id']}/decisions/{did}/resolve"
+        review={'csrf':hidden(result,'csrf'),'task_id':task['id'],'revision':2,'outcome':'retain','reason':'Already covered by expected output.'}
+        assert client.post(target,data=review).status_code==200
+        assert client.post(target,data=review).status_code==409
+        assert client.get(f"/work/{item['id']}/decisions").status_code==200
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[4]))
+        assert client.get(url).status_code==404
+        assert client.get(f"/work/{item['id']}/decisions/{did}").status_code==404
+
+
+def test_decision_concurrent_proposals_and_disabled_changes(workspace):
+    from concurrent.futures import ThreadPoolExecutor
+    c,u,unit,path=workspace;item=case(c,u[0],unit);cid=discussion.post(c,u[0],item['id'],'One source')
+    fields={'title':'One contribution','expected_output':'Output','unit_id':unit}
+    def create(_):
+        conn=st.connect(path)
+        try:
+            decisions.propose(conn,u[0],item['id'],cid,1,fields)
+            return 'created'
+        except docs.Conflict:return 'conflict'
+        finally:conn.close()
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        assert sorted(pool.map(create,range(2)))==['conflict','created']
+    task=tasks.list_for_case(c,u[0],item['id'])[0]
+    did=decisions.record(c,u[1],item['id'],cid,1,decision_fields(c,[task]))
+    st.set_setting(c,'work.enabled','0')
+    assert decisions.detail(c,u[0],item['id'],did)[1]['body']
+    with pytest.raises(ValueError,match='not enabled'):decisions.resolve(c,u[1],item['id'],did,task['id'],2,'retain','Reviewed')
+    with pytest.raises(ValueError,match='not enabled'):decisions.record(c,u[1],item['id'],cid,1,decision_fields(c,[task]))
+    with pytest.raises(ValueError,match='not enabled'):decisions.propose(c,u[0],item['id'],cid,1,fields)
+
+
+def test_decision_document_reference_version_and_stale_review(workspace):
+    c,u,unit,_=workspace;doc=document(c,u[0],unit);item=case(c,u[0],unit,source_document_id=doc['id'])
+    task=propose(c,u[0],item,unit);cid=discussion.post(c,u[0],item['id'],'Approved source context')
+    version=c.execute("INSERT INTO document_file_version(document_id,url,file_id,fingerprint,role,actor_id,created_at) VALUES (?,?,?,?,?,?,?)",(doc['id'],'https://docs.google.com/document/d/synthetic/edit','synthetic','synthetic-fingerprint','source',u[0]['id'],'2026-10-16')).lastrowid
+    c.execute("UPDATE document SET current_version=?,approved_version=?,status='approved' WHERE id=?",(version,version,doc['id']));c.commit()
+    fields=decision_fields(c,[task],document_id=doc['id'],document_revisions={str(doc['id']):doc['revision']-1})
+    with pytest.raises(docs.Conflict):decisions.record(c,u[1],item['id'],cid,1,fields)
+    fields['document_revisions'][str(doc['id'])]=doc['revision']
+    did=decisions.record(c,u[1],item['id'],cid,1,fields)
+    assert decisions.detail(c,u[0],item['id'],did)[1]['document_version_id']==version
+    current=tasks.list_for_case(c,u[0],item['id'])[0]
+    current=advance(c,u[1],current,'confirm',owner_id=u[0]['id'])
+    with pytest.raises(docs.Conflict):decisions.resolve(c,u[1],item['id'],did,task['id'],2,'retain','Stale review')
+    decisions.resolve(c,u[1],item['id'],did,task['id'],current['revision'],'retain','Scope still applies.')
+    assert c.execute('SELECT status,approved_version,current_version FROM document WHERE id=?',(doc['id'],)).fetchone()==('approved',version,version)

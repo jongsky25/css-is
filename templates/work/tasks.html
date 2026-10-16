@@ -6,6 +6,9 @@
 <h3>{{ task.title }} <span class="work-badge">{{ task_labels[task.status] }}</span></h3>
 <p class="work-outcome">{{ task.expected_output }}</p>{% if task.attention %}<p class="work-note">{{ task.attention }}</p>{% endif %}<p class="work-next"><strong>Next step:</strong> {{ task.next_label }}</p>{% if task.return_note %}<p class="work-note"><strong>Changes requested:</strong> {{ task.return_note }}</p>{% endif %}
 <p class="work-small">{% if task.owner_id %}Owner: {{ names.get(task.owner_id, 'Inactive account') }}{% else %}Owner awaiting confirmation{% if task.proposed_owner_id %} · Suggested: {{ names.get(task.proposed_owner_id, 'Inactive account') }}{% endif %}{% endif %}<br>Contributing unit: {% for unit in units if unit.id==task.unit_id %}{{ unit.name }}{% endfor %}<br>Internal target: {{ task.due_date|humandate if task.due_date else 'Not set' }}</p>
+{% if task.source_message %}<details><summary>Proposed from a discussion message</summary><p class="work-outcome">{{ task.source_message.body }}</p><a href="{{ task.source_message.url }}">Source message and history</a> · Recorded revision {{ task.source_message.source_revision }}</details>{% endif %}
+{% for decision in task.pending_decisions %}<p class="work-note"><strong>Changed direction needs review:</strong> <a href="/work/{{ case.id }}/decisions/{{ decision.id }}">{{ decision.body|truncate(160) }}</a></p>{% endfor %}
+{% include "work/blockers.html" %}
 {% if task.submission %}<details open><summary>Latest submitted output</summary><p class="work-outcome">{{ task.submission }}</p></details>{% endif %}
 {% if enabled %}
 {% if task.primary %}{{ task_action(task,task.primary,case,csrf,people,submitted) }}{% endif %}

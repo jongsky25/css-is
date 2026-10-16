@@ -1,4 +1,4 @@
-## October 16, 2026 (v6.61 — automatic public short links)
+## October 16, 2026 (v6.66 — automatic public short links)
 
 - Add an opt-in is.gd outbox in SQLite, with persisted retries, shared pacing, expired-lease recovery and shutdown draining.
 - Queue public activity/form links on creation; reuse mappings for sharing and printable/downloadable QR codes, with original-link fallback.

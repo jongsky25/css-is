@@ -17,18 +17,67 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.61"
+APP_VERSION = "6.66"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "6.61",
+        "version": "6.66",
         "date": "October 16, 2026",
         "summary": "Public registration and feedback links can now be shortened automatically.",
         "changes": [
             "Share compact activity and feedback links with matching QR codes when shortening is enabled.",
             "Keep using the original link while a short link is being prepared or the service is unavailable.",
             "Personal participant recovery links stay private from the shortening service.",
+        ],
+    },
+    {
+        "version": "6.65",
+        "date": "October 16, 2026",
+        "summary": "Turn discussions into proposed tasks and traceable work decisions.",
+        "changes": [
+            "Create a proposed contribution from a message while retaining its original text.",
+            "Record work decisions with their source, affected contributions and supporting correspondence.",
+            "Review changed work direction while preserving earlier outputs and acceptance history.",
+        ],
+    },
+    {
+        "version": "6.64",
+        "date": "October 16, 2026",
+        "summary": "Make blocked contributions and prerequisite work visible to the team.",
+        "changes": [
+            "Record a blocker with a follow-up owner and date, then keep its resolution in history.",
+            "Link prerequisite contributions and see what must be accepted before work can be submitted.",
+            "Find blocker follow-ups in My work without changing official deadlines.",
+        ],
+    },
+    {
+        "version": "6.63",
+        "date": "October 16, 2026",
+        "summary": "Online meetings are easier to join.",
+        "changes": [
+            "A Join Google Meet button now sits on the calendar item.",
+            "People on an online item get the meeting on their own Google Calendar, so they can join without asking.",
+        ],
+    },
+    {
+        "version": "6.62",
+        "date": "October 16, 2026",
+        "summary": "Online meetings on the calendar can get a Google Meet link automatically.",
+        "changes": [
+            "Save a calendar item as Online or Hybrid with no link and a Google Meet link is added for you.",
+            "Changing the time of the item moves the Meet event, and cancelling it removes the event.",
+            "A link you type yourself, such as Zoom or Teams, is never replaced.",
+        ],
+    },
+    {
+        "version": "6.61",
+        "date": "October 16, 2026",
+        "summary": "Follow discussions and see when colleagues need your attention.",
+        "changes": [
+            "Mention people who already have access and find their updates in the notification bell.",
+            "Follow a work item or contribution and stop following whenever you choose.",
+            "See unread messages and mark the displayed versions as read.",
         ],
     },
     {

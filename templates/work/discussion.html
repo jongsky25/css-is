@@ -3,25 +3,32 @@
 <p><a href="/work/{{ case.id }}{% if task %}#task-{{ task.id }}{% endif %}">Back to {{ case.title }}</a></p>
 <h1>{{ 'Contribution discussion' if task else 'Work item discussion' }}</h1>
 <h2>{{ task.title if task else case.title }}</h2>
-<p class="work-note">Visible to everyone who currently has access to this work item, including its linked correspondence. Discussion does not approve, sign, release or change task status. No notifications are sent for discussion messages.</p>
+<p class="work-note">Visible to everyone who currently has access to this work item, including its linked correspondence. Discussion does not approve, sign, release or change task status. Selected mentions, replies and followed discussions create in-app updates; no email is sent.</p>
+<section class="work-card"><h2>Discussion updates</h2>
+<p>{{ 'You follow this discussion.' if following else 'You are not following this discussion.' }} {{ 'Following this work item covers all its contribution discussions.' if not task else 'Following this contribution covers only this discussion.' }}</p>
+{% if following_case %}<p>You also follow the whole work item. <a href="/work/{{ case.id }}/discussion">Manage work-item following</a> to stop updates from all its contributions.</p>{% endif %}
+{% if enabled %}<form method="post" action="/work/{{ case.id }}/discussion/preferences"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="task_id" value="{{ task.id if task else '' }}"><button class="work-btn" name="action" value="{{ 'unfollow' if following else 'follow' }}">{{ 'Unfollow' if following else 'Follow' }}</button></form>{% endif %}
+{% if observed %}<form method="post" action="/work/{{ case.id }}/discussion/preferences"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="task_id" value="{{ task.id if task else '' }}"><input type="hidden" name="observed" value="{{ observed|tojson|forceescape }}"><button class="work-btn" name="action" value="read">Mark displayed messages read</button></form>{% endif %}
+<p class="work-small">Unfollowing stops future follower updates. Mentions and direct replies can still notify you. Earlier unread updates remain until marked read. Edits do not repeat an existing alert.</p></section>
 {% if selected %}<section class="work-card" id="message-history"><h2>Message history</h2>
 <p>By {{ selected.author }} · {{ selected.created_at }}</p>
-{% for rev in revisions %}<details {% if loop.first %}open{% endif %}><summary>{{ 'Original message' if rev.revision==1 else 'Edit ' ~ (rev.revision-1) }} · {{ rev.created_at }}</summary><p class="work-outcome">{{ rev.body }}</p></details>{% endfor %}
+{% for rev in revisions %}<details {% if loop.first %}open{% endif %}><summary>{{ 'Original message' if rev.revision==1 else 'Edit ' ~ (rev.revision-1) }} · {{ rev.created_at }}</summary><p class="work-outcome">{{ rev.body }}</p>{% if rev.mentions %}<p>Mentioned: {% for person in rev.mentions %}{{ person.name }}{{ ", " if not loop.last else "" }}{% endfor %}</p>{% endif %}</details>{% endfor %}
 {% if older_history %}<p><a href="{{ thread_url }}&message={{ selected.id }}&history_before={{ older_history }}#message-history">Earlier edits</a></p>{% endif %}
 {% if request.query_params.get('history_before') %}<p><a href="{{ thread_url }}&message={{ selected.id }}#message-history">Latest edits</a></p>{% endif %}
 {% if enabled and selected.author_id==viewer_id and not request.query_params.get('history_before') %}
 <form class="work-form" method="post" action="/work/{{ case.id }}/discussion/messages?{% if task %}task_id={{ task.id }}&{% endif %}message={{ selected.id }}">
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="action" value="edit"><input type="hidden" name="comment_id" value="{{ selected.id }}"><input type="hidden" name="revision" value="{{ selected.revision }}">
 <label for="edit-body">Edit your message</label><textarea id="edit-body" name="body" required maxlength="4000">{{ submitted.get('body', selected.body) if submitted.get('action')=='edit' else selected.body }}</textarea>
+{% with mention_action="edit",mention_ids=selected.mentioned_ids %}{% include "work/mentions.html" %}{% endwith %}
 <p class="work-small">Earlier text remains visible in message history. If another edit was saved, compare your text with the latest version above before saving.</p><button class="work-btn primary">Save edit</button></form>{% endif %}
 <p><a href="{{ thread_url }}">Back to latest discussion</a></p></section>{% endif %}
 <section aria-label="Discussion messages">
 {% if older %}<p><a href="{{ thread_url }}&before={{ older }}">Older messages</a></p>{% endif %}
 {% for message in messages %}<article class="work-card" id="message-{{ message.id }}">
-<h3>{{ message.author }}</h3><p class="work-small">{{ message.created_at }}{% if message.revision>1 %} · Edited {{ message.edited_at }}{% endif %}</p>
+<h3>{{ message.author }} {% if message.unread %}<span class="work-badge">Unread</span>{% endif %}</h3><p class="work-small">{{ message.created_at }}{% if message.revision>1 %} · Edited {{ message.edited_at }}{% endif %}</p>
 {% if message.parent %}<p class="work-note">Reply to <a href="{{ thread_url }}&focus={{ message.parent.id }}#message-{{ message.parent.id }}">{{ message.parent.author }}’s message</a>: {{ message.parent.body|truncate(160) }}</p>{% endif %}
-<p class="work-outcome">{{ message.body }}</p>
-<div class="work-actions">{% if enabled %}<a href="{{ thread_url }}&reply={{ message.id }}#compose">Reply</a>{% endif %}<a href="{{ thread_url }}&message={{ message.id }}#message-history">{{ 'Edit / history' if enabled and message.author_id==viewer_id else 'Message history' }}</a></div>
+<p class="work-outcome">{{ message.body }}</p>{% if message.mentions %}<p>Mentioned: {% for person in message.mentions %}{{ person.name }}{{ ", " if not loop.last else "" }}{% endfor %}</p>{% endif %}
+<div class="work-actions">{% if enabled %}<a href="{{ thread_url }}&reply={{ message.id }}#compose">Reply</a>{% endif %}<a href="/work/{{ case.id }}/messages/{{ message.id }}/actions">Create task / record decision</a><a href="{{ thread_url }}&message={{ message.id }}#message-history">{{ 'Edit / history' if enabled and message.author_id==viewer_id else 'Message history' }}</a></div>
 </article>{% else %}<p>No messages yet. Start the discussion below.</p>{% endfor %}
 <p><a href="{{ thread_url }}">Latest messages</a></p></section>
 {% if enabled %}<section class="work-card" id="compose"><h2>{{ 'Reply to ' ~ reply.author if reply else 'Add a message' }}</h2>
@@ -29,5 +36,5 @@
 <form class="work-form" method="post" action="/work/{{ case.id }}/discussion/messages?{% if task %}task_id={{ task.id }}&{% endif %}{% if reply %}reply={{ reply.id }}{% endif %}">
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="action" value="post"><input type="hidden" name="parent_id" value="{{ reply.id if reply else '' }}">
 <label for="message-body">{{ 'Your reply' if reply else 'Your message' }}</label><textarea id="message-body" name="body" maxlength="4000" required>{{ submitted.get('body','') if submitted.get('action')=='post' else '' }}</textarea>
-<p class="work-small">Up to 4,000 characters. Messages are plain text; links and mentions are not sent as notifications.</p><button class="work-btn primary">{{ 'Post reply' if reply else 'Post message' }}</button></form></section>{% endif %}
+{% with mention_action="post",mention_ids=[] %}{% include "work/mentions.html" %}{% endwith %}<p class="work-small">Up to 4,000 characters. Messages are plain text.</p><button class="work-btn primary">{{ 'Post reply' if reply else 'Post message' }}</button></form></section>{% endif %}
 {% endblock %}
