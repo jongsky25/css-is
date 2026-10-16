@@ -56,8 +56,6 @@
   <p class="muted small" style="margin:0 0 .25rem;"><strong style="color:var(--ink);">{{ ev.event_date|humandaterange(ev.end_date) }}</strong>{% if ev.modality == 'online' %} · <span class="badge blue">Online</span>{% elif ev.modality == 'hybrid' %} · <span class="badge blue">Hybrid</span>{% endif %}{% if ev.venue %} · {{ ev.venue }}{% endif %}</p>
   {% set org = ev.organizer or ev.lead_name %}
   {% if org %}<p class="muted small" style="margin:0;">{{ org }}</p>{% endif %}
-  {% if can_manage %}<p class="small" style="margin:.4rem 0 0;"><a href="/activities/{{ ev.event_token }}/manage">⚙ Manage this activity →</a></p>{% endif %}
-  {% if travel_url %}<p class="small" style="margin:.4rem 0 0;"><a href="{{ travel_url }}">✈ File a travel claim →</a></p>{% endif %}
 
   {% if attendee %}
   {% if personal_link %}
