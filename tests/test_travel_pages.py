@@ -383,6 +383,7 @@ def test_activity_pages_offer_the_button_only_to_people_on_the_activity(viewer, 
                       people=[(other["id"], "attending")], by="x@x")
         assert travel.event_url_for(conn, other, eid) == f"/travel/new?event={eid}"
         assert "File a travel claim" in viewer.get("/e/tvtesttok").text
+        assert "File a travel claim" not in viewer.get("/monitor/tvtesttok").text
         st.set_setting(conn, "travel.enabled", "0")
         assert travel.event_url_for(conn, user, eid) is None
         st.set_setting(conn, "travel.enabled", "1")

@@ -125,7 +125,6 @@
     {% if report_url %}<a class="btn" href="{{ report_url }}#comments">💬 What people said →</a>{% endif %}
     <a class="btn" href="/monitor/{{ ev.event_token }}/export">⬇ Export roster (XLSX)</a>
     <a class="btn" href="/activities/{{ ev.event_token }}/manage">⚙ Manage activity</a>
-    {% if travel_url %}<a class="btn" href="{{ travel_url }}">✈ File a travel claim</a>{% endif %}
     {% if not is_closed and remind_count %}
     <button type="button" class="btn remind-btn" id="remindAll" data-count="{{ remind_count }}"
             {% if remind_wait or not email_on %}disabled{% endif %}

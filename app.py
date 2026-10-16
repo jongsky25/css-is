@@ -10305,11 +10305,10 @@ def monitor_event(request: Request, event_token: str, flash: str = ""):
         # per-activity SERVQUAL report, an invited/RP one its Type-3 results; both
         # anchor to #comments. Only surfaced once there are responses to read.
         report_url = st.event_report_url(conn, ev["id"]) if st.event_response_total(conn, ev["id"]) else None
-        travel_url = _travel_url(request, conn, ev)
     finally:
         conn.close()
     return templates.TemplateResponse(request, "monitor_event.html", {
-        "nav_active": "monitor", "show_scope": False, "ev": ev, "travel_url": travel_url,
+        "nav_active": "monitor", "show_scope": False, "ev": ev,
         "people": people, "summ": summ, "status_meta": MONITOR_STATUS,
         "answer_tally": answer_tally,
         "base_url": _base_url(request),
