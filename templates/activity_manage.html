@@ -134,22 +134,23 @@
   {% if err == 'badlink' %}<div class="flash warn" style="margin-top:.8rem;">A link needs both a label and a valid web address (http/https).</div>{% endif %}
 
   <!-- public page pointer -->
-  <div class="mcard" style="margin-top:1rem;">
+  <div class="mcard" style="margin-top:1rem;" data-short-link="{{ base_url }}/e/{{ ev.event_token }}">
     <h2>The participant page</h2>
     <p class="hint">This is the single page participants land on. After they register &amp; consent, they see the details, resource persons, your shared resources, and the feedback links.</p>
     {% if travel_url %}<p><a class="btn ghost" href="{{ travel_url }}">✈ File a travel claim</a></p>{% endif %}
     <div class="pubrow">
       <a class="btn" href="/e/{{ ev.slug or ev.event_token }}" target="_blank" rel="noopener">Open public page ↗</a>
-      <code id="pubUrl">{{ base_url }}/e/{{ ev.slug or ev.event_token }}</code>
+      <code id="pubUrl" data-short-text>{{ share_url(base_url ~ "/e/" ~ ev.event_token) }}</code>
+      <a href="{{ base_url }}/e/{{ ev.event_token }}" target="_blank" rel="noopener">Original link</a>
       <button type="button" class="btn ghost small" onclick="navigator.clipboard&amp;&amp;navigator.clipboard.writeText(document.getElementById('pubUrl').textContent)">Copy link</button>
     </div>
 
     <!-- poster QR -->
     <div class="posterqr">
-      <img src="{{ event_qr }}" alt="QR code for the participant page" width="140" height="140">
+      <img data-short-qr src="{{ event_qr }}" alt="QR code for the participant page" width="140" height="140">
       <div>
         <p class="hint" style="margin:0 0 .5rem;">Print this on posters or show it on a slide. It's the <strong>activity</strong> link, the same for everyone. Each person who registers gets their own personal link and QR to save.</p>
-        <a class="btn ghost small" href="{{ event_qr }}" download="{{ ev.slug or ev.event_token }}-qr.png">Download QR</a>
+        <a class="btn ghost small" data-short-download href="{{ event_qr }}" download="{{ ev.slug or ev.event_token }}-qr.png">Download QR</a>
       </div>
     </div>
 

@@ -333,6 +333,29 @@ def test_calendar_chip_labels_and_new_page(viewer, conn):
     assert "filing" not in item and "Not filed" not in str(item) and "In progress" not in str(item)
 
 
+def test_activity_deadline_chip_links_to_its_filing(admin, conn):
+    user = {"id": uid(conn, "admin@test.local"), "username": "admin@test.local", "role": "admin"}
+    event = st.create_event(conn, "TRAVELTEST Pilot visit", days(-2), modality="f2f",
+                            created_by=user["username"])
+    try:
+        source = travel.resolve_source(conn, user, tz.today_local(), event_id=event["id"])
+        filing = travel.create_filing(conn, user, kind="reimbursement", source=source,
+                                      answers={}, role="participant", today=tz.today_local())
+        conn.execute("UPDATE travel_filing SET deadline_date=? WHERE id=?", (days(5), filing["id"]))
+        conn.commit()
+
+        page = admin.get(f"/calendar?scope=bureau&day={days(-2)}")
+        assert page.status_code == 200
+        assert 'href="/monitor/' + event["event_token"] + '"' in page.text
+        assert 'href="/travel/f/' + filing["ref_code"] + '"' in page.text
+        assert "Due in 5 days" in page.text
+        claim = admin.get(f"/travel/f/{filing['ref_code']}")
+        assert claim.status_code == 200 and "Checklist" in claim.text
+    finally:
+        conn.execute("DELETE FROM event WHERE id=?", (event["id"],))
+        conn.commit()
+
+
 def test_summary_labels(conn):
     u = {"id": 0, "username": "x"}
     today = tz.today_local()

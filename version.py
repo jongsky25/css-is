@@ -17,18 +17,37 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.66"
+APP_VERSION = "6.68"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "6.66",
+        "version": "6.68",
         "date": "October 16, 2026",
         "summary": "Find the working draft and hand off contributions with clear context.",
         "changes": [
             "Open the named working Google draft and find supporting files from the work item.",
             "Record contribution handoff notes with the draft and task state you reviewed.",
             "Keep earlier draft selections and file references visible when the working draft changes.",
+        ],
+    },
+    {
+        "version": "6.67",
+        "date": "October 16, 2026",
+        "summary": "Calendar travel claim reminders now open the claim.",
+        "changes": [
+            "Select a travel claim reminder on the calendar to open its filing and checklist.",
+            "Select the activity title to open the activity page.",
+        ],
+    },
+    {
+        "version": "6.66",
+        "date": "October 16, 2026",
+        "summary": "Public registration and feedback links can now be shortened automatically.",
+        "changes": [
+            "Share compact activity and feedback links with matching QR codes when shortening is enabled.",
+            "Keep using the original link while a short link is being prepared or the service is unavailable.",
+            "Personal participant recovery links stay private from the shortening service.",
         ],
     },
     {

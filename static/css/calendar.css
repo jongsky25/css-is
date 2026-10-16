@@ -83,7 +83,6 @@
 .cal-tt { min-width:0; color:inherit; text-decoration:none; overflow-wrap:anywhere; line-height:1.35;
           display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
 a.cal-tt:hover { text-decoration:underline; }
-a.cal-tt::after { content:""; position:absolute; inset:0; border-radius:10px; }          /* the whole card is the tap target */
 a.cal-tt:focus-visible { outline:none; }
 .cal-item:has(a.cal-tt:focus-visible) { outline:2px solid var(--accent); outline-offset:2px; }
 .cal-sub { display:flex; flex-wrap:wrap; gap:.25rem .5rem; align-items:center; padding-left:1.4rem; font-weight:500; }

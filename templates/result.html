@@ -31,11 +31,11 @@
 
   <h2>QR code{{ "s" if qrs|length > 1 else "" }}</h2>
   {% for q in qrs %}
-  <div class="card" style="text-align:center; margin-bottom:1rem;">
+  <div class="card" style="text-align:center; margin-bottom:1rem;" data-short-link="{{ q.original_url|default(q.url) }}">
     <div style="font-weight:600; margin-bottom:.5rem;">{{ q.title }}</div>
-    <img src="{{ q.img }}" alt="QR code for {{ q.title }}" style="width:220px; height:220px; image-rendering:pixelated;">
-    <div class="mono small" style="word-break:break-all; margin-top:.4rem;"><a href="{{ q.url }}">{{ q.url }}</a></div>
-    <div class="noprint" style="margin-top:.5rem;"><a class="btn ghost" href="{{ q.img }}" download="qr-{{ q.title|slugify }}.png">⤓ Download QR</a></div>
+    <img data-short-qr src="{{ q.img }}" alt="QR code for {{ q.title }}" style="width:220px; height:220px; image-rendering:pixelated;">
+    <div class="mono small" style="word-break:break-all; margin-top:.4rem;"><a data-short-text data-short-href href="{{ q.url }}">{{ q.url }}</a></div>
+    <div class="noprint" style="margin-top:.5rem;"><a class="btn ghost" data-short-download href="{{ q.img }}" download="qr-{{ q.title|slugify }}.png">⤓ Download QR</a> <a href="{{ q.original_url|default(q.url) }}">Original link</a></div>
   </div>
   {% endfor %}
 
