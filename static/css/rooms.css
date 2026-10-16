@@ -173,12 +173,51 @@ button.rm-cell:focus-visible { outline:3px solid var(--accent); outline-offset:1
 }
 
 /* ---- the activity form's room line, and the banner on an activity's page ---- */
-.room-chip { border:1px solid var(--line); border-radius:var(--r2); background:var(--surface-2); padding:.55rem .8rem; margin:.8rem 0 0; }
-.room-chip > summary { cursor:pointer; font-weight:700; }
-.room-chip .rc-hours { grid-template-columns:repeat(auto-fill, minmax(7.5rem, 1fr)); margin:.6rem 0; }
+/* The conference-room card on the Add activity and calendar item forms: an always-open card with big switches. */
+.room-chip { border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:var(--r2); background:var(--surface-2); padding:0; margin:.8rem 0 0; }
+.room-chip[data-state="closed"] { border-left-color:var(--amber-ln); }
+.room-chip > summary { list-style:none; cursor:pointer; display:flex; flex-wrap:wrap; align-items:center; gap:.4rem .7rem; min-height:3rem; padding:.55rem .9rem; box-sizing:border-box; }
+.room-chip > summary::-webkit-details-marker { display:none; }
+.room-chip > summary::after { content:"\25BE"; margin-left:auto; color:var(--soft); }
+.room-chip:not([open]) > summary::after { content:"\25B8"; }
+.rc-title { font-weight:800; font-size:1.02rem; }
+.rc-pill { font-weight:700; font-size:.8rem; padding:.15rem .6rem; border-radius:999px; border:1px solid var(--line); background:var(--surface); color:var(--soft); }
+.rc-pill:empty { display:none; }
+.room-chip[data-state="free"] .rc-pill, .room-chip[data-state="partial"] .rc-pill { background:var(--green-bg); border-color:var(--green-ln); color:var(--green); }
+.room-chip[data-state="closed"] .rc-pill { background:var(--amber-bg); border-color:var(--amber-ln); color:var(--ink); white-space:normal; }
+.rc-body { padding:0 .9rem .9rem; display:grid; gap:.6rem; }
+.rc-more { display:grid; gap:.6rem; }
+.room-chip:has(#room-chip-box:not(:checked)) .rc-more { display:none; }          /* hours and meals only matter once the room is switched on */
+.room-chip .rc-hours { grid-template-columns:repeat(auto-fill, minmax(7.5rem, 1fr)); margin:0; }
+.room-chip .rc-hours:empty { display:none; }
 .room-chip .rc-hours li { padding:.15rem .4rem; font-size:.8rem; }
-.room-chip-tick { display:flex !important; align-items:center; gap:.4rem; font-weight:600; margin:.5rem 0; }
+.room-chip .room-chip-tick.rc-row { display:flex !important; align-items:center; gap:.8rem; margin:0; min-height:3.25rem; padding:.55rem .8rem; box-sizing:border-box;
+  background:var(--surface); border:1.5px solid var(--line-strong, var(--line)); border-radius:var(--r2); cursor:pointer; font-weight:400; }
+.room-chip .room-chip-tick.rc-row[hidden] { display:none !important; }
+.room-chip .rc-row:hover { border-color:var(--accent); }
+.room-chip .rc-row:has(input:checked) { border-color:var(--accent); background:var(--blue-bg); }
+.room-chip .rc-row:has(input:disabled) { opacity:.6; cursor:not-allowed; }
+.room-chip .room-chip-tick.rc-standby { border-color:var(--amber-ln); background:var(--amber-bg); }
+.rc-text { display:grid; gap:.1rem; min-width:0; }
+.rc-text b { font-weight:700; }
+.rc-text small { color:var(--soft); font-size:.82rem; }
+.rc-switch { appearance:none; -webkit-appearance:none; flex:none; width:2.9rem !important; height:1.65rem; margin:0; border-radius:999px; position:relative; cursor:pointer;
+  background:var(--line-strong, #9aa3b2); border:0 !important; padding:0 !important; transition:background .15s; }
+.rc-switch::before { content:""; position:absolute; top:.2rem; left:.2rem; width:1.25rem; height:1.25rem; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.35); transition:transform .15s; }
+.rc-switch:checked { background:var(--accent); }
+.rc-switch:checked::before { transform:translateX(1.25rem); }
+.rc-switch:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+.rc-switch:disabled { cursor:not-allowed; }
+@media (prefers-reduced-motion:reduce) { .rc-switch, .rc-switch::before { transition:none; } }
 .room-chip .rm-times label { display:block; font-weight:600; margin:.3rem 0 .15rem; }
+.room-chip .rc-note { margin:0; }
+@media (max-width:640px) {
+  .room-chip > summary { padding:.6rem .8rem; }
+  .rc-body { padding:0 .8rem .8rem; }
+  .room-chip .room-chip-tick.rc-row { min-height:3.5rem; }
+  .room-chip select { min-height:2.9rem; }
+  .room-chip .rc-hours { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+}
 .room-linked { margin:.8rem 0 0; }
 .room-banner { border:1px solid var(--blue-ln); background:var(--blue-bg); border-radius:var(--r2); padding:.7rem .9rem; margin:.8rem 0; }
 .room-banner.warn { border-color:var(--amber-ln); background:var(--amber-bg); }

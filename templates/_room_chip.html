@@ -1,20 +1,28 @@
 {# The conference-room line shared by the Add activity form and the calendar item form (rooms R8).
    Needs: f (room_* values), room_slots, noun ("activity" / "calendar item"). Works without scripts; room_chip.js adds the
    day's availability. The script finds the form's date / venue / format fields through the data-* attributes. #}
-      <details class="room-chip" id="room-chip" data-date="{{ chip_date|default('event_date') }}" data-venue="{{ chip_venue|default('venue') }}" data-format="{{ chip_format|default('modality') }}" data-start="{{ chip_start|default('') }}" data-end="{{ chip_end|default('') }}" {% if f.reserve_room %}open{% endif %}>
-        <summary>🏢 Conference room <span class="hint" id="room-chip-state" role="status"></span></summary>
+      <details class="room-chip" id="room-chip" data-date="{{ chip_date|default('event_date') }}" data-venue="{{ chip_venue|default('venue') }}" data-format="{{ chip_format|default('modality') }}" data-start="{{ chip_start|default('') }}" data-end="{{ chip_end|default('') }}" open>
+        <summary class="rc-head"><span class="rc-title">🏢 Conference room</span> <span class="rc-pill hint" id="room-chip-state" role="status"></span></summary>
+        <div class="rc-body">
         <ul class="rp-hours rc-hours" id="room-chip-hours" aria-label="Conference room hours that day"></ul>
-        <label class="room-chip-tick"><input type="checkbox" name="reserve_room" value="1" id="room-chip-box" {% if f.reserve_room %}checked{% endif %}>
-          Also reserve the conference room for this {{ noun|default('activity') }}</label>
-        <div class="rm-times">
+        <label class="room-chip-tick rc-row"><input type="checkbox" class="rc-switch" name="reserve_room" value="1" id="room-chip-box" {% if f.reserve_room %}checked{% endif %}>
+          <span class="rc-text"><b>Also reserve the conference room for this {{ noun|default('activity') }}</b>
+            <small>Switch on, then pick the hours.</small></span></label>
+        <div class="rc-more">
+        <div class="rm-times rc-times">
           <div><label for="room-from">From</label>
             <select id="room-from" name="room_from">{% for s in room_slots %}<option value="{{ s.id }}" data-time="{{ s.start_time }}" {% if (f.room_from|default(room_slots[2].id if room_slots|length > 2 else ''))|string == s.id|string %}selected{% endif %}>{{ room_hour(s.start_time) }}</option>{% endfor %}</select></div>
           <div><label for="room-to">Until</label>
             <select id="room-to" name="room_to">{% for s in room_slots %}<option value="{{ s.id }}" data-time="{{ s.end_time }}" {% if (f.room_to|default(room_slots[3].id if room_slots|length > 3 else ''))|string == s.id|string %}selected{% endif %}>{{ room_hour(s.end_time) }}</option>{% endfor %}</select></div>
         </div>
-        <label class="room-chip-tick" id="room-standby-row"{% if not f.room_standby %} hidden{% endif %}><input type="checkbox" name="room_standby" value="1" id="room-standby-box" {% if f.room_standby %}checked{% endif %}>
-          These hours are taken: ask for a provisional (standby) use instead. The Administrative Section can confirm it if the room frees up or in an emergency.</label>
-        <label class="room-chip-tick"><input type="checkbox" name="room_meals" value="1" {% if f.room_meals %}checked{% endif %}> Will meals be requested?</label>
-        <div class="hint">The Administrative Section approves the request. It books the first day of the {{ noun|default('activity') }}, at least 2 working days ahead, and you can follow it under Conference room → My reservations.</div>
+        <label class="room-chip-tick rc-row rc-standby" id="room-standby-row"{% if not f.room_standby %} hidden{% endif %}><input type="checkbox" class="rc-switch" name="room_standby" value="1" id="room-standby-box" {% if f.room_standby %}checked{% endif %}>
+          <span class="rc-text"><b>These hours are taken: ask for a standby use instead</b>
+            <small>A provisional use. The Administrative Section can confirm it if the room frees up or in an emergency.</small></span></label>
+        <label class="room-chip-tick rc-row rc-meals"><input type="checkbox" class="rc-switch" name="room_meals" value="1" {% if f.room_meals %}checked{% endif %}>
+          <span class="rc-text"><b>Will meals be requested?</b>
+            <small>Switch on if food will be served.</small></span></label>
+        <p class="hint rc-note">The Administrative Section approves the request. It books the first day of the {{ noun|default('activity') }}, at least 2 working days ahead, and you can follow it under Conference room → My reservations.</p>
+        </div>
+        </div>
       </details>
-<script src="/static/js/room_chip.js?v=20261013b" defer></script>
+<script src="/static/js/room_chip.js?v=20261016a" defer></script>

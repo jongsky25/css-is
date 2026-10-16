@@ -58,11 +58,11 @@ def event_of(conn, title):
 
 # -------------------------------------------------------------- the form's room line ---
 
-def test_the_form_has_a_collapsed_room_line_with_hours(manager, conn):
+def test_the_form_has_an_open_room_card_with_hours(manager, conn):
     page = manager.get("/create").text
     assert 'id="room-chip"' in page and "Also reserve the conference room" in page
     assert page.count('name="room_from"') == 1 and "room_chip.js" in page
-    assert re.search(r'<details class="room-chip" id="room-chip"[^>]*>', page) and "open>" not in re.search(r'<details class="room-chip"[^>]*>', page).group(0)
+    assert re.search(r'<details class="room-chip" id="room-chip"[^>]*>', page) and re.search(r'<details class="room-chip"[^>]*\bopen>', page)   # always open: the room option is never hidden
 
 
 def test_ticking_the_room_files_a_request_tied_to_the_new_activity(manager, conn):
