@@ -99,6 +99,62 @@ def active_account(conn, uid):
     return p.actor(conn, {'id':int(uid)})
 
 
+def setup_operator(conn, user):
+    user = p.actor(conn, user)
+    require(user['role'] == 'admin', 'Only an active system administrator can perform initial setup.')
+    return user
+
+
+def setup_blocker(conn):
+    if (st.get_setting(conn, 'documents.admin_setup_completed', '') or
+            conn.execute("SELECT 1 FROM document_role_grant WHERE role='grant_admin' LIMIT 1").fetchone()):
+        return 'Initial administrator setup is complete. Further role changes belong to the designated Documents grant administrators.'
+    if (st.get_setting(conn, 'documents.enabled', '0') != '0' or
+            st.get_setting(conn, 'documents.sending_enabled', '0') != '0'):
+        return 'Initial setup requires Documents and document sending to be disabled.'
+    return ''
+
+
+def preview_admin_setup(conn, user, usernames, authorization):
+    setup_operator(conn, user)
+    if setup_blocker(conn):
+        raise Conflict(setup_blocker(conn))
+    authorization = reason(authorization)
+    names = list(dict.fromkeys(str(usernames).replace(',', '\n').lower().split()))
+    if not 1 <= len(names) <= 20:
+        raise ValueError('Enter between 1 and 20 existing account emails, one per line.')
+    accounts = []
+    for name in names:
+        found = rows(conn, 'SELECT id,username,active FROM admin_user WHERE lower(username)=?', (name,))
+        if len(found) != 1 or not found[0]['active']:
+            raise ValueError('No unique active account matches ' + name + '. Check Users before continuing.')
+        accounts.append({'id': found[0]['id'], 'username': found[0]['username']})
+    return {'accounts': accounts, 'authorization': authorization}
+
+
+def bootstrap_admins(conn, user, preview):
+    """One-time, explicitly confirmed grants; never infer document authority from app roles."""
+    with transaction(conn):
+        user = setup_operator(conn, user)
+        if setup_blocker(conn):
+            raise Conflict(setup_blocker(conn))
+        accounts = preview['accounts']
+        current = preview_admin_setup(conn, user, '\n'.join(a['username'] for a in accounts), preview['authorization'])
+        if current != preview:
+            raise Conflict('An account changed after preview. Review the accounts again.')
+        now = tz.now_iso()
+        for account in accounts:
+            for role in ('grant_admin', 'workflow_admin'):
+                if not conn.execute('SELECT 1 FROM document_role_grant WHERE user_id=? AND role=? AND unit_id IS NULL AND revoked_at IS NULL',
+                                    (account['id'], role)).fetchone():
+                    conn.execute('INSERT INTO document_role_grant(user_id,role,granted_by,created_at) VALUES (?,?,?,?)',
+                                 (account['id'], role, user['id'], now))
+        conn.execute('INSERT INTO app_setting(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',
+                     ('documents.admin_setup_completed', now))
+        event(conn, None, user, 'bootstrap_grants', {**current, 'roles': ['grant_admin', 'workflow_admin'], 'method': 'administrator setup page'})
+        return current
+
+
 def notify(conn, doc, eid, kind, extra=()):
     recipients = {doc['creator_id'], doc['lead_id']} | set(extra)
     recipients |= {r[0] for r in conn.execute("SELECT user_id FROM document_assignment WHERE document_id=? AND status<>'superseded'",(doc['id'],))}
