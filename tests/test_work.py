@@ -2639,3 +2639,195 @@ def test_digest_read_between_claim_and_send_is_omitted(workspace,monkeypatch):
     assert digests.deliver(c,'https://office.test',now=datetime(2026,10,19,7))==1
     claimed=c.execute('SELECT n.comment_id FROM work_digest_notice dn JOIN work_notice n ON n.id=dn.notice_id').fetchall()
     assert claimed==[(second,)]
+
+
+# P3.5: exact, permission-scoped support counts and matching drill-downs.
+import work_support as support
+from datetime import date
+
+
+def support_counts(report):
+    return {m['key']:m['count'] for m in report['metrics']}
+
+
+def test_support_counts_overlap_without_conflating_cases_and_contributions(workspace):
+    c,u,unit,_=workspace
+    item=inbox_case(c,u,unit)
+    a=propose(c,u[0],item,unit,title='Unassigned and overdue',due_date='2026-10-19')
+    b=propose(c,u[0],item,unit,title='Waiting for upstream')
+    b=advance(c,u[1],b,'confirm',owner_id=u[3]['id'])
+    b=change_block(c,u[2],b,'dependency_add',prerequisite_id=a['id'],reason='Need upstream')
+    result=support.report(c,u[1],today=date(2026,10,20));counts=support_counts(result)
+    assert result['managed_count']==1
+    assert counts['risk']==1 and counts['unassigned']==1 and counts['waiting']==1
+    assert counts['overdue']==1 and counts['no_date']==1 and counts['case_no_date']==1
+    assert len(result['items'])==1 and len(result['items'][0]['reasons'])==3
+    for key in support.METRICS:
+        drill=support.report(c,u[1],{'metric':key},today=date(2026,10,20))
+        assert drill['total']==counts[key] and len(drill['items'])==counts[key]
+    target=support.report(c,u[1],{'metric':'unassigned'},today=date(2026,10,20))['items'][0]
+    assert target['url']==f"/work/{item['id']}#task-{a['id']}"
+
+
+def test_support_today_missing_targets_and_seven_day_boundary(workspace):
+    c,u,unit,_=workspace
+    for due in (None,'2026-10-20','2026-10-27','2026-10-28'):
+        item=case(c,u[0],unit,due_date=due)
+        work.confirm_lead(c,u[1],item['id'],item['revision'],u[2]['id'],'Confirmed')
+    result=support.report(c,u[1],today=date(2026,10,20))
+    assert support_counts(result)['risk']==2  # today through day 7 inclusive
+    assert support_counts(result)['case_no_date']==1
+    assert support_counts(result)['overdue']==0
+    item=inbox_case(c,u,unit)
+    task=propose(c,u[0],item,unit,due_date='2026-10-20')
+    advance(c,u[1],task,'confirm',owner_id=u[3]['id'])
+    assert support_counts(support.report(c,u[1],today=date(2026,10,20)))['overdue']==0
+    assert support_counts(support.report(c,u[1],today=date(2026,10,21)))['overdue']==1
+
+
+def test_support_authority_is_not_membership_or_technical_admin(workspace):
+    c,u,unit,_=workspace;item=inbox_case(c,u,unit)
+    task=propose(c,u[0],item,unit);advance(c,u[1],task,'confirm',owner_id=u[3]['id'])
+    assert support.report(c,u[1])['managed_count']==1
+    assert support.report(c,u[2])['managed_count']==1
+    for user in (u[0],u[3],u[4],{**u[4],'role':'section_manager'}):
+        assert support.report(c,user)['managed_count']==0
+        assert not support.report(c,user)['support_units']
+    c.execute('UPDATE admin_user SET active=0 WHERE id=?',(u[1]['id'],));c.commit()
+    with pytest.raises(permissions.Denied):support.report(c,u[1])
+
+
+def test_support_revocation_hides_counts_titles_units_and_drilldowns(workspace):
+    c,u,unit,_=workspace
+    doc=document(c,u[0],unit)
+    item=case(c,u[0],unit,source_document_id=doc['id'])
+    propose(c,u[0],item,unit,title='Restricted contribution')
+    assert support_counts(support.report(c,u[1]))['unassigned']==1
+    c.execute("INSERT INTO document_role_grant(user_id,role,unit_id,created_at) VALUES (?,'records',?,'2026-10-17')",(u[0]['id'],unit));c.commit()
+    docs.mutate(c,u[0],doc['id'],doc['revision'],'access',{'visibility':'restricted','viewers':[u[0]['id']],'reason':'Restrict officer access'})
+    report=support.report(c,u[1],{'metric':'unassigned'})
+    assert not report['items'] and not report['support_units'] and not report['managed_count']
+    assert all(m['count']==0 for m in report['metrics'])
+
+
+def test_support_unit_filter_uses_case_unit_and_preserves_links(workspace):
+    c,u,unit,_=workspace
+    other=st.add_org_unit(c,'Other case unit','division','OTHER/P35')
+    c.execute("INSERT INTO document_role_grant(user_id,role,unit_id,created_at) VALUES (?,'records',?,'2026-10-17')",(u[1]['id'],other));c.commit()
+    item=case(c,u[0],unit);propose(c,u[0],item,other)
+    another=case(c,u[0],other);propose(c,u[0],another,unit)
+    result=support.report(c,u[1],{'unit':str(unit),'metric':'unassigned'})
+    assert result['managed_count']==1 and result['total']==1
+    assert result['items'][0]['url'].startswith(f"/work/{item['id']}#")
+    assert all(f'unit={unit}' in m['url'] for m in result['metrics'])
+
+
+def test_support_review_age_from_submission_not_later_changes(workspace):
+    c,u,unit,_=workspace;item=inbox_case(c,u,unit)
+    task=propose(c,u[0],item,unit);task=advance(c,u[1],task,'confirm',owner_id=u[3]['id'])
+    task=advance(c,u[3],task,'acknowledge')
+    import tzutil
+    # A genuine submission at a fixed timestamp, followed by an unrelated milestone edit.
+    from unittest.mock import patch
+    with patch.object(tzutil,'now_iso',return_value='2026-10-18T15:00:00'):
+        task=advance(c,u[3],task,'submit',submission='Ready')
+    task=advance(c,u[1],task,'milestone',due_date='2026-10-25')
+    result=support.report(c,u[2],{'metric':'review'},today=date(2026,10,20))
+    assert result['total']==1 and result['items'][0]['wait_days']==2
+    assert support.age(None,date(2026,10,20)) is None
+    assert support.age('2026-10-21T00:00:00',date(2026,10,20)) is None
+    advance(c,u[2],task,'accept')
+    assert support.report(c,u[2],{'metric':'review'})['total']==0
+
+
+def test_support_owner_inactive_and_completed_tasks_excluded(workspace):
+    c,u,unit,_=workspace;item=inbox_case(c,u,unit)
+    task=propose(c,u[0],item,unit);task=advance(c,u[1],task,'confirm',owner_id=u[3]['id'])
+    cancelled=propose(c,u[0],item,unit,due_date='2026-10-01');advance(c,u[1],cancelled,'cancel')
+    c.execute('UPDATE admin_user SET active=0 WHERE id=?',(u[3]['id'],));c.commit()
+    result=support.report(c,u[1],{'metric':'owner_unavailable'})
+    assert result['total']==1 and result['items'][0]['id']==task['id']
+    assert support_counts(result)['unassigned']==0 and support_counts(result)['overdue']==0
+    assert support_counts(result)['risk']==1
+
+
+def test_support_formal_review_deduplicates_shared_documents(workspace,monkeypatch):
+    c,u,unit,_=workspace
+    source,output,item,task=completion_fixture(workspace)
+    # This fixture has approved the output; request a fresh actual review.
+    output=request_consolidation(c,u,output,item)
+    another=case(c,u[0],unit,source_document_id=output['id'])
+    result=support.report(c,u[1],{'metric':'formal_review'})
+    assert result['total']==1 and result['items'][0]['id']==output['id']
+    assert result['items'][0]['url']==f"/documents/{output['id']}"
+    assert result['items'][0]['waiting_since']
+
+
+def test_support_pagination_exact_totals_beyond_one_page(workspace):
+    c,u,unit,_=workspace;item=case(c,u[0],unit)
+    for n in range(27):propose(c,u[0],item,unit,title=f'Contribution {n}')
+    first=support.report(c,u[1],{'metric':'unassigned'})
+    second=support.report(c,u[1],{'metric':'unassigned','page':2})
+    assert first['total']==second['total']==27
+    assert len(first['items'])==25 and len(second['items'])==2
+    assert first['next_url'] and not second['next_url'] and second['previous_url']
+    assert not {i['id'] for i in first['items']} & {i['id'] for i in second['items']}
+
+
+def test_support_read_only_disabled_work_and_closed_migration(workspace):
+    c,u,unit,_=workspace
+    doc=legacy_setup(c,u,unit);migrate(c,u,doc)
+    assert support.report(c,u[1])['managed_count']==1
+    # Historical closed migrated workflow should not become a live support backlog.
+    c.execute("UPDATE document SET status='closed' WHERE id=?",(doc['id'],));c.commit()
+    assert support.report(c,u[1])['managed_count']==0
+    case(c,u[0],unit)
+    st.set_setting(c,'work.enabled','0')
+    before=c.total_changes
+    assert support.report(c,u[1])['managed_count']==1
+    assert c.total_changes==before and not c.in_transaction
+
+
+@pytest.mark.parametrize('values',[{'metric':'private'},{'unit':'-1'},{'unit':'1 OR 1=1'},{'page':'0'},{'page':'99999999999999999999999'}])
+def test_support_invalid_filters(workspace,values):
+    c,u,unit,_=workspace
+    with pytest.raises(ValueError):support.report(c,u[1],values)
+
+
+def test_support_http_counts_links_escape_and_revocation(workspace,app_mod,monkeypatch):
+    from starlette.testclient import TestClient
+    c,u,unit,path=workspace;monkeypatch.setattr(app_mod,'DB',path)
+    item=case(c,u[0],unit);task=propose(c,u[0],item,unit,title='<script>unsafe()</script>')
+    with TestClient(app_mod.app) as client:
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[1]))
+        page=client.get('/work/support?metric=unassigned')
+        assert page.status_code==200,page.text
+        assert '&lt;script&gt;unsafe()&lt;/script&gt;' in page.text
+        assert f"/work/{item['id']}#task-{task['id']}" in page.text
+        assert 'Unassigned contributions · 1 contribution' in page.text
+        assert client.get('/work/support?metric=invalid').status_code==400
+        c.execute("UPDATE document_role_grant SET revoked_at='2026-10-17' WHERE user_id=?",(u[1]['id'],));c.commit()
+        page=client.get('/work/support?metric=unassigned')
+        assert page.status_code==200 and 'unsafe()' not in page.text
+
+
+def test_support_completed_case_disappears_and_reopening_restores(workspace):
+    c,u,unit,_=workspace;item=inbox_case(c,u,unit)
+    completion.configure(c,u[1],item['id'],item['revision'],'internal',[],'Internal work completed')
+    assert support.report(c,u[1])['managed_count']==1
+    finish_case(c,u,item)
+    assert support.report(c,u[1])['managed_count']==0
+    item=work.get(c,u[1],item['id'])
+    completion.reopen(c,u[2],item['id'],item['revision'],'Follow-up is needed')
+    assert support.report(c,u[1])['managed_count']==1
+
+
+def test_support_required_deadline_risk_does_not_use_reference_deadlines(workspace):
+    c,u,unit,_=workspace;source,output,item,task=completion_fixture(workspace)
+    c.execute("UPDATE document SET due_date='2026-10-01' WHERE id=?",(source['id'],));c.commit()
+    baseline=support.report(c,u[1],today=date(2026,10,20))
+    assert support_counts(baseline)['risk']==0  # incoming reference is not declared required
+    c.execute("UPDATE document SET due_date='2026-10-01' WHERE id=?",(output['id'],));c.commit()
+    result=support.report(c,u[1],today=date(2026,10,20))
+    assert support_counts(result)['risk']==1
+    assert result['items'][0]['reasons']==['Required official record deadline overdue']

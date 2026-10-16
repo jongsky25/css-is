@@ -1,6 +1,6 @@
 # P3.4 — Notification preferences and digests
 
-October 17, 2026 (Asia/Manila). **In review**, version **6.75**, branch `codex/work-digests`, based on merged P3.3 (`516ad91`). This increment is not merged or deployed. Phase 3 acceptance remains open.
+October 17, 2026 (Asia/Manila). **In review**, version **6.75**, branch `codex/work-digests`, based on merged P3.3 (`516ad91`). P3.4 was subsequently merged at `ccdc142` on the user’s instruction. Live deployment success has not been independently verified. Phase 3 acceptance remains open.
 
 ## Delivered
 

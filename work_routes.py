@@ -21,6 +21,7 @@ import work_blockers
 import work_decisions
 import work_handoff
 import work_team
+import work_support
 import work_review
 import work_completion
 
@@ -569,6 +570,18 @@ def make_router(templates, get_conn):
             except (ValueError,TypeError):
                 return HTMLResponse('Invalid team filters. Start again at /work/team.',status_code=400)
         finally: conn.close()
+
+    @router.get('/work/support', response_class=HTMLResponse)
+    def support(request: Request):
+        conn = get_conn()
+        try:
+            return render(request, conn, 'support', **work_support.report(conn, request.state.user, request.query_params))
+        except permissions.Denied:
+            return HTMLResponse('An active staff account is required.', status_code=403)
+        except (ValueError, TypeError):
+            return HTMLResponse('Invalid support filters. Start again at /work/support.', status_code=400)
+        finally:
+            conn.close()
 
     @router.get('/work/{case_id}', response_class=HTMLResponse)
     def show(request: Request, case_id: int):
