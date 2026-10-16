@@ -1784,3 +1784,42 @@ def test_handoff_history_pagination_and_http_forms(workspace,app_mod,monkeypatch
         assert page.status_code==200 and 'Place the table in section two.' in page.text
         client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[4]))
         assert client.get(url).status_code==404
+
+
+def test_phase2_question_dependency_decision_and_handoff_journey(workspace):
+    """Phase gate: two contributors resolve a dependency; official source stays intact."""
+    c,u,unit,_=workspace
+    doc=document(c,u[0],unit)
+    doc=docs.mutate(c,u[1],doc['id'],doc['revision'],'access',{'visibility':'restricted','viewers':[u[0]['id'],u[3]['id']],'reason':'Authorize the contributors'})
+    item=case(c,u[0],unit,source_document_id=doc['id'])
+    before=tuple(c.execute('SELECT * FROM document WHERE id=?',(doc['id'],)).fetchone())
+    question=discussion.post(c,u[0],item['id'],'Please validate the regional totals.')
+    upstream=decisions.propose(c,u[0],item['id'],question,1,{
+        'title':'Validate totals','expected_output':'Checked totals','unit_id':unit,'proposed_owner_id':u[3]['id']})
+    upstream=advance(c,u[1],upstream,'confirm',owner_id=u[3]['id'])
+    upstream=advance(c,u[3],upstream,'acknowledge')
+    downstream=propose(c,u[0],item,unit,u[0]['id'])
+    downstream=advance(c,u[1],downstream,'confirm',owner_id=u[0]['id'])
+    downstream=advance(c,u[0],downstream,'acknowledge')
+    downstream=change_block(c,u[1],downstream,'dependency_add',prerequisite_id=upstream['id'])
+    updates.follow(c,u[0],item['id'])
+    reply=discussion.post(c,u[3],item['id'],'Totals checked; use the revised grouping.',parent_id=question,mentions=[u[0]['id']])
+    assert len([n for n in updates.inbox(c,u[0])[0] if n['comment_id']==reply])==1
+    with pytest.raises(ValueError,match='Resolve'):
+        advance(c,u[0],downstream,'submit',submission='Premature consolidation')
+    upstream=change_block(c,u[3],upstream,'block',reason='Need confirmation',followup_owner_id=u[3]['id'],followup_date='2026-10-20')
+    upstream=change_block(c,u[3],upstream,'unblock',reason='Confirmation received in discussion')
+    upstream=advance(c,u[3],upstream,'submit',submission='Validated regional totals')
+    upstream=advance(c,u[1],upstream,'accept')
+    did=decisions.record(c,u[1],item['id'],reply,1,decision_fields(c,[downstream]))
+    downstream=next(t for t in tasks.list_for_case(c,u[0],item['id']) if t['id']==downstream['id'])
+    decisions.resolve(c,u[1],item['id'],did,downstream['id'],downstream['revision'],'retain','The planned consolidation includes this grouping.')
+    downstream=next(t for t in tasks.list_for_case(c,u[0],item['id']) if t['id']==downstream['id'])
+    draft=handoff.set_draft(c,u[0],item['id'],0,{'title':'Response','url':DRAFT_URL,'reason':'Consolidate inputs'})
+    support=handoff.add_file(c,u[3],item['id'],{'title':'Validated totals','url':SUPPORT_URL})
+    handoff.post(c,u[3],item['id'],upstream['id'],upstream['revision'],draft,'Use these totals in the response.',support)
+    downstream=advance(c,u[0],downstream,'submit',submission='Consolidated response')
+    assert advance(c,u[1],downstream,'accept')['status']=='done'
+    assert handoff.page(c,u[0],item['id'])['notes'][0]['snapshot']['status']=='done'
+    assert decisions.task_source(c,u[0],item['id'],upstream['id'])['body']=='Please validate the regional totals.'
+    assert tuple(c.execute('SELECT * FROM document WHERE id=?',(doc['id'],)).fetchone())==before

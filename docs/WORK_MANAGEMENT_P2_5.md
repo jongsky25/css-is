@@ -1,6 +1,6 @@
 # P2.5 — Collaborative draft handoff
 
-October 16, 2026 (Asia/Manila). **In review**, version **6.66**, branch `codex/draft-handoff`. P2.4 was merged at `855b7bb` before development. P2.5 is not merged or deployed.
+October 16, 2026 (Asia/Manila). **In review**, version **6.66**, branch `codex/draft-handoff`. P2.4 was merged at `855b7bb` before development. P2.5 was subsequently merged to main at `0dbfdb8` as version **6.69**, preserving intervening releases. Live deployment success has not been independently verified.
 
 ## Delivered
 
@@ -30,4 +30,4 @@ Chromium journey: coordinator selects a draft; contributor adds evidence and a h
 
 ## Next
 
-Merge P2.5 and review Phase 2 acceptance across discussions, mentions/following, blockers/dependencies, sourced decisions and draft handoffs. After acceptance, P3.1 introduces shared team list/board views. Live integration and operational rollout checks remain separate.
+The [Phase 2 acceptance review](WORK_MANAGEMENT_PHASE_2_ACCEPTANCE.md) passes technical criteria and recommends user acceptance. After acceptance, P3.1 introduces shared team list/board views. Live integration and operational rollout checks remain separate.
