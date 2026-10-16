@@ -1,0 +1,16 @@
+{% extends 'work/base.html' %}
+{% block work_content %}
+<h1>Start a work item</h1><p class="work-intro">Describe the outcome your colleagues need to deliver. Official incoming and outgoing records keep their own numbers and approvals.</p>
+{% if source %}<p class="work-note">Starting from <strong>{{ source.number }} · {{ source.subject }}</strong>. This record will be linked as a reference.</p>{% endif %}
+{% if enabled %}<form method="post" class="work-form work-card" action="/work/new">
+<input type="hidden" name="csrf" value="{{ csrf }}">{% if values.get('source_document_id') %}<input type="hidden" name="source_document_id" value="{{ values.source_document_id }}">{% endif %}
+<label for="title">Work item title</label><input id="title" name="title" value="{{ values.get('title','') }}" maxlength="250" required placeholder="Prepare a consolidated technical response">
+<label for="outcome">Expected outcome</label><textarea id="outcome" name="outcome" maxlength="4000" required placeholder="What needs to be delivered, and what will show that it is complete?">{{ values.get('outcome','') }}</textarea>
+<label for="unit">Concerned unit</label><select id="unit" name="unit_id" required><option value="">Choose a unit</option>{% for unit in units %}<option value="{{ unit.id }}" {% if values.get('unit_id')|string==unit.id|string %}selected{% endif %}>{{ unit.name }}</option>{% endfor %}</select>
+<label for="proposedLead">Suggested lead (optional)</label><select id="proposedLead" name="proposed_lead_id"><option value="">Let the concerned officer confirm</option>{% for person in people %}<option value="{{ person.id }}" {% if values.get('proposed_lead_id')|string==person.id|string %}selected{% endif %}>{{ person.name }} · {{ person.username }}</option>{% endfor %}</select>
+<p class="work-small">The concerned officer confirms the lead. Suggesting someone does not grant them access.</p>
+<label for="target">Planning target (optional)</label><input id="target" type="date" name="due_date" value="{{ values.get('due_date','') }}"><p class="work-small">This planning date does not set or extend any official document deadline.</p>
+<p class="work-small">The creator, confirmed lead, and concerned officers may read this work item only while they also have access to every linked document.</p>
+<div class="work-actions"><button class="work-btn primary" type="submit">Create work item</button><a href="/work">Cancel</a></div>
+</form>{% endif %}
+{% endblock %}

@@ -12,6 +12,7 @@
 <h3>Files and versions</h3><p>Drive permissions are managed in Drive. An adapter check establishes access for its identity only.</p><ul>{% for v in versions %}<li>#{{ v.id }} · <a href="{{ v.url }}" target="_blank" rel="noopener noreferrer">{{ v.role }} file</a> · Exact version: {{ v.fingerprint or 'Not checked — reference only' }}{% if v.id==doc.current_version %} · Current{% endif %}</li>{% else %}<li>No scan or draft attached.</li>{% endfor %}</ul>
 <h3>Directives</h3><ul>{% for x in directives %}<li>{{ x.created_at }} · {{ x.text }}</li>{% else %}<li>No Director directive recorded.</li>{% endfor %}</ul>
 <h3>Related records</h3><ul>{% for x in related %}<li><a href="/documents/{{ x.id }}">{{ x.number }} · {{ x.subject }}</a></li>{% else %}<li>No visible related records.</li>{% endfor %}</ul>
+{% if work_cases or work_enabled %}<h3>Shared work</h3><ul>{% for item in work_cases %}<li><a href="/work/{{ item.id }}">{{ item.title }}</a></li>{% else %}<li>No permitted work items linked.</li>{% endfor %}</ul>{% if work_enabled %}<p><a href="/work/new?source_document_id={{ doc.id }}">Start a work item from this document</a> · <a href="/work">Find existing work</a></p>{% endif %}{% endif %}
 {% if duplicates %}<h3>Possible duplicates</h3><p>These are warnings, not confirmed duplicates.</p><ul>{% for x in duplicates %}<li><a href="/documents/{{ x.id }}">{{ x.number }} · {{ x.subject }}</a></li>{% endfor %}</ul>{% endif %}
 {% if enabled %}<h3>Actions</h3>
 {% if officer %}

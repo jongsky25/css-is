@@ -78,6 +78,7 @@ import rooms_meals_routes
 import rooms_routes
 import travel_routes
 import documents_routes
+import work_routes
 import documents_notify
 import documents
 import report_docs
@@ -642,7 +643,8 @@ NAV_GROUPS = [
     # Section who run it are not necessarily app admins (cap manage_users), so it
     # has its own group: everyone requests; room approvers also get the manage items.
     {"name": "Office", "items": [
-        {"key": "documents", "url": "/documents", "label": "Documents", "section": "Documents", "hint": "Incoming and outgoing document register", "kw": "documents correspondence registry incoming outgoing", "cap": None},
+        {"key": "work", "url": "/work", "label": "Shared work", "section": "Documents", "hint": "Shared outcomes, ownership, and related correspondence", "kw": "work item shared outcome accountable lead", "cap": None},
+        {"key": "documents", "url": "/documents", "label": "Documents", "hint": "Incoming and outgoing document register", "kw": "documents correspondence registry incoming outgoing", "cap": None},
         {"key": "rooms", "url": "/rooms", "label": "Conference room",
          "section": "Reserve",
          "hint": "See what is free and request a slot",
@@ -16908,3 +16910,4 @@ app.include_router(travel_routes.make_router(templates, get_conn, _today_local, 
 
 # Document module: each route enforces account, object access and CSRF.
 app.include_router(documents_routes.make_router(templates, get_conn))
+app.include_router(work_routes.make_router(templates, get_conn))

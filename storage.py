@@ -709,6 +709,8 @@ def init_db(conn):
     travel.ensure_defaults(conn)
     import documents_storage
     documents_storage.install(conn)
+    import work_storage
+    work_storage.install(conn)
     conn.commit()
 
 
