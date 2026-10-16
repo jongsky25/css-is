@@ -989,3 +989,167 @@ def test_contextual_actions_hide_blocked_and_inactive_owner_paths(workspace,app_
         assert 'Reopen the official document' in page.text
         assert '/reassign' not in page.text and 'Propose a contribution' not in page.text
         assert 'Confirm lead</button>' not in page.text
+
+
+# P2.1: discussion has its own immutable history and concurrency boundary.
+import work_discussion as discussion
+
+
+def test_discussion_two_contributors_and_independent_revisions(workspace):
+    c, u, unit, _ = workspace
+    doc = document(c, u[0], unit)
+    item = case(c, u[0], unit, source_document_id=doc['id'])
+    # Approved source state is deliberately fixed: informal discussion must not touch it.
+    c.execute("UPDATE document SET status='approved' WHERE id=?", (doc['id'],));c.commit()
+    task = propose(c, u[0], item, unit, u[0]['id'])
+    task = advance(c, u[1], task, 'confirm', owner_id=u[0]['id'])
+    before_doc = tuple(c.execute('SELECT * FROM document WHERE id=?', (doc['id'],)).fetchone())
+    first = discussion.post(c, u[0], item['id'], 'Can we check these totals?', task['id'])
+    reply = discussion.post(c, u[1], item['id'], 'Yes, the second row needs review.', task['id'], first)
+    discussion.edit(c, u[0], item['id'], task['id'], first, 1, 'Please check the second row totals.')
+    result = discussion.page(c, u[0], item['id'], task['id'])
+    assert [m['id'] for m in result['messages']] == [first, reply]
+    assert result['messages'][1]['parent']['id'] == first
+    assert work.get(c, u[0], item['id'])['revision'] == item['revision']
+    assert tuple(c.execute('SELECT * FROM document WHERE id=?', (doc['id'],)).fetchone()) == before_doc
+    assert advance(c, u[0], task, 'acknowledge')['status'] == 'in_progress'
+    current, history = discussion.history(c, u[1], item['id'], task['id'], first)
+    assert current['revision'] == 2
+    assert [r['body'] for r in history] == ['Please check the second row totals.', 'Can we check these totals?']
+    with pytest.raises(docs.Conflict):
+        discussion.edit(c, u[0], item['id'], task['id'], first, 1, 'Stale overwrite')
+
+
+def test_discussion_thread_boundaries_and_author_only_edits(workspace):
+    c, u, unit, _ = workspace
+    item = case(c, u[0], unit)
+    other = case(c, u[0], unit)
+    a = propose(c, u[0], item, unit)
+    b = propose(c, u[0], item, unit)
+    cid = discussion.post(c, u[0], item['id'], 'Task A only', a['id'])
+    for case_id, task_id in [(item['id'], None), (item['id'], b['id']), (other['id'], a['id'])]:
+        with pytest.raises(permissions.Denied):
+            discussion.post(c, u[0], case_id, 'Wrong thread', task_id, cid)
+        with pytest.raises(permissions.Denied):
+            discussion.history(c, u[0], case_id, task_id, cid)
+    with pytest.raises(permissions.Denied):
+        discussion.edit(c, u[1], item['id'], a['id'], cid, 1, 'Officer overwrite')
+    assert c.execute('SELECT COUNT(*) FROM work_comment').fetchone()[0] == 1
+
+
+def test_discussion_revocation_and_disabled_writes(workspace):
+    c, u, unit, _ = workspace
+    doc = document(c, u[0], unit)
+    item = case(c, u[0], unit, source_document_id=doc['id'])
+    cid = discussion.post(c, u[0], item['id'], 'Restricted discussion')
+    docs.mutate(c, u[1], doc['id'], doc['revision'], 'access',
+                {'visibility':'restricted', 'viewers':[u[0]['id']], 'reason':'Restrict discussion source'})
+    c.execute('DELETE FROM document_access WHERE document_id=? AND user_id=?', (doc['id'], u[1]['id']));c.commit()
+    for user in (u[1], u[4], {**u[3], 'role':'admin'}):
+        with pytest.raises(permissions.Denied):
+            discussion.page(c, user, item['id'])
+    for key in ('work.enabled', 'documents.enabled'):
+        st.set_setting(c, key, '0')
+        assert discussion.page(c, u[0], item['id'])['messages']
+        with pytest.raises(ValueError, match='not enabled'):
+            discussion.post(c, u[0], item['id'], 'Disabled')
+        with pytest.raises(ValueError, match='not enabled'):
+            discussion.edit(c, u[0], item['id'], None, cid, 1, 'Disabled')
+        st.set_setting(c, key, '1')
+    c.execute('DELETE FROM document_access WHERE document_id=? AND user_id=?', (doc['id'], u[0]['id']));c.commit()
+    for operation in (lambda: discussion.page(c,u[0],item['id']),
+                      lambda: discussion.history(c,u[0],item['id'],None,cid),
+                      lambda: discussion.edit(c,u[0],item['id'],None,cid,1,'Revoked'),
+                      lambda: discussion.post(c,u[0],item['id'],'Revoked')):
+        with pytest.raises(permissions.Denied):
+            operation()
+
+
+def test_discussion_pagination_and_immutable_history(workspace):
+    c, u, unit, _ = workspace
+    item = case(c, u[0], unit)
+    ids = [discussion.post(c,u[0],item['id'],f'Message {n}') for n in range(32)]
+    latest = discussion.page(c,u[0],item['id'])
+    older = discussion.page(c,u[0],item['id'],before=latest['older'])
+    assert [m['id'] for m in older['messages'] + latest['messages']] == ids
+    assert older['older'] is None
+    assert discussion.page(c,u[0],item['id'],focus=ids[0])['messages'][0]['id'] == ids[0]
+    st.init_db(c)
+    for table in ('work_comment', 'work_comment_revision'):
+        with pytest.raises(sqlite3.IntegrityError, match='append-only'):
+            c.execute('DELETE FROM ' + table)
+        c.rollback()
+    for body in (' ', 'x'*4001):
+        with pytest.raises(ValueError):
+            discussion.post(c,u[0],item['id'],body)
+    assert c.execute('SELECT COUNT(*) FROM work_comment').fetchone()[0] == 32
+
+
+def test_discussion_concurrent_edits_preserve_one_winner(workspace):
+    from concurrent.futures import ThreadPoolExecutor
+    c,u,unit,path = workspace
+    item = case(c,u[0],unit)
+    cid = discussion.post(c,u[0],item['id'],'Original')
+    def edit(body):
+        conn=st.connect(path)
+        try:
+            discussion.edit(conn,u[0],item['id'],None,cid,1,body)
+            return 'saved'
+        except docs.Conflict:
+            return 'conflict'
+        finally:
+            conn.close()
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        assert sorted(pool.map(edit,['First edit','Second edit'])) == ['conflict','saved']
+    assert len(discussion.history(c,u[0],item['id'],None,cid)[1]) == 2
+
+
+def test_discussion_http_csrf_reply_edit_and_escape(workspace, app_mod, monkeypatch):
+    from starlette.testclient import TestClient
+    c,u,unit,path = workspace
+    item = case(c,u[0],unit)
+    monkeypatch.setattr(app_mod,'DB',path)
+    url=f"/work/{item['id']}/discussion"
+    with TestClient(app_mod.app) as client:
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[0]))
+        page=client.get(url)
+        assert page.status_code==200
+        csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',page.text)[1]
+        fields={'action':'post','body':'<script>unsafe()</script>'}
+        assert client.post(url+'/messages',data=fields).status_code==403
+        posted=client.post(url+'/messages',data={**fields,'csrf':csrf})
+        assert posted.status_code==200
+        assert '&lt;script&gt;unsafe()&lt;/script&gt;' in posted.text
+        assert '<script>unsafe()</script>' not in posted.text
+        cid=c.execute('SELECT id FROM work_comment').fetchone()[0]
+        reply=client.post(url+'/messages?reply='+str(cid),data={'action':'post','body':'A reply','csrf':csrf,'parent_id':cid})
+        assert 'A reply' in reply.text
+        target=url+'/messages?message='+str(cid)
+        edit={'action':'edit','comment_id':cid,'revision':1,'body':'Corrected text','csrf':csrf}
+        assert client.post(target,data=edit).status_code==200
+        stale=client.post(target,data={**edit,'body':'Keep my unsaved draft'})
+        assert stale.status_code==409
+        assert 'Keep my unsaved draft' in stale.text and 'Corrected text' in stale.text
+        history=client.get(url+'?message='+str(cid))
+        assert 'Original message' in history.text and 'Corrected text' in history.text
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[4]))
+        assert client.get(url).status_code==404
+
+
+def test_discussion_history_paging_and_atomic_post(workspace):
+    c,u,unit,_ = workspace
+    item=case(c,u[0],unit)
+    cid=discussion.post(c,u[0],item['id'],'Original')
+    for revision in range(1,33):
+        discussion.edit(c,u[0],item['id'],None,cid,revision,f'Edit {revision}')
+    _,latest=discussion.history(c,u[0],item['id'],None,cid)
+    _,older=discussion.history(c,u[0],item['id'],None,cid,before=latest[29]['revision'])
+    assert [r['revision'] for r in latest[:30]+older] == list(range(33,0,-1))
+    c.execute("CREATE TRIGGER fail_discussion BEFORE INSERT ON work_comment_revision BEGIN SELECT RAISE(ABORT,'write failed'); END;")
+    c.commit()
+    with pytest.raises(sqlite3.IntegrityError):
+        discussion.post(c,u[0],item['id'],'Must roll back')
+    assert c.execute('SELECT COUNT(*) FROM work_comment').fetchone()[0] == 1
+    c.execute('UPDATE admin_user SET active=0 WHERE id=?',(u[0]['id'],));c.commit()
+    with pytest.raises(permissions.Denied):
+        discussion.history(c,u[0],item['id'],None,cid)

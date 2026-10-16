@@ -1,6 +1,7 @@
 # P1.7 — Guided administrator readiness
 
-October 16, 2026. **In review**, version **6.59**, branch `codex/readiness-checklist`. Not merged or deployed. Staff acceptance remains open.
+> **Subsequent status, October 16, 2026:** The user explicitly accepted Phase 1 and authorized P2.1. Earlier review notes below are retained as implementation evidence; live integration verification remains a separate rollout requirement.
+October 16, 2026. **In review**, version **6.59**, branch `codex/readiness-checklist`. Merged at `17dc12f`; the user subsequently accepted Phase 1. Live deployment success was not independently verified.
 
 ## Implementation
 

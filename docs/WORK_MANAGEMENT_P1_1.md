@@ -1,5 +1,6 @@
 # P1.1 — Shared work item and document links
 
+> **Subsequent status, October 16, 2026:** The user explicitly accepted Phase 1 and authorized P2.1. Earlier review notes below are retained as implementation evidence; live integration verification remains a separate rollout requirement.
 Date: October 16, 2026. Status: **In review**. Implementation owner: Codex; staff acceptance owner remains to be designated. Branch: `codex/collaborative-work-foundation`. Prepared version: **6.50**. Merged into `main` on the user’s instruction, October 16, 2026: `e4c5da2db7f37b504e4fdbeb530e2e1e6b892b86` (fast-forward push, remote SHA verified). Operational activation and staff acceptance are not recorded.
 
 ## Delivered workflow

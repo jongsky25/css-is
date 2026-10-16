@@ -43,6 +43,30 @@ def install(conn):
     CREATE TRIGGER IF NOT EXISTS work_event_no_delete BEFORE DELETE ON work_event
       BEGIN SELECT RAISE(ABORT,'Work history is append-only'); END;
     ''')
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS work_comment (
+      id INTEGER PRIMARY KEY,
+      case_id INTEGER NOT NULL REFERENCES work_case(id),
+      task_id INTEGER REFERENCES work_task(id),
+      parent_id INTEGER REFERENCES work_comment(id),
+      author_id INTEGER NOT NULL REFERENCES admin_user(id),
+      created_at TEXT NOT NULL);
+    CREATE INDEX IF NOT EXISTS work_comment_thread ON work_comment(case_id,task_id,id);
+    CREATE TABLE IF NOT EXISTS work_comment_revision (
+      comment_id INTEGER NOT NULL REFERENCES work_comment(id),
+      revision INTEGER NOT NULL CHECK(revision > 0),
+      body TEXT NOT NULL CHECK(length(body) BETWEEN 1 AND 4000),
+      created_at TEXT NOT NULL,
+      PRIMARY KEY(comment_id,revision));
+    CREATE TRIGGER IF NOT EXISTS work_comment_no_update BEFORE UPDATE ON work_comment
+      BEGIN SELECT RAISE(ABORT,'Discussion history is append-only'); END;
+    CREATE TRIGGER IF NOT EXISTS work_comment_no_delete BEFORE DELETE ON work_comment
+      BEGIN SELECT RAISE(ABORT,'Discussion history is append-only'); END;
+    CREATE TRIGGER IF NOT EXISTS work_comment_revision_no_update BEFORE UPDATE ON work_comment_revision
+      BEGIN SELECT RAISE(ABORT,'Discussion history is append-only'); END;
+    CREATE TRIGGER IF NOT EXISTS work_comment_revision_no_delete BEFORE DELETE ON work_comment_revision
+      BEGIN SELECT RAISE(ABORT,'Discussion history is append-only'); END;
+    """)
     if 'mandatory' not in {r[1] for r in conn.execute('PRAGMA table_info(work_task)')}:
         conn.execute('ALTER TABLE work_task ADD COLUMN mandatory INTEGER NOT NULL DEFAULT 1 CHECK(mandatory IN (0,1))')
     conn.executescript("""

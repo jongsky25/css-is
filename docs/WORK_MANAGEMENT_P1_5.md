@@ -1,5 +1,6 @@
 # P1.5 — Simplified intake and curated scenarios
 
+> **Subsequent status, October 16, 2026:** The user explicitly accepted Phase 1 and authorized P2.1. Earlier review notes below are retained as implementation evidence; live integration verification remains a separate rollout requirement.
 October 16, 2026. Status **In review**; implementation owner Codex. Branch `codex/simplified-intake`; prepared version **6.57**. P1.4 was first merged at `53f1fb4` as release 6.55, preserving newer main registration-layout/deployment fixes. Packaging correction `ff100fe` (6.56) then added the personal inbox module to the deployment allowlist. P1.5 was subsequently merged at `72495348c5cf5941f4ab07e661ee91af27dfbac5` on the user’s instruction. The main push triggers the configured deployment workflow; live deployment success was not verified.
 
 ## Guided intake

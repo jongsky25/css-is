@@ -1,5 +1,6 @@
 # P1.3 — Assignment compatibility and migration rehearsal
 
+> **Subsequent status, October 16, 2026:** The user explicitly accepted Phase 1 and authorized P2.1. Earlier review notes below are retained as implementation evidence; live integration verification remains a separate rollout requirement.
 October 16, 2026. **In review**, implementation owner Codex. Branch `codex/assignment-compatibility`; prepared version **6.52**. P1.2 was merged first at `aeba93e` as requested. P1.3 was subsequently merged into main on the user’s instruction at `027d76bc5fa183cf051f7b50eb892957d88d42c9`. Operational deployment and migration are not recorded.
 
 ## Explicit mapping and retained history

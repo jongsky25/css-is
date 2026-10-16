@@ -14,6 +14,7 @@ import work
 import work_tasks
 import work_compat
 import work_inbox
+import work_discussion
 
 
 def csrf(request):
@@ -96,6 +97,68 @@ def make_router(templates, get_conn):
                       documents=work.linked_documents(conn, user, case_id), history=events,
                       choices=work.document_choices(conn, user, request.query_params.get('q', '')),
                       officer=work.officer(conn, user, case), submitted=submitted or {})
+
+    def discussion_page(request, conn, case_id, status_code=200, error='', submitted=None):
+        query = request.query_params
+        task_id = int(query['task_id']) if query.get('task_id') else None
+        values = work_discussion.page(conn, request.state.user, case_id, task_id,
+                    before=int(query['before']) if query.get('before') else None,
+                    focus=int(query['focus']) if query.get('focus') else None)
+        selected = None
+        revisions = []
+        if query.get('message'):
+            selected, revisions = work_discussion.history(conn, request.state.user, case_id, task_id, int(query['message']),
+                before=int(query['history_before']) if query.get('history_before') else None)
+        reply = work_discussion.message(conn, case_id, task_id, int(query['reply'])) if query.get('reply') else None
+        return render(request, conn, 'discussion', status_code=status_code, error=error,
+                      thread_url='/work/' + str(case_id) + '/discussion' + ('?task_id=' + str(task_id) if task_id else '?'),
+                      selected=selected, revisions=revisions[:30], older_history=revisions[29]['revision'] if len(revisions)>30 else None,
+                      reply=reply, submitted=submitted or {}, **values)
+
+    @router.get('/work/{case_id}/discussion', response_class=HTMLResponse)
+    def discussion(request: Request, case_id: int):
+        conn = get_conn()
+        try:
+            return discussion_page(request, conn, case_id)
+        except permissions.Denied:
+            return HTMLResponse('Discussion not found or unavailable to you.', status_code=404)
+        except (ValueError, TypeError):
+            return HTMLResponse('Invalid discussion link.', status_code=400)
+        finally:
+            conn.close()
+
+    @router.post('/work/{case_id}/discussion/messages')
+    async def discussion_change(request: Request, case_id: int):
+        conn = get_conn()
+        fields = {}
+        try:
+            fields = await posted(request)
+            task_id = int(request.query_params['task_id']) if request.query_params.get('task_id') else None
+            if fields.get('action') == 'edit':
+                cid = int(fields.get('comment_id', ''))
+                work_discussion.edit(conn, request.state.user, case_id, task_id, cid,
+                                     int(fields.get('revision', '')), fields.get('body'))
+            elif fields.get('action') == 'post':
+                cid = work_discussion.post(conn, request.state.user, case_id, fields.get('body'), task_id,
+                                          int(fields['parent_id']) if fields.get('parent_id') else None)
+            else:
+                raise ValueError('Choose a discussion action.')
+            url = '/work/' + str(case_id) + '/discussion?focus=' + str(cid)
+            if task_id:
+                url += '&task_id=' + str(task_id)
+            return RedirectResponse(url + '#message-' + str(cid), status_code=303)
+        except permissions.Denied:
+            return HTMLResponse('Discussion or action not available to you. Reload the page.', status_code=403)
+        except (ValueError, TypeError) as e:
+            try:
+                return discussion_page(request, conn, case_id, status_code=409 if isinstance(e, docs.Conflict) else 400,
+                                       error=str(e), submitted=fields)
+            except permissions.Denied:
+                return HTMLResponse('Discussion not found or unavailable to you.', status_code=404)
+            except (ValueError, TypeError):
+                return HTMLResponse('Invalid discussion link.', status_code=400)
+        finally:
+            conn.close()
 
     @router.get('/work', response_class=HTMLResponse)
     def index(request: Request, before: int | None = None):

@@ -1,5 +1,6 @@
 # P1.6 — Contextual work item interface
 
+> **Subsequent status, October 16, 2026:** The user explicitly accepted Phase 1 and authorized P2.1. Earlier review notes below are retained as implementation evidence; live integration verification remains a separate rollout requirement.
 October 16, 2026. **In review**; implementation owner Codex. Branch `codex/contextual-work`; prepared version **6.58**. P1.5 was already merged at `7249534`. P1.6 was subsequently merged at `77d9611` on the user’s instruction. Live deployment success has not been independently verified. Staff acceptance remains open.
 
 ## Work item context
