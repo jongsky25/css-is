@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.47"
+APP_VERSION = "6.48"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.48",
+        "date": "October 16, 2026",
+        "summary": "Travel claims show relevant questions and guide you to the next missing item.",
+        "changes": [
+            "The claim type controls which trip questions and form sections you see.",
+            "Completed checklist items fold away, and the main button takes you to the next unfinished task.",
+            "Actual fares stay separate from policy limits, while cash advance estimates can use the allowed rates.",
+            "The preparation page tells you when your draft is saved in this browser and lets you return directly to the checklist.",
+        ],
+    },
     {
         "version": "6.47",
         "date": "October 16, 2026",

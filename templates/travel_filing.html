@@ -1,7 +1,7 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header, flash %}
 {% block title %}{{ 'Travel claim' if missing else f.ref_code }}{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261015b">{% if uploads_ready %}<script src="/static/js/travel_upload.js?v=20261015a" defer></script>{% endif %}{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261016a">{% if uploads_ready %}<script src="/static/js/travel_upload.js?v=20261015a" defer></script>{% endif %}{% endblock %}
 {% block content %}
 {% if missing %}
 {{ page_header("Travel claim not found", "") }}
@@ -34,8 +34,8 @@
   {% endif %}
 
   <div class="tv-actions">
-    {% if owner and f.status in ('open', 'ready') %}
-      <a class="btn" href="/travel/f/{{ f.ref_code }}/ready">{{ 'Print list and submit' if f.status == 'ready' else 'Review and mark ready' }}</a>
+    {% if owner and next_action %}
+      <a class="btn" href="{{ next_action.url }}">{{ next_action.label }}</a>
     {% elif f.status == 'submitted' %}
       <a class="btn ghost" href="/travel/f/{{ f.ref_code }}/ready">Print list</a>
     {% endif %}
@@ -51,7 +51,7 @@
 </div>
 
 {% if flags %}
-<div class="tv-card"><h2>Flags for the Admin Unit</h2>
+<div class="tv-card" id="travel-flags"><h2>Flags for the Admin Unit</h2>
   <ul class="tv-missing">{% for fl in flags %}<li><span class="badge {{ 'amber' if fl.state == 'open' else ('green' if fl.state == 'verified' else 'red') }}">{{ fl.state|capitalize }}</span> {{ fl.detail }}{% if fl.note %} <em>({{ fl.note }})</em>{% endif %}</li>{% endfor %}</ul></div>
 {% endif %}
 
@@ -61,7 +61,9 @@
   <ul class="tv-items">
   {% for it in items %}
     <li class="tv-item {{ 'tv-fmis' if it.handling == 'fmis' }} {{ 'is-optional' if it.requirement == 'optional' }}" id="item-{{ it.code }}">
-      <div class="tv-item-head">
+      {% set complete = it.state == 'na' or (it.handling == 'generate' and it.doc_url) or (it.handling in ('upload', 'carry') and (it.drive_url or (it.handling == 'carry' and it.note))) %}
+      <details {{ 'open' if not complete and it.requirement == 'required' and it.handling != 'fmis' }}>
+      <summary class="tv-item-head">
         <strong>{{ it.label }}</strong>
         <span>
           {% if it.requirement == 'optional' %}<span class="badge grey">Optional</span>{% endif %}
@@ -71,7 +73,7 @@
           {% elif it.drive_url or (it.handling == 'carry' and it.note) %}<span class="badge green">✓ Added</span>
           {% else %}<span class="badge amber">○ Missing</span>{% endif %}
         </span>
-      </div>
+      </summary>
       <div class="tv-note">{{ it.copies }} cop{{ 'y' if it.copies == 1 else 'ies' }}{% if it.wet_sign %} · <span class="tv-wet">sign in ink</span>{% endif %}{% if it.note_hint %} · {{ it.note_hint }}{% endif %}</div>
       {% if it.handling == 'upload' and it.wet_sign %}<div class="tv-note">Scan it after signing, and sign in ink again when you submit.</div>{% endif %}
       {% if owner and editable %}
@@ -110,13 +112,14 @@
       {% if it.drive_url %}<div class="tv-note"><a href="{{ it.drive_url }}" rel="noopener" target="_blank">{{ 'Open the folder' if it.drive_source == 'upload' else 'Open the file' }}</a></div>{% endif %}
       {% if it.doc_url %}<div class="tv-note"><a href="{{ it.doc_url }}" rel="noopener" target="_blank">Open the form</a>{% if it.doc_state == 'manual' %} (your own copy){% endif %}</div>{% endif %}
       {% if it.note and it.handling == 'carry' %}<div class="tv-note">Note: {{ it.note }}</div>{% endif %}
+      </details>
     </li>
   {% endfor %}
   </ul>
 </div>
 
 {% if owner and editable %}
-<details class="tv-card">
+<details class="tv-card" id="travel-answers">
   <summary><strong>Change my answers</strong></summary>
   <form method="post" action="/travel/f/{{ f.ref_code }}/answers" class="tv-form">
     <div class="field"><label for="role">Your role</label>

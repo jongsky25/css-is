@@ -164,7 +164,10 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             except travel.TravelError as e:
                 return _go("/travel", err=str(e))
             live = travel.live_ca(conn, user["id"], source["entry_id"], source["event_id"])
-            f = {"kind": q.get("kind") if q.get("kind") in travel.KINDS else ("liquidation" if live else "ca"),
+            default_kind = "liquidation" if live else "ca"
+            if not live and source["start"] and tr.ca_lead_error(source["start"], today_local()):
+                default_kind = "reimbursement"
+            f = {"kind": q.get("kind") if q.get("kind") in travel.KINDS else default_kind,
                  "title": "", "start": "", "end": "", "venue": ""}
             ctx = _new_context(conn, user, source, f)
             ctx["f"]["jo_cos"] = "1" if ctx["jo_default"] else ""
@@ -240,6 +243,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
         return templates.TemplateResponse(request, "travel_filing.html", {
             "nav_active": "travel_mine", "tab": "mine", "missing": False, "f": _decorate(filing, today),
             "items": items, "flags": flags, "missing_list": missing, "ans": ans, "owner": travel.is_owner(request.state.user, filing),
+            "next_action": travel.next_action(filing, items, flags, missing),
             "questions": [q_ for q_ in tc.ANSWER_KEYS if filing["kind"] in q_[2]], "roles": tc.ROLES,
             "mc114": travel.MC114_FORMATS, "liquidations": liqs, "ca": ca, "editable": filing["status"] in ("open", "ready"),
             "msg": (q.get("ok") or "")[:200] or None, "err": error or (q.get("err") or "")[:200] or None,
@@ -505,6 +509,11 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             data["status_url"] = f"/travel/f/{ref}/status"
             data["scan_url"] = f"/travel/f/{ref}/scan"
             items = _generate_items(conn, filing)
+            data["kind"] = filing["kind"]
+            data["codes"] = [it["code"] for it in items]
+            data["answers"] = travel.answers_of(filing)
+            data["mc114_format"] = filing["mc114_format"]
+            data["filing_url"] = f"/travel/f/{ref}"
             return templates.TemplateResponse(request, "travel_prepare.html", {
                 "nav_active": "travel_mine", "tab": "mine", "f": filing, "items": items, "relay_ready": gdocs_relay.configured(),
                 "prep_json": json.dumps(data, default=str).replace("</", "<\\/"),

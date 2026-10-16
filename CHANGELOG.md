@@ -1,3 +1,13 @@
+## 6.48 — October 16, 2026
+
+- Filter opening questions by claim type and show external advance details only for an external liquidation.
+- Show only applicable preparation sections; retain required official report fields and prefilled signatories.
+- Guide claimants to the next missing attachment, form, review item, or print list; collapse completed, optional, and FMIS checklist details.
+- Use policy ceilings only to prefill cash advance estimates, never actual fares for reimbursement or liquidation.
+- Show browser draft restore/save failures and a direct checklist link; omit inapplicable refund/deviation text from generated forms.
+- Preserve the existing browser-only draft design, database schema, official form templates, and manual submission workflow.
+- Add browser regression coverage for claim switching, mobile layout, fare calculations, local drafts, conditional sections, and document generation with a fake relay.
+
 ## 6.47 — October 16, 2026
 
 - Added an audited Documents enable/disable control to Administrator → Documents setup.

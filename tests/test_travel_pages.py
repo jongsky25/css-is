@@ -393,3 +393,24 @@ def test_activity_pages_offer_the_button_only_to_people_on_the_activity(viewer, 
     finally:
         conn.execute("DELETE FROM calendar_entry WHERE title='TRAVELTEST overlay'")
         conn.execute("DELETE FROM event WHERE id=?", (eid,)); conn.commit()
+
+
+def test_next_action_follows_missing_documents_then_review(viewer, conn):
+    ref = ref_of(blank(viewer, kind='reimbursement'))
+    url = f'/travel/f/{ref}'
+    page = viewer.get(url).text
+    assert 'href="#item-dpo">Add Department Personnel Order (DPO)</a>' in page
+    assert 'href="' + url + '/ready">Review and mark ready</a>' not in page
+    post(viewer, url + '/item/dpo', drive_url='https://drive.google.com/file/d/dpo/view')
+    page = viewer.get(url).text
+    assert f'href="{url}/prepare">Prepare the missing forms</a>' in page
+    # Completed attachments are collapsed; the missing forms stay expanded.
+    assert '<details >' in page.split('id="item-dpo"', 1)[1].split('</li>', 1)[0]
+    assert '<details open>' in page.split('id="item-appendix_a"', 1)[1].split('</li>', 1)[0]
+    f = travel.get_by_ref(conn, ref)
+    for item in travel.view_items(conn, f):
+        if item['handling'] == 'generate':
+            post(viewer, url + '/item/' + item['code'], drive_url='https://docs.google.com/document/d/form/edit')
+        elif item['handling'] in ('carry', 'upload'):
+            post(viewer, url + '/item/' + item['code'], drive_url='https://drive.google.com/file/d/evidence/view')
+    assert f'href="{url}/ready">Review and mark ready</a>' in viewer.get(url).text

@@ -522,6 +522,29 @@ def missing_for(conn, filing):
     return tr.completeness(filing, view_items(conn, filing), flags_of(conn, filing["id"]))
 
 
+def next_action(filing, items, flags, missing):
+    """The next useful action, using the same readiness rules as the checklist."""
+    base = f"/travel/f/{filing['ref_code']}"
+    if filing["status"] == "submitted":
+        return {"url": base + "/ready", "label": "View print list"}
+    if filing["status"] not in ("open", "ready"):
+        return None
+    if not missing:
+        return {"url": base + "/ready", "label": "Print list and submit" if filing["status"] == "ready" else "Review and mark ready"}
+    for it in items:
+        if it["requirement"] != "required" or it["state"] == "na" or it["handling"] == "fmis":
+            continue
+        if it["handling"] == "generate" and not it.get("doc_url"):
+            return {"url": base + "/prepare", "label": "Prepare the missing forms"}
+        if it["handling"] in ("upload", "carry") and not it.get("drive_url"):
+            if it["handling"] == "carry" and it.get("note"):
+                continue
+            return {"url": "#item-" + it["code"], "label": "Add " + it["label"]}
+    if any(fl["state"] in ("open", "rejected") for fl in flags):
+        return {"url": "#travel-flags", "label": "Review items with the Admin Unit"}
+    return {"url": "#travel-answers", "label": "Complete claim details"}
+
+
 def effective_answers(filing) -> dict:
     """The checklist drivers plus the filing columns the rules read."""
     a = dict(answers_of(filing))

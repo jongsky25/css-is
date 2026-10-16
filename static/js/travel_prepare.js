@@ -42,18 +42,26 @@
   var app = document.getElementById('prep-app'), raw = document.getElementById('prep-data');
   if (!app || !raw) return;
   var data = JSON.parse(raw.textContent), ceil = ceilings(data.ceilings), state = data, policy = data.policy;
+  var codes = data.codes || [], isEstimate = data.kind === 'ca';
+  var draftStatus = document.getElementById('draft-status');
+  function needs(code) { return codes.indexOf(code) >= 0; }
   var BLANK = { date: '', from: '', to: '', dep: '', arr: '', mode: 'none', route_type: '', receipt: 'none', allowance: 0, per_diem: 0,
                 basis: '', place: '', km: 0, day_kind: '', lodging_provided: false, meals_provided: false };
   var calc = [];                       // what the server says the policy allows, one entry per row
   var draftKey = 'travel-draft-' + data.ref;
   try {
     var d = JSON.parse(localStorage.getItem(draftKey) || 'null');
-    if (d && d.rows) {
+    if (d && Array.isArray(d.rows)) {
       state.rows = d.rows.map(function (x) { return Object.assign({}, BLANK, x); });
-      state.texts = d.texts; state.signatories = d.signatories; state.mc114_text = d.mc114_text;
+      state.texts = Object.assign({}, state.texts, d.texts);
+      state.signatories = Object.assign({}, state.signatories, d.signatories);
+      if (typeof d.mc114_text === 'string') state.mc114_text = d.mc114_text;
       if (d.rates) state.rates = Object.assign({}, state.rates, d.rates);
+      if (draftStatus) draftStatus.textContent = 'Draft restored from this browser.';
     }
-  } catch (e) { /* no storage: fine */ }
+  } catch (e) {
+    if (draftStatus) draftStatus.textContent = 'The saved draft could not be restored. Check your details before making forms.';
+  }
 
   function el(tag, attrs, kids) {
     var n = document.createElement(tag);
@@ -61,20 +69,30 @@
     (kids || []).forEach(function (c) { n.appendChild(c); });
     return n;
   }
-  function save() { try { localStorage.setItem(draftKey, JSON.stringify({ rows: state.rows, texts: state.texts, signatories: state.signatories, mc114_text: state.mc114_text, rates: state.rates })); } catch (e) { /* ignore */ } }
+  function save() {
+    try {
+      localStorage.setItem(draftKey, JSON.stringify({ rows: state.rows, texts: state.texts, signatories: state.signatories, mc114_text: state.mc114_text, rates: state.rates }));
+      if (draftStatus) draftStatus.textContent = 'Draft saved in this browser only.';
+    } catch (e) {
+      if (draftStatus) draftStatus.textContent = 'Draft could not be saved. Keep this page open until you make the forms.';
+    }
+  }
+  var fieldId = 0;
   function field(label, value, onInput, opts) {
     opts = opts || {};
     var input = opts.area ? el('textarea', { rows: opts.rows || 3 }) : el('input', { type: opts.type || 'text' });
+    input.id = 'prep-field-' + (++fieldId);
+    if (opts.type === 'number') { input.min = '0'; input.step = '0.01'; }
     input.value = value == null ? '' : value;
     input.addEventListener('input', function () { onInput(input.value); save(); if (opts.refresh) refresh(); });
-    var wrap = el('div', opts.wide ? { 'class': 'tv-row-wide' } : {}, [el('label', { text: label }), input]);
+    var wrap = el('div', opts.wide ? { 'class': 'tv-row-wide' } : {}, [el('label', { text: label, 'for': input.id }), input]);
     return wrap;
   }
   function select(label, value, options, onChange) {
-    var s = el('select');
+    var s = el('select', { id: 'prep-field-' + (++fieldId) });
     options.forEach(function (o) { var op = el('option', { value: o[0], text: o[1] }); if (o[0] === value) op.selected = true; s.appendChild(op); });
     s.addEventListener('change', function () { onChange(s.value); save(); refresh(); });
-    return el('div', {}, [el('label', { text: label }), s]);
+    return el('div', {}, [el('label', { text: label, 'for': s.id }), s]);
   }
 
   function check(label, value, onChange) {
@@ -195,7 +213,7 @@
       if (inputKind === 'km') kids.push(field('Distance by Google Maps (km)', r.km, function (v) { r.km = v; }, { type: 'number', refresh: true }));
       var capLine = el('div', { 'class': 'tv-row-wide tv-hint' });
       kids.push(capLine);
-      kids.push(field('Fare / allowance (\u20b1)', r.allowance, function (v) { r.allowance = v; }, { type: 'number', refresh: true }));
+      kids.push(field(isEstimate ? 'Estimated fare (\u20b1)' : 'Actual fare claimed (\u20b1)', r.allowance, function (v) { r.allowance = v; }, { type: 'number', refresh: true }));
       kids.push(scanPicker(r));
       kids.push(select('Per diem rule', r.day_kind, kinds, function (v) { r.day_kind = v; }));
       if (r.day_kind === 'full' || r.day_kind === 'departure' || ['monitor', 'monitor_late', 'liaison', 'hpdpb'].indexOf(r.day_kind) >= 0) {
@@ -206,7 +224,7 @@
       var pdLine = el('div', { 'class': 'tv-row-wide tv-hint' }), noteLine = el('div', { 'class': 'tv-row-wide tv-flagline' });
       kids.push(pdLine); kids.push(noteLine);
       var box = el('div', { 'class': 'tv-row' }, kids);
-      var rm = el('button', { type: 'button', 'class': 'btn ghost small', text: 'Remove this day' });
+      var rm = el('button', { type: 'button', 'class': 'btn ghost small', text: 'Remove this entry' });
       rm.addEventListener('click', function () { state.rows.splice(i, 1); save(); drawRows(); refresh(); });
       box.appendChild(el('div', { 'class': 'tv-row-wide' }, [rm]));
       rowsBox.appendChild(box);
@@ -224,7 +242,7 @@
         u.cap.appendChild(document.createTextNode('Most allowed for this ride: ' + peso(c.cap) + '. ' + (c.cap_rule || '') + ' '));
         var use = el('button', { type: 'button', 'class': 'btn ghost small', text: 'Use ' + peso(c.cap) });
         use.addEventListener('click', function () { u.row.allowance = c.cap; save(); drawRows(); refresh(); });
-        u.cap.appendChild(use);
+        if (isEstimate) { use.textContent = 'Use as estimate'; u.cap.appendChild(use); }
       }
       u.pd.textContent = '';
       if (c.per_diem != null) {
@@ -268,7 +286,8 @@
           var changed = false;
           state.rows.forEach(function (r, i) {
             var c = calc[i] || {};
-            if (autofill(r, 'allowance', '_aa', c.cap == null ? null : c.cap)) changed = true;
+            // A policy ceiling is not evidence of what the claimant actually paid.
+            if (isEstimate && autofill(r, 'allowance', '_aa', c.cap == null ? null : c.cap)) changed = true;
             if (autofill(r, 'per_diem', '_ap', c.per_diem == null ? null : c.per_diem)) changed = true;
           });
           if (changed) { save(); drawRows(); }
@@ -294,7 +313,7 @@
     var regionOpts = [['', 'Choose where you are going']].concat(policy.regions.map(function (x) { return [x[0], x[1] + ' \u00b7 up to ' + peso(x[2]) + ' a day']; }));
     return el('div', { 'class': 'tv-card' }, [
       el('h3', { text: 'Policy rates' }),
-      el('p', { 'class': 'tv-hint', text: 'Choose the destination and how the days were spent, and the amounts fill in by themselves from the policy (DO 2019-0225 and 2019-0225-A). Change any amount to what you actually spent. See the Policy rates tab for every rate.' }),
+      el('p', { 'class': 'tv-hint', text: isEstimate ? 'Policy rates help estimate your cash advance. Confirm each estimate before making the forms.' : 'Enter the fare you actually paid. Policy rates show the allowed limits and calculate daily allowances; they do not fill in actual fares.' }),
       select('Where you are going', state.rates.region, regionOpts, function (v) { state.rates.region = v; }),
       check('I receive the \u20b150 daily subsistence allowance through payroll', state.rates.receives_sa, function (v) { state.rates.receives_sa = v; }),
       check('I am a senior citizen, PWD or student (20% lower public fare)', state.rates.discounted, function (v) { state.rates.discounted = v; }),
@@ -309,9 +328,9 @@
       var c = calc[i] || {};
       var res = rideCheck(r.mode, r.route_type, r.allowance, r.receipt, ceil, c.cap == null ? null : c.cap);
       if (res.kind) kinds[res.kind] = (kinds[res.kind] || 0) + 1;
-      res.flags.forEach(function (f) { lines.push('Day ' + (i + 1) + ': ' + f); });
+      res.flags.forEach(function (f) { lines.push('Entry ' + (i + 1) + ': ' + f); });
       if (c.per_diem != null && (Number(r.per_diem) || 0) > c.per_diem) {
-        lines.push('Day ' + (i + 1) + ': Per diem is ' + ((Number(r.per_diem) || 0) - c.per_diem).toFixed(2).replace(/\.00$/, '') + ' above the ' + c.per_diem + ' the policy allows for this day.');
+        lines.push('Entry ' + (i + 1) + ': Per diem is ' + ((Number(r.per_diem) || 0) - c.per_diem).toFixed(2).replace(/\.00$/, '') + ' above the ' + c.per_diem + ' the policy allows for this day.');
       }
     });
     totals.textContent = 'Total: ₱' + total.toLocaleString('en-PH', { maximumFractionDigits: 2 }) +
@@ -326,7 +345,7 @@
   function textArea(label, key) { return field(label, state.texts[key], function (v) { state.texts[key] = v; }, { area: true, wide: true }); }
   function section(title, kids) { return el('section', { 'class': 'tv-card' }, [el('h2', { text: title })].concat(kids)); }
 
-  var addDay = el('button', { type: 'button', 'class': 'btn ghost', text: 'Add a day' });
+  var addDay = el('button', { type: 'button', 'class': 'btn ghost', text: 'Add itinerary entry' });
   addDay.addEventListener('click', function () { state.rows.push(Object.assign({}, BLANK)); save(); drawRows(); refresh(); });
 
   var T = state.texts, S = state.signatories;
@@ -334,29 +353,59 @@
   app.appendChild(section('Itinerary of travel', [rowsBox, addDay, totals, flagsBox,
     field('Purpose (completes "To …")', T.purpose, function (v) { T.purpose = v; }, { wide: true }),
     field('Itinerary number (optional)', T.itinerary_no, function (v) { T.itinerary_no = v; })]));
-  app.appendChild(section('Certificate of travel completed', [
-    select('How the travel went', T.strictness, [['strict', 'Strictly as in the itinerary'], ['cut', 'Cut short'], ['extended', 'Extended'], ['other', 'Other']], function (v) { T.strictness = v; }),
-    textArea('Explanation (if it did not go as planned)', 'explanation'),
-    field('Refund amount (if any)', T.refund_amount, function (v) { T.refund_amount = v; }),
-    field('Refund official receipt no.', T.refund_or_no, function (v) { T.refund_or_no = v; }),
-    field('Refund official receipt date', T.refund_or_date, function (v) { T.refund_or_date = v; })]));
-  app.appendChild(section('Post travel report', [textArea('Overview', 'overview')]
-    .concat(state.texts.day_by_day.map(function (line, i) { return field('Day ' + (i + 1), line, function (v) { T.day_by_day[i] = v; }, { area: true, rows: 2, wide: true }); }))
-    .concat([textArea('Key points', 'key_points'), textArea('Contributions', 'contributions'), textArea('Support needed', 'support_needed'), textArea('Recommendations', 'recommendations'), textArea('Conclusion', 'conclusion')])));
-  app.appendChild(section('Job Order certification and MC 114 justification', [
-    textArea('Activities you were engaged in', 'activities'), textArea('Obligations under your contract', 'obligations'),
-    field('MC 114 justification text', state.mc114_text, function (v) { state.mc114_text = v; }, { area: true, rows: 6, wide: true })]));
-  app.appendChild(section('Who signs', [
-    field('Head of office', S.head_name, function (v) { S.head_name = v; }), field('Title', S.head_title, function (v) { S.head_title = v; }),
-    field('Station', S.station, function (v) { S.station = v; }),
-    field('Certifying officer', S.certifier_name, function (v) { S.certifier_name = v; }), field('Title', S.certifier_title, function (v) { S.certifier_title = v; }),
-    field('Approver', S.approver_name, function (v) { S.approver_name = v; }), field('Title', S.approver_title, function (v) { S.approver_title = v; }),
-    field('Reviewed by (report)', S.reviewed_by_name, function (v) { S.reviewed_by_name = v; }), field('Title', S.reviewed_by_title, function (v) { S.reviewed_by_title = v; }),
-    field('Approved by (report)', S.approved_by_name, function (v) { S.approved_by_name = v; }), field('Title', S.approved_by_title, function (v) { S.approved_by_title = v; })]));
+  if (needs('appendix_b')) {
+    var explanation = textArea('Explanation (if it did not go as planned)', 'explanation');
+    explanation.hidden = T.strictness === 'strict';
+    var completed = [select('How the travel went', T.strictness,
+      [['strict', 'Strictly as in the itinerary'], ['cut', 'Cut short'], ['extended', 'Extended'], ['other', 'Other']],
+      function (v) { T.strictness = v; explanation.hidden = v === 'strict'; }), explanation];
+    if (data.kind === 'liquidation' && data.answers.refund) {
+      completed = completed.concat([
+        field('Refund amount (₱)', T.refund_amount, function (v) { T.refund_amount = v; }, { type: 'number' }),
+        field('Refund official receipt no.', T.refund_or_no, function (v) { T.refund_or_no = v; }),
+        field('Refund official receipt date', T.refund_or_date, function (v) { T.refund_or_date = v; }, { type: 'date' })]);
+    }
+    app.appendChild(section('Certificate of travel completed', completed));
+  }
+  if (needs('travel_report')) {
+    app.appendChild(section('Post travel report', [textArea('Overview', 'overview')]
+      .concat(state.texts.day_by_day.map(function (line, i) { return field('Day ' + (i + 1), line, function (v) { T.day_by_day[i] = v; }, { area: true, rows: 2, wide: true }); }))
+      .concat([textArea('Key points', 'key_points'), textArea('Contributions', 'contributions'), textArea('Support needed', 'support_needed'), textArea('Recommendations', 'recommendations'), textArea('Conclusion', 'conclusion')])));
+  }
+  if (needs('jo_cert')) {
+    app.appendChild(section('Job Order certification', [textArea('Activities you were engaged in', 'activities'), textArea('Obligations under your contract', 'obligations')]));
+  }
+  if (needs('mc114_justification') || (needs('appendix_b') && data.mc114_format === 'appendix_b')) {
+    app.appendChild(section('MC 114 justification', [field('MC 114 justification text', state.mc114_text, function (v) { state.mc114_text = v; }, { area: true, rows: 6, wide: true })]));
+  }
+  var signerFields = [], signerSummary = [];
+  function signer(label, name, title) {
+    signerSummary.push(label + ': ' + (S[name] || 'Not yet set'));
+    signerFields.push(field(label, S[name], function (v) { S[name] = v; }));
+    if (title) signerFields.push(field(label + ' title', S[title], function (v) { S[title] = v; }));
+  }
+  if (needs('appendix_b')) {
+    signer('Head of office', 'head_name', 'head_title');
+    signerFields.push(field('Station', S.station, function (v) { S.station = v; }));
+  }
+  if (needs('appendix_a')) signer('Certifying officer', 'certifier_name', 'certifier_title');
+  if (needs('appendix_a') || needs('appendix_b')) signer('Approver', 'approver_name', 'approver_title');
+  if (needs('travel_report')) {
+    signer('Reviewed by (report)', 'reviewed_by_name', 'reviewed_by_title');
+    signer('Approved by (report)', 'approved_by_name', 'approved_by_title');
+  }
+  if (needs('jo_cert')) signer('JO certifying signatory', 'signatory_name', 'signatory_title');
+  // CENRR may become necessary as rides are entered.
+  if (!isEstimate) signer('Noted by (CENRR)', 'noted_by_name', 'noted_by_title');
+  var signers = el('details', { 'class': 'tv-card' }, [el('summary', { text: 'Review or change signatories' }),
+    el('p', { 'class': 'tv-hint', text: signerSummary.join(' · ') })].concat(signerFields));
+  if (signerSummary.some(function (s) { return s.indexOf('Not yet set') >= 0; })) signers.open = true;
+  app.appendChild(signers);
 
   var go = el('button', { type: 'button', 'class': 'btn', text: 'Make the forms' });
   if (app.getAttribute('data-has-relay') !== '1') go.disabled = true;
-  app.appendChild(el('div', { 'class': 'tv-card' }, [go, msgBox, docsList]));
+  app.appendChild(el('div', { 'class': 'tv-card' }, [go, msgBox, docsList,
+    el('a', { href: data.filing_url, 'class': 'btn ghost', text: 'Continue to checklist' })]));
 
   var timer = null;
   function drawDocs(items) {
@@ -374,14 +423,21 @@
       if (!j.ok) { msgBox.textContent = j.error || 'Could not check progress.'; return; }
       drawDocs(j.items);
       if (j.gen_state === 'running') { timer = setTimeout(poll, 2500); return; }
-      go.disabled = false;
-      msgBox.textContent = j.gen_state === 'done' ? 'Done. Open each form, check it, and sign where it says. Then go back to the filing page.' : 'Some forms did not finish. Press the button to try again.';
+      go.disabled = app.getAttribute('data-has-relay') !== '1';
+      msgBox.textContent = j.gen_state === 'idle' ? '' : j.gen_state === 'done' ? 'Done. Open each form, check it, and sign where it says. Then go back to the filing page.' : 'Some forms did not finish. Press the button to try again.';
     }).catch(function () { timer = setTimeout(poll, 5000); });
   }
   go.addEventListener('click', function () {
     go.disabled = true; msgBox.textContent = 'Making the forms…';
+    // Keep hidden answers in the browser draft, but never put stale refund or
+    // deviation details onto a form when they no longer apply to this claim.
+    var texts = Object.assign({}, state.texts);
+    if (texts.strictness === 'strict') texts.explanation = '';
+    if (data.kind !== 'liquidation' || !data.answers.refund) {
+      texts.refund_amount = ''; texts.refund_or_no = ''; texts.refund_or_date = '';
+    }
     fetch(data.post_url, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rows: state.rows, rates: state.rates, texts: state.texts, signatories: state.signatories, mc114_text: state.mc114_text }) })
+      body: JSON.stringify({ rows: state.rows, rates: state.rates, texts: texts, signatories: state.signatories, mc114_text: state.mc114_text }) })
       .then(function (r) { return r.json(); }).then(function (j) {
         if (!j.ok) { go.disabled = false; msgBox.textContent = j.error || 'That did not work.'; return; }
         if (j.flags) msgBox.textContent = 'Making the forms… ' + j.flags + ' item(s) go to the Admin Unit to verify.';
