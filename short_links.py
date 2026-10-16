@@ -90,6 +90,9 @@ def init_db(conn):
         );
         INSERT OR IGNORE INTO short_link_rate VALUES(1,0);
     """)
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(short_links)")}
+    if "requested" not in columns:
+        conn.execute("ALTER TABLE short_links ADD COLUMN requested INTEGER NOT NULL DEFAULT 0")
     # Preserve completed mappings. Move only unsuccessful legacy jobs to Short.io.
     migrated = conn.execute("UPDATE short_links SET provider='short.io',status='pending',attempts=0,"
                             "next_attempt=0,last_error=NULL,updated_at=? "
@@ -100,15 +103,14 @@ def init_db(conn):
 
 
 def enqueue(conn, url):
-    """Caller owns transaction; insert once, never reset a retry or completed link."""
+    """Explicit request; preserve active retries and completed mappings."""
     if enabled() and eligible(url):
         now = time.time()
-        conn.execute("INSERT OR IGNORE INTO short_links(original_url,created_at,updated_at,provider) VALUES(?,?,?,'short.io')",
+        conn.execute("INSERT OR IGNORE INTO short_links(original_url,created_at,updated_at,provider,requested) VALUES(?,?,?,'short.io',1)",
                      (url, now, now))
-
-
-def enqueue_path(conn, path):
-    enqueue(conn, origin() + path)
+        conn.execute("UPDATE short_links SET requested=1,provider='short.io',status='pending',"
+                     "attempts=0,next_attempt=0,last_error=NULL WHERE original_url=? "
+                     "AND short_url IS NULL AND (requested=0 OR status='failed')", (url,))
 
 
 def lookup(conn, url):
@@ -125,11 +127,11 @@ def status(conn, url, *, now=None):
         return {"done": True, "state": "disabled", "message": "Short links are not enabled. Use the original link."}
     if not eligible(url):
         return {"done": True, "state": "ineligible", "message": "A short link is not available for this address. Use the original link."}
-    row = conn.execute("SELECT status,short_url,last_error,next_attempt FROM short_links WHERE original_url=?",
+    row = conn.execute("SELECT status,short_url,last_error,next_attempt,requested FROM short_links WHERE original_url=?",
                        (url,)).fetchone()
-    if not row:
-        return {"done": True, "state": "missing", "message": "A short link has not been queued. Reopen the sharing page to try again."}
-    state, short, error, retry_at = row
+    if not row or (not row[4] and row[0] != "ready"):
+        return {"done": True, "state": "missing", "message": "Create a short link only when you need one. Each new link uses your Short.io allowance."}
+    state, short, error, retry_at, requested = row
     result = {"done": state in ("ready", "failed"), "state": state}
     if state == "ready":
         result.update(url=short, message="Short link ready.")
@@ -165,7 +167,6 @@ def share(db, url):
     try:
         conn = _connect(db)
         try:
-            enqueue(conn, url)
             result = lookup(conn, url)
             conn.commit()
             return result
@@ -186,7 +187,7 @@ def process_one(db, *, now=None, post=None):
         conn.execute("BEGIN IMMEDIATE")
         next_call = conn.execute("SELECT next_call FROM short_link_rate WHERE id=1").fetchone()[0]
         row = conn.execute("SELECT original_url,attempts FROM short_links WHERE "
-                           "provider='short.io' AND status IN ('pending','processing') AND next_attempt<=? "
+                           "requested=1 AND provider='short.io' AND status IN ('pending','processing') AND next_attempt<=? "
                            "ORDER BY created_at LIMIT 1", (now,)).fetchone()
         if now < next_call or not row:
             conn.rollback()
@@ -255,39 +256,3 @@ async def worker(db):
         except Exception:
             log.exception("Short-link worker will retry")
         await asyncio.sleep(5)
-
-
-def backfill(conn):
-    """Queue active public forms/events and outside combined links; safe to rerun."""
-    import storage as st
-    before = conn.total_changes
-    for (token,) in conn.execute("SELECT qr_token FROM form_instance WHERE COALESCE(archived,0)=0"):
-        if token:
-            enqueue_path(conn, f"/r/{token}")
-    for eid, token, kind in conn.execute("SELECT id,event_token,event_kind FROM event"):
-        if st.event_is_archived(conn, eid):
-            continue
-        if kind != "outside":
-            enqueue_path(conn, f"/e/{token}")
-        else:
-            tokens = ",".join(f["qr_token"] for f in st.get_event_forms(conn, eid))
-            if tokens:
-                enqueue_path(conn, f"/seq?tokens={tokens}")
-    conn.commit()
-    return conn.total_changes - before
-
-
-if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser(description="Queue existing active public links for Short.io")
-    parser.add_argument("--backfill", action="store_true", required=True)
-    args = parser.parse_args()
-    if not enabled() or not origin():
-        parser.error("Set CSS_SHORT_LINKS=1 and a public HTTPS CSS_BASE_URL first")
-    import storage as st
-    conn = st.connect(os.environ.get("CSS_DB", "css_is.db"))
-    try:
-        st.init_db(conn)
-        print(f"Queued {backfill(conn)} links. The running app processes the queue.")
-    finally:
-        conn.close()

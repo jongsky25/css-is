@@ -1576,7 +1576,6 @@ def create_form_instance(conn, survey_type, form, event_date, *, end_date=None,
          serving_staff, serving_staff_org_id,
          service, lead_org_id, rp_id, topic, organizer_external_id,
          tz.now_iso(), created_by))
-    short_links.enqueue_path(conn, f"/r/{token}")
     conn.commit()
     return cur.lastrowid
 
@@ -1737,12 +1736,6 @@ def create_event(conn, title, event_date, *, end_date=None, venue=None, organize
         conn.execute(
             "INSERT OR IGNORE INTO event_form(event_id, form_instance_id, ordinal) VALUES (?,?,?)",
             (event_id, fid, i))
-    if event_kind != "outside":
-        short_links.enqueue_path(conn, f"/e/{token}")
-    else:
-        tokens = ",".join(f["qr_token"] for f in get_event_forms(conn, event_id))
-        if tokens:
-            short_links.enqueue_path(conn, f"/seq?tokens={tokens}")
     conn.commit()
     return {"id": event_id, "event_token": token}
 

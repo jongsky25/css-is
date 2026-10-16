@@ -1631,11 +1631,42 @@ def short_link_status(request: Request, url: str):
     conn = get_conn()
     try:
         data = short_links.status(conn, url)
+        data["can_create"] = auth.can(request.state.user["role"], "encode")
     finally:
         conn.close()
     if data.get("url"):
         data["qr"] = _qr_data_uri(data["url"])
     return JSONResponse(data, headers={"Cache-Control": "no-store"})
+
+
+@app.post("/short-links/create")
+async def short_link_create(request: Request):
+    if not auth.can(request.state.user["role"], "encode"):
+        return Response("Permission denied", status_code=403)
+    # A custom header cannot be sent by a cross-origin form submission.
+    if request.headers.get("X-Short-Link-Request") != "1":
+        return Response("Invalid request", status_code=403)
+    url = dict(parse_qsl((await request.body()).decode("utf-8", errors="replace"))).get("url", "")
+    if not short_links.enabled() or not short_links.eligible(url):
+        return Response("Shortening unavailable for this URL", status_code=400)
+    conn = get_conn()
+    try:
+        parts = urlparse(url)
+        if parts.path.startswith("/e/"):
+            exists = conn.execute("SELECT 1 FROM event WHERE event_token=?", (parts.path[3:],)).fetchone()
+        else:
+            from urllib.parse import parse_qs
+            tokens = (parse_qs(parts.query)["tokens"][0].split(",")
+                      if parts.path == "/seq" else [parts.path[3:]])
+            exists = all(conn.execute("SELECT 1 FROM form_instance WHERE qr_token=?", (token,)).fetchone()
+                         for token in tokens)
+        if not exists:
+            return Response("Public link not found", status_code=404)
+        short_links.enqueue(conn, url)
+        conn.commit()
+    finally:
+        conn.close()
+    return short_link_status(request, url)
 
 
 

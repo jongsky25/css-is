@@ -19,6 +19,38 @@
   function message(nodes, text) {
     nodes.forEach(node => { notices.get(node).textContent = text; });
   }
+  const offered = new Set();
+  function offer(original, nodes) {
+    if (offered.has(original)) return;
+    offered.add(original);
+    const buttons = nodes.map(node => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'btn noprint';
+      button.textContent = 'Create short link';
+      node.appendChild(button);
+      button.addEventListener('click', async () => {
+        buttons.forEach(b => { b.disabled = true; });
+        message(nodes, 'Requesting a short link…');
+        try {
+          const response = await fetch('/short-links/create', {
+            method: 'POST', headers: {'X-Short-Link-Request': '1'},
+            body: new URLSearchParams({url: original})
+          });
+          if (!response.ok) throw new Error('Request failed');
+          buttons.forEach(b => b.remove());
+          offered.delete(original);
+          groups.set(original, nodes);
+          rounds = 0;
+          refresh();
+        } catch (_) {
+          buttons.forEach(b => { b.disabled = false; });
+          message(nodes, 'Could not request a short link. Try again or use the original link.');
+        }
+      });
+      return button;
+    });
+  }
   let rounds = 0;
   async function refresh() {
     if (document.hidden) { setTimeout(refresh, 15000); return; }
@@ -43,6 +75,7 @@
           node.querySelectorAll('[data-short-download]').forEach(el => { el.href = result.qr; });
         });
         if (result.done) groups.delete(original);
+        if (result.can_create && (result.state === 'missing' || result.state === 'failed')) offer(original, nodes);
       } catch (_) {
         message(nodes, 'Could not check the short link. You can use the original link now.');
       }
