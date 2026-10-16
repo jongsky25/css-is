@@ -17,10 +17,18 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.52"
+APP_VERSION = "6.53"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.53",
+        "date": "October 16, 2026",
+        "summary": "The registration link on an activity's page is easier to read and copy on a phone.",
+        "changes": [
+            "The registration link now sits on one tidy line with its Copy button instead of spilling over several lines.",
+        ],
+    },
     {
         "version": "6.52",
         "date": "October 16, 2026",
