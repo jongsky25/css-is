@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.75"
+APP_VERSION = "6.76"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.76",
+        "date": "October 17, 2026",
+        "summary": "The calendar add and edit form is easier to read and use.",
+        "changes": [
+            "Fields are grouped into What, When, Where and Who, so the form is shorter and less crowded.",
+            "On a computer the form uses two columns; on tablets and phones the fields fit the screen.",
+            "Save and Cancel are bigger and stay in view on tablets and phones.",
+            "The last repeat date and the meeting link only appear when they are needed.",
+        ],
+    },
     {
         "version": "6.75",
         "date": "October 17, 2026",
