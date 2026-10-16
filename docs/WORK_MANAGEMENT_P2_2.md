@@ -1,6 +1,6 @@
 # P2.2 — Mentions, followers and unread state
 
-October 16, 2026. **In review**, version **6.61**, branch `codex/work-updates`. P2.1 was merged at `9622870` before this increment. P2.2 is not merged or deployed.
+October 16, 2026. **In review**, version **6.61**, branch `codex/work-updates`. P2.1 was merged at `9622870` before this increment. P2.2 was subsequently merged at `4a44fc0` on the user’s instruction. Live deployment success has not been independently verified.
 
 ## Delivered
 

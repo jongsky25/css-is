@@ -8,6 +8,7 @@ import storage as st
 import tzutil as tz
 import work
 import work_compat
+import work_blockers
 
 
 def _reviewer(conn, user, case):
@@ -23,13 +24,20 @@ def _reviewer(conn, user, case):
 
 
 def _entry(conn, user, row, waiting, today):
+    task = None
+    waiting_on = []
     if row['kind'] in ('task', 'lead'):
         try:
             case = work.get(conn, user, row['case_id'])
             work_compat.require_open(conn, case['id'])
         except (permissions.Denied, ValueError):
             return None
-        if row['kind'] == 'lead':
+        if row['kind']=='task':
+            task = rows(conn,'SELECT * FROM work_task WHERE id=?',(row['id'],))[0]
+            waiting_on = [t for t in work_blockers.dependencies(conn,task['id']) if t['status']!='done']
+        if task and task['blocker_reason'] and task['blocker_owner_id']==user['id'] and not waiting:
+            action = 'Follow up on blocker'
+        elif row['kind'] == 'lead':
             if waiting or not work.officer(conn, user, case):
                 return None
             action = 'Confirm accountable lead'
@@ -51,6 +59,8 @@ def _entry(conn, user, row, waiting, today):
             action = 'Acknowledge and start' if row['state'] == 'todo' else 'Prepare and submit output'
         else:
             return None
+        if task and (task['blocker_reason'] or waiting_on) and action!='Follow up on blocker':
+            action = 'Review blocker or prerequisites'
         title, context = row['title'], case['title']
         url = f"/work/{case['id']}" + (f"#task-{row['id']}" if row['kind']=='task' else '')
         can_act = work.enabled(conn)
@@ -90,7 +100,10 @@ def _entry(conn, user, row, waiting, today):
             due_label = 'Target needs correction'
     return {'key': 'work:' + row['kind'] + ':' + str(row['id']), 'title': title,
             'context': context, 'url': url, 'action': action, 'due_date': due,
-            'due_label': due_label, 'waiting': waiting, 'can_act': can_act}
+            'due_label': due_label, 'waiting': waiting, 'can_act': can_act,
+            'blocker_reason':task['blocker_reason'] if task else '',
+            'followup_date':task['blocker_due_date'] if task else None,
+            'prerequisites':[t['title'] for t in waiting_on]}
 
 
 def page(conn, user, before=None, waiting=False, limit=25, today=None):
@@ -113,7 +126,7 @@ def page(conn, user, before=None, waiting=False, limit=25, today=None):
              t.owner_id,t.unit_id,t.due_date,t.title,t.created_at
       FROM work_task t JOIN work_case c ON c.id=t.case_id
       WHERE t.status IN ('proposed','todo','in_progress','for_review')
-        AND (t.owner_id=? OR c.lead_id=? OR t.status IN ('proposed','for_review'))
+        AND (t.owner_id=? OR c.lead_id=? OR t.blocker_owner_id=? OR t.status IN ('proposed','for_review'))
       UNION ALL
       SELECT a.id*3+1,'legacy',a.id,NULL,a.document_id,a.status,a.user_id,d.unit_id,a.due_date,a.action,a.created_at
       FROM document_assignment a JOIN document d ON d.id=a.document_id
@@ -124,7 +137,7 @@ def page(conn, user, before=None, waiting=False, limit=25, today=None):
       UNION ALL
       SELECT c.id*3+2,'lead',c.id,c.id,NULL,'proposed',NULL,c.unit_id,c.due_date,'Confirm ownership',c.created_at
       FROM work_case c WHERE c.lead_id IS NULL
-    ) WHERE (created_at,cursor)<(?,?) ORDER BY created_at DESC,cursor DESC LIMIT 250''', (user['id'],user['id'],user['id'],user['id'],boundary,cursor))
+    ) WHERE (created_at,cursor)<(?,?) ORDER BY created_at DESC,cursor DESC LIMIT 250''', (user['id'],user['id'],user['id'],user['id'],user['id'],boundary,cursor))
     found=[]
     for row in candidates:
         entry=_entry(conn,user,row,waiting,today)

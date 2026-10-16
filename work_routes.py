@@ -16,6 +16,7 @@ import work_compat
 import work_inbox
 import work_discussion
 import work_updates
+import work_blockers
 
 
 def csrf(request):
@@ -60,6 +61,10 @@ def make_router(templates, get_conn):
             event['submission'] = payload.get('submission', '') if event['action']=='task_submit' else ''
             event['task_id'] = payload.get('task_id')
             event['owner_id'] = payload.get('owner_id')
+            event['followup_owner_id'] = payload.get('followup_owner_id')
+            event['followup_date'] = payload.get('followup_date')
+            event['prerequisite_title'] = payload.get('prerequisite_title')
+            event['previous_blocker'] = payload.get('previous_blocker')
             event['status'] = work_tasks.LABELS.get(payload.get('status'), '')
         tasks = work_tasks.list_for_case(conn, user, case_id)
         blocked = ''
@@ -71,6 +76,12 @@ def make_router(templates, get_conn):
         next_steps = []
         for task in tasks:
             counts[task['status']] += 1
+            task['dependencies'] = work_blockers.dependencies(conn,task['id'])
+            task['waiting_on'] = [t for t in task['dependencies'] if t['status']!='done']
+            task['can_block'],task['can_depend'] = work_blockers.authority(conn,user,case,task)
+            if blocked:
+                task['can_block']=task['can_depend']=False
+            task['followup_available'] = not task['blocker_owner_id'] or work_updates.permitted(conn,task['blocker_owner_id'],case_id)
             task['actions'] = [] if blocked else work_tasks.actions(conn, user, case, task)
             task['attention'] = ''
             if task['owner_id'] and task['status'] != 'cancelled':
@@ -88,6 +99,8 @@ def make_router(templates, get_conn):
             task['next_label'] = labels.get(task['primary'], {'proposed':'Awaiting officer confirmation',
                 'todo':'Waiting for the owner to start','in_progress':'Waiting for the owner’s output',
                 'for_review':'Awaiting lead or officer review','done':'Accepted contribution','cancelled':'Cancelled — retained for history'}[task['status']])
+            if task['blocker_reason'] or task['waiting_on']:
+                task['next_label'] = 'Review blocker or prerequisite contributions'
             latest = next((event for event in events if event['task_id']==task['id'] and event['action'] in ('task_return','task_submit','task_reassign','task_reopen','task_cancel','task_accept')), None)
             task['return_note'] = latest['note'] if latest and latest['action']=='task_return' else ''
             task['task_history'] = [event for event in events if event['task_id']==task['id']]
@@ -99,7 +112,7 @@ def make_router(templates, get_conn):
                       tasks=tasks, task_labels=work_tasks.LABELS, counts=counts, next_steps=next_steps, unfinished=unfinished, blocked=blocked, can_link=work.can_link(conn, user, case),
                       documents=work.linked_documents(conn, user, case_id), history=events,
                       choices=work.document_choices(conn, user, request.query_params.get('q', '')),
-                      officer=work.officer(conn, user, case), submitted=submitted or {})
+                      officer=work.officer(conn, user, case), blocker_people=work_updates.candidates(conn,user,case_id), blocker_viewer_id=user['id'], submitted=submitted or {})
 
     def discussion_page(request, conn, case_id, status_code=200, error='', submitted=None):
         query = request.query_params
@@ -305,7 +318,8 @@ def make_router(templates, get_conn):
         conn = get_conn()
         try:
             fields = await posted(request)
-            work_tasks.mutate(conn, request.state.user, case_id, task_id,
+            service = work_blockers.mutate if action in work_blockers.ACTIONS else work_tasks.mutate
+            service(conn, request.state.user, case_id, task_id,
                               int(fields.get('revision', '')), action, fields)
             return RedirectResponse('/work/' + str(case_id) + '#task-' + str(task_id), status_code=303)
         except permissions.Denied:

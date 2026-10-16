@@ -134,5 +134,20 @@ def install(conn):
     CREATE TRIGGER IF NOT EXISTS work_mention_no_delete BEFORE DELETE ON work_mention
       BEGIN SELECT RAISE(ABORT,'Mention history is append-only'); END;
     """)
+    task_columns = {r[1] for r in conn.execute('PRAGMA table_info(work_task)')}
+    for name, definition in (
+        ('blocker_reason', "TEXT NOT NULL DEFAULT ''"),
+        ('blocker_owner_id', 'INTEGER REFERENCES admin_user(id)'),
+        ('blocker_due_date', 'TEXT')):
+        if name not in task_columns:
+            conn.execute('ALTER TABLE work_task ADD COLUMN ' + name + ' ' + definition)
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS work_dependency (
+      task_id INTEGER NOT NULL REFERENCES work_task(id),
+      prerequisite_id INTEGER NOT NULL REFERENCES work_task(id),
+      created_by INTEGER NOT NULL REFERENCES admin_user(id), created_at TEXT NOT NULL,
+      PRIMARY KEY(task_id,prerequisite_id), CHECK(task_id<>prerequisite_id));
+    CREATE INDEX IF NOT EXISTS work_dependency_upstream ON work_dependency(prerequisite_id,task_id);
+    """)
     conn.execute("INSERT OR IGNORE INTO app_setting(key,value) VALUES ('work.enabled','0')")
     conn.commit()

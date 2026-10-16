@@ -5,6 +5,7 @@ import documents_permissions as permissions
 from documents_storage import rows, transaction
 import tzutil as tz
 import work
+import work_blockers
 
 LABELS = {'proposed': 'Proposed', 'todo': 'To do', 'in_progress': 'In progress',
           'for_review': 'For review', 'done': 'Done', 'cancelled': 'Cancelled'}
@@ -95,6 +96,8 @@ def actions(conn, user, case, task):
         result.append('reopen')
     if state not in ('done', 'cancelled') and scoped:
         result.append('cancel')
+    if work_blockers.waiting(conn, task):
+        result = [a for a in result if a not in ('submit','accept')]
     return result
 
 
@@ -116,6 +119,8 @@ def mutate_in_transaction(conn, user, case_id, task_id, revision, action, fields
         raise permissions.Denied('Contribution not found or unavailable to you.')
     task = found[0]
     work._check_revision(task, revision)
+    if action in ('submit','accept') and work_blockers.waiting(conn,task):
+        raise ValueError('Resolve the recorded blocker and wait for prerequisite contributions to be accepted before submitting or accepting.')
     if action not in actions(conn, user, case, task):
         raise permissions.Denied('This contribution action is not available to you in its current state.')
     note = work._text(fields.get('reason'), 'Reason or progress note', 2000)
