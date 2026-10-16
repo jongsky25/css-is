@@ -1,3 +1,8 @@
+## October 16, 2026 (v6.67 — calendar travel claim links)
+
+- Open the matching travel filing and checklist when a claim reminder is selected on the calendar.
+- Keep the activity title linked to the activity page.
+
 ## October 16, 2026 (v6.66 — automatic public short links)
 
 - Add an opt-in is.gd outbox in SQLite, with persisted retries, shared pacing, expired-lease recovery and shutdown draining.
