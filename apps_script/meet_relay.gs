@@ -2,11 +2,12 @@
 // shared organizer mailbox (blhsd@doh.gov.ph): every Meet link it makes belongs to that account.
 // Enable the Calendar API advanced service (Services, +, Google Calendar API, v3).
 // Script Properties: SHARED_SECRET (long random string), optional CALENDAR_ID (default 'primary'),
-// optional TIME_ZONE (default 'Asia/Manila').
+// optional TIME_ZONE (default 'Asia/Manila'), optional ALLOWED_DOMAIN (default 'doh.gov.ph').
 // Deploy: Web app, Execute as Me, Who has access: Anyone. Every request is HMAC-signed, so the open
-// endpoint trusts nothing unsigned. No attendees are added and no Google invitation is sent: the
+// endpoint trusts nothing unsigned. Guests (the people on the item) are added to the event, but only
+// addresses ending @ALLOWED_DOMAIN, and no Google invitation email is sent (sendUpdates none): the
 // Space already notifies people by its own calendar emails.
-const MR_VERSION = 1;
+const MR_VERSION = 2;
 
 function mrProp_(k, d) { return PropertiesService.getScriptProperties().getProperty(k) || d; }
 function mrReply_(v) {
@@ -40,9 +41,20 @@ function mrTimes_(req) {
   const d = new Date(endDate + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + 1);   // all-day end is exclusive
   return { start: { date: req.start_date }, end: { date: d.toISOString().slice(0, 10) }, timed: false };
 }
+function mrGuests_(req) {
+  const dom = '@' + mrProp_('ALLOWED_DOMAIN', 'doh.gov.ph').toLowerCase();
+  const seen = {}, out = [];
+  (req.attendees || []).slice(0, 200).forEach(function (a) {
+    const mail = String(a || '').trim().toLowerCase();
+    if (/^[^@\s]+@[^@\s]+$/.test(mail) && mail.slice(-dom.length) === dom && !seen[mail]) {
+      seen[mail] = true; out.push({ email: mail });
+    }
+  });
+  return out;
+}
 function mrBody_(req) {
   const t = mrTimes_(req);
-  return { summary: String(req.title || 'Meeting').slice(0, 200),
+  return { attendees: mrGuests_(req), guestsCanSeeOtherGuests: true, summary: String(req.title || 'Meeting').slice(0, 200),
            description: String(req.note || '').slice(0, 2000),
            start: t.start, end: t.end };
 }

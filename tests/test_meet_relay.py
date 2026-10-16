@@ -33,6 +33,7 @@ class FakeRelay(mr.Relay):
 
     def _r(self, name, entry):
         self.calls.append((name, entry["uid"]))
+        self.last = entry
         return mr.RelayResult(True, {"meet_url": self.url}) if self.ok else mr.RelayResult(False, error="unreachable")
 
     def create(self, entry): return self._r("create", entry)
@@ -140,3 +141,29 @@ def test_nothing_happens_when_the_relay_is_not_set_up(manager, conn, monkeypatch
     monkeypatch.delenv(mr.ENV_URL, raising=False)
     r = post(manager, "/calendar/new")
     assert r.status_code == 303 and st.cal_get(conn, eid(r))["meeting_url"] is None
+
+
+def test_the_people_on_the_item_are_sent_as_guests_by_email(manager, relay, conn):
+    ids = [r[0] for r in conn.execute("SELECT id FROM admin_user WHERE active=1 ORDER BY id LIMIT 2")]
+    emails = sorted(r[0].lower() for r in conn.execute(
+        f"SELECT username FROM admin_user WHERE id IN ({','.join('?' * len(ids))})", ids))
+    # the form posts people as repeated fields
+    data = [("title", "MEET Guests"), ("kind", "meeting"), ("status", "confirmed"),
+            ("start_date", (tz.today_local() + timedelta(days=6)).isoformat()), ("audience", "people"),
+            ("modality", "online")] + [("people", str(i)) for i in ids]
+    resp = manager.post("/calendar/new", content=urlencode(data), headers=FORM, follow_redirects=False)
+    assert resp.status_code == 303
+    assert relay.last["_emails"] == emails
+
+
+def test_the_item_page_has_a_join_button_for_a_meet_link(manager, relay, conn):
+    i = eid(post(manager, "/calendar/new"))
+    page = manager.get(f"/calendar/entries/{i}").text
+    assert "Join Google Meet" in page and LINK in page
+
+
+def test_a_typed_link_gets_a_plain_join_button_and_a_cancelled_item_none(manager, relay, conn):
+    i = eid(post(manager, "/calendar/new", meeting_url="https://zoom.us/j/1"))
+    assert "Join meeting" in manager.get(f"/calendar/entries/{i}").text
+    manager.post(f"/calendar/entries/{i}/cancel", follow_redirects=False)
+    assert "Join meeting" not in manager.get(f"/calendar/entries/{i}").text

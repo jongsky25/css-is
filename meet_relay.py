@@ -63,8 +63,18 @@ def describe(error: str) -> str:
           else f"The Meet relay answered with an error ({error})." if error else "The Meet relay failed.")
 
 
+def _emails(conn, entry: dict) -> list:
+    """The login emails of the people on the item (a staff account's username IS their email)."""
+    ids = [int(p["user_id"]) for p in entry.get("people", [])]
+    if not ids:
+        return []
+    q = ",".join("?" * len(ids))
+    rows = conn.execute(f"SELECT username FROM admin_user WHERE active=1 AND id IN ({q})", ids).fetchall()
+    return sorted({r[0].strip().lower() for r in rows if r[0] and "@" in r[0]})
+
+
 def _fields(entry: dict) -> dict:
-    return {"request_id": entry["uid"], "title": entry["title"], "start_date": entry["start_date"],
+    return {"attendees": entry.get("_emails") or [], "request_id": entry["uid"], "title": entry["title"], "start_date": entry["start_date"],
             "end_date": entry.get("end_date") or "", "start_time": entry.get("start_time") or "",
             "end_time": entry.get("end_time") or "", "note": ""}
 
@@ -105,6 +115,7 @@ def sync(conn, entry_id: int, *, by=None) -> str:
         e = st.cal_get(conn, entry_id)
         if e is None:
             return ""
+        e["_emails"] = _emails(conn, e)
         relay = get_relay()
         if e["status"] == "cancelled":
             if is_ours(e):
