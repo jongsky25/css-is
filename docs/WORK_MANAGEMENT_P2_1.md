@@ -1,6 +1,6 @@
 # P2.1 — Discussion and replies
 
-October 16, 2026. **In review**, version **6.60**, branch `codex/work-discussions`. Phase 1 was explicitly accepted by the user before development began. This increment is not merged or deployed.
+October 16, 2026. **In review**, version **6.60**, branch `codex/work-discussions`. Phase 1 was explicitly accepted by the user before development began. This increment was subsequently merged at `9622870` on the user’s instruction. Live deployment success has not been independently verified.
 
 ## Delivered
 

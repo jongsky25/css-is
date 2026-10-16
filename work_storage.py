@@ -108,5 +108,31 @@ def install(conn):
       FROM work_task t JOIN work_legacy_document d ON d.case_id=t.case_id
       LEFT JOIN work_legacy_assignment m ON m.task_id=t.id;
     """)
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS work_follow (
+      case_id INTEGER NOT NULL REFERENCES work_case(id),
+      user_id INTEGER NOT NULL REFERENCES admin_user(id),
+      task_id INTEGER REFERENCES work_task(id), created_at TEXT NOT NULL);
+    CREATE UNIQUE INDEX IF NOT EXISTS work_follow_scope ON work_follow(case_id,user_id,COALESCE(task_id,0));
+    CREATE TABLE IF NOT EXISTS work_mention (
+      comment_id INTEGER NOT NULL, revision INTEGER NOT NULL,
+      user_id INTEGER NOT NULL REFERENCES admin_user(id),
+      PRIMARY KEY(comment_id,revision,user_id),
+      FOREIGN KEY(comment_id,revision) REFERENCES work_comment_revision(comment_id,revision));
+    CREATE TABLE IF NOT EXISTS work_comment_read (
+      comment_id INTEGER NOT NULL REFERENCES work_comment(id),
+      user_id INTEGER NOT NULL REFERENCES admin_user(id), revision INTEGER NOT NULL,
+      PRIMARY KEY(comment_id,user_id));
+    CREATE TABLE IF NOT EXISTS work_notice (
+      id INTEGER PRIMARY KEY, comment_id INTEGER NOT NULL REFERENCES work_comment(id),
+      user_id INTEGER NOT NULL REFERENCES admin_user(id), revision INTEGER NOT NULL,
+      reason TEXT NOT NULL CHECK(reason IN ('mention','reply','following')),
+      created_at TEXT NOT NULL, UNIQUE(comment_id,user_id));
+    CREATE INDEX IF NOT EXISTS work_notice_user ON work_notice(user_id,id);
+    CREATE TRIGGER IF NOT EXISTS work_mention_no_update BEFORE UPDATE ON work_mention
+      BEGIN SELECT RAISE(ABORT,'Mention history is append-only'); END;
+    CREATE TRIGGER IF NOT EXISTS work_mention_no_delete BEFORE DELETE ON work_mention
+      BEGIN SELECT RAISE(ABORT,'Mention history is append-only'); END;
+    """)
     conn.execute("INSERT OR IGNORE INTO app_setting(key,value) VALUES ('work.enabled','0')")
     conn.commit()

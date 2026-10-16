@@ -1153,3 +1153,154 @@ def test_discussion_history_paging_and_atomic_post(workspace):
     c.execute('UPDATE admin_user SET active=0 WHERE id=?',(u[0]['id'],));c.commit()
     with pytest.raises(permissions.Denied):
         discussion.history(c,u[0],item['id'],None,cid)
+
+
+# P2.2: targeted updates never create access and are delivered through current ACLs.
+import work_updates as updates
+
+
+def test_updates_mentions_followers_replies_deduplicate(workspace):
+    c,u,unit,_=workspace
+    item=case(c,u[0],unit)
+    item=work.confirm_lead(c,u[1],item['id'],1,u[2]['id'],'Confirmed')
+    updates.follow(c,u[1],item['id'])
+    updates.follow(c,u[1],item['id'])
+    parent=discussion.post(c,u[1],item['id'],'Please check')
+    cid=discussion.post(c,u[0],item['id'],'Checked',parent_id=parent,mentions=[u[1]['id'],u[1]['id'],u[0]['id']])
+    assert c.execute('SELECT COUNT(*) FROM work_notice WHERE comment_id=?',(cid,)).fetchone()[0]==1
+    assert updates.inbox(c,u[1])[0][0]['reason']=='mention'
+    assert not updates.inbox(c,u[0])[0]  # no self notification
+    discussion.edit(c,u[0],item['id'],None,cid,1,'Checked again',mentions=[u[1]['id'],u[2]['id']])
+    assert len(updates.inbox(c,u[1])[0])==1
+    assert len(updates.inbox(c,u[2])[0])==1
+    assert [m['user_id'] for m in updates.mentions(c,cid,1)]==[u[0]['id'],u[1]['id']]
+    assert [m['user_id'] for m in updates.mentions(c,cid,2)]==[u[1]['id'],u[2]['id']]
+    st.init_db(c)
+    assert len(updates.inbox(c,u[1])[0])==1
+
+
+def test_updates_follow_scope_unfollow_and_read_revision(workspace):
+    c,u,unit,_=workspace
+    item=case(c,u[0],unit)
+    a=propose(c,u[0],item,unit)
+    b=propose(c,u[0],item,unit)
+    updates.follow(c,u[1],item['id'],a['id'])
+    discussion.post(c,u[0],item['id'],'Case-wide')
+    discussion.post(c,u[0],item['id'],'Other task',b['id'])
+    cid=discussion.post(c,u[0],item['id'],'Followed task',a['id'])
+    assert [n['comment_id'] for n in updates.inbox(c,u[1])[0]]==[cid]
+    discussion.edit(c,u[0],item['id'],a['id'],cid,1,'Edited while viewing')
+    updates.mark_read(c,u[1],item['id'],a['id'],[[cid,1]])
+    assert updates.read_revision(c,u[1]['id'],cid)==1  # concurrent edit stays unread in thread
+    assert not updates.inbox(c,u[1])[0]  # original targeted alert acknowledged
+    updates.mark_read(c,u[1],item['id'],a['id'],[[cid,2]])
+    updates.mark_read(c,u[1],item['id'],a['id'],[[cid,1]])
+    assert updates.read_revision(c,u[1]['id'],cid)==2
+    updates.follow(c,u[1],item['id'],a['id'],False)
+    discussion.post(c,u[0],item['id'],'After unfollow',a['id'])
+    assert not updates.inbox(c,u[1])[0]
+    updates.follow(c,u[1],item['id'])
+    discussion.post(c,u[0],item['id'],'Case follow includes other tasks',b['id'])
+    assert len(updates.inbox(c,u[1])[0])==1
+
+
+def test_updates_revoked_access_never_delivers_or_mentions(workspace):
+    c,u,unit,_=workspace
+    doc=document(c,u[0],unit)
+    item=case(c,u[0],unit,source_document_id=doc['id'])
+    updates.follow(c,u[0],item['id'])
+    cid=discussion.post(c,u[1],item['id'],'Restricted later',mentions=[u[0]['id']])
+    assert updates.bell_rows(c,u[0])
+    before=c.execute('SELECT COUNT(*) FROM work_comment').fetchone()[0]
+    with pytest.raises(ValueError,match='no longer has access'):
+        discussion.post(c,u[0],item['id'],'Mention cannot grant access',mentions=[u[4]['id']])
+    assert c.execute('SELECT COUNT(*) FROM work_comment').fetchone()[0]==before
+    docs.mutate(c,u[1],doc['id'],doc['revision'],'access',{'visibility':'restricted','viewers':[u[1]['id']],'reason':'Restricted'})
+    assert not updates.inbox(c,u[0])[0]
+    assert not updates.bell_rows(c,u[0])
+    assert u[0]['id'] not in [p['id'] for p in updates.candidates(c,u[1],item['id'])]
+    discussion.post(c,u[1],item['id'],'No delivery to revoked follower')
+    assert c.execute('SELECT COUNT(*) FROM work_notice WHERE user_id=?',(u[0]['id'],)).fetchone()[0]==1
+    with pytest.raises(permissions.Denied):
+        updates.mark_read(c,u[0],item['id'],None,[[cid,1]])
+    with pytest.raises(permissions.Denied):
+        updates.follow(c,u[0],item['id'])
+
+
+def test_updates_read_scope_atomicity_and_disabled_preferences(workspace):
+    c,u,unit,_=workspace
+    item=case(c,u[0],unit)
+    task=propose(c,u[0],item,unit)
+    cid=discussion.post(c,u[1],item['id'],'Case message',mentions=[u[0]['id']])
+    other=discussion.post(c,u[1],item['id'],'Task message',task['id'])
+    with pytest.raises(permissions.Denied):
+        updates.mark_read(c,u[0],item['id'],None,[[cid,1],[other,1]])
+    assert updates.read_revision(c,u[0]['id'],cid)==0
+    with pytest.raises(ValueError):
+        updates.mark_read(c,u[0],item['id'],None,[[cid,2]])
+    st.set_setting(c,'work.enabled','0')
+    with pytest.raises(ValueError):
+        updates.follow(c,u[0],item['id'])
+    updates.mark_read(c,u[0],item['id'],None,[[cid,1]])
+    assert not updates.inbox(c,u[0])[0]
+    c.execute('UPDATE admin_user SET active=0 WHERE id=?',(u[0]['id'],));c.commit()
+    with pytest.raises(permissions.Denied):
+        updates.inbox(c,u[0])
+
+
+def test_updates_atomic_notice_failure_and_scan_pagination(workspace):
+    c,u,unit,_=workspace
+    item=case(c,u[0],unit)
+    updates.follow(c,u[1],item['id'])
+    c.execute("CREATE TRIGGER fail_notice BEFORE INSERT ON work_notice BEGIN SELECT RAISE(ABORT,'notice failed'); END;");c.commit()
+    with pytest.raises(sqlite3.IntegrityError):
+        discussion.post(c,u[0],item['id'],'Must roll back')
+    assert not c.execute('SELECT 1 FROM work_comment').fetchone()
+    c.execute('DROP TRIGGER fail_notice');c.commit()
+    ids=[discussion.post(c,u[0],item['id'],f'Update {n}') for n in range(28)]
+    first,cursor=updates.inbox(c,u[1]);second,_=updates.inbox(c,u[1],cursor)
+    assert [n['comment_id'] for n in first+second]==list(reversed(ids))
+
+
+def test_updates_http_mentions_unread_csrf_and_no_get_mutation(workspace,app_mod,monkeypatch):
+    from starlette.testclient import TestClient
+    c,u,unit,path=workspace
+    item=case(c,u[0],unit)
+    monkeypatch.setattr(app_mod,'DB',path)
+    url=f"/work/{item['id']}/discussion"
+    with TestClient(app_mod.app) as client:
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[0]))
+        page=client.get(url)
+        csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',page.text)[1]
+        assert client.post(url+'/preferences',data={'action':'follow'}).status_code==403
+        assert client.post(url+'/preferences',data={'action':'follow','csrf':csrf}).status_code==200
+        posted=client.post(url+'/messages',data={'action':'post','csrf':csrf,'body':'Please review','mentions':str(u[1]['id'])})
+        assert posted.status_code==200 and 'Mentioned:' in posted.text
+        cid=c.execute('SELECT id FROM work_comment').fetchone()[0]
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[1]))
+        inbox=client.get('/work/updates')
+        assert inbox.status_code==200 and 'Mentioned you' in inbox.text
+        page=client.get(url)
+        assert 'Unread</span>' in page.text
+        assert updates.read_revision(c,u[1]['id'],cid)==0
+        csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',page.text)[1]
+        result=client.post(url+'/preferences',data={'action':'read','csrf':csrf,'observed':json.dumps([[cid,1]])})
+        assert result.status_code==200
+        assert 'No unread updates in this page.' in client.get('/work/updates').text
+
+
+def test_updates_revoked_page_does_not_hide_older_permitted_alert(workspace):
+    c,u,unit,_=workspace
+    visible=case(c,u[0],unit)
+    wanted=discussion.post(c,u[1],visible['id'],'Still permitted',mentions=[u[0]['id']])
+    doc=document(c,u[0],unit)
+    hidden=case(c,u[0],unit,source_document_id=doc['id'])
+    updates.follow(c,u[0],hidden['id'])
+    for n in range(251):
+        discussion.post(c,u[1],hidden['id'],f'Now restricted {n}')
+    docs.mutate(c,u[1],doc['id'],doc['revision'],'access',{'visibility':'restricted','viewers':[u[1]['id']],'reason':'Restrict'})
+    first,cursor=updates.inbox(c,u[0])
+    assert not first and cursor
+    second,_=updates.inbox(c,u[0],cursor)
+    assert [n['comment_id'] for n in second]==[wanted]
+    assert updates.bell_rows(c,u[0])

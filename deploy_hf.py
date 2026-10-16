@@ -75,7 +75,7 @@ RUNTIME_PY = [
     "tours.py", "ui_telemetry.py", "ux_handoff.py", "ai_core.py", "qa_rules.py",
     "wellness_register.py", "work_arrangement_annex.py",
     "work_arrangement_backfill.py", "office_connect.py",
-    "work.py", "work_inbox.py", "work_intake.py", "work_readiness.py", "work_discussion.py", "work_routes.py", "work_compat.py", "work_tasks.py", "work_storage.py",
+    "work.py", "work_inbox.py", "work_intake.py", "work_readiness.py", "work_discussion.py", "work_updates.py", "work_routes.py", "work_compat.py", "work_tasks.py", "work_storage.py",
     "documents.py", "documents_storage.py", "documents_permissions.py", "documents_rules.py", "documents_operations.py", "documents_workspace.py", "documents_notify.py", "documents_routes.py", "documents_calendar.py",
     "office_calendar.py", "calendar_routes.py", "rooms.py", "rooms_routes.py", "rooms_notify.py", "travel.py", "travel_routes.py", "travel_notify.py", "gdocs_relay.py", "travel_rules.py", "travel_checklist.py", "travel_docs.py", "travel_rates.py", "travel_scan.py", "rooms_meals.py", "rooms_meals_routes.py", "room_meal_form.py", "calendar_import.py", "calendar_import_apply.py", "calendar_import_suggest.py", "calendar_people.py", "birthdays.py", "birthday_cards.py", "calendar_ics.py", "recurrence.py", "calendar_answers.py", "search_sources.py", "office_answers.py",
     # Imported by app.py for the daily reminder sweep the scheduler loop fires.

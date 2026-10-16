@@ -226,12 +226,12 @@ Delivery is explicitly phased and incremental. A **phase** delivers a usable cap
 
 ### 9.4 P2 — Make collaboration useful
 
-**Progress, October 16, 2026:** Following explicit user acceptance of Phase 1, [P2.1 discussion and replies](WORK_MANAGEMENT_P2_1.md) is implemented for review as version 6.60. P2.2 remains the next increment.
+**Progress, October 16, 2026:** Following explicit user acceptance of Phase 1, [P2.1 discussion and replies](WORK_MANAGEMENT_P2_1.md) was merged at `9622870` as version 6.60 on the user’s instruction. [P2.2 mentions, following and unread state](WORK_MANAGEMENT_P2_2.md) is implemented for review as version 6.61. P2.3 is next.
 
 | Increment | Status | Depends on | Small deliverable | Acceptance evidence |
 |---|---|---|---|---|
 | **P2.1 — Discussion and replies** | In review | P1 gate | Add case/task threads, replies, and visible edit history. | Two contributors can discuss a task; posting a comment does not invalidate a draft approval or make an unrelated task update stale. |
-| **P2.2 — Mentions, followers, and unread state** | Pending | P2.1 | Add permission-aware mentions, follow/unfollow, unread markers, and durable targeted notices. | Mentions never grant access; duplicate alerts are suppressed; revocation prevents subsequent reads and deliveries. |
+| **P2.2 — Mentions, followers, and unread state** | In review | P2.1 | Add permission-aware mentions, follow/unfollow, unread markers, and durable targeted notices. | Mentions never grant access; duplicate alerts are suppressed; revocation prevents subsequent reads and deliveries. |
 | **P2.3 — Blockers and dependencies** | Pending | P1.2, P2.2 | Add a blocker reason, follow-up owner/date, and task dependency links. | Dependency cycles are rejected; upstream delays are visible; waiting does not silently extend an official deadline. |
 | **P2.4 — Turn discussion into tasks and decisions** | Pending | P2.1, P2.3 | Create a proposed task from a message and record an authorized decision with its source and affected work. | The original discussion remains linked; informal comments cannot become formal approval; changed directives preserve prior contributions and identify reconciliation needs. |
 | **P2.5 — Collaborative draft handoff** | Pending | P2.4 | Identify the working Google draft, supporting files, and contribution handoff notes within the work item. | Participants can identify the current draft and open it when Drive access permits; app access is not presented as proof of Drive access. |

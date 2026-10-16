@@ -15,6 +15,7 @@ import work_tasks
 import work_compat
 import work_inbox
 import work_discussion
+import work_updates
 
 
 def csrf(request):
@@ -38,7 +39,9 @@ def make_router(templates, get_conn):
                                           context(request, conn, **values), status_code=status_code)
 
     async def posted(request):
-        fields = dict(await request.form())
+        form = await request.form()
+        fields = dict(form)
+        fields['mentions'] = form.getlist('mentions')
         if not hmac.compare_digest(str(fields.get('csrf', '')), csrf(request)):
             raise permissions.Denied('The form expired. Reload this page and try again.')
         return fields
@@ -110,10 +113,20 @@ def make_router(templates, get_conn):
             selected, revisions = work_discussion.history(conn, request.state.user, case_id, task_id, int(query['message']),
                 before=int(query['history_before']) if query.get('history_before') else None)
         reply = work_discussion.message(conn, case_id, task_id, int(query['reply'])) if query.get('reply') else None
+        for message in values['messages']:
+            message['mentions'] = work_updates.mentions(conn, message['id'], message['revision'])
+            message['unread'] = work_updates.read_revision(conn, values['viewer_id'], message['id']) < message['revision']
+        for revision in revisions:
+            revision['mentions'] = work_updates.mentions(conn, selected['id'], revision['revision'])
+        if selected:
+            selected['mentioned_ids'] = [m['user_id'] for m in work_updates.mentions(conn, selected['id'], selected['revision'])]
         return render(request, conn, 'discussion', status_code=status_code, error=error,
                       thread_url='/work/' + str(case_id) + '/discussion' + ('?task_id=' + str(task_id) if task_id else '?'),
                       selected=selected, revisions=revisions[:30], older_history=revisions[29]['revision'] if len(revisions)>30 else None,
-                      reply=reply, submitted=submitted or {}, **values)
+                      reply=reply, submitted=submitted or {}, mention_people=work_updates.candidates(conn, request.state.user, case_id),
+                      following=work_updates.following(conn, request.state.user, case_id, task_id),
+                      following_case=work_updates.following(conn, request.state.user, case_id) if task_id else False,
+                      observed=[[m['id'],m['revision']] for m in values['messages']], **values)
 
     @router.get('/work/{case_id}/discussion', response_class=HTMLResponse)
     def discussion(request: Request, case_id: int):
@@ -137,10 +150,10 @@ def make_router(templates, get_conn):
             if fields.get('action') == 'edit':
                 cid = int(fields.get('comment_id', ''))
                 work_discussion.edit(conn, request.state.user, case_id, task_id, cid,
-                                     int(fields.get('revision', '')), fields.get('body'))
+                                     int(fields.get('revision', '')), fields.get('body'), mentions=fields['mentions'])
             elif fields.get('action') == 'post':
                 cid = work_discussion.post(conn, request.state.user, case_id, fields.get('body'), task_id,
-                                          int(fields['parent_id']) if fields.get('parent_id') else None)
+                                          int(fields['parent_id']) if fields.get('parent_id') else None, mentions=fields['mentions'])
             else:
                 raise ValueError('Choose a discussion action.')
             url = '/work/' + str(case_id) + '/discussion?focus=' + str(cid)
@@ -157,6 +170,37 @@ def make_router(templates, get_conn):
                 return HTMLResponse('Discussion not found or unavailable to you.', status_code=404)
             except (ValueError, TypeError):
                 return HTMLResponse('Invalid discussion link.', status_code=400)
+        finally:
+            conn.close()
+
+    @router.get('/work/updates', response_class=HTMLResponse)
+    def updates(request: Request, before: int | None = None):
+        conn = get_conn()
+        try:
+            notices, cursor = work_updates.inbox(conn, request.state.user, before)
+            return render(request, conn, 'updates', notices=notices, next_cursor=cursor, before=before)
+        except permissions.Denied:
+            return HTMLResponse('Updates unavailable.', status_code=403)
+        finally:
+            conn.close()
+
+    @router.post('/work/{case_id}/discussion/preferences')
+    async def discussion_preferences(request: Request, case_id: int):
+        conn = get_conn()
+        try:
+            fields = await posted(request)
+            task_id = int(fields['task_id']) if fields.get('task_id') else None
+            if fields.get('action') in ('follow', 'unfollow'):
+                work_updates.follow(conn, request.state.user, case_id, task_id, fields['action']=='follow')
+            elif fields.get('action') == 'read':
+                work_updates.mark_read(conn, request.state.user, case_id, task_id, json.loads(fields.get('observed', '[]')))
+            else:
+                raise ValueError('Unknown discussion preference.')
+            return RedirectResponse('/work/' + str(case_id) + '/discussion' + ('?task_id=' + str(task_id) if task_id else ''), status_code=303)
+        except permissions.Denied:
+            return HTMLResponse('Discussion unavailable.', status_code=403)
+        except (ValueError, TypeError):
+            return HTMLResponse('The discussion preference could not be saved. Reload and try again.', status_code=400)
         finally:
             conn.close()
 
