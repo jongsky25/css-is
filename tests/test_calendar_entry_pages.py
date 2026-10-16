@@ -211,3 +211,12 @@ def test_an_entry_you_may_not_see_is_a_404_for_every_action(app_mod, viewer, con
 
 def test_a_missing_entry_is_a_404(viewer):
     assert viewer.get("/calendar/entries/987654").status_code == 404
+
+
+def test_add_form_is_sectioned_and_keeps_every_field(admin):
+    html = admin.get(f"/calendar/new?day={DAY}").text
+    for name in ("title", "kind", "status", "start_date", "end_date", "start_time", "end_time", "time_note",
+                 "repeat", "until", "venue", "modality", "meeting_url", "owner_org_id", "audience", "people",
+                 "tags", "note"):
+        assert f'name="{name}"' in html, name
+    assert "cf-sectioned" in html and "cf-save" in html and "cf-cancel" in html
