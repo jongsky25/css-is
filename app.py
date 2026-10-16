@@ -15669,6 +15669,8 @@ def approvals_inbox(request: Request, ok: str = "", err: str = "", period: str =
         chief = st.user_is_chain_approver(conn, user)
         room_admin = rooms.is_room_admin(conn, user)
         document_queue = documents.list_visible(conn, user, queue="review") if documents.enabled(conn) else []
+        import work_review
+        consolidation_reviews = work_review.summaries(conn,user,document_queue)
         if not (chief or room_admin or document_queue):
             return templates.TemplateResponse(
                 request, "forbidden.html",
@@ -15691,7 +15693,7 @@ def approvals_inbox(request: Request, ok: str = "", err: str = "", period: str =
             pass
     return templates.TemplateResponse(request, "approvals.html", {
         "nav_active": "approvals", "show_scope": False,
-        "document_queue": document_queue, "wellness": wellness, "awa": awa, "ok": ok, "err": err,
+        "consolidation_reviews": consolidation_reviews, "document_queue": document_queue, "wellness": wellness, "awa": awa, "ok": ok, "err": err,
         "room_queue": room_queue, "show_rooms": room_admin, "show_chief": chief,
         "decided_period": decided, "decided_period_label": decided_label,
     })

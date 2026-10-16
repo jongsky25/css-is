@@ -200,7 +200,9 @@ def finish(conn, user, doc, action, detail, changes=None, extra=()):
         conn.execute("UPDATE document_notice SET state='cancelled' WHERE document_id=? AND state='pending' AND (kind LIKE 'deadline:%' OR kind LIKE 'milestone:%')",(doc['id'],))
     eid = event(conn,doc['id'],user,action,detail)
     notify(conn,doc,eid,action,extra)
-    return doc
+    import work_review
+    work_review.invalidate(conn,user,document_id=doc['id'])
+    return raw(conn,doc['id'])
 
 
 def apply_route(conn, doc, evaluation):
@@ -442,17 +444,25 @@ def mutate(conn,user,doc_id,revision,action,data):
             if not doc['current_version'] or doc['verification']!='verified' or doc['reconcile']:
                 raise ValueError('Verify, reconcile directives, and attach an exact version before review.')
             reason(data.get('reason'))
+            import work_review
+            work_review.prepare(conn,user,doc,data,reviewer)
             changes={'review_class':klass,'reviewer_id':reviewer['id'],'status':'in_review','approved_version':None,'signed_version':None}
         elif action=='review':
             require(doc['reviewer_id']==user['id'])
             require(p.director(conn,user) if doc['review_class']=='director' else any(s['level']=='bureau' or p.scope_contains(conn,s['id'],doc['unit_id']) for s in p.seats(conn,user)))
             if doc['status']!='in_review' or doc['reconcile'] or not doc['current_version']:
                 raise ValueError('This document is not ready for review.')
+            import work_review
+            packet=work_review.require_current(conn,doc,user)
+            if packet and data.get('work_case_id') and int(data['work_case_id'])!=packet['case_id']:
+                raise ValueError('Open the work item that requested this consolidation review.')
+            if packet and int(data.get('version_id') or 0)!=doc['current_version']:
+                raise Conflict('Review the identified exact version before deciding.')
             decision=data.get('decision')
             if decision not in ('approved','changes_requested'):
                 raise ValueError('Choose approval or return for revision.')
-            conn.execute('INSERT INTO document_review(document_id,version_id,actor_id,decision,reason,delegation_json,created_at) VALUES (?,?,?,?,?,?,?)',
-                         (doc_id,doc['current_version'],user['id'],decision,reason(data.get('reason')),json.dumps(p.seats(conn,user)),tz.now_iso()))
+            conn.execute('INSERT INTO document_review(document_id,version_id,actor_id,decision,reason,delegation_json,created_at,work_packet_id) VALUES (?,?,?,?,?,?,?,?)',
+                         (doc_id,doc['current_version'],user['id'],decision,reason(data.get('reason')),json.dumps(p.seats(conn,user)),tz.now_iso(),packet['id'] if packet else None))
             changes={'status':decision,'approved_version':doc['current_version'] if decision=='approved' else None,'signed_version':None}
         elif action=='receipt':
             require(officer)

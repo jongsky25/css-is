@@ -208,5 +208,27 @@ def install(conn):
         for action in ('UPDATE','DELETE'):
             conn.execute(f"CREATE TRIGGER IF NOT EXISTS {table}_no_{action.lower()} BEFORE {action} ON {table} "
                          "BEGIN SELECT RAISE(ABORT,'Draft and handoff history is append-only'); END;")
+    if 'work_packet_id' not in {r[1] for r in conn.execute('PRAGMA table_info(document_review)')}:
+        conn.execute('ALTER TABLE document_review ADD COLUMN work_packet_id INTEGER REFERENCES work_review_packet(id)')
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS work_review_packet (
+      id INTEGER PRIMARY KEY, case_id INTEGER NOT NULL REFERENCES work_case(id),
+      document_id INTEGER NOT NULL REFERENCES document(id),
+      version_id INTEGER NOT NULL REFERENCES document_file_version(id),
+      reviewer_id INTEGER NOT NULL REFERENCES admin_user(id), actor_id INTEGER NOT NULL REFERENCES admin_user(id),
+      snapshot_json TEXT NOT NULL, snapshot_hash TEXT NOT NULL, reason TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE INDEX IF NOT EXISTS work_review_document ON work_review_packet(document_id,id);
+    CREATE TABLE IF NOT EXISTS work_review_source (
+      packet_id INTEGER NOT NULL REFERENCES work_review_packet(id), document_id INTEGER NOT NULL REFERENCES document(id),
+      PRIMARY KEY(packet_id,document_id));
+    CREATE INDEX IF NOT EXISTS work_review_source_document ON work_review_source(document_id,packet_id);
+    CREATE TABLE IF NOT EXISTS work_review_invalidation (
+      packet_id INTEGER PRIMARY KEY REFERENCES work_review_packet(id), actor_id INTEGER NOT NULL REFERENCES admin_user(id),
+      reason TEXT NOT NULL, created_at TEXT NOT NULL);
+    """)
+    for table in ('work_review_packet','work_review_source','work_review_invalidation'):
+        for action in ('UPDATE','DELETE'):
+            conn.execute(f"CREATE TRIGGER IF NOT EXISTS {table}_no_{action.lower()} BEFORE {action} ON {table} "
+                         "BEGIN SELECT RAISE(ABORT,'Consolidation review history is append-only'); END;")
     conn.execute("INSERT OR IGNORE INTO app_setting(key,value) VALUES ('work.enabled','0')")
     conn.commit()

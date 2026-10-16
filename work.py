@@ -71,6 +71,8 @@ def _event(conn, user, case_id, action, detail):
                  (case_id, user['id'], action, payload, tz.now_iso()))
     st.audit(conn, user['username'], 'work_' + action, target_type='work_case', target_id=case_id,
              after=payload, commit=False)
+    import work_review
+    work_review.invalidate(conn,user,case_id=case_id)
 
 
 def _text(value, label, maximum):

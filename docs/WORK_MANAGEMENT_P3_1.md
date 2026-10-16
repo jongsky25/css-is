@@ -1,6 +1,6 @@
 # P3.1 — Shared team views
 
-October 16, 2026 (Asia/Manila). **In review**, version **6.70**, branch `codex/team-views`. The user authorized this increment after the Phase 2 technical acceptance recommendation; Phase 2 is recorded as accepted. This increment is not merged or deployed.
+October 16, 2026 (Asia/Manila). **In review**, version **6.70**, branch `codex/team-views`. The user authorized this increment after the Phase 2 technical acceptance recommendation; Phase 2 is recorded as accepted. This increment was subsequently merged to main at `eded7ce` on the user’s instruction. Live deployment success has not been independently verified.
 
 ## Delivered
 

@@ -14,6 +14,7 @@ import storage as st
 import tzutil as tz
 import documents as d
 import documents_permissions as p
+import work_review
 from documents_storage import rows, transaction, event
 
 
@@ -85,6 +86,7 @@ def attach(conn,user,doc_id,revision,url,classification,note,adapter=None):
 
 
 def release_gate(conn,user,doc,data):
+    work_review.require_current(conn,doc)
     d.require(p.can_release(conn,user,doc))
     if doc['direction']!='OUT' or doc['status'] not in ('approved','ready_to_release') or doc['verification']!='verified' or doc['reconcile']:
         raise ValueError('A verified, authorized outgoing document is required.')
@@ -132,6 +134,7 @@ def queue(conn,user,doc_id,revision,kind,data):
             url,fid=validate_drive_url(data['url'])
             payload={'url':url,'file_id':fid,'max_bytes':20*1024*1024,'transient':True}
         elif kind=='sign':
+            work_review.require_current(conn,doc)
             d.require(p.has_role(conn,user,'signatory',doc['unit_id']))
             if doc['status']!='approved' or doc['approved_version']!=doc['current_version'] or doc['reconcile']:
                 raise ValueError('Approve the exact final version before signing.')
@@ -176,6 +179,7 @@ def external_signature(conn,user,doc_id,revision,url,source_fingerprint,evidence
     with transaction(conn):
         user,doc=d.check(conn,user,doc_id,revision)
         d.require(p.has_role(conn,user,'signatory',doc['unit_id']))
+        work_review.require_current(conn,doc)
         if doc['status']!='approved' or doc['reconcile'] or doc['approved_version']!=doc['current_version'] or version(conn,doc)['fingerprint']!=source_fingerprint:
             raise ValueError('The reviewed source changed. Review and sign the current version.')
         return persist_signature(conn,user,doc,meta,'external',evidence,str(uuid.uuid4()))
@@ -227,6 +231,7 @@ def execute(conn,operation,adapter=None,*,reconcile=False):
                 raise ValueError('Document sending is disabled.')
             v=release_gate(conn,user,doc,payload)
         elif job['kind']=='sign':
+            work_review.require_current(conn,doc)
             d.require(p.has_role(conn,user,'signatory',doc['unit_id']))
             v=version(conn,doc)
             if doc['status']!='approved' or doc['approved_version']!=v['id'] or doc['reconcile']:
@@ -322,6 +327,7 @@ def signature_preview(conn,user,doc_id,adapter=None):
     d.writable(conn)
     user=p.actor(conn,user); doc=d.get(conn,user,doc_id)
     d.require(p.has_role(conn,user,'signatory',doc['unit_id']))
+    work_review.require_current(conn,doc)
     v=version(conn,doc)
     if doc['status']!='approved' or doc['approved_version']!=v['id'] or doc['reconcile']:
         raise ValueError('Approve the current source before previewing a signature.')

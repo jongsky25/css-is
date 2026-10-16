@@ -19,6 +19,7 @@ import documents_calendar as cal
 import work
 import work_intake
 import work_readiness
+import work_review
 from documents_storage import rows
 
 
@@ -32,7 +33,7 @@ def make_router(templates,get_conn):
     def context(request,conn,**values):
         user=p.actor(conn,getattr(request.state,'user',None))
         return {'nav_active':'documents','enabled':d.enabled(conn),'csrf':csrf(request),'error':'',
-                'workflow_admin':p.has_role(conn,user,'workflow_admin'),
+                'submitted':{},'workflow_admin':p.has_role(conn,user,'workflow_admin'),
                 'people':rows(conn,"SELECT u.id,u.username,COALESCE(NULLIF(r.name,''),u.username) AS name FROM admin_user u LEFT JOIN resource_person r ON r.id=u.rp_id WHERE u.active=1 ORDER BY name"),
                 'names':{r['id']:r['name'] for r in rows(conn,"SELECT u.id,COALESCE(NULLIF(r.name,''),u.username) AS name FROM admin_user u LEFT JOIN resource_person r ON r.id=u.rp_id")},
                 'units':rows(conn,'SELECT id,name FROM org_unit ORDER BY path'),**values}
@@ -47,7 +48,7 @@ def make_router(templates,get_conn):
             return {'redirect':doc['canonical_id']}
         details={name:rows(conn,'SELECT * FROM '+table+' WHERE document_id=? ORDER BY id', (doc_id,)) for name,table in
                  [('assignments','document_assignment_effective'),('versions','document_file_version'),('history','document_event'),
-                  ('dispatches','document_dispatch'),('jobs','document_job'),('references','document_reference'),('receipts','document_receipt'),('directives','document_directive')]}
+                  ('reviews','document_review'),('dispatches','document_dispatch'),('jobs','document_job'),('references','document_reference'),('receipts','document_receipt'),('directives','document_directive')]}
         migration = conn.execute('SELECT case_id FROM work_legacy_document WHERE document_id=?',(doc_id,)).fetchone()
         if migration:
             try:
@@ -77,7 +78,7 @@ def make_router(templates,get_conn):
         if any(a['due_date'] and a['due_date']<doc['created_at'][:10] for a in details['assignments']):
             warnings.append('The proposed contributor buffer cannot fit before the deadline. The lead must adjust milestones explicitly.')
         return {'doc':doc,**details,'policy':policy,'duplicates':d.duplicate_candidates(conn,user,doc_id),
-                'work_migration':migration,
+                'work_migration':migration,'consolidation':work_review.summaries(conn,user,[doc]).get(doc_id),
                 'assignments_migrated':bool(conn.execute('SELECT 1 FROM work_legacy_document WHERE document_id=?',(doc_id,)).fetchone()),
                 'work_enabled':work.enabled(conn),'work_cases':work.cases_for_document(conn,user,doc_id),
                 'warnings':warnings,
