@@ -80,3 +80,9 @@ which corrupts on read); restore it and re-run.
 - **0 admin users by design** until first-run setup (above).
 - **Session cookie is not `Secure`** — intended for LAN/HTTP use. If you ever expose this beyond
   the office network, put it behind HTTPS and set the cookie `Secure`.
+
+## Optional public short links
+
+Automatic is.gd shortening is off by default. See [SHORT_LINKS.md](docs/SHORT_LINKS.md)
+for `CSS_SHORT_LINKS=1`, canonical HTTPS origin requirements, queue behavior and the
+resumable active-activity backfill. No is.gd account or key is required.

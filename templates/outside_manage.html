@@ -107,19 +107,19 @@
     {% if speakers %}
     <div class="qr-grid">
       {% if combined_qr %}
-      <div class="qr-tile combined">
+      <div class="qr-tile combined" data-short-link="{{ combined_original }}">
         <div class="lbl">Combined — all speakers</div>
-        <img src="{{ combined_qr }}" alt="Combined QR code">
-        <div class="url"><a href="{{ combined_url }}">{{ combined_url }}</a></div>
-        <div class="dl noprint"><a class="btn ghost" href="{{ combined_qr }}" download="qr-combined.png">⤓ Download</a></div>
+        <img data-short-qr src="{{ combined_qr }}" alt="Combined QR code">
+        <div class="url"><a data-short-text data-short-href href="{{ combined_url }}">{{ combined_url }}</a> <a href="{{ combined_original }}">Original link</a></div>
+        <div class="dl noprint"><a class="btn ghost" data-short-download href="{{ combined_qr }}" download="qr-combined.png">⤓ Download</a></div>
       </div>
       {% endif %}
       {% for s in speakers %}
-      <div class="qr-tile">
+      <div class="qr-tile" data-short-link="{{ s.original_url }}">
         <div class="lbl">{{ s.topic or 'Untitled' }}{% if s.rp_name %} — {{ s.rp_name }}{% endif %}</div>
-        <img src="{{ s.qr }}" alt="QR code for {{ s.topic }}">
-        <div class="url"><a href="{{ s.url }}">{{ s.url }}</a></div>
-        <div class="dl noprint"><a class="btn ghost" href="{{ s.qr }}" download="qr-{{ (s.topic or 'speaker')|slugify }}.png">⤓ Download</a></div>
+        <img data-short-qr src="{{ s.qr }}" alt="QR code for {{ s.topic }}">
+        <div class="url"><a data-short-text data-short-href href="{{ s.url }}">{{ s.url }}</a> <a href="{{ s.original_url }}">Original link</a></div>
+        <div class="dl noprint"><a class="btn ghost" data-short-download href="{{ s.qr }}" download="qr-{{ (s.topic or 'speaker')|slugify }}.png">⤓ Download</a></div>
       </div>
       {% endfor %}
     </div>
