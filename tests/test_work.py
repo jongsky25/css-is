@@ -1648,3 +1648,139 @@ def test_decision_document_reference_version_and_stale_review(workspace):
     with pytest.raises(docs.Conflict):decisions.resolve(c,u[1],item['id'],did,task['id'],2,'retain','Stale review')
     decisions.resolve(c,u[1],item['id'],did,task['id'],current['revision'],'retain','Scope still applies.')
     assert c.execute('SELECT status,approved_version,current_version FROM document WHERE id=?',(doc['id'],)).fetchone()==('approved',version,version)
+
+
+# P2.5: draft pointers and contribution notes never imply Drive or approval authority.
+import work_handoff as handoff
+
+DRAFT_URL='https://docs.google.com/document/d/synthetic_draft_123/edit'
+SHEET_URL='https://docs.google.com/spreadsheets/d/synthetic_sheet_456/edit'
+SUPPORT_URL='https://drive.google.com/file/d/synthetic_support_789/view'
+
+
+def test_handoff_retains_draft_support_and_task_snapshot_without_state_changes(workspace):
+    c,u,unit,_=workspace;doc=document(c,u[0],unit);item=case(c,u[0],unit,source_document_id=doc['id'])
+    task=propose(c,u[0],item,unit,u[0]['id']);task=advance(c,u[1],task,'confirm',owner_id=u[0]['id'])
+    draft=handoff.set_draft(c,u[0],item['id'],0,{'title':'Response draft','url':DRAFT_URL,'reason':'Start consolidation'})
+    support=handoff.add_file(c,u[0],item['id'],{'title':'Evidence table','url':SUPPORT_URL})
+    before_doc=tuple(c.execute('SELECT * FROM document WHERE id=?',(doc['id'],)).fetchone())
+    before_task=tuple(c.execute('SELECT * FROM work_task WHERE id=?',(task['id'],)).fetchone())
+    hid=handoff.post(c,u[0],item['id'],task['id'],task['revision'],draft,'Insert totals into section two.',support)
+    newdraft=handoff.set_draft(c,u[1],item['id'],draft,{'title':'Calculation sheet','url':SHEET_URL,'reason':'Changed consolidation format'})
+    handoff.retire_file(c,u[0],item['id'],support,'Superseded evidence list')
+    page=handoff.page(c,u[0],item['id']);note=page['notes'][0]
+    assert note['id']==hid and note['draft_id']==draft and note['draft_url']==DRAFT_URL
+    assert note['support_url']==SUPPORT_URL and note['snapshot']['status']=='todo'
+    assert page['draft']['id']==newdraft and not page['support_files']
+    assert page['archived_files'][0]['title']=='Evidence table'
+    assert tuple(c.execute('SELECT * FROM document WHERE id=?',(doc['id'],)).fetchone())==before_doc
+    assert tuple(c.execute('SELECT * FROM work_task WHERE id=?',(task['id'],)).fetchone())==before_task
+    assert work.get(c,u[0],item['id'])['revision']==item['revision']
+
+
+@pytest.mark.parametrize('url', ['javascript:alert(1)','https://evil.test/document/d/synthetic_draft_123/edit',
+    'https://docs.google.com@evil.test/document/d/synthetic_draft_123/edit',
+    'https://user:pass@docs.google.com/document/d/synthetic_draft_123/edit',
+    'http://docs.google.com/document/d/synthetic_draft_123/edit',
+    'https://docs.google.com:invalid/document/d/synthetic_draft_123/edit',
+    'https://drive.google.com/drive/folders/synthetic_draft_123',
+    'https://docs.google.com/document/d/short/edit'])
+def test_handoff_rejects_unsafe_or_nonfile_urls(url):
+    with pytest.raises(ValueError):handoff.link(url)
+
+
+def test_handoff_canonical_google_links_resource_keys_and_draft_types():
+    url,fid,kind=handoff.link(DRAFT_URL+'?utm_source=other&resourcekey=0-share_key#heading=x',draft=True)
+    assert url==DRAFT_URL+'?resourcekey=0-share_key' and kind=='Docs'
+    assert handoff.link(SHEET_URL,draft=True)[2]=='Sheets'
+    assert handoff.link('https://drive.google.com/open?id=synthetic_support_789')[0]==SUPPORT_URL
+    with pytest.raises(ValueError):handoff.link(SUPPORT_URL,draft=True)
+    with pytest.raises(ValueError):handoff.link(DRAFT_URL+'?resourcekey=invalid%20key')
+
+
+def test_handoff_authority_cross_case_and_revoked_source_access(workspace):
+    c,u,unit,_=workspace;doc=document(c,u[0],unit);item=case(c,u[0],unit,source_document_id=doc['id'])
+    doc=docs.mutate(c,u[1],doc['id'],doc['revision'],'verify',{'verification':'verified','reason':'Checked'})
+    a=propose(c,u[0],item,unit,u[0]['id']);a=advance(c,u[1],a,'confirm',owner_id=u[0]['id'])
+    b=propose(c,u[0],item,unit,u[3]['id']);b=advance(c,u[1],b,'confirm',owner_id=u[3]['id'])
+    fields={'title':'Draft','url':DRAFT_URL,'reason':'Selected'}
+    with pytest.raises(permissions.Denied):handoff.set_draft(c,u[3],item['id'],0,fields)
+    with pytest.raises(permissions.Denied):handoff.post(c,u[3],item['id'],a['id'],a['revision'],0,'Other person handoff')
+    with pytest.raises(permissions.Denied):handoff.set_draft(c,u[4],item['id'],0,fields)
+    other=case(c,u[0],unit);outside=handoff.add_file(c,u[0],other['id'],{'title':'Other file','url':SUPPORT_URL})
+    with pytest.raises(ValueError):handoff.post(c,u[0],item['id'],a['id'],a['revision'],0,'Cross case',outside)
+    file=handoff.add_file(c,u[0],item['id'],{'title':'Source table','url':SUPPORT_URL})
+    with pytest.raises(permissions.Denied):handoff.retire_file(c,u[3],item['id'],file,'Not mine')
+    assert handoff.post(c,u[3],item['id'],b['id'],b['revision'],0,'My own handoff')
+    docs.mutate(c,u[1],doc['id'],doc['revision'],'access',{'visibility':'restricted','viewers':[u[1]['id']],'reason':'Restricted'})
+    with pytest.raises(permissions.Denied):handoff.page(c,u[3],item['id'])
+    with pytest.raises(permissions.Denied):handoff.post(c,u[3],item['id'],b['id'],b['revision'],0,'Revoked')
+
+
+def test_handoff_stale_draft_task_removed_link_and_disabled_writes(workspace):
+    c,u,unit,_=workspace;item=case(c,u[0],unit);task=propose(c,u[0],item,unit,u[0]['id'])
+    task=advance(c,u[1],task,'confirm',owner_id=u[0]['id'])
+    draft=handoff.set_draft(c,u[0],item['id'],0,{'title':'Draft','url':DRAFT_URL,'reason':'Selected'})
+    with pytest.raises(docs.Conflict):handoff.post(c,u[0],item['id'],task['id'],task['revision'],0,'Stale draft')
+    with pytest.raises(docs.Conflict):handoff.set_draft(c,u[0],item['id'],0,{'title':'Replacement','url':SHEET_URL,'reason':'Stale'})
+    stale_revision=task['revision'];task=advance(c,u[0],task,'acknowledge')
+    with pytest.raises(docs.Conflict):handoff.post(c,u[0],item['id'],task['id'],stale_revision,draft,'Stale task')
+    sid=handoff.add_file(c,u[0],item['id'],{'title':'Table','url':SUPPORT_URL})
+    with pytest.raises(docs.Conflict):handoff.add_file(c,u[0],item['id'],{'title':'Duplicate name','url':SUPPORT_URL})
+    handoff.retire_file(c,u[0],item['id'],sid,'Removed')
+    with pytest.raises(ValueError):handoff.post(c,u[0],item['id'],task['id'],task['revision'],draft,'Removed file',sid)
+    cleared=handoff.set_draft(c,u[0],item['id'],draft,{'reason':'No draft needed'},clear=True)
+    assert handoff.post(c,u[0],item['id'],task['id'],task['revision'],cleared,'Handoff without draft')
+    st.set_setting(c,'work.enabled','0')
+    assert handoff.page(c,u[0],item['id'])['notes']
+    with pytest.raises(ValueError):handoff.post(c,u[0],item['id'],task['id'],task['revision'],cleared,'Disabled')
+    with pytest.raises(ValueError):handoff.add_file(c,u[0],item['id'],{'title':'No','url':SUPPORT_URL})
+
+
+def test_handoff_concurrent_draft_selection_and_atomic_audit(workspace,monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    c,u,unit,path=workspace;item=case(c,u[0],unit)
+    def select(url):
+        conn=st.connect(path)
+        try:
+            handoff.set_draft(conn,u[0],item['id'],0,{'title':'Shared draft','url':url,'reason':'Selected'})
+            return 'saved'
+        except docs.Conflict:return 'conflict'
+        finally:conn.close()
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        assert sorted(pool.map(select,[DRAFT_URL,SHEET_URL]))==['conflict','saved']
+    def fail(*args,**kwargs):raise RuntimeError('audit unavailable')
+    monkeypatch.setattr(work,'_event',fail)
+    with pytest.raises(RuntimeError):handoff.add_file(c,u[0],item['id'],{'title':'Rollback','url':SUPPORT_URL})
+    assert not handoff.files(c,item['id'])
+    assert c.execute('SELECT COUNT(*) FROM work_draft').fetchone()[0]==1
+    st.init_db(c)
+    with pytest.raises(sqlite3.IntegrityError,match='append-only'):c.execute('DELETE FROM work_draft')
+    c.rollback()
+
+
+def test_handoff_history_pagination_and_http_forms(workspace,app_mod,monkeypatch):
+    from starlette.testclient import TestClient
+    import html
+    c,u,unit,path=workspace;item=case(c,u[0],unit);task=propose(c,u[0],item,unit,u[0]['id'])
+    task=advance(c,u[1],task,'confirm',owner_id=u[0]['id'])
+    ids=[handoff.post(c,u[0],item['id'],task['id'],task['revision'],0,f'Note {i}') for i in range(31)]
+    first=handoff.page(c,u[0],item['id']);older=handoff.page(c,u[0],item['id'],before=first['next_cursor'])
+    assert [n['id'] for n in first['notes']+older['notes']]==list(reversed(ids))
+    monkeypatch.setattr(app_mod,'DB',path);url=f"/work/{item['id']}/draft"
+    def hidden(page,name):return html.unescape(re.search('name="'+name+'" value="([^"]*)"',page.text)[1])
+    with TestClient(app_mod.app) as client:
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[0]));page=client.get(url)
+        assert page.status_code==200 and 'does not grant Drive permissions' in page.text
+        form={'action':'set_draft','draft_id':0,'title':'<script>Draft</script>','url':DRAFT_URL,'reason':'Working copy'}
+        assert client.post(url,data=form).status_code==403
+        form['csrf']=hidden(page,'csrf');page=client.post(url,data=form)
+        assert page.status_code==200 and '&lt;script&gt;Draft&lt;/script&gt;' in page.text
+        assert 'Open in Google Docs' in page.text and 'rel="noopener noreferrer"' in page.text
+        assert client.post(url,data=form).status_code==409
+        assert 'Working draft' in client.get(f"/work/{item['id']}").text
+        payload={'action':'handoff','csrf':hidden(page,'csrf'),'task_id':task['id'],'task_revisions':hidden(page,'task_revisions'),'draft_id':hidden(page,'draft_id'),'note':'Place the table in section two.'}
+        page=client.post(url,data=payload)
+        assert page.status_code==200 and 'Place the table in section two.' in page.text
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[4]))
+        assert client.get(url).status_code==404

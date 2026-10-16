@@ -19,6 +19,7 @@
 {{ task_action(task,action,case,csrf,people,submitted) }}
 {% endfor %}</details>{% endif %}{% endif %}
 <p><a href="/work/{{ case.id }}/discussion?task_id={{ task.id }}">Discuss this contribution</a></p>
+<p><a href="/work/{{ case.id }}/draft?task_id={{ task.id }}#handoffs">Contribution handoff notes</a></p>
 <details class="work-task-history"><summary>Contribution history</summary>{% with history=task.task_history %}{% include "work/history.html" %}{% endwith %}</details>
 </article>
 {% else %}<p>No contributions proposed yet.</p>{% endfor %}

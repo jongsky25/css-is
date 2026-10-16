@@ -181,5 +181,32 @@ def install(conn):
         for action in ('UPDATE','DELETE'):
             conn.execute(f"CREATE TRIGGER IF NOT EXISTS {table}_no_{action.lower()} BEFORE {action} ON {table} "
                          "BEGIN SELECT RAISE(ABORT,'Decision and source history is append-only'); END;")
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS work_draft (
+      id INTEGER PRIMARY KEY, case_id INTEGER NOT NULL REFERENCES work_case(id),
+      title TEXT NOT NULL, url TEXT NOT NULL, file_id TEXT NOT NULL, kind TEXT NOT NULL,
+      actor_id INTEGER NOT NULL REFERENCES admin_user(id), reason TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE INDEX IF NOT EXISTS work_draft_case ON work_draft(case_id,id);
+    CREATE TABLE IF NOT EXISTS work_support_file (
+      id INTEGER PRIMARY KEY, case_id INTEGER NOT NULL REFERENCES work_case(id),
+      title TEXT NOT NULL, url TEXT NOT NULL, file_id TEXT NOT NULL,
+      actor_id INTEGER NOT NULL REFERENCES admin_user(id), created_at TEXT NOT NULL);
+    CREATE INDEX IF NOT EXISTS work_support_file_case ON work_support_file(case_id,id);
+    CREATE TABLE IF NOT EXISTS work_support_retired (
+      file_id INTEGER PRIMARY KEY REFERENCES work_support_file(id),
+      actor_id INTEGER NOT NULL REFERENCES admin_user(id), reason TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS work_handoff (
+      id INTEGER PRIMARY KEY, case_id INTEGER NOT NULL REFERENCES work_case(id),
+      task_id INTEGER NOT NULL REFERENCES work_task(id), actor_id INTEGER NOT NULL REFERENCES admin_user(id),
+      note TEXT NOT NULL, task_snapshot_json TEXT NOT NULL,
+      draft_id INTEGER REFERENCES work_draft(id), support_id INTEGER REFERENCES work_support_file(id),
+      created_at TEXT NOT NULL);
+    CREATE INDEX IF NOT EXISTS work_handoff_case ON work_handoff(case_id,id);
+    CREATE INDEX IF NOT EXISTS work_handoff_task ON work_handoff(task_id,id);
+    """)
+    for table in ('work_draft','work_support_file','work_support_retired','work_handoff'):
+        for action in ('UPDATE','DELETE'):
+            conn.execute(f"CREATE TRIGGER IF NOT EXISTS {table}_no_{action.lower()} BEFORE {action} ON {table} "
+                         "BEGIN SELECT RAISE(ABORT,'Draft and handoff history is append-only'); END;")
     conn.execute("INSERT OR IGNORE INTO app_setting(key,value) VALUES ('work.enabled','0')")
     conn.commit()

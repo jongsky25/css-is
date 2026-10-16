@@ -18,6 +18,7 @@ import work_discussion
 import work_updates
 import work_blockers
 import work_decisions
+import work_handoff
 
 
 def csrf(request):
@@ -117,7 +118,7 @@ def make_router(templates, get_conn):
 
         return render(request, conn, 'detail', status_code=status_code, error=error, case=case,
                       tasks=tasks, task_labels=work_tasks.LABELS, counts=counts, next_steps=next_steps, unfinished=unfinished, blocked=blocked, can_link=work.can_link(conn, user, case),
-                      documents=work.linked_documents(conn, user, case_id), history=events,
+                      documents=work.linked_documents(conn, user, case_id), history=events, working_draft=work_handoff.current(conn,case_id),
                       choices=work.document_choices(conn, user, request.query_params.get('q', '')),
                       officer=work.officer(conn, user, case), blocker_people=work_updates.candidates(conn,user,case_id), blocker_viewer_id=user['id'], submitted=submitted or {})
 
@@ -317,6 +318,56 @@ def make_router(templates, get_conn):
         except (ValueError,TypeError) as e:
             try:return decision_page(request,conn,case_id,decision_id,409 if isinstance(e,docs.Conflict) else 400,str(e),fields)
             except permissions.Denied:return HTMLResponse('Work decision unavailable.',status_code=404)
+        finally:conn.close()
+
+    def handoff_page(request,conn,case_id,status_code=200,error='',submitted=None):
+        q=request.query_params
+        values=work_handoff.page(conn,request.state.user,case_id,
+            task_id=int(q['task_id']) if q.get('task_id') else None,
+            before=int(q['before']) if q.get('before') else None,
+            draft_before=int(q['draft_before']) if q.get('draft_before') else None,
+            file_before=int(q['file_before']) if q.get('file_before') else None)
+        blocked=''
+        try:work_compat.require_open(conn,case_id)
+        except ValueError as e:blocked=str(e)
+        return render(request,conn,'draft',status_code=status_code,error=error,submitted=submitted or {},
+            blocked=blocked,task_labels=work_tasks.LABELS,
+            task_revisions={str(t['id']):t['revision'] for t in values['handoff_tasks']},**values)
+
+    @router.get('/work/{case_id}/draft', response_class=HTMLResponse)
+    def draft(request: Request,case_id: int):
+        conn=get_conn()
+        try:return handoff_page(request,conn,case_id)
+        except permissions.Denied:return HTMLResponse('Work draft unavailable.',status_code=404)
+        except (ValueError,TypeError):return HTMLResponse('Invalid draft or handoff link.',status_code=400)
+        finally:conn.close()
+
+    @router.post('/work/{case_id}/draft')
+    async def save_draft(request: Request,case_id: int):
+        conn=get_conn();fields={}
+        try:
+            fields=await posted(request)
+            action=fields.get('action');anchor='working-draft'
+            if action in ('set_draft','clear_draft'):
+                work_handoff.set_draft(conn,request.state.user,case_id,int(fields.get('draft_id','')),fields,clear=action=='clear_draft')
+            elif action=='add_file':
+                work_handoff.add_file(conn,request.state.user,case_id,fields);anchor='supporting-files'
+            elif action=='retire_file':
+                work_handoff.retire_file(conn,request.state.user,case_id,int(fields.get('support_id','')),fields.get('reason'));anchor='supporting-files'
+            elif action=='handoff':
+                revisions=json.loads(fields.get('task_revisions','{}'))
+                if not isinstance(revisions,dict):raise ValueError('Reload the contribution choices.')
+                tid=int(fields.get('task_id',''))
+                hid=work_handoff.post(conn,request.state.user,case_id,tid,int(revisions.get(str(tid),0)),
+                    int(fields.get('draft_id','')),fields.get('note'),int(fields['support_id']) if fields.get('support_id') else None)
+                anchor='handoff-'+str(hid)
+            else:raise ValueError('Choose a draft or handoff action.')
+            return RedirectResponse(f'/work/{case_id}/draft#{anchor}',status_code=303)
+        except permissions.Denied:return HTMLResponse('Draft or handoff action unavailable.',status_code=403)
+        except (ValueError,TypeError) as e:
+            try:return handoff_page(request,conn,case_id,409 if isinstance(e,docs.Conflict) else 400,str(e),fields)
+            except permissions.Denied:return HTMLResponse('Work draft unavailable.',status_code=404)
+            except (ValueError,TypeError):return HTMLResponse('Invalid draft or handoff link.',status_code=400)
         finally:conn.close()
 
     @router.get('/work', response_class=HTMLResponse)

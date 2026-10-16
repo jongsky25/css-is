@@ -1,6 +1,6 @@
 # P2.4 — Turn discussion into tasks and decisions
 
-October 16, 2026 (Asia/Manila). **In review**, version **6.65**, branch `codex/work-decisions`. P2.3 was merged at `d44d868` as 6.64 before development, preserving intervening Google Meet changes and their changelog entries. P2.4 is not merged or deployed.
+October 16, 2026 (Asia/Manila). **In review**, version **6.65**, branch `codex/work-decisions`. P2.3 was merged at `d44d868` as 6.64 before development, preserving intervening Google Meet changes and their changelog entries. P2.4 was subsequently merged at `855b7bb` on the user’s instruction. Live deployment success has not been independently verified.
 
 ## Delivered
 
