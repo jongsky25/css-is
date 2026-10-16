@@ -1,0 +1,30 @@
+{% extends 'work/base.html' %}
+{% block title %}Team contributions · Office Connect{% endblock %}
+{% block work_content %}
+<h1>Team contributions</h1>
+{% if saved and not error %}<p class="work-note" role="status">Contribution updated. Its new state may no longer match these filters.</p>{% endif %}
+<p class="work-intro">Coordinate contributions across the shared work you can access. Select a team and owner to see progress, review waits and blockers.</p>
+<form method="get" action="/work/team" class="work-form work-team-filters" aria-label="Filter team contributions">
+<input type="hidden" name="view" value="{{ selection.view }}">
+<div><label for="team-q">Find a contribution or work item</label><input id="team-q" name="q" maxlength="120" value="{{ selection.q }}"></div>
+<div><label for="team-unit">Contributing unit</label><select id="team-unit" name="unit"><option value="">All units</option>{% for unit in units %}<option value="{{ unit.id }}" {% if selection.unit==unit.id|string %}selected{% endif %}>{{ unit.name }}</option>{% endfor %}</select></div>
+<div><label for="team-owner">Owner</label><select id="team-owner" name="owner"><option value="">All owners</option><option value="mine" {% if selection.owner=='mine' %}selected{% endif %}>Assigned to me</option><option value="unassigned" {% if selection.owner=='unassigned' %}selected{% endif %}>Unassigned</option>{% for person in people %}<option value="{{ person.id }}" {% if selection.owner==person.id|string %}selected{% endif %}>{{ person.name }}</option>{% endfor %}</select></div>
+<div><label for="team-status">Status</label><select id="team-status" name="status"><option value="active" {% if selection.status=='active' %}selected{% endif %}>Active contributions</option><option value="all" {% if selection.status=='all' %}selected{% endif %}>All statuses</option>{% for state,label in task_labels.items() %}<option value="{{ state }}" {% if selection.status==state %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+<div><label for="team-attention">Needs attention</label><select id="team-attention" name="attention">{% for value,label in [('', 'Any'),('waiting','Blocker, prerequisite or changed decision'),('overdue','Overdue internal target'),('no_date','No internal target')] %}<option value="{{ value }}" {% if selection.attention==value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+<div class="work-actions"><button class="work-btn primary">Apply filters</button><a href="/work/team" class="work-btn">Reset filters</a></div>
+</form>
+<nav class="work-actions" aria-label="Team view"><a class="work-btn" href="{{ list_url }}" {% if selection.view=='list' %}aria-current="page"{% endif %}>List</a><a class="work-btn" href="{{ board_url }}" {% if selection.view=='board' %}aria-current="page"{% endif %}>Board</a></nav>
+<p class="work-small">Newest contributions first. Showing {{ items|length }} on this page; column counts apply to this page only. Internal targets do not change official deadlines. Use each contribution’s action forms to update its status.</p>
+{% if focused %}<section aria-label="Contribution needing correction"><h2>Check this contribution before retrying</h2><p>Your text is retained below. Its latest state may no longer match your filters.</p>{% set task=focused %}{% include 'work/team_card.html' %}{% if submitted.get('_action') not in focused.actions %}<p class="work-note">That action is no longer available. Your unsaved note: {{ submitted.get('reason','') }}</p>{% if submitted.get('submission') %}<p class="work-outcome">Your unsaved output: {{ submitted.submission }}</p>{% endif %}{% endif %}</section>{% endif %}
+{% if items %}
+<div class="{{ 'work-team-board' if selection.view=='board' else 'work-team-list' }}">
+{% if selection.view=='board' %}
+{% for state,label in task_labels.items() if selection.status=='all' or selection.status==state or (selection.status=='active' and state not in ('done','cancelled')) %}
+<section class="work-team-column" aria-labelledby="column-{{ state }}"><h2 id="column-{{ state }}">{{ label }} <span class="work-badge">{{ items|selectattr('status','equalto',state)|list|length }} on this page</span></h2>
+{% for task in items if task.status==state and (not focused or task.id!=focused.id) %}{% include 'work/team_card.html' %}{% else %}<p class="work-small">No further contributions in this column on this page.</p>{% endfor %}</section>
+{% endfor %}
+{% else %}{% for task in items if not focused or task.id!=focused.id %}{% include 'work/team_card.html' %}{% endfor %}{% endif %}
+</div>
+{% else %}<div class="work-card"><h2>No matching contributions on this page</h2><p>Only work you can currently access appears here. Try other filters{% if next_url %} or continue to the next page{% endif %}.</p></div>{% endif %}
+<nav class="work-actions" aria-label="Team pages">{% if selection.before %}<a class="work-btn" href="{{ first_url }}">Back to newest</a>{% endif %}{% if next_url %}<a class="work-btn" href="{{ next_url }}">Continue through contributions</a>{% endif %}</nav>
+{% endblock %}

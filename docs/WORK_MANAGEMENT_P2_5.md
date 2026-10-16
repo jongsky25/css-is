@@ -1,6 +1,8 @@
 # P2.5 — Collaborative draft handoff
 
-October 16, 2026 (Asia/Manila). **In review**, version **6.66**, branch `codex/draft-handoff`. P2.4 was merged at `855b7bb` before development. P2.5 was subsequently merged to main at `0dbfdb8` as version **6.69**, preserving intervening releases. Live deployment success has not been independently verified.
+October 16, 2026 (Asia/Manila). **Accepted**, version **6.66**, branch `codex/draft-handoff`. P2.4 was merged at `855b7bb` before development. P2.5 was subsequently merged to main at `0dbfdb8` as version **6.69**, preserving intervening releases. Live deployment success has not been independently verified.
+
+Phase 2 acceptance was recorded when the user authorized P3.1 after the [technical acceptance review](WORK_MANAGEMENT_PHASE_2_ACCEPTANCE.md). Historical verification notes below remain unchanged.
 
 ## Delivered
 

@@ -1,0 +1,16 @@
+{% from 'work/task_action.html' import task_action %}
+<article class="work-card work-team-card" id="team-task-{{ task.id }}" aria-labelledby="team-title-{{ task.id }}">
+<p class="work-small"><a href="/work/{{ task.case.id }}">{{ task.case.title }}</a></p>
+<h3 id="team-title-{{ task.id }}"><a href="/work/{{ task.case.id }}#task-{{ task.id }}">{{ task.title }}</a></h3>
+<p><span class="work-badge">{{ task_labels[task.status] }}</span>{% if task.mandatory %} <span class="work-badge">Required</span>{% endif %}</p>
+<div class="work-meta"><span>Owner<strong>{{ names.get(task.owner_id,'Inactive account') if task.owner_id else 'Unassigned — awaiting confirmation' }}</strong></span><span>Contributing unit<strong>{% for unit in units if unit.id==task.unit_id %}{{ unit.name }}{% endfor %}</strong></span><span>Internal target<strong>{{ task.due_date|humandate if task.due_date else 'Not set' }}</strong>{% if task.overdue %}<span>Overdue</span>{% endif %}</span></div>
+{% if task.read_only %}<p class="work-note">{{ task.read_only }}</p>{% endif %}
+{% if task.owner_warning %}<p class="work-note">{{ task.owner_warning }}</p>{% endif %}
+{% if task.blocker_reason %}<p class="work-note"><strong>Blocker:</strong> {{ task.blocker_reason }}<br>Follow-up: {{ names.get(task.blocker_owner_id,'Unavailable account') }}{% if task.blocker_due_date %} · {{ task.blocker_due_date|humandate }}{% endif %}</p>{% endif %}
+{% if task.waiting_on %}<p>Waiting for: {% for prerequisite in task.waiting_on %}<a href="/work/{{ task.case.id }}#task-{{ prerequisite.id }}">{{ prerequisite.title }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+{% if task.pending_decisions %}<p class="work-note">Review changed work direction: {% for decision in task.pending_decisions %}<a href="/work/{{ task.case.id }}/decisions/{{ decision.id }}">Decision {{ decision.id }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+<details class="work-secondary"><summary>Expected output and submitted evidence</summary><p class="work-outcome">{{ task.expected_output }}</p>{% if task.submission %}<h4>Latest submitted output</h4><p class="work-outcome">{{ task.submission }}</p>{% else %}<p>No output submitted yet.</p>{% endif %}</details>
+{% if task.status=='for_review' and 'accept' in task.actions %}<p class="work-small">Read the submitted evidence above before accepting. This accepts a contribution; formal document approval remains in Documents.</p>{% endif %}
+{% for action in task.actions %}{{ task_action(task,action,task.case,csrf,people,submitted,team_url) }}{% endfor %}
+<a href="/work/{{ task.case.id }}#task-{{ task.id }}">Contribution details and history →</a>
+</article>

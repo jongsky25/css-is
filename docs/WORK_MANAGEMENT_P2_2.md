@@ -1,6 +1,8 @@
 # P2.2 — Mentions, followers and unread state
 
-October 16, 2026. **In review**, version **6.61**, branch `codex/work-updates`. P2.1 was merged at `9622870` before this increment. P2.2 was subsequently merged at `4a44fc0` on the user’s instruction. Live deployment success has not been independently verified.
+October 16, 2026. **Accepted**, version **6.61**, branch `codex/work-updates`. P2.1 was merged at `9622870` before this increment. P2.2 was subsequently merged at `4a44fc0` on the user’s instruction. Live deployment success has not been independently verified.
+
+Phase 2 acceptance was recorded when the user authorized P3.1 after the [technical acceptance review](WORK_MANAGEMENT_PHASE_2_ACCEPTANCE.md). Historical verification notes below remain unchanged.
 
 ## Delivered
 

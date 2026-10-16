@@ -19,6 +19,7 @@ import work_updates
 import work_blockers
 import work_decisions
 import work_handoff
+import work_team
 
 
 def csrf(request):
@@ -425,6 +426,50 @@ def make_router(templates, get_conn):
             return HTMLResponse(str(e), status_code=400)
         finally:
             conn.close()
+
+    def team_page(request, conn, status_code=200, error='', submitted=None, focused=None):
+        selection = work_team.filters(request.query_params)
+        items, cursor = work_team.page(conn, request.state.user, selection)
+        return render(request, conn, 'team', status_code=status_code, error=error,
+            items=items, selection=selection, task_labels=work_tasks.LABELS,
+            team_url=work_team.url(selection), list_url=work_team.url(selection,view='list'),
+            board_url=work_team.url(selection,view='board'),
+            first_url=work_team.url(selection,before=''),
+            next_url=work_team.url(selection,before=cursor) if cursor else None,
+            submitted=submitted or {}, focused=focused, saved=request.query_params.get('saved')=='1')
+
+    @router.get('/work/team', response_class=HTMLResponse)
+    def team(request: Request):
+        conn = get_conn()
+        try:
+            return team_page(request,conn)
+        except permissions.Denied:
+            return HTMLResponse('An active staff account is required.',status_code=403)
+        except (ValueError,TypeError):
+            return HTMLResponse('Invalid team filters. Start again at /work/team.',status_code=400)
+        finally: conn.close()
+
+    @router.post('/work/team/{case_id}/{task_id}/{action}')
+    async def team_change(request: Request, case_id: int, task_id: int, action: str):
+        conn = get_conn()
+        fields = {}
+        try:
+            selection = work_team.filters(request.query_params)
+            fields = await posted(request)
+            work_tasks.mutate(conn,request.state.user,case_id,task_id,int(fields.get('revision','')),action,fields)
+            return RedirectResponse(work_team.url(selection)+'&saved=1',status_code=303)
+        except permissions.Denied:
+            return HTMLResponse('Contribution or action unavailable. Reload the team view.',status_code=403)
+        except (ValueError,TypeError) as e:
+            try:
+                focused=work_team.one(conn,request.state.user,case_id,task_id)
+                return team_page(request,conn,409 if isinstance(e,docs.Conflict) else 400,str(e),
+                    {**fields,'_task_id':task_id,'_action':action},focused)
+            except permissions.Denied:
+                return HTMLResponse('Contribution unavailable.',status_code=404)
+            except (ValueError,TypeError):
+                return HTMLResponse('Invalid team filters. Start again at /work/team.',status_code=400)
+        finally: conn.close()
 
     @router.get('/work/{case_id}', response_class=HTMLResponse)
     def show(request: Request, case_id: int):

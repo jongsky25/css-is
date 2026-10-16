@@ -1823,3 +1823,166 @@ def test_phase2_question_dependency_decision_and_handoff_journey(workspace):
     assert handoff.page(c,u[0],item['id'])['notes'][0]['snapshot']['status']=='done'
     assert decisions.task_source(c,u[0],item['id'],upstream['id'])['body']=='Please validate the regional totals.'
     assert tuple(c.execute('SELECT * FROM document WHERE id=?',(doc['id'],)).fetchone())==before
+
+
+# P3.1: shared views use the canonical task store, permissions and transitions.
+import work_team as team
+
+
+def test_team_filters_scope_and_unchanged_reads(workspace):
+    c,u,unit,_=workspace
+    item=case(c,u[0],unit,title='Regional response')
+    task=propose(c,u[0],item,unit,u[0]['id'],title='Check totals')
+    task=advance(c,u[1],task,'confirm',owner_id=u[0]['id'])
+    proposal=propose(c,u[0],item,unit,title='Unassigned research')
+    other=st.add_org_unit(c,'Another unit','division','WORK/D2')
+    hidden=case(c,u[2],other,title='Restricted initiative')
+    propose(c,u[2],hidden,other,title='Hidden contribution')
+    before=c.total_changes
+    for view in ('list','board'):
+        items,cursor=team.page(c,u[0],{'view':view,'q':'regional','unit':str(unit),'owner':'mine'})
+        assert [t['id'] for t in items]==[task['id']] and cursor is None
+        assert items[0]['case']['title']=='Regional response'
+    assert [t['id'] for t in team.page(c,u[0],{'owner':'unassigned'})[0]]==[proposal['id']]
+    assert not team.page(c,u[0],{'unit':other})[0]
+    assert not team.page(c,u[4],{'status':'all'})[0]  # no technical-admin bypass
+    assert c.total_changes==before
+
+
+def test_team_waiting_deadlines_and_terminal_filters(workspace):
+    c,u,unit,_=workspace;item=case(c,u[0],unit)
+    task=propose(c,u[0],item,unit,u[0]['id'],due_date='2020-01-01')
+    task=advance(c,u[1],task,'confirm',owner_id=u[0]['id'])
+    task=advance(c,u[0],task,'acknowledge')
+    task=change_block(c,u[0],task,'block',reason='Missing totals',followup_owner_id=u[0]['id'],followup_date='2026-10-20')
+    assert team.page(c,u[0],{'attention':'overdue'})[0][0]['overdue']
+    visible=team.page(c,u[0],{'attention':'waiting'})[0][0]
+    assert 'submit' not in visible['actions']
+    task=change_block(c,u[0],task,'unblock',reason='Totals received')
+    assert not team.page(c,u[0],{'attention':'waiting'})[0]
+    task=advance(c,u[0],task,'submit',submission='Checked totals');task=advance(c,u[1],task,'accept')
+    assert not team.page(c,u[0],{})[0]
+    assert team.page(c,u[0],{'status':'done'})[0][0]['id']==task['id']
+    assert not team.page(c,u[0],{'status':'all','attention':'overdue'})[0]
+
+
+def test_team_bounded_pagination_past_hidden_rows(workspace):
+    c,u,unit,_=workspace
+    visible=case(c,u[0],unit);old=propose(c,u[0],visible,unit)
+    hidden=case(c,u[2],unit,title='Private case')
+    for i in range(250):
+        propose(c,u[2],hidden,unit,title=f'Private {i}')
+    page,cursor=team.page(c,u[0],{})
+    assert page==[] and cursor
+    page,end=team.page(c,u[0],{'before':cursor})
+    assert [t['id'] for t in page]==[old['id']] and end is None
+    for i in range(27):propose(c,u[0],visible,unit,title=f'Visible {i}')
+    a,cursor=team.page(c,u[0],{})
+    b,end=team.page(c,u[0],{'before':cursor})
+    assert len(a)==25 and len(b)==2 and end is not None
+    tail,final=team.page(c,u[0],{'before':end})
+    assert [t['id'] for t in tail]==[old['id']] and final is None
+    assert not {t['id'] for t in a}&{t['id'] for t in b}
+
+
+def test_team_revocation_disabled_and_inactive_owner(workspace):
+    c,u,unit,_=workspace;doc=document(c,u[0],unit)
+    item=case(c,u[0],unit,source_document_id=doc['id'])
+    task=propose(c,u[0],item,unit,u[0]['id']);task=advance(c,u[1],task,'confirm',owner_id=u[0]['id'])
+    st.set_setting(c,'work.enabled','0')
+    assert team.page(c,u[0],{})[0][0]['actions']==[]
+    st.set_setting(c,'work.enabled','1')
+    c.execute('UPDATE admin_user SET active=0 WHERE id=?',(u[0]['id'],));c.commit()
+    assert team.page(c,u[1],{})[0][0]['owner_warning']
+    assert 'acknowledge' not in team.page(c,u[1],{})[0][0]['actions']
+    with pytest.raises(permissions.Denied):team.page(c,u[0],{})
+    c.execute('UPDATE admin_user SET active=1 WHERE id=?',(u[0]['id'],));c.commit()
+    docs.mutate(c,u[1],doc['id'],doc['revision'],'access',{'visibility':'restricted','viewers':[u[1]['id']],'reason':'Restrict'})
+    assert not team.page(c,u[0],{'q':task['title'],'status':'all'})[0]
+    with pytest.raises(permissions.Denied):team.one(c,u[0],item['id'],task['id'])
+
+
+@pytest.mark.parametrize('selection',[{'view':'grid'},{'status':'approved'},{'owner':'-1'},
+    {'unit':'no'},{'before':str(2**64)},{'attention':'secret'},{'q':'x'*121}])
+def test_team_rejects_invalid_filters(selection):
+    with pytest.raises(ValueError):team.filters(selection)
+
+
+def test_team_http_actions_consistency_csrf_and_stale_forms(workspace,app_mod,monkeypatch):
+    from starlette.testclient import TestClient
+    c,u,unit,path=workspace;monkeypatch.setattr(app_mod,'DB',path)
+    item=case(c,u[0],unit,title='Regional collaboration')
+    task=propose(c,u[0],item,unit,u[0]['id'],title='<script>unsafe</script>')
+    task=advance(c,u[1],task,'confirm',owner_id=u[0]['id'])
+    with TestClient(app_mod.app) as client:
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[0]))
+        url='/work/team?view=board&owner=mine'
+        page=client.get(url)
+        assert page.status_code==200,page.text
+        assert '&lt;script&gt;unsafe&lt;/script&gt;' in page.text and '<script>unsafe</script>' not in page.text
+        csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',page.text)[1]
+        target=f"/work/team/{item['id']}/{task['id']}/acknowledge?view=board&owner=mine"
+        fields={'csrf':csrf,'revision':task['revision'],'reason':'Starting the review'}
+        assert client.post(target,data={**fields,'csrf':''}).status_code==403
+        response=client.post(target,data=fields,follow_redirects=False)
+        assert response.status_code==303 and 'view=board' in response.headers['location']
+        assert 'owner=mine' in response.headers['location']
+        for view in ('list','board'):
+            html=client.get('/work/team?view='+view).text
+            assert 'In progress' in html and 'Submit for review' in html
+        assert 'Prepare and submit output' in client.get('/work/mine').text
+        assert 'In progress' in client.get(f"/work/{item['id']}").text
+        stale=client.post(target,data=fields)
+        assert stale.status_code==409 and 'Starting the review' in stale.text
+        task=tasks.list_for_case(c,u[0],item['id'])[0]
+        submit=f"/work/team/{item['id']}/{task['id']}/submit?view=list&status=in_progress"
+        invalid=client.post(submit,data={'csrf':csrf,'revision':task['revision'],'reason':'Keep my note','submission':''})
+        assert invalid.status_code==400 and 'Keep my note' in invalid.text
+        sent=client.post(submit,data={'csrf':csrf,'revision':task['revision'],'reason':'Ready','submission':'Checked output'},follow_redirects=False)
+        assert sent.status_code==303
+        assert 'Waiting for contribution review' in client.get('/work/mine?view=waiting').text
+        assert 'Checked output' in client.get('/work/team?status=for_review').text
+        task=tasks.list_for_case(c,u[0],item['id'])[0]
+        assert client.post(f"/work/team/{item['id']}/{task['id']}/accept",data={'csrf':csrf,'revision':task['revision'],'reason':'Self accept'}).status_code==403
+        assert client.get('/work/team?view=invalid').status_code==400
+        assert client.get('/work/team?before=invalid').status_code==400
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[4]))
+        assert 'Regional collaboration' not in client.get('/work/team?view=board').text
+
+
+def test_team_dependency_and_decision_gates_share_task_authority(workspace):
+    c,u,unit,_=workspace;item=case(c,u[0],unit)
+    task=propose(c,u[0],item,unit,u[0]['id']);task=advance(c,u[1],task,'confirm',owner_id=u[0]['id']);task=advance(c,u[0],task,'acknowledge')
+    upstream=propose(c,u[0],item,unit)
+    task=change_block(c,u[1],task,'dependency_add',prerequisite_id=upstream['id'])
+    entry=team.one(c,u[0],item['id'],task['id'])
+    assert entry['waiting_on'][0]['id']==upstream['id'] and 'submit' not in entry['actions']
+    task=change_block(c,u[1],task,'dependency_remove',prerequisite_id=upstream['id'],reason='Withdraw prerequisite')
+    message=discussion.post(c,u[0],item['id'],'Recheck scope')
+    did=decisions.record(c,u[1],item['id'],message,1,decision_fields(c,[task]))
+    entry=team.one(c,u[0],item['id'],task['id'])
+    assert entry['pending_decisions'][0]['id']==did and 'submit' not in entry['actions']
+    assert [t['id'] for t in team.page(c,u[0],{'attention':'waiting'})[0]]==[task['id']]
+
+
+def test_team_http_revocation_disabled_and_cross_case_reject(workspace,app_mod,monkeypatch):
+    from starlette.testclient import TestClient
+    c,u,unit,path=workspace;monkeypatch.setattr(app_mod,'DB',path)
+    doc=document(c,u[0],unit);item=case(c,u[0],unit,source_document_id=doc['id'])
+    task=propose(c,u[0],item,unit,u[0]['id']);task=advance(c,u[1],task,'confirm',owner_id=u[0]['id'])
+    other=case(c,u[0],unit)
+    with TestClient(app_mod.app) as client:
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[0]))
+        html=client.get('/work/team').text
+        csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',html)[1]
+        fields={'csrf':csrf,'revision':task['revision'],'reason':'Start'}
+        assert client.post(f"/work/team/{other['id']}/{task['id']}/acknowledge",data=fields).status_code==403
+        target=f"/work/team/{item['id']}/{task['id']}/acknowledge"
+        st.set_setting(c,'work.enabled','0')
+        assert client.post(target,data=fields).status_code==400
+        assert 'Start contribution' not in client.get('/work/team').text
+        st.set_setting(c,'work.enabled','1')
+        docs.mutate(c,u[1],doc['id'],doc['revision'],'access',{'visibility':'restricted','viewers':[u[1]['id']],'reason':'Withdraw access'})
+        assert client.post(target,data=fields).status_code==403
+        assert task['title'] not in client.get('/work/team?view=board').text
+        assert tasks.list_for_case(c,u[1],item['id'])[0]['status']=='todo'

@@ -2,7 +2,7 @@
 {% block title %}Shared work · Office Connect{% endblock %}
 {% block head %}<link rel="stylesheet" href="/static/css/work.css">{% endblock %}
 {% block content %}<div class="work-wrap">
-<nav class="work-nav" aria-label="Work navigation"><a href="/work/mine">My work</a><a href="/work">Shared work</a><a href="/work/updates">Discussion updates</a><a href="/documents">Document register</a>{% if enabled %}<a href="/work/new">Start a work item</a>{% endif %}</nav>
+<nav class="work-nav" aria-label="Work navigation"><a href="/work/mine">My work</a><a href="/work">Shared work</a><a href="/work/team">Team contributions</a><a href="/work/updates">Discussion updates</a><a href="/documents">Document register</a>{% if enabled %}<a href="/work/new">Start a work item</a>{% endif %}</nav>
 {% if not enabled %}<p class="work-note" role="status">Shared work is not enabled. Existing work you have access to remains readable.</p>{% endif %}
 {% if error %}<p class="work-note work-error" role="alert">{{ error }}</p>{% endif %}
 {% block work_content %}{% endblock %}

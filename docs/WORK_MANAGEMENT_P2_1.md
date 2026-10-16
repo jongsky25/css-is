@@ -1,6 +1,8 @@
 # P2.1 — Discussion and replies
 
-October 16, 2026. **In review**, version **6.60**, branch `codex/work-discussions`. Phase 1 was explicitly accepted by the user before development began. This increment was subsequently merged at `9622870` on the user’s instruction. Live deployment success has not been independently verified.
+October 16, 2026. **Accepted**, version **6.60**, branch `codex/work-discussions`. Phase 1 was explicitly accepted by the user before development began. This increment was subsequently merged at `9622870` on the user’s instruction. Live deployment success has not been independently verified.
+
+Phase 2 acceptance was recorded when the user authorized P3.1 after the [technical acceptance review](WORK_MANAGEMENT_PHASE_2_ACCEPTANCE.md). Historical verification notes below remain unchanged.
 
 ## Delivered
 
