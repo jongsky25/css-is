@@ -17,6 +17,7 @@ import work_inbox
 import work_discussion
 import work_updates
 import work_blockers
+import work_decisions
 
 
 def csrf(request):
@@ -43,6 +44,7 @@ def make_router(templates, get_conn):
         form = await request.form()
         fields = dict(form)
         fields['mentions'] = form.getlist('mentions')
+        fields['affected_tasks'] = form.getlist('affected_tasks')
         if not hmac.compare_digest(str(fields.get('csrf', '')), csrf(request)):
             raise permissions.Denied('The form expired. Reload this page and try again.')
         return fields
@@ -65,6 +67,7 @@ def make_router(templates, get_conn):
             event['followup_date'] = payload.get('followup_date')
             event['prerequisite_title'] = payload.get('prerequisite_title')
             event['previous_blocker'] = payload.get('previous_blocker')
+            event['decision_id'] = payload.get('decision_id')
             event['status'] = work_tasks.LABELS.get(payload.get('status'), '')
         tasks = work_tasks.list_for_case(conn, user, case_id)
         blocked = ''
@@ -76,6 +79,8 @@ def make_router(templates, get_conn):
         next_steps = []
         for task in tasks:
             counts[task['status']] += 1
+            task['pending_decisions'] = work_decisions.pending(conn,task['id'])
+            task['source_message'] = work_decisions.task_source(conn,user,case_id,task['id'])
             task['dependencies'] = work_blockers.dependencies(conn,task['id'])
             task['waiting_on'] = [t for t in task['dependencies'] if t['status']!='done']
             task['can_block'],task['can_depend'] = work_blockers.authority(conn,user,case,task)
@@ -99,7 +104,9 @@ def make_router(templates, get_conn):
             task['next_label'] = labels.get(task['primary'], {'proposed':'Awaiting officer confirmation',
                 'todo':'Waiting for the owner to start','in_progress':'Waiting for the owner’s output',
                 'for_review':'Awaiting lead or officer review','done':'Accepted contribution','cancelled':'Cancelled — retained for history'}[task['status']])
-            if task['blocker_reason'] or task['waiting_on']:
+            if task['pending_decisions']:
+                task['next_label'] = 'Review changed work direction'
+            elif task['blocker_reason'] or task['waiting_on']:
                 task['next_label'] = 'Review blocker or prerequisite contributions'
             latest = next((event for event in events if event['task_id']==task['id'] and event['action'] in ('task_return','task_submit','task_reassign','task_reopen','task_cancel','task_accept')), None)
             task['return_note'] = latest['note'] if latest and latest['action']=='task_return' else ''
@@ -216,6 +223,101 @@ def make_router(templates, get_conn):
             return HTMLResponse('The discussion preference could not be saved. Reload and try again.', status_code=400)
         finally:
             conn.close()
+
+    def source_page(request, conn, case_id, comment_id, status_code=200, error='', fields=None):
+        user, case, message = work_decisions.source(conn, request.state.user, case_id, comment_id)
+        tasks = work_tasks.list_for_case(conn,user,case_id)
+        documents = work.linked_documents(conn,user,case_id)
+        linked_task = conn.execute('SELECT task_id FROM work_task_source WHERE comment_id=?',(comment_id,)).fetchone()
+        blocked = ''
+        try:
+            work_compat.require_open(conn,case_id)
+        except ValueError as e:
+            blocked = str(e)
+        return render(request,conn,'message_actions',status_code=status_code,error=error,case=case,message=message,
+            tasks=tasks,documents=documents,values=fields or {},task_revisions={str(t['id']):t['revision'] for t in tasks},
+            document_revisions={str(d['id']):d['revision'] for d in documents},
+            can_decide=work_decisions.can_decide(conn,user,case),linked_task=linked_task[0] if linked_task else None,
+            source_url=work_decisions.source_url(case_id,comment_id,message['task_id']),blocked=blocked,
+            previous=rows(conn, "SELECT id,body FROM work_decision d WHERE case_id=? AND NOT EXISTS(SELECT 1 FROM work_decision n WHERE n.supersedes_id=d.id) ORDER BY id DESC",(case_id,)))
+
+    @router.get('/work/{case_id}/messages/{comment_id}/actions', response_class=HTMLResponse)
+    def message_actions(request: Request, case_id: int, comment_id: int):
+        conn=get_conn()
+        try:
+            return source_page(request,conn,case_id,comment_id)
+        except permissions.Denied:
+            return HTMLResponse('Message unavailable.',status_code=404)
+        finally:
+            conn.close()
+
+    @router.post('/work/{case_id}/messages/{comment_id}/actions')
+    async def save_message_action(request: Request, case_id: int, comment_id: int):
+        conn=get_conn();fields={}
+        try:
+            fields=await posted(request)
+            revision=int(fields.get('source_revision',''))
+            if fields.get('action')=='task':
+                task=work_decisions.propose(conn,request.state.user,case_id,comment_id,revision,fields)
+                url=f"/work/{case_id}#task-{task['id']}"
+            elif fields.get('action')=='decision':
+                parsed={**fields,'task_revisions':json.loads(fields.get('task_revisions','{}')),
+                        'document_revisions':json.loads(fields.get('document_revisions','{}'))}
+                did=work_decisions.record(conn,request.state.user,case_id,comment_id,revision,parsed)
+                url=f'/work/{case_id}/decisions/{did}'
+            else:
+                raise ValueError('Choose a message action.')
+            return RedirectResponse(url,status_code=303)
+        except permissions.Denied:
+            return HTMLResponse('Message or action unavailable.',status_code=403)
+        except (ValueError,TypeError) as e:
+            try:
+                return source_page(request,conn,case_id,comment_id,409 if isinstance(e,docs.Conflict) else 400,str(e),fields)
+            except permissions.Denied:
+                return HTMLResponse('Message unavailable.',status_code=404)
+        finally:
+            conn.close()
+
+    def decision_page(request,conn,case_id,decision_id,status_code=200,error='',review_submitted=None):
+        user=permissions.actor(conn,request.state.user)
+        case,decision,affected=work_decisions.detail(conn,user,case_id,decision_id)
+        blocked=''
+        try:work_compat.require_open(conn,case_id)
+        except ValueError as e:blocked=str(e)
+        return render(request,conn,'decision',status_code=status_code,error=error,case=case,decision=decision,
+                      affected=affected,task_labels=work_tasks.LABELS,can_decide=work_decisions.can_decide(conn,user,case),blocked=blocked,review_submitted=review_submitted or {})
+
+    @router.get('/work/{case_id}/decisions', response_class=HTMLResponse)
+    def decisions(request: Request,case_id: int,before: int | None = None):
+        conn=get_conn()
+        try:
+            case=work.get(conn,request.state.user,case_id)
+            decisions=rows(conn, "SELECT d.*,(SELECT id FROM work_decision n WHERE n.supersedes_id=d.id) AS successor_id FROM work_decision d WHERE case_id=? AND (? IS NULL OR id<?) ORDER BY id DESC LIMIT 26",(case_id,before,before))
+            return render(request,conn,'decisions',case=case,decisions=decisions[:25],next_cursor=decisions[24]['id'] if len(decisions)>25 else None)
+        except permissions.Denied:
+            return HTMLResponse('Work decisions unavailable.',status_code=404)
+        finally:conn.close()
+
+    @router.get('/work/{case_id}/decisions/{decision_id}', response_class=HTMLResponse)
+    def decision(request: Request,case_id: int,decision_id: int):
+        conn=get_conn()
+        try:return decision_page(request,conn,case_id,decision_id)
+        except permissions.Denied:return HTMLResponse('Work decision unavailable.',status_code=404)
+        finally:conn.close()
+
+    @router.post('/work/{case_id}/decisions/{decision_id}/resolve')
+    async def resolve_decision(request: Request,case_id: int,decision_id: int):
+        conn=get_conn();fields={}
+        try:
+            fields=await posted(request)
+            work_decisions.resolve(conn,request.state.user,case_id,decision_id,int(fields.get('task_id','')),
+                int(fields.get('revision','')),fields.get('outcome'),fields.get('reason'))
+            return RedirectResponse(f'/work/{case_id}/decisions/{decision_id}',status_code=303)
+        except permissions.Denied:return HTMLResponse('Decision or action unavailable.',status_code=403)
+        except (ValueError,TypeError) as e:
+            try:return decision_page(request,conn,case_id,decision_id,409 if isinstance(e,docs.Conflict) else 400,str(e),fields)
+            except permissions.Denied:return HTMLResponse('Work decision unavailable.',status_code=404)
+        finally:conn.close()
 
     @router.get('/work', response_class=HTMLResponse)
     def index(request: Request, before: int | None = None):

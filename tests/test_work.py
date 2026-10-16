@@ -1450,3 +1450,201 @@ def test_blocker_http_forms_csrf_history_and_source_visibility(workspace,app_mod
         docs.mutate(c,u[1],doc['id'],doc['revision'],'access',{'visibility':'restricted','viewers':[u[1]['id']],'reason':'Restrict'})
         assert client.get(url).status_code==404
         assert client.post(target,data={**form,'csrf':csrf}).status_code==403
+
+
+# P2.4: discussion-derived proposals and decisions retain exact source/affected-work evidence.
+import work_decisions as decisions
+
+
+def decision_fields(c,task_list,**extra):
+    return {'kind':'change','body':'Use the revised regional breakdown.','affected_tasks':[str(t['id']) for t in task_list],
+            'task_revisions':{str(t['id']):c.execute('SELECT revision FROM work_task WHERE id=?',(t['id'],)).fetchone()[0] for t in task_list},**extra}
+
+
+def test_message_proposal_exact_source_duplicate_and_no_authority_grant(workspace):
+    c,u,unit,_=workspace
+    item=case(c,u[0],unit)
+    cid=discussion.post(c,u[0],item['id'],'Please prepare a regional breakdown.')
+    fields={'title':'Regional breakdown','expected_output':'Validated table','unit_id':unit,'proposed_owner_id':u[3]['id']}
+    task=decisions.propose(c,u[0],item['id'],cid,1,fields)
+    assert task['status']=='proposed' and task['owner_id'] is None
+    with pytest.raises(permissions.Denied):work.get(c,u[3],item['id'])
+    with pytest.raises(docs.Conflict):decisions.propose(c,u[0],item['id'],cid,1,fields)
+    discussion.edit(c,u[0],item['id'],None,cid,1,'Changed request later.')
+    source=decisions.task_source(c,u[0],item['id'],task['id'])
+    assert source['source_revision']==1 and source['body']=='Please prepare a regional breakdown.'
+    stale=discussion.post(c,u[0],item['id'],'First draft')
+    discussion.edit(c,u[0],item['id'],None,stale,1,'Latest draft')
+    with pytest.raises(docs.Conflict):decisions.propose(c,u[0],item['id'],stale,1,fields)
+    assert c.execute('SELECT COUNT(*) FROM work_task').fetchone()[0]==1
+
+
+def test_changed_direction_preserves_acceptance_and_requires_explicit_review(workspace):
+    c,u,unit,_=workspace
+    doc=document(c,u[0],unit)
+    item=case(c,u[0],unit,source_document_id=doc['id'])
+    task=propose(c,u[0],item,unit,u[0]['id']);task=advance(c,u[1],task,'confirm',owner_id=u[0]['id'])
+    task=advance(c,u[0],task,'acknowledge');task=advance(c,u[0],task,'submit',submission='Original accepted regional totals')
+    task=advance(c,u[1],task,'accept')
+    before=tuple(c.execute('SELECT * FROM document WHERE id=?',(doc['id'],)).fetchone())
+    cid=discussion.post(c,u[0],item['id'],'Director requests a new regional grouping.')
+    did=decisions.record(c,u[1],item['id'],cid,1,decision_fields(c,[task],document_id=doc['id'],document_revisions={str(doc['id']):doc['revision']}))
+    _,decision,affected=decisions.detail(c,u[0],item['id'],did)
+    assert affected[0]['status']=='done' and affected[0]['snapshot']['submission']=='Original accepted regional totals'
+    assert affected[0]['revision']==task['revision']+1
+    assert decision['document_revision']==doc['revision']
+    assert tuple(c.execute('SELECT * FROM document WHERE id=?',(doc['id'],)).fetchone())==before
+    for user in (u[0],u[1]):
+        assert any(e['action']=='Review changed work direction' for e in work_inbox.page(c,user)[0])
+    with pytest.raises(permissions.Denied):
+        decisions.resolve(c,u[0],item['id'],did,task['id'],affected[0]['revision'],'retain','Self acceptance')
+    decisions.resolve(c,u[1],item['id'],did,task['id'],affected[0]['revision'],'revise','Rework the grouping; preserve the original totals.')
+    _,_,updated=decisions.detail(c,u[0],item['id'],did)
+    assert updated[0]['status']=='in_progress'
+    assert updated[0]['submission']=='Original accepted regional totals'
+    assert updated[0]['snapshot']['status']=='done'
+    assert not decisions.pending(c,task['id'])
+    assert tuple(c.execute('SELECT * FROM document WHERE id=?',(doc['id'],)).fetchone())==before
+    with pytest.raises(docs.Conflict):
+        decisions.resolve(c,u[1],item['id'],did,task['id'],updated[0]['revision'],'retain','Duplicate')
+
+
+def test_decision_gates_submission_retains_output_and_old_forms_are_stale(workspace):
+    c,u,unit,_=workspace
+    item=case(c,u[0],unit)
+    task=propose(c,u[0],item,unit,u[0]['id']);task=advance(c,u[1],task,'confirm',owner_id=u[0]['id']);task=advance(c,u[0],task,'acknowledge')
+    cid=discussion.post(c,u[0],item['id'],'Revise the scope')
+    did=decisions.record(c,u[1],item['id'],cid,1,decision_fields(c,[task]))
+    with pytest.raises(docs.Conflict):advance(c,u[0],task,'submit',submission='Stale submission')
+    current=tasks.list_for_case(c,u[0],item['id'])[0]
+    with pytest.raises(ValueError,match='changed-decision'):
+        advance(c,u[0],current,'submit',submission='Not reviewed')
+    decisions.resolve(c,u[1],item['id'],did,task['id'],current['revision'],'retain','The current scope already meets the changed instruction.')
+    current=tasks.list_for_case(c,u[0],item['id'])[0]
+    assert advance(c,u[0],current,'submit',submission='Reviewed scope')['status']=='for_review'
+
+
+def test_decision_supersession_keeps_all_affected_work_and_stale_sources(workspace):
+    c,u,unit,_=workspace
+    item=case(c,u[0],unit);a=propose(c,u[0],item,unit);b=propose(c,u[0],item,unit)
+    first=discussion.post(c,u[0],item['id'],'First direction')
+    old=decisions.record(c,u[1],item['id'],first,1,decision_fields(c,[a,b]))
+    second=discussion.post(c,u[0],item['id'],'Replacement direction')
+    with pytest.raises(ValueError,match='every contribution'):
+        decisions.record(c,u[1],item['id'],second,1,decision_fields(c,[a],supersedes_id=old))
+    with pytest.raises(ValueError,match='Replacing'):
+        decisions.record(c,u[1],item['id'],second,1,decision_fields(c,[a,b],kind='coordination',supersedes_id=old))
+    new=decisions.record(c,u[1],item['id'],second,1,decision_fields(c,[a,b],supersedes_id=old))
+    assert [d['id'] for d in decisions.pending(c,a['id'])]==[new]
+    assert decisions.detail(c,u[0],item['id'],old)[1]['successor_id']==new
+    with pytest.raises(docs.Conflict):decisions.resolve(c,u[1],item['id'],old,a['id'],3,'retain','Old review')
+    third=discussion.post(c,u[0],item['id'],'Another direction')
+    with pytest.raises(docs.Conflict):decisions.record(c,u[1],item['id'],third,1,decision_fields(c,[a,b],supersedes_id=old))
+    discussion.edit(c,u[0],item['id'],None,second,1,'Edited replacement text')
+    assert decisions.detail(c,u[0],item['id'],new)[1]['source_body']=='Replacement direction'
+
+
+def test_decision_authority_scope_read_revocation_and_immutable_history(workspace):
+    c,u,unit,_=workspace
+    doc=document(c,u[0],unit);item=case(c,u[0],unit,source_document_id=doc['id']);task=propose(c,u[0],item,unit)
+    cid=discussion.post(c,u[0],item['id'],'Discuss this')
+    for user in (u[0],u[4]):
+        with pytest.raises(permissions.Denied):decisions.record(c,user,item['id'],cid,1,decision_fields(c,[task]))
+    other=case(c,u[0],unit);outside=propose(c,u[0],other,unit)
+    with pytest.raises(ValueError):decisions.record(c,u[1],item['id'],cid,1,decision_fields(c,[outside]))
+    did=decisions.record(c,u[1],item['id'],cid,1,decision_fields(c,[task],kind='coordination'))
+    assert not decisions.pending(c,task['id']) and tasks.list_for_case(c,u[0],item['id'])[0]['revision']==1
+    with pytest.raises(docs.Conflict):decisions.record(c,u[1],item['id'],cid,1,decision_fields(c,[task]))
+    st.init_db(c)
+    for table in ('work_decision','work_decision_task'):
+        with pytest.raises(sqlite3.IntegrityError,match='append-only'):c.execute('DELETE FROM '+table)
+        c.rollback()
+    docs.mutate(c,u[1],doc['id'],doc['revision'],'access',{'visibility':'restricted','viewers':[u[1]['id']],'reason':'Restrict'})
+    with pytest.raises(permissions.Denied):decisions.detail(c,u[0],item['id'],did)
+    with pytest.raises(permissions.Denied):decisions.propose(c,u[0],item['id'],cid,1,{'title':'Bypass','expected_output':'Bypass'})
+
+
+def test_decision_atomic_audit_failure_and_revision_checks(workspace,monkeypatch):
+    c,u,unit,_=workspace
+    item=case(c,u[0],unit);task=propose(c,u[0],item,unit);cid=discussion.post(c,u[0],item['id'],'Source')
+    fields=decision_fields(c,[task]);fields['task_revisions'][str(task['id'])]=0
+    with pytest.raises(docs.Conflict):decisions.record(c,u[1],item['id'],cid,1,fields)
+    def fail(*args,**kwargs):raise RuntimeError('audit unavailable')
+    monkeypatch.setattr(work,'_event',fail)
+    with pytest.raises(RuntimeError):decisions.record(c,u[1],item['id'],cid,1,decision_fields(c,[task]))
+    assert not c.execute('SELECT 1 FROM work_decision').fetchone()
+    assert c.execute('SELECT revision FROM work_task WHERE id=?',(task['id'],)).fetchone()[0]==1
+    with pytest.raises(RuntimeError):decisions.propose(c,u[0],item['id'],cid,1,{'title':'Proposal','expected_output':'Output','unit_id':unit})
+    assert c.execute('SELECT COUNT(*) FROM work_task').fetchone()[0]==1
+    assert not c.execute('SELECT 1 FROM work_task_source').fetchone()
+
+
+def test_decision_http_source_forms_csrf_and_review(workspace,app_mod,monkeypatch):
+    from starlette.testclient import TestClient
+    import html
+    c,u,unit,path=workspace;item=case(c,u[0],unit)
+    cid=discussion.post(c,u[0],item['id'],'A <script>source</script> request')
+    monkeypatch.setattr(app_mod,'DB',path)
+    url=f"/work/{item['id']}/messages/{cid}/actions"
+    def hidden(page,name):return html.unescape(re.search('name="'+name+'" value="([^"]*)"',page.text)[1])
+    with TestClient(app_mod.app) as client:
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[0]));page=client.get(url)
+        assert page.status_code==200 and '&lt;script&gt;source&lt;/script&gt;' in page.text
+        assert 'Record work decision</button>' not in page.text
+        data={'action':'task','source_revision':1,'title':'Derived task','expected_output':'Supported output','unit_id':unit}
+        assert client.post(url,data=data).status_code==403
+        result=client.post(url,data={**data,'csrf':hidden(page,'csrf')})
+        assert result.status_code==200 and 'Proposed from a discussion message' in result.text
+        task=tasks.list_for_case(c,u[0],item['id'])[0]
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[1]));page=client.get(url)
+        data={k:hidden(page,k) for k in ('csrf','source_revision','task_revisions','document_revisions')}
+        result=client.post(url,data={**data,'action':'decision','kind':'change','body':'Use the revised grouping','affected_tasks':str(task['id'])})
+        assert result.status_code==200 and 'Needs review against the changed direction' in result.text
+        did=c.execute('SELECT id FROM work_decision').fetchone()[0]
+        target=f"/work/{item['id']}/decisions/{did}/resolve"
+        review={'csrf':hidden(result,'csrf'),'task_id':task['id'],'revision':2,'outcome':'retain','reason':'Already covered by expected output.'}
+        assert client.post(target,data=review).status_code==200
+        assert client.post(target,data=review).status_code==409
+        assert client.get(f"/work/{item['id']}/decisions").status_code==200
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[4]))
+        assert client.get(url).status_code==404
+        assert client.get(f"/work/{item['id']}/decisions/{did}").status_code==404
+
+
+def test_decision_concurrent_proposals_and_disabled_changes(workspace):
+    from concurrent.futures import ThreadPoolExecutor
+    c,u,unit,path=workspace;item=case(c,u[0],unit);cid=discussion.post(c,u[0],item['id'],'One source')
+    fields={'title':'One contribution','expected_output':'Output','unit_id':unit}
+    def create(_):
+        conn=st.connect(path)
+        try:
+            decisions.propose(conn,u[0],item['id'],cid,1,fields)
+            return 'created'
+        except docs.Conflict:return 'conflict'
+        finally:conn.close()
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        assert sorted(pool.map(create,range(2)))==['conflict','created']
+    task=tasks.list_for_case(c,u[0],item['id'])[0]
+    did=decisions.record(c,u[1],item['id'],cid,1,decision_fields(c,[task]))
+    st.set_setting(c,'work.enabled','0')
+    assert decisions.detail(c,u[0],item['id'],did)[1]['body']
+    with pytest.raises(ValueError,match='not enabled'):decisions.resolve(c,u[1],item['id'],did,task['id'],2,'retain','Reviewed')
+    with pytest.raises(ValueError,match='not enabled'):decisions.record(c,u[1],item['id'],cid,1,decision_fields(c,[task]))
+    with pytest.raises(ValueError,match='not enabled'):decisions.propose(c,u[0],item['id'],cid,1,fields)
+
+
+def test_decision_document_reference_version_and_stale_review(workspace):
+    c,u,unit,_=workspace;doc=document(c,u[0],unit);item=case(c,u[0],unit,source_document_id=doc['id'])
+    task=propose(c,u[0],item,unit);cid=discussion.post(c,u[0],item['id'],'Approved source context')
+    version=c.execute("INSERT INTO document_file_version(document_id,url,file_id,fingerprint,role,actor_id,created_at) VALUES (?,?,?,?,?,?,?)",(doc['id'],'https://docs.google.com/document/d/synthetic/edit','synthetic','synthetic-fingerprint','source',u[0]['id'],'2026-10-16')).lastrowid
+    c.execute("UPDATE document SET current_version=?,approved_version=?,status='approved' WHERE id=?",(version,version,doc['id']));c.commit()
+    fields=decision_fields(c,[task],document_id=doc['id'],document_revisions={str(doc['id']):doc['revision']-1})
+    with pytest.raises(docs.Conflict):decisions.record(c,u[1],item['id'],cid,1,fields)
+    fields['document_revisions'][str(doc['id'])]=doc['revision']
+    did=decisions.record(c,u[1],item['id'],cid,1,fields)
+    assert decisions.detail(c,u[0],item['id'],did)[1]['document_version_id']==version
+    current=tasks.list_for_case(c,u[0],item['id'])[0]
+    current=advance(c,u[1],current,'confirm',owner_id=u[0]['id'])
+    with pytest.raises(docs.Conflict):decisions.resolve(c,u[1],item['id'],did,task['id'],2,'retain','Stale review')
+    decisions.resolve(c,u[1],item['id'],did,task['id'],current['revision'],'retain','Scope still applies.')
+    assert c.execute('SELECT status,approved_version,current_version FROM document WHERE id=?',(doc['id'],)).fetchone()==('approved',version,version)

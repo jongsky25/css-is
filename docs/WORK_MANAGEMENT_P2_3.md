@@ -1,6 +1,6 @@
 # P2.3 — Blockers and dependencies
 
-October 16, 2026. **In review**, version **6.62**, branch `codex/work-blockers`. P2.2 was merged at `4a44fc0` before this increment. P2.3 is not merged or deployed.
+October 16, 2026. **In review**, version **6.62**, branch `codex/work-blockers`. P2.2 was merged at `4a44fc0` before this increment. P2.3 was subsequently merged at `d44d868` as release **6.64**, preserving newer Google Meet changes through 6.63 on main. The originally prepared version was 6.62. Live deployment success has not been independently verified.
 
 ## Delivered
 

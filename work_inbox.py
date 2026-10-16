@@ -9,6 +9,7 @@ import tzutil as tz
 import work
 import work_compat
 import work_blockers
+import work_decisions
 
 
 def _reviewer(conn, user, case):
@@ -35,7 +36,10 @@ def _entry(conn, user, row, waiting, today):
         if row['kind']=='task':
             task = rows(conn,'SELECT * FROM work_task WHERE id=?',(row['id'],))[0]
             waiting_on = [t for t in work_blockers.dependencies(conn,task['id']) if t['status']!='done']
-        if task and task['blocker_reason'] and task['blocker_owner_id']==user['id'] and not waiting:
+        pending = work_decisions.pending(conn,task['id']) if task else []
+        if pending and not waiting and (task['owner_id']==user['id'] or _reviewer(conn,user,case)):
+            action = 'Review changed work direction'
+        elif task and task['blocker_reason'] and task['blocker_owner_id']==user['id'] and not waiting:
             action = 'Follow up on blocker'
         elif row['kind'] == 'lead':
             if waiting or not work.officer(conn, user, case):
@@ -59,7 +63,7 @@ def _entry(conn, user, row, waiting, today):
             action = 'Acknowledge and start' if row['state'] == 'todo' else 'Prepare and submit output'
         else:
             return None
-        if task and (task['blocker_reason'] or waiting_on) and action!='Follow up on blocker':
+        if task and (task['blocker_reason'] or waiting_on) and action not in ('Follow up on blocker','Review changed work direction'):
             action = 'Review blocker or prerequisites'
         title, context = row['title'], case['title']
         url = f"/work/{case['id']}" + (f"#task-{row['id']}" if row['kind']=='task' else '')
@@ -125,8 +129,8 @@ def page(conn, user, before=None, waiting=False, limit=25, today=None):
       SELECT t.id*3 AS cursor,'task' AS kind,t.id,t.case_id,NULL AS document_id,t.status AS state,
              t.owner_id,t.unit_id,t.due_date,t.title,t.created_at
       FROM work_task t JOIN work_case c ON c.id=t.case_id
-      WHERE t.status IN ('proposed','todo','in_progress','for_review')
-        AND (t.owner_id=? OR c.lead_id=? OR t.blocker_owner_id=? OR t.status IN ('proposed','for_review'))
+      WHERE (t.status IN ('proposed','todo','in_progress','for_review') OR EXISTS(SELECT 1 FROM work_decision_task dt JOIN work_decision d ON d.id=dt.decision_id WHERE dt.task_id=t.id AND d.kind='change' AND NOT EXISTS(SELECT 1 FROM work_decision n WHERE n.supersedes_id=d.id) AND NOT EXISTS(SELECT 1 FROM work_decision_resolution r WHERE r.decision_id=d.id AND r.task_id=t.id)))
+        AND (t.owner_id=? OR c.lead_id=? OR t.blocker_owner_id=? OR t.status IN ('proposed','for_review') OR EXISTS(SELECT 1 FROM work_decision_task dt WHERE dt.task_id=t.id))
       UNION ALL
       SELECT a.id*3+1,'legacy',a.id,NULL,a.document_id,a.status,a.user_id,d.unit_id,a.due_date,a.action,a.created_at
       FROM document_assignment a JOIN document d ON d.id=a.document_id

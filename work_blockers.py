@@ -14,7 +14,8 @@ def dependencies(conn, task_id):
 
 
 def waiting(conn, task):
-    return bool(task.get('blocker_reason')) or any(t['status'] != 'done' for t in dependencies(conn, task['id']))
+    import work_decisions
+    return bool(work_decisions.pending(conn,task['id'])) or bool(task.get('blocker_reason')) or any(t['status'] != 'done' for t in dependencies(conn, task['id']))
 
 
 def authority(conn, user, case, task):

@@ -120,7 +120,7 @@ def mutate_in_transaction(conn, user, case_id, task_id, revision, action, fields
     task = found[0]
     work._check_revision(task, revision)
     if action in ('submit','accept') and work_blockers.waiting(conn,task):
-        raise ValueError('Resolve the recorded blocker and wait for prerequisite contributions to be accepted before submitting or accepting.')
+        raise ValueError('Resolve changed-decision reviews and recorded blockers, and wait for prerequisite acceptance before submitting or accepting.')
     if action not in actions(conn, user, case, task):
         raise permissions.Denied('This contribution action is not available to you in its current state.')
     note = work._text(fields.get('reason'), 'Reason or progress note', 2000)

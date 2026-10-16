@@ -28,7 +28,7 @@
 <h3>{{ message.author }} {% if message.unread %}<span class="work-badge">Unread</span>{% endif %}</h3><p class="work-small">{{ message.created_at }}{% if message.revision>1 %} · Edited {{ message.edited_at }}{% endif %}</p>
 {% if message.parent %}<p class="work-note">Reply to <a href="{{ thread_url }}&focus={{ message.parent.id }}#message-{{ message.parent.id }}">{{ message.parent.author }}’s message</a>: {{ message.parent.body|truncate(160) }}</p>{% endif %}
 <p class="work-outcome">{{ message.body }}</p>{% if message.mentions %}<p>Mentioned: {% for person in message.mentions %}{{ person.name }}{{ ", " if not loop.last else "" }}{% endfor %}</p>{% endif %}
-<div class="work-actions">{% if enabled %}<a href="{{ thread_url }}&reply={{ message.id }}#compose">Reply</a>{% endif %}<a href="{{ thread_url }}&message={{ message.id }}#message-history">{{ 'Edit / history' if enabled and message.author_id==viewer_id else 'Message history' }}</a></div>
+<div class="work-actions">{% if enabled %}<a href="{{ thread_url }}&reply={{ message.id }}#compose">Reply</a>{% endif %}<a href="/work/{{ case.id }}/messages/{{ message.id }}/actions">Create task / record decision</a><a href="{{ thread_url }}&message={{ message.id }}#message-history">{{ 'Edit / history' if enabled and message.author_id==viewer_id else 'Message history' }}</a></div>
 </article>{% else %}<p>No messages yet. Start the discussion below.</p>{% endfor %}
 <p><a href="{{ thread_url }}">Latest messages</a></p></section>
 {% if enabled %}<section class="work-card" id="compose"><h2>{{ 'Reply to ' ~ reply.author if reply else 'Add a message' }}</h2>

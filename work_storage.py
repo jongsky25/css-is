@@ -149,5 +149,37 @@ def install(conn):
       PRIMARY KEY(task_id,prerequisite_id), CHECK(task_id<>prerequisite_id));
     CREATE INDEX IF NOT EXISTS work_dependency_upstream ON work_dependency(prerequisite_id,task_id);
     """)
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS work_task_source (
+      task_id INTEGER PRIMARY KEY REFERENCES work_task(id),
+      comment_id INTEGER NOT NULL UNIQUE REFERENCES work_comment(id), source_revision INTEGER NOT NULL,
+      FOREIGN KEY(comment_id,source_revision) REFERENCES work_comment_revision(comment_id,revision));
+    CREATE TABLE IF NOT EXISTS work_decision (
+      id INTEGER PRIMARY KEY, case_id INTEGER NOT NULL REFERENCES work_case(id),
+      comment_id INTEGER NOT NULL REFERENCES work_comment(id), source_revision INTEGER NOT NULL,
+      actor_id INTEGER NOT NULL REFERENCES admin_user(id), authority TEXT NOT NULL,
+      kind TEXT NOT NULL CHECK(kind IN ('coordination','change')), body TEXT NOT NULL,
+      supersedes_id INTEGER UNIQUE REFERENCES work_decision(id),
+      document_id INTEGER REFERENCES document(id), document_revision INTEGER,
+      document_version_id INTEGER REFERENCES document_file_version(id), created_at TEXT NOT NULL,
+      UNIQUE(comment_id,source_revision),
+      FOREIGN KEY(comment_id,source_revision) REFERENCES work_comment_revision(comment_id,revision));
+    CREATE INDEX IF NOT EXISTS work_decision_case ON work_decision(case_id,id);
+    CREATE TABLE IF NOT EXISTS work_decision_task (
+      decision_id INTEGER NOT NULL REFERENCES work_decision(id),
+      task_id INTEGER NOT NULL REFERENCES work_task(id), snapshot_json TEXT NOT NULL,
+      PRIMARY KEY(decision_id,task_id));
+    CREATE INDEX IF NOT EXISTS work_decision_task_task ON work_decision_task(task_id,decision_id);
+    CREATE TABLE IF NOT EXISTS work_decision_resolution (
+      decision_id INTEGER NOT NULL, task_id INTEGER NOT NULL,
+      actor_id INTEGER NOT NULL REFERENCES admin_user(id), reviewed_revision INTEGER NOT NULL,
+      outcome TEXT NOT NULL CHECK(outcome IN ('retain','revise')), reason TEXT NOT NULL,
+      created_at TEXT NOT NULL, PRIMARY KEY(decision_id,task_id),
+      FOREIGN KEY(decision_id,task_id) REFERENCES work_decision_task(decision_id,task_id));
+    """)
+    for table in ('work_task_source','work_decision','work_decision_task','work_decision_resolution'):
+        for action in ('UPDATE','DELETE'):
+            conn.execute(f"CREATE TRIGGER IF NOT EXISTS {table}_no_{action.lower()} BEFORE {action} ON {table} "
+                         "BEGIN SELECT RAISE(ABORT,'Decision and source history is append-only'); END;")
     conn.execute("INSERT OR IGNORE INTO app_setting(key,value) VALUES ('work.enabled','0')")
     conn.commit()
