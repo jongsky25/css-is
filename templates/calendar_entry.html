@@ -26,7 +26,9 @@
       {% if e.start_time %} · {{ e.start_time }}{% if e.end_time %}–{{ e.end_time }}{% endif %}{% elif e.time_note %} · {{ e.time_note }}{% else %} · All day{% endif %}</dd>
     {% if e.venue or e.modality %}<dt>Where</dt>
     <dd>{{ e.venue or "" }}{% if e.modality %} <span class="cal-chip">{{ {"f2f": "Face to face", "online": "Online", "hybrid": "Hybrid"}[e.modality] }}</span>{% endif %}</dd>{% endif %}
-    {% if e.meeting_url %}<dt>Link</dt><dd><a href="{{ e.meeting_url }}" rel="noopener noreferrer" target="_blank">{{ e.meeting_url }}</a></dd>{% endif %}
+    {% if e.meeting_url %}<dt>Link</dt><dd>
+      {% if e.status != "cancelled" %}<a class="cal-btn primary" href="{{ e.meeting_url }}" rel="noopener noreferrer" target="_blank">{% if e.meeting_url.startswith("https://meet.google.com/") %}Join Google Meet{% else %}Join meeting{% endif %}</a><br>{% endif %}
+      <a href="{{ e.meeting_url }}" rel="noopener noreferrer" target="_blank">{{ e.meeting_url }}</a></dd>{% endif %}
     {% if attendees %}<dt>On it</dt>
     <dd><ul class="cal-people">{% for p in attendees %}<li>{{ p.name }}{% if p.role == "lead" %} <small>(lead)</small>{% elif p.role == "travel" %} <small>(travelling)</small>{% endif %}</li>{% endfor %}</ul></dd>{% endif %}
     {% if series %}<dt>Repeats</dt>
