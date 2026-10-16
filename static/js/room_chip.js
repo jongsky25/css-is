@@ -35,7 +35,8 @@
     closed = !!j.closed;
     if (closed) {
       showStandby(false);
-      stateEl.textContent = '· not available: ' + j.closed.replace(/\.$/, '');
+      stateEl.textContent = 'Not available: ' + j.closed.replace(/\.$/, '');
+      chip.dataset.state = 'closed';
       box.disabled = true; if (box.checked) box.checked = false;
       return;
     }
@@ -50,11 +51,12 @@
       li.appendChild(b); li.appendChild(s); list.appendChild(li);
     });
     showStandby(taken > 0);
-    stateEl.textContent = '· ' + free + ' of ' + j.hours.length + ' hours open that day';
+    stateEl.textContent = free + ' of ' + j.hours.length + ' hours open that day';
+    chip.dataset.state = taken > 0 ? 'partial' : 'free';
   }
   function refresh() {
     var v = dateEl ? dateEl.value : '';
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) { stateEl.textContent = ''; list.textContent = ''; closed = false; box.disabled = false; showStandby(false); return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) { stateEl.textContent = ''; delete chip.dataset.state; list.textContent = ''; closed = false; box.disabled = false; showStandby(false); return; }
     var mine = ++seq;
     fetch('/rooms/api/day?date=' + encodeURIComponent(v), { credentials: 'same-origin' })
       .then(function (r) { return r.ok ? r.json() : null; })

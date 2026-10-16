@@ -677,3 +677,4 @@ a.cal-tt:focus-visible { outline:none; }
   .cf-sectioned .cf-row:has(input[name=venue]) { grid-template-columns:minmax(0, 1fr); }
 }
 .cf-more:not([open]) { padding-bottom:.8rem; }
+.cf-room .room-chip { margin:0; }
