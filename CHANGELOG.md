@@ -1,3 +1,10 @@
+## October 16, 2026 (v6.72 — Short.io public links)
+
+- Replace is.gd creation requests with authenticated Short.io requests for blhsd.s.gy.
+- Migrate unsuccessful legacy jobs while preserving completed mappings and original destinations.
+- Show missing configuration, provider failure, quota/auth restrictions and retry timing on sharing pages.
+- Cover migration, deduplication payloads, secret handling, retries and HTTPS domain validation with regression tests.
+
 ## October 16, 2026 (v6.68 — participant registration page)
 
 - Remove activity management and travel claim links from the public registration page; staff can use the internal activity and calendar pages.
