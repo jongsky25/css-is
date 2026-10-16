@@ -758,3 +758,149 @@ def test_bell_and_fallback_review_follow_real_responsibilities(workspace):
     other=st.add_org_unit(c,'Other unit','division','WORK/OTHER')
     c.execute('UPDATE document_role_grant SET unit_id=? WHERE user_id=?',(other,u[1]['id']));c.commit()
     assert inbox.page(c,u[1])[0]==[] # fresh scope, no cached officer role
+
+# P1.5 reviewed intake and atomic work selection.
+import work_intake as intake
+
+
+def intake_fields(unit,**extra):
+    return {'subject':'New correspondence','type':'request','unit_id':unit,'scenario':'reference',
+            'work_mode':'reference','confirmed':'yes',**extra}
+
+
+def test_reference_intake_suppresses_automatic_assignments_but_retains_policy(workspace):
+    c,u,unit,_=workspace
+    import documents_rules
+    # Evaluate through a controlled routing result, preserving its formal policy.
+    from unittest.mock import patch
+    evaluation={'leads':[u[2]['id']],'assignees':[u[3]['id']],'lead_units':[unit],
+                'unit_ids':[unit],'policy':{'closure':['outcome']},'matches':[]}
+    with patch.object(documents_rules,'evaluate',return_value=evaluation):
+        doc,item=intake.register(c,u[0],intake_fields(unit))
+    assert item is None and doc['lead_id'] is None
+    assert json.loads(doc['policy_json'])=={'closure':['outcome']}
+    assert not c.execute('SELECT 1 FROM document_assignment').fetchone()
+    assert not c.execute('SELECT 1 FROM work_task').fetchone()
+    assert not c.execute('SELECT 1 FROM work_case').fetchone()
+    assert doc['number'].endswith('000001')
+
+
+@pytest.mark.parametrize('scenario,count',[('response',1),('inputs',1),('activity',2)])
+def test_curated_intake_proposes_only_confirmed_choice_without_authority(workspace,scenario,count):
+    c,u,unit,_=workspace
+    doc,item=intake.register(c,u[0],intake_fields(unit,scenario=scenario,work_mode='new',
+                  outcome=intake.SCENARIOS[scenario]['outcome'],proposed_lead_id=u[2]['id'],propose_steps='yes'))
+    contributions=tasks.list_for_case(c,u[0],item['id'])
+    assert len(contributions)==count
+    assert all(t['status']=='proposed' and t['owner_id'] is None and t['due_date'] is None for t in contributions)
+    assert item['lead_id'] is None and doc['lead_id'] is None
+    assert doc['status']=='registered' and doc['approved_version'] is None
+    assert not c.execute('SELECT 1 FROM document_assignment').fetchone()
+    assert work.linked_documents(c,u[0],item['id'])[0]['id']==doc['id']
+    assert inbox.page(c,u[2])[0]==[]
+
+
+def test_intake_existing_link_stale_and_access_failure_are_atomic(workspace):
+    c,u,unit,_=workspace
+    item=case(c,u[0],unit)
+    fields=intake_fields(unit,scenario='inputs',work_mode='existing',case_selection=f"{item['id']}:{item['revision']}")
+    doc,linked=intake.register(c,u[0],fields)
+    assert linked['id']==item['id'] and len(work.linked_documents(c,u[0],item['id']))==1
+    before=c.execute('SELECT * FROM document_sequence').fetchall()
+    with pytest.raises(docs.Conflict):intake.register(c,u[0],fields)
+    assert c.execute('SELECT * FROM document_sequence').fetchall()==before
+    # Existing lead cannot read the newly created preverification record; linking must not grant access.
+    other=inbox_case(c,u,unit)
+    with pytest.raises(ValueError,match='creator and confirmed lead'):
+        intake.register(c,u[0],{**fields,'case_selection':f"{other['id']}:{other['revision']}"})
+    assert c.execute('SELECT COUNT(*) FROM document').fetchone()[0]==1
+    assert c.execute('SELECT * FROM document_sequence').fetchall()==before
+
+
+def test_intake_invalid_and_failed_steps_roll_back_numbering(workspace,monkeypatch):
+    c,u,unit,_=workspace
+    fields=intake_fields(unit,scenario='response',work_mode='new',outcome='A supported response',propose_steps='yes')
+    with pytest.raises(ValueError,match='confirm'):intake.register(c,u[0],{**fields,'confirmed':''})
+    with pytest.raises(ValueError,match='reference'):intake.register(c,u[0],{**fields,'scenario':'reference'})
+    def fail(*args,**kwargs):raise RuntimeError('Task storage failed')
+    monkeypatch.setattr(tasks,'create_in_transaction',fail)
+    with pytest.raises(RuntimeError):intake.register(c,u[0],fields)
+    for table in ('document','document_sequence','work_case','work_task','work_event','document_event'):
+        assert c.execute('SELECT COUNT(*) FROM '+table).fetchone()[0]==0
+    st.set_setting(c,'work.enabled','0')
+    doc,item=intake.register(c,u[0],intake_fields(unit))
+    assert item is None and doc['number'].endswith('000001')
+
+
+class IntakeAdapter:
+    def __init__(self,fail=False):self.calls=[];self.fail=fail
+    def call(self,action,payload,operation):
+        self.calls.append((action,payload))
+        if self.fail:raise RuntimeError('Relay unavailable')
+        if action=='inspect':return {'file_id':payload['file_id'],'fingerprint':'source-v1','accessible':True,'size':200}
+        return {'state':'confirmed','suggestions':{'subject':'Suggested subject','type':'request',
+               'due_date':'2026-11-01','lead_id':'999','approval':'approved'},
+                'excerpts':['<script>untrusted()</script>'],'warnings':['Check the source date.']}
+
+
+def test_pre_registration_extraction_is_transient_and_allowlisted(workspace):
+    c,u,unit,_=workspace
+    adapter=IntakeAdapter()
+    result=intake.preview(c,u[0],'https://drive.google.com/file/d/sourcefile123456/view',adapter)
+    assert result['suggestions']=={'subject':'Suggested subject','type':'request','due_date':'2026-11-01'}
+    assert adapter.calls[1][1]['transient'] and adapter.calls[1][1]['actor_id']==u[0]['id']
+    for table in ('document','document_sequence','document_job','document_event'):
+        assert c.execute('SELECT COUNT(*) FROM '+table).fetchone()[0]==0
+    with pytest.raises(ValueError):intake.preview(c,u[0],'https://other.example/file',adapter)
+    with pytest.raises(RuntimeError):intake.preview(c,u[0],'https://drive.google.com/file/d/sourcefile123456/view',IntakeAdapter(True))
+    assert not c.execute('SELECT 1 FROM document_sequence').fetchone()
+
+
+def test_guided_intake_http_preview_failure_manual_entry_and_existing_scope(workspace,app_mod,monkeypatch):
+    from starlette.testclient import TestClient
+    import documents_operations as operations
+    c,u,unit,path=workspace;monkeypatch.setattr(app_mod,'DB',path)
+    item=case(c,u[0],unit)
+    with TestClient(app_mod.app) as client:
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[0]))
+        page=client.get('/documents/new')
+        assert page.status_code==200 and 'Reference only' in page.text
+        csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',page.text)[1]
+        payload={**intake_fields(unit),'intake':'guided','csrf':csrf,'direction':'OUT','priority':'urgent',
+                 'subject':'My manually checked subject','drive_url':'https://drive.google.com/file/d/sourcefile123456/view'}
+        monkeypatch.setattr(operations,'get_adapter',lambda:IntakeAdapter(True))
+        failed=client.post('/documents/intake/preview',data=payload)
+        assert failed.status_code==200 and 'continue manually' in failed.text
+        assert 'My manually checked subject' in failed.text and 'value="OUT" selected' in failed.text
+        assert not c.execute('SELECT 1 FROM document').fetchone()
+        monkeypatch.setattr(operations,'get_adapter',lambda:IntakeAdapter())
+        preview=client.post('/documents/intake/preview',data=payload)
+        assert '&lt;script&gt;untrusted()&lt;/script&gt;' in preview.text
+        assert '<script>untrusted()</script>' not in preview.text
+        assert 'My manually checked subject' in preview.text
+        assert client.post('/documents/intake/preview',data={**payload,'csrf':''}).status_code==403
+        saved=client.post('/documents/new',data=payload,follow_redirects=False)
+        assert saved.status_code==303 and saved.headers['location'].startswith('/documents/')
+        doc=docs.raw(c,1)
+        assert doc['subject']=='My manually checked subject' and doc['direction']=='OUT' and doc['priority']=='urgent'
+        assert doc['due_date'] is None # preview didn't silently apply suggestion
+        assert client.get(f"/documents/new?case_id={item['id']}").status_code==200
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[4]))
+        assert client.get(f"/documents/new?case_id={item['id']}").status_code==404
+
+
+def test_deployment_includes_imported_work_modules():
+    import ast
+    from pathlib import Path
+    root=Path(__file__).resolve().parents[1]
+    tree=ast.parse((root/'deploy_hf.py').read_text())
+    runtime=next(ast.literal_eval(node.value) for node in tree.body if isinstance(node,ast.Assign)
+                 and any(isinstance(target,ast.Name) and target.id=='RUNTIME_PY' for target in node.targets))
+    for file in runtime:
+        source=root/file
+        if not source.exists():continue
+        for node in ast.walk(ast.parse(source.read_text())):
+            names=[alias.name for alias in node.names] if isinstance(node,ast.Import) else ([node.module] if isinstance(node,ast.ImportFrom) else [])
+            for name in names:
+                if name and name.startswith('work') and (root/(name+'.py')).exists():
+                    assert name+'.py' in runtime, f'{file} imports undeployed module {name}'

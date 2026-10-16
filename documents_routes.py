@@ -17,6 +17,7 @@ import documents_operations as ops
 import documents_rules as rules
 import documents_calendar as cal
 import work
+import work_intake
 from documents_storage import rows
 
 
@@ -101,11 +102,49 @@ def make_router(templates,get_conn):
         finally:
             conn.close()
 
+    def intake_page(request,conn,data=None,status_code=200,error='',preview=None):
+        data=data or {}
+        cases=work_intake.choices(conn,request.state.user) if work.enabled(conn) else []
+        if data.get('case_selection'):
+            try:
+                chosen=work.get(conn,request.state.user,int(str(data['case_selection']).split(':')[0]))
+                if work.can_link(conn,request.state.user,chosen) and chosen['id'] not in [c['id'] for c in cases]:
+                    cases.append(chosen)
+            except (ValueError,TypeError):
+                pass
+        return templates.TemplateResponse(request,'documents/new.html',context(request,conn,
+            values=data,work_enabled=work.enabled(conn),cases=cases,scenarios=work_intake.SCENARIOS,
+            preview=preview,error=error),status_code=status_code)
+
+    @router.post('/documents/intake/preview')
+    async def intake_preview(request:Request):
+        conn=get_conn();data={}
+        try:
+            data=await posted(request)
+            result=work_intake.preview(conn,request.state.user,data.get('drive_url',''))
+            data.pop('confirmed',None)
+            return intake_page(request,conn,data,preview=result)
+        except p.Denied:
+            return HTMLResponse('The form expired or the account is unavailable.',status_code=403)
+        except Exception:
+            data.pop('confirmed',None)
+            return intake_page(request,conn,data,error='The source could not be read. Your entered fields are retained; continue manually or retry extraction.')
+        finally:
+            conn.close()
+
     @router.get('/documents/new',response_class=HTMLResponse)
-    def new(request:Request):
+    def new(request:Request,case_id:int|None=None):
         conn=get_conn()
         try:
-            return render(request,conn,'new',values={})
+            data={}
+            if case_id:
+                chosen=work.get(conn,request.state.user,case_id)
+                if not work.can_link(conn,request.state.user,chosen):
+                    raise p.Denied('Work item unavailable for linking.')
+                data={'case_selection':str(chosen['id'])+':'+str(chosen['revision']),'work_mode':'existing','scenario':'response'}
+            return intake_page(request,conn,data)
+        except p.Denied:
+            return HTMLResponse('Work item unavailable for linking.',status_code=404)
         finally:
             conn.close()
 
@@ -230,10 +269,13 @@ def make_router(templates,get_conn):
         conn=get_conn(); data={}
         try:
             data=await posted(request)
+            if data.get('intake')=='guided':
+                doc,case=work_intake.register(conn,request.state.user,data)
+                return RedirectResponse('/work/'+str(case['id']) if case else '/documents/'+str(doc['id']),status_code=303)
             doc=d.register(conn,request.state.user,data)
             return RedirectResponse('/documents/'+str(doc['id']),status_code=303)
         except (ValueError,sqlite3.IntegrityError) as e:
-            return templates.TemplateResponse(request,'documents/new.html',context(request,conn,error=str(e),values=data),status_code=403 if isinstance(e,p.Denied) else 400)
+            return intake_page(request,conn,data,error=str(e),status_code=403 if isinstance(e,p.Denied) else (409 if isinstance(e,d.Conflict) else 400))
         finally:
             conn.close()
 

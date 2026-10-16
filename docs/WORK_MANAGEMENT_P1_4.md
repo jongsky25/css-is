@@ -1,6 +1,6 @@
 # P1.4 — My work and home integration
 
-October 16, 2026. Status **In review**. Implementation owner: Codex. Branch `codex/my-work-home`; prepared version **6.53**. P1.3 was merged first at `027d76b` as requested. P1.4 has not been merged or deployed; staff acceptance remains open.
+October 16, 2026. Status **In review**. Implementation owner: Codex. Branch `codex/my-work-home`; prepared version **6.53**. P1.3 was merged first at `027d76b` as requested. P1.4 was subsequently merged on the user’s instruction at `53f1fb462b2e9255b6c097d223824e40f58fd258`, rebased in release numbering to **6.55** to preserve the newer main releases 6.53/6.54. Packaging correction `ff100fe` released **6.56** to include `work_inbox.py`. Deployment and staff acceptance are not recorded.
 
 ## Personal responsibilities
 

@@ -44,26 +44,32 @@ def _event(conn, user, case_id, task, action, reason):
 
 def create(conn, user, case_id, fields):
     with transaction(conn):
-        user = permissions.actor(conn, user)
-        case = work.get(conn, user, case_id)
-        work.writable(conn)
-        import work_compat
-        work_compat.require_open(conn, case_id)
-        title = work._text(fields.get('title'), 'Contribution title', 250)
-        output = work._text(fields.get('expected_output'), 'Expected output', 4000)
-        unit_id = int(fields.get('unit_id') or case['unit_id'])
-        if not conn.execute('SELECT 1 FROM org_unit WHERE id=?', (unit_id,)).fetchone():
-            raise ValueError('Choose the contributing unit.')
-        proposed = work._account(conn, fields['proposed_owner_id'])['id'] if fields.get('proposed_owner_id') else None
-        due = _due(conn, case_id, fields.get('due_date'))
-        now = tz.now_iso()
-        task_id = conn.execute('''INSERT INTO work_task(case_id,title,expected_output,unit_id,
-            proposed_owner_id,creator_id,status,due_date,created_at,updated_at)
-            VALUES (?,?,?,?,?,?,'proposed',?,?,?)''',
-            (case_id, title, output, unit_id, proposed, user['id'], due, now, now)).lastrowid
-        task = rows(conn, 'SELECT * FROM work_task WHERE id=?', (task_id,))[0]
-        _event(conn, user, case_id, task, 'proposed', 'Contribution proposed for officer confirmation.')
-        return task
+        return create_in_transaction(conn, user, case_id, fields)
+
+
+def create_in_transaction(conn, user, case_id, fields):
+    if not conn.in_transaction:
+        raise RuntimeError('An active transaction is required')
+    user = permissions.actor(conn, user)
+    case = work.get(conn, user, case_id)
+    work.writable(conn)
+    import work_compat
+    work_compat.require_open(conn, case_id)
+    title = work._text(fields.get('title'), 'Contribution title', 250)
+    output = work._text(fields.get('expected_output'), 'Expected output', 4000)
+    unit_id = int(fields.get('unit_id') or case['unit_id'])
+    if not conn.execute('SELECT 1 FROM org_unit WHERE id=?', (unit_id,)).fetchone():
+        raise ValueError('Choose the contributing unit.')
+    proposed = work._account(conn, fields['proposed_owner_id'])['id'] if fields.get('proposed_owner_id') else None
+    due = _due(conn, case_id, fields.get('due_date'))
+    now = tz.now_iso()
+    task_id = conn.execute('''INSERT INTO work_task(case_id,title,expected_output,unit_id,
+        proposed_owner_id,creator_id,status,due_date,created_at,updated_at)
+        VALUES (?,?,?,?,?,?,'proposed',?,?,?)''',
+        (case_id, title, output, unit_id, proposed, user['id'], due, now, now)).lastrowid
+    task = rows(conn, 'SELECT * FROM work_task WHERE id=?', (task_id,))[0]
+    _event(conn, user, case_id, task, 'proposed', 'Contribution proposed for officer confirmation.')
+    return task
 
 
 def actions(conn, user, case, task):

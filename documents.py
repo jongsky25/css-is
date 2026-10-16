@@ -216,63 +216,70 @@ def apply_route(conn, doc, evaluation):
 
 def register(conn, user, fields, now=None):
     with transaction(conn):
-        writable(conn)
-        user = p.actor(conn,user)
-        direction = fields.get('direction','IN')
-        if direction not in ('IN','OUT'):
-            raise ValueError('Choose Incoming or Outgoing.')
-        subject, typ = str(fields.get('subject','')).strip(), str(fields.get('type','')).strip()
-        if not subject or len(subject)>500 or not typ or len(typ)>100:
-            raise ValueError('Subject (up to 500 characters) and type (up to 100) are required.')
-        unit = int(fields['unit_id']) if fields.get('unit_id') else None
-        if unit and not conn.execute('SELECT 1 FROM org_unit WHERE id=?',(unit,)).fetchone():
-            raise ValueError('Unknown unit.')
-        # Registration instant, not issue date, governs permanent annual numbering.
-        now = now or datetime.now(ZoneInfo('Asia/Manila'))
-        if now.tzinfo is None:
-            raise ValueError('Registration clock must include a timezone.')
-        local = now.astimezone(ZoneInfo('Asia/Manila'))
-        seq = conn.execute('INSERT INTO document_sequence(year,direction,value) VALUES (?,?,1) ON CONFLICT(year,direction) DO UPDATE SET value=value+1 RETURNING value',
-                           (local.year,direction)).fetchone()[0]
-        number = f'BLHSD-{direction}-{local.year}-{seq:06d}'
-        timestamp = local.replace(tzinfo=None).isoformat(timespec='seconds')
-        due = date.fromisoformat(fields['due_date']).isoformat() if fields.get('due_date') else None
-        issued = date.fromisoformat(fields['document_date']).isoformat() if fields.get('document_date') else None
-        received = str(fields.get('received_at') or timestamp)
-        receipt_time=datetime.fromisoformat(received)
-        if receipt_time.tzinfo is not None:
-            receipt_time=receipt_time.astimezone(ZoneInfo('Asia/Manila')).replace(tzinfo=None)
-        received=receipt_time.isoformat(timespec='seconds')
-        sender = str(fields.get('sender','')).strip()[:500]
-        evaluation = rules.evaluate(conn,{'subject':subject,'type':typ,'sender':sender})
-        policy = evaluation['policy']
-        source = 'explicit' if due else None
-        if not due and 'default_days' in policy and 'anchor' in policy:
-            anchor = received[:10] if policy['anchor']=='receipt' else timestamp[:10]
-            due = rules.shift(conn,anchor,policy['default_days']).isoformat()
-            source = 'default'
-        lead = evaluation['leads'][0] if len(evaluation['leads'])==1 and len(evaluation.get('lead_units',[]))<=1 else None
-        doc_id = conn.execute('''INSERT INTO document(number,direction,subject,type,sender,document_date,received_at,
-            creator_id,unit_id,lead_id,status,priority,due_date,original_due_date,due_source,policy_json,matches_json,created_at,updated_at)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
-            (number,direction,subject,typ,sender,issued,received,user['id'],unit,lead,'registered' if direction=='IN' else 'draft',
-             'urgent' if fields.get('priority')=='urgent' else 'normal',due,due,source,json.dumps(policy),json.dumps(evaluation),timestamp,timestamp)).lastrowid
-        doc = raw(conn,doc_id)
-        for ref in str(fields.get('references','')).splitlines():
-            if ref.strip():
-                conn.execute('INSERT INTO document_reference(document_id,kind,value) VALUES (?,?,?)',(doc_id,'external',ref.strip()[:500]))
-        if direction=='IN':
-            conn.execute('INSERT INTO document_receipt(document_id,channel,sender,received_at,evidence) VALUES (?,?,?,?,?)',
-                         (doc_id,str(fields.get('channel') or 'unspecified')[:100],sender,received,str(fields.get('evidence',''))[:4000]))
+        return register_in_transaction(conn, user, fields, now)
+
+
+def register_in_transaction(conn, user, fields, now=None, suppress_assignments=False):
+    if not conn.in_transaction:
+        raise RuntimeError('An active transaction is required')
+    writable(conn)
+    user = p.actor(conn,user)
+    direction = fields.get('direction','IN')
+    if direction not in ('IN','OUT'):
+        raise ValueError('Choose Incoming or Outgoing.')
+    subject, typ = str(fields.get('subject','')).strip(), str(fields.get('type','')).strip()
+    if not subject or len(subject)>500 or not typ or len(typ)>100:
+        raise ValueError('Subject (up to 500 characters) and type (up to 100) are required.')
+    unit = int(fields['unit_id']) if fields.get('unit_id') else None
+    if unit and not conn.execute('SELECT 1 FROM org_unit WHERE id=?',(unit,)).fetchone():
+        raise ValueError('Unknown unit.')
+    # Registration instant, not issue date, governs permanent annual numbering.
+    now = now or datetime.now(ZoneInfo('Asia/Manila'))
+    if now.tzinfo is None:
+        raise ValueError('Registration clock must include a timezone.')
+    local = now.astimezone(ZoneInfo('Asia/Manila'))
+    seq = conn.execute('INSERT INTO document_sequence(year,direction,value) VALUES (?,?,1) ON CONFLICT(year,direction) DO UPDATE SET value=value+1 RETURNING value',
+                       (local.year,direction)).fetchone()[0]
+    number = f'BLHSD-{direction}-{local.year}-{seq:06d}'
+    timestamp = local.replace(tzinfo=None).isoformat(timespec='seconds')
+    due = date.fromisoformat(fields['due_date']).isoformat() if fields.get('due_date') else None
+    issued = date.fromisoformat(fields['document_date']).isoformat() if fields.get('document_date') else None
+    received = str(fields.get('received_at') or timestamp)
+    receipt_time=datetime.fromisoformat(received)
+    if receipt_time.tzinfo is not None:
+        receipt_time=receipt_time.astimezone(ZoneInfo('Asia/Manila')).replace(tzinfo=None)
+    received=receipt_time.isoformat(timespec='seconds')
+    sender = str(fields.get('sender','')).strip()[:500]
+    evaluation = rules.evaluate(conn,{'subject':subject,'type':typ,'sender':sender})
+    policy = evaluation['policy']
+    source = 'explicit' if due else None
+    if not due and 'default_days' in policy and 'anchor' in policy:
+        anchor = received[:10] if policy['anchor']=='receipt' else timestamp[:10]
+        due = rules.shift(conn,anchor,policy['default_days']).isoformat()
+        source = 'default'
+    lead = evaluation['leads'][0] if not suppress_assignments and len(evaluation['leads'])==1 and len(evaluation.get('lead_units',[]))<=1 else None
+    doc_id = conn.execute('''INSERT INTO document(number,direction,subject,type,sender,document_date,received_at,
+        creator_id,unit_id,lead_id,status,priority,due_date,original_due_date,due_source,policy_json,matches_json,created_at,updated_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+        (number,direction,subject,typ,sender,issued,received,user['id'],unit,lead,'registered' if direction=='IN' else 'draft',
+         'urgent' if fields.get('priority')=='urgent' else 'normal',due,due,source,json.dumps(policy),json.dumps(evaluation),timestamp,timestamp)).lastrowid
+    doc = raw(conn,doc_id)
+    for ref in str(fields.get('references','')).splitlines():
+        if ref.strip():
+            conn.execute('INSERT INTO document_reference(document_id,kind,value) VALUES (?,?,?)',(doc_id,'external',ref.strip()[:500]))
+    if direction=='IN':
+        conn.execute('INSERT INTO document_receipt(document_id,channel,sender,received_at,evidence) VALUES (?,?,?,?,?)',
+                     (doc_id,str(fields.get('channel') or 'unspecified')[:100],sender,received,str(fields.get('evidence',''))[:4000]))
+    if not suppress_assignments:
         apply_route(conn,doc,evaluation)
-        eid = event(conn,doc_id,user,'registered',{'number':number,'routing':evaluation,'scan_missing':not fields.get('drive_url')})
-        if fields.get('drive_url'):
-            from documents_operations import validate_drive_url
-            url, file_id = validate_drive_url(fields['drive_url'])
-            conn.execute('INSERT INTO document_file_version(document_id,url,file_id,fingerprint,role,actor_id,created_at) VALUES (?,?,?,?,?,?,?)',
-                         (doc_id,url,file_id,'','reference',user['id'],timestamp))
-        notify(conn,doc,eid,'registered')
-        return doc
+    eid = event(conn,doc_id,user,'registered',{'number':number,'routing':evaluation,'scan_missing':not fields.get('drive_url'),'automatic_assignments_suppressed':suppress_assignments})
+    if fields.get('drive_url'):
+        from documents_operations import validate_drive_url
+        url, file_id = validate_drive_url(fields['drive_url'])
+        conn.execute('INSERT INTO document_file_version(document_id,url,file_id,fingerprint,role,actor_id,created_at) VALUES (?,?,?,?,?,?,?)',
+                     (doc_id,url,file_id,'','reference',user['id'],timestamp))
+    notify(conn,doc,eid,'registered')
+    return doc
 
 
 def rule_save(conn,user,name,body, rule_id=None, revision=None, state='draft'):

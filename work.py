@@ -117,27 +117,33 @@ def _document_for_link(conn, user, case, document_id, kind):
 
 def create(conn, user, fields):
     with transaction(conn):
-        user = permissions.actor(conn, user)
-        writable(conn)
-        title = _text(fields.get('title'), 'Title', 250)
-        outcome = _text(fields.get('outcome'), 'Expected outcome', 4000)
-        unit_id = int(fields.get('unit_id') or 0)
-        if not conn.execute('SELECT 1 FROM org_unit WHERE id=?', (unit_id,)).fetchone():
-            raise ValueError('Choose the concerned unit.')
-        proposed = _account(conn, fields['proposed_lead_id'])['id'] if fields.get('proposed_lead_id') else None
-        due = date.fromisoformat(fields['due_date']).isoformat() if fields.get('due_date') else None
-        now = tz.now_iso()
-        cid = conn.execute('''INSERT INTO work_case(title,outcome,unit_id,creator_id,proposed_lead_id,
-                              due_date,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?)''',
-                           (title, outcome, unit_id, user['id'], proposed, due, now, now)).lastrowid
-        case = raw(conn, cid)
-        if fields.get('source_document_id'):
-            doc = _document_for_link(conn, user, case, fields['source_document_id'], 'reference')
-            conn.execute('INSERT INTO work_document VALUES (?,?,?,?,?)', (cid, doc['id'], 'reference', user['id'], now))
-        _event(conn, user, cid, 'created', {'proposed_lead_id': proposed})
-        if fields.get('source_document_id'):
-            _event(conn, user, cid, 'document_linked', {'document_id': doc['id'], 'kind': 'reference'})
-        return raw(conn, cid)
+        return create_in_transaction(conn, user, fields)
+
+
+def create_in_transaction(conn, user, fields):
+    if not conn.in_transaction:
+        raise RuntimeError('An active transaction is required')
+    user = permissions.actor(conn, user)
+    writable(conn)
+    title = _text(fields.get('title'), 'Title', 250)
+    outcome = _text(fields.get('outcome'), 'Expected outcome', 4000)
+    unit_id = int(fields.get('unit_id') or 0)
+    if not conn.execute('SELECT 1 FROM org_unit WHERE id=?', (unit_id,)).fetchone():
+        raise ValueError('Choose the concerned unit.')
+    proposed = _account(conn, fields['proposed_lead_id'])['id'] if fields.get('proposed_lead_id') else None
+    due = date.fromisoformat(fields['due_date']).isoformat() if fields.get('due_date') else None
+    now = tz.now_iso()
+    cid = conn.execute('''INSERT INTO work_case(title,outcome,unit_id,creator_id,proposed_lead_id,
+                          due_date,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?)''',
+                       (title, outcome, unit_id, user['id'], proposed, due, now, now)).lastrowid
+    case = raw(conn, cid)
+    if fields.get('source_document_id'):
+        doc = _document_for_link(conn, user, case, fields['source_document_id'], 'reference')
+        conn.execute('INSERT INTO work_document VALUES (?,?,?,?,?)', (cid, doc['id'], 'reference', user['id'], now))
+    _event(conn, user, cid, 'created', {'proposed_lead_id': proposed})
+    if fields.get('source_document_id'):
+        _event(conn, user, cid, 'document_linked', {'document_id': doc['id'], 'kind': 'reference'})
+    return raw(conn, cid)
 
 
 def confirm_lead(conn, user, case_id, revision, lead_id, reason):
@@ -166,27 +172,33 @@ def confirm_lead(conn, user, case_id, revision, lead_id, reason):
 
 def link_document(conn, user, case_id, revision, document_id, kind='reference'):
     with transaction(conn):
-        user = permissions.actor(conn, user)
-        case = get(conn, user, case_id)
-        writable(conn)
-        if not can_link(conn, user, case):
-            raise permissions.Denied('The creator, lead, or concerned officer links correspondence.')
-        _check_revision(case, revision)
-        doc = _document_for_link(conn, user, case, document_id, kind)
-        previous = None
-        for link in rows(conn, 'SELECT document_id,kind FROM work_document WHERE case_id=?', (case_id,)):
-            resolved = resolved_document(conn, link['document_id'])
-            if resolved and resolved['id'] == doc['id']:
-                previous = (link['kind'],)
-                break
-        if previous:
-            if previous[0] == kind:
-                return case  # Repeat submission does not create another link/event.
-            raise ValueError('This document is already linked. Its existing link is retained.')
-        conn.execute('INSERT INTO work_document VALUES (?,?,?,?,?)', (case_id, doc['id'], kind, user['id'], tz.now_iso()))
-        conn.execute('UPDATE work_case SET revision=revision+1,updated_at=? WHERE id=?', (tz.now_iso(), case_id))
-        _event(conn, user, case_id, 'document_linked', {'document_id': doc['id'], 'kind': kind})
-        return raw(conn, case_id)
+        return link_document_in_transaction(conn, user, case_id, revision, document_id, kind)
+
+
+def link_document_in_transaction(conn, user, case_id, revision, document_id, kind='reference'):
+    if not conn.in_transaction:
+        raise RuntimeError('An active transaction is required')
+    user = permissions.actor(conn, user)
+    case = get(conn, user, case_id)
+    writable(conn)
+    if not can_link(conn, user, case):
+        raise permissions.Denied('The creator, lead, or concerned officer links correspondence.')
+    _check_revision(case, revision)
+    doc = _document_for_link(conn, user, case, document_id, kind)
+    previous = None
+    for link in rows(conn, 'SELECT document_id,kind FROM work_document WHERE case_id=?', (case_id,)):
+        resolved = resolved_document(conn, link['document_id'])
+        if resolved and resolved['id'] == doc['id']:
+            previous = (link['kind'],)
+            break
+    if previous:
+        if previous[0] == kind:
+            return case  # Repeat submission does not create another link/event.
+        raise ValueError('This document is already linked. Its existing link is retained.')
+    conn.execute('INSERT INTO work_document VALUES (?,?,?,?,?)', (case_id, doc['id'], kind, user['id'], tz.now_iso()))
+    conn.execute('UPDATE work_case SET revision=revision+1,updated_at=? WHERE id=?', (tz.now_iso(), case_id))
+    _event(conn, user, case_id, 'document_linked', {'document_id': doc['id'], 'kind': kind})
+    return raw(conn, case_id)
 
 
 def can_link(conn, user, case):
