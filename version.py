@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.61"
+APP_VERSION = "6.62"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.62",
+        "date": "October 16, 2026",
+        "summary": "Online meetings on the calendar can get a Google Meet link automatically.",
+        "changes": [
+            "Save a calendar item as Online or Hybrid with no link and a Google Meet link is added for you.",
+            "Changing the time of the item moves the Meet event, and cancelling it removes the event.",
+            "A link you type yourself, such as Zoom or Teams, is never replaced.",
+        ],
+    },
     {
         "version": "6.61",
         "date": "October 16, 2026",
