@@ -1,6 +1,6 @@
 # P1.2 — Contribution task lifecycle
 
-October 16, 2026. Status: **In review**. Implementation owner: Codex. Branch: `codex/contribution-lifecycle`. Prepared version: **6.51**. P1.1 was first merged into main at `e4c5da2` as requested; P1.2 has not been merged or deployed. Staff acceptance remains open.
+October 16, 2026. Status: **In review**. Implementation owner: Codex. Branch: `codex/contribution-lifecycle`. Prepared version: **6.51**. P1.1 was first merged into main at `e4c5da2` as requested; P1.2 was subsequently merged into main on the user’s instruction at `aeba93e5869c55dd8402896e41a8ec4eb94cb6b8`. Operational activation is not recorded. Staff acceptance remains open.
 
 ## Implemented
 

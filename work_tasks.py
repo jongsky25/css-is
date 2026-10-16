@@ -47,6 +47,8 @@ def create(conn, user, case_id, fields):
         user = permissions.actor(conn, user)
         case = work.get(conn, user, case_id)
         work.writable(conn)
+        import work_compat
+        work_compat.require_open(conn, case_id)
         title = work._text(fields.get('title'), 'Contribution title', 250)
         output = work._text(fields.get('expected_output'), 'Expected output', 4000)
         unit_id = int(fields.get('unit_id') or case['unit_id'])
@@ -81,6 +83,8 @@ def actions(conn, user, case, task):
         result.append('submit')
     if state == 'for_review' and coordinator:
         result.extend(('return', 'accept'))
+    if state not in ('done', 'cancelled') and coordinator:
+        result.append('milestone')
     if state == 'done' and coordinator:
         result.append('reopen')
     if state not in ('done', 'cancelled') and scoped:
@@ -90,34 +94,46 @@ def actions(conn, user, case, task):
 
 def mutate(conn, user, case_id, task_id, revision, action, fields):
     with transaction(conn):
-        user = permissions.actor(conn, user)
-        case = work.get(conn, user, case_id)
-        work.writable(conn)
-        found = rows(conn, 'SELECT * FROM work_task WHERE id=? AND case_id=?', (task_id, case_id))
-        if not found:
-            raise permissions.Denied('Contribution not found or unavailable to you.')
-        task = found[0]
-        work._check_revision(task, revision)
-        if action not in actions(conn, user, case, task):
-            raise permissions.Denied('This contribution action is not available to you in its current state.')
-        note = work._text(fields.get('reason'), 'Reason or progress note', 2000)
-        owner, due, submission = task['owner_id'], task['due_date'], task['submission']
-        if action in ('confirm', 'reassign'):
-            owner = _owner(conn, case_id, fields.get('owner_id'))
-            due = _due(conn, case_id, fields.get('due_date', due))
-            if action == 'reassign' and owner == task['owner_id']:
-                raise ValueError('Choose a different owner for reassignment.')
-            state = 'todo'
-        else:
-            state = {'acknowledge': 'in_progress', 'submit': 'for_review', 'return': 'in_progress',
-                     'accept': 'done', 'reopen': 'in_progress', 'cancel': 'cancelled'}[action]
-            if action != 'cancel':
-                _owner(conn, case_id, owner)
-            if action == 'submit':
-                submission = work._text(fields.get('submission'), 'Output or evidence', 8000)
-        conn.execute('''UPDATE work_task SET owner_id=?,status=?,due_date=?,submission=?,
-                        revision=revision+1,updated_at=? WHERE id=?''',
-                     (owner, state, due, submission, tz.now_iso(), task_id))
-        updated = rows(conn, 'SELECT * FROM work_task WHERE id=?', (task_id,))[0]
-        _event(conn, user, case_id, updated, action, note)
-        return updated
+        return mutate_in_transaction(conn, user, case_id, task_id, revision, action, fields)
+
+
+def mutate_in_transaction(conn, user, case_id, task_id, revision, action, fields):
+    if not conn.in_transaction:
+        raise RuntimeError('Task mutation requires its caller transaction')
+    user = permissions.actor(conn, user)
+    case = work.get(conn, user, case_id)
+    work.writable(conn)
+    import work_compat
+    work_compat.require_open(conn, case_id)
+    found = rows(conn, 'SELECT * FROM work_task WHERE id=? AND case_id=?', (task_id, case_id))
+    if not found:
+        raise permissions.Denied('Contribution not found or unavailable to you.')
+    task = found[0]
+    work._check_revision(task, revision)
+    if action not in actions(conn, user, case, task):
+        raise permissions.Denied('This contribution action is not available to you in its current state.')
+    note = work._text(fields.get('reason'), 'Reason or progress note', 2000)
+    owner, due, submission = task['owner_id'], task['due_date'], task['submission']
+    if action == 'milestone':
+        due = _due(conn, case_id, fields.get('due_date'))
+        state = task['status']
+    elif action in ('confirm', 'reassign'):
+        owner = _owner(conn, case_id, fields.get('owner_id'))
+        due = _due(conn, case_id, fields.get('due_date', due))
+        if action == 'reassign' and owner == task['owner_id']:
+            raise ValueError('Choose a different owner for reassignment.')
+        state = 'todo'
+    else:
+        state = {'acknowledge': 'in_progress', 'submit': 'for_review', 'return': 'in_progress',
+                 'accept': 'done', 'reopen': 'in_progress', 'cancel': 'cancelled'}[action]
+        if action != 'cancel':
+            _owner(conn, case_id, owner)
+        if action == 'submit':
+            submission = work._text(fields.get('submission'), 'Output or evidence', 8000)
+    conn.execute('''UPDATE work_task SET owner_id=?,status=?,due_date=?,submission=?,
+                    revision=revision+1,updated_at=? WHERE id=?''',
+                 (owner, state, due, submission, tz.now_iso(), task_id))
+    updated = rows(conn, 'SELECT * FROM work_task WHERE id=?', (task_id,))[0]
+    _event(conn, user, case_id, updated, action, note)
+    conn.execute("UPDATE document_notice SET state='cancelled' WHERE state='pending' AND (kind LIKE 'deadline:%' OR kind LIKE 'milestone:%') AND document_id IN (SELECT document_id FROM work_legacy_document WHERE case_id=?)", (case_id,))
+    return updated

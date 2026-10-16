@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.51"
+APP_VERSION = "6.52"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.52",
+        "date": "October 16, 2026",
+        "summary": "Existing assignments can be rehearsed as shared contributions while preserving their history.",
+        "changes": [
+            "For migrated records, document pages reflect current shared contribution progress.",
+            "Required contributions still control closure, and officers can adjust internal targets with a recorded reason.",
+            "Migration can be checked on a separate database copy before operational use.",
+        ],
+    },
     {
         "version": "6.51",
         "date": "October 16, 2026",

@@ -413,3 +413,194 @@ def test_legacy_document_lead_can_accept_but_cannot_submit_for_another(workspace
         docs.mutate(c, u[3], doc['id'], doc['revision'], 'contribution', {**payload, 'status': 'completed'})
     doc = docs.mutate(c, u[2], doc['id'], doc['revision'], 'contribution', {**payload, 'status': 'completed'})
     assert c.execute('SELECT status FROM document_assignment WHERE id=?', (assignment,)).fetchone()[0] == 'completed'
+
+# P1.3 explicit, idempotent migration and compatibility contracts.
+import work_compat as compat
+
+
+def legacy_setup(c, u, unit, statuses=('assigned',), mandatory=1):
+    doc = document(c, u[0], unit)
+    doc = docs.mutate(c, u[1], doc['id'], doc['revision'], 'verify', {'verification': 'verified', 'reason': 'Checked'})
+    c.execute("UPDATE document SET lead_id=?,policy_json=?,reconcile=0 WHERE id=?", (u[2]['id'], '{"closure":[]}', doc['id']))
+    c.execute("INSERT INTO document_assignment(document_id,user_id,role,action,status,created_at) VALUES (?,?,'lead','Coordinate','assigned','2026-10-16')", (doc['id'],u[2]['id']))
+    for state in statuses:
+        c.execute('''INSERT INTO document_assignment(document_id,user_id,role,action,status,due_date,outcome,mandatory,created_at)
+                     VALUES (?,?,'contributor','Technical input',?,'2026-10-23',?,?, '2026-10-16')''',
+                  (doc['id'],u[3]['id'],state,'Original evidence: '+state,mandatory))
+    c.commit()
+    return docs.raw(c,doc['id'])
+
+
+def migrate(c, u, doc):
+    return compat.migrate(c,u[1],doc['id'],doc['revision'],'One agreed response','Rehearse this explicit record')
+
+
+def test_migration_maps_every_state_preserves_sources_and_repeats(workspace):
+    c,u,unit,_ = workspace
+    doc=legacy_setup(c,u,unit,tuple(compat.STATES))
+    original=c.execute('SELECT * FROM document_assignment').fetchall()
+    report=migrate(c,u,doc)
+    assert report['source_rows_preserved'] and len(report['lead_assignment_ids'])==1
+    assert len(report['contributors'])==7
+    for row in report['contributors']:
+        assert row['current_status']==compat.STATES[row['source_status']]
+        assert row['owner_id']==(None if row['source_status']=='proposed' else u[3]['id'])
+        assert row['source_due_date']==row['due_date'] and row['mandatory']==row['source_mandatory']==1
+        assert row['initial_evidence_preserved']
+    assert work.raw(c,report['case_id'])['lead_id']==u[2]['id']
+    assert len(tasks.list_for_case(c,u[1],report['case_id']))==7 # no redundant lead task
+    assert migrate(c,u,doc)==report
+    st.init_db(c)
+    assert c.execute('SELECT * FROM document_assignment').fetchall()==original
+    for sql in ('UPDATE document_assignment SET outcome=\'overwritten\'', 'DELETE FROM document_assignment'):
+        with pytest.raises(sqlite3.IntegrityError): c.execute(sql)
+        c.rollback()
+    assert c.execute('SELECT COUNT(*) FROM work_case').fetchone()[0]==1
+
+
+def test_migrated_old_and_new_entry_points_share_task_state_and_closure(workspace):
+    c,u,unit,_=workspace
+    doc=legacy_setup(c,u,unit)
+    report=migrate(c,u,doc); cid=report['case_id']; aid=report['contributors'][0]['assignment_id']
+    task=tasks.list_for_case(c,u[1],cid)[0]
+    doc=docs.raw(c,doc['id'])
+    with pytest.raises(ValueError,match='Mandatory contributions'):
+        docs.mutate(c,u[2],doc['id'],doc['revision'],'close',{'evidence':{}})
+    payload={'assignment_id':aid,'status':'acknowledged','outcome':'Starting'}
+    with pytest.raises(docs.Conflict,match='task revision'):
+        docs.mutate(c,u[3],doc['id'],doc['revision'],'contribution',payload)
+    doc=docs.mutate(c,u[3],doc['id'],doc['revision'],'contribution',{**payload,'task_revision':1})
+    task=tasks.list_for_case(c,u[3],cid)[0]
+    assert task['status']=='in_progress' and task['revision']==2
+    task=advance(c,u[3],task,'submit',submission='Current submitted output')
+    with pytest.raises(docs.Conflict):
+        docs.mutate(c,u[2],doc['id'],doc['revision'],'contribution',
+                    {**payload,'status':'completed','task_revision':2})
+    doc=docs.mutate(c,u[2],doc['id'],doc['revision'],'contribution',
+                    {**payload,'status':'completed','task_revision':task['revision']})
+    assert c.execute('SELECT status FROM document_assignment WHERE id=?',(aid,)).fetchone()[0]=='assigned'
+    assert c.execute('SELECT status FROM document_assignment_effective WHERE id=?',(aid,)).fetchone()[0]=='completed'
+    assert docs.metrics(c,[doc])['unacknowledged']==0
+    doc=docs.mutate(c,u[2],doc['id'],doc['revision'],'close',{'evidence':{}})
+    task=tasks.list_for_case(c,u[2],cid)[0]
+    with pytest.raises(ValueError,match='Reopen the official'):
+        advance(c,u[2],task,'reopen')
+    assert doc['status']=='closed'
+
+
+def test_migrated_new_tasks_optional_flags_and_atomic_lead_sync(workspace):
+    c,u,unit,_=workspace
+    doc=legacy_setup(c,u,unit,('assigned',),mandatory=0)
+    report=migrate(c,u,doc); item=work.get(c,u[1],report['case_id'])
+    task=propose(c,u[1],item,unit,u[0]['id'])
+    effective=c.execute('SELECT id,mandatory FROM document_assignment_effective WHERE id=?',(-task['id'],)).fetchone()
+    assert effective==(-task['id'],1)
+    doc=docs.raw(c,doc['id'])
+    with pytest.raises(ValueError,match='Mandatory contributions'):
+        docs.mutate(c,u[2],doc['id'],doc['revision'],'close',{'evidence':{}})
+    task=advance(c,u[1],task,'cancel')
+    item=work.confirm_lead(c,u[1],item['id'],item['revision'],u[0]['id'],'Officer-approved handoff')
+    doc=docs.raw(c,doc['id'])
+    assert doc['lead_id']==item['lead_id']==u[0]['id']
+    assert doc['revision']>report.get('source_revision',1)
+    docs.mutate(c,u[0],doc['id'],doc['revision'],'close',{'evidence':{}}) # optional legacy input doesn't block
+
+
+def test_migration_refuses_unsafe_sources_and_rolls_back(workspace,monkeypatch):
+    c,u,unit,_=workspace
+    doc=legacy_setup(c,u,unit)
+    with pytest.raises(permissions.Denied):
+        compat.migrate(c,u[0],doc['id'],doc['revision'],'Outcome','Unscoped')
+    c.execute("UPDATE document_assignment SET status='unknown' WHERE role='contributor'");c.commit()
+    with pytest.raises(ValueError,match='unsupported'): migrate(c,u,doc)
+    assert not c.execute('SELECT 1 FROM work_case').fetchone()
+    c.execute("UPDATE document_assignment SET status='assigned' WHERE role='contributor'")
+    c.execute('UPDATE admin_user SET active=0 WHERE id=?',(u[3]['id'],));c.commit()
+    with pytest.raises(ValueError,match='active staff'): migrate(c,u,doc)
+    c.execute('UPDATE admin_user SET active=1 WHERE id=?',(u[3]['id'],));c.commit()
+    def fail(*args,**kwargs): raise RuntimeError('Audit unavailable')
+    monkeypatch.setattr(st,'audit',fail)
+    with pytest.raises(RuntimeError): migrate(c,u,doc)
+    assert not c.execute('SELECT 1 FROM work_case').fetchone()
+    assert not c.execute('SELECT 1 FROM work_legacy_assignment').fetchone()
+
+
+def test_migrated_legacy_writes_cannot_fall_back_when_disabled(workspace):
+    c,u,unit,_=workspace
+    doc=legacy_setup(c,u,unit); report=migrate(c,u,doc);doc=docs.raw(c,doc['id'])
+    with pytest.raises(ValueError,match='Shared work'):
+        docs.mutate(c,u[1],doc['id'],doc['revision'],'assign',{'user_id':u[0]['id'],'reason':'New','task':'Input'})
+    st.set_setting(c,'work.enabled','0')
+    row=report['contributors'][0]
+    with pytest.raises(ValueError,match='not enabled'):
+        docs.mutate(c,u[3],doc['id'],doc['revision'],'contribution',
+                    {'assignment_id':row['assignment_id'],'task_revision':1,'status':'acknowledged','outcome':'Try fallback'})
+    assert c.execute('SELECT status FROM document_assignment_effective WHERE id=?',(row['assignment_id'],)).fetchone()[0]=='assigned'
+    assert work.get(c,u[3],report['case_id'])
+
+
+def test_copy_rehearsal_preserves_source_and_refuses_overwrite(workspace,tmp_path):
+    import hashlib
+    from scripts.rehearse_work_migration import rehearse
+    c,u,unit,path=workspace
+    doc=legacy_setup(c,u,unit,('proposed','submitted','superseded'))
+    plan=[{'document_id':doc['id'],'revision':doc['revision'],'outcome':'Agreed output','reason':'Rehearsal'}]
+    before=hashlib.sha256(open(path,'rb').read()).hexdigest()
+    dest=tmp_path/'copy.db'
+    result=rehearse(path,dest,plan,u[1]['id'])
+    assert result['repeat_migration_verified'] and result['rehearsal_only']
+    assert hashlib.sha256(open(path,'rb').read()).hexdigest()==before
+    assert not c.execute('SELECT 1 FROM work_legacy_document').fetchone()
+    with pytest.raises(FileExistsError): rehearse(path,dest,plan,u[1]['id'])
+    with pytest.raises(ValueError): rehearse(path,path,plan,u[1]['id'])
+
+
+def test_migrated_http_projection_respects_shared_audience(workspace,app_mod,monkeypatch):
+    from starlette.testclient import TestClient
+    c,u,unit,path=workspace
+    monkeypatch.setattr(app_mod,'DB',path)
+    doc=legacy_setup(c,u,unit); report=migrate(c,u,doc); cid=report['case_id']
+    task=tasks.list_for_case(c,u[3],cid)[0]
+    task=advance(c,u[3],task,'acknowledge')
+    task=advance(c,u[3],task,'submit',submission='Confidential collaborative evidence')
+    # Link a second restricted source, permitted to all confirmed participants but not another bureau reader.
+    private=document(c,u[0],unit)
+    private=docs.mutate(c,u[1],private['id'],private['revision'],'access',
+                       {'visibility':'restricted','viewers':[x['id'] for x in u[:4]],'reason':'Limited audience'})
+    item=work.raw(c,cid)
+    work.link_document(c,u[1],cid,item['revision'],private['id'])
+    with TestClient(app_mod.app) as client:
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[3]))
+        page=client.get(f"/documents/{doc['id']}")
+        assert page.status_code==200 and 'Confidential collaborative evidence' in page.text
+        assert f'/work/{cid}' in page.text and 'Assignment number' not in page.text
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[4]))
+        page=client.get(f"/documents/{doc['id']}")
+        assert page.status_code==200
+        assert 'Confidential collaborative evidence' not in page.text
+        assert f'/work/{cid}' not in page.text
+        assert client.get(f'/work/{cid}').status_code==404
+    assert not permissions.assigned(c,u[4],doc)
+    assert permissions.can_release(c,u[2],doc) # lead ownership retains its former authority
+
+
+def test_migrated_milestones_and_reminders_use_current_task_state(workspace):
+    import documents_notify as notices
+    from datetime import datetime
+    c,u,unit,_=workspace
+    doc=legacy_setup(c,u,unit)
+    c.execute('UPDATE document SET due_date=?,policy_json=? WHERE id=?',('2026-10-25',json.dumps(
+        {'closure':[],'cutoff':'17:00','reminder_time':'08:00','escalate_chief_days':1,'escalate_director_days':2}),doc['id']));c.commit()
+    report=migrate(c,u,doc);cid=report['case_id'];task=tasks.list_for_case(c,u[1],cid)[0]
+    task=advance(c,u[3],task,'acknowledge')
+    task=advance(c,u[2],task,'milestone',due_date='2026-10-22')
+    aid=report['contributors'][0]['assignment_id']
+    assert c.execute('SELECT due_date FROM document_assignment WHERE id=?',(aid,)).fetchone()[0]=='2026-10-23'
+    assert c.execute('SELECT due_date FROM document_assignment_effective WHERE id=?',(aid,)).fetchone()[0]=='2026-10-22'
+    notices.schedule(c,datetime(2026,10,22,10))
+    assert c.execute("SELECT 1 FROM document_notice WHERE kind LIKE 'milestone:%' AND state='pending'").fetchone()
+    task=advance(c,u[3],task,'submit',submission='All input supplied')
+    advance(c,u[2],task,'accept')
+    notices.schedule(c,datetime(2026,10,22,10))
+    assert not c.execute("SELECT 1 FROM document_notice WHERE kind LIKE 'milestone:%' AND state='pending'").fetchone()
+    assert c.execute("SELECT 1 FROM document_notice WHERE kind='assignments_migrated' AND state='pending'").fetchone()

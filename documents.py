@@ -180,7 +180,7 @@ def set_module_enabled(conn, user, turn_on, expected_revision, authorization):
 
 def notify(conn, doc, eid, kind, extra=()):
     recipients = {doc['creator_id'], doc['lead_id']} | set(extra)
-    recipients |= {r[0] for r in conn.execute("SELECT user_id FROM document_assignment WHERE document_id=? AND status<>'superseded'",(doc['id'],))}
+    recipients |= {r[0] for r in conn.execute("SELECT user_id FROM document_assignment_effective WHERE document_id=? AND status<>'superseded'",(doc['id'],))}
     recipients |= {r[0] for r in conn.execute('SELECT user_id FROM document_access WHERE document_id=?',(doc['id'],))}
     for acct in rows(conn,'SELECT id FROM admin_user WHERE active=1'):
         a = p.actor(conn,acct)
@@ -327,6 +327,10 @@ def mutate(conn,user,doc_id,revision,action,data):
         work=p.can_work(conn,user,doc)
         coordinator=officer or doc['lead_id']==user['id']
         changes={}
+        import work_compat
+        if work_compat.mapping(conn, doc_id) and action in ('assign','lead','contribution','milestone','reevaluate'):
+            detail = work_compat.change(conn, user, doc, action, data)
+            return finish(conn, user, doc, action, detail, {})
         if doc['status'] in ('closed','cancelled') and action not in ('reopen','receipt','relate'):
             raise ValueError('Reopen this record before further work.')
         if action=='confirmed_fields':
@@ -467,7 +471,7 @@ def mutate(conn,user,doc_id,revision,action,data):
                     raise ValueError('A linked outgoing reply must be released before closure.')
             if doc['reconcile'] or not doc['lead_id'] or doc['verification']!='verified':
                 raise ValueError('Resolve ownership, verification and directives before closure.')
-            if conn.execute("SELECT 1 FROM document_assignment WHERE document_id=? AND mandatory=1 AND status NOT IN ('completed','superseded')",(doc_id,)).fetchone():
+            if conn.execute("SELECT 1 FROM document_assignment_effective WHERE document_id=? AND mandatory=1 AND status NOT IN ('completed','superseded')",(doc_id,)).fetchone():
                 raise ValueError('Mandatory contributions are incomplete.')
             if doc['direction']=='OUT' and doc['status'] not in ('released','awaiting_acknowledgment'):
                 raise ValueError('Release the outgoing document before closure.')
@@ -536,6 +540,9 @@ def merge(conn,user,preview,note):
         if current!=preview:
             raise Conflict('Merge preview is stale.')
         source,target=raw(conn,preview['source_id']),raw(conn,preview['target_id'])
+        import work_compat
+        if work_compat.mapping(conn, source['id']) or work_compat.mapping(conn, target['id']):
+            raise ValueError('Reconcile migrated work ownership before merging these records.')
         if source['lead_id']!=target['lead_id'] or source['due_date']!=target['due_date']:
             raise ValueError('Resolve different leads and deadlines before merging.')
         # Retain originals as immutable receipt history. Canonical visibility is the
@@ -582,7 +589,7 @@ def metrics(conn,documents,today=None):
             due=date.fromisoformat(doc['due_date'])
             counts['overdue']+=due<today
             counts['due_soon']+=today<=due<=rules.shift(conn,today,3)
-        counts['unacknowledged']+=bool(conn.execute("SELECT 1 FROM document_assignment WHERE document_id=? AND status IN ('proposed','assigned')",(doc['id'],)).fetchone())
+        counts['unacknowledged']+=bool(conn.execute("SELECT 1 FROM document_assignment_effective WHERE document_id=? AND status IN ('proposed','assigned')",(doc['id'],)).fetchone())
         if doc['status']=='closed':
             closed=conn.execute("SELECT occurred_at FROM document_event WHERE document_id=? AND action='close' ORDER BY id DESC LIMIT 1",(doc['id'],)).fetchone()
             if closed:

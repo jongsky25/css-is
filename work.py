@@ -148,6 +148,8 @@ def confirm_lead(conn, user, case_id, revision, lead_id, reason):
         _check_revision(case, revision)
         if not officer(conn, user, case):
             raise permissions.Denied('The concerned officer must confirm the lead.')
+        import work_compat
+        work_compat.require_open(conn, case_id)
         lead = _account(conn, lead_id)
         reason = _text(reason, 'Reason', 2000)
         for (doc_id,) in conn.execute('SELECT document_id FROM work_document WHERE case_id=?', (case_id,)):
@@ -155,6 +157,9 @@ def confirm_lead(conn, user, case_id, revision, lead_id, reason):
                 raise ValueError('Grant the proposed lead access to every linked document before confirming them.')
         conn.execute('UPDATE work_case SET lead_id=?,revision=revision+1,updated_at=? WHERE id=?',
                      (lead['id'], tz.now_iso(), case_id))
+        for (did,) in conn.execute('SELECT document_id FROM work_legacy_document WHERE case_id=?', (case_id,)):
+            doc = docs.raw(conn, did)
+            docs.finish(conn, user, doc, 'lead', {'reason': reason, 'case_id': case_id}, {'lead_id': lead['id']})
         _event(conn, user, case_id, 'lead_confirmed', {'previous_lead_id': case['lead_id'], 'lead_id': lead['id'], 'reason': reason})
         return raw(conn, case_id)
 

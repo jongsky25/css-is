@@ -42,8 +42,15 @@ def make_router(templates,get_conn):
         if doc['canonical_id']:
             return {'redirect':doc['canonical_id']}
         details={name:rows(conn,'SELECT * FROM '+table+' WHERE document_id=? ORDER BY id', (doc_id,)) for name,table in
-                 [('assignments','document_assignment'),('versions','document_file_version'),('history','document_event'),
+                 [('assignments','document_assignment_effective'),('versions','document_file_version'),('history','document_event'),
                   ('dispatches','document_dispatch'),('jobs','document_job'),('references','document_reference'),('receipts','document_receipt'),('directives','document_directive')]}
+        migration = conn.execute('SELECT case_id FROM work_legacy_document WHERE document_id=?',(doc_id,)).fetchone()
+        if migration:
+            try:
+                work.get(conn, user, migration[0])
+            except p.Denied:
+                details['assignments'] = []
+                migration = None
         for e in details['history']:
             e['detail']=json.loads(e['detail_json'])
         policy=json.loads(doc['policy_json'])
@@ -51,6 +58,8 @@ def make_router(templates,get_conn):
         if any(a['due_date'] and a['due_date']<doc['created_at'][:10] for a in details['assignments']):
             warnings.append('The proposed contributor buffer cannot fit before the deadline. The lead must adjust milestones explicitly.')
         return {'doc':doc,**details,'policy':policy,'duplicates':d.duplicate_candidates(conn,user,doc_id),
+                'work_migration':migration,
+                'assignments_migrated':bool(conn.execute('SELECT 1 FROM work_legacy_document WHERE document_id=?',(doc_id,)).fetchone()),
                 'work_enabled':work.enabled(conn),'work_cases':work.cases_for_document(conn,user,doc_id),
                 'warnings':warnings,
                 'evaluation':rules.evaluate(conn,doc),'operation_id':str(uuid.uuid4()),

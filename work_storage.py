@@ -43,5 +43,46 @@ def install(conn):
     CREATE TRIGGER IF NOT EXISTS work_event_no_delete BEFORE DELETE ON work_event
       BEGIN SELECT RAISE(ABORT,'Work history is append-only'); END;
     ''')
+    if 'mandatory' not in {r[1] for r in conn.execute('PRAGMA table_info(work_task)')}:
+        conn.execute('ALTER TABLE work_task ADD COLUMN mandatory INTEGER NOT NULL DEFAULT 1 CHECK(mandatory IN (0,1))')
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS work_legacy_document (
+      document_id INTEGER PRIMARY KEY REFERENCES document(id),
+      case_id INTEGER NOT NULL UNIQUE REFERENCES work_case(id),
+      actor_id INTEGER NOT NULL REFERENCES admin_user(id), reason TEXT NOT NULL,
+      source_revision INTEGER NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS work_legacy_assignment (
+      assignment_id INTEGER PRIMARY KEY REFERENCES document_assignment(id),
+      case_id INTEGER NOT NULL REFERENCES work_case(id),
+      task_id INTEGER UNIQUE REFERENCES work_task(id), source_json TEXT NOT NULL);
+    CREATE TRIGGER IF NOT EXISTS work_legacy_assignment_no_update BEFORE UPDATE ON work_legacy_assignment
+      BEGIN SELECT RAISE(ABORT,'Assignment mapping is immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS work_legacy_assignment_no_delete BEFORE DELETE ON work_legacy_assignment
+      BEGIN SELECT RAISE(ABORT,'Assignment mapping is immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS work_legacy_document_no_update BEFORE UPDATE ON work_legacy_document
+      BEGIN SELECT RAISE(ABORT,'Document mapping is immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS work_legacy_document_no_delete BEFORE DELETE ON work_legacy_document
+      BEGIN SELECT RAISE(ABORT,'Document mapping is immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS migrated_assignment_no_update BEFORE UPDATE ON document_assignment
+      WHEN EXISTS(SELECT 1 FROM work_legacy_document WHERE document_id IN (OLD.document_id,NEW.document_id))
+      BEGIN SELECT RAISE(ABORT,'Use the shared task service for migrated assignments'); END;
+    CREATE TRIGGER IF NOT EXISTS migrated_assignment_no_delete BEFORE DELETE ON document_assignment
+      WHEN EXISTS(SELECT 1 FROM work_legacy_document WHERE document_id=OLD.document_id)
+      BEGIN SELECT RAISE(ABORT,'Migrated assignment history is retained'); END;
+    CREATE TRIGGER IF NOT EXISTS migrated_assignment_no_insert BEFORE INSERT ON document_assignment
+      WHEN EXISTS(SELECT 1 FROM work_legacy_document WHERE document_id=NEW.document_id)
+      BEGIN SELECT RAISE(ABORT,'Create contributions in Shared work'); END;
+    CREATE VIEW IF NOT EXISTS document_assignment_effective AS
+      SELECT a.* FROM document_assignment a
+      WHERE NOT EXISTS(SELECT 1 FROM work_legacy_document m WHERE m.document_id=a.document_id)
+      UNION ALL
+      SELECT COALESCE(m.assignment_id,-t.id),d.document_id,COALESCE(t.owner_id,t.proposed_owner_id),
+        'contributor',t.expected_output,
+        CASE t.status WHEN 'todo' THEN 'assigned' WHEN 'for_review' THEN 'submitted'
+                      WHEN 'done' THEN 'completed' WHEN 'cancelled' THEN 'superseded' ELSE t.status END,
+        t.due_date,t.submission,t.mandatory,t.created_at
+      FROM work_task t JOIN work_legacy_document d ON d.case_id=t.case_id
+      LEFT JOIN work_legacy_assignment m ON m.task_id=t.id;
+    """)
     conn.execute("INSERT OR IGNORE INTO app_setting(key,value) VALUES ('work.enabled','0')")
     conn.commit()
