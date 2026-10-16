@@ -2,3 +2,4 @@
 .work-task{scroll-margin-top:90px;padding:1rem 0;border-top:1px solid var(--line);overflow-wrap:anywhere}.work-task h3{font-size:1rem;margin:.5rem 0}.work-task-action{margin:1rem 0}.work-task-action>summary{cursor:pointer;color:var(--accent);font-weight:600}.work-task-action[open]{border-left:3px solid var(--line);padding-left:.8rem}
 
 .work-actions a[aria-current="page"]{background:var(--accent);color:#fff}
+.work-next{padding:.6rem .8rem;background:var(--surface-2);border-radius:8px}.work-secondary,.work-task-history{margin:1rem 0}.work-secondary>summary,.work-task-history>summary{cursor:pointer;color:var(--soft)}.work-secondary[open]{padding:.6rem;border:1px solid var(--line);border-radius:8px}.work-task-history .work-history{font-size:.9rem}

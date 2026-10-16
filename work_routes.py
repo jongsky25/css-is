@@ -12,6 +12,7 @@ import documents_permissions as permissions
 from documents_storage import rows
 import work
 import work_tasks
+import work_compat
 import work_inbox
 
 
@@ -28,7 +29,7 @@ def make_router(templates, get_conn):
                                FROM admin_user u LEFT JOIN resource_person r ON r.id=u.rp_id
                                WHERE u.active=1 ORDER BY name,u.id''')
         return {'nav_active': 'work', 'enabled': work.enabled(conn), 'csrf': csrf(request),
-                'error': '', 'people': people, 'names': {u['id']: u['name'] for u in people},
+                'error': '', 'people': people, 'names': {u['id']: u['name'] for u in rows(conn, "SELECT u.id,COALESCE(NULLIF(r.name,''),u.username) AS name FROM admin_user u LEFT JOIN resource_person r ON r.id=u.rp_id")},
                 'units': rows(conn, 'SELECT id,name FROM org_unit ORDER BY path'), **values}
 
     def render(request, conn, template, status_code=200, **values):
@@ -52,12 +53,46 @@ def make_router(templates, get_conn):
             payload = json.loads(event['detail_json'])
             event['note'] = payload.get('reason', '')
             event['task_title'] = payload.get('title', '')
-            event['submission'] = payload.get('submission', '')
+            event['submission'] = payload.get('submission', '') if event['action']=='task_submit' else ''
+            event['task_id'] = payload.get('task_id')
+            event['owner_id'] = payload.get('owner_id')
+            event['status'] = work_tasks.LABELS.get(payload.get('status'), '')
         tasks = work_tasks.list_for_case(conn, user, case_id)
+        blocked = ''
+        try:
+            work_compat.require_open(conn, case_id)
+        except ValueError as e:
+            blocked = str(e)
+        counts = {state:0 for state in work_tasks.LABELS}
+        next_steps = []
         for task in tasks:
-            task['actions'] = work_tasks.actions(conn, user, case, task)
+            counts[task['status']] += 1
+            task['actions'] = [] if blocked else work_tasks.actions(conn, user, case, task)
+            task['attention'] = ''
+            if task['owner_id'] and task['status'] != 'cancelled':
+                try:
+                    work_tasks._owner(conn,case_id,task['owner_id'])
+                except ValueError as e:
+                    task['attention'] = str(e)
+                    task['actions'] = [a for a in task['actions'] if a in ('reassign','cancel','milestone')]
+            preferred = {'proposed':'confirm','todo':'acknowledge','in_progress':'submit','for_review':'accept'}.get(task['status'])
+            if preferred in ('acknowledge','submit') and task['owner_id']!=user['id']:
+                preferred = None  # Officer intervention remains available as another authorized action.
+            task['primary'] = preferred if preferred in task['actions'] and work.enabled(conn) else None
+            labels = {'confirm':'Confirm assignment','acknowledge':'Acknowledge and start',
+                      'submit':'Submit for review','accept':'Review submitted contribution'}
+            task['next_label'] = labels.get(task['primary'], {'proposed':'Awaiting officer confirmation',
+                'todo':'Waiting for the owner to start','in_progress':'Waiting for the owner’s output',
+                'for_review':'Awaiting lead or officer review','done':'Accepted contribution','cancelled':'Cancelled — retained for history'}[task['status']])
+            latest = next((event for event in events if event['task_id']==task['id'] and event['action'] in ('task_return','task_submit','task_reassign','task_reopen','task_cancel','task_accept')), None)
+            task['return_note'] = latest['note'] if latest and latest['action']=='task_return' else ''
+            task['task_history'] = [event for event in events if event['task_id']==task['id']]
+            if task['primary']:
+                next_steps.append(task)
+        unfinished = [task for task in tasks if task['mandatory'] and task['status'] not in ('done','cancelled')]
+
         return render(request, conn, 'detail', status_code=status_code, error=error, case=case,
-                      tasks=tasks, task_labels=work_tasks.LABELS, can_link=work.can_link(conn, user, case),
+                      tasks=tasks, task_labels=work_tasks.LABELS, counts=counts, next_steps=next_steps, unfinished=unfinished, blocked=blocked, can_link=work.can_link(conn, user, case),
                       documents=work.linked_documents(conn, user, case_id), history=events,
                       choices=work.document_choices(conn, user, request.query_params.get('q', '')),
                       officer=work.officer(conn, user, case), submitted=submitted or {})

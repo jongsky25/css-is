@@ -904,3 +904,88 @@ def test_deployment_includes_imported_work_modules():
             for name in names:
                 if name and name.startswith('work') and (root/(name+'.py')).exists():
                     assert name+'.py' in runtime, f'{file} imports undeployed module {name}'
+
+# P1.6 contextual actions and readable history.
+def test_contextual_work_two_units_return_note_and_independent_progress(workspace,app_mod,monkeypatch):
+    from starlette.testclient import TestClient
+    c,u,unit,path=workspace;monkeypatch.setattr(app_mod,'DB',path)
+    other=st.add_org_unit(c,'Evidence Division','division','WORK/D2')
+    c.execute("INSERT INTO document_role_grant(user_id,role,unit_id,created_at) VALUES (?,'records',?,'2026-10-16')",(u[1]['id'],other));c.commit()
+    item=inbox_case(c,u,unit)
+    a=propose(c,u[0],item,unit,u[0]['id'],title='Compile service inputs')
+    b=propose(c,u[0],item,other,u[3]['id'],title='Validate evidence sources')
+    a=advance(c,u[1],a,'confirm',owner_id=u[0]['id'])
+    b=advance(c,u[1],b,'confirm',owner_id=u[3]['id'])
+    a=advance(c,u[0],a,'acknowledge');a=advance(c,u[0],a,'submit',submission='First evidence set')
+    a=advance(c,u[2],a,'return',reason='Add the missing regional basis')
+    a=advance(c,u[2],a,'milestone',due_date='2026-10-25')
+    with TestClient(app_mod.app) as client:
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[0]))
+        page=client.get(f"/work/{item['id']}")
+        assert page.status_code==200
+        assert 'Your next actions' in page.text and 'Submit for review — Compile service inputs' in page.text
+        assert '<strong>Changes requested:</strong> Add the missing regional basis' in page.text
+        assert 'Required contributions still outstanding' in page.text and 'Validate evidence sources' in page.text
+        assert 'First evidence set' in page.text and 'Contribution history' in page.text
+        assert f'/tasks/{b["id"]}/acknowledge' not in page.text
+        a=advance(c,u[0],a,'submit',submission='Revised regional basis')
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[2]))
+        page=client.get(f"/work/{item['id']}")
+        assert 'Review submitted contribution — Compile service inputs' in page.text
+        assert f'/tasks/{a["id"]}/accept' in page.text and f'/tasks/{a["id"]}/return' in page.text
+        a=advance(c,u[2],a,'accept')
+        page=client.get(f"/work/{item['id']}")
+        outstanding=page.text.split('Required contributions still outstanding:',1)[1].split('</ul>',1)[0]
+        assert 'Compile service inputs' not in outstanding and 'Validate evidence sources' in outstanding
+        assert '<strong>Changes requested:</strong>' not in page.text
+        assert tasks.list_for_case(c,u[2],item['id'])[1]==b
+
+
+def test_named_document_assignment_forms_enforce_scope_and_revision(workspace,app_mod,monkeypatch):
+    from starlette.testclient import TestClient
+    c,u,unit,path=workspace;monkeypatch.setattr(app_mod,'DB',path)
+    doc=legacy_setup(c,u,unit)
+    assignment=c.execute("SELECT id FROM document_assignment WHERE document_id=? AND role='contributor'",(doc['id'],)).fetchone()[0]
+    url=f"/documents/{doc['id']}"
+    with TestClient(app_mod.app) as client:
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[3]))
+        page=client.get(url)
+        assert page.status_code==200 and 'Technical input' in page.text
+        assert 'name="assignment_id" type="number"' not in page.text and 'Assignment number' not in page.text
+        assert f'name="assignment_id" value="{assignment}"' in page.text
+        assert 'value="completed"' not in page.text
+        csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',page.text)[1]
+        payload={'csrf':csrf,'revision':doc['revision'],'assignment_id':assignment,'status':'submitted','outcome':'Named form output'}
+        response=client.post(url+'/contribution',data=payload,follow_redirects=False)
+        assert response.status_code==303
+        assert client.post(url+'/contribution',data=payload).status_code==409
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[2]))
+        page=client.get(url)
+        assert 'Confirm contribution complete' in page.text and 'Actor #' not in page.text
+        assert 'Named form output' in page.text
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[4]))
+        page=client.get(url)
+        assert f'name="assignment_id" value="{assignment}"' not in page.text
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[1]))
+        page=client.get(url)
+        assert 'Replace an existing assignment (optional)' in page.text
+        assert '<select name="supersede_id">' in page.text and 'Replace assignment number' not in page.text
+
+
+def test_contextual_actions_hide_blocked_and_inactive_owner_paths(workspace,app_mod,monkeypatch):
+    from starlette.testclient import TestClient
+    c,u,unit,path=workspace;monkeypatch.setattr(app_mod,'DB',path)
+    doc=legacy_setup(c,u,unit);report=migrate(c,u,doc);cid=report['case_id']
+    task=tasks.list_for_case(c,u[1],cid)[0]
+    c.execute('UPDATE admin_user SET active=0 WHERE id=?',(u[3]['id'],));c.commit()
+    with TestClient(app_mod.app) as client:
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[1]))
+        page=client.get(f'/work/{cid}')
+        assert page.status_code==200 and 'Choose an active staff account.' in page.text
+        assert f'/tasks/{task["id"]}/acknowledge' not in page.text
+        assert f'/tasks/{task["id"]}/reassign' in page.text
+        c.execute("UPDATE document SET status='closed' WHERE id=?",(doc['id'],));c.commit()
+        page=client.get(f'/work/{cid}')
+        assert 'Reopen the official document' in page.text
+        assert '/reassign' not in page.text and 'Propose a contribution' not in page.text
+        assert 'Confirm lead</button>' not in page.text

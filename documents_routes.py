@@ -32,13 +32,15 @@ def make_router(templates,get_conn):
         user=p.actor(conn,getattr(request.state,'user',None))
         return {'nav_active':'documents','enabled':d.enabled(conn),'csrf':csrf(request),'error':'',
                 'workflow_admin':p.has_role(conn,user,'workflow_admin'),
-                'people':rows(conn,'SELECT id,username FROM admin_user WHERE active=1 ORDER BY username'),
+                'people':rows(conn,"SELECT u.id,u.username,COALESCE(NULLIF(r.name,''),u.username) AS name FROM admin_user u LEFT JOIN resource_person r ON r.id=u.rp_id WHERE u.active=1 ORDER BY name"),
+                'names':{r['id']:r['name'] for r in rows(conn,"SELECT u.id,COALESCE(NULLIF(r.name,''),u.username) AS name FROM admin_user u LEFT JOIN resource_person r ON r.id=u.rp_id")},
                 'units':rows(conn,'SELECT id,name FROM org_unit ORDER BY path'),**values}
 
     def render(request,conn,page,**values):
         return templates.TemplateResponse(request,'documents/'+page+'.html',context(request,conn,**values))
 
     def detail_context(conn,user,doc_id):
+        user=p.actor(conn,user)
         doc=d.get(conn,user,doc_id)
         if doc['canonical_id']:
             return {'redirect':doc['canonical_id']}
@@ -52,8 +54,23 @@ def make_router(templates,get_conn):
             except p.Denied:
                 details['assignments'] = []
                 migration = None
+        is_officer=p.officer(conn,user,doc)
+        coordinator=is_officer or doc['lead_id']==user['id']
+        for assignment in details['assignments']:
+            assignment['progress_choices']=[]
+            assignment['milestone_allowed']=False
+            if not migration and doc['status'] not in ('closed','cancelled') and assignment['status'] not in ('completed','superseded'):
+                if assignment['user_id']==user['id'] or is_officer:
+                    assignment['progress_choices']={'assigned':[('acknowledged','Acknowledge')],
+                        'acknowledged':[('in_progress','Start contribution'),('submitted','Submit for consolidation')],
+                        'in_progress':[('submitted','Submit for consolidation')]}.get(assignment['status'],[])
+                if coordinator:
+                    if assignment['status']=='submitted':
+                        assignment['progress_choices'].append(('completed','Confirm contribution complete'))
+                    assignment['milestone_allowed']=True
         for e in details['history']:
             e['detail']=json.loads(e['detail_json'])
+            e['note']=e['detail'].get('reason') or e['detail'].get('outcome') or ''
         policy=json.loads(doc['policy_json'])
         warnings=rules.coverage(conn,doc['created_at'],doc['due_date'])
         if any(a['due_date'] and a['due_date']<doc['created_at'][:10] for a in details['assignments']):
