@@ -1534,6 +1534,7 @@ FEATURES = {
         "Each person on a calendar entry that starts tomorrow gets one reminder listing them. CSS "
         "activities are left to the existing activity reminder, so nobody is told twice.",
         "scheduled"),
+    "job_work_updates": ("Shared work — discussion digests", "Optional daily or Monday digests chosen by each user; required workflow alerts stay separate.", "scheduled"),
     "job_documents": ("Documents — workflow notices", "Access-checked document workflow notices and deadline reminders.", "scheduled"),
     "job_travel_filing_due": (
         "Travel claims — due soon or overdue",
@@ -1669,6 +1670,7 @@ _PREVIEWS = {
         "Juan Reyes", "Wednesday, October 14",
         [{"title": "Orientation for new staff", "when": "9:00–10:00", "where": "DOH Conference Room", "url": _SAMPLE_LINK}],
         _SAMPLE_LINK),
+    "job_work_updates": lambda: work_digest_message(_SAMPLE_LINK),
     "job_documents": lambda: document_notice_message(_SAMPLE_LINK),
     "job_travel_filing_due": lambda: travel_filing_due_message(
         "Juan Reyes",
@@ -1725,6 +1727,13 @@ def preview(key):
                 f'<body style="font-family:Arial,Helvetica,sans-serif; white-space:pre-wrap;">'
                 f'{htmlmod.escape(body)}</body></html>')
     return subject, html
+
+
+def work_digest_message(url):
+    """Minimal discussion digest: content and authorization stay in the app."""
+    return ('Your shared-work discussion digest',
+            'You have unread discussion updates in Office Connect. '
+            'Sign in to see the updates you currently have access to.\n\n' + url)
 
 
 def document_notice_message(link):

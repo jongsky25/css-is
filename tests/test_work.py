@@ -2390,3 +2390,252 @@ def test_completion_http_permissions_csrf_retained_note_and_state(workspace,app_
         docs.mutate(c,u[1],source['id'],source['revision'],'access',{'visibility':'restricted','viewers':[u[1]['id']],'reason':'Withdraw case access'})
         assert client.get(url).status_code==404
         assert client.post(url,data=fields).status_code==403
+
+
+# P3.4: preferences change optional discussion delivery, never required workflows.
+import work_digests as digests
+from datetime import datetime, timedelta
+
+
+def digest_fixture(workspace, monkeypatch, cadence='daily'):
+    c,u,unit,_=workspace
+    item=case(c,u[0],unit)
+    updates.follow(c,u[1],item['id'])
+    digests.save(c,u[1],0,'hide',cadence)
+    monkeypatch.setattr(digests.mailer,'email_configured',lambda:True)
+    sent=[]
+    def send(to,subject,body,html=None):
+        sent.append((to,subject,body))
+        return {'sent':True,'detail':'Synthetic acceptance'}
+    monkeypatch.setattr(digests.mailer,'send',send)
+    cid=discussion.post(c,u[0],item['id'],'Private discussion body')
+    return item,cid,sent
+
+
+def test_notification_preferences_defaults_scope_conflict_and_disabled_work(workspace):
+    c,u,unit,_=workspace
+    assert digests.preferences(c,u[0])['digest']=='off'
+    assert digests.preferences(c,u[0])['routine_bell']=='show'
+    st.set_setting(c,'work.enabled','0')
+    digests.save(c,u[0],0,'hide','weekly')  # personal preferences remain editable
+    assert digests.preferences(c,u[1])['digest']=='off'
+    with pytest.raises(docs.Conflict):digests.save(c,u[0],0,'show','off')
+    with pytest.raises(ValueError):digests.save(c,u[0],1,'hide','hourly')
+    st.init_db(c)
+    assert digests.preferences(c,u[0])['digest']=='weekly'
+    c.execute('UPDATE admin_user SET active=0 WHERE id=?',(u[0]['id'],));c.commit()
+    with pytest.raises(permissions.Denied):digests.save(c,u[0],1,'show','off')
+
+
+def test_routine_bell_control_preserves_direct_alerts_and_unread(workspace):
+    c,u,unit,_=workspace
+    item=case(c,u[0],unit);updates.follow(c,u[1],item['id'])
+    cid=discussion.post(c,u[0],item['id'],'Routine progress')
+    assert updates.bell_rows(c,u[1])
+    digests.save(c,u[1],0,'hide','off')
+    assert not updates.bell_rows(c,u[1])
+    assert len(updates.inbox(c,u[1],category='following')[0])==1
+    assert updates.read_revision(c,u[1]['id'],cid)==0
+    # A later explicit mention promotes a routine notice without creating duplicates.
+    discussion.edit(c,u[0],item['id'],None,cid,1,'Please look',mentions=[u[1]['id']])
+    assert updates.bell_rows(c,u[1])
+    assert len(updates.inbox(c,u[1],category='direct')[0])==1
+    assert not updates.inbox(c,u[1],category='following')[0]
+    assert c.execute('SELECT COUNT(*) FROM work_notice').fetchone()[0]==1
+    parent=discussion.post(c,u[1],item['id'],'Question')
+    discussion.post(c,u[0],item['id'],'Answer',parent_id=parent)
+    assert len(updates.inbox(c,u[1],category='direct')[0])==2
+    with pytest.raises(ValueError):updates.inbox(c,u[1],category='untrusted')
+
+
+def test_digest_daily_dedup_read_state_privacy_and_next_day(workspace,monkeypatch):
+    c,u,unit,_=workspace;item,cid,sent=digest_fixture(workspace,monkeypatch)
+    now=datetime(2026,10,19,7)
+    assert digests.deliver(c,'https://office.example.test',dry_run=True,now=now)==1
+    assert not c.execute('SELECT 1 FROM work_digest').fetchone() and not sent
+    assert digests.deliver(c,'https://office.example.test',now=now)==1
+    assert len(sent)==1 and sent[0][0]==u[1]['username']
+    assert 'Private discussion body' not in sent[0][2] and item['title'] not in sent[0][2]
+    assert '/work/updates' in sent[0][2]
+    assert updates.read_revision(c,u[1]['id'],cid)==0
+    assert digests.deliver(c,'https://office.example.test',now=now)==0
+    later=discussion.post(c,u[0],item['id'],'Next update')
+    read=discussion.post(c,u[0],item['id'],'Already read')
+    updates.mark_read(c,u[1],item['id'],None,[[read,1]])
+    assert digests.deliver(c,'https://office.example.test',now=now)==0
+    assert digests.deliver(c,'https://office.example.test',now=now+timedelta(days=1))==1
+    assert c.execute('SELECT COUNT(*) FROM work_digest_notice').fetchone()[0]==2
+    assert digests.deliver(c,'https://office.example.test',now=now+timedelta(days=2))==0
+    assert len(digests.history(c,u[1]))==2 and not digests.history(c,u[0])
+
+
+def test_digest_weekly_and_cadence_changes_do_not_replay(workspace,monkeypatch):
+    c,u,unit,_=workspace;item,cid,sent=digest_fixture(workspace,monkeypatch,'weekly')
+    monday=datetime(2026,10,19,7)
+    assert digests.deliver(c,'https://office.test',now=monday-timedelta(days=1))==0
+    assert digests.deliver(c,'https://office.test',now=monday)==1
+    discussion.post(c,u[0],item['id'],'New update')
+    digests.save(c,u[1],1,'show','daily')
+    assert digests.deliver(c,'https://office.test',now=monday)==0
+    digests.save(c,u[1],2,'show','weekly')
+    assert digests.deliver(c,'https://office.test',now=monday+timedelta(days=1))==0
+    assert digests.deliver(c,'https://office.test',now=monday+timedelta(days=7))==1
+    assert len(sent)==2
+
+
+@pytest.mark.parametrize('outcome',['false','exception','crash'])
+def test_digest_uncertain_attempt_never_replayed(workspace,monkeypatch,outcome):
+    c,u,unit,_=workspace;item,cid,sent=digest_fixture(workspace,monkeypatch)
+    class Interrupted(BaseException):pass
+    def uncertain(*args,**kwargs):
+        sent.append('attempt')
+        if outcome=='crash':raise Interrupted()
+        if outcome=='exception':raise RuntimeError('Transport timed out')
+        return {'sent':False}
+    monkeypatch.setattr(digests.mailer,'send',uncertain)
+    now=datetime(2026,10,19,7)
+    if outcome=='crash':
+        with pytest.raises(Interrupted):digests.deliver(c,'https://office.test',now=now)
+    else:
+        assert digests.deliver(c,'https://office.test',now=now)==0
+    assert digests.history(c,u[1])[0]['state']==('sending' if outcome=='crash' else 'unknown')
+    assert digests.deliver(c,'https://office.test',now=now+timedelta(days=1))==0
+    assert len(sent)==1
+
+
+def test_digest_reentrant_worker_does_not_duplicate_claim(workspace,monkeypatch):
+    c,u,unit,path=workspace;item,cid,sent=digest_fixture(workspace,monkeypatch)
+    now=datetime(2026,10,19,7)
+    def competing(*args,**kwargs):
+        other=st.connect(path)
+        try:assert digests.deliver(other,'https://office.test',now=now)==0
+        finally:other.close()
+        sent.append('one');return {'sent':True}
+    monkeypatch.setattr(digests.mailer,'send',competing)
+    assert digests.deliver(c,'https://office.test',now=now)==1
+    assert sent==['one']
+
+
+@pytest.mark.parametrize('gate',['work','documents','email','transport','inactive','opt_out'])
+def test_digest_disabled_gates_do_not_claim_or_send(workspace,monkeypatch,gate):
+    c,u,unit,_=workspace;item,cid,sent=digest_fixture(workspace,monkeypatch)
+    if gate in ('work','documents'):st.set_setting(c,gate+'.enabled','0')
+    elif gate=='email':st.set_email_feature(c,'job_work_updates',False)
+    elif gate=='transport':monkeypatch.setattr(digests.mailer,'email_configured',lambda:False)
+    elif gate=='opt_out':digests.save(c,u[1],1,'hide','off')
+    else:c.execute('UPDATE admin_user SET active=0 WHERE id=?',(u[1]['id'],));c.commit()
+    assert digests.deliver(c,'https://office.test',now=datetime(2026,10,19,7))==0
+    assert not sent and not c.execute('SELECT 1 FROM work_digest').fetchone()
+
+
+def test_digest_access_revocation_omits_hidden_notices(workspace,monkeypatch):
+    c,u,unit,_=workspace;item,cid,sent=digest_fixture(workspace,monkeypatch)
+    doc=document(c,u[0],unit)
+    hidden=case(c,u[0],unit,source_document_id=doc['id'])
+    updates.follow(c,u[0],hidden['id'])
+    digests.save(c,u[0],0,'show','daily')
+    discussion.post(c,u[1],hidden['id'],'Hidden after revocation')
+    docs.mutate(c,u[1],doc['id'],doc['revision'],'access',{'visibility':'restricted','viewers':[u[1]['id']],'reason':'Restrict'})
+    assert not digests.eligible(c,u[0])
+    assert digests.deliver(c,'https://office.test',now=datetime(2026,10,19,7))==1
+    assert len(sent)==1 and sent[0][0]==u[1]['username']
+
+
+def test_digest_rechecks_revocation_after_claim(workspace,monkeypatch):
+    c,u,unit,_=workspace;item,cid,sent=digest_fixture(workspace,monkeypatch)
+    original=digests.eligible
+    def revoke(conn,user):
+        ids=original(conn,user)
+        conn.execute('UPDATE admin_user SET active=0 WHERE id=?',(user['id'],))
+        return ids
+    monkeypatch.setattr(digests,'eligible',revoke)
+    assert digests.deliver(c,'https://office.test',now=datetime(2026,10,19,7))==0
+    assert not sent
+    assert c.execute('SELECT state FROM work_digest').fetchone()[0]=='cancelled'
+
+
+def test_digest_claim_failure_rolls_back(workspace,monkeypatch):
+    c,u,unit,_=workspace;item,cid,sent=digest_fixture(workspace,monkeypatch)
+    c.execute("CREATE TRIGGER fail_digest BEFORE INSERT ON work_digest_notice BEGIN SELECT RAISE(ABORT,'broken queue'); END;");c.commit()
+    with pytest.raises(sqlite3.IntegrityError):digests.deliver(c,'https://office.test',now=datetime(2026,10,19,7))
+    assert not sent and not c.execute('SELECT 1 FROM work_digest').fetchone()
+
+
+def test_digest_scheduler_and_email_catalog(workspace,monkeypatch):
+    import send_reminders
+    c,u,unit,path=workspace;item,cid,sent=digest_fixture(workspace,monkeypatch)
+    monkeypatch.setenv('CSS_BASE_URL','https://office.test')
+    monkeypatch.setattr(digests.tz,'now_local',lambda:datetime(2026,10,19,7))
+    assert send_reminders.run(path,jobs=['work_updates'])=={'work_updates':1}
+    assert send_reminders.run(path,jobs=['work_updates'])=={'work_updates':0}
+    st.set_email_feature(c,'job_work_updates',False)
+    assert send_reminders.run(path,jobs=['work_updates'])=={}
+    assert 'job_work_updates' in digests.mailer._PREVIEWS
+
+
+def test_notification_preferences_http_csrf_conflicts_and_categories(workspace,app_mod,monkeypatch):
+    from starlette.testclient import TestClient
+    c,u,unit,path=workspace;monkeypatch.setattr(app_mod,'DB',path)
+    item=case(c,u[0],unit);updates.follow(c,u[1],item['id'])
+    discussion.post(c,u[0],item['id'],'Routine body')
+    discussion.post(c,u[0],item['id'],'Direct body',mentions=[u[1]['id']])
+    url='/work/notification-preferences'
+    with TestClient(app_mod.app) as client:
+        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[1]))
+        page=client.get(url);assert page.status_code==200,page.text
+        token=re.search(r'name="csrf" value="([a-f0-9]+)"',page.text)[1]
+        assert not c.execute('SELECT 1 FROM work_notification_preference').fetchone()
+        fields={'csrf':token,'revision':'0','routine_bell':'hide','digest':'weekly','user_id':u[0]['id']}
+        assert client.post(url,data={**fields,'csrf':''}).status_code==403
+        assert client.post(url,data=fields,follow_redirects=False).status_code==303
+        assert digests.preferences(c,u[0])['digest']=='off'
+        assert client.post(url,data=fields).status_code==409
+        assert client.post(url,data={**fields,'revision':'1','digest':'<script>'}).status_code==400
+        direct=client.get('/work/updates?category=direct')
+        assert 'Direct body' in direct.text and 'Routine body' not in direct.text
+        followed=client.get('/work/updates?category=following')
+        assert 'Routine body' in followed.text and 'Direct body' not in followed.text
+        assert client.get('/work/updates?category=invalid').status_code==400
+
+
+def test_quiet_preferences_preserve_required_task_and_review_alerts(workspace):
+    import documents_notify as notices
+    c,u,unit,_=workspace
+    item=inbox_case(c,u,unit);task=propose(c,u[0],item,unit,u[3]['id'])
+    task=advance(c,u[1],task,'confirm',owner_id=u[3]['id'])
+    before=notices.bell_rows(c,u[3]['id'])
+    assert before
+    digests.save(c,u[3],0,'hide','off')
+    assert notices.bell_rows(c,u[3]['id'])==before
+    task=advance(c,u[3],task,'acknowledge');task=advance(c,u[3],task,'submit',submission='Ready')
+    before=notices.bell_rows(c,u[2]['id'])
+    assert before
+    digests.save(c,u[2],0,'hide','weekly')
+    assert notices.bell_rows(c,u[2]['id'])==before
+
+
+def test_digest_optout_after_claim_cancels_without_consuming_notices(workspace,monkeypatch):
+    c,u,unit,_=workspace;item,cid,sent=digest_fixture(workspace,monkeypatch)
+    original=digests.eligible
+    def optout(conn,user):
+        ids=original(conn,user)
+        conn.execute("UPDATE work_notification_preference SET digest='off',revision=revision+1 WHERE user_id=?",(user['id'],))
+        return ids
+    monkeypatch.setattr(digests,'eligible',optout)
+    assert digests.deliver(c,'https://office.test',now=datetime(2026,10,19,7))==0
+    assert not sent and digests.history(c,u[1])[0]['state']=='cancelled'
+    assert not c.execute('SELECT 1 FROM work_digest_notice').fetchone()
+
+
+def test_digest_read_between_claim_and_send_is_omitted(workspace,monkeypatch):
+    c,u,unit,_=workspace;item,cid,sent=digest_fixture(workspace,monkeypatch)
+    second=discussion.post(c,u[0],item['id'],'Still unread')
+    original=digests.eligible
+    def mark(conn,user):
+        ids=original(conn,user)
+        conn.execute('INSERT INTO work_comment_read VALUES (?,?,1)',(cid,user['id']))
+        return ids
+    monkeypatch.setattr(digests,'eligible',mark)
+    assert digests.deliver(c,'https://office.test',now=datetime(2026,10,19,7))==1
+    claimed=c.execute('SELECT n.comment_id FROM work_digest_notice dn JOIN work_notice n ON n.id=dn.notice_id').fetchall()
+    assert claimed==[(second,)]

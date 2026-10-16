@@ -1,8 +1,10 @@
 {% extends 'work/base.html' %}{% block work_content %}
 <h1>Discussion updates</h1>
+<div class="work-actions"><a class="work-btn" href="/work/notification-preferences">Notification preferences</a><a href="/work/mine">Tasks needing your action</a><a href="/approvals">Reviews and approvals</a></div>
+<nav class="work-actions" aria-label="Update categories">{% for key,label in [("all","All discussion updates"),("direct","Mentions and replies"),("following","Following")] %}<a href="/work/updates?category={{ key }}" {% if category==key %}aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}</nav>
 <p>Unread mentions, replies to your messages and new messages in discussions you follow. Only updates you currently have access to are shown. Opening a link does not mark it read; use “Mark displayed messages read” in the discussion.</p>
 {% for notice in notices %}<article class="work-card"><h2><a href="{{ notice.url }}">{{ notice.title }}</a></h2>
 <p><span class="work-badge">{{ {'mention':'Mentioned you','reply':'Replied to you','following':'Following'}[notice.reason] }}</span> · {{ notice.author }} · {{ notice.created_at }}</p><p class="work-outcome">{{ notice.body|truncate(240) }}</p><a href="{{ notice.url }}">Read discussion</a></article>
 {% else %}<p>No unread updates in this page.</p>{% endfor %}
-{% if next_cursor %}<a class="work-btn" href="/work/updates?before={{ next_cursor }}">Older updates</a>{% endif %}{% if before %}<a class="work-btn" href="/work/updates">Latest updates</a>{% endif %}
+{% if next_cursor %}<a class="work-btn" href="/work/updates?category={{ category }}&amp;before={{ next_cursor }}">Older updates</a>{% endif %}{% if before %}<a class="work-btn" href="/work/updates?category={{ category }}">Latest updates</a>{% endif %}
 {% endblock %}

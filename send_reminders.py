@@ -151,11 +151,12 @@ _ALL_JOBS = {"events", "wellness_expiry", "digest", "csm_rp", "csm_activity",
             "wellness_file", "awa_file", "whereabouts",
             "whereabouts_nudge", "whereabouts_rollup", "calendar_css_nudge",
             "birthday_coordinators", "birthday_month", "birthday_greeting",
-            "calendar_day_before", "travel_filing_due", "documents"}
+            "calendar_day_before", "travel_filing_due", "documents", "work_updates"}
 
 # job name -> the admin toggle that can switch it off (see /admin/email).
 JOB_FEATURE = {
     "documents": "job_documents",
+    "work_updates": "job_work_updates",
     "events": "job_events",
     "wellness_expiry": "job_wellness_expiry",
     "digest": "job_digest",
@@ -866,6 +867,9 @@ def run(db_path="css_is.db", dry_run=False, jobs=None):
             report["whereabouts_rollup"] = send_whereabouts_rollup(conn, base, dry_run=dry_run)
         if "calendar_day_before" in jobs:
             report["calendar_day_before"] = send_calendar_day_before(conn, base, dry_run=dry_run)
+        if "work_updates" in jobs:
+            import work_digests
+            report["work_updates"] = work_digests.deliver(conn, base, dry_run=dry_run)
         if "documents" in jobs:
             import documents_notify
             report["documents"] = documents_notify.deliver(conn, base, dry_run=dry_run)

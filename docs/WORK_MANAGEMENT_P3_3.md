@@ -1,6 +1,6 @@
 # P3.3 — Formal release and case completion
 
-October 17, 2026 (Asia/Manila). **In review**, version **6.74**, branch `codex/release-completion`. P3.2 was merged at `b788d34`. This increment incorporates main through `387ea48`, preserving the intervening Short.io/manual-short-link releases. P3.3 is not merged or deployed.
+October 17, 2026 (Asia/Manila). **In review**, version **6.74**, branch `codex/release-completion`. P3.2 was merged at `b788d34`. This increment incorporates main through `387ea48`, preserving the intervening Short.io/manual-short-link releases. P3.3 was subsequently merged at `516ad91` on the user’s instruction. Live deployment success has not been independently verified.
 
 ## Delivered
 

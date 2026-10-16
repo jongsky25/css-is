@@ -53,7 +53,9 @@ def record(conn, comment_id, revision, mentioned, new=False):
         recipients[uid] = 'mention'
     for uid, reason in recipients.items():
         if uid != c['author_id'] and permitted(conn, uid, c['case_id']):
-            conn.execute('INSERT OR IGNORE INTO work_notice(comment_id,user_id,revision,reason,created_at) VALUES (?,?,?,?,?)',
+            conn.execute('''INSERT INTO work_notice(comment_id,user_id,revision,reason,created_at) VALUES (?,?,?,?,?)
+                ON CONFLICT(comment_id,user_id) DO UPDATE SET reason=excluded.reason
+                WHERE work_notice.reason='following' AND excluded.reason IN ('mention','reply')''',
                          (comment_id, uid, revision, reason, tz.now_iso()))
     # Authors have already seen their own saved version.
     conn.execute('INSERT INTO work_comment_read VALUES (?,?,?) ON CONFLICT(comment_id,user_id) DO UPDATE SET revision=MAX(revision,excluded.revision)',
@@ -96,14 +98,17 @@ def mark_read(conn, user, case_id, task_id, observed):
                          (cid, user['id'], revision))
 
 
-def inbox(conn, user, before=None, limit=25):
+def inbox(conn, user, before=None, limit=25, category="all"):
+    if category not in ("all", "direct", "following"):
+        raise ValueError("Choose a valid update category.")
     user = permissions.actor(conn, user)
     result = []
     scanned = rows(conn, '''SELECT n.*,c.case_id,c.task_id FROM work_notice n
         JOIN work_comment c ON c.id=n.comment_id
         LEFT JOIN work_comment_read r ON r.comment_id=n.comment_id AND r.user_id=n.user_id
         WHERE n.user_id=? AND COALESCE(r.revision,0)<n.revision AND (? IS NULL OR n.id<?)
-        ORDER BY n.id DESC LIMIT 251''', (user['id'],before,before))
+        AND (?='all' OR (?='direct' AND n.reason IN ('mention','reply')) OR (?='following' AND n.reason='following'))
+        ORDER BY n.id DESC LIMIT 251''', (user['id'],before,before,category,category,category))
     cursor = None
     for n in scanned[:250]:
         cursor = n['id']
@@ -119,9 +124,11 @@ def inbox(conn, user, before=None, limit=25):
 
 
 def bell_rows(conn, user):
+    from work_digests import preferences
+    category = "all" if preferences(conn, user)["routine_bell"] == "show" else "direct"
     cursor = None
     while True:
-        notices, cursor = inbox(conn, user, before=cursor, limit=1)
+        notices, cursor = inbox(conn, user, before=cursor, limit=1, category=category)
         if notices:
             return [{'text':'Unread discussion updates', 'url':'/work/updates', 'count':1}]
         if cursor is None:

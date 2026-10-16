@@ -1,0 +1,19 @@
+{% extends 'work/base.html' %}{% block work_content %}
+<h1>Notification preferences</h1>
+<p class="work-intro">Choose how you keep up with discussions in shared work.</p>
+{% if saved %}<p class="work-note" role="status">Your notification preferences were saved.</p>{% endif %}
+<section class="work-card"><h2>Always available</h2><p>Mentions and replies remain in your notification bell. Task actions, required document notices, deadlines and review requests keep their existing alerts.</p><div class="work-actions"><a href="/work/mine">My work</a><a href="/approvals">Reviews and approvals</a><a href="/work/updates">Discussion updates</a></div></section>
+<form class="work-form work-card" method="post" action="/work/notification-preferences">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ pref.revision }}">
+<label for="routine_bell">Routine follower updates in the bell</label>
+<select id="routine_bell" name="routine_bell"><option value="show" {% if pref.routine_bell=='show' %}selected{% endif %}>Show in bell</option><option value="hide" {% if pref.routine_bell=='hide' %}selected{% endif %}>Hide from bell</option></select>
+<p class="work-small">You can still read these in Discussion updates. This does not unfollow discussions or mark messages read.</p>
+<label for="digest">Discussion email digest</label>
+<select id="digest" name="digest"><option value="off" {% if pref.digest=='off' %}selected{% endif %}>Off</option><option value="daily" {% if pref.digest=='daily' %}selected{% endif %}>Daily</option><option value="weekly" {% if pref.digest=='weekly' %}selected{% endif %}>Weekly — Monday</option></select>
+<p class="work-small">Digests cover unread mentions, replies and follower updates not previously included in an email attempt. They run with the office’s morning reminders (Philippine time), and only when there are eligible updates. Email links to the app; discussion details stay inside.</p>
+{% if not delivery_available %}<p class="work-note">Email delivery is currently unavailable or switched off. You can save your preference now; in-app updates remain available.</p>{% endif %}
+<button class="work-btn primary" type="submit">Save preferences</button>
+</form>
+<section class="work-card"><h2>Recent digest deliveries</h2><p class="work-small">Sent confirms that the mail service accepted the email. It does not mark messages read. An uncertain or interrupted attempt is not sent again automatically; read your updates in the app.</p>
+{% for delivery in deliveries %}<p>{{ delivery.created_at }} · {{ {'sent':'Sent','unknown':'Delivery uncertain','sending':'Attempt started; delivery not confirmed','cancelled':'Cancelled before sending'}[delivery.state] }}</p>{% else %}<p>No digest attempts yet.</p>{% endfor %}</section>
+{% endblock %}

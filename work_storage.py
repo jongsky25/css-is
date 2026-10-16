@@ -252,3 +252,20 @@ def install(conn):
                          "BEGIN SELECT RAISE(ABORT,'Completion evidence is append-only'); END;")
     conn.execute("INSERT OR IGNORE INTO app_setting(key,value) VALUES ('work.enabled','0')")
     conn.commit()
+
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS work_notification_preference (
+      user_id INTEGER PRIMARY KEY REFERENCES admin_user(id),
+      routine_bell TEXT NOT NULL CHECK(routine_bell IN ('show','hide')),
+      digest TEXT NOT NULL CHECK(digest IN ('off','daily','weekly')),
+      revision INTEGER NOT NULL, updated_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS work_digest (
+      id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES admin_user(id),
+      period_key TEXT NOT NULL, delivery_date TEXT NOT NULL,
+      state TEXT NOT NULL CHECK(state IN ('sending','sent','unknown','cancelled')),
+      created_at TEXT NOT NULL, UNIQUE(user_id,period_key), UNIQUE(user_id,delivery_date));
+    CREATE TABLE IF NOT EXISTS work_digest_notice (
+      digest_id INTEGER NOT NULL REFERENCES work_digest(id),
+      notice_id INTEGER PRIMARY KEY REFERENCES work_notice(id));
+    CREATE INDEX IF NOT EXISTS work_digest_notice_batch ON work_digest_notice(digest_id);
+    """)

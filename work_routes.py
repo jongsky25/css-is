@@ -16,6 +16,7 @@ import work_compat
 import work_inbox
 import work_discussion
 import work_updates
+import work_digests
 import work_blockers
 import work_decisions
 import work_handoff
@@ -199,13 +200,46 @@ def make_router(templates, get_conn):
             conn.close()
 
     @router.get('/work/updates', response_class=HTMLResponse)
-    def updates(request: Request, before: int | None = None):
+    def updates(request: Request, before: int | None = None, category: str = "all"):
         conn = get_conn()
         try:
-            notices, cursor = work_updates.inbox(conn, request.state.user, before)
-            return render(request, conn, 'updates', notices=notices, next_cursor=cursor, before=before)
+            notices, cursor = work_updates.inbox(conn, request.state.user, before, category=category)
+            return render(request, conn, 'updates', notices=notices, next_cursor=cursor, before=before, category=category)
         except permissions.Denied:
             return HTMLResponse('Updates unavailable.', status_code=403)
+        except ValueError as e:
+            return HTMLResponse(str(e), status_code=400)
+        finally:
+            conn.close()
+
+    @router.get('/work/notification-preferences', response_class=HTMLResponse)
+    def notification_preferences(request: Request, saved: bool = False):
+        conn = get_conn()
+        try:
+            return render(request, conn, 'notification_preferences',
+                          pref=work_digests.preferences(conn, request.state.user),
+                          deliveries=work_digests.history(conn, request.state.user),
+                          delivery_available=work_digests.available(conn), saved=saved)
+        except permissions.Denied:
+            return HTMLResponse('Preferences unavailable.', status_code=403)
+        finally:
+            conn.close()
+
+    @router.post('/work/notification-preferences')
+    async def save_notification_preferences(request: Request):
+        conn = get_conn()
+        try:
+            fields = await posted(request)
+            work_digests.save(conn, request.state.user, fields.get('revision', ''),
+                              fields.get('routine_bell'), fields.get('digest'))
+            return RedirectResponse('/work/notification-preferences?saved=true', status_code=303)
+        except permissions.Denied:
+            return HTMLResponse('Preferences unavailable or form expired.', status_code=403)
+        except (ValueError, TypeError) as e:
+            return render(request, conn, 'notification_preferences', status_code=409 if isinstance(e, docs.Conflict) else 400,
+                          error=str(e), pref=work_digests.preferences(conn, request.state.user),
+                          deliveries=work_digests.history(conn, request.state.user),
+                          delivery_available=work_digests.available(conn), saved=False)
         finally:
             conn.close()
 
