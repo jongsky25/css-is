@@ -54,7 +54,7 @@
     if (pdf && pdf.size > 6 * 1024 * 1024) { status.textContent = 'Choose a PDF no larger than 6 MiB.'; return; }
     reading = true; read.disabled = true; skip.disabled = true; file.disabled = true; source.disabled = true;
     clearSuggestions(); form.elements.confirmed.checked = false;
-    status.textContent = 'Reading PDF…';
+    status.textContent = 'Reading PDF… Scanned pages may take up to 45 seconds for OCR.';
     try {
       const response = await fetch('/documents/intake/read', {
         method: 'POST', credentials: 'same-origin', cache: 'no-store',

@@ -164,17 +164,33 @@ def read_pdf(raw):
             raise ValueError('Password-protected PDFs are not supported. Continue manually.')
         if len(reader.pages) > MAX_PAGES:
             raise ValueError('Choose a PDF with at most 50 pages.')
-        pages, total = [], 0
-        for page in reader.pages:
+        pages, total, scanned = [], 0, []
+        for index, page in enumerate(reader.pages):
             text = page.extract_text() or ''
             total += len(text)
             if total > MAX_TEXT:
                 raise ValueError('This PDF contains too much text. Continue manually.')
             pages.append(text)
+            # Sparse text may be a header/footer on an otherwise scanned page.
+            if len(re.sub(r'\W', '', text)) < 40:
+                scanned.append(index)
+        if scanned:
+            import documents_ocr
+            readings = documents_ocr.read_pages(raw, scanned)
+            for index, text in readings.items():
+                # Keep native text if OCR found nothing; otherwise use the complete
+                # rendered page, avoiding duplicate/conflicting header suggestions.
+                if text.strip():
+                    pages[index] = text
+            if sum(map(len, pages)) > MAX_TEXT:
+                raise ValueError('This PDF contains too much text. Continue manually.')
     except ValueError:
         raise
     except Exception:
         raise ValueError('The PDF could not be read. Continue manually.') from None
     if not any(text.strip() for text in pages):
-        raise ValueError('This PDF appears to be scanned or has no readable text. Enter the details manually; OCR is not available yet.')
-    return suggest(pages)
+        raise ValueError('No readable text was found, including after OCR. Try a clearer scan or enter the details manually.')
+    result = suggest(pages)
+    if scanned:
+        result['warnings'].insert(0, 'OCR was used on pages ' + ', '.join(str(i + 1) for i in scanned) + '. Check names, numbers and dates against the scan.')
+    return result

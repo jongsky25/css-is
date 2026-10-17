@@ -33,7 +33,7 @@ def test_bad_scanned_encrypted_and_large_pdfs():
         with pytest.raises(ValueError): reader.read_pdf(data)
     writer = PdfWriter(); writer.add_blank_page(width=100, height=100)
     out = io.BytesIO(); writer.write(out)
-    with pytest.raises(ValueError, match='scanned'): reader.read_pdf(out.getvalue())
+    with pytest.raises(ValueError, match='No readable text'): reader.read_pdf(out.getvalue())
     writer.encrypt('secret'); out = io.BytesIO(); writer.write(out)
     with pytest.raises(ValueError, match='Password'): reader.read_pdf(out.getvalue())
     writer = PdfWriter()

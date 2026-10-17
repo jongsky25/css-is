@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.80"
+APP_VERSION = "6.81"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.81",
+        "date": "October 17, 2026",
+        "summary": "Read scanned PDFs to help fill in correspondence details.",
+        "changes": [
+            "Scanned pages can now be read without saving the PDF or page images.",
+            "Review suggested details with page references and an extra reminder to check scanned names, numbers and dates.",
+            "Read up to ten scanned pages at a time, or continue entering the details manually.",
+        ],
+    },
     {
         "version": "6.80",
         "date": "October 17, 2026",
