@@ -1,8 +1,17 @@
 {% extends "documents/base.html" %}{% from 'documents/forms.html' import field,text %}
 {% block documents_content %}<h2>Receive or prepare correspondence</h2>
 <p>Choose what the correspondence is for, check its details, then register it. Permanent incoming/outgoing numbers are assigned only when registration succeeds. You can enter everything manually without a scan.</p>
-{% if enabled %}<form method="post" action="/documents/new" class="doc-card" id="intake-form"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="intake" value="guided">
-<h3>1. Choose the work</h3>
+{% if enabled %}<form method="post" action="/documents/new" class="doc-card" id="intake-form" data-ux-ignore data-telemetry-ignore><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="intake" value="guided">
+<h3>1. Read a document (optional)</h3>
+<p>Select a text PDF up to 6 MiB and 50 pages, or paste a public HTTPS PDF link. The file is read in memory and is not saved. Private links and scanned PDFs require manual entry.</p>
+<label>PDF file<input type="file" id="intake-pdf" accept="application/pdf,.pdf"></label>
+<label>PDF link<input type="url" id="intake-source" autocomplete="off"></label>
+<button type="button" id="intake-read">Read and pre-fill</button>
+<button type="button" id="intake-skip">Skip and enter manually</button>
+<p id="intake-read-status" role="status" aria-live="polite"></p>
+<section id="intake-suggestions" aria-label="PDF suggestions" hidden></section>
+<noscript>PDF reading requires JavaScript. You can enter all correspondence details manually below.</noscript>
+<h3>2. Choose the work</h3>
 <label>Office scenario<select name="scenario" id="intake-scenario">{% for key,scenario in scenarios.items() %}<option value="{{ key }}" {% if not work_enabled and key!='reference' %}disabled{% endif %} {% if key==values.get('scenario','reference') %}selected{% endif %}>{{ scenario.label }}</option>{% endfor %}</select></label>
 <label>Where does it belong?<select name="work_mode" id="intake-mode"><option value="reference" {% if values.get('work_mode','reference')=='reference' %}selected{% endif %}>Reference only — no work item or assignment</option>{% if work_enabled %}<option value="new" {% if values.get('work_mode')=='new' %}selected{% endif %}>Start new shared work</option><option value="existing" {% if values.get('work_mode')=='existing' %}selected{% endif %}>Link existing shared work</option>{% endif %}</select></label>
 {% if not work_enabled %}<p>Shared work is not enabled. Reference-only registration remains available.</p>{% endif %}
@@ -11,9 +20,8 @@
 <label>Suggested lead<select name="proposed_lead_id"><option value="">Officer to decide</option>{% for person in people %}<option value="{{ person.id }}" {% if person.id==(values.get('proposed_lead_id',0)|int) %}selected{% endif %}>{{ person.username }}</option>{% endfor %}</select></label>
 <label><input type="checkbox" name="propose_steps" value="yes" {% if values.get('propose_steps')=='yes' %}checked{% endif %}> Propose the scenario's contribution steps shown above</label><p>Proposals have no confirmed owner or deadline. An officer must confirm assignments. No approval, signature, booking, or travel claim is created.</p></fieldset>
 <fieldset id="intake-existing"><legend>Existing shared work</legend><label>Work item<select name="case_selection"><option value="">Choose a permitted work item</option>{% for case in cases %}{% set selection=case.id|string ~ ':' ~ case.revision|string %}<option value="{{ selection }}" {% if selection==values.get('case_selection') %}selected{% endif %}>{{ case.title }}</option>{% endfor %}</select></label><p>Shows up to 25 recent permitted items. For older work, open that work item and choose “Register new correspondence.” Its creator, lead, and assigned contributors must already be permitted to read the new record. If access needs setup, register it as reference-only first, arrange access, then link it.</p></fieldset>{% endif %}
-<h3>2. Check the correspondence</h3>
-{{ field('drive_url','Drive scan / source link (optional)',type='url',value=values.get('drive_url',''),required=false) }}<button type="submit" formaction="/documents/intake/preview" formnovalidate>Read source suggestions</button>
-<p>Reading suggestions does not register a document. Review excerpts against the source and choose which suggestions to use.</p>
+<h3>3. Check the correspondence</h3>
+{{ field('drive_url','Attach an existing Drive reference link (optional; saved on registration)',type='url',value=values.get('drive_url',''),required=false) }}
 {% if preview %}<section aria-label="Source suggestions"><h4>Suggestions to review</h4><p>{{ preview.notice }}</p>{% for warning in preview.warnings %}<p class="doc-alert">{{ warning }}</p>{% endfor %}{% for excerpt in preview.excerpts %}<blockquote>{{ excerpt }}</blockquote>{% endfor %}
 {% for name,suggestion in preview.suggestions.items() %}<p><strong>{{ name|replace('_',' ')|title }}:</strong> {{ suggestion }} {% if name in ('subject','type','sender','due_date','references') %}<button type="button" class="intake-use" data-field="{{ name }}" data-value="{{ suggestion }}">Use this suggestion</button>{% endif %}</p>{% endfor %}<p>You may also copy or correct the suggestions manually. They are not saved until you confirm registration.</p></section>{% endif %}
 <label>Direction<select name="direction">{% for value,label in [('IN','Incoming'),('OUT','Outgoing draft')] %}<option value="{{ value }}" {% if value==values.get('direction','IN') %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
@@ -22,5 +30,5 @@
 {{ field('document_date','Document date','date',values.get('document_date',''),false) }}{{ field('received_at','Received at (Manila)','datetime-local',values.get('received_at',''),false) }}{{ field('due_date','Explicit deadline stated in the source','date',values.get('due_date',''),false) }}
 <label>Priority<select name="priority">{% for value,label in [('normal','Normal'),('urgent','Urgent')] %}<option value="{{ value }}" {% if value==values.get('priority','normal') %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
 {{ text('references','DTRAK and other references (one per line)',values.get('references',''),false) }}{{ field('channel','Receipt channel',value=values.get('channel',''),required=false) }}{{ text('evidence','Receipt evidence / note',values.get('evidence',''),false) }}
-<h3>3. Confirm and register</h3><label><input type="checkbox" name="confirmed" value="yes" required> I checked the source, entered fields, work destination, and any proposed steps.</label><p>Scenario suggestions do not authorize release or signing. Existing document policies and permanent numbering still apply.</p><button type="submit">Register correspondence</button></form>
+<h3>4. Confirm and register</h3><label><input type="checkbox" name="confirmed" value="yes" required> I checked the source, entered fields, work destination, and any proposed steps.</label><p>Scenario suggestions do not authorize release or signing. Existing document policies and permanent numbering still apply.</p><button type="submit">Register correspondence</button></form>
 <script src="/static/js/work-intake.js" defer></script>{% endif %}{% endblock %}

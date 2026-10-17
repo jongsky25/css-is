@@ -135,6 +135,45 @@ def make_router(templates,get_conn):
             values=data,work_enabled=work.enabled(conn),cases=cases,scenarios=work_intake.SCENARIOS,
             preview=preview,error=error),status_code=status_code)
 
+    @router.post('/documents/intake/read')
+    async def intake_read(request: Request):
+        import asyncio
+        import documents_reader as reader
+        conn = get_conn()
+        headers = {'Cache-Control': 'no-store', 'Pragma': 'no-cache'}
+        try:
+            p.actor(conn, getattr(request.state, 'user', None))
+            d.writable(conn)
+            supplied = request.headers.get('x-csrf-token', '')
+            if not supplied or not hmac.compare_digest(supplied, csrf(request)) or not request.cookies.get(auth.COOKIE_NAME):
+                raise p.Denied('The form expired. Reload and try again.')
+            raw = bytearray()
+            async for chunk in request.stream():
+                if len(raw) + len(chunk) > reader.MAX_BYTES:
+                    raise ValueError('Choose a PDF no larger than 6 MiB.')
+                raw.extend(chunk)
+            content_type = request.headers.get('content-type', '').split(';')[0]
+            if content_type == 'application/pdf':
+                result = await asyncio.to_thread(reader.read_pdf, bytes(raw))
+            elif content_type == 'application/json' and len(raw) <= 4096:
+                payload = json.loads(raw)
+                url = payload.get('url') if isinstance(payload, dict) else None
+                if not isinstance(url, str) or not url.strip():
+                    raise ValueError('Enter a public PDF link or select a PDF.')
+                pdf = await asyncio.to_thread(reader.fetch_pdf, url.strip())
+                result = await asyncio.to_thread(reader.read_pdf, pdf)
+            else:
+                raise ValueError('Select a PDF or enter a public PDF link.')
+            return JSONResponse(result, headers=headers)
+        except p.Denied:
+            return JSONResponse({'error': 'The form expired or the account is unavailable.'}, status_code=403, headers=headers)
+        except ValueError as exc:
+            return JSONResponse({'error': str(exc)}, status_code=400, headers=headers)
+        except Exception:
+            return JSONResponse({'error': 'The PDF could not be read. Select the file or continue manually.'}, status_code=400, headers=headers)
+        finally:
+            conn.close()
+
     @router.post('/documents/intake/preview')
     async def intake_preview(request:Request):
         conn=get_conn();data={}
