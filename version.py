@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.01"
+APP_VERSION = "7.02"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.02",
+        "date": "October 17, 2026",
+        "summary": "Documents workflow administrators can now archive finished records.",
+        "changes": [
+            "Archive a closed or cancelled document with a reason, and find it later in the Archive queue.",
+            "Archived documents keep their history and can be restored when more work is needed.",
+        ],
+    },
     {
         "version": "7.01",
         "date": "October 17, 2026",

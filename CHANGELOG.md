@@ -1,3 +1,8 @@
+## 7.02 — October 17, 2026
+
+- Let Documents workflow administrators archive closed or cancelled records with a reason and restore them later.
+- Keep archived records and their history available through direct links and an administrator Archive queue while excluding them from normal queues and CSV exports.
+
 ## 7.01 — October 17, 2026
 
 - Choose the receipt channel from a dropdown when registering a document or recording another receipt: Email, Gmail, Hand-delivered, Courier, DTRAK, or Other.
