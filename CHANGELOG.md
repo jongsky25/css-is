@@ -1,3 +1,9 @@
+## 6.85 — October 17, 2026
+
+- Increase transient PDF uploads and link downloads from 6 MiB to 20 MiB.
+- Update browser validation, server limits, error messages and guidance consistently.
+- Retain the existing page, OCR, pixel, extracted-text and timeout limits.
+
 ## 6.84 — October 17, 2026
 
 - Add disabled-by-default, signed Gmail intake with mailbox/account binding and atomic duplicate protection.

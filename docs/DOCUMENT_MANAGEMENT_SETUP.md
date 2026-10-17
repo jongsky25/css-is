@@ -277,7 +277,7 @@ does not call the Drive OCR relay or an AI provider and does not write database
 records. Existing registration still saves only the confirmed form fields and
 any separately entered attachment reference.
 
-Limits: 6 MiB, 50 pages, and 100,000 extracted characters. Extraction is conservative:
+Limits: 20 MiB, 50 pages, and 100,000 extracted characters. Extraction is conservative:
 it recognizes labelled subjects, senders, document types, document dates,
 deadlines, and references; conflicting or ambiguous values remain for manual
 entry. Sparse-text pages use local English OCR, including in mixed text/scan PDFs.
@@ -308,7 +308,7 @@ it is not used by this first-step reader. Existing registered-document extractio
 and signing workflows retain their existing storage behavior.
 
 PDF intake reports selection and validation status before reading. Files over
-6 MiB are explicitly marked as not uploaded/read (OCR did not run). Successful
+20 MiB are explicitly marked as not uploaded/read (OCR did not run). Successful
 reads identify OCR page numbers or direct text extraction and expose an expandable
 transient preview (up to 2,000 characters per page, first 10 pages). Preview limits
 are labelled. The Remove file / clear reading button clears the selected source

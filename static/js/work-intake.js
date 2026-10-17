@@ -55,8 +55,8 @@
     const pdf = file.files[0];
     if (!pdf) { status.textContent = 'No file selected. Reading has not started.'; return; }
     const size = (pdf.size / (1024 * 1024)).toFixed(1);
-    status.textContent = pdf.size > 6 * 1024 * 1024
-      ? `${pdf.name} is ${size} MiB; the limit is 6 MiB. Not uploaded or read; OCR did not run. Remove it or choose a smaller PDF.`
+    status.textContent = pdf.size > 20 * 1024 * 1024
+      ? `${pdf.name} is ${size} MiB; the limit is 20 MiB. Not uploaded or read; OCR did not run. Remove it or choose a smaller PDF.`
       : `${pdf.name} selected (${size} MiB). Reading has not started. Tap Read and pre-fill to read it.`;
   });
   source.addEventListener('input', () => {
@@ -74,7 +74,7 @@
     }
     const pdf = file.files[0];
     if (!pdf && !source.value.trim()) { status.textContent = 'Select a PDF or enter a public PDF link.'; return; }
-    if (pdf && pdf.size > 6 * 1024 * 1024) { status.textContent = 'Not uploaded or read; OCR did not run. The file exceeds 6 MiB. Remove it or choose a smaller PDF.'; remove.hidden = false; return; }
+    if (pdf && pdf.size > 20 * 1024 * 1024) { status.textContent = 'Not uploaded or read; OCR did not run. The file exceeds 20 MiB. Remove it or choose a smaller PDF.'; remove.hidden = false; return; }
     const run = ++generation; controller = new AbortController(); remove.hidden = false;
     let timedOut = false;
     const timer = setTimeout(() => { timedOut = true; if (run === generation) controller?.abort(); }, 90000);
