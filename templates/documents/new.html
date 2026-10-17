@@ -1,4 +1,4 @@
-{% extends "documents/base.html" %}{% from 'documents/forms.html' import field,text %}
+{% extends "documents/base.html" %}{% from 'documents/forms.html' import field,text,receipt_channel %}
 {% block documents_content %}<h2>Receive or prepare correspondence</h2>
 <p>Choose what the correspondence is for, check its details, then register it. Permanent incoming/outgoing numbers are assigned only when registration succeeds. You can enter everything manually without a scan.</p>
 {% if enabled %}<form method="post" action="/documents/new" class="doc-card" id="intake-form" data-ux-ignore data-telemetry-ignore><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="intake" value="guided">
@@ -33,7 +33,7 @@
 <label>Concerned unit<select name="unit_id"><option value="">Not yet determined</option>{% for unit in units %}<option value="{{ unit.id }}" {% if unit.id==(values.get('unit_id',0)|int) %}selected{% endif %}>{{ unit.name }}</option>{% endfor %}</select></label>
 {{ field('document_date','Document date','date',values.get('document_date',''),false) }}{{ field('received_at','Received at (Manila)','datetime-local',values.get('received_at',''),false) }}{{ field('due_date','Explicit deadline stated in the source','date',values.get('due_date',''),false) }}
 <label>Priority<select name="priority">{% for value,label in [('normal','Normal'),('urgent','Urgent')] %}<option value="{{ value }}" {% if value==values.get('priority','normal') %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
-{{ text('references','DTRAK and other references (one per line)',values.get('references',''),false) }}{{ field('channel','Receipt channel',value=values.get('channel',''),required=false) }}{{ text('evidence','Receipt evidence / note',values.get('evidence',''),false) }}
+{{ text('references','DTRAK and other references (one per line)',values.get('references',''),false) }}{{ receipt_channel(values.get('channel','')) }}{{ text('evidence','Receipt evidence / note',values.get('evidence',''),false) }}
 <button type="button" id="intake-approve">Approve details</button><p id="intake-approval" role="status">Details need your review.</p></section>
 <section id="intake-work"><h3>3. Choose the work</h3>
 <label>Office scenario<select name="scenario" id="intake-scenario">{% for key,scenario in scenarios.items() %}<option value="{{ key }}" {% if not work_enabled and key!='reference' %}disabled{% endif %} {% if key==values.get('scenario','reference') %}selected{% endif %}>{{ scenario.label }}</option>{% endfor %}</select></label>

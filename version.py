@@ -17,10 +17,18 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.00"
+APP_VERSION = "7.01"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.01",
+        "date": "October 17, 2026",
+        "summary": "Choose how a document was received from a dropdown.",
+        "changes": [
+            "When registering a document or recording another receipt, choose Email, Gmail, Hand-delivered, Courier, DTRAK, or Other instead of typing the receipt channel.",
+        ],
+    },
     {
         "version": "7.00",
         "date": "October 17, 2026",

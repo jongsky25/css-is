@@ -4,3 +4,6 @@
 {% macro text(name,label,value='',required=true) %}<label>{{ label }}<textarea name="{{ name }}" {% if required %}required{% endif %}>{{ value or '' }}</textarea></label>{% endmacro %}
 {% macro person(name,label,people) %}<label>{{ label }}<select name="{{ name }}" required><option value="">Choose a person</option>{% for u in people %}<option value="{{ u.id }}">{{ u.name or u.username }} · {{ u.username }}</option>{% endfor %}</select></label>{% endmacro %}
 {% macro select(name,label,choices) %}<label>{{ label }}<select name="{{ name }}">{% for value,title in choices %}<option value="{{ value }}">{{ title }}</option>{% endfor %}</select></label>{% endmacro %}
+{% macro receipt_channel(value='',required=false) %}<label>Receipt channel<select name="channel" {% if required %}required{% endif %}>
+{% for key,title in [('', 'Choose how the document was received'), ('email','Email'), ('gmail','Gmail'), ('hand_delivered','Hand-delivered'), ('courier','Courier'), ('dtrak','DTRAK'), ('other','Other')] %}<option value="{{ key }}" {% if key==value %}selected{% endif %}>{{ title }}</option>{% endfor %}
+</select></label>{% endmacro %}

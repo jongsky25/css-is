@@ -1,3 +1,7 @@
+## 7.01 — October 17, 2026
+
+- Choose the receipt channel from a dropdown when registering a document or recording another receipt: Email, Gmail, Hand-delivered, Courier, DTRAK, or Other.
+
 ## 7.00 — October 17, 2026
 
 - The certifying officer on the travel forms now shows the division head's position in the directory (for example Medical Officer V) rather than the designation "Division Chief". The head of office is still the Director seat in the directory, which includes an OIC-Director; the filer's division head still comes from the filer's own division.
