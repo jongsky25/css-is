@@ -17,10 +17,22 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.96"
+APP_VERSION = "6.97"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.97",
+        "date": "October 17, 2026",
+        "summary": "The online service feedback form now follows the official Client Satisfaction Measurement form.",
+        "changes": [
+            "The form opens with the official explanation and confidentiality note, and shows today's date.",
+            "It now asks the official client questions: client type, sex, age, region of residence and the service availed, and keeps the DOH or non-DOH question. All are optional.",
+            "It adds the Citizen's Charter section with its definition and questions CC1 to CC3; if someone does not know what a Citizen's Charter is, CC2 and CC3 are marked Not applicable for them.",
+            "There is an optional email field, and the suggestions box now uses the official wording.",
+            "These answers now count in the official CSM report, the same as paper forms. Available in English and Filipino.",
+        ],
+    },
     {
         "version": "6.96",
         "date": "October 17, 2026",

@@ -7761,6 +7761,40 @@ CSM_SERVICES = [
     "Data Request", "Meeting", "Certification", "Submission",
 ]
 
+# The public Type-1 form asks the official CSM client questions (ARTA MC 2022-05 as amended by 2023-05).
+CSM_PUBLIC_CLIENT_TYPES = ["Citizen", "Business", "Government"]
+_CSM_EMAIL = re.compile(r"^[^@\s]{1,64}@[^@\s]{1,120}\.[^@\s]{2,}$")
+
+
+def _csm_public_meta(posted):
+    """The client information and Citizen's Charter answers from the PUBLIC Type-1 form, ready to store as the
+    same item_remarks the staff paper entry writes (so the official CSM report counts online and paper alike).
+    Every value is checked against the lists the report knows; anything else becomes blank (the endpoint is
+    unauthenticated). Only answers given are returned; nothing here is required. When CC1 says the person did
+    not know what a Citizen's Charter is, CC2 and CC3 are 'Not applicable' (as the official form says); with no
+    CC1 there is no CC2 or CC3."""
+    def pick(key, options):
+        v = (posted.get(key) or "").strip()
+        return v if v in options else ""
+    out = {}
+    out["CLIENT_TYPE"] = pick("csm_client_type", CSM_PUBLIC_CLIENT_TYPES)
+    out["SEX"] = {"M": "Male", "F": "Female"}.get((posted.get("sex") or "").strip().upper(), "")
+    age = (posted.get("csm_age") or "").strip()
+    out["AGE"] = str(int(age)) if age.isdigit() and 0 < int(age) <= 120 else ""
+    out["REGION"] = pick("csm_region", CSM_REGIONS)
+    out["SERVICE"] = re.sub(r"[\x00-\x1f\x7f\s]+", " ", posted.get("csm_service") or "").strip()[:120]
+    email = (posted.get("csm_email") or "").strip()
+    out["EMAIL"] = email if len(email) <= 120 and _CSM_EMAIL.match(email) else ""
+    cc1 = pick("csm_cc1", CSM_CC1_OPTS)
+    cc2, cc3 = pick("csm_cc2", CSM_CC2_OPTS), pick("csm_cc3", CSM_CC3_OPTS)
+    if not cc1:
+        cc2 = cc3 = ""
+    elif cc1 == CSM_CC1_OPTS[3]:
+        cc2, cc3 = CSM_CC2_OPTS[4], CSM_CC3_OPTS[3]
+    out["CC1"], out["CC2"], out["CC3"] = cc1, cc2, cc3
+    return {k: v for k, v in out.items() if v}
+
+
 # --- Official CO-CSM report (ARTA Type-1) scaffolding ---------------------
 # The bureau's fixed service inventory shown in the report's Scope section.
 # Response counts are filled from the data; the catalogue itself is the
@@ -7986,7 +8020,11 @@ def survey_spec(ctx, lang="en"):
             "ask_served_by": False,
             "regions": CSM_REGIONS,
             "cc1_opts": CSM_CC1_OPTS, "cc2_opts": CSM_CC2_OPTS, "cc3_opts": CSM_CC3_OPTS,
-            "services": CSM_SERVICES,
+            "services": CSM_SERVICES, "client_types": CSM_PUBLIC_CLIENT_TYPES,
+            # what the respondent reads (the stored value is always the English option above)
+            "cc1_labels": i18n.CSM_CC1_FIL if fil else CSM_CC1_OPTS,
+            "cc2_labels": i18n.CSM_CC2_FIL if fil else CSM_CC2_OPTS,
+            "cc3_labels": i18n.CSM_CC3_FIL if fil else CSM_CC3_OPTS,
             "groups": [{"label": i18n.t("grp_arta", lang), "items": items}],
         }
 
@@ -8220,9 +8258,11 @@ def rating_form(request: Request, qr_token: str, seq: str = "", att: str = ""):
             staff = [p for p in st.list_resource_persons(conn) if p["is_internal"]]
         finally:
             conn.close()
+    today = _now_local()
     return templates.TemplateResponse(request, "rating.html", {
         "ctx": ctx, "qr_token": qr_token, "spec": spec, "seq": seq, "att": att,
         "staff": staff, "lang": lang, "max_remark_chips": MAX_REMARK_CHIPS,
+        "csm_today": f"{today:%B} {today.day}, {today.year}",       # shown on the Type-1 form; the response is dated when it is submitted
     })
 
 
@@ -8318,6 +8358,8 @@ async def submit_rating(request: Request, qr_token: str):
             affil = posted.get("affil", "").strip().upper()
             if affil in ("DOH", "NON-DOH"):
                 item_remarks["AFFIL"] = affil
+            if ctx["survey_type"] == 1:                 # the official CSM questions (all optional), stored as the paper entry does
+                item_remarks.update(_csm_public_meta(posted))
 
         raffle_code = raffle_prize = None
         _live_ev = st.event_for_form_instance(conn, ctx["id"])

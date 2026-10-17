@@ -1,3 +1,9 @@
+## 6.97 — October 17, 2026
+
+- Make the public service feedback (Type 1 / CSM) form follow the official ARTA Client Satisfaction Measurement form: the official intro and confidentiality note, the date shown automatically, client type, sex, age, region of residence, service availed (from the bureau's list), the Citizen's Charter definition and CC1 to CC3 with the skip rule, optional email and the official suggestions wording (Spot Feedback #121). Everything except the ratings is optional.
+- Store those answers as the paper entry does, so online responses count in the official CSM report; online sex answers are now stored as "Male" / "Female" like the report expects.
+- Filipino text added for all of it (draft, for the office to review). The activity and resource-person forms are unchanged.
+
 ## 6.96 — October 17, 2026
 
 - Keep the small reading taken from each uploaded ticket, receipt, Certificate of Appearance and refund receipt, and draft Appendix A entries and Appendix B answers from it, each showing where it came from (Spot Feedback #122, #123).
