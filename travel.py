@@ -553,7 +553,8 @@ def directory_signers(conn, user_id, settings) -> dict:
             out["head_name"], out["head_title"] = director[0], director[1] or "Director"
     profile = st.get_user_profile(conn, user_id) or {}
     division = _division_path(conn, profile.get("org_path"))
-    chief = st.org_seat_holder(conn, 2, org_path=division, exclude_rp_id=profile.get("rp_id")) if division else None
+    chief = st.org_seat_holder(conn, 2, org_path=division, exclude_rp_id=profile.get("rp_id"),
+                           title_from="position") if division else None
     if chief:
         out["certifier_name"], out["certifier_title"] = chief[0], chief[1] or "Division Chief"
     return out
