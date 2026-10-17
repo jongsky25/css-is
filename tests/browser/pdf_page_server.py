@@ -32,6 +32,8 @@ with tempfile.TemporaryDirectory(prefix='pdf-page-browser-') as directory:
     writer.add_page(PdfReader(io.BytesIO(scanned_pdf())).pages[0])
     padding = DecodedStreamObject(); padding.set_data(b'x' * (21 * 1024 * 1024)); writer._add_object(padding)
     output = io.BytesIO(); writer.write(output); fixture = output.getvalue()
+    if os.environ.get('PDF_TEST_FILE'):
+        fixture = Path(os.environ['PDF_TEST_FILE']).read_bytes()
     app = FastAPI()
     @app.middleware('http')
     async def synthetic_user(request, call_next):

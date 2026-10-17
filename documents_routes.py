@@ -204,7 +204,7 @@ def make_router(templates,get_conn):
                 if not isinstance(url, str) or not url.strip():
                     raise ValueError('Enter a public PDF link or select a PDF.')
                 pdf = await asyncio.to_thread(reader.fetch_pdf, url.strip())
-                result = await asyncio.to_thread(reader.read_pdf, pdf)
+                result = await asyncio.to_thread(reader.read_pdf, pdf, first_page=True)
             else:
                 raise ValueError('Select a PDF or enter a public PDF link.')
             return JSONResponse(result, headers=headers)

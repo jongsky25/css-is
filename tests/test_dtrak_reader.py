@@ -27,9 +27,9 @@ def test_dtrak_header_and_multiline_subject():
     assert result['suggestions'] == {
         'subject': 'Submission of comments on the updated service guidelines',
         'sender': 'Example Office', 'type': 'Memorandum',
-        'document_date': '2026-10-16', 'references': 'DTRAK: 2026-000123456'}
+        'references': 'DTRAK: 2026-000123456'}
     assert result['evidence']['subject'][0]['page'] == 1
-    assert 'routing table' in result['warnings'][0]
+    assert any('routing-table' in warning for warning in result['warnings'])
 
 
 def test_dtrak_ambiguous_numeric_date_not_guessed():
@@ -51,5 +51,46 @@ def test_flat_table_headers_stop_subject_and_separate_date():
     text = slip().replace('Example Office DATE: 10/16/2026', 'Example Office\nDATE: 10/16/2026')
     text = text.replace('ACTION\nREQUIRED/ACTION DUE DATE', 'DATE FROM TO ACTION DUE DATE NAME')
     result = reader.suggest([text])
-    assert result['suggestions']['document_date'] == '2026-10-16'
+    assert 'document_date' not in result['suggestions']
+    assert any('2026-10-16' in warning for warning in result['warnings'])
     assert result['suggestions']['subject'].endswith('service guidelines')
+
+
+def test_underlying_document_date_and_case_normalization():
+    result = reader.suggest([slip(), 'MEMORANDUM\nOctober 14, 2026\nSUBJECT:'])
+    assert result['suggestions']['document_date'] == '2026-10-14'
+    assert result['suggestions']['type'] == 'Memorandum'
+    assert not any('Multiple values found for type' in w for w in result['warnings'])
+
+
+def test_tracking_caption_recovery_and_deadline_position(monkeypatch):
+    import io
+    import subprocess
+    from PIL import Image
+    import documents_ocr
+    out = io.BytesIO()
+    Image.new('RGB', (1200, 1700), 'white').save(out, 'PNG')
+    header = 'level\tpage_num\tblock_num\tpar_num\tline_num\tword_num\tleft\ttop\twidth\theight\tconf\ttext\n'
+    def word(text, x, y, width=40):
+        return f'5\t1\t1\t1\t1\t1\t{x}\t{y}\t{width}\t15\t95\t{text}\n'
+    tsv = header + word('2026-000123456', 400, 300, 180) + word('DUE', 800, 600) + word('DATE', 850, 600)
+    tsv += word('2026-10-15', 100, 720, 120) + word('2026-10-20', 795, 720, 120)
+    monkeypatch.setattr(subprocess, 'run', lambda *a, **k: subprocess.CompletedProcess(a, 0, tsv.encode()))
+    result = documents_ocr.routing_deadline(out.getvalue(), 'DTRAK\nORIGINATING OFFICE: Test')
+    assert result.startswith('2026-000123456\n')
+    assert result.endswith('Deadline: 2026-10-20')
+    tsv += word('2026-10-21', 795, 760, 120)
+    assert 'Deadline:' not in documents_ocr.routing_deadline(out.getvalue(), 'DTRAK\nORIGINATING OFFICE: Test')
+
+
+def test_first_page_link_scope():
+    import io
+    from reportlab.pdfgen import canvas
+    out = io.BytesIO(); c = canvas.Canvas(out)
+    for subject in ('First', 'Second'):
+        c.drawString(50, 700, 'Subject: ' + subject + ' page has enough native text to avoid OCR')
+        c.showPage()
+    c.save()
+    result = reader.read_pdf(out.getvalue(), first_page=True)
+    assert result['reading']['page_count'] == 1
+    assert result['suggestions']['subject'].startswith('First')

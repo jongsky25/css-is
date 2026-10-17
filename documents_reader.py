@@ -132,6 +132,9 @@ def _dtrak_header(text):
         # Routing headers may be split across OCR lines or flattened into one.
         if re.match(r'^(?:ACTION\b|REQUIRED/ACTION\b|TAKEN/|DATE(?:\s+FROM|$)|FROM$|TO$|DUE DATE$|NAME$)', line, re.I):
             break
+        # OCR can corrupt the DATE label after a parenthesized office name.
+        # Keep the office separate; do not promote this unlabelled date.
+        line = re.sub(r'^(ORIGINATING OFFICE:.*\))\s+[^:]{1,12}\s+\d{1,2}/\d{1,2}/\d{4}$', r'\1', line, flags=re.I)
         match = re.match(r'^ORIGINATING OFFICE\s*:\s*(.*?)\s+DATE\s*:\s*(.+)$', line, re.I)
         if match:
             output.extend(['Originating office: ' + match[1], 'Date: ' + match[2]])
@@ -156,12 +159,17 @@ def _dtrak_header(text):
                 value = _date(f'{year:04d}-{month:02d}-{day:02d}')
                 if value:
                     output[i] = 'Date: ' + value
+    # Only the positional OCR pass adds a labelled deadline after the table.
+    for line in lines:
+        if re.fullmatch(r'Deadline: 20\d{2}-\d{2}-\d{2}', line):
+            output.append(line)
     return '\n'.join(output), True
 
 
 def suggest(pages):
     candidates = {key: [] for key in FIELDS}
     dtrak_pages = []
+    routing_dates = []
     patterns = {
         'subject': r'^subject(?:\s*[:\-]\s*|\s+)(.+)$',
         'sender': r'^(?:from|sender|originating office)(?:\s*[:\-]\s*|\s+)(.+)$',
@@ -176,6 +184,16 @@ def suggest(pages):
         text, dtrak = _dtrak_header(text)
         if dtrak:
             dtrak_pages.append(page_number)
+        if dtrak:
+            routing_dates.extend((m[1], page_number) for m in re.finditer(r'^Date: (.+)$', text, re.M))
+            text = re.sub(r'^Date: .+$', '', text, flags=re.M)
+        elif dtrak_pages:
+            # On the document following a routing slip, a standalone header date
+            # is a document date, not the routing or receipt date.
+            for line in text.splitlines()[:25]:
+                value = _date(line)
+                if value:
+                    candidates['document_date'].append((value, page_number, line.strip()))
         lines = [re.sub(r'\s+', ' ', line.replace('：', ':')).strip() for line in text.splitlines()]
         combined = []
         index = 0
@@ -204,9 +222,13 @@ def suggest(pages):
                 if heading[2]:
                     candidates['references'].append((line, page_number, line))
     suggestions, evidence, warnings = {}, {}, []
+    if routing_dates:
+        warnings.append('Routing-slip date: ' + ', '.join(f'{value} (page {page})' for value, page in routing_dates) + '. This is separate from the document date and receipt time.')
     if dtrak_pages:
-        warnings.append('DTRAK routing slip detected. Check the routing table for deadlines, recipients and handwritten instructions; these are not inferred from flattened table text. The header date is the routing-slip date; verify it against the underlying document.')
+        warnings.append('DTRAK routing slip detected. Check routing-table deadlines, recipients and handwritten instructions against the source. Deadline pre-fill requires a readable date aligned beneath the deadline header. The routing-slip date is separate from the document date.')
     for key, found in candidates.items():
+        if key == 'type':
+            found = [(value.title(), page, quote) for value, page, quote in found]
         unique = list(dict.fromkeys(item[0] for item in found))
         if key == 'references' and unique:
             value = '\n'.join(unique)
@@ -224,7 +246,7 @@ def suggest(pages):
             'notice': 'Suggested values are unverified. Check each value against the PDF before registration.'}
 
 
-def read_pdf(raw):
+def read_pdf(raw, first_page=False):
     if not raw or len(raw) > MAX_BYTES:
         raise ValueError('Choose a PDF no larger than 20 MiB.')
     if not raw.startswith(b'%PDF-'):
@@ -237,6 +259,8 @@ def read_pdf(raw):
             raise ValueError('Choose a PDF with at most 50 pages.')
         pages, total, scanned = [], 0, []
         for index, page in enumerate(reader.pages):
+            if first_page and index > 0:
+                break
             text = page.extract_text() or ''
             total += len(text)
             if total > MAX_TEXT:
@@ -255,6 +279,15 @@ def read_pdf(raw):
                     pages[index] = text
             if sum(map(len, pages)) > MAX_TEXT:
                 raise ValueError('This PDF contains too much text. Continue manually.')
+        if first_page and len(reader.pages) > 1 and _dtrak_header(pages[0])[1]:
+            text = reader.pages[1].extract_text() or ''
+            if len(re.sub(r'\W', '', text)) < 40:
+                import documents_ocr
+                text = documents_ocr.read_pages(raw, [1])[1]
+                scanned.append(1)
+            pages.append(text)
+        if sum(map(len, pages)) > MAX_TEXT:
+            raise ValueError('This PDF contains too much text. Continue manually.')
     except ValueError:
         raise
     except Exception:
@@ -267,6 +300,8 @@ def read_pdf(raw):
     result['text_preview'] = [{'page': i + 1, 'text': text[:2000], 'truncated': len(text) > 2000}
                               for i, text in enumerate(pages[:10])]
     result['preview_truncated'] = len(pages) > 10
+    if first_page:
+        result['warnings'].insert(0, 'Read the first page' + (' and the document after the DTRAK slip' if len(pages) > 1 else '') + '. Download and select the file to read other pages.')
     if scanned:
         result['warnings'].insert(0, 'OCR was used on pages ' + ', '.join(str(i + 1) for i in scanned) + '. Check names, numbers and dates against the scan.')
     return result

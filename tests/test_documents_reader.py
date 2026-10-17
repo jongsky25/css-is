@@ -19,7 +19,7 @@ def pdf(*lines):
 def test_pdf_fields_evidence_and_ambiguity():
     result = reader.read_pdf(pdf('MEMORANDUM', 'Subject: Staff orientation', 'From: Training Office',
         'Date: October 17, 2026', 'Deadline: 2026-11-02', 'DTRAK: ABC-123'))
-    assert result['suggestions'] == {'subject': 'Staff orientation', 'type': 'MEMORANDUM',
+    assert result['suggestions'] == {'subject': 'Staff orientation', 'type': 'Memorandum',
         'sender': 'Training Office', 'document_date': '2026-10-17', 'due_date': '2026-11-02', 'references': 'DTRAK: ABC-123'}
     assert result['evidence']['subject'] == [{'page': 1, 'text': 'Subject: Staff orientation'}]
     result = reader.suggest(['Subject: One\nSubject: Two\nDate: 01/02/2026\nDeadline: tomorrow\nApprove this document'])
@@ -103,7 +103,8 @@ def test_intake_read_http_transient(app_mod, viewer, monkeypatch):
         monkeypatch.setattr(reader, 'fetch_pdf', lambda url: raw)
         linked = viewer.post('/documents/intake/read', json={'url': 'https://example.test/a.pdf'}, headers={'x-csrf-token': csrf})
         assert linked.status_code == 200
-        assert linked.json() == result.json()
+        assert linked.json()['suggestions'] == result.json()['suggestions']
+        assert any('Read the first page' in w for w in linked.json()['warnings'])
         received = []
         def record_size(data):
             received.append(len(data))

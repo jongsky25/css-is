@@ -5,3 +5,8 @@
 #intake-read-status:not(:empty){padding:1rem;border:2px solid var(--border,#777);border-radius:.5rem;font-weight:600}#intake-suggestions pre{white-space:pre-wrap;overflow-wrap:anywhere}
 
 #pdf-preview{display:block;max-width:100%;height:auto;border:1px solid #aaa;margin:1rem 0}#pdf-progress:not(:empty){padding:1rem;border:2px solid var(--border,#777);border-radius:.5rem}#pdf-results{padding-left:1.5rem}
+
+.pdf-field-note {display:block; font-size:.85rem; margin:.35rem 0 .75rem; overflow-wrap:anywhere;}
+#intake-details textarea[name=subject] {min-height:6rem;}
+#intake-details {scroll-margin-top:6rem;}
+#intake-approval {font-weight:600;}
