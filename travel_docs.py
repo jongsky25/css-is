@@ -83,6 +83,7 @@ from decimal import InvalidOperation
 
 import travel_rates as rates
 import travel_rules as tr
+import travel_readings
 
 MODES = ("taxi", "tnvs", "public_noreceipt", "van_doh", "plane", "bus", "boat", "own", "govt", "none")
 MODE_LABELS = {"taxi": "Taxi", "tnvs": "TNVS", "public_noreceipt": "Public transport", "van_doh": "DOH van",
@@ -195,8 +196,10 @@ def blank_row(day="") -> dict:
             "lodging_provided": False, "meals_provided": False}
 
 
-def defaults(conn, filing, profile, settings) -> dict:
-    """What the prepare page starts with. `settings` is {'head_name': ..., 'certifier_name': ...}."""
+def defaults(conn, filing, profile, settings, readings=()) -> dict:
+    """What the prepare page starts with. `settings` is {'head_name': ..., 'certifier_name': ...}. `readings` are what
+    was read off the filing's uploads (travel_readings): they draft the itinerary rides and the Certificate of Travel
+    Completed, which the person then checks."""
     name = profile.get("person_name") or profile.get("username") or ""
     desig = profile.get("designation") or ""
     sig = {k: "" for k in SIGNATORY_KEYS}
@@ -208,12 +211,13 @@ def defaults(conn, filing, profile, settings) -> dict:
                approved_by_name=settings.get("head_name", ""), approved_by_title=settings.get("head_title", ""),
                signatory_name=settings.get("head_name", ""), signatory_title=settings.get("head_title", ""))
     days = trip_days(filing["act_start"], filing["act_end"])
-    rows = [blank_row(d.isoformat()) for d in days]
+    rows = travel_readings.draft_rows([blank_row(d.isoformat()) for d in days], readings)
     dates = date_range(filing["act_start"], filing["act_end"])
     texts = {k: "" for k in TEXT_KEYS}
     texts.update(purpose=f"attend {filing['act_title']}", strictness="strict",
                  activities=f"{filing['act_title']} on {dates}" + (f" at {filing['act_venue']}" if filing.get("act_venue") else ""),
                  day_by_day=[f"{long_date(d)}: " for d in days])
+    texts.update(travel_readings.completion_defaults(filing, readings))
     return {"rows": rows, "texts": texts, "signatories": sig, "rates": {"region": "", "receives_sa": False, "discounted": False},
             "mc114_text": fill_tokens(_library_text(conn, filing), filing, profile),
             "traveler": {"name": name, "designation": desig, "employee_no": profile.get("employee_no") or ""},

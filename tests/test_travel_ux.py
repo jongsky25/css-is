@@ -227,3 +227,37 @@ def test_a_day_can_hold_a_plane_ride_and_a_tnvs_ride_to_or_from_the_airport(page
     page.reload()
     pw.expect(modes).to_have_count(n + 3)                                               # the draft keeps them
     assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
+
+
+def test_drafted_entries_keep_edits_take_new_uploads_and_stay_removed(page, viewer, conn, relay):
+    """Appendix A drafted from what was read (Spot Feedback #122/#123): each entry says where it came from, a browser
+    draft keeps what the person changed, picks up uploads read since, and an entry they removed does not come back."""
+    from datetime import timedelta
+    import tzutil as tz
+    import travel, travel_readings as trd
+    ref = mk(viewer, flew='1', taxi_receipt='1')
+    fid = travel.get_by_ref(conn, ref)['id']
+    day = (tz.today_local() - timedelta(days=10)).isoformat()
+    trd.save(conn, fid, 'plane_ticket', 'receipt', {'readable': True, 'kind': 'plane_ticket', 'amount': 4521.5, 'currency': 'PHP',
+                                                    'date': day, 'origin': 'Manila', 'destination': 'Cebu', 'vendor': 'Cebu Pacific'})
+    page.goto(f'http://testserver/travel/f/{ref}/prepare')
+    modes = page.get_by_label('How you travelled', exact=True)
+    pw.expect(modes.first).to_have_value('plane')
+    pw.expect(page.get_by_text('Drafted from your upload', exact=False)).to_have_count(1)
+    fare = page.get_by_label('Actual fare claimed (₱)', exact=True).first
+    pw.expect(fare).to_have_value('4521.5')
+    fare.fill('4000')                                              # the person corrects the amount
+    rows = modes.count()
+    trd.save(conn, fid, 'taxi_receipt', 'receipt', {'readable': True, 'kind': 'taxi_receipt', 'amount': 350.0, 'currency': 'PHP',
+                                                    'date': day, 'origin': 'Airport', 'destination': 'Hotel'})
+    page.reload()
+    pw.expect(page.locator('#draft-status')).to_contain_text('1 entry added from files you uploaded since')
+    pw.expect(modes).to_have_count(rows + 1)
+    pw.expect(page.get_by_label('Actual fare claimed (₱)', exact=True).first).to_have_value('4000')   # the edit survived
+    assert page.get_by_label('Actual fare claimed (₱)', exact=True).evaluate_all('els => els.map(e => e.value)').count('350') == 1
+    page.get_by_role('button', name='Remove this entry', exact=True).last.click()                       # the taxi entry (added last)
+    pw.expect(modes).to_have_count(rows)
+    page.reload()
+    pw.expect(modes).to_have_count(rows)                                                              # it stays removed
+    assert page.get_by_label('Actual fare claimed (₱)', exact=True).evaluate_all('els => els.map(e => e.value)').count('350') == 0
+    assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
