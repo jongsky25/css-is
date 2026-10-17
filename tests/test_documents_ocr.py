@@ -39,6 +39,8 @@ def test_real_scanned_pdf_fields_and_page_evidence(mixed):
     assert result['suggestions']['document_date'] == '2026-10-17'
     assert result['suggestions']['due_date'] == '2026-11-02'
     assert result['evidence']['subject'][0]['page'] == (2 if mixed else 1)
+    assert result['reading']['ocr_pages'] == ([2] if mixed else [1])
+    assert 'Staff orientation' in result['text_preview'][-1]['text']
     assert 'OCR was used on pages ' + ('2' if mixed else '1') in result['warnings'][0]
 
 

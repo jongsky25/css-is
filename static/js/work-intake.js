@@ -27,7 +27,12 @@
   const source = document.getElementById('intake-source');
   const status = document.getElementById('intake-read-status');
   const suggestions = document.getElementById('intake-suggestions');
-  let reading = false;
+  const remove = document.getElementById('intake-remove');
+  let reading = false, generation = 0, controller = null;
+  const idle = () => {
+    reading = false; read.disabled = false; skip.disabled = false;
+    file.disabled = false; source.disabled = false;
+  };
   const clearSuggestions = () => {
     suggestions.replaceChildren(); suggestions.hidden = true;
     for (const field of form.querySelectorAll('[data-pdf-suggested]')) {
@@ -36,9 +41,26 @@
     }
   };
   const skip = document.getElementById('intake-skip');
-  skip.addEventListener('click', () => {
-    file.value = ''; source.value = ''; clearSuggestions(); status.textContent = '';
-    form.elements.subject.focus();
+  const reset = () => {
+    generation++; controller?.abort(); controller = null;
+    file.value = ''; source.value = ''; clearSuggestions(); idle(); remove.hidden = true;
+    status.textContent = 'File and reading cleared. Any form values already entered or applied are kept for review.';
+    form.elements.confirmed.checked = false;
+  };
+  remove.addEventListener('click', reset);
+  skip.addEventListener('click', () => { reset(); form.elements.subject.focus(); });
+  file.addEventListener('change', () => {
+    clearSuggestions(); remove.hidden = !file.files.length && !source.value.trim();
+    const pdf = file.files[0];
+    if (!pdf) { status.textContent = 'No file selected. Reading has not started.'; return; }
+    const size = (pdf.size / (1024 * 1024)).toFixed(1);
+    status.textContent = pdf.size > 6 * 1024 * 1024
+      ? `${pdf.name} is ${size} MiB; the limit is 6 MiB. Not uploaded or read; OCR did not run. Remove it or choose a smaller PDF.`
+      : `${pdf.name} selected (${size} MiB). Reading has not started. Tap Read and pre-fill to read it.`;
+  });
+  source.addEventListener('input', () => {
+    clearSuggestions(); remove.hidden = !file.files.length && !source.value.trim();
+    status.textContent = 'Reading has not started. Tap Read and pre-fill when ready.';
   });
   form.addEventListener('input', () => { form.elements.confirmed.checked = false; });
   form.addEventListener('submit', event => {
@@ -51,17 +73,19 @@
     }
     const pdf = file.files[0];
     if (!pdf && !source.value.trim()) { status.textContent = 'Select a PDF or enter a public PDF link.'; return; }
-    if (pdf && pdf.size > 6 * 1024 * 1024) { status.textContent = 'Choose a PDF no larger than 6 MiB.'; return; }
+    if (pdf && pdf.size > 6 * 1024 * 1024) { status.textContent = 'Not uploaded or read; OCR did not run. The file exceeds 6 MiB. Remove it or choose a smaller PDF.'; remove.hidden = false; return; }
+    const run = ++generation; controller = new AbortController(); remove.hidden = false;
     reading = true; read.disabled = true; skip.disabled = true; file.disabled = true; source.disabled = true;
     clearSuggestions(); form.elements.confirmed.checked = false;
     status.textContent = 'Reading PDF… Scanned pages may take up to 45 seconds for OCR.';
     try {
       const response = await fetch('/documents/intake/read', {
-        method: 'POST', credentials: 'same-origin', cache: 'no-store',
+        method: 'POST', credentials: 'same-origin', cache: 'no-store', signal: controller.signal,
         headers: {'Content-Type': pdf ? 'application/pdf' : 'application/json', 'X-CSRF-Token': form.elements.csrf.value},
         body: pdf || JSON.stringify({url: source.value.trim()})
       });
       const result = await response.json();
+      if (run !== generation) return;
       if (!response.ok) throw new Error(result.error || 'The PDF could not be read. Continue manually.');
       const notice = document.createElement('p'); notice.textContent = result.notice;
       suggestions.append(notice);
@@ -89,13 +113,30 @@
           const quote = document.createElement('blockquote'); quote.textContent = `Page ${item.page}: ${item.text}`; suggestions.append(quote);
         }
       }
+      const preview = document.createElement('details');
+      const summary = document.createElement('summary'); summary.textContent = 'What was read — extracted text';
+      preview.append(summary);
+      for (const item of result.text_preview || []) {
+        const heading = document.createElement('h4'); heading.textContent = `Page ${item.page}`;
+        const text = document.createElement('pre'); text.textContent = item.text || '(No readable text on this page.)';
+        preview.append(heading, text);
+        if (item.truncated) {
+          const note = document.createElement('p'); note.textContent = 'Preview limited to the first 2,000 characters of this page.'; preview.append(note);
+        }
+      }
+      if (result.preview_truncated) {
+        const note = document.createElement('p'); note.textContent = 'Showing the first 10 pages only.'; preview.append(note);
+      }
+      suggestions.append(preview);
+      if (!Object.keys(result.suggestions || {}).length) preview.open = true;
       suggestions.hidden = false;
-      status.textContent = 'Reading finished. Review the suggested values below. The PDF has not been saved.';
+      const ocrPages = result.reading?.ocr_pages || [];
+      const method = ocrPages.length ? `OCR ran on page(s) ${ocrPages.join(', ')}.` : 'Text was read directly; OCR was not needed.';
+      status.textContent = `Reading complete. ${method} ${Object.keys(result.suggestions || {}).length} field suggestion(s) found. Review the suggestions and extracted text below. The PDF has not been saved.`;
     } catch (error) {
-      status.textContent = error.message || 'The PDF could not be read. Continue manually.';
+      if (run === generation) status.textContent = 'Reading did not complete. ' + (error.message || 'Continue manually.');
     } finally {
-      file.value = ''; source.value = ''; reading = false; read.disabled = false;
-      skip.disabled = false; file.disabled = false; source.disabled = false;
+      if (run === generation) { file.value = ''; source.value = ''; controller = null; idle(); }
     }
   });
   update();
