@@ -429,7 +429,7 @@ def test_a_ticket_upload_is_read_and_the_reading_comes_back(viewer, conn, fake, 
     assert seen["images"] == [("image/jpeg", JPEG)] and fake.uploads[0]["data"] == JPEG
     assert row(conn, "plane_ticket")["drive_source"] == "upload"
     cols = " ".join(str(c) for c in conn.execute("SELECT * FROM travel_item").fetchall())
-    assert "4521" not in cols and "Cebu" not in cols                         # the reading is never stored
+    assert "4521" not in cols and "Cebu" not in cols                         # the checklist row holds the link only (the reading sits in travel_reading)
 
 
 def test_other_rows_are_not_read(viewer, conn, fake, on, ai_clean, monkeypatch):

@@ -15,11 +15,11 @@ FEATURE = "travel_scan"
 MAX_BYTES = 6 * 1024 * 1024
 MIME_OK = ("image/jpeg", "image/png", "image/webp", "application/pdf")
 KINDS = ("plane_ticket", "boarding_pass", "bus_boat_ticket", "taxi_receipt", "ridehail_receipt",
-         "terminal_fee", "lodging_bill", "other")
+         "terminal_fee", "lodging_bill", "official_receipt", "other")
 MAX_AMOUNT = Decimal("1000000")
 # Checklist rows whose uploads are tickets or receipts: an upload to one of these is also read for its amount.
 READ_CODES = frozenset({"plane_ticket", "boarding_pass", "boat_bus_ticket", "terminal_fee", "taxi_receipt",
-                        "ridehail_receipt", "lodging_bill", "extra_expense_invoice"})
+                        "ridehail_receipt", "lodging_bill", "extra_expense_invoice", "refund_or"})
 
 SYSTEM = (
     "You read Philippine travel documents for a government travel claim: airline e-tickets, "
@@ -35,7 +35,9 @@ PROMPT = (
     "that currency and name it in currency. date is the travel or receipt date as YYYY-MM-DD. "
     "origin and destination are the places travelled between (leave empty if none). "
     "vendor is the airline, operator or business. reference is the ticket, booking or receipt "
-    "number. note is one short sentence on anything the person should double-check."
+    "number. depart_time and arrive_time are the departure and arrival times as 24-hour HH:MM when the "
+    "document prints them (leave empty if not shown). note is one short sentence on anything the person "
+    "should double-check."
 )
 SCHEMA = {"type": "OBJECT", "properties": {
     "readable": {"type": "BOOLEAN"},
@@ -47,11 +49,14 @@ SCHEMA = {"type": "OBJECT", "properties": {
     "destination": {"type": "STRING"},
     "vendor": {"type": "STRING"},
     "reference": {"type": "STRING"},
+    "depart_time": {"type": "STRING"},
+    "arrive_time": {"type": "STRING"},
     "note": {"type": "STRING"},
 }, "required": ["readable", "kind", "amount", "currency", "date", "origin", "destination",
-                "vendor", "reference", "note"]}
+                "vendor", "reference", "depart_time", "arrive_time", "note"]}
 
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+_TIME = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 
 
 def sniff(raw: bytes) -> str:
@@ -96,7 +101,13 @@ def clean(parsed) -> dict:
     return {"readable": readable, "kind": kind, "amount": float(amount), "currency": cur, "date": day,
             "origin": _text(p.get("origin"), 80), "destination": _text(p.get("destination"), 80),
             "vendor": _text(p.get("vendor"), 80), "reference": _text(p.get("reference"), 40),
+            "depart_time": _hhmm(p.get("depart_time")), "arrive_time": _hhmm(p.get("arrive_time")),
             "note": _text(p.get("note"), 200)}
+
+
+def _hhmm(v) -> str:
+    v = _text(v, 5)
+    return v if _TIME.match(v) else ""
 
 
 async def read(conn, user, ip, raw: bytes, mime: str) -> dict:

@@ -27,6 +27,7 @@ import storage as st
 import travel
 import travel_checklist as tc
 import travel_rules as tr
+import travel_readings
 import travel_scan
 import ai_core
 
@@ -234,6 +235,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
         q = dict(request.query_params)
         today = today_local()
         filing = travel.refresh_deadline(conn, filing)
+        travel.carry_from_ca(conn, filing)
         items = travel.view_items(conn, filing)
         flags = travel.flags_of(conn, filing["id"])
         missing = travel.missing_for(conn, filing)
@@ -244,6 +246,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             "nav_active": "travel_mine", "tab": "mine", "missing": False, "f": _decorate(filing, today),
             "items": items, "flags": flags, "missing_list": missing, "ans": ans, "owner": travel.is_owner(request.state.user, filing),
             "next_action": travel.next_action(filing, items, flags, missing),
+            "draftable": travel.forms_ready_to_draft(items) if filing["status"] in ("open", "ready") else [],
             "questions": [q_ for q_ in tc.ANSWER_KEYS if filing["kind"] in q_[2]], "roles": tc.ROLES,
             "mc114": travel.MC114_FORMATS, "liquidations": liqs, "ca": ca, "editable": filing["status"] in ("open", "ready"),
             "msg": (q.get("ok") or "")[:200] or None, "err": error or (q.get("err") or "")[:200] or None,
@@ -393,6 +396,12 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             except travel.TravelError as e:
                 return _jerr(str(e))
             checks, fill = travel_scan.check(doc, reading, filing) if reading else ([], None)
+            if reading and doc in (travel_scan.DOC_RECEIPT, travel_scan.DOC_APPEARANCE):
+                travel_readings.save(conn, filing["id"], code, doc, reading)
+            if fill and doc == travel_scan.DOC_DPO and fill.get("dpo_date") and not fill.get("dpo_no") and not filing["dpo_date"]:
+                travel.set_dpo_date(conn, filing, fill["dpo_date"])          # the number matches and the date was empty: no button needed
+                checks = checks + [f"The DPO date ({fill['dpo_date']}) was added to this filing from your DPO."]
+                fill = None
             audit(request, conn, "travel_upload", target_type="travel_filing", target_id=ref,
                   summary=f"stored a file for {code}")
             return JSONResponse({"ok": True, "name": res.data.get("name", ""), "count": res.data.get("count"),
@@ -475,8 +484,11 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
 
     SIG_SETTINGS = ("head_name", "head_title", "certifier_name", "certifier_title", "station")
 
-    def _sig_settings(conn):
-        return {k: st.get_setting(conn, f"travel.sig.{k}", "") for k in SIG_SETTINGS}
+    def _sig_settings(conn, user_id=None):
+        """The signatory names the forms start with: the Travel filing settings, with the Director and the filer's
+        division head filled in from the directory where the settings leave them blank (see travel.directory_signers)."""
+        base = {k: st.get_setting(conn, f"travel.sig.{k}", "") for k in SIG_SETTINGS}
+        return travel.directory_signers(conn, user_id, base) if user_id else base
 
     def _generate_items(conn, filing):
         return [it for it in travel.view_items(conn, filing) if it["handling"] == "generate" and it["state"] != "na"]
@@ -494,7 +506,8 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             if filing["status"] not in ("open", "ready"):
                 return _go(f"/travel/f/{ref}", err="This filing can no longer be changed.")
             profile = st.get_user_profile(conn, request.state.user["id"]) or {}
-            data = travel_docs.defaults(conn, filing, profile, _sig_settings(conn))
+            data = travel_docs.defaults(conn, filing, profile, _sig_settings(conn, request.state.user["id"]),
+                                        readings=travel_readings.for_filing(conn, filing["id"]))
             data["ceilings"] = [[m, rt, a] for (m, rt), a in sorted(travel.ceilings(conn).items())]
             data["routes"] = [[r[0], r[1]] for r in conn.execute("SELECT code, label FROM travel_route_type WHERE active=1 ORDER BY sort, code")]
             data["policy"] = {
@@ -597,7 +610,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
                 return _jerr("There is nothing to make for this filing.")
             profile = st.get_user_profile(conn, user["id"]) or {}
             payloads = travel_docs.build_payloads(
-                filing["kind"], filing, profile, _sig_settings(conn), body, codes, ceilings=ceilings,
+                filing["kind"], filing, profile, _sig_settings(conn, user["id"]), body, codes, ceilings=ceilings,
                 items=travel.view_items(conn, filing), today=today_local())
             made = {pl.item_code for pl in payloads}
             if not made:

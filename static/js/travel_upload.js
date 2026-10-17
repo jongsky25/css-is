@@ -1,7 +1,7 @@
 // Travel checklist: upload files for a row. Each file is shrunk on the device when it is a big photo, sent to
 // the server, and the server puts it in the office Drive. The page only ever shows the folder link.
-// A ticket or receipt also comes back with the amount the AI read off it. That reading is kept only in this
-// browser's session (never on the server) and offered on the prepare page, where the person confirms it.
+// A ticket or receipt also comes back with the amount the AI read off it. The server keeps that small reading (never
+// the file) and drafts the Appendix A entries from it on the prepare page, where the person checks each one.
 (function () {
   'use strict';
   var MAX = 6 * 1024 * 1024, EDGE = 2000;
@@ -67,20 +67,13 @@
     out.appendChild(document.createTextNode(' ')); out.appendChild(b);
   }
 
-  function remember(box, j) {                     // keep a peso reading for the prepare page; returns a sentence or ''
+  function remember(box, j) {                     // what the AI found, as a sentence ('' when nothing). The server keeps the reading.
     if (j && (j.doc === 'dpo' || j.doc === 'appearance')) return checked(box, j);
     var r = j && j.doc === 'receipt' ? j.reading : null;
     if (!r || !r.readable) return '';
     var what = [r.vendor, r.date].filter(Boolean).join(' \u00b7 ');
-    if (r.currency !== 'PHP') return 'It shows ' + r.amount + ' ' + r.currency + ', not pesos, so it was not kept.';
-    var key = 'tv-reads:' + box.dataset.ref, list = [];
-    try { list = JSON.parse(store('get', key) || '[]'); } catch (e) { list = []; }
-    var item = { code: box.dataset.code, label: box.dataset.label, amount: r.amount, date: r.date, origin: r.origin,
-                 destination: r.destination, vendor: r.vendor, kind: r.kind };
-    var same = list.some(function (x) { return x.code === item.code && x.amount === item.amount && x.date === item.date && x.vendor === item.vendor; });
-    if (!same) list.push(item);
-    store('set', key, JSON.stringify(list.slice(-30)));
-    return 'Found ' + peso(r.amount) + (what ? ' (' + what + ')' : '') + '. Check it, then use it on the Prepare page.';
+    if (r.currency !== 'PHP') return 'It shows ' + r.amount + ' ' + r.currency + ', not pesos, so it was not used.';
+    return 'Found ' + peso(r.amount) + (what ? ' (' + what + ')' : '') + '. It will be drafted into your forms; check it there.';
   }
 
   document.querySelectorAll('.tv-upload').forEach(function (box) {

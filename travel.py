@@ -451,6 +451,7 @@ def purge_filings(conn, months=None, today=None, dry_run=False, relay=None):
     conn.execute(f"UPDATE travel_item SET drive_url=NULL, drive_file_id=NULL, drive_source=NULL, doc_url=NULL, fmis_ref=NULL, note=NULL, "
                  f"updated_at=? WHERE filing_id IN ({qs})", (now, *ids))
     conn.execute(f"UPDATE travel_flag SET detail=NULL, note=NULL WHERE filing_id IN ({qs})", ids)
+    conn.execute(f"DELETE FROM travel_reading WHERE filing_id IN ({qs})", ids)
     conn.execute(f"UPDATE travel_filing SET answers_json='{{}}', purged_at=?, updated_at=? WHERE id IN ({qs})", (now, now, *ids))
     conn.commit()
     st.audit(conn, "system", "travel_purge", target_type="travel_filing", target_id=ids[0],
@@ -518,6 +519,46 @@ def decide_flag(conn, flag, decided_by, outcome, note="", supervisor_confirmed=F
     return get_flag(conn, flag["id"])
 
 
+def set_dpo_date(conn, filing, iso_date):
+    """Put a DPO date on a filing that has none (read off the uploaded DPO). A date already there is never replaced."""
+    d = _iso_or_none(iso_date)
+    if not d:
+        return
+    conn.execute("UPDATE travel_filing SET dpo_date=?, updated_at=? WHERE id=? AND dpo_date IS NULL",
+                 (d, tz.now_iso(), filing["id"]))
+    conn.commit()
+
+
+def _division_path(conn, org_path):
+    """The org path of the division a unit sits in: the unit itself when it is a division, its parent when it is a
+    section, None for a bureau-level or unknown unit."""
+    row = conn.execute("SELECT level FROM org_unit WHERE path=?", (org_path or "",)).fetchone()
+    if not row:
+        return None
+    if row[0] == "division":
+        return org_path
+    return org_path.rsplit("/", 1)[0] if row[0] == "section" and "/" in org_path else None
+
+
+def directory_signers(conn, user_id, settings) -> dict:
+    """The head of office and certifying officer for a filer, so they need not be typed on every filing.
+    Head of office: the names set under Travel filing settings if given (an acting head, say), otherwise the
+    Director in the directory. Certifying officer: the head of the filer's own division in the directory
+    (never the filer), falling back to the names set under Travel filing settings. `settings` is the
+    travel.sig.* dict; the result has the same keys with blanks filled where the directory knows."""
+    out = dict(settings)
+    if not (settings.get("head_name") or "").strip():
+        director = st.org_seat_holder(conn, 3)
+        if director:
+            out["head_name"], out["head_title"] = director[0], director[1] or "Director"
+    profile = st.get_user_profile(conn, user_id) or {}
+    division = _division_path(conn, profile.get("org_path"))
+    chief = st.org_seat_holder(conn, 2, org_path=division, exclude_rp_id=profile.get("rp_id")) if division else None
+    if chief:
+        out["certifier_name"], out["certifier_title"] = chief[0], chief[1] or "Division Chief"
+    return out
+
+
 def missing_for(conn, filing):
     return tr.completeness(filing, view_items(conn, filing), flags_of(conn, filing["id"]))
 
@@ -543,6 +584,20 @@ def next_action(filing, items, flags, missing):
     if any(fl["state"] in ("open", "rejected") for fl in flags):
         return {"url": "#travel-flags", "label": "Review items with the Admin Unit"}
     return {"url": "#travel-answers", "label": "Complete claim details"}
+
+
+def forms_ready_to_draft(items) -> list:
+    """Labels of the Appendix A / B forms that can now be drafted: every document the person has to upload or carry
+    over is in (or marked not applicable) and the appendix itself has not been made. [] while anything is still to
+    upload, or when there is nothing left to make."""
+    def waiting(it):
+        if it["requirement"] != "required" or it["state"] == "na" or it["handling"] not in ("upload", "carry"):
+            return False
+        return not it.get("drive_url") and not (it["handling"] == "carry" and it.get("note"))
+    if any(waiting(it) for it in items):
+        return []
+    return [it["label"] for it in items if it["code"] in ("appendix_a", "appendix_b")
+            and it["requirement"] == "required" and it["state"] != "na" and not it.get("doc_url")]
 
 
 def effective_answers(filing) -> dict:
@@ -726,7 +781,32 @@ def create_filing(conn, user, *, kind, source, answers, mc114_format="none", rol
     filing = get_filing(conn, fid)
     sync_items(conn, filing)
     conn.commit()
+    carry_from_ca(conn, get_filing(conn, fid))
     return get_filing(conn, fid)
+
+
+def carry_from_ca(conn, filing) -> bool:
+    """A liquidation's "Appendix A of the cash advance" row is the form already made for that cash advance, so take its
+    link instead of asking for it again. Only an untouched row is filled: one the person added, marked not applicable
+    or removed is left as they set it. True when the row was filled."""
+    if filing["kind"] != "liquidation" or not filing["ca_filing_id"] or filing["status"] not in ("open", "ready"):
+        return False
+    sync_items(conn, filing)
+    row = conn.execute("SELECT state, drive_source FROM travel_item WHERE filing_id=? AND item_code='prev_appendix_a'",
+                       (filing["id"],)).fetchone()
+    if not row or row[0] != "missing" or row[1] is not None:
+        return False
+    ca = conn.execute("SELECT f.ref_code, i.doc_url FROM travel_filing f JOIN travel_item i ON i.filing_id=f.id "
+                      "WHERE f.id=? AND i.item_code='appendix_a' AND i.doc_url IS NOT NULL", (filing["ca_filing_id"],)).fetchone()
+    link = valid_drive_link(ca[1]) if ca else ""
+    if not link:
+        return False
+    now = tz.now_iso()
+    conn.execute("UPDATE travel_item SET drive_url=?, drive_file_id=NULL, drive_source='carried', state='present', "
+                 "note=COALESCE(NULLIF(note,''), ?), updated_at=? WHERE filing_id=? AND item_code='prev_appendix_a'",
+                 (link, f"Taken from cash advance {ca[0]}.", now, filing["id"]))
+    conn.commit()
+    return True
 
 
 def _touch_open(conn, filing, now):
@@ -807,7 +887,8 @@ def save_item(conn, filing, code, *, drive_url=None, na=None, fmis_ref=None, not
                 sets.update(drive_url=link, drive_file_id=None, drive_source="link", state="present")
         else:
             sets.update(doc_url=None, doc_state=None, state="missing") if manual else \
-                sets.update(drive_url=None, drive_file_id=None, drive_source=None, state="missing")
+                sets.update(drive_url=None, drive_file_id=None, state="missing",
+                            drive_source="removed" if spec.handling == "carry" else None)   # a removed carry row is not filled in again
     if na is not None:
         if spec.handling not in ("upload", "carry"):
             raise TravelError("Only uploaded documents can be marked as not applicable.")
@@ -827,6 +908,8 @@ def save_item(conn, filing, code, *, drive_url=None, na=None, fmis_ref=None, not
     if not sets:
         return
     sets["updated_at"] = tz.now_iso()
+    if drive_url is not None or na:                    # the files the readings came from are gone or not needed
+        conn.execute("DELETE FROM travel_reading WHERE filing_id=? AND item_code=?", (filing["id"], code))
     conn.execute("UPDATE travel_item SET %s WHERE filing_id=? AND item_code=?" % ", ".join(f"{k}=?" for k in sets),
                  (*sets.values(), filing["id"], code))
     _touch_open(conn, filing, sets["updated_at"])
@@ -866,6 +949,7 @@ def clear_upload(conn, filing, code):
     now = tz.now_iso()
     conn.execute("UPDATE travel_item SET drive_url=NULL, drive_file_id=NULL, drive_source=NULL, state='missing', "
                  "updated_at=? WHERE filing_id=? AND item_code=? AND drive_source='upload'", (now, filing["id"], code))
+    conn.execute("DELETE FROM travel_reading WHERE filing_id=? AND item_code=?", (filing["id"], code))
     _touch_open(conn, filing, now)
     _stamp(conn, filing["id"], now)
     conn.commit()

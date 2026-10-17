@@ -17,10 +17,22 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.95"
+APP_VERSION = "6.96"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.96",
+        "date": "October 17, 2026",
+        "summary": "Appendix A and B are drafted from your uploads, and the signers fill themselves in.",
+        "changes": [
+            "Tickets, boarding passes and receipts you upload are read once, and the itinerary entries are drafted for you to check.",
+            "The Certificate of Travel Completed suggests how the travel went from your Certificate of Appearance, and fills the refund receipt details.",
+            "The Director and your division head are filled in as the signers, so you no longer type them each time.",
+            "When all your attachments are in, the filing page offers to review and make Appendix A and B.",
+            "A liquidation now picks up the Appendix A already made for its cash advance, and your DPO date is read from the uploaded DPO.",
+        ],
+    },
     {
         "version": "6.95",
         "date": "October 17, 2026",

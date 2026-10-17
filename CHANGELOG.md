@@ -1,3 +1,11 @@
+## 6.96 — October 17, 2026
+
+- Keep the small reading taken from each uploaded ticket, receipt, Certificate of Appearance and refund receipt, and draft Appendix A entries and Appendix B answers from it, each showing where it came from (Spot Feedback #122, #123).
+- Fill the head of office (the Director) and the certifying officer (the filer's division head) from the directory (Spot Feedback #125).
+- Offer "Review and make the forms" once every required attachment is in.
+- Carry the cash advance's Appendix A into a liquidation, and add the DPO date from the uploaded DPO.
+- Read departure and arrival times and the refund receipt off uploads.
+
 ## 6.95 — October 17, 2026
 
 - Add "Add another ride on this day" to every itinerary entry, and "Add TNVS to / from the airport" to plane entries (Spot Feedback #120, #124).
