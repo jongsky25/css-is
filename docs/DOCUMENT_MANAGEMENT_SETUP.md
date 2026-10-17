@@ -263,7 +263,7 @@ D12 launch rehearsal have not been performed.
 
 ### Transient PDF intake
 
-The first step of **Receive or prepare correspondence** accepts a local text PDF
+The first step of **Receive or prepare correspondence** accepts a local text or scanned PDF
 or a public HTTPS PDF link. **Read and pre-fill** fills empty fields and offers
 replacements for existing entries. Review every suggestion and its page evidence
 before registering. A source link used for reading is separate from the optional
@@ -280,8 +280,20 @@ any separately entered attachment reference.
 Limits: 6 MiB, 50 pages, and 100,000 extracted characters. Extraction is conservative:
 it recognizes labelled subjects, senders, document types, document dates,
 deadlines, and references; conflicting or ambiguous values remain for manual
-entry. Scanned, encrypted, malformed, and textless PDFs require manual entry.
-OCR is not included in this phase. Private Drive links should be downloaded by
+entry. Sparse-text pages use local English OCR, including in mixed text/scan PDFs.
+OCR processes at most 10 pages per request at up to 200 dpi (12 million pixels per
+page), with a 45-second overall processing budget and a 15-second Tesseract timeout
+per page. PDFium rendering is serialized because the library is not thread safe;
+concurrent OCR requests receive a retry message. Page images are rendered to memory
+and piped into Tesseract through stdin; recognized text returns through stdout.
+No temporary PDF/image files or Drive OCR artifacts are created. OCR-derived
+suggestions retain page evidence and show a review warning for names, numbers,
+and dates. Encrypted, malformed, or unreadable PDFs still require manual entry.
+
+The Docker image installs `tesseract-ocr` and `tesseract-ocr-eng`; Python dependencies
+include `pypdfium2`. Local installations also need Tesseract with English language
+data on PATH. There is no external OCR service or credential requirement.
+Private Drive links should be downloaded by
 the user and selected locally; no account cookies or credentials are forwarded.
 
 Link reads require public HTTPS on port 443. DNS addresses and every redirect are

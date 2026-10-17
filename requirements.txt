@@ -3,6 +3,7 @@
 fastapi
 uvicorn[standard]
 pypdf>=6.1,<7  # in-memory PDF intake
+pypdfium2>=4.30,<6  # memory-only scanned PDF rendering
 python-multipart
 jinja2
 qrcode[pil]

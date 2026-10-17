@@ -3,7 +3,7 @@
 <p>Choose what the correspondence is for, check its details, then register it. Permanent incoming/outgoing numbers are assigned only when registration succeeds. You can enter everything manually without a scan.</p>
 {% if enabled %}<form method="post" action="/documents/new" class="doc-card" id="intake-form" data-ux-ignore data-telemetry-ignore><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="intake" value="guided">
 <h3>1. Read a document (optional)</h3>
-<p>Select a text PDF up to 6 MiB and 50 pages, or paste a public HTTPS PDF link. The file is read in memory and is not saved. Private links and scanned PDFs require manual entry.</p>
+<p>Select a PDF up to 6 MiB and 50 pages, or paste a public HTTPS PDF link. Scanned pages are read with OCR (up to 10 pages per file). The file is read temporarily and is not saved. For private links, select the file from your device.</p>
 <label>PDF file<input type="file" id="intake-pdf" accept="application/pdf,.pdf"></label>
 <label>PDF link<input type="url" id="intake-source" autocomplete="off"></label>
 <button type="button" id="intake-read">Read and pre-fill</button>

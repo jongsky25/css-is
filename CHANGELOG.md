@@ -1,3 +1,10 @@
+## 6.81 — October 17, 2026
+
+- Read scanned PDF pages with local OCR through memory-only rendering and pipes.
+- Keep source files, page images, and extracted contents out of persistent storage.
+- Show OCR review warnings with existing page evidence and preserve typed entries.
+- Include the OCR engine in deployment and bound page count, image size, and OCR execution time.
+
 ## 6.80 — October 17, 2026
 
 - Make PDF upload the first correspondence field, with an optional public PDF link.

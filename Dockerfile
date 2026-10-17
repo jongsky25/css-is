@@ -12,6 +12,10 @@ ENV HOME=/home/user \
 
 WORKDIR $HOME/app
 
+# Local OCR reads rendered pages through pipes without saving source files.
+RUN apt-get update && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-eng && \
+    rm -rf /var/lib/apt/lists/*
+
 # Install dependencies first (lets Docker cache this layer)
 COPY --chown=user requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
