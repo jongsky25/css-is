@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.86"
+APP_VERSION = "6.87"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.87",
+        "date": "October 17, 2026",
+        "summary": "Improve mobile PDF page reading and connection failure feedback.",
+        "changes": [
+            "Send temporary PDF reading requests directly without service worker forwarding.",
+            "Keep selected files and completed pages when a connection fails, with clear retry guidance.",
+        ],
+    },
     {
         "version": "6.86",
         "date": "October 17, 2026",

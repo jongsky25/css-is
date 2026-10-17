@@ -39,6 +39,8 @@ with tempfile.TemporaryDirectory(prefix='pdf-page-browser-') as directory:
         return await call_next(request)
     app.include_router(documents_routes.make_router(Jinja2Templates(directory=str(ROOT/'templates')), lambda:st.connect(database)))
     app.mount('/static', StaticFiles(directory=str(ROOT/'static')), name='static')
+    @app.get('/sw.js')
+    def worker(): return Response((ROOT/'static/js/sw.js').read_text(), media_type='application/javascript')
     @app.get('/fixture')
     def form(request:Request):
         env=Environment(loader=FileSystemLoader(str(ROOT/'templates')),autoescape=True)

@@ -121,6 +121,9 @@ if (form) {
     const controller = new AbortController(); active = controller;
     const timer = setTimeout(() => controller.abort(), 30000);
     try {
+      // Byte bodies also avoid Blob forwarding problems with an older controlling worker.
+      if (body instanceof Blob) body = await body.arrayBuffer();
+      if (run !== generation) throw new Error('Cancelled');
       const response = await fetch(path, {method:'POST', credentials:'same-origin', cache:'no-store', signal:controller.signal,
         headers:{'Content-Type':type,'X-CSRF-Token':form.elements.csrf.value}, body});
       if (run !== generation) throw new Error('Cancelled');
@@ -131,6 +134,7 @@ if (form) {
       return data;
     } catch (error) {
       if (error.name === 'AbortError') throw new Error('Page request timed out or was cancelled. Retry it.');
+      if (error instanceof TypeError) throw new Error('Connection interrupted while reading this page. Keep this tab open, check your connection, then retry failed pages. Your selected file and completed readings are kept.');
       throw error;
     } finally { clearTimeout(timer); if (active === controller) active = null; }
   }
@@ -196,7 +200,7 @@ if (form) {
         } finally { page?.cleanup(); if (run === generation) list(); }
       }
       if (run === generation) {
-        progress.textContent = `${results.size} page(s) completed; ${failed.size} failed. Other pages remain unprocessed. Read more pages, retry failures, or review completed pages.`;
+        progress.textContent = `${results.size ? '' : 'No text was read; no fields were pre-filled. '}${results.size} page(s) completed; ${failed.size} failed. Other pages remain unprocessed. Read more pages, retry failures, or review completed pages.`;
         await aggregate(run);
       }
     } catch (error) {
