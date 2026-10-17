@@ -2,6 +2,7 @@
 # Install:  pip install -r requirements.txt
 fastapi
 uvicorn[standard]
+pypdf>=6.1,<7  # in-memory PDF intake
 python-multipart
 jinja2
 qrcode[pil]

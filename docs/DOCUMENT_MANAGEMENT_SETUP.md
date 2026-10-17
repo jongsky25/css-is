@@ -260,3 +260,37 @@ rule page rendering; no horizontal overflow at 390px; desktop register at 1280px
 `qa_preflight.py` is green. Full-suite baseline and final counts are recorded in the implementation PR.
 Live external-service acceptance, production-directory inspection, file-format visual validation and
 D12 launch rehearsal have not been performed.
+
+### Transient PDF intake
+
+The first step of **Receive or prepare correspondence** accepts a local text PDF
+or a public HTTPS PDF link. **Read and pre-fill** fills empty fields and offers
+replacements for existing entries. Review every suggestion and its page evidence
+before registering. A source link used for reading is separate from the optional
+Drive reference link that is saved on registration.
+
+The `/documents/intake/read` endpoint accepts raw `application/pdf` bytes or JSON
+`{"url":"https://…"}`, with the existing session and an `X-CSRF-Token` header.
+Raw uploads avoid multipart temporary-file spooling. Files, extracted text, and
+suggestions stay in memory; responses use `Cache-Control: no-store`. The reader
+does not call the Drive OCR relay or an AI provider and does not write database
+records. Existing registration still saves only the confirmed form fields and
+any separately entered attachment reference.
+
+Limits: 6 MiB, 50 pages, and 100,000 extracted characters. Extraction is conservative:
+it recognizes labelled subjects, senders, document types, document dates,
+deadlines, and references; conflicting or ambiguous values remain for manual
+entry. Scanned, encrypted, malformed, and textless PDFs require manual entry.
+OCR is not included in this phase. Private Drive links should be downloaded by
+the user and selected locally; no account cookies or credentials are forwarded.
+
+Link reads require public HTTPS on port 443. DNS addresses and every redirect are
+validated, and TLS connections are pinned to a validated IP while retaining
+hostname certificate checks. Downloads are size bounded with network timeouts.
+This downloader requires direct HTTPS egress; it deliberately does not inherit
+credential-bearing proxy configuration. If deployment egress is proxy-only,
+local PDF selection remains available.
+
+The older `/documents/intake/preview` relay endpoint remains for compatibility;
+it is not used by this first-step reader. Existing registered-document extraction
+and signing workflows retain their existing storage behavior.
