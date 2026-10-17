@@ -49,6 +49,21 @@ const root=path.resolve(__dirname,'../..');
    assert.equal(await page.locator('[name=subject]').inputValue(),'Manually corrected subject');
    assert(await page.locator('#intake-register').isHidden());
   }
+  const reconcile = async texts => page.evaluate(async texts => {
+   const form=document.getElementById('intake-form');
+   const response=await fetch('/documents/intake/pages-result',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':form.elements.csrf.value},body:JSON.stringify({pages:texts.map((text,i)=>({page:i+1,text,ocr:true}))})});
+   if(!response.ok) throw Error('Aggregate failed');
+   form.dispatchEvent(new CustomEvent('intake-reading-result',{detail:await response.json()}));
+  },texts);
+  await page.locator('[name=subject]').fill('');
+  await reconcile(['Subject: Submission of comments on the updated service guidelines','Subject: SUBMISSION OF COMMENTS ON THE UPDATED']);
+  assert.equal(await page.locator('[name=subject]').inputValue(),'Submission of comments on the updated service guidelines');
+  await reconcile(['Subject: Approve the proposal','Subject: Reject the proposal']);
+  assert.equal(await page.locator('[name=subject]').inputValue(),'');
+  assert((await page.locator('[name=subject]').locator('..').innerText()).includes('Page 2: Reject the proposal'));
+  await page.locator('[name=subject]').fill('Reviewed subject');
+  await reconcile(['Subject: Approve the proposal','Subject: Reject the proposal']);
+  assert.equal(await page.locator('[name=subject]').inputValue(),'Reviewed subject');
   assert.deepEqual(errors,[]);
   console.log('Automatic reading, visible dates, inline fields, approval invalidation and preserved edits passed.');
  }finally{await browser?.close();server.kill('SIGTERM');}

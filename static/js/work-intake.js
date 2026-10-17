@@ -131,6 +131,16 @@
       }
       for (const name of allowed) {
         const field = form.elements[name];
+        const conflicts = result.conflicts?.[name];
+        if (Array.isArray(conflicts) && conflicts.length) {
+          const note = document.createElement('div'); note.className = 'pdf-field-note';
+          const heading = document.createElement('strong'); heading.textContent = 'Different readings found. Edit this field after checking the source:'; note.append(heading);
+          for (const item of conflicts) {
+            const candidate = document.createElement('p'); candidate.textContent = `Page ${item.page}: ${item.value}`; note.append(candidate);
+          }
+          field.closest('label').append(note);
+          continue;
+        }
         if (field.value.trim()) continue;
         const note = document.createElement('small'); note.className = 'pdf-field-note';
         note.textContent = name === 'due_date' ? 'No reliable deadline captured. Check the source; leave blank if none is stated.' : 'Not identified reliably. Check the source and enter this detail.';

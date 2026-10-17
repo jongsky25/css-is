@@ -94,3 +94,28 @@ def test_first_page_link_scope():
     result = reader.read_pdf(out.getvalue(), first_page=True)
     assert result['reading']['page_count'] == 1
     assert result['suggestions']['subject'].startswith('First')
+
+
+def test_repeated_subject_case_punctuation_and_excerpt():
+    complete = 'Submission of comments on the updated service guidelines'
+    for duplicate in [complete.upper() + '.', 'Submission of comments on the updated']:
+        result = reader.suggest([slip(), 'Subject: ' + duplicate])
+        assert result['suggestions']['subject'] == complete
+        assert [e['page'] for e in result['evidence']['subject']] == [1, 2]
+        assert 'subject' not in result['conflicts']
+
+
+def test_wrapped_title_and_subject_title():
+    for label in ['Title', 'Subject/Title', 'SUBJECT']:
+        result = reader.suggest([label + ': Submission of comments on the\nupdated service guidelines\n\nThis is the body.'])
+        assert result['suggestions']['subject'] == 'Submission of comments on the updated service guidelines'
+
+
+def test_real_subject_conflict_is_explained_and_pages_remapped():
+    from documents_page_reader import summarize
+    result = summarize({'pages': [
+        {'page': 5, 'text': 'Subject: Approve the proposal', 'ocr': True},
+        {'page': 9, 'text': 'Subject: Reject the proposal', 'ocr': True}]})
+    assert 'subject' not in result['suggestions']
+    assert [c['page'] for c in result['conflicts']['subject']] == [5, 9]
+    assert result['conflicts']['subject'][0]['value'] == 'Approve the proposal'
