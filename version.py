@@ -17,10 +17,16 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.91"
+APP_VERSION = "6.92"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.92",
+        "date": "October 17, 2026",
+        "summary": "Automatically mark BLHSD correspondence as outgoing.",
+        "changes": ["Set direction to Outgoing when the originating office is Bureau of Local Health Systems Development or BLHSD, while keeping your manual choice."],
+    },
     {
         "version": "6.91",
         "date": "October 17, 2026",

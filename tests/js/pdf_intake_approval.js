@@ -37,6 +37,18 @@ const root=path.resolve(__dirname,'../..');
    await page.locator('[name=subject]').fill('Synthetic correspondence');
    await page.locator('[name=type]').fill('Memorandum');
   }
+  await page.locator('[name=sender]').fill('');
+  await page.evaluate(() => document.getElementById('intake-form').dispatchEvent(new CustomEvent('intake-reading-result', {detail:{suggestions:{sender:'Bureau of Local Health Systems Development'},text_preview:[],warnings:[],notice:'Read complete.'}})));
+  assert.equal(await page.locator('[name=direction]').inputValue(),'OUT');
+  await page.locator('[name=sender]').fill('Bureau of Local Health Systems Development');
+  assert.equal(await page.locator('[name=direction]').inputValue(),'OUT');
+  await page.locator('[name=sender]').fill('External office');
+  assert.equal(await page.locator('[name=direction]').inputValue(),'IN');
+  await page.locator('[name=sender]').fill('BLHSD - Health Systems Development Division (HSDD)');
+  assert.equal(await page.locator('[name=direction]').inputValue(),'OUT');
+  await page.locator('[name=direction]').selectOption('IN');
+  await page.locator('[name=sender]').fill('bureau of local health systems development');
+  assert.equal(await page.locator('[name=direction]').inputValue(),'IN');
   assert.equal(await page.getByRole('button',{name:'Use this suggestion',exact:true}).count(),0);
   await page.locator('#intake-approve').click();
   assert(await page.locator('#intake-work').isVisible());
