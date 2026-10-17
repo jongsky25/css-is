@@ -20,7 +20,7 @@ const root = path.resolve(__dirname, '../..');
   await context.addCookies([{name:'css_session',value:'synthetic',url:base}]);
   const page=await context.newPage();
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  let pageUploads=0, originals=0, failNext=false, delayNext=false;
+  let pageUploads=0, originals=0, failNext=false, networkFail=false, delayNext=false;
   page.on('request',r=>{
    if(r.method()==='POST') {
     if(r.url().endsWith('/intake/read')) originals++;
@@ -32,17 +32,30 @@ const root = path.resolve(__dirname, '../..');
    }
   });
   await page.route('**/documents/intake/page',async route=>{
+   if(networkFail){networkFail=false;return route.abort('failed');}
    if(failNext){failNext=false;return route.fulfill({status:503,json:{error:'Synthetic retryable failure'}});}
    if(delayNext){delayNext=false;await new Promise(r=>setTimeout(r,1200));return route.fulfill({json:{text:'Subject: Late result must be ignored'}}).catch(()=>{});}
    await route.continue();
   });
   await page.goto(base+'/fixture');
+  await page.evaluate(async()=>{
+   await navigator.serviceWorker.register('/sw.js');
+   await navigator.serviceWorker.ready;
+   if(!navigator.serviceWorker.controller) await new Promise(resolve=>navigator.serviceWorker.addEventListener('controllerchange',resolve,{once:true}));
+  });
+  assert(await page.evaluate(()=>!!navigator.serviceWorker.controller));
   await page.locator('#intake-pdf').setInputFiles({name:'large-scanned.pdf',mimeType:'application/pdf',buffer:pdf});
   await page.locator('#pdf-open').click();
   await page.waitForFunction(()=>document.getElementById('pdf-progress').textContent.includes('Preview ready'),{},{timeout:30000});
   assert((await page.locator('#pdf-info').innerText()).includes('3 pages'));
   assert.equal(originals,0);
   await page.locator('#pdf-selection').fill('2');
+  networkFail=true;
+  await page.locator('#pdf-read-pages').click();
+  await page.waitForFunction(()=>document.getElementById('pdf-results').textContent.includes('Connection interrupted'));
+  await page.waitForFunction(()=>!document.getElementById('pdf-read-pages').disabled);
+  assert((await page.locator('#pdf-progress').innerText()).includes('No text was read; no fields were pre-filled'));
+  assert.equal(await page.locator('#intake-pdf').evaluate(e=>e.files.length),1);
   failNext=true;
   await page.locator('#pdf-read-pages').click();
   await page.waitForFunction(()=>document.getElementById('pdf-results').textContent.includes('Synthetic retryable failure'));

@@ -1,3 +1,9 @@
+## 6.87 — October 17, 2026
+
+- Bypass service-worker forwarding for temporary PDF and page reading requests.
+- Send OCR image bytes instead of Blob request bodies for mobile compatibility.
+- Explain connection failures and explicitly report when no fields were pre-filled.
+
 ## 6.86 — October 17, 2026
 
 - Add local PDF preview and explicit page selection using locally hosted PDF.js.

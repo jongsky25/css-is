@@ -8,7 +8,7 @@
  * whose name differs, so an old app-shell is purged the moment the new SW takes
  * over. Keep this in lockstep with version.py / the ?v= asset tokens.
  */
-const CACHE_VERSION = "v2.20-a";
+const CACHE_VERSION = "v6.87-a";
 const CACHE_NAME = "css-is-" + CACHE_VERSION;
 
 /* ── Edge-retry shield ─────────────────────────────────────────────────────────
@@ -114,6 +114,11 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;  // cross-origin: leave alone
+
+  // Transient document reading owns its timeout/cancellation in the page.
+  // Leave these bodies untouched, especially Blob/image uploads on WebKit.
+  // Never cache, queue, clone or replay document contents here.
+  if (req.method === "POST" && ["/documents/intake/read", "/documents/intake/page", "/documents/intake/pages-result"].includes(url.pathname)) return;
 
   // Writes pass through to the network, but behind the edge-retry shield: a
   // 5xx without the app's marker header is re-sent (it provably never reached
