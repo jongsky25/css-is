@@ -7076,9 +7076,10 @@ def _org_seat_name(conn, rank, org_path=None, exclude_uid=None):
     return " / ".join(names) if names else None
 
 
-def org_seat_holder(conn, rank, org_path=None, exclude_rp_id=None):
+def org_seat_holder(conn, rank, org_path=None, exclude_rp_id=None, title_from="designation"):
     """(name, designation) of the first internal person filling `rank` in the given unit (anywhere when
-    org_path is None), or None. The directory person is named even without an app account."""
+    org_path is None), or None. The directory person is named even without an app account.
+    The title is the designation unless `title_from="position"` (then the position, e.g. Medical Officer V)."""
     sql = ("SELECT rp.name, rp.designation, rp.position FROM resource_person rp "
            "LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id "
            "WHERE rp.is_internal = 1 AND rp.archived_at IS NULL")
@@ -7091,7 +7092,7 @@ def org_seat_holder(conn, rank, org_path=None, exclude_rp_id=None):
         params.append(exclude_rp_id)
     for name, desig, pos in conn.execute(sql + " ORDER BY rp.name", params).fetchall():
         if name and _org_rank(desig, pos) == rank:
-            return name, (desig or pos or "")
+            return name, ((pos or desig or "") if title_from == "position" else (desig or pos or ""))
     return None
 
 

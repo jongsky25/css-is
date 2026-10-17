@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.99"
+APP_VERSION = "7.00"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.00",
+        "date": "October 17, 2026",
+        "summary": "Travel forms now show the certifying officer's own title.",
+        "changes": [
+            "The certifying officer on the travel forms is shown with their plantilla title (for example Medical Officer V) instead of \"Division Chief\".",
+            "The Director, including an OIC-Director, and the filer's division head are still picked from the directory.",
+        ],
+    },
     {
         "version": "6.99",
         "date": "October 17, 2026",

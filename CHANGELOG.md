@@ -1,3 +1,7 @@
+## 7.00 — October 17, 2026
+
+- The certifying officer on the travel forms now shows the division head's position in the directory (for example Medical Officer V) rather than the designation "Division Chief". The head of office is still the Director seat in the directory, which includes an OIC-Director; the filer's division head still comes from the filer's own division.
+
 ## 6.99 — October 17, 2026
 
 - Use the official ARTA wording for rating statements SQD6, SQD7 and SQD8 (adds "(if asked for help)" and "(if denied) … explained to me"); the online form, paper-entry form and official report all read from the same text. Filipino updated to carry the same conditions (draft, for the office to review). Stored ratings are unchanged.

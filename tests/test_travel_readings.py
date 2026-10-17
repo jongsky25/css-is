@@ -238,11 +238,13 @@ def office(conn):
     for key, name, level, path in (("bureau", "TT Bureau", "bureau", "TTB"), ("division", "TT Division", "division", "TTB/Div"),
                                    ("section", "TT Section", "section", "TTB/Div/Sec"), ("division2", "TT Other Division", "division", "TTB/Div2")):
         ids[key] = conn.execute("INSERT INTO org_unit(name, short_name, level, path) VALUES (?,?,?,?)", (name, name, level, path)).lastrowid
-    def person(name, desig, unit):
-        return conn.execute("INSERT INTO resource_person(name, is_internal, org_unit_id, designation) VALUES (?,?,?,?)",
-                            (name, 1, ids[unit], desig)).lastrowid
-    out = {"director": person("!TT Director", "Director IV", "bureau"), "chief": person("!TT Division Chief", "Division Chief", "division"),
-           "chief2": person("!TT Other Chief", "Division Chief", "division2"), "staff": person("!TT Staff", "Medical Officer III", "section")}
+    def person(name, desig, unit, position=None):
+        return conn.execute("INSERT INTO resource_person(name, is_internal, org_unit_id, designation, position) VALUES (?,?,?,?,?)",
+                            (name, 1, ids[unit], desig, position)).lastrowid
+    # as the real directory records them: a chief's position is their plantilla title, their designation "Division Chief"
+    out = {"director": person("!TT Director", "OIC-Director IV", "bureau"),
+           "chief": person("!TT Division Chief", "Division Chief", "division", "Medical Officer V"),
+           "chief2": person("!TT Other Chief", "Division Chief", "division2", "Medical Officer V"), "staff": person("!TT Staff", "Medical Officer III", "section")}
     for k in ("staff", "chief"):
         out[k + "_uid"] = st.create_admin_user(conn, f"tt-{k}@test.local", "x", "y", "viewer", rp_id=out[k])
     conn.commit()
@@ -258,8 +260,8 @@ BLANK_SIG = {"head_name": "", "head_title": "OIC-Director", "certifier_name": ""
 
 def test_the_director_and_the_filers_division_head_sign_when_the_settings_are_blank(conn, office):
     sig = travel.directory_signers(conn, office["staff_uid"], BLANK_SIG)
-    assert (sig["head_name"], sig["head_title"]) == ("!TT Director", "Director IV")          # the setting's "OIC-Director" is not paired with another name
-    assert (sig["certifier_name"], sig["certifier_title"]) == ("!TT Division Chief", "Division Chief")
+    assert (sig["head_name"], sig["head_title"]) == ("!TT Director", "OIC-Director IV")      # the setting's "OIC-Director" is not paired with another name
+    assert (sig["certifier_name"], sig["certifier_title"]) == ("!TT Division Chief", "Medical Officer V")
     assert sig["station"] == "BLHSD"
 
 
@@ -312,7 +314,7 @@ def test_the_prepare_page_starts_with_the_director_and_the_filers_division_head(
     sig = prep_data(staff, ref)["signatories"]
     assert (sig["head_name"], sig["certifier_name"]) == ("!TT Director", "!TT Division Chief")
     assert sig["approver_name"] == "!TT Director" and sig["noted_by_name"] == "!TT Director"           # these follow the head of office
-    assert sig["certifier_title"] == "Division Chief" and sig["head_title"] == "Director IV"
+    assert sig["certifier_title"] == "Medical Officer V" and sig["head_title"] == "OIC-Director IV"
     conn.execute("DELETE FROM travel_filing WHERE user_id=?", (office["staff_uid"],)); conn.commit()
 
 
