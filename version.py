@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.97"
+APP_VERSION = "6.98"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.98",
+        "date": "October 17, 2026",
+        "summary": "See the names of the people who responded, straight from an activity's report.",
+        "changes": [
+            "An activity's report now has a See the name list button in the Who responded section, for people who manage that activity.",
+            "It opens the activity's roster showing only the registered people who responded, with a link back to everyone.",
+            "Walk-in and paper responses have no name, so they are counted but not listed.",
+        ],
+    },
     {
         "version": "6.97",
         "date": "October 17, 2026",
