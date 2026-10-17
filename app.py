@@ -2456,6 +2456,29 @@ def _forbid(request, capability):
     return None
 
 
+def _responder_rosters(conn, user, ev):
+    """The name lists the signed-in user may open from an activity's report (Spot Feedback #91). A report can merge
+    several activities; each one that has a registration roster, is not an invited/outside activity, has registrants,
+    and that THIS user may manage (the same rule as its Monitor page, which shows names and contact details) gives one
+    entry. Anyone else gets [] so the report shows no button and nothing about who responded. Answers themselves
+    are anonymous: only people who registered have a name, so walk-in and paper responses are only counted."""
+    out, seen = [], set()
+    for fid in (ev.get("instance_ids") or []):
+        e = st.event_for_form_instance(conn, fid)
+        if not e or e["id"] in seen:
+            continue
+        seen.add(e["id"])
+        if e.get("event_kind") == "outside" or not _can_manage_event(user, e, conn):
+            continue
+        summ = st.event_registration_summary(conn, e["id"])
+        if not summ["registered"]:
+            continue
+        out.append({"title": e["title"], "url": f"/monitor/{e['event_token']}?show=responded",
+                    "registered": summ["registered"], "responded": summ["completed"] + summ["in_progress"],
+                    "walkin": summ["unattributed"]})
+    return out
+
+
 def _can_manage_event(user, ev, conn=None):
     """Who may manage an activity: an admin, its creator, or — when `conn` is
     given — a section manager whose TEAM runs it.
@@ -10385,7 +10408,7 @@ def outside_events_index(request: Request):
 
 
 @app.get("/monitor/{event_token}", response_class=HTMLResponse)
-def monitor_event(request: Request, event_token: str, flash: str = ""):
+def monitor_event(request: Request, event_token: str, flash: str = "", show: str = ""):
     """One activity's registration roster + CSS status. Only the activity's
     creator or an admin may open it (it shows registrant PII)."""
     conn = get_conn()
@@ -10430,9 +10453,14 @@ def monitor_event(request: Request, event_token: str, flash: str = ""):
         report_url = st.event_report_url(conn, ev["id"]) if st.event_response_total(conn, ev["id"]) else None
     finally:
         conn.close()
+    # ?show=responded: only the registered people who answered at least one form (the name list the activity
+    # report links to). The reminder count still comes from everyone, so it never depends on the view.
+    only_responded = show == "responded"
+    shown = [p for p in people if p["status"] != "not_started"] if only_responded else people
     return templates.TemplateResponse(request, "monitor_event.html", {
         "nav_active": "monitor", "show_scope": False, "ev": ev,
-        "people": people, "summ": summ, "status_meta": MONITOR_STATUS,
+        "people": shown, "only_responded": only_responded, "n_registered": len(people),
+        "summ": summ, "status_meta": MONITOR_STATUS,
         "answer_tally": answer_tally,
         "base_url": _base_url(request),
         "entry_window": entry_window, "is_closed": is_closed,
@@ -14251,6 +14279,7 @@ def dashboard_activity(request: Request, event_id: int, err: str = "", msg: str 
         # the editor below lists the COMPLETE set — every comment stays reachable.
         can_edit = auth.can(request.state.user["role"], "edit_data")
         edit_comments = st.activity_editable_comments(conn, ev["response_ids"]) if can_edit else []
+        rosters = _responder_rosters(conn, request.state.user, ev)
         captured = st.demographics_for_responses(conn, ev["response_ids"])
         manual = st.get_activity_demographics(conn, event_id)
         demo = di.activity_demographics(captured, manual)
@@ -14294,7 +14323,7 @@ def dashboard_activity(request: Request, event_id: int, err: str = "", msg: str 
         "mrr_fields": mrr_fields,
         "scope_label": scope_label,
         "can_manage": auth.can(request.state.user["role"], "create_activity"),
-        "can_edit": can_edit, "edit_comments": edit_comments,
+        "can_edit": can_edit, "edit_comments": edit_comments, "rosters": rosters,
     })
 
 

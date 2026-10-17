@@ -1,3 +1,8 @@
+## 6.98 — October 17, 2026
+
+- Add a "See the name list" button to the Who responded section of an activity's report, shown only to people who manage the activity; it opens the activity's roster limited to the registered people who responded (Spot Feedback #91).
+- The roster page gains a "Show only the people who responded" view; the reminder count does not depend on the view. Walk-in and paper responses are counted but have no name to list.
+
 ## 6.97 — October 17, 2026
 
 - Make the public service feedback (Type 1 / CSM) form follow the official ARTA Client Satisfaction Measurement form: the official intro and confidentiality note, the date shown automatically, client type, sex, age, region of residence, service availed (from the bureau's list), the Citizen's Charter definition and CC1 to CC3 with the skip rule, optional email and the official suggestions wording (Spot Feedback #121). Everything except the ratings is optional.

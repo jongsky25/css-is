@@ -161,8 +161,19 @@
   </div>
   {% endif %}
 
+  {% if only_responded %}
+  <p class="note" role="status">Showing the {{ people|length }} registered participant{{ '' if people|length == 1 else 's' }} who responded (finished or part-way) out of {{ n_registered }} registered.
+    <a href="/monitor/{{ ev.event_token }}">Show everyone</a></p>
+  {% elif n_registered %}
+  <p class="note"><a href="/monitor/{{ ev.event_token }}?show=responded">Show only the people who responded</a></p>
+  {% endif %}
+
   {% if not people %}
+    {% if only_responded %}
+    <div class="empty">No registered participant has responded yet. <a href="/monitor/{{ ev.event_token }}">Show everyone</a></div>
+    {% else %}
     <div class="empty">No one has registered for this activity yet. Share the registration link above so participants can sign in and answer the CSS.</div>
+    {% endif %}
   {% else %}
   <table class="roster resp-table">
     <thead>
