@@ -1,5 +1,5 @@
 // Optional PDF_TEST_FILE exercises a locally supplied PDF; it is never copied into the repository.
-const {chromium}=require('playwright');
+const {chromium,webkit}=require('playwright');
 const {spawn}=require('child_process');
 const fs=require('fs'),assert=require('assert'),path=require('path');
 const root=path.resolve(__dirname,'../..');
@@ -8,7 +8,7 @@ const root=path.resolve(__dirname,'../..');
  try {
   const base='http://127.0.0.1:8899';
   for(let i=0;i<60;i++){try{if((await fetch(base+'/counts')).ok)break;}catch{}await new Promise(r=>setTimeout(r,300));}
-  browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_EXECUTABLE});
+  browser=await (process.env.PDF_BROWSER === 'webkit' ? webkit : chromium).launch({headless:true,executablePath:process.env.PDF_BROWSER === 'webkit' ? undefined : process.env.CHROMIUM_EXECUTABLE});
   const page=await browser.newPage({viewport:{width:390,height:844}});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.context().addCookies([{name:'css_session',value:'synthetic',url:base}]);
@@ -23,6 +23,10 @@ const root=path.resolve(__dirname,'../..');
    await page.waitForFunction(()=>document.querySelector('[name=document_date]').value==='2026-10-14',{},{timeout:60000});
    await page.waitForFunction(()=>document.getElementById('intake-form').dataset.pageBusy==='false');
    assert((await page.locator('[name=subject]').inputValue()).endsWith('Diagnostic Algorithm'));
+   const region = page.locator('[name=subject]').locator('..').locator('details').filter({hasText:'DTRAK subject box read'});
+   await region.locator('summary').click();
+   assert(await region.locator('img').isVisible());
+   assert((await region.locator('pre').innerText()).includes('Diagnostic Algorithm'));
    assert.equal(await page.locator('[name=type]').inputValue(),'Memorandum');
    assert.equal(await page.locator('[name=due_date]').inputValue(),'2026-10-16');
    assert.equal(await page.locator('[name=sender]').inputValue(),'BLHSD - Health Systems Development Division (HSDD)');
@@ -64,6 +68,19 @@ const root=path.resolve(__dirname,'../..');
   await page.locator('[name=subject]').fill('Reviewed subject');
   await reconcile(['Subject: Approve the proposal','Subject: Reject the proposal']);
   assert.equal(await page.locator('[name=subject]').inputValue(),'Reviewed subject');
+  await page.evaluate(()=>document.getElementById('intake-form').dispatchEvent(new CustomEvent('intake-reading-result',{detail:null})));
+  assert((await page.locator('#intake-read-status').innerText()).includes('could not be displayed'));
+  assert.equal(await page.locator('[name=subject]').inputValue(),'Reviewed subject');
+  await page.evaluate(()=>document.getElementById('intake-form').dispatchEvent(new CustomEvent('intake-reading-result',{detail:{scope:'selected_pages',suggestions:{},evidence:{},warnings:[],text_preview:[],field_readings:{subject:[{page:1,status:'failed',method:'dtrak_subject_cell',raw:'',reason:'Subject reading timed out.'}]}}})));
+  assert((await page.locator('[name=subject]').locator('..').innerText()).includes('Subject reading timed out.'));
+  assert((await page.locator('#intake-suggestions').innerText()).includes('no page-text preview'));
+  assert.equal(await page.locator('[name=subject]').inputValue(),'Reviewed subject');
+  if(process.env.PDF_TEST_FILE){
+   await page.getByRole('button',{name:'Retry this page',exact:true}).click();
+   await page.waitForFunction(()=>document.getElementById('intake-form').dataset.pageBusy==='false',{},{timeout:60000});
+   assert.equal(await page.locator('[name=subject]').inputValue(),'Reviewed subject');
+   assert((await page.locator('[name=subject]').locator('..').textContent()).includes('DTRAK subject box read'));
+  }
   assert.deepEqual(errors,[]);
   console.log('Automatic reading, visible dates, inline fields, approval invalidation and preserved edits passed.');
  }finally{await browser?.close();server.kill('SIGTERM');}

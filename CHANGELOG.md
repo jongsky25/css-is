@@ -1,3 +1,10 @@
+## 6.91 — October 17, 2026
+
+- Locate DTRAK subject cells using labels and table geometry, correct slight skew and OCR a border-free enlarged crop.
+- Preserve successful template-region subjects across later-page differences and publish page 1 before reading page 2.
+- Carry structured field readings and display source crops, text and specific failure reasons beside Subject.
+- Handle malformed display results and empty text previews explicitly.
+
 ## 6.90 — October 17, 2026
 
 - Recognize Title and Subject/Title labels and bounded multiline subjects.

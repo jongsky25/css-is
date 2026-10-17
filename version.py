@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.90"
+APP_VERSION = "6.91"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.91",
+        "date": "October 17, 2026",
+        "summary": "Read DTRAK subjects from their own box and show the source beside the field.",
+        "changes": [
+            "Locate the DTRAK subject box, straighten slight scan tilt and read its text separately from the routing table.",
+            "Keep the successfully read DTRAK subject when checking later pages.",
+            "Show the cropped subject box, extracted text and specific reading failures beside the Subject field.",
+        ],
+    },
     {
         "version": "6.90",
         "date": "October 17, 2026",
