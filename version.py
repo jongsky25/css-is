@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.85"
+APP_VERSION = "6.86"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.86",
+        "date": "October 17, 2026",
+        "summary": "Choose pages from larger PDFs and read them a few at a time.",
+        "changes": [
+            "Preview a PDF on your device and select the pages you need without uploading the original file.",
+            "See each page finish reading, retry failed pages, or cancel while keeping completed results.",
+            "Review suggestions with original page references before registering correspondence.",
+        ],
+    },
     {
         "version": "6.85",
         "date": "October 17, 2026",

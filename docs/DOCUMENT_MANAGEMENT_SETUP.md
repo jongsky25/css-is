@@ -326,3 +326,56 @@ The browser reports expired sessions, non-JSON gateway responses, network errors
 and a 90-second request timeout without clearing input. Reading results receive
 focus and scroll into view. Numbered order headings and standalone labels with a
 following value are supported, but ambiguous or unstated fields remain blank.
+
+### Selected-page intake (v6.86, first stage)
+
+For a local PDF, use **Preview and select pages**. The app opens the PDF on-device
+with vendored PDF.js 4.10.38, suggests the first three pages, and lets the user
+preview individual pages and edit a page range such as `1-3, 7`. Include reference,
+subject, sender, date and signature pages. The source PDF is never uploaded by
+this path. It supports local PDFs up to 100 MiB and 500 pages as browser safety
+limits; actual device capacity may be lower. Protected or damaged files can fail
+preview with guidance rather than an unseen password prompt.
+
+Read at most ten pages per batch. Native text is extracted in the browser; sparse
+pages are rendered one at a time at up to 200 dpi with a roughly 3.9 million pixel
+canvas and an 8192-pixel side limit. JPEG quality is reduced as needed to fit a
+2 MiB page request. The server validates format and dimensions (4 million pixels)
+before OCR, normalizes the image in memory, and uses the existing Tesseract lock
+and stdin/stdout-only workflow. The OCR timeout is 15 seconds per page, with a
+30-second browser request timeout. PDF.js resources are served by this application,
+not a third-party CDN, and dynamic evaluation is disabled.
+
+The new authenticated, CSRF-protected endpoints are:
+
+- `POST /documents/intake/page`: raw JPEG/PNG, at most 2 MiB; returns OCR text.
+- `POST /documents/intake/pages-result`: JSON `pages` entries containing original
+  `page`, `text`, and boolean `ocr`; up to 50 completed pages and 100,000 text
+  characters, with a 650,000-byte request cap. Returns the existing suggestion,
+  evidence and preview shape with original page numbers. This content is untrusted
+  and never creates records or assignments.
+
+Results remain in the open tab. Failed pages can be retried; successful pages
+are skipped on subsequent reads. Cancellation stops additional pages, aborts the
+browser request, cancels active rendering and ignores late responses. Already
+completed results remain available through **Review completed pages**. Server OCR
+already underway may finish within its timeout. Reading more pages re-evaluates
+suggestions cumulatively; conflicts are flagged and existing entered/applied
+form values remain for review. Only completed selected pages are represented;
+failed, cancelled, and unselected pages are explicitly not covered. Remove/Skip,
+changing sources, or leaving the page clears the local reading. Images and canvases
+are released between pages; no source content uses persistent browser storage.
+
+The whole-file reader and public-link reader remain available at 20 MiB. For a
+larger or private Drive file, download it with authorized access to the device,
+then select the local PDF for page reading. Direct Drive page retrieval and private
+Drive authentication are deferred to stage two; no access check is bypassed.
+
+Validation includes a real Chromium flow at a 390px viewport using a synthetic
+PDF larger than 20 MiB: no original upload, real Tesseract OCR on selected pages,
+native text without image upload, original-page evidence, retry, cancellation,
+removal, and no document/attachment/AI records created. This is not a physical
+Safari/iPhone validation or a test of the user's actual PDF. A separate synthetic
+4-million-pixel page produced a 347,628-byte JPEG and took 1.35 seconds to read in
+the development environment; reported Python and child process peak RSS were
+76.5 MiB each. These single-request measurements are not production load guarantees.
