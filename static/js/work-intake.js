@@ -22,6 +22,26 @@
     const field = form.elements[button.dataset.field];
     if (field) { field.value = button.dataset.value; form.elements.confirmed.checked = false; field.focus(); }
   });
+  const direction = form.elements.direction;
+  let directionEdited = direction.value !== 'IN', directionInferred = false;
+  const directionNote = document.createElement('small');
+  directionNote.hidden = true;
+  direction.closest('label').append(directionNote);
+  direction.addEventListener('change', () => {
+    directionEdited = true; directionInferred = false; directionNote.hidden = true;
+    invalidateApproval(); form.elements.confirmed.checked = false;
+  });
+  form.elements.sender.addEventListener('input', () => {
+    if (directionEdited) return;
+    const office = form.elements.sender.value.trim().replace(/\s+/g, ' ');
+    const outgoing = /^(?:bureau of local health systems development|BLHSD)(?=$|[\s(,–—-])/i.test(office);
+    if (!outgoing && !directionInferred) return;
+    direction.value = outgoing ? 'OUT' : 'IN';
+    directionInferred = outgoing;
+    directionNote.textContent = 'Outgoing because the originating office is BLHSD. You can change this before approval.';
+    directionNote.hidden = !outgoing;
+    direction.dispatchEvent(new Event('input', {bubbles:true}));
+  });
   const read = document.getElementById('intake-read');
   const file = document.getElementById('intake-pdf');
   const source = document.getElementById('intake-source');

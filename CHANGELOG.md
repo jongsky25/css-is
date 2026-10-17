@@ -1,3 +1,7 @@
+## 6.92 — October 17, 2026
+
+- Default BLHSD-originated correspondence to Outgoing, explain the choice and preserve manual direction changes during OCR updates.
+
 ## 6.91 — October 17, 2026
 
 - Locate DTRAK subject cells using labels and table geometry, correct slight skew and OCR a border-free enlarged crop.
