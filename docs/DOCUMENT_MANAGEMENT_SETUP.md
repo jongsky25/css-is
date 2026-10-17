@@ -306,3 +306,12 @@ local PDF selection remains available.
 The older `/documents/intake/preview` relay endpoint remains for compatibility;
 it is not used by this first-step reader. Existing registered-document extraction
 and signing workflows retain their existing storage behavior.
+
+PDF intake reports selection and validation status before reading. Files over
+6 MiB are explicitly marked as not uploaded/read (OCR did not run). Successful
+reads identify OCR page numbers or direct text extraction and expose an expandable
+transient preview (up to 2,000 characters per page, first 10 pages). Preview limits
+are labelled. The Remove file / clear reading button clears the selected source
+and displayed reading, aborts the browser request, and ignores late responses.
+Already entered/applied form values remain for review. Server processing already
+underway can finish within its existing limits; its response is discarded.

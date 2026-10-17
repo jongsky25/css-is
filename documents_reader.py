@@ -191,6 +191,11 @@ def read_pdf(raw):
     if not any(text.strip() for text in pages):
         raise ValueError('No readable text was found, including after OCR. Try a clearer scan or enter the details manually.')
     result = suggest(pages)
+    result['reading'] = {'page_count': len(pages), 'ocr_pages': [i + 1 for i in scanned]}
+    # Bounded, transient preview even when no labelled fields can be suggested.
+    result['text_preview'] = [{'page': i + 1, 'text': text[:2000], 'truncated': len(text) > 2000}
+                              for i, text in enumerate(pages[:10])]
+    result['preview_truncated'] = len(pages) > 10
     if scanned:
         result['warnings'].insert(0, 'OCR was used on pages ' + ', '.join(str(i + 1) for i in scanned) + '. Check names, numbers and dates against the scan.')
     return result

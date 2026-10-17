@@ -1,3 +1,9 @@
+## 6.82 — October 17, 2026
+
+- Clarify selection, oversized-file rejection, reading progress, and whether OCR ran.
+- Show a bounded extracted-text preview even when no form fields are recognized.
+- Add a remove/clear button and discard late responses after removal while preserving entered values.
+
 ## 6.81 — October 17, 2026
 
 - Read scanned PDF pages with local OCR through memory-only rendering and pipes.

@@ -107,3 +107,16 @@ def test_intake_read_http_transient(app_mod, viewer, monkeypatch):
         assert counts == {t: c.execute('SELECT COUNT(*) FROM ' + t).fetchone()[0] for t in tables}
     finally:
         st.set_setting(c, 'documents.enabled', old); c.close()
+
+
+def test_reading_status_and_preview_without_field_matches():
+    text = 'This document contains ordinary prose without labelled correspondence fields.'
+    result = reader.read_pdf(pdf(text))
+    assert result['suggestions'] == {}
+    assert result['reading'] == {'page_count': 1, 'ocr_pages': []}
+    assert text in result['text_preview'][0]['text']
+    assert result['text_preview'][0]['page'] == 1
+    assert result['text_preview'][0]['truncated'] is False
+    result = reader.read_pdf(pdf('Long prose ' * 400))
+    assert len(result['text_preview'][0]['text']) == 2000
+    assert result['text_preview'][0]['truncated'] is True
