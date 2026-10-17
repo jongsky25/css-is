@@ -1,7 +1,7 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header, flash %}
 {% block title %}File a travel claim{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261016a"><script src="/static/js/travel_new.js?v=20261016a" defer></script>{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261017a"><script src="/static/js/travel_new.js?v=20261016a" defer></script>{% endblock %}
 {% block content %}
 {{ page_header("File a travel claim", "A few short questions decide which documents you need.") }}
 {% include "_travel_tabs.html" %}
@@ -62,12 +62,12 @@
   <h2>Your trip</h2>
   <div class="tv-checks">
     {% for key, label, kinds_ in questions %}
-    <label data-claim-kinds="{{ kinds_|join(' ') }}"><input type="checkbox" name="{{ key }}" value="1" {{ 'checked' if f.get(key) == '1' }}> <span>{{ label }} <small class="tv-hint tv-nojs-kinds">({% for k in kinds_ %}{{ kind_labels[k]|lower }}{{ ', ' if not loop.last }}{% endfor %})</small></span></label>
+    <label data-claim-kinds="{{ kinds_|join(' ') }}"><input type="checkbox" name="{{ key }}" value="1" {{ 'checked' if f.get(key) == '1' }}> <span>{{ label }} <small class="tv-hint tv-nojs-kinds">(asked for: {% for k in kinds_ %}{{ kind_labels[k]|lower }}{{ ', ' if not loop.last }}{% endfor %})</small>{% if key == 'lodging_claimed' %}<small class="tv-hint tv-lodging-note">Lodging is the room cost of your trip. It is not the same as the kind of filing you are opening, which is shown above; the words in brackets only say which kinds of filing ask this question.</small>{% endif %}</span></label>
     {% endfor %}
   </div>
 
   <h2>Papers</h2>
-  <div class="field"><label for="dpo_no">Department Personnel Order number <span class="opt">(optional)</span></label><input id="dpo_no" name="dpo_no" maxlength="60" value="{{ f.dpo_no or '' }}"></div>
+  <div class="field"><label for="dpo_no">Department Personnel Order (DPO) number <span class="req">(required)</span></label><input id="dpo_no" name="dpo_no" maxlength="60" value="{{ f.dpo_no or '' }}" required></div>
   <div class="field"><label for="dpo_date">DPO date <span class="opt">(optional)</span></label><input id="dpo_date" name="dpo_date" type="date" value="{{ f.dpo_date or '' }}"></div>
   <div class="field"><label for="mc114_format">MC 114 justification</label>
     <select id="mc114_format" name="mc114_format">{% for code, label in mc114 %}<option value="{{ code }}" {{ 'selected' if f.mc114_format == code }}>{{ label }}</option>{% endfor %}</select></div>

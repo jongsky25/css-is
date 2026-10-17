@@ -1,7 +1,7 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header, flash %}
 {% block title %}{{ 'Travel claim' if missing else f.ref_code }}{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261016a">{% if uploads_ready %}<script src="/static/js/travel_upload.js?v=20261015a" defer></script>{% endif %}{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261017a">{% if uploads_ready %}<script src="/static/js/travel_upload.js?v=20261015a" defer></script>{% endif %}{% endblock %}
 {% block content %}
 {% if missing %}
 {{ page_header("Travel claim not found", "") }}
@@ -129,7 +129,7 @@
       <label><input type="checkbox" name="{{ key }}" value="1" {{ 'checked' if ans.get(key) }}> <span>{{ label }}</span></label>
       {% endfor %}
     </div>
-    <div class="field"><label for="dpo_no">DPO number</label><input id="dpo_no" name="dpo_no" maxlength="60" value="{{ f.dpo_no or '' }}"></div>
+    <div class="field"><label for="dpo_no">DPO number <span class="req">(required)</span></label><input id="dpo_no" name="dpo_no" maxlength="60" value="{{ f.dpo_no or '' }}" required></div>
     <div class="field"><label for="dpo_date">DPO date</label><input id="dpo_date" name="dpo_date" type="date" value="{{ f.dpo_date or '' }}"></div>
     <div class="field"><label for="mc114_format">MC 114 justification</label>
       <select id="mc114_format" name="mc114_format">{% for code, label in mc114 %}<option value="{{ code }}" {{ 'selected' if f.mc114_format == code }}>{{ label }}</option>{% endfor %}</select></div>

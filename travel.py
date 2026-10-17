@@ -662,6 +662,8 @@ def create_filing(conn, user, *, kind, source, answers, mc114_format="none", rol
         raise TravelError("That activity has no usable dates.")
     if end < start:
         raise TravelError("The last day is before the first day.")
+    if not (dpo_no or "").strip():
+        raise TravelError("Enter the Department Personnel Order (DPO) number. Every travel filing needs one.")
     if mc114_format not in ("none", "separate", "appendix_b"):
         mc114_format = "none"
     ans = clean_answers({**answers, "role": role}, kind)
@@ -751,7 +753,9 @@ def update_answers(conn, filing, answers, *, mc114_format=None, role=None, dpo_n
     now = tz.now_iso()
     sets = {"answers_json": json.dumps(merged), "mc114_format": fmt, "updated_at": now}
     if dpo_no is not None:
-        sets["dpo_no"] = dpo_no.strip()[:60] or None
+        if not dpo_no.strip():
+            raise TravelError("Enter the Department Personnel Order (DPO) number. Every travel filing needs one.")
+        sets["dpo_no"] = dpo_no.strip()[:60]
     if dpo_date is not None:
         sets["dpo_date"] = _iso_or_none(dpo_date)
     if advance_amount is not None and filing["kind"] in ("ca", "liquidation") and not filing["ca_filing_id"]:

@@ -58,7 +58,7 @@ def jpost(client, path, body, headers=None):
 def mk(client, **over):
     f = {"kind": "liquidation", "title": "GENTEST Visit", "start": (tz.today_local() - timedelta(days=10)).isoformat(),
          "end": (tz.today_local() - timedelta(days=8)).isoformat(), "role": "secretariat", "advance_amount": "5000",
-         "mc114_format": "none"}
+         "mc114_format": "none", "dpo_no": "2026-100"}
     f.update(over)
     r = post(client, "/travel/new", **f)
     return r.headers["location"].split("?")[0].rsplit("/", 1)[1]

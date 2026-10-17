@@ -180,7 +180,7 @@ def post(client, path, **data):
 def mk(client, **over):
     f = {"kind": "liquidation", "title": "RELAYTEST Visit", "start": (tz.today_local() - timedelta(days=10)).isoformat(),
          "end": (tz.today_local() - timedelta(days=8)).isoformat(), "role": "secretariat",
-         "advance_amount": "5000", "mc114_format": "none"}
+         "advance_amount": "5000", "mc114_format": "none", "dpo_no": "2026-100"}
     f.update(over)
     r = post(client, "/travel/new", **f)
     return r.headers["location"].split("?")[0].rsplit("/", 1)[1]
