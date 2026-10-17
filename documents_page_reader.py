@@ -46,7 +46,7 @@ def read_image(raw):
             raise ValueError('No readable text was found on this page. Try a clearer copy.')
         if len(text) > documents_reader.MAX_TEXT:
             raise ValueError('This page contains too much text.')
-        return {'text': text}
+        return {'text': documents_ocr.routing_deadline(png, text)}
     finally:
         documents_ocr._LOCK.release()
 

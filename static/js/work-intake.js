@@ -31,11 +31,12 @@
   const remove = document.getElementById('intake-remove');
   let reading = false, generation = 0, controller = null;
   const idle = () => {
-    reading = false; read.disabled = false; skip.disabled = false;
+    reading = false; form.dataset.legacyBusy = 'false'; read.disabled = false; skip.disabled = false;
     file.disabled = false; source.disabled = false;
   };
   const clearSuggestions = () => {
     suggestions.replaceChildren(); suggestions.hidden = true;
+    form.querySelectorAll('.pdf-field-note').forEach(note => note.remove());
     for (const field of form.querySelectorAll('[data-pdf-suggested]')) {
       delete field.dataset.pdfSuggested;
       field.removeAttribute('aria-description');
@@ -43,33 +44,60 @@
   };
   const skip = document.getElementById('intake-skip');
   const reset = () => {
+    invalidateApproval();
     form.dispatchEvent(new Event('intake-source-cleared'));
     generation++; controller?.abort(); controller = null; status.setAttribute('aria-busy', 'false');
-    file.value = ''; source.value = ''; clearSuggestions(); idle(); remove.hidden = true;
+    file.value = ''; source.value = ''; read.hidden = false; clearSuggestions(); idle(); remove.hidden = true;
     status.textContent = 'File and reading cleared. Any form values already entered or applied are kept for review.';
     form.elements.confirmed.checked = false;
   };
   remove.addEventListener('click', reset);
-  skip.addEventListener('click', () => { reset(); form.elements.subject.focus(); });
+  skip.addEventListener('click', () => { reset(); document.getElementById('intake-details').hidden = false; form.elements.subject.focus(); });
+  const clearAutoFields = () => {
+    for (const field of form.querySelectorAll('[data-pdf-value]')) {
+      if (field.value === field.dataset.pdfValue) { field.value = ''; field.dispatchEvent(new Event('input', {bubbles:true})); }
+      delete field.dataset.pdfValue;
+    }
+  };
   file.addEventListener('change', () => {
-    clearSuggestions(); remove.hidden = !file.files.length && !source.value.trim();
-    const pdf = file.files[0];
+    clearAutoFields();
+    clearSuggestions(); invalidateApproval(); remove.hidden = !file.files.length && !source.value.trim();
+    const pdf = file.files[0]; read.hidden = !!pdf;
     if (!pdf) { status.textContent = 'No file selected. Reading has not started.'; return; }
     const size = (pdf.size / (1024 * 1024)).toFixed(1);
-    status.textContent = pdf.size > 20 * 1024 * 1024
-      ? `${pdf.name} selected (${size} MiB). Use Preview and select pages to read it without uploading the whole PDF. Whole-file reading is limited to 20 MiB.`
-      : `${pdf.name} selected (${size} MiB). Reading has not started. Tap Read and pre-fill to read it.`;
+    status.textContent = `${pdf.name} selected (${size} MiB). Opening and reading the first page…`;
   });
   source.addEventListener('input', () => {
-    clearSuggestions(); remove.hidden = !file.files.length && !source.value.trim();
-    status.textContent = 'Reading has not started. Tap Read and pre-fill when ready.';
+    clearAutoFields();
+    clearSuggestions(); invalidateApproval(); remove.hidden = !file.files.length && !source.value.trim();
+    status.textContent = 'Reading has not started. Tap Read document link when ready.';
   });
-  form.addEventListener('input', () => { form.elements.confirmed.checked = false; });
+  form.addEventListener('input', event => { if (event.target !== form.elements.confirmed) form.elements.confirmed.checked = false; });
+  let approved = false;
+  const approval = document.getElementById('intake-approval');
+  document.getElementById('intake-details').hidden = !form.elements.subject.value;
+  document.getElementById('intake-work').hidden = true; document.getElementById('intake-register').hidden = true;
+  function invalidateApproval() { approved = false; approval.textContent = 'Details need your review.'; document.getElementById('intake-work').hidden = true; document.getElementById('intake-register').hidden = true; }
+  document.getElementById('intake-details').addEventListener('input', invalidateApproval);
+  form.addEventListener('intake-reading-cleared', invalidateApproval);
+  document.getElementById('intake-approve').addEventListener('click', () => {
+    if (reading || form.dataset.pageBusy === 'true') { approval.textContent = 'Wait for reading to finish, then review the fields.'; return; }
+    const invalid = [...document.querySelectorAll('#intake-details input, #intake-details textarea')].find(field => !field.checkValidity());
+    if (invalid) { invalid.reportValidity(); return; }
+    document.getElementById('intake-work').hidden = false; document.getElementById('intake-register').hidden = false;
+    approved = true; approval.textContent = 'Details approved. Choose the work and confirm registration below.';
+    document.getElementById('intake-scenario').focus();
+  });
   form.addEventListener('submit', event => {
+    if (!approved) { event.preventDefault(); approval.textContent = 'Review the fields and select Approve details before registering.'; document.getElementById('intake-approve').focus(); }
+
     if (reading || form.dataset.pageBusy === 'true') { event.preventDefault(); status.textContent = 'Wait for PDF reading to finish before registering.'; }
   });
   const showResult = result => {
     clearSuggestions();
+    document.getElementById('intake-details').hidden = false;
+    invalidateApproval();
+      const notesTitle = document.createElement('summary'); notesTitle.textContent = 'Reading notes and extracted text'; suggestions.append(notesTitle);
       const notice = document.createElement('p'); notice.textContent = result.notice;
       suggestions.append(notice);
       for (const warning of result.warnings || []) {
@@ -77,29 +105,36 @@
       }
       const allowed = ['subject', 'type', 'sender', 'document_date', 'due_date', 'references'];
       let applied = 0, found = 0;
-      if (!result.suggestions || typeof result.suggestions !== 'object' || !Array.isArray(result.text_preview)) {
-        throw new Error('The server returned an incomplete reading. Please retry.');
+      if (!result.suggestions || typeof result.suggestions !== 'object' || !Array.isArray(result.text_preview)) throw new Error('Incomplete reading result. Retry.');
+      for (const name of allowed) {
+        const field = form.elements[name];
+        if (!result.suggestions[name] && field.dataset.pdfValue !== undefined && field.value === field.dataset.pdfValue) {
+          field.value = ''; delete field.dataset.pdfValue;
+          field.dispatchEvent(new Event('input', {bubbles:true}));
+        }
       }
-      for (const [name, value] of Object.entries(result.suggestions || {})) {
+      for (const [name, value] of Object.entries(result.suggestions)) {
         if (!allowed.includes(name) || typeof value !== 'string' || !value) continue;
         found++;
         const field = form.elements[name];
-        const apply = () => {
-          field.value = value; field.dataset.pdfSuggested = 'true';
-          field.setAttribute('aria-description', 'Suggested from the PDF; review before registration.');
-          form.elements.confirmed.checked = false;
-        };
-        // Recheck at response time so edits made during reading are preserved.
-        const filled = !field.value.trim();
-        if (filled) { apply(); applied++; }
-        const paragraph = document.createElement('p');
-        paragraph.textContent = `${name.replaceAll('_', ' ')}: ${value} — ${filled ? 'pre-filled; please review' : 'existing entry kept'}. `;
-        const button = document.createElement('button'); button.type = 'button'; button.textContent = 'Use this suggestion';
-        button.addEventListener('click', () => { apply(); field.focus(); });
-        paragraph.append(button); suggestions.append(paragraph);
-        for (const item of result.evidence?.[name] || []) {
-          const quote = document.createElement('blockquote'); quote.textContent = `Page ${item.page}: ${item.text}`; suggestions.append(quote);
+        const filled = !field.value.trim() || (field.dataset.pdfValue !== undefined && field.value === field.dataset.pdfValue);
+        if (filled) {
+          field.value = value; field.dataset.pdfValue = value; field.dataset.pdfSuggested = 'true';
+          field.dispatchEvent(new Event('input', {bubbles:true}));
+          field.dispatchEvent(new Event('change', {bubbles:true}));
+          form.elements.confirmed.checked = false; applied++;
         }
+        const note = document.createElement('details'); note.className = 'pdf-field-note';
+        const caption = document.createElement('summary'); caption.textContent = filled ? 'Read from source — check evidence' : 'Your entry kept — compare source'; note.append(caption);
+        const excerpt = document.createElement('small'); excerpt.textContent = `${filled ? 'Read from source — review' : 'Your entry kept'} · ` + (result.evidence?.[name] || []).map(item => `Page ${item.page}: ${item.text}`).join(' ');
+        note.append(excerpt); field.closest('label').append(note);
+      }
+      for (const name of allowed) {
+        const field = form.elements[name];
+        if (field.value.trim()) continue;
+        const note = document.createElement('small'); note.className = 'pdf-field-note';
+        note.textContent = name === 'due_date' ? 'No reliable deadline captured. Check the source; leave blank if none is stated.' : 'Not identified reliably. Check the source and enter this detail.';
+        field.closest('label').append(note);
       }
       const preview = document.createElement('details');
       const summary = document.createElement('summary'); summary.textContent = 'What was read — extracted text';
@@ -116,6 +151,7 @@
         const note = document.createElement('p'); note.textContent = 'Showing up to 10 completed pages only.'; preview.append(note);
       }
       suggestions.append(preview);
+      suggestions.open = !found;
       if (!found) preview.open = true;
       suggestions.hidden = false;
       const ocrPages = result.reading?.ocr_pages || [];
@@ -124,13 +160,10 @@
       const next = document.createElement('p');
       next.textContent = missing.length ? `Still needs your entry or review: ${missing.join(', ')}. Details not stated clearly in the PDF are left blank.` : 'All supported correspondence fields have values; check them against the source.';
       suggestions.append(next);
-      const manual = document.createElement('p'); manual.textContent = 'Choose the office scenario, work destination, concerned unit and priority yourself; PDF reading does not assign work or approve a document.'; suggestions.append(manual);
-      const review = document.createElement('button'); review.type = 'button'; review.textContent = 'Review correspondence fields';
-      review.addEventListener('click', () => form.elements.subject.focus()); suggestions.append(review);
       status.textContent = found
         ? `${result.scope === 'selected_pages' ? 'Completed selected pages reviewed.' : 'Reading complete.'} ${method} ${found} suggestion(s) found; ${applied} empty field(s) pre-filled, ${found - applied} existing entry/entries kept. Review the results below. Your selected file is kept for retry; no server attachment was saved.`
         : `${result.scope === 'selected_pages' ? 'Selected pages were read' : 'The PDF was read'}, but no form fields could be identified reliably. ${method} No fields were changed. Read the extracted text below and enter the details manually, or retry with a clearer copy. Your selected file is kept.`;
-      announce();
+      document.getElementById('intake-details').scrollIntoView({block:'start',behavior:'smooth'});
   };
   form.addEventListener('intake-reading-result', event => showResult(event.detail));
   form.addEventListener('intake-reading-cleared', clearSuggestions);
@@ -146,7 +179,7 @@
     const run = ++generation; controller = new AbortController(); remove.hidden = false;
     let timedOut = false;
     const timer = setTimeout(() => { timedOut = true; if (run === generation) controller?.abort(); }, 90000);
-    reading = true; read.disabled = true; skip.disabled = true; file.disabled = true; source.disabled = true;
+    reading = true; form.dataset.legacyBusy = 'true'; read.disabled = true; skip.disabled = true; file.disabled = true; source.disabled = true;
     clearSuggestions(); form.elements.confirmed.checked = false;
     status.textContent = 'Reading PDF… Keep this page open. Uploading and OCR can take up to 90 seconds.';
     status.setAttribute('aria-busy', 'true');

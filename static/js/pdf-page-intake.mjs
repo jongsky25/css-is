@@ -30,7 +30,7 @@ if (form) {
   function cancelRun() {
     generation++; active?.abort(); active = null; previewTask?.cancel();
     controls(false); list();
-    progress.textContent = `Reading cancelled. ${results.size} completed page(s) kept. Unprocessed pages have not been read. Review completed pages or select pages to continue.`;
+    el('intake-read-status').textContent = progress.textContent = `Reading cancelled. ${results.size} completed page(s) kept. Unprocessed pages have not been read. Review completed pages or select pages to continue.`;
   }
   const destroy = task => { if(task) Promise.resolve(task.destroy()).catch(()=>{}); };
   function clear() {
@@ -39,7 +39,7 @@ if (form) {
     canvas.width = canvas.height = 1; list(); progress.textContent = '';
     el('pdf-info').textContent = ''; el('pdf-page-label').textContent = ''; selection.value = '';
   }
-  file.addEventListener('change', clear);
+  file.addEventListener('change', () => { clear(); if (file.files[0]) { source.value = ''; open.click(); } });
   source.addEventListener('input', clear);
   form.addEventListener('intake-source-cleared', clear);
   // Starting the legacy reader explicitly replaces this reading context.
@@ -105,16 +105,17 @@ if (form) {
       if (run !== generation) { await pdf.destroy(); return; }
       if (pdf.numPages > 500) throw new Error('Choose a PDF with at most 500 pages for on-device preview.');
       documentPdf = pdf; previewPage = 1;
-      selection.value = pdf.numPages > 1 ? `1-${Math.min(3,pdf.numPages)}` : '1';
+      selection.value = '1';
       el('pdf-info').textContent = `${chosen.name}: ${pdf.numPages} pages. Only selected pages will be read; remaining pages are unprocessed.`;
       await preview();
       if (run !== generation) return;
-      progress.textContent = 'Preview ready. The first few pages are suggested; adjust the selection, then read selected pages.';
+      progress.textContent = 'Preview ready. Reading the first page automatically.';
       el('intake-read-status').textContent = 'PDF opened locally. No pages have been read yet.';
     } catch (error) {
       if (run === generation) { destroy(loading); loading = null; documentPdf = null;
-        progress.textContent = 'Could not preview this PDF. It may be protected, damaged, or too complex for this device. Try a smaller/unlocked copy, or use whole-file reading for files up to 20 MiB.'; }
+        el('intake-read-status').textContent = progress.textContent = 'Could not preview this PDF. It may be protected, damaged, or too complex for this device. Try a smaller/unlocked copy or enter details manually.'; }
     } finally { if (run === generation) controls(false); }
+    if (run === generation && documentPdf) await batch([1], true);
   });
 
   async function request(path, body, type, run) {
@@ -166,7 +167,7 @@ if (form) {
       form.dispatchEvent(new CustomEvent('intake-reading-result', {detail:result}));
     }
   }
-  async function batch(numbers) {
+  async function batch(numbers, automatic = false) {
     if (busy || !documentPdf) return;
     if (numbers.length > 10) { progress.textContent = 'Select at most 10 failed pages to retry in one batch.'; return; }
     if (new Set([...results.keys(), ...numbers]).size > 50) { progress.textContent = 'At most 50 completed pages per reading. Clear the reading to start another.'; return; }
@@ -177,7 +178,7 @@ if (form) {
       for (const [index, number] of numbers.entries()) {
         if (run !== generation) break;
         if (results.has(number)) continue;
-        progress.textContent = `Reading page ${number} (${index+1} of ${numbers.length} selected). ${results.size} page(s) completed.`;
+        el('intake-read-status').textContent = progress.textContent = `Reading page ${number} (${index+1} of ${numbers.length} selected). ${results.size} page(s) completed.`;
         let page;
         try {
           page = await documentPdf.getPage(number);
@@ -195,12 +196,17 @@ if (form) {
           if (!text.trim()) throw new Error('No readable text found. Try a clearer copy.');
           if (text.length + [...results.values()].reduce((n,item)=>n+item.text.length,0) > MAX_TOTAL_TEXT) throw new Error('Reading text limit reached. Clear and select fewer pages.');
           results.set(number,{page:number,text,ocr}); failed.delete(number);
+          if (automatic && number === 1 && !numbers.includes(2) && !results.has(2) && documentPdf.numPages > 1 && /DTRAK/i.test(text) && /ORIGINATING OFFICE/i.test(text)) {
+            numbers.push(2); attempted.add(2); selection.value = '1-2';
+          }
         } catch (error) {
           if (run === generation) failed.set(number,error.message || 'Could not read this page. Retry it.');
         } finally { page?.cleanup(); if (run === generation) list(); }
       }
       if (run === generation) {
         progress.textContent = `${results.size ? '' : 'No text was read; no fields were pre-filled. '}${results.size} page(s) completed; ${failed.size} failed. Other pages remain unprocessed. Read more pages, retry failures, or review completed pages.`;
+        if (failed.size) el('pdf-options').open = true;
+        el('intake-read-status').textContent = progress.textContent;
         await aggregate(run);
       }
     } catch (error) {
@@ -211,7 +217,7 @@ if (form) {
     if (!documentPdf) { progress.textContent = 'Open a PDF preview first.'; return; }
     try { batch(selected()); } catch(error) { progress.textContent = error.message; }
   });
-  retry.addEventListener('click', () => batch([...failed.keys()]));
+  retry.addEventListener('click', () => batch([...failed.keys()], true));
   review.addEventListener('click', async () => {
     const run = ++generation; controls(true);
     try { await aggregate(run); } catch(error) { if (run===generation) progress.textContent = 'Could not prepare suggestions. Completed readings are kept; retry. ' + error.message; }

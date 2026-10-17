@@ -379,3 +379,13 @@ Safari/iPhone validation or a test of the user's actual PDF. A separate syntheti
 4-million-pixel page produced a 347,628-byte JPEG and took 1.35 seconds to read in
 the development environment; reported Python and child process peak RSS were
 76.5 MiB each. These single-request measurements are not production load guarantees.
+
+### Guided intake review (6.89)
+
+Selecting a local PDF starts page 1 automatically, followed by page 2 when a DTRAK routing slip is detected. Public links still download within 20 MiB, but reading starts with the same page scope. Additional local pages remain available under View source / read more pages.
+
+Fields are filled directly with expandable evidence. The shared date display receives input/change events. Document dates are separate from routing-slip dates; receipt time is not inferred. Type comparisons ignore capitalization. DTRAK OCR includes an optional five-second TSV pass for tracking captions and dates aligned beneath a DUE DATE header; low-confidence or conflicting dates remain blank. This is not handwriting recognition.
+
+Approve details reveals work selection and registration. Editing details, replacing the source or receiving another reading invalidates approval. Manual edits are retained; unchanged machine values may be replaced or cleared. The final registration checkbox remains separate. Approval here confirms metadata, not substantive approval of the document.
+
+The user's example was tested locally through PDF.js and real OCR endpoints at a mobile viewport, including shared date-display code. No user document is committed. Physical iPhone validation remains outstanding.

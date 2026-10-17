@@ -1,3 +1,11 @@
+## 6.89 — October 17, 2026
+
+- Automatically read the first local PDF page and the next page for DTRAK documents; public links use the same page scope.
+- Fill editable fields directly, synchronize visible date controls and require review approval before work selection.
+- Preserve manual edits, replace earlier machine-filled values on source changes and invalidate approval after edits.
+- Distinguish routing dates from document dates, normalize document types and use bounded positional OCR for tracking captions and deadlines.
+- Correct confirmation-checkbox handling and keep source evidence available inline.
+
 ## 6.88 — October 17, 2026
 
 - Recognize DTRAK routing-slip headers, wrapped subjects and standalone tracking numbers.
