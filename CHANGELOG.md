@@ -1,3 +1,11 @@
+## 6.83 — October 17, 2026
+
+- Retain the selected file or link after reading attempts, until explicit removal or navigation.
+- Distinguish successful reading from fields actually filled, existing values kept, and no-match outcomes.
+- Open no-match text previews and guide users to manual fields; surface reading results on mobile.
+- Handle expired sessions, unexpected server responses, connection errors and a 90-second browser timeout.
+- Recognize split labels, full-width colons, missing label separators and numbered order headings conservatively.
+
 ## 6.82 — October 17, 2026
 
 - Clarify selection, oversized-file rejection, reading progress, and whether OCR ran.

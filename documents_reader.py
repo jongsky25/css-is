@@ -114,16 +114,30 @@ def _date(value):
 def suggest(pages):
     candidates = {key: [] for key in FIELDS}
     patterns = {
-        'subject': r'^subject\s*[:\-]\s*(.+)$',
-        'sender': r'^(?:from|sender|originating office)\s*[:\-]\s*(.+)$',
+        'subject': r'^subject(?:\s*[:\-]\s*|\s+)(.+)$',
+        'sender': r'^(?:from|sender|originating office)(?:\s*[:\-]\s*|\s+)(.+)$',
         'type': r'^(?:document type|type)\s*[:\-]\s*(.+)$',
-        'document_date': r'^(?:document date|date|dated)\s*[:\-]\s*(.+)$',
+        'document_date': r'^(?:document date|date|dated)(?:\s*[:\-]\s*|\s+)(.+)$',
         'due_date': r'^(?:deadline|due date|due|on or before)\s*[:\-]?\s*(.+)$',
         'references': r'^((?:DTRAK\b|reference\b|ref\.).*)$',
     }
+    label = re.compile(r'^(?:subject|from|sender|originating office|document type|type|document date|date|dated|deadline|due date|due|references?|DTRAK|to)\s*[:\-]?\s*$', re.I)
+    boundary = re.compile(r'^(?:subject|from|sender|originating office|document type|type|document date|date|dated|deadline|due date|due|references?|DTRAK|to)(?:\s*[:\-]|\s*$)', re.I)
     for page_number, text in enumerate(pages, 1):
-        for line in text.splitlines():
-            line = re.sub(r'\s+', ' ', line).strip()
+        lines = [re.sub(r'\s+', ' ', line.replace('：', ':')).strip() for line in text.splitlines()]
+        combined = []
+        index = 0
+        while index < len(lines):
+            line = lines[index]
+            # A standalone label followed by its value is common in PDF text and OCR.
+            if label.fullmatch(line) and index + 1 < len(lines):
+                next_line = lines[index + 1]
+                if next_line and not boundary.match(next_line):
+                    line = line.rstrip(' :-') + ': ' + next_line
+                    index += 1
+            combined.append(line)
+            index += 1
+        for line in combined:
             for key, pattern in patterns.items():
                 match = re.match(pattern, line, re.I)
                 if match:
@@ -132,8 +146,11 @@ def suggest(pages):
                         value = _date(value)
                     if value and len(value) <= FIELDS[key]:
                         candidates[key].append((value, page_number, line[:600]))
-            if re.fullmatch(r'(?:memorandum|memo|letter|advisory|office order|department order|invitation)', line, re.I):
-                candidates['type'].append((line, page_number, line))
+            heading = re.fullmatch(r'(memorandum|memo|letter|advisory|office order|department order|department memorandum|administrative order|invitation)(?:\s+(?:no\.?|number)\s*[:.]?\s*([A-Z0-9][A-Z0-9./ -]{0,60}))?', line, re.I)
+            if heading:
+                candidates['type'].append((heading[1], page_number, line))
+                if heading[2]:
+                    candidates['references'].append((line, page_number, line))
     suggestions, evidence, warnings = {}, {}, []
     for key, found in candidates.items():
         unique = list(dict.fromkeys(item[0] for item in found))
