@@ -166,7 +166,8 @@ def _dtrak_header(text):
     return '\n'.join(output), True
 
 
-def suggest(pages):
+def suggest(pages, subject_readings=None):
+    subject_readings = subject_readings or {}
     candidates = {key: [] for key in FIELDS}
     dtrak_pages = []
     routing_dates = []
@@ -245,6 +246,17 @@ def suggest(pages):
     if dtrak_pages:
         warnings.append('DTRAK routing slip detected. Check routing-table deadlines, recipients and handwritten instructions against the source. Deadline pre-fill requires a readable date aligned beneath the deadline header. The routing-slip date is separate from the document date.')
     for key, found in candidates.items():
+        if key == 'subject':
+            regions = [(index, reading) for index, reading in sorted(subject_readings.items())
+                       if reading.get('status') == 'read' and reading.get('value')]
+            if regions:
+                index, reading = regions[0]
+                suggestions[key] = reading['value']
+                evidence[key] = [{'page': index+1, 'text': reading['raw']}]
+                if any(re.sub(r'\W+', '', value).casefold() != re.sub(r'\W+', '', reading['value']).casefold() for value, _, _ in found):
+                    warnings.append('Subject taken from the DTRAK subject box. Other page text differs; verify the source preview before approval.')
+                continue
+
         if key == 'type':
             found = [(value.title(), page, quote) for value, page, quote in found]
         if key == 'subject' and found:
@@ -275,6 +287,7 @@ def suggest(pages):
     if not suggestions:
         warnings.append('No clearly labelled fields were found. Enter the details manually.')
     return {'suggestions': suggestions, 'evidence': evidence, 'warnings': warnings, 'conflicts': conflicts,
+            'field_readings': {'subject': [dict(reading, page=index+1) for index, reading in sorted(subject_readings.items())]},
             'notice': 'Suggested values are unverified. Check each value against the PDF before registration.'}
 
 
@@ -290,6 +303,7 @@ def read_pdf(raw, first_page=False):
         if len(reader.pages) > MAX_PAGES:
             raise ValueError('Choose a PDF with at most 50 pages.')
         pages, total, scanned = [], 0, []
+        subject_readings = {}
         for index, page in enumerate(reader.pages):
             if first_page and index > 0:
                 break
@@ -304,6 +318,7 @@ def read_pdf(raw, first_page=False):
         if scanned:
             import documents_ocr
             readings = documents_ocr.read_pages(raw, scanned)
+            subject_readings.update(getattr(readings, 'subjects', {}))
             for index, text in readings.items():
                 # Keep native text if OCR found nothing; otherwise use the complete
                 # rendered page, avoiding duplicate/conflicting header suggestions.
@@ -315,7 +330,9 @@ def read_pdf(raw, first_page=False):
             text = reader.pages[1].extract_text() or ''
             if len(re.sub(r'\W', '', text)) < 40:
                 import documents_ocr
-                text = documents_ocr.read_pages(raw, [1])[1]
+                readings = documents_ocr.read_pages(raw, [1])
+                text = readings[1]
+                subject_readings.update(getattr(readings, 'subjects', {}))
                 scanned.append(1)
             pages.append(text)
         if sum(map(len, pages)) > MAX_TEXT:
@@ -326,7 +343,7 @@ def read_pdf(raw, first_page=False):
         raise ValueError('The PDF could not be read. Continue manually.') from None
     if not any(text.strip() for text in pages):
         raise ValueError('No readable text was found, including after OCR. Try a clearer scan or enter the details manually.')
-    result = suggest(pages)
+    result = suggest(pages, subject_readings)
     result['reading'] = {'page_count': len(pages), 'ocr_pages': [i + 1 for i in scanned]}
     # Bounded, transient preview even when no labelled fields can be suggested.
     result['text_preview'] = [{'page': i + 1, 'text': text[:2000], 'truncated': len(text) > 2000}

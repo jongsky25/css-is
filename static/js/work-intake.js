@@ -94,6 +94,7 @@
     if (reading || form.dataset.pageBusy === 'true') { event.preventDefault(); status.textContent = 'Wait for PDF reading to finish before registering.'; }
   });
   const showResult = result => {
+    if (!result || !result.suggestions || typeof result.suggestions !== 'object' || !Array.isArray(result.text_preview)) throw new Error('Incomplete reading result. Retry.');
     clearSuggestions();
     document.getElementById('intake-details').hidden = false;
     invalidateApproval();
@@ -146,12 +147,33 @@
         note.textContent = name === 'due_date' ? 'No reliable deadline captured. Check the source; leave blank if none is stated.' : 'Not identified reliably. Check the source and enter this detail.';
         field.closest('label').append(note);
       }
+      const subjectReadings = result.field_readings?.subject || [];
+      for (const reading of subjectReadings) {
+        const detail = document.createElement('details'); detail.className = 'pdf-field-note';
+        detail.open = reading.status !== 'read';
+        const heading = document.createElement('summary');
+        heading.textContent = `Page ${reading.page}: ${reading.status === 'read' ? 'DTRAK subject box read — check source' : 'Subject extraction needs review'}`;
+        detail.append(heading);
+        const reason = document.createElement('p'); reason.textContent = reading.reason || 'No subject-box result was returned.'; detail.append(reason);
+        if (typeof reading.preview === 'string' && /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(reading.preview) && reading.preview.length < 150000) {
+          const image = document.createElement('img'); image.src = reading.preview; image.alt = 'Detected DTRAK subject box'; image.style.maxWidth = '100%'; detail.append(image);
+        }
+        const raw = document.createElement('pre'); raw.textContent = reading.raw || 'No text was returned for this subject box.'; detail.append(raw);
+        if (reading.status !== 'read' && result.scope === 'selected_pages') {
+          const retryPage = document.createElement('button'); retryPage.type = 'button'; retryPage.textContent = 'Retry this page';
+          retryPage.addEventListener('click', () => form.dispatchEvent(new CustomEvent('intake-retry-page', {detail:{page:reading.page}}))); detail.append(retryPage);
+        }
+        form.elements.subject.closest('label').append(detail);
+      }
       const preview = document.createElement('details');
       const summary = document.createElement('summary'); summary.textContent = 'What was read — extracted text';
       preview.append(summary);
+      if (!result.text_preview.length) {
+        const empty = document.createElement('p'); empty.textContent = 'The reader returned no page-text preview. Retry reading or inspect the original page; no text preview is available for this result.'; preview.append(empty);
+      }
       for (const item of result.text_preview || []) {
         const heading = document.createElement('h4'); heading.textContent = `Page ${item.page}`;
-        const text = document.createElement('pre'); text.textContent = item.text || '(No readable text on this page.)';
+        const text = document.createElement('pre'); text.textContent = item.text || '(No readable text returned for this page. Retry reading or inspect the page preview.)';
         preview.append(heading, text);
         if (item.truncated) {
           const note = document.createElement('p'); note.textContent = 'Preview limited to the first 2,000 characters of this page.'; preview.append(note);
@@ -175,7 +197,10 @@
         : `${result.scope === 'selected_pages' ? 'Selected pages were read' : 'The PDF was read'}, but no form fields could be identified reliably. ${method} No fields were changed. Read the extracted text below and enter the details manually, or retry with a clearer copy. Your selected file is kept.`;
       document.getElementById('intake-details').scrollIntoView({block:'start',behavior:'smooth'});
   };
-  form.addEventListener('intake-reading-result', event => showResult(event.detail));
+  form.addEventListener('intake-reading-result', event => {
+    try { showResult(event.detail); }
+    catch (_) { invalidateApproval(); status.textContent = 'The reading result could not be displayed. Your entered details are kept. Use Review completed pages to retry, or enter details manually.'; announce(); }
+  });
   form.addEventListener('intake-reading-cleared', clearSuggestions);
   read.addEventListener('click', async () => {
     if (reading) return;

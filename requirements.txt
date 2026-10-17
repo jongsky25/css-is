@@ -8,6 +8,7 @@ python-multipart
 jinja2
 qrcode[pil]
 pandas
+numpy  # DTRAK grid geometry and skew detection
 python-dateutil     # runtime: recurrence.py expands repeating calendar items (also a pandas dependency)
 matplotlib
 openpyxl

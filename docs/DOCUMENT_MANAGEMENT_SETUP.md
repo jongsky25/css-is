@@ -389,3 +389,13 @@ Fields are filled directly with expandable evidence. The shared date display rec
 Approve details reveals work selection and registration. Editing details, replacing the source or receiving another reading invalidates approval. Manual edits are retained; unchanged machine values may be replaced or cleared. The final registration checkbox remains separate. Approval here confirms metadata, not substantive approval of the document.
 
 The user's example was tested locally through PDF.js and real OCR endpoints at a mobile viewport, including shared date-display code. No user document is committed. Physical iPhone validation remains outstanding.
+
+### DTRAK subject regions (6.91)
+
+DTRAK scanned pages now receive a separate, bounded eight-second subject-region pass. It detects a SUBJECT anchor (including border-contaminated labels) or the standard TYPE OF DOCUMENT row, locates the enclosing grid lines, estimates slight skew within two degrees and OCRs an enlarged border-free subject crop. This is a template-specific reader, not a general handwriting reader. Unrecognized layouts return explicit field status and keep manual review available.
+
+Page-image responses carry transient `subject_reading` metadata: status, method, value, raw crop text, reason, normalized box and a small JPEG preview. Browser aggregation sends bounded text metadata only; it retains the preview in tab memory and joins it back to the corresponding original page for display. Whole-file reading carries the same metadata in memory. Successful region readings take precedence over generic page-text subject candidates; later-page differences produce a review warning rather than blanking the DTRAK subject. The browser publishes completed first-page fields before reading the next page. Failed region readings expose a retry action; malformed display responses and absent text previews have explicit messages.
+
+No original PDF, crop or OCR text is persisted by these readers. Original request byte/pixel bounds and the OCR lock remain enforced. Page requests allow 45 seconds in the browser for the existing page OCR, routing-table pass and the new bounded subject pass. NumPy is now an explicit dependency and `documents_dtrak.py` is in the deployment manifest.
+
+Validation includes synthetic scaled/skewed routing slips; the provided PDF at three rendering scales, compressed JPEGs, added margins and small rotations; and full Chromium and WebKit browser tests with actual PDF.js rendering, Tesseract, visible dates, subject-crop evidence, approval invalidation and retained manual edits. Physical iPhone validation remains outstanding.

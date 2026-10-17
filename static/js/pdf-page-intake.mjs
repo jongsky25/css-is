@@ -120,7 +120,7 @@ if (form) {
 
   async function request(path, body, type, run) {
     const controller = new AbortController(); active = controller;
-    const timer = setTimeout(() => controller.abort(), 30000);
+    const timer = setTimeout(() => controller.abort(), 45000);
     try {
       // Byte bodies also avoid Blob forwarding problems with an older controlling worker.
       if (body instanceof Blob) body = await body.arrayBuffer();
@@ -160,10 +160,20 @@ if (form) {
   }
   async function aggregate(run) {
     if (!results.size) return;
-    const result = await request('/documents/intake/pages-result', JSON.stringify({pages:[...results.values()]}), 'application/json', run);
+    // The server needs bounded field text, not another copy of the crop image.
+    const pages = [...results.values()].map(({subject_reading, ...item}) => ({
+      ...item,
+      subject_reading: subject_reading
+        ? Object.fromEntries(Object.entries(subject_reading).filter(([key]) => !['preview','box'].includes(key)))
+        : null
+    }));
+    const result = await request('/documents/intake/pages-result', JSON.stringify({pages}), 'application/json', run);
     if (run === generation) {
       const incomplete = [...attempted].filter(n => !results.has(n)).sort((a,b)=>a-b);
       if (incomplete.length) result.warnings.unshift(`Not read successfully: page(s) ${incomplete.join(', ')}. These pages are not included in the suggestions.`);
+      for (const reading of result.field_readings?.subject || []) {
+        reading.preview = results.get(reading.page)?.subject_reading?.preview;
+      }
       form.dispatchEvent(new CustomEvent('intake-reading-result', {detail:result}));
     }
   }
@@ -184,20 +194,23 @@ if (form) {
           page = await documentPdf.getPage(number);
           const content = await page.getTextContent();
           let text = content.items.map(item => (item.str || '') + (item.hasEOL ? '\n' : ' ')).join('').trim();
+          let subject_reading = null;
           let ocr = text.replace(/\W/g,'').length < 40;
           if (ocr) {
             const blob = await imageFor(page, run);
             if (run !== generation) break;
             const result = await request('/documents/intake/page', blob, 'image/jpeg', run);
             if (typeof result.text !== 'string') throw new Error('Incomplete page result. Retry it.');
-            text = result.text;
+            text = result.text; subject_reading = result.subject_reading || null;
           }
           if (run !== generation) break;
           if (!text.trim()) throw new Error('No readable text found. Try a clearer copy.');
           if (text.length + [...results.values()].reduce((n,item)=>n+item.text.length,0) > MAX_TOTAL_TEXT) throw new Error('Reading text limit reached. Clear and select fewer pages.');
-          results.set(number,{page:number,text,ocr}); failed.delete(number);
+          results.set(number,{page:number,text,ocr,subject_reading}); failed.delete(number);
           if (automatic && number === 1 && !numbers.includes(2) && !results.has(2) && documentPdf.numPages > 1 && /DTRAK/i.test(text) && /ORIGINATING OFFICE/i.test(text)) {
             numbers.push(2); attempted.add(2); selection.value = '1-2';
+            // Publish the successful routing-slip fields before attempting page 2.
+            try { await aggregate(run); } catch (_) { /* Completed readings remain available for review/retry. */ }
           }
         } catch (error) {
           if (run === generation) failed.set(number,error.message || 'Could not read this page. Retry it.');
@@ -216,6 +229,13 @@ if (form) {
   read.addEventListener('click', () => {
     if (!documentPdf) { progress.textContent = 'Open a PDF preview first.'; return; }
     try { batch(selected()); } catch(error) { progress.textContent = error.message; }
+  });
+  form.addEventListener('intake-retry-page', event => {
+    const number = event.detail?.page;
+    if (busy) { el('intake-read-status').textContent = 'Wait for the current reading to finish before retrying this page.'; return; }
+    if (!documentPdf || !Number.isInteger(number) || number < 1 || number > documentPdf.numPages) return;
+    results.delete(number); failed.delete(number);
+    batch([number], true);
   });
   retry.addEventListener('click', () => batch([...failed.keys()], true));
   review.addEventListener('click', async () => {

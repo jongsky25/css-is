@@ -12,6 +12,13 @@ OCR_SECONDS = 45
 _LOCK = threading.Lock()
 
 
+class PageReadings(dict):
+    """Text mapping with transient field evidence; callers may still use it as a dict."""
+    def __init__(self):
+        super().__init__()
+        self.subjects = {}
+
+
 def read_pages(raw, indices):
     if len(indices) > MAX_OCR_PAGES:
         raise ValueError('This PDF needs OCR on more than 10 pages. Split it into smaller PDFs or enter the details manually.')
@@ -22,7 +29,7 @@ def read_pages(raw, indices):
         deadline = time.monotonic() + OCR_SECONDS
         document = pdfium.PdfDocument(raw)
         try:
-            result = {}
+            result = PageReadings()
             for index in indices:
                 if time.monotonic() >= deadline:
                     raise ValueError('Reading the scanned PDF timed out. Try fewer pages or continue manually.')
@@ -64,6 +71,10 @@ def read_pages(raw, indices):
                 except subprocess.CalledProcessError:
                     raise ValueError('The scanned page could not be read. Continue manually.') from None
                 result[index] = routing_deadline(png, completed.stdout.decode('utf-8', errors='replace').strip(), deadline-time.monotonic())
+                if deadline-time.monotonic() >= 8:
+                    from documents_dtrak import read_subject
+                    subject = read_subject(png, result[index])
+                    if subject: result.subjects[index] = subject
             return result
         finally:
             document.close()

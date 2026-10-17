@@ -46,7 +46,8 @@ def read_image(raw):
             raise ValueError('No readable text was found on this page. Try a clearer copy.')
         if len(text) > documents_reader.MAX_TEXT:
             raise ValueError('This page contains too much text.')
-        return {'text': documents_ocr.routing_deadline(png, text)}
+        from documents_dtrak import read_subject
+        return {'text': documents_ocr.routing_deadline(png, text), 'subject_reading': read_subject(png, text)}
     finally:
         documents_ocr._LOCK.release()
 
@@ -69,7 +70,22 @@ def summarize(payload):
             raise ValueError('The selected pages contain too much text. Clear the reading and select fewer pages.')
         seen.add(number)
     pages = sorted(pages, key=lambda item: item['page'])
-    result = documents_reader.suggest([item['text'] for item in pages])
+    subjects = {}
+    for i, item in enumerate(pages):
+        reading = item.get('subject_reading')
+        if reading is None: continue
+        if not isinstance(reading, dict): raise ValueError('Invalid subject reading.')
+        cleaned = {}
+        for key, limit in [('status', 30), ('method', 40), ('value', 500), ('raw', 1500), ('reason', 300)]:
+            value = reading.get(key, '')
+            if not isinstance(value, str) or len(value) > limit: raise ValueError('Invalid subject reading.')
+            cleaned[key] = value
+        if cleaned['status'] not in ('read', 'empty', 'rejected', 'failed', 'region_not_found') or cleaned['method'] != 'dtrak_subject_cell':
+            raise ValueError('Invalid subject reading.')
+        subjects[i] = cleaned
+    result = documents_reader.suggest([item['text'] for item in pages], subjects)
+    for reading in result.get('field_readings', {}).get('subject', []):
+        reading['page'] = pages[reading['page'] - 1]['page']
     for evidence in result['evidence'].values():
         for item in evidence:
             item['page'] = pages[item['page'] - 1]['page']
