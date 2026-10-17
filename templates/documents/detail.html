@@ -3,6 +3,12 @@
 <h2>{{ doc.number }} · {{ doc.subject }}</h2>
 <p>{{ doc.type }} · {{ doc.visibility }} · {{ 'Awaiting verification' if doc.verification=='pending' else doc.verification|replace('_',' ') }} · {{ doc.status|replace('_',' ') }}</p>
 <p>Due: {{ doc.due_date or 'Unknown' }} ({{ doc.due_source or 'not set' }}) · Last change {{ doc.updated_at }} · Revision {{ doc.revision }}</p>
+{% if doc.archived_at %}<p class="doc-alert" role="status">Archived {{ doc.archived_at }} by {{ names.get(doc.archived_by,'Former staff member') }}. Restore this record before changing it.</p>{% endif %}
+{% if enabled and can_archive %}{% if doc.archived_at %}
+{{ start(doc,csrf,'restore','Restore from archive') }}{{ text('reason','Reason for restoring') }}{{ end('Restore record') }}
+{% elif doc.status in ['closed','cancelled'] %}
+{{ start(doc,csrf,'archive','Archive this record') }}{{ text('reason','Reason for archiving') }}{{ end('Archive record') }}
+{% endif %}{% endif %}
 {% if doc.reconcile %}<p class="doc-alert">A changed directive or policy needs lead reconciliation. Prior work is retained.</p>{% endif %}
 {% for warning in warnings %}<p class="doc-alert">{{ warning }}</p>{% endfor %}
 {% if not doc.lead_id %}<p class="doc-alert">Ownership is unresolved. Suggested leads: {% for uid in evaluation.leads %}{% for u in people if u.id==uid %}{{ u.username }} {% endfor %}{% else %}none{% endfor %}.</p>{% endif %}
@@ -24,7 +30,7 @@
 <h3>Related records</h3><ul>{% for x in related %}<li><a href="/documents/{{ x.id }}">{{ x.number }} · {{ x.subject }}</a></li>{% else %}<li>No visible related records.</li>{% endfor %}</ul>
 {% if work_cases or work_enabled %}<h3>Shared work</h3><ul>{% for item in work_cases %}<li><a href="/work/{{ item.id }}">{{ item.title }}</a></li>{% else %}<li>No permitted work items linked.</li>{% endfor %}</ul>{% if work_enabled %}<p><a href="/work/new?source_document_id={{ doc.id }}">Start a work item from this document</a> · <a href="/work">Find existing work</a></p>{% endif %}{% endif %}
 {% if duplicates %}<h3>Possible duplicates</h3><p>These are warnings, not confirmed duplicates.</p><ul>{% for x in duplicates %}<li><a href="/documents/{{ x.id }}">{{ x.number }} · {{ x.subject }}</a></li>{% endfor %}</ul>{% endif %}
-{% if enabled %}<h3>Actions</h3>
+{% if enabled and not doc.archived_at %}<h3>Actions</h3>
 {% if officer %}
 {{ start(doc,csrf,'verify','Verify or request correction') }}{{ select('verification','Decision',[('verified','Verified'),('needs_correction','Needs correction')]) }}{{ text('reason','Decision note') }}{{ end() }}
 {{ start(doc,csrf,'access','Manage document visibility') }}{{ select('visibility','Visibility',[('restricted','Restricted'),('bureau','Bureau-wide after verification')]) }}{{ text('viewers','Explicit viewer account IDs (one per line)',required=false) }}<p>Your own access is retained. Restricted assignments require explicit viewer access first.</p>{{ text('reason','Reason') }}{{ end() }}

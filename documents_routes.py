@@ -34,6 +34,7 @@ def make_router(templates,get_conn):
         user=p.actor(conn,getattr(request.state,'user',None))
         return {'nav_active':'documents','enabled':d.enabled(conn),'csrf':csrf(request),'error':'',
                 'submitted':{},'workflow_admin':p.has_role(conn,user,'workflow_admin'),
+                'archive_admin':bool(conn.execute("SELECT 1 FROM document_role_grant WHERE user_id=? AND role='workflow_admin' AND revoked_at IS NULL",(user['id'],)).fetchone()),
                 'people':rows(conn,"SELECT u.id,u.username,COALESCE(NULLIF(r.name,''),u.username) AS name FROM admin_user u LEFT JOIN resource_person r ON r.id=u.rp_id WHERE u.active=1 ORDER BY name"),
                 'names':{r['id']:r['name'] for r in rows(conn,"SELECT u.id,COALESCE(NULLIF(r.name,''),u.username) AS name FROM admin_user u LEFT JOIN resource_person r ON r.id=u.rp_id")},
                 'units':rows(conn,'SELECT id,name FROM org_unit ORDER BY path'),**values}
@@ -90,6 +91,7 @@ def make_router(templates,get_conn):
                 'officer':p.officer(conn,p.actor(conn,user),doc),'can_work':p.can_work(conn,p.actor(conn,user),doc),
                 'signatory':p.has_role(conn,p.actor(conn,user),'signatory',doc['unit_id']),
                 'can_release':p.can_release(conn,p.actor(conn,user),doc),
+                'can_archive':p.has_role(conn,user,'workflow_admin',doc['unit_id']),
                 'merged_sources':rows(conn,'SELECT id,number,subject FROM document WHERE canonical_id=?',(doc_id,)),
                 'notice_rows':rows(conn,"SELECT * FROM document_notice WHERE document_id=? AND user_id=? ORDER BY id DESC",(doc_id,user['id'])),
                 'recipient_outcomes':rows(conn,'SELECT r.* FROM document_dispatch_recipient r JOIN document_dispatch x ON x.id=r.dispatch_id WHERE x.document_id=?',(doc_id,)),
@@ -438,7 +440,11 @@ def make_router(templates,get_conn):
         try:
             data=await posted(request); user=request.state.user
             revision=int(data['revision'])
-            if action=='attach':
+            if action!='restore' and d.get(conn,user,doc_id)['archived_at']:
+                raise ValueError('Restore this document before changing it.')
+            if action in ('archive','restore'):
+                d.set_archived(conn,user,doc_id,revision,action=='archive',data['reason'])
+            elif action=='attach':
                 ops.attach(conn,user,doc_id,revision,data['url'],data['classification'],data['reason'])
             elif action=='sign_preview':
                 preview=ops.signature_preview(conn,user,doc_id)

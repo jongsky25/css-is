@@ -45,6 +45,11 @@ def list_visible(conn, user, query='', queue='all'):
             WHERE i.document_id=d.id) AS gmail_imported FROM document d ORDER BY d.id DESC'''):
         if not p.can_view(conn,user,doc):
             continue
+        if queue == 'archived':
+            if not doc['archived_at'] or not p.has_role(conn,user,'workflow_admin',doc['unit_id']):
+                continue
+        elif doc['archived_at']:
+            continue
         refs=' '.join(r[0] for r in conn.execute('SELECT value FROM document_reference WHERE document_id=?',(doc['id'],)))
         if query and rules.normalize(query) not in rules.normalize(doc['number']+' '+doc['subject']+' '+doc['sender']+' '+refs):
             continue
@@ -77,17 +82,40 @@ def list_visible(conn, user, query='', queue='all'):
     return result
 
 
-def check(conn, user, doc_id, revision):
+def check(conn, user, doc_id, revision, *, allow_archived=False):
     writable(conn)
     user = p.actor(conn,user)
     doc = get(conn,user,doc_id)
     if doc['canonical_id']:
         raise Conflict('This receipt was merged. Open the canonical record.')
+    if doc['archived_at'] and not allow_archived:
+        raise ValueError('Restore this document before changing it.')
     if conn.execute("SELECT 1 FROM document_job WHERE document_id=? AND kind IN ('sign','dispatch') AND state IN ('running','unknown')", (doc_id,)).fetchone():
         raise Conflict('An external operation is running or uncertain. Reconcile its outcome before editing.')
     if doc['revision'] != int(revision):
         raise Conflict(f"This record changed at {doc['updated_at']}; reload revision {doc['revision']} before resubmitting.")
     return user, doc
+
+
+def set_archived(conn, user, doc_id, revision, archive, note):
+    """File or restore a terminal record without changing its workflow status."""
+    with transaction(conn):
+        user, doc = check(conn, user, doc_id, revision, allow_archived=True)
+        require(p.has_role(conn,user,'workflow_admin',doc['unit_id']))
+        note = reason(note)
+        if archive:
+            if doc['archived_at']:
+                raise ValueError('This document is already archived.')
+            if doc['status'] not in ('closed','cancelled'):
+                raise ValueError('Close or cancel the document before archiving it.')
+            if conn.execute("SELECT 1 FROM document_job WHERE document_id=? AND state IN ('pending','running','unknown')", (doc_id,)).fetchone():
+                raise Conflict('Resolve outstanding external operations before archiving.')
+            return finish(conn,user,doc,'archive',{'reason':note},
+                          {'archived_at':tz.now_iso(),'archived_by':user['id']})
+        if not doc['archived_at']:
+            raise ValueError('This document is not archived.')
+        return finish(conn,user,doc,'restore',{'reason':note},
+                      {'archived_at':None,'archived_by':None})
 
 
 def reason(value):
@@ -556,6 +584,8 @@ def duplicate_candidates(conn,user,doc_id):
 def merge_preview(conn,user,source_id,target_id):
     source,target=get(conn,user,source_id),get(conn,user,target_id)
     require(source_id!=target_id and not source['canonical_id'] and not target['canonical_id'])
+    if source['archived_at'] or target['archived_at']:
+        raise ValueError('Restore archived documents before merging them.')
     require(p.officer(conn,p.actor(conn,user),source) and p.officer(conn,p.actor(conn,user),target))
     return {'source_id':source_id,'target_id':target_id,'source_revision':source['revision'],'target_revision':target['revision'],
             'source_lead':source['lead_id'],'target_lead':target['lead_id'],'source_due':source['due_date'],'target_due':target['due_date']}
@@ -593,6 +623,8 @@ def reverse_merge(conn,user,source_id,note):
         if not source['canonical_id']:
             raise ValueError('This record is not merged.')
         target=get(conn,user,source['canonical_id'])
+        if source['archived_at'] or target['archived_at']:
+            raise ValueError('Restore archived documents before correcting a merge.')
         require(p.officer(conn,user,source) and p.officer(conn,user,target))
         viewers=[r['id'] for r in rows(conn,'SELECT id FROM admin_user WHERE active=1') if p.can_view(conn,r,target)]
         conn.execute('DELETE FROM document_access WHERE document_id=?',(source_id,))

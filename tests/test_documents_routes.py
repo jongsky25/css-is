@@ -42,6 +42,49 @@ def test_rule_screen_requires_explicit_workflow_grant(app_mod,admin):
     assert admin.get('/documents/rules').status_code==403
 
 
+def test_archive_screen_and_restore_require_document_admin(app_mod,viewer,admin):
+    c=st.connect(app_mod.DB);st.init_db(c)
+    old=st.get_setting(c,'documents.enabled','0')
+    try:
+        st.set_setting(c,'documents.enabled','1')
+        admin_user=st.get_admin_user(c,'admin@test.local')
+        viewer_user=st.get_admin_user(c,'viewer@test.local')
+        for role in ('records','workflow_admin'):
+            c.execute('INSERT INTO document_role_grant(user_id,role,created_at) VALUES (?,?,?)',
+                      (admin_user['id'],role,'2026-10-17'))
+        c.commit()
+        doc=d.register(c,viewer_user,{'subject':'Archive route record','type':'memo'})
+        page=admin.get(f"/documents/{doc['id']}")
+        csrf=token(page)
+        cancelled=admin.post(f"/documents/{doc['id']}/cancel",data={
+            'csrf':csrf,'revision':doc['revision'],'reason':'Withdrawn'},follow_redirects=False)
+        assert cancelled.status_code==303
+        current=d.raw(c,doc['id'])
+        denied=viewer.post(f"/documents/{doc['id']}/archive",data={
+            'csrf':token(viewer.get(f"/documents/{doc['id']}")),
+            'revision':current['revision'],'reason':'Unauthorized'},follow_redirects=False)
+        assert denied.status_code==403
+        page=admin.get(f"/documents/{doc['id']}")
+        assert 'Archive this record' in page.text
+        archived=admin.post(f"/documents/{doc['id']}/archive",data={
+            'csrf':token(page),'revision':current['revision'],'reason':'Filed'},follow_redirects=False)
+        assert archived.status_code==303
+        assert 'Archive route record' not in admin.get('/documents').text
+        assert 'Archive route record' in admin.get('/documents?queue=archived').text
+        assert 'Archive route record' not in admin.get('/documents/export.csv').text
+        assert 'Restore from archive' in admin.get(f"/documents/{doc['id']}").text
+        current=d.raw(c,doc['id'])
+        restored=admin.post(f"/documents/{doc['id']}/restore",data={
+            'csrf':token(admin.get(f"/documents/{doc['id']}")),
+            'revision':current['revision'],'reason':'Needed again'},follow_redirects=False)
+        assert restored.status_code==303
+        assert 'Archive route record' in admin.get('/documents').text
+    finally:
+        c.execute("DELETE FROM document_role_grant WHERE user_id=? AND role IN ('records','workflow_admin') AND created_at='2026-10-17'",
+                  (admin_user['id'],))
+        c.commit();st.set_setting(c,'documents.enabled',old);c.close()
+
+
 def test_signature_preview_and_confirm_use_existing_profile(app_mod,monkeypatch):
     import auth
     import documents_operations as ops

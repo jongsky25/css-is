@@ -34,7 +34,8 @@ def install(conn):
       review_class TEXT, reviewer_id INTEGER REFERENCES admin_user(id),
       current_version INTEGER, approved_version INTEGER, signed_version INTEGER,
       reconcile INTEGER NOT NULL DEFAULT 0, canonical_id INTEGER REFERENCES document(id),
-      revision INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+      revision INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+      archived_at TEXT, archived_by INTEGER REFERENCES admin_user(id));
     CREATE INDEX IF NOT EXISTS document_due ON document(status,due_date);
     CREATE TABLE IF NOT EXISTS document_role_grant (
       id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES admin_user(id),
@@ -110,6 +111,11 @@ def install(conn):
     columns={row[1] for row in conn.execute('PRAGMA table_info(document_rule_version)')}
     if 'family_id' not in columns:
         conn.execute('ALTER TABLE document_rule_version ADD COLUMN family_id INTEGER')
+    document_columns={row[1] for row in conn.execute('PRAGMA table_info(document)')}
+    if 'archived_at' not in document_columns:
+        conn.execute('ALTER TABLE document ADD COLUMN archived_at TEXT')
+    if 'archived_by' not in document_columns:
+        conn.execute('ALTER TABLE document ADD COLUMN archived_by INTEGER REFERENCES admin_user(id)')
     for key in ('documents.enabled', 'documents.sending_enabled', 'documents.gmail_intake_enabled'):
         conn.execute('INSERT OR IGNORE INTO app_setting(key,value) VALUES (?,?)', (key, '0'))
     conn.commit()

@@ -130,6 +130,46 @@ def test_stale_revision_and_append_only_history(registry):
     c.rollback()
 
 
+def test_archive_requires_workflow_admin_and_terminal_record(registry):
+    c,u,unit,_=registry
+    doc=register(c,u[0],unit)
+    with pytest.raises(p.Denied):
+        d.set_archived(c,u[4],doc['id'],doc['revision'],True,'Filed')
+    with pytest.raises(p.Denied):
+        d.set_archived(c,u[0],doc['id'],doc['revision'],True,'Filed')
+    with pytest.raises(ValueError,match='Close or cancel'):
+        d.set_archived(c,u[1],doc['id'],doc['revision'],True,'Filed')
+    doc=act(c,u[1],doc,'cancel',reason='Withdrawn')
+    archived=d.set_archived(c,u[1],doc['id'],doc['revision'],True,'Filed after withdrawal')
+    assert archived['status']=='cancelled'
+    assert archived['archived_at'] and archived['archived_by']==u[1]['id']
+    assert doc['id'] not in [x['id'] for x in d.list_visible(c,u[1])]
+    assert doc['id'] in [x['id'] for x in d.list_visible(c,u[1],queue='archived')]
+    assert d.list_visible(c,u[0],queue='archived')==[]
+    assert d.get(c,u[0],doc['id'])['archived_at']
+    with pytest.raises(ValueError,match='Restore'):
+        act(c,u[1],archived,'receipt',channel='mail',sender='Office',received_at='2026-01-01',evidence='copy')
+    with pytest.raises(d.Conflict):
+        d.set_archived(c,u[1],doc['id'],doc['revision'],False,'Old page')
+    restored=d.set_archived(c,u[1],doc['id'],archived['revision'],False,'Needed for review')
+    assert restored['archived_at'] is None and restored['archived_by'] is None
+    assert doc['id'] in [x['id'] for x in d.list_visible(c,u[1])]
+    assert [x['action'] for x in rows(c,'SELECT action FROM document_event WHERE document_id=? ORDER BY id',(doc['id'],))][-2:]==['archive','restore']
+    st.init_db(c)
+    assert d.raw(c,doc['id'])['archived_at'] is None
+
+
+def test_archive_rejects_unresolved_external_operation(registry):
+    c,u,unit,_=registry
+    doc=register(c,u[0],unit)
+    doc=act(c,u[1],doc,'cancel',reason='Withdrawn')
+    c.execute("INSERT INTO document_job(id,document_id,actor_id,kind,payload_json,created_at,updated_at) VALUES ('pending-archive',?,?, 'extract','{}','2026-01-01','2026-01-01')",(doc['id'],u[0]['id']))
+    c.commit()
+    with pytest.raises(d.Conflict,match='outstanding'):
+        d.set_archived(c,u[1],doc['id'],doc['revision'],True,'Filed')
+    assert d.raw(c,doc['id'])['archived_at'] is None
+
+
 def test_rule_conflicts_notify_without_hidden_lead(registry):
     c,u,unit,_=registry
     for i in (0,3):
