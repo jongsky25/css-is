@@ -1,3 +1,8 @@
+## 6.92 — October 17, 2026
+
+- Fix the break check-in rating buttons so tapping 5 can no longer select 4 (Spot Feedback #117).
+- Keep a conference room you unticked when a calendar form is sent back with an error (Spot Feedback #114).
+
 ## 6.91 — October 17, 2026
 
 - Locate DTRAK subject cells using labels and table geometry, correct slight skew and OCR a border-free enlarged crop.

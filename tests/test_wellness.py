@@ -1040,3 +1040,12 @@ def test_landing_page_leads_with_your_to_do(app_mod, wellness_org):
     # the to-do comes before the team panels
     if 'data-tour="oc-wellness"' in html:
         assert html.index("Your to-do") < html.index('data-tour="oc-wellness"')
+
+
+def test_check_in_radios_are_pinned_to_their_own_label():
+    """Spot Feedback #117: `.field input {width:100%}` stretched every hidden radio over its neighbours, so a tap on
+    5 could land on 4. The hidden radios must be positioned inside their labels and fill only them."""
+    with open("templates/wellness_reflect.html", encoding="utf-8") as fh:
+        html = fh.read()
+    assert ".moods label, .rate label, .choice label { position:relative; }" in html
+    assert ".field .moods input, .field .rate input, .field .choice input" in html and "inset:0" in html
