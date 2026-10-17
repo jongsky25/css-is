@@ -79,6 +79,7 @@ import rooms_meals_routes
 import rooms_routes
 import travel_routes
 import documents_routes
+import documents_email
 import work_routes
 import documents_notify
 import documents
@@ -2060,7 +2061,7 @@ _PUBLIC_PREFIXES = ("/r/", "/photo/", "/e/", "/static/", "/lang/", "/wellness/de
 _PUBLIC_EXACT = {"/room", "/room/", "/room/day", "/seq", "/login", "/logout", "/favicon.ico",
                  "/set-password", "/forgot", "/reset-password", "/health",
                  "/sw.js", "/manifest.webmanifest",
-                 "/offsite-backup/ping"}   # machine callback, token-gated below
+                 "/offsite-backup/ping", "/integrations/gmail/documents"}   # machine callbacks enforce their own authentication
 
 
 def _base_url(request):
@@ -16994,4 +16995,5 @@ app.include_router(travel_routes.make_router(templates, get_conn, _today_local, 
 
 # Document module: each route enforces account, object access and CSRF.
 app.include_router(documents_routes.make_router(templates, get_conn))
+app.include_router(documents_email.make_router(get_conn))
 app.include_router(work_routes.make_router(templates, get_conn))

@@ -5,7 +5,7 @@
 <div class="documents">
 <h1>Documents</h1>
 <nav aria-label="Document queues" class="doc-tabs">
-{% for value,label in [('mine','My actions'),('IN','Incoming'),('OUT','Outgoing'),('verification','For verification'),('review','For review'),('release','For release'),('unassigned','Unassigned'),('all','Register and overview')] %}<a href="/documents?queue={{ value }}">{{ label }}</a>{% endfor %}
+{% for value,label in [('mine','My actions'),('IN','Incoming'),('OUT','Outgoing'),('verification','For verification'),('gmail','From Gmail'),('gmail_review','Gmail: needs verification'),('review','For review'),('release','For release'),('unassigned','Unassigned'),('all','Register and overview')] %}<a href="/documents?queue={{ value }}">{{ label }}</a>{% endfor %}
 {% if workflow_admin %}<a href="/documents/rules">Rules and policies</a>{% endif %}
 </nav>
 {% if not enabled %}<p class="doc-alert" role="status">Documents is not enabled. You can read records you have access to; new work and sending are disabled.</p>{% endif %}

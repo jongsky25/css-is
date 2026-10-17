@@ -7,6 +7,14 @@
 {% for warning in warnings %}<p class="doc-alert">{{ warning }}</p>{% endfor %}
 {% if not doc.lead_id %}<p class="doc-alert">Ownership is unresolved. Suggested leads: {% for uid in evaluation.leads %}{% for u in people if u.id==uid %}{{ u.username }} {% endfor %}{% else %}none{% endfor %}.</p>{% endif %}
 {% if evaluation.conflicts %}<p class="doc-alert">Policy conflicts need resolution: {{ evaluation.conflicts|join(', ') }}.</p>{% endif %}
+{% if gmail_source %}<section class="doc-card" aria-label="Gmail import source"><h3>Imported from Gmail</h3>
+<dl><dt>Source mailbox</dt><dd>{{ gmail_source.mailbox }}</dd><dt>Gmail message ID</dt><dd>{{ gmail_source.message_id }}</dd><dt>Email received</dt><dd>{{ gmail_source.received_at }}</dd><dt>Registered</dt><dd>{{ gmail_source.created_at }}</dd></dl>
+{% if doc.verification!='verified' %}<p>Needs verification. Check the source attachments and correct the document type, subject and sender before recording your decision. Confirm deadlines separately, then explicitly review routing.</p>{% endif %}
+{% if enabled and can_work and doc.status not in ['closed','cancelled'] and gmail_attachments %}
+{{ start(doc,csrf,'extract','Suggest fields from an imported attachment') }}
+<label>Source attachment<select name="source_version_id" required>{% for v in gmail_attachments %}<option value="{{ v.id }}">Attachment #{{ loop.index }} · {{ v.file_id }}</option>{% endfor %}</select></label>
+<p>Suggestions do not verify the record or change fields until you confirm them. Extraction supports Google Docs/Sheets, plain text, PDF and PNG/JPEG/GIF scans through the configured relay. For other files, use manual correction below.</p>{{ end('Read attachment suggestions') }}
+{% endif %}</section>{% endif %}
 <h3>References and receipts</h3><ul>{% for r in references %}<li>{{ r.kind }}: {{ r.value }}</li>{% endfor %}{% for r in receipts %}<li>{{ r.received_at }} · {{ r.channel }} · {{ r.sender }} · {{ r.evidence }}</li>{% endfor %}</ul>
 {% include 'documents/assignments.html' %}
 {% if consolidation %}<section class="doc-card"><h3>Consolidation review</h3><p><a href="/work/{{ consolidation.case.id }}/consolidation">{{ consolidation.case.title }} — inputs and review history</a></p><p>Requested version #{{ consolidation.version.id }} · {{ consolidation.version.fingerprint }}. {{ consolidation.accepted }} accepted inputs; {{ consolidation.missing }} required inputs outstanding at request.</p>{% if not consolidation.current %}{% if doc.status in ('released','awaiting_acknowledgment','closed','cancelled') %}<p>Historical review context is retained. Use the work item completion checklist to check current requirements.</p>{% else %}<p class="doc-alert">Inputs or the exact draft changed. Request renewed consolidation review.</p>{% endif %}{% endif %}</section>{% endif %}

@@ -133,7 +133,15 @@ def queue(conn,user,doc_id,revision,kind,data):
         payload={}
         vid=doc['current_version']
         if kind=='extract':
-            url,fid=validate_drive_url(data['url'])
+            if data.get('source_version_id'):
+                attached=rows(conn,'SELECT url FROM document_file_version WHERE id=? AND document_id=?',
+                              (int(data['source_version_id']),doc_id))
+                if not attached:
+                    raise ValueError('Choose an attachment belonging to this record.')
+                source_url=attached[0]['url']
+            else:
+                source_url=data['url']
+            url,fid=validate_drive_url(source_url)
             payload={'url':url,'file_id':fid,'max_bytes':20*1024*1024,'transient':True}
         elif kind=='sign':
             work_review.require_current(conn,doc)
