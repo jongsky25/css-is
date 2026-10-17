@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.93"
+APP_VERSION = "6.94"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.94",
+        "date": "October 17, 2026",
+        "summary": "No more retyping the per diem when the policy rates already give it.",
+        "changes": [
+            "When you pick a per diem rule for a day, the amount now comes straight from the policy rates and the Per diem box stays out of the way.",
+            "Press Change amount if you want to claim a different figure, or choose to type the per diem yourself.",
+        ],
+    },
     {
         "version": "6.93",
         "date": "October 17, 2026",

@@ -107,6 +107,7 @@
   var flagsBox = el('div'), msgBox = el('div', { role: 'status', 'aria-live': 'polite' }), docsList = el('ul', { 'class': 'tv-docs' });
 
   var uis = [];                        // per row: the lines the server's answer is painted into
+  var ownPerDiem = new WeakSet();      // rows whose per diem box the person opened to change the policy amount
 
   function placePicker(r) {
     var opts = policy.places[r.basis] || [], wrap = el('div', { 'class': 'tv-row-wide' });
@@ -220,7 +221,8 @@
         kids.push(check('Meals were provided', r.meals_provided, function (v) { r.meals_provided = v; }));
       }
       if (r.day_kind === 'full') kids.push(check('Lodging was provided', r.lodging_provided, function (v) { r.lodging_provided = v; }));
-      kids.push(field('Per diem (\u20b1)', r.per_diem, function (v) { r.per_diem = v; }, { type: 'number', refresh: true }));
+      var pdField = field('Per diem (\u20b1)', r.per_diem, function (v) { r.per_diem = v; ownPerDiem.add(r); }, { type: 'number', refresh: true });
+      kids.push(pdField);
       var pdLine = el('div', { 'class': 'tv-row-wide tv-hint' }), noteLine = el('div', { 'class': 'tv-row-wide tv-flagline' });
       kids.push(pdLine); kids.push(noteLine);
       var box = el('div', { 'class': 'tv-row' }, kids);
@@ -228,7 +230,7 @@
       rm.addEventListener('click', function () { state.rows.splice(i, 1); save(); drawRows(); refresh(); });
       box.appendChild(el('div', { 'class': 'tv-row-wide' }, [rm]));
       rowsBox.appendChild(box);
-      uis.push({ cap: capLine, pd: pdLine, notes: noteLine, row: r });
+      uis.push({ cap: capLine, pd: pdLine, pdField: pdField, notes: noteLine, row: r });
     });
   }
 
@@ -245,14 +247,25 @@
         if (isEstimate) { use.textContent = 'Use as estimate'; u.cap.appendChild(use); }
       }
       u.pd.textContent = '';
+      // The policy already knows the per diem for a chosen rule, so the amount box stays out of the way
+      // until the person asks to change it (or types the per diem themselves, or has a different amount).
+      var fromPolicy = c.per_diem != null && u.row.day_kind !== '' && !ownPerDiem.has(u.row) &&
+        (Number(u.row.per_diem) || 0) === c.per_diem;
+      u.pdField.hidden = fromPolicy;
       if (c.per_diem != null) {
         var parts = c.day || {};
-        u.pd.appendChild(document.createTextNode('Allowed for this day: ' + peso(c.per_diem) +
+        u.pd.appendChild(document.createTextNode((fromPolicy ? 'Per diem for this day, from the policy rates: ' : 'Allowed for this day: ') + peso(c.per_diem) +
           (parts.lodging || parts.meals || parts.incidentals ? ' (lodging ' + peso(parts.lodging) + ', meals ' + peso(parts.meals) + ', incidentals ' + peso(parts.incidentals) + ')' : '') +
           '. ' + (parts.notes || []).join(' ') + ' '));
-        var useP = el('button', { type: 'button', 'class': 'btn ghost small', text: 'Use ' + peso(c.per_diem) });
-        useP.addEventListener('click', function () { u.row.per_diem = c.per_diem; save(); drawRows(); refresh(); });
-        u.pd.appendChild(useP);
+        if (fromPolicy) {
+          var change = el('button', { type: 'button', 'class': 'btn ghost small', text: 'Change amount' });
+          change.addEventListener('click', function () { ownPerDiem.add(u.row); paint(); u.pdField.querySelector('input').focus(); });
+          u.pd.appendChild(change);
+        } else {
+          var useP = el('button', { type: 'button', 'class': 'btn ghost small', text: 'Use ' + peso(c.per_diem) });
+          useP.addEventListener('click', function () { u.row.per_diem = c.per_diem; ownPerDiem.delete(u.row); save(); drawRows(); refresh(); });
+          u.pd.appendChild(useP);
+        }
       }
       u.notes.textContent = (c.warnings || []).join(' ');
     });

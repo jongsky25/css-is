@@ -1,3 +1,7 @@
+## 6.94 — October 17, 2026
+
+- Hide the Per diem amount box when a per diem rule is chosen and the policy rates give the amount; "Change amount" brings it back (Spot Feedback #119).
+
 ## 6.93 — October 17, 2026
 
 - Require the DPO number on every travel filing, when opening it and when editing its answers (Spot Feedback #116, #118).
