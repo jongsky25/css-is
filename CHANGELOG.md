@@ -1,3 +1,11 @@
+## 6.84 — October 17, 2026
+
+- Add disabled-by-default, signed Gmail intake with mailbox/account binding and atomic duplicate protection.
+- Add Apps Script discovery, private Drive attachment storage, stable checkpoints, bounded retries and operator recovery controls.
+- Show Gmail source details and permission-filtered review queues, with explicit extraction confirmation and stale-edit protection.
+- Include synthetic Google-service and cross-language integration tests plus setup/recovery documentation.
+- Keep live mailbox acceptance and trigger rollout for Phase 6; operational controls currently run through Apps Script.
+
 ## 6.83 — October 17, 2026
 
 - Retain the selected file or link after reading attempts, until explicit removal or navigation.

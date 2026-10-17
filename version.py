@@ -17,10 +17,22 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.83"
+APP_VERSION = "6.84"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.84",
+        "date": "October 17, 2026",
+        "summary": "Prepare Gmail documents for automatic registration and staff review.",
+        "changes": [
+            "Once configured, selected Gmail attachments can enter the registry without manual downloading and uploading.",
+            "Imported documents show their email source and wait for staff verification.",
+            "Reviewers can read attachment suggestions while keeping control of confirmed details and deadlines.",
+            "Operators can inspect failures, pause importing and retry saved work without creating duplicate records.",
+            "Gmail importing stays off until mailbox setup and live acceptance are completed.",
+        ],
+    },
     {
         "version": "6.83",
         "date": "October 17, 2026",
