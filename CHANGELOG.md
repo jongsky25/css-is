@@ -1,3 +1,17 @@
+## 6.94 — October 17, 2026
+
+- Hide the Per diem amount box when a per diem rule is chosen and the policy rates give the amount; "Change amount" brings it back (Spot Feedback #119).
+
+## 6.93 — October 17, 2026
+
+- Require the DPO number on every travel filing, when opening it and when editing its answers (Spot Feedback #116, #118).
+- Explain on the travel form that the lodging question is about the room cost, not the kind of filing (Spot Feedback #115).
+
+## 6.92 — October 17, 2026
+
+- Fix the break check-in rating buttons so tapping 5 can no longer select 4 (Spot Feedback #117).
+- Keep a conference room you unticked when a calendar form is sent back with an error (Spot Feedback #114).
+
 ## 6.91 — October 17, 2026
 
 - Locate DTRAK subject cells using labels and table geometry, correct slight skew and OCR a border-free enlarged crop.

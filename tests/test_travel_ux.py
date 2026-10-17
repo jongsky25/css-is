@@ -180,3 +180,22 @@ def test_storage_failure_is_visible_and_hidden_refund_is_not_generated(page, vie
     assert appendix['fields']['refund_amount'] == ''
     assert appendix['fields']['refund_or_no'] == ''
     assert 'Old deviation' not in str(appendix['blocks'])
+
+
+def test_per_diem_box_stays_out_of_the_way_when_the_policy_gives_the_amount(page, viewer, conn, relay):
+    """Spot Feedback #119: with a per diem rule chosen the amount comes from the policy rates, so the box is hidden
+    until the person asks to change it; typing the per diem yourself still shows it."""
+    ref = mk(viewer)
+    page.goto(f'http://testserver/travel/f/{ref}/prepare')
+    box = page.get_by_label('Per diem (₱)', exact=True).first
+    pw.expect(box).to_be_visible()                                              # no rate chosen yet: type it yourself
+    region = page.get_by_label('Where you are going', exact=True)
+    region.select_option(index=1)
+    page.get_by_label('Per diem rule', exact=True).first.select_option(index=1)
+    pw.expect(page.get_by_text('Per diem for this day, from the policy rates:', exact=False).first).to_be_visible()
+    pw.expect(box).to_be_hidden()
+    page.get_by_role('button', name='Change amount', exact=True).first.click()
+    pw.expect(box).to_be_visible()
+    box.fill('100')
+    pw.expect(box).to_have_value('100')
+    assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')

@@ -355,6 +355,9 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             "show_room_chip": not (entry and entry.get("event_id")) and not (
                 entry and any(r["status"] in ("requested", "approved") for r in rooms.reservations_for_entry(conn, entry["id"]))),
             "room_link": _room_link(request, conn, entry) if entry else None,
+            # A form sent back with an error / conflict / confirm step is the person's own answer coming
+            # home: the room line must keep it, not auto-tick again (Spot Feedback #114).
+            "room_decided": bool(error or conflict or confirm or status_code != 200),
             "chip_date": "start_date", "chip_venue": "venue", "chip_format": "modality",
             "chip_start": "start_time", "chip_end": "end_time",
         }, status_code=status_code)

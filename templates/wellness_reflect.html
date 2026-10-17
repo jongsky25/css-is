@@ -14,22 +14,25 @@
            border-radius:10px; background:var(--bg); color:var(--ink); box-sizing:border-box; }
   .field .help { color:var(--soft); font-size:.8rem; margin-top:.25rem; }
   .moods { display:flex; gap:.45rem; }
+  /* The visually-hidden radios must cover only their own label: `.field input` would
+     otherwise stretch each to full width and they'd overlap (Spot Feedback #117). */
+  .moods label, .rate label, .choice label { position:relative; }
+  .field .moods input, .field .rate input, .field .choice input {
+         position:absolute; inset:0; width:100%; height:100%; margin:0; padding:0;
+         border:0; opacity:0; cursor:pointer; }
   .moods label { flex:1; text-align:center; border:1px solid var(--line); border-radius:12px;
                  padding:.5rem .3rem; cursor:pointer; background:var(--bg); }
-  .moods input { position:absolute; opacity:0; }
   .moods label:has(input:checked) { border-color:var(--accent); background:var(--accent-bg); }
   .moods .face { font-size:1.3rem; display:block; }
   .moods small { color:var(--soft); }
   .rate { display:flex; gap:.4rem; }
   .rate label { flex:1; text-align:center; border:1px solid var(--line); border-radius:12px;
                 padding:.5rem .3rem; cursor:pointer; background:var(--bg); font-weight:700; }
-  .rate input { position:absolute; opacity:0; }
   .rate label:has(input:checked) { border-color:var(--accent); background:var(--accent-bg); }
   .choice { display:flex; gap:.5rem; flex-wrap:wrap; }
   .choice label { flex:1; min-width:110px; text-align:center; border:1px solid var(--line);
                   border-radius:12px; padding:.5rem .4rem; cursor:pointer; background:var(--bg);
                   font-weight:700; }
-  .choice input { position:absolute; opacity:0; }
   .choice label:has(input:checked) { border-color:var(--accent); background:var(--accent-bg); }
   .btn { font:inherit; font-weight:700; cursor:pointer; border:1px solid var(--accent);
          background:var(--accent); color:#fff; border-radius:10px; padding:.6rem 1.2rem; }

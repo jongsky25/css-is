@@ -17,10 +17,37 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.91"
+APP_VERSION = "6.94"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.94",
+        "date": "October 17, 2026",
+        "summary": "No more retyping the per diem when the policy rates already give it.",
+        "changes": [
+            "When you pick a per diem rule for a day, the amount now comes straight from the policy rates and the Per diem box stays out of the way.",
+            "Press Change amount if you want to claim a different figure, or choose to type the per diem yourself.",
+        ],
+    },
+    {
+        "version": "6.93",
+        "date": "October 17, 2026",
+        "summary": "The DPO number is now required on every travel filing.",
+        "changes": [
+            "Cash advance, liquidation and reimbursement filings all need a Department Personnel Order number before they can be opened or saved.",
+            "The lodging question on the travel form now explains that it is about the room cost, not the kind of filing.",
+        ],
+    },
+    {
+        "version": "6.92",
+        "date": "October 17, 2026",
+        "summary": "Fix the break check-in rating buttons and keep your conference room choice.",
+        "changes": [
+            "On the break check-in, tapping a rating such as 5 now always selects that rating, not its neighbour.",
+            "If a calendar form comes back with an error, a conference room you unticked stays unticked.",
+        ],
+    },
     {
         "version": "6.91",
         "date": "October 17, 2026",
