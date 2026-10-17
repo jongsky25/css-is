@@ -13,7 +13,8 @@
       startEl = chip.dataset.start ? document.getElementById(chip.dataset.start) : null,
       endEl = chip.dataset.end ? document.getElementById(chip.dataset.end) : null;
   var standbyRow = document.getElementById('room-standby-row'), standbyBox = document.getElementById('room-standby-box');
-  var touched = !!box.checked, autoTicked = false, closed = false, seq = 0;
+  // A form sent back with an error keeps the person's tick / untick (data-decided), so it never auto-ticks over it.
+  var touched = !!box.checked || chip.dataset.decided === '1', autoTicked = false, closed = false, seq = 0;
 
   function wants() {
     var sel = document.getElementById(fmtName), m = sel && sel.tagName === 'SELECT' ? sel : document.querySelector('input[name=' + fmtName + ']:checked');

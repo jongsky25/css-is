@@ -49,15 +49,30 @@
                 basis: '', place: '', km: 0, day_kind: '', lodging_provided: false, meals_provided: false };
   var calc = [];                       // what the server says the policy allows, one entry per row
   var draftKey = 'travel-draft-' + data.ref;
+  // What the server drafted from the uploads (rows with `rid`/`src`, and these suggested answers). A browser draft keeps
+  // what the person changed, takes up rides read from uploads made since, and lets an answer they never touched follow
+  // the newest reading.
+  var SUGGESTED = ['strictness', 'explanation', 'refund_amount', 'refund_or_no', 'refund_or_date'];
+  var sugg = {}, gone = [];
+  SUGGESTED.forEach(function (k) { sugg[k] = state.texts[k] || ''; });
   try {
     var d = JSON.parse(localStorage.getItem(draftKey) || 'null');
     if (d && Array.isArray(d.rows)) {
+      var fromServer = state.rows, serverTexts = state.texts, sig = Object.assign({}, state.signatories);
       state.rows = d.rows.map(function (x) { return Object.assign({}, BLANK, x); });
-      state.texts = Object.assign({}, state.texts, d.texts);
-      state.signatories = Object.assign({}, state.signatories, d.signatories);
+      gone = Array.isArray(d.gone) ? d.gone : [];
+      var have = {}, added = 0;
+      state.rows.forEach(function (x) { if (x.rid) have[x.rid] = 1; });
+      fromServer.forEach(function (sr) {
+        if (sr.rid && !have[sr.rid] && gone.indexOf(sr.rid) < 0) { state.rows.push(Object.assign({}, BLANK, sr)); added++; }
+      });
+      state.texts = Object.assign({}, serverTexts, d.texts);
+      SUGGESTED.forEach(function (k) { if (d.texts && (d.texts[k] || '') === ((d.sugg || {})[k] || '') && serverTexts[k] != null) state.texts[k] = serverTexts[k]; });
+      Object.keys(d.signatories || {}).forEach(function (k) { if (d.signatories[k]) sig[k] = d.signatories[k]; });
+      state.signatories = sig;
       if (typeof d.mc114_text === 'string') state.mc114_text = d.mc114_text;
       if (d.rates) state.rates = Object.assign({}, state.rates, d.rates);
-      if (draftStatus) draftStatus.textContent = 'Draft restored from this browser.';
+      if (draftStatus) draftStatus.textContent = 'Draft restored from this browser.' + (added ? ' ' + added + ' entr' + (added === 1 ? 'y' : 'ies') + ' added from files you uploaded since.' : '');
     }
   } catch (e) {
     if (draftStatus) draftStatus.textContent = 'The saved draft could not be restored. Check your details before making forms.';
@@ -71,7 +86,7 @@
   }
   function save() {
     try {
-      localStorage.setItem(draftKey, JSON.stringify({ rows: state.rows, texts: state.texts, signatories: state.signatories, mc114_text: state.mc114_text, rates: state.rates }));
+      localStorage.setItem(draftKey, JSON.stringify({ rows: state.rows, texts: state.texts, signatories: state.signatories, mc114_text: state.mc114_text, rates: state.rates, gone: gone, sugg: sugg }));
       if (draftStatus) draftStatus.textContent = 'Draft saved in this browser only.';
     } catch (e) {
       if (draftStatus) draftStatus.textContent = 'Draft could not be saved. Keep this page open until you make the forms.';
@@ -107,6 +122,7 @@
   var flagsBox = el('div'), msgBox = el('div', { role: 'status', 'aria-live': 'polite' }), docsList = el('ul', { 'class': 'tv-docs' });
 
   var uis = [];                        // per row: the lines the server's answer is painted into
+  var ownPerDiem = new WeakSet();      // rows whose per diem box the person opened to change the policy amount
 
   function placePicker(r) {
     var opts = policy.places[r.basis] || [], wrap = el('div', { 'class': 'tv-row-wide' });
@@ -132,7 +148,7 @@
     return wrap;
   }
 
-  // One reading (from the scan above or from a ticket uploaded on the checklist) shown as a suggestion with a button.
+  // One reading (from the scan above) shown as a suggestion with a button.
   // Nothing is filled in until the person presses it.
   function offer(out, j, r, after) {
     var what = [j.vendor, [j.origin, j.destination].filter(Boolean).join(' to '), j.date].filter(Boolean).join(' \u00b7 ');
@@ -148,17 +164,6 @@
       save(); drawRows(); refresh();
     });
     out.appendChild(use);
-  }
-
-  // Readings kept by the checklist page when a ticket or receipt was uploaded (this browser's session only).
-  function keptReads() {
-    try { return JSON.parse(window.sessionStorage.getItem('tv-reads:' + data.ref) || '[]'); } catch (e) { return []; }
-  }
-  function dropRead(x) {
-    try {
-      var rest = keptReads().filter(function (y) { return !(y.code === x.code && y.amount === x.amount && y.date === x.date && y.vendor === x.vendor); });
-      window.sessionStorage.setItem('tv-reads:' + data.ref, JSON.stringify(rest));
-    } catch (e) { /* ignore */ }
   }
 
   // Read the fare off a ticket, boarding pass or receipt. The file goes to the server, the AI reads it, and the answer comes
@@ -180,14 +185,17 @@
           offer(out, j, r, null);
         }).catch(function () { pick.value = ''; out.textContent = 'Could not reach the server. Type the amount in.'; });
     });
-    var kept = el('div', { 'class': 'tv-hint' });
-    keptReads().forEach(function (x) {
-      var line = el('div', { 'class': 'tv-hint' });
-      line.appendChild(document.createTextNode((x.label || 'Uploaded file') + ': '));
-      offer(line, x, r, function () { dropRead(x); line.remove(); });
-      kept.appendChild(line);
+    return el('div', { 'class': 'tv-row-wide' }, [el('label', { text: 'Read another ticket or receipt (photo or PDF)' }), pick, out]);
+  }
+
+  // A new entry on the same date straight after entry `i`, with the day's per diem left to the first one.
+  function rideButton(label, i, over) {
+    var b = el('button', { type: 'button', 'class': 'btn ghost small', text: label });
+    b.addEventListener('click', function () {
+      state.rows.splice(i + 1, 0, Object.assign({}, BLANK, { date: state.rows[i].date }, over));
+      save(); drawRows(); refresh();
     });
-    return el('div', { 'class': 'tv-row-wide' }, [el('label', { text: 'Or read it from a ticket or receipt (photo or PDF)' }), pick, out, kept]);
+    return b;
   }
 
   function drawRows() {
@@ -203,7 +211,7 @@
         field('To', r.to, function (v) { r.to = v; }),
         field('Departure', r.dep, function (v) { r.dep = v; }, { type: 'time' }),
         field('Arrival', r.arr, function (v) { r.arr = v; }, { type: 'time' }),
-        select('How you travelled', r.mode, data.modes, function (v) { r.mode = v; }),
+        select('How you travelled', r.mode, data.modes, function (v) { var plane = (v === 'plane') !== (r.mode === 'plane'); r.mode = v; if (plane) setTimeout(drawRows, 0); }),
         select('Route', r.route_type, routeOpts, function (v) { r.route_type = v; }),
         select('Receipt', r.receipt, [['none', 'No receipt'], ['receipt', 'I have a receipt']], function (v) { r.receipt = v; }),
         select('Fare rate', r.basis, basisOpts, function (v) { r.basis = v; r.place = ''; drawRows(); })
@@ -220,15 +228,28 @@
         kids.push(check('Meals were provided', r.meals_provided, function (v) { r.meals_provided = v; }));
       }
       if (r.day_kind === 'full') kids.push(check('Lodging was provided', r.lodging_provided, function (v) { r.lodging_provided = v; }));
-      kids.push(field('Per diem (\u20b1)', r.per_diem, function (v) { r.per_diem = v; }, { type: 'number', refresh: true }));
+      var pdField = field('Per diem (\u20b1)', r.per_diem, function (v) { r.per_diem = v; ownPerDiem.add(r); }, { type: 'number', refresh: true });
+      kids.push(pdField);
       var pdLine = el('div', { 'class': 'tv-row-wide tv-hint' }), noteLine = el('div', { 'class': 'tv-row-wide tv-flagline' });
       kids.push(pdLine); kids.push(noteLine);
+      if (r.src) kids.unshift(el('div', { 'class': 'tv-row-wide tv-hint tv-drafted', text: r.src }));
       var box = el('div', { 'class': 'tv-row' }, kids);
       var rm = el('button', { type: 'button', 'class': 'btn ghost small', text: 'Remove this entry' });
-      rm.addEventListener('click', function () { state.rows.splice(i, 1); save(); drawRows(); refresh(); });
-      box.appendChild(el('div', { 'class': 'tv-row-wide' }, [rm]));
+      rm.addEventListener('click', function () {
+        if (r.rid && gone.indexOf(r.rid) < 0) gone.push(r.rid);            // a ride the person removed stays removed
+        state.rows.splice(i, 1); save(); drawRows(); refresh();
+      });
+      // One entry is one ride. A day with several (plane, then TNVS to the hotel) is several entries on the same date.
+      var sameDay = i > 0 && r.date && state.rows[i - 1].date === r.date;
+      if (sameDay) box.insertBefore(el('div', { 'class': 'tv-row-wide tv-hint', text: 'Another ride on the same day. Claim that day\u2019s per diem on one entry only.' }), box.firstChild);
+      var more = [rideButton('Add another ride on this day', i, {}), ];
+      if (r.mode === 'plane') {
+        more.push(rideButton('Add TNVS to the airport', i, { mode: 'tnvs', receipt: 'receipt', to: 'Airport' }));
+        more.push(rideButton('Add TNVS from the airport', i, { mode: 'tnvs', receipt: 'receipt', from: 'Airport' }));
+      }
+      box.appendChild(el('div', { 'class': 'tv-row-wide tv-row-actions' }, more.concat([rm])));
       rowsBox.appendChild(box);
-      uis.push({ cap: capLine, pd: pdLine, notes: noteLine, row: r });
+      uis.push({ cap: capLine, pd: pdLine, pdField: pdField, notes: noteLine, row: r });
     });
   }
 
@@ -245,14 +266,25 @@
         if (isEstimate) { use.textContent = 'Use as estimate'; u.cap.appendChild(use); }
       }
       u.pd.textContent = '';
+      // The policy already knows the per diem for a chosen rule, so the amount box stays out of the way
+      // until the person asks to change it (or types the per diem themselves, or has a different amount).
+      var fromPolicy = c.per_diem != null && u.row.day_kind !== '' && !ownPerDiem.has(u.row) &&
+        (Number(u.row.per_diem) || 0) === c.per_diem;
+      u.pdField.hidden = fromPolicy;
       if (c.per_diem != null) {
         var parts = c.day || {};
-        u.pd.appendChild(document.createTextNode('Allowed for this day: ' + peso(c.per_diem) +
+        u.pd.appendChild(document.createTextNode((fromPolicy ? 'Per diem for this day, from the policy rates: ' : 'Allowed for this day: ') + peso(c.per_diem) +
           (parts.lodging || parts.meals || parts.incidentals ? ' (lodging ' + peso(parts.lodging) + ', meals ' + peso(parts.meals) + ', incidentals ' + peso(parts.incidentals) + ')' : '') +
           '. ' + (parts.notes || []).join(' ') + ' '));
-        var useP = el('button', { type: 'button', 'class': 'btn ghost small', text: 'Use ' + peso(c.per_diem) });
-        useP.addEventListener('click', function () { u.row.per_diem = c.per_diem; save(); drawRows(); refresh(); });
-        u.pd.appendChild(useP);
+        if (fromPolicy) {
+          var change = el('button', { type: 'button', 'class': 'btn ghost small', text: 'Change amount' });
+          change.addEventListener('click', function () { ownPerDiem.add(u.row); paint(); u.pdField.querySelector('input').focus(); });
+          u.pd.appendChild(change);
+        } else {
+          var useP = el('button', { type: 'button', 'class': 'btn ghost small', text: 'Use ' + peso(c.per_diem) });
+          useP.addEventListener('click', function () { u.row.per_diem = c.per_diem; ownPerDiem.delete(u.row); save(); drawRows(); refresh(); });
+          u.pd.appendChild(useP);
+        }
       }
       u.notes.textContent = (c.warnings || []).join(' ');
     });
@@ -332,6 +364,12 @@
       if (c.per_diem != null && (Number(r.per_diem) || 0) > c.per_diem) {
         lines.push('Entry ' + (i + 1) + ': Per diem is ' + ((Number(r.per_diem) || 0) - c.per_diem).toFixed(2).replace(/\.00$/, '') + ' above the ' + c.per_diem + ' the policy allows for this day.');
       }
+    });
+    var perDiemOn = {};
+    state.rows.forEach(function (r, i) {
+      if (!r.date || !(Number(r.per_diem) > 0)) return;
+      if (perDiemOn[r.date] != null) lines.push('Entries ' + (perDiemOn[r.date] + 1) + ' and ' + (i + 1) + ' are on the same day and both claim a per diem. A day\u2019s per diem is claimed once.');
+      else perDiemOn[r.date] = i;
     });
     totals.textContent = 'Total: ₱' + total.toLocaleString('en-PH', { maximumFractionDigits: 2 }) +
       (kinds.cenrr ? ' · ' + kinds.cenrr + ' ride(s) go on a CENRR' : '') + (kinds.rer ? ' · ' + kinds.rer + ' RER form(s)' : '');

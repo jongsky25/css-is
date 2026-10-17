@@ -58,9 +58,10 @@ ARTA_TEXT_FIL = {
     "SQD5": "Makatuwiran ang halagang aking binayaran para sa aking transaksyon.",
     "SQD6": 'Pakiramdam ko ay patas ang opisina sa lahat, o "walang palakasan", sa aking '
             "transaksyon.",
-    "SQD7": "Magalang akong trinato ng mga tauhan, at handa silang tumulong sa akin.",
-    "SQD8": "Nakuha ko ang aking kailangan mula sa opisina, o naipaliwanag nang sapat ang "
-            "aking hiling.",
+    # SQD7 and SQD8 carry the official "(if asked for help)" / "(if denied)" conditions. DRAFT: office to review.
+    "SQD7": "Magalang akong trinato ng mga tauhan, at (kung humingi ako ng tulong) matulungin sila.",
+    "SQD8": "Nakuha ko ang aking kailangan mula sa opisina ng pamahalaan, o (kung tinanggihan) "
+            "naipaliwanag nang sapat sa akin ang pagtanggi sa aking hiling.",
 }
 
 # SERVQUAL items (Types 2 & 3) — keep the {subject} placeholder. DRAFT.
@@ -114,6 +115,15 @@ CONSENT_TMPL_FIL = (
 LIKERT5_FIL = [(5, "Lubos na sang-ayon"), (4, "Sang-ayon"), (3, "Hindi tiyak"),
                (2, "Hindi sang-ayon"), (1, "Lubos na hindi sang-ayon")]
 OSQ4_FIL = [(4, "Napakahusay"), (3, "Mahusay"), (2, "Katamtaman"), (1, "Mahina")]
+
+# Display text for the Type-1 Citizen's Charter choices, in the SAME order as app.CSM_CC1_OPTS / CC2 / CC3. The stored value is
+# always the English option (the reports match on it); only the label the respondent reads changes. DRAFT: office to review.
+CSM_CC1_FIL = ["Alam ko kung ano ang CC at nakita ko ang CC ng opisinang ito.",
+               "Alam ko kung ano ang CC ngunit HINDI ko nakita ang CC ng opisinang ito.",
+               "Nalaman ko lang ang tungkol sa CC nang makita ko ang CC ng opisinang ito.",
+               "Hindi ko alam kung ano ang CC at wala akong nakitang CC sa opisinang ito."]
+CSM_CC2_FIL = ["Madaling makita", "Medyo madaling makita", "Mahirap makita", "Hindi nakikita", "Hindi naaangkop"]
+CSM_CC3_FIL = ["Malaking tulong", "Medyo nakatulong", "Hindi nakatulong", "Hindi naaangkop"]
 
 # Quick-pick comment chips — order and groups mirror app.REMARK_CHIPS. DRAFT.
 REMARK_CHIPS_FIL = {
@@ -182,6 +192,52 @@ UI = {
     "male": {"en": "Male", "fil": "Lalaki"},
     "female": {"en": "Female", "fil": "Babae"},
     "non_doh": {"en": "Non-DOH", "fil": "Hindi-DOH"},
+
+    # Type-1 (CSM) form: the official ARTA client questions and Citizen's Charter section. Filipino is a DRAFT.
+    "csm_intro_title": {"en": "Help us serve you better!", "fil": "Tulungan kaming magsilbi nang mas mahusay!"},
+    "csm_intro": {
+        "en": "This Client Satisfaction Measurement (CSM) tracks the customer experience of government offices. "
+              "Your feedback on your recently concluded transaction will help this office provide a better service. "
+              "Personal information shared will be kept confidential and you always have the option to not answer this form.",
+        "fil": "Sinusubaybayan ng Client Satisfaction Measurement (CSM) na ito ang karanasan ng mga kliyente sa mga "
+               "tanggapan ng pamahalaan. Makatutulong sa opisinang ito na mapabuti ang serbisyo ang iyong puna sa "
+               "kamakailan mong natapos na transaksyon. Ang personal na impormasyong ibabahagi mo ay ipagpapanatiling "
+               "kumpidensyal, at may karapatan kang hindi sagutan ang form na ito.",
+    },
+    "csm_date": {"en": "Date", "fil": "Petsa"},
+    "csm_client_type": {"en": "Client type", "fil": "Uri ng kliyente"},
+    "csm_ct_citizen": {"en": "Citizen", "fil": "Mamamayan"},
+    "csm_ct_business": {"en": "Business", "fil": "Negosyo"},
+    "csm_ct_government": {"en": "Government (employee or another agency)",
+                          "fil": "Pamahalaan (empleyado o ibang ahensya)"},
+    "csm_age": {"en": "Age", "fil": "Edad"},
+    "csm_region": {"en": "Region of residence", "fil": "Rehiyong tinitirhan"},
+    "csm_service": {"en": "Service availed", "fil": "Serbisyong natanggap"},
+    "csm_service_ph": {"en": "Choose from the list or type the service", "fil": "Pumili sa listahan o i-type ang serbisyo"},
+    "csm_cc_title": {"en": "Citizen's Charter", "fil": "Citizen's Charter"},
+    "csm_cc_instr": {
+        "en": "Check your answer to the Citizen's Charter (CC) questions. The Citizen's Charter is an official document "
+              "that reflects the services of a government agency/office including its requirements, fees, and "
+              "processing times among others.",
+        "fil": "Piliin ang iyong sagot sa mga tanong tungkol sa Citizen's Charter (CC). Ang Citizen's Charter ay "
+               "opisyal na dokumento na naglalahad ng mga serbisyo ng isang ahensya o opisina, kasama ang mga "
+               "kinakailangan, bayarin, at oras ng pagproseso.",
+    },
+    "csm_cc1_q": {"en": "CC1. Which of the following best describes your awareness of a CC?",
+                  "fil": "CC1. Alin sa mga sumusunod ang pinakamahusay na naglalarawan sa iyong kaalaman tungkol sa CC?"},
+    "csm_cc2_q": {"en": "CC2. If aware of CC (answered 1-3 in CC1), would you say that the CC of this office was …?",
+                  "fil": "CC2. Kung may alam sa CC (sumagot ng 1-3 sa CC1), masasabi mo bang ang CC ng opisinang ito ay …?"},
+    "csm_cc3_q": {"en": "CC3. If aware of CC (answered 1-3 in CC1), how much did the CC help you in your transaction?",
+                  "fil": "CC3. Kung may alam sa CC (sumagot ng 1-3 sa CC1), gaano kalaki ang naitulong ng CC sa iyong transaksyon?"},
+    "csm_cc_skip": {"en": "CC2 and CC3 will be marked Not applicable.",
+                    "fil": "Isasagot na namin ang CC2 at CC3 bilang Hindi naaangkop."},
+    "csm_suggest": {"en": "Suggestions on how we can further improve our services",
+                    "fil": "Mga mungkahi kung paano pa namin mapapabuti ang aming serbisyo"},
+    "csm_email": {"en": "Email address", "fil": "Email address"},
+    "csm_confidential": {
+        "en": "Personal information you share is kept confidential. You may skip any question marked optional.",
+        "fil": "Kumpidensyal ang personal na impormasyong ibabahagi mo. Maaari mong laktawan ang anumang tanong na may markang opsyonal.",
+    },
 
     # Scale + items
     "na": {"en": "Not applicable", "fil": "Hindi naaangkop"},

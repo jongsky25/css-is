@@ -1,7 +1,7 @@
 {# The conference-room line shared by the Add activity form and the calendar item form (rooms R8).
    Needs: f (room_* values), room_slots, noun ("activity" / "calendar item"). Works without scripts; room_chip.js adds the
    day's availability. The script finds the form's date / venue / format fields through the data-* attributes. #}
-      <details class="room-chip" id="room-chip" data-date="{{ chip_date|default('event_date') }}" data-venue="{{ chip_venue|default('venue') }}" data-format="{{ chip_format|default('modality') }}" data-start="{{ chip_start|default('') }}" data-end="{{ chip_end|default('') }}" open>
+      <details class="room-chip" id="room-chip" data-date="{{ chip_date|default('event_date') }}" data-venue="{{ chip_venue|default('venue') }}" data-format="{{ chip_format|default('modality') }}" data-start="{{ chip_start|default('') }}" data-end="{{ chip_end|default('') }}"{% if room_decided %} data-decided="1"{% endif %} open>
         <summary class="rc-head"><span class="rc-title">🏢 Conference room</span> <span class="rc-pill hint" id="room-chip-state" role="status"></span></summary>
         <div class="rc-body">
         <ul class="rp-hours rc-hours" id="room-chip-hours" aria-label="Conference room hours that day"></ul>
@@ -25,4 +25,4 @@
         </div>
         </div>
       </details>
-<script src="/static/js/room_chip.js?v=20261016a" defer></script>
+<script src="/static/js/room_chip.js?v=20261017a" defer></script>

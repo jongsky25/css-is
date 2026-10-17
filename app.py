@@ -2456,6 +2456,29 @@ def _forbid(request, capability):
     return None
 
 
+def _responder_rosters(conn, user, ev):
+    """The name lists the signed-in user may open from an activity's report (Spot Feedback #91). A report can merge
+    several activities; each one that has a registration roster, is not an invited/outside activity, has registrants,
+    and that THIS user may manage (the same rule as its Monitor page, which shows names and contact details) gives one
+    entry. Anyone else gets [] so the report shows no button and nothing about who responded. Answers themselves
+    are anonymous: only people who registered have a name, so walk-in and paper responses are only counted."""
+    out, seen = [], set()
+    for fid in (ev.get("instance_ids") or []):
+        e = st.event_for_form_instance(conn, fid)
+        if not e or e["id"] in seen:
+            continue
+        seen.add(e["id"])
+        if e.get("event_kind") == "outside" or not _can_manage_event(user, e, conn):
+            continue
+        summ = st.event_registration_summary(conn, e["id"])
+        if not summ["registered"]:
+            continue
+        out.append({"title": e["title"], "url": f"/monitor/{e['event_token']}?show=responded",
+                    "registered": summ["registered"], "responded": summ["completed"] + summ["in_progress"],
+                    "walkin": summ["unattributed"]})
+    return out
+
+
 def _can_manage_event(user, ev, conn=None):
     """Who may manage an activity: an admin, its creator, or — when `conn` is
     given — a section manager whose TEAM runs it.
@@ -7714,9 +7737,10 @@ ARTA_TEXT = {
     "SQD3": "The steps (including payment) I needed to do for my transaction were easy and simple.",
     "SQD4": "I easily found information about my transaction from the office or its website.",
     "SQD5": "I paid a reasonable amount of fees for my transaction.",
-    "SQD6": 'I feel the office was fair to everyone ("walang palakasan") during my transaction.',
-    "SQD7": "I was treated courteously by the staff, and the staff was helpful.",
-    "SQD8": "I got what I needed from the office, or my request was sufficiently explained.",
+    # SQD6-SQD8 are the official ARTA CSM sentences word for word (MC 2022-05 as amended by 2023-05).
+    "SQD6": "I feel the office was fair to everyone, or \u201cwalang palakasan\u201d, during my transaction.",
+    "SQD7": "I was treated courteously by the staff, and (if asked for help) the staff was helpful.",
+    "SQD8": "I got what I needed from the government office, or (if denied) denial of request was sufficiently explained to me.",
 }
 
 # CO-CSM dropdown options (mirror the official vlookup sheet)
@@ -7760,6 +7784,40 @@ CSM_SERVICES = [
     "Inquiry on LGU-Health Score Card", "Interview/Research",
     "Data Request", "Meeting", "Certification", "Submission",
 ]
+
+# The public Type-1 form asks the official CSM client questions (ARTA MC 2022-05 as amended by 2023-05).
+CSM_PUBLIC_CLIENT_TYPES = ["Citizen", "Business", "Government"]
+_CSM_EMAIL = re.compile(r"^[^@\s]{1,64}@[^@\s]{1,120}\.[^@\s]{2,}$")
+
+
+def _csm_public_meta(posted):
+    """The client information and Citizen's Charter answers from the PUBLIC Type-1 form, ready to store as the
+    same item_remarks the staff paper entry writes (so the official CSM report counts online and paper alike).
+    Every value is checked against the lists the report knows; anything else becomes blank (the endpoint is
+    unauthenticated). Only answers given are returned; nothing here is required. When CC1 says the person did
+    not know what a Citizen's Charter is, CC2 and CC3 are 'Not applicable' (as the official form says); with no
+    CC1 there is no CC2 or CC3."""
+    def pick(key, options):
+        v = (posted.get(key) or "").strip()
+        return v if v in options else ""
+    out = {}
+    out["CLIENT_TYPE"] = pick("csm_client_type", CSM_PUBLIC_CLIENT_TYPES)
+    out["SEX"] = {"M": "Male", "F": "Female"}.get((posted.get("sex") or "").strip().upper(), "")
+    age = (posted.get("csm_age") or "").strip()
+    out["AGE"] = str(int(age)) if age.isdigit() and 0 < int(age) <= 120 else ""
+    out["REGION"] = pick("csm_region", CSM_REGIONS)
+    out["SERVICE"] = re.sub(r"[\x00-\x1f\x7f\s]+", " ", posted.get("csm_service") or "").strip()[:120]
+    email = (posted.get("csm_email") or "").strip()
+    out["EMAIL"] = email if len(email) <= 120 and _CSM_EMAIL.match(email) else ""
+    cc1 = pick("csm_cc1", CSM_CC1_OPTS)
+    cc2, cc3 = pick("csm_cc2", CSM_CC2_OPTS), pick("csm_cc3", CSM_CC3_OPTS)
+    if not cc1:
+        cc2 = cc3 = ""
+    elif cc1 == CSM_CC1_OPTS[3]:
+        cc2, cc3 = CSM_CC2_OPTS[4], CSM_CC3_OPTS[3]
+    out["CC1"], out["CC2"], out["CC3"] = cc1, cc2, cc3
+    return {k: v for k, v in out.items() if v}
+
 
 # --- Official CO-CSM report (ARTA Type-1) scaffolding ---------------------
 # The bureau's fixed service inventory shown in the report's Scope section.
@@ -7986,7 +8044,11 @@ def survey_spec(ctx, lang="en"):
             "ask_served_by": False,
             "regions": CSM_REGIONS,
             "cc1_opts": CSM_CC1_OPTS, "cc2_opts": CSM_CC2_OPTS, "cc3_opts": CSM_CC3_OPTS,
-            "services": CSM_SERVICES,
+            "services": CSM_SERVICES, "client_types": CSM_PUBLIC_CLIENT_TYPES,
+            # what the respondent reads (the stored value is always the English option above)
+            "cc1_labels": i18n.CSM_CC1_FIL if fil else CSM_CC1_OPTS,
+            "cc2_labels": i18n.CSM_CC2_FIL if fil else CSM_CC2_OPTS,
+            "cc3_labels": i18n.CSM_CC3_FIL if fil else CSM_CC3_OPTS,
             "groups": [{"label": i18n.t("grp_arta", lang), "items": items}],
         }
 
@@ -8220,9 +8282,11 @@ def rating_form(request: Request, qr_token: str, seq: str = "", att: str = ""):
             staff = [p for p in st.list_resource_persons(conn) if p["is_internal"]]
         finally:
             conn.close()
+    today = _now_local()
     return templates.TemplateResponse(request, "rating.html", {
         "ctx": ctx, "qr_token": qr_token, "spec": spec, "seq": seq, "att": att,
         "staff": staff, "lang": lang, "max_remark_chips": MAX_REMARK_CHIPS,
+        "csm_today": f"{today:%B} {today.day}, {today.year}",       # shown on the Type-1 form; the response is dated when it is submitted
     })
 
 
@@ -8318,6 +8382,8 @@ async def submit_rating(request: Request, qr_token: str):
             affil = posted.get("affil", "").strip().upper()
             if affil in ("DOH", "NON-DOH"):
                 item_remarks["AFFIL"] = affil
+            if ctx["survey_type"] == 1:                 # the official CSM questions (all optional), stored as the paper entry does
+                item_remarks.update(_csm_public_meta(posted))
 
         raffle_code = raffle_prize = None
         _live_ev = st.event_for_form_instance(conn, ctx["id"])
@@ -10343,7 +10409,7 @@ def outside_events_index(request: Request):
 
 
 @app.get("/monitor/{event_token}", response_class=HTMLResponse)
-def monitor_event(request: Request, event_token: str, flash: str = ""):
+def monitor_event(request: Request, event_token: str, flash: str = "", show: str = ""):
     """One activity's registration roster + CSS status. Only the activity's
     creator or an admin may open it (it shows registrant PII)."""
     conn = get_conn()
@@ -10388,9 +10454,14 @@ def monitor_event(request: Request, event_token: str, flash: str = ""):
         report_url = st.event_report_url(conn, ev["id"]) if st.event_response_total(conn, ev["id"]) else None
     finally:
         conn.close()
+    # ?show=responded: only the registered people who answered at least one form (the name list the activity
+    # report links to). The reminder count still comes from everyone, so it never depends on the view.
+    only_responded = show == "responded"
+    shown = [p for p in people if p["status"] != "not_started"] if only_responded else people
     return templates.TemplateResponse(request, "monitor_event.html", {
         "nav_active": "monitor", "show_scope": False, "ev": ev,
-        "people": people, "summ": summ, "status_meta": MONITOR_STATUS,
+        "people": shown, "only_responded": only_responded, "n_registered": len(people),
+        "summ": summ, "status_meta": MONITOR_STATUS,
         "answer_tally": answer_tally,
         "base_url": _base_url(request),
         "entry_window": entry_window, "is_closed": is_closed,
@@ -14209,6 +14280,7 @@ def dashboard_activity(request: Request, event_id: int, err: str = "", msg: str 
         # the editor below lists the COMPLETE set — every comment stays reachable.
         can_edit = auth.can(request.state.user["role"], "edit_data")
         edit_comments = st.activity_editable_comments(conn, ev["response_ids"]) if can_edit else []
+        rosters = _responder_rosters(conn, request.state.user, ev)
         captured = st.demographics_for_responses(conn, ev["response_ids"])
         manual = st.get_activity_demographics(conn, event_id)
         demo = di.activity_demographics(captured, manual)
@@ -14252,7 +14324,7 @@ def dashboard_activity(request: Request, event_id: int, err: str = "", msg: str 
         "mrr_fields": mrr_fields,
         "scope_label": scope_label,
         "can_manage": auth.can(request.state.user["role"], "create_activity"),
-        "can_edit": can_edit, "edit_comments": edit_comments,
+        "can_edit": can_edit, "edit_comments": edit_comments, "rosters": rosters,
     })
 
 

@@ -1,7 +1,7 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header %}
 {% block title %}Prepare forms · {{ f.ref_code }}{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261016a">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261017c">{% endblock %}
 {% block content %}
 {{ page_header("Prepare the forms · " ~ f.ref_code, f.act_title) }}
 {% include "_travel_tabs.html" %}
@@ -15,5 +15,5 @@
 </div>
 <div id="prep-app" class="tv-prep" data-has-relay="{{ '1' if relay_ready else '0' }}"><noscript><div class="tv-card">This page needs JavaScript. You can still make the forms yourself and paste their links on the filing page.</div></noscript></div>
 <script type="application/json" id="prep-data">{{ prep_json|safe }}</script>
-<script src="/static/js/travel_prepare.js?v=20261016a" defer></script>
+<script src="/static/js/travel_prepare.js?v=20261017c" defer></script>
 {% endblock %}

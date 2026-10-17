@@ -344,6 +344,18 @@
   {{ empty_state(demo_msg, icon="◔") }}
   {% endif %}
 
+  {% if rosters %}
+  <div class="roster-links" style="margin-top:.9rem;">
+    {% for r in rosters %}
+    <p style="margin:.25rem 0;">
+      <a class="btn" href="{{ r.url }}">👥 See the name list{% if rosters|length > 1 %} — {{ r.title }}{% endif %}</a>
+      <span class="sublab" style="display:inline; margin-left:.4rem;">{{ r.responded }} of {{ r.registered }} registered {{ 'person' if r.registered == 1 else 'people' }} responded{% if r.walkin %} · {{ r.walkin }} more answered without a name{% endif %}</span>
+    </p>
+    {% endfor %}
+    <p class="sublab">Names are shown only to the people who manage this activity. Walk-in and paper responses have no name to list.</p>
+  </div>
+  {% endif %}
+
   {% if can_manage %}
   <details class="disclosure" style="margin-top:.9rem;">
     <summary>⚙ Enter / correct demographics manually</summary>

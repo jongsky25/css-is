@@ -1,3 +1,49 @@
+## 7.00 — October 17, 2026
+
+- The certifying officer on the travel forms now shows the division head's position in the directory (for example Medical Officer V) rather than the designation "Division Chief". The head of office is still the Director seat in the directory, which includes an OIC-Director; the filer's division head still comes from the filer's own division.
+
+## 6.99 — October 17, 2026
+
+- Use the official ARTA wording for rating statements SQD6, SQD7 and SQD8 (adds "(if asked for help)" and "(if denied) … explained to me"); the online form, paper-entry form and official report all read from the same text. Filipino updated to carry the same conditions (draft, for the office to review). Stored ratings are unchanged.
+
+## 6.98 — October 17, 2026
+
+- Add a "See the name list" button to the Who responded section of an activity's report, shown only to people who manage the activity; it opens the activity's roster limited to the registered people who responded (Spot Feedback #91).
+- The roster page gains a "Show only the people who responded" view; the reminder count does not depend on the view. Walk-in and paper responses are counted but have no name to list.
+
+## 6.97 — October 17, 2026
+
+- Make the public service feedback (Type 1 / CSM) form follow the official ARTA Client Satisfaction Measurement form: the official intro and confidentiality note, the date shown automatically, client type, sex, age, region of residence, service availed (from the bureau's list), the Citizen's Charter definition and CC1 to CC3 with the skip rule, optional email and the official suggestions wording (Spot Feedback #121). Everything except the ratings is optional.
+- Store those answers as the paper entry does, so online responses count in the official CSM report; online sex answers are now stored as "Male" / "Female" like the report expects.
+- Filipino text added for all of it (draft, for the office to review). The activity and resource-person forms are unchanged.
+
+## 6.96 — October 17, 2026
+
+- Keep the small reading taken from each uploaded ticket, receipt, Certificate of Appearance and refund receipt, and draft Appendix A entries and Appendix B answers from it, each showing where it came from (Spot Feedback #122, #123).
+- Fill the head of office (the Director) and the certifying officer (the filer's division head) from the directory (Spot Feedback #125).
+- Offer "Review and make the forms" once every required attachment is in.
+- Carry the cash advance's Appendix A into a liquidation, and add the DPO date from the uploaded DPO.
+- Read departure and arrival times and the refund receipt off uploads.
+
+## 6.95 — October 17, 2026
+
+- Add "Add another ride on this day" to every itinerary entry, and "Add TNVS to / from the airport" to plane entries (Spot Feedback #120, #124).
+- Warn when two entries on the same day both claim a per diem.
+
+## 6.94 — October 17, 2026
+
+- Hide the Per diem amount box when a per diem rule is chosen and the policy rates give the amount; "Change amount" brings it back (Spot Feedback #119).
+
+## 6.93 — October 17, 2026
+
+- Require the DPO number on every travel filing, when opening it and when editing its answers (Spot Feedback #116, #118).
+- Explain on the travel form that the lodging question is about the room cost, not the kind of filing (Spot Feedback #115).
+
+## 6.92 — October 17, 2026
+
+- Fix the break check-in rating buttons so tapping 5 can no longer select 4 (Spot Feedback #117).
+- Keep a conference room you unticked when a calendar form is sent back with an error (Spot Feedback #114).
+
 ## 6.91 — October 17, 2026
 
 - Locate DTRAK subject cells using labels and table geometry, correct slight skew and OCR a border-free enlarged crop.

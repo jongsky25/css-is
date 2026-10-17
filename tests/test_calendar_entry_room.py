@@ -177,3 +177,14 @@ def test_my_reservations_and_the_approvals_card_show_what_the_room_is_for_and_st
     import rooms_notify
     rooms_notify.on_requested(conn, rooms.get_reservation(conn, q["id"]))
     assert conn.execute("SELECT COUNT(*) FROM room_notice WHERE text LIKE '%STANDBY%'").fetchone()[0] >= 1
+
+
+def test_a_form_sent_back_with_an_error_keeps_the_room_choice_the_person_made(manager, conn):
+    """Spot Feedback #114: the page auto-ticks the room for an online item; after an error the re-rendered form
+    must be marked as already decided, or it would tick the room again over the person's untick."""
+    d = day(conn)
+    fresh = manager.get("/calendar/new").text
+    assert 'data-decided' not in fresh                                       # a blank form may still auto-tick
+    bad = post(manager, "/calendar/new", d, title="", modality="online")      # no room ticked, but invalid
+    assert bad.status_code == 400 and 'data-decided="1"' in bad.text
+    assert conn.execute("SELECT COUNT(*) FROM room_reservation").fetchone()[0] == 0

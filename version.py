@@ -17,10 +17,99 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.91"
+APP_VERSION = "7.00"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.00",
+        "date": "October 17, 2026",
+        "summary": "Travel forms now show the certifying officer's own title.",
+        "changes": [
+            "The certifying officer on the travel forms is shown with their plantilla title (for example Medical Officer V) instead of \"Division Chief\".",
+            "The Director, including an OIC-Director, and the filer's division head are still picked from the directory.",
+        ],
+    },
+    {
+        "version": "6.99",
+        "date": "October 17, 2026",
+        "summary": "The rating statements on the service feedback form now read exactly as on the official form.",
+        "changes": [
+            "Statements 6, 7 and 8 now use the official wording, including \"(if asked for help)\" and \"(if denied)\".",
+            "The same wording shows on the online form, the paper-entry form and the official report. The Filipino version says the same.",
+        ],
+    },
+    {
+        "version": "6.98",
+        "date": "October 17, 2026",
+        "summary": "See the names of the people who responded, straight from an activity's report.",
+        "changes": [
+            "An activity's report now has a See the name list button in the Who responded section, for people who manage that activity.",
+            "It opens the activity's roster showing only the registered people who responded, with a link back to everyone.",
+            "Walk-in and paper responses have no name, so they are counted but not listed.",
+        ],
+    },
+    {
+        "version": "6.97",
+        "date": "October 17, 2026",
+        "summary": "The online service feedback form now follows the official Client Satisfaction Measurement form.",
+        "changes": [
+            "The form opens with the official explanation and confidentiality note, and shows today's date.",
+            "It now asks the official client questions: client type, sex, age, region of residence and the service availed, and keeps the DOH or non-DOH question. All are optional.",
+            "It adds the Citizen's Charter section with its definition and questions CC1 to CC3; if someone does not know what a Citizen's Charter is, CC2 and CC3 are marked Not applicable for them.",
+            "There is an optional email field, and the suggestions box now uses the official wording.",
+            "These answers now count in the official CSM report, the same as paper forms. Available in English and Filipino.",
+        ],
+    },
+    {
+        "version": "6.96",
+        "date": "October 17, 2026",
+        "summary": "Appendix A and B are drafted from your uploads, and the signers fill themselves in.",
+        "changes": [
+            "Tickets, boarding passes and receipts you upload are read once, and the itinerary entries are drafted for you to check.",
+            "The Certificate of Travel Completed suggests how the travel went from your Certificate of Appearance, and fills the refund receipt details.",
+            "The Director and your division head are filled in as the signers, so you no longer type them each time.",
+            "When all your attachments are in, the filing page offers to review and make Appendix A and B.",
+            "A liquidation now picks up the Appendix A already made for its cash advance, and your DPO date is read from the uploaded DPO.",
+        ],
+    },
+    {
+        "version": "6.95",
+        "date": "October 17, 2026",
+        "summary": "Add more than one ride to a day when preparing travel forms.",
+        "changes": [
+            "Each itinerary entry now has an Add another ride on this day button, so a plane and a TNVS can both be listed.",
+            "Plane entries have quick buttons to add a TNVS ride to or from the airport.",
+            "You are warned if two entries on the same day both claim a per diem.",
+        ],
+    },
+    {
+        "version": "6.94",
+        "date": "October 17, 2026",
+        "summary": "No more retyping the per diem when the policy rates already give it.",
+        "changes": [
+            "When you pick a per diem rule for a day, the amount now comes straight from the policy rates and the Per diem box stays out of the way.",
+            "Press Change amount if you want to claim a different figure, or choose to type the per diem yourself.",
+        ],
+    },
+    {
+        "version": "6.93",
+        "date": "October 17, 2026",
+        "summary": "The DPO number is now required on every travel filing.",
+        "changes": [
+            "Cash advance, liquidation and reimbursement filings all need a Department Personnel Order number before they can be opened or saved.",
+            "The lodging question on the travel form now explains that it is about the room cost, not the kind of filing.",
+        ],
+    },
+    {
+        "version": "6.92",
+        "date": "October 17, 2026",
+        "summary": "Fix the break check-in rating buttons and keep your conference room choice.",
+        "changes": [
+            "On the break check-in, tapping a rating such as 5 now always selects that rating, not its neighbour.",
+            "If a calendar form comes back with an error, a conference room you unticked stays unticked.",
+        ],
+    },
     {
         "version": "6.91",
         "date": "October 17, 2026",

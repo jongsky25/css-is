@@ -680,6 +680,16 @@ def init_db(conn):
         updated_at TEXT, drive_source TEXT,
         PRIMARY KEY (filing_id, item_code)
     );
+    CREATE TABLE IF NOT EXISTS travel_reading (
+        id INTEGER PRIMARY KEY,
+        filing_id INTEGER NOT NULL REFERENCES travel_filing(id) ON DELETE CASCADE,
+        item_code TEXT NOT NULL,
+        doc TEXT NOT NULL CHECK (doc IN ('receipt','appearance')),
+        kind TEXT, amount REAL, currency TEXT, day TEXT, origin TEXT, destination TEXT,
+        vendor TEXT, reference TEXT, dep_time TEXT, arr_time TEXT, date_from TEXT, date_to TEXT,
+        created_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS ix_travel_reading_filing ON travel_reading(filing_id);
     CREATE TABLE IF NOT EXISTS travel_flag (
         id INTEGER PRIMARY KEY,
         filing_id INTEGER NOT NULL REFERENCES travel_filing(id) ON DELETE CASCADE,
@@ -7064,6 +7074,26 @@ def _org_seat_name(conn, rank, org_path=None, exclude_uid=None):
         if name and _org_rank(desig, pos) == rank and name not in names:
             names.append(name)
     return " / ".join(names) if names else None
+
+
+def org_seat_holder(conn, rank, org_path=None, exclude_rp_id=None, title_from="designation"):
+    """(name, designation) of the first internal person filling `rank` in the given unit (anywhere when
+    org_path is None), or None. The directory person is named even without an app account.
+    The title is the designation unless `title_from="position"` (then the position, e.g. Medical Officer V)."""
+    sql = ("SELECT rp.name, rp.designation, rp.position FROM resource_person rp "
+           "LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id "
+           "WHERE rp.is_internal = 1 AND rp.archived_at IS NULL")
+    params = []
+    if org_path is not None:
+        sql += " AND ou.path = ?"
+        params.append(org_path)
+    if exclude_rp_id:
+        sql += " AND rp.id <> ?"
+        params.append(exclude_rp_id)
+    for name, desig, pos in conn.execute(sql + " ORDER BY rp.name", params).fetchall():
+        if name and _org_rank(desig, pos) == rank:
+            return name, ((pos or desig or "") if title_from == "position" else (desig or pos or ""))
+    return None
 
 
 def approver_name_for(conn, user_id):

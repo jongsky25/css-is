@@ -41,7 +41,7 @@ def days(n):
 
 def blank(client, kind="liquidation", start=None, end=None, **over):
     f = {"kind": kind, "title": "TRAVELTEST Visit", "start": start or days(-10), "end": end or days(-8),
-         "role": "secretariat", "advance_amount": "5000", "mc114_format": "none"}
+         "role": "secretariat", "advance_amount": "5000", "mc114_format": "none", "dpo_no": "2026-100"}
     f.update(over)
     return post(client, "/travel/new", **f)
 
@@ -127,9 +127,33 @@ def test_unrelated_answers_are_dropped_and_unticked_boxes_count(viewer, conn):
     assert 'id="item-plane_ticket"' in page and 'id="item-bto_report"' in page and 'id="item-cert_appearance"' not in page
 
 
+def test_every_filing_needs_a_dpo_number(viewer, conn):
+    """Spot Feedback #116/#118: the DPO number is required for cash advances, liquidations and reimbursements alike."""
+    for kind, start, end in (("liquidation", days(-10), days(-8)), ("reimbursement", days(-10), days(-8)),
+                             ("ca", days(10), days(12))):
+        r = blank(viewer, kind, start=start, end=end, dpo_no="  ")
+        assert r.status_code == 400 and "DPO" in r.text, kind
+    assert blank(viewer, dpo_no="2026-555").status_code == 303
+
+
+def test_the_dpo_number_cannot_be_cleared_later(viewer, conn):
+    ref = ref_of(blank(viewer, dpo_no="2026-556"))
+    filing = travel.get_by_ref(conn, ref)
+    with pytest.raises(travel.TravelError):
+        travel.update_answers(conn, filing, {}, role="secretariat", dpo_no=" ")
+    assert travel.get_by_ref(conn, ref)["dpo_no"] == "2026-556"
+    assert travel.update_answers(conn, filing, {}, role="secretariat", dpo_no="2026-557")["dpo_no"] == "2026-557"
+
+
+def test_the_form_marks_the_dpo_number_required_and_explains_lodging(viewer, conn):
+    page = viewer.get("/travel/new").text
+    assert 'name="dpo_no" maxlength="60" value="" required' in page and "(optional)</span></label><input id=\"dpo_no\"" not in page
+    assert "Lodging is the room cost of your trip" in page
+
+
 def test_same_origin_check(viewer, conn):
     f = {"kind": "liquidation", "title": "TRAVELTEST X", "start": days(-10), "end": days(-8), "role": "secretariat",
-         "advance_amount": "100"}
+         "advance_amount": "100", "dpo_no": "2026-100"}
     bad = viewer.post("/travel/new", content=urlencode(f), headers={**FORM, "Origin": "https://evil.example"},
                       follow_redirects=False)
     assert bad.status_code == 403
@@ -146,7 +170,8 @@ def test_unliquidated_cash_advance_warns_before_a_new_one(viewer, conn):
     old = travel.create_filing(conn, {"id": u, "username": "viewer@test.local"}, kind="ca",
                                source={"source_kind": "blank", "title": "TRAVELTEST Old", "start": days(-20),
                                        "end": days(-18), "venue": ""},
-                               answers={}, role="secretariat", today=tz.today_local() - timedelta(days=40))
+                               answers={}, role="secretariat", dpo_no="2026-100",
+                               today=tz.today_local() - timedelta(days=40))
     conn.execute("UPDATE travel_filing SET status='submitted' WHERE id=?", (old["id"],)); conn.commit()
     r = blank(viewer, "ca", start=days(20), end=days(22))
     assert r.status_code == 200 and "not been liquidated" in r.text and 'name="ack"' in r.text
@@ -158,7 +183,7 @@ def test_unliquidated_cash_advance_warns_before_a_new_one(viewer, conn):
 def test_liquidating_a_platform_cash_advance_links_it(viewer, conn):
     u = {"id": uid(conn, "viewer@test.local"), "username": "viewer@test.local"}
     ca = travel.create_filing(conn, u, kind="ca", source={"source_kind": "blank", "title": "TRAVELTEST CA",
-                              "start": days(10), "end": days(12), "venue": ""}, answers={}, role="participant",
+                              "start": days(10), "end": days(12), "venue": ""}, answers={}, role="participant", dpo_no="2026-100",
                               advance_amount="2500", today=tz.today_local())
     r = blank(viewer, advance_amount="", ca=str(ca["id"]))
     assert r.status_code == 400 and "Mark that cash advance as submitted" in r.text
@@ -298,16 +323,16 @@ def test_withdraw_frees_the_activity_for_a_new_cash_advance(viewer, conn):
     eid = st.cal_create(conn, "TRAVELTEST Trip", days(20), end_date=days(22), kind="travel", audience="bureau",
                         people=[(u["id"], "attending")], by="x@x")
     src = travel.resolve_source(conn, u, tz.today_local(), entry_id=eid)
-    a = travel.create_filing(conn, u, kind="ca", source=src, answers={}, role="participant", today=tz.today_local())
+    a = travel.create_filing(conn, u, kind="ca", source=src, answers={}, role="participant", dpo_no="2026-100", today=tz.today_local())
     with pytest.raises(travel.TravelError):
-        travel.create_filing(conn, u, kind="ca", source=src, answers={}, role="participant", today=tz.today_local())
+        travel.create_filing(conn, u, kind="ca", source=src, answers={}, role="participant", dpo_no="2026-100", today=tz.today_local())
     with pytest.raises(travel.TravelError):                      # reimbursement hidden while a live CA exists
-        travel.create_filing(conn, u, kind="reimbursement", source=src, answers={}, role="participant",
+        travel.create_filing(conn, u, kind="reimbursement", source=src, answers={}, role="participant", dpo_no="2026-100",
                              today=tz.today_local())
     r = post(viewer, f"/travel/f/{a['ref_code']}/withdraw")
     assert r.headers["location"].startswith("/travel?ok=")
     assert travel.get_by_ref(conn, a["ref_code"])["status"] == "withdrawn"
-    travel.create_filing(conn, u, kind="ca", source=src, answers={}, role="participant", today=tz.today_local())
+    travel.create_filing(conn, u, kind="ca", source=src, answers={}, role="participant", dpo_no="2026-100", today=tz.today_local())
 
 
 # ------------------------------------------------------------- calendar ---
@@ -323,7 +348,7 @@ def test_calendar_chip_labels_and_new_page(viewer, conn):
     page = viewer.get(f"/travel/new?entry={eid}")
     assert page.status_code == 200 and "TRAVELTEST Field visit" in page.text
     src = travel.resolve_source(conn, u, today, entry_id=eid)
-    f = travel.create_filing(conn, u, kind="ca", source=src, answers={}, role="participant", today=today)
+    f = travel.create_filing(conn, u, kind="ca", source=src, answers={}, role="participant", dpo_no="2026-100", today=today)
     items = oc.items_between(conn, u, today, today + timedelta(days=40), scope="mine", layers=["entries"])
     it = next(i for i in items if i["title"] == "TRAVELTEST Field visit")
     assert it["filing"]["label"] == "In progress" and it["filing"]["url"] == f"/travel/f/{f['ref_code']}"
@@ -340,7 +365,7 @@ def test_activity_deadline_chip_links_to_its_filing(admin, conn):
     try:
         source = travel.resolve_source(conn, user, tz.today_local(), event_id=event["id"])
         filing = travel.create_filing(conn, user, kind="reimbursement", source=source,
-                                      answers={}, role="participant", today=tz.today_local())
+                                      answers={}, role="participant", dpo_no="2026-100", today=tz.today_local())
         conn.execute("UPDATE travel_filing SET deadline_date=? WHERE id=?", (days(5), filing["id"]))
         conn.commit()
 
@@ -363,7 +388,7 @@ def test_summary_labels(conn):
     u = {"id": uid_, "username": "lbl@test.local"}
     def mk(kind, start, end, status="open", **kw):
         f = travel.create_filing(conn, u, kind=kind, source={"source_kind": "blank", "title": "T" + start,
-                                 "start": start, "end": end, "venue": ""}, answers={}, role="participant",
+                                 "start": start, "end": end, "venue": ""}, answers={}, role="participant", dpo_no="2026-100",
                                  advance_amount="100", today=today - timedelta(days=60 if kind != "ca" else 0), **kw)
         conn.execute("UPDATE travel_filing SET status=?, entry_id=? WHERE id=?", (status, 900 + f["id"], f["id"]))
         conn.commit()

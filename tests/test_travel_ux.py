@@ -180,3 +180,84 @@ def test_storage_failure_is_visible_and_hidden_refund_is_not_generated(page, vie
     assert appendix['fields']['refund_amount'] == ''
     assert appendix['fields']['refund_or_no'] == ''
     assert 'Old deviation' not in str(appendix['blocks'])
+
+
+def test_per_diem_box_stays_out_of_the_way_when_the_policy_gives_the_amount(page, viewer, conn, relay):
+    """Spot Feedback #119: with a per diem rule chosen the amount comes from the policy rates, so the box is hidden
+    until the person asks to change it; typing the per diem yourself still shows it."""
+    ref = mk(viewer)
+    page.goto(f'http://testserver/travel/f/{ref}/prepare')
+    box = page.get_by_label('Per diem (₱)', exact=True).first
+    pw.expect(box).to_be_visible()                                              # no rate chosen yet: type it yourself
+    region = page.get_by_label('Where you are going', exact=True)
+    region.select_option(index=1)
+    page.get_by_label('Per diem rule', exact=True).first.select_option(index=1)
+    pw.expect(page.get_by_text('Per diem for this day, from the policy rates:', exact=False).first).to_be_visible()
+    pw.expect(box).to_be_hidden()
+    page.get_by_role('button', name='Change amount', exact=True).first.click()
+    pw.expect(box).to_be_visible()
+    box.fill('100')
+    pw.expect(box).to_have_value('100')
+    assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
+
+
+def test_a_day_can_hold_a_plane_ride_and_a_tnvs_ride_to_or_from_the_airport(page, viewer, conn, relay):
+    """Spot Feedback #120/#124: several rides on one day are several entries on the same date."""
+    ref = mk(viewer)
+    page.goto(f'http://testserver/travel/f/{ref}/prepare')
+    modes = page.get_by_label('How you travelled', exact=True)
+    n = modes.count()
+    modes.first.select_option('plane')
+    page.get_by_role('button', name='Add TNVS to the airport', exact=True).first.click()
+    pw.expect(modes).to_have_count(n + 1)
+    first_date = page.get_by_label('Date', exact=True).nth(0).input_value()
+    assert page.get_by_label('Date', exact=True).nth(1).input_value() == first_date
+    pw.expect(modes.nth(1)).to_have_value('tnvs')
+    pw.expect(page.get_by_label('To', exact=True).nth(1)).to_have_value('Airport')
+    pw.expect(page.get_by_text('Another ride on the same day', exact=False)).to_have_count(1)
+    page.get_by_role('button', name='Add TNVS from the airport', exact=True).first.click()
+    pw.expect(modes).to_have_count(n + 2)
+    pw.expect(page.get_by_label('From', exact=True).nth(1)).to_have_value('Airport')   # the newest ride sits right after the plane
+    page.get_by_role('button', name='Add another ride on this day', exact=True).last.click()
+    pw.expect(modes).to_have_count(n + 3)
+    # a day's per diem is claimed once
+    for i in (0, 1):
+        page.get_by_label('Per diem (₱)', exact=True).nth(i).fill('500')
+    pw.expect(page.get_by_text('both claim a per diem', exact=False)).to_be_visible()
+    page.reload()
+    pw.expect(modes).to_have_count(n + 3)                                               # the draft keeps them
+    assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
+
+
+def test_drafted_entries_keep_edits_take_new_uploads_and_stay_removed(page, viewer, conn, relay):
+    """Appendix A drafted from what was read (Spot Feedback #122/#123): each entry says where it came from, a browser
+    draft keeps what the person changed, picks up uploads read since, and an entry they removed does not come back."""
+    from datetime import timedelta
+    import tzutil as tz
+    import travel, travel_readings as trd
+    ref = mk(viewer, flew='1', taxi_receipt='1')
+    fid = travel.get_by_ref(conn, ref)['id']
+    day = (tz.today_local() - timedelta(days=10)).isoformat()
+    trd.save(conn, fid, 'plane_ticket', 'receipt', {'readable': True, 'kind': 'plane_ticket', 'amount': 4521.5, 'currency': 'PHP',
+                                                    'date': day, 'origin': 'Manila', 'destination': 'Cebu', 'vendor': 'Cebu Pacific'})
+    page.goto(f'http://testserver/travel/f/{ref}/prepare')
+    modes = page.get_by_label('How you travelled', exact=True)
+    pw.expect(modes.first).to_have_value('plane')
+    pw.expect(page.get_by_text('Drafted from your upload', exact=False)).to_have_count(1)
+    fare = page.get_by_label('Actual fare claimed (₱)', exact=True).first
+    pw.expect(fare).to_have_value('4521.5')
+    fare.fill('4000')                                              # the person corrects the amount
+    rows = modes.count()
+    trd.save(conn, fid, 'taxi_receipt', 'receipt', {'readable': True, 'kind': 'taxi_receipt', 'amount': 350.0, 'currency': 'PHP',
+                                                    'date': day, 'origin': 'Airport', 'destination': 'Hotel'})
+    page.reload()
+    pw.expect(page.locator('#draft-status')).to_contain_text('1 entry added from files you uploaded since')
+    pw.expect(modes).to_have_count(rows + 1)
+    pw.expect(page.get_by_label('Actual fare claimed (₱)', exact=True).first).to_have_value('4000')   # the edit survived
+    assert page.get_by_label('Actual fare claimed (₱)', exact=True).evaluate_all('els => els.map(e => e.value)').count('350') == 1
+    page.get_by_role('button', name='Remove this entry', exact=True).last.click()                       # the taxi entry (added last)
+    pw.expect(modes).to_have_count(rows)
+    page.reload()
+    pw.expect(modes).to_have_count(rows)                                                              # it stays removed
+    assert page.get_by_label('Actual fare claimed (₱)', exact=True).evaluate_all('els => els.map(e => e.value)').count('350') == 0
+    assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
