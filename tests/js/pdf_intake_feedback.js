@@ -13,10 +13,15 @@ const assert = require('assert');
 (async () => {
  const browser = await chromium.launch({headless:true, executablePath:process.env.CHROMIUM_EXECUTABLE || undefined});
  const page = await browser.newPage({viewport:{width:390,height:844}});
- let calls=0, delayed=false;
+ let calls=0, delayed=false, outcome='success';
  await page.route('http://intake.test/**', async route => {
   if(route.request().url().endsWith('/documents/intake/read')) {
    calls++;
+   if(outcome === 'timeout') return;
+   if(outcome === 'error') return route.fulfill({status:400,json:{error:'No readable text was found. Try a clearer scan.'}});
+   if(outcome === 'html') return route.fulfill({status:502,contentType:'text/html',body:'Gateway error'});
+   if(outcome === 'network') return route.abort('failed');
+   if(outcome === 'empty') return route.fulfill({json:{suggestions:{},evidence:{},warnings:[],notice:'Review',reading:{page_count:1,ocr_pages:[]},text_preview:[{page:1,text:'Unlabelled document text',truncated:false}]}});
    if(delayed) await new Promise(r=>setTimeout(r,400));
    return route.fulfill({json:{suggestions:{sender:'Training Office'},evidence:{},warnings:[],notice:'Review values',
     reading:{page_count:1,ocr_pages:[1]},text_preview:[{page:1,text:'<script>window.injected=true</script>\nFrom: Training Office',truncated:false}]}}).catch(()=>{});
@@ -38,6 +43,8 @@ const assert = require('assert');
  await page.locator('#intake-suggestions summary').click();
  assert((await page.locator('#intake-suggestions pre').innerText()).includes('From: Training Office'));
  assert.equal(await page.evaluate(()=>window.injected),undefined);
+ assert((await file.inputValue()).endsWith('scan.pdf'));
+ assert((await status.innerText()).includes('1 empty field(s) pre-filled'));
  await page.locator('#intake-remove').click();
  assert(await page.locator('#intake-suggestions').isHidden());
  assert.equal(await page.locator('[name=sender]').inputValue(),'Training Office');
@@ -50,6 +57,36 @@ const assert = require('assert');
  assert.equal(await page.locator('[name=sender]').inputValue(),'');
  assert(await page.locator('#intake-suggestions').isHidden());
  assert(await page.locator('#intake-read').isEnabled());
- console.log('Mobile feedback, oversized rejection, OCR preview, removal, and stale-result checks passed.');
+ delayed=false;
+ for(const kind of ['error','html','network','empty']) {
+  outcome=kind;
+  await file.setInputFiles({name:'retry.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-test')});
+  await page.locator('#intake-read').click();
+  await page.waitForFunction(()=>!document.getElementById('intake-read').disabled);
+  assert((await file.inputValue()).endsWith('retry.pdf'));
+  assert.equal(await page.locator('[name=sender]').inputValue(),'');
+  if(kind==='empty') {
+   assert((await status.innerText()).includes('no form fields could be identified'));
+   assert(await page.locator('#intake-suggestions pre').isVisible());
+  } else {
+   assert((await status.innerText()).includes('Reading did not complete'));
+  }
+ }
+ outcome='success';
+ await page.locator('#intake-read').click();
+ await page.waitForFunction(()=>!document.getElementById('intake-read').disabled);
+ assert.equal(await page.locator('[name=sender]').inputValue(),'Training Office');
+ assert((await file.inputValue()).endsWith('retry.pdf'));
+ await page.locator('#intake-read').click();
+ await page.waitForFunction(()=>!document.getElementById('intake-read').disabled);
+ assert((await status.innerText()).includes('0 empty field(s) pre-filled'));
+ await page.clock.install();
+ outcome='timeout';
+ await page.locator('#intake-read').click();
+ await page.clock.fastForward(90001);
+ await page.waitForFunction(()=>document.getElementById('intake-read-status').textContent.includes('Reading timed out'));
+ assert((await file.inputValue()).endsWith('retry.pdf'));
+ assert(await page.locator('#intake-read').isEnabled());
+ console.log('Mobile selection, success/no-match/error/timeout outcomes, retry, removal and stale-result checks passed.');
  await browser.close();
 })();

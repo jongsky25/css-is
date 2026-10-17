@@ -315,3 +315,14 @@ are labelled. The Remove file / clear reading button clears the selected source
 and displayed reading, aborts the browser request, and ignores late responses.
 Already entered/applied form values remain for review. Server processing already
 underway can finish within its existing limits; its response is discarded.
+
+The selected local file or source link is now retained in the browser after every
+reading attempt for retry; only explicit Remove/Skip or leaving the page clears
+it. This does not create a stored server attachment. Completion reports separate
+counts for suggestions, filled empty fields, and preserved existing entries.
+No-match outcomes open the extracted text and explain that no fields changed.
+Work scenario, destination, concerned unit and priority remain user choices.
+The browser reports expired sessions, non-JSON gateway responses, network errors,
+and a 90-second request timeout without clearing input. Reading results receive
+focus and scroll into view. Numbered order headings and standalone labels with a
+following value are supported, but ambiguous or unstated fields remain blank.

@@ -120,3 +120,15 @@ def test_reading_status_and_preview_without_field_matches():
     result = reader.read_pdf(pdf('Long prose ' * 400))
     assert len(result['text_preview'][0]['text']) == 2000
     assert result['text_preview'][0]['truncated'] is True
+
+
+def test_wrapped_labels_missing_colon_and_numbered_order():
+    result = reader.suggest(['Department Order No. 2019-0225\nSUBJECT：\nStaff orientation\nFROM\nTraining Office\nDATE October 17, 2026'])
+    assert result['suggestions'] == {'subject': 'Staff orientation', 'sender': 'Training Office',
+        'type': 'Department Order', 'references': 'Department Order No. 2019-0225', 'document_date': '2026-10-17'}
+    assert result['evidence']['subject'][0]['page'] == 1
+
+
+def test_empty_label_does_not_consume_next_label_or_infer_assignments():
+    result = reader.suggest(['Subject:\nFrom:\nTraining Office\nDate: tomorrow\nUrgent\nAssign to John'])
+    assert result['suggestions'] == {'sender': 'Training Office'}
