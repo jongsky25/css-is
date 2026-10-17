@@ -68,3 +68,4 @@
 .tv-docs li.pending::before { content: "\2026 "; }
 .field .req { color:var(--red, #b3261e); font-weight:600; font-size:.8rem; }
 .tv-lodging-note { display:block; margin:.15rem 0 0; }
+.tv-row-actions { display: flex; flex-wrap: wrap; gap: .4rem; }

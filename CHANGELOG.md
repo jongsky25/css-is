@@ -1,3 +1,8 @@
+## 6.95 — October 17, 2026
+
+- Add "Add another ride on this day" to every itinerary entry, and "Add TNVS to / from the airport" to plane entries (Spot Feedback #120, #124).
+- Warn when two entries on the same day both claim a per diem.
+
 ## 6.94 — October 17, 2026
 
 - Hide the Per diem amount box when a per diem rule is chosen and the policy rates give the amount; "Change amount" brings it back (Spot Feedback #119).

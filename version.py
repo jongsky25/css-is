@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.94"
+APP_VERSION = "6.95"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.95",
+        "date": "October 17, 2026",
+        "summary": "Add more than one ride to a day when preparing travel forms.",
+        "changes": [
+            "Each itinerary entry now has an Add another ride on this day button, so a plane and a TNVS can both be listed.",
+            "Plane entries have quick buttons to add a TNVS ride to or from the airport.",
+            "You are warned if two entries on the same day both claim a per diem.",
+        ],
+    },
     {
         "version": "6.94",
         "date": "October 17, 2026",

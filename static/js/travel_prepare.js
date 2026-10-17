@@ -191,6 +191,16 @@
     return el('div', { 'class': 'tv-row-wide' }, [el('label', { text: 'Or read it from a ticket or receipt (photo or PDF)' }), pick, out, kept]);
   }
 
+  // A new entry on the same date straight after entry `i`, with the day's per diem left to the first one.
+  function rideButton(label, i, over) {
+    var b = el('button', { type: 'button', 'class': 'btn ghost small', text: label });
+    b.addEventListener('click', function () {
+      state.rows.splice(i + 1, 0, Object.assign({}, BLANK, { date: state.rows[i].date }, over));
+      save(); drawRows(); refresh();
+    });
+    return b;
+  }
+
   function drawRows() {
     rowsBox.textContent = '';
     uis = [];
@@ -204,7 +214,7 @@
         field('To', r.to, function (v) { r.to = v; }),
         field('Departure', r.dep, function (v) { r.dep = v; }, { type: 'time' }),
         field('Arrival', r.arr, function (v) { r.arr = v; }, { type: 'time' }),
-        select('How you travelled', r.mode, data.modes, function (v) { r.mode = v; }),
+        select('How you travelled', r.mode, data.modes, function (v) { var plane = (v === 'plane') !== (r.mode === 'plane'); r.mode = v; if (plane) setTimeout(drawRows, 0); }),
         select('Route', r.route_type, routeOpts, function (v) { r.route_type = v; }),
         select('Receipt', r.receipt, [['none', 'No receipt'], ['receipt', 'I have a receipt']], function (v) { r.receipt = v; }),
         select('Fare rate', r.basis, basisOpts, function (v) { r.basis = v; r.place = ''; drawRows(); })
@@ -228,7 +238,15 @@
       var box = el('div', { 'class': 'tv-row' }, kids);
       var rm = el('button', { type: 'button', 'class': 'btn ghost small', text: 'Remove this entry' });
       rm.addEventListener('click', function () { state.rows.splice(i, 1); save(); drawRows(); refresh(); });
-      box.appendChild(el('div', { 'class': 'tv-row-wide' }, [rm]));
+      // One entry is one ride. A day with several (plane, then TNVS to the hotel) is several entries on the same date.
+      var sameDay = i > 0 && r.date && state.rows[i - 1].date === r.date;
+      if (sameDay) box.insertBefore(el('div', { 'class': 'tv-row-wide tv-hint', text: 'Another ride on the same day. Claim that day\u2019s per diem on one entry only.' }), box.firstChild);
+      var more = [rideButton('Add another ride on this day', i, {}), ];
+      if (r.mode === 'plane') {
+        more.push(rideButton('Add TNVS to the airport', i, { mode: 'tnvs', receipt: 'receipt', to: 'Airport' }));
+        more.push(rideButton('Add TNVS from the airport', i, { mode: 'tnvs', receipt: 'receipt', from: 'Airport' }));
+      }
+      box.appendChild(el('div', { 'class': 'tv-row-wide tv-row-actions' }, more.concat([rm])));
       rowsBox.appendChild(box);
       uis.push({ cap: capLine, pd: pdLine, pdField: pdField, notes: noteLine, row: r });
     });
@@ -345,6 +363,12 @@
       if (c.per_diem != null && (Number(r.per_diem) || 0) > c.per_diem) {
         lines.push('Entry ' + (i + 1) + ': Per diem is ' + ((Number(r.per_diem) || 0) - c.per_diem).toFixed(2).replace(/\.00$/, '') + ' above the ' + c.per_diem + ' the policy allows for this day.');
       }
+    });
+    var perDiemOn = {};
+    state.rows.forEach(function (r, i) {
+      if (!r.date || !(Number(r.per_diem) > 0)) return;
+      if (perDiemOn[r.date] != null) lines.push('Entries ' + (perDiemOn[r.date] + 1) + ' and ' + (i + 1) + ' are on the same day and both claim a per diem. A day\u2019s per diem is claimed once.');
+      else perDiemOn[r.date] = i;
     });
     totals.textContent = 'Total: ₱' + total.toLocaleString('en-PH', { maximumFractionDigits: 2 }) +
       (kinds.cenrr ? ' · ' + kinds.cenrr + ' ride(s) go on a CENRR' : '') + (kinds.rer ? ' · ' + kinds.rer + ' RER form(s)' : '');
