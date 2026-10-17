@@ -111,8 +111,57 @@ def _date(value):
         return ''
 
 
+def _dtrak_header(text):
+    """Read labelled routing-slip metadata; never guess flattened table columns."""
+    if not (re.search(r'\bDTRAK\b', text, re.I) and
+            re.search(r'ORIGINATING OFFICE\s*:', text, re.I) and
+            re.search(r'TYPE OF DOCUMENT\s*:', text, re.I)):
+        return text, False
+    lines = [re.sub(r'\s+', ' ', line).strip() for line in text.splitlines()]
+    start = next(i for i, line in enumerate(lines) if re.search(r'ORIGINATING OFFICE\s*:', line, re.I))
+    output = []
+    # The barcode caption is a standalone tracking number, not the form version.
+    for line in lines[:start]:
+        if re.fullmatch(r'(?:19|20)\d{2}-\d{6,12}', line):
+            output.append('DTRAK: ' + line)
+    header = lines[start:]
+    subject = False
+    for line in header:
+        if not line:
+            continue
+        # Routing headers may be split across OCR lines or flattened into one.
+        if re.match(r'^(?:ACTION\b|REQUIRED/ACTION\b|TAKEN/|DATE(?:\s+FROM|$)|FROM$|TO$|DUE DATE$|NAME$)', line, re.I):
+            break
+        match = re.match(r'^ORIGINATING OFFICE\s*:\s*(.*?)\s+DATE\s*:\s*(.+)$', line, re.I)
+        if match:
+            output.extend(['Originating office: ' + match[1], 'Date: ' + match[2]])
+            subject = False
+            continue
+        line = re.sub(r'^TYPE OF DOCUMENT\s*:', 'Type:', line, flags=re.I)
+        if re.match(r'^SUBJECT\s*:', line, re.I):
+            subject = True
+            output.append(line)
+        elif re.match(r'^(?:Originating office|Type|Date|Deadline|Due date)\s*:', line, re.I):
+            subject = False
+            output.append(line)
+        elif subject:
+            output[-1] += ' ' + line
+    # Convert only numeric dates whose month/day ordering is unambiguous.
+    for i, line in enumerate(output):
+        match = re.fullmatch(r'Date:\s*(\d{1,2})/(\d{1,2})/(\d{4})', line, re.I)
+        if match:
+            first, second, year = map(int, match.groups())
+            if first > 12 or second > 12 or first == second:
+                month, day = (second, first) if first > 12 else (first, second)
+                value = _date(f'{year:04d}-{month:02d}-{day:02d}')
+                if value:
+                    output[i] = 'Date: ' + value
+    return '\n'.join(output), True
+
+
 def suggest(pages):
     candidates = {key: [] for key in FIELDS}
+    dtrak_pages = []
     patterns = {
         'subject': r'^subject(?:\s*[:\-]\s*|\s+)(.+)$',
         'sender': r'^(?:from|sender|originating office)(?:\s*[:\-]\s*|\s+)(.+)$',
@@ -124,6 +173,9 @@ def suggest(pages):
     label = re.compile(r'^(?:subject|from|sender|originating office|document type|type|document date|date|dated|deadline|due date|due|references?|DTRAK|to)\s*[:\-]?\s*$', re.I)
     boundary = re.compile(r'^(?:subject|from|sender|originating office|document type|type|document date|date|dated|deadline|due date|due|references?|DTRAK|to)(?:\s*[:\-]|\s*$)', re.I)
     for page_number, text in enumerate(pages, 1):
+        text, dtrak = _dtrak_header(text)
+        if dtrak:
+            dtrak_pages.append(page_number)
         lines = [re.sub(r'\s+', ' ', line.replace('：', ':')).strip() for line in text.splitlines()]
         combined = []
         index = 0
@@ -152,6 +204,8 @@ def suggest(pages):
                 if heading[2]:
                     candidates['references'].append((line, page_number, line))
     suggestions, evidence, warnings = {}, {}, []
+    if dtrak_pages:
+        warnings.append('DTRAK routing slip detected. Check the routing table for deadlines, recipients and handwritten instructions; these are not inferred from flattened table text. The header date is the routing-slip date; verify it against the underlying document.')
     for key, found in candidates.items():
         unique = list(dict.fromkeys(item[0] for item in found))
         if key == 'references' and unique:

@@ -1,3 +1,9 @@
+## 6.88 — October 17, 2026
+
+- Recognize DTRAK routing-slip headers, wrapped subjects and standalone tracking numbers.
+- Separate office and date fields; exclude form versions and routing-table text from metadata.
+- Flag routing deadlines, handwritten notes and routing-slip date semantics for review.
+
 ## 6.87 — October 17, 2026
 
 - Bypass service-worker forwarding for temporary PDF and page reading requests.
