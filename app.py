@@ -7737,9 +7737,10 @@ ARTA_TEXT = {
     "SQD3": "The steps (including payment) I needed to do for my transaction were easy and simple.",
     "SQD4": "I easily found information about my transaction from the office or its website.",
     "SQD5": "I paid a reasonable amount of fees for my transaction.",
-    "SQD6": 'I feel the office was fair to everyone ("walang palakasan") during my transaction.',
-    "SQD7": "I was treated courteously by the staff, and the staff was helpful.",
-    "SQD8": "I got what I needed from the office, or my request was sufficiently explained.",
+    # SQD6-SQD8 are the official ARTA CSM sentences word for word (MC 2022-05 as amended by 2023-05).
+    "SQD6": "I feel the office was fair to everyone, or \u201cwalang palakasan\u201d, during my transaction.",
+    "SQD7": "I was treated courteously by the staff, and (if asked for help) the staff was helpful.",
+    "SQD8": "I got what I needed from the government office, or (if denied) denial of request was sufficiently explained to me.",
 }
 
 # CO-CSM dropdown options (mirror the official vlookup sheet)
