@@ -41,16 +41,23 @@ def get(conn, user, doc_id):
 def list_visible(conn, user, query='', queue='all'):
     user = p.actor(conn,user)
     result = []
-    for doc in rows(conn, 'SELECT * FROM document ORDER BY id DESC'):
+    for doc in rows(conn, '''SELECT d.*, EXISTS(SELECT 1 FROM document_email_import i
+            WHERE i.document_id=d.id) AS gmail_imported FROM document d ORDER BY d.id DESC'''):
         if not p.can_view(conn,user,doc):
             continue
         refs=' '.join(r[0] for r in conn.execute('SELECT value FROM document_reference WHERE document_id=?',(doc['id'],)))
         if query and rules.normalize(query) not in rules.normalize(doc['number']+' '+doc['subject']+' '+doc['sender']+' '+refs):
             continue
+        if queue in ('gmail','gmail_review') and (not doc['gmail_imported'] or doc['canonical_id']):
+            continue
+        if queue == 'gmail_review' and (doc['verification']=='verified' or
+                doc['status'] in ('closed','cancelled') or not p.officer(conn,user,doc)):
+            continue
         if doc['canonical_id']:
             if query:
                 canonical=get(conn,user,doc['canonical_id'])
-                if canonical not in result:
+                if not any(item['id']==canonical['id'] for item in result):
+                    canonical['gmail_imported']=bool(conn.execute('SELECT 1 FROM document_email_import WHERE document_id=?',(canonical['id'],)).fetchone())
                     result.append(canonical)
             continue
         if queue in ('IN','OUT') and doc['direction'] != queue:
@@ -65,7 +72,7 @@ def list_visible(conn, user, query='', queue='all'):
             continue
         if queue == 'unassigned' and doc['lead_id']:
             continue
-        if doc not in result:
+        if not any(item['id']==doc['id'] for item in result):
             result.append(doc)
     return result
 
@@ -223,7 +230,7 @@ def register(conn, user, fields, now=None):
         return register_in_transaction(conn, user, fields, now)
 
 
-def register_in_transaction(conn, user, fields, now=None, suppress_assignments=False):
+def register_in_transaction(conn, user, fields, now=None, suppress_assignments=False, defer_rules=False):
     if not conn.in_transaction:
         raise RuntimeError('An active transaction is required')
     writable(conn)
@@ -254,7 +261,9 @@ def register_in_transaction(conn, user, fields, now=None, suppress_assignments=F
         receipt_time=receipt_time.astimezone(ZoneInfo('Asia/Manila')).replace(tzinfo=None)
     received=receipt_time.isoformat(timespec='seconds')
     sender = str(fields.get('sender','')).strip()[:500]
-    evaluation = rules.evaluate(conn,{'subject':subject,'type':typ,'sender':sender})
+    evaluation = ({'matches':[], 'leads':[], 'lead_units':[], 'unit_ids':[],
+                   'assignees':[], 'policy':{}, 'conflicts':[]} if defer_rules else
+                  rules.evaluate(conn,{'subject':subject,'type':typ,'sender':sender}))
     policy = evaluation['policy']
     source = 'explicit' if due else None
     if not due and 'default_days' in policy and 'anchor' in policy:

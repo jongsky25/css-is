@@ -12,6 +12,13 @@ def rows(conn, sql, args=()):
 
 def install(conn):
     conn.executescript('''
+    CREATE TABLE IF NOT EXISTS document_email_import (
+      id INTEGER PRIMARY KEY, mailbox TEXT NOT NULL, message_id TEXT NOT NULL,
+      payload_hash TEXT NOT NULL, document_id INTEGER NOT NULL REFERENCES document(id),
+      received_at TEXT NOT NULL, attachments_json TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'registered' CHECK(status='registered'),
+      created_at TEXT NOT NULL, UNIQUE(mailbox,message_id));
+    CREATE INDEX IF NOT EXISTS document_email_import_document ON document_email_import(document_id);
     CREATE TABLE IF NOT EXISTS document_sequence (
       year INTEGER NOT NULL, direction TEXT NOT NULL CHECK(direction IN ('IN','OUT')),
       value INTEGER NOT NULL, PRIMARY KEY(year,direction));
@@ -103,7 +110,7 @@ def install(conn):
     columns={row[1] for row in conn.execute('PRAGMA table_info(document_rule_version)')}
     if 'family_id' not in columns:
         conn.execute('ALTER TABLE document_rule_version ADD COLUMN family_id INTEGER')
-    for key in ('documents.enabled', 'documents.sending_enabled'):
+    for key in ('documents.enabled', 'documents.sending_enabled', 'documents.gmail_intake_enabled'):
         conn.execute('INSERT OR IGNORE INTO app_setting(key,value) VALUES (?,?)', (key, '0'))
     conn.commit()
 

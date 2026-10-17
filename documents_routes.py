@@ -56,6 +56,10 @@ def make_router(templates,get_conn):
             except p.Denied:
                 details['assignments'] = []
                 migration = None
+        imports=rows(conn,'SELECT mailbox,message_id,received_at,created_at,attachments_json FROM document_email_import WHERE document_id=?',(doc_id,))
+        details['gmail_source']=imports[0] if imports else None
+        imported_files={a['file_id'] for a in json.loads(imports[0]['attachments_json'])} if imports else set()
+        details['gmail_attachments']=[v for v in details['versions'] if v['file_id'] in imported_files and v['role']=='reference']
         is_officer=p.officer(conn,user,doc)
         coordinator=is_officer or doc['lead_id']==user['id']
         for assignment in details['assignments']:
@@ -406,9 +410,21 @@ def make_router(templates,get_conn):
                 operation=ops.queue(conn,user,doc_id,revision,action,data)
                 # An explicit submit requests this effect; process it now, with intent
                 # durably persisted before I/O. Interrupted operations remain visible.
-                result=ops.execute(conn,operation)
+                extraction_doc=d.get(conn,user,doc_id) if action=='extract' else None
+                try:
+                    result=ops.execute(conn,operation)
+                except Exception:
+                    if action!='extract':
+                        raise
+                    raise ValueError('The source could not be read. Your document is unchanged. Correct fields manually or retry extraction.') from None
                 if action=='extract':
-                    return render(request,conn,'extraction',doc=d.get(conn,user,doc_id),result=result)
+                    # Reload permission after external I/O, but retain the revision
+                    # captured before extraction so concurrent corrections cannot be overwritten.
+                    d.get(conn,user,doc_id)
+                    source=json.loads(rows(conn,'SELECT payload_json FROM document_job WHERE id=?',(operation,))[0]['payload_json'])
+                    response=render(request,conn,'extraction',doc=extraction_doc,result=result,source_url=source['url'])
+                    response.headers['Cache-Control']='no-store'
+                    return response
             elif action=='record_dispatch':
                 ops.record_dispatch(conn,user,doc_id,revision,data)
             elif action=='operation_status':
