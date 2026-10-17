@@ -76,7 +76,7 @@ def test_redirects_checked_and_download_bounded(monkeypatch):
     assert len(checked) == 2
     Response.status = 200
     monkeypatch.setattr(Response, 'getheader', lambda self, name: str(reader.MAX_BYTES + 1) if name == 'Content-Length' else None)
-    with pytest.raises(ValueError, match='6 MiB'): reader.fetch_pdf('https://public.test/a')
+    with pytest.raises(ValueError, match='20 MiB'): reader.fetch_pdf('https://public.test/a')
 
 
 def test_intake_read_http_transient(app_mod, viewer, monkeypatch):
@@ -104,6 +104,14 @@ def test_intake_read_http_transient(app_mod, viewer, monkeypatch):
         linked = viewer.post('/documents/intake/read', json={'url': 'https://example.test/a.pdf'}, headers={'x-csrf-token': csrf})
         assert linked.status_code == 200
         assert linked.json() == result.json()
+        received = []
+        def record_size(data):
+            received.append(len(data))
+            return result.json()
+        monkeypatch.setattr(reader, 'read_pdf', record_size)
+        boundary = viewer.post('/documents/intake/read', content=b'%PDF-' + b'x' * (reader.MAX_BYTES - 5), headers=headers)
+        assert boundary.status_code == 200
+        assert received == [20 * 1024 * 1024]
         assert counts == {t: c.execute('SELECT COUNT(*) FROM ' + t).fetchone()[0] for t in tables}
     finally:
         st.set_setting(c, 'documents.enabled', old); c.close()
@@ -132,3 +140,25 @@ def test_wrapped_labels_missing_colon_and_numbered_order():
 def test_empty_label_does_not_consume_next_label_or_infer_assignments():
     result = reader.suggest(['Subject:\nFrom:\nTraining Office\nDate: tomorrow\nUrgent\nAssign to John'])
     assert result['suggestions'] == {'sender': 'Training Office'}
+
+
+def test_twenty_mib_pdf_accepted_and_one_byte_over_rejected():
+    # A valid PDF with an unreferenced stream exercises the byte boundary without
+    # changing the page count or generating a costly 20 MiB page raster.
+    from pypdf import PdfReader, PdfWriter
+    from pypdf.generic import DecodedStreamObject
+    writer = PdfWriter(clone_from=PdfReader(io.BytesIO(pdf('Subject: Boundary acceptance', 'From: Training Office'))))
+    padding = DecodedStreamObject()
+    padding.set_data(b'x')
+    writer._add_object(padding)
+    raw = b''
+    size = reader.MAX_BYTES - 2000
+    for _ in range(4):
+        padding.set_data(b'x' * size)
+        output = io.BytesIO(); writer.write(output); raw = output.getvalue()
+        if len(raw) == reader.MAX_BYTES: break
+        size += reader.MAX_BYTES - len(raw)
+    assert len(raw) == 20 * 1024 * 1024
+    assert reader.read_pdf(raw)['suggestions']['subject'] == 'Boundary acceptance'
+    with pytest.raises(ValueError, match='20 MiB'):
+        reader.read_pdf(raw + b' ')

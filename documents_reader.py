@@ -11,7 +11,7 @@ from urllib.parse import urljoin, urlsplit, urlencode
 from dateutil.parser import parse as parse_date
 from pypdf import PdfReader
 
-MAX_BYTES = 6 * 1024 * 1024
+MAX_BYTES = 20 * 1024 * 1024
 MAX_PAGES = 50
 MAX_TEXT = 100_000
 FIELDS = {'subject': 500, 'type': 100, 'sender': 500, 'document_date': 10,
@@ -76,7 +76,7 @@ def fetch_pdf(url):
                 raise ValueError('The PDF link is unavailable. Select the file or continue manually.')
             length = response.getheader('Content-Length')
             if length and int(length) > MAX_BYTES:
-                raise ValueError('Choose a PDF no larger than 6 MiB.')
+                raise ValueError('Choose a PDF no larger than 20 MiB.')
             raw = bytearray()
             while True:
                 remaining = deadline - time.monotonic()
@@ -90,7 +90,7 @@ def fetch_pdf(url):
                     break
                 raw.extend(chunk)
                 if len(raw) > MAX_BYTES:
-                    raise ValueError('Choose a PDF no larger than 6 MiB.')
+                    raise ValueError('Choose a PDF no larger than 20 MiB.')
             return bytes(raw)
         finally:
             conn.close()
@@ -172,7 +172,7 @@ def suggest(pages):
 
 def read_pdf(raw):
     if not raw or len(raw) > MAX_BYTES:
-        raise ValueError('Choose a PDF no larger than 6 MiB.')
+        raise ValueError('Choose a PDF no larger than 20 MiB.')
     if not raw.startswith(b'%PDF-'):
         raise ValueError('This is not a PDF file. For private links, select the PDF from your device.')
     try:

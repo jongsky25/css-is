@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.84"
+APP_VERSION = "6.85"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "6.85",
+        "date": "October 17, 2026",
+        "summary": "Read larger PDFs up to 20 MiB.",
+        "changes": [
+            "Select a PDF or read a public PDF link up to 20 MiB without saving an attachment.",
+            "The existing page counts and scanned-page reading limits still apply.",
+        ],
+    },
     {
         "version": "6.84",
         "date": "October 17, 2026",

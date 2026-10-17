@@ -154,7 +154,7 @@ def make_router(templates,get_conn):
             raw = bytearray()
             async for chunk in request.stream():
                 if len(raw) + len(chunk) > reader.MAX_BYTES:
-                    raise ValueError('Choose a PDF no larger than 6 MiB.')
+                    raise ValueError('Choose a PDF no larger than 20 MiB.')
                 raw.extend(chunk)
             content_type = request.headers.get('content-type', '').split(';')[0]
             if content_type == 'application/pdf':
