@@ -1,3 +1,10 @@
+## 6.80 — October 17, 2026
+
+- Make PDF upload the first correspondence field, with an optional public PDF link.
+- Read text PDFs in memory and pre-fill empty fields with page evidence for review.
+- Preserve existing entries and save confirmed details only when registering.
+- Keep scanned or password-protected PDFs on the manual-entry path.
+
 ## 6.73 — October 16, 2026
 
 - Create short links with an explicit button click to conserve the Short.io allowance.
