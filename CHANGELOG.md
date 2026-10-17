@@ -1,3 +1,7 @@
+## 6.99 — October 17, 2026
+
+- Use the official ARTA wording for rating statements SQD6, SQD7 and SQD8 (adds "(if asked for help)" and "(if denied) … explained to me"); the online form, paper-entry form and official report all read from the same text. Filipino updated to carry the same conditions (draft, for the office to review). Stored ratings are unchanged.
+
 ## 6.98 — October 17, 2026
 
 - Add a "See the name list" button to the Who responded section of an activity's report, shown only to people who manage the activity; it opens the activity's roster limited to the registered people who responded (Spot Feedback #91).

@@ -184,3 +184,41 @@ def test_online_responses_now_show_up_in_the_official_report_rows(client, app_mo
     conn.close()
     mine = [r for r in rows if r["SERVICE"] == "Inquiry" and r["AGE"] == "29"]
     assert mine and mine[-1]["CLIENT_TYPE"] == "Business" and mine[-1]["SEX"] == "Female" and mine[-1]["REGION"] == "NCR"
+
+
+# ------------------------------------------------------------------ the rating statements are the official ones ---
+
+OFFICIAL_SQD = {   # ARTA CSM form (MC 2022-05 as amended by 2023-05), as printed by DBM and NPDC
+    "SQD0": "I am satisfied with the service that I availed.",
+    "SQD1": "I spent a reasonable amount of time for my transaction.",
+    "SQD2": "The office followed the transaction’s requirements and steps based on the information provided.",
+    "SQD3": "The steps (including payment) I needed to do for my transaction were easy and simple.",
+    "SQD4": "I easily found information about my transaction from the office or its website.",
+    "SQD5": "I paid a reasonable amount of fees for my transaction.",
+    "SQD6": "I feel the office was fair to everyone, or “walang palakasan”, during my transaction.",
+    "SQD7": "I was treated courteously by the staff, and (if asked for help) the staff was helpful.",
+    "SQD8": "I got what I needed from the government office, or (if denied) denial of request was sufficiently explained to me.",
+}
+
+
+def _plain(s):
+    return s.replace("’", "'").replace("“", '"').replace("”", '"')
+
+
+@pytest.mark.parametrize("sqd", sorted(OFFICIAL_SQD))
+def test_each_rating_statement_is_the_official_sentence(sqd):
+    assert _plain(app.ARTA_TEXT[sqd]) == _plain(OFFICIAL_SQD[sqd])
+
+
+def test_the_public_form_shows_the_official_statements(client, walkin):
+    import html as _html
+    page = _plain(_html.unescape(client.get(f"/r/{walkin}").text))
+    for sqd, text in OFFICIAL_SQD.items():
+        assert _plain(text) in page, sqd
+
+
+def test_the_filipino_statements_keep_the_official_conditions():
+    fil = i18n.ARTA_TEXT_FIL
+    assert "kung humingi ako ng tulong" in fil["SQD7"]
+    assert "kung tinanggihan" in fil["SQD8"] and "pagtanggi" in fil["SQD8"]
+    assert "walang palakasan" in fil["SQD6"]
