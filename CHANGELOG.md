@@ -1,3 +1,11 @@
+## 6.86 — October 17, 2026
+
+- Add local PDF preview and explicit page selection using locally hosted PDF.js.
+- Extract native text on-device; send scanned pages as bounded compressed images for local OCR.
+- Process selected pages sequentially with progress, partial results, retry, cancellation and cumulative review.
+- Preserve original page numbers, report incomplete coverage, and retain manual control of form entries.
+- Keep whole-file/public-link reading available with its existing 20 MiB limit.
+
 ## 6.85 — October 17, 2026
 
 - Increase transient PDF uploads and link downloads from 6 MiB to 20 MiB.

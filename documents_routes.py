@@ -139,6 +139,45 @@ def make_router(templates,get_conn):
             values=data,work_enabled=work.enabled(conn),cases=cases,scenarios=work_intake.SCENARIOS,
             preview=preview,error=error),status_code=status_code)
 
+    async def transient_page_body(request, limit):
+        conn = get_conn()
+        try:
+            p.actor(conn, getattr(request.state, 'user', None))
+            d.writable(conn)
+            supplied = request.headers.get('x-csrf-token', '')
+            if not supplied or not hmac.compare_digest(supplied, csrf(request)) or not request.cookies.get(auth.COOKIE_NAME):
+                raise p.Denied('The form expired. Reload and try again.')
+        finally:
+            conn.close()
+        raw = bytearray()
+        async for chunk in request.stream():
+            if len(raw) + len(chunk) > limit:
+                raise ValueError('The page request is too large. Select fewer pages or retry at a lower resolution.')
+            raw.extend(chunk)
+        return bytes(raw)
+
+    @router.post('/documents/intake/page')
+    @router.post('/documents/intake/pages-result')
+    async def page_reading(request: Request):
+        import asyncio
+        import documents_page_reader as page_reader
+        headers = {'Cache-Control': 'no-store', 'Pragma': 'no-cache'}
+        try:
+            aggregate = request.url.path.endswith('/pages-result')
+            expected = ('application/json',) if aggregate else ('image/jpeg', 'image/png')
+            if request.headers.get('content-type', '').split(';')[0] not in expected:
+                raise ValueError('Unsupported page request format.')
+            raw = await transient_page_body(request, page_reader.MAX_RESULT_BYTES if aggregate else page_reader.MAX_IMAGE_BYTES)
+            result = (page_reader.summarize(json.loads(raw)) if aggregate else
+                      await asyncio.to_thread(page_reader.read_image, raw))
+            return JSONResponse(result, headers=headers)
+        except p.Denied:
+            return JSONResponse({'error': 'Your session expired or this account is unavailable. Sign in again.'}, status_code=403, headers=headers)
+        except ValueError as exc:
+            return JSONResponse({'error': str(exc)}, status_code=400, headers=headers)
+        except Exception:
+            return JSONResponse({'error': 'The page could not be read. Retry it or continue manually.'}, status_code=400, headers=headers)
+
     @router.post('/documents/intake/read')
     async def intake_read(request: Request):
         import asyncio

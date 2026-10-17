@@ -3,11 +3,25 @@
 <p>Choose what the correspondence is for, check its details, then register it. Permanent incoming/outgoing numbers are assigned only when registration succeeds. You can enter everything manually without a scan.</p>
 {% if enabled %}<form method="post" action="/documents/new" class="doc-card" id="intake-form" data-ux-ignore data-telemetry-ignore><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="intake" value="guided">
 <h3>1. Read a document (optional)</h3>
-<p>Select a PDF up to 20 MiB and 50 pages, or paste a public HTTPS PDF link. Scanned pages are read with OCR (up to 10 pages per file). The file is read temporarily and is not saved. For private links, select the file from your device.</p>
+<p>For large PDFs, select a file and preview its pages on your device. Read up to 10 selected pages per batch without uploading the original PDF. Public links and whole-file reading remain limited to 20 MiB. For a private or larger Drive file, download it to Files first, then select it here.</p>
 <label>PDF file<input type="file" id="intake-pdf" accept="application/pdf,.pdf"></label>
+<button type="button" id="pdf-open">Preview and select pages</button>
+<section id="pdf-pages" hidden aria-label="Select PDF pages" data-ux-ignore>
+<p id="pdf-info"></p>
+<label>Pages to read (for example 1-3, 7)<input id="pdf-selection" maxlength="200" type="text" inputmode="text" autocomplete="off"></label>
+<p>Include the subject, sender, dates, reference and signature pages. Up to 10 pages per batch and 50 completed pages per reading.</p>
+<div><button type="button" id="pdf-prev">Previous preview</button> <span id="pdf-page-label"></span> <button type="button" id="pdf-next">Next preview</button></div>
+<canvas id="pdf-preview" aria-label="Preview of current PDF page"></canvas>
+<button type="button" id="pdf-read-pages">Read selected pages</button>
+<button type="button" id="pdf-retry" hidden>Retry failed pages</button>
+<button type="button" id="pdf-cancel" disabled>Cancel reading</button>
+<button type="button" id="pdf-review" hidden>Review completed pages</button>
+<p id="pdf-progress" role="status" aria-live="polite" aria-atomic="true"></p>
+<ul id="pdf-results"></ul>
+</section>
 <button type="button" id="intake-remove" hidden>Remove file / clear reading</button>
 <label>PDF link<input type="url" id="intake-source" autocomplete="off"></label>
-<button type="button" id="intake-read">Read and pre-fill</button>
+<button type="button" id="intake-read">Read whole PDF / link (20 MiB max)</button>
 <button type="button" id="intake-skip">Skip and enter manually</button>
 <p id="intake-read-status" role="status" aria-live="polite" aria-atomic="true" tabindex="-1"></p>
 <section id="intake-suggestions" aria-label="PDF suggestions" hidden></section>
@@ -32,4 +46,5 @@
 <label>Priority<select name="priority">{% for value,label in [('normal','Normal'),('urgent','Urgent')] %}<option value="{{ value }}" {% if value==values.get('priority','normal') %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
 {{ text('references','DTRAK and other references (one per line)',values.get('references',''),false) }}{{ field('channel','Receipt channel',value=values.get('channel',''),required=false) }}{{ text('evidence','Receipt evidence / note',values.get('evidence',''),false) }}
 <h3>4. Confirm and register</h3><label><input type="checkbox" name="confirmed" value="yes" required> I checked the source, entered fields, work destination, and any proposed steps.</label><p>Scenario suggestions do not authorize release or signing. Existing document policies and permanent numbering still apply.</p><button type="submit">Register correspondence</button></form>
-<script src="/static/js/work-intake.js" defer></script>{% endif %}{% endblock %}
+<script src="/static/js/work-intake.js" defer></script>
+<script type="module" src="/static/js/pdf-page-intake.mjs"></script>{% endif %}{% endblock %}

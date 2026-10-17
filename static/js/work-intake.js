@@ -43,6 +43,7 @@
   };
   const skip = document.getElementById('intake-skip');
   const reset = () => {
+    form.dispatchEvent(new Event('intake-source-cleared'));
     generation++; controller?.abort(); controller = null; status.setAttribute('aria-busy', 'false');
     file.value = ''; source.value = ''; clearSuggestions(); idle(); remove.hidden = true;
     status.textContent = 'File and reading cleared. Any form values already entered or applied are kept for review.';
@@ -56,7 +57,7 @@
     if (!pdf) { status.textContent = 'No file selected. Reading has not started.'; return; }
     const size = (pdf.size / (1024 * 1024)).toFixed(1);
     status.textContent = pdf.size > 20 * 1024 * 1024
-      ? `${pdf.name} is ${size} MiB; the limit is 20 MiB. Not uploaded or read; OCR did not run. Remove it or choose a smaller PDF.`
+      ? `${pdf.name} selected (${size} MiB). Use Preview and select pages to read it without uploading the whole PDF. Whole-file reading is limited to 20 MiB.`
       : `${pdf.name} selected (${size} MiB). Reading has not started. Tap Read and pre-fill to read it.`;
   });
   source.addEventListener('input', () => {
@@ -65,38 +66,10 @@
   });
   form.addEventListener('input', () => { form.elements.confirmed.checked = false; });
   form.addEventListener('submit', event => {
-    if (reading) { event.preventDefault(); status.textContent = 'Wait for PDF reading to finish before registering.'; }
+    if (reading || form.dataset.pageBusy === 'true') { event.preventDefault(); status.textContent = 'Wait for PDF reading to finish before registering.'; }
   });
-  read.addEventListener('click', async () => {
-    if (reading) return;
-    if (file.files.length && source.value.trim()) {
-      status.textContent = 'Choose either a file or a link, not both.'; return;
-    }
-    const pdf = file.files[0];
-    if (!pdf && !source.value.trim()) { status.textContent = 'Select a PDF or enter a public PDF link.'; return; }
-    if (pdf && pdf.size > 20 * 1024 * 1024) { status.textContent = 'Not uploaded or read; OCR did not run. The file exceeds 20 MiB. Remove it or choose a smaller PDF.'; remove.hidden = false; return; }
-    const run = ++generation; controller = new AbortController(); remove.hidden = false;
-    let timedOut = false;
-    const timer = setTimeout(() => { timedOut = true; if (run === generation) controller?.abort(); }, 90000);
-    reading = true; read.disabled = true; skip.disabled = true; file.disabled = true; source.disabled = true;
-    clearSuggestions(); form.elements.confirmed.checked = false;
-    status.textContent = 'Reading PDF… Keep this page open. Uploading and OCR can take up to 90 seconds.';
-    status.setAttribute('aria-busy', 'true');
-    try {
-      const response = await fetch('/documents/intake/read', {
-        method: 'POST', credentials: 'same-origin', cache: 'no-store', signal: controller.signal,
-        headers: {'Content-Type': pdf ? 'application/pdf' : 'application/json', 'X-CSRF-Token': form.elements.csrf.value},
-        body: pdf || JSON.stringify({url: source.value.trim()})
-      });
-      if (response.redirected || response.status === 401 || response.status === 403) {
-        throw new Error('Your session may have expired. Sign in again, then retry. Your selected file has been kept.');
-      }
-      if (!(response.headers.get('content-type') || '').includes('application/json')) {
-        throw new Error('The server did not return a reading result. Please retry; your file and entered details are kept.');
-      }
-      const result = await response.json();
-      if (run !== generation) return;
-      if (!response.ok) throw new Error(result.error || 'The PDF could not be read. Continue manually.');
+  const showResult = result => {
+    clearSuggestions();
       const notice = document.createElement('p'); notice.textContent = result.notice;
       suggestions.append(notice);
       for (const warning of result.warnings || []) {
@@ -140,7 +113,7 @@
         }
       }
       if (result.preview_truncated) {
-        const note = document.createElement('p'); note.textContent = 'Showing the first 10 pages only.'; preview.append(note);
+        const note = document.createElement('p'); note.textContent = 'Showing up to 10 completed pages only.'; preview.append(note);
       }
       suggestions.append(preview);
       if (!found) preview.open = true;
@@ -155,9 +128,44 @@
       const review = document.createElement('button'); review.type = 'button'; review.textContent = 'Review correspondence fields';
       review.addEventListener('click', () => form.elements.subject.focus()); suggestions.append(review);
       status.textContent = found
-        ? `Reading complete. ${method} ${found} suggestion(s) found; ${applied} empty field(s) pre-filled, ${found - applied} existing entry/entries kept. Review the results below. Your selected file is kept for retry; no server attachment was saved.`
-        : `The PDF was read, but no form fields could be identified reliably. ${method} No fields were changed. Read the extracted text below and enter the details manually, or retry with a clearer copy. Your selected file is kept.`;
+        ? `${result.scope === 'selected_pages' ? 'Completed selected pages reviewed.' : 'Reading complete.'} ${method} ${found} suggestion(s) found; ${applied} empty field(s) pre-filled, ${found - applied} existing entry/entries kept. Review the results below. Your selected file is kept for retry; no server attachment was saved.`
+        : `${result.scope === 'selected_pages' ? 'Selected pages were read' : 'The PDF was read'}, but no form fields could be identified reliably. ${method} No fields were changed. Read the extracted text below and enter the details manually, or retry with a clearer copy. Your selected file is kept.`;
       announce();
+  };
+  form.addEventListener('intake-reading-result', event => showResult(event.detail));
+  form.addEventListener('intake-reading-cleared', clearSuggestions);
+  read.addEventListener('click', async () => {
+    if (reading) return;
+    if (file.files.length && source.value.trim()) {
+      status.textContent = 'Choose either a file or a link, not both.'; return;
+    }
+    const pdf = file.files[0];
+    if (!pdf && !source.value.trim()) { status.textContent = 'Select a PDF or enter a public PDF link.'; return; }
+    if (pdf && pdf.size > 20 * 1024 * 1024) { status.textContent = 'Not uploaded or read; OCR did not run. The file exceeds 20 MiB. Remove it or choose a smaller PDF.'; remove.hidden = false; return; }
+    form.dispatchEvent(new Event('intake-legacy-reading'));
+    const run = ++generation; controller = new AbortController(); remove.hidden = false;
+    let timedOut = false;
+    const timer = setTimeout(() => { timedOut = true; if (run === generation) controller?.abort(); }, 90000);
+    reading = true; read.disabled = true; skip.disabled = true; file.disabled = true; source.disabled = true;
+    clearSuggestions(); form.elements.confirmed.checked = false;
+    status.textContent = 'Reading PDF… Keep this page open. Uploading and OCR can take up to 90 seconds.';
+    status.setAttribute('aria-busy', 'true');
+    try {
+      const response = await fetch('/documents/intake/read', {
+        method: 'POST', credentials: 'same-origin', cache: 'no-store', signal: controller.signal,
+        headers: {'Content-Type': pdf ? 'application/pdf' : 'application/json', 'X-CSRF-Token': form.elements.csrf.value},
+        body: pdf || JSON.stringify({url: source.value.trim()})
+      });
+      if (response.redirected || response.status === 401 || response.status === 403) {
+        throw new Error('Your session may have expired. Sign in again, then retry. Your selected file has been kept.');
+      }
+      if (!(response.headers.get('content-type') || '').includes('application/json')) {
+        throw new Error('The server did not return a reading result. Please retry; your file and entered details are kept.');
+      }
+      const result = await response.json();
+      if (run !== generation) return;
+      if (!response.ok) throw new Error(result.error || 'The PDF could not be read. Continue manually.');
+      showResult(result);
     } catch (error) {
       if (run === generation) {
         status.textContent = timedOut

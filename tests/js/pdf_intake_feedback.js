@@ -26,14 +26,14 @@ const assert = require('assert');
    return route.fulfill({json:{suggestions:{sender:'Training Office'},evidence:{},warnings:[],notice:'Review values',
     reading:{page_count:1,ocr_pages:[1]},text_preview:[{page:1,text:'<script>window.injected=true</script>\nFrom: Training Office',truncated:false}]}}).catch(()=>{});
   }
-  if(route.request().url().endsWith('.js')) return route.fulfill({body:'',contentType:'application/javascript'});
+  if(/\.m?js$/.test(route.request().url())) return route.fulfill({body:'',contentType:'application/javascript'});
   return route.fulfill({body:html,contentType:'text/html'});
  });
  await page.goto('http://intake.test/');
  await page.addScriptTag({path:path.join(root,'static/js/work-intake.js')});
  const file=page.locator('#intake-pdf'), status=page.locator('#intake-read-status');
  await file.setInputFiles({name:'large.pdf',mimeType:'application/pdf',buffer:Buffer.alloc(20*1024*1024+1)});
- assert((await status.innerText()).includes('OCR did not run'));
+ assert((await status.innerText()).includes('Preview and select pages'));
  await page.locator('#intake-read').click(); assert.equal(calls,0);
  await page.locator('#intake-remove').click(); assert.equal(await file.inputValue(),'');
  await file.setInputFiles({name:'scan.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-test')});

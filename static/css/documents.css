@@ -3,3 +3,5 @@
 #intake-form fieldset{min-width:0;margin:1rem 0;border:1px solid var(--line,#aaa);border-radius:.5rem;padding:1rem}#intake-form input[type="checkbox"]{display:inline-block;width:auto;margin-right:.5rem}#intake-form blockquote,#intake-form p{overflow-wrap:anywhere}#intake-form section{background:var(--surface-2,#f2f5fa);padding:1rem;border-radius:.5rem}
 
 #intake-read-status:not(:empty){padding:1rem;border:2px solid var(--border,#777);border-radius:.5rem;font-weight:600}#intake-suggestions pre{white-space:pre-wrap;overflow-wrap:anywhere}
+
+#pdf-preview{display:block;max-width:100%;height:auto;border:1px solid #aaa;margin:1rem 0}#pdf-progress:not(:empty){padding:1rem;border:2px solid var(--border,#777);border-radius:.5rem}#pdf-results{padding-left:1.5rem}
