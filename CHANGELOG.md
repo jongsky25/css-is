@@ -1,3 +1,15 @@
+## 7.01 — October 17, 2026
+
+- Choose the receipt channel from a dropdown when registering a document or recording another receipt: Email, Gmail, Hand-delivered, Courier, DTRAK, or Other.
+
+## 7.00 — October 17, 2026
+
+- The certifying officer on the travel forms now shows the division head's position in the directory (for example Medical Officer V) rather than the designation "Division Chief". The head of office is still the Director seat in the directory, which includes an OIC-Director; the filer's division head still comes from the filer's own division.
+
+## 6.99 — October 17, 2026
+
+- Use the official ARTA wording for rating statements SQD6, SQD7 and SQD8 (adds "(if asked for help)" and "(if denied) … explained to me"); the online form, paper-entry form and official report all read from the same text. Filipino updated to carry the same conditions (draft, for the office to review). Stored ratings are unchanged.
+
 ## 6.98 — October 17, 2026
 
 - Add a "See the name list" button to the Who responded section of an activity's report, shown only to people who manage the activity; it opens the activity's roster limited to the registered people who responded (Spot Feedback #91).

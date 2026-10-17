@@ -17,10 +17,36 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "6.98"
+APP_VERSION = "7.01"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.01",
+        "date": "October 17, 2026",
+        "summary": "Choose how a document was received from a dropdown.",
+        "changes": [
+            "When registering a document or recording another receipt, choose Email, Gmail, Hand-delivered, Courier, DTRAK, or Other instead of typing the receipt channel.",
+        ],
+    },
+    {
+        "version": "7.00",
+        "date": "October 17, 2026",
+        "summary": "Travel forms now show the certifying officer's own title.",
+        "changes": [
+            "The certifying officer on the travel forms is shown with their plantilla title (for example Medical Officer V) instead of \"Division Chief\".",
+            "The Director, including an OIC-Director, and the filer's division head are still picked from the directory.",
+        ],
+    },
+    {
+        "version": "6.99",
+        "date": "October 17, 2026",
+        "summary": "The rating statements on the service feedback form now read exactly as on the official form.",
+        "changes": [
+            "Statements 6, 7 and 8 now use the official wording, including \"(if asked for help)\" and \"(if denied)\".",
+            "The same wording shows on the online form, the paper-entry form and the official report. The Filipino version says the same.",
+        ],
+    },
     {
         "version": "6.98",
         "date": "October 17, 2026",

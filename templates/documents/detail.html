@@ -1,4 +1,4 @@
-{% extends 'documents/base.html' %}{% from 'documents/forms.html' import start,end,field,text,person,select %}
+{% extends 'documents/base.html' %}{% from 'documents/forms.html' import start,end,field,text,person,select,receipt_channel %}
 {% block documents_content %}
 <h2>{{ doc.number }} · {{ doc.subject }}</h2>
 <p>{{ doc.type }} · {{ doc.visibility }} · {{ 'Awaiting verification' if doc.verification=='pending' else doc.verification|replace('_',' ') }} · {{ doc.status|replace('_',' ') }}</p>
@@ -40,7 +40,7 @@
 {{ start(doc,csrf,'reevaluate','Preview and apply current routing rules') }}<p>Matched rules: {% for r in evaluation.matches %}{{ r.name }} (#{{ r.id }}) {% else %}none{% endfor %}. This preserves prior work and requires reconciliation.</p><input type="hidden" name="preview" value="{{ evaluation|tojson|forceescape }}">{{ text('reason','Reason to reevaluate') }}{{ end('Apply these proposals') }}
 {{ start(doc,csrf,'merge_preview','Preview duplicate merge') }}{{ field('target_id','Canonical document ID','number') }}{{ end('Preview merge') }}
 {{ start(doc,csrf,'cancel','Cancel this record') }}{{ text('reason','Cancellation authority and reason') }}{{ end('Cancel record; retain number') }}
-{{ start(doc,csrf,'receipt','Record another receipt') }}{{ field('channel','Channel') }}{{ field('sender','Sender') }}{{ field('received_at','Received at (Manila)','datetime-local') }}{{ text('evidence','Receipt evidence') }}{{ end() }}
+{{ start(doc,csrf,'receipt','Record another receipt') }}{{ receipt_channel(required=true) }}{{ field('sender','Sender') }}{{ field('received_at','Received at (Manila)','datetime-local') }}{{ text('evidence','Receipt evidence') }}{{ end() }}
 {% endif %}
 {% if can_work %}
 {{ start(doc,csrf,'reconcile','Reconcile changed instructions') }}{{ text('reason','Explain how existing work and assignments address the new instruction') }}{{ end() }}

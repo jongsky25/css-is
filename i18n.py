@@ -58,9 +58,10 @@ ARTA_TEXT_FIL = {
     "SQD5": "Makatuwiran ang halagang aking binayaran para sa aking transaksyon.",
     "SQD6": 'Pakiramdam ko ay patas ang opisina sa lahat, o "walang palakasan", sa aking '
             "transaksyon.",
-    "SQD7": "Magalang akong trinato ng mga tauhan, at handa silang tumulong sa akin.",
-    "SQD8": "Nakuha ko ang aking kailangan mula sa opisina, o naipaliwanag nang sapat ang "
-            "aking hiling.",
+    # SQD7 and SQD8 carry the official "(if asked for help)" / "(if denied)" conditions. DRAFT: office to review.
+    "SQD7": "Magalang akong trinato ng mga tauhan, at (kung humingi ako ng tulong) matulungin sila.",
+    "SQD8": "Nakuha ko ang aking kailangan mula sa opisina ng pamahalaan, o (kung tinanggihan) "
+            "naipaliwanag nang sapat sa akin ang pagtanggi sa aking hiling.",
 }
 
 # SERVQUAL items (Types 2 & 3) — keep the {subject} placeholder. DRAFT.
