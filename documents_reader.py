@@ -141,7 +141,7 @@ def _dtrak_header(text):
             subject = False
             continue
         line = re.sub(r'^TYPE OF DOCUMENT\s*:', 'Type:', line, flags=re.I)
-        if re.match(r'^SUBJECT\s*:', line, re.I):
+        if re.match(r'^(?:SUBJECT(?:\s*/\s*TITLE)?|TITLE)\s*:', line, re.I):
             subject = True
             output.append(line)
         elif re.match(r'^(?:Originating office|Type|Date|Deadline|Due date)\s*:', line, re.I):
@@ -171,15 +171,15 @@ def suggest(pages):
     dtrak_pages = []
     routing_dates = []
     patterns = {
-        'subject': r'^subject(?:\s*[:\-]\s*|\s+)(.+)$',
+        'subject': r'^(?:subject(?:\s*/\s*title)?|title)(?:\s*[:\-]\s*|\s+)(.+)$',
         'sender': r'^(?:from|sender|originating office)(?:\s*[:\-]\s*|\s+)(.+)$',
         'type': r'^(?:document type|type)\s*[:\-]\s*(.+)$',
         'document_date': r'^(?:document date|date|dated)(?:\s*[:\-]\s*|\s+)(.+)$',
         'due_date': r'^(?:deadline|due date|due|on or before)\s*[:\-]?\s*(.+)$',
         'references': r'^((?:DTRAK\b|reference\b|ref\.).*)$',
     }
-    label = re.compile(r'^(?:subject|from|sender|originating office|document type|type|document date|date|dated|deadline|due date|due|references?|DTRAK|to)\s*[:\-]?\s*$', re.I)
-    boundary = re.compile(r'^(?:subject|from|sender|originating office|document type|type|document date|date|dated|deadline|due date|due|references?|DTRAK|to)(?:\s*[:\-]|\s*$)', re.I)
+    label = re.compile(r'^(?:subject(?:\s*/\s*title)?|title|from|sender|originating office|document type|type|document date|date|dated|deadline|due date|due|references?|DTRAK|to)\s*[:\-]?\s*$', re.I)
+    boundary = re.compile(r'^(?:subject(?:\s*/\s*title)?|title|from|sender|originating office|document type|type|document date|date|dated|deadline|due date|due|references?|DTRAK|to)(?:\s*[:\-]|\s*$)', re.I)
     for page_number, text in enumerate(pages, 1):
         text, dtrak = _dtrak_header(text)
         if dtrak:
@@ -205,6 +205,23 @@ def suggest(pages):
                 if next_line and not boundary.match(next_line):
                     line = line.rstrip(' :-') + ': ' + next_line
                     index += 1
+            # Join explicitly labelled subject continuations, stopping at blanks,
+            # metadata, routing headings or common body openings.
+            if not dtrak and re.match(patterns['subject'], line, re.I):
+                for _ in range(5):
+                    if index + 1 >= len(lines):
+                        break
+                    following = lines[index + 1]
+                    if (not following or boundary.match(following) or
+                        any(re.match(pattern, following, re.I) for pattern in patterns.values()) or
+                        _date(following) or
+                        re.match(r'^(?:ACTION|DATE|FROM|TO|NAME|FOR|MEMORANDUM)\b', following) or
+                        re.match(r'^(?:This is|Please|Upon |Thank |Dear |In reference|For questions)', following, re.I)):
+                        break
+                    if len(line) + len(following) > FIELDS['subject']:
+                        break
+                    line += ' ' + following
+                    index += 1
             combined.append(line)
             index += 1
         for line in combined:
@@ -222,6 +239,7 @@ def suggest(pages):
                 if heading[2]:
                     candidates['references'].append((line, page_number, line))
     suggestions, evidence, warnings = {}, {}, []
+    conflicts = {}
     if routing_dates:
         warnings.append('Routing-slip date: ' + ', '.join(f'{value} (page {page})' for value, page in routing_dates) + '. This is separate from the document date and receipt time.')
     if dtrak_pages:
@@ -229,6 +247,19 @@ def suggest(pages):
     for key, found in candidates.items():
         if key == 'type':
             found = [(value.title(), page, quote) for value, page, quote in found]
+        if key == 'subject' and found:
+            # Do not invent missing words: choose an existing complete reading
+            # only when others are the same words or a substantial leading excerpt.
+            words = lambda value: re.findall(r'[^\W_]+', value.casefold())
+            longest = max(found, key=lambda item: len(words(item[0])))
+            full = words(longest[0])
+            compatible = all(words(value) == full or
+                             (len(words(value)) >= 6 and full[:len(words(value))] == words(value))
+                             for value, _, _ in found)
+            if compatible:
+                suggestions[key] = longest[0]
+                evidence[key] = [{'page': page, 'text': quote} for _, page, quote in found[:8]]
+                continue
         unique = list(dict.fromkeys(item[0] for item in found))
         if key == 'references' and unique:
             value = '\n'.join(unique)
@@ -239,10 +270,11 @@ def suggest(pages):
             suggestions[key] = unique[0]
             evidence[key] = [{'page': found[0][1], 'text': found[0][2]}]
         elif len(unique) > 1:
+            conflicts[key] = [{'value': value, 'page': page, 'text': quote} for value, page, quote in found[:8]]
             warnings.append('Multiple values found for ' + key.replace('_', ' ') + '; enter it manually.')
     if not suggestions:
         warnings.append('No clearly labelled fields were found. Enter the details manually.')
-    return {'suggestions': suggestions, 'evidence': evidence, 'warnings': warnings,
+    return {'suggestions': suggestions, 'evidence': evidence, 'warnings': warnings, 'conflicts': conflicts,
             'notice': 'Suggested values are unverified. Check each value against the PDF before registration.'}
 
 

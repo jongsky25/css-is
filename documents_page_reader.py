@@ -73,6 +73,9 @@ def summarize(payload):
     for evidence in result['evidence'].values():
         for item in evidence:
             item['page'] = pages[item['page'] - 1]['page']
+    for candidates in result.get('conflicts', {}).values():
+        for item in candidates:
+            item['page'] = pages[item['page'] - 1]['page']
     ocr_pages = [item['page'] for item in pages if item['ocr']]
     result['scope'] = 'selected_pages'
     result['reading'] = {'page_count': len(pages), 'ocr_pages': ocr_pages}

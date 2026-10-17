@@ -1,3 +1,9 @@
+## 6.90 — October 17, 2026
+
+- Recognize Title and Subject/Title labels and bounded multiline subjects.
+- Reconcile identical subject words across formatting differences and substantial leading excerpts without inventing text.
+- Expose genuine conflicting readings beside fields with original page references; preserve manual corrections.
+
 ## 6.89 — October 17, 2026
 
 - Automatically read the first local PDF page and the next page for DTRAK documents; public links use the same page scope.
