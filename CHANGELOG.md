@@ -1,3 +1,10 @@
+## 7.08 — October 19, 2026
+
+- Bind intake OCR to the queued content checksum, verify the actual source bytes and recheck the source folder/content after reading, while allowing metadata-only Drive version changes.
+- Refresh the cached Drive fingerprint from the verified OCR receipt; reject missing or mismatched source receipts before caching suggestions.
+- Keep registered-document extraction, approval, signing and filing version checks strict, and show OCR errors beside the review controls.
+- Update documents_relay.gs in the existing Docs/travel project and deploy a new version of its existing web app for content-checked intake OCR.
+
 ## 7.07 — October 19, 2026
 
 - Fix Workspace replies being decoded twice when Google uses gzip or deflate compression, which caused Drive checks to report an unreachable reply service.
