@@ -925,6 +925,60 @@ def save_item(conn, filing, code, *, drive_url=None, na=None, fmis_ref=None, not
     conn.commit()
 
 
+def peers_of(conn, filing):
+    """The other live filings of the same kind for the same activity and the same DPO: the travellers
+    one personnel order covers. A blank (typed-in) activity links nobody, and an empty DPO number matches nothing."""
+    dpo = " ".join((filing["dpo_no"] or "").split()).upper()
+    if filing["source_kind"] == "blank" or not dpo:
+        return []
+    return [r for r in _rows(
+        conn, "SELECT * FROM travel_filing WHERE id<>? AND kind=? AND source_kind=? AND status IN ('open','ready') "
+              "AND purged_at IS NULL AND COALESCE(entry_id,-1)=? AND COALESCE(event_id,-1)=?",
+        (filing["id"], filing["kind"], filing["source_kind"],
+         filing["entry_id"] if filing["entry_id"] is not None else -1,
+         filing["event_id"] if filing["event_id"] is not None else -1))
+        if " ".join((r["dpo_no"] or "").split()).upper() == dpo]
+
+
+def apply_na_to_peers(conn, filing, code, na, *, by=None):
+    """'Apply to everyone': copy this row's applicability to the other travellers on the same activity and
+    DPO. It only moves rows that are still undecided (missing -> not applicable) or already marked not
+    applicable (back to needed); a row someone has already filled in is never touched. Returns how many
+    filings changed."""
+    changed = 0
+    for peer in peers_of(conn, filing):
+        try:
+            spec = _item_spec(peer, code)
+        except TravelError:
+            continue                                    # not on that person's checklist
+        if spec.handling not in ("upload", "carry"):
+            continue
+        sync_items(conn, peer)
+        cur = conn.execute("SELECT state, drive_url FROM travel_item WHERE filing_id=? AND item_code=?",
+                           (peer["id"], code)).fetchone()
+        if na and cur[0] == "missing":
+            new = "na"
+        elif not na and cur[0] == "na":
+            new = "present" if cur[1] else "missing"
+        else:
+            continue
+        now = tz.now_iso()
+        conn.execute("UPDATE travel_item SET state=?, updated_at=? WHERE filing_id=? AND item_code=?",
+                     (new, now, peer["id"], code))
+        if na:
+            conn.execute("DELETE FROM travel_reading WHERE filing_id=? AND item_code=?", (peer["id"], code))
+        _touch_open(conn, peer, now)
+        _stamp(conn, peer["id"], now)
+        changed += 1
+    if changed:
+        conn.commit()
+        if by:
+            st.audit(conn, by, "travel_item_everyone", target_type="travel_filing", target_id=filing["id"],
+                     summary=f"Marked '{code}' {'not applicable' if na else 'needed'} for {changed} other "
+                             f"traveller(s) on DPO {filing['dpo_no']}")
+    return changed
+
+
 def uploaded_folder(conn, filing, code):
     """The Drive folder id the office made for this row's uploaded files, or None (nothing, or a pasted link)."""
     r = conn.execute("SELECT drive_file_id FROM travel_item WHERE filing_id=? AND item_code=? AND drive_source='upload'",

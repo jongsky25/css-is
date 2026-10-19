@@ -250,6 +250,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             "questions": [q_ for q_ in tc.ANSWER_KEYS if filing["kind"] in q_[2]], "roles": tc.ROLES,
             "mc114": travel.MC114_FORMATS, "liquidations": liqs, "ca": ca, "editable": filing["status"] in ("open", "ready"),
             "msg": (q.get("ok") or "")[:200] or None, "err": error or (q.get("err") or "")[:200] or None,
+            "peers": len(travel.peers_of(conn, filing)) if travel.is_owner(request.state.user, filing) else 0,
             "uploads_ready": _uploads_ready(conn), "rev": tc.CHECKLIST_REV, "can_manual_amount": filing["kind"] in ("ca", "liquidation") and not filing["ca_filing_id"],
         }, status_code=status_code)
 
@@ -305,7 +306,12 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
                                  note=f["note"] if "note" in f else None)
             except travel.TravelError as e:
                 return _go(f"/travel/f/{ref}#item-{code}", err=str(e))
-            return _go(f"/travel/f/{ref}#item-{code}", msg="Saved.")
+            said = "Saved."
+            if f.get("everyone") == "1" and "na" in f:        # "apply to everyone on this DPO"
+                n = travel.apply_na_to_peers(conn, filing, code, f["na"] == "1", by=request.state.user["username"])
+                said = "Saved" + (f" for you and {n} other traveller{'s' if n != 1 else ''} on this DPO." if n
+                                  else ". Nobody else on this DPO needed changing.")
+            return _go(f"/travel/f/{ref}#item-{code}", msg=said)
         finally:
             conn.close()
 

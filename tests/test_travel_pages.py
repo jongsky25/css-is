@@ -497,3 +497,28 @@ def test_next_action_follows_missing_documents_then_review(viewer, conn):
         elif item['handling'] in ('carry', 'upload'):
             post(viewer, url + '/item/' + item['code'], drive_url='https://drive.google.com/file/d/evidence/view')
     assert f'href="{url}/ready">Review and mark ready</a>' in viewer.get(url).text
+
+
+def test_apply_na_to_everyone_on_the_same_dpo(viewer, conn):
+    """Spot Feedback #126/#128: the button appears only when someone else is on the DPO, and copies the answer."""
+    ref = ref_of(blank(viewer, "ca", start=days(8), end=days(10), title="TRAVELTEST Joint"))
+    me = travel.get_by_ref(conn, ref)
+    page = viewer.get(f"/travel/f/{ref}").text
+    assert 'name="everyone"' not in page                       # nobody else on this DPO yet
+    # a blank (typed-in) activity links nobody, so make this a calendar-linked filing with a colleague
+    other = st.create_admin_user(conn, "tvcolleague@test.local", "x", "y", "viewer")
+    conn.execute("UPDATE travel_filing SET source_kind='entry', entry_id=991 WHERE id=?", (me["id"],))
+    cols = "user_id, ref_code, kind, source_kind, entry_id, act_title, act_start, act_end, dpo_no, status"
+    conn.execute(f"INSERT INTO travel_filing({cols}) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                 (other, "TF-9999-0001", "ca", "entry", 991, "TRAVELTEST Joint", me["act_start"], me["act_end"],
+                  me["dpo_no"], "open")); conn.commit()
+    page = viewer.get(f"/travel/f/{ref}").text
+    assert 'name="everyone"' in page and "Does not apply to everyone on this DPO" in page
+    r = post(viewer, f"/travel/f/{ref}/item/dpo", na="1", everyone="1")
+    assert r.status_code == 303 and "other%20traveller" in r.headers["location"].replace("+", "%20")
+    states = dict(conn.execute("SELECT f.ref_code, i.state FROM travel_item i JOIN travel_filing f ON f.id=i.filing_id "
+                               "WHERE i.item_code='dpo'").fetchall())
+    assert states == {ref: "na", "TF-9999-0001": "na"}
+    for t in ("travel_item", "travel_filing"):
+        conn.execute(f"DELETE FROM {t}")
+    conn.execute("DELETE FROM admin_user WHERE id=?", (other,)); conn.commit()

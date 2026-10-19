@@ -110,6 +110,12 @@
         <form method="post" action="/travel/f/{{ f.ref_code }}/item/{{ it.code }}">
           <input type="hidden" name="na" value="{{ '0' if it.state == 'na' else '1' }}">
           <button class="btn ghost small" type="submit">{{ 'Needed after all' if it.state == 'na' else 'Does not apply to me' }}</button></form>
+        {% if peers %}
+        <form method="post" action="/travel/f/{{ f.ref_code }}/item/{{ it.code }}">
+          <input type="hidden" name="na" value="{{ '0' if it.state == 'na' else '1' }}">
+          <input type="hidden" name="everyone" value="1">
+          <button class="btn ghost small" type="submit" title="Also applies to the {{ peers }} other traveller{{ 's' if peers != 1 }} on this DPO whose answer is still open">{{ 'Needed by everyone on this DPO' if it.state == 'na' else 'Does not apply to everyone on this DPO' }}</button></form>
+        {% endif %}
         {% endif %}
         {% endif %}
       {% elif it.handling == 'fmis' and it.fmis_ref %}<div class="tv-note">FMIS: {{ it.fmis_ref }}</div>

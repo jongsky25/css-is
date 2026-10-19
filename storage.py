@@ -3905,6 +3905,7 @@ _AUDIT_ACTIONS = {
     "travel_library_save": ("Saved the MC 114 justification library", "Travel filing"),
     "travel_settings_save": ("Saved travel filing settings", "Travel filing"),
     "travel_purge":        ("Removed old travel filing details", "Travel filing"),
+    "travel_item_everyone": ("Applied a travel checklist answer to everyone on the DPO", "Travel filing"),
     "room_meal_tag":       ("Tagged a room meal order", "Conference room"),
     "room_encode":         ("Encoded a room booking", "Conference room"),
     "room_cancel":         ("Cancelled a room booking", "Conference room"),
