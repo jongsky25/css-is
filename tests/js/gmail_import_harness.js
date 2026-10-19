@@ -2,7 +2,7 @@ const fs=require('fs'),vm=require('vm'),crypto=require('crypto'),assert=require(
 const secret='test-only-secret-with-at-least-32-characters';
 let offset=0,runCount=0;
 class Clock extends Date {constructor(...args){super(...(args.length?args:[Date.now()+offset]));}static now(){return Date.now()+offset;}}
-let props,files,counter,requests,downloads,failCreate,failPost,failSave,locked,permissionFailure,replyCode,scanPage,queueReply;
+let props,files,counter,requests,downloads,failCreate,failPost,failSave,locked,permissionFailure,replyCode,scanPage,queueReply,attachmentData;
 const hash=(alg,b)=>crypto.createHash(alg).update(Buffer.from(b)).digest();
 function blob(value,mime,name){const b=Buffer.from(Array.isArray(value)?value:String(value));return {bytes:b,getBytes:()=>Array.from(b),getDataAsString:()=>b.toString()};}
 const candidate={mailbox:'office@example.test',message_id:'19abc123',subject:'Mémo for review',sender:'Office A',received_at:'2026-10-17T00:00:00Z',ready_for_import:true,
@@ -11,6 +11,7 @@ function reset(){
  offset=0;runCount=0;
  props={GMAIL_DOCUMENTS_IMPORT_ENABLED:'true',GMAIL_DOCUMENTS_FOLDER_ID:'private_folder123',GMAIL_DOCUMENTS_INTAKE_URL:'https://css.example.test/integrations/gmail/documents',CSS_GMAIL_INTAKE_SECRET:secret};
  files=new Map();counter=0;requests=[];downloads=0;failCreate='';failPost=false;failSave=false;locked=false;permissionFailure=false;replyCode=201;queueReply=false;
+ attachmentData=Buffer.from('DATA').toString('base64url');
  scanPage={candidates:[candidate],excluded:[],errors:[],next_page_token:null};
 }
 reset();
@@ -24,8 +25,8 @@ const context={Date:Clock,JSON,Math,Number,String,Array,Set,Error,console:{log:(
  LockService:{getScriptLock:()=>({tryLock:()=>!locked,releaseLock:()=>{}})},
  Utilities:{DigestAlgorithm:{SHA_256:'sha256',MD5:'md5'},newBlob:blob,
  computeDigest:(alg,bytes)=>Array.from(hash(alg,bytes)),base64DecodeWebSafe:s=>Array.from(Buffer.from(s,'base64url')),
- computeHmacSha256Signature:(body,key)=>Array.from(crypto.createHmac('sha256',key).update(body).digest())},
- Gmail:{Users:{getProfile:()=>({emailAddress:'office@example.test'}),Messages:{Attachments:{get:()=>{downloads++;return {data:Buffer.from('DATA').toString('base64url')};}}}}},
+ computeHmacSha256Signature:(body,key)=>Array.from(crypto.createHmac('sha256',Buffer.from(key)).update(Buffer.from(body)).digest())},
+ Gmail:{Users:{getProfile:()=>({emailAddress:'office@example.test'}),Messages:{Attachments:{get:()=>{downloads++;return {data:attachmentData};}}}}},
  Drive:{Files:{generateIds:()=>({ids:['reserved_file_'+(++counter)]}),
  get:id=>{
   if(id==='private_folder123')return {mimeType:'application/vnd.google-apps.folder',capabilities:{canAddChildren:true}};
@@ -48,8 +49,11 @@ const context={Date:Clock,JSON,Math,Number,String,Array,Set,Error,console:{log:(
  UrlFetchApp:{fetch:(url,options)=>{
   assert.equal(url,props.GMAIL_DOCUMENTS_INTAKE_URL);assert.equal(options.followRedirects,false);
   const ts=options.headers['X-CSS-Timestamp'];
-  assert.equal(options.headers['X-CSS-Signature'],crypto.createHmac('sha256',secret).update(ts+'.'+options.payload).digest('hex'));
-  requests.push(options);
+  assert(Array.isArray(options.payload));
+  assert.equal(options.contentType,'application/json; charset=utf-8');
+  const wire=Buffer.from(options.payload);
+  assert.equal(options.headers['X-CSS-Signature'],crypto.createHmac('sha256',secret).update(Buffer.concat([Buffer.from(ts+'.'),wire])).digest('hex'));
+  requests.push({...options,payload:wire.toString('utf8')});
   if(failPost){failPost=false;throw Error('Timeout AFTER registry commit');}
   return {getResponseCode:()=>replyCode,getContentText:()=>JSON.stringify(queueReply ? {intake_id:456,state:'queued',duplicate:requests.length>1} : {document_id:123,duplicate:requests.length>1})};
  }}
@@ -204,6 +208,91 @@ check('HTML-only body is converted to text and oversized content is not truncate
  assert.equal(context.gdiBodyText_('19abc'),'Hello & welcome\nNext');
  context.Gmail.Users.Messages.get=()=>({payload:{mimeType:'text/plain',body:{data:Buffer.from('x'.repeat(16001)).toString('base64url')}}});
  assert.throws(()=>context.gdiBodyText_('19abc'),/too_large/);
+});
+check('byte-array PDF preserves all bytes and expected 55880-byte size',()=>{
+ const pdf=Buffer.from(Array.from({length:55880},(_,i)=>i%256));
+ attachmentData=Array.from(pdf,b=>b>127?b-256:b);
+ queueReply=true;scanPage.candidates=[{...candidate,attachments:[{...candidate.attachments[0],size:pdf.length}]}];
+ assert.equal(run().queued,1);assert.equal(attachmentCount(),1);
+ const file=[...files.values()].find(f=>f.meta.appProperties.gdi_attachment);
+ assert.equal(file.meta.size,55880);assert.equal(file.meta.md5Checksum,hash('md5',pdf).toString('hex'));
+ assert.equal(run().already_queued,1);assert.equal(downloads,1);
+});
+check('signed and unsigned byte arrays match base64url including UTF-8',()=>{
+ const source=Buffer.from('Review: Español — 日本語');
+ for(const data of [Array.from(source),Array.from(source,b=>b>127?b-256:b),source.toString('base64url')]) {
+   assert.deepEqual(Buffer.from(context.gdiBytes_(data,1000,'bad_data')),source);
+   context.Gmail.Users.Messages.get=()=>({payload:{mimeType:'text/plain',body:{data,size:source.length}}});
+   assert.equal(context.gdiBodyText_('19abc'),source.toString());
+ }
+});
+check('body-only byte arrays prefer plain text and stay out of health logs',()=>{
+ queueReply=true;scanPage.candidates=[{...candidate,attachments:[],body_only:true}];
+ const text='Please review.\n'+'x'.repeat(2093);assert.equal(Buffer.byteLength(text),2108);
+ context.Gmail.Users.Messages.get=()=>({payload:{mimeType:'multipart/alternative',parts:[
+   {mimeType:'text/plain',body:{size:2108,data:Array.from(Buffer.from(text))}},
+   {mimeType:'text/html',body:{size:19100,data:Array.from(Buffer.from('x'.repeat(19100)))}}]}});
+ assert.equal(run().queued,1);assert.equal(JSON.parse(requests[0].payload).body_text,text);
+ assert.equal(attachmentCount(),0);assert.equal(downloads,0);
+ assert(!JSON.stringify(context.gmailDocumentsStatus()).includes('Please review.'));
+});
+check('external body and HTML-only byte arrays are decoded',()=>{
+ attachmentData=Array.from(Buffer.from('External body.'));
+ context.Gmail.Users.Messages.get=()=>({payload:{mimeType:'text/plain',body:{size:14,attachmentId:'body-part'}}});
+ assert.equal(context.gdiBodyText_('19abc'),'External body.');assert.equal(downloads,1);
+ context.Gmail.Users.Messages.get=()=>({payload:{mimeType:'text/html',body:{data:Array.from(Buffer.from('<p>Hi &amp; welcome</p>'))}}});
+ assert.equal(context.gdiBodyText_('19abc'),'Hi & welcome');
+});
+check('malformed and oversized data still fail closed',()=>{
+ for(const data of [undefined,null,{},[256],[-129],[1.5],['65'],new Array(2),'%%%']) {
+   assert.throws(()=>context.gdiBytes_(data,100,'bad_data'),/bad_data/);
+ }
+ assert.throws(()=>context.gdiBytes_([1,2,3],2,'bad_data'),/bad_data/);
+ assert.throws(()=>context.gdiBytes_(Buffer.alloc(100).toString('base64url'),5,'bad_data'),/bad_data/);
+ attachmentData=[65,66,67];assert.equal(run().errors[0].reason,'attachment_size');
+ assert.equal(attachmentCount(),0);assert.equal(requests.length,0);
+});
+check('targeted recovery resets blocked read without reallocating reserved IDs',()=>{
+ attachmentData={};assert.equal(run().errors[0].reason,'attachment_size');
+ const before=context.gmailDocumentsStatus();assert.equal(before.receipts[0].state,'needs_attention');
+ const reserved=counter,receipt=before.receipts[0].receipt_id;
+ const pinned=JSON.parse(files.get(receipt).body);
+ attachmentData=Array.from(Buffer.from('DATA'));
+ const retryReport=context.retryGmailDocumentReadFailures();assert.equal(retryReport.retried.length,1);
+ const resetReceipt=JSON.parse(files.get(receipt).body);
+ assert.deepEqual(resetReceipt.files,pinned.files);assert.deepEqual(resetReceipt.candidate,pinned.candidate);
+ assert.equal(counter,reserved);assert.equal(requests.length,0);
+ assert.equal(run().registered,1);assert.equal(attachmentCount(),2);
+ assert.equal(context.gmailDocumentsStatus().receipts[0].receipt_id,receipt);
+ assert(resetReceipt.history.some(h=>h.action==='operator_retry' && h.actor==='office@example.test'));
+ assert.equal(context.retryGmailDocumentReadFailures().retried.length,0);
+});
+check('targeted recovery resets a body read and permits immediate import',()=>{
+ queueReply=true;scanPage.candidates=[{...candidate,attachments:[],body_only:true}];
+ context.Gmail.Users.Messages.get=()=>({payload:{mimeType:'text/plain',body:{data:null}}});
+ assert.equal(run().errors[0].reason,'gmail_body_unavailable');
+ context.Gmail.Users.Messages.get=()=>({payload:{mimeType:'text/plain',body:{data:[79,75]}}});
+ assert.equal(context.retryGmailDocumentReadFailures().retried.length,1);
+ assert.equal(context.importGmailDocuments().queued,1);assert.equal(JSON.parse(requests[0].payload).body_text,'OK');
+});
+check('targeted recovery preserves submitted requests and rejects binding changes',()=>{
+ failPost=true;run();const receipt=context.gmailDocumentsStatus().receipts[0].receipt_id;
+ const value=JSON.parse(files.get(receipt).body);value.last_error='attachment_size';files.get(receipt).body=JSON.stringify(value);
+ const before=files.get(receipt).body;
+ assert.equal(context.retryGmailDocumentReadFailures().retried.length,0);assert.equal(files.get(receipt).body,before);
+ props.GMAIL_DOCUMENTS_INTAKE_URL='https://other.example.test/integrations/gmail/documents';
+ assert.equal(context.retryGmailDocumentReadFailures().errors[0].reason,'receipt_binding_conflict');
+ assert.equal(files.get(receipt).body,before);
+ locked=true;assert.throws(()=>context.retryGmailDocumentReadFailures(),/busy/);
+});
+check('Unicode body authentication retry preserves the exact payload',()=>{
+ queueReply=true;replyCode=401;scanPage.candidates=[{...candidate,attachments:[],body_only:true}];
+ const body='Mémo — café 🇵🇭';
+ context.Gmail.Users.Messages.get=()=>({payload:{mimeType:'text/plain',body:{data:Array.from(Buffer.from(body))}}});
+ assert.equal(run().errors[0].reason,'intake_http_401');
+ assert.equal(JSON.parse(requests[0].payload).body_text,body);
+ retry();replyCode=201;assert.equal(run().already_queued,1);
+ assert.equal(requests[0].payload,requests[1].payload);assert.equal(attachmentCount(),0);
 });
 if(process.argv.includes('--envelope')){
  reset();run();console.log(JSON.stringify({body:requests[0].payload,headers:requests[0].headers}));

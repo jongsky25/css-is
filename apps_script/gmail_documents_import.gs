@@ -1,5 +1,24 @@
 // Phase 3 importer. Requires gmail_documents.gs, Gmail v1 and Drive v3.
 // The two opt-in switches must be enabled separately. Never sends email.
+// Advanced Gmail may return already-decoded Byte[]; REST returns base64url text.
+// Normalize once and keep exact size/checksum checks for both representations.
+function gdiBytes_(data,maxBytes,errorCode) {
+  let bytes;
+  if(Array.isArray(data)) {
+    if(data.length>maxBytes)throw new Error(errorCode);
+    bytes=Array.from(data,function(b) {
+      if(!Number.isInteger(b) || b < -128 || b > 255)throw new Error(errorCode);
+      return b>127 ? b-256 : b;
+    });
+  } else if(typeof data==='string') {
+    if(data.length>Math.ceil(maxBytes/3)*4+4 || !/^[A-Za-z0-9_-]*={0,2}$/.test(data))throw new Error(errorCode);
+    try {bytes=Utilities.base64DecodeWebSafe(data);}
+    catch(ignore) {throw new Error(errorCode);}
+  } else throw new Error(errorCode);
+  if(bytes.length>maxBytes)throw new Error(errorCode);
+  return bytes;
+}
+
 function gdiHash_(value) {
   return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, Utilities.newBlob(value).getBytes())
     .map(function(b) {return ('0'+(b&255).toString(16)).slice(-2);}).join('');
@@ -69,8 +88,7 @@ function gdiUpload_(config, saved, attachment) {
   if (!meta) {
     if (file.uploaded) throw new Error('imported_file_missing');
     const data=Gmail.Users.Messages.Attachments.get('me',receipt.message_id,attachment.attachment_id);
-    if (typeof data.data!=='string' || data.data.length>Math.ceil(GDI_MAX_BYTES/3)*4+4) throw new Error('attachment_size');
-    const bytes=Utilities.base64DecodeWebSafe(data.data);
+    const bytes=gdiBytes_(data.data,GDI_MAX_BYTES,'attachment_size');
     if (bytes.length!==attachment.size || bytes.length>GDI_MAX_BYTES || bytes.length===0) throw new Error('attachment_size');
     file.md5=Utilities.computeDigest(Utilities.DigestAlgorithm.MD5,bytes)
       .map(function(b) {return ('0'+(b&255).toString(16)).slice(-2);}).join('');
@@ -88,12 +106,14 @@ function gdiUpload_(config, saved, attachment) {
   return {attachment_id:attachment.attachment_id,drive_url:'https://drive.google.com/file/d/'+file.id+'/view'};
 }
 function gdiSubmit_(config,payload) {
-  const body=JSON.stringify(payload);
-  if (Utilities.newBlob(body).getBytes().length>64*1024) throw new Error('intake_payload_size');
+  const body=Utilities.newBlob(JSON.stringify(payload)).getBytes();
+  if (body.length>64*1024) throw new Error('intake_payload_size');
   const ts=String(Math.floor(Date.now()/1000));
-  const sig=Utilities.computeHmacSha256Signature(ts+'.'+body,config.secret)
+  const sig=Utilities.computeHmacSha256Signature(
+    Utilities.newBlob(ts+'.').getBytes().concat(body),
+    Utilities.newBlob(config.secret).getBytes())
     .map(function(b) {return ('0'+(b&255).toString(16)).slice(-2);}).join('');
-  const response=UrlFetchApp.fetch(config.endpoint,{method:'post',contentType:'application/json',payload:body,
+  const response=UrlFetchApp.fetch(config.endpoint,{method:'post',contentType:'application/json; charset=utf-8',payload:body,
     headers:{'X-CSS-Timestamp':ts,'X-CSS-Signature':sig},followRedirects:false,muteHttpExceptions:true});
   const code=response.getResponseCode();
   if (code!==200 && code!==201) throw new Error('intake_http_'+code);
@@ -113,8 +133,7 @@ function gdiBodyText_(messageId) {
     const body=part.body || {};
     if(Number(body.size || 0)>128*1024)throw new Error('gmail_body_too_large');
     const data=body.attachmentId ? Gmail.Users.Messages.Attachments.get('me',messageId,body.attachmentId).data : body.data;
-    if(typeof data!=='string' || data.length>180000)throw new Error('gmail_body_unavailable');
-    return Utilities.newBlob(Utilities.base64DecodeWebSafe(data)).getDataAsString('UTF-8');
+    return Utilities.newBlob(gdiBytes_(data,128*1024,'gmail_body_unavailable')).getDataAsString('UTF-8');
   }
   function walk(part,depth) {
     if(!part || ++visited>500 || depth>20)throw new Error('gmail_body_structure');
@@ -220,5 +239,42 @@ function importGmailDocuments() {
     const code=gdiErrorCode_(err);
     gdiHealth_({state:'failed',last_finished_at:new Date().toISOString(),last_error:code});
     throw new Error(code);
+  } finally {lock.releaseLock();}
+}
+
+// Explicit editor-run recovery after updating Gmail byte-array support.
+// Reset only failed reads that have never reached submission or uploaded a file.
+// Keeps the reserved receipt/file IDs and original source metadata intact.
+function retryGmailDocumentReadFailures() {
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(1000))throw new Error('gmail_import_busy');
+  try {
+    const config=gdiImportConfig_(); // verifies the actual executing mailbox
+    const props=PropertiesService.getScriptProperties(),all=props.getProperties();
+    const keys=Object.keys(all).filter(function(k){return k.indexOf('GDI_RECEIPT_')===0;}).sort();
+    const report={state:'retry_scheduled',retried:[],skipped:0,errors:[],has_more:keys.length>20};
+    keys.slice(0,20).forEach(function(key) {
+      try {
+        const id=all[key],meta=gdiGet_(id);
+        if(!meta || meta.trashed || !(meta.parents || []).includes(config.folder) ||
+           (meta.appProperties || {}).gdi_receipt!==key)throw new Error('receipt_location_conflict');
+        const r=JSON.parse(DriveApp.getFileById(id).getBlob().getDataAsString('UTF-8'));
+        if(r.binding!==config.binding || r.mailbox!==config.mailbox)throw new Error('receipt_binding_conflict');
+        if(!['pending','needs_attention'].includes(r.state) ||
+           !['gmail_body_unavailable','attachment_size'].includes(r.last_error) ||
+           r.payload || !r.candidate || (r.files || []).some(function(f){return f.uploaded;})) {
+          report.skipped++;return;
+        }
+        r.state='pending';r.attempts=0;r.next_attempt_at=null;r.last_error='';
+        gdiHistory_(r,'operator_retry','');
+        const entry=r.history[r.history.length-1];
+        entry.reason='Retry after Gmail byte-array compatibility update.';
+        entry.actor=config.mailbox;
+        gdiSaveReceipt_(id,r);
+        report.retried.push({receipt_id:id,message_id:r.message_id});
+      } catch(err) {report.errors.push({receipt_id:all[key],reason:gdiErrorCode_(err)});}
+    });
+    if(report.retried.length)props.setProperty('GDI_RECOVERY_OFFSET','0');
+    console.log(JSON.stringify(report));return report;
   } finally {lock.releaseLock();}
 }
