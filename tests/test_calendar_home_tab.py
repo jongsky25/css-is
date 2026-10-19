@@ -100,7 +100,6 @@ def test_bad_input_falls_back_quietly(viewer):
 
 def test_scope_param_picks_the_pill(viewer):
     assert re.search(r'<option value="mine" selected>Mine only</option>', viewer.get("/?view=calendar&scope=mine").text)
-    viewer.cookies.delete("cal_pref")                       # a plain visit would otherwise remember "mine"
     assert re.search(r'<option value="blend" selected>Mine \+ bureau-wide</option>', viewer.get("/?view=calendar").text)
 
 

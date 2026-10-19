@@ -1,3 +1,13 @@
+## 7.20 — October 19, 2026
+
+- Save your preferred calendar layout and whose events to show from the calendar toolbar.
+- Reopen the saved view after refreshing or returning to the calendar, even if you browse another view in between.
+
+## 7.19 — October 19, 2026
+
+- Keep online activities out of travel claim options and calendar claim reminders.
+- Prevent starting a travel claim from an online activity.
+
 ## 7.18 — October 19, 2026
 
 - Download an editable Word memorandum draft from an outgoing document.

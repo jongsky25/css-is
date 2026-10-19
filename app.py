@@ -5223,6 +5223,8 @@ def choose(request: Request, msg: str = "", view: str = "team"):
                     conn, request.state.user, _today_local(), shown, **args)
                     or calendar_routes.build_calendar_page(
                         conn, request.state.user, _today_local(), {}, **args))
+                if cal_page:
+                    cal_page["preferred"] = calendar_routes.preferred_matches(request, cal_page)
             except Exception:
                 traceback.print_exc()
                 cal_page = None
@@ -5276,9 +5278,6 @@ def choose(request: Request, msg: str = "", view: str = "team"):
         "ladder": st.avatar_growth_ladder(avatar_kind, wstats),
         "growth_how": st.avatar_growth_actions(avatar_kind),
     })
-    if view == "calendar":
-        calendar_routes.remember(resp, {k: v for k, v in request.query_params.items() if k != "view"},
-                                 cal_page, "layout")
     return resp
 
 

@@ -32,6 +32,11 @@ def pref_cookie(client):
     return client.cookies.get("cal_pref")
 
 
+def save_pref(client, layout="month", scope="mine", next_url="/calendar"):
+    return client.post("/calendar/preference", data={"layout": layout, "scope": scope, "next": next_url},
+                       follow_redirects=False)
+
+
 # ------------------------------------------------------------------- search ---
 
 def item(title, **kw):
@@ -95,19 +100,22 @@ def test_a_search_in_the_month_layout_filters_the_grid_instead_of_changing_the_w
 
 def test_a_chosen_layout_and_scope_are_remembered_for_a_plain_visit(viewer, conn):
     mk(conn, "Thing", (tz.today_local() + timedelta(days=1)).isoformat())
-    viewer.get("/calendar?view=month&scope=mine")
+    chosen = viewer.get("/calendar?view=month&scope=mine").text
+    assert "Save as preferred view" in chosen
+    assert save_pref(viewer).status_code == 303
     assert pref_cookie(viewer) == "month:mine"
     html = viewer.get("/calendar").text                                                   # a bare visit
     assert 'aria-current="true">Month' in html and '<option value="mine" selected>' in html
     again = viewer.get("/?view=calendar").text                                            # ...and the home tab shares it
     assert 'aria-current="true">Month' in again and '<option value="mine" selected>' in again
+    assert "Preferred view saved" in again
 
 
 def test_a_link_that_names_something_always_wins_and_a_bare_visit_saves_nothing(viewer):
-    viewer.get("/calendar?view=month&scope=mine")
+    save_pref(viewer)
     html = viewer.get("/calendar?day=2026-10-12").text                                    # explicit date: agenda, not the remembered month
     assert 'aria-current="true">Agenda' in html and 'aria-current="true">Month' not in html
-    assert pref_cookie(viewer) == "agenda:blend"                                          # what was just chosen is what is kept
+    assert pref_cookie(viewer) == "month:mine"                                           # browsing does not replace it
     viewer.cookies.delete("cal_pref")
     viewer.get("/calendar")                                                               # nothing chosen, nothing saved
     assert pref_cookie(viewer) is None
@@ -127,14 +135,30 @@ def test_a_remembered_scope_the_person_is_not_offered_falls_back_quietly(viewer)
 
 def test_a_remembered_team_layout_still_works_for_someone_with_a_team(app_mod, viewer):
     with in_the_directory(app_mod, "viewer@test.local", path="CALP4/D1/S1"):
-        viewer.get("/calendar?view=week")
+        save_pref(viewer, "week", "blend")
         assert pref_cookie(viewer) == "week:blend"
         assert 'aria-current="true">Week' in viewer.get("/?view=calendar").text
 
 
 def test_the_cookie_is_httponly_lax_and_a_year_long(viewer):
-    sc = viewer.get("/calendar?view=month").headers["set-cookie"]
+    sc = save_pref(viewer, scope="blend").headers["set-cookie"]
     assert "cal_pref=month:blend" in sc and "HttpOnly" in sc and "SameSite=lax" in sc and "Max-Age=31536000" in sc
+
+
+def test_preference_can_be_saved_from_home_and_survives_refresh(viewer):
+    url = "/?view=calendar&layout=timeline"
+    assert "Save as preferred view" in viewer.get(url).text
+    r = save_pref(viewer, "timeline", "blend", url)
+    assert r.headers["location"] == url
+    assert "Preferred view saved" in viewer.get(url).text
+    assert 'aria-current="true">Timeline' in viewer.get("/calendar").text
+
+
+def test_invalid_preferences_are_rejected_and_redirect_stays_local(viewer):
+    assert save_pref(viewer, "bogus", "mine").status_code == 400
+    assert pref_cookie(viewer) is None
+    r = save_pref(viewer, next_url="//outside.example")
+    assert r.headers["location"] == "/calendar"
 
 
 # ------------------------------------------- markup the scripts rely on ---

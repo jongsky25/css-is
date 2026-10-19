@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.19"
+APP_VERSION = "7.20"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.20",
+        "date": "October 19, 2026",
+        "summary": "Save your preferred calendar view.",
+        "changes": [
+            "Save the calendar layout and whose events you want to see, then return to that view after refreshing or reopening the calendar.",
+            "Looking at another calendar view no longer replaces your saved preference."
+        ]
+    },
     {
         "version": "7.19",
         "date": "October 19, 2026",

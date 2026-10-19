@@ -170,10 +170,11 @@ def test_scope_choices_hide_pills_that_could_only_be_empty():
         "blend", "mine", "section", "division", "bureau"]
 
 
-def test_the_agenda_days_sit_in_one_grid_container_so_wide_screens_can_use_columns(viewer):
-    html = viewer.get("/calendar").text
+def test_the_agenda_days_sit_in_one_grid_container_so_wide_screens_can_use_columns(viewer, conn):
+    _entry(conn, "Grid day", day="2031-01-06")
+    html = viewer.get("/calendar?day=2031-01-06").text
     assert html.count('<div class="cal-agenda">') == 1
-    assert html.index('<div class="cal-agenda">') < html.index('class="cal-day') < html.index('class="cal-empty"')
+    assert html.index('<div class="cal-agenda">') < html.index('class="cal-day') < html.index("CALPG Grid day") < html.index("</div>", html.index('class="cal-day'))
 
 
 # ------------------------------------- the card (CALENDAR_UX_PLAN Phase 3) ---

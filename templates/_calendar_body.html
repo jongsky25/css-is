@@ -15,6 +15,14 @@
     <a href="{{ qs(layout='month', month='', day='') }}" {% if layout == "month" %}aria-current="true"{% endif %}>Month</a>
   </nav>
   <span class="cal-actions">
+    <form class="cal-preference" method="post" action="/calendar/preference">
+      <input type="hidden" name="layout" value="{{ layout }}">
+      <input type="hidden" name="scope" value="{{ scope }}">
+      <input type="hidden" name="next" value="{{ request.url.path }}{% if request.url.query %}?{{ request.url.query }}{% endif %}">
+      <button class="cal-btn" type="submit" {% if preferred %}disabled{% endif %}>
+        {{ "✓ Preferred view saved" if preferred else "Save as preferred view" }}
+      </button>
+    </form>
     <a class="cal-btn primary cal-add" href="/calendar/new?day={{ add_day }}">+ Add</a>
     <details class="cal-more">
       <summary class="cal-btn" aria-label="More: quick add, birthdays{% if can_import %}, import{% endif %}">⋯<span class="cal-more-t"> More</span></summary>

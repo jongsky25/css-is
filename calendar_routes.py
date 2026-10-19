@@ -71,10 +71,9 @@ def _filters(kind, status, tag, unit, text=""):
              "text": clean["q"] or None}, clean)
 
 
-# ── remembering the layout and whose calendar a person last chose ────────────
-# A cookie, read on the server, so the page opens right the first time. It only fills in a BARE
-# visit (the Calendar tab, the menu link): any link that names a layout, a scope, a date or a filter
-# means exactly what it says, so a shared link never changes under the person who opens it.
+# ── preferred layout and whose calendar ──────────────────────────────────────
+# A cookie, read on the server, so a bare visit opens the saved view immediately.
+# Explicit links still mean exactly what they say, and browsing does not replace the preference.
 PREF_COOKIE = "cal_pref"
 _PREF_PARAMS = ("scope", "day", "month", "kind", "status", "tag", "unit", "q")
 PREF_LAYOUTS = ("agenda", "week", "timeline", "month")
@@ -103,12 +102,8 @@ def with_pref(q, request, layout_key):
     return out
 
 
-def remember(response, q, page, layout_key):
-    """Save what was just shown, but only when the person chose it (a bare visit saves nothing)."""
-    if page is None or is_bare(q, layout_key):
-        return
-    response.set_cookie(PREF_COOKIE, f"{page['layout']}:{page['scope']}", max_age=365 * 24 * 3600,
-                        httponly=True, samesite="lax", path="/")
+def preferred_matches(request, page):
+    return read_pref(request) == (page["layout"], page["scope"])
 
 
 def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="view", fixed=None):
@@ -310,8 +305,30 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             return RedirectResponse("/calendar" + ("?view=month" if q.get("view") == "month" else ""),
                                     status_code=303)
         resp = templates.TemplateResponse(request, "calendar.html",
-                                          {"nav_active": "calendar", "show_scope": False, **page})
-        remember(resp, q, page, "view")
+                                          {"nav_active": "calendar", "show_scope": False,
+                                           **page, "preferred": preferred_matches(request, page)})
+        return resp
+
+    @router.post("/calendar/preference")
+    async def save_calendar_preference(request: Request):
+        form = await request.form()
+        layout = str(form.get("layout", ""))
+        scope = str(form.get("scope", ""))
+        conn = get_conn()
+        try:
+            choices = oc.scope_choices(oc.viewer_context(conn, request.state.user))
+        finally:
+            conn.close()
+        if layout not in PREF_LAYOUTS or scope not in {c["key"] for c in choices}:
+            return HTMLResponse("Invalid calendar preference.", status_code=400)
+        next_url = str(form.get("next", ""))
+        if not (next_url == "/calendar" or next_url.startswith("/calendar?")
+                or next_url == "/?view=calendar" or next_url.startswith("/?view=calendar&")) \
+                or "//" in next_url or any(c in next_url for c in "\r\n\\"):
+            next_url = "/calendar"
+        resp = RedirectResponse(next_url, status_code=303)
+        resp.set_cookie(PREF_COOKIE, f"{layout}:{scope}", max_age=365 * 24 * 3600,
+                        httponly=True, samesite="lax", path="/")
         return resp
 
     # ── add / view / edit / cancel / restore ────────────────────────────────

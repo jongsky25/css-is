@@ -416,6 +416,8 @@ a.cal-tt:focus-visible { outline:none; }
 .cal-views { margin:0; }
 .cal-pills a { min-height:2.4rem; display:inline-flex; align-items:center; }
 .cal-actions { display:inline-flex; gap:.5rem; align-items:center; margin-left:auto; }
+.cal-preference { margin:0; }
+.cal-preference .cal-btn:disabled { cursor:default; color:var(--ink-soft); }
 .cal-btn { min-height:2.4rem; display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; }
 .cal-more { position:relative; }
 .cal-more > summary { list-style:none; cursor:pointer; user-select:none; }
