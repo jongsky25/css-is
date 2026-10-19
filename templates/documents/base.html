@@ -1,8 +1,8 @@
 {% extends "dash_layout.html" %}
 {% block title %}Documents{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/documents.css">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/documents.css?v=7.11">{% endblock %}
 {% block content %}
-<div class="documents">
+<div class="documents {% block documents_class %}{% endblock %}">
 <h1>Documents</h1>
 <nav aria-label="Document queues" class="doc-tabs">
 <a href="/documents?queue=mine">My work</a>

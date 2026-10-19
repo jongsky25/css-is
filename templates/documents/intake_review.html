@@ -1,4 +1,4 @@
-{% extends 'documents/base.html' %}{% block documents_content %}
+{% extends 'documents/base.html' %}{% block documents_class %}doc-intake-review{% endblock %}{% block documents_content %}
 <p><a href="/documents/intake">← Intake queue</a></p>
 {% if request.query_params.get("registered") %}<p role="status">Previous document registered.</p>{% endif %}
 <h2>{{ item.email.subject if item.email else item.original_name }}</h2>
@@ -9,32 +9,40 @@
 {% if not editable and claimant and item.claim_until and item.claim_until>now %}<p role="status">Being reviewed by {{ claimant[0] }} until {{ item.claim_until }}.</p>{% endif %}
 {% if enabled and item.state=='dismissed' %}<form method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ item.revision }}"><button name="action" value="requeue">Return this scan to the queue</button></form>{% endif %}
 {% if not editable and enabled and item.state in ('waiting','attention') %}<form method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ item.revision }}"><button name="action" value="claim">Start or resume review</button><p>Review sessions last 30 minutes. Save to extend your session.</p></form>{% endif %}
-<div class="doc-workspace">
-{% if item.email and item.email.body_text %}<section class="doc-card"><h3>Email body</h3><div class="doc-email-body" role="region" aria-label="Email body">{{ item.email.body_text }}</div></section>{% else %}<section class="doc-preview"><h3>Original scan</h3><p><a href="https://drive.google.com/file/d/{{ item.file_id }}/view" target="_blank" rel="noopener noreferrer">Open in Drive</a> if the preview asks you to sign in.</p>
+<div class="doc-view-switch" hidden aria-label="Review view">
+<button type="button" data-doc-view="source" aria-controls="doc-source" aria-pressed="false">Document</button>
+<button type="button" data-doc-view="review" aria-controls="doc-review" aria-pressed="true">Review details</button>
+</div>
+<div class="doc-workspace" data-intake-workspace>
+{% if item.email and item.email.body_text %}<section id="doc-source" class="doc-card doc-source"><h3>Email body</h3><div class="doc-email-body" role="region" aria-label="Email body">{{ item.email.body_text }}</div></section>{% else %}<section id="doc-source" class="doc-preview doc-source"><h3>Original scan</h3><p><a href="https://drive.google.com/file/d/{{ item.file_id }}/view" target="_blank" rel="noopener noreferrer">Open full document</a> if the preview asks you to sign in.</p>
 <iframe src="https://drive.google.com/file/d/{{ item.file_id }}/preview" title="Original scan preview" loading="lazy" referrerpolicy="no-referrer" allow="fullscreen"></iframe></section>{% endif %}
-<section class="doc-card"><h3>Review document details</h3>
+<section id="doc-review" class="doc-card"><h3>Review document details</h3>
 {% if error %}<p class="doc-alert" role="alert">{{ error }}</p>{% endif %}
 {% if not editable and enabled %}<p>Click <strong>Start or resume review</strong> above to enable OCR and the document fields.</p>{% endif %}
 <form method="post" data-ux-ignore data-telemetry-ignore>
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ item.revision }}">
 <fieldset {% if not editable or not enabled %}disabled{% endif %}>
 {% if not item.email or item.email_files %}<button name="action" value="{{ 'reread' if item.suggestions else 'extract' }}" formnovalidate>{{ 'Read scan again with OCR' if item.suggestions else 'Read scan with OCR' }}</button>{% endif %}
-{% if item.suggestions %}<details open><summary>Suggestions from the scan</summary><dl>{% for key,value in item.suggestions.get('suggestions',{}).items() if value %}<dt>{{ key|replace('_',' ') }}</dt><dd>{{ value }}</dd>{% endfor %}</dl>{% for warning in item.suggestions.get('warnings',[]) %}<p>{{ warning }}</p>{% endfor %}<button name="action" value="apply" formnovalidate>Fill empty fields with suggestions</button></details>{% endif %}
-<p>Direction follows the sender: Bureau of Local Health Systems Development (BLHSD) is Outgoing; other senders are Incoming. Saving or applying suggestions updates it.</p>
+{% if item.suggestions %}<details class="doc-ocr-results"><summary>Suggestions and warnings from the scan</summary><dl>{% for key,value in item.suggestions.get('suggestions',{}).items() if value %}<dt>{{ key|replace('_',' ') }}</dt><dd>{{ value }}</dd>{% endfor %}</dl>{% for warning in item.suggestions.get('warnings',[]) %}<p>{{ warning }}</p>{% endfor %}<button name="action" value="apply" formnovalidate>Fill empty fields with suggestions</button></details>{% endif %}
+<p class="doc-direction-note">BLHSD sender → Outgoing; other senders → Incoming. Updates when saved.</p>
+<div class="doc-fields">
 <label>Direction<select name="direction"><option value="">Choose direction</option>{% for key,label in [('IN','Incoming'),('OUT','Outgoing')] %}<option value="{{ key }}" {% if values.get('direction')==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
-<label>Subject<textarea name="subject" maxlength="500">{{ values.get('subject','') }}</textarea></label>
 <label>Document type<input name="type" maxlength="100" value="{{ values.get('type','') }}"></label>
-<label>Sender / originating office<input name="sender" maxlength="500" value="{{ values.get('sender','') }}"></label>
+<label class="doc-field-wide">Subject<textarea name="subject" maxlength="500">{{ values.get('subject','') }}</textarea></label>
+<label class="doc-field-wide">Sender / originating office<input name="sender" maxlength="500" value="{{ values.get('sender','') }}"></label>
 <label>Document date<input type="date" name="document_date" value="{{ values.get('document_date','') }}"></label>
 <label>Actual received date and time (Manila)<input type="datetime-local" name="received_at" value="{{ values.get('received_at','') }}"></label>
 <label>Deadline stated in the source (optional)<input type="date" name="due_date" value="{{ values.get('due_date','') }}"></label>
-<label>References<textarea name="references">{{ values.get('references','') }}</textarea></label>
+<label class="doc-field-wide">References<textarea name="references">{{ values.get('references','') }}</textarea></label>
 <label>Priority<select name="priority">{% for key in ['normal','urgent'] %}<option {% if values.get('priority')==key %}selected{% endif %}>{{ key }}</option>{% endfor %}</select></label>
+</div>
 {% if candidates and not item.email %}<details><summary>Include other scans with this document</summary><p>Select only attachments belonging to this correspondence. Up to 20 files total.</p>{% for candidate in candidates %}<label class="doc-check"><input type="checkbox" name="attach:{{ candidate.id }}" value="{{ candidate.revision }}">{{ candidate.original_name }}</label>{% endfor %}</details>{% endif %}
 <label class="doc-check"><input type="checkbox" name="confirmed" value="yes"> I checked the source and these details.</label>
-<button name="action" value="register_next">Register and review next</button> <button name="action" value="register">Register and open record</button>
+<button name="action" value="register_next">Register and review next</button>
 <p>Incoming documents go to the Director for instructions. {% if not item.email or item.email_files %}Drive filing follows automatically.{% endif %}</p>
-<button name="action" value="save" formnovalidate>Save review</button> <button name="action" value="release" formnovalidate>Save and return to queue</button>
+<button name="action" value="release" formnovalidate>Save and return to queue</button>
 <details><summary>This scan needs attention</summary><label>Reason<textarea name="note" maxlength="1000"></textarea></label><button name="action" value="attention" formnovalidate>Request a clearer scan / flag a problem</button><button name="action" value="dismiss" formnovalidate>Dismiss duplicate or unrelated file</button><p>Dismissing retains the original file in Drive and its intake history.</p></details>
+<div class="doc-review-actions"><button name="action" value="save" formnovalidate>Save review</button><button class="doc-register" name="action" value="register">Register document</button></div>
 </fieldset></form></section></div>
+<script src="/static/js/document_intake_layout.js?v=7.11" defer></script>
 {% endblock %}
