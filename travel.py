@@ -612,14 +612,16 @@ def effective_answers(filing) -> dict:
 
 def activity_choices(conn, user, today):
     """Activities this person is attached to, 120 days back to 365 ahead, each once:
-    [{entry_id, event_id, title, start, end, venue}]. An overlay entry and its CSS activity
-    appear once, as the activity."""
+    [{entry_id, event_id, title, start, end, venue}]. Online activities are excluded.
+    An overlay entry and its CSS activity appear once, as the activity."""
     today = _d(today)
     items = oc.items_between(conn, user, today - timedelta(days=CHOICE_BACK_DAYS),
                              today + timedelta(days=CHOICE_AHEAD_DAYS), scope="mine",
                              layers=["entries", "activities"])
     out, seen = [], set()
     for i in items:
+        if i.get("modality") == "online":
+            continue
         if i["layer"] == "activities" and i.get("css"):
             ident = (None, i["css"]["event_id"], i["start"])
         elif i["layer"] == "entries" and i["key"].startswith("entry:"):
@@ -655,6 +657,8 @@ def resolve_source(conn, user, today, entry_id=None, event_id=None, on=None):
         if e.get("event_id"):                 # an overlay on a CSS activity: file against the activity
             entry_id, event_id = None, e["event_id"]
         else:
+            if e.get("modality") == "online":
+                raise TravelError("Online activities are not eligible for travel claims.")
             start, end = e["start_date"], e["end_date"] or e["start_date"]
             if e.get("rrule"):
                 ch = find_choice(activity_choices(conn, user, today), entry_id=entry_id, on=on)
@@ -663,6 +667,9 @@ def resolve_source(conn, user, today, entry_id=None, event_id=None, on=None):
             return {"source_kind": "entry", "entry_id": entry_id, "event_id": None, "title": e["title"],
                     "start": start, "end": end, "venue": e.get("venue") or ""}
     if event_id:
+        event = conn.execute("SELECT modality FROM event WHERE id=?", (event_id,)).fetchone()
+        if event and event[0] == "online":
+            raise TravelError("Online activities are not eligible for travel claims.")
         ch = find_choice(activity_choices(conn, user, today), event_id=event_id)
         if ch is None:
             raise TravelError("You can only file travel for activities you are part of.")
@@ -1114,6 +1121,9 @@ def event_url_for(conn, user, event_id):
     overlay, or a speaker on it) and travel filing is on; else None. A few indexed lookups, no
     calendar scan, because it runs on every activity page view."""
     if not user or not enabled(conn):
+        return None
+    event = conn.execute("SELECT modality FROM event WHERE id=?", (event_id,)).fetchone()
+    if event and event[0] == "online":
         return None
     uid = user["id"]
     hit = (

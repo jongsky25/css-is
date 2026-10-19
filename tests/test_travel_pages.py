@@ -358,6 +358,36 @@ def test_calendar_chip_labels_and_new_page(viewer, conn):
     assert "filing" not in item and "Not filed" not in str(item) and "In progress" not in str(item)
 
 
+def test_online_activities_cannot_start_travel_claims(viewer, conn):
+    user = {"id": uid(conn, "viewer@test.local"), "username": "viewer@test.local"}
+    entry_id = st.cal_create(conn, "TRAVELTEST Online training", days(10), kind="training",
+                             modality="online", audience="bureau", people=[(user["id"], "attending")], by="x@x")
+    event = st.create_event(conn, "TRAVELTEST Online event", days(12), modality="online",
+                            created_by=user["username"])
+    try:
+        index = viewer.get("/travel").text
+        assert "TRAVELTEST Online training" not in index
+        assert "TRAVELTEST Online event" not in index
+        assert all(c["title"] not in ("TRAVELTEST Online training", "TRAVELTEST Online event")
+                   for c in travel.activity_choices(conn, user, tz.today_local()))
+        for source in (f"entry={entry_id}", f"event={event['id']}"):
+            response = viewer.get(f"/travel/new?{source}", follow_redirects=False)
+            assert response.status_code == 303 and "err=" in response.headers["location"]
+            response = post(viewer, "/travel/new", **dict([source.split("=")], kind="reimbursement",
+                                                        role="participant", dpo_no="2026-100"))
+            assert response.status_code == 303 and "err=" in response.headers["location"]
+        assert travel.event_url_for(conn, user, event["id"]) is None
+        items = oc.items_between(conn, user, tz.today_local(), tz.today_local() + timedelta(days=20),
+                                 scope="mine", layers=["entries", "activities"])
+        assert all(i["filing"] is None for i in items if i["title"] in
+                   ("TRAVELTEST Online training", "TRAVELTEST Online event"))
+        assert conn.execute("SELECT COUNT(*) FROM travel_filing WHERE user_id=?", (user["id"],)).fetchone()[0] == 0
+    finally:
+        conn.execute("DELETE FROM calendar_entry WHERE id=?", (entry_id,))
+        conn.execute("DELETE FROM event WHERE id=?", (event["id"],))
+        conn.commit()
+
+
 def test_activity_deadline_chip_links_to_its_filing(admin, conn):
     user = {"id": uid(conn, "admin@test.local"), "username": "admin@test.local", "role": "admin"}
     event = st.create_event(conn, "TRAVELTEST Pilot visit", days(-2), modality="f2f",

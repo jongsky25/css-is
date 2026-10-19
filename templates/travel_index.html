@@ -15,7 +15,8 @@
 {% endfor %}
 
 <div class="tv-card">
-  <h2>Activities that may need a claim</h2>
+  <h2>Activities that may need a travel claim</h2>
+  <p class="tv-hint">Online activities are not eligible for travel claims.</p>
   {% if todo %}
   <div class="table-wrap"><table class="list resp-table">
     <thead><tr><th>Activity</th><th>When</th><th></th></tr></thead>
@@ -29,7 +30,7 @@
     {% endfor %}
     </tbody></table></div>
   {% else %}
-  <p class="tv-hint">Nothing waiting. Activities you are part of, from 60 days ago to 60 days ahead, show here until you file.</p>
+  <p class="tv-hint">Nothing waiting. In-person and hybrid activities you are part of, from 60 days ago to 60 days ahead, show here until you file.</p>
   {% endif %}
   <p><a class="btn ghost small" href="/travel/new?blank=1">File for something not on the calendar</a></p>
 </div>

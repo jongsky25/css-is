@@ -236,7 +236,7 @@ def _entries_layer(conn, ctx, start, end, scope):
             "css": None, "flags": flags, "editable": True, "private": False,
             "filing": filed.get(("entry", e["id"])) or (
                 travel.not_filed_chip(e["id"], None, o_start, o_end, today_d)
-                if chips_on and e["kind"] in ("travel", "training")
+                if chips_on and e["kind"] in ("travel", "training") and e["modality"] != "online"
                 and any(p["user_id"] == ctx["user_id"] for p in e["people"]) else None),
         })
     return out
