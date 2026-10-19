@@ -15831,7 +15831,9 @@ def wellness_approvals(request: Request, err: str = "", ok: str = ""):
     queue. Still gated here, so a non-approver gets the same 403 as before."""
     conn = get_conn()
     try:
-        if not st.user_is_wellness_chief(conn, request.state.user):
+        # same check as the inbox it redirects to: the admin role alone is not enough, so an admin
+        # with no chief seat gets "No access" here instead of after a pointless redirect
+        if not st.user_is_chain_approver(conn, request.state.user):
             return _wellness_forbid(request)
     finally:
         conn.close()
@@ -16483,10 +16485,10 @@ def work_arrangement_approvals(request: Request, ok: str = "", err: str = "",
                                period: str = ""):
     """Kept for bookmarks and emails already sent: into the inbox's work
     arrangement queue. Still gated here, so a non-approver (e.g. a bureau-wide
-    schedule grant holder — sight is not authority) gets the same 403."""
+    schedule grant holder — sight is not authority, or an admin with no chief seat) gets the same 403."""
     conn = get_conn()
     try:
-        if not st.user_is_approving_chief(conn, request.state.user):
+        if not st.user_is_chain_approver(conn, request.state.user):
             return _wa_forbid(request)
     finally:
         conn.close()
