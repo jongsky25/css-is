@@ -1,3 +1,8 @@
+> For the unified review queue, My Drive/Shared Drive support, body-only email,
+> and the current rollout, see [Document workspace setup](DOCUMENT_WORKSPACE_PHASES.md).
+> The sections below describe the earlier incremental implementation. Enabling the
+> new intake workflow routes future Gmail imports through review before numbering.
+
 # Gmail document intake: incremental implementation
 
 ## Phase 1 — intake foundation

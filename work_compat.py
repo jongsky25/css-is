@@ -40,6 +40,8 @@ def migrate(conn, user, document_id, revision, outcome, reason):
             return reconcile(conn, document_id)
         user, doc = docs.check(conn, user, document_id, revision)
         work.writable(conn)
+        if doc.get('instruction_state')=='pending':
+            raise ValueError('Wait for the Director’s routing instruction before migrating assignments.')
         if conn.execute('SELECT 1 FROM document WHERE canonical_id=?', (document_id,)).fetchone():
             raise ValueError('Reconcile merged source assignments before migration.')
         if doc['status'] in ('closed', 'cancelled'):

@@ -67,4 +67,9 @@ check('duplicate list entries, empty mailbox and attached emails',()=>{
  set({abc:message([attachment('forward.eml','message/rfc822')])});page.messages.push({id:'abc'});assert.equal(run().excluded.length,1);
  set({});assert.equal(run().candidates.length,0);
 });
+check('body-only messages are candidates without logging their contents',()=>{
+ set({abc:message([])});const r=run();assert.equal(r.candidates.length,1);
+ assert(r.candidates[0].body_only);assert(r.candidates[0].ready_for_import);
+ assert(!JSON.stringify(r).includes('PRIVATE_BODY_SENTINEL'));
+});
 console.log(checks+' Gmail discovery contracts passed');

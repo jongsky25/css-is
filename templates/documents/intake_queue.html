@@ -1,0 +1,19 @@
+{% extends 'documents/base.html' %}
+{% block documents_content %}
+<div class="doc-heading"><div><h2>Intake</h2><p>Office Drive uploads and imported work emails, ready for a records review.</p></div>
+{% if workflow_admin %}<a href="/documents/intake/settings">Drive intake settings</a>{% endif %}</div>
+{% if request.query_params.get("registered") %}<p role="status">Document registered. There are no more unclaimed scans waiting for review.</p>{% endif %}
+{% if config.intake_enabled!='1' %}<p class="doc-alert">Drive intake is not configured. A records officer with workflow-administrator access can connect the office folders.</p>{% else %}
+<p>Last successful Drive check: {{ config.last_sync or 'Not yet checked' }}. Automatic checks run every three minutes while the system is running.</p>
+{% if enabled %}<form method="post" action="/documents/intake/sync"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Check Drive now</button></form>{% endif %}
+{% endif %}
+{% if request.query_params.get('checking') %}<p role="status">Drive check requested. <a href="/documents/intake">Refresh the queue</a> to see the result.</p>{% endif %}
+{% if config.sync_error %}<p class="doc-alert" role="status">{{ config.sync_error }}</p>{% endif %}
+<nav class="doc-tabs" aria-label="Intake status">{% for key,label in [('waiting','Waiting'),('attention','Needs attention'),('registered','Registered'),('dismissed','Dismissed')] %}<a href="?state={{ key }}" {% if state==key %}aria-current="page"{% endif %}>{{ label }} ({{ counts.get(key,0) }})</a>{% endfor %}</nav>
+<div class="doc-table"><table><thead><tr><th>File</th><th>Added to queue</th><th>Review</th></tr></thead><tbody>
+{% for item in items %}<tr><td><a href="/documents/intake/{{ item.id }}">{{ item.email_subject or item.original_name }}</a>{% if item.email_id %} <span>· Email</span>{% else %} <span>· Drive upload</span>{% endif %}</td><td>{{ item.discovered_at }}</td><td>
+{% if item.state=='registered' %}Registered{% if item.filing_state!='none' %} · Drive filing {{ item.filing_state }}{% endif %}{% elif item.claimed_by and item.claim_until and item.claim_until>now %}Being reviewed by {{ item.reviewer }}{% else %}{{ 'Needs attention' if item.state=='attention' else 'Ready to review' if item.state=='waiting' else 'Dismissed' }}{% endif %}
+{% if item.error %}<p>{{ item.error }}</p>{% endif %}</td></tr>{% else %}<tr><td colspan="3">No files in this queue.</td></tr>{% endfor %}
+</tbody></table></div>
+<nav class="doc-tabs" aria-label="Intake pages">{% if page>1 %}<a href="?state={{ state }}&amp;page={{ page-1 }}">Previous</a>{% endif %}<span>Page {{ page }}</span>{% if more %}<a href="?state={{ state }}&amp;page={{ page+1 }}">Next</a>{% endif %}</nav>
+{% endblock %}

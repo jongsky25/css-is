@@ -99,6 +99,8 @@ def _document_for_link(conn, user, case, document_id, kind):
         raise ValueError('Only reference links are supported by this increment.')
     doc = resolved_document(conn, int(document_id))
     permissions.require_view(conn, user, doc)
+    if doc.get('instruction_state')=='pending':
+        raise ValueError('Wait for the Director’s routing instruction before starting shared work.')
     # Case readership is the intersection of its audience and all linked records.
     # Do not strand its creator/lead by linking something they cannot currently read.
     for uid in {case['creator_id'], case['lead_id']} - {None}:

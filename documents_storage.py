@@ -1,4 +1,4 @@
-"""Additive document registry schema. No binary files or extracted text are persisted."""
+"""Additive document registry schema. No binary files or full OCR text are persisted."""
 from contextlib import contextmanager
 import json
 import storage as st
@@ -108,6 +108,46 @@ def install(conn):
       document_id INTEGER PRIMARY KEY REFERENCES document(id), entry_id INTEGER NOT NULL REFERENCES calendar_entry(id),
       confirmed_by INTEGER NOT NULL REFERENCES admin_user(id), confirmed_at TEXT NOT NULL);
     ''')
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS document_intake (
+      id INTEGER PRIMARY KEY, file_id TEXT NOT NULL UNIQUE,
+      source_folder TEXT NOT NULL, original_name TEXT NOT NULL, current_name TEXT NOT NULL,
+      mime_type TEXT NOT NULL, fingerprint TEXT NOT NULL, content_key TEXT NOT NULL,
+      discovered_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+      state TEXT NOT NULL DEFAULT 'waiting' CHECK(state IN ('waiting','attention','registered','dismissed')),
+      revision INTEGER NOT NULL DEFAULT 1, claimed_by INTEGER REFERENCES admin_user(id), claim_until TEXT,
+      draft_json TEXT NOT NULL DEFAULT '{}', suggestions_json TEXT NOT NULL DEFAULT '{}', suggestion_key TEXT,
+      document_id INTEGER REFERENCES document(id), filing_state TEXT NOT NULL DEFAULT 'none',
+      filing_operation TEXT, filing_payload TEXT, error TEXT NOT NULL DEFAULT '');
+    CREATE TABLE IF NOT EXISTS document_intake_email (
+      id INTEGER PRIMARY KEY, mailbox TEXT NOT NULL, message_id TEXT NOT NULL,
+      payload_hash TEXT NOT NULL, subject TEXT NOT NULL, sender TEXT NOT NULL,
+      received_at TEXT NOT NULL, attachments_json TEXT NOT NULL,
+      primary_intake_id INTEGER REFERENCES document_intake(id),
+      document_id INTEGER REFERENCES document(id), created_at TEXT NOT NULL,
+      UNIQUE(mailbox,message_id));
+    CREATE INDEX IF NOT EXISTS document_intake_email_document ON document_intake_email(document_id);
+    CREATE INDEX IF NOT EXISTS document_intake_queue ON document_intake(state,id);
+    CREATE INDEX IF NOT EXISTS document_intake_content ON document_intake(content_key);
+    CREATE INDEX IF NOT EXISTS document_intake_document ON document_intake(document_id);
+    CREATE INDEX IF NOT EXISTS document_intake_filing ON document_intake(filing_state,id);
+    CREATE INDEX IF NOT EXISTS document_reference_value ON document_reference(value,document_id);
+    CREATE INDEX IF NOT EXISTS document_reference_document ON document_reference(document_id);
+    CREATE INDEX IF NOT EXISTS document_file_lookup ON document_file_version(file_id,document_id);
+    CREATE INDEX IF NOT EXISTS document_file_document ON document_file_version(document_id);
+    CREATE INDEX IF NOT EXISTS document_sender_date ON document(sender,document_date);
+    CREATE TABLE IF NOT EXISTS document_instruction_recipient (
+      directive_id INTEGER NOT NULL REFERENCES document_directive(id),
+      user_id INTEGER NOT NULL REFERENCES admin_user(id), PRIMARY KEY(directive_id,user_id));
+    """)
+    email_columns={row[1] for row in conn.execute('PRAGMA table_info(document_intake_email)')}
+    if 'body_text' not in email_columns:
+        conn.execute("ALTER TABLE document_intake_email ADD COLUMN body_text TEXT NOT NULL DEFAULT ''")
+    intake_columns={row[1] for row in conn.execute('PRAGMA table_info(document_intake)')}
+    if 'email_id' not in intake_columns:
+        conn.execute('ALTER TABLE document_intake ADD COLUMN email_id INTEGER REFERENCES document_intake_email(id)')
+        conn.execute('ALTER TABLE document_intake ADD COLUMN email_primary INTEGER NOT NULL DEFAULT 1')
+    conn.execute('CREATE INDEX IF NOT EXISTS document_intake_email_files ON document_intake(email_id,id)')
     columns={row[1] for row in conn.execute('PRAGMA table_info(document_rule_version)')}
     if 'family_id' not in columns:
         conn.execute('ALTER TABLE document_rule_version ADD COLUMN family_id INTEGER')
@@ -116,7 +156,10 @@ def install(conn):
         conn.execute('ALTER TABLE document ADD COLUMN archived_at TEXT')
     if 'archived_by' not in document_columns:
         conn.execute('ALTER TABLE document ADD COLUMN archived_by INTEGER REFERENCES admin_user(id)')
-    for key in ('documents.enabled', 'documents.sending_enabled', 'documents.gmail_intake_enabled'):
+    if 'instruction_state' not in document_columns:
+        conn.execute("ALTER TABLE document ADD COLUMN instruction_state TEXT NOT NULL DEFAULT 'not_required'")
+    conn.execute('CREATE INDEX IF NOT EXISTS document_instruction_queue ON document(instruction_state,id)')
+    for key in ('documents.gmail_review_queue_enabled', 'documents.drive_intake_enabled', 'documents.enabled', 'documents.sending_enabled', 'documents.gmail_intake_enabled'):
         conn.execute('INSERT OR IGNORE INTO app_setting(key,value) VALUES (?,?)', (key, '0'))
     conn.commit()
 

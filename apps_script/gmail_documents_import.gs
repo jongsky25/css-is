@@ -16,14 +16,14 @@ function gdiImportConfig_() {
   if(String(Gmail.Users.getProfile('me').emailAddress || '').toLowerCase()!==config.mailbox) throw new Error('gmail_import_mailbox_mismatch');
   // Limit each invocation to five messages; walk pages across invocations.
   config.pageSize=Math.min(config.pageSize,5);
-  const folder=Drive.Files.get(config.folder,{fields:'id,mimeType,trashed,capabilities(canAddChildren)'});
+  const folder=Drive.Files.get(config.folder,{fields:'id,mimeType,trashed,capabilities(canAddChildren)',supportsAllDrives:true});
   if (folder.trashed || folder.mimeType!=='application/vnd.google-apps.folder' || !folder.capabilities.canAddChildren) throw new Error('gmail_import_folder');
   config.binding=gdiHash_(JSON.stringify([config.mailbox,config.folder,config.endpoint]));
   return config;
 }
 function gdiNewId_() { return Drive.Files.generateIds({count:1,space:'drive',type:'files'}).ids[0]; }
 function gdiGet_(id) {
-  try { return Drive.Files.get(id,{fields:'id,trashed,parents,appProperties,size,md5Checksum'}); }
+  try { return Drive.Files.get(id,{fields:'id,trashed,parents,appProperties,size,md5Checksum',supportsAllDrives:true}); }
   catch(err) {
     // Only a definite not-found permits creation with the RESERVED ID. Other
     // failures (permission, quota, timeout) never justify allocating another ID.
@@ -32,7 +32,7 @@ function gdiGet_(id) {
   }
 }
 function gdiSaveReceipt_(id, receipt) {
-  Drive.Files.update({},id,Utilities.newBlob(JSON.stringify(receipt),'application/json'),{fields:'id'});
+  Drive.Files.update({},id,Utilities.newBlob(JSON.stringify(receipt),'application/json'),{fields:'id',supportsAllDrives:true});
 }
 function gdiReceipt_(config,candidate) {
   const props=PropertiesService.getScriptProperties();
@@ -48,7 +48,7 @@ function gdiReceipt_(config,candidate) {
     const receipt={binding:config.binding,mailbox:config.mailbox,message_id:candidate.message_id,
       state:'pending',candidate:candidate,files:[],payload:null,document_id:null};
     Drive.Files.create({id:id,name:key+'.json',mimeType:'application/json',parents:[config.folder],
-      appProperties:{gdi_receipt:key}},Utilities.newBlob(JSON.stringify(receipt),'application/json'),{fields:'id'});
+      properties:{office_intake:'gmail_receipt'},appProperties:{gdi_receipt:key}},Utilities.newBlob(JSON.stringify(receipt),'application/json'),{fields:'id',supportsAllDrives:true});
     meta=gdiGet_(id);
   }
   if (!meta || meta.trashed || !(meta.parents || []).includes(config.folder) || (meta.appProperties || {}).gdi_receipt!==key) throw new Error('receipt_location_conflict');
@@ -76,8 +76,8 @@ function gdiUpload_(config, saved, attachment) {
       .map(function(b) {return ('0'+(b&255).toString(16)).slice(-2);}).join('');
     gdiSaveReceipt_(saved.id,receipt); // checksum before external effect
     Drive.Files.create({id:file.id,name:attachment.filename || 'Document',mimeType:attachment.mime_type,
-      parents:[config.folder],appProperties:{gdi_attachment:identity}},
-      Utilities.newBlob(bytes,attachment.mime_type,attachment.filename || 'Document'),{fields:'id'});
+      parents:[config.folder],properties:{office_intake:'gmail_attachment'},appProperties:{gdi_attachment:identity}},
+      Utilities.newBlob(bytes,attachment.mime_type,attachment.filename || 'Document'),{fields:'id',supportsAllDrives:true});
     meta=gdiGet_(file.id);
   }
   if (!meta || meta.trashed || !(meta.parents || []).includes(config.folder) ||
@@ -100,23 +100,67 @@ function gdiSubmit_(config,payload) {
   const text=response.getContentText();
   if (text.length>4096) throw new Error('intake_reply_invalid');
   const result=JSON.parse(text);
-  if (!Number.isSafeInteger(result.document_id) || result.document_id<1 || typeof result.duplicate!=='boolean') throw new Error('intake_reply_invalid');
+  const queued=result.state==='queued' && Number.isSafeInteger(result.intake_id) && result.intake_id>0;
+  const registered=Number.isSafeInteger(result.document_id) && result.document_id>0;
+  if ((!queued && !registered) || typeof result.duplicate!=='boolean') throw new Error('intake_reply_invalid');
   return result;
 }
+// Read body only at import time; discovery and health logs remain metadata-only.
+function gdiBodyText_(messageId) {
+  const payload=Gmail.Users.Messages.get('me',messageId,{format:'full'}).payload;
+  let visited=0;
+  function decode(part) {
+    const body=part.body || {};
+    if(Number(body.size || 0)>128*1024)throw new Error('gmail_body_too_large');
+    const data=body.attachmentId ? Gmail.Users.Messages.Attachments.get('me',messageId,body.attachmentId).data : body.data;
+    if(typeof data!=='string' || data.length>180000)throw new Error('gmail_body_unavailable');
+    return Utilities.newBlob(Utilities.base64DecodeWebSafe(data)).getDataAsString('UTF-8');
+  }
+  function walk(part,depth) {
+    if(!part || ++visited>500 || depth>20)throw new Error('gmail_body_structure');
+    if(part.filename || /^attachment\b/i.test(gdiHeader_(part,'content-disposition')) || part.mimeType==='message/rfc822')return '';
+    if(part.mimeType==='text/plain')return decode(part);
+    if(part.mimeType==='text/html') {
+      return decode(part).replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi,'')
+        .replace(/<br\s*\/?\s*>|<\/(p|div|li|tr|h[1-6])\s*>/gi,'\n').replace(/<[^>]*>/g,'')
+        .replace(/&(#x[0-9a-f]+|#\d+|amp|lt|gt|quot|apos|nbsp);/gi,function(all,key){
+          if(key[0]==='#') {const n=key[1].toLowerCase()==='x'?parseInt(key.slice(2),16):parseInt(key.slice(1),10);return n>0 && n<=0x10ffff?String.fromCodePoint(n):'\ufffd';}
+          return {amp:'&',lt:'<',gt:'>',quot:'"',apos:"'",nbsp:' '}[key.toLowerCase()];
+        });
+    }
+    const parts=part.parts || [];
+    if(part.mimeType==='multipart/alternative') {
+      const plain=parts.find(function(p){return p.mimeType==='text/plain';});
+      if(plain)return walk(plain,depth+1);
+      const html=parts.find(function(p){return p.mimeType==='text/html';});
+      if(html)return walk(html,depth+1);
+    }
+    return parts.map(function(p){return walk(p,depth+1);}).filter(Boolean).join('\n\n');
+  }
+  const text=walk(payload,0).replace(/\r\n?/g,'\n').trim();
+  if(!text)throw new Error('gmail_body_empty');
+  if(text.length>16000)throw new Error('gmail_body_too_large');
+  return text;
+}
+
 function gdiImportOne_(config,candidate) {
   const saved=gdiReceipt_(config,candidate), receipt=saved.value;
+  if (receipt.state==='queued') return 'already_queued';
   if (receipt.state==='registered') return 'already_registered';
   const pinned=receipt.candidate;
   if (!receipt.payload) {
     const attachments=pinned.attachments.map(function(item) {return gdiUpload_(config,saved,item);});
     receipt.payload={mailbox:receipt.mailbox,message_id:receipt.message_id,subject:pinned.subject,
       sender:pinned.sender,received_at:pinned.received_at,attachments:attachments};
+    if(!attachments.length)receipt.payload.body_text=gdiBodyText_(receipt.message_id);
     gdiSaveReceipt_(saved.id,receipt); // pin exact request before HTTP
   }
   const result=gdiSubmit_(config,receipt.payload);
-  receipt.document_id=result.document_id;receipt.state='registered';
+  receipt.document_id=result.document_id || null;
+  receipt.intake_id=result.intake_id || null;
+  receipt.state=result.state==='queued' ? 'queued' : 'registered';
   gdiSaveReceipt_(saved.id,receipt);
-  return result.duplicate ? 'already_registered' : 'registered';
+  return result.duplicate ? 'already_'+receipt.state : receipt.state;
 }
 
 // Run manually for acceptance, then optionally add a five-minute time trigger.
@@ -141,7 +185,7 @@ function importGmailDocuments() {
       discoveryFailed=true;
       page={candidates:[],excluded:[],next_page_token:null,errors:[{reason:'gmail_discovery_failed'}]};
     }
-    const report={state:'complete',registered:0,already_registered:0,needs_review:0,deferred:0,
+    const report={state:'complete',registered:0,already_registered:0,queued:0,already_queued:0,needs_review:0,deferred:0,
       needs_attention:recovery.result.needs_attention,waiting_receipts:recovery.result.waiting,excluded:page.excluded.length,
       excluded_attachments:page.candidates.reduce(function(n,c) {return n+(c.excluded_attachments || []).length;},0),
       errors:recovery.result.errors.concat(page.errors)};

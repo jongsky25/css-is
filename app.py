@@ -4978,6 +4978,8 @@ async def _start_scheduler():
         c = get_conn()
         c.close()
         _short_link_task = asyncio.create_task(short_links.worker(DB))
+    import documents_intake
+    asyncio.create_task(documents_intake.worker(get_conn))
     asyncio.create_task(_scheduler_loop())
     if PERSIST_DIR:                   # durability engine (bucket-backed persistence)
         print(f"[persist] active — snapshotting {DB} to {bk.SCHED_DIR} "
@@ -17066,6 +17068,8 @@ app.include_router(rooms_meals_routes.make_router(templates, get_conn, _today_lo
 app.include_router(travel_routes.make_router(templates, get_conn, _today_local, audit=_audit, base_url=_base_url))
 
 # Document module: each route enforces account, object access and CSRF.
+import documents_intake_routes
+app.include_router(documents_intake_routes.make_router(templates, get_conn))
 app.include_router(documents_routes.make_router(templates, get_conn))
 app.include_router(documents_email.make_router(get_conn))
 app.include_router(work_routes.make_router(templates, get_conn))

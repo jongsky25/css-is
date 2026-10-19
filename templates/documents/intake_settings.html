@@ -1,0 +1,10 @@
+{% extends 'documents/base.html' %}{% block documents_content %}
+<h2>Connect office Drive intake</h2>
+<p>Use the office account’s To Review and Filed folders in My Drive, or two folders in the same Shared Drive. The existing Workspace relay must be updated with the matching folder IDs before enabling checks.</p>
+<form method="post" class="doc-card"><input type="hidden" name="csrf" value="{{ csrf }}">
+<label>To Review folder ID<input name="inbox" value="{{ config.inbox }}" maxlength="200"></label>
+<label>Filed folder ID<input name="filed" value="{{ config.filed }}" maxlength="200"></label>
+<label class="doc-check"><input type="checkbox" name="enabled" value="yes" {% if config.intake_enabled=='1' %}checked{% endif %}> Enable discovery and filing</label>
+<p>Checks run under your records authority. Files are renamed and moved only after a reviewer confirms registration. Moving files can change inherited Drive access; check the destination folder's permissions first.</p>
+<button>Save intake settings</button> <a href="/documents/intake">Back to queue</a><p>Enabling this workflow also sends future Gmail imports to the review queue before registration. Gmail auto-pull has its own enable switch and trigger. Pausing Drive does not restore automatic email registration.</p></form>
+{% endblock %}

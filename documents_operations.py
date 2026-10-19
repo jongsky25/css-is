@@ -65,6 +65,8 @@ def attach(conn,user,doc_id,revision,url,classification,note,adapter=None):
     # External I/O precedes the writer transaction; revision checked again afterward.
     user=p.actor(conn,user); doc=d.get(conn,user,doc_id); d.writable(conn)
     d.require(p.can_work(conn,user,doc)); d.reason(note)
+    if doc['instruction_state']=='pending':
+        raise ValueError('Wait for the Director’s routing instruction before linking a draft.')
     meta=metadata(url,user,adapter)
     with transaction(conn):
         user,doc=d.check(conn,user,doc_id,revision)

@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.02"
+APP_VERSION = "7.03"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.03",
+        "date": "October 19, 2026",
+        "summary": "Review office uploads and emails, then issue digital routing instructions beside the document.",
+        "changes": [
+            "Configured office Drive folders feed a review queue with saved details and OCR suggestions.",
+            "Reviewed scans receive a document number and are filed automatically with a visible retry status.",
+            "The Director can read an incoming document, write instructions and send it to the concerned staff from one workspace.",
+        ],
+    },
     {
         "version": "7.02",
         "date": "October 17, 2026",

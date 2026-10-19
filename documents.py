@@ -41,8 +41,12 @@ def get(conn, user, doc_id):
 def list_visible(conn, user, query='', queue='all'):
     user = p.actor(conn,user)
     result = []
+    if queue == 'instruction' and not p.director(conn,user):
+        return []
+    predicate = "WHERE d.instruction_state='pending' AND d.archived_at IS NULL AND d.status NOT IN ('closed','cancelled')" if queue == 'instruction' else ''
     for doc in rows(conn, '''SELECT d.*, EXISTS(SELECT 1 FROM document_email_import i
-            WHERE i.document_id=d.id) AS gmail_imported FROM document d ORDER BY d.id DESC'''):
+            WHERE i.document_id=d.id) AS gmail_imported FROM document d ''' + predicate + ' ORDER BY d.id DESC'):
+
         if not p.can_view(conn,user,doc):
             continue
         if queue == 'archived':
@@ -50,7 +54,7 @@ def list_visible(conn, user, query='', queue='all'):
                 continue
         elif doc['archived_at']:
             continue
-        refs=' '.join(r[0] for r in conn.execute('SELECT value FROM document_reference WHERE document_id=?',(doc['id'],)))
+        refs=' '.join(r[0] for r in conn.execute('SELECT value FROM document_reference WHERE document_id=?',(doc['id'],))) if query else ''
         if query and rules.normalize(query) not in rules.normalize(doc['number']+' '+doc['subject']+' '+doc['sender']+' '+refs):
             continue
         if queue in ('gmail','gmail_review') and (not doc['gmail_imported'] or doc['canonical_id']):
@@ -80,6 +84,18 @@ def list_visible(conn, user, query='', queue='all'):
         if not any(item['id']==doc['id'] for item in result):
             result.append(doc)
     return result
+
+
+def instruction_page(conn,user,before=0):
+    user=p.actor(conn,user)
+    require(p.director(conn,user),'This inbox is for the Director or bureau OIC.')
+    # The Director can see preverification records, but restricted records still
+    # require explicit access. Filter before LIMIT so page counts reveal no files.
+    return rows(conn,"""SELECT d.* FROM document d WHERE instruction_state='pending'
+        AND archived_at IS NULL AND canonical_id IS NULL AND status NOT IN ('closed','cancelled')
+        AND (?=0 OR d.id<?) AND (visibility<>'restricted' OR EXISTS (
+            SELECT 1 FROM document_access a WHERE a.document_id=d.id AND a.user_id=?))
+        ORDER BY d.id DESC LIMIT 31""",(before,before,user['id']))
 
 
 def check(conn, user, doc_id, revision, *, allow_archived=False):
@@ -375,6 +391,8 @@ def mutate(conn,user,doc_id,revision,action,data):
         work=p.can_work(conn,user,doc)
         coordinator=officer or doc['lead_id']==user['id']
         changes={}
+        if doc['instruction_state']=='pending' and action not in ('route_instruction','confirmed_fields','verify','access','receipt','relate','cancel','reopen','deadline'):
+            raise ValueError('The Director must issue the first routing instruction before work is assigned.')
         import work_compat
         if work_compat.mapping(conn, doc_id) and action in ('assign','lead','contribution','milestone','reevaluate'):
             detail = work_compat.change(conn, user, doc, action, data)
@@ -439,6 +457,34 @@ def mutate(conn,user,doc_id,revision,action,data):
                 require(coordinator,'The lead or concerned officer confirms completion.')
             outcome=reason(data.get('outcome'))
             conn.execute('UPDATE document_assignment SET status=?,outcome=? WHERE id=?',(data['status'],outcome,item[0]['id']))
+        elif action=='route_instruction':
+            require(p.director(conn,user),'Only the Director or bureau OIC can issue this routing instruction.')
+            if doc['direction']!='IN' or doc['instruction_state']!='pending':
+                raise Conflict('This document is not waiting for its first Director instruction.')
+            if doc['verification']!='verified':
+                raise ValueError('Confirm the corrected document details before issuing instructions.')
+            text=reason(data.get('reason'))
+            lead=int(data.get('lead_id') or 0); active_account(conn,lead)
+            unit=int(data.get('unit_id') or 0)
+            if not conn.execute("SELECT 1 FROM org_unit WHERE id=? AND level IN ('division','bureau','section')",(unit,)).fetchone():
+                raise ValueError('Choose the lead office or division.')
+            recipients={lead} | {int(k.split(':',1)[1]) for k,v in data.items() if k.startswith('recipient:') and v=='yes'}
+            if len(recipients)>30: raise ValueError('Choose at most 30 recipients.')
+            for uid in recipients: active_account(conn,uid)
+            due=date.fromisoformat(data['action_due']).isoformat() if data.get('action_due') else None
+            if due and doc['due_date'] and due>doc['due_date']:
+                raise ValueError('The action deadline cannot follow the document deadline.')
+            directive=conn.execute('INSERT INTO document_directive(document_id,actor_id,text,created_at) VALUES (?,?,?,?)',
+                                  (doc_id,user['id'],text,tz.now_iso())).lastrowid
+            for uid in recipients:
+                conn.execute('INSERT INTO document_instruction_recipient VALUES (?,?)',(directive,uid))
+                conn.execute('INSERT OR IGNORE INTO document_access VALUES (?,?,?)',(doc_id,uid,'director_instruction'))
+                conn.execute('''INSERT INTO document_assignment(document_id,user_id,role,action,status,due_date,created_at)
+                    VALUES (?,?,?,?,'assigned',?,?)''',(doc_id,uid,'lead' if uid==lead else 'contributor',text,due,tz.now_iso()))
+            evaluation=rules.evaluate(conn,{**doc,'unit_id':unit})
+            changes={'instruction_state':'issued','lead_id':lead,'unit_id':unit,'reconcile':0,
+                     'policy_json':json.dumps(evaluation['policy']),'matches_json':json.dumps(evaluation)}
+            data={**data,'directive_id':directive,'recipients':sorted(recipients)}
         elif action=='directive':
             require(p.director(conn,user))
             conn.execute('INSERT INTO document_directive(document_id,actor_id,text,created_at) VALUES (?,?,?,?)',(doc_id,user['id'],reason(data.get('reason')),tz.now_iso()))
@@ -573,12 +619,21 @@ def mutate(conn,user,doc_id,revision,action,data):
 
 def duplicate_candidates(conn,user,doc_id):
     doc=get(conn,user,doc_id)
-    refs={r[0] for r in conn.execute('SELECT value FROM document_reference WHERE document_id=?',(doc_id,))}
-    files={r[0] for r in conn.execute('SELECT file_id FROM document_file_version WHERE document_id=?',(doc_id,))}
-    return [d for d in list_visible(conn,user) if d['id']!=doc_id and (
-        (rules.normalize(d['subject'])==rules.normalize(doc['subject']) and d['sender']==doc['sender'] and d['document_date']==doc['document_date']) or
-        refs.intersection(r[0] for r in conn.execute('SELECT value FROM document_reference WHERE document_id=?',(d['id'],))) or
-        files.intersection(r[0] for r in conn.execute('SELECT file_id FROM document_file_version WHERE document_id=?',(d['id'],))))]
+    # Indexed candidates avoid loading and permission-checking the whole register
+    # every time a scan is opened. Final matching preserves normalized subjects.
+    candidates=rows(conn, """SELECT d.*,
+        EXISTS(SELECT 1 FROM document_reference r JOIN document_reference s ON s.value=r.value
+               WHERE r.document_id=d.id AND s.document_id=?) AS same_reference,
+        EXISTS(SELECT 1 FROM document_file_version f JOIN document_file_version s ON s.file_id=f.file_id
+               WHERE f.document_id=d.id AND s.document_id=?) AS same_file
+        FROM document d WHERE d.id<>? AND d.canonical_id IS NULL AND d.archived_at IS NULL
+        AND ((d.sender=? AND d.document_date IS ?) OR d.id IN (
+            SELECT r.document_id FROM document_reference r JOIN document_reference s ON s.value=r.value WHERE s.document_id=?)
+          OR d.id IN (SELECT f.document_id FROM document_file_version f JOIN document_file_version s ON s.file_id=f.file_id WHERE s.document_id=?))
+        ORDER BY d.id DESC LIMIT 100""",(doc_id,doc_id,doc_id,doc['sender'],doc['document_date'],doc_id,doc_id))
+    return [candidate for candidate in candidates if p.can_view(conn,user,candidate) and
+            (candidate['same_reference'] or candidate['same_file'] or
+             rules.normalize(candidate['subject'])==rules.normalize(doc['subject']))]
 
 
 def merge_preview(conn,user,source_id,target_id):

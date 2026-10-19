@@ -31,7 +31,7 @@ def authenticate(body, timestamp, signature):
 
 
 def normalize(payload):
-    if not isinstance(payload, dict) or set(payload) != {'mailbox','message_id','subject','sender','received_at','attachments'}:
+    if not isinstance(payload, dict) or set(payload) not in ({'mailbox','message_id','subject','sender','received_at','attachments'}, {'mailbox','message_id','subject','sender','received_at','attachments','body_text'}):
         raise ValueError('Invalid intake fields.')
     for field, limit in [('mailbox',254),('message_id',128),('subject',500),('sender',500),('received_at',40)]:
         value = payload[field]
@@ -48,7 +48,13 @@ def normalize(payload):
     if received.tzinfo is None:
         raise ValueError('Received date requires a timezone.')
     attachments = payload['attachments']
-    if not isinstance(attachments,list) or not 1 <= len(attachments) <= 20:
+    if 'body_text' in payload:
+        body=payload['body_text']
+        if not isinstance(body,str) or not body.strip() or len(body)>16000 or any(ord(c)<32 and c not in '\r\n\t' for c in body):
+            raise ValueError('Invalid email body.')
+        if attachments:
+            raise ValueError('Body capture is for emails without attachments.')
+    if not isinstance(attachments,list) or not 0 <= len(attachments) <= 20 or (not attachments and not payload.get('body_text')):
         raise ValueError('Supply between 1 and 20 attachments.')
     clean, ids, files = [], set(), set()
     for item in attachments:
@@ -84,12 +90,24 @@ def ingest(conn, payload):
         actor = permissions.actor(conn,{'id':int(actor_id)})
         if not permissions.has_role(conn,actor,'records'):
             raise permissions.Denied('Intake account requires a bureau-wide records grant.')
+        # Staged messages retain their acknowledgement even after registration.
+        staged = conn.execute('SELECT primary_intake_id,payload_hash FROM document_intake_email WHERE mailbox=? AND message_id=?',
+                              (mailbox,payload['message_id'])).fetchone()
+        if staged:
+            if staged[1] != digest:
+                raise d.Conflict('Message was already queued with different content.')
+            return {'intake_id':staged[0],'state':'queued','duplicate':True}
         prior = conn.execute('SELECT document_id,payload_hash FROM document_email_import WHERE mailbox=? AND message_id=?',
                              (mailbox,payload['message_id'])).fetchone()
         if prior:
             if prior[1] != digest:
                 raise d.Conflict('Message was already imported with different content.')
             return {'document_id':prior[0],'duplicate':True}
+        if st.get_setting(conn,'documents.gmail_review_queue_enabled','0') == '1':
+            from documents_intake import stage_email
+            return stage_email(conn,actor,payload,digest)
+        if not payload['attachments']:
+            raise ValueError('Enable the email review queue for body-only correspondence.')
         doc = d.register_in_transaction(conn,actor,{
             'direction':'IN','subject':payload['subject'],'type':'Unclassified',
             'sender':payload['sender'],'received_at':payload['received_at'],

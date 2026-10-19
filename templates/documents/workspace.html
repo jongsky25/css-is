@@ -1,0 +1,30 @@
+{% set source=preview_file|default(versions[0] if versions else none) %}
+{% if filing_rows %}{% for item in filing_rows if item.filing_state!='complete' %}<p class="doc-alert" role="status">{{ item.original_name }} · {{ 'Drive filing needs attention. The document is registered.' if item.filing_state=='error' else 'Registered. Drive filing is pending the next check.' }}{% if intake_access %} <a href="/documents/intake?state=registered">View filing status</a>{% endif %}</p>{% endfor %}{% endif %}
+<div class="doc-workspace">
+<section class="doc-preview"><h3>Document</h3>
+{% for email in email_bodies %}<section class="doc-card"><h3>Email body</h3><p><strong>No attachment</strong></p><div class="doc-email-body" role="region" aria-label="Email body">{{ email.body_text }}</div></section>{% endfor %}
+{% if source %}<nav class="doc-tabs" aria-label="Document files">{% for v in versions %}<a href="?file={{ v.id }}" {% if v.id==source.id %}aria-current="page"{% endif %}>{{ v.role|capitalize }} {{ loop.index }}</a>{% endfor %}</nav>
+<p><a href="{{ source.url }}" target="_blank" rel="noopener noreferrer">Open in Drive</a> if the preview asks you to sign in.</p>
+<iframe src="https://drive.google.com/file/d/{{ source.file_id }}/preview" title="Document preview" loading="lazy" referrerpolicy="no-referrer" allow="fullscreen"></iframe>
+{% elif not email_bodies %}<p>No source file is attached yet.</p>{% endif %}</section>
+<section class="doc-card"><h3>Routing slip</h3>
+<p>{{ doc.sender or 'Sender not recorded' }} · Received {{ doc.received_at or 'not recorded' }}{% if doc.due_date %} · Document deadline {{ doc.due_date }}{% endif %}</p>
+{% for directive in directives %}<article><p><strong>{{ names.get(directive.actor_id,'Former staff member') }}</strong> · {{ directive.created_at }}</p><p class="doc-instruction">{{ directive.text }}</p>
+{% if instruction_recipients %}<p>{% for recipient in instruction_recipients if recipient.directive_id==directive.id %}{{ names.get(recipient.user_id,'Former staff member') }}{% if not loop.last %}, {% endif %}{% endfor %}</p>{% endif %}</article>{% else %}<p>{{ 'Waiting for the Director’s instruction.' if doc.instruction_state=='pending' else 'No Director instruction recorded.' }}</p>{% endfor %}
+{% if enabled and is_director and doc.instruction_state=='pending' and not doc.archived_at %}
+<form method="post" action="/documents/{{ doc.id }}/route_instruction" data-ux-ignore data-telemetry-ignore>
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ doc.revision }}">
+{{ person('lead_id','Lead person',people) }}
+<label>Lead office or division<select name="unit_id" required><option value="">Choose office or division</option>{% for unit in units %}<option value="{{ unit.id }}">{{ unit.name }}</option>{% endfor %}</select></label>
+{{ text('reason','Instruction',value=submitted.get('reason','')) }}
+{{ field('action_due','Action due (optional)','date',required=false) }}
+<details><summary>Additional action recipients</summary>{% for person in people %}<label class="doc-check"><input type="checkbox" name="recipient:{{ person.id }}" value="yes">{{ person.name }}</label>{% endfor %}</details>
+<p>Recipients receive access to this record in the system. They also need permission to open its files in Drive.</p>
+<button>Send instruction</button></form>
+{% endif %}
+{% if doc.lead_id %}<p>Lead: <strong>{{ names.get(doc.lead_id,'Former staff member') }}</strong></p>{% endif %}
+{% if assignments %}<h3>Assigned work</h3><ul>{% for assignment in assignments %}<li>{{ names.get(assignment.user_id,'Former staff member') }} · {{ assignment.status|replace('_',' ') }}<p>{{ assignment.action }}</p></li>{% endfor %}</ul>{% endif %}
+{% if work_cases %}<h3>Shared work</h3>{% for item in work_cases %}<p><a href="/work/{{ item.id }}">{{ item.title }}</a></p>{% endfor %}
+{% elif work_enabled and can_work and doc.instruction_state!='pending' %}<p><a href="/work/new?source_document_id={{ doc.id }}">Coordinate tasks in shared work</a></p>{% endif %}
+{% if enabled and can_work and doc.instruction_state!='pending' and not doc.archived_at %}<details><summary>Link a draft Google Doc</summary><form method="post" action="/documents/{{ doc.id }}/attach"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ doc.revision }}"><input type="hidden" name="classification" value="material">{{ field('url','Draft Drive link','url') }}{{ text('reason','What this draft is for') }}<button>Link draft</button></form><p>Use a separately registered outgoing document for formal approval and dispatch, linked to this incoming record.</p></details>{% endif %}
+</section></div>

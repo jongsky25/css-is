@@ -1,6 +1,8 @@
 {% extends 'documents/base.html' %}{% from 'documents/forms.html' import start,end,field,text,person,select,receipt_channel %}
 {% block documents_content %}
 <h2>{{ doc.number }} · {{ doc.subject }}</h2>
+{% include 'documents/workspace.html' %}
+<details class="doc-secondary"><summary>Record details and additional actions</summary>
 <p>{{ doc.type }} · {{ doc.visibility }} · {{ 'Awaiting verification' if doc.verification=='pending' else doc.verification|replace('_',' ') }} · {{ doc.status|replace('_',' ') }}</p>
 <p>Due: {{ doc.due_date or 'Unknown' }} ({{ doc.due_source or 'not set' }}) · Last change {{ doc.updated_at }} · Revision {{ doc.revision }}</p>
 {% if doc.archived_at %}<p class="doc-alert" role="status">Archived {{ doc.archived_at }} by {{ names.get(doc.archived_by,'Former staff member') }}. Restore this record before changing it.</p>{% endif %}
@@ -73,4 +75,5 @@
 <h3>Dispatch evidence</h3><ul>{% for x in dispatches %}<li>#{{ x.id }} · {{ x.created_at }} · {{ x.channel }} · {{ x.sender }} · {{ x.evidence }}</li>{% else %}<li>No dispatch recorded. Approval and signing are not dispatch.</li>{% endfor %}</ul>
 <h3>External operations</h3><ul>{% for job in jobs %}<li>{{ job.kind }} · {{ job.state }} · {{ job.id }}{% if enabled and job.state in ['running','unknown'] %}{{ start(doc,csrf,'operation_status','Query confirmed outcome without resending') }}<input type="hidden" name="operation_id" value="{{ job.id }}">{{ end('Check service receipt') }}{% endif %}{% if enabled and job.state in ['running','unknown','failed','pending'] %}{{ start(doc,csrf,'operation_reconcile','Reconcile this operation') }}<input type="hidden" name="operation_id" value="{{ job.id }}">{{ select('outcome','Outcome',[('confirmed_no_effect','Confirmed no external effect'),('cancelled','Cancel unexecuted request')]) }}{{ text('evidence','Evidence checked with the service; do not retry an uncertain send') }}{{ end() }}{% endif %}</li>{% else %}<li>No external operations.</li>{% endfor %}</ul>
 <h3>Timeline</h3><ol>{% for e in history %}<li>{{ e.recorded_at }} · {{ e.action|replace('_',' ') }} · {{ names.get(e.actor_id,'Former staff member') }}{% if e.note %}<p>{{ e.note }}</p>{% endif %}<details><summary>Evidence</summary><pre>{{ e.detail|tojson(indent=2) }}</pre></details></li>{% endfor %}</ol>
+</details>
 {% endblock %}
