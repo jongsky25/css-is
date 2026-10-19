@@ -1,3 +1,10 @@
+## 7.11 — October 19, 2026
+
+- Widen the intake review workspace, size the preview against the viewport/navigation, and stack panels below 1000px.
+- Provide phone view switches below 600px that retain the same form DOM and unsaved values; both panels remain available without JavaScript.
+- Collapse OCR suggestions, group fields responsively, keep primary actions accessible, and move floating feedback below the workspace to prevent overlap.
+- Scope layout changes to intake review and version its stylesheet/script URLs. No Apps Script update required.
+
 ## 7.10 — October 19, 2026
 
 - Derive intake direction from the reviewed sender: Bureau of Local Health Systems Development / BLHSD is Outgoing; other identified senders are Incoming.

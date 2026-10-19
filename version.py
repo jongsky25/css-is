@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.10"
+APP_VERSION = "7.11"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.11",
+        "date": "October 19, 2026",
+        "summary": "Review intake documents comfortably on monitors, laptops, tablets and phones.",
+        "changes": [
+            "Larger screens use a wider document-and-form workspace; smaller tablets stack the panels.",
+            "Phones can switch between Document and Review details without losing entered values.",
+            "OCR suggestions collapse above the fields, while Save review and Register document remain accessible during scrolling."
+        ]
+    },
     {
         "version": "7.10",
         "date": "October 19, 2026",
