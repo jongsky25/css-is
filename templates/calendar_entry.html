@@ -16,7 +16,7 @@
   <p class="cal-chips">
     <span class="cal-chip">{{ kind_label }}</span>
     {% if e.status != "confirmed" %}<span class="cal-chip warn">{{ status_label }}</span>{% endif %}
-    {% if owner %}<span class="cal-chip">{{ owner }}</span>{% endif %}
+    {% for o in owners %}<span class="cal-chip">{{ o }}</span>{% endfor %}
     <span class="cal-chip" title="Who can see this item">{{ audience_label }}</span>
   </p>
 

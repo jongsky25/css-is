@@ -108,6 +108,17 @@
         <select name="audience">{% for k, label in audiences.items() %}<option value="{{ k }}" {{ "selected" if f.audience == k }}>{{ label }}</option>{% endfor %}</select></label>
     </div>
 
+    <fieldset class="cf-wide cf-units">
+      <legend>Other sections involved <span class="opt">(optional; the owning unit above stays the main one)</span></legend>
+      <div class="cf-checks-scroll">
+        <div class="cf-checks">
+          {% for u in units %}
+          <label><input type="checkbox" name="extra_org_ids" value="{{ u.id }}" {{ "checked" if u.id|string in f.extra_org_ids }}> {{ u.label|trim }}</label>
+          {% endfor %}
+        </div>
+      </div>
+    </fieldset>
+
     <fieldset class="cf-wide cf-people">
       <legend>Who is on it <span class="opt">(they will see it in their calendar)</span></legend>
       <input type="search" id="people-search" class="cf-people-search" placeholder="Search names…"

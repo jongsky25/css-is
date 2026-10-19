@@ -161,9 +161,9 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
     # one never makes the other options vanish
     units = {}
     for i in entries:
-        if i["owner_org_id"]:
-            units[i["owner_org_id"]] = {"id": i["owner_org_id"], "label": i["owner_label"],
-                                        "tone": i["tone"]}
+        for u in i.get("owner_units") or ([{"id": i["owner_org_id"], "label": i["owner_label"], "tone": i["tone"]}]
+                                          if i["owner_org_id"] else []):
+            units[u["id"]] = u
     month_param = m.strftime("%Y-%m") if layout == "month" and q.get("month") else ""
     params = {**fixed, "scope": scope, layout_key: layout if layout != "agenda" else "",
               "month": month_param, **clean}
@@ -387,7 +387,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         return {"title": "", "kind": "meeting", "status": "confirmed", "start_date": day,
                 "end_date": "", "start_time": "", "end_time": "", "time_note": "",
                 "venue": "", "modality": "", "meeting_url": "", "note": "",
-                "owner_org_id": owner, "audience": "unit", "people": [], "tags": "",
+                "owner_org_id": owner, "extra_org_ids": [], "audience": "unit", "people": [], "tags": "",
                 "updated_at": "", "repeat": "none", "until": ""}
 
     def _activity_of(conn, e):
@@ -410,7 +410,8 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 "time_note": e["time_note"] or "", "venue": e["venue"] or "",
                 "modality": e["modality"] or "", "meeting_url": e["meeting_url"] or "",
                 "note": e["note"] or "",
-                "owner_org_id": str(e["owner_org_id"] or ""), "audience": e["audience"],
+                "owner_org_id": str(e["owner_org_id"] or ""),
+                "extra_org_ids": [str(i) for i in e["extra_org_ids"]], "audience": e["audience"],
                 "people": [str(p["user_id"]) for p in e["people"]],
                 "tags": ", ".join(e["tags"]), "updated_at": e["updated_at"] or "",
                 **dict(zip(("repeat", "until"), _repeat_of(e)))}
@@ -419,6 +420,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         raw = parse_qs((await request.body()).decode("utf-8"), keep_blank_values=True)
         one = {k: (v[0] if v else "").strip() for k, v in raw.items()}
         one["people"] = [x for x in raw.get("people", []) if x.isdigit()]
+        one["extra_org_ids"] = [x for x in raw.get("extra_org_ids", []) if x.isdigit()]
         return one
 
     def _parse(f, existing=None, allowed_people=()):
@@ -439,7 +441,8 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             "meeting_url", "note")}
         fields.update(title=f["title"], start_date=f["start_date"], kind=f["kind"],
                       status=f["status"], audience=f["audience"],
-                      owner_org_id=int(f["owner_org_id"]) if f["owner_org_id"].isdigit() else None)
+                      owner_org_id=int(f["owner_org_id"]) if f["owner_org_id"].isdigit() else None,
+                      extra_org_ids=[int(x) for x in f.get("extra_org_ids", [])])
         repeat = f.get("repeat") or "none"
         if (existing or {}).get("event_id"):
             repeat = "none"                                      # an activity's item never repeats
@@ -471,7 +474,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         return {"title": "", "kind": "meeting", "status": "confirmed", "start_date": "",
                 "end_date": "", "start_time": "", "end_time": "", "time_note": "",
                 "venue": "", "modality": "", "meeting_url": "", "note": "",
-                "owner_org_id": "", "audience": "unit", "tags": "", "updated_at": "",
+                "owner_org_id": "", "extra_org_ids": [], "audience": "unit", "tags": "", "updated_at": "",
                 "repeat": "none", "until": "", "reserve_room": "", "room_from": "", "room_to": "",
                 "room_meals": "", "room_standby": ""}
 
@@ -718,6 +721,8 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                     f[k] = q[k][:200]
             if q.getlist("people"):
                 f["people"] = q.getlist("people")
+            if q.getlist("extra_org_ids"):
+                f["extra_org_ids"] = [x for x in q.getlist("extra_org_ids") if x.isdigit()]
             return _form_page(request, conn, f)
         finally:
             conn.close()
@@ -872,7 +877,8 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             if e is None:
                 return _not_found(request)
             cards = oc._people_cards(conn, [p["user_id"] for p in e["people"]])
-            unit = oc._units(conn, [e["owner_org_id"]]).get(e["owner_org_id"])
+            owner_units = oc._units(conn, [e["owner_org_id"], *e["extra_org_ids"]])
+            owners = [owner_units[i]["label"] for i in (e["owner_org_id"], *e["extra_org_ids"]) if i in owner_units]
             revs = st.cal_revisions(conn, entry_id)
             names = oc.display_names(conn, [e["created_by"], e["updated_by"]]
                                      + [r["changed_by"] for r in revs])
@@ -892,7 +898,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         return templates.TemplateResponse(request, "calendar_entry.html", {
             "nav_active": "calendar", "e": e, "ok": ok, "err": err, "css": css, "heads_up": heads_up, "series": series,
             "room_link": room_link, "filing": filing,
-            "owner": unit["label"] if unit else None,
+            "owner": " + ".join(owners) or None, "owners": owners,
             "attendees": [{**cards.get(p["user_id"], {"name": "?", "initials": "?"}),
                            "role": p["role"]} for p in e["people"]],
             "kind_label": KIND_LABELS.get(e["kind"], e["kind"]),

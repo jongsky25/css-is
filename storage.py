@@ -620,6 +620,13 @@ def init_db(conn):
         PRIMARY KEY (entry_id, tag)
     );
 
+    -- Other units an entry also involves; owner_org_id stays the primary one (Spot Feedback #129).
+    CREATE TABLE IF NOT EXISTS calendar_entry_unit (
+        entry_id INTEGER NOT NULL REFERENCES calendar_entry(id) ON DELETE CASCADE,
+        org_id   INTEGER NOT NULL REFERENCES org_unit(id),
+        PRIMARY KEY (entry_id, org_id)
+    );
+
     -- Append-only change history: powers "History" and Restore.
     CREATE TABLE IF NOT EXISTS calendar_entry_revision (
         id         INTEGER PRIMARY KEY,
@@ -10754,14 +10761,47 @@ def _cal_tag_rows(conn, entry_ids):
     return out
 
 
+def _cal_unit_rows(conn, entry_ids):
+    out = {i: [] for i in entry_ids}
+    for i in range(0, len(entry_ids), 500):
+        chunk = entry_ids[i:i + 500]
+        q = ",".join("?" * len(chunk))
+        for r in conn.execute(
+                "SELECT entry_id, org_id FROM calendar_entry_unit"
+                f" WHERE entry_id IN ({q}) ORDER BY org_id", chunk):
+            out[r[0]].append(r[1])
+    return out
+
+
 def _cal_hydrate(conn, rows):
     entries = [dict(zip(_CAL_COLS, r)) for r in rows]
     ids = [e["id"] for e in entries]
     people, tags = _cal_people_rows(conn, ids), _cal_tag_rows(conn, ids)
+    units = _cal_unit_rows(conn, ids)
     for e in entries:
         e["people"] = people[e["id"]]
         e["tags"] = tags[e["id"]]
+        e["extra_org_ids"] = units[e["id"]]          # the other units it involves (owner_org_id is the first)
     return entries
+
+
+def _cal_normalise_units(conn, org_ids, primary):
+    """Sorted, de-duplicated extra unit ids, without the primary one. Raises ValueError for an id
+    that is not a unit in the directory."""
+    ids = sorted({int(x) for x in org_ids or ()} - {primary})
+    if ids:
+        known = {r[0] for r in conn.execute(
+            "SELECT id FROM org_unit WHERE id IN (%s)" % ",".join("?" * len(ids)), ids)}
+        if known != set(ids):
+            raise ValueError("One of the units you chose isn't in the directory.")
+    return ids
+
+
+def _cal_write_units(conn, entry_id, org_ids):
+    conn.execute("DELETE FROM calendar_entry_unit WHERE entry_id=?", (entry_id,))
+    for oid in org_ids:
+        conn.execute("INSERT INTO calendar_entry_unit(entry_id, org_id) VALUES (?,?)",
+                     (entry_id, oid))
 
 
 def _cal_normalise_people(people):
@@ -10917,7 +10957,7 @@ def cal_create(conn, title, start_date, *, end_date=None, kind="meeting",
                venue=None, modality=None, meeting_url=None, note=None,
                owner_org_id=None, audience="unit", event_id=None, rrule=None,
                exdates=None, source="app", import_key=None, people=None, tags=None,
-               by=None, audit_it=True, commit=True):
+               extra_org_ids=None, by=None, audit_it=True, commit=True):
     """Create an entry; returns its id. With an `import_key` that already exists,
     returns the existing entry's id and changes nothing (idempotent re-import).
     `audit_it=False` skips the per-entry audit line (a bulk import writes one summary)."""
@@ -10941,6 +10981,7 @@ def cal_create(conn, title, start_date, *, end_date=None, kind="meeting",
     v["rrule"], v["exdates"] = series["rrule"], series["exdates"]
     people = _cal_normalise_people(people)
     tags = _cal_normalise_tags(tags)
+    extra_units = _cal_normalise_units(conn, extra_org_ids, owner_org_id)
     now = tz.now_iso()
     cancelled = (now, by) if v["status"] == "cancelled" else (None, None)
     cur = conn.execute(
@@ -10958,6 +10999,7 @@ def cal_create(conn, title, start_date, *, end_date=None, kind="meeting",
     _cal_write_people(conn, entry_id, people, by)
     _cal_stamp_seen(conn, entry_id, 0, by, everyone=(source == "import"))
     _cal_write_tags(conn, entry_id, tags)
+    _cal_write_units(conn, entry_id, extra_units)
     _cal_revision(conn, entry_id, 0, "create", by, {"title": [None, v["title"]]})
     if source != "import" and v["status"] != "cancelled":          # a bulk import never emails anyone
         _cal_enqueue(conn, {"id": entry_id, **v}, "added", [u for u, _r in people], by)
@@ -10970,11 +11012,11 @@ def cal_create(conn, title, start_date, *, end_date=None, kind="meeting",
 
 
 def cal_update(conn, entry_id, *, by=None, expected_sequence=None,
-               expected_updated_at=None, people=None, tags=None, **fields):
+               expected_updated_at=None, people=None, tags=None, extra_org_ids=None, **fields):
     """Change an entry. Raises CalendarConflict when `expected_sequence` or
     `expected_updated_at` is given and no longer matches what is stored (the form
-    sends `updated_at`, which moves on every edit, not only schedule changes). `people` / `tags` (when not None) replace
-    the whole list. The sequence rises only when a date/time/status/recurrence field
+    sends `updated_at`, which moves on every edit, not only schedule changes). `people` / `tags` /
+    `extra_org_ids` (when not None) replace the whole list. The sequence rises only when a date/time/status/recurrence field
     actually changes. Returns the updated entry; a no-op leaves no revision."""
     cur = cal_get(conn, entry_id)
     if cur is None:
@@ -11009,6 +11051,11 @@ def cal_update(conn, entry_id, *, by=None, expected_sequence=None,
         new_tags = _cal_normalise_tags(tags)
         if new_tags != sorted(cur["tags"], key=str.lower):
             diff["tags"] = [cur["tags"], new_tags]
+    # the extra units: an explicit list replaces them; a new primary unit drops itself from the list
+    new_units = _cal_normalise_units(
+        conn, cur["extra_org_ids"] if extra_org_ids is None else extra_org_ids, merged["owner_org_id"])
+    if new_units != cur["extra_org_ids"]:
+        diff["extra_orgs"] = [cur["extra_org_ids"], new_units]
     if not diff:
         return cur
     seq = cur["sequence"] + (1 if any(f in diff for f in _CAL_SEQ_FIELDS) else 0)
@@ -11026,6 +11073,8 @@ def cal_update(conn, entry_id, *, by=None, expected_sequence=None,
     _cal_stamp_seen(conn, entry_id, seq, by)           # you have seen what you just changed yourself
     if "tags" in diff:
         _cal_write_tags(conn, entry_id, new_tags)
+    if "extra_orgs" in diff:
+        _cal_write_units(conn, entry_id, new_units)
     _cal_revision(conn, entry_id, seq, "update", by, diff)
     old_ids = {p["user_id"] for p in cur["people"]}
     new_ids = {u for u, _r in new_people} if "people" in diff else old_ids
@@ -11096,6 +11145,7 @@ def cal_delete(conn, entry_id, *, by=None):
         return False
     conn.execute("DELETE FROM calendar_entry_person WHERE entry_id=?", (entry_id,))
     conn.execute("DELETE FROM calendar_entry_tag WHERE entry_id=?", (entry_id,))
+    conn.execute("DELETE FROM calendar_entry_unit WHERE entry_id=?", (entry_id,))
     conn.execute("DELETE FROM calendar_entry_revision WHERE entry_id=?", (entry_id,))
     conn.execute("DELETE FROM calendar_entry WHERE id=?", (entry_id,))
     conn.commit()
