@@ -22,6 +22,19 @@ versions. Existing application permissions and independent Drive permissions sti
 
 ### Configuration for an acceptance instance
 
+In v7.13 and later, open **Documents → Intake → Drive and Gmail intake settings**
+(`/documents/intake/settings`). The **Work email / Gmail** section lets an active
+account with bureau-wide Records officer and Workflow administrator grants select
+the mailbox, records owner and intake switch. The owner dropdown contains only active
+accounts with bureau-wide Records officer authority. Saving rechecks those grants.
+Enabling requires Documents enabled, a hosting intake secret of at least 32 characters,
+the unified review queue enabled and a recorded successful Drive check. The page only
+reports secret presence/length; matching it to Apps Script is verified by a signed import.
+Pause remains available if the importer account or hosting secret later becomes invalid.
+This form does not change Drive settings, create accounts/grants, start Apps Script or
+install a trigger. Keep the importer paused until these settings are saved, then run a
+manual import and check the Waiting queue before scheduling it.
+
 Use the existing server-side settings mechanism (`storage.set_setting`) to configure:
 
 | Setting | Value |

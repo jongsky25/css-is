@@ -6,6 +6,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 import documents as d
 import documents_permissions as p
 import documents_intake as intake
+import documents_gmail_settings as gmail_settings
 from documents_routes import csrf
 from documents_storage import rows
 import tzutil as tz
@@ -76,7 +77,8 @@ def make_router(templates,get_conn):
         try:
             user=intake.reviewer(conn,request.state.user)
             d.require(p.has_role(conn,user,'workflow_admin'))
-            return render(request,conn,'intake_settings',config=intake.settings(conn))
+            return render(request,conn,'intake_settings',config=intake.settings(conn),
+                          gmail=gmail_settings.settings(conn),records_accounts=gmail_settings.records_accounts(conn))
         except p.Denied as exc: return HTMLResponse(str(exc),status_code=403)
         finally: conn.close()
 
@@ -89,6 +91,25 @@ def make_router(templates,get_conn):
             return RedirectResponse('/documents/intake',status_code=303)
         except (ValueError,p.Denied) as exc:
             return HTMLResponse(str(exc),status_code=403 if isinstance(exc,p.Denied) else 400)
+        finally: conn.close()
+
+    @router.post('/documents/intake/settings/gmail')
+    async def configure_gmail(request:Request):
+        conn=get_conn()
+        data={}
+        try:
+            gmail_settings.administrator(conn,request.state.user)
+            data=await posted(request)
+            gmail_settings.configure(conn,request.state.user,data)
+            return RedirectResponse('/documents/intake/settings?gmail_saved=1#gmail',status_code=303)
+        except p.Denied as exc:
+            return HTMLResponse(str(exc),status_code=403)
+        except ValueError as exc:
+            # Preserve harmless form values; credentials are never accepted here.
+            values={key:data.get(key,'') for key in ('mailbox','actor_id','enabled')}
+            return render(request,conn,'intake_settings',400,config=intake.settings(conn),
+                          gmail=gmail_settings.settings(conn),records_accounts=gmail_settings.records_accounts(conn),
+                          gmail_values=values,error=str(exc))
         finally: conn.close()
 
     def sync_background():

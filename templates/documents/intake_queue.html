@@ -1,7 +1,7 @@
 {% extends 'documents/base.html' %}
 {% block documents_content %}
 <div class="doc-heading"><div><h2>Intake</h2><p>Office Drive uploads and imported work emails, ready for a records review.</p></div>
-{% if workflow_admin %}<a href="/documents/intake/settings">Drive intake settings</a>{% endif %}</div>
+{% if workflow_admin %}<a href="/documents/intake/settings">Drive and Gmail intake settings</a>{% endif %}</div>
 {% if request.query_params.get("registered") %}<p role="status">Document registered. There are no more unclaimed scans waiting for review.</p>{% endif %}
 {% if config.intake_enabled!='1' %}<p class="doc-alert">Drive intake is not configured. A records officer with workflow-administrator access can connect the office folders.</p>{% else %}
 <p>Last successful Drive check: {{ config.last_sync or 'Not yet checked' }}. Automatic checks run every three minutes while the system is running.</p>
