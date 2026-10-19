@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.06"
+APP_VERSION = "7.07"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.07",
+        "date": "October 19, 2026",
+        "summary": "Fix Drive intake checks that failed while reading Google’s reply.",
+        "changes": [
+            "Compressed Google replies are now decoded once, fixing the application error that appeared as an unreachable relay.",
+            "The fix preserves response-size checks and does not repeat signed requests."
+        ]
+    },
     {
         "version": "7.06",
         "date": "October 19, 2026",

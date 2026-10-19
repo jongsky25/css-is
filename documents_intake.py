@@ -413,6 +413,8 @@ def relay_network_failure(exc):
     except (AttributeError, RuntimeError):
         reply=False
     target='Google’s reply service' if reply else 'the Google Docs web-app service'
+    if isinstance(exc,httpx.DecodingError):
+        return 'The response from '+target+' could not be decoded. Check the application response handling and relay reply format. [relay_decoding]'
     if isinstance(exc,httpx.ProxyError):
         return 'The hosting network proxy could not connect to '+target+'. Check the proxy settings or access policy for this host. [relay_proxy]'
     if any(isinstance(c,ssl.SSLCertVerificationError) for c in causes) or 'certificate_verify_failed' in descriptions or 'certificate verify failed' in descriptions:
