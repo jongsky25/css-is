@@ -20,7 +20,8 @@ class Drive:
             if self.fail: raise TimeoutError()
             return {'state':'confirmed','file_id':payload['file_id'],'fingerprint':'filed-version'}
         if action=='extract':
-            return {'state':'confirmed','suggestions':{'subject':'Suggested','role':'admin'},'excerpts':['never store me']}
+            return {'state':'confirmed','file_id':payload['file_id'],'content_key':payload['content_key'],'fingerprint':payload['fingerprint'],
+                    'suggestions':{'subject':'Suggested','role':'admin'},'excerpts':['never store me']}
         if action=='intake_list':
             return {'inbox':'inbox_folder_123','files':[]}
         raise AssertionError(action)
@@ -298,3 +299,31 @@ def test_network_diagnostic_identifies_reply_host_and_message_only_certificate_e
     error=intake.sync_failure(exc,'relay')
     assert 'reply service' in error and '[relay_tls_certificate]' in error
     assert 'private' not in error and 'token' not in error
+
+
+def test_ocr_metadata_drift_updates_fingerprint_without_changing_content(registry):
+    c,u,unit,path=registry;seed(registry)
+    item=intake.claim(c,u[1],1,1)
+    class MetadataOnly(Drive):
+        def call(self,action,payload,operation):
+            assert action=='extract' and payload['intake'] is True
+            assert payload['inbox']=='inbox_folder_123' and payload['content_key']==item['content_key']
+            return {**super().call(action,payload,operation),'fingerprint':'latest-metadata-version'}
+    saved=intake.extract(c,u[1],1,item['revision'],MetadataOnly())
+    assert saved['fingerprint']=='latest-metadata-version' and saved['content_key']==item['content_key']
+    assert saved['suggestions']['suggestions']['subject']=='Suggested'
+
+
+@pytest.mark.parametrize('mode',['old_relay','wrong_file','changed_content'])
+def test_ocr_requires_content_receipt_before_caching(registry,mode):
+    c,u,unit,path=registry;seed(registry)
+    item=intake.claim(c,u[1],1,1)
+    class UnconfirmedSource(Drive):
+        def call(self,*args):
+            result=super().call(*args)
+            if mode=='old_relay':result.pop('content_key')
+            elif mode=='wrong_file':result['file_id']='other_file_1234'
+            else:result['content_key']='replacement content'
+            return result
+    with pytest.raises(ValueError):intake.extract(c,u[1],1,item['revision'],UnconfirmedSource())
+    assert intake.get(c,u[1],1)['suggestions']=={}

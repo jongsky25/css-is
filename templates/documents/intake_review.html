@@ -13,6 +13,8 @@
 {% if item.email and item.email.body_text %}<section class="doc-card"><h3>Email body</h3><div class="doc-email-body" role="region" aria-label="Email body">{{ item.email.body_text }}</div></section>{% else %}<section class="doc-preview"><h3>Original scan</h3><p><a href="https://drive.google.com/file/d/{{ item.file_id }}/view" target="_blank" rel="noopener noreferrer">Open in Drive</a> if the preview asks you to sign in.</p>
 <iframe src="https://drive.google.com/file/d/{{ item.file_id }}/preview" title="Original scan preview" loading="lazy" referrerpolicy="no-referrer" allow="fullscreen"></iframe></section>{% endif %}
 <section class="doc-card"><h3>Review document details</h3>
+{% if error %}<p class="doc-alert" role="alert">{{ error }}</p>{% endif %}
+{% if not editable and enabled %}<p>Click <strong>Start or resume review</strong> above to enable OCR and the document fields.</p>{% endif %}
 <form method="post" data-ux-ignore data-telemetry-ignore>
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ item.revision }}">
 <fieldset {% if not editable or not enabled %}disabled{% endif %}>

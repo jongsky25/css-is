@@ -287,17 +287,24 @@ def extract(conn,user,item_id,revision,adapter=None):
     if item['suggestion_key']==item['content_key'] and item['suggestions']:
         return item
     adapter=adapter or ops.get_adapter()
+    config=_active(conn)
     result=adapter.call('extract',{'file_id':item['file_id'],'fingerprint':item['fingerprint'],
+                                  'intake':True,'inbox':config['inbox'],'content_key':item['content_key'],
                                   'actor_id':user['id']},str(uuid.uuid4()))
     if result.get('state')!='confirmed': raise ValueError('OCR was not confirmed. Enter details manually or retry.')
+    if result.get('file_id') is None or result.get('content_key') is None or not result.get('fingerprint'):
+        raise ValueError('Update documents_relay.gs in the Docs/travel project and deploy a new version of the existing web app to use content-checked intake OCR.')
+    if result['file_id']!=item['file_id'] or result['content_key']!=item['content_key']:
+        raise d.Conflict('The OCR source does not match this intake file. Refresh Drive and review its contents again.')
     sanitized=ops.sanitize_extraction(result)
     # Persist suggestions only: no full text, excerpts, or binary copies.
     cached={'suggestions':sanitized['suggestions'],'warnings':sanitized['warnings']}
     with transaction(conn):
         user,current=_editable(conn,user,item_id,revision)
+        if _active(conn)['inbox']!=config['inbox']: raise d.Conflict('The intake folder changed during reading. Reload this review.')
         if current['content_key']!=item['content_key']: raise d.Conflict('The scan changed during reading.')
-        conn.execute('''UPDATE document_intake SET suggestions_json=?,suggestion_key=?,revision=revision+1
-                        WHERE id=?''',(json.dumps(cached),item['content_key'],item_id))
+        conn.execute('''UPDATE document_intake SET suggestions_json=?,suggestion_key=?,fingerprint=?,revision=revision+1
+                        WHERE id=?''',(json.dumps(cached),item['content_key'],str(result['fingerprint'])[:500],item_id))
         event(conn,None,user,'intake_read',{'intake_id':item_id})
     return get(conn,user,item_id)
 

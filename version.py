@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.07"
+APP_VERSION = "7.08"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.08",
+        "date": "October 19, 2026",
+        "summary": "Check intake document contents during OCR without blocking on metadata changes.",
+        "changes": [
+            "Intake OCR checks the file checksum and the bytes read before accepting suggestions, while allowing metadata-only Drive version changes.",
+            "Actual file-content changes still stop OCR; approval and signing keep their strict version checks.",
+            "OCR errors now also appear beside the review controls, and disabled fields explain how to start a review."
+        ]
+    },
     {
         "version": "7.07",
         "date": "October 19, 2026",

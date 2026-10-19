@@ -152,3 +152,19 @@ or timeout errors and local processing stages. Credentials, request URLs and arb
 provider text are not included. A successful editor listing does not verify the
 application’s endpoint or the web app’s deployed code/execution account. Keep Gmail
 paused until the application records a successful Drive check.
+
+## Intake OCR source checks (v7.08)
+
+Update only `documents_relay.gs` in the existing Docs/travel project and publish a
+new version of the existing web app. The extract action is already allowlisted;
+keep Code.gs, templates, secrets, folder properties and the deployment URL.
+
+The app sends the queued content checksum and inbox binding for intake OCR. The
+relay verifies the current file metadata, the actual blob handed to OCR, and the
+file content/folder again afterwards. It returns the verified content key and latest
+fingerprint. Metadata-only version drift is allowed for this unregistered-intake
+mode; real content changes or moves block caching. Requests without intake mode
+retain their previous strict version checks. Old relay replies without content
+provenance are not accepted for caching; the reviewer sees an update instruction.
+Suggestions contain only bounded fields/warnings, and temporary OCR files are still
+removed. No content-check behavior for signing or approval is relaxed.

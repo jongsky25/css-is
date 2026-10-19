@@ -91,8 +91,18 @@ function dmPreview_(req) {
           url:DriveApp.getFileById(req.file_id).getUrl(), marker:'{{OFFICE_CONNECT_SIGNATURE}}', width:160, max_height:80};
 }
 function dmExtract_(req) {
-  const meta = dmMeta_(req.file_id), fingerprint = dmFingerprint_(meta);
-  if (req.fingerprint && fingerprint!==req.fingerprint) dmError_('version_changed');
+  const intake=req.intake===true;
+  const meta = intake ? dmIntakeOcrSource_(req) : dmMeta_(req.file_id), fingerprint = dmFingerprint_(meta);
+  if (!intake && req.fingerprint && fingerprint!==req.fingerprint) dmError_('version_changed');
+  let sourceBlob=null;
+  if (intake) {
+    if (!['application/pdf','image/png','image/jpeg','image/gif','text/plain'].includes(meta.mimeType)) dmError_('unsupported_format');
+    sourceBlob=dmBlob_(meta);
+    // Verify the actual bytes handed to OCR, in addition to metadata before/after.
+    const checksum=Utilities.computeDigest(Utilities.DigestAlgorithm.MD5,sourceBlob.getBytes())
+      .map(function(b){return ('0'+(b&255).toString(16)).slice(-2);}).join('');
+    if (checksum!==req.content_key) dmError_('version_changed');
+  }
   let text = '', temp = null;
   try {
     if (meta.mimeType === 'application/vnd.google-apps.document') {
@@ -105,21 +115,23 @@ function dmExtract_(req) {
         text += sheet.getDataRange().getDisplayValues().map(function (r) {return r.join(' ');}).join('\n') + '\n';
       });
     } else if (meta.mimeType === 'text/plain') {
-      text = dmBlob_(meta).getDataAsString('UTF-8');
+      text = (sourceBlob || dmBlob_(meta)).getDataAsString('UTF-8');
     } else if (['application/pdf','image/png','image/jpeg','image/gif'].includes(meta.mimeType)) {
       // Google Drive's import conversion performs OCR. No document text is sent
       // to another vendor. Imported OCR artifacts are permanently removed below.
       const converted = Drive.Files.create({name:'temporary-ocr-' + req.operation_id,
         mimeType:'application/vnd.google-apps.document',
         appProperties:{office_connect_transient:'ocr',operation_id:req.operation_id}},
-        dmBlob_(meta), {ocrLanguage:'en',fields:'id'});
+        sourceBlob || dmBlob_(meta), {ocrLanguage:'en',fields:'id'});
       temp = converted.id;
       text = DocumentApp.openById(temp).getBody().getText();
     } else dmError_('unsupported_format');
     if (!text.trim()) dmError_('extraction_failed');
     if (text.length > DM_MAX_TEXT) dmError_('input_too_large');
-    dmExpect_(meta.id,fingerprint);
-    return Object.assign({ok:true, operation_id:req.operation_id, state:'confirmed'}, dmSuggest_(text));
+    const current=intake ? dmIntakeOcrSource_(req) : dmExpect_(meta.id,fingerprint);
+    if (intake && current.mimeType!==meta.mimeType) dmError_('version_changed');
+    return Object.assign({ok:true, operation_id:req.operation_id, state:'confirmed'}, dmSuggest_(text),
+      intake ? {file_id:current.id,content_key:current.md5Checksum,fingerprint:dmFingerprint_(current)} : {});
   } finally {
     // Failure to remove temporary content fails the operation visibly; do not
     // silently report successful transient processing if cleanup failed.
@@ -351,6 +363,13 @@ function dmIntakeMeta_(id) {
   const m=Drive.Files.get(id,{fields:'id,name,mimeType,size,version,md5Checksum,parents,appProperties,trashed',supportsAllDrives:true});
   if (m.trashed) dmError_('bad_file');
   return m;
+}
+function dmIntakeOcrSource_(req) {
+  const roots=dmIntakeRoots_(req,false);
+  if (typeof req.content_key!=='string' || !/^[a-f0-9]{32}$/.test(req.content_key)) dmError_('bad_request');
+  const meta=dmIntakeMeta_(req.file_id);
+  if (!(meta.parents || []).includes(roots.inbox) || meta.md5Checksum!==req.content_key) dmError_('version_changed');
+  return meta;
 }
 function dmIntakeList_(req) {
   const roots=dmIntakeRoots_(req,false);
