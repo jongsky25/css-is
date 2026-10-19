@@ -13,7 +13,7 @@ GET_ROUTES = [
     "/reports?type=2", "/reports?type=3",
     "/reports/verbatims", "/directory", "/directory/staff/new",
     "/arta", "/encode", "/admin/users", "/admin/audit",
-    "/work-arrangement", "/work-arrangement/file", "/work-arrangement/approvals",
+    "/work-arrangement", "/work-arrangement/file",
     "/work-arrangement/schedule",
 ]
 
@@ -22,6 +22,14 @@ def test_get_route_renders_for_admin(admin, path):
     r = admin.get(path)
     assert r.status_code == 200, f"{path} -> {r.status_code}\n{r.text[:300]}"
     assert r.text.strip(), f"{path} rendered empty body"
+
+def test_admin_without_a_chief_seat_has_no_approvals_inbox(admin):
+    """The approvals inbox is for people requests are routed to (a directory chief seat or an acting
+    OIC), not for the admin role alone, so the old /work-arrangement/approvals bookmark lands on
+    "No access" for such an admin. A chief seat is covered in test_wellness."""
+    assert admin.get("/approvals").status_code == 403
+    assert admin.get("/work-arrangement/approvals").status_code == 403
+
 
 def test_csm_blhsd_export_honors_period(admin):
     r = admin.get("/csm-blhsd/export?period=year:2026")
