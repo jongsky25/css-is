@@ -850,12 +850,14 @@ def viewable_entry(conn, user, entry_id):
 
 
 def people_choices(conn):
-    """Active accounts a person can be put on an entry as: [{user_id, name}]."""
+    """Active staff accounts a person can be put on an entry as: [{user_id, name}]."""
+    staff_sql, staff_params = st._staff_only_sql("a")
     return sorted(
         ({"user_id": r[0], "name": r[1] or r[2]} for r in conn.execute(
             "SELECT a.id, rp.name, a.username FROM admin_user a "
             "LEFT JOIN resource_person rp ON rp.id = a.rp_id "
-            "WHERE a.active = 1 AND (rp.id IS NULL OR rp.archived_at IS NULL)")),
+            f"WHERE a.active = 1 AND (rp.id IS NULL OR rp.archived_at IS NULL) AND {staff_sql}",
+            staff_params)),
         key=lambda p: p["name"].lower())
 
 

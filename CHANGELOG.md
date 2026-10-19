@@ -1,3 +1,8 @@
+## 7.26 — October 19, 2026
+
+- Search the people list when adding or editing a calendar item, with a clear message when no one matches.
+- Keep the system administrator account out of that list.
+
 ## 7.25 — October 19, 2026
 
 - Show only events and trips involving your section or division in the home page's Coming up card.

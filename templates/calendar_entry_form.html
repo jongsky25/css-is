@@ -1,7 +1,7 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header %}
 {% block title %}{{ "Edit calendar item" if entry else "Add to the calendar" }}{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261016b"><link rel="stylesheet" href="/static/css/rooms.css?v=20261016b">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261016b"><link rel="stylesheet" href="/static/css/rooms.css?v=20261016b"><script src="/static/js/calendar_people_search.js?v=20261019a" defer></script>{% endblock %}
 {% block content %}
 {{ page_header("Edit calendar item" if entry else "Add to the calendar",
                "Anyone can add or change items. Every change is recorded, and the people on an item see it in their calendar.") }}
@@ -147,20 +147,6 @@
 
   <script>
   (function () {
-    var box = document.getElementById("people-search");
-    var none = document.getElementById("people-nomatch");
-    var labels = document.querySelectorAll(".cf-checks label");
-    box.addEventListener("input", function () {
-      var q = box.value.trim().toLowerCase(), shown = 0;
-      labels.forEach(function (l) {
-        var ok = !q || l.dataset.name.indexOf(q) !== -1;
-        l.hidden = !ok;
-        if (ok) shown++;
-      });
-      none.hidden = shown > 0;
-    });
-    box.addEventListener("keydown", function (e) { if (e.key === "Enter") e.preventDefault(); });
-
     // Show the "last date" only when the item repeats, and the meeting link unless it is in person.
     var rep = document.getElementById("repeat"), until = document.getElementById("until-wrap");
     function syncRepeat() {

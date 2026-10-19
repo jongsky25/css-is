@@ -63,6 +63,14 @@ def test_bureau_audience_is_visible_to_everyone_including_unlinked(world):
         assert titles(world, world[who]) == ["Strat Planning"], who
 
 
+def test_calendar_people_choices_exclude_the_nonstaff_admin(world):
+    conn = world["conn"]
+    ray = st.create_admin_user(conn, "Ray@Gmail.com", "x", "y", "admin")
+    choices = {person["user_id"] for person in oc.people_choices(conn)}
+    assert ray not in choices
+    assert world["s1"]["id"] in choices
+
+
 def test_unit_audience_follows_the_directory(world):
     add(world, "S1 huddle", owner="T/D1/S1")
     assert titles(world, world["s1"], "bureau") == ["S1 huddle"]
