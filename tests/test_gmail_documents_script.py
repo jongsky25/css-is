@@ -13,4 +13,4 @@ def test_gmail_discovery_contracts():
     result = subprocess.run([node,'tests/js/gmail_documents_harness.js'],cwd=root,
                             capture_output=True,text=True,timeout=30)
     assert result.returncode == 0, result.stdout + result.stderr
-    assert '10 Gmail discovery contracts passed' in result.stdout
+    assert '11 Gmail discovery contracts passed' in result.stdout

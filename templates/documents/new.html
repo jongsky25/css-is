@@ -3,6 +3,7 @@
 <p>Choose what the correspondence is for, check its details, then register it. Permanent incoming/outgoing numbers are assigned only when registration succeeds. You can enter everything manually without a scan.</p>
 {% if enabled %}<form method="post" action="/documents/new" class="doc-card" id="intake-form" data-ux-ignore data-telemetry-ignore><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="intake" value="guided">
 <h3>1. Choose a file or link</h3>
+{% if preview %}<details open class="doc-card"><summary>Suggestions from the linked document</summary><p>Compare these with the scan before entering or changing the details below.</p><dl>{% for key,value in preview.suggestions.items() if value %}<dt>{{ key|replace('_',' ') }}</dt><dd>{{ value }}</dd>{% endfor %}</dl>{% for excerpt in preview.excerpts %}<blockquote>{{ excerpt }}</blockquote>{% endfor %}{% for warning in preview.warnings %}<p>{{ warning }}</p>{% endfor %}</details>{% endif %}
 <p>Select a PDF to read its first page automatically. If it is a DTRAK routing slip, we also check the next page for the document date. The file is read temporarily and is not saved.</p>
 <label>PDF file<input type="file" id="intake-pdf" accept="application/pdf,.pdf"></label>
 <details id="pdf-options"><summary>View source / read more pages</summary><button type="button" id="pdf-open">Open preview again</button>

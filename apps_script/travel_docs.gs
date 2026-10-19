@@ -13,7 +13,7 @@ function doPost(e) {
     if (!verify_(env)) return reply_({ ok: false, error: 'unauthorized' });
     const req = JSON.parse(env.payload);
     if (String(req.action || '').indexOf('document_') === 0 && typeof documentOperation_ === 'function') {
-      return reply_(documentOperation_(req, ['inspect','preview','extract','sign','status']));
+      return reply_(documentOperation_(req, ['inspect','preview','extract','sign','status','intake_list','intake_check','intake_file']));
     }
     switch (req.action) {
       case 'ping': return reply_({ ok: true, version: 2 });

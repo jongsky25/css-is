@@ -92,6 +92,7 @@ function dmPreview_(req) {
 }
 function dmExtract_(req) {
   const meta = dmMeta_(req.file_id), fingerprint = dmFingerprint_(meta);
+  if (req.fingerprint && fingerprint!==req.fingerprint) dmError_('version_changed');
   let text = '', temp = null;
   try {
     if (meta.mimeType === 'application/vnd.google-apps.document') {
@@ -284,6 +285,9 @@ function documentOperation_(req,allowed) {
   try {
     const kind=String(req.action || '').replace(/^document_/,'');
     if (!allowed.includes(kind) || !/^[a-f0-9-]{36}$/.test(String(req.operation_id)) || !Number.isInteger(req.actor_id) || req.actor_id<1) dmError_('bad_request');
+    if (kind==='intake_list') return dmIntakeList_(req);
+    if (kind==='intake_check') return dmIntakeCheck_(req);
+    if (kind==='intake_file') return dmIntakeFile_(req);
     if (kind==='inspect') return dmInspect_(req);
     if (kind==='preview') return dmPreview_(req);
     if (kind==='extract') return dmExtract_(req);
@@ -326,4 +330,90 @@ function cleanupDocumentOcrTemps() {
     (page.files || []).forEach(function (file) {Drive.Files.remove(file.id);});
     token=page.nextPageToken;
   } while (token);
+}
+
+// Office Drive intake (My Drive folders or an actual Shared Drive). These operations never send mail or copy source files.
+function dmIntakeRoots_(req, filing) {
+  const props=PropertiesService.getScriptProperties();
+  const inbox=props.getProperty('DOCUMENTS_INTAKE_FOLDER_ID');
+  const filed=props.getProperty('DOCUMENTS_FILED_FOLDER_ID');
+  if (!inbox || req.inbox!==inbox || (filing && (!filed || req.filed!==filed || filed===inbox))) dmError_('not_configured');
+  const source=Drive.Files.get(inbox,{fields:'id,mimeType,driveId,trashed',supportsAllDrives:true});
+  if (source.trashed || source.mimeType!=='application/vnd.google-apps.folder') dmError_('bad_folder');
+  if (filing) {
+    const destination=Drive.Files.get(filed,{fields:'id,mimeType,driveId,trashed',supportsAllDrives:true});
+    if (destination.trashed || destination.mimeType!=='application/vnd.google-apps.folder' || (destination.driveId || null)!==(source.driveId || null)) dmError_('bad_folder');
+  }
+  return {inbox:inbox,filed:filed,driveId:source.driveId};
+}
+function dmIntakeMeta_(id) {
+  if (!/^[A-Za-z0-9_-]{10,200}$/.test(String(id))) dmError_('bad_file');
+  const m=Drive.Files.get(id,{fields:'id,name,mimeType,size,version,md5Checksum,parents,appProperties,trashed',supportsAllDrives:true});
+  if (m.trashed) dmError_('bad_file');
+  return m;
+}
+function dmIntakeList_(req) {
+  const roots=dmIntakeRoots_(req,false);
+  const options={q:"'"+roots.inbox+"' in parents and trashed = false and mimeType != 'application/vnd.google-apps.folder' and not properties has { key='office_intake' and value='gmail_receipt' }",
+    corpora:roots.driveId?'drive':'user',includeItemsFromAllDrives:true,supportsAllDrives:true,
+    pageSize:100,orderBy:'createdTime',fields:'nextPageToken,files(id,name,mimeType,size,version,md5Checksum,appProperties,properties)'};
+  if (roots.driveId) options.driveId=roots.driveId;
+  if (req.cursor) options.pageToken=String(req.cursor);
+  const result=Drive.Files.list(options);
+  return {ok:true,operation_id:req.operation_id,inbox:roots.inbox,next_cursor:result.nextPageToken || '',
+    files:(result.files || []).map(function(m) {return {id:m.id,name:m.name,mime_type:m.mimeType,
+      email_attachment:!!(m.appProperties || {}).gdi_attachment || (m.properties || {}).office_intake==='gmail_attachment',email_receipt:!!(m.appProperties || {}).gdi_receipt || (m.properties || {}).office_intake==='gmail_receipt',
+      size:Number(m.size || 0),fingerprint:dmFingerprint_(m),content_key:m.md5Checksum || dmFingerprint_(m)};})};
+}
+function dmIntakeCheck_(req) {
+  const roots=dmIntakeRoots_(req,false), m=dmIntakeMeta_(req.file_id);
+  if (!(m.parents || []).includes(roots.inbox) || dmFingerprint_(m)!==req.fingerprint) dmError_('version_changed');
+  if (!m.md5Checksum || Number(m.size || 0)>DM_MAX_BYTES) dmError_('unsupported_format');
+  return {ok:true,operation_id:req.operation_id,state:'confirmed',fingerprint:dmFingerprint_(m)};
+}
+function dmIntakeFolder_(parent,name,driveId) {
+  const options={q:"'"+parent+"' in parents and trashed = false and mimeType = 'application/vnd.google-apps.folder' and name = '"+name+"'",
+    corpora:driveId?'drive':'user',includeItemsFromAllDrives:true,supportsAllDrives:true,pageSize:2,fields:'files(id)'};
+  if (driveId) options.driveId=driveId;
+  const result=Drive.Files.list(options);
+  if ((result.files || []).length>1) dmError_('duplicate_folder');
+  return result.files && result.files.length ? result.files[0].id :
+    Drive.Files.create({name:name,mimeType:'application/vnd.google-apps.folder',parents:[parent]},null,{fields:'id',supportsAllDrives:true}).id;
+}
+function dmIntakeFile_(req) {
+  const roots=dmIntakeRoots_(req,true);
+  if (!/^[0-9]{4}$/.test(String(req.year)) || !['IN','OUT'].includes(req.direction) ||
+      !new RegExp('^BLHSD-'+req.direction+'-'+req.year+'-[0-9]{6,}$').test(String(req.number)) ||
+      !Number.isInteger(req.ordinal) || req.ordinal<1 || req.ordinal>20) dmError_('bad_request');
+  const lock=LockService.getScriptLock();
+  if (!lock.tryLock(1000)) dmError_('busy');
+  try {
+    let m=dmIntakeMeta_(req.file_id);
+    const props=m.appProperties || {}, hash=dmRequestHash_(req);
+    if (props.oc_intake_op) {
+      if (props.oc_intake_op!==req.operation_id || props.oc_intake_hash!==hash || props.oc_intake_content!==m.md5Checksum) dmError_('operation_conflict');
+      if (!(m.parents || []).includes(props.oc_intake_folder)) dmError_('operation_conflict');
+    } else {
+      if (!(m.parents || []).includes(roots.inbox) || dmFingerprint_(m)!==req.fingerprint) dmError_('version_changed');
+      if (!m.md5Checksum || Number(m.size || 0)>DM_MAX_BYTES) dmError_('unsupported_format');
+      const year=dmIntakeFolder_(roots.filed,String(req.year),roots.driveId);
+      const folder=dmIntakeFolder_(year,req.direction==='IN'?'Incoming':'Outgoing',roots.driveId);
+      const extensions={'application/pdf':'.pdf','image/png':'.png','image/jpeg':'.jpg','image/gif':'.gif','text/plain':'.txt',
+        'application/msword':'.doc','application/vnd.ms-excel':'.xls','application/vnd.ms-powerpoint':'.ppt',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document':'.docx',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':'.xlsx',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation':'.pptx'};
+      if (!extensions[m.mimeType]) dmError_('unsupported_format');
+      const name=req.number+' - '+(req.ordinal===1?'Original Scan':'Attachment '+req.ordinal)+extensions[m.mimeType];
+      // Rename, move and receipt marker are one Drive metadata update. A repeated
+      // call reconciles that marker instead of creating another file or folder.
+      Drive.Files.update({name:name,appProperties:Object.assign({},props,{oc_intake_op:req.operation_id,
+        oc_intake_hash:hash,oc_intake_content:m.md5Checksum,oc_intake_folder:folder})},m.id,null,
+        {addParents:folder,removeParents:roots.inbox,supportsAllDrives:true,fields:'id'});
+      m=dmIntakeMeta_(m.id);
+      if (m.appProperties.oc_intake_hash!==hash || m.appProperties.oc_intake_content!==m.md5Checksum ||
+          !(m.parents || []).includes(folder)) dmError_('operation_conflict');
+    }
+    return {ok:true,operation_id:req.operation_id,state:'confirmed',file_id:m.id,fingerprint:dmFingerprint_(m)};
+  } finally {lock.releaseLock();}
 }

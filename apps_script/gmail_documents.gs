@@ -98,9 +98,9 @@ function gdiDiscoverPage_(config, pageToken) {
       if (!sender.trim() || sender.length>500 || /[\x00-\x1f]/.test(sender)) warnings.push('sender_needs_review');
       if (attachments.accepted.length>20) warnings.push('too_many_attachments');
       if (new Set(attachments.accepted.map(function(a) {return a.attachment_id;})).size!==attachments.accepted.length) warnings.push('duplicate_attachment_id');
-      if (!attachments.accepted.length) {result.excluded.push({message_id:ref.id,reason:'no_supported_attachments',attachments:attachments.excluded}); return;}
+      if (!attachments.accepted.length && attachments.excluded.some(function(a){return a.reason!=='inline_attachment';})) {result.excluded.push({message_id:ref.id,reason:'no_supported_attachments',attachments:attachments.excluded}); return;}
       result.candidates.push({mailbox:config.mailbox,message_id:ref.id,subject:subject.slice(0,500),sender:sender.slice(0,500),
-        received_at:new Date(received).toISOString(),attachments:attachments.accepted,
+        body_only:attachments.accepted.length===0,received_at:new Date(received).toISOString(),attachments:attachments.accepted,
         excluded_attachments:attachments.excluded,warnings:warnings,ready_for_import:warnings.length===0});
     } catch (err) {
       // Do not expose provider errors, email bodies or credential information.

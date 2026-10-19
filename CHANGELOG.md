@@ -1,3 +1,18 @@
+## 7.03 — October 19, 2026
+
+- Include body-only work emails in intake with a preserved, escaped Email body box and No attachment note, visible through Director routing without OCR or a synthetic Drive file.
+
+- Converge eligible Gmail auto-pull with Drive uploads in the unnumbered review queue: preserve email provenance, group attachments, prefill sender/receipt details, and require review before numbering and Director instructions.
+- Preserve importer replay/recovery with queued acknowledgements, support Shared Drive attachment operations, and keep paused discovery from reverting email to automatic registration.
+
+- Add an opt-in Shared Drive intake queue with metadata discovery, saved review drafts, expiring claims, cached OCR suggestions and grouped scan registration.
+- Allocate numbers only after review; move and rename the same files by registration year and direction through durable, retry-safe filing operations.
+- Add a document preview and Director routing slip workspace, with a paginated instruction inbox and server-enforced Director-first routing for new incoming intake records.
+- Keep intake and registered history permission checked, preserve original filenames, and provide duplicate-scan warnings and reversible dismissal.
+- Bound new queue pages and duplicate lookups; reuse the existing FastAPI, SQLite and Workspace relay without a new paid service.
+- Preserve legacy OCR preview routes and show their escaped suggestions; allow HTTP tests to initialize a synthetic database in clean checkouts.
+- See `docs/DOCUMENT_WORKSPACE_PHASES.md` for setup and live acceptance. Drive integration is disabled until configured; this change does not enable or deploy it.
+
 ## 7.02 — October 17, 2026
 
 - Let Documents workflow administrators archive closed or cancelled records with a reason and restore them later.

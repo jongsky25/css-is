@@ -15,7 +15,7 @@ function gdiHealth_(patch) {
   if(patch.last_finished_at) {
     const runs=JSON.parse(props.getProperty('GDI_RUNS') || '[]');
     props.setProperty('GDI_RUNS',JSON.stringify(runs.concat([{at:patch.last_finished_at,state:patch.state,
-      error:patch.last_error || '',registered:patch.report ? patch.report.registered : 0,
+      error:patch.last_error || '',queued:patch.report ? patch.report.queued || 0 : 0,registered:patch.report ? patch.report.registered : 0,
       errors:patch.report ? patch.report.errors.length : 0}]).slice(-20)));
   }
   return next;
@@ -25,6 +25,7 @@ function gdiAttempt_(config,candidate) {
   try {
     saved=gdiReceipt_(config,candidate);
     const r=saved.value;
+    if(r.state==='queued')return 'already_queued';
     if(r.state==='registered')return 'already_registered';
     if(r.state==='needs_attention')return 'needs_attention';
     if(r.next_attempt_at && Date.parse(r.next_attempt_at)>Date.now())return 'deferred';
@@ -39,14 +40,14 @@ function gdiAttempt_(config,candidate) {
     // with the pre-upload copy retained above.
     saved=gdiReceipt_(config,candidate);
     saved.value.last_error='';saved.value.next_attempt_at=null;
-    gdiHistory_(saved.value,'registered','');gdiSaveReceipt_(saved.id,saved.value);
+    gdiHistory_(saved.value,saved.value.state,'');gdiSaveReceipt_(saved.id,saved.value);
     return result;
   } catch(err) {
     const code=gdiErrorCode_(err);
     if(saved) {
       try {
         const current=gdiReceipt_(config,candidate);
-        if(current.value.state!=='registered') {
+        if(!['registered','queued'].includes(current.value.state)) {
           const blocked=/^intake_http_(400|401|403|404|409|413)$/.test(code) ||
             ['attachment_conflict','attachment_size','imported_file_missing','receipt_binding_conflict','receipt_location_conflict'].includes(code);
           current.value.state=blocked || current.value.attempts>=8 ? 'needs_attention' : 'pending';
@@ -98,7 +99,7 @@ function gmailDocumentsStatus(offset) {
       const r=JSON.parse(DriveApp.getFileById(id).getBlob().getDataAsString('UTF-8'));
       report.receipts.push({receipt_id:id,message_id:r.message_id,state:r.state,attempts:r.attempts || 0,
         last_attempt_at:r.last_attempt_at || null,next_attempt_at:r.next_attempt_at || null,
-        last_error:r.last_error || '',document_id:r.document_id,history:r.history || []});
+        last_error:r.last_error || '',document_id:r.document_id,intake_id:r.intake_id || null,history:r.history || []});
     }catch(err){report.receipts.push({receipt_id:id,state:'unreadable',last_error:'receipt_unavailable'});}
   });
   console.log(JSON.stringify(report,null,2));return report;
@@ -146,6 +147,7 @@ function retryGmailDocument() {
     const meta=gdiGet_(id);
     if(!meta || meta.trashed || (meta.appProperties || {}).gdi_receipt!==key)throw new Error('receipt_location_conflict');
     const r=JSON.parse(DriveApp.getFileById(id).getBlob().getDataAsString('UTF-8'));
+    if(r.state==='queued')throw new Error('already_queued');
     if(r.state==='registered')throw new Error('already_registered');
     r.state='pending';r.attempts=0;r.next_attempt_at=null;r.last_error='';
     gdiHistory_(r,'operator_retry','');r.history[r.history.length-1].reason=reason;r.history[r.history.length-1].actor=Session.getEffectiveUser().getEmail();

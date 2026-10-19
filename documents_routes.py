@@ -33,7 +33,7 @@ def make_router(templates,get_conn):
     def context(request,conn,**values):
         user=p.actor(conn,getattr(request.state,'user',None))
         return {'nav_active':'documents','enabled':d.enabled(conn),'csrf':csrf(request),'error':'',
-                'submitted':{},'workflow_admin':p.has_role(conn,user,'workflow_admin'),
+                'submitted':{},'intake_access':p.has_role(conn,user,'records'),'is_director':p.director(conn,user),'workflow_admin':p.has_role(conn,user,'workflow_admin'),
                 'archive_admin':bool(conn.execute("SELECT 1 FROM document_role_grant WHERE user_id=? AND role='workflow_admin' AND revoked_at IS NULL",(user['id'],)).fetchone()),
                 'people':rows(conn,"SELECT u.id,u.username,COALESCE(NULLIF(r.name,''),u.username) AS name FROM admin_user u LEFT JOIN resource_person r ON r.id=u.rp_id WHERE u.active=1 ORDER BY name"),
                 'names':{r['id']:r['name'] for r in rows(conn,"SELECT u.id,COALESCE(NULLIF(r.name,''),u.username) AS name FROM admin_user u LEFT JOIN resource_person r ON r.id=u.rp_id")},
@@ -83,6 +83,9 @@ def make_router(templates,get_conn):
         if any(a['due_date'] and a['due_date']<doc['created_at'][:10] for a in details['assignments']):
             warnings.append('The proposed contributor buffer cannot fit before the deadline. The lead must adjust milestones explicitly.')
         return {'doc':doc,**details,'policy':policy,'duplicates':d.duplicate_candidates(conn,user,doc_id),
+                'email_bodies':rows(conn,"SELECT body_text FROM document_intake_email WHERE document_id=? AND body_text<>''",(doc_id,)),
+                'filing_rows':rows(conn,"SELECT original_name,filing_state,error FROM document_intake WHERE document_id=? AND filing_state<>'none'",(doc_id,)),
+                'instruction_recipients':rows(conn,'SELECT r.directive_id,r.user_id FROM document_instruction_recipient r JOIN document_directive d ON d.id=r.directive_id WHERE d.document_id=?',(doc_id,)),
                 'work_migration':migration,'consolidation':work_review.summaries(conn,user,[doc]).get(doc_id),
                 'assignments_migrated':bool(conn.execute('SELECT 1 FROM work_legacy_document WHERE document_id=?',(doc_id,)).fetchone()),
                 'work_enabled':work.enabled(conn),'work_cases':work.cases_for_document(conn,user,doc_id),
@@ -95,17 +98,23 @@ def make_router(templates,get_conn):
                 'merged_sources':rows(conn,'SELECT id,number,subject FROM document WHERE canonical_id=?',(doc_id,)),
                 'notice_rows':rows(conn,"SELECT * FROM document_notice WHERE document_id=? AND user_id=? ORDER BY id DESC",(doc_id,user['id'])),
                 'recipient_outcomes':rows(conn,'SELECT r.* FROM document_dispatch_recipient r JOIN document_dispatch x ON x.id=r.dispatch_id WHERE x.document_id=?',(doc_id,)),
-                'related': [x for x in d.list_visible(conn,user) if x['id'] in {r[0] for r in conn.execute('SELECT target_id FROM document_relation WHERE source_id=? UNION SELECT source_id FROM document_relation WHERE target_id=?',(doc_id,doc_id))}]}
+                'related': [x for x in rows(conn,'SELECT * FROM document WHERE id IN (SELECT target_id FROM document_relation WHERE source_id=? UNION SELECT source_id FROM document_relation WHERE target_id=?)',(doc_id,doc_id)) if p.can_view(conn,user,x)]}
 
     @router.get('/documents',response_class=HTMLResponse)
     def index(request:Request):
         conn=get_conn()
         try:
-            docs=d.list_visible(conn,request.state.user,request.query_params.get('q',''),request.query_params.get('queue','all'))
-            return render(request,conn,'index',documents=docs,queue=request.query_params.get('queue','all'),
+            queue=request.query_params.get('queue','all')
+            more=False
+            if queue=='instruction':
+                docs=d.instruction_page(conn,request.state.user,int(request.query_params.get('before','0')))
+                more=len(docs)>30;docs=docs[:30]
+            else:
+                docs=d.list_visible(conn,request.state.user,request.query_params.get('q',''),queue)
+            return render(request,conn,'index',documents=docs,queue=queue,more=more,
                           missing_dates=sum(not x['due_date'] for x in docs),metrics=d.metrics(conn,docs))
-        except p.Denied as e:
-            return HTMLResponse(str(e),status_code=403)
+        except (p.Denied,ValueError) as e:
+            return HTMLResponse(str(e),status_code=403 if isinstance(e,p.Denied) else 400)
         finally:
             conn.close()
 
@@ -273,7 +282,13 @@ def make_router(templates,get_conn):
             values=detail_context(conn,request.state.user,doc_id)
             if 'redirect' in values:
                 return RedirectResponse('/documents/'+str(values['redirect']),status_code=303)
-            return render(request,conn,'detail',**values)
+            selected=request.query_params.get('file','')
+            values['preview_file']=next((v for v in values['versions'] if str(v['id'])==selected),
+                                        next((v for v in values['versions'] if v['id']==values['doc']['current_version']),
+                                             values['versions'][0] if values['versions'] else None))
+            response=render(request,conn,'detail',**values)
+            response.headers['Cache-Control']='no-store'
+            return response
         except p.Denied as e:
             return HTMLResponse(str(e),status_code=404)
         finally:

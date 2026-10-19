@@ -42,7 +42,13 @@ def app_mod(tmp_path_factory):
     src = os.path.join(os.path.dirname(app_mod.__file__), "css_is.db")
     tmpdir = tmp_path_factory.mktemp("db")
     test_db = str(tmpdir / "test.db")
-    shutil.copy(src, test_db)
+    if os.path.isfile(src):
+        shutil.copy(src, test_db)
+    else:
+        # Clean checkouts need no production snapshot to exercise HTTP routes.
+        seed = st.connect(test_db)
+        st.init_db(seed)
+        seed.close()
     app_mod.DB = test_db                      # repoint the whole app at the copy
     import monitoring                         # keep the request log out of the repo
     monitoring.LOG_PATH = str(tmpdir / "requests.log")

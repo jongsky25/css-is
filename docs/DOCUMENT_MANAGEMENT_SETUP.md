@@ -1,3 +1,8 @@
+> For the new Shared Drive review queue and Director workspace, follow
+> [Document workspace phases and setup](DOCUMENT_WORKSPACE_PHASES.md).
+> Enabling this workflow routes future Gmail imports through the same unnumbered
+> review queue. Follow the Gmail convergence rollout before resuming auto-pull.
+
 # Documents: implementation and acceptance setup
 
 This implements the D1–D11 application paths behind **disabled** switches. It is not D12

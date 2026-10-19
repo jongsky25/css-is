@@ -1,0 +1,37 @@
+{% extends 'documents/base.html' %}{% block documents_content %}
+<p><a href="/documents/intake">← Intake queue</a></p>
+{% if request.query_params.get("registered") %}<p role="status">Previous document registered.</p>{% endif %}
+<h2>{{ item.email.subject if item.email else item.original_name }}</h2>
+{% if item.email %}<section class="doc-card"><h3>Received by office email</h3><p>From: {{ item.email.sender }} · Mailbox: {{ item.email.mailbox }}</p><p>Received: {{ item.email.received_at }}</p>{% if not item.email_files %}<p><strong>No attachment</strong></p>{% else %}<p>All {{ item.email_files|length }} attachments will register together. Open each attachment to check its contents.</p><ul>{% for file in item.email_files %}<li><a href="https://drive.google.com/file/d/{{ file.file_id }}/view" target="_blank" rel="noopener noreferrer">{{ file.current_name }}</a></li>{% endfor %}</ul>{% endif %}</section>{% endif %}
+<p>Added to queue {{ item.discovered_at }} · No permanent document number yet</p>
+{% if possible_duplicates %}<div class="doc-alert"><p>This scan matches a file already registered. Check before registering it again.</p>{% for doc in possible_duplicates %}<p><a href="/documents/{{ doc.id }}" target="_blank" rel="noopener">{{ doc.number }} · {{ doc.subject }}</a></p>{% endfor %}</div>{% endif %}
+{% if item.error %}<p class="doc-alert">{{ item.error }}</p>{% endif %}
+{% if not editable and claimant and item.claim_until and item.claim_until>now %}<p role="status">Being reviewed by {{ claimant[0] }} until {{ item.claim_until }}.</p>{% endif %}
+{% if enabled and item.state=='dismissed' %}<form method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ item.revision }}"><button name="action" value="requeue">Return this scan to the queue</button></form>{% endif %}
+{% if not editable and enabled and item.state in ('waiting','attention') %}<form method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ item.revision }}"><button name="action" value="claim">Start or resume review</button><p>Review sessions last 30 minutes. Save to extend your session.</p></form>{% endif %}
+<div class="doc-workspace">
+{% if item.email and item.email.body_text %}<section class="doc-card"><h3>Email body</h3><div class="doc-email-body" role="region" aria-label="Email body">{{ item.email.body_text }}</div></section>{% else %}<section class="doc-preview"><h3>Original scan</h3><p><a href="https://drive.google.com/file/d/{{ item.file_id }}/view" target="_blank" rel="noopener noreferrer">Open in Drive</a> if the preview asks you to sign in.</p>
+<iframe src="https://drive.google.com/file/d/{{ item.file_id }}/preview" title="Original scan preview" loading="lazy" referrerpolicy="no-referrer" allow="fullscreen"></iframe></section>{% endif %}
+<section class="doc-card"><h3>Review document details</h3>
+<form method="post" data-ux-ignore data-telemetry-ignore>
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ item.revision }}">
+<fieldset {% if not editable or not enabled %}disabled{% endif %}>
+{% if not item.email or item.email_files %}<button name="action" value="extract" formnovalidate>{{ 'Read saved OCR suggestions' if item.suggestions else 'Read scan with OCR' }}</button>{% endif %}
+{% if item.suggestions %}<details open><summary>Suggestions from the scan</summary><dl>{% for key,value in item.suggestions.get('suggestions',{}).items() if value %}<dt>{{ key|replace('_',' ') }}</dt><dd>{{ value }}</dd>{% endfor %}</dl>{% for warning in item.suggestions.get('warnings',[]) %}<p>{{ warning }}</p>{% endfor %}<button name="action" value="apply" formnovalidate>Fill empty fields with suggestions</button></details>{% endif %}
+<label>Direction<select name="direction"><option value="">Choose direction</option>{% for key,label in [('IN','Incoming'),('OUT','Outgoing')] %}<option value="{{ key }}" {% if values.get('direction')==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+<label>Subject<textarea name="subject" maxlength="500">{{ values.get('subject','') }}</textarea></label>
+<label>Document type<input name="type" maxlength="100" value="{{ values.get('type','') }}"></label>
+<label>Sender / originating office<input name="sender" maxlength="500" value="{{ values.get('sender','') }}"></label>
+<label>Document date<input type="date" name="document_date" value="{{ values.get('document_date','') }}"></label>
+<label>Actual received date and time (Manila)<input type="datetime-local" name="received_at" value="{{ values.get('received_at','') }}"></label>
+<label>Deadline stated in the source (optional)<input type="date" name="due_date" value="{{ values.get('due_date','') }}"></label>
+<label>References<textarea name="references">{{ values.get('references','') }}</textarea></label>
+<label>Priority<select name="priority">{% for key in ['normal','urgent'] %}<option {% if values.get('priority')==key %}selected{% endif %}>{{ key }}</option>{% endfor %}</select></label>
+{% if candidates and not item.email %}<details><summary>Include other scans with this document</summary><p>Select only attachments belonging to this correspondence. Up to 20 files total.</p>{% for candidate in candidates %}<label class="doc-check"><input type="checkbox" name="attach:{{ candidate.id }}" value="{{ candidate.revision }}">{{ candidate.original_name }}</label>{% endfor %}</details>{% endif %}
+<label class="doc-check"><input type="checkbox" name="confirmed" value="yes"> I checked the source and these details.</label>
+<button name="action" value="register_next">Register and review next</button> <button name="action" value="register">Register and open record</button>
+<p>Incoming documents go to the Director for instructions. {% if not item.email or item.email_files %}Drive filing follows automatically.{% endif %}</p>
+<button name="action" value="save" formnovalidate>Save review</button> <button name="action" value="release" formnovalidate>Save and return to queue</button>
+<details><summary>This scan needs attention</summary><label>Reason<textarea name="note" maxlength="1000"></textarea></label><button name="action" value="attention" formnovalidate>Request a clearer scan / flag a problem</button><button name="action" value="dismiss" formnovalidate>Dismiss duplicate or unrelated file</button><p>Dismissing retains the original file in Drive and its intake history.</p></details>
+</fieldset></form></section></div>
+{% endblock %}

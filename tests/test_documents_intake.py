@@ -1,0 +1,214 @@
+"""Synthetic intake contracts; never touches an office Drive."""
+import json
+import pytest
+import documents as d
+import documents_intake as intake
+import documents_permissions as p
+import storage as st
+from test_documents import registry
+
+
+class Drive:
+    def __init__(self):
+        self.fail=False
+        self.calls=[]
+    def call(self,action,payload,operation):
+        self.calls.append((action,payload,operation))
+        if action=='intake_check':
+            return {'state':'confirmed','fingerprint':payload['fingerprint']}
+        if action=='intake_file':
+            if self.fail: raise TimeoutError()
+            return {'state':'confirmed','file_id':payload['file_id'],'fingerprint':'filed-version'}
+        if action=='extract':
+            return {'state':'confirmed','suggestions':{'subject':'Suggested','role':'admin'},'excerpts':['never store me']}
+        if action=='intake_list':
+            return {'inbox':'inbox_folder_123','files':[]}
+        raise AssertionError(action)
+
+
+def seed(registry,count=1):
+    c,u,unit,path=registry
+    intake.configure(c,u[1],{'enabled':'yes','inbox':'inbox_folder_123','filed':'filed_folder_123'})
+    files=[{'id':f'scan_file_{i:06}','name':f'scan {i}.pdf','fingerprint':f'v{i}',
+            'content_key':f'checksum{i}','mime_type':'application/pdf','size':10} for i in range(count)]
+    intake.discover(c,intake.settings(c),{'inbox':'inbox_folder_123','files':files})
+    return files
+
+
+def fields():
+    return {'direction':'IN','subject':'Reviewed request','type':'Letter','sender':'Regional Office',
+            'received_at':'2026-10-18T09:00','confirmed':'yes'}
+
+
+def test_discovery_replay_permissions_and_changed_content(registry):
+    c,u,unit,path=registry
+    files=seed(registry)
+    assert c.execute('SELECT COUNT(*) FROM document').fetchone()[0]==0
+    assert c.execute('SELECT COUNT(*) FROM document_sequence').fetchone()[0]==0
+    intake.discover(c,intake.settings(c),{'inbox':'inbox_folder_123','files':files})
+    assert c.execute('SELECT COUNT(*) FROM document_intake').fetchone()[0]==1
+    with pytest.raises(p.Denied): intake.list_page(c,u[4])
+    item=intake.claim(c,u[1],1,1)
+    item=intake.extract(c,u[1],1,item['revision'],Drive())
+    assert 'never store me' not in json.dumps(item)
+    assert 'role' not in item['suggestions']['suggestions']
+    files[0]['content_key']='changed';files[0]['fingerprint']='v2'
+    intake.discover(c,intake.settings(c),{'inbox':'inbox_folder_123','files':files})
+    assert intake.get(c,u[1],1)['suggestions']=={}
+    with pytest.raises(d.Conflict): intake.save(c,u[1],1,item['revision'],fields())
+
+
+def test_registration_atomic_group_retry_filing(registry):
+    c,u,unit,path=registry
+    seed(registry,2)
+    item=intake.claim(c,u[1],1,1)
+    drive=Drive()
+    doc=intake.register(c,u[1],1,item['revision'],fields(),[(2,1)],drive)
+    assert doc['instruction_state']=='pending' and doc['lead_id'] is None
+    assert c.execute('SELECT COUNT(*) FROM document_assignment').fetchone()[0]==0
+    assert c.execute('SELECT COUNT(*) FROM document_file_version').fetchone()[0]==2
+    assert intake.register(c,u[1],1,item['revision'],fields(),adapter=drive)['id']==doc['id']
+    assert c.execute('SELECT COUNT(*) FROM document').fetchone()[0]==1
+    drive.fail=True;intake.file_pending(c,drive)
+    assert intake.get(c,u[1],1)['filing_state']=='error'
+    operation=intake.get(c,u[1],1)['filing_operation']
+    drive.fail=False;intake.file_pending(c,drive)
+    assert intake.get(c,u[1],1)['filing_state']=='complete'
+    assert [x[2] for x in drive.calls if x[0]=='intake_file' and x[1]['ordinal']==1]==[operation,operation]
+
+
+def test_claim_cache_and_invalid_registration(registry):
+    c,u,unit,path=registry
+    seed(registry)
+    c.execute("INSERT INTO document_role_grant(user_id,role,created_at) VALUES (?,'records','now')",(u[0]['id'],));c.commit()
+    item=intake.claim(c,u[1],1,1)
+    with pytest.raises(d.Conflict): intake.claim(c,u[0],1,item['revision'])
+    drive=Drive();item=intake.extract(c,u[1],1,item['revision'],drive)
+    intake.extract(c,u[1],1,item['revision'],drive)
+    assert len(drive.calls)==1
+    with pytest.raises(ValueError): intake.register(c,u[1],1,item['revision'],{**fields(),'subject':''},adapter=drive)
+    assert c.execute('SELECT COUNT(*) FROM document_sequence').fetchone()[0]==0
+    st.set_setting(c,'documents.enabled','0')
+    with pytest.raises(ValueError): intake.save(c,u[1],1,item['revision'],fields())
+
+
+def test_queue_pagination(registry):
+    c,u,unit,path=registry;seed(registry,35)
+    page,more,counts=intake.list_page(c,u[1])
+    assert len(page)==30 and more and counts['waiting']==35
+    assert len(intake.list_page(c,u[1],page=2)[0])==5
+
+
+def test_director_first_instruction_routes_and_grants_access(registry):
+    c,u,unit,path=registry;seed(registry)
+    item=intake.claim(c,u[1],1,1)
+    doc=intake.register(c,u[1],1,item['revision'],fields(),adapter=Drive())
+    payload={'lead_id':u[0]['id'],'unit_id':unit,'reason':'Evaluate and prepare a recommendation.',
+             f"recipient:{u[3]['id']}":'yes','action_due':'2026-10-20'}
+    with pytest.raises(p.Denied): d.mutate(c,u[1],doc['id'],doc['revision'],'route_instruction',payload)
+    with pytest.raises(ValueError): d.mutate(c,u[1],doc['id'],doc['revision'],'assign',{'user_id':u[0]['id'],'task':'Premature'})
+    assert d.list_visible(c,u[1],queue='instruction')==[]
+    assert [x['id'] for x in d.list_visible(c,u[2],queue='instruction')]==[doc['id']]
+    routed=d.mutate(c,u[2],doc['id'],doc['revision'],'route_instruction',payload)
+    assert routed['instruction_state']=='issued' and routed['lead_id']==u[0]['id']
+    assert p.can_view(c,u[3],routed)
+    assert c.execute('SELECT COUNT(*) FROM document_instruction_recipient').fetchone()[0]==2
+    assert c.execute('SELECT COUNT(*) FROM document_assignment').fetchone()[0]==2
+    assert d.list_visible(c,u[2],queue='instruction')==[]
+    with pytest.raises(d.Conflict): d.mutate(c,u[2],doc['id'],doc['revision'],'route_instruction',payload)
+
+
+def test_registered_intake_respects_later_restricted_access(registry):
+    c,u,unit,path=registry;seed(registry)
+    item=intake.claim(c,u[1],1,1)
+    doc=intake.register(c,u[1],1,item['revision'],fields(),adapter=Drive())
+    c.execute("UPDATE document SET visibility='restricted' WHERE id=?",(doc['id'],));c.commit()
+    assert intake.list_page(c,u[1],'registered')[0]==[]
+    assert intake.list_page(c,u[1],'registered')[2].get('registered',0)==0
+    with pytest.raises(p.Denied): intake.get(c,u[1],1)
+
+
+def test_http_intake_review_csrf_and_registration(app_mod,admin,viewer,monkeypatch):
+    import documents_operations as ops
+    from test_documents_routes import token
+    c=st.connect(app_mod.DB);st.init_db(c)
+    user=st.get_admin_user(c,'admin@test.local')
+    old=st.get_setting(c,'documents.enabled','0')
+    try:
+        for role in ('records','workflow_admin'):
+            c.execute('INSERT INTO document_role_grant(user_id,role,created_at) VALUES (?,?,?)',(user['id'],role,'intake-test'))
+        c.commit();st.set_setting(c,'documents.enabled','1')
+        intake.configure(c,user,{'enabled':'yes','inbox':'inbox_folder_123','filed':'filed_folder_123'})
+        intake.discover(c,intake.settings(c),{'inbox':'inbox_folder_123','files':[{'id':'http_scan_123456','name':'Letter.pdf',
+            'mime_type':'application/pdf','fingerprint':'http-v1','content_key':'http-md5','size':100}]})
+        iid=c.execute("SELECT id FROM document_intake WHERE file_id='http_scan_123456'").fetchone()[0]
+        monkeypatch.setattr(ops,'get_adapter',lambda:Drive())
+        assert viewer.get('/documents/intake').status_code==403
+        page=admin.get('/documents/intake');assert page.status_code==200,page.text
+        assert 'Letter.pdf' in page.text
+        url='/documents/intake/'+str(iid)
+        assert admin.post(url,data={'action':'claim','revision':1}).status_code==403
+        review=admin.get(url);csrf=token(review)
+        claimed=admin.post(url,data={'csrf':csrf,'action':'claim','revision':1})
+        assert claimed.status_code==200,claimed.text
+        assert 'Original scan preview' in claimed.text
+        item=intake.get(c,user,iid)
+        extracted=admin.post(url,data={**fields(),'csrf':csrf,'revision':item['revision'],'action':'extract'})
+        assert extracted.status_code==200,extracted.text
+        assert 'Suggested' in extracted.text
+        item=intake.get(c,user,iid)
+        registered=admin.post(url,data={**fields(),'csrf':csrf,'revision':item['revision'],'action':'register'})
+        assert registered.status_code==200,registered.text
+        assert 'Waiting for the Director' in registered.text
+        assert 'Drive filing is pending' in registered.text
+    finally:
+        c.execute("DELETE FROM document_role_grant WHERE created_at='intake-test'")
+        c.commit();st.set_setting(c,'documents.enabled',old)
+        st.set_setting(c,'documents.drive_intake_enabled','0');c.close()
+
+
+def test_source_change_during_registration_consumes_no_number(registry):
+    c,u,unit,path=registry;files=seed(registry)
+    item=intake.claim(c,u[1],1,1)
+    class ChangingDrive(Drive):
+        def call(self,action,payload,operation):
+            assert not c.in_transaction
+            files[0]['content_key']='replacement';files[0]['fingerprint']='new-version'
+            intake.discover(c,intake.settings(c),{'inbox':'inbox_folder_123','files':files})
+            return super().call(action,payload,operation)
+    with pytest.raises(d.Conflict): intake.register(c,u[1],1,item['revision'],fields(),adapter=ChangingDrive())
+    assert c.execute('SELECT COUNT(*) FROM document_sequence').fetchone()[0]==0
+    assert intake.get(c,u[1],1)['state']=='attention'
+
+
+def test_dismiss_restore_and_shared_work_director_gate(registry):
+    import work
+    c,u,unit,path=registry;seed(registry)
+    item=intake.claim(c,u[1],1,1)
+    dismissed=intake.save(c,u[1],1,item['revision'],{'note':'Duplicate scan'},'dismiss')
+    intake.requeue(c,u[1],1,dismissed['revision'])
+    item=intake.claim(c,u[1],1,intake.get(c,u[1],1)['revision'])
+    doc=intake.register(c,u[1],1,item['revision'],fields(),adapter=Drive())
+    st.set_setting(c,'work.enabled','1')
+    with pytest.raises(ValueError,match='Director'):
+        work.create(c,u[1],{'title':'Early work','outcome':'Premature assignment','unit_id':unit,'source_document_id':doc['id']})
+    assert not c.execute('SELECT 1 FROM work_case').fetchone()
+    cancelled=d.mutate(c,u[1],doc['id'],doc['revision'],'cancel',{'reason':'Withdrawn'})
+    reopened=d.mutate(c,u[1],doc['id'],cancelled['revision'],'reopen',{'reason':'Received again','due_date':'2026-11-01'})
+    assert reopened['instruction_state']=='pending'
+
+
+def test_poll_failure_and_reviewer_revocation(registry):
+    c,u,unit,path=registry;seed(registry)
+    class Unavailable(Drive):
+        def call(self,*args): raise TimeoutError('private upstream error')
+    intake.sync(c,Unavailable())
+    assert 'private upstream error' not in intake.settings(c)['sync_error']
+    assert c.execute('SELECT COUNT(*) FROM document_intake').fetchone()[0]==1
+    item=intake.claim(c,u[1],1,1)
+    class RevokingDrive(Drive):
+        def call(self,*args):
+            c.execute("UPDATE document_role_grant SET revoked_at='now' WHERE user_id=? AND role='records'",(u[1]['id'],));c.commit()
+            return super().call(*args)
+    with pytest.raises(p.Denied): intake.extract(c,u[1],1,item['revision'],RevokingDrive())
+    assert c.execute('SELECT suggestions_json FROM document_intake').fetchone()[0]=='{}'
