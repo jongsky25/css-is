@@ -1,3 +1,7 @@
+## 7.21 — October 19, 2026
+
+- Keep your saved calendar layout and event scope when returning from an item after cancelling or restoring it.
+
 ## 7.20 — October 19, 2026
 
 - Save your preferred calendar layout and whose events to show from the calendar toolbar.

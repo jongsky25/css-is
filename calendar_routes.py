@@ -106,6 +106,19 @@ def preferred_matches(request, page):
     return read_pref(request) == (page["layout"], page["scope"])
 
 
+def entry_calendar_back(request, start_date):
+    """Return to the item's date without dropping a saved layout or scope."""
+    layout, scope = read_pref(request)
+    params = {"scope": scope} if scope else {}
+    if layout == "month":
+        params.update(view="month", month=start_date[:7])
+    else:
+        if layout in ("week", "timeline"):
+            params["view"] = layout
+        params["day"] = start_date
+    return "/calendar?" + urlencode(params)
+
+
 def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="view", fixed=None):
     """Everything the calendar body (agenda / month, filters, scope pills) needs, as a dict
     for templates/_calendar_body.html — or None when `q` holds a date that isn't one.
@@ -908,6 +921,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         who = lambda u: names.get(u, u or "someone")           # noqa: E731
         return templates.TemplateResponse(request, "calendar_entry.html", {
             "nav_active": "calendar", "e": e, "ok": ok, "err": err, "css": css, "heads_up": heads_up, "series": series,
+            "calendar_back": entry_calendar_back(request, e["start_date"]),
             "room_link": room_link, "filing": filing,
             "owner": unit["label"] if unit else None,
             "attendees": [{**cards.get(p["user_id"], {"name": "?", "initials": "?"}),

@@ -7,7 +7,7 @@
   {{ empty_state("That calendar item isn't here.", "It may have been removed, or it isn't shared with you.", "📅") }}
   <p><a href="/calendar">← Back to the calendar</a></p>
 {% else %}
-<p class="cal-back"><a href="/calendar?day={{ e.start_date }}">← Back to the calendar</a></p>
+<p class="cal-back"><a href="{{ calendar_back }}">← Back to the calendar</a></p>
 {% if ok %}<div class="cal-flash ok" role="status">✓ {{ ok }}</div>{% endif %}
 {% if err %}<div class="cal-flash err" role="alert">✕ {{ err }}</div>{% endif %}
 

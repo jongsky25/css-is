@@ -173,6 +173,19 @@ def test_cancel_then_restore_round_trip(viewer, conn):
     assert acts == ["create", "cancel", "restore"]
 
 
+def test_cancelled_item_returns_to_saved_everything_scope(viewer, conn):
+    eid = create(viewer, title="CALEP Preferred")
+    saved = viewer.post("/calendar/preference", data={"layout": "agenda", "scope": "bureau"},
+                        follow_redirects=False)
+    assert saved.status_code == 303
+    viewer.post(f"/calendar/entries/{eid}/cancel")
+    detail = viewer.get(f"/calendar/entries/{eid}").text
+    assert f'href="/calendar?scope=bureau&amp;day={DAY}"' in detail
+    calendar = viewer.get(f"/calendar?scope=bureau&day={DAY}").text
+    assert '<option value="bureau" selected>Everything I can see</option>' in calendar
+    assert viewer.cookies.get("cal_pref") == "agenda:bureau"
+
+
 def test_restore_after_thirty_days_is_refused_politely(viewer, conn):
     eid = create(viewer, title="CALEP Old")
     st.cal_cancel(conn, eid)
