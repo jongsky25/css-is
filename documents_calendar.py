@@ -25,8 +25,7 @@ def confirm(conn,user,doc_id,revision,day,entry_id=None):
         if entry_id:
             candidate=st.cal_get(conn,int(entry_id))
             ctx=oc.viewer_context(conn,user)
-            unit=conn.execute('SELECT path FROM org_unit WHERE id=?',(candidate['owner_org_id'],)).fetchone() if candidate else None
-            d.require(candidate and oc.entry_visible(ctx,candidate,unit[0] if unit else None))
+            d.require(candidate and oc.entry_visible(ctx,candidate,oc.entry_owner_paths(conn,candidate)))
         else:
             # A generic private reminder deliberately contains no document title,
             # number, source URL or sender, even if app access is later revoked.
