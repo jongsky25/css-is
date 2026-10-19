@@ -1,3 +1,9 @@
+## 7.24 — October 19, 2026
+
+- Add other sections to a calendar item; every involved section sees it and the item shows all of them.
+- Mark a travel checklist document as not applicable (or needed) for everyone on the same DPO in one click.
+- The Job Order clearance is now named as the signed Certification for Job Order / COS, since they are the same document.
+
 ## 7.23 — October 19, 2026
 
 - Show similar activities, dates and details while creating a survey.

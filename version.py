@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.23"
+APP_VERSION = "7.24"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.24",
+        "date": "October 19, 2026",
+        "summary": "Calendar items can involve several sections, and travel checklists can be answered for everyone on a DPO.",
+        "changes": [
+            "Add other sections to a calendar item; every involved section sees it and the item shows all of them.",
+            "Mark a travel checklist document as not applicable (or needed) for everyone on the same DPO in one click.",
+            "The Job Order clearance is now named as the signed Certification for Job Order / COS, since they are the same document."
+        ]
+    },
     {
         "version": "7.23",
         "date": "October 19, 2026",
