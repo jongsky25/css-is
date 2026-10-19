@@ -1,3 +1,9 @@
+## 7.07 — October 19, 2026
+
+- Fix Workspace replies being decoded twice when Google uses gzip or deflate compression, which caused Drive checks to report an unreachable reply service.
+- Remove stale encoding and wire-length headers when reconstructing an already-decoded response while preserving decoded-size limits, redirect validation and single signed POST behavior.
+- Identify genuinely malformed compressed replies as decoding errors rather than network connection failures.
+
 ## 7.06 — October 19, 2026
 
 - Distinguish the DNS, proxy, TLS/certificate and connection causes previously grouped as relay_unreachable.

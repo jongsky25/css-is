@@ -29,7 +29,12 @@ def _request(client,method,url,**kwargs):
             content.extend(chunk)
             if len(content)>MAX_RESPONSE:
                 raise WorkspaceError('response_too_large', 'Workspace response exceeded the metadata limit.')
-        return httpx.Response(response.status_code,headers=response.headers,
+        # iter_bytes() already decoded Content-Encoding and removed wire framing.
+        # Keeping those headers on a new Response makes HTTPX decode the plain
+        # bytes a second time (Google's compressed reply then raises DecodingError).
+        headers=[(key,value) for key,value in response.headers.multi_items()
+                 if key.lower() not in ('content-encoding','content-length','transfer-encoding')]
+        return httpx.Response(response.status_code,headers=headers,
                               content=bytes(content),request=response.request)
 
 

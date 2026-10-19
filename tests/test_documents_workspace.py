@@ -109,3 +109,31 @@ def test_unknown_provider_text_never_becomes_diagnostic_code(relay_env,monkeypat
         ws.WorkspaceRelay().call('intake_list',{'actor_id':1},'op')
     assert caught.value.code=='unconfirmed'
     assert 'private provider' not in str(caught.value)
+
+
+@pytest.mark.parametrize('encoding',['gzip','deflate'])
+def test_compressed_google_reply_is_decoded_once(relay_env,monkeypatch,encoding):
+    import gzip,zlib
+    calls=[]
+    data={'ok':True,'operation_id':'op','inbox':'office_folder_123','files':[]}
+    raw=json.dumps(data).encode()
+    compressed=gzip.compress(raw) if encoding=='gzip' else zlib.compress(raw)
+    def handle(request):
+        calls.append(request)
+        if request.method=='POST':
+            return httpx.Response(302,headers={'Location':'https://script.googleusercontent.com/macros/echo?result=private'})
+        assert not request.content
+        return httpx.Response(200,headers={'Content-Encoding':encoding,'Content-Length':str(len(compressed)),
+            'Content-Type':'application/json'},stream=httpx.ByteStream(compressed))
+    transport(monkeypatch,handle)
+    assert ws.WorkspaceRelay().call('intake_list',{'inbox':'office_folder_123','actor_id':1},'op')==data
+    assert [r.method for r in calls]==['POST','GET']
+
+
+def test_decoded_metadata_limit_applies_to_compressed_response(relay_env,monkeypatch):
+    import gzip
+    compressed=gzip.compress(b'x'*(ws.MAX_RESPONSE+1))
+    transport(monkeypatch,lambda req:httpx.Response(200,headers={'Content-Encoding':'gzip'},stream=httpx.ByteStream(compressed)))
+    with pytest.raises(ws.WorkspaceError) as caught:
+        ws.WorkspaceRelay().call('intake_list',{'actor_id':1},'op')
+    assert caught.value.code=='response_too_large'
