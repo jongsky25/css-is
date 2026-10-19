@@ -1215,11 +1215,10 @@ def home_tasks(conn, user, today=None):
 # page does (office_calendar.items_between), so what a person may see here can never
 # differ from what they may see there: visibility is decided once, in that module.
 #
-# Which calendar scope each tab shows follows team_view_data's own rule, so the two
-# agree about "your team": Team -> the viewer's unit (a section member sees their
-# section, a division chief their division) or the whole bureau for a bureau-wide
-# viewer; Me — and anyone with no directory link — -> their own items plus what is
-# bureau-wide.
+# Team shows items owned by the viewer's unit (or its descendants for a chief),
+# or the whole bureau for a bureau-wide viewer. The calendar's section scope also
+# includes bureau-wide items owned elsewhere, so narrow the home card separately.
+# Me — and anyone with no directory link — shows their own plus bureau-wide items.
 
 CAL_WEEK_DAYS = 7
 CAL_WEEK_ITEMS = 5
@@ -1256,6 +1255,17 @@ def calendar_week_block(conn, user, *, view, today=None):
     else:
         scope = "bureau" if ctx["kind"] == "bureau" else "section"
     items = ocal.items_between(conn, user, today, end, scope=scope)
+    if view == "team" and ctx["kind"] == "unit":
+        owner_ids = {unit_id for i in items if i["layer"] in ("entries", "activities")
+                     for unit_id in (i.get("owner_org_ids") or [i["owner_org_id"]]) if unit_id}
+        paths = {row[0]: row[1] for row in conn.execute(
+            "SELECT id, path FROM org_unit WHERE id IN (%s)" % ",".join("?" * len(owner_ids)),
+            sorted(owner_ids))} if owner_ids else {}
+        root = ctx["scope_path"]
+        items = [i for i in items if i["layer"] not in ("entries", "activities")
+                 or any(path == root or path.startswith(root + "/")
+                        for unit_id in (i.get("owner_org_ids") or [i["owner_org_id"]])
+                        if (path := paths.get(unit_id)))]
     work = [i for i in items if i["layer"] in ("entries", "activities")]
     holidays = [i for i in items if i["layer"] == "holidays"]
     celebrating = []

@@ -17,10 +17,18 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.24"
+APP_VERSION = "7.25"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.25",
+        "date": "October 19, 2026",
+        "summary": "Keep your team's upcoming list to your team.",
+        "changes": [
+            "The Coming up card on your team page now shows events and trips involving your section or division, without filling the list with other sections' events."
+        ]
+    },
     {
         "version": "7.24",
         "date": "October 19, 2026",
