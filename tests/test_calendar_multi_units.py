@@ -72,3 +72,16 @@ def test_delete_removes_the_links(world):
     eid = add(world, "Joint", owner="T/D1/S1", extra_org_ids=[u["T/D1/S2"]])
     st.cal_delete(conn, eid)
     assert conn.execute("SELECT COUNT(*) FROM calendar_entry_unit").fetchone()[0] == 0
+
+
+def test_division_chief_and_bureau_views_match_through_any_involved_section(world):
+    """S1 is in D1; S3 is in D2. An item owned by S1 that also involves S3 belongs to both divisions."""
+    u = world["unit"]
+    add(world, "Joint", owner="T/D1/S1", extra_org_ids=[u["T/D2/S3"]])
+    add(world, "D1 only", owner="T/D1/S1")
+    add(world, "D2 only", owner="T/D2/S3")
+    d1 = titles(world, world["d1chief"], scope="division")
+    assert "Joint" in d1 and "D1 only" in d1 and "D2 only" not in d1
+    # the bureau-wide view and a bureau-access account see everything
+    for who in (world["director"], world["grant"]):
+        assert {"Joint", "D1 only", "D2 only"} <= set(titles(world, who, scope="bureau"))
