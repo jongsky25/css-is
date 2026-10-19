@@ -51,6 +51,11 @@ html:has(.doc-intake-review){scroll-padding-top:calc(var(--topnav-h,53px) + 70px
 .doc-action-overdue{color:var(--danger,#a92727);font-weight:700}
 .doc-action-detail{white-space:pre-wrap;max-height:8rem;overflow:auto}
 .doc-action-card:target,article[id^="instruction-"]:target,article[id^="assignment-"]:target{outline:2px solid var(--accent,#17794b);scroll-margin-top:5rem}
+.doc-ink-controls{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin:.8rem 0}
+.doc-ink-controls[hidden],.doc-ink-stage[hidden]{display:none}
+.doc-ink-stage{position:relative;max-width:100%;overflow:hidden;box-shadow:0 1px 8px #0003}
+.doc-ink-stage canvas{display:block;max-width:100%}
+#doc-ink-overlay{position:absolute;inset:0;touch-action:none;cursor:crosshair}
 .doc-intake-review .doc-check input{min-height:0}
 @media(max-width:1199px){.doc-intake-review .doc-fields{grid-template-columns:1fr}}
 @media(max-width:999px){

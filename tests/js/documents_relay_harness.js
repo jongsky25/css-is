@@ -46,12 +46,16 @@ const ctx={console,Date,JSON,Math,Number,String,Array,Set,Error,
 vm.createContext(ctx);vm.runInContext(fs.readFileSync('apps_script/documents_relay.gs','utf8'),ctx);
 const longMime=Buffer.from(ctx.dmMime_({sender:'office@example.test',subject:'📄'.repeat(100),message:'body'.repeat(100),operation_id:'mime-test'},'recipient@example.test',ctx.Utilities.newBlob('attachment'.repeat(100)), 'test@example.test'),'base64url').toString();
 assert(longMime.split('\r\n').every(line=>line.length<=120), 'MIME headers and base64 bodies must be folded');
-const allowed=['inspect','preview','extract','sign','dispatch','status'];
+const allowed=['inspect','preview','extract','text','sign','dispatch','status'];
 let op=0;
 function req(action,fields={}) {return {action:'document_'+action,actor_id:7,operation_id:'00000000-0000-4000-8000-'+String(++op).padStart(12,'0'),...fields};}
 function run(r){return ctx.documentOperation_(r,allowed);}
 const source={file_id:'source_doc_12345',fingerprint:'drive-v3:source_doc_12345:1'};
 assert.equal(run(req('inspect',source)).fingerprint,source.fingerprint);
+assert.equal(run(req('inspect',source)).sha256.length,64);
+assert.equal(run(req('text',source)).text.includes('Subject: Request'),true);
+assert.equal(run(req('text',{file_id:'scan_file_12345',fingerprint:'drive-v3:scan_file_12345:1'})).text.includes('OCR memo'),true);
+assert.equal(run(req('text',{file_id:source.file_id,fingerprint:'stale'})).error,'version_changed');
 bumpOnRead=true;assert.equal(run(req('inspect',source)).error,'version_changed');files.get(source.file_id).version=1;
 assert.equal(run(req('preview',source)).state,'confirmed');
 const extracted=run(req('extract',{file_id:'scan_file_12345'}));assert.equal(extracted.suggestions.subject,'OCR memo');assert(removed.some(id=>id.startsWith('ocr_file_')));

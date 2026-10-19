@@ -1,6 +1,7 @@
 import re
 import storage as st
 import documents as d
+from io import BytesIO
 
 
 def token(response):
@@ -57,6 +58,61 @@ def test_action_screen_renders_only_permitted_documents(app_mod,viewer,admin):
         assert 'Action screen route record' not in admin.get('/documents/actions').text
         assert viewer.get('/documents/actions?view=division').status_code==403
         assert viewer.get('/documents/actions?view=invalid').status_code==400
+    finally:
+        st.set_setting(c,'documents.enabled',old);c.close()
+
+
+def test_memo_annotation_and_file_text_routes(app_mod,viewer,admin,monkeypatch):
+    from docx import Document
+    import documents_operations as ops
+    c=st.connect(app_mod.DB);st.init_db(c)
+    old=st.get_setting(c,'documents.enabled','0')
+    try:
+        st.set_setting(c,'documents.enabled','1')
+        user=st.get_admin_user(c,'viewer@test.local')
+        doc=d.register(c,user,{'subject':'Enhancement route record','type':'memo','direction':'OUT'})
+        url=f"/documents/{doc['id']}"
+        detail=viewer.get(url)
+        assert 'Start from a memorandum template' in detail.text
+        response=viewer.post(url+'/memo.docx',data={'csrf':token(detail),'kind':'internal',
+            'to':'Team','from':'Office','date':'2026-10-19','subject':'Draft',
+            'body':'Please review the plan.'})
+        assert response.status_code==200
+        assert 'Please review the plan.' in [p.text for p in Document(BytesIO(response.content)).paragraphs]
+        assert admin.post(url+'/memo.docx',data={'csrf':token(detail),'kind':'internal'}).status_code==403
+        vid=c.execute('''INSERT INTO document_file_version(document_id,url,file_id,fingerprint,role,actor_id,created_at)
+            VALUES (?,?,?,?,?,?,?)''',(doc['id'],'https://drive.google.com/file/d/sourcefile12345/view',
+            'sourcefile12345','','reference',user['id'],'2026-10-19')).lastrowid
+        c.commit()
+        note_page=viewer.get(f'{url}/annotate/{vid}')
+        assert note_page.status_code==200
+        assert admin.get(f'{url}/annotate/{vid}').status_code==404
+        saved=viewer.post(f'{url}/annotate/{vid}',data={'csrf':token(note_page),
+            'revision':doc['revision'],'kind':'note','page_number':2,'body':'Check this page.'},follow_redirects=False)
+        assert saved.status_code==303
+        assert 'Check this page.' in viewer.get(f'{url}/annotate/{vid}').text
+        class Drive:
+            def call(self,action,payload,operation):
+                if action=='inspect':
+                    return {'accessible':True,'file_id':'sourcefile12345',
+                            'fingerprint':'drive-v3:sourcefile12345:1',
+                            'mime':'application/pdf','sha256':'a'*64}
+                assert action=='text' and payload['fingerprint']=='drive-v3:sourcefile12345:1'
+                return {'state':'confirmed','file_id':'sourcefile12345',
+                        'fingerprint':payload['fingerprint'],'text':'The uniqueptolemy appendix.'}
+        monkeypatch.setattr(ops,'get_adapter',lambda:Drive())
+        detail=viewer.get(url)
+        indexed=viewer.post(url+'/index-file',data={'csrf':token(detail),'revision':d.raw(c,doc['id'])['revision'],
+            'version_id':vid},follow_redirects=False)
+        assert indexed.status_code==303
+        assert 'Enhancement route record' in viewer.get('/documents?q=uniqueptolemy').text
+        assert 'Enhancement route record' not in admin.get('/documents?q=uniqueptolemy').text
+        annotation=viewer.get(f'{url}/annotate/{vid}')
+        ink={'csrf':token(annotation),'revision':d.raw(c,doc['id'])['revision'],
+             'kind':'ink','page_number':1,'strokes':[[[.1,.1],[.2,.2]]],'source_sha256':'a'*64}
+        assert viewer.post(f'{url}/annotate/{vid}',json={**ink,'source_sha256':'b'*64}).status_code==400
+        assert viewer.post(f'{url}/annotate/{vid}',json=ink,follow_redirects=False).status_code==303
+        assert 'Pen marks' in viewer.get(f'{url}/annotate/{vid}').text
     finally:
         st.set_setting(c,'documents.enabled',old);c.close()
 
