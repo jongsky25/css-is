@@ -212,3 +212,52 @@ def test_poll_failure_and_reviewer_revocation(registry):
             return super().call(*args)
     with pytest.raises(p.Denied): intake.extract(c,u[1],1,item['revision'],RevokingDrive())
     assert c.execute('SELECT suggestions_json FROM document_intake').fetchone()[0]=='{}'
+
+
+@pytest.mark.parametrize('code',['unauthorized','unknown_action','not_configured','bad_folder','receipt_mismatch','no_json','unexpected_redirect'])
+def test_sync_surfaces_connection_diagnostic_and_retains_queue(registry,code):
+    from documents_workspace import WorkspaceError
+    c,u,unit,path=registry;seed(registry)
+    class RejectingDrive(Drive):
+        def call(self,*args):raise WorkspaceError(code,'private provider response / credential')
+    intake.sync(c,RejectingDrive())
+    error=intake.settings(c)['sync_error']
+    assert '['+code+']' in error
+    assert 'private provider' not in error and 'credential' not in error
+    assert c.execute('SELECT COUNT(*) FROM document_intake').fetchone()[0]==1
+    intake.sync(c,Drive())
+    assert intake.settings(c)['sync_error']==''
+    assert intake.settings(c)['last_sync']
+
+
+def test_unknown_listing_failure_does_not_expose_provider_text(registry):
+    c,u,unit,path=registry;seed(registry)
+    class InvalidListing(Drive):
+        def call(self,*args):return {'inbox':'another_folder','files':[],'provider_text':'private content'}
+    intake.sync(c,InvalidListing())
+    assert '[listing]' in intake.settings(c)['sync_error']
+    assert 'private content' not in intake.settings(c)['sync_error']
+
+
+def test_sync_missing_runtime_configuration_is_actionable(registry):
+    from documents_workspace import Unconfigured
+    c,u,unit,path=registry;seed(registry)
+    class MissingConfiguration(Drive):
+        def call(self,*args):raise Unconfigured('private credential details')
+    intake.sync(c,MissingConfiguration())
+    error=intake.settings(c)['sync_error']
+    assert '[relay_not_configured]' in error and 'CSS_DOCS_RELAY_URL' in error
+    assert 'private credential details' not in error
+
+
+def test_http_failure_diagnostic_excludes_request_url_and_response_body(registry):
+    import httpx
+    c,u,unit,path=registry;seed(registry)
+    class Forbidden(Drive):
+        def call(self,*args):
+            response=httpx.Response(403,content=b'private response',request=httpx.Request('POST','https://private.example/secret'))
+            response.raise_for_status()
+    intake.sync(c,Forbidden())
+    error=intake.settings(c)['sync_error']
+    assert 'HTTP 403' in error and '[relay_http]' in error
+    assert 'private' not in error and 'secret' not in error

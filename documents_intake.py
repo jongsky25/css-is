@@ -6,6 +6,8 @@ import json
 import re
 import threading
 import uuid
+import httpx
+from documents_workspace import WorkspaceError, Unconfigured
 
 import documents as d
 import documents_permissions as p
@@ -393,21 +395,64 @@ def file_pending(conn, adapter):
                              ('Drive filing needs attention; the registered record is saved. Check relay permissions and source changes.',tz.now_iso(),item['id']))
 
 
+def sync_failure(exc, phase):
+    """Describe only known causes; credentials, URLs and provider bodies stay private."""
+    if isinstance(exc, Unconfigured):
+        return 'The application Docs relay URL or secret is missing. Check CSS_DOCS_RELAY_URL and CSS_DOCS_RELAY_SECRET in the hosting settings. [relay_not_configured]'
+    if isinstance(exc, WorkspaceError):
+        messages={
+            'invalid_endpoint':'The application Docs relay URL must be the existing Apps Script web-app address ending in /exec.',
+            'unauthorized':'The deployed Docs relay rejected the signature. Check that the application Docs relay secret matches SHARED_SECRET in that project, and check the clocks.',
+            'unknown_action':'The application reached a relay that does not recognize intake. Update Code.gs and documents_relay.gs in the Docs project and deploy a new version of the existing web app.',
+            'not_configured':'The intake folder in the application does not match DOCUMENTS_INTAKE_FOLDER_ID in the deployed Docs project, or that property is missing.',
+            'bad_folder':'The deployed Docs relay could not use the intake folder. Check its ID, folder type and access for the web-app execution account.',
+            'unexpected_redirect':'Google returned an unexpected redirect. Check that the existing Docs web app executes as the office account and allows access without an interactive sign-in.',
+            'no_json':'The Docs relay returned a page instead of a confirmed reply. Check the web-app URL, access settings and deployment version.',
+            'receipt_mismatch':'The reply does not identify this intake request. Check that the application uses the updated Docs web-app deployment, rather than the mail relay or an older deployment.',
+            'response_too_large':'The Docs relay returned too much metadata. Check the deployed listing operation and page size.',
+            'bad_request':'The deployed Docs relay rejected the intake request format. Check that both Docs script files are the matching updated versions.',
+            'unconfirmed':'The deployed Docs script could not complete the listing. Check its web-app execution permissions and execution log; an editor test alone does not verify the deployed version.',
+            'busy':'The Docs relay is busy. Retry the Drive check shortly.'}
+        if exc.code in messages:
+            return messages[exc.code]+' ['+exc.code+']'
+    if isinstance(exc, (httpx.TimeoutException, TimeoutError)):
+        return 'The Docs relay timed out. Check its execution log, then retry the Drive check. [relay_timeout]'
+    if isinstance(exc, httpx.HTTPStatusError):
+        code=exc.response.status_code
+        return 'The Docs relay returned HTTP '+str(code)+'. Check the deployed web-app URL and access settings. [relay_http]'
+    if isinstance(exc, httpx.RequestError):
+        return 'The application could not connect to the Docs relay. Check hosting network access and the relay address. [relay_unreachable]'
+    if isinstance(exc, p.Denied):
+        return 'The account saved in intake settings no longer has active records authority. Have an authorized records/workflow administrator save the intake settings again. [sync_account]'
+    messages={
+        'settings':'Check that Documents and Drive intake are enabled and that both folder IDs are saved.',
+        'account':'The saved sync account could not be validated. Have an authorized records/workflow administrator save the intake settings again.',
+        'relay':'The relay request did not complete. Check the updated Docs deployment and its execution log.',
+        'listing':'The relay reply could not be saved as an intake listing. Check matching script/application versions and refresh Drive.',
+        'filing':'The listing was saved, but the filing worker could not start. Check the saved records account and intake settings.'}
+    return messages.get(phase,'Drive check failed. Queued reviews are retained.')+' ['+phase+']'
+
+
 def sync(conn, adapter=None):
     if not _SYNC_LOCK.acquire(blocking=False): return
+    phase='settings'
     try:
         config=_active(conn)
+        phase='account'
         actor=reviewer(conn,{'id':int(config['actor_id'])})
+        phase='relay'
         adapter=adapter or ops.get_adapter()
         result=adapter.call('intake_list',{'inbox':config['inbox'],'cursor':config['cursor'],
                                          'actor_id':actor['id']},str(uuid.uuid4()))
+        phase='listing'
         discover(conn,config,result)
+        phase='filing'
         file_pending(conn,adapter)
-    except Exception:
+    except Exception as exc:
         if conn.in_transaction: conn.rollback()
         with transaction(conn):
             _setting(conn,'cursor','')
-            _setting(conn,'sync_error','Drive check failed. Verify intake settings, relay deployment and folder access; queued reviews are retained.')
+            _setting(conn,'sync_error',sync_failure(exc,phase))
     finally:
         _SYNC_LOCK.release()
 
