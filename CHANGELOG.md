@@ -1,3 +1,7 @@
+## 7.25 — October 19, 2026
+
+- Show only events and trips involving your section or division in the home page's Coming up card.
+
 ## 7.24 — October 19, 2026
 
 - Add other sections to a calendar item; every involved section sees it and the item shows all of them.

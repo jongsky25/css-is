@@ -60,6 +60,16 @@ def test_an_activity_is_on_the_calendar_with_no_copy_and_no_backfill(world):    
     assert world["conn"].execute("SELECT COUNT(*) FROM calendar_entry").fetchone()[0] == 0     # nothing was written
 
 
+def test_home_team_card_only_shows_activities_its_unit_organises(world):  # noqa: F811
+    make(world, "S1 activity", d(1), owner="T/D1/S1")
+    make(world, "S2 activity", d(1), owner="T/D1/S2")
+    make(world, "Bureau activity", d(1), owner="T")
+    team = oc.calendar_week_block(world["conn"], world["s1"], view="team", today=NOW)
+    assert [i["title"] for i in team["items"]] == ["S1 activity"]
+    division = oc.calendar_week_block(world["conn"], world["d1"], view="team", today=NOW)
+    assert {i["title"] for i in division["items"]} == {"S1 activity", "S2 activity"}
+
+
 def test_staff_who_manage_activities_land_on_the_monitor_page(world):                             # noqa: F811
     _, token, _ = make(world, "Managed", d(1))
     boss = {**world["s1"], "role": "admin"}

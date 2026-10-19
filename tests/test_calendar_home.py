@@ -34,6 +34,7 @@ def world(tmp_path):
         return {"id": uid, "username": f"{label}@test.local", "role": "viewer"}
 
     w = {"conn": conn, "unit": unit, "s1": acct("s1", "T/D1/S1"), "s1b": acct("s1b", "T/D1/S1"),
+         "d1": acct("d1", "T/D1", "Division Chief"),
          "s3": acct("s3", "T/D2/S3"), "dir": acct("dir", "T/OD", "Director"), "nobody": acct("nobody")}
     return w
 
@@ -60,10 +61,11 @@ def test_team_follows_the_directory_and_me_is_yours_plus_bureau_wide(world):
     add(world, "All hands", owner="T", audience="bureau")
     add(world, "My thing", owner="T/D2/S3", people=[world["s1"]])
     assert block(world, "s1")["scope"] == "section" and block(world, "s1", "me")["scope"] == "blend"
-    # Team = my unit's own items + what is bureau-wide (an item I am on that another unit owns is on the Me tab)
-    assert sorted(titles(block(world, "s1"))) == ["All hands", "S1 huddle"]
+    # Team is owned by my unit; the calendar's section scope also includes bureau-wide items.
+    assert titles(block(world, "s1")) == ["S1 huddle"]
     assert sorted(titles(block(world, "s1", "me"))) == ["All hands", "My thing"]
-    assert sorted(titles(block(world, "s3"))) == ["All hands", "My thing", "S3 huddle"]
+    assert sorted(titles(block(world, "s3"))) == ["My thing", "S3 huddle"]
+    assert sorted(titles(block(world, "d1"))) == ["S1 huddle"]
     b = block(world, "dir")
     assert b["scope"] == "bureau" and sorted(titles(b)) == ["All hands", "My thing", "S1 huddle", "S3 huddle"]
 
@@ -73,6 +75,25 @@ def test_an_unlinked_account_gets_the_personal_scope_whichever_tab(world):
     for view in ("team", "me"):
         b = block(world, "nobody", view)
         assert b["scope"] == "blend" and titles(b) == ["All hands"]
+
+
+def test_team_card_keeps_its_own_bureau_wide_item_and_excludes_other_sections_trips(world):
+    add(world, "S1 announcement", audience="bureau")
+    add(world, "S2 announcement", owner="T/D1/S2", audience="bureau")
+    add(world, "S2 trip", owner="T/D1/S2", audience="bureau", kind="travel",
+        people=[(world["s1"]["id"], "travel")])
+    team = block(world, "s1")
+    assert titles(team) == ["S1 announcement"]
+    assert team["away"] == []
+    assert "S2 announcement" in titles(block(world, "s1", "me"))
+
+
+def test_joint_item_appears_for_each_involved_section(world):
+    add(world, "Joint visit", owner="T/D1/S1", extra_org_ids=[world["unit"]["T/D2/S3"]])
+    add(world, "S2 only", owner="T/D1/S2", audience="bureau")
+    assert titles(block(world, "s1")) == ["Joint visit"]
+    assert titles(block(world, "s3")) == ["Joint visit"]
+    assert set(titles(block(world, "d1"))) == {"Joint visit", "S2 only"}
 
 
 @pytest.mark.parametrize("who, view", [("s1", "team"), ("s1", "me"), ("s3", "team"), ("s3", "me"), ("dir", "team"),
@@ -85,7 +106,7 @@ def test_the_card_never_shows_more_than_the_calendar_page_would(world, who, view
     add(world, "Private", 1, owner="T/D1/S1", audience="people", people=[world["s3"]])
     b = block(world, who, view)
     page = ocal.items_between(world["conn"], world[who], TODAY, TODAY + timedelta(days=6), scope=b["scope"])
-    assert titles(b) == [i["title"] for i in page if i["layer"] != "holidays"][:5]
+    assert set(titles(b)).issubset({i["title"] for i in page})
     assert ("Private" in titles(b)) == (who == "s3" and view == "me")       # only the person it names, on their Me tab
 
 
@@ -152,7 +173,7 @@ def test_who_is_away_comes_from_trips_with_people_on_them(world):
 def test_the_away_strip_respects_scope_and_is_capped(world):
     for n in range(9):
         a = st.create_admin_user(world["conn"], f"away{n}@test.local", "x", "y", "viewer")
-        add(world, f"Trip {n}", 1, kind="travel", audience="bureau", owner="T", people=[(a, "travel")])
+        add(world, f"Trip {n}", 1, kind="travel", audience="bureau", owner="T/D2/S3", people=[(a, "travel")])
     b = block(world, "s3")
     assert len(b["away"]) == 6 and b["n_away_more"] == 3
     add(world, "S1 only trip", 2, kind="travel", people=[(world["s1"]["id"], "travel")])
