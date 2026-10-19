@@ -138,30 +138,97 @@ function dmExtract_(req) {
     if (temp) Drive.Files.remove(temp);
   }
 }
+// Parse only labelled metadata. OCR can flatten table cells or split labels/values.
 function dmSuggest_(text) {
-  const lines = text.split(/\r?\n/).map(function (s) {return s.trim();}).filter(Boolean);
-  const suggestions = {}, warnings = ['Suggestions are unverified. Compare with the source before confirming.'];
-  function first(prefix) {
-    const line = lines.find(function (s) {return prefix.test(s);});
-    return line ? line.replace(prefix,'').trim().slice(0,1000) : '';
-  }
-  suggestions.subject = first(/^subject\s*[:\-]\s*/i) || (lines[0] || '').slice(0,500);
-  suggestions.sender = first(/^(?:from|sender)\s*[:\-]\s*/i);
-  suggestions.references = lines.filter(function (s) {return /\b(?:DTRAK|reference|ref\.)\b/i.test(s);}).slice(0,8).join('\n').slice(0,1000);
-  const dates = [];
-  lines.filter(function (s) {return /\b(?:deadline|due|on or before)\b/i.test(s);}).forEach(function (s) {
-    (s.match(/\b\d{4}-\d{2}-\d{2}\b/g) || []).forEach(function (value) {
-      const parsed = new Date(value + 'T00:00:00Z');
-      if (!isNaN(parsed.getTime()) && parsed.toISOString().slice(0,10) === value) dates.push(value);
+  const lines=text.replace(/\u00a0/g,' ').split(/\r?\n/).map(function(s){return s.trim();}).filter(Boolean);
+  const suggestions={}, warnings=['Suggestions are unverified. Compare with the source before confirming.'];
+  const labels='type of document|document type|originating office|document date|date of document|due date|deadline|on or before|subject|sender|from|date|type|keywords|reference(?:s| no\\.?)?';
+  const boundary=new RegExp('\\s+(?=(?:'+labels+')\\s*:)','ig');
+  const parts=lines.join('\n').replace(boundary,'\n').split('\n');
+  const anyLabel=new RegExp('^(?:'+labels+')\\s*[:\\-]','i');
+  function values(label) {
+    const prefix=new RegExp('^(?:'+label+')\\s*[:\\-]\\s*','i'), found=[];
+    parts.forEach(function(line,i) {
+      if (!prefix.test(line)) return;
+      let value=line.replace(prefix,'').trim();
+      // A value on the next line is common in OCR tables; never swallow another label/header.
+      if (!value && parts[i+1] && !anyLabel.test(parts[i+1]) &&
+          !/^(?:DATE|FROM|TO|DUE DATE|NAME|ACTION REQUIRED|ROUTING SLIP)$/i.test(parts[i+1])) value=parts[i+1];
+      if (value) found.push(value.slice(0,1000));
     });
+    return Array.from(new Set(found));
+  }
+  function field(key,label) {
+    const found=values(label);
+    if (found.length===1) suggestions[key]=found[0];
+    else if(found.length>1) warnings.push('Multiple '+key.replace('_',' ')+' values found; choose the correct one from the source.');
+  }
+  field('subject','subject');
+  field('sender','originating office|sender');
+  if (!suggestions.sender && !values('originating office|sender').length) field('sender','from');
+  field('type','type of document|document type|type');
+  field('keywords','keywords');
+  // Include wrapped subject/office text until the next label or routing-table heading.
+  ['subject','sender'].forEach(function(key) {
+    if (!suggestions[key]) return;
+    const i=parts.findIndex(function(line){return line.endsWith(suggestions[key]);});
+    if (i<0) return;
+    for(let j=i+1;j<Math.min(parts.length,i+4);j++) {
+      const next=parts[j];
+      if(anyLabel.test(next) || /^(?:DATE|FROM|TO|NAME|DUE DATE|ACTION|ROUTING|MEMORANDUM|DEPARTMENT|REPUBLIC)\b/i.test(next) || (/^\d/.test(next) && !/^20\d{2}$/.test(next))) break;
+      suggestions[key]+=' '+next;
+    }
+    suggestions[key]=suggestions[key].slice(0,500);
   });
-  const unique = Array.from(new Set(dates));
-  if (unique.length === 1) suggestions.due_date = unique[0];
-  else warnings.push('No single unambiguous ISO deadline found; confirm the date manually.');
-  suggestions.type = first(/^(?:document type|type)\s*[:\-]\s*/i);
-  suggestions.keywords = first(/^keywords\s*[:\-]\s*/i);
-  return {suggestions:suggestions, excerpts:lines.slice(0,10).map(function (s) {return s.slice(0,1000);}), warnings:warnings};
+  const refs=values('reference(?:s| no\\.?)?');
+  if (/\bDTRAK\b/i.test(text)) {
+    (text.match(/\b\d{4}-\d{7,12}\b/g)||[]).forEach(function(id){refs.push('DTRAK: '+id);});
+  }
+  if(refs.length) suggestions.references=Array.from(new Set(refs)).slice(0,8).join('\n').slice(0,1000);
+  function dateField(key,candidates) {
+    const dates=[], ambiguous=[];
+    candidates.forEach(function(value) {
+      const parsed=dmSuggestionDates_(value);
+      dates.push.apply(dates,parsed.dates); if(parsed.ambiguous) ambiguous.push(value);
+    });
+    const unique=Array.from(new Set(dates));
+    if(unique.length===1 && !ambiguous.length) suggestions[key]=unique[0];
+    else if(candidates.length) warnings.push('Confirm '+key.replace('_',' ')+': the source has conflicting, ambiguous or unreadable dates.');
+  }
+  const explicit=values('document date|date of document');
+  dateField('document_date',explicit.length?explicit:values('date'));
+  const deadlines=values('due date|deadline|on or before');
+  // Also accept a clearly stated deadline in prose, not a date somewhere in a routing table.
+  parts.forEach(function(line){const m=line.match(/\b(?:on or before|deadline(?: is)?|due date(?: is)?)\s+(?!:)(.+)/i);if(m) deadlines.push(m[1]);});
+  dateField('due_date',deadlines);
+  if(!suggestions.due_date) warnings.push('No clear current deadline captured. Check the source; routing-history dates may refer to earlier actions.');
+  warnings.push('Confirm Incoming or Outgoing and the actual office receipt time manually.');
+  return {suggestions:suggestions,excerpts:lines.slice(0,10).map(function(s){return s.slice(0,1000);}),warnings:warnings};
 }
+function dmSuggestionDates_(value) {
+  const dates=[];let ambiguous=false;
+  function add(year,month,day) {
+    const iso=String(year)+'-'+String(month).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+    const parsed=new Date(iso+'T00:00:00Z');
+    if(!isNaN(parsed.getTime()) && parsed.toISOString().slice(0,10)===iso) dates.push(iso);
+    else ambiguous=true;
+  }
+  (value.match(/\b\d{4}-\d{2}-\d{2}\b/g)||[]).forEach(function(v){const p=v.split('-');add(+p[0],+p[1],+p[2]);});
+  (value.match(/\b\d{1,2}\/\d{1,2}\/\d{4}\b/g)||[]).forEach(function(v){
+    const p=v.split('/').map(Number);
+    if(p[0]<=12 && p[1]>12) add(p[2],p[0],p[1]);
+    else if(p[0]>12 && p[1]<=12) add(p[2],p[1],p[0]);
+    else if(p[0]===p[1]) add(p[2],p[0],p[1]);
+    else ambiguous=true;
+  });
+  const months='jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?';
+  const names=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  const patterns=[new RegExp('\\b('+months+')\\.?\\s+(\\d{1,2})(?:st|nd|rd|th)?[,]?\\s+(\\d{4})\\b','ig'),new RegExp('\\b(\\d{1,2})\\s+('+months+')\\.?[,]?\\s+(\\d{4})\\b','ig')];
+  patterns.forEach(function(re,index){let m;while((m=re.exec(value))!==null){add(+m[3],names.indexOf(m[index?2:1].slice(0,3).toLowerCase())+1,+m[index?1:2]);}});
+  if(!dates.length) ambiguous=true;
+  return {dates:dates,ambiguous:ambiguous};
+}
+
 function dmSign_(req, folder, receipt) {
   if (req.actor_id !== req.signatory_id || !Number.isInteger(req.actor_id) || !req.signature_base64) dmError_('unauthorized');
   if (!['image/png','image/jpeg'].includes(req.signature_mime) || req.signature_base64.length > 700000) dmError_('bad_signature');

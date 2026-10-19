@@ -135,9 +135,9 @@ def make_router(templates,get_conn):
                         except d.Conflict: pass
                     return RedirectResponse('/documents/intake?registered=1',status_code=303)
                 return RedirectResponse('/documents/'+str(doc['id']),status_code=303)
-            elif action in ('save','release','attention','dismiss','extract','apply'):
+            elif action in ('save','release','attention','dismiss','extract','reread','apply'):
                 saved=intake.save(conn,user,item_id,rev,data,action if action in ('release','attention','dismiss') else 'save')
-                if action=='extract': intake.extract(conn,user,item_id,saved['revision'])
+                if action in ('extract','reread'): intake.extract(conn,user,item_id,saved['revision'],force=action=='reread')
                 if action=='apply':
                     # Apply to empty inputs only; never overwrite a reviewer's corrections.
                     values=saved['draft']

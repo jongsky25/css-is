@@ -1,3 +1,11 @@
+## 7.09 — October 19, 2026
+
+- Recognize routing-slip metadata labels, inline table cells, wrapped subjects/offices and DTRAK identifiers.
+- Support document-date suggestions and validate ISO, unambiguous numeric and written month dates; keep ambiguous and conflicting dates for manual review.
+- Stop treating the first OCR heading as a subject and avoid assigning dates from unlabelled routing-history rows as current deadlines.
+- Add an explicit OCR reread action to refresh cached suggestions without overwriting reviewer-entered fields.
+- Requires replacing documents_relay.gs and deploying a new version of the existing Docs/travel web app.
+
 ## 7.08 — October 19, 2026
 
 - Bind intake OCR to the queued content checksum, verify the actual source bytes and recheck the source folder/content after reading, while allowing metadata-only Drive version changes.

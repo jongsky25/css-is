@@ -278,13 +278,13 @@ def save(conn,user,item_id,revision,fields,action='save'):
     return get(conn,user,item_id)
 
 
-def extract(conn,user,item_id,revision,adapter=None):
+def extract(conn,user,item_id,revision,adapter=None,force=False):
     user,item=_editable(conn,user,item_id,revision)
     if item['mime_type'] not in OCR_MIMES:
         raise ValueError('OCR supports PDFs, images and text. Review this attachment in Drive and enter details manually.')
     if item['fingerprint']=='pending':
         raise ValueError('Check Drive to load attachment metadata before OCR.')
-    if item['suggestion_key']==item['content_key'] and item['suggestions']:
+    if not force and item['suggestion_key']==item['content_key'] and item['suggestions']:
         return item
     adapter=adapter or ops.get_adapter()
     config=_active(conn)

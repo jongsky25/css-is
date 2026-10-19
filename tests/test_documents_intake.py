@@ -157,6 +157,11 @@ def test_http_intake_review_csrf_and_registration(app_mod,admin,viewer,monkeypat
         extracted=admin.post(url,data={**fields(),'csrf':csrf,'revision':item['revision'],'action':'extract'})
         assert extracted.status_code==200,extracted.text
         assert 'Suggested' in extracted.text
+        assert 'Read scan again with OCR' in extracted.text
+        item=intake.get(c,user,iid)
+        reread=admin.post(url,data={**fields(),'csrf':csrf,'revision':item['revision'],'action':'reread'})
+        assert reread.status_code==200,reread.text
+        assert 'Suggested' in reread.text
         item=intake.get(c,user,iid)
         registered=admin.post(url,data={**fields(),'csrf':csrf,'revision':item['revision'],'action':'register'})
         assert registered.status_code==200,registered.text
@@ -327,3 +332,28 @@ def test_ocr_requires_content_receipt_before_caching(registry,mode):
             return result
     with pytest.raises(ValueError):intake.extract(c,u[1],1,item['revision'],UnconfirmedSource())
     assert intake.get(c,u[1],1)['suggestions']=={}
+
+
+def test_explicit_ocr_reread_refreshes_suggestions_without_overwriting_draft(registry):
+    c,u,unit,path=registry
+    seed(registry)
+    item=intake.claim(c,u[1],1,1)
+    item=intake.save(c,u[1],1,item['revision'],fields())
+    drive=Drive()
+    item=intake.extract(c,u[1],1,item['revision'],drive)
+    intake.extract(c,u[1],1,item['revision'],drive)
+    assert len(drive.calls)==1
+
+    class Improved(Drive):
+        def call(self,action,payload,operation):
+            result=super().call(action,payload,operation)
+            result['suggestions'].update(document_date='2026-10-15',type='Memorandum',sender='BLHSD')
+            return result
+
+    fresh=Improved()
+    item=intake.extract(c,u[1],1,item['revision'],fresh,force=True)
+    assert len(fresh.calls)==1
+    assert item['suggestions']['suggestions']['document_date']=='2026-10-15'
+    assert item['suggestions']['suggestions']['type']=='Memorandum'
+    assert item['draft']['subject']=='Reviewed request'
+    assert item['draft']['type']=='Letter'
