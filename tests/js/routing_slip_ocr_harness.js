@@ -29,3 +29,13 @@ assert(!ctx.dmSuggest_('Header without a subject label').suggestions.subject);
 assert(!ctx.dmSuggest_(scan+'\nSUBJECT: A different enclosed letter').suggestions.subject);
 assert.equal(ctx.dmSuggest_('Subject: A safe title\nFrom: Regional Office\nDeadline 2026-10-30').suggestions.due_date,'2026-10-30');
 console.log('Routing slip metadata and conservative multi-page date handling passed');
+
+// Header date takes priority over dates on later pages and routing entries.
+assert.equal(ctx.dmSuggest_(scan+'\nDate: 10/16/2026\nDocument date: October 20, 2026').suggestions.document_date,'2026-10-15');
+assert.equal(ctx.dmSuggest_('ORIGINATING OFFICE: BLHSD\nDATE:\n10/15/2026\nTYPE OF DOCUMENT: Memorandum\nDate: 10/16/2026').suggestions.document_date,'2026-10-15');
+assert.equal(ctx.dmSuggest_('ORIGINATING OFFICE: BLHSD\nDATE\n10/15/2026\nSUBJECT: Test').suggestions.document_date,'2026-10-15');
+assert(!ctx.dmSuggest_('ORIGINATING OFFICE: BLHSD\nTYPE OF DOCUMENT: Memorandum\nDate: 10/16/2026').suggestions.document_date);
+assert(!ctx.dmSuggest_('ORIGINATING OFFICE: BLHSD DATE: illegible\nTYPE OF DOCUMENT: Memo\nDocument date: October 20, 2026').suggestions.document_date);
+assert(!ctx.dmSuggest_(scan+'\nORIGINATING OFFICE: Other Office DATE: 10/16/2026\nSUBJECT: Another slip').suggestions.document_date);
+assert.equal(ctx.dmSuggest_(scan+'\n'+scan).suggestions.document_date,'2026-10-15');
+assert(!ctx.dmSuggest_('ORIGINATING OFFICE: BLHSD DATE: 01/02/2026\nSUBJECT: Test').suggestions.document_date);

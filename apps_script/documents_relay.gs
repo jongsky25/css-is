@@ -195,8 +195,29 @@ function dmSuggest_(text) {
     if(unique.length===1 && !ambiguous.length) suggestions[key]=unique[0];
     else if(candidates.length) warnings.push('Confirm '+key.replace('_',' ')+': the source has conflicting, ambiguous or unreadable dates.');
   }
+  // The routing-slip document date belongs to the originating-office header.
+  // Stop before the next metadata field/table; later page and routing dates are unrelated.
+  const headerDates=[];
+  let hasOfficeHeader=false;
+  parts.forEach(function(line,i) {
+    if(!/^originating office\s*(?::|$)/i.test(line)) return;
+    hasOfficeHeader=true;
+    let found=false;
+    for(let j=i+1;j<Math.min(parts.length,i+9);j++) {
+      const next=parts[j];
+      const match=next.match(/^date\s*(?::\s*(.*)|$)/i);
+      if(match) {
+        let value=(match[1]||'').trim();
+        if(!value && parts[j+1] && !anyLabel.test(parts[j+1]) &&
+            !/^(?:FROM|TO|NAME|DUE DATE|ACTION|TYPE OF DOCUMENT|SUBJECT)\b/i.test(parts[j+1])) value=parts[j+1];
+        headerDates.push(value);found=true;break;
+      }
+      if(anyLabel.test(next) || /^(?:DATE|FROM|TO|NAME|DUE DATE|ACTION|TYPE OF DOCUMENT|SUBJECT)\b/i.test(next)) break;
+    }
+    if(!found) headerDates.push('');
+  });
   const explicit=values('document date|date of document');
-  dateField('document_date',explicit.length?explicit:values('date'));
+  dateField('document_date',hasOfficeHeader?headerDates:(explicit.length?explicit:values('date')));
   const deadlines=values('due date|deadline|on or before');
   // Also accept a clearly stated deadline in prose, not a date somewhere in a routing table.
   parts.forEach(function(line){const m=line.match(/\b(?:on or before|deadline(?: is)?|due date(?: is)?)\s+(?!:)(.+)/i);if(m) deadlines.push(m[1]);});

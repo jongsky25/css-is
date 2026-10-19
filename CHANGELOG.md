@@ -1,3 +1,10 @@
+## 7.12 — October 19, 2026
+
+- Prioritize the Date in the Originating office header block for routing-slip document-date suggestions.
+- Stop at the next metadata field or routing table; do not fall back to unrelated dates when the office-header date is missing or unreadable.
+- Preserve ambiguity checks for multiple routing slips and support split label/value OCR text.
+- Update documents_relay.gs in the existing Docs/travel project and redeploy its existing web app; then reread the scan to refresh cached suggestions.
+
 ## 7.11 — October 19, 2026
 
 - Widen the intake review workspace, size the preview against the viewport/navigation, and stack panels below 1000px.
