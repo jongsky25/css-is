@@ -168,3 +168,7 @@ retain their previous strict version checks. Old relay replies without content
 provenance are not accepted for caching; the reviewer sees an update instruction.
 Suggestions contain only bounded fields/warnings, and temporary OCR files are still
 removed. No content-check behavior for signing or approval is relaxed.
+
+### v7.09 OCR pilot follow-up
+
+Update `documents_relay.gs` in the existing Docs/travel project and deploy a new version of its existing web app. In an already reviewed intake item, use **Read scan again with OCR**, then **Fill empty fields with suggestions**. Existing entered values are preserved. Check the original PDF before registration: OCR supports labelled routing-slip fields but cannot guarantee recognition of every page, table or handwritten note. Ambiguous dates, direction and actual office receipt time require review. No additional OCR vendor or service is introduced.

@@ -297,7 +297,7 @@ def execute(conn,operation,adapter=None,*,reconcile=False):
 
 def sanitize_extraction(result):
     fields=result.get('suggestions',{})
-    allowed={'subject','sender','references','type','due_date','keywords'}
+    allowed={'subject','sender','references','type','document_date','due_date','keywords'}
     if not isinstance(fields,dict):
         raise ValueError('Extraction returned invalid suggestions.')
     return {'suggestions':{k:str(v)[:1000] for k,v in fields.items() if k in allowed},
