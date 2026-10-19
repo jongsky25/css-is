@@ -1,3 +1,8 @@
+## 7.06 — October 19, 2026
+
+- Distinguish the DNS, proxy, TLS/certificate and connection causes previously grouped as relay_unreachable.
+- Identify the affected Google service while keeping request URLs, credentials and raw transport/provider messages private.
+
 ## 7.05 — October 19, 2026
 
 - Show specific, safe document-intake connection diagnostics for missing configuration, rejected signatures, older deployments, folder mismatches, network failures and processing stages.

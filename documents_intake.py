@@ -7,6 +7,9 @@ import re
 import threading
 import uuid
 import httpx
+import errno
+import socket
+import ssl
 from documents_workspace import WorkspaceError, Unconfigured
 
 import documents as d
@@ -395,6 +398,49 @@ def file_pending(conn, adapter):
                              ('Drive filing needs attention; the registered record is saved. Check relay permissions and source changes.',tz.now_iso(),item['id']))
 
 
+def relay_network_failure(exc):
+    """Classify transport causes without persisting raw URLs, headers or proxy data."""
+    causes=[]
+    current=exc
+    while current is not None and len(causes)<12 and id(current) not in {id(c) for c in causes}:
+        causes.append(current)
+        current=current.__cause__ or current.__context__
+    # Some transports retain only the message from the underlying OS exception.
+    # Inspect it for known conditions, but never return or log its contents.
+    descriptions=' '.join(str(c)[:2000] for c in causes).lower()
+    try:
+        reply=exc.request.url.host=='script.googleusercontent.com'
+    except (AttributeError, RuntimeError):
+        reply=False
+    target='Google’s reply service' if reply else 'the Google Docs web-app service'
+    if isinstance(exc,httpx.ProxyError):
+        return 'The hosting network proxy could not connect to '+target+'. Check the proxy settings or access policy for this host. [relay_proxy]'
+    if any(isinstance(c,ssl.SSLCertVerificationError) for c in causes) or 'certificate_verify_failed' in descriptions or 'certificate verify failed' in descriptions:
+        return 'The application could not verify the TLS certificate from '+target+'. Check the hosting certificate trust and any HTTPS proxy; keep certificate verification enabled. [relay_tls_certificate]'
+    if any(isinstance(c,ssl.SSLError) for c in causes):
+        return 'The TLS connection to '+target+' failed. Check the hosting HTTPS/proxy configuration. [relay_tls]'
+    if any(isinstance(c,socket.gaierror) for c in causes) or any(t in descriptions for t in ('name or service not known','temporary failure in name resolution','nodename nor servname','getaddrinfo failed')):
+        return 'The hosting DNS service could not resolve '+target+'. Check DNS and outbound network access on the host. [relay_dns]'
+    numbers={getattr(c,'errno',None) for c in causes}
+    if numbers & {errno.ENETUNREACH,errno.EHOSTUNREACH}:
+        return 'The hosting network has no route to '+target+'. Check outbound HTTPS access and proxy configuration. [relay_network_route]'
+    if errno.ECONNREFUSED in numbers:
+        return 'The network connection to '+target+' was refused. Check the hosting proxy and outbound HTTPS access. [relay_connection_refused]'
+    if numbers & {errno.ECONNRESET,errno.EPIPE}:
+        return 'The network connection to '+target+' was reset. Check hosting/proxy logs before retrying. [relay_connection_reset]'
+    if isinstance(exc,httpx.RemoteProtocolError):
+        return target+' closed or returned an invalid network response. Check hosting/proxy logs. [relay_remote_protocol]'
+    if isinstance(exc,httpx.LocalProtocolError):
+        return 'The application could not send a valid network request. Check the configured Docs relay address and hosting/proxy settings. [relay_local_protocol]'
+    if isinstance(exc,httpx.ConnectError):
+        return 'The application could not establish a connection to '+target+'. Check hosting/proxy logs for the connection failure. [relay_connect]'
+    if isinstance(exc,httpx.ReadError):
+        return 'The connection to '+target+' failed while reading its response. Check hosting/proxy logs. [relay_read]'
+    if isinstance(exc,httpx.WriteError):
+        return 'The connection to '+target+' failed while sending the request. Check hosting/proxy logs. [relay_write]'
+    return 'The application’s network request to '+target+' failed. Check hosting network access and the relay address. [relay_unreachable]'
+
+
 def sync_failure(exc, phase):
     """Describe only known causes; credentials, URLs and provider bodies stay private."""
     if isinstance(exc, Unconfigured):
@@ -421,7 +467,7 @@ def sync_failure(exc, phase):
         code=exc.response.status_code
         return 'The Docs relay returned HTTP '+str(code)+'. Check the deployed web-app URL and access settings. [relay_http]'
     if isinstance(exc, httpx.RequestError):
-        return 'The application could not connect to the Docs relay. Check hosting network access and the relay address. [relay_unreachable]'
+        return relay_network_failure(exc)
     if isinstance(exc, p.Denied):
         return 'The account saved in intake settings no longer has active records authority. Have an authorized records/workflow administrator save the intake settings again. [sync_account]'
     messages={

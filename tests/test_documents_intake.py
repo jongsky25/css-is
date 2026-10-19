@@ -261,3 +261,40 @@ def test_http_failure_diagnostic_excludes_request_url_and_response_body(registry
     error=intake.settings(c)['sync_error']
     assert 'HTTP 403' in error and '[relay_http]' in error
     assert 'private' not in error and 'secret' not in error
+
+
+@pytest.mark.parametrize('kind,code',[
+    ('dns','relay_dns'),('certificate','relay_tls_certificate'),('tls','relay_tls'),
+    ('proxy','relay_proxy'),('route','relay_network_route'),('refused','relay_connection_refused'),
+    ('reset','relay_connection_reset'),('protocol','relay_remote_protocol'),
+    ('local','relay_local_protocol'),('connect','relay_connect'),('read','relay_read'),('write','relay_write')])
+def test_network_diagnostic_classifies_cause_without_sensitive_text(registry,kind,code):
+    import errno,socket,ssl,httpx
+    c,u,unit,path=registry;seed(registry)
+    request=httpx.Request('POST','https://script.google.com/macros/s/private-endpoint/exec')
+    classes={'proxy':httpx.ProxyError,'protocol':httpx.RemoteProtocolError,'local':httpx.LocalProtocolError,
+             'read':httpx.ReadError,'write':httpx.WriteError}
+    exc=classes.get(kind,httpx.ConnectError)('private credential and proxy details',request=request)
+    causes={'dns':socket.gaierror(-2,'private DNS details'),
+            'certificate':ssl.SSLCertVerificationError(1,'private certificate details'),
+            'tls':ssl.SSLError(1,'private TLS details'),
+            'route':OSError(errno.ENETUNREACH,'private network details'),
+            'refused':OSError(errno.ECONNREFUSED,'private network details'),
+            'reset':OSError(errno.ECONNRESET,'private network details')}
+    if kind in causes:exc.__cause__=causes[kind]
+    class NetworkFailure(Drive):
+        def call(self,*args):raise exc
+    intake.sync(c,NetworkFailure())
+    error=intake.settings(c)['sync_error']
+    assert '['+code+']' in error
+    assert 'private' not in error and 'credential' not in error
+    assert c.execute('SELECT COUNT(*) FROM document_intake').fetchone()[0]==1
+
+
+def test_network_diagnostic_identifies_reply_host_and_message_only_certificate_error():
+    import httpx
+    exc=httpx.ConnectError('[SSL: CERTIFICATE_VERIFY_FAILED] private proxy data',
+        request=httpx.Request('GET','https://script.googleusercontent.com/private-token'))
+    error=intake.sync_failure(exc,'relay')
+    assert 'reply service' in error and '[relay_tls_certificate]' in error
+    assert 'private' not in error and 'token' not in error
