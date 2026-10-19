@@ -100,13 +100,15 @@ def test_group_dismiss_restore_and_changed_sibling_invalidates_review(setup):
     assert not c.execute('SELECT 1 FROM document_sequence').fetchone()
 
 
-def test_email_cannot_be_split_or_marked_outgoing(setup):
+def test_email_cannot_be_split_and_direction_follows_sender(setup):
     c,path,uid,client=setup;enable(c,uid);user={'id':uid}
     iid=signed(client).json()['intake_id'];discover(c)
     item=intake.claim(c,user,iid,intake.get(c,user,iid)['revision'])
-    with pytest.raises(ValueError,match='Incoming'):intake.register(c,user,iid,item['revision'],{**fields(),'direction':'OUT'},adapter=Drive())
     with pytest.raises(ValueError,match='already grouped'):intake.register(c,user,iid,item['revision'],fields(),[(999,1)],Drive())
     assert not c.execute('SELECT 1 FROM document').fetchone()
+    doc=intake.register(c,user,iid,item['revision'],{**fields(),'sender':'Bureau of Local Health Systems Development - Office of the Director'},adapter=Drive())
+    assert doc['direction']=='OUT'
+    assert doc['instruction_state']=='not_required'
 
 
 def test_office_attachment_can_register_without_ocr(setup):

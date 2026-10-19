@@ -1,3 +1,9 @@
+## 7.10 — October 19, 2026
+
+- Derive intake direction from the reviewed sender: Bureau of Local Health Systems Development / BLHSD is Outgoing; other identified senders are Incoming.
+- Apply the rule to existing cached OCR suggestions, review saves, Gmail staging and registration; replace the blanket Incoming-only email restriction.
+- App-only change; no additional Apps Script update required.
+
 ## 7.09 — October 19, 2026
 
 - Recognize routing-slip metadata labels, inline table cells, wrapped subjects/offices and DTRAK identifiers.

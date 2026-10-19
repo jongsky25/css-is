@@ -77,6 +77,17 @@ def _active(conn):
     return config
 
 
+def direction_from_sender(sender):
+    """Office rule: BLHSD correspondence is outgoing, other named sources incoming."""
+    normalized=re.sub(r'[^a-z0-9]+',' ',str(sender or '').casefold()).strip()
+    if not normalized:
+        return ''
+    if (re.search(r'\bbureau of local health systems development\b',normalized)
+            or re.search(r'\bblhsd\b',normalized)):
+        return 'OUT'
+    return 'IN'
+
+
 def get(conn, user, item_id):
     reviewer(conn,user)
     found = rows(conn,'SELECT * FROM document_intake WHERE id=?',(item_id,))
@@ -87,6 +98,12 @@ def get(conn, user, item_id):
         d.get(conn,user,item['document_id'])
     for key in ('draft','suggestions'):
         item[key] = json.loads(item[key+'_json'])
+    if item['suggestions']:
+        suggested=item['suggestions'].get('suggestions',{})
+        direction=direction_from_sender(suggested.get('sender'))
+        if direction: suggested['direction']=direction
+        item['suggestions']['warnings']=[w for w in item['suggestions'].get('warnings',[])
+            if not w.startswith('Confirm Incoming or Outgoing')]
     item['email'] = None
     item['email_files'] = []
     if item['email_id']:
@@ -105,7 +122,7 @@ def stage_email(conn, actor, payload, digest):
         received_at,attachments_json,created_at) VALUES (?,?,?,?,?,?,?,?)''',
         (payload['mailbox'],payload['message_id'],digest,payload['subject'],payload['sender'],
          payload['received_at'],json.dumps(payload['attachments']),now)).lastrowid
-    draft=json.dumps({'direction':'IN','subject':payload['subject'],'sender':payload['sender'],
+    draft=json.dumps({'direction':direction_from_sender(payload['sender']),'subject':payload['subject'],'sender':payload['sender'],
         'type':'Unclassified','received_at':datetime.fromisoformat(payload['received_at']).astimezone(ZoneInfo('Asia/Manila')).replace(tzinfo=None).isoformat(timespec='minutes')})
     conn.execute('UPDATE document_intake_email SET body_text=? WHERE id=?',(payload.get('body_text',''),eid))
     primary=None
@@ -255,6 +272,7 @@ def clean_fields(fields):
     clean={key:str(fields.get(key,'')).strip() for key in FIELDS}
     if any(len(v)>4000 for v in clean.values()):
         raise ValueError('A review field is too long.')
+    clean['direction']=direction_from_sender(clean['sender']) or clean['direction']
     return clean
 
 
@@ -322,8 +340,6 @@ def register(conn,user,item_id,revision,fields,attachments=(),adapter=None):
     # Validate dates before allocating a number, including draft outgoing intake.
     datetime.fromisoformat(values['received_at'])
     body_only=bool(prior['email_id'] and prior['email']['body_text'] and not prior['email_files'])
-    if prior['email_id'] and values['direction']!='IN':
-        raise ValueError('Received email must be registered as Incoming.')
     if prior['email_id']:
         if attachments: raise ValueError('Email attachments are already grouped; register other correspondence separately.')
         attachments=[(f['id'],f['revision']) for f in prior['email_files'] if f['id']!=int(item_id)]

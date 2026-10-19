@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.09"
+APP_VERSION = "7.10"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.10",
+        "date": "October 19, 2026",
+        "summary": "Determine document direction from the originating office.",
+        "changes": [
+            "Documents from the Bureau of Local Health Systems Development or BLHSD are classified as Outgoing; other identified senders are Incoming.",
+            "The rule applies to saved reviews, OCR suggestions and registration, including documents received through email."
+        ]
+    },
     {
         "version": "7.09",
         "date": "October 19, 2026",

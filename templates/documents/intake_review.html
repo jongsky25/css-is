@@ -20,6 +20,7 @@
 <fieldset {% if not editable or not enabled %}disabled{% endif %}>
 {% if not item.email or item.email_files %}<button name="action" value="{{ 'reread' if item.suggestions else 'extract' }}" formnovalidate>{{ 'Read scan again with OCR' if item.suggestions else 'Read scan with OCR' }}</button>{% endif %}
 {% if item.suggestions %}<details open><summary>Suggestions from the scan</summary><dl>{% for key,value in item.suggestions.get('suggestions',{}).items() if value %}<dt>{{ key|replace('_',' ') }}</dt><dd>{{ value }}</dd>{% endfor %}</dl>{% for warning in item.suggestions.get('warnings',[]) %}<p>{{ warning }}</p>{% endfor %}<button name="action" value="apply" formnovalidate>Fill empty fields with suggestions</button></details>{% endif %}
+<p>Direction follows the sender: Bureau of Local Health Systems Development (BLHSD) is Outgoing; other senders are Incoming. Saving or applying suggestions updates it.</p>
 <label>Direction<select name="direction"><option value="">Choose direction</option>{% for key,label in [('IN','Incoming'),('OUT','Outgoing')] %}<option value="{{ key }}" {% if values.get('direction')==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
 <label>Subject<textarea name="subject" maxlength="500">{{ values.get('subject','') }}</textarea></label>
 <label>Document type<input name="type" maxlength="100" value="{{ values.get('type','') }}"></label>

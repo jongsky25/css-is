@@ -172,3 +172,7 @@ removed. No content-check behavior for signing or approval is relaxed.
 ### v7.09 OCR pilot follow-up
 
 Update `documents_relay.gs` in the existing Docs/travel project and deploy a new version of its existing web app. In an already reviewed intake item, use **Read scan again with OCR**, then **Fill empty fields with suggestions**. Existing entered values are preserved. Check the original PDF before registration: OCR supports labelled routing-slip fields but cannot guarantee recognition of every page, table or handwritten note. Ambiguous dates, direction and actual office receipt time require review. No additional OCR vendor or service is introduced.
+
+### v7.10 originating-office direction rule
+
+Direction now follows the reviewed Sender / originating office when saving, applying suggestions or registering: the full Bureau of Local Health Systems Development name or the standalone BLHSD abbreviation means Outgoing; other identified senders mean Incoming. Existing OCR suggestions gain the derived direction without another OCR call. The rule also applies to Gmail documents; email delivery alone no longer forces Incoming. Correct the sender if OCR misreads it. This is an application update and requires no further relay deployment.
