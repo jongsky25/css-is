@@ -1,0 +1,38 @@
+{% extends "documents/base.html" %}
+{% block documents_content %}
+<p><a href="/documents/{{ doc.id }}">← Back to {{ doc.number }}</a></p>
+<h2>Page notes and pen marks · {{ doc.subject }}</h2>
+<p>File version #{{ file_version.id }} · {{ file_version.role }} · {{ file_version.fingerprint or 'No confirmed exact version' }}</p>
+<p>Page notes are tied to this file version. For pen marks, select your local copy of the same PDF. The file stays in your browser; the app checks its SHA-256 against the exact Drive version before saving marks.</p>
+<p><a href="{{ file_version.url }}" target="_blank" rel="noopener noreferrer">Open the file in Drive</a></p>
+<section class="doc-card"><h3>Saved annotations</h3>
+<ol>{% for item in annotations %}<li>Page {{ item.page_number }} · {{ item.author }} · {{ item.created_at }} · {{ 'Pen marks' if item.kind=='ink' else 'Note' }}{% if item.body %}<p>{{ item.body }}</p>{% endif %}</li>{% else %}<li>No annotations on this version.</li>{% endfor %}</ol>
+<p>Annotations are kept with the selected version; a new file version needs its own review.</p></section>
+{% if can_annotate %}
+<section class="doc-card"><h3>Add a page note</h3>
+<form method="post" action="/documents/{{ doc.id }}/annotate/{{ file_version.id }}">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ doc.revision }}">
+<input type="hidden" name="kind" value="note">
+<label>Page number<input name="page_number" type="number" min="1" max="500" required></label>
+<label>Note<textarea name="body" maxlength="4000" required></textarea></label>
+<button>Save page note</button></form></section>
+<section class="doc-card" id="doc-ink"
+ data-save-url="/documents/{{ doc.id }}/annotate/{{ file_version.id }}"
+ data-csrf="{{ csrf }}" data-revision="{{ doc.revision }}">
+<h3>Draw on a matching PDF</h3>
+<label>Select local PDF (up to 20 MiB)<input id="doc-ink-file" type="file" accept="application/pdf,.pdf"></label>
+<p id="doc-ink-status" role="status">Select a file to start.</p>
+<div class="doc-ink-controls" hidden>
+<button type="button" id="doc-ink-prev">Previous page</button>
+<span id="doc-ink-page-label"></span>
+<button type="button" id="doc-ink-next">Next page</button>
+<button type="button" id="doc-ink-undo">Undo stroke</button>
+<button type="button" id="doc-ink-clear">Clear unsaved marks</button>
+<button type="button" id="doc-ink-save">Save marks on this page</button>
+</div>
+<div class="doc-ink-stage" hidden><canvas id="doc-ink-pdf"></canvas><canvas id="doc-ink-overlay" aria-label="Draw pen marks on the selected PDF page"></canvas></div>
+</section>
+<script id="doc-ink-saved" type="application/json">{{ annotations|tojson }}</script>
+<script src="/static/js/document_ink.mjs?v=1" type="module"></script>
+{% endif %}
+{% endblock %}

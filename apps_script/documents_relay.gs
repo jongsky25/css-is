@@ -71,6 +71,7 @@ function dmInspect_(req) {
   dmExpect_(req.file_id, dmFingerprint_(meta));
   return {ok:true, operation_id:req.operation_id, accessible:true, file_id:meta.id,
           fingerprint:dmFingerprint_(meta), size:blob.getBytes().length, mime:meta.mimeType,
+          sha256:dmDigest_(blob.getBytes()),
           access_identity:'relay account only'};
 }
 function dmMarker_(id, opened) {
@@ -130,6 +131,8 @@ function dmExtract_(req) {
     if (text.length > DM_MAX_TEXT) dmError_('input_too_large');
     const current=intake ? dmIntakeOcrSource_(req) : dmExpect_(meta.id,fingerprint);
     if (intake && current.mimeType!==meta.mimeType) dmError_('version_changed');
+    if (req.return_text===true) return {ok:true,operation_id:req.operation_id,state:'confirmed',
+      file_id:current.id,fingerprint:dmFingerprint_(current),mime:current.mimeType,text:text};
     return Object.assign({ok:true, operation_id:req.operation_id, state:'confirmed'}, dmSuggest_(text),
       intake ? {file_id:current.id,content_key:current.md5Checksum,fingerprint:dmFingerprint_(current)} : {});
   } finally {
@@ -137,6 +140,10 @@ function dmExtract_(req) {
     // silently report successful transient processing if cleanup failed.
     if (temp) Drive.Files.remove(temp);
   }
+}
+function dmText_(req) {
+  if (req.intake===true || !req.fingerprint) dmError_('bad_request');
+  return dmExtract_(Object.assign({},req,{return_text:true}));
 }
 // Parse only labelled metadata. OCR can flatten table cells or split labels/values.
 function dmSuggest_(text) {
@@ -391,6 +398,7 @@ function documentOperation_(req,allowed) {
     if (kind==='inspect') return dmInspect_(req);
     if (kind==='preview') return dmPreview_(req);
     if (kind==='extract') return dmExtract_(req);
+    if (kind==='text') return dmText_(req);
     const lock=LockService.getScriptLock();
     if (!lock.tryLock(1000)) dmError_('busy');
     try {

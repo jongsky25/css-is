@@ -1,3 +1,10 @@
+## 7.18 — October 19, 2026
+
+- Download an editable Word memorandum draft from an outgoing document.
+- Add page notes or pen marks tied to a selected PDF version; pen marks require a matching local copy.
+- Index or remove a file’s searchable text with current access and an exact Drive version check.
+- Update the existing travel Docs Apps Script deployment to activate pen matching and file text extraction.
+
 ## 7.17 — October 19, 2026
 
 - Include the new instruction, search and action modules in the deployed app.

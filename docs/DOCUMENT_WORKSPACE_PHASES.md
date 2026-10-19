@@ -138,10 +138,45 @@ A prior local 10,000-entry queue measurement returned one page/counts in a media
 1.3 ms, without Drive calls; it is not a production latency guarantee. The legacy
 all-document register/export retains its previous visibility implementation.
 
-Later increments include pen/page annotations, office memo templates and searching
-the contents of Drive files, guided by pilot feedback. Existing restricted records should not be placed in the general
+The next release adds page annotations, editable memo drafts and explicit search indexing
+for supported Drive files. Existing restricted records should not be placed in the general
 unregistered intake audience;
 queue access currently requires bureau-wide records authority.
+
+### Memorandum drafts, page annotations and Drive text (v7.18)
+
+On an active outgoing record, someone with document work access can download an
+editable Word memorandum draft. The internal and response layouts include record
+context and user-entered fields. The draft is not an official letterhead or a final
+artifact: review it, store the approved copy in Drive, then attach it through the
+existing exact-version workflow. Downloading never approves, signs or dispatches.
+
+Each listed file version has a page-annotation view. Permitted workers and the
+assigned formal reviewer can add page-numbered notes; all current document viewers
+can read them. Pen marks use a browser-selected local PDF, rendered by the bundled
+PDF.js. The browser sends only the PDF SHA-256 and normalized strokes; the PDF bytes
+stay in the browser. Before saving, the app checks the SHA-256 and Drive version
+through the existing Docs relay. Notes and marks are append-only and tied to one
+file version. They do not alter the Drive file or its approval state. For a native
+Google Doc or non-PDF file, use page notes or the file's own Drive comments.
+
+A permitted worker may explicitly index or remove searchable text for a current
+draft or reference file. The Docs relay reads Google Docs, bounded Sheets, UTF-8
+text, PDFs and supported image scans, confirms the file version before and after,
+and deletes temporary OCR copies. Up to 100,000 characters are stored in the
+application's search index and backups. Results are a snapshot, not a live read of
+Drive. Search exposes file snippets only to the indexer or accounts explicitly
+granted document access, and still applies the current document visibility check.
+Drive sharing remains separate. If a Drive file changes, attach it as a new version before indexing again;
+older draft indexes are excluded from current search results. An unchanged
+version can be indexed again or its index removed.
+
+To activate PDF matching and file-text indexing, replace **both**
+`apps_script/documents_relay.gs` and `apps_script/travel_docs.gs` in the existing
+travel Docs Apps Script project, then deploy a **new version of the same web app**.
+Keep its URL, secrets, project properties and other script files. The application
+fails closed for those actions until the updated relay is running. Memo drafts and
+page notes need only the application release.
 
 The **My actions** screen now collects unread tagged instructions, active document
 contributions, formal reviews, Director routing and lead follow-up. It shows due

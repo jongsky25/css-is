@@ -17,6 +17,9 @@ import documents_operations as ops
 import documents_rules as rules
 import documents_calendar as cal
 import documents_actions as actions
+import documents_memo as memo
+import documents_annotations as annotations
+import documents_file_text as file_text
 import work
 import work_intake
 import work_readiness
@@ -95,6 +98,8 @@ def make_router(templates,get_conn):
         if any(a['due_date'] and a['due_date']<doc['created_at'][:10] for a in details['assignments']):
             warnings.append('The proposed contributor buffer cannot fit before the deadline. The lead must adjust milestones explicitly.')
         return {'doc':doc,**details,'policy':policy,'duplicates':d.duplicate_candidates(conn,user,doc_id),
+                'file_indexes':{row['version_id']:row for row in rows(conn,
+                    'SELECT version_id,indexed_at,chars FROM document_file_index WHERE document_id=?',(doc_id,))},
                 'email_bodies':rows(conn,"SELECT body_text FROM document_intake_email WHERE document_id=? AND body_text<>''",(doc_id,)),
                 'filing_rows':rows(conn,"SELECT original_name,filing_state,error FROM document_intake WHERE document_id=? AND filing_state<>'none'",(doc_id,)),
                 'instruction_recipients':rows(conn,'SELECT r.directive_id,r.user_id FROM document_instruction_recipient r JOIN document_directive d ON d.id=r.directive_id WHERE d.document_id=?',(doc_id,)),
@@ -354,6 +359,107 @@ def make_router(templates,get_conn):
             if fields:
                 data['checklist' if prefix=='checklist' else 'evidence']=fields
         return data
+
+    @router.post('/documents/{doc_id}/memo.docx')
+    async def memo_draft(request: Request, doc_id: int):
+        conn = get_conn()
+        try:
+            data = await posted(request)
+            user = p.actor(conn, request.state.user)
+            doc = d.get(conn, user, doc_id)
+            d.writable(conn)
+            d.require(p.can_work(conn, user, doc) and doc['direction'] == 'OUT'
+                      and doc['status'] not in ('closed', 'cancelled', 'released', 'awaiting_acknowledgment')
+                      and not doc['archived_at'])
+            content = memo.build(doc, data)
+            return Response(content, media_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                            headers={'Content-Disposition': f'attachment; filename="{doc["number"]}-memo-draft.docx"',
+                                     'Cache-Control': 'no-store'})
+        except p.Denied as exc:
+            return HTMLResponse(str(exc), status_code=403)
+        except ValueError as exc:
+            return HTMLResponse(str(exc), status_code=400)
+        finally:
+            conn.close()
+
+    @router.get('/documents/{doc_id}/annotate/{version_id}', response_class=HTMLResponse)
+    def annotation_page(request: Request, doc_id: int, version_id: int):
+        conn = get_conn()
+        try:
+            user = p.actor(conn, request.state.user)
+            doc, file_version = annotations.source(conn, user, doc_id, version_id)
+            items = annotations.list_for_version(conn, user, doc_id, version_id)
+            for item in items:
+                item['strokes'] = json.loads(item['strokes_json'])
+            can_annotate = (d.enabled(conn) and not doc['archived_at'] and
+                doc['status'] not in ('closed', 'cancelled', 'released', 'awaiting_acknowledgment') and
+                (p.can_work(conn, user, doc) or (doc['reviewer_id'] == user['id'] and doc['status'] == 'in_review')))
+            response = render(request, conn, 'annotate', doc=doc, file_version=file_version,
+                              annotations=items, can_annotate=can_annotate)
+            response.headers['Cache-Control'] = 'no-store'
+            return response
+        except p.Denied as exc:
+            return HTMLResponse(str(exc), status_code=404)
+        finally:
+            conn.close()
+
+    @router.post('/documents/{doc_id}/annotate/{version_id}')
+    async def annotation_save(request: Request, doc_id: int, version_id: int):
+        try:
+            import asyncio
+            data = await posted(request)
+            ink = data.get('kind') == 'ink'
+            strokes = json.loads(data.get('strokes', '[]')) if ink and isinstance(data.get('strokes'), str) else data.get('strokes') if ink else None
+            def save():
+                conn = get_conn()
+                try:
+                    return annotations.save(conn, request.state.user, doc_id, version_id,
+                                            data.get('revision'), data.get('page_number'),
+                                            body=data.get('body', ''), strokes=strokes,
+                                            source_sha256=data.get('source_sha256', ''))
+                finally:
+                    conn.close()
+            await asyncio.to_thread(save)
+            return RedirectResponse(f'/documents/{doc_id}/annotate/{version_id}', status_code=303)
+        except p.Denied as exc:
+            return HTMLResponse(str(exc), status_code=403)
+        except (ValueError, TypeError) as exc:
+            return HTMLResponse(str(exc), status_code=409 if isinstance(exc, d.Conflict) else 400)
+
+    @router.post('/documents/{doc_id}/index-file')
+    async def index_file(request: Request, doc_id: int):
+        try:
+            import asyncio
+            data = await posted(request)
+            version_id = int(data.get('version_id'))
+            def index():
+                conn = get_conn()
+                try:
+                    return file_text.index(conn, request.state.user, doc_id, version_id,
+                                           data.get('revision'))
+                finally:
+                    conn.close()
+            await asyncio.to_thread(index)
+            return RedirectResponse(f'/documents/{doc_id}?file={version_id}', status_code=303)
+        except p.Denied as exc:
+            return HTMLResponse(str(exc), status_code=403)
+        except (ValueError, TypeError) as exc:
+            return HTMLResponse(str(exc), status_code=409 if isinstance(exc, d.Conflict) else 400)
+
+    @router.post('/documents/{doc_id}/unindex-file')
+    async def unindex_file(request: Request, doc_id: int):
+        conn = get_conn()
+        try:
+            data = await posted(request)
+            version_id = int(data.get('version_id'))
+            file_text.remove(conn, request.state.user, doc_id, version_id, data.get('revision'))
+            return RedirectResponse(f'/documents/{doc_id}', status_code=303)
+        except p.Denied as exc:
+            return HTMLResponse(str(exc), status_code=403)
+        except (ValueError, TypeError) as exc:
+            return HTMLResponse(str(exc), status_code=409 if isinstance(exc, d.Conflict) else 400)
+        finally:
+            conn.close()
 
     def setup_signature(request, preview):
         payload = json.dumps(preview, sort_keys=True, separators=(',', ':'))

@@ -57,7 +57,7 @@ def list_visible(conn, user, query='', queue='all'):
     result = []
     if queue == 'instruction' and not p.director(conn,user):
         return []
-    text_matches = search.matches(conn,query) if query else {}
+    text_matches = search.matches(conn,query,user['id']) if query else {}
     predicate = "WHERE d.instruction_state='pending' AND d.archived_at IS NULL AND d.status NOT IN ('closed','cancelled')" if queue == 'instruction' else ''
     for doc in rows(conn, '''SELECT d.*, EXISTS(SELECT 1 FROM document_email_import i
             WHERE i.document_id=d.id) AS gmail_imported FROM document d ''' + predicate + ' ORDER BY d.id DESC'):

@@ -66,6 +66,19 @@ def install(conn):
       url TEXT NOT NULL, file_id TEXT NOT NULL, fingerprint TEXT NOT NULL,
       role TEXT NOT NULL, parent_id INTEGER REFERENCES document_file_version(id),
       actor_id INTEGER NOT NULL REFERENCES admin_user(id), created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS document_annotation (
+      id INTEGER PRIMARY KEY, document_id INTEGER NOT NULL REFERENCES document(id),
+      version_id INTEGER NOT NULL REFERENCES document_file_version(id),
+      actor_id INTEGER NOT NULL REFERENCES admin_user(id), page_number INTEGER NOT NULL,
+      kind TEXT NOT NULL CHECK(kind IN ('note','ink')), body TEXT NOT NULL DEFAULT '',
+      strokes_json TEXT NOT NULL DEFAULT '[]', source_sha256 TEXT,
+      created_at TEXT NOT NULL);
+    CREATE INDEX IF NOT EXISTS document_annotation_version ON document_annotation(version_id,page_number,id);
+    CREATE TABLE IF NOT EXISTS document_file_index (
+      version_id INTEGER PRIMARY KEY REFERENCES document_file_version(id),
+      document_id INTEGER NOT NULL REFERENCES document(id),
+      fingerprint TEXT NOT NULL, indexed_by INTEGER NOT NULL REFERENCES admin_user(id),
+      indexed_at TEXT NOT NULL, chars INTEGER NOT NULL);
     CREATE TABLE IF NOT EXISTS document_review (
       id INTEGER PRIMARY KEY, document_id INTEGER NOT NULL REFERENCES document(id),
       version_id INTEGER NOT NULL REFERENCES document_file_version(id), actor_id INTEGER NOT NULL REFERENCES admin_user(id),

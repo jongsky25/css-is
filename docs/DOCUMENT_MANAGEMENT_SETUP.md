@@ -164,6 +164,17 @@ longer used. Keep the current `CSS_DOCS_RELAY_*` and `CSS_MAIL_RELAY_*` values o
 
 ### Supported document operations
 
+- **PDF check for pen marks:** inspect now also returns the SHA-256 of the bytes
+  read by the relay. The app accepts ink only for a local PDF with the same hash
+  and exact Drive version. Update `documents_relay.gs` and `travel_docs.gs` in the
+  existing travel Docs project, then deploy a new web-app version before using it.
+- **Explicit text indexing:** `document_text` returns up to 100,000 characters
+  from a version-checked file using the existing extraction and OCR cleanup path.
+  The app stores that snapshot in its SQLite search index and backups. Indexing
+  does not run for every file automatically; permitted staff can reindex the same exact version or remove
+  an index from the document record. File snippets require explicit document
+  access or the original indexer, in addition to current record visibility.
+
 - **Inspect:** checks Drive accessibility and returns `drive-v3:<file-id>:<version>` from Drive v3.
   For exported attachments it checks the version before and after export. Size is bounded to 20 MiB;
   access proves access for the relay identity only.

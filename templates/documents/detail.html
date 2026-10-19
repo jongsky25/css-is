@@ -2,6 +2,22 @@
 {% block documents_content %}
 <h2>{{ doc.number }} · {{ doc.subject }}</h2>
 {% include 'documents/workspace.html' %}
+{% if enabled and can_work and doc.direction=='OUT' and doc.status not in ['closed','cancelled','released','awaiting_acknowledgment'] and not doc.archived_at %}
+<details class="doc-card"><summary>Start from a memorandum template</summary>
+<p>Download an editable Word draft, review it in your office format, then attach its final Drive copy to this record. Downloading does not approve, sign or send it.</p>
+<form method="post" action="/documents/{{ doc.id }}/memo.docx">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label>Template<select name="kind"><option value="internal">Internal memorandum</option><option value="response">Response memorandum</option></select></label>
+<label>To<input name="to" maxlength="500" required></label>
+<label>From<input name="from" maxlength="500" value="{{ names.get(request.state.user.id,'') }}" required></label>
+<label>Date<input type="date" name="date" required></label>
+<label>Subject<input name="subject" maxlength="500" value="{{ doc.subject }}" required></label>
+<label>Reference<input name="reference" maxlength="500" value="{{ doc.number }}"></label>
+<label>Body<textarea name="body" maxlength="12000" required></textarea></label>
+<label>Prepared by<input name="prepared_by" maxlength="200"></label>
+<button>Download Word draft</button>
+</form></details>
+{% endif %}
 <details class="doc-secondary"><summary>Record details and additional actions</summary>
 <p>{{ doc.type }} · {{ doc.visibility }} · {{ 'Awaiting verification' if doc.verification=='pending' else doc.verification|replace('_',' ') }} · {{ doc.status|replace('_',' ') }}</p>
 <p>Due: {{ doc.due_date or 'Unknown' }} ({{ doc.due_source or 'not set' }}) · Last change {{ doc.updated_at }} · Revision {{ doc.revision }}</p>
@@ -27,7 +43,7 @@
 {% include 'documents/assignments.html' %}
 {% if consolidation %}<section class="doc-card"><h3>Consolidation review</h3><p><a href="/work/{{ consolidation.case.id }}/consolidation">{{ consolidation.case.title }} — inputs and review history</a></p><p>Requested version #{{ consolidation.version.id }} · {{ consolidation.version.fingerprint }}. {{ consolidation.accepted }} accepted inputs; {{ consolidation.missing }} required inputs outstanding at request.</p>{% if not consolidation.current %}{% if doc.status in ('released','awaiting_acknowledgment','closed','cancelled') %}<p>Historical review context is retained. Use the work item completion checklist to check current requirements.</p>{% else %}<p class="doc-alert">Inputs or the exact draft changed. Request renewed consolidation review.</p>{% endif %}{% endif %}</section>{% endif %}
 <h3>Review feedback</h3><ul>{% for review in reviews %}<li>Version #{{ review.version_id }} · {{ review.decision|replace('_',' ') }} · {{ names.get(review.actor_id,'Former staff member') }} · {{ review.created_at }}<p>{{ review.reason }}</p></li>{% else %}<li>No formal review recorded.</li>{% endfor %}</ul>
-<h3>Files and versions</h3><p>Drive permissions are managed in Drive. An adapter check establishes access for its identity only.</p><ul>{% for v in versions %}<li>#{{ v.id }} · <a href="{{ v.url }}" target="_blank" rel="noopener noreferrer">{{ v.role }} file</a> · Exact version: {{ v.fingerprint or 'Not checked — reference only' }}{% if v.id==doc.current_version %} · Current{% endif %}</li>{% else %}<li>No scan or draft attached.</li>{% endfor %}</ul>
+<h3>Files and versions</h3><p>Drive permissions are managed in Drive. An adapter check establishes access for its identity only.</p><ul>{% for v in versions %}<li>#{{ v.id }} · <a href="{{ v.url }}" target="_blank" rel="noopener noreferrer">{{ v.role }} file</a> · <a href="/documents/{{ doc.id }}/annotate/{{ v.id }}">Page notes and pen marks</a> · Exact version: {{ v.fingerprint or 'Not checked — reference only' }}{% if file_indexes.get(v.id) %} · Text indexed {{ file_indexes[v.id].indexed_at }}{% endif %}{% if enabled and can_work and not doc.archived_at and doc.status not in ['closed','cancelled'] %}<form method="post" action="/documents/{{ doc.id }}/index-file"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ doc.revision }}"><input type="hidden" name="version_id" value="{{ v.id }}"><button>Index text for this version</button></form>{% if file_indexes.get(v.id) %}<form method="post" action="/documents/{{ doc.id }}/unindex-file"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ doc.revision }}"><input type="hidden" name="version_id" value="{{ v.id }}"><button>Remove indexed text</button></form>{% endif %}{% endif %}{% if v.id==doc.current_version %} · Current{% endif %}</li>{% else %}<li>No scan or draft attached.</li>{% endfor %}</ul>
 <h3>Directives</h3><ul>{% for x in directives %}<li>{{ x.created_at }} · {{ x.text }}</li>{% else %}<li>No Director directive recorded.</li>{% endfor %}</ul>
 <h3>Related records</h3><ul>{% for x in related %}<li><a href="/documents/{{ x.id }}">{{ x.number }} · {{ x.subject }}</a></li>{% else %}<li>No visible related records.</li>{% endfor %}</ul>
 {% if work_cases or work_enabled %}<h3>Shared work</h3><ul>{% for item in work_cases %}<li><a href="/work/{{ item.id }}">{{ item.title }}</a></li>{% else %}<li>No permitted work items linked.</li>{% endfor %}</ul>{% if work_enabled %}<p><a href="/work/new?source_document_id={{ doc.id }}">Start a work item from this document</a> · <a href="/work">Find existing work</a></p>{% endif %}{% endif %}

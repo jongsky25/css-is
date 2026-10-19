@@ -1,5 +1,6 @@
 """Synthetic document lifecycle contracts; no live mail, Drive or signing."""
 from datetime import datetime, timezone
+from io import BytesIO
 from concurrent.futures import ThreadPoolExecutor
 import json
 import pytest
@@ -9,6 +10,9 @@ import documents_permissions as p
 import documents_operations as ops
 import documents_rules as rules
 import documents_notify as notices
+import documents_annotations as annotations
+import documents_file_text as file_text
+import documents_memo as memo
 import documents_actions as actions
 from documents_storage import rows, transaction
 
@@ -126,6 +130,71 @@ def test_stored_text_search_backfills_existing_registry(registry):
     st.init_db(c)
     assert [item['id'] for item in d.list_visible(c,u[0],'searchable')]==[doc['id']]
     assert c.execute('SELECT COUNT(*) FROM document_search_fts WHERE document_id=?',(doc['id'],)).fetchone()[0]==1
+
+
+def test_memo_draft_has_editable_content_without_formal_decision(registry):
+    from docx import Document
+    c,u,unit,_=registry
+    doc=register(c,u[0],unit,'OUT')
+    content=memo.build(doc,{'kind':'response','to':'Office A','from':'Division B',
+        'date':'2026-10-19','subject':'Synthetic reply','body':'First paragraph.\nSecond paragraph.',
+        'prepared_by':'Staff Member'})
+    paragraphs=[p.text for p in Document(BytesIO(content)).paragraphs]
+    assert 'RESPONSE MEMORANDUM' in paragraphs
+    assert 'First paragraph.' in paragraphs and 'Second paragraph.' in paragraphs
+    assert 'This draft is not an approval, signature, or dispatch.' in paragraphs
+    assert d.raw(c,doc['id'])['status']=='draft'
+
+
+def test_page_ink_requires_matching_drive_pdf_and_current_access(registry):
+    c,u,unit,_=registry
+    doc=register(c,u[0],unit,'OUT')
+    vid=c.execute('''INSERT INTO document_file_version(document_id,url,file_id,fingerprint,role,actor_id,created_at)
+        VALUES (?,?,?,?,?,?,?)''',(doc['id'],'https://drive.google.com/file/d/sourcefile12345/view',
+        'sourcefile12345','drive-v3:sourcefile12345:1','draft',u[0]['id'],'2026-10-19')).lastrowid
+    c.commit()
+    class Drive:
+        def call(self,action,payload,operation):
+            assert action=='inspect'
+            return {'accessible':True,'file_id':'sourcefile12345','fingerprint':'drive-v3:sourcefile12345:1',
+                    'mime':'application/pdf','sha256':'a'*64}
+    with pytest.raises(ValueError,match='does not match'):
+        annotations.save(c,u[0],doc['id'],vid,doc['revision'],1,
+                         strokes=[[[0.1,0.1],[0.2,0.2]]],source_sha256='b'*64,adapter=Drive())
+    aid=annotations.save(c,u[0],doc['id'],vid,doc['revision'],1,
+                         strokes=[[[0.1,0.1],[0.2,0.2]]],source_sha256='a'*64,adapter=Drive())
+    assert annotations.list_for_version(c,u[0],doc['id'],vid)[0]['id']==aid
+    with pytest.raises(p.Denied):
+        annotations.list_for_version(c,u[4],doc['id'],vid)
+    with pytest.raises(d.Conflict):
+        annotations.save(c,u[0],doc['id'],vid,doc['revision'],2,body='Stale note')
+
+
+def test_indexed_drive_text_needs_explicit_access_and_current_version(registry):
+    c,u,unit,_=registry
+    doc=register(c,u[0],unit,'OUT',subject='Routine record')
+    vid=c.execute('''INSERT INTO document_file_version(document_id,url,file_id,fingerprint,role,actor_id,created_at)
+        VALUES (?,?,?,?,?,?,?)''',(doc['id'],'https://drive.google.com/file/d/sourcefile12345/view',
+        'sourcefile12345','drive-v3:sourcefile12345:1','draft',u[0]['id'],'2026-10-19')).lastrowid
+    c.execute("UPDATE document SET current_version=?,verification='verified',visibility='bureau' WHERE id=?",(vid,doc['id']))
+    c.commit()
+    class Drive:
+        def call(self,action,payload,operation):
+            assert action=='text' and payload['fingerprint']=='drive-v3:sourcefile12345:1'
+            return {'state':'confirmed','file_id':'sourcefile12345','fingerprint':payload['fingerprint'],
+                    'text':'The marmalade assessment belongs to this draft.'}
+    assert file_text.index(c,u[0],doc['id'],vid,doc['revision'],adapter=Drive())>0
+    assert d.list_visible(c,u[0],'marmalade')[0]['search_source']=='Indexed file snapshot'
+    assert d.list_visible(c,u[4],'marmalade')==[]  # Bureau visibility alone is not file-text access.
+    c.execute('INSERT INTO document_access(document_id,user_id,source) VALUES (?,?,?)',(doc['id'],u[3]['id'],'test'))
+    c.commit()
+    assert [x['id'] for x in d.list_visible(c,u[3],'marmalade')]==[doc['id']]
+    c.execute('DELETE FROM document_access WHERE document_id=? AND user_id=?',(doc['id'],u[3]['id']))
+    c.execute('UPDATE document SET current_version=NULL WHERE id=?',(doc['id'],))
+    c.commit()
+    assert d.list_visible(c,u[0],'marmalade')==[]  # Historical draft text is not treated as current.
+    file_text.remove(c,u[0],doc['id'],vid,doc['revision'])
+    assert c.execute('SELECT 1 FROM document_file_index WHERE version_id=?',(vid,)).fetchone() is None
 
 
 def test_action_screen_tracks_personal_steps_and_current_access(registry):
