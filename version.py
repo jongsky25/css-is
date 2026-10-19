@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.12"
+APP_VERSION = "7.13"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.13",
+        "date": "October 19, 2026",
+        "summary": "Connect work email to the document review queue from Intake settings.",
+        "changes": [
+            "Records and workflow administrators can set the Gmail mailbox, select a records owner and enable or pause email intake.",
+            "Setup checks the hosting secret and review queue before enabling intake, while keeping the secret hidden.",
+            "Email importing still starts from the existing Apps Script project after a successful manual test."
+        ]
+    },
     {
         "version": "7.12",
         "date": "October 19, 2026",

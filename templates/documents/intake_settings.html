@@ -1,10 +1,35 @@
 {% extends 'documents/base.html' %}{% block documents_content %}
-<h2>Connect office Drive intake</h2>
+<h2>Drive and Gmail intake settings</h2>
+<h3>Office Drive</h3>
 <p>Use the office account’s To Review and Filed folders in My Drive, or two folders in the same Shared Drive. The existing Workspace relay must be updated with the matching folder IDs before enabling checks.</p>
-<form method="post" class="doc-card"><input type="hidden" name="csrf" value="{{ csrf }}">
+<form method="post" action="/documents/intake/settings" class="doc-card"><input type="hidden" name="csrf" value="{{ csrf }}">
 <label>To Review folder ID<input name="inbox" value="{{ config.inbox }}" maxlength="200"></label>
 <label>Filed folder ID<input name="filed" value="{{ config.filed }}" maxlength="200"></label>
 <label class="doc-check"><input type="checkbox" name="enabled" value="yes" {% if config.intake_enabled=='1' %}checked{% endif %}> Enable discovery and filing</label>
 <p>Checks run under your records authority. Files are renamed and moved only after a reviewer confirms registration. Moving files can change inherited Drive access; check the destination folder's permissions first.</p>
 <button>Save intake settings</button> <a href="/documents/intake">Back to queue</a><p>Enabling this workflow also sends future Gmail imports to the review queue before registration. Gmail auto-pull has its own enable switch and trigger. Pausing Drive does not restore automatic email registration.</p></form>
+<section id="gmail">
+{% set gmail_values = gmail_values|default({}) %}
+<h3>Work email / Gmail</h3>
+{% if request.query_params.get('gmail_saved') %}<p role="status">Gmail settings saved. Office Connect intake is {{ 'enabled' if gmail.intake_enabled=='1' else 'paused' }}.</p>{% endif %}
+<p>Imported emails and their attachments wait in Intake for review before receiving a document number.</p>
+<p>Office Connect intake: <strong>{{ 'Enabled' if gmail.intake_enabled=='1' else 'Paused' }}</strong>.
+Hosting intake secret: <strong>{{ 'Configured' if gmail.secret_configured else 'Missing or too short' }}</strong>.
+Review queue and first Drive check: <strong>{{ 'Ready' if gmail.review_ready else 'Setup needed' }}</strong>.</p>
+{% if not gmail.secret_configured %}<p>Add <code>CSS_GMAIL_INTAKE_SECRET</code> to the hosting secrets with the same value used in Apps Script. The value is never shown or entered on this page.</p>{% endif %}
+{% if not gmail.review_ready %}<p>Save the office Drive settings above, then use <a href="/documents/intake">Check Drive now</a> and confirm a successful check.</p>{% endif %}
+<form method="post" action="/documents/intake/settings/gmail" class="doc-card">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label>Gmail mailbox<input type="email" name="mailbox" maxlength="254" required value="{{ gmail_values.get('mailbox',gmail.mailbox) }}" placeholder="office@example.gov.ph"></label>
+<label>Records owner<select name="actor_id" required>
+<option value="">Choose a records officer</option>
+{% for account in records_accounts %}<option value="{{ account.id }}" {% if gmail_values.get('actor_id',gmail.actor_id)==account.id|string %}selected{% endif %}>{{ account.username }}</option>{% endfor %}
+</select></label>
+<p>Only active accounts with the Records officer grant for All units appear. Manage grants in <a href="/documents/rules">Rules and policies</a>.</p>
+<label class="doc-check"><input type="checkbox" name="enabled" value="yes" {% if gmail_values.get('enabled','yes' if gmail.intake_enabled=='1' else '')=='yes' %}checked{% endif %}> Enable Gmail intake in Office Connect</label>
+<button>Save Gmail settings</button>
+<p>Keep Apps Script importing paused during setup. After saving, run one manual import and verify the Waiting queue before enabling the five-minute trigger. This page does not start the importer or confirm that the two secrets match.</p>
+</form>
+{% if gmail.intake_enabled=='1' %}<form method="post" action="/documents/intake/settings/gmail"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="action" value="pause"><button>Pause Gmail intake</button></form>{% endif %}
+</section>
 {% endblock %}
