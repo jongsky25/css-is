@@ -5,6 +5,31 @@
 
 # Gmail document intake: incremental implementation
 
+## Byte-array compatibility update (v7.14)
+
+An office pilot diagnostic confirmed that the Apps Script advanced Gmail service
+returns `MessagePartBody.data` as decoded byte arrays for both bodies and attachments.
+The former string-only reader rejected these with `gmail_body_unavailable` and
+`attachment_size`, even when the actual and declared byte counts matched.
+
+Replace **only `gmail_documents_import.gs`** in the existing mail project with the
+updated file. It now accepts signed/unsigned byte arrays and base64url strings,
+checks numeric byte ranges and size limits, and retains the attachment's exact
+expected length and Drive checksum checks. No web-app redeployment is needed.
+Keep the existing properties, receipt indexes, folder IDs and other script files.
+
+For receipts created by the failed pilot, run **`retryGmailDocumentReadFailures`**
+once with the importer configured/enabled, then run **`importGmailDocuments`**.
+The retry function reads at most the first 20 indexed receipts and resets only
+pending/blocked `gmail_body_unavailable` or `attachment_size` failures without a
+saved request payload or confirmed uploaded files. It validates mailbox/folder
+binding, records the executing mailbox and repair reason, and preserves reserved
+file IDs and source metadata. It does not itself download, upload or submit mail.
+Completed imports and other failures are untouched. For later receipt pages use
+the existing individual `retryGmailDocument` control with the receipt ID and reason.
+Genuine size mismatches will fail validation again. Confirm the live import result
+before scheduling the trigger; synthetic checks do not establish live acceptance.
+
 ## Phase 1 — intake foundation
 
 Implemented locally: an authenticated machine endpoint, disabled-by-default switch,
