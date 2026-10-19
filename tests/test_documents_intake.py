@@ -357,3 +357,34 @@ def test_explicit_ocr_reread_refreshes_suggestions_without_overwriting_draft(reg
     assert item['suggestions']['suggestions']['type']=='Memorandum'
     assert item['draft']['subject']=='Reviewed request'
     assert item['draft']['type']=='Letter'
+
+
+@pytest.mark.parametrize('sender,expected',[
+    ('Bureau of Local Health Systems Development - Office of the Director','OUT'),
+    ('BUREAU OF LOCAL HEALTH SYSTEMS DEVELOPMENT (BLHSD)','OUT'),
+    ('BLHSD - Health Systems Development Division (HSDD)','OUT'),
+    ('blhsd@doh.gov.ph','OUT'),
+    ('Regional Office','IN'),('OtherBLHSDOffice','IN'),('', ''),
+])
+def test_direction_from_originating_office(sender,expected):
+    assert intake.direction_from_sender(sender)==expected
+
+
+def test_cached_ocr_direction_and_reviewed_sender_rule(registry):
+    c,u,unit,path=registry;seed(registry)
+    item=intake.claim(c,u[1],1,1)
+    c.execute("UPDATE document_intake SET suggestions_json=? WHERE id=1",
+              (json.dumps({'suggestions':{'sender':'BLHSD - HSDD'},'warnings':[]}),))
+    c.commit()
+    assert intake.get(c,u[1],1)['suggestions']['suggestions']['direction']=='OUT'
+    saved=intake.save(c,u[1],1,item['revision'],{**fields(),'sender':'BLHSD','direction':'IN'})
+    assert saved['draft']['direction']=='OUT'
+    doc=intake.register(c,u[1],1,saved['revision'],{**fields(),'sender':'BLHSD','direction':'IN'},adapter=Drive())
+    assert doc['direction']=='OUT'
+    assert doc['instruction_state']=='not_required'
+
+
+def test_corrected_sender_recalculates_direction():
+    assert intake.clean_fields({'sender':'Regional Office','direction':'OUT'})['direction']=='IN'
+    assert intake.clean_fields({'sender':'BLHSD','direction':'IN'})['direction']=='OUT'
+    assert intake.clean_fields({'sender':'','direction':''})['direction']==''
