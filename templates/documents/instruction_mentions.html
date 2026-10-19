@@ -1,0 +1,8 @@
+<div class="doc-mention-picker" data-doc-mention-picker>
+<p>Type @ in the instruction and choose a suggestion, or use the list below. Typing a name without selecting it does not notify anyone. Selected tags notify people with document access. A first Director routing instruction also assigns its tagged recipients.</p>
+<div class="doc-mention-results" role="listbox" aria-label="Mention suggestions" hidden></div>
+<details><summary>Choose tags without typing @</summary>
+{% for person in mention_people %}<label class="doc-check" data-mention-label="person" data-mention-name="{{ person.name }}"><input type="checkbox" name="mention_person:{{ person.id }}" value="yes" {% if submitted.get('mention_person:' ~ person.id)=='yes' %}checked{% endif %}>Person: {{ person.name }}</label>{% endfor %}
+{% for section in mention_sections %}<label class="doc-check" data-mention-label="section" data-mention-name="{{ section.name }}"><input type="checkbox" name="mention_section:{{ section.id }}" value="yes" {% if submitted.get('mention_section:' ~ section.id)=='yes' %}checked{% endif %}>Section: {{ section.name }}</label>{% endfor %}
+</details>
+</div>

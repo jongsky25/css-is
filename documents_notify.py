@@ -122,6 +122,16 @@ def bell_rows(conn,user_id,today=None):
     reviews = d.list_visible(conn, user, queue='review')
     if reviews:
         result.append({'text':f'{len(reviews)} document reviews awaiting your decision', 'url':'/approvals', 'count':len(reviews)})
+    mentions = rows(conn, '''SELECT x.document_id FROM document_directive x
+        JOIN document_instruction_recipient r ON r.directive_id=x.id
+        LEFT JOIN document_instruction_read seen ON seen.directive_id=x.id AND seen.user_id=r.user_id
+        WHERE r.user_id=? AND seen.directive_id IS NULL
+          AND EXISTS(SELECT 1 FROM document_instruction_tag t WHERE t.directive_id=x.id)
+        ORDER BY x.id DESC LIMIT 20''', (user_id,))
+    visible = [item for item in mentions if p.can_view(conn,user,d.raw(conn,item['document_id']))]
+    if visible:
+        result.append({'text':f'{len(visible)} unread document instructions',
+                       'url':'/documents?queue=mentions', 'count':len(visible)})
     return result
 
 

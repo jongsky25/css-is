@@ -15,6 +15,7 @@
 @media(max-width:760px){.doc-workspace{grid-template-columns:1fr}.doc-preview{position:static}.doc-preview iframe{height:55vh;min-height:320px}}
 
 .doc-email-body { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 65vh; overflow-y: auto; padding: 1rem; border: 1px solid #cbd5e1; border-radius: .5rem; }
+.doc-mention-picker{position:relative;margin:.5rem 0}.doc-mention-picker>p{font-size:.9rem}.doc-mention-results:not([hidden]){display:grid;max-height:14rem;overflow:auto;border:1px solid var(--line,#aaa);border-radius:.4rem;background:var(--surface,#fff);box-shadow:0 6px 18px #0002}.doc-mention-results button{display:block;width:100%;text-align:left;margin:0;border:0;border-bottom:1px solid var(--line,#ddd);border-radius:0;background:transparent}.doc-mention-results button:hover,.doc-mention-results button:focus-visible{background:var(--surface-2,#eef3f7)}.doc-tag{display:inline-block;margin:.2rem .25rem .2rem 0;padding:.15rem .45rem;border:1px solid var(--line,#aaa);border-radius:1rem;font-size:.85rem}
 
 /* Intake review: keep the document readable and the form usable at each width. */
 main.wrap:has(.doc-intake-review){max-width:1800px}
@@ -41,6 +42,15 @@ main.wrap:has(.doc-intake-review){max-width:1800px}
 body:has(.doc-intake-review) .sf-float{position:static;margin:1rem auto;display:flex;width:auto;max-width:calc(100% - 2rem)}
 html:has(.doc-intake-review){scroll-padding-top:calc(var(--topnav-h,53px) + 70px);scroll-padding-bottom:110px}
 .doc-intake-review input,.doc-intake-review textarea,.doc-intake-review select{scroll-margin-bottom:110px}
+.doc-action-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,310px),1fr));gap:.8rem}
+.doc-action-card{margin:0;min-width:0}
+.doc-action-card h3{font-size:1.08rem;margin:.55rem 0;overflow-wrap:anywhere}
+.doc-action-card p{margin:.5rem 0;overflow-wrap:anywhere}
+.doc-action-kind{font-weight:700}
+.doc-action-due{display:inline-block;margin-left:.5rem;color:var(--soft,#536275)}
+.doc-action-overdue{color:var(--danger,#a92727);font-weight:700}
+.doc-action-detail{white-space:pre-wrap;max-height:8rem;overflow:auto}
+.doc-action-card:target,article[id^="instruction-"]:target,article[id^="assignment-"]:target{outline:2px solid var(--accent,#17794b);scroll-margin-top:5rem}
 .doc-intake-review .doc-check input{min-height:0}
 @media(max-width:1199px){.doc-intake-review .doc-fields{grid-template-columns:1fr}}
 @media(max-width:999px){

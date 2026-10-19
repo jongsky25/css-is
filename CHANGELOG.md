@@ -1,3 +1,10 @@
+## 7.16 — October 19, 2026
+
+- Tag people and sections in instructions; recipients can find unread tags and mark them read.
+- Search saved document details, references, receipts, instructions and email bodies within current access.
+- Open My actions for personal steps or Division follow-up for chief and OIC exceptions.
+- Use My shared work for contributions already moved to Shared work.
+
 ## 7.12 — October 19, 2026
 
 - Prioritize the Date in the Originating office header block for routing-slip document-date suggestions.

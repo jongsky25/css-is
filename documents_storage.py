@@ -139,8 +139,21 @@ def install(conn):
     CREATE TABLE IF NOT EXISTS document_instruction_recipient (
       directive_id INTEGER NOT NULL REFERENCES document_directive(id),
       user_id INTEGER NOT NULL REFERENCES admin_user(id), PRIMARY KEY(directive_id,user_id));
+    CREATE TABLE IF NOT EXISTS document_instruction_tag (
+      directive_id INTEGER NOT NULL REFERENCES document_directive(id),
+      target_type TEXT NOT NULL CHECK(target_type IN ('person','section')),
+      target_id INTEGER NOT NULL,
+      PRIMARY KEY(directive_id,target_type,target_id));
+    CREATE INDEX IF NOT EXISTS document_instruction_tag_target ON document_instruction_tag(target_type,target_id);
+    CREATE TABLE IF NOT EXISTS document_instruction_read (
+      directive_id INTEGER NOT NULL REFERENCES document_directive(id),
+      user_id INTEGER NOT NULL REFERENCES admin_user(id),
+      read_at TEXT NOT NULL, PRIMARY KEY(directive_id,user_id));
     """)
     email_columns={row[1] for row in conn.execute('PRAGMA table_info(document_intake_email)')}
+    directive_columns={row[1] for row in conn.execute('PRAGMA table_info(document_directive)')}
+    if 'kind' not in directive_columns:
+        conn.execute("ALTER TABLE document_directive ADD COLUMN kind TEXT NOT NULL DEFAULT 'directive'")
     if 'body_text' not in email_columns:
         conn.execute("ALTER TABLE document_intake_email ADD COLUMN body_text TEXT NOT NULL DEFAULT ''")
     intake_columns={row[1] for row in conn.execute('PRAGMA table_info(document_intake)')}
@@ -161,6 +174,8 @@ def install(conn):
     conn.execute('CREATE INDEX IF NOT EXISTS document_instruction_queue ON document(instruction_state,id)')
     for key in ('documents.gmail_review_queue_enabled', 'documents.drive_intake_enabled', 'documents.enabled', 'documents.sending_enabled', 'documents.gmail_intake_enabled'):
         conn.execute('INSERT OR IGNORE INTO app_setting(key,value) VALUES (?,?)', (key, '0'))
+    import documents_search
+    documents_search.install(conn)
     conn.commit()
 
 

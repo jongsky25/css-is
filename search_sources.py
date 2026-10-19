@@ -248,9 +248,9 @@ def _documents(conn, user, terms, ctx):
     import documents
     if not documents.enabled(conn):
         return []
+    query = " ".join(terms)
     return [{"title": doc["subject"], "hint": doc["number"], "url": "/documents/"+str(doc["id"]),
-             "section": "Documents", "kw": ""} for doc in documents.list_visible(conn,user)
-            if all(t.lower() in (doc["subject"]+" "+doc["number"]).lower() for t in terms)][:SECTION_CAP]
+             "section": "Documents", "kw": ""} for doc in documents.list_visible(conn,user,query)][:SECTION_CAP]
 
 
 SOURCES = [

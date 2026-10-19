@@ -1,11 +1,13 @@
 {% extends "dash_layout.html" %}
 {% block title %}Documents{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/documents.css?v=7.11">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/documents.css?v=7.16">{% endblock %}
 {% block content %}
 <div class="documents {% block documents_class %}{% endblock %}">
 <h1>Documents</h1>
 <nav aria-label="Document queues" class="doc-tabs">
-<a href="/documents?queue=mine">My work</a>
+<a href="/documents/actions">My actions</a>
+<a href="/documents?queue=mine">My document register</a>
+<a href="/documents?queue=mentions">Instructions for me</a>
 {% if intake_access %}<a href="/documents/intake">Intake</a>{% endif %}
 {% if is_director %}<a href="/documents?queue=instruction">For my instruction</a>{% endif %}
 <a href="/documents">All documents</a>

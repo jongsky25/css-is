@@ -42,6 +42,59 @@ def test_rule_screen_requires_explicit_workflow_grant(app_mod,admin):
     assert admin.get('/documents/rules').status_code==403
 
 
+def test_action_screen_renders_only_permitted_documents(app_mod,viewer,admin):
+    c=st.connect(app_mod.DB);st.init_db(c)
+    old=st.get_setting(c,'documents.enabled','0')
+    try:
+        st.set_setting(c,'documents.enabled','1')
+        user=st.get_admin_user(c,'viewer@test.local')
+        doc=d.register(c,user,{'subject':'Action screen route record','type':'memo','direction':'OUT'})
+        c.execute("UPDATE document SET lead_id=?,reconcile=1 WHERE id=?",(user['id'],doc['id']))
+        c.commit()
+        page=viewer.get('/documents/actions')
+        assert page.status_code==200 and 'Action screen route record' in page.text
+        assert 'Reconcile changed instruction or policy' in page.text
+        assert 'Action screen route record' not in admin.get('/documents/actions').text
+        assert viewer.get('/documents/actions?view=division').status_code==403
+        assert viewer.get('/documents/actions?view=invalid').status_code==400
+    finally:
+        st.set_setting(c,'documents.enabled',old);c.close()
+
+
+def test_instruction_mentions_render_and_require_session_token(app_mod,viewer,admin):
+    c=st.connect(app_mod.DB);st.init_db(c)
+    old=st.get_setting(c,'documents.enabled','0')
+    try:
+        st.set_setting(c,'documents.enabled','1')
+        user=st.get_admin_user(c,'viewer@test.local')
+        doc=d.register(c,user,{'subject':'Instruction mention route','type':'memo','direction':'OUT'})
+        url=f"/documents/{doc['id']}"
+        page=viewer.get(url)
+        assert page.status_code==200 and 'Write an instruction or update' in page.text
+        assert 'document_mentions.js' in page.text
+        data={'revision':doc['revision'],'reason':'Please check <script>alert(1)</script>',
+              f'mention_person:{user["id"]}':'yes'}
+        assert viewer.post(url+'/instruction_note',data=data).status_code==403
+        saved=viewer.post(url+'/instruction_note',data={**data,'csrf':token(page)},follow_redirects=False)
+        assert saved.status_code==303,saved.text
+        detail=viewer.get(url)
+        assert '&lt;script&gt;alert(1)&lt;/script&gt;' in detail.text
+        assert '<script>alert(1)</script>' not in detail.text
+        search=viewer.get('/documents?q=script')
+        assert 'Instruction mention route' in search.text
+        assert '&lt;script&gt;' in search.text and '<script>alert(1)</script>' not in search.text
+        assert 'Instruction mention route' not in admin.get('/documents?q=script').text
+        assert viewer.get('/documents?q=%22+OR+%2A').status_code==200
+        assert 'Mark instruction read' not in detail.text  # Authors already saw their own note.
+        directive_id=c.execute("SELECT id FROM document_directive WHERE document_id=? AND kind='note'",(doc['id'],)).fetchone()[0]
+        read=viewer.post(url+'/instruction_read',data={'csrf':token(detail),'revision':d.raw(c,doc['id'])['revision'],
+            'directive_id':directive_id},follow_redirects=False)
+        assert read.status_code==303
+        assert 'Mark instruction read' not in viewer.get(url).text
+    finally:
+        st.set_setting(c,'documents.enabled',old);c.close()
+
+
 def test_archive_screen_and_restore_require_document_admin(app_mod,viewer,admin):
     c=st.connect(app_mod.DB);st.init_db(c)
     old=st.get_setting(c,'documents.enabled','0')

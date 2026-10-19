@@ -9,6 +9,7 @@ import documents_permissions as p
 import documents_operations as ops
 import documents_rules as rules
 import documents_notify as notices
+import documents_actions as actions
 from documents_storage import rows, transaction
 
 
@@ -77,6 +78,100 @@ def test_module_off_and_repeat_migration(registry):
         register(c,u[0],unit)
     assert not c.execute('SELECT 1 FROM document').fetchone()
     assert st.get_setting(c,'documents.enabled')=='0'
+
+
+def test_stored_text_search_tracks_changes_and_permissions(registry):
+    c,u,unit,_=registry
+    doc=register(c,u[0],unit,'OUT',subject='Routine report')
+    secret=register(c,u[0],unit,'OUT',subject='Private report',visibility='restricted')
+    c.execute("INSERT INTO document_directive(document_id,actor_id,text,created_at) VALUES (?,?,?,?)",
+              (doc['id'],u[0]['id'],'Prepare the lighthouse evaluation.','2026-10-19'))
+    c.execute("INSERT INTO document_receipt(document_id,channel,sender,received_at,evidence) VALUES (?,?,?,?,?)",
+              (doc['id'],'email','Office A','2026-10-19','Attached the watershed briefing.'))
+    c.execute("INSERT INTO document_directive(document_id,actor_id,text,created_at) VALUES (?,?,?,?)",
+              (secret['id'],u[0]['id'],'Confidential lighthouse review.','2026-10-19'))
+    c.execute('''INSERT INTO document_intake_email(mailbox,message_id,payload_hash,subject,sender,
+        received_at,attachments_json,document_id,created_at,body_text) VALUES (?,?,?,?,?,?,?,?,?,?)''',
+        ('mail@example.test','message-1','hash','Update','Sender','2026-10-19','[]',doc['id'],'2026-10-19',
+         'The estuary assessment needs a response.'))
+    c.commit()
+    assert [x['id'] for x in d.list_visible(c,u[0],'lighthouse')]==[secret['id'],doc['id']]
+    assert d.list_visible(c,u[4],'lighthouse')==[]
+    assert d.list_visible(c,u[0],'watershed')[0]['search_source']=='Receipt'
+    assert d.list_visible(c,u[0],'estuary')[0]['search_source']=='Email body'
+    import search_sources
+    assert [r['url'] for r in search_sources._documents(c,u[0],['estuary'],{})]==[
+        '/documents/'+str(doc['id'])]
+    assert search_sources._documents(c,u[4],['estuary'],{})==[]
+    c.execute("UPDATE document_intake_email SET body_text='The delta assessment needs a response.' WHERE document_id=?",(doc['id'],))
+    c.commit()
+    assert d.list_visible(c,u[0],'estuary')==[]
+    assert d.list_visible(c,u[0],'delta')[0]['search_source']=='Email body'
+    c.execute("UPDATE document_directive SET text='Prepare the harbor evaluation.' WHERE document_id=?",(doc['id'],))
+    c.commit()
+    assert [x['id'] for x in d.list_visible(c,u[0],'lighthouse')]==[secret['id']]
+    assert d.list_visible(c,u[0],'harbor')[0]['search_source']=='Instruction'
+    st.init_db(c)
+    assert len(d.list_visible(c,u[0],'harbor'))==1  # Repeat migration cannot duplicate hits.
+
+
+def test_stored_text_search_backfills_existing_registry(registry):
+    c,u,unit,_=registry
+    doc=register(c,u[0],unit,'OUT',subject='Legacy searchable subject')
+    triggers=[row[0] for row in c.execute("SELECT name FROM sqlite_master WHERE type='trigger' AND name LIKE 'document_search_%'")]
+    for name in triggers:
+        c.execute('DROP TRIGGER '+name)
+    c.execute('DROP TABLE document_search_fts')
+    c.commit()
+    st.init_db(c)
+    assert [item['id'] for item in d.list_visible(c,u[0],'searchable')]==[doc['id']]
+    assert c.execute('SELECT COUNT(*) FROM document_search_fts WHERE document_id=?',(doc['id'],)).fetchone()[0]==1
+
+
+def test_action_screen_tracks_personal_steps_and_current_access(registry):
+    c,u,unit,_=registry
+    doc=register(c,u[0],unit,'OUT',due_date='2026-10-21')
+    c.execute('INSERT INTO document_assignment(document_id,user_id,role,action,status,due_date,created_at) '
+              "VALUES (?,?,? ,?,'assigned',?,?)",
+              (doc['id'],u[3]['id'],'contributor','Prepare the annex','2026-10-18','2026-10-19'))
+    assignment_id=c.execute('SELECT last_insert_rowid()').fetchone()[0]
+    c.execute('INSERT INTO document_access(document_id,user_id,source) VALUES (?,?,?)',
+              (doc['id'],u[3]['id'],'test'))
+    directive_id=c.execute('INSERT INTO document_directive(document_id,actor_id,text,created_at) VALUES (?,?,?,?)',
+                           (doc['id'],u[0]['id'],'Review the annex','2026-10-19')).lastrowid
+    c.execute('INSERT INTO document_instruction_tag VALUES (?,?,?)',(directive_id,'person',u[3]['id']))
+    c.execute('INSERT INTO document_instruction_recipient VALUES (?,?)',(directive_id,u[3]['id']))
+    c.commit()
+    cards=actions.personal(c,u[3],today='2026-10-19')
+    assert {card['kind'] for card in cards}=={'Contribution','Instruction'}
+    assert any(card['url'].endswith(f'#instruction-{directive_id}') for card in cards)
+    assert any(card['url'].endswith(f'#assignment-{assignment_id}') and card['overdue'] for card in cards)
+    c.execute('INSERT INTO document_instruction_read VALUES (?,?,?)',(directive_id,u[3]['id'],'2026-10-19'))
+    c.execute("UPDATE document_assignment SET status='completed' WHERE id=?",(assignment_id,))
+    c.commit()
+    assert actions.personal(c,u[3],today='2026-10-19')==[]
+    c.execute("UPDATE document_assignment SET status='assigned' WHERE id=?",(assignment_id,))
+    c.execute("UPDATE document SET visibility='restricted' WHERE id=?",(doc['id'],))
+    c.execute("DELETE FROM document_access WHERE document_id=? AND user_id=?",(doc['id'],u[3]['id']))
+    c.commit()
+    assert actions.personal(c,u[3],today='2026-10-19')==[]
+
+
+def test_division_follow_up_respects_scope_and_restrictions(registry):
+    c,u,unit,_=registry
+    st.set_section_oic(c,unit,u[3]['id'])
+    outside=st.add_org_unit(c,'Other division','division','BLHSD/D2')
+    own=register(c,u[0],unit,'OUT',due_date='2026-10-18')
+    other=register(c,u[0],outside,'OUT',due_date='2026-10-18')
+    hidden=register(c,u[0],unit,'OUT',due_date='2026-10-18')
+    c.execute("UPDATE document SET verification='verified',visibility='bureau' WHERE id IN (?,?)",(own['id'],other['id']))
+    c.execute("UPDATE document SET visibility='restricted' WHERE id=?",(hidden['id'],))
+    c.commit()
+    assert [card['document_id'] for card in actions.team(c,u[3],today='2026-10-19')]==[own['id']]
+    assert actions.team(c,u[4],today='2026-10-19')==[]
+    c.execute('INSERT INTO document_access(document_id,user_id,source) VALUES (?,?,?)',(hidden['id'],u[3]['id'],'test'))
+    c.commit()
+    assert {card['document_id'] for card in actions.team(c,u[3],today='2026-10-19')}=={own['id'],hidden['id']}
 
 
 def test_numbering_and_manila_boundary(registry):
