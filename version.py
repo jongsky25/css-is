@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.11"
+APP_VERSION = "7.12"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.12",
+        "date": "October 19, 2026",
+        "summary": "Read the document date beside the originating office on routing slips.",
+        "changes": [
+            "Routing-slip OCR uses the date beside Originating office, so later routing entries and enclosed-page dates do not override it.",
+            "Unreadable or conflicting routing-slip header dates remain for your review."
+        ]
+    },
     {
         "version": "7.11",
         "date": "October 19, 2026",
