@@ -38,11 +38,26 @@ def get(conn, user, doc_id):
     return doc
 
 
+def mark_instruction_read(conn, user, doc_id, directive_id):
+    with transaction(conn):
+        user = p.actor(conn, user)
+        get(conn, user, doc_id)
+        found = conn.execute('''SELECT 1 FROM document_directive x
+            JOIN document_instruction_recipient r ON r.directive_id=x.id
+            WHERE x.id=? AND x.document_id=? AND r.user_id=?''',
+            (directive_id, doc_id, user['id'])).fetchone()
+        require(found, 'This instruction was not addressed to you.')
+        conn.execute('''INSERT OR IGNORE INTO document_instruction_read(directive_id,user_id,read_at)
+            VALUES (?,?,?)''', (directive_id,user['id'],tz.now_iso()))
+
+
 def list_visible(conn, user, query='', queue='all'):
+    import documents_search as search
     user = p.actor(conn,user)
     result = []
     if queue == 'instruction' and not p.director(conn,user):
         return []
+    text_matches = search.matches(conn,query) if query else {}
     predicate = "WHERE d.instruction_state='pending' AND d.archived_at IS NULL AND d.status NOT IN ('closed','cancelled')" if queue == 'instruction' else ''
     for doc in rows(conn, '''SELECT d.*, EXISTS(SELECT 1 FROM document_email_import i
             WHERE i.document_id=d.id) AS gmail_imported FROM document d ''' + predicate + ' ORDER BY d.id DESC'):
@@ -55,7 +70,9 @@ def list_visible(conn, user, query='', queue='all'):
         elif doc['archived_at']:
             continue
         refs=' '.join(r[0] for r in conn.execute('SELECT value FROM document_reference WHERE document_id=?',(doc['id'],))) if query else ''
-        if query and rules.normalize(query) not in rules.normalize(doc['number']+' '+doc['subject']+' '+doc['sender']+' '+refs):
+        metadata_match = query and rules.normalize(query) in rules.normalize(doc['number']+' '+doc['subject']+' '+doc['sender']+' '+refs)
+        text_match = text_matches.get(doc['id']) if not doc['canonical_id'] else None
+        if query and not (metadata_match or text_match):
             continue
         if queue in ('gmail','gmail_review') and (not doc['gmail_imported'] or doc['canonical_id']):
             continue
@@ -79,9 +96,19 @@ def list_visible(conn, user, query='', queue='all'):
             continue
         if queue == 'mine' and not (p.can_work(conn,user,doc) and doc['status'] not in ('closed','cancelled')):
             continue
+        if queue == 'mentions' and not conn.execute('''SELECT 1 FROM document_directive x
+            JOIN document_instruction_recipient r ON r.directive_id=x.id
+            LEFT JOIN document_instruction_read seen ON seen.directive_id=x.id AND seen.user_id=r.user_id
+            WHERE x.document_id=? AND r.user_id=? AND seen.directive_id IS NULL
+              AND EXISTS(SELECT 1 FROM document_instruction_tag t WHERE t.directive_id=x.id)''',
+            (doc['id'],user['id'])).fetchone():
+            continue
         if queue == 'unassigned' and doc['lead_id']:
             continue
         if not any(item['id']==doc['id'] for item in result):
+            if text_match:
+                doc['search_source'] = search.LABELS[text_match[0]]
+                doc['search_excerpt'] = search.excerpt(text_match[1],query)
             result.append(doc)
     return result
 
@@ -458,6 +485,7 @@ def mutate(conn,user,doc_id,revision,action,data):
             outcome=reason(data.get('outcome'))
             conn.execute('UPDATE document_assignment SET status=?,outcome=? WHERE id=?',(data['status'],outcome,item[0]['id']))
         elif action=='route_instruction':
+            import documents_instruction_tags as tags
             require(p.director(conn,user),'Only the Director or bureau OIC can issue this routing instruction.')
             if doc['direction']!='IN' or doc['instruction_state']!='pending':
                 raise Conflict('This document is not waiting for its first Director instruction.')
@@ -468,7 +496,8 @@ def mutate(conn,user,doc_id,revision,action,data):
             unit=int(data.get('unit_id') or 0)
             if not conn.execute("SELECT 1 FROM org_unit WHERE id=? AND level IN ('division','bureau','section')",(unit,)).fetchone():
                 raise ValueError('Choose the lead office or division.')
-            recipients={lead} | {int(k.split(':',1)[1]) for k,v in data.items() if k.startswith('recipient:') and v=='yes'}
+            tag_people, tag_sections, tagged = tags.resolve(conn, doc, data, initial=True)
+            recipients={lead} | tagged | {int(k.split(':',1)[1]) for k,v in data.items() if k.startswith('recipient:') and v=='yes'}
             if len(recipients)>30: raise ValueError('Choose at most 30 recipients.')
             for uid in recipients: active_account(conn,uid)
             due=date.fromisoformat(data['action_due']).isoformat() if data.get('action_due') else None
@@ -476,18 +505,49 @@ def mutate(conn,user,doc_id,revision,action,data):
                 raise ValueError('The action deadline cannot follow the document deadline.')
             directive=conn.execute('INSERT INTO document_directive(document_id,actor_id,text,created_at) VALUES (?,?,?,?)',
                                   (doc_id,user['id'],text,tz.now_iso())).lastrowid
+            tags.save(conn, directive, tag_people, tag_sections)
             for uid in recipients:
                 conn.execute('INSERT INTO document_instruction_recipient VALUES (?,?)',(directive,uid))
                 conn.execute('INSERT OR IGNORE INTO document_access VALUES (?,?,?)',(doc_id,uid,'director_instruction'))
                 conn.execute('''INSERT INTO document_assignment(document_id,user_id,role,action,status,due_date,created_at)
                     VALUES (?,?,?,?,'assigned',?,?)''',(doc_id,uid,'lead' if uid==lead else 'contributor',text,due,tz.now_iso()))
+            if user['id'] in recipients:
+                conn.execute('INSERT INTO document_instruction_read VALUES (?,?,?)',(directive,user['id'],tz.now_iso()))
             evaluation=rules.evaluate(conn,{**doc,'unit_id':unit})
             changes={'instruction_state':'issued','lead_id':lead,'unit_id':unit,'reconcile':0,
                      'policy_json':json.dumps(evaluation['policy']),'matches_json':json.dumps(evaluation)}
             data={**data,'directive_id':directive,'recipients':sorted(recipients)}
+        elif action=='instruction_note':
+            import documents_instruction_tags as tags
+            require(work, 'Only a person working on this document can post an instruction.')
+            if doc['instruction_state']=='pending':
+                raise ValueError('Wait for the first Director routing instruction.')
+            text=reason(data.get('reason'))
+            tag_people, tag_sections, recipients=tags.resolve(conn, doc, data)
+            directive=conn.execute('''INSERT INTO document_directive(document_id,actor_id,text,created_at,kind)
+                VALUES (?,?,?,?,'note')''',(doc_id,user['id'],text,tz.now_iso())).lastrowid
+            tags.save(conn,directive,tag_people,tag_sections)
+            for uid in recipients:
+                conn.execute('INSERT INTO document_instruction_recipient VALUES (?,?)',(directive,uid))
+            if user['id'] in recipients:
+                conn.execute('INSERT INTO document_instruction_read VALUES (?,?,?)',(directive,user['id'],tz.now_iso()))
+            conn.execute('UPDATE document SET revision=revision+1,updated_at=? WHERE id=?',(tz.now_iso(),doc_id))
+            eid=event(conn,doc_id,user,'instruction_note',{'directive_id':directive,'reason':text,
+                'mentioned_people':sorted(tag_people),'mentioned_sections':sorted(tag_sections)})
+            for uid in recipients - {user['id']}:
+                conn.execute('''INSERT INTO document_notice(document_id,event_id,user_id,kind,dedup_key,due_at)
+                    VALUES (?,?,?,?,?,?)''',(doc_id,eid,uid,'instruction_mention',f'instruction:{directive}:{uid}',tz.now_iso()))
+            return raw(conn,doc_id)
         elif action=='directive':
+            import documents_instruction_tags as tags
             require(p.director(conn,user))
-            conn.execute('INSERT INTO document_directive(document_id,actor_id,text,created_at) VALUES (?,?,?,?)',(doc_id,user['id'],reason(data.get('reason')),tz.now_iso()))
+            tag_people,tag_sections,recipients=tags.resolve(conn,doc,data)
+            directive=conn.execute('INSERT INTO document_directive(document_id,actor_id,text,created_at) VALUES (?,?,?,?)',(doc_id,user['id'],reason(data.get('reason')),tz.now_iso())).lastrowid
+            tags.save(conn,directive,tag_people,tag_sections)
+            for uid in recipients:
+                conn.execute('INSERT INTO document_instruction_recipient VALUES (?,?)',(directive,uid))
+            if user['id'] in recipients:
+                conn.execute('INSERT INTO document_instruction_read VALUES (?,?,?)',(directive,user['id'],tz.now_iso()))
             changes={'reconcile':1,'approved_version':None,'signed_version':None}
             if doc['direction']=='OUT':
                 changes['status']='changes_requested'

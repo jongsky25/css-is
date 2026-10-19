@@ -1,0 +1,25 @@
+{% extends "documents/base.html" %}
+{% block documents_content %}
+<h2>{{ 'Division follow-up' if view=='division' else 'My next steps' }}</h2>
+<nav class="doc-tabs" aria-label="Action views">
+<a href="/documents/actions" {% if view=='mine' %}aria-current="page"{% endif %}>My next steps</a>
+{% if division_access %}<a href="/documents/actions?view=division" {% if view=='division' %}aria-current="page"{% endif %}>Division follow-up</a>{% endif %}
+</nav>
+{% if view=='mine' %}
+<p>Unread instructions, document contributions, reviews and lead work you can access now. Open a record to take the next step.</p>
+<p>Contributions moved to Shared work appear in <a href="/work/mine">My shared work</a>.</p>
+{% else %}
+<p>Division documents with unresolved ownership, overdue dates, changed instructions or contributions needing follow-up. Your current document access still applies.</p>
+{% endif %}
+<p>{{ cards|length }} {{ 'follow-up records' if view=='division' else 'next steps' }}. An unknown deadline is never counted as overdue.</p>
+<div class="doc-action-list">
+{% for card in cards %}
+<article class="doc-card doc-action-card">
+<div><span class="doc-action-kind">{{ card.kind }}</span> <span class="doc-action-due{% if card.overdue %} doc-action-overdue{% endif %}">{{ card.due_label }}</span></div>
+<h3><a href="{{ card.url }}">{{ card.number }} · {{ card.subject }}</a></h3>
+<p><strong>{{ card.action }}</strong></p>
+{% if card.detail %}<p class="doc-action-detail">{{ card.detail }}</p>{% endif %}
+</article>
+{% else %}<p>No {{ 'division exceptions' if view=='division' else 'document steps' }} need follow-up right now.</p>{% endfor %}
+</div>
+{% endblock %}

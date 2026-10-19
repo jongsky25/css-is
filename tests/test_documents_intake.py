@@ -119,6 +119,50 @@ def test_director_first_instruction_routes_and_grants_access(registry):
     with pytest.raises(d.Conflict): d.mutate(c,u[2],doc['id'],doc['revision'],'route_instruction',payload)
 
 
+def test_instruction_section_mentions_and_staff_followup(registry):
+    import documents_notify as notices
+    c,u,unit,path=registry;seed(registry)
+    section=st.add_org_unit(c,'Review Section','section','BLHSD/D1/Review')
+    for account in (u[0],u[3],u[4]):
+        rp=st.add_rp(c,'Staff '+str(account['id']),is_internal=True,org_unit_id=section)
+        c.execute('UPDATE admin_user SET rp_id=? WHERE id=?',(rp,account['id']))
+    c.commit()
+    item=intake.claim(c,u[1],1,1)
+    doc=intake.register(c,u[1],1,item['revision'],fields(),adapter=Drive())
+    with pytest.raises(ValueError,match='Director'):
+        d.mutate(c,u[1],doc['id'],doc['revision'],'instruction_note',{'reason':'Too early'})
+    routed=d.mutate(c,u[2],doc['id'],doc['revision'],'route_instruction',{
+        'lead_id':u[0]['id'],'unit_id':unit,'reason':'Review this together.',
+        f'mention_section:{section}':'yes'})
+    assert all(p.can_view(c,person,routed) for person in (u[0],u[3],u[4]))
+    directive=c.execute('SELECT id FROM document_directive WHERE document_id=?',(doc['id'],)).fetchone()[0]
+    assert c.execute('SELECT target_id FROM document_instruction_tag WHERE directive_id=?',(directive,)).fetchone()[0]==section
+    assert c.execute('SELECT COUNT(*) FROM document_instruction_recipient WHERE directive_id=?',(directive,)).fetchone()[0]==3
+    d.mark_instruction_read(c,u[0],doc['id'],directive)
+
+    c.execute("UPDATE document SET visibility='restricted' WHERE id=?",(doc['id'],))
+    c.execute('DELETE FROM document_access WHERE document_id=? AND user_id=?',(doc['id'],u[4]['id']))
+    c.commit()
+    routed=d.raw(c,doc['id'])
+    with pytest.raises(ValueError,match='no longer has access'):
+        d.mutate(c,u[3],doc['id'],routed['revision'],'instruction_note',{
+            'reason':'Please review.',f'mention_person:{u[4]["id"]}':'yes'})
+    note=d.mutate(c,u[3],doc['id'],routed['revision'],'instruction_note',{
+        'reason':'Please review.',f'mention_section:{section}':'yes'})
+    assert note['revision']==routed['revision']+1
+    note_id=c.execute("SELECT id FROM document_directive WHERE document_id=? AND kind='note'",(doc['id'],)).fetchone()[0]
+    assert {r[0] for r in c.execute('SELECT user_id FROM document_instruction_recipient WHERE directive_id=?',(note_id,))}=={u[0]['id'],u[3]['id']}
+    assert {r[0] for r in c.execute("SELECT user_id FROM document_notice WHERE kind='instruction_mention'")}=={u[0]['id']}
+    assert [x['id'] for x in d.list_visible(c,u[0],queue='mentions')]==[doc['id']]
+    assert d.list_visible(c,u[4],queue='mentions')==[]
+    assert any('unread document instructions' in x['text'] for x in notices.bell_rows(c,u[0]['id']))
+    d.mark_instruction_read(c,u[0],doc['id'],note_id)
+    assert d.list_visible(c,u[0],queue='mentions')==[]
+    assert not any('unread document instructions' in x['text'] for x in notices.bell_rows(c,u[0]['id']))
+    with pytest.raises(p.Denied):
+        d.mark_instruction_read(c,u[4],doc['id'],note_id)
+
+
 def test_registered_intake_respects_later_restricted_access(registry):
     c,u,unit,path=registry;seed(registry)
     item=intake.claim(c,u[1],1,1)

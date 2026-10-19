@@ -16,6 +16,7 @@ import documents_permissions as p
 import documents_operations as ops
 import documents_rules as rules
 import documents_calendar as cal
+import documents_actions as actions
 import work
 import work_intake
 import work_readiness
@@ -61,6 +62,17 @@ def make_router(templates,get_conn):
         details['gmail_source']=imports[0] if imports else None
         imported_files={a['file_id'] for a in json.loads(imports[0]['attachments_json'])} if imports else set()
         details['gmail_attachments']=[v for v in details['versions'] if v['file_id'] in imported_files and v['role']=='reference']
+        import documents_instruction_tags as instruction_tags
+        details['mention_people'],details['mention_sections']=instruction_tags.choices(
+            conn,doc,initial=bool(p.director(conn,user) and doc['instruction_state']=='pending'))
+        details['instruction_tags']=rows(conn,'''SELECT t.directive_id,t.target_type,t.target_id,
+            CASE WHEN t.target_type='person' THEN COALESCE(NULLIF(r.name,''),u.username)
+                 ELSE o.name END AS name
+            FROM document_instruction_tag t JOIN document_directive x ON x.id=t.directive_id
+            LEFT JOIN admin_user u ON t.target_type='person' AND u.id=t.target_id
+            LEFT JOIN resource_person r ON r.id=u.rp_id
+            LEFT JOIN org_unit o ON t.target_type='section' AND o.id=t.target_id
+            WHERE x.document_id=? ORDER BY t.directive_id,t.target_type,t.target_id''',(doc_id,))
         is_officer=p.officer(conn,user,doc)
         coordinator=is_officer or doc['lead_id']==user['id']
         for assignment in details['assignments']:
@@ -86,6 +98,11 @@ def make_router(templates,get_conn):
                 'email_bodies':rows(conn,"SELECT body_text FROM document_intake_email WHERE document_id=? AND body_text<>''",(doc_id,)),
                 'filing_rows':rows(conn,"SELECT original_name,filing_state,error FROM document_intake WHERE document_id=? AND filing_state<>'none'",(doc_id,)),
                 'instruction_recipients':rows(conn,'SELECT r.directive_id,r.user_id FROM document_instruction_recipient r JOIN document_directive d ON d.id=r.directive_id WHERE d.document_id=?',(doc_id,)),
+                'unread_instructions':{r['id'] for r in rows(conn,'''SELECT x.id FROM document_directive x
+                    JOIN document_instruction_recipient r ON r.directive_id=x.id
+                    LEFT JOIN document_instruction_read seen ON seen.directive_id=x.id AND seen.user_id=r.user_id
+                    WHERE x.document_id=? AND r.user_id=? AND seen.directive_id IS NULL
+                      AND EXISTS(SELECT 1 FROM document_instruction_tag t WHERE t.directive_id=x.id)''',(doc_id,user['id']))},
                 'work_migration':migration,'consolidation':work_review.summaries(conn,user,[doc]).get(doc_id),
                 'assignments_migrated':bool(conn.execute('SELECT 1 FROM work_legacy_document WHERE document_id=?',(doc_id,)).fetchone()),
                 'work_enabled':work.enabled(conn),'work_cases':work.cases_for_document(conn,user,doc_id),
@@ -115,6 +132,24 @@ def make_router(templates,get_conn):
                           missing_dates=sum(not x['due_date'] for x in docs),metrics=d.metrics(conn,docs))
         except (p.Denied,ValueError) as e:
             return HTMLResponse(str(e),status_code=403 if isinstance(e,p.Denied) else 400)
+        finally:
+            conn.close()
+
+    @router.get('/documents/actions',response_class=HTMLResponse)
+    def action_screen(request:Request):
+        conn=get_conn()
+        try:
+            user=p.actor(conn,request.state.user)
+            view=request.query_params.get('view','mine')
+            if view not in ('mine','division'):
+                return HTMLResponse('Unknown action view.',status_code=400)
+            units=actions.division_units(conn,user)
+            if view=='division' and not units:
+                return HTMLResponse('Division follow-up is for division chiefs or OICs.',status_code=403)
+            cards=actions.team(conn,user) if view=='division' else actions.personal(conn,user)
+            return render(request,conn,'actions',cards=cards,view=view,division_access=bool(units))
+        except p.Denied as e:
+            return HTMLResponse(str(e),status_code=403)
         finally:
             conn.close()
 
@@ -455,9 +490,11 @@ def make_router(templates,get_conn):
         try:
             data=await posted(request); user=request.state.user
             revision=int(data['revision'])
-            if action!='restore' and d.get(conn,user,doc_id)['archived_at']:
+            if action not in ('restore','instruction_read') and d.get(conn,user,doc_id)['archived_at']:
                 raise ValueError('Restore this document before changing it.')
-            if action in ('archive','restore'):
+            if action=='instruction_read':
+                d.mark_instruction_read(conn,user,doc_id,int(data['directive_id']))
+            elif action in ('archive','restore'):
                 d.set_archived(conn,user,doc_id,revision,action=='archive',data['reason'])
             elif action=='attach':
                 ops.attach(conn,user,doc_id,revision,data['url'],data['classification'],data['reason'])

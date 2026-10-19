@@ -9,18 +9,29 @@
 {% elif not email_bodies %}<p>No source file is attached yet.</p>{% endif %}</section>
 <section class="doc-card"><h3>Routing slip</h3>
 <p>{{ doc.sender or 'Sender not recorded' }} · Received {{ doc.received_at or 'not recorded' }}{% if doc.due_date %} · Document deadline {{ doc.due_date }}{% endif %}</p>
-{% for directive in directives %}<article><p><strong>{{ names.get(directive.actor_id,'Former staff member') }}</strong> · {{ directive.created_at }}</p><p class="doc-instruction">{{ directive.text }}</p>
-{% if instruction_recipients %}<p>{% for recipient in instruction_recipients if recipient.directive_id==directive.id %}{{ names.get(recipient.user_id,'Former staff member') }}{% if not loop.last %}, {% endif %}{% endfor %}</p>{% endif %}</article>{% else %}<p>{{ 'Waiting for the Director’s instruction.' if doc.instruction_state=='pending' else 'No Director instruction recorded.' }}</p>{% endfor %}
+{% for directive in directives %}<article id="instruction-{{ directive.id }}"><p><strong>{{ names.get(directive.actor_id,'Former staff member') }}</strong> · {{ directive.created_at }} · {{ 'Instruction note' if directive.kind=='note' else 'Director directive' }}</p><p class="doc-instruction">{{ directive.text }}</p>
+{% for tag in instruction_tags if tag.directive_id==directive.id %}<span class="doc-tag">@{{ tag.name or 'Former staff member' }} ({{ tag.target_type }})</span> {% endfor %}
+{% if instruction_recipients %}<p>{% for recipient in instruction_recipients if recipient.directive_id==directive.id %}{{ names.get(recipient.user_id,'Former staff member') }}{% if not loop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+{% if directive.id in unread_instructions %}<form method="post" action="/documents/{{ doc.id }}/instruction_read"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ doc.revision }}"><input type="hidden" name="directive_id" value="{{ directive.id }}"><button type="submit">Mark instruction read</button></form>{% endif %}</article>{% else %}<p>{{ 'Waiting for the Director’s instruction.' if doc.instruction_state=='pending' else 'No Director instruction recorded.' }}</p>{% endfor %}
 {% if enabled and is_director and doc.instruction_state=='pending' and not doc.archived_at %}
 <form method="post" action="/documents/{{ doc.id }}/route_instruction" data-ux-ignore data-telemetry-ignore>
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ doc.revision }}">
 {{ person('lead_id','Lead person',people) }}
 <label>Lead office or division<select name="unit_id" required><option value="">Choose office or division</option>{% for unit in units %}<option value="{{ unit.id }}">{{ unit.name }}</option>{% endfor %}</select></label>
 {{ text('reason','Instruction',value=submitted.get('reason','')) }}
+{% include 'documents/instruction_mentions.html' %}
 {{ field('action_due','Action due (optional)','date',required=false) }}
 <details><summary>Additional action recipients</summary>{% for person in people %}<label class="doc-check"><input type="checkbox" name="recipient:{{ person.id }}" value="yes">{{ person.name }}</label>{% endfor %}</details>
 <p>Recipients receive access to this record in the system. They also need permission to open its files in Drive.</p>
 <button>Send instruction</button></form>
+{% endif %}
+{% if enabled and can_work and doc.instruction_state!='pending' and doc.status not in ['closed','cancelled'] and not doc.archived_at %}
+<details><summary>Write an instruction or update</summary><form method="post" action="/documents/{{ doc.id }}/instruction_note">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ doc.revision }}">
+{{ text('reason','Instruction or update',value=submitted.get('reason','')) }}
+{% include 'documents/instruction_mentions.html' %}
+<p>Posting a note does not change assignments, approval, or release authority. Mentioned people receive a notice only while they can access this record.</p>
+<button>Post instruction</button></form></details>
 {% endif %}
 {% if doc.lead_id %}<p>Lead: <strong>{{ names.get(doc.lead_id,'Former staff member') }}</strong></p>{% endif %}
 {% if assignments %}<h3>Assigned work</h3><ul>{% for assignment in assignments %}<li>{{ names.get(assignment.user_id,'Former staff member') }} · {{ assignment.status|replace('_',' ') }}<p>{{ assignment.action }}</p></li>{% endfor %}</ul>{% endif %}

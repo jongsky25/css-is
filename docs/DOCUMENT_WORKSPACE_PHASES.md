@@ -138,10 +138,38 @@ A prior local 10,000-entry queue measurement returned one page/counts in a media
 1.3 ms, without Drive calls; it is not a production latency guarantee. The legacy
 all-document register/export retains its previous visibility implementation.
 
-Later increments include pen/page annotations, office memo templates, more focused
-chief/staff action screens and full-text search, guided by pilot feedback. Existing
-restricted records should not be placed in the general unregistered intake audience;
+Later increments include pen/page annotations, office memo templates and searching
+the contents of Drive files, guided by pilot feedback. Existing restricted records should not be placed in the general
+unregistered intake audience;
 queue access currently requires bureau-wide records authority.
+
+The **My actions** screen now collects unread tagged instructions, active document
+contributions, formal reviews, Director routing and lead follow-up. It shows due
+dates without treating unknown dates as overdue. Division chiefs and OICs can use
+**Division follow-up** to see accessible records in their division with unresolved
+ownership, overdue dates, changed instructions or outstanding contributions.
+Migrated contributions remain in **My shared work**. Every card follows current
+document access, so revoking access removes it from the screen.
+
+Instruction tagging is available in the Documents workspace: type `@` in an
+instruction to select a person or section, or use the accessible tag list. The
+first Director routing instruction expands section tags into current active staff
+and assigns those recipients through the existing routing flow. Later notes can be
+posted by people working on the document; they notify only tagged staff who already
+have document access, and never grant restricted access or alter approval/release
+authority. Section membership comes from each staff account's current directory
+section. The selected people and sections are saved with the instruction; recipients
+can find tagged instructions in **Instructions for me** and mark them read. Sending
+and any live delivery still require the existing module
+configuration and acceptance checks.
+
+The register and office-wide search now find words in stored record details,
+references, receipt evidence, instructions and saved email bodies. The searchable
+index is backfilled from existing records on migration and follows later edits; results
+and excerpts use the same document visibility check as the register. Drive file
+contents and temporary OCR output are not retained or indexed. Searching those
+files requires a separate retention and indexing decision, especially for restricted
+correspondence.
 
 ## Diagnosing a failed intake check
 
