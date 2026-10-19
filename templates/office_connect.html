@@ -283,7 +283,7 @@
     <div class="oc-seg" role="group" aria-label="Whose information to show">
       {% if linked %}<a href="/" {% if cur_tab == "team" %}aria-current="true"{% endif %}>Team</a>{% endif %}
       <a href="/?view=me" {% if cur_tab == "me" %}aria-current="true"{% endif %}>Me</a>
-      <a href="/?view=calendar{% if cal_week and view != 'calendar' %}&scope={{ cal_week.scope }}{% endif %}"
+      <a href="/?view=calendar"
          {% if cur_tab == "calendar" %}aria-current="true"{% endif %}>Calendar</a>
     </div>
   {% endset %}

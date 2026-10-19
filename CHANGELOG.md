@@ -1,3 +1,8 @@
+## 7.22 — October 19, 2026
+
+- Open the calendar with Everything I can see selected when no other preferred view is saved.
+- Open the Calendar tab with the same default from Team or Me.
+
 ## 7.21 — October 19, 2026
 
 - Keep your saved calendar layout and event scope when returning from an item after cancelling or restoring it.

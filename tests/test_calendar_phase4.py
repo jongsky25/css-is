@@ -121,6 +121,13 @@ def test_a_link_that_names_something_always_wins_and_a_bare_visit_saves_nothing(
     assert pref_cookie(viewer) is None
 
 
+def test_everything_i_can_see_is_the_default_without_a_saved_preference(viewer):
+    for url in ("/calendar", "/?view=calendar"):
+        html = viewer.get(url).text
+        assert '<option value="bureau" selected>Everything I can see</option>' in html
+    assert pref_cookie(viewer) is None
+
+
 @pytest.mark.parametrize("bad", ["month", "week:bogus value", "x:mine", "<b>:mine", "agenda:" + "a" * 40])
 def test_a_forged_cookie_is_ignored(viewer, bad):
     viewer.cookies.set("cal_pref", bad)
@@ -130,7 +137,7 @@ def test_a_forged_cookie_is_ignored(viewer, bad):
 
 def test_a_remembered_scope_the_person_is_not_offered_falls_back_quietly(viewer):
     viewer.cookies.set("cal_pref", "agenda:section")                                      # an unlinked account has no "section"
-    assert '<option value="blend" selected>' in viewer.get("/calendar").text
+    assert '<option value="bureau" selected>' in viewer.get("/calendar").text
 
 
 def test_a_remembered_team_layout_still_works_for_someone_with_a_team(app_mod, viewer):
@@ -148,7 +155,7 @@ def test_the_cookie_is_httponly_lax_and_a_year_long(viewer):
 def test_preference_can_be_saved_from_home_and_survives_refresh(viewer):
     url = "/?view=calendar&layout=timeline"
     assert "Save as preferred view" in viewer.get(url).text
-    r = save_pref(viewer, "timeline", "blend", url)
+    r = save_pref(viewer, "timeline", "bureau", url)
     assert r.headers["location"] == url
     assert "Preferred view saved" in viewer.get(url).text
     assert 'aria-current="true">Timeline' in viewer.get("/calendar").text

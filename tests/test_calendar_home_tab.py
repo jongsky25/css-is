@@ -100,7 +100,7 @@ def test_bad_input_falls_back_quietly(viewer):
 
 def test_scope_param_picks_the_pill(viewer):
     assert re.search(r'<option value="mine" selected>Mine only</option>', viewer.get("/?view=calendar&scope=mine").text)
-    assert re.search(r'<option value="blend" selected>Mine \+ bureau-wide</option>', viewer.get("/?view=calendar").text)
+    assert re.search(r'<option value="bureau" selected>Everything I can see</option>', viewer.get("/?view=calendar").text)
 
 
 def test_the_tab_never_shows_more_than_the_calendar_page(app_mod, viewer, conn):
@@ -120,20 +120,21 @@ def test_the_tab_never_shows_more_than_the_calendar_page(app_mod, viewer, conn):
         conn.commit()
 
 
-def test_the_tab_opens_on_the_scope_of_the_tab_you_came_from(app_mod, viewer, conn):
+def test_the_tab_uses_the_calendar_default_from_team_or_me(app_mod, viewer, conn):
     with in_the_directory(app_mod, "viewer@test.local", path="CALTB/D1/S1"):
         team = viewer.get("/").text
         me = viewer.get("/?view=me").text
-        assert 'href="/?view=calendar&scope=section"' in team          # Team -> my team
-        assert 'href="/?view=calendar&scope=blend"' in me              # Me -> mine + bureau-wide
+        assert 'href="/?view=calendar"' in team
+        assert 'href="/?view=calendar"' in me
         assert '>Team</a>' in team
-        cal = viewer.get("/?view=calendar&scope=section").text
-        assert re.search(r'<option value="section" selected>My section</option>', cal) and 'aria-current="true">Calendar</a>' in cal
+        cal = viewer.get("/?view=calendar").text
+        assert re.search(r'<option value="bureau" selected>Everything I can see</option>', cal)
+        assert 'aria-current="true">Calendar</a>' in cal
 
 
 def test_an_unlinked_account_has_me_and_calendar_but_no_team_tab(viewer):
     html = viewer.get("/").text
-    assert '>Team</a>' not in html and 'href="/?view=calendar&scope=blend"' in html
+    assert '>Team</a>' not in html and 'href="/?view=calendar"' in html
     assert 'aria-current="true">Me</a>' in html
 
 

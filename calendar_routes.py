@@ -77,6 +77,7 @@ def _filters(kind, status, tag, unit, text=""):
 PREF_COOKIE = "cal_pref"
 _PREF_PARAMS = ("scope", "day", "month", "kind", "status", "tag", "unit", "q")
 PREF_LAYOUTS = ("agenda", "week", "timeline", "month")
+DEFAULT_PAGE_SCOPE = "bureau"            # Everything I can see, subject to each item's visibility rules
 
 
 def read_pref(request):
@@ -152,9 +153,9 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
         start, end = date(start.year, 1, 1), date(start.year, 12, 31)
     ctx = oc.viewer_context(conn, user)
     choices = oc.scope_choices(ctx)
-    scope = q.get("scope") or oc.DEFAULT_SCOPE
+    scope = q.get("scope") or DEFAULT_PAGE_SCOPE
     if scope not in {c["key"] for c in choices}:
-        scope = oc.DEFAULT_SCOPE                 # also catches a pill this viewer isn't offered
+        scope = DEFAULT_PAGE_SCOPE               # also catches a pill this viewer isn't offered
     # The Week layout is "who is where" for the viewer's whole team: its rows come from the
     # directory, so the items must not be narrowed to "mine" or the others' trips would vanish.
     # Visibility is unchanged — items_between still only returns what this viewer may see.
