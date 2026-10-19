@@ -106,12 +106,14 @@ function gdiUpload_(config, saved, attachment) {
   return {attachment_id:attachment.attachment_id,drive_url:'https://drive.google.com/file/d/'+file.id+'/view'};
 }
 function gdiSubmit_(config,payload) {
-  const body=JSON.stringify(payload);
-  if (Utilities.newBlob(body).getBytes().length>64*1024) throw new Error('intake_payload_size');
+  const body=Utilities.newBlob(JSON.stringify(payload)).getBytes();
+  if (body.length>64*1024) throw new Error('intake_payload_size');
   const ts=String(Math.floor(Date.now()/1000));
-  const sig=Utilities.computeHmacSha256Signature(ts+'.'+body,config.secret)
+  const sig=Utilities.computeHmacSha256Signature(
+    Utilities.newBlob(ts+'.').getBytes().concat(body),
+    Utilities.newBlob(config.secret).getBytes())
     .map(function(b) {return ('0'+(b&255).toString(16)).slice(-2);}).join('');
-  const response=UrlFetchApp.fetch(config.endpoint,{method:'post',contentType:'application/json',payload:body,
+  const response=UrlFetchApp.fetch(config.endpoint,{method:'post',contentType:'application/json; charset=utf-8',payload:body,
     headers:{'X-CSS-Timestamp':ts,'X-CSS-Signature':sig},followRedirects:false,muteHttpExceptions:true});
   const code=response.getResponseCode();
   if (code!==200 && code!==201) throw new Error('intake_http_'+code);

@@ -25,7 +25,7 @@ const context={Date:Clock,JSON,Math,Number,String,Array,Set,Error,console:{log:(
  LockService:{getScriptLock:()=>({tryLock:()=>!locked,releaseLock:()=>{}})},
  Utilities:{DigestAlgorithm:{SHA_256:'sha256',MD5:'md5'},newBlob:blob,
  computeDigest:(alg,bytes)=>Array.from(hash(alg,bytes)),base64DecodeWebSafe:s=>Array.from(Buffer.from(s,'base64url')),
- computeHmacSha256Signature:(body,key)=>Array.from(crypto.createHmac('sha256',key).update(body).digest())},
+ computeHmacSha256Signature:(body,key)=>Array.from(crypto.createHmac('sha256',Buffer.from(key)).update(Buffer.from(body)).digest())},
  Gmail:{Users:{getProfile:()=>({emailAddress:'office@example.test'}),Messages:{Attachments:{get:()=>{downloads++;return {data:attachmentData};}}}}},
  Drive:{Files:{generateIds:()=>({ids:['reserved_file_'+(++counter)]}),
  get:id=>{
@@ -49,8 +49,11 @@ const context={Date:Clock,JSON,Math,Number,String,Array,Set,Error,console:{log:(
  UrlFetchApp:{fetch:(url,options)=>{
   assert.equal(url,props.GMAIL_DOCUMENTS_INTAKE_URL);assert.equal(options.followRedirects,false);
   const ts=options.headers['X-CSS-Timestamp'];
-  assert.equal(options.headers['X-CSS-Signature'],crypto.createHmac('sha256',secret).update(ts+'.'+options.payload).digest('hex'));
-  requests.push(options);
+  assert(Array.isArray(options.payload));
+  assert.equal(options.contentType,'application/json; charset=utf-8');
+  const wire=Buffer.from(options.payload);
+  assert.equal(options.headers['X-CSS-Signature'],crypto.createHmac('sha256',secret).update(Buffer.concat([Buffer.from(ts+'.'),wire])).digest('hex'));
+  requests.push({...options,payload:wire.toString('utf8')});
   if(failPost){failPost=false;throw Error('Timeout AFTER registry commit');}
   return {getResponseCode:()=>replyCode,getContentText:()=>JSON.stringify(queueReply ? {intake_id:456,state:'queued',duplicate:requests.length>1} : {document_id:123,duplicate:requests.length>1})};
  }}
@@ -281,6 +284,15 @@ check('targeted recovery preserves submitted requests and rejects binding change
  assert.equal(context.retryGmailDocumentReadFailures().errors[0].reason,'receipt_binding_conflict');
  assert.equal(files.get(receipt).body,before);
  locked=true;assert.throws(()=>context.retryGmailDocumentReadFailures(),/busy/);
+});
+check('Unicode body authentication retry preserves the exact payload',()=>{
+ queueReply=true;replyCode=401;scanPage.candidates=[{...candidate,attachments:[],body_only:true}];
+ const body='Mémo — café 🇵🇭';
+ context.Gmail.Users.Messages.get=()=>({payload:{mimeType:'text/plain',body:{data:Array.from(Buffer.from(body))}}});
+ assert.equal(run().errors[0].reason,'intake_http_401');
+ assert.equal(JSON.parse(requests[0].payload).body_text,body);
+ retry();replyCode=201;assert.equal(run().already_queued,1);
+ assert.equal(requests[0].payload,requests[1].payload);assert.equal(attachmentCount(),0);
 });
 if(process.argv.includes('--envelope')){
  reset();run();console.log(JSON.stringify({body:requests[0].payload,headers:requests[0].headers}));

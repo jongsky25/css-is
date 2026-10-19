@@ -429,3 +429,16 @@ Phase 6 acceptance with the office mailbox.
 6. One-mailbox acceptance pilot, access checks and gradual filter expansion.
 
 True Gmail push notifications remain optional after scheduled polling is validated.
+
+### Authentication retry after updating the importer
+
+The importer signs and sends the same UTF-8 byte array, including email text.
+Replace `gmail_documents_import.gs` in the existing Apps Script project to apply
+this change. For a receipt blocked by `intake_http_401`, set Script Properties
+`GMAIL_DOCUMENTS_RETRY_RECEIPT_ID` to its receipt ID (from `gmailDocumentsStatus`)
+and `GMAIL_DOCUMENTS_OPERATOR_REASON` to the repair reason. Run
+`retryGmailDocument`, then `importGmailDocuments`. This preserves the pinned
+payload and existing file IDs; completed receipts are not reset.
+
+Pilot verification on October 19, 2026: the operator reported `queued: 1`,
+`already_queued: 1`, and `errors: []` after applying the byte-signing update.
