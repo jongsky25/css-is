@@ -1,3 +1,7 @@
+## 7.17 — October 19, 2026
+
+- Include the new instruction, search and action modules in the deployed app.
+
 ## 7.16 — October 19, 2026
 
 - Tag people and sections in instructions; recipients can find unread tags and mark them read.
