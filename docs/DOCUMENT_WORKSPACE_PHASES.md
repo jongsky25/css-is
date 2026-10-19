@@ -142,3 +142,13 @@ Later increments include pen/page annotations, office memo templates, more focus
 chief/staff action screens and full-text search, guided by pilot feedback. Existing
 restricted records should not be placed in the general unregistered intake audience;
 queue access currently requires bureau-wide records authority.
+
+## Diagnosing a failed intake check
+
+The Intake page preserves a specific diagnostic after a failed check and clears it
+on the next successful listing. Known codes distinguish missing application relay
+configuration, signature rejection, unknown intake actions, folder mismatch, HTTP
+or timeout errors and local processing stages. Credentials, request URLs and arbitrary
+provider text are not included. A successful editor listing does not verify the
+application’s endpoint or the web app’s deployed code/execution account. Keep Gmail
+paused until the application records a successful Drive check.

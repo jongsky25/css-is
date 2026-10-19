@@ -66,3 +66,13 @@ function verifyDocumentIntakeFolders() {
   });
   console.log('Both folders are readable. This check does not verify upload or move permissions.');
 }
+
+// Read-only test of the exact intake listing operation, without HTTP or file writes.
+// Errors are deliberately left visible in the editor for the office operator.
+function testDocumentIntakeConnection() {
+  const inbox=PropertiesService.getScriptProperties().getProperty('DOCUMENTS_INTAKE_FOLDER_ID');
+  if(!inbox)throw new Error('Missing property: DOCUMENTS_INTAKE_FOLDER_ID');
+  const result=dmIntakeList_({inbox:inbox,cursor:'',operation_id:Utilities.getUuid()});
+  if(!result.ok)throw new Error('Intake listing was not confirmed.');
+  console.log('Drive intake listing succeeded. Files found: ' + result.files.length);
+}

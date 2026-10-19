@@ -1,3 +1,9 @@
+## 7.05 — October 19, 2026
+
+- Show specific, safe document-intake connection diagnostics for missing configuration, rejected signatures, older deployments, folder mismatches, network failures and processing stages.
+- Distinguish relay rejections made before an operation receipt exists while continuing to reject mismatched receipts and hide arbitrary provider text.
+- Keep queued reviews after failed checks and clear the diagnostic on the next successful listing.
+
 ## 7.04 — October 19, 2026
 
 - Expand the sign-in page’s What’s new to explain the unified Drive and Gmail review queue, body-only emails, grouped attachments, automatic filing and Director routing.

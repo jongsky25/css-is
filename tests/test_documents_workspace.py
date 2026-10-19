@@ -86,3 +86,26 @@ def test_new_scripts_parse(name,tmp_path):
     path=tmp_path/(name+'.js');path.write_text((ROOT/'apps_script'/name).read_text())
     result=subprocess.run(['node','--check',str(path)],capture_output=True,text=True,timeout=30)
     assert result.returncode==0,result.stderr
+
+
+@pytest.mark.parametrize('code',['unauthorized','unknown_action'])
+def test_relay_rejection_before_operation_has_specific_safe_code(relay_env,monkeypatch,code):
+    transport(monkeypatch,lambda req:httpx.Response(200,json={'ok':False,'error':code}))
+    with pytest.raises(ws.WorkspaceError) as caught:
+        ws.WorkspaceRelay().call('intake_list',{'inbox':'private-folder','actor_id':1},'expected-op')
+    assert caught.value.code==code
+
+
+def test_rejection_with_wrong_operation_stays_mismatched(relay_env,monkeypatch):
+    transport(monkeypatch,lambda req:httpx.Response(200,json={'ok':False,'operation_id':'other','error':'unauthorized'}))
+    with pytest.raises(ws.WorkspaceError) as caught:
+        ws.WorkspaceRelay().call('intake_list',{'actor_id':1},'expected-op')
+    assert caught.value.code=='receipt_mismatch'
+
+
+def test_unknown_provider_text_never_becomes_diagnostic_code(relay_env,monkeypatch):
+    transport(monkeypatch,lambda req:httpx.Response(200,json={'ok':False,'operation_id':'op','error':'private provider response / secret value'}))
+    with pytest.raises(ws.WorkspaceError) as caught:
+        ws.WorkspaceRelay().call('intake_list',{'actor_id':1},'op')
+    assert caught.value.code=='unconfirmed'
+    assert 'private provider' not in str(caught.value)

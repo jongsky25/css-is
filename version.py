@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.04"
+APP_VERSION = "7.05"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.05",
+        "date": "October 19, 2026",
+        "summary": "See the specific reason when the document intake Drive check fails.",
+        "changes": [
+            "Intake now explains missing relay configuration, rejected connections, outdated deployments and folder-setting mismatches instead of showing one generic error.",
+            "Queued reviews are retained when a connection fails, and the message clears after the next successful check."
+        ]
+    },
     {
         "version": "7.04",
         "date": "October 19, 2026",

@@ -11,6 +11,13 @@ import gdocs_relay
 MAX_RESPONSE = 1024 * 1024
 
 
+class WorkspaceError(ValueError):
+    """A fixed diagnostic code; never expose arbitrary provider text."""
+    def __init__(self, code, message):
+        super().__init__(message)
+        self.code = code
+
+
 class Unconfigured(ValueError):
     pass
 
@@ -21,7 +28,7 @@ def _request(client,method,url,**kwargs):
         for chunk in response.iter_bytes():
             content.extend(chunk)
             if len(content)>MAX_RESPONSE:
-                raise ValueError('Workspace response exceeded the metadata limit.')
+                raise WorkspaceError('response_too_large', 'Workspace response exceeded the metadata limit.')
         return httpx.Response(response.status_code,headers=response.headers,
                               content=bytes(content),request=response.request)
 
@@ -35,7 +42,7 @@ class WorkspaceRelay:
             raise Unconfigured('The existing '+('mail' if mail else 'travel documents')+' relay is not configured in this runtime.')
         parsed = urlparse(endpoint)
         if parsed.scheme != 'https' or parsed.hostname != 'script.google.com' or parsed.username or parsed.port not in (None,443) or not parsed.path.endswith('/exec'):
-            raise ValueError('Use the existing Google Apps Script /exec deployment URL.')
+            raise WorkspaceError('invalid_endpoint', 'Use the existing Google Apps Script /exec deployment URL.')
         request = {**payload, 'action':'document_'+action, 'operation_id':operation_id}
         envelope = gdocs_relay.envelope(request, secret)
         with httpx.Client(timeout=httpx.Timeout(90,connect=10),follow_redirects=False) as client:
@@ -48,17 +55,25 @@ class WorkspaceRelay:
                 location=response.headers.get('location','')
                 dest=urlparse(location)
                 if dest.scheme!='https' or dest.hostname!='script.googleusercontent.com' or dest.username or dest.port not in (None,443):
-                    raise ValueError('Unexpected Workspace redirect; the operation needs reconciliation.')
+                    raise WorkspaceError('unexpected_redirect', 'Unexpected Workspace redirect; the operation needs reconciliation.')
                 response=_request(client,"GET",location)
             response.raise_for_status()
             if len(response.content)>MAX_RESPONSE:
-                raise ValueError('Workspace response exceeded the metadata limit.')
+                raise WorkspaceError('response_too_large', 'Workspace response exceeded the metadata limit.')
             try:
                 result=response.json()
             except ValueError:
-                raise ValueError('Workspace returned no confirmed JSON receipt. Check the operation status before retrying.') from None
+                raise WorkspaceError('no_json', 'Workspace returned no confirmed JSON receipt. Check the operation status before retrying.') from None
+        # The main relay can reject a request before it reaches documentOperation_.
+        # These two known rejections have no operation ID; keep them distinguishable
+        # from a malformed or mismatched success receipt. Never accept them as success.
+        if isinstance(result,dict) and result.get('ok') is False and result.get('operation_id') is None:
+            if result.get('error') == 'unauthorized':
+                raise WorkspaceError('unauthorized', 'The relay rejected the request signature.')
+            if result.get('error') == 'unknown_action':
+                raise WorkspaceError('unknown_action', 'The deployed relay does not recognize this document operation.')
         if not isinstance(result,dict) or result.get('operation_id')!=operation_id:
-            raise ValueError('The deployed relay lacks document operations or returned a mismatched receipt. Update the existing deployment.')
+            raise WorkspaceError('receipt_mismatch', 'The deployed relay lacks document operations or returned a mismatched receipt. Update the existing deployment.')
         if result.get('ok') is False:
             # Never echo arbitrary provider errors or document text into the UI.
             code=result.get('error','unconfirmed')
@@ -71,5 +86,6 @@ class WorkspaceRelay:
                       'input_too_large':'The file exceeds the configured processing limit.',
                       'not_configured':'Set the document root folder in the existing Apps Script project.',
                       'extraction_failed':'The source could not be read. Manual entry remains available.'}
-            raise ValueError(messages.get(code,'The Workspace operation could not be confirmed. Check the relay execution and operation receipt.'))
+            safe_code=code if isinstance(code,str) and code in set(messages) | {'bad_folder','bad_request','unauthorized','unknown_action','busy','unconfirmed'} else 'unconfirmed'
+            raise WorkspaceError(safe_code,messages.get(safe_code,'The Workspace operation could not be confirmed. Check the relay execution and operation receipt.'))
         return result
