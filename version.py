@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.05"
+APP_VERSION = "7.06"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.06",
+        "date": "October 19, 2026",
+        "summary": "Identify the network problem behind a failed document intake connection.",
+        "changes": [
+            "Drive intake now distinguishes DNS, proxy, certificate and connection failures without displaying private network details.",
+            "The diagnostic identifies whether the failure occurred at the Docs web app or Google’s reply service."
+        ]
+    },
     {
         "version": "7.05",
         "date": "October 19, 2026",
