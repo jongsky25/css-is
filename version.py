@@ -17,10 +17,24 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.03"
+APP_VERSION = "7.04"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.04",
+        "date": "October 19, 2026",
+        "summary": "Review documents from office Drive and Gmail, then route them digitally.",
+        "changes": [
+            "Office uploads and Gmail messages enter one review queue before receiving a document number.",
+            "Reviewers can preview files, save document details, use OCR suggestions and keep email attachments together.",
+            "Emails without attachments appear in an Email body box marked No attachment, including after registration.",
+            "Confirmed documents are numbered, renamed and filed by year and Incoming or Outgoing direction.",
+            "Incoming documents wait for the Director’s digital routing instructions before staff assignments begin.",
+            "The Intake menu requires Documents records access; enabling its folder settings also requires workflow-administrator access.",
+            "The workflow uses the existing office Drive folders and must be configured before use; Gmail auto-pull stays paused during setup."
+        ]
+    },
     {
         "version": "7.03",
         "date": "October 19, 2026",

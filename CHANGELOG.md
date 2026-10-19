@@ -1,3 +1,9 @@
+## 7.04 — October 19, 2026
+
+- Expand the sign-in page’s What’s new to explain the unified Drive and Gmail review queue, body-only emails, grouped attachments, automatic filing and Director routing.
+- Explain the Documents permissions and configuration needed to use Intake, and that Gmail stays paused during setup.
+- These notes describe the workspace delivered in v7.03; this release corrects its incomplete on-screen description.
+
 ## 7.03 — October 19, 2026
 
 - Include body-only work emails in intake with a preserved, escaped Email body box and No attachment note, visible through Director routing without OCR or a synthetic Drive file.
