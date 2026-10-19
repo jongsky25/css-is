@@ -29,6 +29,7 @@ import sqlite3
 import uuid
 import re
 import difflib
+import unicodedata
 from datetime import datetime, timedelta, date, time
 import time as _clock
 import pandas as pd
@@ -180,6 +181,7 @@ def init_db(conn):
         lead_org_id  INTEGER REFERENCES org_unit(id),
         created_at   TEXT
     );
+    CREATE INDEX IF NOT EXISTS idx_event_event_date ON event(event_date);
 
     CREATE TABLE IF NOT EXISTS event_form (  -- which forms belong to an event, in order
         event_id         INTEGER NOT NULL REFERENCES event(id),
@@ -1776,6 +1778,74 @@ def find_recent_duplicate_event(conn, title, event_date):
         return None
     return {"id": row[0], "event_token": row[1], "created_at": row[2],
             "event_kind": row[3] or "bureau", "responses": row[4]}
+
+
+def _normalized_activity_title(title):
+    """Comparable title while preserving meaningful words and numbers."""
+    title = unicodedata.normalize("NFKC", title or "").casefold().replace("&", " and ")
+    return " ".join(re.findall(r"\w+", title))
+
+
+def find_similar_events(conn, title, event_date, *, end_date=None, event_kind=None,
+                        venue=None, organizer=None, limit=3):
+    """Rank existing activities on overlapping dates for the create warning.
+
+    Exact normalized titles are strong matches. A very close fuzzy title is
+    strong only for the same event type; other fuzzy matches are advisory.
+    Date filtering happens in SQL so matching does not scan every event.
+    """
+    normalized = _normalized_activity_title(title)
+    if not normalized or not event_date or limit < 1:
+        return []
+    last_day = end_date or event_date
+    venue_hint = _normalized_activity_title(venue)
+    organizer_hint = _normalized_activity_title(organizer)
+    rows = conn.execute("""
+        SELECT e.id, e.event_token, e.title, e.event_date, e.end_date,
+               e.venue, e.organizer, COALESCE(e.event_kind, 'bureau'),
+               e.created_at,
+               (SELECT COUNT(*) FROM event_form ef JOIN response r
+                  ON r.form_instance_id = ef.form_instance_id WHERE ef.event_id = e.id)
+        FROM event e
+        WHERE e.event_date <= ? AND COALESCE(e.end_date, e.event_date) >= ?
+        ORDER BY e.created_at DESC LIMIT 500
+    """, (last_day, event_date)).fetchall()
+    matches = []
+    for row in rows:
+        other = _normalized_activity_title(row[2])
+        if not other:
+            continue
+        exact = normalized == other
+        if exact:
+            score = 1.0
+        else:
+            # Avoid fuzzy matching short, generic titles such as "Training".
+            if min(len(normalized), len(other)) < 12:
+                continue
+            direct = difflib.SequenceMatcher(None, normalized, other).ratio()
+            reordered = difflib.SequenceMatcher(
+                None, " ".join(sorted(normalized.split())),
+                " ".join(sorted(other.split()))).ratio()
+            score = max(direct, reordered)
+            if score < 0.84:
+                continue
+        kind = row[7]
+        strength = "strong" if (exact or (score >= 0.94 and
+                         kind == event_kind and row[3] == event_date)) else "possible"
+        rank_score = score
+        if venue_hint and venue_hint == _normalized_activity_title(row[5]):
+            rank_score += 0.02
+        if organizer_hint and organizer_hint in _normalized_activity_title(row[6]):
+            rank_score += 0.02
+        matches.append({"id": row[0], "event_token": row[1], "title": row[2],
+                        "event_date": row[3], "end_date": row[4], "venue": row[5],
+                        "organizer": row[6], "event_kind": kind,
+                        "created_at": row[8], "responses": row[9],
+                        "strength": strength, "score": score,
+                        "rank_score": rank_score})
+    matches.sort(key=lambda m: (m["strength"] == "strong", m["rank_score"],
+                                m["event_date"], m["created_at"] or ""), reverse=True)
+    return matches[:limit]
 
 
 _EVENT_COLS = """

@@ -1,3 +1,8 @@
+## 7.23 — October 19, 2026
+
+- Show similar activities, dates and details while creating a survey.
+- Ask for confirmation before saving a closely matching activity, while allowing a separate activity when needed.
+
 ## 7.22 — October 19, 2026
 
 - Open the calendar with Everything I can see selected when no other preferred view is saved.

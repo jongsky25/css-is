@@ -43,10 +43,7 @@
   </div>
   {% endif %}
 
-  <!-- Filled in live by checkDuplicate() below when activity name + date match an
-       existing activity (any creator, any age) — a heads-up, not a block: Save
-       still works either way, this just offers a shortcut to the existing
-       activity instead. -->
+  <!-- Filled in live by checkDuplicate() with similar activities on these dates. -->
   <div class="dup-warn hidden" id="dupWarn" role="alert"></div>
 
   <!-- Office calendar: a calendar item this activity is made from (or has just been matched to).
@@ -62,6 +59,25 @@
   <form method="post" action="/create" data-loading="Creating survey…">
     <input type="hidden" name="from_entry" id="from_entry" value="{{ f.from_entry|default('') }}">
     <input type="hidden" name="from_entry_title" id="from_entry_title" value="{{ f.from_entry_title|default('') }}">
+    {% if duplicate_confirm_key %}
+    <div class="dup-warn" role="alert" id="duplicateConfirm">
+      <strong>An activity like this already exists. Review it before creating another.</strong>
+      <ul>
+        {% for match in duplicate_matches %}
+        <li><a href="{{ '/activities/' ~ match.event_token ~ '/manage' if match.event_kind == 'outside' else '/monitor/' ~ match.event_token }}" target="_blank" rel="noopener">{{ match.title }}</a>
+          · {{ match.event_date }}{% if match.end_date and match.end_date != match.event_date %} to {{ match.end_date }}{% endif %}
+          · {{ 'Invited event' if match.event_kind == 'outside' else 'Bureau activity' }}
+          {% if match.organizer %} · {{ match.organizer }}{% endif %}
+          {% if match.venue %} · {{ match.venue }}{% endif %}
+          · {{ match.responses }} response{{ '' if match.responses == 1 else 's' }}
+          ({{ 'Likely duplicate' if match.strength == 'strong' else 'Possible duplicate' }})</li>
+        {% endfor %}
+      </ul>
+      <p>Open an existing activity above, or confirm that this is a separate one.</p>
+      <input type="hidden" name="duplicate_confirm" value="{{ duplicate_confirm_key }}">
+      <button type="submit" class="btn small">Create a separate activity anyway</button>
+    </div>
+    {% endif %}
 
     <fieldset>
       <legend>1 · Event type</legend>
@@ -161,7 +177,7 @@
       <div class="locked">Nothing to fill in here — the response window is whatever you set under “When can people answer?” in step 2 above. By default the survey opens on the event date and stays open until you close it.</div>
     </fieldset>
 
-    <button type="submit" class="btn" style="font-size:1rem; padding:.7rem 1.4rem;">Generate QR &amp; save</button>
+    <button type="submit" class="btn" style="font-size:1rem; padding:.7rem 1.4rem;">{{ 'Create a separate activity anyway' if duplicate_confirm_key else 'Generate QR & save' }}</button>
     <div class="hint" style="margin-top:.5rem;">Saving creates the survey forms and shows their QR codes on the next
       screen — nothing is sent anywhere automatically.</div>
   </form>
@@ -271,42 +287,71 @@ if (SUBMITTED_SPEAKERS.length) {
   addRow();   // start with one row
 }
 
-// Live "this already exists" heads-up (spot-feedback #67): a same-day duplicate
-// activity created by mistake had no reachable Archive button once it aged off the
-// home feed, so catch the mistake here instead — before Save, not after. Matches on
-// title + date alone, regardless of who created the earlier one or how long ago, so
-// it also catches two different staff logging the same activity. Purely
-// informational: it never blocks Save, it just offers a shortcut to the activity
-// that's already there. Debounced so it only fires once typing settles.
+// Live heads-up while the activity details are being entered. The server repeats
+// the check on Save, so a delayed or failed request cannot skip confirmation.
 let dupCheckTimer = null;
+let dupCheckSequence = 0;
 function checkDuplicate() {
   clearTimeout(dupCheckTimer);
+  const sequence = ++dupCheckSequence;
   dupCheckTimer = setTimeout(async () => {
     const name = document.getElementById('activity_name').value.trim();
     const date = document.getElementById('event_date').value;
+    const endDate = document.getElementById('end_date').value;
+    const eventType = document.querySelector('input[name=event_type]:checked').value;
+    const venue = document.getElementById('venue').value.trim();
+    const organizer = eventType === 'outside'
+      ? document.getElementById('external_org').value.trim() : '';
     const box = document.getElementById('dupWarn');
     if (!name || !date) { box.classList.add('hidden'); return; }
     let data;
     try {
       const resp = await fetch('/create/check-duplicate?activity_name='
-        + encodeURIComponent(name) + '&event_date=' + encodeURIComponent(date));
+        + encodeURIComponent(name) + '&event_date=' + encodeURIComponent(date)
+        + '&end_date=' + encodeURIComponent(endDate)
+        + '&event_type=' + encodeURIComponent(eventType)
+        + '&venue=' + encodeURIComponent(venue)
+        + '&organizer=' + encodeURIComponent(organizer));
       data = resp.ok ? await resp.json() : null;
-    } catch (e) { return; }                    // offline / hiccup — stay silent
-    const dup = data && data.duplicate;
-    if (!dup) { box.classList.add('hidden'); return; }
-    const link = dup.event_kind === 'outside'
-      ? '/activities/' + dup.event_token + '/manage' : '/monitor/' + dup.event_token;
-    const respLine = dup.responses
-      ? `, and it already has ${dup.responses} response${dup.responses === 1 ? '' : 's'}` : '';
-    box.innerHTML = `<strong>“${name}” already exists on this date</strong>`
-      + `<p>Made ${dup.created_at_human}${respLine}. If this is an accidental `
-      + `resubmit, open it instead of making a duplicate — otherwise just carry on.</p>`
-      + `<p><a class="btn small" href="${link}">Open the existing activity</a></p>`;
+    } catch (e) { data = null; }
+    if (sequence !== dupCheckSequence) return;
+    const matches = data && data.matches || [];
+    box.replaceChildren();
+    if (!matches.length) { box.classList.add('hidden'); return; }
+    const heading = document.createElement('strong');
+    heading.textContent = 'Potential duplicate activities';
+    box.appendChild(heading);
+    const list = document.createElement('ul');
+    for (const match of matches) {
+      const item = document.createElement('li');
+      const link = document.createElement('a');
+      link.href = match.event_kind === 'outside'
+        ? '/activities/' + encodeURIComponent(match.event_token) + '/manage'
+        : '/monitor/' + encodeURIComponent(match.event_token);
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.textContent = match.title;
+      item.appendChild(link);
+      const dates = match.end_date && match.end_date !== match.event_date
+        ? match.event_date + ' to ' + match.end_date : match.event_date;
+      const details = [dates, match.event_kind === 'outside' ? 'Invited event' : 'Bureau activity',
+        match.organizer, match.venue,
+        match.responses + ' response' + (match.responses === 1 ? '' : 's')].filter(Boolean);
+      item.appendChild(document.createTextNode(' · ' + details.join(' · ')
+        + ' (' + (match.strength === 'strong' ? 'Likely duplicate' : 'Possible duplicate') + ')'));
+      list.appendChild(item);
+    }
+    box.appendChild(list);
     box.classList.remove('hidden');
   }, 500);
 }
 document.getElementById('activity_name').addEventListener('input', checkDuplicate);
 document.getElementById('event_date').addEventListener('change', checkDuplicate);
+document.getElementById('end_date').addEventListener('change', checkDuplicate);
+document.getElementById('venue').addEventListener('input', checkDuplicate);
+document.getElementById('external_org').addEventListener('input', checkDuplicate);
+document.querySelectorAll('input[name=event_type]').forEach(el => el.addEventListener('change', checkDuplicate));
+if (document.getElementById('activity_name').value && document.getElementById('event_date').value) checkDuplicate();
 
 // Office calendar heads-up: a calendar item the person can see that looks like this activity
 // (same dates, similar name, not linked yet). A suggestion with a button — nothing is linked

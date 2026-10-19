@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.22"
+APP_VERSION = "7.23"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.23",
+        "date": "October 19, 2026",
+        "summary": "Check for duplicate activities before creating a survey.",
+        "changes": [
+            "See similar activities with their dates and details while filling in a new survey.",
+            "Review an existing activity before saving another with a closely matching name and date."
+        ]
+    },
     {
         "version": "7.22",
         "date": "October 19, 2026",
