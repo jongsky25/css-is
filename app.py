@@ -11628,12 +11628,12 @@ def _mrr_dim_rows(e):
     Assurance and Empathy can be named too — the three event-about dimensions in
     `ranked` alone gave every activity in the bureau the same handful of weakest
     areas. Falls back to `ranked` when no scorecard is attached."""
-    dims = [d for d in ((e.get("report") or {}).get("dims") or []) if d.get("value") is not None]
+    dims = [d for d in ((e.get("report") or {}).get("dims") or []) if eng.finite_number(d.get("value")) is not None]
     if dims:
         rows = [{"raw": d["key"], "value": d["value"], "shown": f"{d['value']:.1f}"} for d in dims]
     else:
         rows = [{"raw": r.get("raw"), "value": r["value"], "shown": r["shown"]}
-                for r in (e.get("ranked") or []) if r.get("value") is not None]
+                for r in (e.get("ranked") or []) if eng.finite_number(r.get("value")) is not None]
     for r in rows:
         r["name"] = _mrr_dim_name(r["raw"])
     rows.sort(key=lambda r: -r["value"])
@@ -11662,9 +11662,9 @@ def _activity_mrr_profile(e):
     rows = _mrr_dim_rows(e)
     osq = f2.get("osq_shown") or (report.get("osq_shown") if report.get("osq") is not None else None)
     osq_band = f2.get("osq_band") or report.get("osq_grade")
-    overall, exp = f2.get("overall"), f2.get("expectation")
+    overall, exp = eng.finite_number(f2.get("overall")), eng.finite_number(f2.get("expectation"))
     if overall is None and report.get("average") is not None:
-        overall, exp = report.get("average"), report.get("expectation")
+        overall, exp = eng.finite_number(report.get("average")), eng.finite_number(report.get("expectation"))
     gap = (overall - exp) if (overall is not None and exp is not None) else None
     n = int(e.get("respondents") or 0)
     attendance = e.get("attendance")
@@ -11751,8 +11751,8 @@ def _mrr_action_text(p):
     respondents asked for."""
     w, sev = p["weakest"], p["severity"]
     if not w:
-        return ("Sustain the current facilitation standards and keep gathering participant feedback "
-                "on every activity.")
+        return ("There are no valid dimension ratings yet. Gather participant feedback "
+                "before identifying an area for correction.")
     table = _MRR_ACTION.get(w["raw"]) or {}
     if w["raw"] == "Tangible":
         table = table.get(p["modality"], {})
@@ -11791,7 +11791,10 @@ def _mrr_next_steps_text(p, e):
                      f"and the answers still owed from the open forum to the {p['n']} respondent(s).")
         review = "the next"
     w = p["weakest"]
-    if w and p["severity"] != "strong":
+    if not w:
+        steps.append(f"At the {review} management review: collect valid dimension ratings for “{name}” "
+                     "before judging whether the current standard should be retained or improved.")
+    elif p["severity"] != "strong":
         steps.append(f"Before the next {p['modality_word']} run of “{name}”: build the improvement above "
                      f"into the planning and confirm it with the organising team at the preparatory meeting.")
         steps.append(f"At the {review} management review: re-check {w['name']} against this activity's "
@@ -11810,7 +11813,9 @@ def _mrr_resources_text(p):
     """Column F — what carrying the action out actually requires, sized to this
     activity's modality and crowd."""
     w = p["weakest"]
-    if not w or p["severity"] == "strong":
+    if not w:
+        return "Resource needs cannot be assessed until valid dimension ratings are available."
+    if p["severity"] == "strong":
         return ("None identified from the feedback — the current arrangements are holding. Continue "
                 "funding the existing venue/platform and materials.")
     base = _MRR_RESOURCE.get(w["raw"])
@@ -12413,6 +12418,7 @@ def _servqual_block(df, dim_map):
         g = overall.value - expc.value
         gap = {"shown": f'{g:+.2f}', "label": eng.gap_label(g)}
     return {
+        "answer_quality": eng.answer_quality(df)[2],
         "overall": _metric_view(overall), "expectation": _metric_view(expc),
         "osq": _metric_view(osq, bands=eng.OSQ_BANDS), "dimensions": dims, "gap": gap,
         "respondents": int(df["response_id"].nunique()) if not df.empty else 0,
@@ -12431,7 +12437,7 @@ def _servqual_response_rows(df, dim_map):
     in by the caller, which has the connection."""
     if df is None or df.empty:
         return {}
-    v = df[~df["is_na"]][["response_id", "item_id", "value"]].copy()
+    v = eng.valid_answers(df)[["response_id", "item_id", "value"]].copy()
     if v.empty:
         return {}
     v["item_id"] = v["item_id"].astype("object")

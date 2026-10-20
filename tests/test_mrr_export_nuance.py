@@ -230,5 +230,8 @@ def test_page_preview_matches_the_downloaded_draft(manager, app_mod):
     html = manager.get(f"/reports/activities/{fid}").text
     action = _row_for(_sheet1(manager), topic)[2]
     # The textarea carries the same drafted sentence (HTML-escaped quotes aside).
-    assert action.split(".")[0].split("“")[0].strip()[:40] in html
+    import re
+    from html import unescape
+    preview = re.search(r'<textarea name="action"[^>]*>(.*?)</textarea>', html, re.S)
+    assert preview and unescape(preview.group(1)) == action
     assert "Assurance" in action, "the five-dimension scorecard must reach the page draft"

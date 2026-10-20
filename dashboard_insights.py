@@ -479,7 +479,7 @@ _VOLATILE = {"pct": 8.0, "mean7": 0.8}
 def consistency(values, scale="mean7"):
     """Plain-language read on how much a person's scores swing between sessions.
     Informational only — it surfaces the pattern, it is not a flag on the person."""
-    vals = [float(v) for v in values if v is not None and not (isinstance(v, float) and np.isnan(v))]
+    vals = [n for v in values if (n := eng.finite_number(v)) is not None]
     if len(vals) < 2:
         return {"known": False, "stable": None, "sd": None,
                 "phrase": "Not enough sessions yet to tell whether scores are steady."}
@@ -496,7 +496,7 @@ def consistency(values, scale="mean7"):
 def stability_phrase(series, scale="mean7"):
     """Read a trend (list of {value}) and say what it's doing, in words.
     Returns {phrase, tone} where tone is good / bad / neutral."""
-    vals = [p["value"] for p in series if p.get("value") is not None]
+    vals = [n for p in series if (n := eng.finite_number(p.get("value"))) is not None]
     n = len(vals)
     if n < 2:
         return {"phrase": "Not enough periods yet to see a trend.", "tone": "neutral"}
@@ -544,10 +544,10 @@ def frame_item_means(df):
     re-scan the frame per item. Returns a dict."""
     if not _has(df):
         return {}
-    valid = df[~df["is_na"]]
+    valid = eng.valid_answers(df)
     if valid.empty:
         return {}
-    return valid.groupby("item_id")["value"].mean().to_dict()
+    return valid.groupby("item_id", observed=True)["value"].mean().to_dict()
 
 
 def frame_dim_means(dim_map, item_means):
@@ -1425,8 +1425,8 @@ def _ranked_dimensions(df, dim_map, labels=DIM_LABELS):
     # calling eng.dimension_mean per dimension, but a single scan instead of one boolean
     # filter + groupby per dimension. Hot path for pulse insights/summary + person extras.
     rows = []
-    valid = df[~df["is_na"]] if _has(df) else df
-    agg = (valid.groupby("item_id")["value"].agg(["mean", "count"])
+    valid = eng.valid_answers(df) if _has(df) else df
+    agg = (valid.groupby("item_id", observed=True)["value"].agg(["mean", "count"])
            if _has(valid) and len(valid) else None)
     if agg is None or agg.empty:
         return rows
@@ -1469,14 +1469,14 @@ def event_overall_map(df, dim_map):
     for looping eng.overall_perception() over thousands of events."""
     if not _has(df):
         return {}
-    valid = df[~df["is_na"]]
+    valid = eng.valid_answers(df)
     item2dim = {it: d for d, items in dim_map.items() for it in items}
     sub = valid[valid["item_id"].isin(item2dim)]
     if sub.empty:
         return {}
     dim = sub["item_id"].map(item2dim)
     # mean per (event, item) -> mean per (event, dim) -> mean per event
-    item_means = sub.groupby([sub["form_instance_id"], sub["item_id"], dim.values])["value"].mean()
+    item_means = sub.groupby([sub["form_instance_id"], sub["item_id"], dim.values], observed=True)["value"].mean()
     item_means.index.names = ["fid", "item", "dim"]
     dim_means = item_means.groupby(["fid", "dim"]).mean()
     overall = dim_means.groupby("fid").mean()
@@ -1487,7 +1487,7 @@ def event_value_map(df, item_id):
     """Vectorized per-form-instance mean of one item (e.g. 'A' = expectation)."""
     if not _has(df):
         return {}
-    sub = df[(df["item_id"] == item_id) & (~df["is_na"])]
+    sub = eng.valid_answers(df[df["item_id"] == item_id])
     if sub.empty:
         return {}
     return sub.groupby("form_instance_id")["value"].mean().to_dict()
@@ -1518,8 +1518,8 @@ def build_events(atoms, instances):
 
     # ---- one-time aggregation over all atoms ----
     if len(atoms):
-        nona = atoms[~atoms["is_na"]]
-        agg = nona.groupby(["form_instance_id", "item_id"])["value"].agg(["sum", "count"])
+        nona = eng.valid_answers(atoms)
+        agg = nona.groupby(["form_instance_id", "item_id"], observed=True)["value"].agg(["sum", "count"])
         fi_item = {}
         for (fi, item), row in zip(agg.index, agg.itertuples(index=False)):
             fi_item.setdefault(fi, {})[item] = (float(row.sum), int(row.count))
@@ -1784,10 +1784,10 @@ def pooled_summary(atoms):
     if not len(pa):
         return None
     f2 = pa[pa["survey_type"] == 2]
-    nona = f2[~f2["is_na"]]
+    nona = eng.valid_answers(f2)
     overall = None
     if len(nona):
-        item_means = nona.groupby("item_id")["value"].mean().to_dict()
+        item_means = nona.groupby("item_id", observed=True)["value"].mean().to_dict()
         dims = []
         for _dim, items in EVENT_DIMS_FORM2.items():   # event-about dims, as on each event row
             present = [it for it in items if it in item_means]
@@ -1820,6 +1820,7 @@ def pooled_summary(atoms):
 
 def _servqual_verdict(gap):
     """Standard SERVQUAL read of a perception-minus-expectation gap."""
+    gap = eng.finite_number(gap)
     if gap is None:
         return None
     if gap >= 0.10:
@@ -1837,6 +1838,7 @@ def activity_servqual(atoms, instance_ids):
         return None
     df = atoms[(atoms["form_instance_id"].isin(instance_ids)) &
                (atoms["survey_type"] == 2) & (~atoms["is_na"])]
+    df = eng.valid_answers(df)
     if not len(df):
         return None
     exp = eng.expectation_A(df).value
@@ -1896,7 +1898,7 @@ def activity_benchmark(atoms, instance_ids, scope_label):
         return None
     org_path, year = paths.iloc[0], str(dates.iloc[0])[:4]
     pool = atoms[(atoms["survey_type"] == 2) & (~atoms["is_na"]) &
-                 (atoms["org_path"].str.startswith(org_path)) &
+                 (atoms["org_path"].astype("string").str.startswith(org_path, na=False)) &
                  (atoms["event_date"].str.slice(0, 4) == year) &
                  (~atoms["form_instance_id"].isin(instance_ids))]
     if not len(pool):
@@ -3021,7 +3023,7 @@ def servqual_topbox(df, dim_map):
 
 def _topbox_metric(df, items, thresh):
     sub = df[df["item_id"].isin(items)]
-    valid = sub[~sub["is_na"]]
+    valid = eng.valid_answers(sub)
     n = len(valid)
     if n == 0:
         return _ItemMetric(None, 0)
@@ -3038,7 +3040,7 @@ SERVQUAL_BOTTOMBOX_MAX = 3
 
 def _bottombox_metric(df, items, thresh):
     sub = df[df["item_id"].isin(items)]
-    valid = sub[~sub["is_na"]]
+    valid = eng.valid_answers(sub)
     n = len(valid)
     if n == 0:
         return _ItemMetric(None, 0)
@@ -3094,7 +3096,7 @@ def _arta_topbox_resp(df):
     the per-period confidence band uses a fair sample size."""
     m = eng.arta_topbox(df)
     sub = df[df["item_id"].isin(eng.ARTA_HEADLINE_ITEMS)]
-    resp = int(sub[~sub["is_na"]]["response_id"].nunique()) if len(sub) else 0
+    resp = int(eng.valid_answers(sub)["response_id"].nunique()) if len(sub) else 0
     return _ItemMetric(m.value, resp)
 
 

@@ -431,13 +431,16 @@
       {% if v.has_data %}{{ report_downloads(rtype, sel_org, sel_period, sel_activity) }}{% endif %}
     </div>
   </div>
+  {% if v.answer_quality and v.answer_quality.invalid %}
+  <p class="meta" role="status">{{ v.answer_quality.invalid|comma }} missing or invalid answer(s) were excluded from scores. Source records are retained for review.</p>
+  {% endif %}
   {% if not v.has_data %}
-    {{ empty_state("No responses in this scope.", icon="◔") }}
+    {{ empty_state("No valid ratings in this scope.", icon="◔") }}
   {% else %}
   <div class="head-num">
     <span class="big">{{ v.overall.shown }}</span><span class="meta">/ 7</span>
     {% if v.gap %}<span class="badge {{ {'Exceeds':'b-good','Meets':'b-good','Needs Improvement':'b-bad'}.get(v.gap.label,'b-grey') }}">{{ v.gap.label }} expectation ({{ v.gap.shown }})</span>{% endif %}
-    <span class="meta">overall perception (dimension-weighted) · {{ v.respondents|comma }} respondent(s)</span>
+    <span class="meta">overall perception (dimension-weighted) · {{ v.overall.n|comma }} rated respondent(s) · {{ v.respondents|comma }} total submission(s)</span>
   </div>
   {% if v.overall.flags %}<div class="flags">{% for f in v.overall.flags %}<span class="badge {{ 'b-mid' if 'low n' in f else 'b-info' }}">{{ f }}</span>{% endfor %}</div>{% endif %}
 
