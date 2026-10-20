@@ -42,7 +42,8 @@ jobs:
 
       # Same reviewed client and transitive packages on every deployment.
       - name: Install deploy dependency
-        run: python -m pip install --require-hashes --only-binary=:all: -r requirements-deploy.txt
+        run: |
+          python -m pip install --require-hashes --only-binary=:all: -r requirements-deploy.txt
 
       - name: Deploy (runs the exact same routine as the local deploy_hf.py)
         env:
