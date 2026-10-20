@@ -238,3 +238,33 @@ def test_add_form_is_sectioned_and_keeps_every_field(admin):
 def test_add_form_loads_the_room_card_styles(admin):
     html = admin.get(f"/calendar/new?day={DAY}").text
     assert 'id="room-chip"' in html and "/static/css/rooms.css" in html     # the card is styled even with no room banner
+
+
+def test_an_item_can_involve_several_sections(viewer, conn):
+    """Spot Feedback #129: the owning unit stays the main one; ticked units are added to it."""
+    ids = [conn.execute("INSERT INTO org_unit(name, short_name, level, path) VALUES (?,?,?,?)",
+                        (n, n, "section", f"CALEP/{n}")).lastrowid for n in ("CALEPA", "CALEPB", "CALEPC")]
+    conn.commit()
+    try:
+        eid = create(viewer, title="CALEP Joint", audience="unit", owner_org_id=str(ids[0]),
+                     extra_org_ids=[str(ids[1]), str(ids[2])])
+        e = st.cal_get(conn, eid)
+        assert e["owner_org_id"] == ids[0] and e["extra_org_ids"] == [ids[1], ids[2]]
+        page = viewer.get(f"/calendar/entries/{eid}").text
+        assert all(n in page for n in ("CALEPA", "CALEPB", "CALEPC"))
+        edit = viewer.get(f"/calendar/entries/{eid}/edit").text
+        assert f'name="extra_org_ids" value="{ids[1]}" checked' in edit
+        assert f'name="extra_org_ids" value="{ids[0]}" checked' not in edit
+        r = post(viewer, f"/calendar/entries/{eid}/edit", title="CALEP Joint", audience="unit",
+                 owner_org_id=str(ids[0]), extra_org_ids=[str(ids[2])],
+                 updated_at=e["updated_at"])
+        assert r.status_code == 303, r.text
+        assert st.cal_get(conn, eid)["extra_org_ids"] == [ids[2]]
+        r = post(viewer, "/calendar/new", title="CALEP Bad", audience="unit",
+                 owner_org_id=str(ids[0]), extra_org_ids=["99999999"])
+        assert r.status_code == 400 and "isn&#39;t in the directory" in r.text.replace("&#x27;", "&#39;")
+    finally:
+        for (i,) in conn.execute("SELECT id FROM calendar_entry WHERE title LIKE 'CALEP %'").fetchall():
+            st.cal_delete(conn, i)
+        conn.execute("DELETE FROM org_unit WHERE path LIKE 'CALEP/%'")
+        conn.commit()

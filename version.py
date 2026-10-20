@@ -17,29 +17,56 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.24"
+APP_VERSION = "7.27"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "7.24",
+        "version": "7.27",
         "date": "October 20, 2026",
-        "summary": "Safer navigation and fewer duplicate submissions after connection failures.",
+        "summary": "Safer sign-ins, saving, and navigation.",
         "changes": [
+            "Sign in again after this update; signing out and account access changes now end the affected sign-ins.",
+            "An administrator maintains your directory designation while your other profile details stay editable.",
+            "Automatic saves run regularly and report stalled saves; restoring a backup requires fresh sign-in.",
             "Sign-in and return links keep you within Office Connect.",
-            "Connection failures no longer make the app automatically resend changes outside the protected survey queue.",
-            "This update also includes the sign-in and saving protections from version 7.23."
+            "Connection failures no longer make the app automatically resend changes outside the protected survey queue."
+        ]
+    },
+    {
+        "version": "7.26",
+        "date": "October 19, 2026",
+        "summary": "Find people when adding a calendar item.",
+        "changes": [
+            "Searching the people list now shows matching names and tells you when no one matches.",
+            "The system administrator account no longer appears in the people list."
+        ]
+    },
+    {
+        "version": "7.25",
+        "date": "October 19, 2026",
+        "summary": "Keep your team's upcoming list to your team.",
+        "changes": [
+            "The Coming up card on your team page now shows events and trips involving your section or division, without filling the list with other sections' events."
+        ]
+    },
+    {
+        "version": "7.24",
+        "date": "October 19, 2026",
+        "summary": "Calendar items can involve several sections, and travel checklists can be answered for everyone on a DPO.",
+        "changes": [
+            "Add other sections to a calendar item; every involved section sees it and the item shows all of them.",
+            "Mark a travel checklist document as not applicable (or needed) for everyone on the same DPO in one click.",
+            "The Job Order clearance is now named as the signed Certification for Job Order / COS, since they are the same document."
         ]
     },
     {
         "version": "7.23",
         "date": "October 19, 2026",
-        "summary": "Safer sign-ins and more dependable saving.",
+        "summary": "Check for duplicate activities before creating a survey.",
         "changes": [
-            "After this update, sign in again on each device.",
-            "Signing out now closes that sign-in, and account access changes end existing sign-ins.",
-            "An administrator now maintains your directory designation while you can still edit your other profile details.",
-            "Automatic saves run regularly and show a warning when saving stalls."
+            "See similar activities with their dates and details while filling in a new survey.",
+            "Review an existing activity before saving another with a closely matching name and date."
         ]
     },
     {

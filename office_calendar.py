@@ -150,8 +150,23 @@ def _under(path, root):
     return bool(path and root) and (path == root or path.startswith(root + "/"))
 
 
+def _paths(owner_path):
+    """Owner unit paths as a list: an item may belong to several units (Spot Feedback #129)."""
+    if not owner_path:
+        return []
+    return [owner_path] if isinstance(owner_path, str) else [p for p in owner_path if p]
+
+
+def entry_owner_paths(conn, entry):
+    """Paths of every unit an entry belongs to (its owner plus the others it involves)."""
+    ids = [entry["owner_org_id"], *entry.get("extra_org_ids", ())]
+    units = _units(conn, ids)
+    return [units[i]["path"] for i in ids if i in units]
+
+
 def entry_visible(ctx, entry, owner_path):
-    """May this viewer see this entry at all? (Independent of the scope asked for.)"""
+    """May this viewer see this entry at all? (Independent of the scope asked for.)
+    `owner_path` is one unit path or a list of them; any one that reaches the viewer is enough."""
     listed = {p["user_id"] for p in entry["people"]}
     if ctx["user_id"] in listed or (ctx["username"] and entry["created_by"] == ctx["username"]):
         return True                               # your own items, whatever the audience
@@ -161,12 +176,13 @@ def entry_visible(ctx, entry, owner_path):
     if audience == "people" or ctx["kind"] == "none":
         return False
     # audience == "unit": it must belong to a unit, or nobody outside its people sees it
-    if not owner_path:
+    paths = _paths(owner_path)
+    if not paths:
         return False
     if ctx["kind"] == "bureau":
         return True
     mine = ctx["section_path"]
-    return _under(mine, owner_path) or _under(owner_path, ctx["scope_path"])
+    return any(_under(mine, p) or _under(p, ctx["scope_path"]) for p in paths)
 
 
 def _in_scope(ctx, scope, entry, owner_path):
@@ -184,7 +200,7 @@ def _in_scope(ctx, scope, entry, owner_path):
         return mine or bureau_wide
     root = ctx["section_path"] if scope == "section" else ctx["division_path"]
     # a section/division view is that unit's own items, plus what is bureau-wide
-    return _under(owner_path, root) or bureau_wide
+    return any(_under(p, root) for p in _paths(owner_path)) or bureau_wide
 
 
 # ── providers ────────────────────────────────────────────────────────────────
@@ -195,7 +211,7 @@ def _entries_layer(conn, ctx, start, end, scope):
     so the page can offer "just this one"; an occurrence on a holiday says so."""
     occs = st.cal_occurrences_between(conn, start, end)
     entries = [e for e, _a, _b in occs]
-    units = _units(conn, [e["owner_org_id"] for e in entries])
+    units = _units(conn, [i for e in entries for i in (e["owner_org_id"], *e["extra_org_ids"])])
     tones = _tone_map(conn)
     cards = _people_cards(conn, [p["user_id"] for e in entries for p in e["people"]])
     holidays = st.holidays_between(conn, date.fromisoformat(start), date.fromisoformat(end)) \
@@ -209,7 +225,8 @@ def _entries_layer(conn, ctx, start, end, scope):
         if e["event_id"]:
             continue            # an overlay on a CSS activity: the activities layer draws it, once
         unit = units.get(e["owner_org_id"])
-        path = unit["path"] if unit else None
+        owned = [units[i] | {"id": i} for i in (e["owner_org_id"], *e["extra_org_ids"]) if i in units]
+        path = [u["path"] for u in owned]
         if not entry_visible(ctx, e, path) or not _in_scope(ctx, scope, e, path):
             continue
         flags = [e["status"]] if e["status"] in ("tentative", "postponed") else []
@@ -224,7 +241,9 @@ def _entries_layer(conn, ctx, start, end, scope):
             "all_day": e["start_time"] is None, "time_note": e["time_note"],
             "kind": e["kind"], "status": e["status"],
             "owner_org_id": e["owner_org_id"],
-            "owner_label": unit["label"] if unit else None,
+            "owner_org_ids": [u["id"] for u in owned],
+            "owner_units": [{"id": u["id"], "label": u["label"], "tone": _tone(u, u["id"], tones)} for u in owned],
+            "owner_label": " + ".join(u["label"] for u in owned) or None,
             "tone": _tone(unit, e["owner_org_id"], tones),
             "people": [{"user_id": p["user_id"], "role": p["role"],
                         **cards.get(p["user_id"], {"name": "", "initials": "?",
@@ -752,7 +771,8 @@ def apply_filters(items, filters):
         elif ((not f.get("kinds") or i["kind"] in f["kinds"])
               and (not f.get("statuses") or i["status"] in f["statuses"])
               and (not f.get("tags") or f["tags"] & set(i["tags"]))
-              and (not f.get("owner_org_ids") or i["owner_org_id"] in f["owner_org_ids"])
+              and (not f.get("owner_org_ids")
+                   or f["owner_org_ids"] & set(i.get("owner_org_ids") or [i["owner_org_id"]]))
               and (not text or _matches_text(i, text))):
             keep.append(i)
     return keep
@@ -813,7 +833,7 @@ FIELD_LABELS = {
     "title": "title", "kind": "type", "status": "status", "start_date": "start date",
     "end_date": "end date", "start_time": "start time", "end_time": "end time",
     "time_note": "time note", "venue": "venue", "modality": "format",
-    "meeting_url": "meeting link", "note": "notes", "owner_org_id": "owning unit",
+    "meeting_url": "meeting link", "note": "notes", "owner_org_id": "owning unit", "extra_orgs": "other units involved",
     "audience": "who can see it", "people": "people", "tags": "tags",
     "event_id": "linked activity", "rrule": "repeat", "exdates": "skipped dates",
 }
@@ -826,17 +846,18 @@ def viewable_entry(conn, user, entry_id):
     e = st.cal_get(conn, entry_id)
     if e is None:
         return None
-    owner = _units(conn, [e["owner_org_id"]]).get(e["owner_org_id"])
-    return e if entry_visible(viewer_context(conn, user), e, owner["path"] if owner else None) else None
+    return e if entry_visible(viewer_context(conn, user), e, entry_owner_paths(conn, e)) else None
 
 
 def people_choices(conn):
-    """Active accounts a person can be put on an entry as: [{user_id, name}]."""
+    """Active staff accounts a person can be put on an entry as: [{user_id, name}]."""
+    staff_sql, staff_params = st._staff_only_sql("a")
     return sorted(
         ({"user_id": r[0], "name": r[1] or r[2]} for r in conn.execute(
             "SELECT a.id, rp.name, a.username FROM admin_user a "
             "LEFT JOIN resource_person rp ON rp.id = a.rp_id "
-            "WHERE a.active = 1 AND (rp.id IS NULL OR rp.archived_at IS NULL)")),
+            f"WHERE a.active = 1 AND (rp.id IS NULL OR rp.archived_at IS NULL) AND {staff_sql}",
+            staff_params)),
         key=lambda p: p["name"].lower())
 
 
@@ -1552,9 +1573,8 @@ def build_feed(conn, user, base_url, *, scope="mine", birthdays=False, today=Non
     cancelled = [e for e in st.cal_list_between(conn, start, end, include_cancelled=True)
                  if e["status"] == "cancelled" and e["id"] not in seen and (e["cancelled_at"] or "") >= since
                  and not e["event_id"]]
-    units = _units(conn, [e["owner_org_id"] for e in cancelled])
     for e in cancelled:
-        path = (units.get(e["owner_org_id"]) or {}).get("path")
+        path = entry_owner_paths(conn, e)
         if entry_visible(ctx, e, path) and _in_scope(ctx, "blend" if scope == "mine" else "section", e, path):
             events.append(cics.entry_event(e, base_url))
     span = {("event", i["css"]["event_id"]): [(i["start"], i["end"])] for i in items if i.get("css")}

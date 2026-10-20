@@ -1,16 +1,31 @@
-## 7.24 — October 20, 2026
+## 7.27 — October 20, 2026
 
+- Sign in again after this update; signing out and account access changes now revoke affected sign-ins.
+- Keep directory designations under administrator control while retaining other profile edits.
+- Save snapshots every interval, report stalled saves, avoid overlapping timed-out workers, and require fresh sign-in after restore.
 - Validate sign-in, onboarding, language, directory, room and installed-app return destinations through a shared local-path policy.
-- Stop service-worker replay of writes after ambiguous proxy failures; retain GET recovery and the existing deduplicated survey queue.
-- Refresh the service-worker cache generation so installed clients can adopt the repair.
-- Includes the unreleased 7.23 repairs; local candidate only, with live verification deferred.
+- Stop service-worker write replay after ambiguous proxy failures; retain GET recovery and the deduplicated survey queue.
+- Includes the locally prepared security repairs previously labelled 7.23/7.24; those candidate numbers were superseded by concurrent releases on main.
+
+## 7.26 — October 19, 2026
+
+- Search the people list when adding or editing a calendar item, with a clear message when no one matches.
+- Keep the system administrator account out of that list.
+
+## 7.25 — October 19, 2026
+
+- Show only events and trips involving your section or division in the home page's Coming up card.
+
+## 7.24 — October 19, 2026
+
+- Add other sections to a calendar item; every involved section sees it and the item shows all of them.
+- Mark a travel checklist document as not applicable (or needed) for everyone on the same DPO in one click.
+- The Job Order clearance is now named as the signed Certification for Job Order / COS, since they are the same document.
 
 ## 7.23 — October 19, 2026
 
-- Sign in again after this update; signing out and account access changes now revoke existing sign-ins.
-- Keep directory designations under administrator control while retaining other profile edits.
-- Save snapshots every interval, report stalled saves, and avoid overlapping timed-out snapshot workers.
-- Require fresh sign-in after restoring a backup.
+- Show similar activities, dates and details while creating a survey.
+- Ask for confirmation before saving a closely matching activity, while allowing a separate activity when needed.
 
 ## 7.22 — October 19, 2026
 

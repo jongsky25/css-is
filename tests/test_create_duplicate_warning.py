@@ -9,12 +9,10 @@ original same-creator/6-hour match rule missed the common case: two different
 staff logging the same activity, or a resubmit hours or days later — so the match
 now keys on title + date alone, regardless of who created it or when.
 
-This is a live, NON-blocking heads-up: /create/check-duplicate reports whether an
-event with this title + date already exists, and the create screen's JS shows a
-note with a link to it — but /create itself is untouched, so submitting twice on
-purpose (a legitimate second activity that happens to share a name) still works
-exactly as before. See storage.find_recent_duplicate_event for the match rule.
+The live check lists possible matches. Strong matches require a second, explicit
+submission so an accidental resubmit cannot silently create another activity.
 """
+import re
 import storage as st
 
 
@@ -88,7 +86,7 @@ def test_check_duplicate_endpoint_reports_none_when_nothing_matches(manager):
     r = manager.get("/create/check-duplicate", params={
         "activity_name": "Never Created This", "event_date": "2026-06-15"})
     assert r.status_code == 200
-    assert r.json() == {"duplicate": None}
+    assert r.json() == {"duplicate": None, "matches": []}
 
 
 def test_check_duplicate_endpoint_reports_the_existing_event(manager, db_path):
@@ -120,6 +118,14 @@ def test_check_duplicate_endpoint_reports_it_across_different_creators(admin, ma
     assert r.json()["duplicate"] is not None
 
 
+def test_save_confirmation_applies_across_creators(admin, manager):
+    title = "Cross Creator Confirmation Probe"
+    assert _bureau(admin, name=title).status_code == 200
+    attempt = _bureau(manager, name=title)
+    assert attempt.status_code == 409
+    assert title in attempt.text
+
+
 def test_check_duplicate_endpoint_requires_login(app_mod):
     from starlette.testclient import TestClient
     anon = TestClient(app_mod.app, follow_redirects=False)
@@ -128,15 +134,61 @@ def test_check_duplicate_endpoint_requires_login(app_mod):
     assert r.status_code in (302, 303, 401, 403)
 
 
-# ── /create itself stays exactly as it was — advisory only, never blocking ──
+# ── Save-time confirmation for strong matches ───────────────────────────────
 
-def test_create_still_allows_a_genuine_second_activity_with_the_same_name(manager, db_path):
+def test_create_requires_confirmation_for_a_genuine_second_activity(manager, db_path):
     title = "Duplicate Warning — legitimately created twice"
     r1 = _bureau(manager, name=title)
     assert r1.status_code == 200, r1.text[:600]
     r2 = _bureau(manager, name=title)
-    assert r2.status_code == 200, r2.text[:600]
-    assert len(_events(db_path, title)) == 2, "the heads-up must never block a real resubmit"
+    assert r2.status_code == 409, r2.text[:600]
+    assert "Create a separate activity anyway" in r2.text
+    assert len(_events(db_path, title)) == 1
+    key = re.search(r'name="duplicate_confirm" value="([a-f0-9]+)"', r2.text).group(1)
+    r3 = _bureau(manager, name=title, duplicate_confirm=key)
+    assert r3.status_code == 200, r3.text[:600]
+    assert len(_events(db_path, title)) == 2
+
+
+def test_fuzzy_title_and_reordered_words_are_suggested(manager):
+    title = "Regional Immunization Forum Fuzzy Probe"
+    _bureau(manager, name=title)
+    r = manager.get("/create/check-duplicate", params={
+        "activity_name": "Forum Regional Immunization Fuzzy Probe",
+        "event_date": "2026-06-15"})
+    assert r.status_code == 200
+    assert r.json()["matches"][0]["title"] == title
+    assert r.json()["matches"][0]["strength"] == "strong"
+
+
+def test_multi_day_overlap_is_suggested(manager):
+    title = "Multi Day Duplicate Probe"
+    _bureau(manager, name=title, end_date="2026-06-17")
+    r = manager.get("/create/check-duplicate", params={
+        "activity_name": title, "event_date": "2026-06-16"})
+    assert r.status_code == 200
+    assert r.json()["matches"][0]["title"] == title
+
+
+def test_weaker_fuzzy_match_warns_without_save_confirmation(manager):
+    _bureau(manager, name="Regional Health Planning Session")
+    probe = manager.get("/create/check-duplicate", params={
+        "activity_name": "Regional Health Plan Session",
+        "event_date": "2026-06-15"})
+    assert probe.json()["matches"][0]["strength"] == "possible"
+    saved = _bureau(manager, name="Regional Health Plan Session")
+    assert saved.status_code == 200
+
+
+def test_confirmation_is_bound_to_activity_details(manager, db_path):
+    title = "Confirmation Bound Probe"
+    _bureau(manager, name=title)
+    prompt = _bureau(manager, name=title)
+    key = re.search(r'name="duplicate_confirm" value="([a-f0-9]+)"', prompt.text).group(1)
+    changed = _bureau(manager, name=title, end_date="2026-06-16",
+                      duplicate_confirm=key)
+    assert changed.status_code == 409
+    assert len(_events(db_path, title)) == 1
 
 
 # ── create screen renders the wiring ────────────────────────────────────────

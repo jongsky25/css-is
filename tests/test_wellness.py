@@ -490,11 +490,13 @@ def test_chief_pages_are_gated(app_mod, wellness_org, viewer, admin, future_week
     assert viewer.get("/wellness").status_code == 200
     for path in ("/wellness/approvals", "/wellness/dashboard", "/wellness/export.xlsx"):
         assert viewer.get(path).status_code == 403, path
-    # admins and directory-resolved chiefs both pass
+    # a directory-resolved chief passes both; an admin sees the dashboard, but the approvals inbox is
+    # only for people requests are routed to (a chief seat), so an admin without one gets "No access"
     chief_c = _client_for_id(app_mod, wellness_org["chief"])
-    for c in (admin, chief_c):
-        for path in ("/wellness/approvals", "/wellness/dashboard"):
-            assert c.get(path).status_code == 200, path
+    for path in ("/wellness/approvals", "/wellness/dashboard"):
+        assert chief_c.get(path).status_code == 200, path
+    assert admin.get("/wellness/dashboard").status_code == 200
+    assert admin.get("/wellness/approvals").status_code == 403
     # deciding someone else's claim from a non-approver account bounces
     d = future_weekday
     conn = wellness_org["conn"]

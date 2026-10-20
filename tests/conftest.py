@@ -67,11 +67,30 @@ def app_mod(tmp_path_factory):
     # a pending invited account (no password) for invite/reset token tests
     st.create_admin_user(conn, "pending@test.local", "", "", "viewer",
                          created_by="test", active=False)
+    # A clean checkout has no css_is.db snapshot, so the directory is empty and every test that
+    # creates an activity from "the first internal person" has nobody to pick. Seed a few.
+    if not conn.execute("SELECT 1 FROM resource_person WHERE is_internal=1 LIMIT 1").fetchone():
+        for name in ("Test Internal One", "Test Internal Two", "Test Internal Three"):
+            conn.execute("INSERT INTO resource_person(name, is_internal) VALUES (?, 1)", (name,))
     conn.commit(); conn.close()
     # reset the in-process atoms cache so it binds to the test DB
     app_mod._atoms_state.update({"key": None, "df": None, "built": 0.0})
     app_mod._view_memo.clear()
     return app_mod
+
+@pytest.fixture(autouse=True)
+def _no_duplicate_gate(request, monkeypatch):
+    """The Save-time duplicate-activity check (v7.23) asks for a second, explicit submission when an
+    activity with the same title and date already exists. The session shares one database, so many
+    tests that each create "the same" sample activity would be refused with a 409. Switch the check
+    off everywhere except the module that tests it."""
+    if request.module.__name__.endswith("test_create_duplicate_warning"):
+        yield
+        return
+    import storage
+    monkeypatch.setattr(storage, "find_similar_events", lambda *a, **k: [])
+    yield
+
 
 @pytest.fixture(autouse=True)
 def _reset_shared_state(request):

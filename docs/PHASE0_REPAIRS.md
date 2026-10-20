@@ -1,5 +1,7 @@
 # Phase 0 repair release — Office Connect 7.23
 
+**Release integration:** these repairs are included in version **7.27** after integrating the newer main-branch releases. See [release integration record](releases/7.27.md); the candidate 7.23 evidence below remains historical.
+
 **Continuation, 20 October 2026:** live verification is now deferred at the user's direction. Local work continues in candidate 7.24; see [Phase 1 progress](PHASE1_LOCAL_PROGRESS.md). The results and hashes below describe the earlier 7.23 candidate.
 
 Branch: `fix/phase-0-authority-persistence-sessions`, based on `3a45851`.

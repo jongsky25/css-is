@@ -6372,6 +6372,7 @@ async def create_survey(request: Request):
     modality = first("modality", "f2f").strip()
     modality = modality if modality in ("f2f", "online", "hybrid") else "f2f"
     qr_mode = first("qr_mode", "combined")                 # 'combined' | 'separate'
+    duplicate_confirm = first("duplicate_confirm")
     external_org = first("external_org").strip()
     # Optional response window ("allowed time to entry") — applies to every form
     # of this event. The picker is date-only by default; a bare date is widened to
@@ -6484,6 +6485,27 @@ async def create_survey(request: Request):
 
     if errors:
         return _rerender_create_form({"errors": errors})
+
+    # Check again on Save: the live hint may have failed or become stale while
+    # another manager was creating the same activity. Confirmation applies only
+    # to this exact input and this set of strong matches.
+    check_conn = get_conn()
+    try:
+        duplicate_matches = st.find_similar_events(
+            check_conn, activity_name, event_date, end_date=end_date,
+            event_kind=event_type, venue=venue,
+            organizer=external_org if event_type == "outside" else None)
+    finally:
+        check_conn.close()
+    strong_ids = [str(m["id"]) for m in duplicate_matches if m["strength"] == "strong"]
+    if strong_ids:
+        confirm_key = hashlib.sha256(json.dumps([
+            st._normalized_activity_title(activity_name), event_date, end_date,
+            event_type, strong_ids], separators=(",", ":")).encode()).hexdigest()
+        if not hmac.compare_digest(duplicate_confirm, confirm_key):
+            return _rerender_create_form({"duplicate_matches": duplicate_matches,
+                                          "duplicate_confirm_key": confirm_key},
+                                         status_code=409)
 
     conn = get_conn()
     try:
@@ -6617,25 +6639,26 @@ async def create_survey(request: Request):
 
 
 @app.get("/create/check-duplicate")
-def create_check_duplicate(activity_name: str = "", event_date: str = ""):
-    """Live probe behind the /create screen's duplicate heads-up (spot-feedback
-    #67: a same-day duplicate bureau event, created by mistake, left an empty
-    twin with no responses). Matches on title + date alone — any creator, any
-    age — so it also catches two different staff logging the same activity.
-    Read-only, JSON, purely informational — it never blocks Save, it only tells
-    the create screen whether to show a "this already exists" note. See
-    storage.find_recent_duplicate_event for the match rule."""
+def create_check_duplicate(activity_name: str = "", event_date: str = "",
+                           end_date: str = "", event_type: str = "bureau",
+                           venue: str = "", organizer: str = ""):
+    """Return ranked activity candidates for the live create-screen warning."""
     conn = get_conn()
     try:
-        dup = st.find_recent_duplicate_event(conn, activity_name, event_date)
+        matches = st.find_similar_events(conn, activity_name, event_date,
+                                         end_date=end_date or None,
+                                         event_kind=event_type, venue=venue,
+                                         organizer=organizer if event_type == "outside" else None)
     finally:
         conn.close()
-    if not dup:
-        return JSONResponse({"duplicate": None})
-    return JSONResponse({"duplicate": {
-        "event_token": dup["event_token"], "event_kind": dup["event_kind"],
-        "responses": dup["responses"], "created_at_human": _humandt(dup["created_at"]),
-    }})
+    shown = [{"title": m["title"], "event_date": m["event_date"],
+              "end_date": m["end_date"], "venue": m["venue"],
+              "organizer": m["organizer"], "event_token": m["event_token"],
+              "event_kind": m["event_kind"], "responses": m["responses"],
+              "strength": m["strength"],
+              "created_at_human": _humandt(m["created_at"])} for m in matches]
+    return JSONResponse({"duplicate": shown[0] if shown else None,
+                         "matches": shown})
 
 
 # ---------------------------------------------------------------------
@@ -15828,7 +15851,9 @@ def wellness_approvals(request: Request, err: str = "", ok: str = ""):
     queue. Still gated here, so a non-approver gets the same 403 as before."""
     conn = get_conn()
     try:
-        if not st.user_is_wellness_chief(conn, request.state.user):
+        # same check as the inbox it redirects to: the admin role alone is not enough, so an admin
+        # with no chief seat gets "No access" here instead of after a pointless redirect
+        if not st.user_is_chain_approver(conn, request.state.user):
             return _wellness_forbid(request)
     finally:
         conn.close()
@@ -16480,10 +16505,10 @@ def work_arrangement_approvals(request: Request, ok: str = "", err: str = "",
                                period: str = ""):
     """Kept for bookmarks and emails already sent: into the inbox's work
     arrangement queue. Still gated here, so a non-approver (e.g. a bureau-wide
-    schedule grant holder — sight is not authority) gets the same 403."""
+    schedule grant holder — sight is not authority, or an admin with no chief seat) gets the same 403."""
     conn = get_conn()
     try:
-        if not st.user_is_approving_chief(conn, request.state.user):
+        if not st.user_is_chain_approver(conn, request.state.user):
             return _wa_forbid(request)
     finally:
         conn.close()

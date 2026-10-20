@@ -29,6 +29,7 @@ import sqlite3
 import uuid
 import re
 import difflib
+import unicodedata
 from datetime import datetime, timedelta, date, time
 import time as _clock
 import pandas as pd
@@ -180,6 +181,7 @@ def init_db(conn):
         lead_org_id  INTEGER REFERENCES org_unit(id),
         created_at   TEXT
     );
+    CREATE INDEX IF NOT EXISTS idx_event_event_date ON event(event_date);
 
     CREATE TABLE IF NOT EXISTS event_form (  -- which forms belong to an event, in order
         event_id         INTEGER NOT NULL REFERENCES event(id),
@@ -618,6 +620,13 @@ def init_db(conn):
         entry_id INTEGER NOT NULL REFERENCES calendar_entry(id) ON DELETE CASCADE,
         tag      TEXT NOT NULL,
         PRIMARY KEY (entry_id, tag)
+    );
+
+    -- Other units an entry also involves; owner_org_id stays the primary one (Spot Feedback #129).
+    CREATE TABLE IF NOT EXISTS calendar_entry_unit (
+        entry_id INTEGER NOT NULL REFERENCES calendar_entry(id) ON DELETE CASCADE,
+        org_id   INTEGER NOT NULL REFERENCES org_unit(id),
+        PRIMARY KEY (entry_id, org_id)
     );
 
     -- Append-only change history: powers "History" and Restore.
@@ -1801,6 +1810,74 @@ def find_recent_duplicate_event(conn, title, event_date):
         return None
     return {"id": row[0], "event_token": row[1], "created_at": row[2],
             "event_kind": row[3] or "bureau", "responses": row[4]}
+
+
+def _normalized_activity_title(title):
+    """Comparable title while preserving meaningful words and numbers."""
+    title = unicodedata.normalize("NFKC", title or "").casefold().replace("&", " and ")
+    return " ".join(re.findall(r"\w+", title))
+
+
+def find_similar_events(conn, title, event_date, *, end_date=None, event_kind=None,
+                        venue=None, organizer=None, limit=3):
+    """Rank existing activities on overlapping dates for the create warning.
+
+    Exact normalized titles are strong matches. A very close fuzzy title is
+    strong only for the same event type; other fuzzy matches are advisory.
+    Date filtering happens in SQL so matching does not scan every event.
+    """
+    normalized = _normalized_activity_title(title)
+    if not normalized or not event_date or limit < 1:
+        return []
+    last_day = end_date or event_date
+    venue_hint = _normalized_activity_title(venue)
+    organizer_hint = _normalized_activity_title(organizer)
+    rows = conn.execute("""
+        SELECT e.id, e.event_token, e.title, e.event_date, e.end_date,
+               e.venue, e.organizer, COALESCE(e.event_kind, 'bureau'),
+               e.created_at,
+               (SELECT COUNT(*) FROM event_form ef JOIN response r
+                  ON r.form_instance_id = ef.form_instance_id WHERE ef.event_id = e.id)
+        FROM event e
+        WHERE e.event_date <= ? AND COALESCE(e.end_date, e.event_date) >= ?
+        ORDER BY e.created_at DESC LIMIT 500
+    """, (last_day, event_date)).fetchall()
+    matches = []
+    for row in rows:
+        other = _normalized_activity_title(row[2])
+        if not other:
+            continue
+        exact = normalized == other
+        if exact:
+            score = 1.0
+        else:
+            # Avoid fuzzy matching short, generic titles such as "Training".
+            if min(len(normalized), len(other)) < 12:
+                continue
+            direct = difflib.SequenceMatcher(None, normalized, other).ratio()
+            reordered = difflib.SequenceMatcher(
+                None, " ".join(sorted(normalized.split())),
+                " ".join(sorted(other.split()))).ratio()
+            score = max(direct, reordered)
+            if score < 0.84:
+                continue
+        kind = row[7]
+        strength = "strong" if (exact or (score >= 0.94 and
+                         kind == event_kind and row[3] == event_date)) else "possible"
+        rank_score = score
+        if venue_hint and venue_hint == _normalized_activity_title(row[5]):
+            rank_score += 0.02
+        if organizer_hint and organizer_hint in _normalized_activity_title(row[6]):
+            rank_score += 0.02
+        matches.append({"id": row[0], "event_token": row[1], "title": row[2],
+                        "event_date": row[3], "end_date": row[4], "venue": row[5],
+                        "organizer": row[6], "event_kind": kind,
+                        "created_at": row[8], "responses": row[9],
+                        "strength": strength, "score": score,
+                        "rank_score": rank_score})
+    matches.sort(key=lambda m: (m["strength"] == "strong", m["rank_score"],
+                                m["event_date"], m["created_at"] or ""), reverse=True)
+    return matches[:limit]
 
 
 _EVENT_COLS = """
@@ -3853,6 +3930,7 @@ _AUDIT_ACTIONS = {
     "travel_library_save": ("Saved the MC 114 justification library", "Travel filing"),
     "travel_settings_save": ("Saved travel filing settings", "Travel filing"),
     "travel_purge":        ("Removed old travel filing details", "Travel filing"),
+    "travel_item_everyone": ("Applied a travel checklist answer to everyone on the DPO", "Travel filing"),
     "room_meal_tag":       ("Tagged a room meal order", "Conference room"),
     "room_encode":         ("Encoded a room booking", "Conference room"),
     "room_cancel":         ("Cancelled a room booking", "Conference room"),
@@ -10804,14 +10882,47 @@ def _cal_tag_rows(conn, entry_ids):
     return out
 
 
+def _cal_unit_rows(conn, entry_ids):
+    out = {i: [] for i in entry_ids}
+    for i in range(0, len(entry_ids), 500):
+        chunk = entry_ids[i:i + 500]
+        q = ",".join("?" * len(chunk))
+        for r in conn.execute(
+                "SELECT entry_id, org_id FROM calendar_entry_unit"
+                f" WHERE entry_id IN ({q}) ORDER BY org_id", chunk):
+            out[r[0]].append(r[1])
+    return out
+
+
 def _cal_hydrate(conn, rows):
     entries = [dict(zip(_CAL_COLS, r)) for r in rows]
     ids = [e["id"] for e in entries]
     people, tags = _cal_people_rows(conn, ids), _cal_tag_rows(conn, ids)
+    units = _cal_unit_rows(conn, ids)
     for e in entries:
         e["people"] = people[e["id"]]
         e["tags"] = tags[e["id"]]
+        e["extra_org_ids"] = units[e["id"]]          # the other units it involves (owner_org_id is the first)
     return entries
+
+
+def _cal_normalise_units(conn, org_ids, primary):
+    """Sorted, de-duplicated extra unit ids, without the primary one. Raises ValueError for an id
+    that is not a unit in the directory."""
+    ids = sorted({int(x) for x in org_ids or ()} - {primary})
+    if ids:
+        known = {r[0] for r in conn.execute(
+            "SELECT id FROM org_unit WHERE id IN (%s)" % ",".join("?" * len(ids)), ids)}
+        if known != set(ids):
+            raise ValueError("One of the units you chose isn't in the directory.")
+    return ids
+
+
+def _cal_write_units(conn, entry_id, org_ids):
+    conn.execute("DELETE FROM calendar_entry_unit WHERE entry_id=?", (entry_id,))
+    for oid in org_ids:
+        conn.execute("INSERT INTO calendar_entry_unit(entry_id, org_id) VALUES (?,?)",
+                     (entry_id, oid))
 
 
 def _cal_normalise_people(people):
@@ -10967,7 +11078,7 @@ def cal_create(conn, title, start_date, *, end_date=None, kind="meeting",
                venue=None, modality=None, meeting_url=None, note=None,
                owner_org_id=None, audience="unit", event_id=None, rrule=None,
                exdates=None, source="app", import_key=None, people=None, tags=None,
-               by=None, audit_it=True, commit=True):
+               extra_org_ids=None, by=None, audit_it=True, commit=True):
     """Create an entry; returns its id. With an `import_key` that already exists,
     returns the existing entry's id and changes nothing (idempotent re-import).
     `audit_it=False` skips the per-entry audit line (a bulk import writes one summary)."""
@@ -10991,6 +11102,7 @@ def cal_create(conn, title, start_date, *, end_date=None, kind="meeting",
     v["rrule"], v["exdates"] = series["rrule"], series["exdates"]
     people = _cal_normalise_people(people)
     tags = _cal_normalise_tags(tags)
+    extra_units = _cal_normalise_units(conn, extra_org_ids, owner_org_id)
     now = tz.now_iso()
     cancelled = (now, by) if v["status"] == "cancelled" else (None, None)
     cur = conn.execute(
@@ -11008,6 +11120,7 @@ def cal_create(conn, title, start_date, *, end_date=None, kind="meeting",
     _cal_write_people(conn, entry_id, people, by)
     _cal_stamp_seen(conn, entry_id, 0, by, everyone=(source == "import"))
     _cal_write_tags(conn, entry_id, tags)
+    _cal_write_units(conn, entry_id, extra_units)
     _cal_revision(conn, entry_id, 0, "create", by, {"title": [None, v["title"]]})
     if source != "import" and v["status"] != "cancelled":          # a bulk import never emails anyone
         _cal_enqueue(conn, {"id": entry_id, **v}, "added", [u for u, _r in people], by)
@@ -11020,11 +11133,11 @@ def cal_create(conn, title, start_date, *, end_date=None, kind="meeting",
 
 
 def cal_update(conn, entry_id, *, by=None, expected_sequence=None,
-               expected_updated_at=None, people=None, tags=None, **fields):
+               expected_updated_at=None, people=None, tags=None, extra_org_ids=None, **fields):
     """Change an entry. Raises CalendarConflict when `expected_sequence` or
     `expected_updated_at` is given and no longer matches what is stored (the form
-    sends `updated_at`, which moves on every edit, not only schedule changes). `people` / `tags` (when not None) replace
-    the whole list. The sequence rises only when a date/time/status/recurrence field
+    sends `updated_at`, which moves on every edit, not only schedule changes). `people` / `tags` /
+    `extra_org_ids` (when not None) replace the whole list. The sequence rises only when a date/time/status/recurrence field
     actually changes. Returns the updated entry; a no-op leaves no revision."""
     cur = cal_get(conn, entry_id)
     if cur is None:
@@ -11059,6 +11172,11 @@ def cal_update(conn, entry_id, *, by=None, expected_sequence=None,
         new_tags = _cal_normalise_tags(tags)
         if new_tags != sorted(cur["tags"], key=str.lower):
             diff["tags"] = [cur["tags"], new_tags]
+    # the extra units: an explicit list replaces them; a new primary unit drops itself from the list
+    new_units = _cal_normalise_units(
+        conn, cur["extra_org_ids"] if extra_org_ids is None else extra_org_ids, merged["owner_org_id"])
+    if new_units != cur["extra_org_ids"]:
+        diff["extra_orgs"] = [cur["extra_org_ids"], new_units]
     if not diff:
         return cur
     seq = cur["sequence"] + (1 if any(f in diff for f in _CAL_SEQ_FIELDS) else 0)
@@ -11076,6 +11194,8 @@ def cal_update(conn, entry_id, *, by=None, expected_sequence=None,
     _cal_stamp_seen(conn, entry_id, seq, by)           # you have seen what you just changed yourself
     if "tags" in diff:
         _cal_write_tags(conn, entry_id, new_tags)
+    if "extra_orgs" in diff:
+        _cal_write_units(conn, entry_id, new_units)
     _cal_revision(conn, entry_id, seq, "update", by, diff)
     old_ids = {p["user_id"] for p in cur["people"]}
     new_ids = {u for u, _r in new_people} if "people" in diff else old_ids
@@ -11146,6 +11266,7 @@ def cal_delete(conn, entry_id, *, by=None):
         return False
     conn.execute("DELETE FROM calendar_entry_person WHERE entry_id=?", (entry_id,))
     conn.execute("DELETE FROM calendar_entry_tag WHERE entry_id=?", (entry_id,))
+    conn.execute("DELETE FROM calendar_entry_unit WHERE entry_id=?", (entry_id,))
     conn.execute("DELETE FROM calendar_entry_revision WHERE entry_id=?", (entry_id,))
     conn.execute("DELETE FROM calendar_entry WHERE id=?", (entry_id,))
     conn.commit()
