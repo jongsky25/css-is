@@ -1,0 +1,78 @@
+{
+  "candidate_version": "7.29",
+  "base_commit": "03e2e7d77821bd2d7308d72128105132fed48977",
+  "production_functional_testing": "deferred by user",
+  "runtime": "Python 3.12",
+  "full_suite": {
+    "tests": 4207,
+    "passed": 4175,
+    "failed": 16,
+    "skipped": 16,
+    "seconds": 241.36,
+    "failures": [
+      "tests.test_ai_report_draft::test_csm_ai_draft_saves_report_draft_with_ai_actor",
+      "tests.test_ai_report_draft::test_csm_export_reflects_saved_draft",
+      "tests.test_ai_report_draft::test_csm_export_falls_back_to_na_and_boilerplate_with_no_draft",
+      "tests.test_avatar_care::test_landing_and_profile_both_show_the_ladder",
+      "tests.test_home_feeds::test_recently_concluded_links_resolve",
+      "tests.test_integrity::test_no_orphan_answers",
+      "tests.test_integrity::test_no_orphan_responses",
+      "tests.test_integrity::test_no_orphan_item_remarks",
+      "tests.test_integrity::test_served_by_points_to_real_person",
+      "tests.test_integrity::test_form_instance_rp_fk",
+      "tests.test_integrity::test_unique_qr_tokens",
+      "tests.test_integrity::test_answer_values_in_sane_range",
+      "tests.test_integrity::test_survey_types_valid",
+      "tests.test_integrity::test_headline_counts_present",
+      "tests.test_office_answers::test_room_windows_split_around_a_booked_hour",
+      "tests.test_search::test_api_search_activities"
+    ]
+  },
+  "final_focused_suite": {
+    "tests": 101,
+    "passed": 101,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 7.736,
+    "failures": []
+  },
+  "new_failure_names_vs_prior_csrf_full": [],
+  "resolved_failure_names_vs_prior_csrf_full": [
+    "tests.test_documents_setup::test_readiness_http_access_and_read_only_page",
+    "tests.test_insights_tabs::test_every_dashboard_shows_the_same_tab_bar_with_itself_current",
+    "tests.test_insights_tabs::test_tabs_carry_org_everywhere_and_period_only_where_it_means_the_same",
+    "tests.test_mrr_export_nuance::test_action_names_the_weakest_dimension_and_scales_its_advice",
+    "tests.test_mrr_export_nuance::test_analysis_columns_differ_between_activities",
+    "tests.test_mrr_export_nuance::test_page_preview_matches_the_downloaded_draft",
+    "tests.test_mrr_export_nuance::test_resources_and_action_do_not_degrade_hybrid_to_face_to_face",
+    "tests.test_mrr_export_nuance::test_resources_split_on_modality",
+    "tests.test_routes::test_dashboard_pulse_export_all_formats",
+    "tests.test_routes::test_dashboard_team_bogus_path",
+    "tests.test_routes::test_dashboard_team_detail",
+    "tests.test_routes::test_dashboard_team_export_all_formats",
+    "tests.test_routes::test_dashboard_teams_index_export_all_formats",
+    "tests.test_routes::test_export_png",
+    "tests.test_routes::test_get_route_renders_for_admin[/dashboard/teams]",
+    "tests.test_routes::test_get_route_renders_for_admin[/dashboard]",
+    "tests.test_search::test_rendered_nav_shows_groups_and_sections",
+    "tests.test_short_links::test_status_and_qr_ui",
+    "tests.test_tours::test_tour_engine_wired_into_dashboard"
+  ],
+  "limitations": [
+    "The full suite predates the final no-rating next-steps wording, report count notice and three added tests; the final focused suite covers these changes.",
+    "The prior CSRF full run included two test assumptions subsequently corrected in 7.28, so 19 fewer failures includes 17 analytics/report failures plus those two existing fixes.",
+    "Six export tests fail when run in the smaller route selection, also reproduced on unchanged 7.28; they pass in the full run. Fixture/order dependence remains for A10.",
+    "No manual production or browser interaction test; HTML is exercised through local TestClient.",
+    "Python 3.11 full test parity is not verified."
+  ],
+  "sha256": {
+    "app.py": "a88841eb89abf9843a96e5f979bd5160050cbcef0dd637d1c981545dd2d346c4",
+    "css_is_engine.py": "65a7a9ab3f28fd21b08ac08b1a19107f163241d12d3e58356790531c03c75915",
+    "dashboard_insights.py": "f65a60ae2358df3f28ee259086edd34190a92e92462bb4bc19dd7276a2070bcf",
+    "templates/reports.html": "5f5729dfe1ba7b1d9d09ec05910b25bfcbec7a3c0b5a16d6f9e4d6904fdecffc",
+    "version.py": "29e0a090b9a9c1825a1f9b9116e28b6fc19dd46d9f9fff37cd079ef857c93975",
+    "static/js/sw.js": "1b86738fa1abb9cf9013b0083d94526ce7b3ee2e0c92ab3ed6e84b60fa25e5d2",
+    "tests/test_sparse_analytics.py": "b4624884e643e6f0a818680cc86704f2e3f28be02aee9648bbd0697da3a3ab0c",
+    "tests/test_mrr_export_nuance.py": "31ea639a1e1849713c176924466529eaf29e2bb89eafa0145c61f00f67244cb5"
+  }
+}

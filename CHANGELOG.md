@@ -1,3 +1,11 @@
+## 7.29 — October 20, 2026
+
+- Exclude unused categorical survey items from dimension averages and recommendations.
+- Apply shared finite, in-scale answer filtering to score denominators and raw report rows, retaining source records and diagnostic counts.
+- Count only contributing respondents in the overall perception metric; retain total submissions separately in official reports.
+- Handle null organization paths and non-finite trend values without crashing.
+- Verify sparse reference totals across Word, PDF, PowerPoint and Excel, plus exact activity-preview/Excel recommendation agreement.
+
 ## 7.28 — October 20, 2026
 
 - Apply exact-origin verification to staff writes and public account operations, including JSON and uploads.

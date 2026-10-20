@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.28"
+APP_VERSION = "7.29"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.29",
+        "date": "October 20, 2026",
+        "summary": "More reliable scores and report recommendations when answers are incomplete.",
+        "changes": [
+            "Reports calculate scores from valid answers and leave unrated areas blank.",
+            "Activity recommendations now correctly identify the areas needing improvement.",
+            "Scoped dashboards handle missing office details and incomplete trends without crashing.",
+            "Report previews and downloads use consistent calculations for incomplete responses."
+        ]
+    },
     {
         "version": "7.28",
         "date": "October 20, 2026",

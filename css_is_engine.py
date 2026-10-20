@@ -66,9 +66,39 @@ QUALITY_SCALE_MAX = {**{it: 7 for it in SERVQUAL_ITEMS}, OSQ_ITEM: 4}    # per-i
 QUALITY_INDEX_BANDS = [(0, 50, "Poor"), (50, 75, "Fair"), (75, 87.5, "Good"), (87.5, 100.001, "Excellent")]
 
 
+def finite_number(value):
+    """Normalize a numeric scalar; missing, malformed and infinite values are absent."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    return number if np.isfinite(number) else None
+
+
+def answer_quality(df):
+    """Disjoint source-row counts, without mutating or dropping the source records."""
+    values = pd.to_numeric(df["value"], errors="coerce")
+    na = df["is_na"].eq(True).fillna(False)
+    known = df["is_na"].eq(False).fillna(False)
+    tops = df["item_id"].astype(object).map(
+        {**{it: 5 for it in ["SQD0", *ARTA_HEADLINE_ITEMS]},
+         **QUALITY_SCALE_MAX, "A": 7})
+    valid = known & np.isfinite(values) & values.ge(1) & values.le(tops)
+    return values, valid, {"valid": int(valid.sum()), "na": int(na.sum()),
+                           "invalid": int((~na & ~valid).sum())}
+
+
+def valid_answers(df):
+    """Only finite, in-scale, explicitly rated answers enter score denominators."""
+    values, valid, _ = answer_quality(df)
+    result = df.loc[valid].copy()
+    result["value"] = values.loc[valid].astype(float)
+    return result
+
+
 def band(value, table):
     """Return the band label for a value, or None if there is no value."""
-    if value is None or (isinstance(value, float) and np.isnan(value)):
+    if finite_number(value) is None:
         return None
     for lo, hi, label in table:
         if lo <= value < hi:
@@ -94,7 +124,7 @@ class Metric:
     flags: list = field(default_factory=list)
 
     def show(self, kind="mean"):
-        if self.value is None:
+        if finite_number(self.value) is None:
             return f"(no data, n={self.n})"
         v = f"{self.value:.1f}%" if kind == "pct" else f"{self.value:.2f}"
         tail = f"  [{' ; '.join(self.flags)}]" if self.flags else ""
@@ -108,7 +138,7 @@ class Metric:
 def arta_topbox(df, items=ARTA_HEADLINE_ITEMS):
     """Headline ARTA score: share of Agree+Strongly-Agree among valid answers."""
     sub = df[df["item_id"].isin(items)]
-    valid = sub[~sub["is_na"]]
+    valid = valid_answers(sub)
     n = len(valid)                                   # valid ITEM-responses = the headline denominator
     if n == 0:
         return Metric(None, 0, "valid SQD answers", ["no data"])
@@ -126,15 +156,16 @@ def arta_topbox(df, items=ARTA_HEADLINE_ITEMS):
 def arta_item_detail(df, item):
     """Full distribution + score for one SQD item."""
     sub = df[df["item_id"] == item]
-    valid = sub[~sub["is_na"]]
+    valid = valid_answers(sub)
     n = len(valid)
-    na = int(sub["is_na"].sum())
+    _, _, quality = answer_quality(sub)
+    na = quality["na"]
     if n == 0:
-        return {"item": item, "n": 0, "na": na, "score": None}
+        return {"item": item, "n": 0, "na": na, "invalid": quality["invalid"], "score": None}
     score = (valid["value"] >= 4).sum() / n * 100      # top-box %
     bottombox = (valid["value"] <= 2).sum() / n * 100
     dist = valid["value"].value_counts().reindex([5, 4, 3, 2, 1], fill_value=0)
-    return {"item": item, "n": n, "na": na, "score": score, "bottom_box": bottombox,
+    return {"item": item, "n": n, "na": na, "invalid": quality["invalid"], "score": score, "bottom_box": bottombox,
             "dist": {"SA": int(dist[5]), "A": int(dist[4]), "Neither": int(dist[3]),
                      "D": int(dist[2]), "SD": int(dist[1])}}
 
@@ -144,7 +175,7 @@ def arta_item_detail(df, item):
 # =====================================================================
 
 def item_stats(df, item):
-    sub = df[(df["item_id"] == item) & (~df["is_na"])]
+    sub = valid_answers(df[df["item_id"] == item])
     vals = sub["value"].astype(float)
     n = len(vals)
     if n == 0:
@@ -162,10 +193,10 @@ def dimension_mean(df, items):
     faster when called repeatedly at production volume.
     """
     flags = ["1-item, volatile"] if len(items) == 1 else []
-    valid = df[~df["is_na"]]
+    valid = valid_answers(df)
     if len(valid):
         sub = valid[valid["item_id"].isin(items)]
-        agg = sub.groupby("item_id")["value"].agg(["mean", "count"]) if len(sub) else None
+        agg = sub.groupby("item_id", observed=True)["value"].agg(["mean", "count"]) if len(sub) else None
     else:
         agg = None
     if agg is None or agg.empty:
@@ -185,9 +216,10 @@ def overall_perception(df, dim_map):
     item-means, and the overall is still the mean of the present dimension-means);
     just far faster when called thousands of times at production volume.
     """
-    respondents = df["response_id"].nunique()
-    valid = df[~df["is_na"]]
-    item_mean = valid.groupby("item_id")["value"].mean() if len(valid) else None
+    valid = valid_answers(df)
+    valid = valid[valid["item_id"].isin({it for items in dim_map.values() for it in items})]
+    respondents = valid["response_id"].nunique()
+    item_mean = valid.groupby("item_id", observed=True)["value"].mean() if len(valid) else None
     dvals = []
     if item_mean is not None:
         idx = item_mean.index
@@ -202,7 +234,7 @@ def overall_perception(df, dim_map):
 
 
 def expectation_A(df):
-    sub = df[(df["item_id"] == "A") & (~df["is_na"])]
+    sub = valid_answers(df[df["item_id"] == "A"])
     n = len(sub)
     if n == 0:
         return Metric(None, 0, "expectation answers", ["no data"])
@@ -210,7 +242,7 @@ def expectation_A(df):
 
 
 def osq_C(df):
-    sub = df[(df["item_id"] == "C") & (~df["is_na"])]
+    sub = valid_answers(df[df["item_id"] == "C"])
     n = len(sub)
     if n == 0:
         return Metric(None, 0, "OSQ answers", ["no data"])
@@ -231,10 +263,10 @@ def quality_index(df):
     (None, 0) when the slice has no scorable answer.
     """
     items = SERVQUAL_ITEMS + [OSQ_ITEM]
-    sub = df[(df["item_id"].isin(items)) & (~df["is_na"])]
+    sub = valid_answers(df[df["item_id"].isin(items)])
     if sub.empty:
         return None, 0
-    tops = sub["item_id"].map(QUALITY_SCALE_MAX)          # 7 for B*, 4 for C
+    tops = sub["item_id"].astype(object).map(QUALITY_SCALE_MAX)          # 7 for B*, 4 for C
     norm = (sub["value"] - 1) / (tops - 1) * 100.0        # min-max to 0-100
     per_resp = norm.groupby(sub["response_id"]).mean()    # equal weight per answered question
     if per_resp.empty:
@@ -287,7 +319,7 @@ def scope(atoms, org_prefix=None, period_col=None, period=None,
     if form is not None:
         df = df[df["form"] == form]
     if org_prefix is not None:
-        df = df[df["org_path"].str.startswith(org_prefix)]
+        df = df[df["org_path"].astype("string").str.startswith(org_prefix, na=False)]
     if period is not None and period_col is not None:
         df = df[df[period_col] == period]
     if rp_internal is not None:
