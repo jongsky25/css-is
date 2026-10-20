@@ -35,7 +35,7 @@ need representative live acceptance:
 - `TableRow.replaceText` fills a copied row of Appendix A (merged cells);
 - `makeTravelTemplates` left each converted form looking like the original (the Word and Excel conversions can shift tables, logos and merged cells), and the CENRR's single repeating line and the sample date row were removed correctly;
 - a CENRR with several rides grows its rows and keeps the total underneath;
-- whether `addEditor` emails the person;
+- whether the person is emailed when a document is shared (7.55: sharing now goes through `Drive.Permissions.create` with `sendNotificationEmail: false`, so it should not; `addEditor` is only the fallback);
 - five documents in one go finish inside one script run (Apps Script allows several minutes).
 
 ## If something goes wrong

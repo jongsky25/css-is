@@ -69,9 +69,21 @@ function generateDoc_(req) {
     doc.saveAndClose();
   }
   (req.share_with || []).forEach(function (a) {
-    if (String(a).toLowerCase().endsWith('@' + P.getProperty('ALLOWED_DOMAIN'))) copy.addEditor(a);
+    if (String(a).toLowerCase().endsWith('@' + P.getProperty('ALLOWED_DOMAIN'))) shareQuietly_(copy, a, 'writer');
   });
   return doc_(copy);
+}
+
+// Gives a person access WITHOUT Google's "shared with you" email: the app already shows the link on the page, so a mail for
+// every draft only clutters the inbox (spot feedback #146). Uses the Drive advanced service, which this project already has
+// switched on for the template copy; if it is somehow missing, fall back to the plain share so access is never lost.
+function shareQuietly_(item, email, role) {
+  try {
+    Drive.Permissions.create({ type: 'user', role: role, emailAddress: email }, item.getId(),
+                             { sendNotificationEmail: false, supportsAllDrives: true });
+  } catch (e) {
+    if (role === 'writer') item.addEditor(email); else item.addViewer(email);
+  }
 }
 
 // Uploaded documents (version 2). A file lands in ROOT/<folder_key>/<item_key>/, one sub-folder per checklist
@@ -103,7 +115,7 @@ function uploadFile_(req) {
     file.setDescription('request_id=' + req.request_id);
   }
   (req.share_with || []).forEach(function (a) {
-    if (String(a).toLowerCase().endsWith('@' + P.getProperty('ALLOWED_DOMAIN'))) folder.addViewer(a);
+    if (String(a).toLowerCase().endsWith('@' + P.getProperty('ALLOWED_DOMAIN'))) shareQuietly_(folder, a, 'reader');
   });
   let count = 0; const all = folder.getFiles(); while (all.hasNext()) { all.next(); count++; }
   return { ok: true, id: file.getId(), url: file.getUrl(), name: file.getName(),

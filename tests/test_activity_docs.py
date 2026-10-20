@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
-from urllib.parse import urlencode
+from urllib.parse import unquote, urlencode
 
 import pytest
 
@@ -318,3 +318,18 @@ def test_the_letterhead_and_name_position_tables_fit_between_the_margins():
     """Docs' default is equal columns: the title wrapped and the right-hand logo or the Position column fell off the page."""
     dpo = build_templates()["dpo"]["widths"]
     assert dpo == [84, 300, 84, 234, 234] and sum(dpo[:3]) == 468 and sum(dpo[3:]) == 468
+
+
+def test_a_draft_says_it_is_shared_without_an_email(viewer, conn, relay):
+    """Spot feedback #143/#146: nobody should wonder whether a draft worked, or be mailed for each one."""
+    eid = create(viewer, title="CALEP Field Visit", kind="travel", people=[str(uid(conn, "viewer@test.local"))])
+    r = draft(viewer, eid, "dpo")
+    assert "No email is sent" in unquote(r.headers["location"]).replace("+", " ")
+    assert "no email is sent" in entry_page(viewer, eid)
+
+
+def test_the_relay_shares_without_google_s_notification_email():
+    src = open("apps_script/travel_docs.gs", encoding="utf-8").read()
+    assert "sendNotificationEmail: false" in src
+    assert src.count("addEditor(") == 1 and src.count("addViewer(") == 1          # only the fallback inside shareQuietly_
+    assert "shareQuietly_(copy, a, 'writer')" in src and "shareQuietly_(folder, a, 'reader')" in src

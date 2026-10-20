@@ -1,3 +1,7 @@
+## 7.55 — October 20, 2026
+
+- Documents the app makes (calendar item drafts, travel forms and uploaded files) are now shared with the person through the Drive permissions API with `sendNotificationEmail: false`, so Google no longer emails a "shared with you" notice for each one. The link is on the page; the daily email about travel claims that are due soon or overdue is unchanged (spot feedback #146). After drafting, the calendar item says the draft is shared with you, that no email is sent and that drafting again makes another copy (spot feedback #143). Replace `travel_docs` in the Apps Script project to apply the change to the relay.
+
 ## 7.54 — October 20, 2026
 
 - Fix for the new letterhead: the Apps Script templates now give the letterhead row (seal, title, Bagong Pilipinas logo) and the DPO Name / Position table fixed column widths that fit between the margins. With Google's default equal columns the title wrapped and the right-hand logo and the Position column could fall off the page. Replace `activity_templates` in the Apps Script project and run `rebuildActivityTemplates()` again.
