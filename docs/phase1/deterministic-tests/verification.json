@@ -1,0 +1,131 @@
+{
+  "candidate_version": "7.34",
+  "base_commit": "faa33918b02580d0aa1baf730de10377aecf2aad",
+  "verified_source_commit": "97c3460466f38091ce5dc4c8987c48ac78002dda",
+  "runtime": "Python 3.12",
+  "default_local_test_time": "2026-10-20T06:00:00",
+  "boundary_local_test_time": "2028-02-29T23:55:00",
+  "runs": {
+    "clean_normal_order": {
+      "tests": 4211,
+      "passed": 4195,
+      "failed": 0,
+      "skipped": 16,
+      "seconds": 243.866
+    },
+    "clean_shuffled_seed_734": {
+      "tests": 4211,
+      "passed": 4195,
+      "failed": 0,
+      "skipped": 16,
+      "seconds": 255.043
+    },
+    "preliminary_shuffled_seed_732": {
+      "tests": 4211,
+      "passed": 4195,
+      "failed": 0,
+      "skipped": 16,
+      "seconds": 231.662
+    },
+    "leap_day_seed_229": {
+      "tests": 137,
+      "passed": 137,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 9.458
+    },
+    "targeted_seed_732": {
+      "tests": 136,
+      "passed": 136,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 26.489
+    },
+    "javascript_python_clock_contracts": {
+      "tests": 27,
+      "passed": 27,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 4.398
+    }
+  },
+  "standalone_fresh_process_runs": [
+    {
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 2.007
+    },
+    {
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 1.872
+    },
+    {
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 2.039
+    },
+    {
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 1.659
+    },
+    {
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 1.932
+    },
+    {
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 1.755
+    }
+  ],
+  "clean_checkout_checks": {
+    "normal": "/workspace/scratch/deterministic-ordered",
+    "shuffled": "/workspace/scratch/deterministic-shuffled",
+    "both_started_without_css_is_db": true,
+    "both_process_exit_codes": 0
+  },
+  "notes": [
+    "Final normal and seed-734 runs use identical committed code in separate clean worktrees.",
+    "Seed 732 full run preceded the final epoch/JavaScript clock alignment; final clean runs cover that alignment.",
+    "No new skips or expected-failure markers. Existing 16 browser/environment-dependent skips remain.",
+    "The reference database has 6 synthetic forms and 72 synthetic responses. Every HTTP test uses a fresh copy.",
+    "No production snapshot, live account or live functional test was used.",
+    "Python 3.11 compatibility and mandatory release gates remain separate work."
+  ],
+  "sha256": {
+    "CHANGELOG.md": "4b2b8c02561ff156375b5d8440928a71e1f0372d5e7af3d47c0f14404dc99144",
+    "static/js/sw.js": "753ae7e016ee0969df1d1fcabbb9c20a61c212c69033c3947ea956a7e230cf70",
+    "tests/conftest.py": "26a3c37415dd049a1fa6becdcd54d70c28f69b3d3e1d28b7923ecf6f51e0e242",
+    "tests/js/gmail_import_harness.js": "defd842461fb4aacb05c2e6189ef60a1efeb9461d7f1a3bbf10d13edb4c2c5c2",
+    "tests/test_att_hardening.py": "401f0dc41e591c1a53576d8a8b69ba6dbf173369ea663050584979d5192a72eb",
+    "tests/test_audit_insights.py": "692c4cb03794dd7aece7e632440c9db7db91a25eaa7f77a60a20cfddfa819354",
+    "tests/test_bulk_actions.py": "b3e9ef59be29c6faffc53f9f3923656e399940a9106007a83a2f239d07d2d63d",
+    "tests/test_calendar_recurrence.py": "a0dc889739818275d533019aaaab73bf3bee3212889982112966094030abe111",
+    "tests/test_csm_public_form.py": "2de666fe5400a24aad9465d8d6c9cdf71778e4cc2bac2a11bfa478144682c7df",
+    "tests/test_date_handling.py": "273553b292c4a8838e5d027c5ba813ad23b6f128404accd1a41c68c3415676b9",
+    "tests/test_event_hub.py": "3975c94aa48d85f3537a5248262436b37ee77a4291ed75bf2100788e8cfcd39c",
+    "tests/test_gmail_import_script.py": "cb8b0cee6f989bacaec6ec79bac26f9bdf7f419042884a13531844884fa4bd1e",
+    "tests/test_landing_insights.py": "181d7b20be97f4d7698af99e2190d418bcdf7c66af8ccedd8d37fc38302764e0",
+    "tests/test_registration_dedup.py": "91ff718b9e3551f197ba45bf52995cfcc7eb96745a43e98a34b8f6bb62e3df2e",
+    "tests/test_registration_questions.py": "b8c10346e56d9aa1bfb520ba722556510a9a4d323c86a0be6db06169fce13c3c",
+    "tests/test_responder_name_list.py": "a9165c86ebd658eebe1cfae317aa042bfe973dc467f44b41377c6ad45dfa0407",
+    "tests/test_rooms_meals.py": "2f25a27f813a882e453bb6ee218ab2a7beec69f65f8a85ed48a26721bcf0467a",
+    "tests/test_update_email.py": "d0803ea29efd4043bb626f49f2a39746e3139038f181cdd3608dc8317e44b4dd",
+    "version.py": "a0fad782c7a75cdc983e648e7d755c7c16af9037a6a3bf22893eaf83e7955768"
+  }
+}

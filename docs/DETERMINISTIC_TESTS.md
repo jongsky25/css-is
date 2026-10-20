@@ -42,6 +42,16 @@ Shuffling sorts case IDs by a seed-specific SHA-256 value, so the order is repro
 
 ## Verification and limits
 
+Final verification on committed source:
+
+| Run | Result |
+|---|---|
+| Clean checkout, normal order | 4,195 passed; zero failures; 16 existing skips |
+| Separate clean checkout, shuffled seed 734 | 4,195 passed; zero failures; 16 existing skips |
+| Leap day, shuffled seed 229 | 137 passed |
+| Six selected tests, each in a fresh process | All six passed |
+| JavaScript/Python clock and signature contracts | 27 passed |
+
 Results and source hashes are recorded in `docs/phase1/deterministic-tests/verification.json`. Verification covers normal full-suite execution, shuffled full-suite execution, selected tests in separate pytest processes, and a leap-day date-sensitive selection. A clean worktree run verifies that no database snapshot or generated local file is needed.
 
 Existing environment-dependent browser skips remain; no failing case is converted to a skip or expected failure. These checks do not prove every possible ordering or date. Python 3.11 parity and mandatory release gates are the next A10 steps. Manual production testing remains deferred. This increment preserves main's 7.33 travel-upload changes and requires no database migration.
