@@ -25,6 +25,62 @@ jobs:
         env:
           BASE_SHA: ${{ inputs.base_sha }}
         run: python scripts/check_release.py release --base "$BASE_SHA"
+      - name: Check dependency lock inputs
+        run: |
+          python scripts/lock_dependencies.py --check
+          python scripts/check_vendor_dependencies.py
+
+  dependencies:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install isolated locked audit tools
+        run: |
+          python -m venv .venv-audit
+          .venv-audit/bin/python -m pip install --require-hashes --only-binary=:all: -r requirements-tools.txt
+          .venv-audit/bin/python -m pip check
+      - name: Build and inventory the production Docker recipe
+        run: |
+          mkdir -p dependency-results
+          docker build --tag office-connect:dependency-audit .
+          docker run --rm --network none office-connect:dependency-audit python -m pip check
+          docker run --rm --network none office-connect:dependency-audit python -m pip freeze --all > dependency-results/runtime-installed.txt
+          docker image inspect office-connect:dependency-audit --format '{{.Id}}' > dependency-results/image-id.txt
+          sha256sum requirements*.txt Dockerfile > dependency-results/source-sha256.txt
+      - name: Verify vendored browser dependency
+        run: |
+          python scripts/check_vendor_dependencies.py --audit-output dependency-results/vendor-audit.json
+          cp docs/dependencies/pdfjs-manifest.json dependency-results/vendor-manifest.json
+      - name: Audit built runtime and generate SBOM
+        run: |
+          .venv-audit/bin/pip-audit -r dependency-results/runtime-installed.txt --no-deps --disable-pip --strict --progress-spinner off -f json -o dependency-results/runtime-audit.json
+          python scripts/check_dependency_audit.py report dependency-results/runtime-installed.txt dependency-results/runtime-audit.json
+          .venv-audit/bin/pip-audit -r dependency-results/runtime-installed.txt --no-deps --disable-pip --strict --progress-spinner off -f cyclonedx-json -o dependency-results/runtime-sbom.cdx.json
+      - name: Install and audit test, tooling and deployment inventories
+        run: |
+          for scope in test deploy; do
+            python -m venv ".venv-${scope}"
+            ".venv-${scope}/bin/python" -m pip install --require-hashes --only-binary=:all: -r "requirements-${scope}.txt"
+            ".venv-${scope}/bin/python" -m pip check
+            ".venv-${scope}/bin/python" -m pip freeze --all > "dependency-results/${scope}-installed.txt"
+          done
+          .venv-audit/bin/python -m pip freeze --all > dependency-results/tools-installed.txt
+          python scripts/check_dependency_audit.py shared dependency-results/runtime-installed.txt dependency-results/test-installed.txt
+          for scope in test tools deploy; do
+            .venv-audit/bin/pip-audit -r "dependency-results/${scope}-installed.txt" --no-deps --disable-pip --strict --progress-spinner off -f json -o "dependency-results/${scope}-audit.json"
+            python scripts/check_dependency_audit.py report "dependency-results/${scope}-installed.txt" "dependency-results/${scope}-audit.json"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dependency-results/
+          retention-days: 14
 
   tests:
     name: Python 3.11 (${{ matrix.order }})
@@ -52,9 +108,11 @@ jobs:
           sudo apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-eng
       - name: Install test dependencies
         run: |
-          python -m pip install -r requirements-test.txt
-          python -m pip check
-          python -m playwright install --with-deps chromium
+          python -m venv .venv-test
+          .venv-test/bin/python -m pip install --require-hashes --only-binary=:all: -r requirements-test.txt
+          .venv-test/bin/python -m pip check
+          .venv-test/bin/python -m playwright install --with-deps chromium
+          echo "$PWD/.venv-test/bin" >> "$GITHUB_PATH"
       - name: Run complete suite
         env:
           TEST_ORDER: ${{ matrix.order }}
@@ -71,6 +129,7 @@ jobs:
         run: |
           mkdir -p test-results
           python -m pip freeze > test-results/resolved-requirements.txt
+          python -m pip freeze --all > test-results/test-installed.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -81,13 +140,15 @@ jobs:
   required:
     name: Required checks
     if: always()
-    needs: [metadata, tests]
+    needs: [metadata, dependencies, tests]
     runs-on: ubuntu-latest
     steps:
       - name: Require every prerequisite to succeed
         env:
           METADATA_RESULT: ${{ needs.metadata.result }}
+          DEPENDENCY_RESULT: ${{ needs.dependencies.result }}
           TEST_RESULT: ${{ needs.tests.result }}
         run: |
           test "$METADATA_RESULT" = success
+          test "$DEPENDENCY_RESULT" = success
           test "$TEST_RESULT" = success

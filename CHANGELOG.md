@@ -1,3 +1,10 @@
+## 7.50 — October 20, 2026
+
+- Pin runtime, test, audit-tool and deployment-client dependencies with distribution hashes, including PDF libraries.
+- Require complete vulnerability scans, a Python dependency SBOM from the production Docker recipe and matching runtime/test versions before release.
+- Keep document intake, OCR, previews and generated reports covered by the normal and shuffled Python 3.11 suites.
+- PDF/OCR process isolation and the previously excluded authentication/logging changes remain separate work.
+
 ## 7.49 — October 20, 2026
 
 - Fix every sign-in and save failing with "This request could not be verified. Reload the page and try again." after 7.48: the new `Referrer-Policy: no-referrer` made Chrome and Edge send form posts with `Origin: null` and no Referer, which the write origin check rejects. The policy is now `same-origin`, which still sends nothing to other sites. Adds a real-browser regression test.

@@ -40,9 +40,10 @@ jobs:
         with:
           python-version: "3.11"
 
-      # deploy_hf.py needs only huggingface_hub; pull_backup.py is stdlib-only.
+      # Same reviewed client and transitive packages on every deployment.
       - name: Install deploy dependency
-        run: pip install "huggingface_hub>=0.23"
+        run: |
+          python -m pip install --require-hashes --only-binary=:all: -r requirements-deploy.txt
 
       - name: Deploy (runs the exact same routine as the local deploy_hf.py)
         env:

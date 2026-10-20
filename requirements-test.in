@@ -1,0 +1,6 @@
+# Constrain all shared packages to the production lock.
+-c requirements.txt
+-r requirements.in
+pytest==9.1.1
+PyMuPDF==2.0
+playwright==1.62.0
