@@ -1,0 +1,93 @@
+name: Release checks
+
+on:
+  workflow_call:
+    inputs:
+      base_sha:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  metadata:
+    name: Release metadata
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Check version increase and release metadata
+        env:
+          BASE_SHA: ${{ inputs.base_sha }}
+        run: python scripts/check_release.py release --base "$BASE_SHA"
+
+  tests:
+    name: Python 3.11 (${{ matrix.order }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        order: [normal, shuffled]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-test.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install production OCR dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-eng
+      - name: Install test dependencies
+        run: |
+          python -m pip install -r requirements-test.txt
+          python -m pip check
+          python -m playwright install --with-deps chromium
+      - name: Run complete suite
+        env:
+          TEST_ORDER: ${{ matrix.order }}
+          CSS_TEST_NOW: "2026-10-20T06:00:00"
+        run: |
+          mkdir -p test-results
+          args=()
+          if [ "$TEST_ORDER" = shuffled ]; then args+=(--shuffle-seed=311); fi
+          python -m pytest "${args[@]}" --tb=short --junitxml=test-results/results.xml
+      - name: Reject empty reports, failures and skipped tests
+        run: python scripts/check_release.py junit test-results/results.xml
+      - name: Record resolved dependencies
+        if: always()
+        run: |
+          mkdir -p test-results
+          python -m pip freeze > test-results/resolved-requirements.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: python311-${{ matrix.order }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test-results/
+          retention-days: 14
+
+  required:
+    name: Required checks
+    if: always()
+    needs: [metadata, tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every prerequisite to succeed
+        env:
+          METADATA_RESULT: ${{ needs.metadata.result }}
+          TEST_RESULT: ${{ needs.tests.result }}
+        run: |
+          test "$METADATA_RESULT" = success
+          test "$TEST_RESULT" = success

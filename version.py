@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.41"
+APP_VERSION = "7.42"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.42",
+        "date": "October 20, 2026",
+        "summary": "Updates must pass automated checks before deployment.",
+        "changes": [
+            "Updates are checked on the live system's Python version before deployment.",
+            "Release numbers and browser cache versions are checked together."
+        ]
+    },
     {
         "version": "7.39",
         "date": "October 20, 2026",

@@ -1,3 +1,10 @@
+## 7.42 — October 20, 2026
+
+- Run normal and shuffled Python 3.11 tests on pull requests and before deployment, including Chromium browser tests.
+- Reject missing, failed or skipped checks and inconsistent or non-increasing release versions.
+- Keep the deployment backup and live-version checks mandatory in GitHub Actions.
+- Preserve the 7.40–7.41 travel report and liquidation improvements.
+
 ## 7.41 — October 20, 2026
 
 - Liquidation figures on the prepare page: what was actually spent, by kind (plane, TNVS, taxi, per diem and so on, with how many entries were read from your uploaded tickets and receipts), the total against the cash advance, and the refund or the amount over. The Liquidation Report row now points to it (spot feedback #130).
