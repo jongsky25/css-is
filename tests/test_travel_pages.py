@@ -536,3 +536,13 @@ def test_apply_na_to_everyone_on_the_same_dpo(viewer, conn):
     for t in ("travel_item", "travel_filing"):
         conn.execute(f"DELETE FROM {t}")
     conn.execute("DELETE FROM admin_user WHERE id=?", (other,)); conn.commit()
+
+
+def test_saving_a_row_redirects_with_the_message_before_the_fragment(viewer, conn):
+    """The "Saved." message travelled after the #fragment, so the browser never sent it and it never showed."""
+    ref = ref_of(blank(viewer))
+    r = viewer.post(f"/travel/f/{ref}/item/dpo", content="na=1", headers={"Content-Type": "application/x-www-form-urlencoded"},
+                    follow_redirects=False)
+    assert r.status_code == 303
+    assert r.headers["location"] == f"/travel/f/{ref}?ok=Saved.#item-dpo"
+    assert "Saved." in viewer.get(r.headers["location"].split("#")[0]).text

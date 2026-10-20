@@ -28,7 +28,8 @@ CHANGELOG = [
         "changes": [
             "A claim page now has four steps: your claim, attach the documents, make the forms, and the items to enter in FMIS.",
             "Each step says what it is for and how many items are done, so attaching documents is clearly different from making forms.",
-            "There is now one place to prepare the forms, in step 3."
+            "There is now one place to prepare the forms, in step 3.",
+            "Saving a checklist item now shows its confirmation or error message again."
         ]
     },
     {

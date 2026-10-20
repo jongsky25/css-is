@@ -44,6 +44,10 @@ def page(browser, viewer):
         response = viewer.request(request.method, path, content=request.post_data_buffer,
                                   headers={'Content-Type': request.headers.get('content-type', '')},
                                   follow_redirects=False)
+        if request.method != 'GET' and 300 <= response.status_code < 400 and response.headers.get('location'):
+            # A form POST that redirects: answer with the page it redirects to. Fulfilling a 3xx makes Chromium's
+            # follow-up request bypass this handler first and fail DNS for 'testserver' (slowly on some runners).
+            response = viewer.get(response.headers['location'].split('#')[0], follow_redirects=False)
         route.fulfill(status=response.status_code, body=response.content,
                       headers={k: v for k, v in response.headers.items()
                                if k.lower() not in ('content-length', 'content-encoding', 'set-cookie')})
@@ -348,15 +352,16 @@ def test_a_reimbursement_has_no_liquidation_figures(page, viewer, conn, relay):
 def test_filing_steps_count_progress_and_jump_to_their_section(page, viewer, conn, relay):
     ref = mk(viewer, kind='liquidation')
     page.goto(f'http://testserver/travel/f/{ref}')
-    nav = page.get_by_role('list', name='Steps to file this claim')
-    pw.expect(nav.get_by_text('Attach documents')).to_be_visible()
-    pw.expect(nav.get_by_text('0 of 4')).to_be_visible()
-    nav.get_by_role('link', name=re.compile('Make the forms')).click()
+    steps = page.get_by_role('list', name='Steps to file this claim')
+    pw.expect(steps).to_contain_text('Attach documents')
+    pw.expect(steps).to_contain_text('0 of 4')
+    steps.get_by_role('link', name=re.compile('Make the forms')).click()
     pw.expect(page.locator('#step-make')).to_be_in_viewport()
-    # marking a required document "does not apply" takes it out of the count
-    page.locator('#step-attach #item-back_to_office_report summary, #step-attach #item-bto_report summary').first.click()
-    page.locator('#step-attach').get_by_role('button', name='Does not apply to me').first.click()
-    pw.expect(page.get_by_role('list', name='Steps to file this claim').get_by_text('0 of 3')).to_be_visible()
+    # marking one required document "does not apply" takes it out of the count
+    dpo = page.locator('#step-attach #item-dpo')
+    with page.expect_navigation():
+        dpo.get_by_role('button', name='Does not apply to me').click()
+    pw.expect(page.get_by_role('list', name='Steps to file this claim')).to_contain_text('0 of 3')
     # the explanation tells attaching and making apart
     pw.expect(page.locator('#step-attach')).to_contain_text('Nothing here is made for you')
     pw.expect(page.locator('#step-make')).to_contain_text('made for you from a template')

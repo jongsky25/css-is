@@ -68,7 +68,8 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
 
     def _go(path, msg=None, err=None):
         q = f"?ok={quote(msg[:200])}" if msg else (f"?err={quote(err[:200])}" if err else "")
-        return RedirectResponse(path + q, status_code=303)
+        base, hash_, fragment = path.partition("#")          # the query goes before the #fragment, or it is never sent
+        return RedirectResponse(base + q + hash_ + fragment, status_code=303)
 
     def _decorate(f, today):
         words, tone = travel.deadline_words(f, today) if f["status"] in ("open", "ready") else (None, None)
