@@ -1,7 +1,7 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header, flash %}
 {% block title %}{{ 'Travel claim' if missing else f.ref_code }}{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261017c">{% if uploads_ready %}<script src="/static/js/travel_upload.js?v=20261017a" defer></script>{% endif %}{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261017c">{% if uploads_ready %}<script src="/static/js/travel_upload.js?v=20261020a" defer></script>{% endif %}{% endblock %}
 {% block content %}
 {% if missing %}
 {{ page_header("Travel claim not found", "") }}

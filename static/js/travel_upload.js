@@ -21,13 +21,37 @@
     }).catch(function () { return file; });
   }
 
+  // One request, read as text first so a server error page never looks like "no connection". A network drop or a
+  // 5xx is retried once; every other failure says what the server answered so the person knows what to do.
+  function why(status) {
+    if (status === 403) return 'The server could not verify the request. Reload the page, sign in again if asked, and retry.';
+    if (status === 401) return 'You were signed out. Sign in again, then retry.';
+    if (status === 413) return 'That file is too large. Use one under 6 MB.';
+    if (status === 429) return 'Too many tries. Wait a minute and retry.';
+    if (status >= 500) return 'The server had a problem (code ' + status + '). Try again shortly, or paste a Google Drive link instead.';
+    return 'The upload was refused (code ' + status + ').';
+  }
+
+  function post(url, f, name, attempt) {
+    var retry = function () { return new Promise(function (go) { setTimeout(go, 1500); }).then(function () { return post(url, f, name, attempt + 1); }); };
+    return fetch(url, { method: 'POST', credentials: 'same-origin', body: f, headers: { 'X-Filename': encodeURIComponent(name) } })
+      .then(function (r) {
+        return r.text().then(function (t) {
+          var j = null; try { j = JSON.parse(t); } catch (e) { /* not JSON: a proxy or error page */ }
+          if (j && typeof j === 'object') return j;
+          if (r.status >= 500 && attempt < 1) return retry();
+          return { ok: false, error: why(r.status) };
+        });
+      }, function () {
+        if (attempt < 1) return retry();
+        return { ok: false, error: 'The upload did not go through. Check your connection and try again, or paste a Google Drive link instead.' };
+      });
+  }
+
   function send(box, file) {
     return shrink(file).then(function (f) {
       if (f.size > MAX) return { ok: false, error: file.name + ' is too large (over 6 MB). Paste a Google Drive link instead.' };
-      return fetch(box.dataset.url + '?code=' + encodeURIComponent(box.dataset.code), {
-        method: 'POST', credentials: 'same-origin', body: f,
-        headers: { 'X-Filename': encodeURIComponent(file.name) }
-      }).then(function (r) { return r.json(); }).catch(function () { return { ok: false, error: 'The upload did not go through. Check your connection and try again.' }; });
+      return post(box.dataset.url + '?code=' + encodeURIComponent(box.dataset.code), f, file.name, 0);
     });
   }
 
