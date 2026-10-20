@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.55"
+APP_VERSION = "7.56"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.56",
+        "date": "October 20, 2026",
+        "summary": "The travel checklist now says the DPO that allows a representative or OIC to sign.",
+        "changes": [
+            "The checklist row is now \"DPO allowing a representative or OIC to sign\", with a note saying it is the order that lets them sign in the Head of Office's place.",
+            "The question when you file now reads \"The Department Personnel Order allows a representative or OIC to sign\"."
+        ]
+    },
     {
         "version": "7.55",
         "date": "October 20, 2026",
