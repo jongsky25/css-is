@@ -129,7 +129,7 @@ def test_the_screen_opens_by_its_private_address_without_a_login(client, conn):
 
 def test_a_wrong_or_replaced_address_shows_nothing(client, conn):
     tok = rooms.display_token(conn)
-    for bad in ("nope", tok[:-1] + "x"):
+    for bad in ("nope", tok[:-1] + ("x" if tok[-1] != "x" else "y")):
         r = client.get(f"/rooms/display/{bad}")
         assert r.status_code == 404 and "Conference room" not in r.text and "noindex" in r.headers["x-robots-tag"]
     rooms.reset_display_token(conn)

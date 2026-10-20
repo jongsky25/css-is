@@ -44,7 +44,10 @@ def page(browser, viewer):
         response = viewer.request(request.method, path, content=request.post_data_buffer,
                                   headers={'Content-Type': request.headers.get('content-type', ''),
                                            'Accept': request.headers.get('accept', '')},
-                                  follow_redirects=False)
+                                  # Resolve the initial canonical-form redirect inside the ASGI
+                                  # client; intercepted Chromium redirects otherwise attempt DNS
+                                  # for the synthetic testserver host. Later navigation is real.
+                                  follow_redirects=request.method == 'GET' and url.path == '/travel/new')
         route.fulfill(status=response.status_code, body=response.content,
                       headers={k: v for k, v in response.headers.items()
                                if k.lower() not in ('content-length', 'content-encoding', 'set-cookie')})
