@@ -72,7 +72,8 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
 
     def _go(path, msg=None, err=None):
         q = f"?ok={quote(msg[:200])}" if msg else (f"?err={quote(err[:200])}" if err else "")
-        return RedirectResponse(path + q, status_code=303)
+        base, hash_, fragment = path.partition("#")          # the query goes before the #fragment, or it is never sent
+        return RedirectResponse(base + q + hash_ + fragment, status_code=303)
 
     def _decorate(f, today):
         words, tone = travel.deadline_words(f, today) if f["status"] in ("open", "ready") else (None, None)
@@ -369,12 +370,14 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
         ans = travel.answers_of(filing)
         liqs = travel.liquidations_of(conn, filing["id"]) if filing["kind"] == "ca" else []
         ca = travel.get_filing(conn, filing["ca_filing_id"]) if filing["ca_filing_id"] else None
+        questions = [q_ for q_ in tc.ANSWER_KEYS if filing["kind"] in q_[2]]
         return templates.TemplateResponse(request, "travel_filing.html", {
             "nav_active": "travel_mine", "tab": "mine", "missing": False, "f": _decorate(filing, today),
             "items": items, "flags": flags, "missing_list": missing, "ans": ans, "owner": travel.is_owner(request.state.user, filing),
             "next_action": travel.next_action(filing, items, flags, missing),
             "draftable": travel.forms_ready_to_draft(items) if filing["status"] in ("open", "ready") else [],
-            "questions": [q_ for q_ in tc.ANSWER_KEYS if filing["kind"] in q_[2]], "roles": tc.ROLES,
+            "questions": questions, "roles": tc.ROLES,
+            "role_label": dict(tc.ROLES).get(ans.get("role"), ""), "yes_answers": [label for key, label, _k in questions if ans.get(key)],
             "mc114": travel.MC114_FORMATS, "liquidations": liqs, "ca": ca, "editable": filing["status"] in ("open", "ready"),
             "msg": (q.get("ok") or "")[:200] or None, "err": error or (q.get("err") or "")[:200] or None,
             "peers": len(travel.peers_of(conn, filing)) if travel.is_owner(request.state.user, filing) else 0,

@@ -1,8 +1,13 @@
-## 7.44 — October 20, 2026
+## 7.45 — October 20, 2026
 
 - Protect opening a travel filing with durable account-bound submission IDs and atomic filing, checklist, audit and result receipts.
 - Recover an existing checklist after an interrupted response; retries reuse the same submission.
 - Add private status lookup, preserved form answers and safe closure of unfinished attempts.
+
+## 7.44 — October 20, 2026
+
+- The travel filing page now walks through the claim in steps: 1 Your claim (the answers that decide what you need), 2 Attach the documents (the ones that already exist outside the app), 3 Make the forms (made for you from a template, using what you attached), 4 Enter these in FMIS. Each step explains itself and counts its progress, each item keeps its done or missing badge, and there is one place to prepare the forms (spot feedback #140).
+- Fix the "Saved." and error messages on the travel filing page: after saving a checklist item the message was placed after the #fragment in the address, so the browser never sent it and it never showed.
 
 ## 7.43 — October 20, 2026
 

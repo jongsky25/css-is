@@ -99,6 +99,20 @@ def test_blank_liquidation_opens_a_filing_with_a_checklist(viewer, conn):
     assert conn.execute("SELECT COUNT(*) FROM audit_log WHERE action='travel_open'").fetchone()[0] >= 1
 
 
+def test_the_filing_page_walks_through_the_claim_in_steps(viewer, conn):
+    ref = ref_of(blank(viewer))
+    html = viewer.get(f"/travel/f/{ref}").text
+    pos = {k: html.index(k) for k in ('id="step-claim"', 'id="step-attach"', 'id="step-make"', 'id="step-fmis"')}
+    assert list(pos.values()) == sorted(pos.values())                          # the four steps come in order
+    where = lambda code: html.index(f'id="item-{code}"')                       # noqa: E731
+    assert pos['id="step-attach"'] < where("dpo") < pos['id="step-make"']       # an external document is attached in step 2
+    assert pos['id="step-make"'] < where("appendix_b") < pos['id="step-fmis"']  # a made form is in step 3
+    assert pos['id="step-fmis"'] < where("fms_routing_slip")                    # an FMIS reminder is in step 4
+    assert "Your claim" in html and "Make the forms" in html and "Enter these in FMIS" in html
+    assert "0 of" in html                                                      # progress is counted per step
+    assert html.count('id="item-dpo"') == 1                                    # each item appears once, not once per view
+
+
 def test_cash_advance_needs_more_than_a_week(viewer, conn):
     r = blank(viewer, "ca", start=days(5), end=days(7))
     assert r.status_code == 400 and "more than a week" in r.text
@@ -409,7 +423,7 @@ def test_activity_deadline_chip_links_to_its_filing(admin, conn):
         assert 'href="/travel/f/' + filing["ref_code"] + '"' in page.text
         assert "Due in 5 days" in page.text
         claim = admin.get(f"/travel/f/{filing['ref_code']}")
-        assert claim.status_code == 200 and "Checklist" in claim.text
+        assert claim.status_code == 200 and "Attach the documents" in claim.text
     finally:
         conn.execute("DELETE FROM event WHERE id=?", (event["id"],))
         conn.commit()
@@ -526,3 +540,13 @@ def test_apply_na_to_everyone_on_the_same_dpo(viewer, conn):
     for t in ("travel_item", "travel_filing"):
         conn.execute(f"DELETE FROM {t}")
     conn.execute("DELETE FROM admin_user WHERE id=?", (other,)); conn.commit()
+
+
+def test_saving_a_row_redirects_with_the_message_before_the_fragment(viewer, conn):
+    """The "Saved." message travelled after the #fragment, so the browser never sent it and it never showed."""
+    ref = ref_of(blank(viewer))
+    r = viewer.post(f"/travel/f/{ref}/item/dpo", content="na=1", headers={"Content-Type": "application/x-www-form-urlencoded"},
+                    follow_redirects=False)
+    assert r.status_code == 303
+    assert r.headers["location"] == f"/travel/f/{ref}?ok=Saved.#item-dpo"
+    assert "Saved." in viewer.get(r.headers["location"].split("#")[0]).text

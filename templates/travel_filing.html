@@ -1,7 +1,69 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header, flash %}
+{% macro item_row(it) %}
+<li class="tv-item {{ 'tv-fmis' if it.handling == 'fmis' }} {{ 'is-optional' if it.requirement == 'optional' }}" id="item-{{ it.code }}">
+    {% set complete = it.state == 'na' or (it.handling == 'generate' and it.doc_url) or (it.handling in ('upload', 'carry') and (it.drive_url or (it.handling == 'carry' and it.note))) %}
+    <details {{ 'open' if not complete and it.requirement == 'required' and it.handling != 'fmis' }}>
+    <summary class="tv-item-head">
+      <strong>{{ it.label }}</strong>
+      <span>
+        {% if it.requirement == 'optional' %}<span class="badge grey">Optional</span>{% endif %}
+        {% if it.handling == 'fmis' %}<span class="badge grey">In FMIS</span>
+        {% elif it.state == 'na' %}<span class="badge grey">– Not applicable</span>
+        {% elif it.handling == 'generate' %}{% if it.doc_url %}<span class="badge green">✓ Ready</span>{% else %}<span class="badge amber">○ To make</span>{% endif %}
+        {% elif it.drive_url or (it.handling == 'carry' and it.note) %}<span class="badge green">✓ Added</span>
+        {% else %}<span class="badge amber">○ Missing</span>{% endif %}
+      </span>
+    </summary>
+    <div class="tv-note">{{ it.copies }} cop{{ 'y' if it.copies == 1 else 'ies' }}{% if it.wet_sign %} · <span class="tv-wet">sign in ink</span>{% endif %}{% if it.note_hint %} · {{ it.note_hint }}{% endif %}</div>
+    {% if it.handling == 'upload' and it.wet_sign %}<div class="tv-note">Scan it after signing, and sign in ink again when you submit.</div>{% endif %}
+    {% if owner and editable %}
+      {% if it.handling == 'fmis' %}
+      <form method="post" action="/travel/f/{{ f.ref_code }}/item/{{ it.code }}">
+        <input type="text" name="fmis_ref" maxlength="120" value="{{ it.fmis_ref }}" placeholder="FMIS reference or status" aria-label="FMIS reference for {{ it.label }}">
+        <button class="btn ghost small" type="submit">Save</button></form>
+      {% else %}
+      {% if uploads_ready and it.handling in ('upload', 'carry') %}
+      <div class="tv-upload" data-url="/travel/f/{{ f.ref_code }}/upload" data-ref="{{ f.ref_code }}" data-code="{{ it.code }}" data-label="{{ it.label }}">
+        <label class="btn ghost small">{{ 'Add another file' if it.drive_source == 'upload' else 'Choose file or take photo' }}
+          <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" multiple hidden aria-label="Upload files for {{ it.label }}"></label>
+        <span class="tv-upload-out tv-note" role="status" aria-live="polite"></span>
+      </div>
+      {% if it.drive_source == 'upload' %}
+      <form method="post" action="/travel/f/{{ f.ref_code }}/item/{{ it.code }}/remove-upload">
+        <button class="btn ghost small" type="submit">Remove uploaded files</button></form>
+      {% endif %}
+      {% endif %}
+      <form method="post" action="/travel/f/{{ f.ref_code }}/item/{{ it.code }}">
+        <input type="url" name="drive_url" maxlength="500" value="{{ (it.doc_url if it.handling == 'generate' else it.drive_url) or '' }}" placeholder="{{ 'Link to the form you made in Google Drive' if it.handling == 'generate' else ('Or paste a Google Drive link' if uploads_ready else 'Paste the Google Drive link') }}" aria-label="Drive link for {{ it.label }}">
+        <button class="btn ghost small" type="submit">Save link</button></form>
+      {% if it.handling == 'carry' %}
+      <form method="post" action="/travel/f/{{ f.ref_code }}/item/{{ it.code }}">
+        <input type="text" name="note" maxlength="300" value="{{ it.note }}" placeholder="Or a note, if you have it on paper" aria-label="Note for {{ it.label }}">
+        <button class="btn ghost small" type="submit">Save note</button></form>
+      {% endif %}
+      {% if it.handling in ('upload', 'carry') %}
+      <form method="post" action="/travel/f/{{ f.ref_code }}/item/{{ it.code }}">
+        <input type="hidden" name="na" value="{{ '0' if it.state == 'na' else '1' }}">
+        <button class="btn ghost small" type="submit">{{ 'Needed after all' if it.state == 'na' else 'Does not apply to me' }}</button></form>
+      {% if peers %}
+      <form method="post" action="/travel/f/{{ f.ref_code }}/item/{{ it.code }}">
+        <input type="hidden" name="na" value="{{ '0' if it.state == 'na' else '1' }}">
+        <input type="hidden" name="everyone" value="1">
+        <button class="btn ghost small" type="submit" title="Also applies to the {{ peers }} other traveller{{ 's' if peers != 1 }} on this DPO whose answer is still open">{{ 'Needed by everyone on this DPO' if it.state == 'na' else 'Does not apply to everyone on this DPO' }}</button></form>
+      {% endif %}
+      {% endif %}
+      {% endif %}
+    {% elif it.handling == 'fmis' and it.fmis_ref %}<div class="tv-note">FMIS: {{ it.fmis_ref }}</div>
+    {% endif %}
+    {% if it.drive_url %}<div class="tv-note"><a href="{{ it.drive_url }}" rel="noopener" target="_blank">{{ 'Open the folder' if it.drive_source == 'upload' else 'Open the file' }}</a></div>{% endif %}
+    {% if it.doc_url %}<div class="tv-note"><a href="{{ it.doc_url }}" rel="noopener" target="_blank">Open the form</a>{% if it.doc_state == 'manual' %} (your own copy){% endif %}</div>{% endif %}
+    {% if it.note and it.handling == 'carry' %}<div class="tv-note">Note: {{ it.note }}</div>{% endif %}
+    </details>
+  </li>
+{% endmacro %}
 {% block title %}{{ 'Travel claim' if missing else f.ref_code }}{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261017c">{% if uploads_ready %}<script src="/static/js/travel_upload.js?v=20261020a" defer></script>{% endif %}{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261020e">{% if uploads_ready %}<script src="/static/js/travel_upload.js?v=20261020a" defer></script>{% endif %}{% endblock %}
 {% block content %}
 {% if missing %}
 {{ page_header("Travel claim not found", "") }}
@@ -44,9 +106,6 @@
     {% elif f.status == 'submitted' %}
       <a class="btn ghost" href="/travel/f/{{ f.ref_code }}/ready">Print list</a>
     {% endif %}
-    {% if owner and f.status in ('open', 'ready') and items|selectattr('handling', 'equalto', 'generate')|list %}
-      <a class="btn ghost" href="/travel/f/{{ f.ref_code }}/prepare">Prepare the forms</a>
-    {% endif %}
     {% if owner and f.status in ('open', 'ready') %}
       <form method="post" action="/travel/f/{{ f.ref_code }}/withdraw" onsubmit="return confirm('Withdraw this filing?')"><button class="btn danger" type="submit">Withdraw</button></form>
     {% endif %}
@@ -60,74 +119,60 @@
   <ul class="tv-missing">{% for fl in flags %}<li><span class="badge {{ 'amber' if fl.state == 'open' else ('green' if fl.state == 'verified' else 'red') }}">{{ fl.state|capitalize }}</span> {{ fl.detail }}{% if fl.note %} <em>({{ fl.note }})</em>{% endif %}</li>{% endfor %}</ul></div>
 {% endif %}
 
-<div class="tv-card">
-  <h2>Checklist</h2>
-  <p class="tv-hint">Based on form {{ rev }}. Documents in FMIS are listed so you do not forget them; they never block "ready".</p>
+{% set ns = namespace(att_total=0, att_done=0, gen_total=0, gen_done=0, fmis=0) %}
+{% for it in items %}{% if it.requirement == 'required' and it.state != 'na' %}
+  {% if it.handling in ('upload', 'carry') %}{% set ns.att_total = ns.att_total + 1 %}{% if it.drive_url or (it.handling == 'carry' and it.note) %}{% set ns.att_done = ns.att_done + 1 %}{% endif %}
+  {% elif it.handling == 'generate' %}{% set ns.gen_total = ns.gen_total + 1 %}{% if it.doc_url %}{% set ns.gen_done = ns.gen_done + 1 %}{% endif %}
+  {% else %}{% set ns.fmis = ns.fmis + 1 %}{% endif %}
+{% endif %}{% endfor %}
+{% set attach_items = items|selectattr('handling', 'in', ['upload', 'carry'])|list %}
+{% set make_items = items|selectattr('handling', 'equalto', 'generate')|list %}
+{% set fmis_items = items|selectattr('handling', 'equalto', 'fmis')|list %}
+{% set attach_ok = ns.att_done >= ns.att_total %}
+{% set make_ok = ns.gen_done >= ns.gen_total %}
+
+<ol class="tv-steps" aria-label="Steps to file this claim">
+  <li class="done"><a href="#step-claim"><span class="tv-step-no">1</span> Your claim</a></li>
+  <li class="{{ 'done' if attach_ok else 'now' }}"><a href="#step-attach"><span class="tv-step-no">2</span> Attach documents <small>{{ ns.att_done }} of {{ ns.att_total }}</small></a></li>
+  <li class="{{ 'done' if make_ok and ns.gen_total else ('now' if attach_ok else '') }}"><a href="#step-make"><span class="tv-step-no">3</span> Make the forms <small>{{ ns.gen_done }} of {{ ns.gen_total }}</small></a></li>
+  <li><a href="#step-fmis"><span class="tv-step-no">4</span> In FMIS</a></li>
+</ol>
+
+<section class="tv-card tv-step" id="step-claim">
+  <h2><span class="tv-step-no">1</span> Your claim</h2>
+  <p class="tv-hint">These answers decide which documents and forms below you need.</p>
+  <p>{{ travel_kind_labels[f.kind] }}{% if role_label %} · {{ role_label }}{% endif %}</p>
+  {% if yes_answers %}<ul class="tv-missing">{% for label in yes_answers %}<li>{{ label }}</li>{% endfor %}</ul>
+  {% else %}<p class="tv-hint">No special situations were ticked.</p>{% endif %}
+  {% if owner and editable %}<p><a class="btn ghost small" href="#travel-answers" onclick="document.getElementById('travel-answers').open=true">Change my answers</a></p>{% endif %}
+</section>
+
+<section class="tv-card tv-step" id="step-attach">
+  <h2><span class="tv-step-no">2</span> Attach the documents <small class="tv-step-count">{{ ns.att_done }} of {{ ns.att_total }} in</small></h2>
+  <p class="tv-hint">These already exist outside this app: the e-ticket, receipts, the DPO and so on. Upload each one or paste its Google Drive link. Nothing here is made for you.</p>
   <ul class="tv-items">
-  {% for it in items %}
-    <li class="tv-item {{ 'tv-fmis' if it.handling == 'fmis' }} {{ 'is-optional' if it.requirement == 'optional' }}" id="item-{{ it.code }}">
-      {% set complete = it.state == 'na' or (it.handling == 'generate' and it.doc_url) or (it.handling in ('upload', 'carry') and (it.drive_url or (it.handling == 'carry' and it.note))) %}
-      <details {{ 'open' if not complete and it.requirement == 'required' and it.handling != 'fmis' }}>
-      <summary class="tv-item-head">
-        <strong>{{ it.label }}</strong>
-        <span>
-          {% if it.requirement == 'optional' %}<span class="badge grey">Optional</span>{% endif %}
-          {% if it.handling == 'fmis' %}<span class="badge grey">In FMIS</span>
-          {% elif it.state == 'na' %}<span class="badge grey">– Not applicable</span>
-          {% elif it.handling == 'generate' %}{% if it.doc_url %}<span class="badge green">✓ Ready</span>{% else %}<span class="badge amber">○ To make</span>{% endif %}
-          {% elif it.drive_url or (it.handling == 'carry' and it.note) %}<span class="badge green">✓ Added</span>
-          {% else %}<span class="badge amber">○ Missing</span>{% endif %}
-        </span>
-      </summary>
-      <div class="tv-note">{{ it.copies }} cop{{ 'y' if it.copies == 1 else 'ies' }}{% if it.wet_sign %} · <span class="tv-wet">sign in ink</span>{% endif %}{% if it.note_hint %} · {{ it.note_hint }}{% endif %}</div>
-      {% if it.handling == 'upload' and it.wet_sign %}<div class="tv-note">Scan it after signing, and sign in ink again when you submit.</div>{% endif %}
-      {% if owner and editable %}
-        {% if it.handling == 'fmis' %}
-        <form method="post" action="/travel/f/{{ f.ref_code }}/item/{{ it.code }}">
-          <input type="text" name="fmis_ref" maxlength="120" value="{{ it.fmis_ref }}" placeholder="FMIS reference or status" aria-label="FMIS reference for {{ it.label }}">
-          <button class="btn ghost small" type="submit">Save</button></form>
-        {% else %}
-        {% if uploads_ready and it.handling in ('upload', 'carry') %}
-        <div class="tv-upload" data-url="/travel/f/{{ f.ref_code }}/upload" data-ref="{{ f.ref_code }}" data-code="{{ it.code }}" data-label="{{ it.label }}">
-          <label class="btn ghost small">{{ 'Add another file' if it.drive_source == 'upload' else 'Choose file or take photo' }}
-            <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" multiple hidden aria-label="Upload files for {{ it.label }}"></label>
-          <span class="tv-upload-out tv-note" role="status" aria-live="polite"></span>
-        </div>
-        {% if it.drive_source == 'upload' %}
-        <form method="post" action="/travel/f/{{ f.ref_code }}/item/{{ it.code }}/remove-upload">
-          <button class="btn ghost small" type="submit">Remove uploaded files</button></form>
-        {% endif %}
-        {% endif %}
-        <form method="post" action="/travel/f/{{ f.ref_code }}/item/{{ it.code }}">
-          <input type="url" name="drive_url" maxlength="500" value="{{ (it.doc_url if it.handling == 'generate' else it.drive_url) or '' }}" placeholder="{{ 'Link to the form you made in Google Drive' if it.handling == 'generate' else ('Or paste a Google Drive link' if uploads_ready else 'Paste the Google Drive link') }}" aria-label="Drive link for {{ it.label }}">
-          <button class="btn ghost small" type="submit">Save link</button></form>
-        {% if it.handling == 'carry' %}
-        <form method="post" action="/travel/f/{{ f.ref_code }}/item/{{ it.code }}">
-          <input type="text" name="note" maxlength="300" value="{{ it.note }}" placeholder="Or a note, if you have it on paper" aria-label="Note for {{ it.label }}">
-          <button class="btn ghost small" type="submit">Save note</button></form>
-        {% endif %}
-        {% if it.handling in ('upload', 'carry') %}
-        <form method="post" action="/travel/f/{{ f.ref_code }}/item/{{ it.code }}">
-          <input type="hidden" name="na" value="{{ '0' if it.state == 'na' else '1' }}">
-          <button class="btn ghost small" type="submit">{{ 'Needed after all' if it.state == 'na' else 'Does not apply to me' }}</button></form>
-        {% if peers %}
-        <form method="post" action="/travel/f/{{ f.ref_code }}/item/{{ it.code }}">
-          <input type="hidden" name="na" value="{{ '0' if it.state == 'na' else '1' }}">
-          <input type="hidden" name="everyone" value="1">
-          <button class="btn ghost small" type="submit" title="Also applies to the {{ peers }} other traveller{{ 's' if peers != 1 }} on this DPO whose answer is still open">{{ 'Needed by everyone on this DPO' if it.state == 'na' else 'Does not apply to everyone on this DPO' }}</button></form>
-        {% endif %}
-        {% endif %}
-        {% endif %}
-      {% elif it.handling == 'fmis' and it.fmis_ref %}<div class="tv-note">FMIS: {{ it.fmis_ref }}</div>
-      {% endif %}
-      {% if it.drive_url %}<div class="tv-note"><a href="{{ it.drive_url }}" rel="noopener" target="_blank">{{ 'Open the folder' if it.drive_source == 'upload' else 'Open the file' }}</a></div>{% endif %}
-      {% if it.doc_url %}<div class="tv-note"><a href="{{ it.doc_url }}" rel="noopener" target="_blank">Open the form</a>{% if it.doc_state == 'manual' %} (your own copy){% endif %}</div>{% endif %}
-      {% if it.note and it.handling == 'carry' %}<div class="tv-note">Note: {{ it.note }}</div>{% endif %}
-      </details>
-    </li>
-  {% endfor %}
+  {% for it in attach_items %}{{ item_row(it) }}{% endfor %}
   </ul>
-</div>
+</section>
+
+<section class="tv-card tv-step" id="step-make">
+  <h2><span class="tv-step-no">3</span> Make the forms <small class="tv-step-count">{{ ns.gen_done }} of {{ ns.gen_total }} ready</small></h2>
+  <p class="tv-hint">These are made for you from a template. Their content comes from the documents you attached in step 2 and the details you check on the prepare page, so attach first.</p>
+  {% if owner and editable and make_items %}<p><a class="btn" href="/travel/f/{{ f.ref_code }}/prepare">Review and make the forms</a></p>{% endif %}
+  <ul class="tv-items">
+  {% for it in make_items %}{{ item_row(it) }}{% endfor %}
+  </ul>
+</section>
+
+{% if fmis_items %}
+<section class="tv-card tv-step" id="step-fmis">
+  <h2><span class="tv-step-no">4</span> Enter these in FMIS</h2>
+  <p class="tv-hint">These are done in FMIS, not here. They are listed so you do not forget them and never block "ready". Note the FMIS reference if you have it.</p>
+  <ul class="tv-items">
+  {% for it in fmis_items %}{{ item_row(it) }}{% endfor %}
+  </ul>
+</section>
+{% endif %}
 
 {% if owner and editable %}
 <details class="tv-card" id="travel-answers">
