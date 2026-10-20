@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.47"
+APP_VERSION = "7.48"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.48",
+        "date": "October 20, 2026",
+        "summary": "Safer browser handling of your sign-in and private pages.",
+        "changes": [
+            "Sign-in cookies use encrypted connections automatically on the hosted system.",
+            "Private pages and photos are no longer saved for offline viewing; offline navigation shows the offline notice.",
+            "Browser protections reduce information shared with other websites and prevent them from embedding the system."
+        ]
+    },
     {
         "version": "7.47",
         "date": "October 20, 2026",

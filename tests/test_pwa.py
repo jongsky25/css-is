@@ -47,10 +47,11 @@ def test_service_worker_served_at_root_scope(client):
     assert "CACHE_VERSION" in r.text
 
 
-def test_service_worker_caches_photos(client):
-    # profile photos get stale-while-revalidate (they're outside /static/)
+def test_service_worker_is_public_assets_only(client):
     r = client.get("/sw.js")
-    assert "isPhoto(url)" in r.text and "PHOTO_MAX" in r.text
+    assert r.status_code == 200 and "cacheableStatic" in r.text
+    # Dynamic-cache behavior is executed under Node in test_service_worker_retry.
+    assert "PHOTO_MAX" not in r.text and "PUBLIC_NAV" not in r.text
 
 
 def test_public_form_wires_pwa(client, sample_ids):

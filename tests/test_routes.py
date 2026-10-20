@@ -263,7 +263,7 @@ def test_photo_etag_and_thumbnail(client, app_mod, sample_ids):
     finally:
         conn.close()
     full = client.get(f"/photo/{rp}")
-    assert full.status_code == 200 and "max-age" in full.headers["cache-control"]
+    assert full.status_code == 200 and full.headers["cache-control"] == "no-store"
     etag = full.headers["etag"]
     # a repeat view with the validator is a bodyless 304
     again = client.get(f"/photo/{rp}", headers={"If-None-Match": etag})

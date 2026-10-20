@@ -8,7 +8,7 @@
  * whose name differs, so an old app-shell is purged the moment the new SW takes
  * over. Keep this in lockstep with version.py / the ?v= asset tokens.
  */
-const CACHE_VERSION = "v7.47-a";
+const CACHE_VERSION = "v7.48-a";
 const CACHE_NAME = "css-is-" + CACHE_VERSION;
 
 /* ── Edge-retry shield ─────────────────────────────────────────────────────────
@@ -56,16 +56,20 @@ const PRECACHE = [
   "/static/img/icons/icon-512.png",
 ];
 
-/* Only runtime-cache navigations for the public survey surfaces — never the
- * authenticated admin pages (which must always come from the network). */
-const PUBLIC_NAV = ["/r/", "/seq", "/e/"];
+// Only public static assets enter Cache Storage. Personal pages and photos do not.
+function cacheableStatic(res) {
+  return res && res.ok && !res.redirected &&
+    !/(?:^|,)\s*(?:no-store|private)(?:\s*(?:=|,|$))/i.test(res.headers.get("Cache-Control") || "");
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      // addAll is atomic; a single 404 would abort install, so swallow per-item.
+      // One missing file must not prevent installation; reject private responses.
       .then((cache) => Promise.all(
-        PRECACHE.map((u) => cache.add(u).catch(() => null))))
+        PRECACHE.map((u) => fetch(u).then((res) => {
+          if (cacheableStatic(res)) return cache.put(u, res);
+        }).catch(() => null))))
       .then(() => self.skipWaiting())
   );
 });
@@ -84,27 +88,6 @@ function isStaticAsset(url) {
   return url.origin === self.location.origin && url.pathname.startsWith("/static/");
 }
 
-/* Profile photos (/photo/<id>[?s=N]): stale-while-revalidate, so a face that was
- * seen once paints instantly (and offline) on every later page while a fresh
- * copy is fetched behind it. They live in the same cache as the app shell, so
- * the version bump above purges them too. Bounded so the cache can't grow
- * without limit (each entry is a few KB thumbnail, or ~100 KB for the original). */
-const PHOTO_MAX = 300;
-
-function isPhoto(url) {
-  return url.origin === self.location.origin && /^\/photo\/\d+$/.test(url.pathname);
-}
-
-async function trimPhotos(cache) {
-  const keys = (await cache.keys()).filter((r) => isPhoto(new URL(r.url)));
-  // keys() is insertion-ordered: drop the oldest beyond the cap
-  await Promise.all(keys.slice(0, Math.max(0, keys.length - PHOTO_MAX)).map((r) => cache.delete(r)));
-}
-
-function isPublicNav(url) {
-  return PUBLIC_NAV.some((p) => url.pathname === p || url.pathname.startsWith(p));
-}
-
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
@@ -114,33 +97,14 @@ self.addEventListener("fetch", (event) => {
   // uncertain result must be checked by the workflow before another write.
   if (req.method !== "GET") return;
 
-  // Profile photos: stale-while-revalidate (only successful responses are kept,
-  // so a 404 for a removed photo is never pinned in the cache).
-  if (isPhoto(url)) {
-    event.respondWith(
-      caches.open(CACHE_NAME).then((cache) =>
-        cache.match(req).then((hit) => {
-          const network = fetchRetrying(req, true).then((res) => {
-            if (res && res.ok) {
-              cache.put(req, res.clone()).then(() => trimPhotos(cache)).catch(() => null);
-            } else if (res && res.status === 404) {
-              cache.delete(req);             // photo was removed: stop showing the stale copy
-            }
-            return res;
-          }).catch(() => hit);
-          return hit || network;
-        }))
-    );
-    return;
-  }
-
   // Static assets: stale-while-revalidate — instant from cache, refresh behind.
   if (isStaticAsset(url)) {
     event.respondWith(
       caches.open(CACHE_NAME).then((cache) =>
         cache.match(req).then((hit) => {
           const network = fetchRetrying(req, true).then((res) => {
-            if (res && res.ok) cache.put(req, res.clone());
+            if (cacheableStatic(res)) cache.put(req, res.clone()).catch(() => null);
+            else cache.delete(req).catch(() => null);
             return res;
           }).catch(() => hit);
           return hit || network;
@@ -149,26 +113,16 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Navigations: network-first (with edge retries), fall back to a cached
-  // page, then the offline shell. Only public survey pages are stored, to
-  // bound the cache.
-  // NOTE: the Cache API rejects put()/match() on a request whose mode is
-  // "navigate", so we key by the URL string (req.url) on both store and lookup.
+  // Pages always use the network. Offline, show only the generic public shell;
+  // never return a participant page or another account's cached information.
   if (req.mode === "navigate") {
     event.respondWith(
-      fetchRetrying(req, true).then((res) => {
-        if (res && res.ok && isPublicNav(url)) {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req.url, copy));
-        }
-        return res;
-      }).catch(() =>
-        caches.match(req.url).then((hit) => hit || caches.match("/static/offline.html")))
+      fetchRetrying(req, true).catch(() => caches.match("/static/offline.html"))
     );
     return;
   }
 
-  // Every other same-origin GET (JSON APIs, exports, other images): no caching,
+  // Every other same-origin GET (JSON APIs, exports, photos and other images): no caching,
   // just the edge-retry shield.
   event.respondWith(fetchRetrying(req, true));
 });
