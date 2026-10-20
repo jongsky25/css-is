@@ -248,19 +248,21 @@ def make_router(templates,get_conn):
                 raw.extend(chunk)
             content_type = request.headers.get('content-type', '').split(';')[0]
             if content_type == 'application/pdf':
-                result = await asyncio.to_thread(reader.read_pdf, bytes(raw))
+                result = await reader.read_pdf_async(bytes(raw), disconnected=request.is_disconnected)
             elif content_type == 'application/json' and len(raw) <= 4096:
                 payload = json.loads(raw)
                 url = payload.get('url') if isinstance(payload, dict) else None
                 if not isinstance(url, str) or not url.strip():
                     raise ValueError('Enter a public PDF link or select a PDF.')
                 pdf = await asyncio.to_thread(reader.fetch_pdf, url.strip())
-                result = await asyncio.to_thread(reader.read_pdf, pdf, first_page=True)
+                result = await reader.read_pdf_async(pdf, first_page=True, disconnected=request.is_disconnected)
             else:
                 raise ValueError('Select a PDF or enter a public PDF link.')
             return JSONResponse(result, headers=headers)
         except p.Denied:
             return JSONResponse({'error': 'The form expired or the account is unavailable.'}, status_code=403, headers=headers)
+        except reader.PDFBusy as exc:
+            return JSONResponse({'error': str(exc)}, status_code=429, headers={**headers, 'Retry-After': '3'})
         except ValueError as exc:
             return JSONResponse({'error': str(exc)}, status_code=400, headers=headers)
         except Exception:

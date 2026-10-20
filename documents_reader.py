@@ -1,6 +1,5 @@
 """Transient PDF intake: no database, file writes, AI calls, or content logging."""
 import http.client
-import io
 import ipaddress
 import re
 import socket
@@ -9,11 +8,8 @@ import time
 from urllib.parse import urljoin, urlsplit, urlencode
 
 from dateutil.parser import parse as parse_date
-from pypdf import PdfReader
+from pdf_reader_process import MAX_BYTES, MAX_PAGES, MAX_TEXT, PDFBusy, MESSAGES, read_native
 
-MAX_BYTES = 20 * 1024 * 1024
-MAX_PAGES = 50
-MAX_TEXT = 100_000
 FIELDS = {'subject': 500, 'type': 100, 'sender': 500, 'document_date': 10,
           'due_date': 10, 'references': 1000}
 
@@ -291,30 +287,17 @@ def suggest(pages, subject_readings=None):
             'notice': 'Suggested values are unverified. Check each value against the PDF before registration.'}
 
 
-def read_pdf(raw, first_page=False):
-    if not raw or len(raw) > MAX_BYTES:
-        raise ValueError('Choose a PDF no larger than 20 MiB.')
-    if not raw.startswith(b'%PDF-'):
-        raise ValueError('This is not a PDF file. For private links, select the PDF from your device.')
+def read_pdf(raw, first_page=False, cancelled=None):
+    def check_cancelled():
+        if cancelled is not None and cancelled.is_set():
+            raise ValueError(MESSAGES['cancelled'])
+
     try:
-        reader = PdfReader(io.BytesIO(raw), strict=True)
-        if reader.is_encrypted:
-            raise ValueError('Password-protected PDFs are not supported. Continue manually.')
-        if len(reader.pages) > MAX_PAGES:
-            raise ValueError('Choose a PDF with at most 50 pages.')
-        pages, total, scanned = [], 0, []
+        page_count, native = read_native(raw, selection='first' if first_page else 'all', cancelled=cancelled)
+        pages = [native[index] for index in sorted(native)]
+        scanned = [index for index, text in enumerate(pages) if len(re.sub(r'\W', '', text)) < 40]
         subject_readings = {}
-        for index, page in enumerate(reader.pages):
-            if first_page and index > 0:
-                break
-            text = page.extract_text() or ''
-            total += len(text)
-            if total > MAX_TEXT:
-                raise ValueError('This PDF contains too much text. Continue manually.')
-            pages.append(text)
-            # Sparse text may be a header/footer on an otherwise scanned page.
-            if len(re.sub(r'\W', '', text)) < 40:
-                scanned.append(index)
+        check_cancelled()
         if scanned:
             import documents_ocr
             readings = documents_ocr.read_pages(raw, scanned)
@@ -326,8 +309,10 @@ def read_pdf(raw, first_page=False):
                     pages[index] = text
             if sum(map(len, pages)) > MAX_TEXT:
                 raise ValueError('This PDF contains too much text. Continue manually.')
-        if first_page and len(reader.pages) > 1 and _dtrak_header(pages[0])[1]:
-            text = reader.pages[1].extract_text() or ''
+        if first_page and page_count > 1 and _dtrak_header(pages[0])[1]:
+            check_cancelled()
+            _, following = read_native(raw, selection='second', cancelled=cancelled)
+            text = following[1]
             if len(re.sub(r'\W', '', text)) < 40:
                 import documents_ocr
                 readings = documents_ocr.read_pages(raw, [1])
@@ -335,6 +320,7 @@ def read_pdf(raw, first_page=False):
                 subject_readings.update(getattr(readings, 'subjects', {}))
                 scanned.append(1)
             pages.append(text)
+        check_cancelled()
         if sum(map(len, pages)) > MAX_TEXT:
             raise ValueError('This PDF contains too much text. Continue manually.')
     except ValueError:
@@ -354,3 +340,32 @@ def read_pdf(raw, first_page=False):
     if scanned:
         result['warnings'].insert(0, 'OCR was used on pages ' + ', '.join(str(i + 1) for i in scanned) + '. Check names, numbers and dates against the scan.')
     return result
+
+
+async def read_pdf_async(raw, *, first_page=False, disconnected=None):
+    """Stop a native worker when its HTTP request is cancelled/disconnected.
+
+    OCR remains the existing bounded thread path; it observes cancellation when
+    it returns. No PDF bytes or results are persisted by an abandoned task.
+    """
+    import asyncio
+    import threading
+    cancelled = threading.Event()
+    task = asyncio.create_task(asyncio.to_thread(read_pdf, raw, first_page=first_page,
+                                                cancelled=cancelled))
+
+    def consume(completed):
+        if not completed.cancelled():
+            completed.exception()
+
+    try:
+        while True:
+            done, _ = await asyncio.wait({task}, timeout=.1)
+            if task in done:
+                return task.result()
+            if disconnected is not None and await disconnected():
+                raise asyncio.CancelledError
+    finally:
+        if not task.done():
+            cancelled.set()
+            task.add_done_callback(consume)
