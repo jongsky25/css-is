@@ -60,7 +60,7 @@ DOH address footer.
 - **Left for the person:** the DPO number, the DPO date and the funding source stay as blank lines. The subject, background,
   authority line and the Name / Position table are written from the calendar item and its people.
 
-## The invitation follows the DOH memorandum to the regions (7.50 onwards)
+## The invitation follows the DOH memorandum to the regions (7.51 onwards)
 
 The invitation is the DOH **memorandum** format: the date, MEMORANDUM, FOR / FROM / SUBJECT, a rule, the request, the what / when
 / where lines, an "Area / Requested Assistance" table, the contact line, the thanks and an Initials / Date block.
@@ -72,7 +72,7 @@ The invitation is the DOH **memorandum** format: the date, MEMORANDUM, FOR / FRO
   Director set in the travel settings. The Requested Assistance table starts with Participants, Venue, Meals and Coordination;
   edit the wording on the draft.
 
-## The concept note and the program flow (7.51 onwards)
+## The concept note and the program flow (7.52 onwards)
 
 The rest of the DOH package is drafted too.
 
@@ -87,5 +87,5 @@ The rest of the DOH package is drafted too.
   training or anything lasting several days. The person can overrule either.
 - **Updating an existing setup:** replace the `activity_templates` file in the Apps Script project and run `makeActivityTemplates()`
   again. It creates the two new templates and keeps the DPO and the invitation if they are already current.
-- **Database:** the first start of 7.51 rebuilds the small `calendar_entry_doc` table so it accepts the two new document types.
+- **Database:** the first start of 7.52 rebuilds the small `calendar_entry_doc` table so it accepts the two new document types.
   Existing choices and draft links are kept.

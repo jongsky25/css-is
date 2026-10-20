@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-20",
+  "scope": "Candidate 7.50 clean Python 3.11 environments; not a live production inventory",
+  "python": "3.11.17",
+  "locks": {
+    "requirements-deploy.txt": "e4b4e4ea3edff4d0241d4000ba1b59be6caba634a402e6696ae5366e7e0d2cab",
+    "requirements-test.txt": "c320be2c4f09d72539bfd1e95c1ba8188126e9bdd56aa5841907c60862f9562e",
+    "requirements-tools.txt": "8d87948d5bd0070e8a33416b4918a941331263ef4b1a72e932aad3a97ac3b285",
+    "requirements.txt": "a570e66223146fd7e3e8a87f4c487bb5abb5fbe938ac5928db111bb0ac626950"
+  },
+  "audits": {
+    "runtime": {
+      "packages": 52,
+      "reported_advisories": 0
+    },
+    "test": {
+      "packages": 68,
+      "reported_advisories": 0
+    },
+    "tools": {
+      "packages": 32,
+      "reported_advisories": 0
+    },
+    "deploy": {
+      "packages": 18,
+      "reported_advisories": 0
+    }
+  },
+  "vendor": {
+    "package": "pdfjs-dist",
+    "version": "4.10.38",
+    "verified_upstream_files": 188,
+    "reported_advisories": 0
+  },
+  "focused_tests": {
+    "passed": 179,
+    "failures": 0,
+    "skips": 0,
+    "additional_vendor_gate_cases": 6
+  },
+  "ci": "Full release evidence is recorded in PR #355 checks and dependency-audit artifacts",
+  "resolved_findings": [
+    "The first built-image parity gate detected the base image packaging library wheel outside the lock; wheel 0.48.0 is now explicitly pinned with pip and setuptools."
+  ]
+}

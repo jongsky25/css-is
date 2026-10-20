@@ -8,6 +8,11 @@ secrets. It does not use `pull_request_target`.
 
 The shared workflow checks:
 
+- Current hashed dependency locks and vendored PDF.js integrity, plus a strict
+  advisory scan of the built container's Python inventory, test/release tooling
+  and deployment client. A Python CycloneDX SBOM is retained; the image's runtime
+  package versions must match the locked test environment. See [dependency
+  maintenance](DEPENDENCIES.md) for scope and artifact limitations.
 - Python 3.11, with complete test dependencies, Node.js 24, Chromium, and
   the production Tesseract OCR packages.
 - The complete suite in normal order and shuffled order (seed 311).
@@ -17,8 +22,8 @@ The shared workflow checks:
   Markdown changelog release, and the service-worker cache version.
 
 The final **Required checks** job runs even when prerequisites fail or are skipped
-and succeeds only when both metadata validation and the entire test matrix
-succeed. Cancelled workflows cannot produce a successful gate.
+and succeeds only when metadata validation, the dependency audit and the entire
+test matrix succeed. Cancelled workflows cannot produce a successful gate.
 JUnit results and resolved dependencies are retained as workflow artifacts
 for 14 days, including after test failure.
 
