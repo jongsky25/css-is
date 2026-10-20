@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.42"
+APP_VERSION = "7.43"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.43",
+        "date": "October 20, 2026",
+        "summary": "Calendar items can now say they need a DPO or an invitation, and draft it.",
+        "changes": [
+            "A calendar item shows whether it needs a DPO or an invitation, with the reason. You can change the answer.",
+            "A needed document can be drafted in Google Docs from the item's details. The DPO number, date and funding source are left blank for you to fill in."
+        ]
+    },
     {
         "version": "7.42",
         "date": "October 20, 2026",
