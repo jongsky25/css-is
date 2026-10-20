@@ -91,7 +91,7 @@ def test_blank_liquidation_opens_a_filing_with_a_checklist(viewer, conn):
         assert text in page.text
     f = travel.get_by_ref(conn, ref)
     assert f["status"] == "open" and f["advance_amount"] == 5000
-    assert f["deadline_rule"] == "after_fact" and f["user_id"] == uid(conn, "viewer@test.local")
+    assert f["deadline_rule"] == "plotted" and f["user_id"] == uid(conn, "viewer@test.local")
     assert conn.execute("SELECT COUNT(*) FROM travel_item WHERE filing_id=?", (f["id"],)).fetchone()[0] >= 6
     assert conn.execute("SELECT COUNT(*) FROM audit_log WHERE action='travel_open'").fetchone()[0] >= 1
 

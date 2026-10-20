@@ -1,3 +1,7 @@
+## 7.35 — October 20, 2026
+
+- Travel filings are now due 5 working days after the last day of the activity, even when the filing was opened after the activity ended (spot feedback #135).
+
 ## 7.34 — October 20, 2026
 
 - Make Quick add redraw its date fields so the chosen day shows in Starts instead of "Pick a date".

@@ -17,7 +17,7 @@
     <div><dt>Activity dates</dt><dd>{{ f.act_start }}{% if f.act_end != f.act_start %} to {{ f.act_end }}{% endif %}</dd></div>
     {% if f.act_venue %}<div><dt>Venue</dt><dd>{{ f.act_venue }}</dd></div>{% endif %}
     <div><dt>Deadline</dt><dd>{% if f.deadline_date %}{{ f.deadline_date }}{% if f.deadline_text %} · <span class="tv-due {{ f.deadline_tone }}">{{ f.deadline_text }}</span>{% endif %}
-      <small class="tv-hint">{{ 'Counted from the day you opened it.' if f.deadline_rule == 'after_fact' else '5 days after the last day, next working day.' }}</small>{% else %}None for a cash advance{% endif %}</dd></div>
+      <small class="tv-hint">5 working days after the last day of the activity.</small>{% else %}None for a cash advance{% endif %}</dd></div>
     {% if f.advance_amount %}<div><dt>Cash advance received</dt><dd>₱{{ '{:,.2f}'.format(f.advance_amount) }}</dd></div>{% endif %}
     {% if ca %}<div><dt>Liquidates</dt><dd><a href="/travel/f/{{ ca.ref_code }}">{{ ca.ref_code }}</a></dd></div>{% endif %}
     {% if f.dpo_no %}<div><dt>DPO</dt><dd>{{ f.dpo_no }}{% if f.dpo_date %} dated {{ f.dpo_date }}{% endif %}</dd></div>{% endif %}
