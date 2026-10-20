@@ -54,3 +54,29 @@ def test_same_origin_preview_and_existing_inline_scripts_work(page):
     pw.expect(login.locator('input[name="username"]')).to_be_visible()
     # The shared layout's inline theme script still runs under report-only CSP.
     pw.expect(login.locator('html')).to_have_attribute('data-theme', re.compile(r'light|dark|contrast'))
+
+
+def test_a_form_post_carries_the_sites_own_origin_so_the_write_check_can_pass(browser, client):
+    """Chromium sends "Origin: null" (and no Referer) on a form POST under "Referrer-Policy: no-referrer"; the
+    application rejects such a write, so every login and save failed. The policy the app really serves must let the
+    browser send the site's own origin."""
+    policy = client.get('/login', follow_redirects=False).headers['referrer-policy']
+    seen = {}
+    context = browser.new_context()
+    page = context.new_page()
+
+    def serve(route):
+        request = route.request
+        if request.method == 'POST':
+            seen.update(origin=request.headers.get('origin'), referer=request.headers.get('referer'))
+            route.fulfill(status=200, body='posted', headers={'Referrer-Policy': policy})
+        else:
+            route.fulfill(status=200, content_type='text/html', headers={'Referrer-Policy': policy},
+                          body='<form method="post" action="/login"><input name="u" value="x"><button>go</button></form>')
+
+    page.route('**/*', serve)
+    page.goto('http://office.test/login')
+    page.click('button')
+    page.wait_for_load_state()
+    context.close()
+    assert seen.get('origin') == 'http://office.test', f"Referrer-Policy {policy!r} sent Origin={seen.get('origin')!r}"
