@@ -1,6 +1,6 @@
 # Phase 1 local progress — candidate 7.24
 
-**Current slice, 20 October 2026:** A10 steps 1 and 2 were merged/deployed as **7.32** and **7.35**. Step 3 Python 3.11 verification passed in normal and shuffled order (4,195 passed, 16 existing Chromium-dependent skips each); see [Python 3.11 verification](PYTHON311_VERIFICATION.md). The clean-install test dependency fix and evidence are local; mandatory release gates remain pending. This note does not change the historical verification below.
+**Current slice, 20 October 2026:** A10 steps 1 and 2 were merged/deployed as **7.32** and **7.35**. Step 3 Python 3.11 verification passed in normal and shuffled order (4,195 passed, 16 existing Chromium-dependent skips each); see [Python 3.11 verification](PYTHON311_VERIFICATION.md). The clean-install test dependency fix and evidence are prepared for release **7.39**, preserving main through 7.38; the integrated Python 3.11 suite also passed. Mandatory release gates remain pending. This note does not change the historical verification below.
 
 **Release integration, 20 October 2026:** the user authorized merging before further work. Main had advanced to 7.26, so the combined repairs are now version **7.27**, including the main-branch changes through `7b8f910`. Integration validation passed 486 tests with no failures/skips. See [release integration record](releases/7.27.md). The candidate 7.24 results below are retained as historical evidence.
 

@@ -60,3 +60,7 @@ Two successful orders do not establish correctness for every possible ordering
 or date. Dependencies remain largely unpinned in production; a later fresh
 resolution can differ from this recorded environment. Mandatory CI and deployment
 gates are the next A10 increment.
+
+## Release integration — 7.39
+
+Preserved main's 7.36–7.38 travel changes and bumped the application and service-worker cache to 7.39. The combined source passed the full Python 3.11 suite with seed 739: **4,196 passed, zero failures, 18 existing Chromium-dependent skips**. The original 7.35 verification remains above as historical evidence; the integration result and source commit are in `verification.json`.

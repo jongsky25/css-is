@@ -81,5 +81,20 @@
     "Fresh dependency resolution; not an exact live-container reproduction.",
     "Two non-failing warnings: Starlette httpx TestClient deprecation and PyMuPDF fitz alias deprecation.",
     "No application source changes, manual live testing, or deployment."
-  ]
+  ],
+  "release_integration": {
+    "version": "7.39",
+    "verified_source_commit": "1307c3c2b87fc4c347969912a7f213d2266def34",
+    "base_commit": "f273dc8e77495abac2844f53ae4734868c52b3ae",
+    "python": "3.11.17",
+    "seed": 739,
+    "tests": 4214,
+    "passed": 4196,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 18,
+    "seconds": 277.655,
+    "exit_code": 0,
+    "junit_sha256": "b90d2b1e9798d00ce9a8945b80b78de88fcecfb5e7e53708345a805f93e3cdad"
+  }
 }
