@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.29"
+APP_VERSION = "7.30"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.30",
+        "date": "October 20, 2026",
+        "summary": "No travel claim on calendar items that use the conference room.",
+        "changes": [
+            "When a conference room is requested or booked for a calendar item, the travel claim link and button are hidden, since the venue is the office.",
+            "A travel claim that was already filed still shows.",
+        ],
+    },
     {
         "version": "7.29",
         "date": "October 20, 2026",
