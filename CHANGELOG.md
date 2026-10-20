@@ -1,6 +1,17 @@
-## 7.42 — October 20, 2026
+## 7.44 — October 20, 2026
 
 - The travel filing page now walks through the claim in steps: 1 Your claim (the answers that decide what you need), 2 Attach the documents (the ones that already exist outside the app), 3 Make the forms (made for you from a template, using what you attached), 4 Enter these in FMIS. Each step explains itself and counts its progress, each item keeps its done or missing badge, and there is one place to prepare the forms (spot feedback #140).
+
+## 7.43 — October 20, 2026
+
+- A calendar item now has a "Documents for this activity" block that says whether it needs a DPO or an invitation. The app suggests from what the item already says (people travelling, who it is open to, its kind) and gives the reason; the person can overrule each one. A needed document can be drafted in Google Docs from the item's details, with the DPO number, date and funding source left blank. The relay needs a one-time template setup (docs/ACTIVITY_DOCS_SETUP.md); until then a draft says so plainly (spot feedback #136).
+
+## 7.42 — October 20, 2026
+
+- Run normal and shuffled Python 3.11 tests on pull requests and before deployment, including Chromium browser tests.
+- Reject missing, failed or skipped checks and inconsistent or non-increasing release versions.
+- Keep the deployment backup and live-version checks mandatory in GitHub Actions.
+- Preserve the 7.40–7.41 travel report and liquidation improvements.
 
 ## 7.41 — October 20, 2026
 

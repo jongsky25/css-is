@@ -1,7 +1,7 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header, empty_state %}
 {% block title %}{{ "Not found" if missing else e.title }}{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261014a">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261020a">{% endblock %}
 {% block content %}
 {% if missing %}
   {{ empty_state("That calendar item isn't here.", "It may have been removed, or it isn't shared with you.", "📅") }}
@@ -92,6 +92,40 @@
   {% if filing %}
   <p class="cal-range">✈ <strong>Travel claim:</strong>
     {% if filing.chip %}<a href="{{ filing.chip.url }}">{{ filing.chip.label }}</a>{% else %}none filed yet. <a href="{{ filing.new_url }}">File a travel claim</a>{% endif %}</p>
+  {% endif %}
+
+  {% if documents %}
+  <section class="cal-docs" id="documents" aria-labelledby="documents-h">
+    <h2 id="documents-h">Documents for this activity</h2>
+    <p class="cal-hint">Say which documents this activity needs. We suggest from what the item already says; you decide. A needed document can be drafted in Google Docs from the item's details, with the blanks left for you.</p>
+    <ul class="cal-doc-list">
+    {% for d in documents['items'] %}
+      <li class="cal-doc {{ 'is-needed' if d.needed }}">
+        <div class="cal-doc-head">
+          <strong>{{ d.label }}</strong>
+          {% if d.needed %}<span class="cal-chip need">Needed</span>{% else %}<span class="cal-chip">Not needed</span>{% endif %}
+          {% if d.choice is none %}<span class="cal-chip soft">Suggested</span>{% else %}<span class="cal-chip soft">Your choice</span>{% endif %}
+        </div>
+        <p class="cal-hint">{{ d.blurb }} {{ d.reason }}</p>
+        <form method="post" action="/calendar/entries/{{ e.id }}/documents/{{ d.key }}/needed" class="cal-doc-choice">
+          <button class="cal-btn" type="submit" name="needed" value="yes" {{ 'aria-pressed=true' if d.choice == 1 }}>Needed</button>
+          <button class="cal-btn" type="submit" name="needed" value="no" {{ 'aria-pressed=true' if d.choice == 0 }}>Not needed</button>
+          {% if d.choice is not none %}<button class="cal-btn" type="submit" name="needed" value="auto">Use the suggestion</button>{% endif %}
+        </form>
+        {% if d.needed %}
+        <div class="cal-doc-draft">
+          {% if documents['relay'] %}
+          <form method="post" action="/calendar/entries/{{ e.id }}/documents/{{ d.key }}/draft">
+            <button class="cal-btn primary" type="submit">{{ 'Draft again in Google Docs' if d.doc_url else 'Draft in Google Docs' }}</button></form>
+          {% else %}<p class="cal-hint">Drafting in Google Docs is not switched on yet.</p>{% endif %}
+          {% if d.doc_url %}<p><a href="{{ d.doc_url }}" target="_blank" rel="noopener">Open the latest draft</a></p>{% endif %}
+          {% if d.doc_state == 'failed' and d.note %}<p class="cal-doc-error" role="alert">{{ d.note }}</p>{% endif %}
+        </div>
+        {% endif %}
+      </li>
+    {% endfor %}
+    </ul>
+  </section>
   {% endif %}
 
   <p class="cal-range"><a href="/calendar/entries/{{ e.id }}/event.ics">Add to my calendar (.ics)</a></p>

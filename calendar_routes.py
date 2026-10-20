@@ -21,8 +21,11 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from starlette.concurrency import run_in_threadpool
 
+import activity_docs
 import auth
 import calendar_ics as cics
+import gdocs_relay
+import ratelimit
 import mailer
 import meet_relay
 import calendar_import as ci
@@ -361,6 +364,22 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                                             [e["event_id"]] if e["event_id"] else [])
             new_url = f"/travel/new?entry={e['id']}" + (f"&date={on}" if on and not e["event_id"] else "")
             return {"chip": chips.get(key), "new_url": new_url}
+        except Exception:                                   # noqa: BLE001
+            return None
+
+    DOC_KINDS = ("meeting", "training", "travel", "audit_mr", "activity")      # items that can need a DPO or an invitation
+
+    def _doc_owner_label(conn, e):
+        units = oc._units(conn, [e["owner_org_id"]]) if e["owner_org_id"] else {}
+        return (units.get(e["owner_org_id"]) or {}).get("label", "")
+
+    def _documents_block(conn, e):
+        """The "Documents for this activity" block, or None. Never raises: the page must open regardless."""
+        try:
+            if e["status"] == "cancelled" or e["kind"] not in DOC_KINDS:
+                return None
+            return {"items": activity_docs.state_for(conn, e, KIND_LABELS.get(e["kind"], "")),
+                    "relay": gdocs_relay.configured()}
         except Exception:                                   # noqa: BLE001
             return None
 
@@ -923,6 +942,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                    "candidates": oc.activity_candidates_for_entry(conn, e) if eligible else []}
             room_link = _room_link(request, conn, e)
             filing = _travel_block(conn, user, e, request.query_params.get("date", ""))
+            documents = _documents_block(conn, e)
             # A requested or booked conference room makes the venue the office: no travel to claim.
             if filing and not filing["chip"] and room_link and room_link.get("state") in (
                     "requested", "booked", "move_pending", "mismatch", "archived_holds"):
@@ -933,7 +953,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         return templates.TemplateResponse(request, "calendar_entry.html", {
             "nav_active": "calendar", "e": e, "ok": ok, "err": err, "css": css, "heads_up": heads_up, "series": series,
             "calendar_back": entry_calendar_back(request, e["start_date"]),
-            "room_link": room_link, "filing": filing,
+            "room_link": room_link, "filing": filing, "documents": documents,
             "owner": " + ".join(owners) or None, "owners": owners,
             "attendees": [{**cards.get(p["user_id"], {"name": "?", "initials": "?"}),
                            "role": p["role"]} for p in e["people"]],
@@ -1072,6 +1092,56 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             return f"{a:%B} {a.day}, {a.year}"
         b = date.fromisoformat(end)
         return f"{a:%B} {a.day} – {b:%B} {b.day}, {b.year}"
+
+    @router.post("/calendar/entries/{entry_id}/documents/{key}/needed")
+    async def calendar_document_needed(request: Request, entry_id: int, key: str):
+        """Say whether this activity needs a DPO or an invitation: yes, no, or 'auto' to follow the suggestion."""
+        raw = parse_qs((await request.body()).decode("utf-8"), keep_blank_values=True)
+        choice = (raw.get("needed") or [""])[0]
+        user = request.state.user
+        conn = get_conn()
+        try:
+            e = oc.viewable_entry(conn, user, entry_id)
+            if e is None:
+                return _not_found(request)
+            if key not in activity_docs.DOCS or choice not in ("yes", "no", "auto") or e["status"] == "cancelled":
+                note = f"err={quote('That choice was not understood.')}"
+            else:
+                activity_docs.set_needed(conn, entry_id, key, {"yes": True, "no": False, "auto": None}[choice], user["username"])
+                st.audit(conn, user["username"], "activity_doc_needed", target_type="calendar_entry", target_id=entry_id,
+                         summary=f"{key}: {choice}")
+                note = f"ok={quote(activity_docs.DOCS[key]['label'] + ': saved.')}"
+        finally:
+            conn.close()
+        return RedirectResponse(f"/calendar/entries/{entry_id}?{note}#documents", status_code=303)
+
+    @router.post("/calendar/entries/{entry_id}/documents/{key}/draft")
+    async def calendar_document_draft(request: Request, entry_id: int, key: str):
+        """Draft the document as a Google Doc from the entry's details. The relay call can take a few seconds, so
+        it runs off the event loop; the database work stays on this thread (a connection is not shared)."""
+        user = request.state.user
+        conn = get_conn()
+        try:
+            e = oc.viewable_entry(conn, user, entry_id)
+            if e is None:
+                return _not_found(request)
+            if key not in activity_docs.DOCS or e["status"] == "cancelled" or e["kind"] not in DOC_KINDS:
+                note = f"err={quote('That document cannot be drafted for this item.')}"
+            elif not gdocs_relay.configured():
+                note = f"err={quote(activity_docs.PLAIN_ERRORS['not_configured'])}"
+            elif not ratelimit.allow("activity_doc_draft", f"u{user['id']}"):
+                note = f"err={quote('Too many requests. Wait a minute and try again.')}"
+            else:
+                prep = activity_docs.prepare(conn, e, key, user, _doc_owner_label(conn, e))
+                relay_res = await run_in_threadpool(prep.call)        # only the network call leaves this thread
+                res = activity_docs.record(conn, prep, relay_res, user)
+                st.audit(conn, user["username"], "activity_doc_draft", target_type="calendar_entry", target_id=entry_id,
+                         summary=f"{key}: {'drafted' if res['ok'] else 'failed'}")
+                label = activity_docs.DOCS[key]["label"]
+                note = f"ok={quote(label + ': draft made. Open it, complete the blanks and check it.')}" if res["ok"] else f"err={quote(res['error'])}"
+        finally:
+            conn.close()
+        return RedirectResponse(f"/calendar/entries/{entry_id}?{note}#documents", status_code=303)
 
     @router.post("/calendar/entries/{entry_id}/link-activity")
     async def calendar_link_activity(request: Request, entry_id: int):
