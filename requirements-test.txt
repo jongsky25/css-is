@@ -1,0 +1,5 @@
+# Install the application and the dependencies used by the complete test suite.
+# Browser tests additionally need: python -m playwright install chromium
+-r requirements.txt
+PyMuPDF
+playwright
