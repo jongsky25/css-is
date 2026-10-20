@@ -106,7 +106,7 @@ def test_intake_read_http_transient(app_mod, viewer, monkeypatch):
         assert linked.json()['suggestions'] == result.json()['suggestions']
         assert any('Read the first page' in w for w in linked.json()['warnings'])
         received = []
-        def record_size(data):
+        def record_size(data, **kwargs):
             received.append(len(data))
             return result.json()
         monkeypatch.setattr(reader, 'read_pdf', record_size)

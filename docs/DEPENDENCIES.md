@@ -120,6 +120,7 @@ comparison and browser/PDF workflow checks before replacing the manifest.
 
 ## Remaining increment
 
-Parser CPU/memory/wall-clock isolation, cancellation and concurrency bounds are
-separate work. Updated libraries and clean advisory scans do not establish
-resistance to every hostile PDF or replace those resource limits.
+Native PDF extraction now has a separate bounded subprocess in the current
+[PDF reader increment](PDF_READER_LIMITS.md). OCR/PDFium process isolation remains
+separate work. Clean advisory scans and native parsing limits do not establish
+resistance to every hostile scanned PDF.

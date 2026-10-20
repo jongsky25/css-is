@@ -1,3 +1,10 @@
+## 7.58 — October 20, 2026
+
+- Isolate native PDF text extraction in a fresh Linux subprocess with CPU, address-space, elapsed-time and output bounds.
+- Admit one native parser per application process, reject excess work with retry guidance, and terminate/reap cancelled, stuck or failed workers.
+- Keep child environments and inherited descriptors private; preserve file/link limits, DTRAK behavior, OCR fallback and transient intake.
+- OCR/PDFium process isolation remains a separate increment.
+
 ## 7.57 — October 20, 2026
 
 - Monitor: a way to see which region each participant belongs to. The roster has never recorded a region, so there was nothing to show. A new **Region** ready-made registration question (Central Office, NCR, CAR, Regions I to XIII, BARMM, Other; required) can be added from the Monitor page in one click, or from the manage page with the other presets. Answers then appear under each person, in "Registration answers at a glance" and in the exported roster. Only people who register after it is added are asked (spot feedback #141).
