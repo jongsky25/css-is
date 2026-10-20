@@ -2,18 +2,20 @@
    `next` (where actions return to) and the flash messages. Nothing here changes anything by itself: every change is a
    button the person presses. #}
 {% if room_link %}
-<link rel="stylesheet" href="/static/css/rooms.css?v=20261016b">
+<link rel="stylesheet" href="/static/css/rooms.css?v=20261020a">
 {% set rl = room_link %}
 {% if rl.flash_ok %}<div class="room-banner" role="status">✓ {{ rl.flash_ok }}.</div>{% endif %}
 {% if rl.flash_err %}<div class="room-banner bad" role="alert">✕ {{ rl.flash_err }}</div>{% endif %}
 
 {% if rl.state == 'booked' %}
 <div class="room-banner"><p>🏢 <strong>Conference room reserved</strong>: {{ rl.res.when }}, {{ rl.res.hours }} <span class="badge green">✓ Approved</span> <code>{{ rl.res.ref_code }}</code></p>
-  <a href="/rooms/mine">Conference room → My reservations</a></div>
+  <a href="/rooms/mine">Conference room → My reservations</a>
+  {% if rl.can_act %}<p class="hint"><a href="/rooms/meals/{{ rl.res.id }}">{{ 'Meal form' if rl.res.meals_requested else 'Request meals' }}</a>{% if rl.res.meals_requested %} <span class="badge grey">Meals</span>{% endif %}</p>{% endif %}</div>
 
 {% elif rl.state == 'requested' %}
 <div class="room-banner"><p>🏢 <strong>Conference room requested</strong>: {{ rl.res.when }}, {{ rl.res.hours }} <span class="badge amber">○ {{ 'Provisional (standby)' if rl.standby else 'Waiting' }}</span> <code>{{ rl.res.ref_code }}</code></p>
-  <p class="hint">{% if rl.standby %}Those hours are taken, so nothing is held. The Administrative Section can confirm it if the room frees up or in an emergency. You will be told.{% else %}The Administrative Section will decide. You will be told.{% endif %}</p></div>
+  <p class="hint">{% if rl.standby %}Those hours are taken, so nothing is held. The Administrative Section can confirm it if the room frees up or in an emergency. You will be told.{% else %}The Administrative Section will decide. You will be told.{% endif %}</p>
+  {% if rl.can_act %}<p class="hint"><a href="/rooms/meals/{{ rl.res.id }}">{{ 'Meal form' if rl.res.meals_requested else 'Request meals' }}</a>{% if rl.res.meals_requested %} <span class="badge grey">Meals</span>{% endif %}</p>{% endif %}</div>
 
 {% elif rl.state == 'mismatch' %}
 <div class="room-banner warn"><p>🏢 <strong>The room is booked for a different day.</strong> The booking is for {{ rl.res.when }} ({{ rl.res.hours }}), but this {{ rl.noun }} is now on {{ rl.event_when }}.</p>

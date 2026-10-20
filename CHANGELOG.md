@@ -1,3 +1,9 @@
+## 7.31 — October 20, 2026
+
+- Add a Request meals / Meal form link to the conference room banner on activities and calendar items.
+- Add a Request meals entry under Office in the drawer for every requester (Room meals stays admin-only).
+- Show a What needs to be done checklist on the meal request form.
+
 ## 7.30 — October 20, 2026
 
 - Hide the travel claim link and button on calendar items that hold a conference room (requested, booked, pending move, day mismatch or cancelled-but-holding), since the venue is the office.
