@@ -1,5 +1,8 @@
 """Documents an activity needs (Spot Feedback #136): the suggestion, the owner's choice, the Google Doc draft."""
 from __future__ import annotations
+import json
+import shutil
+import subprocess
 from urllib.parse import urlencode
 
 import pytest
@@ -108,15 +111,34 @@ def test_drafting_an_invitation_sends_the_entry_details_and_links_the_doc(viewer
     assert "Open the latest draft" in entry_page(viewer, eid)
 
 
-def test_a_dpo_lists_the_travelling_people_and_leaves_the_blanks(viewer, conn, relay):
-    eid = create(viewer, kind="travel", title="CALEP Field Visit", people=[str(uid(conn, "viewer@test.local"))])
+def test_a_dpo_follows_the_doh_order_and_leaves_the_blanks(viewer, conn, relay):
+    eid = create(viewer, kind="travel", title="CALEP Field Visit", venue="Cebu City",
+                 start_date="2026-10-12", end_date="2026-10-16", people=[str(uid(conn, "viewer@test.local"))])
     st.set_setting(conn, "travel.sig.head_name", "Dr. Ana Reyes"); st.set_setting(conn, "travel.sig.head_title", "Director IV")
     assert draft(viewer, eid, "dpo").status_code == 303
     call = relay.calls[0]
     f = call["fields"]
-    assert call["template_key"] == "dpo" and f["dpo_no"] == ad.BLANK and f["funding_source"] == ad.BLANK
-    assert f["head_name"] == "Dr. Ana Reyes" and f["purpose"] == "attend CALEP Field Visit"
+    assert call["template_key"] == "dpo"
+    # the number, date and funding source are never guessed
+    assert f["dpo_no"] == ad.BLANK and f["dpo_date"] == ad.BLANK and f["funding_source"] == ad.BLANK
+    assert f["dpo_year"] == "2026"
+    assert f["subject"].startswith("Authority for Select") and "CALEP Field Visit" in f["subject"] and "in Cebu City" in f["subject"]
+    assert "CALEP Field Visit" in f["background"] and f["intro"].startswith("Authority is hereby given to the following select")
+    assert f["intro"].endswith(":") and "October 12-16, 2026" in f["intro"]
+    assert f["head_name"] == "DR. ANA REYES" and f["head_title"] == "Director IV"      # the signatory is printed in capitals
+    # the personnel go in as a Name | Position table, and as lines for a template that still has a {{personnel}} line
+    table = call["rows"]["personnel"]
+    assert table["marker"] == "p_name" and len(table["data"]) == 1 and table["data"][0]["p_name"].startswith("1. ")
+    assert set(table["data"][0]) == {"p_name", "p_position"}
     assert len(call["blocks"]["personnel"]) == 1 and call["blocks"]["personnel"][0].startswith("1. ")
+
+
+def test_a_dpo_without_a_venue_or_unit_still_reads_as_a_sentence(viewer, conn, relay):
+    eid = create(viewer, kind="travel", title="CALEP Field Visit", venue="", owner_org_id="")
+    draft(viewer, eid, "dpo")
+    f = relay.calls[0]["fields"]
+    assert " in " not in f["subject"].split("CALEP Field Visit")[1] and f["subject"].startswith("Authority for Select Personnel")
+    assert f["intro"].startswith("Authority is hereby given to the following select personnel")
 
 
 def test_a_second_draft_is_a_new_revision(viewer, conn, relay):
@@ -152,3 +174,23 @@ def test_a_cancelled_item_cannot_be_drafted(viewer, conn, relay):
     eid = create(viewer, audience="bureau")
     viewer.post(f"/calendar/entries/{eid}/cancel", headers=FORM, follow_redirects=False)
     assert "err=" in draft(viewer, eid, "invitation").headers["location"] and relay.calls == []
+
+
+# ------------------------------------------------ the Apps Script template and the app agree ---
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+def test_every_placeholder_in_the_dpo_template_is_one_the_app_fills(viewer, conn, relay):
+    """Runs the template builder against a fake Docs API (the real one only runs in Google), then checks the
+    placeholders it writes against what a draft sends, so a template and the app cannot drift apart."""
+    out = subprocess.run(["node", "tests/js/activity_templates_stub.js", "apps_script/activity_templates.gs"],
+                         capture_output=True, text=True, timeout=30)
+    assert out.returncode == 0, out.stderr
+    built = json.loads(out.stdout)
+    assert built["missing"] == [] and set(built["expect"]) <= set(built["found"])      # it writes everything it promises
+    eid = create(viewer, kind="travel", title="CALEP Field Visit", people=[str(uid(conn, "viewer@test.local"))])
+    draft(viewer, eid, "dpo")
+    call = relay.calls[0]
+    filled = set(call["fields"]) | set(call["blocks"]) | {r["marker"] for r in call["rows"].values()} | {
+        k for r in call["rows"].values() for d in r["data"] for k in d}
+    unfilled = set(built["found"]) - filled
+    assert unfilled == set(), f"in the template but never filled by the app: {sorted(unfilled)}"

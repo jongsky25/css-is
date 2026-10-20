@@ -27,7 +27,7 @@ Both templates are plain Google Docs in the `_templates` folder under the relay'
 
 | Template | Placeholders |
 |---|---|
-| `dpo` | `dpo_no`, `dpo_date`, `title`, `purpose`, `dates`, `venue`, `funding_source`, `personnel` (a block), `head_name`, `head_title`, `prepared_by` |
+| `dpo` | `dpo_year`, `dpo_no`, `dpo_date`, `subject`, `background`, `intro`, `funding_source`, `p_name` and `p_position` (one table row, copied per person), `head_name`, `head_title`, `unit_name`. Also available: `title`, `purpose`, `dates`, `venue`, `prepared_by`, and a `{{personnel}}` line of numbered names |
 | `invitation` | `date`, `title`, `invited`, `details` (a block), `sender_name`, `sender_title`, `contact`, `head_name`, `head_title` |
 
 ## What the app fills in, and what it leaves for you
@@ -40,3 +40,20 @@ Both templates are plain Google Docs in the `_templates` folder under the relay'
 - An item's private **note** is never copied into a draft.
 - The draft is shared with the person who asked for it. Only the choice (needed or not) and the link are stored; the
   content of a draft is built when it is asked for and not kept.
+
+## The DPO follows the DOH Department Personnel Order layout
+
+The DPO template (version 7.47 onwards) is built to the DOH order format: the "Republic of the Philippines / DEPARTMENT OF
+HEALTH / Office of the Secretary" letterhead, the date at the top right, "DEPARTMENT PERSONNEL ORDER No. 2026 - ____", a
+bold underlined SUBJECT, a background paragraph, "Authority is hereby given to the following select ... personnel", a
+Name / Position table, the expenses paragraphs, "By Authority of the Secretary of Health:", the signatory in capitals and the
+DOH address footer.
+
+- **Updating an existing setup:** replace the `activity_templates` file in the Apps Script project with the new one and run
+  `makeActivityTemplates()` again. The old DPO template lacks the new placeholders, so it is rebuilt and `TPL_dpo` points to
+  the new Doc. The old copy stays in `_templates`. The invitation template is already good and is kept.
+- **Logos:** the two logos cannot be drawn from the repo. Either add them once by hand to the new template Doc, or upload
+  the two images to Drive and put their file ids in `AT_LOGO_LEFT_ID` and `AT_LOGO_RIGHT_ID` at the top of the script before
+  running it. Every draft keeps what is in the template.
+- **Left for the person:** the DPO number, the DPO date and the funding source stay as blank lines. The subject, background,
+  authority line and the Name / Position table are written from the calendar item and its people.

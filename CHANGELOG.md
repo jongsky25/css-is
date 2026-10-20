@@ -1,3 +1,7 @@
+## 7.47 — October 20, 2026
+
+- The drafted DPO now follows the DOH Department Personnel Order layout: DOH letterhead, date and number, a subject, a background paragraph, the authority line, a Name and Position table, the expenses paragraphs, "By Authority of the Secretary of Health" with the signatory in capitals, and the DOH address footer. The DPO number, date and funding source are still left blank for you to fill in. The Apps Script template needs to be updated and re-run (docs/ACTIVITY_DOCS_SETUP.md) (spot feedback #136).
+
 ## 7.46 — October 20, 2026
 
 - Protect opening a travel filing with durable account-bound submission IDs and atomic filing, checklist, audit and result receipts.
