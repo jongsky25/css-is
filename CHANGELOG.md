@@ -1,9 +1,13 @@
-## 7.53 — October 20, 2026
+## 7.54 — October 20, 2026
 
 - Isolate native PDF text extraction in a fresh Linux subprocess with CPU, address-space, elapsed-time and output bounds.
 - Admit one native parser per application process, reject excess work with retry guidance, and terminate/reap cancelled, stuck or failed workers.
 - Keep child environments and inherited descriptors private; preserve file/link limits, DTRAK behavior, OCR fallback and transient intake.
 - OCR/PDFium process isolation remains a separate increment.
+
+## 7.53 — October 20, 2026
+
+- The four activity documents (DPO, memorandum, concept note, program flow) now start with the **DOH letterhead**: the DOH seal, "Republic of the Philippines / DEPARTMENT OF HEALTH / Office of the Secretary" and the Bagong Pilipinas logo, with the DOH address footer on every page. Both logos come from the DOH package and are embedded in a new `apps_script/activity_logos.gs`, so no Drive upload is needed. Add that file to the Apps Script project, replace `activity_templates`, and run the new `rebuildActivityTemplates()` (it rebuilds templates that were already good). No change to the app itself (spot feedback #136).
 
 ## 7.52 — October 20, 2026
 

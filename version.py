@@ -17,18 +17,27 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.53"
+APP_VERSION = "7.54"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "7.53",
+        "version": "7.54",
         "date": "October 20, 2026",
         "summary": "PDF reading has limits so difficult files do not hold up the system.",
         "changes": [
             "PDF text reading runs separately with limits on time, memory and simultaneous reads.",
             "A read that takes too long stops and explains how to retry or enter the details manually.",
             "Cancelling a native PDF read stops its worker and releases its place for another read."
+        ]
+    },
+    {
+        "version": "7.53",
+        "date": "October 20, 2026",
+        "summary": "Drafted documents now start with the DOH seal and the Bagong Pilipinas logo.",
+        "changes": [
+            "The DPO, memorandum, concept note and program flow templates carry the DOH letterhead with both logos, and the DOH address at the foot of each page.",
+            "The logos are built into the Apps Script file, so nothing has to be uploaded to Drive."
         ]
     },
     {
