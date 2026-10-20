@@ -106,7 +106,8 @@ def test_bulk_restore_no_ids_redirects_with_error(manager):
     assert "err=" in r.headers["location"]
 
 
-def test_archived_page_renders_select_to_restore(admin):
+def test_archived_page_renders_select_to_restore(admin, app_mod):
+    _make_archived_standalone(app_mod, "admin@test.local")
     r = admin.get("/activities/archived")
     assert r.status_code == 200
     assert 'id="restoreForm"' in r.text

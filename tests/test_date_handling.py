@@ -9,6 +9,7 @@ Covers three changes:
 * dates display with the month spelled out ("June 16, 2026") so dd/mm is never
   ambiguous.
 """
+import tzutil as _test_tz
 import re
 from datetime import date, timedelta
 
@@ -94,7 +95,7 @@ def test_window_state_defaults_to_local_now(monkeypatch):
     assert app._window_state(ctx_future) == "not_yet"
 
 
-def test_now_local_is_ahead_of_utc():
+def test_now_local_is_ahead_of_utc(real_application_clock):
     """_now_local() is PH time (UTC+8 by default), i.e. ahead of UTC."""
     from datetime import datetime as _dt, timezone as _tz
     delta = app._now_local() - _dt.now(_tz.utc).replace(tzinfo=None)
@@ -120,7 +121,7 @@ def _base(db_path, **extra):
 
 
 def test_event_more_than_two_years_ahead_rejected(manager, db_path):
-    far = (date.today().replace(year=date.today().year + 3)).isoformat()
+    far = (_test_tz.today_local() + timedelta(days=3 * 366)).isoformat()
     r = manager.post("/create", data=_base(db_path, event_date=far),
                      follow_redirects=True)
     assert r.status_code == 400
@@ -128,7 +129,7 @@ def test_event_more_than_two_years_ahead_rejected(manager, db_path):
 
 
 def test_event_within_two_years_accepted(manager, db_path):
-    ok = (date.today() + timedelta(days=30)).isoformat()
+    ok = (_test_tz.today_local() + timedelta(days=30)).isoformat()
     r = manager.post("/create", data=_base(db_path, event_date=ok),
                      follow_redirects=True)
     assert r.status_code == 200, r.text
@@ -143,7 +144,7 @@ def test_create_screen_exposes_date_max(manager):
 
 
 def _make_event(manager, db_path, **extra):
-    ev_date = (date.today() + timedelta(days=10)).isoformat()
+    ev_date = (_test_tz.today_local() + timedelta(days=10)).isoformat()
     r = manager.post("/create", data=_base(db_path, event_date=ev_date, **extra),
                      follow_redirects=True)
     assert r.status_code == 200, r.text
@@ -165,8 +166,8 @@ def test_window_edit_saves_date_only(manager, db_path):
     """Editing the window from the manage page with bare dates stores whole-day
     bounds on every form (the function the user flagged)."""
     tok = _make_event(manager, db_path)
-    opens = (date.today() + timedelta(days=2)).isoformat()
-    closes = (date.today() + timedelta(days=5)).isoformat()
+    opens = (_test_tz.today_local() + timedelta(days=2)).isoformat()
+    closes = (_test_tz.today_local() + timedelta(days=5)).isoformat()
     r = manager.post(f"/activities/{tok}/window",
                      data={"open_at": opens, "close_at": closes},
                      follow_redirects=False)
@@ -178,7 +179,7 @@ def test_window_edit_saves_date_only(manager, db_path):
 
 def test_window_edit_can_clear_back_to_always_open(manager, db_path):
     tok = _make_event(manager, db_path)
-    closes = (date.today() + timedelta(days=5)).isoformat()
+    closes = (_test_tz.today_local() + timedelta(days=5)).isoformat()
     manager.post(f"/activities/{tok}/window",
                  data={"open_at": "", "close_at": closes}, follow_redirects=False)
     # now clear both -> always open
@@ -190,8 +191,8 @@ def test_window_edit_can_clear_back_to_always_open(manager, db_path):
 
 def test_window_edit_rejects_close_before_open(manager, db_path):
     tok = _make_event(manager, db_path)
-    opens = (date.today() + timedelta(days=5)).isoformat()
-    closes = (date.today() + timedelta(days=2)).isoformat()       # before open
+    opens = (_test_tz.today_local() + timedelta(days=5)).isoformat()
+    closes = (_test_tz.today_local() + timedelta(days=2)).isoformat()       # before open
     r = manager.post(f"/activities/{tok}/window",
                      data={"open_at": opens, "close_at": closes},
                      follow_redirects=False)
@@ -213,7 +214,7 @@ def _qr_token(db_path, event_token):
 def test_spot_feedback_button_on_not_yet_page_for_staff(manager, db_path):
     """A signed-in staff member viewing a public 'not open yet' survey sees the
     Spot Feedback button (it extends to public attendee pages)."""
-    opens = (date.today() + timedelta(days=3)).isoformat()
+    opens = (_test_tz.today_local() + timedelta(days=3)).isoformat()
     tok = _make_event(manager, db_path, open_at=opens)   # future open -> not_yet
     qr = _qr_token(db_path, tok)
     r = manager.get(f"/r/{qr}")
@@ -224,8 +225,8 @@ def test_spot_feedback_button_on_not_yet_page_for_staff(manager, db_path):
 
 def test_date_only_window_widens_to_whole_day(manager, db_path):
     """Posting bare dates to /create stores 00:00 / 23:59 bounds on every form."""
-    ev_date = (date.today() + timedelta(days=10)).isoformat()
-    close_date = (date.today() + timedelta(days=20)).isoformat()
+    ev_date = (_test_tz.today_local() + timedelta(days=10)).isoformat()
+    close_date = (_test_tz.today_local() + timedelta(days=20)).isoformat()
     r = manager.post("/create", data=_base(
         db_path, event_date=ev_date, close_at=close_date), follow_redirects=True)
     assert r.status_code == 200, r.text

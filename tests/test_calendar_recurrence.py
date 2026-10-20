@@ -1,5 +1,6 @@
 """Repeating calendar items (office calendar H1)."""
 from __future__ import annotations
+import tzutil as _test_tz
 from datetime import date, timedelta
 from urllib.parse import urlencode
 
@@ -244,7 +245,7 @@ def test_a_series_cannot_be_turned_into_an_activity():
 
 def test_skipping_a_date_tells_the_people_on_it(world):                                        # noqa: F811
     c = world["conn"]
-    far = date.today() + timedelta(days=30)
+    far = _test_tz.today_local() + timedelta(days=30)
     e = st.cal_create(c, "Weekly", far.isoformat(), rrule=rc.build("weekly", far, far + timedelta(days=60)),
                       people=[(world["s1"]["id"], "attending")], by="editor@x")
     c.execute("DELETE FROM calendar_outbox"); c.commit()

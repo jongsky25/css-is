@@ -11,6 +11,7 @@ Three layers, tested apart:
     still works with JavaScript switched off.
 """
 from __future__ import annotations
+import tzutil as _test_tz
 
 from tests.conftest import session_token
 import contextlib
@@ -306,7 +307,7 @@ def an_activity_of_ours(app_mod, path="LFTEAM/D1/S1"):
         pytest.skip("the sample database carries no rated activity to retag")
     fi_id, was_org, was_date = row
     unit = conn.execute("SELECT id FROM org_unit WHERE path=?", (path,)).fetchone()
-    today = date.today().isoformat()
+    today = _test_tz.today_local().isoformat()
     conn.execute("UPDATE form_instance SET lead_org_id=?, event_date=? WHERE id=?",
                  (unit[0], today, fi_id))
     conn.commit()

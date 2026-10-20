@@ -5,6 +5,7 @@ guessing or forging an integer id gets an attacker nothing, on every path that u
 to accept one.
 """
 from __future__ import annotations
+import tzutil as _test_tz
 import re
 import time
 from datetime import date, timedelta
@@ -13,7 +14,7 @@ import auth
 import storage as st
 from starlette.testclient import TestClient
 
-_PAST = (date.today() - timedelta(days=5)).isoformat()
+_PAST = (_test_tz.today_local() - timedelta(days=5)).isoformat()
 
 
 def _event(db_path, event_date=_PAST, title="Hardening Forum"):
@@ -147,7 +148,7 @@ def test_session_token_expires_after_400_days():
 def test_nobody_is_locked_out_after_the_personal_link_expires(app_mod, db_path):
     # An activity long past its last day + 30 days: the emailed resume link is dead,
     # but registering again with the same email still gets the person back in.
-    long_ago = (date.today() - timedelta(days=200)).isoformat()
+    long_ago = (_test_tz.today_local() - timedelta(days=200)).isoformat()
     tok, qr = _event(db_path, event_date=long_ago)
     c, token, aid = _register(app_mod, tok)
     assert _finish(c, qr, token).status_code == 200

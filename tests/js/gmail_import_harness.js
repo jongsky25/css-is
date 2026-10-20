@@ -1,7 +1,8 @@
 const fs=require('fs'),vm=require('vm'),crypto=require('crypto'),assert=require('assert');
 const secret='test-only-secret-with-at-least-32-characters';
 let offset=0,runCount=0;
-class Clock extends Date {constructor(...args){super(...(args.length?args:[Date.now()+offset]));}static now(){return Date.now()+offset;}}
+const clockEpoch = Number(process.env.CSS_TEST_EPOCH_MS || Date.now());
+class Clock extends Date {constructor(...args){super(...(args.length?args:[clockEpoch+offset]));}static now(){return clockEpoch+offset;}}
 let props,files,counter,requests,downloads,failCreate,failPost,failSave,locked,permissionFailure,replyCode,scanPage,queueReply,attachmentData;
 const hash=(alg,b)=>crypto.createHash(alg).update(Buffer.from(b)).digest();
 function blob(value,mime,name){const b=Buffer.from(Array.isArray(value)?value:String(value));return {bytes:b,getBytes:()=>Array.from(b),getDataAsString:()=>b.toString()};}
