@@ -1,6 +1,6 @@
 # Phase 1 local progress — candidate 7.24
 
-**Current slice, 20 October 2026:** A10 deployment checks are merged/deployed as **7.42**. A11 now protects opening travel filings as candidate **7.45**, with durable receipts, atomic business/audit writes, status recovery and safe closure of unfinished forms; see [travel submission recovery](TRAVEL_SUBMISSION_RECOVERY.md). Other write workflows remain separate increments. Requiring checks before merge still needs administrator configuration. This note does not change historical verification below.
+**Current slice, 20 October 2026:** A10 deployment checks are merged/deployed as **7.42**. A11 now protects opening travel filings as candidate **7.46**, with durable receipts, atomic business/audit writes, status recovery and safe closure of unfinished forms; see [travel submission recovery](TRAVEL_SUBMISSION_RECOVERY.md). Other write workflows remain separate increments. Requiring checks before merge still needs administrator configuration. This note does not change historical verification below.
 
 **Release integration, 20 October 2026:** the user authorized merging before further work. Main had advanced to 7.26, so the combined repairs are now version **7.27**, including the main-branch changes through `7b8f910`. Integration validation passed 486 tests with no failures/skips. See [release integration record](releases/7.27.md). The candidate 7.24 results below are retained as historical evidence.
 

@@ -17,17 +17,25 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.45"
+APP_VERSION = "7.46"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "7.45",
+        "version": "7.46",
         "date": "October 20, 2026",
         "summary": "Recover a travel filing after a connection drop without opening it twice.",
         "changes": [
             "If opening a travel filing is interrupted, check its status and return to the existing checklist.",
             "Retrying the same submission keeps one filing, and an unfinished attempt can be closed safely."
+        ]
+    },
+    {
+        "version": "7.45",
+        "date": "October 20, 2026",
+        "summary": "Earlier releases now appear in the update history.",
+        "changes": [
+            "The update history on the login screen now includes the travel claim releases 7.36 to 7.41."
         ]
     },
     {
@@ -60,12 +68,60 @@ CHANGELOG = [
         ]
     },
     {
+        "version": "7.41",
+        "date": "October 20, 2026",
+        "summary": "Liquidations now show where the money went.",
+        "changes": [
+            "On the prepare page, a liquidation shows your actual expenses by kind: plane, TNVS, taxi, per diem and so on.",
+            "It compares the total with the cash advance and tells you the refund, or how much you went over.",
+            "The Liquidation Report row points to these figures."
+        ]
+    },
+    {
+        "version": "7.40",
+        "date": "October 20, 2026",
+        "summary": "The Post Travel Report now starts filled in.",
+        "changes": [
+            "The overview is written from the activity, its dates, venue and DPO.",
+            "Each day is written from your itinerary. A day follows the itinerary until you edit it, and what you wrote is never overwritten.",
+            "Key points, contributions, recommendations and the conclusion stay yours to write, with a hint on what goes in each."
+        ]
+    },
+    {
         "version": "7.39",
         "date": "October 20, 2026",
         "summary": "More dependable checks before future updates.",
         "changes": [
             "Automated checks have been verified on the Python version used by the live system.",
             "The test setup now includes the tools needed to check generated PDF reports."
+        ]
+    },
+    {
+        "version": "7.38",
+        "date": "October 20, 2026",
+        "summary": "Appendix B and the Post Travel Report can be made again, and errors explain themselves.",
+        "changes": [
+            "Fixed Appendix B and the Post Travel Report failing to generate.",
+            "When a form fails, you are told in plain words what happened and what to do, with the claim reference to give the Admin Unit.",
+            "The prepare page now shows how the Total is worked out: each fare, and each day's per diem rule, rate and parts."
+        ]
+    },
+    {
+        "version": "7.37",
+        "date": "October 20, 2026",
+        "summary": "Warnings on the prepare page now point to the field.",
+        "changes": [
+            "A warning marks the field it is about in red, with a short message on that field.",
+            "Clicking a warning takes you straight to that field. The red goes away once it is fixed."
+        ]
+    },
+    {
+        "version": "7.36",
+        "date": "October 20, 2026",
+        "summary": "Travel claims are now due 5 working days after the activity.",
+        "changes": [
+            "A liquidation or reimbursement is due 5 working days after the last day of the activity, skipping holidays.",
+            "This applies even if the claim was opened after the activity ended."
         ]
     },
     {
