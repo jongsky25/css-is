@@ -215,10 +215,12 @@ def test_api_search_result_shape(admin):
             assert key in item, f"missing '{key}' in {item}"
 
 
-def test_api_search_activities(admin):
+def test_api_search_activities(admin, app_mod, reference_form):
     """A real seeded activity surfaces in the Activities section, and its link
     points at the /reports/activities/<id> the report page actually resolves."""
-    r = admin.get("/api/search?q=learning")
+    fid = reference_form(2, app_mod._today_local().isoformat(), [("B1", 6), ("C", 4)],
+                         topic="Learning Search Reference", venue="Search Reference Hall")
+    r = admin.get("/api/search?q=Learning%20Search%20Reference")
     assert r.status_code == 200
     data = r.json()
     acts = [it for it in data if it["section"] == "Activities"]
@@ -226,7 +228,7 @@ def test_api_search_activities(admin):
     assert any("Learning" in it["title"] for it in acts)
     # the link must resolve to a real activity report page (not 404)
     url = next(it["url"] for it in acts if "Learning" in it["title"])
-    assert url.startswith("/reports/activities/")
+    assert url == f"/reports/activities/{fid}"
     detail = admin.get(url)
     assert detail.status_code == 200
 

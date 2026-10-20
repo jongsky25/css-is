@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.31"
+APP_VERSION = "7.32"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.32",
+        "date": "October 20, 2026",
+        "summary": "See how your companion grows from your profile.",
+        "changes": [
+            "Your profile now shows your companion’s growth stages and how to reach them.",
+            "Improved automated checks for reports, activity links, search and room availability."
+        ]
+    },
     {
         "version": "7.31",
         "date": "October 20, 2026",

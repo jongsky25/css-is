@@ -2,10 +2,12 @@
 {% from "_components.html" import flash %}
 {% from "_photo_crop.html" import photo_crop_styles, photo_adjust_button, photo_editor %}
 {% from "_avatars.html" import avatar_svg, avatar_defs %}
+{% from "_growth.html" import growth_defs, growth %}
 {% block title %}My profile{% endblock %}
 {% block page_width %}narrow{% endblock %}
 {% block content %}
 {{ avatar_defs() }}
+{{ growth_defs() }}
 {{ photo_crop_styles() }}
 <style>
   .me-wrap { max-width:760px; margin:0 auto; }
@@ -170,6 +172,12 @@
         <p class="hint">Up to {{ name_maxlen }} characters.</p>
       </div>
     </div>
+
+    <section class="panel" aria-labelledby="companion-growth-title">
+      <h2 id="companion-growth-title">How your companion grows</h2>
+      {{ growth(profile.avatar_kind if profile and profile.avatar_kind else "plant",
+                ladder, growth_how, wstats, pet_name=(profile.avatar_name if profile else "")) }}
+    </section>
 
     <div class="actions"><button class="btn" type="submit">Save changes</button></div>
   </form>
