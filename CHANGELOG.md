@@ -1,3 +1,9 @@
+## 7.40 — October 20, 2026
+
+- Run normal and shuffled Python 3.11 tests on pull requests and before deployment, including Chromium browser tests.
+- Reject missing, failed or skipped checks and inconsistent or non-increasing release versions.
+- Keep the deployment backup and live-version checks mandatory in GitHub Actions.
+
 ## 7.39 — October 20, 2026
 
 - Verify normal and shuffled test execution on Python 3.11 and record the resolved dependencies.

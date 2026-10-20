@@ -7,17 +7,14 @@ name: Deploy to Hugging Face
 # version.py, so a wedge or a missed version bump fails loudly instead of
 # silently shipping nothing / shipping unversioned.
 #
-# Manual runs also work via workflow_dispatch — Actions → "Deploy to Hugging
-# Face" → Run workflow (e.g. to retry, or to pass skip_backup).
+# Manual runs use the same verification and backup gates as automatic releases.
 on:
   push:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      skip_backup:
-        description: "DANGER: skip the pre-deploy DB backup gate (only if backup infra is down)"
-        type: boolean
-        default: false
+
+permissions:
+  contents: read
 
 # Never let two deploys overlap (each one restarts the live Space).
 concurrency:
@@ -25,7 +22,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  verification:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/release-checks.yml
+    with:
+      base_sha: ${{ github.event.before || 'HEAD^' }}
+
   deploy:
+    needs: verification
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -46,4 +51,4 @@ jobs:
           CSS_ADMIN_PASS: ${{ secrets.CSS_ADMIN_PASS }}
           CSS_DEPLOY_STRICT_VERSION: "1"             # hard-abort if APP_VERSION wasn't bumped
         run: |
-          python deploy_hf.py --yes ${{ inputs.skip_backup && '--skip-backup' || '' }}
+          python deploy_hf.py --yes
