@@ -1,8 +1,12 @@
-## 7.43 — October 20, 2026
+## 7.44 — October 20, 2026
 
 - Protect opening a travel filing with durable account-bound submission IDs and atomic filing, checklist, audit and result receipts.
 - Recover an existing checklist after an interrupted response; retries reuse the same submission.
 - Add private status lookup, preserved form answers and safe closure of unfinished attempts.
+
+## 7.43 — October 20, 2026
+
+- A calendar item now has a "Documents for this activity" block that says whether it needs a DPO or an invitation. The app suggests from what the item already says (people travelling, who it is open to, its kind) and gives the reason; the person can overrule each one. A needed document can be drafted in Google Docs from the item's details, with the DPO number, date and funding source left blank. The relay needs a one-time template setup (docs/ACTIVITY_DOCS_SETUP.md); until then a draft says so plainly (spot feedback #136).
 
 ## 7.42 — October 20, 2026
 

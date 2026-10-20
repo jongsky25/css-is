@@ -17,17 +17,26 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.43"
+APP_VERSION = "7.44"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "7.43",
+        "version": "7.44",
         "date": "October 20, 2026",
         "summary": "Recover a travel filing after a connection drop without opening it twice.",
         "changes": [
             "If opening a travel filing is interrupted, check its status and return to the existing checklist.",
             "Retrying the same submission keeps one filing, and an unfinished attempt can be closed safely."
+        ]
+    },
+    {
+        "version": "7.43",
+        "date": "October 20, 2026",
+        "summary": "Calendar items can now say they need a DPO or an invitation, and draft it.",
+        "changes": [
+            "A calendar item shows whether it needs a DPO or an invitation, with the reason. You can change the answer.",
+            "A needed document can be drafted in Google Docs from the item's details. The DPO number, date and funding source are left blank for you to fill in."
         ]
     },
     {

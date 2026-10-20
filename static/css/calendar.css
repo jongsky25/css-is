@@ -680,3 +680,17 @@ a.cal-tt:focus-visible { outline:none; }
 }
 .cf-more:not([open]) { padding-bottom:.8rem; }
 .cf-room .room-chip { margin:0; }
+.cal-docs { margin:1rem 0; padding:.8rem 1rem; border:1px solid var(--line); border-radius:10px; }
+.cal-docs h2 { margin:0 0 .3rem; font-size:1.05rem; }
+.cal-hint { color:var(--soft, #5b6572); font-size:.88rem; margin:.2rem 0 .5rem; }
+.cal-doc-list { list-style:none; margin:.4rem 0 0; padding:0; display:grid; gap:.7rem; }
+.cal-doc { padding:.6rem .7rem; border:1px solid var(--line); border-radius:8px; }
+.cal-doc.is-needed { border-color:var(--accent); }
+.cal-doc-head { display:flex; flex-wrap:wrap; align-items:center; gap:.4rem; }
+.cal-chip.need { color:var(--on-accent); background:var(--accent); border-color:var(--accent); }
+.cal-chip.soft { opacity:.75; }
+.cal-doc-choice { display:flex; flex-wrap:wrap; gap:.4rem; margin:.3rem 0; }
+.cal-doc-choice .cal-btn[aria-pressed="true"] { background:var(--accent); border-color:var(--accent); color:var(--on-accent); }
+.cal-doc-draft { margin-top:.4rem; }
+.cal-doc-error { color:#a12; font-size:.9rem; }
+@media (prefers-color-scheme: dark) { .cal-doc-error { color:#ff8a97; } }
