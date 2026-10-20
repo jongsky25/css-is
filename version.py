@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.56"
+APP_VERSION = "7.57"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.57",
+        "date": "October 20, 2026",
+        "summary": "Find out which regions your participants come from.",
+        "changes": [
+            "The Monitor page now offers an \"Add the Region question\" button. Once added, registration asks for the person's region, and each answer shows on the roster, in the counts at a glance and in the exported roster.",
+            "Region is also in the ready-made questions on the activity's manage page, next to food, arrival and shirt size.",
+            "It applies to people who register after the question is added."
+        ]
+    },
     {
         "version": "7.56",
         "date": "October 20, 2026",

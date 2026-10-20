@@ -161,6 +161,15 @@
   </div>
   {% endif %}
 
+  {% if can_add_region %}
+  <form class="qtally" method="post" action="/activities/{{ ev.event_token }}/questions/preset">
+    <h2>Which regions are they from?</h2>
+    <p>The roster does not record a region unless the registration form asks for it. Add a Region question (Central Office, NCR, CAR, Regions I to XIII, BARMM or Other) and each person's answer shows here, with a count by region, and in the exported roster. It applies to people who register from now on.</p>
+    <input type="hidden" name="preset" value="region">
+    <button type="submit" class="btn">Add the Region question</button>
+  </form>
+  {% endif %}
+
   {% if only_responded %}
   <p class="note" role="status">Showing the {{ people|length }} registered participant{{ '' if people|length == 1 else 's' }} who responded (finished or part-way) out of {{ n_registered }} registered.
     <a href="/monitor/{{ ev.event_token }}">Show everyone</a></p>
