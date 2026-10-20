@@ -3,6 +3,7 @@ Phase 5): storage.basic_status_for_day / colleague_status_for, the colleague sea
 and the /people/{id} card. The point of most checks: only a bare state ever leaves."""
 from __future__ import annotations
 
+from tests.conftest import session_token
 from datetime import date
 
 import pytest
@@ -20,7 +21,7 @@ SECRET = "Secretplace Xyzzy"
 def _client(app_mod, conn, uid):
     u = st.get_admin_user_by_id(conn, uid)
     c = TestClient(app_mod.app, raise_server_exceptions=True)
-    c.cookies.set(auth.COOKIE_NAME, auth.make_token({"id": u["id"], "username": u["username"], "role": u["role"]}))
+    c.cookies.set(auth.COOKIE_NAME, session_token({"id": u["id"], "username": u["username"], "role": u["role"]}))
     return c
 
 

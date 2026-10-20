@@ -8,6 +8,7 @@ that stops a half-finished onboarding being skipped by URL.
 """
 from __future__ import annotations
 
+from tests.conftest import session_token
 import pytest
 
 import auth
@@ -46,7 +47,7 @@ def _client(app_mod, username):
     conn = st.connect(app_mod.DB)
     u = st.get_admin_user(conn, username)
     conn.close()
-    c.cookies.set(auth.COOKIE_NAME, auth.make_token(
+    c.cookies.set(auth.COOKIE_NAME, session_token(
         {"id": u["id"], "username": u["username"], "role": u["role"]}))
     return c
 

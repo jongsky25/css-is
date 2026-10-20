@@ -8,21 +8,14 @@
  * whose name differs, so an old app-shell is purged the moment the new SW takes
  * over. Keep this in lockstep with version.py / the ?v= asset tokens.
  */
-const CACHE_VERSION = "v6.91-a";
+const CACHE_VERSION = "v7.24-a";
 const CACHE_NAME = "css-is-" + CACHE_VERSION;
 
 /* ── Edge-retry shield ─────────────────────────────────────────────────────────
- * The hosting platform's proxy/LB can fail a request before it ever reaches the
- * app (observed July 2026: ~half of all requests answered 500/503 by the edge
- * while the app replica was perfectly healthy). The server stamps X-CSS-App on
- * EVERY response it produces — success, 4xx, even unhandled 500s — so a 5xx
- * WITHOUT that header is proof the app never saw the request, which makes a
- * retry safe for any method, POST included (nothing was executed).
- *
- * Network errors (fetch rejection) carry no such proof — the request may have
- * reached the server with only the response lost — so those are retried for
- * GETs only, never for writes (the offline submit queue already covers survey
- * POSTs, deduped server-side by submission_id). */
+ * Retry GETs after an unmarked proxy 5xx or a network error. A missing
+ * X-CSS-App header cannot establish whether the app committed a write: the
+ * proxy may replace or lose its response. Never replay writes here. The
+ * separate survey queue uses server-side submission_id deduplication. */
 const APP_MARK = "x-css-app";
 const EDGE_RETRIES = 3;          // extra attempts after the first
 const EDGE_DELAY_MS = 400;       // grows linearly per attempt
@@ -32,11 +25,13 @@ function isEdgeError(res) {
 }
 
 async function fetchRetrying(req, retryNetworkErrors) {
+  // Defense in depth if another caller uses this helper for a mutation.
+  if (req.method !== "GET") return fetch(req);
   let lastRes = null, lastErr = null;
   for (let i = 0; i <= EDGE_RETRIES; i++) {
     if (i) await new Promise((r) => setTimeout(r, EDGE_DELAY_MS * i));
     try {
-      // Always fetch a clone so a body-carrying request stays re-sendable.
+      // GETs can be retried without reusing a consumed request.
       lastRes = await fetch(req.clone());
       lastErr = null;
     } catch (e) {
@@ -115,18 +110,9 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;  // cross-origin: leave alone
 
-  // Transient document reading owns its timeout/cancellation in the page.
-  // Leave these bodies untouched, especially Blob/image uploads on WebKit.
-  // Never cache, queue, clone or replay document contents here.
-  if (req.method === "POST" && ["/documents/intake/read", "/documents/intake/page", "/documents/intake/pages-result"].includes(url.pathname)) return;
-
-  // Writes pass through to the network, but behind the edge-retry shield: a
-  // 5xx without the app's marker header is re-sent (it provably never reached
-  // the app), while an app response — or a network error — is never retried.
-  if (req.method !== "GET") {
-    event.respondWith(fetchRetrying(req, false));
-    return;
-  }
+  // Leave every non-GET to the browser, including document uploads. An
+  // uncertain result must be checked by the workflow before another write.
+  if (req.method !== "GET") return;
 
   // Profile photos: stale-while-revalidate (only successful responses are kept,
   // so a 404 for a removed photo is never pinned in the cache).

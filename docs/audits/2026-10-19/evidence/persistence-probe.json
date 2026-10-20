@@ -1,0 +1,22 @@
+[
+  {
+    "step": 0,
+    "fresh_connection_data_version": 2,
+    "persistent_reader_data_version": 2
+  },
+  {
+    "step": 1,
+    "fresh_connection_data_version": 2,
+    "persistent_reader_data_version": 3
+  },
+  {
+    "step": 2,
+    "fresh_connection_data_version": 2,
+    "persistent_reader_data_version": 4
+  },
+  {
+    "step": 3,
+    "fresh_connection_data_version": 2,
+    "persistent_reader_data_version": 5
+  }
+]

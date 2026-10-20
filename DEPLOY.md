@@ -1,5 +1,11 @@
 # Deployment & live-data rules
 
+## Current repair-release guidance — October 19, 2026
+
+Use [Phase 0 repairs and rollout](docs/PHASE0_REPAIRS.md) for release 7.23. The deployed storage configuration is **not yet verified**. When `CSS_PERSIST_DIR` is set, the application keeps its live SQLite database at `CSS_DB` (default `css_is.db`), restores a bucket snapshot on boot and snapshots back every configured interval. The bucket is not necessarily the live database path. Confirm effective paths before deploying or restoring anything.
+
+Release 7.23 adds revocable sessions and requires fresh sign-in; database restores also invalidate sessions. Merging to `main` deploys automatically, so keep the repair on its review branch until the production verification gate in that runbook is complete.
+
 > ## ⛔ THE WHOLE ROUTINE
 >
 > **As of the `deploy-hf.yml` push trigger, merging a PR to `main` ships it —
@@ -79,18 +85,8 @@ is how Spot Feedback tags were lost once: a stale DB was shipped.
 > test sessions. To reset manually: remove `css_is.db-wal`/`-shm`, then restore a
 > known-good DB.
 
-## Space configuration (must stay this way)
+## Verify the effective storage model
 
-- **`CSS_DB` UNSET** — the app reads the repo's `css_is.db`, which the upload delivers.
-  Do **not** enable persistent storage / point `CSS_DB` at `/data` (a different,
-  mutually exclusive model that would make the uploaded DB inert).
-- The startup `[live-db] WARNING …` (when `CSS_DB` is unset) is **expected/harmless**.
-- Keep **`CSS_SESSION_SECRET`** (logins survive rebuilds without a committed secret —
-  `.session_secret` is gitignored and NOT shipped), **`CSS_BASE_URL`**, and uvicorn
-  **`--proxy-headers`**.
+The historical DB-in-repository instructions above describe an earlier deployment model. The current deploy script detects `CSS_PERSIST_DIR` and can upload code without the seed database. Confirm the actual Space variables/mounts before following the historical download-and-upload routine; do not change storage topology based on this document alone.
 
-## Alternative model (NOT in use — do not mix)
-
-A persistent-storage model exists in code (`_ensure_live_db()` + `build_hf_upload.ps1`,
-DB lives only on `/data`). It's mutually exclusive with the upload_folder + DB-in-repo
-model above. We use the model above. Switching is a deliberate change, not a mix.
+An ephemeral deployment without verified durable storage can lose data on rebuild. Its startup warning is actionable. Keep the signing secret configured, use the correct public base URL, secure cookies and proxy settings, and verify recovery from a real snapshot. A stable signing secret does not override session revocation or the deliberate fresh-login requirement after database restoration.

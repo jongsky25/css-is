@@ -3,8 +3,7 @@ Office Connect auth — minimal, stdlib-only authentication + role-based access 
 
 What it does:
   * hashes passwords with PBKDF2-HMAC-SHA256 + a per-user salt (no dependencies),
-  * issues a tamper-proof session as an HMAC-signed cookie value (no server-side
-    session store needed), and
+  * signs session cookies whose random IDs are registered/revoked in storage, and
   * defines the four roles and exactly what each one may do (the capability map).
 
 Security notes (on the record):
@@ -148,9 +147,14 @@ def _b64d(s):
 
 
 def make_token(user, issued_at=None):
-    """Sign a session token for a logged-in user dict."""
+    """Sign a token; callers must register its ID before it grants a session.
+
+    Role/name claims are informational; requests resolve current account state.
+    Old cookies without registered IDs deliberately require a fresh login.
+    """
     payload = {"uid": user["id"], "u": user["username"], "r": user["role"],
-               "iat": int(issued_at if issued_at is not None else time.time())}
+               "iat": int(issued_at if issued_at is not None else time.time()),
+               "v": 2, "sid": secrets.token_hex(32)}
     raw = json.dumps(payload, separators=(",", ":")).encode("utf-8")
     body = _b64e(raw)
     sig = hmac.new(_secret(), body.encode("ascii"), hashlib.sha256).hexdigest()
@@ -158,19 +162,30 @@ def make_token(user, issued_at=None):
 
 
 def parse_token(token, now=None):
-    """Validate a token's signature + age; return the payload dict or None."""
-    if not token or "." not in token:
-        return None
-    body, sig = token.rsplit(".", 1)
-    expect = hmac.new(_secret(), body.encode("ascii"), hashlib.sha256).hexdigest()
-    if not hmac.compare_digest(sig, expect):
+    """Validate signature, shape and lifetime; storage checks revocation."""
+    if not isinstance(token, str) or len(token) > 4096 or "." not in token:
         return None
     try:
+        body, sig = token.rsplit(".", 1)
+        if not re.fullmatch(r"[0-9a-f]{64}", sig):
+            return None
+        expect = hmac.new(_secret(), body.encode("ascii"), hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(sig, expect):
+            return None
         payload = json.loads(_b64d(body))
-    except (ValueError, json.JSONDecodeError):
+    except (ValueError, UnicodeError):
         return None
-    iat = payload.get("iat", 0)
-    if (now if now is not None else time.time()) - iat > _MAX_AGE:
+    if not isinstance(payload, dict):
+        return None
+    if (payload.get("v") != 2 or type(payload.get("uid")) is not int
+            or payload["uid"] <= 0 or type(payload.get("iat")) is not int
+            or not isinstance(payload.get("u"), str) or not payload["u"]
+            or not isinstance(payload.get("r"), str) or not valid_role(payload["r"])
+            or not isinstance(payload.get("sid"), str)
+            or not re.fullmatch(r"[0-9a-f]{64}", payload["sid"])):
+        return None
+    age = (now if now is not None else time.time()) - payload["iat"]
+    if age >= _MAX_AGE or age < -60:
         return None
     return payload
 

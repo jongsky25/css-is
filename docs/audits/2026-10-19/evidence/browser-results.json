@@ -1,0 +1,834 @@
+[
+  {
+    "path": "/",
+    "width": 1440,
+    "status": 200,
+    "metrics": {
+      "title": "Home \u2014 Office Connect",
+      "headings": [
+        "Hi, Audit \ud83d\udc4b",
+        "Your to-do",
+        "Coming up",
+        "Wellness this week",
+        "Alternative Work Arrangement",
+        "Activities your team ran or spoke at",
+        "How your companion grows",
+        "Search and ask in one box"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 1440,
+      "visibleLinks": 43,
+      "visibleControls": 28,
+      "navigation": [
+        {
+          "ttfbMs": 24.5,
+          "domContentLoadedMs": 111.70000000001164
+        }
+      ]
+    },
+    "violations": [
+      {
+        "id": "aria-required-children",
+        "impact": "critical",
+        "help": "Certain ARIA roles must contain particular children",
+        "nodes": [
+          {
+            "target": [
+              ".deck-dots"
+            ],
+            "summary": "Fix any of the following:\n  Element has children which are not allowed: button[aria-current], button[aria-label]"
+          }
+        ],
+        "count": 1
+      },
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": [
+              ".gs-kbd"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 7.9pt (10.56px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "section[aria-label=\"Recent\"] > .foot"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 9.1pt (12.16px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".locked.gl-step[role=\"listitem\"]:nth-child(2) > .gl-pts"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 8.4pt (11.2px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".locked.gl-step[role=\"listitem\"]:nth-child(3) > .gl-pts"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 8.4pt (11.2px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".locked.gl-step[role=\"listitem\"]:nth-child(4) > .gl-pts"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 8.4pt (11.2px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".locked.gl-step[role=\"listitem\"]:nth-child(5) > .gl-pts"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 8.4pt (11.2px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ],
+        "count": 7
+      },
+      {
+        "id": "target-size",
+        "impact": "serious",
+        "help": "All touch targets must be 24px large, or leave sufficient space",
+        "nodes": [
+          {
+            "target": [
+              "button[aria-label=\"Who is in the office\"][aria-current=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (20px by 8px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 13.6px instead of at least 24px."
+          },
+          {
+            "target": [
+              "button[aria-label=\"Who is on-site now, by weekday\"]"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (8px by 8px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 1.6px instead of at least 24px."
+          },
+          {
+            "target": [
+              "button[aria-label=\"What the team is on now\"]"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (8px by 8px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 1.6px instead of at least 24px."
+          },
+          {
+            "target": [
+              "button[aria-label=\"The day the office empties now\"]"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (8px by 8px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 1.6px instead of at least 24px."
+          },
+          {
+            "target": [
+              "button[aria-label=\"Who has filed\"]"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (8px by 8px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 1.6px instead of at least 24px."
+          }
+        ],
+        "count": 5
+      }
+    ],
+    "js_errors": []
+  },
+  {
+    "path": "/calendar",
+    "width": 1440,
+    "status": 200,
+    "metrics": {
+      "title": "Office calendar \u2014 Office Connect",
+      "headings": [
+        "Office calendar",
+        "Mon, Oct 19",
+        "Sun, Nov 1",
+        "Quick add"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 1440,
+      "visibleLinks": 32,
+      "visibleControls": 25,
+      "navigation": [
+        {
+          "ttfbMs": 51.79999999998836,
+          "domContentLoadedMs": 126.09999999997672
+        }
+      ]
+    },
+    "violations": [],
+    "js_errors": []
+  },
+  {
+    "path": "/rooms",
+    "width": 1440,
+    "status": 200,
+    "metrics": {
+      "title": "Conference room \u2014 Office Connect",
+      "headings": [
+        "Conference room",
+        "Request the room"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 1440,
+      "visibleLinks": 27,
+      "visibleControls": 69,
+      "navigation": [
+        {
+          "ttfbMs": 65.09999999997672,
+          "domContentLoadedMs": 131.5
+        }
+      ]
+    },
+    "violations": [],
+    "js_errors": []
+  },
+  {
+    "path": "/room",
+    "width": 1440,
+    "status": 200,
+    "metrics": {
+      "title": "Request the conference room \u2014 Office Connect",
+      "headings": [
+        "Request the conference room",
+        "1 Pick a day"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 1440,
+      "visibleLinks": 41,
+      "visibleControls": 15,
+      "navigation": [
+        {
+          "ttfbMs": 24.900000000023283,
+          "domContentLoadedMs": 70.09999999997672
+        }
+      ]
+    },
+    "violations": [],
+    "js_errors": []
+  },
+  {
+    "path": "/travel",
+    "width": 1440,
+    "status": 200,
+    "metrics": {
+      "title": "My travel claims \u2014 Office Connect",
+      "headings": [
+        "Travel claims",
+        "Activities that may need a travel claim",
+        "My filings"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 1440,
+      "visibleLinks": 26,
+      "visibleControls": 16,
+      "navigation": [
+        {
+          "ttfbMs": 24.599999999976717,
+          "domContentLoadedMs": 57.79999999993015
+        }
+      ]
+    },
+    "violations": [],
+    "js_errors": []
+  },
+  {
+    "path": "/wellness",
+    "width": 1440,
+    "status": 200,
+    "metrics": {
+      "title": "Wellness \u2014 Office Connect",
+      "headings": [
+        "Wellness break",
+        "My break requests"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 1440,
+      "visibleLinks": 24,
+      "visibleControls": 18,
+      "navigation": [
+        {
+          "ttfbMs": 25.399999999906868,
+          "domContentLoadedMs": 74.69999999995343
+        }
+      ]
+    },
+    "violations": [
+      {
+        "id": "nested-interactive",
+        "impact": "serious",
+        "help": "Interactive controls must not be nested",
+        "nodes": [
+          {
+            "target": [
+              ".avwrap"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants"
+          }
+        ],
+        "count": 1
+      }
+    ],
+    "js_errors": []
+  },
+  {
+    "path": "/work-arrangement",
+    "width": 1440,
+    "status": 200,
+    "metrics": {
+      "title": "Work arrangement \u2014 Office Connect",
+      "headings": [
+        "Work arrangement",
+        "Current schedule\n    \u2014 October 16-31, 2026",
+        "Open for filing",
+        "November 1-15, 2026",
+        "November 16-30, 2026"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 1440,
+      "visibleLinks": 24,
+      "visibleControls": 18,
+      "navigation": [
+        {
+          "ttfbMs": 32.10000000009313,
+          "domContentLoadedMs": 63.800000000046566
+        }
+      ]
+    },
+    "violations": [],
+    "js_errors": []
+  },
+  {
+    "path": "/documents",
+    "width": 1440,
+    "status": 200,
+    "metrics": {
+      "title": "Documents \u2014 Office Connect",
+      "headings": [
+        "Documents"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 1440,
+      "visibleLinks": 37,
+      "visibleControls": 18,
+      "navigation": [
+        {
+          "ttfbMs": 26.600000000093132,
+          "domContentLoadedMs": 60.699999999953434
+        }
+      ]
+    },
+    "violations": [],
+    "js_errors": []
+  },
+  {
+    "path": "/documents/1",
+    "width": 1440,
+    "status": 200,
+    "metrics": {
+      "title": "Documents \u2014 Office Connect",
+      "headings": [
+        "Documents",
+        "BLHSD-IN-2026-000001 \u00b7 Prepare quarterly operations update",
+        "Document",
+        "Routing slip",
+        "References and receipts",
+        "Assignments",
+        "Review feedback",
+        "Files and versions",
+        "Directives",
+        "Related records",
+        "Shared work",
+        "Actions",
+        "Delivery attempts for you",
+        "Recipient outcomes",
+        "Dispatch evidence",
+        "External operations",
+        "Timeline"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 1440,
+      "visibleLinks": 37,
+      "visibleControls": 50,
+      "navigation": [
+        {
+          "ttfbMs": 83,
+          "domContentLoadedMs": 127.59999999997672
+        }
+      ]
+    },
+    "violations": [],
+    "js_errors": []
+  },
+  {
+    "path": "/work",
+    "width": 1440,
+    "status": 200,
+    "metrics": {
+      "title": "Shared work \u00b7 Office Connect \u2014 Office Connect",
+      "headings": [
+        "Shared work",
+        "Coordinate quarterly operations update"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 1440,
+      "visibleLinks": 31,
+      "visibleControls": 16,
+      "navigation": [
+        {
+          "ttfbMs": 20.400000000023283,
+          "domContentLoadedMs": 64.40000000002328
+        }
+      ]
+    },
+    "violations": [],
+    "js_errors": []
+  },
+  {
+    "path": "/work/1",
+    "width": 1440,
+    "status": 200,
+    "metrics": {
+      "title": "Shared work \u00b7 Office Connect \u2014 Office Connect",
+      "headings": [
+        "Coordinate quarterly operations update",
+        "Contribution progress",
+        "Working draft",
+        "Contributions",
+        "Related correspondence",
+        "Link an existing document",
+        "Ownership",
+        "History"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 1440,
+      "visibleLinks": 35,
+      "visibleControls": 26,
+      "navigation": [
+        {
+          "ttfbMs": 59.90000000002328,
+          "domContentLoadedMs": 101.59999999997672
+        }
+      ]
+    },
+    "violations": [],
+    "js_errors": []
+  },
+  {
+    "path": "/dashboard",
+    "width": 1440,
+    "status": 200,
+    "metrics": {
+      "title": "Insights \u00b7 Pulse \u2014 Office Connect",
+      "headings": [
+        "Pulse",
+        "What has been good",
+        "Worth looking at",
+        "Overall pulse",
+        "Set scope & period"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 1440,
+      "visibleLinks": 35,
+      "visibleControls": 23,
+      "navigation": [
+        {
+          "ttfbMs": 113.19999999995343,
+          "domContentLoadedMs": 170.5
+        }
+      ]
+    },
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": [
+              ".tone-good.vital:nth-child(1) > .spark-chips > .chip:nth-child(1) > i"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.48 (foreground color: #94a3b8, background color: #f0fff4, font size: 8.9pt (11.84px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".tone-good.vital:nth-child(1) > .spark-chips > .chip:nth-child(3) > i"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.48 (foreground color: #94a3b8, background color: #f0fff4, font size: 8.9pt (11.84px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".tone-good.vital:nth-child(1) > .spark-chips > .chip:nth-child(5) > i"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.48 (foreground color: #94a3b8, background color: #f0fff4, font size: 8.9pt (11.84px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".tone-good.vital:nth-child(1) > .spark-chips > .chip:nth-child(7) > i"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.48 (foreground color: #94a3b8, background color: #f0fff4, font size: 8.9pt (11.84px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".tone-good.vital:nth-child(1) > .spark-note"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.48 (foreground color: #94a3b8, background color: #f0fff4, font size: 8.2pt (10.88px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".tone-good.vital:nth-child(1) > .foot"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.48 (foreground color: #94a3b8, background color: #f0fff4, font size: 8.9pt (11.84px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ],
+        "count": 17
+      }
+    ],
+    "js_errors": []
+  },
+  {
+    "path": "/r/{synthetic-token}",
+    "width": 1440,
+    "status": 200,
+    "metrics": {
+      "title": "Survey \u2014 Office Connect",
+      "headings": [
+        "Service feedback",
+        "Help us serve you better!"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 1440,
+      "visibleLinks": 3,
+      "visibleControls": 112,
+      "navigation": [
+        {
+          "ttfbMs": 43.79999999993015,
+          "domContentLoadedMs": 89.5
+        }
+      ]
+    },
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": [
+              ".pub-foot"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.36 (foreground color: #94a3b8, background color: #f4f6fa, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ],
+        "count": 1
+      },
+      {
+        "id": "target-size",
+        "impact": "serious",
+        "help": "All touch targets must be 24px large, or leave sufficient space",
+        "nodes": [
+          {
+            "target": [
+              "#na-SQD0"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (13px by 13px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 21.4px instead of at least 24px."
+          },
+          {
+            "target": [
+              "#na-SQD1"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (13px by 13px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 21.4px instead of at least 24px."
+          },
+          {
+            "target": [
+              "#na-SQD2"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (13px by 13px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 21.4px instead of at least 24px."
+          },
+          {
+            "target": [
+              "#na-SQD3"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (13px by 13px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 21.4px instead of at least 24px."
+          },
+          {
+            "target": [
+              "#na-SQD4"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (13px by 13px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 21.4px instead of at least 24px."
+          },
+          {
+            "target": [
+              "#na-SQD5"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (13px by 13px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 21.4px instead of at least 24px."
+          }
+        ],
+        "count": 9
+      }
+    ],
+    "js_errors": []
+  },
+  {
+    "path": "/",
+    "width": 390,
+    "status": 200,
+    "metrics": {
+      "title": "Home \u2014 Office Connect",
+      "headings": [
+        "Hi, Audit \ud83d\udc4b",
+        "Your to-do",
+        "Coming up",
+        "Wellness this week",
+        "Alternative Work Arrangement",
+        "Activities your team ran or spoke at",
+        "How your companion grows",
+        "Search and ask in one box"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 390,
+      "visibleLinks": 23,
+      "visibleControls": 13,
+      "navigation": [
+        {
+          "ttfbMs": 21.199999999953434,
+          "domContentLoadedMs": 91
+        }
+      ]
+    },
+    "violations": [
+      {
+        "id": "aria-required-children",
+        "impact": "critical",
+        "help": "Certain ARIA roles must contain particular children",
+        "nodes": [
+          {
+            "target": [
+              ".deck-dots"
+            ],
+            "summary": "Fix any of the following:\n  Element has children which are not allowed: button[aria-current], button[aria-label]"
+          }
+        ],
+        "count": 1
+      },
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": [
+              "section[aria-label=\"Recent\"] > .foot"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 9.1pt (12.16px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".locked.gl-step[role=\"listitem\"]:nth-child(2) > .gl-pts"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 8.4pt (11.2px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".locked.gl-step[role=\"listitem\"]:nth-child(3) > .gl-pts"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 8.4pt (11.2px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ],
+        "count": 3
+      },
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              ".gl-strip"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ],
+        "count": 1
+      },
+      {
+        "id": "target-size",
+        "impact": "serious",
+        "help": "All touch targets must be 24px large, or leave sufficient space",
+        "nodes": [
+          {
+            "target": [
+              "button[aria-label=\"Who is in the office\"][aria-current=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (20px by 8px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 13.6px instead of at least 24px."
+          },
+          {
+            "target": [
+              "button[aria-label=\"Who is on-site now, by weekday\"]"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (8px by 8px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 1.6px instead of at least 24px."
+          },
+          {
+            "target": [
+              "button[aria-label=\"What the team is on now\"]"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (8px by 8px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 1.6px instead of at least 24px."
+          },
+          {
+            "target": [
+              "button[aria-label=\"The day the office empties now\"]"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (8px by 8px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 1.6px instead of at least 24px."
+          },
+          {
+            "target": [
+              "button[aria-label=\"Who has filed\"]"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (8px by 8px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 1.6px instead of at least 24px."
+          }
+        ],
+        "count": 5
+      }
+    ],
+    "js_errors": []
+  },
+  {
+    "path": "/calendar",
+    "width": 390,
+    "status": 200,
+    "metrics": {
+      "title": "Office calendar \u2014 Office Connect",
+      "headings": [
+        "Office calendar",
+        "Mon, Oct 19",
+        "Sun, Nov 1",
+        "Quick add"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 390,
+      "visibleLinks": 12,
+      "visibleControls": 11,
+      "navigation": [
+        {
+          "ttfbMs": 10.5,
+          "domContentLoadedMs": 47.5
+        }
+      ]
+    },
+    "violations": [],
+    "js_errors": []
+  },
+  {
+    "path": "/rooms",
+    "width": 390,
+    "status": 200,
+    "metrics": {
+      "title": "Conference room \u2014 Office Connect",
+      "headings": [
+        "Conference room",
+        "Request the room"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 390,
+      "visibleLinks": 12,
+      "visibleControls": 21,
+      "navigation": [
+        {
+          "ttfbMs": 13.20000000006985,
+          "domContentLoadedMs": 57.699999999953434
+        }
+      ]
+    },
+    "violations": [],
+    "js_errors": []
+  },
+  {
+    "path": "/room",
+    "width": 390,
+    "status": 200,
+    "metrics": {
+      "title": "Request the conference room \u2014 Office Connect",
+      "headings": [
+        "Request the conference room",
+        "1 Pick a day"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 390,
+      "visibleLinks": 41,
+      "visibleControls": 15,
+      "navigation": [
+        {
+          "ttfbMs": 16,
+          "domContentLoadedMs": 41.29999999993015
+        }
+      ]
+    },
+    "violations": [],
+    "js_errors": []
+  },
+  {
+    "path": "/travel",
+    "width": 390,
+    "status": 200,
+    "metrics": {
+      "title": "My travel claims \u2014 Office Connect",
+      "headings": [
+        "Travel claims",
+        "Activities that may need a travel claim",
+        "My filings"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 390,
+      "visibleLinks": 6,
+      "visibleControls": 2,
+      "navigation": [
+        {
+          "ttfbMs": 9.599999999976717,
+          "domContentLoadedMs": 34.79999999993015
+        }
+      ]
+    },
+    "violations": [],
+    "js_errors": []
+  },
+  {
+    "path": "/documents",
+    "width": 390,
+    "status": 200,
+    "metrics": {
+      "title": "Documents \u2014 Office Connect",
+      "headings": [
+        "Documents"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 390,
+      "visibleLinks": 17,
+      "visibleControls": 4,
+      "navigation": [
+        {
+          "ttfbMs": 10.5,
+          "domContentLoadedMs": 64.79999999993015
+        }
+      ]
+    },
+    "violations": [],
+    "js_errors": []
+  },
+  {
+    "path": "/work",
+    "width": 390,
+    "status": 200,
+    "metrics": {
+      "title": "Shared work \u00b7 Office Connect \u2014 Office Connect",
+      "headings": [
+        "Shared work",
+        "Coordinate quarterly operations update"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 390,
+      "visibleLinks": 11,
+      "visibleControls": 2,
+      "navigation": [
+        {
+          "ttfbMs": 9.300000000046566,
+          "domContentLoadedMs": 33.70000000006985
+        }
+      ]
+    },
+    "violations": [],
+    "js_errors": []
+  }
+]

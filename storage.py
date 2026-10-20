@@ -1073,6 +1073,31 @@ def _add_missing_columns(conn):
             conn.execute("ALTER TABLE admin_user ADD COLUMN employee_no TEXT")
         conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_admin_user_rp "
                      "ON admin_user(rp_id) WHERE rp_id IS NOT NULL")
+    # Additive migration: pre-migration cookies have no registered session ID.
+    # Triggers also cover account changes made by maintenance scripts.
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS login_session (
+        session_id TEXT PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES admin_user(id) ON DELETE CASCADE,
+        issued_at INTEGER NOT NULL,
+        expires_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_login_session_user ON login_session(user_id);
+    CREATE INDEX IF NOT EXISTS idx_login_session_expiry ON login_session(expires_at);
+    CREATE TRIGGER IF NOT EXISTS revoke_sessions_on_account_change
+    AFTER UPDATE OF username, pw_hash, salt, role, active, must_change ON admin_user
+    WHEN OLD.username IS NOT NEW.username OR OLD.pw_hash IS NOT NEW.pw_hash
+      OR OLD.salt IS NOT NEW.salt OR OLD.role IS NOT NEW.role
+      OR OLD.active IS NOT NEW.active OR OLD.must_change IS NOT NEW.must_change
+    BEGIN
+        DELETE FROM login_session WHERE user_id = OLD.id;
+    END;
+    CREATE TRIGGER IF NOT EXISTS revoke_sessions_on_account_delete
+    AFTER DELETE ON admin_user
+    BEGIN
+        DELETE FROM login_session WHERE user_id = OLD.id;
+    END;
+    """)
     # Respondent demographics captured at Type-2 pre-registration. These are NON-PII
     # aggregate tallies (sex = M/F, affiliation = DOH/NON-DOH) and are deliberately
     # NOT nulled by the retention purge — they carry no identity on their own.
@@ -4284,6 +4309,31 @@ def get_admin_user_by_id(conn, user_id):
     return _admin_row(r) if r else None
 
 
+def register_login_session(conn, payload):
+    """Register an authenticated token inside the caller's transaction."""
+    conn.execute("DELETE FROM login_session WHERE expires_at <= ?", (int(_clock.time()),))
+    conn.execute("INSERT INTO login_session(session_id,user_id,issued_at,expires_at) "
+                 "VALUES (?,?,?,?)", (payload["sid"], payload["uid"], payload["iat"],
+                                       payload["iat"] + 12 * 3600))
+
+
+def session_actor(conn, payload):
+    """Current identity for a registered, unexpired session, or None."""
+    row = conn.execute(
+        "SELECT u.id,u.username,u.role FROM login_session s "
+        "JOIN admin_user u ON u.id=s.user_id "
+        "WHERE s.session_id=? AND s.user_id=? AND s.expires_at>? "
+        "AND u.active=1 AND u.must_change=0",
+        (payload["sid"], payload["uid"], int(_clock.time()))).fetchone()
+    return {"id": row[0], "username": row[1], "role": row[2]} if row else None
+
+
+def revoke_login_session(conn, session_id):
+    """Log out this session; account-change triggers revoke all sessions."""
+    conn.execute("DELETE FROM login_session WHERE session_id=?", (session_id,))
+    conn.commit()
+
+
 def get_admin_user_by_rp(conn, rp_id):
     r = conn.execute(f"SELECT {_ADMIN_COLS} FROM admin_user WHERE rp_id=?",
                      (rp_id,)).fetchone()
@@ -4404,7 +4454,7 @@ def get_user_profile(conn, user_id):
         "org_unit_id": (rp or {}).get("org_unit_id"),
         "org_path": (rp or {}).get("org_path"),
         # For a linked account the staff directory is authoritative (an admin
-        # may edit it there too, and /me writes through to it), so its value
+        # edits it there; self-service profile changes cannot write it), so its value
         # wins; an unlinked account uses the designation stored on the account.
         "designation": ((rp or {}).get("designation") if rp
                         else acct.get("designation")) or "",

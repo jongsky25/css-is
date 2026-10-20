@@ -1,0 +1,239 @@
+{
+  "base_revision": "3a45851",
+  "branch": "fix/phase-0-authority-persistence-sessions",
+  "candidate_version": "7.23",
+  "scope": "Local working-tree repair; no deployment; final focused run includes the later legacy-restore regression",
+  "runtime": {
+    "python": "3.12.14",
+    "deployment_python": "3.11",
+    "deployment_runtime_verification": "pending"
+  },
+  "focused": {
+    "total": 173,
+    "passed": 173,
+    "failed": 0,
+    "skipped": 0,
+    "errors": 0,
+    "seconds": 11.014,
+    "started_utc": "2026-10-19T23:21:50.687857+00:00",
+    "failures": []
+  },
+  "full": {
+    "total": 4072,
+    "passed": 4020,
+    "failed": 36,
+    "skipped": 16,
+    "errors": 0,
+    "seconds": 205.45,
+    "started_utc": "2026-10-19T23:11:41.358976+00:00",
+    "failures": [
+      {
+        "test": "tests.test_ai_report_draft::test_csm_ai_draft_saves_report_draft_with_ai_actor",
+        "message": "AssertionError: assert 'Drafted Sections V' in 'No CSM responses in this period to draft from.'"
+      },
+      {
+        "test": "tests.test_ai_report_draft::test_csm_export_reflects_saved_draft",
+        "message": "AssertionError: assert 'Distinctive saved action plan text.' in '\\n\\n\\nDEPARTMENT OF HEALTH\\n\\n\\nClient Satisfaction Measurement Report\\nBureau of Local Health Systems Development\\n1st QUARTER (CY 2026)\\n\\nNo CSM (Type-1"
+      },
+      {
+        "test": "tests.test_ai_report_draft::test_csm_export_falls_back_to_na_and_boilerplate_with_no_draft",
+        "message": "AssertionError: assert 'The Bureau will continue to implement the use of Harmonized CSM' in '\\n\\n\\nDEPARTMENT OF HEALTH\\n\\n\\nClient Satisfaction Measurement Report\\nBureau of Local Health Systems Development\\n1st QUARTER"
+      },
+      {
+        "test": "tests.test_avatar_care::test_landing_and_profile_both_show_the_ladder",
+        "message": "AssertionError: /me"
+      },
+      {
+        "test": "tests.test_csm_public_form::test_the_date_is_shown_not_asked",
+        "message": "assert 'October 19, 2026' in '<!doctype html>\\n<html lang=\"en\">\\n<head>\\n<meta charset=\"utf-8\">\\n<meta name=\"viewport\" content=\"width=device-width,...\",\\n  discard: \"Discard\"\\n};</script>\\n\\n<script src=\"/static/js/app.j"
+      },
+      {
+        "test": "tests.test_home_feeds::test_recently_concluded_links_resolve",
+        "message": "AssertionError: expected at least one invited/F3-only concluded activity"
+      },
+      {
+        "test": "tests.test_insights_tabs::test_every_dashboard_shows_the_same_tab_bar_with_itself_current",
+        "message": "AttributeError: 'float' object has no attribute 'numerator'"
+      },
+      {
+        "test": "tests.test_insights_tabs::test_tabs_carry_org_everywhere_and_period_only_where_it_means_the_same",
+        "message": "ValueError: Cannot mask with non-boolean array containing NA / NaN values"
+      },
+      {
+        "test": "tests.test_integrity::test_no_orphan_answers",
+        "message": "sqlite3.OperationalError: no such table: answer"
+      },
+      {
+        "test": "tests.test_integrity::test_no_orphan_responses",
+        "message": "sqlite3.OperationalError: no such table: response"
+      },
+      {
+        "test": "tests.test_integrity::test_no_orphan_item_remarks",
+        "message": "sqlite3.OperationalError: no such table: item_remark"
+      },
+      {
+        "test": "tests.test_integrity::test_served_by_points_to_real_person",
+        "message": "sqlite3.OperationalError: no such table: response"
+      },
+      {
+        "test": "tests.test_integrity::test_form_instance_rp_fk",
+        "message": "sqlite3.OperationalError: no such table: form_instance"
+      },
+      {
+        "test": "tests.test_integrity::test_unique_qr_tokens",
+        "message": "sqlite3.OperationalError: no such table: form_instance"
+      },
+      {
+        "test": "tests.test_integrity::test_answer_values_in_sane_range",
+        "message": "sqlite3.OperationalError: no such table: answer"
+      },
+      {
+        "test": "tests.test_integrity::test_survey_types_valid",
+        "message": "sqlite3.OperationalError: no such table: form_instance"
+      },
+      {
+        "test": "tests.test_integrity::test_headline_counts_present",
+        "message": "sqlite3.OperationalError: no such table: response"
+      },
+      {
+        "test": "tests.test_mrr_export_nuance::test_analysis_columns_differ_between_activities",
+        "message": "AssertionError: Action repeated across activities: ['No area needs correcting \u2014 \u201cAttention & set-up\u201d (Tangible) is the lowest at nan of 7 and still holds up. Keep the present platform and pre-session technical check, and"
+      },
+      {
+        "test": "tests.test_mrr_export_nuance::test_action_names_the_weakest_dimension_and_scales_its_advice",
+        "message": "AssertionError: assert ('Responsiveness' in 'No area needs correcting \u2014 \u201cAttention & set-up\u201d (Tangible) is the lowest at nan of 7 and still holds up. Maintain the current venue standard and keep issuing the take-away ref"
+      },
+      {
+        "test": "tests.test_mrr_export_nuance::test_resources_split_on_modality",
+        "message": "AssertionError: assert 'online-meeting platform' in 'None identified from the feedback \u2014 the current arrangements are holding. Continue funding the existing venue/platform and materials.'"
+      },
+      {
+        "test": "tests.test_mrr_export_nuance::test_resources_and_action_do_not_degrade_hybrid_to_face_to_face",
+        "message": "AssertionError: assert ('hybrid' in 'no area needs correcting \u2014 \u201cattention & set-up\u201d (tangible) is the lowest at nan of 7 and still holds up. maintain the current venue and platform standard, and keep issuing the take-aw"
+      },
+      {
+        "test": "tests.test_mrr_export_nuance::test_page_preview_matches_the_downloaded_draft",
+        "message": "AssertionError: the five-dimension scorecard must reach the page draft"
+      },
+      {
+        "test": "tests.test_office_answers::test_room_windows_split_around_a_booked_hour",
+        "message": "rooms.RoomError: That date has already passed."
+      },
+      {
+        "test": "tests.test_routes::test_get_route_renders_for_admin[/dashboard]",
+        "message": "AttributeError: 'float' object has no attribute 'numerator'"
+      },
+      {
+        "test": "tests.test_routes::test_get_route_renders_for_admin[/dashboard/teams]",
+        "message": "ValueError: Cannot mask with non-boolean array containing NA / NaN values"
+      },
+      {
+        "test": "tests.test_routes::test_get_route_renders_for_admin[/work-arrangement/approvals]",
+        "message": "AssertionError: /work-arrangement/approvals -> 403"
+      },
+      {
+        "test": "tests.test_routes::test_dashboard_pulse_export_all_formats",
+        "message": "AttributeError: 'float' object has no attribute 'numerator'"
+      },
+      {
+        "test": "tests.test_routes::test_dashboard_teams_index_export_all_formats",
+        "message": "ValueError: Cannot mask with non-boolean array containing NA / NaN values"
+      },
+      {
+        "test": "tests.test_routes::test_dashboard_team_export_all_formats",
+        "message": "ValueError: Cannot mask with non-boolean array containing NA / NaN values"
+      },
+      {
+        "test": "tests.test_routes::test_dashboard_team_detail",
+        "message": "ValueError: Cannot mask with non-boolean array containing NA / NaN values"
+      },
+      {
+        "test": "tests.test_routes::test_dashboard_team_bogus_path",
+        "message": "ValueError: Cannot mask with non-boolean array containing NA / NaN values"
+      },
+      {
+        "test": "tests.test_routes::test_export_png",
+        "message": "AttributeError: 'float' object has no attribute 'numerator'"
+      },
+      {
+        "test": "tests.test_search::test_api_search_activities",
+        "message": "AssertionError: expected at least one Activities hit for 'learning'"
+      },
+      {
+        "test": "tests.test_search::test_rendered_nav_shows_groups_and_sections",
+        "message": "AttributeError: 'float' object has no attribute 'numerator'"
+      },
+      {
+        "test": "tests.test_tours::test_tour_engine_wired_into_dashboard",
+        "message": "AttributeError: 'float' object has no attribute 'numerator'"
+      },
+      {
+        "test": "tests.test_wellness::test_chief_pages_are_gated",
+        "message": "AssertionError: /wellness/approvals"
+      }
+    ]
+  },
+  "preflight": {
+    "failures": 0,
+    "warnings": [
+      "No _backups directory available for size comparison"
+    ]
+  },
+  "baseline_comparison": {
+    "shared_failure_names": 35,
+    "additional_failure_names": [
+      "tests.test_csm_public_form::test_the_date_is_shown_not_asked"
+    ],
+    "additional_failure_reproduced_on_unchanged_base": {
+      "total": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "errors": 0,
+      "seconds": 2.258,
+      "started_utc": "2026-10-19T23:17:39.180569+00:00",
+      "failures": [
+        {
+          "test": "tests.test_csm_public_form::test_the_date_is_shown_not_asked",
+          "message": "assert 'October 19, 2026' in '<!doctype html>\\n<html lang=\"en\">\\n<head>\\n<meta charset=\"utf-8\">\\n<meta name=\"viewport\" content=\"width=device-width,...\",\\n  discard: \"Discard\"\\n};</script>\\n\\n<script src=\"/static/js/app.j"
+        }
+      ]
+    },
+    "note": "Twelve clock/calendar failures from the earlier audit no longer occurred; do not attribute those to these repairs. The signature test now checks its 404 before deleting its account."
+  },
+  "production": {
+    "access_authorized": true,
+    "reachable": false,
+    "connection_result": "Proxy CONNECT rejected with HTTP 403; current enforced policy excludes production host",
+    "login_used": false,
+    "deployment_performed": false
+  },
+  "reviewed_source_sha256": {
+    "app.py": "2e99edad7962d09d26e5f4ce90e157087e2dcc44012bd6c20e104a60777b2383",
+    "auth.py": "61999b13713caf37a5501bb49d6129e741e7fedc8ba9da72d2f0899f20351a5b",
+    "backups.py": "d302df82bad0846f92b402fbf8c07b6ab22d24da2f118a0d1591f23d0c6c4823",
+    "storage.py": "190c67ee10d0e7e5c0a428a82354369c4050bd153cfcb1631e2cb18aad4c1de5",
+    "templates/me.html": "197a9ef812ab9d466036018f91acb66dd693a30742e59271f623b690a27f116b",
+    "tests/conftest.py": "91eeef71776a014d268656ea9f74163d060a60c60650dd209c1845ca3fe3e4aa",
+    "tests/test_bureau_access.py": "a4a7aeb0f59481cd8ec25c09ba3e6ae2f459d65243d13904b6a1bcb167671d8f",
+    "tests/test_colleague_status.py": "07363b12a6aaa80201f04f6c5d54cfe333c4a5313c050f0a5085d08213102beb",
+    "tests/test_documents_gmail_review.py": "4c80952177d63b8d5c9efd8f73f145c1c126f74f6e625688dd781c78352fddd5",
+    "tests/test_documents_routes.py": "771366d22388f409bf226552b2bf74098d77ad01d2c9ffe9cc543c32ba689431",
+    "tests/test_documents_setup.py": "f71ce72677a687d31bad67be3012d765e9e4cb2ba870c394fa64c6efa98373df",
+    "tests/test_landing_insights.py": "886eb4f8477aac1a4c71ac4283a0782267b08fdd0b866ff180266398edbaa215",
+    "tests/test_notifications.py": "8807b347e90ea3fd20a719f82b2a5e64ce912252c606f8d605ceee5f093fc8ea",
+    "tests/test_onboarding_flow.py": "b57bf6073b51d9b694ab82c610a156586537e0b0919f597eb109fb84b627cc65",
+    "tests/test_persist_health.py": "535ccb49103af7a796f90b6a7fb0e32ca263807ab96c39478f1756022955dac9",
+    "tests/test_profile_edit.py": "eff2a5fc1f49976fbe0cda5fd2c57240ef86e61d085cc3117863c701afad87d5",
+    "tests/test_pwa.py": "da0761b52f7a0002ef53df0b76d301c666733d2d88dfc72779efcc6162e50a89",
+    "tests/test_section_oic.py": "fad9f2a25eb9b333e97a07365903eaa9b47980184a5c39cb1c68741495535b54",
+    "tests/test_short_links.py": "7aab2452e15f95638daf961f107a81cf577c9f86fde87005caaa4a100c64a0d0",
+    "tests/test_viewer_routing.py": "cd982b27383a83ab8297817e2ed476cfd3c26c5e1daec4b59e55d80d34c7ea87",
+    "tests/test_wellness.py": "4ed6372fd1804b375a62fd80f53ae346c01a6aeff855e8bca6530983b097e794",
+    "tests/test_work.py": "e756fc85590e70316d25720a677a71cf95e063acc8e535d46529b881ca1fe4bb",
+    "tests/test_work_arrangement.py": "43af3efadae4e32e86ce7447ee7320c825d65273c5e0cf13e5b1e18ca0a2d8c5",
+    "version.py": "cc38ce607133bff696d6eb8e18a7b845a883ac99d602cd3adf06db9a3e1af85f",
+    "tests/test_phase0_security.py": "4b02b589c8842e6bf3cfc92a597ae33a2e8f717c6ddbf81c1f4158b7ba182d0e",
+    "tests/test_phase0_persistence.py": "fad6364455c86467ff064dde67d1acef0c9f469e2b2f18b9cc8378a7af89dcb0"
+  }
+}

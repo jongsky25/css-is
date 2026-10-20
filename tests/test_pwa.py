@@ -7,6 +7,7 @@ on public survey pages (all anonymous/public routes).
 Phase 2 — the offline submission queue's server side: the submission_log dedup that
 makes a replayed offline POST idempotent.
 """
+from tests.conftest import session_token
 import json
 import sqlite3
 
@@ -64,16 +65,27 @@ def test_public_form_wires_pwa(client, sample_ids):
 
 # ── Phase 2: offline-queue dedup (submission_log) ─────────────────────────────
 
-def _open_token(client, db_path):
-    """A qr_token whose form window is currently open (GET /r/<tok> → 200)."""
-    conn = sqlite3.connect(db_path)
-    toks = [r[0] for r in conn.execute(
-        "SELECT qr_token FROM form_instance WHERE qr_token IS NOT NULL").fetchall()]
-    conn.close()
-    for tk in toks:
-        if client.get(f"/r/{tk}").status_code == 200:
-            return tk
-    return None
+@pytest.fixture
+def offline_form(app_mod, tmp_path, monkeypatch, client):
+    """An open synthetic survey; replay checks need no production snapshot."""
+    import storage as st
+    import tzutil
+    from datetime import timedelta
+    path = str(tmp_path / 'offline.db')
+    monkeypatch.setattr(app_mod, 'DB', path)
+    conn = app_mod.get_conn()
+    try:
+        rp = st.add_rp(conn, 'Synthetic speaker', True)
+        now = tzutil.now_local()
+        fid = st.create_form_instance(conn, 3, 'F3', now.date().isoformat(),
+                                      rp_id=rp, topic='Offline replay test')
+        st.set_response_window(conn, fid, (now - timedelta(days=1)).isoformat(),
+                               (now + timedelta(days=1)).isoformat())
+        token = conn.execute('SELECT qr_token FROM form_instance WHERE id=?', (fid,)).fetchone()[0]
+    finally:
+        conn.close()
+    assert client.get(f'/r/{token}').status_code == 200
+    return path, token
 
 
 def _response_count(db_path, qr_token):
@@ -97,10 +109,8 @@ def test_submission_log_helpers(db_path):
     conn.close()
 
 
-def test_offline_replay_records_once(client, db_path):
-    tk = _open_token(client, db_path)
-    if not tk:
-        pytest.skip("no open form in the test DB")
+def test_offline_replay_records_once(client, offline_form):
+    db_path, tk = offline_form
     body = {"submission_id": "REPLAY-PWA-1", "A": "5", "remarks": "from the field"}
     before = _response_count(db_path, tk)
 
@@ -114,22 +124,18 @@ def test_offline_replay_records_once(client, db_path):
     assert _response_count(db_path, tk) == before + 1   # no duplicate
 
 
-def test_no_submission_id_is_not_deduped(client, db_path):
+def test_no_submission_id_is_not_deduped(client, offline_form):
     # Regression: an ordinary (online) submit carries no submission_id and is
     # recorded every time — behaviour must be unchanged by Phase 2.
-    tk = _open_token(client, db_path)
-    if not tk:
-        pytest.skip("no open form in the test DB")
+    db_path, tk = offline_form
     before = _response_count(db_path, tk)
     client.post(f"/r/{tk}", data={"A": "4"})
     client.post(f"/r/{tk}", data={"A": "4"})
     assert _response_count(db_path, tk) == before + 2
 
 
-def test_seq_replay_deduped(client, db_path):
-    tk = _open_token(client, db_path)
-    if not tk:
-        pytest.skip("no open form in the test DB")
+def test_seq_replay_deduped(client, offline_form):
+    db_path, tk = offline_form
     body = {"tokens": tk, "submission_id": "SEQ-REPLAY-PWA-1"}
     r1 = client.post("/seq", data=body)
     assert r1.status_code == 200
@@ -139,9 +145,8 @@ def test_seq_replay_deduped(client, db_path):
     assert r2.json().get("deduped") is True
 
 
-# ── Edge-retry shield (July 2026: the hosting edge 5xx'd requests the app never
-# saw — the SW retries any 5xx that lacks the app's X-CSS-App marker, so every
-# app-originated response must carry it, including crash 500s). ───────────────
+# App response identification: GET retries avoid app-originated failures.
+# Absence of a marker does not establish that a write was never committed.
 
 def test_every_response_carries_app_marker_header(client):
     # success, redirect, and 4xx all stamp X-CSS-App
@@ -151,8 +156,7 @@ def test_every_response_carries_app_marker_header(client):
 
 
 def test_unhandled_crash_500_still_carries_app_marker(app_mod):
-    # A 5xx WITHOUT the marker is the SW's "retry this, even a POST" signal —
-    # an in-app crash must never qualify, or a crashed write could re-execute.
+    # An app crash should be identifiable so GETs do not retry it.
     # (Signed-in client: the auth gate would otherwise redirect the test route
     # to /login before it can crash.)
     from starlette.testclient import TestClient
@@ -166,7 +170,7 @@ def test_unhandled_crash_500_still_carries_app_marker(app_mod):
     conn = st.connect(app_mod.DB)
     u = st.get_admin_user(conn, ROLE_USERS["admin"]); conn.close()
     c = TestClient(app_mod.app, raise_server_exceptions=False)
-    c.cookies.set(auth.COOKIE_NAME, auth.make_token(
+    c.cookies.set(auth.COOKIE_NAME, session_token(
         {"id": u["id"], "username": u["username"], "role": u["role"]}))
     r = c.get("/_test_boom_route")
     assert r.status_code == 500
@@ -178,5 +182,6 @@ def test_service_worker_has_edge_retry_shield(client):
     assert "x-css-app" in sw
     assert "fetchRetrying" in sw
     assert "isEdgeError" in sw
-    # writes are shielded too (no longer returned early before respondWith)
+    # Non-GETs bypass the shield; executable regression coverage is in
+    # test_service_worker_retry.py.
     assert 'req.method !== "GET"' in sw

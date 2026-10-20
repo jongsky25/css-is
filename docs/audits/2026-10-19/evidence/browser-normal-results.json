@@ -1,0 +1,636 @@
+[
+  {
+    "path": "/",
+    "width": 1440,
+    "status": 200,
+    "metrics": {
+      "title": "Home \u2014 Office Connect",
+      "headings": [
+        "Hi, Audit \ud83d\udc4b",
+        "Your to-do",
+        "Coming up",
+        "Wellness this week",
+        "Alternative Work Arrangement",
+        "Activities your team ran or spoke at",
+        "How your companion grows"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 1440,
+      "visibleLinks": 43,
+      "visibleControls": 25,
+      "navigation": [
+        {
+          "ttfbMs": 16.400000000023283,
+          "domContentLoadedMs": 78.89999999990687
+        }
+      ]
+    },
+    "violations": [
+      {
+        "id": "aria-required-children",
+        "impact": "critical",
+        "help": "Certain ARIA roles must contain particular children",
+        "nodes": [
+          {
+            "target": [
+              ".deck-dots"
+            ],
+            "summary": "Fix any of the following:\n  Element has children which are not allowed: button[aria-current], button[aria-label]"
+          }
+        ],
+        "count": 1
+      },
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": [
+              ".gs-kbd"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 7.9pt (10.56px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "section[aria-label=\"Recent\"] > .foot"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 9.1pt (12.16px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".locked.gl-step[role=\"listitem\"]:nth-child(2) > .gl-pts"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 8.4pt (11.2px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".locked.gl-step[role=\"listitem\"]:nth-child(3) > .gl-pts"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 8.4pt (11.2px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".locked.gl-step[role=\"listitem\"]:nth-child(4) > .gl-pts"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 8.4pt (11.2px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".locked.gl-step[role=\"listitem\"]:nth-child(5) > .gl-pts"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 8.4pt (11.2px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ],
+        "count": 7
+      },
+      {
+        "id": "target-size",
+        "impact": "serious",
+        "help": "All touch targets must be 24px large, or leave sufficient space",
+        "nodes": [
+          {
+            "target": [
+              "button[aria-label=\"Who is in the office\"][aria-current=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (20px by 8px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 13.6px instead of at least 24px."
+          },
+          {
+            "target": [
+              "button[aria-label=\"Who is on-site now, by weekday\"]"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (8px by 8px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 1.6px instead of at least 24px."
+          },
+          {
+            "target": [
+              "button[aria-label=\"What the team is on now\"]"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (8px by 8px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 1.6px instead of at least 24px."
+          },
+          {
+            "target": [
+              "button[aria-label=\"The day the office empties now\"]"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (8px by 8px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 1.6px instead of at least 24px."
+          },
+          {
+            "target": [
+              "button[aria-label=\"Who has filed\"]"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (8px by 8px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 1.6px instead of at least 24px."
+          }
+        ],
+        "count": 5
+      }
+    ],
+    "js_errors": []
+  },
+  {
+    "path": "/wellness",
+    "width": 1440,
+    "status": 200,
+    "metrics": {
+      "title": "Wellness \u2014 Office Connect",
+      "headings": [
+        "Wellness break",
+        "My break requests"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 1440,
+      "visibleLinks": 24,
+      "visibleControls": 18,
+      "navigation": [
+        {
+          "ttfbMs": 13.099999999976717,
+          "domContentLoadedMs": 56.59999999997672
+        }
+      ]
+    },
+    "violations": [
+      {
+        "id": "nested-interactive",
+        "impact": "serious",
+        "help": "Interactive controls must not be nested",
+        "nodes": [
+          {
+            "target": [
+              ".avwrap"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants"
+          }
+        ],
+        "count": 1
+      }
+    ],
+    "js_errors": []
+  },
+  {
+    "path": "/dashboard",
+    "width": 1440,
+    "status": 200,
+    "metrics": {
+      "title": "Insights \u00b7 Pulse \u2014 Office Connect",
+      "headings": [
+        "Pulse",
+        "What has been good",
+        "Worth looking at",
+        "Overall pulse"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 1440,
+      "visibleLinks": 35,
+      "visibleControls": 20,
+      "navigation": [
+        {
+          "ttfbMs": 16.400000000023283,
+          "domContentLoadedMs": 65.5
+        }
+      ]
+    },
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": [
+              ".tone-good.vital:nth-child(1) > .spark-chips > .chip:nth-child(1) > i"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.48 (foreground color: #94a3b8, background color: #f0fff4, font size: 8.9pt (11.84px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".tone-good.vital:nth-child(1) > .spark-chips > .chip:nth-child(3) > i"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.48 (foreground color: #94a3b8, background color: #f0fff4, font size: 8.9pt (11.84px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".tone-good.vital:nth-child(1) > .spark-chips > .chip:nth-child(5) > i"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.48 (foreground color: #94a3b8, background color: #f0fff4, font size: 8.9pt (11.84px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".tone-good.vital:nth-child(1) > .spark-chips > .chip:nth-child(7) > i"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.48 (foreground color: #94a3b8, background color: #f0fff4, font size: 8.9pt (11.84px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".tone-good.vital:nth-child(1) > .spark-note"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.48 (foreground color: #94a3b8, background color: #f0fff4, font size: 8.2pt (10.88px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".tone-good.vital:nth-child(1) > .foot"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.48 (foreground color: #94a3b8, background color: #f0fff4, font size: 8.9pt (11.84px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ],
+        "count": 17
+      }
+    ],
+    "js_errors": []
+  },
+  {
+    "path": "/r/{synthetic-token}",
+    "width": 1440,
+    "status": 200,
+    "metrics": {
+      "title": "Survey \u2014 Office Connect",
+      "headings": [
+        "Service feedback",
+        "Help us serve you better!"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 1440,
+      "visibleLinks": 3,
+      "visibleControls": 112,
+      "navigation": [
+        {
+          "ttfbMs": 13.900000000023283,
+          "domContentLoadedMs": 37.79999999993015
+        }
+      ]
+    },
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": [
+              ".pub-foot"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.36 (foreground color: #94a3b8, background color: #f4f6fa, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ],
+        "count": 1
+      },
+      {
+        "id": "target-size",
+        "impact": "serious",
+        "help": "All touch targets must be 24px large, or leave sufficient space",
+        "nodes": [
+          {
+            "target": [
+              "#na-SQD0"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (13px by 13px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 21.4px instead of at least 24px."
+          },
+          {
+            "target": [
+              "#na-SQD1"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (13px by 13px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 21.4px instead of at least 24px."
+          },
+          {
+            "target": [
+              "#na-SQD2"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (13px by 13px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 21.4px instead of at least 24px."
+          },
+          {
+            "target": [
+              "#na-SQD3"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (13px by 13px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 21.4px instead of at least 24px."
+          },
+          {
+            "target": [
+              "#na-SQD4"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (13px by 13px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 21.4px instead of at least 24px."
+          },
+          {
+            "target": [
+              "#na-SQD5"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (13px by 13px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 21.4px instead of at least 24px."
+          }
+        ],
+        "count": 9
+      }
+    ],
+    "js_errors": []
+  },
+  {
+    "path": "/",
+    "width": 390,
+    "status": 200,
+    "metrics": {
+      "title": "Home \u2014 Office Connect",
+      "headings": [
+        "Hi, Audit \ud83d\udc4b",
+        "Your to-do",
+        "Coming up",
+        "Wellness this week",
+        "Alternative Work Arrangement",
+        "Activities your team ran or spoke at",
+        "How your companion grows"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 390,
+      "visibleLinks": 23,
+      "visibleControls": 10,
+      "navigation": [
+        {
+          "ttfbMs": 14.400000000023283,
+          "domContentLoadedMs": 67
+        }
+      ]
+    },
+    "violations": [
+      {
+        "id": "aria-required-children",
+        "impact": "critical",
+        "help": "Certain ARIA roles must contain particular children",
+        "nodes": [
+          {
+            "target": [
+              ".deck-dots"
+            ],
+            "summary": "Fix any of the following:\n  Element has children which are not allowed: button[aria-current], button[aria-label]"
+          }
+        ],
+        "count": 1
+      },
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": [
+              "section[aria-label=\"Recent\"] > .foot"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 9.1pt (12.16px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".locked.gl-step[role=\"listitem\"]:nth-child(2) > .gl-pts"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 8.4pt (11.2px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".locked.gl-step[role=\"listitem\"]:nth-child(3) > .gl-pts"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.56 (foreground color: #94a3b8, background color: #ffffff, font size: 8.4pt (11.2px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ],
+        "count": 3
+      },
+      {
+        "id": "scrollable-region-focusable",
+        "impact": "serious",
+        "help": "Scrollable region must have keyboard access",
+        "nodes": [
+          {
+            "target": [
+              ".gl-strip"
+            ],
+            "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+          }
+        ],
+        "count": 1
+      },
+      {
+        "id": "target-size",
+        "impact": "serious",
+        "help": "All touch targets must be 24px large, or leave sufficient space",
+        "nodes": [
+          {
+            "target": [
+              "button[aria-label=\"Who is in the office\"][aria-current=\"true\"]"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (20px by 8px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 13.6px instead of at least 24px."
+          },
+          {
+            "target": [
+              "button[aria-label=\"Who is on-site now, by weekday\"]"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (8px by 8px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 1.6px instead of at least 24px."
+          },
+          {
+            "target": [
+              "button[aria-label=\"What the team is on now\"]"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (8px by 8px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 1.6px instead of at least 24px."
+          },
+          {
+            "target": [
+              "button[aria-label=\"The day the office empties now\"]"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (8px by 8px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 1.6px instead of at least 24px."
+          },
+          {
+            "target": [
+              "button[aria-label=\"Who has filed\"]"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (8px by 8px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 1.6px instead of at least 24px."
+          }
+        ],
+        "count": 5
+      }
+    ],
+    "js_errors": []
+  },
+  {
+    "path": "/wellness",
+    "width": 390,
+    "status": 200,
+    "metrics": {
+      "title": "Wellness \u2014 Office Connect",
+      "headings": [
+        "Wellness break",
+        "My break requests"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 390,
+      "visibleLinks": 4,
+      "visibleControls": 4,
+      "navigation": [
+        {
+          "ttfbMs": 13.100000000093132,
+          "domContentLoadedMs": 39.60000000009313
+        }
+      ]
+    },
+    "violations": [
+      {
+        "id": "nested-interactive",
+        "impact": "serious",
+        "help": "Interactive controls must not be nested",
+        "nodes": [
+          {
+            "target": [
+              ".avwrap"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants"
+          }
+        ],
+        "count": 1
+      }
+    ],
+    "js_errors": []
+  },
+  {
+    "path": "/dashboard",
+    "width": 390,
+    "status": 200,
+    "metrics": {
+      "title": "Insights \u00b7 Pulse \u2014 Office Connect",
+      "headings": [
+        "Pulse",
+        "What has been good",
+        "Worth looking at",
+        "Overall pulse"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 390,
+      "visibleLinks": 15,
+      "visibleControls": 5,
+      "navigation": [
+        {
+          "ttfbMs": 13.5,
+          "domContentLoadedMs": 50.699999999953434
+        }
+      ]
+    },
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": [
+              ".tone-good.vital:nth-child(1) > .spark-chips > .chip:nth-child(1) > i"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.48 (foreground color: #94a3b8, background color: #f0fff4, font size: 8.9pt (11.84px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".tone-good.vital:nth-child(1) > .spark-chips > .chip:nth-child(3) > i"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.48 (foreground color: #94a3b8, background color: #f0fff4, font size: 8.9pt (11.84px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".tone-good.vital:nth-child(1) > .spark-chips > .chip:nth-child(5) > i"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.48 (foreground color: #94a3b8, background color: #f0fff4, font size: 8.9pt (11.84px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".tone-good.vital:nth-child(1) > .spark-chips > .chip:nth-child(7) > i"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.48 (foreground color: #94a3b8, background color: #f0fff4, font size: 8.9pt (11.84px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".tone-good.vital:nth-child(1) > .spark-note"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.48 (foreground color: #94a3b8, background color: #f0fff4, font size: 8.2pt (10.88px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".tone-good.vital:nth-child(1) > .foot"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.48 (foreground color: #94a3b8, background color: #f0fff4, font size: 8.9pt (11.84px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ],
+        "count": 17
+      }
+    ],
+    "js_errors": []
+  },
+  {
+    "path": "/r/{synthetic-token}",
+    "width": 390,
+    "status": 200,
+    "metrics": {
+      "title": "Survey \u2014 Office Connect",
+      "headings": [
+        "Service feedback",
+        "Help us serve you better!"
+      ],
+      "horizontalOverflow": false,
+      "documentWidth": 390,
+      "visibleLinks": 3,
+      "visibleControls": 112,
+      "navigation": [
+        {
+          "ttfbMs": 10.099999999976717,
+          "domContentLoadedMs": 32.90000000002328
+        }
+      ]
+    },
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": [
+              ".pub-foot"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.36 (foreground color: #94a3b8, background color: #f4f6fa, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ],
+        "count": 1
+      },
+      {
+        "id": "target-size",
+        "impact": "serious",
+        "help": "All touch targets must be 24px large, or leave sufficient space",
+        "nodes": [
+          {
+            "target": [
+              "#na-SQD0"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (13px by 13px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 21.4px instead of at least 24px."
+          },
+          {
+            "target": [
+              "#na-SQD1"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (13px by 13px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 21.4px instead of at least 24px."
+          },
+          {
+            "target": [
+              "#na-SQD2"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (13px by 13px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 21.4px instead of at least 24px."
+          },
+          {
+            "target": [
+              "#na-SQD3"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (13px by 13px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 21.4px instead of at least 24px."
+          },
+          {
+            "target": [
+              "#na-SQD4"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (13px by 13px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 21.4px instead of at least 24px."
+          },
+          {
+            "target": [
+              "#na-SQD5"
+            ],
+            "summary": "Fix any of the following:\n  Target has insufficient size (13px by 13px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 21.4px instead of at least 24px."
+          }
+        ],
+        "count": 9
+      }
+    ],
+    "js_errors": []
+  }
+]

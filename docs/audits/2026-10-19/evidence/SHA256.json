@@ -1,0 +1,16 @@
+{
+  "api-contract.json": "67151dde1d75a80c08c7f71a336498425f735a0f45b2f886f21b38a0139a3b61",
+  "authority-ai-probes.json": "f55ad250aca3802dc6bb4a1fb561f992d4167dd6fd42e1063f8ae12f45b7cc6a",
+  "browser-normal-results.json": "08cdbafe490023c263446eb6ec14b9f74f2fae7f323d696fe3022f4adc7a4acf",
+  "browser-results.json": "fa1db813ccdea4f3034fbe33989b05f8c0d224068543b6cc6e22156523c12123",
+  "dashboard-desktop.png": "9565aee31b6c0f25f0343ddb099f5c34ac89d448803570a2eb0c3e3a439fc593",
+  "dependency-summary.json": "b5beeca1b7c874175ade0078659a5f1e89671a6eba2d05a1db1e66909f56707e",
+  "home-mobile.png": "e259187a0457f1614a4d95b7722a8af25f0341a8166c505c8836c15f749bcecc",
+  "performance.json": "ce2540aaa2460bb08db99598580ff666bf5b34fbb44f644278a4eeb6be5a5781",
+  "persistence-probe.json": "69e7d28da42c6b50b90299c78925bc701a02a19285e180a06b02ba29b1812a3e",
+  "resolved-audit-requirements.txt": "d25277e9065c10915106066cf5cdba0a416c5f7b36b88cf4390a5332deab7deb",
+  "retry-probe.json": "3b46e2883be90bc256bf612e0ef75d0ec61a782fa357e5155f00ab9b8ed4e506",
+  "security-probes.json": "2e7c0337f468c785e649630967adf1b9fe4437f3026107656b913e39f2fa919f",
+  "source-summary.json": "0d4820d9631535d7065e860db4f53d717797821c04484ce1d0f49efbf3c1213e",
+  "test-summary.json": "3151910fac6d7cf38f287e2d61fa9bd521d15712323756ea686974ab6f09a6b7"
+}

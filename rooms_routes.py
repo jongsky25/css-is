@@ -16,6 +16,7 @@ import ratelimit as rl
 import rooms
 import rooms_notify
 import storage as st
+from request_security import safe_local_return
 
 MODALITY_LABELS = {"f2f": "Face-to-face", "online": "Online", "hybrid": "Hybrid"}
 STATUS_BADGE = {   # status -> (badge colour, icon + word)
@@ -35,7 +36,7 @@ def _errkey(back):
 
 def _safe_next(value, default):
     """A same-site path we are willing to send someone back to (an activity page or the room pages)."""
-    v = (value or "").strip()
+    v = safe_local_return(value, default="")
     return v if v.startswith(_NEXT_OK) and "//" not in v and "\\" not in v and len(v) < 300 else default
 
 

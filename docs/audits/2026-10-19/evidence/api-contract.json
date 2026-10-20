@@ -1,0 +1,8 @@
+{
+  "paths": 362,
+  "operations": 411,
+  "write_operations": 224,
+  "operations_with_request_body_schema": 0,
+  "operations_with_security_definition": 0,
+  "security_schemes": []
+}

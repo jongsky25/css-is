@@ -1,0 +1,130 @@
+# Phased incremental roadmap
+
+This plan follows the [findings](FINDINGS.md) and [peer benchmarks](BENCHMARKS.md). It proposes small deployable changes, with production verification and restore evidence before migrations. It does not authorize or perform deployment. The [backlog CSV](backlog.csv) contains owners, dependencies, effort ranges and acceptance criteria for each package.
+
+## Planning assumptions
+
+**Execution update, 20 October 2026:** live verification is deferred at the user's direction. Phase 0 local repairs are implemented, and the next local slice addresses safe return URLs and service-worker write replay. See [current progress and next local sequence](../../PHASE1_LOCAL_PROGRESS.md). The historical audit below and its production-dependent acceptance gates remain unchanged.
+
+- Preserve the current FastAPI/Jinja application and office-specific workflows. Keep SQLite initially; query growth, blocking work and durability defects have concrete fixes independent of a database replacement.
+- Documents-to-Work is the proposed first workflow pilot because it combines permissions, approvals, external operations and performance concerns. Confirm this choice against actual staff priorities in Phase 0. A business-critical survey/reporting deadline can change the pilot order without postponing the security repairs.
+- There is no reliable production traffic, dataset, staffing or usability baseline yet. The live URL inferred from repository documentation is `https://equityinhealth-office-connect.hf.space`; its current deployment must be confirmed.
+- Effort ranges are preliminary **engineering person-days**, including focused tests and review. They are not calendar promises, and exclude procurement, staff availability, infrastructure approval and a full identity-platform migration. Re-estimate after Phase 0. An engineer working with a reviewer and part-time operations/QA support is the minimum practical delivery arrangement; independent security review of authority changes is preferable.
+- Mandatory security/durability work is prioritized before benefit-versus-effort scoring. For subsequent opportunities, compare staff frequency, time/error reduction, operational risk, integration demand, dependencies and evidence confidence. Record the assumptions instead of inventing numeric ROI.
+
+## Delivery overview
+
+| Phase | Delivered result | Packages | Preliminary effort | Exit gate |
+|---|---|---|---|---|
+| **0 — Contain and verify** | Self-service authority boundary repaired, revocable current-account sessions, demonstrably working recovery path | A00–A03 | 6–12 days | Authority/session regression tests and real snapshot/restore evidence; deployed exposure documented |
+| **1 — Establish a dependable foundation** | Managed authority, consistent request security, safer parsing/retries, reliable analytics and required release checks | A04–A12 | 17–33 days | Green reproducible release gate; boundary and failure-injection tests pass |
+| **2 — Improve one complete workflow** | Documents-to-Work pilot with bounded queries, responsive external jobs and clearer task/status flow | A13–A15 | 7–13 days | Pilot completion/error metrics and concurrency/permission tests meet agreed targets |
+| **3 — Expand usability improvements** | Shared accessibility repairs and clearer calendar/room/travel/survey journeys | A16–A18 | 5–10 days | Manual and automated accessibility checks; staff task evidence supports expansion |
+| **4 — Publish supported integrations** | Small typed API, scoped machine/delegated identities, reliable events and one useful external adapter | A19–A21 | 7–13 days | Independent client passes contract, scope, retry and revocation checks |
+| **5 — Add evaluated AI assistance** | Source-backed read assistance with privacy controls, evaluations and optional MCP adapter | A22–A24 | 7–13 days | Evaluation, permission and budget gates pass; write capabilities remain separately gated |
+| **6 — Make the scaling decision** | Evidence-backed hosting/database/cache/worker decision and capacity/recovery targets | A25 | 2–4 days | Representative load and recovery results justify either retaining or changing infrastructure |
+
+Total provisional implementation effort: **51–98 person-days** if all listed packages, including optional MCP work, are selected. This is a budgeting range for a broad program, not a commitment to one large release. Phase 0 is the immediate first release sequence. Later phases may be reduced after baseline measurements. Any database/hosting migration approved in Phase 6 requires its own estimate and rollout plan.
+
+## Phase 0 — Contain authority and durability risks
+
+**Owners:** backend/security lead and operations owner; business owner validates leadership assignments.
+
+1. **A00: Verify the running environment.** Record deployed revision/image, enabled modules, Python/dependency versions, data size, concurrency, active identity/leadership mappings, cookie/edge policy, storage paths and snapshot destinations. Obtain actual staff priorities and identify the accountable data/system owner. Inspect metadata first; use minimized representative data only where necessary. Run a restore into an isolated environment and reconcile sampled records.
+2. **A01: Close the self-service authority path.** Prevent ordinary profile editing from changing any directory field used for permission inference. Review existing privileged assignments and recent relevant audit entries with the owner. Preserve valid display/profile functionality. This containment does not require waiting for a full organizational-role redesign.
+3. **A02: Repair and prove persistence.** Replace the fresh-connection change-counter comparison; create a snapshot only marked successful after completion. Test multiple commits after the first snapshot, copy failure, restart and recovery. Align operations indicators and runbooks with actual behavior.
+4. **A03: Repair account/session revocation.** Resolve current account state consistently; add explicit revocation semantics and safe denied-account handling. Coordinate necessary forced sign-in with staff.
+
+**Reviewable release evidence:** before/after local regressions for F01–F03, an anonymized authority-assignment review, snapshot timestamps/generations, restore verification, release revision, rollback steps and operator checklist. No live exploit attempts are required to establish the code defects.
+
+**Provisional recovery objectives to agree:** no more than two minutes of committed-data loss and recovery within 30 minutes for the agreed failure scenario. These are proposed service objectives, not current capability claims. If remote snapshot cost/latency makes them unsuitable, select explicit alternatives based on business impact. Include attachments, configuration and required encryption/signing material in the recovery dependency inventory.
+
+## Phase 1 — Make security and releases consistent
+
+**Owners:** backend/security lead, release engineer, reporting owner.
+
+- **A04:** replace free-text authority inference with controlled organization assignments, including delegation and expiry. Migrate only reviewed assignments. Centralize the actor/permission contract while preserving explicit restricted-document grants and approval lineage.
+- **A05:** extend consistent CSRF/origin controls to cookie-authenticated writes; use one safe internal-redirect validator. Inventory explicit public and machine-callback exceptions.
+- **A06:** harden bootstrap, login/reset abuse controls, password hash migration and production cookie/header configuration. Assess organizational OIDC/MFA availability; a broad identity-provider migration is a separate decision.
+- **A07:** remove bearer tokens from logs, minimize AI text storage, define provider/retention/access rules and verify actual edge logs.
+- **A08:** lock dependencies, scan the built artifact and isolate untrusted PDF/OCR execution. Verify existing file/URL protections still hold.
+- **A09:** repair null/NaN analytics and MRR narrative issues against a documented reference dataset. Verify browser/export agreement and handling of small samples.
+- **A10:** make fixtures/date handling deterministic, repair preflight/smoke harnesses, and require tests before promotion. Exercise deployment-runtime parity, backup checks and rollback.
+- **A11:** stop automatic ambiguous write replay; introduce durable idempotency/status handling for priority mutations and update the installed service worker.
+- **A12:** protect the optional AI grounded-answer path immediately: keep official numeric answers deterministic or validate structured facts independently. Do not expand that mode until evaluation gates exist.
+
+**Release slices:** these packages can ship in reviewed groups; they do not need one simultaneous release. Security containment stays enabled throughout. Use required focused regressions from the first patch; expand to a fully green suite as fixture and application failures are resolved. A known failing test must have an explicit diagnosis and owner rather than an undocumented blanket skip.
+
+**Exit gate:** fresh checkout/build on the deployment runtime passes required checks without production data, the relevant threats and failure modes are covered, and operators can identify a failed job/backup/authentication boundary from safe diagnostics.
+
+## Phase 2 — Pilot Documents-to-Work end to end
+
+**Owners:** backend and UX leads, records officer, representative staff and approver.
+
+- **A13:** remove database work from static asset requests; reduce repeated Home/request permission queries; add permission-aware bounded registry queries and pagination. Compare old/new result sets for every permission scenario.
+- **A14:** offload blocking calls immediately, then introduce durable job status, leases and reconciliation for the pilot's external operations. Reuse document operation receipts. Bound worker concurrency and expose pending/failed/unknown states in ordinary language.
+- **A15:** observe baseline tasks, then refine one complete journey: find/register a document → confirm details → assign work → contribute → review the exact version → release → see delivery/closure status. Build on the existing personal to-do area and existing revision/approval controls. Include correction, rejected approval and lost-connection recovery.
+
+**Proposed engineering gates:** static asset requests perform zero application SQL; registry first-page query count stays bounded as total records grow; no unauthorized records appear in list/search/counts; a two-second simulated provider stall does not stall unrelated health/navigation requests; ambiguous delivery is reconciled without duplicate business effect.
+
+**Staff pilot:** recruit roughly 5–8 participants spanning staff, approvers and records roles if feasible. Collect completion, time, assistance, mistaken actions and confidence for the same task set before/after. This sample discovers friction; it is not a statistically representative productivity study. Agree improvement thresholds after measuring the baseline.
+
+## Phase 3 — Expand usability and accessibility
+
+**Owners:** UX/frontend lead and business owners for rooms/calendar, travel and surveys.
+
+- **A16:** repair shared contrast, control sizing, carousel semantics, keyboard scroll access and nested controls. Test desktop/mobile, light/dark theme, zoom, keyboard and one representative screen-reader/browser combination. Then recheck the primary journeys, including errors and dialogs.
+- **A17:** apply proven status/action patterns to room availability and reservations, calendar changes/feed subscription, travel filing and approvals. Clearly distinguish submitted, approved, scheduled, delivered, failed and canceled states. Validate terminology with staff and preserve calendar deep links and feed behavior.
+- **A18:** improve survey touch controls, error recovery and completion feedback; make reporting scope, date range, sample size and export meaning visible. Reconcile results against the corrected analytics reference dataset.
+
+**Exit gate:** agreed primary journeys meet WCAG 2.2 AA checks within the tested scope; no critical/serious automated findings remain there; manual focus/keyboard/error checks pass; staff can complete tasks with acceptable assistance/error rates. Track remaining issues explicitly instead of labeling the whole product certified.
+
+## Phase 4 — Establish a supported integration boundary
+
+**Owners:** backend/integration lead, security reviewer and owner of the first external system.
+
+1. **A19:** publish typed `/api/v1` contracts for a narrow useful workflow: selected document/work reads, task/status changes and operation status. Use consistent resource IDs, timezones, validation errors, pagination and revision preconditions. Keep business rules in shared services consumed by UI and API.
+2. **A20:** add scoped service principals or delegated OAuth according to actual client needs. Define consent, token lifetime, audience, rotation/revocation and audit actor attribution. Keep human approval authority distinct from machine access.
+3. **A21:** add signed versioned events, delivery receipts, deduplication and replay controls. Implement one adapter selected by the owner, such as Workspace automation, Microsoft 365/Power Automate or n8n. Use provider sandboxes/fakes before live credentials. Document ownership and failure recovery.
+
+**Exit gate:** a separate example client can use published documentation alone, scope/revocation tests pass, repeated deliveries are harmless, and an operator can reconcile a failed integration. Do not expose every existing browser route as a supported API at once.
+
+## Phase 5 — Add evaluated AI capabilities
+
+**Owners:** AI/application lead, security reviewer and business/data owner.
+
+- **A22:** create a versioned evaluation set for representative questions, exact facts, missing/stale sources, permissions, injection, refusals and tool errors. Define provider data contracts, retention, timeouts, cost budgets and fallback behavior. Require source IDs/versions/timestamps and independent validation for official numbers.
+- **A23:** pilot read assistance and drafts through existing domain services. Display evidence and uncertainty usefully. Log minimized outcome/latency/cost metadata and sampled quality review according to approved policy. Use deterministic UI links/actions where possible.
+- **A24 (optional):** add an MCP adapter over the supported API after a real client need is confirmed. Start with scoped reads. Validate token audience and user delegation; do not pass through shared administrative tokens. If later adding writes, require preview, explicit confirmation, current permission, exact-version preconditions, idempotency and a recorded result.
+
+**Suggested hard gates:** zero cross-user/unit/restricted-record leakage in the access test set; exact agreement for official numeric facts; all write tools refuse without appropriate current authorization and confirmation; safe fallback when providers fail or budget is exhausted. Set broader answer-quality targets from the actual use cases, and retain difficult failed cases in the evaluation set. Passing an evaluation does not guarantee no future errors.
+
+## Phase 6 — Decide infrastructure from measured constraints
+
+**Owners:** operations/backend lead and accountable system owner.
+
+**A25:** measure the corrected system with representative data and concurrent reads/writes: p50/p95/p99 latency, error rate, SQLite lock wait, CPU/RSS, event-loop delay, queue age, export/refresh duration, restore time and snapshot lag. Test the existing single-writer deployment's restart behavior and limits.
+
+| Evidence | Likely next decision |
+|---|---|
+| Query and worker fixes meet traffic/recovery objectives | Retain SQLite and simple hosting; document the capacity envelope and monitor it |
+| Sustained write contention or a requirement for multiple independent application writers | Evaluate PostgreSQL and managed backups with a rehearsed data migration |
+| Jobs dominate web resource use or must survive web restarts independently | Separate durable workers/queue first; choose infrastructure based on required concurrency and recovery |
+| Recovery/availability requirements exceed the current host's storage guarantees | Change storage/hosting topology and test failover/restore before promising availability |
+| Expensive repeated read/analytics work remains after query optimization | Add targeted cache/materialized results with authorization-aware keys and measured invalidation behavior |
+
+For any approved migration, use additive schemas, validation/backfill, record-count and business-total reconciliation, a documented cutover and rollback window, and tested recovery from an interrupted migration. Do not infer that adding web replicas is safe while SQLite/shared scheduler assumptions remain unchanged.
+
+## Every release: promotion and rollback
+
+1. Write the behavioral acceptance criteria and identify affected permissions/data contracts before implementation.
+2. Build a reproducible artifact. Run required tests, realistic synthetic migrations, dependency checks and appropriate browser/failure-injection checks.
+3. Restore the current backup into isolation before a risky data change. Verify actual records and required associated files.
+4. Review the concrete change, migration, release notes and rollback procedure with the accountable owner through the established deployment process.
+5. Promote to staging/pilot, then a small production cohort or feature flag where supported. For global security fixes, use rapid monitored rollout with focused compatibility checks.
+6. Compare errors, failed jobs, snapshot lag, denied-access anomalies, latency and staff task failures with baseline. Stop expansion or revert the affected feature if the gate fails.
+7. Roll back application behavior only when schema compatibility is proven. Prefer a forward repair for irreversible data changes; preserve new writes. Never reintroduce a known authorization defect as the default rollback. Retain security containment while correcting compatibility issues.
+
+## Decisions required from production discovery
+
+Record these in A00: actual deployment/revision; staff roles and active user count; peak/concurrent workload and growth; three highest-value workflows; data classification/retention; required recovery objectives; identity provider and external systems; ownership of travel/approval/reporting rules; and available engineering/operations time. These inputs refine sequencing and estimates, while the independently reproduced repairs remain actionable now.

@@ -1,3 +1,17 @@
+## 7.24 — October 20, 2026
+
+- Validate sign-in, onboarding, language, directory, room and installed-app return destinations through a shared local-path policy.
+- Stop service-worker replay of writes after ambiguous proxy failures; retain GET recovery and the existing deduplicated survey queue.
+- Refresh the service-worker cache generation so installed clients can adopt the repair.
+- Includes the unreleased 7.23 repairs; local candidate only, with live verification deferred.
+
+## 7.23 — October 19, 2026
+
+- Sign in again after this update; signing out and account access changes now revoke existing sign-ins.
+- Keep directory designations under administrator control while retaining other profile edits.
+- Save snapshots every interval, report stalled saves, and avoid overlapping timed-out snapshot workers.
+- Require fresh sign-in after restoring a backup.
+
 ## 7.22 — October 19, 2026
 
 - Open the calendar with Everything I can see selected when no other preferred view is saved.

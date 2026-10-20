@@ -1,5 +1,7 @@
 # Pre-production hardening checklist
 
+**October 19, 2026 update:** the deployed configuration still needs verification. Follow [Phase 0 repairs and rollout](docs/PHASE0_REPAIRS.md) for release 7.23, its session migration and recovery checks. Historical deployment assumptions below are not evidence of current settings.
+
 Steps to take the CSS-IS system from "internal LAN pilot" to a production-ready
 deployment on the Hugging Face Space `equityinhealth/office-connect`.
 
@@ -43,16 +45,13 @@ logins drop on every rebuild, and HTTPS cookie protection can't turn on.
 | `CSS_BASE_URL` | variable | `https://equityinhealth-office-connect.hf.space` | Pins the public origin for QR codes and share/email links (no trailing slash). |
 | `CSS_SECURE_COOKIES` | variable | `1` | Marks session + participant cookies `Secure` so they never ride plain HTTP. Code support shipped; this flag turns it on. |
 
-> Leave `CSS_DB` **UNSET** — see [DEPLOY.md](DEPLOY.md). This Space uses the
-> DB-in-repo round-trip model; pointing `CSS_DB` at `/data` would silently break
-> deploys. Do **not** enable persistent storage.
+> Verify `CSS_DB`, `CSS_PERSIST_DIR`, the actual mount and snapshot destination — see [DEPLOY.md](DEPLOY.md). Do not disable or reconfigure persistence based on historical DB-in-repository assumptions.
 
 Confirm uvicorn runs with `--proxy-headers` (in the Dockerfile / start command)
 so `request.base_url` and the Secure cookies see the real HTTPS scheme behind
 HF's proxy.
 
-After setting these, restart/rebuild the Space and verify: log in, redeploy, and
-confirm you stay logged in (proves `CSS_SESSION_SECRET` is sticking).
+After setting these, verify the HTTPS cookie attributes and sign-in behavior. Release 7.23 and database restores intentionally require a new sign-in, even with a stable signing secret; remaining signed in is no longer a valid standalone persistence check.
 
 ---
 

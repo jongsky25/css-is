@@ -14,6 +14,7 @@ every section's wellness claims, and it must not make its holder an approver.
 """
 from __future__ import annotations
 
+from tests.conftest import session_token
 import pytest
 
 import auth
@@ -74,7 +75,7 @@ def _u(conn, uid):
 def _client(app_mod, conn, uid):
     from starlette.testclient import TestClient
     c = TestClient(app_mod.app, raise_server_exceptions=True)
-    c.cookies.set(auth.COOKIE_NAME, auth.make_token(_u(conn, uid)))
+    c.cookies.set(auth.COOKIE_NAME, session_token(_u(conn, uid)))
     return c
 
 

@@ -4,6 +4,7 @@ validation, section-chief approver resolution, the apply→approve→reflect flo
 with its gamification side-effects, in-handler RBAC on the chief/admin pages,
 and the monitoring register export.
 """
+from tests.conftest import session_token
 import base64
 import io
 import re
@@ -69,7 +70,7 @@ def _client_for_id(app_mod, uid):
     u = st.get_admin_user_by_id(conn, uid)
     conn.close()
     c = TestClient(app_mod.app, raise_server_exceptions=True)
-    c.cookies.set(auth.COOKIE_NAME, auth.make_token(
+    c.cookies.set(auth.COOKIE_NAME, session_token(
         {"id": u["id"], "username": u["username"], "role": u["role"]}))
     return c
 

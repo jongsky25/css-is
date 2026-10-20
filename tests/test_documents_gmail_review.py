@@ -1,4 +1,5 @@
 """Gmail review UI, access boundaries, and explicit extraction confirmation."""
+from tests.conftest import session_token
 import json
 import re
 import pytest
@@ -23,7 +24,7 @@ def review(setup,monkeypatch,tmp_path):
     other=st.create_admin_user(conn,'unrelated@example.test','hash','salt','viewer',active=True)
     st.mark_onboarded(conn,other)
     with TestClient(app.app) as client:
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(st.get_admin_user_by_id(conn,uid)))
+        client.cookies.set(auth.COOKIE_NAME,session_token(st.get_admin_user_by_id(conn,uid)))
         yield conn,uid,result['document_id'],other,client
 
 
@@ -46,7 +47,7 @@ def test_source_badges_filters_export_and_permissions(review):
     assert detail.text.count('<option value=')>=2
     csv=client.get('/documents/export.csv?queue=gmail_review').text
     assert 'Incoming memo' in csv and 'Manual record' not in csv
-    client.cookies.set(auth.COOKIE_NAME,auth.make_token(st.get_admin_user_by_id(c,other)))
+    client.cookies.set(auth.COOKIE_NAME,session_token(st.get_admin_user_by_id(c,other)))
     assert 'Incoming memo' not in client.get('/documents?queue=gmail_review').text
     assert 'Incoming memo' not in client.get('/documents/export.csv?queue=gmail').text
     assert client.get('/documents/'+str(did)).status_code==404

@@ -1,0 +1,663 @@
+{
+  "revision": "3a45851",
+  "top_level_python_files": 131,
+  "python_lines": 81777,
+  "html_templates": 182,
+  "files": [
+    {
+      "file": "activity_admin.py",
+      "lines": 176,
+      "functions": 7
+    },
+    {
+      "file": "activity_messages.py",
+      "lines": 110,
+      "functions": 6
+    },
+    {
+      "file": "ai_core.py",
+      "lines": 855,
+      "functions": 35
+    },
+    {
+      "file": "app.py",
+      "lines": 17074,
+      "functions": 578
+    },
+    {
+      "file": "apply_directory.py",
+      "lines": 193,
+      "functions": 7
+    },
+    {
+      "file": "apply_speakers.py",
+      "lines": 252,
+      "functions": 15
+    },
+    {
+      "file": "auth.py",
+      "lines": 503,
+      "functions": 28
+    },
+    {
+      "file": "backups.py",
+      "lines": 666,
+      "functions": 34
+    },
+    {
+      "file": "birthday_cards.py",
+      "lines": 155,
+      "functions": 11
+    },
+    {
+      "file": "birthdays.py",
+      "lines": 148,
+      "functions": 14
+    },
+    {
+      "file": "calendar_answers.py",
+      "lines": 162,
+      "functions": 14
+    },
+    {
+      "file": "calendar_ics.py",
+      "lines": 179,
+      "functions": 12
+    },
+    {
+      "file": "calendar_import.py",
+      "lines": 630,
+      "functions": 27
+    },
+    {
+      "file": "calendar_import_apply.py",
+      "lines": 353,
+      "functions": 13
+    },
+    {
+      "file": "calendar_import_suggest.py",
+      "lines": 85,
+      "functions": 3
+    },
+    {
+      "file": "calendar_people.py",
+      "lines": 289,
+      "functions": 10
+    },
+    {
+      "file": "calendar_routes.py",
+      "lines": 1380,
+      "functions": 67
+    },
+    {
+      "file": "certificate.py",
+      "lines": 242,
+      "functions": 9
+    },
+    {
+      "file": "check_room_approvers.py",
+      "lines": 91,
+      "functions": 2
+    },
+    {
+      "file": "close_feedback.py",
+      "lines": 57,
+      "functions": 1
+    },
+    {
+      "file": "consolidate_titles.py",
+      "lines": 185,
+      "functions": 8
+    },
+    {
+      "file": "csm_report.py",
+      "lines": 712,
+      "functions": 31
+    },
+    {
+      "file": "css_is_engine.py",
+      "lines": 347,
+      "functions": 16
+    },
+    {
+      "file": "daily_backup.py",
+      "lines": 158,
+      "functions": 7
+    },
+    {
+      "file": "dashboard_docs.py",
+      "lines": 1926,
+      "functions": 86
+    },
+    {
+      "file": "dashboard_export.py",
+      "lines": 1069,
+      "functions": 30
+    },
+    {
+      "file": "dashboard_insights.py",
+      "lines": 4450,
+      "functions": 172
+    },
+    {
+      "file": "demo.py",
+      "lines": 165,
+      "functions": 4
+    },
+    {
+      "file": "deploy_hf.py",
+      "lines": 415,
+      "functions": 11
+    },
+    {
+      "file": "documents.py",
+      "lines": 776,
+      "functions": 30
+    },
+    {
+      "file": "documents_actions.py",
+      "lines": 123,
+      "functions": 6
+    },
+    {
+      "file": "documents_annotations.py",
+      "lines": 118,
+      "functions": 6
+    },
+    {
+      "file": "documents_calendar.py",
+      "lines": 36,
+      "functions": 2
+    },
+    {
+      "file": "documents_dtrak.py",
+      "lines": 116,
+      "functions": 3
+    },
+    {
+      "file": "documents_email.py",
+      "lines": 151,
+      "functions": 5
+    },
+    {
+      "file": "documents_file_text.py",
+      "lines": 79,
+      "functions": 2
+    },
+    {
+      "file": "documents_gmail_settings.py",
+      "lines": 68,
+      "functions": 5
+    },
+    {
+      "file": "documents_instruction_tags.py",
+      "lines": 64,
+      "functions": 5
+    },
+    {
+      "file": "documents_intake.py",
+      "lines": 540,
+      "functions": 24
+    },
+    {
+      "file": "documents_intake_routes.py",
+      "lines": 191,
+      "functions": 15
+    },
+    {
+      "file": "documents_memo.py",
+      "lines": 55,
+      "functions": 1
+    },
+    {
+      "file": "documents_notify.py",
+      "lines": 156,
+      "functions": 5
+    },
+    {
+      "file": "documents_ocr.py",
+      "lines": 131,
+      "functions": 3
+    },
+    {
+      "file": "documents_operations.py",
+      "lines": 354,
+      "functions": 16
+    },
+    {
+      "file": "documents_page_reader.py",
+      "lines": 104,
+      "functions": 2
+    },
+    {
+      "file": "documents_permissions.py",
+      "lines": 94,
+      "functions": 11
+    },
+    {
+      "file": "documents_reader.py",
+      "lines": 356,
+      "functions": 8
+    },
+    {
+      "file": "documents_routes.py",
+      "lines": 687,
+      "functions": 33
+    },
+    {
+      "file": "documents_rules.py",
+      "lines": 115,
+      "functions": 6
+    },
+    {
+      "file": "documents_search.py",
+      "lines": 90,
+      "functions": 4
+    },
+    {
+      "file": "documents_storage.py",
+      "lines": 216,
+      "functions": 4
+    },
+    {
+      "file": "documents_workspace.py",
+      "lines": 96,
+      "functions": 3
+    },
+    {
+      "file": "feedback.py",
+      "lines": 170,
+      "functions": 6
+    },
+    {
+      "file": "fix_timezone_history.py",
+      "lines": 210,
+      "functions": 5
+    },
+    {
+      "file": "gdocs_relay.py",
+      "lines": 128,
+      "functions": 12
+    },
+    {
+      "file": "harmonize.py",
+      "lines": 545,
+      "functions": 29
+    },
+    {
+      "file": "i18n.py",
+      "lines": 591,
+      "functions": 2
+    },
+    {
+      "file": "import_csm_blhsd.py",
+      "lines": 268,
+      "functions": 8
+    },
+    {
+      "file": "mailer.py",
+      "lines": 1742,
+      "functions": 68
+    },
+    {
+      "file": "meet_relay.py",
+      "lines": 142,
+      "functions": 13
+    },
+    {
+      "file": "merge_duplicate_attendees.py",
+      "lines": 122,
+      "functions": 5
+    },
+    {
+      "file": "migrate.py",
+      "lines": 414,
+      "functions": 24
+    },
+    {
+      "file": "monitoring.py",
+      "lines": 278,
+      "functions": 16
+    },
+    {
+      "file": "name_cleanup.py",
+      "lines": 416,
+      "functions": 18
+    },
+    {
+      "file": "office_answers.py",
+      "lines": 220,
+      "functions": 14
+    },
+    {
+      "file": "office_calendar.py",
+      "lines": 1577,
+      "functions": 62
+    },
+    {
+      "file": "office_connect.py",
+      "lines": 1301,
+      "functions": 36
+    },
+    {
+      "file": "pull_backup.py",
+      "lines": 290,
+      "functions": 13
+    },
+    {
+      "file": "qa_preflight.py",
+      "lines": 142,
+      "functions": 8
+    },
+    {
+      "file": "qa_rules.py",
+      "lines": 142,
+      "functions": 5
+    },
+    {
+      "file": "qa_smoke.py",
+      "lines": 245,
+      "functions": 6
+    },
+    {
+      "file": "ratelimit.py",
+      "lines": 92,
+      "functions": 4
+    },
+    {
+      "file": "realtime.py",
+      "lines": 33,
+      "functions": 3
+    },
+    {
+      "file": "rechain_audit.py",
+      "lines": 65,
+      "functions": 1
+    },
+    {
+      "file": "recurrence.py",
+      "lines": 208,
+      "functions": 14
+    },
+    {
+      "file": "reference_match.py",
+      "lines": 283,
+      "functions": 11
+    },
+    {
+      "file": "refile_lost_feedback.py",
+      "lines": 121,
+      "functions": 2
+    },
+    {
+      "file": "reg_questions.py",
+      "lines": 259,
+      "functions": 11
+    },
+    {
+      "file": "report_docs.py",
+      "lines": 1239,
+      "functions": 65
+    },
+    {
+      "file": "retention.py",
+      "lines": 267,
+      "functions": 7
+    },
+    {
+      "file": "room_meal_form.py",
+      "lines": 93,
+      "functions": 5
+    },
+    {
+      "file": "rooms.py",
+      "lines": 1542,
+      "functions": 94
+    },
+    {
+      "file": "rooms_meals.py",
+      "lines": 304,
+      "functions": 15
+    },
+    {
+      "file": "rooms_meals_routes.py",
+      "lines": 269,
+      "functions": 22
+    },
+    {
+      "file": "rooms_notify.py",
+      "lines": 413,
+      "functions": 25
+    },
+    {
+      "file": "rooms_routes.py",
+      "lines": 730,
+      "functions": 41
+    },
+    {
+      "file": "search_sources.py",
+      "lines": 288,
+      "functions": 16
+    },
+    {
+      "file": "seed_dashboard_demo.py",
+      "lines": 188,
+      "functions": 7
+    },
+    {
+      "file": "send_reminders.py",
+      "lines": 958,
+      "functions": 28
+    },
+    {
+      "file": "setup_db.py",
+      "lines": 92,
+      "functions": 0
+    },
+    {
+      "file": "short_links.py",
+      "lines": 258,
+      "functions": 13
+    },
+    {
+      "file": "split_rosters.py",
+      "lines": 169,
+      "functions": 4
+    },
+    {
+      "file": "storage.py",
+      "lines": 11367,
+      "functions": 508
+    },
+    {
+      "file": "tag_sections.py",
+      "lines": 107,
+      "functions": 4
+    },
+    {
+      "file": "tours.py",
+      "lines": 205,
+      "functions": 1
+    },
+    {
+      "file": "travel.py",
+      "lines": 1135,
+      "functions": 76
+    },
+    {
+      "file": "travel_checklist.py",
+      "lines": 208,
+      "functions": 12
+    },
+    {
+      "file": "travel_docs.py",
+      "lines": 423,
+      "functions": 34
+    },
+    {
+      "file": "travel_notify.py",
+      "lines": 69,
+      "functions": 3
+    },
+    {
+      "file": "travel_rates.py",
+      "lines": 489,
+      "functions": 19
+    },
+    {
+      "file": "travel_readings.py",
+      "lines": 157,
+      "functions": 9
+    },
+    {
+      "file": "travel_routes.py",
+      "lines": 976,
+      "functions": 52
+    },
+    {
+      "file": "travel_rules.py",
+      "lines": 243,
+      "functions": 16
+    },
+    {
+      "file": "travel_scan.py",
+      "lines": 248,
+      "functions": 12
+    },
+    {
+      "file": "tzutil.py",
+      "lines": 42,
+      "functions": 3
+    },
+    {
+      "file": "ui_telemetry.py",
+      "lines": 714,
+      "functions": 31
+    },
+    {
+      "file": "ux_handoff.py",
+      "lines": 586,
+      "functions": 13
+    },
+    {
+      "file": "verify_migration.py",
+      "lines": 51,
+      "functions": 0
+    },
+    {
+      "file": "version.py",
+      "lines": 5998,
+      "functions": 0
+    },
+    {
+      "file": "wellness_register.py",
+      "lines": 276,
+      "functions": 13
+    },
+    {
+      "file": "wipe_external_rps.py",
+      "lines": 92,
+      "functions": 1
+    },
+    {
+      "file": "work.py",
+      "lines": 268,
+      "functions": 22
+    },
+    {
+      "file": "work_arrangement_annex.py",
+      "lines": 249,
+      "functions": 6
+    },
+    {
+      "file": "work_arrangement_backfill.py",
+      "lines": 349,
+      "functions": 11
+    },
+    {
+      "file": "work_blockers.py",
+      "lines": 88,
+      "functions": 4
+    },
+    {
+      "file": "work_compat.py",
+      "lines": 156,
+      "functions": 6
+    },
+    {
+      "file": "work_completion.py",
+      "lines": 212,
+      "functions": 12
+    },
+    {
+      "file": "work_decisions.py",
+      "lines": 159,
+      "functions": 10
+    },
+    {
+      "file": "work_digests.py",
+      "lines": 132,
+      "functions": 6
+    },
+    {
+      "file": "work_discussion.py",
+      "lines": 92,
+      "functions": 6
+    },
+    {
+      "file": "work_handoff.py",
+      "lines": 134,
+      "functions": 11
+    },
+    {
+      "file": "work_inbox.py",
+      "lines": 165,
+      "functions": 4
+    },
+    {
+      "file": "work_intake.py",
+      "lines": 86,
+      "functions": 3
+    },
+    {
+      "file": "work_readiness.py",
+      "lines": 95,
+      "functions": 3
+    },
+    {
+      "file": "work_review.py",
+      "lines": 169,
+      "functions": 9
+    },
+    {
+      "file": "work_routes.py",
+      "lines": 646,
+      "functions": 40
+    },
+    {
+      "file": "work_storage.py",
+      "lines": 271,
+      "functions": 1
+    },
+    {
+      "file": "work_support.py",
+      "lines": 158,
+      "functions": 6
+    },
+    {
+      "file": "work_tasks.py",
+      "lines": 150,
+      "functions": 9
+    },
+    {
+      "file": "work_team.py",
+      "lines": 120,
+      "functions": 5
+    },
+    {
+      "file": "work_updates.py",
+      "lines": 135,
+      "functions": 11
+    }
+  ]
+}

@@ -108,8 +108,9 @@
       <div class="field">
         <label for="designation">Designation</label>
         <input type="text" id="designation" name="designation" maxlength="120"
-               value="{{ profile.designation }}" placeholder="e.g. Section Head">
-        <p class="hint">Your functional role — fill it in and update it any time.</p>
+               value="{{ profile.designation }}" placeholder="e.g. Section Head"
+               {{ 'readonly' if profile.rp_id }} aria-describedby="designation-help">
+        <p class="hint" id="designation-help">{% if profile.rp_id %}Contact an administrator to update your directory designation.{% else %}Your displayed job title. Approval assignments are managed separately.{% endif %}</p>
       </div>
       <div class="field">
         <label for="employee_no">Employee number</label>

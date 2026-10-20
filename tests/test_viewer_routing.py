@@ -8,6 +8,7 @@ branches, the chooser CSS-card target, and the self-banner on the person page.
 """
 from __future__ import annotations
 
+from tests.conftest import session_token
 import pytest
 
 import app as A
@@ -111,7 +112,7 @@ def test_non_viewer_always_goes_to_hub(app_mod, routed_people):
 def test_chooser_css_card_points_to_own_profile(app_mod, routed_people):
     from starlette.testclient import TestClient
     c = TestClient(app_mod.app)
-    c.cookies.set(auth.COOKIE_NAME, auth.make_token(
+    c.cookies.set(auth.COOKIE_NAME, session_token(
         {"id": routed_people["linked"], "username": "vr-linked@test.local", "role": "viewer"}))
     r = c.get("/")
     assert r.status_code == 200
@@ -148,7 +149,7 @@ def test_self_banner_shows_when_viewing_own_profile(app_mod, linked_to_rendered)
     uid, person = linked_to_rendered
     from starlette.testclient import TestClient
     c = TestClient(app_mod.app)
-    c.cookies.set(auth.COOKIE_NAME, auth.make_token(
+    c.cookies.set(auth.COOKIE_NAME, session_token(
         {"id": uid, "username": "vr-self@test.local", "role": "viewer"}))
     r = c.get(f"/dashboard/people/{person['id']}")
     assert r.status_code == 200
