@@ -83,3 +83,15 @@
 .tv-liq { margin: .6rem 0; }
 .tv-liq h3 { margin: .2rem 0; font-size: 1rem; }
 .tv-liq ul { margin: 0; padding-left: 1.1rem; }
+.tv-steps { display: flex; flex-wrap: wrap; gap: .4rem; list-style: none; margin: .6rem 0; padding: 0; }
+.tv-steps li { flex: 1 1 9rem; border: 1px solid var(--line, #d8dde3); border-radius: 8px; padding: 0; }
+.tv-steps a { display: block; padding: .45rem .6rem; color: inherit; text-decoration: none; font-weight: 600; }
+.tv-steps small { display: block; font-weight: 400; color: var(--soft); }
+.tv-steps li.done { border-color: #1a7f37; }
+.tv-steps li.now { border-color: var(--accent, #2563eb); box-shadow: 0 0 0 2px rgba(37, 99, 235, .15); }
+.tv-step-no { display: inline-block; min-width: 1.5em; text-align: center; border-radius: 999px; background: var(--line, #d8dde3); color: inherit; font-size: .85em; margin-right: .3em; }
+.tv-steps li.done .tv-step-no { background: #1a7f37; color: #fff; }
+.tv-step h2 { display: flex; align-items: center; flex-wrap: wrap; gap: .3rem; }
+.tv-step-count { font-weight: 400; color: var(--soft); font-size: .8em; }
+.tv-step { scroll-margin-top: 4rem; }
+@media (prefers-color-scheme: dark) { .tv-steps li.done .tv-step-no { background: #2ea043; } }

@@ -343,3 +343,23 @@ def test_a_reimbursement_has_no_liquidation_figures(page, viewer, conn, relay):
     page.goto(f'http://testserver/travel/f/{ref}/prepare')
     pw.expect(page.get_by_role('heading', name='Itinerary of travel')).to_be_visible()
     pw.expect(page.locator('.tv-liq')).to_have_count(0)
+
+
+def test_filing_steps_count_progress_and_jump_to_their_section(page, viewer, conn, relay):
+    ref = mk(viewer, kind='liquidation')
+    page.goto(f'http://testserver/travel/f/{ref}')
+    nav = page.get_by_role('list', name='Steps to file this claim')
+    pw.expect(nav.get_by_text('Attach documents')).to_be_visible()
+    pw.expect(nav.get_by_text('0 of 4')).to_be_visible()
+    nav.get_by_role('link', name=re.compile('Make the forms')).click()
+    pw.expect(page.locator('#step-make')).to_be_in_viewport()
+    # marking a required document "does not apply" takes it out of the count
+    page.locator('#step-attach #item-back_to_office_report summary, #step-attach #item-bto_report summary').first.click()
+    page.locator('#step-attach').get_by_role('button', name='Does not apply to me').first.click()
+    pw.expect(page.get_by_role('list', name='Steps to file this claim').get_by_text('0 of 3')).to_be_visible()
+    # the explanation tells attaching and making apart
+    pw.expect(page.locator('#step-attach')).to_contain_text('Nothing here is made for you')
+    pw.expect(page.locator('#step-make')).to_contain_text('made for you from a template')
+    # one place to prepare the forms
+    pw.expect(page.get_by_role('link', name='Review and make the forms')).to_have_count(1)
+    pw.expect(page.get_by_role('link', name='Prepare the forms')).to_have_count(0)

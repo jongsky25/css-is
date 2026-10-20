@@ -1,3 +1,7 @@
+## 7.42 — October 20, 2026
+
+- The travel filing page now walks through the claim in steps: 1 Your claim (the answers that decide what you need), 2 Attach the documents (the ones that already exist outside the app), 3 Make the forms (made for you from a template, using what you attached), 4 Enter these in FMIS. Each step explains itself and counts its progress, each item keeps its done or missing badge, and there is one place to prepare the forms (spot feedback #140).
+
 ## 7.41 — October 20, 2026
 
 - Liquidation figures on the prepare page: what was actually spent, by kind (plane, TNVS, taxi, per diem and so on, with how many entries were read from your uploaded tickets and receipts), the total against the cash advance, and the refund or the amount over. The Liquidation Report row now points to it (spot feedback #130).
