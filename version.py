@@ -17,18 +17,27 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.49"
+APP_VERSION = "7.50"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "7.49",
+        "version": "7.50",
         "date": "October 20, 2026",
         "summary": "Updates use checked, consistent software libraries.",
         "changes": [
             "Updates use the same verified library versions during testing and deployment.",
             "A release is stopped if its library checks find a known security issue or incomplete results.",
             "Document intake, previews and generated reports are checked before release."
+        ]
+    },
+    {
+        "version": "7.49",
+        "date": "October 20, 2026",
+        "summary": "Fixed signing in and saving failing with \"This request could not be verified\".",
+        "changes": [
+            "After the last update, signing in and saving could fail with \"This request could not be verified. Reload the page and try again.\" That is fixed.",
+            "Links to other sites still do not receive any page address from this app."
         ]
     },
     {

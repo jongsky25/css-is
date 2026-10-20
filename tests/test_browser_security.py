@@ -25,7 +25,7 @@ def test_secure_cookie_configuration(env, expected):
 def _assert_headers(response):
     assert response.headers['x-content-type-options'] == 'nosniff'
     assert response.headers['x-frame-options'] == 'SAMEORIGIN'
-    assert response.headers['referrer-policy'] == 'no-referrer'
+    assert response.headers['referrer-policy'] == 'same-origin'
     policy = response.headers['content-security-policy']
     assert "frame-ancestors 'self'" in policy and "base-uri 'self'" in policy
     assert "object-src 'none'" in policy
@@ -145,3 +145,25 @@ def test_streams_and_multiple_cookies_are_preserved(monkeypatch):
     for line in response.headers.get_list('set-cookie'):
         cookies.load(line)
     assert all(cookie['secure'] and cookie['httponly'] for cookie in cookies.values())
+
+
+# Policies under which a browser still sends the real Origin on a same-origin form POST. Under "no-referrer" (and
+# "same-origin" is not in this list by accident: it is) a Chromium form POST would carry "Origin: null", which the
+# application's write check rejects, so login and every save would fail with "This request could not be verified".
+ORIGIN_PRESERVING_POLICIES = {'same-origin', 'origin', 'origin-when-cross-origin', 'strict-origin',
+                              'strict-origin-when-cross-origin', 'no-referrer-when-downgrade', 'unsafe-url'}
+
+
+def test_the_referrer_policy_lets_a_same_origin_form_post_pass_the_origin_check(client):
+    policy = client.get('/login').headers['referrer-policy']
+    assert policy in ORIGIN_PRESERVING_POLICIES, (
+        f"Referrer-Policy {policy!r} makes browsers send 'Origin: null' on form posts; every write would be rejected")
+    # what such a browser sends: the site's own Origin, with or without a Referer
+    host = 'http://testserver'
+    for headers in ({'Origin': host}, {'Origin': host, 'Referer': host + '/login'}):
+        r = client.post('/login', data={'username': 'nobody@example.invalid', 'password': 'x'}, headers=headers,
+                        follow_redirects=False)
+        assert r.status_code != 403, headers
+    # and the request this policy exists to prevent is still refused
+    r = client.post('/login', data={'username': 'a', 'password': 'b'}, headers={'Origin': 'null'}, follow_redirects=False)
+    assert r.status_code == 403 and 'could not be verified' in r.text

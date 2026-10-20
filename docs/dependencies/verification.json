@@ -1,6 +1,6 @@
 {
   "date": "2026-10-20",
-  "scope": "Candidate 7.49 clean Python 3.11 environments; not a live production inventory",
+  "scope": "Candidate 7.50 clean Python 3.11 environments; not a live production inventory",
   "python": "3.11.17",
   "locks": {
     "requirements-deploy.txt": "e4b4e4ea3edff4d0241d4000ba1b59be6caba634a402e6696ae5366e7e0d2cab",
