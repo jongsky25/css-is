@@ -79,8 +79,10 @@ need a second native parse. This is not a single total download/read deadline.
 This is resource and process isolation. It does not create filesystem/network
 namespaces, drop the container user, or claim arbitrary-code containment.
 Browser PDF.js, public-link fetching, account policies and log privacy are
-unchanged. No dependency or database migration is required. All new helper
-and worker files are included in the deployment payload.
+unchanged. No runtime dependency or database migration is required. The
+release tooling lock updates uv to 0.13.4 to resolve the advisory found by this
+candidate's dependency gate; see [dependency maintenance](DEPENDENCIES.md).
+All new helper and worker files are included in the deployment payload.
 
 Synthetic tests cover real OCR accuracy, mixed/native/scanned documents,
 10 scanned pages, DTRAK subject previews, actual CPU/address-space/wall limits,
