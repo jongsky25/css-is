@@ -16,7 +16,7 @@ MAX_TEXT = 100_000
 MAX_RESULT_BYTES = 1024 * 1024
 SUPPORTED = sys.platform == 'linux'
 _SLOT = threading.BoundedSemaphore(1)
-_WORKER = Path(__file__).with_name('pdf_reader_worker.py')
+_WORKER = Path(__file__).resolve().with_name('pdf_reader_worker.py')
 
 
 @dataclass(frozen=True)

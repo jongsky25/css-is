@@ -86,6 +86,10 @@ def test_fifty_native_pages_remain_supported():
     assert count == len(pages) == 50
 
 
+def test_unicode_text_survives_the_bounded_json_pipe():
+    assert 'Réunion' in worker.read_native(pdf('Subject: Réunion for staff orientation and updated guidelines'))[1][0]
+
+
 @pytest.mark.parametrize('scanned_slip', [False, True])
 def test_link_reads_document_after_native_or_scanned_dtrak_slip(monkeypatch, processes, scanned_slip):
     import documents_ocr
