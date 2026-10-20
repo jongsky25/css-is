@@ -8,8 +8,19 @@ async function lifecycle() {
   const listeners = {}, removed = [], added = [];
   let skipped = false, claimed = false, cacheName;
   const context = vm.createContext({
+    fetch: async url => {
+      if (url.endsWith('/app.css')) return new Response('private', {headers: {'Cache-Control': 'private'}});
+      if (url.endsWith('/app.js')) return new Response('no-store', {headers: {'Cache-Control': 'no-store'}});
+      if (url.endsWith('/search.js')) return new Response('error', {status: 503});
+      if (url.endsWith('/icon-192.png')) {
+        const response = new Response('redirect');
+        Object.defineProperty(response, 'redirected', {value: true});
+        return response;
+      }
+      return new Response('public asset');
+    }, Response,
     caches: {
-      open: async (name) => {cacheName = name; return {add: async (url) => {added.push(url);}};},
+      open: async (name) => {cacheName = name; return {put: async (url) => {added.push(url);}};},
       keys: async () => ['css-is-v6.91-a', cacheName, 'unrelated-cache'],
       delete: async (name) => {removed.push(name);},
     },
@@ -29,6 +40,7 @@ async function lifecycle() {
   assert.deepEqual(removed, ['css-is-v6.91-a']);
   assert.ok(skipped && claimed);
   assert.ok(added.includes('/static/offline.html'));
+  assert.deepEqual(added.sort(), ['/static/img/icons/icon-512.png', '/static/offline.html']);
 }
 
 async function run(method, first, path = '/work/12') {
@@ -59,8 +71,65 @@ async function run(method, first, path = '/work/12') {
   return {sends, effects, response, error};
 }
 
+async function cachePrivacy() {
+  for (const path of ['/me', '/e/bearer-token/resume/person-token', '/r/survey-token', '/seq?tokens=secret', '/photo/12']) {
+    for (const offline of [false, true]) {
+      const listeners = {}, writes = [], lookups = [];
+      const context = vm.createContext({
+        URL, Response, setTimeout: fn => fn(),
+        fetch: async () => {
+          if (offline) throw new Error('offline');
+          return new Response('personal data', {headers: {'Cache-Control': 'no-store'}});
+        },
+        caches: {
+          open: async () => ({put: async key => writes.push(key), match: async key => {
+            lookups.push(key); return new Response('stale personal data');
+          }}),
+          match: async key => {lookups.push(key); return new Response('generic offline shell');},
+        },
+        self: {location: {origin: 'https://office.test'},
+          addEventListener: (name, fn) => {listeners[name] = fn;}},
+      });
+      vm.runInContext(source, context);
+      // A small worker Request stand-in permits navigate mode in Node.
+      const request = {url: 'https://office.test' + path, method: 'GET',
+        mode: path.startsWith('/photo/') ? 'cors' : 'navigate', clone() {return this;}};
+      let pending;
+      listeners.fetch({request, respondWith: p => {pending = p;}});
+      let response, failed = false;
+      try { response = await pending; } catch (_) {failed = true;}
+      assert.equal(writes.length, 0, path + ' must never be stored');
+      assert.ok(lookups.every(key => key === '/static/offline.html'));
+      if (!offline) assert.equal(await response.text(), 'personal data');
+      else if (request.mode === 'navigate') assert.equal(await response.text(), 'generic offline shell');
+      else assert.ok(failed, 'offline photos must not return cached personal data');
+    }
+  }
+  for (const control of ['', 'public, max-age=300', 'no-store', 'private', 'max-age=30, PRIVATE', 'private="cookie"']) {
+    const listeners = {}, writes = [], deleted = [];
+    const context = vm.createContext({
+      URL, Response, setTimeout: fn => fn(),
+      fetch: async () => new Response('asset', {headers: {'Cache-Control': control}}),
+      caches: {open: async () => ({match: async () => undefined,
+        put: async key => writes.push(key), delete: async key => deleted.push(key)})},
+      self: {location: {origin: 'https://office.test'},
+        addEventListener: (name, fn) => {listeners[name] = fn;}},
+    });
+    vm.runInContext(source, context);
+    const request = {url: 'https://office.test/static/js/app.js', method: 'GET',
+      mode: 'cors', clone() {return this;}};
+    let pending;
+    listeners.fetch({request, respondWith: p => {pending = p;}});
+    assert.equal(await (await pending).text(), 'asset');
+    const privateResponse = /private|no-store/i.test(control);
+    assert.equal(writes.length, privateResponse ? 0 : 1, control);
+    assert.equal(deleted.length, privateResponse ? 1 : 0, control);
+  }
+}
+
 (async () => {
   await lifecycle();
+  await cachePrivacy();
   for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) {
     for (const status of [500, 502, 503, 504]) {
       // The server commits; a proxy replaces its response. Missing header
@@ -86,5 +155,5 @@ async function run(method, first, path = '/work/12') {
   assert.equal(appError.response.status, 500);
   const intake = await run('POST', new Response('Unknown', {status: 503}), '/documents/intake/read');
   assert.equal(intake.effects, 1);
-  console.log('Passed: write failures are not replayed; GET recovery and intake pass-through remain.');
+  console.log('Passed: private pages/photos stay out of caches; private assets are rejected; writes are not replayed; GET recovery and queue code remain.');
 })().catch((error) => { console.error(error); process.exitCode = 1; });

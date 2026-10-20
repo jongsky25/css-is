@@ -1,9 +1,8 @@
 """
 Session/recognition cookies must be markable Secure (HTTPS-only) in production.
 
-The behaviour is gated by the CSS_SECURE_COOKIES env var (read once at import
-into app.SECURE_COOKIES) so local http://LAN dev keeps working while an HTTPS
-deploy can flip it on. We assert the raw Set-Cookie header carries (or omits)
+HTTPS configuration enables Secure automatically; the explicit flag remains
+available for local testing. Local HTTP LAN development keeps working. We assert the raw Set-Cookie header carries (or omits)
 the `Secure` attribute accordingly — checking the header, not the client-stored
 cookie, since an http test client won't retain a Secure cookie.
 """
@@ -43,10 +42,8 @@ def test_session_cookie_secure_when_enabled(app_mod, monkeypatch):
     assert "httponly" in header.lower()
 
 
-def test_secure_flag_parses_truthy_env(monkeypatch):
-    # The env parse treats "", "0", "false" as off and anything else as on.
-    import importlib
+def test_secure_flag_parses_truthy_env():
+    from browser_security import secure_cookies_enabled
     for val, want in [("", False), ("0", False), ("false", False),
-                      ("1", True), ("true", True), ("yes", True)]:
-        got = val.strip() not in ("", "0", "false", "False")
-        assert got is want, f"CSS_SECURE_COOKIES={val!r} -> {got}, want {want}"
+                      ("False", False), ("1", True), ("true", True), ("yes", True)]:
+        assert secure_cookies_enabled({"CSS_SECURE_COOKIES": val}) is want

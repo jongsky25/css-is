@@ -51,6 +51,7 @@ import pandas as pd
 from datetime import datetime, date, timedelta, timezone
 from urllib.parse import parse_qsl, quote, urlencode, urlparse
 from request_security import safe_local_return, same_origin_write, csrf_exempt, SAFE_METHODS
+from browser_security import BrowserSecurityMiddleware, protect_response, secure_cookies_enabled
 
 import qrcode
 from fastapi import FastAPI, Request
@@ -148,10 +149,9 @@ PERSIST_OP_TIMEOUT = int(os.environ.get("CSS_PERSIST_OP_TIMEOUT", "30"))
 # independent of the recorded ok/skip/fail state — a wedged loop freezes at 'ok').
 PERSIST_STALL_TICKS = int(os.environ.get("CSS_PERSIST_STALL_TICKS", "5"))
 
-# Mark cookies Secure (HTTPS-only) in production. Off by default so local
-# http://LAN dev still works; set CSS_SECURE_COOKIES=1 as a Space variable
-# when serving over HTTPS so session/recognition cookies never ride plain HTTP.
-SECURE_COOKIES = os.environ.get("CSS_SECURE_COOKIES", "0").strip() not in ("", "0", "false", "False")
+# HTTPS deployments default to Secure cookies. HTTP LAN development still works.
+# The response middleware also secures every cookie on a trusted HTTPS request.
+SECURE_COOKIES = secure_cookies_enabled()
 
 
 def _persist_sentinel():
@@ -2357,6 +2357,10 @@ async def _metrics_gate(request: Request, call_next):
             _record_http_error(request, user, status)
 
 
+# Wrap authentication and metrics too, so early denials receive the same policy.
+app.add_middleware(BrowserSecurityMiddleware, secure_cookies=lambda: SECURE_COOKIES)
+
+
 # Paths whose failures say nothing about a staff task: assets, the telemetry
 # beacon itself, and the live-count stream (a dropped SSE connection).
 _HTTP_ERROR_SKIP = ("/static/", "/telemetry", "/favicon", "/sw.js", "/manifest",
@@ -2391,8 +2395,12 @@ async def _unhandled_error(request: Request, exc: Exception):
     The service worker never retries writes, regardless of this marker.
     Starlette still re-raises after sending, preserving the server traceback.
     """
-    return Response("Internal Server Error", status_code=500,
-                    media_type="text/plain", headers={"X-CSS-App": "1"})
+    response = Response("Internal Server Error", status_code=500,
+                        media_type="text/plain", headers={"X-CSS-App": "1"})
+    # Starlette's ServerErrorMiddleware sits outside user middleware.
+    protect_response(request.scope, response.raw_headers, response.status_code,
+                     secure_cookies=SECURE_COOKIES)
+    return response
 
 
 def _audit(request, conn, action, **kw):
@@ -7734,7 +7742,7 @@ def colleague_card(request: Request, user_id: int):
 
 
 _PHOTO_SIZES = (64, 128, 256)     # thumbnail edge lengths a caller may ask for (?s=)
-_PHOTO_CACHE_CONTROL = "private, max-age=300"   # re-check after 5 min; ETag makes that a 304
+_PHOTO_CACHE_CONTROL = "no-store"   # personal images must not persist in browser caches
 _thumb_cache: dict = {}           # (etag, size) -> (bytes, mime); tiny, bounded below
 
 

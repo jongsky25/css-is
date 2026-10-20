@@ -1,5 +1,7 @@
 # Pre-production hardening checklist
 
+**Browser-security update:** see [browser policy and rollout](docs/BROWSER_SECURITY.md). HTTPS deployments now enable Secure cookies automatically; the historical optional-flag guidance below is superseded. First-admin setup, authentication throttling and password/hash changes are outside the current enhancement.
+
 **October 19, 2026 update:** the deployed configuration still needs verification. Follow [Phase 0 repairs and rollout](docs/PHASE0_REPAIRS.md) for release 7.23, its session migration and recovery checks. Historical deployment assumptions below are not evidence of current settings.
 
 Steps to take the CSS-IS system from "internal LAN pilot" to a production-ready
@@ -37,13 +39,13 @@ treated as compromised — anyone holding it can overwrite the live Space.
 ## 2. Set the Space secrets & variables
 
 Space → **Settings → Variables and secrets**. Without these, two things break:
-logins drop on every rebuild, and HTTPS cookie protection can't turn on.
+logins may drop on rebuilds and generated public links may use the wrong origin.
 
 | Name | Type | Value | Why |
 |---|---|---|---|
 | `CSS_SESSION_SECRET` | **secret** | a long random string (e.g. `python -c "import secrets;print(secrets.token_urlsafe(48))"`) | `auth.py` signs session tokens with this. If unset, a *new random* secret is generated on every rebuild → **everyone is logged out on each deploy**. |
 | `CSS_BASE_URL` | variable | `https://equityinhealth-office-connect.hf.space` | Pins the public origin for QR codes and share/email links (no trailing slash). |
-| `CSS_SECURE_COOKIES` | variable | `1` | Marks session + participant cookies `Secure` so they never ride plain HTTP. Code support shipped; this flag turns it on. |
+| `CSS_SECURE_COOKIES` | variable | `1` | Marks session + participant cookies `Secure` so they never ride plain HTTP. Automatic with HTTPS CSS_BASE_URL or SPACE_HOST; explicit flag supported elsewhere. |
 
 > Verify `CSS_DB`, `CSS_PERSIST_DIR`, the actual mount and snapshot destination — see [DEPLOY.md](DEPLOY.md). Do not disable or reconfigure persistence based on historical DB-in-repository assumptions.
 
@@ -89,7 +91,7 @@ Once live, restart/rebuild the Space and verify: invite a test account from
 - [ ] 1. HF token rotated
 - [ ] 2. `CSS_SESSION_SECRET`, `CSS_BASE_URL`, `CSS_SECURE_COOKIES` set on the Space
 - [ ] 3. Pilot auth reverted to invite links (code shipped; deploy the mail relay — [docs/MAIL_RELAY_SETUP.md](docs/MAIL_RELAY_SETUP.md))
-- [x] Cookie `Secure` support in code (`CSS_SECURE_COOKIES`, off by default) — shipped
+- [x] Cookie `Secure` support in code (automatic for configured HTTPS deployments) — shipped
 # Candidate 7.28: browser write boundary
 
 Staff writes and public account actions now require an exact Origin (or Referer fallback). Configure the canonical public origin and update native cookie-based clients. Public/bearer routes and signed machine callbacks have explicit exceptions with their own controls. Logout is POST-only for session revocation. See [request security policy and verification](docs/REQUEST_SECURITY.md).

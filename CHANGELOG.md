@@ -1,3 +1,10 @@
+## 7.48 — October 20, 2026
+
+- Enable Secure cookies automatically for configured HTTPS deployments and trusted HTTPS requests, including preference and deletion cookies.
+- Add browser framing, MIME, referrer and transport protections, with a staged report-only script policy.
+- Prevent dynamic response and service-worker caching of private pages and photos; retain public static assets and the generic offline shell.
+- Exclude first-admin setup, authentication throttling and password/hash changes from this enhancement.
+
 ## 7.47 — October 20, 2026
 
 - The drafted DPO now follows the DOH Department Personnel Order layout: DOH letterhead, date and number, a subject, a background paragraph, the authority line, a Name and Position table, the expenses paragraphs, "By Authority of the Secretary of Health" with the signatory in capitals, and the DOH address footer. The DPO number, date and funding source are still left blank for you to fill in. The Apps Script template needs to be updated and re-run (docs/ACTIVITY_DOCS_SETUP.md) (spot feedback #136).
