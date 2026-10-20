@@ -43,7 +43,9 @@ def sign(ts, payload: str, secret: str) -> str:
 
 def envelope(request: dict, secret: str, now_ms=None) -> dict:
     ts = int(time.time() * 1000) if now_ms is None else int(now_ms)
-    payload = json.dumps(request, separators=(",", ":"), ensure_ascii=False, sort_keys=True)
+    # ASCII only (non-ASCII becomes \uXXXX escapes): the script re-signs the payload text it receives, and a
+    # form with a checkbox glyph or a pasted curly quote must sign the same whatever encoding either end assumes.
+    payload = json.dumps(request, separators=(",", ":"), ensure_ascii=True, sort_keys=True)
     return {"ts": ts, "payload": payload, "sig": sign(ts, payload, secret)}
 
 
@@ -94,6 +96,21 @@ def describe(error: str) -> str:
         "not_allowed": "The relay would not touch that file.",
     }.get(error, f"The relay said: {error}." if error and not error.startswith("http_")
           else f"The relay answered with an error ({error})." if error else "The relay failed.")
+
+
+_ASK_ADMIN = " Press Make the forms to try again. If it fails again, tell the Admin Unit."
+
+
+def describe_for_filer(error: str) -> str:
+    """What a person making their forms is told when one fails: what happened in plain words and what to do.
+    The technical reason (secrets, scripts, templates) stays in describe() for administrators."""
+    if error == "unreachable":
+        return "The form service could not be reached just now. This is not caused by what you entered." + _ASK_ADMIN
+    if error == "template_not_set":
+        return "This form has not been set up yet. Nothing you entered is wrong. Tell the Admin Unit which form it is."
+    if error == "not_configured":
+        return "Making forms automatically is not switched on yet. Make the form yourself and paste its link on the filing page."
+    return "The form service refused this request. This is a setup problem, not something you entered wrong." + _ASK_ADMIN
 
 
 class Relay:

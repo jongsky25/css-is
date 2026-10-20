@@ -281,3 +281,21 @@ def test_warning_marks_its_field_and_jumps_to_it(page, viewer, conn, relay):
     receipt.select_option('receipt')
     pw.expect(receipt).not_to_have_attribute('aria-invalid', 'true')
     pw.expect(page.locator('.tv-field-error', has_text='No receipt')).to_have_count(0)
+
+
+def test_total_shows_where_each_amount_comes_from(page, viewer, conn, relay):
+    ref = mk(viewer, kind='reimbursement')
+    page.goto(f'http://testserver/travel/f/{ref}/prepare')
+    page.get_by_label('Where you are going', exact=True).select_option(index=1)
+    row = page.locator('.tv-row').first
+    row.get_by_label('Per diem rule', exact=True).select_option('full')
+    fare = row.get_by_label('Actual fare claimed (₱)', exact=True)
+    fare.fill('250')
+    summary = page.get_by_text('How this total is worked out', exact=True)
+    pw.expect(summary).to_be_visible()
+    summary.click()
+    box = page.locator('.tv-breakdown')
+    pw.expect(box.get_by_text('The amount you typed.').first).to_be_visible()
+    pw.expect(box.get_by_text('lodging').first).to_be_visible()
+    pw.expect(box.locator('.tv-breakdown-total')).to_contain_text('Total ₱')
+    pw.expect(box.get_by_role('link', name='See every policy rate')).to_be_visible()
