@@ -8,6 +8,7 @@
   * the organizer's pinned update
 """
 from __future__ import annotations
+import tzutil as _test_tz
 import re
 import time
 from datetime import date, timedelta
@@ -19,9 +20,9 @@ import ratelimit as rl
 import storage as st
 from starlette.testclient import TestClient
 
-_FUTURE = (date.today() + timedelta(days=60)).isoformat()   # well ahead of today
-_PAST = (date.today() - timedelta(days=5)).isoformat()      # already started
-_LONG_AGO = (date.today() - timedelta(days=200)).isoformat()  # > 30-day buffer past
+_FUTURE = (_test_tz.today_local() + timedelta(days=60)).isoformat()   # well ahead of today
+_PAST = (_test_tz.today_local() - timedelta(days=5)).isoformat()      # already started
+_LONG_AGO = (_test_tz.today_local() - timedelta(days=200)).isoformat()  # > 30-day buffer past
 
 
 def _reg(name="Ana Cruz", email="ana@example.com", **kw):
@@ -99,7 +100,7 @@ def test_started_activity_shows_feedback(app_mod, db_path):
 
 
 def test_activity_starting_today_is_open(app_mod, db_path):
-    tok, qr = _db_event(db_path, date.today().isoformat())
+    tok, qr = _db_event(db_path, _test_tz.today_local().isoformat())
     c, _ = _register(app_mod, tok)
     assert f"/r/{qr}" in c.get(f"/e/{tok}").text
 
@@ -185,7 +186,7 @@ def test_link_expiry_is_last_day_plus_30(app_mod):
 
 
 def test_early_registrant_link_outlives_90_days(app_mod, db_path):
-    far = (date.today() + timedelta(days=150)).isoformat()
+    far = (_test_tz.today_local() + timedelta(days=150)).isoformat()
     tok, _ = _db_event(db_path, far)
     c, r = _register(app_mod, tok)
     att = auth.verify_attendee_token(parse_qs(urlparse(r.headers["location"]).query)["att"][0])
@@ -208,7 +209,7 @@ def test_link_past_the_buffer_is_expired(app_mod, db_path):
 
 
 def test_cookie_lasts_through_a_distant_activity(app_mod, db_path):
-    far = (date.today() + timedelta(days=150)).isoformat()
+    far = (_test_tz.today_local() + timedelta(days=150)).isoformat()
     tok, _ = _db_event(db_path, far)
     _, r = _register(app_mod, tok)
     cookie = [v for v in r.headers.get_list("set-cookie") if "css_att_e" in v][0]

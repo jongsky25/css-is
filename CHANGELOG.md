@@ -1,3 +1,12 @@
+## 7.35 — October 20, 2026
+
+- Build synthetic survey reference data without reading a production database.
+- Give each HTTP test its own database, clients, report caches and rate-limit state.
+- Control application dates and token epoch time; retain real elapsed time for worker timeouts.
+- Add reproducible shuffled execution and leap-day verification.
+- Remove the global duplicate-activity bypass and seed previously implicit audit/archive test state.
+- Preserve 7.33 travel upload and 7.34 calendar date-prefill changes.
+
 ## 7.34 — October 20, 2026
 
 - Make Quick add redraw its date fields so the chosen day shows in Starts instead of "Pick a date".

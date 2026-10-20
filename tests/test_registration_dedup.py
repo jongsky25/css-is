@@ -9,8 +9,9 @@ Two layers, mirroring test_monitor / test_event_e:
     on the bare link, and the PII-free /check probe.
 """
 from __future__ import annotations
+import tzutil as _test_tz
 import re
-from datetime import date
+from datetime import date, timedelta
 import auth
 import ratelimit as rl
 import storage as st
@@ -19,7 +20,7 @@ from starlette.testclient import TestClient
 
 # A future event date that stays within the create form's "no more than 2 years
 # ahead" guard (computed relative to today so it never drifts out of bounds).
-_FUTURE_DATE = date.today().replace(year=date.today().year + 1).isoformat()
+_FUTURE_DATE = (_test_tz.today_local() + timedelta(days=365)).isoformat()
 
 
 # --------------------------------------------------------------------------

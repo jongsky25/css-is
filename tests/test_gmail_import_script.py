@@ -1,5 +1,7 @@
 """Execute the actual Apps Script importer against failure-injecting API doubles."""
 import json
+import os
+import time
 import pathlib
 import shutil
 import subprocess
@@ -15,7 +17,8 @@ def harness(*args):
     if not node:
         pytest.skip('Node is required for Apps Script contract tests')
     result=subprocess.run([node,'tests/js/gmail_import_harness.js',*args],cwd=ROOT,
-                          capture_output=True,text=True,timeout=30)
+                          capture_output=True,text=True,timeout=30,
+                          env={**os.environ, "CSS_TEST_EPOCH_MS": str(int(time.time()*1000))})
     assert result.returncode==0,result.stdout+result.stderr
     return result.stdout
 

@@ -68,8 +68,11 @@ def test_audit_breakdown_empty(tmp_path):
 
 
 def test_audit_page_shows_friendly_labels(admin):
+    from tests.conftest import PW
+    signed_in = admin.post("/login", data={"username": "admin@test.local", "password": PW},
+                           follow_redirects=False)
+    assert signed_in.status_code == 303
     body = admin.get("/admin/audit").text
-    assert body.count("login") >= 0                  # raw code still present (hover/filter)
     assert "Signed in" in body                        # friendly label rendered (admin just logged in)
     # The insights aggregator exposes the label key the template uses.
     import storage as st, app as A
