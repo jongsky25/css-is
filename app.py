@@ -33,6 +33,7 @@ import base64
 import calendar
 import csv
 import io
+import logging
 import asyncio
 import hashlib
 import hmac
@@ -2271,6 +2272,11 @@ async def _auth_gate(request: Request, call_next):
             # Server-provided hostname, never a raw X-Forwarded-Host header.
             canonical = "https://" + os.environ["SPACE_HOST"]
         if not same_origin_write(request, canonical):
+            logging.getLogger("css.security").warning(
+                "origin check rejected %s %s: expected=%s origin=%r referer=%r sec-fetch-site=%r",
+                request.method, path, canonical or str(request.base_url),
+                request.headers.get("origin"), request.headers.get("referer"),
+                request.headers.get("sec-fetch-site"))
             return Response("This request could not be verified. Reload the page and try again.",
                             status_code=403, headers={"Cache-Control": "no-store"})
     # Expose the Spot Feedback switch to every page a signed-in staff member sees

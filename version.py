@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.32"
+APP_VERSION = "7.33"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.33",
+        "date": "October 20, 2026",
+        "summary": "Attaching documents and sending feedback now retry and tell you what went wrong.",
+        "changes": [
+            "Uploading a ticket or receipt tries again once on its own if the connection drops or the server hiccups.",
+            "When an upload, ticket reading or feedback fails, the message now says why and what to do (reload, sign in, or paste a Google Drive link).",
+            "Your feedback message is kept on screen when it can't be sent, so you can resend it.",
+        ],
+    },
     {
         "version": "7.32",
         "date": "October 20, 2026",

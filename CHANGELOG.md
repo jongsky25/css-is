@@ -1,3 +1,9 @@
+## 7.33 — October 20, 2026
+
+- Retry document uploads once on a dropped connection or server error, and say why an upload, ticket reading or feedback failed.
+- Keep the feedback message on screen when it can't be sent.
+- Log the expected and received origin when a write is rejected, so a misconfigured server address is easy to find.
+
 ## 7.32 — October 20, 2026
 
 - Restore the companion growth ladder and guidance on the profile page.

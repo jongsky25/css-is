@@ -124,18 +124,30 @@
       body.append("page_url", location.href);
       body.append("element_selector", selector || "");
       body.append("region_json", JSON.stringify(region));
-      fetch("/feedback", {
-        method: "POST", credentials: "same-origin",
-        headers: { "X-Requested-With": "fetch",
-                   "Content-Type": "application/x-www-form-urlencoded" },
-        body: body.toString()
-      }).then(function (r) {
-        if (r.status === 204) { closeModal(); toast("Thanks — your feedback was sent. 🙏"); }
-        else if (r.status === 403) { showErr(err, "Feedback is currently turned off."); send.disabled = false; }
-        else { showErr(err, "Couldn’t send — please try again."); send.disabled = false; }
-      }).catch(function () {
-        showErr(err, "Couldn’t send — check your connection."); send.disabled = false;
-      });
+      var tries = 0;
+      (function attempt() {
+        fetch("/feedback", {
+          method: "POST", credentials: "same-origin",
+          headers: { "X-Requested-With": "fetch",
+                     "Content-Type": "application/x-www-form-urlencoded" },
+          body: body.toString()
+        }).then(function (r) {
+          if (r.status === 204) { closeModal(); toast("Thanks — your feedback was sent. 🙏"); return; }
+          if (r.status >= 500 && tries++ < 1) { setTimeout(attempt, 1500); return; }
+          if (r.status === 403) {
+            r.text().then(function (t) {
+              showErr(err, /could not be verified/i.test(t)
+                ? "Couldn’t verify the request — reload the page and try again. Your message is kept."
+                : "Feedback is currently turned off.");
+              send.disabled = false;
+            }, function () { showErr(err, "Feedback is currently turned off."); send.disabled = false; });
+          } else if (r.status === 401) { showErr(err, "You were signed out — sign in again, then resend. Your message is kept."); send.disabled = false; }
+          else { showErr(err, "Couldn’t send (code " + r.status + ") — please try again. Your message is kept."); send.disabled = false; }
+        }).catch(function () {
+          if (tries++ < 1) { setTimeout(attempt, 1500); return; }
+          showErr(err, "Couldn’t send — check your connection and try again. Your message is kept."); send.disabled = false;
+        });
+      })();
     });
   }
   function closeModal() { if (modalEl) { modalEl.remove(); modalEl = null; } }

@@ -176,14 +176,21 @@
       if (!f) return;
       out.textContent = 'Reading\u2026';
       fetch(data.scan_url, { method: 'POST', credentials: 'same-origin', body: f })
-        .then(function (res) { return res.json(); }).then(function (j) {
+        .then(function (res) {
+          return res.text().then(function (t) {
+            var j = null; try { j = JSON.parse(t); } catch (e) { /* not JSON */ }
+            return j || { ok: false, error: res.status === 403 ? 'The server could not verify the request. Reload the page and try again, or type the amount in.'
+              : res.status >= 500 ? 'The server had a problem (code ' + res.status + '). Type the amount in, or try again shortly.'
+              : 'Could not read that file (code ' + res.status + '). Type the amount in.' };
+          });
+        }).then(function (j) {
           pick.value = '';
           out.textContent = '';
           if (!j.ok) { out.textContent = j.error || 'Could not read that file. Type the amount in.'; return; }
           if (!j.readable) { out.textContent = 'Could not find an amount on that file. Type it in.' + (j.note ? ' ' + j.note : ''); return; }
           if (j.currency !== 'PHP') { out.textContent = 'That shows ' + j.amount + ' ' + j.currency + ', not pesos. Type the peso amount you paid.'; return; }
           offer(out, j, r, null);
-        }).catch(function () { pick.value = ''; out.textContent = 'Could not reach the server. Type the amount in.'; });
+        }).catch(function () { pick.value = ''; out.textContent = 'No connection to the server. Check your internet, or type the amount in.'; });
     });
     return el('div', { 'class': 'tv-row-wide' }, [el('label', { text: 'Read another ticket or receipt (photo or PDF)' }), pick, out]);
   }
@@ -476,11 +483,11 @@
     }
     fetch(data.post_url, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rows: state.rows, rates: state.rates, texts: texts, signatories: state.signatories, mc114_text: state.mc114_text }) })
-      .then(function (r) { return r.json(); }).then(function (j) {
+      .then(function (r) { return r.json().catch(function () { return { ok: false, error: 'The server could not make the forms (code ' + r.status + '). Reload the page and try again.' }; }); }).then(function (j) {
         if (!j.ok) { go.disabled = false; msgBox.textContent = j.error || 'That did not work.'; return; }
         if (j.flags) msgBox.textContent = 'Making the forms… ' + j.flags + ' item(s) go to the Admin Unit to verify.';
         poll();
-      }).catch(function () { go.disabled = false; msgBox.textContent = 'Could not reach the server. Try again.'; });
+      }).catch(function () { go.disabled = false; msgBox.textContent = 'No connection to the server. Check your internet and try again.'; });
   });
 
   drawRows(); refresh(); poll();
