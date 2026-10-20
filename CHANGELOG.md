@@ -1,3 +1,8 @@
+## 7.44 — October 20, 2026
+
+- The travel filing page now walks through the claim in steps: 1 Your claim (the answers that decide what you need), 2 Attach the documents (the ones that already exist outside the app), 3 Make the forms (made for you from a template, using what you attached), 4 Enter these in FMIS. Each step explains itself and counts its progress, each item keeps its done or missing badge, and there is one place to prepare the forms (spot feedback #140).
+- Fix the "Saved." and error messages on the travel filing page: after saving a checklist item the message was placed after the #fragment in the address, so the browser never sent it and it never showed.
+
 ## 7.43 — October 20, 2026
 
 - A calendar item now has a "Documents for this activity" block that says whether it needs a DPO or an invitation. The app suggests from what the item already says (people travelling, who it is open to, its kind) and gives the reason; the person can overrule each one. A needed document can be drafted in Google Docs from the item's details, with the DPO number, date and funding source left blank. The relay needs a one-time template setup (docs/ACTIVITY_DOCS_SETUP.md); until then a draft says so plainly (spot feedback #136).

@@ -44,6 +44,10 @@ def page(browser, viewer):
         response = viewer.request(request.method, path, content=request.post_data_buffer,
                                   headers={'Content-Type': request.headers.get('content-type', '')},
                                   follow_redirects=False)
+        if request.method != 'GET' and 300 <= response.status_code < 400 and response.headers.get('location'):
+            # A form POST that redirects: answer with the page it redirects to. Fulfilling a 3xx makes Chromium's
+            # follow-up request bypass this handler first and fail DNS for 'testserver' (slowly on some runners).
+            response = viewer.get(response.headers['location'].split('#')[0], follow_redirects=False)
         route.fulfill(status=response.status_code, body=response.content,
                       headers={k: v for k, v in response.headers.items()
                                if k.lower() not in ('content-length', 'content-encoding', 'set-cookie')})
@@ -343,3 +347,24 @@ def test_a_reimbursement_has_no_liquidation_figures(page, viewer, conn, relay):
     page.goto(f'http://testserver/travel/f/{ref}/prepare')
     pw.expect(page.get_by_role('heading', name='Itinerary of travel')).to_be_visible()
     pw.expect(page.locator('.tv-liq')).to_have_count(0)
+
+
+def test_filing_steps_count_progress_and_jump_to_their_section(page, viewer, conn, relay):
+    ref = mk(viewer, kind='liquidation')
+    page.goto(f'http://testserver/travel/f/{ref}')
+    steps = page.get_by_role('list', name='Steps to file this claim')
+    pw.expect(steps).to_contain_text('Attach documents')
+    pw.expect(steps).to_contain_text('0 of 4')
+    steps.get_by_role('link', name=re.compile('Make the forms')).click()
+    pw.expect(page.locator('#step-make')).to_be_in_viewport()
+    # marking one required document "does not apply" takes it out of the count
+    dpo = page.locator('#step-attach #item-dpo')
+    with page.expect_navigation():
+        dpo.get_by_role('button', name='Does not apply to me').click()
+    pw.expect(page.get_by_role('list', name='Steps to file this claim')).to_contain_text('0 of 3')
+    # the explanation tells attaching and making apart
+    pw.expect(page.locator('#step-attach')).to_contain_text('Nothing here is made for you')
+    pw.expect(page.locator('#step-make')).to_contain_text('made for you from a template')
+    # one place to prepare the forms
+    pw.expect(page.get_by_role('link', name='Review and make the forms')).to_have_count(1)
+    pw.expect(page.get_by_role('link', name='Prepare the forms')).to_have_count(0)

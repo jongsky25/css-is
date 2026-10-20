@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.43"
+APP_VERSION = "7.44"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.44",
+        "date": "October 20, 2026",
+        "summary": "The travel claim page now guides you through the steps.",
+        "changes": [
+            "A claim page now has four steps: your claim, attach the documents, make the forms, and the items to enter in FMIS.",
+            "Each step says what it is for and how many items are done, so attaching documents is clearly different from making forms.",
+            "There is now one place to prepare the forms, in step 3.",
+            "Saving a checklist item now shows its confirmation or error message again."
+        ]
+    },
     {
         "version": "7.43",
         "date": "October 20, 2026",
