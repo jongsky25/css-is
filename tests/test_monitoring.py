@@ -83,7 +83,7 @@ def _last_actions(db_path, n=12):
 
 
 def test_logout_is_audited(admin, db_path):
-    admin.get("/logout", follow_redirects=False)
+    admin.post("/logout", follow_redirects=False)
     assert "logout" in _last_actions(db_path)
 
 

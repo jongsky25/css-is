@@ -90,3 +90,6 @@ Once live, restart/rebuild the Space and verify: invite a test account from
 - [ ] 2. `CSS_SESSION_SECRET`, `CSS_BASE_URL`, `CSS_SECURE_COOKIES` set on the Space
 - [ ] 3. Pilot auth reverted to invite links (code shipped; deploy the mail relay — [docs/MAIL_RELAY_SETUP.md](docs/MAIL_RELAY_SETUP.md))
 - [x] Cookie `Secure` support in code (`CSS_SECURE_COOKIES`, off by default) — shipped
+# Candidate 7.28: browser write boundary
+
+Staff writes and public account actions now require an exact Origin (or Referer fallback). Configure the canonical public origin and update native cookie-based clients. Public/bearer routes and signed machine callbacks have explicit exceptions with their own controls. Logout is POST-only for session revocation. See [request security policy and verification](docs/REQUEST_SECURITY.md).

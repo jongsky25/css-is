@@ -90,3 +90,6 @@ is how Spot Feedback tags were lost once: a stale DB was shipped.
 The historical DB-in-repository instructions above describe an earlier deployment model. The current deploy script detects `CSS_PERSIST_DIR` and can upload code without the seed database. Confirm the actual Space variables/mounts before following the historical download-and-upload routine; do not change storage topology based on this document alone.
 
 An ephemeral deployment without verified durable storage can lose data on rebuild. Its startup warning is actionable. Keep the signing secret configured, use the correct public base URL, secure cookies and proxy settings, and verify recovery from a real snapshot. A stable signing secret does not override session revocation or the deliberate fresh-login requirement after database restoration.
+# Candidate 7.28: origin configuration
+
+Before promoting 7.28, set `CSS_BASE_URL` to the canonical public origin (scheme, host and optional port, without a path), or verify that the server-provided `SPACE_HOST`/trusted ASGI origin is correct. Writes reject foreign or absent Origin/Referer. Use the updated `pull_backup.py` so maintenance login/snapshot requests send Origin; do not bypass the backup gate. See [compatibility and deferred checks](docs/REQUEST_SECURITY.md).

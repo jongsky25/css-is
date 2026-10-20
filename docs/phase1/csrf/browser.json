@@ -1,0 +1,9 @@
+{
+  "scope": "Local Chromium, synthetic database only",
+  "cross_origin_form_status": 403,
+  "valid_session_cookie_sent": true,
+  "rejected_write_left_setting_unchanged": true,
+  "same_origin_fetch_write_succeeded": true,
+  "logout_get_did_not_clear_session": true,
+  "logout_post_cleared_session": true
+}

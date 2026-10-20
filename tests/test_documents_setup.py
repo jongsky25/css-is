@@ -333,5 +333,8 @@ def test_readiness_http_access_and_read_only_page(setup_db, app_mod, monkeypatch
         assert page.status_code == 200
         assert 'Work management readiness' in page.text
         assert 'No external connections are tested' in page.text
-        assert 'type="submit"' not in page.text
+        # The shared navigation has a POST logout button; the readiness
+        # content itself must remain read-only.
+        content = page.text.split('<main id="maincontent"', 1)[1].split('</main>', 1)[0]
+        assert 'type="submit"' not in content
         assert st.get_setting(conn, 'documents.sending_enabled') == '0'

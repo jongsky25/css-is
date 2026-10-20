@@ -1,9 +1,8 @@
 """Travel filing pages (docs/TRAVEL_FILING_PLAN.md, section 8). Rules live in travel.py and
 travel_rules.py; this module reads the request, calls them and renders.
 
-No middleware gate covers /travel, so every handler checks the switch, then ownership
-(travel.can_view / travel.is_owner), and every POST checks that Origin / Referer, when
-present, is this site."""
+Every handler checks the feature switch and ownership (travel.can_view / travel.is_owner).
+Writes also use the shared exact-origin policy, including in a standalone router."""
 from __future__ import annotations
 import asyncio
 import hashlib
@@ -47,18 +46,12 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
         return {k: (v[0] if v else "").strip() for k, v in raw.items()}
 
     def _same_origin(request) -> bool:
-        """Origin / Referer, when the browser sends them, must name this site (there is no CSRF
-        token anywhere in the app and the session cookie is SameSite=Lax)."""
-        allowed = {request.headers.get("host"), request.headers.get("x-forwarded-host")}
-        try:
-            allowed.add(urlparse(base_url(request)).netloc)
-        except Exception:                                   # noqa: BLE001
-            pass
-        for h in ("origin", "referer"):
-            v = request.headers.get(h)
-            if v and urlparse(v).netloc not in allowed:
-                return False
-        return True
+        """Keep standalone-router checks aligned with the shared boundary."""
+        from request_security import same_origin_write
+        canonical = os.environ.get("CSS_BASE_URL")
+        if not canonical and os.environ.get("SPACE_HOST"):
+            canonical = "https://" + os.environ["SPACE_HOST"]
+        return same_origin_write(request, canonical)
 
     def _forbidden(request, why="this page"):
         return templates.TemplateResponse(request, "forbidden.html",

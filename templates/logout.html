@@ -1,0 +1,12 @@
+{% extends "public_layout.html" %}
+{% block title %}Log out — Office Connect{% endblock %}
+{% block content %}
+<div class="pub-card" style="max-width:380px; margin:8vh auto 0;">
+  <h1>Log out?</h1>
+  <p>This ends your sign-in on this device.</p>
+  <form method="post" action="/logout">
+    <button type="submit" class="btn primary">Log out</button>
+    <a href="/" class="btn">Stay signed in</a>
+  </form>
+</div>
+{% endblock %}

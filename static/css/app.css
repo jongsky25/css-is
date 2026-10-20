@@ -354,7 +354,8 @@ details.disclosure[open] > summary::before { transform:rotate(90deg); }
           border:1px solid var(--line); border-radius:var(--rpill); padding:.2rem .6rem;
           text-decoration:none; }
 a.whoami:hover { border-color:var(--accent); }
-.topnav .right a.logout { font-weight:700; color:var(--accent); font-size:.85rem; text-decoration:none; }
+.topnav .right .logout { font-family:inherit; font-weight:700; font-size:.85rem; color:var(--accent); text-decoration:none;
+  background:transparent; border:0; cursor:pointer; padding:.25rem; }
 
 /* Notification bell — one popover for everything waiting on this account:
    unread Spot Feedback replies, approvals queued for them as a chief, and
@@ -494,15 +495,16 @@ a.whoami:hover { border-color:var(--accent); }
   .mm-disp > .mm-set { position:absolute; left:.8rem; right:.8rem; bottom:100%; max-height:60dvh; overflow-y:auto;
         background:var(--surface); border:1px solid var(--line); border-radius:var(--r2);
         box-shadow:var(--shadow-md); padding:.8rem; }
-  .mobile-menu a.mm-logout { justify-content:center; background:var(--accent); color:var(--on-accent);
-        font-weight:700; }
-  .mobile-menu a.mm-logout:hover { background:var(--accent-ink); }
+  .mobile-menu .mm-logout { display:flex; width:100%; min-height:44px; align-items:center;
+        justify-content:center; background:var(--accent); color:var(--on-accent);
+        font-family:inherit; font-size:inherit; font-weight:700; border:0; border-radius:var(--r1); cursor:pointer; }
+  .mobile-menu .mm-logout:hover { background:var(--accent-ink); }
   .topnav .right { flex-wrap:nowrap; gap:.35rem; }
 }
 /* Phones: one row — logo · search · bell · ☰. Display settings, help/tour and
    Log out live inside the ☰ menu (Log out was in both places before). */
 @media (max-width:640px) {
-  .topnav .right .settings, .topnav .right a.logout { display:none; }
+  .topnav .right .settings, .topnav .right .logout { display:none; }
 }
 @media (max-width:359px) {   /* the smallest phones: tighten the logo so the row still fits */
   .topnav .inner { padding-left:.6rem; padding-right:.6rem; }
