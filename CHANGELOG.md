@@ -1,3 +1,7 @@
+## 7.34 — October 20, 2026
+
+- Make Quick add redraw its date fields so the chosen day shows in Starts instead of "Pick a date".
+
 ## 7.33 — October 20, 2026
 
 - Retry document uploads once on a dropped connection or server error, and say why an upload, ticket reading or feedback failed.
