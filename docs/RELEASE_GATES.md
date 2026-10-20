@@ -8,7 +8,8 @@ secrets. It does not use `pull_request_target`.
 
 The shared workflow checks:
 
-- Python 3.11, with complete test dependencies, Node.js 24, and Chromium.
+- Python 3.11, with complete test dependencies, Node.js 24, Chromium, and
+  the production Tesseract OCR packages.
 - The complete suite in normal order and shuffled order (seed 311).
 - A nonempty JUnit report with no failures, errors, or skipped tests.
 - A version greater than the base commit's version.
@@ -69,3 +70,10 @@ The base ref must identify the previous release, not the release being checked.
 The JUnit command intentionally fails if Chromium or Node is absent and tests
 skip. The metadata checker parses version assignments without executing either
 the base or candidate Python file.
+
+## Verification record
+
+- Local regression coverage: 24 gate tests passed; candidate 7.40 metadata passed.
+- [PR #345](https://github.com/jongsky25/css-is/pull/345) carries the GitHub checks and their logs.
+- The first runner execution exposed missing Tesseract prerequisites (9 OCR failures and 2 OCR skips in the shuffled run); Chromium tests ran successfully. The workflow now installs the production OCR packages before testing.
+- CI intentionally rejects skipped tests; missing prerequisites are fixed rather than bypassed. Local Chromium download remains blocked by the workspace policy, so complete browser verification runs on GitHub.
