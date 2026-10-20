@@ -1,0 +1,100 @@
+{
+  "date": "2026-10-20",
+  "application_version": "7.35",
+  "verified_source_commit": "0f06eed42623fda3bfb981454aead07472b78375",
+  "python": "3.11.17",
+  "sqlite": "3.53.1",
+  "node": "24.19.0",
+  "dependency_check": "passed",
+  "runs": {
+    "normal": {
+      "seed": null,
+      "tests": 4211,
+      "passed": 4195,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 16,
+      "seconds": 241.461,
+      "exit_code": 0,
+      "junit_sha256": "db9690fd507d4c7ce287962b73bce8586b4cd617cb6b6a19ce7eaa3cf8096e26",
+      "skipped_cases": [
+        "tests.test_csm_public_form_ux::test_not_knowing_what_a_charter_is_hides_cc2_and_cc3",
+        "tests.test_csm_public_form_ux::test_the_questions_one_at_a_time_mode_walks_through_the_new_steps",
+        "tests.test_csm_public_form_ux::test_everything_optional_can_be_left_blank_and_the_form_submits",
+        "tests.test_csm_public_form_ux::test_a_filled_form_is_stored_with_the_client_answers",
+        "tests.test_travel_ux::test_kind_switch_hides_irrelevant_answers_and_preserves_them",
+        "tests.test_travel_ux::test_preparation_only_shows_applicable_forms[ca]",
+        "tests.test_travel_ux::test_preparation_only_shows_applicable_forms[reimbursement]",
+        "tests.test_travel_ux::test_preparation_only_shows_applicable_forms[liquidation]",
+        "tests.test_travel_ux::test_applicable_certification_justification_and_refund_are_available",
+        "tests.test_travel_ux::test_actual_fare_survives_policy_calculation_and_browser_reload",
+        "tests.test_travel_ux::test_unconfigured_relay_cannot_be_enabled_by_status_poll",
+        "tests.test_travel_ux::test_estimate_can_use_policy_but_does_not_replace_manual_amount",
+        "tests.test_travel_ux::test_storage_failure_is_visible_and_hidden_refund_is_not_generated",
+        "tests.test_travel_ux::test_per_diem_box_stays_out_of_the_way_when_the_policy_gives_the_amount",
+        "tests.test_travel_ux::test_a_day_can_hold_a_plane_ride_and_a_tnvs_ride_to_or_from_the_airport",
+        "tests.test_travel_ux::test_drafted_entries_keep_edits_take_new_uploads_and_stay_removed"
+      ]
+    },
+    "shuffled": {
+      "seed": 311,
+      "tests": 4211,
+      "passed": 4195,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 16,
+      "seconds": 251.559,
+      "exit_code": 0,
+      "junit_sha256": "c370e0bf07853e566b20411569c5ab00979bca8e2035e8d928a44637eafd9dfb",
+      "skipped_cases": [
+        "tests.test_travel_ux::test_preparation_only_shows_applicable_forms[ca]",
+        "tests.test_travel_ux::test_applicable_certification_justification_and_refund_are_available",
+        "tests.test_csm_public_form_ux::test_the_questions_one_at_a_time_mode_walks_through_the_new_steps",
+        "tests.test_travel_ux::test_unconfigured_relay_cannot_be_enabled_by_status_poll",
+        "tests.test_travel_ux::test_storage_failure_is_visible_and_hidden_refund_is_not_generated",
+        "tests.test_travel_ux::test_actual_fare_survives_policy_calculation_and_browser_reload",
+        "tests.test_travel_ux::test_a_day_can_hold_a_plane_ride_and_a_tnvs_ride_to_or_from_the_airport",
+        "tests.test_travel_ux::test_per_diem_box_stays_out_of_the_way_when_the_policy_gives_the_amount",
+        "tests.test_csm_public_form_ux::test_everything_optional_can_be_left_blank_and_the_form_submits",
+        "tests.test_travel_ux::test_estimate_can_use_policy_but_does_not_replace_manual_amount",
+        "tests.test_travel_ux::test_preparation_only_shows_applicable_forms[reimbursement]",
+        "tests.test_csm_public_form_ux::test_a_filled_form_is_stored_with_the_client_answers",
+        "tests.test_travel_ux::test_kind_switch_hides_irrelevant_answers_and_preserves_them",
+        "tests.test_travel_ux::test_preparation_only_shows_applicable_forms[liquidation]",
+        "tests.test_travel_ux::test_drafted_entries_keep_edits_take_new_uploads_and_stay_removed",
+        "tests.test_csm_public_form_ux::test_not_knowing_what_a_charter_is_hides_cc2_and_cc3"
+      ]
+    }
+  },
+  "dependencies": "resolved-requirements.txt",
+  "source_sha256": {
+    "Dockerfile": "974a9596a98fa7942ba92fa7c3dc86748ab3712ddf52c821ca1767263833414b",
+    "requirements.txt": "dddc361f890f92baaddfe93f355381e13ca104019bf50cf671714ba78312bf8d",
+    "requirements-test.txt": "e9aba2abeb00a3ef55f71b868868defa4ce612d1ed1e7ce650c60c227acd6a00",
+    "tests/conftest.py": "26a3c37415dd049a1fa6becdcd54d70c28f69b3d3e1d28b7923ecf6f51e0e242",
+    "docs/phase1/python311/resolved-requirements.txt": "7b9f85b564c80c7949071db929c8af54c3c12dcf14ef87a5bdf6897685fbfa31"
+  },
+  "notes": [
+    "Separate detached checkouts of the same source commit; no production database copied.",
+    "Initial collection failed because runtime requirements did not declare PyMuPDF; requirements-test.txt declares the extra test dependencies.",
+    "16 existing skips in each run: Chromium unavailable. No new skips or expected failures.",
+    "Fresh dependency resolution; not an exact live-container reproduction.",
+    "Two non-failing warnings: Starlette httpx TestClient deprecation and PyMuPDF fitz alias deprecation.",
+    "No application source changes, manual live testing, or deployment."
+  ],
+  "release_integration": {
+    "version": "7.39",
+    "verified_source_commit": "1307c3c2b87fc4c347969912a7f213d2266def34",
+    "base_commit": "f273dc8e77495abac2844f53ae4734868c52b3ae",
+    "python": "3.11.17",
+    "seed": 739,
+    "tests": 4214,
+    "passed": 4196,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 18,
+    "seconds": 277.655,
+    "exit_code": 0,
+    "junit_sha256": "b90d2b1e9798d00ce9a8945b80b78de88fcecfb5e7e53708345a805f93e3cdad"
+  }
+}
