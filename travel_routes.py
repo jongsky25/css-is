@@ -34,6 +34,8 @@ import ai_core
 
 _REF = re.compile(r"^TF-\d{4}-\d{4,}$")
 STATUS_BADGE = {"open": "amber", "ready": "blue", "submitted": "green", "withdrawn": "grey"}
+_OPERATION_PATH = {'parameters': [{'name': 'operation_id', 'in': 'path', 'required': True,
+                                  'schema': {'type': 'string', 'format': 'uuid'}}]}
 
 
 def make_router(templates, get_conn, today_local, *, audit, base_url):
@@ -148,7 +150,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
                 "questions": tc.ANSWER_KEYS, "roles": tc.ROLES, "mc114": travel.MC114_FORMATS,
                 "kind_labels": travel.KIND_LABELS}
 
-    @router.get('/travel/new/{operation_id}', response_class=HTMLResponse)
+    @router.get('/travel/new/{operation_id}', response_class=HTMLResponse, openapi_extra=_OPERATION_PATH)
     @router.get("/travel/new", response_class=HTMLResponse)
     def travel_new(request: Request):
         user, q = request.state.user, dict(request.query_params)
@@ -238,7 +240,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
         finally:
             conn.close()
 
-    @router.post('/travel/new/{operation_id}')
+    @router.post('/travel/new/{operation_id}', openapi_extra=_OPERATION_PATH)
     @router.post("/travel/new")
     async def travel_new_post(request: Request):
         if not _same_origin(request):
