@@ -11,7 +11,7 @@ import logging
 import os
 import re
 from datetime import timedelta
-from urllib.parse import parse_qs, quote, urlparse
+from urllib.parse import parse_qs, quote, urlencode, urlparse
 
 from fastapi import APIRouter, Request
 from starlette.background import BackgroundTask
@@ -127,7 +127,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
 
     # ------------------------------------------------------------------- new ---
 
-    def _new_context(conn, user, source, f, *, error="", ack=False):
+    def _new_context(conn, user, source, f, *, error="", ack=False, operation_id=None):
         today = today_local()
         live = travel.live_ca(conn, user["id"], source["entry_id"], source["event_id"])
         has_dates = bool(source["start"] and source["end"])
@@ -139,7 +139,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
         if prof.get("rp_id"):
             rp = st.get_rp(conn, prof["rp_id"]) or {}
             jo_default = rp.get("employment_type") in ("job_order", "consultant")
-        operation_id = submissions.issue(conn, user['id'])
+        operation_id = operation_id or submissions.issue(conn, user['id'])
         return {"nav_active": "travel_mine", "tab": "new", "source": source, "f": f, "error": error, "ack": ack,
                 "operation_id": operation_id, "submission_status_url": f'/travel/submissions/{operation_id}',
                 "live_ca": live, "ca_msg": ca_msg if has_dates else None, "cas": cas, "jo_default": jo_default,
@@ -155,19 +155,39 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
         try:
             if not travel.enabled(conn):
                 return _off(request)
+            operation_id = q.get('operation')
+            if operation_id:
+                try:
+                    outcome = _submission_state(conn, user, operation_id)
+                except submissions.MissingOperation:
+                    return _submission_page(request, {'state': 'unknown', 'location': None,
+                        'message': 'This submission could not be found.'}, 404)
+                if outcome['state'] == 'completed' and outcome['location']:
+                    response = _go(outcome['location'])
+                    response.headers['Cache-Control'] = 'no-store'
+                    return response
+                if outcome['state'] != 'ready':
+                    return _submission_page(request, outcome,
+                        status_url=f'/travel/submissions/{operation_id}')
             try:
                 source = travel.resolve_source(
                     conn, user, today_local(), entry_id=int(q["entry"]) if (q.get("entry") or "").isdigit() else None,
                     event_id=int(q["event"]) if (q.get("event") or "").isdigit() else None, on=q.get("date"))
             except travel.TravelError as e:
                 return _go("/travel", err=str(e))
+            if not operation_id:
+                key = submissions.issue(conn, user['id'])
+                params = {k: q[k] for k in ('entry', 'event', 'date', 'kind') if k in q}
+                params['operation'] = key
+                return RedirectResponse('/travel/new?' + urlencode(params), status_code=303,
+                                        headers={'Cache-Control': 'no-store'})
             live = travel.live_ca(conn, user["id"], source["entry_id"], source["event_id"])
             default_kind = "liquidation" if live else "ca"
             if not live and source["start"] and tr.ca_lead_error(source["start"], today_local()):
                 default_kind = "reimbursement"
             f = {"kind": q.get("kind") if q.get("kind") in travel.KINDS else default_kind,
                  "title": "", "start": "", "end": "", "venue": ""}
-            ctx = _new_context(conn, user, source, f)
+            ctx = _new_context(conn, user, source, f, operation_id=operation_id)
             ctx["f"]["jo_cos"] = "1" if ctx["jo_default"] else ""
             ctx["f"]["cert_of_appearance_available"] = "1"
             return templates.TemplateResponse(request, "travel_new.html", ctx, headers={'Cache-Control': 'no-store'})

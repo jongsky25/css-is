@@ -15,7 +15,7 @@
 </div>
 {% endif %}
 
-<form method="post" action="/travel/new" class="tv-card tv-form" data-submission-status="{{ submission_status_url }}">
+<form method="post" action="/travel/new?operation={{ operation_id }}" class="tv-card tv-form" data-submission-status="{{ submission_status_url }}">
   <input type="hidden" name="operation_id" value="{{ operation_id }}">
   <div data-submission-feedback role="status" aria-live="polite" hidden><p data-submission-message></p></div>
   {% if source.entry_id %}<input type="hidden" name="entry" value="{{ source.entry_id }}"><input type="hidden" name="date" value="{{ source.start }}">{% endif %}

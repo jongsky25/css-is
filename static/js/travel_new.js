@@ -1,7 +1,7 @@
 /* Keep the no-JavaScript form usable; progressively hide unrelated questions. */
 (function () {
   'use strict';
-  var form = document.querySelector('form[action="/travel/new"]');
+  var form = document.querySelector('form[data-submission-status]');
   if (!form) return;
   function show(node, visible) {
     node.hidden = !visible;
@@ -30,6 +30,17 @@
   var label = submitButton.textContent;
   var pendingBody = null, busy = false, locked = [];
   checkButton.hidden = false;
+
+  function setAttempt(key, statusUrl) {
+    form.elements.operation_id.value = key;
+    form.dataset.submissionStatus = statusUrl;
+    statusLink.href = statusUrl;
+    form.action = '/travel/new?operation=' + encodeURIComponent(key);
+    var pageUrl = new URL(window.location.href);
+    pageUrl.searchParams.set('operation', key);
+    window.history.replaceState(null, '', pageUrl.href);
+  }
+  setAttempt(form.elements.operation_id.value, form.dataset.submissionStatus);
 
   function say(text) {
     feedback.hidden = false;
@@ -95,9 +106,7 @@
         if (completed(result)) return;
         if (result.state === 'rejected' && result.operation_id && result.status_url) {
           unlock();
-          form.elements.operation_id.value = result.operation_id;
-          form.dataset.submissionStatus = result.status_url;
-          statusLink.href = result.status_url;
+          setAttempt(result.operation_id, result.status_url);
           pendingBody = null;
           if (result.ack_required) {
             var ack = form.querySelector('[name="ack"]');

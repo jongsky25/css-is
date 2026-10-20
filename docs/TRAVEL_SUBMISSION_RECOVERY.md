@@ -22,6 +22,11 @@ or explains how to retry the original form. If the form is lost, Close this
 unfinished attempt waits for any writer, checks for a completed result, and
 retires only an unfinished operation before offering a new form.
 
+The form's URL retains the issued operation ID. Reloading a ready form reuses
+that ID; reloading after completion returns the existing checklist. Reloading
+an unfinished or rejected attempt shows its recovery status rather than silently
+issuing another submission. Validation corrections update the form URL and key.
+
 An older open form without an operation ID is rejected with its entered values
 and a refreshed form. It never creates a filing without a tracked operation.
 Separate new forms represent separate intents; identical contents with different

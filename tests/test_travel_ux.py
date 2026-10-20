@@ -100,7 +100,7 @@ def test_lost_creation_response_recovers_existing_checklist(page, viewer, conn):
         assert response.status_code == 200, response.text
         posted.append(1)
         route.abort('failed')  # The business effect committed, but the browser never receives it.
-    page.route('**/travel/new', lose_response)
+    page.route('**/travel/new*', lose_response)
     page.get_by_role('button', name='Open the checklist', exact=True).click()
     page.wait_for_url(re.compile(r'.*/travel/f/TF-\d{4}-\d+$'))
     assert posted == [1]
@@ -114,7 +114,7 @@ def test_repeated_submit_events_open_only_one_checklist(page, conn):
     page.on('request', lambda request: posted.append(1)
             if request.method == 'POST' and urlsplit(request.url).path == '/travel/new' else None)
     page.evaluate('''() => {
-        const form = document.querySelector('form[action="/travel/new"]');
+        const form = document.querySelector('form[data-submission-status]');
         form.requestSubmit(); form.requestSubmit();
     }''')
     page.wait_for_url(re.compile(r'.*/travel/f/TF-\d{4}-\d+$'))

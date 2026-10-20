@@ -9,7 +9,7 @@
   {% elif outcome.state in ('ready', 'pending') %}
   <p>Return to your original form with your browser’s Back button and retry that same submission. It will use the existing filing if one was already opened.</p>
   <p>If that form is lost, close this unfinished attempt first. This checks whether a filing was opened before letting you start over.</p>
-  <form method="post" action="{{ request.url.path }}/close"><button type="submit" class="btn ghost">Close this unfinished attempt</button></form>
+  <form method="post" action="{{ status_url or request.url.path }}/close"><button type="submit" class="btn ghost">Close this unfinished attempt</button></form>
   {% elif outcome.state == 'rejected' %}
   <p><a class="btn" href="/travel/new">Start a new form</a></p>
   {% endif %}

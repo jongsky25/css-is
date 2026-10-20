@@ -85,6 +85,8 @@ def test_partial_work_rolls_back_and_same_operation_can_resume(viewer, conn, mon
     assert effects(conn) == (0, 0)
     assert conn.execute('SELECT COUNT(*) FROM travel_item').fetchone()[0] == 0
     assert status(viewer, key).json()['state'] == 'pending'
+    reloaded = viewer.get('/travel/new?operation=' + key)
+    assert 'action="/travel/submissions/' + key + '/close"' in reloaded.text
     assert post(viewer, {**fields(key), 'advance_amount': '6000'}).status_code == 409
     assert post(viewer, fields(key)).json()['state'] == 'completed'
     assert effects(conn) == (1, 1)
@@ -232,6 +234,18 @@ def test_form_is_not_cached_and_native_status_is_available(viewer, conn):
     page = viewer.get('/travel/submissions/' + key)
     assert page.status_code == 200 and 'No completed filing' in page.text
     assert page.headers['cache-control'] == 'no-store'
+
+
+def test_form_url_retains_its_key_and_reload_recovers_the_result(viewer, conn):
+    page = viewer.get('/travel/new')
+    key = str(page.url).split('operation=')[1]
+    assert viewer.get(str(page.url)).text.count('value="' + key + '"') == 1
+    assert conn.execute('SELECT COUNT(*) FROM travel_submission').fetchone()[0] == 1
+    result = post(viewer, fields(key)).json()
+    recovered = viewer.get(str(page.url), follow_redirects=False)
+    assert recovered.status_code == 303 and recovered.headers['location'] == result['location']
+    assert recovered.headers['cache-control'] == 'no-store'
+    assert effects(conn) == (1, 1)
 
 
 def test_revoked_account_cannot_read_or_replay_receipt(viewer, conn):
