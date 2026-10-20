@@ -182,6 +182,38 @@ def test_defaults_seed_one_row_and_one_day_per_trip_day(tmp_path):
     json.dumps(d, default=str)
 
 
+def test_defaults_draft_the_report_overview_and_describe_the_days(tmp_path):
+    c = st.connect(str(tmp_path / "d.db")); st.init_db(c)
+    f = filing("2026-12-30", "2027-01-02", act_venue="Cebu City", dpo_no="123", dpo_date="2026-12-01")
+    d = td.defaults(c, f, PROFILE, {})
+    assert d["texts"]["overview"] == ("This report covers my travel to attend Regional Planning Workshop on "
+                                      f"{td.date_range('2026-12-30', '2027-01-02')} at Cebu City, as per DPO No. 123 dated December 1, 2026.")
+    assert [x["iso"] for x in d["days"]] == ["2026-12-30", "2026-12-31", "2027-01-01", "2027-01-02"]
+    assert d["days"][0]["label"] == "December 30, 2026"
+    assert d["activity"] == {"title": "Regional Planning Workshop", "venue": "Cebu City",
+                             "start": "2026-12-30", "end": "2027-01-02"}
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+def test_the_page_writes_each_report_day_from_the_itinerary():
+    rows = [{"date": "2026-10-12", "from": "Quezon City", "to": "Tagaytay", "dep": "06:00", "arr": "08:30", "mode": "tnvs"},
+            {"date": "2026-10-14", "from": "Tagaytay", "to": "Quezon City", "dep": "17:00", "arr": "", "mode": "van_doh"},
+            {"date": "2026-10-13", "from": "", "to": "", "dep": "", "arr": "", "mode": "none"}]
+    act = {"title": "Planning Workshop", "venue": "Tagaytay", "start": "2026-10-12", "end": "2026-10-14"}
+    days = ["2026-10-11", "2026-10-12", "2026-10-13", "2026-10-14"]
+    script = ("global.window=undefined;const src=require('fs').readFileSync('static/js/travel_prepare.js','utf8');"
+              "const g={};new Function('globalThis',src.replace(/\\}\\)\\(typeof window[^\\n]*$/, '})(globalThis);'))(g);"
+              f"const rows={json.dumps(rows)},act={json.dumps(act)},m={json.dumps({'tnvs': 'TNVS', 'van_doh': 'DOH van'})};"
+              f"console.log(JSON.stringify({json.dumps(days)}.map(d=>g.TravelPrepare.describeDay(rows,d,act,m))));")
+    out = subprocess.run(["node", "-e", script], capture_output=True, text=True, timeout=30)
+    assert out.returncode == 0, out.stderr
+    assert json.loads(out.stdout) == [
+        "",                                                                    # before the activity, nothing entered
+        "travelled from Quezon City to Tagaytay by TNVS (left 06:00, arrived 08:30); took part in Planning Workshop at Tagaytay",
+        "took part in Planning Workshop at Tagaytay",                           # a middle day: the activity alone
+        "took part in Planning Workshop at Tagaytay; travelled from Tagaytay to Quezon City by DOH van (left 17:00)"]
+
+
 # --------------------------------------------------- page rules match the server ---
 
 @pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")

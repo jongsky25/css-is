@@ -37,7 +37,32 @@
     return c;
   }
 
-  root.TravelPrepare = { rideCheck: rideCheck, ceilings: ceilings };
+  // One day of the Post Travel Report written from the itinerary: the rides entered for that date and, inside the activity's
+  // dates, taking part in it. `modes` maps a mode code to its label. Returns '' when there is nothing to say yet.
+  function plain(label) { label = String(label); return label.length > 1 && label.charAt(1) === label.charAt(1).toUpperCase() && label.charAt(1) !== label.charAt(1).toLowerCase() ? label : label.charAt(0).toLowerCase() + label.slice(1); }
+  function describeDay(rows, iso, act, modes) {
+    var rides = [];
+    (rows || []).forEach(function (r) {
+      if (r.date !== iso || !r.mode || r.mode === 'none') return;
+      var s = 'travelled' + (r.from ? ' from ' + r.from : '') + (r.to ? ' to ' + r.to : '') + ' by ' + plain((modes || {})[r.mode] || r.mode);
+      var when = [];
+      if (r.dep) when.push('left ' + r.dep);
+      if (r.arr) when.push('arrived ' + r.arr);
+      rides.push(when.length ? s + ' (' + when.join(', ') + ')' : s);
+    });
+    var inside = act && iso >= act.start && iso <= act.end;
+    if (!inside) return rides.join('; ');
+    var part = 'took part in ' + act.title + (act.venue ? ' at ' + act.venue : '');
+    var first = iso === act.start, last = iso === act.end, at;
+    if (first && !last) at = rides.length;                  // travel in, then the activity
+    else if (last && !first) at = 0;                        // the activity, then travel home
+    else if (first && last) at = Math.ceil(rides.length / 2); // out, the activity, back
+    else at = 0;
+    rides.splice(at, 0, part);
+    return rides.join('; ');
+  }
+
+  root.TravelPrepare = { rideCheck: rideCheck, ceilings: ceilings, describeDay: describeDay };
   if (typeof document === 'undefined') return;
 
   var app = document.getElementById('prep-app'), raw = document.getElementById('prep-data');
@@ -54,7 +79,7 @@
   // what the person changed, takes up rides read from uploads made since, and lets an answer they never touched follow
   // the newest reading.
   var SUGGESTED = ['strictness', 'explanation', 'refund_amount', 'refund_or_no', 'refund_or_date'];
-  var sugg = {}, gone = [];
+  var sugg = {}, gone = [], dayAuto = [];   // dayAuto: the report line the page last wrote for each day
   SUGGESTED.forEach(function (k) { sugg[k] = state.texts[k] || ''; });
   try {
     var d = JSON.parse(localStorage.getItem(draftKey) || 'null');
@@ -68,6 +93,7 @@
         if (sr.rid && !have[sr.rid] && gone.indexOf(sr.rid) < 0) { state.rows.push(Object.assign({}, BLANK, sr)); added++; }
       });
       state.texts = Object.assign({}, serverTexts, d.texts);
+      if (Array.isArray(d.dauto)) dayAuto = d.dauto;
       SUGGESTED.forEach(function (k) { if (d.texts && (d.texts[k] || '') === ((d.sugg || {})[k] || '') && serverTexts[k] != null) state.texts[k] = serverTexts[k]; });
       Object.keys(d.signatories || {}).forEach(function (k) { if (d.signatories[k]) sig[k] = d.signatories[k]; });
       state.signatories = sig;
@@ -85,10 +111,10 @@
     (kids || []).forEach(function (c) { n.appendChild(c); });
     return n;
   }
-  function save() {
+  function save(quiet) {                // quiet: the page itself updated a draft line, so leave the status message alone
     try {
-      localStorage.setItem(draftKey, JSON.stringify({ rows: state.rows, texts: state.texts, signatories: state.signatories, mc114_text: state.mc114_text, rates: state.rates, gone: gone, sugg: sugg }));
-      if (draftStatus) draftStatus.textContent = 'Draft saved in this browser only.';
+      localStorage.setItem(draftKey, JSON.stringify({ rows: state.rows, texts: state.texts, signatories: state.signatories, mc114_text: state.mc114_text, rates: state.rates, gone: gone, sugg: sugg, dauto: dayAuto }));
+      if (draftStatus && !quiet) draftStatus.textContent = 'Draft saved in this browser only.';
     } catch (e) {
       if (draftStatus) draftStatus.textContent = 'Draft could not be saved. Keep this page open until you make the forms.';
     }
@@ -99,6 +125,7 @@
     var input = opts.area ? el('textarea', { rows: opts.rows || 3 }) : el('input', { type: opts.type || 'text' });
     input.id = 'prep-field-' + (++fieldId);
     if (opts.type === 'number') { input.min = '0'; input.step = '0.01'; }
+    if (opts.placeholder) input.setAttribute('placeholder', opts.placeholder);
     input.value = value == null ? '' : value;
     input.addEventListener('input', function () { onInput(input.value); save(); if (opts.refresh) refresh(); });
     var wrap = el('div', opts.wide ? { 'class': 'tv-row-wide' } : {}, [el('label', { text: label, 'for': input.id }), input]);
@@ -447,6 +474,7 @@
     totals.textContent = 'Total: \u20b1' + total.toLocaleString('en-PH', { maximumFractionDigits: 2 }) +
       (kinds.cenrr ? ' \u00b7 ' + kinds.cenrr + ' ride(s) go on a CENRR' : '') + (kinds.rer ? ' \u00b7 ' + kinds.rer + ' RER form(s)' : '');
     drawBreakdown();
+    draftReport();
     flagsBox.textContent = '';
     clearMarks();
     if (lines.length) {
@@ -470,7 +498,7 @@
     }
   }
 
-  function textArea(label, key) { return field(label, state.texts[key], function (v) { state.texts[key] = v; }, { area: true, wide: true }); }
+  function textArea(label, key, hint) { return field(label, state.texts[key], function (v) { state.texts[key] = v; }, { area: true, wide: true, placeholder: hint }); }
   function section(title, kids) { return el('section', { 'class': 'tv-card' }, [el('h2', { text: title })].concat(kids)); }
 
   var addDay = el('button', { type: 'button', 'class': 'btn ghost', text: 'Add itinerary entry' });
@@ -495,10 +523,36 @@
     }
     app.appendChild(section('Certificate of travel completed', completed));
   }
+  var dayInputs = [], modeLabels = {};
+  (data.modes || []).forEach(function (m) { modeLabels[m[0]] = m[1]; });
   if (needs('travel_report')) {
-    app.appendChild(section('Post travel report', [textArea('Overview', 'overview')]
-      .concat(state.texts.day_by_day.map(function (line, i) { return field('Day ' + (i + 1), line, function (v) { T.day_by_day[i] = v; }, { area: true, rows: 2, wide: true }); }))
-      .concat([textArea('Key points', 'key_points'), textArea('Contributions', 'contributions'), textArea('Support needed', 'support_needed'), textArea('Recommendations', 'recommendations'), textArea('Conclusion', 'conclusion')])));
+    var dayFields = state.texts.day_by_day.map(function (line, i) {
+      var f = field('Day ' + (i + 1) + (data.days && data.days[i] ? ' \u00b7 ' + data.days[i].label : ''), line, function (v) { T.day_by_day[i] = v; }, { area: true, rows: 2, wide: true });
+      dayInputs[i] = f.querySelector('textarea');
+      return f;
+    });
+    app.appendChild(section('Post travel report', [textArea('Overview', 'overview'),
+      el('p', { 'class': 'tv-hint', text: 'Each day below is written from your itinerary and follows it until you edit that day yourself.' })]
+      .concat(dayFields)
+      .concat([textArea('Key points', 'key_points', 'The main things you learned or decided. Only you can write this.'),
+               textArea('Contributions', 'contributions', 'What you contributed to the activity.'),
+               textArea('Support needed', 'support_needed', 'Anything the office needs to provide as a follow-up.'),
+               textArea('Recommendations', 'recommendations', 'What you recommend, based on what you saw.'),
+               textArea('Conclusion', 'conclusion', 'A short closing statement.')])));
+  }
+  // Keep each day's line in step with the itinerary, but never overwrite a line the person has written or changed.
+  function draftReport() {
+    if (!dayInputs.length || !data.days) return;
+    var changed = false;
+    data.days.forEach(function (d, i) {
+      if (!dayInputs[i]) return;
+      var cur = T.day_by_day[i] || '', body = describeDay(state.rows, d.iso, data.activity, modeLabels);
+      var auto = body ? d.label + ': ' + body.charAt(0).toUpperCase() + body.slice(1) + '.' : d.label + ': ';
+      if ((cur === dayAuto[i] || cur.trim() === '' || cur.trim() === d.label + ':') && cur !== auto) {
+        T.day_by_day[i] = auto; dayInputs[i].value = auto; dayAuto[i] = auto; changed = true;
+      }
+    });
+    if (changed) save(true);
   }
   if (needs('jo_cert')) {
     app.appendChild(section('Job Order certification', [textArea('Activities you were engaged in', 'activities'), textArea('Obligations under your contract', 'obligations')]));
