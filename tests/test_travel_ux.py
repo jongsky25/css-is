@@ -321,3 +321,25 @@ def test_report_days_follow_the_itinerary_until_the_person_edits_one(page, viewe
     page.reload()
     pw.expect(day1).to_have_value(re.compile(r'to Antipolo by TNVS'))      # the saved draft keeps following too
     pw.expect(page.get_by_label('Key points', exact=True)).to_have_attribute('placeholder', re.compile('Only you can write'))
+
+
+def test_liquidation_figures_compare_expenses_with_the_cash_advance(page, viewer, conn, relay):
+    ref = mk(viewer, kind='liquidation', advance_amount='5000')
+    page.goto(f'http://testserver/travel/f/{ref}/prepare')
+    box = page.locator('.tv-liq')
+    pw.expect(box.get_by_role('heading', name='Liquidation figures')).to_be_visible()
+    row = page.locator('.tv-row').first
+    row.get_by_label('How you travelled', exact=True).select_option('tnvs')
+    row.get_by_label('Actual fare claimed (₱)', exact=True).fill('1200')
+    pw.expect(box).to_contain_text('TNVS ₱1,200')
+    pw.expect(box).to_contain_text('Actual expenses ₱1,200')
+    pw.expect(box).to_contain_text('₱3,800 goes back to the office as a refund')
+    row.get_by_label('Actual fare claimed (₱)', exact=True).fill('6000')
+    pw.expect(box).to_contain_text('You spent ₱1,000 more than the cash advance of ₱5,000')
+
+
+def test_a_reimbursement_has_no_liquidation_figures(page, viewer, conn, relay):
+    ref = mk(viewer, kind='reimbursement')
+    page.goto(f'http://testserver/travel/f/{ref}/prepare')
+    pw.expect(page.get_by_role('heading', name='Itinerary of travel')).to_be_visible()
+    pw.expect(page.locator('.tv-liq')).to_have_count(0)
