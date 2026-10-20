@@ -17,12 +17,23 @@ import tzutil as tz
 DOCS = {
     "dpo": {"label": "Department Personnel Order (DPO)",
             "blurb": "Authorises the personnel to attend or travel for the activity."},
-    "invitation": {"label": "Invitation",
-                   "blurb": "Tells the invited people what, when and where."},
+    "invitation": {"label": "Invitation (memorandum)",
+                   "blurb": "A memorandum asking the recipient's office for its help, with what, when and where."},
+    "concept_note": {"label": "Concept note",
+                     "blurb": "Explains why the activity is held, who takes part and what it costs, with the program of activities."},
+    "program_flow": {"label": "Program flow",
+                     "blurb": "The day-by-day schedule: when, what, and who is responsible."},
 }
 KEYS = tuple(DOCS)
 INVITE_KINDS = ("training",)           # a training or workshop is announced to the people it is for
-BLANK = "__________"                  # left for the person to fill in by hand on the draft
+BLANK = "__________"
+# The usual asks in a memorandum to a regional office (Area, Requested assistance). Starting wording only.
+ASSISTANCE = (
+    ("Participants", "Identify and designate the personnel who will participate in the activity."),
+    ("Venue", "Provide a suitable venue, preferably with stable internet connectivity."),
+    ("Meals", "Provide meals for the participants during the activity."),
+    ("Coordination", "Facilitate the coordination and attendance of the identified participants."),
+)                  # left for the person to fill in by hand on the draft
 
 
 def suggest(entry, kind_label="") -> dict:
@@ -42,6 +53,17 @@ def suggest(entry, kind_label="") -> dict:
         out["invitation"] = (True, f"A {(kind_label or entry.get('kind') or 'training').lower()} is usually announced with an invitation.")
     else:
         out["invitation"] = (False, "It is for the people you listed or your own unit.")
+    multi_day = bool(entry.get("end_date")) and entry["end_date"] != entry.get("start_date")
+    if entry.get("kind") in INVITE_KINDS:
+        out["concept_note"] = (True, f"A {(kind_label or 'training').lower()} is usually prepared with a concept note.")
+    elif travelling or multi_day:
+        out["concept_note"] = (True, "An activity with travel or lasting several days usually needs a concept note.")
+    else:
+        out["concept_note"] = (False, "A short internal item rarely needs one.")
+    if multi_day or entry.get("kind") in INVITE_KINDS:
+        out["program_flow"] = (True, "A training or an activity lasting several days needs a program.")
+    else:
+        out["program_flow"] = (False, "A single short item rarely needs a program.")
     return out
 
 
@@ -157,11 +179,71 @@ def payload(conn, entry, key, user, owner_label="") -> td.DocPayload:
         lines = [f"What: {title}", f"When: {when_text(entry)}", f"Where: {where_text(entry)}"]
         if link:
             lines.append(f"Join online: {link}")
+        days = days_text(entry)
+        place = (entry.get("venue") or "").strip()
+        in_place = f" in {place}" if place else ""
+        unit = owner_label.strip()
         fields = {"date": td.long_date(tz.today_local()), "title": title, "invited": invited,
                   "sender_name": me, "sender_title": profile.get("designation") or "",
-                  "contact": user.get("username") or "", "head_name": head_name, "head_title": head_title}
-        return td.DocPayload("invitation", "invitation", f"Invitation - {title}"[:120], fields, blocks={"details": lines})
+                  "contact": user.get("username") or "", "head_name": head_name, "head_title": head_title,
+                  # the DOH memorandum to the regions: FOR / FROM / SUBJECT, the request, the contact line
+                  "for_name": BLANK, "for_title": BLANK, "for_office": BLANK,
+                  "from_name": head_name.upper(), "from_title": head_title, "unit_name": unit,
+                  "subject": f"Request for Assistance in the Conduct of {title}",
+                  "opening": (f"The {unit} respectfully requests" if unit else "We respectfully request")
+                             + f" your office\u2019s assistance in the conduct of {title} on {days}{in_place}.",
+                  "contact_name": me, "contact_email": user.get("username") or "", "contact_phone": BLANK}
+        # what the request asks of the office: one row each, the person edits the wording
+        rows = {"assistance": {"marker": "a_area", "data": [{"a_area": a, "a_request": r} for a, r in ASSISTANCE]}}
+        return td.DocPayload("invitation", "invitation", f"Memorandum - {title}"[:120], fields,
+                             blocks={"details": lines}, rows=rows)
+    if key == "concept_note":
+        return _concept_note(conn, entry, title, me, profile, head_name, head_title, owner_label.strip())
+    if key == "program_flow":
+        return _program_flow(entry, title)
     raise ValueError("Unknown document.")
+
+
+# Prompts the person replaces. Square brackets mark text that is theirs to write: the app only knows dates, places and people.
+CONCEPT_PROMPTS = {
+    "background": ["[Why this activity is held: the mandate or policy it supports, what has been done so far, and the need it answers.]"],
+    "objectives": ["The activity aims to [state the general objective].", "Specifically, it seeks to:",
+                   "1. [first specific objective]", "2. [second specific objective]"],
+    "outputs": ["The activity is expected to produce the following:", "- [first expected output]", "- [second expected output]"],
+    "methodology": ["[How the activity will be conducted: the approach, the sessions and how participants take part.]"],
+}
+
+
+def _day_label(i, d) -> str:
+    return f"Day {i} \u2013 {td.long_date(d)}"
+
+
+def _concept_note(conn, entry, title, me, profile, head_name, head_title, unit) -> td.DocPayload:
+    days = td.trip_days(entry["start_date"], entry.get("end_date") or entry["start_date"])
+    people = describe_people(conn, entry)
+    participants = [_line(i, n, d) for i, (n, d) in enumerate(people, 1)] or ["[List who takes part, by group, and how many.]"]
+    fields = {"title": title, "unit_name": unit, "date_duration": days_text(entry),
+              "venue": (entry.get("venue") or "").strip() or "To be determined",
+              "participant_count": str(len(people)) if people else BLANK,
+              "facilitators": unit or BLANK, "budget": BLANK,
+              "prepared_by": me, "prepared_title": profile.get("designation") or "",
+              "noted_by_name": BLANK, "noted_by_title": BLANK,
+              "recommended_name": head_name.upper(), "recommended_title": head_title}
+    blocks = {**CONCEPT_PROMPTS, "participants": participants}
+    rows = {"program": {"marker": "pd_day", "data": [{"pd_day": _day_label(i, d), "pd_am": "", "pd_pm": ""}
+                                                     for i, d in enumerate(days, 1)]}}
+    return td.DocPayload("concept_note", "concept_note", f"Concept Note - {title}"[:120], fields, blocks=blocks, rows=rows)
+
+
+def _program_flow(entry, title) -> td.DocPayload:
+    """A heading row for each day and two empty rows under it: the schedule itself is the person's to write."""
+    days = td.trip_days(entry["start_date"], entry.get("end_date") or entry["start_date"])
+    data = []
+    for i, d in enumerate(days, 1):
+        data.append({"pf_time": _day_label(i, d), "pf_topic": "", "pf_person": ""})
+        data += [{"pf_time": "", "pf_topic": "", "pf_person": ""} for _ in range(2)]
+    return td.DocPayload("program_flow", "program_flow", f"Program Flow - {title}"[:120], {"title": title},
+                         rows={"flow": {"marker": "pf_time", "data": data}})
 
 
 PLAIN_ERRORS = {

@@ -57,6 +57,31 @@ def connect(db_path="css_is.db"):
     return conn
 
 
+def _calendar_entry_doc_any_key(conn):
+    """7.43 created calendar_entry_doc with CHECK (doc_key IN ('dpo','invitation')). Rebuild it without the CHECK, keeping
+    every row, so the concept note and program flow can be recorded. A no-op once rebuilt or on a new database."""
+    row = conn.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='calendar_entry_doc'").fetchone()
+    if not row or "doc_key IN" not in (row[0] or ""):
+        return
+    conn.executescript("""
+    BEGIN;
+    ALTER TABLE calendar_entry_doc RENAME TO calendar_entry_doc_old;
+    CREATE TABLE calendar_entry_doc (
+        entry_id INTEGER NOT NULL REFERENCES calendar_entry(id) ON DELETE CASCADE,
+        doc_key TEXT NOT NULL,
+        needed INTEGER CHECK (needed IN (0,1)),
+        doc_url TEXT, doc_state TEXT, note TEXT,
+        rev INTEGER NOT NULL DEFAULT 0,
+        updated_by TEXT, updated_at TEXT,
+        PRIMARY KEY (entry_id, doc_key)
+    );
+    INSERT INTO calendar_entry_doc (entry_id, doc_key, needed, doc_url, doc_state, note, rev, updated_by, updated_at)
+        SELECT entry_id, doc_key, needed, doc_url, doc_state, note, rev, updated_by, updated_at FROM calendar_entry_doc_old;
+    DROP TABLE calendar_entry_doc_old;
+    COMMIT;
+    """)
+
+
 def init_db(conn):
     """Create all the tables (safe to run again -- it won't duplicate)."""
     short_links.init_db(conn)
@@ -622,11 +647,12 @@ def init_db(conn):
         PRIMARY KEY (entry_id, tag)
     );
 
-    -- Documents an activity needs (Spot Feedback #136): whether the owner says it needs a DPO or an invitation
-    -- (NULL = follow the app's suggestion) and the Google Doc drafted for it. The draft's content is never stored.
+    -- Documents an activity needs (Spot Feedback #136): whether the owner says it needs a DPO, an invitation, a concept note or
+    -- a program flow (NULL = follow the app's suggestion) and the Google Doc drafted for it. The draft's content is never
+    -- stored. The set of keys lives in activity_docs.DOCS, not in a CHECK, so a new document type needs no table rebuild.
     CREATE TABLE IF NOT EXISTS calendar_entry_doc (
         entry_id INTEGER NOT NULL REFERENCES calendar_entry(id) ON DELETE CASCADE,
-        doc_key TEXT NOT NULL CHECK (doc_key IN ('dpo','invitation')),
+        doc_key TEXT NOT NULL,
         needed INTEGER CHECK (needed IN (0,1)),
         doc_url TEXT, doc_state TEXT, note TEXT,
         rev INTEGER NOT NULL DEFAULT 0,
@@ -1327,6 +1353,7 @@ def _add_missing_columns(conn):
                admin_note       TEXT,
                updated_at       TEXT
            )""")
+    _calendar_entry_doc_any_key(conn)
     sf_cols = {row[1] for row in conn.execute("PRAGMA table_info(spot_feedback)")}
     # submitter_seen_at: when the person who left the feedback last looked at their
     # "My feedback" page. Drives the unread badge (any newer update = unread).

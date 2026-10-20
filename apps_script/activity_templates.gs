@@ -24,8 +24,15 @@ const AT_TEMPLATES = [
   { key: 'dpo', title: 'Template - dpo', build: at_buildDpo_,
     expect: ['dpo_year', 'dpo_no', 'dpo_date', 'subject', 'background', 'intro', 'funding_source', 'p_name', 'p_position',
              'head_name', 'head_title', 'unit_name'] },
-  { key: 'invitation', title: 'Template - invitation', build: at_buildInvitation_,
-    expect: ['date', 'title', 'invited', 'details', 'sender_name', 'sender_title', 'contact', 'head_name', 'head_title'] }
+  { key: 'invitation', title: 'Template - invitation (memorandum)', build: at_buildInvitation_,
+    expect: ['date', 'for_name', 'for_title', 'for_office', 'from_name', 'from_title', 'unit_name', 'subject', 'opening',
+             'details', 'a_area', 'a_request', 'contact_name', 'contact_email', 'contact_phone'] },
+  { key: 'concept_note', title: 'Template - concept note', build: at_buildConceptNote_,
+    expect: ['title', 'background', 'objectives', 'outputs', 'participants', 'participant_count', 'methodology', 'date_duration',
+             'venue', 'facilitators', 'budget', 'pd_day', 'pd_am', 'pd_pm', 'prepared_by', 'prepared_title', 'noted_by_name',
+             'noted_by_title', 'recommended_name', 'recommended_title', 'unit_name'] },
+  { key: 'program_flow', title: 'Template - program flow', build: at_buildProgramFlow_,
+    expect: ['title', 'pf_time', 'pf_topic', 'pf_person'] }
 ];
 
 function makeActivityTemplates() {
@@ -158,20 +165,110 @@ function at_buildDpo_(body, doc) {
   if (first.getType() === DocumentApp.ElementType.PARAGRAPH && first.asParagraph().getText() === '') body.removeChild(first);
 }
 
+// The DOH memorandum to a regional office (the "Memo to Regions (Invitation)" format): date, MEMORANDUM, FOR / FROM /
+// SUBJECT, the request, the what / when / where lines, a table of the help asked for, the contact line and an initials block.
+//   {{details}} is a block (the app replaces that line with several); {{a_area}} and {{a_request}} sit in ONE table row.
 function at_buildInvitation_(body, doc) {
-  body.appendParagraph('{{date}}').setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
-  body.appendParagraph('TO: {{invited}}').setBold(true);
-  body.appendParagraph('SUBJECT: Invitation to {{title}}').setBold(true);
-  body.appendParagraph('Greetings!');
-  body.appendParagraph('You are invited to the following activity:');
-  body.appendParagraph('{{details}}');
-  body.appendParagraph('Please confirm your attendance with the contact below.');
-  body.appendParagraph('Contact: {{contact}}');
+  body.appendParagraph('{{date}}');
+  const title = body.appendParagraph('MEMORANDUM');
+  title.setBold(true);
+  title.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+  [
+    ['FOR:\t{{for_name}}', '{{for_title}}', '{{for_office}}'],
+    ['FROM:\t{{from_name}}', '{{from_title}}', '{{unit_name}}']
+  ].forEach(function (group) {
+    group.forEach(function (line, i) {
+      const p = body.appendParagraph(line);
+      if (i === 0) p.setBold(true);
+      if (i > 0) p.setIndentStart(36);
+    });
+  });
+  body.appendParagraph('SUBJECT:\t{{subject}}').setBold(true);
+  body.appendHorizontalRule();
+  [
+    '{{opening}}',
+    '{{details}}',
+    'In this regard, we kindly request your office\u2019s assistance in facilitating the activity through the following:'
+  ].forEach(function (t) {
+    const p = body.appendParagraph(t);
+    p.setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
+  });
+  const table = body.appendTable([['Area', 'Requested Assistance'], ['{{a_area}}', '{{a_request}}']]);
+  table.getRow(0).editAsText().setBold(true);
+  [
+    'For clarifications, your staff may contact {{contact_name}} at {{contact_email}}, or you may reach us via telephone: {{contact_phone}}.',
+    'We sincerely appreciate your support in facilitating the successful conduct of this activity.',
+    'Thank you very much for your continued support.'
+  ].forEach(function (t) {
+    const p = body.appendParagraph(t);
+    p.setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
+  });
   body.appendParagraph('');
-  body.appendParagraph('Thank you.');
+  const initials = body.appendTable([['', '{{unit_name}}'], ['Initials', ''], ['Date', '']]);
+  initials.getRow(0).editAsText().setBold(true);
+  body.editAsText().setFontFamily('Times New Roman');
+  body.editAsText().setFontSize(12);
+  const first = body.getChild(0);
+  if (first.getType() === DocumentApp.ElementType.PARAGRAPH && first.asParagraph().getText() === '') body.removeChild(first);
+}
+
+// The DOH concept note: numbered sections, an Operational Details table, the program of activities (one row per day),
+// and the Prepared by / Noted by / Recommended by block.
+//   {{background}} {{objectives}} {{outputs}} {{participants}} {{methodology}} are blocks (a prompt or lines the app writes).
+//   {{pd_day}} {{pd_am}} {{pd_pm}} sit in ONE table row: the app copies that row once per day.
+function at_buildConceptNote_(body, doc) {
+  const heading = body.appendParagraph('CONCEPT NOTE');
+  heading.setBold(true);
+  heading.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+  const title = body.appendParagraph('{{title}}');
+  title.setBold(true);
+  title.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+  [
+    ['1.  Background and Rationale', ['{{background}}']],
+    ['2.  Objectives', ['{{objectives}}']],
+    ['3.  Expected Outputs', ['{{outputs}}']],
+    ['4.  Participants', ['{{participants}}', 'Estimated total: {{participant_count}}']],
+    ['5.  Methodology', ['{{methodology}}']]
+  ].forEach(function (section) {
+    body.appendParagraph(section[0]).setBold(true);
+    section[1].forEach(function (line) {
+      body.appendParagraph(line).setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
+    });
+  });
+  body.appendParagraph('6.  Operational Details').setBold(true);
+  const details = body.appendTable([
+    ['Title', '{{title}}'], ['Date/Duration', '{{date_duration}}'], ['Venue', '{{venue}}'],
+    ['Participants', '{{participant_count}}'], ['Facilitators', '{{facilitators}}'], ['Budget and Source', '{{budget}}']
+  ]);
+  details.setBorderWidth(1);
+  body.appendParagraph('7.  Proposed Program of Activities').setBold(true);
+  const program = body.appendTable([['Day', 'AM', 'PM'], ['{{pd_day}}', '{{pd_am}}', '{{pd_pm}}']]);
+  program.getRow(0).editAsText().setBold(true);
   body.appendParagraph('');
-  body.appendParagraph('{{sender_name}}').setBold(true);
-  body.appendParagraph('{{sender_title}}');
+  const signers = body.appendTable([['Prepared by:', 'Noted by:'], ['{{prepared_by}}', '{{noted_by_name}}'],
+                                    ['{{prepared_title}}', '{{noted_by_title}}']]);
+  signers.setBorderWidth(0);
+  signers.getRow(0).editAsText().setBold(true);
   body.appendParagraph('');
-  body.appendParagraph('Noted by: {{head_name}}, {{head_title}}').setItalic(true);
+  body.appendParagraph('Recommended by:').setBold(true);
+  body.appendParagraph('{{recommended_name}}').setBold(true);
+  body.appendParagraph('{{recommended_title}}');
+  body.appendParagraph('{{unit_name}}');
+  body.editAsText().setFontFamily('Times New Roman');
+  body.editAsText().setFontSize(12);
+  const first = body.getChild(0);
+  if (first.getType() === DocumentApp.ElementType.PARAGRAPH && first.asParagraph().getText() === '') body.removeChild(first);
+}
+
+// The program flow: the activity and one table of Date/Time, Topic/Activity and Person Responsible.
+//   {{pf_time}} {{pf_topic}} {{pf_person}} sit in ONE table row: the app copies it for each day heading and each empty row.
+function at_buildProgramFlow_(body, doc) {
+  body.appendParagraph('Activity: {{title}}').setBold(true);
+  body.appendParagraph('Tentative Program Flow:');
+  const table = body.appendTable([['Date/Time', 'Topic/Activity', 'Person Responsible'], ['{{pf_time}}', '{{pf_topic}}', '{{pf_person}}']]);
+  table.getRow(0).editAsText().setBold(true);
+  body.editAsText().setFontFamily('Times New Roman');
+  body.editAsText().setFontSize(12);
+  const first = body.getChild(0);
+  if (first.getType() === DocumentApp.ElementType.PARAGRAPH && first.asParagraph().getText() === '') body.removeChild(first);
 }

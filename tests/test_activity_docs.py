@@ -36,6 +36,37 @@ def test_a_bureau_wide_or_training_item_suggests_an_invitation():
     assert ad.suggest(entry(kind="training"), "Training / workshop")["invitation"][0] is True
 
 
+def test_a_training_or_a_multi_day_item_suggests_a_concept_note_and_a_program():
+    training = ad.suggest(entry(kind="training"), "Training / workshop")
+    assert training["concept_note"][0] is True and training["program_flow"][0] is True
+    multi = ad.suggest(entry(start_date="2026-10-12", end_date="2026-10-16"))
+    assert multi["concept_note"][0] is True and multi["program_flow"][0] is True
+    travelling = ad.suggest(entry(people=[{"user_id": 1, "role": "travel"}]))
+    assert travelling["concept_note"][0] is True and travelling["program_flow"][0] is False     # a short trip needs no program
+    plain = ad.suggest(entry(start_date="2026-10-12", end_date="2026-10-12"))
+    assert plain["concept_note"][0] is False and plain["program_flow"][0] is False
+
+
+def test_an_old_table_that_only_allowed_two_keys_is_rebuilt_and_keeps_its_rows(tmp_path):
+    import sqlite3
+    c = st.connect(str(tmp_path / "old.db")); st.init_db(c)
+    c.executescript("""DROP TABLE calendar_entry_doc;
+        CREATE TABLE calendar_entry_doc (entry_id INTEGER NOT NULL REFERENCES calendar_entry(id) ON DELETE CASCADE,
+          doc_key TEXT NOT NULL CHECK (doc_key IN ('dpo','invitation')), needed INTEGER CHECK (needed IN (0,1)),
+          doc_url TEXT, doc_state TEXT, note TEXT, rev INTEGER NOT NULL DEFAULT 0, updated_by TEXT, updated_at TEXT,
+          PRIMARY KEY (entry_id, doc_key));
+        INSERT INTO calendar_entry(id, uid, title, start_date) VALUES (7, 'u7', 'x', '2026-10-12');
+        INSERT INTO calendar_entry_doc VALUES (7, 'dpo', 1, 'https://docs.google.com/d/1', 'done', '', 2, 'a', 't');""")
+    with pytest.raises(sqlite3.IntegrityError):
+        c.execute("INSERT INTO calendar_entry_doc(entry_id, doc_key) VALUES (7, 'concept_note')")
+    st.init_db(c)
+    assert c.execute("SELECT doc_key, needed, doc_url, rev FROM calendar_entry_doc").fetchall() == [
+        ("dpo", 1, "https://docs.google.com/d/1", 2)]
+    c.execute("INSERT INTO calendar_entry_doc(entry_id, doc_key) VALUES (7, 'concept_note')")
+    st.init_db(c)                                                         # a second run changes nothing
+    assert c.execute("SELECT COUNT(*) FROM calendar_entry_doc").fetchone()[0] == 2
+
+
 def test_when_and_where_read_as_one_line_each():
     e = {"start_date": "2026-10-12", "end_date": "2026-10-14", "start_time": "09:00", "end_time": "16:00",
          "venue": "Hotel Ozamiz", "modality": "hybrid", "time_note": None}
@@ -58,6 +89,7 @@ def test_the_page_lists_both_documents_with_the_reason(viewer, conn):
     assert "Documents for this activity" in html and "Department Personnel Order (DPO)" in html
     assert "It is open to everyone in the bureau." in html and "Nobody is marked as travelling." in html
     assert html.index("Invitation") > 0 and "Suggested" in html
+    assert "Concept note" in html and "Program flow" in html
 
 
 def test_an_item_that_never_needs_these_has_no_section(viewer, conn):
@@ -100,7 +132,7 @@ def test_drafting_an_invitation_sends_the_entry_details_and_links_the_doc(viewer
     assert r.status_code == 303 and "ok=" in r.headers["location"]
     call = relay.calls[0]
     assert call["template_key"] == "invitation" and call["folder_key"] == f"act-{eid}"
-    assert call["request_id"] == f"act{eid}:invitation:1" and call["title"] == "Invitation - CALEP Planning Workshop"
+    assert call["request_id"] == f"act{eid}:invitation:1" and call["title"] == "Memorandum - CALEP Planning Workshop"
     assert call["fields"]["title"] == "CALEP Planning Workshop" and call["fields"]["invited"] == "All personnel of the bureau"
     details = call["blocks"]["details"]
     assert details[0] == "What: CALEP Planning Workshop" and "Where: Hotel Ozamiz" in details[2]
@@ -178,19 +210,78 @@ def test_a_cancelled_item_cannot_be_drafted(viewer, conn, relay):
 
 # ------------------------------------------------ the Apps Script template and the app agree ---
 
+def test_the_invitation_is_the_doh_memorandum_with_the_request_table(viewer, conn, relay):
+    st.set_setting(conn, "travel.sig.head_name", "Dr. Ana Reyes"); st.set_setting(conn, "travel.sig.head_title", "OIC - Director IV")
+    eid = create(viewer, audience="bureau", title="CALEP Planning Workshop", venue="Hotel Ozamiz",
+                 start_date="2026-10-12", end_date="2026-10-16")
+    assert draft(viewer, eid, "invitation").status_code == 303
+    f, call = relay.calls[0]["fields"], relay.calls[0]
+    assert f["subject"] == "Request for Assistance in the Conduct of CALEP Planning Workshop"
+    assert "respectfully request" in f["opening"] and "CALEP Planning Workshop" in f["opening"]
+    assert "October 12-16, 2026" in f["opening"] and f["opening"].rstrip().endswith("in Hotel Ozamiz.")
+    # who it is for, and the phone, are never guessed
+    assert f["for_name"] == f["for_title"] == f["for_office"] == f["contact_phone"] == ad.BLANK
+    assert f["from_name"] == "DR. ANA REYES" and f["from_title"] == "OIC - Director IV"
+    assert f["contact_name"] and f["contact_email"] == "viewer@test.local"
+    table = call["rows"]["assistance"]
+    assert table["marker"] == "a_area" and [r["a_area"] for r in table["data"]] == ["Participants", "Venue", "Meals", "Coordination"]
+    assert all(set(r) == {"a_area", "a_request"} and r["a_request"] for r in table["data"])
+
+
+def test_a_concept_note_fills_what_the_item_knows_and_prompts_for_the_rest(viewer, conn, relay):
+    eid = create(viewer, kind="training", title="CALEP Planning Workshop", venue="Hotel Ozamiz",
+                 start_date="2026-10-12", end_date="2026-10-14", people=[str(uid(conn, "viewer@test.local"))])
+    assert draft(viewer, eid, "concept_note").status_code == 303
+    call = relay.calls[0]
+    f, blocks = call["fields"], call["blocks"]
+    assert call["template_key"] == "concept_note" and call["title"] == "Concept Note - CALEP Planning Workshop"
+    assert f["title"] == "CALEP Planning Workshop" and f["venue"] == "Hotel Ozamiz" and "October 12-14, 2026" in f["date_duration"]
+    assert f["participant_count"] == "1" and f["budget"] == ad.BLANK and f["noted_by_name"] == ad.BLANK
+    assert blocks["participants"][0].startswith("1. ")
+    for key in ("background", "objectives", "outputs", "methodology"):          # theirs to write: a prompt, never invented text
+        assert blocks[key] and any("[" in line for line in blocks[key]), key
+    days = call["rows"]["program"]
+    assert days["marker"] == "pd_day" and [r["pd_day"] for r in days["data"]] == [
+        "Day 1 \u2013 October 12, 2026", "Day 2 \u2013 October 13, 2026", "Day 3 \u2013 October 14, 2026"]
+    assert all(r["pd_am"] == "" and r["pd_pm"] == "" for r in days["data"])      # the program itself is theirs to write
+
+
+def test_a_concept_note_with_no_venue_or_people_still_reads_properly(viewer, conn, relay):
+    eid = create(viewer, kind="training", title="CALEP Planning Workshop", venue="")
+    draft(viewer, eid, "concept_note")
+    call = relay.calls[0]
+    assert call["fields"]["venue"] == "To be determined"
+    assert call["blocks"]["participants"] == ["[List who takes part, by group, and how many.]"] or call["blocks"]["participants"][0].startswith("1. ")
+
+
+def test_a_program_flow_has_a_heading_and_two_empty_rows_for_each_day(viewer, conn, relay):
+    eid = create(viewer, kind="training", title="CALEP Planning Workshop", start_date="2026-10-12", end_date="2026-10-13")
+    assert draft(viewer, eid, "program_flow").status_code == 303
+    call = relay.calls[0]
+    assert call["template_key"] == "program_flow" and call["fields"] == {"title": "CALEP Planning Workshop"}
+    flow = call["rows"]["flow"]
+    assert flow["marker"] == "pf_time" and len(flow["data"]) == 6
+    assert [r["pf_time"] for r in flow["data"] if r["pf_time"]] == ["Day 1 \u2013 October 12, 2026", "Day 2 \u2013 October 13, 2026"]
+    assert all(set(r) == {"pf_time", "pf_topic", "pf_person"} for r in flow["data"])
+
+
 @pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
-def test_every_placeholder_in_the_dpo_template_is_one_the_app_fills(viewer, conn, relay):
-    """Runs the template builder against a fake Docs API (the real one only runs in Google), then checks the
-    placeholders it writes against what a draft sends, so a template and the app cannot drift apart."""
+@pytest.mark.parametrize("key, over", [
+    ("dpo", {"kind": "travel"}), ("invitation", {"audience": "bureau"}),
+    ("concept_note", {"kind": "training", "start_date": "2026-10-12", "end_date": "2026-10-13"}),
+    ("program_flow", {"kind": "training", "start_date": "2026-10-12", "end_date": "2026-10-13"})])
+def test_every_placeholder_in_a_template_is_one_the_app_fills(viewer, conn, relay, key, over):
+    """Runs the template builders against a fake Docs API (the real one only runs in Google), then checks the
+    placeholders each writes against what a draft sends, so a template and the app cannot drift apart."""
     out = subprocess.run(["node", "tests/js/activity_templates_stub.js", "apps_script/activity_templates.gs"],
                          capture_output=True, text=True, timeout=30)
     assert out.returncode == 0, out.stderr
-    built = json.loads(out.stdout)
+    built = json.loads(out.stdout)[key]
     assert built["missing"] == [] and set(built["expect"]) <= set(built["found"])      # it writes everything it promises
-    eid = create(viewer, kind="travel", title="CALEP Field Visit", people=[str(uid(conn, "viewer@test.local"))])
-    draft(viewer, eid, "dpo")
+    eid = create(viewer, title="CALEP Field Visit", people=[str(uid(conn, "viewer@test.local"))], **over)
+    draft(viewer, eid, key)
     call = relay.calls[0]
     filled = set(call["fields"]) | set(call["blocks"]) | {r["marker"] for r in call["rows"].values()} | {
         k for r in call["rows"].values() for d in r["data"] for k in d}
     unfilled = set(built["found"]) - filled
-    assert unfilled == set(), f"in the template but never filled by the app: {sorted(unfilled)}"
+    assert unfilled == set(), f"in the {key} template but never filled by the app: {sorted(unfilled)}"
