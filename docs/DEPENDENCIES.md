@@ -118,9 +118,10 @@ remains self-hosted; evaluation stays disabled and user documents are not sent
 to a CDN. Future vendor updates require repeating the upstream integrity/file
 comparison and browser/PDF workflow checks before replacing the manifest.
 
-## Remaining increment
+## Parser and OCR increments
 
 Native PDF extraction now has a separate bounded subprocess in the current
-[PDF reader increment](PDF_READER_LIMITS.md). OCR/PDFium process isolation remains
-separate work. Clean advisory scans and native parsing limits do not establish
-resistance to every hostile scanned PDF.
+[PDF reader increment](PDF_READER_LIMITS.md). The current [OCR worker increment](OCR_WORKER_LIMITS.md) moves PDFium, image
+decoding and Tesseract into a separate bounded process group as well. Clean
+advisory scans and these process limits do not establish resistance to every
+hostile document or provide a full OS sandbox.

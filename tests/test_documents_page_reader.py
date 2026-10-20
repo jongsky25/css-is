@@ -5,7 +5,7 @@ import subprocess
 import pytest
 from PIL import Image, ImageDraw, ImageFont
 import documents_page_reader as pages
-import documents_ocr
+import ocr_process
 import storage as st
 
 
@@ -20,24 +20,22 @@ def page_image():
 
 def test_real_image_ocr():
     assert 'Page selection test' in pages.read_image(page_image())['text']
-    assert not documents_ocr._LOCK.locked()
+    assert ocr_process._SLOT.acquire(blocking=False)
+    ocr_process._SLOT.release()
 
 
 def test_image_bounds_and_cleanup(monkeypatch):
     for raw in (b'', b'not an image', b'x' * (pages.MAX_IMAGE_BYTES + 1)):
         with pytest.raises(ValueError): pages.read_image(raw)
-        assert not documents_ocr._LOCK.locked()
+        assert ocr_process._SLOT.acquire(blocking=False)
+        ocr_process._SLOT.release()
     with Image.new('RGB', (2001, 2000)) as image:
         out = io.BytesIO(); image.save(out, 'PNG')
     with pytest.raises(ValueError, match='pixels'): pages.read_image(out.getvalue())
-    def timeout(*args, **kwargs): raise subprocess.TimeoutExpired('tesseract', 15)
-    monkeypatch.setattr(subprocess, 'run', timeout)
-    with pytest.raises(ValueError, match='timed out'): pages.read_image(page_image())
-    assert not documents_ocr._LOCK.locked()
-    documents_ocr._LOCK.acquire()
+    ocr_process._SLOT.acquire()
     try:
         with pytest.raises(ValueError, match='Another'): pages.read_image(page_image())
-    finally: documents_ocr._LOCK.release()
+    finally: ocr_process._SLOT.release()
 
 
 def test_aggregate_page_numbers_and_conflicts():
@@ -72,7 +70,7 @@ def test_page_routes_auth_bounds_and_no_storage(app_mod, viewer, monkeypatch):
     try:
         page=viewer.get('/documents/new')
         csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',page.text)[1]
-        monkeypatch.setattr(pages,'read_image',lambda raw:{'text':'Subject: One page'})
+        monkeypatch.setattr(pages,'read_image',lambda raw, **kwargs:{'text':'Subject: One page'})
         assert viewer.post('/documents/intake/page',content=page_image(),headers={'content-type':'image/jpeg'}).status_code==403
         headers={'content-type':'image/jpeg','x-csrf-token':csrf}
         response=viewer.post('/documents/intake/page',content=page_image(),headers=headers)

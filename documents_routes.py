@@ -210,8 +210,8 @@ def make_router(templates,get_conn):
     @router.post('/documents/intake/page')
     @router.post('/documents/intake/pages-result')
     async def page_reading(request: Request):
-        import asyncio
         import documents_page_reader as page_reader
+        from pdf_reader_process import PDFBusy
         headers = {'Cache-Control': 'no-store', 'Pragma': 'no-cache'}
         try:
             aggregate = request.url.path.endswith('/pages-result')
@@ -220,10 +220,12 @@ def make_router(templates,get_conn):
                 raise ValueError('Unsupported page request format.')
             raw = await transient_page_body(request, page_reader.MAX_RESULT_BYTES if aggregate else page_reader.MAX_IMAGE_BYTES)
             result = (page_reader.summarize(json.loads(raw)) if aggregate else
-                      await asyncio.to_thread(page_reader.read_image, raw))
+                      await page_reader.read_image_async(raw, disconnected=request.is_disconnected))
             return JSONResponse(result, headers=headers)
         except p.Denied:
             return JSONResponse({'error': 'Your session expired or this account is unavailable. Sign in again.'}, status_code=403, headers=headers)
+        except PDFBusy as exc:
+            return JSONResponse({'error': str(exc)}, status_code=429, headers={**headers, 'Retry-After': '3'})
         except ValueError as exc:
             return JSONResponse({'error': str(exc)}, status_code=400, headers=headers)
         except Exception:

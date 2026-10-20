@@ -67,7 +67,8 @@ def test_tracking_caption_recovery_and_deadline_position(monkeypatch):
     import io
     import subprocess
     from PIL import Image
-    import documents_ocr
+    import ocr_engine
+    import ocr_tesseract
     out = io.BytesIO()
     Image.new('RGB', (1200, 1700), 'white').save(out, 'PNG')
     header = 'level\tpage_num\tblock_num\tpar_num\tline_num\tword_num\tleft\ttop\twidth\theight\tconf\ttext\n'
@@ -75,12 +76,12 @@ def test_tracking_caption_recovery_and_deadline_position(monkeypatch):
         return f'5\t1\t1\t1\t1\t1\t{x}\t{y}\t{width}\t15\t95\t{text}\n'
     tsv = header + word('2026-000123456', 400, 300, 180) + word('DUE', 800, 600) + word('DATE', 850, 600)
     tsv += word('2026-10-15', 100, 720, 120) + word('2026-10-20', 795, 720, 120)
-    monkeypatch.setattr(subprocess, 'run', lambda *a, **k: subprocess.CompletedProcess(a, 0, tsv.encode()))
-    result = documents_ocr.routing_deadline(out.getvalue(), 'DTRAK\nORIGINATING OFFICE: Test')
+    monkeypatch.setattr(ocr_tesseract, 'run', lambda *a, **k: tsv.encode())
+    result = ocr_engine.routing_deadline(out.getvalue(), 'DTRAK\nORIGINATING OFFICE: Test')
     assert result.startswith('2026-000123456\n')
     assert result.endswith('Deadline: 2026-10-20')
     tsv += word('2026-10-21', 795, 760, 120)
-    assert 'Deadline:' not in documents_ocr.routing_deadline(out.getvalue(), 'DTRAK\nORIGINATING OFFICE: Test')
+    assert 'Deadline:' not in ocr_engine.routing_deadline(out.getvalue(), 'DTRAK\nORIGINATING OFFICE: Test')
 
 
 def test_first_page_link_scope():

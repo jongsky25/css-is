@@ -49,7 +49,7 @@ def test_successful_region_authoritative_over_later_page():
 def test_region_timeout_and_non_dtrak(monkeypatch):
     assert dtrak.read_subject(b'', 'Ordinary memorandum') is None
     def timeout(*args, **kwargs): raise subprocess.TimeoutExpired('tesseract', 4)
-    monkeypatch.setattr(subprocess, 'run', timeout)
+    monkeypatch.setattr(dtrak.ocr_tesseract, 'run', timeout)
     result = dtrak.read_subject(fixture(), 'DTRAK ROUTING SLIP')
     assert result['status'] == 'failed' and not result['value']
     assert result['reason']

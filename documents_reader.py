@@ -300,7 +300,7 @@ def read_pdf(raw, first_page=False, cancelled=None):
         check_cancelled()
         if scanned:
             import documents_ocr
-            readings = documents_ocr.read_pages(raw, scanned)
+            readings = documents_ocr.read_pages(raw, scanned, cancelled=cancelled)
             subject_readings.update(getattr(readings, 'subjects', {}))
             for index, text in readings.items():
                 # Keep native text if OCR found nothing; otherwise use the complete
@@ -315,7 +315,7 @@ def read_pdf(raw, first_page=False, cancelled=None):
             text = following[1]
             if len(re.sub(r'\W', '', text)) < 40:
                 import documents_ocr
-                readings = documents_ocr.read_pages(raw, [1])
+                readings = documents_ocr.read_pages(raw, [1], cancelled=cancelled)
                 text = readings[1]
                 subject_readings.update(getattr(readings, 'subjects', {}))
                 scanned.append(1)
@@ -343,16 +343,16 @@ def read_pdf(raw, first_page=False, cancelled=None):
 
 
 async def read_pdf_async(raw, *, first_page=False, disconnected=None):
-    """Stop a native worker when its HTTP request is cancelled/disconnected.
+    """Stop native and scanned-PDF workers on cancellation or disconnect."""
+    return await read_in_thread(read_pdf, raw, disconnected=disconnected, first_page=first_page)
 
-    OCR remains the existing bounded thread path; it observes cancellation when
-    it returns. No PDF bytes or results are persisted by an abandoned task.
-    """
+
+async def read_in_thread(function, raw, *, disconnected=None, **kwargs):
+    """Bridge async request lifetime to the worker controller's stop event."""
     import asyncio
     import threading
     cancelled = threading.Event()
-    task = asyncio.create_task(asyncio.to_thread(read_pdf, raw, first_page=first_page,
-                                                cancelled=cancelled))
+    task = asyncio.create_task(asyncio.to_thread(function, raw, cancelled=cancelled, **kwargs))
 
     def consume(completed):
         if not completed.cancelled():

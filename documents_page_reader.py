@@ -1,55 +1,17 @@
-"""Bounded, transient page-image OCR and aggregation for browser PDF selection."""
-import io
-import subprocess
-
-from PIL import Image
-import documents_ocr
+"""Bounded transient OCR and aggregation for browser PDF page selection."""
+from ocr_process import MAX_IMAGE_BYTES, MAX_IMAGE_PIXELS, read
 import documents_reader
 
-MAX_IMAGE_BYTES = 2 * 1024 * 1024
-MAX_IMAGE_PIXELS = 4_000_000
 MAX_RESULT_BYTES = 650_000
 MAX_PAGES = 50
 
 
-def read_image(raw):
-    if not raw or len(raw) > MAX_IMAGE_BYTES:
-        raise ValueError('A page image must be no larger than 2 MiB.')
-    if not documents_ocr._LOCK.acquire(blocking=False):
-        raise ValueError('Another page is being read. Retry this page shortly.')
-    try:
-        try:
-            with Image.open(io.BytesIO(raw)) as image:
-                if image.format not in ('JPEG', 'PNG') or image.width * image.height > MAX_IMAGE_PIXELS:
-                    raise ValueError('Use a JPEG or PNG page image with at most 4 million pixels.')
-                image.load()
-                with image.convert('RGB') as rgb, io.BytesIO() as output:
-                    rgb.save(output, format='PNG')
-                    png = output.getvalue()
-        except ValueError:
-            raise
-        except Exception:
-            raise ValueError('This page image could not be opened. Retry the page.') from None
-        try:
-            result = subprocess.run(['tesseract', 'stdin', 'stdout', '-l', 'eng', '--psm', '3',
-                                     '-c', 'debug_file=/dev/null'], input=png,
-                                    stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                                    timeout=15, check=True)
-        except FileNotFoundError:
-            raise ValueError('OCR is unavailable on this server. Try again later.') from None
-        except subprocess.TimeoutExpired:
-            raise ValueError('OCR timed out on this page. Retry it or choose another page.') from None
-        except subprocess.CalledProcessError:
-            raise ValueError('OCR failed on this page. Retry it or choose another page.') from None
-        text = result.stdout.decode('utf-8', errors='replace').strip()
-        if not text:
-            raise ValueError('No readable text was found on this page. Try a clearer copy.')
-        if len(text) > documents_reader.MAX_TEXT:
-            raise ValueError('This page contains too much text.')
-        from documents_dtrak import read_subject
-        return {'text': documents_ocr.routing_deadline(png, text), 'subject_reading': read_subject(png, text)}
-    finally:
-        documents_ocr._LOCK.release()
+def read_image(raw, *, cancelled=None):
+    return read(raw, mode='image', cancelled=cancelled)
+
+
+async def read_image_async(raw, *, disconnected=None):
+    return await documents_reader.read_in_thread(read_image, raw, disconnected=disconnected)
 
 
 def summarize(payload):
