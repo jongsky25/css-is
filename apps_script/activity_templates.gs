@@ -26,7 +26,13 @@ const AT_TEMPLATES = [
              'head_name', 'head_title', 'unit_name'] },
   { key: 'invitation', title: 'Template - invitation (memorandum)', build: at_buildInvitation_,
     expect: ['date', 'for_name', 'for_title', 'for_office', 'from_name', 'from_title', 'unit_name', 'subject', 'opening',
-             'details', 'a_area', 'a_request', 'contact_name', 'contact_email', 'contact_phone'] }
+             'details', 'a_area', 'a_request', 'contact_name', 'contact_email', 'contact_phone'] },
+  { key: 'concept_note', title: 'Template - concept note', build: at_buildConceptNote_,
+    expect: ['title', 'background', 'objectives', 'outputs', 'participants', 'participant_count', 'methodology', 'date_duration',
+             'venue', 'facilitators', 'budget', 'pd_day', 'pd_am', 'pd_pm', 'prepared_by', 'prepared_title', 'noted_by_name',
+             'noted_by_title', 'recommended_name', 'recommended_title', 'unit_name'] },
+  { key: 'program_flow', title: 'Template - program flow', build: at_buildProgramFlow_,
+    expect: ['title', 'pf_time', 'pf_topic', 'pf_person'] }
 ];
 
 function makeActivityTemplates() {
@@ -200,6 +206,67 @@ function at_buildInvitation_(body, doc) {
   body.appendParagraph('');
   const initials = body.appendTable([['', '{{unit_name}}'], ['Initials', ''], ['Date', '']]);
   initials.getRow(0).editAsText().setBold(true);
+  body.editAsText().setFontFamily('Times New Roman');
+  body.editAsText().setFontSize(12);
+  const first = body.getChild(0);
+  if (first.getType() === DocumentApp.ElementType.PARAGRAPH && first.asParagraph().getText() === '') body.removeChild(first);
+}
+
+// The DOH concept note: numbered sections, an Operational Details table, the program of activities (one row per day),
+// and the Prepared by / Noted by / Recommended by block.
+//   {{background}} {{objectives}} {{outputs}} {{participants}} {{methodology}} are blocks (a prompt or lines the app writes).
+//   {{pd_day}} {{pd_am}} {{pd_pm}} sit in ONE table row: the app copies that row once per day.
+function at_buildConceptNote_(body, doc) {
+  const heading = body.appendParagraph('CONCEPT NOTE');
+  heading.setBold(true);
+  heading.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+  const title = body.appendParagraph('{{title}}');
+  title.setBold(true);
+  title.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+  [
+    ['1.  Background and Rationale', ['{{background}}']],
+    ['2.  Objectives', ['{{objectives}}']],
+    ['3.  Expected Outputs', ['{{outputs}}']],
+    ['4.  Participants', ['{{participants}}', 'Estimated total: {{participant_count}}']],
+    ['5.  Methodology', ['{{methodology}}']]
+  ].forEach(function (section) {
+    body.appendParagraph(section[0]).setBold(true);
+    section[1].forEach(function (line) {
+      body.appendParagraph(line).setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
+    });
+  });
+  body.appendParagraph('6.  Operational Details').setBold(true);
+  const details = body.appendTable([
+    ['Title', '{{title}}'], ['Date/Duration', '{{date_duration}}'], ['Venue', '{{venue}}'],
+    ['Participants', '{{participant_count}}'], ['Facilitators', '{{facilitators}}'], ['Budget and Source', '{{budget}}']
+  ]);
+  details.setBorderWidth(1);
+  body.appendParagraph('7.  Proposed Program of Activities').setBold(true);
+  const program = body.appendTable([['Day', 'AM', 'PM'], ['{{pd_day}}', '{{pd_am}}', '{{pd_pm}}']]);
+  program.getRow(0).editAsText().setBold(true);
+  body.appendParagraph('');
+  const signers = body.appendTable([['Prepared by:', 'Noted by:'], ['{{prepared_by}}', '{{noted_by_name}}'],
+                                    ['{{prepared_title}}', '{{noted_by_title}}']]);
+  signers.setBorderWidth(0);
+  signers.getRow(0).editAsText().setBold(true);
+  body.appendParagraph('');
+  body.appendParagraph('Recommended by:').setBold(true);
+  body.appendParagraph('{{recommended_name}}').setBold(true);
+  body.appendParagraph('{{recommended_title}}');
+  body.appendParagraph('{{unit_name}}');
+  body.editAsText().setFontFamily('Times New Roman');
+  body.editAsText().setFontSize(12);
+  const first = body.getChild(0);
+  if (first.getType() === DocumentApp.ElementType.PARAGRAPH && first.asParagraph().getText() === '') body.removeChild(first);
+}
+
+// The program flow: the activity and one table of Date/Time, Topic/Activity and Person Responsible.
+//   {{pf_time}} {{pf_topic}} {{pf_person}} sit in ONE table row: the app copies it for each day heading and each empty row.
+function at_buildProgramFlow_(body, doc) {
+  body.appendParagraph('Activity: {{title}}').setBold(true);
+  body.appendParagraph('Tentative Program Flow:');
+  const table = body.appendTable([['Date/Time', 'Topic/Activity', 'Person Responsible'], ['{{pf_time}}', '{{pf_topic}}', '{{pf_person}}']]);
+  table.getRow(0).editAsText().setBold(true);
   body.editAsText().setFontFamily('Times New Roman');
   body.editAsText().setFontSize(12);
   const first = body.getChild(0);

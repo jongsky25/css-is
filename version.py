@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.51"
+APP_VERSION = "7.52"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.52",
+        "date": "October 20, 2026",
+        "summary": "A calendar item can now also draft a concept note and a program flow.",
+        "changes": [
+            "A concept note has the DOH sections, the operational details and a program with one row for each day. Dates, venue, people and unit are filled in, and prompts are left for the rest.",
+            "A program flow has a heading and two empty rows for each day, ready to fill.",
+            "They are suggested for trainings, trips and activities lasting several days, and you can change that."
+        ]
+    },
     {
         "version": "7.51",
         "date": "October 20, 2026",
