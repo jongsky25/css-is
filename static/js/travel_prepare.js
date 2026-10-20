@@ -7,25 +7,26 @@
   // policy limit for the rate chosen on the row (travel_rates.row_cap, worked out by the server).
   function rideCheck(mode, routeType, fare, receipt, ceil, cap) {
     fare = Number(fare) || 0;
-    var flags = [];
-    if (fare <= 0 || ['tnvs', 'taxi', 'public_noreceipt'].indexOf(mode) < 0) return { kind: null, flags: flags };
+    var flags = [], targets = [];     // targets[i] names the entry field flags[i] is about: fare, route or receipt
+    function add(text, target) { flags.push(text); targets.push(target); }
+    if (fare <= 0 || ['tnvs', 'taxi', 'public_noreceipt'].indexOf(mode) < 0) return { kind: null, flags: flags, targets: targets };
     var policy = cap != null;
     var known = policy || ceil.routes.indexOf(routeType) >= 0;
-    function over(limit) { flags.push('Fare is ' + (fare - limit).toFixed(2).replace(/\.00$/, '') + ' above the ' + limit + ' ceiling.'); }
-    if (!known) flags.push('The route is not on the approved list.');
+    function over(limit) { add('Fare is ' + (fare - limit).toFixed(2).replace(/\.00$/, '') + ' above the ' + limit + ' ceiling.', 'fare'); }
+    if (!known) add('The route is not on the approved list.', 'route');
     if (policy && fare > cap) over(cap);
     if ((mode === 'tnvs' || mode === 'taxi') && receipt === 'receipt') {
       var flat = ceil.flat[mode] || 0;
       if (!policy && flat && fare > flat) over(flat);
-      return { kind: 'receipt', flags: flags };
+      return { kind: 'receipt', flags: flags, targets: targets };
     }
-    if (fare <= (ceil.flat.cenrr || 300)) return { kind: 'cenrr', flags: flags };
+    if (fare <= (ceil.flat.cenrr || 300)) return { kind: 'cenrr', flags: flags, targets: targets };
     if (!policy) {
       var rcap = known ? (ceil.rer[routeType] || 0) : 0;
       if (known && rcap && fare > rcap) over(rcap);
     }
-    if (fare > 1000) flags.push('No receipt for a fare of ' + fare + '.');
-    return { kind: 'rer', flags: flags };
+    if (fare > 1000) add('No receipt for a fare of ' + fare + '.', 'receipt');
+    return { kind: 'rer', flags: flags, targets: targets };
   }
 
   function ceilings(list) {
@@ -212,6 +213,9 @@
       var routeOpts = [['', 'Other route (needs review)']].concat(data.routes);
       var basisOpts = [['', 'I type the fare myself']].concat(policy.bases.map(function (b) { return [b[0], b[1]]; }));
       var kinds = [['', 'I type the per diem myself']].concat(policy.day_kinds.map(function (k) { return [k[0], k[2]]; }));
+      var routeField = select('Route', r.route_type, routeOpts, function (v) { r.route_type = v; });
+      var receiptField = select('Receipt', r.receipt, [['none', 'No receipt'], ['receipt', 'I have a receipt']], function (v) { r.receipt = v; });
+      var fareField = field(isEstimate ? 'Estimated fare (\u20b1)' : 'Actual fare claimed (\u20b1)', r.allowance, function (v) { r.allowance = v; }, { type: 'number', refresh: true });
       var kids = [
         field('Date', r.date, function (v) { r.date = v; }, { type: 'date', refresh: true }),
         field('From', r.from, function (v) { r.from = v; }),
@@ -219,8 +223,8 @@
         field('Departure', r.dep, function (v) { r.dep = v; }, { type: 'time' }),
         field('Arrival', r.arr, function (v) { r.arr = v; }, { type: 'time' }),
         select('How you travelled', r.mode, data.modes, function (v) { var plane = (v === 'plane') !== (r.mode === 'plane'); r.mode = v; if (plane) setTimeout(drawRows, 0); }),
-        select('Route', r.route_type, routeOpts, function (v) { r.route_type = v; }),
-        select('Receipt', r.receipt, [['none', 'No receipt'], ['receipt', 'I have a receipt']], function (v) { r.receipt = v; }),
+        routeField,
+        receiptField,
         select('Fare rate', r.basis, basisOpts, function (v) { r.basis = v; r.place = ''; drawRows(); })
       ];
       var inputKind = (policy.bases.filter(function (b) { return b[0] === r.basis; })[0] || [])[2];
@@ -228,7 +232,7 @@
       if (inputKind === 'km') kids.push(field('Distance by Google Maps (km)', r.km, function (v) { r.km = v; }, { type: 'number', refresh: true }));
       var capLine = el('div', { 'class': 'tv-row-wide tv-hint' });
       kids.push(capLine);
-      kids.push(field(isEstimate ? 'Estimated fare (\u20b1)' : 'Actual fare claimed (\u20b1)', r.allowance, function (v) { r.allowance = v; }, { type: 'number', refresh: true }));
+      kids.push(fareField);
       kids.push(scanPicker(r));
       kids.push(select('Per diem rule', r.day_kind, kinds, function (v) { r.day_kind = v; }));
       if (r.day_kind === 'full' || r.day_kind === 'departure' || ['monitor', 'monitor_late', 'liaison', 'hpdpb'].indexOf(r.day_kind) >= 0) {
@@ -256,7 +260,7 @@
       }
       box.appendChild(el('div', { 'class': 'tv-row-wide tv-row-actions' }, more.concat([rm])));
       rowsBox.appendChild(box);
-      uis.push({ cap: capLine, pd: pdLine, pdField: pdField, notes: noteLine, row: r });
+      uis.push({ cap: capLine, pd: pdLine, pdField: pdField, notes: noteLine, row: r, fields: { fare: fareField, route: routeField, receipt: receiptField, per_diem: pdField } });
     });
   }
 
@@ -359,31 +363,64 @@
       allDays()]);
   }
 
+  // Mark the field a warning is about: red border, aria-invalid, and a message tied to it for screen readers.
+  function markField(wrap, text) {
+    var input = wrap && wrap.querySelector('input, select, textarea');
+    if (!input) return null;
+    input.setAttribute('aria-invalid', 'true');
+    input.classList.add('tv-invalid');
+    var note = wrap.querySelector('.tv-field-error');
+    if (!note) { note = el('div', { 'class': 'tv-field-error', id: input.id + '-err' }); wrap.appendChild(note); }
+    note.textContent = note.textContent ? note.textContent + ' ' + text : text;
+    input.setAttribute('aria-describedby', note.id);
+    return input;
+  }
+  function clearMarks() {
+    rowsBox.querySelectorAll('.tv-invalid').forEach(function (n) { n.classList.remove('tv-invalid'); n.removeAttribute('aria-invalid'); n.removeAttribute('aria-describedby'); });
+    rowsBox.querySelectorAll('.tv-field-error').forEach(function (n) { n.remove(); });
+  }
+
   function refresh(fromServer) {
-    var total = 0, kinds = {}, lines = [];
+    var total = 0, kinds = {}, lines = [];       // each line: { text, short (the message on the field), marks: [[row index, field], ...] }
     if (fromServer !== true) recalc();
     state.rows.forEach(function (r, i) {
       total += (Number(r.allowance) || 0) + (Number(r.per_diem) || 0);
       var c = calc[i] || {};
       var res = rideCheck(r.mode, r.route_type, r.allowance, r.receipt, ceil, c.cap == null ? null : c.cap);
       if (res.kind) kinds[res.kind] = (kinds[res.kind] || 0) + 1;
-      res.flags.forEach(function (f) { lines.push('Entry ' + (i + 1) + ': ' + f); });
+      res.flags.forEach(function (f, k) { lines.push({ text: 'Entry ' + (i + 1) + ': ' + f, short: f, marks: [[i, res.targets[k]]] }); });
       if (c.per_diem != null && (Number(r.per_diem) || 0) > c.per_diem) {
-        lines.push('Entry ' + (i + 1) + ': Per diem is ' + ((Number(r.per_diem) || 0) - c.per_diem).toFixed(2).replace(/\.00$/, '') + ' above the ' + c.per_diem + ' the policy allows for this day.');
+        lines.push({ text: 'Entry ' + (i + 1) + ': Per diem is ' + ((Number(r.per_diem) || 0) - c.per_diem).toFixed(2).replace(/\.00$/, '') + ' above the ' + c.per_diem + ' the policy allows for this day.', short: 'Above the ' + c.per_diem + ' the policy allows for this day.', marks: [[i, 'per_diem']] });
       }
     });
     var perDiemOn = {};
     state.rows.forEach(function (r, i) {
       if (!r.date || !(Number(r.per_diem) > 0)) return;
-      if (perDiemOn[r.date] != null) lines.push('Entries ' + (perDiemOn[r.date] + 1) + ' and ' + (i + 1) + ' are on the same day and both claim a per diem. A day\u2019s per diem is claimed once.');
+      if (perDiemOn[r.date] != null) lines.push({ text: 'Entries ' + (perDiemOn[r.date] + 1) + ' and ' + (i + 1) + ' are on the same day and both claim a per diem. A day\u2019s per diem is claimed once.', short: 'Another entry on this day also claims a per diem.', marks: [[perDiemOn[r.date], 'per_diem'], [i, 'per_diem']] });
       else perDiemOn[r.date] = i;
     });
-    totals.textContent = 'Total: ₱' + total.toLocaleString('en-PH', { maximumFractionDigits: 2 }) +
-      (kinds.cenrr ? ' · ' + kinds.cenrr + ' ride(s) go on a CENRR' : '') + (kinds.rer ? ' · ' + kinds.rer + ' RER form(s)' : '');
+    totals.textContent = 'Total: \u20b1' + total.toLocaleString('en-PH', { maximumFractionDigits: 2 }) +
+      (kinds.cenrr ? ' \u00b7 ' + kinds.cenrr + ' ride(s) go on a CENRR' : '') + (kinds.rer ? ' \u00b7 ' + kinds.rer + ' RER form(s)' : '');
     flagsBox.textContent = '';
+    clearMarks();
     if (lines.length) {
       flagsBox.appendChild(el('p', { 'class': 'tv-flagline bad', text: 'These will be sent to the Admin Unit to verify before you can mark the filing ready:' }));
-      var ul = el('ul'); lines.forEach(function (l) { ul.appendChild(el('li', { 'class': 'tv-flagline', text: l })); }); flagsBox.appendChild(ul);
+      var ul = el('ul');
+      lines.forEach(function (l) {
+        var inputs = [];
+        l.marks.forEach(function (m) {
+          var u = uis[m[0]], input = u && u.fields[m[1]] && !u.fields[m[1]].hidden ? markField(u.fields[m[1]], l.short) : null;
+          if (input) inputs.push(input);
+        });
+        var li = el('li', { 'class': 'tv-flagline' });
+        if (inputs.length) {
+          var go = el('button', { type: 'button', 'class': 'tv-flaglink', text: l.text, title: 'Go to the field' });
+          go.addEventListener('click', function () { inputs[0].scrollIntoView({ block: 'center' }); inputs[0].focus(); });
+          li.appendChild(go);
+        } else li.textContent = l.text;
+        ul.appendChild(li);
+      });
+      flagsBox.appendChild(ul);
     }
   }
 
