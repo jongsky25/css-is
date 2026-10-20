@@ -64,6 +64,8 @@ def test_commit_then_lost_response_is_recoverable(viewer, conn, monkeypatch):
     with monkeypatch.context() as patch:
         patch.setattr(operations, 'execute', commit_then_drop)
         lost = post(viewer, fields(key))
+        native_lost = post(viewer, fields(key), json_response=False)
+        assert native_lost.status_code == 503 and native_lost.headers['cache-control'] == 'no-store'
     assert lost.status_code == 503 and lost.json()['state'] == 'unknown'
     saved = status(viewer, key)
     assert saved.json()['state'] == 'completed'

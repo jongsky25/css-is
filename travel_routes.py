@@ -180,6 +180,11 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
     def _submission_json(data, status=200):
         return JSONResponse(data, status_code=status, headers={'Cache-Control': 'no-store'})
 
+    def _submission_page(request, outcome, status=200, *, status_url=None):
+        return templates.TemplateResponse(request, 'travel_submission.html',
+            {'nav_active': 'travel_mine', 'outcome': outcome, 'status_url': status_url},
+            status_code=status, headers={'Cache-Control': 'no-store'})
+
     def _submission_state(conn, user, operation_id):
         row = submissions.lookup(conn, user['id'], operation_id)
         state, location = row['state'], None
@@ -208,9 +213,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
                 status = 404
             if _json_requested(request):
                 return _submission_json(outcome, status)
-            return templates.TemplateResponse(request, 'travel_submission.html',
-                {'nav_active': 'travel_mine', 'outcome': outcome}, status_code=status,
-                headers={'Cache-Control': 'no-store'})
+            return _submission_page(request, outcome, status)
         finally:
             conn.close()
 
@@ -256,8 +259,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
                     return _submission_json(outcome)
                 if outcome['location']:
                     return _go(outcome['location'], msg='Filing opened. Work through the checklist below.')
-                return templates.TemplateResponse(request, 'travel_submission.html',
-                    {'nav_active': 'travel_mine', 'outcome': outcome}, status_code=410)
+                return _submission_page(request, outcome, 410)
             except (travel.TravelError, submissions.RejectedSubmission) as e:
                 key = submissions.issue(conn, user['id']) if _json_requested(request) else None
                 if _json_requested(request):
@@ -279,17 +281,15 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
                 status = 404 if isinstance(e, submissions.MissingOperation) else 409
                 if _json_requested(request):
                     return _submission_json(outcome, status)
-                return templates.TemplateResponse(request, 'travel_submission.html',
-                    {'nav_active': 'travel_mine', 'outcome': outcome}, status_code=status)
+                return _submission_page(request, outcome, status)
             except Exception as e:
                 conn.rollback()
                 logging.getLogger(__name__).error('Travel submission result not confirmed (%s)', type(e).__name__)
                 outcome = {'state': 'unknown', 'message': 'The result could not be confirmed. Check the submission status before starting another filing.', 'location': None}
                 if _json_requested(request):
                     return _submission_json(outcome, 503)
-                return templates.TemplateResponse(request, 'travel_submission.html',
-                    {'nav_active': 'travel_mine', 'outcome': outcome,
-                     'status_url': f'/travel/submissions/{f.get("operation_id", "")}'}, status_code=503)
+                return _submission_page(request, outcome, 503,
+                    status_url=f'/travel/submissions/{f.get("operation_id", "")}')
         finally:
             conn.close()
 
@@ -306,10 +306,9 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             except Exception as e:
                 conn.rollback()
                 logging.getLogger(__name__).error('Travel submission close not confirmed (%s)', type(e).__name__)
-                return templates.TemplateResponse(request, 'travel_submission.html', {
-                    'nav_active': 'travel_mine', 'outcome': {'state': 'unknown', 'location': None,
+                return _submission_page(request, {'state': 'unknown', 'location': None,
                     'message': 'The result is not confirmed. Check again before starting another filing.'},
-                    'status_url': f'/travel/submissions/{operation_id}'}, status_code=503)
+                    503, status_url=f'/travel/submissions/{operation_id}')
             return _go(f'/travel/submissions/{operation_id}')
         finally:
             conn.close()
