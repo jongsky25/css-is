@@ -54,9 +54,14 @@ DOH address footer.
 - **Updating an existing setup:** replace the `activity_templates` file in the Apps Script project with the new one and run
   `makeActivityTemplates()` again. The old DPO template lacks the new placeholders, so it is rebuilt and `TPL_dpo` points to
   the new Doc. The old copy stays in `_templates`. The invitation template is already good and is kept.
-- **Logos:** the two logos cannot be drawn from the repo. Either add them once by hand to the new template Doc, or upload
-  the two images to Drive and put their file ids in `AT_LOGO_LEFT_ID` and `AT_LOGO_RIGHT_ID` at the top of the script before
-  running it. Every draft keeps what is in the template.
+- **Logos (7.53):** the DOH seal and the Bagong Pilipinas logo are embedded in `apps_script/activity_logos.gs`, taken from the
+  DOH package. Add that file to the Apps Script project next to `activity_templates` (File > New > Script, name it
+  `activity_logos`), replace `activity_templates` with the new version and run `rebuildActivityTemplates()`. All four
+  documents (DPO, memorandum, concept note, program flow) then start with the seal, "Republic of the Philippines /
+  DEPARTMENT OF HEALTH / Office of the Secretary" and the Bagong Pilipinas logo, and carry the DOH address footer.
+  `rebuildActivityTemplates()` makes new Docs even though the old ones were good; the old ones stay in `_templates`.
+  To use other pictures, replace the base64 text in `activity_logos.gs`, or put Drive file ids in `AT_LOGO_LEFT_ID` and
+  `AT_LOGO_RIGHT_ID`, which win over the embedded ones. Every draft keeps what is in the template.
 - **Left for the person:** the DPO number, the DPO date and the funding source stay as blank lines. The subject, background,
   authority line and the Name / Position table are written from the calendar item and its people.
 

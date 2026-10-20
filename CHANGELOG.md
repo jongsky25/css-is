@@ -1,3 +1,7 @@
+## 7.53 — October 20, 2026
+
+- The four activity documents (DPO, memorandum, concept note, program flow) now start with the **DOH letterhead**: the DOH seal, "Republic of the Philippines / DEPARTMENT OF HEALTH / Office of the Secretary" and the Bagong Pilipinas logo, with the DOH address footer on every page. Both logos come from the DOH package and are embedded in a new `apps_script/activity_logos.gs`, so no Drive upload is needed. Add that file to the Apps Script project, replace `activity_templates`, and run the new `rebuildActivityTemplates()` (it rebuilds templates that were already good). No change to the app itself (spot feedback #136).
+
 ## 7.52 — October 20, 2026
 
 - A calendar item can now also draft a **concept note** and a **program flow**, the rest of the DOH package. The concept note has the numbered DOH sections, the Operational Details table and a program of activities with one row per day; the app fills the title, dates, venue, people and unit and leaves bracketed prompts for the background, objectives, outputs and methodology. The program flow is a heading and two empty rows for each day. They are suggested for trainings, trips and activities lasting several days. The Apps Script templates need to be updated and re-run (docs/ACTIVITY_DOCS_SETUP.md); the first start rebuilds the small document table to accept the new types and keeps what is there (spot feedback #136).
