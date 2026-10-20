@@ -1,3 +1,7 @@
+## 7.57 — October 20, 2026
+
+- Monitor: a way to see which region each participant belongs to. The roster has never recorded a region, so there was nothing to show. A new **Region** ready-made registration question (Central Office, NCR, CAR, Regions I to XIII, BARMM, Other; required) can be added from the Monitor page in one click, or from the manage page with the other presets. Answers then appear under each person, in "Registration answers at a glance" and in the exported roster. Only people who register after it is added are asked (spot feedback #141).
+
 ## 7.56 — October 20, 2026
 
 - Travel checklist wording: the row "DPO signed by a representative" is now "DPO allowing a representative or OIC to sign", with a note that it is the order that lets a representative or the officer-in-charge sign in the Head of Office's place, and the filing question reads "The Department Personnel Order allows a representative or OIC to sign". The row still appears when that box is ticked (spot feedback #145).

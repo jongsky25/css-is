@@ -63,10 +63,16 @@ PRESETS = {  # key -> list of question dicts (label, kind, options, required, he
     "emergency": [
         {"label": "Emergency contact person and number", "kind": "text", "required": False},
     ],
+    "region": [
+        {"label": "Region", "kind": "single", "required": True,
+         "options": ["Central Office", "NCR", "CAR", "Region I", "Region II", "Region III", "Region IV-A", "Region IV-B",
+                     "Region V", "Region VI", "Region VII", "Region VIII", "Region IX", "Region X", "Region XI",
+                     "Region XII", "Region XIII", "BARMM", "Other"]},
+    ],
 }
 PRESET_LABELS = {"food": "Food restrictions", "arrival": "Arrival details",
                  "accommodation": "Accommodation", "shirt": "Shirt size",
-                 "emergency": "Emergency contact"}
+                 "emergency": "Emergency contact", "region": "Region"}
 
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _TIME_RE = re.compile(r"^\d{2}:\d{2}$")
