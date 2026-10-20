@@ -24,6 +24,11 @@
 {% if f.locked %}<div class="flash info" role="status"><span>{{ 'The Administrative Section has started ordering from this form. You can still change it, but a meal you change goes back to "Not yet requested" and is ordered again.' if admin else 'The Administrative Section has started ordering from this form, so it can no longer be changed here. Please ask them if something needs to change.' }}</span></div>{% endif %}
 {% if res.status == 'requested' %}<div class="flash info" role="status"><span>The room isn't approved yet. The Administrative Section orders the meals once it is.</span></div>{% endif %}
 
+{% if todo %}<section class="card rm-todo" aria-labelledby="rm-todo-h">
+  <h2 class="rm-mealh" id="rm-todo-h">What needs to be done</h2>
+  <ul class="rm-todo-list">{% for t in todo %}<li>{{ '✓' if t.done else '○' }} <span{% if t.done %} class="muted"{% endif %}>{{ t.text }}{% if t.optional %} <em>(optional)</em>{% endif %}</span></li>{% endfor %}</ul>
+</section>{% endif %}
+
 <form method="post" action="{{ base }}" class="rm-mealform card">
   <div class="field"><label>1. Title of the Activity</label>
     <input value="{{ f.title }}" readonly aria-readonly="true"><div class="help">Taken from the reservation.</div></div>

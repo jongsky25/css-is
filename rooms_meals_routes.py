@@ -69,7 +69,7 @@ def make_router(templates, get_conn, today_local):
         return templates.TemplateResponse(request, "rooms_meal_form.html", {
             "layout": "public_layout.html" if guest else "dash_layout.html", "nav_active": "rooms", "tab": "meals_form",
             "res": res, "when": rooms.queue_when(res), "hours": rooms.hours_text(conn, res), "f": form, "base": base, "guest": guest,
-            "admin": admin, "live": live, "err": err, "ok": ok, "show_scope": False, "meals": rm.MEALS,
+            "admin": admin, "live": live, "todo": rm.todo(form) if form else [], "err": err, "ok": ok, "show_scope": False, "meals": rm.MEALS,
             "can_edit": live and (admin or not (form and form["locked"])), "room_pending": None, "mine_open": 0,
         }, status_code=status_code)
 

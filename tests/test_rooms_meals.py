@@ -316,3 +316,13 @@ def test_the_pdf_renders_with_the_form_fields(conn, me):
     assert data.startswith(b"%PDF") and len(data) > 2000
     assert room_meal_form.filename(form) == f"meal-request-{r['ref_code'].lower()}.pdf"
     assert [room_meal_form.clock(x) for x in ("07:30", "12:00", "15:30", "00:05", "x", None)] == ["7:30 AM", "12:00 PM", "3:30 PM", "12:05 AM", "x", "—"]
+
+
+def test_todo_lists_what_is_left_on_a_meal_request():
+    form = {"reservation": {"status": "requested"}, "pax": None, "special_request": "",
+            "wanted": [{"status": "pending", "deliver_at": "12:00"}]}
+    done = [t["done"] for t in rm.todo(form)]
+    assert done == [False, False, True, True, False, False, False]
+    form.update(pax=20, reservation={"status": "approved"})
+    form["wanted"][0]["status"] = "delivered"
+    assert [t["done"] for t in rm.todo(form)] == [True, True, True, True, False, True, True]
