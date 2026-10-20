@@ -317,6 +317,24 @@ def test_food_preset_adds_two(manager, db_path):
     assert 'name="preset" value="food"' not in manager.get(f"/activities/{tok}/manage").text
 
 
+def test_the_monitor_offers_a_region_question_until_the_form_has_one(manager, db_path):
+    """Spot Feedback #141: the roster has no region unless registration asks for it; offer that in one click."""
+    tok = _make_event(manager, db_path)
+    page = manager.get(f"/monitor/{tok}").text
+    assert "Which regions are they from?" in page and 'name="preset" value="region"' in page
+    r = manager.post(f"/activities/{tok}/questions/preset", data={"preset": "region"}, follow_redirects=False)
+    assert r.status_code == 303 and "qok=1" in r.headers["location"]
+    qs = _questions(db_path, tok)
+    assert len(qs) == 1 and qs[0]["label"] == "Region" and qs[0]["kind"] == "single" and qs[0]["required"]
+    assert "Central Office" in qs[0]["options"] and "BARMM" in qs[0]["options"] and "Region XIII" in qs[0]["options"]
+    assert "Which regions are they from?" not in manager.get(f"/monitor/{tok}").text   # offered once
+
+
+def test_the_region_offer_is_not_shown_to_someone_who_cannot_add_questions(viewer, manager, db_path):
+    tok = _make_event(manager, db_path)
+    assert "Which regions are they from?" not in viewer.get(f"/monitor/{tok}").text
+
+
 def test_bad_question_forms_redirect_with_code(manager, db_path):
     tok = _make_event(manager, db_path)
     assert "qerr=label" in _add_q(manager, tok, label="").headers["location"]

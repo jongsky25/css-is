@@ -1,9 +1,25 @@
-## 7.54 — October 20, 2026
+## 7.58 — October 20, 2026
 
 - Isolate native PDF text extraction in a fresh Linux subprocess with CPU, address-space, elapsed-time and output bounds.
 - Admit one native parser per application process, reject excess work with retry guidance, and terminate/reap cancelled, stuck or failed workers.
 - Keep child environments and inherited descriptors private; preserve file/link limits, DTRAK behavior, OCR fallback and transient intake.
 - OCR/PDFium process isolation remains a separate increment.
+
+## 7.57 — October 20, 2026
+
+- Monitor: a way to see which region each participant belongs to. The roster has never recorded a region, so there was nothing to show. A new **Region** ready-made registration question (Central Office, NCR, CAR, Regions I to XIII, BARMM, Other; required) can be added from the Monitor page in one click, or from the manage page with the other presets. Answers then appear under each person, in "Registration answers at a glance" and in the exported roster. Only people who register after it is added are asked (spot feedback #141).
+
+## 7.56 — October 20, 2026
+
+- Travel checklist wording: the row "DPO signed by a representative" is now "DPO allowing a representative or OIC to sign", with a note that it is the order that lets a representative or the officer-in-charge sign in the Head of Office's place, and the filing question reads "The Department Personnel Order allows a representative or OIC to sign". The row still appears when that box is ticked (spot feedback #145).
+
+## 7.55 — October 20, 2026
+
+- Documents the app makes (calendar item drafts, travel forms and uploaded files) are now shared with the person through the Drive permissions API with `sendNotificationEmail: false`, so Google no longer emails a "shared with you" notice for each one. The link is on the page; the daily email about travel claims that are due soon or overdue is unchanged (spot feedback #146). After drafting, the calendar item says the draft is shared with you, that no email is sent and that drafting again makes another copy (spot feedback #143). Replace `travel_docs` in the Apps Script project to apply the change to the relay.
+
+## 7.54 — October 20, 2026
+
+- Fix for the new letterhead: the Apps Script templates now give the letterhead row (seal, title, Bagong Pilipinas logo) and the DPO Name / Position table fixed column widths that fit between the margins. With Google's default equal columns the title wrapped and the right-hand logo and the Position column could fall off the page. Replace `activity_templates` in the Apps Script project and run `rebuildActivityTemplates()` again.
 
 ## 7.53 — October 20, 2026
 

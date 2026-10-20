@@ -251,3 +251,12 @@ def test_date_range(start, end, text):
 
 def test_money():
     assert td.money(1060) == "1,060" and td.money(1060.5) == "1,060.50" and td.money(None) == "0"
+
+
+def test_the_representative_dpo_row_says_it_allows_a_representative_or_oic_to_sign():
+    """Spot feedback #145: it is the DPO that allows them to sign, not a DPO a representative signed."""
+    import travel_checklist as tc
+    row = next(d for d in tc.CHECKLIST if d.code == "dpo_representative")
+    assert row.label == "DPO allowing a representative or OIC to sign" and "officer-in-charge" in row.note
+    question = next(label for key, label, _ in tc.ANSWER_KEYS if key == "representative_signs")
+    assert "allows a representative or OIC to sign" in question

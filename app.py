@@ -10533,6 +10533,11 @@ def monitor_event(request: Request, event_token: str, flash: str = "", show: str
         # per-activity SERVQUAL report, an invited/RP one its Type-3 results; both
         # anchor to #comments. Only surfaced once there are responses to read.
         report_url = st.event_report_url(conn, ev["id"]) if st.event_response_total(conn, ev["id"]) else None
+        # Spot Feedback #141: "how do I know the regions they belong to?" The roster has no region of its own; an
+        # activity gets one by asking for it at registration. Offer that in one click, to someone who may add questions,
+        # until the form has a Region question.
+        asks_region = any(q["label"].strip().casefold() == "region" and not q.get("archived_at") for q in questions)
+        can_add_region = (not asks_region) and _can_manage_event(request.state.user, ev)
     finally:
         conn.close()
     # ?show=responded: only the registered people who answered at least one form (the name list the activity
@@ -10547,6 +10552,7 @@ def monitor_event(request: Request, event_token: str, flash: str = "", show: str
         "base_url": _base_url(request),
         "entry_window": entry_window, "is_closed": is_closed,
         "report_url": report_url,
+        "can_add_region": can_add_region,
         "flash": flash,
         "remind_count": (0 if _window_over((entry_window or {}).get("close_at"))
                          else len(_unfinished_with_email(people))),

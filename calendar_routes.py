@@ -1138,7 +1138,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 st.audit(conn, user["username"], "activity_doc_draft", target_type="calendar_entry", target_id=entry_id,
                          summary=f"{key}: {'drafted' if res['ok'] else 'failed'}")
                 label = activity_docs.DOCS[key]["label"]
-                note = f"ok={quote(label + ': draft made. Open it, complete the blanks and check it.')}" if res["ok"] else f"err={quote(res['error'])}"
+                note = f"ok={quote(label + ': draft made and shared with you in Google Docs. No email is sent, so open it from the link below, complete the blanks and check it.')}" if res["ok"] else f"err={quote(res['error'])}"
         finally:
             conn.close()
         return RedirectResponse(f"/calendar/entries/{entry_id}?{note}#documents", status_code=303)

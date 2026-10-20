@@ -118,7 +118,8 @@
           <form method="post" action="/calendar/entries/{{ e.id }}/documents/{{ d.key }}/draft">
             <button class="cal-btn primary" type="submit">{{ 'Draft again in Google Docs' if d.doc_url else 'Draft in Google Docs' }}</button></form>
           {% else %}<p class="cal-hint">Drafting in Google Docs is not switched on yet.</p>{% endif %}
-          {% if d.doc_url %}<p><a href="{{ d.doc_url }}" target="_blank" rel="noopener">Open the latest draft</a></p>{% endif %}
+          {% if d.doc_url %}<p><a href="{{ d.doc_url }}" target="_blank" rel="noopener">Open the latest draft</a></p>
+          <p class="cal-hint">The draft is shared with you in Google Docs; no email is sent. Drafting again makes another copy and this link moves to it.</p>{% endif %}
           {% if d.doc_state == 'failed' and d.note %}<p class="cal-doc-error" role="alert">{{ d.note }}</p>{% endif %}
         </div>
         {% endif %}

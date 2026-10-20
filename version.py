@@ -17,18 +17,56 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.54"
+APP_VERSION = "7.58"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "7.54",
+        "version": "7.58",
         "date": "October 20, 2026",
         "summary": "PDF reading has limits so difficult files do not hold up the system.",
         "changes": [
             "PDF text reading runs separately with limits on time, memory and simultaneous reads.",
             "A read that takes too long stops and explains how to retry or enter the details manually.",
             "Cancelling a native PDF read stops its worker and releases its place for another read."
+        ]
+    },
+    {
+        "version": "7.57",
+        "date": "October 20, 2026",
+        "summary": "Find out which regions your participants come from.",
+        "changes": [
+            "The Monitor page now offers an \"Add the Region question\" button. Once added, registration asks for the person's region, and each answer shows on the roster, in the counts at a glance and in the exported roster.",
+            "Region is also in the ready-made questions on the activity's manage page, next to food, arrival and shirt size.",
+            "It applies to people who register after the question is added."
+        ]
+    },
+    {
+        "version": "7.56",
+        "date": "October 20, 2026",
+        "summary": "The travel checklist now says the DPO that allows a representative or OIC to sign.",
+        "changes": [
+            "The checklist row is now \"DPO allowing a representative or OIC to sign\", with a note saying it is the order that lets them sign in the Head of Office's place.",
+            "The question when you file now reads \"The Department Personnel Order allows a representative or OIC to sign\"."
+        ]
+    },
+    {
+        "version": "7.55",
+        "date": "October 20, 2026",
+        "summary": "Drafted and generated documents no longer trigger an email, and the page says where the draft is.",
+        "changes": [
+            "Documents made from a calendar item or a travel claim are shared with you without Google's \"shared with you\" email. The link is on the page.",
+            "After drafting, the message says the draft is shared with you, that no email is sent and where to open it. Drafting again makes a new copy.",
+            "Reminders about travel claims that are due soon or overdue still come by email."
+        ]
+    },
+    {
+        "version": "7.54",
+        "date": "October 20, 2026",
+        "summary": "The DPO letterhead and Name / Position table now fit the page.",
+        "changes": [
+            "The seal, the title and the Bagong Pilipinas logo sit in one row of fixed widths, so the title no longer wraps and the right-hand logo stays on the page.",
+            "The Name / Position table is two equal columns that fit between the margins."
         ]
     },
     {
