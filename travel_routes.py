@@ -148,6 +148,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
                 "questions": tc.ANSWER_KEYS, "roles": tc.ROLES, "mc114": travel.MC114_FORMATS,
                 "kind_labels": travel.KIND_LABELS}
 
+    @router.get('/travel/new/{operation_id}', response_class=HTMLResponse)
     @router.get("/travel/new", response_class=HTMLResponse)
     def travel_new(request: Request):
         user, q = request.state.user, dict(request.query_params)
@@ -155,7 +156,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
         try:
             if not travel.enabled(conn):
                 return _off(request)
-            operation_id = q.get('operation')
+            operation_id = request.path_params.get('operation_id')
             if operation_id:
                 try:
                     outcome = _submission_state(conn, user, operation_id)
@@ -178,8 +179,8 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             if not operation_id:
                 key = submissions.issue(conn, user['id'])
                 params = {k: q[k] for k in ('entry', 'event', 'date', 'kind') if k in q}
-                params['operation'] = key
-                return RedirectResponse('/travel/new?' + urlencode(params), status_code=303,
+                suffix = '?' + urlencode(params) if params else ''
+                return RedirectResponse('/travel/new/' + key + suffix, status_code=303,
                                         headers={'Cache-Control': 'no-store'})
             live = travel.live_ca(conn, user["id"], source["entry_id"], source["event_id"])
             default_kind = "liquidation" if live else "ca"
@@ -237,6 +238,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
         finally:
             conn.close()
 
+    @router.post('/travel/new/{operation_id}')
     @router.post("/travel/new")
     async def travel_new_post(request: Request):
         if not _same_origin(request):
@@ -270,6 +272,9 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
                 return filing['ref_code']
 
             try:
+                path_key = request.path_params.get('operation_id')
+                if path_key and path_key != f.get('operation_id'):
+                    raise submissions.ChangedSubmission('This form has changed. Check the submission status before continuing.')
                 if not f.get('operation_id'):
                     raise travel.TravelError('This form needs a refresh to prevent duplicate filings. Review it and submit again.')
                 submissions.execute(conn, user['id'], f['operation_id'], f, create,

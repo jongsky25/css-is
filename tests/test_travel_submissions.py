@@ -6,7 +6,7 @@ import subprocess
 import sys
 import threading
 import time
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit, unquote
 import uuid
 
 import pytest
@@ -26,8 +26,8 @@ def fields(key):
             'role': 'secretariat', 'advance_amount': '5000', 'dpo_no': '2026-100'}
 
 
-def post(client, data, *, json_response=True):
-    return client.post('/travel/new', content=urlencode(data), follow_redirects=False,
+def post(client, data, *, json_response=True, path='/travel/new'):
+    return client.post(path, content=urlencode(data), follow_redirects=False,
         headers={'Content-Type': 'application/x-www-form-urlencoded',
                  'Accept': 'application/json' if json_response else 'text/html'})
 
@@ -85,7 +85,7 @@ def test_partial_work_rolls_back_and_same_operation_can_resume(viewer, conn, mon
     assert effects(conn) == (0, 0)
     assert conn.execute('SELECT COUNT(*) FROM travel_item').fetchone()[0] == 0
     assert status(viewer, key).json()['state'] == 'pending'
-    reloaded = viewer.get('/travel/new?operation=' + key)
+    reloaded = viewer.get('/travel/new/' + key)
     assert 'action="/travel/submissions/' + key + '/close"' in reloaded.text
     assert post(viewer, {**fields(key), 'advance_amount': '6000'}).status_code == 409
     assert post(viewer, fields(key)).json()['state'] == 'completed'
@@ -167,6 +167,9 @@ def test_changed_payload_cannot_reuse_completed_key(viewer, conn):
     assert post(viewer, fields(key)).json()['state'] == 'completed'
     response = post(viewer, {**fields(key), 'advance_amount': '6000'})
     assert response.status_code == 409
+    other = operation_id(viewer)
+    mismatch = post(viewer, fields(key), path='/travel/new/' + other)
+    assert mismatch.status_code == 409 and status(viewer, other).json()['state'] == 'ready'
     assert effects(conn) == (1, 1)
 
 
@@ -202,7 +205,7 @@ def test_missing_key_requires_review_instead_of_unprotected_write(viewer, conn):
 
 def test_native_form_replay_redirects_to_the_same_checklist(viewer, conn):
     key = operation_id(viewer)
-    a, b = [post(viewer, fields(key), json_response=False) for _ in range(2)]
+    a, b = [post(viewer, fields(key), json_response=False, path='/travel/new/' + key) for _ in range(2)]
     assert a.status_code == b.status_code == 303
     assert a.headers['location'] == b.headers['location']
     assert effects(conn) == (1, 1)
@@ -238,7 +241,7 @@ def test_form_is_not_cached_and_native_status_is_available(viewer, conn):
 
 def test_form_url_retains_its_key_and_reload_recovers_the_result(viewer, conn):
     page = viewer.get('/travel/new')
-    key = str(page.url).split('operation=')[1]
+    key = urlsplit(str(page.url)).path.rsplit('/', 1)[1]
     assert viewer.get(str(page.url)).text.count('value="' + key + '"') == 1
     assert conn.execute('SELECT COUNT(*) FROM travel_submission').fetchone()[0] == 1
     result = post(viewer, fields(key)).json()
@@ -254,6 +257,8 @@ def test_revoked_account_cannot_read_or_replay_receipt(viewer, conn):
     st.set_admin_active(conn, st.get_admin_user(conn, 'viewer@test.local')['id'], False)
     denied = viewer.get('/travel/submissions/' + key, follow_redirects=False)
     assert denied.status_code in (303, 401, 403)
+    sign_in = viewer.get('/travel/new/' + key, follow_redirects=False)
+    assert sign_in.status_code == 303 and '/travel/new/' + key in unquote(sign_in.headers['location'])
     assert post(viewer, fields(key)).status_code in (401, 403)
     assert effects(conn) == (1, 1)
 

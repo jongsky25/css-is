@@ -1,6 +1,6 @@
 # Travel filing submission recovery — A11, first workflow
 
-Opening a travel filing (`POST /travel/new`) now uses a server-issued,
+Opening a travel filing (`POST /travel/new`, or its keyed form path) now uses a server-issued,
 account-bound operation ID. Repeating the same submission returns its original
 checklist instead of creating another filing. Other travel edits, document
 generation, uploads, and external provider jobs are separate workflows and do
@@ -22,7 +22,8 @@ or explains how to retry the original form. If the form is lost, Close this
 unfinished attempt waits for any writer, checks for a completed result, and
 retires only an unfinished operation before offering a new form.
 
-The form's URL retains the issued operation ID. Reloading a ready form reuses
+The form's URL path retains the issued operation ID, including through a sign-in
+return. Reloading a ready form reuses
 that ID; reloading after completion returns the existing checklist. Reloading
 an unfinished or rejected attempt shows its recovery status rather than silently
 issuing another submission. Validation corrections update the form URL and key.

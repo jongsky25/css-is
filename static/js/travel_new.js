@@ -35,9 +35,10 @@
     form.elements.operation_id.value = key;
     form.dataset.submissionStatus = statusUrl;
     statusLink.href = statusUrl;
-    form.action = '/travel/new?operation=' + encodeURIComponent(key);
+    form.action = '/travel/new/' + encodeURIComponent(key);
     var pageUrl = new URL(window.location.href);
-    pageUrl.searchParams.set('operation', key);
+    pageUrl.pathname = '/travel/new/' + encodeURIComponent(key);
+    pageUrl.searchParams.delete('operation');
     window.history.replaceState(null, '', pageUrl.href);
   }
   setAttempt(form.elements.operation_id.value, form.dataset.submissionStatus);
