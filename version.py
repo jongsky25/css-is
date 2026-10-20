@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.27"
+APP_VERSION = "7.28"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.28",
+        "date": "October 20, 2026",
+        "summary": "Protect staff changes from requests sent by another website.",
+        "changes": [
+            "Staff changes and account actions now verify that the request came from Office Connect.",
+            "Old logout links ask for confirmation; the Log out button still works in one step.",
+            "Public surveys and signed integration callbacks keep their existing access checks."
+        ]
+    },
     {
         "version": "7.27",
         "date": "October 20, 2026",

@@ -90,10 +90,19 @@ def _opener():
     return urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar)), jar
 
 
+def request_origin(url):
+    """Explicit origin for trusted non-browser clients using session cookies."""
+    parts = urllib.parse.urlsplit(url)
+    if parts.scheme not in ('http', 'https') or not parts.netloc or parts.username is not None:
+        raise ValueError('Expected an HTTP(S) application URL without credentials')
+    return f'{parts.scheme}://{parts.netloc}'
+
+
 def _post(opener, url, fields, follow=True):
     data = urllib.parse.urlencode(fields).encode("utf-8")
     req = urllib.request.Request(url, data=data, method="POST",
-                                 headers={"User-Agent": "css-pull-backup"})
+                                 headers={"User-Agent": "css-pull-backup",
+                                          "Origin": request_origin(url)})
     if follow:
         return _with_retry(lambda: opener.open(req, timeout=60), network_too=False)
     # Manual no-follow so we can read the redirect Location.

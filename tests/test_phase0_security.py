@@ -87,7 +87,7 @@ def test_logout_revokes_only_that_session_and_blocks_replay(system):
     retained = first.cookies.get(auth.COOKIE_NAME)
     assert retained != second.cookies.get(auth.COOKIE_NAME)
     assert first.get('/admin/users').status_code == 200
-    assert first.get('/logout', follow_redirects=False).status_code == 303
+    assert first.post('/logout', follow_redirects=False).status_code == 303
     replay = TestClient(app.app)
     replay.cookies.set(auth.COOKIE_NAME, retained)
     assert replay.get('/admin/users', follow_redirects=False).status_code == 303
@@ -174,7 +174,7 @@ def test_restore_does_not_resurrect_logged_out_session(system, tmp_path, monkeyp
     client = login()
     retained = client.cookies.get(auth.COOKIE_NAME)
     snapshot = bk.make_backup(app.DB, kind='manual')
-    client.get('/logout')
+    client.post('/logout')
     bk.restore_backup(snapshot['name'], app.DB)
     client.cookies.set(auth.COOKIE_NAME, retained)
     assert client.get('/admin/users', follow_redirects=False).status_code == 303

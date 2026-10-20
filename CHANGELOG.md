@@ -1,3 +1,11 @@
+## 7.28 — October 20, 2026
+
+- Apply exact-origin verification to staff writes and public account operations, including JSON and uploads.
+- Reject missing, opaque, malformed, sibling-host, wrong-scheme and wrong-port origins; permit an exact Referer origin when Origin is absent.
+- Keep narrow public/bearer and machine-callback exceptions, plus existing Documents/Work CSRF tokens.
+- Make logout a protected POST; old GET links show confirmation without ending the session.
+- Update cookie-based backup and feedback maintenance clients to send Origin explicitly.
+
 ## 7.27 — October 20, 2026
 
 - Sign in again after this update; signing out and account access changes now revoke affected sign-ins.

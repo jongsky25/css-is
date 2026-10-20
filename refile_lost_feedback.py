@@ -76,6 +76,7 @@ def post_feedback(opener, base, page_url, selector, message):
     }).encode("utf-8")
     req = urllib.request.Request(base + "/feedback", data=data, method="POST",
                                  headers={"User-Agent": "css-refile",
+                                          "Origin": pb.request_origin(base),
                                           "X-Requested-With": "fetch"})
     resp = opener.open(req, timeout=60)
     return resp.status

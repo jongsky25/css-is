@@ -1,0 +1,1352 @@
+[
+  {
+    "method": "POST",
+    "path": "/short-links/create",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/login",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/logout",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/set-password",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/forgot",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/reset-password",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/users/invite",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/users/{user_id}/reset-default",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/users/{user_id}/role",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/users/{user_id}/bureau-access",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/users/birthday-coordinators",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/users/birthday",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/users/section-oic/{org_unit_id}/set",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/users/section-oic/{org_unit_id}/clear",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/users/{user_id}/active",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/sharing",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/feedback",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/my/feedback/{fid}/archive",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/my/feedback/{fid}/unarchive",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/feedback/toggle",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/feedback/{fid}",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/feedback/{fid}/ai-suggest",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/offsite-backup/ping",
+    "policy": "independent contract",
+    "exception_reason": "Shared X-Backup-Token secret; no session authority"
+  },
+  {
+    "method": "POST",
+    "path": "/admin/backups/settings",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/backups/now",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/backups/delete",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/backups/restore",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/telemetry",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/ux-insights/retention",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/ux-insights/analyze",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/ai/settings",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/ai/test",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/ai/test-groq",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/rules/toggle",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/rules/create",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/rules/{rid}",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/email/toggle",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/email/params",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/email/test",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/welcome",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/me",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/me/birthday/remove",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/avatar/care",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/api/ai/route",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/api/ai/feedback",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/create",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/arta/entries/{response_id}",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/arta/entries/{response_id}/archive",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/directory/division",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/directory/section",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/directory/bureau",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/directory/unit/{unit_id}/edit",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/directory/unit/{unit_id}/delete",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/directory/clear-sample",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/directory/person",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/directory/person/{rp_id}/update",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/directory/person/{rp_id}/birthday",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/directory/person/{rp_id}/archive",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/directory/person/{rp_id}/photo",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/directory/external",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/directory/external/{rp_id}",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/directory/external-org",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/directory/cleanup/backup",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/directory/cleanup/bulk-titlecase",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/directory/cleanup/archive-low",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/directory/cleanup/quickfix",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/directory/cleanup/rename",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/directory/cleanup/merge",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/directory/cleanup/ai-suggest",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/directory/cleanup/split",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/r/{qr_token}",
+    "policy": "independent contract",
+    "exception_reason": "Public survey token, response window and submission deduplication"
+  },
+  {
+    "method": "POST",
+    "path": "/seq",
+    "policy": "independent contract",
+    "exception_reason": "Public survey tokens, response windows and submission deduplication"
+  },
+  {
+    "method": "POST",
+    "path": "/e/{event_token}",
+    "policy": "independent contract",
+    "exception_reason": "Public event registration token and registration validation"
+  },
+  {
+    "method": "POST",
+    "path": "/e/{event_token}/email-link",
+    "policy": "independent contract",
+    "exception_reason": "Public event token and rate-limited email-link recovery"
+  },
+  {
+    "method": "POST",
+    "path": "/activities/{event_token}/slug",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/{event_token}/links",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/{event_token}/links/{link_id}",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/{event_token}/questions",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/{event_token}/questions/preset",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/{event_token}/questions/{qid}",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/{event_token}/questions/{qid}/remove",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/{event_token}/questions/{qid}/move",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/{event_token}/messages",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/{event_token}/announcement",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/{event_token}/messages/ai-draft",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/{event_token}/certificate",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/{event_token}/window",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/{event_token}/respondents",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/{event_token}/dates",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/{event_token}/raffle/settings",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/{event_token}/raffle/draw",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/{event_token}/raffle/reset",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/{event_token}/speakers",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/{event_token}/speakers/{form_id}/rename",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/{event_token}/speakers/{form_id}/remove",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/{event_token}/close",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/{event_token}/reopen",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/{event_token}/archive",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/form/{fid}/archive",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/instance/{fid}/archive",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/activities/archived/bulk",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/monitor/{event_token}/resend/{attendee_id}",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/monitor/{event_token}/archive",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/monitor/{event_token}/remind-unfinished",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/monitor/{event_token}/attendee/{attendee_id}/delete",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/reports/activities/export-selected",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/encode/lock-all",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/encode/{qr_token}",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/reports/csm-draft",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/reports/csm-draft/save",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/responses/{response_id}/edit-remark",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/dashboard/comment-tag",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/dashboard/people/{rp_id}/hide",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/reports/activities/{event_id}/ai-reanalyze",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/reports/activities/{event_id}/ai-summary",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/reports/activities/{event_id}/ai-mrr-draft",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/reports/activities/{event_id}/mrr-draft",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/reports/activities/{event_id}/demographics",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/reports/activities/{event_id}/section",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/reports/activities/bulk",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/wellness/apply",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/wellness/claims/{claim_id}/cancel",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/wellness/claims/{claim_id}/decide",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/wellness/decide/{claim_id}",
+    "policy": "independent contract",
+    "exception_reason": "Signed decision token; current approver checked by handler"
+  },
+  {
+    "method": "POST",
+    "path": "/wellness/claims/{claim_id}/complete",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/work-arrangement/file",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/work-arrangement/{wa_id}/change",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/work-arrangement/{wa_id}/cancel",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/work-arrangement/{wa_id}/decide",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/holidays",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/work-arrangement/colleague-status",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/work-arrangement/reopen",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/whereabouts/week",
+    "policy": "independent contract",
+    "exception_reason": "Signed user/week token; no session authority"
+  },
+  {
+    "method": "POST",
+    "path": "/work-arrangement/week",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/work-arrangement/week/add-trip",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/work-arrangement/no-awa",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/work-arrangement/no-awa/remove",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/birthday/card/{uid}",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/me/cards/{card_id}/hide",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/birthday-cards/{card_id}/hidden",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/calendar/preference",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/me/calendar-feed/reset",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/me/calendar-feed/off",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/me/calendar-feed/settings",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/calendar/new",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/calendar/entries/{entry_id}/skip",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/calendar/entries/{entry_id}/unskip",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/calendar/entries/{entry_id}/edit",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/calendar/entries/{entry_id}/link-activity",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/calendar/entries/{entry_id}/cancel",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/calendar/entries/{entry_id}/restore",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/calendar/import",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/calendar/import/{batch_id}",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/calendar/import/{batch_id}/people",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/calendar/nicknames",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/calendar/import/{batch_id}/undo",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/calendar/import/{batch_id}/discard",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/rooms/request",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/rooms/{rid}/withdraw-series",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/rooms/{rid}/withdraw",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/rooms/{rid}/move",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/rooms/encode",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/rooms/{rid}/take",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/rooms/blocks",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/rooms/blocks/reopen",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/rooms/decide/{rid}",
+    "policy": "independent contract",
+    "exception_reason": "Signed room decision token; current approver checked by handler"
+  },
+  {
+    "method": "POST",
+    "path": "/room",
+    "policy": "independent contract",
+    "exception_reason": "Anonymous external room request; rate limit, honeypot and validation"
+  },
+  {
+    "method": "POST",
+    "path": "/room/t/{token}/withdraw",
+    "policy": "independent contract",
+    "exception_reason": "Signed room tracking token; external reservation only"
+  },
+  {
+    "method": "POST",
+    "path": "/room/t/{token}/take",
+    "policy": "independent contract",
+    "exception_reason": "Signed room tracking token; external reservation only"
+  },
+  {
+    "method": "POST",
+    "path": "/rooms/display-setup",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/rooms/{rid}/decide",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/rooms/meals/{rid}",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/rooms/meals/{rid}/start",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/room/t/{token}/meals",
+    "policy": "independent contract",
+    "exception_reason": "Signed room tracking token; external reservation only"
+  },
+  {
+    "method": "POST",
+    "path": "/room/t/{token}/meals/start",
+    "policy": "independent contract",
+    "exception_reason": "Signed room tracking token; external reservation only"
+  },
+  {
+    "method": "POST",
+    "path": "/rooms/meals/{rid}/tag",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/rooms/meals/{rid}/tag-all",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/travel/new",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/travel/f/{ref}/answers",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/travel/f/{ref}/item/{code}",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/travel/f/{ref}/upload",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/travel/f/{ref}/item/{code}/remove-upload",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/travel/f/{ref}/link-check",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/travel/f/{ref}/generate",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/travel/f/{ref}/rates",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/travel/f/{ref}/scan",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/travel/verify/{flag_id}",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/travel/admin/ceilings",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/travel/admin/route",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/travel/library",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/travel/f/{ref}/ready",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/travel/f/{ref}/submit",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/travel/f/{ref}/withdraw",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/travel",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/travel/ping",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/travel/signatories",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/documents/intake/settings",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/documents/intake/settings/gmail",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/documents/intake/sync",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/documents/intake/{item_id}",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/documents/intake/pages-result",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/documents/intake/page",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/documents/intake/read",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/documents/intake/preview",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/documents/new",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/documents/rules",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/documents/{doc_id}/memo.docx",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/documents/{doc_id}/annotate/{version_id}",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/documents/{doc_id}/index-file",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/documents/{doc_id}/unindex-file",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/admin/documents/setup",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/documents/{doc_id}/{action}",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/integrations/gmail/documents",
+    "policy": "independent contract",
+    "exception_reason": "Timestamped body HMAC; no session authority"
+  },
+  {
+    "method": "POST",
+    "path": "/work/{case_id}/discussion/messages",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/work/notification-preferences",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/work/{case_id}/discussion/preferences",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/work/{case_id}/messages/{comment_id}/actions",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/work/{case_id}/decisions/{decision_id}/resolve",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/work/{case_id}/draft",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/work/{case_id}/consolidation/{document_id}",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/work/{case_id}/completion",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/work/new",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/work/team/{case_id}/{task_id}/{action}",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/work/{case_id}/{action}",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  },
+  {
+    "method": "POST",
+    "path": "/work/{case_id}/tasks/{task_id}/{action}",
+    "policy": "exact origin / referer",
+    "exception_reason": null
+  }
+]

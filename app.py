@@ -49,7 +49,7 @@ import traceback
 import pandas as pd
 from datetime import datetime, date, timedelta, timezone
 from urllib.parse import parse_qsl, quote, urlencode, urlparse
-from request_security import safe_local_return
+from request_security import safe_local_return, same_origin_write, csrf_exempt, SAFE_METHODS
 
 import qrcode
 from fastapi import FastAPI, Request
@@ -2258,6 +2258,18 @@ async def _auth_gate(request: Request, call_next):
     request.state.notifications = []
     request.state.notif_count = 0
     path = request.url.path
+    # Cookie-authenticated writes and public account operations share one
+    # browser boundary. _is_public is deliberately NOT a CSRF exemption.
+    if (request.method not in SAFE_METHODS
+            and (request.state.user or _is_public(path))
+            and not csrf_exempt(request.method, path)):
+        canonical = os.environ.get("CSS_BASE_URL")
+        if not canonical and os.environ.get("SPACE_HOST"):
+            # Server-provided hostname, never a raw X-Forwarded-Host header.
+            canonical = "https://" + os.environ["SPACE_HOST"]
+        if not same_origin_write(request, canonical):
+            return Response("This request could not be verified. Reload the page and try again.",
+                            status_code=403, headers={"Cache-Control": "no-store"})
     # Expose the Spot Feedback switch to every page a signed-in staff member sees
     # — including PUBLIC attendee pages (the live survey, the "not open yet" and
     # "closed" screens), so they can flag issues anywhere. One cheap settings read
@@ -2674,6 +2686,14 @@ async def login_submit(request: Request):
 
 
 @app.get("/logout")
+def logout_confirmation(request: Request):
+    """Old bookmarks may open a confirmation, but GET must not revoke a session."""
+    if not getattr(request.state, "user", None):
+        return RedirectResponse("/login", status_code=303)
+    return templates.TemplateResponse(request, "logout.html", {"show_scope": False})
+
+
+@app.post("/logout")
 def logout(request: Request):
     user = getattr(request.state, "user", None)
     if user:

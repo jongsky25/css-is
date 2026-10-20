@@ -22,6 +22,28 @@ ROLE_USERS = {
     "admin":           "admin@test.local",
 }
 
+
+@pytest.fixture(scope="session", autouse=True)
+def _browser_request_origins():
+    """HTTP clients model a browser's Origin; security tests can clear it.
+
+    This exercises the production origin check, not an authentication bypass.
+    TestClient does not synthesize browser security headers itself. Explicit
+    per-request headers still override the default, including hostile origins.
+    """
+    from starlette.testclient import TestClient
+    from urllib.parse import urlsplit
+    original = TestClient.__init__
+
+    def browser_init(self, *args, **kwargs):
+        original(self, *args, **kwargs)
+        url = urlsplit(str(self.base_url))
+        self.headers.setdefault('Origin', f'{url.scheme}://{url.netloc}')
+
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(TestClient, '__init__', browser_init)
+        yield
+
 def join_admin_section(conn, user_id, path="BLHSD/ADMIN"):
     """Make this account a member of the Administrative Section (the only room approvers)."""
     row = conn.execute("SELECT id FROM org_unit WHERE path=?", (path,)).fetchone()

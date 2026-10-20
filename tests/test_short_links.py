@@ -159,7 +159,7 @@ def test_status_and_qr_ui(queue, monkeypatch):
     ev = st.create_event(conn, 'Sharing', '2026-10-16', created_by='short@test.local')
     conn.close()
     original = BASE + '/e/' + ev['event_token']
-    client = TestClient(app.app)
+    client = TestClient(app.app, base_url=BASE)
     assert client.post('/short-links/create', data={'url': original}, headers={'X-Short-Link-Request': '1'}).status_code == 401
     assert client.get('/short-links/status', params={'url': original}, follow_redirects=False).status_code in (302, 303)
     client.cookies.set(auth.COOKIE_NAME, session_token({'id': uid, 'username': 'short@test.local', 'role': 'admin'}))

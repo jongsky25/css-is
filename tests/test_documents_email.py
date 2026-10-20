@@ -136,6 +136,8 @@ def test_real_app_auth_gate(setup,monkeypatch,tmp_path):
     monkeypatch.setattr(app,'DB',path)
     monkeypatch.setattr(monitoring,'LOG_PATH',str(tmp_path/'requests.log'))
     with TestClient(app.app) as client:
+        # This HMAC-authenticated callback must not rely on browser origins.
+        client.headers['Origin'] = 'https://external-integration.example'
         assert client.post(email.PATH,json=payload()).status_code==401
         response=signed(client)
         assert response.status_code==201,response.text

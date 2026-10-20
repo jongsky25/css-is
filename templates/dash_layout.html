@@ -6,7 +6,7 @@
 <title>{% block title %}Dashboard{% endblock %} — Office Connect</title>
 {# Set theme + text size before first paint so the choice never flashes. #}
 <script>(function(){try{var d=document.documentElement;var t=localStorage.getItem("theme");if(t!=="dark"&&t!=="light"&&t!=="contrast"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light";}d.setAttribute("data-theme",t);var s=localStorage.getItem("textscale");if(s!=="sm"&&s!=="lg"&&s!=="md"){s="md";}d.setAttribute("data-textscale",s);var dn=localStorage.getItem("density");if(dn!=="compact"&&dn!=="cozy"){dn="cozy";}d.setAttribute("data-density",dn);var ac=localStorage.getItem("accent");if(["blue","teal","violet","emerald","rose","amber"].indexOf(ac)<0){ac="blue";}d.setAttribute("data-accent",ac);}catch(e){}})();</script>
-<link rel="stylesheet" href="/static/css/app.css?v=20261009f">
+<link rel="stylesheet" href="/static/css/app.css?v=20261020csrf">
 {% block head %}{% endblock %}
 </head>
 {# page_width: "full" (dense tables), "narrow" (forms/reading), or empty for the default. #}
@@ -152,7 +152,7 @@
               <div class="mm-set">{{ display_settings() }}</div>
             </details>
           </div>
-          <a href="/logout" class="mm-logout">Log out</a>
+          <form method="post" action="/logout"><button type="submit" class="mm-logout">Log out</button></form>
         </div>
         {% endif %}
       </div>
@@ -178,7 +178,7 @@
       {% if u %}
       {{ notif_bell(request.state.notifications, request.state.notif_count) }}
       <a class="whoami" href="/me" title="My profile — {{ ROLE_LABELS.get(u.role, u.role) }}">{{ u.username }} · {{ ROLE_LABELS.get(u.role, u.role) }}</a>
-      <a href="/logout" class="logout">Log out</a>{% endif %}
+      <form method="post" action="/logout"><button type="submit" class="logout">Log out</button></form>{% endif %}
     </div>
   </div>
 </nav>
