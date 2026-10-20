@@ -1,3 +1,7 @@
+## 7.37 — October 20, 2026
+
+- On the travel prepare page, each warning now marks the field it is about in red, with a message on that field, and clicking the warning jumps to the field (spot feedback #131, #137).
+
 ## 7.36 — October 20, 2026
 
 - Travel filings are now due 5 working days after the last day of the activity, even when the filing was opened after the activity ended (spot feedback #135).

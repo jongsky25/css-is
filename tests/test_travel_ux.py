@@ -261,3 +261,23 @@ def test_drafted_entries_keep_edits_take_new_uploads_and_stay_removed(page, view
     pw.expect(modes).to_have_count(rows)                                                              # it stays removed
     assert page.get_by_label('Actual fare claimed (₱)', exact=True).evaluate_all('els => els.map(e => e.value)').count('350') == 0
     assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
+
+
+def test_warning_marks_its_field_and_jumps_to_it(page, viewer, conn, relay):
+    ref = mk(viewer, kind='reimbursement')
+    page.goto(f'http://testserver/travel/f/{ref}/prepare')
+    row = page.locator('.tv-row').first
+    row.get_by_label('How you travelled', exact=True).select_option('tnvs')
+    fare = row.get_by_label('Actual fare claimed (₱)', exact=True)
+    fare.fill('5000')
+    warning = page.locator('.tv-flaglink', has_text='No receipt for a fare of 5000')
+    pw.expect(warning).to_be_visible()
+    pw.expect(fare).to_have_count(1)
+    receipt = row.get_by_label('Receipt', exact=True)
+    pw.expect(receipt).to_have_attribute('aria-invalid', 'true')
+    pw.expect(row.locator('.tv-field-error').first).to_be_visible()
+    warning.click()
+    pw.expect(receipt).to_be_focused()
+    receipt.select_option('receipt')
+    pw.expect(receipt).not_to_have_attribute('aria-invalid', 'true')
+    pw.expect(page.locator('.tv-field-error', has_text='No receipt')).to_have_count(0)
