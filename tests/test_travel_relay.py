@@ -551,3 +551,23 @@ def test_receipts_still_come_back_marked_as_receipts(viewer, conn, fake, on, ai_
     ai_on(conn, monkeypatch, GOOD)
     j = up(viewer, ref, code="plane_ticket", body=JPEG).json()
     assert j["doc"] == "receipt" and j["checks"] == [] and j["fill"] is None
+
+
+def test_the_payload_is_ascii_so_the_signature_does_not_depend_on_encoding(env, posts):
+    # Appendix B always carries the checkbox glyphs; free text can carry curly quotes and accents.
+    fields = {"strictness": "☒ strictly ☐ cut", "note": "Dela Cruz’s trip to Muñoz ₱1,200", "emoji": "\U0001F600"}
+    assert gr.Relay().generate_doc(request_id="TF-2610-0001:appendix_b:1", template_key="appendix_b",
+                                   folder_key="TF-2610-0001", title="T", fields=fields).ok
+    e = posts[0][1]["json"]
+    assert e["payload"].isascii()
+    assert json.loads(e["payload"])["fields"] == fields
+    want = hmac.new(SECRET.encode(), f"{e['ts']}.{e['payload']}".encode("ascii"), hashlib.sha256).hexdigest()
+    assert e["sig"] == want
+    assert e["payload"].encode("ascii") == e["payload"].encode("utf-8")        # same bytes under any encoding
+
+
+def test_a_filer_is_told_what_to_do_not_how_the_relay_is_configured():
+    for code in ("unauthorized", "unreachable", "template_not_set", "unknown_error"):
+        msg = gr.describe_for_filer(code)
+        assert "relay" not in msg.lower() and "secret" not in msg.lower() and "script" not in msg.lower()
+        assert "Admin Unit" in msg

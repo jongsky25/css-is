@@ -175,7 +175,7 @@ def test_a_failed_document_can_be_retried_with_a_new_revision(viewer, conn, rela
     assert r.json()["ok"]
     got = items(conn, ref)
     assert got["appendix_b"]["doc_state"] == "failed:1" and not got["appendix_b"]["doc_url"]
-    assert "template" in got["appendix_b"]["note"].lower() and got["travel_report"]["doc_state"] == "done:1"
+    assert "not been set up" in got["appendix_b"]["note"] and got["travel_report"]["doc_state"] == "done:1"
     status = viewer.get(f"/travel/f/{ref}/status").json()
     assert status["gen_state"] == "failed" and [i for i in status["items"] if i["state"] == "failed"][0]["code"] == "appendix_b"
     assert "Generate" in " ".join(travel.missing_for(conn, travel.get_by_ref(conn, ref)))

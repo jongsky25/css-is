@@ -1,3 +1,17 @@
+## 7.38 — October 20, 2026
+
+- Fix Appendix B and the Post Travel Report failing with "The relay rejected the signature": requests to the documents relay are now signed over an ASCII-only payload, so checkbox glyphs, curly quotes and accented names no longer break the signature (spot feedback #132).
+- When a form fails, tell the person in plain words what happened and what to do, with the filing reference to give the Admin Unit, instead of relay and secret jargon (spot feedback #139).
+- Show how the Total is worked out on the prepare page: each fare, and for each day the per diem rule, the region's rate and its lodging, meals and incidentals parts, with the policy notes (spot feedback #138).
+
+## 7.37 — October 20, 2026
+
+- On the travel prepare page, each warning now marks the field it is about in red, with a message on that field, and clicking the warning jumps to the field (spot feedback #131, #137).
+
+## 7.36 — October 20, 2026
+
+- Travel filings are now due 5 working days after the last day of the activity, even when the filing was opened after the activity ended (spot feedback #135).
+
 ## 7.35 — October 20, 2026
 
 - Build synthetic survey reference data without reading a production database.

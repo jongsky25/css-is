@@ -28,28 +28,25 @@ def kinds(res):
 
 # --------------------------------------------------------------- deadlines ---
 
-def test_plotted_liquidation_deadline(conn):
-    # Mon 12 Oct - Fri 16 Oct 2026: +5 calendar days = Wed 21 Oct
-    assert tr.deadline_for(conn, "liquidation", "2026-10-16", "2026-10-01") == ("2026-10-21", "plotted")
-
-
-def test_plotted_deadline_rolls_forward_off_the_weekend(conn):
+def test_deadline_is_five_working_days_after_the_last_day(conn):
+    # Fri 16 Oct 2026 + 5 working days = Fri 23 Oct
+    assert tr.deadline_for(conn, "liquidation", "2026-10-16", "2026-10-01") == ("2026-10-23", "plotted")
     assert tr.deadline_for(conn, "reimbursement", "2026-10-12", "2026-10-01") == ("2026-10-19", "plotted")
 
 
-def test_plotted_deadline_rolls_past_a_holiday(conn):
+def test_deadline_skips_a_holiday(conn):
     st.set_holiday(conn, "2026-10-19", "Test holiday", "regular")
     assert tr.deadline_for(conn, "liquidation", "2026-10-12", "2026-10-01") == ("2026-10-20", "plotted")
 
 
-def test_after_the_fact_is_five_working_days_from_opening(conn):
-    assert tr.deadline_for(conn, "liquidation", "2026-10-09", "2026-10-16") == ("2026-10-23", "after_fact")
-    assert tr.deadline_for(conn, "ca", "2026-10-09", "2026-10-16") == ("2026-10-23", "after_fact")
+def test_deadline_counts_from_the_last_day_not_from_opening(conn):
+    # activity ended Fri 16 Oct, filing opened Tue 20 Oct: still due Fri 23 Oct
+    assert tr.deadline_for(conn, "liquidation", "2026-10-16", "2026-10-20") == ("2026-10-23", "plotted")
+    assert tr.deadline_for(conn, "reimbursement", "2026-10-16", "2026-10-20") == ("2026-10-23", "plotted")
 
 
-def test_after_the_fact_skips_a_holiday(conn):
-    st.set_holiday(conn, "2026-10-20", "Test holiday", "regular")
-    assert tr.deadline_for(conn, "reimbursement", "2026-10-09", "2026-10-16") == ("2026-10-26", "after_fact")
+def test_cash_advance_on_an_ended_activity_is_held_to_the_same_date(conn):
+    assert tr.deadline_for(conn, "ca", "2026-10-09", "2026-10-16") == ("2026-10-16", "after_fact")
 
 
 def test_cash_advance_on_a_future_or_current_activity_has_no_deadline(conn):

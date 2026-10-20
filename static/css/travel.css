@@ -70,3 +70,13 @@
 .tv-lodging-note { display:block; margin:.15rem 0 0; }
 .tv-row-actions { display: flex; flex-wrap: wrap; gap: .4rem; }
 .tv-drafted { border-left: 3px solid var(--accent, #2563eb); padding-left: .5rem; }
+.tv-invalid { border-color: #a12 !important; outline: 1px solid #a12; background: #fff5f5; }
+.tv-field-error { color: #a12; font-size: .85rem; margin-top: .15rem; }
+.tv-flaglink { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-align: left; text-decoration: underline dotted; cursor: pointer; }
+.tv-flaglink:hover, .tv-flaglink:focus-visible { text-decoration: underline; }
+@media (prefers-color-scheme: dark) { .tv-invalid { background: #3a1a1e; } .tv-field-error { color: #ff8a97; } }
+.tv-breakdown { margin: .4rem 0 .8rem; }
+.tv-breakdown summary { cursor: pointer; font-weight: 600; }
+.tv-breakdown h4 { margin: .7rem 0 .2rem; font-size: .95rem; }
+.tv-breakdown ul { margin: 0; padding-left: 1.1rem; }
+.tv-breakdown-total { font-weight: 700; margin: .6rem 0 .2rem; }
