@@ -28,7 +28,7 @@ Both templates are plain Google Docs in the `_templates` folder under the relay'
 | Template | Placeholders |
 |---|---|
 | `dpo` | `dpo_year`, `dpo_no`, `dpo_date`, `subject`, `background`, `intro`, `funding_source`, `p_name` and `p_position` (one table row, copied per person), `head_name`, `head_title`, `unit_name`. Also available: `title`, `purpose`, `dates`, `venue`, `prepared_by`, and a `{{personnel}}` line of numbered names |
-| `invitation` | `date`, `title`, `invited`, `details` (a block), `sender_name`, `sender_title`, `contact`, `head_name`, `head_title` |
+| `invitation` (the DOH memorandum) | `date`, `for_name`, `for_title`, `for_office`, `from_name`, `from_title`, `unit_name`, `subject`, `opening`, `details` (a block of What / When / Where lines), `a_area` and `a_request` (one table row, copied per request), `contact_name`, `contact_email`, `contact_phone`. Also available: `title`, `invited`, `sender_name`, `sender_title`, `contact`, `head_name`, `head_title` |
 
 ## What the app fills in, and what it leaves for you
 
@@ -57,3 +57,16 @@ DOH address footer.
   running it. Every draft keeps what is in the template.
 - **Left for the person:** the DPO number, the DPO date and the funding source stay as blank lines. The subject, background,
   authority line and the Name / Position table are written from the calendar item and its people.
+
+## The invitation follows the DOH memorandum to the regions (7.50 onwards)
+
+The invitation is the DOH **memorandum** format: the date, MEMORANDUM, FOR / FROM / SUBJECT, a rule, the request, the what / when
+/ where lines, an "Area / Requested Assistance" table, the contact line, the thanks and an Initials / Date block.
+
+- **Updating an existing setup:** replace the `activity_templates` file in the Apps Script project and run
+  `makeActivityTemplates()` again. The old invitation lacks the new placeholders, so it is rebuilt and `TPL_invitation`
+  points to the new Doc (the old copy stays in `_templates`). The DPO is kept if it is already current.
+- **Left for the person:** who it is FOR (name, title, office) and the telephone number stay as blank lines. The FROM is the
+  Director set in the travel settings. The Requested Assistance table starts with Participants, Venue, Meals and Coordination;
+  edit the wording on the draft.
+- **Concept Note and Program Flow** are separate documents in the same DOH package. They are not drafted by the app yet.

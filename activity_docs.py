@@ -17,12 +17,19 @@ import tzutil as tz
 DOCS = {
     "dpo": {"label": "Department Personnel Order (DPO)",
             "blurb": "Authorises the personnel to attend or travel for the activity."},
-    "invitation": {"label": "Invitation",
-                   "blurb": "Tells the invited people what, when and where."},
+    "invitation": {"label": "Invitation (memorandum)",
+                   "blurb": "A memorandum asking the recipient's office for its help, with what, when and where."},
 }
 KEYS = tuple(DOCS)
 INVITE_KINDS = ("training",)           # a training or workshop is announced to the people it is for
-BLANK = "__________"                  # left for the person to fill in by hand on the draft
+BLANK = "__________"
+# The usual asks in a memorandum to a regional office (Area, Requested assistance). Starting wording only.
+ASSISTANCE = (
+    ("Participants", "Identify and designate the personnel who will participate in the activity."),
+    ("Venue", "Provide a suitable venue, preferably with stable internet connectivity."),
+    ("Meals", "Provide meals for the participants during the activity."),
+    ("Coordination", "Facilitate the coordination and attendance of the identified participants."),
+)                  # left for the person to fill in by hand on the draft
 
 
 def suggest(entry, kind_label="") -> dict:
@@ -157,10 +164,24 @@ def payload(conn, entry, key, user, owner_label="") -> td.DocPayload:
         lines = [f"What: {title}", f"When: {when_text(entry)}", f"Where: {where_text(entry)}"]
         if link:
             lines.append(f"Join online: {link}")
+        days = days_text(entry)
+        place = (entry.get("venue") or "").strip()
+        in_place = f" in {place}" if place else ""
+        unit = owner_label.strip()
         fields = {"date": td.long_date(tz.today_local()), "title": title, "invited": invited,
                   "sender_name": me, "sender_title": profile.get("designation") or "",
-                  "contact": user.get("username") or "", "head_name": head_name, "head_title": head_title}
-        return td.DocPayload("invitation", "invitation", f"Invitation - {title}"[:120], fields, blocks={"details": lines})
+                  "contact": user.get("username") or "", "head_name": head_name, "head_title": head_title,
+                  # the DOH memorandum to the regions: FOR / FROM / SUBJECT, the request, the contact line
+                  "for_name": BLANK, "for_title": BLANK, "for_office": BLANK,
+                  "from_name": head_name.upper(), "from_title": head_title, "unit_name": unit,
+                  "subject": f"Request for Assistance in the Conduct of {title}",
+                  "opening": (f"The {unit} respectfully requests" if unit else "We respectfully request")
+                             + f" your office\u2019s assistance in the conduct of {title} on {days}{in_place}.",
+                  "contact_name": me, "contact_email": user.get("username") or "", "contact_phone": BLANK}
+        # what the request asks of the office: one row each, the person edits the wording
+        rows = {"assistance": {"marker": "a_area", "data": [{"a_area": a, "a_request": r} for a, r in ASSISTANCE]}}
+        return td.DocPayload("invitation", "invitation", f"Memorandum - {title}"[:120], fields,
+                             blocks={"details": lines}, rows=rows)
     raise ValueError("Unknown document.")
 
 

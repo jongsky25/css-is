@@ -1,3 +1,7 @@
+## 7.50 — October 20, 2026
+
+- The drafted invitation now follows the DOH memorandum format used to write to the regions: MEMORANDUM with FOR, FROM and SUBJECT, a request paragraph, the what, when and where, a table of the assistance asked for, the contact line and an initials block. Who it is FOR and the telephone number are left blank to fill in. The Apps Script template needs to be updated and re-run (docs/ACTIVITY_DOCS_SETUP.md) (spot feedback #136).
+
 ## 7.49 — October 20, 2026
 
 - Fix every sign-in and save failing with "This request could not be verified. Reload the page and try again." after 7.48: the new `Referrer-Policy: no-referrer` made Chrome and Edge send form posts with `Origin: null` and no Referer, which the write origin check rejects. The policy is now `same-origin`, which still sends nothing to other sites. Adds a real-browser regression test.

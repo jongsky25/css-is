@@ -24,8 +24,9 @@ const AT_TEMPLATES = [
   { key: 'dpo', title: 'Template - dpo', build: at_buildDpo_,
     expect: ['dpo_year', 'dpo_no', 'dpo_date', 'subject', 'background', 'intro', 'funding_source', 'p_name', 'p_position',
              'head_name', 'head_title', 'unit_name'] },
-  { key: 'invitation', title: 'Template - invitation', build: at_buildInvitation_,
-    expect: ['date', 'title', 'invited', 'details', 'sender_name', 'sender_title', 'contact', 'head_name', 'head_title'] }
+  { key: 'invitation', title: 'Template - invitation (memorandum)', build: at_buildInvitation_,
+    expect: ['date', 'for_name', 'for_title', 'for_office', 'from_name', 'from_title', 'unit_name', 'subject', 'opening',
+             'details', 'a_area', 'a_request', 'contact_name', 'contact_email', 'contact_phone'] }
 ];
 
 function makeActivityTemplates() {
@@ -158,20 +159,49 @@ function at_buildDpo_(body, doc) {
   if (first.getType() === DocumentApp.ElementType.PARAGRAPH && first.asParagraph().getText() === '') body.removeChild(first);
 }
 
+// The DOH memorandum to a regional office (the "Memo to Regions (Invitation)" format): date, MEMORANDUM, FOR / FROM /
+// SUBJECT, the request, the what / when / where lines, a table of the help asked for, the contact line and an initials block.
+//   {{details}} is a block (the app replaces that line with several); {{a_area}} and {{a_request}} sit in ONE table row.
 function at_buildInvitation_(body, doc) {
-  body.appendParagraph('{{date}}').setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
-  body.appendParagraph('TO: {{invited}}').setBold(true);
-  body.appendParagraph('SUBJECT: Invitation to {{title}}').setBold(true);
-  body.appendParagraph('Greetings!');
-  body.appendParagraph('You are invited to the following activity:');
-  body.appendParagraph('{{details}}');
-  body.appendParagraph('Please confirm your attendance with the contact below.');
-  body.appendParagraph('Contact: {{contact}}');
+  body.appendParagraph('{{date}}');
+  const title = body.appendParagraph('MEMORANDUM');
+  title.setBold(true);
+  title.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+  [
+    ['FOR:\t{{for_name}}', '{{for_title}}', '{{for_office}}'],
+    ['FROM:\t{{from_name}}', '{{from_title}}', '{{unit_name}}']
+  ].forEach(function (group) {
+    group.forEach(function (line, i) {
+      const p = body.appendParagraph(line);
+      if (i === 0) p.setBold(true);
+      if (i > 0) p.setIndentStart(36);
+    });
+  });
+  body.appendParagraph('SUBJECT:\t{{subject}}').setBold(true);
+  body.appendHorizontalRule();
+  [
+    '{{opening}}',
+    '{{details}}',
+    'In this regard, we kindly request your office\u2019s assistance in facilitating the activity through the following:'
+  ].forEach(function (t) {
+    const p = body.appendParagraph(t);
+    p.setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
+  });
+  const table = body.appendTable([['Area', 'Requested Assistance'], ['{{a_area}}', '{{a_request}}']]);
+  table.getRow(0).editAsText().setBold(true);
+  [
+    'For clarifications, your staff may contact {{contact_name}} at {{contact_email}}, or you may reach us via telephone: {{contact_phone}}.',
+    'We sincerely appreciate your support in facilitating the successful conduct of this activity.',
+    'Thank you very much for your continued support.'
+  ].forEach(function (t) {
+    const p = body.appendParagraph(t);
+    p.setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
+  });
   body.appendParagraph('');
-  body.appendParagraph('Thank you.');
-  body.appendParagraph('');
-  body.appendParagraph('{{sender_name}}').setBold(true);
-  body.appendParagraph('{{sender_title}}');
-  body.appendParagraph('');
-  body.appendParagraph('Noted by: {{head_name}}, {{head_title}}').setItalic(true);
+  const initials = body.appendTable([['', '{{unit_name}}'], ['Initials', ''], ['Date', '']]);
+  initials.getRow(0).editAsText().setBold(true);
+  body.editAsText().setFontFamily('Times New Roman');
+  body.editAsText().setFontSize(12);
+  const first = body.getChild(0);
+  if (first.getType() === DocumentApp.ElementType.PARAGRAPH && first.asParagraph().getText() === '') body.removeChild(first);
 }
