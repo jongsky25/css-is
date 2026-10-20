@@ -17,18 +17,26 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.34"
+APP_VERSION = "7.35"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "7.34",
+        "version": "7.35",
         "date": "October 20, 2026",
         "summary": "More dependable automated checks before future updates.",
         "changes": [
             "Automated checks now use separate sample databases and controlled dates.",
             "Tests can run in shuffled order without relying on earlier tests or production records."
         ]
+    },
+    {
+        "version": "7.34",
+        "date": "October 20, 2026",
+        "summary": "Quick add now shows the day you picked.",
+        "changes": [
+            "When you add something from a day on the calendar, the Starts box shows that day instead of \"Pick a date\".",
+        ],
     },
     {
         "version": "7.33",

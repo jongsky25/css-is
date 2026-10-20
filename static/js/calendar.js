@@ -193,6 +193,11 @@
   function open(date, uid, name) {
     form.reset();
     form.querySelector("[data-start]").value = date || "";
+    // Setting .value (or reset()) fires no event, and the date fields wear a display overlay (app.js)
+    // that only redraws on "change", so without this it kept showing "Pick a date".
+    Array.prototype.forEach.call(form.querySelectorAll("input[type=date]"), function (el) {
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    });
     setPeople(uid || "", name || "");
     if (uid && audience) audience.value = "people";
     var more = form.querySelector("[data-more]");

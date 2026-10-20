@@ -1,4 +1,4 @@
-# Deterministic tests — A10 step 2 / candidate 7.34
+# Deterministic tests — A10 step 2 / candidate 7.35
 
 ## Isolation
 
@@ -54,4 +54,4 @@ Final verification on committed source:
 
 Results and source hashes are recorded in `docs/phase1/deterministic-tests/verification.json`. Verification covers normal full-suite execution, shuffled full-suite execution, selected tests in separate pytest processes, and a leap-day date-sensitive selection. A clean worktree run verifies that no database snapshot or generated local file is needed.
 
-Existing environment-dependent browser skips remain; no failing case is converted to a skip or expected failure. These checks do not prove every possible ordering or date. Python 3.11 parity and mandatory release gates are the next A10 steps. Manual production testing remains deferred. This increment preserves main's 7.33 travel-upload changes and requires no database migration.
+Existing environment-dependent browser skips remain; no failing case is converted to a skip or expected failure. These checks do not prove every possible ordering or date. Python 3.11 parity and mandatory release gates are the next A10 steps. Manual production testing remains deferred. This increment preserves main's 7.33 travel-upload and 7.34 calendar date-prefill changes and requires no database migration.
