@@ -266,6 +266,8 @@ def test_lost_form_can_be_closed_and_its_key_cannot_execute(viewer, conn):
     key = operation_id(viewer)
     response = viewer.post('/travel/submissions/' + key + '/close', follow_redirects=False)
     assert response.status_code == 303
+    assert viewer.post('/travel/submissions/' + key + '/close', follow_redirects=False).status_code == 303
+    assert conn.execute("SELECT COUNT(*) FROM audit_log WHERE action='travel_submission_close'").fetchone()[0] == 1
     assert status(viewer, key).json()['state'] == 'rejected'
     assert post(viewer, fields(key)).status_code == 400
     assert effects(conn) == (0, 0)
@@ -323,3 +325,19 @@ def test_close_waits_for_the_writer_and_preserves_its_commit(viewer, conn, app_m
         closing.result(timeout=10)
     assert status(viewer, key).json()['location'] == '/travel/f/' + ref
     assert conn.execute('SELECT COUNT(*) FROM travel_filing').fetchone()[0] == 1
+
+
+def test_close_audit_failure_keeps_the_attempt_resumable(viewer, conn, monkeypatch):
+    key = operation_id(viewer)
+    audit = st.audit
+    def interrupt(c, actor, action, **kw):
+        audit(c, actor, action, **kw)
+        if action == 'travel_submission_close':
+            raise RuntimeError('Audit interrupted')
+    with monkeypatch.context() as patch:
+        patch.setattr(st, 'audit', interrupt)
+        response = viewer.post('/travel/submissions/' + key + '/close', follow_redirects=False)
+    assert response.status_code == 503
+    assert status(viewer, key).json()['state'] == 'ready'
+    assert conn.execute("SELECT COUNT(*) FROM audit_log WHERE action='travel_submission_close'").fetchone()[0] == 0
+    assert post(viewer, fields(key)).json()['state'] == 'completed'

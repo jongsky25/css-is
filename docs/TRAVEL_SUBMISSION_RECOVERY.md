@@ -58,7 +58,9 @@ previously completed operation.
 
 Concurrent requests serialize through SQLite's writer lock. Closing a pending
 attempt uses the same lock: it either observes a completed filing or prevents a
-later execution of that key. This contract is for local database work only.
+later execution of that key. Closing an unfinished attempt records one audit
+entry in the same transaction; repeated closure does not add another entry,
+and an audit failure rolls back the closure. This contract is for local database work only.
 Callbacks must not commit independently or perform external side effects.
 External jobs need their own receipts, delivery/reconciliation contracts and
 recovery policy before adopting retries.

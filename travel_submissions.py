@@ -52,7 +52,7 @@ def lookup(conn, user_id, operation_id):
     return dict(zip(('state', 'request_hash', 'ref'), row))
 
 
-def close_unfinished(conn, user_id, operation_id):
+def close_unfinished(conn, user_id, operation_id, *, on_close=None):
     """Retire a lost form only after the active writer has finished or rolled back."""
     if conn.in_transaction:
         raise RuntimeError('Travel submissions require a dedicated connection')
@@ -62,6 +62,8 @@ def close_unfinished(conn, user_id, operation_id):
         if state['state'] in ('ready', 'pending'):
             conn.execute("UPDATE travel_submission SET state='rejected',updated_at=? WHERE operation_id=?",
                          (tz.now_iso(), operation_id))
+            if on_close is not None:
+                on_close()
 
 
 def execute(conn, user_id, operation_id, fields, action, *, rejected_exceptions=()):

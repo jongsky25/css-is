@@ -300,7 +300,10 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
         conn = get_conn()
         try:
             try:
-                submissions.close_unfinished(conn, request.state.user['id'], operation_id)
+                submissions.close_unfinished(conn, request.state.user['id'], operation_id,
+                    on_close=lambda: audit(request, conn, 'travel_submission_close',
+                        target_type='travel_submission', target_id=operation_id,
+                        summary='Closed an unfinished travel filing attempt.', commit=False))
             except submissions.MissingOperation:
                 return _submission_json({'state': 'unknown', 'message': 'This submission could not be found.'}, 404)
             except Exception as e:
