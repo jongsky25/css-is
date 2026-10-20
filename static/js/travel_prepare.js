@@ -62,7 +62,27 @@
     return rides.join('; ');
   }
 
-  root.TravelPrepare = { rideCheck: rideCheck, ceilings: ceilings, describeDay: describeDay };
+  // A liquidation's figures: what was actually spent, by kind, against the cash advance. Money is added in centavos so
+  // the result never carries floating-point crumbs. `fromFiles` counts the entries drafted from an uploaded ticket or receipt.
+  function liquidationFigures(rows, advance, modes) {
+    var by = {}, order = [], pdCents = 0, pdDays = 0;
+    function cents(v) { return Math.round((Number(v) || 0) * 100); }
+    (rows || []).forEach(function (r) {
+      var fare = cents(r.allowance), pd = cents(r.per_diem), key = r.mode && r.mode !== 'none' ? r.mode : 'other';
+      if (fare > 0) {
+        if (!by[key]) { by[key] = { label: key === 'other' ? 'Other fares' : String((modes || {})[key] || key), cents: 0, count: 0, fromFiles: 0 }; order.push(key); }
+        by[key].cents += fare; by[key].count++; if (r.src) by[key].fromFiles++;
+      }
+      if (pd > 0) { pdCents += pd; pdDays++; }
+    });
+    var lines = order.map(function (k) { return by[k]; });
+    if (pdCents) lines.push({ label: 'Per diem', cents: pdCents, count: pdDays, fromFiles: 0 });
+    var total = lines.reduce(function (n, l) { return n + l.cents; }, 0);
+    var adv = advance == null || advance === '' ? null : cents(advance);
+    return { lines: lines, totalCents: total, advanceCents: adv, diffCents: adv == null ? null : adv - total };
+  }
+
+  root.TravelPrepare = { rideCheck: rideCheck, ceilings: ceilings, describeDay: describeDay, liquidationFigures: liquidationFigures };
   if (typeof document === 'undefined') return;
 
   var app = document.getElementById('prep-app'), raw = document.getElementById('prep-data');
@@ -146,7 +166,7 @@
   }
   function peso(n) { return '\u20b1' + Number(n).toLocaleString('en-PH', { maximumFractionDigits: 2 }); }
 
-  var rowsBox = el('div', { 'class': 'tv-rows' }), totals = el('div', { 'class': 'tv-totals' }), breakBox = el('details', { 'class': 'tv-breakdown' });
+  var rowsBox = el('div', { 'class': 'tv-rows' }), totals = el('div', { 'class': 'tv-totals' }), breakBox = el('details', { 'class': 'tv-breakdown' }), liqBox = el('div', { 'class': 'tv-liq' });
   var flagsBox = el('div'), msgBox = el('div', { role: 'status', 'aria-live': 'polite' }), docsList = el('ul', { 'class': 'tv-docs' });
 
   var uis = [];                        // per row: the lines the server's answer is painted into
@@ -435,6 +455,34 @@
     breakBox.open = open;
   }
 
+  // The figures to enter in FMIS for a liquidation: what was spent, by kind, against the cash advance received.
+  function drawLiquidation() {
+    var f = liquidationFigures(state.rows, data.advance, modeLabels);
+    liqBox.textContent = '';
+    liqBox.appendChild(el('h3', { text: 'Liquidation figures' }));
+    if (!f.lines.length) {
+      liqBox.appendChild(el('p', { 'class': 'tv-hint', text: 'Enter the fares you paid and choose a per diem rule on each entry and the figures appear here.' }));
+      return;
+    }
+    var ul = el('ul');
+    f.lines.forEach(function (l) {
+      var note = l.count + (l.count === 1 ? ' entry' : ' entries') + (l.fromFiles ? ', ' + l.fromFiles + ' read from your uploaded files' : '');
+      ul.appendChild(el('li', {}, [el('strong', { text: l.label + ' ' + peso(l.cents / 100) }), el('div', { 'class': 'tv-hint', text: note })]));
+    });
+    liqBox.appendChild(ul);
+    liqBox.appendChild(el('p', { 'class': 'tv-breakdown-total', text: 'Actual expenses ' + peso(f.totalCents / 100) }));
+    if (f.advanceCents == null) {
+      liqBox.appendChild(el('p', { 'class': 'tv-hint', text: 'The cash advance amount is not on this filing. Add it on the filing page to see the refund or the amount over.' }));
+    } else {
+      var d = f.diffCents, msg;
+      if (d > 0) msg = 'Cash advance received ' + peso(f.advanceCents / 100) + ' is ' + peso(d / 100) + ' more than you spent, so ' + peso(d / 100) + ' goes back to the office as a refund.';
+      else if (d < 0) msg = 'You spent ' + peso(-d / 100) + ' more than the cash advance of ' + peso(f.advanceCents / 100) + '. Ask the Admin Unit how the excess is claimed.';
+      else msg = 'Your expenses match the cash advance of ' + peso(f.advanceCents / 100) + ' exactly. Nothing to refund.';
+      liqBox.appendChild(el('p', { 'class': d > 0 ? 'tv-flagline' : 'tv-hint', text: msg }));
+    }
+    liqBox.appendChild(el('p', { 'class': 'tv-hint', text: 'Fares are what you entered or what was read from your uploads, and the per diem is from the policy rate you chose. Check each against its receipt before you enter these in FMIS.' }));
+  }
+
   // Mark the field a warning is about: red border, aria-invalid, and a message tied to it for screen readers.
   function markField(wrap, text) {
     var input = wrap && wrap.querySelector('input, select, textarea');
@@ -474,6 +522,7 @@
     totals.textContent = 'Total: \u20b1' + total.toLocaleString('en-PH', { maximumFractionDigits: 2 }) +
       (kinds.cenrr ? ' \u00b7 ' + kinds.cenrr + ' ride(s) go on a CENRR' : '') + (kinds.rer ? ' \u00b7 ' + kinds.rer + ' RER form(s)' : '');
     drawBreakdown();
+    if (data.kind === 'liquidation') drawLiquidation();
     draftReport();
     flagsBox.textContent = '';
     clearMarks();
@@ -506,9 +555,9 @@
 
   var T = state.texts, S = state.signatories;
   app.appendChild(ratesPanel());
-  app.appendChild(section('Itinerary of travel', [rowsBox, addDay, totals, breakBox, flagsBox,
+  app.appendChild(section('Itinerary of travel', [rowsBox, addDay, totals, breakBox].concat(data.kind === 'liquidation' ? [liqBox] : []).concat([flagsBox,
     field('Purpose (completes "To …")', T.purpose, function (v) { T.purpose = v; }, { wide: true }),
-    field('Itinerary number (optional)', T.itinerary_no, function (v) { T.itinerary_no = v; })]));
+    field('Itinerary number (optional)', T.itinerary_no, function (v) { T.itinerary_no = v; })])));
   if (needs('appendix_b')) {
     var explanation = textArea('Explanation (if it did not go as planned)', 'explanation');
     explanation.hidden = T.strictness === 'strict';

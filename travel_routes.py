@@ -522,6 +522,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             data["scan_url"] = f"/travel/f/{ref}/scan"
             items = _generate_items(conn, filing)
             data["kind"] = filing["kind"]
+            data["advance"] = filing["advance_amount"]
             data["codes"] = [it["code"] for it in items]
             data["answers"] = travel.answers_of(filing)
             data["mc114_format"] = filing["mc114_format"]
