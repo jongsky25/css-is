@@ -42,10 +42,11 @@ Shuffling sorts case IDs by a seed-specific SHA-256 value, so the order is repro
 
 ## Verification and limits
 
-Final verification on committed source:
+Verification on committed source (the two clean-checkout runs precede integration of the 7.34 calendar fix; seed 735 verifies the combined 7.35 release):
 
 | Run | Result |
 |---|---|
+| Integrated 7.35 release, shuffled seed 735 | 4,195 passed; zero failures; 16 existing skips |
 | Clean checkout, normal order | 4,195 passed; zero failures; 16 existing skips |
 | Separate clean checkout, shuffled seed 734 | 4,195 passed; zero failures; 16 existing skips |
 | Leap day, shuffled seed 229 | 137 passed |
