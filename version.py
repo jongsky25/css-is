@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.45"
+APP_VERSION = "7.46"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.46",
+        "date": "October 20, 2026",
+        "summary": "Recover a travel filing after a connection drop without opening it twice.",
+        "changes": [
+            "If opening a travel filing is interrupted, check its status and return to the existing checklist.",
+            "Retrying the same submission keeps one filing, and an unfinished attempt can be closed safely."
+        ]
+    },
     {
         "version": "7.45",
         "date": "October 20, 2026",

@@ -1,3 +1,9 @@
+## 7.46 — October 20, 2026
+
+- Protect opening a travel filing with durable account-bound submission IDs and atomic filing, checklist, audit and result receipts.
+- Recover an existing checklist after an interrupted response; retries reuse the same submission.
+- Add private status lookup, preserved form answers and safe closure of unfinished attempts.
+
 ## 7.45 — October 20, 2026
 
 - Add the missing in-app update-history entries for 7.36, 7.37, 7.38, 7.40 and 7.41, so the login screen history has no gaps.
