@@ -3,6 +3,7 @@
 definition and CC1-CC3, and suggestions and email (Spot Feedback #121). Only Type 1 changes: the activity (Type 2) and
 resource-person (Type 3) forms are untouched. Everything except the SQD ratings is optional."""
 from __future__ import annotations
+import tzutil as _test_tz
 import re
 from datetime import date
 
@@ -79,7 +80,7 @@ def walkin(app_mod):
 @pytest.fixture
 def activity_form(app_mod):
     conn = st.connect(app_mod.DB); st.init_db(conn)
-    f2 = st.create_form_instance(conn, 2, "F2", date.today().isoformat(), topic="CSMTEST Forum")
+    f2 = st.create_form_instance(conn, 2, "F2", _test_tz.today_local().isoformat(), topic="CSMTEST Forum")
     token = conn.execute("SELECT qr_token FROM form_instance WHERE id=?", (f2,)).fetchone()[0]
     conn.close()
     return token
@@ -104,7 +105,7 @@ def test_the_walk_in_form_carries_the_official_text_and_questions(client, walkin
 
 def test_the_date_is_shown_not_asked(client, walkin):
     html = client.get(f"/r/{walkin}").text
-    today = date.today()
+    today = _test_tz.today_local()
     assert f"{today:%B} {today.day}, {today.year}" in html
     assert 'name="csm_date"' not in html and 'type="date"' not in html
 

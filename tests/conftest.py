@@ -3,16 +3,70 @@ Shared fixtures for the Office Connect HTTP test suite.
 
 Strategy
 --------
-* Copy the real css_is.db into a temp file (never touch the delivered DB).
-* Point app.DB at the copy, seed one ACTIVE account per role with a known
+* Build a synthetic reference database once; give each test a private copy.
+* Point app.DB at that test copy, with one ACTIVE account per role and a known
   password, plus one PENDING (invited, no-password) account for token tests.
 * Provide a FastAPI TestClient and per-role authenticated clients. We log a
   role in through the same registered-session issuer the app uses,
   which is exactly what a real browser carries after /login.
 """
 from __future__ import annotations
-import contextlib, os, shutil, tempfile, importlib
+import contextlib, os, tempfile, sqlite3
+import time
+from datetime import datetime, timedelta
+import tzutil as tz
 import pytest
+
+# Set before collection so module-level date constants use the same clock.
+_TEST_NOW = datetime.fromisoformat(os.environ.get("CSS_TEST_NOW", "2026-10-20T06:00:00"))
+_REAL_TIME = time.time
+_TEST_EPOCH = _TEST_NOW.replace(tzinfo=tz.LOCAL_TZ).timestamp()
+_REAL_NOW_LOCAL = tz.now_local
+_REAL_TODAY_LOCAL = tz.today_local
+def pytest_configure(config):
+    started = time.monotonic()
+    time.time = lambda: _TEST_EPOCH + time.monotonic() - started
+    tz.now_local = lambda: _TEST_NOW
+    tz.today_local = lambda: tz.now_local().date()
+
+
+def pytest_unconfigure(config):
+    time.time = _REAL_TIME
+    tz.now_local = _REAL_NOW_LOCAL
+    tz.today_local = _REAL_TODAY_LOCAL
+
+
+def pytest_addoption(parser):
+    parser.addoption("--shuffle-seed", type=int, default=None,
+                     help="Deterministically shuffle test cases with this seed")
+
+
+def pytest_collection_modifyitems(config, items):
+    seed = config.getoption("--shuffle-seed")
+    if seed is not None:
+        import hashlib
+        items.sort(key=lambda item: hashlib.sha256(f"{seed}:{item.nodeid}".encode()).digest())
+
+
+def pytest_report_header(config):
+    return f"Application clock: {_TEST_NOW.isoformat()}; shuffle seed: {config.getoption('--shuffle-seed')}"
+
+
+@pytest.fixture(autouse=True)
+def application_clock(monkeypatch):
+    # Epoch-based tokens and local dates share one reference. Monotonic time and
+    # short elapsed intervals keep advancing, so worker timeouts still work.
+    started = time.monotonic()
+    monkeypatch.setattr(time, "time", lambda: _TEST_EPOCH + time.monotonic() - started)
+    monkeypatch.setattr(tz, "now_local", lambda: _TEST_NOW)
+    monkeypatch.setattr(tz, "today_local", lambda: tz.now_local().date())
+
+
+@pytest.fixture
+def real_application_clock(monkeypatch):
+    """Opt into the real timezone adapter when testing that adapter itself."""
+    monkeypatch.setattr(tz, "now_local", _REAL_NOW_LOCAL)
+
 
 PW = "Test1234!"
 ROLE_USERS = {
@@ -58,61 +112,68 @@ def join_admin_section(conn, user_id, path="BLHSD/ADMIN"):
 
 
 @pytest.fixture(scope="session")
-def app_mod(tmp_path_factory):
-    import app as app_mod
+def reference_database(tmp_path_factory):
+    """No production input: a documented, nonempty example for all three surveys."""
     import storage as st, auth
-    src = os.path.join(os.path.dirname(app_mod.__file__), "css_is.db")
-    tmpdir = tmp_path_factory.mktemp("db")
-    test_db = str(tmpdir / "test.db")
-    if os.path.isfile(src):
-        shutil.copy(src, test_db)
-    else:
-        # Clean checkouts need no production snapshot to exercise HTTP routes.
-        seed = st.connect(test_db)
-        st.init_db(seed)
-        seed.close()
-    app_mod.DB = test_db                      # repoint the whole app at the copy
-    import monitoring                         # keep the request log out of the repo
-    monitoring.LOG_PATH = str(tmpdir / "requests.log")
-
-    conn = st.connect(test_db); st.init_db(conn)
-    # wipe any pre-existing accounts, seed deterministic ones
-    conn.execute("DELETE FROM admin_user"); conn.commit()
+    path = str(tmp_path_factory.mktemp("reference") / "reference.db")
+    conn = st.connect(path)
+    st.init_db(conn)
     h, salt = auth.hash_password(PW)
     for role, username in ROLE_USERS.items():
         uid = st.create_admin_user(conn, username, h, salt, role, created_by="test", active=True)
-        # The seeded role accounts represent ESTABLISHED users (post first-run):
-        # stamp them onboarded so the landing (`/`) renders the hub instead of
-        # diverting to the one-time /welcome flow. Tests that exercise onboarding
-        # reset onboarded_at to NULL on the account they need fresh.
         st.mark_onboarded(conn, uid)
-    # a pending invited account (no password) for invite/reset token tests
-    st.create_admin_user(conn, "pending@test.local", "", "", "viewer",
-                         created_by="test", active=False)
-    # A clean checkout has no css_is.db snapshot, so the directory is empty and every test that
-    # creates an activity from "the first internal person" has nobody to pick. Seed a few.
-    if not conn.execute("SELECT 1 FROM resource_person WHERE is_internal=1 LIMIT 1").fetchone():
-        for name in ("Test Internal One", "Test Internal Two", "Test Internal Three"):
-            conn.execute("INSERT INTO resource_person(name, is_internal) VALUES (?, 1)", (name,))
-    conn.commit(); conn.close()
-    # reset the in-process atoms cache so it binds to the test DB
-    app_mod._atoms_state.update({"key": None, "df": None, "built": 0.0})
-    app_mod._view_memo.clear()
-    return app_mod
+    st.create_admin_user(conn, "pending@test.local", "", "", "viewer", created_by="test", active=False)
+    st.get_or_create_blhsd(conn)
+    section = st.add_org_unit(conn, "Reference Section", "section", "BLHSD/REFERENCE")
+    people = []
+    for name in ("Test Internal One", "Test Internal Two", "Test Internal Three"):
+        people.append(conn.execute("INSERT INTO resource_person(name,is_internal,org_unit_id) VALUES (?,1,?)",
+                                  (name, section)).lastrowid)
+    conn.commit()
+    for days in (7, 42):
+        day = (_TEST_NOW.date() - timedelta(days=days)).isoformat()
+        for kind in (1, 2, 3):
+            fid = st.create_form_instance(conn, kind, f"F{kind}", day,
+                topic=f"Reference Learning {days}", venue=f"Reference Hall {days}",
+                lead_org_id=section if kind == 2 else None,
+                serving_staff_org_id=section if kind == 1 else None,
+                rp_id=people[0] if kind == 3 else None)
+            answers = ([(f"SQD{i}", 5) for i in range(9)] if kind == 1 else
+                       [("A", 6), *[(f"B{i}", 6) for i in range(1, 10)], ("C", 4)])
+            for n in range(12):
+                st.record_response(conn, fid, answers, submitted_at=day+"T09:00:00",
+                    remarks="Reference feedback: clear explanations",
+                    served_by_rp_id=people[0] if kind == 1 else None)
+    conn.commit()
+    conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+    conn.close()
+    return path
 
-@pytest.fixture(autouse=True)
-def _no_duplicate_gate(request, monkeypatch):
-    """The Save-time duplicate-activity check (v7.23) asks for a second, explicit submission when an
-    activity with the same title and date already exists. The session shares one database, so many
-    tests that each create "the same" sample activity would be refused with a 409. Switch the check
-    off everywhere except the module that tests it."""
-    if request.module.__name__.endswith("test_create_duplicate_warning"):
-        yield
-        return
-    import storage
-    monkeypatch.setattr(storage, "find_similar_events", lambda *a, **k: [])
-    yield
 
+@pytest.fixture
+def app_mod(reference_database, monkeypatch):
+    import app as app_mod
+    import storage as st, monitoring
+    with tempfile.TemporaryDirectory(prefix="office-test-") as directory:
+        test_db = os.path.join(directory, "test.db")
+        with sqlite3.connect(reference_database) as src, sqlite3.connect(test_db) as dst:
+            src.backup(dst)
+        monkeypatch.setattr(app_mod, "DB", test_db)
+        monkeypatch.setattr(monitoring, "LOG_PATH", os.path.join(directory, "requests.log"))
+        # Test-local snapshots prevent direct cache mutation leaking into later cases.
+        monkeypatch.setattr(app_mod, "_atoms_state", dict(
+            key=None, df=None, built=0.0, answer_maxid=0, force_full=True,
+            rebuilding=False, rebuild_started=0.0, stale_since=0.0, bg_full=False, epoch=0))
+        monkeypatch.setattr(app_mod, "_view_memo", {})
+        monkeypatch.setattr(app_mod, "_view_prev", {})
+        monkeypatch.setattr(app_mod, "_views_warming", False)
+        monkeypatch.setattr(app_mod, "_views_warming_since", 0.0)
+        # Restore even the few legacy tests that directly assign these wrappers.
+        monkeypatch.setattr(app_mod, "_today_local", lambda: tz.today_local())
+        monkeypatch.setattr(app_mod, "_now_local", lambda: tz.now_local())
+        st.basic_status_clear_cache()
+        yield app_mod
+        st.basic_status_clear_cache()
 
 @pytest.fixture(autouse=True)
 def _reset_shared_state(request):
@@ -122,25 +183,26 @@ def _reset_shared_state(request):
       (bucket, IP). Tests run from a single constant IP, so without a reset the
       register/check buckets accumulate across the whole session and later HTTP
       tests intermittently fail with 429 depending on wall-clock timing.
-    * The session-scoped `client` carries its cookie jar across tests, so a
+    * A client cookie jar can retain authentication, so a
       single successful login (e.g. test_login_success_sets_cookie) would
       silently authenticate every later "anonymous" request and make order-
       dependent assertions flap. Clear its jar so each test starts logged out.
     """
     import ratelimit
     ratelimit.reset()
-    # Only touch the client if it has already been built this session — don't
-    # force-create it for tests that never use HTTP.
+    # Avoid creating an HTTP client for pure logic/storage tests.
     if "client" in getattr(request, "fixturenames", ()):
         request.getfixturevalue("client").cookies.clear()
     yield
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def client(app_mod):
     from starlette.testclient import TestClient
     # raise_server_exceptions=True surfaces 500s as test failures with tracebacks
-    return TestClient(app_mod.app, raise_server_exceptions=True)
+    c = TestClient(app_mod.app, raise_server_exceptions=True)
+    yield c
+    c.close()
 
 def session_token(user):
     """Use the application's registered-session path for authenticated fixtures."""
@@ -167,9 +229,8 @@ def in_the_directory(app_mod, *usernames, path="LFTEAM/D1/S1"):
     The seeded role accounts carry no rp_id, and the DIRECTORY — not the app
     role — is what decides whose filings a page shows (storage.team_scope_for_user),
     so without this they have no team and the landing page renders the personal
-    view. Everything is undone on the way out: app_mod's database is session-
-    scoped, and a stray directory link would silently change what every later
-    test's admin can see."""
+    view. Everything is undone on the way out so callers can compare the
+    linked and unlinked states in the same test."""
     import storage as st
     conn = st.connect(app_mod.DB)
     st.init_db(conn)
@@ -200,20 +261,32 @@ def in_the_directory(app_mod, *usernames, path="LFTEAM/D1/S1"):
 
 
 @pytest.fixture
-def viewer(app_mod):          return _auth_client(app_mod, "viewer")
+def viewer(app_mod):
+    c = _auth_client(app_mod, "viewer")
+    yield c
+    c.close()
 @pytest.fixture
-def encoder(app_mod):         return _auth_client(app_mod, "encoder")
+def encoder(app_mod):
+    c = _auth_client(app_mod, "encoder")
+    yield c
+    c.close()
 @pytest.fixture
-def manager(app_mod):         return _auth_client(app_mod, "section_manager")
+def manager(app_mod):
+    c = _auth_client(app_mod, "section_manager")
+    yield c
+    c.close()
 @pytest.fixture
-def admin(app_mod):           return _auth_client(app_mod, "admin")
+def admin(app_mod):
+    c = _auth_client(app_mod, "admin")
+    yield c
+    c.close()
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def db_path(app_mod):
     return app_mod.DB
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def sample_ids(app_mod):
     """Real ids/tokens pulled from the test DB for path-param routes."""
     import storage as st

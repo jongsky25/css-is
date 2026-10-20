@@ -8,15 +8,16 @@ Three layers, mirroring test_registration_dedup:
     registration flow with answers.
 """
 from __future__ import annotations
+import tzutil as _test_tz
 import json
 import re
-from datetime import date
+from datetime import date, timedelta
 from urllib.parse import urlencode
 
 import reg_questions as rq
 import storage as st
 
-_FUTURE_DATE = date.today().replace(year=date.today().year + 1).isoformat()
+_FUTURE_DATE = (_test_tz.today_local() + timedelta(days=365)).isoformat()
 
 
 # --------------------------------------------------------------------------
@@ -228,10 +229,14 @@ def test_get_event_question_is_event_scoped(tmp_path):
 def _make_event(manager, db_path):
     conn = st.connect(db_path)
     rp = conn.execute("SELECT id FROM resource_person WHERE is_internal=1 LIMIT 1").fetchone()
+    count = conn.execute("SELECT COUNT(*) FROM event").fetchone()[0]
+    # Distinct dates represent distinct activities; duplicate protection stays active.
+    from datetime import date, timedelta
+    event_day = (date.fromisoformat(_FUTURE_DATE) + timedelta(days=count)).isoformat()
     conn.close()
     r = manager.post("/create", data={
         "event_type": "bureau", "activity_name": "Questions Forum",
-        "event_date": _FUTURE_DATE, "venue": "Hall A", "qr_mode": "combined",
+        "event_date": event_day, "venue": "Hall A", "qr_mode": "combined",
         "rp_id": str(rp[0]), "topic": "Keynote",
     }, follow_redirects=True)
     assert r.status_code == 200

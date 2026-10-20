@@ -6,6 +6,7 @@ cap across activities; the admin switch and the "email not configured" case; onl
 the activity's manager can trigger it; the text is escaped.
 """
 from __future__ import annotations
+import tzutil as _test_tz
 import re
 from datetime import date, timedelta
 from urllib.parse import parse_qs, urlparse
@@ -14,16 +15,20 @@ import mailer
 import storage as st
 from starlette.testclient import TestClient
 
-_FUTURE = (date.today() + timedelta(days=60)).isoformat()
+_FUTURE = (_test_tz.today_local() + timedelta(days=60)).isoformat()
 
 
 def _event(manager, db_path):
     conn = st.connect(db_path)
     rp = conn.execute("SELECT id FROM resource_person WHERE is_internal=1 LIMIT 1").fetchone()
+    count = conn.execute("SELECT COUNT(*) FROM event").fetchone()[0]
+    # Distinct dates represent distinct activities; duplicate protection stays active.
+    from datetime import date, timedelta
+    event_day = (date.fromisoformat(_FUTURE) + timedelta(days=count)).isoformat()
     conn.close()
     r = manager.post("/create", data={
         "event_type": "bureau", "activity_name": "Update Mail Forum",
-        "event_date": _FUTURE, "venue": "Hall A", "qr_mode": "combined",
+        "event_date": event_day, "venue": "Hall A", "qr_mode": "combined",
         "rp_id": str(rp[0]), "topic": "Keynote",
     }, follow_redirects=True)
     assert r.status_code == 200

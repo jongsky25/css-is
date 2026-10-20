@@ -4,6 +4,7 @@ The report page is open to more people than the roster is, so the button appears
 activity (the Monitor page's own rule), and the roster page can show just the registered people who responded.
 Survey answers stay anonymous: only registered people have a name; walk-in and paper responses are counted, not named."""
 from __future__ import annotations
+import tzutil as _test_tz
 import re
 from datetime import date, timedelta
 
@@ -12,7 +13,7 @@ from starlette.testclient import TestClient
 
 import storage as st
 
-_PAST = (date.today() - timedelta(days=5)).isoformat()
+_PAST = (_test_tz.today_local() - timedelta(days=5)).isoformat()
 
 
 def _activity(db_path, title, created_by="admin@test.local", event_date=_PAST):
@@ -89,7 +90,7 @@ def test_the_creator_of_the_activity_sees_the_button(app_mod, db_path):
 
 def test_no_button_when_nobody_registered(admin, app_mod, db_path):
     # its own date: activities that share a date, venue and organizer are merged into one report
-    act = _activity(db_path, "NAMELIST Walk-in Forum", event_date=(date.today() - timedelta(days=40)).isoformat())
+    act = _activity(db_path, "NAMELIST Walk-in Forum", event_date=(_test_tz.today_local() - timedelta(days=40)).isoformat())
     TestClient(app_mod.app).post(f"/r/{act['qr']}", data={"A": "5", "B1": "5", "C": "3"})
     url = _report_url(db_path, act)
     r = admin.get(url)
@@ -132,7 +133,7 @@ def test_the_roster_stays_closed_to_people_who_cannot_manage_the_activity(viewer
 
 def test_a_merged_report_offers_one_name_list_per_activity(admin, app_mod, db_path):
     """Activities with the same date, venue and organizer share one report; each keeps its own roster."""
-    day = (date.today() - timedelta(days=61)).isoformat()
+    day = (_test_tz.today_local() - timedelta(days=61)).isoformat()
     a = _activity(db_path, "NAMELIST Session One", event_date=day)
     b = _activity(db_path, "NAMELIST Session Two", event_date=day)
     for act, who in ((a, "Eve One"), (b, "Fay Two")):

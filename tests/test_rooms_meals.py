@@ -1,5 +1,6 @@
 """Conference room R9: the meal request form and its tagging (service rules)."""
 from __future__ import annotations
+import tzutil as _test_tz
 import json
 from datetime import date, datetime
 
@@ -273,7 +274,7 @@ def test_the_section_gets_an_email_about_a_meal_form(conn, me):
     join_admin_section(conn, st.create_admin_user(conn, "boss@test.local", "x", "y", "admin"))
     book(conn, me)
     mail = Mail()
-    rn.flush(conn, "https://x.test", now=datetime.now(), send=mail)
+    rn.flush(conn, "https://x.test", now=_test_tz.now_local(), send=mail)
     got = [m for m in mail.sent if m[0] == "boss@test.local" and "meal form is ready" in m[1]]
     assert got and "https://x.test/rooms/meals" in got[0][2]
 
