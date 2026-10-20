@@ -214,6 +214,29 @@ def test_the_page_writes_each_report_day_from_the_itinerary():
         "took part in Planning Workshop at Tagaytay; travelled from Tagaytay to Quezon City by DOH van (left 17:00)"]
 
 
+@pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+def test_the_page_totals_a_liquidation_against_the_cash_advance():
+    rows = [{"mode": "plane", "allowance": 2300.5, "per_diem": 0, "src": "Read from your e-ticket"},
+            {"mode": "tnvs", "allowance": 0.1, "per_diem": 1500},
+            {"mode": "tnvs", "allowance": 0.2, "per_diem": 0, "src": "Read from a receipt"},
+            {"mode": "none", "allowance": 0, "per_diem": 1500}]
+    modes = {"plane": "Plane", "tnvs": "TNVS"}
+    script = ("global.window=undefined;const src=require('fs').readFileSync('static/js/travel_prepare.js','utf8');"
+              "const g={};new Function('globalThis',src.replace(/\\}\\)\\(typeof window[^\\n]*$/, '})(globalThis);'))(g);"
+              f"const rows={json.dumps(rows)},m={json.dumps(modes)};"
+              "console.log(JSON.stringify([5000,3000,null,'',0].map(a=>g.TravelPrepare.liquidationFigures(rows,a,m))));")
+    out = subprocess.run(["node", "-e", script], capture_output=True, text=True, timeout=30)
+    assert out.returncode == 0, out.stderr
+    refund, over, none, blank, zero = json.loads(out.stdout)
+    assert [(l["label"], l["cents"], l["count"], l["fromFiles"]) for l in refund["lines"]] == [
+        ("Plane", 230050, 1, 1), ("TNVS", 30, 2, 1), ("Per diem", 300000, 2, 0)]     # 0.1 + 0.2 is exactly 30 centavos
+    assert refund["totalCents"] == 530080 and refund["advanceCents"] == 500000 and refund["diffCents"] == -30080
+    assert over["diffCents"] == 3000 * 100 - 530080                                    # spent more than the advance
+    assert none["advanceCents"] is None and none["diffCents"] is None
+    assert blank["advanceCents"] is None                                               # an empty amount is "not on the filing"
+    assert zero["advanceCents"] == 0 and zero["diffCents"] == -530080
+
+
 # --------------------------------------------------- page rules match the server ---
 
 @pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")

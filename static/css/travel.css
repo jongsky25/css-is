@@ -80,3 +80,6 @@
 .tv-breakdown h4 { margin: .7rem 0 .2rem; font-size: .95rem; }
 .tv-breakdown ul { margin: 0; padding-left: 1.1rem; }
 .tv-breakdown-total { font-weight: 700; margin: .6rem 0 .2rem; }
+.tv-liq { margin: .6rem 0; }
+.tv-liq h3 { margin: .2rem 0; font-size: 1rem; }
+.tv-liq ul { margin: 0; padding-left: 1.1rem; }
