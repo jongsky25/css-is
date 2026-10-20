@@ -22,6 +22,15 @@ APP_VERSION = "7.43"
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
+        "version": "7.43",
+        "date": "October 20, 2026",
+        "summary": "Calendar items can now say they need a DPO or an invitation, and draft it.",
+        "changes": [
+            "A calendar item shows whether it needs a DPO or an invitation, with the reason. You can change the answer.",
+            "A needed document can be drafted in Google Docs from the item's details. The DPO number, date and funding source are left blank for you to fill in."
+        ]
+    },
+    {
         "version": "7.42",
         "date": "October 20, 2026",
         "summary": "Updates must pass automated checks before deployment.",
