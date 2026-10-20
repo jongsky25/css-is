@@ -174,6 +174,9 @@ def conn(app_mod):
 
 
 def post(client, path, **data):
+    if path == '/travel/new' and 'operation_id' not in data:
+        from travel_requests import operation_id
+        data['operation_id'] = operation_id(client)
     return client.post(path, content=urlencode(data), headers=FORM, follow_redirects=False)
 
 

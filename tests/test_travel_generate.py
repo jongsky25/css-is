@@ -11,6 +11,7 @@ import ratelimit
 import storage as st
 import travel
 import tzutil as tz
+from travel_requests import operation_id
 
 FORM = {"Content-Type": "application/x-www-form-urlencoded"}
 URL, SECRET = "https://script.google.com/macros/s/AKfyc/exec", "s3cret"
@@ -48,6 +49,8 @@ def conn(app_mod):
 
 
 def post(client, path, **data):
+    if path == '/travel/new' and 'operation_id' not in data:
+        data['operation_id'] = operation_id(client)
     return client.post(path, content=urlencode(data), headers=FORM, follow_redirects=False)
 
 

@@ -1,3 +1,9 @@
+## 7.43 — October 20, 2026
+
+- Protect opening a travel filing with durable account-bound submission IDs and atomic filing, checklist, audit and result receipts.
+- Recover an existing checklist after an interrupted response; retries reuse the same submission.
+- Add private status lookup, preserved form answers and safe closure of unfinished attempts.
+
 ## 7.42 — October 20, 2026
 
 - Run normal and shuffled Python 3.11 tests on pull requests and before deployment, including Chromium browser tests.

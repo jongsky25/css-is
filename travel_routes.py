@@ -7,6 +7,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import logging
 import os
 import re
 from datetime import timedelta
@@ -24,6 +25,7 @@ import ratelimit
 import rooms
 import storage as st
 import travel
+import travel_submissions as submissions
 import travel_checklist as tc
 import travel_rules as tr
 import travel_readings
@@ -137,7 +139,9 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
         if prof.get("rp_id"):
             rp = st.get_rp(conn, prof["rp_id"]) or {}
             jo_default = rp.get("employment_type") in ("job_order", "consultant")
+        operation_id = submissions.issue(conn, user['id'])
         return {"nav_active": "travel_mine", "tab": "new", "source": source, "f": f, "error": error, "ack": ack,
+                "operation_id": operation_id, "submission_status_url": f'/travel/submissions/{operation_id}',
                 "live_ca": live, "ca_msg": ca_msg if has_dates else None, "cas": cas, "jo_default": jo_default,
                 "kinds": [(k, travel.KIND_LABELS[k]) for k in travel.KINDS
                           if not (k == "reimbursement" and live)],
@@ -166,7 +170,47 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             ctx = _new_context(conn, user, source, f)
             ctx["f"]["jo_cos"] = "1" if ctx["jo_default"] else ""
             ctx["f"]["cert_of_appearance_available"] = "1"
-            return templates.TemplateResponse(request, "travel_new.html", ctx)
+            return templates.TemplateResponse(request, "travel_new.html", ctx, headers={'Cache-Control': 'no-store'})
+        finally:
+            conn.close()
+
+    def _json_requested(request):
+        return 'application/json' in request.headers.get('accept', '')
+
+    def _submission_json(data, status=200):
+        return JSONResponse(data, status_code=status, headers={'Cache-Control': 'no-store'})
+
+    def _submission_state(conn, user, operation_id):
+        row = submissions.lookup(conn, user['id'], operation_id)
+        state, location = row['state'], None
+        message = {
+            'ready': 'No completed filing is recorded yet. Check again or retry the original form.',
+            'pending': 'The result is not confirmed yet. Check again or retry this same submission.',
+            'rejected': 'This attempt did not open a filing. Review the form and submit again.',
+            'completed': 'Your filing was opened. Continue to its checklist.'}[state]
+        if state == 'completed':
+            filing = travel.get_by_ref(conn, row['ref'])
+            if filing and travel.is_owner(user, filing):
+                location = f'/travel/f/{filing["ref_code"]}'
+            else:
+                message = 'This filing was opened previously but is no longer available. Contact the Admin Unit.'
+        return {'state': state, 'message': message, 'location': location}
+
+    @router.get('/travel/submissions/{operation_id}', response_class=HTMLResponse)
+    def travel_submission_status(request: Request, operation_id: str):
+        conn = get_conn()
+        try:
+            try:
+                outcome = _submission_state(conn, request.state.user, operation_id)
+                status = 200
+            except submissions.MissingOperation:
+                outcome = {'state': 'unknown', 'message': 'This submission could not be found.', 'location': None}
+                status = 404
+            if _json_requested(request):
+                return _submission_json(outcome, status)
+            return templates.TemplateResponse(request, 'travel_submission.html',
+                {'nav_active': 'travel_mine', 'outcome': outcome}, status_code=status,
+                headers={'Cache-Control': 'no-store'})
         finally:
             conn.close()
 
@@ -179,33 +223,94 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
         try:
             if not travel.enabled(conn):
                 return _off(request)
-            today = today_local()
-            try:
-                src = travel.resolve_source(
+            today, src = today_local(), None
+
+            def source_for_form():
+                source = travel.resolve_source(
                     conn, user, today, entry_id=int(f["entry"]) if (f.get("entry") or "").isdigit() else None,
                     event_id=int(f["event"]) if (f.get("event") or "").isdigit() else None, on=f.get("date"))
-            except travel.TravelError as e:
-                return _go("/travel", err=str(e))
-            if src["source_kind"] == "blank":
-                src.update(title=f.get("title", ""), start=f.get("start", ""), end=f.get("end", ""),
-                           venue=f.get("venue", ""))
-            kind = f.get("kind", "")
-            try:
+                if source['source_kind'] == 'blank':
+                    source.update(title=f.get('title', ''), start=f.get('start', ''), end=f.get('end', ''),
+                                  venue=f.get('venue', ''))
+                return source
+
+            def create():
+                nonlocal src
+                src = source_for_form()
                 filing = travel.create_filing(
-                    conn, user, kind=kind, source=src, answers=f, mc114_format=f.get("mc114_format", "none"),
+                    conn, user, kind=f.get('kind', ''), source=src, answers=f, mc114_format=f.get("mc114_format", "none"),
                     role=f.get("role", ""), dpo_no=f.get("dpo_no", ""), dpo_date=f.get("dpo_date", ""),
                     ca_filing_id=int(f["ca"]) if (f.get("ca") or "").isdigit() else None,
-                    advance_amount=f.get("advance_amount"), today=today, acknowledged=f.get("ack") == "1")
-            except travel.Unliquidated as e:
-                ctx = _new_context(conn, user, src, f)
-                ctx["warn"] = [_decorate(x, today) for x in e.filings]
-                return templates.TemplateResponse(request, "travel_new.html", ctx)
-            except travel.TravelError as e:
-                return templates.TemplateResponse(request, "travel_new.html",
-                                                  _new_context(conn, user, src, f, error=str(e)), status_code=400)
-            audit(request, conn, "travel_open", target_type="travel_filing", target_id=filing["id"],
-                  summary=f"opened {filing['ref_code']} ({travel.KIND_LABELS[filing['kind']].lower()})")
-            return _go(f"/travel/f/{filing['ref_code']}", msg="Filing opened. Work through the checklist below.")
+                    advance_amount=f.get("advance_amount"), today=today, acknowledged=f.get("ack") == "1", commit=False)
+                audit(request, conn, "travel_open", target_type="travel_filing", target_id=filing["id"],
+                      summary=f"opened {filing['ref_code']} ({travel.KIND_LABELS[filing['kind']].lower()})", commit=False)
+                return filing['ref_code']
+
+            try:
+                if not f.get('operation_id'):
+                    raise travel.TravelError('This form needs a refresh to prevent duplicate filings. Review it and submit again.')
+                submissions.execute(conn, user['id'], f['operation_id'], f, create,
+                                    rejected_exceptions=(travel.TravelError,))
+                outcome = _submission_state(conn, user, f['operation_id'])
+                if _json_requested(request):
+                    return _submission_json(outcome)
+                if outcome['location']:
+                    return _go(outcome['location'], msg='Filing opened. Work through the checklist below.')
+                return templates.TemplateResponse(request, 'travel_submission.html',
+                    {'nav_active': 'travel_mine', 'outcome': outcome}, status_code=410)
+            except (travel.TravelError, submissions.RejectedSubmission) as e:
+                key = submissions.issue(conn, user['id']) if _json_requested(request) else None
+                if _json_requested(request):
+                    return _submission_json({'state': 'rejected', 'message': str(e), 'operation_id': key,
+                        'status_url': f'/travel/submissions/{key}', 'ack_required': isinstance(e, travel.Unliquidated)},
+                        200 if isinstance(e, travel.Unliquidated) else 400)
+                if src is None:
+                    try:
+                        src = source_for_form()
+                    except travel.TravelError:
+                        return _go('/travel', err=str(e))
+                ctx = _new_context(conn, user, src, f, error=str(e))
+                if isinstance(e, travel.Unliquidated):
+                    ctx['warn'] = [_decorate(x, today) for x in e.filings]
+                return templates.TemplateResponse(request, 'travel_new.html', ctx,
+                    status_code=200 if isinstance(e, travel.Unliquidated) else 400, headers={'Cache-Control': 'no-store'})
+            except (submissions.MissingOperation, submissions.ChangedSubmission) as e:
+                outcome = {'state': 'unknown', 'message': str(e), 'location': None}
+                status = 404 if isinstance(e, submissions.MissingOperation) else 409
+                if _json_requested(request):
+                    return _submission_json(outcome, status)
+                return templates.TemplateResponse(request, 'travel_submission.html',
+                    {'nav_active': 'travel_mine', 'outcome': outcome}, status_code=status)
+            except Exception as e:
+                conn.rollback()
+                logging.getLogger(__name__).error('Travel submission result not confirmed (%s)', type(e).__name__)
+                outcome = {'state': 'unknown', 'message': 'The result could not be confirmed. Check the submission status before starting another filing.', 'location': None}
+                if _json_requested(request):
+                    return _submission_json(outcome, 503)
+                return templates.TemplateResponse(request, 'travel_submission.html',
+                    {'nav_active': 'travel_mine', 'outcome': outcome,
+                     'status_url': f'/travel/submissions/{f.get("operation_id", "")}'}, status_code=503)
+        finally:
+            conn.close()
+
+    @router.post('/travel/submissions/{operation_id}/close')
+    def travel_close_submission(request: Request, operation_id: str):
+        if not _same_origin(request):
+            return _forbidden(request, 'this request (it came from another site)')
+        conn = get_conn()
+        try:
+            try:
+                submissions.close_unfinished(conn, request.state.user['id'], operation_id)
+            except submissions.MissingOperation:
+                return _submission_json({'state': 'unknown', 'message': 'This submission could not be found.'}, 404)
+            except Exception as e:
+                conn.rollback()
+                logging.getLogger(__name__).error('Travel submission close not confirmed (%s)', type(e).__name__)
+                return templates.TemplateResponse(request, 'travel_submission.html', {
+                    'nav_active': 'travel_mine', 'outcome': {'state': 'unknown', 'location': None,
+                    'message': 'The result is not confirmed. Check again before starting another filing.'},
+                    'status_url': f'/travel/submissions/{operation_id}'}, status_code=503)
+            return _go(f'/travel/submissions/{operation_id}')
         finally:
             conn.close()
 

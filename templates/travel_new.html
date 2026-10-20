@@ -1,7 +1,7 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header, flash %}
 {% block title %}File a travel claim{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261017c"><script src="/static/js/travel_new.js?v=20261016a" defer></script>{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261017c"><script src="/static/js/travel_new.js?v={{ APP_VERSION }}" defer></script>{% endblock %}
 {% block content %}
 {{ page_header("File a travel claim", "A few short questions decide which documents you need.") }}
 {% include "_travel_tabs.html" %}
@@ -15,7 +15,9 @@
 </div>
 {% endif %}
 
-<form method="post" action="/travel/new" class="tv-card tv-form">
+<form method="post" action="/travel/new" class="tv-card tv-form" data-submission-status="{{ submission_status_url }}">
+  <input type="hidden" name="operation_id" value="{{ operation_id }}">
+  <div data-submission-feedback role="status" aria-live="polite" hidden><p data-submission-message></p></div>
   {% if source.entry_id %}<input type="hidden" name="entry" value="{{ source.entry_id }}"><input type="hidden" name="date" value="{{ source.start }}">{% endif %}
   {% if source.event_id %}<input type="hidden" name="event" value="{{ source.event_id }}">{% endif %}
   {% if warn %}<input type="hidden" name="ack" value="1">{% endif %}
@@ -73,5 +75,11 @@
     <select id="mc114_format" name="mc114_format">{% for code, label in mc114 %}<option value="{{ code }}" {{ 'selected' if f.mc114_format == code }}>{{ label }}</option>{% endfor %}</select></div>
 
   <div class="tv-actions"><button class="btn" type="submit">{{ 'Continue anyway' if warn else 'Open the checklist' }}</button> <a class="btn ghost" href="/travel">Cancel</a></div>
+  <p class="tv-hint">If the connection drops, check this submission before opening another filing.</p>
+  <div class="tv-actions">
+    <a data-submission-link href="{{ submission_status_url }}">Check submission status</a>
+    <button class="btn ghost" type="button" data-check-submission hidden>Check again</button>
+    <button class="btn ghost" type="button" data-retry-submission hidden>Retry this submission</button>
+  </div>
 </form>
 {% endblock %}
