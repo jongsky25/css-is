@@ -18,7 +18,7 @@ function mk(kind, text) {
 }
 function newBody() { return { paragraphs: [],
   appendParagraph(t) { log.push('P: ' + t); const p = mk('p', t); this.paragraphs.push(p); return p; },
-  appendTable(c) { log.push('TABLE: ' + JSON.stringify(c)); const cell = mk('cell'); return { setBorderWidth() {}, getRow: () => mk('row'), getCell: () => cell }; },
+  appendTable(c) { log.push('TABLE: ' + JSON.stringify(c)); const cell = mk('cell'); return { setBorderWidth() {}, setColumnWidth(c, w) { log.push('WIDTH: ' + c + ' ' + w); }, getRow: () => mk('row'), getCell: () => cell }; },
   appendHorizontalRule() { return mk('h'); },
   editAsText: () => mk('t'), getChild: () => mk('p', 'x'), removeChild() { } }; }
 const doc = { addFooter() { return { setText(t) { log.push('FOOTER: ' + t); }, appendParagraph(t) { log.push('FOOTER: ' + t); return mk('p'); },
@@ -38,6 +38,7 @@ const out = {};
   out[x[0]] = { expect: tpl.expect,
                 found: Array.from(new Set((text.match(/\{\{[a-z0-9_]+\}\}/g) || []).map(y => y.slice(2, -2)))),
                 missing: tpl.expect.filter(k => text.indexOf('{{' + k + '}}') < 0),
-                images: (text.match(/IMAGE: \S+ image\/png \d+/g) || []), footer: /FOOTER: Building 1/.test(text) };
+                images: (text.match(/IMAGE: \S+ image\/png \d+/g) || []), footer: /FOOTER: Building 1/.test(text),
+                widths: (text.match(/WIDTH: \d+ \d+/g) || []).map(w => +w.split(' ')[2]) };
 });
 console.log(JSON.stringify(out));

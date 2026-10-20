@@ -311,3 +311,10 @@ def test_the_embedded_logos_are_small_transparent_pngs():
         assert data[:8] == b"\x89PNG\r\n\x1a\n" and len(data) < 60_000
         assert list(struct.unpack(">II", data[16:24])) == size                         # the stated size is the real one
         assert data[25] in (3, 6)                                                       # palette or RGBA, so transparency is kept
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+def test_the_letterhead_and_name_position_tables_fit_between_the_margins():
+    """Docs' default is equal columns: the title wrapped and the right-hand logo or the Position column fell off the page."""
+    dpo = build_templates()["dpo"]["widths"]
+    assert dpo == [84, 300, 84, 234, 234] and sum(dpo[:3]) == 468 and sum(dpo[3:]) == 468
