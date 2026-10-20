@@ -1,3 +1,7 @@
+## 7.51 — October 20, 2026
+
+- A calendar item can now also draft a **concept note** and a **program flow**, the rest of the DOH package. The concept note has the numbered DOH sections, the Operational Details table and a program of activities with one row per day; the app fills the title, dates, venue, people and unit and leaves bracketed prompts for the background, objectives, outputs and methodology. The program flow is a heading and two empty rows for each day. They are suggested for trainings, trips and activities lasting several days. The Apps Script templates need to be updated and re-run (docs/ACTIVITY_DOCS_SETUP.md); the first start rebuilds the small document table to accept the new types and keeps what is there (spot feedback #136).
+
 ## 7.50 — October 20, 2026
 
 - The drafted invitation now follows the DOH memorandum format used to write to the regions: MEMORANDUM with FOR, FROM and SUBJECT, a request paragraph, the what, when and where, a table of the assistance asked for, the contact line and an initials block. Who it is FOR and the telephone number are left blank to fill in. The Apps Script template needs to be updated and re-run (docs/ACTIVITY_DOCS_SETUP.md) (spot feedback #136).

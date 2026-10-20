@@ -1,4 +1,4 @@
-// A fake of just enough of the Docs API to run both template builders (DPO and invitation) and report the {{placeholders}} each writes.
+// A fake of just enough of the Docs API to run all four template builders (DPO, invitation, concept note, program flow) and report the {{placeholders}} each writes.
 // Usage: node activity_templates_stub.js apps_script/activity_templates.gs
 const fs = require('fs'); const log = [];
 function mk(kind, text) {
@@ -23,10 +23,10 @@ function newBody() { return { paragraphs: [],
 const doc = { addFooter() { return { setText(t) { log.push('FOOTER: ' + t); }, appendParagraph(t) { log.push('FOOTER: ' + t); return mk('p'); },
   getParagraphs: () => [mk('p')], editAsText: () => mk('t') }; } };
 global.DocumentApp = { HorizontalAlignment: { CENTER: 'C', RIGHT: 'R', JUSTIFY: 'J' }, ElementType: { PARAGRAPH: 'PARAGRAPH' } };
-const src = fs.readFileSync(process.argv[2], 'utf8') + '\n;module.exports = { AT_TEMPLATES, at_buildDpo_, at_buildInvitation_ };';
+const src = fs.readFileSync(process.argv[2], 'utf8') + '\n;module.exports = { AT_TEMPLATES, at_buildDpo_, at_buildInvitation_, at_buildConceptNote_, at_buildProgramFlow_ };';
 const m = new Function('module', 'DocumentApp', src + '\nreturn module.exports;')({ exports: {} }, global.DocumentApp);
 const out = {};
-[['dpo', m.at_buildDpo_], ['invitation', m.at_buildInvitation_]].forEach(function (x) {
+[['dpo', m.at_buildDpo_], ['invitation', m.at_buildInvitation_], ['concept_note', m.at_buildConceptNote_], ['program_flow', m.at_buildProgramFlow_]].forEach(function (x) {
   log.length = 0;
   x[1](newBody(), doc);
   const text = log.join('\n');

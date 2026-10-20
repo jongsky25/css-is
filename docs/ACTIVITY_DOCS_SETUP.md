@@ -29,6 +29,8 @@ Both templates are plain Google Docs in the `_templates` folder under the relay'
 |---|---|
 | `dpo` | `dpo_year`, `dpo_no`, `dpo_date`, `subject`, `background`, `intro`, `funding_source`, `p_name` and `p_position` (one table row, copied per person), `head_name`, `head_title`, `unit_name`. Also available: `title`, `purpose`, `dates`, `venue`, `prepared_by`, and a `{{personnel}}` line of numbered names |
 | `invitation` (the DOH memorandum) | `date`, `for_name`, `for_title`, `for_office`, `from_name`, `from_title`, `unit_name`, `subject`, `opening`, `details` (a block of What / When / Where lines), `a_area` and `a_request` (one table row, copied per request), `contact_name`, `contact_email`, `contact_phone`. Also available: `title`, `invited`, `sender_name`, `sender_title`, `contact`, `head_name`, `head_title` |
+| `concept_note` | `title`, `date_duration`, `venue`, `participant_count`, `facilitators`, `budget`, `prepared_by`, `prepared_title`, `noted_by_name`, `noted_by_title`, `recommended_name`, `recommended_title`, `unit_name`; blocks `background`, `objectives`, `outputs`, `participants`, `methodology`; one table row `pd_day` / `pd_am` / `pd_pm` copied per day |
+| `program_flow` | `title`; one table row `pf_time` / `pf_topic` / `pf_person` copied for each day heading and each empty row |
 
 ## What the app fills in, and what it leaves for you
 
@@ -69,4 +71,21 @@ The invitation is the DOH **memorandum** format: the date, MEMORANDUM, FOR / FRO
 - **Left for the person:** who it is FOR (name, title, office) and the telephone number stay as blank lines. The FROM is the
   Director set in the travel settings. The Requested Assistance table starts with Participants, Venue, Meals and Coordination;
   edit the wording on the draft.
-- **Concept Note and Program Flow** are separate documents in the same DOH package. They are not drafted by the app yet.
+
+## The concept note and the program flow (7.51 onwards)
+
+The rest of the DOH package is drafted too.
+
+- **Concept note:** the numbered DOH sections (Background and Rationale, Objectives, Expected Outputs, Participants, Methodology),
+  the Operational Details table, the Proposed Program of Activities (one row per day, AM and PM empty) and the Prepared by /
+  Noted by / Recommended by block. The app fills what the calendar item knows: the title, dates, venue, the people on the item,
+  the unit as the facilitator, and the Director as the one recommending. The Background, Objectives, Outputs and Methodology
+  start as bracketed prompts in square brackets for the person to replace. The budget and the Noted by name are blank lines.
+- **Program flow:** "Activity: ..." and "Tentative Program Flow:" with a Date/Time, Topic/Activity and Person Responsible table:
+  a heading row for each day ("Day 1 - October 12, 2026") with two empty rows under it. The schedule is the person's to write.
+- **When they are suggested:** a concept note for a training, a trip, or anything lasting several days; a program flow for a
+  training or anything lasting several days. The person can overrule either.
+- **Updating an existing setup:** replace the `activity_templates` file in the Apps Script project and run `makeActivityTemplates()`
+  again. It creates the two new templates and keeps the DPO and the invitation if they are already current.
+- **Database:** the first start of 7.51 rebuilds the small `calendar_entry_doc` table so it accepts the two new document types.
+  Existing choices and draft links are kept.
