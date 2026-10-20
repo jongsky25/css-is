@@ -1,0 +1,4 @@
+# Same Hugging Face client used by the verified 7.48 deployment.
+huggingface-hub==2.2.0
+pip==26.2.1
+setuptools==84.2.0

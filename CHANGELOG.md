@@ -1,3 +1,10 @@
+## 7.49 — October 20, 2026
+
+- Pin runtime, test, audit-tool and deployment-client dependencies with distribution hashes, including PDF libraries.
+- Require complete vulnerability scans, a Python dependency SBOM from the production Docker recipe and matching runtime/test versions before release.
+- Keep document intake, OCR, previews and generated reports covered by the normal and shuffled Python 3.11 suites.
+- PDF/OCR process isolation and the previously excluded authentication/logging changes remain separate work.
+
 ## 7.48 — October 20, 2026
 
 - Enable Secure cookies automatically for configured HTTPS deployments and trusted HTTPS requests, including preference and deletion cookies.

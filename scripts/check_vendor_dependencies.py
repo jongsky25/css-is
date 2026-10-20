@@ -1,0 +1,50 @@
+"""Verify vendored PDF.js integrity and, optionally, its npm advisories."""
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import re
+import urllib.request
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SERVICE = 'https://registry.npmjs.org/-/npm/v1/security/advisories/bulk'
+
+
+def check_vendor(root=ROOT):
+    manifest = json.loads((root / 'docs/dependencies/pdfjs-manifest.json').read_text())
+    if manifest.get('package') != 'pdfjs-dist' or not re.fullmatch(r'\d+\.\d+\.\d+', manifest.get('version', '')):
+        raise ValueError('Invalid PDF.js manifest identity')
+    vendor = root / 'static/vendor/pdfjs'
+    observed = {path.relative_to(vendor).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+                for path in vendor.rglob('*') if path.is_file() and path.name != 'README.txt'}
+    if not observed or observed != manifest.get('files'):
+        raise ValueError('Vendored PDF.js files differ from the reviewed upstream manifest')
+    return manifest
+
+
+def audit_vendor(manifest, output):
+    request = urllib.request.Request(SERVICE, method='POST',
+        data=json.dumps({manifest['package']: [manifest['version']]}).encode(),
+        headers={'Content-Type': 'application/json'})
+    with urllib.request.urlopen(request, timeout=30) as response:
+        advisories = json.loads(response.read(1024 * 1024))
+    report = {key: manifest[key] for key in ('package', 'version', 'source', 'integrity')}
+    report.update(service=SERVICE, checked_at=datetime.now(timezone.utc).isoformat(),
+                  verified_files=len(manifest['files']), advisories=advisories)
+    Path(output).write_text(json.dumps(report, indent=2) + '\n')
+    # The bulk endpoint returns {} only when no submitted version is affected.
+    # Unexpected schemas or an advisory must never silently pass.
+    if advisories != {}:
+        raise ValueError('Vendor advisory scan found issues or returned unexpected data')
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--audit-output', help='Also query npm and save the advisory receipt')
+    args = parser.parse_args()
+    manifest = check_vendor()
+    if args.audit_output:
+        audit_vendor(manifest, args.audit_output)
+    print(f"Vendor gate OK: PDF.js {manifest['version']}, {len(manifest['files'])} verified files")

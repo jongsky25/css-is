@@ -62,6 +62,7 @@ back to the LAN IP so dev QR codes stay phone-scannable.
 ## 3. Run the QA gate + tests (do this BEFORE trusting a build)
 ```
 python qa_preflight.py            # integrity gate: must print "RESULT: GREEN"
+python -m pip install --require-hashes --only-binary=:all: -r requirements-test.txt
 python -m pytest                  # routes / auth+RBAC / input-abuse / integrity / new modules
 python qa_smoke.py                # dashboard data + every export format (no time limit locally)
 ```
