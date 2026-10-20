@@ -129,6 +129,29 @@ def overall(form):
     return next(iter(live)) if len(live) == 1 else "mixed"
 
 
+def todo(form):
+    """What is left to do on a meal request, as [{"done": bool, "text": str, "optional": bool}] in the order
+    it happens: the room is approved, the form is filled in, then the Administrative Section orders and the
+    meals arrive. Read-only, so the page can show it to the requester and the guest alike."""
+    res, wanted = form["reservation"], form["wanted"]
+    live = [i for i in wanted if i["status"] != "cancelled"]
+    steps = [
+        {"done": res["status"] == "approved", "text": "The Administrative Section approves the room"
+         if res["status"] != "approved" else "The room is approved", "optional": False},
+        {"done": bool(form["pax"]), "text": "Enter the number of pax", "optional": False},
+        {"done": bool(live), "text": "Mark at least one meal as needed", "optional": False},
+        {"done": bool(live) and all(i["deliver_at"] for i in live), "text": "Set a delivery time for each meal you need",
+         "optional": False},
+        {"done": bool((form["special_request"] or "").strip()), "text": "Add any special request, such as dietary needs",
+         "optional": True},
+        {"done": bool(live) and all(i["status"] in ("requested", "delivered") for i in live),
+         "text": "The Administrative Section orders the meals", "optional": False},
+        {"done": bool(live) and all(i["status"] == "delivered" for i in live), "text": "The meals are delivered",
+         "optional": False},
+    ]
+    return steps
+
+
 # --------------------------------------------------------------- editing ---
 
 def _clean_time(value, label):

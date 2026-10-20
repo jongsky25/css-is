@@ -1,6 +1,6 @@
 # Phase 1 local progress — candidate 7.24
 
-**Current slice, 20 October 2026:** A05 and A09 are merged/deployed as **7.28** and **7.29**. A10 step 1 repairs are implemented locally as candidate **7.30**; see [remaining failure repairs](REMAINING_FAILURE_REPAIRS.md). Broader fixture/date isolation, Python 3.11 parity and release gates remain pending. This note does not change the historical verification below.
+**Current slice, 20 October 2026:** A05 and A09 are merged/deployed as **7.28** and **7.29**. A10 step 1 repairs are implemented locally as candidate **7.32**; see [remaining failure repairs](REMAINING_FAILURE_REPAIRS.md). Broader fixture/date isolation, Python 3.11 parity and release gates remain pending. This note does not change the historical verification below.
 
 **Release integration, 20 October 2026:** the user authorized merging before further work. Main had advanced to 7.26, so the combined repairs are now version **7.27**, including the main-branch changes through `7b8f910`. Integration validation passed 486 tests with no failures/skips. See [release integration record](releases/7.27.md). The candidate 7.24 results below are retained as historical evidence.
 

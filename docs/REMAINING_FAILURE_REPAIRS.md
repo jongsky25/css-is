@@ -1,4 +1,4 @@
-# Remaining failure repairs — A10 step 1 / candidate 7.30
+# Remaining failure repairs — A10 step 1 / candidate 7.32
 
 Scope: resolve the 16 failures recorded after the 7.29 analytics work. This increment does not implement the rest of A10 (suite-wide fixture isolation, Python 3.11 parity or mandatory CI release gates).
 
@@ -29,4 +29,8 @@ Testing is local on Python 3.12. Manual production testing remains deferred. Exi
 
 ## Release
 
-Candidate 7.30 updates the application version, changelog and service-worker cache. No database migration is needed. Merge/deployment are separate from this local repair increment.
+Candidate 7.32 updates the application version, changelog and service-worker cache. No database migration is needed. Merge/deployment are separate from this local repair increment.
+
+## Merge verification
+
+The original local 7.30 candidate was renumbered to **7.32** because main had independently released 7.30 and 7.31. Both releases are preserved. The combined source passed **4,195 tests, zero failures, 16 existing skips** before merge.

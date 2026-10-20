@@ -250,3 +250,5 @@ button.rm-cell:focus-visible { outline:3px solid var(--accent); outline-offset:1
 .rm-until { display:inline-flex; gap:.4rem; align-items:center; margin-left:.4rem; }
 .rm-series ul { list-style:none; padding:0; margin:.4rem 0 .6rem; } .rm-series li { padding:.15rem 0; } .rm-series li.bad { color:var(--red); } .rm-series li.ok { color:var(--green); }
 .rm-series small { display:block; color:var(--soft); margin-left:1.4rem; }
+.rm-todo-list { list-style: none; margin: 0; padding: 0; }
+.rm-todo-list li { padding: .2rem 0; }

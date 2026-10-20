@@ -1,9 +1,21 @@
-## 7.30 — October 20, 2026
+## 7.32 — October 20, 2026
 
 - Restore the companion growth ladder and guidance on the profile page.
 - Give CSM draft/export, activity-feed and search tests explicit survey examples with cleanup.
 - Exercise database integrity against a populated temporary database instead of an absent production snapshot.
 - Pass the room test's reference date explicitly to the booking guard.
+- Retain the concurrent 7.30 and 7.31 calendar and meal-request changes.
+
+## 7.31 — October 20, 2026
+
+- Add a Request meals / Meal form link to the conference room banner on activities and calendar items.
+- Add a Request meals entry under Office in the drawer for every requester (Room meals stays admin-only).
+- Show a What needs to be done checklist on the meal request form.
+
+## 7.30 — October 20, 2026
+
+- Hide the travel claim link and button on calendar items that hold a conference room (requested, booked, pending move, day mismatch or cancelled-but-holding), since the venue is the office.
+- Keep showing a travel claim that was already filed.
 
 ## 7.29 — October 20, 2026
 

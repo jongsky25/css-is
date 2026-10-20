@@ -17,18 +17,37 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.30"
+APP_VERSION = "7.32"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "7.30",
+        "version": "7.32",
         "date": "October 20, 2026",
         "summary": "See how your companion grows from your profile.",
         "changes": [
             "Your profile now shows your companion’s growth stages and how to reach them.",
             "Improved automated checks for reports, activity links, search and room availability."
         ]
+    },
+    {
+        "version": "7.31",
+        "date": "October 20, 2026",
+        "summary": "Request meals and see what is left to do, from the places you already look.",
+        "changes": [
+            "The conference room banner on an activity or calendar item now links to Request meals (or the Meal form once requested).",
+            "Everyone now has a Request meals entry in the menu, under Office.",
+            "The meal request form shows a What needs to be done checklist, from room approval to delivery.",
+        ],
+    },
+    {
+        "version": "7.30",
+        "date": "October 20, 2026",
+        "summary": "No travel claim on calendar items that use the conference room.",
+        "changes": [
+            "When a conference room is requested or booked for a calendar item, the travel claim link and button are hidden, since the venue is the office.",
+            "A travel claim that was already filed still shows.",
+        ],
     },
     {
         "version": "7.29",
