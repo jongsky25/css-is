@@ -217,8 +217,13 @@ def defaults(conn, filing, profile, settings, readings=()) -> dict:
     texts.update(purpose=f"attend {filing['act_title']}", strictness="strict",
                  activities=f"{filing['act_title']} on {dates}" + (f" at {filing['act_venue']}" if filing.get("act_venue") else ""),
                  day_by_day=[f"{long_date(d)}: " for d in days])
+    texts.update(overview=f"This report covers my travel to attend {filing['act_title']} on {dates}"
+                          + (f" at {filing['act_venue']}" if filing.get("act_venue") else "") + f", as per {dpo_ref(filing)}.")
     texts.update(travel_readings.completion_defaults(filing, readings))
-    return {"rows": rows, "texts": texts, "signatories": sig, "rates": {"region": "", "receives_sa": False, "discounted": False},
+    return {"rows": rows, "texts": texts,
+            "days": [{"iso": d.isoformat(), "label": long_date(d)} for d in days],
+            "activity": {"title": filing["act_title"], "venue": filing.get("act_venue") or "",
+                         "start": filing["act_start"], "end": filing["act_end"]}, "signatories": sig, "rates": {"region": "", "receives_sa": False, "discounted": False},
             "mc114_text": fill_tokens(_library_text(conn, filing), filing, profile),
             "traveler": {"name": name, "designation": desig, "employee_no": profile.get("employee_no") or ""},
             "modes": [[m, MODE_LABELS[m] or "No travel"] for m in MODES]}

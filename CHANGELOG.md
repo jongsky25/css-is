@@ -1,3 +1,7 @@
+## 7.40 — October 20, 2026
+
+- Post Travel Report on the prepare page: the overview is written from the activity, dates, venue and DPO, and each day is written from the itinerary (rides with times, and taking part in the activity). A day follows the itinerary until you edit it, and a line you wrote is never overwritten. Key points, contributions, support needed, recommendations and the conclusion keep their own boxes, now with a hint on what goes in each (spot feedback #134, #133).
+
 ## 7.39 — October 20, 2026
 
 - Verify normal and shuffled test execution on Python 3.11 and record the resolved dependencies.

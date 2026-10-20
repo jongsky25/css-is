@@ -4,6 +4,7 @@ Optional runner: pip install playwright && python -m playwright install chromium
 The browser is served by the authenticated TestClient; Google and all other
 external requests are blocked. Generated documents use the recording relay.
 """
+import re
 from urllib.parse import urlsplit
 
 import pytest
@@ -299,3 +300,24 @@ def test_total_shows_where_each_amount_comes_from(page, viewer, conn, relay):
     pw.expect(box.get_by_text('lodging').first).to_be_visible()
     pw.expect(box.locator('.tv-breakdown-total')).to_contain_text('Total ₱')
     pw.expect(box.get_by_role('link', name='See every policy rate')).to_be_visible()
+
+
+def test_report_days_follow_the_itinerary_until_the_person_edits_one(page, viewer, conn, relay):
+    ref = mk(viewer, kind='reimbursement')
+    page.goto(f'http://testserver/travel/f/{ref}/prepare')
+    overview = page.get_by_label('Overview', exact=True)
+    assert 'This report covers my travel to attend' in overview.input_value()
+    day1 = page.get_by_label(re.compile(r'^Day 1'))
+    day2 = page.get_by_label(re.compile(r'^Day 2'))
+    first = page.locator('.tv-row').first
+    first.get_by_label('From', exact=True).fill('Quezon City')
+    first.get_by_label('To', exact=True).fill('Tagaytay')
+    first.get_by_label('How you travelled', exact=True).select_option('tnvs')
+    pw.expect(day1).to_have_value(re.compile(r'[Tt]ravelled from Quezon City to Tagaytay by TNVS'))
+    day2.fill('I wrote this myself.')
+    first.get_by_label('To', exact=True).fill('Antipolo')
+    pw.expect(day1).to_have_value(re.compile(r'to Antipolo by TNVS'))      # still following the itinerary
+    pw.expect(day2).to_have_value('I wrote this myself.')                    # never overwritten
+    page.reload()
+    pw.expect(day1).to_have_value(re.compile(r'to Antipolo by TNVS'))      # the saved draft keeps following too
+    pw.expect(page.get_by_label('Key points', exact=True)).to_have_attribute('placeholder', re.compile('Only you can write'))
