@@ -1,4 +1,4 @@
-// Office Connect: one-time activity template maker (DPO and invitation).
+// Office Connect: one-time activity template maker (DPO, memorandum, concept note and program flow).
 //
 // Add this file to the SAME Apps Script project as travel_docs.gs (File > New > Script). Unlike the travel
 // forms, these two documents are built here from scratch, so no source folder is needed. Run
@@ -11,8 +11,8 @@
 // them, and a placeholder you remove is simply left empty on the draft.
 //   {{details}} and {{personnel}} are blocks: the app replaces that whole line with several lines.
 
-// Optional: the Drive file ids of the DOH seal and the Bagong Pilipinas logo. When set, the DPO letterhead is built with
-// them. When blank the letterhead is plain text; add the two logos by hand in Google Docs once and every draft keeps them.
+// The DOH seal and the Bagong Pilipinas logo come from activity_logos.gs (add that file to this project too). To use other
+// pictures, put their Drive file ids here: an id wins over the embedded picture. With neither, the letterhead is plain text.
 const AT_LOGO_LEFT_ID = '';
 const AT_LOGO_RIGHT_ID = '';
 const AT_FOOTER_LINES = [
@@ -35,7 +35,13 @@ const AT_TEMPLATES = [
     expect: ['title', 'pf_time', 'pf_topic', 'pf_person'] }
 ];
 
-function makeActivityTemplates() {
+// Rebuilds all four templates even when they are already good, for a new letterhead or logos. TPL_<key> then points to the
+// new Docs; the old ones stay in "_templates".
+function rebuildActivityTemplates() {
+  return makeActivityTemplates(true);
+}
+
+function makeActivityTemplates(force) {
   const P = PropertiesService.getScriptProperties();
   const root = DriveApp.getFolderById(P.getProperty('ROOT_FOLDER_ID'));
   const it = root.getFoldersByName('_templates');
@@ -45,7 +51,7 @@ function makeActivityTemplates() {
   AT_TEMPLATES.forEach(function (t) {
     try {
       const existing = P.getProperty('TPL_' + t.key);
-      if (existing) {
+      if (existing && !force) {
         let gaps = null;
         try { gaps = at_missing_(existing, t); } catch (e) { gaps = ['(could not open it)']; }
         if (!gaps.length) { report.push(t.key + ': already good, kept'); return; }
@@ -89,6 +95,19 @@ function at_missing_(id, t) {
 // The DOH Department Personnel Order layout: letterhead, date, DPO number, subject, background, authority line, a Name /
 // Position table, funding and accounting paragraphs, the signatory and the DOH address footer.
 //   {{p_name}} and {{p_position}} sit in ONE table row: the app copies that row once per person.
+function at_logo_(side) {
+  const id = side === 0 ? AT_LOGO_LEFT_ID : AT_LOGO_RIGHT_ID;
+  if (id) return { blob: DriveApp.getFileById(id).getBlob(), size: [1, 1] };
+  const b64 = side === 0 ? (typeof AT_LOGO_LEFT_B64 !== 'undefined' ? AT_LOGO_LEFT_B64 : '')
+                         : (typeof AT_LOGO_RIGHT_B64 !== 'undefined' ? AT_LOGO_RIGHT_B64 : '');
+  if (!b64) return null;
+  const size = side === 0 ? AT_LOGO_LEFT_SIZE : AT_LOGO_RIGHT_SIZE;
+  return { blob: Utilities.newBlob(Utilities.base64Decode(b64), 'image/png', side === 0 ? 'doh-seal.png' : 'bagong-pilipinas.png'),
+           size: size };
+}
+
+// The letterhead every DOH document starts with: the seal, "Republic of the Philippines / DEPARTMENT OF HEALTH / Office of
+// the Secretary" and the Bagong Pilipinas logo. Pictures are 70 pt tall with their own proportions.
 function at_letterhead_(body) {
   const names = ['Republic of the Philippines', 'DEPARTMENT OF HEALTH', 'Office of the Secretary'];
   function fill(container, first) {
@@ -100,17 +119,34 @@ function at_letterhead_(body) {
       p.setItalic(i === 2);
     });
   }
-  if (!AT_LOGO_LEFT_ID && !AT_LOGO_RIGHT_ID) { fill(body, null); return; }
+  const logos = [at_logo_(0), at_logo_(2)];
+  if (!logos[0] && !logos[1]) { fill(body, null); return; }
   const table = body.appendTable([['', '', '']]);
   table.setBorderWidth(0);
-  [[0, AT_LOGO_LEFT_ID], [2, AT_LOGO_RIGHT_ID]].forEach(function (x) {
-    if (!x[1]) return;
-    const img = table.getCell(0, x[0]).getChild(0).asParagraph().appendInlineImage(DriveApp.getFileById(x[1]).getBlob());
-    img.setWidth(70);
+  [0, 2].forEach(function (col, i) {
+    const logo = logos[i];
+    if (!logo) return;
+    const cell = table.getCell(0, col);
+    const para = cell.getChild(0).asParagraph();
+    para.setAlignment(col === 0 ? DocumentApp.HorizontalAlignment.LEFT : DocumentApp.HorizontalAlignment.RIGHT);
+    const img = para.appendInlineImage(logo.blob);
     img.setHeight(70);
+    img.setWidth(Math.round(70 * logo.size[0] / logo.size[1]));
   });
   const mid = table.getCell(0, 1);
   fill(mid, mid.getChild(0).asParagraph());
+}
+
+// The DOH address block at the foot of every page.
+function at_footer_(doc) {
+  const footer = doc.addFooter();
+  footer.setText(AT_FOOTER_LINES[0]);
+  footer.appendParagraph(AT_FOOTER_LINES[1]);
+  footer.getParagraphs().forEach(function (p) {
+    p.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+  });
+  footer.editAsText().setFontFamily('Times New Roman');
+  footer.editAsText().setFontSize(8);
 }
 
 function at_buildDpo_(body, doc) {
@@ -153,14 +189,7 @@ function at_buildDpo_(body, doc) {
   body.appendParagraph('{{unit_name}}').setIndentStart(216);
   body.editAsText().setFontFamily('Times New Roman');
   body.editAsText().setFontSize(12);
-  const footer = doc.addFooter();
-  footer.setText(AT_FOOTER_LINES[0]);
-  footer.appendParagraph(AT_FOOTER_LINES[1]);
-  footer.getParagraphs().forEach(function (p) {
-    p.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-  });
-  footer.editAsText().setFontFamily('Times New Roman');
-  footer.editAsText().setFontSize(8);
+  at_footer_(doc);
   const first = body.getChild(0);
   if (first.getType() === DocumentApp.ElementType.PARAGRAPH && first.asParagraph().getText() === '') body.removeChild(first);
 }
@@ -169,6 +198,7 @@ function at_buildDpo_(body, doc) {
 // SUBJECT, the request, the what / when / where lines, a table of the help asked for, the contact line and an initials block.
 //   {{details}} is a block (the app replaces that line with several); {{a_area}} and {{a_request}} sit in ONE table row.
 function at_buildInvitation_(body, doc) {
+  at_letterhead_(body);
   body.appendParagraph('{{date}}');
   const title = body.appendParagraph('MEMORANDUM');
   title.setBold(true);
@@ -208,6 +238,7 @@ function at_buildInvitation_(body, doc) {
   initials.getRow(0).editAsText().setBold(true);
   body.editAsText().setFontFamily('Times New Roman');
   body.editAsText().setFontSize(12);
+  at_footer_(doc);
   const first = body.getChild(0);
   if (first.getType() === DocumentApp.ElementType.PARAGRAPH && first.asParagraph().getText() === '') body.removeChild(first);
 }
@@ -217,6 +248,7 @@ function at_buildInvitation_(body, doc) {
 //   {{background}} {{objectives}} {{outputs}} {{participants}} {{methodology}} are blocks (a prompt or lines the app writes).
 //   {{pd_day}} {{pd_am}} {{pd_pm}} sit in ONE table row: the app copies that row once per day.
 function at_buildConceptNote_(body, doc) {
+  at_letterhead_(body);
   const heading = body.appendParagraph('CONCEPT NOTE');
   heading.setBold(true);
   heading.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
@@ -256,6 +288,7 @@ function at_buildConceptNote_(body, doc) {
   body.appendParagraph('{{unit_name}}');
   body.editAsText().setFontFamily('Times New Roman');
   body.editAsText().setFontSize(12);
+  at_footer_(doc);
   const first = body.getChild(0);
   if (first.getType() === DocumentApp.ElementType.PARAGRAPH && first.asParagraph().getText() === '') body.removeChild(first);
 }
@@ -263,12 +296,14 @@ function at_buildConceptNote_(body, doc) {
 // The program flow: the activity and one table of Date/Time, Topic/Activity and Person Responsible.
 //   {{pf_time}} {{pf_topic}} {{pf_person}} sit in ONE table row: the app copies it for each day heading and each empty row.
 function at_buildProgramFlow_(body, doc) {
+  at_letterhead_(body);
   body.appendParagraph('Activity: {{title}}').setBold(true);
   body.appendParagraph('Tentative Program Flow:');
   const table = body.appendTable([['Date/Time', 'Topic/Activity', 'Person Responsible'], ['{{pf_time}}', '{{pf_topic}}', '{{pf_person}}']]);
   table.getRow(0).editAsText().setBold(true);
   body.editAsText().setFontFamily('Times New Roman');
   body.editAsText().setFontSize(12);
+  at_footer_(doc);
   const first = body.getChild(0);
   if (first.getType() === DocumentApp.ElementType.PARAGRAPH && first.asParagraph().getText() === '') body.removeChild(first);
 }

@@ -265,6 +265,21 @@ def test_a_program_flow_has_a_heading_and_two_empty_rows_for_each_day(viewer, co
     assert all(set(r) == {"pf_time", "pf_topic", "pf_person"} for r in flow["data"])
 
 
+def build_templates():
+    out = subprocess.run(["node", "tests/js/activity_templates_stub.js", "apps_script/activity_templates.gs",
+                          "apps_script/activity_logos.gs"], capture_output=True, text=True, timeout=30)
+    assert out.returncode == 0, out.stderr
+    return json.loads(out.stdout)
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+@pytest.mark.parametrize("key", ["dpo", "invitation", "concept_note", "program_flow"])
+def test_every_template_has_the_letterhead_logos_and_address_footer(key):
+    built = build_templates()[key]
+    assert [i.split()[2] for i in built["images"]] == ["image/png", "image/png"]
+    assert built["footer"] is True
+
+
 @pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
 @pytest.mark.parametrize("key, over", [
     ("dpo", {"kind": "travel"}), ("invitation", {"audience": "bureau"}),
@@ -273,10 +288,7 @@ def test_a_program_flow_has_a_heading_and_two_empty_rows_for_each_day(viewer, co
 def test_every_placeholder_in_a_template_is_one_the_app_fills(viewer, conn, relay, key, over):
     """Runs the template builders against a fake Docs API (the real one only runs in Google), then checks the
     placeholders each writes against what a draft sends, so a template and the app cannot drift apart."""
-    out = subprocess.run(["node", "tests/js/activity_templates_stub.js", "apps_script/activity_templates.gs"],
-                         capture_output=True, text=True, timeout=30)
-    assert out.returncode == 0, out.stderr
-    built = json.loads(out.stdout)[key]
+    built = build_templates()[key]
     assert built["missing"] == [] and set(built["expect"]) <= set(built["found"])      # it writes everything it promises
     eid = create(viewer, title="CALEP Field Visit", people=[str(uid(conn, "viewer@test.local"))], **over)
     draft(viewer, eid, key)
@@ -285,3 +297,17 @@ def test_every_placeholder_in_a_template_is_one_the_app_fills(viewer, conn, rela
         k for r in call["rows"].values() for d in r["data"] for k in d}
     unfilled = set(built["found"]) - filled
     assert unfilled == set(), f"in the {key} template but never filled by the app: {sorted(unfilled)}"
+
+
+def test_the_embedded_logos_are_small_transparent_pngs():
+    import base64
+    import re
+    import struct
+    src = open("apps_script/activity_logos.gs", encoding="utf-8").read()
+    for name in ("LEFT", "RIGHT"):
+        text = re.search(r"AT_LOGO_%s_B64 = \[(.*?)\]\.join" % name, src, re.S).group(1)
+        data = base64.b64decode("".join(re.findall(r"'([^']+)'", text)))
+        size = [int(n) for n in re.search(r"AT_LOGO_%s_SIZE = \[(\d+), (\d+)\]" % name, src).groups()]
+        assert data[:8] == b"\x89PNG\r\n\x1a\n" and len(data) < 60_000
+        assert list(struct.unpack(">II", data[16:24])) == size                         # the stated size is the real one
+        assert data[25] in (3, 6)                                                       # palette or RGBA, so transparency is kept
