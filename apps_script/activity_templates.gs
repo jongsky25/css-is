@@ -123,6 +123,9 @@ function at_letterhead_(body) {
   if (!logos[0] && !logos[1]) { fill(body, null); return; }
   const table = body.appendTable([['', '', '']]);
   table.setBorderWidth(0);
+  // Fixed widths that add up to the 468 pt between the margins; the Docs default is three equal columns, which wraps the
+  // title and can push the right-hand logo off the page.
+  [84, 300, 84].forEach(function (w, c) { table.setColumnWidth(c, w); });
   [0, 2].forEach(function (col, i) {
     const logo = logos[i];
     if (!logo) return;
@@ -168,6 +171,7 @@ function at_buildDpo_(body, doc) {
   });
   const table = body.appendTable([['Name', 'Position'], ['{{p_name}}', '{{p_position}}']]);
   table.setBorderWidth(0);
+  [234, 234].forEach(function (w, c) { table.setColumnWidth(c, w); });
   table.getRow(0).editAsText().setBold(true);
   [0, 1].forEach(function (r) {
     table.getCell(r, 1).getChild(0).asParagraph().setAlignment(DocumentApp.HorizontalAlignment.CENTER);

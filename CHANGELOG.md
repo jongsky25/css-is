@@ -1,3 +1,7 @@
+## 7.54 — October 20, 2026
+
+- Fix for the new letterhead: the Apps Script templates now give the letterhead row (seal, title, Bagong Pilipinas logo) and the DPO Name / Position table fixed column widths that fit between the margins. With Google's default equal columns the title wrapped and the right-hand logo and the Position column could fall off the page. Replace `activity_templates` in the Apps Script project and run `rebuildActivityTemplates()` again.
+
 ## 7.53 — October 20, 2026
 
 - The four activity documents (DPO, memorandum, concept note, program flow) now start with the **DOH letterhead**: the DOH seal, "Republic of the Philippines / DEPARTMENT OF HEALTH / Office of the Secretary" and the Bagong Pilipinas logo, with the DOH address footer on every page. Both logos come from the DOH package and are embedded in a new `apps_script/activity_logos.gs`, so no Drive upload is needed. Add that file to the Apps Script project, replace `activity_templates`, and run the new `rebuildActivityTemplates()` (it rebuilds templates that were already good). No change to the app itself (spot feedback #136).
