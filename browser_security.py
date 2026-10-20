@@ -47,7 +47,10 @@ def protect_response(scope, raw_headers, status, *, secure_cookies=False):
     headers = MutableHeaders(raw=raw_headers)
     headers.setdefault('X-Content-Type-Options', 'nosniff')
     headers.setdefault('X-Frame-Options', 'SAMEORIGIN')
-    headers.setdefault('Referrer-Policy', 'no-referrer')
+    # 'same-origin', not 'no-referrer': under no-referrer Chromium sends a form POST with "Origin: null" and no Referer,
+    # so the application's origin check rejects every login and save ("This request could not be verified"). With
+    # same-origin the site's own requests carry their real Origin, and nothing is ever sent to another site.
+    headers.setdefault('Referrer-Policy', 'same-origin')
     headers.setdefault('Content-Security-Policy', ENFORCED_CSP)
     headers.setdefault('Content-Security-Policy-Report-Only', REPORT_ONLY_CSP)
     if scope.get('scheme') == 'https' or https_deployment():

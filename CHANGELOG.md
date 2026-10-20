@@ -1,3 +1,7 @@
+## 7.49 — October 20, 2026
+
+- Fix every sign-in and save failing with "This request could not be verified. Reload the page and try again." after 7.48: the new `Referrer-Policy: no-referrer` made Chrome and Edge send form posts with `Origin: null` and no Referer, which the write origin check rejects. The policy is now `same-origin`, which still sends nothing to other sites. Adds a real-browser regression test.
+
 ## 7.48 — October 20, 2026
 
 - Enable Secure cookies automatically for configured HTTPS deployments and trusted HTTPS requests, including preference and deletion cookies.

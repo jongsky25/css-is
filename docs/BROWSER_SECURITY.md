@@ -30,8 +30,10 @@ Every response, including authentication denials, redirects, validation errors
 and the application's unhandled 500 response, receives:
 
 - `X-Content-Type-Options: nosniff`.
-- `Referrer-Policy: no-referrer`, keeping bearer paths and query strings out of
-  navigation/subresource referrers.
+- `Referrer-Policy: same-origin`, keeping bearer paths and query strings out of
+  every referrer sent to another site. It is deliberately not `no-referrer`: with that policy Chrome and Edge
+  send a form POST with `Origin: null` and no Referer, and the origin check on writes then rejects every login and
+  save. `same-origin` lets the site's own requests carry their real Origin.
 - `X-Frame-Options: SAMEORIGIN` and an enforced CSP with
   `frame-ancestors 'self'; base-uri 'self'; object-src 'none'`.
 
