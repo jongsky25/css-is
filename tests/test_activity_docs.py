@@ -100,7 +100,7 @@ def test_drafting_an_invitation_sends_the_entry_details_and_links_the_doc(viewer
     assert r.status_code == 303 and "ok=" in r.headers["location"]
     call = relay.calls[0]
     assert call["template_key"] == "invitation" and call["folder_key"] == f"act-{eid}"
-    assert call["request_id"] == f"act{eid}:invitation:1" and call["title"] == "Invitation - CALEP Planning Workshop"
+    assert call["request_id"] == f"act{eid}:invitation:1" and call["title"] == "Memorandum - CALEP Planning Workshop"
     assert call["fields"]["title"] == "CALEP Planning Workshop" and call["fields"]["invited"] == "All personnel of the bureau"
     details = call["blocks"]["details"]
     assert details[0] == "What: CALEP Planning Workshop" and "Where: Hotel Ozamiz" in details[2]
@@ -178,19 +178,38 @@ def test_a_cancelled_item_cannot_be_drafted(viewer, conn, relay):
 
 # ------------------------------------------------ the Apps Script template and the app agree ---
 
+def test_the_invitation_is_the_doh_memorandum_with_the_request_table(viewer, conn, relay):
+    st.set_setting(conn, "travel.sig.head_name", "Dr. Ana Reyes"); st.set_setting(conn, "travel.sig.head_title", "OIC - Director IV")
+    eid = create(viewer, audience="bureau", title="CALEP Planning Workshop", venue="Hotel Ozamiz",
+                 start_date="2026-10-12", end_date="2026-10-16")
+    assert draft(viewer, eid, "invitation").status_code == 303
+    f, call = relay.calls[0]["fields"], relay.calls[0]
+    assert f["subject"] == "Request for Assistance in the Conduct of CALEP Planning Workshop"
+    assert "respectfully request" in f["opening"] and "CALEP Planning Workshop" in f["opening"]
+    assert "October 12-16, 2026" in f["opening"] and f["opening"].rstrip().endswith("in Hotel Ozamiz.")
+    # who it is for, and the phone, are never guessed
+    assert f["for_name"] == f["for_title"] == f["for_office"] == f["contact_phone"] == ad.BLANK
+    assert f["from_name"] == "DR. ANA REYES" and f["from_title"] == "OIC - Director IV"
+    assert f["contact_name"] and f["contact_email"] == "viewer@test.local"
+    table = call["rows"]["assistance"]
+    assert table["marker"] == "a_area" and [r["a_area"] for r in table["data"]] == ["Participants", "Venue", "Meals", "Coordination"]
+    assert all(set(r) == {"a_area", "a_request"} and r["a_request"] for r in table["data"])
+
+
 @pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
-def test_every_placeholder_in_the_dpo_template_is_one_the_app_fills(viewer, conn, relay):
-    """Runs the template builder against a fake Docs API (the real one only runs in Google), then checks the
-    placeholders it writes against what a draft sends, so a template and the app cannot drift apart."""
+@pytest.mark.parametrize("key, over", [("dpo", {"kind": "travel"}), ("invitation", {"audience": "bureau"})])
+def test_every_placeholder_in_a_template_is_one_the_app_fills(viewer, conn, relay, key, over):
+    """Runs the template builders against a fake Docs API (the real one only runs in Google), then checks the
+    placeholders each writes against what a draft sends, so a template and the app cannot drift apart."""
     out = subprocess.run(["node", "tests/js/activity_templates_stub.js", "apps_script/activity_templates.gs"],
                          capture_output=True, text=True, timeout=30)
     assert out.returncode == 0, out.stderr
-    built = json.loads(out.stdout)
+    built = json.loads(out.stdout)[key]
     assert built["missing"] == [] and set(built["expect"]) <= set(built["found"])      # it writes everything it promises
-    eid = create(viewer, kind="travel", title="CALEP Field Visit", people=[str(uid(conn, "viewer@test.local"))])
-    draft(viewer, eid, "dpo")
+    eid = create(viewer, title="CALEP Field Visit", people=[str(uid(conn, "viewer@test.local"))], **over)
+    draft(viewer, eid, key)
     call = relay.calls[0]
     filled = set(call["fields"]) | set(call["blocks"]) | {r["marker"] for r in call["rows"].values()} | {
         k for r in call["rows"].values() for d in r["data"] for k in d}
     unfilled = set(built["found"]) - filled
-    assert unfilled == set(), f"in the template but never filled by the app: {sorted(unfilled)}"
+    assert unfilled == set(), f"in the {key} template but never filled by the app: {sorted(unfilled)}"

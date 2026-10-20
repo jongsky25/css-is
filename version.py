@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.50"
+APP_VERSION = "7.51"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.51",
+        "date": "October 20, 2026",
+        "summary": "The drafted invitation now follows the DOH memorandum format.",
+        "changes": [
+            "A drafted invitation is a memorandum with FOR, FROM and SUBJECT, a request, the what, when and where, and a table of the help asked for.",
+            "Who it is for and the telephone number are left blank for you to fill in."
+        ]
+    },
     {
         "version": "7.50",
         "date": "October 20, 2026",

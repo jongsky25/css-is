@@ -1,4 +1,4 @@
-// A fake of just enough of the Docs API to run the DPO template builder and report the {{placeholders}} it writes.
+// A fake of just enough of the Docs API to run both template builders (DPO and invitation) and report the {{placeholders}} each writes.
 // Usage: node activity_templates_stub.js apps_script/activity_templates.gs
 const fs = require('fs'); const log = [];
 function mk(kind, text) {
@@ -15,18 +15,24 @@ function mk(kind, text) {
   }});
   return chain;
 }
-const body = { paragraphs: [],
+function newBody() { return { paragraphs: [],
   appendParagraph(t) { log.push('P: ' + t); const p = mk('p', t); this.paragraphs.push(p); return p; },
   appendTable(c) { log.push('TABLE: ' + JSON.stringify(c)); const cell = mk('cell'); return { setBorderWidth() {}, getRow: () => mk('row'), getCell: () => cell }; },
-  editAsText: () => mk('t'), getChild: () => mk('p', 'x'), removeChild() { log.push('removed leading empty paragraph?'); } };
+  appendHorizontalRule() { return mk('h'); },
+  editAsText: () => mk('t'), getChild: () => mk('p', 'x'), removeChild() { } }; }
 const doc = { addFooter() { return { setText(t) { log.push('FOOTER: ' + t); }, appendParagraph(t) { log.push('FOOTER: ' + t); return mk('p'); },
   getParagraphs: () => [mk('p')], editAsText: () => mk('t') }; } };
 global.DocumentApp = { HorizontalAlignment: { CENTER: 'C', RIGHT: 'R', JUSTIFY: 'J' }, ElementType: { PARAGRAPH: 'PARAGRAPH' } };
 const src = fs.readFileSync(process.argv[2], 'utf8') + '\n;module.exports = { AT_TEMPLATES, at_buildDpo_, at_buildInvitation_ };';
 const m = new Function('module', 'DocumentApp', src + '\nreturn module.exports;')({ exports: {} }, global.DocumentApp);
-m.at_buildDpo_(body, doc);
-const text = log.join('\n');
-const dpo = m.AT_TEMPLATES.find(t => t.key === 'dpo');
-const missing = dpo.expect.filter(k => text.indexOf('{{' + k + '}}') < 0);
-const found = Array.from(new Set((text.match(/\{\{[a-z0-9_]+\}\}/g) || []).map(x => x.slice(2, -2))));
-console.log(JSON.stringify({ expect: dpo.expect, found: found, missing: missing }));
+const out = {};
+[['dpo', m.at_buildDpo_], ['invitation', m.at_buildInvitation_]].forEach(function (x) {
+  log.length = 0;
+  x[1](newBody(), doc);
+  const text = log.join('\n');
+  const tpl = m.AT_TEMPLATES.find(t => t.key === x[0]);
+  out[x[0]] = { expect: tpl.expect,
+                found: Array.from(new Set((text.match(/\{\{[a-z0-9_]+\}\}/g) || []).map(y => y.slice(2, -2)))),
+                missing: tpl.expect.filter(k => text.indexOf('{{' + k + '}}') < 0) };
+});
+console.log(JSON.stringify(out));
