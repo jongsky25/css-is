@@ -622,6 +622,18 @@ def init_db(conn):
         PRIMARY KEY (entry_id, tag)
     );
 
+    -- Documents an activity needs (Spot Feedback #136): whether the owner says it needs a DPO or an invitation
+    -- (NULL = follow the app's suggestion) and the Google Doc drafted for it. The draft's content is never stored.
+    CREATE TABLE IF NOT EXISTS calendar_entry_doc (
+        entry_id INTEGER NOT NULL REFERENCES calendar_entry(id) ON DELETE CASCADE,
+        doc_key TEXT NOT NULL CHECK (doc_key IN ('dpo','invitation')),
+        needed INTEGER CHECK (needed IN (0,1)),
+        doc_url TEXT, doc_state TEXT, note TEXT,
+        rev INTEGER NOT NULL DEFAULT 0,
+        updated_by TEXT, updated_at TEXT,
+        PRIMARY KEY (entry_id, doc_key)
+    );
+
     -- Other units an entry also involves; owner_org_id stays the primary one (Spot Feedback #129).
     CREATE TABLE IF NOT EXISTS calendar_entry_unit (
         entry_id INTEGER NOT NULL REFERENCES calendar_entry(id) ON DELETE CASCADE,
