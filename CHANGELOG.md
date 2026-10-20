@@ -1,3 +1,8 @@
+## 7.30 — October 20, 2026
+
+- Hide the travel claim link and button on calendar items that hold a conference room (requested, booked, pending move, day mismatch or cancelled-but-holding), since the venue is the office.
+- Keep showing a travel claim that was already filed.
+
 ## 7.29 — October 20, 2026
 
 - Exclude unused categorical survey items from dimension averages and recommendations.
