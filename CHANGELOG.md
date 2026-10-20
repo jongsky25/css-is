@@ -1,3 +1,10 @@
+## 7.30 — October 20, 2026
+
+- Restore the companion growth ladder and guidance on the profile page.
+- Give CSM draft/export, activity-feed and search tests explicit survey examples with cleanup.
+- Exercise database integrity against a populated temporary database instead of an absent production snapshot.
+- Pass the room test's reference date explicitly to the booking guard.
+
 ## 7.29 — October 20, 2026
 
 - Exclude unused categorical survey items from dimension averages and recommendations.

@@ -1,20 +1,25 @@
-"""
-Data-integrity invariants on the delivered css_is.db (read-only).
+"""Integrity invariants exercised against a populated, isolated application database.
 
-These run against the REAL delivered database (not the seeded test copy) so they
-double as a health check on the data that ships. They assert referential
-integrity, no dangling foreign keys, unique QR tokens, and that the headline
-counts the run logs claim still hold.
+These are storage regression tests, not a health assertion about production data.
+No test opens or creates css_is.db in the repository.
 """
-import os
 import pytest
 import storage as st
 
-REAL_DB = os.path.join(os.path.dirname(__file__), "..", "css_is.db")
 
 @pytest.fixture(scope="module")
-def conn():
-    c = st.connect(REAL_DB)
+def conn(tmp_path_factory):
+    c = st.connect(str(tmp_path_factory.mktemp("integrity") / "reference.db"))
+    st.init_db(c)
+    rp = c.execute("INSERT INTO resource_person(name, is_internal) VALUES ('Integrity reference',1)").lastrowid
+    for survey_type in (1, 2, 3):
+        fid = st.create_form_instance(c, survey_type, f"F{survey_type}", "2026-01-01",
+                                      rp_id=rp if survey_type == 3 else None)
+        answers = [("SQD1", 5), ("SQD2", 4)] if survey_type == 1 else [("B1", 6), ("C", 4)]
+        st.record_response(c, fid, answers, submitted_at="2026-01-01T09:00:00",
+                           served_by_rp_id=rp if survey_type == 1 else None,
+                           item_remarks={answers[0][0]: "Reference note"})
+    c.commit()
     yield c
     c.close()
 
@@ -66,9 +71,9 @@ def test_survey_types_valid(conn):
     bad = conn.execute("SELECT COUNT(*) FROM form_instance WHERE survey_type NOT IN (1,2,3)").fetchone()[0]
     assert bad == 0
 
-def test_headline_counts_present(conn):
+def test_reference_counts_present(conn):
     responses = conn.execute("SELECT COUNT(*) FROM response").fetchone()[0]
     answers = conn.execute("SELECT COUNT(*) FROM answer").fetchone()[0]
-    # the run logs claim ~41k responses / ~454k atoms; assert the data is there
-    assert responses > 30000, f"only {responses} responses — data may be missing"
-    assert answers > 300000, f"only {answers} answers"
+    assert responses == 3
+    assert answers == 6
+    assert conn.execute("SELECT COUNT(*) FROM item_remark").fetchone()[0] == 3

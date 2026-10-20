@@ -238,8 +238,16 @@ def test_mrr_export_selected_reads_saved_draft(manager, app_mod, monkeypatch):
 
 # ---- Official CO-CSM report Sections V-VI ---------------------------------------
 
-_CSM_PERIOD = "quarter:2026-Q1"          # already seeded in the shared test DB
+_CSM_PERIOD = "quarter:2026-Q1"          # explicitly seeded by csm_response below
 _CSM_EMPTY_PERIOD = "year:1999"          # certainly no data
+
+
+
+@pytest.fixture
+def csm_response(reference_form):
+    """A Type-1 submission in the report period, independent of a snapshot."""
+    return reference_form(1, "2026-02-04", [(f"SQD{i}", 5) for i in range(9)],
+                          submitted_at="2026-02-04T09:00:00", service="CSM draft reference")
 
 
 def test_csm_ai_draft_requires_create_activity_cap(viewer, encoder, manager):
@@ -257,7 +265,7 @@ def test_csm_save_requires_create_activity_cap(viewer, manager):
     assert r.status_code == 303
 
 
-def test_csm_ai_draft_saves_report_draft_with_ai_actor(manager, app_mod, monkeypatch):
+def test_csm_ai_draft_saves_report_draft_with_ai_actor(manager, app_mod, monkeypatch, csm_response):
     conn = st.connect(app_mod.DB); _reset(conn)
     _configure(conn, monkeypatch)
     conn.commit(); conn.close()
@@ -314,7 +322,7 @@ def test_csm_human_save_and_blank_reverts(manager, app_mod, monkeypatch):
     assert drafts["continuous_improvement"]["text"] == "Saved improvement."
 
 
-def test_csm_export_reflects_saved_draft(manager, app_mod, monkeypatch):
+def test_csm_export_reflects_saved_draft(manager, app_mod, monkeypatch, csm_response):
     conn = st.connect(app_mod.DB); _reset(conn)
     conn.commit(); conn.close()
     manager.post("/reports/csm-draft/save", data={
@@ -331,7 +339,7 @@ def test_csm_export_reflects_saved_draft(manager, app_mod, monkeypatch):
     assert "N/A" not in full.split("Distinctive saved action plan text.")[0][-5:]
 
 
-def test_csm_export_falls_back_to_na_and_boilerplate_with_no_draft(manager, app_mod):
+def test_csm_export_falls_back_to_na_and_boilerplate_with_no_draft(manager, app_mod, csm_response):
     conn = st.connect(app_mod.DB); _reset(conn)
     conn.commit(); conn.close()
     r = manager.get("/reports/export",

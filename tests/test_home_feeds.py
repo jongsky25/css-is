@@ -28,7 +28,7 @@ def test_css_hub_is_titled_css_hub(admin):
     assert "<h1>CSS hub</h1>" in r.text
 
 
-def test_recently_concluded_links_resolve(admin):
+def test_recently_concluded_links_resolve(admin, app_mod, reference_form):
     """Every concluded card must link somewhere renderable. Bureau (Form-2) events
     open their SERVQUAL report — the card id must equal the build_events
     representative id that route expects, never a raw form_instance id (404).
@@ -37,14 +37,25 @@ def test_recently_concluded_links_resolve(admin):
     narrowed to that activity. We follow each item's own `url`, which encodes that
     rule."""
     import json
+    from datetime import timedelta
+    conn = st.connect(app_mod.DB)
+    day = (app_mod._today_local() - timedelta(days=1)).isoformat()
+    rp = conn.execute("SELECT id FROM resource_person LIMIT 1").fetchone()[0]
+    conn.close()
+    seeded = []
+    for kind in (2, 3):
+        fid = reference_form(kind, day, [("B1", 6), ("C", 4)],
+            topic=f"Concluded reference {kind}", venue=f"Concluded reference hall {kind}",
+            rp_id=rp if kind == 3 else None)
+        seeded.append(fid)
     r = admin.get("/css")
     assert r.status_code == 200
     blob = r.text.split("window.HOME_CONCLUDED =", 1)[1].split(";", 1)[0]
     items = json.loads(blob)
-    # The delivered test DB has recent activities with feedback, so this is non-empty.
-    assert items, "no concluded activities passed to the home feed"
+    items = [a for a in items if a["id"] in seeded]
+    assert len(items) == 2, "both reference activities must reach the feed"
     saw_invited = False
-    for a in items[:12]:        # sample — every url is built the same way
+    for a in items:
         url = a.get("url") or f"/reports/activities/{a['id']}"
         if a.get("invited"):
             saw_invited = True
@@ -54,8 +65,7 @@ def test_recently_concluded_links_resolve(admin):
         else:
             assert url.startswith("/reports/activities/")
         assert admin.get(url).status_code == 200, f"concluded link {url} did not resolve"
-    # The delivered DB includes the HRH PK Reorientation invited activity, so the
-    # invited branch is actually exercised here (not silently skipped).
+    # The explicitly seeded Form-3-only activity exercises the invited branch.
     assert saw_invited, "expected at least one invited/F3-only concluded activity"
 
 
