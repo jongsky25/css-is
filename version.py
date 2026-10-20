@@ -17,7 +17,7 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.35"
+APP_VERSION = "7.36"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [

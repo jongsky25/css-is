@@ -11,9 +11,8 @@ import rooms
 import travel_checklist as tc
 import travel_rates as rates
 
-AFTER_FACT_DAYS = 5          # working days to file when the activity had already ended
+DUE_WORKING_DAYS = 5         # working days after the last day of the activity to file
 CA_MIN_LEAD_DAYS = 7         # a cash advance needs MORE than this many days before the activity starts
-PLOTTED_DAYS = 5             # calendar days after the last day, then the next working day
 NO_RECEIPT_LIMIT = 1000      # an unreceipted fare above this always goes to the Admin Unit
 RECEIPT_MODES = ("tnvs", "taxi")
 RIDE_MODES = RECEIPT_MODES + ("public_noreceipt",)
@@ -54,18 +53,15 @@ def count_working_days(conn, start_iso, end_iso) -> int:
 def deadline_for(conn, kind, act_end_iso, opened_iso):
     """(deadline ISO date or None, rule) where rule is 'after_fact', 'plotted' or 'none'.
 
-    An activity that had ended before the filing was opened: 5 working days from the day
-    opened, for every kind. Otherwise liquidation and reimbursement are due 5 calendar days
-    after the last day, rolled forward to a working day. A cash advance on a current or
-    future activity has no deadline."""
+    Liquidation and reimbursement are due 5 working days after the last day of the activity,
+    whether or not it had ended when the filing was opened. A cash advance has no deadline
+    while the activity is current or ahead; once it has ended it is held to the same date."""
     end, opened = _d(act_end_iso), _d(opened_iso)
-    if end < opened:
-        return rooms.add_working_days(conn, opened, AFTER_FACT_DAYS).isoformat(), "after_fact"
+    due = rooms.add_working_days(conn, end, DUE_WORKING_DAYS).isoformat()
     if kind in ("liquidation", "reimbursement"):
-        d = end + timedelta(days=PLOTTED_DAYS)
-        while not rooms.is_working_day(conn, d):
-            d += timedelta(days=1)
-        return d.isoformat(), "plotted"
+        return due, "plotted"
+    if end < opened:
+        return due, "after_fact"
     return None, "none"
 
 

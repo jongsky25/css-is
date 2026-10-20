@@ -1,3 +1,7 @@
+## 7.36 — October 20, 2026
+
+- Travel filings are now due 5 working days after the last day of the activity, even when the filing was opened after the activity ended (spot feedback #135).
+
 ## 7.35 — October 20, 2026
 
 - Build synthetic survey reference data without reading a production database.
