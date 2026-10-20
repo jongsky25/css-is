@@ -1,8 +1,16 @@
-## 7.32 — October 20, 2026
+## 7.33 — October 20, 2026
 
 - Retry document uploads once on a dropped connection or server error, and say why an upload, ticket reading or feedback failed.
 - Keep the feedback message on screen when it can't be sent.
 - Log the expected and received origin when a write is rejected, so a misconfigured server address is easy to find.
+
+## 7.32 — October 20, 2026
+
+- Restore the companion growth ladder and guidance on the profile page.
+- Give CSM draft/export, activity-feed and search tests explicit survey examples with cleanup.
+- Exercise database integrity against a populated temporary database instead of an absent production snapshot.
+- Pass the room test's reference date explicitly to the booking guard.
+- Retain the concurrent 7.30 and 7.31 calendar and meal-request changes.
 
 ## 7.31 — October 20, 2026
 

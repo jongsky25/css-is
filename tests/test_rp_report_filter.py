@@ -74,13 +74,15 @@ def test_rp_report_activity_filter(manager, app_mod):
     # Narrow to Alpha → exactly its 3 responses; its name shows + the option is selected.
     ra = manager.get("/reports", params={"type": 3, "activity": a_val})
     assert ra.status_code == 200
-    assert "3 respondent(s)" in ra.text
+    assert "3 rated respondent(s)" in ra.text
+    assert "3 total submission(s)" in ra.text
     assert "RP Filter Alpha" in ra.text
     assert f'value="{a_val}" selected' in ra.text
 
     # Narrow to Bravo → its 2 responses (proves the filter actually restricts).
     rb = manager.get("/reports", params={"type": 3, "activity": b_val})
-    assert "2 respondent(s)" in rb.text
+    assert "2 rated respondent(s)" in rb.text
+    assert "2 total submission(s)" in rb.text
 
 
 def test_activity_filter_is_type3_only(manager):

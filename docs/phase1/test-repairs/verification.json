@@ -1,0 +1,78 @@
+{
+  "candidate_version": "7.32",
+  "base_commit": "a6c05fe590b37e595e0a60331c2b050f3691a40a",
+  "runtime": "Python 3.12",
+  "scope": "A10 step 1: remaining failures",
+  "original_16_alone": {
+    "tests": 16,
+    "passed": 16,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 3.578
+  },
+  "affected_modules": {
+    "tests": 116,
+    "passed": 116,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 6.245
+  },
+  "report_wording_modules": {
+    "tests": 5,
+    "passed": 5,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 2.121
+  },
+  "deployment_packaging": {
+    "tests": 4,
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 1.436
+  },
+  "first_full_run": {
+    "tests": 4210,
+    "passed": 4192,
+    "failed": 2,
+    "skipped": 16,
+    "seconds": 232.692
+  },
+  "final_full_run": {
+    "tests": 4210,
+    "passed": 4194,
+    "failed": 0,
+    "skipped": 16,
+    "seconds": 235.016
+  },
+  "notes": [
+    "Original 16 failures resolved; two additional stale 7.29 wording assertions found in first full run and corrected before final full run.",
+    "Historical test_headline_counts_present renamed test_reference_counts_present; it asserts exact synthetic data counts, not production data volume.",
+    "No test marked expected-failure or newly skipped. Existing 16 browser/environment skips remain.",
+    "Suite-wide fixture/date isolation, production Python 3.11 parity and required CI gates are outside this increment.",
+    "No manual production testing or deployment in this increment.",
+    "Release renumbered to 7.32 after incorporating concurrent main releases 7.30 and 7.31. Full combined source retested: 4195 passed, 16 existing skips, zero failures. User authorized merge; main auto-deploys."
+  ],
+  "sha256": {
+    "templates/me.html": "585e9a2b76cf6ca56804ff8e3ce605c879c58f6afbdab5073c6ffc93e4843a93",
+    "tests/conftest.py": "a40f30fe5188ef0455b43c56e33b1e0090669c05faa70a06c74d485bd1ebf5c9",
+    "tests/test_ai_report_draft.py": "185325b8e136d5e21afedd73e52ca76bb2f9cde0139bd18b0baf62f9cb54f399",
+    "tests/test_avatar_care.py": "a9c1396ec3b0c39684bd97f9e0efc6da924bf55bfabaf955fe8c6b6364cbcf72",
+    "tests/test_home_feeds.py": "0f452f93d77d78fc87b2ba8c4955d472be01a2134af09c87d3fbbc768b7b9931",
+    "tests/test_integrity.py": "3d3aac5dbf62b288a756081321708fc0e29fe717788f642449a1b9d7a31abd18",
+    "tests/test_office_answers.py": "9937ea375997793cc20fe2bd742697885c01767f7fd704b9064f1cc41c2054f9",
+    "tests/test_search.py": "2f96b3294d693e39748c3e98a4f40485cd000d433f49c733803ef0c50d68cda4",
+    "tests/test_report_activity_verbatims.py": "00250e21b8931ab29a48911bb734ffb43d0c2732bdfe243bc1028332bc1f7adf",
+    "tests/test_rp_report_filter.py": "bbaa16b748b63b347def6e5d599c6f88eab355448884a075e7894a5ac6f839a6",
+    "version.py": "74a2ab0600f207371c79b90294f3bc05d74a3e4a13f51fc4f6336263563ff913",
+    "static/js/sw.js": "7305854d2aa4c8e0eb3c93ebda1f860d4922f19f5d526883ae7e3677ee1eb95b"
+  },
+  "integration_base_commit": "3e217ba75506dba7c66e8e23e3cbd5fa06f704c4",
+  "integrated_732_full_run": {
+    "tests": 4211,
+    "passed": 4195,
+    "failed": 0,
+    "skipped": 16,
+    "seconds": 242.967
+  }
+}

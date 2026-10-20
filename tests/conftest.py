@@ -255,3 +255,35 @@ def future_weekday(monkeypatch):
     monkeypatch.setattr(tz, "now_local", lambda: fixed)
     monkeypatch.setattr(tz, "today_local", lambda: fixed.date())
     return (monday + timedelta(days=2)).isoformat()   # Wednesday
+
+
+@pytest.fixture
+def reference_form(app_mod):
+    """Create explicit survey examples and remove their rows after the test."""
+    import storage as st
+    created = []
+
+    def make(survey_type, day, answers, *, submitted_at=None, **context):
+        conn = st.connect(app_mod.DB)
+        try:
+            fid = st.create_form_instance(conn, survey_type, f"F{survey_type}", day, **context)
+            created.append(fid)
+            st.record_response(conn, fid, answers, submitted_at=submitted_at)
+        finally:
+            conn.close()
+        app_mod.invalidate_atoms()
+        return fid
+
+    yield make
+    conn = st.connect(app_mod.DB)
+    try:
+        for fid in created:
+            for table in ("answer", "item_remark"):
+                conn.execute(f"DELETE FROM {table} WHERE response_id IN "
+                             "(SELECT id FROM response WHERE form_instance_id=?)", (fid,))
+            conn.execute("DELETE FROM response WHERE form_instance_id=?", (fid,))
+            conn.execute("DELETE FROM form_instance WHERE id=?", (fid,))
+        conn.commit()
+    finally:
+        conn.close()
+        app_mod.invalidate_atoms()

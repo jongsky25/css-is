@@ -177,7 +177,7 @@ def test_room_windows_split_around_a_booked_hour(world):
     slots = rooms.list_slots(world["conn"])
     assert len(slots) >= 3
     mid = slots[1]
-    rooms.add_block(world["conn"], "oa-ann@test.local", WED, [mid["id"]], "test")
+    rooms.add_block(world["conn"], "oa-ann@test.local", WED, [mid["id"]], "test", today=WED)
     try:
         out = say(world, "room_today")
         assert out.count("–") >= 2          # two windows either side of the blocked hour

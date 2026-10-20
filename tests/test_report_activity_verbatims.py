@@ -56,5 +56,5 @@ def test_type3_unmatched_activity_is_empty_not_bureau_wide(manager, app_mod):
     empty, labelled report — never a silent fall-back to the whole bureau."""
     _invited_with_comment(app_mod, "Real Activity", "Some real comment", org="Org REAL")
     html = manager.get("/reports?type=3&activity=99999999").text
-    assert "No responses in this scope." in html
+    assert "No valid ratings in this scope." in html
     assert "Some real comment" not in html
