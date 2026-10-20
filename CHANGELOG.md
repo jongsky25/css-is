@@ -1,3 +1,7 @@
+## 7.56 — October 20, 2026
+
+- Travel checklist wording: the row "DPO signed by a representative" is now "DPO allowing a representative or OIC to sign", with a note that it is the order that lets a representative or the officer-in-charge sign in the Head of Office's place, and the filing question reads "The Department Personnel Order allows a representative or OIC to sign". The row still appears when that box is ticked (spot feedback #145).
+
 ## 7.55 — October 20, 2026
 
 - Documents the app makes (calendar item drafts, travel forms and uploaded files) are now shared with the person through the Drive permissions API with `sendNotificationEmail: false`, so Google no longer emails a "shared with you" notice for each one. The link is on the page; the daily email about travel claims that are due soon or overdue is unchanged (spot feedback #146). After drafting, the calendar item says the draft is shared with you, that no email is sent and that drafting again makes another copy (spot feedback #143). Replace `travel_docs` in the Apps Script project to apply the change to the relay.
