@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.54"
+APP_VERSION = "7.55"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.55",
+        "date": "October 20, 2026",
+        "summary": "Drafted and generated documents no longer trigger an email, and the page says where the draft is.",
+        "changes": [
+            "Documents made from a calendar item or a travel claim are shared with you without Google's \"shared with you\" email. The link is on the page.",
+            "After drafting, the message says the draft is shared with you, that no email is sent and where to open it. Drafting again makes a new copy.",
+            "Reminders about travel claims that are due soon or overdue still come by email."
+        ]
+    },
     {
         "version": "7.54",
         "date": "October 20, 2026",
