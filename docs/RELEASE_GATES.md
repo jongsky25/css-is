@@ -73,7 +73,7 @@ the base or candidate Python file.
 
 ## Verification record
 
-- Local regression coverage: 24 gate tests passed; candidate 7.40 metadata passed.
+- Local regression coverage: 24 gate tests passed; candidate 7.41 metadata passed.
 - [PR #345](https://github.com/jongsky25/css-is/pull/345) carries the GitHub checks and their logs.
 - The first runner execution exposed missing Tesseract prerequisites (9 OCR failures and 2 OCR skips in the shuffled run); Chromium tests ran successfully. The workflow now installs the production OCR packages before testing.
 - CI intentionally rejects skipped tests; missing prerequisites are fixed rather than bypassed. Local Chromium download remains blocked by the workspace policy, so complete browser verification runs on GitHub.

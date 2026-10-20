@@ -1,8 +1,13 @@
-## 7.40 — October 20, 2026
+## 7.41 — October 20, 2026
 
 - Run normal and shuffled Python 3.11 tests on pull requests and before deployment, including Chromium browser tests.
 - Reject missing, failed or skipped checks and inconsistent or non-increasing release versions.
 - Keep the deployment backup and live-version checks mandatory in GitHub Actions.
+- Preserve the 7.40 travel report improvements.
+
+## 7.40 — October 20, 2026
+
+- Post Travel Report on the prepare page: the overview is written from the activity, dates, venue and DPO, and each day is written from the itinerary (rides with times, and taking part in the activity). A day follows the itinerary until you edit it, and a line you wrote is never overwritten. Key points, contributions, support needed, recommendations and the conclusion keep their own boxes, now with a hint on what goes in each (spot feedback #134, #133).
 
 ## 7.39 — October 20, 2026
 
