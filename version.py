@@ -17,18 +17,27 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.46"
+APP_VERSION = "7.47"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "7.46",
+        "version": "7.47",
         "date": "October 20, 2026",
         "summary": "The drafted DPO now follows the DOH order format.",
         "changes": [
             "A drafted DPO has the DOH letterhead, a subject, a background paragraph and a table of names and positions.",
             "It ends with \"By Authority of the Secretary of Health\" and the signatory, with the DOH address at the bottom.",
             "The DPO number, date and funding source are still left blank for you to fill in."
+        ]
+    },
+    {
+        "version": "7.46",
+        "date": "October 20, 2026",
+        "summary": "Recover a travel filing after a connection drop without opening it twice.",
+        "changes": [
+            "If opening a travel filing is interrupted, check its status and return to the existing checklist.",
+            "Retrying the same submission keeps one filing, and an unfinished attempt can be closed safely."
         ]
     },
     {

@@ -12,11 +12,14 @@ import storage as st
 import travel
 import tzutil as tz
 from conftest import join_admin_section
+from travel_requests import operation_id
 
 FORM = {"Content-Type": "application/x-www-form-urlencoded"}
 
 
 def post(client, path, **data):
+    if path == '/travel/new' and 'operation_id' not in data:
+        data['operation_id'] = operation_id(client)
     return client.post(path, content=urlencode(data), headers=FORM, follow_redirects=False)
 
 
@@ -168,6 +171,7 @@ def test_the_form_marks_the_dpo_number_required_and_explains_lodging(viewer, con
 def test_same_origin_check(viewer, conn):
     f = {"kind": "liquidation", "title": "TRAVELTEST X", "start": days(-10), "end": days(-8), "role": "secretariat",
          "advance_amount": "100", "dpo_no": "2026-100"}
+    f['operation_id'] = operation_id(viewer)
     bad = viewer.post("/travel/new", content=urlencode(f), headers={**FORM, "Origin": "https://evil.example"},
                       follow_redirects=False)
     assert bad.status_code == 403

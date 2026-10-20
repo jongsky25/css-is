@@ -42,11 +42,12 @@ def page(browser, viewer):
             return
         path = url.path + ('?' + url.query if url.query else '')
         response = viewer.request(request.method, path, content=request.post_data_buffer,
-                                  headers={'Content-Type': request.headers.get('content-type', '')},
-                                  follow_redirects=False)
+                                  headers={'Content-Type': request.headers.get('content-type', ''),
+                                           'Accept': request.headers.get('accept', '')},
+                                  # Follow the initial canonical form redirect inside the ASGI client.
+                                  follow_redirects=request.method == 'GET' and url.path == '/travel/new')
         if request.method != 'GET' and 300 <= response.status_code < 400 and response.headers.get('location'):
-            # A form POST that redirects: answer with the page it redirects to. Fulfilling a 3xx makes Chromium's
-            # follow-up request bypass this handler first and fail DNS for 'testserver' (slowly on some runners).
+            # Chromium bypasses this route handler on redirected navigation to testserver.
             response = viewer.get(response.headers['location'].split('#')[0], follow_redirects=False)
         route.fulfill(status=response.status_code, body=response.content,
                       headers={k: v for k, v in response.headers.items()
@@ -76,6 +77,120 @@ def test_kind_switch_hides_irrelevant_answers_and_preserves_them(page, conn):
     page.locator('[name="kind"][value="ca"]').check()
     pw.expect(gas).to_be_checked()
     pw.expect(gas).to_be_enabled()
+
+
+def _fill_new_filing(page):
+    from datetime import timedelta
+    import tzutil as tz
+    page.goto('http://testserver/travel/new')
+    page.locator('[name="kind"][value="liquidation"]').check()
+    page.locator('[name="title"]').fill('Recoverable travel filing')
+    page.locator('[name="start"]').fill((tz.today_local() - timedelta(days=10)).isoformat())
+    page.locator('[name="end"]').fill((tz.today_local() - timedelta(days=8)).isoformat())
+    page.locator('[name="role"][value="secretariat"]').check()
+    page.locator('[name="advance_amount"]').fill('5000')
+    page.locator('[name="dpo_no"]').fill('2026-100')
+
+
+def test_lost_creation_response_recovers_existing_checklist(page, viewer, conn):
+    _fill_new_filing(page)
+    posted = []
+    def lose_response(route):
+        request = route.request
+        if request.method != 'POST':
+            route.fallback(); return
+        response = viewer.post('/travel/new', content=request.post_data_buffer,
+            headers={'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json'})
+        assert response.status_code == 200, response.text
+        posted.append(1)
+        route.abort('failed')  # The business effect committed, but the browser never receives it.
+    page.route('**/travel/new/**', lose_response)
+    page.get_by_role('button', name='Open the checklist', exact=True).click()
+    page.wait_for_url(re.compile(r'.*/travel/f/TF-\d{4}-\d+$'))
+    assert posted == [1]
+    assert conn.execute('SELECT COUNT(*) FROM travel_filing').fetchone()[0] == 1
+    assert conn.execute("SELECT COUNT(*) FROM audit_log WHERE action='travel_open'").fetchone()[0] == 1
+
+
+def test_repeated_submit_events_open_only_one_checklist(page, conn):
+    _fill_new_filing(page)
+    posted = []
+    page.on('request', lambda request: posted.append(1)
+            if request.method == 'POST' and urlsplit(request.url).path.startswith('/travel/new/') else None)
+    page.evaluate('''() => {
+        const form = document.querySelector('form[data-submission-status]');
+        form.requestSubmit(); form.requestSubmit();
+    }''')
+    page.wait_for_url(re.compile(r'.*/travel/f/TF-\d{4}-\d+$'))
+    assert posted == [1]
+    assert conn.execute('SELECT COUNT(*) FROM travel_filing').fetchone()[0] == 1
+
+
+def test_interrupted_creation_waits_for_manual_retry_with_the_same_key(page, conn, monkeypatch):
+    import travel
+    _fill_new_filing(page)
+    original_key = page.locator('[name="operation_id"]').input_value()
+    create = travel.create_filing
+    calls = []
+    def interrupt_once(*args, **kw):
+        filing = create(*args, **kw)
+        calls.append(1)
+        if len(calls) == 1:
+            raise RuntimeError('Process interrupted before receipt')
+        return filing
+    monkeypatch.setattr(travel, 'create_filing', interrupt_once)
+    page.get_by_role('button', name='Open the checklist', exact=True).click()
+    pw.expect(page.locator('[data-submission-message]')).to_contain_text('not confirmed')
+    assert calls == [1]  # Status lookup does not repeat the write.
+    assert conn.execute('SELECT COUNT(*) FROM travel_filing').fetchone()[0] == 0
+    assert page.locator('[name="operation_id"]').input_value() == original_key
+    pw.expect(page.locator('[name="title"]')).to_be_disabled()
+    page.get_by_role('button', name='Retry this submission', exact=True).click()
+    page.wait_for_url(re.compile(r'.*/travel/f/TF-\d{4}-\d+$'))
+    assert calls == [1, 1]
+    assert conn.execute('SELECT COUNT(*) FROM travel_filing').fetchone()[0] == 1
+    assert conn.execute("SELECT operation_id FROM travel_submission WHERE state='completed'").fetchone()[0] == original_key
+
+
+def test_validation_keeps_answers_and_uses_a_fresh_attempt(page, conn, monkeypatch):
+    import travel
+    _fill_new_filing(page)
+    original_key = page.locator('[name="operation_id"]').input_value()
+    def reject(*args, **kw):
+        raise travel.TravelError('Review your travel details.')
+    with monkeypatch.context() as patch:
+        patch.setattr(travel, 'create_filing', reject)
+        page.get_by_role('button', name='Open the checklist', exact=True).click()
+        pw.expect(page.locator('[data-submission-message]')).to_have_text('Review your travel details.')
+    pw.expect(page.locator('[name="title"]')).to_be_enabled()
+    assert page.locator('[name="title"]').input_value() == 'Recoverable travel filing'
+    assert page.locator('[name="operation_id"]').input_value() != original_key
+    page.get_by_role('button', name='Open the checklist', exact=True).click()
+    page.wait_for_url(re.compile(r'.*/travel/f/TF-\d{4}-\d+$'))
+    assert conn.execute('SELECT COUNT(*) FROM travel_filing').fetchone()[0] == 1
+
+
+def test_cash_advance_warning_requires_an_explicit_second_click(page, conn, monkeypatch):
+    from datetime import timedelta
+    import travel
+    import tzutil as tz
+    _fill_new_filing(page)
+    page.locator('[name="kind"][value="ca"]').check()
+    page.locator('[name="start"]').fill((tz.today_local() + timedelta(days=20)).isoformat())
+    page.locator('[name="end"]').fill((tz.today_local() + timedelta(days=22)).isoformat())
+    create, calls = travel.create_filing, []
+    def warn_once(*args, **kw):
+        calls.append(1)
+        if len(calls) == 1:
+            raise travel.Unliquidated([])
+        return create(*args, **kw)
+    monkeypatch.setattr(travel, 'create_filing', warn_once)
+    page.get_by_role('button', name='Open the checklist', exact=True).click()
+    pw.expect(page.get_by_role('button', name='Continue anyway', exact=True)).to_be_enabled()
+    assert calls == [1] and conn.execute('SELECT COUNT(*) FROM travel_filing').fetchone()[0] == 0
+    page.get_by_role('button', name='Continue anyway', exact=True).click()
+    page.wait_for_url(re.compile(r'.*/travel/f/TF-\d{4}-\d+$'))
+    assert calls == [1, 1]
 
 
 @pytest.mark.parametrize('kind', ['ca', 'reimbursement', 'liquidation'])

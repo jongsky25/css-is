@@ -43,7 +43,7 @@ Both templates are plain Google Docs in the `_templates` folder under the relay'
 
 ## The DPO follows the DOH Department Personnel Order layout
 
-The DPO template (version 7.46 onwards) is built to the DOH order format: the "Republic of the Philippines / DEPARTMENT OF
+The DPO template (version 7.47 onwards) is built to the DOH order format: the "Republic of the Philippines / DEPARTMENT OF
 HEALTH / Office of the Secretary" letterhead, the date at the top right, "DEPARTMENT PERSONNEL ORDER No. 2026 - ____", a
 bold underlined SUBJECT, a background paragraph, "Authority is hereby given to the following select ... personnel", a
 Name / Position table, the expenses paragraphs, "By Authority of the Secretary of Health:", the signatory in capitals and the

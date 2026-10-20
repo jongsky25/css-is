@@ -692,6 +692,16 @@ def init_db(conn):
         WHERE kind='ca' AND status<>'withdrawn' AND source_kind<>'blank';
     CREATE INDEX IF NOT EXISTS ix_travel_filing_user ON travel_filing(user_id, status);
     CREATE INDEX IF NOT EXISTS ix_travel_filing_act ON travel_filing(entry_id, event_id);
+    CREATE TABLE IF NOT EXISTS travel_submission (
+        operation_id TEXT PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES admin_user(id) ON DELETE CASCADE,
+        state TEXT NOT NULL CHECK (state IN ('ready','pending','completed','rejected')),
+        request_hash TEXT,
+        result_ref TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS ix_travel_submission_user ON travel_submission(user_id);
     CREATE TABLE IF NOT EXISTS travel_item (
         filing_id INTEGER NOT NULL REFERENCES travel_filing(id) ON DELETE CASCADE,
         item_code TEXT NOT NULL,

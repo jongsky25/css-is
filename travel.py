@@ -712,7 +712,7 @@ def sync_items(conn, filing):
 
 
 def create_filing(conn, user, *, kind, source, answers, mc114_format="none", role="", dpo_no="", dpo_date="",
-                  ca_filing_id=None, advance_amount=None, today, acknowledged=False):
+                  ca_filing_id=None, advance_amount=None, today, acknowledged=False, commit=True):
     """Open a filing. Raises TravelError (message safe to show) or Unliquidated (warn first)."""
     today = _d(today)
     if kind not in KINDS:
@@ -782,18 +782,20 @@ def create_filing(conn, user, *, kind, source, answers, mc114_format="none", rol
              _iso_or_none(dpo_date), json.dumps(ans), amount, ca_id, mc114_format, deadline, rule,
              now, user["username"], now))
     except sqlite3.IntegrityError:
-        conn.rollback()
+        if commit:
+            conn.rollback()
         raise TravelError("You already have a cash advance for this activity.")
     fid = cur.lastrowid
     conn.execute("UPDATE travel_filing SET ref_code=? WHERE id=?", (f"TF-{today:%y%m}-{fid:04d}", fid))
     filing = get_filing(conn, fid)
     sync_items(conn, filing)
-    conn.commit()
-    carry_from_ca(conn, get_filing(conn, fid))
+    carry_from_ca(conn, get_filing(conn, fid), commit=False)
+    if commit:
+        conn.commit()
     return get_filing(conn, fid)
 
 
-def carry_from_ca(conn, filing) -> bool:
+def carry_from_ca(conn, filing, *, commit=True) -> bool:
     """A liquidation's "Appendix A of the cash advance" row is the form already made for that cash advance, so take its
     link instead of asking for it again. Only an untouched row is filled: one the person added, marked not applicable
     or removed is left as they set it. True when the row was filled."""
@@ -813,7 +815,8 @@ def carry_from_ca(conn, filing) -> bool:
     conn.execute("UPDATE travel_item SET drive_url=?, drive_file_id=NULL, drive_source='carried', state='present', "
                  "note=COALESCE(NULLIF(note,''), ?), updated_at=? WHERE filing_id=? AND item_code='prev_appendix_a'",
                  (link, f"Taken from cash advance {ca[0]}.", now, filing["id"]))
-    conn.commit()
+    if commit:
+        conn.commit()
     return True
 
 
