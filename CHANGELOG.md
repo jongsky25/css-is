@@ -1,3 +1,7 @@
+## 7.45 — October 20, 2026
+
+- Add the missing in-app update-history entries for 7.36, 7.37, 7.38, 7.40 and 7.41, so the login screen history has no gaps.
+
 ## 7.44 — October 20, 2026
 
 - The travel filing page now walks through the claim in steps: 1 Your claim (the answers that decide what you need), 2 Attach the documents (the ones that already exist outside the app), 3 Make the forms (made for you from a template, using what you attached), 4 Enter these in FMIS. Each step explains itself and counts its progress, each item keeps its done or missing badge, and there is one place to prepare the forms (spot feedback #140).
