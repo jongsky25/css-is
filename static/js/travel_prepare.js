@@ -48,7 +48,7 @@
   function needs(code) { return codes.indexOf(code) >= 0; }
   var BLANK = { date: '', from: '', to: '', dep: '', arr: '', mode: 'none', route_type: '', receipt: 'none', allowance: 0, per_diem: 0,
                 basis: '', place: '', km: 0, day_kind: '', lodging_provided: false, meals_provided: false };
-  var calc = [];                       // what the server says the policy allows, one entry per row
+  var calc = [], regionDte = null;     // what the server says the policy allows, one entry per row, and the region's daily rate
   var draftKey = 'travel-draft-' + data.ref;
   // What the server drafted from the uploads (rows with `rid`/`src`, and these suggested answers). A browser draft keeps
   // what the person changed, takes up rides read from uploads made since, and lets an answer they never touched follow
@@ -119,7 +119,7 @@
   }
   function peso(n) { return '\u20b1' + Number(n).toLocaleString('en-PH', { maximumFractionDigits: 2 }); }
 
-  var rowsBox = el('div', { 'class': 'tv-rows' }), totals = el('div', { 'class': 'tv-totals' });
+  var rowsBox = el('div', { 'class': 'tv-rows' }), totals = el('div', { 'class': 'tv-totals' }), breakBox = el('details', { 'class': 'tv-breakdown' });
   var flagsBox = el('div'), msgBox = el('div', { role: 'status', 'aria-live': 'polite' }), docsList = el('ul', { 'class': 'tv-docs' });
 
   var uis = [];                        // per row: the lines the server's answer is painted into
@@ -325,7 +325,7 @@
         body: JSON.stringify({ rows: state.rows, rates: state.rates }) })
         .then(function (r) { return r.json(); }).then(function (j) {
           if (seq !== calcSeq || !j.ok) return;
-          calc = j.rows;
+          calc = j.rows; regionDte = j.dte;
           var changed = false;
           state.rows.forEach(function (r, i) {
             var c = calc[i] || {};
@@ -361,6 +361,51 @@
       check('I receive the \u20b150 daily subsistence allowance through payroll', state.rates.receives_sa, function (v) { state.rates.receives_sa = v; }),
       check('I am a senior citizen, PWD or student (20% lower public fare)', state.rates.discounted, function (v) { state.rates.discounted = v; }),
       allDays()]);
+  }
+
+  // Where every peso in the Total comes from: what the person typed, and for each day the policy rule and rate behind
+  // the per diem, so a manual computation can be compared line by line.
+  function drawBreakdown() {
+    var open = breakBox.open, rows = [], total = 0;
+    breakBox.textContent = '';
+    breakBox.appendChild(el('summary', { text: 'How this total is worked out' }));
+    state.rows.forEach(function (r, i) {
+      var c = calc[i] || {}, fare = Number(r.allowance) || 0, pd = Number(r.per_diem) || 0;
+      if (!fare && !pd) return;
+      total += fare + pd;
+      var kind = (policy.day_kinds.filter(function (k) { return k[0] === r.day_kind; })[0] || [])[2];
+      var title = 'Entry ' + (i + 1) + (r.date ? ' \u00b7 ' + r.date : '') + (r.from || r.to ? ' \u00b7 ' + (r.from || '?') + ' to ' + (r.to || '?') : '');
+      var lines = [];
+      if (fare) {
+        lines.push([isEstimate ? 'Estimated fare' : 'Fare', fare, 'The amount you typed.' + (c.cap != null ? ' The policy allows up to ' + peso(c.cap) + '. ' + (c.cap_rule || '') : '')]);
+      }
+      if (pd) {
+        var why;
+        if (c.per_diem == null || !r.day_kind) why = 'The amount you typed. Choose a per diem rule to have the policy work it out.';
+        else {
+          var d = c.day || {};
+          why = (kind || 'Per diem rule') + (regionDte ? ' at ' + peso(regionDte) + ' a day' : '') + ': lodging ' + peso(d.lodging || 0) + ' + meals ' + peso(d.meals || 0) +
+            ' + incidentals ' + peso(d.incidentals || 0) + ' = ' + peso(c.per_diem) + '. ' + (d.notes || []).join(' ');
+          if (pd !== c.per_diem) why += ' You typed ' + peso(pd) + ' instead.';
+        }
+        lines.push(['Per diem', pd, why]);
+      }
+      rows.push([title, lines]);
+    });
+    if (!rows.length) {
+      breakBox.appendChild(el('p', { 'class': 'tv-hint', text: 'Enter a fare or choose a per diem rule on an entry and its working appears here.' }));
+    } else {
+      rows.forEach(function (x) {
+        breakBox.appendChild(el('h4', { text: x[0] }));
+        var ul = el('ul');
+        x[1].forEach(function (l) { ul.appendChild(el('li', {}, [el('strong', { text: l[0] + ' ' + peso(l[1]) }), el('div', { 'class': 'tv-hint', text: l[2] })])); });
+        breakBox.appendChild(ul);
+      });
+      breakBox.appendChild(el('p', { 'class': 'tv-breakdown-total', text: 'Total ' + peso(total) }));
+      breakBox.appendChild(el('p', { 'class': 'tv-hint' }, [document.createTextNode('If your own figure differs, check the rate for where you went, whether meals or lodging were provided, and the \u20b150 subsistence allowance. '),
+        el('a', { href: policy.rates_url, target: '_blank', rel: 'noopener', text: 'See every policy rate' })]));
+    }
+    breakBox.open = open;
   }
 
   // Mark the field a warning is about: red border, aria-invalid, and a message tied to it for screen readers.
@@ -401,6 +446,7 @@
     });
     totals.textContent = 'Total: \u20b1' + total.toLocaleString('en-PH', { maximumFractionDigits: 2 }) +
       (kinds.cenrr ? ' \u00b7 ' + kinds.cenrr + ' ride(s) go on a CENRR' : '') + (kinds.rer ? ' \u00b7 ' + kinds.rer + ' RER form(s)' : '');
+    drawBreakdown();
     flagsBox.textContent = '';
     clearMarks();
     if (lines.length) {
@@ -432,7 +478,7 @@
 
   var T = state.texts, S = state.signatories;
   app.appendChild(ratesPanel());
-  app.appendChild(section('Itinerary of travel', [rowsBox, addDay, totals, flagsBox,
+  app.appendChild(section('Itinerary of travel', [rowsBox, addDay, totals, breakBox, flagsBox,
     field('Purpose (completes "To …")', T.purpose, function (v) { T.purpose = v; }, { wide: true }),
     field('Itinerary number (optional)', T.itinerary_no, function (v) { T.itinerary_no = v; })]));
   if (needs('appendix_b')) {
@@ -506,7 +552,7 @@
       drawDocs(j.items);
       if (j.gen_state === 'running') { timer = setTimeout(poll, 2500); return; }
       go.disabled = app.getAttribute('data-has-relay') !== '1';
-      msgBox.textContent = j.gen_state === 'idle' ? '' : j.gen_state === 'done' ? 'Done. Open each form, check it, and sign where it says. Then go back to the filing page.' : 'Some forms did not finish. Press the button to try again.';
+      msgBox.textContent = j.gen_state === 'idle' ? '' : j.gen_state === 'done' ? 'Done. Open each form, check it, and sign where it says. Then go back to the filing page.' : 'Some forms did not finish. Each one says why below. Press the button to try again. If it still fails, tell the Admin Unit and give them this reference: ' + data.ref + '.';
     }).catch(function () { timer = setTimeout(poll, 5000); });
   }
   go.addEventListener('click', function () {

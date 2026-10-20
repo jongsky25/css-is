@@ -550,7 +550,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
                     if res.ok and res.data.get("url"):
                         urls.append(res.data["url"])
                     else:
-                        err = gdocs_relay.describe(res.error)
+                        err = gdocs_relay.describe_for_filer(res.error)
                         break
                 if err or not urls:
                     travel.finish_item(conn, filing_id, code, rev, error=err or "No document came back.")
