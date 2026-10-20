@@ -1,3 +1,7 @@
+## 7.46 — October 20, 2026
+
+- The drafted DPO now follows the DOH Department Personnel Order layout: DOH letterhead, date and number, a subject, a background paragraph, the authority line, a Name and Position table, the expenses paragraphs, "By Authority of the Secretary of Health" with the signatory in capitals, and the DOH address footer. The DPO number, date and funding source are still left blank for you to fill in. The Apps Script template needs to be updated and re-run (docs/ACTIVITY_DOCS_SETUP.md) (spot feedback #136).
+
 ## 7.45 — October 20, 2026
 
 - Add the missing in-app update-history entries for 7.36, 7.37, 7.38, 7.40 and 7.41, so the login screen history has no gaps.

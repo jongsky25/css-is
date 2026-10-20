@@ -86,6 +86,12 @@ def when_text(entry) -> str:
     return f"{days}, {entry['time_note']}" if entry.get("time_note") else days
 
 
+def days_text(entry) -> str:
+    """Just the dates, for an order that does not carry the time of day."""
+    a, b = entry["start_date"], entry.get("end_date") or entry["start_date"]
+    return td.date_range(a, b)
+
+
 def where_text(entry) -> str:
     mod = {"f2f": "face to face", "online": "online", "hybrid": "hybrid"}.get(entry.get("modality") or "", "")
     venue = (entry.get("venue") or "").strip()
@@ -121,11 +127,25 @@ def payload(conn, entry, key, user, owner_label="") -> td.DocPayload:
     head_title = st.get_setting(conn, "travel.sig.head_title", "")
     if key == "dpo":
         people = describe_people(conn, entry, "travel") or describe_people(conn, entry) or [(me, profile.get("designation") or "")]
-        fields = {"dpo_no": BLANK, "dpo_date": BLANK, "title": title, "purpose": f"attend {title}",
-                  "dates": when_text(entry), "venue": where_text(entry), "funding_source": BLANK,
-                  "head_name": head_name, "head_title": head_title, "prepared_by": me}
+        days = days_text(entry)
+        place = (entry.get("venue") or "").strip()
+        in_place = f" in {place}" if place else ""
+        unit = owner_label.strip()
+        who = f"Select {unit} Personnel" if unit else "Select Personnel"
+        fields = {"dpo_year": str(td._d(entry["start_date"]).year), "dpo_no": BLANK, "dpo_date": BLANK,
+                  "subject": f"Authority for {who} to Participate in {title}, {days}{in_place}",
+                  "background": (f"The {unit} will conduct {title} on {days}{in_place}." if unit
+                                 else f"{title} will be held on {days}{in_place}."),
+                  "intro": f"Authority is hereby given to the following select {unit + ' ' if unit else ''}personnel to participate in "
+                           f"{title} on {days}{in_place}:",
+                  "title": title, "purpose": f"attend {title}", "dates": days, "venue": where_text(entry),
+                  "funding_source": BLANK, "unit_name": unit, "head_name": head_name.upper(), "head_title": head_title,
+                  "prepared_by": me}
+        # The personnel go in as a table (Name | Position) and, for a template that still has a {{personnel}} line, as
+        # numbered lines too. Whichever the template carries is filled; the other is skipped.
+        rows = {"personnel": {"marker": "p_name", "data": [{"p_name": f"{i}. {n}", "p_position": d} for i, (n, d) in enumerate(people, 1)]}}
         blocks = {"personnel": [_line(i, n, d) for i, (n, d) in enumerate(people, 1)]}
-        return td.DocPayload("dpo", "dpo", f"DPO - {title}"[:120], fields, blocks=blocks)
+        return td.DocPayload("dpo", "dpo", f"DPO - {title}"[:120], fields, blocks=blocks, rows=rows)
     if key == "invitation":
         if entry.get("audience") == "bureau":
             invited = "All personnel of the bureau"
