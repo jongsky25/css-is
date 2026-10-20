@@ -7,6 +7,7 @@ never chose. The /me page lets a user re-pick or rename after onboarding.
 """
 from __future__ import annotations
 
+from tests.conftest import session_token
 import base64
 import re
 
@@ -35,7 +36,7 @@ def _fresh(app_mod, username, kind=None, name=None, onboarded=True):
 def _client(app_mod, uid, username):
     from starlette.testclient import TestClient
     c = TestClient(app_mod.app)
-    c.cookies.set(auth.COOKIE_NAME, auth.make_token(
+    c.cookies.set(auth.COOKIE_NAME, session_token(
         {"id": uid, "username": username, "role": "viewer"}))
     return c
 
@@ -138,10 +139,8 @@ def test_me_saves_designation(app_mod):
     conn.execute("DELETE FROM admin_user WHERE id=?", (uid,)); conn.commit(); conn.close()
 
 
-def test_me_designation_syncs_to_directory(app_mod):
-    """A directory-linked account's designation writes through to its
-    resource_person row (the field certificates read), and clearing it on the
-    profile clears it there too."""
+def test_me_cannot_change_linked_directory_designation(app_mod):
+    """Directory titles drive authority and cannot be edited through /me."""
     conn = st.connect(app_mod.DB)
     st.init_db(conn)
     conn.execute("DELETE FROM admin_user WHERE username=?", ("pe-link@test.local",))
@@ -154,19 +153,20 @@ def test_me_designation_syncs_to_directory(app_mod):
     conn.commit(); conn.close()
     c = _client(app_mod, uid, "pe-link@test.local")
 
-    # Edit on the profile → the directory row is updated.
+    assert 'readonly' in c.get('/me').text.split('id="designation"', 1)[1].split('>', 1)[0]
+    # A forged field cannot change authority, even if a stale client sends it.
     c.post("/me", data={"avatar_kind": "cat", "avatar_name": "Milo",
                         "designation": "Section Head"}, follow_redirects=False)
     conn = st.connect(app_mod.DB)
-    assert st.get_rp(conn, rp_id)["designation"] == "Section Head"
-    assert st.get_user_profile(conn, uid)["designation"] == "Section Head"
+    assert st.get_rp(conn, rp_id)["designation"] == "Old Title"
+    assert st.get_user_profile(conn, uid)["designation"] == "Old Title"
     conn.close()
 
-    # Clearing it on the profile clears the directory too.
+    # Clearing the field cannot erase an administrator-maintained title either.
     c.post("/me", data={"avatar_kind": "cat", "avatar_name": "Milo",
                         "designation": ""}, follow_redirects=False)
     conn = st.connect(app_mod.DB)
-    assert st.get_rp(conn, rp_id)["designation"] in (None, "")
+    assert st.get_rp(conn, rp_id)["designation"] == "Old Title"
     conn.execute("DELETE FROM admin_user WHERE id=?", (uid,))
     conn.execute("DELETE FROM resource_person WHERE id=?", (rp_id,))
     conn.commit(); conn.close()
@@ -254,10 +254,10 @@ def test_linked_account_signs_on_its_directory_row(app_mod):
                         "remove_signature": "1"}, follow_redirects=False)
     conn = st.connect(app_mod.DB)
     assert st.get_rp_signature(conn, rp_id) is None
+    assert c.get("/me/signature.png").status_code == 404
     conn.execute("DELETE FROM admin_user WHERE id=?", (uid,))
     conn.execute("DELETE FROM resource_person WHERE id=?", (rp_id,))
     conn.commit(); conn.close()
-    assert c.get("/me/signature.png").status_code == 404
 
 
 def test_me_requires_a_name(app_mod):

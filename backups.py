@@ -99,7 +99,9 @@ def make_backup(db_path="css_is.db", kind="manual"):
     # Advance the high-water mark to the data we just captured (monotonic — it
     # can't be lowered by a stale writer). This is what a later boot compares the
     # newest visible snapshot against to detect a lagging FUSE view.
-    write_highwater(db_path, name)
+    # A writer can commit to the live DB after the copy finishes. The recovery
+    # marker must describe the data actually saved, not a newer live generation.
+    write_highwater(dst, name)
     return _meta(name)
 
 
@@ -466,6 +468,18 @@ def prune_backups(keep, keep_daily=0):
     return deleted
 
 
+def clear_restored_sessions(db_path):
+    """A restored snapshot must not resurrect a previously revoked cookie."""
+    conn = sqlite3.connect(db_path)
+    try:
+        with conn:
+            if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' "
+                            "AND name='login_session'").fetchone():
+                conn.execute("DELETE FROM login_session")
+    finally:
+        conn.close()
+
+
 def restore_backup(name, db_path="css_is.db"):
     """Overwrite the live DB with a chosen snapshot, after auto-snapshotting the
     current DB first (so a restore is itself reversible). Returns the safety
@@ -489,6 +503,7 @@ def restore_backup(name, db_path="css_is.db"):
     # A deliberate restore may legitimately move the live DB to an OLDER state, so
     # realign the high-water mark DOWN to it — otherwise the boot/persist guards
     # would reject the admin's own chosen snapshot as "stale".
+    clear_restored_sessions(db_path)
     reset_highwater(db_path)
     return safety
 

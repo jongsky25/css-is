@@ -1,4 +1,5 @@
 """Public-link outbox: durability, provider failures, boundaries and sharing UI."""
+from tests.conftest import session_token
 import concurrent.futures
 import sqlite3
 
@@ -161,7 +162,7 @@ def test_status_and_qr_ui(queue, monkeypatch):
     client = TestClient(app.app)
     assert client.post('/short-links/create', data={'url': original}, headers={'X-Short-Link-Request': '1'}).status_code == 401
     assert client.get('/short-links/status', params={'url': original}, follow_redirects=False).status_code in (302, 303)
-    client.cookies.set(auth.COOKIE_NAME, auth.make_token({'id': uid, 'username': 'short@test.local', 'role': 'admin'}))
+    client.cookies.set(auth.COOKIE_NAME, session_token({'id': uid, 'username': 'short@test.local', 'role': 'admin'}))
     assert client.get('/short-links/status', params={'url': original}).json()['state'] == 'missing'
     assert client.post('/short-links/create', data={'url': original}).status_code == 403
     assert client.post('/short-links/create', data={'url': BASE + '/e/unknown'}, headers={'X-Short-Link-Request': '1'}).status_code == 404

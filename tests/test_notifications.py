@@ -8,6 +8,7 @@ with a chief + staff account, cleaned up per test.
 """
 from __future__ import annotations
 
+from tests.conftest import session_token
 import pytest
 
 import auth
@@ -82,7 +83,7 @@ def _client_for(app_mod, uid):
     u = st.get_admin_user_by_id(conn, uid)
     conn.close()
     c = TestClient(app_mod.app, raise_server_exceptions=True)
-    c.cookies.set(auth.COOKIE_NAME, auth.make_token(
+    c.cookies.set(auth.COOKIE_NAME, session_token(
         {"id": u["id"], "username": u["username"], "role": u["role"]}))
     return c
 

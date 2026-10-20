@@ -1,0 +1,39 @@
+{
+  "profile_authority": {
+    "before_director": false,
+    "before_can_view_other_office_document": false,
+    "profile_save_status": 303,
+    "after_director": true,
+    "after_approving_chief": true,
+    "after_can_view_other_office_document": true,
+    "after_can_view_explicitly_restricted_document": false,
+    "after_application_role": "viewer",
+    "after_document_http_status": 200
+  },
+  "model_self_grounding": {
+    "source_fact": 2,
+    "status": 200,
+    "response": {
+      "kind": "answer",
+      "label": "Answer",
+      "text": "There are 999999 survey responses.",
+      "confidence": 0.99,
+      "interaction_id": 100001,
+      "served_by": "grounded"
+    },
+    "method": "Provider-stub contract check; does not measure real-model hallucination frequency."
+  },
+  "privacy_log_mask": {
+    "masked": "Synthetic Person has a private medical appointment; contact [email], reference ###"
+  },
+  "analytics_edge_inputs": {
+    "null_org_path": {
+      "exception": "ValueError",
+      "message": "Cannot mask with non-boolean array containing NA / NaN values"
+    },
+    "nan_trend": {
+      "exception": "AttributeError",
+      "message": "'float' object has no attribute 'numerator'"
+    }
+  }
+}

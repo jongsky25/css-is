@@ -4,6 +4,7 @@ period and deadline arithmetic, field validation, the staff-initiated change
 flow, approver routing through the shared org chain, the advisory (never
 blocking) coverage warnings, in-handler RBAC, and both annex exports.
 """
+from tests.conftest import session_token
 import io
 import sqlite3
 from datetime import date, timedelta
@@ -83,7 +84,7 @@ def _client_for_id(app_mod, uid):
     u = st.get_admin_user_by_id(conn, uid)
     conn.close()
     c = TestClient(app_mod.app, raise_server_exceptions=True)
-    c.cookies.set(auth.COOKIE_NAME, auth.make_token(
+    c.cookies.set(auth.COOKIE_NAME, session_token(
         {"id": u["id"], "username": u["username"], "role": u["role"]}))
     return c
 

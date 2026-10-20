@@ -1,0 +1,1035 @@
+{
+  "full_suite": {
+    "tests": 4032,
+    "passed": 3968,
+    "failed": 48,
+    "skipped": 16,
+    "errors": 0,
+    "seconds": 209.882,
+    "by_module": {
+      "tests.test_a11y_charts": {
+        "passed": 10
+      },
+      "tests.test_account_email_sync": {
+        "passed": 3
+      },
+      "tests.test_activity_editable_comments": {
+        "passed": 5
+      },
+      "tests.test_activity_merge_across_dates": {
+        "passed": 9
+      },
+      "tests.test_activity_messages": {
+        "passed": 7
+      },
+      "tests.test_activity_report": {
+        "passed": 7
+      },
+      "tests.test_activity_report_comments": {
+        "passed": 12
+      },
+      "tests.test_activity_report_none_gap": {
+        "passed": 1
+      },
+      "tests.test_activity_respondents_excludes_speakers": {
+        "passed": 2
+      },
+      "tests.test_ai_admin": {
+        "passed": 13
+      },
+      "tests.test_ai_answers": {
+        "passed": 12
+      },
+      "tests.test_ai_answers_grounded": {
+        "passed": 12
+      },
+      "tests.test_ai_assistant": {
+        "passed": 15
+      },
+      "tests.test_ai_core": {
+        "passed": 50
+      },
+      "tests.test_ai_feedback_triage": {
+        "passed": 11
+      },
+      "tests.test_ai_harmonize": {
+        "passed": 11
+      },
+      "tests.test_ai_learned_rules": {
+        "passed": 10
+      },
+      "tests.test_ai_messages": {
+        "passed": 9
+      },
+      "tests.test_ai_report_draft": {
+        "passed": 13,
+        "failed": 3
+      },
+      "tests.test_ai_router": {
+        "passed": 18
+      },
+      "tests.test_ai_verbatim": {
+        "passed": 13
+      },
+      "tests.test_arta_report": {
+        "passed": 11
+      },
+      "tests.test_atoms_cache": {
+        "passed": 22
+      },
+      "tests.test_att_hardening": {
+        "passed": 12
+      },
+      "tests.test_audit_insights": {
+        "passed": 5
+      },
+      "tests.test_auth_async": {
+        "passed": 3
+      },
+      "tests.test_auth_rbac": {
+        "passed": 75
+      },
+      "tests.test_avatar_care": {
+        "passed": 35,
+        "failed": 1
+      },
+      "tests.test_backups": {
+        "passed": 33
+      },
+      "tests.test_base_url": {
+        "passed": 5
+      },
+      "tests.test_birthday_calendar": {
+        "passed": 33
+      },
+      "tests.test_birthday_capture": {
+        "passed": 32
+      },
+      "tests.test_birthday_cards": {
+        "passed": 27
+      },
+      "tests.test_birthday_greeting_signin": {
+        "passed": 11
+      },
+      "tests.test_birthday_greetings": {
+        "passed": 14
+      },
+      "tests.test_birthday_reminders": {
+        "passed": 23
+      },
+      "tests.test_bulk_actions": {
+        "passed": 10
+      },
+      "tests.test_bureau_access": {
+        "passed": 15
+      },
+      "tests.test_bureau_no_rp": {
+        "passed": 2
+      },
+      "tests.test_calendar_a11y": {
+        "passed": 12
+      },
+      "tests.test_calendar_activities": {
+        "passed": 16
+      },
+      "tests.test_calendar_api_ai": {
+        "passed": 28
+      },
+      "tests.test_calendar_bell": {
+        "passed": 17
+      },
+      "tests.test_calendar_contrast": {
+        "passed": 3
+      },
+      "tests.test_calendar_entry_pages": {
+        "passed": 32
+      },
+      "tests.test_calendar_entry_room": {
+        "passed": 11
+      },
+      "tests.test_calendar_home": {
+        "passed": 19
+      },
+      "tests.test_calendar_home_tab": {
+        "passed": 20
+      },
+      "tests.test_calendar_ics": {
+        "passed": 24
+      },
+      "tests.test_calendar_import": {
+        "passed": 114
+      },
+      "tests.test_calendar_import_page": {
+        "passed": 45
+      },
+      "tests.test_calendar_import_suggest": {
+        "passed": 9
+      },
+      "tests.test_calendar_link": {
+        "passed": 30
+      },
+      "tests.test_calendar_linked_edit": {
+        "passed": 19
+      },
+      "tests.test_calendar_mismatch": {
+        "passed": 14
+      },
+      "tests.test_calendar_month": {
+        "passed": 28
+      },
+      "tests.test_calendar_outbox": {
+        "passed": 22
+      },
+      "tests.test_calendar_page": {
+        "passed": 22
+      },
+      "tests.test_calendar_people": {
+        "passed": 90
+      },
+      "tests.test_calendar_phase4": {
+        "passed": 26
+      },
+      "tests.test_calendar_recurrence": {
+        "passed": 59
+      },
+      "tests.test_calendar_rooms": {
+        "passed": 19
+      },
+      "tests.test_calendar_rooms_pages": {
+        "passed": 6
+      },
+      "tests.test_calendar_scope": {
+        "passed": 21
+      },
+      "tests.test_calendar_storage": {
+        "passed": 30
+      },
+      "tests.test_calendar_timeline": {
+        "passed": 24
+      },
+      "tests.test_calendar_toolbar": {
+        "passed": 10
+      },
+      "tests.test_calendar_week": {
+        "passed": 18
+      },
+      "tests.test_calendar_week_ahead": {
+        "passed": 16
+      },
+      "tests.test_calendar_whereabouts_e1": {
+        "passed": 21
+      },
+      "tests.test_certificate": {
+        "passed": 19
+      },
+      "tests.test_colleague_status": {
+        "passed": 13
+      },
+      "tests.test_comment_bucketing": {
+        "passed": 5
+      },
+      "tests.test_create_duplicate_warning": {
+        "passed": 10
+      },
+      "tests.test_csm_official": {
+        "passed": 14
+      },
+      "tests.test_csm_public_form": {
+        "passed": 30
+      },
+      "tests.test_csm_public_form_ux": {
+        "skipped": 4
+      },
+      "tests.test_date_handling": {
+        "passed": 16
+      },
+      "tests.test_date_range": {
+        "passed": 9
+      },
+      "tests.test_deploy_hf": {
+        "passed": 4
+      },
+      "tests.test_dimension_labels": {
+        "passed": 6
+      },
+      "tests.test_director_and_oic_routing": {
+        "passed": 9
+      },
+      "tests.test_director_exclusion": {
+        "passed": 2
+      },
+      "tests.test_directory_archive": {
+        "passed": 15
+      },
+      "tests.test_directory_search": {
+        "passed": 5
+      },
+      "tests.test_documents": {
+        "passed": 33
+      },
+      "tests.test_documents_dtrak": {
+        "passed": 9
+      },
+      "tests.test_documents_email": {
+        "passed": 14
+      },
+      "tests.test_documents_email_queue": {
+        "passed": 11
+      },
+      "tests.test_documents_gmail_review": {
+        "passed": 6
+      },
+      "tests.test_documents_gmail_settings": {
+        "passed": 11
+      },
+      "tests.test_documents_intake": {
+        "passed": 48
+      },
+      "tests.test_documents_intake_script": {
+        "passed": 3
+      },
+      "tests.test_documents_ocr": {
+        "passed": 8
+      },
+      "tests.test_documents_page_reader": {
+        "passed": 13
+      },
+      "tests.test_documents_reader": {
+        "passed": 18
+      },
+      "tests.test_documents_routes": {
+        "passed": 7
+      },
+      "tests.test_documents_setup": {
+        "passed": 24
+      },
+      "tests.test_documents_workspace": {
+        "passed": 21
+      },
+      "tests.test_dtrak_reader": {
+        "passed": 10
+      },
+      "tests.test_email_admin": {
+        "passed": 30
+      },
+      "tests.test_event_e": {
+        "passed": 5
+      },
+      "tests.test_event_hub": {
+        "passed": 24
+      },
+      "tests.test_event_links": {
+        "passed": 8
+      },
+      "tests.test_event_sharing": {
+        "passed": 11
+      },
+      "tests.test_event_slug": {
+        "passed": 4
+      },
+      "tests.test_event_speaker_manage": {
+        "passed": 5
+      },
+      "tests.test_form_archive": {
+        "passed": 7
+      },
+      "tests.test_gmail_documents_script": {
+        "passed": 1
+      },
+      "tests.test_gmail_import_script": {
+        "passed": 2
+      },
+      "tests.test_home_assistant_box": {
+        "passed": 8
+      },
+      "tests.test_home_concluded_invited": {
+        "passed": 2
+      },
+      "tests.test_home_feeds": {
+        "passed": 10,
+        "failed": 1
+      },
+      "tests.test_i18n_review": {
+        "passed": 15
+      },
+      "tests.test_input_abuse": {
+        "passed": 9
+      },
+      "tests.test_insights_tabs": {
+        "failed": 2,
+        "passed": 2
+      },
+      "tests.test_integrity": {
+        "passed": 1,
+        "failed": 9
+      },
+      "tests.test_landing_fork": {
+        "passed": 18
+      },
+      "tests.test_landing_insights": {
+        "passed": 16
+      },
+      "tests.test_mailer": {
+        "passed": 34
+      },
+      "tests.test_meet_relay": {
+        "passed": 11
+      },
+      "tests.test_modality": {
+        "passed": 4
+      },
+      "tests.test_monitor": {
+        "passed": 60
+      },
+      "tests.test_monitoring": {
+        "passed": 10
+      },
+      "tests.test_mrr_export_nuance": {
+        "passed": 9,
+        "failed": 5
+      },
+      "tests.test_my_activities": {
+        "passed": 5
+      },
+      "tests.test_notifications": {
+        "passed": 23
+      },
+      "tests.test_office_answers": {
+        "passed": 15,
+        "failed": 1
+      },
+      "tests.test_office_connect": {
+        "passed": 36
+      },
+      "tests.test_onboarding_flow": {
+        "passed": 11
+      },
+      "tests.test_onboarding_storage": {
+        "passed": 17
+      },
+      "tests.test_ops_usage": {
+        "passed": 6
+      },
+      "tests.test_outside_activity": {
+        "passed": 24
+      },
+      "tests.test_outside_events_page": {
+        "passed": 5
+      },
+      "tests.test_outside_rp_results_link": {
+        "passed": 4
+      },
+      "tests.test_page_tabs": {
+        "passed": 5
+      },
+      "tests.test_participation": {
+        "passed": 11
+      },
+      "tests.test_persist_health": {
+        "passed": 4
+      },
+      "tests.test_profile_edit": {
+        "passed": 13,
+        "failed": 1
+      },
+      "tests.test_pulse_spark": {
+        "passed": 7
+      },
+      "tests.test_pwa": {
+        "passed": 13
+      },
+      "tests.test_qa_rules": {
+        "passed": 10
+      },
+      "tests.test_quality_index": {
+        "passed": 6
+      },
+      "tests.test_quality_standing": {
+        "passed": 5
+      },
+      "tests.test_raffle": {
+        "passed": 18
+      },
+      "tests.test_registration_dedup": {
+        "passed": 21
+      },
+      "tests.test_registration_questions": {
+        "passed": 41
+      },
+      "tests.test_report_activity_verbatims": {
+        "passed": 3
+      },
+      "tests.test_responder_name_list": {
+        "passed": 10
+      },
+      "tests.test_rooms_activity": {
+        "passed": 16
+      },
+      "tests.test_rooms_activity_pages": {
+        "passed": 16
+      },
+      "tests.test_rooms_approval": {
+        "passed": 18
+      },
+      "tests.test_rooms_bump": {
+        "passed": 20
+      },
+      "tests.test_rooms_bump_pages": {
+        "passed": 14
+      },
+      "tests.test_rooms_core": {
+        "passed": 20
+      },
+      "tests.test_rooms_display": {
+        "passed": 17
+      },
+      "tests.test_rooms_guest": {
+        "passed": 21
+      },
+      "tests.test_rooms_guest_pages": {
+        "passed": 17
+      },
+      "tests.test_rooms_meals": {
+        "passed": 50
+      },
+      "tests.test_rooms_meals_pages": {
+        "passed": 17
+      },
+      "tests.test_rooms_notify": {
+        "passed": 30
+      },
+      "tests.test_rooms_notify_pages": {
+        "passed": 13
+      },
+      "tests.test_rooms_pages": {
+        "passed": 17
+      },
+      "tests.test_rooms_series": {
+        "passed": 14
+      },
+      "tests.test_rooms_series_pages": {
+        "passed": 3,
+        "failed": 7
+      },
+      "tests.test_routes": {
+        "passed": 42,
+        "failed": 9
+      },
+      "tests.test_rp_report_filter": {
+        "passed": 2
+      },
+      "tests.test_rp_roster_pptx": {
+        "passed": 5
+      },
+      "tests.test_saved_views": {
+        "passed": 2
+      },
+      "tests.test_search": {
+        "passed": 25,
+        "failed": 2
+      },
+      "tests.test_search_sources": {
+        "passed": 12
+      },
+      "tests.test_search_telemetry": {
+        "passed": 12
+      },
+      "tests.test_section_oic": {
+        "passed": 17
+      },
+      "tests.test_secure_cookies": {
+        "passed": 3
+      },
+      "tests.test_send_reminders": {
+        "passed": 30,
+        "failed": 5
+      },
+      "tests.test_servqual_raw_responses": {
+        "passed": 4
+      },
+      "tests.test_short_links": {
+        "passed": 40
+      },
+      "tests.test_spot_feedback": {
+        "passed": 20
+      },
+      "tests.test_summit_merged_results": {
+        "passed": 2
+      },
+      "tests.test_survey_wording": {
+        "passed": 9
+      },
+      "tests.test_team_scope": {
+        "passed": 14
+      },
+      "tests.test_telemetry_ingest": {
+        "passed": 13
+      },
+      "tests.test_tours": {
+        "passed": 3,
+        "failed": 1
+      },
+      "tests.test_travel_admin": {
+        "passed": 19
+      },
+      "tests.test_travel_core": {
+        "passed": 11
+      },
+      "tests.test_travel_docs_payloads": {
+        "passed": 15
+      },
+      "tests.test_travel_flags": {
+        "passed": 25
+      },
+      "tests.test_travel_generate": {
+        "passed": 16
+      },
+      "tests.test_travel_pages": {
+        "passed": 32
+      },
+      "tests.test_travel_rates": {
+        "passed": 70
+      },
+      "tests.test_travel_readings": {
+        "passed": 23
+      },
+      "tests.test_travel_relay": {
+        "passed": 47
+      },
+      "tests.test_travel_reminders": {
+        "passed": 12
+      },
+      "tests.test_travel_rules": {
+        "passed": 56
+      },
+      "tests.test_travel_scan": {
+        "passed": 19
+      },
+      "tests.test_travel_scripts": {
+        "passed": 10
+      },
+      "tests.test_travel_ux": {
+        "skipped": 12
+      },
+      "tests.test_trends": {
+        "passed": 15
+      },
+      "tests.test_trends_phase_d": {
+        "passed": 7
+      },
+      "tests.test_ui_telemetry": {
+        "passed": 29
+      },
+      "tests.test_ui_telemetry_retention": {
+        "passed": 5
+      },
+      "tests.test_update_email": {
+        "passed": 13
+      },
+      "tests.test_ux_analysis": {
+        "passed": 7
+      },
+      "tests.test_ux_handoff": {
+        "passed": 19
+      },
+      "tests.test_ux_insights": {
+        "passed": 13
+      },
+      "tests.test_verbatim_sentiment": {
+        "passed": 18
+      },
+      "tests.test_verbatims_mixed_column": {
+        "passed": 3
+      },
+      "tests.test_viewer_routing": {
+        "passed": 7
+      },
+      "tests.test_walkin_entries": {
+        "passed": 4
+      },
+      "tests.test_wellness": {
+        "passed": 50,
+        "failed": 1
+      },
+      "tests.test_wellness_escalation": {
+        "passed": 12
+      },
+      "tests.test_whereabouts": {
+        "passed": 37
+      },
+      "tests.test_work": {
+        "passed": 163
+      },
+      "tests.test_work_arrangement": {
+        "passed": 173
+      },
+      "tests.test_work_arrangement_backfill": {
+        "passed": 32
+      }
+    },
+    "failures": [
+      {
+        "module": "tests.test_ai_report_draft",
+        "test": "test_csm_ai_draft_saves_report_draft_with_ai_actor",
+        "message": "AssertionError: assert 'Drafted Sections V' in 'No CSM responses in this period to draft from.'"
+      },
+      {
+        "module": "tests.test_ai_report_draft",
+        "test": "test_csm_export_reflects_saved_draft",
+        "message": "AssertionError: assert 'Distinctive saved action plan text.' in '\\n\\n\\nDEPARTMENT OF HEALTH\\n\\n\\nClient Satisfaction Measurement Report\\nBureau of Local Health Systems Development\\n1st QUARTER (CY 2026)\\n\\nNo CSM (Type-1) responses were recorded for this period.'"
+      },
+      {
+        "module": "tests.test_ai_report_draft",
+        "test": "test_csm_export_falls_back_to_na_and_boilerplate_with_no_draft",
+        "message": "AssertionError: assert 'The Bureau will continue to implement the use of Harmonized CSM' in '\\n\\n\\nDEPARTMENT OF HEALTH\\n\\n\\nClient Satisfaction Measurement Report\\nBureau of Local Health Systems Development\\n1st QUARTER (CY 2026)\\n\\nNo CSM (Type-1) responses were recorded for this period.'"
+      },
+      {
+        "module": "tests.test_avatar_care",
+        "test": "test_landing_and_profile_both_show_the_ladder",
+        "message": "AssertionError: /me"
+      },
+      {
+        "module": "tests.test_home_feeds",
+        "test": "test_recently_concluded_links_resolve",
+        "message": "AssertionError: expected at least one invited/F3-only concluded activity"
+      },
+      {
+        "module": "tests.test_insights_tabs",
+        "test": "test_every_dashboard_shows_the_same_tab_bar_with_itself_current",
+        "message": "AttributeError: 'float' object has no attribute 'numerator'"
+      },
+      {
+        "module": "tests.test_insights_tabs",
+        "test": "test_tabs_carry_org_everywhere_and_period_only_where_it_means_the_same",
+        "message": "ValueError: Cannot mask with non-boolean array containing NA / NaN values"
+      },
+      {
+        "module": "tests.test_integrity",
+        "test": "test_no_orphan_answers",
+        "message": "sqlite3.OperationalError: no such table: answer"
+      },
+      {
+        "module": "tests.test_integrity",
+        "test": "test_no_orphan_responses",
+        "message": "sqlite3.OperationalError: no such table: response"
+      },
+      {
+        "module": "tests.test_integrity",
+        "test": "test_no_orphan_item_remarks",
+        "message": "sqlite3.OperationalError: no such table: item_remark"
+      },
+      {
+        "module": "tests.test_integrity",
+        "test": "test_served_by_points_to_real_person",
+        "message": "sqlite3.OperationalError: no such table: response"
+      },
+      {
+        "module": "tests.test_integrity",
+        "test": "test_form_instance_rp_fk",
+        "message": "sqlite3.OperationalError: no such table: form_instance"
+      },
+      {
+        "module": "tests.test_integrity",
+        "test": "test_unique_qr_tokens",
+        "message": "sqlite3.OperationalError: no such table: form_instance"
+      },
+      {
+        "module": "tests.test_integrity",
+        "test": "test_answer_values_in_sane_range",
+        "message": "sqlite3.OperationalError: no such table: answer"
+      },
+      {
+        "module": "tests.test_integrity",
+        "test": "test_survey_types_valid",
+        "message": "sqlite3.OperationalError: no such table: form_instance"
+      },
+      {
+        "module": "tests.test_integrity",
+        "test": "test_headline_counts_present",
+        "message": "sqlite3.OperationalError: no such table: response"
+      },
+      {
+        "module": "tests.test_mrr_export_nuance",
+        "test": "test_analysis_columns_differ_between_activities",
+        "message": "AssertionError: Action repeated across activities: ['No area needs correcting \u2014 \u201cAttention & set-up\u201d (Tangible) is the lowest at nan of 7 and still holds up. Keep the present platform and pre-session technical check, and continue sending the materials out as files.', 'No area needs correcting \u2014 \u201cAttention & set-up\u201d (Tangible) is the lowest at nan o"
+      },
+      {
+        "module": "tests.test_mrr_export_nuance",
+        "test": "test_action_names_the_weakest_dimension_and_scales_its_advice",
+        "message": "AssertionError: assert ('Responsiveness' in 'No area needs correcting \u2014 \u201cAttention & set-up\u201d (Tangible) is the lowest at nan of 7 and still holds up. Maintain the current venue standard and keep issuing the take-away reference pack.')"
+      },
+      {
+        "module": "tests.test_mrr_export_nuance",
+        "test": "test_resources_split_on_modality",
+        "message": "AssertionError: assert 'online-meeting platform' in 'None identified from the feedback \u2014 the current arrangements are holding. Continue funding the existing venue/platform and materials.'"
+      },
+      {
+        "module": "tests.test_mrr_export_nuance",
+        "test": "test_resources_and_action_do_not_degrade_hybrid_to_face_to_face",
+        "message": "AssertionError: assert ('hybrid' in 'no area needs correcting \u2014 \u201cattention & set-up\u201d (tangible) is the lowest at nan of 7 and still holds up. maintain the current venue and platform standard, and keep issuing the take-away reference pack to both audiences.')"
+      },
+      {
+        "module": "tests.test_mrr_export_nuance",
+        "test": "test_page_preview_matches_the_downloaded_draft",
+        "message": "AssertionError: the five-dimension scorecard must reach the page draft"
+      },
+      {
+        "module": "tests.test_office_answers",
+        "test": "test_room_windows_split_around_a_booked_hour",
+        "message": "rooms.RoomError: That date has already passed."
+      },
+      {
+        "module": "tests.test_profile_edit",
+        "test": "test_linked_account_signs_on_its_directory_row",
+        "message": "documents_permissions.Denied: An active staff account is required."
+      },
+      {
+        "module": "tests.test_rooms_series_pages",
+        "test": "test_a_weekly_request_files_every_date_and_says_so",
+        "message": "assert (409 == 303)"
+      },
+      {
+        "module": "tests.test_rooms_series_pages",
+        "test": "test_dates_that_cannot_be_had_are_shown_first_then_the_rest_can_be_requested",
+        "message": "rooms.RoomError: Closed: All Souls' Day."
+      },
+      {
+        "module": "tests.test_rooms_series_pages",
+        "test": "test_the_approval_card_offers_the_whole_series",
+        "message": "assert ('Repeating request:' in '<!doctype html>\\n<html lang=\"en\">\\n<head>\\n<meta charset=\"utf-8\">\\n<meta name=\"viewport\" content=\"width=device-width,...js?v=20261009f\" defer></script>\\n<script src=\"/static/js/short_links.js?v=20261016c\" defer></script>\\n</body>\\n</html>')"
+      },
+      {
+        "module": "tests.test_rooms_series_pages",
+        "test": "test_declining_the_series_needs_a_reason",
+        "message": "TypeError: 'NoneType' object is not subscriptable"
+      },
+      {
+        "module": "tests.test_rooms_series_pages",
+        "test": "test_a_taken_date_is_reported_when_approving_the_series",
+        "message": "IndexError: list index out of range"
+      },
+      {
+        "module": "tests.test_rooms_series_pages",
+        "test": "test_my_reservations_shows_the_series_and_can_withdraw_all_of_it",
+        "message": "assert ('Repeats: 4 dates in this request' in '<!doctype html>\\n<html lang=\"en\">\\n<head>\\n<meta charset=\"utf-8\">\\n<meta name=\"viewport\" content=\"width=device-width,...js?v=20261009f\" defer></script>\\n<script src=\"/static/js/short_links.js?v=20261016c\" defer></script>\\n</body>\\n</html>')"
+      },
+      {
+        "module": "tests.test_rooms_series_pages",
+        "test": "test_someone_else_cannot_withdraw_my_series",
+        "message": "TypeError: 'NoneType' object is not subscriptable"
+      },
+      {
+        "module": "tests.test_routes",
+        "test": "test_get_route_renders_for_admin[/dashboard]",
+        "message": "AttributeError: 'float' object has no attribute 'numerator'"
+      },
+      {
+        "module": "tests.test_routes",
+        "test": "test_get_route_renders_for_admin[/dashboard/teams]",
+        "message": "ValueError: Cannot mask with non-boolean array containing NA / NaN values"
+      },
+      {
+        "module": "tests.test_routes",
+        "test": "test_get_route_renders_for_admin[/work-arrangement/approvals]",
+        "message": "AssertionError: /work-arrangement/approvals -> 403"
+      },
+      {
+        "module": "tests.test_routes",
+        "test": "test_dashboard_pulse_export_all_formats",
+        "message": "AttributeError: 'float' object has no attribute 'numerator'"
+      },
+      {
+        "module": "tests.test_routes",
+        "test": "test_dashboard_teams_index_export_all_formats",
+        "message": "ValueError: Cannot mask with non-boolean array containing NA / NaN values"
+      },
+      {
+        "module": "tests.test_routes",
+        "test": "test_dashboard_team_export_all_formats",
+        "message": "ValueError: Cannot mask with non-boolean array containing NA / NaN values"
+      },
+      {
+        "module": "tests.test_routes",
+        "test": "test_dashboard_team_detail",
+        "message": "ValueError: Cannot mask with non-boolean array containing NA / NaN values"
+      },
+      {
+        "module": "tests.test_routes",
+        "test": "test_dashboard_team_bogus_path",
+        "message": "ValueError: Cannot mask with non-boolean array containing NA / NaN values"
+      },
+      {
+        "module": "tests.test_routes",
+        "test": "test_export_png",
+        "message": "AttributeError: 'float' object has no attribute 'numerator'"
+      },
+      {
+        "module": "tests.test_search",
+        "test": "test_api_search_activities",
+        "message": "AssertionError: expected at least one Activities hit for 'learning'"
+      },
+      {
+        "module": "tests.test_search",
+        "test": "test_rendered_nav_shows_groups_and_sections",
+        "message": "AttributeError: 'float' object has no attribute 'numerator'"
+      },
+      {
+        "module": "tests.test_send_reminders",
+        "test": "test_disabled_job_is_absent_from_the_report_and_sends_nothing",
+        "message": "ValueError: File a break at least 30 minutes before it starts, so your approver has time to see it."
+      },
+      {
+        "module": "tests.test_send_reminders",
+        "test": "test_enabled_job_is_unaffected_by_the_gate",
+        "message": "ValueError: File a break at least 30 minutes before it starts, so your approver has time to see it."
+      },
+      {
+        "module": "tests.test_send_reminders",
+        "test": "test_dry_run_names_a_disabled_job_instead_of_running_it",
+        "message": "ValueError: File a break at least 30 minutes before it starts, so your approver has time to see it."
+      },
+      {
+        "module": "tests.test_send_reminders",
+        "test": "test_digest_bundles_wellness_and_awa_for_one_approver",
+        "message": "ValueError: File a break at least 30 minutes before it starts, so your approver has time to see it."
+      },
+      {
+        "module": "tests.test_send_reminders",
+        "test": "test_digest_omits_already_decided_items",
+        "message": "ValueError: File a break at least 30 minutes before it starts, so your approver has time to see it."
+      },
+      {
+        "module": "tests.test_tours",
+        "test": "test_tour_engine_wired_into_dashboard",
+        "message": "AttributeError: 'float' object has no attribute 'numerator'"
+      },
+      {
+        "module": "tests.test_wellness",
+        "test": "test_chief_pages_are_gated",
+        "message": "AssertionError: /wellness/approvals"
+      }
+    ]
+  },
+  "focused_rerun": {
+    "tests": 79,
+    "passed": 63,
+    "failed": 16,
+    "skipped": 0,
+    "errors": 0,
+    "seconds": 19.294,
+    "by_module": {
+      "tests.test_mrr_export_nuance": {
+        "passed": 9,
+        "failed": 5
+      },
+      "tests.test_routes": {
+        "passed": 41,
+        "failed": 10
+      },
+      "tests.test_profile_edit": {
+        "passed": 13,
+        "failed": 1
+      }
+    },
+    "failures": [
+      {
+        "module": "tests.test_mrr_export_nuance",
+        "test": "test_analysis_columns_differ_between_activities",
+        "message": "AssertionError: Action repeated across activities: ['No area needs correcting \u2014 \u201cAttention & set-up\u201d (Tangible) is the lowest at nan of 7 and still holds up. Keep the present platform and pre-session technical check, and continue sending the materials out as files.', 'No area needs correcting \u2014 \u201cAttention & set-up\u201d (Tangible) is the lowest at nan o"
+      },
+      {
+        "module": "tests.test_mrr_export_nuance",
+        "test": "test_action_names_the_weakest_dimension_and_scales_its_advice",
+        "message": "AssertionError: assert ('Responsiveness' in 'No area needs correcting \u2014 \u201cAttention & set-up\u201d (Tangible) is the lowest at nan of 7 and still holds up. Maintain the current venue standard and keep issuing the take-away reference pack.')"
+      },
+      {
+        "module": "tests.test_mrr_export_nuance",
+        "test": "test_resources_split_on_modality",
+        "message": "AssertionError: assert 'online-meeting platform' in 'None identified from the feedback \u2014 the current arrangements are holding. Continue funding the existing venue/platform and materials.'"
+      },
+      {
+        "module": "tests.test_mrr_export_nuance",
+        "test": "test_resources_and_action_do_not_degrade_hybrid_to_face_to_face",
+        "message": "AssertionError: assert ('hybrid' in 'no area needs correcting \u2014 \u201cattention & set-up\u201d (tangible) is the lowest at nan of 7 and still holds up. maintain the current venue and platform standard, and keep issuing the take-away reference pack to both audiences.')"
+      },
+      {
+        "module": "tests.test_mrr_export_nuance",
+        "test": "test_page_preview_matches_the_downloaded_draft",
+        "message": "AssertionError: the five-dimension scorecard must reach the page draft"
+      },
+      {
+        "module": "tests.test_routes",
+        "test": "test_get_route_renders_for_admin[/dashboard/teams]",
+        "message": "ValueError: Cannot mask with non-boolean array containing NA / NaN values"
+      },
+      {
+        "module": "tests.test_routes",
+        "test": "test_get_route_renders_for_admin[/work-arrangement/approvals]",
+        "message": "AssertionError: /work-arrangement/approvals -> 403"
+      },
+      {
+        "module": "tests.test_routes",
+        "test": "test_reports_type3_xlsx_export",
+        "message": "assert 'fmt=xlsx' in '<!doctype html>\\n<html lang=\"en\">\\n<head>\\n<meta charset=\"utf-8\">\\n<meta name=\"viewport\" content=\"width=device-width,...js?v=20261009f\" defer></script>\\n<script src=\"/static/js/short_links.js?v=20261016c\" defer></script>\\n</body>\\n</html>'"
+      },
+      {
+        "module": "tests.test_routes",
+        "test": "test_dashboard_trends_export_all_types_and_formats",
+        "message": "AssertionError: type 1 png -> 404"
+      },
+      {
+        "module": "tests.test_routes",
+        "test": "test_dashboard_people_export_all_formats",
+        "message": "AssertionError: png -> 404"
+      },
+      {
+        "module": "tests.test_routes",
+        "test": "test_dashboard_teams_index_export_all_formats",
+        "message": "ValueError: Cannot mask with non-boolean array containing NA / NaN values"
+      },
+      {
+        "module": "tests.test_routes",
+        "test": "test_dashboard_team_export_all_formats",
+        "message": "ValueError: Cannot mask with non-boolean array containing NA / NaN values"
+      },
+      {
+        "module": "tests.test_routes",
+        "test": "test_dashboard_person_export_all_formats",
+        "message": "AssertionError: png -> 404"
+      },
+      {
+        "module": "tests.test_routes",
+        "test": "test_dashboard_team_detail",
+        "message": "ValueError: Cannot mask with non-boolean array containing NA / NaN values"
+      },
+      {
+        "module": "tests.test_routes",
+        "test": "test_dashboard_team_bogus_path",
+        "message": "ValueError: Cannot mask with non-boolean array containing NA / NaN values"
+      },
+      {
+        "module": "tests.test_profile_edit",
+        "test": "test_linked_account_signs_on_its_directory_row",
+        "message": "documents_permissions.Denied: An active staff account is required."
+      }
+    ]
+  },
+  "preflight": {
+    "native": {
+      "failures": 0,
+      "warnings": 1
+    },
+    "isolated_db": {
+      "failures": 1,
+      "warnings": 1,
+      "failure": "Informational database initialization stdout parsed as template failure"
+    }
+  },
+  "smoke": {
+    "checks": 142,
+    "failed": 1,
+    "warnings": 2,
+    "failure": "office calendar views: UndefinedError: request is undefined",
+    "limitation": "Direct template render lacks request context; not a demonstrated HTTP calendar failure"
+  }
+}

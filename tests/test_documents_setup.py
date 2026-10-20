@@ -1,4 +1,5 @@
 """Initial appointments are explicit, atomic, session-bound and never enable Documents."""
+from tests.conftest import session_token
 import html
 import json
 import re
@@ -143,10 +144,10 @@ def test_http_preview_confirmation_csrf_and_one_time_access(setup_db, app_mod, m
     url = '/admin/documents/setup'
     with TestClient(app_mod.app) as client:
         assert client.get(url, follow_redirects=False).status_code in (302, 303)
-        client.cookies.set(auth.COOKIE_NAME, auth.make_token(users[1]))
+        client.cookies.set(auth.COOKIE_NAME, session_token(users[1]))
         assert client.get(url).status_code == 403
         assert client.post(url, data={'action': 'confirm'}).status_code == 403
-        admin_token = auth.make_token(users[0])
+        admin_token = session_token(users[0])
         client.cookies.set(auth.COOKIE_NAME, admin_token)
         page = client.get(url)
         assert page.status_code == 200
@@ -168,7 +169,7 @@ def test_http_preview_confirmation_csrf_and_one_time_access(setup_db, app_mod, m
         # Even another legitimate system administrator cannot replay this preview.
         conn.execute("UPDATE admin_user SET role='admin' WHERE id=?", (users[1]['id'],)); conn.commit()
         other = st.get_admin_user_by_id(conn, users[1]['id'])
-        client.cookies.set(auth.COOKIE_NAME, auth.make_token(other))
+        client.cookies.set(auth.COOKIE_NAME, session_token(other))
         other_csrf = hidden(client.get(url), 'csrf')
         assert client.post(url, data={**confirm, 'csrf': other_csrf}).status_code == 403
         conn.execute("UPDATE admin_user SET role='viewer' WHERE id=?", (users[1]['id'],)); conn.commit()
@@ -183,7 +184,7 @@ def test_http_preview_confirmation_csrf_and_one_time_access(setup_db, app_mod, m
         assert st.get_setting(conn, 'documents.sending_enabled') == '0'
         # The operator gets no Documents grant by virtue of being system admin.
         assert client.get('/documents/rules').status_code == 403
-        client.cookies.set(auth.COOKIE_NAME, auth.make_token(users[1]))
+        client.cookies.set(auth.COOKIE_NAME, session_token(users[1]))
         assert client.get('/documents/rules').status_code == 200
         assert client.get(url).status_code == 403
 
@@ -244,7 +245,7 @@ def test_http_enable_requires_confirmation_and_allows_intake(setup_db, app_mod, 
     d.bootstrap_admins(conn, users[0], preview)
     url = '/admin/documents/setup'
     with TestClient(app_mod.app) as client:
-        client.cookies.set(auth.COOKIE_NAME, auth.make_token(users[0]))
+        client.cookies.set(auth.COOKIE_NAME, session_token(users[0]))
         page = client.get(url)
         assert 'Enable Documents</button>' in page.text
         form = {'action': 'enable_module', 'settings_revision': '0', 'authorization': 'Controlled acceptance'}
@@ -325,9 +326,9 @@ def test_readiness_http_access_and_read_only_page(setup_db, app_mod, monkeypatch
     url = '/admin/documents/readiness'
     with TestClient(app_mod.app) as client:
         assert client.get(url, follow_redirects=False).status_code in (302, 303)
-        client.cookies.set(auth.COOKIE_NAME, auth.make_token(users[1]))
+        client.cookies.set(auth.COOKIE_NAME, session_token(users[1]))
         assert client.get(url).status_code == 403
-        client.cookies.set(auth.COOKIE_NAME, auth.make_token(users[0]))
+        client.cookies.set(auth.COOKIE_NAME, session_token(users[0]))
         page = client.get(url)
         assert page.status_code == 200
         assert 'Work management readiness' in page.text

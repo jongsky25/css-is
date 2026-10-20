@@ -1,3 +1,4 @@
+from tests.conftest import session_token
 import re
 import storage as st
 import documents as d
@@ -216,7 +217,7 @@ def test_signature_preview_and_confirm_use_existing_profile(app_mod,monkeypatch)
             return {'operation_id':operation_id,'state':'confirmed','source_fingerprint':'v1','signatory_id':uid,
                     'url':'https://drive.google.com/file/d/signedfile12345/view','fingerprint':'signed-v1'}
     monkeypatch.setattr(ops,'get_adapter',lambda:Relay())
-    client=TestClient(app_mod.app);client.cookies.set(auth.COOKIE_NAME,auth.make_token(user))
+    client=TestClient(app_mod.app);client.cookies.set(auth.COOKIE_NAME,session_token(user))
     try:
         page=client.get('/documents/'+str(doc['id']));csrf=token(page)
         preview=client.post(f"/documents/{doc['id']}/sign_preview",data={'csrf':csrf,'revision':1})

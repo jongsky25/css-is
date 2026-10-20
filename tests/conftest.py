@@ -7,7 +7,7 @@ Strategy
 * Point app.DB at the copy, seed one ACTIVE account per role with a known
   password, plus one PENDING (invited, no-password) account for token tests.
 * Provide a FastAPI TestClient and per-role authenticated clients. We log a
-  role in by minting the same signed cookie the app issues (auth.make_token),
+  role in through the same registered-session issuer the app uses,
   which is exactly what a real browser carries after /login.
 """
 from __future__ import annotations
@@ -120,6 +120,14 @@ def client(app_mod):
     # raise_server_exceptions=True surfaces 500s as test failures with tracebacks
     return TestClient(app_mod.app, raise_server_exceptions=True)
 
+def session_token(user):
+    """Use the application's registered-session path for authenticated fixtures."""
+    import app
+    token = app._issue_session(user)
+    assert token is not None, "Fixture account must be active and eligible to sign in"
+    return token
+
+
 def _auth_client(app_mod, role):
     from starlette.testclient import TestClient
     import auth, storage as st
@@ -127,7 +135,7 @@ def _auth_client(app_mod, role):
     u = st.get_admin_user(conn, ROLE_USERS[role]); conn.close()
     user = {"id": u["id"], "username": u["username"], "role": u["role"]}
     c = TestClient(app_mod.app, raise_server_exceptions=True)
-    c.cookies.set(auth.COOKIE_NAME, auth.make_token(user))
+    c.cookies.set(auth.COOKIE_NAME, session_token(user))
     return c
 
 @contextlib.contextmanager

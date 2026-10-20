@@ -1,0 +1,125 @@
+{
+  "environment": {
+    "python": "3.12.14",
+    "sqlite": "3.53.1",
+    "scope": "Local synthetic data, in-process HTTP; no TLS/proxy/network or production traffic."
+  },
+  "routes": [
+    {
+      "path": "/",
+      "status": 200,
+      "first_ms": 332.6,
+      "warm_median_ms": 15.2,
+      "warm_max_ms": 20.1,
+      "sql_statement_count": 219,
+      "select_count": 219,
+      "response_bytes": 133969
+    },
+    {
+      "path": "/calendar",
+      "status": 200,
+      "first_ms": 62.1,
+      "warm_median_ms": 10.9,
+      "warm_max_ms": 13.1,
+      "sql_statement_count": 79,
+      "select_count": 79,
+      "response_bytes": 29862
+    },
+    {
+      "path": "/documents",
+      "status": 200,
+      "first_ms": 40.2,
+      "warm_median_ms": 11.6,
+      "warm_max_ms": 15.0,
+      "sql_statement_count": 80,
+      "select_count": 80,
+      "response_bytes": 24001
+    },
+    {
+      "path": "/work",
+      "status": 200,
+      "first_ms": 28.6,
+      "warm_median_ms": 10.7,
+      "warm_max_ms": 11.9,
+      "sql_statement_count": 66,
+      "select_count": 66,
+      "response_bytes": 22180
+    },
+    {
+      "path": "/rooms",
+      "status": 200,
+      "first_ms": 53.0,
+      "warm_median_ms": 13.4,
+      "warm_max_ms": 15.5,
+      "sql_statement_count": 104,
+      "select_count": 104,
+      "response_bytes": 76070
+    },
+    {
+      "path": "/travel",
+      "status": 200,
+      "first_ms": 17.7,
+      "warm_median_ms": 9.5,
+      "warm_max_ms": 15.9,
+      "sql_statement_count": 70,
+      "select_count": 70,
+      "response_bytes": 22231
+    },
+    {
+      "path": "/dashboard",
+      "status": 200,
+      "first_ms": 111.4,
+      "warm_median_ms": 14.9,
+      "warm_max_ms": 20.6,
+      "sql_statement_count": 64,
+      "select_count": 64,
+      "response_bytes": 46196
+    },
+    {
+      "path": "/health",
+      "status": 200,
+      "first_ms": 8.2,
+      "warm_median_ms": 8.2,
+      "warm_max_ms": 12.4,
+      "sql_statement_count": 57,
+      "select_count": 57,
+      "response_bytes": 52
+    },
+    {
+      "path": "/static/css/app.css",
+      "status": 200,
+      "first_ms": 8.9,
+      "warm_median_ms": 6.6,
+      "warm_max_ms": 7.1,
+      "sql_statement_count": 56,
+      "select_count": 56,
+      "response_bytes": 76618
+    }
+  ],
+  "anonymous_static_sql_count": 0,
+  "document_scale": [
+    {
+      "records": 10,
+      "visible": 10,
+      "elapsed_ms": 0.4,
+      "sql_statements": 22
+    },
+    {
+      "records": 100,
+      "visible": 100,
+      "elapsed_ms": 2.9,
+      "sql_statements": 202
+    },
+    {
+      "records": 1000,
+      "visible": 1000,
+      "elapsed_ms": 50.2,
+      "sql_statements": 2002
+    }
+  ],
+  "forgot_mail_event_loop": {
+    "injected_provider_delay_ms": 300,
+    "max_event_loop_lag_ms": 309.3,
+    "response_status": 200
+  }
+}

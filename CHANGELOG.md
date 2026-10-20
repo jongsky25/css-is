@@ -1,3 +1,12 @@
+## 7.27 — October 20, 2026
+
+- Sign in again after this update; signing out and account access changes now revoke affected sign-ins.
+- Keep directory designations under administrator control while retaining other profile edits.
+- Save snapshots every interval, report stalled saves, avoid overlapping timed-out workers, and require fresh sign-in after restore.
+- Validate sign-in, onboarding, language, directory, room and installed-app return destinations through a shared local-path policy.
+- Stop service-worker write replay after ambiguous proxy failures; retain GET recovery and the deduplicated survey queue.
+- Includes the locally prepared security repairs previously labelled 7.23/7.24; those candidate numbers were superseded by concurrent releases on main.
+
 ## 7.26 — October 19, 2026
 
 - Search the people list when adding or editing a calendar item, with a clear message when no one matches.

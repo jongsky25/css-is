@@ -49,6 +49,7 @@ import traceback
 import pandas as pd
 from datetime import datetime, date, timedelta, timezone
 from urllib.parse import parse_qsl, quote, urlencode, urlparse
+from request_security import safe_local_return
 
 import qrcode
 from fastapi import FastAPI, Request
@@ -120,10 +121,10 @@ SEED_DB = "css_is.db"
 
 # Persistent-storage root (the mounted HF bucket, e.g. /data). When set, the
 # live DB runs on the fast local disk but is RESTORED from this bucket on boot
-# and SNAPSHOTTED back to it after every change + on shutdown -- so a Space
+# and SNAPSHOTTED back to it every interval + on shutdown -- so a Space
 # rebuild/restart no longer wipes live data. Empty => local dev (no persistence).
 PERSIST_DIR = os.environ.get("CSS_PERSIST_DIR", "").strip()
-# How often the background snapshotter checks for changes, and how many auto
+# How often the background snapshotter saves, and how many auto
 # snapshots to retain on the bucket.
 PERSIST_TICK = int(os.environ.get("CSS_PERSIST_TICK", "60"))
 PERSIST_KEEP = int(os.environ.get("CSS_PERSIST_KEEP", "24"))
@@ -135,9 +136,9 @@ PERSIST_KEEP_DAILY = int(os.environ.get("CSS_PERSIST_KEEP_DAILY", "14"))
 # giving up. A transient mount lag must NOT be read as 'empty bucket' -- that is
 # exactly what reverted live data to the shipped seed once.
 PERSIST_BOOT_WAIT = int(os.environ.get("CSS_PERSIST_BOOT_WAIT", "60"))
-# A single snapshot attempt must finish within this many seconds. If the bucket
-# (a FUSE mount) stalls mid-write, the attempt is abandoned so the persist loop
-# keeps TICKING and REPORTS the failure instead of wedging silently — the
+# A single wait is bounded by this many seconds. If bucket I/O stalls, retain
+# the worker and report failure; subsequent ticks wait on that same attempt.
+# Threads cannot cancel filesystem I/O. This prevents the
 # 2026-06-26 outage, where a hung snapshot thread froze the loop for ~5h AND
 # left the /ops health card falsely green.
 PERSIST_OP_TIMEOUT = int(os.environ.get("CSS_PERSIST_OP_TIMEOUT", "30"))
@@ -259,6 +260,7 @@ def _ensure_live_db():
             if not allow_seed:
                 snap = _await_fresh_snapshot(snap)
             shutil.copy2(snap, DB)
+            bk.clear_restored_sessions(DB)
             _persist_mark_initialized()          # ensure the sentinel exists going forward
             print(f"[persist] restored live DB from bucket snapshot "
                   f"{os.path.basename(snap)} (dir={bk.SCHED_DIR}).")
@@ -281,6 +283,7 @@ def _ensure_live_db():
         if os.path.exists(SEED_DB) and os.path.abspath(DB) != os.path.abspath(SEED_DB):
             os.makedirs(os.path.dirname(os.path.abspath(DB)) or ".", exist_ok=True)
             shutil.copy2(SEED_DB, DB)
+            bk.clear_restored_sessions(DB)
         print("[persist] bucket empty (verified first boot): seeding from repo "
               f"snapshot and writing the first durable snapshot to {bk.SCHED_DIR}.")
         try:
@@ -307,6 +310,7 @@ def _ensure_live_db():
     os.makedirs(os.path.dirname(os.path.abspath(DB)) or ".", exist_ok=True)
     if os.path.exists(SEED_DB):
         shutil.copy2(SEED_DB, DB)
+        bk.clear_restored_sessions(DB)
         print(f"[live-db] first boot: seeded live database {DB} from {SEED_DB}.")
     else:
         print(f"[live-db] first boot: no seed file {SEED_DB}; starting empty at {DB}.")
@@ -2096,7 +2100,35 @@ def _user_from_request(request):
     payload = auth.parse_token(request.cookies.get(auth.COOKIE_NAME))
     if not payload:
         return None
-    return {"id": payload["uid"], "username": payload["u"], "role": payload["r"]}
+    conn = get_conn()
+    try:
+        return st.session_actor(conn, payload)
+    finally:
+        conn.close()
+
+
+def _issue_session(user):
+    """Register a session for an authenticated account without a change race.
+
+    Authentication callers supply the verified password hash. Holding the write
+    transaction through registration ensures an intervening account update either
+    prevents issuance or revokes the new session through the database trigger.
+    """
+    conn = get_conn()
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        current = st.get_admin_user_by_id(conn, user["id"])
+        if (not current or not current["active"] or current["must_change"]
+                or not auth.valid_role(current["role"])
+                or current["username"] != user["username"]
+                or ("pw_hash" in user and current["pw_hash"] != user["pw_hash"])):
+            return None
+        token = auth.make_token(current)
+        st.register_login_session(conn, auth.parse_token(token))
+        conn.commit()
+        return token
+    finally:
+        conn.close()
 
 
 def _required_cap(path):
@@ -2219,7 +2251,7 @@ def _notification_items(conn, user, feedback_unread):
 async def _auth_gate(request: Request, call_next):
     """Gate every non-public route behind a valid session, then enforce the
     per-area capability (if any) for the path."""
-    request.state.user = _user_from_request(request)
+    request.state.user = await asyncio.to_thread(_user_from_request, request)
     request.state.spot_feedback_enabled = False
     request.state.feedback_unread = 0
     request.state.is_chief = False
@@ -2282,10 +2314,9 @@ async def _metrics_gate(request: Request, call_next):
     """Outermost wrapper (defined after the auth gate, so it runs first): time
     every request, count it by status, and write a structured log line. Records
     a 500 if the handler raises. Also stamps X-CSS-App on every response — the
-    service worker (and pull_backup.py) treat a 5xx WITHOUT this header as
-    proof the request never reached the app (the hosting platform's LB/proxy
-    answered instead) and safely retry it; see _unhandled_error for why even a
-    crash 500 must carry it. Never otherwise alters the response."""
+    service worker uses this header to avoid retrying app-originated GET
+    failures. Missing headers do not establish whether a write committed;
+    writes must never be automatically retried on that basis."""
     start = time.perf_counter()
     mon.inc_inflight()
     status = 500
@@ -2335,12 +2366,10 @@ def _record_http_error(request, user, status):
 
 @app.exception_handler(Exception)
 async def _unhandled_error(request: Request, exc: Exception):
-    """Stamp X-CSS-App even on an unhandled-crash 500. The service worker
-    retries any 5xx that LACKS this header (provably never reached the app —
-    it's the hosting edge failing); an app-originated crash must never look
-    like that, or a crashing POST could be re-sent and double-execute its side
-    effects. Starlette still re-raises after sending this, so the traceback
-    reaches the server log exactly as before."""
+    """Identify app-originated crash responses, including for GET retry policy.
+    The service worker never retries writes, regardless of this marker.
+    Starlette still re-raises after sending, preserving the server traceback.
+    """
     return Response("Internal Server Error", status_code=500,
                     media_type="text/plain", headers={"X-CSS-App": "1"})
 
@@ -2562,16 +2591,14 @@ def login_form(request: Request, next: str = "/", err: str = ""):
     if request.state.user and not first_run:
         return RedirectResponse("/", status_code=303)
     return templates.TemplateResponse(request, "login.html", {
-        "first_run": first_run, "next": next, "err": err, "show_scope": False,
+        "first_run": first_run, "next": safe_local_return(next), "err": err, "show_scope": False,
     })
 
 
 @app.post("/login")
 async def login_submit(request: Request):
     p = await _posted(request)
-    nxt = p.get("next") or "/"
-    if not nxt.startswith("/"):
-        nxt = "/"
+    nxt = safe_local_return(p.get("next"))
     username = (p.get("username", "") or "").strip()
     password = p.get("password", "") or ""
     force_reset = False          # set when the account is on a temporary password
@@ -2589,7 +2616,7 @@ async def login_submit(request: Request):
                     status_code=400)
             h, salt = await auth.hash_password_async(password)
             uid = st.create_admin_user(conn, username, h, salt, "admin", created_by="(first-run setup)")
-            user = {"id": uid, "username": username, "role": "admin"}
+            user = st.get_admin_user_by_id(conn, uid)
             _ip = request.client.host if request.client else None
             st.audit(conn, username, "first_run_admin", ip=_ip, target_type="user",
                      target_id=uid, summary="first admin account created via first-run setup")
@@ -2604,7 +2631,7 @@ async def login_submit(request: Request):
                     "first_run": False, "next": nxt, "show_scope": False,
                     "err": "Wrong username or password (or the account is inactive)."},
                     status_code=401)
-            user = {"id": u["id"], "username": u["username"], "role": u["role"]}
+            user = u
             if u["must_change"]:
                 force_reset = True
                 reset_hash = u["pw_hash"]
@@ -2643,11 +2670,7 @@ async def login_submit(request: Request):
         nxt = "/welcome" + (("?next=" + quote(nxt)) if nxt != "/" else "")
     elif redirect_to_start:
         nxt = "/start"
-    resp = RedirectResponse(nxt, status_code=303)
-    resp.set_cookie(auth.COOKIE_NAME, auth.make_token(user),
-                    httponly=True, secure=SECURE_COOKIES, samesite="lax",
-                    path="/", max_age=12 * 3600)
-    return resp
+    return await asyncio.to_thread(_login_response, user, nxt)
 
 
 @app.get("/logout")
@@ -2656,6 +2679,9 @@ def logout(request: Request):
     if user:
         conn = get_conn()
         try:
+            payload = auth.parse_token(request.cookies.get(auth.COOKIE_NAME))
+            if payload:
+                st.revoke_login_session(conn, payload["sid"])
             _audit(request, conn, "logout", summary="signed out")
         finally:
             conn.close()
@@ -2671,10 +2697,13 @@ def set_language(request: Request, code: str, next: str = ""):
     returns the respondent to the page they came from (same-site only)."""
     if code not in i18n.LANGS:
         code = i18n.DEFAULT
-    dest = next if next.startswith("/") else ""
+    dest = safe_local_return(next, default="")
     if not dest:
-        ref = urlparse(request.headers.get("referer") or "")
-        dest = (ref.path or "/") + (("?" + ref.query) if ref.query else "")
+        try:
+            ref = urlparse(request.headers.get("referer") or "")
+            dest = safe_local_return((ref.path or "/") + (("?" + ref.query) if ref.query else ""))
+        except ValueError:
+            dest = "/"
     resp = RedirectResponse(dest, status_code=303)
     resp.set_cookie("lang", code, max_age=365 * 24 * 3600,
                     secure=SECURE_COOKIES, samesite="lax", path="/")
@@ -2684,8 +2713,11 @@ def set_language(request: Request, code: str, next: str = ""):
 # ---- invite / set-password / forgot-password (token links, public) ----
 
 def _login_response(user, nxt="/"):
-    resp = RedirectResponse(nxt if nxt.startswith("/") else "/", status_code=303)
-    resp.set_cookie(auth.COOKIE_NAME, auth.make_token(user),
+    token = _issue_session(user)
+    if token is None:
+        return Response("Your account changed. Please sign in again.", status_code=401)
+    resp = RedirectResponse(safe_local_return(nxt), status_code=303)
+    resp.set_cookie(auth.COOKIE_NAME, token,
                     httponly=True, secure=SECURE_COOKIES, samesite="lax",
                     path="/", max_age=12 * 3600)
     return resp
@@ -2779,7 +2811,7 @@ async def set_password_submit(request: Request):
         st.set_admin_password(conn, u["id"], h, salt, activate=True)
     finally:
         conn.close()
-    return _login_response({"id": u["id"], "username": u["username"], "role": u["role"]})
+    return await asyncio.to_thread(_login_response, {**u, "pw_hash": h, "salt": salt})
 
 
 @app.get("/forgot", response_class=HTMLResponse)
@@ -2837,7 +2869,7 @@ async def reset_password_submit(request: Request):
         st.set_admin_password(conn, u["id"], h, salt, activate=True)
     finally:
         conn.close()
-    return _login_response({"id": u["id"], "username": u["username"], "role": u["role"]})
+    return await asyncio.to_thread(_login_response, {**u, "pw_hash": h, "salt": salt})
 
 
 # ---- user management (admin only) ----
@@ -3807,6 +3839,9 @@ async def admin_backups_restore(request: Request):
                                 status_code=303)
     # The in-process caches now point at the old data — drop them.
     invalidate_atoms()
+    # The restored snapshot may predate session/schema migrations. Reapply them
+    # before the next session lookup rather than trusting the old path cache.
+    _schema_ready_for.discard(DB)
     conn = get_conn()
     try:
         _audit(request, conn, "backup_restore", target_type="backup", target_id=base,
@@ -3858,14 +3893,11 @@ def _persist_health_view():
     # so state alone reads green while nothing is actually saved (2026-06-26). Flip
     # red if the loop stopped ticking, or unsaved changes have gone unwritten too
     # long. Checked BEFORE the state branches so it overrides a stale 'ok'.
-    try:
-        cur_ver = _db_data_version()
-    except Exception:                       # noqa: BLE001
-        cur_ver = None
-    unsaved = (h.get("saved_ver") is not None and cur_ver is not None
-               and cur_ver != h["saved_ver"])
+    # Snapshot every tick. Fresh-connection PRAGMA data_version values cannot
+    # establish whether data changed, so require a recent successful save even
+    # when the database appears idle.
     if bk.persist_is_stalled(last_tick=h.get("last_tick_mono"),
-                             last_ok=h.get("last_ok_mono"), unsaved=unsaved,
+                             last_ok=h.get("last_ok_mono"), unsaved=True,
                              now=time.monotonic(), tick=PERSIST_TICK,
                              stall_ticks=PERSIST_STALL_TICKS):
         last = (f" Last successful save was {h['last_ok'].replace('T', ' ')}."
@@ -4832,19 +4864,20 @@ async def _scheduler_loop():
 
 # --- Live-data persistence: snapshot the local DB to the bucket -------------
 # Separate from the admin-configurable scheduled backups above. This is the
-# durability engine: it copies the live DB to the persistent bucket whenever it
-# changes (and on shutdown), so a Space rebuild/restart restores the latest
+# durability engine: it copies the live DB to the persistent bucket each tick
+# (and on shutdown), so a Space rebuild/restart restores the latest saved
 # state instead of reverting to the shipped seed. No-op unless CSS_PERSIST_DIR
 # (a mounted bucket) is set.
 
 # Live health of the durability engine, surfaced on /ops so a silent persistence
 # failure (the 2026-06-25 data-loss class) can NEVER again pass unnoticed.
 # last_tick_mono / last_ok_mono are monotonic-clock stamps used by the stall
-# detector (bk.persist_is_stalled); saved_ver is the data_version we last durably
-# wrote, so the health view can tell whether live has UNSAVED changes right now.
+# detector (bk.persist_is_stalled). Periodic saves do not rely on a connection-
+# local change counter; success must remain recent even on an idle database.
 _PERSIST_HEALTH = {"state": "unknown", "reason": "not started yet",
                    "last_ok": None, "last_event": None, "consecutive_bad": 0,
-                   "last_tick_mono": None, "last_ok_mono": None, "saved_ver": None}
+                   "last_tick_mono": None, "last_ok_mono": None}
+_PERSIST_TASK = None                 # retain timed-out work; never pile up writers
 
 
 def _persist_note(state, reason):
@@ -4900,40 +4933,35 @@ def _snapshot_to_bucket(reason="timer"):
         return False
 
 
-def _db_data_version():
-    """SQLite's change counter — bumps on every commit, so we only snapshot when
-    something actually changed (avoids rewriting 20 MB every tick for nothing)."""
-    conn = st.connect(DB)
+async def _persist_once(reason="timer"):
+    """One bounded wait for a snapshot; an uninterruptible thread stays tracked.
+
+    A timeout cannot kill filesystem I/O in a thread. Shield the task and reuse
+    it on later ticks instead of launching overlapping writes indefinitely.
+    """
+    global _PERSIST_TASK
+    _PERSIST_HEALTH["last_tick_mono"] = time.monotonic()
+    if _PERSIST_TASK is None or _PERSIST_TASK.done():
+        _PERSIST_TASK = asyncio.create_task(asyncio.to_thread(_snapshot_to_bucket, reason))
+    task = _PERSIST_TASK
     try:
-        return conn.execute("PRAGMA data_version").fetchone()[0]
+        return await asyncio.wait_for(asyncio.shield(task), timeout=PERSIST_OP_TIMEOUT)
+    except asyncio.TimeoutError:
+        _persist_note("fail", f"snapshot timed out after {PERSIST_OP_TIMEOUT}s "
+                      "— bucket I/O may be stalled; waiting for the same attempt")
+        return False
+    except Exception as exc:                # keep the periodic saver alive and observable
+        _persist_note("fail", f"snapshot error: {exc!r}")
+        return False
     finally:
-        conn.close()
+        if task.done() and _PERSIST_TASK is task:
+            _PERSIST_TASK = None
 
 
 async def _persist_loop():
     while True:
         await asyncio.sleep(PERSIST_TICK)
-        # Heartbeat FIRST: proof the loop is alive this tick. If a snapshot below
-        # wedges, this stops advancing and the stall detector flips /ops red.
-        _PERSIST_HEALTH["last_tick_mono"] = time.monotonic()
-        try:
-            ver = _db_data_version()
-            if ver != _PERSIST_HEALTH["saved_ver"]:
-                # Bound the attempt: a stalled bucket write must not hang the loop
-                # forever (the 2026-06-26 outage). On timeout the worker thread may
-                # still be stuck, but the loop keeps ticking and records the failure.
-                try:
-                    ok = await asyncio.wait_for(
-                        asyncio.to_thread(_snapshot_to_bucket, "timer"),
-                        timeout=PERSIST_OP_TIMEOUT)
-                except asyncio.TimeoutError:
-                    _persist_note("fail", f"snapshot timed out after {PERSIST_OP_TIMEOUT}s "
-                                  "— bucket I/O may be stalled")
-                    ok = False
-                if ok:
-                    _PERSIST_HEALTH["saved_ver"] = ver
-        except Exception:                   # noqa: BLE001 — never let the loop die
-            pass
+        await _persist_once()
 
 
 @app.on_event("shutdown")
@@ -4942,7 +4970,12 @@ async def _persist_on_shutdown():
     or sleep sends SIGTERM first) — this is what shrinks the data-loss window of
     a planned restart to ~zero."""
     if PERSIST_DIR:
-        await asyncio.to_thread(_snapshot_to_bucket, "shutdown")
+        # Drain an earlier attempt before taking the final snapshot. If it is
+        # still stuck, surface failure instead of starting another writer.
+        if _PERSIST_TASK is not None and not _PERSIST_TASK.done():
+            if not await _persist_once("shutdown-wait"):
+                return
+        await _persist_once("shutdown")
 
 
 @app.on_event("startup")
@@ -4983,7 +5016,7 @@ async def _start_scheduler():
     asyncio.create_task(_scheduler_loop())
     if PERSIST_DIR:                   # durability engine (bucket-backed persistence)
         print(f"[persist] active — snapshotting {DB} to {bk.SCHED_DIR} "
-              f"every {PERSIST_TICK}s on change (keep {PERSIST_KEEP}).")
+              f"every {PERSIST_TICK}s (keep {PERSIST_KEEP}).")
         asyncio.create_task(_persist_loop())
 
 
@@ -5452,12 +5485,8 @@ def start_page(request: Request):
 
 
 def _safe_next(raw):
-    """A local ?next= target, or '/'. Guards the onboarding redirect against an
-    open-redirect (only same-site absolute paths, never '//host' or a scheme)."""
-    nxt = (raw or "/").strip()
-    if not nxt.startswith("/") or nxt.startswith("//"):
-        return "/"
-    return nxt
+    """Shared local-return policy for the onboarding flow."""
+    return safe_local_return(raw)
 
 
 def _initials(name):
@@ -5714,19 +5743,14 @@ async def me_submit(request: Request):
             st.set_bday_notify_pref(conn, uid, p.get("bday_notify") == "1")
             st.set_calendar_email_extras(conn, uid, week=p.get("cal_email_week") == "1",
                                          daybefore=p.get("cal_email_daybefore") == "1")
-        st.set_user_designation(conn, uid, designation)
+        # Directory titles currently drive business authority. Only directory
+        # administration may edit linked titles; profile text is display-only
+        # for unlinked accounts. Ignore forged/old linked-profile form fields.
+        if not profile or not profile.get("rp_id"):
+            st.set_user_designation(conn, uid, designation)
         st.set_user_nickname(conn, uid, nickname)
         if "employee_no" in p:                  # only when the field was on the form it never wipes
             st.set_user_employee_no(conn, uid, p.get("employee_no"))
-        # Keep the staff directory in sync: a linked account's designation is
-        # the same field the directory shows on certificates/signatory lines, so
-        # write it through (a blank clears it on both sides).
-        if profile and profile.get("rp_id"):
-            st.update_rp(conn, profile["rp_id"], designation=designation or None)
-            _audit(request, conn, "profile_update", target_type="person",
-                   target_id=profile["rp_id"],
-                   summary=f"updated their designation to '{designation}'"
-                           if designation else "cleared their designation")
         st.set_user_avatar(conn, uid, kind, pet_name)
         _audit(request, conn, "avatar_choose", target_type="user",
                target_id=uid,
@@ -7249,8 +7273,7 @@ def _safe_back(v, default="/directory"):
     """A `back` param a section manager (no "directory" cap) can actually
     land on — only a same-site relative path, never the bare default someone
     without directory access can't open."""
-    v = (v or "").strip()
-    return v if v.startswith("/") and not v.startswith("//") else default
+    return safe_local_return(v, default)
 
 
 @app.get("/directory/external/new", response_class=HTMLResponse)
@@ -8230,10 +8253,7 @@ _SW_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "j
 
 @app.get("/manifest.webmanifest")
 def web_manifest(request: Request, start: str = "/"):
-    # Only accept a same-origin path as the launch target; anything with a scheme
-    # or protocol-relative prefix falls back to the site root.
-    if not start.startswith("/") or start.startswith("//"):
-        start = "/"
+    start = safe_local_return(start)
     manifest = {
         "name": "Office Connect — Client Satisfaction Survey",
         "short_name": "Office Connect",

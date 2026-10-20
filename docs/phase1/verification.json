@@ -1,0 +1,26 @@
+{
+  "candidate_version": "7.24",
+  "base_revision": "3a45851ad4cab498edcec06fea7839f95bf022e7",
+  "scope": "Local safe-return and write-replay containment slice including prior Phase 0 repairs",
+  "live_verification": "deferred by user; no deployment",
+  "focused": {
+    "tests": "247",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "12.692"
+  },
+  "before_repair_failing_cases": 30,
+  "full_suite": "not rerun; earlier baseline failures remain",
+  "source_sha256": {
+    "app.py": "30dde78f6a18c4b1b520bba638a6823338d23a0cf2491169a9a81a0d61bc78c7",
+    "request_security.py": "4df93d2bd37dd6da9a8df93496d319c5544c2fc03deb556e093adab08e3242d0",
+    "rooms_routes.py": "523be57dd5df2f67df36a7643754ab1420dbd4798b32d0d0ce57e4d0d6c58aff",
+    "static/js/sw.js": "3a54df6e581cc503efbbf8b80ae5ea028fa5eee0d6c989950800e49ccf008701",
+    "version.py": "675089d4868aefb527ee5b0f96ec6407ac6b27c07b4b2c60c65d2d13f5711196",
+    "tests/test_safe_returns.py": "09c3a26dbcdeb4ef4f5b6f293bac4b7c7f218d9b378bf31a0ab5b64ab65d3ff3",
+    "tests/test_service_worker_retry.py": "59a2ace6216cdcedaf25c1ec2684b41339cbb3f7331bbab5f65c51863b1ab463",
+    "tests/js/service_worker_retry.js": "5a0da0e27f8a50f23fcc90751bb40547998a9406408226ee61f82821ada5cb71",
+    "tests/test_pwa.py": "79b6376634c341da2dcc5d0a452b69b69bd842ef67189cfd381dbcb74bdba5d6"
+  }
+}

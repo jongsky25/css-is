@@ -12,6 +12,7 @@ Three layers, tested apart:
 """
 from __future__ import annotations
 
+from tests.conftest import session_token
 import contextlib
 from datetime import date, timedelta
 
@@ -252,7 +253,7 @@ def test_the_landing_cards_are_decks_with_more_than_one_view(app_mod, team):
     import auth
     from starlette.testclient import TestClient
     c = TestClient(app_mod.app, raise_server_exceptions=True)
-    c.cookies.set(auth.COOKIE_NAME, auth.make_token(_u(conn, team["one"])))
+    c.cookies.set(auth.COOKIE_NAME, session_token(_u(conn, team["one"])))
     html = c.get("/").text
 
     assert html.count('class="deck-slide"') >= 4
@@ -279,7 +280,7 @@ def test_a_deck_slide_says_what_its_chart_means(app_mod, team):
     import auth
     from starlette.testclient import TestClient
     c = TestClient(app_mod.app, raise_server_exceptions=True)
-    c.cookies.set(auth.COOKIE_NAME, auth.make_token(_u(conn, team["one"])))
+    c.cookies.set(auth.COOKIE_NAME, session_token(_u(conn, team["one"])))
     html = c.get("/").text
 
     assert "Wednesday" in html                      # the peak day, said out loud

@@ -1,0 +1,6 @@
+{
+  "scenario": "Simulated origin commit followed by a proxy 503 without the application marker",
+  "http_status": 200,
+  "simulated_side_effect_count": 2,
+  "scope": "Service-worker replay behavior, not an observed production duplicate"
+}

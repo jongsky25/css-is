@@ -1,0 +1,24 @@
+{
+  "release": "7.27",
+  "integrated_main": "7b8f910",
+  "tests": {
+    "tests": "486",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "time": "26.243",
+    "timestamp": "2026-10-20T01:33:55.364074+00:00"
+  },
+  "live_testing": "deferred by user",
+  "source_sha256": {
+    "app.py": "18d86d84aa44beec6886b2888fe32b38eb42731ce782804651734feac302d4b6",
+    "auth.py": "61999b13713caf37a5501bb49d6129e741e7fedc8ba9da72d2f0899f20351a5b",
+    "storage.py": "8f58d90924a5f16c5e176951cfc57b414a07b6495f14b8c1c8f04c74f70810d9",
+    "backups.py": "d302df82bad0846f92b402fbf8c07b6ab22d24da2f118a0d1591f23d0c6c4823",
+    "request_security.py": "4df93d2bd37dd6da9a8df93496d319c5544c2fc03deb556e093adab08e3242d0",
+    "rooms_routes.py": "523be57dd5df2f67df36a7643754ab1420dbd4798b32d0d0ce57e4d0d6c58aff",
+    "static/js/sw.js": "457f135d3b04380c8760fa0991a466faf5f6bd049b15ca8f7dc3448881d17883",
+    "version.py": "792411ef2c2fdc672ef6396ce2131ff31b83bad2d7ba6aa17d7a132cd63676a3",
+    "tests/conftest.py": "af675c2ac9c9839a789e4dc1c13695e7fef1d8853e5a67070bb514d29b843a5d"
+  }
+}

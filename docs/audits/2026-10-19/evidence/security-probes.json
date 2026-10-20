@@ -1,0 +1,35 @@
+{
+  "baseline_admin_status": 200,
+  "deactivated_admin_old_cookie_status": 500,
+  "deactivated_documents_old_cookie_status": 500,
+  "demoted_admin_old_cookie_status": 200,
+  "password_changed_old_cookie_status": 200,
+  "logged_out_replayed_cookie_status": 200,
+  "foreign_origin_cookie_bearing_admin_post": {
+    "http_status": 303,
+    "setting_changed": true,
+    "limitation": "TestClient supplies cookie; browser SameSite behavior is not simulated."
+  },
+  "protocol_relative_login_redirect": {
+    "status": 303,
+    "location": "//example.invalid"
+  },
+  "login_cookie_secure_with_default_configuration": false,
+  "thirty_invalid_logins": {
+    "401": 30
+  },
+  "application_response_security_headers": {
+    "content-security-policy": null,
+    "x-content-type-options": null,
+    "x-frame-options": null,
+    "strict-transport-security": null,
+    "referrer-policy": null,
+    "cache-control": null
+  },
+  "token_path_redaction": {
+    "/calendar/feed/SYNTHETIC_SECRET.ics": "/calendar/feed/SYNTHETIC_SECRET.ics",
+    "/room/t/SYNTHETIC_SECRET": "/room/t/SYNTHETIC_SECRET",
+    "/rooms/display/SYNTHETIC_SECRET": "/rooms/display/SYNTHETIC_SECRET"
+  },
+  "weak_password_accepted_by_policy": true
+}

@@ -1,4 +1,5 @@
 """P1.1: synthetic work items, no external files, signatures, or mail."""
+from tests.conftest import session_token
 import re
 import sqlite3
 
@@ -196,7 +197,7 @@ def test_http_creation_lead_link_and_access(workspace, app_mod, monkeypatch):
     monkeypatch.setattr(app_mod, 'DB', path)
     def client(user):
         result = TestClient(app_mod.app)
-        result.cookies.set(auth.COOKIE_NAME, auth.make_token(user))
+        result.cookies.set(auth.COOKIE_NAME, session_token(user))
         return result
     def token(page):
         assert page.status_code == 200, page.text
@@ -360,7 +361,7 @@ def test_task_http_authorization_csrf_stale_and_disabled(workspace, app_mod, mon
     url = f"/work/{item['id']}"
     with TestClient(app_mod.app) as client:
         def login(user):
-            client.cookies.set(auth.COOKIE_NAME, auth.make_token(user))
+            client.cookies.set(auth.COOKIE_NAME, session_token(user))
             page = client.get(url)
             assert page.status_code == 200
             return re.search(r'name="csrf" value="([a-f0-9]+)"', page.text)[1]
@@ -570,11 +571,11 @@ def test_migrated_http_projection_respects_shared_audience(workspace,app_mod,mon
     item=work.raw(c,cid)
     work.link_document(c,u[1],cid,item['revision'],private['id'])
     with TestClient(app_mod.app) as client:
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[3]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[3]))
         page=client.get(f"/documents/{doc['id']}")
         assert page.status_code==200 and 'Confidential collaborative evidence' in page.text
         assert f'/work/{cid}' in page.text and 'Assignment number' not in page.text
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[4]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[4]))
         page=client.get(f"/documents/{doc['id']}")
         assert page.status_code==200
         assert 'Confidential collaborative evidence' not in page.text
@@ -730,7 +731,7 @@ def test_personal_inbox_http_filters_home_and_dates(workspace,app_mod,monkeypatc
     item=inbox_case(c,u,unit);task=propose(c,u[0],item,unit,u[3]['id'],title='Prepare the regional input',due_date='2026-10-23')
     task=advance(c,u[1],task,'confirm',owner_id=u[3]['id'])
     with TestClient(app_mod.app) as client:
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[3]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[3]))
         page=client.get('/work/mine')
         assert page.status_code==200 and 'Prepare the regional input' in page.text
         assert 'October 23, 2026' in page.text and 'Acknowledge and start' in page.text
@@ -738,7 +739,7 @@ def test_personal_inbox_http_filters_home_and_dates(workspace,app_mod,monkeypatc
         assert 'Prepare the regional input' not in client.get('/work/mine?view=waiting').text.split('<div class="work-wrap">',1)[1]
         assert client.get('/work/mine?view=bogus').status_code==400
         assert client.get('/work/mine?before=-3').status_code==400
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[4]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[4]))
         assert 'Prepare the regional input' not in client.get('/work/mine').text
         assert 'Prepare the regional input' not in client.get('/').text
 
@@ -862,7 +863,7 @@ def test_guided_intake_http_preview_failure_manual_entry_and_existing_scope(work
     c,u,unit,path=workspace;monkeypatch.setattr(app_mod,'DB',path)
     item=case(c,u[0],unit)
     with TestClient(app_mod.app) as client:
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[0]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[0]))
         page=client.get('/documents/new')
         assert page.status_code==200 and 'Reference only' in page.text
         csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',page.text)[1]
@@ -885,7 +886,7 @@ def test_guided_intake_http_preview_failure_manual_entry_and_existing_scope(work
         assert doc['subject']=='My manually checked subject' and doc['direction']=='OUT' and doc['priority']=='urgent'
         assert doc['due_date'] is None # preview didn't silently apply suggestion
         assert client.get(f"/documents/new?case_id={item['id']}").status_code==200
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[4]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[4]))
         assert client.get(f"/documents/new?case_id={item['id']}").status_code==404
 
 
@@ -920,7 +921,7 @@ def test_contextual_work_two_units_return_note_and_independent_progress(workspac
     a=advance(c,u[2],a,'return',reason='Add the missing regional basis')
     a=advance(c,u[2],a,'milestone',due_date='2026-10-25')
     with TestClient(app_mod.app) as client:
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[0]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[0]))
         page=client.get(f"/work/{item['id']}")
         assert page.status_code==200
         assert 'Your next actions' in page.text and 'Submit for review — Compile service inputs' in page.text
@@ -929,7 +930,7 @@ def test_contextual_work_two_units_return_note_and_independent_progress(workspac
         assert 'First evidence set' in page.text and 'Contribution history' in page.text
         assert f'/tasks/{b["id"]}/acknowledge' not in page.text
         a=advance(c,u[0],a,'submit',submission='Revised regional basis')
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[2]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[2]))
         page=client.get(f"/work/{item['id']}")
         assert 'Review submitted contribution — Compile service inputs' in page.text
         assert f'/tasks/{a["id"]}/accept' in page.text and f'/tasks/{a["id"]}/return' in page.text
@@ -948,7 +949,7 @@ def test_named_document_assignment_forms_enforce_scope_and_revision(workspace,ap
     assignment=c.execute("SELECT id FROM document_assignment WHERE document_id=? AND role='contributor'",(doc['id'],)).fetchone()[0]
     url=f"/documents/{doc['id']}"
     with TestClient(app_mod.app) as client:
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[3]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[3]))
         page=client.get(url)
         assert page.status_code==200 and 'Technical input' in page.text
         assert 'name="assignment_id" type="number"' not in page.text and 'Assignment number' not in page.text
@@ -959,14 +960,14 @@ def test_named_document_assignment_forms_enforce_scope_and_revision(workspace,ap
         response=client.post(url+'/contribution',data=payload,follow_redirects=False)
         assert response.status_code==303
         assert client.post(url+'/contribution',data=payload).status_code==409
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[2]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[2]))
         page=client.get(url)
         assert 'Confirm contribution complete' in page.text and 'Actor #' not in page.text
         assert 'Named form output' in page.text
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[4]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[4]))
         page=client.get(url)
         assert f'name="assignment_id" value="{assignment}"' not in page.text
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[1]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[1]))
         page=client.get(url)
         assert 'Replace an existing assignment (optional)' in page.text
         assert '<select name="supersede_id">' in page.text and 'Replace assignment number' not in page.text
@@ -979,7 +980,7 @@ def test_contextual_actions_hide_blocked_and_inactive_owner_paths(workspace,app_
     task=tasks.list_for_case(c,u[1],cid)[0]
     c.execute('UPDATE admin_user SET active=0 WHERE id=?',(u[3]['id'],));c.commit()
     with TestClient(app_mod.app) as client:
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[1]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[1]))
         page=client.get(f'/work/{cid}')
         assert page.status_code==200 and 'Choose an active staff account.' in page.text
         assert f'/tasks/{task["id"]}/acknowledge' not in page.text
@@ -1111,7 +1112,7 @@ def test_discussion_http_csrf_reply_edit_and_escape(workspace, app_mod, monkeypa
     monkeypatch.setattr(app_mod,'DB',path)
     url=f"/work/{item['id']}/discussion"
     with TestClient(app_mod.app) as client:
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[0]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[0]))
         page=client.get(url)
         assert page.status_code==200
         csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',page.text)[1]
@@ -1132,7 +1133,7 @@ def test_discussion_http_csrf_reply_edit_and_escape(workspace, app_mod, monkeypa
         assert 'Keep my unsaved draft' in stale.text and 'Corrected text' in stale.text
         history=client.get(url+'?message='+str(cid))
         assert 'Original message' in history.text and 'Corrected text' in history.text
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[4]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[4]))
         assert client.get(url).status_code==404
 
 
@@ -1269,7 +1270,7 @@ def test_updates_http_mentions_unread_csrf_and_no_get_mutation(workspace,app_mod
     monkeypatch.setattr(app_mod,'DB',path)
     url=f"/work/{item['id']}/discussion"
     with TestClient(app_mod.app) as client:
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[0]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[0]))
         page=client.get(url)
         csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',page.text)[1]
         assert client.post(url+'/preferences',data={'action':'follow'}).status_code==403
@@ -1277,7 +1278,7 @@ def test_updates_http_mentions_unread_csrf_and_no_get_mutation(workspace,app_mod
         posted=client.post(url+'/messages',data={'action':'post','csrf':csrf,'body':'Please review','mentions':str(u[1]['id'])})
         assert posted.status_code==200 and 'Mentioned:' in posted.text
         cid=c.execute('SELECT id FROM work_comment').fetchone()[0]
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[1]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[1]))
         inbox=client.get('/work/updates')
         assert inbox.status_code==200 and 'Mentioned you' in inbox.text
         page=client.get(url)
@@ -1437,7 +1438,7 @@ def test_blocker_http_forms_csrf_history_and_source_visibility(workspace,app_mod
     monkeypatch.setattr(app_mod,'DB',path)
     url=f"/work/{item['id']}";target=url+f"/tasks/{task['id']}/block"
     with TestClient(app_mod.app) as client:
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[0]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[0]))
         page=client.get(url);assert 'Report a blocker' in page.text
         csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',page.text)[1]
         form={'revision':task['revision'],'reason':'<script>Need totals</script>','followup_owner_id':u[0]['id'],'followup_date':'2026-10-20'}
@@ -1588,7 +1589,7 @@ def test_decision_http_source_forms_csrf_and_review(workspace,app_mod,monkeypatc
     url=f"/work/{item['id']}/messages/{cid}/actions"
     def hidden(page,name):return html.unescape(re.search('name="'+name+'" value="([^"]*)"',page.text)[1])
     with TestClient(app_mod.app) as client:
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[0]));page=client.get(url)
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[0]));page=client.get(url)
         assert page.status_code==200 and '&lt;script&gt;source&lt;/script&gt;' in page.text
         assert 'Record work decision</button>' not in page.text
         data={'action':'task','source_revision':1,'title':'Derived task','expected_output':'Supported output','unit_id':unit}
@@ -1596,7 +1597,7 @@ def test_decision_http_source_forms_csrf_and_review(workspace,app_mod,monkeypatc
         result=client.post(url,data={**data,'csrf':hidden(page,'csrf')})
         assert result.status_code==200 and 'Proposed from a discussion message' in result.text
         task=tasks.list_for_case(c,u[0],item['id'])[0]
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[1]));page=client.get(url)
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[1]));page=client.get(url)
         data={k:hidden(page,k) for k in ('csrf','source_revision','task_revisions','document_revisions')}
         result=client.post(url,data={**data,'action':'decision','kind':'change','body':'Use the revised grouping','affected_tasks':str(task['id'])})
         assert result.status_code==200 and 'Needs review against the changed direction' in result.text
@@ -1606,7 +1607,7 @@ def test_decision_http_source_forms_csrf_and_review(workspace,app_mod,monkeypatc
         assert client.post(target,data=review).status_code==200
         assert client.post(target,data=review).status_code==409
         assert client.get(f"/work/{item['id']}/decisions").status_code==200
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[4]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[4]))
         assert client.get(url).status_code==404
         assert client.get(f"/work/{item['id']}/decisions/{did}").status_code==404
 
@@ -1770,7 +1771,7 @@ def test_handoff_history_pagination_and_http_forms(workspace,app_mod,monkeypatch
     monkeypatch.setattr(app_mod,'DB',path);url=f"/work/{item['id']}/draft"
     def hidden(page,name):return html.unescape(re.search('name="'+name+'" value="([^"]*)"',page.text)[1])
     with TestClient(app_mod.app) as client:
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[0]));page=client.get(url)
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[0]));page=client.get(url)
         assert page.status_code==200 and 'does not grant Drive permissions' in page.text
         form={'action':'set_draft','draft_id':0,'title':'<script>Draft</script>','url':DRAFT_URL,'reason':'Working copy'}
         assert client.post(url,data=form).status_code==403
@@ -1782,7 +1783,7 @@ def test_handoff_history_pagination_and_http_forms(workspace,app_mod,monkeypatch
         payload={'action':'handoff','csrf':hidden(page,'csrf'),'task_id':task['id'],'task_revisions':hidden(page,'task_revisions'),'draft_id':hidden(page,'draft_id'),'note':'Place the table in section two.'}
         page=client.post(url,data=payload)
         assert page.status_code==200 and 'Place the table in section two.' in page.text
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[4]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[4]))
         assert client.get(url).status_code==404
 
 
@@ -1915,7 +1916,7 @@ def test_team_http_actions_consistency_csrf_and_stale_forms(workspace,app_mod,mo
     task=propose(c,u[0],item,unit,u[0]['id'],title='<script>unsafe</script>')
     task=advance(c,u[1],task,'confirm',owner_id=u[0]['id'])
     with TestClient(app_mod.app) as client:
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[0]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[0]))
         url='/work/team?view=board&owner=mine'
         page=client.get(url)
         assert page.status_code==200,page.text
@@ -1946,7 +1947,7 @@ def test_team_http_actions_consistency_csrf_and_stale_forms(workspace,app_mod,mo
         assert client.post(f"/work/team/{item['id']}/{task['id']}/accept",data={'csrf':csrf,'revision':task['revision'],'reason':'Self accept'}).status_code==403
         assert client.get('/work/team?view=invalid').status_code==400
         assert client.get('/work/team?before=invalid').status_code==400
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[4]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[4]))
         assert 'Regional collaboration' not in client.get('/work/team?view=board').text
 
 
@@ -1972,7 +1973,7 @@ def test_team_http_revocation_disabled_and_cross_case_reject(workspace,app_mod,m
     task=propose(c,u[0],item,unit,u[0]['id']);task=advance(c,u[1],task,'confirm',owner_id=u[0]['id'])
     other=case(c,u[0],unit)
     with TestClient(app_mod.app) as client:
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[0]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[0]))
         html=client.get('/work/team').text
         csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',html)[1]
         fields={'csrf':csrf,'revision':task['revision'],'reason':'Start'}
@@ -2135,14 +2136,14 @@ def test_consolidation_http_request_return_inbox_and_stale_note(workspace,app_mo
     source,output,item,task=consolidation_fixture(workspace)
     url=f"/work/{item['id']}/consolidation";target=url+f"/{output['id']}"
     with TestClient(app_mod.app) as client:
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[1]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[1]))
         page=client.get(url);assert page.status_code==200,page.text
         token=re.search(r'name="csrf" value="([a-f0-9]+)"',page.text)[1]
         fields={'csrf':token,'action':'review_route','revision':output['revision'],'version_id':output['current_version'],
             'work_snapshot':review.snapshot(c,item['id'],output['id'])[1],'review_class':'director','reviewer_id':u[2]['id'],'reason':'Review consolidated evidence'}
         assert client.post(target,data={**fields,'csrf':''}).status_code==403
         assert client.post(target,data=fields,follow_redirects=False).status_code==303
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[2]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[2]))
         inbox=client.get('/approvals');assert inbox.status_code==200,inbox.text
         assert 'checked-v1' in inbox.text and '1 accepted inputs' in inbox.text
         page=client.get(url);token=re.search(r'name="csrf" value="([a-f0-9]+)"',page.text)[1]
@@ -2153,7 +2154,7 @@ def test_consolidation_http_request_return_inbox_and_stale_note(workspace,app_mo
         assert '&lt;script&gt;Clarify totals&lt;/script&gt;' in client.get(f"/documents/{output['id']}").text
         response=client.post(target,data={**fields,'reason':'Retain my stale feedback'})
         assert response.status_code==409 and 'Retain my stale feedback' in response.text
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[4]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[4]))
         assert client.get(url).status_code==404
 
 
@@ -2371,11 +2372,11 @@ def test_completion_http_permissions_csrf_retained_note_and_state(workspace,app_
     source,output,item,task=completion_fixture(workspace);output=release_and_close(c,u,output)
     url=f"/work/{item['id']}/completion"
     with TestClient(app_mod.app) as client:
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[0]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[0]))
         page=client.get(url);assert page.status_code==200,page.text
         # No completion form for an ordinary contributor.
         assert 'Record completion</button>' not in page.text
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[2]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[2]))
         page=client.get(url);token=re.search(r'name="csrf" value="([a-f0-9]+)"',page.text)[1]
         data=completion.page(c,u[2],item['id'])
         fields={'action':'complete','csrf':token,'revision':data['case']['revision'],'digest':data['digest'],'evidence':'<script>Outcome confirmed</script>'}
@@ -2581,7 +2582,7 @@ def test_notification_preferences_http_csrf_conflicts_and_categories(workspace,a
     discussion.post(c,u[0],item['id'],'Direct body',mentions=[u[1]['id']])
     url='/work/notification-preferences'
     with TestClient(app_mod.app) as client:
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[1]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[1]))
         page=client.get(url);assert page.status_code==200,page.text
         token=re.search(r'name="csrf" value="([a-f0-9]+)"',page.text)[1]
         assert not c.execute('SELECT 1 FROM work_notification_preference').fetchone()
@@ -2799,7 +2800,7 @@ def test_support_http_counts_links_escape_and_revocation(workspace,app_mod,monke
     c,u,unit,path=workspace;monkeypatch.setattr(app_mod,'DB',path)
     item=case(c,u[0],unit);task=propose(c,u[0],item,unit,title='<script>unsafe()</script>')
     with TestClient(app_mod.app) as client:
-        client.cookies.set(auth.COOKIE_NAME,auth.make_token(u[1]))
+        client.cookies.set(auth.COOKIE_NAME,session_token(u[1]))
         page=client.get('/work/support?metric=unassigned')
         assert page.status_code==200,page.text
         assert '&lt;script&gt;unsafe()&lt;/script&gt;' in page.text
