@@ -923,6 +923,10 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                    "candidates": oc.activity_candidates_for_entry(conn, e) if eligible else []}
             room_link = _room_link(request, conn, e)
             filing = _travel_block(conn, user, e, request.query_params.get("date", ""))
+            # A requested or booked conference room makes the venue the office: no travel to claim.
+            if filing and not filing["chip"] and room_link and room_link.get("state") in (
+                    "requested", "booked", "move_pending", "mismatch", "archived_holds"):
+                filing = None
         finally:
             conn.close()
         who = lambda u: names.get(u, u or "someone")           # noqa: E731

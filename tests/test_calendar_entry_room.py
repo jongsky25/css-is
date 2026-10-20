@@ -65,6 +65,7 @@ def test_ticking_the_room_files_a_request_tied_to_the_new_item(manager, conn):
     assert row == ("CALROOM Meeting", "requested", eid, "online")
     page = manager.get(r.headers["location"]).text
     assert "Conference room requested" in page                                   # the banner on the item's page
+    assert "File travel claim" not in page and "File a travel claim" not in page  # the venue is the office
 
 
 def test_a_room_choice_that_cannot_work_stops_before_the_item_is_saved(manager, conn):
