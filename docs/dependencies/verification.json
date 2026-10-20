@@ -3,26 +3,26 @@
   "scope": "Candidate 7.49 clean Python 3.11 environments; not a live production inventory",
   "python": "3.11.17",
   "locks": {
-    "requirements-deploy.txt": "ba37e1006609471dda784b8e0c5e34b1d72fe14a8023d129f94aae1f657242f1",
-    "requirements-test.txt": "7c7f4c70aa80691d990a293fe0f833e056fd155479700ee85e6ed5133f015748",
-    "requirements-tools.txt": "12107b16d8c6e5bb84ac28d605c5d019c1a0e26e2f43b7ae707319983fb43d2b",
-    "requirements.txt": "cd114864d753055f6a1470b44b58eefb0f62275d6ae0b6ad7eb9e814538b62ef"
+    "requirements-deploy.txt": "e4b4e4ea3edff4d0241d4000ba1b59be6caba634a402e6696ae5366e7e0d2cab",
+    "requirements-test.txt": "c320be2c4f09d72539bfd1e95c1ba8188126e9bdd56aa5841907c60862f9562e",
+    "requirements-tools.txt": "8d87948d5bd0070e8a33416b4918a941331263ef4b1a72e932aad3a97ac3b285",
+    "requirements.txt": "a570e66223146fd7e3e8a87f4c487bb5abb5fbe938ac5928db111bb0ac626950"
   },
   "audits": {
     "runtime": {
-      "packages": 51,
+      "packages": 52,
       "reported_advisories": 0
     },
     "test": {
-      "packages": 67,
+      "packages": 68,
       "reported_advisories": 0
     },
     "tools": {
-      "packages": 31,
+      "packages": 32,
       "reported_advisories": 0
     },
     "deploy": {
-      "packages": 17,
+      "packages": 18,
       "reported_advisories": 0
     }
   },
@@ -38,5 +38,8 @@
     "skips": 0,
     "additional_vendor_gate_cases": 6
   },
-  "ci": "Pending built-container audit and full normal/shuffled release suites"
+  "ci": "Full release evidence is recorded in PR #355 checks and dependency-audit artifacts",
+  "resolved_findings": [
+    "The first built-image parity gate detected the base image packaging library wheel outside the lock; wheel 0.48.0 is now explicitly pinned with pip and setuptools."
+  ]
 }

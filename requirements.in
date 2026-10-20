@@ -22,3 +22,4 @@ httpx==0.28.1
 # Pin the packaging tools bundled into the runtime image, too.
 pip==26.2.1
 setuptools==84.2.0
+wheel==0.48.0

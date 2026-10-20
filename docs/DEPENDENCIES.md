@@ -23,7 +23,7 @@ Manual production workflow testing remains deferred.
 
 | Inputs | Generated, hash-verified lock | Purpose |
 |---|---|---|
-| `requirements.in` | `requirements.txt` | Runtime, including pinned base packaging tools |
+| `requirements.in` | `requirements.txt` | Runtime, including pinned pip/setuptools/wheel |
 | `requirements-test.in` | `requirements-test.txt` | Same runtime graph plus pytest, PyMuPDF and Playwright |
 | `requirements-tools.in` | `requirements-tools.txt` | Isolated uv/pip-audit release tooling |
 | `requirements-deploy.in` | `requirements-deploy.txt` | Hugging Face client and its full dependency graph |
@@ -80,7 +80,8 @@ The reusable release workflow now requires:
 
 1. Current lock fingerprints, vendor file integrity and release metadata.
 2. A container built from the production Docker recipe, with `pip check` and
-   an actual installed-package inventory, including packaging tools.
+   an actual installed-package inventory, including packaging tools. The first container run caught the base image
+   supplying an unpinned wheel package; it is now explicitly pinned to 0.48.0.
 3. A strict PyPI advisory scan of that inventory, exact report coverage, and a
    CycloneDX **Python dependency** SBOM.
 4. Clean test, tooling and deployment installs and complete scans of their

@@ -2,3 +2,4 @@
 huggingface-hub==2.2.0
 pip==26.2.1
 setuptools==84.2.0
+wheel==0.48.0

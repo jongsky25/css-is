@@ -3,3 +3,4 @@ uv==0.12.23
 pip-audit==2.10.1
 pip==26.2.1
 setuptools==84.2.0
+wheel==0.48.0
