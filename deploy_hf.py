@@ -85,7 +85,7 @@ ALLOW = RUNTIME_PY + [
     "version.py",            # drives the login version string
     "css_is.db",             # the live DB carrier
     "build_info.json",       # build telemetry for the /ops admin dashboard
-    "Dockerfile", "requirements.txt", "README.md",
+    "Dockerfile", ".dockerignore", "requirements.txt", "README.md",
     "templates/**", "static/**", "assets/**",
 ]
 IGNORE = ["**/__pycache__/**"]

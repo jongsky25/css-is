@@ -18,8 +18,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends tesseract-ocr t
 
 # Install dependencies first (lets Docker cache this layer)
 COPY --chown=user requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+RUN python -m pip install --no-cache-dir --require-hashes --only-binary=:all: -r requirements.txt && \
+    python -m pip check
 
 # Copy the rest of your app
 COPY --chown=user . .

@@ -1,6 +1,13 @@
-## 7.50 — October 20, 2026
+## 7.51 — October 20, 2026
 
 - The drafted invitation now follows the DOH memorandum format used to write to the regions: MEMORANDUM with FOR, FROM and SUBJECT, a request paragraph, the what, when and where, a table of the assistance asked for, the contact line and an initials block. Who it is FOR and the telephone number are left blank to fill in. The Apps Script template needs to be updated and re-run (docs/ACTIVITY_DOCS_SETUP.md) (spot feedback #136).
+
+## 7.50 — October 20, 2026
+
+- Pin runtime, test, audit-tool and deployment-client dependencies with distribution hashes, including PDF libraries.
+- Require complete vulnerability scans, a Python dependency SBOM from the production Docker recipe and matching runtime/test versions before release.
+- Keep document intake, OCR, previews and generated reports covered by the normal and shuffled Python 3.11 suites.
+- PDF/OCR process isolation and the previously excluded authentication/logging changes remain separate work.
 
 ## 7.49 — October 20, 2026
 
