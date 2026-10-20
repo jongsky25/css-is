@@ -1,3 +1,9 @@
+## 7.39 — October 20, 2026
+
+- Verify normal and shuffled test execution on Python 3.11 and record the resolved dependencies.
+- Declare the additional PDF and browser test dependencies for clean installations.
+- Preserve the travel filing and form improvements in releases 7.36–7.38.
+
 ## 7.38 — October 20, 2026
 
 - Fix Appendix B and the Post Travel Report failing with "The relay rejected the signature": requests to the documents relay are now signed over an ASCII-only payload, so checkbox glyphs, curly quotes and accented names no longer break the signature (spot feedback #132).
