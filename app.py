@@ -12932,6 +12932,8 @@ def reports(request: Request, org: str = "", period: str = "all", type: int = 1,
         org_opts = _org_options(conn)
         arta_report = sq = story = None
         activity_opts = []
+        my_rp_id = None
+        my_rp_engagements = []
         sel_activity = activity_label = ""
         csm_draft = None
         if rtype == 1:
@@ -12947,6 +12949,21 @@ def reports(request: Request, org: str = "", period: str = "all", type: int = 1,
                 sel_activity, activity_label, inst_ids = _rp_activity_scope(opts, activity)
                 if inst_ids is not None:            # narrow to one activity's forms
                     sdf_atoms = atoms[atoms["form_instance_id"].isin(set(inst_ids))]
+                account = st.get_admin_user_by_id(conn, request.state.user["id"])
+                my_rp_id = account.get("rp_id") if account else None
+                if my_rp_id:
+                    person = st.get_rp(conn, my_rp_id)
+                    if (not person or (person.get("hidden_public") or st.is_bureau_director(person))
+                            and not auth.can(request.state.user["role"], "hide")):
+                        my_rp_id = None
+                    else:
+                        events = view_memo("events", ("", "all"),
+                                           lambda: di.build_events(atoms, st.list_activity_instances(conn)))
+                        my_rp_engagements = di.rp_activity_engagements(events, my_rp_id)
+                        if sel_activity:
+                            selected_ids = set(inst_ids or [])
+                            my_rp_engagements = [e for e in my_rp_engagements
+                                                 if e["event_id"] in selected_ids]
             sdf = eng.scope(sdf_atoms, org_prefix=org or None, period_col=period_col,
                             period=period_v, survey_type=rtype)
             rids = sdf["response_id"].unique().tolist() if not sdf.empty else []
@@ -12971,6 +12988,7 @@ def reports(request: Request, org: str = "", period: str = "all", type: int = 1,
         "period_opts": _period_options(atoms),
         "org_opts": org_opts,
         "activity_opts": activity_opts,
+        "my_rp_id": my_rp_id, "my_rp_engagements": my_rp_engagements,
         "sel_org": org, "sel_period": period, "sel_activity": sel_activity,
         "scope_label": scope_label,
         "total_responses": total_responses,
