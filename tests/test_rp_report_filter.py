@@ -89,3 +89,32 @@ def test_activity_filter_is_type3_only(manager):
     """A stray activity param on Type 1/2 is ignored — no narrowing, no crash."""
     assert manager.get("/reports", params={"type": 1, "activity": "999999"}).status_code == 200
     assert manager.get("/reports", params={"type": 2, "activity": "999999"}).status_code == 200
+
+
+def test_linked_staff_sees_own_results_by_activity(viewer, manager, app_mod):
+    db_path = app_mod.DB
+    own_rp = _one_internal_rp(db_path)
+    conn = st.connect(db_path)
+    conn.execute("UPDATE admin_user SET rp_id=? WHERE username=?",
+                 (own_rp, "viewer@test.local"))
+    conn.commit()
+    conn.close()
+
+    _a_ev, a_f3 = _make_bureau(manager, db_path, "My RP Alpha", "2026-07-10", "Hall A")
+    _b_ev, b_f3 = _make_bureau(manager, db_path, "My RP Bravo", "2026-07-11", "Hall B")
+    _add_responses(db_path, a_f3, 3)
+    _add_responses(db_path, b_f3, 2)
+    app_mod.invalidate_atoms()
+
+    body = viewer.get("/reports", params={"type": 3}).text
+    assert "Your RP results by activity" in body
+    assert "My RP Alpha" in body and "My RP Bravo" in body
+    a_val = _option_value(body, "My RP Alpha")
+    assert a_val
+    narrowed = viewer.get("/reports", params={"type": 3, "activity": a_val}).text
+    section = narrowed.split('id="my-rp-heading"', 1)[1].split("</section>", 1)[0]
+    assert "My RP Alpha" in section
+    assert "My RP Bravo" not in section
+    assert f'/dashboard/people/{own_rp}/activity/{a_val}' in section
+    assert viewer.get(f"/dashboard/people/{own_rp}/activity/{a_val}").status_code == 200
+    assert "Your RP results by activity" not in manager.get("/reports", params={"type": 3}).text

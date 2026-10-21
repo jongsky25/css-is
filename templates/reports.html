@@ -33,6 +33,13 @@
   /* Activity options carry long titles; cap the closed control so it doesn't balloon to full width. */
   .filters select#activity { width:min(360px, 100%); max-width:100%; }
   .filters .scope { margin-left:auto; color:var(--soft); font-size:.85rem; text-align:right; }
+  .my-rp-list { list-style:none; padding:0; margin:.7rem 0 0; display:grid; gap:.55rem; }
+  .my-rp-list a { display:flex; justify-content:space-between; align-items:center; gap:1rem;
+                  padding:.7rem .85rem; border:1px solid var(--line); border-radius:9px;
+                  color:var(--ink); text-decoration:none; }
+  .my-rp-list a:hover { border-color:var(--accent); background:var(--accent-bg); }
+  .my-rp-list small { display:block; color:var(--soft); font-size:.78rem; margin-top:.15rem; }
+  .my-rp-score { white-space:nowrap; font-weight:800; font-variant-numeric:tabular-nums; }
   .rcard { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:1.25rem 1.5rem;
           margin-bottom:1.25rem; box-shadow:0 1px 3px rgba(0,0,0,.05); }
   .rcard h2 { font-size:1.1rem; margin:0; }
@@ -277,6 +284,28 @@
   {% endif %}
   <div class="scope">Showing<br><strong>{{ scope_label }}</strong></div>
 </form>
+
+{% if rtype == 3 and my_rp_id %}
+<section class="rcard" aria-labelledby="my-rp-heading">
+  <div class="cardhead">
+    <div><h2 id="my-rp-heading">Your RP results by activity</h2>
+      <p class="meta" style="margin:.3rem 0 0;">Your own resource-person ratings, separate from the combined report below. Activities from June 15, 2026 onward; all periods.</p></div>
+    <a class="vlink" href="/dashboard/people/{{ my_rp_id }}">View your full profile →</a>
+  </div>
+  {% if my_rp_engagements %}
+  <ul class="my-rp-list">
+    {% for e in my_rp_engagements %}
+    <li><a href="/dashboard/people/{{ my_rp_id }}/activity/{{ e.event_id }}">
+      <span><strong>{{ e.name }}</strong><small>{{ e.date|humandate }} · {{ e.respondents|comma }} rating{{ '' if e.respondents == 1 else 's' }}</small></span>
+      <span class="my-rp-score">{{ e.shown }}/7&nbsp; →</span>
+    </a></li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="meta">{{ 'You have no RP ratings for this activity yet.' if sel_activity else 'You have no per-activity RP ratings yet.' }}</p>
+  {% endif %}
+</section>
+{% endif %}
 
 {% if rtype == 1 %}
 <details class="disclosure rcard" style="padding:.9rem 1.25rem;">

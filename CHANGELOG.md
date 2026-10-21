@@ -1,3 +1,8 @@
+## 7.65 — October 21, 2026
+
+- Add a personal results list to the Type 3 report for staff whose accounts are linked to a resource-person profile, with each activity's score and rating count.
+- Selecting an activity narrows that personal list and opens the existing per-activity scorecard for detailed ratings, comments and downloads.
+
 ## 7.64 — October 21, 2026
 
 - Replace model-authored survey answers with validated fact selections and server-rendered figures; fixed answers skip the extra AI call.
