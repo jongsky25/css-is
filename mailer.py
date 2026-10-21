@@ -1560,6 +1560,19 @@ FEATURES = {
         "scheduled"),
 }
 
+# Email sent by a deliberate, audited action in another module, with its own
+# switch and receipts there. Not switchable here (and not paused by the global
+# pause), but listed so the console shows every way this system sends mail, and
+# its sends appear in the send log under the same key.
+# key -> (label, why, where to change it)
+EXTERNAL = {
+    "document_dispatch": (
+        "Official document dispatch",
+        "A signed outgoing document is emailed to its recipients by an authorized officer. "
+        "Controlled by Document sending, with its own release checks and receipts.",
+        "/admin/documents/setup"),
+}
+
 # Attachment options: not emails of their own, but a part of one that an admin
 # may want to leave off (a calendar app invite can clash with the person's own
 # calendar). Stored as `email_option.<key>`, default on.

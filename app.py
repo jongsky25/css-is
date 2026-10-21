@@ -4482,6 +4482,25 @@ async def admin_rules_edit(request: Request, rid: int):
 # defensively, same reasoning as /admin/rules (see D8).
 # ---------------------------------------------------------------------
 
+def _email_blockers(conn):
+    """key -> (reason, settings URL) for features whose switch here is ON but
+    which another setting keeps from sending. Read-only hints for the console."""
+    out = {}
+    docs_on = st.get_setting(conn, "documents.enabled", "0") == "1"
+    sending_on = st.get_setting(conn, "documents.sending_enabled", "0") == "1"
+    if not docs_on:
+        out["job_documents"] = ("Documents is switched off.", "/admin/documents/setup")
+    elif not sending_on:
+        out["job_documents"] = ("Document sending is switched off.", "/admin/documents/setup")
+    if not sending_on:
+        out["document_dispatch"] = ("Document sending is switched off.", "/admin/documents/setup")
+    if not (docs_on and st.get_setting(conn, "work.enabled", "0") == "1"):
+        out["job_work_updates"] = ("Shared work is switched off.", "/admin/documents/readiness")
+    if st.get_setting(conn, "travel.enabled", "1") == "0":
+        out["job_travel_filing_due"] = ("Travel filing is switched off.", "/admin/travel")
+    return out
+
+
 @app.get("/admin/email", response_class=HTMLResponse)
 def admin_email(request: Request, msg: str = "", err: str = ""):
     if (r := _forbid(request, "manage_users")):
@@ -4494,6 +4513,7 @@ def admin_email(request: Request, msg: str = "", err: str = ""):
         param_values = {k: send_reminders._param(conn, k) for k in send_reminders.PARAMS}
         retention_days = int(st.get_setting(
             conn, "email_log_retention_days", str(ret.EMAIL_LOG_RETENTION_DAYS_DEFAULT)))
+        blockers = _email_blockers(conn)
     finally:
         conn.close()
     def _state(k):
@@ -4511,12 +4531,14 @@ def admin_email(request: Request, msg: str = "", err: str = ""):
                 in mailer.FEATURES.items() if group == "scheduled"]
     labels = {k: v[0] for k, v in mailer.FEATURES.items()}
     labels.update({k: v[0] for k, v in mailer.ALWAYS_ON.items()})
+    labels.update({k: v[0] for k, v in mailer.EXTERNAL.items()})
     for row in recent_sends:
         row["label"] = labels.get(row["feature"], row["feature"])
     params = [(k, label, lo, hi, param_values[k]) for k, (label, _default, lo, hi)
              in send_reminders.PARAMS.items()]
     return templates.TemplateResponse(request, "admin_email.html", {
-        "email_configured": mailer.email_configured(), "paused": paused, "options": options,
+        "email_configured": mailer.email_configured(), "paused": paused, "options": options, "blockers": blockers,
+        "external": [(k, label, why, url, blockers.get(k)) for k, (label, why, url) in mailer.EXTERNAL.items()],
         "relay_configured": mailer.relay_configured(),
         "smtp_configured": mailer.smtp_configured(),
         "transactional": transactional, "scheduled": scheduled,

@@ -325,6 +325,8 @@ def _execute(conn,operation,adapter=None,*,reconcile=False,token):
                 # Excerpts are transient: only completion metadata is retained.
                 event(conn,doc['id'],user,'extraction_finished',{'operation_id':operation})
             jobs.completed(conn,operation,token)
+        if job['kind']=='dispatch':
+            log_dispatch(conn,doc['number'],outcomes)
         return extracted if job['kind']=='extract' else {'state':'confirmed'}
     except Exception as exc:
         with transaction(conn):
@@ -332,6 +334,17 @@ def _execute(conn,operation,adapter=None,*,reconcile=False,token):
             jobs.failed(conn,operation,token,state,
                         blocked=isinstance(exc,Unconfigured) or getattr(exc,'code','') in ('not_found','operation_conflict','receipt_mismatch'))
         raise
+
+
+def log_dispatch(conn,number,outcomes):
+    """One send-log row per recipient so /admin/email shows official dispatch too.
+    Best effort and after the dispatch is committed: a log failure never changes the outcome."""
+    try:
+        for recipient,o in outcomes.items():
+            st.log_email_send(conn,'document_dispatch',recipient,str(number),
+                              'sent' if o.get('outcome')=='accepted' else 'failed',None)
+    except Exception:
+        pass
 
 
 def sanitize_extraction(result):

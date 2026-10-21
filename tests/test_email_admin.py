@@ -406,3 +406,35 @@ def test_email_option_defaults_on_and_route_toggles(admin, db_path):
 
 def test_email_option_requires_manage_users(viewer):
     assert viewer.post("/admin/email/option", data={"key": "calendar_ics", "on": "0"}).status_code == 403
+
+
+# ---- documents dispatch visibility + blocked-elsewhere hints ---------------
+
+def test_dispatch_outcomes_are_logged_per_recipient(db_path):
+    import documents_operations as ops
+    conn = st.connect(db_path); st.init_db(conn); _reset_log(conn)
+    try:
+        ops.log_dispatch(conn, "OUT-2026-1", {"a@x.test": {"outcome": "accepted"}, "b@x.test": {"outcome": "failed"}})
+        rows = {r["recipient"]: r["status"] for r in st.recent_email_sends(conn, limit=5)}
+        assert rows == {"a@x.test": "sent", "b@x.test": "failed"}
+        assert {r["feature"] for r in st.recent_email_sends(conn, limit=5)} == {"document_dispatch"}
+    finally:
+        _reset_log(conn); conn.close()
+
+
+def test_console_lists_dispatch_and_flags_blocked_features(admin, db_path):
+    conn = st.connect(db_path); st.init_db(conn)
+    try:
+        conn.execute("DELETE FROM app_setting WHERE key IN ('documents.enabled','documents.sending_enabled','work.enabled')")
+        conn.commit()
+        html = admin.get("/admin/email").text
+        assert "Official document dispatch" in html
+        assert "Won&#39;t send right now" in html or "Won't send right now" in html
+        assert "Document sending is switched off." in html
+    finally:
+        conn.close()
+
+
+def test_every_external_email_has_a_label_and_settings_link():
+    for key, (label, why, url) in mailer.EXTERNAL.items():
+        assert label and why and url.startswith("/")
