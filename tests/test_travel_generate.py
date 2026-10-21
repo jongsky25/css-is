@@ -113,14 +113,16 @@ def test_filing_page_links_to_prepare(viewer, conn, relay):
 def test_generate_makes_every_required_form_and_marks_them_present(viewer, conn, relay):
     ref = mk(viewer)
     r = jpost(viewer, f"/travel/f/{ref}/generate", {"rows": [ride("2026-09-01", 0)], "texts": {"overview": "Fine"}})
-    assert r.status_code == 200 and r.json()["ok"] and set(r.json()["started"]) == {"appendix_b", "travel_report"}
+    assert r.status_code == 200 and r.json()["ok"] and set(r.json()["started"]) == {"appendix_a", "appendix_b", "travel_report"}
     got = items(conn, ref)
-    for code in ("appendix_b", "travel_report"):
+    for code in ("appendix_a", "appendix_b", "travel_report"):
         assert got[code]["doc_url"].startswith("https://docs.google.com/") and got[code]["doc_state"] == "done:1"
         assert got[code]["state"] == "present"
+    assert got["appendix_a"]["doc_url"] == got["appendix_b"]["doc_url"]            # Appendix A and B are one document
     assert conn.execute("SELECT gen_state FROM travel_filing WHERE ref_code=?", (ref,)).fetchone()[0] == "done"
     ids = {c["request_id"] for c in relay.calls}
-    assert ids == {f"{ref}:appendix_b:1:1", f"{ref}:travel_report:1:1"}
+    assert ids == {f"{ref}:appendix_a:1:1", f"{ref}:travel_report:1:1"}            # made once, not twice
+    assert {c["template_key"] for c in relay.calls} == {"claim_liq", "travel_report"}
     assert all(c["folder_key"] == ref for c in relay.calls)
     st_ = viewer.get(f"/travel/f/{ref}/status").json()
     assert st_["gen_state"] == "done" and {i["state"] for i in st_["items"]} == {"done"}
@@ -141,7 +143,7 @@ def test_rides_add_cenrr_and_rer_forms_and_open_flags(viewer, conn, relay):
     ref = mk(viewer)
     rows = [ride("2026-09-01", 250), ride("2026-09-02", 500), ride("2026-09-03", 600, route="")]
     r = jpost(viewer, f"/travel/f/{ref}/generate", {"rows": rows})
-    assert r.json()["ok"] and {"cenrr", "rer", "appendix_b", "travel_report"} == set(r.json()["started"])
+    assert r.json()["ok"] and {"cenrr", "rer", "appendix_a", "appendix_b", "travel_report"} == set(r.json()["started"])
     keys = [c["template_key"] for c in relay.calls]
     assert keys.count("rer") == 2 and keys.count("cenrr") == 1
     assert items(conn, ref)["rer"]["note"].startswith("More: https://docs.google.com/")
@@ -173,20 +175,23 @@ def test_participant_role_opens_a_flag(viewer, conn, relay):
 
 def test_a_failed_document_can_be_retried_with_a_new_revision(viewer, conn, relay):
     ref = mk(viewer)
-    relay.fail["appendix_b"] = "template_not_set"
+    relay.fail["claim_liq"] = "template_not_set"
     r = jpost(viewer, f"/travel/f/{ref}/generate", {"rows": []})
     assert r.json()["ok"]
     got = items(conn, ref)
-    assert got["appendix_b"]["doc_state"] == "failed:1" and not got["appendix_b"]["doc_url"]
-    assert "not been set up" in got["appendix_b"]["note"] and got["travel_report"]["doc_state"] == "done:1"
+    for code in ("appendix_a", "appendix_b"):                                       # one document, so both rows fail together
+        assert got[code]["doc_state"] == "failed:1" and not got[code]["doc_url"]
+        assert "not been set up" in got[code]["note"]
+    assert got["travel_report"]["doc_state"] == "done:1"
     status = viewer.get(f"/travel/f/{ref}/status").json()
-    assert status["gen_state"] == "failed" and [i for i in status["items"] if i["state"] == "failed"][0]["code"] == "appendix_b"
+    assert status["gen_state"] == "failed" and {i["code"] for i in status["items"] if i["state"] == "failed"} == {"appendix_a", "appendix_b"}
     assert "Generate" in " ".join(travel.missing_for(conn, travel.get_by_ref(conn, ref)))
     relay.fail.clear(); relay.calls.clear()
     jpost(viewer, f"/travel/f/{ref}/generate", {"rows": [], "codes": ["appendix_b"]})
     got = items(conn, ref)
     assert got["appendix_b"]["doc_state"] == "done:2" and got["appendix_b"]["note"] is None
     assert [c["request_id"] for c in relay.calls] == [f"{ref}:appendix_b:2:1"]
+    assert got["appendix_a"]["doc_state"] == "done:2" and got["appendix_a"]["doc_url"] == got["appendix_b"]["doc_url"]   # same document
     assert got["travel_report"]["doc_state"] == "done:1"                       # untouched
     assert conn.execute("SELECT gen_state FROM travel_filing WHERE ref_code=?", (ref,)).fetchone()[0] == "done"
 
@@ -196,7 +201,7 @@ def test_a_relay_that_raises_never_leaves_a_run_stuck(viewer, conn, relay, monke
     monkeypatch.setattr(relay, "generate_doc", lambda **kw: (_ for _ in ()).throw(RuntimeError("boom")))
     assert jpost(viewer, f"/travel/f/{ref}/generate", {"rows": []}).json()["ok"]
     assert conn.execute("SELECT gen_state FROM travel_filing WHERE ref_code=?", (ref,)).fetchone()[0] == "failed"
-    assert {v["doc_state"] for k, v in items(conn, ref).items() if k in ("appendix_b", "travel_report")} == {"failed:1"}
+    assert {v["doc_state"] for k, v in items(conn, ref).items() if k in ("appendix_a", "appendix_b", "travel_report")} == {"failed:1"}
 
 
 # -------------------------------------------------------------------- guards ---

@@ -142,7 +142,7 @@ def test_cash_advance_base_checklist():
 
 def test_liquidation_base_checklist():
     c = codes("liquidation")
-    assert set(c) == {"fms_routing_slip", "dpo", "prev_appendix_a", "prev_dv", "appendix_b",
+    assert set(c) == {"fms_routing_slip", "dpo", "prev_appendix_a", "prev_dv", "appendix_a", "appendix_b",
                       "liquidation_report", "cert_appearance", "travel_report"}
 
 

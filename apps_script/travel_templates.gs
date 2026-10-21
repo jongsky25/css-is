@@ -17,17 +17,34 @@
 
 const TM_SOURCE_FOLDER_ID = 'PUT-THE-TRAVEL-REIMBURSEMENT-TEMPLATE-FOLDER-ID-HERE';
 
+// The "Claims Templates" folder (Cash Advance, Liquidation and Reimbursement sub-folders), the office's current forms.
+// Appendix A for a cash advance, and Appendix A and B together for a liquidation and a reimbursement, are made from the
+// "Sample [...]" files in it. The mailbox that runs this must be able to open the folder.
+const TM_CLAIMS_FOLDER_ID = '1VkxwIB8CxgLzqESbHdeoN4q4eDDTDnTn';
+
 const TM_DOC = 'application/vnd.google-apps.document';
 const TM_SHEET = 'application/vnd.google-apps.spreadsheet';
 
 const TM_TEMPLATES = [
-  { key: 'appendix_a', source: 'Appendix A.docx', mime: TM_DOC, build: tm_appendixA_,
+  // Appendix A of a cash advance (PERA): the itinerary form alone.
+  { key: 'appendix_a', from: 'claims', source: 'Sample [CASH ADVANCE / PERA] .docx', mime: TM_DOC, build: tm_claimCa_,
     expect: ['traveler_name', 'purpose', 'r_date', 'r_place', 'r_dep', 'r_arr', 'r_mode', 'r_allowance', 'r_perdiem',
-             'r_total', 'grand_total', 'certifier_name', 'certifier_title', 'prepared_by', 'approver_name', 'approver_title'] },
-  { key: 'appendix_b', source: 'Appendix B.docx', mime: TM_DOC, build: tm_appendixB_,
-    expect: ['date', 'head_name', 'head_title', 'station', 'dpo_ref', 'chk_strict', 'chk_cut', 'chk_extended', 'chk_other',
-             'refund_amount', 'refund_or_no', 'refund_or_date', 'explanation', 'evidence_list', 'traveler_name',
-             'traveler_designation', 'approver_name', 'approver_title'] },
+             'r_total', 'grand_total', 'certifier_name', 'certifier_title', 'prepared_by', 'prepared_title',
+             'approver_name', 'approver_title'] },
+  // Appendix A and B of a liquidation, one document: the itinerary with its Cash Advance and Reimbursement lines, then the certificate.
+  { key: 'claim_liq', from: 'claims', source: 'Sample [LIQUIDATION] .docx', mime: TM_DOC, build: tm_claimLiq_,
+    expect: ['traveler_name', 'purpose', 'r_date', 'r_place', 'r_dep', 'r_arr', 'r_mode', 'r_allowance', 'r_perdiem',
+             'r_total', 'grand_total', 'certifier_name', 'certifier_title', 'prepared_by', 'prepared_title',
+             'approver_name', 'approver_title',
+             'ca_amount', 'reimb_amount', 'date', 'head_name', 'head_title', 'station', 'dpo_ref', 'chk_strict', 'chk_cut', 'chk_extended', 'chk_other',
+             'refund_amount', 'refund_or_no', 'refund_or_date', 'explanation', 'evidence_list', 'traveler_designation'] },
+  // Appendix A and B of a reimbursement, one document ("Expenses Incidental" in the itinerary).
+  { key: 'claim_rei', from: 'claims', source: 'Sample [REIMBURSEMENT] .docx', mime: TM_DOC, build: tm_claimRei_,
+    expect: ['traveler_name', 'purpose', 'r_date', 'r_place', 'r_dep', 'r_arr', 'r_mode', 'r_allowance', 'r_perdiem',
+             'r_total', 'grand_total', 'certifier_name', 'certifier_title', 'prepared_by', 'prepared_title',
+             'approver_name', 'approver_title',
+             'date', 'head_name', 'head_title', 'station', 'dpo_ref', 'chk_strict', 'chk_cut', 'chk_extended', 'chk_other',
+             'refund_amount', 'refund_or_no', 'refund_or_date', 'explanation', 'evidence_list', 'traveler_designation'] },
   { key: 'travel_report', source: 'Post Travel Report.docx', mime: TM_DOC, build: tm_report_,
     expect: ['name_designation', 'travel_dates', 'dpo_ref', 'overview', 'day_by_day', 'key_points', 'contributions',
              'support_needed', 'recommendations', 'conclusion', 'submitted_by_name', 'submitted_by_title',
@@ -47,24 +64,33 @@ const TM_TEMPLATES = [
 
 // ------------------------------------------------------------------ entry points ---
 
-function makeTravelTemplates() {
+function makeTravelTemplates() { return tm_make_(null, false); }
+
+// Makes the three claim forms again even when they look good: Appendix A (cash advance), and Appendix A and B for a
+// liquidation and for a reimbursement. The older copies stay in _templates.
+function rebuildClaimTemplates() { return tm_make_(['appendix_a', 'claim_liq', 'claim_rei'], true); }
+
+function tm_make_(only, force) {
   const P = PropertiesService.getScriptProperties();
-  if (TM_SOURCE_FOLDER_ID.indexOf('PUT-') === 0) throw new Error('Set TM_SOURCE_FOLDER_ID at the top of this file first.');
-  const source = DriveApp.getFolderById(TM_SOURCE_FOLDER_ID);
+  const needOld = TM_TEMPLATES.some(function (t) { return t.from !== 'claims' && (!only || only.indexOf(t.key) >= 0); });
+  if (needOld && TM_SOURCE_FOLDER_ID.indexOf('PUT-') === 0) throw new Error('Set TM_SOURCE_FOLDER_ID at the top of this file first.');
+  const source = needOld ? DriveApp.getFolderById(TM_SOURCE_FOLDER_ID) : null;
+  const claims = DriveApp.getFolderById(TM_CLAIMS_FOLDER_ID);
   const out = tm_outFolder_(P);
   const stamp = Utilities.formatDate(new Date(), 'Asia/Manila', 'MMM d HH:mm');
   const report = [];
   TM_TEMPLATES.forEach(function (t) {
+    if (only && only.indexOf(t.key) < 0) return;
     try {
       // A template that is already set and has every placeholder is kept; anything else is (re)made.
       const existing = P.getProperty('TPL_' + t.key);
-      if (existing) {
+      if (existing && !force) {
         let gaps = null;
         try { gaps = tm_missing_(existing, t); } catch (e) { gaps = ['(could not open it)']; }
         if (!gaps.length) { report.push(t.key + ': already good, kept'); return; }
       }
-      const file = tm_find_(source, t.source);
-      if (!file) throw new Error('could not find "' + t.source + '" under the source folder');
+      const file = tm_find_(t.from === 'claims' ? claims : source, t.source);
+      if (!file) throw new Error('could not find "' + t.source + '" under the ' + (t.from === 'claims' ? 'Claims Templates' : 'source') + ' folder');
       const id = tm_convert_(file, t.mime, out.getId(), tm_title_(t) + ' (' + stamp + ')');
       t.build(id);
       P.setProperty('TPL_' + t.key, id);
@@ -233,45 +259,112 @@ function tm_removeRowsContaining_(body, texts) {
 
 // ---------------------------------------------------------------------- the Docs ---
 
-function tm_appendixA_(id) {
-  const body = DocumentApp.openById(id).getBody();
-  tm_rep_(body, 'ELVIE JO ROBIS', '{{traveler_name}}');
+// The claim forms. Each is made from the office's own filled-in sample: its text becomes {{placeholders}}, its first itinerary row
+// becomes the row the app repeats and the other sample rows are removed. Replacements are made in this order on purpose: first
+// the ones that belong to one table row (Prepared by, Approved by), then the ones that would also match elsewhere.
+
+// The itinerary table, shared by the three forms. `firstRow` is text in the row kept as the repeating row; `others` are
+// text in the rows to remove; `n` holds the sample strings of this form.
+function tm_itinerary_(body, firstRow, others, n) {
   tm_rep_(body, 'Purpose of Travel: .*', 'Purpose of Travel: {{purpose}}');
-  // the first sample row stays and becomes the repeating row: one placeholder per column
-  const row = tm_findRow_(body, 'September 01, 2026');
+  const row = tm_findRow_(body, firstRow);
   if (row) {
     const cols = ['r_date', 'r_place', 'r_dep', 'r_arr', 'r_mode', 'r_allowance', 'r_perdiem', 'r_total'];
     for (let c = 0; c < Math.min(row.getNumCells(), cols.length); c++) tm_setCell_(row.getCell(c), '{{' + cols[c] + '}}');
   }
-  tm_removeRowsContaining_(body, ['DOH-Central Office to Sunday', 'ACTIVITY PROPER', 'Sunday Hevea Hotel and Resort to DOH',
-                                  'DOH-Central Office to Residence']);
-  tm_rep_(body, 'PhP2,120', 'PhP{{grand_total}}');
-  tm_rep_(body, 'MARIA LOURDES B\\. GAJITOS, MD, MPH, CFP', '{{certifier_name}}');
-  tm_rep_(body, 'Medical Officer V', '{{certifier_title}}');
-  tm_rowRep_(body, 'Prepared by', 'Name', '{{prepared_by}}');
-  tm_rep_(body, 'JUAN ALFONSO R\\. PEREZ IV, MD, MBA, MPM', '{{approver_name}}');
-  tm_rep_(body, 'OIC-Director IV-BLHSD', '{{approver_title}}');
+  tm_removeRowsContaining_(body, others);
+  tm_rowRep_(body, 'Total:', n.total, '{{grand_total}}');
+  tm_rowRep_(body, 'Prepared by', n.person, '{{prepared_by}}');
+  tm_rowRep_(body, 'Prepared by', n.designation, '{{prepared_title}}');
+  tm_rowRep_(body, 'Approved by:', 'JUAN ALFONSO PEREZ IV, MD, MBA, MPM', '{{approver_name}}');
+  tm_rowRep_(body, 'Approved by:', 'OIC-Director IV, BLHSD', '{{approver_title}}');
+  tm_rep_(body, n.certifier, '{{certifier_name}}');
+  tm_rep_(body, n.certifierTitle, '{{certifier_title}}');
+  tm_rep_(body, n.person, '{{traveler_name}}');
 }
 
-function tm_appendixB_(id) {
-  const body = DocumentApp.openById(id).getBody();
-  tm_rep_(body, 'JUAN ALFONSO R\\. PEREZ IV, MD, MBA, MPM', '{{head_name}}');
-  tm_rep_(body, 'OIC-Director IV', '{{head_title}}');
-  tm_rep_(body, 'Bureau of Local Health System Development', '{{station}}');
-  tm_rep_(body, 'September 07, 2026', '{{date}}');
-  tm_rep_(body, 'DPO No\\.\\s?2026-5556 dated August 04, 2026', '{{dpo_ref}}');
+// The certificate (Appendix B) that follows the itinerary in a liquidation and a reimbursement.
+//   `approvedInRow`: the "APPROVED:" block is a table cell (liquidation) rather than loose paragraphs (reimbursement).
+function tm_certificate_(body, n, approvedInRow) {
+  if (approvedInRow) {
+    tm_rowRep_(body, 'APPROVED:', 'JUAN ALFONSO PEREZ IV, MD, MBA, MPM', '{{approver_name}}');
+    tm_rowRep_(body, 'APPROVED:', 'OIC-Director IV, BLHSD', '{{approver_title}}');
+  } else {
+    tm_afterPara_(body, 'APPROVED:', ['{{approver_name}}', '{{approver_title}}']);
+  }
+  tm_rep_(body, 'JUAN ALFONSO PEREZ IV, MD, MBA, MPM', '{{head_name}}');
+  tm_rep_(body, 'BLHSD-DOH', '{{station}}');
+  tm_rep_(body, 'Director IV', '{{head_title}}');
+  tm_rep_(body, n.certDate, '{{date}}');
   tm_check_(body, 'Strictly in accordance', '{{chk_strict}}');
   tm_check_(body, 'Cut short', '{{chk_cut}}');
   tm_check_(body, 'Extended as explained', '{{chk_extended}}');
   tm_check_(body, 'Other deviations', '{{chk_other}}');
   tm_rep_(body, 'Excess payment in the amount of', 'Excess payment in the amount of {{refund_amount}}');
   tm_rep_(body, 'O\\.R\\. No\\. _+ dated _+', 'O.R. No. {{refund_or_no}} dated {{refund_or_date}}');
-  tm_section_(body, 'Explanation or Justification', 'Evidence of Travel attached hereto', '{{explanation}}', { exact: false });
-  tm_section_(body, 'Evidence of Travel attached hereto', 'Respectfully submitted', '{{evidence_list}}', { exact: false });
-  tm_rep_(body, 'ARYAMEIR BAGIS ISMAEL', '{{traveler_name}}');
-  tm_rep_(body, 'Freelance Consultant', '{{traveler_designation}}');
-  tm_rep_(body, 'MARIA LOURDES B\\. GAJITOS, MD, MPH', '{{approver_name}}');
-  tm_rep_(body, 'Medical Officer V-BLHSD', '{{approver_title}}');
+  if (n.evidenceFirst) {                                   // the liquidation sample lists the evidence, then the justification
+    tm_section_(body, 'Evidence of Travel attached hereto', 'Justification:', '{{evidence_list}}', { exact: false });
+    tm_section_(body, 'Justification:', null, '{{explanation}}', { exact: false });
+  } else {
+    tm_section_(body, 'Explanation or Justification', 'Evidence of Travel attached hereto', '{{explanation}}', { exact: false });
+    tm_section_(body, 'Evidence of Travel attached hereto', 'Respectfully submitted', '{{evidence_list}}', { exact: false });
+  }
+  tm_rep_(body, n.dpoRef, '{{dpo_ref}}');
+  tm_rep_(body, n.designation, '{{traveler_designation}}');
+}
+
+// Sets the next non-empty paragraphs after the paragraph that reads `heading` (used where a block is loose paragraphs).
+function tm_afterPara_(body, heading, placeholders) {
+  const n = body.getNumChildren(), want = tm_norm_(heading);
+  let start = -1;
+  for (let i = 0; i < n && start < 0; i++) {
+    const el = body.getChild(i);
+    if (el.getType() === DocumentApp.ElementType.PARAGRAPH && tm_norm_(el.asParagraph().getText()) === want) start = i;
+  }
+  if (start < 0) return false;
+  let k = 0;
+  for (let i = start + 1; i < n && k < placeholders.length; i++) {
+    const el = body.getChild(i);
+    if (el.getType() !== DocumentApp.ElementType.PARAGRAPH || !tm_norm_(el.asParagraph().getText())) continue;
+    el.asParagraph().setText(placeholders[k++]);
+  }
+  return k === placeholders.length;
+}
+
+// Appendix A of a cash advance (PERA).
+function tm_claimCa_(id) {
+  const body = DocumentApp.openById(id).getBody();
+  tm_itinerary_(body, 'August 3, 2026', ['NAIA Terminal 3 to Virac Airport', 'August 4-6, 2026', 'August 7, 2026',
+                'NAIA Terminal 3 to Residence', 'August 10, 2026', 'NAIA Terminal 2 to Bancasi Airport',
+                'August 11-13, 2026', 'August 14, 2026', 'NAIA Terminal 2 to Residence'],
+                { total: '26,414\\.4', person: 'VLANCHE APRIL DULFO', designation: 'Medical Officer III',
+                  certifier: 'MARIA LOURDES GAJITOS, MD', certifierTitle: 'Medical Officer V' });
+}
+
+// Appendix A and B of a liquidation, with the Cash Advance and Reimbursement lines.
+function tm_claimLiq_(id) {
+  const body = DocumentApp.openById(id).getBody();
+  tm_itinerary_(body, 'August 3, 2026', ['NAIA Terminal 3 to Virac Airport', 'August 4-6, 2026', 'August 7, 2026',
+                'NAIA Terminal 3 to Residence', 'August 10, 2026', 'NAIA Terminal 2 to Bancasi Airport',
+                'August 11-13, 2026', 'August 14, 2026', 'NAIA Terminal 2 to Residence'],
+                { total: '39,417\\.4', person: 'VLANCHE APRIL DULFO', designation: 'Medical Officer III',
+                  certifier: 'MARIA LOURDES GAJITOS, MD', certifierTitle: 'Medical Officer V' });
+  tm_rowRep_(body, 'Cash Advance:', '25,714\\.4', '{{ca_amount}}');
+  tm_rowRep_(body, 'Reimbursement:', '13,703', '{{reimb_amount}}');
+  tm_certificate_(body, { certDate: 'August 17, 2026', evidenceFirst: true, designation: 'Medical Officer III',
+                          dpoRef: 'DPO No\\.\\s?2026-4835 dated July 17, 2026, and DPO No\\.\\s?2026-5023 dated July 24, 2026, respectively' }, true);
+}
+
+// Appendix A and B of a reimbursement.
+function tm_claimRei_(id) {
+  const body = DocumentApp.openById(id).getBody();
+  tm_itinerary_(body, 'September 28, 2026', ['NAIA Terminal 2 to Iloilo International Airport',
+                'Iloilo International Airport to Zuri Hotel', 'October 1, 2026', 'Iloilo International Airport to NAIA Terminal 2',
+                'NAIA Terminal 2 to Residence'],
+                { total: '12,971', person: 'VLANCHE APRIL DULFO', designation: 'Medical Officer III',
+                  certifier: 'MARIA LOURDES B\\. GAJITOS, MD', certifierTitle: 'Medical Officer V-BLHSD' });
+  tm_certificate_(body, { certDate: 'October 6, 2026', evidenceFirst: false, designation: 'Medical Officer III',
+                          dpoRef: 'DPO No\\.\\s?2026-6168 dated September 10, 2026' }, false);
 }
 
 function tm_report_(id) {
@@ -387,27 +480,26 @@ function tm_rer_(id) {
 
 // ------------------------------------------------------------- when a template needs a look ---
 
-// Logs how the converted Appendix A table and the Appendix B checkbox lines really look, so a gap can be fixed.
+// Logs how the converted claim forms' itinerary tables and checkbox lines really look, so a gap can be fixed.
 function debugTravelTemplates() {
   const P = PropertiesService.getScriptProperties(), out = [];
-  const a = P.getProperty('TPL_appendix_a');
+  ['appendix_a', 'claim_liq', 'claim_rei'].forEach(function (key) {
+  const a = P.getProperty('TPL_' + key);
   if (a) {
     DocumentApp.openById(a).getBody().getTables().forEach(function (tb, ti) {
       for (let r = 0; r < tb.getNumRows(); r++) {
         const row = tb.getRow(r), cells = [];
         for (let c = 0; c < row.getNumCells(); c++) cells.push(tm_norm_(row.getCell(c).getText()).slice(0, 28));
-        out.push('A table ' + ti + ' row ' + r + ' [' + row.getNumCells() + ']: ' + cells.join(' | '));
+        out.push(key + ' table ' + ti + ' row ' + r + ' [' + row.getNumCells() + ']: ' + cells.join(' | '));
       }
     });
-  }
-  const b = P.getProperty('TPL_appendix_b');
-  if (b) {
-    DocumentApp.openById(b).getBody().getText().split('\n').forEach(function (line) {
+    DocumentApp.openById(a).getBody().getText().split('\n').forEach(function (line) {
       if (/Strictly|Cut short|Extended|Other deviations|Excess/.test(line)) {
-        out.push('B line: ' + JSON.stringify(line.slice(0, 40)) + ' codes ' + line.slice(0, 3).split('').map(function (ch) { return ch.charCodeAt(0); }).join(','));
+        out.push(key + ' line: ' + JSON.stringify(line.slice(0, 40)) + ' codes ' + line.slice(0, 3).split('').map(function (ch) { return ch.charCodeAt(0); }).join(','));
       }
     });
   }
+  });
   const r = P.getProperty('TPL_rer');
   if (r) {
     SpreadsheetApp.openById(r).getSheets()[0].getDataRange().getValues().forEach(function (row, i) {

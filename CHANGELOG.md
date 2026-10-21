@@ -1,3 +1,7 @@
+## 7.60 — October 21, 2026
+
+- Travel forms follow the office's current "Claims Templates" (Cash Advance, Liquidation, Reimbursement). A liquidation now always makes **Appendix A** (before, only when the itinerary had changed; spot feedback #142), and a liquidation or reimbursement makes **Appendix A and B as one document**, credited to both checklist rows, as in the office's own Word forms (spot feedback #144). The liquidation's Appendix A has the Cash Advance and Reimbursement lines under the total, filled from the advance entered on the filing and left blank when it is not known. A cash advance keeps Appendix A alone. The Apps Script templates must be replaced and rebuilt (`rebuildClaimTemplates()`, docs/TRAVEL_DOCS_RELAY_SETUP.md); until then the new forms cannot be drafted.
+
 ## 7.59 — October 20, 2026
 
 - Move PDFium rendering, image decoding, Tesseract and DTRAK scan passes into a resource-limited OCR worker shared by PDF and selected-page reads.

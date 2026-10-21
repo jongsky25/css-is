@@ -37,9 +37,9 @@ def row(d, **kw):
     return r
 
 
-def build(codes, rows, f=None, texts=None, sig=None, mc114="", items=(), **kw):
+def build(codes, rows, f=None, texts=None, sig=None, mc114="", items=(), kind="liquidation", **kw):
     posted = {"rows": rows, "texts": texts or {}, "signatories": sig or {}, "mc114_text": mc114}
-    return td.build_payloads("liquidation", f or filing(), PROFILE, SETTINGS, posted, codes, ceilings=CEIL,
+    return td.build_payloads(kind, f or filing(kind=kind), PROFILE, SETTINGS, posted, codes, ceilings=CEIL,
                              items=items, today=date(2026, 9, 10), **kw)
 
 
@@ -63,7 +63,7 @@ def check_golden(name, payload):
 def test_appendix_a_four_day_trip_grows_one_row_per_day():
     rows = [row(f"2026-09-0{d}", mode="taxi", receipt="receipt", route_type="residence_airport", allowance=250, per_diem=500)
             for d in (1, 2, 3, 4)]
-    p = one(["appendix_a"], rows, texts={"purpose": "attend the Regional Planning Workshop"})
+    p = one(["appendix_a"], rows, texts={"purpose": "attend the Regional Planning Workshop"}, kind="ca")
     assert len(p.rows["itinerary"]["data"]) == 4 and p.rows["itinerary"]["marker"] == "r_date"
     assert p.fields["grand_total"] == "3,000"
     assert p.fields["purpose"] == ("To attend the Regional Planning Workshop on September 01-04, 2026 at Cebu City "
@@ -72,15 +72,15 @@ def test_appendix_a_four_day_trip_grows_one_row_per_day():
 
 
 def test_appendix_a_cross_month_trip_and_empty_rows():
-    f = filing("2026-08-30", "2026-09-02")
-    p = one(["appendix_a"], [], f=f)
+    f = filing("2026-08-30", "2026-09-02", kind="ca")
+    p = one(["appendix_a"], [], f=f, kind="ca")
     assert "August 30 - September 02, 2026" in p.fields["purpose"]
     assert p.rows["itinerary"]["data"] == [] and p.fields["grand_total"] == "0"       # the relay keeps one blank row
 
 
 def test_row_count_is_capped_and_bad_values_never_raise():
     rows = [row("2026-09-01", allowance="abc", per_diem=-5, mode="rocket") for _ in range(100)]
-    p = one(["appendix_a"], rows)
+    p = one(["appendix_a"], rows, kind="ca")
     assert len(p.rows["itinerary"]["data"]) == td.MAX_ROWS and p.fields["grand_total"] == "0"
     assert p.rows["itinerary"]["data"][0]["r_mode"] == ""
     assert td.normalize("not a dict")["rows"] == [] and td.normalize({"rows": "x", "texts": 5})["texts"]["strictness"] == "strict"
@@ -96,17 +96,80 @@ def test_appendix_b_checks_one_box_lists_evidence_and_appends_the_justification(
     f = filing(mc114_format="appendix_b")
     p = one(["appendix_b"], [], f=f, items=items, texts={"strictness": "cut", "explanation": "Left a day early.\n\nSick."},
             mc114="Because of the schedule.\nIt was necessary.")
+    assert p.item_code == "appendix_b" and p.also == ("appendix_a",) and p.template_key == "claim_liq"   # one document, both rows
     assert (p.fields["chk_strict"], p.fields["chk_cut"]) == ("☐", "☒")
     assert p.blocks["evidence_list"] == ["1. Plane ticket", "2. Post Travel Report"]
     assert p.blocks["explanation"] == ["Left a day early.", "Sick.", "Justification (MC 114):",
                                        "Because of the schedule.", "It was necessary."]
     assert p.fields["date"] == "September 10, 2026" and p.fields["head_name"] == "Dr. Ana Reyes"
-    check_golden("appendix_b_cut_short", p)
+    check_golden("claim_liq_cut_short", p)
 
 
 def test_appendix_b_without_the_justification_format_leaves_it_out():
     p = one(["appendix_b"], [], mc114="ignored text")
     assert p.blocks["explanation"] == []
+
+
+# ------------------------------------------------- Appendix A and B as one document ---
+
+def test_a_liquidation_makes_appendix_a_and_b_as_one_document_credited_to_both_rows():
+    rows = [row("2026-09-01", mode="taxi", receipt="receipt", route_type="residence_airport", allowance=250, per_diem=500)]
+    out = build(["appendix_a", "appendix_b", "travel_report"], rows)
+    assert [(p.item_code, p.template_key, p.also) for p in out] == [
+        ("appendix_a", "claim_liq", ("appendix_b",)), ("travel_report", "travel_report", ())]
+    p = out[0]
+    assert p.rows["itinerary"]["data"][0]["r_total"] == "750" and p.fields["grand_total"] == "750"      # the itinerary part
+    assert p.fields["chk_strict"] == "☒" and "evidence_list" in p.blocks and p.fields["prepared_title"] == "Nurse II"   # the certificate part
+    assert p.title == "Appendix A and B - Itinerary and Certificate of Travel Completed - TF-2609-0001"
+
+
+def test_a_reimbursement_has_its_own_template_and_no_cash_advance_lines():
+    p = one(["appendix_a", "appendix_b"], [], kind="reimbursement")
+    assert p.template_key == "claim_rei" and "ca_amount" not in p.fields and p.also == ("appendix_b",)
+
+
+def test_a_cash_advance_keeps_appendix_a_alone():
+    p = one(["appendix_a"], [], kind="ca")
+    assert (p.template_key, p.also) == ("appendix_a", ()) and "chk_strict" not in p.fields
+
+
+def test_the_liquidation_itinerary_splits_the_total_into_the_advance_and_the_reimbursement():
+    rows = [row("2026-09-01", allowance=1000, per_diem=500), row("2026-09-02", allowance=200, per_diem=0)]
+    f = filing(advance_amount=1000.0)
+    p = one(["appendix_a"], rows, f=f)
+    assert (p.fields["grand_total"], p.fields["ca_amount"], p.fields["reimb_amount"]) == ("1,700", "1,000", "700")
+    under = one(["appendix_a"], rows, f=filing(advance_amount=2000.0))
+    assert (under.fields["ca_amount"], under.fields["reimb_amount"]) == ("2,000", "–")              # nothing beyond the advance
+    unknown = one(["appendix_a"], rows)
+    assert (unknown.fields["ca_amount"], unknown.fields["reimb_amount"]) == ("", "")                 # left for the person
+
+
+def _template_expects():
+    """{template key: its expected placeholders} for the three claim forms, read from the Apps Script source."""
+    import re
+    src = pathlib.Path("apps_script/travel_templates.gs").read_text(encoding="utf-8")
+    out = {}
+    for key in ("appendix_a", "claim_liq", "claim_rei"):
+        m = re.search(r"key: '%s',.*?expect: \[(.*?)\] \}" % key, src, re.S)
+        assert m, key
+        out[key] = set(re.findall(r"'([a-z0-9_]+)'", m.group(1)))
+    return out, src
+
+
+@pytest.mark.parametrize("kind, key, codes", [("ca", "appendix_a", ["appendix_a"]),
+                                              ("liquidation", "claim_liq", ["appendix_a"]),
+                                              ("reimbursement", "claim_rei", ["appendix_a"])])
+def test_every_placeholder_a_claim_template_expects_is_one_the_app_fills(kind, key, codes):
+    """A template and the payload must not drift apart: a placeholder the app never fills would be left blank on the form,
+    and a value the app sends that no template has would be lost."""
+    expects, src = _template_expects()
+    rows = [row("2026-09-01", mode="taxi", receipt="receipt", route_type="residence_airport", allowance=250, per_diem=500)]
+    p = one(codes, rows, kind=kind, f=filing(kind=kind, advance_amount=1000.0))
+    assert p.template_key == key
+    sent = set(p.fields) | set(p.blocks) | {k for spec in p.rows.values() for d in spec["data"] for k in d}
+    assert expects[key] <= sent, sorted(expects[key] - sent)
+    for name in expects[key]:                                                      # and the builder really writes it
+        assert "{{%s}}" % name in src or "'%s'" % name in src, name
 
 
 # ---------------------------------------------------------------- the others ---

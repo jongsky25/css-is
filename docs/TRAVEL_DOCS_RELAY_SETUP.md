@@ -16,6 +16,20 @@ Until this is done the travel pages still work: people paste a link to a form th
 
 Other things the office has to supply, not part of this setup: name the template administrators (same settings page), load the 2027 holidays before 2027 deadlines are trusted, and send the per diem rules when they exist.
 
+## The claim forms (7.60)
+
+The office's current forms live in the "Claims Templates" Drive folder, one sub-folder per claim: **Cash Advance**, **Liquidation** and **Reimbursement**, each with a blank and a "Sample" file. The app now makes:
+
+- a **cash advance**: Appendix A alone (`TPL_appendix_a`, made from `Sample [CASH ADVANCE / PERA] .docx`);
+- a **liquidation**: Appendix A and Appendix B as **one document** (`TPL_claim_liq`, from `Sample [LIQUIDATION] .docx`), with the Cash Advance and Reimbursement lines under the total;
+- a **reimbursement**: Appendix A and B as one document (`TPL_claim_rei`, from `Sample [REIMBURSEMENT] .docx`), with the "Expenses Incidental" column heading.
+
+The one document is credited to both the Appendix A and the Appendix B checklist rows. A liquidation's Appendix A is now always required (before, only when the itinerary had changed).
+
+To set up: replace `travel_templates` in the Apps Script project with the new version (it already holds the Claims Templates folder id in `TM_CLAIMS_FOLDER_ID`; the mailbox must be able to open that folder), then run `rebuildClaimTemplates()` and read the Execution log. It lists every placeholder that did not land, as before; send that log if any are missing. `debugTravelTemplates()` prints how the converted tables and checkbox lines really look. The old `TPL_appendix_b` is no longer used.
+
+The liquidation sample lists the evidence before the justification; the reimbursement sample (and the blank forms) put the explanation first. Each template follows its own sample.
+
 ## How it is protected
 
 - The endpoint is open to anyone, so nothing is trusted without a signature. The Space signs `timestamp.payload` with HMAC-SHA256; the script rejects a wrong signature or a timestamp more than 5 minutes off. Keep both secrets out of chat and screenshots.

@@ -119,11 +119,8 @@ def _plane_fare_proof(kind, a):
 
 
 def _appendix_a(kind, a):
-    if kind in (CA, REI):
-        return "required"
-    if kind == LIQ and truthy(a.get("revised_itinerary")):
-        return "required"
-    return None
+    # A liquidation's Appendix A is part of the one Appendix A and B form, with the cash advance and reimbursement lines.
+    return "required" if kind in KINDS else None
 
 
 def _ors_dv(kind, a):

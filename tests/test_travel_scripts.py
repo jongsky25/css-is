@@ -83,8 +83,11 @@ def test_the_relay_picks_sheet_or_doc_from_the_template_type():
 def test_the_template_maker_covers_every_template_key_the_app_asks_for():
     import travel_docs as td
     src = (ROOT / "apps_script" / "travel_templates.gs").read_text()
-    for key in td.DOC_TEMPLATES:
+    # Appendix B is no longer a template of its own: a liquidation and a reimbursement are made as one Appendix A and B form
+    asked = {k for k in td.DOC_TEMPLATES if k != "appendix_b"} | set(td.CLAIM_TEMPLATES.values())
+    for key in asked:
         assert f"key: '{key}'" in src, key
+    assert "key: 'appendix_b'" not in src
 
 
 @pytest.mark.parametrize("name", ["travel_docs.gs", "travel_templates.gs"])
