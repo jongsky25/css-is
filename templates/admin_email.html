@@ -131,6 +131,20 @@
   </div>
 
   <div class="acard">
+    <h2>Attachments</h2>
+    <p class="hint">Parts of an email that can be left off while the email itself still sends.</p>
+    {% for key, label, hint, on in options %}
+    <div class="fblock"><div class="frow">
+      <div><div class="lbl">{{ label }} <span class="state {{ 'on' if on else 'off' }}">{{ 'ON' if on else 'OFF' }}</span></div><div class="fhint">{{ hint }}</div></div>
+      <form method="post" action="/admin/email/option">
+        <input type="hidden" name="key" value="{{ key }}"><input type="hidden" name="on" value="{{ '0' if on else '1' }}">
+        <button class="btn {{ 'danger' if on else '' }}" type="submit">{{ 'Turn OFF' if on else 'Turn ON' }}</button>
+      </form>
+    </div></div>
+    {% endfor %}
+  </div>
+
+  <div class="acard">
     <h2>Timing</h2>
     <p class="hint">How far ahead, how often, and how long — the schedule the jobs above run on. Changes take effect on the next daily sweep.</p>
     <form method="post" action="/admin/email/params">

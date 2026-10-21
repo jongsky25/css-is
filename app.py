@@ -4488,15 +4488,23 @@ def admin_email(request: Request, msg: str = "", err: str = ""):
         return r
     conn = get_conn()
     try:
-        settings = st.get_settings(conn, [f"email_feature.{k}" for k in mailer.FEATURES] + ["email_paused"])
+        settings = st.get_settings(conn, [f"email_feature.{k}" for k in mailer.FEATURES]
+                                   + [f"email_option.{k}" for k in mailer.OPTIONS] + ["email_paused"])
         recent_sends = st.recent_email_sends(conn, limit=50)
         param_values = {k: send_reminders._param(conn, k) for k in send_reminders.PARAMS}
         retention_days = int(st.get_setting(
             conn, "email_log_retention_days", str(ret.EMAIL_LOG_RETENTION_DAYS_DEFAULT)))
     finally:
         conn.close()
-    states = {k: settings.get(f"email_feature.{k}", "1") != "0" for k in mailer.FEATURES}
+    def _state(k):
+        v = settings.get(f"email_feature.{k}")
+        if v is None and k in st.EMAIL_FEATURE_FALLBACK:
+            v = settings.get(f"email_feature.{st.EMAIL_FEATURE_FALLBACK[k]}")
+        return (v if v is not None else "1") != "0"
+    states = {k: _state(k) for k in mailer.FEATURES}
     paused = settings.get("email_paused") == "1"
+    options = [(k, label, hint, settings.get(f"email_option.{k}", "1") != "0")
+               for k, (label, hint) in mailer.OPTIONS.items()]
     transactional = [(k, label, hint, states[k]) for k, (label, hint, group)
                      in mailer.FEATURES.items() if group == "transactional"]
     scheduled = [(k, label, hint, states[k]) for k, (label, hint, group)
@@ -4508,7 +4516,7 @@ def admin_email(request: Request, msg: str = "", err: str = ""):
     params = [(k, label, lo, hi, param_values[k]) for k, (label, _default, lo, hi)
              in send_reminders.PARAMS.items()]
     return templates.TemplateResponse(request, "admin_email.html", {
-        "email_configured": mailer.email_configured(), "paused": paused,
+        "email_configured": mailer.email_configured(), "paused": paused, "options": options,
         "relay_configured": mailer.relay_configured(),
         "smtp_configured": mailer.smtp_configured(),
         "transactional": transactional, "scheduled": scheduled,
@@ -4534,6 +4542,25 @@ async def admin_email_toggle(request: Request):
         st.set_email_feature(conn, key, on)
         _audit(request, conn, "email_feature_toggle", target_type="setting", target_id=key,
                summary=f"{label} email turned {'ON' if on else 'OFF'}.")
+    finally:
+        conn.close()
+    return RedirectResponse("/admin/email?msg=" + quote("Saved."), status_code=303)
+
+
+@app.post("/admin/email/option")
+async def admin_email_option(request: Request):
+    if (r := _forbid(request, "manage_users")):
+        return r
+    posted = await _posted(request)
+    key = posted.get("key", "")
+    if key not in mailer.OPTIONS:
+        return RedirectResponse("/admin/email?err=" + quote("Unknown option."), status_code=303)
+    on = posted.get("on") in ("on", "1", "true", "yes")
+    conn = get_conn()
+    try:
+        st.set_email_option(conn, key, on)
+        _audit(request, conn, "email_option_toggle", target_type="setting", target_id=key,
+               summary=f"{mailer.OPTIONS[key][0]} turned {'ON' if on else 'OFF'}.")
     finally:
         conn.close()
     return RedirectResponse("/admin/email?msg=" + quote("Saved."), status_code=303)

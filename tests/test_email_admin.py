@@ -366,3 +366,43 @@ def test_paused_room_and_calendar_queues_wait(db_path):
     finally:
         conn.execute("DELETE FROM app_setting WHERE key='email_paused'"); conn.commit()
         conn.close()
+
+
+# ---- room meal alerts split + attachment options ---------------------------
+
+def test_room_meal_alerts_has_own_switch_and_preview():
+    import rooms_notify
+    assert "room_meal_alerts" in mailer.FEATURES
+    assert {rooms_notify.FEATURE[k] for k in rooms_notify.MEAL_KINDS} == {"room_meal_alerts"}
+    assert mailer.sample_message("room_meal_alerts")[0]
+
+
+def test_room_meal_alerts_follow_the_old_switch_until_set(db_path):
+    conn = st.connect(db_path); st.init_db(conn); _reset(conn)
+    try:
+        st.set_email_feature(conn, "room_admin_alerts", False)
+        assert st.email_feature_enabled(conn, "room_meal_alerts") is False   # was off before the split
+        st.set_email_feature(conn, "room_meal_alerts", True)
+        assert st.email_feature_enabled(conn, "room_meal_alerts") is True
+        st.set_email_feature(conn, "room_admin_alerts", True)
+        st.set_email_feature(conn, "room_meal_alerts", False)
+        assert st.email_feature_enabled(conn, "room_admin_alerts") is True
+    finally:
+        _reset(conn); conn.close()
+
+
+def test_email_option_defaults_on_and_route_toggles(admin, db_path):
+    conn = st.connect(db_path); st.init_db(conn)
+    try:
+        assert st.email_option_enabled(conn, "calendar_ics") is True
+        r = admin.post("/admin/email/option", data={"key": "calendar_ics", "on": "0"}, follow_redirects=False)
+        assert r.status_code == 303 and "msg=" in r.headers["location"]
+        assert st.email_option_enabled(conn, "calendar_ics") is False
+        bad = admin.post("/admin/email/option", data={"key": "nope", "on": "0"}, follow_redirects=False)
+        assert "err=" in bad.headers["location"]
+    finally:
+        conn.execute("DELETE FROM app_setting WHERE key LIKE 'email_option.%'"); conn.commit(); conn.close()
+
+
+def test_email_option_requires_manage_users(viewer):
+    assert viewer.post("/admin/email/option", data={"key": "calendar_ics", "on": "0"}).status_code == 403

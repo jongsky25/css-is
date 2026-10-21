@@ -1788,6 +1788,11 @@ def set_email_paused(conn, on):
     set_setting(conn, "email_paused", "1" if on else "0")
 
 
+# A switch split out of an older one reads as its parent until an admin sets it
+# itself, so splitting never turns back on something an admin had turned off.
+EMAIL_FEATURE_FALLBACK = {"room_meal_alerts": "room_admin_alerts"}
+
+
 def email_feature_enabled(conn, key):
     """True unless an admin has turned this email feature off, or paused all
     non-account email. Unknown keys read as ON: a typo in a feature key must
@@ -1796,7 +1801,19 @@ def email_feature_enabled(conn, key):
         return True
     if email_paused(conn):
         return False
-    return get_setting(conn, f"email_feature.{key}", "1") != "0"
+    own = get_setting(conn, f"email_feature.{key}")
+    if own is None and key in EMAIL_FEATURE_FALLBACK:
+        own = get_setting(conn, f"email_feature.{EMAIL_FEATURE_FALLBACK[key]}")
+    return (own if own is not None else "1") != "0"
+
+
+def email_option_enabled(conn, key):
+    """An email attachment option (mailer.OPTIONS): on unless an admin turned it off."""
+    return get_setting(conn, f"email_option.{key}", "1") != "0"
+
+
+def set_email_option(conn, key, on):
+    set_setting(conn, f"email_option.{key}", "1" if on else "0")
 
 
 def set_email_feature(conn, key, on):

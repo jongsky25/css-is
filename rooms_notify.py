@@ -24,7 +24,7 @@ MEAL_KINDS = ("meal_form", "meal_revised", "meal_cancel")
 FEATURE = {"new_request": "room_new_request", "received": "room_decided", "approved": "room_decided", "declined": "room_decided",
            "cancelled": "room_decided", "encoded": "room_decided", "expired": "room_decided",
            "reminder": "room_reminder", "escalation": "room_admin_alerts",
-           "meal_form": "room_admin_alerts", "meal_revised": "room_admin_alerts", "meal_cancel": "room_admin_alerts",
+           "meal_form": "room_meal_alerts", "meal_revised": "room_meal_alerts", "meal_cancel": "room_meal_alerts",
            "withdrawn_late": "room_admin_alerts", "digest": "room_digest", "tomorrow": "room_digest"}
 ESCALATE_AFTER = timedelta(hours=24)       # a request pending this long goes to the Admin Head ...
 ESCALATE_WITHIN = timedelta(hours=48)      # ... as does one whose date is this close
@@ -329,7 +329,7 @@ def _build(conn, n, base, name, send_to_account):
     else:
         sugg = []
     att = None
-    if kind in ("approved", "encoded") and res["slot_ids"]:
+    if kind in ("approved", "encoded") and res["slot_ids"] and st.email_option_enabled(conn, "room_ics"):
         by = {s["id"]: s for s in rooms.list_slots(conn, active_only=False)}
         first, last = by[res["slot_ids"][0]], by[res["slot_ids"][-1]]
         import office_calendar as oc

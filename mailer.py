@@ -1438,6 +1438,10 @@ FEATURES = {
         "Conference room alerts for the section",
         "The Admin Head is told a request has waited too long, and the section is told of a short-notice withdrawal.",
         "transactional"),
+    "room_meal_alerts": (
+        "Conference room meal alerts",
+        "The Administrative Section is told a meal form is ready to order, was changed, or needs cancelling.",
+        "transactional"),
     "room_digest": (
         "Conference room daily summary",
         "The Administrative Section gets the open requests each morning and tomorrow's room schedule each afternoon.",
@@ -1556,6 +1560,19 @@ FEATURES = {
         "scheduled"),
 }
 
+# Attachment options: not emails of their own, but a part of one that an admin
+# may want to leave off (a calendar app invite can clash with the person's own
+# calendar). Stored as `email_option.<key>`, default on.
+# key -> (label, hint)
+OPTIONS = {
+    "calendar_ics": (
+        "Calendar changes — attach the calendar file",
+        "Each calendar-change email carries an .ics file so the item lands in the person's own calendar app."),
+    "room_ics": (
+        "Conference room approval — attach the calendar file",
+        "An approved room booking carries an .ics file so it lands in the requester's calendar app."),
+}
+
 # Account/recovery mail: never admin-disableable (see the admin email plan,
 # D3) — turning any of these off could lock someone out of their own account
 # recovery. Listed in the console anyway, greyed, so an admin who goes
@@ -1618,6 +1635,9 @@ _PREVIEWS = {
         "Maria Santos", "a request has waited over a day",
         "Section planning (Thu 15 Oct 2026, 9 AM – 11 AM) from Juan Reyes is still waiting for a decision.",
         _SAMPLE_LINK, approve_link=_SAMPLE_LINK, decline_link=_SAMPLE_LINK),
+    "room_meal_alerts": lambda: room_alert_message(
+        "Maria Santos", "a meal form is ready to order",
+        "Section planning, Thu 15 Oct 2026, 9 AM – 11 AM: 20 meal(s) for 20 pax.", _SAMPLE_LINK),
     "room_digest": lambda: room_digest_message(
         "Maria Santos", ["Thu 15 Oct, 9 AM – 11 AM: Section planning (Juan Reyes)"],
         [], _SAMPLE_LINK),

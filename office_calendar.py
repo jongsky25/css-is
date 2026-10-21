@@ -1266,7 +1266,7 @@ def flush_outbox(conn, base_url, *, now=None, send=None):
                 kind = "cancelled"
             if kind in ("added", "changed") and st.cal_last_day(e) < now.date().isoformat():
                 continue
-            if kind != "removed":                # tell their calendar app too: same uid, current sequence
+            if kind != "removed" and st.email_option_enabled(conn, "calendar_ics"):   # tell their calendar app too: same uid, current sequence
                 ics.append(cics.entry_event(e, base_url))
             moved = sorted({_WHAT[f] for r in rs for f in (r["detail"] or "").split(",") if f in _WHAT})
             lines.append({"kind": kind, "title": e["title"], "when": _when_text(e),
