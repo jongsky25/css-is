@@ -89,7 +89,16 @@
 <h3>Delivery attempts for you</h3><ul>{% for n in notice_rows %}<li>{{ n.kind }} · {{ n.state }} · {{ n.attempts }} attempts{% if enabled and n.state in ['failed','unknown','sending'] %}{{ start(doc,csrf,'notice_retry','Retry notification after checking delivery') }}<input type="hidden" name="notice_id" value="{{ n.id }}">{{ text('reason','Delivery check / retry reason') }}{{ end('Retry notice') }}{% endif %}</li>{% endfor %}</ul>
 <h3>Recipient outcomes</h3><ul>{% for r in recipient_outcomes %}<li>Dispatch #{{ r.dispatch_id }} · {{ r.recipient }} · {{ r.outcome }} · {{ r.evidence }} · Acknowledged: {{ r.acknowledged_at or 'Not recorded' }}</li>{% endfor %}</ul>
 <h3>Dispatch evidence</h3><ul>{% for x in dispatches %}<li>#{{ x.id }} · {{ x.created_at }} · {{ x.channel }} · {{ x.sender }} · {{ x.evidence }}</li>{% else %}<li>No dispatch recorded. Approval and signing are not dispatch.</li>{% endfor %}</ul>
-<h3>External operations</h3><ul>{% for job in jobs %}<li>{{ job.kind }} · {{ job.state }} · {{ job.id }}{% if enabled and job.state in ['running','unknown'] %}{{ start(doc,csrf,'operation_status','Query confirmed outcome without resending') }}<input type="hidden" name="operation_id" value="{{ job.id }}">{{ end('Check service receipt') }}{% endif %}{% if enabled and job.state in ['running','unknown','failed','pending'] %}{{ start(doc,csrf,'operation_reconcile','Reconcile this operation') }}<input type="hidden" name="operation_id" value="{{ job.id }}">{{ select('outcome','Outcome',[('confirmed_no_effect','Confirmed no external effect'),('cancelled','Cancel unexecuted request')]) }}{{ text('evidence','Evidence checked with the service; do not retry an uncertain send') }}{{ end() }}{% endif %}</li>{% else %}<li>No external operations.</li>{% endfor %}</ul>
+<h3>External operations</h3>
+<ul>{% for job in jobs %}
+<li><strong>{{ job.kind }} · {{ job.progress.label }}</strong> · <code>{{ job.id }}</code>
+<p>{{ job.progress.message }}</p>
+{% if job.progress.last_checked_at %}<p>Last checked: {{ job.progress.last_checked_at }}{% if job.progress.next_check_at %} · Next receipt check: {{ job.progress.next_check_at }}{% endif %}</p>{% endif %}
+{% if enabled and job.can_check %}{{ start(doc,csrf,'operation_status','Query confirmed outcome without resending') }}<input type="hidden" name="operation_id" value="{{ job.id }}">{{ end('Check service receipt') }}{% endif %}
+{% if enabled and job.can_reconcile %}{{ start(doc,csrf,'operation_reconcile','Reconcile this operation') }}<input type="hidden" name="operation_id" value="{{ job.id }}">
+{% if job.state == 'pending' %}{{ select('outcome','Outcome',[('confirmed_no_effect','Confirmed no external effect'),('cancelled','Cancel unexecuted request')]) }}{% else %}<input type="hidden" name="outcome" value="confirmed_no_effect"><p>Confirm no external effect only after checking with the service.</p>{% endif %}
+{{ text('evidence','Evidence checked with the service; do not retry an uncertain send') }}{{ end() }}{% endif %}
+</li>{% else %}<li>No external operations.</li>{% endfor %}</ul>
 <h3>Timeline</h3><ol>{% for e in history %}<li>{{ e.recorded_at }} · {{ e.action|replace('_',' ') }} · {{ names.get(e.actor_id,'Former staff member') }}{% if e.note %}<p>{{ e.note }}</p>{% endif %}<details><summary>Evidence</summary><pre>{{ e.detail|tojson(indent=2) }}</pre></details></li>{% endfor %}</ol>
 </details>
 <script src="/static/js/document_mentions.js?v=1" defer></script>

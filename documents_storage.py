@@ -183,6 +183,16 @@ def install(conn):
     if 'family_id' not in columns:
         conn.execute('ALTER TABLE document_rule_version ADD COLUMN family_id INTEGER')
     document_columns={row[1] for row in conn.execute('PRAGMA table_info(document)')}
+    job_columns={row[1] for row in conn.execute('PRAGMA table_info(document_job)')}
+    for name, definition in (
+        ('lease_owner', 'TEXT'), ('lease_until', 'TEXT'),
+        ('attempts', 'INTEGER NOT NULL DEFAULT 0'), ('next_check_at', 'TEXT'),
+        ('last_checked_at', 'TEXT'), ('recovery_blocked', 'INTEGER NOT NULL DEFAULT 0'),
+        ('recovery_note', "TEXT NOT NULL DEFAULT ''"),
+    ):
+        if name not in job_columns:
+            conn.execute('ALTER TABLE document_job ADD COLUMN '+name+' '+definition)
+    conn.execute('CREATE INDEX IF NOT EXISTS document_job_recovery ON document_job(recovery_blocked,state,next_check_at,lease_until,updated_at,id)')
     if 'archived_at' not in document_columns:
         conn.execute('ALTER TABLE document ADD COLUMN archived_at TEXT')
     if 'archived_by' not in document_columns:

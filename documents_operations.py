@@ -16,6 +16,7 @@ import storage as st
 import tzutil as tz
 import documents as d
 import documents_permissions as p
+import documents_jobs as jobs
 import work_review
 from documents_storage import rows, transaction, event
 
@@ -32,7 +33,7 @@ def exclusive_operation(operation):
     """Keep live execution and reconciliation from racing in this process.
 
     The durable job/relay receipt remains the recovery source after restart.
-    This guard is deliberately not a cross-process lease or recovery worker.
+    Database ownership in documents_jobs also coordinates other processes.
     """
     with _ACTIVE_LOCK:
         if operation in _ACTIVE_OPERATIONS:
@@ -251,16 +252,22 @@ def record_dispatch(conn,user,doc_id,revision,data,adapter=None):
         return persist_dispatch(conn,user,doc,data,operation,outcomes,evidence)
 
 
-def execute(conn,operation,adapter=None,*,reconcile=False):
+def execute(conn,operation,adapter=None,*,reconcile=False,recovery=False):
     with exclusive_operation(operation):
-        return _execute(conn, operation, adapter, reconcile=reconcile)
+        token=jobs.claim(conn,operation,reconcile=reconcile,recovery=recovery)
+        try:
+            return _execute(conn, operation, adapter, reconcile=reconcile,token=token)
+        except BaseException:
+            jobs.validation_failed(conn,operation,token,recovery=recovery)
+            raise
 
 
-def _execute(conn,operation,adapter=None,*,reconcile=False):
+def _execute(conn,operation,adapter=None,*,reconcile=False,token):
     adapter=adapter or get_adapter()
     transient={}
     with transaction(conn):
         d.writable(conn)
+        jobs.owned(conn,operation,token)
         job=rows(conn,'SELECT * FROM document_job WHERE id=?',(operation,))
         allowed=('running','unknown') if reconcile else ('pending',)
         if not job or job[0]['state'] not in allowed:
@@ -306,6 +313,7 @@ def _execute(conn,operation,adapter=None,*,reconcile=False):
         if job['kind']=='extract':
             extracted=sanitize_extraction(result)
         with transaction(conn):
+            jobs.owned(conn,operation,token)
             doc=d.raw(conn,job['document_id'])
             if job['kind']!='extract' and doc['current_version']!=job['version_id']:
                 raise d.Conflict('Document changed during the external operation; reconcile the result.')
@@ -316,11 +324,13 @@ def _execute(conn,operation,adapter=None,*,reconcile=False):
             else:
                 # Excerpts are transient: only completion metadata is retained.
                 event(conn,doc['id'],user,'extraction_finished',{'operation_id':operation})
-            conn.execute("UPDATE document_job SET state='confirmed',result_json=?,updated_at=? WHERE id=?",(json.dumps({'confirmed':True}),tz.now_iso(),operation))
+            jobs.completed(conn,operation,token)
         return extracted if job['kind']=='extract' else {'state':'confirmed'}
     except Exception as exc:
         with transaction(conn):
-            conn.execute("UPDATE document_job SET state=?,result_json=?,updated_at=? WHERE id=?",('failed' if job['kind']=='extract' or isinstance(exc,Unconfigured) else 'unknown',json.dumps({'error':'The adapter did not provide a confirmed result. Reconcile before retry.'}),tz.now_iso(),operation))
+            state='failed' if job['kind']=='extract' or (isinstance(exc,Unconfigured) and not reconcile) else 'unknown'
+            jobs.failed(conn,operation,token,state,
+                        blocked=isinstance(exc,Unconfigured) or getattr(exc,'code','') in ('not_found','operation_conflict','receipt_mismatch'))
         raise
 
 
@@ -347,13 +357,17 @@ def _reconcile(conn,user,operation,outcome,evidence):
         if not job or job[0]['state'] not in ('running','unknown','failed','pending'):
             raise ValueError('This operation does not need reconciliation.')
         job=job[0]; doc=d.get(conn,user,job['document_id'])
+        if jobs.active(job):
+            raise d.Conflict('This operation is still in progress. Wait and check its status again.')
         d.require(p.officer(conn,user,doc) or (job['actor_id']==user['id'] and job['kind']!='dispatch'))
         if outcome=='cancelled' and job['state']!='pending':
             raise ValueError('Only an unexecuted pending request may be cancelled.')
         if outcome not in ('confirmed_no_effect','cancelled'):
             raise ValueError('Confirm no external effect before another attempt. Record a confirmed send/signature separately with evidence.')
         d.reason(evidence)
-        conn.execute('UPDATE document_job SET state=?,result_json=?,updated_at=? WHERE id=?',(outcome,json.dumps({'evidence':evidence}),tz.now_iso(),operation))
+        conn.execute('''UPDATE document_job SET state=?,result_json=?,updated_at=?,last_checked_at=?,
+            lease_owner=NULL,lease_until=NULL,next_check_at=NULL,recovery_blocked=1,recovery_note=''
+            WHERE id=?''',(outcome,json.dumps({'evidence':evidence}),tz.now_iso(),tz.now_iso(),operation))
         d.finish(conn,user,doc,'operation_reconciled',{'operation_id':operation,'outcome':outcome,'evidence':evidence})
 
 
