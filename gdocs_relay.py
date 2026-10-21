@@ -123,10 +123,11 @@ class Relay:
         return call("check_link", url=url)
 
     def generate_doc(self, *, request_id, template_key, folder_key, title, fields=None, blocks=None,
-                     rows=None, share_with=None) -> RelayResult:
+                     rows=None, share_with=None, extras=None) -> RelayResult:
+        extra = {"extras": extras} if extras else {}              # only sent when asked for, so an older relay sees no change
         return call("generate_doc", request_id=request_id, template_key=template_key, folder_key=folder_key,
                     title=title, fields=fields or {}, blocks=blocks or {}, rows=rows or {},
-                    share_with=share_with or [])
+                    share_with=share_with or [], **extra)
 
     def upload_file(self, *, request_id, folder_key, item_key, name, mime, data, share_with=None) -> RelayResult:
         """Put one file in the filing's Drive folder for a checklist row. `data` is the raw bytes."""

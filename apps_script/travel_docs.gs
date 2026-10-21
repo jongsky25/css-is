@@ -58,6 +58,7 @@ function generateDoc_(req) {
   const isSheet = tplFile.getMimeType() === 'application/vnd.google-apps.spreadsheet';
   const copy = tplFile.makeCopy(String(req.title).slice(0, 120), folder);
   copy.setDescription('request_id=' + req.request_id);
+  let extras = '';
   if (isSheet) {
     SpreadsheetApp.openById(copy.getId()).getSheets().forEach(function (sh) {
       applyRowsSheet_(sh, req.rows || {}); applyFieldsSheet_(sh, req.fields || {}); formatSheet_(sh);
@@ -68,11 +69,14 @@ function generateDoc_(req) {
     applyRows_(body, req.rows || {}); applyBlocks_(body, req.blocks || {}); applyFields_(body, req.fields || {});
     formatDoc_(body);
     doc.saveAndClose();
+    if (req.extras && req.extras.file_copy) extras = addFileCopy_(copy.getId());
   }
   (req.share_with || []).forEach(function (a) {
     if (String(a).toLowerCase().endsWith('@' + P.getProperty('ALLOWED_DOMAIN'))) shareQuietly_(copy, a, 'writer');
   });
-  return doc_(copy);
+  const out = doc_(copy);
+  if (extras) out.extras = extras;                  // 'ok' or why the file-copy page was not added; the draft itself is fine
+  return out;
 }
 
 // Gives a person access WITHOUT Google's "shared with you" email: the app already shows the link on the page, so a mail for
@@ -196,6 +200,91 @@ function formatDoc_(body) {
       if ((align === null || align === H.LEFT || align === H.JUSTIFY) && text.trim().length >= JUSTIFY_FROM) p.setAlignment(H.JUSTIFY);
     });
   } catch (err) { /* keep the form as it is */ }
+}
+
+// ---- The file copy (spot feedback #158) --------------------------------------------------------------------------------
+// A DPO can ask for "extras": {file_copy: true}: after the order, a second page with the same content but NO letterhead
+// or address footer, followed by the routing tables (BLHSD / Initials / Date, and Keywords / Related issuances). Google Docs
+// shows a header on every page of a section, so the copy starts a new section with its own empty header and footer; the
+// Apps Script document service cannot make a section, so this uses the Docs advanced service (Services > Google Docs API).
+// Best effort: when it is not switched on, or Google refuses, the order itself is already complete and the result says why.
+const FILE_COPY_MARK = '[[FILE COPY]]';
+const FILE_COPY_SLIP = [['', 'BLHSD'], ['Initials', ''], ['Date', '']];
+const FILE_COPY_KEYS = [['Keywords', ''], ['Related issuances, laws, directives', '']];
+
+// Pure: where the paragraph holding `mark` starts in a Docs API document, or -1.
+function findMarkIndex_(docJson, mark) {
+  const content = (docJson && docJson.body && docJson.body.content) || [];
+  for (let i = 0; i < content.length; i++) {
+    const els = (content[i].paragraph && content[i].paragraph.elements) || [];
+    for (let j = 0; j < els.length; j++) {
+      if (els[j].textRun && String(els[j].textRun.content).indexOf(mark) >= 0) return els[j].startIndex || 0;
+    }
+  }
+  return -1;
+}
+
+// Pure: where the last section break starts, or -1 when the document still has only its first section.
+function lastSectionBreakIndex_(docJson) {
+  const content = (docJson && docJson.body && docJson.body.content) || [];
+  let found = -1, count = 0;
+  content.forEach(function (c) { if (c.sectionBreak) { count++; found = c.startIndex || 0; } });
+  return count > 1 ? found : -1;
+}
+
+function plainTable_(body, cells) {
+  const t = body.appendTable(cells);
+  t.editAsText().setBold(false);
+  t.editAsText().setFontFamily(FORM_FONT); t.editAsText().setFontSize(FORM_SIZE);
+  [234, 234].forEach(function (w, c) { t.setColumnWidth(c, w); });
+  return t;
+}
+
+function addFileCopy_(docId) {
+  if (typeof Docs === 'undefined') return 'docs_service_off';
+  let placed = false;
+  try {
+    const doc = DocumentApp.openById(docId), body = doc.getBody(), n = body.getNumChildren();
+    const mark = body.appendParagraph(FILE_COPY_MARK);
+    mark.setBold(false);
+    placed = true;
+    const T = DocumentApp.ElementType;
+    for (let i = 0; i < n; i++) {
+      const el = body.getChild(i), t = el.getType();
+      if (t === T.PARAGRAPH) body.appendParagraph(el.asParagraph().copy());
+      else if (t === T.TABLE) body.appendTable(el.asTable().copy());
+      else if (t === T.LIST_ITEM) body.appendListItem(el.asListItem().copy());
+      else if (t === T.HORIZONTAL_RULE) body.appendHorizontalRule();
+    }
+    body.appendParagraph('').setBold(false);
+    plainTable_(body, FILE_COPY_SLIP);
+    body.appendParagraph('').setBold(false);
+    plainTable_(body, FILE_COPY_KEYS);
+    doc.saveAndClose();
+
+    const at = findMarkIndex_(Docs.Documents.get(docId), FILE_COPY_MARK);
+    if (at < 0) throw new Error('mark not found');
+    Docs.Documents.batchUpdate({ requests: [{ insertSectionBreak: { location: { index: at }, sectionType: 'NEXT_PAGE' } }] }, docId);
+    const brk = lastSectionBreakIndex_(Docs.Documents.get(docId));
+    if (brk < 0) throw new Error('section break not found');
+    Docs.Documents.batchUpdate({ requests: [
+      { createHeader: { type: 'DEFAULT', sectionBreakLocation: { index: brk } } },
+      { createFooter: { type: 'DEFAULT', sectionBreakLocation: { index: brk } } }
+    ] }, docId);
+    Docs.Documents.batchUpdate({ requests: [
+      { replaceAllText: { containsText: { text: FILE_COPY_MARK, matchCase: true }, replaceText: '' } }
+    ] }, docId);
+    return 'ok';
+  } catch (e) {
+    if (placed) {                                    // never leave the marker text in the order
+      try {
+        Docs.Documents.batchUpdate({ requests: [
+          { replaceAllText: { containsText: { text: FILE_COPY_MARK, matchCase: true }, replaceText: '' } }
+        ] }, docId);
+      } catch (e2) { /* nothing more to do */ }
+    }
+    return 'failed';
+  }
 }
 
 // Sheets cannot justify text, so a sheet gets the font, the size and the titles.

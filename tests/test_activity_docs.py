@@ -550,3 +550,83 @@ def test_an_invited_resource_person_attends_as_a_resource_speaker(viewer, conn, 
 def test_the_relay_can_drop_a_table_it_was_told_to_remove():
     src = open("apps_script/travel_docs.gs", encoding="utf-8").read()
     assert "if (spec.remove)" in src and "parent.removeChild(table)" in src
+
+
+# ------------------------------- the real header and the file-copy page (spot feedback #157/#158) ---
+
+def file_copy():
+    out = subprocess.run(["node", "tests/js/file_copy_harness.js"], capture_output=True, text=True, timeout=30)
+    assert out.returncode == 0, out.stderr
+    return json.loads(out.stdout)
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+def test_the_letterhead_is_built_into_the_real_header_of_every_template():
+    for key, built in build_templates().items():
+        assert built["header"] is True and built["bodyLetterhead"] is False, key
+        assert [i.split()[2] for i in built["images"]] == ["image/png", "image/png"] and built["footer"] is True
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+def test_the_file_copy_page_has_its_own_empty_header_and_footer_and_the_routing_tables():
+    ok = file_copy()["ok"]
+    assert ok["status"] == "ok"
+    names = [c if isinstance(c, str) else next(iter(c)) for c in ok["calls"]]
+    # find the mark, start a new section there, give THAT section an empty header and footer, then clear the mark
+    assert names == ["get", "insertSectionBreak", "get", "createHeader", "createFooter", "replaceAllText"]
+    assert ok["calls"][1]["insertSectionBreak"]["sectionType"] == "NEXT_PAGE"
+    assert ok["calls"][3]["createHeader"]["type"] == "DEFAULT" and "sectionBreakLocation" in ok["calls"][3]["createHeader"]
+    assert ok["calls"][4]["createFooter"]["sectionBreakLocation"] == ok["calls"][3]["createHeader"]["sectionBreakLocation"]
+    kids = ok["children"]
+    original = kids[:4]
+    copy = kids[5:9]                                              # after the mark paragraph (index 4), the same four elements
+    assert [(c["type"], c.get("text"), c.get("cells")) for c in copy] == [(c["type"], c.get("text"), c.get("cells")) for c in original]
+    tables = [c["cells"] for c in kids[9:] if c["type"] == "TABLE"]
+    assert tables == [[["", "BLHSD"], ["Initials", ""], ["Date", ""]],
+                      [["Keywords", ""], ["Related issuances, laws, directives", ""]]]
+    assert kids[4]["text"] == ""                                   # the mark is cleared from the order
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+def test_without_the_docs_service_the_order_is_left_alone_and_a_failure_does_not_lose_it():
+    out = file_copy()
+    assert out["off"]["status"] == "docs_service_off" and len(out["off"]["children"]) == 4 and out["off"]["calls"] == []
+    assert out["fail"]["status"] == "failed"                       # the order exists; the caller is told why there is no copy page
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+def test_the_index_finders_read_a_docs_document_correctly():
+    p = file_copy()["pure"]
+    assert p == {"oneBreak": -1, "twoBreaks": 3, "missing": -1, "found": 4, "empty": -1, "emptyBreak": -1}
+
+
+def test_only_the_dpo_asks_for_the_file_copy_page(viewer, conn, relay):
+    eid = create(viewer, kind="travel", title="CALEP Field Visit", audience="bureau", people=[str(uid(conn, "viewer@test.local"))])
+    draft(viewer, eid, "dpo"); draft(viewer, eid, "invitation")
+    assert relay.calls[0].get("extras") == {"file_copy": True} and not relay.calls[1].get("extras")
+
+
+def test_the_relay_client_sends_extras_only_when_asked_for(monkeypatch):
+    sent = []
+    monkeypatch.setattr(gr, "call", lambda action, **kw: sent.append((action, kw)) or gr.RelayResult(True, {}))
+    gr.Relay().generate_doc(request_id="r", template_key="dpo", folder_key="f", title="t")
+    gr.Relay().generate_doc(request_id="r", template_key="dpo", folder_key="f", title="t", extras={"file_copy": True})
+    assert "extras" not in sent[0][1] and sent[1][1]["extras"] == {"file_copy": True}
+
+
+@pytest.mark.parametrize("extras, words", [("docs_service_off", "Google Docs service is not switched on"),
+                                           ("failed", "could not be added this time"), ("ok", None), (None, None)])
+def test_the_person_is_told_when_the_order_was_made_without_its_extra_page(viewer, conn, relay, monkeypatch, extras, words):
+    eid = create(viewer, kind="travel", title="CALEP Field Visit", people=[str(uid(conn, "viewer@test.local"))])
+    original = relay.generate_doc
+
+    def with_extras(**kw):
+        res = original(**kw)
+        if extras:
+            res.data["extras"] = extras
+        return res
+    monkeypatch.setattr(relay, "generate_doc", with_extras)
+    r = draft(viewer, eid, "dpo")
+    note = unquote(r.headers["location"]).replace("+", " ")
+    assert "ok=" in note
+    assert (words in note) if words else ("extra file-copy page" not in note)
