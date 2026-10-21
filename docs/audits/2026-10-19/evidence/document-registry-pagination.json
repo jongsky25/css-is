@@ -1,0 +1,70 @@
+{
+  "method": "synthetic SQLite; half verified bureau, half restricted; no private grants; includes full-register measures; counts from one traced read; elapsed_ms from one subsequent warm untraced read; not a production capacity estimate",
+  "environment": {
+    "python": "3.11.17",
+    "sqlite": "3.53.1",
+    "observed_at": "2026-10-21T04:27:50.900720+00:00"
+  },
+  "observations": [
+    {
+      "records": 500,
+      "query": "",
+      "permitted_matches": 250,
+      "legacy": {
+        "select_statements": 1252,
+        "elapsed_ms": 8.93,
+        "registry_rows_fetched": 500
+      },
+      "paginated": {
+        "select_statements": 13,
+        "elapsed_ms": 1.57,
+        "registry_rows_fetched": 31
+      }
+    },
+    {
+      "records": 500,
+      "query": "Needle",
+      "permitted_matches": 250,
+      "legacy": {
+        "select_statements": 1503,
+        "elapsed_ms": 10.67,
+        "registry_rows_fetched": 500
+      },
+      "paginated": {
+        "select_statements": 14,
+        "elapsed_ms": 3.45,
+        "registry_rows_fetched": 31
+      }
+    },
+    {
+      "records": 5000,
+      "query": "",
+      "permitted_matches": 2500,
+      "legacy": {
+        "select_statements": 12502,
+        "elapsed_ms": 260.38,
+        "registry_rows_fetched": 5000
+      },
+      "paginated": {
+        "select_statements": 13,
+        "elapsed_ms": 6.02,
+        "registry_rows_fetched": 31
+      }
+    },
+    {
+      "records": 5000,
+      "query": "Needle",
+      "permitted_matches": 2500,
+      "legacy": {
+        "select_statements": 15003,
+        "elapsed_ms": 310.02,
+        "registry_rows_fetched": 5000
+      },
+      "paginated": {
+        "select_statements": 14,
+        "elapsed_ms": 21.28,
+        "registry_rows_fetched": 31
+      }
+    }
+  ]
+}

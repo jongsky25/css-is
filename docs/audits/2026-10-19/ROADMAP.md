@@ -61,7 +61,7 @@ Total provisional implementation effort: **51–98 person-days** if all listed p
 
 **Owners:** backend and UX leads, records officer, representative staff and approver.
 
-- **A13:** remove database work from static asset requests; reduce repeated Home/request permission queries; add permission-aware bounded registry queries and pagination. Compare old/new result sets for every permission scenario.
+- **A13:** v7.68 delivers the [registry pagination slice](../../DOCUMENT_REGISTRY_PAGINATION.md): SQL permissions before limits, full filtered totals, bounded snippets and count-only document approval summaries, checked against legacy results and a synthetic benchmark. Static asset SQL and other Home/request permission queries remain for a separate increment.
 - **A14:** offload blocking calls immediately, then introduce durable job status, leases and reconciliation for the pilot's external operations. Reuse document operation receipts. Bound worker concurrency and expose pending/failed/unknown states in ordinary language.
 - **A15:** observe baseline tasks, then refine one complete journey: find/register a document → confirm details → assign work → contribute → review the exact version → release → see delivery/closure status. Build on the existing personal to-do area and existing revision/approval controls. Include correction, rejected approval and lost-connection recovery.
 
