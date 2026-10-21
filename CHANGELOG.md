@@ -1,10 +1,14 @@
-## 7.78 — October 21, 2026
+## 7.79 — October 21, 2026
 
 - Complete A14 with one alternating document background scheduler and one shared background admission slot, leaving interactive capacity in the two-worker pool.
 - Coordinate Drive discovery and filing across processes through an expiring SQLite lease, fenced cursor/result/error writes and durable manual check requests.
 - Bound listing/filing turns and intake registration checks with a shared elapsed service budget; process one due filing per turn with backoff, attempt limits and review stops.
 - Retain original filing operation markers, payloads and registered numbers after interruptions; expose last/next attempt and protected manual filing retry controls.
 - Verify competing processes, real worker exit after filing, stale workers, scheduler fairness, transport budgets, authority changes, safe diagnostics and responsive HTTP navigation during provider stalls.
+
+## 7.78 — October 21, 2026
+
+- Signatory for activity documents (spot feedback #157): the DPO, memorandum and concept note took the head of office only from `travel.sig.head_name`, so they were unsigned unless an administrator typed a name. They now use the same rule as the travel forms (`activity_docs.head_of_office`): the name and title set under Travel filing settings win, and with no name set the Director from the directory is used. Travel filing settings relabels the certifying officer boxes as a fallback and explains that each form takes the head of the traveller's own division from the directory (`travel.directory_signers`, unchanged), and that a blank head of office means the directory's Director. No change to how travel forms pick their signers.
 
 ## 7.77 — October 21, 2026
 

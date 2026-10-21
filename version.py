@@ -17,18 +17,27 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.78"
+APP_VERSION = "7.79"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "7.78",
+        "version": "7.79",
         "date": "October 21, 2026",
         "summary": "Drive checks and filing recover safely without crowding out your work.",
         "changes": [
             "Drive checks are queued and coordinated so automatic and manual checks do not overlap.",
             "Failed filing waits before retrying and keeps the same document number and filing request.",
             "The intake queue shows check and filing progress, with a retry option when attention is needed."
+        ]
+    },
+    {
+        "version": "7.78",
+        "date": "October 21, 2026",
+        "summary": "Activity documents are signed by the Director from the directory unless you name an acting head.",
+        "changes": [
+            "The DPO, memorandum and concept note now use the Director from the directory as the signatory when no head of office is set, the same as the travel forms. Naming a head in Travel filing settings still wins.",
+            "Travel filing settings now explain that the certifying officer comes from the traveller's own division in the directory, and that the two certifying officer boxes are only used when the directory has no division head."
         ]
     },
     {
