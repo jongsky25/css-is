@@ -1,7 +1,7 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header, empty_state %}
 {% block title %}{{ "Not found" if missing else e.title }}{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261020a">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261020a">{% if documents and documents['outside'] and documents['uploads_ready'] %}<script src="/static/js/activity_invitation.js?v=20261021a" defer></script>{% endif %}{% endblock %}
 {% block content %}
 {% if missing %}
   {{ empty_state("That calendar item isn't here.", "It may have been removed, or it isn't shared with you.", "📅") }}
@@ -115,9 +115,24 @@
             <textarea name="invitation" rows="3" maxlength="600">{{ out.invitation if out }}</textarea></label>
         </div>
         <button class="cal-btn" type="submit">Save</button>
+        {% if out and documents['uploads_ready'] %}
+        <div class="cal-outside-upload" data-invitation-upload data-url="/calendar/entries/{{ e.id }}/outside/upload">
+          <label>Or add the invitation or letter (PDF or photo, under 6 MB)
+            <input type="file" accept="application/pdf,image/jpeg,image/png,image/webp"></label>
+          <p>{% if out.file_url %}<a data-link href="{{ out.file_url }}" target="_blank" rel="noopener">{{ out.file_name or 'Open the letter' }}</a>{% else %}<a data-link href="#" target="_blank" rel="noopener" hidden></a>{% endif %}</p>
+          <p data-status class="cal-hint" role="status">The letter is kept in the office Drive and read for a suggestion; nothing is filled in until you press &ldquo;Use these&rdquo; and Save.</p>
+          <div data-offer></div>
+        </div>
+        {% endif %}
         <p class="cal-hint">Another office's activity: the DPO background says they invited us and repeats the lines you paste. Left empty, nothing is invented.</p>
       </fieldset>
     </form>
+    {% if out and out.file_url %}
+    <form method="post" action="/calendar/entries/{{ e.id }}/outside/file/remove" class="cal-outside-remove">
+      <button class="cal-btn" type="submit">Remove the link to the letter</button>
+      <span class="cal-hint">The file stays in Drive; only the link here goes.</span>
+    </form>
+    {% endif %}
     <ul class="cal-doc-list">
     {% for d in documents['items'] %}
       <li class="cal-doc {{ 'is-needed' if d.needed }}">

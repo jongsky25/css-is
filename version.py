@@ -17,18 +17,28 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.73"
+APP_VERSION = "7.74"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "7.73",
+        "version": "7.74",
         "date": "October 21, 2026",
         "summary": "Slow document services no longer hold up other pages.",
         "changes": [
             "Document service calls run separately so you can keep navigating while they finish.",
             "Busy services tell you when a request has not started, and an unconfirmed result asks you to check the record before trying again.",
-            "Status checks wait for an active operation to finish, keeping its recorded result consistent."
+            "Status and recovery checks ask you to wait while an operation is still running."
+        ]
+    },
+    {
+        "version": "7.73",
+        "date": "October 21, 2026",
+        "summary": "Add the other office's invitation letter to a calendar item and have it read for you.",
+        "changes": [
+            "When an activity is run by another office, you can now add their invitation or letter (a PDF or photo). It is kept in the office Drive and linked from the item.",
+            "The letter is also read for you. The office, how you were invited and the key lines are shown as a suggestion: nothing changes until you press Use these and then Save.",
+            "If reading is switched off or fails, the letter is still kept and you can type the key lines yourself."
         ]
     },
     {

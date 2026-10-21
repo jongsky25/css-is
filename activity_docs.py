@@ -80,8 +80,10 @@ HOST_MAX, INVITATION_MAX = 160, 600
 
 def get_outside(conn, entry_id) -> Optional[dict]:
     """The outside-activity details, or None when BLHSD conducts the activity."""
-    r = conn.execute("SELECT host, invited_as, invitation FROM calendar_entry_outside WHERE entry_id=?", (entry_id,)).fetchone()
-    return {"host": r[0] or "", "invited_as": r[1] or "attendee", "invitation": r[2] or ""} if r else None
+    r = conn.execute("SELECT host, invited_as, invitation, invitation_url, invitation_name FROM calendar_entry_outside "
+                     "WHERE entry_id=?", (entry_id,)).fetchone()
+    return {"host": r[0] or "", "invited_as": r[1] or "attendee", "invitation": r[2] or "",
+            "file_url": r[3] or "", "file_name": r[4] or ""} if r else None
 
 
 def set_outside(conn, entry_id, host, invited_as, invitation, by) -> None:
@@ -96,6 +98,18 @@ def set_outside(conn, entry_id, host, invited_as, invitation, by) -> None:
                  "VALUES (?,?,?,?,?,?) ON CONFLICT(entry_id) DO UPDATE SET host=excluded.host, invited_as=excluded.invited_as, "
                  "invitation=excluded.invitation, updated_by=excluded.updated_by, updated_at=excluded.updated_at",
                  (entry_id, host, invited_as, invitation, by, tz.now_iso()))
+    conn.commit()
+
+
+def set_invitation_file(conn, entry_id, url, name, by) -> None:
+    """Keep the link to the uploaded letter (or clear it with an empty url). Needs the activity marked as another office's."""
+    url = str(url or "").strip()
+    if url and not url.startswith("https://"):
+        raise ValueError("That is not a link the app can keep.")
+    cur = conn.execute("UPDATE calendar_entry_outside SET invitation_url=?, invitation_name=?, updated_by=?, updated_at=? "
+                       "WHERE entry_id=?", (url, (str(name or "").strip()[:100] if url else ""), by, tz.now_iso(), entry_id))
+    if cur.rowcount == 0:
+        raise ValueError("Choose \u201cAnother office\u201d and save it first, then add the letter.")
     conn.commit()
 
 

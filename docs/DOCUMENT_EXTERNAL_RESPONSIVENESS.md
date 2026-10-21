@@ -1,6 +1,6 @@
 # Document external-operation responsiveness
 
-Introduced in **7.73**, the first A14 increment.
+Introduced in **7.74**, the first A14 increment.
 
 ## Behavior
 
