@@ -1,3 +1,11 @@
+## 7.77 — October 21, 2026
+
+- Complete A14 with one alternating document background scheduler and one shared background admission slot, leaving interactive capacity in the two-worker pool.
+- Coordinate Drive discovery and filing across processes through an expiring SQLite lease, fenced cursor/result/error writes and durable manual check requests.
+- Bound listing/filing turns and intake registration checks with a shared elapsed service budget; process one due filing per turn with backoff, attempt limits and review stops.
+- Retain original filing operation markers, payloads and registered numbers after interruptions; expose last/next attempt and protected manual filing retry controls.
+- Verify competing processes, real worker exit after filing, stale workers, scheduler fairness, transport budgets, authority changes, safe diagnostics and responsive HTTP navigation during provider stalls.
+
 ## 7.76 — October 21, 2026
 
 - DPO for one person (spot feedback #157): when a DPO has exactly one person, the subject reads "Authority for {name}, {position} of the Bureau of Local Health Systems Development (BLHSD) to Attend as {Participant | Resource Speaker} in the {title} in {venue} on {dates}", the authority line says the same in a sentence, and the Name | Position table is dropped. Resource Speaker when the calendar item says we were invited as a resource person, otherwise Participant. The position follows the #154 rule: a blank line unless "Fill in positions" is ticked. More than one person is unchanged. The request marks the table with `"remove": true`; the relay (`travel_docs.gs` `applyRows_`) deletes that table. Replace the relay script and deploy a new version of it to apply; a relay without it leaves the table with one blank row.

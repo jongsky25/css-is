@@ -4853,10 +4853,8 @@ async def _start_scheduler():
         c = get_conn()
         c.close()
         _short_link_task = asyncio.create_task(short_links.worker(DB))
-    import documents_intake
-    asyncio.create_task(documents_intake.worker(get_conn))
-    import documents_jobs
-    _document_job_task = asyncio.create_task(documents_jobs.worker(get_conn))
+    import documents_sync
+    _document_job_task = asyncio.create_task(documents_sync.worker(get_conn))
     asyncio.create_task(_scheduler_loop())
     if PERSIST_DIR:                   # durability engine (bucket-backed persistence)
         print(f"[persist] active — snapshotting {DB} to {bk.SCHED_DIR} "

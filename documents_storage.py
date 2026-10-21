@@ -148,6 +148,12 @@ def install(conn):
     CREATE INDEX IF NOT EXISTS document_intake_queue ON document_intake(state,id);
     CREATE INDEX IF NOT EXISTS document_intake_content ON document_intake(content_key);
     CREATE INDEX IF NOT EXISTS document_intake_document ON document_intake(document_id);
+    CREATE TABLE IF NOT EXISTS document_intake_sync (
+      id INTEGER PRIMARY KEY CHECK(id=1), lease_owner TEXT, lease_until TEXT,
+      state TEXT NOT NULL DEFAULT 'idle', failures INTEGER NOT NULL DEFAULT 0,
+      blocked INTEGER NOT NULL DEFAULT 0, next_check_at TEXT,
+      last_started_at TEXT, last_finished_at TEXT);
+    INSERT OR IGNORE INTO document_intake_sync(id) VALUES (1);
     CREATE INDEX IF NOT EXISTS document_intake_filing ON document_intake(filing_state,id);
     CREATE INDEX IF NOT EXISTS document_reference_value ON document_reference(value,document_id);
     CREATE INDEX IF NOT EXISTS document_reference_document ON document_reference(document_id);
@@ -175,6 +181,14 @@ def install(conn):
     if 'body_text' not in email_columns:
         conn.execute("ALTER TABLE document_intake_email ADD COLUMN body_text TEXT NOT NULL DEFAULT ''")
     intake_columns={row[1] for row in conn.execute('PRAGMA table_info(document_intake)')}
+    for name, definition in (
+        ('filing_attempts','INTEGER NOT NULL DEFAULT 0'),
+        ('filing_next_at','TEXT'), ('filing_last_at','TEXT'),
+        ('filing_blocked','INTEGER NOT NULL DEFAULT 0'),
+    ):
+        if name not in intake_columns:
+            conn.execute('ALTER TABLE document_intake ADD COLUMN '+name+' '+definition)
+    conn.execute('CREATE INDEX IF NOT EXISTS document_intake_retry ON document_intake(filing_blocked,filing_state,filing_next_at,id)')
     if 'email_id' not in intake_columns:
         conn.execute('ALTER TABLE document_intake ADD COLUMN email_id INTEGER REFERENCES document_intake_email(id)')
         conn.execute('ALTER TABLE document_intake ADD COLUMN email_primary INTEGER NOT NULL DEFAULT 1')

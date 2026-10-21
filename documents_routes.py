@@ -109,7 +109,7 @@ def make_router(templates,get_conn):
                 'file_indexes':{row['version_id']:row for row in rows(conn,
                     'SELECT version_id,indexed_at,chars FROM document_file_index WHERE document_id=?',(doc_id,))},
                 'email_bodies':rows(conn,"SELECT body_text FROM document_intake_email WHERE document_id=? AND body_text<>''",(doc_id,)),
-                'filing_rows':rows(conn,"SELECT original_name,filing_state,error FROM document_intake WHERE document_id=? AND filing_state<>'none'",(doc_id,)),
+                'filing_rows':rows(conn,"SELECT id,original_name,filing_state,filing_attempts,filing_next_at,filing_last_at,filing_blocked,error FROM document_intake WHERE document_id=? AND filing_state<>'none'",(doc_id,)),
                 'instruction_recipients':rows(conn,'SELECT r.directive_id,r.user_id FROM document_instruction_recipient r JOIN document_directive d ON d.id=r.directive_id WHERE d.document_id=?',(doc_id,)),
                 'unread_instructions':{r['id'] for r in rows(conn,'''SELECT x.id FROM document_directive x
                     JOIN document_instruction_recipient r ON r.directive_id=x.id

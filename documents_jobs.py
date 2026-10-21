@@ -150,7 +150,7 @@ async def worker(get_conn):
     while True:
         try:
             if not _RECOVERY_SLOT.locked():
-                await external.run(recover_one, get_conn)
+                await external.run_background(recover_one, get_conn)
         except (external.Busy, external.Unconfirmed):
             pass
         except Exception:

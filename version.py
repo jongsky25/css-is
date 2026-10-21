@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.76"
+APP_VERSION = "7.77"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.77",
+        "date": "October 21, 2026",
+        "summary": "Drive checks and filing recover safely without crowding out your work.",
+        "changes": [
+            "Drive checks are queued and coordinated so automatic and manual checks do not overlap.",
+            "Failed filing waits before retrying and keeps the same document number and filing request.",
+            "The intake queue shows check and filing progress, with a retry option when attention is needed."
+        ]
+    },
     {
         "version": "7.76",
         "date": "October 21, 2026",

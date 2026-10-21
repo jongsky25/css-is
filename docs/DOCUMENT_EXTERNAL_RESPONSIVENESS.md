@@ -94,3 +94,5 @@ status improvements and background sync scheduling/admission remain the next
 A14 increment. No new email, Drive or infrastructure credentials are needed.
 
 The next slice, **7.75**, adds [durable ownership and restart recovery](DOCUMENT_JOB_RECOVERY.md) around these jobs and existing receipts. Background synchronization capacity remains separate.
+
+**7.77 completes A14:** [bounded background synchronization](DOCUMENT_BACKGROUND_SYNC.md) adds shared background admission, fair scheduling, durable Drive ownership and controlled filing retries.
