@@ -17,18 +17,38 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.66"
+APP_VERSION = "7.68"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "7.66",
+        "version": "7.68",
         "date": "October 21, 2026",
         "summary": "Browse the document register in pages while keeping your search and queue totals.",
         "changes": [
             "Browse 30 documents at a time and keep your chosen queue and search when opening older records.",
             "Counts and measures cover all matching records you can access, and CSV export still includes the complete matching register.",
             "Access is checked again as you browse, and document searches and approval counts load less data as the register grows."
+        ]
+    },
+    {
+        "version": "7.67",
+        "date": "October 21, 2026",
+        "summary": "Confirm your designation when you prepare the travel forms, and every form now has the same look.",
+        "changes": [
+            "Every travel form is made in Times New Roman 12, with body text justified and titles in bold with a capital letter on each main word.",
+            "The Prepare the forms page now asks for your designation, filled in from your profile when you have one, so it is on every form that shows it (CENRR, RER, Appendix B, the justification, the report and the rest).",
+            "If your profile has no designation, type it once on this page instead of finding the blank on each form afterwards."
+        ]
+    },
+    {
+        "version": "7.66",
+        "date": "October 21, 2026",
+        "summary": "Open resource-person ratings from an activity's report.",
+        "changes": [
+            "An activity report now lists each rated resource person with their own score and a link to their results.",
+            "The activity report also links to the combined resource-person report for that activity.",
+            "The Type 3 report now links to other resource persons' profiles."
         ]
     },
     {

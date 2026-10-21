@@ -1,9 +1,20 @@
-## 7.66 — October 21, 2026
+## 7.68 — October 21, 2026
 
 - Page the document registry in groups of 30 after applying current permissions and queue/search filters; preserve full-register counts, measures and CSV exports.
 - Resolve authority once per read snapshot and use SQL filters for restricted records, organizational grants, merged receipts and legacy/migrated work assignments.
 - Bound search excerpts to page records, skip unused export/global-search snippets, use count queries for approval summaries, and add supporting indexes.
 - Add independent legacy-result comparisons, pagination/revocation/work-boundary checks and a reproducible synthetic query/row-loading benchmark.
+
+## 7.67 — October 21, 2026
+
+- Travel Prepare page: a "Your designation (shown on the forms)" field, prefilled from the profile and kept in the browser draft with the signatories. It is sent as `traveler_title` and used for the designation on every form; blank falls back to the profile (spot feedback #150-152, designation part).
+- Travel forms (relay `travel_docs.gs`): after each form is filled it is set to Times New Roman 12, paragraphs of 60 characters or more that are left-aligned are justified (tables too), and titles (short bold lines with no full stop, comma, colon or brackets, either centred, all capitals or headings) are bold and in Title Case, keeping acronyms such as DPO, CENRR and RER. Sheets get the font, size and titles; Google Sheets cannot justify. Replace `travel_docs` in the Apps Script project to apply it. No template rebuild (spot feedback #150-152).
+
+## 7.66 — October 21, 2026
+
+- Show each rated resource person on the activity rating page, with their own score, rating count and a clickable result link.
+- Link to the combined Type 3 report for the activity while keeping hidden or director profiles subject to the existing visibility rules.
+- Add a link from the Type 3 report to the People page to find other resource persons' results.
 
 ## 7.65 — October 21, 2026
 

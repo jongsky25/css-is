@@ -457,6 +457,7 @@
       {% if v.has_data %}<a class="vlink" href="/reports/verbatims?survey_type={{ rtype }}&org={{ sel_org }}&period={{ sel_period }}{% if sel_activity %}&activity={{ sel_activity }}{% endif %}">{{ "See this activity's verbatims →" if sel_activity else "See all verbatims →" }}</a>{% endif %}
       {% if rtype == 2 %}<a class="vlink" href="/reports/activities?org={{ sel_org }}&period={{ sel_period }}">View individual customer satisfaction survey reports →</a>
       {% if can_curate %}<a class="vlink" href="/reports/activities?org={{ sel_org }}&period={{ sel_period }}">Edit / merge activities →</a>{% endif %}{% endif %}
+      {% if rtype == 3 %}<a class="vlink" href="/dashboard/people">View other resource persons →</a>{% endif %}
       {% if v.has_data %}{{ report_downloads(rtype, sel_org, sel_period, sel_activity) }}{% endif %}
     </div>
   </div>

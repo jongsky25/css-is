@@ -243,6 +243,7 @@ def test_defaults_seed_one_row_and_one_day_per_trip_day(tmp_path):
     assert [r["date"] for r in d["rows"]] == ["2026-12-30", "2026-12-31", "2027-01-01", "2027-01-02"]
     assert d["texts"]["day_by_day"][0] == "December 30, 2026: " and d["signatories"]["head_name"] == "Dr. Ana Reyes"
     assert "Juan Dela Cruz" in d["mc114_text"] and "Regional Planning Workshop" in d["mc114_text"]
+    assert d["signatories"]["traveler_title"] == "Nurse II"
     assert td.defaults(c, filing(mc114_format="none"), PROFILE, {})["mc114_text"] == ""
     json.dumps(d, default=str)
 
@@ -323,3 +324,13 @@ def test_the_page_ride_rules_agree_with_the_python_rules():
     for case, (kind, nflags) in zip(cases, got):
         res = tr.ride_check(case[0], case[1], case[2], case[3], CEIL)
         assert (res.kind, len(res.flags)) == (kind, nflags), case
+
+
+def test_designation_confirmed_on_the_prepare_page_is_used_on_every_form():
+    rows = [row("2026-09-01", mode="public_noreceipt", route_type="residence_airport", allowance=250),
+            row("2026-09-02", mode="public_noreceipt", route_type="residence_airport", allowance=450)]
+    docs = build(["cenrr", "rer", "mc114_justification"], rows, sig={"traveler_title": "Senior Health Program Officer"})
+    assert [d.fields.get("designation") or d.fields.get("payee_designation") or d.fields.get("traveler_position") for d in docs] \
+        == ["Senior Health Program Officer"] * 3
+    blank = build(["cenrr"], rows)                                       # nothing typed: the profile's designation
+    assert blank[0].fields["designation"] == "Nurse II"

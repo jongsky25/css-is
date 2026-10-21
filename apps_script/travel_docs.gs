@@ -60,12 +60,13 @@ function generateDoc_(req) {
   copy.setDescription('request_id=' + req.request_id);
   if (isSheet) {
     SpreadsheetApp.openById(copy.getId()).getSheets().forEach(function (sh) {
-      applyRowsSheet_(sh, req.rows || {}); applyFieldsSheet_(sh, req.fields || {});
+      applyRowsSheet_(sh, req.rows || {}); applyFieldsSheet_(sh, req.fields || {}); formatSheet_(sh);
     });
     SpreadsheetApp.flush();
   } else {
     const doc = DocumentApp.openById(copy.getId()), body = doc.getBody();
     applyRows_(body, req.rows || {}); applyBlocks_(body, req.blocks || {}); applyFields_(body, req.fields || {});
+    formatDoc_(body);
     doc.saveAndClose();
   }
   (req.share_with || []).forEach(function (a) {
@@ -145,6 +146,71 @@ function trashFile_(req) {
   if (!underRoot_(item, rootId)) return { ok: false, error: 'not_allowed' };
   item.setTrashed(true);
   return { ok: true };
+}
+
+// One look for every form (spot feedback #150-152): Times New Roman 12, body text justified, titles bold in Title Case.
+// Done on each copy after it is filled, so the templates need no change. A formatting problem must never stop a form being made.
+const FORM_FONT = 'Times New Roman', FORM_SIZE = 12, JUSTIFY_FROM = 60;      // paragraphs shorter than this stay as they are
+const KEEP_CAPS_ = { DPO: 1, CENRR: 1, RER: 1, MC: 1, DOH: 1, JO: 1, OIC: 1, TNVS: 1, DM: 1, CESO: 1, MD: 1, MPA: 1, II: 1, III: 1, IV: 1, VI: 1, VII: 1, VIII: 1, IX: 1 };
+const SMALL_WORDS_ = { a: 1, an: 1, and: 1, as: 1, at: 1, by: 1, for: 1, from: 1, in: 1, of: 1, on: 1, or: 1, the: 1, to: 1, with: 1 };
+
+// "CERTIFICATION OF EXPENSES" -> "Certification of Expenses". Initials and known acronyms keep their capitals.
+function titleCase_(text) {
+  let first = true;
+  return String(text).replace(/[A-Za-z][A-Za-z'\u2019]*/g, function (w) {
+    const isFirst = first; first = false;
+    const up = w.toUpperCase(), low = w.toLowerCase();
+    if (KEEP_CAPS_[up] || w.length === 1) return up;
+    if (!isFirst && SMALL_WORDS_[low]) return low;
+    return low.charAt(0).toUpperCase() + low.slice(1);
+  });
+}
+
+// A short line with no sentence punctuation. Lines with a full stop, comma, colon or brackets are names, labels or sentences.
+function looksLikeTitle_(text) {
+  const t = String(text).trim();
+  return t.length >= 3 && t.length <= 90 && /[A-Za-z]/.test(t) && !/[.,:;()\/]/.test(t);
+}
+
+function eachParagraph_(el, fn) {
+  const type = el.getType();
+  if (type === DocumentApp.ElementType.PARAGRAPH || type === DocumentApp.ElementType.LIST_ITEM) { fn(el); return; }
+  if (typeof el.getNumChildren === 'function') for (let i = 0; i < el.getNumChildren(); i++) eachParagraph_(el.getChild(i), fn);
+}
+
+function formatDoc_(body) {
+  try {
+    const H = DocumentApp.HorizontalAlignment, NORMAL = DocumentApp.ParagraphHeading.NORMAL;
+    eachParagraph_(body, function (p) {
+      const text = p.getText();
+      p.setFontFamily(FORM_FONT); p.setFontSize(FORM_SIZE);
+      if (!text.trim()) return;
+      const align = p.getAlignment(), heading = p.getHeading ? p.getHeading() : NORMAL;
+      const bold = p.editAsText().isBold() === true;
+      if (looksLikeTitle_(text) && (heading !== NORMAL || (bold && (align === H.CENTER || text === text.toUpperCase())))) {
+        const fixed = titleCase_(text);
+        if (fixed !== text) p.editAsText().setText(fixed);
+        p.editAsText().setBold(true);
+        return;
+      }
+      if ((align === null || align === H.LEFT || align === H.JUSTIFY) && text.trim().length >= JUSTIFY_FROM) p.setAlignment(H.JUSTIFY);
+    });
+  } catch (err) { /* keep the form as it is */ }
+}
+
+// Sheets cannot justify text, so a sheet gets the font, the size and the titles.
+function formatSheet_(sh) {
+  try {
+    const all = sh.getDataRange();
+    all.setFontFamily(FORM_FONT).setFontSize(FORM_SIZE);
+    const values = all.getValues(), formulas = all.getFormulas(), weights = all.getFontWeights();
+    for (let r = 0; r < values.length; r++) for (let c = 0; c < values[r].length; c++) {
+      const v = values[r][c];
+      if (typeof v !== 'string' || formulas[r][c] || weights[r][c] !== 'bold' || !looksLikeTitle_(v)) continue;
+      const cell = sh.getRange(r + 1, c + 1);
+      cell.setValue(titleCase_(v)); cell.setFontWeight('bold');
+    }
+  } catch (err) { /* keep the form as it is */ }
 }
 
 function doc_(f) { return { ok: true, id: f.getId(), url: f.getUrl(), name: f.getName() }; }

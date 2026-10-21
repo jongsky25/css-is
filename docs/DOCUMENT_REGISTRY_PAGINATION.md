@@ -1,6 +1,6 @@
 # Document registry pagination — A13 registry slice
 
-Introduced in **7.66**. The registry loads 30 permitted records at a time, with
+Introduced in **7.68**. The registry loads 30 permitted records at a time, with
 “Older documents” and “Newest records” links that retain the chosen queue and
 search. Search starts at the newest page. CSV exports still include the entire
 matching permitted register, regardless of the page currently displayed.
