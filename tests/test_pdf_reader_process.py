@@ -100,7 +100,7 @@ def test_link_reads_document_after_native_or_scanned_dtrak_slip(monkeypatch, pro
     raw = pdf('' if scanned_slip else slip, following, 'Date: October 20, 2026 - this third page must not be read')
     calls = []
 
-    def ocr(_raw, indices):
+    def ocr(_raw, indices, **kwargs):
         calls.append(indices)
         return {0: slip}
 

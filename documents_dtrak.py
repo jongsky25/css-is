@@ -6,6 +6,8 @@ import re
 import subprocess
 import time
 
+import ocr_tesseract
+
 import numpy as np
 from PIL import Image, ImageOps
 
@@ -16,11 +18,8 @@ def _ocr(image, deadline, config='tsv'):
         raise subprocess.TimeoutExpired('tesseract', 8)
     with io.BytesIO() as output:
         image.save(output, 'PNG')
-        result = subprocess.run(['tesseract', 'stdin', 'stdout', '-l', 'eng', '--psm', '6',
-                                 '-c', 'debug_file=/dev/null'] + ([config] if config else []),
-                                input=output.getvalue(), stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                                timeout=min(4, remaining), check=True)
-    return result.stdout.decode('utf-8', errors='replace')
+        result = ocr_tesseract.run(output.getvalue(), deadline, seconds=4, psm='6', config=config)
+    return result.decode('utf-8', errors='replace')
 
 
 def _words(tsv):
@@ -29,13 +28,13 @@ def _words(tsv):
             if r.get('level') == '5' and r.get('text', '').strip()]
 
 
-def read_subject(png, page_text):
+def read_subject(png, page_text, *, deadline=None):
     if not (re.search(r'DTRAK|Document Tracking Information System', page_text, re.I)
             and re.search(r'ORIGINATING OFFICE|ROUTING SLIP', page_text, re.I)):
         return None
     result = {'status': 'region_not_found', 'method': 'dtrak_subject_cell', 'value': '', 'raw': '',
               'reason': 'The DTRAK subject box could not be located. Check the page preview.'}
-    deadline = time.monotonic() + 8
+    deadline = min(deadline, time.monotonic() + 8) if deadline is not None else time.monotonic() + 8
     try:
         with Image.open(io.BytesIO(png)) as source:
             image = source.convert('L')

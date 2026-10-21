@@ -118,9 +118,23 @@ remains self-hosted; evaluation stays disabled and user documents are not sent
 to a CDN. Future vendor updates require repeating the upstream integrity/file
 comparison and browser/PDF workflow checks before replacing the manifest.
 
-## Remaining increment
+## Parser and OCR increments
 
 Native PDF extraction now has a separate bounded subprocess in the current
-[PDF reader increment](PDF_READER_LIMITS.md). OCR/PDFium process isolation remains
-separate work. Clean advisory scans and native parsing limits do not establish
-resistance to every hostile scanned PDF.
+[PDF reader increment](PDF_READER_LIMITS.md). The current [OCR worker increment](OCR_WORKER_LIMITS.md) moves PDFium, image
+decoding and Tesseract into a separate bounded process group as well. Clean
+advisory scans and these process limits do not establish resistance to every
+hostile document or provide a full OS sandbox.
+
+## Release tooling update in candidate 7.59
+
+The mandatory dependency gate reported **PYSEC-2026-4321 / GHSA-hq85-5cpj-mr62**
+in uv 0.12.23 during this candidate's verification. Its bundled trust store
+included a root associated with compromised intermediate CA keys; the advisory
+identifies **0.13.4** as the fix. The isolated tools input now pins that version,
+and its hashed lock was regenerated with uv 0.13.4. Other package versions in
+that lock, the application/test/deployment locks and the Docker image are
+unchanged. A local strict audit of all 32 installed tooling packages passed
+with complete coverage and no known reported advisories. Full CI evidence is
+recorded on PR #364; the earlier verification.json remains historical 7.50
+evidence rather than a current advisory claim.

@@ -66,15 +66,14 @@ unavailable. There is no silent in-process fallback. Local non-Linux users can
 use the existing browser-selected-page workflow or manual entry, or run the
 Linux deployment environment.
 
-## Deliberate remaining boundary
+## Subsequent OCR increment
 
-PDFium rendering, Tesseract and the existing OCR thread path are **not moved**
-in this increment. Their current lock, size and timeout controls remain.
-Cancellation during OCR is observed when that existing call returns; it cannot
-forcibly stop an in-process PDFium render. A scanned document can therefore
-still enter that older boundary after native parsing. OCR rendering/process
-isolation is the next separate increment. Browser PDF.js processing and public
-link download/DNS behavior are also unchanged.
+The native-only 7.58 release left PDFium rendering, Tesseract and OCR in the
+existing thread path. The subsequent [OCR worker increment](OCR_WORKER_LIMITS.md)
+now moves those paths, including selected page-image reading and DTRAK scan
+passes, into a separate bounded process group. Request cancellation reaches
+both worker controllers. The native limits above remain unchanged. Browser
+PDF.js processing and public-link download/DNS behavior remain unchanged.
 
 ## Verification and rollout
 

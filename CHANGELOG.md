@@ -1,3 +1,10 @@
+## 7.59 — October 20, 2026
+
+- Move PDFium rendering, image decoding, Tesseract and DTRAK scan passes into a resource-limited OCR worker shared by PDF and selected-page reads.
+- Bound worker and Tesseract pipe output, preserve scan limits and field evidence, and return retry guidance when OCR is occupied.
+- Stop and clean up the worker process group on cancellation, disconnect, timeout or failure; retain capacity until live work has ended.
+- Update isolated release tooling to uv 0.13.4 for its reviewed TLS trust-store fix (PYSEC-2026-4321); regenerate its hashed lock.
+
 ## 7.58 — October 20, 2026
 
 - Isolate native PDF text extraction in a fresh Linux subprocess with CPU, address-space, elapsed-time and output bounds.

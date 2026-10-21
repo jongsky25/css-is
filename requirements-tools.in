@@ -1,5 +1,5 @@
 # Isolated release tooling; not installed in the application image.
-uv==0.12.23
+uv==0.13.4
 pip-audit==2.10.1
 pip==26.2.1
 setuptools==84.2.0

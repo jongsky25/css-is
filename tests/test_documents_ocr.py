@@ -9,6 +9,9 @@ from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
 
 import documents_ocr as ocr
+import ocr_engine
+import ocr_process
+import ocr_tesseract
 import documents_reader as reader
 
 
@@ -44,37 +47,32 @@ def test_real_scanned_pdf_fields_and_page_evidence(mixed):
     assert 'OCR was used on pages ' + ('2' if mixed else '1') in result['warnings'][0]
 
 
-def test_ocr_uses_pipes_and_releases_lock(monkeypatch):
-    def run(args, **kwargs):
-        assert args[:3] == ['tesseract', 'stdin', 'stdout']
-        assert kwargs['input'].startswith(b'\x89PNG')
-        assert kwargs['stdout'] == subprocess.PIPE
-        assert kwargs['stderr'] == subprocess.DEVNULL
-        assert kwargs['timeout'] <= 15
-        assert 'shell' not in kwargs
-        return subprocess.CompletedProcess(args, 0, b'Subject: Read in memory')
-    monkeypatch.setattr(subprocess, 'run', run)
-    assert ocr.read_pages(scanned_pdf(), [0]) == {0: 'Subject: Read in memory'}
-    assert not ocr._LOCK.locked()
+def test_ocr_png_input_and_worker_result(monkeypatch):
+    def run(png, deadline, **kwargs):
+        assert png.startswith(b'\x89PNG')
+        return b'Subject: Read in memory'
+    monkeypatch.setattr(ocr_tesseract, 'run', run)
+    result = ocr_engine.extract(scanned_pdf(), {'mode': 'pdf', 'indices': [0], 'seconds': 45})
+    assert result == {'pages': {'0': 'Subject: Read in memory'}, 'subjects': {}}
 
 
-@pytest.mark.parametrize('error, message', [(FileNotFoundError(), 'unavailable'),
-    (subprocess.TimeoutExpired('tesseract', 15), 'timed out'),
-    (subprocess.CalledProcessError(1, 'tesseract'), 'could not be read')])
-def test_ocr_failure_is_safe_and_unlocks(monkeypatch, error, message):
+@pytest.mark.parametrize('error, code', [(FileNotFoundError(), 'unavailable'),
+    (subprocess.TimeoutExpired('tesseract', 15), 'timeout'),
+    (subprocess.CalledProcessError(1, 'tesseract'), 'unreadable')])
+def test_ocr_engine_failure_codes_are_fixed(monkeypatch, error, code):
     def run(*args, **kwargs): raise error
-    monkeypatch.setattr(subprocess, 'run', run)
-    with pytest.raises(ValueError, match=message): ocr.read_pages(scanned_pdf(), [0])
-    assert not ocr._LOCK.locked()
+    monkeypatch.setattr(ocr_tesseract, 'run', run)
+    with pytest.raises(ValueError, match='^' + code + '$'):
+        ocr_engine.extract(scanned_pdf(), {'mode': 'pdf', 'indices': [0], 'seconds': 45})
 
 
 def test_ocr_page_and_concurrency_limits():
     with pytest.raises(ValueError, match='more than 10'): ocr.read_pages(b'', list(range(11)))
-    ocr._LOCK.acquire()
+    ocr_process._SLOT.acquire()
     try:
-        with pytest.raises(ValueError, match='Another'): ocr.read_pages(b'', [0])
+        with pytest.raises(ValueError, match='Another'): ocr.read_pages(scanned_pdf(), [0])
     finally:
-        ocr._LOCK.release()
+        ocr_process._SLOT.release()
 
 
 def test_scanned_upload_creates_no_records(app_mod, viewer, monkeypatch):
@@ -88,7 +86,7 @@ def test_scanned_upload_creates_no_records(app_mod, viewer, monkeypatch):
     try:
         page = viewer.get('/documents/new')
         csrf = re.search(r'name="csrf" value="([a-f0-9]+)"', page.text)[1]
-        monkeypatch.setattr(ocr, 'read_pages', lambda raw, indices: {0: 'Subject: Read the scanned document'})
+        monkeypatch.setattr(ocr, 'read_pages', lambda raw, indices, **kwargs: {0: 'Subject: Read the scanned document'})
         response = viewer.post('/documents/intake/read', content=scanned_pdf(),
             headers={'content-type': 'application/pdf', 'x-csrf-token': csrf})
         assert response.status_code == 200, response.text

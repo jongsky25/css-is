@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.58"
+APP_VERSION = "7.59"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.59",
+        "date": "October 20, 2026",
+        "summary": "Scanned document reading now runs separately with limits and cancellation.",
+        "changes": [
+            "Scanned PDFs and selected page images are read with limits on time, memory and simultaneous reads.",
+            "Cancelling a read stops its scan workers, and difficult scans explain how to retry or enter details manually.",
+            "DTRAK subject previews and page evidence remain available for checking the reading."
+        ]
+    },
     {
         "version": "7.58",
         "date": "October 20, 2026",
