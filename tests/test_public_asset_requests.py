@@ -167,11 +167,23 @@ def test_asset_boundary_uses_the_same_path_as_the_router(app_mod, viewer, monkey
         denied = client.get(root_path + '/directory/person/1/signature.png')
         assert denied.status_code == 403
 
+        conn = app_mod.get_conn()
+        uid = conn.execute("SELECT id FROM admin_user WHERE username='viewer@test.local'").fetchone()[0]
+        app_mod.st.set_user_photo(conn, uid, b'private-photo', 'image/png')
+        conn.close()
+        private = client.get(root_path + '/me/photo')
+        assert private.status_code == 200 and private.content == b'private-photo'
+        assert 'no-store' in private.headers['cache-control']
+
         def unavailable(*args, **kwargs):
             raise sqlite3.OperationalError('synthetic database outage')
 
         monkeypatch.setattr(sqlite3, 'connect', unavailable)
-        assert client.get(root_path + '/static/js/app.js').status_code == 200
-        assert client.get(root_path + '/sw.js').status_code == 200
+        asset = client.get(root_path + '/static/js/app.js')
+        assert asset.status_code == 200
+        assert 'no-store' not in asset.headers.get('cache-control', '')
+        worker = client.get(root_path + '/sw.js')
+        assert worker.status_code == 200
+        assert worker.headers['cache-control'] == 'no-cache'
     finally:
         client.close()

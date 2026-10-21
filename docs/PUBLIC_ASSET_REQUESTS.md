@@ -10,6 +10,9 @@ permissions or navigation notifications. The static mount serves packaged
 public files only. Neither file extensions nor query parameters identify an
 asset. Path comparison uses Starlette's router-relative path, including when
 the application has a `root_path` such as `/office` or `/static`.
+The browser response policy captures the same path before mount dispatch
+changes the scope, so private files retain `no-store` even under a mount prefix
+named `/static` and public assets retain normal cache validation.
 
 Other public routes retain their normal processing, including database-backed
 directory photos, survey pages and machine callbacks. Private photos,
