@@ -492,3 +492,63 @@ def test_room_morning_hour_param_moves_the_summary(db_path):
             rooms_notify.queue_morning_digest = orig
     finally:
         conn.execute("DELETE FROM app_setting WHERE key LIKE 'email_param.%'"); conn.commit(); conn.close()
+
+
+# ---- send log: filter, health, CSV -----------------------------------------
+
+def _seed_log(conn):
+    _reset_log(conn)
+    st.log_email_send(conn, "event_created", "ana@test.local", "Welcome", "sent")
+    st.log_email_send(conn, "event_created", "bo@test.local", "=HYPERLINK(\"x\")", "failed", "relay down")
+    st.log_email_send(conn, "room_digest", "cy@test.local", "Rooms 100%", "skipped_off")
+
+
+def test_email_log_query_filters_and_escapes(db_path):
+    conn = st.connect(db_path); st.init_db(conn)
+    try:
+        _seed_log(conn)
+        assert len(st.email_log_query(conn)) == 3
+        assert {r["recipient"] for r in st.email_log_query(conn, feature="event_created")} == {"ana@test.local", "bo@test.local"}
+        assert [r["recipient"] for r in st.email_log_query(conn, status="failed")] == ["bo@test.local"]
+        assert [r["recipient"] for r in st.email_log_query(conn, q="cy@")] == ["cy@test.local"]
+        assert [r["recipient"] for r in st.email_log_query(conn, q="100%")] == ["cy@test.local"]
+        assert st.email_log_query(conn, q="%") and len(st.email_log_query(conn, q="%")) == 1   # a literal %, not a wildcard
+        assert len(st.email_log_query(conn, limit=1)) == 1
+    finally:
+        _reset_log(conn); conn.close()
+
+
+def test_email_log_health_counts_recent_failures(db_path):
+    conn = st.connect(db_path); st.init_db(conn)
+    try:
+        _seed_log(conn)
+        h = st.email_log_health(conn, "2000-01-01")
+        assert h["event_created"]["failed"] == 1 and h["event_created"]["sent"] == 1
+        assert h["event_created"]["last_error"] == "relay down" and h["event_created"]["last_sent"]
+        assert h["room_digest"]["last_sent"] is None
+        assert st.email_log_health(conn, "2999-01-01")["event_created"]["failed"] == 0
+    finally:
+        _reset_log(conn); conn.close()
+
+
+def test_console_filters_and_shows_attention(admin, db_path):
+    conn = st.connect(db_path); st.init_db(conn)
+    try:
+        _seed_log(conn)
+        page = admin.get("/admin/email?log_status=failed").text
+        assert "bo@test.local" in page and "ana@test.local" not in page
+        assert "Needs attention" in admin.get("/admin/email").text
+    finally:
+        _reset_log(conn); conn.close()
+
+
+def test_csv_export_neutralises_formulas_and_is_gated(admin, viewer, db_path):
+    conn = st.connect(db_path); st.init_db(conn)
+    try:
+        _seed_log(conn)
+        r = admin.get("/admin/email/log.csv?log_feature=event_created")
+        assert r.status_code == 200 and r.headers["content-type"].startswith("text/csv")
+        assert "'=HYPERLINK" in r.text and "room_digest" not in r.text
+        assert viewer.get("/admin/email/log.csv").status_code == 403
+    finally:
+        _reset_log(conn); conn.close()

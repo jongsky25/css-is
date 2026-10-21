@@ -62,6 +62,8 @@
         {% else %}<span class="state on">ALWAYS ON</span>{% endif %}
       </div>
       <div class="fhint">{{ hint }}</div>
+      {% set h = health.get(key) %}
+      {% if h %}<div class="fhint">Last sent: {{ (h.last_sent or 'never')|replace('T', ' ') }}{% if h.failed %} · <span class="blocked">{{ h.failed }} failed in the last 7 days</span>{% endif %}</div>{% endif %}
       {% if on and blockers.get(key) %}<div class="fhint blocked">⚠ Won't send right now: {{ blockers[key][0] }} <a href="{{ blockers[key][1] }}">Change this</a></div>{% endif %}
     </div>
     <div class="ractions">
@@ -91,6 +93,20 @@
 
   {% if msg %}<div class="flash ok">{{ msg }}</div>{% endif %}
   {% if err %}<div class="flash err">{{ err }}</div>{% endif %}
+
+  {% if attention %}
+  <div class="acard">
+    <h2>Needs attention</h2>
+    <p class="hint">Emails that failed to send in the last 7 days.</p>
+    {% for key, h in attention %}
+    <div class="fblock"><div class="frow">
+      <div><div class="lbl">{{ labels.get(key, key) }} <span class="state off">{{ h.failed }} failed</span></div>
+        {% if h.last_error %}<div class="fhint">Latest error: {{ h.last_error }}</div>{% endif %}</div>
+      <a class="btn ghost" style="text-decoration:none;" href="/admin/email?log_feature={{ key }}&log_status=failed#sends">See them</a>
+    </div></div>
+    {% endfor %}
+  </div>
+  {% endif %}
 
   <div class="acard">
     <h2>Pause all email</h2>
@@ -203,9 +219,23 @@
     {% for key, (label, why) in always_on %}{{ row(key, label, why) }}{% endfor %}
   </div>
 
-  <div class="acard">
+  <div class="acard" id="sends">
     <h2>Recent sends</h2>
-    <p class="hint">The newest 50 attempts, across every feature above — including ones turned off (shown as "skipped").</p>
+    <p class="hint">Attempts across every feature above — including ones turned off or paused (shown as "skipped"). Search by address or subject, or filter by feature and result.</p>
+    <form method="get" action="/admin/email" class="frow" style="margin-bottom:.8rem; justify-content:flex-start;">
+      <select name="log_feature" style="padding:.3rem .5rem; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:inherit;">
+        <option value="">All features</option>
+        {% for k in log_features %}<option value="{{ k }}" {{ 'selected' if k == log_filter.feature else '' }}>{{ labels.get(k, k) }}</option>{% endfor %}
+      </select>
+      <select name="log_status" style="padding:.3rem .5rem; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:inherit;">
+        <option value="">Any result</option>
+        {% for k in ['sent', 'failed', 'not_configured', 'skipped_off'] %}<option value="{{ k }}" {{ 'selected' if k == log_filter.status else '' }}>{{ k.replace('_', ' ') }}</option>{% endfor %}
+      </select>
+      <input type="search" name="log_q" value="{{ log_filter.q }}" placeholder="Address or subject" maxlength="100"
+             style="padding:.3rem .5rem; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:inherit;">
+      <button class="btn" type="submit">Filter</button>
+      <a class="btn ghost" style="text-decoration:none;" href="/admin/email/log.csv?log_feature={{ log_filter.feature|urlencode }}&log_status={{ log_filter.status|urlencode }}&log_q={{ log_filter.q|urlencode }}">Download CSV</a>
+    </form>
     {% if recent_sends %}
     <table class="log-table">
       <thead><tr><th></th><th>When</th><th>Feature</th><th>To</th><th>Subject</th></tr></thead>
@@ -223,8 +253,9 @@
         {% endfor %}
       </tbody>
     </table>
+    {% if log_more %}<p style="margin-top:.6rem;"><a class="btn ghost" style="text-decoration:none;" href="/admin/email?log_feature={{ log_filter.feature|urlencode }}&log_status={{ log_filter.status|urlencode }}&log_q={{ log_filter.q|urlencode }}&log_limit={{ log_filter.limit + 100 }}#sends">Show more</a></p>{% endif %}
     {% else %}
-    <p class="hint">Nothing sent yet.</p>
+    <p class="hint">{{ 'Nothing matches.' if log_filter.feature or log_filter.status or log_filter.q else 'Nothing sent yet.' }}</p>
     {% endif %}
   </div>
 </div>

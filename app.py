@@ -4503,14 +4503,17 @@ def _email_blockers(conn):
 
 
 @app.get("/admin/email", response_class=HTMLResponse)
-def admin_email(request: Request, msg: str = "", err: str = ""):
+def admin_email(request: Request, msg: str = "", err: str = "", log_feature: str = "",
+                log_status: str = "", log_q: str = "", log_limit: int = 50):
     if (r := _forbid(request, "manage_users")):
         return r
     conn = get_conn()
     try:
         settings = st.get_settings(conn, [f"email_feature.{k}" for k in mailer.FEATURES]
                                    + [f"email_option.{k}" for k in mailer.OPTIONS] + ["email_paused"])
-        recent_sends = st.recent_email_sends(conn, limit=50)
+        log_limit = max(50, min(int(log_limit or 50), 500))
+        recent_sends = st.email_log_query(conn, log_feature, log_status, log_q.strip()[:100], limit=log_limit)
+        health = st.email_log_health(conn, (_now_local() - timedelta(days=7)).isoformat())
         param_values = {k: send_reminders._param(conn, k) for k in send_reminders.PARAMS}
         retention_days = int(st.get_setting(
             conn, "email_log_retention_days", str(ret.EMAIL_LOG_RETENTION_DAYS_DEFAULT)))
@@ -4538,7 +4541,11 @@ def admin_email(request: Request, msg: str = "", err: str = ""):
     params = [(k, label, lo, hi, param_values[k]) for k, (label, _default, lo, hi)
              in send_reminders.PARAMS.items()]
     return templates.TemplateResponse(request, "admin_email.html", {
-        "email_configured": mailer.email_configured(), "paused": paused, "options": options, "blockers": blockers,
+        "email_configured": mailer.email_configured(), "paused": paused, "options": options, "health": health, "labels": labels,
+        "attention": sorted(((k, v) for k, v in health.items() if v["failed"]), key=lambda kv: -kv[1]["failed"]),
+        "log_filter": {"feature": log_feature, "status": log_status, "q": log_q, "limit": log_limit},
+        "log_features": sorted(set(labels)),
+        "log_more": len(recent_sends) >= log_limit and log_limit < 500, "blockers": blockers,
         "external": [(k, label, why, url, blockers.get(k)) for k, (label, why, url) in mailer.EXTERNAL.items()],
         "relay_configured": mailer.relay_configured(),
         "smtp_configured": mailer.smtp_configured(),
@@ -4548,6 +4555,30 @@ def admin_email(request: Request, msg: str = "", err: str = ""):
         "params": params, "retention_days": retention_days,
         "msg": msg, "err": err, "show_scope": False, "nav_active": "email",
     })
+
+
+@app.get("/admin/email/log.csv")
+def admin_email_log_csv(request: Request, log_feature: str = "", log_status: str = "", log_q: str = ""):
+    """The send log as CSV, filtered the same as the console. Recipients are personal data, so
+    the export is manage_users-only and audited; cells that could run as spreadsheet formulas are neutralised."""
+    if (r := _forbid(request, "manage_users")):
+        return r
+    conn = get_conn()
+    try:
+        rows = st.email_log_query(conn, log_feature, log_status, log_q.strip()[:100], limit=5000)
+        _audit(request, conn, "email_log_export", target_type="setting", target_id="email_log",
+               summary=f"Exported {len(rows)} send-log rows.")
+    finally:
+        conn.close()
+    import csv, io
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow(["when", "feature", "recipient", "subject", "status", "detail"])
+    safe = lambda v: ("'" + v) if isinstance(v, str) and v[:1] in ("=", "+", "-", "@", "\t", "\r") else (v or "")   # noqa: E731
+    for r_ in rows:
+        w.writerow([r_["created_at"], r_["feature"], safe(r_["recipient"]), safe(r_["subject"]), r_["status"], safe(r_["detail"])])
+    return Response(buf.getvalue(), media_type="text/csv",
+                    headers={"Content-Disposition": 'attachment; filename="email-log.csv"'})
 
 
 @app.post("/admin/email/toggle")
