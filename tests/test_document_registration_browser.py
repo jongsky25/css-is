@@ -128,3 +128,17 @@ def test_definite_validation_error_preserves_fields_and_allows_correction(regist
     page.wait_for_url(re.compile(r'/documents/\d+$'))
     assert len(state['posts']) == 2
     assert conn.execute('SELECT type FROM document').fetchone()[0] == 'letter'
+
+
+def test_changed_successful_submission_does_not_claim_the_edits_were_saved(registration_page, viewer):
+    page, state, conn = registration_page
+    payload = page.locator('#intake-form').evaluate('form => Object.fromEntries(new FormData(form))')
+    result = viewer.post('/documents/new', data={**payload, 'subject': 'Previously saved subject'},
+                         headers={'Accept': 'application/json'})
+    assert result.status_code == 200
+    submit(page)
+    page.wait_for_function("document.getElementById('registration-status').textContent.includes('changed details have not been applied')")
+    assert page.url.endswith('/documents/new')
+    assert page.locator('#registration-result').is_visible()
+    assert conn.execute('SELECT subject FROM document').fetchone()[0] == 'Previously saved subject'
+    assert conn.execute('SELECT COUNT(*) FROM document').fetchone()[0] == 1

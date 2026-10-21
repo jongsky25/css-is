@@ -41,7 +41,7 @@
       return {response, data: await response.json()};
     } finally { clearTimeout(timer); }
   }
-  function success(data) {
+  function success(data, {conflict = false} = {}) {
     if (data.state !== 'saved' || typeof data.url !== 'string' || typeof data.number !== 'string') throw new Error('unconfirmed');
     const url = new URL(data.url, window.location.origin);
     if (url.origin !== window.location.origin || !/^\/(documents|work)\/[1-9]\d*$/.test(url.pathname) || url.search || url.hash) throw new Error('unconfirmed');
@@ -49,14 +49,15 @@
     retry.hidden = check.hidden = true;
     link.href = url.href;
     link.hidden = false;
-    announce('Saved as ' + data.number + '. Opening the saved record…');
-    window.location.assign(url.href);
+    announce(conflict ? 'Already saved as ' + data.number + '. These changed details have not been applied. Open the saved record to review it.'
+      : 'Saved as ' + data.number + '. Opening the saved record…');
+    if (!conflict) window.location.assign(url.href);
   }
-  async function checkResult() {
+  async function checkResult(options = {}) {
     announce('Checking whether this registration was saved…');
     try {
       const {response, data} = await request(endpoint, {method: 'GET', cache: 'no-store'}, 10);
-      if (response.ok && data.state === 'saved') { success(data); return; }
+      if (response.ok && data.state === 'saved') { success(data, options); return; }
       if (data.state === 'unavailable') {
         announce('The saved result is unavailable to this account. Sign in again if needed, then check your document register before starting another registration.');
         return;
@@ -78,7 +79,7 @@
         snapshot = null;
         unlock();
         announce(data.error || 'Check the entered fields and submit again.');
-      } else await checkResult();
+      } else await checkResult({conflict: data.state === 'conflict'});
     } catch { await checkResult(); }
     finally { working(false); }
   }
