@@ -74,6 +74,36 @@ def get_rows(conn, entry_id) -> dict:
             for r in cur.fetchall()}
 
 
+INVITED_AS = {"resource_person": "as resource person", "attendee": "as participant"}
+HOST_MAX, INVITATION_MAX = 160, 600
+
+
+def get_outside(conn, entry_id) -> Optional[dict]:
+    """The outside-activity details, or None when BLHSD conducts the activity."""
+    r = conn.execute("SELECT host, invited_as, invitation FROM calendar_entry_outside WHERE entry_id=?", (entry_id,)).fetchone()
+    return {"host": r[0] or "", "invited_as": r[1] or "attendee", "invitation": r[2] or ""} if r else None
+
+
+def set_outside(conn, entry_id, host, invited_as, invitation, by) -> None:
+    """Mark the activity as run by another office. The invitation text is the person's own paste, kept on one line."""
+    host = " ".join(str(host or "").split())[:HOST_MAX]
+    if not host:
+        raise ValueError("Say which office is holding the activity.")
+    if invited_as not in INVITED_AS:
+        raise ValueError("Choose how you were invited.")
+    invitation = " ".join(str(invitation or "").split())[:INVITATION_MAX]
+    conn.execute("INSERT INTO calendar_entry_outside(entry_id, host, invited_as, invitation, updated_by, updated_at) "
+                 "VALUES (?,?,?,?,?,?) ON CONFLICT(entry_id) DO UPDATE SET host=excluded.host, invited_as=excluded.invited_as, "
+                 "invitation=excluded.invitation, updated_by=excluded.updated_by, updated_at=excluded.updated_at",
+                 (entry_id, host, invited_as, invitation, by, tz.now_iso()))
+    conn.commit()
+
+
+def clear_outside(conn, entry_id) -> None:
+    conn.execute("DELETE FROM calendar_entry_outside WHERE entry_id=?", (entry_id,))
+    conn.commit()
+
+
 def state_for(conn, entry, kind_label="") -> list:
     """One dict per document: the suggestion, the person's choice, the effective answer and the draft so far."""
     sug, rows, out = suggest(entry, kind_label), get_rows(conn, entry["id"]), []
@@ -157,12 +187,22 @@ def payload(conn, entry, key, user, owner_label="", positions=False) -> td.DocPa
         in_place = f" in {place}" if place else ""
         unit = owner_label.strip()
         who = f"Select {unit} Personnel" if unit else "Select Personnel"
+        outside = get_outside(conn, entry["id"])
+        if outside:
+            # Another office holds it (spot feedback #155): the rationale is the invitation, in the host's name.
+            role = "to serve as resource person in" if outside["invited_as"] == "resource_person" else "to participate in"
+            background = (f"{outside['host']} invited {unit + ' ' if unit else ''}personnel {role} {title} on {days}{in_place}."
+                          + (f" {outside['invitation']}" if outside["invitation"] else ""))
+            intro = (f"Authority is hereby given to the following select {unit + ' ' if unit else ''}personnel {role} "
+                     f"{title} on {days}{in_place}:")
+        else:
+            background = (f"The {unit} will conduct {title} on {days}{in_place}." if unit
+                          else f"{title} will be held on {days}{in_place}.")
+            intro = (f"Authority is hereby given to the following select {unit + ' ' if unit else ''}personnel to participate in "
+                     f"{title} on {days}{in_place}:")
         fields = {"dpo_year": str(td._d(entry["start_date"]).year), "dpo_no": BLANK, "dpo_date": BLANK,
                   "subject": f"Authority for {who} to Participate in {title}, {days}{in_place}",
-                  "background": (f"The {unit} will conduct {title} on {days}{in_place}." if unit
-                                 else f"{title} will be held on {days}{in_place}."),
-                  "intro": f"Authority is hereby given to the following select {unit + ' ' if unit else ''}personnel to participate in "
-                           f"{title} on {days}{in_place}:",
+                  "background": background, "intro": intro,
                   "title": title, "purpose": f"attend {title}", "dates": days, "venue": where_text(entry),
                   "funding_source": BLANK, "unit_name": unit, "head_name": head_name.upper(), "head_title": head_title,
                   "prepared_by": me}

@@ -660,6 +660,16 @@ def init_db(conn):
         PRIMARY KEY (entry_id, doc_key)
     );
 
+    -- An activity another office runs (Spot Feedback #155): who invited us, whether as a resource person or an attendee, and the
+    -- invitation's key lines pasted in, so the DPO background can cite it. No row means BLHSD conducts the activity.
+    CREATE TABLE IF NOT EXISTS calendar_entry_outside (
+        entry_id INTEGER PRIMARY KEY REFERENCES calendar_entry(id) ON DELETE CASCADE,
+        host TEXT NOT NULL DEFAULT '',
+        invited_as TEXT NOT NULL DEFAULT 'attendee',
+        invitation TEXT NOT NULL DEFAULT '',
+        updated_by TEXT, updated_at TEXT
+    );
+
     -- Other units an entry also involves; owner_org_id stays the primary one (Spot Feedback #129).
     CREATE TABLE IF NOT EXISTS calendar_entry_unit (
         entry_id INTEGER NOT NULL REFERENCES calendar_entry(id) ON DELETE CASCADE,
@@ -11316,6 +11326,7 @@ def cal_delete(conn, entry_id, *, by=None):
     conn.execute("DELETE FROM calendar_entry_person WHERE entry_id=?", (entry_id,))
     conn.execute("DELETE FROM calendar_entry_tag WHERE entry_id=?", (entry_id,))
     conn.execute("DELETE FROM calendar_entry_unit WHERE entry_id=?", (entry_id,))
+    conn.execute("DELETE FROM calendar_entry_outside WHERE entry_id=?", (entry_id,))
     conn.execute("DELETE FROM calendar_entry_revision WHERE entry_id=?", (entry_id,))
     conn.execute("DELETE FROM calendar_entry WHERE id=?", (entry_id,))
     conn.commit()

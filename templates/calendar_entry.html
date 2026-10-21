@@ -98,6 +98,26 @@
   <section class="cal-docs" id="documents" aria-labelledby="documents-h">
     <h2 id="documents-h">Documents for this activity</h2>
     <p class="cal-hint">Say which documents this activity needs. We suggest from what the item already says; you decide. A needed document can be drafted in Google Docs from the item's details, with the blanks left for you.</p>
+    {% set out = documents['outside'] %}
+    <form method="post" action="/calendar/entries/{{ e.id }}/outside" class="cal-outside">
+      <fieldset>
+        <legend>Who conducts this activity?</legend>
+        <label><input type="radio" name="conducted_by" value="blhsd" {{ 'checked' if not out }}> BLHSD</label>
+        <label><input type="radio" name="conducted_by" value="outside" {{ 'checked' if out }}> Another office (we were requested or invited)</label>
+        <div class="cal-outside-fields">
+          <label>Office that invited us <input type="text" name="host" maxlength="160" value="{{ out.host if out }}" autocomplete="off"></label>
+          <label>We were invited
+            <select name="invited_as">
+              {% for k, v in documents['invited_as'].items() %}<option value="{{ k }}" {{ 'selected' if out and out.invited_as == k }}>{{ v }}</option>{% endfor %}
+            </select>
+          </label>
+          <label>Key lines from the invitation (the DPO cites these)
+            <textarea name="invitation" rows="3" maxlength="600">{{ out.invitation if out }}</textarea></label>
+        </div>
+        <button class="cal-btn" type="submit">Save</button>
+        <p class="cal-hint">Another office's activity: the DPO background says they invited us and repeats the lines you paste. Left empty, nothing is invented.</p>
+      </fieldset>
+    </form>
     <ul class="cal-doc-list">
     {% for d in documents['items'] %}
       <li class="cal-doc {{ 'is-needed' if d.needed }}">
