@@ -552,3 +552,71 @@ def test_csv_export_neutralises_formulas_and_is_gated(admin, viewer, db_path):
         assert viewer.get("/admin/email/log.csv").status_code == 403
     finally:
         _reset_log(conn); conn.close()
+
+
+# ---- delivery policy --------------------------------------------------------
+
+def _policy(**kw):
+    base = {"redirect_to": "", "from_name": "", "reply_to": "", "subject_prefix": ""}
+    base.update(kw)
+    return lambda: base
+
+
+def test_no_policy_leaves_the_message_alone(monkeypatch):
+    monkeypatch.setattr(mailer, "_policy_loader", None)
+    assert mailer._apply_policy("a@x.test", "Hi", "Body", "<p>x</p>") == ("a@x.test", "Hi", "Body", "<p>x</p>", "", "")
+
+
+def test_staging_redirect_replaces_recipient_and_names_the_original(monkeypatch):
+    monkeypatch.setattr(mailer, "_policy_loader", _policy(redirect_to="qa@x.test", subject_prefix="[TEST]"))
+    to, subj, body, html, _n, _r = mailer._apply_policy("real@x.test", "Hello", "Body", "<p>x</p>")
+    assert to == "qa@x.test" and subj == "[TEST] [Staging: real@x.test] Hello"
+    assert "real@x.test" in body and "real@x.test" in html
+
+
+def test_broken_policy_loader_never_stops_mail(monkeypatch):
+    def boom():
+        raise RuntimeError("db down")
+    monkeypatch.setattr(mailer, "_policy_loader", boom)
+    assert mailer._apply_policy("a@x.test", "Hi", "B", None)[0] == "a@x.test"
+
+
+def test_relay_payload_carries_sender_name_and_reply_to(monkeypatch):
+    seen = {}
+    monkeypatch.setenv("CSS_MAIL_RELAY_URL", "https://relay.example/x")
+    monkeypatch.setenv("CSS_MAIL_RELAY_SECRET", "s")
+    monkeypatch.setattr(mailer, "_policy_loader", _policy(redirect_to="qa@x.test", from_name="BLHSD", reply_to="help@x.test"))
+    monkeypatch.setattr(mailer, "_post_to_relay", lambda url, payload: seen.update(payload) or (None, RuntimeError("stop")))
+    mailer.send("real@x.test", "Hi", "Body")
+    assert seen["to"] == "qa@x.test" and seen["fromName"] == "BLHSD" and seen["replyTo"] == "help@x.test"
+
+
+def test_policy_route_validates_audits_and_gates(admin, viewer, db_path):
+    import email_params
+    conn = st.connect(db_path); st.init_db(conn)
+    try:
+        bad = admin.post("/admin/email/policy", data={"redirect_to": "not an email"}, follow_redirects=False)
+        assert "err=" in bad.headers["location"] and email_params.get_policy(conn)["redirect_to"] == ""
+        ok = admin.post("/admin/email/policy", data={"redirect_to": "QA@x.test", "from_name": "BLHSD", "subject_prefix": "[T]"},
+                        follow_redirects=False)
+        assert "msg=" in ok.headers["location"]
+        assert email_params.get_policy(conn)["redirect_to"] == "qa@x.test"
+        assert "Staging redirect is ON" in admin.get("/admin/email").text
+        assert viewer.post("/admin/email/policy", data={"redirect_to": "q@x.test"}).status_code == 403
+    finally:
+        email_params.set_policy(conn, {}); conn.close()
+
+
+def test_test_send_can_target_only_an_active_account(admin, monkeypatch, db_path):
+    calls = []
+    monkeypatch.setattr(mailer, "email_configured", lambda: True)
+    monkeypatch.setattr(mailer, "send", lambda *a, **kw: calls.append(a) or {"sent": True, "detail": "ok"})
+    conn = st.connect(db_path)
+    try:
+        other = next(u for u in st.list_admin_users(conn) if u["active"] and u["username"] != "admin@test.local")
+    finally:
+        conn.close()
+    r = admin.post("/admin/email/test", data={"key": "event_created", "to_account": str(other["id"])}, follow_redirects=False)
+    assert "msg=" in r.headers["location"] and calls[-1][0] == other["username"]
+    bad = admin.post("/admin/email/test", data={"key": "event_created", "to_account": "999999"}, follow_redirects=False)
+    assert "err=" in bad.headers["location"] and len(calls) == 1

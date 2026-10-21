@@ -58,3 +58,46 @@ def param(conn, key):
     except (TypeError, ValueError):
         n = default
     return max(lo, min(n, hi))
+
+
+# ---- Delivery policy (staging redirect, sender name, reply-to, subject prefix) ----
+import time as _time
+
+POLICY_KEYS = ("redirect_to", "from_name", "reply_to", "subject_prefix")
+_POLICY_TTL = 10.0
+_policy_cache = {}
+
+
+def get_policy(conn):
+    return {k: st.get_setting(conn, f"email_policy.{k}", "") or "" for k in POLICY_KEYS}
+
+
+def set_policy(conn, values):
+    for k in POLICY_KEYS:
+        st.set_setting(conn, f"email_policy.{k}", values.get(k, ""))
+    clear_policy_cache()
+
+
+def clear_policy_cache():
+    _policy_cache.clear()
+
+
+def install_policy(db_path):
+    """Give mailer a loader for the admin's delivery policy. `db_path` is a string or a
+    zero-argument callable (the app's DB can be re-pointed in tests). Cached for a few
+    seconds, so a burst of mail costs one read, and cleared whenever the policy is saved."""
+    import mailer
+
+    def load():
+        path = db_path() if callable(db_path) else db_path
+        hit = _policy_cache.get(path)
+        if hit and _time.monotonic() - hit[0] < _POLICY_TTL:
+            return hit[1]
+        conn = st.connect(path)
+        try:
+            pol = get_policy(conn)
+        finally:
+            conn.close()
+        _policy_cache[path] = (_time.monotonic(), pol)
+        return pol
+    mailer.set_policy_loader(load)

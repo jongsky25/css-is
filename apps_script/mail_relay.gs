@@ -24,6 +24,7 @@ function doPost(e) {
     if (!body.to || !body.subject) return mailReply_({ok:false,error:'missing to/subject'});
     const message={to:body.to,subject:body.subject,body:body.text || '',name:body.fromName || 'Office Connect'};
     if (body.html) message.htmlBody=body.html;
+    if (body.replyTo) message.replyTo=String(body.replyTo);
     if (body.attachments && body.attachments.length) message.attachments=body.attachments.map(function (a) {
       return Utilities.newBlob(Utilities.base64Decode(a.base64),a.mimeType,a.name);
     });

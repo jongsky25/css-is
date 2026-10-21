@@ -175,6 +175,7 @@ JOB_FEATURE = {
     "travel_filing_due": "job_travel_filing_due",
 }
 
+import email_params
 from email_params import PARAMS, param as _param   # noqa: E402 - admin-tunable knobs live in email_params
 
 
@@ -796,6 +797,7 @@ def run(db_path="css_is.db", dry_run=False, jobs=None):
         print(_NO_BASE_URL)
         return {}
     jobs = set(jobs) if jobs else set(_ALL_JOBS)
+    email_params.install_policy(db_path)
     conn = st.connect(db_path)
     report = {}
     try:

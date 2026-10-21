@@ -76,7 +76,11 @@
       {% endif %}
       <form method="post" action="/admin/email/test">
         <input type="hidden" name="key" value="{{ key }}">
-        <button class="btn ghost" type="submit">Send test to me</button>
+        <select name="to_account" aria-label="Send the test to" style="padding:.25rem .4rem; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:inherit; max-width:11rem; font-size:.78rem;">
+          <option value="">to me</option>
+          {% for uid, uname in accounts %}<option value="{{ uid }}">{{ uname }}</option>{% endfor %}
+        </select>
+        <button class="btn ghost" type="submit">Send test</button>
       </form>
     </div>
   </div>
@@ -147,6 +151,24 @@
     <h2>Scheduled</h2>
     <p class="hint">The daily reminder sweep's jobs — each runs once, on its own schedule.</p>
     {% for key, label, hint, on in scheduled %}{{ row(key, label, hint, on) }}{% endfor %}
+  </div>
+
+  <div class="acard">
+    <h2>Delivery policy</h2>
+    <p class="hint">Applies to every message this system sends, account mail included. Leave a box blank to leave it unset.</p>
+    {% if policy.redirect_to %}<div class="flash err">Staging redirect is ON: every email is going to {{ policy.redirect_to }} instead of its real recipient — including password resets and invites. Clear it before real use.</div>{% endif %}
+    <form method="post" action="/admin/email/policy">
+      {% set fld = 'padding:.3rem .5rem; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:inherit; width:16rem; max-width:100%;' %}
+      <div class="fblock"><div class="frow"><div><div class="lbl">Send everything to one address (staging)</div><div class="fhint">For testing: real recipients get nothing. The original address is shown in the subject.</div></div>
+        <input type="email" name="redirect_to" value="{{ policy.redirect_to }}" maxlength="254" style="{{ fld }}"></div></div>
+      <div class="fblock"><div class="frow"><div><div class="lbl">Sender name</div><div class="fhint">What recipients see as the sender. Blank: Office Connect.</div></div>
+        <input type="text" name="from_name" value="{{ policy.from_name }}" maxlength="60" style="{{ fld }}"></div></div>
+      <div class="fblock"><div class="frow"><div><div class="lbl">Reply-to address</div><div class="fhint">Where replies go. Needs the updated mail relay script (docs/MAIL_RELAY_SETUP.md); an older one ignores it.</div></div>
+        <input type="email" name="reply_to" value="{{ policy.reply_to }}" maxlength="254" style="{{ fld }}"></div></div>
+      <div class="fblock"><div class="frow"><div><div class="lbl">Subject prefix</div><div class="fhint">Added to the start of every subject, e.g. [TEST].</div></div>
+        <input type="text" name="subject_prefix" value="{{ policy.subject_prefix }}" maxlength="40" style="{{ fld }}"></div></div>
+      <div class="fblock"><button class="btn" type="submit">Save delivery policy</button></div>
+    </form>
   </div>
 
   <div class="acard">

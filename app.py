@@ -120,6 +120,7 @@ import qa_rules
 # The database file. Override with CSS_DB for a throwaway/demo instance so the
 # delivered css_is.db is never touched (mirrors CSS_BASE_URL / CSS_SMTP_*).
 DB = os.environ.get("CSS_DB", "css_is.db")
+email_params.install_policy(lambda: DB)    # the admin's email delivery policy (/admin/email)
 
 # The snapshot shipped inside the repo. In production it is ONLY a one-time
 # seed -- never the live database. See DEPLOY.md for the full rules.
@@ -4518,6 +4519,8 @@ def admin_email(request: Request, msg: str = "", err: str = "", log_feature: str
         retention_days = int(st.get_setting(
             conn, "email_log_retention_days", str(ret.EMAIL_LOG_RETENTION_DAYS_DEFAULT)))
         blockers = _email_blockers(conn)
+        policy = email_params.get_policy(conn)
+        accounts = [(u["id"], u["username"]) for u in st.list_admin_users(conn) if u.get("active") and u.get("username")]
     finally:
         conn.close()
     def _state(k):
@@ -4541,7 +4544,7 @@ def admin_email(request: Request, msg: str = "", err: str = "", log_feature: str
     params = [(k, label, lo, hi, param_values[k]) for k, (label, _default, lo, hi)
              in send_reminders.PARAMS.items()]
     return templates.TemplateResponse(request, "admin_email.html", {
-        "email_configured": mailer.email_configured(), "paused": paused, "options": options, "health": health, "labels": labels,
+        "email_configured": mailer.email_configured(), "paused": paused, "options": options, "policy": policy, "accounts": accounts, "health": health, "labels": labels,
         "attention": sorted(((k, v) for k, v in health.items() if v["failed"]), key=lambda kv: -kv[1]["failed"]),
         "log_filter": {"feature": log_feature, "status": log_status, "q": log_q, "limit": log_limit},
         "log_features": sorted(set(labels)),
@@ -4596,6 +4599,36 @@ async def admin_email_toggle(request: Request):
         st.set_email_feature(conn, key, on)
         _audit(request, conn, "email_feature_toggle", target_type="setting", target_id=key,
                summary=f"{label} email turned {'ON' if on else 'OFF'}.")
+    finally:
+        conn.close()
+    return RedirectResponse("/admin/email?msg=" + quote("Saved."), status_code=303)
+
+
+_POLICY_EMAIL_RE = re.compile(r"^[^@\s,;<>]+@[^@\s,;<>]+\.[^@\s,;<>]+$")
+
+
+@app.post("/admin/email/policy")
+async def admin_email_policy(request: Request):
+    """Delivery policy for ALL outgoing mail, account mail included: a staging address that
+    receives everything instead of the real recipients, the sender name, a reply-to, and a
+    subject prefix. Blank clears a field."""
+    if (r := _forbid(request, "manage_users")):
+        return r
+    posted = await _posted(request)
+    clean = lambda k, n: " ".join((posted.get(k) or "").split())[:n]   # noqa: E731
+    values = {"redirect_to": clean("redirect_to", 254).lower(), "reply_to": clean("reply_to", 254).lower(),
+              "from_name": clean("from_name", 60), "subject_prefix": clean("subject_prefix", 40)}
+    for k in ("redirect_to", "reply_to"):
+        if values[k] and not _POLICY_EMAIL_RE.match(values[k]):
+            return RedirectResponse("/admin/email?err=" + quote("Enter a valid email address."), status_code=303)
+    conn = get_conn()
+    try:
+        before = email_params.get_policy(conn)
+        email_params.set_policy(conn, values)
+        changed = [k for k in email_params.POLICY_KEYS if before[k] != values[k]]
+        _audit(request, conn, "email_policy_changed", target_type="setting", target_id="email_policy",
+               summary="Email delivery policy changed: " + (", ".join(changed) or "no change") + "."
+               + (f" All mail now goes to {values['redirect_to']}." if values["redirect_to"] and "redirect_to" in changed else ""))
     finally:
         conn.close()
     return RedirectResponse("/admin/email?msg=" + quote("Saved."), status_code=303)
@@ -4700,17 +4733,30 @@ async def admin_email_test(request: Request):
     subject, body, html = sample
     catalog = mailer.FEATURES.get(key) or mailer.ALWAYS_ON.get(key)
     user = request.state.user
-    result = mailer.send(user["username"], f"[Test] {subject}", body, html=html)
+    target = user["username"]
+    # Optionally another colleague's ACCOUNT address (picked by id, never typed): the form can
+    # only ever reach an address that already belongs to an active account.
+    other = (posted.get("to_account") or "").strip()
+    if other.isdigit():
+        conn = get_conn()
+        try:
+            acct = st.get_admin_user_by_id(conn, int(other))
+        finally:
+            conn.close()
+        if not acct or not acct.get("active") or not acct.get("username") or "@" not in acct["username"]:
+            return RedirectResponse("/admin/email?err=" + quote("Pick an active account."), status_code=303)
+        target = acct["username"]
+    result = mailer.send(target, f"[Test] {subject}", body, html=html)
     conn = get_conn()
     try:
         _audit(request, conn, "email_feature_test", target_type="setting", target_id=key,
-               summary=f"Test send of “{catalog[0]}” to {user['username']}: "
+               summary=f"Test send of “{catalog[0]}” to {target}: "
                        f"{'sent' if result['sent'] else 'failed — ' + result['detail']}.")
     finally:
         conn.close()
     if result["sent"]:
         return RedirectResponse("/admin/email?msg=" + quote(
-            f"Test email sent to {user['username']}."), status_code=303)
+            f"Test email sent to {target}."), status_code=303)
     return RedirectResponse("/admin/email?err=" + quote(result["detail"]), status_code=303)
 
 
