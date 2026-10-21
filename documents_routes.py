@@ -20,6 +20,7 @@ import documents_actions as actions
 import documents_memo as memo
 import documents_annotations as annotations
 import documents_file_text as file_text
+import documents_registration as registration
 import work
 import work_intake
 import work_readiness
@@ -188,6 +189,7 @@ def make_router(templates,get_conn):
                 pass
         return templates.TemplateResponse(request,'documents/new.html',context(request,conn,
             values=data,work_enabled=work.enabled(conn),cases=cases,scenarios=work_intake.SCENARIOS,
+            submission_id=data.get('submission_id') or registration.issue(p.actor(conn,request.state.user)),
             preview=preview,error=error),status_code=status_code)
 
     async def transient_page_body(request, limit):
@@ -540,20 +542,58 @@ def make_router(templates,get_conn):
         finally:
             conn.close()
 
-    @router.post('/documents/new')
-    async def create(request:Request):
-        conn=get_conn(); data={}
+    @router.get('/documents/registrations/{submission_id}')
+    def registration_status(request:Request,submission_id:str):
+        conn=get_conn()
+        headers={'Cache-Control':'no-store','Pragma':'no-cache'}
         try:
-            data=await posted(request)
-            if data.get('intake')=='guided':
-                doc,case=work_intake.register(conn,request.state.user,data)
-                return RedirectResponse('/work/'+str(case['id']) if case else '/documents/'+str(doc['id']),status_code=303)
-            doc=d.register(conn,request.state.user,data)
-            return RedirectResponse('/documents/'+str(doc['id']),status_code=303)
-        except (ValueError,sqlite3.IntegrityError) as e:
-            return intake_page(request,conn,data,error=str(e),status_code=403 if isinstance(e,p.Denied) else (409 if isinstance(e,d.Conflict) else 400))
+            return JSONResponse(registration.status(conn,request.state.user,submission_id),headers=headers)
+        except p.Denied:
+            return JSONResponse({'state':'unavailable','error':'The registration result is unavailable to this account. Sign in again if needed.'},status_code=404,headers=headers)
         finally:
             conn.close()
+
+    def save_registration(user,data):
+        # Own this connection in the worker thread; SQLite connections cannot
+        # cross threads. Waiting for another writer must not block navigation.
+        conn=get_conn()
+        try:
+            return registration.register(conn,user,data)
+        finally:
+            conn.close()
+
+    @router.post('/documents/new')
+    async def create(request:Request):
+        import asyncio
+        data={}
+        json_reply='application/json' in request.headers.get('accept','')
+        headers={'Cache-Control':'no-store','Pragma':'no-cache'}
+        try:
+            data=await posted(request)
+            result=await asyncio.to_thread(save_registration,request.state.user,data)
+            return JSONResponse(result,headers=headers) if json_reply else RedirectResponse(result['url'],status_code=303)
+        except (ValueError,sqlite3.IntegrityError) as exc:
+            code=403 if isinstance(exc,p.Denied) else 409 if isinstance(exc,d.Conflict) else 400
+            if json_reply:
+                return JSONResponse({'state':'unavailable' if code==403 else 'conflict' if code==409 else 'invalid',
+                    'error':str(exc)},status_code=code,headers=headers)
+            conn=get_conn()
+            try:
+                return intake_page(request,conn,data,error=str(exc),status_code=code)
+            finally:
+                conn.close()
+        except Exception as exc:
+            busy=isinstance(exc,sqlite3.OperationalError) and (getattr(exc,'sqlite_errorcode',0) & 255) in (sqlite3.SQLITE_BUSY,sqlite3.SQLITE_LOCKED)
+            message='The save is not confirmed. Check the saved result or retry this same submission; do not start another registration yet.'
+            if busy:
+                headers['Retry-After']='3'
+            if json_reply:
+                return JSONResponse({'state':'unconfirmed','error':message},status_code=503 if busy else 500,headers=headers)
+            conn=get_conn()
+            try:
+                return intake_page(request,conn,data,error=message,status_code=503 if busy else 500)
+            finally:
+                conn.close()
 
     @router.post('/documents/rules')
     async def save_rule(request:Request):

@@ -1,7 +1,7 @@
 {% extends "documents/base.html" %}{% from 'documents/forms.html' import field,text,receipt_channel %}
 {% block documents_content %}<h2>Receive or prepare correspondence</h2>
 <p>Choose what the correspondence is for, check its details, then register it. Permanent incoming/outgoing numbers are assigned only when registration succeeds. You can enter everything manually without a scan.</p>
-{% if enabled %}<form method="post" action="/documents/new" class="doc-card" id="intake-form" data-ux-ignore data-telemetry-ignore><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="intake" value="guided">
+{% if enabled %}<form method="post" action="/documents/new" class="doc-card" id="intake-form" data-ux-ignore data-telemetry-ignore><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="intake" value="guided"><input type="hidden" name="submission_id" value="{{ submission_id }}">
 <h3>1. Choose a file or link</h3>
 {% if preview %}<details open class="doc-card"><summary>Suggestions from the linked document</summary><p>Compare these with the scan before entering or changing the details below.</p><dl>{% for key,value in preview.suggestions.items() if value %}<dt>{{ key|replace('_',' ') }}</dt><dd>{{ value }}</dd>{% endfor %}</dl>{% for excerpt in preview.excerpts %}<blockquote>{{ excerpt }}</blockquote>{% endfor %}{% for warning in preview.warnings %}<p>{{ warning }}</p>{% endfor %}</details>{% endif %}
 <p>Select a PDF to read its first page automatically. If it is a DTRAK routing slip, we also check the next page for the document date. The file is read temporarily and is not saved.</p>
@@ -45,6 +45,15 @@
 <label>Suggested lead<select name="proposed_lead_id"><option value="">Officer to decide</option>{% for person in people %}<option value="{{ person.id }}" {% if person.id==(values.get('proposed_lead_id',0)|int) %}selected{% endif %}>{{ person.username }}</option>{% endfor %}</select></label>
 <label><input type="checkbox" name="propose_steps" value="yes" {% if values.get('propose_steps')=='yes' %}checked{% endif %}> Propose the scenario's contribution steps shown above</label><p>Proposals have no confirmed owner or deadline. An officer must confirm assignments. No approval, signature, booking, or travel claim is created.</p></fieldset>
 <fieldset id="intake-existing"><legend>Existing shared work</legend><label>Work item<select name="case_selection"><option value="">Choose a permitted work item</option>{% for case in cases %}{% set selection=case.id|string ~ ':' ~ case.revision|string %}<option value="{{ selection }}" {% if selection==values.get('case_selection') %}selected{% endif %}>{{ case.title }}</option>{% endfor %}</select></label><p>Shows up to 25 recent permitted items. For older work, open that work item and choose “Register new correspondence.” Its creator, lead, and assigned contributors must already be permitted to read the new record. If access needs setup, register it as reference-only first, arrange access, then link it.</p></fieldset>{% endif %}
-</section><section id="intake-register"><h3>4. Confirm and register</h3><label><input type="checkbox" name="confirmed" value="yes" required> I checked the source, entered fields, work destination, and any proposed steps.</label><p>Scenario suggestions do not authorize release or signing. Existing document policies and permanent numbering still apply.</p><button type="submit">Register correspondence</button></section></form>
+</section><section id="intake-register"><h3>4. Confirm and register</h3><label><input type="checkbox" name="confirmed" value="yes" required> I checked the source, entered fields, work destination, and any proposed steps.</label><p>Scenario suggestions do not authorize release or signing. Existing document policies and permanent numbering still apply.</p><button type="submit">Register correspondence</button></section>
+<section id="registration-feedback" hidden aria-label="Registration result">
+<p id="registration-status" role="status" aria-live="polite" aria-atomic="true" tabindex="-1"></p>
+<a id="registration-result" hidden>Open saved record</a>
+<button type="button" id="registration-check">Check saved result</button>
+<button type="button" id="registration-retry" hidden>Retry same submission</button>
+<p>Keep this page open until the result is confirmed. If the connection drops, entered values stay on this page and retries use the same submission. No file or form draft is stored in your browser.</p>
+<a href="/documents?queue=mine">Check my document register</a>
+</section></form>
 <script src="/static/js/work-intake.js" defer></script>
+<script src="/static/js/document-registration.js" defer></script>
 <script type="module" src="/static/js/pdf-page-intake.mjs"></script>{% endif %}{% endblock %}

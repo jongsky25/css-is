@@ -1,10 +1,14 @@
 ## 7.62 — October 21, 2026
 
-- Travel forms: each ride that needs a CENRR now gets its own CENRR sheet, like the RER (spot feedback #149). The template is unchanged: it already has one repeating line, which now holds one ride. The Prepare page says each generated form is a Google Doc or Sheet that can be opened and edited (spot feedback #148).
+- Travel Prepare page: itinerary entries can be reordered by dragging their handle, with Move up / Move down buttons and a Sort by date button (spot feedback #147). Entries keep the order shown when the forms are made.
+- Travel forms: each ride that needs a CENRR now gets its own CENRR sheet, like the RER (spot feedback #149). The template is unchanged: it already has one repeating line, which now holds one ride.
+- The Prepare page says each generated form is a Google Doc or Sheet that can be opened and edited (spot feedback #148).
 
 ## 7.61 — October 21, 2026
 
-- Travel Prepare page: itinerary entries can be reordered by dragging their handle, with Move up / Move down buttons and a Sort by date button (spot feedback #147). Entries keep the order shown when the forms are made.
+- Add atomic registration receipts so retries of the same correspondence submission return the saved document/work result without duplicating numbering, tasks or events.
+- Add read-only result checks and clear saving/unconfirmed feedback, retain the submitted values in memory and require an explicit retry with the original submission.
+- Recheck current access on recovery, reject changed payloads for completed submissions and keep writer waits off the event loop.
 
 ## 7.60 — October 21, 2026
 

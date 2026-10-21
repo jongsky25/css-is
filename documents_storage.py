@@ -37,6 +37,11 @@ def install(conn):
       revision INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
       archived_at TEXT, archived_by INTEGER REFERENCES admin_user(id));
     CREATE INDEX IF NOT EXISTS document_due ON document(status,due_date);
+    CREATE TABLE IF NOT EXISTS document_registration (
+      actor_id INTEGER NOT NULL REFERENCES admin_user(id), submission_id TEXT NOT NULL,
+      payload_hash TEXT NOT NULL, document_id INTEGER NOT NULL REFERENCES document(id),
+      case_id INTEGER REFERENCES work_case(id), created_at TEXT NOT NULL,
+      PRIMARY KEY(actor_id,submission_id));
     CREATE TABLE IF NOT EXISTS document_role_grant (
       id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES admin_user(id),
       role TEXT NOT NULL CHECK(role IN ('records','workflow_admin','grant_admin','signatory')),

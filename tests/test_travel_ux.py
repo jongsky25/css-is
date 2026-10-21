@@ -296,7 +296,10 @@ def test_storage_failure_is_visible_and_hidden_refund_is_not_generated(page, vie
     pw.expect(page.locator('#draft-status')).to_contain_text('Draft could not be saved')
     page.get_by_role('button', name='Make the forms', exact=True).click()
     pw.expect(page.get_by_text('Done. Open each form', exact=False)).to_be_visible(timeout=15000)
-    appendix = next(c for c in relay.calls if c['template_key'] == 'claim_rei')   # Appendix A and B are one document since 7.60
+    claims = [c for c in relay.calls if c['template_key'] == 'claim_rei']
+    assert len(claims) == 1  # Appendix A and B share the current reimbursement form.
+    assert not any(c['template_key'] == 'appendix_b' for c in relay.calls)
+    appendix = claims[0]
     assert appendix['fields']['refund_amount'] == ''
     assert appendix['fields']['refund_or_no'] == ''
     assert 'Old deviation' not in str(appendix['blocks'])

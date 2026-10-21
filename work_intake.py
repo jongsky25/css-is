@@ -46,41 +46,47 @@ def preview(conn,user,url,adapter=None):
 
 def register(conn,user,fields):
     with transaction(conn):
-        user=permissions.actor(conn,user)
-        if fields.get('confirmed')!='yes':
-            raise ValueError('Check the source and confirm the entered fields before registration.')
-        scenario=fields.get('scenario','reference')
-        mode=fields.get('work_mode','reference')
-        if scenario not in SCENARIOS or mode not in ('reference','new','existing'):
-            raise ValueError('Choose a supported scenario and work destination.')
-        if (scenario=='reference') != (mode=='reference'):
-            raise ValueError('For information/reference uses reference-only intake. Choose an action scenario for shared work.')
-        if mode!='reference':
-            work.writable(conn)
-        if mode=='new' and not fields.get('unit_id'):
-            raise ValueError('Choose the concerned unit to start shared work.')
-        existing=None
-        if mode=='existing':
-            selection=str(fields.get('case_selection','')).split(':')
-            cid,revision=selection if len(selection)==2 else (fields.get('case_id') or 0,fields.get('case_revision') or 0)
-            existing=work.get(conn,user,int(cid))
-            work._check_revision(existing,int(revision))
-            if not work.can_link(conn,user,existing):
-                raise permissions.Denied('The creator, lead, or concerned officer links correspondence.')
-        # Suppress automatic preliminary assignments in this guided flow: reference
-        # records need none, and shared work owns its explicit proposed contributions.
-        doc=docs.register_in_transaction(conn,user,fields,suppress_assignments=True)
-        case=None
-        if mode=='new':
-            case=work.create_in_transaction(conn,user,{'title':fields.get('work_title') or doc['subject'],
-                'outcome':fields.get('outcome'),'unit_id':fields['unit_id'],
-                'proposed_lead_id':fields.get('proposed_lead_id'),'source_document_id':doc['id']})
-            if fields.get('propose_steps')=='yes':
-                for title,output in SCENARIOS[scenario]['tasks']:
-                    work_tasks.create_in_transaction(conn,user,case['id'],{'title':title,'expected_output':output,
-                                                                          'unit_id':fields['unit_id']})
-        elif mode=='existing':
-            case=work.link_document_in_transaction(conn,user,existing['id'],existing['revision'],doc['id'])
-        docs.event(conn,doc['id'],user,'intake_confirmed',{'scenario':scenario,'work_mode':mode,
-                   'case_id':case['id'] if case else None,'proposed_steps':fields.get('propose_steps')=='yes' and mode=='new'})
-        return doc,case
+        return register_in_transaction(conn,user,fields)
+
+
+def register_in_transaction(conn,user,fields):
+    if not conn.in_transaction:
+        raise RuntimeError('An active transaction is required')
+    user=permissions.actor(conn,user)
+    if fields.get('confirmed')!='yes':
+        raise ValueError('Check the source and confirm the entered fields before registration.')
+    scenario=fields.get('scenario','reference')
+    mode=fields.get('work_mode','reference')
+    if scenario not in SCENARIOS or mode not in ('reference','new','existing'):
+        raise ValueError('Choose a supported scenario and work destination.')
+    if (scenario=='reference') != (mode=='reference'):
+        raise ValueError('For information/reference uses reference-only intake. Choose an action scenario for shared work.')
+    if mode!='reference':
+        work.writable(conn)
+    if mode=='new' and not fields.get('unit_id'):
+        raise ValueError('Choose the concerned unit to start shared work.')
+    existing=None
+    if mode=='existing':
+        selection=str(fields.get('case_selection','')).split(':')
+        cid,revision=selection if len(selection)==2 else (fields.get('case_id') or 0,fields.get('case_revision') or 0)
+        existing=work.get(conn,user,int(cid))
+        work._check_revision(existing,int(revision))
+        if not work.can_link(conn,user,existing):
+            raise permissions.Denied('The creator, lead, or concerned officer links correspondence.')
+    # Suppress automatic preliminary assignments in this guided flow: reference
+    # records need none, and shared work owns its explicit proposed contributions.
+    doc=docs.register_in_transaction(conn,user,fields,suppress_assignments=True)
+    case=None
+    if mode=='new':
+        case=work.create_in_transaction(conn,user,{'title':fields.get('work_title') or doc['subject'],
+            'outcome':fields.get('outcome'),'unit_id':fields['unit_id'],
+            'proposed_lead_id':fields.get('proposed_lead_id'),'source_document_id':doc['id']})
+        if fields.get('propose_steps')=='yes':
+            for title,output in SCENARIOS[scenario]['tasks']:
+                work_tasks.create_in_transaction(conn,user,case['id'],{'title':title,'expected_output':output,
+                                                                      'unit_id':fields['unit_id']})
+    elif mode=='existing':
+        case=work.link_document_in_transaction(conn,user,existing['id'],existing['revision'],doc['id'])
+    docs.event(conn,doc['id'],user,'intake_confirmed',{'scenario':scenario,'work_mode':mode,
+               'case_id':case['id'] if case else None,'proposed_steps':fields.get('propose_steps')=='yes' and mode=='new'})
+    return doc,case
