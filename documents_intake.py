@@ -166,7 +166,11 @@ def list_page(conn, user, state='waiting', page=1):
     visible="""i.email_primary=1 AND (i.document_id IS NULL OR (d.canonical_id IS NULL AND
         (d.visibility<>'restricted' OR EXISTS(SELECT 1 FROM document_access a WHERE a.document_id=d.id AND a.user_id=?))))"""
     items=rows(conn,'''SELECT i.id,i.original_name,i.discovered_at,i.state,i.revision,i.claimed_by,
-        i.claim_until,i.document_id,i.filing_state,i.filing_attempts,i.filing_next_at,i.filing_last_at,i.filing_blocked,i.error,i.email_id,e.subject AS email_subject,u.username AS reviewer
+        i.claim_until,i.document_id,i.filing_state,i.filing_attempts,i.filing_next_at,i.filing_last_at,i.filing_blocked,i.error,i.email_id,e.subject AS email_subject,u.username AS reviewer,
+        (SELECT COUNT(*) FROM document_intake sibling WHERE sibling.email_id=i.email_id
+            AND sibling.filing_state IN ('pending','running','error')) AS filing_remaining,
+        (SELECT COUNT(*) FROM document_intake sibling WHERE sibling.email_id=i.email_id
+            AND sibling.filing_state IN ('pending','running','error') AND sibling.filing_blocked=1) AS filing_review
         FROM document_intake i LEFT JOIN admin_user u ON u.id=i.claimed_by
         LEFT JOIN document_intake_email e ON e.id=i.email_id LEFT JOIN document d ON d.id=i.document_id WHERE ''' + visible +
         ' AND i.state=? ORDER BY i.id LIMIT 31 OFFSET ?',(user['id'],state,(page-1)*30))

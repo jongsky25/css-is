@@ -13,6 +13,10 @@ Introduced in **7.78**, completing A14's document execution work after the
 - Registered files show pending, being checked, waiting to retry, needs review or
   completed filing. Last and next attempts are shown where available. Filing
   failure leaves the registered document and its number intact.
+- Grouped email rows count attachments still awaiting filing, including those
+  requiring review, and link to each file's status. Finishing the first attachment
+  does not mark the whole email as filed. Counts use the indexed email group for
+  each visible page row.
 - Authorized records staff can request another filing check from the registered
   queue or the document, including individual attachments. The original filing
   operation ID and payload stay unchanged. Current permission checks still apply.
