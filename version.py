@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.70"
+APP_VERSION = "7.71"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.71",
+        "date": "October 21, 2026",
+        "summary": "You stay signed in when the site is updated.",
+        "changes": [
+            "Each update restarts the site, and that used to sign everyone out. Your sign-in now carries through an update.",
+            "Signing out yourself, a password change, or an administrator turning off an account still ends the session straight away."
+        ]
+    },
     {
         "version": "7.70",
         "date": "October 21, 2026",

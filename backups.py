@@ -468,6 +468,16 @@ def prune_backups(keep, keep_daily=0):
     return deleted
 
 
+def clear_sessions_on_boot_restore(environ=None):
+    """Whether the routine start-up restore signs everyone out. Off by default: a deploy restarts the container, and
+    the shutdown snapshot taken just before holds exactly the live sessions, so wiping them signed every user out on
+    each deploy (spot feedback #153). Set CSS_CLEAR_SESSIONS_ON_BOOT=1 to bring the strict behaviour back, for
+    example after a crash when the newest snapshot may be older than a logout. An operator restore from the admin page
+    and a first-boot seed always clear them."""
+    env = os.environ if environ is None else environ
+    return str(env.get("CSS_CLEAR_SESSIONS_ON_BOOT", "")).strip().lower() in ("1", "true", "yes", "on")
+
+
 def clear_restored_sessions(db_path):
     """A restored snapshot must not resurrect a previously revoked cookie."""
     conn = sqlite3.connect(db_path)

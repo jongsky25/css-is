@@ -1,3 +1,7 @@
+## 7.71 — October 21, 2026
+
+- Staying signed in across a deploy (spot feedback #153): every start-up restore of the live database deleted all login sessions, so each deploy signed every user out (about fifteen times on one busy day). The start-up restore now keeps them; the shutdown snapshot taken just before a restart holds the live sessions. Sessions are still cleared by an operator restore from the Backups page, a first-boot seed, a logout, and any change to the account's password, role, username or active state. Set `CSS_CLEAR_SESSIONS_ON_BOOT=1` on the Space to bring back the old wipe, for example after a crash when the newest snapshot may be older than a logout.
+
 ## 7.70 — October 21, 2026
 
 - Activity documents (DPO, memorandum, concept note): positions are no longer filled in from saved profiles on their own. The Draft button now has a "Fill in positions from saved profiles" checkbox, off by default; without it the position cells are left blank for the person to complete (spot feedback #154).

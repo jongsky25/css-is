@@ -263,7 +263,8 @@ def _ensure_live_db():
             if not allow_seed:
                 snap = _await_fresh_snapshot(snap)
             shutil.copy2(snap, DB)
-            bk.clear_restored_sessions(DB)
+            if bk.clear_sessions_on_boot_restore():      # off by default: keeps people signed in across a deploy
+                bk.clear_restored_sessions(DB)
             _persist_mark_initialized()          # ensure the sentinel exists going forward
             print(f"[persist] restored live DB from bucket snapshot "
                   f"{os.path.basename(snap)} (dir={bk.SCHED_DIR}).")

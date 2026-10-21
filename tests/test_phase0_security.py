@@ -231,3 +231,14 @@ def test_invalid_shapes_and_legacy_cookies_require_login(payload):
 @pytest.mark.parametrize('token', ['é.signature', 'body.é', 'x'*5000, None, 17])
 def test_invalid_cookie_encoding_never_raises(token):
     assert auth.parse_token(token) is None
+
+
+def test_a_routine_restart_keeps_sessions_unless_asked_to_clear_them():
+    """Spot feedback #153: every deploy restarts the container and used to sign everyone out."""
+    import backups as bk
+    assert bk.clear_sessions_on_boot_restore({}) is False
+    assert bk.clear_sessions_on_boot_restore({"CSS_CLEAR_SESSIONS_ON_BOOT": "0"}) is False
+    assert bk.clear_sessions_on_boot_restore({"CSS_CLEAR_SESSIONS_ON_BOOT": "1"}) is True
+    src = open("app.py", encoding="utf-8").read()
+    assert "if bk.clear_sessions_on_boot_restore():" in src
+    assert src.count("bk.clear_restored_sessions(DB)") == 3      # restore (gated), first-boot seed, legacy path

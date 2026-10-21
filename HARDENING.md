@@ -44,6 +44,7 @@ logins may drop on rebuilds and generated public links may use the wrong origin.
 | Name | Type | Value | Why |
 |---|---|---|---|
 | `CSS_SESSION_SECRET` | **secret** | a long random string (e.g. `python -c "import secrets;print(secrets.token_urlsafe(48))"`) | `auth.py` signs session tokens with this. If unset, a *new random* secret is generated on every rebuild → **everyone is logged out on each deploy**. |
+| `CSS_CLEAR_SESSIONS_ON_BOOT` | variable (optional) | `1` | Off by default: the start-up restore keeps login sessions so a deploy does not sign everyone out. Set `1` to delete all sessions on every start-up restore (strict mode). Operator restores always clear them. |
 | `CSS_BASE_URL` | variable | `https://equityinhealth-office-connect.hf.space` | Pins the public origin for QR codes and share/email links (no trailing slash). |
 | `CSS_SECURE_COOKIES` | variable | `1` | Marks session + participant cookies `Secure` so they never ride plain HTTP. Automatic with HTTPS CSS_BASE_URL or SPACE_HOST; explicit flag supported elsewhere. |
 
