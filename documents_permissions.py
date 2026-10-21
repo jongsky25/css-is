@@ -128,9 +128,14 @@ class RegistryScope:
         workflow = [g['unit_id'] for g in grants if g['role'] == 'workflow_admin']
         self.officer_all = self.is_director or None in records
         self.workflow_all = None in workflow
+        self.division_units = [s['id'] for s in current_seats if s['level']=='division']
+        signatories = [g['unit_id'] for g in grants if g['role']=='signatory']
+        self.signatory_all = None in signatories
         self.params = {'registry_actor': self.uid,
                        'registry_officer_units': json.dumps(covered(records + [s['id'] for s in current_seats])),
-                       'registry_workflow_units': json.dumps(covered(workflow))}
+                       'registry_workflow_units': json.dumps(covered(workflow)),
+                       'registry_signatory_units': json.dumps(covered(signatories)),
+                       'registry_division_units': json.dumps(covered(self.division_units))}
 
     def officer_sql(self, alias, *, concerned=True):
         if self.officer_all:
@@ -152,6 +157,10 @@ class RegistryScope:
     def workflow_sql(self, alias):
         return '1' if self.workflow_all else (
             f'{alias}.unit_id IN (SELECT value FROM json_each(:registry_workflow_units))')
+
+    def signatory_sql(self, alias):
+        return '1' if self.signatory_all else (
+            f'{alias}.unit_id IN (SELECT value FROM json_each(:registry_signatory_units))')
 
     def _base_view_sql(self, alias):
         explicit = f'''EXISTS (SELECT 1 FROM document_access access

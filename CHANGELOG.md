@@ -1,3 +1,11 @@
+## 7.82 — October 21, 2026
+
+- Extend A15 to My actions and division follow-up with current document guidance, responsible people/roles, ready/waiting/attention states and direct links to existing controls.
+- Filter current access and scope before seek pagination; batch ordinary page data and responsibility names, bound instruction/contribution cards, retain deadline ordering and label unknown dates.
+- Share closure facts and legacy contribution choices, preserve authoritative shared-work checks, and retain independent fresh write guards.
+- Protect stale review links after authority changes and restore keyboard focus on cross-page action links without waiting for external previews.
+- Verify workflow/card agreement, private inputs, role and scope changes, interrupted/partial delivery, page boundaries, growing registers, OS SQLite compatibility and real browser navigation. Staff observations remain open.
+
 ## 7.81 — October 21, 2026
 
 - Start A15 with a document “What happens next?” panel showing current responsibility, the next permitted action and an explanation of blockers.

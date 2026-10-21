@@ -26,6 +26,9 @@
       reveal();
     }
   });
+  // Initial cross-page fragment navigation can reset focus after deferred
+  // scripts run. Restore it after DOM readiness, without waiting for Drive frames.
+  document.addEventListener('DOMContentLoaded', () => requestAnimationFrame(reveal), { once: true });
   addEventListener('hashchange', reveal);
   reveal();
 })();
