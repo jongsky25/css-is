@@ -1,3 +1,7 @@
+## 7.64 — October 21, 2026
+
+- Travel Prepare page: a "Your designation (shown on the forms)" field, prefilled from the profile and kept in the browser draft with the signatories. It is sent as `traveler_title` and used for the designation on every form; blank falls back to the profile (spot feedback #150-152, designation part). The font and alignment part of those entries is not in this release.
+
 ## 7.63 — October 21, 2026
 
 - Travel Prepare page: each form in the list has a Make this form again button (Try this form again when it failed). It sends only that form's code, so changing an entry no longer means remaking every form. The earlier copy stays in Drive and the page says so (follow-up to spot feedback #148). No server change: the generate route already took a list of forms.

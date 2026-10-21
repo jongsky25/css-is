@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.63"
+APP_VERSION = "7.64"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.64",
+        "date": "October 21, 2026",
+        "summary": "Confirm your designation when you prepare the travel forms.",
+        "changes": [
+            "The Prepare the forms page now asks for your designation, filled in from your profile when you have one, so it is on every form that shows it (CENRR, RER, Appendix B, the justification, the report and the rest).",
+            "If your profile has no designation, type it once on this page instead of finding the blank on each form afterwards."
+        ]
+    },
     {
         "version": "7.63",
         "date": "October 21, 2026",
