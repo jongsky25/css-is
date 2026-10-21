@@ -1,3 +1,8 @@
+## 7.68 — October 21, 2026
+
+- Activity documents (DPO, memorandum, concept note): positions are no longer filled in from saved profiles on their own. The Draft button now has a "Fill in positions from saved profiles" checkbox, off by default; without it the position cells are left blank for the person to complete (spot feedback #154).
+- Activity templates (`activity_templates.gs`): every paragraph and table now starts plain, because Docs copies the formatting of the paragraph above and one bold line had made the whole DPO bold. Only titles, headings and signatories are bold. The letterhead logos are sized from the picture's own proportions at 70 pt tall. Run `rebuildActivityTemplates()` once to apply it; existing templates are not changed (spot feedback #154).
+
 ## 7.67 — October 21, 2026
 
 - Travel Prepare page: a "Your designation (shown on the forms)" field, prefilled from the profile and kept in the browser draft with the signatories. It is sent as `traveler_title` and used for the designation on every form; blank falls back to the profile (spot feedback #150-152, designation part). 

@@ -133,11 +133,28 @@ function at_letterhead_(body) {
     const para = cell.getChild(0).asParagraph();
     para.setAlignment(col === 0 ? DocumentApp.HorizontalAlignment.LEFT : DocumentApp.HorizontalAlignment.RIGHT);
     const img = para.appendInlineImage(logo.blob);
+    // keep the picture's own proportions: the size read from the inserted image wins over the stated one
+    const w = img.getWidth(), h = img.getHeight();
+    const ratio = (typeof w === 'number' && typeof h === 'number' && w > 0 && h > 0) ? w / h : logo.size[0] / logo.size[1];
     img.setHeight(70);
-    img.setWidth(Math.round(70 * logo.size[0] / logo.size[1]));
+    img.setWidth(Math.round(70 * ratio));
   });
   const mid = table.getCell(0, 1);
   fill(mid, mid.getChild(0).asParagraph());
+}
+
+// Docs copies the formatting of the paragraph above onto a new one, so one bold line made every line after it bold
+// (spot feedback #154). Each paragraph and table starts plain; the builders then bold only what is meant to be bold.
+function at_add_(body, text) {
+  const p = body.appendParagraph(text);
+  p.setBold(false); p.setItalic(false); p.setUnderline(false);
+  return p;
+}
+
+function at_table_(body, cells) {
+  const table = body.appendTable(cells);
+  table.editAsText().setBold(false);
+  return table;
 }
 
 // The DOH address block at the foot of every page.
@@ -154,10 +171,10 @@ function at_footer_(doc) {
 
 function at_buildDpo_(body, doc) {
   at_letterhead_(body);
-  body.appendParagraph('{{dpo_date}}').setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
-  body.appendParagraph('DEPARTMENT PERSONNEL ORDER').setBold(true);
-  body.appendParagraph('No. {{dpo_year}} - {{dpo_no}}');
-  const subject = body.appendParagraph('SUBJECT: {{subject}}');
+  at_add_(body, '{{dpo_date}}').setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
+  at_add_(body, 'DEPARTMENT PERSONNEL ORDER').setBold(true);
+  at_add_(body, 'No. {{dpo_year}} - {{dpo_no}}');
+  const subject = at_add_(body, 'SUBJECT: {{subject}}');
   const subjectText = subject.editAsText();
   subjectText.setBold(true);
   subjectText.setUnderline(9, subjectText.getText().length - 1, true);
@@ -165,11 +182,11 @@ function at_buildDpo_(body, doc) {
     '{{background}}',
     '{{intro}}'
   ].forEach(function (t) {
-    const p = body.appendParagraph(t);
+    const p = at_add_(body, t);
     p.setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
     p.setIndentFirstLine(36);
   });
-  const table = body.appendTable([['Name', 'Position'], ['{{p_name}}', '{{p_position}}']]);
+  const table = at_table_(body, [['Name', 'Position'], ['{{p_name}}', '{{p_position}}']]);
   table.setBorderWidth(0);
   [234, 234].forEach(function (w, c) { table.setColumnWidth(c, w); });
   table.getRow(0).editAsText().setBold(true);
@@ -181,16 +198,16 @@ function at_buildDpo_(body, doc) {
     'Under this Order, traveling expenses such as plane fare, per diem, TNVs (e.g. grab, InDrive), bus, boat, taxi, and other allowable incidental expenses relative to the conduct of the activity of the abovementioned staff shall be charged against the {{funding_source}} funds.',
     'All expenses are subject to the usual accounting and auditing rules and regulations.'
   ].forEach(function (t) {
-    const p = body.appendParagraph(t);
+    const p = at_add_(body, t);
     p.setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
     p.setIndentFirstLine(36);
   });
-  body.appendParagraph('By Authority of the Secretary of Health:').setIndentStart(216);
-  body.appendParagraph('');
-  body.appendParagraph('');
-  body.appendParagraph('{{head_name}}').setBold(true).setIndentStart(216);
-  body.appendParagraph('{{head_title}}').setIndentStart(216);
-  body.appendParagraph('{{unit_name}}').setIndentStart(216);
+  at_add_(body, 'By Authority of the Secretary of Health:').setIndentStart(216);
+  at_add_(body, '');
+  at_add_(body, '');
+  at_add_(body, '{{head_name}}').setBold(true).setIndentStart(216);
+  at_add_(body, '{{head_title}}').setIndentStart(216);
+  at_add_(body, '{{unit_name}}').setIndentStart(216);
   body.editAsText().setFontFamily('Times New Roman');
   body.editAsText().setFontSize(12);
   at_footer_(doc);
@@ -203,8 +220,8 @@ function at_buildDpo_(body, doc) {
 //   {{details}} is a block (the app replaces that line with several); {{a_area}} and {{a_request}} sit in ONE table row.
 function at_buildInvitation_(body, doc) {
   at_letterhead_(body);
-  body.appendParagraph('{{date}}');
-  const title = body.appendParagraph('MEMORANDUM');
+  at_add_(body, '{{date}}');
+  const title = at_add_(body, 'MEMORANDUM');
   title.setBold(true);
   title.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
   [
@@ -212,33 +229,33 @@ function at_buildInvitation_(body, doc) {
     ['FROM:\t{{from_name}}', '{{from_title}}', '{{unit_name}}']
   ].forEach(function (group) {
     group.forEach(function (line, i) {
-      const p = body.appendParagraph(line);
+      const p = at_add_(body, line);
       if (i === 0) p.setBold(true);
       if (i > 0) p.setIndentStart(36);
     });
   });
-  body.appendParagraph('SUBJECT:\t{{subject}}').setBold(true);
+  at_add_(body, 'SUBJECT:\t{{subject}}').setBold(true);
   body.appendHorizontalRule();
   [
     '{{opening}}',
     '{{details}}',
     'In this regard, we kindly request your office\u2019s assistance in facilitating the activity through the following:'
   ].forEach(function (t) {
-    const p = body.appendParagraph(t);
+    const p = at_add_(body, t);
     p.setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
   });
-  const table = body.appendTable([['Area', 'Requested Assistance'], ['{{a_area}}', '{{a_request}}']]);
+  const table = at_table_(body, [['Area', 'Requested Assistance'], ['{{a_area}}', '{{a_request}}']]);
   table.getRow(0).editAsText().setBold(true);
   [
     'For clarifications, your staff may contact {{contact_name}} at {{contact_email}}, or you may reach us via telephone: {{contact_phone}}.',
     'We sincerely appreciate your support in facilitating the successful conduct of this activity.',
     'Thank you very much for your continued support.'
   ].forEach(function (t) {
-    const p = body.appendParagraph(t);
+    const p = at_add_(body, t);
     p.setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
   });
-  body.appendParagraph('');
-  const initials = body.appendTable([['', '{{unit_name}}'], ['Initials', ''], ['Date', '']]);
+  at_add_(body, '');
+  const initials = at_table_(body, [['', '{{unit_name}}'], ['Initials', ''], ['Date', '']]);
   initials.getRow(0).editAsText().setBold(true);
   body.editAsText().setFontFamily('Times New Roman');
   body.editAsText().setFontSize(12);
@@ -253,10 +270,10 @@ function at_buildInvitation_(body, doc) {
 //   {{pd_day}} {{pd_am}} {{pd_pm}} sit in ONE table row: the app copies that row once per day.
 function at_buildConceptNote_(body, doc) {
   at_letterhead_(body);
-  const heading = body.appendParagraph('CONCEPT NOTE');
+  const heading = at_add_(body, 'CONCEPT NOTE');
   heading.setBold(true);
   heading.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-  const title = body.appendParagraph('{{title}}');
+  const title = at_add_(body, '{{title}}');
   title.setBold(true);
   title.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
   [
@@ -266,30 +283,30 @@ function at_buildConceptNote_(body, doc) {
     ['4.  Participants', ['{{participants}}', 'Estimated total: {{participant_count}}']],
     ['5.  Methodology', ['{{methodology}}']]
   ].forEach(function (section) {
-    body.appendParagraph(section[0]).setBold(true);
+    at_add_(body, section[0]).setBold(true);
     section[1].forEach(function (line) {
-      body.appendParagraph(line).setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
+      at_add_(body, line).setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
     });
   });
-  body.appendParagraph('6.  Operational Details').setBold(true);
-  const details = body.appendTable([
+  at_add_(body, '6.  Operational Details').setBold(true);
+  const details = at_table_(body, [
     ['Title', '{{title}}'], ['Date/Duration', '{{date_duration}}'], ['Venue', '{{venue}}'],
     ['Participants', '{{participant_count}}'], ['Facilitators', '{{facilitators}}'], ['Budget and Source', '{{budget}}']
   ]);
   details.setBorderWidth(1);
-  body.appendParagraph('7.  Proposed Program of Activities').setBold(true);
-  const program = body.appendTable([['Day', 'AM', 'PM'], ['{{pd_day}}', '{{pd_am}}', '{{pd_pm}}']]);
+  at_add_(body, '7.  Proposed Program of Activities').setBold(true);
+  const program = at_table_(body, [['Day', 'AM', 'PM'], ['{{pd_day}}', '{{pd_am}}', '{{pd_pm}}']]);
   program.getRow(0).editAsText().setBold(true);
-  body.appendParagraph('');
-  const signers = body.appendTable([['Prepared by:', 'Noted by:'], ['{{prepared_by}}', '{{noted_by_name}}'],
+  at_add_(body, '');
+  const signers = at_table_(body, [['Prepared by:', 'Noted by:'], ['{{prepared_by}}', '{{noted_by_name}}'],
                                     ['{{prepared_title}}', '{{noted_by_title}}']]);
   signers.setBorderWidth(0);
   signers.getRow(0).editAsText().setBold(true);
-  body.appendParagraph('');
-  body.appendParagraph('Recommended by:').setBold(true);
-  body.appendParagraph('{{recommended_name}}').setBold(true);
-  body.appendParagraph('{{recommended_title}}');
-  body.appendParagraph('{{unit_name}}');
+  at_add_(body, '');
+  at_add_(body, 'Recommended by:').setBold(true);
+  at_add_(body, '{{recommended_name}}').setBold(true);
+  at_add_(body, '{{recommended_title}}');
+  at_add_(body, '{{unit_name}}');
   body.editAsText().setFontFamily('Times New Roman');
   body.editAsText().setFontSize(12);
   at_footer_(doc);
@@ -301,9 +318,9 @@ function at_buildConceptNote_(body, doc) {
 //   {{pf_time}} {{pf_topic}} {{pf_person}} sit in ONE table row: the app copies it for each day heading and each empty row.
 function at_buildProgramFlow_(body, doc) {
   at_letterhead_(body);
-  body.appendParagraph('Activity: {{title}}').setBold(true);
-  body.appendParagraph('Tentative Program Flow:');
-  const table = body.appendTable([['Date/Time', 'Topic/Activity', 'Person Responsible'], ['{{pf_time}}', '{{pf_topic}}', '{{pf_person}}']]);
+  at_add_(body, 'Activity: {{title}}').setBold(true);
+  at_add_(body, 'Tentative Program Flow:');
+  const table = at_table_(body, [['Date/Time', 'Topic/Activity', 'Person Responsible'], ['{{pf_time}}', '{{pf_topic}}', '{{pf_person}}']]);
   table.getRow(0).editAsText().setBold(true);
   body.editAsText().setFontFamily('Times New Roman');
   body.editAsText().setFontSize(12);

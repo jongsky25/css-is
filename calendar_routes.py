@@ -1120,6 +1120,8 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         """Draft the document as a Google Doc from the entry's details. The relay call can take a few seconds, so
         it runs off the event loop; the database work stays on this thread (a connection is not shared)."""
         user = request.state.user
+        raw = parse_qs((await request.body()).decode("utf-8"), keep_blank_values=True)
+        positions = (raw.get("positions") or [""])[0] == "1"          # positions are written only when asked for
         conn = get_conn()
         try:
             e = oc.viewable_entry(conn, user, entry_id)
@@ -1132,7 +1134,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             elif not ratelimit.allow("activity_doc_draft", f"u{user['id']}"):
                 note = f"err={quote('Too many requests. Wait a minute and try again.')}"
             else:
-                prep = activity_docs.prepare(conn, e, key, user, _doc_owner_label(conn, e))
+                prep = activity_docs.prepare(conn, e, key, user, _doc_owner_label(conn, e), positions=positions)
                 relay_res = await run_in_threadpool(prep.call)        # only the network call leaves this thread
                 res = activity_docs.record(conn, prep, relay_res, user)
                 st.audit(conn, user["username"], "activity_doc_draft", target_type="calendar_entry", target_id=entry_id,

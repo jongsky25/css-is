@@ -333,3 +333,22 @@ def test_the_relay_shares_without_google_s_notification_email():
     assert "sendNotificationEmail: false" in src
     assert src.count("addEditor(") == 1 and src.count("addViewer(") == 1          # only the fallback inside shareQuietly_
     assert "shareQuietly_(copy, a, 'writer')" in src and "shareQuietly_(folder, a, 'reader')" in src
+
+
+def test_positions_are_blank_unless_the_person_asks_for_them(viewer, conn, relay):
+    """Spot feedback #154: do not fill in positions on their own."""
+    me = uid(conn, "viewer@test.local")
+    conn.execute("UPDATE admin_user SET designation=? WHERE id=?", ("Planning Officer III", me)); conn.commit()
+    eid = create(viewer, kind="travel", title="CALEP Field Visit", people=[str(me)])
+    draft(viewer, eid, "dpo")
+    assert relay.calls[0]["rows"]["personnel"]["data"][0]["p_position"] == ""
+    viewer.post(f"/calendar/entries/{eid}/documents/dpo/draft", content="positions=1", headers=FORM, follow_redirects=False)
+    assert relay.calls[1]["rows"]["personnel"]["data"][0]["p_position"] == "Planning Officer III"
+
+
+def test_a_template_paragraph_never_inherits_bold_from_the_one_above():
+    """Spot feedback #154: Docs copies the previous paragraph's formatting, which made whole documents bold."""
+    src = open("apps_script/activity_templates.gs", encoding="utf-8").read()
+    builders = src.split("function at_buildDpo_")[1]
+    assert "body.appendParagraph(" not in builders and "body.appendTable(" not in builders
+    assert "setBold(false)" in src and "img.getWidth()" in src
