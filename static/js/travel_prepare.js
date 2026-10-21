@@ -253,6 +253,14 @@
     return b;
   }
 
+  var dragFrom = -1;
+  // Entries are kept in the order the person sets, and the forms are made in that order.
+  function moveRow(from, to) {
+    if (from === to || from < 0 || to < 0 || from >= state.rows.length || to >= state.rows.length) return;
+    state.rows.splice(to, 0, state.rows.splice(from, 1)[0]);
+    save(); drawRows(); refresh();
+  }
+
   function drawRows() {
     rowsBox.textContent = '';
     uis = [];
@@ -305,7 +313,23 @@
         more.push(rideButton('Add TNVS to the airport', i, { mode: 'tnvs', receipt: 'receipt', to: 'Airport' }));
         more.push(rideButton('Add TNVS from the airport', i, { mode: 'tnvs', receipt: 'receipt', from: 'Airport' }));
       }
-      box.appendChild(el('div', { 'class': 'tv-row-wide tv-row-actions' }, more.concat([rm])));
+      var up = el('button', { type: 'button', 'class': 'btn ghost small', text: 'Move up', 'aria-label': 'Move entry ' + (i + 1) + ' up' });
+      var down = el('button', { type: 'button', 'class': 'btn ghost small', text: 'Move down', 'aria-label': 'Move entry ' + (i + 1) + ' down' });
+      up.disabled = i === 0; down.disabled = i === state.rows.length - 1;
+      up.addEventListener('click', function () { moveRow(i, i - 1); });
+      down.addEventListener('click', function () { moveRow(i, i + 1); });
+      var grip = el('span', { 'class': 'tv-grip', draggable: 'true', title: 'Drag to move this entry', text: '\u2807 Drag' });
+      grip.addEventListener('dragstart', function (e) {
+        dragFrom = i;
+        e.dataTransfer.effectAllowed = 'move';
+        try { e.dataTransfer.setData('text/plain', String(i)); e.dataTransfer.setDragImage(box, 20, 20); } catch (x) { /* older browsers */ }
+      });
+      grip.addEventListener('dragend', function () { dragFrom = -1; rowsBox.querySelectorAll('.tv-drop').forEach(function (n) { n.classList.remove('tv-drop'); }); });
+      box.addEventListener('dragover', function (e) { if (dragFrom < 0) return; e.preventDefault(); box.classList.add('tv-drop'); });
+      box.addEventListener('dragleave', function () { box.classList.remove('tv-drop'); });
+      box.addEventListener('drop', function (e) { if (dragFrom < 0) return; e.preventDefault(); var from = dragFrom; dragFrom = -1; moveRow(from, i); });
+      box.insertBefore(el('div', { 'class': 'tv-row-wide tv-row-head' }, [grip, el('strong', { text: 'Entry ' + (i + 1) })]), box.firstChild);
+      box.appendChild(el('div', { 'class': 'tv-row-wide tv-row-actions' }, more.concat([up, down, rm])));
       rowsBox.appendChild(box);
       uis.push({ cap: capLine, pd: pdLine, pdField: pdField, notes: noteLine, row: r, fields: { fare: fareField, route: routeField, receipt: receiptField, per_diem: pdField } });
     });
@@ -553,9 +577,22 @@
   var addDay = el('button', { type: 'button', 'class': 'btn ghost', text: 'Add itinerary entry' });
   addDay.addEventListener('click', function () { state.rows.push(Object.assign({}, BLANK)); save(); drawRows(); refresh(); });
 
+  var sortDays = el('button', { type: 'button', 'class': 'btn ghost', text: 'Sort by date' });
+  sortDays.addEventListener('click', function () {
+    var keyed = state.rows.map(function (r, i) { return { r: r, i: i }; });
+    keyed.sort(function (a, b) {                       // earliest first; entries with no date go last; the same day keeps its order
+      if (a.r.date === b.r.date) return a.i - b.i;
+      if (!a.r.date) return 1;
+      if (!b.r.date) return -1;
+      return a.r.date < b.r.date ? -1 : 1;
+    });
+    state.rows = keyed.map(function (k) { return k.r; });
+    save(); drawRows(); refresh();
+  });
+
   var T = state.texts, S = state.signatories;
   app.appendChild(ratesPanel());
-  app.appendChild(section('Itinerary of travel', [rowsBox, addDay, totals, breakBox].concat(data.kind === 'liquidation' ? [liqBox] : []).concat([flagsBox,
+  app.appendChild(section('Itinerary of travel', [rowsBox, el('div', { 'class': 'tv-row-actions' }, [addDay, sortDays]), el('p', { 'class': 'tv-hint', text: 'To change the order, drag an entry by its handle, use Move up and Move down, or press Sort by date.' }), totals, breakBox].concat(data.kind === 'liquidation' ? [liqBox] : []).concat([flagsBox,
     field('Purpose (completes "To …")', T.purpose, function (v) { T.purpose = v; }, { wide: true }),
     field('Itinerary number (optional)', T.itinerary_no, function (v) { T.itinerary_no = v; })])));
   if (needs('appendix_b')) {

@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.60"
+APP_VERSION = "7.61"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.61",
+        "date": "October 21, 2026",
+        "summary": "Put the itinerary entries in the order you want.",
+        "changes": [
+            "On the Prepare the forms page, drag an entry by its handle, or use Move up and Move down, to put it where it belongs. Sort by date puts the earliest day first.",
+            "The forms are made with the entries in the order shown."
+        ]
+    },
     {
         "version": "7.60",
         "date": "October 21, 2026",

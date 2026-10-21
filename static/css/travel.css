@@ -95,3 +95,7 @@
 .tv-step-count { font-weight: 400; color: var(--soft); font-size: .8em; }
 .tv-step { scroll-margin-top: 4rem; }
 @media (prefers-color-scheme: dark) { .tv-steps li.done .tv-step-no { background: #2ea043; } }
+
+.tv-row-head { display: flex; align-items: center; gap: .6rem; }
+.tv-grip { cursor: grab; user-select: none; padding: .15rem .5rem; border: 1px dashed var(--line, #d8dde3); border-radius: 6px; font-size: .85rem; }
+.tv-row.tv-drop { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; }
