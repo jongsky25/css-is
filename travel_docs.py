@@ -121,6 +121,7 @@ class DocPayload:
     fields: dict = field(default_factory=dict)
     blocks: dict = field(default_factory=dict)       # name -> [paragraph, ...]
     rows: dict = field(default_factory=dict)         # name -> {"marker": "r_date", "data": [{...}, ...]}
+    extras: dict = field(default_factory=dict)       # options for the relay, e.g. {"file_copy": True} (a DPO's routing page)
     index: int = 1                                   # 1-based position among documents of the same item (CENRR, RER)
     also: tuple = ()                                 # other checklist items this one document also satisfies
 

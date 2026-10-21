@@ -107,7 +107,8 @@ function at_logo_(side) {
 }
 
 // The letterhead every DOH document starts with: the seal, "Republic of the Philippines / DEPARTMENT OF HEALTH / Office of
-// the Secretary" and the Bagong Pilipinas logo. Pictures are 70 pt tall with their own proportions.
+// the Secretary" and the Bagong Pilipinas logo. It is built into the document's real header (spot feedback #157), so it
+// repeats on every page and stays out of the body text. Pictures are 70 pt tall with their own proportions.
 function at_letterhead_(body) {
   const names = ['Republic of the Philippines', 'DEPARTMENT OF HEALTH', 'Office of the Secretary'];
   function fill(container, first) {
@@ -141,6 +142,17 @@ function at_letterhead_(body) {
   });
   const mid = table.getCell(0, 1);
   fill(mid, mid.getChild(0).asParagraph());
+  at_dropLeadingBlank_(body);
+}
+
+// A new header starts with one empty paragraph that would sit above the letterhead. A container always keeps a
+// paragraph at its end, so this is only tried when there is more than one child; if Docs refuses, the blank line stays.
+function at_dropLeadingBlank_(container) {
+  try {
+    if (typeof container.getNumChildren !== 'function' || container.getNumChildren() < 2) return;
+    const first = container.getChild(0);
+    if (first.getType() === DocumentApp.ElementType.PARAGRAPH && first.asParagraph().getText() === '') container.removeChild(first);
+  } catch (e) { /* cosmetic only */ }
 }
 
 // Docs copies the formatting of the paragraph above onto a new one, so one bold line made every line after it bold
@@ -170,7 +182,7 @@ function at_footer_(doc) {
 }
 
 function at_buildDpo_(body, doc) {
-  at_letterhead_(body);
+  at_letterhead_(doc.addHeader());
   at_add_(body, '{{dpo_date}}').setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
   at_add_(body, 'DEPARTMENT PERSONNEL ORDER').setBold(true);
   at_add_(body, 'No. {{dpo_year}} - {{dpo_no}}');
@@ -219,7 +231,7 @@ function at_buildDpo_(body, doc) {
 // SUBJECT, the request, the what / when / where lines, a table of the help asked for, the contact line and an initials block.
 //   {{details}} is a block (the app replaces that line with several); {{a_area}} and {{a_request}} sit in ONE table row.
 function at_buildInvitation_(body, doc) {
-  at_letterhead_(body);
+  at_letterhead_(doc.addHeader());
   at_add_(body, '{{date}}');
   const title = at_add_(body, 'MEMORANDUM');
   title.setBold(true);
@@ -269,7 +281,7 @@ function at_buildInvitation_(body, doc) {
 //   {{background}} {{objectives}} {{outputs}} {{participants}} {{methodology}} are blocks (a prompt or lines the app writes).
 //   {{pd_day}} {{pd_am}} {{pd_pm}} sit in ONE table row: the app copies that row once per day.
 function at_buildConceptNote_(body, doc) {
-  at_letterhead_(body);
+  at_letterhead_(doc.addHeader());
   const heading = at_add_(body, 'CONCEPT NOTE');
   heading.setBold(true);
   heading.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
@@ -317,7 +329,7 @@ function at_buildConceptNote_(body, doc) {
 // The program flow: the activity and one table of Date/Time, Topic/Activity and Person Responsible.
 //   {{pf_time}} {{pf_topic}} {{pf_person}} sit in ONE table row: the app copies it for each day heading and each empty row.
 function at_buildProgramFlow_(body, doc) {
-  at_letterhead_(body);
+  at_letterhead_(doc.addHeader());
   at_add_(body, 'Activity: {{title}}').setBold(true);
   at_add_(body, 'Tentative Program Flow:');
   const table = at_table_(body, [['Date/Time', 'Topic/Activity', 'Person Responsible'], ['{{pf_time}}', '{{pf_topic}}', '{{pf_person}}']]);

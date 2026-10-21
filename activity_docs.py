@@ -238,7 +238,8 @@ def payload(conn, entry, key, user, owner_label="", positions=False) -> td.DocPa
             # "remove" asks the relay to drop the whole Name | Position table; a relay without it leaves one blank row.
             rows["personnel"] = {"marker": "p_name", "data": [{"p_name": "", "p_position": ""}], "remove": True}
             blocks = {"personnel": [""]}
-        return td.DocPayload("dpo", "dpo", f"DPO - {title}"[:120], fields, blocks=blocks, rows=rows)
+        # Spot feedback #158: after the order, a second page without the letterhead, with the routing tables.
+        return td.DocPayload("dpo", "dpo", f"DPO - {title}"[:120], fields, blocks=blocks, rows=rows, extras={"file_copy": True})
     if key == "invitation":
         if entry.get("audience") == "bureau":
             invited = "All personnel of the bureau"
@@ -317,6 +318,13 @@ def _program_flow(entry, title) -> td.DocPayload:
                          rows={"flow": {"marker": "pf_time", "data": data}})
 
 
+# What to tell the person when the order was made but its extra page was not (the relay's "extras" result).
+EXTRAS_WARNINGS = {
+    "docs_service_off": "The extra file-copy page was not added: the Google Docs service is not switched on in the relay script. "
+                        "An administrator can enable it (see ACTIVITY_DOCS_SETUP.md).",
+    "failed": "The extra file-copy page could not be added this time. The order itself is complete; try Draft again, or add the page by hand.",
+}
+
 PLAIN_ERRORS = {
     "template_not_set": "The template for this document has not been set up in Google Docs yet. Ask an administrator to run makeActivityTemplates in the relay script.",
     "not_configured": "Drafting in Google Docs is not switched on yet.",
@@ -341,7 +349,7 @@ def prepare(conn, entry, key, user, owner_label="", relay=None, positions=False)
     share = [user["username"]] if user.get("username") else []
     return Prepared(entry["id"], key, rev, lambda: relay.generate_doc(
         request_id=f"act{entry['id']}:{key}:{rev}", template_key=pl.template_key, folder_key=f"act-{entry['id']}",
-        title=pl.title, fields=pl.fields, blocks=pl.blocks, rows=pl.rows, share_with=share))
+        title=pl.title, fields=pl.fields, blocks=pl.blocks, rows=pl.rows, share_with=share, extras=pl.extras or None))
 
 
 def record(conn, prep, res, user) -> dict:
@@ -355,7 +363,9 @@ def record(conn, prep, res, user) -> dict:
                  "rev=excluded.rev, updated_by=excluded.updated_by, updated_at=excluded.updated_at",
                  (prep.entry_id, prep.key, url or "", "done" if url else "failed", err, prep.rev, user.get("username"), tz.now_iso()))
     conn.commit()
-    return {"ok": bool(url), "url": url or "", "error": err}
+    extras = (res.data or {}).get("extras") if res.ok else ""
+    warning = EXTRAS_WARNINGS.get(extras, "") if url else ""
+    return {"ok": bool(url), "url": url or "", "error": err, "warning": warning}
 
 
 def draft(conn, entry, key, user, owner_label="", relay=None, positions=False) -> dict:
