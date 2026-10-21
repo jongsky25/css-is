@@ -1,3 +1,9 @@
+## 7.66 — October 21, 2026
+
+- Show each rated resource person on the activity rating page, with their own score, rating count and a clickable result link.
+- Link to the combined Type 3 report for the activity while keeping hidden or director profiles subject to the existing visibility rules.
+- Add a link from the Type 3 report to the People page to find other resource persons' results.
+
 ## 7.65 — October 21, 2026
 
 - Add a personal results list to the Type 3 report for staff whose accounts are linked to a resource-person profile, with each activity's score and rating count.

@@ -67,6 +67,7 @@ def test_rp_report_activity_filter(manager, app_mod):
     # The dropdown offers both activities on the Type-3 report.
     body = manager.get("/reports", params={"type": 3}).text
     assert 'name="activity"' in body             # the new filter control exists
+    assert 'href="/dashboard/people">View other resource persons' in body
     a_val = _option_value(body, "RP Filter Alpha")
     b_val = _option_value(body, "RP Filter Bravo")
     assert a_val and b_val, "both activities should appear as filter options"
