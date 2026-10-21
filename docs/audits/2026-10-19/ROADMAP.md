@@ -73,7 +73,7 @@ Total provisional implementation effort: **51–98 person-days** if all listed p
 
 **Owners:** UX/frontend lead and business owners for rooms/calendar, travel and surveys.
 
-- **A16:** repair shared contrast, control sizing, carousel semantics, keyboard scroll access and nested controls. Test desktop/mobile, light/dark theme, zoom, keyboard and one representative screen-reader/browser combination. Then recheck the primary journeys, including errors and dialogs.
+- **A16:** v7.83 delivers the [shared accessibility engineering slice](../../SHARED_ACCESSIBILITY.md): readable muted text, larger controls, valid carousel/search semantics, keyboard scroll access, native companion actions and shared modal focus/background handling. Automated Chromium journeys and pinned local axe evidence cover desktop/mobile, light/dark, text resizing/reflow, errors and open dialogs. The pilot exit gate remains open for real screen-reader/browser sessions, axe incomplete reviews, real zoom/mobile/forced-color checks and staff task observations; no whole-product certification is claimed.
 - **A17:** apply proven status/action patterns to room availability and reservations, calendar changes/feed subscription, travel filing and approvals. Clearly distinguish submitted, approved, scheduled, delivered, failed and canceled states. Validate terminology with staff and preserve calendar deep links and feed behavior.
 - **A18:** improve survey touch controls, error recovery and completion feedback; make reporting scope, date range, sample size and export meaning visible. Reconcile results against the corrected analytics reference dataset.
 

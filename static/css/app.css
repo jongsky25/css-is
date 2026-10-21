@@ -15,7 +15,7 @@
   --bg:#f4f6fa; --surface:#ffffff; --surface-2:#f8fafc; --surface-3:#eef1f6;
   --line:#e2e6ee; --line-strong:#cdd5e1;
   /* text */
-  --ink:#1b2230; --ink-soft:#374151; --soft:#5a6473; --grey:#94a3b8;
+  --ink:#1b2230; --ink-soft:#374151; --soft:#5a6473; --grey:#58677b;
   /* brand / accent — default is the Equity-in-Health logo blue (navy #002060 + bright #1040a0) */
   --accent:#1040a0; --accent-ink:#002060; --accent-bg:#e7edf9; --on-accent:#ffffff;
   /* semantic */
@@ -46,7 +46,7 @@
   color-scheme:dark;
   --bg:#0f1623; --surface:#172132; --surface-2:#1d293b; --surface-3:#243144;
   --line:#2c3a4f; --line-strong:#3b4c66;
-  --ink:#e8edf5; --ink-soft:#c6cfdd; --soft:#9aa7bb; --grey:#6f7d93;
+  --ink:#e8edf5; --ink-soft:#c6cfdd; --soft:#9aa7bb; --grey:#a7b4c6;
   --accent:#6f9be8; --accent-ink:#a9c5f2; --accent-bg:#142036; --on-accent:#0c1420;
   --green:#5fcf93; --green-bg:#112619; --green-ln:#23472f;
   --amber:#e3b566; --amber-bg:#2a2210; --amber-ln:#4c3c18;
@@ -1008,7 +1008,7 @@ body:has(.gsearch.js .gsearch-results:not(:empty)) .sf-float { visibility:hidden
 .oc-search .gsearch { flex:1 1 auto; margin:0; min-width:0; }
 .try-assistant { font-size:.82rem; font-weight:600; color:var(--accent); text-decoration:none;
   padding:.5rem .9rem; border-radius:999px; border:1px solid var(--blue-ln);
-  background:var(--surface-2); white-space:nowrap; align-self:center; }
+  background:var(--surface-2); white-space:normal; max-width:100%; align-self:center; }
 .try-assistant:hover { background:var(--accent-bg); }
 @media (max-width:640px) { .oc-search { flex-direction:column; align-items:stretch; gap:.5rem; }
   .try-assistant { align-self:flex-start; } }
@@ -1100,3 +1100,16 @@ body:has(.gsearch.js .gsearch-results:not(:empty)) .sf-float { visibility:hidden
                  padding:.45rem .9rem; border-radius:999px; z-index:9999; opacity:0;
                  transition:opacity .3s ease, transform .3s ease; pointer-events:none; }
 .offline-toast.show { opacity:1; transform:translate(-50%,0); }
+
+/* Shared keyboard access: a solid indicator survives light/dark and high contrast. */
+:focus-visible:not(input[type="radio"]):not(input[type="checkbox"]) {
+  outline:2px solid var(--accent-ink); outline-offset:3px;
+}
+.na-row { min-height:44px; }
+.na-row input { width:24px; height:24px; flex:0 0 24px; accent-color:var(--accent); }
+.na-row label { display:flex; align-items:center; min-height:44px; padding:0 .35rem; cursor:pointer; }
+.na-row input:focus-visible { outline:2px solid var(--accent-ink); outline-offset:3px; }
+body.a11y-modal-open { overflow:hidden; }
+
+.palette-close { flex:0 0 44px; width:44px; height:44px; border:1px solid var(--line);
+  border-radius:var(--r1); background:var(--surface); color:var(--ink); cursor:pointer; }
