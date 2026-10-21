@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.68"
+APP_VERSION = "7.69"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.69",
+        "date": "October 21, 2026",
+        "summary": "Page styles, scripts and icons load without checking the database.",
+        "changes": [
+            "Loading public styles, scripts and icons no longer repeats account, permission and notification lookups.",
+            "Private photos, signatures and document pages still check your current access.",
+            "Public page files remain available during a database problem."
+        ]
+    },
     {
         "version": "7.68",
         "date": "October 21, 2026",
