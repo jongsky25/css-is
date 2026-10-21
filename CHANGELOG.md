@@ -1,3 +1,10 @@
+## 7.71 — October 21, 2026
+
+- Share wellness/AWA approval counts, document-review counts, document feature state and the three-item work preview between navigation and Home within one request.
+- Reuse the room-approver display lookup across navigation and travel-flag notifications; omit the unused team-link lookup on Home's non-calendar tabs.
+- Keep account/session validation and domain permission, write and scoped-data checks live; bind display reads to one account, copy mutable results and retry failed reads.
+- Add HTTP parity, query-count, concurrent-user, revocation, feature-switch, failure-recovery and write-boundary regressions.
+
 ## 7.70 — October 21, 2026
 
 - Activity documents (DPO, memorandum, concept note): positions are no longer filled in from saved profiles on their own. The Draft button now has a "Fill in positions from saved profiles" checkbox, off by default; without it the position cells are left blank for the person to complete (spot feedback #154).

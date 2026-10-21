@@ -109,17 +109,19 @@ def deliver(conn,base,dry_run=False):
     return count
 
 
-def bell_rows(conn,user_id,today=None):
-    if not d.enabled(conn):
+def bell_rows(conn,user_id,today=None,*,reads=None):
+    if not (reads.documents_enabled(conn, {'id': user_id}) if reads is not None else d.enabled(conn)):
         return []
     import work_inbox
     user = p.actor(conn, {'id': user_id})
-    items, cursor = work_inbox.page(conn, user, limit=3, today=today)
+    today = today or tz.today_local()
+    items, cursor = (reads.work_preview(conn, user, today) if reads is not None else
+                     work_inbox.page(conn, user, limit=3, today=today))
     result = [{'text':item['action'] + ': ' + item['title'], 'url':item['url'], 'count':1}
               for item in items if item['can_act']]
     if cursor:
         result.append({'text':'Browse My work', 'url':'/work/mine', 'count':0})
-    reviews = d.count_visible(conn, user, queue='review')
+    reviews = reads.document_reviews(conn, user) if reads is not None else d.count_visible(conn, user, queue='review')
     if reviews:
         result.append({'text':f'{reviews} document reviews awaiting your decision', 'url':'/approvals', 'count':reviews})
     mentions = rows(conn, '''SELECT x.document_id FROM document_directive x

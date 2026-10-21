@@ -152,10 +152,11 @@ def page(conn, user, before=None, waiting=False, limit=25, today=None):
     return [x[1] for x in found], candidates[-1]['cursor'] if len(candidates)==250 else None
 
 
-def home_rows(conn,user,today=None):
-    if not docs.enabled(conn):
+def home_rows(conn,user,today=None,*,reads=None):
+    if not (reads.documents_enabled(conn, user) if reads is not None else docs.enabled(conn)):
         return []
-    items,cursor=page(conn,user,limit=3,today=today)
+    today = today or tz.today_local()
+    items,cursor = reads.work_preview(conn, user, today) if reads is not None else page(conn,user,limit=3,today=today)
     result=[{'key':item['key'],'icon':'📋','tone':'todo','title':item['title'],
              'detail':item['context']+' · '+item['due_label']+((' · '+item['due_date']) if item['due_date'] else ''),
              'cta':item['action'],'url':item['url']} for item in items if item['can_act']]

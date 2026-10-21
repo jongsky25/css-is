@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.70"
+APP_VERSION = "7.71"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.71",
+        "date": "October 21, 2026",
+        "summary": "Home and the notification bell share their repeated checks.",
+        "changes": [
+            "Home and the bell reuse approval counts, document reviews and your work preview while preparing the same page.",
+            "Room approval links reuse the same membership check within each request.",
+            "Counts and access are checked again on your next request, and actions still check your current permission."
+        ]
+    },
     {
         "version": "7.70",
         "date": "October 21, 2026",
