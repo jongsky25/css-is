@@ -17,18 +17,28 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.69"
+APP_VERSION = "7.70"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "7.69",
+        "version": "7.70",
         "date": "October 21, 2026",
         "summary": "Drafted activity documents no longer fill in positions on their own.",
         "changes": [
             "When you draft a DPO, memorandum or concept note, positions are left blank unless you tick \"Fill in positions from saved profiles\".",
             "New activity templates keep plain text plain, so only titles and signatories are bold.",
             "New activity templates size the logos from the picture's own proportions."
+        ]
+    },
+    {
+        "version": "7.69",
+        "date": "October 21, 2026",
+        "summary": "Page styles, scripts and icons load without checking the database.",
+        "changes": [
+            "Loading public styles, scripts and icons no longer repeats account, permission and notification lookups.",
+            "Private photos, signatures and document pages still check your current access.",
+            "Public page files remain available during a database problem."
         ]
     },
     {

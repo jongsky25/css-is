@@ -8,6 +8,7 @@ import re
 from urllib.parse import urlsplit
 
 from starlette.datastructures import MutableHeaders
+from starlette._utils import get_route_path
 
 
 ENFORCED_CSP = "base-uri 'self'; object-src 'none'; frame-ancestors 'self'"
@@ -57,7 +58,7 @@ def protect_response(scope, raw_headers, status, *, secure_cookies=False):
         # Begin with one day, only this hostname. No preload/includeSubDomains.
         headers.setdefault('Strict-Transport-Security', 'max-age=86400')
 
-    path = scope.get('path', '')
+    path = get_route_path(scope)
     public_asset = (path.startswith('/static/') and
                     scope.get('method') in ('GET', 'HEAD') and
                     status in (200, 206, 304) and 'set-cookie' not in headers)
@@ -86,9 +87,14 @@ class BrowserSecurityMiddleware:
         if scope['type'] != 'http':
             return await self.app(scope, receive, send)
 
+        # Mount dispatch mutates root_path before sending the response. Capture
+        # the application-relative path now so packaged assets and private files
+        # keep the same policy classification before and after dispatch.
+        policy_scope = dict(scope, path=get_route_path(scope), root_path='')
+
         async def protected_send(message):
             if message['type'] == 'http.response.start':
-                protect_response(scope, message['headers'], message['status'],
+                protect_response(policy_scope, message['headers'], message['status'],
                                  secure_cookies=self.secure_cookies())
             await send(message)
 

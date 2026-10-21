@@ -60,6 +60,7 @@ from fastapi.responses import (FileResponse, HTMLResponse, JSONResponse,
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.background import BackgroundTask
+from starlette._utils import get_route_path
 
 import css_is_engine as eng
 import short_links
@@ -1851,6 +1852,11 @@ _PUBLIC_EXACT = {"/room", "/room/", "/room/day", "/seq", "/login", "/logout", "/
                  "/sw.js", "/manifest.webmanifest",
                  "/offsite-backup/ping", "/integrations/gmail/documents"}   # machine callbacks enforce their own authentication
 
+# These responses have no account-dependent content. Keep this narrower than
+# _PUBLIC_*: public surveys, directory photos and machine callbacks still use
+# their normal request/session and handler checks.
+_PUBLIC_ASSET_EXACT = frozenset({"/sw.js", "/manifest.webmanifest", "/favicon.ico"})
+
 
 def _base_url(request):
     """Absolute public origin for QR codes, share/copy links, and email links.
@@ -2035,13 +2041,21 @@ def _notification_items(conn, user, feedback_unread):
 async def _auth_gate(request: Request, call_next):
     """Gate every non-public route behind a valid session, then enforce the
     per-area capability (if any) for the path."""
-    request.state.user = await asyncio.to_thread(_user_from_request, request)
+    request.state.user = None
     request.state.spot_feedback_enabled = False
     request.state.feedback_unread = 0
     request.state.is_chief = False
     request.state.notifications = []
     request.state.notif_count = 0
-    path = request.url.path
+    path = get_route_path(request.scope)
+    # The /static mount serves only packaged public files; its own lookup keeps
+    # missing/traversal paths inside that boundary. Skip session/authority/nav
+    # reads even with a login cookie, while the outer security/metrics wrappers
+    # still cover every response. Unsafe methods retain the origin check below.
+    if (request.method in ("GET", "HEAD")
+            and (path.startswith("/static/") or path in _PUBLIC_ASSET_EXACT)):
+        return await call_next(request)
+    request.state.user = await asyncio.to_thread(_user_from_request, request)
     # Cookie-authenticated writes and public account operations share one
     # browser boundary. _is_public is deliberately NOT a CSRF exemption.
     if (request.method not in SAFE_METHODS
