@@ -672,31 +672,39 @@
 
   var go = el('button', { type: 'button', 'class': 'btn', text: 'Make the forms' });
   if (app.getAttribute('data-has-relay') !== '1') go.disabled = true;
-  app.appendChild(el('div', { 'class': 'tv-card' }, [go, el('p', { 'class': 'tv-hint', text: 'Each form is saved as a Google Doc or Sheet in your Drive. You can open it from the list below and edit any part of it. Rides that need a CENRR or an RER get one sheet each.' }), msgBox, docsList,
+  app.appendChild(el('div', { 'class': 'tv-card' }, [go, el('p', { 'class': 'tv-hint', text: 'Each form is saved as a Google Doc or Sheet in your Drive. You can open it from the list below and edit any part of it. If you change the entries here instead, use Make this form again next to that form. The earlier copy stays in your Drive. Rides that need a CENRR or an RER get one sheet each.' }), msgBox, docsList,
     el('a', { href: data.filing_url, 'class': 'btn ghost', text: 'Continue to checklist' })]));
 
   var timer = null;
-  function drawDocs(items) {
+  function drawDocs(items, busy) {
     docsList.textContent = '';
     items.forEach(function (it) {
       var li = el('li', { 'class': it.state }, [document.createTextNode(it.label + ' ')]);
       if (it.url) li.appendChild(el('a', { href: it.url, target: '_blank', rel: 'noopener', text: 'Open' }));
       if (it.state === 'failed') li.appendChild(document.createTextNode(' ' + (it.error || 'Failed')));
       if (it.state === 'pending') li.appendChild(document.createTextNode(' making…'));
+      if (it.state === 'done' || it.state === 'failed') {
+        // After changing the entries, make just this form again. The earlier copy stays in Drive.
+        var again = el('button', { type: 'button', 'class': 'btn ghost small', text: it.state === 'done' ? 'Make this form again' : 'Try this form again' });
+        again.disabled = !!busy || app.getAttribute('data-has-relay') !== '1';
+        again.addEventListener('click', function () { makeForms(it.code); });
+        li.appendChild(document.createTextNode(' ')); li.appendChild(again);
+      }
       docsList.appendChild(li);
     });
   }
   function poll() {
     fetch(data.status_url, { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (j) {
       if (!j.ok) { msgBox.textContent = j.error || 'Could not check progress.'; return; }
-      drawDocs(j.items);
+      drawDocs(j.items, j.gen_state === 'running');
       if (j.gen_state === 'running') { timer = setTimeout(poll, 2500); return; }
       go.disabled = app.getAttribute('data-has-relay') !== '1';
       msgBox.textContent = j.gen_state === 'idle' ? '' : j.gen_state === 'done' ? 'Done. Open each form, check it, and sign where it says. Every form is a Google Doc or Sheet that you can open and edit, so change anything that is wrong before you sign. Then go back to the filing page.' : 'Some forms did not finish. Each one says why below. Press the button to try again. If it still fails, tell the Admin Unit and give them this reference: ' + data.ref + '.';
     }).catch(function () { timer = setTimeout(poll, 5000); });
   }
-  go.addEventListener('click', function () {
-    go.disabled = true; msgBox.textContent = 'Making the forms…';
+  // `only` is the code of one form to make again; without it every form is made.
+  function makeForms(only) {
+    go.disabled = true; msgBox.textContent = only ? 'Making that form again…' : 'Making the forms…';
     // Keep hidden answers in the browser draft, but never put stale refund or
     // deviation details onto a form when they no longer apply to this claim.
     var texts = Object.assign({}, state.texts);
@@ -705,13 +713,14 @@
       texts.refund_amount = ''; texts.refund_or_no = ''; texts.refund_or_date = '';
     }
     fetch(data.post_url, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rows: state.rows, rates: state.rates, texts: texts, signatories: state.signatories, mc114_text: state.mc114_text }) })
+      body: JSON.stringify({ rows: state.rows, rates: state.rates, texts: texts, signatories: state.signatories, mc114_text: state.mc114_text, codes: only ? [only] : undefined }) })
       .then(function (r) { return r.json().catch(function () { return { ok: false, error: 'The server could not make the forms (code ' + r.status + '). Reload the page and try again.' }; }); }).then(function (j) {
         if (!j.ok) { go.disabled = false; msgBox.textContent = j.error || 'That did not work.'; return; }
         if (j.flags) msgBox.textContent = 'Making the forms… ' + j.flags + ' item(s) go to the Admin Unit to verify.';
         poll();
       }).catch(function () { go.disabled = false; msgBox.textContent = 'No connection to the server. Check your internet and try again.'; });
-  });
+  }
+  go.addEventListener('click', function () { makeForms(); });
 
   drawRows(); refresh(); poll();
 })(typeof window !== 'undefined' ? window : globalThis);
