@@ -28,6 +28,9 @@
 <style>
   .avwrap { display:inline-block; text-align:center; position:relative;
             --av-sway:5s; --av-breathe:3.6s; perspective:700px; }
+  .av-play-btn { display:block; border:0; padding:0; width:100%; background:transparent;
+                 color:inherit; cursor:pointer; border-radius:1rem; }
+  .av-care-btn, .av-sound-btn, .av-explore-btn { min-width:44px; min-height:44px; }
   .avwrap svg { display:block; overflow:visible;
                 filter:drop-shadow(0 8px 6px rgba(20,30,50,.16)); }
   /* Whole-body 3D lean toward the cursor (avatars.js "curiosity" loop sets the
@@ -53,7 +56,7 @@
   .av-bubble { display:inline-block; margin-top:.35rem; font-size:.82rem; font-weight:800;
                color:var(--accent); opacity:0; transition:opacity .15s; min-height:1.1em; }
   .avwrap[data-interactive]:hover .av-bubble,
-  .avwrap[data-interactive]:focus-visible .av-bubble { opacity:1; }
+  .avwrap[data-interactive]:focus-within .av-bubble { opacity:1; }
   .av-bubble.show { opacity:1; }
 
   /* ---- eyes / part groups (art in _avatars_art.html) -------------------- */
@@ -309,7 +312,7 @@
       <stop offset="0" stop-color="#eaf4fa"/><stop offset="1" stop-color="#c2dced"/></linearGradient>
   </defs>
 </svg>
-<script src="/static/js/avatars.js?v=20260925a" defer></script>
+<script src="/static/js/avatars.js?v=7.83" defer></script>
 {% endmacro %}
 
 
@@ -363,13 +366,15 @@
       {% if person %}data-person="{{ person }}"{% endif %}
       {% if care_streak %}data-care-streak="{{ care_streak }}"{% endif %}
       {% if last_care %}data-last-care="{{ last_care }}"{% endif %}
-      {% if interactive %}data-interactive tabindex="0" role="button"
-      aria-label="{{ name or 'Your companion' }} — tap to play"{% else %}aria-hidden="true"{% endif %}
+      {% if interactive %}data-interactive role="group"
+      aria-label="{{ name or 'Your companion' }} controls"{% else %}aria-hidden="true"{% endif %}
       style="width:{{ size }}px;">
+  {% if interactive %}<button type="button" class="av-play-btn" aria-label="Play with {{ name or 'your companion' }}">{% endif %}
   <span class="av-tiltstage" style="display:block;width:{{ size }}px;height:{{ (size * 1.16)|round|int }}px;">
     {{ avatar_svg(kind, stage) }}
   </span>
-  {% if name %}<span class="av-bubble">{{ name }}</span>{% endif %}
+  {% if interactive %}</button>{% endif %}
+  {% if name or interactive %}<span class="av-bubble"{% if interactive %} aria-live="polite" aria-atomic="true"{% endif %}>{{ name }}</span>{% endif %}
   {% if care and interactive %}
   <button type="button" class="av-care-btn" data-care-action="{{ verb }}"
           aria-label="{{ 'Water' if verb == 'water' else 'Feed' }} {{ name or 'your companion' }}">

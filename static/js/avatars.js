@@ -845,6 +845,7 @@
       }, 80);
     }
     w.addEventListener("keydown", function (e) {
+      if (!e.target.closest(".av-play-btn")) return;
       var d = { ArrowLeft: [-8, 0], ArrowRight: [8, 0], ArrowUp: [0, -8], ArrowDown: [0, 8] }[e.key];
       if (!d) return;
       e.preventDefault();

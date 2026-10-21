@@ -17,12 +17,12 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.83"
+APP_VERSION = "7.84"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "7.83",
+        "version": "7.84",
         "date": "October 21, 2026",
         "summary": "The Email page gets a pause button, delivery settings and a searchable send log.",
         "changes": [
@@ -33,6 +33,16 @@ CHANGELOG = [
             "The send log can be searched, filtered and downloaded, and failed emails are flagged.",
             "Administrators can set a sender name, reply-to address and subject prefix, or send all mail to a test address, and can send a test to another staff account.",
         ],
+    },
+    {
+        "version": "7.83",
+        "date": "October 21, 2026",
+        "summary": "Clearer text and easier keyboard and touch controls across shared pages.",
+        "changes": [
+            "Muted text is easier to read in light and dark themes, and survey choices are easier to tap.",
+            "Menus, search, feedback, tours and snapshots keep keyboard focus inside and return it when closed.",
+            "Card views and companion controls have clearer names, larger buttons and separate keyboard actions."
+        ]
     },
     {
         "version": "7.82",

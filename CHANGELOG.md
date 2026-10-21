@@ -1,4 +1,4 @@
-## 7.83 — October 21, 2026
+## 7.84 — October 21, 2026
 
 - Email console (`/admin/email`): add a global **Pause all email** (account mail — invite, reset, registration-link re-send — is never paused; queued room and calendar mail waits and sends after resume; scheduled jobs skip while paused). Audited as `email_pause`.
 - Split conference-room meal alerts into their own `room_meal_alerts` switch (reads the old `room_admin_alerts` value until set, so nothing turns back on). Add attachment options `calendar_ics` and `room_ics`.
@@ -8,6 +8,14 @@
 - Delivery policy (applies to all mail, account mail included): staging redirect address, sender name, reply-to, subject prefix. Reply-to needs the updated `apps_script/mail_relay.gs` (redeploy). Test-send can target another active account picked from a list.
 - `tests/test_email_coverage.py` fails when a new direct `mailer.send` call, an uncatalogued feature key or an unused catalog entry appears.
 - Not changed: birthday greetings still have no per-person opt-out (a documented decision), birthday and daily-job send times follow the single daily sweep, and message wording is still not editable.
+
+## 7.83 — October 21, 2026
+
+- Deliver the A16 shared accessibility engineering slice: readable muted text, theme-aware Wellness buttons, solid keyboard focus indicators, larger survey N/A and carousel controls, keyboard-scrollable growth stages and separate native avatar actions.
+- Share modal focus containment, background isolation, Escape dismissal and focus restoration across the mobile drawer, search, feedback, tours and daily snapshots, including nested overlays and responsive dismissal.
+- Add a search close control, valid single-control search options, keyboard whole-page feedback with announced errors/status, larger CSS hub filters and Home reflow with doubled text.
+- Verify real Chromium keyboard journeys, accessible names/descriptions and native accessibility trees, mobile/desktop layout and no-JavaScript carousel access; record pinned local axe scans of ordinary and open-dialog states.
+- Manual screen-reader/browser sessions, remaining axe incomplete checks, staff task observations and live production testing remain open; this is not whole-product WCAG certification.
 
 ## 7.82 — October 21, 2026
 

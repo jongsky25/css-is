@@ -23,8 +23,11 @@ def review(setup,monkeypatch,tmp_path):
     result=email.ingest(conn,payload())
     other=st.create_admin_user(conn,'unrelated@example.test','hash','salt','viewer',active=True)
     st.mark_onboarded(conn,other)
+    # Initialize through the real session issuer before lifespan starts workers.
+    # Otherwise unrelated background bootstrap can race the first session setup.
+    token=session_token(st.get_admin_user_by_id(conn,uid))
     with TestClient(app.app) as client:
-        client.cookies.set(auth.COOKIE_NAME,session_token(st.get_admin_user_by_id(conn,uid)))
+        client.cookies.set(auth.COOKIE_NAME,token)
         yield conn,uid,result['document_id'],other,client
 
 

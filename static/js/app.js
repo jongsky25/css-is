@@ -88,14 +88,25 @@ window.refreshChipCap = function (container) {
   (function () {
     var tg = document.querySelector("details.nav-toggle");
     if (!tg) return;
+    var releaseMenu = null;
     function closeMenu() {
       if (!tg.open) return;
       tg.removeAttribute("open");
       var dp = tg.querySelector(".mm-disp");
       if (dp) dp.removeAttribute("open");
       var sm = tg.querySelector("summary");
-      if (sm) sm.focus();
+      if (releaseMenu) { releaseMenu(); releaseMenu = null; }
+      else if (sm) sm.focus();
     }
+    tg.addEventListener('toggle', function () {
+      if (tg.open && window.OfficeA11y) {
+        releaseMenu = OfficeA11y.open(tg, { focusRoot: tg.querySelector('.mobile-menu'), allow:[tg.querySelector('.mm-backdrop')],
+          initialFocus: '.mm-close', returnFocus: tg.querySelector('summary'), onDismiss: closeMenu });
+      } else if (releaseMenu) { releaseMenu(); releaseMenu = null; }
+    });
+    window.addEventListener('resize', function () {
+      if (tg.open && getComputedStyle(tg).display === 'none') closeMenu();
+    });
     tg.addEventListener("click", function (e) {
       if (e.target.closest("[data-mm-close]")) closeMenu();
     });
@@ -930,7 +941,6 @@ window.cssToast = window.cssToast || function (msg) {
       row.className = "sv-row";
       var go = document.createElement("a");
       go.className = "sv-go"; go.href = v.url; go.textContent = v.name;
-      go.setAttribute("role", "menuitem");
       var del = document.createElement("button");
       del.type = "button"; del.className = "sv-del"; del.textContent = "×";
       del.title = "Remove this saved view";
@@ -977,6 +987,7 @@ window.cssToast = window.cssToast || function (msg) {
   toggleBtn.addEventListener("click", function () {
     var open = menu.hidden;
     menu.hidden = !open;
+    if (open) { var first = menu.querySelector("a,button"); if (first) first.focus(); }
     toggleBtn.setAttribute("aria-expanded", open ? "true" : "false");
   });
 
@@ -984,7 +995,7 @@ window.cssToast = window.cssToast || function (msg) {
     if (!box.contains(e.target)) closeMenu();
   });
   document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape") closeMenu();
+    if (e.key === "Escape" && !menu.hidden) { closeMenu(); toggleBtn.focus(); }
   });
 
   renderMenu();

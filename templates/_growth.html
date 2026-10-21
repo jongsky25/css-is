@@ -51,7 +51,7 @@
      `stats` from wellness_stats. --#}
 {% macro growth(kind, ladder, how, stats, pet_name="") %}
 <div class="gl">
-  <div class="gl-strip" role="list"
+  <div class="gl-strip" role="list" tabindex="0"
        aria-label="Growth stages for {{ pet_name or 'your companion' }}">
     {% for s in ladder %}
     <div class="gl-step {{ 'current' if s.current else ('locked' if not s.reached else '') }}"
