@@ -1,0 +1,20 @@
+{% extends 'supplies/base.html' %}
+{% block supplies_content %}
+<h1>Stock workbook previews</h1>
+<p>Compare the summary with individual stock cards before reconciling opening balances. Uploading a workbook creates preview evidence only; stock remains unchanged.</p>
+{% if can_maintain and enabled %}
+<section class="supply-panel"><h2>Preview workbook</h2>
+<form method="post" action="/supplies/import/preview" enctype="multipart/form-data">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}">
+<label for="stock-workbook">Stock-card workbook (XLSX, up to 8 MiB)</label><input id="stock-workbook" name="workbook" type="file" accept=".xlsx" required>
+<p>The workbook must contain the summary and individual stock cards. Formulas, macros, and links are never run.</p>
+<button type="submit">Preview workbook</button>
+</form></section>
+{% endif %}
+<section class="supply-panel"><h2>Saved previews</h2>
+<div class="supply-table" role="region" aria-label="Saved workbook previews" tabindex="0"><table><caption>Uploaded workbook evidence</caption><thead><tr><th scope="col">Workbook</th><th scope="col">Previewed</th><th scope="col">Stage</th></tr></thead><tbody>
+{% for batch in batches %}<tr><td><a href="/supplies/import/{{ batch.id }}">{{ batch.filename }}</a></td><td>{{ batch.created_at }}</td><td>{{ batch.status|capitalize }}</td></tr>{% else %}<tr><td colspan="3">No workbooks have been previewed.</td></tr>{% endfor %}
+</tbody></table></div>
+<nav class="supply-actions" aria-label="Preview history pages">{% if page > 1 %}<a href="/supplies/import?page={{ page-1 }}">Previous page</a>{% endif %}<span>Page {{ page }}</span>{% if has_next %}<a href="/supplies/import?page={{ page+1 }}">Next page</a>{% endif %}</nav>
+</section>
+{% endblock %}

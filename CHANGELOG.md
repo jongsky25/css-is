@@ -1,3 +1,10 @@
+## 7.78 — October 21, 2026
+
+- Add the Supplies module through S3.2: independent role grants and default-off access, catalog, immutable ledger, reviewed opening import and stock receipts.
+- Support staff drafts, scoped approval and reservations, awaiting-stock tracking, reasoned remainder cancellation and numbered partial/full releases.
+- Record recipient acknowledgment/dispute and attributed paper evidence; print submitted request and release forms on A4 with separate release dates and blank signatures.
+- Preserve current main's changes and release history; no live stock import or operational role configuration is performed by installation.
+
 ## 7.77 — October 21, 2026
 
 - Real header and a file-copy page (spot feedback #157, #158): the letterhead (seal, Bagong Pilipinas logo and the three-line name) is built into the document's header by `activity_templates.gs` for all four templates, instead of the first table in the body (this also keeps the relay's title-casing from touching "DEPARTMENT OF HEALTH"). A DPO request now carries `extras: {"file_copy": true}`; the relay (`travel_docs.gs` `addFileCopy_`) appends the order's content again after a new section with its own empty header and footer, then two plain tables: BLHSD / Initials / Date, and Keywords / Related issuances, laws, directives. The section change uses the Google Docs advanced service in the relay's Apps Script project. Without it, or if Google refuses, the order is still made, the relay answers `extras: docs_service_off` or `failed`, and the draft message says the extra page is missing. An older relay ignores `extras`. Setup is in `docs/ACTIVITY_DOCS_SETUP.md`: replace `activity_templates` and `travel_docs`, enable the Docs service, deploy a new web-app version and run `rebuildActivityTemplates()`.

@@ -1,0 +1,46 @@
+{% extends 'supplies/base.html' %}
+{% from 'supplies/_fields.html' import item_fields %}
+{% block supplies_content %}
+<h1>{{ item.description }}</h1>
+<p>{{ item.code }} · {{ item.unit }} · {{ 'Active' if item.active else 'Inactive' }}</p>
+<p>Critical level: {{ item.critical_level }}. Target level: {{ item.target_level if item.target_level is not none else 'Not set' }}.</p>
+{% if totals.recorded %}<p class="supply-notice"><strong>On hand: {{ totals.on_hand }} {{ item.unit }}</strong> · Reserved: {{ availability.reserved_quantity }} · Available: {{ availability.available }}</p>
+{% else %}<p class="supply-notice">Stock balances are not yet recorded for this item.</p>{% endif %}
+{% if can_maintain and enabled and item.active and not totals.recorded %}
+<section class="supply-panel"><h2>Record opening stock</h2>
+<p>Enter the reviewed physical count. An opening can be recorded once, before any other stock posting for this item.</p>
+<form method="post" action="/supplies/items/{{ item.id }}/opening">
+  <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}"><input type="hidden" name="revision" value="{{ item.revision }}">
+  <div class="supply-fields"><label>Opening quantity ({{ item.unit }})<input name="quantity" type="number" min="0" max="2147483647" step="1" required value="{{ submitted.get('quantity', '') }}"></label>
+  <div><label for="opening-date">Physical-count date</label><input id="opening-date" type="date" name="effective_date" required max="{{ today }}" value="{{ submitted.get('effective_date', today) }}"></div></div>
+  <label>Physical-count basis<textarea name="reason" required maxlength="2000">{{ submitted.get('reason', '') }}</textarea></label>
+  <button type="submit">Post opening stock</button>
+</form></section>
+{% endif %}
+{% if card %}
+<section class="supply-panel"><h2>Stock card</h2>
+<p>Running balances follow posting order. The effective date records when the count or receipt took place.</p>
+<div class="supply-table" role="region" aria-label="Stock card" tabindex="0"><table><caption>Posted movements for {{ item.code }}</caption>
+<thead><tr><th scope="col">Posting</th><th scope="col">Effective date</th><th scope="col">Transaction</th><th scope="col">Quantity</th><th scope="col">Balance</th><th scope="col">References</th><th scope="col">Recorded by</th></tr></thead><tbody>
+{% for movement in card.movements %}<tr><td>{{ movement.id }}<br>{{ movement.posted_at }}</td><td>{{ movement.effective_date }}</td><td>{{ movement.kind|capitalize }}<br>{{ movement.code_snapshot }} · {{ movement.unit_snapshot }}{% if movement.reason %}<br>{{ movement.reason }}{% endif %}</td><td>{{ '+' if movement.quantity_delta >= 0 else '' }}{{ movement.quantity_delta }}</td><td>{{ movement.balance }}</td><td>{% if movement.receipt_line_id %}<a href="/supplies/receipts/{{ movement.source_id }}">Receipt {{ movement.source_id }}</a><br>{{ movement.supplier }}{% if movement.dr_number %}<br>DR: {{ movement.dr_number }}{% endif %}<br>Unit cost: {{ movement.unit_cost if movement.unit_cost is not none else 'Not recorded' }}{% if movement.expiry_date %}<br>Expiry: {{ movement.expiry_date }}{% endif %}{% else %}Physical count{% endif %}</td><td>{{ movement.actor_snapshot }}</td></tr>
+{% else %}<tr><td colspan="7">No stock movements have been recorded.</td></tr>{% endfor %}</tbody></table></div>
+<nav class="supply-actions" aria-label="Stock card pages">{% if card.page > 1 %}<a href="/supplies/items/{{ item.id }}?page={{ card.page - 1 }}">Previous page</a>{% endif %}<span>Page {{ card.page }}</span>{% if card.has_next %}<a href="/supplies/items/{{ item.id }}?page={{ card.page + 1 }}">Next page</a>{% endif %}</nav>
+</section>
+{% endif %}
+{% if can_maintain and enabled %}
+<section class="supply-panel"><h2>Edit item</h2>
+<form method="post" action="/supplies/items/{{ item.id }}/update">
+  <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}">
+  <input type="hidden" name="revision" value="{{ submitted.get('revision', item.revision) }}">
+  {{ item_fields(submitted if submitted and 'code' in submitted else item) }}<button type="submit">Save item</button>
+</form></section>
+{% if item.active %}<section class="supply-panel"><h2>Deactivate item</h2>
+<p>Inactive items leave the staff catalog. Custodians and auditors retain access to their history.</p>
+<form method="post" action="/supplies/items/{{ item.id }}/deactivate">
+  <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}"><input type="hidden" name="revision" value="{{ item.revision }}">
+  <label>Reason<textarea name="reason" maxlength="2000" required>{{ submitted.get('reason', '') }}</textarea></label>
+  <button type="submit">Deactivate item</button>
+</form></section>{% endif %}
+{% endif %}
+{% if events %}<section class="supply-panel"><h2>Recent item history</h2><ol>{% for event in events %}<li>{{ event.created_at }} · {{ {'item_create':'Item added','item_update':'Item updated','item_deactivate':'Item deactivated','opening_post':'Opening stock posted'}.get(event.action, event.action) }} · {{ event.username }}</li>{% endfor %}</ol></section>{% endif %}
+{% endblock %}

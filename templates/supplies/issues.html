@@ -1,0 +1,5 @@
+{% extends 'supplies/base.html' %}{% block supplies_content %}
+<h1>Supply releases</h1><p>Posted handovers you can access.</p>
+{% if releases %}<ul>{% for release in releases %}<li><a href="/supplies/issues/{{ release.id }}">{{ release.release_number }}</a> · {{ release.control_number }} · {{ release.effective_date|humandate }} · {{ release.recipient_snapshot }} · {{ release.acknowledgment_status|capitalize }}</li>{% endfor %}</ul>{% else %}<p>No supply releases are available to you.</p>{% endif %}
+<nav class="supply-actions" aria-label="Release pages">{% if page>1 %}<a href="?page={{ page-1 }}">Previous</a>{% endif %}<span>Page {{ page }}</span>{% if has_next %}<a href="?page={{ page+1 }}">Next</a>{% endif %}</nav>
+{% endblock %}

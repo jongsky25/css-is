@@ -1,0 +1,25 @@
+{% extends 'supplies/base.html' %}
+{% from 'supplies/_fields.html' import item_fields %}
+{% block supplies_content %}
+<h1>Supply catalog</h1>
+<p>Office supplies, their units of measure, and recorded stock on hand.</p>
+<form method="get" action="/supplies/items" class="supply-actions">
+  <label>Search items<input name="q" value="{{ query }}" maxlength="200" type="search"></label>
+  {% if can_maintain or can_audit %}<label class="supply-check"><input type="checkbox" name="inactive" value="1" {% if include_inactive %}checked{% endif %}> Include inactive items</label>{% endif %}
+  <button type="submit">Search</button>
+</form>
+<p>{{ count }} item{{ '' if count == 1 else 's' }} found.</p>
+<div class="supply-table" role="region" aria-label="Supply items" tabindex="0">
+<table><caption>Supply items, stock on hand, and thresholds</caption><thead><tr><th scope="col">Code</th><th scope="col">Description</th><th scope="col">Unit</th><th scope="col">On hand</th><th scope="col">Critical level</th><th scope="col">Target level</th><th scope="col">Status</th></tr></thead>
+<tbody>{% for item in items %}<tr><td><a href="/supplies/items/{{ item.id }}">{{ item.code }}</a></td><td>{{ item.description }}</td><td>{{ item.unit }}</td><td>{{ item.on_hand if item.movement_count else 'Not recorded' }}</td><td>{{ item.critical_level }}</td><td>{{ item.target_level if item.target_level is not none else 'Not set' }}</td><td>{{ 'Active' if item.active else 'Inactive' }}</td></tr>
+{% else %}<tr><td colspan="7">No supply items match this search.</td></tr>{% endfor %}</tbody></table>
+</div>
+<nav class="supply-actions" aria-label="Catalog pages">{% if page > 1 %}<a href="{{ page_url(page - 1) }}">Previous page</a>{% endif %}<span>Page {{ page }}</span>{% if has_next %}<a href="{{ page_url(page + 1) }}">Next page</a>{% endif %}</nav>
+{% if can_maintain and enabled %}
+<section class="supply-panel"><h2>Add supply item</h2>
+<form method="post" action="/supplies/items">
+  <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}">
+  {{ item_fields(submitted) }}<button type="submit">Add item</button>
+</form></section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends 'supplies/base.html' %}
+{% block supplies_content %}
+<h1>Supply requests awaiting stock</h1>
+<p>Approved shortages you can access, shown in approval order. A request may have some stock reserved while other quantities await delivery.</p>
+{% if can_maintain and enabled %}<form method="post" action="/supplies/allocations/refresh"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}"><button type="submit">Refresh reservations</button></form>{% endif %}
+{% if shortages %}<div class="supply-table" role="region" aria-label="Approved supply shortages" tabindex="0"><table><thead><tr><th scope="col">Request / requester</th><th scope="col">Item</th><th scope="col">Approved</th><th scope="col">Reserved</th><th scope="col">Awaiting stock</th><th scope="col">Unit</th></tr></thead><tbody>
+{% for line in shortages %}<tr><td><a href="/supplies/requests/{{ line.request_id }}">{{ line.control_number }}</a><br>{{ line.requester_snapshot }} · {{ line.request_unit_snapshot }}</td><td>{{ line.code_snapshot }} · {{ line.description_snapshot }}</td><td>{{ line.approved_quantity }}</td><td>{{ line.reserved_quantity }}</td><td>{{ line.awaiting_stock_quantity }}</td><td>{{ line.unit_snapshot }}</td></tr>{% endfor %}</tbody></table></div>
+<ul class="supply-mobile-quantities" aria-label="Shortages by item">{% for line in shortages %}<li><a href="/supplies/requests/{{ line.request_id }}">{{ line.control_number }}</a> · {{ line.code_snapshot }}: reserved {{ line.reserved_quantity }} {{ line.unit_snapshot }}; awaiting stock {{ line.awaiting_stock_quantity }}.</li>{% endfor %}</ul>
+{% else %}<p>No approved shortages in the requests you can access.</p>{% endif %}
+<nav class="supply-actions" aria-label="Shortage pages">{% if page>1 %}<a href="?page={{ page-1 }}">Previous</a>{% endif %}<span>Page {{ page }}</span>{% if has_next %}<a href="?page={{ page+1 }}">Next</a>{% endif %}</nav>
+{% endblock %}
