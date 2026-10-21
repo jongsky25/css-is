@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.62"
+APP_VERSION = "7.63"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.63",
+        "date": "October 21, 2026",
+        "summary": "Make one travel form again after you change the entries.",
+        "changes": [
+            "Each form in the list on the Prepare the forms page now has a Make this form again button, so you can change an entry and remake just that form instead of all of them.",
+            "The earlier copy stays in your Drive, and the page now says so."
+        ]
+    },
     {
         "version": "7.62",
         "date": "October 21, 2026",
