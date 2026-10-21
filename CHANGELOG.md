@@ -1,7 +1,19 @@
-## 7.64 — October 21, 2026
+## 7.66 — October 21, 2026
 
 - Travel Prepare page: a "Your designation (shown on the forms)" field, prefilled from the profile and kept in the browser draft with the signatories. It is sent as `traveler_title` and used for the designation on every form; blank falls back to the profile (spot feedback #150-152, designation part). 
 - Travel forms (relay `travel_docs.gs`): after each form is filled it is set to Times New Roman 12, paragraphs of 60 characters or more that are left-aligned are justified (tables too), and titles (short bold lines with no full stop, comma, colon or brackets, either centred, all capitals or headings) are bold and in Title Case, keeping acronyms such as DPO, CENRR and RER. Sheets get the font, size and titles; Google Sheets cannot justify. Replace `travel_docs` in the Apps Script project to apply it. No template rebuild (spot feedback #150-152).
+
+## 7.65 — October 21, 2026
+
+- Add a personal results list to the Type 3 report for staff whose accounts are linked to a resource-person profile, with each activity's score and rating count.
+- Selecting an activity narrows that personal list and opens the existing per-activity scorecard for detailed ratings, comments and downloads.
+
+## 7.64 — October 21, 2026
+
+- Replace model-authored survey answers with validated fact selections and server-rendered figures; fixed answers skip the extra AI call.
+- Calculate simple differences on the server, show source labels and periods, and reject invented, changed or incompatible facts.
+- Recheck the current session and AI switches after provider calls; preserve resource-person opt-in and search fallback.
+- Exclude missing and invalid ratings from Home satisfaction totals and broader survey facts.
 
 ## 7.63 — October 21, 2026
 

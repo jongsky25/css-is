@@ -17,18 +17,38 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.64"
+APP_VERSION = "7.66"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "7.64",
+        "version": "7.66",
         "date": "October 21, 2026",
         "summary": "Confirm your designation when you prepare the travel forms, and every form now has the same look.",
         "changes": [
             "Every travel form is made in Times New Roman 12, with body text justified and titles in bold with a capital letter on each main word.",
             "The Prepare the forms page now asks for your designation, filled in from your profile when you have one, so it is on every form that shows it (CENRR, RER, Appendix B, the justification, the report and the rest).",
             "If your profile has no designation, type it once on this page instead of finding the blank on each form afterwards."
+        ]
+    },
+    {
+        "version": "7.65",
+        "date": "October 21, 2026",
+        "summary": "See your resource-person results by activity on the Type 3 report.",
+        "changes": [
+            "Staff with a linked profile can see their own score and rating count for each activity on the Resource Person report.",
+            "Choose an activity to find your result for it, then open your scorecard for the detailed ratings and comments."
+        ]
+    },
+    {
+        "version": "7.64",
+        "date": "October 21, 2026",
+        "summary": "AI survey answers use checked system facts and calculations.",
+        "changes": [
+            "Survey answers show figures from the system instead of numbers written by the AI.",
+            "Broader answers identify the figures and periods used, and simple comparisons are calculated by the system.",
+            "If the facts or your access change while an answer is prepared, normal search is used instead.",
+            "Satisfaction totals exclude missing and invalid ratings."
         ]
     },
     {

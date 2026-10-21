@@ -51,7 +51,7 @@ Total provisional implementation effort: **51–98 person-days** if all listed p
 - **A09:** repair null/NaN analytics and MRR narrative issues against a documented reference dataset. Verify browser/export agreement and handling of small samples.
 - **A10:** make fixtures/date handling deterministic, repair preflight/smoke harnesses, and require tests before promotion. Exercise deployment-runtime parity, backup checks and rollback.
 - **A11:** stop automatic ambiguous write replay; introduce durable idempotency/status handling for priority mutations and update the installed service worker.
-- **A12:** protect the optional AI grounded-answer path immediately: keep official numeric answers deterministic or validate structured facts independently. Do not expand that mode until evaluation gates exist.
+- **A12:** v7.64 replaces model-authored survey answers with independently validated selections of server-owned facts and arithmetic; see [the contract and regression coverage](../../VERIFIED_AI_ANSWERS.md). Fixed answers stay deterministic. Unsupported claims, stale selections, access revocation and provider failures fall back. Broader AI expansion still depends on A22 evaluation gates.
 
 **Release slices:** these packages can ship in reviewed groups; they do not need one simultaneous release. Security containment stays enabled throughout. Use required focused regressions from the first patch; expand to a fully green suite as fixture and application failures are resolved. A known failing test must have an explicit diagnosis and owner rather than an undocumented blanket skip.
 

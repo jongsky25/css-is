@@ -72,7 +72,7 @@ RUNTIME_PY = [
     "name_cleanup.py", "apply_speakers.py", "harmonize.py", "activity_admin.py",
     "activity_messages.py", "reg_questions.py", "certificate.py", "ratelimit.py", "i18n.py",
     "realtime.py", "short_links.py",
-    "tours.py", "ui_telemetry.py", "ux_handoff.py", "ai_core.py", "qa_rules.py",
+    "tours.py", "ui_telemetry.py", "ux_handoff.py", "ai_core.py", "ai_facts.py", "qa_rules.py",
     "wellness_register.py", "work_arrangement_annex.py",
     "work_arrangement_backfill.py", "office_connect.py",
     "work.py", "work_inbox.py", "work_intake.py", "work_readiness.py", "work_discussion.py", "work_updates.py", "work_digests.py", "work_blockers.py", "work_decisions.py", "work_handoff.py", "work_team.py", "work_support.py", "work_review.py", "work_completion.py", "work_routes.py", "work_compat.py", "work_tasks.py", "work_storage.py",

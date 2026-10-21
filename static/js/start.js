@@ -17,7 +17,7 @@
   if (!form || !input || !results || !window.CSSAssistant) return;
 
   // Server-side timeout is 8s per model call (ai_core.ask default). The
-  // "maximize" answer engine makes a SECOND grounded call after the router, so
+  // "maximize" broader lookups make a SECOND fact-selection call after the router, so
   // that page gets a longer client budget before it degrades to the keyword
   // palette; every other mode keeps the snappy 9s. Either way a timeout just
   // shows the palette — never an error.
