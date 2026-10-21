@@ -5,6 +5,7 @@ import json
 import pathlib
 import shutil
 import subprocess
+from types import SimpleNamespace
 import httpx
 import pytest
 import documents_workspace as ws
@@ -137,3 +138,54 @@ def test_decoded_metadata_limit_applies_to_compressed_response(relay_env,monkeyp
     with pytest.raises(ws.WorkspaceError) as caught:
         ws.WorkspaceRelay().call('intake_list',{'actor_id':1},'op')
     assert caught.value.code=='response_too_large'
+
+
+def test_redirect_uses_remaining_call_budget_and_explicit_phase_timeouts(relay_env, monkeypatch):
+    clock, calls = [0.0], []
+    monkeypatch.setattr(ws, 'time', SimpleNamespace(monotonic=lambda: clock[0]))
+    def handle(request):
+        calls.append((request.method, request.extensions['timeout']))
+        if request.method == 'POST':
+            clock[0] = ws.CALL_SECONDS - 1
+            return httpx.Response(302, headers={'Location': 'https://script.googleusercontent.com/result'})
+        return httpx.Response(200, json={'ok': True, 'operation_id': 'op', 'state': 'confirmed'})
+    transport(monkeypatch, handle)
+    assert ws.WorkspaceRelay().call('dispatch', {}, 'op')['state'] == 'confirmed'
+    assert [method for method, _ in calls] == ['POST', 'GET']
+    assert calls[0][1] == {'connect': 10, 'read': 90, 'write': 90, 'pool': 10}
+    assert calls[1][1] == {'connect': 1, 'read': 1, 'write': 1, 'pool': 1}
+
+
+def test_exhausted_call_budget_does_not_follow_redirect_or_repeat_post(relay_env, monkeypatch):
+    clock, calls = [0.0], []
+    monkeypatch.setattr(ws, 'time', SimpleNamespace(monotonic=lambda: clock[0]))
+    def handle(request):
+        calls.append(request.method)
+        clock[0] = ws.CALL_SECONDS + 1
+        return httpx.Response(302, headers={'Location': 'https://script.googleusercontent.com/result'})
+    transport(monkeypatch, handle)
+    with pytest.raises(ws.WorkspaceError) as caught:
+        ws.WorkspaceRelay().call('dispatch', {}, 'op')
+    assert caught.value.code == 'timeout'
+    assert calls == ['POST']
+
+
+def test_trickled_response_cannot_keep_resetting_the_elapsed_budget(relay_env, monkeypatch):
+    clock, calls, closed = [0.0], [], []
+    monkeypatch.setattr(ws, 'time', SimpleNamespace(monotonic=lambda: clock[0]))
+    class SlowStream(httpx.SyncByteStream):
+        def __iter__(self):
+            for _ in range(10):
+                clock[0] += ws.CALL_SECONDS / 2 + 1
+                yield b' '
+        def close(self):
+            closed.append(True)
+    def handle(request):
+        calls.append(request.method)
+        return httpx.Response(200, stream=SlowStream())
+    transport(monkeypatch, handle)
+    with pytest.raises(ws.WorkspaceError) as caught:
+        ws.WorkspaceRelay().call('extract', {}, 'op')
+    assert caught.value.code == 'timeout'
+    assert clock[0] < ws.CALL_SECONDS * 2
+    assert calls == ['POST'] and closed == [True]

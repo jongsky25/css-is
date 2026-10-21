@@ -7,6 +7,7 @@ import documents as d
 import documents_permissions as p
 import documents_intake as intake
 import documents_gmail_settings as gmail_settings
+import documents_external as external
 from documents_routes import csrf
 from documents_storage import rows
 import tzutil as tz
@@ -186,6 +187,11 @@ def make_router(templates,get_conn):
         except (ValueError,p.Denied) as exc: return HTMLResponse(str(exc),status_code=403 if isinstance(exc,p.Denied) else 400)
         # OCR and Drive checks execute off the event loop, with a connection owned
         # by that worker thread. No SQLite transaction spans external I/O.
+        if data.get('action') in ('extract', 'reread'):
+            try:
+                return await external.run(handle, request, item_id, data)
+            except (external.Busy, external.Unconfirmed) as exc:
+                return external.failure_response(request, f'/documents/intake/{item_id}', exc)
         return await asyncio.to_thread(handle,request,item_id,data)
 
     return router

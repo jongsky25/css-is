@@ -9,6 +9,8 @@ import base64
 import json
 import re
 import uuid
+import threading
+from contextlib import contextmanager
 from urllib.parse import urlparse
 import storage as st
 import tzutil as tz
@@ -19,6 +21,28 @@ from documents_storage import rows, transaction, event
 
 
 from documents_workspace import WorkspaceRelay, Unconfigured
+
+
+_ACTIVE_OPERATIONS = set()
+_ACTIVE_LOCK = threading.Lock()
+
+
+@contextmanager
+def exclusive_operation(operation):
+    """Keep live execution and reconciliation from racing in this process.
+
+    The durable job/relay receipt remains the recovery source after restart.
+    This guard is deliberately not a cross-process lease or recovery worker.
+    """
+    with _ACTIVE_LOCK:
+        if operation in _ACTIVE_OPERATIONS:
+            raise d.Conflict('This operation is still in progress. Wait and check its status again.')
+        _ACTIVE_OPERATIONS.add(operation)
+    try:
+        yield
+    finally:
+        with _ACTIVE_LOCK:
+            _ACTIVE_OPERATIONS.remove(operation)
 
 
 def validate_drive_url(value):
@@ -228,6 +252,11 @@ def record_dispatch(conn,user,doc_id,revision,data,adapter=None):
 
 
 def execute(conn,operation,adapter=None,*,reconcile=False):
+    with exclusive_operation(operation):
+        return _execute(conn, operation, adapter, reconcile=reconcile)
+
+
+def _execute(conn,operation,adapter=None,*,reconcile=False):
     adapter=adapter or get_adapter()
     transient={}
     with transaction(conn):
@@ -307,6 +336,11 @@ def sanitize_extraction(result):
 
 
 def reconcile(conn,user,operation,outcome,evidence):
+    with exclusive_operation(operation):
+        return _reconcile(conn, user, operation, outcome, evidence)
+
+
+def _reconcile(conn,user,operation,outcome,evidence):
     with transaction(conn):
         d.writable(conn); user=p.actor(conn,user)
         job=rows(conn,'SELECT * FROM document_job WHERE id=?',(operation,))

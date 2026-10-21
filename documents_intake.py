@@ -483,7 +483,8 @@ def sync_failure(exc, phase):
             'response_too_large':'The Docs relay returned too much metadata. Check the deployed listing operation and page size.',
             'bad_request':'The deployed Docs relay rejected the intake request format. Check that both Docs script files are the matching updated versions.',
             'unconfirmed':'The deployed Docs script could not complete the listing. Check its web-app execution permissions and execution log; an editor test alone does not verify the deployed version.',
-            'busy':'The Docs relay is busy. Retry the Drive check shortly.'}
+            'busy':'The Docs relay is busy. Retry the Drive check shortly.',
+            'timeout':'The Docs relay did not confirm the result in time. Check its execution log and operation status before retrying.'}
         if exc.code in messages:
             return messages[exc.code]+' ['+exc.code+']'
     if isinstance(exc, (httpx.TimeoutException, TimeoutError)):

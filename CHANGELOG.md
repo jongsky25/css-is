@@ -1,3 +1,11 @@
+## 7.73 — October 21, 2026
+
+- Move document action processing and source-preview I/O off the request event loop with SQLite connections owned by their worker threads.
+- Bound covered interactive external work to two workers per process with immediate busy rejection and a 120-second request wait; retain capacity until actual completion after timeout/cancellation.
+- Share an elapsed Workspace call budget across the initial POST, reply redirects and streamed chunks, with explicit HTTP phase timeouts and no POST retries.
+- Prevent active execution, status checks and manual reconciliation from racing over one operation; preserve durable job/relay receipts and sanitize transport errors.
+- Verify same-loop navigation during simulated two-second provider stalls, capacity rejection before job creation, cancellation/timeout receipt settlement, and single-effect dispatch behavior.
+
 ## 7.72 — October 21, 2026
 
 - Share wellness/AWA approval counts, document-review counts, document feature state and the three-item work preview between navigation and Home within one request.
