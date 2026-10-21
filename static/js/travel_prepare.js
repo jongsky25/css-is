@@ -593,6 +593,7 @@
   var T = state.texts, S = state.signatories;
   app.appendChild(ratesPanel());
   app.appendChild(section('Itinerary of travel', [rowsBox, el('div', { 'class': 'tv-row-actions' }, [addDay, sortDays]), el('p', { 'class': 'tv-hint', text: 'To change the order, drag an entry by its handle, use Move up and Move down, or press Sort by date.' }), totals, breakBox].concat(data.kind === 'liquidation' ? [liqBox] : []).concat([flagsBox,
+    field('Your designation (shown on the forms)', S.traveler_title, function (v) { S.traveler_title = v; }, { wide: true }),
     field('Purpose (completes "To …")', T.purpose, function (v) { T.purpose = v; }, { wide: true }),
     field('Itinerary number (optional)', T.itinerary_no, function (v) { T.itinerary_no = v; })])));
   if (needs('appendix_b')) {

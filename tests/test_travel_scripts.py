@@ -95,3 +95,48 @@ def test_the_scripts_use_the_real_sheets_method_names(name):
     """Google's Sheets TextFinder spells it useRegularExpression (no s); the plural is a runtime error."""
     src = (ROOT / "apps_script" / name).read_text()
     assert "useRegularExpressions" not in src
+
+
+@pytest.fixture(scope="module")
+def formatted():
+    if shutil.which("node") is None:
+        pytest.skip("node is not installed")
+    out = subprocess.run(["node", "tests/js/format_harness.js"], capture_output=True, text=True, cwd=ROOT, timeout=60)
+    assert out.returncode == 0, out.stderr
+    return json.loads(out.stdout)
+
+
+def test_titles_are_title_case_and_keep_acronyms_and_initials(formatted):
+    assert formatted["titles"] == [
+        "Certification of Expenses Not Requiring Receipts", "Appendix A", "Itinerary of Travel",
+        "DPO and CENRR for the MC 114 Trip", "June Rose A", "Post-Travel Report", "Appendix 46 Reimbursement Expense Receipt"]
+
+
+def test_only_short_lines_without_sentence_punctuation_count_as_titles(formatted):
+    assert formatted["looks"] == [True, False, False, False, False, False]
+
+
+def test_every_paragraph_is_times_new_roman_12_and_body_text_is_justified(formatted):
+    d = formatted["doc"]
+    assert all(p["font"] == "Times New Roman" and p["size"] == 12 for p in d.values())
+    assert d["body"]["align"] == "justify" and d["cell"]["align"] == "justify"          # tables too
+    assert d["bodyCentered"]["align"] == "center" and d["bodyRight"]["align"] == "right"  # deliberate alignment is kept
+    assert d["short"]["align"] is None                                                   # short lines are left alone
+
+
+def test_titles_are_bold_and_title_case_but_names_and_sentences_are_not_touched(formatted):
+    d = formatted["doc"]
+    assert (d["title"]["text"], d["title"]["bold"], d["title"]["align"]) == ("Post Travel Report", True, "center")
+    assert d["capsLeft"]["text"] == "Certificate of Travel Completed" and d["capsLeft"]["bold"]
+    assert d["heading"]["text"] == "Overview of the Trip"
+    assert d["name"]["text"] == "MAR WYNN D. BELLO, MD, MPA"                              # has punctuation: a name, not a title
+    assert d["sentenceBold"]["text"].startswith("NOTE THAT THIS IS BOLD")
+
+
+def test_sheets_get_the_font_and_titles_but_numbers_and_formulas_are_left(formatted):
+    cells = formatted["sheet"]
+    assert all(c["font"] == "Times New Roman" and c["size"] == 12 for row in cells for c in row)
+    assert cells[0][0]["value"] == "Certification of Expenses Not Requiring Receipts" and cells[0][0]["weight"] == "bold"
+    assert cells[2][0]["value"] == "Total" and cells[2][1]["value"] == 670
+    assert cells[2][2]["value"] == "=SUM(A1)"                                           # a formula is never overwritten
+    assert cells[3][0]["value"] == "MAR WYNN D. BELLO, MD"

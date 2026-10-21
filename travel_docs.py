@@ -106,7 +106,8 @@ REQUEST_PHRASE = {"ca": "cash advance", "liquidation": "liquidation", "reimburse
 STRICTNESS = ("strict", "cut", "extended", "other")
 SIGNATORY_KEYS = ("head_name", "head_title", "station", "certifier_name", "certifier_title", "approver_name",
                   "approver_title", "noted_by_name", "noted_by_title", "reviewed_by_name", "reviewed_by_title",
-                  "approved_by_name", "approved_by_title", "prepared_by", "signatory_name", "signatory_title")
+                  "approved_by_name", "approved_by_title", "prepared_by", "signatory_name", "signatory_title",
+                  "traveler_title")
 TEXT_KEYS = ("purpose", "explanation", "refund_amount", "refund_or_no", "refund_or_date", "overview",
              "key_points", "contributions", "support_needed", "recommendations", "conclusion", "activities",
              "obligations", "itinerary_no")
@@ -211,7 +212,7 @@ def defaults(conn, filing, profile, settings, readings=()) -> dict:
     sig = {k: "" for k in SIGNATORY_KEYS}
     sig.update(head_name=settings.get("head_name", ""), head_title=settings.get("head_title", ""),
                station=settings.get("station", ""), certifier_name=settings.get("certifier_name", ""),
-               certifier_title=settings.get("certifier_title", ""), prepared_by=name,
+               certifier_title=settings.get("certifier_title", ""), prepared_by=name, traveler_title=desig,
                approver_name=settings.get("head_name", ""), approver_title=settings.get("head_title", ""),
                noted_by_name=settings.get("head_name", ""), noted_by_title=settings.get("head_title", ""),
                approved_by_name=settings.get("head_name", ""), approved_by_title=settings.get("head_title", ""),
@@ -449,7 +450,8 @@ def build_payloads(kind, filing, profile, settings, posted, codes, *, ceilings, 
         sig[k + "_name"] = sig[k + "_name"] or sig["head_name"]
         sig[k + "_title"] = sig[k + "_title"] or sig["head_title"]
     name = profile.get("person_name") or profile.get("username") or ""
-    ctx = {"filing": filing, "profile": profile, "name": name, "designation": profile.get("designation") or "",
+    ctx = {"filing": filing, "profile": profile, "name": name,
+           "designation": sig["traveler_title"] or profile.get("designation") or "",           # what the person confirmed on the prepare page
            "rows": p["rows"], "texts": p["texts"], "sig": sig, "rates": p["rates"], "mc114_text": p["mc114_text"], "ceilings": ceilings,
            "items": list(items), "today": today or date.today(),
            "title": lambda code: f"{DOC_TITLES[code]} - {filing['ref_code']}"}
