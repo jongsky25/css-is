@@ -1,3 +1,10 @@
+## 7.69 — October 21, 2026
+
+- Remove session, authority and notification SQL from GET/HEAD requests to packaged public assets, the service worker, manifest and existing favicon path.
+- Retain normal routing, file lookup, browser security, cache validation, range responses and request metrics; unsafe methods keep origin checks.
+- Match the router's application-relative path so a mount prefix cannot classify private routes as static assets.
+- Verify zero database connections/statements with anonymous, active, revoked and malformed sessions, plus private-route, traversal, outage and revocation regressions.
+
 ## 7.68 — October 21, 2026
 
 - Page the document registry in groups of 30 after applying current permissions and queue/search filters; preserve full-register counts, measures and CSV exports.
