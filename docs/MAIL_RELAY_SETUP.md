@@ -160,3 +160,11 @@ and `apps_script/documents_relay.gs`, and enabling the Gmail/Drive advanced serv
 requests remain supported. Follow [the upgrade steps](DOCUMENT_MANAGEMENT_SETUP.md#existing-mail-apps-script-project);
 keep the existing secret value, deployment URL and sending account. Merely pointing Documents at an
 older mail deployment is insufficient: an unqualified `{ok:true}` is not official dispatch evidence.
+
+
+## Reply-to (since v7.84)
+
+`/admin/email` can set a reply-to address. The relay passes it on if the script contains
+`if (body.replyTo) message.replyTo=String(body.replyTo);` right after the `htmlBody` line (it is in
+`apps_script/mail_relay.gs`). Replace the script and deploy a new version; an older script ignores the
+reply-to and mail still sends.

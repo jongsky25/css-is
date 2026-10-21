@@ -1,3 +1,14 @@
+## 7.84 — October 21, 2026
+
+- Email console (`/admin/email`): add a global **Pause all email** (account mail — invite, reset, registration-link re-send — is never paused; queued room and calendar mail waits and sends after resume; scheduled jobs skip while paused). Audited as `email_pause`.
+- Split conference-room meal alerts into their own `room_meal_alerts` switch (reads the old `room_admin_alerts` value until set, so nothing turns back on). Add attachment options `calendar_ics` and `room_ics`.
+- Show features that are ON but blocked by another setting (Documents, document sending, shared work, travel filing), list official document dispatch under "Sent from other modules", and write one `document_dispatch` send-log row per recipient.
+- Move the admin-tunable timing knobs to `email_params.py` and add room morning/afternoon hours, escalation hours, calendar hold-back, send retries, shared-work digest weekday and the pinned-update cooldown and daily cap (defaults unchanged). `UPDATE_EMAIL_DAILY_CAP`/`UPDATE_EMAIL_COOLDOWN_MIN` constants are now the `update_email_*` settings.
+- Send log: filter by feature/result/address, show more, CSV export (manage_users, audited, formula-safe), last-sent and 7-day failure hints, and a "Needs attention" card.
+- Delivery policy (applies to all mail, account mail included): staging redirect address, sender name, reply-to, subject prefix. Reply-to needs the updated `apps_script/mail_relay.gs` (redeploy). Test-send can target another active account picked from a list.
+- `tests/test_email_coverage.py` fails when a new direct `mailer.send` call, an uncatalogued feature key or an unused catalog entry appears.
+- Not changed: birthday greetings still have no per-person opt-out (a documented decision), birthday and daily-job send times follow the single daily sweep, and message wording is still not editable.
+
 ## 7.83 — October 21, 2026
 
 - Deliver the A16 shared accessibility engineering slice: readable muted text, theme-aware Wellness buttons, solid keyboard focus indicators, larger survey N/A and carousel controls, keyboard-scrollable growth stages and separate native avatar actions.

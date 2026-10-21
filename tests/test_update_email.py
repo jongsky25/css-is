@@ -11,6 +11,7 @@ import re
 from datetime import date, timedelta
 from urllib.parse import parse_qs, urlparse
 
+import email_params
 import mailer
 import storage as st
 from starlette.testclient import TestClient
@@ -140,7 +141,7 @@ def test_cooldown_blocks_a_second_blast_but_still_posts(app_mod, manager, db_pat
 
 def test_daily_cap_leaves_the_overflow_out(app_mod, manager, db_path, monkeypatch):
     tok, sent = _fixture(app_mod, manager, db_path, monkeypatch, emails=("a@x.com", "b@x.com", "c@x.com"))
-    monkeypatch.setattr(app_mod, "UPDATE_EMAIL_DAILY_CAP", 2)
+    monkeypatch.setattr(email_params, "PARAMS", {**email_params.PARAMS, "update_email_daily_cap": ("cap", 2, 1, 1000)})
     q = _qs(_post(manager, tok))
     assert q["ann"] == "sent" and q["annn"] == "2" and q["annm"] == "1"
     assert len(sent) == 2

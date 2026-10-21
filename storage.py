@@ -1776,11 +1776,44 @@ def get_settings(conn, keys):
 # One app_setting row per gateable email feature (mailer.FEATURES). Read by
 # app.py's three send funnels and send_reminders.run() (Phases 2-3).
 
+EMAIL_ACCOUNT_KEYS = ("invite", "reset", "recovery")   # == mailer.ALWAYS_ON; mailer stays DB-free
+
+
+def email_paused(conn):
+    """True while an admin has paused every non-account email at once."""
+    return get_setting(conn, "email_paused", "0") == "1"
+
+
+def set_email_paused(conn, on):
+    set_setting(conn, "email_paused", "1" if on else "0")
+
+
+# A switch split out of an older one reads as its parent until an admin sets it
+# itself, so splitting never turns back on something an admin had turned off.
+EMAIL_FEATURE_FALLBACK = {"room_meal_alerts": "room_admin_alerts"}
+
+
 def email_feature_enabled(conn, key):
-    """True unless an admin has turned this email feature off. Unknown keys
-    read as ON: a typo in a feature key must never silently swallow a real
-    send."""
-    return get_setting(conn, f"email_feature.{key}", "1") != "0"
+    """True unless an admin has turned this email feature off, or paused all
+    non-account email. Unknown keys read as ON: a typo in a feature key must
+    never silently swallow a real send. Account mail is never paused."""
+    if key in EMAIL_ACCOUNT_KEYS:
+        return True
+    if email_paused(conn):
+        return False
+    own = get_setting(conn, f"email_feature.{key}")
+    if own is None and key in EMAIL_FEATURE_FALLBACK:
+        own = get_setting(conn, f"email_feature.{EMAIL_FEATURE_FALLBACK[key]}")
+    return (own if own is not None else "1") != "0"
+
+
+def email_option_enabled(conn, key):
+    """An email attachment option (mailer.OPTIONS): on unless an admin turned it off."""
+    return get_setting(conn, f"email_option.{key}", "1") != "0"
+
+
+def set_email_option(conn, key, on):
+    set_setting(conn, f"email_option.{key}", "1" if on else "0")
 
 
 def set_email_feature(conn, key, on):
@@ -1808,6 +1841,43 @@ def recent_email_sends(conn, limit=50):
         "FROM email_log ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
     return [{"id": r[0], "created_at": r[1], "feature": r[2], "recipient": r[3],
              "subject": r[4], "status": r[5], "detail": r[6]} for r in rows]
+
+
+def email_log_query(conn, feature="", status="", q="", limit=50, offset=0):
+    """Filtered view of the email log, newest first. `q` matches recipient or subject."""
+    where, args = [], []
+    if feature:
+        where.append("feature=?"); args.append(feature)
+    if status:
+        where.append("status=?"); args.append(status)
+    if q:
+        like = "%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+        where.append("(recipient LIKE ? ESCAPE '\\' OR subject LIKE ? ESCAPE '\\')"); args += [like, like]
+    sql = ("SELECT id, created_at, feature, recipient, subject, status, detail FROM email_log"
+           + (" WHERE " + " AND ".join(where) if where else "") + " ORDER BY id DESC LIMIT ? OFFSET ?")
+    rows = conn.execute(sql, (*args, int(limit), int(offset))).fetchall()
+    return [{"id": r[0], "created_at": r[1], "feature": r[2], "recipient": r[3],
+             "subject": r[4], "status": r[5], "detail": r[6]} for r in rows]
+
+
+def email_log_health(conn, since_iso):
+    """Per feature: {last_sent, last_attempt, failed (since), sent (since), last_error}.
+    Drives the console's 'last sent' and 'needs attention' hints."""
+    out = {}
+    for feature, last_sent, last_at in conn.execute(
+            "SELECT feature, MAX(CASE WHEN status='sent' THEN created_at END), MAX(created_at) "
+            "FROM email_log GROUP BY feature"):
+        out[feature] = {"last_sent": last_sent, "last_attempt": last_at, "failed": 0, "sent": 0, "last_error": None}
+    for feature, status, n in conn.execute(
+            "SELECT feature, status, COUNT(*) FROM email_log WHERE created_at>=? GROUP BY feature, status", (since_iso,)):
+        if feature in out and status in ("failed", "sent"):
+            out[feature][status] = n
+    for feature, detail in conn.execute(
+            "SELECT feature, detail FROM email_log WHERE status='failed' AND created_at>=? "
+            "AND id IN (SELECT MAX(id) FROM email_log WHERE status='failed' GROUP BY feature)", (since_iso,)):
+        if feature in out:
+            out[feature]["last_error"] = detail
+    return out
 
 
 def purge_stale_email_log(conn, cutoff_iso):

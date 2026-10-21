@@ -313,3 +313,310 @@ def test_retention_purge_stale_email_log_dry_run_changes_nothing(db_path):
     finally:
         _reset_log(conn)
         conn.close()
+
+
+# ---- global pause ----------------------------------------------------------
+
+def test_pause_holds_every_feature_but_not_account_mail(db_path):
+    conn = st.connect(db_path); st.init_db(conn); _reset(conn)
+    try:
+        st.set_email_paused(conn, True)
+        for key in list(mailer.FEATURES) + ["not_a_real_feature"]:
+            assert st.email_feature_enabled(conn, key) is False, key
+        for key in mailer.ALWAYS_ON:
+            assert st.email_feature_enabled(conn, key) is True, key
+        st.set_email_paused(conn, False)
+        assert st.email_feature_enabled(conn, "event_created") is True
+    finally:
+        conn.execute("DELETE FROM app_setting WHERE key='email_paused'"); conn.commit()
+        conn.close()
+
+
+def test_always_on_constant_matches_mailer_catalog():
+    assert set(st.EMAIL_ACCOUNT_KEYS) == set(mailer.ALWAYS_ON)
+
+
+def test_admin_email_pause_route_audits_and_toggles(admin, db_path):
+    conn = st.connect(db_path)
+    try:
+        r = admin.post("/admin/email/pause", data={"paused": "1"}, follow_redirects=False)
+        assert r.status_code == 303 and "msg=" in r.headers["location"]
+        assert st.email_paused(conn) is True
+        assert "PAUSED" in admin.get("/admin/email").text
+        admin.post("/admin/email/pause", data={"paused": "0"}, follow_redirects=False)
+        assert st.email_paused(conn) is False
+    finally:
+        conn.execute("DELETE FROM app_setting WHERE key='email_paused'"); conn.commit()
+        conn.close()
+
+
+def test_admin_email_pause_requires_manage_users(viewer):
+    assert viewer.post("/admin/email/pause", data={"paused": "1"}).status_code == 403
+
+
+def test_paused_room_and_calendar_queues_wait(db_path):
+    import rooms_notify, office_calendar
+    conn = st.connect(db_path); st.init_db(conn)
+    try:
+        st.set_email_paused(conn, True)
+        sent = []
+        assert rooms_notify.flush(conn, "https://x.example", send=lambda *a, **k: sent.append(a)) == {}
+        assert office_calendar.flush_outbox(conn, "https://x.example", send=lambda *a, **k: sent.append(a)) == 0
+        assert sent == []
+    finally:
+        conn.execute("DELETE FROM app_setting WHERE key='email_paused'"); conn.commit()
+        conn.close()
+
+
+# ---- room meal alerts split + attachment options ---------------------------
+
+def test_room_meal_alerts_has_own_switch_and_preview():
+    import rooms_notify
+    assert "room_meal_alerts" in mailer.FEATURES
+    assert {rooms_notify.FEATURE[k] for k in rooms_notify.MEAL_KINDS} == {"room_meal_alerts"}
+    assert mailer.sample_message("room_meal_alerts")[0]
+
+
+def test_room_meal_alerts_follow_the_old_switch_until_set(db_path):
+    conn = st.connect(db_path); st.init_db(conn); _reset(conn)
+    try:
+        st.set_email_feature(conn, "room_admin_alerts", False)
+        assert st.email_feature_enabled(conn, "room_meal_alerts") is False   # was off before the split
+        st.set_email_feature(conn, "room_meal_alerts", True)
+        assert st.email_feature_enabled(conn, "room_meal_alerts") is True
+        st.set_email_feature(conn, "room_admin_alerts", True)
+        st.set_email_feature(conn, "room_meal_alerts", False)
+        assert st.email_feature_enabled(conn, "room_admin_alerts") is True
+    finally:
+        _reset(conn); conn.close()
+
+
+def test_email_option_defaults_on_and_route_toggles(admin, db_path):
+    conn = st.connect(db_path); st.init_db(conn)
+    try:
+        assert st.email_option_enabled(conn, "calendar_ics") is True
+        r = admin.post("/admin/email/option", data={"key": "calendar_ics", "on": "0"}, follow_redirects=False)
+        assert r.status_code == 303 and "msg=" in r.headers["location"]
+        assert st.email_option_enabled(conn, "calendar_ics") is False
+        bad = admin.post("/admin/email/option", data={"key": "nope", "on": "0"}, follow_redirects=False)
+        assert "err=" in bad.headers["location"]
+    finally:
+        conn.execute("DELETE FROM app_setting WHERE key LIKE 'email_option.%'"); conn.commit(); conn.close()
+
+
+def test_email_option_requires_manage_users(viewer):
+    assert viewer.post("/admin/email/option", data={"key": "calendar_ics", "on": "0"}).status_code == 403
+
+
+# ---- documents dispatch visibility + blocked-elsewhere hints ---------------
+
+def test_dispatch_outcomes_are_logged_per_recipient(db_path):
+    import documents_operations as ops
+    conn = st.connect(db_path); st.init_db(conn); _reset_log(conn)
+    try:
+        ops.log_dispatch(conn, "OUT-2026-1", {"a@x.test": {"outcome": "accepted"}, "b@x.test": {"outcome": "failed"}})
+        rows = {r["recipient"]: r["status"] for r in st.recent_email_sends(conn, limit=5)}
+        assert rows == {"a@x.test": "sent", "b@x.test": "failed"}
+        assert {r["feature"] for r in st.recent_email_sends(conn, limit=5)} == {"document_dispatch"}
+    finally:
+        _reset_log(conn); conn.close()
+
+
+def test_console_lists_dispatch_and_flags_blocked_features(admin, db_path):
+    conn = st.connect(db_path); st.init_db(conn)
+    try:
+        conn.execute("DELETE FROM app_setting WHERE key IN ('documents.enabled','documents.sending_enabled','work.enabled')")
+        conn.commit()
+        html = admin.get("/admin/email").text
+        assert "Official document dispatch" in html
+        assert "Won&#39;t send right now" in html or "Won't send right now" in html
+        assert "Document sending is switched off." in html
+    finally:
+        conn.close()
+
+
+def test_every_external_email_has_a_label_and_settings_link():
+    for key, (label, why, url) in mailer.EXTERNAL.items():
+        assert label and why and url.startswith("/")
+
+
+# ---- tunable schedule params for the newer senders -------------------------
+
+def test_new_params_default_to_the_old_hard_coded_values(db_path):
+    import email_params
+    conn = st.connect(db_path); st.init_db(conn)
+    try:
+        conn.execute("DELETE FROM app_setting WHERE key LIKE 'email_param.%'"); conn.commit()
+        got = {k: email_params.param(conn, k) for k in email_params.PARAMS}
+        assert got["room_morning_hour"] == 8 and got["room_afternoon_hour"] == 16
+        assert got["room_escalate_hours"] == 24 and got["send_retry_attempts"] == 3
+        assert got["calendar_quiet_minutes"] == 10 and got["calendar_max_wait_minutes"] == 60
+        assert got["update_email_cooldown_min"] == 15 and got["update_email_daily_cap"] == 300
+        assert got["work_digest_weekday"] == 0
+    finally:
+        conn.close()
+
+
+def test_param_is_clamped_and_survives_garbage(db_path):
+    import email_params
+    conn = st.connect(db_path); st.init_db(conn)
+    try:
+        st.set_setting(conn, "email_param.room_morning_hour", "99")
+        assert email_params.param(conn, "room_morning_hour") == 12
+        st.set_setting(conn, "email_param.room_morning_hour", "abc")
+        assert email_params.param(conn, "room_morning_hour") == 8
+    finally:
+        conn.execute("DELETE FROM app_setting WHERE key LIKE 'email_param.%'"); conn.commit(); conn.close()
+
+
+def test_send_reminders_still_exposes_params():
+    import send_reminders, email_params
+    assert send_reminders.PARAMS is email_params.PARAMS
+
+
+def test_room_morning_hour_param_moves_the_summary(db_path):
+    import rooms_notify
+    from datetime import datetime
+    conn = st.connect(db_path); st.init_db(conn)
+    try:
+        calls = []
+        orig = rooms_notify.queue_morning_digest
+        rooms_notify.queue_morning_digest = lambda c, n: calls.append(n)
+        try:
+            st.set_setting(conn, "email_param.room_morning_hour", "10")
+            rooms_notify.tick(conn, "", now=datetime(2026, 10, 20, 9, 0))
+            assert calls == []
+            rooms_notify.tick(conn, "", now=datetime(2026, 10, 20, 10, 5))
+            assert len(calls) == 1
+        finally:
+            rooms_notify.queue_morning_digest = orig
+    finally:
+        conn.execute("DELETE FROM app_setting WHERE key LIKE 'email_param.%'"); conn.commit(); conn.close()
+
+
+# ---- send log: filter, health, CSV -----------------------------------------
+
+def _seed_log(conn):
+    _reset_log(conn)
+    st.log_email_send(conn, "event_created", "ana@test.local", "Welcome", "sent")
+    st.log_email_send(conn, "event_created", "bo@test.local", "=HYPERLINK(\"x\")", "failed", "relay down")
+    st.log_email_send(conn, "room_digest", "cy@test.local", "Rooms 100%", "skipped_off")
+
+
+def test_email_log_query_filters_and_escapes(db_path):
+    conn = st.connect(db_path); st.init_db(conn)
+    try:
+        _seed_log(conn)
+        assert len(st.email_log_query(conn)) == 3
+        assert {r["recipient"] for r in st.email_log_query(conn, feature="event_created")} == {"ana@test.local", "bo@test.local"}
+        assert [r["recipient"] for r in st.email_log_query(conn, status="failed")] == ["bo@test.local"]
+        assert [r["recipient"] for r in st.email_log_query(conn, q="cy@")] == ["cy@test.local"]
+        assert [r["recipient"] for r in st.email_log_query(conn, q="100%")] == ["cy@test.local"]
+        assert st.email_log_query(conn, q="%") and len(st.email_log_query(conn, q="%")) == 1   # a literal %, not a wildcard
+        assert len(st.email_log_query(conn, limit=1)) == 1
+    finally:
+        _reset_log(conn); conn.close()
+
+
+def test_email_log_health_counts_recent_failures(db_path):
+    conn = st.connect(db_path); st.init_db(conn)
+    try:
+        _seed_log(conn)
+        h = st.email_log_health(conn, "2000-01-01")
+        assert h["event_created"]["failed"] == 1 and h["event_created"]["sent"] == 1
+        assert h["event_created"]["last_error"] == "relay down" and h["event_created"]["last_sent"]
+        assert h["room_digest"]["last_sent"] is None
+        assert st.email_log_health(conn, "2999-01-01")["event_created"]["failed"] == 0
+    finally:
+        _reset_log(conn); conn.close()
+
+
+def test_console_filters_and_shows_attention(admin, db_path):
+    conn = st.connect(db_path); st.init_db(conn)
+    try:
+        _seed_log(conn)
+        page = admin.get("/admin/email?log_status=failed").text
+        assert "bo@test.local" in page and "ana@test.local" not in page
+        assert "Needs attention" in admin.get("/admin/email").text
+    finally:
+        _reset_log(conn); conn.close()
+
+
+def test_csv_export_neutralises_formulas_and_is_gated(admin, viewer, db_path):
+    conn = st.connect(db_path); st.init_db(conn)
+    try:
+        _seed_log(conn)
+        r = admin.get("/admin/email/log.csv?log_feature=event_created")
+        assert r.status_code == 200 and r.headers["content-type"].startswith("text/csv")
+        assert "'=HYPERLINK" in r.text and "room_digest" not in r.text
+        assert viewer.get("/admin/email/log.csv").status_code == 403
+    finally:
+        _reset_log(conn); conn.close()
+
+
+# ---- delivery policy --------------------------------------------------------
+
+def _policy(**kw):
+    base = {"redirect_to": "", "from_name": "", "reply_to": "", "subject_prefix": ""}
+    base.update(kw)
+    return lambda: base
+
+
+def test_no_policy_leaves_the_message_alone(monkeypatch):
+    monkeypatch.setattr(mailer, "_policy_loader", None)
+    assert mailer._apply_policy("a@x.test", "Hi", "Body", "<p>x</p>") == ("a@x.test", "Hi", "Body", "<p>x</p>", "", "")
+
+
+def test_staging_redirect_replaces_recipient_and_names_the_original(monkeypatch):
+    monkeypatch.setattr(mailer, "_policy_loader", _policy(redirect_to="qa@x.test", subject_prefix="[TEST]"))
+    to, subj, body, html, _n, _r = mailer._apply_policy("real@x.test", "Hello", "Body", "<p>x</p>")
+    assert to == "qa@x.test" and subj == "[TEST] [Staging: real@x.test] Hello"
+    assert "real@x.test" in body and "real@x.test" in html
+
+
+def test_broken_policy_loader_never_stops_mail(monkeypatch):
+    def boom():
+        raise RuntimeError("db down")
+    monkeypatch.setattr(mailer, "_policy_loader", boom)
+    assert mailer._apply_policy("a@x.test", "Hi", "B", None)[0] == "a@x.test"
+
+
+def test_relay_payload_carries_sender_name_and_reply_to(monkeypatch):
+    seen = {}
+    monkeypatch.setenv("CSS_MAIL_RELAY_URL", "https://relay.example/x")
+    monkeypatch.setenv("CSS_MAIL_RELAY_SECRET", "s")
+    monkeypatch.setattr(mailer, "_policy_loader", _policy(redirect_to="qa@x.test", from_name="BLHSD", reply_to="help@x.test"))
+    monkeypatch.setattr(mailer, "_post_to_relay", lambda url, payload: seen.update(payload) or (None, RuntimeError("stop")))
+    mailer.send("real@x.test", "Hi", "Body")
+    assert seen["to"] == "qa@x.test" and seen["fromName"] == "BLHSD" and seen["replyTo"] == "help@x.test"
+
+
+def test_policy_route_validates_audits_and_gates(admin, viewer, db_path):
+    import email_params
+    conn = st.connect(db_path); st.init_db(conn)
+    try:
+        bad = admin.post("/admin/email/policy", data={"redirect_to": "not an email"}, follow_redirects=False)
+        assert "err=" in bad.headers["location"] and email_params.get_policy(conn)["redirect_to"] == ""
+        ok = admin.post("/admin/email/policy", data={"redirect_to": "QA@x.test", "from_name": "BLHSD", "subject_prefix": "[T]"},
+                        follow_redirects=False)
+        assert "msg=" in ok.headers["location"]
+        assert email_params.get_policy(conn)["redirect_to"] == "qa@x.test"
+        assert "Staging redirect is ON" in admin.get("/admin/email").text
+        assert viewer.post("/admin/email/policy", data={"redirect_to": "q@x.test"}).status_code == 403
+    finally:
+        email_params.set_policy(conn, {}); conn.close()
+
+
+def test_test_send_can_target_only_an_active_account(admin, monkeypatch, db_path):
+    calls = []
+    monkeypatch.setattr(mailer, "email_configured", lambda: True)
+    monkeypatch.setattr(mailer, "send", lambda *a, **kw: calls.append(a) or {"sent": True, "detail": "ok"})
+    conn = st.connect(db_path)
+    try:
+        other = next(u for u in st.list_admin_users(conn) if u["active"] and u["username"] != "admin@test.local")
+    finally:
+        conn.close()
+    r = admin.post("/admin/email/test", data={"key": "event_created", "to_account": str(other["id"])}, follow_redirects=False)
+    assert "msg=" in r.headers["location"] and calls[-1][0] == other["username"]
+    bad = admin.post("/admin/email/test", data={"key": "event_created", "to_account": "999999"}, follow_redirects=False)
+    assert "err=" in bad.headers["location"] and len(calls) == 1
