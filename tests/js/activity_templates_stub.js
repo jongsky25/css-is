@@ -21,7 +21,7 @@ function newBody() { return { paragraphs: [],
   appendTable(c) { log.push('TABLE: ' + JSON.stringify(c)); const cell = mk('cell'); return { setBorderWidth() {}, editAsText: () => mk('t'), setColumnWidth(c, w) { log.push('WIDTH: ' + c + ' ' + w); }, getRow: () => mk('row'), getCell: () => cell }; },
   appendHorizontalRule() { return mk('h'); },
   editAsText: () => mk('t'), getChild: () => mk('p', 'x'), removeChild() { } }; }
-const doc = { addFooter() { return { setText(t) { log.push('FOOTER: ' + t); }, appendParagraph(t) { log.push('FOOTER: ' + t); return mk('p'); },
+const doc = { addHeader() { const h = newBody(); h.getNumChildren = () => 2; log.push('HEADER'); const at = h.appendTable; h.appendTable = function (c) { const r = at.call(this, c); log.pop(); log.push('HEADER-TABLE: ' + JSON.stringify(c)); return r; }; return h; }, addFooter() { return { setText(t) { log.push('FOOTER: ' + t); }, appendParagraph(t) { log.push('FOOTER: ' + t); return mk('p'); },
   getParagraphs: () => [mk('p')], editAsText: () => mk('t') }; } };
 global.DocumentApp = { HorizontalAlignment: { CENTER: 'C', RIGHT: 'R', JUSTIFY: 'J' }, ElementType: { PARAGRAPH: 'PARAGRAPH' } };
 global.Utilities = { base64Decode: (b) => Buffer.from(b, 'base64'),
@@ -38,7 +38,8 @@ const out = {};
   out[x[0]] = { expect: tpl.expect,
                 found: Array.from(new Set((text.match(/\{\{[a-z0-9_]+\}\}/g) || []).map(y => y.slice(2, -2)))),
                 missing: tpl.expect.filter(k => text.indexOf('{{' + k + '}}') < 0),
-                images: (text.match(/IMAGE: \S+ image\/png \d+/g) || []), footer: /FOOTER: Building 1/.test(text),
+                images: (text.match(/IMAGE: \S+ image\/png \d+/g) || []), footer: /FOOTER: Building 1/.test(text), header: /HEADER-TABLE/.test(text),
+                bodyLetterhead: /(^|\n)TABLE: \[\["","",""\]\]/.test(text),
                 widths: (text.match(/WIDTH: \d+ \d+/g) || []).map(w => +w.split(' ')[2]) };
 });
 console.log(JSON.stringify(out));

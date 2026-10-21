@@ -1,10 +1,14 @@
-## 7.77 — October 21, 2026
+## 7.78 — October 21, 2026
 
 - Complete A14 with one alternating document background scheduler and one shared background admission slot, leaving interactive capacity in the two-worker pool.
 - Coordinate Drive discovery and filing across processes through an expiring SQLite lease, fenced cursor/result/error writes and durable manual check requests.
 - Bound listing/filing turns and intake registration checks with a shared elapsed service budget; process one due filing per turn with backoff, attempt limits and review stops.
 - Retain original filing operation markers, payloads and registered numbers after interruptions; expose last/next attempt and protected manual filing retry controls.
 - Verify competing processes, real worker exit after filing, stale workers, scheduler fairness, transport budgets, authority changes, safe diagnostics and responsive HTTP navigation during provider stalls.
+
+## 7.77 — October 21, 2026
+
+- Real header and a file-copy page (spot feedback #157, #158): the letterhead (seal, Bagong Pilipinas logo and the three-line name) is built into the document's header by `activity_templates.gs` for all four templates, instead of the first table in the body (this also keeps the relay's title-casing from touching "DEPARTMENT OF HEALTH"). A DPO request now carries `extras: {"file_copy": true}`; the relay (`travel_docs.gs` `addFileCopy_`) appends the order's content again after a new section with its own empty header and footer, then two plain tables: BLHSD / Initials / Date, and Keywords / Related issuances, laws, directives. The section change uses the Google Docs advanced service in the relay's Apps Script project. Without it, or if Google refuses, the order is still made, the relay answers `extras: docs_service_off` or `failed`, and the draft message says the extra page is missing. An older relay ignores `extras`. Setup is in `docs/ACTIVITY_DOCS_SETUP.md`: replace `activity_templates` and `travel_docs`, enable the Docs service, deploy a new web-app version and run `rebuildActivityTemplates()`.
 
 ## 7.76 — October 21, 2026
 

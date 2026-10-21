@@ -1,6 +1,6 @@
 # Bounded background document processing
 
-Introduced in **7.77**, completing A14's document execution work after the
+Introduced in **7.78**, completing A14's document execution work after the
 [7.74 responsiveness](DOCUMENT_EXTERNAL_RESPONSIVENESS.md) and
 [7.75 operation recovery](DOCUMENT_JOB_RECOVERY.md) increments.
 

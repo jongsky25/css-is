@@ -65,6 +65,31 @@ DOH address footer.
 - **Left for the person:** the DPO number, the DPO date and the funding source stay as blank lines. The subject, background,
   authority line and the Name / Position table are written from the calendar item and its people.
 
+## Real header and footer, and the DPO's file-copy page (spot feedback #157, #158)
+
+**Letterhead in the real header.** The four templates now build the seal, "Republic of the Philippines / DEPARTMENT OF
+HEALTH / Office of the Secretary" and the Bagong Pilipinas logo into the document's header, so it repeats on each page and is
+not part of the body text (the address footer was already a real footer). To apply it, replace `activity_templates` in the
+Apps Script project and run `rebuildActivityTemplates()`. Existing drafts and templates are not changed.
+
+**A DPO for one person** is written as one sentence with no table. Replace `travel_docs` (the relay) with the new version and
+**deploy a new version of the web app** (Deploy > Manage deployments > pencil > Version: New version > Deploy); until then the
+Name / Position table stays with one blank row.
+
+**The file-copy page.** Each DPO ends with a second page holding the same content with **no letterhead and no address footer**,
+followed by two tables: BLHSD / Initials / Date, and Keywords / Related issuances, laws, directives. Google Docs repeats a header
+on every page of a section, so the copy starts a new section with an empty header and footer. The Apps Script document service
+cannot make a section, so this needs the **Google Docs advanced service**:
+
+1. In the Apps Script project, open **Services** (the + beside it in the left sidebar), choose **Google Docs API**, keep
+   identifier `Docs`, and **Add**. (The project already uses the Drive service the same way.)
+2. If the project's `appsscript.json` lists `oauthScopes` by hand, add `https://www.googleapis.com/auth/documents`.
+3. Deploy a new version of the web app, as above, and approve the permission prompt the first time a DPO is drafted.
+
+If the service is not on, the DPO is still made, without the second page, and the draft message says so. If Google refuses
+the section change on a given draft, the same message appears; "Draft again" tries once more. The second page is a copy made
+when the draft is created: edit the order first, then use the copy, or edit both.
+
 ## The invitation follows the DOH memorandum to the regions (7.51 onwards)
 
 The invitation is the DOH **memorandum** format: the date, MEMORANDUM, FOR / FROM / SUBJECT, a rule, the request, the what / when
