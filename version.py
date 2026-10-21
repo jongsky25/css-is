@@ -24,8 +24,9 @@ CHANGELOG = [
     {
         "version": "7.64",
         "date": "October 21, 2026",
-        "summary": "Confirm your designation when you prepare the travel forms.",
+        "summary": "Confirm your designation when you prepare the travel forms, and every form now has the same look.",
         "changes": [
+            "Every travel form is made in Times New Roman 12, with body text justified and titles in bold with a capital letter on each main word.",
             "The Prepare the forms page now asks for your designation, filled in from your profile when you have one, so it is on every form that shows it (CENRR, RER, Appendix B, the justification, the report and the rest).",
             "If your profile has no designation, type it once on this page instead of finding the blank on each form afterwards."
         ]

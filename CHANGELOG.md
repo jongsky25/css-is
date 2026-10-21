@@ -1,6 +1,7 @@
 ## 7.64 — October 21, 2026
 
-- Travel Prepare page: a "Your designation (shown on the forms)" field, prefilled from the profile and kept in the browser draft with the signatories. It is sent as `traveler_title` and used for the designation on every form; blank falls back to the profile (spot feedback #150-152, designation part). The font and alignment part of those entries is not in this release.
+- Travel Prepare page: a "Your designation (shown on the forms)" field, prefilled from the profile and kept in the browser draft with the signatories. It is sent as `traveler_title` and used for the designation on every form; blank falls back to the profile (spot feedback #150-152, designation part). 
+- Travel forms (relay `travel_docs.gs`): after each form is filled it is set to Times New Roman 12, paragraphs of 60 characters or more that are left-aligned are justified (tables too), and titles (short bold lines with no full stop, comma, colon or brackets, either centred, all capitals or headings) are bold and in Title Case, keeping acronyms such as DPO, CENRR and RER. Sheets get the font, size and titles; Google Sheets cannot justify. Replace `travel_docs` in the Apps Script project to apply it. No template rebuild (spot feedback #150-152).
 
 ## 7.63 — October 21, 2026
 
