@@ -28,8 +28,8 @@
         {% if c.state in ('free', 'requested') %}
         <button type="button" class="rm-cell st-{{ c.state }}{{ ' mine' if c.mine }}" data-day="{{ d.iso }}" data-slot="{{ s.id }}"
                 data-row="{{ row }}" data-pending="{{ c.pending }}"
-                aria-label="{{ label }}, {{ 'free' if c.state == 'free' else (c.pending ~ ' pending request' ~ ('s' if c.pending != 1 else '')) }}{{ ', including yours' if c.mine }}">
-          {% if c.mine %}<span aria-hidden="true">★</span> Yours
+                aria-label="{{ 'Yours · Requested' if c.mine_requested else ('Free' if c.state == 'free' else c.pending ~ ' requested') }}, {{ label }}. {{ 'Not reserved until approval.' if c.state == 'requested' else 'Available to request; approval is required.' }}">
+          {% if c.mine_requested %}<span aria-hidden="true">★</span> Yours · Requested
           {% elif c.state == 'free' %}<span aria-hidden="true">✓</span> Free
           {% else %}<span aria-hidden="true">○</span> {{ c.pending }} requested{% endif %}
         </button>
@@ -39,12 +39,12 @@
                 data-row="{{ row }}" data-pending="{{ c.pending }}" data-booked="1" data-title="{{ c.title }}"
                 aria-label="{{ label }}, booked: {{ c.title }}. Select to book over it.">
           {% if c.cont %}<span aria-hidden="true">┆</span>
-          {% else %}<span aria-hidden="true">{{ '★' if c.mine else '●' }}</span> <span class="rm-title">{{ c.title }}</span>{% endif %}
+          {% else %}<span aria-hidden="true">{{ '★' if c.mine_approved else '●' }}</span> <span class="rm-title">{{ c.title }}</span>{% endif %}
         </button>
         {% elif c.state == 'approved' %}
-        <div class="rm-cell st-approved{{ ' mine' if c.mine }}{{ ' cont' if c.cont }}" aria-label="{{ label }}, booked{{ ': ' ~ c.title if not c.cont }}">
+        <div class="rm-cell st-approved{{ ' mine' if c.mine }}{{ ' cont' if c.cont }}" aria-label="{{ label }}, booked{{ ': ' ~ c.title if not c.cont }}{{ '; your request is still waiting' if c.mine_requested and not c.mine_approved }}">
           {% if c.cont %}<span aria-hidden="true">┆</span>
-          {% else %}<span aria-hidden="true">{{ '★' if c.mine else '●' }}</span> <span class="rm-title">{{ c.title }}</span>{% endif %}
+          {% else %}<span aria-hidden="true">{{ '★' if c.mine_approved else '●' }}</span> <span class="rm-title">{{ c.title }}</span>{% endif %}
         </div>
         {% elif c.state == 'blocked' %}
         <div class="rm-cell st-blocked" title="{{ c.reason }}" aria-label="{{ label }}, unavailable: {{ c.reason }}"><span aria-hidden="true">✕</span> Unavailable</div>

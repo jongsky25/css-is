@@ -1,7 +1,8 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header, flash, empty_state %}
+{% from "_room_guidance.html" import reservation_guidance %}
 {% block title %}My room reservations{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/rooms.css?v=20261020a">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/rooms.css?v=7.85">{% endblock %}
 {% block content %}
 {{ page_header("Conference room", "Your requests and bookings.") }}
 {% include "_rooms_tabs.html" %}
@@ -10,10 +11,10 @@
 {% macro rows(items, can_act) %}
 <div class="table-wrap">
 <table class="list resp-table rm-mine">
-  <thead><tr><th>Ref</th><th>When</th><th>Meeting</th><th>Status</th><th>History</th><th></th></tr></thead>
+  <thead><tr><th>Ref</th><th>When</th><th>Meeting</th><th>Status and next step</th><th>History</th><th></th></tr></thead>
   <tbody>
   {% for r in items %}
-  <tr>
+  <tr id="room-{{ r.id }}" tabindex="-1">
     <td data-label="Ref"><code>{{ r.ref_code }}</code></td>
     <td data-label="When"><strong>{{ r.day_date.strftime('%a') }} {{ r.day_date.day }} {{ r.day_date.strftime('%b %Y') }}</strong><br>{{ r.hours }}</td>
     <td data-label="Meeting">{{ r.title }}{% if r.meals_requested %} <span class="badge grey">Meals</span>{% endif %}
@@ -26,17 +27,19 @@
       {% elif r.linked %}<div class="rm-hint">{{ r.linked.kind }}: <a href="{{ r.linked.url }}">{{ r.linked.title }}</a></div>
       {% elif r.status in ('requested', 'approved') and r.day_date >= today %}<div class="rm-hint"><a href="/create?from_room={{ r.id }}">Create a CSS activity for this</a></div>{% endif %}
       {% if r.standby and r.status == 'requested' %}<div class="rm-hint">Those hours were already taken, so nothing is held. The Administrative Section can confirm it if the room frees up or in an emergency.</div>{% endif %}</td>
-    <td data-label="Status"><span class="badge {{ r.badge[0] }}">{{ r.badge[1] }}</span></td>
+    <td data-label="Status and next step"><span class="badge {{ r.badge[0] }}">{{ r.badge[1] }}</span>
+      {{ reservation_guidance(r.guidance) }}
+    </td>
     <td data-label="History">{{ r.timeline }}{% if r.status in ('declined', 'cancelled') and r.decide_note %}<br><em>Reason: {{ r.decide_note }}</em>{% endif %}
       {% if r.offers %}
-      <div class="rm-offers"><strong>{{ 'Your booking was cancelled. Pick a new time and it is booked at once:' if r.was_bumped else 'Other times that are free. Ask again:' }}</strong>
+      <div class="rm-offers"><strong>{{ 'Your booking was cancelled. Choose a new time; it is booked at once if still free:' if r.was_bumped else 'Other times that are free. Ask again:' }}</strong>
         {% for o in r.offers %}
         <form method="post" action="/rooms/{{ r.id }}/take">
           <input type="hidden" name="day" value="{{ o.day }}"><input type="hidden" name="slots" value="{{ o.slot_ids|join(',') }}">
-          <button class="btn ghost small" type="submit">{{ o.label }}</button>
+          <button class="btn ghost small" type="submit">{{ 'Book' if r.was_bumped else 'Request' }} {{ o.label }}</button>
         </form>
         {% endfor %}
-      </div>{% endif %}</td>
+      </div>{% elif r.guidance.state == 'attention' %}<p><a href="/rooms">Check availability</a></p>{% endif %}</td>
     <td class="actions" data-label="">
       {% if can_act and r.status in ('requested', 'approved') %}
       <details class="rm-withdraw">
@@ -74,4 +77,5 @@
   {{ rows(earlier, false) }}
 </section>
 {% endif %}
+<script src="/static/js/rooms_mine.js?v=7.85" defer></script>
 {% endblock %}

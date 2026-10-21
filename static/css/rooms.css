@@ -252,3 +252,20 @@ button.rm-cell:focus-visible { outline:3px solid var(--accent); outline-offset:1
 .rm-series small { display:block; color:var(--soft); margin-left:1.4rem; }
 .rm-todo-list { list-style: none; margin: 0; padding: 0; }
 .rm-todo-list li { padding: .2rem 0; }
+
+/* Reservation guidance stays readable inside both wide and stacked tables. */
+.rm-guidance { border-left:3px solid var(--accent); padding:.4rem .6rem; margin-top:.45rem;
+  background:var(--surface-2); border-radius:var(--r1); min-width:0; overflow-wrap:anywhere; }
+.rm-guidance p { margin:.3rem 0 0; font-size:.86rem; color:var(--ink-soft); }
+.rm-guidance[data-room-state="attention"] { border-color:var(--amber); }
+.rm-mine tr { scroll-margin-top:5rem; }
+.rm-mine td { overflow-wrap:anywhere; }
+#rm-check { display:none; margin:0 0 .8rem; min-height:44px; }
+.rm-close { min-width:44px; min-height:44px; }
+@media (max-width:1199px) {
+  .rm-wrap.js .rm-panel[aria-hidden="true"] { visibility:hidden; pointer-events:none; }
+  .rm-wrap.js.panel-open .rm-panel { visibility:visible; pointer-events:auto; }
+}
+@media (prefers-reduced-motion:reduce) { .rm-wrap.js .rm-panel { transition:none; } }
+
+.rm-wrap.js #rm-check { display:inline-flex; }

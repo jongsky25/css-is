@@ -3,7 +3,7 @@
 {% from "_rooms_grid.html" import week_grid %}
 {% block title %}Conference room{% endblock %}
 {% block page_width %}full{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/rooms.css?v=20261020a">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/rooms.css?v=7.85">{% endblock %}
 {% block content %}
 {{ page_header("Conference room", "See what is free, then pick your hours. The Administrative Section approves each request.") }}
 {% include "_rooms_tabs.html" %}
@@ -18,21 +18,21 @@
         <a class="btn ghost small" href="/rooms?week={{ board.this_week.isoformat() }}">Today</a>
         <a class="btn ghost small" href="/rooms?week={{ board.next.isoformat() }}" aria-label="Next week">▶</a>
       </div>
-      <button type="button" class="btn rm-open-panel" id="rm-open">+ Request</button>
+      <button type="button" class="btn rm-open-panel" id="rm-open" aria-controls="rm-panel" aria-expanded="false">+ Request</button>
     </div>
     <p class="rm-hint">Earliest date you can request: <strong>{{ earliest.strftime('%a') }} {{ earliest.day }} {{ earliest.strftime('%b') }}</strong> (2 working days' notice).
-      Click an hour, then another in the same day to pick a range. <span class="rm-legend"><span>✓ Free</span><span>○ Others requested (still ask)</span><span>● Booked</span><span>★ Yours</span><span>✕ Unavailable</span></span></p>
+      Click an hour, then another in the same day to pick a range. <span class="rm-legend"><span>✓ Free to request</span><span>○ Requested, not reserved</span><span>● Booked</span><span>★ Your request or booking</span><span>✕ Unavailable</span></span></p>
 
-    <div class="rm-daystrip" role="tablist" aria-label="Day">
+    <nav class="rm-daystrip" aria-label="Choose a day">
       {% for d in board.days %}
       {% set free = d.cells | rejectattr('state', 'in', ['approved', 'blocked', 'closed']) | list | length %}
-      <a href="/rooms?week={{ board.start.isoformat() }}&day={{ d.iso }}" role="tab" data-day="{{ d.iso }}"
-         class="{{ 'is-active-day' if d.iso == active_day }}" aria-selected="{{ 'true' if d.iso == active_day else 'false' }}">
+      <a href="/rooms?week={{ board.start.isoformat() }}&day={{ d.iso }}" data-day="{{ d.iso }}"
+         class="{{ 'is-active-day' if d.iso == active_day }}" {% if d.iso == active_day %}aria-current="true"{% endif %}>
         <span>{{ d.date.strftime('%a') }}</span><strong>{{ d.date.day }}</strong>
         <small>{% if d.closed %}{{ d.closed_short|lower }}{% else %}{{ free }} open{% endif %}</small>
       </a>
       {% endfor %}
-    </div>
+    </nav>
 
     {{ week_grid(board, active_day, "", can_encode) }}
     <div class="rm-week2">{{ week_grid(board2, '', 'second', can_encode) }}</div>
@@ -41,11 +41,14 @@
   <aside class="rm-panel" id="rm-panel" aria-label="Request the conference room">
     <form method="post" action="/rooms/request" id="rm-form">
       <div class="rm-panel-head">
-        <h2>Request the room</h2>
-        <button type="button" class="btn ghost small rm-close" id="rm-close" aria-label="Close">✕</button>
+        <h2 id="rm-panel-title">Request the room</h2>
+        <button type="button" class="btn ghost small rm-close" id="rm-close" aria-label="Close room request">✕</button>
       </div>
+      {% if error %}<div class="flash err" id="rm-form-error" role="alert" tabindex="-1">{{ error }} Your details are kept. Review the message and your details, then submit again when ready.</div>{% endif %}
+      <p class="rm-hint">Sending a request does not reserve the room. The Administrative Section must approve it first.</p>
       <p class="rm-summary" id="rm-summary" aria-live="polite">Pick hours on the grid, or fill in the date and times below.</p>
-      <p class="rm-clash" id="rm-clash" role="status"></p>
+      <p class="rm-clash" id="rm-clash" role="status" aria-atomic="true"></p>
+      <button type="button" class="btn ghost small" id="rm-check">Check availability</button>
       {% if series %}
       <div class="rm-bump rm-series" role="alert">
         <strong>Check these dates first. Nothing has been requested yet:</strong>
@@ -139,5 +142,5 @@
     </form>
   </aside>
 </div>
-<script src="/static/js/rooms.js?v=20261009a" defer></script>
+<script src="/static/js/rooms.js?v=7.85" defer></script>
 {% endblock %}

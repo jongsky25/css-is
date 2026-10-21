@@ -15,6 +15,7 @@ import auth
 import ratelimit as rl
 import rooms
 import rooms_notify
+import rooms_guidance
 import storage as st
 from request_security import safe_local_return
 
@@ -149,6 +150,7 @@ def make_router(templates, get_conn, today_local, *, base_url=None, qr_data_uri=
         try:
             rooms_notify.mark_seen(conn, user["id"], rooms_notify.REQUESTER_KINDS)
             rows = rooms.list_for_user(conn, user["id"])
+            relationships = rooms_guidance.relationship_index(rows)
             for r in rows:
                 r["hours"] = rooms.hours_text(conn, r)
                 r["timeline"] = rooms.timeline(conn, r)
@@ -162,9 +164,10 @@ def make_router(templates, get_conn, today_local, *, base_url=None, qr_data_uri=
                 r["offers"] = rooms.suggestions_for(conn, r, today=today)
                 r["series"] = rooms.series_summary(conn, r)
                 r["was_bumped"] = r["status"] == "cancelled" and r["bumped_by_reservation_id"] is not None
+                r["guidance"] = rooms_guidance.reservation(r, relationships=relationships, offers=r["offers"], today=today)
             upcoming = sorted((r for r in rows if r["status"] in ("requested", "approved")
                                and r["day_date"] >= today), key=lambda r: (r["day"], r["id"]))
-            attention = [r for r in rows if r["offers"]]            # cancelled/declined, date still ahead, needs a new time
+            attention = [r for r in rows if r["guidance"]["state"] == "attention" and r["day_date"] >= today]            # cancelled/declined, date still ahead, needs a new time
             earlier = [r for r in rows if r not in upcoming and r not in attention]
             msg = err = None
             if q.get("took"):
@@ -179,9 +182,9 @@ def make_router(templates, get_conn, today_local, *, base_url=None, qr_data_uri=
                     msg = (f"Request {r['ref_code']} sent" + (f" for {n} dates" if n.isdigit() else "") +
                            ". The Administrative Section will decide; you'll see the result here.")
             elif q.get("done") == "series":
-                msg = f"Withdrew {q.get('n', '')} date(s) of the repeating request. The hours are free again."[:200]
+                msg = f"Withdrew {q.get('n', '')} date(s) of the repeating request. Check availability before requesting those hours again."[:200]
             elif q.get("done") == "withdrawn":
-                msg = "Reservation withdrawn. The hours are free again."
+                msg = "Reservation withdrawn. Check availability before requesting these hours again."
             elif q.get("err"):
                 err = q["err"][:200]
             return templates.TemplateResponse(request, "rooms_mine.html", {
@@ -544,6 +547,7 @@ def make_router(templates, get_conn, today_local, *, base_url=None, qr_data_uri=
         res["when"] = rooms.queue_when(res)
         offers = rooms.suggestions_for(conn, res, today=today)
         return templates.TemplateResponse(request, "room_track.html", {
+            "guidance": rooms_guidance.reservation(res, peers=rooms_guidance.guest_relations(conn, res), offers=offers, today=today),
             "r": res, "token": token, "badge": STATUS_BADGE.get(res["status"], ("grey", res["status"].title())),
             "timeline": rooms.timeline(conn, res, names=False), "offers": offers,
             "was_bumped": res["status"] == "cancelled" and res["bumped_by_reservation_id"] is not None,
@@ -562,7 +566,7 @@ def make_router(templates, get_conn, today_local, *, base_url=None, qr_data_uri=
             if not new and not res["ext_email_verified_at"]:
                 rooms.mark_email_verified(conn, res["id"])
             q = request.query_params
-            msg = {"withdrawn": "Your request was withdrawn. The hours are free again."}.get(q.get("done"), "")
+            msg = {"withdrawn": "Your request was withdrawn. Check availability before requesting these hours again."}.get(q.get("done"), "")
             return _track_page(request, conn, token, res, msg=msg, err=(q.get("err") or "")[:200], new=new)
         finally:
             conn.close()
