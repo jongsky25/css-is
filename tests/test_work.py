@@ -867,7 +867,7 @@ def test_guided_intake_http_preview_failure_manual_entry_and_existing_scope(work
         page=client.get('/documents/new')
         assert page.status_code==200 and 'Reference only' in page.text
         csrf=re.search(r'name="csrf" value="([a-f0-9]+)"',page.text)[1]
-        payload={**intake_fields(unit),'intake':'guided','csrf':csrf,'direction':'OUT','priority':'urgent',
+        payload={**intake_fields(unit),'submission_id':re.search(r'name="submission_id" value="([^"]+)"',page.text)[1],'intake':'guided','csrf':csrf,'direction':'OUT','priority':'urgent',
                  'subject':'My manually checked subject','drive_url':'https://drive.google.com/file/d/sourcefile123456/view'}
         monkeypatch.setattr(operations,'get_adapter',lambda:IntakeAdapter(True))
         failed=client.post('/documents/intake/preview',data=payload)

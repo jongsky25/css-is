@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.60"
+APP_VERSION = "7.61"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.61",
+        "date": "October 21, 2026",
+        "summary": "Registration can recover a saved result after a connection problem.",
+        "changes": [
+            "Retrying the same correspondence submission opens its original saved result instead of creating another record or work item.",
+            "If a save is not confirmed, check its result or retry the same submission while your entered details stay on the page.",
+            "A definite validation error lets you correct the fields before trying again."
+        ]
+    },
     {
         "version": "7.60",
         "date": "October 21, 2026",

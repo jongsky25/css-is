@@ -258,7 +258,7 @@ def test_http_enable_requires_confirmation_and_allows_intake(setup_db, app_mod, 
         assert 'Disable Documents and sending</button>' in client.get(url).text
         assert client.post(url, data=form).status_code == 409
         page = client.get('/documents/new')
-        created = client.post('/documents/new', data={'csrf': hidden(page, 'csrf'), 'subject': 'Synthetic enabled intake', 'type': 'memo'}, follow_redirects=False)
+        created = client.post('/documents/new', data={'submission_id': hidden(page, 'submission_id'), 'csrf': hidden(page, 'csrf'), 'subject': 'Synthetic enabled intake', 'type': 'memo'}, follow_redirects=False)
         assert created.status_code == 303, created.text
         assert st.get_setting(conn, 'documents.sending_enabled') == '0'
         assert client.post(url, data={**form, 'action': 'disable_module', 'settings_revision': '1'}).status_code == 200

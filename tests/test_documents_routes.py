@@ -22,7 +22,7 @@ def test_routes_disabled_csrf_and_private_records(app_mod,viewer,admin):
         page=viewer.get('/documents/new');assert page.status_code==200
         csrf=token(page)
         assert viewer.post('/documents/new',data={'subject':'Hidden document','type':'memo'}).status_code==403
-        created=viewer.post('/documents/new',data={'csrf':csrf,'subject':'Hidden document','type':'memo'},follow_redirects=False)
+        created=viewer.post('/documents/new',data={'submission_id':re.search(r'name="submission_id" value="([^"]+)"',page.text)[1],'csrf':csrf,'subject':'Hidden document','type':'memo'},follow_redirects=False)
         assert created.status_code==303,created.text
         url=created.headers['location'];detail=viewer.get(url)
         assert detail.status_code==200,detail.text
