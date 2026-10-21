@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.61"
+APP_VERSION = "7.62"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.62",
+        "date": "October 21, 2026",
+        "summary": "AI survey answers use checked system facts and calculations.",
+        "changes": [
+            "Survey answers show figures from the system instead of numbers written by the AI.",
+            "Broader answers identify the figures and periods used, and simple comparisons are calculated by the system.",
+            "If the facts or your access change while an answer is prepared, normal search is used instead.",
+            "Satisfaction totals exclude missing and invalid ratings."
+        ]
+    },
     {
         "version": "7.61",
         "date": "October 21, 2026",

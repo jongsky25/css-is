@@ -1,3 +1,10 @@
+## 7.62 — October 21, 2026
+
+- Replace model-authored survey answers with validated fact selections and server-rendered figures; fixed answers skip the extra AI call.
+- Calculate simple differences on the server, show source labels and periods, and reject invented, changed or incompatible facts.
+- Recheck the current session and AI switches after provider calls; preserve resource-person opt-in and search fallback.
+- Exclude missing and invalid ratings from Home satisfaction totals and broader survey facts.
+
 ## 7.61 — October 21, 2026
 
 - Add atomic registration receipts so retries of the same correspondence submission return the saved document/work result without duplicating numbering, tasks or events.
