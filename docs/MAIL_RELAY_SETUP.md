@@ -162,7 +162,7 @@ keep the existing secret value, deployment URL and sending account. Merely point
 older mail deployment is insufficient: an unqualified `{ok:true}` is not official dispatch evidence.
 
 
-## Reply-to (since v7.82)
+## Reply-to (since v7.83)
 
 `/admin/email` can set a reply-to address. The relay passes it on if the script contains
 `if (body.replyTo) message.replyTo=String(body.replyTo);` right after the `htmlBody` line (it is in

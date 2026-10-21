@@ -55,7 +55,8 @@ def test_action_screen_renders_only_permitted_documents(app_mod,viewer,admin):
         c.commit()
         page=viewer.get('/documents/actions')
         assert page.status_code==200 and 'Action screen route record' in page.text
-        assert 'Reconcile changed instruction or policy' in page.text
+        assert 'Verify the source and document details' in page.text
+        assert 'Waiting' in page.text  # Verification precedes reconciliation.
         assert 'Action screen route record' not in admin.get('/documents/actions').text
         assert viewer.get('/documents/actions?view=division').status_code==403
         assert viewer.get('/documents/actions?view=invalid').status_code==400

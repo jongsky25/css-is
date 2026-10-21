@@ -73,7 +73,7 @@
 {{ start(doc,csrf,'reopen','Reopen a closed record') }}{{ field('due_date','Reconciled deadline','date') }}{{ text('reason','Reopening reason') }}{{ end() }}
 {% endif %}
 {% if is_director %}{{ start(doc,csrf,'directive','Change Director directive') }}<p>A formal changed directive requires lead reconciliation and renewed approval where applicable.</p>{{ text('reason','Instruction') }}{% include 'documents/instruction_mentions.html' %}{{ end() }}{% endif %}
-{% if doc.reviewer_id==request.state.user.id %}{{ start(doc,csrf,'review','Review the exact current version') }}<input type="hidden" name="version_id" value="{{ doc.current_version }}">{{ select('decision','Decision',[('approved','Approve'),('changes_requested','Return for revision')]) }}{{ text('reason','Review note',value=submitted.get('reason','')) }}{{ end('Record review') }}{% endif %}
+{% if doc.reviewer_id==request.state.user.id and next_step.stage=='review' and next_step.action %}{{ start(doc,csrf,'review','Review the exact current version') }}<input type="hidden" name="version_id" value="{{ doc.current_version }}">{{ select('decision','Decision',[('approved','Approve'),('changes_requested','Return for revision')]) }}{{ text('reason','Review note',value=submitted.get('reason','')) }}{{ end('Record review') }}{% endif %}
 {% if signatory %}
 {{ start(doc,csrf,'external_signature','Record your externally signed final copy') }}{{ field('url','Signed Drive copy','url') }}{{ field('source_fingerprint','Reviewed source fingerprint') }}{{ text('evidence','Signing evidence and confirmation that content matches the approved source') }}{{ end() }}
 {{ start(doc,csrf,'sign_preview','Preview your stored signature placement') }}<p>Place {{ '{{OFFICE_CONNECT_SIGNATURE}}' }} on a paragraph of its own in the Google Doc before review. Existing PDFs can use the external-signature workflow.</p>{{ end('Check final source and placement') }}
@@ -103,5 +103,5 @@
 <h3>Timeline</h3><ol>{% for e in history %}<li>{{ e.recorded_at }} · {{ e.action|replace('_',' ') }} · {{ names.get(e.actor_id,'Former staff member') }}{% if e.note %}<p>{{ e.note }}</p>{% endif %}<details><summary>Evidence</summary><pre>{{ e.detail|tojson(indent=2) }}</pre></details></li>{% endfor %}</ol>
 </details>
 <script src="/static/js/document_mentions.js?v=1" defer></script>
-<script src="/static/js/document_action_link.js?v=2" defer></script>
+<script src="/static/js/document_action_link.js?v=3" defer></script>
 {% endblock %}

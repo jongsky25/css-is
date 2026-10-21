@@ -214,7 +214,7 @@ def test_action_screen_tracks_personal_steps_and_current_access(registry):
     cards=actions.personal(c,u[3],today='2026-10-19')
     assert {card['kind'] for card in cards}=={'Contribution','Instruction'}
     assert any(card['url'].endswith(f'#instruction-{directive_id}') for card in cards)
-    assert any(card['url'].endswith(f'#assignment-{assignment_id}') and card['overdue'] for card in cards)
+    assert any(card['url'].endswith(f'#document-contribution-{assignment_id}') and card['overdue'] for card in cards)
     c.execute('INSERT INTO document_instruction_read VALUES (?,?,?)',(directive_id,u[3]['id'],'2026-10-19'))
     c.execute("UPDATE document_assignment SET status='completed' WHERE id=?",(assignment_id,))
     c.commit()

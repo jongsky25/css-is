@@ -8,7 +8,22 @@ import documents_permissions as permissions
 import work_completion
 
 
+def assignment_choices(user, doc, officer, assignment):
+    """Existing legacy contribution transitions, shared by detail and action list."""
+    choices=[]
+    if doc['status'] in ('closed','cancelled') or assignment['status'] in ('completed','superseded'):
+        return choices
+    if assignment['user_id']==user['id'] or officer:
+        choices={'assigned':[('acknowledged','Acknowledge')],
+                 'acknowledged':[('in_progress','Start contribution'),('submitted','Submit for consolidation')],
+                 'in_progress':[('submitted','Submit for consolidation')]}.get(assignment['status'],[])
+    if (officer or doc['lead_id']==user['id']) and assignment['status']=='submitted':
+        choices.append(('completed','Confirm contribution complete'))
+    return choices
+
+
 def build(conn, user, values):
+    prepared=values.get('prepared',{})
     doc=values['doc']
     policy=values['policy']
     officer=values['officer']
@@ -30,7 +45,7 @@ def build(conn, user, values):
                 'contributions':contributions if personal else []}
 
     def closure():
-        blockers=docs.closure_blockers(conn,doc,policy)
+        blockers=docs.closure_blockers(conn,doc,policy,facts=prepared.get('closure_facts'))
         if blockers:
             first=blockers[0]
             code=first['code']
@@ -60,7 +75,7 @@ def build(conn, user, values):
             'Check that the work is complete, then supply the required closure evidence. Closing this document does not complete a linked work item.',
             action='close',label='Review closure requirements',allowed=coordinator)
 
-    if not docs.enabled(conn):
+    if not (prepared['enabled'] if 'enabled' in prepared else docs.enabled(conn)):
         return result('disabled','This record is read-only','Documents is disabled. Existing records and their history remain readable.',owner=None,role='Workflow administrator')
     if doc['archived_at']:
         return result('archived','Restore before making changes','The archived record and its history are retained. A workflow administrator can restore it with a reason.',
@@ -91,7 +106,7 @@ def build(conn, user, values):
         return result('instruction','Confirm the initial instruction and routing',
             'The Director or bureau OIC gives the instruction and identifies the responsible lead.',
             owner=None,role='Director or bureau OIC',action='route_instruction',label='Give the routing instruction',
-            allowed=permissions.director(conn,user),blocker='The initial routing instruction is pending.')
+            allowed=prepared['director'] if 'director' in prepared else permissions.director(conn,user),blocker='The initial routing instruction is pending.')
     if not lead:
         return result('lead','Identify the responsible lead',
             'The records officer confirms ownership. Migrated assignments are managed in shared work.',
@@ -118,7 +133,7 @@ def build(conn, user, values):
             'Prepare the outgoing draft and attach a checked Drive version so the reviewer can approve the exact content.',
             action='attach',label='Attach the draft',allowed=can_work,personal=True)
     consolidation=values['consolidation']
-    packet_exists=conn.execute('SELECT 1 FROM work_review_packet WHERE document_id=?',(doc['id'],)).fetchone()
+    packet_exists=prepared['packet_exists'] if 'packet_exists' in prepared else conn.execute('SELECT 1 FROM work_review_packet WHERE document_id=?',(doc['id'],)).fetchone()
     if packet_exists and (not consolidation or not consolidation['current']):
         href='/work/'+str(consolidation['case']['id'])+'/consolidation' if consolidation else None
         return result('consolidation','Request renewed shared-work review',
@@ -161,15 +176,22 @@ def build(conn, user, values):
             owner=None,role='Authorized signatory',action='sign_preview' if can_work else 'external_signature',
             label='Review signing options',allowed=values['signatory'])
     try:
-        work_completion.release_gate(conn,doc)
+        if not prepared.get('release_clear',False):
+            work_completion.release_gate(conn,doc)
     except ValueError:
         return result('release_contributions','Finish shared-work contributions before release',
             'Ask the lead to resolve outstanding contributions and changed-input blockers.',
             href=case_link,label='Open shared work',allowed=bool(case_link),
             blocker='Shared-work contributions are not ready for release.',personal=True)
-    dispatch_ids={x['id'] for x in values['dispatches'] if x['version_id']==doc['current_version']}
-    outcomes=[r for r in values['recipient_outcomes'] if r['dispatch_id'] in dispatch_ids]
-    if any(r['outcome']=='unknown' for r in outcomes):
+    if 'delivery_state' in prepared:
+        outcomes=prepared['delivery_state']!='none'
+        unknown=prepared['delivery_state']=='unknown'
+    else:
+        dispatch_ids={x['id'] for x in values['dispatches'] if x['version_id']==doc['current_version']}
+        recipients=[r for r in values['recipient_outcomes'] if r['dispatch_id'] in dispatch_ids]
+        outcomes=bool(recipients)
+        unknown=any(r['outcome']=='unknown' for r in recipients)
+    if unknown:
         return result('delivery_unknown','Check the uncertain delivery outcome',
             'Check the original service receipt with the records officer. Do not resend to recipients whose delivery is accepted or uncertain.',
             owner=None,role='Concerned records officer',href='#document-recipient-outcomes',

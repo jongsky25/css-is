@@ -1,4 +1,4 @@
-## 7.82 — October 21, 2026
+## 7.83 — October 21, 2026
 
 - Email console (`/admin/email`): add a global **Pause all email** (account mail — invite, reset, registration-link re-send — is never paused; queued room and calendar mail waits and sends after resume; scheduled jobs skip while paused). Audited as `email_pause`.
 - Split conference-room meal alerts into their own `room_meal_alerts` switch (reads the old `room_admin_alerts` value until set, so nothing turns back on). Add attachment options `calendar_ics` and `room_ics`.
@@ -8,6 +8,14 @@
 - Delivery policy (applies to all mail, account mail included): staging redirect address, sender name, reply-to, subject prefix. Reply-to needs the updated `apps_script/mail_relay.gs` (redeploy). Test-send can target another active account picked from a list.
 - `tests/test_email_coverage.py` fails when a new direct `mailer.send` call, an uncatalogued feature key or an unused catalog entry appears.
 - Not changed: birthday greetings still have no per-person opt-out (a documented decision), birthday and daily-job send times follow the single daily sweep, and message wording is still not editable.
+
+## 7.82 — October 21, 2026
+
+- Extend A15 to My actions and division follow-up with current document guidance, responsible people/roles, ready/waiting/attention states and direct links to existing controls.
+- Filter current access and scope before seek pagination; batch ordinary page data and responsibility names, bound instruction/contribution cards, retain deadline ordering and label unknown dates.
+- Share closure facts and legacy contribution choices, preserve authoritative shared-work checks, and retain independent fresh write guards.
+- Protect stale review links after authority changes and restore keyboard focus on cross-page action links without waiting for external previews.
+- Verify workflow/card agreement, private inputs, role and scope changes, interrupted/partial delivery, page boundaries, growing registers, OS SQLite compatibility and real browser navigation. Staff observations remain open.
 
 ## 7.81 — October 21, 2026
 
