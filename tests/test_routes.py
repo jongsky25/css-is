@@ -196,6 +196,46 @@ def test_dashboard_activity_report(admin):
     assert r.status_code == 200, r.text[:300]
     assert "Service quality, dimension by dimension" in r.text
 
+
+def test_activity_report_links_to_rated_resource_person(viewer, manager, admin, app_mod, sample_ids):
+    import storage as st
+
+    rp_id = sample_ids["rp_id"]
+    response = manager.post("/create", data={
+        "event_type": "bureau", "activity_name": "Linked RP activity",
+        "event_date": "2026-08-14", "venue": "Linked RP hall", "qr_mode": "combined",
+        "rp_id": [str(rp_id)], "topic": ["Workshop"],
+    }, follow_redirects=True)
+    assert response.status_code == 200
+    conn = st.connect(app_mod.DB)
+    event_id = conn.execute("SELECT id FROM event WHERE title=? ORDER BY id DESC LIMIT 1",
+                            ("Linked RP activity",)).fetchone()[0]
+    forms = conn.execute(
+        "SELECT fi.id, fi.survey_type FROM event_form ef "
+        "JOIN form_instance fi ON fi.id=ef.form_instance_id WHERE ef.event_id=?",
+        (event_id,)).fetchall()
+    eid = min(row[0] for row in forms)
+    answers = [("A", 6), *[(f"B{i}", 6) for i in range(1, 10)], ("C", 4)]
+    for form_id, _survey_type in forms:
+        st.record_response(conn, form_id, answers)
+    conn.close()
+    app_mod.invalidate_atoms()
+    detail = f"/dashboard/people/{rp_id}/activity/{eid}"
+    page = viewer.get(f"/reports/activities/{eid}")
+    assert page.status_code == 200
+    assert "Resource-person ratings for this activity" in page.text
+    assert detail in page.text
+    assert f"/reports?type=3&amp;activity={eid}" in page.text
+    assert viewer.get(detail).status_code == 200
+
+    conn = st.connect(app_mod.DB)
+    st.set_rp_hidden(conn, rp_id, True)
+    conn.close()
+    app_mod.invalidate_atoms()
+    hidden_page = viewer.get(f"/reports/activities/{eid}")
+    assert detail not in hidden_page.text
+    assert detail in admin.get(f"/reports/activities/{eid}").text
+
 def test_dashboard_activity_bogus_id(admin):
     # Unknown activity id -> a clean 404 page, never a 500.
     r = admin.get("/reports/activities/99999999")
