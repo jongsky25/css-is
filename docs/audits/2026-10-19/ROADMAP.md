@@ -103,7 +103,7 @@ Total provisional implementation effort: **51–98 person-days** if all listed p
 
 **Owners:** operations/backend lead and accountable system owner.
 
-**A25:** measure the corrected system with representative data and concurrent reads/writes: p50/p95/p99 latency, error rate, SQLite lock wait, CPU/RSS, event-loop delay, queue age, export/refresh duration, restore time and snapshot lag. Test the existing single-writer deployment's restart behavior and limits.
+**A25:** measure the corrected system with representative data and concurrent reads/writes: p50/p95/p99 latency, error rate, SQLite lock wait, CPU/RSS, event-loop delay, queue age, export/refresh duration, restore time and snapshot lag. Test the existing single-writer deployment's restart behavior and limits. Include concurrent first-use database initialization: A16 CI exposed a startup-worker/session bootstrap lock in a fresh Gmail-review test database; the fixture ordering was repaired, while production bootstrap concurrency remains to be reproduced and evaluated.
 
 | Evidence | Likely next decision |
 |---|---|

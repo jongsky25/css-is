@@ -43,6 +43,12 @@ Use the locked test environment and installed Chromium (the browser fixture uses
 3. Check real browser zoom at 200% and 400%, forced colors, touch and a representative mobile browser across primary journeys. The automated 200% text resize and narrow CSS viewports cover useful reflow behavior, not every zoom/browser configuration or every page.
 4. Observe agreed staff tasks, including errors and dialogs, before expanding to A17/A18. Permission-dependent content, real long labels/data, larger datasets, other accent choices and pages outside this sample need their own checks. No claim of full WCAG 2.2 AA certification is made.
 
+## CI follow-up: concurrent cold-start initialization
+
+The first CI revision passed all 4,811 tests in normal order. Its shuffled run passed 4,810 tests and hit `database is locked` during Gmail-review fixture session setup: the first `get_conn()` seeding path was entered while TestClient lifespan workers could also initialize the same fresh database. Account setup already commits its writes. The fixture now obtains its genuine registered session before starting lifespan workers, consistent with the other authentication fixtures; its assertions and production session checks are retained. Twenty related Gmail review/intake tests pass locally after that change.
+
+This test setup ordering change does not repair or establish production cold-start concurrency safety. Reproduce concurrent first-use initialization and investigate serialization/atomic seeding under A25 before claiming that behavior is verified. No A16 production database/session behavior was changed to suppress the failure.
+
 ## Release and rollback
 
 Review 7.83, run the existing required release/dependency/full-suite gates, then merge through the normal release workflow. The service-worker cache and every changed static asset reference are versioned together. Roll back by reverting this release's frontend/templates and publishing a new application/cache version through the same workflow; there is no database migration or durable data conversion.
