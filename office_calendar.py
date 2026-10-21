@@ -37,6 +37,7 @@ from datetime import date, datetime, timedelta
 import auth
 import birthdays as bd
 import calendar_ics as cics
+import email_params
 import mailer
 import storage as st
 import tzutil as tz
@@ -1181,10 +1182,7 @@ def entry_candidates_for_activity(conn, user, title, start, end=None):
 # it waits until the person's newest notice is QUIET_MINUTES old (or the oldest has waited
 # MAX_WAIT_MINUTES), except that a notice about something today or tomorrow goes at once.
 
-QUIET_MINUTES = 10
-MAX_WAIT_MINUTES = 60
 EXPIRE_DAYS = 2
-MAX_ATTEMPTS = 3
 
 _WHAT = {"title": "title", "start_date": "date", "end_date": "date", "start_time": "time",
          "end_time": "time", "time_note": "time", "venue": "venue", "modality": "format",
@@ -1229,6 +1227,9 @@ def flush_outbox(conn, base_url, *, now=None, send=None):
     conn.commit()
     if st.email_paused(conn):                            # an admin paused all email: keep the queue for after resume
         return 0
+    quiet = email_params.param(conn, "calendar_quiet_minutes")
+    max_wait = email_params.param(conn, "calendar_max_wait_minutes")
+    max_attempts = email_params.param(conn, "send_retry_attempts")
     pending = {}
     for r in conn.execute("SELECT id, user_id, entry_id, kind, detail, queued_at, urgent, attempts "
                           "FROM calendar_outbox WHERE sent_at IS NULL ORDER BY id"):
@@ -1238,8 +1239,8 @@ def flush_outbox(conn, base_url, *, now=None, send=None):
     for uid, rows in pending.items():
         times = [datetime.fromisoformat(r["queued_at"]) for r in rows]
         ready = (any(r["urgent"] for r in rows)
-                 or now - max(times) >= timedelta(minutes=QUIET_MINUTES)
-                 or now - min(times) >= timedelta(minutes=MAX_WAIT_MINUTES))
+                 or now - max(times) >= timedelta(minutes=quiet)
+                 or now - min(times) >= timedelta(minutes=max_wait))
         if not ready:
             continue
         ids = [r["id"] for r in rows]
@@ -1286,7 +1287,7 @@ def flush_outbox(conn, base_url, *, now=None, send=None):
         st.log_email_send(conn, "calendar_changes", acct["username"], subj, status, result.get("detail"))
         if status == "sent":
             close("sent"); sent += 1
-        elif status == "failed" and max(r["attempts"] for r in rows) + 1 >= MAX_ATTEMPTS:
+        elif status == "failed" and max(r["attempts"] for r in rows) + 1 >= max_attempts:
             close("failed")
         else:                                            # not configured yet / try again next tick
             conn.execute("UPDATE calendar_outbox SET attempts=attempts+1 WHERE id IN (%s)"

@@ -91,6 +91,7 @@ import documents
 import report_docs
 import csm_report
 import auth
+import email_params
 import mailer
 import send_reminders
 import backups as bk
@@ -9463,10 +9464,9 @@ async def activity_messages_save(request: Request, event_token: str):
     return RedirectResponse(f"/activities/{event_token}/manage", status_code=303)
 
 
-UPDATE_EMAIL_COOLDOWN_MIN = 15      # one blast per activity per this many minutes
-UPDATE_EMAIL_DAILY_CAP = 300        # all activities together, per local day: the relay's
-                                    # ~1500/day (docs/MAIL_RELAY_SETUP.md) also carries
-                                    # invites and password resets, so updates get a slice
+# Pinned-update emails: cooldown and the daily cap (all activities together, per local day) are the
+# admin-tunable email_params "update_email_*" — the relay's ~1500/day (docs/MAIL_RELAY_SETUP.md) also
+# carries invites and password resets, so updates get a slice (default 300).
 
 
 def _update_cooldown_key(event_id):
@@ -9503,7 +9503,7 @@ def _queue_update_emails(request, conn, ev, text):
     last = st.get_setting(conn, _update_cooldown_key(ev["id"]))
     if last:
         try:
-            left = UPDATE_EMAIL_COOLDOWN_MIN - int(
+            left = email_params.param(conn, "update_email_cooldown_min") - int(
                 (_now_local() - datetime.fromisoformat(last)).total_seconds() // 60)
             if left > 0:
                 return f"wait:{left}", 0, 0, []
@@ -9513,7 +9513,7 @@ def _queue_update_emails(request, conn, ev, text):
                if not p["purged"] and p.get("email")]
     if not targets:
         return "none", 0, 0, []
-    remaining = max(0, UPDATE_EMAIL_DAILY_CAP - _update_quota_used(conn))
+    remaining = max(0, email_params.param(conn, "update_email_daily_cap") - _update_quota_used(conn))
     chosen = targets[:remaining]
     if not chosen:
         return "cap", 0, len(targets), []

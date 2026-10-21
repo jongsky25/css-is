@@ -3,6 +3,7 @@ from datetime import timedelta
 from urllib.parse import urlsplit
 
 import documents as docs
+import email_params
 import documents_permissions as permissions
 from documents_storage import rows, transaction
 import mailer
@@ -62,9 +63,10 @@ def deliver(conn, base, dry_run=False, now=None):
     if not available(conn) or urlsplit(base).scheme not in ('https', 'http') or not urlsplit(base).netloc:
         return 0
     now = now or tz.now_local()
+    weekday = email_params.param(conn, 'work_digest_weekday')
     count = 0
     for pref in rows(conn, "SELECT user_id,digest FROM work_notification_preference WHERE digest<>'off' ORDER BY user_id"):
-        if pref['digest'] == 'weekly' and now.weekday() != 0:
+        if pref['digest'] == 'weekly' and now.weekday() != weekday:
             continue
         uid = pref['user_id']
         try:

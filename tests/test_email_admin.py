@@ -438,3 +438,57 @@ def test_console_lists_dispatch_and_flags_blocked_features(admin, db_path):
 def test_every_external_email_has_a_label_and_settings_link():
     for key, (label, why, url) in mailer.EXTERNAL.items():
         assert label and why and url.startswith("/")
+
+
+# ---- tunable schedule params for the newer senders -------------------------
+
+def test_new_params_default_to_the_old_hard_coded_values(db_path):
+    import email_params
+    conn = st.connect(db_path); st.init_db(conn)
+    try:
+        conn.execute("DELETE FROM app_setting WHERE key LIKE 'email_param.%'"); conn.commit()
+        got = {k: email_params.param(conn, k) for k in email_params.PARAMS}
+        assert got["room_morning_hour"] == 8 and got["room_afternoon_hour"] == 16
+        assert got["room_escalate_hours"] == 24 and got["send_retry_attempts"] == 3
+        assert got["calendar_quiet_minutes"] == 10 and got["calendar_max_wait_minutes"] == 60
+        assert got["update_email_cooldown_min"] == 15 and got["update_email_daily_cap"] == 300
+        assert got["work_digest_weekday"] == 0
+    finally:
+        conn.close()
+
+
+def test_param_is_clamped_and_survives_garbage(db_path):
+    import email_params
+    conn = st.connect(db_path); st.init_db(conn)
+    try:
+        st.set_setting(conn, "email_param.room_morning_hour", "99")
+        assert email_params.param(conn, "room_morning_hour") == 12
+        st.set_setting(conn, "email_param.room_morning_hour", "abc")
+        assert email_params.param(conn, "room_morning_hour") == 8
+    finally:
+        conn.execute("DELETE FROM app_setting WHERE key LIKE 'email_param.%'"); conn.commit(); conn.close()
+
+
+def test_send_reminders_still_exposes_params():
+    import send_reminders, email_params
+    assert send_reminders.PARAMS is email_params.PARAMS
+
+
+def test_room_morning_hour_param_moves_the_summary(db_path):
+    import rooms_notify
+    from datetime import datetime
+    conn = st.connect(db_path); st.init_db(conn)
+    try:
+        calls = []
+        orig = rooms_notify.queue_morning_digest
+        rooms_notify.queue_morning_digest = lambda c, n: calls.append(n)
+        try:
+            st.set_setting(conn, "email_param.room_morning_hour", "10")
+            rooms_notify.tick(conn, "", now=datetime(2026, 10, 20, 9, 0))
+            assert calls == []
+            rooms_notify.tick(conn, "", now=datetime(2026, 10, 20, 10, 5))
+            assert len(calls) == 1
+        finally:
+            rooms_notify.queue_morning_digest = orig
+    finally:
+        conn.execute("DELETE FROM app_setting WHERE key LIKE 'email_param.%'"); conn.commit(); conn.close()

@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from urllib.parse import quote
 
 import auth
+import email_params
 import mailer
 import storage as st
 import tzutil as tz
@@ -26,10 +27,7 @@ FEATURE = {"new_request": "room_new_request", "received": "room_decided", "appro
            "reminder": "room_reminder", "escalation": "room_admin_alerts",
            "meal_form": "room_meal_alerts", "meal_revised": "room_meal_alerts", "meal_cancel": "room_meal_alerts",
            "withdrawn_late": "room_admin_alerts", "digest": "room_digest", "tomorrow": "room_digest"}
-ESCALATE_AFTER = timedelta(hours=24)       # a request pending this long goes to the Admin Head ...
 ESCALATE_WITHIN = timedelta(hours=48)      # ... as does one whose date is this close
-MORNING_HOUR, AFTERNOON_HOUR = 8, 16
-MAX_ATTEMPTS = 3
 RETRY_AFTER = timedelta(minutes=5)
 STALE_AFTER = timedelta(days=3)           # an email nobody could send for 3 days is no longer news
 
@@ -229,7 +227,7 @@ def queue_escalations(conn, now):
     for res in rooms.list_pending(conn):
         created = datetime.fromisoformat(res["created_at"]) if res["created_at"] else now
         start = datetime.fromisoformat(f"{res['day']}T00:00:00")
-        if not (now - created >= ESCALATE_AFTER or start - now <= ESCALATE_WITHIN):
+        if not (now - created >= timedelta(hours=email_params.param(conn, "room_escalate_hours")) or start - now <= ESCALATE_WITHIN):
             continue
         who, _u, _e = rooms.requester_label(conn, res)
         for h in heads:
@@ -355,7 +353,7 @@ def flush(conn, base_url, now=None, send=None):
     rows = conn.execute(
         "SELECT id, user_id, email, kind, reservation_id, version, text, attempts, created_at FROM room_notice "
         "WHERE email_status IS NULL OR (email_status='failed' AND attempts<? AND emailed_at<=?) ORDER BY id",
-        (MAX_ATTEMPTS, cutoff)).fetchall()
+        (email_params.param(conn, "send_retry_attempts"), cutoff)).fetchall()
     tally = {}
     for rid_, user_id, email, kind, res_id, version, text, attempts, created in rows:
         n = {"user_id": user_id, "kind": kind, "reservation_id": res_id, "version": version, "text": text}
@@ -408,8 +406,8 @@ def tick(conn, base_url, now=None, send=None):
             pass
     expire_past_requests(conn, now.date())
     queue_escalations(conn, now)
-    if now.hour >= MORNING_HOUR:
+    if now.hour >= email_params.param(conn, "room_morning_hour"):
         queue_morning_digest(conn, now)
-    if now.hour >= AFTERNOON_HOUR:
+    if now.hour >= email_params.param(conn, "room_afternoon_hour"):
         queue_afternoon(conn, now)
     return flush(conn, base_url, now=now, send=send)
