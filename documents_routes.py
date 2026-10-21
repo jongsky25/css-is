@@ -1,5 +1,6 @@
 """Authenticated document screens and form/JSON actions with session-bound CSRF."""
 import csv
+import asyncio
 import hashlib
 import hmac
 import io
@@ -21,6 +22,7 @@ import documents_memo as memo
 import documents_annotations as annotations
 import documents_file_text as file_text
 import documents_registration as registration
+import documents_external as external
 import work
 import work_intake
 import work_readiness
@@ -276,9 +278,18 @@ def make_router(templates,get_conn):
 
     @router.post('/documents/intake/preview')
     async def intake_preview(request:Request):
-        conn=get_conn();data={}
         try:
-            data=await posted(request)
+            data = await posted(request)
+        except (ValueError, p.Denied) as exc:
+            return HTMLResponse(str(exc), status_code=403 if isinstance(exc, p.Denied) else 400)
+        try:
+            return await external.run(build_intake_preview, request, data)
+        except (external.Busy, external.Unconfirmed) as exc:
+            return external.failure_response(request, '/documents/new', exc)
+
+    def build_intake_preview(request, data):
+        conn=get_conn()
+        try:
             result=work_intake.preview(conn,request.state.user,data.get('drive_url',''))
             data.pop('confirmed',None)
             return intake_page(request,conn,data,preview=result)
@@ -412,7 +423,6 @@ def make_router(templates,get_conn):
     @router.post('/documents/{doc_id}/annotate/{version_id}')
     async def annotation_save(request: Request, doc_id: int, version_id: int):
         try:
-            import asyncio
             data = await posted(request)
             ink = data.get('kind') == 'ink'
             strokes = json.loads(data.get('strokes', '[]')) if ink and isinstance(data.get('strokes'), str) else data.get('strokes') if ink else None
@@ -425,17 +435,21 @@ def make_router(templates,get_conn):
                                             source_sha256=data.get('source_sha256', ''))
                 finally:
                     conn.close()
-            await asyncio.to_thread(save)
+            if ink:
+                await external.run(save)
+            else:
+                await asyncio.to_thread(save)
             return RedirectResponse(f'/documents/{doc_id}/annotate/{version_id}', status_code=303)
         except p.Denied as exc:
             return HTMLResponse(str(exc), status_code=403)
+        except (external.Busy, external.Unconfirmed) as exc:
+            return external.failure_response(request, f'/documents/{doc_id}/annotate/{version_id}', exc)
         except (ValueError, TypeError) as exc:
             return HTMLResponse(str(exc), status_code=409 if isinstance(exc, d.Conflict) else 400)
 
     @router.post('/documents/{doc_id}/index-file')
     async def index_file(request: Request, doc_id: int):
         try:
-            import asyncio
             data = await posted(request)
             version_id = int(data.get('version_id'))
             def index():
@@ -445,10 +459,12 @@ def make_router(templates,get_conn):
                                            data.get('revision'))
                 finally:
                     conn.close()
-            await asyncio.to_thread(index)
+            await external.run(index)
             return RedirectResponse(f'/documents/{doc_id}?file={version_id}', status_code=303)
         except p.Denied as exc:
             return HTMLResponse(str(exc), status_code=403)
+        except (external.Busy, external.Unconfirmed) as exc:
+            return external.failure_response(request, f'/documents/{doc_id}', exc)
         except (ValueError, TypeError) as exc:
             return HTMLResponse(str(exc), status_code=409 if isinstance(exc, d.Conflict) else 400)
 
@@ -636,9 +652,26 @@ def make_router(templates,get_conn):
 
     @router.post('/documents/{doc_id}/{action}')
     async def action_route(request:Request,doc_id:int,action:str):
-        conn=get_conn();data={}
         try:
-            data=await posted(request); user=request.state.user
+            data = await posted(request)
+        except (ValueError, KeyError) as exc:
+            return await asyncio.to_thread(handle_action, request, doc_id, action, {}, exc)
+        if action in ('attach', 'sign_preview', 'external_signature', 'extract', 'sign',
+                      'dispatch', 'record_dispatch', 'operation_status'):
+            try:
+                return await external.run(handle_action, request, doc_id, action, data)
+            except (external.Busy, external.Unconfirmed) as exc:
+                return external.failure_response(request, f'/documents/{doc_id}', exc)
+        return await asyncio.to_thread(handle_action, request, doc_id, action, data)
+
+    def handle_action(request, doc_id, action, data, parse_error=None):
+        # All SQLite work, external I/O and rendering use this worker's own
+        # connection. No connection created on the request loop crosses threads.
+        conn=get_conn()
+        try:
+            if parse_error is not None:
+                raise parse_error
+            user=request.state.user
             revision=int(data['revision'])
             if action not in ('restore','instruction_read') and d.get(conn,user,doc_id)['archived_at']:
                 raise ValueError('Restore this document before changing it.')
@@ -713,12 +746,14 @@ def make_router(templates,get_conn):
             return RedirectResponse('/documents/'+str(doc_id),status_code=303)
         except (ValueError,KeyError,sqlite3.IntegrityError,http_error(),TimeoutError) as e:
             status=403 if isinstance(e,p.Denied) else 409 if isinstance(e,d.Conflict) else 400
+            message = ('The external service did not confirm the result. Check this document before retrying.'
+                       if isinstance(e, (http_error(), TimeoutError)) else str(e))
             if request.headers.get('content-type','').startswith('application/json'):
-                return JSONResponse({'error':str(e)},status_code=status)
+                return JSONResponse({'error':message},status_code=status)
             # Keep submitted text on errors without exposing it to another viewer.
             try:
                 values=detail_context(conn,request.state.user,doc_id)
-                return templates.TemplateResponse(request,'documents/detail.html',context(request,conn,**values,error=str(e),submitted=data),status_code=status)
+                return templates.TemplateResponse(request,'documents/detail.html',context(request,conn,**values,error=message,submitted=data),status_code=status)
             except p.Denied:
                 return HTMLResponse('Document not found or unavailable to you.',status_code=404)
         finally:

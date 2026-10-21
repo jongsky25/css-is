@@ -4,11 +4,20 @@ Never retry a POST. Apps Script ContentService redirects are followed as GETs to
 Google's reply host, without forwarding the signed body or secret.
 """
 import os
+import time
 from urllib.parse import urlparse
 import httpx
 import gdocs_relay
 
 MAX_RESPONSE = 1024 * 1024
+CALL_SECONDS = 120
+
+
+def remaining(deadline):
+    seconds = deadline - time.monotonic()
+    if seconds <= 0:
+        raise WorkspaceError('timeout', 'Workspace did not confirm the result in time. Check the operation status before retrying.')
+    return seconds
 
 
 class WorkspaceError(ValueError):
@@ -22,10 +31,14 @@ class Unconfigured(ValueError):
     pass
 
 
-def _request(client,method,url,**kwargs):
-    with client.stream(method,url,**kwargs) as response:
+def _request(client,method,url,*,deadline,**kwargs):
+    budget = remaining(deadline)
+    timeout = httpx.Timeout(min(90, budget), connect=min(10, budget), pool=min(10, budget))
+    with client.stream(method,url,timeout=timeout,**kwargs) as response:
+        remaining(deadline)
         content=bytearray()
         for chunk in response.iter_bytes():
+            remaining(deadline)
             content.extend(chunk)
             if len(content)>MAX_RESPONSE:
                 raise WorkspaceError('response_too_large', 'Workspace response exceeded the metadata limit.')
@@ -34,6 +47,7 @@ def _request(client,method,url,**kwargs):
         # bytes a second time (Google's compressed reply then raises DecodingError).
         headers=[(key,value) for key,value in response.headers.multi_items()
                  if key.lower() not in ('content-encoding','content-length','transfer-encoding')]
+        remaining(deadline)
         return httpx.Response(response.status_code,headers=headers,
                               content=bytes(content),request=response.request)
 
@@ -50,8 +64,9 @@ class WorkspaceRelay:
             raise WorkspaceError('invalid_endpoint', 'Use the existing Google Apps Script /exec deployment URL.')
         request = {**payload, 'action':'document_'+action, 'operation_id':operation_id}
         envelope = gdocs_relay.envelope(request, secret)
+        deadline = time.monotonic() + CALL_SECONDS
         with httpx.Client(timeout=httpx.Timeout(90,connect=10),follow_redirects=False) as client:
-            response = _request(client,"POST",endpoint,json=envelope)
+            response = _request(client,"POST",endpoint,deadline=deadline,json=envelope)
             # ContentService's 302/303 response is a result location, not another
             # execution. Never repeat the authenticated POST, including on timeout.
             for _ in range(3):
@@ -61,7 +76,7 @@ class WorkspaceRelay:
                 dest=urlparse(location)
                 if dest.scheme!='https' or dest.hostname!='script.googleusercontent.com' or dest.username or dest.port not in (None,443):
                     raise WorkspaceError('unexpected_redirect', 'Unexpected Workspace redirect; the operation needs reconciliation.')
-                response=_request(client,"GET",location)
+                response=_request(client,"GET",location,deadline=deadline)
             response.raise_for_status()
             if len(response.content)>MAX_RESPONSE:
                 raise WorkspaceError('response_too_large', 'Workspace response exceeded the metadata limit.')
