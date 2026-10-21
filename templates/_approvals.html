@@ -65,10 +65,17 @@
           <div>{{ r.hours }}</div>
         </td>
         <td data-label="Meeting">
+          <p class="sub"><b>Next: Administrative Section.</b>
+            {% if r.past %}This date has passed; approval is no longer available.
+            {% elif r.blocked %}The room is closed for these hours. Reopen it under Room closures before approval, or decline with a reason.
+            {% elif r.can_confirm_standby %}Confirm standby with a reason to release any bookings that hold these hours, or decline. Nothing is reserved by this request yet.
+            {% elif r.held_by %}These hours are already booked. Decline with a reason or coordinate another time.
+            {% else %}Approve to reserve these hours, or decline with a reason. This request does not reserve them yet.{% endif %}
+          </p>
           <div>{{ r.title }}{% if r.standby %} <span class="pill warn" title="Filed for hours that were already booked or closed">Standby · provisional</span>{% endif %}</div>
           <div class="sub">{{ room_modalities.get(r.modality, r.modality) }}{% if r.attendees %} · {{ r.attendees }} attending{% endif %}{% if r.meals_requested %} · meals requested{% endif %}</div>
           {% if r.linked %}<div class="sub">{{ r.linked.kind }}: <a href="{{ r.linked.url }}">{{ r.linked.title }}</a></div>{% endif %}
-          {% if r.move_of %}<div class="delta"><span class="pill warn">Move</span> of <b>{{ r.move_of.ref }}</b> ({{ r.move_of.when }}). Approving releases the old hours.</div>{% endif %}
+          {% if r.move_of %}<div class="delta"><span class="pill warn">Move</span> of <b>{{ r.move_of.ref }}</b> ({{ r.move_of.when }}). {% if r.move_of.status == 'approved' %}The original booking stays until this move is approved. Approving releases the old hours.{% else %}The earlier reservation is {{ r.move_of.status }}; check its current status.{% endif %}</div>{% endif %}
           {% if r.purpose %}<div class="note">“{{ r.purpose }}”</div>{% endif %}
         </td>
         <td data-label="Other requests">
@@ -81,7 +88,7 @@
         </td>
         <td data-label="Decision" class="actions">
           <form class="df" method="post" action="/rooms/{{ r.id }}/decide">
-            <input type="text" name="note" placeholder="remark or reason">
+            <label>Note or reason <input type="text" name="note" maxlength="200" aria-label="Note or reason for {{ r.ref_code }}" placeholder="remark or reason"></label>
             {% if r.can_approve %}<button class="ok" type="submit" name="action" value="approve">Approve</button>{% endif %}
             {% if r.can_confirm_standby %}<button class="ok" type="submit" name="action" value="confirm_standby" title="Cancels the booking that holds these hours. A reason is required and is sent to them.">Confirm standby (needs reason)</button>{% endif %}
             <button class="no" type="submit" name="action" value="decline">Decline</button>

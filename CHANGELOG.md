@@ -1,3 +1,12 @@
+## 7.85 — October 21, 2026
+
+- Start A17 with current conference-room status and next-step guidance for owned reservations and validated guest tracking links, including standby, moves, replacements, declines, cancellation, withdrawal, expiry and unavailable alternatives.
+- Distinguish owned pending requests from owned approved slots; retain pending-title privacy, directory-based approval authority and independent mutation checks.
+- Check typed dates/hours through the existing minimal read API with stale-response protection, retained drafts, explicit check retry and fresh server validation on submission.
+- Make mobile request panels contain/restore focus, preserve focus across resizing, use ordinary day links and provide visible server-error recovery; keep the native form usable without JavaScript.
+- Clarify immediate booking versus a new request in alternative buttons, current approval blockers and decision notes; avoid claiming email delivery or universal free hours after withdrawal.
+- Verify lifecycle/ownership/fresh-authority/HTTP behavior and actual Chromium form-to-data journeys; record sampled local accessibility evidence. Calendar/travel refinements, manual screen-reader and staff task observations remain open.
+
 ## 7.84 — October 21, 2026
 
 - Email console (`/admin/email`): add a global **Pause all email** (account mail — invite, reset, registration-link re-send — is never paused; queued room and calendar mail waits and sends after resume; scheduled jobs skip while paused). Audited as `email_pause`.

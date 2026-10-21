@@ -1,0 +1,3624 @@
+{
+  "axe": "4.14.0",
+  "engine_sha256": "20c09fe157a8a34a30e241aaa1fcdade657734f08ab379ecfbeb7d45cc46e878",
+  "browser": "154.0.8037.57",
+  "checks": [
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-prohibited-attr",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".st-approved"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"div\" elements with no valid role attribute."
+            },
+            {
+              "target": [
+                ".rm-quick"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"div\" elements with no valid role attribute."
+            }
+          ]
+        },
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".st-approved > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".st-requested.mine[data-pending=\"1\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".st-requested[data-pending=\"1\"][data-slot=\"11\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "a[aria-label=\"Previous week\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "a[href=\"/rooms?week=2026-11-02\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Availability board",
+      "width": 1440,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-prohibited-attr",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".st-approved"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"div\" elements with no valid role attribute."
+            },
+            {
+              "target": [
+                ".rm-quick"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"div\" elements with no valid role attribute."
+            }
+          ]
+        },
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".st-approved > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".st-requested.mine[data-pending=\"1\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".st-requested[data-pending=\"1\"][data-slot=\"11\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "a[aria-label=\"Previous week\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "a[href=\"/rooms?week=2026-11-02\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Request panel",
+      "width": 1440,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "My reservations",
+      "width": 1440,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Guest tracking",
+      "width": 1440,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Room approvals",
+      "width": 1440,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-prohibited-attr",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".st-approved"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"div\" elements with no valid role attribute."
+            },
+            {
+              "target": [
+                ".rm-quick"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"div\" elements with no valid role attribute."
+            }
+          ]
+        },
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".st-approved > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".st-requested.mine[data-pending=\"1\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".st-requested[data-pending=\"1\"][data-slot=\"11\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "a[aria-label=\"Previous week\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "a[href=\"/rooms?week=2026-11-02\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Server conflict with retained draft",
+      "width": 1440,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "a[aria-label=\"Previous week\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "a[href=\"/rooms?week=2026-11-02\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Availability board",
+      "width": 390,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-prohibited-attr",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".rm-quick"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"div\" elements with no valid role attribute."
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "#rm-close"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "#rm-close"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Request panel",
+      "width": 390,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "My reservations",
+      "width": 390,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Guest tracking",
+      "width": 390,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Room approvals",
+      "width": 390,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-prohibited-attr",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".rm-quick"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"div\" elements with no valid role attribute."
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "#rm-close"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "#rm-close"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Server conflict with retained draft",
+      "width": 390,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-prohibited-attr",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".st-approved"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"div\" elements with no valid role attribute."
+            },
+            {
+              "target": [
+                ".rm-quick"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"div\" elements with no valid role attribute."
+            }
+          ]
+        },
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".st-approved > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".st-requested.mine[data-pending=\"1\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".st-requested[data-pending=\"1\"][data-slot=\"11\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "a[aria-label=\"Previous week\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "a[href=\"/rooms?week=2026-11-02\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Availability board",
+      "width": 1440,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-prohibited-attr",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".st-approved"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"div\" elements with no valid role attribute."
+            },
+            {
+              "target": [
+                ".rm-quick"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"div\" elements with no valid role attribute."
+            }
+          ]
+        },
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".st-approved > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".st-requested.mine[data-pending=\"1\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".st-requested[data-pending=\"1\"][data-slot=\"11\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "a[aria-label=\"Previous week\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "a[href=\"/rooms?week=2026-11-02\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Request panel",
+      "width": 1440,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "My reservations",
+      "width": 1440,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Guest tracking",
+      "width": 1440,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Room approvals",
+      "width": 1440,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-prohibited-attr",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".st-approved"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"div\" elements with no valid role attribute."
+            },
+            {
+              "target": [
+                ".rm-quick"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"div\" elements with no valid role attribute."
+            }
+          ]
+        },
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".st-approved > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".st-requested.mine[data-pending=\"1\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".st-requested[data-pending=\"1\"][data-slot=\"11\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-27\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-28\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-29\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-30\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "a[aria-label=\"Previous week\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "a[href=\"/rooms?week=2026-11-02\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Server conflict with retained draft",
+      "width": 1440,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"1\"][data-row=\"0\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"2\"][data-row=\"1\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"3\"][data-row=\"2\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"4\"][data-row=\"3\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"5\"][data-row=\"4\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"6\"][data-row=\"5\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"7\"][data-row=\"6\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"8\"][data-row=\"7\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"9\"][data-row=\"8\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"10\"][data-row=\"9\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"11\"][data-row=\"10\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[data-slot=\"12\"][data-row=\"11\"][data-day=\"2026-10-26\"] > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "a[aria-label=\"Previous week\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "a[href=\"/rooms?week=2026-11-02\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Availability board",
+      "width": 390,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-prohibited-attr",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".rm-quick"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"div\" elements with no valid role attribute."
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "#rm-close"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "#rm-close"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Request panel",
+      "width": 390,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "My reservations",
+      "width": 390,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Guest tracking",
+      "width": 390,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Room approvals",
+      "width": 390,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-prohibited-attr",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".rm-quick"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"div\" elements with no valid role attribute."
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "#rm-close"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "#rm-close"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Server conflict with retained draft",
+      "width": 390,
+      "theme": "dark"
+    }
+  ],
+  "errors": [],
+  "notes": "Synthetic local authenticated requester/approver and guest data. Four intentional rejected requests. No production access or screen-reader session.",
+  "release": "7.85",
+  "date": "2026-10-21",
+  "base_revision": "764c08590d5688a40863be45036fd527e604aaeb"
+}
