@@ -16,8 +16,10 @@
   <p class="tv-hint">These pre-fill the generated forms. People can still change them while preparing a form.</p>
   <label>Head of office <input name="head_name" value="{{ sig.head_name }}" maxlength="120"></label>
   <label>Head of office, title <input name="head_title" value="{{ sig.head_title }}" maxlength="120"></label>
-  <label>Certifying officer <input name="certifier_name" value="{{ sig.certifier_name }}" maxlength="120"></label>
-  <label>Certifying officer, title <input name="certifier_title" value="{{ sig.certifier_title }}" maxlength="120"></label>
+  <p class="tv-hint">Fill in the head of office to name an acting head or OIC. Leave the name blank to use the Director from the directory. It signs the DPO and the other activity documents as well as the travel forms.</p>
+  <label>Certifying officer, fallback <input name="certifier_name" value="{{ sig.certifier_name }}" maxlength="120"></label>
+  <label>Certifying officer, fallback title <input name="certifier_title" value="{{ sig.certifier_title }}" maxlength="120"></label>
+  <p class="tv-hint">The certifying officer depends on the division: each form uses the head of the traveller's own division from the directory. These two boxes are used only when the directory has no division head for that person.</p>
   <label>Station <input name="station" value="{{ sig.station }}" maxlength="120"></label>
   <label>Template administrators (email addresses, comma separated) <textarea name="template_admins" rows="2" maxlength="1000">{{ template_admins }}</textarea></label>
   <button class="btn" type="submit">Save</button>
