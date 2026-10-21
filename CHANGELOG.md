@@ -1,11 +1,18 @@
-## 7.68 — October 21, 2026
+## 7.69 — October 21, 2026
 
 - Activity documents (DPO, memorandum, concept note): positions are no longer filled in from saved profiles on their own. The Draft button now has a "Fill in positions from saved profiles" checkbox, off by default; without it the position cells are left blank for the person to complete (spot feedback #154).
 - Activity templates (`activity_templates.gs`): every paragraph and table now starts plain, because Docs copies the formatting of the paragraph above and one bold line had made the whole DPO bold. Only titles, headings and signatories are bold. The letterhead logos are sized from the picture's own proportions at 70 pt tall. Run `rebuildActivityTemplates()` once to apply it; existing templates are not changed (spot feedback #154).
 
+## 7.68 — October 21, 2026
+
+- Page the document registry in groups of 30 after applying current permissions and queue/search filters; preserve full-register counts, measures and CSV exports.
+- Resolve authority once per read snapshot and use SQL filters for restricted records, organizational grants, merged receipts and legacy/migrated work assignments.
+- Bound search excerpts to page records, skip unused export/global-search snippets, use count queries for approval summaries, and add supporting indexes.
+- Add independent legacy-result comparisons, pagination/revocation/work-boundary checks and a reproducible synthetic query/row-loading benchmark.
+
 ## 7.67 — October 21, 2026
 
-- Travel Prepare page: a "Your designation (shown on the forms)" field, prefilled from the profile and kept in the browser draft with the signatories. It is sent as `traveler_title` and used for the designation on every form; blank falls back to the profile (spot feedback #150-152, designation part). 
+- Travel Prepare page: a "Your designation (shown on the forms)" field, prefilled from the profile and kept in the browser draft with the signatories. It is sent as `traveler_title` and used for the designation on every form; blank falls back to the profile (spot feedback #150-152, designation part).
 - Travel forms (relay `travel_docs.gs`): after each form is filled it is set to Times New Roman 12, paragraphs of 60 characters or more that are left-aligned are justified (tables too), and titles (short bold lines with no full stop, comma, colon or brackets, either centred, all capitals or headings) are bold and in Title Case, keeping acronyms such as DPO, CENRR and RER. Sheets get the font, size and titles; Google Sheets cannot justify. Replace `travel_docs` in the Apps Script project to apply it. No template rebuild (spot feedback #150-152).
 
 ## 7.66 — October 21, 2026

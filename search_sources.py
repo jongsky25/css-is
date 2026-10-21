@@ -250,7 +250,7 @@ def _documents(conn, user, terms, ctx):
         return []
     query = " ".join(terms)
     return [{"title": doc["subject"], "hint": doc["number"], "url": "/documents/"+str(doc["id"]),
-             "section": "Documents", "kw": ""} for doc in documents.list_visible(conn,user,query)][:SECTION_CAP]
+             "section": "Documents", "kw": ""} for doc in documents.list_page(conn,user,query,limit=SECTION_CAP,totals=False,snippets=False)['documents']]
 
 
 SOURCES = [

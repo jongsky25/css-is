@@ -17,18 +17,28 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.68"
+APP_VERSION = "7.69"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "7.68",
+        "version": "7.69",
         "date": "October 21, 2026",
         "summary": "Drafted activity documents no longer fill in positions on their own.",
         "changes": [
             "When you draft a DPO, memorandum or concept note, positions are left blank unless you tick \"Fill in positions from saved profiles\".",
             "New activity templates keep plain text plain, so only titles and signatories are bold.",
             "New activity templates size the logos from the picture's own proportions."
+        ]
+    },
+    {
+        "version": "7.68",
+        "date": "October 21, 2026",
+        "summary": "Browse the document register in pages while keeping your search and queue totals.",
+        "changes": [
+            "Browse 30 documents at a time and keep your chosen queue and search when opening older records.",
+            "Counts and measures cover all matching records you can access, and CSV export still includes the complete matching register.",
+            "Access is checked again as you browse, and document searches and approval counts load less data as the register grows."
         ]
     },
     {
