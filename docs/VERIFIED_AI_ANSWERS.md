@@ -99,13 +99,13 @@ It exercises the real HTTP route and database with provider stubs, covering:
 - server values, source labels, percentage-point arithmetic and no-data behavior;
 - false numeric prose, spelled-out numbers, forged confidence and extra fields;
 - invented, private, duplicate, malformed and incompatible source selections;
-- misleading source names and user instructions, without executable answer HTML;
+- misleading source names and user instructions confined to quoted source labels;
 - current access/settings, opt-in revocation, changed data, archiving and dates;
 - fixed/user-scoped answer paths, feature gates, budgets, errors and timeouts;
 - missing, fractional and out-of-scale ratings in source and Home calculations.
 
 Required release CI runs the full suite normally and shuffled, including existing
-answer-card browser tests, deployment closure and dependency checks. This is local
+browser regressions, Home/assistant checks, deployment closure and dependency checks. This is local
 and CI evidence; no manual production testing or real-provider evaluation is
 claimed. No schema migration is required. After deployment, use existing AI
 outcomes to watch fallback frequency. If broader lookups have compatibility
