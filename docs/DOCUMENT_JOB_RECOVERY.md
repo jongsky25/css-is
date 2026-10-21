@@ -73,3 +73,5 @@ queue across independent database copies, and cannot reconstruct a lost receipt.
 Current authorization or approval changes can deliberately stop recovery for
 manual review. Background Gmail synchronization capacity and staff usability
 pilots remain separate A14/A15 work.
+
+**7.79 completes A14:** [bounded background synchronization](DOCUMENT_BACKGROUND_SYNC.md) adds shared background admission, fair scheduling, durable Drive ownership and controlled filing retries.
