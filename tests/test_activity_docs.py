@@ -147,7 +147,8 @@ def test_drafting_an_invitation_sends_the_entry_details_and_links_the_doc(viewer
 
 def test_a_dpo_follows_the_doh_order_and_leaves_the_blanks(viewer, conn, relay):
     eid = create(viewer, kind="travel", title="CALEP Field Visit", venue="Cebu City",
-                 start_date="2026-10-12", end_date="2026-10-16", people=[str(uid(conn, "viewer@test.local"))])
+                 start_date="2026-10-12", end_date="2026-10-16",
+                 people=[str(uid(conn, "viewer@test.local")), str(uid(conn, "encoder@test.local"))])
     st.set_setting(conn, "travel.sig.head_name", "Dr. Ana Reyes"); st.set_setting(conn, "travel.sig.head_title", "Director IV")
     assert draft(viewer, eid, "dpo").status_code == 303
     call = relay.calls[0]
@@ -162,17 +163,18 @@ def test_a_dpo_follows_the_doh_order_and_leaves_the_blanks(viewer, conn, relay):
     assert f["head_name"] == "DR. ANA REYES" and f["head_title"] == "Director IV"      # the signatory is printed in capitals
     # the personnel go in as a Name | Position table, and as lines for a template that still has a {{personnel}} line
     table = call["rows"]["personnel"]
-    assert table["marker"] == "p_name" and len(table["data"]) == 1 and table["data"][0]["p_name"].startswith("1. ")
-    assert set(table["data"][0]) == {"p_name", "p_position"}
-    assert len(call["blocks"]["personnel"]) == 1 and call["blocks"]["personnel"][0].startswith("1. ")
+    assert table["marker"] == "p_name" and len(table["data"]) == 2 and table["data"][0]["p_name"].startswith("1. ")
+    assert set(table["data"][0]) == {"p_name", "p_position"} and "remove" not in table
+    assert len(call["blocks"]["personnel"]) == 2 and call["blocks"]["personnel"][0].startswith("1. ")
 
 
 def test_a_dpo_without_a_venue_or_unit_still_reads_as_a_sentence(viewer, conn, relay):
     eid = create(viewer, kind="travel", title="CALEP Field Visit", venue="", owner_org_id="")
     draft(viewer, eid, "dpo")
     f = relay.calls[0]["fields"]
-    assert " in " not in f["subject"].split("CALEP Field Visit")[1] and f["subject"].startswith("Authority for Select Personnel")
-    assert f["intro"].startswith("Authority is hereby given to the following select personnel")
+    assert " in " not in f["subject"].split("CALEP Field Visit")[1] and f["subject"].startswith("Authority for ")
+    assert f["subject"].endswith("on October 12, 2026") or " on " in f["subject"].split("CALEP Field Visit")[1]
+    assert f["intro"].startswith("Authority is hereby given to ") and f["intro"].endswith(".")
 
 
 def test_a_second_draft_is_a_new_revision(viewer, conn, relay):
@@ -341,7 +343,7 @@ def test_positions_are_blank_unless_the_person_asks_for_them(viewer, conn, relay
     """Spot feedback #154: do not fill in positions on their own."""
     me = uid(conn, "viewer@test.local")
     conn.execute("UPDATE admin_user SET designation=? WHERE id=?", ("Planning Officer III", me)); conn.commit()
-    eid = create(viewer, kind="travel", title="CALEP Field Visit", people=[str(me)])
+    eid = create(viewer, kind="travel", title="CALEP Field Visit", people=[str(me), str(uid(conn, "encoder@test.local"))])
     draft(viewer, eid, "dpo")
     assert relay.calls[0]["rows"]["personnel"]["data"][0]["p_position"] == ""
     viewer.post(f"/calendar/entries/{eid}/documents/dpo/draft", content="positions=1", headers=FORM, follow_redirects=False)
@@ -364,8 +366,8 @@ def outside(viewer, eid, **fields):
 
 
 def test_a_dpo_for_an_activity_another_office_runs_cites_their_invitation(viewer, conn, relay):
-    eid = create(viewer, kind="travel", title="CALEP Field Visit", venue="Cebu City",
-                 start_date="2026-10-12", end_date="2026-10-16", people=[str(uid(conn, "viewer@test.local"))])
+    eid = create(viewer, kind="travel", title="CALEP Field Visit", venue="Cebu City", start_date="2026-10-12",
+                 end_date="2026-10-16", people=[str(uid(conn, "viewer@test.local")), str(uid(conn, "encoder@test.local"))])
     r = outside(viewer, eid, conducted_by="outside", host="Center for Health Development VII", invited_as="resource_person",
                 invitation="  Per\nmemo dated   October 1, 2026, we are requested to  lecture on CALEP. ")
     assert r.status_code == 303 and "ok=" in r.headers["location"]
@@ -503,3 +505,48 @@ def test_the_reading_is_cleaned_and_cannot_carry_a_surprise():
     assert out["host"] == "CHD VII" and out["invited_as"] == "" and len(out["key_lines"]) == 600
     assert ai_inv.clean("garbage") == {"readable": False, "host": "", "invited_as": "", "key_lines": "", "note": ""}
     assert ai_inv.clean({"readable": True, "host": "", "key_lines": ""})["readable"] is False
+
+
+# ------------------------------------- one person on a DPO (spot feedback #157) ---
+
+def one_person_dpo(viewer, conn, relay, **over):
+    eid = create(viewer, kind="travel", title="CALEP Field Visit", venue="Cebu City", start_date="2026-10-12",
+                 end_date="2026-10-16", people=[str(uid(conn, "viewer@test.local"))], **over)
+    return eid, relay
+
+
+def test_a_dpo_for_one_person_names_them_and_has_no_list(viewer, conn, relay):
+    conn.execute("UPDATE admin_user SET designation=? WHERE id=?",
+                 ("Planning Officer III", uid(conn, "viewer@test.local"))); conn.commit()
+    eid, _ = one_person_dpo(viewer, conn, relay)
+    viewer.post(f"/calendar/entries/{eid}/documents/dpo/draft", content="positions=1", headers=FORM, follow_redirects=False)
+    f, rows = relay.calls[0]["fields"], relay.calls[0]["rows"]
+    who = "viewer@test.local, Planning Officer III of the Bureau of Local Health Systems Development (BLHSD)"
+    assert f["subject"] == f"Authority for {who} to Attend as Participant in the CALEP Field Visit in Cebu City on October 12-16, 2026"
+    assert f["intro"] == f"Authority is hereby given to {who} to attend as Participant in the CALEP Field Visit in Cebu City on October 12-16, 2026."
+    assert rows["personnel"]["remove"] is True and relay.calls[0]["blocks"]["personnel"] == [""]
+    assert "Select" not in f["subject"] and "following" not in f["intro"]
+
+
+def test_the_designation_is_left_blank_unless_asked_for(viewer, conn, relay):
+    conn.execute("UPDATE admin_user SET designation=? WHERE id=?", ("Planning Officer III", uid(conn, "viewer@test.local"))); conn.commit()
+    eid, _ = one_person_dpo(viewer, conn, relay)
+    draft(viewer, eid, "dpo")
+    f = relay.calls[0]["fields"]
+    assert ad.BLANK in f["subject"] and "Planning Officer III" not in f["subject"] and ad.BLANK in f["intro"]
+
+
+def test_an_invited_resource_person_attends_as_a_resource_speaker(viewer, conn, relay):
+    eid, _ = one_person_dpo(viewer, conn, relay)
+    outside(viewer, eid, conducted_by="outside", host="CHD VII", invited_as="resource_person")
+    draft(viewer, eid, "dpo")
+    f = relay.calls[0]["fields"]
+    assert "to Attend as Resource Speaker in the CALEP Field Visit" in f["subject"] and "attend as Resource Speaker" in f["intro"]
+    outside(viewer, eid, conducted_by="outside", host="CHD VII", invited_as="attendee")
+    draft(viewer, eid, "dpo")
+    assert "to Attend as Participant in the" in relay.calls[1]["fields"]["subject"]
+
+
+def test_the_relay_can_drop_a_table_it_was_told_to_remove():
+    src = open("apps_script/travel_docs.gs", encoding="utf-8").read()
+    assert "if (spec.remove)" in src and "parent.removeChild(table)" in src

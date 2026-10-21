@@ -264,6 +264,11 @@ function applyRows_(body, rows) {
     while (el && el.getType() !== DocumentApp.ElementType.TABLE_ROW) el = el.getParent();
     if (!el) return;
     const row = el.asTableRow(), table = row.getParent().asTable(), idx = table.getChildIndex(row);
+    if (spec.remove) {          // e.g. one person on a DPO: the Name | Position table is not wanted at all
+      const parent = table.getParent();
+      if (parent.getNumChildren() > 1) parent.removeChild(table);
+      return;
+    }
     const data = spec.data.length ? spec.data : [{}];
     for (let i = 1; i < data.length; i++) table.insertTableRow(idx + i, row.copy());
     data.forEach(function (d, i) {
