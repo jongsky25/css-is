@@ -1,6 +1,14 @@
-## 7.75 — October 21, 2026
+## 7.76 — October 21, 2026
 
 - DPO for one person (spot feedback #157): when a DPO has exactly one person, the subject reads "Authority for {name}, {position} of the Bureau of Local Health Systems Development (BLHSD) to Attend as {Participant | Resource Speaker} in the {title} in {venue} on {dates}", the authority line says the same in a sentence, and the Name | Position table is dropped. Resource Speaker when the calendar item says we were invited as a resource person, otherwise Participant. The position follows the #154 rule: a blank line unless "Fill in positions" is ticked. More than one person is unchanged. The request marks the table with `"remove": true`; the relay (`travel_docs.gs` `applyRows_`) deletes that table. Replace the relay script and deploy a new version of it to apply; a relay without it leaves the table with one blank row.
+
+## 7.75 — October 21, 2026
+
+- Add durable, expiring SQLite ownership with fenced completion/failure writes for document service jobs and cross-process reconciliation exclusion.
+- Recover aged unstarted sends/signatures after fresh validation; recover interrupted/uncertain operations through existing receipts without repeating their effects.
+- Bound automatic receipt checks with backoff and an attempt limit; require review for missing receipts, changed authority and interrupted transient extraction.
+- Show clear operation progress and protected minimal status reads; start and cancel the recovery loop with the application lifecycle.
+- Verify real worker exit after remote success, competing processes, stale ownership, authorization changes, receipt safety and transient-data privacy.
 
 ## 7.74 — October 21, 2026
 

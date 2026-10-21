@@ -1462,6 +1462,7 @@ async def short_link_create(request: Request):
 
 
 _short_link_task = None
+_document_job_task = None
 
 
 @app.on_event("shutdown")
@@ -1470,6 +1471,12 @@ async def _stop_short_links():
         _short_link_task.cancel()
         try:
             await _short_link_task
+        except asyncio.CancelledError:
+            pass
+    if _document_job_task:
+        _document_job_task.cancel()
+        try:
+            await _document_job_task
         except asyncio.CancelledError:
             pass
 
@@ -4815,7 +4822,7 @@ async def _persist_on_shutdown():
 
 @app.on_event("startup")
 async def _start_scheduler():
-    global _short_link_task
+    global _short_link_task, _document_job_task
     mon.set_start_db_bytes(DB)        # baseline for the DB-growth saturation signal
     # F3: warm the atoms cache from the last snapshot so the first request is fast.
     try:
@@ -4848,6 +4855,8 @@ async def _start_scheduler():
         _short_link_task = asyncio.create_task(short_links.worker(DB))
     import documents_intake
     asyncio.create_task(documents_intake.worker(get_conn))
+    import documents_jobs
+    _document_job_task = asyncio.create_task(documents_jobs.worker(get_conn))
     asyncio.create_task(_scheduler_loop())
     if PERSIST_DIR:                   # durability engine (bucket-backed persistence)
         print(f"[persist] active — snapshotting {DB} to {bk.SCHED_DIR} "

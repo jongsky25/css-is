@@ -23,6 +23,7 @@ import documents_annotations as annotations
 import documents_file_text as file_text
 import documents_registration as registration
 import documents_external as external
+import documents_jobs as jobs
 import work
 import work_intake
 import work_readiness
@@ -80,6 +81,10 @@ def make_router(templates,get_conn):
             LEFT JOIN org_unit o ON t.target_type='section' AND o.id=t.target_id
             WHERE x.document_id=? ORDER BY t.directive_id,t.target_type,t.target_id''',(doc_id,))
         is_officer=p.officer(conn,user,doc)
+        for job in details['jobs']:
+            job['progress']=jobs.describe(job)
+            job['can_check']=(job['actor_id']==user['id'] or is_officer) and job['kind'] in ('sign','dispatch') and job['state'] in ('running','unknown') and not job['progress']['busy']
+            job['can_reconcile']=(is_officer or (job['actor_id']==user['id'] and job['kind']!='dispatch')) and job['state'] in ('pending','running','unknown','failed') and not job['progress']['busy']
         coordinator=is_officer or doc['lead_id']==user['id']
         for assignment in details['assignments']:
             assignment['progress_choices']=[]
@@ -329,6 +334,21 @@ def make_router(templates,get_conn):
             return render(request,conn,'rules',rules=items,can_grant=p.has_role(conn,user,'grant_admin'),grants=rows(conn,'SELECT * FROM document_role_grant WHERE revoked_at IS NULL'))
         except p.Denied as e:
             return HTMLResponse(str(e),status_code=403)
+        finally:
+            conn.close()
+
+    @router.get('/documents/{doc_id}/operations/{operation_id}')
+    def operation_progress(request:Request,doc_id:int,operation_id:str):
+        conn=get_conn()
+        try:
+            user=p.actor(conn,getattr(request.state,'user',None))
+            doc=d.get(conn,user,doc_id)
+            found=rows(conn,'SELECT * FROM document_job WHERE id=? AND document_id=?',(operation_id,doc_id))
+            d.require(found and (found[0]['actor_id']==user['id'] or p.officer(conn,user,doc)))
+            job=found[0]
+            return JSONResponse({'id':job['id'],'kind':job['kind'],**jobs.describe(job)},headers={'Cache-Control':'no-store'})
+        except (p.Denied,ValueError):
+            return JSONResponse({'error':'Operation not available.'},status_code=404,headers={'Cache-Control':'no-store'})
         finally:
             conn.close()
 
