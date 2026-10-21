@@ -47,8 +47,14 @@ def test_email_waits_for_review_then_registers_group_with_provenance(setup):
     assert c.execute('SELECT received_at FROM document_email_import').fetchone()[0]==payload()['received_at']
     assert signed(client).json()=={**first,'duplicate':True}
     assert len(intake.list_page(c,user,'registered')[0])==1
-    intake.file_pending(c,Drive())
+    operations=list(c.execute('SELECT filing_operation FROM document_intake ORDER BY id'))
+    drive=Drive()
+    intake.file_pending(c,drive)
+    assert c.execute("SELECT COUNT(*) FROM document_intake WHERE filing_state='complete'").fetchone()[0]==1
+    intake.file_pending(c,drive)
     assert c.execute("SELECT COUNT(*) FROM document_intake WHERE filing_state='complete'").fetchone()[0]==2
+    assert list(c.execute('SELECT filing_operation FROM document_intake ORDER BY id'))==operations
+    assert [call[2] for call in drive.calls]==[operation[0] for operation in operations]
 
 
 def test_drive_before_webhook_skips_receipts_and_partial_email_uploads(setup):
