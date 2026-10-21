@@ -27,6 +27,7 @@ DOCS = {
 KEYS = tuple(DOCS)
 INVITE_KINDS = ("training",)           # a training or workshop is announced to the people it is for
 BLANK = "__________"
+BUREAU = "the Bureau of Local Health Systems Development (BLHSD)"
 # The usual asks in a memorandum to a regional office (Area, Requested assistance). Starting wording only.
 ASSISTANCE = (
     ("Participants", "Identify and designate the personnel who will participate in the activity."),
@@ -214,8 +215,17 @@ def payload(conn, entry, key, user, owner_label="", positions=False) -> td.DocPa
                           else f"{title} will be held on {days}{in_place}.")
             intro = (f"Authority is hereby given to the following select {unit + ' ' if unit else ''}personnel to participate in "
                      f"{title} on {days}{in_place}:")
+        subject = f"Authority for {who} to Participate in {title}, {days}{in_place}"
+        single = len(people) == 1
+        if single:
+            # One person (spot feedback #157): the subject and the body name them, with no list and no table.
+            name, desig = people[0]
+            role = "Resource Speaker" if outside and outside["invited_as"] == "resource_person" else "Participant"
+            who_one = f"{name}, {desig or BLANK} of {BUREAU}"
+            subject = f"Authority for {who_one} to Attend as {role} in the {title}{in_place} on {days}"
+            intro = f"Authority is hereby given to {who_one} to attend as {role} in the {title}{in_place} on {days}."
         fields = {"dpo_year": str(td._d(entry["start_date"]).year), "dpo_no": BLANK, "dpo_date": BLANK,
-                  "subject": f"Authority for {who} to Participate in {title}, {days}{in_place}",
+                  "subject": subject,
                   "background": background, "intro": intro,
                   "title": title, "purpose": f"attend {title}", "dates": days, "venue": where_text(entry),
                   "funding_source": BLANK, "unit_name": unit, "head_name": head_name.upper(), "head_title": head_title,
@@ -224,6 +234,10 @@ def payload(conn, entry, key, user, owner_label="", positions=False) -> td.DocPa
         # numbered lines too. Whichever the template carries is filled; the other is skipped.
         rows = {"personnel": {"marker": "p_name", "data": [{"p_name": f"{i}. {n}", "p_position": d} for i, (n, d) in enumerate(people, 1)]}}
         blocks = {"personnel": [_line(i, n, d) for i, (n, d) in enumerate(people, 1)]}
+        if single:
+            # "remove" asks the relay to drop the whole Name | Position table; a relay without it leaves one blank row.
+            rows["personnel"] = {"marker": "p_name", "data": [{"p_name": "", "p_position": ""}], "remove": True}
+            blocks = {"personnel": [""]}
         return td.DocPayload("dpo", "dpo", f"DPO - {title}"[:120], fields, blocks=blocks, rows=rows)
     if key == "invitation":
         if entry.get("audience") == "bureau":
