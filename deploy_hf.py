@@ -68,7 +68,7 @@ LOCAL_DB = "css_is.db"
 RUNTIME_PY = [
     "app.py", "css_is_engine.py", "storage.py", "tzutil.py", "fix_timezone_history.py",
     "dashboard_insights.py", "dashboard_export.py", "dashboard_docs.py", "report_docs.py",
-    "csm_report.py", "auth.py", "request_security.py", "browser_security.py", "mailer.py", "backups.py", "retention.py", "monitoring.py",
+    "csm_report.py", "auth.py", "request_security.py", "request_reads.py", "browser_security.py", "mailer.py", "backups.py", "retention.py", "monitoring.py",
     "name_cleanup.py", "apply_speakers.py", "harmonize.py", "activity_admin.py",
     "activity_messages.py", "reg_questions.py", "certificate.py", "ratelimit.py", "i18n.py",
     "realtime.py", "short_links.py",

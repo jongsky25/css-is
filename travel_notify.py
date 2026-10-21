@@ -28,7 +28,7 @@ def _plural(n, one, many):
     return f"{n} {one if n == 1 else many}"
 
 
-def bell_rows(conn, user_id, today):
+def bell_rows(conn, user_id, today, *, reads=None):
     if not travel.enabled(conn):
         return []
     today_iso = today.isoformat()
@@ -62,8 +62,12 @@ def bell_rows(conn, user_id, today):
     flags = conn.execute("SELECT COUNT(*) FROM travel_flag g JOIN travel_filing f ON f.id=g.filing_id "
                          "WHERE g.state='open' AND f.status IN ('open','ready')").fetchone()[0]
     if flags:
-        user = st.get_admin_user_by_id(conn, user_id)
-        if user and rooms.is_room_admin(conn, user):
+        if reads is not None:
+            room_admin = reads.room_admin(conn, {'id': user_id})
+        else:
+            user = st.get_admin_user_by_id(conn, user_id)
+            room_admin = bool(user and rooms.is_room_admin(conn, user))
+        if room_admin:
             rows.append({"text": f"{_plural(flags, 'travel flag', 'travel flags')} to verify",
                          "url": "/travel/verify", "count": flags})
     return rows

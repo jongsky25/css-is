@@ -909,7 +909,7 @@ def _weekday_name(idx):
 # the payload
 # --------------------------------------------------------------------------
 
-def _approvals_waiting(conn, user):
+def _approvals_waiting(conn, user, *, reads=None):
     """Requests waiting on THIS approver's decision, across the wellness and
     work-arrangement queues — the two share one chief gate
     (storage.user_is_approving_chief / its user_is_wellness_chief alias), so
@@ -920,7 +920,7 @@ def _approvals_waiting(conn, user):
     storage.pending_approval_counts is the single source of truth here — the
     nav bell (app.py's auth middleware) calls the same function, so the two
     can never disagree about what's waiting."""
-    counts = st.pending_approval_counts(conn, user)
+    counts = reads.approvals(conn, user) if reads is not None else st.pending_approval_counts(conn, user)
     wellness, awa = counts["wellness"], counts["awa"]
     if not (wellness or awa):
         return None
@@ -928,7 +928,7 @@ def _approvals_waiting(conn, user):
 
 
 def team_view_data(conn, user, *, get_atoms, view_memo,
-                   today=None, week_start=None):
+                   today=None, week_start=None, reads=None):
     """Everything the Office Connect landing page renders, in one pass."""
     today = today or tz.today_local()
     week_start = week_start or st.wellness_week_start(today)
@@ -960,7 +960,7 @@ def team_view_data(conn, user, *, get_atoms, view_memo,
     # Approvals waiting on YOU — surfaced before any click into either queue,
     # so a chief who approves both wellness and AWA doesn't have to open each
     # one blind just to find out whether there's anything to decide.
-    approvals = _approvals_waiting(conn, user)
+    approvals = _approvals_waiting(conn, user, reads=reads)
     if approvals:
         if approvals["wellness"]:
             n = approvals["wellness"]
@@ -1026,10 +1026,13 @@ def _plural(n, word):
     return f"{n} {word}{'' if n == 1 else 's'}"
 
 
-def _task_approvals(conn, user):
-    counts = st.pending_approval_counts(conn, user)
+def _task_approvals(conn, user, *, reads=None):
+    counts = reads.approvals(conn, user) if reads is not None else st.pending_approval_counts(conn, user)
     import documents
-    document_reviews = documents.count_visible(conn, user, queue='review') if documents.enabled(conn) else 0
+    if reads is not None:
+        document_reviews = reads.document_reviews(conn, user)
+    else:
+        document_reviews = documents.count_visible(conn, user, queue='review') if documents.enabled(conn) else 0
     n = counts["wellness"] + counts["awa"] + document_reviews
     if not n:
         return None
@@ -1178,17 +1181,17 @@ def _task_activities(conn, user):
     return out
 
 
-def home_tasks(conn, user, today=None):
+def home_tasks(conn, user, today=None, *, reads=None):
     """The landing page's to-do strip: what this person needs to do next,
     most urgent first (to do → waiting → for information → done)."""
     today = today or tz.today_local()
     tasks = []
     import work_inbox
     try:
-        tasks.extend(work_inbox.home_rows(conn, user, today))
+        tasks.extend(work_inbox.home_rows(conn, user, today, reads=reads))
     except Exception:
         pass
-    for build in (lambda: _task_approvals(conn, user),
+    for build in (lambda: _task_approvals(conn, user, reads=reads),
                   lambda: _task_wellness(conn, user, today),
                   lambda: _task_awa(conn, user, today),
                   lambda: _task_office_today(conn, user, today),
