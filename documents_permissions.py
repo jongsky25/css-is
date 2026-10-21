@@ -41,6 +41,13 @@ def director(conn, user):
     return bool(st._org_accounts_at_rank(conn, 3) and user['id'] in st._org_accounts_at_rank(conn, 3)) or any(s['level'] == 'bureau' for s in seats(conn, user))
 
 
+def review_authority(conn, user, doc):
+    """Current directory authority; callers still check the assigned reviewer."""
+    return director(conn, user) if doc['review_class'] == 'director' else any(
+        seat['level'] == 'bureau' or scope_contains(conn, seat['id'], doc['unit_id'])
+        for seat in seats(conn, user))
+
+
 def officer(conn, user, doc):
     evaluation=json.loads(doc.get('matches_json') or '{}')
     concerned={doc['unit_id']} | set(evaluation.get('unit_ids',[]) if isinstance(evaluation,dict) else [])

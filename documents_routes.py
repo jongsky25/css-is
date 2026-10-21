@@ -24,6 +24,7 @@ import documents_file_text as file_text
 import documents_registration as registration
 import documents_external as external
 import documents_jobs as jobs
+import documents_guidance as guidance
 import work
 import work_intake
 import work_readiness
@@ -105,7 +106,7 @@ def make_router(templates,get_conn):
         warnings=rules.coverage(conn,doc['created_at'],doc['due_date'])
         if any(a['due_date'] and a['due_date']<doc['created_at'][:10] for a in details['assignments']):
             warnings.append('The proposed contributor buffer cannot fit before the deadline. The lead must adjust milestones explicitly.')
-        return {'doc':doc,**details,'policy':policy,'duplicates':d.duplicate_candidates(conn,user,doc_id),
+        values={'doc':doc,**details,'policy':policy,'duplicates':d.duplicate_candidates(conn,user,doc_id),
                 'file_indexes':{row['version_id']:row for row in rows(conn,
                     'SELECT version_id,indexed_at,chars FROM document_file_index WHERE document_id=?',(doc_id,))},
                 'email_bodies':rows(conn,"SELECT body_text FROM document_intake_email WHERE document_id=? AND body_text<>''",(doc_id,)),
@@ -129,6 +130,9 @@ def make_router(templates,get_conn):
                 'notice_rows':rows(conn,"SELECT * FROM document_notice WHERE document_id=? AND user_id=? ORDER BY id DESC",(doc_id,user['id'])),
                 'recipient_outcomes':rows(conn,'SELECT r.* FROM document_dispatch_recipient r JOIN document_dispatch x ON x.id=r.dispatch_id WHERE x.document_id=?',(doc_id,)),
                 'related': [x for x in rows(conn,'SELECT * FROM document WHERE id IN (SELECT target_id FROM document_relation WHERE source_id=? UNION SELECT source_id FROM document_relation WHERE target_id=?)',(doc_id,doc_id)) if p.can_view(conn,user,x)]}
+
+        values['next_step']=guidance.build(conn,user,values)
+        return values
 
     @router.get('/documents',response_class=HTMLResponse)
     def index(request:Request):

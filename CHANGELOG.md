@@ -1,3 +1,11 @@
+## 7.81 — October 21, 2026
+
+- Start A15 with a document “What happens next?” panel showing current responsibility, the next permitted action and an explanation of blockers.
+- Cover verification/correction, routing, contributions, exact-version review and returns, signing, delivery, acknowledgment, closure, reopening and archived/read-only states.
+- Reuse structural closure and current reviewer authority checks; retain independent POST authorization, revision and exact-version guards.
+- Link only to permitted shared work and existing forms; open nested details and move keyboard focus without submitting actions or replaying uncertain external requests.
+- Add lifecycle, permission, failure-recovery, read-only HTTP and real-browser navigation coverage. Staff pilot measurements and live production testing remain deferred.
+
 ## 7.80 — October 21, 2026
 
 - Navigation: "Travel filing settings" (`/admin/travel`: travel filing on or off, the head of office and certifying-officer fallback, template administrators and the documents relay) moves from search-only into the Administrator menu under Setup & records, for accounts with `manage_users`. Only the menu entry changed; the page, its permission and its search entry are the same, and the search keywords now include head of office, Director, OIC and certifying officer.

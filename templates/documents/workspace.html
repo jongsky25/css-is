@@ -15,7 +15,7 @@
 {% if instruction_recipients %}<p>{% for recipient in instruction_recipients if recipient.directive_id==directive.id %}{{ names.get(recipient.user_id,'Former staff member') }}{% if not loop.last %}, {% endif %}{% endfor %}</p>{% endif %}
 {% if directive.id in unread_instructions %}<form method="post" action="/documents/{{ doc.id }}/instruction_read"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ doc.revision }}"><input type="hidden" name="directive_id" value="{{ directive.id }}"><button type="submit">Mark instruction read</button></form>{% endif %}</article>{% else %}<p>{{ 'Waiting for the Director’s instruction.' if doc.instruction_state=='pending' else 'No Director instruction recorded.' }}</p>{% endfor %}
 {% if enabled and is_director and doc.instruction_state=='pending' and not doc.archived_at %}
-<form method="post" action="/documents/{{ doc.id }}/route_instruction" data-ux-ignore data-telemetry-ignore>
+<form id="document-action-route_instruction" tabindex="-1" method="post" action="/documents/{{ doc.id }}/route_instruction" data-ux-ignore data-telemetry-ignore>
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ doc.revision }}">
 {{ person('lead_id','Lead person',people) }}
 <label>Lead office or division<select name="unit_id" required><option value="">Choose office or division</option>{% for unit in units %}<option value="{{ unit.id }}">{{ unit.name }}</option>{% endfor %}</select></label>

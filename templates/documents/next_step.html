@@ -1,0 +1,9 @@
+<section class="doc-card doc-next" id="document-next" aria-labelledby="document-next-title" data-stage="{{ next_step.stage }}">
+<h3 id="document-next-title">What happens next?</h3>
+<p><strong>{{ next_step.title }}</strong></p>
+<p>Responsible: {% if next_step.owner_id %}<strong>{{ names.get(next_step.owner_id,'Former staff member') }}</strong> · {% endif %}{{ next_step.owner_role }}</p>
+<p>{{ next_step.message }}</p>
+{% if next_step.blocker %}<p class="doc-alert"><strong>Before continuing:</strong> {{ next_step.blocker }}</p>{% endif %}
+{% if next_step.action %}<p><a class="doc-next-action" href="{{ next_step.action.href }}">{{ next_step.action.label }}</a></p>{% endif %}
+{% if next_step.contributions %}<h4>Your available contribution steps</h4><ul>{% for step in next_step.contributions %}<li><a href="{{ step.href }}">{{ step.label }}</a></li>{% endfor %}</ul>{% endif %}
+</section>
