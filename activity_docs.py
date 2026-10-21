@@ -122,8 +122,9 @@ def where_text(entry) -> str:
     return venue or (mod.capitalize() if mod else "To be announced")
 
 
-def describe_people(conn, entry, role=None) -> list:
-    """[(name, designation)] for the people on the entry, optionally only one role, in the order they were added."""
+def describe_people(conn, entry, role=None, positions=True) -> list:
+    """[(name, designation)] for the people on the entry, optionally only one role, in the order they were added.
+    With positions=False the designation is left empty: a position is only written when the person asked for it."""
     out = []
     for p in entry.get("people") or []:
         if role and p.get("role") != role:
@@ -131,7 +132,7 @@ def describe_people(conn, entry, role=None) -> list:
         prof = st.get_user_profile(conn, p["user_id"]) or {}
         name = prof.get("person_name") or prof.get("username") or ""
         if name:
-            out.append((name, prof.get("designation") or ""))
+            out.append((name, (prof.get("designation") or "") if positions else ""))
     return out
 
 
@@ -139,16 +140,18 @@ def _line(i, name, desig):
     return f"{i}. {name}" + (f", {desig}" if desig else "")
 
 
-def payload(conn, entry, key, user, owner_label="") -> td.DocPayload:
+def payload(conn, entry, key, user, owner_label="", positions=False) -> td.DocPayload:
     """The relay request for one document. Placeholders left for the person to complete are filled with a blank line,
-    so the draft never carries a guess for a number, a source of funds or a signature."""
+    so the draft never carries a guess for a number, a source of funds or a signature. Positions (designations) from
+    saved profiles are written only when `positions` is True (spot feedback #154: ask first, do not fill them on their own)."""
     profile = st.get_user_profile(conn, user["id"]) or {}
     me = profile.get("person_name") or user.get("username") or ""
     title = entry["title"]
     head_name = st.get_setting(conn, "travel.sig.head_name", "")
     head_title = st.get_setting(conn, "travel.sig.head_title", "")
     if key == "dpo":
-        people = describe_people(conn, entry, "travel") or describe_people(conn, entry) or [(me, profile.get("designation") or "")]
+        people = (describe_people(conn, entry, "travel", positions) or describe_people(conn, entry, None, positions)
+                  or [(me, (profile.get("designation") or "") if positions else "")])
         days = days_text(entry)
         place = (entry.get("venue") or "").strip()
         in_place = f" in {place}" if place else ""
@@ -184,7 +187,7 @@ def payload(conn, entry, key, user, owner_label="") -> td.DocPayload:
         in_place = f" in {place}" if place else ""
         unit = owner_label.strip()
         fields = {"date": td.long_date(tz.today_local()), "title": title, "invited": invited,
-                  "sender_name": me, "sender_title": profile.get("designation") or "",
+                  "sender_name": me, "sender_title": (profile.get("designation") or "") if positions else "",
                   "contact": user.get("username") or "", "head_name": head_name, "head_title": head_title,
                   # the DOH memorandum to the regions: FOR / FROM / SUBJECT, the request, the contact line
                   "for_name": BLANK, "for_title": BLANK, "for_office": BLANK,
@@ -198,7 +201,7 @@ def payload(conn, entry, key, user, owner_label="") -> td.DocPayload:
         return td.DocPayload("invitation", "invitation", f"Memorandum - {title}"[:120], fields,
                              blocks={"details": lines}, rows=rows)
     if key == "concept_note":
-        return _concept_note(conn, entry, title, me, profile, head_name, head_title, owner_label.strip())
+        return _concept_note(conn, entry, title, me, profile, head_name, head_title, owner_label.strip(), positions)
     if key == "program_flow":
         return _program_flow(entry, title)
     raise ValueError("Unknown document.")
@@ -218,15 +221,15 @@ def _day_label(i, d) -> str:
     return f"Day {i} \u2013 {td.long_date(d)}"
 
 
-def _concept_note(conn, entry, title, me, profile, head_name, head_title, unit) -> td.DocPayload:
+def _concept_note(conn, entry, title, me, profile, head_name, head_title, unit, positions=False) -> td.DocPayload:
     days = td.trip_days(entry["start_date"], entry.get("end_date") or entry["start_date"])
-    people = describe_people(conn, entry)
+    people = describe_people(conn, entry, None, positions)
     participants = [_line(i, n, d) for i, (n, d) in enumerate(people, 1)] or ["[List who takes part, by group, and how many.]"]
     fields = {"title": title, "unit_name": unit, "date_duration": days_text(entry),
               "venue": (entry.get("venue") or "").strip() or "To be determined",
               "participant_count": str(len(people)) if people else BLANK,
               "facilitators": unit or BLANK, "budget": BLANK,
-              "prepared_by": me, "prepared_title": profile.get("designation") or "",
+              "prepared_by": me, "prepared_title": (profile.get("designation") or "") if positions else "",
               "noted_by_name": BLANK, "noted_by_title": BLANK,
               "recommended_name": head_name.upper(), "recommended_title": head_title}
     blocks = {**CONCEPT_PROMPTS, "participants": participants}
@@ -262,9 +265,9 @@ class Prepared:
         self.entry_id, self.key, self.rev, self.call = entry_id, key, rev, call
 
 
-def prepare(conn, entry, key, user, owner_label="", relay=None) -> Prepared:
+def prepare(conn, entry, key, user, owner_label="", relay=None, positions=False) -> Prepared:
     """Build the relay request for a new revision of one document (reads the database)."""
-    pl = payload(conn, entry, key, user, owner_label)
+    pl = payload(conn, entry, key, user, owner_label, positions)
     rev = int((get_rows(conn, entry["id"]).get(key) or {"rev": 0})["rev"]) + 1
     relay = relay or gdocs_relay.get_relay()
     share = [user["username"]] if user.get("username") else []
@@ -287,7 +290,7 @@ def record(conn, prep, res, user) -> dict:
     return {"ok": bool(url), "url": url or "", "error": err}
 
 
-def draft(conn, entry, key, user, owner_label="", relay=None) -> dict:
+def draft(conn, entry, key, user, owner_label="", relay=None, positions=False) -> dict:
     """Prepare, send and record in one step (for callers that are not on an event loop)."""
-    prep = prepare(conn, entry, key, user, owner_label, relay)
+    prep = prepare(conn, entry, key, user, owner_label, relay, positions)
     return record(conn, prep, prep.call(), user)

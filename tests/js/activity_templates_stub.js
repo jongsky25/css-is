@@ -18,7 +18,7 @@ function mk(kind, text) {
 }
 function newBody() { return { paragraphs: [],
   appendParagraph(t) { log.push('P: ' + t); const p = mk('p', t); this.paragraphs.push(p); return p; },
-  appendTable(c) { log.push('TABLE: ' + JSON.stringify(c)); const cell = mk('cell'); return { setBorderWidth() {}, setColumnWidth(c, w) { log.push('WIDTH: ' + c + ' ' + w); }, getRow: () => mk('row'), getCell: () => cell }; },
+  appendTable(c) { log.push('TABLE: ' + JSON.stringify(c)); const cell = mk('cell'); return { setBorderWidth() {}, editAsText: () => mk('t'), setColumnWidth(c, w) { log.push('WIDTH: ' + c + ' ' + w); }, getRow: () => mk('row'), getCell: () => cell }; },
   appendHorizontalRule() { return mk('h'); },
   editAsText: () => mk('t'), getChild: () => mk('p', 'x'), removeChild() { } }; }
 const doc = { addFooter() { return { setText(t) { log.push('FOOTER: ' + t); }, appendParagraph(t) { log.push('FOOTER: ' + t); return mk('p'); },
