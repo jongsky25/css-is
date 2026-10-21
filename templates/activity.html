@@ -64,6 +64,13 @@
     margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
   .panel h3 { margin:0 0 .15rem; font-size:1.02rem; }
   .panel .sublab { color:var(--soft); font-size:.82rem; margin:0 0 .9rem; }
+  .rp-list { list-style:none; padding:0; margin:.7rem 0 0; display:grid; gap:.55rem; }
+  .rp-list a { display:flex; justify-content:space-between; align-items:center; gap:1rem;
+    padding:.7rem .85rem; border:1px solid var(--line); border-radius:9px;
+    color:var(--ink); text-decoration:none; }
+  .rp-list a:hover { border-color:var(--accent); background:var(--accent-bg); }
+  .rp-list small { display:block; color:var(--soft); font-size:.78rem; margin-top:.15rem; }
+  .rp-score { white-space:nowrap; font-weight:800; font-variant-numeric:tabular-nums; }
   table.sq { width:100%; border-collapse:collapse; font-size:.9rem; }
   table.sq th { text-align:left; font-size:.66rem; text-transform:uppercase; letter-spacing:.03em;
     color:var(--soft); font-weight:700; padding:.3rem .5rem; border-bottom:1px solid var(--line); }
@@ -222,6 +229,23 @@
     <div class="k">Respondents</div>
     <div class="foot"><span class="cap">shared their feedback</span></div>
   </div>
+</div>
+{% endif %}
+
+{% if rp_speakers %}
+<div class="panel" id="resource-person-results">
+  <h3>Resource-person ratings for this activity</h3>
+  <p class="sublab">Each score belongs to that resource person, separate from the activity score above.
+    <a href="/reports?type=3&amp;activity={{ ev.id }}">View the combined RP report →</a></p>
+  <ul class="rp-list">
+    {% for speaker in rp_speakers %}
+    <li><a href="{{ speaker.detail_url }}">
+      <span><strong>{{ speaker.name }}</strong>{% if speaker.topic %}<small>{{ speaker.topic }}</small>{% endif %}
+        <small>{{ speaker.respondents|comma }} rating{{ '' if speaker.respondents == 1 else 's' }} · {{ 'View activity scorecard' if ev.date >= rp_engagement_since else 'View all-time profile' }} →</small></span>
+      <span class="rp-score">{{ speaker.shown }}/7</span>
+    </a></li>
+    {% endfor %}
+  </ul>
 </div>
 {% endif %}
 

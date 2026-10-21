@@ -14146,6 +14146,16 @@ def dashboard_activity(request: Request, event_id: int, err: str = "", msg: str 
                                               {"nav_active": "activities", "ev": None},
                                               status_code=404)
         ev = dict(ev)   # copy: never mutate the memoized event
+        can_view_hidden = auth.can(request.state.user["role"], "hide")
+        rp_speakers = []
+        for speaker in ev["speakers"]:
+            if (speaker.get("hidden") or speaker.get("is_director")) and not can_view_hidden:
+                continue
+            rp_id = speaker["rp_id"]
+            detail_url = (f"/dashboard/people/{rp_id}/activity/{ev['id']}"
+                          if (ev["date"] or "") >= di.RP_ENGAGEMENT_SINCE
+                          else f"/dashboard/people/{rp_id}")
+            rp_speakers.append(dict(speaker, detail_url=detail_url))
         report = di.activity_servqual(atoms, ev["instance_ids"])
         story = di.story_panel(st.verbatims_for_responses(conn, ev["response_ids"]),
                                st.get_comment_overrides(conn, ev["response_ids"]))
@@ -14199,6 +14209,7 @@ def dashboard_activity(request: Request, event_id: int, err: str = "", msg: str 
         "scope_label": scope_label,
         "can_manage": auth.can(request.state.user["role"], "create_activity"),
         "can_edit": can_edit, "edit_comments": edit_comments, "rosters": rosters,
+        "rp_speakers": rp_speakers, "rp_engagement_since": di.RP_ENGAGEMENT_SINCE,
     })
 
 
