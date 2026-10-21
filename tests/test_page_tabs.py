@@ -65,3 +65,17 @@ def test_system_is_one_menu_entry_for_admins_only(app_mod, viewer):
     # still admin-only, tab by tab
     for url in SYSTEM:
         assert viewer.get(url, follow_redirects=False).status_code in (302, 303, 403), url
+
+
+def test_travel_filing_settings_is_in_the_administrator_menu_for_admins_only(app_mod):
+    """Spot feedback #157: the signatories live there but the page had no menu link."""
+    class A:
+        role = "admin"
+
+    class V:
+        role = "viewer"
+    admin = next(g for g in app_mod.nav_groups_for(A()) if g["name"] == "Administrator")
+    item = next(it for it in admin["items"] if it["url"] == "/admin/travel")
+    assert item["label"] == "Travel filing settings"
+    assert "/admin/travel" not in {it["url"] for g in app_mod.nav_groups_for(V()) for it in g["items"]}
+    assert "/admin/travel" in {e["url"] for e in app_mod.search_index_for(A())}

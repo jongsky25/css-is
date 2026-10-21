@@ -1,3 +1,7 @@
+## 7.80 — October 21, 2026
+
+- Navigation: "Travel filing settings" (`/admin/travel`: travel filing on or off, the head of office and certifying-officer fallback, template administrators and the documents relay) moves from search-only into the Administrator menu under Setup & records, for accounts with `manage_users`. Only the menu entry changed; the page, its permission and its search entry are the same, and the search keywords now include head of office, Director, OIC and certifying officer.
+
 ## 7.79 — October 21, 2026
 
 - Complete A14 with one alternating document background scheduler and one shared background admission slot, leaving interactive capacity in the two-worker pool.

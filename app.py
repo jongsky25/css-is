@@ -707,10 +707,6 @@ NAV_GROUPS = [
          "section": "Admin Unit",
          "hint": "The MC 114 justification texts travel forms start from",
          "kw": "travel justification library mc 114 template text appendix b", "cap": "room_admin"},
-        {"key": "admin_travel", "url": "/admin/travel", "label": "Travel filing settings",
-         "hint": "Switch travel filing on or off",
-         "kw": "travel filing settings enable switch signatories relay", "cap": "manage_users",
-         "in_nav": False},
     ]},
     # ---- 5. Calendar (bureau-wide, not part of room booking) ---------------
     {"name": "Calendar", "items": [
@@ -796,6 +792,11 @@ NAV_GROUPS = [
          "hint": "Temporarily reopen a closed filing period",
          "kw": "awa work arrangement reopen deadline override filing period cww wfh "
                "annex c closed open late",
+         "cap": "manage_users"},
+        {"key": "admin_travel", "url": "/admin/travel", "label": "Travel filing settings",
+         "hint": "Travel filing on or off, the signatories and the documents relay",
+         "kw": "travel filing settings enable switch signatories head of office director oic "
+               "certifying officer relay google docs templates administrators station",
          "cap": "manage_users"},
     ]},
 ]

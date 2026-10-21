@@ -17,10 +17,18 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.79"
+APP_VERSION = "7.80"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.80",
+        "date": "October 21, 2026",
+        "summary": "Travel filing settings is now in the Administrator menu.",
+        "changes": [
+            "Administrators can open Travel filing settings from the Administrator menu, under Setup & records, instead of knowing its address. It is where the head of office, the signatories and the documents relay are set."
+        ]
+    },
     {
         "version": "7.79",
         "date": "October 21, 2026",
