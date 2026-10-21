@@ -681,6 +681,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
                 by_code.setdefault(pl.item_code, []).append(pl)
             for code, docs in by_code.items():
                 rev, urls, err = revs[code], [], ""
+                also = [c for pl in docs for c in pl.also if c != code]            # one document, several checklist rows
                 for pl in docs:
                     res = relay.generate_doc(request_id=f"{ref}:{code}:{rev}:{pl.index}", template_key=pl.template_key,
                                              folder_key=ref, title=pl.title if pl.index == 1 else f"{pl.title} {pl.index}",
@@ -692,9 +693,13 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
                         break
                 if err or not urls:
                     travel.finish_item(conn, filing_id, code, rev, error=err or "No document came back.")
+                    for c in also:
+                        travel.finish_item(conn, filing_id, c, revs[c], error=err or "No document came back.")
                 else:
                     travel.finish_item(conn, filing_id, code, rev, url=urls[0],
                                        extra=("More: " + " ".join(urls[1:])) if len(urls) > 1 else None)
+                    for c in also:
+                        travel.finish_item(conn, filing_id, c, revs[c], url=urls[0])
             travel.finish_generation(conn, filing_id)
         except Exception:                                   # noqa: BLE001 - never leave a run 'running'
             try:
@@ -749,7 +754,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             payloads = travel_docs.build_payloads(
                 filing["kind"], filing, profile, _sig_settings(conn, user["id"]), body, codes, ceilings=ceilings,
                 items=travel.view_items(conn, filing), today=today_local())
-            made = {pl.item_code for pl in payloads}
+            made = {c for pl in payloads for c in (pl.item_code, *pl.also)}
             if not made:
                 return _jerr("Nothing to make: no rides need a form.")
             revs = travel.start_generation(conn, filing, sorted(made))

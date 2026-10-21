@@ -1,8 +1,18 @@
 {
   "item_code": "appendix_b",
-  "template_key": "appendix_b",
-  "title": "Appendix B - Certificate of Travel Completed - TF-2609-0001",
+  "template_key": "claim_liq",
+  "title": "Appendix A and B - Itinerary and Certificate of Travel Completed - TF-2609-0001",
   "fields": {
+    "traveler_name": "Juan Dela Cruz",
+    "purpose": "To attend Regional Planning Workshop on September 01-04, 2026 at Cebu City as per DPO No. 2026-123 dated August 20, 2026",
+    "itinerary_no": "",
+    "grand_total": "0",
+    "certifier_name": "Dr. Lito Cruz",
+    "certifier_title": "Medical Officer V",
+    "prepared_by": "Juan Dela Cruz",
+    "prepared_title": "Nurse II",
+    "approver_name": "Dr. Ana Reyes",
+    "approver_title": "OIC-Director",
     "date": "September 10, 2026",
     "head_name": "Dr. Ana Reyes",
     "head_title": "OIC-Director",
@@ -16,10 +26,9 @@
     "refund_amount": "",
     "refund_or_no": "",
     "refund_or_date": "",
-    "traveler_name": "Juan Dela Cruz",
     "traveler_designation": "Nurse II",
-    "approver_name": "Dr. Ana Reyes",
-    "approver_title": "OIC-Director"
+    "ca_amount": "",
+    "reimb_amount": ""
   },
   "blocks": {
     "explanation": [
@@ -34,5 +43,10 @@
       "2. Post Travel Report"
     ]
   },
-  "rows": {}
+  "rows": {
+    "itinerary": {
+      "marker": "r_date",
+      "data": []
+    }
+  }
 }

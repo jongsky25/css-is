@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.59"
+APP_VERSION = "7.60"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.60",
+        "date": "October 21, 2026",
+        "summary": "Travel forms now follow the office's current Cash Advance, Liquidation and Reimbursement forms.",
+        "changes": [
+            "A liquidation now makes Appendix A, which it did not before unless the itinerary had changed, and a liquidation or reimbursement makes Appendix A and Appendix B as one document, like the office's own forms.",
+            "The liquidation's Appendix A has the Cash Advance and Reimbursement lines under the total, worked out from the advance you entered. A reimbursement uses the \"Expenses Incidental\" heading.",
+            "A cash advance keeps Appendix A alone, now in the office's current layout."
+        ]
+    },
     {
         "version": "7.59",
         "date": "October 20, 2026",

@@ -93,7 +93,12 @@ MAX_ROWS, MAX_DAYS = 40, 62
 MAX_KM = 2000
 DOC_TEMPLATES = {"appendix_a": "appendix_a", "appendix_b": "appendix_b", "mc114_justification": "mc114_justification",
                  "jo_cert": "jo_cert", "travel_report": "travel_report", "cenrr": "cenrr", "rer": "rer"}
+# A liquidation and a reimbursement are one document in the office's own forms: Appendix A and Appendix B together,
+# each kind with its own layout. It is made once and credited to both checklist rows. A cash advance has Appendix A only.
+CLAIM_TEMPLATES = {"liquidation": "claim_liq", "reimbursement": "claim_rei"}
+CLAIM_ITEMS = ("appendix_a", "appendix_b")
 DOC_TITLES = {"appendix_a": "Appendix A - Itinerary of Travel", "appendix_b": "Appendix B - Certificate of Travel Completed",
+              "appendix_ab": "Appendix A and B - Itinerary and Certificate of Travel Completed",
               "mc114_justification": "MC 114 justification", "jo_cert": "Certification for Job Order",
               "travel_report": "Post Travel Report", "cenrr": "CENRR", "rer": "RER"}
 DM_CITATION = "DM No. 2025-0202, as amended by DM Nos. 2025-0202-A and 2025-0202-B"
@@ -116,6 +121,7 @@ class DocPayload:
     blocks: dict = field(default_factory=dict)       # name -> [paragraph, ...]
     rows: dict = field(default_factory=dict)         # name -> {"marker": "r_date", "data": [{...}, ...]}
     index: int = 1                                   # 1-based position among documents of the same item (RER)
+    also: tuple = ()                                 # other checklist items this one document also satisfies
 
 
 def long_date(v) -> str:
@@ -295,6 +301,20 @@ def _leg(row) -> str:
     return " to ".join(x for x in (row["from"], row["to"]) if x) or "local travel"
 
 
+def _advance_split(filing, grand) -> dict:
+    """The "Cash Advance:" and "Reimbursement:" lines under the total of a liquidation's Appendix A: what was
+    received, and the part of the total that goes beyond it. Both stay blank when the advance is not known."""
+    raw = filing.get("advance_amount")
+    try:
+        advance = Decimal(str(raw).replace(",", "")) if raw not in (None, "") else None
+    except Exception:                                       # noqa: BLE001
+        advance = None
+    if advance is None:
+        return {"ca_amount": "", "reimb_amount": ""}
+    extra = grand - advance
+    return {"ca_amount": _m(advance), "reimb_amount": _m(extra) if extra > 0 else "–"}
+
+
 def _appendix_a(ctx) -> DocPayload:
     f, n, sig = ctx["filing"], ctx["name"], ctx["sig"]
     data, grand = [], Decimal(0)
@@ -310,7 +330,8 @@ def _appendix_a(ctx) -> DocPayload:
     return DocPayload("appendix_a", "appendix_a", ctx["title"]("appendix_a"), {
         "traveler_name": n, "purpose": purpose, "itinerary_no": ctx["texts"]["itinerary_no"], "grand_total": _m(grand),
         "certifier_name": sig["certifier_name"], "certifier_title": sig["certifier_title"],
-        "prepared_by": sig["prepared_by"] or n, "approver_name": sig["approver_name"], "approver_title": sig["approver_title"]},
+        "prepared_by": sig["prepared_by"] or n, "prepared_title": ctx["designation"],
+        "approver_name": sig["approver_name"], "approver_title": sig["approver_title"]},
         rows={"itinerary": {"marker": "r_date", "data": data}})
 
 
@@ -334,6 +355,18 @@ def _appendix_b(ctx) -> DocPayload:
         "traveler_name": n, "traveler_designation": ctx["designation"],
         "approver_name": sig["approver_name"], "approver_title": sig["approver_title"]},
         blocks={"explanation": lines, "evidence_list": _evidence(ctx["items"])})
+
+
+def _claim(ctx, kind, asked) -> DocPayload:
+    """Appendix A and B as the one document the office's liquidation / reimbursement form is. It satisfies both checklist
+    rows whichever was asked for: `asked[0]` owns the request and the rest are credited with the same document."""
+    a, b = _appendix_a(ctx), _appendix_b(ctx)
+    fields = {**a.fields, **b.fields}
+    if kind == "liquidation":
+        grand = sum((r["allowance"] + r["per_diem"] for r in ctx["rows"]), Decimal(0))
+        fields.update(_advance_split(ctx["filing"], grand))
+    return DocPayload(asked[0], CLAIM_TEMPLATES[kind], ctx["title"]("appendix_ab"), fields, blocks=b.blocks, rows=a.rows,
+                      also=tuple(asked[1:]))
 
 
 def _mc114(ctx) -> DocPayload:
@@ -421,8 +454,15 @@ def build_payloads(kind, filing, profile, settings, posted, codes, *, ceilings, 
            "rows": p["rows"], "texts": p["texts"], "sig": sig, "rates": p["rates"], "mc114_text": p["mc114_text"], "ceilings": ceilings,
            "items": list(items), "today": today or date.today(),
            "title": lambda code: f"{DOC_TITLES[code]} - {filing['ref_code']}"}
-    out = []
+    out, claim_done = [], False
     for code in DOC_TEMPLATES:
-        if code in codes:
-            out.extend(_BUILDERS[code](ctx))
+        if code not in codes:
+            continue
+        if kind in CLAIM_TEMPLATES and code in CLAIM_ITEMS:
+            if not claim_done:                              # Appendix A and B are one document for these claims
+                claim_done = True
+                first = next(c for c in CLAIM_ITEMS if c in codes)
+                out.append(_claim(ctx, kind, (first,) + tuple(c for c in CLAIM_ITEMS if c != first)))
+            continue
+        out.extend(_BUILDERS[code](ctx))
     return out
