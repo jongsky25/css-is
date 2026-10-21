@@ -52,6 +52,7 @@ from datetime import datetime, date, timedelta, timezone
 from urllib.parse import parse_qsl, quote, urlencode, urlparse
 from request_security import safe_local_return, same_origin_write, csrf_exempt, SAFE_METHODS
 from browser_security import BrowserSecurityMiddleware, protect_response, secure_cookies_enabled
+from request_reads import RequestReads
 
 import qrcode
 from fastapi import FastAPI, Request
@@ -1967,7 +1968,7 @@ def _decision_summary(noun, statuses):
     return f"{n} of your {noun}s were decided — {', '.join(bits)}"
 
 
-def _notification_items(conn, user, feedback_unread):
+def _notification_items(conn, user, feedback_unread, *, reads=None):
     """The nav bell's dropdown rows for this signed-in account: unread spot-
     feedback replies, approvals waiting on them as a chief, and unseen
     decisions on their own wellness/AWA requests. Each item is
@@ -1978,15 +1979,16 @@ def _notification_items(conn, user, feedback_unread):
     work_arrangement_decisions), so the bell can never promise something the
     destination doesn't have.
 
-    Queried on every authenticated request, same as count_unread_feedback
-    already was — these are small, per-user queries, not table scans."""
+    Recomputed for every authenticated request. When supplied, reads shares the
+    small display results with Home; domain permission and write checks remain
+    live and do not consume those display results."""
     items = []
     if feedback_unread:
         items.append({
             "text": f"{feedback_unread} update{'' if feedback_unread == 1 else 's'} on your feedback",
             "url": "/my/feedback", "count": feedback_unread,
         })
-    approvals = st.pending_approval_counts(conn, user)
+    approvals = reads.approvals(conn, user) if reads is not None else st.pending_approval_counts(conn, user)
     if approvals["wellness"]:
         n = approvals["wellness"]
         items.append({
@@ -1999,7 +2001,7 @@ def _notification_items(conn, user, feedback_unread):
             "text": f"{n} work arrangement request{'' if n == 1 else 's'} waiting on your decision",
             "url": "/approvals#awa", "count": n,
         })
-    if rooms.is_room_admin(conn, user):
+    if (reads.room_admin(conn, user) if reads is not None else rooms.is_room_admin(conn, user)):
         n = rooms.pending_count(conn)
         if n:
             items.append({
@@ -2012,8 +2014,8 @@ def _notification_items(conn, user, feedback_unread):
         pass
     try:
         import travel_notify
-        items.extend(travel_notify.bell_rows(conn, user["id"], _tz.today_local()))
-        items.extend(documents_notify.bell_rows(conn, user["id"], _tz.today_local()))
+        items.extend(travel_notify.bell_rows(conn, user["id"], _tz.today_local(), reads=reads))
+        items.extend(documents_notify.bell_rows(conn, user["id"], _tz.today_local(), reads=reads))
     except Exception:                      # noqa: BLE001 — the bell must never break a page
         pass
     import work_updates
@@ -2047,6 +2049,7 @@ async def _auth_gate(request: Request, call_next):
     request.state.is_chief = False
     request.state.notifications = []
     request.state.notif_count = 0
+    request.state.reads = None
     path = get_route_path(request.scope)
     # The /static mount serves only packaged public files; its own lookup keeps
     # missing/traversal paths inside that boundary. Skip session/authority/nav
@@ -2078,6 +2081,7 @@ async def _auth_gate(request: Request, call_next):
     # "closed" screens), so they can flag issues anywhere. One cheap settings read
     # whenever a session exists; anonymous attendees never see the button.
     if request.state.user:
+        request.state.reads = RequestReads(request.state.user["id"])
         conn = get_conn()
         try:
             request.state.spot_feedback_enabled = (
@@ -2096,7 +2100,7 @@ async def _auth_gate(request: Request, call_next):
             # chief + unseen decisions on its own wellness/AWA requests, all in
             # one list so the bell can show more than "you have feedback news".
             request.state.notifications = _notification_items(
-                conn, request.state.user, request.state.feedback_unread)
+                conn, request.state.user, request.state.feedback_unread, reads=request.state.reads)
             request.state.notif_count = sum(
                 n["count"] for n in request.state.notifications)
             # How far this account may SEE (BUREAU_ACCESS_LEVELS). Read from the
@@ -2109,7 +2113,7 @@ async def _auth_gate(request: Request, call_next):
                 conn, request.state.user)
             # Administrative Section members decide conference-room requests; the
             # nav's "approver" cap reads this flag.
-            request.state.user["room_approver"] = rooms.is_room_admin(conn, request.state.user)
+            request.state.user["room_approver"] = request.state.reads.room_admin(conn, request.state.user)
         finally:
             conn.close()
     if _is_public(path):
@@ -5051,11 +5055,13 @@ def choose(request: Request, msg: str = "", view: str = "team"):
         on_calendar = view == "calendar"
         data, tasks, cal_week, wstats = None, [], None, None
         wa_now, wa_label, wa_file_label, wa_file_filed = None, "", "", False
-        team_linked = st.team_scope_for_user(conn, request.state.user)[1] != "none"
+        # Other tabs already use data.scope.kind; only Calendar needs this flag.
+        team_linked = on_calendar and st.team_scope_for_user(conn, request.state.user)[1] != "none"
         if not on_calendar:
             try:
                 data = oc.team_view_data(conn, request.state.user,
-                                         get_atoms=get_atoms, view_memo=view_memo)
+                                         get_atoms=get_atoms, view_memo=view_memo,
+                                         reads=request.state.reads)
             except Exception:
                 # The landing page must never be the reason someone can't sign in.
                 # Losing the panels still leaves the greeting and the three doors,
@@ -5064,7 +5070,7 @@ def choose(request: Request, msg: str = "", view: str = "team"):
                 data = None
             # The to-do strip that leads the page: each task with its one next step.
             try:
-                tasks = oc.home_tasks(conn, request.state.user)
+                tasks = oc.home_tasks(conn, request.state.user, reads=request.state.reads)
             except Exception:
                 traceback.print_exc()
                 tasks = []

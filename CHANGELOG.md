@@ -1,3 +1,10 @@
+## 7.72 — October 21, 2026
+
+- Share wellness/AWA approval counts, document-review counts, document feature state and the three-item work preview between navigation and Home within one request.
+- Reuse the room-approver display lookup across navigation and travel-flag notifications; omit the unused team-link lookup on Home's non-calendar tabs.
+- Keep account/session validation and domain permission, write and scoped-data checks live; bind display reads to one account, copy mutable results and retry failed reads.
+- Add HTTP parity, query-count, concurrent-user, revocation, feature-switch, failure-recovery and write-boundary regressions.
+
 ## 7.71 — October 21, 2026
 
 - Outside activities (spot feedback #155): a calendar item has a new "Who conducts this activity?" choice, BLHSD or another office. For another office it records the host, whether we were invited as a resource person or a participant, and the key lines of the invitation (pasted, one line, up to 600 characters). The DPO background then reads "{host} invited {unit} personnel to ... {title} ..." followed by the pasted lines, and the authority line says "to serve as resource person in" or "to participate in". BLHSD activities draft as before. New table `calendar_entry_outside` (no row means BLHSD); saving is audited as `activity_outside`. No relay or template change.
