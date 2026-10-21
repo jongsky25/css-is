@@ -630,3 +630,39 @@ def test_the_person_is_told_when_the_order_was_made_without_its_extra_page(viewe
     note = unquote(r.headers["location"]).replace("+", " ")
     assert "ok=" in note
     assert (words in note) if words else ("extra file-copy page" not in note)
+
+
+# ------------------------------------------------ who signs (spot feedback #157) ---
+
+def signatory(viewer, conn, relay, monkeypatch, director, **setting):
+    for k in ("head_name", "head_title"):
+        st.set_setting(conn, f"travel.sig.{k}", setting.get(k, ""))
+    conn.commit()
+    monkeypatch.setattr(st, "org_seat_holder", lambda c, rank, **kw: director if rank == 3 else None)
+    eid = create(viewer, kind="travel", title="CALEP Field Visit", audience="bureau",
+                 people=[str(uid(conn, "viewer@test.local"))])
+    draft(viewer, eid, "dpo")
+    return relay.calls[-1]["fields"]
+
+
+def test_with_no_head_set_the_dpo_is_signed_by_the_directors_in_the_directory(viewer, conn, relay, monkeypatch):
+    f = signatory(viewer, conn, relay, monkeypatch, ("Dr. Maria Santos", "Director IV"))
+    assert f["head_name"] == "DR. MARIA SANTOS" and f["head_title"] == "Director IV"
+
+
+def test_a_head_set_under_travel_filing_settings_wins_over_the_directory(viewer, conn, relay, monkeypatch):
+    f = signatory(viewer, conn, relay, monkeypatch, ("Dr. Maria Santos", "Director IV"),
+                  head_name="Juan Alfonso Perez IV, MD, MBA, MPM", head_title="OIC-Director IV")
+    assert f["head_name"] == "JUAN ALFONSO PEREZ IV, MD, MBA, MPM" and f["head_title"] == "OIC-Director IV"
+
+
+def test_with_neither_the_signatory_is_left_blank(viewer, conn, relay, monkeypatch):
+    f = signatory(viewer, conn, relay, monkeypatch, None, head_title="OIC-Director")
+    assert f["head_name"] == "" and f["head_title"] == "OIC-Director"
+
+
+def test_the_settings_page_says_the_certifying_officer_is_only_a_fallback(admin):
+    page = admin.get("/admin/travel").text
+    assert "Certifying officer, fallback" in page and "depends on the division" in page
+    assert "used only when the directory has no division head" in page
+    assert "Leave the name blank to use the Director from the directory" in page
