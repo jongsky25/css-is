@@ -1,0 +1,64 @@
+{% extends 'supplies/base.html' %}
+{% macro quantity(value) %}{{ value if value is not none else 'Unavailable' }}{% endmacro %}
+{% block supplies_content %}
+<h1>Workbook preview</h1>
+<p><strong>{{ preview.filename }}</strong> · {{ preview.sheet_count }} sheet{{ '' if preview.sheet_count == 1 else 's' }} · {{ preview.row_count }} summary item{{ '' if preview.row_count == 1 else 's' }}</p>
+{% if preview.status == 'applied' %}
+<p class="supply-notice" role="status">Applied: {{ selection.included_count }} opening balances recorded; {{ selection.excluded_count }} rows excluded. Count and cutover date: {{ selection.count_date }}.</p>
+{% else %}<p class="supply-notice" role="status">Preview only. No inventory balances have changed.</p>{% endif %}
+<p>Review status: {{ preview.status }} · Revision {{ preview.revision }} · {{ decisions|length }} of {{ preview.row_count }} rows decided.</p>
+{% if selection %}
+<section class="supply-panel"><h2>Finalized selection</h2>
+<p>{{ selection.included_count }} included · {{ selection.excluded_count }} excluded · Count and cutover date: {{ selection.count_date }}</p>
+<p>{{ selection.basis }}</p><p class="supply-source-hash">Selection: {{ selection.selection_sha256 }}</p>
+<p>Quantities below use each item's canonical unit; quantities in different units are not added together.</p>
+<div class="supply-table" role="region" aria-label="Final selection and exclusion report" tabindex="0"><table><caption>Accepted selection and exclusions</caption><thead><tr><th>Source</th><th>Decision</th><th>Canonical item / count</th><th>Reason</th></tr></thead><tbody>
+{% for selected in selection.rows %}<tr><td>{{ selected.source_sheet }} row {{ selected.source_row }}</td><td>{{ selected.decision }}</td><td>{% if selected.decision == 'include' %}{{ selected.item.code }} · {{ selected.quantity }} {{ selected.item.unit }} · critical {{ selected.item.critical_level }} · target {{ selected.item.target_level if selected.item.target_level is not none else 'Unset' }}{% endif %}</td><td>{{ selected.reason }}</td></tr>{% endfor %}
+</tbody></table></div>
+{% if preview.status == 'reviewed' and can_maintain and enabled %}
+<form method="post" action="/supplies/import/{{ preview.id }}/apply">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}"><input type="hidden" name="revision" value="{{ preview.revision }}"><input type="hidden" name="selection_sha256" value="{{ selection.selection_sha256 }}">
+<p>Apply creates the included item masters and opening balances together. Any conflict rejects the entire batch.</p><button type="submit">Apply finalized opening balances</button></form>{% endif %}
+</section>{% endif %}
+{% if preview.status != 'applied' and can_maintain and enabled %}
+<details class="supply-panel"><summary>Finalize all row decisions</summary>
+<form method="post" action="/supplies/import/{{ preview.id }}/finalize" class="supply-fields">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}"><input type="hidden" name="revision" value="{{ preview.revision }}">
+<label for="count-date">Physical count and stock cutover date</label><input id="count-date" type="date" name="count_date" required>
+<label for="count-basis">Physical count and cutover basis</label><input id="count-basis" name="basis" maxlength="2000" required>
+<label><input type="checkbox" name="confirmed" value="yes" required> I verified physical counts in the canonical units at this cutover date, resolved source differences, and recorded reasons for exclusions.</label>
+<button type="submit">Finalize reviewed selection</button></form></details>{% endif %}
+{% for issue in preview.metadata.issues %}<p>{{ issue.message }}</p>{% endfor %}
+<details class="supply-panel"><summary>Source identification</summary><p>Summary: {{ preview.metadata.summary_sheet }} · Previewed: {{ preview.created_at }}</p><p class="supply-source-hash">SHA-256: {{ preview.source_sha256 }}</p>{% if preview.metadata.unmapped_sheets %}<p>Unmapped sheets: {{ preview.metadata.unmapped_sheets|join(', ') }}</p>{% endif %}</details>
+{% for row in preview.rows %}
+<article class="supply-panel"><h2>{{ row.name or ('Unnamed item at row ' ~ row.source_row) }}</h2>
+<p>Summary row {{ row.source_row }} · Summary unit: {{ row.unit or 'Missing' }}{% if row.card %} · Card unit: {{ row.card.unit or 'Missing' }}{% endif %} · Critical level: {{ quantity(row.critical_level) }}</p>
+<div class="supply-table" role="region" aria-label="Balance comparison for {{ row.name }}" tabindex="0"><table><caption>Balance evidence for {{ row.name }}</caption><thead><tr><th scope="col">Saved summary balance</th><th scope="col">Saved referenced balance</th><th scope="col">Saved latest card balance</th><th scope="col">Independent arithmetic</th></tr></thead><tbody><tr><td>{{ quantity(row.summary_balance) }}</td><td>{{ quantity(row.reference_balance) }}</td><td>{{ quantity(row.card.latest_balance if row.card else none) }}</td><td>{{ quantity(row.card.calculated_balance if row.card else none) }}</td></tr></tbody></table></div>
+{% set issues = row.issues + (row.card.issues if row.card else []) %}
+{% if issues %}<h3>Review findings</h3><ul>{% for issue in issues %}<li>{{ issue.message }}</li>{% endfor %}</ul>{% else %}<p>No differences detected in these sources. A physical count is still required.</p>{% endif %}
+{% set decision = decisions.get(row.staging_id) %}
+<p><strong>Decision: {{ decision.decision if decision else 'Unresolved' }}</strong>{% if decision %} · {{ decision.reason }}{% if decision.decision == 'include' %} · {{ decision.item.code }}: {{ decision.quantity }} {{ decision.item.unit }}{% endif %}{% endif %}</p>
+{% if preview.status != 'applied' and can_maintain and enabled %}
+<details><summary>Reconcile or exclude this row</summary>
+<p>Enter the physical count in the canonical unit. Explain unit differences and count reconciliation in the reason. Saving a change requires finalizing the review again.</p>
+<form method="post" action="/supplies/import/{{ preview.id }}/rows/{{ row.staging_id }}" class="supply-fields">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}"><input type="hidden" name="revision" value="{{ preview.revision }}"><input type="hidden" name="page" value="{{ preview.page }}">
+<label for="decision-{{ row.staging_id }}">Decision</label><select id="decision-{{ row.staging_id }}" name="decision" required><option value="">Choose explicitly</option><option value="include">Include reconciled opening</option><option value="exclude">Exclude with reason</option></select>
+<label for="target-{{ row.staging_id }}">Canonical item (for inclusion)</label><select id="target-{{ row.staging_id }}" name="item_choice"><option value="new">Create new item using fields below</option>{% for item in items %}<option value="{{ item.id }}:{{ item.revision }}">{{ item.code }} · {{ item.description }} · {{ item.unit }}</option>{% endfor %}</select>
+<label>New item code<input name="code" maxlength="40"></label><label>New item description<input name="description" maxlength="240"></label><label>New item canonical unit<input name="unit" maxlength="40"></label>
+<label>Verified physical count<input name="quantity" type="number" min="0" max="2147483647" step="1"></label>
+<label>Reviewed critical level<input name="critical_level" type="number" min="0" max="2147483647" step="1"></label><label>Reviewed target level (optional)<input name="target_level" type="number" min="0" max="2147483647" step="1"></label>
+<label>Count, unit reconciliation or exclusion reason<input name="reason" maxlength="2000" required></label>
+<button type="submit">Save row decision</button></form></details>{% endif %}
+<details><summary>Source cells and transaction evidence</summary>
+<p>{{ row.source_sheet }}{% if row.card %} → {{ row.card.sheet }}{% endif %}</p>
+<ul>{% for cell in row.source_cells %}<li>{{ cell.cell }}: <code>{{ cell.value }}</code>{% if cell.formula %} · cached: {{ cell.cached }}{% endif %}</li>{% endfor %}</ul>
+{% if row.reference_cell is defined %}<p>Referenced card cell {{ row.reference_cell.cell }}: <code>{{ row.reference_cell.value }}</code> · cached: {{ row.reference_cell.cached }}</p>{% endif %}
+{% if row.card %}<p>Last meaningful balance cell: {{ row.card.latest_cell or 'Unavailable' }} · Last transaction date: {{ row.card.last_transaction_date or 'Unavailable' }}</p>
+{% if row.card.footer_cells %}<p>Separate total-row evidence:</p><ul>{% for cell in row.card.footer_cells %}<li>{{ cell.cell }}: <code>{{ cell.value }}</code> · cached: {{ cell.cached }}</li>{% endfor %}</ul>{% endif %}
+<div class="supply-table" role="region" aria-label="Source transactions for {{ row.name }}" tabindex="0"><table><caption>Source card evidence (not imported transactions)</caption><thead><tr><th scope="col">Row/date</th><th scope="col">Received</th><th scope="col">Issued</th><th scope="col">Raw balance</th><th scope="col">Cached balance</th></tr></thead><tbody>{% for tx in row.card.transactions %}<tr><td>{{ tx.row }} · {{ tx.date }}</td><td>{{ tx.received.value if tx.received.value is not none else '' }}</td><td>{{ tx.issued.value if tx.issued.value is not none else '' }}</td><td><code>{{ tx.balance.value }}</code></td><td>{{ tx.balance.cached }}</td></tr>{% endfor %}</tbody></table></div>
+{% endif %}
+</details></article>
+{% endfor %}
+<nav class="supply-actions" aria-label="Preview item pages">{% if preview.page>1 %}<a href="/supplies/import/{{ preview.id }}?page={{ preview.page-1 }}">Previous items</a>{% endif %}<span>Page {{ preview.page }}</span>{% if preview.has_next %}<a href="/supplies/import/{{ preview.id }}?page={{ preview.page+1 }}">Next items</a>{% endif %}</nav>
+{% endblock %}

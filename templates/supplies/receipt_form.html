@@ -1,0 +1,27 @@
+{% extends 'supplies/base.html' %}
+{% block supplies_content %}
+<h1>Record stock receipt</h1>
+<p>Post accepted supplies from a delivery. Record up to five item lines per receipt; leave unused lines blank.</p>
+{% if enabled %}
+<form method="post" action="/supplies/receipts">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}">
+<section class="supply-panel"><h2>Delivery details</h2><div class="supply-fields">
+<label>Supplier<input name="supplier" required maxlength="240" value="{{ submitted.get('supplier', '') }}"></label>
+<div><label for="receipt-date">Receipt date</label><input id="receipt-date" name="effective_date" type="date" required max="{{ today }}" value="{{ submitted.get('effective_date', today) }}"></div>
+<label>Delivery receipt (DR) number<input name="dr_number" maxlength="120" value="{{ submitted.get('dr_number', '') }}"></label>
+<label>APR number<input name="apr_number" maxlength="120" value="{{ submitted.get('apr_number', '') }}"></label>
+<label>Procurement mode<input name="procurement_mode" maxlength="120" value="{{ submitted.get('procurement_mode', '') }}"></label>
+</div><label>Receipt note (optional)<textarea name="note" maxlength="2000">{{ submitted.get('note', '') }}</textarea></label></section>
+{% for i in range(5) %}<fieldset class="supply-panel"><legend>Item line {{ i + 1 }}</legend>
+<label for="receipt-item-{{ i }}">Supply item — line {{ i + 1 }}</label>
+<select id="receipt-item-{{ i }}" name="item_choice_{{ i }}"><option value="">Choose an item</option>{% for item in items %}{% set choice = item.id|string ~ ':' ~ item.revision|string %}<option value="{{ choice }}" {% if submitted.get('item_choice_' ~ i) == choice %}selected{% endif %}>{{ item.code }} · {{ item.description }} · {{ item.unit }}</option>{% endfor %}</select>
+<div class="supply-fields">
+<label>Accepted quantity — line {{ i + 1 }}<input name="quantity_{{ i }}" type="number" min="1" max="2147483647" step="1" value="{{ submitted.get('quantity_' ~ i, '') }}"></label>
+<label>Unit cost (PHP, optional) — line {{ i + 1 }}<input name="unit_cost_{{ i }}" type="number" min="0" max="999999999.9999" step="0.0001" value="{{ submitted.get('unit_cost_' ~ i, '') }}"></label>
+<div><label for="receipt-expiry-{{ i }}">Expiry date (optional) — line {{ i + 1 }}</label><input id="receipt-expiry-{{ i }}" name="expiry_date_{{ i }}" type="date" value="{{ submitted.get('expiry_date_' ~ i, '') }}"></div>
+</div></fieldset>{% endfor %}
+<p>Only accepted quantities add to stock. Costs and expiry dates are retained as delivery details.</p>
+<button type="submit">Post stock receipt</button>
+</form>
+{% endif %}
+{% endblock %}

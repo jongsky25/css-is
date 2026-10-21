@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "purpose": "Synthetic acceptance expectations; no supplies implementation is exercised by this fixture alone.",
+  "item": {"code": "TEST-PAPER", "description": "Synthetic paper", "unit": "Ream", "critical_level": 5, "target_level": 20},
+  "actors": {"requester_a": "synthetic-a", "requester_b": "synthetic-b", "approver": "synthetic-approver", "custodian": "synthetic-custodian", "replenishment_approver": "synthetic-replenishment-approver"},
+  "expected_fields": ["on_hand", "reserved", "available", "outstanding", "incoming"],
+  "steps": [
+    {"id": "opening", "action": "opening", "quantity": 10, "expected": [10, 0, 10, 0, 0]},
+    {"id": "approve-a", "action": "approve_request", "request": "A", "requested": 8, "approved": 6, "reason": "Synthetic reduced approval", "expected": [10, 6, 4, 6, 0]},
+    {"id": "approve-b", "action": "approve_request", "request": "B", "requested": 7, "approved": 7, "expected": [10, 10, 0, 13, 0]},
+    {"id": "issue-a", "action": "issue", "request": "A", "quantity": 4, "operation_key": "synthetic-issue-a-1", "expected": [6, 6, 0, 9, 0]},
+    {"id": "retry-issue-a", "action": "issue", "request": "A", "quantity": 4, "operation_key": "synthetic-issue-a-1", "expected": [6, 6, 0, 9, 0]},
+    {"id": "cancel-a", "action": "cancel_remainder", "request": "A", "quantity": 2, "expected": [6, 6, 0, 7, 0]},
+    {"id": "suggest", "action": "suggest_replenishment", "expected_suggestion": 21, "expected": [6, 6, 0, 7, 0]},
+    {"id": "approve-replenishment", "action": "approve_replenishment", "quantity": 21, "expected_suggestion": 0, "expected": [6, 6, 0, 7, 21]},
+    {"id": "receive-partial", "action": "receive", "quantity": 10, "expected": [16, 7, 9, 7, 11]},
+    {"id": "issue-b", "action": "issue", "request": "B", "quantity": 7, "operation_key": "synthetic-issue-b-1", "expected": [9, 0, 9, 0, 11]},
+    {"id": "receive-final", "action": "receive", "quantity": 11, "expected": [20, 0, 20, 0, 0]},
+    {"id": "return-b", "action": "return", "request": "B", "quantity": 1, "expected": [21, 0, 21, 0, 0]}
+  ]
+}

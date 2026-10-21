@@ -1,0 +1,5 @@
+{% extends 'supplies/base.html' %}
+{% block supplies_content %}<h1>Supply approval inbox</h1><p>Pending submitted requests within your current approval scope. Your own requests are excluded.</p>
+{% if requests %}<div class="supply-table" role="region" aria-label="Pending supply approvals" tabindex="0"><table><thead><tr><th>Request</th><th>Requester / unit</th><th>Purpose</th><th>Submitted</th></tr></thead><tbody>
+{% for entry in requests %}<tr><td><a href="/supplies/requests/{{ entry.id }}">{{ entry.control_number }}</a></td><td>{{ entry.requester_snapshot }} · {{ entry.unit_snapshot }}</td><td>{{ entry.purpose }}</td><td>{{ entry.submitted_at|humandt }}</td></tr>{% endfor %}</tbody></table></div>{% else %}<p>No pending requests in your scope.</p>{% endif %}
+<nav class="supply-actions" aria-label="Approval pages">{% if page>1 %}<a href="?page={{ page-1 }}">Previous</a>{% endif %}<span>Page {{ page }}</span>{% if has_next %}<a href="?page={{ page+1 }}">Next</a>{% endif %}</nav>{% endblock %}

@@ -86,6 +86,7 @@ import travel_routes
 import documents_routes
 import documents_email
 import work_routes
+import supplies_routes
 import documents_notify
 import documents
 import report_docs
@@ -653,6 +654,7 @@ NAV_GROUPS = [
     # Section who run it are not necessarily app admins (cap manage_users), so it
     # has its own group: everyone requests; room approvers also get the manage items.
     {"name": "Office", "items": [
+        {"key": "supplies", "url": "/supplies", "label": "Supplies", "section": "Supplies", "hint": "Browse supply items and manage the catalog", "kw": "supplies inventory catalog stock custodian", "cap": None},
         {"key": "work", "url": "/work/mine", "label": "My work", "section": "Documents", "hint": "Shared outcomes, ownership, and related correspondence", "kw": "work item shared outcome accountable lead", "cap": None},
         {"key": "documents", "url": "/documents", "label": "Documents", "hint": "Incoming and outgoing document register", "kw": "documents correspondence registry incoming outgoing", "cap": None},
         {"key": "rooms", "url": "/rooms", "label": "Conference room",
@@ -16987,3 +16989,4 @@ app.include_router(documents_intake_routes.make_router(templates, get_conn))
 app.include_router(documents_routes.make_router(templates, get_conn))
 app.include_router(documents_email.make_router(get_conn))
 app.include_router(work_routes.make_router(templates, get_conn))
+app.include_router(supplies_routes.make_router(templates, get_conn))
