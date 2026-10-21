@@ -120,7 +120,7 @@ class DocPayload:
     fields: dict = field(default_factory=dict)
     blocks: dict = field(default_factory=dict)       # name -> [paragraph, ...]
     rows: dict = field(default_factory=dict)         # name -> {"marker": "r_date", "data": [{...}, ...]}
-    index: int = 1                                   # 1-based position among documents of the same item (RER)
+    index: int = 1                                   # 1-based position among documents of the same item (CENRR, RER)
     also: tuple = ()                                 # other checklist items this one document also satisfies
 
 
@@ -402,22 +402,21 @@ def _travel_report(ctx) -> DocPayload:
 
 
 def _cenrr(ctx) -> list:
-    rides = [(r, k) for r, k, res in rides_of(ctx["rows"], ctx["ceilings"], ctx["rates"]) if res.kind == "cenrr"]
-    if not rides:
-        return []
-    sig, total = ctx["sig"], Decimal(0)
-    data = []
-    for r, _k in rides:
-        total += r["allowance"]
-        data.append({"p_date": long_date(r["date"]) if r["date"] else "",
-                     "p_text": f"Fare from {_leg(r)} by {MODE_LABELS[r['mode']].lower()}", "p_amount": _m(r["allowance"])})
-    return [DocPayload("cenrr", "cenrr", ctx["title"]("cenrr"), {
-        "employee_name": ctx["name"], "employee_no": ctx["profile"].get("employee_no") or "", "office": sig["station"],
-        "division": _division(ctx["profile"]), "total": _m(total), "purpose": f"attend {ctx['filing']['act_title']}",
-        "dates": date_range(ctx["filing"]["act_start"], ctx["filing"]["act_end"]), "dpo_ref": dpo_ref(ctx["filing"]),
-        "printed_name": ctx["name"], "designation": ctx["designation"],
-        "noted_by_name": sig["noted_by_name"], "noted_by_title": sig["noted_by_title"]},
-        rows={"items": {"marker": "p_date", "data": data}})]
+    """One CENRR sheet per ride, as with the RER."""
+    sig, out = ctx["sig"], []
+    for r, _k, res in rides_of(ctx["rows"], ctx["ceilings"], ctx["rates"]):
+        if res.kind != "cenrr":
+            continue
+        line = {"p_date": long_date(r["date"]) if r["date"] else "",
+                "p_text": f"Fare from {_leg(r)} by {MODE_LABELS[r['mode']].lower()}", "p_amount": _m(r["allowance"])}
+        out.append(DocPayload("cenrr", "cenrr", ctx["title"]("cenrr"), {
+            "employee_name": ctx["name"], "employee_no": ctx["profile"].get("employee_no") or "", "office": sig["station"],
+            "division": _division(ctx["profile"]), "total": _m(r["allowance"]), "purpose": f"attend {ctx['filing']['act_title']}",
+            "dates": date_range(ctx["filing"]["act_start"], ctx["filing"]["act_end"]), "dpo_ref": dpo_ref(ctx["filing"]),
+            "printed_name": ctx["name"], "designation": ctx["designation"],
+            "noted_by_name": sig["noted_by_name"], "noted_by_title": sig["noted_by_title"]},
+            rows={"items": {"marker": "p_date", "data": [line]}}, index=len(out) + 1))
+    return out
 
 
 def _rers(ctx) -> list:

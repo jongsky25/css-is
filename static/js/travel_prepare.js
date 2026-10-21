@@ -672,7 +672,7 @@
 
   var go = el('button', { type: 'button', 'class': 'btn', text: 'Make the forms' });
   if (app.getAttribute('data-has-relay') !== '1') go.disabled = true;
-  app.appendChild(el('div', { 'class': 'tv-card' }, [go, msgBox, docsList,
+  app.appendChild(el('div', { 'class': 'tv-card' }, [go, el('p', { 'class': 'tv-hint', text: 'Each form is saved as a Google Doc or Sheet in your Drive. You can open it from the list below and edit any part of it. Rides that need a CENRR or an RER get one sheet each.' }), msgBox, docsList,
     el('a', { href: data.filing_url, 'class': 'btn ghost', text: 'Continue to checklist' })]));
 
   var timer = null;
@@ -692,7 +692,7 @@
       drawDocs(j.items);
       if (j.gen_state === 'running') { timer = setTimeout(poll, 2500); return; }
       go.disabled = app.getAttribute('data-has-relay') !== '1';
-      msgBox.textContent = j.gen_state === 'idle' ? '' : j.gen_state === 'done' ? 'Done. Open each form, check it, and sign where it says. Then go back to the filing page.' : 'Some forms did not finish. Each one says why below. Press the button to try again. If it still fails, tell the Admin Unit and give them this reference: ' + data.ref + '.';
+      msgBox.textContent = j.gen_state === 'idle' ? '' : j.gen_state === 'done' ? 'Done. Open each form, check it, and sign where it says. Every form is a Google Doc or Sheet that you can open and edit, so change anything that is wrong before you sign. Then go back to the filing page.' : 'Some forms did not finish. Each one says why below. Press the button to try again. If it still fails, tell the Admin Unit and give them this reference: ' + data.ref + '.';
     }).catch(function () { timer = setTimeout(poll, 5000); });
   }
   go.addEventListener('click', function () {

@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.61"
+APP_VERSION = "7.62"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.62",
+        "date": "October 21, 2026",
+        "summary": "One CENRR sheet for each ride, and a reminder that every form can be edited.",
+        "changes": [
+            "A ride that needs a CENRR now gets its own CENRR sheet, the same as an RER. Before, all such rides were listed on one sheet.",
+            "The Prepare page now says that each form is a Google Doc or Sheet you can open and edit before you sign."
+        ]
+    },
     {
         "version": "7.61",
         "date": "October 21, 2026",
