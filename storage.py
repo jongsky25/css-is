@@ -792,6 +792,8 @@ def init_db(conn):
     documents_storage.install(conn)
     import work_storage
     work_storage.install(conn)
+    import supplies_storage
+    supplies_storage.install(conn)
     conn.commit()
 
 
