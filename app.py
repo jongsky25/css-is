@@ -4488,7 +4488,7 @@ def admin_email(request: Request, msg: str = "", err: str = ""):
         return r
     conn = get_conn()
     try:
-        settings = st.get_settings(conn, [f"email_feature.{k}" for k in mailer.FEATURES])
+        settings = st.get_settings(conn, [f"email_feature.{k}" for k in mailer.FEATURES] + ["email_paused"])
         recent_sends = st.recent_email_sends(conn, limit=50)
         param_values = {k: send_reminders._param(conn, k) for k in send_reminders.PARAMS}
         retention_days = int(st.get_setting(
@@ -4496,6 +4496,7 @@ def admin_email(request: Request, msg: str = "", err: str = ""):
     finally:
         conn.close()
     states = {k: settings.get(f"email_feature.{k}", "1") != "0" for k in mailer.FEATURES}
+    paused = settings.get("email_paused") == "1"
     transactional = [(k, label, hint, states[k]) for k, (label, hint, group)
                      in mailer.FEATURES.items() if group == "transactional"]
     scheduled = [(k, label, hint, states[k]) for k, (label, hint, group)
@@ -4507,7 +4508,7 @@ def admin_email(request: Request, msg: str = "", err: str = ""):
     params = [(k, label, lo, hi, param_values[k]) for k, (label, _default, lo, hi)
              in send_reminders.PARAMS.items()]
     return templates.TemplateResponse(request, "admin_email.html", {
-        "email_configured": mailer.email_configured(),
+        "email_configured": mailer.email_configured(), "paused": paused,
         "relay_configured": mailer.relay_configured(),
         "smtp_configured": mailer.smtp_configured(),
         "transactional": transactional, "scheduled": scheduled,
@@ -4536,6 +4537,26 @@ async def admin_email_toggle(request: Request):
     finally:
         conn.close()
     return RedirectResponse("/admin/email?msg=" + quote("Saved."), status_code=303)
+
+
+@app.post("/admin/email/pause")
+async def admin_email_pause(request: Request):
+    """One switch that holds every non-account email (invites, password resets
+    and registration-link re-sends keep working). Queued room and calendar
+    mail waits and goes out after resume; scheduled jobs skip while paused."""
+    if (r := _forbid(request, "manage_users")):
+        return r
+    posted = await _posted(request)
+    paused = posted.get("paused") in ("on", "1", "true", "yes")
+    conn = get_conn()
+    try:
+        st.set_email_paused(conn, paused)
+        _audit(request, conn, "email_pause", target_type="setting", target_id="email_paused",
+               summary=f"All non-account email {'PAUSED' if paused else 'RESUMED'}.")
+    finally:
+        conn.close()
+    return RedirectResponse("/admin/email?msg=" + quote(
+        "All non-account email is paused." if paused else "Email resumed."), status_code=303)
 
 
 @app.post("/admin/email/params")

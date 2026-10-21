@@ -1227,6 +1227,8 @@ def flush_outbox(conn, base_url, *, now=None, send=None):
     conn.execute("UPDATE calendar_outbox SET sent_at=?, result='expired' WHERE sent_at IS NULL AND queued_at < ?",
                  (stamp(now), stamp(now - timedelta(days=EXPIRE_DAYS))))
     conn.commit()
+    if st.email_paused(conn):                            # an admin paused all email: keep the queue for after resume
+        return 0
     pending = {}
     for r in conn.execute("SELECT id, user_id, entry_id, kind, detail, queued_at, urgent, attempts "
                           "FROM calendar_outbox WHERE sent_at IS NULL ORDER BY id"):

@@ -90,6 +90,16 @@
   {% if err %}<div class="flash err">{{ err }}</div>{% endif %}
 
   <div class="acard">
+    <h2>Pause all email</h2>
+    <p class="hint">Holds every email on the lists below at once — nothing is sent, and nothing else changes. Account mail (invites, password resets, registration-link re-sends) is never paused. Queued room and calendar emails wait and go out after you resume; the daily reminder jobs skip while paused.</p>
+    <form method="post" action="/admin/email/pause" class="frow">
+      <div><span class="state {{ 'off' if paused else 'on' }}">{{ 'PAUSED' if paused else 'RUNNING' }}</span></div>
+      <input type="hidden" name="paused" value="{{ '0' if paused else '1' }}">
+      <button class="btn {{ '' if paused else 'danger' }}" type="submit">{{ 'Resume email' if paused else 'Pause all email' }}</button>
+    </form>
+  </div>
+
+  <div class="acard">
     <h2>Transport</h2>
     <div class="status-row">
       <span class="k">Overall <span class="pill {{ 'on' if email_configured else 'off' }}">{{ 'configured' if email_configured else 'not configured' }}</span></span>

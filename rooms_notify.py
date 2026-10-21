@@ -347,6 +347,8 @@ def flush(conn, base_url, now=None, send=None):
         if not mailer.email_configured():                  # nothing to send with: keep them waiting (the bell still works)
             return {}
         send = mailer.send
+    if st.email_paused(conn):                              # an admin paused all email: hold the queue, send it after resume
+        return {}
     now = now or tz.now_local()
     cutoff = (now - RETRY_AFTER).isoformat(timespec="seconds")
     stale = (now - STALE_AFTER).isoformat(timespec="seconds")

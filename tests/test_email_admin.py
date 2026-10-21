@@ -313,3 +313,56 @@ def test_retention_purge_stale_email_log_dry_run_changes_nothing(db_path):
     finally:
         _reset_log(conn)
         conn.close()
+
+
+# ---- global pause ----------------------------------------------------------
+
+def test_pause_holds_every_feature_but_not_account_mail(db_path):
+    conn = st.connect(db_path); st.init_db(conn); _reset(conn)
+    try:
+        st.set_email_paused(conn, True)
+        for key in list(mailer.FEATURES) + ["not_a_real_feature"]:
+            assert st.email_feature_enabled(conn, key) is False, key
+        for key in mailer.ALWAYS_ON:
+            assert st.email_feature_enabled(conn, key) is True, key
+        st.set_email_paused(conn, False)
+        assert st.email_feature_enabled(conn, "event_created") is True
+    finally:
+        conn.execute("DELETE FROM app_setting WHERE key='email_paused'"); conn.commit()
+        conn.close()
+
+
+def test_always_on_constant_matches_mailer_catalog():
+    assert set(st.EMAIL_ACCOUNT_KEYS) == set(mailer.ALWAYS_ON)
+
+
+def test_admin_email_pause_route_audits_and_toggles(admin, db_path):
+    conn = st.connect(db_path)
+    try:
+        r = admin.post("/admin/email/pause", data={"paused": "1"}, follow_redirects=False)
+        assert r.status_code == 303 and "msg=" in r.headers["location"]
+        assert st.email_paused(conn) is True
+        assert "PAUSED" in admin.get("/admin/email").text
+        admin.post("/admin/email/pause", data={"paused": "0"}, follow_redirects=False)
+        assert st.email_paused(conn) is False
+    finally:
+        conn.execute("DELETE FROM app_setting WHERE key='email_paused'"); conn.commit()
+        conn.close()
+
+
+def test_admin_email_pause_requires_manage_users(viewer):
+    assert viewer.post("/admin/email/pause", data={"paused": "1"}).status_code == 403
+
+
+def test_paused_room_and_calendar_queues_wait(db_path):
+    import rooms_notify, office_calendar
+    conn = st.connect(db_path); st.init_db(conn)
+    try:
+        st.set_email_paused(conn, True)
+        sent = []
+        assert rooms_notify.flush(conn, "https://x.example", send=lambda *a, **k: sent.append(a)) == {}
+        assert office_calendar.flush_outbox(conn, "https://x.example", send=lambda *a, **k: sent.append(a)) == 0
+        assert sent == []
+    finally:
+        conn.execute("DELETE FROM app_setting WHERE key='email_paused'"); conn.commit()
+        conn.close()

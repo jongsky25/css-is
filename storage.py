@@ -1776,10 +1776,26 @@ def get_settings(conn, keys):
 # One app_setting row per gateable email feature (mailer.FEATURES). Read by
 # app.py's three send funnels and send_reminders.run() (Phases 2-3).
 
+EMAIL_ACCOUNT_KEYS = ("invite", "reset", "recovery")   # == mailer.ALWAYS_ON; mailer stays DB-free
+
+
+def email_paused(conn):
+    """True while an admin has paused every non-account email at once."""
+    return get_setting(conn, "email_paused", "0") == "1"
+
+
+def set_email_paused(conn, on):
+    set_setting(conn, "email_paused", "1" if on else "0")
+
+
 def email_feature_enabled(conn, key):
-    """True unless an admin has turned this email feature off. Unknown keys
-    read as ON: a typo in a feature key must never silently swallow a real
-    send."""
+    """True unless an admin has turned this email feature off, or paused all
+    non-account email. Unknown keys read as ON: a typo in a feature key must
+    never silently swallow a real send. Account mail is never paused."""
+    if key in EMAIL_ACCOUNT_KEYS:
+        return True
+    if email_paused(conn):
+        return False
     return get_setting(conn, f"email_feature.{key}", "1") != "0"
 
 
